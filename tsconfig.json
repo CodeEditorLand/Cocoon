@@ -1,0 +1,41 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+
+	"compilerOptions": {
+		"baseUrl": "./",
+
+		"emitDeclarationOnly": false,
+
+		"emitDecoratorMetadata": true,
+
+		"experimentalDecorators": true,
+
+		"lib": ["ESNext"],
+
+		"module": "ESNext",
+
+		"moduleResolution": "Bundler",
+
+		"noEmit": true,
+
+		"outDir": "Target",
+
+		"paths": {
+			"@Source/*": ["Source/*"],
+
+			"@VSCode/*": ["../../Dependency/Microsoft/Dependency/Editor/src/*"]
+		},
+
+		"rootDir": "Source",
+
+		"rootDirs": [".", "../../Dependency/Microsoft/Dependency/Editor/src/"],
+
+		"target": "ESNext"
+	},
+
+	"exclude": ["Target"],
+
+	"extends": "@playform/build/tsconfig",
+
+	"include": ["Source"]
+}

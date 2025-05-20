@@ -1,0 +1,9 @@
+{
+	"compilerOptions": {
+		"baseUrl": "./",
+		"outDir": "Target",
+		"rootDir": "Source"
+	},
+	"extends": "./tsconfig.json",
+	"include": ["Source"]
+}

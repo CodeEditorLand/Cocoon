@@ -1,0 +1,33 @@
+{
+	"name": "@codeeditorland/cocoon",
+	"version": "0.0.1",
+	"private": false,
+	"description": "Cocoon 🦋",
+	"homepage": "https://GitHub.Com/CodeEditorLand/Cocoon#readme",
+	"bugs": {
+		"url": "https://GitHub.Com/CodeEditorLand/Cocoon/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/CodeEditorLand/Cocoon.git"
+	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "Source 🖋️ Open 👐🏻",
+		"email": "Source/Open@Editor.Land",
+		"url": "https://Editor.Land"
+	},
+	"type": "module",
+	"scripts": {
+		"Run": "sh Source/Run.sh",
+		"prepublishOnly": "sh Source/prepublishOnly.sh"
+	},
+	"devDependencies": {
+		"@playform/build": "0.2.4",
+		"ulid": "3.0.0"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	}
+}
