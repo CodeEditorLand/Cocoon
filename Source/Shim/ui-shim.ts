@@ -20,7 +20,7 @@
  *   MainThread service exists (e.g., `MainThreadQuickInput`, `MainThreadStatusBar`).
  *--------------------------------------------------------------------------------------------*/
 
-import {
+import type {
 	MessageItem as VscodeMessageItem,
 	// vscode API types for window methods
 	MessageOptions as VscodeMessageOptions,
@@ -35,8 +35,8 @@ import {
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
+	type IExtHostRpcService,
+	type ILogService,
 	ProxyIdentifier,
 	refineError,
 } from "./_baseShim";

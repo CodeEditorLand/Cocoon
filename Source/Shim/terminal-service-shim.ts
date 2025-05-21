@@ -27,7 +27,7 @@
 
 import {
 	Emitter as VscodeEmitter,
-	Event as VscodeEvent,
+	type Event as VscodeEvent,
 } from "vs/base/common/event";
 import { IDisposable } from "vs/base/common/lifecycle";
 // For URI marshalling checks
@@ -37,30 +37,30 @@ import {
 	MainContext,
 } from "vs/workbench/api/common/extHost.protocol";
 import {
-	EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
-	EnvironmentVariableMutator as VscodeEnvironmentVariableMutator,
+	type EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
+	type EnvironmentVariableMutator as VscodeEnvironmentVariableMutator,
 	EnvironmentVariableMutatorType as VscodeEnvironmentVariableMutatorType,
-	Extension as VscodeExtension,
-	ExtensionTerminalOptions as VscodeExtensionTerminalOptions,
+	type Extension as VscodeExtension,
+	type ExtensionTerminalOptions as VscodeExtensionTerminalOptions,
 	// For ExtensionTerminalOptions.pty
 	Pseudoterminal as VscodePseudoterminal,
 	// Use VscodeTerminal to distinguish from internal types
-	Terminal as VscodeTerminal,
+	type Terminal as VscodeTerminal,
 	// For pty data events
 	Event as VscodeTerminalDataEvent,
 	// For ExtensionTerminalOptions.pty
 	TerminalDimensions as VscodeTerminalDimensions,
 	TerminalExitReason as VscodeTerminalExitReason,
-	TerminalExitStatus as VscodeTerminalExitStatus,
-	TerminalOptions as VscodeTerminalOptions,
-	TerminalState as VscodeTerminalState,
+	type TerminalExitStatus as VscodeTerminalExitStatus,
+	type TerminalOptions as VscodeTerminalOptions,
+	type TerminalState as VscodeTerminalState,
 	// For cwd or iconPath
 	Uri as VscodeUri,
 	// Not used directly if passing options object
 	// TerminalLocation as VscodeApiTerminalLocation,
 
 	// For TerminalOptions.location
-	ViewColumn as VscodeViewColumn,
+	type ViewColumn as VscodeViewColumn,
 } from "vscode";
 
 // Assuming API objects from 'vscode' shim or real API
@@ -68,9 +68,9 @@ import {
 import * as ipc from "../cocoon-ipc";
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 
@@ -243,7 +243,7 @@ class ShimTerminalImpl implements VscodeTerminal {
 
 	#logService?: ILogService;
 
-	#isDisposed: boolean = false;
+	#isDisposed = false;
 
 	readonly #processIdPromise: Promise<number | undefined>;
 
@@ -368,7 +368,7 @@ class ShimTerminalImpl implements VscodeTerminal {
 
 	// get pty(): VscodePseudoterminal | undefined { /* TODO: If PTYs fully supported */ return undefined; }
 
-	public sendText(text: string, addNewLine: boolean = true): void {
+	public sendText(text: string, addNewLine = true): void {
 		try {
 			const proxy = this._validateAndGetProxy();
 
@@ -388,7 +388,7 @@ class ShimTerminalImpl implements VscodeTerminal {
 		}
 	}
 
-	public show(preserveFocus: boolean = false): void {
+	public show(preserveFocus = false): void {
 		try {
 			const proxy = this._validateAndGetProxy();
 
@@ -735,7 +735,6 @@ class ShimEnvironmentVariableCollectionImpl
 				return {
 					value: [key, Object.freeze({ ...value })] as [
 						string,
-
 						VscodeEnvironmentVariableMutator,
 					],
 

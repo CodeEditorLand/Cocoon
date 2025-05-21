@@ -23,12 +23,12 @@
 
 import {
 	Emitter as VscodeEmitter,
-	Event as VscodeEvent,
+	type Event as VscodeEvent,
 } from "vs/base/common/event";
 // Assuming bundled
 import {
 	ExtensionIdentifier,
-	IExtensionDescription,
+	type IExtensionDescription,
 	// For Extension type
 } from "vs/platform/extensions/common/extensions";
 import {
@@ -36,15 +36,15 @@ import {
 	// A more general interface
 	IExtensionEnablementService,
 	// This interface is often implemented by the ExtHost counterpart
-	IGlobalExtensionEnablementService,
+	type IGlobalExtensionEnablementService,
 	// The service ID used in DI
 	IWorkbenchExtensionEnablementService,
 } from "vs/workbench/services/extensionManagement/common/extensionManagement";
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
+	type IExtHostRpcService,
+	type ILogService,
 	ProxyIdentifier,
 	// Import ILogService & BaseCocoonShim
 } from "./_baseShim";

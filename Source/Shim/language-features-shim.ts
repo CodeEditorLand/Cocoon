@@ -41,29 +41,29 @@ import {
 	CallHierarchyItem,
 	CallHierarchyOutgoingCall,
 	CallHierarchyProvider,
-	CodeAction,
-	CodeActionProvider,
-	CodeLens,
-	CodeLensProvider,
-	CompletionContext,
-	CompletionItem,
-	CompletionItemProvider,
-	CompletionList,
+	type CodeAction,
+	type CodeActionProvider,
+	type CodeLens,
+	type CodeLensProvider,
+	type CompletionContext,
+	type CompletionItem,
+	type CompletionItemProvider,
+	type CompletionList,
 	Declaration,
 	DeclarationProvider,
-	Definition,
-	DefinitionLink,
-	DefinitionProvider,
+	type Definition,
+	type DefinitionLink,
+	type DefinitionProvider,
 	DocumentFormattingEditProvider,
 	DocumentHighlight,
 	DocumentHighlightProvider,
-	DocumentLink,
+	type DocumentLink,
 	DocumentLinkProvider,
 	DocumentRangeFormattingEditProvider,
-	DocumentSelector,
+	type DocumentSelector,
 	FormattingOptions,
-	Hover,
-	HoverProvider,
+	type Hover,
+	type HoverProvider,
 	Implementation,
 	ImplementationProvider,
 	LinkedEditingRangeProvider,
@@ -78,33 +78,33 @@ import {
 	SignatureHelp,
 	SignatureHelpContext,
 	SignatureHelpProvider,
-	SymbolInformation,
+	type SymbolInformation,
 	SymbolKind,
-	TextDocument,
+	type TextDocument,
 	TextEdit,
 	TypeDefinition,
 	TypeDefinitionProvider,
 	TypeHierarchyItem,
 	TypeHierarchyProvider,
 	Location as VscodeLocation,
-	Position as VscodePosition,
+	type Position as VscodePosition,
 	Range as VscodeRange,
 	// vscode API types used by providers
-	Uri as VscodeUri,
+	type Uri as VscodeUri,
 	WorkspaceSymbolProvider,
 	// TODO: Add other provider types and their result types (InlayHint, ColorInformation, FoldingRange, etc.)
 } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 // Assuming from 'vscode' API shim or real types
 
 // For IExtHostDocuments functionality
-import { ShimDocumentService } from "./document-shim";
+import type { ShimDocumentService } from "./document-shim";
 
 // --- Type Definitions ---
 
@@ -315,7 +315,7 @@ export class ShimLanguageFeatures
 	readonly #mainThreadLanguageFeaturesProxy: MainThreadLanguageFeaturesShape | null =
 		null;
 
-	#providerHandlePool: number = 0;
+	#providerHandlePool = 0;
 
 	readonly #providerHandles = new Map<number, ProviderRegistrationData>();
 

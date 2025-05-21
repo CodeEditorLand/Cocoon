@@ -22,11 +22,15 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as path from "path";
-import { IExtensionDescription } from "vs/platform/extensions/common/extensions";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions";
 
 // Use vscode.Uri for the API
 import { Uri as VscodeUri } from "../Shim/out/vscode";
-import { BaseCocoonShim, IExtHostRpcService, ILogService } from "./_baseShim";
+import {
+	BaseCocoonShim,
+	type IExtHostRpcService,
+	type ILogService,
+} from "./_baseShim";
 // Default import of the fs-shim object
 import fsShimInstance from "./fs-shim";
 

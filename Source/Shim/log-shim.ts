@@ -19,19 +19,19 @@
 
 import {
 	Emitter as VscodeEmitter,
-	Event as VscodeEvent,
+	type Event as VscodeEvent,
 } from "vs/base/common/event";
-import { dispose, IDisposable } from "vs/base/common/lifecycle";
+import { IDisposable, dispose } from "vs/base/common/lifecycle";
 // TODO: Ensure 'vs/platform/log/common/log' provides these interfaces and enums.
 // If not, they need to be defined locally matching VS Code's structure.
 // For ILoggerService createLogger resource URI
 import { URI } from "vs/base/common/uri";
 import {
-	parseLogLevel,
-	ILogger as VscodeILogger,
-	ILoggerService as VscodeILoggerService,
-	ILogService as VscodeILogService,
+	type ILogService as VscodeILogService,
+	type ILogger as VscodeILogger,
+	type ILoggerService as VscodeILoggerService,
 	LogLevel as VscodeLogLevel,
+	parseLogLevel,
 } from "vs/platform/log/common/log";
 
 // --- ShimLogService: Implements VscodeILogService and VscodeILogger ---

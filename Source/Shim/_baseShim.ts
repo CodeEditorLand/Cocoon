@@ -24,7 +24,7 @@
 import { EventEmitter } from "events";
 // For NOP event emitter type safety; Needs event code bundled
 // Renamed to avoid conflict with DOM Event
-import { IDisposable, Event as VscodeEvent } from "vs/base/common/event";
+import { type IDisposable, Event as VscodeEvent } from "vs/base/common/event";
 // Core revival function; Needs marshalling code bundled
 // Assuming this is a function: (data: any, context?: any) => any
 import { revive } from "vs/base/common/marshalling";
@@ -34,12 +34,6 @@ import { revive } from "vs/base/common/marshalling";
 // Assuming this is an enum or const object
 import { MarshalledId } from "vs/base/common/marshallingIds";
 
-// Import direct IPC functions (use sparingly, prefer RPC proxies)
-import {
-	sendNotificationToMountain,
-	sendToMountainAndWait,
-	// TODO: Ensure this path is correct and these functions are appropriately typed in cocoon-ipc.ts.
-} from "../cocoon-ipc";
 // Assume VS Code API types are available (might require specific imports based on bundling)
 // For the purpose of this conversion, we'll assume these types are correctly imported.
 // If these are shimmed versions, their definitions would be in '../Shim/out/vscode'.
@@ -52,6 +46,12 @@ import {
 	// TODO: Ensure these imports point to the correct vscode API type definitions or shim implementations.
 	// The path "../Shim/out/vscode" is assumed.
 } from "../Shim/out/vscode";
+// Import direct IPC functions (use sparingly, prefer RPC proxies)
+import {
+	sendNotificationToMountain,
+	sendToMountainAndWait,
+	// TODO: Ensure this path is correct and these functions are appropriately typed in cocoon-ipc.ts.
+} from "../cocoon-ipc";
 
 // Define interfaces for injected services based on usage
 // TODO: These interfaces should ideally be imported from actual VS Code type definition files if available.
@@ -115,7 +115,7 @@ export function refineError(
 
 	logService?: ILogService,
 
-	context: string = "",
+	context = "",
 ): Error {
 	if (!(originalError instanceof Error) || !originalError.message) {
 		return originalError;
@@ -352,7 +352,7 @@ export class BaseCocoonShim {
 
 		params: any,
 
-		timeoutMs: number = 5000,
+		timeoutMs = 5000,
 	): Promise<any> {
 		this._log(`Sending direct IPC request '${mountainMethod}'...`);
 
@@ -551,7 +551,7 @@ export class BaseCocoonShim {
 	protected _createEventFromEmitter<T>(
 		emitter: EventEmitter,
 
-		eventName: string = "fire",
+		eventName = "fire",
 	): VscodeEvent<T> {
 		const event: VscodeEvent<T> = (listener, thisArgs, disposables?) => {
 			// Make disposables optional

@@ -18,19 +18,19 @@
  *--------------------------------------------------------------------------------------------*/
 
 // Assuming bundled
-import {
+import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 import {
 	ExtensionHostKind,
-	IExtensionHostKindPicker,
+	type IExtensionHostKindPicker,
 	// Not a type itself, but used as parameter type
 	// ExtensionHostKind[],
 } from "vs/workbench/services/extensions/common/extensionHostKind";
 
 // For logging
-import { ILogService } from "./_baseShim";
+import type { ILogService } from "./_baseShim";
 
 // --- Type Definitions ---
 

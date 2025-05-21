@@ -23,95 +23,95 @@
 
 import { delta as arrayDelta } from "vs/base/common/arrays";
 import { Barrier } from "vs/base/common/async";
-import { CancellationToken } from "vs/base/common/cancellation";
+import type { CancellationToken } from "vs/base/common/cancellation";
 import {
 	Emitter as VscodeEmitter,
 	Event as VscodeEvent,
 } from "vs/base/common/event";
 import {
 	DisposableStore,
-	IDisposable,
+	type IDisposable,
 	toDisposable,
 } from "vs/base/common/lifecycle";
 import { Schemas } from "vs/base/common/network";
 import {
+	ExtUri,
+	type IExtUri,
 	basenameOrAuthority,
 	dirname,
-	ExtUri,
-	IExtUri,
 	relativePath as resourcesRelativePath,
 } from "vs/base/common/resources";
 import { compare } from "vs/base/common/strings";
 import { TernarySearchTree } from "vs/base/common/ternarySearchTree";
 import {
 	URI as VSCodeInternalURI,
-	UriComponents as VSCodeInternalUriComponents,
+	type UriComponents as VSCodeInternalUriComponents,
 } from "vs/base/common/uri";
 import {
 	ExtensionIdentifier,
-	IExtensionDescription,
+	type IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files";
 // For service IDs
-import { createDecorator } from "vs/platform/instantiation/common/instantiation";
+import type { createDecorator } from "vs/platform/instantiation/common/instantiation";
 import {
 	// RPC Contexts
 	ExtHostContext,
 	MainContext,
 	// DTO from protocol
-	IRelativePatternDto as RpcRelativePattern,
+	type IRelativePatternDto as RpcRelativePattern,
 	// DTO from protocol
-	IWorkspaceData as RpcWorkspaceData,
+	type IWorkspaceData as RpcWorkspaceData,
 	// DTO from protocol
-	IWorkspaceFolderData as RpcWorkspaceFolderData,
+	type IWorkspaceFolderData as RpcWorkspaceFolderData,
 	// RPC Shape for methods called by MainThread
-	ExtHostWorkspaceShape as VscodeExtHostWorkspaceShape,
+	type ExtHostWorkspaceShape as VscodeExtHostWorkspaceShape,
 } from "vs/workbench/api/common/extHost.protocol";
 // Interface for dependency
-import { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
+import type { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
 
-// For IPC events like onWorkspaceFoldersChanged
-import * as ipc from "../cocoon-ipc";
 // vscode API types (from ../Shim/out/vscode or actual vscode namespace)
 import {
 	CanonicalUriProvider,
-	ConfigurationScope,
+	type ConfigurationScope,
 	EditSessionIdentityProvider,
-	FileSystem,
-	FileSystemProvider,
+	type FileSystem,
+	type FileSystemProvider,
 	FindTextInFilesOptions,
 	PortAttributesProvider,
 	QuickDiffProvider,
-	TaskProvider,
-	TextDocument,
-	TextDocumentChangeEvent,
-	TextDocumentContentProvider,
+	type TaskProvider,
+	type TextDocument,
+	type TextDocumentChangeEvent,
+	type TextDocumentContentProvider,
 	// Stubs for less critical/complex APIs for now
 	TextSearchQuery,
 	TextSearchResult,
 	TimelineProvider,
 	TunnelProvider,
 	UriHandler,
-	GlobPattern as VscodeApiGlobPattern,
+	type GlobPattern as VscodeApiGlobPattern,
 	RelativePattern as VscodeApiRelativePattern,
 	Uri as VscodeApiUri,
-	WorkspaceFolder as VscodeApiWorkspaceFolder,
-	WorkspaceFoldersChangeEvent as VscodeWorkspaceFoldersChangeEvent,
-	WorkspaceConfiguration,
-	WorkspaceTrustRequestOptions,
+	type WorkspaceFolder as VscodeApiWorkspaceFolder,
+	type WorkspaceFoldersChangeEvent as VscodeWorkspaceFoldersChangeEvent,
+	type WorkspaceConfiguration,
+	type WorkspaceTrustRequestOptions,
 	// TODO: Add other types from vscode.d.ts as needed for the API surface
 } from "../Shim/out/vscode";
+// For IPC events like onWorkspaceFoldersChanged
+import * as ipc from "../cocoon-ipc";
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 // For IExtHostConfiguration type
-import { ShimExtHostConfiguration } from "./configuration-shim";
+import type { ShimExtHostConfiguration } from "./configuration-shim";
 // Cocoon specific shims
-import { ShimDocumentService } from "./document-shim";
+import type { ShimDocumentService } from "./document-shim";
 // For workspace.fs
 import { ShimFileSystemApi } from "./fs-api-shim";
 
@@ -304,7 +304,7 @@ export class ShimExtHostWorkspace
 	// For optimistic updates from updateWorkspaceFolders
 	#unconfirmedWorkspaceState: CocoonInternalWorkspace | undefined;
 
-	#isWorkspaceTrusted: boolean = false;
+	#isWorkspaceTrusted = false;
 
 	readonly #initializedBarrier = new Barrier();
 

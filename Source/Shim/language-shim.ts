@@ -22,56 +22,56 @@
 // Assuming these come from the vscode API shim
 // For event type signatures (e.g., onDidChangeDiagnostics)
 import { Event as VscodeEvent } from "vs/base/common/event";
-import { Disposable, IDisposable } from "vs/base/common/lifecycle";
+import { Disposable, type IDisposable } from "vs/base/common/lifecycle";
 // VS Code internal URI
 import { URI } from "vs/base/common/uri";
 
 // Import vscode API types for providers, selectors, and other language-related interfaces/enums
 import {
-	CallHierarchyProvider,
-	CodeActionProvider,
-	CodeActionProviderMetadata,
-	CodeLensProvider,
-	CompletionItemProvider,
-	DeclarationProvider,
-	DefinitionProvider,
-	DocumentColorProvider,
-	DocumentFormattingEditProvider,
-	DocumentHighlightProvider,
-	DocumentLinkProvider,
-	DocumentRangeFormattingEditProvider,
-	DocumentSelector,
-	FoldingRangeProvider,
-	HoverProvider,
-	ImplementationProvider,
-	InlayHintsProvider,
-	LanguageStatusItem,
+	type CallHierarchyProvider,
+	type CodeActionProvider,
+	type CodeActionProviderMetadata,
+	type CodeLensProvider,
+	type CompletionItemProvider,
+	type DeclarationProvider,
+	type DefinitionProvider,
+	type DocumentColorProvider,
+	type DocumentFormattingEditProvider,
+	type DocumentHighlightProvider,
+	type DocumentLinkProvider,
+	type DocumentRangeFormattingEditProvider,
+	type DocumentSelector,
+	type FoldingRangeProvider,
+	type HoverProvider,
+	type ImplementationProvider,
+	type InlayHintsProvider,
+	type LanguageStatusItem,
 	// For setLanguageStatus
 	LanguageStatusSeverity,
-	LinkedEditingRangeProvider,
-	OnTypeFormattingEditProvider,
+	type LinkedEditingRangeProvider,
+	type OnTypeFormattingEditProvider,
 	OnTypeFormattingEditProviderOptions,
-	ReferenceProvider,
-	RenameProvider,
-	SelectionRangeProvider,
-	SignatureHelpProvider,
-	SignatureHelpProviderMetadata,
-	TypeDefinitionProvider,
-	TypeHierarchyProvider,
-	WorkspaceSymbolProvider,
+	type ReferenceProvider,
+	type RenameProvider,
+	type SelectionRangeProvider,
+	type SignatureHelpProvider,
+	type SignatureHelpProviderMetadata,
+	type TypeDefinitionProvider,
+	type TypeHierarchyProvider,
+	type WorkspaceSymbolProvider,
 	// For getLanguages, matchLanguages, etc.
 	// LanguageFilter,
 	// TODO: Add any other provider or language API types that vscode.languages exposes.
 } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
+	type IExtHostRpcService,
+	type ILogService,
 	refineError,
 } from "./_baseShim";
 import {
 	ExtHostLanguageFeaturesServiceShape,
-	ShimLanguageFeatures,
+	type ShimLanguageFeatures,
 } from "./shims/language-features-shim";
 
 // Import concrete class and its RPC shape

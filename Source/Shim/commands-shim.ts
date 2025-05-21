@@ -15,10 +15,10 @@
 
 // though Mountain's current command handlers seem to expect plain JSON for args.
 import { VSBuffer } from "vs/base/common/buffer";
-import { ICommandMetadata } from "vs/platform/commands/common/commands";
+import type { ICommandMetadata } from "vs/platform/commands/common/commands";
 import {
 	ExtensionIdentifier,
-	IExtensionDescription,
+	type IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 import {
 	ExtHostContext,
@@ -28,9 +28,9 @@ import { SerializableObjectWithBuffers } from "vs/workbench/services/extensions/
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 // Placeholder for vscode.Disposable etc.
@@ -489,7 +489,7 @@ export class ShimExtHostCommands
 	}
 
 	public async getCommands(
-		filterUnderscoreCommands: boolean = false,
+		filterUnderscoreCommands = false,
 	): Promise<string[]> {
 		// API method
 		// this._logService?.trace('getCommands (API call)');

@@ -22,15 +22,15 @@
 
 import {
 	Emitter as VscodeEmitter,
-	Event as VscodeEvent,
+	type Event as VscodeEvent,
 } from "vs/base/common/event";
 // VS Code internal interface
-import { IExtHostSecretState as VscodeIExtHostSecretState } from "vs/workbench/api/common/extHostSecretState";
+import type { IExtHostSecretState as VscodeIExtHostSecretState } from "vs/workbench/api/common/extHostSecretState";
 // IExtHostRpcService is not used if all calls are direct IPC
 // import { IExtHostRpcService } from "./_baseShim";
 
 // From vscode API
-import { SecretStorage, SecretStorageChangeEvent } from "vscode";
+import type { SecretStorage, SecretStorageChangeEvent } from "vscode";
 
 import { sendToMountainAndWait } from "../cocoon-ipc";
 

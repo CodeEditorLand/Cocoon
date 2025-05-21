@@ -28,7 +28,7 @@ import {
 // Assuming API objects from 'vscode' shim
 import { IDisposable } from "vs/base/common/lifecycle";
 // VS Code internal LogLevel enum
-import { LogLevel as VscodeInternalLogLevel } from "vs/platform/log/common/log";
+import type { LogLevel as VscodeInternalLogLevel } from "vs/platform/log/common/log";
 import {
 	ExtHostContext,
 	MainContext,
@@ -36,20 +36,20 @@ import {
 } from "vs/workbench/api/common/extHost.protocol";
 import {
 	// For show options
-	ViewColumn,
+	type ViewColumn,
 	// The vscode.LogLevel enum from the API
 	LogLevel as VscodeApiLogLevel,
-	LogOutputChannel as VscodeLogOutputChannel,
-	OutputChannel as VscodeOutputChannel,
+	type LogOutputChannel as VscodeLogOutputChannel,
+	type OutputChannel as VscodeOutputChannel,
 	// Renamed to avoid conflict with internal URI if used
-	Uri as VscodeUri,
+	type Uri as VscodeUri,
 } from "vscode";
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 
@@ -131,7 +131,7 @@ class ShimOutputChannelImpl implements VscodeOutputChannel {
 	// For internal logging of the shim itself
 	#logService?: ILogService;
 
-	#isDisposed: boolean = false;
+	#isDisposed = false;
 
 	constructor(
 		idForRpc: string,
@@ -436,7 +436,7 @@ class ShimLogOutputChannelImpl
 
 		...args: any[]
 	): void {
-		let fullMessage =
+		const fullMessage =
 			message instanceof Error
 				? `${message.message}${message.stack ? `\n${message.stack}` : ""}`
 				: message;
@@ -542,7 +542,7 @@ export class ShimOutputService
 		let languageId: string | undefined = undefined;
 
 		// For file-backed log channels (advanced)
-		let fileUri: VscodeUri | undefined = undefined;
+		const fileUri: VscodeUri | undefined = undefined;
 
 		if (typeof optionsOrLangId === "string") {
 			languageId = optionsOrLangId;

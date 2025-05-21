@@ -9,7 +9,7 @@ import {
 	// For typed RPC adapter events
 } from "vs/base/common/event";
 import {
-	IMessagePassingProtocol,
+	type IMessagePassingProtocol,
 	MessagePassingProtocol as VSCodeMessagePassingProtocol,
 	// For RPC adapter type
 } from "vs/workbench/services/extensions/common/rpcProtocol";
@@ -154,7 +154,7 @@ interface PendingRequestEntry {
 // --- State for Request/Response Handling ---
 const pendingRequests = new Map<number, PendingRequestEntry>();
 
-let nextRequestId: number = 1;
+let nextRequestId = 1;
 
 // --- Event Emitter for specific, named incoming messages/notifications FROM Mountain ---
 // TODO: Consider using VscodeEmitter for type safety if specific event payloads are well-defined.
@@ -198,7 +198,7 @@ export function sendToMountainAndWait(
 
 	params: any,
 
-	timeoutMs: number = 5000,
+	timeoutMs = 5000,
 ): Promise<any> {
 	return new Promise((resolve, reject) => {
 		const id = nextRequestId++;

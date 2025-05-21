@@ -6,16 +6,19 @@ import * as path from "path";
 import { performance } from "perf_hooks";
 import { VSBuffer } from "vs/base/common/buffer";
 // VS Code internal URI
-import { URI, UriComponents as VSCodeUriComponents } from "vs/base/common/uri";
+import {
+	URI,
+	type UriComponents as VSCodeUriComponents,
+} from "vs/base/common/uri";
 import {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 import { getSingletonServiceDescriptors } from "vs/platform/instantiation/common/extensions";
 import {
-	createDecorator,
-	IInstantiationService,
+	type IInstantiationService,
 	InstantiationService,
+	createDecorator,
 } from "vs/platform/instantiation/common/instantiationService";
 // MarshalledId and revive are used by BaseCocoonShim, direct import not strictly needed here if BaseCocoonShim handles it.
 // import { MarshalledId } from "vs/base/common/marshallingIds";
@@ -28,15 +31,13 @@ import {
 } from "vs/platform/instantiation/common/serviceCollection";
 // Service Interfaces (ensure paths and names match your VS Code version)
 import {
-	ILoggerService,
 	ILogService,
+	ILoggerService,
 	LogLevel,
 } from "vs/platform/log/common/log";
-// Interceptor & Error Handling
-import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain";
 import {
+	type IExtensionApiFactory /* VSCodeAPI */,
 	createApiFactory as createVSCodeApiFactory,
-	IExtensionApiFactory /* VSCodeAPI */,
 } from "vs/workbench/api/common/extHost.api.impl";
 import {
 	ExtHostContext,
@@ -44,6 +45,8 @@ import {
 	IWorkspaceData as RpcWorkspaceData,
 	ExtHostWorkspaceShape as VscodeExtHostWorkspaceShape,
 } from "vs/workbench/api/common/extHost.protocol";
+// Interceptor & Error Handling
+import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain";
 // Use DTOs from protocol
 
 import { IExtHostCommands } from "vs/workbench/api/common/extHostCommands";
@@ -65,7 +68,7 @@ import { IHostUtils } from "vs/workbench/api/common/extHostExtensionService";
 // Needed for Workspace shim
 import { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
 import {
-	ExtHostInitData,
+	type ExtHostInitData,
 	IExtHostInitDataService,
 } from "vs/workbench/api/common/extHostInitDataService";
 import {
@@ -103,7 +106,7 @@ import {
 	ExtensionActivationReason,
 } from "vs/workbench/services/extensions/common/extensions";
 import {
-	IMessagePassingProtocol,
+	type IMessagePassingProtocol,
 	RPCProtocol,
 } from "vs/workbench/services/extensions/common/rpcProtocol";
 import type {
@@ -138,11 +141,11 @@ import {
 } from "./shims/language-features-shim";
 import { ShimExtHostLanguageModels } from "./shims/language-models-shim";
 // Shim Implementations (import classes)
-import { ShimLoggerService, ShimLogService } from "./shims/log-shim";
+import { ShimLogService, ShimLoggerService } from "./shims/log-shim";
 import { NodeModuleShimFactory as NodeBuiltinsShimFactory } from "./shims/node-module-shim-factory";
 import { ShimOutputService } from "./shims/output-channel-shim";
 import {
-	IExtHostProposedApis as CocoonIExtHostProposedApis,
+	type IExtHostProposedApis as CocoonIExtHostProposedApis,
 	ShimExtensionsProposedApi,
 } from "./shims/proposed-api-shim";
 import { ShimExtHostSecretState } from "./shims/secret-state-shim";
@@ -218,7 +221,7 @@ let rpcProtocolInstance: RPCProtocol | null = null;
 // Renamed for clarity
 let ipcMessagePassingProtocol: IMessagePassingProtocol | null = null;
 // Combined flag
-let didFailOrExit: boolean = false;
+let didFailOrExit = false;
 
 declare global {
 	var cocoonInstantiationService: IInstantiationService | null;

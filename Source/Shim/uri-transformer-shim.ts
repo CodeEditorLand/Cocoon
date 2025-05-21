@@ -22,7 +22,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 // Use vscode.Uri from the API shim
-import { Uri as VscodeUri } from "../Shim/out/vscode";
+import type { Uri as VscodeUri } from "../Shim/out/vscode";
 
 // IURITransformerService or IURITransformer should ideally be imported from VS Code's type definitions
 // e.g., import { IURITransformerService, IURITransformer } from 'vs/workbench/api/common/extHostUriTransformerService';

@@ -36,9 +36,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 // Used by BaseCocoonShim._createEventEmitter
-import { EventEmitter } from "events";
+import type { EventEmitter } from "events";
 // For type signature of onDidChangeConfiguration
-import { Event as VscodeEvent } from "vs/base/common/event";
+import type { Event as VscodeEvent } from "vs/base/common/event";
 // Assuming ProxyIdentifier constants
 import { MainContext } from "vs/workbench/api/common/extHost.protocol";
 
@@ -48,9 +48,9 @@ import * as ipc from "..";
 import { Uri } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 
@@ -252,7 +252,6 @@ export class ShimExtHostConfiguration extends BaseCocoonShim {
 		ipc.onConfigurationChanged(
 			([newConfigData, changeDetails]: [
 				NewConfigData,
-
 				ConfigurationChangeDetails | undefined,
 			]) => {
 				const affectedKeys = changeDetails?.keys || [];
@@ -514,7 +513,7 @@ export class ShimExtHostConfiguration extends BaseCocoonShim {
 	protected _createShimConfiguration(
 		values: any,
 
-		sectionPrefix: string = "",
+		sectionPrefix = "",
 	): WorkspaceConfiguration {
 		const lookupValue = (allValues: any, key: string): any => {
 			// For `getConfiguration('')` or `config.get('')`
@@ -833,7 +832,7 @@ export class ShimExtHostConfiguration extends BaseCocoonShim {
 					throw new Error("Invalid configurationTarget for update.");
 				}
 
-				let scopeUriComponent =
+				const scopeUriComponent =
 					this._uriToComponents(scopeUriForUpdate);
 
 				this._log(

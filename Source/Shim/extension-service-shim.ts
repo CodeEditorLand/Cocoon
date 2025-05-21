@@ -21,15 +21,15 @@ import {
 	Emitter as VscodeEmitter,
 	Event as VscodeEvent,
 } from "vs/base/common/event";
-import { dispose, IDisposable } from "vs/base/common/lifecycle";
+import { type IDisposable, dispose } from "vs/base/common/lifecycle";
 // VS Code internal URI for initData revival
 import { URI } from "vs/base/common/uri";
 // --- VS Code Internal Module Imports ---
 import {
 	ExtensionIdentifier,
-	IEnabledApiProposals,
-	IExtensionDescription,
-	ISerializedExtension,
+	type IEnabledApiProposals,
+	type IExtensionDescription,
+	type ISerializedExtension,
 } from "vs/platform/extensions/common/extensions";
 // For ExtensionContext
 import { IExtHostCommands } from "vs/workbench/api/common/extHostCommands";
@@ -38,11 +38,11 @@ import {
 	IExtHostConfigurationShape,
 } from "vs/workbench/api/common/extHostConfiguration";
 import {
-	ActivatedExtension,
+	type ActivatedExtension,
 	// Enum for activation kind
 	ActivationKind,
 	EmptyExtension,
-	ExtensionActivationReason,
+	type ExtensionActivationReason,
 	ExtensionActivationTimes,
 	ExtensionActivationTimesBuilder,
 } from "vs/workbench/api/common/extHostExtensionActivator";
@@ -54,23 +54,23 @@ import { IExtHostStorage } from "vs/workbench/api/common/extHostStorage";
 import { IExtensionStoragePaths } from "vs/workbench/api/common/extHostStoragePaths";
 import {
 	IExtHostTerminalService,
-	IExtHostTerminalServiceShape,
+	type IExtHostTerminalServiceShape,
 } from "vs/workbench/api/common/extHostTerminalService";
 import {
 	ExtensionDescriptionRegistry,
-	IExtensionPointUser,
+	type IExtensionPointUser,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry";
 import { checkProposedApiEnabled } from "vs/workbench/services/extensions/common/extensions";
 // EventEmitter from 'events' is not directly used for public API, VscodeEmitter is preferred.
 import {
-	EnvironmentVariableCollection,
-	Extension,
-	ExtensionContext,
+	type EnvironmentVariableCollection,
+	type Extension,
+	type ExtensionContext,
 	ExtensionKind,
 	ExtensionMode,
 	ExtensionRuntime,
-	Memento,
-	SecretStorage,
+	type Memento,
+	type SecretStorage,
 	Uri as VscodeUri,
 	// Assuming from 'vscode' API shim
 } from "vscode";
@@ -79,7 +79,7 @@ import { sendNotificationToMountain } from "../cocoon-ipc";
 import {
 	BaseCocoonShim,
 	IExtHostRpcService,
-	ILogService,
+	type ILogService,
 	ProxyIdentifier,
 } from "./_baseShim";
 
@@ -872,7 +872,7 @@ export class ShimExtHostExtensionService
 		);
 
 		// Check proposed API access
-		let enabledProposalsSource =
+		const enabledProposalsSource =
 			this.#initData.environment.extensionEnabledProposedApi;
 
 		let enabledProposalsArray: string[] = [];

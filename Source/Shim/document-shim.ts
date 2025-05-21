@@ -45,11 +45,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 // Renamed to VscodeEvent
-import { Emitter, Event as VscodeEvent } from "vs/base/common/event";
+import { Emitter, type Event as VscodeEvent } from "vs/base/common/event";
 import { splitLines } from "vs/base/common/strings";
 import {
 	ExtHostContext,
-	IModelContentChange,
+	type IModelContentChange,
 	ISingleEditOperation,
 	MainContext,
 } from "vs/workbench/api/common/extHost.protocol";
@@ -59,10 +59,10 @@ import {
 	Location,
 	Position,
 	Range,
-	TextDocument,
-	TextDocumentChangeEvent,
-	TextDocumentContentChangeEvent,
-	TextLine,
+	type TextDocument,
+	type TextDocumentChangeEvent,
+	type TextDocumentContentChangeEvent,
+	type TextLine,
 	Uri,
 } from "vscode";
 
@@ -70,9 +70,9 @@ import {
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 } from "./_baseShim";
 
 // Attempt to import VS Code's word helper utility and regex validator
@@ -693,18 +693,18 @@ export class ShimDocumentData {
 
 	#lines: string[] = [];
 
-	#eol: string = "\n";
+	#eol = "\n";
 
-	#versionId: number = 1;
+	#versionId = 1;
 
-	#languageId: string = "plaintext";
+	#languageId = "plaintext";
 
-	#isDirty: boolean = false;
+	#isDirty = false;
 
-	#isClosed: boolean = false;
+	#isClosed = false;
 
 	// Added encoding
-	#encoding: string = "utf8";
+	#encoding = "utf8";
 
 	#logService?: ILogService;
 
@@ -880,7 +880,7 @@ export class ShimDocumentData {
 		if (range.isEmpty) return lines;
 
 		// Work on copy
-		let currentLines = [...lines];
+		const currentLines = [...lines];
 
 		const { start, end } = range;
 
@@ -944,7 +944,7 @@ export class ShimDocumentData {
 			return lines;
 
 		// Work on copy
-		let currentLines = [...lines];
+		const currentLines = [...lines];
 
 		const { line, character } = position;
 
@@ -1064,7 +1064,7 @@ export class ShimDocumentData {
 			}
 		}
 
-		let lineIndex = Math.max(0, low - 1);
+		const lineIndex = Math.max(0, low - 1);
 
 		lineStartOffset = this.#lineStarts[lineIndex];
 
@@ -1104,7 +1104,7 @@ export class ShimDocumentData {
 				end.character,
 			);
 		} else {
-			let result: string[] = [];
+			const result: string[] = [];
 
 			result.push(this.#lines[start.line].substring(start.character));
 
@@ -1405,7 +1405,7 @@ export class ShimDocumentData {
 			},
 
 			lineAt: (lineOrPosition: number | Position): TextLine => {
-				let line =
+				const line =
 					typeof lineOrPosition === "number"
 						? lineOrPosition
 						: lineOrPosition.line;

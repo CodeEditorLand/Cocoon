@@ -29,7 +29,7 @@
 // Assuming API objects from 'vscode' shim
 import {
 	Emitter as VscodeEmitter,
-	Event as VscodeEvent,
+	type Event as VscodeEvent,
 } from "vs/base/common/event";
 import {
 	IMarkerData,
@@ -44,7 +44,7 @@ import {
 } from "vs/workbench/api/common/extHost.protocol";
 import {
 	Diagnostic,
-	DiagnosticCollection,
+	type DiagnosticCollection,
 	DiagnosticRelatedInformation,
 	DiagnosticSeverity,
 	DiagnosticTag,
@@ -59,9 +59,9 @@ import {
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 
@@ -185,7 +185,7 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 
 	#logService?: ILogService;
 
-	#isDisposed: boolean = false;
+	#isDisposed = false;
 
 	// Key: uri.toString()
 	readonly #data = new Map<string, Diagnostic[]>();
@@ -318,7 +318,6 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 		if (toSync.size > 0 && this.#proxy) {
 			const entriesForProxy: [
 				ILocalUriComponents,
-
 				ILocalMarkerData[] | undefined,
 			][] = [];
 
@@ -711,7 +710,7 @@ export class ShimDiagnosticsService
 
 	#mainThreadDiagnosticsProxy: MainThreadDiagnosticsShape | null = null;
 
-	#collectionCounter: number = 0;
+	#collectionCounter = 0;
 
 	readonly #onDidChangeDiagnosticsEmitter = new VscodeEmitter<
 		readonly Uri[]

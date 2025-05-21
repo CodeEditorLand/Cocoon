@@ -575,7 +575,7 @@ const fsPromisesShimImpl: FsPromisesApiShim = {
 			| BufferEncoding
 			| null,
 	): Promise<string[] | Buffer[] | FsDirentShim[]> => {
-		let ipcReadOptions: {
+		const ipcReadOptions: {
 			withFileTypes?: boolean;
 
 			recursive?: boolean;

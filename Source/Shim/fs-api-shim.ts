@@ -39,13 +39,13 @@ import {
 // For event types
 import {
 	// For FileStat.permissions
-	FilePermission,
-	FileStat,
+	type FilePermission,
+	type FileStat,
 	FileSystemError,
 	// For isWritableFileSystem, though not fully used
 	FileSystemProviderCapabilities,
 	FileType,
-	Uri,
+	type Uri,
 	// For event types (if implemented)
 	// FileChangeEvent,
 	// To avoid conflict with node fs.FSWatcher
@@ -54,7 +54,7 @@ import {
 	// FileSystem as VscodeFileSystem,
 } from "vscode";
 
-import { BaseCocoonShim, ILogService, refineError } from "./_baseShim";
+import { BaseCocoonShim, type ILogService, refineError } from "./_baseShim";
 
 // --- Type definitions for parameters and return values ---
 
@@ -147,13 +147,13 @@ const FileTypeMap = {
 } as const;
 
 const FileTypeReverseMap: { [key: string]: FileType } = {
-	"Unknown": FileType.Unknown,
+	Unknown: FileType.Unknown,
 
-	"File": FileType.File,
+	File: FileType.File,
 
-	"Directory": FileType.Directory,
+	Directory: FileType.Directory,
 
-	"SymbolicLink": FileType.SymbolicLink,
+	SymbolicLink: FileType.SymbolicLink,
 };
 
 // ShimFileSystemApi implements the vscode.FileSystem interface

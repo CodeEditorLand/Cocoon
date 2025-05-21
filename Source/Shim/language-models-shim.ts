@@ -28,7 +28,7 @@ import {
 } from "vs/base/common/event";
 import {
 	ExtensionIdentifier,
-	IExtensionDescription,
+	type IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 // IDisposable is not directly used by the current stub but would be for real event emitters.
 // import { IDisposable } from "vs/base/common/lifecycle";

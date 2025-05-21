@@ -577,7 +577,6 @@ export {
 	Selection,
 	Location,
 	Disposable,
-
 	// VS Code's Emitter
 	VscodeEmitter,
 	CancellationToken,
