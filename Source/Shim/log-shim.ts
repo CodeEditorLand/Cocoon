@@ -1,7 +1,8 @@
 // --- START OF FILE log-shim.ts ---
 
 /*---------------------------------------------------------------------------------------------
- * Cocoon Log Shims (log-shim.ts) // Header: Updated to reflect it contains multiple shims
+ // Header: Updated to reflect it contains multiple shims 
+* Cocoon Log Shims (log-shim.ts)
  * --------------------------------------------------------------------------------------------
  * Provides shim implementations for VS Code's logging services:
  * - `ShimLogService`: Implements `ILogService`, typically used by most ExtHost services.
@@ -23,7 +24,8 @@ import {
 import { dispose, IDisposable } from "vs/base/common/lifecycle";
 // TODO: Ensure 'vs/platform/log/common/log' provides these interfaces and enums.
 // If not, they need to be defined locally matching VS Code's structure.
-import { URI } from "vs/base/common/uri"; // For ILoggerService createLogger resource URI
+// For ILoggerService createLogger resource URI
+import { URI } from "vs/base/common/uri";
 import {
 	parseLogLevel,
 	ILogger as VscodeILogger,
@@ -43,7 +45,8 @@ export class ShimLogService implements VscodeILogService {
 
 	public readonly onDidChangeLogLevel: VscodeEvent<VscodeLogLevel>;
 
-	private readonly name?: string; // Optional name for this logger instance
+	// Optional name for this logger instance
+	private readonly name?: string;
 
 	constructor(
 		initialLogLevel: VscodeLogLevel = VscodeLogLevel.Info,
@@ -102,7 +105,8 @@ export class ShimLogService implements VscodeILogService {
 		// This interpretation might be reversed from original; let's assume higher value = higher severity (less logging).
 		// VS Code standard: Trace = 0, Debug = 1, Info = 2, Warning = 3, Error = 4, Critical = 5, Off = 6
 		// So, `this.currentLogLevel <= targetLevel` means "log if current setting is at least as verbose as target".
-		return true; // Simplification: let individual methods check level.
+		// Simplification: let individual methods check level.
+		return true;
 	}
 
 	public trace(message: string, ...args: any[]): void {
@@ -113,13 +117,15 @@ export class ShimLogService implements VscodeILogService {
 
 	public debug(message: string, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Debug) {
-			console.debug(this._formatMessage("Debug", message, ...args)); // Use console.debug
+			// Use console.debug
+			console.debug(this._formatMessage("Debug", message, ...args));
 		}
 	}
 
 	public info(message: string, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Info) {
-			console.info(this._formatMessage("Info", message, ...args)); // Use console.info
+			// Use console.info
+			console.info(this._formatMessage("Info", message, ...args));
 		}
 	}
 
@@ -182,7 +188,8 @@ export class ShimLogService implements VscodeILogService {
 
 			this._onDidChangeLogLevel.fire(this.currentLogLevel);
 
-			this.info(`Log level set to ${VscodeLogLevel[newLevel]}`); // Log the change at new Info level
+			// Log the change at new Info level
+			this.info(`Log level set to ${VscodeLogLevel[newLevel]}`);
 		}
 	}
 
@@ -219,7 +226,8 @@ export class ShimLogService implements VscodeILogService {
 	}
 
 	public getDefaultLogger(): VscodeILogger {
-		return this; // The LogService itself can act as the default logger
+		// The LogService itself can act as the default logger
+		return this;
 	}
 }
 
@@ -229,10 +237,14 @@ export class ShimLoggerService implements VscodeILoggerService {
 
 	private defaultLogLevel: VscodeLogLevel = VscodeLogLevel.Info;
 
-	private readonly loggers = new Map<string, ShimLogService>(); // Cache loggers by resource URI string
+	// Cache loggers by resource URI string
+	private readonly loggers = new Map<string, ShimLogService>();
+
 	private readonly _onDidChangeLogLevel: VscodeEmitter<
 		[URI | undefined, VscodeLogLevel]
-	>; // Payload: [resource, newLevel]
+		// Payload: [resource, newLevel]
+	>;
+
 	public readonly onDidChangeLogLevel: VscodeEvent<
 		[URI | undefined, VscodeLogLevel]
 	>;
@@ -272,7 +284,9 @@ export class ShimLoggerService implements VscodeILoggerService {
 				) ||
 				"default-logger";
 
-			const logLevel = options?.logLevel ?? this.getLogLevel(resource); // Use resource-specific or default
+			// Use resource-specific or default
+			const logLevel = options?.logLevel ?? this.getLogLevel(resource);
+
 			const newLogger = new ShimLogService(logLevel, name);
 
 			this.loggers.set(key, newLogger);
@@ -324,7 +338,8 @@ export class ShimLoggerService implements VscodeILoggerService {
 			const logger = this.loggers.get(resourceOrLevel.toString());
 
 			if (logger) {
-				logger.setLevel(level); // This will fire logger's onDidChangeLogLevel if it has one
+				// This will fire logger's onDidChangeLogLevel if it has one
+				logger.setLevel(level);
 			} else {
 				// If logger doesn't exist, should we create it or just set a default for future creations?
 				// For now, log a warning. If createLogger is called next, it will use this level.
