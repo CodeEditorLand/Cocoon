@@ -228,7 +228,7 @@ class ShimDocumentService
 			);
 		}
 
-		if (this._rpcService) {
+		if (this._rpcService) { 
 			try {
 				this._rpcService.set(
 					ExtHostContext.ExtHostDocuments as ProxyIdentifier<ExtHostDocumentsShape>,
