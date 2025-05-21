@@ -23,13 +23,16 @@
 
 import { EventEmitter } from "events";
 // For NOP event emitter type safety; Needs event code bundled
-import { Event as VscodeEvent } from "vs/base/common/event"; // Renamed to avoid conflict with DOM Event
+// Renamed to avoid conflict with DOM Event
+import { Event as VscodeEvent } from "vs/base/common/event";
 // Core revival function; Needs marshalling code bundled
-import { revive } from "vs/base/common/marshalling"; // Assuming this is a function: (data: any, context?: any) => any
+// Assuming this is a function: (data: any, context?: any) => any
+import { revive } from "vs/base/common/marshalling";
 // Assuming these are classes or interfaces
 
 // Needs marshalling code bundled
-import { MarshalledId } from "vs/base/common/marshallingIds"; // Assuming this is an enum or const object
+// Assuming this is an enum or const object
+import { MarshalledId } from "vs/base/common/marshallingIds";
 
 // Import direct IPC functions (use sparingly, prefer RPC proxies)
 import {
@@ -54,29 +57,44 @@ import {
 // Define interfaces for injected services based on usage
 export interface ILogService {
 	trace(message: string, ...args: any[]): void;
+
 	info(message: string, ...args: any[]): void;
+
 	warn(message: string, ...args: any[]): void;
+
 	error(message: string, ...args: any[]): void;
+
 	// Add other methods if used: debug, critical, flush, dispose, onDidChangeLogLevel, getLogLevel, setLevel
 }
 
 export interface ProxyIdentifier<T> {
-	sid: string; // Service identifier string
+	// Service identifier string
+	sid: string;
 }
 
 export interface IExtHostRpcService {
 	getProxy<T>(identifier: ProxyIdentifier<T>): T;
-	set<T>(identifier: ProxyIdentifier<T>, instance: T): void; // Assuming 'set' takes similar ProxyIdentifier
+
+	// Assuming 'set' takes similar ProxyIdentifier
+	set<T>(identifier: ProxyIdentifier<T>, instance: T): void;
 }
 
 // Interface for structured errors parsed from JSON
 interface IStructuredError {
 	message?: string;
+
 	name?: string;
-	code?: string | number; // Node.js errors often have string codes like 'ENOENT'
-	errno?: number; // POSIX error number
+
+	// Node.js errors often have string codes like 'ENOENT'
+	code?: string | number;
+
+	// POSIX error number
+	errno?: number;
+
 	syscall?: string;
-	// stack?: string; // Not typically part of the message JSON, but could be
+
+	// Not typically part of the message JSON, but could be
+	// stack?: string;
 }
 
 /**
@@ -91,7 +109,9 @@ interface IStructuredError {
  */
 export function refineError(
 	originalError: Error,
+
 	logService?: ILogService,
+
 	context: string = "",
 ): Error {
 	if (!(originalError instanceof Error) || !originalError.message) {
@@ -100,8 +120,10 @@ export function refineError(
 	}
 
 	let structuredErrorPayload: IStructuredError | null = null;
+
 	try {
 		const trimmedMessage = originalError.message.trim();
+
 		if (
 			(trimmedMessage.startsWith("{") && trimmedMessage.endsWith("}")) ||
 			(trimmedMessage.startsWith("[") && trimmedMessage.endsWith("]"))
@@ -113,14 +135,17 @@ export function refineError(
 	} catch (e: any) {
 		logService?.trace(
 			`[RefineError][${context}] Failed to parse error message as JSON:`,
+
 			e,
 		);
+
 		return originalError;
 	}
 
 	if (structuredErrorPayload && typeof structuredErrorPayload === "object") {
 		const newMessage =
 			structuredErrorPayload.message || originalError.message;
+
 		const refinedError = new Error(newMessage);
 
 		if (structuredErrorPayload.name)
@@ -129,8 +154,10 @@ export function refineError(
 		// Handle 'code' which might be string or number. Error 'code' is typically string.
 		if (structuredErrorPayload.code)
 			(refinedError as any).code = String(structuredErrorPayload.code);
+
 		if (structuredErrorPayload.errno)
 			(refinedError as any).errno = structuredErrorPayload.errno;
+
 		if (structuredErrorPayload.syscall)
 			(refinedError as any).syscall = structuredErrorPayload.syscall;
 
@@ -140,8 +167,10 @@ export function refineError(
 
 		logService?.trace(
 			`[RefineError][${context}] Refined error from JSON message:`,
+
 			refinedError,
 		);
+
 		return refinedError;
 	}
 
@@ -166,11 +195,17 @@ export class BaseCocoonShim {
 
 	constructor(
 		serviceIdentifier: string | symbol,
-		rpcService: IExtHostRpcService | undefined, // Allow undefined for robustness
-		logService: ILogService | undefined, // Allow undefined for robustness
+
+		// Allow undefined for robustness
+		rpcService: IExtHostRpcService | undefined,
+
+		// Allow undefined for robustness
+		logService: ILogService | undefined,
 	) {
 		this.#serviceIdentifier = String(serviceIdentifier);
+
 		this.#rpcService = rpcService;
+
 		this.#logService = logService;
 
 		if (!this.#logService) {
@@ -181,7 +216,9 @@ export class BaseCocoonShim {
 
 		if (!this.#rpcService) {
 			const errorMsg = `RPCService (RPCProtocol instance) not provided! Many features will fail.`;
-			this._logError(errorMsg); // Use internal logger method
+
+			// Use internal logger method
+			this._logError(errorMsg);
 		}
 
 		this._log(`Initialized.`);
@@ -205,11 +242,13 @@ export class BaseCocoonShim {
 		if (this.#logService) {
 			this.#logService.trace(
 				`[${this.#serviceIdentifier}] ${message}`,
+
 				...args,
 			);
 		} else {
 			console.log(
 				`[${this.#serviceIdentifier}][trace] ${message}`,
+
 				...args,
 			);
 		}
@@ -219,11 +258,13 @@ export class BaseCocoonShim {
 		if (this.#logService) {
 			this.#logService.info(
 				`[${this.#serviceIdentifier}] ${message}`,
+
 				...args,
 			);
 		} else {
 			console.info(
 				`[${this.#serviceIdentifier}][info] ${message}`,
+
 				...args,
 			);
 		}
@@ -233,11 +274,13 @@ export class BaseCocoonShim {
 		if (this.#logService) {
 			this.#logService.warn(
 				`[${this.#serviceIdentifier}] ${message}`,
+
 				...args,
 			);
 		} else {
 			console.warn(
 				`[${this.#serviceIdentifier}][warn] ${message}`,
+
 				...args,
 			);
 		}
@@ -247,11 +290,13 @@ export class BaseCocoonShim {
 		if (this.#logService) {
 			this.#logService.error(
 				`[${this.#serviceIdentifier}] ${message}`,
+
 				...args,
 			);
 		} else {
 			console.error(
 				`[${this.#serviceIdentifier}][error] ${message}`,
+
 				...args,
 			);
 		}
@@ -260,6 +305,7 @@ export class BaseCocoonShim {
 	protected _logWarnOnce(message: string, ...args: any[]): void {
 		if (!this.#warnOnceMessages.has(message)) {
 			this.#warnOnceMessages.add(message);
+
 			this._logWarn(message, ...args);
 		}
 	}
@@ -270,15 +316,19 @@ export class BaseCocoonShim {
 			this._logError(
 				`Cannot get RPC proxy for ${String(mainContextId?.sid || mainContextId)}: RPCService unavailable.`,
 			);
+
 			return null;
 		}
+
 		try {
 			return this.#rpcService.getProxy(mainContextId);
 		} catch (e: any) {
 			this._logError(
 				`Failed to get RPC proxy for ${String(mainContextId?.sid || mainContextId)}:`,
+
 				e,
 			);
+
 			return null;
 		}
 	}
@@ -286,28 +336,40 @@ export class BaseCocoonShim {
 	// --- Direct IPC Helpers (Use with caution, prefer RPC proxies) ---
 	protected async _ipcRequestResponse(
 		mountainMethod: string,
+
 		params: any,
+
 		timeoutMs: number = 5000,
 	): Promise<any> {
 		this._log(`Sending direct IPC request '${mountainMethod}'...`);
+
 		try {
 			const result = await sendToMountainAndWait(
 				mountainMethod,
+
 				params,
+
 				timeoutMs,
 			);
+
 			this._log(`Received direct IPC response for '${mountainMethod}'.`);
+
 			return result;
 		} catch (error: any) {
 			const refinedError = refineError(
 				error,
+
 				this._logService,
+
 				`ipcRequestResponse(${mountainMethod})`,
 			);
+
 			this._logError(
 				`Error in direct IPC request '${mountainMethod}':`,
+
 				refinedError,
 			);
+
 			throw refinedError;
 		}
 	}
@@ -316,14 +378,17 @@ export class BaseCocoonShim {
 		const paramSummary = params
 			? JSON.stringify(params).substring(0, 80) + "..."
 			: "(no params)";
+
 		this._log(
 			`Sending direct IPC notification '${mountainMethod}' to Mountain: ${paramSummary}`,
 		);
+
 		try {
 			sendNotificationToMountain(mountainMethod, params);
 		} catch (error: any) {
 			this._logError(
 				`Error sending direct IPC notification '${mountainMethod}':`,
+
 				error,
 			);
 		}
@@ -342,53 +407,75 @@ export class BaseCocoonShim {
 		try {
 			if (arg instanceof Uri) {
 				return {
-					$mid: MarshalledId.UriSimple, // Assuming UriSimple is appropriate
+					// Assuming UriSimple is appropriate
+					$mid: MarshalledId.UriSimple,
+
 					scheme: arg.scheme,
+
 					authority: arg.authority,
+
 					path: arg.path,
+
 					query: arg.query,
+
 					fragment: arg.fragment,
 				};
 			}
+
 			if (arg instanceof Position) {
 				return { line: arg.line, character: arg.character };
 			}
+
 			if (arg instanceof Range) {
 				return {
 					start: this._convertApiArgToInternal(arg.start),
+
 					end: this._convertApiArgToInternal(arg.end),
 				};
 			}
+
 			if (arg instanceof Selection) {
 				// VS Code Selection uses anchor/active which are Positions
 				return {
 					// This seems to be converting to ISelection for editor, 1-based
 					selectionStartLineNumber: arg.anchor.line + 1,
+
 					selectionStartColumn: arg.anchor.character + 1,
+
 					positionLineNumber: arg.active.line + 1,
+
 					positionColumn: arg.active.character + 1,
 				};
 			}
+
 			if (arg instanceof Location) {
 				return {
 					uri: this._convertApiArgToInternal(arg.uri),
+
 					range: this._convertApiArgToInternal(arg.range),
 				};
 			}
+
 			if (arg instanceof RegExp) {
 				return {
 					$mid: MarshalledId.Regexp,
+
 					source: arg.source,
+
 					flags: arg.flags,
 				};
 			}
 		} catch (conversionError: any) {
 			this._logError(
 				"Failed during specific type conversion in _convertApiArgToInternal:",
+
 				arg,
+
 				conversionError,
 			);
-			return arg; // Return original on error
+
+			// Return original on error
+			return arg;
 		}
 
 		if (
@@ -409,18 +496,22 @@ export class BaseCocoonShim {
 		// Check for plain object
 		if (arg.constructor === Object) {
 			const result: { [key: string]: any } = {};
+
 			for (const key in arg) {
 				if (Object.prototype.hasOwnProperty.call(arg, key)) {
 					result[key] = this._convertApiArgToInternal(arg[key]);
 				}
 			}
+
 			return result;
 		}
 
 		this._logWarnOnce(
 			`Unhandled object type in _convertApiArgToInternal, returning original:`,
+
 			arg,
 		);
+
 		return arg;
 	}
 
@@ -428,28 +519,38 @@ export class BaseCocoonShim {
 		if (arg === undefined || arg === null) {
 			return arg;
 		}
+
 		try {
-			return revive(arg); // revive might need a context argument in some VS Code versions/setups
+			// revive might need a context argument in some VS Code versions/setups
+			return revive(arg);
 		} catch (e: any) {
 			this._logError("Failed to revive argument/result:", arg, e);
-			return arg; // Return original on error
+
+			// Return original on error
+			return arg;
 		}
 	}
 
 	// --- Event Handling Helpers ---
 	protected _createEventEmitter(): EventEmitter {
 		const emitter = new EventEmitter();
-		// emitter.setMaxListeners(20); // Optionally set max listeners
+
+		// Optionally set max listeners
+		// emitter.setMaxListeners(20);
+
 		return emitter;
 	}
 
 	protected _createEventFromEmitter<T>(
 		emitter: EventEmitter,
+
 		eventName: string = "fire",
 	): VscodeEvent<T> {
 		const event: VscodeEvent<T> = (listener, thisArgs, disposables) => {
 			const handler = (...args: any[]) =>
-				listener.call(thisArgs, ...(args as [T])); // Cast args to [T]
+				// Cast args to [T]
+				listener.call(thisArgs, ...(args as [T]));
+
 			emitter.on(eventName, handler);
 
 			const disposable = {
@@ -461,8 +562,10 @@ export class BaseCocoonShim {
 			if (Array.isArray(disposables)) {
 				disposables.push(disposable);
 			}
+
 			return disposable;
 		};
+
 		return event;
 	}
 
@@ -476,17 +579,22 @@ export class BaseCocoonShim {
 				`Error accessing Event.None, falling back to NOP stub. Error: ${e.message}`,
 			);
 		}
+
 		this._logWarnOnce(
 			"Event.None not available or failed, using NOP stub.",
 		);
+
 		return () => ({ dispose: () => {} });
 	}
 }
 
 // Export helper function too
-// module.exports = { BaseCocoonShim, refineError }; // Original JS export
+// Original JS export
+// module.exports = { BaseCocoonShim, refineError };
+
 // In TS, we use `export` keyword for classes and functions directly.
 // If this file is a module, these are already exported.
 // If it's intended to be requireable as an object with these two properties,
+
 // we might need a default export or a namespace.
 // For typical module usage, the class and function are already exported.
