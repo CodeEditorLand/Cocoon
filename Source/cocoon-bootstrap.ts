@@ -2,155 +2,170 @@
  * Cocoon Bootstrap Utilities (cocoon-bootstrap.ts)
  * --------------------------------------------------------------------------------------------
  * Contains utility functions adapted from VS Code's Node.js bootstrap process, primarily
- * for patching the global `process` object to prevent extensions from exiting or crashing
- * the host unintentionally, and potentially setting environment variables expected by
+ * for patching the global `process` object to prevent extensions from unintentionally
+ * exiting or crashing the host, and setting environment variables expected by
  * VS Code platform code.
  *
- * NOTE: This file is NOT the main entry point for Cocoon; `index.ts` is.
- * This file only provides helper functions imported by `index.ts`.
+ * This file provides helper functions imported by `index.ts` during early startup.
  *
  * Responsibilities:
- * - Patching `process.exit` to prevent direct calls by extensions (logs warning instead).
- * - Patching `process.crash` (if exists) similarly.
- * - Setting environment variables expected by VS Code code (e.g., `ELECTRON_RUN_AS_NODE`).
- * - Blocking the deprecated 'natives' module.
+ * - Patching `process.exit` to be conditional.
+ * - Patching `process.crash` (if it exists) to be conditional or a NOP.
+ * - Setting `ELECTRON_RUN_AS_NODE=1` environment variable.
+ * - Attempting to block the deprecated 'natives' Node.js module.
  *
  * Key Interactions:
- * - Imported and used by `Cocoon/index.ts` early in its execution.
- * - Modifies the global Node.js `process` object.
+ * - Imported and used by `Cocoon/index.ts`.
+ * - Modifies the global Node.js `process` object and `Module._load`.
  *--------------------------------------------------------------------------------------------*/
 
 console.log("[Cocoon Bootstrap] Loading utilities...");
 
 // --- Block deprecated 'natives' module ---
-// With Electron 2.x and node.js 8.x the "natives" module
-// can cause a native crash. To prevent this, we blocklist this module.
-// Refs: https://github.com/nodejs/node/issues/19891
-// Refs: https://github.com/electron/electron/issues/10905
+// Based on VS Code's bootstrap logic.
 (() => {
 	try {
-		const Module = require("node:module"); // Use commonjs require for patching global Module
+		// Use CommonJS require for patching Node.js internals like Module._load
+		const Module = require("node:module");
 
-		// Check if Module and _load exist (they should in a Node.js environment)
 		if (Module && typeof Module._load === "function") {
 			const originalLoad = Module._load;
 
 			Module._load = function (
 				request: string,
-				parent: any,
+
+				parentModule: any,
+
 				isMain: boolean,
 			): any {
-				// Added types for _load
 				if (request === "natives") {
-					console.warn(
-						"[Cocoon Bootstrap] An extension or dependency attempted to load the deprecated 'natives' module. Blocking.",
-					);
+					const errorMessage =
+						"[Cocoon Bootstrap] Attempt to load deprecated 'natives' module blocked. See https://go.microsoft.com/fwlink/?linkid=871887.";
 
-					throw new Error(
-						'Using the "natives" node module is deprecated and unsupported. See https://go.microsoft.com/fwlink/?linkid=871887.',
-					);
+					console.warn(errorMessage);
+
+					throw new Error(errorMessage);
 				}
 
-				// Use original arguments, not spreading `arguments` which is not standard in TS arrow functions or strict mode.
-				return originalLoad.call(this, request, parent, isMain);
+				// Call original with original arguments context
+
+				return originalLoad.call(this, request, parentModule, isMain);
 			};
 
 			console.log(
-				"[Cocoon Bootstrap] Patched require to block 'natives' module.",
+				"[Cocoon Bootstrap] Patched Module._load to block 'natives' module.",
 			);
 		} else {
 			console.warn(
-				"[Cocoon Bootstrap] Could not patch 'natives' module: Module._load not found.",
+				"[Cocoon Bootstrap] Could not patch 'natives' module: Module._load not found or not a function.",
 			);
 		}
 	} catch (error: any) {
 		console.error(
-			"[Cocoon Bootstrap] Failed to patch require for 'natives' module:",
-			error,
+			"[Cocoon Bootstrap] Failed to patch Module._load for 'natives' module:",
+
+			error.message || error,
 		);
 	}
 })();
 
-// Store original process functions before patching
-const nativeExit: (code?: number) => never = process.exit.bind(process);
+// Store original process functions before patching.
+// Ensure these are bound to `process` to maintain `this` context if they expect it.
+const nativeProcessExit: (code?: number) => never = process.exit.bind(process);
 
-// process.crash is Electron-specific and might not be present in NodeJS.Process by default
-const nativeCrash: (() => void) | undefined = (process as any).crash?.bind(
-	process,
-);
+// `process.crash` is Electron-specific. It might not exist in a standard Node.js environment
+// where Cocoon could potentially run for testing or other purposes.
+const nativeProcessCrash: (() => void) | undefined =
+	typeof (process as any).crash === "function"
+		? (process as any).crash.bind(process)
+		: undefined;
 
 /**
- * Patches the global `process` object.
- * - `process.exit` is replaced to prevent extensions from terminating the host.
- *   It will only exit if `allowExitFn` returns true (useful for testing scenarios).
- * - `process.crash` (if it exists) is replaced similarly.
- * - Sets `ELECTRON_RUN_AS_NODE=1` environment variable for compatibility.
+ * Patches the global `process` object to control termination behavior.
+ * - `process.exit` is replaced. It will only call the native exit if `allowExitFn()` returns true.
+ * - `process.crash` (if it exists) is replaced to log a warning and prevent the crash.
+ * - Sets `ELECTRON_RUN_AS_NODE=1` environment variable for compatibility with some Node modules
+ *   or child processes expecting an Electron-like Node environment.
  *
- * @param allowExitFn A function that returns true if exiting is allowed, false otherwise.
+ * @param allowExitFn A function that returns `true` if exiting is allowed, `false` otherwise.
  */
 export function patchProcess(allowExitFn: () => boolean): void {
 	// Patch process.exit
 	process.exit = (code?: number): never => {
-		// Match NodeJS.Process['exit'] signature
 		if (allowExitFn()) {
+			const exitCodeStr = code !== undefined ? String(code) : "(no code)";
+
 			console.log(
-				`[Cocoon Bootstrap] Exiting process with code ${code ?? ""} as allowed by host.`, // Handle undefined code
+				`[Cocoon Bootstrap] process.exit(${exitCodeStr}) called and allowed by host. Terminating.`,
 			);
 
-			nativeExit(code);
+			// This will terminate the process.
+			nativeProcessExit(code);
 		} else {
 			const err = new Error(
-				"An extension called process.exit() and this was prevented.",
+				"process.exit() was called by an extension or internal code but was prevented by Cocoon bootstrap policy.",
 			);
 
-			console.warn(`[Cocoon Bootstrap] ${err.message}\n${err.stack}`);
+			// Log as a warning because this is an attempt to exit that's being gracefully handled.
+			console.warn(
+				`[Cocoon Bootstrap] ${err.message}\n${err.stack || "(No stack trace for this error object)"}`,
+			);
 
-			// In a non-exiting scenario, we need to decide what to do.
-			// Throwing here might crash the host if not caught.
-			// For now, it just warns and doesn't exit, effectively making process.exit a NOP.
-			// To satisfy 'never', we'd theoretically need to throw or loop, but that's not the intent here.
-			// This is a tricky type to satisfy perfectly when preventing exit.
-			// A common workaround if you *must* satisfy `never` and don't exit is to throw.
-			// However, for this specific patch, the goal is to *prevent* termination.
-			// Let's assume the runtime won't strictly enforce 'never' if the function returns.
-			// For practical purposes, we might need to cast or adjust if the compiler is too strict.
-			// One way is to just not declare 'never' if we intend for it to be a NOP.
-			// However, to match `process.exit`, `never` is correct if it *always* exits.
-			// Since we *sometimes* don't, this is an impedance mismatch.
-			// For the shim, logging and not exiting is the primary goal.
+			// To satisfy the `never` return type when not exiting, we must throw an error.
+			// This makes the call to process.exit() behave like it failed if not allowed.
+			// However, the original intent was often just to prevent exit and continue.
+			// If continuing is desired, the `never` type is problematic here.
+			// For now, let's throw to indicate the operation was blocked, which is a form of failure.
+			// If the goal is to truly make it a NOP and continue, the function signature should not be `never`.
+			// Given `process.exit` *should* be `never`, throwing aligns with "operation failed to complete as expected".
+			throw new Error(`Blocked call to process.exit(${code ?? ""})`);
 		}
-
-		return undefined as never; // This satisfies 'never' for the compiler but is a lie at runtime if not exiting.
 	};
 
 	// Patch process.crash (Electron-specific)
-	if (typeof nativeCrash === "function") {
+	if (nativeProcessCrash) {
+		// Check if it was found and bound
 		(process as any).crash = (): void => {
-			// `process.crash` is not standard on NodeJS.Process
 			const err = new Error(
-				"An extension called process.crash() and this was prevented.",
+				"process.crash() was called by an extension or internal code but was prevented by Cocoon bootstrap policy.",
 			);
 
-			console.warn(`[Cocoon Bootstrap] ${err.message}\n${err.stack}`);
+			console.warn(
+				`[Cocoon Bootstrap] ${err.message}\n${err.stack || "(No stack trace for this error object)"}`,
+			);
+
+			// Similar to process.exit, if process.crash is typed as `() => never`, we might need to throw.
+			// However, the goal is to prevent the crash. A warning is usually sufficient.
+			// If VS Code's `process.crash` is `() => void` then just returning is fine.
+			// For now, assume it's `() => void` and the warning is the main action.
 		};
 
-		console.log("[Cocoon Bootstrap] Patched process.crash()");
+		console.log("[Cocoon Bootstrap] Patched process.crash().");
 	} else {
 		console.log(
-			"[Cocoon Bootstrap] process.crash() not found, skipping patch.",
+			"[Cocoon Bootstrap] process.crash() not found on global process object, skipping patch.",
 		);
 	}
 
-	// Set ELECTRON_RUN_AS_NODE environment variable
+	// Set ELECTRON_RUN_AS_NODE environment variable.
+	// This can influence how some Node modules or child processes behave,
+
+	// making them think they are in a more standard Node.js environment
+	// even if running under an Electron-like parent (though Cocoon is Node.js).
+	// It's a common setting in VS Code's extension host.
 	process.env["ELECTRON_RUN_AS_NODE"] = "1";
 
 	console.log(
-		"[Cocoon Bootstrap] Patched process.exit() and set ELECTRON_RUN_AS_NODE=1.",
+		"[Cocoon Bootstrap] Patched process methods and set ELECTRON_RUN_AS_NODE=1.",
 	);
+
+	// Note on `process.on('uncaughtException')`:
+	// The original JS file mentioned omitting this patch because `index.ts` sets up
+	// VS Code's `ErrorHandler`. This remains a valid approach. `index.ts` should
+	// be responsible for comprehensive error handling for the fully initialized environment.
 }
 
-// --- Exports ---
-// module.exports = { patchProcess }; // Original JS export
-// `export function patchProcess` handles this in TS.
+// `export function patchProcess` handles the export.
+// The IIFE for 'natives' patching executes on import/require.
 
 console.log("[Cocoon Bootstrap] Utilities loaded.");
