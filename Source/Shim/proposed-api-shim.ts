@@ -1,21 +1,40 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Proposed API Shim (shims/proposed-api-shim.ts)
+ * Cocoon Proposed API Shim (proposed-api-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Handles checks for proposed VS Code APIs enablement based on initial environment data.
- * In a real scenario, this integrates deeply with the extension service and API factory.
- * For Cocoon's MVP, it primarily reads the list of globally enabled proposed APIs
- * from initData and provides a check function (`isProposedApiEnabled`).
+ * Handles checks for proposed VS Code API enablement. In Cocoon's context, this shim
+ * primarily relies on initialization data from Mountain to determine which proposed APIs
+ * are globally enabled or enabled for specific extensions.
+ *
+ * Responsibilities:
+ * - Reading the list of enabled proposed APIs from `initData.environment.extensionEnabledProposedApi`.
+ * - Providing `isProposedApiEnabled(extensionId, proposalName)` to check if a specific
+ *   proposal is enabled for a given extension.
+ *
+ * Key Interactions:
+ * - Relies on `initData` provided during Cocoon startup.
+ * - Used by the API factory (`createApiFactory` in `index.ts`) or `ExtHostExtensionService`
+ *   when constructing the `vscode` API object for an extension, to determine if
+ *   proposed API features should be exposed.
  *--------------------------------------------------------------------------------------------*/
-// For strict type checking/comparison
-import { ExtensionIdentifier } from "vs/platform/extensions/common/extensions";
 
-// IExtHostRpcService not needed
-import { BaseCocoonShim, ILogService } from "./_baseShim";
+import {
+	ExtensionIdentifier,
+	type IEnabledApiProposals,
+} from "vs/platform/extensions/common/extensions";
 
-// Define the structure of initData relevant to this shim
-interface ShimInitDataProposedApi {
+import { BaseCocoonShim, type ILogService } from "./_baseShim";
+
+// TODO: Ensure IEnabledApiProposals is correctly defined or imported if it's a specific VS Code type.
+// It's often `string[] | { [extensionId: string]: string[]; '*': string[] }`.
+
+// --- Type Definitions ---
+
+// Structure of initData relevant to this shim
+interface ShimInitDataForProposedApi {
 	environment?: {
-		extensionEnabledProposedApi?: string[];
+		// In VS Code, this can be a simple array of proposal names (globally enabled)
+		// or an IEnabledApiProposals object for per-extension enablement.
+		extensionEnabledProposedApi?: string[] | IEnabledApiProposals;
 
 		// ... other environment properties
 	};
@@ -23,113 +42,187 @@ interface ShimInitDataProposedApi {
 	// ... other initData properties
 }
 
-// Define the interface this shim might implement (e.g., from ExtHostProposedApiShape)
-export interface IExtHostProposedApi {
+// Interface for the service this shim provides (should align with VS Code's ExtHostProposedApisShape or similar)
+// TODO: Define this more accurately based on the actual VS Code interface if this shim is to implement it fully.
+export interface IExtHostProposedApis {
 	readonly _serviceBrand: undefined;
 
 	isProposedApiEnabled(
 		extensionId: ExtensionIdentifier,
+
 		proposalName: string,
 	): boolean;
 
-	// Other methods like $registerBuiltinየ... if dynamically registering proposals
+	// Example of other methods a full ExtHostProposedApis might have:
+	// $registerBuiltinProposalActions?(extensionId: string, proposals: string[]): Promise<void>;
+
+	// $registerProductProperty?(name: string, value: any): Promise<void>;
 }
 
 export class ShimExtensionsProposedApi
 	extends BaseCocoonShim
-	implements IExtHostProposedApi
+	implements IExtHostProposedApis
 {
 	public readonly _serviceBrand: undefined;
 
-	// Stores proposal names (strings)
-	readonly #enabledProposedApis = new Set<string>();
+	// Stores globally enabled proposal names (strings)
+	readonly #globallyEnabledProposedApis = new Set<string>();
+
+	// Stores per-extension enabled proposals
+	readonly #perExtensionEnabledProposedApis = new Map<string, Set<string>>();
 
 	constructor(
-		// Make initData potentially undefined for robustness
-		initData: ShimInitDataProposedApi | undefined,
+		initData: ShimInitDataForProposedApi | undefined,
+
 		logService: ILogService | undefined,
 	) {
-		// No RPC needed for basic enablement checks based on initData passed during startup
-		super("ExtensionsProposedApi", undefined /* rpcService */, logService);
+		super(
+			"ExtensionsProposedApi",
 
-		const enabledList = initData?.environment?.extensionEnabledProposedApi;
+			undefined /* rpcService not needed for initData-based checks */,
 
-		if (Array.isArray(enabledList)) {
-			enabledList.forEach((proposalName) => {
+			logService,
+		);
+
+		const enabledApiConfig =
+			initData?.environment?.extensionEnabledProposedApi;
+
+		if (Array.isArray(enabledApiConfig)) {
+			// Simple list: all are globally enabled
+			enabledApiConfig.forEach((proposalName) => {
 				if (
 					typeof proposalName === "string" &&
 					proposalName.length > 0
 				) {
-					this.#enabledProposedApis.add(proposalName);
+					this.#globallyEnabledProposedApis.add(proposalName);
 				} else {
 					this._logWarn(
-						`Ignoring non-string or empty entry in extensionEnabledProposedApi list: ${proposalName}`,
+						`Ignoring invalid entry in global extensionEnabledProposedApi list: ${proposalName}`,
 					);
 				}
 			});
 
 			this._log(
-				`Initialized with ${this.#enabledProposedApis.size} enabled proposed APIs: ${[...this.#enabledProposedApis].join(", ")}`,
+				`Initialized with ${this.#globallyEnabledProposedApis.size} globally enabled proposed APIs: [${[...this.#globallyEnabledProposedApis].join(", ")}]`,
+			);
+		} else if (
+			typeof enabledApiConfig === "object" &&
+			enabledApiConfig !== null
+		) {
+			// IEnabledApiProposals object: { '*': string[], 'ext.id': string[] }
+			let globalCount = 0;
+
+			let perExtCount = 0;
+
+			for (const key in enabledApiConfig) {
+				const proposals = (enabledApiConfig as IEnabledApiProposals)[
+					key
+				];
+
+				if (Array.isArray(proposals)) {
+					if (key === "*") {
+						// Global proposals
+						proposals.forEach((p) => {
+							if (typeof p === "string" && p.length > 0)
+								this.#globallyEnabledProposedApis.add(p);
+						});
+
+						globalCount = this.#globallyEnabledProposedApis.size;
+					} else {
+						// Per-extension proposals
+						const extProposals = new Set<string>();
+
+						proposals.forEach((p) => {
+							if (typeof p === "string" && p.length > 0)
+								extProposals.add(p);
+						});
+
+						if (extProposals.size > 0) {
+							this.#perExtensionEnabledProposedApis.set(
+								key,
+
+								extProposals,
+							);
+
+							perExtCount++;
+						}
+					}
+				} else {
+					this._logWarn(
+						`Invalid proposal list for key '${key}' in extensionEnabledProposedApi:`,
+
+						proposals,
+					);
+				}
+			}
+			this._log(
+				`Initialized proposed APIs. Globally enabled: ${globalCount}. Specific configurations for ${perExtCount} extensions.`,
 			);
 		} else {
 			this._logWarn(
-				`No 'extensionEnabledProposedApi' list found or not an array in initData.environment. No proposed APIs will be considered enabled.`,
+				`'extensionEnabledProposedApi' not found or invalid in initData. No proposed APIs will be considered enabled by default.`,
 			);
 		}
 	}
 
 	/**
-	 * Checks if a specific proposal is enabled (based on the initial global list).
-	 * This is the core logic used by the API factory or extension service when constructing
-	 * extension APIs or contexts.
-	 * @param {ExtensionIdentifier | string} extensionId Extension ID object or string identifier.
-	 * @param {string} proposalName Name of the proposed API feature (e.g., 'testProposedApi').
-	 * @returns {boolean} True if the proposal name was in the initial `extensionEnabledProposedApi` list.
+	 * Checks if a specific proposed API is enabled for a given extension.
+	 * It checks globally enabled APIs and per-extension enabled APIs.
 	 */
 	public isProposedApiEnabled(
-		extensionIdInput: ExtensionIdentifier | string,
+		extensionIdentifier: ExtensionIdentifier, // Use ExtensionIdentifier directly
 		proposalName: string,
 	): boolean {
-		let extensionIdString: string;
+		if (!(extensionIdentifier instanceof ExtensionIdentifier)) {
+			this._logError(
+				"isProposedApiEnabled called with invalid extensionIdentifier type:",
 
-		if (extensionIdInput instanceof ExtensionIdentifier) {
-			extensionIdString = extensionIdInput.value;
-		} else if (typeof extensionIdInput === "string") {
-			extensionIdString = extensionIdInput;
-		} else {
-			this._logWarn(
-				`isProposedApiEnabled called with invalid extensionId type:`,
-				extensionIdInput,
+				extensionIdentifier,
 			);
 
-			// Cannot determine for unknown extension ID type
 			return false;
 		}
+		const extensionIdString = extensionIdentifier.value;
 
-		const enabled = this.#enabledProposedApis.has(proposalName);
+		// 1. Check globally enabled proposals
+		if (this.#globallyEnabledProposedApis.has(proposalName)) {
+			this._log(
+				`Proposed API '${proposalName}' for ext '${extensionIdString}' is GLOBALLY ENABLED.`,
+			);
+
+			return true;
+		}
+
+		// 2. Check per-extension enabled proposals
+		const extensionSpecificProposals =
+			this.#perExtensionEnabledProposedApis.get(extensionIdString);
+
+		if (extensionSpecificProposals?.has(proposalName)) {
+			this._log(
+				`Proposed API '${proposalName}' for ext '${extensionIdString}' is specifically ENABLED for this extension.`,
+			);
+
+			return true;
+		}
 
 		this._log(
-			`isProposedApiEnabled check: ext='${extensionIdString}', proposal='${proposalName}', enabled=${enabled}`,
+			`Proposed API '${proposalName}' for ext '${extensionIdString}' is NOT ENABLED.`,
 		);
 
-		// MVP behavior: Check only against the global list provided by initData.
-		// Real VS Code might have more complex per-extension enablement logic involving extension manifests etc.,
-		// but this covers the basic enablement flag passed from the main process.
-		return enabled;
+		return false;
 	}
 
-	// Other methods potentially part of the real ExtHostProposedApiShape (like $registerBuiltinProvider)
-	// are omitted as they typically involve RPC communication for dynamic registration or
-	// changes, which isn't the focus of this simple initData-based check shim.
+	// TODO: Implement other methods from IExtHostProposedApis or VS Code's ExtHostProposedApisShape
+	// if they are needed (e.g., for dynamic registration of proposals by built-in extensions,
+
+	// which would likely involve RPC calls to MainThreadProposedApis).
 	// Example:
-	// public async $registerBuiltinProvider(extensionId: ExtensionIdentifier, proposalName: string, providerId: string): Promise<void> {
+	// public async $registerBuiltinProposalActions(extensionIdString: string, proposals: string[]): Promise<void> {
 
-	//     this._logWarn(`$registerBuiltinProvider for ${extensionId.value}, proposal ${proposalName} - STUB`);
+	//     const extensionId = new ExtensionIdentifier(extensionIdString);
 
-	// This would typically involve RPC to the main thread.
-	//
+	//     this._logWarn(`$registerBuiltinProposalActions for ${extensionId.value}, proposals [${proposals.join(', ')}] - STUB`);
+
+	//     // This would typically involve updating local enablement state and/or notifying other services.
 	// }
 }
-
-// Class is already exported
-// export { ShimExtensionsProposedApi };
