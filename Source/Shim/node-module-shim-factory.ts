@@ -3,6 +3,7 @@
  * --------------------------------------------------------------------------------------------
  * Implements the `INodeModuleFactory` interface for the `NodeRequireInterceptor`.
  * It intercepts calls to `require()` for various built-in Node.js modules (like 'os',
+ *
  * 'crypto', 'process') that might need partial shimming or proxying within Cocoon.
  *
  * Responsibilities:
@@ -35,7 +36,9 @@ export interface INodeModuleFactory {
 
 	load(
 		request: string,
+
 		parentUri: Uri | undefined,
+
 		originalLoad: (request: string) => any,
 	): any;
 
@@ -52,8 +55,10 @@ export class NodeModuleShimFactory implements INodeModuleFactory {
 	public load(
 		// The module name being required (e.g., "fs", "os")
 		request: string,
+
 		// The URI of the module performing the require
 		parentUri: Uri | undefined,
+
 		// The original Node.js require/load function
 		originalLoad: (request: string) => any,
 	): any {
@@ -78,6 +83,7 @@ export class NodeModuleShimFactory implements INodeModuleFactory {
 			default:
 				// If we didn't intend to shim it, or if the request is for a sub-module
 				// of a shimmed module that the shim doesn't explicitly handle (e.g., 'fs/promises'),
+
 				// try the original loader.
 				console.warn(
 					`[Cocoon Node Factory] Module '${request}' not explicitly shimmed by this factory. Passing to original loader.`,
@@ -88,6 +94,7 @@ export class NodeModuleShimFactory implements INodeModuleFactory {
 				} catch (e: any) {
 					console.error(
 						`[Cocoon Node Factory] Original loader failed for '${request}':`,
+
 						e,
 					);
 
@@ -98,6 +105,7 @@ export class NodeModuleShimFactory implements INodeModuleFactory {
 	}
 
 	// public alternativeModuleName(name: string): string | undefined {
+
 	// Example: if (name === 'some-module') return 'some-module-shimmed';
 	//
 	//     return undefined;
