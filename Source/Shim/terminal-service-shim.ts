@@ -1,91 +1,176 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Terminal Service Shim (shims/terminal-service-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements parts of the `vscode.window` terminal-related APIs (`IExtHostTerminalService`).
- * Handles terminal creation, state management, process interaction (if applicable),
+ * Implements parts of the `vscode.window` terminal-related APIs (via `IExtHostTerminalService`).
+ * Handles terminal creation, state management, and environment variable collections,
  *
  *
- *
- *
- * and environment variable collections, proxying most actions to Mountain.
+ * proxying most actions to Mountain.
  *
  * Responsibilities:
- * - Implementing `createTerminal` by proxying to Mountain via RPC.
- * - Managing terminal instances (`ShimTerminalImpl`) created via the API (`#terminals`).
- * - Handling `show`, `hide`, `sendText`, `dispose` calls on `ShimTerminalImpl` instances
- *   by proxying them to Mountain (`$show`, `$hide`, `$sendText`, `$dispose` RPC calls).
- * - Providing terminal lifecycle events (`onDidOpenTerminal`, `onDidCloseTerminal`, etc.)
- *   by listening to notifications from Mountain via RPC (`$acceptTerminalOpened`, `$acceptTerminalClosed`).
- * - Implementing `getEnvironmentVariableCollection` to return a shimmed collection object (`ShimEnvironmentVariableCollectionImpl`).
- * - Proxying changes made to the environment variable collection (`set`, `delete`, `clear`)
- *   back to Mountain via **Vine IPC notifications** (`terminal_*` methods).
+ * - `createTerminal()`: Proxies to Mountain via RPC to create a terminal backend.
+ * - `ShimTerminalImpl`: Represents a terminal instance, proxying actions (`show`, `sendText`, `dispose`)
+ *   to Mountain via RPC. Manages `processId` and `exitStatus`.
+ * - Terminal Lifecycle Events (`onDidOpenTerminal`, etc.): Fired based on RPC notifications from Mountain.
+ * - `getEnvironmentVariableCollection()`: Returns `ShimEnvironmentVariableCollectionImpl`.
+ * - `ShimEnvironmentVariableCollectionImpl`: Manages environment changes for an extension,
+ *
+ *
+ *   notifying Mountain via Vine IPC.
  *
  * Key Interactions:
- * - Provides parts of `vscode.window` terminal APIs.
- * - Interacts with `RPCProtocol` via `this._rpcService.getProxy(MainContext.MainThreadTerminalService)` for terminal actions.
- * - Receives terminal lifecycle events from Mountain via RPC.
- * - Sends environment variable change notifications to Mountain via `Vine` (`cocoon-ipc.js`).
+ * - Provides terminal APIs accessible via `vscode.window`.
+ * - Uses `RPCProtocol` for terminal actions and lifecycle events.
+ * - Uses direct Vine IPC (`cocoon-ipc.ts`) for environment variable changes.
+ * - Relies on `MainThreadTerminalService` in Mountain.
  *--------------------------------------------------------------------------------------------*/
 
 import {
 	Emitter as VscodeEmitter,
 	Event as VscodeEvent,
 } from "vs/base/common/event";
-// VS Code event system
-
 import { IDisposable } from "vs/base/common/lifecycle";
+// For URI marshalling checks
+import { MarshalledId } from "vs/base/common/marshallingIds";
 import {
 	ExtHostContext,
 	MainContext,
-	// Import specific DTOs if available from extHost.protocol, e.g.:
-	// ICreateTerminalOptions, ITerminalLaunchResult, ITerminalDimensionsDto
 } from "vs/workbench/api/common/extHost.protocol";
-// Needs bundling
 import {
-	EnvironmentVariableCollection,
-	EnvironmentVariableMutator,
-	EnvironmentVariableMutatorType,
-	// For getEnvironmentVariableCollection
-	Extension,
-	// For createTerminal options
-	ExtensionTerminalOptions,
-	Terminal,
-	TerminalExitReason,
-	// Type for exitStatus
-	TerminalExitStatus,
-	// Enum
-	TerminalLocation,
-	TerminalOptions,
-	// Type for state
-	TerminalState,
-	// If createTerminal with profile is supported
-	// TerminalProfile,
-	// If registering profile providers
-	// TerminalProfileProvider,
-	// If PTYs are handled
-	// Pseudoterminal,
-	// For onDidWriteData
-	// TerminalDataWriteEvent,
+	EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
+	EnvironmentVariableMutator as VscodeEnvironmentVariableMutator,
+	EnvironmentVariableMutatorType as VscodeEnvironmentVariableMutatorType,
+	Extension as VscodeExtension,
+	ExtensionTerminalOptions as VscodeExtensionTerminalOptions,
+	// For ExtensionTerminalOptions.pty
+	Pseudoterminal as VscodePseudoterminal,
+	// Use VscodeTerminal to distinguish from internal types
+	Terminal as VscodeTerminal,
+	// For pty data events
+	Event as VscodeTerminalDataEvent,
+	// For ExtensionTerminalOptions.pty
+	TerminalDimensions as VscodeTerminalDimensions,
+	TerminalExitReason as VscodeTerminalExitReason,
+	TerminalExitStatus as VscodeTerminalExitStatus,
+	TerminalOptions as VscodeTerminalOptions,
+	TerminalState as VscodeTerminalState,
+	// For cwd or iconPath
+	Uri as VscodeUri,
+	// Not used directly if passing options object
+	// TerminalLocation as VscodeApiTerminalLocation,
+
+	// For TerminalOptions.location
+	ViewColumn as VscodeViewColumn,
 } from "vscode";
 
-// Assuming API objects from 'vscode' shim
-// Access to Vine IPC layer
-import * as ipc from "..";
+// Assuming API objects from 'vscode' shim or real API
+// For environment variable IPC
+import * as ipc from "../cocoon-ipc";
 import {
 	BaseCocoonShim,
 	IExtHostRpcService,
 	ILogService,
 	ProxyIdentifier,
+	refineError,
 } from "./_baseShim";
 
-// --- Interfaces based on VS Code API and internal usage ---
+// --- Type Definitions ---
+
+// For URI components (used in RPC), should align with BaseCocoonShim's output
+interface ILocalUriComponents {
+	$mid?: number;
+
+	scheme: string;
+
+	path: string;
+
+	authority?: string;
+
+	query?: string;
+
+	fragment?: string;
+
+	external?: string;
+
+	fsPath?: string;
+}
+
+// Options for $createTerminal RPC call (subset of vscode.TerminalOptions & ExtensionTerminalOptions)
+// TODO: This MUST align with what MainThreadTerminalService.$createTerminal expects.
+interface ICreateTerminalRpcOptions {
+	name?: string;
+
+	shellPath?: string;
+
+	shellArgs?: string[] | string;
+
+	// Path string or URI components
+	cwd?: string | ILocalUriComponents;
+
+	// null value means delete
+	env?: { [key: string]: string | null };
+
+	iconPath?:
+		| ILocalUriComponents
+		| { light: ILocalUriComponents; dark: ILocalUriComponents };
+
+	// TerminalColor.id
+	color?: string;
+
+	message?: string;
+
+	location?:
+		| VscodeViewColumn
+		| /* vscode.TerminalEditorLocationOptions */ {
+				viewColumn?: VscodeViewColumn;
+
+				preserveFocus?: boolean;
+		  }
+		| /* vscode.TerminalLocation */ number;
+
+	isTransient?: boolean;
+
+	// For PTY:
+	// Indicate if it's a PTY-backed terminal
+	isPty?: boolean;
+
+	// If PTYs are managed with handles
+	ptyId?: number;
+
+	// Part of TerminalOptions
+	// useShellEnvironment?: boolean;
+
+	// Part of TerminalOptions
+	// strictEnv?: boolean;
+
+	// Part of TerminalOptions
+	hideFromUser?: boolean;
+}
+
+// Result from $createTerminal RPC call
+// TODO: This MUST align with what MainThreadTerminalService.$createTerminal returns.
+interface ITerminalLaunchRpcResult {
+	id: number;
+
+	name: string;
+
+	// Optional: PID might be sent later via $acceptTerminalProcessId
+	pid?: number;
+
+	// Initial title might differ from name
+	// title?: string;
+
+	// If this distinction is made on main thread
+	// isFeatureTerminal?: boolean;
+}
 
 // For MainThreadTerminalService RPC proxy
 interface MainThreadTerminalServiceShape {
 	$createTerminal(
-		options: any /* ICreateTerminalOptions */,
-	): Promise<any /* ITerminalLaunchResult */ | undefined>;
+		options: ICreateTerminalRpcOptions,
+	): Promise<ITerminalLaunchRpcResult | undefined>;
 
+	// viewColumn was here, but show in API doesn't always take it. $reveal might.
 	$show(terminalId: number, preserveFocus?: boolean): Promise<void>;
 
 	$hide(terminalId: number): Promise<void>;
@@ -94,19 +179,24 @@ interface MainThreadTerminalServiceShape {
 
 	$dispose(terminalId: number): Promise<void>;
 
-	// Add other methods like $getXtermColor?(id), $getDimensions?(id), $setDimensions?(id, dim)
+	// TODO: Add methods for PTY interaction if supported: $sendProcessInput, $resize, $shutdown
+	// For PTY data flow
+	// $pty maternelle(id:number, initialDimensions: VscodeTerminalDimensions | undefined): Promise<void>
+	// For flow control with PTY
+	// $acknowledgeDataEvent(id: number, charCount: number): void;
 }
 
 // For ExtHostTerminalService (methods called BY Mountain)
-interface ExtHostTerminalServiceShape {
+// TODO: This MUST align with VS Code's ExtHostTerminalServiceShape
+interface ExtHostTerminalServiceRpcShape {
 	$acceptTerminalOpened(
 		id: number,
 
 		name: string,
 
-		isFeatureTerminal?: boolean,
+		shellLaunchConfigName?: string /* for title */,
 
-		// isFeatureTerminal might be part of launch result instead
+		isFeatureTerminal?: boolean,
 	): void;
 
 	$acceptTerminalClosed(
@@ -114,35 +204,40 @@ interface ExtHostTerminalServiceShape {
 
 		exitCode: number | undefined,
 
-		exitReason: TerminalExitReason | undefined,
+		exitReason: VscodeTerminalExitReason | undefined,
 	): void;
 
 	$acceptTerminalProcessId(id: number, processId: number): void;
 
 	$acceptActiveTerminalChanged(id: number | null): void;
 
-	$acceptTerminalTitleChange(id: number, name: string): void;
+	$acceptTerminalTitleChanged(id: number, name: string): void;
 
-	// $acceptTerminalData?(id: number, data: string): void;
+	// For PTY output
+	$acceptTerminalData?(id: number, data: string): void;
 
-	// $acceptTerminalInteraction?(id: number): void;
+	// $acceptProcessStateChange?(id: number, /* ProcessState */ any): void;
 
-	// $acceptProcessStateChange?(id: number, isRunning: boolean): void;
+	// $acceptTerminalDimensions?(id: number, cols: number, rows: number): void;
+
+	// $acceptTaskDetection?(id: number, name: string, shellType: string): void;
 }
 
-// Options for createTerminal (combined for simplicity)
-type CreateTerminalOptions =
-	| string
-	| TerminalOptions
-	| ExtensionTerminalOptions;
+// Options for ShimEnvironmentVariableCollectionImpl constructor
+interface EnvVarCollectionOptions {
+	persistent?: boolean;
 
-class ShimTerminalImpl implements Terminal {
+	description?: string;
+
+	// VS Code internal also has `scope: EnvironmentVariableScope | undefined`
+}
+
+class ShimTerminalImpl implements VscodeTerminal {
 	readonly #proxy: MainThreadTerminalServiceShape | null;
 
-	// Terminal ID assigned by Mountain
 	readonly #id: number;
 
-	#nameProp: string;
+	#nameInternal: string;
 
 	readonly #onDidDisposeEmitter = new VscodeEmitter<void>();
 
@@ -150,24 +245,25 @@ class ShimTerminalImpl implements Terminal {
 
 	#isDisposed: boolean = false;
 
-	#processIdPromise: Promise<number | undefined>;
+	readonly #processIdPromise: Promise<number | undefined>;
 
-	// Asserted as it's set in constructor
-	#processIdPromiseComplete!: (pid: number | undefined) => void;
+	// Asserted: set in constructor
+	#processIdPromiseResolver!: (pid: number | undefined) => void;
 
-	// Store exit status
-	#exitStatusProp: TerminalExitStatus | undefined = undefined;
+	#exitStatusInternal: VscodeTerminalExitStatus | undefined = undefined;
 
-	// Store creation options
-	#creationOpts: Readonly<TerminalOptions | ExtensionTerminalOptions>;
+	readonly #creationOptionsInternal: Readonly<
+		VscodeTerminalOptions | VscodeExtensionTerminalOptions
+	>;
 
 	constructor(
 		id: number,
 
 		initialName: string,
 
-		// Store original options
-		creationOptions: Readonly<TerminalOptions | ExtensionTerminalOptions>,
+		creationOptions: Readonly<
+			VscodeTerminalOptions | VscodeExtensionTerminalOptions
+		>,
 
 		proxy: MainThreadTerminalServiceShape | null,
 
@@ -175,147 +271,179 @@ class ShimTerminalImpl implements Terminal {
 	) {
 		this.#id = id;
 
-		this.#nameProp = initialName;
+		this.#nameInternal = initialName;
 
-		this.#creationOpts = creationOptions;
+		// Store a copy
+		this.#creationOptionsInternal = { ...creationOptions };
 
 		this.#proxy = proxy;
 
 		this.#logService = logService;
 
 		this.#processIdPromise = new Promise<number | undefined>((resolve) => {
-			this.#processIdPromiseComplete = resolve;
+			this.#processIdPromiseResolver = resolve;
 		});
 
-		this._log(`Created`);
+		this._logShimOp(`Created (id: ${this.#id})`);
 	}
 
-	private _log(msg: string, ...args: any[]): void {
+	private _logShimOp(msg: string, ...args: any[]): void {
 		this.#logService?.trace(
-			`[TerminalShim][${this.#nameProp}(${this.#id})] ${msg}`,
+			`[Terminal][${this.#nameInternal}(${this.#id})] ${msg}`,
 
 			...args,
 		);
 	}
 
-	private _logError(msg: string, ...args: any[]): void {
+	private _logShimError(msg: string, ...args: any[]): void {
 		this.#logService?.error(
-			`[TerminalShim][${this.#nameProp}(${this.#id})] ${msg}`,
+			`[Terminal][${this.#nameInternal}(${this.#id})] ${msg}`,
 
 			...args,
 		);
 	}
 
-	private _validate(): void {
-		if (this.#isDisposed) throw new Error("Terminal has been disposed");
+	private _validateAndGetProxy(): MainThreadTerminalServiceShape {
+		if (this.#isDisposed)
+			throw new Error(
+				`Terminal '${this.#nameInternal}' (id: ${this.#id}) has been disposed.`,
+			);
+
+		if (!this.#proxy)
+			throw new Error(
+				`Terminal '${this.#nameInternal}' (id: ${this.#id}) RPC proxy is unavailable.`,
+			);
+
+		return this.#proxy;
 	}
 
 	get name(): string {
-		return this.#nameProp;
+		return this.#nameInternal;
 	}
 
-	_setName(newName: string): void {
-		this.#nameProp = newName;
+	_setNameInternal(newName: string): void {
+		this.#nameInternal = newName;
 
-		// Internal setter for title changes
+		// Called by $acceptTerminalTitleChanged
 	}
 
-	get exitStatus(): TerminalExitStatus | undefined {
-		return this.#exitStatusProp;
+	get exitStatus(): VscodeTerminalExitStatus | undefined {
+		return this.#exitStatusInternal;
 	}
 
-	_setExitStatus(status: TerminalExitStatus): void {
-		this.#exitStatusProp = status;
+	_setExitStatusInternal(status: VscodeTerminalExitStatus): void {
+		this.#exitStatusInternal = status;
 	}
 
 	get processId(): Promise<number | undefined> {
 		return this.#processIdPromise;
 	}
 
-	_setProcessId(pid: number | undefined): void {
-		if (this.#processIdPromiseComplete) {
-			this.#processIdPromiseComplete(pid);
+	_setProcessIdInternal(pid: number | undefined): void {
+		if (this.#processIdPromiseResolver) {
+			// Check if already resolved
+			this.#processIdPromiseResolver(pid);
 
-			// Prevent future resolution, tricky with strict null checks
-			// this.#processIdPromiseComplete = undefined as any;
+			// Prevent future resolution
+			(this.#processIdPromiseResolver as any) = null;
+		} else if (pid !== undefined) {
+			// If trying to set a new PID after initial resolution
+			this._logShimOp(
+				`ProcessId already resolved, new PID ${pid} ignored.`,
+			);
 		}
 	}
 
 	get creationOptions(): Readonly<
-		TerminalOptions | ExtensionTerminalOptions
+		VscodeTerminalOptions | VscodeExtensionTerminalOptions
 	> {
-		return this.#creationOpts;
+		return this.#creationOptionsInternal;
 	}
 
-	// Simplified state, real one might involve more detailed info from main thread
-	get state(): TerminalState {
-		return Object.freeze({ isInteractedWith: false });
+	get state(): VscodeTerminalState {
+		return Object.freeze({
+			isInteractedWith: false,
+		}); /* TODO: Sync state from MainThread */
 	}
 
-	// No direct PTY access in this shim model
-	// get pty(): Pseudoterminal | undefined { return undefined; }
+	// get pty(): VscodePseudoterminal | undefined { /* TODO: If PTYs fully supported */ return undefined; }
 
 	public sendText(text: string, addNewLine: boolean = true): void {
-		this._validate();
+		try {
+			const proxy = this._validateAndGetProxy();
 
-		// Terminals often expect \r
-		const message = text + (addNewLine ? "\r" : "");
+			const message = text + (addNewLine ? "\r" : "");
 
-		this._log(
-			`sendText: "${message.substring(0, 50)}${message.length > 50 ? "..." : ""}"`,
-		);
+			// this._logShimOp(`sendText: "${message.substring(0, 30)}..."`);
 
-		this.#proxy
-			?.$sendText(this.#id, message)
-			.catch((e: any) =>
-				this._logError("Error sending text via RPC:", e),
+			proxy.$sendText(this.#id, message).catch((e) =>
+				this._logShimError(
+					"RPC $sendText failed:",
+
+					refineError(e, this.#logService),
+				),
 			);
+		} catch (e: any) {
+			this._logShimError("sendText validation failed:", e);
+		}
 	}
 
 	public show(preserveFocus: boolean = false): void {
-		this._validate();
+		try {
+			const proxy = this._validateAndGetProxy();
 
-		this._log(`show: preserveFocus=${preserveFocus}`);
+			// this._logShimOp(`show(preserveFocus=${preserveFocus})`);
 
-		this.#proxy
-			?.$show(this.#id, preserveFocus)
-			.catch((e: any) =>
-				this._logError("Error showing terminal via RPC:", e),
+			proxy.$show(this.#id, preserveFocus).catch((e) =>
+				this._logShimError(
+					"RPC $show failed:",
+
+					refineError(e, this.#logService),
+				),
 			);
+		} catch (e: any) {
+			this._logShimError("show validation failed:", e);
+		}
 	}
 
 	public hide(): void {
-		this._validate();
+		try {
+			const proxy = this._validateAndGetProxy();
 
-		this._log(`hide`);
+			// this._logShimOp(`hide`);
 
-		this.#proxy
-			?.$hide(this.#id)
-			.catch((e: any) =>
-				this._logError("Error hiding terminal via RPC:", e),
+			proxy.$hide(this.#id).catch((e) =>
+				this._logShimError(
+					"RPC $hide failed:",
+
+					refineError(e, this.#logService),
+				),
 			);
+		} catch (e: any) {
+			this._logShimError("hide validation failed:", e);
+		}
 	}
 
 	public dispose(): void {
 		if (!this.#isDisposed) {
-			this._log(`dispose`);
+			this._logShimOp(`dispose`);
 
 			this.#isDisposed = true;
 
-			this.#proxy
-				?.$dispose(this.#id)
-				.catch((e: any) =>
-					this._logError("Error disposing terminal via RPC:", e),
-				);
+			this.#proxy?.$dispose(this.#id).catch((e) =>
+				this._logShimError(
+					"RPC $dispose failed:",
+
+					refineError(e, this.#logService),
+				),
+			);
 
 			this.#onDidDisposeEmitter.fire();
 
 			this.#onDidDisposeEmitter.dispose();
 
-			if (this.#processIdPromiseComplete) {
-				this._setProcessId(undefined);
-
-				// Resolve PID promise
+			if (this.#processIdPromiseResolver) {
+				this._setProcessIdInternal(undefined);
 			}
 
 			this.#proxy = null;
@@ -326,31 +454,37 @@ class ShimTerminalImpl implements Terminal {
 
 	public readonly onDidDispose: VscodeEvent<void> =
 		this.#onDidDisposeEmitter.event;
+
+	// TODO: Implement other events like onDidWriteData, onDidChangeState if PTYs/state sync are added.
 }
 
 class ShimEnvironmentVariableCollectionImpl
-	implements EnvironmentVariableCollection
+	implements VscodeEnvironmentVariableCollection
 {
 	readonly #extensionId: string;
 
-	// Default to persistent
-	#persistentProp: boolean = true;
+	#persistentInternal: boolean;
 
-	readonly #map = new Map<string, EnvironmentVariableMutator>();
+	readonly #map = new Map<string, VscodeEnvironmentVariableMutator>();
 
-	// Store IPC layer
-	readonly #ipc: typeof ipc;
+	readonly #ipcLayer: typeof ipc;
 
 	#logService?: ILogService;
 
-	// Optional description for the collection
-	readonly #description?: string;
+	readonly #descriptionInternal?: string;
+
+	// EnvironmentVariableScope if used
+	readonly #scopeInternal?: any;
+
+	// TODO: onDidChange event for EnvVarCollection
+	// private readonly _onDidChangeCollection: VscodeEmitter<void> = new VscodeEmitter<void>();
+
+	// public readonly onDidChange: VscodeEvent<void> = this._onDidChangeCollection.event;
 
 	constructor(
-		// Use vscode.Extension type
-		extension: Extension<any>,
+		extension: VscodeExtension<any>,
 
-		options: { persistent?: boolean; description?: string } | undefined,
+		options: EnvVarCollectionOptions | undefined,
 
 		ipcLayer: typeof ipc,
 
@@ -358,159 +492,167 @@ class ShimEnvironmentVariableCollectionImpl
 	) {
 		this.#extensionId = extension.id;
 
-		if (options?.persistent !== undefined)
-			this.#persistentProp = options.persistent;
+		this.#persistentInternal = options?.persistent ?? true;
 
-		this.#description = options?.description;
+		this.#descriptionInternal = options?.description;
 
-		this.#ipc = ipcLayer;
+		// If scope is part of options
+		// this.#scopeInternal = options?.scope;
+
+		this.#ipcLayer = ipcLayer;
 
 		this.#logService = logService;
 
-		this._log(
-			`Created (persistent=${this.#persistentProp}, description=${this.#description || "none"})`,
+		this._logShimOp(
+			`Created (persistent=${this.#persistentInternal}, desc='${this.#descriptionInternal || ""}')`,
 		);
 	}
 
-	private _log(msg: string, ...args: any[]): void {
+	private _logShimOp(msg: string, ...args: any[]): void {
 		this.#logService?.trace(
-			`[EnvVarCollectionShim][${this.#extensionId}] ${msg}`,
+			`[EnvVarCol][${this.#extensionId}] ${msg}`,
 
 			...args,
 		);
 	}
 
-	private _logError(msg: string, ...args: any[]): void {
+	private _logShimError(msg: string, ...args: any[]): void {
 		this.#logService?.error(
-			`[EnvVarCollectionShim][${this.#extensionId}] ${msg}`,
+			`[EnvVarCol][${this.#extensionId}] ${msg}`,
 
 			...args,
 		);
 	}
 
 	get persistent(): boolean {
-		return this.#persistentProp;
+		return this.#persistentInternal;
 	}
 
 	get description(): string | undefined {
-		return this.#description;
-
-		// Added description
+		return this.#descriptionInternal;
 	}
 
+	// get scope(): EnvironmentVariableScope | undefined { return this.#scopeInternal; }
+
 	public replace(variable: string, value: string): void {
-		this.set(variable, {
+		this._set(variable, {
 			value,
 
-			type: EnvironmentVariableMutatorType.Replace,
+			type: VscodeEnvironmentVariableMutatorType.Replace,
 		});
 	}
 
 	public append(variable: string, value: string): void {
-		this.set(variable, {
+		this._set(variable, {
 			value,
 
-			type: EnvironmentVariableMutatorType.Append,
+			type: VscodeEnvironmentVariableMutatorType.Append,
 		});
 	}
 
 	public prepend(variable: string, value: string): void {
-		this.set(variable, {
+		this._set(variable, {
 			value,
 
-			type: EnvironmentVariableMutatorType.Prepend,
+			type: VscodeEnvironmentVariableMutatorType.Prepend,
 		});
 	}
 
-	// Internal set method to handle common logic, called by replace, append, prepend
-	private set(variable: string, mutator: EnvironmentVariableMutator): void {
-		if (typeof variable !== "string" || variable.length === 0)
-			throw new Error("Invalid variable name");
+	private _set(
+		variable: string,
 
-		this._log(
-			`set: variable=${variable}, mutator=${JSON.stringify(mutator)}`,
-		);
+		mutator: VscodeEnvironmentVariableMutator,
+	): void {
+		if (typeof variable !== "string" || !variable)
+			throw new Error(
+				"Invalid variable name for environment collection.",
+			);
+
+		// this._logShimOp(`set: var='${variable}', mutatorType=${VscodeEnvironmentVariableMutatorType[mutator.type]}`);
 
 		// Store a copy
 		this.#map.set(variable, { ...mutator });
 
 		try {
-			this.#ipc.sendNotificationToMountain(
+			this.#ipcLayer.sendNotificationToMountain(
 				"terminal_setEnvironmentVariable",
 
 				{
 					extensionId: this.#extensionId,
 
-					variable: variable,
+					variable,
 
-					// Send copy
 					mutator: { ...mutator },
 
-					persistent: this.#persistentProp,
+					persistent:
+						this
+							.#persistentInternal /* scope: this.#scopeInternal */,
 				},
 			);
-		} catch (e: any) {
-			this._logError(
-				`Error sending IPC notification for set EnvironmentVariable:`,
 
-				e,
-			);
+			// this._onDidChangeCollection.fire();
+		} catch (e: any) {
+			this._logShimError("IPC sendNotification for setEnvVar failed:", e);
 		}
 	}
 
-	public get(variable: string): EnvironmentVariableMutator | undefined {
+	public get(variable: string): VscodeEnvironmentVariableMutator | undefined {
 		const mutator = this.#map.get(variable);
 
 		return mutator ? Object.freeze({ ...mutator }) : undefined;
 	}
 
 	public delete(variable: string): void {
-		if (typeof variable !== "string" || variable.length === 0)
-			throw new Error("Invalid variable name");
+		if (typeof variable !== "string" || !variable)
+			throw new Error("Invalid variable name for delete.");
 
-		this._log(`delete: variable=${variable}`);
+		// this._logShimOp(`delete: var='${variable}'`);
 
 		if (this.#map.delete(variable)) {
 			try {
-				this.#ipc.sendNotificationToMountain(
+				this.#ipcLayer.sendNotificationToMountain(
 					"terminal_deleteEnvironmentVariable",
 
 					{
 						extensionId: this.#extensionId,
 
-						variable: variable,
+						variable,
 
-						persistent: this.#persistentProp,
+						persistent:
+							this
+								.#persistentInternal /* scope: this.#scopeInternal */,
 					},
 				);
+
+				// this._onDidChangeCollection.fire();
 			} catch (e: any) {
-				this._logError(
-					`Error sending IPC notification for delete EnvironmentVariable:`,
+				this._logShimError(
+					"IPC sendNotification for deleteEnvVar failed:",
 
 					e,
 				);
 			}
 		} else {
-			this._log(
-				`delete: Variable '${variable}' not found in local cache. Notifying Mountain anyway.`,
-			);
+			// Even if not in local cache, notify Mountain to ensure consistency if it had state.
+			// this._logShimOp(`delete: var='${variable}' not in local cache, notifying Mountain.`);
 
-			// Still send notification as Mountain might have state we don't know, or to ensure consistency.
 			try {
-				this.#ipc.sendNotificationToMountain(
+				this.#ipcLayer.sendNotificationToMountain(
 					"terminal_deleteEnvironmentVariable",
 
 					{
 						extensionId: this.#extensionId,
 
-						variable: variable,
+						variable,
 
-						persistent: this.#persistentProp,
+						persistent:
+							this
+								.#persistentInternal /* scope: this.#scopeInternal */,
 					},
 				);
 			} catch (e: any) {
-				this._logError(
-					`Error sending IPC notification for delete EnvironmentVariable (not in cache):`,
+				this._logShimError(
+					"IPC sendNotification for deleteEnvVar (not cached) failed:",
 
 					e,
 				);
@@ -519,24 +661,28 @@ class ShimEnvironmentVariableCollectionImpl
 	}
 
 	public clear(): void {
-		this._log(`clear`);
+		// this._logShimOp(`clear`);
 
 		if (this.#map.size > 0) {
 			this.#map.clear();
 
 			try {
-				this.#ipc.sendNotificationToMountain(
+				this.#ipcLayer.sendNotificationToMountain(
 					"terminal_clearEnvironmentVariableCollection",
 
 					{
 						extensionId: this.#extensionId,
 
-						persistent: this.#persistentProp,
+						persistent:
+							this
+								.#persistentInternal /* scope: this.#scopeInternal */,
 					},
 				);
+
+				// this._onDidChangeCollection.fire();
 			} catch (e: any) {
-				this._logError(
-					`Error sending IPC notification for clear EnvironmentVariableCollection:`,
+				this._logShimError(
+					"IPC sendNotification for clearEnvVarCol failed:",
 
 					e,
 				);
@@ -548,20 +694,28 @@ class ShimEnvironmentVariableCollectionImpl
 		callback: (
 			variable: string,
 
-			mutator: EnvironmentVariableMutator,
+			mutator: VscodeEnvironmentVariableMutator,
 
-			collection: EnvironmentVariableCollection,
+			collection: VscodeEnvironmentVariableCollection,
 		) => any,
 
 		thisArg?: any,
 	): void {
-		this.#map.forEach((value, key) => {
-			callback.call(thisArg, key, Object.freeze({ ...value }), this);
+		this.#map.forEach((mutator, variable) => {
+			callback.call(
+				thisArg,
+
+				variable,
+
+				Object.freeze({ ...mutator }),
+
+				this,
+			);
 		});
 	}
 
 	public [Symbol.iterator](): IterableIterator<
-		[string, EnvironmentVariableMutator]
+		[string, VscodeEnvironmentVariableMutator]
 	> {
 		const mapIter = this.#map.entries();
 
@@ -579,7 +733,11 @@ class ShimEnvironmentVariableCollectionImpl
 				const [key, value] = result.value;
 
 				return {
-					value: [key, Object.freeze({ ...value })],
+					value: [key, Object.freeze({ ...value })] as [
+						string,
+
+						VscodeEnvironmentVariableMutator,
+					],
 
 					done: false,
 				};
@@ -590,38 +748,51 @@ class ShimEnvironmentVariableCollectionImpl
 			},
 		};
 	}
+
+	public toArray(): ReadonlyArray<
+		[string, VscodeEnvironmentVariableMutator]
+	> {
+		return Object.freeze(
+			Array.from(this.#map.entries()).map(([key, value]) => [
+				key,
+
+				{ ...value },
+			]),
+		);
+	}
 }
 
+// This should implement vscode.window.terminals API parts + IExtHostTerminalService (for DI)
+// and ExtHostTerminalServiceRpcShape (for calls from MainThread)
 export class ShimExtHostTerminalService
 	extends BaseCocoonShim
-	implements ExtHostTerminalServiceShape
+	implements ExtHostTerminalServiceRpcShape
 {
-	public readonly _serviceBrand: undefined;
+	// For IExtHostTerminalService
+	/*, IExtHostTerminalService */ public readonly _serviceBrand: undefined;
 
 	#mainThreadTerminalProxy: MainThreadTerminalServiceShape | null = null;
 
-	// Key: terminal ID (number)
 	readonly #terminals = new Map<number, ShimTerminalImpl>();
 
 	readonly #envVariableCollections = new Map<
 		string,
 		ShimEnvironmentVariableCollectionImpl
-		// Key: extension ID
 	>();
 
-	readonly #onDidOpenTerminalEmitter = new VscodeEmitter<Terminal>();
+	readonly #onDidOpenTerminalEmitter = new VscodeEmitter<VscodeTerminal>();
 
-	// VSCode API uses Terminal, not TerminalExitStatus obj
-	readonly #onDidCloseTerminalEmitter = new VscodeEmitter<Terminal>();
+	// API uses Terminal, not complex event obj
+	readonly #onDidCloseTerminalEmitter = new VscodeEmitter<VscodeTerminal>();
 
 	readonly #onDidChangeActiveTerminalEmitter = new VscodeEmitter<
-		Terminal | undefined
+		VscodeTerminal | undefined
 	>();
 
-	readonly #onDidChangeTerminalStateEmitter = new VscodeEmitter<Terminal>();
+	readonly #onDidChangeTerminalStateEmitter =
+		new VscodeEmitter<VscodeTerminal>();
 
-	// If PTY data is proxied
-	// #onDidWriteTerminalDataEmitter = new VscodeEmitter<TerminalDataWriteEvent>();
+	// TODO: Add other emitters like onDidWriteTerminalData, onDidChangeShell
 
 	constructor(
 		rpcService: IExtHostRpcService | undefined,
@@ -634,18 +805,10 @@ export class ShimExtHostTerminalService
 			this.#mainThreadTerminalProxy = this._getProxy(
 				MainContext.MainThreadTerminalService as ProxyIdentifier<MainThreadTerminalServiceShape>,
 			);
-		}
 
-		if (!this.#mainThreadTerminalProxy) {
-			this._logError(
-				"Failed to get MainThreadTerminalService proxy! Terminal features may be limited.",
-			);
-		}
-
-		if (this._rpcService) {
 			try {
 				this._rpcService.set(
-					ExtHostContext.ExtHostTerminalService as ProxyIdentifier<ExtHostTerminalServiceShape>,
+					ExtHostContext.ExtHostTerminalService as ProxyIdentifier<ExtHostTerminalServiceRpcShape>,
 
 					this,
 				);
@@ -660,37 +823,38 @@ export class ShimExtHostTerminalService
 					e,
 				);
 			}
-		} else {
+		}
+
+		if (!this.#mainThreadTerminalProxy) {
 			this._logError(
-				"RPCService is not available, cannot set ExtHostTerminalService for RPC.",
+				"Failed to get MainThreadTerminalService proxy! Terminal features will be severely impaired.",
 			);
 		}
 	}
 
-	// --- Public API Methods (vscode.window.terminals) ---
+	// --- vscode.window API (subset for terminals) ---
 	public async createTerminal(
 		nameOrOptions?: CreateTerminalOptions,
 
 		shellPath?: string,
 
 		shellArgs?: string[] | string,
-	): Promise<Terminal> {
-		let options: TerminalOptions | ExtensionTerminalOptions;
+	): Promise<VscodeTerminal> {
+		let options: VscodeTerminalOptions | VscodeExtensionTerminalOptions;
 
 		if (typeof nameOrOptions === "string") {
 			options = { name: nameOrOptions, shellPath, shellArgs };
 		} else {
-			// Default to empty object if undefined
 			options = nameOrOptions || {};
 		}
 
 		this._log(
-			`createTerminal: name=${options.name}, shellPath=${options.shellPath}`,
+			`createTerminal: name='${options.name}', shellPath='${options.shellPath}'`,
 		);
 
 		if (!this.#mainThreadTerminalProxy) {
 			this._logError(
-				"Cannot create terminal, MainThreadTerminalService proxy unavailable.",
+				"Cannot create terminal: MainThreadTerminalService proxy unavailable.",
 			);
 
 			throw new Error(
@@ -699,9 +863,8 @@ export class ShimExtHostTerminalService
 		}
 
 		try {
-			// Map VS Code API options to internal protocol options (ICreateTerminalOptions)
-			const internalOptions: any = {
-				// Type this with ICreateTerminalOptions if defined
+			const internalOptions: ICreateTerminalRpcOptions = {
+				// Map to RPC DTO
 				name: options.name,
 
 				shellPath: options.shellPath,
@@ -709,32 +872,38 @@ export class ShimExtHostTerminalService
 				shellArgs: options.shellArgs,
 
 				cwd: options.cwd
-					? options.cwd instanceof Uri
-						? this._convertApiArgToInternal(options.cwd)
-						: options.cwd
+					? options.cwd instanceof VscodeUri
+						? (this._convertApiArgToInternal(
+								options.cwd,
+							) as ILocalUriComponents)
+						: String(options.cwd)
 					: undefined,
 
 				env: options.env,
 
 				iconPath: options.iconPath
-					? options.iconPath instanceof Uri
+					? options.iconPath instanceof VscodeUri
 						? this._convertApiArgToInternal(options.iconPath)
-						: options.iconPath
+						: this._convertApiArgToInternal({
+								light: options.iconPath.light,
+
+								dark: options.iconPath.dark,
+							})
 					: undefined,
 
-				// If color is TerminalColor
-				color: (options as any).color,
-
+				// Not standard on TerminalOptions
 				message: (options as any).message,
 
-				// TerminalLocation enum or { viewColumn, preserveFocus }
+				hideFromUser: options.hideFromUser,
 
-				location: (options as any).location,
-
+				// Not standard on TerminalOptions
 				isTransient: (options as any).isTransient,
 
-				// PTY handling would be complex, assume not used by shim for now
-				// pty: (options as ExtensionTerminalOptions).pty,
+				// PTY specific options
+				isPty: !!(options as VscodeExtensionTerminalOptions).pty,
+
+				// If PTYs are pre-registered and have IDs
+				// ptyId: ...
 			};
 
 			if (options.location && typeof options.location === "object") {
@@ -755,7 +924,6 @@ export class ShimExtHostTerminalService
 				);
 
 			if (!result || typeof result.id !== "number") {
-				// result should be ITerminalLaunchResult
 				this._logError(
 					"Failed to create terminal via RPC: Main thread returned invalid result.",
 
@@ -768,7 +936,7 @@ export class ShimExtHostTerminalService
 			const terminal = new ShimTerminalImpl(
 				result.id,
 
-				result.name || options.name || "Terminal",
+				result.name || options.name || `Terminal ${result.id}`,
 
 				options,
 
@@ -779,56 +947,47 @@ export class ShimExtHostTerminalService
 
 			this.#terminals.set(result.id, terminal);
 
-			// $acceptTerminalOpened will fire the onDidOpenTerminal event when main thread confirms
+			// $acceptTerminalOpened (called by main thread) will fire the onDidOpenTerminal event.
 			return terminal;
 		} catch (e: any) {
 			this._logError("Failed to create terminal via RPC:", e);
 
-			throw e;
+			throw refineError(e, this._logService, "createTerminal");
 		}
 	}
 
-	get terminals(): readonly Terminal[] {
-		return [...this.#terminals.values()];
+	get terminals(): readonly VscodeTerminal[] {
+		return Object.freeze([...this.#terminals.values()]);
 	}
 
-	get activeTerminal(): Terminal | undefined {
+	get activeTerminal(): VscodeTerminal | undefined {
+		// This needs to be updated by $acceptActiveTerminalChanged from Mountain.
+		// TODO: Store active terminal ID and look it up.
 		this._logWarnOnce(
-			"activeTerminal is not fully implemented in shim (relies on $acceptActiveTerminalChanged).",
+			"activeTerminal is based on incoming RPC events, may not be up-to-date if events missed.",
 		);
 
-		// This would be set by $acceptActiveTerminalChanged
-		// For now, find first non-disposed or return undefined.
-		for (const term of this.#terminals.values()) {
-			// A more robust check for "disposed" might be needed on ShimTerminalImpl if it has such a property
-			// Hacky access to private
-			// if (!(term as any).#isDisposed) return term;
-
-			// Simplistic: return first one
-			return term;
-		}
-
+		// Placeholder until state is synced
 		return undefined;
 	}
 
 	public getEnvironmentVariableCollection(
-		extension: Extension<any>,
+		extension: VscodeExtension<any>,
 
-		options?: { persistent?: boolean; description?: string },
-	): EnvironmentVariableCollection {
-		if (!extension?.id) {
-			this._logError(
-				"getEnvironmentVariableCollection called without valid extension object.",
-			);
-
+		options?: EnvVarCollectionOptions,
+	): VscodeEnvironmentVariableCollection {
+		// The `options` for vscode.EnvironmentVariableCollection in the API includes `scope`.
+		// The original shim's EnvVarCollectionOptions only had `persistent`.
+		// TODO: Align EnvVarCollectionOptions with vscode.EnvironmentVariableCollectionOptions if `scope` is needed.
+		if (!extension?.id)
 			throw new Error(
 				"Invalid extension provided to getEnvironmentVariableCollection",
 			);
-		}
 
 		const extId = extension.id;
 
-		this._log(`getEnvironmentVariableCollection: extId=${extId}`);
+		// Can be verbose
+		// this._log(`getEnvironmentVariableCollection: extId=${extId}`);
 
 		if (!this.#envVariableCollections.has(extId)) {
 			this.#envVariableCollections.set(
@@ -846,34 +1005,35 @@ export class ShimExtHostTerminalService
 			);
 		}
 
-		// Assert not undefined
 		return this.#envVariableCollections.get(extId)!;
 	}
 
 	// --- Events ---
-	get onDidOpenTerminal(): VscodeEvent<Terminal> {
+	get onDidOpenTerminal(): VscodeEvent<VscodeTerminal> {
 		return this.#onDidOpenTerminalEmitter.event;
 	}
 
-	get onDidCloseTerminal(): VscodeEvent<Terminal> {
+	get onDidCloseTerminal(): VscodeEvent<VscodeTerminal> {
 		return this.#onDidCloseTerminalEmitter.event;
 	}
 
-	get onDidChangeActiveTerminal(): VscodeEvent<Terminal | undefined> {
+	get onDidChangeActiveTerminal(): VscodeEvent<VscodeTerminal | undefined> {
 		return this.#onDidChangeActiveTerminalEmitter.event;
 	}
 
-	get onDidChangeTerminalState(): VscodeEvent<Terminal> {
+	get onDidChangeTerminalState(): VscodeEvent<VscodeTerminal> {
 		return this.#onDidChangeTerminalStateEmitter.event;
 	}
 
-	// get onDidWriteTerminalData(): VscodeEvent<TerminalDataWriteEvent> { return this.#onDidWriteTerminalDataEmitter.event; }
+	// TODO: get onDidWriteData, onDidChangeShellType etc.
 
-	// --- RPC Methods Called BY Mountain ---
+	// --- RPC Methods Called BY Mountain (ExtHostTerminalServiceRpcShape) ---
 	public $acceptTerminalOpened(
 		id: number,
 
 		name: string,
+
+		_shellLaunchConfigName?: string,
 
 		_isFeatureTerminal?: boolean,
 	): void {
@@ -882,12 +1042,13 @@ export class ShimExtHostTerminalService
 		let terminal = this.#terminals.get(id);
 
 		if (!terminal) {
-			this._log(
-				`   Terminal shim for ID ${id} created implicitly by $acceptTerminalOpened.`,
-			);
-
-			// Need creationOptions. For now, use a default.
-			const creationOpts: TerminalOptions = { name };
+			// Terminal might have been created by main thread directly or createTerminal promise not yet resolved on ext host side.
+			// Need creationOptions to properly create ShimTerminalImpl.
+			// For now, use defaults if creating implicitly.
+			// TODO: MainThread should ideally send enough info (like original options) if it expects ExtHost to create the object.
+			// Or, ExtHost's createTerminal should fully await the MainThread creation and then $acceptTerminalOpened is just a confirmation/update.
+			// Minimal
+			const creationOpts: VscodeTerminalOptions = { name };
 
 			terminal = new ShimTerminalImpl(
 				id,
@@ -902,9 +1063,13 @@ export class ShimExtHostTerminalService
 			);
 
 			this.#terminals.set(id, terminal);
+
+			this._log(
+				`   Terminal shim for ID ${id} implicitly created by $acceptTerminalOpened.`,
+			);
 		} else {
-			// Update name if it changed
-			terminal._setName(name);
+			// Update name if different
+			terminal._setNameInternal(name);
 		}
 
 		this.#onDidOpenTerminalEmitter.fire(terminal);
@@ -918,28 +1083,33 @@ export class ShimExtHostTerminalService
 
 		exitCode: number | undefined,
 
-		exitReason: TerminalExitReason | undefined,
+		exitReason: VscodeTerminalExitReason | undefined,
 	): void {
+		const reasonStr =
+			exitReason !== undefined
+				? VscodeTerminalExitReason[exitReason]
+				: "Unknown";
+
 		this._log(
-			`$acceptTerminalClosed: id=${id}, code=${exitCode}, reason=${exitReason !== undefined ? TerminalExitReason[exitReason] : "unknown"}`,
+			`$acceptTerminalClosed: id=${id}, code=${exitCode}, reason=${reasonStr}`,
 		);
 
 		const terminal = this.#terminals.get(id);
 
 		if (terminal) {
-			terminal._setExitStatus({
+			terminal._setExitStatusInternal({
 				code: exitCode,
 
-				reason: exitReason || TerminalExitReason.Unknown,
+				reason: exitReason ?? VscodeTerminalExitReason.Unknown,
 			});
 
 			this.#terminals.delete(id);
 
-			// API expects the terminal instance
+			// API expects the Terminal instance
 			this.#onDidCloseTerminalEmitter.fire(terminal);
 
-			// Ensure internal disposal
-			(terminal as ShimTerminalImpl).dispose();
+			// Ensure internal cleanup
+			terminal.dispose();
 		} else {
 			this._logWarn(
 				`Received $acceptTerminalClosed for unknown terminal ID: ${id}`,
@@ -950,27 +1120,26 @@ export class ShimExtHostTerminalService
 	public $acceptTerminalProcessId(id: number, processId: number): void {
 		this._log(`$acceptTerminalProcessId: id=${id}, pid=${processId}`);
 
-		const terminal = this.#terminals.get(id);
-
-		terminal?._setProcessId(processId);
+		this.#terminals.get(id)?._setProcessIdInternal(processId);
 	}
 
 	public $acceptActiveTerminalChanged(id: number | null): void {
-		this._log(`$acceptActiveTerminalChanged: id=${id}`);
+		this._log(`$acceptActiveTerminalChanged: new active ID=${id}`);
 
 		const activeTerminal =
 			id === null ? undefined : this.#terminals.get(id);
 
+		// TODO: Update internal state for `this.activeTerminal` getter.
 		this.#onDidChangeActiveTerminalEmitter.fire(activeTerminal);
 	}
 
-	public $acceptTerminalTitleChange(id: number, name: string): void {
-		this._log(`$acceptTerminalTitleChange: id=${id}, name=${name}`);
+	public $acceptTerminalTitleChanged(id: number, name: string): void {
+		this._log(`$acceptTerminalTitleChanged: id=${id}, newName=${name}`);
 
 		const terminal = this.#terminals.get(id);
 
 		if (terminal) {
-			terminal._setName(name);
+			terminal._setNameInternal(name);
 
 			this.#onDidChangeTerminalStateEmitter.fire(terminal);
 		} else {
@@ -979,8 +1148,13 @@ export class ShimExtHostTerminalService
 			);
 		}
 	}
+
+	// TODO: Implement other $accept* methods if PTY data, dimensions, process state changes are proxied.
+	// public $acceptTerminalData(id: number, data: string): void {
+
+	//     const terminal = this.#terminals.get(id);
+
+	// terminal?._onDidWriteDataEmitter.fire(data); // If terminal has this emitter
+	//
+	// }
 }
-
-// export { ShimExtHostTerminalService, ShimTerminalImpl as ShimTerminal, ShimEnvironmentVariableCollectionImpl as ShimEnvironmentVariableCollection };
-
-// Classes are already exported.
