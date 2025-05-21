@@ -1,80 +1,76 @@
-// Assume these are available via module.paths or are standard Node modules
 // Node.js built-in
-import { EventEmitter } from "events";
-// Using Node's fs for path checking
 import * as fs from "fs";
-// --- Setup Module Paths (CRITICAL) ---
+// --- Setup Module Paths ---
 import * as path from "path";
+// Node.js built-in
 import { performance } from "perf_hooks";
-// Needs bundling
 import { VSBuffer } from "vs/base/common/buffer";
-// Needs bundling
-import { URI, UriParts } from "vs/base/common/uri";
+// VS Code internal URI
+import { URI, UriComponents as VSCodeUriComponents } from "vs/base/common/uri";
 import {
 	ExtensionIdentifier,
 	IExtensionDescription,
-	IRelaxedExtensionDescription,
-	// Needs bundling
 } from "vs/platform/extensions/common/extensions";
-// Needs bundling
 import { getSingletonServiceDescriptors } from "vs/platform/instantiation/common/extensions";
 import {
 	createDecorator,
 	IInstantiationService,
 	InstantiationService,
-	// Needs bundling
 } from "vs/platform/instantiation/common/instantiationService";
-// Used by BaseCocoonShim
+// MarshalledId and revive are used by BaseCocoonShim, direct import not strictly needed here if BaseCocoonShim handles it.
 // import { MarshalledId } from "vs/base/common/marshallingIds";
 
-// Used by BaseCocoonShim
-// import { revive } from "vs/base/common/marshalling";
-
+// Alias to avoid conflict with local revive
+// import { revive as vscodeRevive } from "vs/base/common/marshalling";
 import {
 	ServiceCollection,
 	SyncDescriptor,
-	// Needs bundling
 } from "vs/platform/instantiation/common/serviceCollection";
-// This type might be part of extHostExtensionActivator
-// import { ExtensionActivationReason } from "vs/workbench/services/extensions/common/extensions";
-
-// Service Interfaces (ensure paths are correct)
+// Service Interfaces (ensure paths and names match your VS Code version)
 import {
 	ILoggerService,
 	ILogService,
 	LogLevel,
 } from "vs/platform/log/common/log";
 // Interceptor & Error Handling
-// Assuming this path
 import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain";
 import {
 	createApiFactory as createVSCodeApiFactory,
-	IExtensionApiFactory,
+	IExtensionApiFactory /* VSCodeAPI */,
 } from "vs/workbench/api/common/extHost.api.impl";
 import {
 	ExtHostContext,
 	MainContext,
-	// Needs bundling
+	IWorkspaceData as RpcWorkspaceData,
+	ExtHostWorkspaceShape as VscodeExtHostWorkspaceShape,
 } from "vs/workbench/api/common/extHost.protocol";
+// Use DTOs from protocol
+
 import { IExtHostCommands } from "vs/workbench/api/common/extHostCommands";
 import {
 	IExtHostConfiguration,
 	IExtHostConfigurationShape,
 } from "vs/workbench/api/common/extHostConfiguration";
-import { IExtHostDiagnostics } from "vs/workbench/api/common/extHostDiagnostics";
+import {
+	ExtHostDiagnosticsShape,
+	IExtHostDiagnostics,
+} from "vs/workbench/api/common/extHostDiagnostics";
+// Added ExtHostDiagnosticsShape
 import {
 	IExtHostDocuments,
 	IExtHostDocumentsShape,
 } from "vs/workbench/api/common/extHostDocuments";
-// This might be from a different path in newer VS Code
+// Path might vary
 import { IHostUtils } from "vs/workbench/api/common/extHostExtensionService";
+// Needed for Workspace shim
+import { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
 import {
 	ExtHostInitData,
 	IExtHostInitDataService,
 } from "vs/workbench/api/common/extHostInitDataService";
 import {
-	ExtHostLanguageFeaturesShape,
 	IExtHostLanguageFeatures,
+	ExtHostLanguageFeaturesShape as VscodeExtHostLangFeaturesShape,
 } from "vs/workbench/api/common/extHostLanguageFeatures";
 import { IExtHostLanguageModels } from "vs/workbench/api/common/extHostLanguageModels";
 import { IExtHostOutputService } from "vs/workbench/api/common/extHostOutput";
@@ -86,105 +82,99 @@ import {
 	IExtHostTerminalService,
 	IExtHostTerminalServiceShape,
 } from "vs/workbench/api/common/extHostTerminalService";
-import {
-	IURITransformer,
-	IURITransformerService,
-} from "vs/workbench/api/common/extHostUriTransformerService";
+import { IURITransformerService } from "vs/workbench/api/common/extHostUriTransformerService";
 import { IExtHostWorkspace } from "vs/workbench/api/common/extHostWorkspace";
+// Real Extension Service Implementation (Node specific)
 import {
 	ExtHostExtensionService,
 	IExtHostExtensionService,
-	// Node specific
 } from "vs/workbench/api/node/extHostExtensionService";
 import {
+	INodeModuleFactory,
 	NodeModuleAliasingModuleFactory,
 	NodeRequireInterceptor,
 	VSCodeNodeModuleFactory,
 } from "vs/workbench/api/node/extHostRequireInterceptor";
 import { IWorkbenchExtensionEnablementService } from "vs/workbench/services/extensionManagement/common/extensionManagement";
 import { IExtensionHostKindPicker } from "vs/workbench/services/extensions/common/extensionHostKind";
+// ExtensionActivationReason might be part of extHostExtensionActivator or extensions itself
+import {
+	ActivationKind,
+	ExtensionActivationReason,
+} from "vs/workbench/services/extensions/common/extensions";
 import {
 	IMessagePassingProtocol,
 	RPCProtocol,
-	// Needs bundling
 } from "vs/workbench/services/extensions/common/rpcProtocol";
+import type {
+	Uri as VscodeApiUri,
+	FileSystem as VscodeFileSystem,
+} from "vscode";
 
-// Import as namespace
-import * as ipc from ".";
-// --- Cocoon Specific Requires ---
-// Import as namespace
-import * as bootstrap from "./cocoon-bootstrap";
+// For API factory
+
+// Cocoon Specific Imports
+// Use namespace import
+import * as bootstrapUtils from "./cocoon-bootstrap";
+// Default import
+import ipcApiInstance, { CocoonIpcApi } from "./cocoon-ipc";
 import { ShimExtHostCommands } from "./shims/commands-shim";
 import { ShimExtHostConfiguration } from "./shims/configuration-shim";
 import { ShimDiagnosticsService } from "./shims/diagnostics-shim";
 import { ShimDocumentService } from "./shims/document-shim";
 import { ShimExtensionEnablementService } from "./shims/enablement-service-shim";
+import {
+	IExtHostFileSystemInfo as CocoonIExtHostFileSystemInfo,
+	ShimExtHostFileSystemInfo,
+} from "./shims/file-system-info-shim";
+// Assuming you create this
 import { ShimFileSystemApi } from "./shims/fs-api-shim";
 import { FsModuleShimFactory } from "./shims/fs-module-shim-factory";
 import { ShimExtensionHostKindPicker } from "./shims/host-kind-picker-shim";
 import { ShimHostUtils } from "./shims/host-utils-shim";
-import { ShimLanguageFeatures } from "./shims/language-features-shim";
+import {
+	ExtHostLanguageFeaturesServiceShape as CocoonExtHostLangFeaturesShape,
+	ShimLanguageFeatures,
+} from "./shims/language-features-shim";
 import { ShimExtHostLanguageModels } from "./shims/language-models-shim";
 // Shim Implementations (import classes)
 import { ShimLoggerService, ShimLogService } from "./shims/log-shim";
-// Renamed to avoid conflict
 import { NodeModuleShimFactory as NodeBuiltinsShimFactory } from "./shims/node-module-shim-factory";
 import { ShimOutputService } from "./shims/output-channel-shim";
 import {
-	IExtHostProposedApi,
+	IExtHostProposedApis as CocoonIExtHostProposedApis,
 	ShimExtensionsProposedApi,
-	// Import interface too
 } from "./shims/proposed-api-shim";
 import { ShimExtHostSecretState } from "./shims/secret-state-shim";
 import { ShimExtensionStoragePaths } from "./shims/storage-paths-shim";
 import { ShimExtHostStorage } from "./shims/storage-shim";
 import { ShimExtHostTerminalService } from "./shims/terminal-service-shim";
 import { ShimUriTransformerService } from "./shims/uri-transformer-shim";
-import { ShimExtHostWorkspace } from "./shims/workspace-shim";
+import {
+	WorkspaceFoldersChangeEvent as CocoonWorkspaceFoldersChangeEvent,
+	ShimExtHostWorkspace,
+} from "./shims/workspace-shim";
+
+// Import event type
 
 /*---------------------------------------------------------------------------------------------
  * Cocoon Bootstrap Entry Point (index.ts)
  * --------------------------------------------------------------------------------------------
- * This script is the main entry point for the Cocoon Node.js sidecar process.
- * It sets up the Node.js environment to mimic the VS Code extension host, loads real
- * VS Code platform code, registers shims for platform dependencies, and initializes
- * the real `ExtHostExtensionService` to load and run extensions.
+ * Main entry point for the Cocoon Node.js sidecar process.
+ * Sets up the environment, loads VS Code platform code, registers shims,
  *
- * Responsibilities:
- * - Patching the Node.js `process` object (`cocoon-bootstrap.ts`).
- * - Setting up the Vine IPC communication layer (`cocoon-ipc.ts`).
- * - Waiting for the `initExtensionHost` command/payload from Mountain via Vine.
- * - Reviving/Transforming URI components within the received `initData` into live `vscode.Uri` objects.
- * - Loading core VS Code modules (DI, RPC, Services, etc.) from the bundled JS file(s).
- * - Setting up the Dependency Injection container (`ServiceCollection`, `InstantiationService`).
- * - Registering service implementations:
- *   - Registers numerous SHIMS (`./shims/*.ts`) for services requiring native/UI interaction.
- *   - Registers the REAL `RPCProtocol` instance for `IExtHostRpcService`.
- *   - Registers REAL VS Code services (via `SyncDescriptor`s) where no shimming is needed.
- * - Installing the `NodeRequireInterceptor` to handle `require('vscode')` and shim native Node modules.
- * - Installing standard VS Code `ErrorHandler`s.
- * - Instantiating the REAL `ExtHostExtensionService` via DI.
- * - Calling `ExtHostExtensionService.initialize()` to start extension loading/activation.
- * - Signaling successful initialization back to Mountain via Vine (`extHostInitialized`).
- *
- * Key Interactions:
- * - Launched by Mountain (`process_mgmt.rs`).
- * - Communicates with Mountain exclusively via `Vine` IPC (`cocoon-ipc.ts`).
- * - Uses `cocoon-bootstrap.ts` for process patching.
- * - `require`s code from the JS bundle generated by `Rest`/`Maintain`.
- * - Uses VS Code's `InstantiationService` for DI.
- * - Instantiates and uses shims from `./shims/`.
- * - Instantiates and initializes the real `ExtHostExtensionService`.
+ * initializes ExtHostExtensionService, and runs extensions.
  *--------------------------------------------------------------------------------------------*/
 
 console.log("[Cocoon] Node.js Sidecar Starting...");
 
 performance.mark(`code/extHost/willConnectToRenderer`);
 
+// TODO: Ensure this path is robust and correctly points to VS Code's 'out' directory.
+// Consider using an environment variable or a configuration file for this path.
 const vsCodeOutPath = path.resolve(
 	__dirname,
 
-	// Adjust path as needed
 	"../../../Dependency/Microsoft/Dependency/Editor/out",
 );
 
@@ -193,17 +183,16 @@ console.log(
 );
 
 if (fs.existsSync(vsCodeOutPath)) {
-	// module.paths is a Node.js specific global. In TS, you might need to declare it or handle it carefully.
-	// For now, assume `(module as any).paths` or handle if `module` is not typed for `paths`.
 	if (Array.isArray((module as any).paths)) {
+		// Node.js specific module.paths
+		// Add to the beginning for higher precedence
 		(module as any).paths.unshift(path.join(vsCodeOutPath));
-
 		console.log(
 			"[Cocoon] VS Code 'out' directory found. Updated Node.js module.paths.",
 		);
 	} else {
 		console.warn(
-			"[Cocoon] module.paths is not an array, cannot prepend VS Code 'out' directory.",
+			"[Cocoon] module.paths is not an array or not available, cannot prepend VS Code 'out' directory path.",
 		);
 	}
 } else {
@@ -211,372 +200,374 @@ if (fs.existsSync(vsCodeOutPath)) {
 		`[Cocoon] CRITICAL ERROR: VSCode 'out' directory not found at expected location: ${vsCodeOutPath}.`,
 	);
 
-	console.error("[Cocoon] Please ensure VSCode has been built successfully.");
+	console.error(
+		"[Cocoon] Please ensure VSCode has been built successfully and the path is correct.",
+	);
 
-	// Critical failure
 	process.exit(1);
 }
 
-// --- Core VSCode & Node Requires ---
-console.log("[Cocoon] Requiring core modules...");
-
-// For reviveUriOnly
+// --- Core VSCode & Node Imports ---
+console.log("[Cocoon] Importing core modules...");
 
 // --- Global State ---
 let instantiationService: IInstantiationService | null = null;
 
 let rpcProtocolInstance: RPCProtocol | null = null;
 
-// From cocoon-ipc
-let messagePassingProtocol: IMessagePassingProtocol | null = null;
+// Renamed for clarity
+let ipcMessagePassingProtocol: IMessagePassingProtocol | null = null;
+// Combined flag
+let didFailOrExit: boolean = false;
 
-let didFail: boolean = false;
-
-// Expose to shims if needed (e.g., ExtensionContext creation)
-// Use declare global for better type safety if accessed by shims directly.
 declare global {
 	var cocoonInstantiationService: IInstantiationService | null;
 
 	var cocoonRpcProtocolInstance: RPCProtocol | null;
-}
 
+	// For workspace.fs in vscode.ts
+	var cocoonFileSystemApiService: VscodeFileSystem | null;
+}
 global.cocoonInstantiationService = null;
 
 global.cocoonRpcProtocolInstance = null;
 
+global.cocoonFileSystemApiService = null;
+
 // --- Process Patching ---
-bootstrap.patchProcess(() => !didFail);
+// Pass the control flag
+bootstrapUtils.patchProcess(() => !didFailOrExit);
 
 // --- IPC Adapter Setup ---
 console.log("[Cocoon] Creating Host Protocol Interface (IPC Adapter)...");
 
-messagePassingProtocol = ipc.createHostProtocolInterface();
+// Use imported instance
+ipcMessagePassingProtocol = ipcApiInstance.createHostProtocolInterface();
 
-// --- URI Helper Functions ---
-function reviveUriOnly(uriComponent: any): URI | undefined {
-	// uriComponent can be various things
+// --- URI Helper Functions (from BaseCocoonShim, could be centralized or part of a utility class) ---
+// For initial initData revival, we need a basic reviver before full DI is up.
+function reviveUriDtoRaw(uriComponent: any): URI | undefined {
 	if (!uriComponent) return undefined;
 
 	try {
-		// Check if it's already a URI instance (less likely from raw initData)
-		if (uriComponent instanceof URI) return uriComponent;
-
-		if (typeof uriComponent === "object" && uriComponent !== null) {
-			// Check for common URI component properties or VS Code's marshalling ID
-			if (
-				uriComponent.path ||
+		if (
+			typeof uriComponent === "object" &&
+			uriComponent !== null &&
+			(uriComponent.path ||
 				uriComponent.scheme ||
 				uriComponent.authority ||
-				(uriComponent as any).$mid === 1 /* MarshalledId.UriSimple */
-			) {
-				// Cast to UriParts if it matches
-				return URI.revive(uriComponent as UriParts);
-			}
+				(uriComponent as any).$mid === 1)
+		) {
+			return URI.revive(uriComponent as VSCodeUriComponents);
 		}
 	} catch (e: any) {
 		console.error(
-			`[Cocoon URI] Failed to revive URI component:`,
+			`[Cocoon Pre-DI URI Revival] Failed for component:`,
 
 			uriComponent,
 
 			e,
 		);
 	}
-
 	return undefined;
 }
-
-function transformUrisDeep(
+function transformUrisInObjectRaw(
 	obj: any,
 
 	transformerFunc: (component: any) => URI | undefined,
 ): any {
-	if (!obj) return obj;
+	if (!obj || obj instanceof URI) return obj;
 
-	// Already a URI instance
-	if (obj instanceof URI) return obj;
-
-	if (Array.isArray(obj)) {
+	if (Array.isArray(obj))
 		return obj
-			.map((item) => transformUrisDeep(item, transformerFunc))
+			.map((item) => transformUrisInObjectRaw(item, transformerFunc))
 			.filter((item) => item !== undefined);
-	}
 
-	if (typeof obj === "object" && obj !== null) {
+	if (typeof obj === "object") {
 		const revivedUriAttempt = transformerFunc(obj);
 
-		if (revivedUriAttempt instanceof URI) {
-			return revivedUriAttempt;
-		} else if (
+		if (revivedUriAttempt instanceof URI) return revivedUriAttempt;
+
+		if (
 			revivedUriAttempt === undefined &&
 			obj.path &&
 			obj.scheme &&
 			!(obj instanceof Error)
 		) {
-			// If transformerFunc returned undefined but it looked like a URI, log it.
-			// This means reviveUriOnly failed for some reason.
 			console.warn(
-				"[Cocoon URI] transformUrisDeep: transformerFunc failed for potential URI, returning undefined:",
+				"[Cocoon Pre-DI URI Transform] Transformer failed for potential URI, returning undefined:",
 
 				obj,
 			);
 
 			return undefined;
 		}
-
 		const newObj: { [key: string]: any } = {};
 
-		for (const key in obj) {
-			if (Object.prototype.hasOwnProperty.call(obj, key)) {
-				newObj[key] = transformUrisDeep(obj[key], transformerFunc);
-			}
-		}
+		for (const key in obj)
+			if (Object.prototype.hasOwnProperty.call(obj, key))
+				newObj[key] = transformUrisInObjectRaw(
+					obj[key],
+
+					transformerFunc,
+				);
 
 		return newObj;
 	}
-
 	return obj;
 }
 
 // --- Main Initialization Function ---
-async function initializeExtensionHost(
-	initDataRaw: any /* ExtHostInitData from RPC, but before URI revival */,
-): Promise<void> {
+async function initializeCocoonExtensionHost(rawInitData: any): Promise<void> {
 	console.log("[Cocoon] Initializing Extension Host Environment...");
 
 	performance.mark(`code/extHost/didWaitForInitData`);
 
-	if (didFail) {
-		console.warn("[Cocoon] Initialization skipped, already failed.");
+	if (didFailOrExit) {
+		console.warn(
+			"[Cocoon] Initialization skipped, already failed or exited.",
+		);
 
 		return;
 	}
 
-	// Define here for final catch block
-	let logServiceInstance: ILogService | undefined;
+	let logService: ILogService | undefined;
 
 	try {
-		console.log("[Cocoon] Reviving URIs in initData...");
+		console.log("[Cocoon] Reviving URIs in initial initData...");
 
-		const initData = transformUrisDeep(
-			initDataRaw,
+		const initData = transformUrisInObjectRaw(
+			rawInitData,
 
-			reviveUriOnly,
-
-			// Cast after transformation
+			reviveUriDtoRaw,
 		) as ExtHostInitData;
 
-		console.log("[Cocoon] Finished reviving URIs in initData.");
+		console.log("[Cocoon] URIs in initData revived.");
+
+		// 1. RPC Protocol Instance (already created and assigned to rpcProtocolInstance)
+		if (!rpcProtocolInstance)
+			throw new Error("RPCProtocol instance is null, cannot proceed.");
+
+		// 2. Service Collection and Core Services
+		console.log(
+			"[Cocoon] Setting up ServiceCollection and core services...",
+		);
 
 		const serviceCollection = new ServiceCollection();
 
-		// 1. Core services first (Log, InitData, RPC, URI Transformer, HostUtils)
-		if (!rpcProtocolInstance) {
-			// Should have been set by listener
-			throw new Error(
-				"RPCProtocol instance not created before initializeExtensionHost",
-			);
-		}
+		// Default to Trace for dev, initData might override
+		logService = new ShimLogService(LogLevel.Trace);
+		// TODO: Use initData.logLevel if provided by Mountain to set initial log level
+		// if (initData.logLevel) { logService.setLevel(initData.logLevel); }
+		serviceCollection.set(ILogService, logService);
 
-		// Cast if ShimLogService constructor differs
-		logServiceInstance = new ShimLogService(rpcProtocolInstance as any);
+		serviceCollection.set(
+			ILoggerService,
 
-		// Pass ILogService
-		const loggerServiceInstance = new ShimLoggerService(logServiceInstance);
+			new ShimLoggerService(logService),
 
-		const initDataServiceInstance: IExtHostInitDataService = {
+			// Pass ILogService
+		);
+
+		const initDataService: IExtHostInitDataService = {
 			_serviceBrand: undefined,
 
 			...initData,
 		};
 
-		const hostUtilsInstance = new ShimHostUtils();
+		serviceCollection.set(IExtHostInitDataService, initDataService);
 
-		const uriTransformerInstance = new ShimUriTransformerService(
-			initData.remote?.authority,
+		// The real RPCProtocol
+		serviceCollection.set(IExtHostRpcService, rpcProtocolInstance);
+		serviceCollection.set(
+			IURITransformerService,
+
+			new ShimUriTransformerService(initData.remote?.authority),
 		);
 
-		serviceCollection.set(ILogService, logServiceInstance);
+		serviceCollection.set(IHostUtils, new ShimHostUtils());
 
-		serviceCollection.set(ILoggerService, loggerServiceInstance);
+		// IExtHostFileSystemInfo is critical for URI comparisons in ExtHostWorkspace
+		// Instantiate shim
+		const extHostFileSystemInfoInstance = new ShimExtHostFileSystemInfo();
+		serviceCollection.set(
+			IExtHostFileSystemInfo,
 
-		serviceCollection.set(IExtHostInitDataService, initDataServiceInstance);
+			extHostFileSystemInfoInstance,
+		);
 
-		serviceCollection.set(IExtHostRpcService, rpcProtocolInstance);
-
-		serviceCollection.set(IURITransformerService, uriTransformerInstance);
-
-		serviceCollection.set(IHostUtils, hostUtilsInstance);
-
-		// 2. Create InstantiationService
+		// 3. Create InstantiationService
 		console.log("[Cocoon] Creating InstantiationService...");
 
 		instantiationService = new InstantiationService(
 			serviceCollection,
 
-			true,
+			true /* strict parent */,
 		);
 
+		// Make available globally for shims needing it
 		global.cocoonInstantiationService = instantiationService;
 
-		// 3. Instantiate and register shims via DI
-		console.log("[Cocoon] Instantiating remaining shims via DI...");
+		// 4. Instantiate and Register Shims (and real services where applicable) via DI
+		console.log("[Cocoon] Instantiating and registering shims/services...");
 
-		const docServiceInstance =
+		// Order matters for dependencies: Log > InitData > RPC > FSInfo > (Docs, Workspace, Config) > Others > ExtensionService
+		const docService =
 			instantiationService.createInstance(ShimDocumentService);
 
-		serviceCollection.set(IExtHostDocuments, docServiceInstance);
+		serviceCollection.set(IExtHostDocuments, docService);
 
-		const languageFeaturesInstance = instantiationService.createInstance(
+		const langFeaturesService = instantiationService.createInstance(
 			ShimLanguageFeatures,
 
-			docServiceInstance,
+			docService,
 		);
 
-		serviceCollection.set(
-			IExtHostLanguageFeatures,
+		serviceCollection.set(IExtHostLanguageFeatures, langFeaturesService);
 
-			languageFeaturesInstance,
-		);
-
-		const workspaceInstance = instantiationService.createInstance(
+		const workspaceService = instantiationService.createInstance(
 			ShimExtHostWorkspace,
 
-			initData,
+			initDataService /* IExtHostInitDataService.value */,
 
-			docServiceInstance,
+			extHostFileSystemInfoInstance,
 
-			// Pass initData
+			docService,
 		);
 
-		serviceCollection.set(IExtHostWorkspace, workspaceInstance);
+		serviceCollection.set(IExtHostWorkspace, workspaceService);
 
-		const configInstance = instantiationService.createInstance(
+		const configService = instantiationService.createInstance(
 			ShimExtHostConfiguration,
 
 			initData,
 
-			// Pass initData
+			// initData directly as it's simpler here
+		);
+		serviceCollection.set(IExtHostConfiguration, configService);
+
+		serviceCollection.set(
+			IExtensionStoragePaths,
+
+			instantiationService.createInstance(
+				ShimExtensionStoragePaths,
+
+				initData.environment,
+			),
 		);
 
-		serviceCollection.set(IExtHostConfiguration, configInstance);
+		serviceCollection.set(
+			IExtHostStorage,
 
-		const storagePathsInstance = instantiationService.createInstance(
-			ShimExtensionStoragePaths,
-
-			initData.environment,
-
-			// Pass environment
+			instantiationService.createInstance(ShimExtHostStorage),
 		);
 
-		serviceCollection.set(IExtensionStoragePaths, storagePathsInstance);
+		serviceCollection.set(
+			IExtHostCommands,
 
-		const storageInstance =
-			instantiationService.createInstance(ShimExtHostStorage);
-
-		serviceCollection.set(IExtHostStorage, storageInstance);
-
-		const commandsInstance =
-			instantiationService.createInstance(ShimExtHostCommands);
-
-		serviceCollection.set(IExtHostCommands, commandsInstance);
-
-		const secretStateInstance = instantiationService.createInstance(
-			ShimExtHostSecretState,
+			instantiationService.createInstance(ShimExtHostCommands),
 		);
 
-		serviceCollection.set(IExtHostSecretState, secretStateInstance);
+		serviceCollection.set(
+			IExtHostSecretState,
 
-		const outputServiceInstance =
-			instantiationService.createInstance(ShimOutputService);
-
-		serviceCollection.set(IExtHostOutputService, outputServiceInstance);
-
-		const diagnosticsInstance = instantiationService.createInstance(
-			ShimDiagnosticsService,
+			instantiationService.createInstance(ShimExtHostSecretState),
 		);
 
-		serviceCollection.set(IExtHostDiagnostics, diagnosticsInstance);
+		serviceCollection.set(
+			IExtHostOutputService,
 
-		const terminalServiceInstance = instantiationService.createInstance(
-			ShimExtHostTerminalService,
+			instantiationService.createInstance(ShimOutputService),
 		);
 
-		serviceCollection.set(IExtHostTerminalService, terminalServiceInstance);
+		serviceCollection.set(
+			IExtHostDiagnostics,
 
-		const languageModelsInstance = instantiationService.createInstance(
-			ShimExtHostLanguageModels,
+			instantiationService.createInstance(ShimDiagnosticsService),
 		);
 
-		serviceCollection.set(IExtHostLanguageModels, languageModelsInstance);
+		serviceCollection.set(
+			IExtHostTerminalService,
 
-		// Assuming IExtHostProposedApi is a valid service identifier if used with DI
-		const IProposedApi =
-			// Example decorator
-			createDecorator<IExtHostProposedApi>("extHostProposedApi");
-
-		const proposedApiInstance = instantiationService.createInstance(
-			ShimExtensionsProposedApi,
-
-			initData,
+			instantiationService.createInstance(ShimExtHostTerminalService),
 		);
 
-		serviceCollection.set(IProposedApi, proposedApiInstance);
+		serviceCollection.set(
+			IExtHostLanguageModels,
 
-		// Register REAL VS Code services where no shimming is needed using SyncDescriptor
-		// Example: serviceCollection.set(IFooService, new SyncDescriptor(ExtHostFooService));
-
-		// This requires ExtHostFooService to be importable and its dependencies resolvable by DI.
-
-		// For services that are shims but also might be registered with DI using their interfaces:
-		const enablementServiceInstance = instantiationService.createInstance(
-			ShimExtensionEnablementService,
+			instantiationService.createInstance(ShimExtHostLanguageModels),
 		);
 
 		serviceCollection.set(
 			IWorkbenchExtensionEnablementService,
 
-			enablementServiceInstance,
+			instantiationService.createInstance(ShimExtensionEnablementService),
 		);
 
-		const kindPickerInstance = instantiationService.createInstance(
-			ShimExtensionHostKindPicker,
+		serviceCollection.set(
+			IExtensionHostKindPicker,
+
+			instantiationService.createInstance(ShimExtensionHostKindPicker),
 		);
 
-		serviceCollection.set(IExtensionHostKindPicker, kindPickerInstance);
+		// Proposed APIs Service (shimmed)
+		// TODO: VS Code uses a specific service ID for proposed APIs if it's a formal service.
+		// If not, it's often handled within ExtHostExtensionService or ApiFactory.
+		// For now, let's assume a custom decorator if it were a distinct service.
+		const IExtHostProposedApisShim =
+			createDecorator<CocoonIExtHostProposedApis>(
+				"extHostProposedApisShim",
+			);
 
-		// 4. Add remaining standard VSCode singleton descriptors
+		serviceCollection.set(
+			IExtHostProposedApisShim,
+
+			instantiationService.createInstance(
+				ShimExtensionsProposedApi,
+
+				initData,
+			),
+		);
+
+		// Real ExtHostExtensionService (from VS Code's sources)
+		serviceCollection.set(
+			IExtHostExtensionService,
+
+			new SyncDescriptor(ExtHostExtensionService),
+		);
+
+		// 5. Add any remaining standard VS Code singleton descriptors (if any are not covered or shimmed)
 		console.log(
-			"[Cocoon] Adding remaining standard singleton descriptors...",
+			"[Cocoon] Adding any remaining standard singleton descriptors...",
 		);
 
 		for (const [id, descriptor] of getSingletonServiceDescriptors()) {
-			if (!serviceCollection.has(id)) {
+			if (!serviceCollection.has(id))
 				serviceCollection.set(id, descriptor);
-			}
 		}
 
-		// 5. Instantiate and Install the Require Interceptor
-		console.log("[Cocoon] Setting up RequireInterceptor...");
+		// 6. Instantiate and Install the Require Interceptor
+		console.log("[Cocoon] Setting up NodeRequireInterceptor...");
 
 		const apiFactoryProvider =
 			instantiationService.invokeFunction<IExtensionApiFactory>(
 				(accessor) => {
-					// Use aliased import
-					const originalFactory = createVSCodeApiFactory(accessor);
+					const originalVSCodeFactory =
+						createVSCodeApiFactory(accessor);
 
-					// Get from accessor
 					const localLogSvc = accessor.get(ILogService);
 
-					return (
-						extensionData,
+					const localFsApiShimInstance = new ShimFileSystemApi(
+						localLogSvc,
 
-						extensionInfo,
+						// Create instance for fs
+					);
+					// Make it available for vscode.ts
+					global.cocoonFileSystemApiService = localFsApiShimInstance;
 
-						localConfigProvider,
-					) => {
-						const vscodeApi = originalFactory(
-							extensionData,
+					return (extension, extensionInfo, localConfigProvider) => {
+						const vscodeApi = originalVSCodeFactory(
+							extension,
 
 							extensionInfo,
 
@@ -584,27 +575,24 @@ async function initializeExtensionHost(
 						);
 
 						// Inject our shimmed vscode.workspace.fs
-						if (vscodeApi.workspace) {
-							(vscodeApi.workspace as any).fs =
-								new ShimFileSystemApi(localLogSvc);
-						} else {
-							(vscodeApi as any).workspace = {
-								fs: new ShimFileSystemApi(localLogSvc),
-							};
-						}
+						// Ensure workspace and its properties are modifiable if they come from originalFactory
+						if (!vscodeApi.workspace)
+							(vscodeApi as any).workspace = {};
 
+						(vscodeApi.workspace as any).fs =
+							localFsApiShimInstance;
+
+						// TODO: Inject other direct API parts if needed, e.g., if vscode.ts's _injectРеализация isn't used.
 						return vscodeApi;
 					};
 				},
 			);
 
-		const extPathIndex = await (workspaceInstance as ShimExtHostWorkspace)
-			// workspaceInstance is ShimExtHostWorkspace
-			.getExtensionPathIndex();
-
-		const cfgProvider = await (configInstance as ShimExtHostConfiguration)
-			// configInstance is ShimExtHostConfiguration
-			.getConfigProvider();
+		// These are needed by VSCodeNodeModuleFactory
+		// ShimExtHostWorkspace should provide this
+		const extPathIndex = await workspaceService.getExtensionPathIndex();
+		// ShimExtHostConfiguration should provide this
+		const cfgProvider = await configService.getConfigProvider();
 
 		const moduleInterceptor = instantiationService.invokeFunction(
 			(accessor) => {
@@ -620,6 +608,7 @@ async function initializeExtensionHost(
 					},
 				);
 
+				// Factory for `require('vscode')`
 				interceptor.register(
 					new VSCodeNodeModuleFactory(
 						apiFactoryProvider,
@@ -638,16 +627,18 @@ async function initializeExtensionHost(
 					),
 				);
 
+				// Factory for aliased modules (e.g., 'graceful-fs')
 				interceptor.register(
 					accessor.createInstance(NodeModuleAliasingModuleFactory),
 				);
 
-				// Shim for 'fs'
+				// Factory for `require('fs')`
 				interceptor.register(new FsModuleShimFactory());
 
-				// Shim for other node builtins like 'os', 'crypto', 'process'
+				// Factory for other Node built-ins (`os`, `crypto`, `process`)
 				interceptor.register(new NodeBuiltinsShimFactory());
 
+				// TODO: Add other INodeModuleFactory instances if more modules need specific interception.
 				return interceptor;
 			},
 		);
@@ -658,22 +649,31 @@ async function initializeExtensionHost(
 
 		console.log("[Cocoon] Require interceptor installed successfully.");
 
-		// 6. Install Error Handlers
+		// 7. Install Error Handlers
 		console.log("[Cocoon] Installing Error Handlers...");
 
-		// Create instance first
-		const errorHandler = instantiationService.createInstance(ErrorHandler);
+		const errorHandlerInstance =
+			instantiationService.createInstance(ErrorHandler);
 
-		// Pass instance
-		ErrorHandler.встановітьEarlyHandler(errorHandler, instantiationService);
+		ErrorHandler.installEarlyHandler(
+			errorHandlerInstance,
 
+			instantiationService,
+
+			// Pass IS
+		);
 		console.log("[Cocoon] Early error handler installed.");
 
 		process.on("uncaughtException", (err: Error) => {
-			// Type error
-			console.error("[Cocoon Uncaught Exception]", err);
+			console.error(
+				"[Cocoon Uncaught Exception]",
 
-			ipc.sendNotificationToMountain("extHostError", {
+				err.message,
+
+				err.stack,
+			);
+
+			ipcApiInstance.sendNotificationToMountain("extHostError", {
 				message: err.message || String(err),
 
 				stack: err.stack,
@@ -684,7 +684,6 @@ async function initializeExtensionHost(
 			"unhandledRejection",
 
 			(reason: any, promise: Promise<any>) => {
-				// Type reason and promise
 				console.error(
 					"[Cocoon Unhandled Rejection at:",
 
@@ -700,7 +699,7 @@ async function initializeExtensionHost(
 						? reason
 						: new Error(String(reason));
 
-				ipc.sendNotificationToMountain("extHostError", {
+				ipcApiInstance.sendNotificationToMountain("extHostError", {
 					message: err.message || String(err),
 
 					stack: err.stack,
@@ -708,48 +707,52 @@ async function initializeExtensionHost(
 			},
 		);
 
-		// 7. Instantiate and Initialize the REAL Extension Service
-		console.log("[Cocoon] Instantiating real ExtHostExtensionService...");
+		// 8. Instantiate and Initialize the REAL ExtHostExtensionService
+		console.log(
+			"[Cocoon] Instantiating real ExtHostExtensionService via DI...",
+		);
 
 		const extensionService =
 			instantiationService.invokeFunction<IExtHostExtensionService>(
 				(accessor) => accessor.get(IExtHostExtensionService),
 			);
 
-		// Register ExtHostExtensionService itself if it needs to be callable by other ExtHost services (uncommon)
-		// Already gettable via DI
-		// serviceCollection.set(IExtHostExtensionService, extensionService);
+		console.log(
+			"[Cocoon] Initializing real ExtHostExtensionService (will load extensions)...",
+		);
 
-		console.log("[Cocoon] Initializing real Extension Service...");
-
-		// This is the critical call to load extensions
+		// This is the critical call
 		await extensionService.initialize();
+		console.log("[Cocoon] Real ExtHostExtensionService initialized.");
 
-		console.log("[Cocoon] Real Extension Service initialized.");
+		// Install the full error handler AFTER extension service and its dependencies are ready
+		ErrorHandler.installFullHandler(
+			errorHandlerInstance,
 
-		// Install the full error handler AFTER extension service is ready
-		// Pass instance
-		ErrorHandler.встановітьFullHandler(errorHandler, instantiationService);
+			instantiationService,
 
-		logServiceInstance?.info("[Cocoon] Full error handler installed.");
+			// Pass IS
+		);
+		logService?.info("[Cocoon] Full error handler installed.");
 
 		console.log(
 			"[Cocoon] Extension Host Environment Initialized Successfully.",
 		);
 
-		// Signal success
-		ipc.sendNotificationToMountain("extHostInitialized", {});
+		ipcApiInstance.sendNotificationToMountain("extHostInitialized", {});
 	} catch (hostError: any) {
-		didFail = true;
+		didFailOrExit = true;
 
 		console.error(
 			"[Cocoon] FATAL: Failed to initialize extension host environment:",
 
-			hostError,
+			hostError.message,
+
+			hostError.stack,
 		);
 
 		try {
-			ipc.sendNotificationToMountain("extHostError", {
+			ipcApiInstance.sendNotificationToMountain("extHostError", {
 				message: `Cocoon initialization failed: ${hostError.message || hostError}`,
 
 				stack: hostError.stack,
@@ -761,20 +764,22 @@ async function initializeExtensionHost(
 				sendError,
 			);
 		}
-
 		process.exit(1);
 	}
 }
 
 // --- Main Message Listener & Readiness Signal ---
-let initializationStarted = false;
+// Renamed for clarity
+let initializationFlowStarted = false;
+console.log(
+	"[Cocoon] Setting up main message listener for 'initExtensionHost' command...",
+);
 
-console.log("[Cocoon] Setting up main message listener for init command...");
-
-ipc.onMessageFromMountain(
-	(message: any /* Type this with VineMessage if defined */) => {
-		// Ignore if already started
-		if (initializationStarted) return;
+ipcApiInstance.onMessageFromMountain(
+	(message: any /* TODO: Type with VineMessage from cocoon-ipc.ts */) => {
+		if (initializationFlowStarted) {
+			/* console.log("[Cocoon IPC] Ignoring message, initialization already started/done."); */ return;
+		}
 
 		if (
 			message &&
@@ -783,78 +788,84 @@ ipc.onMessageFromMountain(
 			message.params
 		) {
 			console.log(
-				"[Cocoon] Received initExtensionHost command. Starting initialization...",
+				"[Cocoon] Received 'initExtensionHost' command from Mountain. Params snippet:",
+
+				JSON.stringify(message.params).substring(0, 200),
 			);
 
-			initializationStarted = true;
+			initializationFlowStarted = true;
 
-			console.log(
-				"[Cocoon] Creating RPCProtocol instance (transformer: null)...",
-			);
+			console.log("[Cocoon] Creating RPCProtocol instance...");
 
-			if (!messagePassingProtocol) {
+			if (!ipcMessagePassingProtocol) {
 				console.error(
-					"[Cocoon] CRITICAL: messagePassingProtocol (IPC adapter) is null. Cannot create RPCProtocol.",
+					"[Cocoon] CRITICAL: ipcMessagePassingProtocol is null. Cannot create RPCProtocol.",
 				);
 
+				didFailOrExit = true;
+
 				process.exit(1);
+
+				return;
 			}
-
+			// The transformer is null for local extension hosts. If Cocoon ever talks to a remote with different URI schemes, this would change.
 			global.cocoonRpcProtocolInstance = new RPCProtocol(
-				messagePassingProtocol,
+				ipcMessagePassingProtocol,
 
-				null /* NO transformer for local */,
+				null /* IURITransformer */,
 			);
 
-			// Assign to module-scoped variable
 			rpcProtocolInstance = global.cocoonRpcProtocolInstance;
 
-			initializeExtensionHost(message.params).catch((err: any) => {
-				if (!didFail) {
-					// Prevent double-reporting if error already caught in initializeExtensionHost
-					didFail = true;
+			initializeCocoonExtensionHost(
+				message.params /* raw initData */,
+			).catch((err: any) => {
+				if (!didFailOrExit) {
+					// Prevent double-reporting/exit if error already handled inside initialize
+					didFailOrExit = true;
 
 					console.error(
-						"[Cocoon] Unhandled error during async initializeExtensionHost call:",
+						"[Cocoon] Unhandled promise rejection during async initializeCocoonExtensionHost:",
 
-						err,
+						err.message,
+
+						err.stack,
 					);
 
 					try {
-						ipc.sendNotificationToMountain("extHostError", {
-							message: `Cocoon async initialization failed: ${err.message || err}`,
+						ipcApiInstance.sendNotificationToMountain(
+							"extHostError",
 
-							stack: err.stack,
-						});
+							{
+								message: `Cocoon async init failed: ${err.message || err}`,
+
+								stack: err.stack,
+							},
+						);
 					} catch (sendError: any) {
 						console.error(
-							"[Cocoon] Failed to send async initialization error back to Mountain:",
+							"[Cocoon] Failed to send async init error to Mountain:",
 
 							sendError,
 						);
 					}
-
 					process.exit(1);
 				}
 			});
 		} else if (
 			message &&
 			message.msg_type !== 6 /* Notification */ &&
-			message.method !== "rpcData"
+			message.method !== "rpcData" /* Internal RPC data */
 		) {
 			console.warn(
-				`[Cocoon] Received unexpected message before initialization:`,
-
-				message?.method || `Type: ${message?.msg_type}`,
+				`[Cocoon] Received unexpected message before 'initExtensionHost': Method='${message?.method}', Type=${message?.msg_type}`,
 			);
 		}
 	},
 );
 
-ipc.sendNotificationToMountain("extHostReadyForInit", {});
+ipcApiInstance.sendNotificationToMountain("extHostReadyForInit", {});
 
-console.log("[Cocoon] Ready for init command from Mountain.");
-
-// ErrorHandler.installEarlyHandler(errorHandler, instantiationService);
-
-// ErrorHandler.installFullHandler(errorHandler, instantiationService);
+console.log(
+	"[Cocoon] Cocoon sidecar is ready and waiting for 'initExtensionHost' command from Mountain.",
+);
