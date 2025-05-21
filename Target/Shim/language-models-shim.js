@@ -1,0 +1,1 @@
+import{Event as o}from"vs/base/common/event";import"vs/base/common/lifecycle";import"vs/platform/extensions/common/extensions";class d{_serviceBrand;constructor(){}createLanguageModelAccessInformation(e){return{get accessAllowed(){return!1},onDidChange:o.None}}$acceptChatParticipants(e){}$acceptLanguageModels(e){}}export{d as ShimExtHostLanguageModels};
