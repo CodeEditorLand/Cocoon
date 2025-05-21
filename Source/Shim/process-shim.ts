@@ -1,284 +1,245 @@
-// Basic process shim, trying to align with NodeJS.Process
-// For full NodeJS.Process type, you'd need `@types/node`
+/*---------------------------------------------------------------------------------------------
+ // Header: Added basic header 
+* Cocoon Process Shim (process-shim.ts)
+ * --------------------------------------------------------------------------------------------
+ * Provides a shim for Node.js's built-in `process` object.
+ * This is intended to be returned by the `NodeModuleShimFactory` when an extension
+ * `require('process')`. It controls access to potentially sensitive process operations.
+ *
+ * Responsibilities:
+ * - Exposing safe `process` properties like `pid`, `env`, `platform`, `arch`.
+ * - Providing a controlled `kill` method.
+ * - Stubbing or restricting other `process` methods/properties as needed for Cocoon's
+ *   sandboxing or stability goals (e.g., `exit`, `cwd`, `chdir`).
+ * - Mimicking the `EventEmitter` nature of the `process` object (partially).
+ *
+ * Key Interactions:
+ * - Returned by `NodeModuleShimFactory`.
+ * - Uses the actual Node.js `process` object of the Cocoon environment for some properties.
+ * - The `kill` method may interact with the host OS via the real `process.kill`.
+ *--------------------------------------------------------------------------------------------*/
+
+// For EventEmitter base
+import { EventEmitter } from "events";
+// For type information from @types/node
+import type * as NodeProcess from "node:process";
+
+// --- Type Definitions ---
 
 // Define an interface for the parts of NodeJS.Process we are shimming.
-// This helps in type-checking the shim.
+// This should align with what extensions commonly expect from `require('process')`.
+// TODO: If @types/node is a dev dependency, this interface can extend or utilize types from `NodeJS.Process`.
 export interface ProcessShim extends NodeJS.EventEmitter {
-	// process is also an EventEmitter
-	// pid can be undefined in some environments, though typically present in Node
-	pid?: number;
+	// Properties
+	readonly pid?: number;
 
+	readonly env: NodeJS.ProcessEnv;
+
+	readonly platform: NodeJS.Platform;
+
+	readonly arch: string;
+
+	readonly versions: NodeJS.ProcessVersions;
+
+	readonly argv: string[];
+
+	readonly execArgv: string[];
+
+	// Path to Node executable
+	readonly execPath: string;
+
+	// Typically 'node' or script name
+	readonly title: string;
+
+	// Methods
 	kill(pid: number, signal?: string | number): boolean;
 
-	env: NodeJS.ProcessEnv;
+	cwd(): string;
 
-	// Add other common process properties/methods if needed by extensions
-	// For example:
-	// platform: NodeJS.Platform;
+	// `process.exit` is patched by cocoon-bootstrap.ts, this shim might offer a safer version or re-expose patched.
+	exit(code?: number): never;
 
-	// arch: string;
+	memoryUsage(): NodeJS.MemoryUsage;
 
-	// cwd(): string;
+	hrtime(time?: [number, number]): [number, number];
 
-	// versions: NodeJS.ProcessVersions;
+	uptime(): number;
 
-	// argv: string[];
+	nextTick(callback: Function, ...args: any[]): void;
 
-	// execArgv: string[];
+	// TODO: Add other common process methods/properties if needed by extensions.
+	// e.g., chdir(directory: string): void;
 
-	// exit(code?: number): never;
+	// getuid?(): number; getgid?(): number;
 
-	// memoryUsage(): NodeJS.MemoryUsage;
+	// geteuid?(): number; getegid?(): number;
 
-	// hrtime(time?: [number, number]): [number, number];
+	// getgroups?(): number[];
 
-	// on(event: string, listener: (...args: any[]) => void): this;
-
-	// ... and so on
+	// umask(mask?: number): number;
 }
 
-const processShimInstance: ProcessShim = {
-	// --- NodeJS.EventEmitter properties/methods (process inherits from EventEmitter) ---
-	// These would typically be provided by a base EventEmitter implementation or by
-	// directly using Node's `process` if parts of it are not shimmed.
-	// For a pure shim, you might need to implement these or use a minimal EventEmitter.
-	// Let's assume for this shim these are NOPs or delegate if possible without full re-implementation.
-	addListener: (
-		event: string | symbol,
+// Create a base class for the shim to properly inherit EventEmitter behavior
+class ProcessShimBase extends EventEmitter {}
 
-		listener: (...args: any[]) => void,
-	): any => {
-		console.warn(
-			`[Cocoon Process Shim] addListener(${String(event)}) called - STUB`,
-		);
+// Keep a reference to the real Node.js process object
+const actualProcess = process;
 
-		return processShimInstance;
+const processShimInstanceInternal: ProcessShim = {
+	// --- NodeJS.EventEmitter properties/methods ---
+	// Delegate to a new EventEmitter instance or the actual process object if desired.
+	// For simplicity and isolation, using a new EventEmitter instance.
+	// Spread EventEmitter methods
+	...new ProcessShimBase(),
+
+	// --- Process properties (mostly direct pass-through from actual Cocoon process) ---
+	get pid(): number | undefined {
+		return actualProcess.pid;
 	},
 
-	on: (event: string | symbol, listener: (...args: any[]) => void): any => {
-		console.warn(
-			`[Cocoon Process Shim] on(${String(event)}) called - STUB`,
-		);
-
-		return processShimInstance;
+	get env(): NodeJS.ProcessEnv {
+		return actualProcess.env;
 	},
 
-	once: (event: string | symbol, listener: (...args: any[]) => void): any => {
-		console.warn(
-			`[Cocoon Process Shim] once(${String(event)}) called - STUB`,
-		);
-
-		return processShimInstance;
+	get platform(): NodeJS.Platform {
+		return actualProcess.platform;
 	},
 
-	removeListener: (
-		event: string | symbol,
-
-		listener: (...args: any[]) => void,
-	): any => {
-		console.warn(
-			`[Cocoon Process Shim] removeListener(${String(event)}) called - STUB`,
-		);
-
-		return processShimInstance;
+	get arch(): string {
+		return actualProcess.arch;
 	},
 
-	off: (event: string | symbol, listener: (...args: any[]) => void): any => {
-		console.warn(
-			`[Cocoon Process Shim] off(${String(event)}) called - STUB`,
-		);
-
-		return processShimInstance;
+	get versions(): NodeJS.ProcessVersions {
+		return actualProcess.versions;
 	},
 
-	removeAllListeners: (event?: string | symbol): any => {
-		console.warn(
-			`[Cocoon Process Shim] removeAllListeners(${String(event || "")}) called - STUB`,
-		);
+	get argv(): string[] {
+		return actualProcess.argv;
 
-		return processShimInstance;
+		// Exposing argv might be a security concern
 	},
 
-	setMaxListeners: (n: number): any => {
-		console.warn(
-			`[Cocoon Process Shim] setMaxListeners(${n}) called - STUB`,
-		);
+	get execArgv(): string[] {
+		return actualProcess.execArgv;
 
-		return processShimInstance;
+		// Security concern?
 	},
 
-	getMaxListeners: (): number => {
-		console.warn(`[Cocoon Process Shim] getMaxListeners() called - STUB`);
-
-		return 10;
-
-		// Default Node value
+	get execPath(): string {
+		return actualProcess.execPath;
 	},
 
-	listeners: (event: string | symbol): Function[] => {
-		console.warn(
-			`[Cocoon Process Shim] listeners(${String(event)}) called - STUB`,
-		);
-
-		return [];
+	get title(): string {
+		return actualProcess.title;
 	},
 
-	rawListeners: (event: string | symbol): Function[] => {
-		console.warn(
-			`[Cocoon Process Shim] rawListeners(${String(event)}) called - STUB`,
-		);
-
-		return [];
-	},
-
-	emit: (event: string | symbol, ...args: any[]): boolean => {
-		console.warn(
-			`[Cocoon Process Shim] emit(${String(event)}) called - STUB`,
-		);
-
-		return false;
-	},
-
-	listenerCount: (event: string | symbol): number => {
-		console.warn(
-			`[Cocoon Process Shim] listenerCount(${String(event)}) called - STUB`,
-		);
-
-		return 0;
-	},
-
-	prependListener: (
-		event: string | symbol,
-
-		listener: (...args: any[]) => void,
-	): any => {
-		console.warn(
-			`[Cocoon Process Shim] prependListener(${String(event)}) called - STUB`,
-		);
-
-		return processShimInstance;
-	},
-
-	prependOnceListener: (
-		event: string | symbol,
-
-		listener: (...args: any[]) => void,
-	): any => {
-		console.warn(
-			`[Cocoon Process Shim] prependOnceListener(${String(event)}) called - STUB`,
-		);
-
-		return processShimInstance;
-	},
-
-	eventNames: (): Array<string | symbol> => {
-		console.warn(`[Cocoon Process Shim] eventNames() called - STUB`);
-
-		return [];
-	},
-
-	// --- Actual Process properties/methods ---
-	// Use the actual pid of the Cocoon process
-	pid: process.pid,
-
+	// --- Process methods ---
 	kill: (pidToKill: number, signal?: string | number): boolean => {
+		// This `kill` is the one extensions will call.
+		// It should be cautious. The one in `cocoon-bootstrap.ts` patches the *global* `process.kill`.
+		// This shim might offer a more restricted version or just log.
 		console.warn(
-			`[Cocoon Process Shim] kill(${pidToKill}, ${signal || "SIGTERM"}) called.`,
+			`[Cocoon Process Shim] Extension called require('process').kill(${pidToKill}, ${signal || "SIGTERM"}). This is potentially risky.`,
 		);
 
-		// Check if trying to "kill" itself with signal 0 (check existence)
-		if (pidToKill === process.pid && (signal === 0 || signal === "0")) {
-			console.log(
-				"[Cocoon Process Shim] kill(self, 0) - process exists.",
-			);
+		if (
+			pidToKill === actualProcess.pid &&
+			(signal === 0 || signal === "0")
+		) {
+			// console.log("[Cocoon Process Shim] kill(self, 0) - process exists.");
 
-			// Process exists
 			return true;
 		}
 
-		// For other PIDs, attempt to use Node's native process.kill
-		// This is risky in a sandboxed/sidecar environment and might be disallowed.
-		// If disallowed, this should throw or always return false for external PIDs.
-		// TODO: If killing other pids is needed, potentially proxy via Vine to Mountain? (Highly risky).
+		// TODO: Decide on the policy for extensions calling process.kill() on other PIDs.
+		// Option A: Disallow completely for external PIDs.
+		// if (pidToKill !== actualProcess.pid) {
+
+		//    console.error("[Cocoon Process Shim] Attempt to kill external PID denied by shim policy.");
+
+		// Or throw an error
+		//    return false;
+
+		// }
+
+		// Option B: Delegate to the (potentially patched by cocoon-bootstrap) global process.kill
 		try {
-			// Node's process.kill can throw if pid doesn't exist or permissions are denied.
-			// It returns true on success (signal sent), but this doesn't mean process died.
-			const result = process.kill(
+			// This will call the globally patched process.kill if cocoon-bootstrap ran.
+			return actualProcess.kill(
 				pidToKill,
 
 				signal as string | number | undefined,
-
-				// Cast to allow undefined for default signal
 			);
-
-			console.log(
-				`[Cocoon Process Shim] Native process.kill(${pidToKill}, ${signal}) returned ${result}.`,
-			);
-
-			// Should be true if signal was sent
-			return result;
 		} catch (e: any) {
 			console.warn(
-				`[Cocoon Process Shim] Native process.kill failed for PID ${pidToKill}:`,
+				`[Cocoon Process Shim] actualProcess.kill failed for PID ${pidToKill}:`,
 
 				e.message,
 			);
 
-			// Emulate typical errors:
-			// ESRCH: No such process
-			// Signal could not be sent because PID doesn't exist
 			if (e.code === "ESRCH") return false;
 
-			// EPERM: Operation not permitted
-			if (e.code === "EPERM") {
-				// console.error("[Cocoon Process Shim] Permission denied to kill PID", pidToKill);
+			// Permission errors are usually thrown
+			if (e.code === "EPERM") throw e;
 
-				// Depending on desired behavior, either rethrow or return false.
-				// Throwing is more accurate to Node's behavior if permissions fail.
-				throw e;
-			}
-
-			// Rethrow other unhandled errors, or return false to indicate failure.
-			// For a shim, returning false might be safer than rethrowing unexpected errors.
+			// Default to false for other errors
 			return false;
 		}
 	},
 
-	// Pass through the environment variables of the Cocoon process
-	env: process.env,
+	cwd: (): string => {
+		// TODO: Consider if extensions should see Cocoon's CWD or a virtualized one.
+		// For now, pass through.
+		return actualProcess.cwd();
+	},
 
-	// ... other process properties/methods if needed by host ...
-	// platform: process.platform,
+	exit: (code?: number): never => {
+		// This `exit` is what extensions call via `require('process').exit()`.
+		// The global `process.exit` is already patched by `cocoon-bootstrap.ts` to prevent actual exit.
+		// So, calling `actualProcess.exit()` here will trigger the patched version.
+		console.warn(
+			`[Cocoon Process Shim] Extension called require('process').exit(${code ?? ""}). This will be handled by the patched global process.exit.`,
+		);
 
-	// arch: process.arch,
+		// Will invoke the patched (safe) version
+		return actualProcess.exit(code);
+	},
 
-	// cwd: () => process.cwd(),
+	memoryUsage: (): NodeJS.MemoryUsage => actualProcess.memoryUsage(),
 
-	// versions: process.versions,
+	hrtime: (time?: [number, number]): [number, number] =>
+		actualProcess.hrtime(time),
 
-	// argv: process.argv,
+	uptime: (): number => actualProcess.uptime(),
 
-	// execArgv: process.execArgv,
+	nextTick: (callback: Function, ...args: any[]): void =>
+		actualProcess.nextTick(callback, ...args),
 
-	// exit: (code?: number): never => {
+	// TODO: Implement or stub other methods from ProcessShim interface as needed.
+	// Example:
+	// chdir: (directory: string): void => {
 
-	//     console.warn(`[Cocoon Process Shim] process.exit(${code}) called! This would terminate Cocoon.`);
+	//    console.warn(`[Cocoon Process Shim] Extension called process.chdir("${directory}"). This is a restricted operation.`);
 
-	// In a real shim, you might notify Mountain before actually exiting, or prevent exit.
+	// actualProcess.chdir(directory); // Or disallow
 	//
-	// This will terminate the Cocoon process itself. Use with extreme caution.
-	//     return process.exit(code);
+	//    throw new Error("process.chdir is restricted in this environment.");
 
 	// },
-
-	// memoryUsage: () => process.memoryUsage(),
-
-	// hrtime: (time?: [number, number]) => process.hrtime(time),
 };
 
-export default processShimInstance;
+// Ensure all EventEmitter methods are correctly on the instance
+// The spread `...new ProcessShimBase()` should handle this.
+// We can verify a few:
+if (
+	typeof processShimInstanceInternal.on !== "function" ||
+	typeof processShimInstanceInternal.emit !== "function"
+) {
+	console.error(
+		"[Cocoon Process Shim] EventEmitter methods not correctly applied to shim instance!",
+	);
 
-// Original JS export
-// module.exports = { ... }
+	// Fallback or throw, this indicates an issue with the spread or base class.
+}
 
-// `export default ...` handles this in TS.
+export default processShimInstanceInternal;
