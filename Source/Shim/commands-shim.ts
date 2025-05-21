@@ -1,68 +1,60 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Command Shim (shims/commands-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements the `vscode.commands` API (`IExtHostCommands`) for extensions running in Cocoon.
- * It handles both registering commands implemented within Cocoon and executing commands
- * (which might be implemented in Cocoon, natively in Mountain, or in other extensions).
+ * Implements the `vscode.commands` API (via `IExtHostCommands`) for Cocoon.
+ * Based on insights from VS Code's `ExtHostCommands.ts`.
  *
- * Responsibilities:
- * - `registerCommand`: Stores the command callback locally (`#registeredCommands`). Notifies
- *   Mountain (`$registerCommand` RPC) so the command ID is globally known. Returns a disposable
- *   that calls `$unregisterCommand` RPC on dispose.
- * - `executeCommand`:
- *   - Checks if the command is registered locally in *this* Cocoon instance.
- *   - If local: Executes the callback directly.
- *   - If not local: Proxies the execution request (`$executeCommand` RPC) to Mountain's
- *     `MainThreadCommands` handler, which then routes it appropriately (native execution
- *     or potentially back to this/another sidecar).
- * - Implementing the RPC methods called *by* Mountain:
- *   - `$executeContributedCommand`: Called by Mountain to execute a command that was
- *     originally registered by *this* Cocoon instance. Finds and runs the local callback.
- *   - `$getContributedCommandMetadata`: Returns metadata about locally registered commands.
- * - Argument/Result Handling: Uses marshalling helpers (`_convertApiArgToInternal`,
+ * Responsibilities (Simplified for Cocoon):
+ * - `registerCommand`: Stores command callback locally. Notifies Mountain for global commands.
+ * - `executeCommand`: Executes local commands or proxies to Mountain.
+ * - Handles RPC calls from Mountain: `$executeContributedCommand`, `$getContributedCommandMetadata`.
+ * - Uses BaseCocoonShim for argument marshalling/revival.
  *
- *
- *   `_reviveApiArgument`) from `BaseCocoonShim` for data crossing the RPC boundary.
- *
- * Key Interactions:
- * - Provides the `vscode.commands` API surface.
- * - Interacts with the `RPCProtocol` via `this._rpcService.getProxy(MainContext.MainThreadCommands)`.
- * - Registers itself via `rpcService.set(ExtHostContext.ExtHostCommands, this)` to handle incoming RPC calls.
- * - Manages local command registration state (`#registeredCommands`).
+ * NOTE: This shim does NOT implement the full `CommandsConverter` or `ApiCommand`
+ * system from VS Code's `ExtHostCommands.ts` for simplicity. If that level of
+ * argument processing, validation, or API command wrapping is needed, this shim
+ * would need significant expansion.
  *--------------------------------------------------------------------------------------------*/
 
-// Uri is only used by the overridden _convertApiArgToInternal in the original JS,
-
-// which is now removed in favor of the base shim's version. So, Uri import might not be strictly needed here anymore
-// unless it's part of a command's arguments or results directly handled by this shim.
-// import { Uri } from "../Shim/out/vscode";
-
-// MarshalledId and revive are handled by BaseCocoonShim.
-// import { MarshalledId } from "vs/base/common/marshallingIds";
-
-// import { revive } from "vs/base/common/marshalling";
-
+import { VSBuffer } from "vs/base/common/buffer";
+import { toErrorMessage } from "vs/base/common/errorMessage";
+// For error checking
+import { ErrorNoTelemetry, isCancellationError } from "vs/base/common/errors";
+// For argument processing
+import { revive } from "vs/base/common/marshalling";
+import { cloneAndChange } from "vs/base/common/objects";
+import { URI } from "vs/base/common/uri";
+import { IPosition, Position } from "vs/editor/common/core/position";
+import { IRange, Range } from "vs/editor/common/core/range";
+import { ICommandMetadata } from "vs/platform/commands/common/commands";
+import {
+	ExtensionIdentifier,
+	IExtensionDescription,
+} from "vs/platform/extensions/common/extensions";
 import {
 	ExtHostContext,
+	ICommandDto,
 	MainContext,
-	// TODO: Consider importing specific DTO/shape types from extHost.protocol if they exist,
-	// instead of relying on `any` or defining local shapes for RPC.
 } from "vs/workbench/api/common/extHost.protocol";
+import { SerializableObjectWithBuffers } from "vs/workbench/services/extensions/common/proxyIdentifier";
 
 import {
 	BaseCocoonShim,
 	IExtHostRpcService,
 	ILogService,
 	ProxyIdentifier,
+	refineError,
 } from "./_baseShim";
-
-// Assuming these are ProxyIdentifier constants
+// Placeholder
+import * as extHostTypeConverter from "./extHostTypeConverters";
+// Assuming extHostTypes and extHostTypeConverter are available if we were to implement full conversion
+// Placeholder for actual import
+import * as extHostTypes from "./extHostTypes";
 
 // --- Type Definitions ---
 
-// Shape for the MainThreadCommands RPC proxy
-// TODO: This should ideally be part of a shared protocol definition file (e.g., extHost.protocol.d.ts)
-interface MainThreadCommandsShape {
+// Shape for the MainThreadCommands RPC proxy (based on VS Code's ExtHostCommands)
+interface MainThreadCommandsShapeForShim {
 	$registerCommand(id: string): Promise<void>;
 
 	$unregisterCommand(id: string): Promise<void>;
@@ -70,93 +62,105 @@ interface MainThreadCommandsShape {
 	$executeCommand(
 		id: string,
 
-		args: any[],
+		args: any | SerializableObjectWithBuffers<any>,
 
-		CancellationToken?: any /* Not used in current shim */,
-
-		// Add CancellationToken if protocol supports
+		retry: boolean,
 	): Promise<any>;
 
-	$getCommands(filterUnderscoreCommands: boolean): Promise<string[]>;
+	// filterUnderscoreCommands is often client-side
+	$getCommands(): Promise<string[]>;
 
-	// For _notifyMountain, if specific notification methods exist on the proxy
-	[methodName: string]: ((...args: any[]) => Promise<any> | void) | undefined;
+	// Not awaited
+	$fireCommandActivationEvent(id: string): void;
+
+	// TODO: Add MainThreadTelemetryShape if telemetry reporting is implemented
 }
 
-// Shape for the ExtHostCommands service itself (methods called by Mountain)
-// TODO: This should align with `ExtHostCommandsShape` in VS Code's `extHost.protocol.ts`
-interface ExtHostCommandsShape {
-	$executeContributedCommand(id: string, ...args: any[]): Promise<any>;
+// Shape for this ExtHostCommands service (methods called by Mountain)
+interface ExtHostCommandsShapeForShim {
+	// args can be SerializableObjectWithBuffers
+	$executeContributedCommand(id: string, args: any): Promise<any>;
 
 	$getContributedCommandMetadata(): Promise<{
-		[commandId: string]: CommandMetadataDto;
-
-		// Using a DTO for metadata
+		[id: string]: ICommandMetadataDtoForShim;
 	}>;
 }
 
-interface CommandMetadataDto {
-	// Example, actual structure depends on protocol
-	title?: string;
-
-	category?: string;
-
-	// Other metadata properties
+interface ICommandMetadataDtoForShim extends ICommandMetadata {
+	/* Potentially DTO version of ICommandMetadata */
 }
 
-interface RegisteredCommandEntry {
-	// The command handler function
-	callback: (...args: any[]) => any;
+interface CommandHandlerShimEntry {
+	// (...args: any[]) => any | Promise<any>
+	callback: Function;
 
-	// The `this` context for the handler
-	thisArg?: any;
+	thisArg: any;
 
-	// Store revived metadata if provided during registration
-	metadata?: CommandMetadataDto;
+	// From platform/commands
+	metadata?: ICommandMetadata;
+
+	// For context and error reporting
+	extension?: IExtensionDescription;
 }
 
-// Interface for VS Code's Disposable
-interface IDisposable {
-	dispose(): void;
+// ArgumentProcessor interface from VS Code
+export interface ArgumentProcessorShim {
+	processArgument(
+		arg: any,
+
+		extension: IExtensionDescription | undefined,
+	): any;
 }
 
 export class ShimExtHostCommands
 	extends BaseCocoonShim
-	implements ExtHostCommandsShape
+	implements ExtHostCommandsShapeForShim
 {
-	public readonly _serviceBrand: undefined;
+	// For IExtHostCommands
+	/*, IExtHostCommands (from VS Code) */ public readonly _serviceBrand: undefined;
 
-	readonly #mainThreadCommandsProxy: MainThreadCommandsShape | null = null;
+	readonly #proxy: MainThreadCommandsShapeForShim | null = null;
 
-	readonly #registeredCommands = new Map<string, RegisteredCommandEntry>();
+	readonly #commands = new Map<string, CommandHandlerShimEntry>();
+
+	// TODO: If ApiCommand system is needed, add #apiCommands map and related logic.
+	// private readonly _apiCommands = new Map<string, ApiCommand>();
+
+	// TODO: If full argument processing/conversion like VS Code is needed,
+
+	// _argumentProcessors and CommandsConverter would be implemented here.
+	// For Cocoon MVP, we rely on BaseCocoonShim's simpler marshalling.
+	// private readonly _argumentProcessors: ArgumentProcessorShim[] = [];
+
+	// Would need CommandsConverter class
+	// readonly converter: CommandsConverter;
 
 	constructor(
 		rpcService: IExtHostRpcService | undefined,
 
 		logService: ILogService | undefined,
+
+		// If telemetry reporting implemented
+		// @IExtHostTelemetry extHostTelemetry: IExtHostTelemetry
 	) {
 		super("ExtHostCommands", rpcService, logService);
 
 		this._log("Initializing...");
 
 		if (this._rpcService) {
-			this.#mainThreadCommandsProxy = this._getProxy(
-				// TODO: Ensure MainContext.MainThreadCommands is correctly typed or cast.
-				MainContext.MainThreadCommands as ProxyIdentifier<MainThreadCommandsShape>,
+			this.#proxy = this._getProxy(
+				MainContext.MainThreadCommands as ProxyIdentifier<MainThreadCommandsShapeForShim>,
 			);
 
-			if (this.#mainThreadCommandsProxy) {
-				this._log("MainThreadCommands RPC proxy obtained.");
-			}
-
-			// Error logged by _getProxy if it returns null
+			// TODO: Initialize MainThreadTelemetry proxy if full telemetry is implemented.
 		}
+
+		if (this.#proxy) this._log("MainThreadCommands RPC proxy obtained.");
 
 		if (this._rpcService) {
 			try {
 				this._rpcService.set(
-					// TODO: Ensure ExtHostContext.ExtHostCommands is correctly typed or cast.
-					ExtHostContext.ExtHostCommands as ProxyIdentifier<ExtHostCommandsShape>,
+					ExtHostContext.ExtHostCommands as ProxyIdentifier<ExtHostCommandsShapeForShim>,
 
 					this,
 				);
@@ -165,103 +169,67 @@ export class ShimExtHostCommands
 					"Set local instance for incoming RPC calls (ExtHostContext.ExtHostCommands).",
 				);
 			} catch (e: any) {
-				this._logError(
-					"Failed to set local instance for incoming RPC calls:",
-
-					e,
-				);
+				this._logError("Failed to set local instance for RPC:", e);
 			}
-		} else {
-			this._logError(
-				"RPCService is not available, cannot set local ExtHostCommands instance for RPC.",
-			);
 		}
+
+		// Initialize argument processors similar to VS Code, if a simplified version is desired.
+		// This current shim mostly uses BaseCocoonShim._reviveApiArgument for incoming args.
+		// this._argumentProcessors.push({ processArgument(a, _ext) { return revive(a); } });
 	}
 
 	public registerCommand(
-		// Original JS: "Unused by shim, registration scope determined by notification."
-		global: boolean,
-
+		// `global` parameter removed as its effect is implicit
 		id: string,
 
-		callback: (...args: any[]) => any,
+		callback: <T>(...args: any[]) => T | Promise<T>,
 
 		thisArg?: any,
 
-		// TODO: Add metadata parameter if `vscode.commands.registerCommand` supports it and it should be proxied.
-		// metadata?: CommandMetadataDto
-	): IDisposable {
-		if (!id) {
-			this._logError("Attempted to register command with empty ID.");
+		// VS Code uses ICommandMetadata
+		metadata?: ICommandMetadata,
 
-			// VS Code throws: new Error('Command id cannot be empty');
+		// Context of the registering extension
+		extension?: IExtensionDescription,
+	): extHostTypes.Disposable {
+		// Return vscode.Disposable
+		this._logService?.trace("ShimExtHostCommands#registerCommand", id);
 
-			// Return NOP disposable to avoid breaking callers expecting a disposable.
-			return { dispose: () => {} };
+		if (!id.trim().length) throw new Error("Command id cannot be empty");
+
+		if (this.#commands.has(id)) {
+			// VS Code throws here. For a shim, warning might be acceptable for MVP, but throwing is more correct.
+			this._logError(
+				`Command '${id}' is already registered. Overwriting can lead to unpredictable behavior.`,
+			);
+
+			// throw new Error(`Command '${id}' already exists`);
 		}
 
-		this._log(`Registering command: id='${id}', global=${!!global}`);
+		this.#commands.set(id, { callback, thisArg, metadata, extension });
 
-		if (this.#registeredCommands.has(id)) {
-			this._logWarn(
-				`Command '${id}' is already registered. Overwriting previous registration.`,
+		// The `global` parameter from original shim decided this.
+		// In VS Code's ExtHostCommands, $registerCommand is always called.
+		// The 'global' concept might be for UI visibility, handled by MainThread.
+		this.#proxy
+			?.$registerCommand(id)
+			.catch((e) =>
+				this._logError(`$registerCommand RPC for '${id}' failed:`, e),
 			);
-		}
 
-		this.#registeredCommands.set(id, { callback, thisArg /*, metadata */ });
+		return new extHostTypes.Disposable(() => {
+			if (this.#commands.delete(id)) {
+				this._log(`Command '${id}' registration disposed locally.`);
 
-		// The `global` parameter's meaning in shim context:
-		// If true, notify Mountain. This implies Mountain uses this to know if a command
-		// can be listed in the command palette or triggered by keybindings not originating from this extension host.
-		if (global && this.#mainThreadCommandsProxy) {
-			this.#mainThreadCommandsProxy.$registerCommand(id).catch((e: any) =>
-				this._logError(
-					`Failed to notify Mountain of command registration '${id}':`,
+				this.#proxy?.$unregisterCommand(id).catch((e) =>
+					this._logError(
+						`$unregisterCommand RPC for '${id}' failed:`,
 
-					e,
-				),
-			);
-		} else if (global && !this.#mainThreadCommandsProxy) {
-			this._logWarn(
-				`Cannot notify Mountain of global command registration '${id}': RPC proxy unavailable.`,
-			);
-		}
-
-		let isDisposed = false;
-
-		return {
-			dispose: () => {
-				if (isDisposed) return;
-
-				isDisposed = true;
-
-				this._log(`Dispose registration requested for '${id}'`);
-
-				if (this.#registeredCommands.delete(id)) {
-					this._log(`Command '${id}' unregistered locally.`);
-
-					if (global && this.#mainThreadCommandsProxy) {
-						this.#mainThreadCommandsProxy
-							.$unregisterCommand(id)
-							.catch((e: any) =>
-								this._logError(
-									`Failed to notify Mountain of command unregistration '${id}':`,
-
-									e,
-								),
-							);
-					} else if (global && !this.#mainThreadCommandsProxy) {
-						this._logWarn(
-							`Cannot notify Mountain of global command unregistration '${id}': RPC proxy unavailable.`,
-						);
-					}
-				} else {
-					this._logWarn(
-						`Command '${id}' not found for unregistration.`,
-					);
-				}
-			},
-		};
+						e,
+					),
+				);
+			}
+		});
 	}
 
 	public async executeCommand<T = any>(
@@ -269,239 +237,268 @@ export class ShimExtHostCommands
 
 		...args: any[]
 	): Promise<T> {
-		if (!id) {
-			this._logError("executeCommand called with empty ID.");
+		this._logService?.trace(
+			"ShimExtHostCommands#executeCommand",
 
-			return Promise.reject(new Error("Command ID cannot be empty."));
-		}
+			id,
 
-		this._log(`executeCommand: id='${id}', argsCount=${args.length}`);
+			args.length,
+		);
 
-		if (this.#registeredCommands.has(id)) {
-			this._log(`Executing command '${id}' locally.`);
+		return this._doExecuteCommand<T>(id, args, true /* allow retry */);
+	}
 
-			return this._executeRegisteredCommandLocally(id, args);
+	private async _doExecuteCommand<T>(
+		id: string,
+
+		args: any[],
+
+		retry: boolean,
+	): Promise<T> {
+		if (this.#commands.has(id)) {
+			// Local command
+			// Fire and forget activation event
+			this.#proxy?.$fireCommandActivationEvent(id);
+
+			return this._executeContributedCommand<T>(
+				id,
+
+				args,
+
+				false /* don't annotate error for local proxy */,
+			);
 		} else {
-			this._log(
-				`Command '${id}' not local. Proxying execution to Mountain...`,
-			);
+			// Remote command
+			// VS Code's ExtHostCommands does more sophisticated argument conversion here.
+			// For Cocoon's shim, we'll rely on BaseCocoonShim's _convertApiArgToInternal.
+			// TODO: Re-evaluate if VS Code's specific marshalling (Position, Range, Uri to internal, Buffer wrapping)
+			// is necessary for Cocoon's IPC or if BaseCocoonShim's generic approach is sufficient.
+			// The original JS shim had its own _convertApiArgToInternal; BaseCocoonShim's is more general.
+			let hasBuffers = false;
 
-			if (!this.#mainThreadCommandsProxy) {
-				const errorMsg = `Cannot execute command '${id}': MainThreadCommands RPC proxy unavailable.`;
+			const marshalledArgs = args.map((arg) => {
+				// Base shim's conversion
+				const converted = this._convertApiArgToInternal(arg);
 
-				this._logError(errorMsg);
+				if (
+					converted instanceof VSBuffer ||
+					arg instanceof ArrayBuffer ||
+					arg instanceof Uint8Array
+				) {
+					// Signal if VSBuffer or raw buffer types are present
+					hasBuffers = true;
+				}
 
-				return Promise.reject(new Error(errorMsg));
-			}
+				// If VSBuffer is returned by _convertApiArgToInternal, it's fine.
+				// If raw ArrayBuffer/Uint8Array are still present, wrap them.
+				if (arg instanceof ArrayBuffer)
+					return VSBuffer.wrap(new Uint8Array(arg));
 
-			// Using inherited marshalling from BaseCocoonShim
-			const internalArgs = args.map((arg) =>
-				this._convertApiArgToInternal(arg),
-			);
+				if (arg instanceof Uint8Array) return VSBuffer.wrap(arg);
+
+				return converted;
+			});
+
+			const rpcArgs = hasBuffers
+				? new SerializableObjectWithBuffers(marshalledArgs)
+				: marshalledArgs;
 
 			try {
-				// TODO: Pass CancellationToken if supported by protocol and available
-				const result =
-					await this.#mainThreadCommandsProxy.$executeCommand(
-						id,
+				const result = await this.#proxy!.$executeCommand(
+					id,
 
-						internalArgs,
+					rpcArgs,
+
+					retry,
+
+					// Assert proxy not null
+				);
+
+				// Base shim's revival
+				return this._reviveApiArgument(result);
+			} catch (e: any) {
+				if (
+					e instanceof Error &&
+					e.message === "$executeCommand:retry" &&
+					retry
+				) {
+					this._log(
+						`Retrying command '${id}' as requested by main thread.`,
 					);
 
-				this._log(
-					`Command '${id}' executed via Mountain. Reviving result...`,
-				);
+					return this._doExecuteCommand<T>(
+						id,
 
-				// Using inherited revival
-				return this._reviveApiArgument(result);
-			} catch (error: any) {
-				// BaseCocoonShim's refineError can be used here if errors from RPC are structured JSON
-				const refinedError =
-					error instanceof Error
-						? refineError(
-								error,
+						args,
 
-								this._logService,
+						false /* no more retries */,
+					);
+				} else {
+					const refined =
+						e instanceof Error
+							? refineError(
+									e,
 
-								`executeCommand(${id})`,
-							)
-						: new Error(String(error));
+									this._logService,
 
-				this._logError(
-					`Error executing command '${id}' via Mountain RPC:`,
+									`executeRemoteCmd(${id})`,
+								)
+							: new Error(String(e));
 
-					refinedError,
-				);
+					this._logError(
+						`Error executing remote command '${id}':`,
 
-				throw refinedError;
+						refined,
+					);
+
+					throw refined;
+				}
 			}
 		}
+	}
+
+	private async _executeContributedCommand<T = unknown>(
+		id: string,
+
+		args: any[],
+
+		annotateError: boolean,
+	): Promise<T> {
+		const command = this.#commands.get(id);
+
+		if (!command)
+			throw new Error(`Command '${id}' not found locally for execution.`);
+
+		const { callback, thisArg, metadata, extension } = command;
+
+		// TODO: Implement argument validation if metadata.args is present and structured like VS Code's.
+		// if (metadata?.args) { ... validate ... }
+
+		try {
+			// this._logService?.trace(`Executing command '${id}' from extension '${extension?.identifier.value || 'unknown'}'`);
+
+			return await callback.apply(thisArg, args);
+		} catch (err: any) {
+			if (!isCancellationError(err)) {
+				// Don't log cancellation errors as routine errors
+				this._logService?.error(
+					`Error during execution of contributed command '${id}':`,
+
+					err,
+				);
+			}
+
+			if (annotateError && extension?.identifier) {
+				// TODO: If full telemetry and error annotation (like CommandError class) is desired:
+				// const reported = this.#extHostTelemetry.onExtensionError(extension.identifier, err);
+
+				// throw new CommandErrorWithNameAndSource(id, extension.displayName || extension.name, err);
+
+				// For now, rethrow a refined error or the original.
+				throw err instanceof Error
+					? refineError(
+							err,
+
+							this._logService,
+
+							`localCmdExecAnnotated(${id})`,
+						)
+					: new Error(String(err));
+			}
+
+			// Rethrow original or minimally processed error
+			throw err;
+		} finally {
+			// TODO: Implement telemetry reporting like in VS Code's ExtHostCommands._reportTelemetry
+			// if (extension) this._reportTelemetry(command, id, duration);
+		}
+	}
+
+	// --- RPC Methods called BY Mountain ---
+	public async $executeContributedCommand(
+		id: string,
+
+		marshalledArgs: any,
+	): Promise<any> {
+		this._logService?.trace(
+			"ShimExtHostCommands#$executeContributedCommand",
+
+			id,
+		);
+
+		const cmdHandler = this.#commands.get(id);
+
+		if (!cmdHandler)
+			return Promise.reject(
+				new Error(`Contributed command '${id}' does not exist.`),
+			);
+
+		// Revive arguments. VS Code's version has more complex argument processing here.
+		// For Cocoon, rely on BaseCocoonShim's general revival.
+		let revivedArgs = this._reviveApiArgument(marshalledArgs);
+
+		if (
+			!Array.isArray(revivedArgs) &&
+			marshalledArgs !== undefined &&
+			marshalledArgs !== null
+		) {
+			// If single arg was sent not in an array, wrap it
+			revivedArgs = [revivedArgs];
+		} else if (!Array.isArray(revivedArgs)) {
+			// Ensure it's an array for .apply
+			revivedArgs = [];
+		}
+
+		return this._executeContributedCommand(
+			id,
+
+			revivedArgs,
+
+			true /* annotateError for external calls */,
+		);
 	}
 
 	public async getCommands(
 		filterUnderscoreCommands: boolean = false,
 	): Promise<string[]> {
-		this._log(
-			`getCommands(filterUnderscore=${filterUnderscoreCommands}) requesting from Mountain...`,
+		this._logService?.trace(
+			"ShimExtHostCommands#getCommands",
+
+			filterUnderscoreCommands,
 		);
 
-		let mountainCommands: string[] = [];
+		const remoteCommands = (await this.#proxy?.$getCommands()) || [];
 
-		if (this.#mainThreadCommandsProxy) {
-			try {
-				const result = await this.#mainThreadCommandsProxy.$getCommands(
-					filterUnderscoreCommands,
-				);
+		const localCommands = Array.from(this.#commands.keys());
 
-				mountainCommands = Array.isArray(result) ? result : [];
-			} catch (error: any) {
-				this._logError(
-					"Failed to get commands from Mountain via RPC:",
+		let allCommands = [...new Set([...remoteCommands, ...localCommands])];
 
-					error,
-				);
-
-				mountainCommands = [];
-			}
-		} else {
-			this._logWarn(
-				"Cannot get commands from Mountain: RPC proxy unavailable.",
+		if (filterUnderscoreCommands) {
+			allCommands = allCommands.filter(
+				(command) => !command.startsWith("_"),
 			);
 		}
 
-		const localCommands = Array.from(this.#registeredCommands.keys());
-
-		const allCommands = new Set<string>([
-			...mountainCommands,
-
-			...localCommands,
-		]);
-
-		let result = Array.from(allCommands);
-
-		if (filterUnderscoreCommands) {
-			result = result.filter((cmdId) => !cmdId.startsWith("_"));
-		}
-
-		return result.sort();
-	}
-
-	// --- RPC Methods called BY Mountain ---
-
-	public async $executeContributedCommand(
-		id: string,
-
-		...args: any[]
-	): Promise<any> {
-		this._log(
-			`Received RPC request from Mountain to execute local command '${id}' with ${args.length} args.`,
-		);
-
-		// Using inherited revival from BaseCocoonShim
-		const revivedArgs = args.map((arg) => this._reviveApiArgument(arg));
-
-		return this._executeRegisteredCommandLocally(id, revivedArgs);
+		return allCommands.sort();
 	}
 
 	public async $getContributedCommandMetadata(): Promise<{
-		[commandId: string]: CommandMetadataDto;
+		[id: string]: ICommandMetadataDtoForShim;
 	}> {
-		this._log(
-			"Received RPC request from Mountain for contributed command metadata.",
-		);
+		const result: { [id: string]: ICommandMetadataDtoForShim } =
+			Object.create(null);
 
-		const allMetadata: { [commandId: string]: CommandMetadataDto } = {};
-
-		for (const [id, registration] of this.#registeredCommands) {
-			// TODO: Ensure `registration.metadata` is populated if vscode.commands.registerCommand
-			// is extended to accept and store metadata.
-			allMetadata[id] = registration.metadata || {};
-		}
-
-		return allMetadata;
-	}
-
-	// --- Internal Helper Methods ---
-
-	protected async _executeRegisteredCommandLocally(
-		commandId: string,
-
-		args: any[],
-	): Promise<any> {
-		const command = this.#registeredCommands.get(commandId);
-
-		if (!command) {
-			const errorMsg = `Command '${commandId}' registration unexpectedly missing locally.`;
-
-			this._logError(errorMsg);
-
-			// This aligns with VS Code behavior: if a command is found then disappears, it's an error.
-			throw new Error(errorMsg);
-		}
-
-		const { callback, thisArg } = command;
-
-		try {
-			this._log(`Executing local callback for '${commandId}'...`);
-
-			const result = await Promise.resolve(callback.apply(thisArg, args));
-
-			this._log(
-				`Local callback for '${commandId}' executed successfully.`,
-			);
-
-			return result;
-		} catch (err: any) {
-			// TODO: Consider if errors from command execution should be reported to Mountain
-			// via a specific notification, or if simply letting the RPC call fail is sufficient.
-			// const refinedError = err instanceof Error ? refineError(err, this._logService, `localCmdExec(${commandId})`) : new Error(String(err));
-
-			this._logError(
-				`Error executing local command callback '${commandId}':`,
-
-				err,
-			);
-
-			// Rethrow to be caught by the caller (either local executeCommand or RPC handler)
-			throw err;
-		}
-	}
-
-	// _convertApiArgToInternal and _reviveApiArgument are inherited from BaseCocoonShim.
-	// The specific versions in the original commands-shim.js were removed.
-
-	// This method was for generic notifications to Mountain via RPC.
-	// It's kept for conceptual completeness but might be better replaced by specific proxy method calls.
-	protected _notifyMountain(method: string, params: any): void {
-		if (this.#mainThreadCommandsProxy) {
-			// VS Code convention for main thread methods
-			const rpcMethodName = `$${method}`;
-
-			const proxyMethod = this.#mainThreadCommandsProxy[rpcMethodName];
-
-			if (typeof proxyMethod === "function") {
-				// Assuming notifications are fire-and-forget, so not awaiting Promise if it returns one.
-				try {
-					// Explicitly cast to Function
-					(proxyMethod as Function)(params);
-				} catch (e: any) {
-					this._logError(
-						`Error synchronously calling notification method '${rpcMethodName}' on proxy:`,
-
-						e,
-					);
-				}
-			} else {
-				this._logWarn(
-					`RPC method '${rpcMethodName}' not found on MainThreadCommands proxy for notification.`,
-				);
+		for (const [id, command] of this.#commands) {
+			if (command.metadata) {
+				// TODO: Convert ICommandMetadata to ICommandMetadataDto if their structures differ for RPC.
+				// Assuming direct compatibility for now
+				result[id] = command.metadata as ICommandMetadataDtoForShim;
 			}
-		} else {
-			this._logWarn(
-				`Cannot send notification '${method}': RPC proxy unavailable.`,
-			);
 		}
-	}
-}
 
-// --- END OF FILE commands-shim.ts ---
+		return result;
+	}
+
+	// TODO: registerArgumentProcessor, registerApiCommand would be needed for full fidelity with VS Code's ExtHostCommands.
+	// These are advanced features for framework-level command definition and argument handling.
+}
