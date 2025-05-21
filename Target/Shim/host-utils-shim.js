@@ -1,1 +1,1 @@
-import*as s from"./fs-shim.js";import*as i from"./process-shim";class t{_serviceBrand;constructor(){}get pid(){return i.pid}exit(e){}fsExists(e){return s.default.promises.stat(e).then(()=>!0).catch(()=>!1)}fsRealpath(e){return s.default.promises.realpath(e)}}export{t as ShimHostUtils};
+import*as s from"./fs-shim.js";import*as i from"./process-shim.js";class t{_serviceBrand;constructor(){}get pid(){return i.pid}exit(e){}fsExists(e){return s.default.promises.stat(e).then(()=>!0).catch(()=>!1)}fsRealpath(e){return s.default.promises.realpath(e)}}export{t as ShimHostUtils};
