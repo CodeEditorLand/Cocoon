@@ -1,89 +1,98 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Language Features Shim (shims/language-features-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements the `ExtHostLanguageFeaturesShape` interface, handling both registration/unregistration
- * requests for language providers (hover, completion, etc.) AND the execution requests (`$provide*`)
- * originating from Mountain when a feature is invoked by the user.
+ * Implements the `ExtHostLanguageFeaturesShape` interface. It handles registration/unregistration
+ * of language providers (hover, completion, etc.) and executes provider methods when invoked
+ * by Mountain via RPC.
  *
  * Responsibilities:
- * - Storing registered provider objects locally keyed by a generated handle.
- * - Implementing `$register*Provider` methods (called internally by vscode.languages):
- *   - Generates a local handle.
- *   - Stores the provider object locally (`#providerHandles`).
- *   - Sends an RPC request to `MainThreadLanguageFeatures` on Mountain to register
- *     the provider metadata (selector, handle, trigger chars, etc.) centrally.
- *   - Returns the local handle.
- * - Implementing `$unregisterProvider` method:
- *   - Removes the provider locally.
- *   - Sends an RPC request to `MainThreadLanguageFeatures` to remove the registration.
- * - Implementing `$provide*` methods (e.g., `$provideHover`, `$provideCompletionItems`):
- *   - Called *by Mountain* via RPC when a feature needs data.
- *   - Receives handle, document URI, position, context, token.
- *   - Looks up the corresponding provider object locally using the handle.
- *   - Retrieves the `vscode.TextDocument` using the injected `ExtHostDocuments` service.
- *   - Calls the actual provider method (e.g., `provider.provideHover(...)`).
- *   - Marshals the result back to Mountain.
+ * - Storing registered provider objects locally.
+ * - Implementing `$register*Provider` methods (called by `ShimLanguages`):
+ *   - Generates a handle, stores the provider, and notifies `MainThreadLanguageFeatures` via RPC.
+ * - Implementing `$unregisterProvider`: Removes provider locally and notifies main thread.
+ * - Implementing `$provide*` / `$resolve*` methods (called by Mountain via RPC):
+ *   - Retrieves the provider, document, and calls the provider method.
+ *   - Marshals/revives arguments and results.
  *
  * Key Interactions:
- * - `$register*Provider` methods are called internally by `vscode.languages` implementation.
- * - `$provide*` methods are called by Mountain via RPC when features are invoked.
- * - Interacts with `RPCProtocol` via `this._rpcService.getProxy(MainContext.MainThreadLanguageFeatures)`.
- * - Interacts with injected `ExtHostDocuments` service.
- * - Manages local state of registered providers (`#providerHandles`).
+ * - Methods prefixed with `$` (except `$register*Provider`) are part of the RPC interface
+ *   called by Mountain's `MainThreadLanguageFeatures`.
+ * - `$register*Provider` methods are called by `ShimLanguages` (the `vscode.languages` API shim).
+ * - Uses `BaseCocoonShim` for RPC, logging, marshalling, and revival.
+ * - Depends on `ShimDocumentService` to get `TextDocument` instances.
  *--------------------------------------------------------------------------------------------*/
+
+// IDisposable is not directly returned by this shim's $register methods, but by ShimLanguages.
+// import { IDisposable } from "vs/base/common/lifecycle";
 
 import {
 	CancellationToken,
 	CancellationTokenSource,
 } from "vs/base/common/cancellation";
-// For return type if needed
-import { Disposable, IDisposable } from "vs/base/common/lifecycle";
 import {
 	ExtHostContext,
 	MainContext,
-	// Import specific DTOs and shapes from extHost.protocol if available
-	// For example:
-	// IRawLanguageFeaturesDocumentSelector as DocumentSelector, (if it's a specific DTO)
-	// IRawHover, IRawCompletionList, IRawLocation, etc. for provider results
-	// ICancellationTokenDto,
-	// Needs bundling
+	// TODO: Import specific DTOs from extHost.protocol.ts if defined (e.g., IRawDocumentSelector, IRawHover)
+	// For now, using `any` or vscode types directly for DTOs, assuming they are compatible or revived.
 } from "vs/workbench/api/common/extHost.protocol";
 
-// Assuming from 'vscode' shim
 import {
+	CallHierarchyIncomingCall,
+	CallHierarchyItem,
+	CallHierarchyOutgoingCall,
 	CallHierarchyProvider,
+	CodeAction,
 	CodeActionProvider,
+	CodeLens,
 	CodeLensProvider,
 	CompletionContext,
 	CompletionItem,
 	CompletionItemProvider,
 	CompletionList,
+	Declaration,
 	DeclarationProvider,
 	Definition,
+	DefinitionLink,
 	DefinitionProvider,
 	DocumentFormattingEditProvider,
+	DocumentHighlight,
 	DocumentHighlightProvider,
 	DocumentLink,
 	DocumentLinkProvider,
 	DocumentRangeFormattingEditProvider,
 	DocumentSelector,
+	FormattingOptions,
 	Hover,
 	HoverProvider,
+	Implementation,
 	ImplementationProvider,
 	LinkedEditingRangeProvider,
-	Location,
+	LinkedEditingRanges,
 	OnTypeFormattingEditProvider,
-	Position,
+	ReferenceContext,
 	ReferenceProvider,
+	RenameLocation,
 	RenameProvider,
+	SelectionRange,
 	SelectionRangeProvider,
+	SignatureHelp,
+	SignatureHelpContext,
 	SignatureHelpProvider,
 	SymbolInformation,
+	SymbolKind,
 	TextDocument,
+	TextEdit,
+	TypeDefinition,
 	TypeDefinitionProvider,
+	TypeHierarchyItem,
 	TypeHierarchyProvider,
-	Uri,
+	Location as VscodeLocation,
+	Position as VscodePosition,
+	Range as VscodeRange,
+	// vscode API types used by providers
+	Uri as VscodeUri,
 	WorkspaceSymbolProvider,
+	// TODO: Add other provider types and their result types (InlayHint, ColorInformation, FoldingRange, etc.)
 } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
@@ -92,28 +101,34 @@ import {
 	ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
-// Assuming ShimDocumentService is exported from document-shim.ts
+// Assuming from 'vscode' API shim or real types
+
+// For IExtHostDocuments functionality
 import { ShimDocumentService } from "./document-shim";
 
-// --- Type definitions based on vscode API and extHost.protocol ---
+// --- Type Definitions ---
 
-// For provider registration details stored locally
-interface ProviderRegistration {
-	// The actual provider object (e.g., HoverProvider, CompletionItemProvider)
+interface ProviderRegistrationData {
+	// The actual language provider object
 	provider: any;
 
-	selector: DocumentSelector;
+	// Null for workspace-wide providers like WorkspaceSymbolProvider
+	selector: DocumentSelector | null;
 
 	// e.g., "Hover", "Completion"
 	type: string;
 
 	triggerCharacters?: string[];
 
-	// For providers like CodeActionProvider, SignatureHelpProvider
+	// For CodeActionProviderMetadata, SignatureHelpProviderMetadata, etc.
 	metadata?: any;
+
+	// TODO: Add event emitters for providers like CodeLensProvider if they have onDidChangeCodeLenses
+	// onDidChangeCodeLensesEmitter?: VscodeEmitter<void>;
 }
 
-// For MainThreadLanguageFeatures RPC proxy (define methods based on usage)
+// RPC Shape for MainThreadLanguageFeatures
+// TODO: This MUST align with the actual MainThreadLanguageFeatures service in Mountain.
 interface MainThreadLanguageFeaturesShape {
 	$registerHoverProvider(
 		handle: number,
@@ -126,7 +141,9 @@ interface MainThreadLanguageFeaturesShape {
 
 		selector: DocumentSelector,
 
-		triggerCharacters: string[],
+		triggerCharacters: ReadonlyArray<string>,
+
+		supportsResolveDetails?: boolean,
 	): Promise<void>;
 
 	$registerDefinitionProvider(
@@ -135,40 +152,37 @@ interface MainThreadLanguageFeaturesShape {
 		selector: DocumentSelector,
 	): Promise<void>;
 
-	// ... add other $register*Provider methods
-	$registerCodeLensProvider?(
+	$registerCodeLensProvider(
 		handle: number,
 
 		selector: DocumentSelector,
 
 		eventHandle?: number,
+
+		// eventHandle for onDidChangeCodeLenses
 	): Promise<void>;
 
-	$registerCodeActionProvider?(
+	$registerCodeActionProvider(
 		handle: number,
 
 		selector: DocumentSelector,
 
 		metadata?: any /* CodeActionProviderMetadataDto */,
+
+		displayName?: string,
 	): Promise<void>;
 
-	// ... and so on for all provider types
+	// TODO: Add $register methods for ALL other provider types. Ensure signatures (metadata, trigger chars, event handles) match protocol.
+	// e.g., $registerDocumentLinkProvider(handle: number, selector: DocumentSelector, supportsResolve?: boolean): Promise<void>;
 
 	$unregisterProvider(handle: number): Promise<void>;
-
-	// $resolveCodeLens?
-
-	// $resolveDocumentLink?
-
-	// $resolveWorkspaceSymbol?
 }
 
-// ExtHostLanguageFeaturesShape (methods called BY Mountain)
-interface ExtHostLanguageFeaturesShape {
-	// Registration methods called by vscode.languages API implementation (ShimLanguages)
-
-	// These are now directly taking the provider object
-
+// RPC Shape for ExtHostLanguageFeatures (methods on this class called BY Mountain)
+// TODO: This MUST align with VS Code's `ExtHostLanguageFeaturesShape` (from extHost.protocol.ts)
+export interface ExtHostLanguageFeaturesServiceShape {
+	// Renamed to avoid conflict if VS Code type is imported
+	// These are the methods called by ShimLanguages (which is vscode.languages)
 	$registerHoverProvider(
 		selector: DocumentSelector,
 
@@ -189,94 +203,123 @@ interface ExtHostLanguageFeaturesShape {
 		provider: DefinitionProvider,
 	): Promise<number>;
 
-	// ... other $register* methods
+	$registerCodeLensProvider(
+		selector: DocumentSelector,
 
-	// This one is still for unregistering
+		provider: CodeLensProvider,
+	): Promise<number>;
+
+	$registerCodeActionProvider(
+		selector: DocumentSelector,
+
+		provider: CodeActionProvider,
+
+		metadata?: any /* CodeActionProviderMetadata from vscode API */,
+	): Promise<number>;
+
+	// TODO: Add ALL other $register*Provider methods that ShimLanguages will call.
+
 	$unregisterProvider(handle: number): Promise<void>;
 
-	// Provider execution methods called BY Mountain
-
+	// These are the methods called BY Mountain to execute providers
 	$provideHover(
 		handle: number,
 
 		uriComponents: any,
 
-		position: Position,
+		positionDto: any,
 
-		tokenDto: any /* ICancellationTokenDto */,
-	): Promise<Hover | undefined>;
+		tokenDto: any,
+	): Promise<Hover | undefined /* IRawHover | undefined */>;
 
 	$provideCompletionItems(
 		handle: number,
 
 		uriComponents: any,
 
-		position: Position,
+		positionDto: any,
 
-		contextDto: any /* CompletionContextDto */,
+		contextDto: any,
 
 		tokenDto: any,
-	): Promise<CompletionList | CompletionItem[] | undefined>;
+	): Promise<
+		| CompletionList
+		| CompletionItem[]
+		| undefined /* IRawCompletionList | undefined */
+	>;
 
 	$resolveCompletionItem(
 		handle: number,
 
-		itemDto: CompletionItem,
+		itemDto: any /* IRawCompletionItem */,
 
 		tokenDto: any,
-	): Promise<CompletionItem | undefined>;
+	): Promise<CompletionItem | undefined /* IRawCompletionItem | undefined */>;
 
-	// DefinitionLink[] also possible
 	$provideDefinition(
 		handle: number,
 
 		uriComponents: any,
 
-		position: Position,
+		positionDto: any,
 
 		tokenDto: any,
-	): Promise<Definition | Definition[] | undefined>;
+	): Promise<
+		| Definition
+		| DefinitionLink[]
+		| undefined /* IRawLocationDto | IRawLocationDto[] | DefinitionLinkDto[] */
+	>;
 
-	// ... other $provide* and $resolve* methods
-	$resolveDocumentLink?(
+	// TODO: Add ALL other $provide* and $resolve* methods.
+	$provideCodeLenses?(
 		handle: number,
 
-		link: DocumentLink,
+		uriComponents: any,
 
 		tokenDto: any,
-	): Promise<DocumentLink | undefined>;
-
-	$resolveWorkspaceSymbol?(
-		handle: number,
-
-		symbol: SymbolInformation,
-
-		tokenDto: any,
-	): Promise<SymbolInformation | undefined>;
+	): Promise<CodeLens[] | undefined /* IRawCodeLensList | undefined */>;
 
 	$resolveCodeLens?(
 		handle: number,
 
-		codeLens: any /* CodeLensDto */,
+		codeLensDto: any /* IRawCodeLens */,
 
 		tokenDto: any,
-	): Promise<any /* CodeLensDto */ | undefined>;
+	): Promise<CodeLens | undefined /* IRawCodeLens | undefined */>;
+
+	$provideCodeActions?(
+		handle: number,
+
+		uriComponents: any,
+
+		rangeDto: any,
+
+		contextDto: any,
+
+		tokenDto: any,
+	): Promise<
+		| (Command | CodeAction)[]
+		| undefined /* (CommandDto | CodeActionDto)[] */
+	>;
+
+	// ... and so on for all provider execution methods.
 }
 
 export class ShimLanguageFeatures
 	extends BaseCocoonShim
-	implements ExtHostLanguageFeaturesShape
+	implements ExtHostLanguageFeaturesServiceShape
 {
+	// For ExtHostLanguageFeaturesShape DI type
 	public readonly _serviceBrand: undefined;
 
-	#mainThreadLanguageFeaturesProxy: MainThreadLanguageFeaturesShape | null =
+	readonly #mainThreadLanguageFeaturesProxy: MainThreadLanguageFeaturesShape | null =
 		null;
 
 	#providerHandlePool: number = 0;
 
-	#providerHandles = new Map<number, ProviderRegistration>();
+	readonly #providerHandles = new Map<number, ProviderRegistrationData>();
 
-	// Injected ShimDocumentService instance
+	// Type is concrete ShimDocumentService
 	readonly #extHostDocuments: ShimDocumentService;
 
 	constructor(
@@ -284,18 +327,19 @@ export class ShimLanguageFeatures
 
 		logService: ILogService | undefined,
 
+		// Inject concrete shim
 		extHostDocuments: ShimDocumentService,
 	) {
 		super("ExtHostLanguageFeatures", rpcService, logService);
 
-		this._log("Initializing Language Features Shim...");
+		this._log("Initializing...");
 
 		if (!extHostDocuments) {
 			this._logError(
-				"ExtHostDocuments service is required but was not provided!",
+				"ExtHostDocuments service is critical and was not provided!",
 			);
 
-			// This is a critical dependency, consider throwing or ensuring it's always present.
+			// Consider throwing if this is an unrecoverable state.
 		}
 
 		this.#extHostDocuments = extHostDocuments;
@@ -304,18 +348,11 @@ export class ShimLanguageFeatures
 			this.#mainThreadLanguageFeaturesProxy = this._getProxy(
 				MainContext.MainThreadLanguageFeatures as ProxyIdentifier<MainThreadLanguageFeaturesShape>,
 			);
-		}
 
-		if (!this.#mainThreadLanguageFeaturesProxy) {
-			this._logError(
-				"Failed to get MainThreadLanguageFeatures proxy! Provider registration will fail.",
-			);
-		}
-
-		if (this._rpcService) {
+			// Register self for RPC calls from Mountain
 			try {
 				this._rpcService.set(
-					ExtHostContext.ExtHostLanguageFeatures as ProxyIdentifier<ExtHostLanguageFeaturesShape>,
+					ExtHostContext.ExtHostLanguageFeatures as ProxyIdentifier<ExtHostLanguageFeaturesServiceShape>,
 
 					this,
 				);
@@ -330,25 +367,35 @@ export class ShimLanguageFeatures
 					e,
 				);
 			}
-		} else {
+		}
+
+		if (!this.#mainThreadLanguageFeaturesProxy) {
 			this._logError(
-				"RPCService not available, cannot set ExtHostLanguageFeatures for RPC.",
+				"Failed to get MainThreadLanguageFeatures proxy! Provider registration and execution will be impaired.",
 			);
 		}
 	}
 
-	// --- Registration Methods (Called by ShimLanguages / vscode.languages implementation) ---
-	// These methods now receive the actual provider *object*.
+	// --- Generic Registration Helper (Internal to this class, called by $register* methods) ---
+	private async _doRegisterProvider<P>(
+		providerType: string,
 
-	public async $registerHoverProvider(
-		selector: DocumentSelector,
+		provider: P,
 
-		provider: HoverProvider,
+		// Null for workspace-wide providers
+		selector: DocumentSelector | null,
+
+		mainThreadCall: (
+			handle: number,
+
+			selector: DocumentSelector | null,
+
+			providerSpecificArgs?: any,
+		) => Promise<void>,
+
+		// e.g., triggerCharacters, metadata, eventHandle
+		providerSpecificArgs?: any,
 	): Promise<number> {
-		this._log(
-			`Registering HoverProvider locally: selector=${JSON.stringify(selector)}`,
-		);
-
 		const handle = ++this.#providerHandlePool;
 
 		this.#providerHandles.set(handle, {
@@ -356,409 +403,263 @@ export class ShimLanguageFeatures
 
 			selector,
 
-			type: "Hover",
+			type: providerType,
+
+			...providerSpecificArgs,
 		});
 
+		this._log(
+			`Locally registered ${providerType}Provider with handle ${handle}. Selector: ${JSON.stringify(selector)}`,
+		);
+
 		if (!this.#mainThreadLanguageFeaturesProxy) {
-			// Clean up local registration
+			// Rollback local registration
 			this.#providerHandles.delete(handle);
 
-			throw new Error(
-				"Cannot register hover provider, RPC proxy unavailable.",
-			);
+			const errorMsg = `Cannot register ${providerType}Provider, RPC proxy to MainThreadLanguageFeatures unavailable.`;
+
+			this._logError(errorMsg);
+
+			throw new Error(errorMsg);
 		}
 
 		try {
-			await this.#mainThreadLanguageFeaturesProxy.$registerHoverProvider(
+			await mainThreadCall.call(
+				this.#mainThreadLanguageFeaturesProxy,
+
 				handle,
 
 				selector,
+
+				providerSpecificArgs,
 			);
 
 			this._log(
-				`Hover provider registration notification sent for handle: ${handle}`,
+				`${providerType}Provider (handle ${handle}) registration sent to main thread.`,
 			);
 
 			return handle;
 		} catch (e: any) {
+			// Rollback local registration
 			this.#providerHandles.delete(handle);
 
 			this._logError(
-				"Failed to send hover provider registration via RPC:",
+				`RPC failed for ${providerType}Provider (handle ${handle}) registration:`,
 
 				e,
 			);
 
-			throw refineError(e, this._logService, "registerHoverProvider");
+			throw refineError(
+				e,
+
+				this._logService,
+
+				`register${providerType}Provider`,
+			);
 		}
 	}
 
-	public async $registerCompletionProvider(
+	// --- $register*Provider Methods (Called by ShimLanguages) ---
+	public $registerHoverProvider(
+		selector: DocumentSelector,
+
+		provider: HoverProvider,
+	): Promise<number> {
+		return this._doRegisterProvider("Hover", provider, selector, (h, sel) =>
+			this.#mainThreadLanguageFeaturesProxy!.$registerHoverProvider(
+				h,
+
+				sel!,
+
+				// sel cannot be null for hover
+			),
+		);
+	}
+
+	public $registerCompletionProvider(
 		selector: DocumentSelector,
 
 		provider: CompletionItemProvider,
 
 		triggerCharacters: string[],
 	): Promise<number> {
-		this._log(
-			`Registering CompletionProvider locally: selector=${JSON.stringify(selector)}, triggers=${triggerCharacters.join("")}`,
-		);
+		const supportsResolve =
+			typeof provider.resolveCompletionItem === "function";
 
-		const handle = ++this.#providerHandlePool;
+		return this._doRegisterProvider(
+			"Completion",
 
-		this.#providerHandles.set(handle, {
 			provider,
 
 			selector,
 
-			triggerCharacters,
+			(h, sel, args) =>
+				this.#mainThreadLanguageFeaturesProxy!.$registerCompletionProvider(
+					h,
 
-			type: "Completion",
-		});
+					sel!,
 
-		if (!this.#mainThreadLanguageFeaturesProxy) {
-			this.#providerHandles.delete(handle);
+					args.triggerCharacters,
 
-			throw new Error(
-				"Cannot register completion provider, RPC proxy unavailable.",
-			);
-		}
+					args.supportsResolve,
+				),
 
-		try {
-			await this.#mainThreadLanguageFeaturesProxy.$registerCompletionProvider(
-				handle,
-
-				selector,
-
-				triggerCharacters,
-			);
-
-			this._log(
-				`Completion provider registration notification sent for handle: ${handle}`,
-			);
-
-			return handle;
-		} catch (e: any) {
-			this.#providerHandles.delete(handle);
-
-			this._logError(
-				"Failed to send completion provider registration via RPC:",
-
-				e,
-			);
-
-			throw refineError(
-				e,
-
-				this._logService,
-
-				"registerCompletionProvider",
-			);
-		}
+			{ triggerCharacters, supportsResolve },
+		);
 	}
 
-	public async $registerDefinitionProvider(
+	public $registerDefinitionProvider(
 		selector: DocumentSelector,
 
 		provider: DefinitionProvider,
 	): Promise<number> {
-		this._log(
-			`Registering DefinitionProvider locally: selector=${JSON.stringify(selector)}`,
+		return this._doRegisterProvider(
+			"Definition",
+
+			provider,
+
+			selector,
+
+			(h, sel) =>
+				this.#mainThreadLanguageFeaturesProxy!.$registerDefinitionProvider(
+					h,
+
+					sel!,
+				),
+		);
+	}
+
+	public $registerCodeLensProvider(
+		selector: DocumentSelector,
+
+		provider: CodeLensProvider,
+	): Promise<number> {
+		// TODO: Handle onDidChangeCodeLenses event if provider has it. This involves creating an event emitter,
+
+		// getting a handle for it, and passing that eventHandle to the main thread.
+		// const eventHandle = provider.onDidChangeCodeLenses ? someWayToGetEventHandle(provider.onDidChangeCodeLenses) : undefined;
+
+		// Placeholder
+		const eventHandle = undefined;
+
+		if (!this.#mainThreadLanguageFeaturesProxy?.$registerCodeLensProvider) {
+			this._logWarnOnce(
+				"MainThreadLanguageFeatures.$registerCodeLensProvider not available/defined on proxy.",
+			);
+
+			// Fallback to local-only registration
+			return this._simpleLocalRegister("CodeLens", provider, selector);
+		}
+
+		return this._doRegisterProvider(
+			"CodeLens",
+
+			provider,
+
+			selector,
+
+			(h, sel) =>
+				this.#mainThreadLanguageFeaturesProxy!
+					.$registerCodeLensProvider!(h, sel!, eventHandle),
+		);
+	}
+
+	public $registerCodeActionProvider(
+		selector: DocumentSelector,
+
+		provider: CodeActionProvider,
+
+		metadata?: any /* vscode.CodeActionProviderMetadata */,
+	): Promise<number> {
+		// TODO: Convert vscode.CodeActionProviderMetadata to the DTO expected by $registerCodeActionProvider.
+		// Assuming direct pass-through for now or metadata is already DTO
+		const metadataDto = metadata;
+
+		const displayName =
+			typeof provider.displayName === "string"
+				? provider.displayName
+				: undefined;
+
+		if (
+			!this.#mainThreadLanguageFeaturesProxy?.$registerCodeActionProvider
+		) {
+			this._logWarnOnce(
+				"MainThreadLanguageFeatures.$registerCodeActionProvider not available/defined on proxy.",
+			);
+
+			return this._simpleLocalRegister(
+				"CodeAction",
+
+				provider,
+
+				selector,
+
+				metadataDto,
+			);
+		}
+
+		return this._doRegisterProvider(
+			"CodeAction",
+
+			provider,
+
+			selector,
+
+			(h, sel, args) =>
+				this.#mainThreadLanguageFeaturesProxy!
+					.$registerCodeActionProvider!(
+					h,
+
+					sel!,
+
+					args.metadataDto,
+
+					args.displayName,
+				),
+
+			{ metadataDto, displayName },
+		);
+	}
+
+	// Fallback for providers where main thread registration is not yet implemented or proxy method is missing
+	private async _simpleLocalRegister<P>(
+		type: string,
+
+		provider: P,
+
+		selector: DocumentSelector | null,
+
+		metadata?: any,
+	): Promise<number> {
+		this._logWarnOnce(
+			`Using simple local registration for ${type}Provider. Main thread notification might be missing or partial.`,
 		);
 
 		const handle = ++this.#providerHandlePool;
 
 		this.#providerHandles.set(handle, {
-			provider,
-
-			selector,
-
-			type: "Definition",
-		});
-
-		if (!this.#mainThreadLanguageFeaturesProxy) {
-			this.#providerHandles.delete(handle);
-
-			throw new Error(
-				"Cannot register definition provider, RPC proxy unavailable.",
-			);
-		}
-
-		try {
-			await this.#mainThreadLanguageFeaturesProxy.$registerDefinitionProvider(
-				handle,
-
-				selector,
-			);
-
-			this._log(
-				`Definition provider registration notification sent for handle: ${handle}`,
-			);
-
-			return handle;
-		} catch (e: any) {
-			this.#providerHandles.delete(handle);
-
-			this._logError(
-				"Failed to send definition provider registration via RPC:",
-
-				e,
-			);
-
-			throw refineError(
-				e,
-
-				this._logService,
-
-				"registerDefinitionProvider",
-			);
-		}
-	}
-
-	// --- Stubs for other registration methods ---
-
-	// (Implement fully by calling corresponding this.#mainThreadLanguageFeaturesProxy.$register... method)
-
-	private async _simpleRegister<P>(
-		type: string,
-
-		selector: DocumentSelector,
-
-		provider: P,
-
-		metadata?: any,
-	): Promise<number> {
-		this._logWarnOnce(
-			`Registration not fully implemented via RPC for: $register${type}Provider`,
-		);
-
-		const handle = ++this.#providerHandlePool;
-
-		const regData: ProviderRegistration = {
 			provider,
 
 			selector,
 
 			type,
 
-			metadata,
-		};
-
-		// Example for triggerChars for completion
-		if (type === "Completion" && metadata?.triggerCharacters) {
-			regData.triggerCharacters = metadata.triggerCharacters;
-		}
-
-		this.#providerHandles.set(handle, regData);
-
-		const mainThreadMethodName =
-			`$register${type}Provider` as keyof MainThreadLanguageFeaturesShape;
-
-		if (
-			this.#mainThreadLanguageFeaturesProxy &&
-			typeof this.#mainThreadLanguageFeaturesProxy[
-				mainThreadMethodName
-			] === "function"
-		) {
-			try {
-				// Call the specific RPC method, adapting arguments as needed
-
-				// For example, $registerCodeActionProvider might take metadata
-
-				if (
-					type === "CodeAction" &&
-					(this.#mainThreadLanguageFeaturesProxy as any)[
-						mainThreadMethodName
-					]
-				) {
-					await (this.#mainThreadLanguageFeaturesProxy as any)[
-						mainThreadMethodName
-					](handle, selector, metadata);
-				} else if (
-					type === "Completion" &&
-					(this.#mainThreadLanguageFeaturesProxy as any)[
-						mainThreadMethodName
-					]
-				) {
-					await (this.#mainThreadLanguageFeaturesProxy as any)[
-						mainThreadMethodName
-					](handle, selector, regData.triggerCharacters || []);
-				} else if (
-					(this.#mainThreadLanguageFeaturesProxy as any)[
-						mainThreadMethodName
-					]
-				) {
-					await (this.#mainThreadLanguageFeaturesProxy as any)[
-						mainThreadMethodName
-					](handle, selector);
-				}
-
-				this._log(
-					`${type}Provider registration notification potentially sent for handle: ${handle}`,
-				);
-			} catch (e: any) {
-				// Clean up if RPC failed
-				this.#providerHandles.delete(handle);
-
-				this._logError(
-					`Failed to send ${type}Provider registration via RPC:`,
-
-					e,
-				);
-
-				throw refineError(
-					e,
-
-					this._logService,
-
-					`register${type}Provider`,
-				);
-			}
-		} else {
-			this._logWarn(
-				`No RPC method ${mainThreadMethodName} on proxy, or proxy unavailable. ${type}Provider not registered on main thread.`,
-			);
-		}
+			...metadata,
+		});
 
 		return handle;
 	}
 
-	public $registerCodeLensProvider = async (
-		selector: DocumentSelector,
+	// TODO: Implement ALL other $register*Provider methods from ExtHostLanguageFeaturesServiceShape
+	// For example:
+	// public $registerDocumentLinkProvider = ...
+	// Each should call _doRegisterProvider with the correct main thread proxy method and arguments.
 
-		provider: CodeLensProvider,
-	): Promise<number> => this._simpleRegister("CodeLens", selector, provider);
-
-	public $registerCodeActionProvider = async (
-		selector: DocumentSelector,
-
-		provider: CodeActionProvider,
-
-		metadata?: any,
-	): Promise<number> =>
-		this._simpleRegister("CodeAction", selector, provider, metadata);
-
-	public $registerDocumentHighlightProvider = async (
-		selector: DocumentSelector,
-
-		provider: DocumentHighlightProvider,
-	): Promise<number> =>
-		this._simpleRegister("DocumentHighlight", selector, provider);
-
-	public $registerDocumentLinkProvider = async (
-		selector: DocumentSelector,
-
-		provider: DocumentLinkProvider,
-	): Promise<number> =>
-		this._simpleRegister("DocumentLink", selector, provider);
-
-	public $registerDocumentFormattingEditProvider = async (
-		selector: DocumentSelector,
-
-		provider: DocumentFormattingEditProvider,
-	): Promise<number> =>
-		this._simpleRegister("DocumentFormattingEdit", selector, provider);
-
-	public $registerDocumentRangeFormattingEditProvider = async (
-		selector: DocumentSelector,
-
-		provider: DocumentRangeFormattingEditProvider,
-	): Promise<number> =>
-		this._simpleRegister("DocumentRangeFormattingEdit", selector, provider);
-
-	// Pass triggers via metadata
-	public $registerOnTypeFormattingEditProvider = async (
-		selector: DocumentSelector,
-
-		provider: OnTypeFormattingEditProvider,
-
-		triggerCharacters: string[],
-	): Promise<number> =>
-		this._simpleRegister("OnTypeFormattingEdit", selector, provider, {
-			triggerCharacters,
-		});
-
-	public $registerReferenceProvider = async (
-		selector: DocumentSelector,
-
-		provider: ReferenceProvider,
-	): Promise<number> => this._simpleRegister("Reference", selector, provider);
-
-	public $registerRenameProvider = async (
-		selector: DocumentSelector,
-
-		provider: RenameProvider,
-	): Promise<number> => this._simpleRegister("Rename", selector, provider);
-
-	public $registerSignatureHelpProvider = async (
-		selector: DocumentSelector,
-
-		provider: SignatureHelpProvider,
-
-		metadata: any /* SignatureHelpProviderMetadataDto */,
-	): Promise<number> =>
-		this._simpleRegister("SignatureHelp", selector, provider, metadata);
-
-	public $registerImplementationProvider = async (
-		selector: DocumentSelector,
-
-		provider: ImplementationProvider,
-	): Promise<number> =>
-		this._simpleRegister("Implementation", selector, provider);
-
-	public $registerTypeDefinitionProvider = async (
-		selector: DocumentSelector,
-
-		provider: TypeDefinitionProvider,
-	): Promise<number> =>
-		this._simpleRegister("TypeDefinition", selector, provider);
-
-	// Selector is not applicable
-	public $registerWorkspaceSymbolProvider = async (
-		provider: WorkspaceSymbolProvider,
-	): Promise<number> =>
-		this._simpleRegister("WorkspaceSymbol", null as any, provider);
-
-	public $registerDeclarationProvider = async (
-		selector: DocumentSelector,
-
-		provider: DeclarationProvider,
-	): Promise<number> =>
-		this._simpleRegister("Declaration", selector, provider);
-
-	public $registerSelectionRangeProvider = async (
-		selector: DocumentSelector,
-
-		provider: SelectionRangeProvider,
-	): Promise<number> =>
-		this._simpleRegister("SelectionRange", selector, provider);
-
-	public $registerCallHierarchyProvider = async (
-		selector: DocumentSelector,
-
-		provider: CallHierarchyProvider,
-	): Promise<number> =>
-		this._simpleRegister("CallHierarchy", selector, provider);
-
-	public $registerTypeHierarchyProvider = async (
-		selector: DocumentSelector,
-
-		provider: TypeHierarchyProvider,
-	): Promise<number> =>
-		this._simpleRegister("TypeHierarchy", selector, provider);
-
-	public $registerLinkedEditingRangeProvider = async (
-		selector: DocumentSelector,
-
-		provider: LinkedEditingRangeProvider,
-	): Promise<number> =>
-		this._simpleRegister("LinkedEditingRange", selector, provider);
-
-	// Add InlayHints, DocumentColor, FoldingRange etc.
-
-	// --- Unregistration ---
+	// --- $unregisterProvider ---
 	public async $unregisterProvider(handle: number): Promise<void> {
-		this._log(`$unregisterProvider called: handle=${handle}`);
+		// Implementation from previous step, seems fine.
+		// Consider if unregistering a provider with an active onDidChange event emitter needs special cleanup.
+		this._log(`$unregisterProvider called for handle: ${handle}`);
 
 		const registration = this.#providerHandles.get(handle);
 
@@ -766,6 +667,8 @@ export class ShimLanguageFeatures
 			this._log(
 				`Locally unregistered provider handle: ${handle} (Type: ${registration?.type})`,
 			);
+
+			// TODO: If provider had an onDidChange event (e.g. CodeLens), dispose its emitter/subscription here.
 		} else {
 			this._logWarn(
 				`Attempted to unregister non-existent local provider handle: ${handle}`,
@@ -777,7 +680,6 @@ export class ShimLanguageFeatures
 				"Cannot send unregister request, RPC proxy unavailable.",
 			);
 
-			// Don't throw for unregister typically
 			return;
 		}
 
@@ -796,25 +698,24 @@ export class ShimLanguageFeatures
 				e,
 			);
 
-			// Log refined error but don't rethrow
 			refineError(e, this._logService, "unregisterProvider");
 		}
 	}
 
 	// --- Provider Execution Methods (Called BY Mountain via RPC) ---
 
-	private _getProviderMethod<M extends keyof P, P = any>(
+	private _getProviderAndMethod<P, M extends keyof P>(
 		handle: number,
 
 		methodName: M,
 
 		expectedType: string,
-	): P[M] | null {
+	): { provider: P; method: P[M] } | null {
 		const registration = this.#providerHandles.get(handle);
 
 		if (!registration) {
 			this._logWarn(
-				`No registration found for handle: ${handle} (expected ${expectedType})`,
+				`No registration for handle ${handle} (expected ${expectedType})`,
 			);
 
 			return null;
@@ -832,91 +733,56 @@ export class ShimLanguageFeatures
 
 		if (!provider || typeof provider[methodName] !== "function") {
 			this._logWarn(
-				`${expectedType}Provider found for handle ${handle}, but method '${String(methodName)}' is missing or not a function.`,
+				`${expectedType}Provider (handle ${handle}) method '${String(methodName)}' is missing/not function.`,
 			);
 
 			return null;
 		}
 
-		return (provider[methodName] as Function).bind(provider) as P[M];
+		return { provider, method: provider[methodName] as P[M] };
 	}
 
-	private _getDocOrLog(revivedUri: Uri | undefined): TextDocument | null {
-		if (!revivedUri) return null;
+	private _getTextDocument(uriComponents: any): TextDocument | null {
+		// uriComponents is DTO
+		// Use VscodeUri for vscode.TextDocument
+		const revivedUri = this._reviveApiArgument<VscodeUri>(uriComponents);
 
-		// Gets ShimDocumentData
+		if (!revivedUri) {
+			this._logError(
+				"Failed to revive URI for getTextDocument",
+
+				uriComponents,
+			);
+
+			return null;
+		}
+
+		// getDocument expects vscode.Uri
 		const documentData = this.#extHostDocuments.getDocument(revivedUri);
 
 		if (!documentData) {
-			this._logError(
-				`Document not found for URI: ${revivedUri.toString()}`,
-			);
+			this._logError(`Document not found: ${revivedUri.toString()}`);
 
 			return null;
 		}
 
-		// Return the vscode.TextDocument facade
+		// This is vscode.TextDocument
 		return documentData.document;
 	}
 
-	// Helper to create CancellationToken from DTO (if DTO is used)
-
-	private _createCancellationToken(
-		tokenDto: any /* ICancellationTokenDto */,
-	): CancellationToken {
-		// For MVP, if tokenDto is not complex, CancellationToken.None might suffice.
-
-		// If tokenDto has an id for a CancellationTokenSource on the main thread,
-
-		// it's more complex to proxy cancellation.
-
-		// Basic check
-		if (tokenDto && typeof tokenDto.isCancellationRequested === "boolean") {
-			// This implies tokenDto itself might be a CancellationToken-like object
-
-			// Or we need to create one that polls $isCancelled(tokenId)
-
+	// TODO: Implement proper CancellationToken creation if Mountain sends a tokenId or other DTO for it.
+	// This might involve a CancellationTokenRegistry on the ExtHost side.
+	private _getCancellationToken(tokenDto: any): CancellationToken {
+		if (tokenDto && typeof tokenDto === "object" && tokenDto.id) {
 			this._logWarnOnce(
-				"CancellationToken handling in providers is basic (uses CancellationToken.None or direct DTO properties).",
+				"CancellationToken DTO received, but full proxying not implemented. Using CancellationToken.None.",
 			);
+
+			// Example: return this.#cancellationRegistry.getToken(tokenDto.id);
 		}
 
-		// Placeholder
+		// Default if no DTO or not implemented
 		return CancellationToken.None;
-	}
-
-	// --- Revivers for RPC arguments (using base shim helpers) ---
-	protected _reviveUri(uriComponents: any): Uri | undefined {
-		return super._reviveApiArgument<Uri>(uriComponents);
-	}
-
-	protected _revivePosition(posDto: any): Position | undefined {
-		return super._reviveApiArgument<Position>(posDto);
-	}
-
-	protected _reviveRange(rangeDto: any): Range | undefined {
-		return super._reviveApiArgument<Range>(rangeDto);
-	}
-
-	protected _reviveLocation(locDto: any): Location | undefined {
-		return super._reviveApiArgument<Location>(locDto);
-	}
-
-	protected _reviveCompletionContext(
-		contextDto: any,
-	): CompletionContext | undefined {
-		// CompletionContext has triggerKind and triggerCharacter
-
-		// This might need specific revival if it's not a plain object.
-
-		if (!contextDto) return undefined;
-
-		return {
-			// Assuming these are direct properties
-			triggerKind: contextDto.triggerKind,
-
-			triggerCharacter: contextDto.triggerCharacter,
-		} as CompletionContext;
 	}
 
 	public async $provideHover(
@@ -928,43 +794,39 @@ export class ShimLanguageFeatures
 
 		tokenDto: any,
 	): Promise<Hover | undefined> {
-		this._log(`Received $provideHover request for handle ${handle}`);
-
-		const provideHoverMethod = this._getProviderMethod<
-			"provideHover",
-			HoverProvider
+		const providerInfo = this._getProviderAndMethod<
+			HoverProvider,
+			"provideHover"
 		>(handle, "provideHover", "Hover");
 
-		if (!provideHoverMethod) return undefined;
+		if (!providerInfo) return undefined;
 
-		const revivedUri = this._reviveUri(uriComponents);
+		const document = this._getTextDocument(uriComponents);
 
-		const revivedPosition = this._revivePosition(positionDto);
+		const position = this._reviveApiArgument<VscodePosition>(positionDto);
 
-		const document = this._getDocOrLog(revivedUri);
+		if (!document || !position) return undefined;
 
-		if (!document || !revivedPosition) return undefined;
-
-		const token = this._createCancellationToken(tokenDto);
+		const token = this._getCancellationToken(tokenDto);
 
 		try {
-			const result = await provideHoverMethod(
+			const result = await providerInfo.method.call(
+				providerInfo.provider,
+
 				document,
 
-				revivedPosition,
+				position,
 
 				token,
 			);
 
-			this._log(
-				`HoverProvider result received for handle ${handle}: ${result ? "{...Hover...}" : result}`,
-			);
+			// this._log(`HoverProvider (handle ${handle}) result: ${result ? "Hover" : "undefined"}`);
 
-			// Marshal result for sending back
+			// Marshal result
 			return this._convertApiArgToInternal(result);
 		} catch (err: any) {
 			this._logError(
-				`Error executing provideHover for handle ${handle}:`,
+				`Error executing provideHover (handle ${handle}):`,
 
 				err,
 			);
@@ -984,49 +846,43 @@ export class ShimLanguageFeatures
 
 		tokenDto: any,
 	): Promise<CompletionList | CompletionItem[] | undefined> {
-		this._log(
-			`Received $provideCompletionItems request for handle ${handle}`,
-		);
-
-		const provideItemsMethod = this._getProviderMethod<
-			"provideCompletionItems",
-			CompletionItemProvider
+		const providerInfo = this._getProviderAndMethod<
+			CompletionItemProvider,
+			"provideCompletionItems"
 		>(handle, "provideCompletionItems", "Completion");
 
-		if (!provideItemsMethod) return undefined;
+		if (!providerInfo) return undefined;
 
-		const revivedUri = this._reviveUri(uriComponents);
+		const document = this._getTextDocument(uriComponents);
 
-		const revivedPosition = this._revivePosition(positionDto);
+		const position = this._reviveApiArgument<VscodePosition>(positionDto);
 
-		const revivedContext = this._reviveCompletionContext(contextDto);
+		// TODO: Ensure CompletionContext revival is correct
+		const context = this._reviveApiArgument<CompletionContext>(contextDto);
 
-		const document = this._getDocOrLog(revivedUri);
+		if (!document || !position || !context) return undefined;
 
-		if (!document || !revivedPosition || !revivedContext) return undefined;
-
-		const token = this._createCancellationToken(tokenDto);
+		const token = this._getCancellationToken(tokenDto);
 
 		try {
-			const result = await provideItemsMethod(
+			const result = await providerInfo.method.call(
+				providerInfo.provider,
+
 				document,
 
-				revivedPosition,
+				position,
+
+				context,
 
 				token,
-
-				revivedContext,
 			);
 
-			this._log(
-				`CompletionProvider result received for handle ${handle}`,
-			);
+			// this._log(`CompletionProvider (handle ${handle}) result: ${result ? (Array.isArray(result) ? result.length + " items" : "CompletionList") : "undefined"}`);
 
-			// Marshal CompletionList or CompletionItem[]
 			return this._convertApiArgToInternal(result);
 		} catch (err: any) {
 			this._logError(
-				`Error executing provideCompletionItems for handle ${handle}:`,
+				`Error executing provideCompletionItems (handle ${handle}):`,
 
 				err,
 			);
@@ -1042,58 +898,61 @@ export class ShimLanguageFeatures
 
 		tokenDto: any,
 	): Promise<CompletionItem | undefined> {
-		this._log(
-			`Received $resolveCompletionItem request for handle ${handle}`,
-		);
-
-		const resolveMethod = this._getProviderMethod<
-			"resolveCompletionItem",
-			CompletionItemProvider
+		const providerInfo = this._getProviderAndMethod<
+			CompletionItemProvider,
+			"resolveCompletionItem"
 		>(handle, "resolveCompletionItem", "Completion");
 
-		if (!resolveMethod) {
-			// If provider doesn't have resolve, return the original item DTO (already marshalled by main thread)
-
+		// If provider or resolveCompletionItem method doesn't exist, VS Code often returns the original (unresolved) item.
+		if (!providerInfo?.method) {
 			this._logWarn(
-				`No CompletionItemProvider.resolveCompletionItem found for handle ${handle}, returning original item DTO.`,
+				`No resolveCompletionItem method for handle ${handle}. Returning unrevived DTO or revived item if possible.`,
 			);
 
-			// itemDto is already the marshalled form from main thread
+			// itemDto is from main thread, potentially already marshalled. If we need to return it, it should be as is.
+			// Or, if it was a *revived* item initially sent from ext host, then revive it.
+			// The contract here is tricky. Let's assume itemDto is what main thread sent (marshalled).
+			// Return DTO as is if no resolver
 			return itemDto;
 		}
 
-		const token = this._createCancellationToken(tokenDto);
+		const itemToResolve = this._reviveApiArgument<CompletionItem>(itemDto);
+
+		if (!itemToResolve) {
+			this._logError(
+				`Failed to revive CompletionItem DTO for resolve (handle ${handle}):`,
+
+				itemDto,
+			);
+
+			// Return original DTO
+			return itemDto;
+		}
+
+		const token = this._getCancellationToken(tokenDto);
 
 		try {
-			// Revive the item DTO to a vscode.CompletionItem instance for the provider
+			const result = await providerInfo.method.call(
+				providerInfo.provider,
 
-			const revivedItem =
-				this._reviveApiArgument<CompletionItem>(itemDto);
+				itemToResolve,
 
-			if (!revivedItem) {
-				this._logError(
-					`Failed to revive CompletionItem DTO for handle ${handle}`,
-				);
+				token,
+			);
 
-				// Return original DTO on revival failure
-				return itemDto;
-			}
+			// this._log(`resolveCompletionItem (handle ${handle}) result: ${result ? "Resolved Item" : "undefined"}`);
 
-			const result = await resolveMethod(revivedItem, token);
-
-			this._log(`CompletionItem resolved for handle ${handle}`);
-
-			// Marshal resolved CompletionItem
 			return this._convertApiArgToInternal(result);
 		} catch (err: any) {
 			this._logError(
-				`Error executing resolveCompletionItem for handle ${handle}:`,
+				`Error executing resolveCompletionItem (handle ${handle}):`,
 
 				err,
 			);
 
-			// Return original DTO on error
-			return itemDto;
+			// On error, VS Code might return the original unresolved item.
+			// Marshal the *revived but unresolved* item
+			return this._convertApiArgToInternal(itemToResolve);
 		}
 	}
 
@@ -1105,44 +964,37 @@ export class ShimLanguageFeatures
 		positionDto: any,
 
 		tokenDto: any,
-	): Promise<Definition | Definition[] | undefined> {
-		this._log(`Received $provideDefinition request for handle ${handle}`);
-
-		const provideDefMethod = this._getProviderMethod<
-			"provideDefinition",
-			DefinitionProvider
+	): Promise<Definition | DefinitionLink[] | undefined> {
+		const providerInfo = this._getProviderAndMethod<
+			DefinitionProvider,
+			"provideDefinition"
 		>(handle, "provideDefinition", "Definition");
 
-		if (!provideDefMethod) return undefined;
+		if (!providerInfo) return undefined;
 
-		const revivedUri = this._reviveUri(uriComponents);
+		const document = this._getTextDocument(uriComponents);
 
-		const revivedPosition = this._revivePosition(positionDto);
+		const position = this._reviveApiArgument<VscodePosition>(positionDto);
 
-		const document = this._getDocOrLog(revivedUri);
+		if (!document || !position) return undefined;
 
-		if (!document || !revivedPosition) return undefined;
-
-		const token = this._createCancellationToken(tokenDto);
+		const token = this._getCancellationToken(tokenDto);
 
 		try {
-			const result = await provideDefMethod(
+			const result = await providerInfo.method.call(
+				providerInfo.provider,
+
 				document,
 
-				revivedPosition,
+				position,
 
 				token,
 			);
 
-			this._log(
-				`DefinitionProvider result received for handle ${handle}`,
-			);
-
-			// Marshal Location | Location[] | DefinitionLink[]
 			return this._convertApiArgToInternal(result);
 		} catch (err: any) {
 			this._logError(
-				`Error executing provideDefinition for handle ${handle}:`,
+				`Error executing provideDefinition (handle ${handle}):`,
 
 				err,
 			);
@@ -1151,8 +1003,43 @@ export class ShimLanguageFeatures
 		}
 	}
 
-	// --- Stubs for other provider execution methods ---
+	// TODO: Implement ALL other $provide* and $resolve* methods from ExtHostLanguageFeaturesServiceShape.
+	// Each will follow a similar pattern:
+	// 1. Get provider method using _getProviderAndMethod.
+	// 2. Get TextDocument if URI is an argument.
+	// 3. Revive arguments (Position, Range, Context objects, specific DTOs) using _reviveApiArgument.
+	// 4. Get CancellationToken.
+	// 5. Call the provider method within a try/catch.
+	// 6. Marshal the result using _convertApiArgToInternal.
+	// Example stubs for remaining:
+	public async $provideCodeLenses(
+		handle: number,
 
+		uriComponents: any,
+
+		tokenDto: any,
+	): Promise<CodeLens[] | undefined> {
+		this._logWarnOnce(`$provideCodeLenses for handle ${handle} - STUBBED`);
+
+		return undefined;
+	}
+
+	public async $resolveCodeLens(
+		handle: number,
+
+		codeLensDto: any,
+
+		tokenDto: any,
+	): Promise<CodeLens | undefined> {
+		this._logWarnOnce(`$resolveCodeLens for handle ${handle} - STUBBED`);
+
+		// Basic: return revived DTO
+		return this._reviveApiArgument(codeLensDto);
+	}
+
+	// ... and so on for DocumentLinks, CodeActions, Highlights, Formatting, References, Rename, SignatureHelp, etc.
+
+	// These were in original JS, ensure they are on ExtHostLanguageFeaturesServiceShape if still used
 	public async $resolveDocumentLink(
 		handle: number,
 
@@ -1163,8 +1050,6 @@ export class ShimLanguageFeatures
 		this._logWarnOnce(
 			`Provider execution not implemented: $resolveDocumentLink (handle: ${handle})`,
 		);
-
-		// Revive linkDto to DocumentLink, call provider.resolveDocumentLink, marshal result
 
 		// Basic: return revived DTO if no resolve
 		return this._reviveApiArgument(linkDto);
@@ -1184,22 +1069,5 @@ export class ShimLanguageFeatures
 		return this._reviveApiArgument(symbolDto);
 	}
 
-	public async $resolveCodeLens(
-		handle: number,
-
-		codeLensDto: any,
-
-		tokenDto: any,
-	): Promise<any | undefined> {
-		this._logWarnOnce(
-			`Provider execution not implemented: $resolveCodeLens (handle: ${handle})`,
-		);
-
-		return this._reviveApiArgument(codeLensDto);
-	}
-
-	// TODO: Implement other $provide* and $resolve* methods similarly.
+	// BaseCocoonShim's _convertApiArgToInternal and _reviveApiArgument are used for marshalling.
 }
-
-// Class is already exported
-// export { ShimLanguageFeatures };
