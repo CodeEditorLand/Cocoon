@@ -16,7 +16,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 // Assuming fs-shim.ts has a default export for the shim object
-import type { Uri as VscodeUri } from "vscode"; // For parentUri type, assuming from vscode API
+// For parentUri type, assuming from vscode API
+import type { Uri as VscodeUri } from "vscode";
 
 import fsShimInstance from "./fs-shim";
 
@@ -40,7 +41,9 @@ export interface INodeModuleFactory {
 	 */
 	load(
 		request: string,
+
 		parentUri: VscodeUri | undefined,
+
 		originalLoad: (request: string) => any,
 	): any;
 
@@ -52,18 +55,24 @@ export interface INodeModuleFactory {
 }
 
 export class FsModuleShimFactory implements INodeModuleFactory {
-	public readonly nodeModuleName: string = "fs"; // This factory specifically handles "fs"
+	// This factory specifically handles "fs"
+	public readonly nodeModuleName: string = "fs";
 
 	public load(
-		request: string, // Will be "fs" due to nodeModuleName
+		// Will be "fs" due to nodeModuleName
+		request: string,
+
 		parentUri: VscodeUri | undefined,
-		originalLoad: (request: string) => any, // Not used by this specific factory, but part of interface
+
+		// Not used by this specific factory, but part of interface
+		originalLoad: (request: string) => any,
 	): any {
 		// Should return the 'fs' module shim (the default export of fs-shim.ts)
 		// Log the interception, including the requesting module if available
 		const requester = parentUri
 			? parentUri.fsPath || parentUri.toString()
 			: "unknown module";
+
 		console.log(
 			`[Cocoon FS Factory] Intercepted require('fs') from ${requester}. Providing fs-shim.`,
 		);

@@ -1,1 +1,1 @@
-import"../Shim/out/vscode";import*as e from"./fs-shim.js";class d{get nodeModuleName(){return"fs"}load(n,o,t){return e}}export{d as FsModuleShimFactory};
+import o from"./fs-shim.js";class d{nodeModuleName="fs";load(n,e,t){const i=e?e.fsPath||e.toString():"unknown module";return o}}export{d as FsModuleShimFactory};
