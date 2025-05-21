@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Base Shim (_baseShim.ts) // Header: Seems correct and matches original intent.
+ * Cocoon Base Shim (_baseShim.ts)
  * --------------------------------------------------------------------------------------------
  * Provides a base class for Cocoon shims, offering common functionality:
  * - Consistent logging with service identifiers (using injected `ILogService`).
@@ -23,15 +23,16 @@
 
 import { EventEmitter } from "events";
 // For NOP event emitter type safety; Needs event code bundled
-import { IDisposable, Event as VscodeEvent } from "vs/base/common/event"; // Renamed to avoid conflict with DOM Event
-
+// Renamed to avoid conflict with DOM Event
+import { IDisposable, Event as VscodeEvent } from "vs/base/common/event";
 // Core revival function; Needs marshalling code bundled
-import { revive } from "vs/base/common/marshalling"; // Assuming this is a function: (data: any, context?: any) => any
-
+// Assuming this is a function: (data: any, context?: any) => any
+import { revive } from "vs/base/common/marshalling";
 // Assuming these are classes or interfaces
 
 // Needs marshalling code bundled
-import { MarshalledId } from "vs/base/common/marshallingIds"; // Assuming this is an enum or const object
+// Assuming this is an enum or const object
+import { MarshalledId } from "vs/base/common/marshallingIds";
 
 // Import direct IPC functions (use sparingly, prefer RPC proxies)
 import {
@@ -61,14 +62,17 @@ export interface ILogService {
 
 	warn(message: string, ...args: any[]): void;
 
-	error(message: string | Error, ...args: any[]): void; // Allow Error type for message
+	// Allow Error type for message
+	error(message: string | Error, ...args: any[]): void;
 	// Add other methods if used: debug, critical, flush, dispose, onDidChangeLogLevel, getLogLevel, setLevel
 }
 
 export interface ProxyIdentifier<T> {
 	// T is the type of the service being proxied
-	sid: string; // Service identifier string
-	nid?: number; // Optional numeric id, common in VS Code ProxyIdentifier
+	// Service identifier string
+	sid: string;
+	// Optional numeric id, common in VS Code ProxyIdentifier
+	nid?: number;
 }
 
 export interface IExtHostRpcService {
@@ -85,10 +89,12 @@ interface IStructuredError {
 
 	code?: string | number;
 
-	errno?: number; // POSIX error number
+	// POSIX error number
+	errno?: number;
 	syscall?: string;
 
-	// stack?: string; // Not typically part of the message JSON, but could be
+	// Not typically part of the message JSON, but could be
+	// stack?: string;
 }
 
 /**
@@ -119,7 +125,8 @@ export function refineError(
 
 		if (
 			(trimmedMessage.startsWith("{") && trimmedMessage.endsWith("}")) ||
-			(trimmedMessage.startsWith("[") && trimmedMessage.endsWith("]")) // Though array errors are less common as top-level
+			// Though array errors are less common as top-level
+			(trimmedMessage.startsWith("[") && trimmedMessage.endsWith("]"))
 		) {
 			structuredErrorPayload = JSON.parse(
 				trimmedMessage,
@@ -129,7 +136,8 @@ export function refineError(
 		logService?.trace(
 			`[RefineError][${context}] Failed to parse error message as JSON:`,
 
-			e.message || e, // Log error message
+			// Log error message
+			e.message || e,
 		);
 
 		return originalError;
@@ -176,7 +184,8 @@ export function refineError(
 }
 
 export class BaseCocoonShim {
-	public readonly _serviceBrand: undefined; // Required by VSCode DI/type system
+	// Required by VSCode DI/type system
+	public readonly _serviceBrand: undefined;
 
 	readonly #serviceIdentifier: string;
 
@@ -187,7 +196,9 @@ export class BaseCocoonShim {
 	readonly #warnOnceMessages = new Set<string>();
 
 	constructor(
-		serviceIdentifier: string | symbol, // Usually a string
+		// Usually a string
+		serviceIdentifier: string | symbol,
+
 		rpcService: IExtHostRpcService | undefined,
 
 		logService: ILogService | undefined,
@@ -275,7 +286,8 @@ export class BaseCocoonShim {
 
 	protected _logError(message: string | Error, ...args: any[]): void {
 		if (this.#logService) {
-			this.#logService.error(message, ...args); // Pass message directly
+			// Pass message directly
+			this.#logService.error(message, ...args);
 		} else {
 			if (message instanceof Error) {
 				console.error(
@@ -369,10 +381,12 @@ export class BaseCocoonShim {
 			this._logError(
 				`Error in direct IPC request '${mountainMethod}':`,
 
-				refined, // Log the refined/created error
+				// Log the refined/created error
+				refined,
 			);
 
-			throw refined; // Rethrow refined/created error
+			// Rethrow refined/created error
+			throw refined;
 		}
 	}
 
@@ -404,7 +418,9 @@ export class BaseCocoonShim {
 		try {
 			if (arg instanceof Uri) {
 				return {
-					$mid: MarshalledId.UriSimple, // TODO: Confirm if UriSimple is always appropriate or if full Uri marshalling is needed sometimes.
+					// TODO: Confirm if UriSimple is always appropriate or if full Uri marshalling is needed sometimes.
+					$mid: MarshalledId.UriSimple,
+
 					scheme: arg.scheme,
 
 					authority: arg.authority,
@@ -415,7 +431,8 @@ export class BaseCocoonShim {
 
 					fragment: arg.fragment,
 
-					// external: arg.toString(true), fsPath: arg.fsPath // Consider if these are needed by main thread
+					// Consider if these are needed by main thread
+					// external: arg.toString(true), fsPath: arg.fsPath
 				};
 			}
 
@@ -510,7 +527,8 @@ export class BaseCocoonShim {
 		if (arg === undefined || arg === null) return arg;
 
 		try {
-			return revive(arg, context); // Pass context if available/needed by revive
+			// Pass context if available/needed by revive
+			return revive(arg, context);
 		} catch (e: any) {
 			this._logError("Failed to revive argument/result:", arg, e);
 
@@ -521,7 +539,8 @@ export class BaseCocoonShim {
 	protected _createEventEmitter(): EventEmitter {
 		const emitter = new EventEmitter();
 
-		// emitter.setMaxListeners(20); // Default is 10, increase if many listeners are expected per emitter.
+		// Default is 10, increase if many listeners are expected per emitter.
+		// emitter.setMaxListeners(20);
 		return emitter;
 	}
 
