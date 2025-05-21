@@ -72,7 +72,7 @@ import {
 
 // Assuming API objects from 'vscode' shim
 // Access to Vine IPC layer
-import * as ipc from "../cocoon-ipc";
+import * as ipc from "..";
 import {
 	BaseCocoonShim,
 	IExtHostRpcService,

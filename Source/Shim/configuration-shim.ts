@@ -43,7 +43,7 @@ import { Event as VscodeEvent } from "vs/base/common/event";
 import { MainContext } from "vs/workbench/api/common/extHost.protocol";
 
 // Assuming cocoon-ipc exports onConfigurationChanged
-import * as ipc from "../cocoon-ipc";
+import * as ipc from "..";
 // Assuming this is a class or interface
 import { Uri } from "../Shim/out/vscode";
 import {

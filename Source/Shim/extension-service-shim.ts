@@ -71,7 +71,7 @@ import {
 import { checkProposedApiEnabled } from "vs/workbench/services/extensions/common/extensions";
 
 // For reporting activation status
-import { sendNotificationToMountain } from "../cocoon-ipc";
+import { sendNotificationToMountain } from "..";
 // Assume shimmed or real vscode.Uri
 import { Uri } from "../Shim/out/vscode";
 // IExtHostRpcService not directly used by this shim's constructor

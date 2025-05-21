@@ -3,7 +3,7 @@
 import * as nodeOs from "node:os";
 
 // Assuming typed: (method: string, params: any, timeout?: number) => Promise<any>
-import { sendToMountainAndWait } from "../cocoon-ipc";
+import { sendToMountainAndWait } from "..";
 
 // Define the shape of the os shim based on Node.js os module
 // This is a subset; a full os module has many more functions.

@@ -84,7 +84,7 @@ import {
 } from "vscode";
 
 // For IPC events
-import * as ipc from "../cocoon-ipc";
+import * as ipc from "..";
 import {
 	BaseCocoonShim,
 	IExtHostRpcService,

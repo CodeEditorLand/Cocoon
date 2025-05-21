@@ -39,7 +39,7 @@ import {
 	sendNotificationToMountain,
 	sendToMountainAndWait,
 	// Adjust path as needed
-} from "../cocoon-ipc";
+} from "..";
 // Assume VS Code API types are available (might require specific imports based on bundling)
 // For the purpose of this conversion, we'll assume these types are correctly imported.
 // If these are shimmed versions, their definitions would be in '../Shim/out/vscode'.

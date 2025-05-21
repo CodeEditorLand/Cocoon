@@ -4,7 +4,7 @@ import { Buffer } from "buffer";
 import * as nodeFsConstants from "node:fs";
 
 // Assuming typed: (method: string, params: any, timeout?: number) => Promise<any>
-import { sendToMountainAndWait } from "../cocoon-ipc";
+import { sendToMountainAndWait } from "..";
 
 /*---------------------------------------------------------------------------------------------
  * Cocoon Node 'fs' Shim (shims/fs-shim.ts)

@@ -33,7 +33,7 @@ import {
 import { SecretStorageChangeEvent } from "vscode";
 
 // Assuming typed: (method: string | { method: string; params: any }, paramsOrTimeout?: any, timeout?: number) => Promise<any>
-import { sendToMountainAndWait } from "../cocoon-ipc";
+import { sendToMountainAndWait } from "..";
 // For constructor, though not directly used in methods
 import { IExtHostRpcService } from "./_baseShim";
 
