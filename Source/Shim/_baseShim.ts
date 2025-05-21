@@ -64,6 +64,7 @@ export interface ILogService {
 
 	// Allow Error type for message
 	error(message: string | Error, ...args: any[]): void;
+
 	// Add other methods if used: debug, critical, flush, dispose, onDidChangeLogLevel, getLogLevel, setLevel
 }
 
@@ -71,6 +72,7 @@ export interface ProxyIdentifier<T> {
 	// T is the type of the service being proxied
 	// Service identifier string
 	sid: string;
+
 	// Optional numeric id, common in VS Code ProxyIdentifier
 	nid?: number;
 }
@@ -91,6 +93,7 @@ interface IStructuredError {
 
 	// POSIX error number
 	errno?: number;
+
 	syscall?: string;
 
 	// Not typically part of the message JSON, but could be
@@ -541,6 +544,7 @@ export class BaseCocoonShim {
 
 		// Default is 10, increase if many listeners are expected per emitter.
 		// emitter.setMaxListeners(20);
+
 		return emitter;
 	}
 
