@@ -1,0 +1,1 @@
+import"../Shim/out/vscode";class o{_serviceBrand;constructor(r){}transformIncoming(r){return r}transformOutgoing(r){return r}transformOutgoingURI(r){return r}transformOutgoingScheme(r){return r}}export{o as ShimUriTransformerService};
