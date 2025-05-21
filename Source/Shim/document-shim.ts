@@ -228,7 +228,7 @@ class ShimDocumentService
 			);
 		}
 
-		if (this._rpcService) { 
+		if (this._rpcService) {
 			try {
 				this._rpcService.set(
 					ExtHostContext.ExtHostDocuments as ProxyIdentifier<ExtHostDocumentsShape>,
@@ -1483,4 +1483,5 @@ export class ShimDocumentData {
 // Original JS way
 // module.exports = { ShimDocumentService, ShimDocumentData };
 
-export { ShimDocumentService, ShimDocumentData };
+// export { ShimDocumentService, ShimDocumentData };
+export { ShimDocumentService };
