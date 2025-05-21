@@ -142,8 +142,6 @@ import { ShimExtHostTerminalService } from "./shims/terminal-service-shim";
 import { ShimUriTransformerService } from "./shims/uri-transformer-shim";
 import { ShimExtHostWorkspace } from "./shims/workspace-shim";
 
-// --- START OF FILE index.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Bootstrap Entry Point (index.ts)
  * --------------------------------------------------------------------------------------------
@@ -857,9 +855,6 @@ ipc.sendNotificationToMountain("extHostReadyForInit", {});
 
 console.log("[Cocoon] Ready for init command from Mountain.");
 
-// Ukrainian "встановіть" -> "install"
 // ErrorHandler.installEarlyHandler(errorHandler, instantiationService);
 
 // ErrorHandler.installFullHandler(errorHandler, instantiationService);
-
-// --- END OF FILE index.ts ---

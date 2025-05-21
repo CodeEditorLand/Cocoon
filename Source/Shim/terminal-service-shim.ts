@@ -1,5 +1,3 @@
-// --- START OF FILE terminal-service-shim.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Terminal Service Shim (shims/terminal-service-shim.ts)
  * --------------------------------------------------------------------------------------------
@@ -986,4 +984,3 @@ export class ShimExtHostTerminalService
 // export { ShimExtHostTerminalService, ShimTerminalImpl as ShimTerminal, ShimEnvironmentVariableCollectionImpl as ShimEnvironmentVariableCollection };
 
 // Classes are already exported.
-// --- END OF FILE terminal-service-shim.ts ---
