@@ -1,56 +1,123 @@
-// Assuming Uri type from vscode shim or actual API
-import { Uri } from "../Shim/out/vscode";
+/*---------------------------------------------------------------------------------------------
+ // Header: Added basic header 
+* Cocoon URI Transformer Shim (uri-transformer-shim.ts)
+ * --------------------------------------------------------------------------------------------
+ * Provides a shim for the `IURITransformerService`. This service is crucial in
+ * VS Code environments that involve remote connections or different URI schemes
+ * (e.g., 'file' vs. 'vscode-remote'). It translates URIs between the extension host's
+ * perspective and the main thread's/renderer's perspective.
+ *
+ * For a local-only Cocoon MVP, this shim typically acts as a NO-OP, as URI
+ * transformations are not usually required.
+ *
+ * Responsibilities:
+ * - Implementing the `IURITransformerService` (or `IURITransformer`) interface.
+ * - Providing `transformIncoming`, `transformOutgoing`, etc., methods.
+ * - In a NO-OP implementation, these methods return the input URI/scheme unchanged.
+ *
+ * Key Interactions:
+ * - Used by various ExtHost services when URIs are passed over RPC to ensure they are
+ *   in the correct format for the receiving end.
+ * - Registered with DI in `index.ts`.
+ *--------------------------------------------------------------------------------------------*/
 
-// Define the IUriTransformer interface based on VS Code's common usage.
-// This would typically be part of VS Code's platform services.
-export interface IUriTransformer {
-	transformIncoming(uri: Uri): Uri;
+// Use vscode.Uri from the API shim
+import { Uri as VscodeUri } from "../Shim/out/vscode";
 
-	transformOutgoing(uri: Uri): Uri;
+// IURITransformerService or IURITransformer should ideally be imported from VS Code's type definitions
+// e.g., import { IURITransformerService, IURITransformer } from 'vs/workbench/api/common/extHostUriTransformerService';
 
-	// Often an alias or specific version
-	transformOutgoingURI(uri: Uri): Uri;
+// or from 'vs/base/common/uriIpc.d.ts' for IURITransformer
+// If not available, define it locally.
+
+// --- Type Definitions ---
+
+// TODO: If IURITransformer/IURITransformerService is not imported from VS Code types,
+// ensure this local definition matches the actual interface.
+// IURITransformer is often a simpler interface with just the transform methods.
+// IURITransformerService might be the service ID for DI and could be more complex.
+export interface ILocalUriTransformer {
+	// A common shape for a URI transformer
+	transformIncoming(uri: VscodeUri): VscodeUri;
+
+	transformOutgoing(uri: VscodeUri): VscodeUri;
+
+	// Often returns string for direct use
+	transformOutgoingToString(uri: VscodeUri): string;
 
 	transformOutgoingScheme(scheme: string): string;
 }
 
-// Basic URI Transformer Shim (No-op for local MVP)
-export class ShimUriTransformerService implements IUriTransformer {
-	// _serviceBrand is typical for VS Code services registered with DI,
-	// but this shim might be directly instantiated if it's very simple.
-	public readonly _serviceBrand: undefined;
+// The service itself might be IURITransformerService which could just be the transformer
+// or a more complex service object.
+export interface ILocalUriTransformerService extends ILocalUriTransformer {
+	readonly _serviceBrand: undefined;
 
-	// The `authority` parameter was in the original JS constructor but marked as unused.
-	// If it were used, it would typically be for scenarios involving remote connections
-	// to determine if a URI needs transformation (e.g., from local 'file' to 'vscode-remote').
-	constructor(authority?: string /* Unused in this no-op shim */) {
-		// console.log(`[Cocoon URI Transformer Shim] Initialized. Authority: ${authority || 'none'}`);
-	}
-
-	public transformIncoming(uri: Uri): Uri {
-		// No-op: In a local-only scenario, incoming URIs usually don't need transformation.
-		// If this were handling URIs from a remote source, it might convert them here.
-		return uri;
-	}
-
-	public transformOutgoing(uri: Uri): Uri {
-		// No-op: In a local-only scenario, outgoing URIs usually don't need transformation.
-		// If sending URIs to a remote target, it might convert 'file' to 'vscode-remote' scheme, etc.
-		return uri;
-	}
-
-	public transformOutgoingURI(uri: Uri): Uri {
-		// Often an alias for transformOutgoing or a slightly different transformation logic.
-		// For this no-op shim, it's the same.
-		return uri;
-	}
-
-	public transformOutgoingScheme(scheme: string): string {
-		// No-op: In a local-only scenario, schemes typically don't change.
-		// For remotes, 'file' might become 'vscode-remote'.
-		return scheme;
-	}
+	// Potentially other methods if the service is more than just a transformer object.
 }
 
-// Class is already exported
-// export { ShimUriTransformerService };
+export class ShimUriTransformerService implements ILocalUriTransformerService {
+	// For DI service registration
+	public readonly _serviceBrand: undefined;
+
+	// Store if needed for actual transformations
+	private readonly remoteAuthority?: string;
+
+	constructor(remoteAuthority?: string) {
+		this.remoteAuthority = remoteAuthority;
+
+		// In a real transformer, `remoteAuthority` would be crucial for determining
+		// how to transform URIs (e.g., from 'file' to 'vscode-remote://<authority>/').
+		// console.log(`[Cocoon URI Transformer Shim] Initialized. Remote Authority: ${this.remoteAuthority || 'none (local)'}. This shim is currently a NO-OP.`);
+	}
+
+	/**
+	 * Transforms a URI coming from the main thread/renderer to the extension host's perspective.
+	 */
+	public transformIncoming(uri: VscodeUri): VscodeUri {
+		// NO-OP for local MVP.
+		// If `this.remoteAuthority` was set and `uri.scheme === 'vscode-remote'` and `uri.authority === this.remoteAuthority`,
+		// it might transform to a local 'file' URI or a mapped path.
+		return uri;
+	}
+
+	/**
+	 * Transforms a URI from the extension host's perspective to what the main thread/renderer expects.
+	 */
+	public transformOutgoing(uri: VscodeUri): VscodeUri {
+		// NO-OP for local MVP.
+		// If `this.remoteAuthority` was set and `uri.scheme === 'file'`,
+		// it might transform to `vscode-remote://${this.remoteAuthority}${uri.path}`.
+		return uri;
+	}
+
+	/**
+	 * Alias for `transformOutgoing` that explicitly returns a string. Useful for RPC.
+	 * VS Code's `IURITransformer` often has this.
+	 */
+	public transformOutgoingToString(uri: VscodeUri): string {
+		// Convert the (potentially transformed) URI to string
+		return this.transformOutgoing(uri).toString();
+	}
+
+	/**
+	 * Transforms an outgoing URI scheme.
+	 */
+	public transformOutgoingScheme(scheme: string): string {
+		// NO-OP for local MVP.
+		// If `this.remoteAuthority` was set and `scheme === 'file'`, it might return 'vscode-remote'.
+		return scheme;
+	}
+
+	// The original JS shim had `transformOutgoingURI` which is often an alias for `transformOutgoing`.
+	// I've kept `transformOutgoing` and added `transformOutgoingToString` which is more common in IURITransformer.
+	// If `transformOutgoingURI` is specifically needed by some VS Code internal that this shim provides for,
+	// it can be added as an alias:
+	// public transformOutgoingURI(uri: VscodeUri): VscodeUri {
+
+	//    return this.transformOutgoing(uri);
+
+	// }
+}
+
+// --- END OF FILE uri-transformer-shim.ts ---

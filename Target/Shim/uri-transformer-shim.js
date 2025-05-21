@@ -1,1 +1,1 @@
-import"../Shim/out/vscode";class o{_serviceBrand;constructor(r){}transformIncoming(r){return r}transformOutgoing(r){return r}transformOutgoingURI(r){return r}transformOutgoingScheme(r){return r}}export{o as ShimUriTransformerService};
+import"../Shim/out/vscode";class n{_serviceBrand;remoteAuthority;constructor(r){this.remoteAuthority=r}transformIncoming(r){return r}transformOutgoing(r){return r}transformOutgoingToString(r){return this.transformOutgoing(r).toString()}transformOutgoingScheme(r){return r}}export{n as ShimUriTransformerService};
