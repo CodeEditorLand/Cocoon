@@ -7,285 +7,234 @@
  *
  * Responsibilities:
  * - Implementing methods matching the `vscode.FileSystem` interface (`stat`, `readFile`,
- *
- *
  *   `writeFile`, `readDirectory`, `createDirectory`, `delete`, `rename`, `copy`, `isWritableFileSystem`).
  * - Proxying each API call to a corresponding handler in Mountain using dedicated
- *   `workspacefs_*` method names via direct Vine IPC (`_ipcRequestResponse`) or potentially
- *   an RPC proxy if available.
+ *   `workspacefs_*` method names via direct Vine IPC (`_ipcRequestResponse`).
  * - Converting arguments (e.g., `vscode.Uri` to `UriComponents`, `Uint8Array` to base64)
- *   into the format expected by the Mountain handlers.
+ *   into the format expected by the Mountain handlers using BaseCocoonShim helpers.
  * - Converting results received from Mountain back into the format expected by the API
  *   (e.g., base64 to `Uint8Array` for `readFile`, stat structure, directory entry format).
  * - Handling errors returned by Mountain and converting them into appropriate
- *   `vscode.FileSystemError` instances (e.g., `FileNotFound`, `NoPermissions`).
- * - Providing basic implementation or stubs for file events (`onDidChangeFile`, etc.).
+ *   `vscode.FileSystemError` instances.
+ * - Providing stubs for file events (`onDidChangeFile`, etc.) which would require
+ *   notifications from Mountain to be fully implemented.
  *
  * Key Interactions:
- * - Provides the `vscode.workspace.fs` API object (integrated via `createApiFactory` in `index.js`).
- * - Uses `_ipcRequestResponse` from `_baseShim.js` to call `workspacefs_*` handlers in Mountain.
+ * - Provides the `vscode.workspace.fs` API object (integrated via `createApiFactory` in `index.ts`).
+ * - Uses `_ipcRequestResponse` from `_baseShim.ts` to call `workspacefs_*` handlers in Mountain.
  * - Handles data serialization/deserialization (URIs, base64 buffers).
  * - Converts error codes/messages into `vscode.FileSystemError`.
  * - Relies on bundled VS Code types (`Uri`, `FileType`, `FileSystemError`, `VSBuffer`).
  *--------------------------------------------------------------------------------------------*/
 
-// Assume API objects available, imported from 'vscode'
-// Needs bundling
-import { VSBuffer } from "vs/base/common/buffer";
+// Assume API objects available, imported from 'vscode' shim
+import { VSBuffer } from "vs/base/common/buffer"; // Needs bundling
+
 import {
-	FilePermission,
+	Emitter as VscodeEmitter,
+	Event as VscodeEvent,
+} from "vs/base/common/event";
+// For event types
+import {
+	FilePermission, // For FileStat.permissions
 	FileStat,
 	FileSystemError,
+	FileSystemProviderCapabilities, // For isWritableFileSystem, though not fully used
 	FileType,
 	Uri,
-	// Not used in current event stubs
-	// FileChangeType,
-	// For full API shape, not directly used by this consumer shim
-	// FileSystemProvider,
-	// For event types
+	// For event types (if implemented)
 	// FileChangeEvent,
-	// Interface this class implements
-	// FileSystem,
-	// Not directly used in current implementation
-	// FileSystemProviderCapabilities,
+	// FileSystemWatcher as VscodeFileSystemWatcher, // To avoid conflict with node fs.FSWatcher
+	// FileSystem as VscodeFileSystem, // Interface this class implements
 } from "vscode";
 
-import { BaseCocoonShim, ILogService } from "./_baseShim";
-
-// For event types
-// import { Event as VscodeEvent } from "vs/base/common/event";
+import { BaseCocoonShim, ILogService, refineError } from "./_baseShim";
 
 // --- Type definitions for parameters and return values ---
 
-// For URI components (used in RPC)
-interface IUriComponents {
-	$mid?: number;
-
+// For URI components (used in RPC), should align with BaseCocoonShim's output
+interface ILocalUriComponents {
+	$mid?: number; // MarshalledId.Uri or UriSimple
 	scheme: string;
-
-	// Optional
 	authority?: string;
-
 	path: string;
-
-	// Optional
 	query?: string;
-
-	// Optional
 	fragment?: string;
-
-	// Optional
 	external?: string;
+	fsPath?: string; // Sometimes useful
 }
 
-// Options for delete operation
-interface DeleteOptions {
-	recursive?: boolean;
+// Options for writeFile operation (from vscode.d.ts)
+interface FileWriteOptions {
+	create?: boolean;
+	overwrite?: boolean;
+	atomic?:
+		| boolean
+		| {
+				undoStopBefore: boolean;
+				undoStopAfter: boolean;
+		  };
+}
 
+// Options for delete operation (from vscode.d.ts)
+interface FileDeleteOptions {
+	recursive?: boolean;
 	useTrash?: boolean;
 }
 
-// Options for rename/copy operation
-interface OverwriteOptions {
+// Options for rename/copy operation (from vscode.d.ts)
+interface FileOverwriteOptions {
 	overwrite?: boolean;
 }
 
-// For readDirectory result
+// For readDirectory result (from vscode.d.ts)
 type DirectoryEntry = [string, FileType];
 
-// For stat result from Mountain (before conversion to FileStat)
-interface RawFileStat {
-	// 'File', 'Directory', etc.
-	type: keyof typeof FileTypeMap;
-
-	ctime: number;
-
-	mtime: number;
-
+// For stat result from Mountain (before conversion to vscode.FileStat)
+interface RawFileStatFromMountain {
+	type: keyof typeof FileTypeMap; // 'File', 'Directory', etc. as strings
+	ctime: number; // Milliseconds since epoch
+	mtime: number; // Milliseconds since epoch
 	size: number;
-
-	// Optional, as vscode.FileStat has it
-	permissions?: FilePermission;
+	permissions?: FilePermission; // Optional, as vscode.FileStat has it
 }
 
-// For FileSystemError structured message
-interface StructuredFsError {
-	code?: string;
-
+// For FileSystemError structured message (parsed from IPC error)
+interface StructuredFsErrorPayload {
+	code?: string; // e.g., 'ENOENT'
 	message?: string;
+	// Other potential fields from Mountain's error structure
 }
 
 const FileTypeMap = {
 	[FileType.Unknown]: "Unknown",
-
 	[FileType.File]: "File",
-
 	[FileType.Directory]: "Directory",
-
 	[FileType.SymbolicLink]: "SymbolicLink",
-
-	// Use const assertion for stricter typing of keys
 } as const;
 
 const FileTypeReverseMap: { [key: string]: FileType } = {
 	"Unknown": FileType.Unknown,
-
 	"File": FileType.File,
-
 	"Directory": FileType.Directory,
-
 	"SymbolicLink": FileType.SymbolicLink,
 };
 
-// This shim directly implements the vscode.FileSystem interface
-// No _serviceBrand is needed if it's not registered with DI in the same way as ExtHost services.
-export class ShimFileSystemApi extends BaseCocoonShim /* implements vscode.FileSystem */ {
+// ShimFileSystemApi implements the vscode.FileSystem interface
+// TODO: Explicitly add `implements VscodeFileSystem` if VscodeFileSystem is imported and correctly defined.
+export class ShimFileSystemApi extends BaseCocoonShim {
+	// No _serviceBrand needed as this is directly instantiated by createApiFactory in index.ts for vscode.workspace.fs
+
 	constructor(logService: ILogService | undefined) {
-		// No specific ExtHost service, acts as a direct API provider.
 		// No RPC proxy needed if using direct IPC helpers from base shim.
 		super("WorkspaceFS", undefined /* rpcService */, logService);
-
 		this._log("Initialized vscode.workspace.fs shim.");
 	}
 
-	// _convertApiArgToInternal from BaseCocoonShim should handle Uri to components.
-	// If a more specific version is needed for this shim, it can be overridden.
-	protected _uriToComponents(uri: Uri): IUriComponents | undefined {
-		const components = super._convertApiArgToInternal(uri);
-
-		// Basic check to see if it looks like URI components
-		if (
-			components &&
-			typeof components.scheme === "string" &&
-			typeof components.path === "string"
-		) {
-			return components as IUriComponents;
+	// Override from BaseCocoonShim if more specific marshalling is needed for fs URIs.
+	// For now, assume the base class _convertApiArgToInternal is sufficient.
+	protected _uriDtoForIpc(uri: Uri): ILocalUriComponents | undefined {
+		const components = super._convertApiArgToInternal(uri); // This should produce UriSimple like structure
+		if (components && components.$mid === 1 /* MarshalledId.UriSimple */) {
+			// Ensure it has the core fields for clarity, even if $mid implies them
+			return {
+				scheme: components.scheme,
+				authority: components.authority,
+				path: components.path,
+				query: components.query,
+				fragment: components.fragment,
+				external: components.external || uri.toString(true), // Ensure external is present if needed
+				fsPath:
+					components.fsPath ||
+					(uri.scheme === "file" ? uri.fsPath : undefined),
+				$mid: components.$mid,
+			};
 		}
-
-		this._logWarn(
-			"Failed to convert URI to components using base method, falling back or erroring.",
-
+		this._logError(
+			"URI to DTO conversion for IPC failed or produced unexpected format.",
 			uri,
+			components,
 		);
-
-		// Fallback or throw error if base method is not sufficient for this shim's IPC needs.
-		// For now, let's assume base method works or this will be an error point if it doesn't.
-		if (!uri) return undefined;
-
+		// Fallback to a basic conversion if base method isn't suitable
 		return {
 			scheme: uri.scheme,
-
-			authority: uri.authority,
-
 			path: uri.path,
-
-			query: uri.query,
-
-			fragment: uri.fragment,
-
 			external: uri.toString(true),
+			fsPath: uri.fsPath,
 		};
 	}
 
 	private _handleFsError(
 		operation: string,
-
 		uri: Uri | undefined,
-
-		error: any,
+		thrownError: any,
 	): FileSystemError {
-		this._logError(
-			`WorkspaceFS.${operation} failed for ${uri?.toString() || "unknown URI"}:`,
-
-			error,
+		// Use refineError from BaseCocoonShim to attempt parsing structured JSON errors
+		const initialError =
+			thrownError instanceof Error
+				? thrownError
+				: new Error(String(thrownError));
+		const refinedError = refineError(
+			initialError,
+			this._logService,
+			`WorkspaceFS.${operation}`,
 		);
 
-		let structuredError: StructuredFsError | null = null;
+		this._logError(
+			`WorkspaceFS.${operation} failed for ${uri?.toString() || "unknown URI"}:`,
+			refinedError,
+		);
 
-		if (error instanceof Error && error.message) {
-			try {
-				const parsed = JSON.parse(error.message);
+		// Now, map common error codes (from refinedError or original) to FileSystemError static methods
+		const code =
+			(refinedError as NodeJS.ErrnoException).code ||
+			(initialError as NodeJS.ErrnoException).code;
+		const msg = refinedError.message; // Use message from refinedError
+		const targetUriForError =
+			uri || (typeof msg === "string" ? msg : undefined);
 
-				if (typeof parsed === "object" && parsed !== null) {
-					structuredError = parsed as StructuredFsError;
-				}
-			} catch (e) {
-				/* ignore */
-			}
-		} else if (typeof error === "object" && error !== null) {
-			// error itself might be the structured error
-			structuredError = error as StructuredFsError;
-		}
-
-		// Check error.code as well
-		const code = structuredError?.code || (error as any)?.code;
-
-		const msg =
-			structuredError?.message ||
-			(error instanceof Error ? error.message : String(error)) ||
-			`Unknown error during ${operation}`;
-
-		// Use URI in error if available
-		const targetUri = uri || (typeof msg === "string" ? msg : undefined);
-
-		if (code === "ENOENT") return FileSystemError.FileNotFound(targetUri);
-
-		if (code === "EEXIST") return FileSystemError.FileExists(targetUri);
-
+		if (code === "ENOENT")
+			return FileSystemError.FileNotFound(targetUriForError);
+		if (code === "EEXIST")
+			return FileSystemError.FileExists(targetUriForError);
 		if (code === "EISDIR")
-			return FileSystemError.FileIsADirectory(targetUri);
-
+			return FileSystemError.FileIsADirectory(targetUriForError);
 		if (code === "ENOTDIR")
-			return FileSystemError.FileNotADirectory(targetUri);
-
+			return FileSystemError.FileNotADirectory(targetUriForError);
 		if (code === "EACCES" || code === "EPERM")
-			return FileSystemError.NoPermissions(targetUri);
-
-		if (code === "ENOSPC")
-			return FileSystemError.NoPermissions(
-				`No space left on device for ${operation} on ${targetUri}`,
-
-				// Example
-			);
-
+			return FileSystemError.NoPermissions(targetUriForError);
+		if (code === "ENOSPC") return FileSystemError.NoSpace(msg); // vscode.FileSystemError has NoSpace
 		if (code === "EROFS")
 			return FileSystemError.NoPermissions(
-				`Read-only file system for ${operation} on ${targetUri}`,
-
-				// Example
+				`Read-only file system for ${operation} on ${targetUriForError}`,
 			);
+		// TODO: Add more mappings as identified (e.g., FileSystemError.Unavailable, FileSystemError.Unknown)
 
-		// Generic error
-		return new FileSystemError(msg);
+		return new FileSystemError(msg); // Generic error if no specific code matched
 	}
 
 	// --- vscode.FileSystem API Implementation ---
 
 	public async stat(uri: Uri): Promise<FileStat> {
 		this._log(`stat: ${uri.toString()}`);
-
 		try {
-			const params = { uri: this._uriToComponents(uri) };
-
-			if (!params.uri) throw new Error("URI conversion failed for stat");
+			const uriDto = this._uriDtoForIpc(uri);
+			if (!uriDto)
+				throw new Error(
+					"URI DTO conversion failed for stat operation.",
+				);
+			const params = { uri: uriDto };
 
 			const result = (await this._ipcRequestResponse(
 				"workspacefs_stat",
-
 				params,
-			)) as RawFileStat;
-
+			)) as RawFileStatFromMountain;
 			return {
 				type: FileTypeReverseMap[result.type] ?? FileType.Unknown,
-
 				ctime: result.ctime,
-
 				mtime: result.mtime,
-
 				size: result.size,
-
-				// Assuming Mountain might send this
-				permissions: result.permissions,
+				permissions: result.permissions, // Optional: if Mountain provides permissions
 			};
 		} catch (e: any) {
 			throw this._handleFsError("stat", uri, e);
@@ -294,22 +243,18 @@ export class ShimFileSystemApi extends BaseCocoonShim /* implements vscode.FileS
 
 	public async readDirectory(uri: Uri): Promise<DirectoryEntry[]> {
 		this._log(`readDirectory: ${uri.toString()}`);
-
 		try {
-			const params = { uri: this._uriToComponents(uri) };
-
-			if (!params.uri)
-				throw new Error("URI conversion failed for readDirectory");
+			const uriDto = this._uriDtoForIpc(uri);
+			if (!uriDto)
+				throw new Error("URI DTO conversion failed for readDirectory.");
+			const params = { uri: uriDto };
 
 			const result = (await this._ipcRequestResponse(
 				"workspacefs_readDirectory",
-
 				params,
 			)) as [string, keyof typeof FileTypeMap][];
-
 			return result.map(([name, typeStr]) => [
 				name,
-
 				FileTypeReverseMap[typeStr] ?? FileType.Unknown,
 			]);
 		} catch (e: any) {
@@ -319,23 +264,22 @@ export class ShimFileSystemApi extends BaseCocoonShim /* implements vscode.FileS
 
 	public async readFile(uri: Uri): Promise<Uint8Array> {
 		this._log(`readFile: ${uri.toString()}`);
-
 		try {
-			const params = { uri: this._uriToComponents(uri) };
-
-			if (!params.uri)
-				throw new Error("URI conversion failed for readFile");
+			const uriDto = this._uriDtoForIpc(uri);
+			if (!uriDto)
+				throw new Error("URI DTO conversion failed for readFile.");
+			const params = { uri: uriDto };
 
 			const base64Data = (await this._ipcRequestResponse(
 				"workspacefs_readFile",
-
 				params,
 			)) as string;
-
+			if (typeof base64Data !== "string")
+				throw new Error(
+					"readFile IPC response was not a base64 string.",
+				);
 			const buffer = VSBuffer.fromBase64(base64Data);
-
-			// Uint8Array
-			return buffer.buffer;
+			return buffer.buffer; // Returns Uint8Array
 		} catch (e: any) {
 			throw this._handleFsError("readFile", uri, e);
 		}
@@ -343,29 +287,27 @@ export class ShimFileSystemApi extends BaseCocoonShim /* implements vscode.FileS
 
 	public async writeFile(
 		uri: Uri,
-
 		content: Uint8Array,
-
-		options?: { create?: boolean; overwrite?: boolean; atomic?: boolean },
+		options?: FileWriteOptions,
 	): Promise<void> {
-		this._log(`writeFile: ${uri.toString()} (${content.byteLength} bytes)`);
-
+		this._log(
+			`writeFile: ${uri.toString()} (${content.byteLength} bytes), options: ${JSON.stringify(options)}`,
+		);
 		try {
-			const buffer = VSBuffer.wrap(content);
+			const buffer = VSBuffer.wrap(content); // VSBuffer can wrap Uint8Array
+			const base64Data = buffer.toString("base64"); // VSBuffer.toString('base64')
+			// TODO: Confirm VSBuffer.toString('base64') is available and correct.
+			// If not, use `Buffer.from(content).toString('base64')`.
+			// The previous conversion used `buffer.base64Encode()` which is not standard on VSBuffer.
 
-			const base64Data = buffer.base64Encode();
-
+			const uriDto = this._uriDtoForIpc(uri);
+			if (!uriDto)
+				throw new Error("URI DTO conversion failed for writeFile.");
 			const params = {
-				uri: this._uriToComponents(uri),
-
+				uri: uriDto,
 				content: base64Data,
-
-				// Pass options if Mountain handler supports them
-				options: options,
+				options: options, // Pass options if Mountain handler supports them (e.g., create, overwrite)
 			};
-
-			if (!params.uri)
-				throw new Error("URI conversion failed for writeFile");
 
 			await this._ipcRequestResponse("workspacefs_writeFile", params);
 		} catch (e: any) {
@@ -375,62 +317,51 @@ export class ShimFileSystemApi extends BaseCocoonShim /* implements vscode.FileS
 
 	public async createDirectory(uri: Uri): Promise<void> {
 		this._log(`createDirectory: ${uri.toString()}`);
-
 		try {
-			const params = { uri: this._uriToComponents(uri) };
-
-			if (!params.uri)
-				throw new Error("URI conversion failed for createDirectory");
+			const uriDto = this._uriDtoForIpc(uri);
+			if (!uriDto)
+				throw new Error(
+					"URI DTO conversion failed for createDirectory.",
+				);
+			const params = { uri: uriDto };
 
 			await this._ipcRequestResponse(
 				"workspacefs_createDirectory",
-
 				params,
 			);
 		} catch (e: any) {
-			// As per VS Code API spec, FileExists error should be ignored for createDirectory.
 			const filesysError = this._handleFsError("createDirectory", uri, e);
-
+			// As per VS Code API spec, FileExists error during createDirectory should NOT be thrown by provider.
 			if (filesysError.code === FileSystemError.FileExists().code) {
-				// Check code string
-				this._log("createDirectory ignored FileExists error.");
-
-				return;
+				this._log(
+					"createDirectory ignored FileExists error as per spec.",
+				);
+				return; // Success, directory already exists
 			}
-
-			throw filesysError;
+			throw filesysError; // Rethrow other errors
 		}
 	}
 
-	public async delete(uri: Uri, options?: DeleteOptions): Promise<void> {
+	public async delete(uri: Uri, options?: FileDeleteOptions): Promise<void> {
 		const recursive = options?.recursive ?? false;
-
-		// Note: useTrash might not be handled by simple IPC
 		const useTrash = options?.useTrash ?? false;
-
 		this._log(
 			`delete: ${uri.toString()} (recursive=${recursive}, useTrash=${useTrash})`,
 		);
 
+		// TODO: Mountain's `workspacefs_delete` handler needs to support `useTrash`.
+		// If not, this shim might need to implement a fallback or always log a warning.
 		if (useTrash) {
-			this._logWarn(
-				"delete with useTrash=true NOT IMPLEMENTED robustly by basic IPC shim.",
+			this._logWarnOnce(
+				"delete with useTrash=true relies on Mountain's implementation.",
 			);
-
-			//  // Or attempt non-trash deletethrow FileSystemError.NoPermissions('Trash not implemented via
-			// simple IPC');
 		}
 
 		try {
-			const params = {
-				uri: this._uriToComponents(uri),
-
-				// Mountain needs to handle useTrash
-				options: { recursive /*, useTrash */ },
-			};
-
-			if (!params.uri)
-				throw new Error("URI conversion failed for delete");
+			const uriDto = this._uriDtoForIpc(uri);
+			if (!uriDto)
+				throw new Error("URI DTO conversion failed for delete.");
+			const params = { uri: uriDto, options: { recursive, useTrash } };
 
 			await this._ipcRequestResponse("workspacefs_delete", params);
 		} catch (e: any) {
@@ -440,64 +371,50 @@ export class ShimFileSystemApi extends BaseCocoonShim /* implements vscode.FileS
 
 	public async rename(
 		source: Uri,
-
 		target: Uri,
-
-		options?: OverwriteOptions,
+		options?: FileOverwriteOptions,
 	): Promise<void> {
 		const overwrite = options?.overwrite ?? false;
-
 		this._log(
 			`rename: ${source.toString()} -> ${target.toString()} (overwrite=${overwrite})`,
 		);
-
 		try {
+			const sourceDto = this._uriDtoForIpc(source);
+			const targetDto = this._uriDtoForIpc(target);
+			if (!sourceDto || !targetDto)
+				throw new Error("URI DTO conversion failed for rename.");
 			const params = {
-				source: this._uriToComponents(source),
-
-				target: this._uriToComponents(target),
-
+				source: sourceDto,
+				target: targetDto,
 				options: { overwrite },
 			};
 
-			if (!params.source || !params.target)
-				throw new Error("URI conversion failed for rename");
-
 			await this._ipcRequestResponse("workspacefs_rename", params);
 		} catch (e: any) {
-			throw this._handleFsError("rename", source, e);
+			throw this._handleFsError("rename", source, e); // Pass source URI for error context
 		}
 	}
 
 	public async copy(
 		source: Uri,
-
 		target: Uri,
-
-		options?: OverwriteOptions,
+		options?: FileOverwriteOptions,
 	): Promise<void> {
 		const overwrite = options?.overwrite ?? false;
-
 		this._log(
 			`copy: ${source.toString()} -> ${target.toString()} (overwrite=${overwrite})`,
 		);
-
-		// this._logWarn("vscode.workspace.fs.copy is NOT IMPLEMENTED.");
-
-		// throw new FileSystemError("copy operation not implemented");
-
+		// TODO: Ensure 'workspacefs_copy' is implemented in Mountain and handles overwrite.
 		try {
+			const sourceDto = this._uriDtoForIpc(source);
+			const targetDto = this._uriDtoForIpc(target);
+			if (!sourceDto || !targetDto)
+				throw new Error("URI DTO conversion failed for copy.");
 			const params = {
-				source: this._uriToComponents(source),
-
-				target: this._uriToComponents(target),
-
+				source: sourceDto,
+				target: targetDto,
 				options: { overwrite },
 			};
-
-			if (!params.source || !params.target)
-				throw new Error("URI conversion failed for copy");
-
 			await this._ipcRequestResponse("workspacefs_copy", params);
 		} catch (e: any) {
 			throw this._handleFsError("copy", source, e);
@@ -505,49 +422,32 @@ export class ShimFileSystemApi extends BaseCocoonShim /* implements vscode.FileS
 	}
 
 	public isWritableFileSystem(scheme: string): boolean | undefined {
-		// This information ideally comes from Mountain (e.g., from FileSystemProvider registration)
-		this._logWarn(
-			`isWritableFileSystem check for '${scheme}' is using basic MVP logic.`,
+		// TODO: This should ideally query Mountain or use capabilities registered by FileSystemProviders.
+		// For MVP, a hardcoded list is acceptable but limited.
+		this._logWarnOnce(
+			`isWritableFileSystem check for '${scheme}' is using basic MVP logic (file, untitled).`,
 		);
-
 		if (scheme === "file" || scheme === "untitled") {
 			return true;
 		}
-
-		// For other schemes, we don't know, so returning undefined is appropriate.
-		// Extensions should check for capabilities of a FileSystemProvider if they register one.
+		// For other schemes, if not registered, VS Code typically returns `undefined`.
 		return undefined;
-
-		// TODO: Query Mountain or use initData capabilities map
-		// const capabilities = this.#fileSystemInfoService.getCapabilities(scheme);
-
-		// return !(capabilities & FileSystemProviderCapabilities.Readonly);
 	}
 
-	// --- File/Directory events (onDid*) ---
-	// These would require Mountain to send notifications via Vine/IPC, which then trigger Emitters here.
-	// public readonly onDidChangeFile: VscodeEvent<readonly FileChangeEvent[]> = this._createNopEventEmitter();
+	// --- File Events (onDid*) ---
+	// TODO: These require Mountain to send notifications (e.g., via Vine IPC or specific RPC calls on an ExtHostFileSystemEventService).
+	// The ExtHost side would then have Emitters that fire these VscodeEvent types.
+	// Example for one event:
+	// private readonly _onDidChangeFileEmitter = new VscodeEmitter<readonly vscode.FileChangeEvent[]>();
+	// public readonly onDidChangeFile: VscodeEvent<readonly vscode.FileChangeEvent[]> = this._onDidChangeFileEmitter.event;
+	// Mountain would call something like `$acceptFileChanges(eventDto)` on an ExtHost service,
+	// which would then revive DTOs and fire `_onDidChangeFileEmitter`.
 
-	//  // Correct type?public readonly onDidCreateFiles: VscodeEvent<FileCreateEvent> = this.
-	// _createNopEventEmitter();
-
-	//  // Correct type?public readonly onDidDeleteFiles: VscodeEvent<FileDeleteEvent> = this.
-	// _createNopEventEmitter();
-
-	//  // Correct type?public readonly onWillRenameFiles: VscodeEvent<FileRenameEvent> = this.
-	// _createNopEventEmitter();
-
-	//  // Correct type?public readonly onDidRenameFiles: VscodeEvent<FileRenameEvent> = this.
-	// _createNopEventEmitter();
-
-	// For onDidChangeFile, an emitter needs to be managed if events are proxied.
-	// Example:
-	// #onDidChangeFileEmitter = this._createEmitter<readonly FileChangeEvent[]>();
-
-	// get onDidChangeFile(): VscodeEvent<readonly FileChangeEvent[]> { return this.#onDidChangeFileEmitter.event; }
-
-	// Then, Mountain would call a method like $onFileChanges(eventsDto) which calls this.#onDidChangeFileEmitter.fire(...)
+	// For now, returning VscodeEvent.None for all.
+	public readonly onDidChangeFile: VscodeEvent<any /*readonly vscode.FileChangeEvent[]*/> =
+		VscodeEvent.None;
+	// public readonly onDidCreateFiles: VscodeEvent<vscode.FileCreateEvent> = VscodeEvent.None;
+	// public readonly onDidDeleteFiles: VscodeEvent<vscode.FileDeleteEvent> = VscodeEvent.None;
+	// public readonly onWillRenameFiles: VscodeEvent<vscode.FileRenameEvent> = VscodeEvent.None;
+	// public readonly onDidRenameFiles: VscodeEvent<vscode.FileRenameEvent> = VscodeEvent.None;
 }
-
-// Class is already exported
-// export { ShimFileSystemApi };
