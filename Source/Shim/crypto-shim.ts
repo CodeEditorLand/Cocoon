@@ -1,66 +1,84 @@
-// Basic crypto shim - relies on Node's built-in crypto where possible, proxies if needed
+/*---------------------------------------------------------------------------------------------
+ // Header: Added a basic header. 
+* Cocoon Crypto Shim (crypto-shim.ts)
+ * --------------------------------------------------------------------------------------------
+ * Provides a shim for Node.js's built-in 'crypto' module.
+ * For most operations, it delegates directly to the native Node.js 'crypto' module.
+ * It includes a placeholder for proxying specific crypto operations to Mountain if needed,
+ * for example, operations requiring system-specific resources or entropy sources not
+ * directly available/trusted in the Cocoon environment.
+ *
+ * Key Interactions:
+ * - Returned by `NodeModuleShimFactory` when `require('crypto')` is intercepted.
+ * - Primarily uses `node:crypto`.
+ * - Can use `sendToMountainAndWait` from `cocoon-ipc.ts` for proxied operations.
+ *--------------------------------------------------------------------------------------------*/
+
 import * as nodeCrypto from "node:crypto";
 
-// Only needed if proxying
+// Uncomment if proxying is implemented
 // import { sendToMountainAndWait } from "../cocoon-ipc";
 
-// Define the shape of the exported module if it were to be more complex
-// For now, it directly mirrors parts of nodeCrypto
+// --- Type Definitions ---
+
+// Define the shape of the shim to match relevant parts of Node.js 'crypto' module.
+// This makes the shim's exports more explicit and type-safe.
+// TODO: Expand this interface as more crypto functions are shimmed or proxied.
 export interface CocoonCrypto {
+	// From node:crypto
 	createHash: typeof nodeCrypto.createHash;
-
 	createHmac: typeof nodeCrypto.createHmac;
-
 	randomBytes: typeof nodeCrypto.randomBytes;
-
 	randomUUID: typeof nodeCrypto.randomUUID;
-
-	// generateKeyPair?: (
-	// 	type: 'rsa' | 'dsa' | 'ec' | 'ed25519' | 'ed448' | 'x25519' | 'x448' | 'dh',
-	// 	options: nodeCrypto.GenerateKeyPairKeyObjectOptions | nodeCrypto.GenerateKeyPairStringOptions,
-	// 	callback: (err: Error | null, publicKey: string | Buffer | nodeCrypto.KeyObject, privateKey: string | Buffer | nodeCrypto.KeyObject) => void
-	// ) => void;
-
-	// generateKeyPair?: (
-	// More generic for potential proxying
-	// 	type: string,
-	// 	options: any
-	// If async version
-	// ) => Promise<{ publicKey: string | Buffer | nodeCrypto.KeyObject, privateKey: string | Buffer | nodeCrypto.KeyObject }>;
+	// TODO: Add types for other commonly used crypto functions if they are to be exposed, e.g.,
+	// pbkdf2: typeof nodeCrypto.pbkdf2;
+	// If using Node's directly
+	// generateKeyPair: typeof nodeCrypto.generateKeyPair;
+	// Or a proxied version:
+	// generateKeyPairProxied?(
+	//    type: string,
+	//    options: any,
+	// ): Promise<{ publicKey: string | Buffer; privateKey: string | Buffer }>;
 }
 
-const cryptoShim: CocoonCrypto = {
-	// Functions likely safe to run directly in Cocoon's Node env
+const cryptoShimInstance: CocoonCrypto = {
+	// Functions likely safe to run directly in Cocoon's Node.js environment
 	createHash: nodeCrypto.createHash,
 	createHmac: nodeCrypto.createHmac,
-
-	// Usually available
 	randomBytes: nodeCrypto.randomBytes,
-	
 
-	// Modern Node only (check Node version compatibility if necessary)
+	// randomUUID is available in Node.js v14.17.0+ and v15.6.0+.
+	// Ensure Cocoon's Node.js version supports this.
 	randomUUID: nodeCrypto.randomUUID,
 
 	// Example of a function that *might* need proxying if it involved system specifics
-	// generateKeyPair: async (type: string, options: any) => {
-
-	//    console.warn("[Cocoon Crypto Shim] generateKeyPair - proxying to Mountain (example)");
-
-	// Assuming sendToMountainAndWait is properly typed and imported
+	// not suitable for direct execution in Cocoon.
+	// generateKeyPairProxied: async (type: string, options: any) => {
+	//    console.warn("[Cocoon Crypto Shim] generateKeyPairProxied - proxying to Mountain (example)");
+	// TODO: Ensure sendToMountainAndWait is imported and types match.
 	//
-	//    return sendToMountainAndWait('crypto_generateKeyPair', { type, options }, 5000);
-
+	// return sendToMountainAndWait('crypto_generateKeyPair', { type, options }, 5000);
+	//
+	// For now, this is a placeholder:
+	//
+	//    throw new Error("generateKeyPairProxied is not implemented");
 	// }
-	// Add other functions as needed, deciding whether to use nodeCrypto or proxy
+
+	// TODO: Add other functions from 'node:crypto' as needed by extensions.
+	// For each function, decide whether to:
+	// 1. Delegate directly to `nodeCrypto.<functionName>`.
+	// 2. Implement a proxied version using `sendToMountainAndWait`.
+	// 3. Omit it if not required or too risky to expose directly.
 };
 
-export default cryptoShim;
+// Default export for easy import via `import cryptoShim from './crypto-shim';`
+// This matches the pattern used by NodeModuleShimFactory.
+export default cryptoShimInstance;
 
-// Or, if you prefer direct exports matching the original module.exports structure:
-// export const createHash = nodeCrypto.createHash;
-
-// export const createHmac = nodeCrypto.createHmac;
-
-// export const randomBytes = nodeCrypto.randomBytes;
-
-// export const randomUUID = nodeCrypto.randomUUID;
+// Alternatively, if individual named exports are preferred to exactly mimic `require('crypto')`:
+// export const createHash = cryptoShimInstance.createHash;
+// export const createHmac = cryptoShimInstance.createHmac;
+// export const randomBytes = cryptoShimInstance.randomBytes;
+// export const randomUUID = cryptoShimInstance.randomUUID;
+// This alternative makes usage like `import { createHash } from './crypto-shim';` possible.
+// However, the factory likely expects a single module object.
