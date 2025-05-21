@@ -99,17 +99,23 @@ import { ShimDocumentService } from "./document-shim";
 // For initData structure
 interface WorkspaceInitDataDto {
 	id: string;
+
 	name: string;
+
 	isUntitled?: boolean;
+
 	// URI components for workspace file
 	configuration?: UriComponentsDto | null;
+
 	folders: WorkspaceFolderDto[];
 }
 
 interface ShimInitDataWorkspace {
 	workspace?: WorkspaceInitDataDto;
+
 	environment?: {
 		isTrusted?: boolean;
+
 		// other env properties
 	};
 }
@@ -117,31 +123,43 @@ interface ShimInitDataWorkspace {
 interface UriComponentsDto {
 	// Based on common marshalling
 	$mid?: number;
+
 	scheme: string;
+
 	authority?: string;
+
 	path: string;
+
 	query?: string;
+
 	fragment?: string;
+
 	// Often included
 	external?: string;
+
 	// Sometimes included
 	fsPath?: string;
 }
 
 interface WorkspaceFolderDto {
 	uri: UriComponentsDto;
+
 	name: string;
+
 	index: number;
 }
 
 // RPC Shape for MainThreadWorkspace
 interface MainThreadWorkspaceShape {
 	$getWorkspaceFolders(): Promise<WorkspaceFolderDto[]>;
+
 	$resolveWorkspaceFolder(
 		uri: UriComponentsDto,
 	): Promise<WorkspaceFolderDto | undefined>;
+
 	// Assuming it's a subscription
 	$onDidGrantWorkspaceTrust(callback: () => void): IDisposable;
+
 	$findFiles(
 		include: RpcGlobPattern | string,
 
@@ -149,22 +167,28 @@ interface MainThreadWorkspaceShape {
 
 		options?: {
 			maxResults?: number | null;
+
 			[key: string]: any /* useIgnoreFiles etc*/;
 		},
 	): Promise<UriComponentsDto[]>;
+
 	$requestWorkspaceTrust(
 		options?: WorkspaceTrustRequestOptions,
 	): Promise<boolean | undefined>;
+
 	// updateWorkspaceFolders is typically not exposed via RPC to ExtHost this way
 }
 
 // RPC Shape for MainThreadDocuments (subset needed here)
 interface MainThreadDocumentsShape {
 	$trySaveDocument(uri: UriComponentsDto): Promise<boolean>;
+
 	$trySaveDocumentAs(
 		uri: UriComponentsDto,
 	): Promise<UriComponentsDto | undefined>;
+
 	$saveAll(includeUntitled?: boolean): Promise<boolean>;
+
 	// Or returns UriComponents if untitled
 	$tryOpenDocument(uri: UriComponentsDto): Promise<void>;
 }
@@ -172,6 +196,7 @@ interface MainThreadDocumentsShape {
 interface RpcGlobPattern {
 	// Structure for RelativePattern over RPC
 	pattern: string;
+
 	base?: UriComponentsDto;
 }
 
@@ -186,24 +211,34 @@ export class ShimExtHostWorkspace
 	implements ExtHostWorkspaceShape
 {
 	public readonly _serviceBrand: undefined;
+
 	readonly #initData: ShimInitDataWorkspace;
+
 	#folders: WorkspaceFolder[] = [];
+
 	// Use VS Code internal URI
 	#workspaceFile: URI | null = null;
+
 	#workspaceInfo: { id: string; name: string; isUntitled: boolean } | null =
 		null;
 
 	readonly #mainThreadWorkspaceProxy: MainThreadWorkspaceShape | null = null;
+
 	readonly #mainThreadDocsProxy: MainThreadDocumentsShape | null = null;
+
 	// Injected
 	readonly #extHostDocuments: ShimDocumentService;
 
 	readonly #onDidChangeWorkspaceFoldersEmitter =
 		new VscodeEmitter<WorkspaceFoldersChangeEvent>();
+
 	// Event payload is void
 	readonly #onDidGrantWorkspaceTrustEmitter = new VscodeEmitter<void>();
+
 	readonly #onDidOpenTextDocumentEmitter = new VscodeEmitter<TextDocument>();
+
 	readonly #onDidCloseTextDocumentEmitter = new VscodeEmitter<TextDocument>();
+
 	readonly #onDidChangeTextDocumentEmitter =
 		new VscodeEmitter<TextDocumentChangeEvent>();
 
@@ -220,14 +255,18 @@ export class ShimExtHostWorkspace
 		extHostDocuments: ShimDocumentService,
 	) {
 		super("ExtHostWorkspace", rpcService, logService);
+
 		this.#initData = initData;
+
 		this.#extHostDocuments = extHostDocuments;
+
 		this._log("Initializing...");
 
 		if (this._rpcService) {
 			this.#mainThreadWorkspaceProxy = this._getProxy(
 				MainContext.MainThreadWorkspace as ProxyIdentifier<MainThreadWorkspaceShape>,
 			);
+
 			this.#mainThreadDocsProxy = this._getProxy(
 				MainContext.MainThreadDocuments as ProxyIdentifier<MainThreadDocumentsShape>,
 			);
@@ -236,6 +275,7 @@ export class ShimExtHostWorkspace
 		if (this.#mainThreadWorkspaceProxy)
 			this._log("MainThreadWorkspace RPC proxy obtained.");
 		else this._logError("Failed to get MainThreadWorkspace RPC proxy!");
+
 		if (this.#mainThreadDocsProxy)
 			this._log("MainThreadDocuments RPC proxy obtained.");
 		else this._logError("Failed to get MainThreadDocuments RPC proxy!");
@@ -248,6 +288,7 @@ export class ShimExtHostWorkspace
 
 				isUntitled: !!initData.workspace.isUntitled,
 			};
+
 			if (initData.workspace.configuration) {
 				this.#workspaceFile = this._reviveUriDto(
 					initData.workspace.configuration,
@@ -258,12 +299,14 @@ export class ShimExtHostWorkspace
 				this.#folders = initData.workspace.folders
 					.map((fDto, index): WorkspaceFolder | null => {
 						const revivedUri = this._reviveUriDto(fDto.uri);
+
 						if (!revivedUri) {
 							this._logError(
 								`Failed to revive folder URI DTO:`,
 
 								fDto.uri,
 							);
+
 							return null;
 						}
 
@@ -302,9 +345,11 @@ export class ShimExtHostWorkspace
 		ipc.onWorkspaceFoldersChanged(async () => {
 			// Make async as _fetchAndUpdateFolders is async
 			this._log("IPC: workspaceFoldersChanged. Refetching...");
+
 			// Now awaits
 			await this._fetchAndUpdateFolders();
 		});
+
 		this._log("Subscribed to IPC workspace folder changes.");
 
 		this.#extHostDocuments.onDidAddDocument(
@@ -314,6 +359,7 @@ export class ShimExtHostWorkspace
 
 			this.#disposables,
 		);
+
 		this.#extHostDocuments.onDidRemoveDocument(
 			this.#onDidCloseTextDocumentEmitter.fire,
 
@@ -321,6 +367,7 @@ export class ShimExtHostWorkspace
 
 			this.#disposables,
 		);
+
 		this.#extHostDocuments.onDidChangeDocument(
 			this.#onDidChangeTextDocumentEmitter.fire,
 
@@ -328,6 +375,7 @@ export class ShimExtHostWorkspace
 
 			this.#disposables,
 		);
+
 		this._log("Subscribed to document service events.");
 
 		// If ExtHostWorkspace itself needs to be callable by MainThread (e.g. for folder changes if not IPC)
@@ -339,9 +387,11 @@ export class ShimExtHostWorkspace
 		uriDto: UriComponentsDto | null | undefined,
 	): URI | null {
 		if (!uriDto) return null;
+
 		try {
 			// Use base class _reviveApiArgument for consistency with other shims
 			const revived = super._reviveApiArgument<URI>(uriDto);
+
 			if (revived instanceof URI) return revived;
 
 			// Fallback if base reviver doesn't work or if $mid is missing
@@ -350,6 +400,7 @@ export class ShimExtHostWorkspace
 			return URI.revive(uriDto as any);
 		} catch (e: any) {
 			this._logError("Failed to revive URI DTO:", uriDto, e);
+
 			return null;
 		}
 	}
@@ -357,6 +408,7 @@ export class ShimExtHostWorkspace
 	protected _uriToComponentsDto(uri: URI): UriComponentsDto | undefined {
 		// Use base class _convertApiArgToInternal
 		const components = super._convertApiArgToInternal(uri);
+
 		if (
 			components &&
 			typeof components.scheme === "string" &&
@@ -370,6 +422,7 @@ export class ShimExtHostWorkspace
 
 			uri,
 		);
+
 		// Or throw
 		return undefined;
 	}
@@ -378,11 +431,13 @@ export class ShimExtHostWorkspace
 		pattern: GlobPattern,
 	): RpcGlobPattern | string | undefined {
 		if (typeof pattern === "string") return pattern;
+
 		if (pattern instanceof VscodeRelativePattern) {
 			const baseComponents = pattern.base
 				? this._uriToComponentsDto(URI.parse(pattern.base.toString()))
 				: // Convert vscode.Uri to internal URI then to DTO
 					undefined;
+
 			return { pattern: pattern.pattern, base: baseComponents };
 		}
 
@@ -394,9 +449,12 @@ export class ShimExtHostWorkspace
 		) {
 			const legacyPattern = pattern as {
 				pattern: string;
+
 				base?: string | /*vscode.Uri*/ any;
 			};
+
 			let baseComponents: UriComponentsDto | undefined = undefined;
+
 			if (typeof legacyPattern.base === "string") {
 				try {
 					baseComponents = this._uriToComponentsDto(
@@ -439,6 +497,7 @@ export class ShimExtHostWorkspace
 
 			pattern,
 		);
+
 		return undefined;
 	}
 
@@ -447,18 +506,23 @@ export class ShimExtHostWorkspace
 			this._logWarn(
 				"Cannot fetch folders, MainThreadWorkspace proxy unavailable.",
 			);
+
 			return;
 		}
 
 		this._log("Fetching updated folders via RPC...");
+
 		try {
 			const foldersData =
 				await this.#mainThreadWorkspaceProxy.$getWorkspaceFolders();
+
 			const newFolders: WorkspaceFolder[] = Array.isArray(foldersData)
 				? foldersData
 						.map((fDto, index): WorkspaceFolder | null => {
 							const revivedUri = this._reviveUriDto(fDto.uri);
+
 							if (!revivedUri) return null;
+
 							return {
 								uri: revivedUri,
 
@@ -473,6 +537,7 @@ export class ShimExtHostWorkspace
 			const oldFolderUris = this.#folders
 				.map((f) => f.uri.toString())
 				.sort();
+
 			const newFolderUris = newFolders
 				.map((f) => f.uri.toString())
 				.sort();
@@ -483,15 +548,20 @@ export class ShimExtHostWorkspace
 				this._log(
 					"Workspace folders changed. Updating cache and firing event.",
 				);
+
 				// Shallow clone for event
 				const oldFolders = [...this.#folders];
+
 				this.#folders = newFolders;
+
 				const eventData = this._calculateFoldersChangeEvent(
 					oldFolders,
 
 					newFolders,
 				);
+
 				this.#onDidChangeWorkspaceFoldersEmitter.fire(eventData);
+
 				this._log(
 					`Fired onDidChangeWorkspaceFolders: ${eventData.added.length} added, ${eventData.removed.length} removed.`,
 				);
@@ -513,16 +583,20 @@ export class ShimExtHostWorkspace
 		newFolders: readonly WorkspaceFolder[],
 	): WorkspaceFoldersChangeEvent {
 		const oldSorted = [...oldFolders].sort((a, b) => a.index - b.index);
+
 		const newSorted = [...newFolders].sort((a, b) => a.index - b.index);
 
 		const added: WorkspaceFolder[] = [];
+
 		const removed: WorkspaceFolder[] = [];
 
 		let oldIdx = 0;
+
 		let newIdx = 0;
 
 		while (oldIdx < oldSorted.length || newIdx < newSorted.length) {
 			const oldF = oldSorted[oldIdx];
+
 			const newF = newSorted[newIdx];
 
 			if (oldF && newF) {
@@ -532,10 +606,12 @@ export class ShimExtHostWorkspace
 						// For simplicity, treat as remove and add if properties other than URI changed.
 						// A more precise diff would be needed for just property changes.
 						removed.push(oldF);
+
 						added.push(newF);
 					}
 
 					oldIdx++;
+
 					newIdx++;
 				} else if (
 					newF.index <= oldF.index ||
@@ -545,20 +621,25 @@ export class ShimExtHostWorkspace
 				) {
 					// Heuristic: newF inserted or comes before oldF
 					added.push(newF);
+
 					newIdx++;
 				} else {
 					// oldF must have been removed
 					removed.push(oldF);
+
 					oldIdx++;
 				}
 			} else if (oldF) {
 				removed.push(oldF);
+
 				oldIdx++;
 			} else if (newF) {
 				added.push(newF);
+
 				newIdx++;
 			} else {
 				break;
+
 				// Should not happen
 			}
 		}
@@ -573,6 +654,7 @@ export class ShimExtHostWorkspace
 	// --- Public API Getters (vscode.workspace) ---
 	get workspaceFile(): URI | null {
 		return this.#workspaceFile;
+
 		// Use VS Code internal URI type
 	}
 
@@ -588,6 +670,7 @@ export class ShimExtHostWorkspace
 
 	get isTrusted(): boolean {
 		return this.#initData.environment?.isTrusted ?? false;
+
 		// Default to not trusted if unspecified
 	}
 
@@ -595,9 +678,11 @@ export class ShimExtHostWorkspace
 	public getWorkspaceFolder(uri: URI): WorkspaceFolder | undefined {
 		// uri is VS Code internal URI
 		if (!this.#folders.length || !uri) return undefined;
+
 		const sortedFolders = [...this.#folders].sort(
 			(a, b) => b.uri.path.length - a.uri.path.length,
 		);
+
 		for (const folder of sortedFolders) {
 			if (
 				uri.scheme === folder.uri.scheme &&
@@ -606,6 +691,7 @@ export class ShimExtHostWorkspace
 				const folderPath = folder.uri.path.endsWith("/")
 					? folder.uri.path
 					: folder.uri.path + "/";
+
 				if (
 					uri.path.startsWith(folderPath) ||
 					uri.path === folder.uri.path
@@ -626,19 +712,23 @@ export class ShimExtHostWorkspace
 		this._log(
 			`getConfiguration (section: ${section}) -> delegating to IExtHostConfiguration`,
 		);
+
 		if (!global.cocoonInstantiationService)
 			throw new Error("DI service unavailable for getConfiguration");
+
 		const {
 			IExtHostConfiguration,
 
 			// Late require
 		} = require("vs/workbench/api/common/extHostConfiguration");
+
 		const configService = global.cocoonInstantiationService.invokeFunction(
 			(accessor) =>
 				accessor.get<typeof IExtHostConfiguration>(
 					IExtHostConfiguration,
 				),
 		);
+
 		// Cast scope if type mismatch from vscode.d.ts
 		return configService.getConfiguration(section, scope as any);
 	}
@@ -657,17 +747,21 @@ export class ShimExtHostWorkspace
 			this._logWarn(
 				"findFiles: RPC proxy unavailable, returning empty array.",
 			);
+
 			return [];
 		}
 
 		this._log(
 			`findFiles: include=${include}, exclude=${exclude}, max=${maxResults}`,
 		);
+
 		if (token?.isCancellationRequested) return [];
 
 		try {
 			const includeDto = this._convertGlobDto(include);
+
 			const excludeDto = exclude ? this._convertGlobDto(exclude) : null;
+
 			const options = {
 				maxResults,
 
@@ -683,7 +777,9 @@ export class ShimExtHostWorkspace
 
 				options,
 			);
+
 			if (token?.isCancellationRequested) return [];
+
 			return Array.isArray(resultsDto)
 				? (resultsDto
 						.map((dto) => this._reviveUriDto(dto))
@@ -691,7 +787,9 @@ export class ShimExtHostWorkspace
 				: [];
 		} catch (e: any) {
 			if (e instanceof Error && e.name === "Canceled") return [];
+
 			this._logError("workspace.findFiles RPC failed:", e);
+
 			return [];
 		}
 	}
@@ -700,14 +798,17 @@ export class ShimExtHostWorkspace
 	public async saveAll(includeUntitled: boolean = true): Promise<boolean> {
 		if (!this.#mainThreadDocsProxy) {
 			this._logError("saveAll: Docs proxy unavailable");
+
 			return false;
 		}
 
 		this._log(`saveAll (includeUntitled: ${includeUntitled})`);
+
 		try {
 			return await this.#mainThreadDocsProxy.$saveAll(includeUntitled);
 		} catch (e: any) {
 			this._logError("saveAll RPC failed:", e);
+
 			return false;
 		}
 	}
@@ -723,10 +824,12 @@ export class ShimExtHostWorkspace
 	): Promise<boolean | undefined> {
 		if (!this.#mainThreadWorkspaceProxy) {
 			this._logWarn("requestWorkspaceTrust: RPC proxy unavailable.");
+
 			return Promise.resolve(undefined);
 		}
 
 		this._log("requestWorkspaceTrust");
+
 		return this.#mainThreadWorkspaceProxy.$requestWorkspaceTrust(options);
 	}
 
@@ -744,6 +847,7 @@ export class ShimExtHostWorkspace
 		this._logWarn(
 			`updateWorkspaceFolders called - This is normally disallowed for extensions. Ignoring.`,
 		);
+
 		// Indicate no change made
 		return false;
 	}
@@ -777,16 +881,19 @@ export class ShimExtHostWorkspace
 	// --- Stubs for unimplemented / complex APIs ---
 	get onWillSaveTextDocument(): VscodeEvent<any> {
 		this._logWarnOnce("Event not implemented: onWillSaveTextDocument");
+
 		return VscodeEvent.None;
 	}
 
 	get onDidSaveTextDocument(): VscodeEvent<TextDocument> {
 		this._logWarnOnce("Event not implemented: onDidSaveTextDocument");
+
 		return VscodeEvent.None;
 	}
 
 	get notebookDocuments(): readonly any[] {
 		this._logWarnOnce("API not implemented: workspace.notebookDocuments");
+
 		return [];
 	}
 
@@ -796,6 +903,7 @@ export class ShimExtHostWorkspace
 		// URI is VS Code internal URI or string path
 		if (!this.#mainThreadDocsProxy)
 			throw new Error("openTextDocument: Docs proxy unavailable.");
+
 		let uriToOpenDto: UriComponentsDto | undefined;
 
 		if (uriOrOptions instanceof URI) {
@@ -808,6 +916,7 @@ export class ShimExtHostWorkspace
 			this._logWarn(
 				"openTextDocument with content/language options for untitled needs specific MainThread RPC, not fully implemented.",
 			);
+
 			// Requires a different RPC call like $createUntitledDocument or similar on MainThreadDocuments
 			// For now, let's throw or return a dummy.
 			throw new Error(
@@ -819,16 +928,20 @@ export class ShimExtHostWorkspace
 			throw new Error("Invalid URI or options for openTextDocument.");
 
 		this._log(`openTextDocument for ${uriToOpenDto.path}`);
+
 		await this.#mainThreadDocsProxy.$tryOpenDocument(uriToOpenDto);
+
 		const doc = this.#extHostDocuments.getDocument(
 			this._reviveUriDto(uriToOpenDto)!,
 
 			// Assert revived URI not null
 		);
+
 		if (!doc)
 			throw new Error(
 				`Document ${uriToOpenDto.path} not found after open attempt.`,
 			);
+
 		return doc.document;
 	}
 
@@ -837,13 +950,17 @@ export class ShimExtHostWorkspace
 		this._logWarnOnce(
 			"API not fully implemented: workspace.fs (returning basic stub)",
 		);
+
 		if (!global.cocoonInstantiationService)
 			throw new Error("DI service unavailable for workspace.fs");
+
 		// This should return an instance of ShimFileSystemApi or similar
 		// Late require
 		// const { ShimFileSystemApi } = require("./fs-api-shim");
+
 		// Assuming constructor matches
 		// return new ShimFileSystemApi(this._logService);
+
 		// For now, a very basic stub:
 		return {
 			stat: async (_uri: URI): Promise<FileStat> => {
@@ -899,16 +1016,20 @@ export class ShimExtHostWorkspace
 		this._logWarnOnce(
 			"API not fully implemented: workspace.getRelativePath (basic fallback)",
 		);
+
 		const targetPath =
 			typeof pathOrUri === "string" ? pathOrUri : pathOrUri.fsPath;
+
 		const bestFolder = this.getWorkspaceFolder(
 			typeof pathOrUri === "string" ? URI.file(pathOrUri) : pathOrUri,
 		);
+
 		if (bestFolder) {
 			if (targetPath.startsWith(bestFolder.uri.fsPath)) {
 				const relative = targetPath
 					.substring(bestFolder.uri.fsPath.length)
 					.replace(/^[\/\\]/, "");
+
 				return _includeWorkspace
 					? `${bestFolder.name}/${relative}`
 					: relative;
@@ -922,11 +1043,17 @@ export class ShimExtHostWorkspace
 	public dispose(): void {
 		// Call base dispose if it exists
 		super.dispose();
+
 		dispose(this.#disposables);
+
 		this.#onDidChangeWorkspaceFoldersEmitter.dispose();
+
 		this.#onDidGrantWorkspaceTrustEmitter.dispose();
+
 		this.#onDidOpenTextDocumentEmitter.dispose();
+
 		this.#onDidCloseTextDocumentEmitter.dispose();
+
 		this.#onDidChangeTextDocumentEmitter.dispose();
 	}
 
@@ -934,18 +1061,22 @@ export class ShimExtHostWorkspace
 	public $acceptGrantWorkspaceTrust(): void {
 		// Example name
 		this._log("Received $acceptGrantWorkspaceTrust from main thread.");
+
 		this.#onDidGrantWorkspaceTrustEmitter.fire();
 	}
 
 	// --- RPC method for main thread to call if onDidChangeWorkspaceFolders is not IPC based ---
 	public $acceptWorkspaceFoldersChanged(eventData: {
 		added: WorkspaceFolderDto[];
+
 		removed: WorkspaceFolderDto[];
 	}): void {
 		this._log("Received $acceptWorkspaceFoldersChanged from main thread.");
+
 		const added = eventData.added
 			.map((d) => this._reviveFolderDto(d))
 			.filter((f) => f !== null) as WorkspaceFolder[];
+
 		const removed = eventData.removed
 			.map((d) => this._reviveFolderDto(d))
 			.filter((f) => f !== null) as WorkspaceFolder[];
@@ -956,10 +1087,13 @@ export class ShimExtHostWorkspace
 		this._logWarnOnce(
 			"$acceptWorkspaceFoldersChanged implies Mountain sends deltas, current _fetchAndUpdateFolders refetches all.",
 		);
+
 		const currentFolders = [...this.#folders];
+
 		this.#folders = this.#folders.filter(
 			(f) => !removed.find((r) => r.uri.toString() === f.uri.toString()),
 		);
+
 		this.#folders.push(
 			...added.filter(
 				(a) =>
@@ -968,6 +1102,7 @@ export class ShimExtHostWorkspace
 					),
 			),
 		);
+
 		// Re-sort
 		this.#folders.sort((a, b) => a.index - b.index);
 
@@ -978,7 +1113,9 @@ export class ShimExtHostWorkspace
 
 	private _reviveFolderDto(dto: WorkspaceFolderDto): WorkspaceFolder | null {
 		const uri = this._reviveUriDto(dto.uri);
+
 		if (!uri) return null;
+
 		return { uri, name: dto.name, index: dto.index };
 	}
 }
@@ -986,6 +1123,7 @@ export class ShimExtHostWorkspace
 // Define event types used by this shim
 export interface WorkspaceFoldersChangeEvent {
 	readonly added: readonly WorkspaceFolder[];
+
 	readonly removed: readonly WorkspaceFolder[];
 }
 
