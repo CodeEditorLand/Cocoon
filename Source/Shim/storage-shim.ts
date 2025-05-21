@@ -1,138 +1,135 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Storage (Memento) Shim (shims/storage-shim.ts)
+ * Cocoon Storage (Memento) Shim (storage-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements the `vscode.Memento` API (`IExtHostStorage`) for extensions in Cocoon.
- * Provides the `ExtensionContext.globalState` and `ExtensionContext.workspaceState`
- * key-value storage, proxying operations to Mountain for persistence.
+ * Implements the `vscode.Memento` API (via `IExtHostStorage` service) for extensions
+ * running in Cocoon. Provides `ExtensionContext.globalState` and
+ * `ExtensionContext.workspaceState` key-value storage by proxying operations to
+ * Mountain for persistence.
  *
  * Responsibilities:
- * - `ShimExtHostStorage` Service:
- *   - Implements `createMemento(id, global)` which returns a `ShimMementoImpl` instance.
- * - `ShimMementoImpl` Class:
- *   - Implements the `vscode.Memento` interface (`get`, `update`, `keys`).
- *   - Proxies `get(key)` calls to Mountain (`$getValue` RPC on `MainThreadStorage`),
- *
- *
- *     passing the extension ID (used implicitly by Mountain) and scope (Global/Workspace).
- *   - Proxies `update(key, value)` calls to Mountain (`$setValue` RPC), handling `null`/`undefined`
- *     values for key deletion.
- *   - `keys()` method is typically stubbed or requires a dedicated RPC call.
- *   - Provides `whenReady` promise (resolves immediately in shim).
+ * - `ShimExtHostStorage`:
+ *   - Implements `IExtHostStorage`.
+ *   - `createMemento(id, global)`: Returns a `ShimMementoImpl` instance, scoped appropriately.
+ * - `ShimMementoImpl`:
+ *   - Implements `vscode.Memento`.
+ *   - Proxies `get(key)`, `update(key, value)`, and potentially `keys()` to Mountain's
+ *     `MainThreadStorage` service via RPC.
+ *   - Handles `null`/`undefined` values for key deletion in `update`.
+ *   - Provides `whenReady` promise (resolves immediately in this shim, as data is fetched on demand).
  *
  * Key Interactions:
- * - Provides `vscode.Memento` instances (used for `ExtensionContext.globalState`, etc.).
- * - Interacts with `RPCProtocol` via `this._rpcService.getProxy(MainContext.MainThreadStorage)`.
- * - Relies on Mountain handlers (`handlers/storage.rs`) for actual data storage, retrieval,
- *
- *
- *   and persistence logic.
+ * - Provides `vscode.Memento` instances for `ExtensionContext`.
+ * - Interacts with `RPCProtocol` via `this._getProxy(MainContext.MainThreadStorage)`.
+ * - Relies on Mountain's storage handlers for data persistence.
  *--------------------------------------------------------------------------------------------*/
 
-// Protocol identifiers
 import { MainContext } from "vs/workbench/api/common/extHost.protocol";
-// Assuming Memento interface from 'vscode' API
-import { Memento } from "vscode";
+// TODO: Ensure VscodeMemento is correctly imported or defined if 'vscode' types are not globally available.
+// For VS Code internal IExtHostStorage:
+import {
+	MementoKeysOptions,
+	MementoUpdateArguments,
+	IExtHostStorage as VscodeIExtHostStorage,
+} from "vs/workbench/api/common/extHostStorage";
+// Use vscode.Memento interface from the API
+import { Memento as VscodeMemento } from "vscode";
 
 import {
 	BaseCocoonShim,
 	IExtHostRpcService,
 	ILogService,
 	ProxyIdentifier,
+	refineError,
 } from "./_baseShim";
 
-// Define the MementoScope enum based on VS Code's internal usage (if not directly available)
-enum MementoScope {
-	// Typically maps to Profile. tidigare WORKSPACE
-	WORKSPACE = 0,
+// --- Type Definitions ---
 
-	// New name for WORKSPACE scope
+// VS Code's internal MementoScope enum. Ensure this matches.
+// These values are used in RPC calls to MainThreadStorage.
+enum InternalMementoScope {
+	// Workspace or Profile-specific
 	PROFILE = 0,
 
-	// Typically maps to Global. tidigare GLOBAL
+	// Global/Application-wide
 	APPLICATION = 1,
 }
 
-// Note: VS Code has evolved Memento scopes. `APPLICATION` (global) and `PROFILE` (workspace/profile specific).
-// The original shim used 0 for Workspace, 1 for Global. We'll map `global: boolean` to these.
+// Note: The original shim used 0 for Workspace, 1 for Global.
+// VS Code has evolved to Profile (0) and Application (1). This mapping is important.
 
-// Define the shape of MainThreadStorage RPC proxy
+// Shape of MainThreadStorage RPC proxy
+// TODO: This MUST align with the actual MainThreadStorage service in Mountain.
 interface MainThreadStorageShape {
 	$getValue<T>(target: {
-		scope: MementoScope;
+		scope: InternalMementoScope;
 
 		key: string;
 	}): Promise<T | undefined>;
 
 	$setValue(
-		target: { scope: MementoScope; key: string },
+		target: { scope: InternalMementoScope; key: string },
 
 		value: any,
 	): Promise<void>;
 
-	// Optional
+	$keys?(
+		target: { scope: InternalMementoScope },
+
+		options?: MementoKeysOptions,
+
+		// For Memento.keys()
+	): Promise<string[]>;
+
+	// Optional, if main thread needs explicit init
 	// $initialize?(): Promise<void>;
 
 	// Optional
 	// $optimize?(): Promise<void>;
-
-	// If keys() is implemented
-	// $keys?(target: { scope: MementoScope }): Promise<string[]>;
 }
 
-// Define IExtHostStorage interface (from VS Code's extHostStorage.ts)
-export interface IExtHostStorage {
-	readonly _serviceBrand: undefined;
+// This is the class that implements the vscode.Memento interface
+class ShimMementoImpl implements VscodeMemento {
+	readonly #scope: InternalMementoScope;
 
-	// Returns vscode.Memento
-	createMemento(id: string, global: boolean): Memento;
-
-	// Optional
-	initialize?(): Promise<void>;
-
-	// Optional
-	optimize?(): Promise<void>;
-}
-
-class ShimMementoImpl implements Memento {
-	readonly #scope: MementoScope;
-
-	// ID of the extension this memento belongs to
+	// For logging context primarily
 	readonly #extensionId: string;
 
 	readonly #mainThreadStorageProxy: MainThreadStorageShape | null;
 
 	readonly #logService?: ILogService;
 
-	// Kept for API compatibility, resolves immediately
+	// API compatibility
 	readonly #whenReadyPromise: Promise<void>;
 
 	constructor(
-		id: string,
+		// For logging/context
+		extensionId: string,
 
-		global: boolean,
+		isGlobalScope: boolean,
 
 		mainThreadStorageProxy: MainThreadStorageShape | null,
 
 		logService?: ILogService,
 	) {
-		this.#extensionId = id;
+		this.#extensionId = extensionId;
 
-		// Map boolean to enum
-		this.#scope = global ? MementoScope.APPLICATION : MementoScope.PROFILE;
+		this.#scope = isGlobalScope
+			? InternalMementoScope.APPLICATION
+			: InternalMementoScope.PROFILE;
 
 		this.#mainThreadStorageProxy = mainThreadStorageProxy;
 
 		this.#logService = logService;
 
-		// Ready immediately for shim
+		// Memento is "ready" immediately; data is fetched on demand.
 		this.#whenReadyPromise = Promise.resolve();
 
-		this._log(`Memento created (Scope: ${MementoScope[this.#scope]})`);
+		this._log(`Created (Scope: ${InternalMementoScope[this.#scope]})`);
 	}
 
 	private _log(message: string, ...args: any[]): void {
 		this.#logService?.trace(
-			`[Memento Shim][${this.#extensionId}][${MementoScope[this.#scope]}] ${message}`,
+			`[Memento][${this.#extensionId}][${InternalMementoScope[this.#scope]}] ${message}`,
 
 			...args,
 		);
@@ -140,7 +137,7 @@ class ShimMementoImpl implements Memento {
 
 	private _logError(message: string, ...args: any[]): void {
 		this.#logService?.error(
-			`[Memento Shim][${this.#extensionId}][${MementoScope[this.#scope]}] ${message}`,
+			`[Memento][${this.#extensionId}][${InternalMementoScope[this.#scope]}] ${message}`,
 
 			...args,
 		);
@@ -148,7 +145,7 @@ class ShimMementoImpl implements Memento {
 
 	private _logWarn(message: string, ...args: any[]): void {
 		this.#logService?.warn(
-			`[Memento Shim][${this.#extensionId}][${MementoScope[this.#scope]}] ${message}`,
+			`[Memento][${this.#extensionId}][${InternalMementoScope[this.#scope]}] ${message}`,
 
 			...args,
 		);
@@ -158,60 +155,55 @@ class ShimMementoImpl implements Memento {
 		return this.#whenReadyPromise;
 	}
 
+	// vscode.Memento.get
 	public get<T>(key: string): T | undefined;
 
 	public get<T>(key: string, defaultValue: T): T;
 
 	public get<T>(key: string, defaultValue?: T): T | undefined {
-		if (key === null || key === undefined) {
-			this._logError(`Invalid key provided to Memento.get: ${key}`);
+		if (!key) {
+			// Check for empty or null/undefined key
+			this._logError(`Invalid key provided to Memento.get: '${key}'`);
 
-			// To match Memento behavior, which would likely return defaultValue or undefined
 			return defaultValue;
 		}
 
 		const storageKey = String(key);
 
-		this._log(`get: key='${storageKey}'`);
+		// Can be too verbose
+		// this._log(`get: key='${storageKey}'`);
 
 		if (!this.#mainThreadStorageProxy) {
 			this._logError(
-				`Cannot Memento.get key='${storageKey}', RPC proxy unavailable.`,
+				`Cannot Memento.get key='${storageKey}': MainThreadStorage RPC proxy unavailable.`,
 			);
 
 			return defaultValue;
 		}
 
+		// $getValue in VS Code often returns the value directly, or undefined if not found.
+		// The promise wrapper here is for the async RPC call.
 		return this.#mainThreadStorageProxy
-			.$getValue<{ scope: MementoScope; key: string }, T>({
-				scope: this.#scope,
-
-				key: storageKey,
-			})
+			.$getValue<T>({ scope: this.#scope, key: storageKey })
 			.then((resultValue) => {
-				if (resultValue === undefined) {
-					// $getValue should return undefined if not found
-					this._log(
-						`get: key='${storageKey}' not found, returning default.`,
-					);
-
-					return defaultValue;
-				}
-
-				this._log(`get: key='${storageKey}' returned value.`);
-
-				return resultValue;
+				return resultValue === undefined ? defaultValue : resultValue;
 			})
 			.catch((err: any) => {
-				this._logError(`get: Error fetching key='${storageKey}':`, err);
+				this._logError(
+					`Memento.get: Error fetching key='${storageKey}':`,
 
+					refineError(err, this.#logService, "Memento.get"),
+				);
+
+				// Return defaultValue on any RPC error
 				return defaultValue;
 			});
 	}
 
+	// vscode.Memento.update
 	public async update(key: string, value: any): Promise<void> {
-		if (key === null || key === undefined) {
-			const errorMsg = `Invalid key provided to Memento.update: ${key}`;
+		if (!key) {
+			const errorMsg = `Invalid key provided to Memento.update: '${key}'`;
 
 			this._logError(errorMsg);
 
@@ -220,26 +212,28 @@ class ShimMementoImpl implements Memento {
 
 		const storageKey = String(key);
 
-		// Value can be undefined to delete the key as per Memento API
+		// `value: undefined` means delete the key, as per Memento API.
+		// `value: null` is a valid JSON value to store.
 		if (value !== undefined) {
+			// Only check serializability if not deleting
 			try {
-				// Basic serializability check
+				// Basic check; structuredClone is more robust but might not be available/needed for simple JSON values.
 				JSON.stringify(value);
 			} catch (e: any) {
-				const errorMsg = `Value for key '${storageKey}' is not JSON serializable`;
+				const errorMsg = `Value for Memento key '${storageKey}' is not JSON serializable. Value type: ${typeof value}`;
 
-				this._logError(errorMsg, value, e);
+				// Don't log the value itself if it's huge or sensitive.
+				this._logError(errorMsg, e.message);
 
 				return Promise.reject(new Error(`${errorMsg}: ${e.message}`));
 			}
 		}
 
-		this._log(
-			`update: key='${storageKey}' with value (type: ${typeof value})`,
-		);
+		// Can be too verbose
+		// this._log(`update: key='${storageKey}', value type: ${typeof value}`);
 
 		if (!this.#mainThreadStorageProxy) {
-			const errorMsg = `Cannot Memento.update key='${storageKey}', RPC proxy unavailable.`;
+			const errorMsg = `Cannot Memento.update key='${storageKey}': MainThreadStorage RPC proxy unavailable.`;
 
 			this._logError(errorMsg);
 
@@ -253,53 +247,70 @@ class ShimMementoImpl implements Memento {
 				value,
 			);
 
-			this._log(`update: key='${storageKey}' successful.`);
+			// this._log(`update: key='${storageKey}' successful.`);
 		} catch (err: any) {
-			this._logError(`update: Error setting key='${storageKey}':`, err);
+			this._logError(
+				`Memento.update: Error setting key='${storageKey}':`,
 
-			// Rethrow to signal failure
+				refineError(err, this._logService, "Memento.update"),
+			);
+
+			// Rethrow to signal failure to the extension
 			throw err;
 		}
 	}
 
-	public async keys(): Promise<readonly string[]> {
-		this._logWarn(
-			"Memento.keys() not robustly implemented in shim, returning empty array.",
-		);
+	// vscode.Memento.keys
+	public async keys(
+		options?: MementoKeysOptions,
+	): Promise<readonly string[]> {
+		this._log(`keys() called with options: ${JSON.stringify(options)}`);
 
-		// if (this.#mainThreadStorageProxy?.$keys) {
+		if (!this.#mainThreadStorageProxy?.$keys) {
+			this._logWarn(
+				"Memento.keys() not available: MainThreadStorageProxy.$keys is not defined. Returning empty array.",
+			);
 
-		//     try {
+			return [];
+		}
 
-		//         return await this.#mainThreadStorageProxy.$keys({ scope: this.#scope });
+		try {
+			const result = await this.#mainThreadStorageProxy.$keys(
+				{ scope: this.#scope },
 
-		//     } catch (err: any) {
+				options,
+			);
 
-		//         this._logError("Memento.keys() RPC failed:", err);
+			// Ensure readonly array and handle null/undefined result
+			return Object.freeze(result || []);
+		} catch (err: any) {
+			this._logError(
+				"Memento.keys() RPC failed:",
 
-		//         return [];
+				refineError(err, this._logService, "Memento.keys"),
+			);
 
-		//     }
-
-		// }
-
-		return [];
+			return [];
+		}
 	}
 
 	// Memento interface in vscode.d.ts might not have setKeysForSync.
-	// This was in the original JS shim. If it's part of an internal interface, keep it.
+	// This was in the original JS shim. If it's part of an internal IExtHostMemento, keep it.
+	// Otherwise, it might be obsolete.
 	public setKeysForSync(keys: readonly string[]): void {
+		// Make keys readonly
 		this._logWarn(
-			`Memento.setKeysForSync([${keys.join(", ")}]) not implemented in shim.`,
+			`Memento.setKeysForSync([${keys.join(", ")}]) called. This is related to VS Code settings sync and is a NOP in this shim.`,
 		);
-
-		// Relates to VS Code's settings sync, likely NOP for Cocoon MVP.
 	}
+
+	// TODO: Implement `get<T>` and `update` that return `Thenable<T>` if the API requires stricter Thenable returns instead of Promise.
+	// For most practical purposes, Promise is compatible.
 }
 
 export class ShimExtHostStorage
 	extends BaseCocoonShim
-	implements IExtHostStorage
+	implements VscodeIExtHostStorage
 {
 	public readonly _serviceBrand: undefined;
 
@@ -323,33 +334,36 @@ export class ShimExtHostStorage
 		if (this.#mainThreadStorageProxy) {
 			this._log("MainThreadStorage RPC proxy obtained.");
 		} else {
-			// Error logged by _getProxy or if rpcService is undefined
 			this._logError(
-				"Failed to get MainThreadStorage RPC proxy! Memento functionality will be impaired.",
+				"Failed to get MainThreadStorage RPC proxy! Memento functionality will be severely impaired or non-functional.",
 			);
 		}
 	}
 
-	public createMemento(id: string, global: boolean): Memento {
-		this._log(`Creating Memento for id='${id}', global=${global}`);
+	public createMemento(
+		extensionId: string,
+
+		isGlobal: boolean,
+	): VscodeMemento {
+		this._log(
+			`Creating Memento for extensionId='${extensionId}', isGlobal=${isGlobal}`,
+		);
 
 		if (!this.#mainThreadStorageProxy) {
 			this._logError(
-				`Cannot create Memento for '${id}', RPC proxy unavailable. Critical feature impaired.`,
+				`Cannot create Memento for '${extensionId}': MainThreadStorage RPC proxy unavailable. This is critical.`,
 			);
 
-			// Returning a NOP Memento or throwing might be options.
-			// For robustness, a NOP Memento that logs errors could be returned.
-			// However, throwing makes the issue apparent earlier.
+			// VS Code might throw or return a Memento that always fails. Throwing is clearer.
 			throw new Error(
 				"Cannot create Memento: MainThreadStorage RPC proxy is unavailable.",
 			);
 		}
 
 		return new ShimMementoImpl(
-			id,
+			extensionId,
 
-			global,
+			isGlobal,
 
 			this.#mainThreadStorageProxy,
 
@@ -358,33 +372,29 @@ export class ShimExtHostStorage
 	}
 
 	public async initialize(): Promise<void> {
-		this._log(
-			"initialize() called (No-op in current shim, could call $initialize on MainThreadStorage).",
-		);
+		this._log("initialize() called.");
 
-		// if (this.#mainThreadStorageProxy?.$initialize) {
+		// TODO: If MainThreadStorage requires explicit initialization (e.g., to load data from disk),
 
-		//     await this.#mainThreadStorageProxy.$initialize();
-
-		// }
-
+		// this should call `this.#mainThreadStorageProxy?.$initialize()`.
+		// For now, it's a NOP as Mementos fetch on demand.
 		return Promise.resolve();
 	}
 
 	public async optimize(): Promise<void> {
-		this._log(
-			"optimize() called (No-op in current shim, could call $optimize on MainThreadStorage).",
-		);
+		this._log("optimize() called.");
 
-		// if (this.#mainThreadStorageProxy?.$optimize) {
-
-		//     await this.#mainThreadStorageProxy.$optimize();
-
-		// }
-
+		// TODO: If MainThreadStorage supports an optimization/compaction step, call it here.
+		// For now, a NOP.
 		return Promise.resolve();
 	}
-}
 
-// Class is already exported
-// export { ShimExtHostStorage };
+	// updateWorkspaceStorageData is specific to IExtHostStorage and used for initialization from main thread.
+	// This shim doesn't use it if data is fetched on demand by Memento.get.
+	// If Mountain *pushes* initial storage data, this method would be called.
+	// public $updateWorkspaceStorageData(data: IStringDictionary<any>): void {
+
+	//     this._logWarn("$updateWorkspaceStorageData called - STUB. This shim fetches Memento data on demand.");
+
+	// }
+}
