@@ -1,63 +1,71 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Extension Enablement Shim (enablement-service-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements the `IWorkbenchExtensionEnablementService` (or a relevant ExtHost subset)
- * for extensions running in Cocoon. It determines if an extension is enabled or disabled
- * based on global/workspace settings, potentially proxying requests to Mountain.
+ * Implements `IWorkbenchExtensionEnablementService` (or a compatible ExtHost interface
+ * like `IGlobalExtensionEnablementService`) for extensions running in Cocoon.
+ * It determines if an extension is enabled or disabled, ideally by proxying requests
+ * to `MainThreadExtensionEnablementService` in Mountain.
  *
  * Responsibilities:
- * - `getEnablementState(extension)`: Determines the enablement state of an extension.
- *   For MVP, this might be a stub or rely on initData. Ideally, proxies to Mountain.
- * - `setEnablement(extensions, state)`: Allows changing the enablement state, proxied to Mountain.
- * - `isEnabled(extension)`: Convenience method based on `getEnablementState`.
- * - `onDidChangeEnablement`: Event fired when enablement states change (requires notifications from Mountain).
+ * - `getEnablementState(extension)`: Proxies to Mountain to get the enablement state.
+ * - `setEnablement(extensions, state)`: Proxies to Mountain to change enablement state.
+ * - `isEnabled(extension)`: Derived from `getEnablementState`.
+ * - `onDidChangeEnablement`: Event fired when Mountain signals enablement changes.
  *
  * Key Interactions:
- * - Provides enablement status, often used by `ExtHostExtensionService` during activation.
- * - May interact with `MainThreadExtensionEnablementService` via RPC or IPC.
- * - Uses `EnablementState` enum from VS Code services.
+ * - Injected into the real `ExtHostExtensionService` via DI.
+ * - Makes RPC calls to `MainThreadExtensionEnablementService` in Mountain.
+ * - Receives RPC calls from Mountain (e.g., `$acceptEnablementChanged`) to trigger events.
  *--------------------------------------------------------------------------------------------*/
-
-// Needed if proxying state checks/changes via direct IPC
-// import { sendToMountainAndWait } from "../cocoon-ipc";
 
 import {
 	Emitter as VscodeEmitter,
-	type Event as VscodeEvent,
+	Event as VscodeEvent,
 } from "vs/base/common/event";
-// Assuming bundled
 import {
 	ExtensionIdentifier,
-	type IExtensionDescription,
-	// For Extension type
+	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 import {
+	ExtHostContext,
+	MainContext,
+	// For RPC identifiers
+} from "vs/workbench/api/common/extHost.protocol";
+import {
 	EnablementState,
-	// A more general interface
-	IExtensionEnablementService,
-	// This interface is often implemented by the ExtHost counterpart
-	type IGlobalExtensionEnablementService,
-	// The service ID used in DI
+	// Common interface for ExtHost side
+	IGlobalExtensionEnablementService,
+	// Service ID for DI
 	IWorkbenchExtensionEnablementService,
+	// For event payload if main thread sends rich delta
+	// IExtensionEnablementServiceDelta,
 } from "vs/workbench/services/extensionManagement/common/extensionManagement";
+// For onDidChangeEnablement payload
+import type { Extension as VscodeExtensionApi } from "vscode";
 
 import {
 	BaseCocoonShim,
-	type IExtHostRpcService,
-	type ILogService,
+	IExtHostRpcService,
+	ILogService,
 	ProxyIdentifier,
-	// Import ILogService & BaseCocoonShim
+	refineError,
 } from "./_baseShim";
 
 // --- Type Definitions ---
 
-// Define the shape of the Extension object used by this shim, typically IExtensionDescription
-type Extension = IExtensionDescription;
+// Represents the IExtensionDescription or a compatible structure used by this service.
+type ExtensionForEnablement = IExtensionDescription;
 
-// Define the RPC shape for MainThreadExtensionEnablementService if used
-// TODO: Define this based on actual protocol if RPC is used.
-interface MainThreadExtensionEnablementShape {
-	$getEnablementState(extensionId: string): Promise<EnablementState>;
+// RPC Shape for MainThreadExtensionEnablementService
+// TODO: This MUST align with Mountain's MainThread implementation.
+interface MainThreadExtensionEnablementProxyShape {
+	$getEnablementStates(
+		extensionIds: string[],
+
+		workspaceType?: /* WorkspaceType */ any,
+
+		// Or individual $getEnablementState
+	): Promise<EnablementState[]>;
 
 	$setEnablement(
 		extensionIds: string[],
@@ -65,71 +73,140 @@ interface MainThreadExtensionEnablementShape {
 		newState: EnablementState,
 	): Promise<boolean[]>;
 
-	// If events are pull/RPC based
-	// $registerExtensionEnablementChangeListener? (callbackId: number) : Promise<void>
+	// Some versions have this
+	// $isIgnored?(extensionId: string): Promise<boolean>;
 }
 
-// Define the ExtHost shape if Mountain calls methods on this service
-interface ExtHostExtensionEnablementShape {
-	// Example if Mountain pushes events
-	$onEnablementChanged(extensionIds: string[]): void;
+// RPC Shape for methods on this ExtHost service called by Mountain
+// TODO: This MUST align with VS Code's ExtHostExtensionEnablementShape or similar.
+interface ExtHostExtensionEnablementRpcShape {
+	/**
+	 * Called by the main thread when the enablement of one or more extensions changes.
+	 * @param extensionIds Array of string identifiers for extensions whose enablement changed.
+	 */
+	// Or takes IExtensionEnablementServiceDelta
+	$acceptEnablementChanged(extensionIds: string[]): Promise<void>;
 }
 
-// TODO: Determine which interface this shim should precisely implement.
-// IGlobalExtensionEnablementService is common for ExtHost.
-// IWorkbenchExtensionEnablementService is the service ID.
 export class ShimExtensionEnablementService
 	extends BaseCocoonShim
 	implements
 		IGlobalExtensionEnablementService,
-		ExtHostExtensionEnablementShape
+		ExtHostExtensionEnablementRpcShape
 {
+	// For IWorkbenchExtensionEnablementService DI
 	public readonly _serviceBrand: undefined;
 
-	readonly #mainThreadEnablementProxy: MainThreadExtensionEnablementShape | null =
+	readonly #mainThreadEnablementProxy: MainThreadExtensionEnablementProxyShape | null =
 		null;
 
 	readonly #onDidChangeEnablementEmitter = new VscodeEmitter<
-		readonly Extension[]
-		// TODO: Extension[] needs to be full IExtensionDescription
+		readonly VscodeExtensionApi[]
+		// Payload is vscode.Extension[]
 	>();
+
+	// TODO: This service needs access to IExtHostExtensionService to resolve extension IDs to IExtensionDescription
+	// for the onDidChangeEnablement event payload. This is a common pattern in VS Code ExtHost services.
+	// This would be injected via constructor or fetched from DI later.
+	// For now, this dependency is implicit and needs to be addressed.
+	// private _extHostExtensionService: IExtHostExtensionService | undefined;
 
 	constructor(
 		rpcService: IExtHostRpcService | undefined,
 
 		logService: ILogService | undefined,
+
+		// Potential future: @IExtHostExtensionService extHostExtensionService: IExtHostExtensionService
 	) {
-		// Service Identifier for logging
 		super("ExtensionEnablementService", rpcService, logService);
 
-		this._log(`Initialized.`);
+		this._log(`Initializing...`);
 
 		if (this._rpcService) {
 			// TODO: Use the correct MainContext identifier for MainThreadExtensionEnablementService
-			// this.#mainThreadEnablementProxy = this._getProxy(MainContext.MainThreadExtensionEnablementService as ProxyIdentifier<MainThreadExtensionEnablementShape>);
-			// TODO: Register self for RPC calls from Mountain if ExtHostExtensionEnablementShape is used
-			// this._rpcService.set(ExtHostContext.ExtHostExtensionEnablementService as ProxyIdentifier<ExtHostExtensionEnablementShape>, this);
+			// This identifier might not be in the standard MainContext enum if it's a newer/more specific service.
+			// It might be something like `MainContext.MainThreadExtensionEnablement`.
+			const proxyId =
+				MainContext[
+					"MainThreadExtensionEnablementService" as keyof typeof MainContext
+					// Try a potential name
+				] ||
+				MainContext[
+					"MainThreadExtensionEnablement" as keyof typeof MainContext
+					// Another potential name
+				];
+
+			if (proxyId) {
+				this.#mainThreadEnablementProxy = this._getProxy(
+					proxyId as ProxyIdentifier<MainThreadExtensionEnablementProxyShape>,
+				);
+			} else {
+				this._logError(
+					"ProxyIdentifier for MainThreadExtensionEnablementService not found in MainContext. RPC calls will fail.",
+				);
+			}
+
+			// Register self for RPC calls from Mountain
+			try {
+				// TODO: Use the correct ExtHostContext identifier.
+				const selfProxyId =
+					ExtHostContext[
+						"ExtHostExtensionEnablementService" as keyof typeof ExtHostContext
+					] ||
+					ExtHostContext[
+						"ExtHostExtensionEnablement" as keyof typeof ExtHostContext
+					];
+
+				if (selfProxyId) {
+					this._rpcService.set(
+						selfProxyId as ProxyIdentifier<ExtHostExtensionEnablementRpcShape>,
+
+						this,
+					);
+
+					this._log(
+						"Registered self for RPC calls (ExtHostExtensionEnablementService).",
+					);
+				} else {
+					this._logError(
+						"ProxyIdentifier for self (ExtHostExtensionEnablementService) not found in ExtHostContext.",
+					);
+				}
+			} catch (e: any) {
+				this._logError("Failed to set self for RPC:", e);
+			}
 		}
 
 		if (!this.#mainThreadEnablementProxy) {
 			this._logWarn(
-				"MainThreadExtensionEnablementService proxy not available. Enablement checks/changes might be stubbed or fail.",
+				"MainThreadExtensionEnablementService proxy not available. Enablement state will be STUBBED.",
 			);
 		}
 	}
 
-	// --- IGlobalExtensionEnablementService methods ---
+	// --- IGlobalExtensionEnablementService / IWorkbenchExtensionEnablementService methods ---
 
-	public getEnablementState(extension: Extension): EnablementState {
-		this._log(`getEnablementState for ${extension.identifier.value}`);
+	public getEnablementState(
+		extension: ExtensionForEnablement,
+	): EnablementState {
+		// Can be verbose
+		// this._log(`getEnablementState for ${extension.identifier.value}`);
 
 		if (this.#mainThreadEnablementProxy) {
-			// TODO: Implement RPC call to this.#mainThreadEnablementProxy.$getEnablementState(extension.identifier.id)
-			// For now, returning stub.
-			this._logWarn(
-				`getEnablementState for ${extension.identifier.value} - STUBBED, returning EnabledGlobally.`,
+			// The proxy method $getEnablementStates typically takes an array of IDs.
+			// For a single extension, we could call it with a single-element array.
+			// Or, MainThread might have a singular $getEnablementState(id).
+			// TODO: This should ideally be an async method returning Promise<EnablementState>.
+			// The interface IGlobalExtensionEnablementService.getEnablementState is synchronous.
+			// This implies either the ExtHost service has a cache populated by the main thread,
+
+			// or this method is not intended for direct RPC for each call.
+			// VS Code's real ExtHostExtensionEnablementService maintains a cache.
+			this._logWarnOnce(
+				`getEnablementState for ${extension.identifier.value} - RPC STUBBED, returning EnabledGlobally. Sync API with async backend is tricky.`,
 			);
 
+			// MVP Stub, as direct RPC is async
 			return EnablementState.EnabledGlobally;
 		}
 
@@ -137,144 +214,169 @@ export class ShimExtensionEnablementService
 			`getEnablementState for ${extension.identifier.value} - RPC Proxy unavailable, STUBBED, returning EnabledGlobally.`,
 		);
 
-		// MVP Stub
 		return EnablementState.EnabledGlobally;
 	}
 
 	public async setEnablement(
-		extensions: Extension[],
+		extensions: ExtensionForEnablement[],
 
 		newState: EnablementState,
 	): Promise<boolean[]> {
-		const extensionIds = extensions.map((e) => e.identifier.value);
+		// Use .id for string from ExtensionIdentifier
+		const extensionIds = extensions.map((e) => e.identifier.id);
 
 		this._log(
 			`setEnablement for [${extensionIds.join(", ")}] to state ${EnablementState[newState]}`,
 		);
 
-		if (this.#mainThreadEnablementProxy) {
-			// TODO: Implement RPC call to this.#mainThreadEnablementProxy.$setEnablement(extensionIds, newState)
-			this._logWarn(
-				`setEnablement for [${extensionIds.join(", ")}] - RPC STUBBED, returning all true.`,
+		if (!this.#mainThreadEnablementProxy) {
+			this._logError(
+				`setEnablement for [${extensionIds.join(", ")}] - RPC Proxy unavailable, operation failed.`,
 			);
 
-			return extensions.map(() => true);
+			// Indicate failure for all
+			return extensions.map(() => false);
 		}
 
-		this._logError(
-			`setEnablement for [${extensionIds.join(", ")}] - RPC Proxy unavailable, operation failed.`,
-		);
+		try {
+			return await this.#mainThreadEnablementProxy.$setEnablement(
+				extensionIds,
 
-		// Indicate failure
-		return extensions.map(() => false);
+				newState,
+			);
+		} catch (e: any) {
+			this._logError(
+				`RPC $setEnablement failed:`,
+
+				refineError(e, this._logService),
+			);
+
+			return extensions.map(() => false);
+		}
 	}
 
-	// --- IExtensionEnablementService methods (often part of the same ExtHost service) ---
-
-	public isEnabled(extension: Extension): boolean {
+	public isEnabled(extension: ExtensionForEnablement): boolean {
 		const state = this.getEnablementState(extension);
 
-		// More accurate check based on EnablementState semantics
 		return (
 			state === EnablementState.EnabledGlobally ||
 			state === EnablementState.EnabledWorkspace
 		);
 	}
 
-	// Utility method from original JS, not typically part of standard IExtensionEnablementService.
-	// It checks if a given state *means* the extension is effectively enabled.
+	// This utility method was in the original JS.
 	public isEnablementStateEnabled(state: EnablementState): boolean {
 		switch (state) {
 			case EnablementState.EnabledGlobally:
+			// Workspace specific enablement
 			case EnablementState.EnabledWorkspace:
 				return true;
 
-			case EnablementState.DisabledByExtensionKind:
-			case EnablementState.DisabledByTrustRequirement:
-			// Corrected typo from original JS
-			case EnablementState.DisabledByEnvironment:
-			case EnablementState.DisabledByPolicy:
-			case EnablementState.DisabledGlobally:
-			case EnablementState.DisabledWorkspace:
-				// TODO: Check for newer states like DisabledByVirtualWorkspace, DisabledByExtensionDependency, etc.
-				return false;
-
+			// All other states (Disabled*, DisabledByEnvironment, etc.)
 			default:
-				// For unknown or new states, safer to assume not enabled or log a warning.
-				this._logWarn(
-					`Unknown EnablementState encountered in isEnablementStateEnabled: ${state}`,
-				);
-
 				return false;
 		}
 	}
 
 	public getEnablementStates(
-		extensions: Extension[],
+		extensions: ExtensionForEnablement[],
 
-		_workspaceType?: undefined,
+		_workspaceType?: /* WorkspaceType */ any,
 	): EnablementState[] {
-		// The _workspaceType parameter is from an older version of the interface, often unused now.
-		this._log(`getEnablementStates for ${extensions.length} extensions`);
+		// Verbose
+		// this._log(`getEnablementStates for ${extensions.length} extensions`);
 
-		// TODO: If proxy available, could batch this request or make individual calls.
-		// For now, calls individual getEnablementState stubs.
+		// Similar to getEnablementState, this is sync but backend is async.
+		// VS Code's real service would use a cache.
+		// TODO: Implement caching or make this async if interface allows.
+		// Uses stubbed getEnablementState
 		return extensions.map((ext) => this.getEnablementState(ext));
 	}
 
-	public get onDidChangeEnablement(): VscodeEvent<readonly Extension[]> {
-		// TODO: This event should be fired when this.#mainThreadEnablementProxy notifies of changes,
-
-		// e.g., via an RPC call like $onEnablementChanged.
-		// The payload should be the actual ExtensionDescription objects that changed.
-		this._logWarnOnce(
-			"onDidChangeEnablement STUB - returning NOP event. Real implementation requires main thread notifications.",
-		);
-
-		// Return actual emitter if implemented
+	public get onDidChangeEnablement(): VscodeEvent<
+		readonly VscodeExtensionApi[]
+	> {
 		return this.#onDidChangeEnablementEmitter.event;
-
-		// Fallback if emitter not yet wired
-		// return this._createNopEventEmitter<readonly Extension[]>();
 	}
 
-	// --- ExtHostExtensionEnablementShape methods (called by Mountain) ---
-	public $onEnablementChanged(changedExtensionIdsFromMain: string[]): void {
+	// --- ExtHostExtensionEnablementRpcShape methods (called by Mountain) ---
+	public async $acceptEnablementChanged(
+		changedExtensionIdsFromMain: string[],
+	): Promise<void> {
 		this._log(
-			`Received $onEnablementChanged from Mountain for IDs: [${changedExtensionIdsFromMain.join(", ")}]`,
+			`RPC $acceptEnablementChanged for IDs: [${changedExtensionIdsFromMain.join(", ")}]`,
 		);
 
-		// TODO: This requires having access to the full IExtensionDescription objects for these IDs
-		// to fire the onDidChangeEnablement event with the correct payload.
-		// This implies ShimExtensionEnablementService might need access to IExtHostExtensionService
-		// or a registry to look up extensions by ID.
-		// For now, this is a placeholder.
+		// TODO: Critical: This service needs access to `IExtHostExtensionService` to resolve
+		// string IDs back to `IExtensionDescription` (or `vscode.Extension`) objects
+		// to fire the `onDidChangeEnablementEmitter` with the correct payload type.
 		// Example:
-		// const changedExtensions: Extension[] = [];
+		// Needs to be injected or DI'd
+		// const extHostSvc = this._getExtHostExtensionService();
 
-		// for (const idStr of changedExtensionIdsFromMain) {
+		// if (extHostSvc) {
 
-		//     const ext = await someWayToGetExtensionDescription(idStr);
+		//     const changedExtensionsPromises = changedExtensionIdsFromMain.map(idStr => extHostSvc.getExtension(idStr));
 
-		//     if (ext) changedExtensions.push(ext);
+		//     const resolvedExtensions = (await Promise.all(changedExtensionsPromises)).filter(ext => !!ext) as IExtensionDescription[];
 
-		// }
+		//     if (resolvedExtensions.length > 0) {
 
-		// if (changedExtensions.length > 0) {
+		// Convert IExtensionDescription to vscode.Extension if necessary for the event
+		//
+		//         const apiExtensions = resolvedExtensions.map(desc => this._convertToApiExtension(desc));
 
-		//     this.#onDidChangeEnablementEmitter.fire(Object.freeze(changedExtensions));
+		//         this.#onDidChangeEnablementEmitter.fire(Object.freeze(apiExtensions));
+
+		//     }
+
+		// } else {
+
+		//     this._logError("Cannot fire onDidChangeEnablement: IExtHostExtensionService not available to resolve extension descriptions.");
 
 		// }
 
 		this._logWarnOnce(
-			"$onEnablementChanged received but not fully implemented to fetch Extension objects and fire event.",
+			"$acceptEnablementChanged received but not fully implemented to fetch Extension objects and fire event correctly.",
 		);
+
+		// For now, fire with empty array or attempt to create dummy extensions if only IDs are available for the event type.
+		// The event type `readonly VscodeExtensionApi[]` implies we need the full API object.
+		// If it were `readonly ExtensionIdentifier[]`, it would be simpler.
+		// Fire with empty for now
+		this.#onDidChangeEnablementEmitter.fire([]);
 	}
 
-	// For completeness, if _createNopEventEmitter is used from base:
-	// protected _createNopEventEmitter<T = any>(): VscodeEvent<T> {
+	// Helper placeholder (would need full Extension object construction logic from ExtHostExtensionService)
+	// private _convertToApiExtension(desc: IExtensionDescription): VscodeExtensionApi {
 
-	// 	return () => ({ dispose: () => {} });
+	// This is a simplified mock. The real conversion is complex.
+	//
+	//     return {
+
+	//         id: desc.identifier.value,
+
+	//         extensionPath: desc.extensionLocation.fsPath,
+
+	// This service doesn't know activation state
+	//         isActive: false,
+
+	//         packageJSON: desc as any,
+
+	// Placeholder
+	//         extensionKind: ExtensionKind.Workspace,
+
+	//         exports: undefined,
+
+	//         activate: () => Promise.resolve(),
+
+	//     } as VscodeExtensionApi;
 
 	// }
+
+	public dispose(): void {
+		super.dispose();
+
+		this.#onDidChangeEnablementEmitter.dispose();
+	}
 }
