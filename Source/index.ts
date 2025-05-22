@@ -10,6 +10,7 @@
  * - Process Initialization: Sets up the Node.js environment, including module path
  *   adjustments for VS Code's internal module resolution.
  * - IPC Management: Utilizes `cocoon-ipc.ts` to communicate with the Mountain host,
+ *
  *   primarily waiting for an `initExtensionHost` command containing initialization data.
  * - Dependency Injection (DI): Configures and instantiates VS Code's `InstantiationService`
  *   with a `ServiceCollection` that includes:
@@ -24,10 +25,12 @@
  *       shimmed functionalities (e.g., `vscode.workspace.fs`).
  *     - Shimmed module factories for Node.js built-ins (like 'fs') if necessary.
  * - Extension Host Lifecycle: Triggers the initialization of the `ExtHostExtensionService`,
+ *
  *   which subsequently loads and activates extensions based on the provided init data.
  * - URI Revival: Handles the "revival" of URI-like objects (and other marshallable types)
  *   received from the Mountain process into proper VS Code `URI` instances.
  * - Global Error Handling: Installs global error handlers (`process.on('uncaughtException')`,
+ *
  *   etc.) to report errors back to Mountain via RPC.
  *
  * Key Interactions:
@@ -268,6 +271,7 @@ declare global {
 
 	// Note: cocoonRpcProtocolInstance is used via (global as any) later, not strictly typed here.
 }
+
 global.DI = undefined;
 
 global.fsImplForVscodeApi = undefined;
@@ -308,6 +312,7 @@ function reviveUriComponentsRaw(uriComponent: any): URI | undefined {
 			// Keep warning for hard failures
 		);
 	}
+
 	return undefined;
 }
 
@@ -321,6 +326,7 @@ function transformUrisInObjectRawForInitData(obj: any): any {
 	) {
 		return obj;
 	}
+
 	if (Array.isArray(obj)) {
 		// If undefineds from failed revival in arrays are problematic, they might need filtering.
 		// VS Code's own marshalling/revival handles this; here we replicate.
@@ -362,6 +368,7 @@ function transformUrisInObjectRawForInitData(obj: any): any {
 			newObj[key] = transformUrisInObjectRawForInitData(obj[key]);
 		}
 	}
+
 	return newObj;
 }
 
@@ -773,6 +780,7 @@ async function initializeCocoonHost(
 				sendError,
 			);
 		}
+
 		process.exit(1);
 	}
 }
@@ -812,6 +820,7 @@ ipcApiInstance.onMessageFromMountain((message: VineMessage) => {
 
 			return;
 		}
+
 		const rpcLogger: IRPCProtocolLogger | null = null;
 
 		// Assign to global first, then to module-scoped variable, as per File 2's pattern
@@ -855,6 +864,7 @@ ipcApiInstance.onMessageFromMountain((message: VineMessage) => {
 						sendError,
 					);
 				}
+
 				process.exit(1);
 			}
 		});
