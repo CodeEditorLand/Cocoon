@@ -20,11 +20,11 @@
 
 import {
 	Emitter as VscodeEmitter,
-	Event as VscodeEvent,
+	type Event as VscodeEvent,
 } from "vs/base/common/event";
 import {
 	ExtensionIdentifier,
-	IExtensionDescription,
+	type IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 import {
 	ExtHostContext,
@@ -34,7 +34,7 @@ import {
 import {
 	EnablementState,
 	// Common interface for ExtHost side
-	IGlobalExtensionEnablementService,
+	type IGlobalExtensionEnablementService,
 	// Service ID for DI
 	IWorkbenchExtensionEnablementService,
 	// For event payload if main thread sends rich delta
@@ -45,9 +45,9 @@ import type { Extension as VscodeExtensionApi } from "vscode";
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 

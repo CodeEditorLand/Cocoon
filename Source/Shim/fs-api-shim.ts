@@ -27,19 +27,19 @@ import { Event as VscodeEvent } from "vs/base/common/event";
 // For URI marshalling check
 import { MarshalledId } from "vs/base/common/marshallingIds";
 import {
-	FileChangeEvent as VscodeFileChangeEvent,
+	type FileChangeEvent as VscodeFileChangeEvent,
 	FileChangeType as VscodeFileChangeType,
-	FilePermission as VscodeFilePermission,
-	FileStat as VscodeFileStat,
+	type FilePermission as VscodeFilePermission,
+	type FileStat as VscodeFileStat,
 	// The interface this class implements
-	FileSystem as VscodeFileSystem,
+	type FileSystem as VscodeFileSystem,
 	FileSystemError as VscodeFileSystemError,
 	FileType as VscodeFileType,
 	// Use VscodeUri for API consistency
 	Uri as VscodeUri,
 } from "vscode";
 
-import { BaseCocoonShim, ILogService, refineError } from "./_baseShim";
+import { BaseCocoonShim, type ILogService, refineError } from "./_baseShim";
 
 // --- Type Definitions ---
 

@@ -21,36 +21,36 @@ import {
 } from "vs/base/common/event";
 import {
 	DisposableStore,
-	dispose,
 	IDisposable,
+	dispose,
 } from "vs/base/common/lifecycle";
 // For Schemas.file etc.
 import { Schemas } from "vs/base/common/network";
 import {
 	URI as VSCodeInternalURI,
-	UriComponents as VSCodeInternalUriComponents,
+	type UriComponents as VSCodeInternalUriComponents,
 } from "vs/base/common/uri";
 // --- VS Code Internal Module Imports ---
 import {
 	CanonicalExtensionIdentifier,
 	ExtensionIdentifier,
 	IEnabledApiProposals,
-	IExtensionDescription,
-	ISerializedExtension,
+	type IExtensionDescription,
+	type ISerializedExtension,
 	MissingExtensionDependency,
 } from "vs/platform/extensions/common/extensions";
 import {
-	ActivatedExtension,
+	type ActivatedExtension,
 	ActivationKind,
 	EmptyExtension,
-	ExtensionActivationReason,
+	type ExtensionActivationReason,
 	ExtensionActivationTimes,
 	ExtensionActivationTimesBuilder,
 	IExtensionAPI,
-	IExtensionModule,
+	type IExtensionModule,
 } from "vs/workbench/api/common/extHostExtensionActivator";
 import {
-	ExtHostInitData,
+	type ExtHostInitData,
 	IExtHostInitDataService,
 	// For initData
 } from "vs/workbench/api/common/extHostInitDataService";
@@ -58,8 +58,8 @@ import { IExtHostLanguageModels } from "vs/workbench/api/common/extHostLanguageM
 // For localized messages
 import { IExtHostLocalizationService } from "vs/workbench/api/common/extHostLocalizationService";
 import {
-	IExtHostSecrets,
 	IExtHostSecretState,
+	IExtHostSecrets,
 	// IExtHostSecrets might be the DI key
 } from "vs/workbench/api/common/extHostSecretState";
 // --- Service Interface Imports (for DI access during ExtensionContext creation) ---
@@ -71,32 +71,32 @@ import { IExtensionStoragePaths } from "vs/workbench/api/common/extHostStoragePa
 
 import {
 	IExtHostTerminalService,
-	IExtHostTerminalServiceShape,
+	type IExtHostTerminalServiceShape,
 } from "vs/workbench/api/common/extHostTerminalService";
 import {
 	ExtensionDescriptionRegistry,
-	IActivationEventsReader as VscodeActivationEventsReader,
+	type IActivationEventsReader as VscodeActivationEventsReader,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry";
 import { checkProposedApiEnabled as vscodeCheckProposedApiEnabled } from "vs/workbench/services/extensions/common/extensions";
 
-import { sendNotificationToMountain } from "../cocoon-ipc";
 import {
-	EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
-	Extension as VscodeExtension,
-	ExtensionContext as VscodeExtensionContext,
+	type EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
+	type Extension as VscodeExtension,
+	type ExtensionContext as VscodeExtensionContext,
 	ExtensionKind as VscodeExtensionKind,
 	ExtensionMode as VscodeExtensionMode,
 	ExtensionRuntime as VscodeExtensionRuntime,
 	// For ExtensionContext.languageModelAccessInformation
-	LanguageModelAccessInformation as VscodeLanguageModelAccessInformation,
-	Memento as VscodeMemento,
-	SecretStorage as VscodeSecretStorage,
+	type LanguageModelAccessInformation as VscodeLanguageModelAccessInformation,
+	type Memento as VscodeMemento,
+	type SecretStorage as VscodeSecretStorage,
 	Uri as VscodeUri,
 	// For MessagePassingProtocol if used in ExtensionContext
 	// MessagePassingProtocol as VscodeMessagePassingProtocol,
 } from "../Shim/out/vscode";
+import { sendNotificationToMountain } from "../cocoon-ipc";
 // vscode API types
-import { BaseCocoonShim, ILogService } from "./_baseShim";
+import { BaseCocoonShim, type ILogService } from "./_baseShim";
 
 // --- Type Definitions ---
 
@@ -630,7 +630,7 @@ export class ShimExtHostExtensionService
 		// this._log(`Simulated: Activating module: ${desc.identifier.value}`);
 
 		// Proposed API Check
-		let enabledProposalsSource =
+		const enabledProposalsSource =
 			this.#initData.environment.extensionEnabledProposedApi;
 
 		let finalEnabledProposalsForExt: string[] = [];

@@ -531,7 +531,7 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 		options?: ReaddirOptionsShim,
 	): Promise<string[] | Buffer[] | DirentShim[]> => {
-		let ipcReadOptions: {
+		const ipcReadOptions: {
 			withFileTypes?: boolean;
 
 			recursive?: boolean;

@@ -16,17 +16,17 @@
 
 import { Event as VscodeEvent } from "vs/base/common/event";
 import { URI as VSCodeInternalURI } from "vs/base/common/uri";
-import {
+import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 // Actual VS Code interface
-import { IExtHostLocalizationService as VscodeIExtHostLocalizationService } from "vs/workbench/api/common/extHostLocalizationService";
+import type { IExtHostLocalizationService as VscodeIExtHostLocalizationService } from "vs/workbench/api/common/extHostLocalizationService";
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
+	type IExtHostRpcService,
+	type ILogService,
 	ProxyIdentifier,
 } from "./_baseShim";
 

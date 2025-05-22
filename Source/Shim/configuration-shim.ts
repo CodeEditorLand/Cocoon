@@ -12,32 +12,32 @@
  * - Uses `BaseCocoonShim` for common utilities.
  *--------------------------------------------------------------------------------------------*/
 
-import { Event as VscodeEvent } from "vs/base/common/event";
+import type { Event as VscodeEvent } from "vs/base/common/event";
 import {
 	ConfigurationTargetDto,
-	IConfigurationChange,
-	IConfigurationInitData,
-	IConfigurationOverridesDto,
+	type IConfigurationChange,
+	type IConfigurationInitData,
+	type IConfigurationOverridesDto,
 	MainContext,
-	ExtHostConfigurationShape as VscodeExtHostConfigurationShape,
+	type ExtHostConfigurationShape as VscodeExtHostConfigurationShape,
 	// Protocol DTOs and shapes
 } from "vs/workbench/api/common/extHost.protocol";
 
-// For onConfigurationChanged IPC event
-import * as ipc from "../cocoon-ipc";
 // EventEmitter from 'events' is used by _createEventEmitter from BaseCocoonShim
 import {
-	ConfigurationChangeEvent as VscodeConfigurationChangeEvent,
+	type ConfigurationChangeEvent as VscodeConfigurationChangeEvent,
 	ConfigurationTarget as VscodeConfigurationTarget,
 	Uri as VscodeUri,
-	WorkspaceConfiguration as VscodeWorkspaceConfiguration,
+	type WorkspaceConfiguration as VscodeWorkspaceConfiguration,
 	// vscode API types
 } from "../Shim/out/vscode";
+// For onConfigurationChanged IPC event
+import * as ipc from "../cocoon-ipc";
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 
@@ -50,9 +50,7 @@ interface MainThreadConfigurationProxyShape {
 	$getConfiguration(
 		args: [
 			string | null,
-
 			IConfigurationOverridesDto | null,
-
 			boolean | undefined,
 		],
 
@@ -68,13 +66,9 @@ interface MainThreadConfigurationProxyShape {
 	$updateConfigurationOption(
 		args: [
 			ConfigurationTargetDto | null | undefined,
-
 			string,
-
 			any,
-
 			IConfigurationOverridesDto | null,
-
 			boolean | undefined,
 		],
 
@@ -199,7 +193,6 @@ export class ShimExtHostConfiguration
 		ipc.onConfigurationChanged(
 			([newConfigPayload, changeDetails]: [
 				MountainConfigNotificationPayload,
-
 				MountainConfigChangeDetails | undefined,
 			]) => {
 				const affectedKeys = changeDetails?.keys || [];

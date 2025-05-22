@@ -30,18 +30,18 @@
 // Assuming from 'vscode' API shim
 import {
 	Emitter as VscodeEmitter,
-	Event as VscodeEvent,
+	type Event as VscodeEvent,
 } from "vs/base/common/event";
 import {
 	DisposableStore,
+	type IDisposable,
 	dispose,
-	IDisposable,
 } from "vs/base/common/lifecycle";
 // VS Code internal utility
 import { splitLines } from "vs/base/common/strings";
 import {
 	URI as VSCodeInternalURI,
-	UriComponents as VSCodeInternalUriComponents,
+	type UriComponents as VSCodeInternalUriComponents,
 } from "vs/base/common/uri";
 import {
 	// RPC Contexts
@@ -52,23 +52,23 @@ import {
 	// From extHost.protocol.ts (or local definitions if not directly importable)
 	IModelAddedData as RpcModelAddedData,
 	// Contains versionId, changes, eol, etc.
-	IModelChangedEvent as RpcModelChangedEvent,
-	IModelContentChange as RpcModelContentChange,
+	type IModelChangedEvent as RpcModelChangedEvent,
+	type IModelContentChange as RpcModelContentChange,
 	ExtHostDocumentsAndEditorsShape as VscodeExtHostDocumentsAndEditorsShape,
 	// RPC methods on this service called by main
-	ExtHostDocumentsShape as VscodeExtHostDocumentsShape,
+	type ExtHostDocumentsShape as VscodeExtHostDocumentsShape,
 	// RPC proxy to main thread
-	MainThreadDocumentsShape as VscodeMainThreadDocumentsShape,
+	type MainThreadDocumentsShape as VscodeMainThreadDocumentsShape,
 } from "vs/workbench/api/common/extHost.protocol";
 
 import {
 	EndOfLine as VscodeEndOfLine,
 	Position as VscodePosition,
 	Range as VscodeRange,
-	TextDocument as VscodeTextDocument,
-	TextDocumentChangeEvent as VscodeTextDocumentChangeEvent,
-	TextDocumentContentChangeEvent as VscodeTextDocumentContentChangeEvent,
-	TextLine as VscodeTextLine,
+	type TextDocument as VscodeTextDocument,
+	type TextDocumentChangeEvent as VscodeTextDocumentChangeEvent,
+	type TextDocumentContentChangeEvent as VscodeTextDocumentContentChangeEvent,
+	type TextLine as VscodeTextLine,
 	Uri as VscodeUri,
 	// Not directly used in TextDocument API here
 	// Location as VscodeLocation,
@@ -77,9 +77,9 @@ import {
 } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 
@@ -743,7 +743,7 @@ export class CocoonDocumentData implements IDisposable {
 
 	#isDirtyInternal: boolean;
 
-	#isClosedInternal: boolean = false;
+	#isClosedInternal = false;
 
 	// Internal tracking of encoding
 	#encodingInternal: string;
@@ -927,7 +927,7 @@ export class CocoonDocumentData implements IDisposable {
 		/* ... (implementation from previous conversion, ensure it uses VscodeRange/Position) ... */
 		if (range.isEmpty) return lines;
 
-		let currentLines = [...lines];
+		const currentLines = [...lines];
 
 		const { start, end } = range;
 
@@ -962,7 +962,7 @@ export class CocoonDocumentData implements IDisposable {
 		/* ... (implementation from previous conversion, ensure it uses VscodeRange/Position) ... */
 		if (!text) return lines;
 
-		let currentLines = [...lines];
+		const currentLines = [...lines];
 
 		const { line, character } = position;
 
@@ -1188,11 +1188,11 @@ export class CocoonDocumentData implements IDisposable {
 					else high = mid;
 				}
 
-				let lineIndex = Math.max(0, low - 1);
+				const lineIndex = Math.max(0, low - 1);
 
 				lineStartOffset = self.#lineStartsInternal[lineIndex];
 
-				let character = Math.min(
+				const character = Math.min(
 					offset - lineStartOffset,
 
 					self.#linesInternal[lineIndex]?.length ?? 0,
@@ -1217,7 +1217,7 @@ export class CocoonDocumentData implements IDisposable {
 						end.character,
 					);
 
-				let res: string[] = [
+				const res: string[] = [
 					self.#linesInternal[start.line].substring(start.character),
 				];
 

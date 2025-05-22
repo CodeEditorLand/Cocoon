@@ -14,9 +14,9 @@
  * - Would interact with `MainThreadTelemetry` via RPC in a full implementation.
  *--------------------------------------------------------------------------------------------*/
 
-import { SerializedError } from "vs/base/common/errors";
-import { ExtensionIdentifier } from "vs/platform/extensions/common/extensions";
-import {
+import type { SerializedError } from "vs/base/common/errors";
+import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions";
+import type {
 	ClassifiedEvent,
 	IGDPRProperty,
 	OmitMetadata,
@@ -26,17 +26,17 @@ import {
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry";
 import {
 	MainContext,
-	ExtHostTelemetryShape as VscodeExtHostTelemetryShape,
-	MainThreadTelemetryShape as VscodeMainThreadTelemetryShape,
+	type ExtHostTelemetryShape as VscodeExtHostTelemetryShape,
+	type MainThreadTelemetryShape as VscodeMainThreadTelemetryShape,
 } from "vs/workbench/api/common/extHost.protocol";
 // Actual VS Code interface
-import { IExtHostTelemetry as VscodeIExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry";
+import type { IExtHostTelemetry as VscodeIExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry";
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 } from "./_baseShim";
 
 // TODO: Ensure VscodeIExtHostTelemetry and related shapes are correctly imported or defined.

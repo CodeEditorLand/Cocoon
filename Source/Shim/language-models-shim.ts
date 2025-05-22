@@ -15,7 +15,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { AsyncIterableObject, AsyncIterableSource } from "vs/base/common/async";
-import { VSBuffer } from "vs/base/common/buffer";
+import type { VSBuffer } from "vs/base/common/buffer";
 import {
 	CancellationToken,
 	CancellationTokenSource,
@@ -33,7 +33,7 @@ import {
 import { Iterable } from "vs/base/common/iterator";
 import {
 	DisposableStore,
-	IDisposable,
+	type IDisposable,
 	toDisposable,
 } from "vs/base/common/lifecycle";
 // For internal URI handling
@@ -42,7 +42,7 @@ import {
 	ExtensionIdentifier,
 	ExtensionIdentifierMap,
 	ExtensionIdentifierSet,
-	IExtensionDescription,
+	type IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 // For Progress<T> type
 import { Progress } from "vs/platform/progress/common/progress";
@@ -50,25 +50,25 @@ import {
 	// RPC Contexts
 	ExtHostContext,
 	// The RPC interface this service implements (calls from MainThread)
-	ExtHostLanguageModelsShape,
+	type ExtHostLanguageModelsShape,
 	MainContext,
 	// The RPC interface for calling MainThread
-	MainThreadLanguageModelsShape,
+	type MainThreadLanguageModelsShape,
 	// DTOs from protocol - these should be used for RPC if defined
-	IChatMessage as RpcChatMessage,
-	IChatResponseFragment as RpcChatResponseFragment,
-	ILanguageModelChatMetadata as RpcLanguageModelChatMetadata,
-	ILanguageModelsChangeEvent as RpcLanguageModelsChangeEvent,
+	type IChatMessage as RpcChatMessage,
+	type IChatResponseFragment as RpcChatResponseFragment,
+	type ILanguageModelChatMetadata as RpcLanguageModelChatMetadata,
+	type ILanguageModelsChangeEvent as RpcLanguageModelsChangeEvent,
 	// TODO: Add other DTOs used by Main/ExtHostLanguageModelsShape
 } from "vs/workbench/api/common/extHost.protocol";
 // Dependency for auth hack
-import { IExtHostAuthentication } from "vs/workbench/api/common/extHostAuthentication";
+import type { IExtHostAuthentication } from "vs/workbench/api/common/extHostAuthentication";
 // For type conversions
 import * as typeConvert from "vs/workbench/api/common/extHostTypeConverters";
 // For LanguageModelError etc.
 import * as extHostTypes from "vs/workbench/api/common/extHostTypes";
 import {
-	ChatImageMimeType,
+	type ChatImageMimeType,
 	IChatResponsePart,
 } from "vs/workbench/contrib/chat/common/languageModels";
 // For types used in streaming
@@ -80,33 +80,33 @@ import { INTERNAL_AUTH_PROVIDER_PREFIX } from "vs/workbench/services/authenticat
 import { checkProposedApiEnabled } from "vs/workbench/services/extensions/common/extensions";
 
 import {
-	CancellationToken as VscodeCancellationToken,
-	ChatResponseProvider as VscodeChatResponseProvider,
-	ChatResponseProviderMetadata as VscodeChatResponseProviderMetadata,
+	type CancellationToken as VscodeCancellationToken,
+	type ChatResponseProvider as VscodeChatResponseProvider,
+	type ChatResponseProviderMetadata as VscodeChatResponseProviderMetadata,
 	// vscode API types
-	LanguageModelAccessInformation as VscodeLanguageModelAccessInformation,
-	LanguageModelChat as VscodeLanguageModelChat,
+	type LanguageModelAccessInformation as VscodeLanguageModelAccessInformation,
+	type LanguageModelChat as VscodeLanguageModelChat,
 	// Note the '2'
-	LanguageModelChatMessage2 as VscodeLanguageModelChatMessage2,
+	type LanguageModelChatMessage2 as VscodeLanguageModelChatMessage2,
 	LanguageModelChatMessageRole as VscodeLanguageModelChatMessageRole,
-	LanguageModelChatRequestOptions as VscodeLanguageModelChatRequestOptions,
-	LanguageModelChatResponse as VscodeLanguageModelChatResponse,
-	LanguageModelChatSelector as VscodeLanguageModelChatSelector,
+	type LanguageModelChatRequestOptions as VscodeLanguageModelChatRequestOptions,
+	type LanguageModelChatResponse as VscodeLanguageModelChatResponse,
+	type LanguageModelChatSelector as VscodeLanguageModelChatSelector,
 	// Added
-	LanguageModelDataPart as VscodeLanguageModelDataPart,
+	type LanguageModelDataPart as VscodeLanguageModelDataPart,
 	LanguageModelError as VscodeLanguageModelError,
 	// Added
-	LanguageModelIgnoredFileProvider as VscodeLanguageModelIgnoredFileProvider,
-	LanguageModelTextPart as VscodeLanguageModelTextPart,
+	type LanguageModelIgnoredFileProvider as VscodeLanguageModelIgnoredFileProvider,
+	type LanguageModelTextPart as VscodeLanguageModelTextPart,
 	// Added
-	LanguageModelToolCallPart as VscodeLanguageModelToolCallPart,
+	type LanguageModelToolCallPart as VscodeLanguageModelToolCallPart,
 	// TODO: Add other vscode types if needed (e.g., ChatResponseFragment2)
 } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
-	ProxyIdentifier,
+	type IExtHostRpcService,
+	type ILogService,
+	type ProxyIdentifier,
 	refineError,
 } from "./_baseShim";
 
@@ -173,7 +173,7 @@ class LanguageModelResponseShim {
 	// The primary stream
 	private readonly _defaultStream: LanguageModelResponseStreamShim;
 
-	private _isDone: boolean = false;
+	private _isDone = false;
 
 	constructor() {
 		// Default stream for index 0 or first one

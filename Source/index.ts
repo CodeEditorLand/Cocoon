@@ -64,35 +64,33 @@ import {
 import { Schemas } from "vs/base/common/network";
 import {
 	URI,
-	UriComponents as VSCodeInternalUriComponents,
+	type UriComponents as VSCodeInternalUriComponents,
 } from "vs/base/common/uri";
 import {
 	ExtensionIdentifier,
 	IExtensionDescription,
 	IExtensionDescriptionDelta,
-	IRelaxedExtensionDescription,
+	type IRelaxedExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 import { getSingletonServiceDescriptors } from "vs/platform/instantiation/common/extensions";
 import {
-	createDecorator,
-	IInstantiationService,
+	type IInstantiationService,
 	InstantiationService,
+	createDecorator,
 } from "vs/platform/instantiation/common/instantiationService";
 import {
 	ServiceCollection,
 	SyncDescriptor,
 } from "vs/platform/instantiation/common/serviceCollection";
 import {
-	ILoggerService,
 	ILogService,
+	ILoggerService,
 	LogLevel,
 	parseLogLevel,
 } from "vs/platform/log/common/log";
-// Interceptor & Error Handling
-import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain";
 import {
+	type IExtensionApiFactory,
 	createApiFactory as createVSCodeApiFactoryOriginal,
-	IExtensionApiFactory,
 } from "vs/workbench/api/common/extHost.api.impl";
 import {
 	ExtHostContext,
@@ -131,7 +129,7 @@ import {
 } from "vs/workbench/api/common/extHostExtensionService";
 import { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
 import {
-	ExtHostInitData,
+	type ExtHostInitData,
 	IExtHostInitDataService,
 } from "vs/workbench/api/common/extHostInitDataService";
 import {
@@ -155,13 +153,15 @@ import {
 } from "vs/workbench/api/common/extHostTerminalService";
 import { IURITransformerService } from "vs/workbench/api/common/extHostUriTransformerService";
 import { IExtHostWorkspace } from "vs/workbench/api/common/extHostWorkspace";
+// Interceptor & Error Handling
+import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain";
 // The REAL service for Path A
 import { ExtHostExtensionService } from "vs/workbench/api/node/extHostExtensionService";
 import {
 	NodeModuleAliasingModuleFactory,
 	NodeRequireInterceptor,
-	INodeModuleFactory as VscodeINodeModuleFactory,
 	VSCodeNodeModuleFactory,
+	INodeModuleFactory as VscodeINodeModuleFactory,
 } from "vs/workbench/api/node/extHostRequireInterceptor";
 import { IWorkbenchExtensionEnablementService } from "vs/workbench/services/extensionManagement/common/extensionManagement";
 import { IExtensionHostKindPicker } from "vs/workbench/services/extensions/common/extensionHostKind";
@@ -170,8 +170,8 @@ import {
 	ExtensionActivationReason,
 } from "vs/workbench/services/extensions/common/extensions";
 import {
-	IMessagePassingProtocol,
-	IRPCProtocolLogger,
+	type IMessagePassingProtocol,
+	type IRPCProtocolLogger,
 	RPCProtocol,
 } from "vs/workbench/services/extensions/common/rpcProtocol";
 import type {
@@ -181,7 +181,7 @@ import type {
 
 // Cocoon Specific Imports
 import * as bootstrapUtils from "./cocoon-bootstrap";
-import ipcApiInstance, { CocoonIpcApi, VineMessage } from "./cocoon-ipc";
+import ipcApiInstance, { CocoonIpcApi, type VineMessage } from "./cocoon-ipc";
 import { ShimExtHostApiDeprecationService } from "./shims/api-deprecation-shim";
 import { ShimExtHostAuthentication } from "./shims/authentication-shim";
 import { ShimExtHostCommands } from "./shims/commands-shim";
@@ -201,12 +201,12 @@ import { ShimExtHostLocalizationService } from "./shims/localization-shim";
 // import { BaseCocoonShim } from "./_baseShim";
 
 // Shim Implementations (import classes)
-import { ShimLoggerService, ShimLogService } from "./shims/log-shim";
+import { ShimLogService, ShimLoggerService } from "./shims/log-shim";
 import { ShimExtHostManagedSockets } from "./shims/managed-sockets-shim";
 import { NodeModuleShimFactory as NodeBuiltinsShimFactory } from "./shims/node-module-shim-factory";
 import { ShimOutputService } from "./shims/output-channel-shim";
 import {
-	IExtHostProposedApis as CocoonIExtHostProposedApis,
+	type IExtHostProposedApis as CocoonIExtHostProposedApis,
 	ShimExtensionsProposedApi,
 } from "./shims/proposed-api-shim";
 import { ShimExtHostSecretState } from "./shims/secret-state-shim";
@@ -261,7 +261,7 @@ let cocoonRpcProtocol: RPCProtocol | null = null;
 
 let cocoonIpcAdapter: IMessagePassingProtocol | null = null;
 
-let initializationFailedOrExited: boolean = false;
+let initializationFailedOrExited = false;
 
 declare global {
 	// Short alias

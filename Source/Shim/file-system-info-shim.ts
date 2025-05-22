@@ -27,22 +27,22 @@
 import { Schemas } from "vs/base/common/network";
 // For platform check
 import { isWindows } from "vs/base/common/platform";
-import { ExtUri, IExtUri } from "vs/base/common/resources";
-import { UriComponents as VSCodeInternalUriComponents } from "vs/base/common/uri";
+import { ExtUri, type IExtUri } from "vs/base/common/resources";
+import type { UriComponents as VSCodeInternalUriComponents } from "vs/base/common/uri";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files";
-import {
+import type {
 	// RPC Shape
 	ExtHostFileSystemInfoShape as VscodeExtHostFileSystemInfoShape,
 	// Not directly used in this simplified version
 	// UriComponents
 } from "vs/workbench/api/common/extHost.protocol";
 // Actual VS Code interface
-import { IExtHostFileSystemInfo as VscodeIExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
+import type { IExtHostFileSystemInfo as VscodeIExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
+	type IExtHostRpcService,
+	type ILogService,
 	ProxyIdentifier,
 } from "./_baseShim";
 

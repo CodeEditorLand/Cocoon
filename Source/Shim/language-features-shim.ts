@@ -31,20 +31,20 @@ import {
 // import { IDisposable } from "vs/base/common/lifecycle";
 
 import {
-	ExtHostContext,
-	// DTOs from extHost.protocol.ts
-	IDocumentFilterDto,
-	MainContext,
 	// For registration
 	type CodeActionProviderMetadataDto,
 	// DTO for CodeActionContext
 	type CodeActionContextDto as ExtHostCodeActionContextDto,
 	// DTO for CompletionContext
 	type CompletionContextDto as ExtHostCompletionContextDto,
+	ExtHostContext,
 	// DTO for SignatureHelpContext
 	type SignatureHelpContextDto as ExtHostSignatureHelpContextDto,
+	// DTOs from extHost.protocol.ts
+	type IDocumentFilterDto,
 	// Renamed to avoid conflict with vscode.Position
 	type IPosition,
+	MainContext,
 	// For results
 	type ICodeActionDto as RpcCodeAction,
 	// For results
@@ -66,55 +66,54 @@ import {
 	type ISuggestResultDto as RpcSuggestResult,
 	// For registration
 	type SignatureHelpProviderMetadataDto,
+	type UriComponents as VSCodeInternalUriComponents,
 	// type ILinksListDto as RpcLinksList,
 
 	// type IWorkspaceEditDto as RpcWorkspaceEdit,
 
 	// Actual RPC shapes
 	type ExtHostLanguageFeaturesShape as VscodeExtHostLanguageFeaturesShape,
-	type UriComponents as VSCodeInternalUriComponents,
 	type MainThreadLanguageFeaturesShape as VscodeMainThreadLanguageFeaturesShape,
 } from "vs/workbench/api/common/extHost.protocol";
 
 import {
-	// Provider Interfaces
-	CallHierarchyProvider,
-	DeclarationProvider,
-	DocumentFormattingEditProvider,
-	DocumentHighlightProvider,
-	DocumentLinkProvider,
-	DocumentRangeFormattingEditProvider,
-	ImplementationProvider,
-	LinkedEditingRangeProvider,
-	OnTypeFormattingEditProvider,
-	ReferenceProvider,
-	RenameProvider,
-	SelectionRangeProvider,
-	TypeDefinitionProvider,
-	TypeHierarchyProvider,
-	WorkspaceSymbolProvider,
 	// vscode API types
 	type CallHierarchyIncomingCall,
 	type CallHierarchyItem,
 	type CallHierarchyOutgoingCall,
+	// Provider Interfaces
+	CallHierarchyProvider,
 	type CodeActionProvider,
 	type CodeLensProvider,
 	type CompletionItemProvider,
 	type Declaration,
+	DeclarationProvider,
 	type DefinitionProvider,
+	DocumentFormattingEditProvider,
 	type DocumentHighlight,
+	DocumentHighlightProvider,
+	type DocumentLinkProvider,
+	DocumentRangeFormattingEditProvider,
 	type FormattingOptions,
 	type HoverProvider,
 	type Implementation,
+	ImplementationProvider,
+	LinkedEditingRangeProvider,
 	type LinkedEditingRanges,
+	OnTypeFormattingEditProvider,
 	type ReferenceContext,
+	ReferenceProvider,
 	type RenameLocation,
+	RenameProvider,
 	type SelectionRange,
+	SelectionRangeProvider,
 	type SignatureHelpProvider,
 	type SymbolInformation,
 	type TextEdit,
 	type TypeDefinition,
+	TypeDefinitionProvider,
 	type TypeHierarchyItem,
+	TypeHierarchyProvider,
 	type CodeAction as VscodeCodeAction,
 	type CodeActionProviderMetadata as VscodeCodeActionProviderMetadata,
 	type CodeLens as VscodeCodeLens,
@@ -137,15 +136,16 @@ import {
 	// SymbolKind,
 	type TextDocument as VscodeTextDocument,
 	type Uri as VscodeUri,
+	type WorkspaceSymbolProvider,
 } from "../Shim/out/vscode";
 // Assuming path to vscode API shim
 import {
 	BaseCocoonShim,
-	// Using refineError from file 1, can be swapped with refineErrorForShim if different
-	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
+	// Using refineError from file 1, can be swapped with refineErrorForShim if different
+	refineError,
 } from "./_baseShim";
 import type { ShimDocumentService } from "./document-shim";
 

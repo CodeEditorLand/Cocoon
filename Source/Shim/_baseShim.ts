@@ -11,7 +11,7 @@
 import { EventEmitter } from "events";
 
 // VS Code internal
-import { IDisposable, Event as VscodeEvent } from "vs/base/common/event";
+import { type IDisposable, Event as VscodeEvent } from "vs/base/common/event";
 
 import {
 	MarshalledObject,
@@ -102,7 +102,7 @@ export function refineErrorForShim(
 
 	logService?: ILogServiceForShim,
 
-	context: string = "",
+	context = "",
 ): Error {
 	if (!(originalError instanceof Error) || !originalError.message)
 		return originalError;
@@ -337,7 +337,7 @@ export class BaseCocoonShim {
 
 		params: any,
 
-		timeoutMs: number = 5000,
+		timeoutMs = 5000,
 	): Promise<any> {
 		this._log(`IPC Req: '${mountainMethod}'`);
 

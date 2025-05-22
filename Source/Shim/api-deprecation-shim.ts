@@ -13,11 +13,15 @@
  *   `vscode` API object are accessed by extensions.
  *--------------------------------------------------------------------------------------------*/
 
-import { ExtensionIdentifier } from "vs/platform/extensions/common/extensions";
+import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions";
 // Actual VS Code interface
-import { IExtHostApiDeprecationService as VscodeIExtHostApiDeprecationService } from "vs/workbench/api/common/extHostApiDeprecationService";
+import type { IExtHostApiDeprecationService as VscodeIExtHostApiDeprecationService } from "vs/workbench/api/common/extHostApiDeprecationService";
 
-import { BaseCocoonShim, IExtHostRpcService, ILogService } from "./_baseShim";
+import {
+	BaseCocoonShim,
+	type IExtHostRpcService,
+	type ILogService,
+} from "./_baseShim";
 
 // TODO: Ensure VscodeIExtHostApiDeprecationService is correctly imported or defined locally.
 export interface CocoonIExtHostApiDeprecationService

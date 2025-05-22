@@ -14,8 +14,8 @@
  * - Would interact with `MainThreadManagedSockets` via RPC in a full implementation.
  *--------------------------------------------------------------------------------------------*/
 
-import { VSBuffer } from "vs/base/common/buffer";
-import {
+import type { VSBuffer } from "vs/base/common/buffer";
+import type {
 	IExtHostManagedSockets as VscodeIExtHostManagedSockets /* Other related types */,
 } from "vs/workbench/api/common/extHostManagedSockets";
 
@@ -23,8 +23,8 @@ import {
 
 import {
 	BaseCocoonShim,
-	IExtHostRpcService,
-	ILogService,
+	type IExtHostRpcService,
+	type ILogService,
 	ProxyIdentifier,
 } from "./_baseShim";
 

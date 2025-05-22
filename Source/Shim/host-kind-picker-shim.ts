@@ -23,19 +23,23 @@
 // For checking URI schemes (e.g., vscode-remote)
 import { Schemas } from "vs/base/common/network";
 // VS Code internal type
-import {
+import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 import {
 	ExtensionHostKind,
-	IExtensionHostKindPicker,
+	type IExtensionHostKindPicker,
 	// Might be relevant if decisions depend on workspace type
 	// WorkspaceFolderSchemes,
 } from "vs/workbench/services/extensions/common/extensionHostKind";
 
 // Base for logging
-import { BaseCocoonShim, IExtHostRpcService, ILogService } from "./_baseShim";
+import {
+	BaseCocoonShim,
+	type IExtHostRpcService,
+	type ILogService,
+} from "./_baseShim";
 
 // Type for the preference parameter in pickExtensionHostKind.
 // In VS Code, this might be an enum (ExtensionRunningPreference) or a more specific type.
@@ -231,7 +235,7 @@ export class ShimExtensionHostKindPicker
 
 		preference: ExtensionRunningPreference,
 	): ExtensionHostKind | null {
-		let manifestBasedKinds = extensionDescription.extensionKinds || [];
+		const manifestBasedKinds = extensionDescription.extensionKinds || [];
 
 		// If the extension is located on a remote, it's primarily a Remote extension host kind.
 		// However, it might also declare `ui` or `workspace` if it has parts that can run there.
