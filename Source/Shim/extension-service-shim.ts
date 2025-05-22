@@ -1,12 +1,13 @@
-// --- START OF FILE extension-service-shim.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Shim for IExtHostExtensionService (extension-service-shim.ts)
  * --------------------------------------------------------------------------------------------
  * Provides a *simulated* implementation of the VS Code IExtHostExtensionService interface
- * for the Cocoon sidecar environment.
+ * for a scenario where the original VS Code service is NOT run (e.g., Path B - Grove Rewrite).
  *
- * Responsibilities:
+ * For Path A (Cocoon Sidecar running the real ExtHostExtensionService), this file is
+ * primarily a reference for understanding ExtensionContext dependencies.
+ *
+ * Responsibilities (when acting as a simulated service):
  * - Managing a registry of known extensions (from initData).
  * - Handling extension activation requests.
  * - Loading extension code (Node.js `require`).
@@ -21,185 +22,147 @@ import {
 	Emitter as VscodeEmitter,
 	Event as VscodeEvent,
 } from "vs/base/common/event";
-import { type IDisposable, dispose } from "vs/base/common/lifecycle";
-// VS Code internal URI for initData revival
-import { URI } from "vs/base/common/uri";
+import { dispose, IDisposable } from "vs/base/common/lifecycle";
+import {
+	URI as VSCodeInternalURI,
+	UriComponents as VSCodeInternalUriComponents,
+} from "vs/base/common/uri";
 // --- VS Code Internal Module Imports ---
 import {
+	// For comparing extension IDs
+	CanonicalExtensionIdentifier,
 	ExtensionIdentifier,
-	type IEnabledApiProposals,
-	type IExtensionDescription,
-	type ISerializedExtension,
+	IEnabledApiProposals,
+	IExtensionDescription,
+	ISerializedExtension,
 } from "vs/platform/extensions/common/extensions";
-// For ExtensionContext
-import { IExtHostCommands } from "vs/workbench/api/common/extHostCommands";
 import {
 	IExtHostConfiguration,
 	IExtHostConfigurationShape,
 } from "vs/workbench/api/common/extHostConfiguration";
 import {
-	type ActivatedExtension,
-	// Enum for activation kind
+	ActivatedExtension,
 	ActivationKind,
 	EmptyExtension,
-	type ExtensionActivationReason,
+	ExtensionActivationReason,
 	ExtensionActivationTimes,
 	ExtensionActivationTimesBuilder,
 } from "vs/workbench/api/common/extHostExtensionActivator";
-// For ExtensionContext
 import { IExtHostLanguageModels } from "vs/workbench/api/common/extHostLanguageModels";
 import { IExtHostSecrets } from "vs/workbench/api/common/extHostSecrets";
 // --- Service Interfaces for ExtensionContext dependencies ---
+// TODO: These should be the exact interfaces from VS Code DI, used as keys for `accessor.get`.
 import { IExtHostStorage } from "vs/workbench/api/common/extHostStorage";
 import { IExtensionStoragePaths } from "vs/workbench/api/common/extHostStoragePaths";
 import {
 	IExtHostTerminalService,
-	type IExtHostTerminalServiceShape,
+	IExtHostTerminalServiceShape,
 } from "vs/workbench/api/common/extHostTerminalService";
 import {
 	ExtensionDescriptionRegistry,
-	type IExtensionPointUser,
+	IExtensionPointUser,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry";
-import { checkProposedApiEnabled } from "vs/workbench/services/extensions/common/extensions";
-// EventEmitter from 'events' is not directly used for public API, VscodeEmitter is preferred.
-import {
-	type EnvironmentVariableCollection,
-	type Extension,
-	type ExtensionContext,
-	ExtensionKind,
-	ExtensionMode,
-	ExtensionRuntime,
-	type Memento,
-	type SecretStorage,
-	Uri as VscodeUri,
-	// Assuming from 'vscode' API shim
-} from "vscode";
+// Alias
+import { checkProposedApiEnabled as vscodeCheckProposedApiEnabled } from "vs/workbench/services/extensions/common/extensions";
 
 import { sendNotificationToMountain } from "../cocoon-ipc";
 import {
+	EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
+	Extension as VscodeExtension,
+	ExtensionContext as VscodeExtensionContext,
+	ExtensionKind as VscodeExtensionKind,
+	ExtensionMode as VscodeExtensionMode,
+	ExtensionRuntime as VscodeExtensionRuntime,
+	Memento as VscodeMemento,
+	SecretStorage as VscodeSecretStorage,
+	Uri as VscodeUri,
+} from "../Shim/out/vscode";
+import {
 	BaseCocoonShim,
 	IExtHostRpcService,
-	type ILogService,
+	ILogService,
 	ProxyIdentifier,
+	// RpcService not directly used in this shim's constructor if it's simulating
 } from "./_baseShim";
+
+// `IExtHostCommands` might be needed if `ExtensionContext` provides command execution.
 
 // --- Type Definitions ---
 
 // Structure of initData relevant to this shim
-interface ShimInitDataForExtensionService {
+interface ShimInitDataForExtSvc {
 	extensions: {
-		// This part should be IExtensionHostExtensionsInitParams
-		// Raw from main thread
-		allExtensions: ISerializedExtension[];
+		// From MainThreadExtensionService
+		allExtensions: ReadonlyArray<ISerializedExtension>;
 
-		// IDs of extensions to run in this host
-		myExtensions: ExtensionIdentifier[];
+		// IDs for this host
+		myExtensions: ReadonlyArray<ExtensionIdentifier>;
 	};
 
 	environment: {
-		// Can be string array or object
 		extensionEnabledProposedApi?: string[] | IEnabledApiProposals;
 
-		appRoot?: UriComponents;
+		appRoot?: VSCodeInternalUriComponents;
 
 		appName?: string;
 
-		appHost?: string;
-
-		appUriScheme?: string;
-
-		appLanguage?: string;
+		appHost?: "desktop" | "web" | string;
 
 		isTrusted?: boolean;
 
-		// ... other env properties
+		// ...
 	};
 
-	// VS Code internal URI components
-	logsLocation: UriComponents;
+	logsLocation: VSCodeInternalUriComponents;
 
-	machineId: string;
+	remote?: { isRemote?: boolean; authority?: string };
 
-	sessionId: string;
-
-	remote?: {
-		isRemote?: boolean;
-
-		authority?: string;
-
-		connectionToken?: string;
-	};
-
-	// ... other initData properties for IExtHostInitDataService
+	// ... other initData fields from ExtHostInitData
 }
 
-interface UriComponents {
-	scheme: string;
-
-	authority?: string;
-
-	path: string;
-
-	query?: string;
-
-	fragment?: string;
-
-	fsPath?: string;
-
-	external?: string;
-
-	$mid?: 1;
+// For the `vscode.Extension` object provided in ExtensionContext
+interface CocoonVscodeExtensionApi<T = any> extends VscodeExtension<T> {
+	// Add any Cocoon-specific overrides or ensure compatibility
 }
 
-// For ExtensionContext
-interface CocoonExtensionContext extends ExtensionContext {
-	// Add any Cocoon-specific extensions to the context if needed, though aiming for vscode.ExtensionContext compatibility.
-	// Note: vscode.ExtensionContext already has most of these properties.
-	// We are essentially re-typing it for clarity of what this shim constructs.
-	// This is vscode.Extension<T>
-	readonly extension: Extension<any>;
+// For ExtensionContext provided to extensions
+interface CocoonExtensionContextApi extends VscodeExtensionContext {
+	// Ensure our specific Extension type
+	readonly extension: CocoonVscodeExtensionApi<any>;
 
-	readonly extensionRuntime: ExtensionRuntime;
+	readonly extensionRuntime: VscodeExtensionRuntime;
+
+	// Other properties like `globalState`, `workspaceState` are already on VscodeExtensionContext
 }
 
 // Type for the loaded extension module
-interface ExtensionModule {
-	activate?: (context: ExtensionContext) => any | Promise<any>;
+interface LoadedExtensionModule {
+	activate?: (context: VscodeExtensionContext) => any | Promise<any>;
 
 	deactivate?: () => void | Promise<void>;
 }
 
-// For the activator internal logic (subset of what real ExtHostExtensionActivator provides)
-interface ShimActivator {
-	isActivated: (id: ExtensionIdentifier) => boolean;
-
-	getActivatedExtension: (
-		id: ExtensionIdentifier,
-	) => ActivatedExtension | undefined;
-}
-
 // For RPC methods (called by MainThreadExtensionService)
-// TODO: Align with ExtHostExtensionServiceShape from extHost.protocol.ts
-interface ExtHostExtensionServiceShapeForRpc {
+// TODO: This MUST align with VS Code's `ExtHostExtensionServiceShape`.
+interface CocoonExtHostExtensionServiceRpcShape {
 	$resolveAuthority?(
 		remoteAuthority: string,
 
 		resolveAttempt?: number,
-
-		// These were on original JS, may not be on IExtHostExtensionService
 	): Promise<any>;
 
 	$getCanonicalURI?(
 		remoteAuthority: string,
 
 		uri: VscodeUri,
+
+		// API Uri
 	): Promise<VscodeUri>;
 
 	$setRemoteEnvironment?(env: {
 		[key: string]: string | null;
 	}): Promise<void>;
 
-	// From IExtHostExtensionService
 	$activateByEvent(
 		activationEvent: string,
 
@@ -207,51 +170,39 @@ interface ExtHostExtensionServiceShapeForRpc {
 	): Promise<void>;
 
 	$activate(
-		extensionId: ExtensionIdentifier,
+		extensionIdString: string /* was ExtensionIdentifier in prev. TS */,
 
 		reason: ExtensionActivationReason,
 	): Promise<boolean>;
 
-	// $deltaExtensions might be used instead of $startExtensionHost in newer VS Code
 	$deltaExtensions?(delta: {
-		removed: string[];
+		removed: string[] /* ids */;
 
 		added: ISerializedExtension[];
 	}): Promise<void>;
-
-	// Older $startExtensionHost
-	$startExtensionHost?(delta: {
-		removed: ExtensionIdentifier[];
-
-		added: IExtensionDescription[];
-	}): Promise<void>;
 }
 
-// Global instantiation service (assume it's set elsewhere by index.ts)
+// Access to DI (setup in index.ts)
 declare var cocoonInstantiationService:
 	| {
 			invokeFunction<T>(
 				callback: (accessor: { get: <Svc>(id: any) => Svc }) => T,
 			): T;
 	  }
-
-	// Make it possibly undefined for safety checks
 	| undefined;
 
+// This class simulates IExtHostExtensionService if Path B (Grove) was chosen,
+
+// or serves as a detailed reference for ExtensionContext construction.
 export class ShimExtHostExtensionService
 	extends BaseCocoonShim
-	implements ExtHostExtensionServiceShapeForRpc
+	implements CocoonExtHostExtensionServiceRpcShape
 {
-	/* and IExtHostExtensionService */ // For IExtHostExtensionService
-	public readonly _serviceBrand: undefined;
+	/*, IExtHostExtensionService */ public readonly _serviceBrand: undefined;
 
-	readonly #initData: ShimInitDataForExtensionService;
+	readonly #initData: ShimInitDataForExtSvc;
 
-	// #configService is not directly used by this class's methods, but by ExtensionContext creation.
-	// It would be fetched from DI during _loadExtensionContextShim.
 	#extensionRegistry: ExtensionDescriptionRegistry | null = null;
-
-	readonly #activator: ShimActivator;
 
 	readonly #activationTimes = new Map<string, ExtensionActivationTimes>();
 
@@ -259,11 +210,14 @@ export class ShimExtHostExtensionService
 
 	readonly #activationErrors = new Map<string, Error>();
 
-	// Store promises for ongoing or completed activations to handle re-entrant calls.
 	readonly #activationPromises = new Map<
 		string,
 		Promise<ActivatedExtension>
+		// Key: CanonicalExtensionIdentifier
 	>();
+
+	// Cache loaded modules for deactivate
+	readonly #extensionModules = new Map<string, LoadedExtensionModule>();
 
 	// Events from IExtHostExtensionService
 	private readonly _onDidRegisterExtensions = new VscodeEmitter<void>();
@@ -271,214 +225,229 @@ export class ShimExtHostExtensionService
 	public readonly onDidRegisterExtensions: VscodeEvent<void> =
 		this._onDidRegisterExtensions.event;
 
-	// Type this with ResponsiveMode
-	private readonly _onDidChangeResponsiveMode = new VscodeEmitter<any>();
-
-	public readonly onDidChangeResponsiveMode: VscodeEvent<any> =
-		this._onDidChangeResponsiveMode.event;
+	// TODO: Implement onDidChangeResponsiveMode if needed
 
 	constructor(
-		// Received from index.ts
-		initData: ShimInitDataForExtensionService,
+		initData: ShimInitDataForExtSvc,
 
 		logService: ILogService | undefined,
 
-		// rpcService is inherited from BaseCocoonShim, not directly passed here.
-		// configService is obtained via DI when creating ExtensionContext.
+		// configService obtained via DI for ExtensionContext
+		// configService: IExtHostConfigurationShape | undefined
 	) {
 		super(
 			"ExtHostExtensionService",
 
-			undefined /* rpcService from base */,
+			undefined /* No direct RPC proxy for self */,
 
 			logService,
 		);
 
 		this.#initData = initData;
 
-		this._log("Initializing...");
+		this._log("Initializing (Simulated ExtHostExtensionService)...");
 
-		// TODO: Register self for RPC if needed, using ExtHostContext.ExtHostExtensionService
+		// TODO: Register self for RPC if Mountain calls methods on this service directly.
 		// if (this._rpcService) {
 
-		//    this._rpcService.set(ExtHostContext.ExtHostExtensionService as ProxyIdentifier<ExtHostExtensionServiceShapeForRpc>, this);
+		//    this._rpcService.set(ExtHostContext.ExtHostExtensionService as ProxyIdentifier<CocoonExtHostExtensionServiceRpcShape>, this);
 
 		// }
 
-		// --- Initialize Extension Registry ---
-		if (!initData?.extensions?.allExtensions) {
-			this._logError(
-				"Initialization failed: Missing extensions data in initData.extensions.allExtensions.",
-			);
-
-			this.#extensionRegistry = new ExtensionDescriptionRegistry(
-				_createSimpleReader(),
-
-				[],
-			);
-		} else {
-			const allExtensions = initData.extensions.allExtensions
-				.map((extDesc): IExtensionDescription | null => {
-					try {
-						// Revive ISerializedExtension to IExtensionDescription
-						const identifier = ExtensionIdentifier.revive(
-							extDesc.identifier,
-						);
-
-						if (!identifier) {
-							this._logError(
-								"Failed to revive identifier for extension:",
-
-								extDesc.identifier,
-							);
-
-							return null;
-						}
-
-						const extensionLocation = this._reviveUriDto(
-							extDesc.extensionLocation,
-						);
-
-						if (!extensionLocation) {
-							this._logError(
-								`Failed to revive extensionLocation for ${identifier.value}:`,
-
-								extDesc.extensionLocation,
-							);
-
-							return null;
-						}
-
-						// Reconstruct IExtensionDescription
-						// This needs to map all fields from ISerializedExtension to IExtensionDescription
-						const description: IExtensionDescription = {
-							// Spread serialized fields
-							...extDesc,
-
-							identifier,
-
-							extensionLocation,
-
-							// Ensure required fields from IExtensionDescription are present and correctly typed
-							isBuiltin: !!extDesc.isBuiltin,
-
-							isUserBuiltin: !!extDesc.isUserBuiltin,
-
-							isUnderDevelopment: !!extDesc.isUnderDevelopment,
-
-							// main, browser, etc. are already strings or undefined
-							// contributes, activationEvents are already in ISerializedExtension
-							// engines, keywords, categories, etc.
-							// TODO: Ensure all IExtensionDescription fields are correctly populated from ISerializedExtension.
-						};
-
-						return description;
-					} catch (e: any) {
-						this._logError(
-							`Failed to process extension description for ${extDesc?.identifier?.value || "unknown"}:`,
-
-							e,
-						);
-
-						return null;
-					}
-				})
-				.filter((ext): ext is IExtensionDescription => ext !== null);
-
-			this.#extensionRegistry = new ExtensionDescriptionRegistry(
-				_createSimpleReader(),
-
-				allExtensions,
-			);
-
-			this._log(
-				`Initialized registry with ${this.#extensionRegistry.getAllExtensionDescriptions().length} extensions.`,
-			);
-
-			// Fire event after initial registry setup
-			this._onDidRegisterExtensions.fire();
-		}
-
-		// --- Setup Activator Logic ---
-		this.#activator = {
-			isActivated: (id) =>
-				this.#extensionExports.has(id.value) ||
-				this.#activationErrors.has(id.value),
-
-			getActivatedExtension: (id) => {
-				const activationFailedError = this.#activationErrors.get(
-					id.value,
-				);
-
-				return {
-					activationFailed: !!activationFailedError,
-
-					activationFailedError: activationFailedError || null,
-
-					activationTimes:
-						this.#activationTimes.get(id.value) ||
-						ExtensionActivationTimes.NONE,
-
-					// Shim doesn't store raw module here
-					module: null,
-
-					exports: this.#extensionExports.get(id.value),
-
-					// NOP disposable
-					disposable: { dispose: () => {} },
-				};
-			},
-		};
+		this._initializeRegistry();
 	}
 
-	// --- Shim's own initialization (called by index.ts) ---
-	public async initializeMaster(): Promise<void> {
-		// Renamed from initialize_shim to avoid conflict
-		this._log(
-			"Starting master initialization (eager activations, etc.)...",
-		);
+	private _initializeRegistry(): void {
+		if (!this.#initData?.extensions?.allExtensions) {
+			this._logError(
+				"Extension registry init failed: Missing initData.extensions.allExtensions.",
+			);
 
-		if (!this.#extensionRegistry) {
-			this._logWarn(
-				"Cannot initialize master, extension registry is invalid.",
+			this.#extensionRegistry = new ExtensionDescriptionRegistry(
+				_createSimpleReaderForExtSvc(),
+
+				[],
 			);
 
 			return;
 		}
 
-		// The original _doHandleExtensionPointsShim was a NOP. In a real scenario,
+		// Only process extensions listed in myExtensions if that field is definitive for this host
+		// const myExtensionIds = new Set(this.#initData.extensions.myExtensions.map(id => id.value));
 
-		// this would involve processing contributions from manifests.
-		// this._doHandleExtensionPointsShim(this.#extensionRegistry.getAllExtensionDescriptions());
+		// const extensionsToLoad = this.#initData.extensions.allExtensions.filter(sExt => myExtensionIds.has(sExt.identifier.value));
 
-		await this._handleEagerExtensionsShim();
+		// For now, assume allExtensions are potentially relevant for this host if simulating.
+		const extensionsToLoad = this.#initData.extensions.allExtensions;
+
+		const allRevivedExtensions = extensionsToLoad
+			.map((serializedExt): IExtensionDescription | null => {
+				try {
+					const identifier = ExtensionIdentifier.revive(
+						serializedExt.identifier,
+					);
+
+					if (!identifier) {
+						this._logError(
+							"Failed to revive identifier:",
+
+							serializedExt.identifier,
+						);
+
+						return null;
+					}
+
+					const extensionLocation =
+						this._reviveUriDtoToInternalVSCodeUri(
+							serializedExt.extensionLocation,
+						);
+
+					if (!extensionLocation) {
+						this._logError(
+							`Failed to revive location for ${identifier.value}:`,
+
+							serializedExt.extensionLocation,
+						);
+
+						return null;
+					}
+
+					// Reconstruct IExtensionDescription carefully
+					const description: IExtensionDescription = {
+						// Mandatory fields
+						identifier,
+
+						extensionLocation,
+
+						name: serializedExt.name,
+
+						version: serializedExt.version,
+
+						publisher: serializedExt.publisher,
+
+						isBuiltin: !!serializedExt.isBuiltin,
+
+						isUserBuiltin: !!serializedExt.isUserBuiltin,
+
+						isUnderDevelopment: !!serializedExt.isUnderDevelopment,
+
+						// Optional fields from ISerializedExtension
+						description: serializedExt.description,
+
+						main: serializedExt.main,
+
+						browser: serializedExt.browser,
+
+						// If worker is a new field
+						worker: (serializedExt as any).worker,
+
+						engines: serializedExt.engines,
+
+						enabledApiProposals: serializedExt.enabledApiProposals,
+
+						api: serializedExt.api,
+
+						activationEvents: serializedExt.activationEvents,
+
+						contributes: serializedExt.contributes,
+
+						repository: serializedExt.repository,
+
+						icon: serializedExt.icon,
+
+						categories: serializedExt.categories,
+
+						keywords: serializedExt.keywords,
+
+						badges: serializedExt.badges,
+
+						sponsor: serializedExt.sponsor,
+
+						extensionDependencies:
+							serializedExt.extensionDependencies,
+
+						extensionPack: serializedExt.extensionPack,
+
+						localizedMessages: serializedExt.localizedMessages
+							? {
+									default: serializedExt.localizedMessages
+										.default
+										? VSCodeInternalURI.revive(
+												serializedExt.localizedMessages
+													.default,
+											)
+										: undefined,
+
+									values: serializedExt.localizedMessages
+										.values,
+								}
+							: undefined,
+
+						// Ensure all other fields from IExtensionDescription are covered or defaulted.
+					};
+
+					return description;
+				} catch (e: any) {
+					this._logError(
+						`Failed to process serialized extension description for ${serializedExt?.identifier?.value || "unknown"}:`,
+
+						e,
+					);
+
+					return null;
+				}
+			})
+			.filter((ext): ext is IExtensionDescription => ext !== null);
+
+		this.#extensionRegistry = new ExtensionDescriptionRegistry(
+			_createSimpleReaderForExtSvc(),
+
+			allRevivedExtensions,
+		);
+
+		this._log(
+			`Initialized extension registry with ${this.#extensionRegistry.getAllExtensionDescriptions().length} extensions.`,
+		);
+
+		this._onDidRegisterExtensions.fire();
+	}
+
+	// --- Shim's own initialization (called by index.ts if this shim is used directly) ---
+	public async masterInitialize(): Promise<void> {
+		this._log("Master initialization sequence (eager activations)...");
+
+		if (!this.#extensionRegistry) {
+			this._logWarn(
+				"Registry not initialized, skipping eager activations.",
+			);
+
+			return;
+		}
+
+		await this._triggerEagerActivations();
 
 		this._log("Master initialization finished.");
 	}
 
-	// --- IExtHostExtensionService Public API Implementation ---
+	// --- IExtHostExtensionService API Implementation (subset for simulation) ---
 	public async initialize(): Promise<void> {
-		// This is the one called by VS Code's ExtHostMain usually
-		// This method in the real ExtHostExtensionService does a lot more, including setting up RPC.
-		// For this shim, we assume RPC is set up by index.ts.
-		// The primary role here for the shim, if it *were* the real service, would be _initialize.
-		// Since this is a shim *of* the service, its main async task is eager activation.
-		this._log(
-			"IExtHostExtensionService.initialize() called (delegating to master init for eager).",
-		);
+		// The real service's initialize does more. For this shim, it means being ready.
+		this._log("IExtHostExtensionService.initialize() called (simulated).");
 
-		return this.initializeMaster();
+		// Trigger eager activations as part of init
+		return this.masterInitialize();
 	}
 
-	public terminate(reason: string): void {
+	public terminate(_reason: string): void {
 		this._logWarn(
-			`IExtHostExtensionService.terminate called: ${reason}. (No-op in shim)`,
+			"IExtHostExtensionService.terminate called (simulated NOP).",
 		);
 	}
 
 	public async getExtension(
 		extensionIdString: string,
 	): Promise<IExtensionDescription | undefined> {
+		/* ... (implementation from prev. TS, using ExtensionIdentifier) ... */
 		if (!this.#extensionRegistry) return undefined;
 
 		const id = new ExtensionIdentifier(extensionIdString);
@@ -487,6 +456,7 @@ export class ShimExtHostExtensionService
 	}
 
 	public async getExtensions(): Promise<IExtensionDescription[]> {
+		/* ... (implementation from prev. TS) ... */
 		if (!this.#extensionRegistry) return Promise.resolve([]);
 
 		return Promise.resolve(
@@ -495,12 +465,17 @@ export class ShimExtHostExtensionService
 	}
 
 	public isActivated(extensionIdString: string): boolean {
+		/* ... (implementation using #extensionExports, #activationErrors) ... */
 		const id = new ExtensionIdentifier(extensionIdString);
 
-		return this.#activator.isActivated(id);
+		return (
+			this.#extensionExports.has(id.value) ||
+			this.#activationErrors.has(id.value)
+		);
 	}
 
 	public getExtensionExports(extensionIdString: string): any | undefined {
+		/* ... (implementation using #extensionExports) ... */
 		const id = new ExtensionIdentifier(extensionIdString);
 
 		return this.#extensionExports.get(id.value);
@@ -511,33 +486,30 @@ export class ShimExtHostExtensionService
 
 		reason: ExtensionActivationReason,
 	): Promise<void> {
-		// This is the method usually called by other ExtHost services or by the API factory.
-		// The `activateByIdWithErrors` was a naming from the original JS. Let's align with `activateById`.
-		this._log(
-			`activateById: ${extensionId.value}, Reason: ${ActivationKind[reason.activationKind]} (${reason.activationEvent || "API"})`,
-		);
+		// Use canonical for map keys
+		const canonicalId = CanonicalExtensionIdentifier.toKey(extensionId);
 
-		if (this.#activationPromises.has(extensionId.value)) {
-			this._log(
-				`Activation for ${extensionId.value} already requested/completed, awaiting existing promise.`,
-			);
+		// this._log(`activateById: ${extensionId.value}, Reason: ${ActivationKind[reason.activationKind]} (${reason.activationEvent || "API"})`);
+
+		if (this.#activationPromises.has(canonicalId)) {
+			// this._log(`Activation for ${extensionId.value} already requested/completed, awaiting existing promise.`);
 
 			try {
 				const existingActivationResult =
-					await this.#activationPromises.get(extensionId.value)!;
+					await this.#activationPromises.get(canonicalId)!;
 
-				if (existingActivationResult.activationFailed) {
+				if (existingActivationResult.activationFailed)
 					throw (
 						existingActivationResult.activationFailedError ||
-						new Error("Previously failed activation.")
+						new Error(
+							"Previously failed activation (no error detail).",
+						)
 					);
-				}
 
-				// Succeeded or will succeed
 				return;
 			} catch (e: any) {
 				this._logError(
-					`Re-entrant activation for ${extensionId.value} encountered previous error:`,
+					`Re-entrant activation for ${extensionId.value} hit previous error:`,
 
 					e,
 				);
@@ -546,13 +518,13 @@ export class ShimExtHostExtensionService
 			}
 		}
 
-		const activationPromise = this._activateExtensionShim(
+		const activationPromise = this._activateExtensionModule(
 			extensionId,
 
 			reason,
 		);
 
-		this.#activationPromises.set(extensionId.value, activationPromise);
+		this.#activationPromises.set(canonicalId, activationPromise);
 
 		try {
 			const activationResult = await activationPromise;
@@ -560,77 +532,101 @@ export class ShimExtHostExtensionService
 			if (activationResult.activationFailed) {
 				const errorToThrow =
 					activationResult.activationFailedError ||
-					new Error(`Activation failed for ${extensionId.value}`);
+					new Error(
+						`Activation failed for ${extensionId.value} (unknown error).`,
+					);
 
-				if (!this.#activationErrors.has(extensionId.value)) {
-					// Ensure error is stored
-					this.#activationErrors.set(extensionId.value, errorToThrow);
-				}
+				if (!this.#activationErrors.has(canonicalId))
+					this.#activationErrors.set(canonicalId, errorToThrow);
 
-				// Report status before throwing
-				this._reportActivationStatus(extensionId);
+				this._reportActivationStatusToMountain(
+					extensionId,
+
+					activationResult,
+				);
 
 				throw errorToThrow;
 			}
 
-			// Success is handled by finally block for reporting
+			// Success reporting handled in finally
 		} catch (error: any) {
-			// Error already logged by _activateExtensionShim if it originated there.
-			// Ensure it's stored if it's a new error from this level.
-			if (!this.#activationErrors.has(extensionId.value)) {
-				this.#activationErrors.set(extensionId.value, error);
-			}
+			if (!this.#activationErrors.has(canonicalId))
+				this.#activationErrors.set(canonicalId, error);
 
-			// Report status if not already done due to this error.
-			if (
-				!this.#activationPromises.get(extensionId.value)?.then(
-					(res) => res.activationFailed,
+			// Ensure status is reported for errors caught at this level too
+			const failedActivationResult: ActivatedExtension = {
+				activationFailed: true,
 
-					() => true,
-				)
-			) {
-				// Avoid double reporting
-				this._reportActivationStatus(extensionId);
-			}
+				activationFailedError: error,
 
-			// Re-throw to the caller
+				module: {},
+
+				exports: undefined,
+
+				disposable: { dispose: () => {} },
+
+				activationTimes:
+					this.#activationTimes.get(canonicalId) ||
+					ExtensionActivationTimes.NONE,
+			};
+
+			this._reportActivationStatusToMountain(
+				extensionId,
+
+				failedActivationResult,
+			);
+
 			throw error;
 		} finally {
-			// Report status on success.
 			if (
-				!this.#activationErrors.has(extensionId.value) &&
-				this.#extensionExports.has(extensionId.value)
+				!this.#activationErrors.has(canonicalId) &&
+				this.#extensionExports.has(canonicalId)
 			) {
-				this._reportActivationStatus(extensionId);
+				// Report success if no error was stored and exports are present
+				const status = this.#activationPromises.get(canonicalId)!.then(
+					(res) => res,
+
+					(err) =>
+						({
+							activationFailed: true,
+
+							activationFailedError: err,
+						}) as ActivatedExtension,
+				);
+
+				this._reportActivationStatusToMountain(
+					extensionId,
+
+					await status,
+				);
 			}
 		}
 	}
 
 	public async getExtensionRegistry(): Promise<ExtensionDescriptionRegistry> {
+		/* ... (implementation from prev. TS) ... */
 		if (!this.#extensionRegistry) {
 			this._logWarn(
-				"Attempted to get extension registry before it was initialized. Creating empty one.",
+				"getExtensionRegistry called before init. Returning empty.",
 			);
 
-			this.#extensionRegistry = new ExtensionDescriptionRegistry(
-				_createSimpleReader(),
+			return new ExtensionDescriptionRegistry(
+				_createSimpleReaderForExtSvc(),
 
 				[],
-
-				// Should not happen if constructor ran
 			);
 		}
 
-		// Assert not null after check or creation
-		return this.#extensionRegistry!;
+		return this.#extensionRegistry;
 	}
 
 	public async getExtensionPathIndex(): Promise<{
-		findSubstr: (uri: VscodeUri) => IExtensionDescription | undefined;
+		findSubstr: (uri: VscodeApiUri) => IExtensionDescription | undefined;
 	}> {
-		// Implementation from previous step, seems fine.
-		// TODO: Ensure VscodeUri is compatible with internal URI if used for fsPath comparison.
-		this._logWarnOnce("getExtensionPathIndex returning basic mock.");
+		/* ... (implementation from prev. TS) ... */
+		this._logWarnOnce(
+			"getExtensionPathIndex (simulated) returning basic mock.",
+		);
 
 		if (!this.#extensionRegistry) return { findSubstr: () => undefined };
 
@@ -638,7 +634,8 @@ export class ShimExtHostExtensionService
 			this.#extensionRegistry.getAllExtensionDescriptions();
 
 		return {
-			findSubstr: (uri: VscodeUri) => {
+			findSubstr: (uri: VscodeApiUri) => {
+				// uri is vscode.Uri
 				if (!uri?.fsPath) return undefined;
 
 				return extensions.find(
@@ -650,58 +647,17 @@ export class ShimExtHostExtensionService
 		};
 	}
 
-	// --- Remote/Web Worker Host stubs (as in original) ---
-	public registerRemoteAuthorityResolver = (
-		_authorityPrefix: string,
-
-		_resolver: any,
-	): IDisposable => {
-		this._logWarnOnce(
-			"API not implemented: registerRemoteAuthorityResolver",
-		);
-
-		return { dispose: () => {} };
-	};
-
-	// ... other remote stubs like getRemoteExecServer ...
-	public async $resolveAuthority(
-		_remoteAuthority: string,
-
-		_resolveAttempt?: number,
-	): Promise<any> {
-		throw new Error("Not implemented in shim: $resolveAuthority");
-	}
-
-	public async $getCanonicalURI(
-		_remoteAuthority: string,
-
-		uri: VscodeUri,
-	): Promise<VscodeUri> {
-		return uri;
-	}
-
-	public readonly onDidChangeRemoteConnectionData = VscodeEvent.None;
-
-	public getRemoteConnectionData = () => null;
-
-	public async $setRemoteEnvironment(_env: {
-		[key: string]: string | null;
-	}): Promise<void> {
-		/* No-op */
-	}
-
-	// --- RPC Methods called by Main Thread ---
+	// --- RPC Methods called by MainThreadExtensionService ---
 	public async $activateByEvent(
 		activationEvent: string,
 
 		activationKind: ActivationKind,
 	): Promise<void> {
 		this._log(
-			`$activateByEvent received: ${activationEvent} (Kind: ${ActivationKind[activationKind]})`,
+			`RPC $activateByEvent: '${activationEvent}' (Kind: ${ActivationKind[activationKind]})`,
 		);
 
-		// Fire and forget activation attempts for the event
-		this._activateByEventShim(activationEvent, activationKind).catch(
+		this._triggerActivationsByEvent(activationEvent, activationKind).catch(
 			(err) => {
 				this._logError(
 					`Error during background activation for event '${activationEvent}':`,
@@ -713,20 +669,15 @@ export class ShimExtHostExtensionService
 	}
 
 	public async $activate(
-		extensionIdRaw: { _lower?: string; value: string } | string,
+		extensionIdString: string,
 
 		reason: ExtensionActivationReason,
 	): Promise<boolean> {
-		// Ensure extensionId can be revived or is a string
-		const idString =
-			typeof extensionIdRaw === "string"
-				? extensionIdRaw
-				: extensionIdRaw.value;
-
-		const extensionId = new ExtensionIdentifier(idString);
+		// Mountain's rpc.rs calls this with extensionId as a string.
+		const extensionId = new ExtensionIdentifier(extensionIdString);
 
 		this._log(
-			`$activate RPC received for ${extensionId.value}, reason: ${ActivationKind[reason.activationKind]} (${reason.activationEvent})`,
+			`RPC $activate: ${extensionId.value}, Reason: ${ActivationKind[reason.activationKind]} (${reason.activationEvent})`,
 		);
 
 		try {
@@ -735,7 +686,7 @@ export class ShimExtHostExtensionService
 			return true;
 		} catch (e: any) {
 			this._logError(
-				`$activate RPC for ${extensionId.value} failed:`,
+				`RPC $activate for ${extensionId.value} failed:`,
 
 				e.message,
 			);
@@ -744,44 +695,107 @@ export class ShimExtHostExtensionService
 		}
 	}
 
-	// TODO: Implement $deltaExtensions or $startExtensionHost if Mountain uses them to update the extension list.
-	// This would involve updating this.#extensionRegistry and potentially triggering re-scans or activations.
 	public async $deltaExtensions(delta: {
 		removed: string[];
 
 		added: ISerializedExtension[];
 	}): Promise<void> {
-		this._logWarn("$deltaExtensions RPC received, STUBBED.", delta);
+		this._log(
+			`RPC $deltaExtensions: Added ${delta.added.length}, Removed ${delta.removed.length}`,
+		);
 
-		// 1. Remove extensions: iterate delta.removed, find in registry, remove.
-		// 2. Add extensions: iterate delta.added, revive ISerializedExtension, add to registry.
-		// 3. Fire this._onDidRegisterExtensions.fire();
+		if (!this.#extensionRegistry) {
+			this._logError("Cannot apply delta, registry not initialized.");
 
-		// 4. Potentially re-evaluate eager activations.
+			return;
+		}
+
+		const newExtensions =
+			this.#extensionRegistry.getAllExtensionDescriptions();
+
+		const removedIds = new Set(
+			delta.removed.map((idStr) =>
+				CanonicalExtensionIdentifier.toKey(
+					new ExtensionIdentifier(idStr),
+				),
+			),
+		);
+
+		let currentExtensions = newExtensions.filter(
+			(desc) =>
+				!removedIds.has(
+					CanonicalExtensionIdentifier.toKey(desc.identifier),
+				),
+		);
+
+		const addedDescriptions = delta.added
+			.map((sExt) => {
+				// Simplified revival logic (from constructor)
+				try {
+					const identifier = ExtensionIdentifier.revive(
+						sExt.identifier,
+					);
+
+					if (!identifier) return null;
+
+					const extensionLocation =
+						this._reviveUriDtoToInternalVSCodeUri(
+							sExt.extensionLocation,
+						);
+
+					if (!extensionLocation) return null;
+
+					return {
+						...sExt,
+
+						identifier,
+
+						extensionLocation,
+
+						isBuiltin: !!sExt.isBuiltin,
+
+						isUserBuiltin: !!sExt.isUserBuiltin,
+
+						isUnderDevelopment: !!sExt.isUnderDevelopment,
+					} as IExtensionDescription;
+				} catch {
+					return null;
+				}
+			})
+			.filter((d) => d !== null) as IExtensionDescription[];
+
+		currentExtensions.push(...addedDescriptions);
+
+		this.#extensionRegistry = new ExtensionDescriptionRegistry(
+			_createSimpleReaderForExtSvc(),
+
+			currentExtensions,
+		);
+
+		this._log(
+			`Extension registry updated. New count: ${this.#extensionRegistry.getAllExtensionDescriptions().length}`,
+		);
+
+		// Signal that registry has changed
+		this._onDidRegisterExtensions.fire();
+
+		// TODO: Potentially re-evaluate eager activations or trigger activations for newly added extensions if their events match.
 	}
 
-	public async $startExtensionHost(delta: {
-		removed: ExtensionIdentifier[];
+	// --- Stubs for other RPC methods if this shim aims for full IExtHostExtensionService compatibility ---
+	// $setRemoteEnvironment, $updateRemoteConnectionData, etc.
 
-		added: IExtensionDescription[];
-	}): Promise<void> {
-		this._logWarn("$startExtensionHost RPC received, STUBBED.", delta);
-	}
-
-	// --- Shim Internal Helper Logic ---
-	protected _reviveUriDto(
-		uriDto: UriComponents | undefined,
-	): URI | undefined {
-		// Input is DTO
+	// --- Internal Helper Logic ---
+	private _reviveUriDtoToInternalVSCodeUri(
+		uriDto: VSCodeInternalUriComponents | undefined,
+	): VSCodeInternalURI | undefined {
 		if (!uriDto) return undefined;
 
 		try {
-			// URI.revive is designed for VS Code internal URI components which might include $mid
-			// Cast if UriComponents doesn't perfectly match what URI.revive expects
-			return URI.revive(uriDto as any);
+			return VSCodeInternalURI.revive(uriDto);
 		} catch (e: any) {
 			this._logError(
-				"Failed to revive URI DTO in ExtensionService:",
+				"Failed to revive URI DTO to VSCodeInternalURI:",
 
 				uriDto,
 
@@ -792,16 +806,13 @@ export class ShimExtHostExtensionService
 		}
 	}
 
-	protected async _handleEagerExtensionsShim(): Promise<void> {
-		this._log("Handling eager extension activations ('*' event)...");
+	private async _triggerEagerActivations(): Promise<void> {
+		this._log("Handling eager activations (event: '*')...");
 
-		// Provide a default activationKind
-		await this._activateByEventShim("*", ActivationKind.Normal);
-
-		this._log("Eager activation handling complete.");
+		await this._triggerActivationsByEvent("*", ActivationKind.Normal);
 	}
 
-	protected async _activateByEventShim(
+	private async _triggerActivationsByEvent(
 		activationEvent: string,
 
 		activationKind: ActivationKind,
@@ -815,14 +826,11 @@ export class ShimExtHostExtensionService
 
 		if (candidates.length > 0) {
 			this._log(
-				`Triggering activation for ${candidates.length} extensions on event: '${activationEvent}'`,
+				`Event '${activationEvent}' triggers activation for ${candidates.length} extensions.`,
 			);
 
-			const activationReason: ExtensionActivationReason = {
+			const reasonBase: Omit<ExtensionActivationReason, "extensionId"> = {
 				startup: activationEvent === "*",
-
-				// Generic trigger ID
-				extensionId: new ExtensionIdentifier("trigger.activationEvent"),
 
 				activationEvent,
 
@@ -831,24 +839,19 @@ export class ShimExtHostExtensionService
 
 			const promises = candidates.map((desc) =>
 				this.activateById(desc.identifier, {
-					...activationReason,
+					...reasonBase,
 
 					extensionId: desc.identifier,
 				}).catch((err: any) => {
-					this._logError(
-						`Background activation failed for ${desc.identifier.value} on event '${activationEvent}':`,
-
-						err.message,
-					);
+					/* Errors logged by activateById */
 				}),
 			);
 
-			// Wait for all to attempt, regardless of individual success/failure
 			await Promise.allSettled(promises);
 		}
 	}
 
-	protected async _activateExtensionShim(
+	private async _activateExtensionModule(
 		extensionId: ExtensionIdentifier,
 
 		reason: ExtensionActivationReason,
@@ -858,67 +861,58 @@ export class ShimExtHostExtensionService
 
 		if (!desc) {
 			const error = new Error(
-				`Extension description not found: ${extensionId.value}`,
+				`Extension description not found for activation: ${extensionId.value}`,
 			);
 
-			// Store error
-			this.#activationErrors.set(extensionId.value, error);
+			this.#activationErrors.set(
+				CanonicalExtensionIdentifier.toKey(extensionId),
+
+				error,
+			);
 
 			throw error;
 		}
 
-		this._log(
-			`Attempting to activate: ${desc.identifier.value} (reason: ${ActivationKind[reason.activationKind]})`,
-		);
+		// this._log(`Activating module: ${desc.identifier.value} (reason: ${ActivationKind[reason.activationKind]})`);
 
-		// Check proposed API access
-		const enabledProposalsSource =
+		// Proposed API Check
+		let enabledProposalsSource =
 			this.#initData.environment.extensionEnabledProposedApi;
 
-		let enabledProposalsArray: string[] = [];
+		let finalEnabledProposalsForExt: string[] = [];
 
-		if (Array.isArray(enabledProposalsSource)) {
-			enabledProposalsArray = enabledProposalsSource;
-		} else if (
-			typeof enabledProposalsSource === "object" &&
-			enabledProposalsSource !== null
+		if (Array.isArray(enabledProposalsSource))
+			finalEnabledProposalsForExt = enabledProposalsSource;
+		else if (
+			enabledProposalsSource &&
+			typeof enabledProposalsSource === "object"
 		) {
-			// Handle IEnabledApiProposals { [extensionId: string]: string[] }
+			finalEnabledProposalsForExt = [
+				...(enabledProposalsSource["*"] || []),
 
-			const specificProposals = (
-				enabledProposalsSource as IEnabledApiProposals
-			)[extensionId.value];
-
-			if (Array.isArray(specificProposals)) {
-				enabledProposalsArray = specificProposals;
-			}
-
-			// Also consider '*' for globally enabled proposals if the structure supports it
-			const globalProposals = (
-				enabledProposalsSource as IEnabledApiProposals
-			)["*"];
-
-			if (Array.isArray(globalProposals)) {
-				enabledProposalsArray = [
-					...new Set([...enabledProposalsArray, ...globalProposals]),
-				];
-			}
+				...(enabledProposalsSource[desc.identifier.value] || []),
+			];
 		}
 
-		const canUseProposed = checkProposedApiEnabled(
-			desc,
+		if (desc.enabledApiProposals) {
+			for (const proposal of desc.enabledApiProposals) {
+				if (
+					!vscodeCheckProposedApiEnabled(
+						desc,
 
-			enabledProposalsArray,
-		);
+						finalEnabledProposalsForExt,
 
-		if (
-			desc.enabledApiProposals &&
-			desc.enabledApiProposals.length > 0 &&
-			!canUseProposed
-		) {
-			this._logWarn(
-				`Extension '${desc.identifier.value}' requests proposed API ([${desc.enabledApiProposals.join(", ")}]) but is NOT ENABLED for them. Activation proceeds, but API calls may fail.`,
-			);
+						proposal,
+					)
+				) {
+					// Check one by one
+					this._logWarn(
+						`Extension '${desc.identifier.value}' requests proposed API '${proposal}' which is NOT ENABLED.`,
+					);
+
+					// TODO: Decide if activation should fail here or just log. VS Code often logs and continues.
+				}
+			}
 		}
 
 		const entryPoint = this._getEntryPointShim(desc);
@@ -928,24 +922,25 @@ export class ShimExtHostExtensionService
 		);
 
 		if (!entryPoint) {
+			/* ... (implementation for EmptyExtension from prev. TS) ... */
 			this._log(
-				`Extension ${desc.identifier.value} has no main/browser/worker entry point. Activating as EmptyExtension.`,
+				`Extension ${desc.identifier.value} has no entry point. Activating as EmptyExtension.`,
 			);
 
 			const times = activationTimesBuilder.build();
 
-			this.#activationTimes.set(desc.identifier.value, times);
+			this.#activationTimes.set(
+				CanonicalExtensionIdentifier.toKey(desc.identifier),
+
+				times,
+			);
 
 			return new EmptyExtension(times);
 		}
 
-		this._log(
-			`Loading entry point '${entryPoint}' for ${desc.identifier.value} from ${desc.extensionLocation.fsPath}`,
-		);
+		let loadedModule: LoadedExtensionModule | undefined;
 
-		let extensionModule: ExtensionModule | undefined;
-
-		let context: CocoonExtensionContext | undefined;
+		let contextApi: CocoonExtensionContextApi | undefined;
 
 		try {
 			const modulePath = path.join(
@@ -957,42 +952,46 @@ export class ShimExtHostExtensionService
 			activationTimesBuilder.codeLoadingStart();
 
 			// Node.js require
-			extensionModule = require(modulePath) as ExtensionModule;
+			loadedModule = require(modulePath) as LoadedExtensionModule;
 
 			activationTimesBuilder.codeLoadingStop();
 
-			this._log(`Module loaded for ${desc.identifier.value}.`);
-
-			context = await this._loadExtensionContextShim(desc);
-
 			this._log(
-				`ExtensionContext prepared for ${desc.identifier.value}.`,
+				`Module loaded for ${desc.identifier.value}. Cache for deactivate.`,
 			);
+
+			this.#extensionModules.set(
+				CanonicalExtensionIdentifier.toKey(desc.identifier),
+
+				loadedModule,
+			);
+
+			// Ensure this uses VscodeExtensionContext
+			contextApi = await this._loadExtensionContextShim(desc);
+
+			// this._log(`ExtensionContext prepared for ${desc.identifier.value}.`);
 
 			let activationResult: any = undefined;
 
-			if (typeof extensionModule?.activate === "function") {
+			if (typeof loadedModule?.activate === "function") {
 				activationTimesBuilder.activateCallStart();
 
-				this._log(`Calling activate() for ${desc.identifier.value}...`);
+				// this._log(`Calling activate() for ${desc.identifier.value}...`);
 
 				activationResult = await Promise.resolve(
-					extensionModule.activate.apply(globalThis, [context]),
+					loadedModule.activate.apply(globalThis, [contextApi]),
 				);
 
 				activationTimesBuilder.activateCallStop();
 
-				// Assume resolve is instant
 				activationTimesBuilder.activateResolveStart();
 
 				activationTimesBuilder.activateResolveStop();
 
-				this._log(
-					`activate() finished for ${desc.identifier.value}. Exports type: ${typeof activationResult}`,
-				);
+				// this._log(`activate() finished for ${desc.identifier.value}. Exports type: ${typeof activationResult}`);
 			} else {
 				this._logWarn(
-					`Extension ${desc.identifier.value} has entry point but no activate() function.`,
+					`Extension ${desc.identifier.value} entry point loaded but no activate() function found.`,
 				);
 
 				activationTimesBuilder.activateCallStop();
@@ -1000,14 +999,25 @@ export class ShimExtHostExtensionService
 				activationTimesBuilder.activateResolveStop();
 			}
 
-			this.#extensionExports.set(desc.identifier.value, activationResult);
+			this.#extensionExports.set(
+				CanonicalExtensionIdentifier.toKey(desc.identifier),
+
+				activationResult,
+			);
 
 			const activationTimes = activationTimesBuilder.build();
 
-			this.#activationTimes.set(desc.identifier.value, activationTimes);
+			this.#activationTimes.set(
+				CanonicalExtensionIdentifier.toKey(desc.identifier),
 
-			// No error stored if successful up to this point
-			this.#activationErrors.delete(desc.identifier.value);
+				activationTimes,
+			);
+
+			this.#activationErrors.delete(
+				CanonicalExtensionIdentifier.toKey(desc.identifier),
+
+				// Clear previous errors on success
+			);
 
 			return {
 				activationFailed: false,
@@ -1016,36 +1026,45 @@ export class ShimExtHostExtensionService
 
 				activationTimes,
 
-				module: extensionModule || {},
+				module: loadedModule || {},
 
 				exports: activationResult,
 
 				disposable: {
 					dispose: () => {
-						if (typeof extensionModule?.deactivate === "function") {
+						const moduleToDeactivate = this.#extensionModules.get(
+							CanonicalExtensionIdentifier.toKey(desc.identifier),
+						);
+
+						if (
+							typeof moduleToDeactivate?.deactivate === "function"
+						) {
 							this._log(
 								`Calling deactivate() for ${desc.identifier.value}...`,
 							);
 
 							Promise.resolve(
-								extensionModule.deactivate!(),
+								moduleToDeactivate.deactivate!(),
 							).catch((e: any) =>
 								this._logError(
 									`Error in deactivate of ${desc.identifier.value}:`,
 
-									e,
+									refineError(e, this._logService),
 								),
 							);
 						}
 
-						if (context?.subscriptions) {
-							this._log(
-								`Disposing ${context.subscriptions.length} subscriptions for ${desc.identifier.value}.`,
-							);
+						if (contextApi?.subscriptions) {
+							// this._log(`Disposing ${contextApi.subscriptions.length} subscriptions for ${desc.identifier.value}.`);
 
-							// VS Code's dispose helper
-							dispose(context.subscriptions);
+							dispose(contextApi.subscriptions);
 						}
+
+						this.#extensionModules.delete(
+							CanonicalExtensionIdentifier.toKey(desc.identifier),
+
+							// Clean up module cache
+						);
 					},
 				},
 			};
@@ -1056,18 +1075,17 @@ export class ShimExtHostExtensionService
 				error,
 			);
 
-			// Store error for future re-entrant checks and for getActivatedExtension
-			this.#activationErrors.set(desc.identifier.value, error);
+			// Already set by activateById if error bubbles up
+			// this.#activationErrors.set(CanonicalExtensionIdentifier.toKey(desc.identifier), error);
 
 			return {
 				activationFailed: true,
 
 				activationFailedError: error,
 
-				// Timings up to failure
 				activationTimes: activationTimesBuilder.build(),
 
-				module: extensionModule || {},
+				module: loadedModule || {},
 
 				exports: undefined,
 
@@ -1078,80 +1096,64 @@ export class ShimExtHostExtensionService
 
 	protected async _loadExtensionContextShim(
 		desc: IExtensionDescription,
-	): Promise<CocoonExtensionContext> {
-		this._log(`Loading ExtensionContext for ${desc.identifier.value}`);
+	): Promise<CocoonExtensionContextApi> {
+		// this._log(`Loading ExtensionContext for ${desc.identifier.value}`);
 
-		if (!global.cocoonInstantiationService) {
+		if (!global.cocoonInstantiationService)
 			throw new Error(
-				"Cannot load ExtensionContext: InstantiationService (global.cocoonInstantiationService) not available!",
+				"DI service (global.cocoonInstantiationService) unavailable for ExtensionContext!",
 			);
-		}
 
-		const instantiationService = global.cocoonInstantiationService;
+		// InstantiationService
+		const iService = global.cocoonInstantiationService;
 
-		// These are service IDs (decorators)
-		// Assuming IExtHostStorage is the service identifier
-		const extHostStorageId = IExtHostStorage;
-
-		const extHostStoragePathsId = IExtensionStoragePaths;
-
-		const extHostSecretsId = IExtHostSecrets;
-
-		const extHostTerminalId = IExtHostTerminalService;
-
-		const extHostLangModelsId = IExtHostLanguageModels;
-
-		// For extension.exports.executeCommand
-		// const extHostCommandsId = IExtHostCommands;
-
-		// For config access within context
-		// const extHostConfigId = IExtHostConfiguration;
-
-		const storageService = instantiationService.invokeFunction((accessor) =>
-			accessor.get<IExtHostStorage>(extHostStorageId),
+		// Fetch services via DI. Ensure service IDs are correct.
+		const storageService = iService.invokeFunction((accessor) =>
+			accessor.get<IExtHostStorage>(IExtHostStorage),
 		);
 
 		const globalState = storageService.createMemento(
-			desc.identifier.value,
+			desc.identifier.id,
 
 			true,
 
-			// isGlobal = true
+			// .id for string
 		);
 
 		const workspaceState = storageService.createMemento(
-			desc.identifier.value,
+			desc.identifier.id,
 
 			false,
-
-			// isGlobal = false
 		);
 
-		const storagePathsService = instantiationService.invokeFunction(
-			(accessor) =>
-				accessor.get<IExtensionStoragePaths>(extHostStoragePathsId),
+		const storagePaths = iService.invokeFunction((accessor) =>
+			accessor.get<IExtensionStoragePaths>(IExtensionStoragePaths),
 		);
 
-		// Uri | undefined
-		const storageUri = storagePathsService.workspaceValue(desc);
+		const storageUri = VscodeApiUri.from(
+			storagePaths.workspaceValue(desc) || desc.extensionLocation,
 
-		// Uri (should always be defined)
-		const globalStorageUri = storagePathsService.globalValue(desc);
+			// Fallback for workspaceValue
+		);
 
-		let secretsApi: SecretStorage;
+		const globalStorageUri = VscodeApiUri.from(
+			storagePaths.globalValue(desc),
+
+			// Should not be undefined
+		);
+
+		let secrets: VscodeSecretStorage;
 
 		try {
-			secretsApi = instantiationService.invokeFunction(
-				(accessor) => accessor.get<IExtHostSecrets>(extHostSecretsId),
-
-				// Cast if IExtHostSecrets is the service and SecretStorage is the API shape
-			) as SecretStorage;
+			secrets = iService.invokeFunction((accessor) =>
+				accessor.get<IExtHostSecrets>(IExtHostSecrets),
+			) as VscodeSecretStorage;
 		} catch (e) {
 			this._logWarn(
-				`IExtHostSecrets service not found for ${desc.identifier.value}, providing NOP SecretStorage. Error: ${e}`,
+				`IExtHostSecrets not found for ${desc.identifier.id}, NOP SecretStorage. Error: ${e}`,
 			);
 
-			secretsApi = {
+			secrets = {
 				get: () => Promise.resolve(undefined),
 
 				store: () => Promise.resolve(),
@@ -1162,35 +1164,48 @@ export class ShimExtHostExtensionService
 			};
 		}
 
-		const logPathUri = URI.joinPath(
-			this._reviveUriDto(this.#initData.logsLocation)!,
-
-			`${desc.identifier.value}.log`,
+		const logPathBaseUri = this._reviveUriDtoToInternalVSCodeUri(
+			this.#initData.logsLocation,
 		);
 
-		let termEnvCollection: EnvironmentVariableCollection;
-
-		try {
-			const terminalService = instantiationService.invokeFunction(
-				(accessor) =>
-					accessor.get<IExtHostTerminalServiceShape>(
-						extHostTerminalId,
-					),
+		if (!logPathBaseUri)
+			throw new Error(
+				"Logs location URI could not be revived for ExtensionContext.",
 			);
 
-			termEnvCollection =
-				terminalService.getEnvironmentVariableCollection(
-					this._createExtensionApiObjectShim(desc) as any,
+		const logUri = VscodeApiUri.joinPath(
+			VscodeApiUri.from(logPathBaseUri),
 
-					// Cast to any if type mismatch
+			`${desc.identifier.id}.log`,
+
+			// Use VscodeApiUri.joinPath
+		);
+
+		let environmentVariableCollection: VscodeEnvironmentVariableCollection;
+
+		// Create this first
+		const extensionApiObject = this._createExtensionApiObjectShim(desc);
+
+		try {
+			const terminalService = iService.invokeFunction((accessor) =>
+				accessor.get<IExtHostTerminalServiceShape>(
+					IExtHostTerminalService,
+				),
+			);
+
+			environmentVariableCollection =
+				terminalService.getEnvironmentVariableCollection(
+					extensionApiObject,
 				);
 		} catch (e) {
 			this._logWarn(
-				`IExtHostTerminalService not found for ${desc.identifier.value}, providing NOP EnvironmentVariableCollection. Error: ${e}`,
+				`IExtHostTerminalService not found for ${desc.identifier.id}, NOP EnvVarCollection. Error: ${e}`,
 			);
 
-			termEnvCollection = {
+			environmentVariableCollection = {
 				persistent: true,
+
+				description: undefined,
 
 				replace: () => {},
 
@@ -1207,113 +1222,120 @@ export class ShimExtHostExtensionService
 				clear: () => {},
 
 				[Symbol.iterator]: function* () {},
-			} as EnvironmentVariableCollection;
+
+				toArray: () => [],
+			};
 		}
 
 		await Promise.all([
-			(globalState as Memento).whenReady,
+			(globalState as VscodeMemento).whenReady,
 
-			(workspaceState as Memento).whenReady,
-
-			// Ensure Mementos are ready
+			(workspaceState as VscodeMemento).whenReady,
 		]);
 
-		const context: CocoonExtensionContext = {
+		const context: CocoonExtensionContextApi = {
 			subscriptions: [],
 
-			// Cast if createMemento returns internal type
-			globalState: globalState as Memento,
+			globalState: globalState as VscodeMemento,
 
-			workspaceState: workspaceState as Memento,
+			workspaceState: workspaceState as VscodeMemento,
 
-			secrets: secretsApi,
+			secrets,
 
-			// Convert internal URI to vscode.Uri
-			extensionUri: VscodeUri.from(desc.extensionLocation),
+			// Convert internal URI
+			extensionUri: VscodeApiUri.from(desc.extensionLocation),
 
 			extensionPath: desc.extensionLocation.fsPath,
 
-			environmentVariableCollection: termEnvCollection,
+			environmentVariableCollection,
 
 			asAbsolutePath: (relativePath) =>
 				path.join(desc.extensionLocation.fsPath, relativePath),
 
-			storageUri: storageUri ? VscodeUri.from(storageUri) : undefined,
+			// Already VscodeApiUri
+			storageUri,
 
 			storagePath: storageUri?.fsPath,
 
-			globalStorageUri: VscodeUri.from(globalStorageUri),
+			// Already VscodeApiUri
+			globalStorageUri,
 
 			globalStoragePath: globalStorageUri.fsPath,
 
-			logUri: VscodeUri.from(logPathUri),
+			// Already VscodeApiUri
+			logUri,
 
-			logPath: logPathUri.fsPath,
+			logPath: logUri.fsPath,
 
 			extensionMode: desc.isUnderDevelopment
-				? ExtensionMode.Development
-				: ExtensionMode.Production,
+				? VscodeExtensionMode.Development
+				: VscodeExtensionMode.Production,
 
-			extension: this._createExtensionApiObjectShim(
-				desc,
+			extension: extensionApiObject,
 
-				// Cast to vscode.Extension<any>
-			) as Extension<any>,
+			extensionRuntime: VscodeExtensionRuntime.Node,
 
-			// Cocoon runs in Node.js
-			extensionRuntime: ExtensionRuntime.Node,
+			// TODO: Implement other ExtensionContext properties like `globalศัพท์`, `workspaceศัพท์` (state sync), `extensionMode` (test/debug), `languageModelAccessInformation`.
+			// languageModelAccessInformation: iService.invokeFunction(accessor => accessor.get<IExtHostLanguageModels>(IExtHostLanguageModels)).createLanguageModelAccessInformation(desc),
 
-			// TODO: Implement other ExtensionContext properties like globalEffect, workspaceEffect, etc.
-			// These are related to state synchronization and might be complex.
+			// The above line for languageModelAccessInformation would require IExtHostLanguageModels to be properly shimmed and registered.
 		};
 
+		// VS Code freezes the context
 		return Object.freeze(context);
 	}
 
 	protected _getEntryPointShim(
 		desc: IExtensionDescription,
 	): string | undefined {
-		// Check 'main' (Node), then 'browser' (Web), then 'worker' (Web Worker)
-		// VS Code resolution order might be more complex (e.g. based on host type)
+		/* ... (implementation from prev. TS) ... */
 		if (typeof desc.main === "string")
 			return desc.main.replace(/\.js$/, "");
 
 		if (typeof desc.browser === "string") {
-			this._logWarn(
-				`Using 'browser' field as entry point for Node-based shim ${desc.identifier.value}: ${desc.browser}`,
-			);
+			if (
+				this.#initData.remote?.isRemote ||
+				typeof process !== "object"
+			) {
+				// If in a web-like environment or remote context
+				// this._log(`Using 'browser' entry point for ${desc.identifier.value}: ${desc.browser}`);
 
-			return desc.browser.replace(/\.js$/, "");
+				return desc.browser.replace(/\.js$/, "");
+			} else {
+				this._logWarn(
+					`Ignoring 'browser' field for Node-based shim ${desc.identifier.value}, 'main' preferred.`,
+				);
+			}
 		}
 
 		if (typeof (desc as any).worker === "string") {
-			// worker might not be on IExtensionDescription
+			// TODO: Cocoon doesn't support worker extension hosts yet.
 			this._logWarn(
-				`Using 'worker' field as entry point for Node-based shim ${desc.identifier.value}: ${(desc as any).worker}`,
+				`Ignoring 'worker' field for ${desc.identifier.value} as worker hosts are not supported by Cocoon shim.`,
 			);
-
-			return (desc as any).worker.replace(/\.js$/, "");
 		}
 
-		return undefined;
+		return typeof desc.main === "string"
+			? desc.main.replace(/\.js$/, "")
+			: // Prioritize main for Node
+				undefined;
 	}
 
 	protected _createExtensionApiObjectShim(
 		desc: IExtensionDescription,
-	): Extension<any> {
-		// Return vscode.Extension<any>
-		// Capture `this`
+	): VscodeExtension<any> {
+		/* ... (implementation from prev. TS, ensuring return type VscodeExtension<any>) ... */
 		const extensionService = this;
 
-		const extensionApiObject: Extension<any> = {
+		const extensionApiObject: VscodeExtension<any> = {
 			get id() {
-				return desc.identifier.value;
+				return desc.identifier.id;
+
+				// Use .id from ExtensionIdentifier
 			},
 
 			get extensionUri() {
-				return VscodeUri.from(desc.extensionLocation);
-
-				// Convert internal URI
+				return VscodeApiUri.from(desc.extensionLocation);
 			},
 
 			get extensionPath() {
@@ -1321,40 +1343,35 @@ export class ShimExtHostExtensionService
 			},
 
 			get isActive() {
-				return extensionService.isActivated(desc.identifier.value);
+				return extensionService.isActivated(desc.identifier.id);
 			},
 
 			get packageJSON() {
 				return desc as any;
 
-				// Cast as IRelaxedExtensionDescription might be needed if fields differ
+				// Cast if IExtensionDescription is not directly assignable
 			},
 
 			get extensionKind() {
-				// Determine based on initData and potentially desc.extensionKind
-				// return desc.extensionKind ?? (this.#initData.remote?.isRemote ? ExtensionKind.Workspace : ExtensionKind.UI);
-
-				// A simpler approach for Cocoon (local process host):
-				// Or UI if it hosts UI extensions
-				return ExtensionKind.Workspace;
+				// Determine based on extension manifest or context
+				// If desc.extensionKind is present and is ExtensionHostKind, map it to vscode.ExtensionKind
+				// For Cocoon, it's usually Workspace or UI (if UI extensions run here)
+				// Default for Cocoon
+				return VscodeExtensionKind.Workspace;
 			},
 
 			get exports() {
-				return extensionService.getExtensionExports(
-					desc.identifier.value,
-				);
+				return extensionService.getExtensionExports(desc.identifier.id);
 			},
 
 			activate: async (): Promise<any> => {
-				if (!extensionService.isActivated(desc.identifier.value)) {
-					// Reason for direct activation via API
+				if (!extensionService.isActivated(desc.identifier.id)) {
 					const reason: ExtensionActivationReason = {
 						startup: false,
 
 						extensionId: desc.identifier,
 
-						// Generic reason
-						activationEvent: `extension.activate()`,
+						activationEvent: `extension.activateApiCall`,
 
 						activationKind: ActivationKind.Api,
 					};
@@ -1366,32 +1383,41 @@ export class ShimExtHostExtensionService
 					);
 				}
 
-				return extensionService.getExtensionExports(
-					desc.identifier.value,
-				);
+				return extensionService.getExtensionExports(desc.identifier.id);
 			},
-
-			// TODO: Add contributes if needed and if IExtensionDescription has it in a usable format
-			// get contributes() { return desc.contributes; }
 		};
 
 		return Object.freeze(extensionApiObject);
 	}
 
-	protected _reportActivationStatus(extensionId: ExtensionIdentifier): void {
-		const status = this.#activator.getActivatedExtension(extensionId);
+	protected _reportActivationStatusToMountain(
+		extensionId: ExtensionIdentifier,
 
+		status: ActivatedExtension,
+	): void {
+		/* ... (implementation from prev. TS, ensure status.activationTimes is serializable) ... */
 		if (!status) {
 			this._logError(
-				`Could not get activation status for ${extensionId.value} to report.`,
+				`Cannot report activation status for ${extensionId.value}, status object is undefined.`,
 			);
 
 			return;
 		}
 
-		this._log(
-			`Reporting activation status for ${extensionId.value}: success=${!status.activationFailed}`,
-		);
+		const serializableTimes = {
+			// Ensure activationTimes is plain data
+			startup: status.activationTimes.startup,
+
+			codeLoadingTime: status.activationTimes.codeLoadingTime,
+
+			activateCallTime: status.activationTimes.activateCallTime,
+
+			activateResolvedTime: status.activationTimes.activateResolvedTime,
+
+			activationReason: status.activationTimes.activationReason,
+		};
+
+		// this._log(`Reporting activation status for ${extensionId.value}: success=${!status.activationFailed}`);
 
 		sendNotificationToMountain("extensionActivationResult", {
 			id: extensionId.value,
@@ -1408,8 +1434,7 @@ export class ShimExtHostExtensionService
 					}
 				: null,
 
-			// Ensure this is serializable
-			activationTimes: status.activationTimes,
+			activationTimes: serializableTimes,
 		}).catch((e: any) =>
 			this._logError(
 				`Failed to report activation status for ${extensionId.value}:`,
@@ -1418,36 +1443,66 @@ export class ShimExtHostExtensionService
 			),
 		);
 	}
+
+	public dispose(): void {
+		// If BaseCocoonShim has a dispose
+		super.dispose();
+
+		this._onDidRegisterExtensions.dispose();
+
+		this._onDidChangeResponsiveMode.dispose();
+
+		// TODO: Iterate over #activationPromises and dispose any disposables from ActivatedExtension if they are stored and managed.
+		// Current ActivatedExtension.disposable is NOP for this shim, but full VS Code might do more.
+		this.#activationPromises.clear();
+
+		this.#extensionModules.forEach((module) => {
+			// Attempt to call deactivate on any loaded modules
+			if (typeof module.deactivate === "function") {
+				try {
+					module.deactivate();
+				} catch (e) {
+					this._logError(
+						"Error during mass deactivation on dispose:",
+
+						e,
+					);
+				}
+			}
+		});
+
+		this.#extensionModules.clear();
+
+		this._log("Disposed.");
+	}
 }
 
-// Helper for ExtensionDescriptionRegistry (simplified)
-function _createSimpleReader(): IExtensionPointUser<any>[] {
-	// This needs to return an array of objects that conform to IExtensionPointUser.
-	// The key part is providing a way for the registry to read activationEvents.
+// Helper for ExtensionDescriptionRegistry (from VS Code's extHostExtensionService)
+// This provides the `readActivationEvents` method.
+function _createSimpleReaderForExtSvc(): IExtensionPointUser<any>[] {
 	return [
 		{
-			// Minimal IExtensionPointUser, focusing on what ExtensionDescriptionRegistry uses for activation events
-			// Arbitrary name for the user
-			name: "activationEventsReader",
-
 			description: {
-				name: "cocoon-shim-activation-reader",
+				name: "cocoon-activation-event-reader",
 
 				version: "0.0.1",
 
 				publisher: "cocoon-internal",
 
-				// Mock description
+				engines: { vscode: "*" },
+
+				// Mock
 			},
 
-			// Actual reader function
+			// Not strictly how IExtensionPointUser works, but targets registry's need
+			name: "activationEvents",
+
 			read: (desc: IExtensionDescription) => desc.activationEvents || [],
 
-			accept: (collector, desc) => {},
+			more: (collector, desc) => {
+				/* NOP for 'more' (accept/contribute) */
+				// Using Telugu for "more" as a placeholder
+			},
 		},
-
-		// Cast if the simple object doesn't fully match IExtensionPointUser
 	] as any[];
 }
-
-// --- END OF FILE extension-service-shim.ts ---
