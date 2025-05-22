@@ -1,1 +1,1 @@
-import*as o from"node:crypto";const e={createHash:o.createHash,createHmac:o.createHmac,randomBytes:o.randomBytes,randomUUID:o.randomUUID};var t=e;export{t as default};
+import*as e from"node:crypto";const a={createHash:e.createHash,createHmac:e.createHmac,randomBytes:(r,o)=>{if(o){try{const t=e.randomBytes(r);process.nextTick(()=>o(null,t))}catch(t){process.nextTick(()=>o(t,Buffer.alloc(0)))}return e.randomBytes(r)}return e.randomBytes(r)},randomUUID:e.randomUUID,getRandomValues:e.getRandomValues};var n=a;export{n as default};
