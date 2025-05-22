@@ -29,5 +29,8 @@
 	"publishConfig": {
 		"access": "public",
 		"provenance": true
+	},
+	"dependencies": {
+		"@types/node": "22.15.21"
 	}
 }
