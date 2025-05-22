@@ -11,6 +11,7 @@
  *   adjustments for VS Code's internal module resolution.
  * - IPC Management: Utilizes `cocoon-ipc.ts` to communicate with the Mountain host,
  *
+ *
  *   primarily waiting for an `initExtensionHost` command containing initialization data.
  * - Dependency Injection (DI): Configures and instantiates VS Code's `InstantiationService`
  *   with a `ServiceCollection` that includes:
@@ -26,10 +27,12 @@
  *     - Shimmed module factories for Node.js built-ins (like 'fs') if necessary.
  * - Extension Host Lifecycle: Triggers the initialization of the `ExtHostExtensionService`,
  *
+ *
  *   which subsequently loads and activates extensions based on the provided init data.
  * - URI Revival: Handles the "revival" of URI-like objects (and other marshallable types)
  *   received from the Mountain process into proper VS Code `URI` instances.
  * - Global Error Handling: Installs global error handlers (`process.on('uncaughtException')`,
+ *
  *
  *   etc.) to report errors back to Mountain via RPC.
  *
@@ -74,23 +77,25 @@ import {
 } from "vs/platform/extensions/common/extensions";
 import { getSingletonServiceDescriptors } from "vs/platform/instantiation/common/extensions";
 import {
-	type IInstantiationService,
-	InstantiationService,
 	createDecorator,
+	InstantiationService,
+	type IInstantiationService,
 } from "vs/platform/instantiation/common/instantiationService";
 import {
 	ServiceCollection,
 	SyncDescriptor,
 } from "vs/platform/instantiation/common/serviceCollection";
 import {
-	ILogService,
 	ILoggerService,
+	ILogService,
 	LogLevel,
 	parseLogLevel,
 } from "vs/platform/log/common/log";
+// Interceptor & Error Handling
+import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain";
 import {
-	type IExtensionApiFactory,
 	createApiFactory as createVSCodeApiFactoryOriginal,
+	type IExtensionApiFactory,
 } from "vs/workbench/api/common/extHost.api.impl";
 import {
 	ExtHostContext,
@@ -129,8 +134,8 @@ import {
 } from "vs/workbench/api/common/extHostExtensionService";
 import { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
 import {
-	type ExtHostInitData,
 	IExtHostInitDataService,
+	type ExtHostInitData,
 } from "vs/workbench/api/common/extHostInitDataService";
 import {
 	ExtHostLanguageFeaturesShape,
@@ -153,15 +158,13 @@ import {
 } from "vs/workbench/api/common/extHostTerminalService";
 import { IURITransformerService } from "vs/workbench/api/common/extHostUriTransformerService";
 import { IExtHostWorkspace } from "vs/workbench/api/common/extHostWorkspace";
-// Interceptor & Error Handling
-import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain";
 // The REAL service for Path A
 import { ExtHostExtensionService } from "vs/workbench/api/node/extHostExtensionService";
 import {
 	NodeModuleAliasingModuleFactory,
 	NodeRequireInterceptor,
-	VSCodeNodeModuleFactory,
 	INodeModuleFactory as VscodeINodeModuleFactory,
+	VSCodeNodeModuleFactory,
 } from "vs/workbench/api/node/extHostRequireInterceptor";
 import { IWorkbenchExtensionEnablementService } from "vs/workbench/services/extensionManagement/common/extensionManagement";
 import { IExtensionHostKindPicker } from "vs/workbench/services/extensions/common/extensionHostKind";
@@ -170,9 +173,9 @@ import {
 	ExtensionActivationReason,
 } from "vs/workbench/services/extensions/common/extensions";
 import {
+	RPCProtocol,
 	type IMessagePassingProtocol,
 	type IRPCProtocolLogger,
-	RPCProtocol,
 } from "vs/workbench/services/extensions/common/rpcProtocol";
 import type {
 	Uri as VscodeApiUri,
@@ -201,13 +204,13 @@ import { ShimExtHostLocalizationService } from "./shims/localization-shim";
 // import { BaseCocoonShim } from "./_baseShim";
 
 // Shim Implementations (import classes)
-import { ShimLogService, ShimLoggerService } from "./shims/log-shim";
+import { ShimLoggerService, ShimLogService } from "./shims/log-shim";
 import { ShimExtHostManagedSockets } from "./shims/managed-sockets-shim";
 import { NodeModuleShimFactory as NodeBuiltinsShimFactory } from "./shims/node-module-shim-factory";
 import { ShimOutputService } from "./shims/output-channel-shim";
 import {
-	type IExtHostProposedApis as CocoonIExtHostProposedApis,
 	ShimExtensionsProposedApi,
+	type IExtHostProposedApis as CocoonIExtHostProposedApis,
 } from "./shims/proposed-api-shim";
 import { ShimExtHostSecretState } from "./shims/secret-state-shim";
 import { ShimExtensionStoragePaths } from "./shims/storage-paths-shim";

@@ -23,10 +23,12 @@
 		"paths": {
 			"@Source/*": ["Source/*"],
 
-			"@VSCode/*": ["../../Dependency/Microsoft/Dependency/Editor/src/*"]
+			"@VSCode/*": ["../../Dependency/Microsoft/Dependency/Editor/src/*"],
+
+			"vs/*": ["../../Dependency/Microsoft/Dependency/Editor/src/vs/*"]
 		},
 
-		"rootDir": "Source",
+		// "rootDir": "Source",
 
 		"rootDirs": [".", "../../Dependency/Microsoft/Dependency/Editor/src/"],
 
