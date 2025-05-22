@@ -1,95 +1,88 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Node 'fs' Shim Factory (shims/fs-module-shim-factory.ts)
+ * Cocoon Node 'fs' Shim Factory (fs-module-shim-factory.ts)
  * --------------------------------------------------------------------------------------------
- * Implements the `INodeModuleFactory` interface for the `NodeRequireInterceptor`.
- * Its purpose is to intercept calls to Node.js's built-in `require('fs')` made by
- * extension code or bundled VS Code platform code running within Cocoon.
+ * Implements the `INodeModuleFactory` interface, specifically for intercepting
+ * `require('fs')` calls within the Cocoon environment.
  *
  * Responsibilities:
  * - Declaring that it handles the 'fs' module name.
  * - Implementing the `load` method, which is called by the `NodeRequireInterceptor`.
- * - Returning the `fs-shim.ts` module instance when `require('fs')` is intercepted.
+ * - Returning the instance of `fs-shim.ts` (which provides a proxied `fs.promises` API)
+ *   when `require('fs')` is intercepted by extensions or VS Code platform code.
  *
  * Key Interactions:
- * - Registered with the `NodeRequireInterceptor` instance in `index.ts`.
- * - Returns the `fs-shim.ts` module.
+ * - Registered with the `NodeRequireInterceptor` in Cocoon's `index.ts`.
+ * - Provides the `fs-shim.ts` module, enabling controlled/proxied filesystem access
+ *   for code that directly uses Node.js's `fs` module.
  *--------------------------------------------------------------------------------------------*/
 
-// Assuming fs-shim.ts has a default export for the shim object
-// For parentUri type, assuming from vscode API
+// Import the default export from fs-shim.ts (which is the fsShimInstance object)
+// For parentUri type in INodeModuleFactory
 import type { Uri as VscodeUri } from "vscode";
 
-import fsShimInstance from "./fs-shim";
+// Assuming FsShimStructure is exported from fs-shim.ts if we want to type the return value of load()
+import fsShimInstanceFromFile, { type FsShimStructure } from "./fs-shim";
 
 // --- Type Definitions ---
 
-// INodeModuleFactory interface should be defined centrally if used by multiple factories.
-// For this file, if not imported, a local definition suffices.
-// TODO: Move INodeModuleFactory to a shared types file (e.g., `types.ts` or alongside NodeRequireInterceptor).
-export interface INodeModuleFactory {
-	/**
-	 * The name or names of the Node.js module this factory can provide.
-	 */
-	readonly nodeModuleName: string | readonly string[];
+// INodeModuleFactory interface.
+// TODO: This interface should be defined in a central location (e.g., alongside NodeRequireInterceptor
+// or in a shared `types.ts`) and imported here and in `node-module-shim-factory.ts`.
+export interface INodeModuleFactoryForFs {
+	// Renamed to be specific if it differs slightly
+	// Specifically "fs" for this factory
+	readonly nodeModuleName: string;
 
-	/**
-	 * Called by the NodeRequireInterceptor when a listed `nodeModuleName` is required.
-	 * @param request The exact string passed to `require()` (e.g., "fs", "fs/promises").
-	 * @param parentUri The URI of the module that made the `require()` call.
-	 * @param originalLoad A function to call the original Node.js `require` mechanism.
-	 * @returns The shimmed module, or the result of `originalLoad(request)`.
-	 */
 	load(
-		request: string,
+		// Request will always be "fs" due to nodeModuleName
+		request: "fs",
 
 		parentUri: VscodeUri | undefined,
 
+		// Function to call original Node.js require
 		originalLoad: (request: string) => any,
-	): any;
 
-	/**
-	 * Optional method to suggest an alternative module name if the factory
-	 * handles a module under a different name than requested.
-	 */
+		// Should return the type exported by fs-shim.ts
+	): FsShimStructure;
+
 	alternativeModuleName?(name: string): string | undefined;
 }
 
-export class FsModuleShimFactory implements INodeModuleFactory {
-	// This factory specifically handles "fs"
+export class FsModuleShimFactory implements INodeModuleFactoryForFs {
 	public readonly nodeModuleName: string = "fs";
 
+	/**
+	 * Called by the NodeRequireInterceptor when `require('fs')` is encountered.
+	 * Returns the Cocoon `fs-shim` implementation.
+	 */
 	public load(
-		// Will be "fs" due to nodeModuleName
-		request: string,
+		// Parameter `request` will always be "fs" for this factory
+		request: "fs",
 
 		parentUri: VscodeUri | undefined,
 
-		// Not used by this specific factory, but part of interface
-		originalLoad: (request: string) => any,
-	): any {
-		// Should return the 'fs' module shim (the default export of fs-shim.ts)
-		// Log the interception, including the requesting module if available
-		const requester = parentUri
+		// `originalLoad` is not used here, as we always return the shim.
+		_originalLoad: (request: string) => any,
+	): FsShimStructure {
+		// Type the return as the structure provided by fs-shim.ts
+		const requesterModule = parentUri
 			? parentUri.fsPath || parentUri.toString()
-			: "unknown module";
+			: "an unknown module";
 
 		console.log(
-			`[Cocoon FS Factory] Intercepted require('fs') from ${requester}. Providing fs-shim.`,
+			`[Cocoon FS Module Factory] Intercepted require('fs') from ${requesterModule}. Providing Cocoon's fs-shim.`,
 		);
 
-		// Return our fs-shim implementation.
-		// fsShimInstance is the default export from fs-shim.ts.
-		return fsShimInstance;
+		// Return our fs-shim implementation (which is the default export of fs-shim.ts)
+		return fsShimInstanceFromFile;
 
-		// Potential future enhancements:
-		// - Check `request`: if `request` is 'fs/promises', directly return `fsShimInstance.promises`.
-		//   However, `NodeRequireInterceptor` usually handles the base module name 'fs'.
-		// - Conditional shimming: Based on `parentUri` (e.g., specific extensions get different shims or direct access via originalLoad).
-		//   This is complex and generally not needed for 'fs'.
+		// Notes:
+		// - This factory *always* returns the shim for 'fs'. It does not use `originalLoad` for 'fs'.
+		// - If an extension tried `require('fs/promises')`, the Node.js module system itself would typically
+		//   first load 'fs' (which this factory provides), and then access the `promises` property from it.
+		//   The interceptor usually only works on the top-level module name.
 	}
 
 	// alternativeModuleName is optional and not needed here as "fs" is the canonical name.
 	// public alternativeModuleName(name: string): string | undefined { return undefined; }
 }
-
-// No `module.exports` needed; `export class FsModuleShimFactory` handles the export.
