@@ -1,4 +1,4 @@
-# Cocoon 🦋 — The Node.js Extension Sidecar for Land 🏞️
+# Cocoon 🦋 — The Node.js Extension Sidecar for Land 🏞️
 
 Welcome to **Cocoon**, a core component of the **Land Code Editor**. Cocoon is a
 specialized Node.js sidecar process designed to host and run existing Visual
@@ -48,7 +48,7 @@ one of the MVP.
 
 ---
 
-## Cocoon Architecture 🦋
+## Cocoon Architecture 🦋
 
 Cocoon operates as a standalone Node.js process, carefully orchestrated by
 `Mountain`.
@@ -171,11 +171,11 @@ Cocoon is developed as part of the main Land project. To work on or run Cocoon:
 
 ---
 
-## System Architecture Diagram 🗺️
+## System Architecture Diagram 🗺️
 
 ```mermaid
 graph LR
-    subgraph "Cocoon 🦋 (Node.js Extension Host Sidecar)"
+    subgraph "Cocoon 🦋 (Node.js Extension Host Sidecar)"
         direction TB
         CocoonIndex["index.ts (DI, RPC, ExtSvc Init)"]
         CocoonIPC["cocoon-ipc.ts (Vine JS Layer)"]
@@ -210,7 +210,7 @@ graph LR
         ExtensionCode --"Calls"--> VSCodeAPIStub
     end
 
-    subgraph "Mountain 🏞️ (Rust/Tauri Backend)"
+    subgraph "Mountain 🏞️ (Rust/Tauri Backend)"
         direction TB
         TauriApp["Tauri App (main.rs)"]
         MountainTrack["track.rs (Command/RPC Dispatcher)"]
@@ -315,12 +315,12 @@ guidelines.
 
 ---
 
-## Changelog 📜
+## Changelog 📜
 
 Stay updated with our progress! See [`CHANGELOG.md`](CHANGELOG.md) for a history
 of changes.
 
-## Funding & Acknowledgements 🙏
+## Funding & Acknowledgements 🙏
 
 Land is proud to be an open-source endeavor. Our journey is significantly
 supported by:
