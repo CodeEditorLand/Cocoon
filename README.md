@@ -171,6 +171,128 @@ Cocoon is developed as part of the main Land project. To work on or run Cocoon:
 
 ---
 
+## System Architecture Diagram 🗺️
+
+```mermaid
+graph LR
+    subgraph "Cocoon 🦋 (Node.js Extension Host Sidecar)"
+        direction TB
+        CocoonIndex["index.ts (DI, RPC, ExtSvc Init)"]
+        CocoonIPC["cocoon-ipc.ts (Vine JS Layer)"]
+        BaseShim["_baseShim.ts"]
+        Shims["Shims (*-shim.ts)"]
+        VSCodeAPIStub["vscode.ts (API Stub, populated by Factory)"]
+
+        subgraph "VS Code Platform Code (Bundled by Rest)"
+            ExtHostExtensionService["ExtHostExtensionService (Node Impl)"]
+            APIImpl["extHost.api.impl.ts (API Factory Creator)"]
+            RequireInterceptor["NodeRequireInterceptor / ESM Interceptor"]
+            OtherExtHostServices["Other Real ExtHost Services (Debug, Tasks, etc.)"]
+        end
+
+        ExtensionCode["Extension Code (JS/TS)"]
+
+        CocoonIndex -->|"Initializes"| CocoonIPC
+        CocoonIndex -->|"Sets up DI for"| ExtHostExtensionService
+        CocoonIndex -->|"Configures"| RequireInterceptor
+        CocoonIndex -- Uses --> BaseShim
+        RequireInterceptor --"require('vscode')"--> APIImpl
+        APIImpl --"Creates vscode API object for"--> ExtensionCode
+        APIImpl --"Uses DI'd (often shimmed) services"--> Shims
+        APIImpl --"Uses DI'd services"--> OtherExtHostServices
+        ExtHostExtensionService --"Manages/Activates"--> ExtensionCode
+        ExtHostExtensionService --"Uses DI'd services"--> Shims
+        ExtHostExtensionService --"Uses DI'd services"--> OtherExtHostServices
+        Shims --"Inherit from"--> BaseShim
+        Shims --"Use"--> CocoonIPC
+        Shims --"Provide API surface via"--> VSCodeAPIStub
+        BaseShim --"Uses"--> CocoonIPC
+        ExtensionCode --"Calls"--> VSCodeAPIStub
+    end
+
+    subgraph "Mountain 🏞️ (Rust/Tauri Backend)"
+        direction TB
+        TauriApp["Tauri App (main.rs)"]
+        MountainTrack["track.rs (Command/RPC Dispatcher)"]
+        VineIPC["vine.rs (Vine Rust Layer)"]
+        RPCServerHandlers["rpc.rs (MainThread...Shape Impls)"]
+        NativeHandlers["handlers/*.rs (FS, UI, Config, etc.)"]
+        MountainEnv["environment.rs (FsReader/Writer, ConfigProvider etc.)"]
+        AppState["app_state.rs (Global Shared State)"]
+        AppRuntime["runtime.rs (Effect Executor)"]
+        RiverSunLibs["River/Sun Libs (Native FS)"]
+
+        TauriApp --"Manages"--> AppState
+        TauriApp --"Manages"--> AppRuntime
+        TauriApp --"Sets up invoke handler"--> MountainTrack
+        TauriApp --"Launches Cocoon & Sets up"--> VineIPC
+        MountainTrack --"Receives from"--> VineIPC
+        MountainTrack --"Dispatches to"--> RPCServerHandlers
+        MountainTrack --"Dispatches to"--> NativeHandlers
+        MountainTrack --"Uses"--> AppRuntime
+        RPCServerHandlers --"Use"--> AppRuntime
+        RPCServerHandlers --"Use"--> NativeHandlers
+        NativeHandlers --"Use"--> AppRuntime
+        NativeHandlers --"Access/Modify"--> AppState
+        AppRuntime --"Contains"--> MountainEnv
+        MountainEnv --"Accesses"--> AppState
+        MountainEnv --"Uses"--> RiverSunLibs
+        MountainEnv --"Called by"--> AppRuntime
+    end
+
+    subgraph "VS Code Original Files (Conceptual Contracts & References)"
+        direction TB
+        VscodeDTS["vscode.d.ts (Public API Contract)"]
+        ExtHostProtocol["extHost.protocol.ts (RPC Contract)"]
+        ExtHostCommonService["api/common/extHostExtensionService.ts (Abstract Logic)"]
+        ExtHostMainFiles["api/common/extensionHostMain.ts & api/node/extensionHostProcess.ts (Bootstrap Ref)"]
+    end
+
+    %% IPC/RPC Communication Flow
+    CocoonIPC -.->|"Vine Protocol (JSON/stdio)"| VineIPC
+
+    %% Extension API Call Flow (Example: workspace.fs.readFile)
+    ExtensionCode -->|"vscode.workspace.fs.readFile()"| Shims
+    Shims -->|"IPC/RPC via Vine (e.g., workspacefs_readFile)"| MountainTrack
+    MountainTrack -->|"Routes to FsApiHandler"| NativeHandlers
+    NativeHandlers -->|"Calls env.readFile()"| MountainEnv
+    MountainEnv -->|"Uses River"| RiverSunLibs
+    RiverSunLibs -->|"Actual OS Read"| OS_Filesystem["Operating System Filesystem"]
+    OS_Filesystem -.->|"Data back"| RiverSunLibs
+    RiverSunLibs -.->|Data| MountainEnv
+    MountainEnv -.->|Result| NativeHandlers
+    NativeHandlers -.->|Response| MountainTrack
+    MountainTrack -.->|"Response via Vine"| Shims
+    Shims -.->|"Promise resolved"| ExtensionCode
+
+    %% DI and Setup Flow
+    CocoonIndex --"Provides shims to DI for"--> ExtHostExtensionService
+    CocoonIndex --"Uses API Factory from"--> APIImpl
+    ExtHostExtensionService --"Is Reference for"--> ExtHostCommonService
+    CocoonIndex --"Replicates parts of"--> ExtHostMainFiles
+
+    %% Contract Adherence
+    VSCodeAPIStub -.->|"Should match"| VscodeDTS
+    Shims -.->|"Implement IExtHost* / Use MainThread* Shapes from"| ExtHostProtocol
+    RPCServerHandlers -.->|"Implement MainThread* / Use ExtHost* Shapes from"| ExtHostProtocol
+
+    classDef mountain fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef cocoon fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef sky fill:#9cf,stroke:#333,stroke-width:2px;
+    classDef vscode_originals fill:#cfc,stroke:#333,stroke-width:1px,color:#333;
+    classDef ipc_comm fill:#ff9,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5,color:DimGray;
+    classDef os_resource fill:#ddd,stroke:#666,color:DarkSlateGray;
+
+    class TauriApp,MountainTrack,VineIPC,RPCServerHandlers,NativeHandlers,MountainEnv,AppState,AppRuntime,RiverSunLibs mountain;
+    class CocoonIndex,CocoonIPC,BaseShim,Shims,VSCodeAPIStub,ExtHostExtensionService,APIImpl,RequireInterceptor,OtherExtHostServices,ExtensionCode cocoon;
+    class VscodeDTS,ExtHostProtocol,ExtHostCommonService,ExtHostMainFiles vscode_originals;
+    class OS_Filesystem os_resource;
+
+    linkStyle default interpolate basis
+```
+
+---
+
 ## Contribution & Future Development
 
 Cocoon is critical for achieving initial extension compatibility in Land. Future
