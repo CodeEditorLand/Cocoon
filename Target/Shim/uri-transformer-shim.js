@@ -1,1 +1,0 @@
-class e{_serviceBrand;remoteAuthority;constructor(r){this.remoteAuthority=r}transformIncoming(r){return r}transformOutgoing(r){return r}transformOutgoingToString(r){return this.transformOutgoing(r).toString()}transformOutgoingScheme(r){return r}}export{e as ShimUriTransformerService};

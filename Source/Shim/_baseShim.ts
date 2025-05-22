@@ -1,145 +1,129 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Base Shim (_baseShim.ts)
  * --------------------------------------------------------------------------------------------
- * Provides a base class for Cocoon shims, offering common functionality:
- * - Consistent logging with service identifiers (using injected `ILogService`).
- * - Access to injected core services like the `RPCProtocol` instance (`this._rpcService`).
- * - Helper method (`_getProxy`) to obtain RPC proxies for `MainThread...Shape` services.
- * - Helper methods (`_ipcRequestResponse`, `_ipcNotify`) for making direct `Vine` IPC
- *   calls to Mountain (less preferred than RPC proxies). Handles structured errors from IPC.
- * - Utilities for argument marshalling (`_convertApiArgToInternal`) and revival
- *   (`_reviveApiArgument` using `revive`), including specific handling for common
- *   VS Code API types (Uri, Position, Range, Selection, Location, RegExp).
- * - Helper methods for creating and managing `vscode.Event` emitters backed by Node's
- *   `EventEmitter` (`_createEventEmitter`, `_createEventFromEmitter`, `_createNopEventEmitter`).
+ * Provides a base class for Cocoon shims, offering common functionality for logging,
  *
- * Key Interactions:
- * - Inherited by most specific shims (`./shims/*.ts`).
- * - Requires `ILogService` and the `RPCProtocol` instance (`IExtHostRpcService`) to be injected.
- * - Uses `cocoon-ipc.ts` for direct IPC helpers (previously cocoon-ipc.js).
- * - Uses VS Code's `marshalling.revive`, marshalling IDs, and `Event.None` (requires bundling).
- * - Assumes common VS Code API types (Uri, Position, etc.) are available.
+ *
+ * RPC/IPC communication, argument marshalling/revival, and event handling.
+ * It aims to prepare data for, and process data from, VS Code's RPCProtocol.
  *--------------------------------------------------------------------------------------------*/
 
 import { EventEmitter } from "events";
-// For NOP event emitter type safety; Needs event code bundled
-// Renamed to avoid conflict with DOM Event
-import { type IDisposable, Event as VscodeEvent } from "vs/base/common/event";
-// Core revival function; Needs marshalling code bundled
-// Assuming this is a function: (data: any, context?: any) => any
-import { revive } from "vs/base/common/marshalling";
-// Assuming these are classes or interfaces
 
-// Needs marshalling code bundled
-// Assuming this is an enum or const object
+// VS Code internal
+import { IDisposable, Event as VscodeEvent } from "vs/base/common/event";
+
+import {
+	MarshalledObject,
+	revive as vscodeRevive,
+} from "vs/base/common/marshalling";
+
+// VS Code internal
+// Assumed to be vscode API type definitions or shims
+
+// VS Code internal
 import { MarshalledId } from "vs/base/common/marshallingIds";
 
-// Assume VS Code API types are available (might require specific imports based on bundling)
-// For the purpose of this conversion, we'll assume these types are correctly imported.
-// If these are shimmed versions, their definitions would be in '../Shim/out/vscode'.
-import {
-	Location,
-	Position,
-	Range,
-	Selection,
-	Uri,
-	// TODO: Ensure these imports point to the correct vscode API type definitions or shim implementations.
-	// The path "../Shim/out/vscode" is assumed.
-} from "../Shim/out/vscode";
-// Import direct IPC functions (use sparingly, prefer RPC proxies)
+// VS Code internal
+import { IURITransformer } from "vs/base/common/uriIpc";
+
+// Cocoon-specific IPC helpers
 import {
 	sendNotificationToMountain,
 	sendToMountainAndWait,
-	// TODO: Ensure this path is correct and these functions are appropriately typed in cocoon-ipc.ts.
 } from "../cocoon-ipc";
 
-// Define interfaces for injected services based on usage
-// TODO: These interfaces should ideally be imported from actual VS Code type definition files if available.
-export interface ILogService {
+import {
+	Location as VscodeApiLocation,
+	Position as VscodeApiPosition,
+	Range as VscodeApiRange,
+	Selection as VscodeApiSelection,
+	Uri as VscodeApiUri,
+	// TODO: Import other vscode API types as needed by _convertApiArgToInternal
+} from "../Shim/out/vscode";
+
+// --- Type Definitions ---
+
+// For services injected into the BaseCocoonShim or its children
+export interface ILogServiceForShim {
+	// Renamed to avoid conflict if real ILogService is different
 	trace(message: string, ...args: any[]): void;
 
 	info(message: string, ...args: any[]): void;
 
 	warn(message: string, ...args: any[]): void;
 
-	// Allow Error type for message
 	error(message: string | Error, ...args: any[]): void;
-
-	// Add other methods if used: debug, critical, flush, dispose, onDidChangeLogLevel, getLogLevel, setLevel
 }
 
+// Based on vs/workbench/services/extensions/common/proxyIdentifier.ts
 export interface ProxyIdentifier<T> {
-	// T is the type of the service being proxied
 	// Service identifier string
-	sid: string;
+	readonly sid: string;
 
-	// Optional numeric id, common in VS Code ProxyIdentifier
-	nid?: number;
+	// Numeric ID, crucial for RPCProtocol
+	readonly nid: number;
 }
 
-export interface IExtHostRpcService {
+// Based on public API of vs/workbench/services/extensions/common/rpcProtocol.ts (RPCProtocol class)
+// This is what shims will interact with as `this._rpcService`.
+// TODO: Ensure this accurately reflects the methods shims actually need from RPCProtocol.
+export interface IRpcProtocolServiceAdapter {
+	// Renamed to avoid conflict with actual RPCProtocol class name
+	// T is Proxied<T>
 	getProxy<T>(identifier: ProxyIdentifier<T>): T;
 
-	set<T>(identifier: ProxyIdentifier<T>, instance: T): void;
+	set<T, R extends T>(identifier: ProxyIdentifier<T>, value: R): R;
+
+	// Available if RPCProtocol has a transformer
+	transformIncomingURIs?<T>(obj: T): T;
+
+	drain?(): Promise<void>;
+
+	// If shims need to react
+	// onDidChangeResponsiveState?: VscodeEvent<ResponsiveState>;
 }
 
-// Interface for structured errors parsed from JSON
-interface IStructuredError {
+interface IStructuredErrorPayload {
+	// Renamed
 	message?: string;
 
 	name?: string;
 
 	code?: string | number;
 
-	// POSIX error number
 	errno?: number;
 
 	syscall?: string;
-
-	// Not typically part of the message JSON, but could be
-	// stack?: string;
 }
 
-/**
- * Attempts to parse a structured error from an Error's message property.
- * If the message is valid JSON representing an error structure, creates a new Error
- * object with properties from the JSON. Otherwise, returns the original error.
- *
- * @param originalError The original error caught.
- * @param logService Optional logger.
- * @param context Optional context string for logging.
- * @returns The original error or a refined error object.
- */
-export function refineError(
+export function refineErrorForShim(
 	originalError: Error,
 
-	logService?: ILogService,
+	logService?: ILogServiceForShim,
 
-	context = "",
+	context: string = "",
 ): Error {
-	if (!(originalError instanceof Error) || !originalError.message) {
+	if (!(originalError instanceof Error) || !originalError.message)
 		return originalError;
-	}
 
-	let structuredErrorPayload: IStructuredError | null = null;
+	let structuredErrorPayload: IStructuredErrorPayload | null = null;
 
 	try {
 		const trimmedMessage = originalError.message.trim();
 
 		if (
 			(trimmedMessage.startsWith("{") && trimmedMessage.endsWith("}")) ||
-			// Though array errors are less common as top-level
 			(trimmedMessage.startsWith("[") && trimmedMessage.endsWith("]"))
 		) {
 			structuredErrorPayload = JSON.parse(
 				trimmedMessage,
-			) as IStructuredError;
+			) as IStructuredErrorPayload;
 		}
 	} catch (e: any) {
 		logService?.trace(
 			`[RefineError][${context}] Failed to parse error message as JSON:`,
 
-			// Log error message
 			e.message || e,
 		);
 
@@ -168,16 +152,14 @@ export function refineError(
 			(refinedError as NodeJS.ErrnoException).syscall =
 				structuredErrorPayload.syscall;
 
-		// TODO: Consider copying other common error properties if Mountain sends them.
-
 		refinedError.stack = originalError.stack
 			? `${refinedError.name}: ${refinedError.message}\n(Original Stack):\n${originalError.stack}`
-			: `${refinedError.name}: ${refinedError.message}\n(Stack trace unavailable)`;
+			: `${refinedError.name}: ${refinedError.message}\n(Stack unavailable)`;
 
 		logService?.trace(
-			`[RefineError][${context}] Refined error from JSON message:`,
+			`[RefineError][${context}] Refined error from JSON:`,
 
-			refinedError,
+			refinedError.message,
 		);
 
 		return refinedError;
@@ -187,58 +169,63 @@ export function refineError(
 }
 
 export class BaseCocoonShim {
-	// Required by VSCode DI/type system
 	public readonly _serviceBrand: undefined;
 
-	readonly #serviceIdentifier: string;
+	// Renamed for clarity
+	readonly #serviceIdentifierString: string;
 
-	readonly #rpcService: IExtHostRpcService | undefined;
+	// Renamed
+	readonly #rpcProtocolAdapter: IRpcProtocolServiceAdapter | undefined;
 
-	readonly #logService: ILogService | undefined;
+	// Renamed
+	readonly #logger: ILogServiceForShim | undefined;
 
-	readonly #warnOnceMessages = new Set<string>();
+	// Renamed
+	readonly #warnOnceMessageSet = new Set<string>();
 
 	constructor(
-		// Usually a string
 		serviceIdentifier: string | symbol,
 
-		rpcService: IExtHostRpcService | undefined,
+		// Expecting the RPCProtocol instance
+		rpcServiceAdapter: IRpcProtocolServiceAdapter | undefined,
 
-		logService: ILogService | undefined,
+		logService: ILogServiceForShim | undefined,
 	) {
-		this.#serviceIdentifier = String(serviceIdentifier);
+		this.#serviceIdentifierString = String(serviceIdentifier);
 
-		this.#rpcService = rpcService;
+		this.#rpcProtocolAdapter = rpcServiceAdapter;
 
-		this.#logService = logService;
+		this.#logger = logService;
 
-		if (!this.#logService) {
+		if (!this.#logger)
 			console.warn(
-				`[BaseShim][${this.#serviceIdentifier}] LogService not provided! Falling back to console.`,
+				`[BaseShim][${this.#serviceIdentifierString}] LogService not provided! Falling back to console.`,
 			);
-		}
 
-		if (!this.#rpcService) {
-			const errorMsg = `RPCService (RPCProtocol instance) not provided for ${this.#serviceIdentifier}! Many features will fail.`;
-
-			this._logError(errorMsg);
+		if (!this.#rpcProtocolAdapter) {
+			// For some shims (like log, or very basic ones), RPC might not be strictly necessary.
+			// However, most will need it.
+			this._logError(
+				`RPCService Adapter not provided for ${this.#serviceIdentifierString}! Many features will be impaired.`,
+			);
 		}
 
 		this._log(`Initialized.`);
 	}
 
-	protected get _logService(): ILogService | undefined {
-		return this.#logService;
+	protected get _logService(): ILogServiceForShim | undefined {
+		return this.#logger;
 	}
 
-	protected get _rpcService(): IExtHostRpcService | undefined {
-		return this.#rpcService;
+	protected get _rpcService(): IRpcProtocolServiceAdapter | undefined {
+		return this.#rpcProtocolAdapter;
 	}
 
 	protected get _serviceIdentifier(): string {
-		return this.#serviceIdentifier;
+		return this.#serviceIdentifierString;
 	}
 
+	// Logging helpers (unchanged from previous refinement, seem okay)
 	protected _log(message: string, ...args: any[]): void {
 		if (this.#logService) {
 			this.#logService.trace(
@@ -318,43 +305,41 @@ export class BaseCocoonShim {
 		}
 	}
 
-	protected _getProxy<T>(mainContextId: ProxyIdentifier<T>): T | null {
-		// The original JS used `String(mainContextId?.sid || mainContextId)`.
-		// ProxyIdentifier<T> implies mainContextId is an object with `sid`.
-		const idForLog =
-			typeof mainContextId === "string"
-				? mainContextId
-				: mainContextId?.sid;
+	protected _getProxy<T>(
+		identifier: ProxyIdentifier<T>,
+	): T /* Proxied<T> */ | null {
+		const idForLog = identifier?.sid || String(identifier);
 
-		if (!this.#rpcService) {
+		if (!this.#rpcProtocolAdapter) {
 			this._logError(
-				`Cannot get RPC proxy for ${String(idForLog)}: RPCService unavailable.`,
+				`Cannot get RPC proxy for ${idForLog}: RPCService Adapter unavailable.`,
 			);
 
 			return null;
 		}
 
 		try {
-			return this.#rpcService.getProxy(mainContextId);
+			return this.#rpcProtocolAdapter.getProxy(identifier);
 		} catch (e: any) {
 			this._logError(
-				`Failed to get RPC proxy for ${String(idForLog)}:`,
+				`Failed to get RPC proxy for ${idForLog}:`,
 
-				e,
+				refineErrorForShim(e, this.#logger),
 			);
 
 			return null;
 		}
 	}
 
+	// --- Direct IPC Helpers ---
 	protected async _ipcRequestResponse(
 		mountainMethod: string,
 
 		params: any,
 
-		timeoutMs = 5000,
+		timeoutMs: number = 5000,
 	): Promise<any> {
-		this._log(`Sending direct IPC request '${mountainMethod}'...`);
+		this._log(`IPC Req: '${mountainMethod}'`);
 
 		try {
 			const result = await sendToMountainAndWait(
@@ -365,30 +350,30 @@ export class BaseCocoonShim {
 				timeoutMs,
 			);
 
-			this._log(`Received direct IPC response for '${mountainMethod}'.`);
+			// Can be verbose
+			// this._log(`IPC Resp for '${mountainMethod}'.`);
 
 			return result;
 		} catch (error: any) {
-			// error can be Error or other type if IPC layer throws non-Error
 			const refined =
 				error instanceof Error
-					? refineError(
+					? refineErrorForShim(
 							error,
 
-							this._logService,
+							this.#logger,
 
-							`ipcRequestResponse(${mountainMethod})`,
+							`ipcReqResp(${mountainMethod})`,
 						)
 					: new Error(String(error));
 
 			this._logError(
-				`Error in direct IPC request '${mountainMethod}':`,
+				`IPC Req Error '${mountainMethod}':`,
 
-				// Log the refined/created error
-				refined,
+				refined.message,
+
+				refined.stack,
 			);
 
-			// Rethrow refined/created error
 			throw refined;
 		}
 	}
@@ -413,15 +398,23 @@ export class BaseCocoonShim {
 		}
 	}
 
+	// --- Argument Marshalling/Revival Helpers ---
+	// These prepare JS objects for JSON serialization (potentially with $mid)
+	// to be passed as arguments to RPC calls or stored.
+	// RPCProtocol itself might do further transformations (e.g., URI stringification if transformer is set).
 	protected _convertApiArgToInternal(arg: any): any {
 		if (arg === undefined || arg === null) return arg;
 
-		if (typeof arg !== "object") return arg;
+		// VSBuffer passed as-is for RPCProtocol
+		if (typeof arg !== "object" || arg instanceof VSBuffer) return arg;
 
+		// Use instanceof checks for vscode API types
 		try {
-			if (arg instanceof Uri) {
+			if (arg instanceof VscodeApiUri) {
+				// RPCProtocol can handle URI instances if no transformer is set, or transform them if one is.
+				// If we want to ensure it's always a DTO with $mid for `vscodeRevive` on the other side (or here):
 				return {
-					// TODO: Confirm if UriSimple is always appropriate or if full Uri marshalling is needed sometimes.
+					// Or MarshalledId.Uri if full components are always needed
 					$mid: MarshalledId.UriSimple,
 
 					scheme: arg.scheme,
@@ -434,24 +427,38 @@ export class BaseCocoonShim {
 
 					fragment: arg.fragment,
 
-					// Consider if these are needed by main thread
-					// external: arg.toString(true), fsPath: arg.fsPath
+					// Often useful for debugging on other side
+					// external: arg.toString(true),
+
+					// fsPath only for file URIs
+					// fsPath: arg.scheme === Schemas.file ? arg.fsPath : undefined,
 				};
 			}
 
-			if (arg instanceof Position)
-				return { line: arg.line, character: arg.character };
-
-			if (arg instanceof Range)
+			if (arg instanceof VscodeApiPosition)
 				return {
+					$mid: MarshalledId.Position,
+
+					line: arg.line,
+
+					character: arg.character,
+				};
+
+			if (arg instanceof VscodeApiRange)
+				return {
+					$mid: MarshalledId.Range,
+
 					start: this._convertApiArgToInternal(arg.start),
 
 					end: this._convertApiArgToInternal(arg.end),
 				};
 
-			if (arg instanceof Selection) {
-				// This seems to be marshalling for ISelection (1-based)
+			if (arg instanceof VscodeApiSelection) {
+				// This DTO aligns with ISelection for internal editor use
 				return {
+					// If there's a specific ID for this structure
+					$mid: MarshalledId.Selection,
+
 					selectionStartLineNumber: arg.anchor.line + 1,
 
 					selectionStartColumn: arg.anchor.character + 1,
@@ -462,8 +469,10 @@ export class BaseCocoonShim {
 				};
 			}
 
-			if (arg instanceof Location)
+			if (arg instanceof VscodeApiLocation)
 				return {
+					$mid: MarshalledId.Location,
+
 					uri: this._convertApiArgToInternal(arg.uri),
 
 					range: this._convertApiArgToInternal(arg.range),
@@ -477,15 +486,21 @@ export class BaseCocoonShim {
 
 					flags: arg.flags,
 				};
+
+			// TODO: Add converters for other common vscode API types if they need specific DTOs
+			// (e.g., MarkdownString, NotebookCellData, etc.) based on extHostTypeConverters.ts patterns.
+			// For types not specifically handled, VS Code's marshalling often relies on them having a toJSON() method
+			// or being plain objects/arrays.
 		} catch (conversionError: any) {
 			this._logError(
-				"Failed during specific type conversion in _convertApiArgToInternal:",
+				"Error in _convertApiArgToInternal specific type conversion:",
 
 				arg,
 
 				conversionError,
 			);
 
+			// Fallback to original on error
 			return arg;
 		}
 
@@ -493,31 +508,27 @@ export class BaseCocoonShim {
 			try {
 				return (arg as any).toJSON();
 			} catch (e: any) {
-				this._logWarn("Failed to call toJSON on argument:", arg, e);
+				// Let objects with toJSON serialize themselves
+				this._logWarn("Call to toJSON() failed on argument:", arg, e);
 			}
 		}
 
-		if (Array.isArray(arg)) {
+		if (Array.isArray(arg))
 			return arg.map((el) => this._convertApiArgToInternal(el));
-		}
 
 		if (arg.constructor === Object) {
-			// Plain object
+			// Plain object, recurse
 			const result: { [key: string]: any } = {};
 
-			for (const key in arg) {
-				if (Object.prototype.hasOwnProperty.call(arg, key)) {
+			for (const key in arg)
+				if (Object.prototype.hasOwnProperty.call(arg, key))
 					result[key] = this._convertApiArgToInternal(arg[key]);
-				}
-			}
 
 			return result;
 		}
 
 		this._logWarnOnce(
-			`Unhandled object type in _convertApiArgToInternal, returning original:`,
-
-			arg.constructor ? arg.constructor.name : typeof arg,
+			`Unhandled object type in _convertApiArgToInternal (constructor: ${arg.constructor?.name || typeof arg}), returning original:`,
 
 			arg,
 		);
@@ -525,20 +536,35 @@ export class BaseCocoonShim {
 		return arg;
 	}
 
-	protected _reviveApiArgument<T = any>(arg: any, context?: any): T {
-		// Added optional context for revive
+	protected _reviveApiArgument<T = any>(
+		arg: any,
+
+		context?: any /* For vscodeRevive */,
+	): T {
 		if (arg === undefined || arg === null) return arg;
 
+		// If RPCProtocol has a URI transformer and it already revived URIs, `arg` might contain URI instances.
+		// `vscodeRevive` can often handle this, or we might check `arg instanceof URI` first.
+		// The `uriTransformer` in `parseJsonAndRestoreBufferRefs` (in rpcProtocol.ts) handles incoming URIs.
+		// So `arg` here should have URIs already revived if a transformer was used.
+		// `vscodeRevive` then handles other $mid objects.
+
 		try {
-			// Pass context if available/needed by revive
-			return revive(arg, context);
+			return vscodeRevive(arg, context);
 		} catch (e: any) {
-			this._logError("Failed to revive argument/result:", arg, e);
+			this._logError(
+				"Failed to revive argument/result with vscodeRevive:",
+
+				arg,
+
+				e,
+			);
 
 			return arg;
 		}
 	}
 
+	// --- Event Handling Helpers (unchanged, seem okay) ---
 	protected _createEventEmitter(): EventEmitter {
 		const emitter = new EventEmitter();
 
@@ -551,7 +577,7 @@ export class BaseCocoonShim {
 	protected _createEventFromEmitter<T>(
 		emitter: EventEmitter,
 
-		eventName = "fire",
+		eventName?: string,
 	): VscodeEvent<T> {
 		const event: VscodeEvent<T> = (listener, thisArgs, disposables?) => {
 			// Make disposables optional
@@ -602,6 +628,9 @@ export class BaseCocoonShim {
 
 		return () => ({ dispose: () => {} });
 	}
-}
 
-// Exports are handled by `export class BaseCocoonShim` and `export function refineError`
+	public dispose(): void {
+		// Base shims can override to dispose their specific resources (e.g., RPC listeners, event emitters)
+		this._log("BaseCocoonShim disposed (no-op by default).");
+	}
+}
