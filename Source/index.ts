@@ -77,25 +77,23 @@ import {
 } from "vs/platform/extensions/common/extensions";
 import { getSingletonServiceDescriptors } from "vs/platform/instantiation/common/extensions";
 import {
-	createDecorator,
-	InstantiationService,
 	type IInstantiationService,
+	InstantiationService,
+	createDecorator,
 } from "vs/platform/instantiation/common/instantiationService";
 import {
 	ServiceCollection,
 	SyncDescriptor,
 } from "vs/platform/instantiation/common/serviceCollection";
 import {
-	ILoggerService,
 	ILogService,
+	ILoggerService,
 	LogLevel,
 	parseLogLevel,
 } from "vs/platform/log/common/log";
-// Interceptor & Error Handling
-import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain";
 import {
-	createApiFactory as createVSCodeApiFactoryOriginal,
 	type IExtensionApiFactory,
+	createApiFactory as createVSCodeApiFactoryOriginal,
 } from "vs/workbench/api/common/extHost.api.impl";
 import {
 	ExtHostContext,
@@ -134,8 +132,8 @@ import {
 } from "vs/workbench/api/common/extHostExtensionService";
 import { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
 import {
-	IExtHostInitDataService,
 	type ExtHostInitData,
+	IExtHostInitDataService,
 } from "vs/workbench/api/common/extHostInitDataService";
 import {
 	ExtHostLanguageFeaturesShape,
@@ -158,13 +156,15 @@ import {
 } from "vs/workbench/api/common/extHostTerminalService";
 import { IURITransformerService } from "vs/workbench/api/common/extHostUriTransformerService";
 import { IExtHostWorkspace } from "vs/workbench/api/common/extHostWorkspace";
+// Interceptor & Error Handling
+import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain";
 // The REAL service for Path A
 import { ExtHostExtensionService } from "vs/workbench/api/node/extHostExtensionService";
 import {
 	NodeModuleAliasingModuleFactory,
 	NodeRequireInterceptor,
-	INodeModuleFactory as VscodeINodeModuleFactory,
 	VSCodeNodeModuleFactory,
+	INodeModuleFactory as VscodeINodeModuleFactory,
 } from "vs/workbench/api/node/extHostRequireInterceptor";
 import { IWorkbenchExtensionEnablementService } from "vs/workbench/services/extensionManagement/common/extensionManagement";
 import { IExtensionHostKindPicker } from "vs/workbench/services/extensions/common/extensionHostKind";
@@ -173,9 +173,9 @@ import {
 	ExtensionActivationReason,
 } from "vs/workbench/services/extensions/common/extensions";
 import {
-	RPCProtocol,
 	type IMessagePassingProtocol,
 	type IRPCProtocolLogger,
+	RPCProtocol,
 } from "vs/workbench/services/extensions/common/rpcProtocol";
 import type {
 	Uri as VscodeApiUri,
@@ -204,13 +204,13 @@ import { ShimExtHostLocalizationService } from "./shims/localization-shim";
 // import { BaseCocoonShim } from "./_baseShim";
 
 // Shim Implementations (import classes)
-import { ShimLoggerService, ShimLogService } from "./shims/log-shim";
+import { ShimLogService, ShimLoggerService } from "./shims/log-shim";
 import { ShimExtHostManagedSockets } from "./shims/managed-sockets-shim";
 import { NodeModuleShimFactory as NodeBuiltinsShimFactory } from "./shims/node-module-shim-factory";
 import { ShimOutputService } from "./shims/output-channel-shim";
 import {
-	ShimExtensionsProposedApi,
 	type IExtHostProposedApis as CocoonIExtHostProposedApis,
+	ShimExtensionsProposedApi,
 } from "./shims/proposed-api-shim";
 import { ShimExtHostSecretState } from "./shims/secret-state-shim";
 import { ShimExtensionStoragePaths } from "./shims/storage-paths-shim";
