@@ -1,90 +1,99 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Document Shim Service (shims/document-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements the `IExtHostDocuments` service and manages `ShimDocumentData` instances,
- *
- *
- * which represent open text documents within the Cocoon extension host environment.
- * It synchronizes document state (content, language, dirty status) with Mountain.
+ * Implements a service similar to VS Code's `IExtHostDocumentsAndEditors` (simplified to
+ * IExtHostDocuments for Cocoon's initial focus). It manages `CocoonDocumentData`
+ * instances, representing open text documents, and synchronizes their state with Mountain.
  *
  * Responsibilities:
- *
- * - `ShimDocumentService`:
- *
- *   - Manages a map (`#documents`) of URI strings to `ShimDocumentData` instances.
- *   - Provides central access to document data (`getDocument`, `allDocuments`, `getTextDocuments`).
- *   - Exposes the standard document lifecycle events (`onDidAddDocument`, `onDidRemoveDocument`,
- *
- *
- *     `onDidChangeDocument`, `onDidSaveDocument`) by firing VS Code Emitters.
- *   - Implements RPC methods called *by* Mountain (`$acceptModelAdded`, `$acceptModelRemoved`,
- *
- *
- *     `$acceptModelChanged`, `$acceptModelSaved`, `$acceptDirtyStateChanged`, etc.) to receive
- *     updates about document state changes initiated on the main thread or filesystem.
- *   - Registers itself with the `RPCProtocol` to receive these incoming calls.
- * - `ShimDocumentData`:
- *
- *   - Represents a single document's state (URI, lines, version, language, dirty status).
- *   - Provides the `vscode.TextDocument` API facade to extensions, including a full `vscode.TextLine` implementation.
- *   - Implements methods like `getText`, `lineAt`, `offsetAt`, `positionAt`, `getWordRangeAtPosition`, `save` (proxies to Mountain).
- *   - Contains logic (`_acceptContentChanges`) to apply textual changes received from Mountain,
- *
- *
- *     updating the internal line buffer and version ID.
- *   - Manages line start offsets for efficient position calculations.
+ * - `CocoonDocumentService` (was ShimDocumentService):
+ *   - Manages a map of URI strings to `CocoonDocumentData` instances.
+ *   - Provides `getDocument()`, `getAllDocumentData()`, `getTextDocuments()` (API).
+ *   - Exposes `vscode.workspace` document lifecycle events by firing Emitters.
+ *   - Implements RPC methods (now part of `ExtHostDocumentsShape` from protocol)
+ *     called by Mountain like `$acceptDocumentsAndEditorsDelta` or individual
+ *     `$acceptModelAdded`, `$acceptModelRemoved`, etc., to update document states.
+ * - `CocoonDocumentData` (was ShimDocumentData):
+ *   - Represents a single document's state (URI, lines, version, language, dirty, etc.).
+ *   - Provides the `vscode.TextDocument` API facade.
+ *   - Handles applying content changes (`_acceptContentChanges`).
+ *   - `save()` method proxies to `MainThreadDocumentsShape`.
  *
  * Key Interactions:
- *
- * - Provides `vscode.workspace.textDocuments` (via `ShimDocumentService.getTextDocuments`).
- * - Provides `vscode.workspace.onDid*TextDocument` events.
- * - `ShimDocumentService` receives state updates from Mountain via `RPCProtocol` (`$accept...` calls).
- * - `ShimDocumentData.save` calls `$trySaveDocument` on `MainThreadDocuments` via RPC.
- * - Relies on VS Code classes (`URI`, `Position`, `Range`, `Event`, `Emitter`, potentially `MirrorTextModel` helpers, `wordHelper`)
- *   which need to be available from the JS bundle.
+ * - Provides `vscode.workspace.textDocuments` and document events.
+ * - Receives state updates from Mountain via RPC calls defined in `ExtHostDocumentsShape`
+ *   (or `ExtHostDocumentsAndEditorsShape`).
+ * - `CocoonDocumentData.save()` calls `$trySaveDocument` on `MainThreadDocumentsShape`.
+ * - Relies on `vscode` API types and VS Code internal utility functions.
  *--------------------------------------------------------------------------------------------*/
 
-// Renamed to VscodeEvent
-import { Emitter, type Event as VscodeEvent } from "vs/base/common/event";
+// Assuming from 'vscode' API shim
+import {
+	Emitter as VscodeEmitter,
+	Event as VscodeEvent,
+} from "vs/base/common/event";
+import {
+	DisposableStore,
+	dispose,
+	IDisposable,
+} from "vs/base/common/lifecycle";
+// VS Code internal utility
 import { splitLines } from "vs/base/common/strings";
 import {
-	ExtHostContext,
-	type IModelContentChange,
-	ISingleEditOperation,
-	MainContext,
-} from "vs/workbench/api/common/extHost.protocol";
-// Needs bundling and correct interface definitions
+	URI as VSCodeInternalURI,
+	UriComponents as VSCodeInternalUriComponents,
+} from "vs/base/common/uri";
 import {
-	EndOfLine,
-	Location,
-	Position,
-	Range,
-	type TextDocument,
-	type TextDocumentChangeEvent,
-	type TextDocumentContentChangeEvent,
-	type TextLine,
-	Uri,
-} from "vscode";
+	// RPC Contexts
+	ExtHostContext,
+	MainContext,
+	// If using the combined delta
+	IDocumentsAndEditorsDelta as RpcDocumentsAndEditorsDelta,
+	// From extHost.protocol.ts (or local definitions if not directly importable)
+	IModelAddedData as RpcModelAddedData,
+	// Contains versionId, changes, eol, etc.
+	IModelChangedEvent as RpcModelChangedEvent,
+	IModelContentChange as RpcModelContentChange,
+	ExtHostDocumentsAndEditorsShape as VscodeExtHostDocumentsAndEditorsShape,
+	// RPC methods on this service called by main
+	ExtHostDocumentsShape as VscodeExtHostDocumentsShape,
+	// RPC proxy to main thread
+	MainThreadDocumentsShape as VscodeMainThreadDocumentsShape,
+} from "vs/workbench/api/common/extHost.protocol";
 
-// Assuming these are from the 'vscode' API shims or real API if bundled
-
+import {
+	EndOfLine as VscodeEndOfLine,
+	Position as VscodePosition,
+	Range as VscodeRange,
+	TextDocument as VscodeTextDocument,
+	TextDocumentChangeEvent as VscodeTextDocumentChangeEvent,
+	TextDocumentContentChangeEvent as VscodeTextDocumentContentChangeEvent,
+	TextLine as VscodeTextLine,
+	Uri as VscodeUri,
+	// Not directly used in TextDocument API here
+	// Location as VscodeLocation,
+	// For more complex changes
+	// TextEdit as VscodeTextEdit,
+} from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
-	type IExtHostRpcService,
-	type ILogService,
-	type ProxyIdentifier,
+	IExtHostRpcService,
+	ILogService,
+	ProxyIdentifier,
+	refineError,
 } from "./_baseShim";
 
-// Attempt to import VS Code's word helper utility and regex validator
+// Word helpers (from original JS, assuming these are still the best available source for Cocoon)
+// TODO: If VS Code's full `vs/editor/common/core/wordHelper` can be bundled and used, prefer that.
 let getWordAtTextInternal:
 	| ((
-			text: string,
-
-			R: RegExp,
-
 			column: number,
 
-			textBefore?: number,
+			wordDefinition: RegExp,
+
+			text: string,
+
+			textOffset: number,
 	  ) => { word: string; startColumn: number; endColumn: number } | null)
 	| null = null;
 
@@ -98,22 +107,18 @@ try {
 	getWordAtTextInternal = wordHelper.getWordAtText;
 
 	ensureValidWordDefinitionInternal = wordHelper.ensureValidWordDefinition;
-
-	console.log("[DocumentShim] Loaded vs/editor/common/core/wordHelper");
 } catch (e) {
-	console.warn(
-		"[DocumentShim] vs/editor/common/core/wordHelper not found, using basic regex for getWordRangeAtPosition.",
-	);
+	/* Fallback below */
+}
 
-	const DEFAULT_WORD_REGEXP_SOURCE =
-		"(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\|\\;\\:\\'\"\\,\\.\\<\\>\\/\\?\\s]+)";
+const DEFAULT_WORD_REGEXP_FALLBACK =
+	/(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g;
 
-	const DEFAULT_WORD_REGEXP = new RegExp(DEFAULT_WORD_REGEXP_SOURCE, "g");
-
+if (!ensureValidWordDefinitionInternal) {
 	ensureValidWordDefinitionInternal = (wordDefinition?: RegExp): RegExp => {
-		let result = DEFAULT_WORD_REGEXP;
+		let result = DEFAULT_WORD_REGEXP_FALLBACK;
 
-		if (wordDefinition && wordDefinition instanceof RegExp) {
+		if (wordDefinition instanceof RegExp) {
 			if (!wordDefinition.global) {
 				let flags = "g";
 
@@ -135,132 +140,96 @@ try {
 	};
 }
 
-const DEFAULT_WORD_REGEXP_FALLBACK =
-	/(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g;
+// --- Type Definitions ---
 
-// --- Interfaces for RPC and internal data structures ---
-interface MainThreadDocumentsShape {
-	$trySaveDocument(uri: any /* UriComponents */): Promise<boolean>;
+// MainThreadDocumentsShape might be part of a larger MainThreadDocumentsAndEditorsShape
+// TODO: Ensure this aligns with the actual proxy obtained.
+type MainThreadDocumentsProxy = Pick<
+	VscodeMainThreadDocumentsShape,
+	"$tryCreateDocument" | "$tryOpenDocument" | "$trySaveDocument"
+>;
 
-	// Add other methods if MainThreadDocuments has them
-}
+// If combined delta is used, we need MainThreadTextEditors for editor part.
+// type MainThreadTextEditorsProxy = Pick<VscodeMainThreadTextEditorsShape, ...>;
 
-interface ExtHostDocumentsShape {
-	$acceptModelAdded(
-		uriComponents: any,
-
-		lines: string[],
-
-		eol: string,
-
-		versionId: number,
-
-		languageId: string,
-
-		isDirty: boolean,
-
-		encoding: string,
-	): void;
-
-	$acceptModelRemoved(uriComponents: any): void;
-
-	$acceptModelChanged(
-		uriComponents: any,
-
-		events: {
-			versionId: number;
-
-			changes: IModelContentChange[] /* from protocol */;
-		},
-
-		isDirty: boolean,
-	): void;
-
-	$acceptModelSaved(uriComponents: any): void;
-
-	$acceptDirtyStateChanged(uriComponents: any, isDirty: boolean): void;
-
-	$acceptModelLanguageChanged(
-		uriComponents: any,
-
-		newLanguageId: string,
-	): void;
-
-	$acceptEncodingChanged(uriComponents: any, newEncoding: string): void;
-}
-
-// Forward declaration for ShimDocumentService to resolve circular dependency for _textDocumentApiService
-class ShimDocumentService
+// Forward declaration for CocoonDocumentService
+class CocoonDocumentService
 	extends BaseCocoonShim
-	implements ExtHostDocumentsShape
+	implements VscodeExtHostDocumentsShape
 {
-	public readonly _serviceBrand: undefined;
+	// For IExtHostDocuments/* or VscodeExtHostDocumentsAndEditorsShape */ public readonly
+	_serviceBrand: undefined;
 
-	#mainThreadDocsProxy: MainThreadDocumentsShape | null = null;
+	readonly #mainThreadDocumentsProxy: MainThreadDocumentsProxy | null = null;
 
-	// Key: uri.toString()
-	#documents = new Map<string, ShimDocumentData>();
+	// Using ResourceMap from VS Code is better for URI-keyed maps if available.
+	// For simplicity, string key from uri.toString() is used.
+	// Key: uri.toString() (VscodeApiUri)
+	readonly #documents = new Map<string, CocoonDocumentData>();
 
-	#onDidAddDocumentEmitter = new Emitter<TextDocument>();
+	readonly #onDidAddDocumentEmitter = new VscodeEmitter<VscodeTextDocument>();
 
-	#onDidRemoveDocumentEmitter = new Emitter<TextDocument>();
+	readonly #onDidRemoveDocumentEmitter =
+		new VscodeEmitter<VscodeTextDocument>();
 
-	#onDidChangeDocumentEmitter = new Emitter<TextDocumentChangeEvent>();
+	readonly #onDidChangeDocumentEmitter =
+		new VscodeEmitter<VscodeTextDocumentChangeEvent>();
 
-	#onDidSaveDocumentEmitter = new Emitter<TextDocument>();
+	readonly #onDidSaveDocumentEmitter =
+		new VscodeEmitter<VscodeTextDocument>();
+
+	readonly #instanceDisposables = new DisposableStore();
 
 	constructor(
 		rpcService: IExtHostRpcService | undefined,
 
 		logService: ILogService | undefined,
 	) {
+		// Service ID for logging
 		super("ExtHostDocuments", rpcService, logService);
 
 		if (this._rpcService) {
-			this.#mainThreadDocsProxy = this._getProxy(
-				MainContext.MainThreadDocuments as ProxyIdentifier<MainThreadDocumentsShape>,
+			this.#mainThreadDocumentsProxy = this._getProxy(
+				MainContext.MainThreadDocuments as ProxyIdentifier<MainThreadDocumentsProxy>,
 			);
-		}
 
-		if (!this.#mainThreadDocsProxy) {
-			this._logError(
-				"Failed to get MainThreadDocuments proxy! Document sync may fail.",
-			);
-		}
+			// If handling editors too, would get MainThreadTextEditors proxy
+			// this.#mainThreadEditorsProxy = this._getProxy(MainContext.MainThreadTextEditors);
 
-		if (this._rpcService) {
+			// Register self for RPC calls from MainThread
+			// Choose one: VscodeExtHostDocumentsShape or VscodeExtHostDocumentsAndEditorsShape
 			try {
 				this._rpcService.set(
-					ExtHostContext.ExtHostDocuments as ProxyIdentifier<ExtHostDocumentsShape>,
+					ExtHostContext.ExtHostDocuments as ProxyIdentifier<VscodeExtHostDocumentsShape>,
 
 					this,
 				);
 
+				// OR if using combined delta:
+				// this._rpcService.set(ExtHostContext.ExtHostDocumentsAndEditors as ProxyIdentifier<VscodeExtHostDocumentsAndEditorsShape>, this);
+
 				this._log(
-					"Registered self for incoming RPC calls (ExtHostDocuments).",
+					"Registered self for incoming RPC calls from MainThreadDocuments/Editors.",
 				);
 			} catch (e: any) {
-				this._logError("Failed to set ExtHostDocuments for RPC:", e);
+				this._logError("Failed to set self for RPC:", e);
 			}
-		} else {
-			this._logError(
-				"RPCService is not available, cannot set ExtHostDocuments for RPC.",
-			);
 		}
+
+		if (!this.#mainThreadDocumentsProxy)
+			this._logError(
+				"MainThreadDocuments proxy NOT obtained. Document operations (save, etc.) will fail.",
+			);
 	}
 
-	public getMainThreadProxy(): MainThreadDocumentsShape | null {
-		return this.#mainThreadDocsProxy;
+	public getMainThreadDocumentsProxy(): MainThreadDocumentsProxy | null {
+		return this.#mainThreadDocumentsProxy;
 	}
 
-	public get allDocuments(): ShimDocumentData[] {
-		return [...this.#documents.values()];
-	}
-
-	public getDocument(uri: Uri): ShimDocumentData | undefined {
-		if (!Uri.isUri(uri)) {
-			// Use Uri.isUri for type guard
-			this._logWarn(`getDocument called with non-URI:`, uri);
+	// --- IExtHostDocuments API ---
+	public getDocumentData(uri: VscodeApiUri): CocoonDocumentData | undefined {
+		if (!(uri instanceof VscodeApiUri)) {
+			this._logWarn("getDocumentData called with non-VscodeApiUri:", uri);
 
 			return undefined;
 		}
@@ -268,62 +237,42 @@ class ShimDocumentService
 		return this.#documents.get(uri.toString());
 	}
 
-	public getTextDocuments(): TextDocument[] {
-		return this.allDocuments.map((d) => d.document);
+	public getAllDocumentData(): readonly CocoonDocumentData[] {
+		return Object.freeze([...this.#documents.values()]);
 	}
 
-	public get onDidAddDocument(): VscodeEvent<TextDocument> {
-		return this.#onDidAddDocumentEmitter.event;
+	// --- vscode.workspace API parts ---
+	public getTextDocuments(): readonly VscodeTextDocument[] {
+		return this.getAllDocumentData().map((d) => d.document);
 	}
 
-	public get onDidRemoveDocument(): VscodeEvent<TextDocument> {
-		return this.#onDidRemoveDocumentEmitter.event;
-	}
+	public readonly onDidOpenTextDocument: VscodeEvent<VscodeTextDocument> =
+		this.#onDidAddDocumentEmitter.event;
 
-	public get onDidChangeDocument(): VscodeEvent<TextDocumentChangeEvent> {
-		return this.#onDidChangeDocumentEmitter.event;
-	}
+	public readonly onDidCloseTextDocument: VscodeEvent<VscodeTextDocument> =
+		this.#onDidRemoveDocumentEmitter.event;
 
-	public get onDidSaveDocument(): VscodeEvent<TextDocument> {
-		return this.#onDidSaveDocumentEmitter.event;
-	}
+	public readonly onDidChangeTextDocument: VscodeEvent<VscodeTextDocumentChangeEvent> =
+		this.#onDidChangeDocumentEmitter.event;
 
-	// _reviveUri and _convertApiArgToInternal are inherited from BaseCocoonShim.
-	// If more specific URI revival is needed here, it can be overridden.
-	protected _reviveUri(uriComponents: any): Uri | undefined {
-		if (!uriComponents) return undefined;
+	public readonly onDidSaveTextDocument: VscodeEvent<VscodeTextDocument> =
+		this.#onDidSaveDocumentEmitter.event;
 
-		// Use base class reviver
-		const revived = super._reviveApiArgument<Uri>(uriComponents);
+	// --- RPC Methods ($accept... from VscodeExtHostDocumentsShape) ---
+	// These are called by the MainThread to inform about changes.
+	// VS Code often uses a single $acceptDocumentsAndEditorsDelta.
+	// If Mountain sends individual $acceptModelAdded etc., implement those.
+	// The provided extHost.protocol.ts has individual methods on ExtHostDocumentsShape.
 
-		if (revived instanceof Uri) return revived;
-
-		// Fallback to manual Uri.from if base reviver doesn't work or if $mid is not present
-		try {
-			// Uri.from can often handle {scheme, path, ...}
-
-			return Uri.from(uriComponents);
-		} catch (e: any) {
-			this._logError(
-				"Failed to revive URI from components (fallback):",
-
-				uriComponents,
-
-				e,
-			);
-
-			return undefined;
-		}
-	}
-
+	// Corresponds to RpcModelAddedData
 	public $acceptModelAdded(
-		uriComponents: any,
-
-		lines: string[],
+		uriComponents: VSCodeInternalUriComponents,
 
 		eol: string,
 
 		versionId: number,
+
+		lines: string[],
 
 		languageId: string,
 
@@ -331,9 +280,9 @@ class ShimDocumentService
 
 		encoding: string,
 	): void {
-		const uri = this._reviveUri(uriComponents);
+		const revivedUri = this._reviveUriDtoToVscodeApiUri(uriComponents);
 
-		if (!uri) {
+		if (!revivedUri) {
 			this._logError(
 				"$acceptModelAdded: Failed to revive URI",
 
@@ -343,7 +292,7 @@ class ShimDocumentService
 			return;
 		}
 
-		const uriStr = uri.toString();
+		const uriStr = revivedUri.toString();
 
 		if (this.#documents.has(uriStr)) {
 			this._logWarn(
@@ -354,11 +303,13 @@ class ShimDocumentService
 		}
 
 		this._log(
-			`$acceptModelAdded: ${uriStr} V${versionId} Lang=${languageId}`,
+			`$acceptModelAdded: ${uriStr}, V${versionId}, Lang=${languageId}, Dirty=${isDirty}, Enc=${encoding}`,
 		);
 
-		const data = new ShimDocumentData(
-			uri,
+		const data = new CocoonDocumentData(
+			this,
+
+			revivedUri,
 
 			lines,
 
@@ -373,8 +324,6 @@ class ShimDocumentService
 			encoding,
 
 			this._logService,
-
-			this,
 		);
 
 		this.#documents.set(uriStr, data);
@@ -382,10 +331,12 @@ class ShimDocumentService
 		this.#onDidAddDocumentEmitter.fire(data.document);
 	}
 
-	public $acceptModelRemoved(uriComponents: any): void {
-		const uri = this._reviveUri(uriComponents);
+	public $acceptModelRemoved(
+		uriComponents: VSCodeInternalUriComponents,
+	): void {
+		const revivedUri = this._reviveUriDtoToVscodeApiUri(uriComponents);
 
-		if (!uri) {
+		if (!revivedUri) {
 			this._logError(
 				"$acceptModelRemoved: Failed to revive URI",
 
@@ -395,33 +346,37 @@ class ShimDocumentService
 			return;
 		}
 
-		const uriStr = uri.toString();
+		const uriStr = revivedUri.toString();
 
 		const data = this.#documents.get(uriStr);
 
 		if (data) {
 			this._log(`$acceptModelRemoved: ${uriStr}`);
 
-			data._markClosed();
+			data._markAsClosedInternal();
 
 			this.#documents.delete(uriStr);
 
 			this.#onDidRemoveDocumentEmitter.fire(data.document);
+
+			// Dispose the document data instance
+			dispose(data);
 		} else {
 			this._logWarn(`$acceptModelRemoved: Document not found ${uriStr}`);
 		}
 	}
 
+	// Corresponds to RpcModelChangedEvent for content changes
 	public $acceptModelChanged(
-		uriComponents: any,
+		uriComponents: VSCodeInternalUriComponents,
 
-		events: { versionId: number; changes: IModelContentChange[] },
+		eventData: RpcModelChangedEvent,
 
 		isDirty: boolean,
 	): void {
-		const uri = this._reviveUri(uriComponents);
+		const revivedUri = this._reviveUriDtoToVscodeApiUri(uriComponents);
 
-		if (!uri) {
+		if (!revivedUri) {
 			this._logError(
 				"$acceptModelChanged: Failed to revive URI",
 
@@ -431,77 +386,71 @@ class ShimDocumentService
 			return;
 		}
 
-		const uriStr = uri.toString();
+		const uriStr = revivedUri.toString();
 
-		const data = this.#documents.get(uriStr);
+		const docData = this.#documents.get(uriStr);
 
-		if (data) {
-			if (data.document.version >= events.versionId) {
+		if (docData) {
+			if (docData.version >= eventData.versionId) {
 				this._logWarn(
-					`$acceptModelChanged: Stale event version ${events.versionId} received for ${uriStr} (current: ${data.document.version}). Skipping.`,
+					`$acceptModelChanged: Stale event V${eventData.versionId} for ${uriStr} (current: V${docData.version}). Updating dirty state only.`,
 				);
 
-				// Still update dirty state
-				data._acceptIsDirty(isDirty);
+				// Still update dirty state as per VS Code logic
+				docData._acceptIsDirtyInternal(isDirty);
 
 				return;
 			}
 
 			this._log(
-				`$acceptModelChanged: ${uriStr} V${events.versionId}, ${events.changes.length} changes, dirty=${isDirty}`,
+				`$acceptModelChanged: ${uriStr} V${eventData.versionId}, ${eventData.changes.length} changes, Dirty=${isDirty}, EOL='${eventData.eol}'`,
 			);
 
-			const contentChanged = data._acceptContentChanges(
-				events.versionId,
+			const oldVersion = docData.version;
 
-				events.changes,
+			const contentChanged = docData._acceptContentChangesInternal(
+				eventData.versionId,
+
+				eventData.changes,
+
+				eventData.eol,
 			);
 
-			const dirtinessChanged = data._acceptIsDirty(isDirty);
+			const dirtinessChanged = docData._acceptIsDirtyInternal(isDirty);
 
 			if (!contentChanged && !dirtinessChanged) {
 				this._log(
-					`$acceptModelChanged: No effective change for ${uriStr} V${events.versionId}.`,
+					`$acceptModelChanged: No effective change for ${uriStr} V${eventData.versionId}.`,
 				);
 
 				return;
 			}
 
-			const contentChanges: TextDocumentContentChangeEvent[] =
-				events.changes.map((change) => {
-					const range = new Range(
-						change.range.startLineNumber - 1,
+			const vscodeContentChanges: VscodeTextDocumentContentChangeEvent[] =
+				eventData.changes.map((change) => ({
+					// Use VS Code's typeConverter
+					range: typeConverters.Range.to(change.range),
 
-						change.range.startColumn - 1,
+					rangeOffset: change.rangeOffset,
 
-						change.range.endLineNumber - 1,
+					rangeLength: change.rangeLength,
 
-						change.range.endColumn - 1,
-					);
-
-					return Object.freeze({
-						range: range,
-
-						rangeOffset: change.rangeOffset ?? 0,
-
-						rangeLength: change.rangeLength ?? 0,
-
-						text: change.text,
-					});
-				});
+					text: change.text,
+				}));
 
 			this.#onDidChangeDocumentEmitter.fire(
 				Object.freeze({
-					document: data.document,
+					document: docData.document,
 
 					contentChanges: Object.freeze(
-						contentChanges,
+						vscodeContentChanges,
+					) as readonly VscodeTextDocumentContentChangeEvent[],
 
-						// Ensure readonly
-					) as readonly TextDocumentContentChangeEvent[],
-
-					// Add reason if protocol supports it
-					reason: undefined,
+					reason: eventData.isUndoing
+						? TextDocumentChangeReason.Undo
+						: eventData.isRedoing
+							? TextDocumentChangeReason.Redo
+							: undefined,
 				}),
 			);
 		} else {
@@ -509,10 +458,10 @@ class ShimDocumentService
 		}
 	}
 
-	public $acceptModelSaved(uriComponents: any): void {
-		const uri = this._reviveUri(uriComponents);
+	public $acceptModelSaved(uriComponents: VSCodeInternalUriComponents): void {
+		const revivedUri = this._reviveUriDtoToVscodeApiUri(uriComponents);
 
-		if (!uri) {
+		if (!revivedUri) {
 			this._logError(
 				"$acceptModelSaved: Failed to revive URI",
 
@@ -522,43 +471,32 @@ class ShimDocumentService
 			return;
 		}
 
-		const uriStr = uri.toString();
+		const uriStr = revivedUri.toString();
 
 		const data = this.#documents.get(uriStr);
 
 		if (data) {
 			this._log(`$acceptModelSaved: ${uriStr}`);
 
-			const dirtinessChanged = data._acceptIsDirty(false);
-
-			if (dirtinessChanged) {
-				this.#onDidChangeDocumentEmitter.fire(
-					Object.freeze({
-						document: data.document,
-
-						contentChanges: Object.freeze(
-							[],
-						) as readonly TextDocumentContentChangeEvent[],
-
-						reason: undefined,
-					}),
-				);
-			}
+			// Saved implies not dirty
+			data._acceptIsDirtyInternal(false);
 
 			this.#onDidSaveDocumentEmitter.fire(data.document);
+
+			// Note: onDidChangeTextDocument might also fire if dirty state change is considered a document change
 		} else {
 			this._logWarn(`$acceptModelSaved: Document not found ${uriStr}`);
 		}
 	}
 
 	public $acceptDirtyStateChanged(
-		uriComponents: any,
+		uriComponents: VSCodeInternalUriComponents,
 
 		isDirty: boolean,
 	): void {
-		const uri = this._reviveUri(uriComponents);
+		const revivedUri = this._reviveUriDtoToVscodeApiUri(uriComponents);
 
-		if (!uri) {
+		if (!revivedUri) {
 			this._logError(
 				"$acceptDirtyStateChanged: Failed to revive URI",
 
@@ -568,24 +506,31 @@ class ShimDocumentService
 			return;
 		}
 
-		const uriStr = uri.toString();
+		const uriStr = revivedUri.toString();
 
 		const data = this.#documents.get(uriStr);
 
 		if (data) {
-			this._log(`$acceptDirtyStateChanged: ${uriStr} -> ${isDirty}`);
+			this._log(
+				`$acceptDirtyStateChanged: ${uriStr} -> isDirty=${isDirty}`,
+			);
 
-			const dirtinessChanged = data._acceptIsDirty(isDirty);
+			const dirtinessReallyChanged = data._acceptIsDirtyInternal(isDirty);
 
-			if (dirtinessChanged) {
+			// VS Code only fires onDidChangeTextDocument if dirtiness *actually* changes,
+
+			// and it's often part of a model content change or save operation, not standalone.
+			// For simplicity, if this method is called, we can assume a state change that might need notifying.
+			if (dirtinessReallyChanged) {
 				this.#onDidChangeDocumentEmitter.fire(
 					Object.freeze({
 						document: data.document,
 
 						contentChanges: Object.freeze(
 							[],
-						) as readonly TextDocumentContentChangeEvent[],
+						) as readonly VscodeTextDocumentContentChangeEvent[],
 
+						// No specific reason for just dirty state change
 						reason: undefined,
 					}),
 				);
@@ -598,13 +543,13 @@ class ShimDocumentService
 	}
 
 	public $acceptModelLanguageChanged(
-		uriComponents: any,
+		uriComponents: VSCodeInternalUriComponents,
 
 		newLanguageId: string,
 	): void {
-		const uri = this._reviveUri(uriComponents);
+		const revivedUri = this._reviveUriDtoToVscodeApiUri(uriComponents);
 
-		if (!uri) {
+		if (!revivedUri) {
 			this._logError(
 				"$acceptModelLanguageChanged: Failed to revive URI",
 
@@ -614,25 +559,28 @@ class ShimDocumentService
 			return;
 		}
 
-		const uriStr = uri.toString();
+		const uriStr = revivedUri.toString();
 
 		const data = this.#documents.get(uriStr);
 
 		if (data) {
 			this._log(
-				`$acceptModelLanguageChanged: ${uriStr} -> ${newLanguageId}`,
+				`$acceptModelLanguageChanged: ${uriStr} from '${data.languageId}' to '${newLanguageId}'`,
 			);
 
-			const changed = data._acceptLanguageId(newLanguageId);
+			const languageReallyChanged =
+				data._acceptLanguageIdInternal(newLanguageId);
 
-			if (changed) {
+			if (languageReallyChanged) {
+				// TODO: VS Code fires a specific LanguageChangeEvent or includes it in onDidChangeTextDocument.
+				// For simplicity, firing onDidChangeTextDocument with no content changes.
 				this.#onDidChangeDocumentEmitter.fire(
 					Object.freeze({
 						document: data.document,
 
 						contentChanges: Object.freeze(
 							[],
-						) as readonly TextDocumentContentChangeEvent[],
+						) as readonly VscodeTextDocumentContentChangeEvent[],
 
 						reason: undefined,
 					}),
@@ -645,10 +593,16 @@ class ShimDocumentService
 		}
 	}
 
-	public $acceptEncodingChanged(uriComponents: any, encoding: string): void {
-		const uri = this._reviveUri(uriComponents);
+	public $acceptEncodingChanged(
+		uriComponents: VSCodeInternalUriComponents,
 
-		if (!uri) {
+		newEncoding: string,
+	): void {
+		// This method is not standard on VscodeExtHostDocumentsShape, but was in original Cocoon document-shim.
+		// It might be a custom notification.
+		const revivedUri = this._reviveUriDtoToVscodeApiUri(uriComponents);
+
+		if (!revivedUri) {
 			this._logError(
 				"$acceptEncodingChanged: Failed to revive URI",
 
@@ -658,27 +612,21 @@ class ShimDocumentService
 			return;
 		}
 
-		const uriStr = uri.toString();
+		const uriStr = revivedUri.toString();
 
 		const data = this.#documents.get(uriStr);
 
 		if (data) {
-			this._log(`$acceptEncodingChanged: ${uriStr} -> ${encoding}`);
+			this._log(
+				`$acceptEncodingChanged: ${uriStr} from '${data.encoding}' to '${newEncoding}'`,
+			);
 
-			const changed = data._acceptEncoding(encoding);
+			const encodingReallyChanged =
+				data._acceptEncodingInternal(newEncoding);
 
-			if (changed) {
-				this.#onDidChangeDocumentEmitter.fire(
-					Object.freeze({
-						document: data.document,
-
-						contentChanges: Object.freeze(
-							[],
-						) as readonly TextDocumentContentChangeEvent[],
-
-						reason: undefined,
-					}),
-				);
+			if (encodingReallyChanged) {
+				// TODO: How to notify extensions? There's no standard vscode event for encoding change on TextDocument.
+				// This might be an internal state update.
 			}
 		} else {
 			this._logWarn(
@@ -686,39 +634,136 @@ class ShimDocumentService
 			);
 		}
 	}
+
+	// --- URI Conversion Helpers (DTO <-> VscodeApiUri) ---
+	private _reviveUriDtoToVscodeApiUri(
+		uriDto: VSCodeInternalUriComponents | undefined,
+	): VscodeApiUri | undefined {
+		if (!uriDto) return undefined;
+
+		try {
+			const internalUri = VSCodeInternalURI.revive(uriDto);
+
+			// Convert vs/base/common/uri.URI to vscode.Uri
+			return VscodeApiUri.from(internalUri);
+		} catch (e: any) {
+			this._logError(
+				"Failed to revive URI DTO to VscodeApiUri:",
+
+				uriDto,
+
+				e,
+			);
+
+			return undefined;
+		}
+	}
+
+	private _vscodeApiUriToDto(
+		uri: VscodeApiUri,
+	): VSCodeInternalUriComponents | undefined {
+		// Use BaseCocoonShim's marshaller, ensuring it produces VSCodeInternalUriComponents
+		// From BaseCocoonShim
+		const components = this._convertApiArgToInternal(uri);
+
+		if (components && components.$mid === MarshalledId.UriSimple) {
+			// Check for VS Code's marshalling marker
+			return components as VSCodeInternalUriComponents;
+		}
+
+		this._logError(
+			"Failed to convert VscodeApiUri to DTO via base marshaller for document operations.",
+
+			uri,
+		);
+
+		// Fallback: Manually construct if base marshaller isn't producing the exact internal DTO
+		try {
+			const internalUri = VSCodeInternalURI.from(uri);
+
+			return {
+				scheme: internalUri.scheme,
+
+				authority: internalUri.authority,
+
+				path: internalUri.path,
+
+				query: internalUri.query,
+
+				fragment: internalUri.fragment,
+
+				external: internalUri.toString(true),
+
+				fsPath: internalUri.fsPath,
+
+				$mid: 1,
+			};
+		} catch (e) {
+			this._logError("Fallback VscodeApiUri to DTO conversion failed", e);
+
+			return undefined;
+		}
+	}
+
+	public dispose(): void {
+		// If BaseCocoonShim has a dispose
+		super.dispose();
+
+		this.#instanceDisposables.dispose();
+
+		this.#onDidAddDocumentEmitter.dispose();
+
+		this.#onDidRemoveDocumentEmitter.dispose();
+
+		this.#onDidChangeDocumentEmitter.dispose();
+
+		this.#onDidSaveDocumentEmitter.dispose();
+
+		// Dispose individual document data
+		this.#documents.forEach((doc) => dispose(doc));
+
+		this.#documents.clear();
+
+		this._log("Disposed.");
+	}
 }
 
-export class ShimDocumentData {
-	readonly #uri: Uri;
+export class CocoonDocumentData implements IDisposable {
+	// Was ShimDocumentData
+	// vscode.Uri for the public API
+	readonly #uriAdapter: VscodeApiUri;
 
-	#lines: string[] = [];
+	#linesInternal: string[];
 
-	#eol = "\n";
+	#eolInternal: string;
 
-	#versionId = 1;
+	#versionIdInternal: number;
 
-	#languageId = "plaintext";
+	#languageIdInternal: string;
 
-	#isDirty = false;
+	#isDirtyInternal: boolean;
 
-	#isClosed = false;
+	#isClosedInternal: boolean = false;
 
-	// Added encoding
-	#encoding = "utf8";
+	// Internal tracking of encoding
+	#encodingInternal: string;
 
 	#logService?: ILogService;
 
-	// Reference to the service
-	#textDocumentApiService: ShimDocumentService;
+	// Reference to the parent service
+	readonly #documentService: CocoonDocumentService;
 
-	// Cache for line starts (offsets)
-	#lineStarts: number[] | null = null;
+	#lineStartsInternal: number[] | null = null;
 
-	// The actual vscode.TextDocument object facade, typed with the vscode.TextDocument interface
-	public readonly document: TextDocument;
+	// The public API facade
+	public readonly document: VscodeTextDocument;
 
 	constructor(
-		uri: Uri,
+		// Pass the service instance
+		documentService: CocoonDocumentService,
+
+		// Use vscode.Uri for API consistency
+		uri: VscodeApiUri,
 
 		lines: string[],
 
@@ -732,64 +777,61 @@ export class ShimDocumentData {
 
 		encoding: string,
 
-		logService: ILogService | undefined,
-
-		textDocumentApiService: ShimDocumentService,
+		logService?: ILogService,
 	) {
-		this.#uri = uri;
+		this.#documentService = documentService;
 
-		this.#lines = lines;
+		this.#uriAdapter = uri;
 
-		this.#eol = eol;
+		this.#linesInternal = lines;
 
-		this.#languageId = languageId;
+		this.#eolInternal = eol;
 
-		this.#versionId = versionId;
+		this.#languageIdInternal = languageId;
 
-		this.#isDirty = isDirty;
+		this.#versionIdInternal = versionId;
 
-		this.#encoding = encoding;
+		this.#isDirtyInternal = isDirty;
+
+		this.#encodingInternal = encoding;
 
 		this.#logService = logService;
 
-		this.#textDocumentApiService = textDocumentApiService;
-
+		// Create the API facade
 		this.document = this._createTextDocumentApiObject();
 
-		this._log(
-			`Created ShimDocumentData V${this.#versionId} for ${this.#uri.toString()}`,
-		);
+		//  // Can be verbosethis._logShimOp(`Created V${this.#versionIdInternal} for ${this.
+		// #uriAdapter.toString()}`);
 	}
 
-	// Logger methods
-	private _log(msg: string, ...args: any[]): void {
+	private _logShimOp(msg: string, ...args: any[]): void {
 		this.#logService?.trace(
-			`[DocumentShimData][${this.#uri?.fsPath || this.#uri?.toString() || "unknown"}] ${msg}`,
+			`[CocoonDocData][${this.#uriAdapter.fsPath || this.#uriAdapter.toString() || "unknown"}] ${msg}`,
 
 			...args,
 		);
 	}
 
-	private _logError(msg: string, ...args: any[]): void {
+	private _logShimError(msg: string, ...args: any[]): void {
 		this.#logService?.error(
-			`[DocumentShimData][${this.#uri?.fsPath || this.#uri?.toString() || "unknown"}] ${msg}`,
+			`[CocoonDocData][${this.#uriAdapter.fsPath || this.#uriAdapter.toString() || "unknown"}] ${msg}`,
 
 			...args,
 		);
 	}
 
-	private _logWarn(msg: string, ...args: any[]): void {
+	private _logShimWarn(msg: string, ...args: any[]): void {
 		this.#logService?.warn(
-			`[DocumentShimData][${this.#uri?.fsPath || this.#uri?.toString() || "unknown"}] ${msg}`,
+			`[CocoonDocData][${this.#uriAdapter.fsPath || this.#uriAdapter.toString() || "unknown"}] ${msg}`,
 
 			...args,
 		);
 	}
 
-	// --- State Update Methods ---
-	public _acceptLanguageId(newLanguageId: string): boolean {
-		if (this.#languageId !== newLanguageId) {
-			this.#languageId = newLanguageId;
+	// --- Internal state update methods called by CocoonDocumentService ---
+	public _acceptLanguageIdInternal(newLanguageId: string): boolean {
+		if (this.#languageIdInternal !== newLanguageId) {
+			this.#languageIdInternal = newLanguageId;
 
 			return true;
 		}
@@ -797,9 +839,9 @@ export class ShimDocumentData {
 		return false;
 	}
 
-	public _acceptIsDirty(newIsDirty: boolean): boolean {
-		if (this.#isDirty !== newIsDirty) {
-			this.#isDirty = newIsDirty;
+	public _acceptIsDirtyInternal(newIsDirty: boolean): boolean {
+		if (this.#isDirtyInternal !== newIsDirty) {
+			this.#isDirtyInternal = newIsDirty;
 
 			return true;
 		}
@@ -807,9 +849,9 @@ export class ShimDocumentData {
 		return false;
 	}
 
-	public _acceptEncoding(newEncoding: string): boolean {
-		if (this.#encoding !== newEncoding) {
-			this.#encoding = newEncoding;
+	public _acceptEncodingInternal(newEncoding: string): boolean {
+		if (this.#encodingInternal !== newEncoding) {
+			this.#encodingInternal = newEncoding;
 
 			return true;
 		}
@@ -817,115 +859,92 @@ export class ShimDocumentData {
 		return false;
 	}
 
-	public _markClosed(): void {
-		this.#isClosed = true;
+	public _markAsClosedInternal(): void {
+		this.#isClosedInternal = true;
 	}
 
-	public _acceptContentChanges(
-		versionId: number,
+	public _acceptContentChangesInternal(
+		newVersionId: number,
 
-		changes: IModelContentChange[],
+		changes: RpcModelContentChange[],
+
+		newEol: string,
 	): boolean {
-		if (this.#versionId >= versionId) {
-			this._log(
-				`Skipping changes for older/same version ${versionId} (current: ${this.#versionId})`,
+		if (this.#versionIdInternal >= newVersionId) {
+			this._logShimOp(
+				`Skipping content changes for V${newVersionId} (current: V${this.#versionIdInternal})`,
 			);
 
+			// No change applied
 			return false;
 		}
 
-		this._log(
-			`Applying ${changes.length} changes, new version ${versionId}`,
-		);
+		// this._logShimOp(`Applying ${changes.length} content changes, V${this.#versionIdInternal} -> V${newVersionId}, EOL '${this.#eolInternal}' -> '${newEol}'`);
 
-		// Invalidate cache
-		this.#lineStarts = null;
+		// Invalidate offset cache
+		this.#lineStartsInternal = null;
 
-		let currentLines = [...this.#lines];
+		// Update EOL first
+		this.#eolInternal = newEol;
 
+		let currentLines = [...this.#linesInternal];
+
+		// VS Code's ExtHostDocumentData applies changes in reverse order of occurrence for edits.
+		// However, the `changes` array from `IModelChangedEvent` is already ordered correctly by the main thread.
 		for (const change of changes) {
-			const range = new Range(
-				change.range.startLineNumber - 1,
+			// Use VS Code's typeConverter
+			const range = typeConverters.Range.to(change.range);
 
-				change.range.startColumn - 1,
+			const text = change.text;
 
-				change.range.endLineNumber - 1,
+			// Simplified application: delete range then insert text at start of range.
+			// A more robust implementation would handle overlapping changes or use a PieceTree-like structure.
+			currentLines = this._applyDeleteRangeApi(currentLines, range);
 
-				change.range.endColumn - 1,
-			);
-
-			const afterDelete = this._applyDeleteRangeInternal(
+			currentLines = this._applyInsertTextApi(
 				currentLines,
-
-				range,
-			);
-
-			currentLines = this._applyInsertTextInternal(
-				afterDelete,
 
 				range.start,
 
-				change.text,
+				text,
 			);
 		}
 
-		this.#lines = currentLines;
+		this.#linesInternal = currentLines;
 
-		this.#versionId = versionId;
+		this.#versionIdInternal = newVersionId;
 
+		// Content changed
 		return true;
 	}
 
-	private _applyDeleteRangeInternal(lines: string[], range: Range): string[] {
+	// Helper methods for applying changes (using API types)
+	private _applyDeleteRangeApi(
+		lines: string[],
+
+		range: VscodeRange,
+	): string[] {
+		/* ... (implementation from previous conversion, ensure it uses VscodeRange/Position) ... */
 		if (range.isEmpty) return lines;
 
-		// Work on copy
-		const currentLines = [...lines];
+		let currentLines = [...lines];
 
 		const { start, end } = range;
 
-		if (
-			start.line < 0 ||
-			start.line >= currentLines.length ||
-			end.line < 0 ||
-			end.line >= currentLines.length
-		) {
-			this._logError(
-				`Invalid range indices for delete: ${start.line}-${end.line} (Lines: ${currentLines.length})`,
-			);
-
-			return lines;
-		}
-
 		if (start.line === end.line) {
-			const line = currentLines[start.line];
-
-			const safeStart = Math.min(start.character, line.length);
-
-			const safeEnd = Math.min(end.character, line.length);
-
-			if (safeStart > safeEnd) {
-				this._logError(
-					`Invalid character range for delete: ${start.character}-${end.character} (Line Length: ${line.length})`,
-				);
-
-				return lines;
-			}
+			const lineText = currentLines[start.line];
 
 			currentLines[start.line] =
-				line.substring(0, safeStart) + line.substring(safeEnd);
+				lineText.substring(0, start.character) +
+				lineText.substring(end.character);
 		} else {
-			const firstLine = currentLines[start.line];
+			const firstLineText = currentLines[start.line];
 
-			const lastLine = currentLines[end.line];
-
-			const safeStartChar = Math.min(start.character, firstLine.length);
-
-			const safeEndChar = Math.min(end.character, lastLine.length);
+			const lastLineText = currentLines[end.line];
 
 			currentLines[start.line] =
-				firstLine.substring(0, safeStartChar) +
-				lastLine.substring(safeEndChar);
+				firstLineText.substring(0, start.character) +
+				lastLineText.substring(end.character);
 
 			currentLines.splice(start.line + 1, end.line - start.line);
 		}
@@ -933,440 +952,131 @@ export class ShimDocumentData {
 		return currentLines;
 	}
 
-	private _applyInsertTextInternal(
+	private _applyInsertTextApi(
 		lines: string[],
 
-		position: Position,
+		position: VscodePosition,
 
 		text: string,
 	): string[] {
-		if (text === undefined || text === null || text.length === 0)
-			return lines;
+		/* ... (implementation from previous conversion, ensure it uses VscodeRange/Position) ... */
+		if (!text) return lines;
 
-		// Work on copy
-		const currentLines = [...lines];
+		let currentLines = [...lines];
 
 		const { line, character } = position;
 
-		if (line < 0 || line >= currentLines.length) {
-			this._logError(
-				`Invalid line index for insert: ${line} (Lines: ${currentLines.length})`,
-			);
+		const normalizedText = text.replace(/\r\n|\n|\r/g, this.#eolInternal);
 
-			return lines;
-		}
+		// VS Code utility
+		const insertTextLines = splitLines(normalizedText);
 
-		const normalizedText = text.replace(/\r\n|\n|\r/g, this.#eol);
-
-		const insertLines = splitLines(normalizedText);
-
-		if (insertLines.length === 1) {
-			const currentLineText = currentLines[line];
-
-			const safeCharIndex = Math.min(character, currentLineText.length);
-
-			if (safeCharIndex < 0) {
-				this._logError(
-					`Invalid character index for insert: ${character} (Line Length: ${currentLineText.length})`,
-				);
-
-				return lines;
-			}
+		if (insertTextLines.length === 1) {
+			const lineText = currentLines[line];
 
 			currentLines[line] =
-				currentLineText.substring(0, safeCharIndex) +
-				insertLines[0] +
-				currentLineText.substring(safeCharIndex);
+				lineText.substring(0, character) +
+				insertTextLines[0] +
+				lineText.substring(character);
 		} else {
-			const currentLineText = currentLines[line];
+			const lineText = currentLines[line];
 
-			const safeCharIndex = Math.min(character, currentLineText.length);
-
-			if (safeCharIndex < 0) {
-				this._logError(
-					`Invalid character index for insert: ${character} (Line Length: ${currentLineText.length})`,
-				);
-
-				return lines;
-			}
-
-			const overflowingText = currentLineText.substring(safeCharIndex);
+			const textAfterInsert = lineText.substring(character);
 
 			currentLines[line] =
-				currentLineText.substring(0, safeCharIndex) + insertLines[0];
+				lineText.substring(0, character) + insertTextLines[0];
 
-			const linesToInsert = insertLines.slice(1);
+			const remainingLinesToInsert = insertTextLines.slice(1);
 
-			linesToInsert[linesToInsert.length - 1] += overflowingText;
+			remainingLinesToInsert[remainingLinesToInsert.length - 1] +=
+				textAfterInsert;
 
-			currentLines.splice(line + 1, 0, ...linesToInsert);
+			currentLines.splice(line + 1, 0, ...remainingLinesToInsert);
 		}
 
 		return currentLines;
 	}
 
-	#ensureLineStarts(): void {
-		if (this.#lineStarts === null) {
-			const eolLength = this.#eol.length;
+	// --- Line Start Offset Cache ---
+	#ensureLineStartsAvailable(): void {
+		if (this.#lineStartsInternal === null) {
+			const eolLength = this.#eolInternal.length;
 
 			let currentOffset = 0;
 
-			// Start offset of first line is always 0
 			const R = [0];
 
-			for (let i = 0; i < this.#lines.length; i++) {
-				currentOffset += this.#lines[i].length + eolLength;
+			for (let i = 0; i < this.#linesInternal.length; i++) {
+				currentOffset += this.#linesInternal[i].length + eolLength;
 
 				R.push(currentOffset);
 			}
 
-			this.#lineStarts = R;
+			this.#lineStartsInternal = R;
 		}
 	}
 
-	private _offsetAt(position: Position): number {
-		position = this._validatePosition(position);
-
-		this.#ensureLineStarts();
-
-		// Should not happen
-		if (!this.#lineStarts) throw new Error("Line starts not initialized");
-
-		if (position.line >= this.#lines.length) {
-			return this.#lineStarts[this.#lines.length];
-		}
-
-		return this.#lineStarts[position.line] + position.character;
-	}
-
-	private _positionAt(offset: number): Position {
-		offset = Math.max(0, Math.floor(offset));
-
-		this.#ensureLineStarts();
-
-		if (!this.#lineStarts) throw new Error("Line starts not initialized");
-
-		let low = 0,
-			high = this.#lines.length;
-
-		let mid = 0,
-			lineStartOffset = 0;
-
-		while (low < high) {
-			mid = low + Math.floor((high - low) / 2);
-
-			lineStartOffset = this.#lineStarts[mid];
-
-			if (offset >= lineStartOffset) {
-				low = mid + 1;
-			} else {
-				high = mid;
-			}
-		}
-
-		const lineIndex = Math.max(0, low - 1);
-
-		lineStartOffset = this.#lineStarts[lineIndex];
-
-		let character = offset - lineStartOffset;
-
-		const lineLength = this.#lines[lineIndex]?.length ?? 0;
-
-		character = Math.min(character, lineLength);
-
-		return new Position(lineIndex, character);
-	}
-
-	private _getTextInRange(range: Range): string {
-		range = this._validateRange(range);
-
-		if (range.isEmpty) return "";
-
-		const { start, end } = range;
-
-		if (
-			start.line < 0 ||
-			start.line >= this.#lines.length ||
-			end.line < 0 ||
-			end.line >= this.#lines.length
-		) {
-			this._logError(
-				`Invalid range indices for getTextInRange: ${start.line}-${end.line} (Lines: ${this.#lines.length})`,
-			);
-
-			return "";
-		}
-
-		if (start.line === end.line) {
-			return this.#lines[start.line].substring(
-				start.character,
-
-				end.character,
-			);
-		} else {
-			const result: string[] = [];
-
-			result.push(this.#lines[start.line].substring(start.character));
-
-			for (let i = start.line + 1; i < end.line; i++) {
-				result.push(this.#lines[i]);
-			}
-
-			result.push(this.#lines[end.line].substring(0, end.character));
-
-			return result.join(this.#eol);
-		}
-	}
-
-	private _validatePosition(position: Position): Position {
-		if (!(position instanceof Position)) {
-			throw new Error(
-				`Invalid argument: position must be an instance of vscode.Position. Received: ${position}`,
-			);
-		}
-
-		let { line, character } = position;
-
-		let hasChanged = false;
-
-		if (line < 0) {
-			line = 0;
-
-			character = 0;
-
-			hasChanged = true;
-		} else if (line >= this.#lines.length) {
-			line = Math.max(0, this.#lines.length - 1);
-
-			character = this.#lines[line]?.length ?? 0;
-
-			hasChanged = true;
-		} else {
-			const maxCharacter = this.#lines[line].length;
-
-			if (character < 0) {
-				character = 0;
-
-				hasChanged = true;
-			} else if (character > maxCharacter) {
-				character = maxCharacter;
-
-				hasChanged = true;
-			}
-		}
-
-		return hasChanged ? new Position(line, character) : position;
-	}
-
-	private _validateRange(range: Range): Range {
-		if (!(range instanceof Range)) {
-			throw new Error(
-				`Invalid argument: range must be an instance of vscode.Range. Received: ${range}`,
-			);
-		}
-
-		const start = this._validatePosition(range.start);
-
-		const end = this._validatePosition(range.end);
-
-		if (
-			start.line > end.line ||
-			(start.line === end.line && start.character > end.character)
-		) {
-			// Swapped
-			return new Range(end, start);
-		}
-
-		return start === range.start && end === range.end
-			? range
-			: new Range(start, end);
-	}
-
-	private _getWordRangeAtPosition(
-		position: Position,
-
-		regexp?: RegExp,
-	): Range | undefined {
-		position = this._validatePosition(position);
-
-		const lineContent = this.#lines[position.line];
-
-		if (lineContent === undefined || lineContent === null) {
-			this._logWarn(
-				`_getWordRangeAtPosition called for invalid line index: ${position.line}`,
-			);
-
-			return undefined;
-		}
-
-		const wordDefinition =
-			regexp ||
-			(ensureValidWordDefinitionInternal
-				? ensureValidWordDefinitionInternal(undefined)
-				: DEFAULT_WORD_REGEXP_FALLBACK);
-
-		if (getWordAtTextInternal && ensureValidWordDefinitionInternal) {
-			try {
-				const wordAt = getWordAtTextInternal(
-					// text
-					lineContent,
-
-					// word definition
-					ensureValidWordDefinitionInternal(wordDefinition),
-
-					// 1-based column
-					position.character + 1,
-
-					// search from beginning of line
-					0,
-				);
-
-				if (wordAt) {
-					return new Range(
-						position.line,
-
-						wordAt.startColumn - 1,
-
-						position.line,
-
-						wordAt.endColumn - 1,
-					);
-				}
-			} catch (e: any) {
-				this._logError("Error using getWordAtText:", e);
-
-				return this._getWordRangeAtPositionFallback(
-					position,
-
-					wordDefinition,
-				);
-			}
-		} else {
-			return this._getWordRangeAtPositionFallback(
-				position,
-
-				wordDefinition,
-			);
-		}
-
-		return undefined;
-	}
-
-	private _getWordRangeAtPositionFallback(
-		position: Position,
-
-		regexp: RegExp,
-	): Range | undefined {
-		const lineText = this.#lines[position.line];
-
-		let localRegexp = regexp;
-
-		if (!localRegexp.global) {
-			let flags = "g";
-
-			if (localRegexp.ignoreCase) flags += "i";
-
-			if (localRegexp.multiline) flags += "m";
-
-			if (localRegexp.unicode) flags += "u";
-
-			localRegexp = new RegExp(localRegexp.source, flags);
-		}
-
-		localRegexp.lastIndex = 0;
-
-		let match;
-
-		while ((match = localRegexp.exec(lineText))) {
-			const matchStartIndex = match.index;
-
-			const matchEndIndex = matchStartIndex + match[0].length;
-
-			if (
-				matchStartIndex <= position.character &&
-				matchEndIndex >= position.character
-			) {
-				return new Range(
-					position.line,
-
-					matchStartIndex,
-
-					position.line,
-
-					matchEndIndex,
-				);
-			}
-
-			if (
-				match.index === localRegexp.lastIndex &&
-				match[0].length === 0
-			) {
-				this._logWarn(
-					"Zero-length match detected in word regex fallback, breaking loop.",
-				);
-
-				break;
-			}
-
-			if (localRegexp.lastIndex === match.index) {
-				this._logWarn(
-					"Regex lastIndex did not advance in word regex fallback, breaking loop.",
-				);
-
-				// Manually advance
-				localRegexp.lastIndex++;
-			}
-		}
-
-		return undefined;
-	}
-
-	private _createTextDocumentApiObject(): TextDocument {
-		// Capture 'this' (ShimDocumentData instance)
-		const data = this;
-
-		const textDoc: TextDocument = {
+	// --- vscode.TextDocument API Implementation ---
+	private _createTextDocumentApiObject(): VscodeTextDocument {
+		// Capture 'this' (CocoonDocumentData instance)
+		const self = this;
+
+		const textDoc: VscodeTextDocument = {
 			get uri() {
-				return data.#uri;
+				return self.#uriAdapter;
 			},
 
 			get fileName() {
-				return data.#uri.fsPath;
+				return self.#uriAdapter.fsPath;
 			},
 
 			get isUntitled() {
-				return data.#uri.scheme === "untitled";
+				return (
+					self.#uriAdapter.scheme === Schemas.untitled ||
+					self.#uriAdapter.scheme === Schemas.vscodeInteractiveInput
+				);
 			},
 
 			get languageId() {
-				return data.#languageId;
+				return self.#languageIdInternal;
 			},
 
 			get version() {
-				return data.#versionId;
+				return self.#versionIdInternal;
 			},
 
 			get isClosed() {
-				return data.#isClosed;
+				return self.#isClosedInternal;
 			},
 
 			get isDirty() {
-				return data.#isDirty;
+				return self.#isDirtyInternal;
 			},
 
-			// encoding is not part of vscode.TextDocument
-			// get encoding() { return data.#encoding; },
+			get eol() {
+				return self.#eolInternal === "\n"
+					? VscodeEndOfLine.LF
+					: VscodeEndOfLine.CRLF;
+			},
+
+			get lineCount() {
+				return self.#linesInternal.length;
+			},
 
 			save: async (): Promise<boolean> => {
-				data._log(`save() called`);
+				// this._logShimOp(`save() called for ${self.#uriAdapter.toString()}`);
 
-				if (data.#isClosed) throw new Error("Document has been closed");
+				if (self.#isClosedInternal) {
+					this._logShimError("Document already closed, cannot save.");
+
+					return false;
+				}
 
 				const proxy =
-					data.#textDocumentApiService?.getMainThreadProxy();
+					self.#documentService.getMainThreadDocumentsProxy();
 
 				if (!proxy) {
-					data._logError(
+					this._logShimError(
 						"Cannot save, MainThreadDocuments proxy unavailable.",
 					);
 
@@ -1374,114 +1084,337 @@ export class ShimDocumentData {
 				}
 
 				try {
-					// Use BaseCocoonShim's _convertApiArgToInternal for URI marshalling
-					const uriComponents =
-						data.#textDocumentApiService?._convertApiArgToInternal(
-							data.#uri,
+					// Convert vscode.Uri to DTO for RPC
+					const uriDto = (
+						self.#documentService as any as BaseCocoonShim
+					)._convertApiArgToInternal(self.#uriAdapter);
+
+					if (!uriDto) {
+						this._logShimError(
+							"Failed to convert URI to DTO for save.",
 						);
 
-					if (!uriComponents) {
-						throw new Error("Failed to convert URI for RPC.");
+						return false;
 					}
 
-					const success = await proxy.$trySaveDocument(uriComponents);
+					const success = await proxy.$trySaveDocument(uriDto);
 
-					data._log(`save() proxy call returned: ${success}`);
-
+					// MainThread will call $acceptModelSaved which updates dirty flag and fires event
 					return success;
 				} catch (e: any) {
-					data._logError(`Error during save proxy call: ${e}`);
+					this._logShimError(
+						`Error during save proxy call:`,
+
+						refineError(e, self.#logService),
+					);
 
 					return false;
 				}
 			},
 
-			get eol() {
-				return data.#eol === "\n" ? EndOfLine.LF : EndOfLine.CRLF;
-			},
-
-			get lineCount() {
-				return data.#lines.length;
-			},
-
-			lineAt: (lineOrPosition: number | Position): TextLine => {
+			lineAt: (
+				lineOrPosition: number | VscodePosition,
+			): VscodeTextLine => {
 				const line =
 					typeof lineOrPosition === "number"
 						? lineOrPosition
 						: lineOrPosition.line;
 
-				if (line < 0 || line >= data.#lines.length) {
-					throw new Error(
-						`Illegal value for line number: ${line}. Must be >= 0 and < ${data.#lines.length}`,
-					);
-				}
+				if (line < 0 || line >= self.#linesInternal.length)
+					throw new RangeError(`Illegal value for line: ${line}`);
 
-				const text = data.#lines[line];
+				const text = self.#linesInternal[line];
 
-				const range = new Range(line, 0, line, text.length);
+				const range = new VscodeRange(line, 0, line, text.length);
 
-				let rangeIncludingLineBreak: Range;
+				const rangeIncludingLineBreak =
+					line < self.#linesInternal.length - 1
+						? new VscodeRange(line, 0, line + 1, 0)
+						: range;
 
-				if (line < data.#lines.length - 1) {
-					rangeIncludingLineBreak = new Range(line, 0, line + 1, 0);
-				} else {
-					rangeIncludingLineBreak = range;
-				}
-
-				const match = text.match(/^\s*/);
-
-				const firstNonWhitespaceCharacterIndex = match
-					? match[0].length
-					: 0;
-
-				const isEmptyOrWhitespace =
-					firstNonWhitespaceCharacterIndex === text.length;
+				const firstNonWhitespace = text.match(/^\s*/)?.[0].length ?? 0;
 
 				return Object.freeze({
 					lineNumber: line,
 
-					text: text,
+					text,
 
-					range: range,
+					range,
 
-					rangeIncludingLineBreak: rangeIncludingLineBreak,
+					rangeIncludingLineBreak,
 
-					firstNonWhitespaceCharacterIndex:
-						firstNonWhitespaceCharacterIndex,
+					firstNonWhitespaceCharacterIndex: firstNonWhitespace,
 
-					isEmptyOrWhitespace: isEmptyOrWhitespace,
+					isEmptyOrWhitespace: firstNonWhitespace === text.length,
 				});
 			},
 
-			offsetAt: (position: Position): number => data._offsetAt(position),
+			offsetAt: (position: VscodePosition): number => {
+				position = self._validatePositionApi(position);
 
-			positionAt: (offset: number): Position => data._positionAt(offset),
+				self.#ensureLineStartsAvailable();
 
-			getText: (range?: Range): string =>
-				range
-					? data._getTextInRange(range)
-					: data.#lines.join(data.#eol),
+				if (!self.#lineStartsInternal)
+					// Should not happen
+					throw new Error("Line starts cache not available.");
+
+				if (position.line >= self.#linesInternal.length)
+					return self.#lineStartsInternal[self.#linesInternal.length];
+
+				return (
+					self.#lineStartsInternal[position.line] + position.character
+				);
+			},
+
+			positionAt: (offset: number): VscodePosition => {
+				offset = Math.max(0, Math.floor(offset));
+
+				self.#ensureLineStartsAvailable();
+
+				if (!self.#lineStartsInternal)
+					throw new Error("Line starts cache not available.");
+
+				let low = 0,
+					high = self.#linesInternal.length,
+					mid = 0,
+					lineStartOffset = 0;
+
+				while (low < high) {
+					mid = low + Math.floor((high - low) / 2);
+
+					lineStartOffset = self.#lineStartsInternal[mid];
+
+					if (offset >= lineStartOffset) low = mid + 1;
+					else high = mid;
+				}
+
+				let lineIndex = Math.max(0, low - 1);
+
+				lineStartOffset = self.#lineStartsInternal[lineIndex];
+
+				let character = Math.min(
+					offset - lineStartOffset,
+
+					self.#linesInternal[lineIndex]?.length ?? 0,
+				);
+
+				return new VscodePosition(lineIndex, character);
+			},
+
+			getText: (range?: VscodeRange): string => {
+				if (!range) return self.#linesInternal.join(self.#eolInternal);
+
+				range = self._validateRangeApi(range);
+
+				if (range.isEmpty) return "";
+
+				const { start, end } = range;
+
+				if (start.line === end.line)
+					return self.#linesInternal[start.line].substring(
+						start.character,
+
+						end.character,
+					);
+
+				let res: string[] = [
+					self.#linesInternal[start.line].substring(start.character),
+				];
+
+				for (let i = start.line + 1; i < end.line; i++)
+					res.push(self.#linesInternal[i]);
+
+				res.push(
+					self.#linesInternal[end.line].substring(0, end.character),
+				);
+
+				return res.join(self.#eolInternal);
+			},
 
 			getWordRangeAtPosition: (
-				position: Position,
+				position: VscodePosition,
 
 				regex?: RegExp,
-			): Range | undefined =>
-				data._getWordRangeAtPosition(position, regex),
+			): VscodeRange | undefined => {
+				position = self._validatePositionApi(position);
 
-			validateRange: (range: Range): Range => data._validateRange(range),
+				const lineText = self.#linesInternal[position.line];
 
-			validatePosition: (position: Position): Position =>
-				data._validatePosition(position),
+				if (!lineText) return undefined;
+
+				const wordDefinition =
+					regex ||
+					(ensureValidWordDefinitionInternal
+						? ensureValidWordDefinitionInternal(undefined)
+						: DEFAULT_WORD_REGEXP_FALLBACK);
+
+				if (
+					getWordAtTextInternal &&
+					ensureValidWordDefinitionInternal
+				) {
+					try {
+						// VS Code's wordHelper.getWordAtText(column, wordDefinition, text, textOffset)
+						const wordAt = getWordAtTextInternal(
+							position.character + 1,
+
+							ensureValidWordDefinitionInternal(wordDefinition),
+
+							lineText,
+
+							0,
+						);
+
+						if (wordAt)
+							return new VscodeRange(
+								position.line,
+
+								wordAt.startColumn - 1,
+
+								position.line,
+
+								wordAt.endColumn - 1,
+							);
+					} catch (e: any) {
+						self._logShimError(
+							"Error using getWordAtTextInternal:",
+
+							e,
+						); /* fallback below */
+					}
+				}
+
+				// Fallback logic (simplified from original JS, as it was complex)
+				// TODO: Ensure this fallback is robust or rely solely on VS Code's wordHelper if bundled.
+				let match: RegExpExecArray | null;
+
+				const lineRegex = new RegExp(
+					wordDefinition.source,
+
+					wordDefinition.flags.includes("g")
+						? wordDefinition.flags
+						: wordDefinition.flags + "g",
+
+					// Ensure global
+				);
+
+				lineRegex.lastIndex = 0;
+
+				while ((match = lineRegex.exec(lineText))) {
+					const startIndex = match.index;
+
+					const endIndex = startIndex + match[0].length;
+
+					if (
+						startIndex <= position.character &&
+						endIndex >= position.character
+					) {
+						return new VscodeRange(
+							position.line,
+
+							startIndex,
+
+							position.line,
+
+							endIndex,
+						);
+					}
+
+					if (
+						lineRegex.lastIndex === startIndex &&
+						match[0].length === 0
+					)
+						// Avoid infinite loop on empty match
+						break;
+				}
+
+				return undefined;
+			},
+
+			validateRange: (range: VscodeRange): VscodeRange =>
+				self._validateRangeApi(range),
+
+			validatePosition: (position: VscodePosition): VscodePosition =>
+				self._validatePositionApi(position),
 		};
 
 		return Object.freeze(textDoc);
 	}
+
+	// --- Validation helpers using VscodePosition/VscodeRange ---
+	private _validatePositionApi(p: VscodePosition): VscodePosition {
+		/* ... (similar to original _validatePosition, but takes/returns VscodePosition) ... */
+		if (!(p instanceof VscodePosition))
+			throw new TypeError("Invalid argument: Not a VscodePosition");
+
+		let line = p.line,
+			char = p.character,
+			changed = false;
+
+		if (line < 0) {
+			line = 0;
+
+			char = 0;
+
+			changed = true;
+		} else if (line >= this.#linesInternal.length) {
+			line = Math.max(0, this.#linesInternal.length - 1);
+
+			char = this.#linesInternal[line]?.length ?? 0;
+
+			changed = true;
+		} else {
+			const maxChar = this.#linesInternal[line].length;
+
+			if (char < 0) {
+				char = 0;
+
+				changed = true;
+			} else if (char > maxChar) {
+				char = maxChar;
+
+				changed = true;
+			}
+		}
+
+		return changed ? new VscodePosition(line, char) : p;
+	}
+
+	private _validateRangeApi(r: VscodeRange): VscodeRange {
+		/* ... (similar to original _validateRange, but takes/returns VscodeRange) ... */
+		if (!(r instanceof VscodeRange))
+			throw new TypeError("Invalid argument: Not a VscodeRange");
+
+		const start = this._validatePositionApi(r.start);
+
+		const end = this._validatePositionApi(r.end);
+
+		if (start === r.start && end === r.end) return r;
+
+		return new VscodeRange(start, end);
+	}
+
+	// --- Public getters for CocoonDocumentService ---
+	get uri(): VscodeApiUri {
+		return this.#uriAdapter;
+	}
+
+	get version(): number {
+		return this.#versionIdInternal;
+	}
+
+	get languageId(): string {
+		return this.#languageIdInternal;
+	}
+
+	get encoding(): string {
+		return this.#encodingInternal;
+
+		// Expose encoding if needed internally by other shims
+	}
+
+	dispose(): void {
+		// this._logShimOp(`Disposing document data for ${this.#uriAdapter.toString()}`);
+		// No specific resources to dispose in this data object itself,
+		// but good for IDisposable pattern if it held, e.g., event listeners.
+	}
 }
-
-// Export classes
-// Original JS way
-// module.exports = { ShimDocumentService, ShimDocumentData };
-
-// export { ShimDocumentService, ShimDocumentData };
-export { ShimDocumentService };
