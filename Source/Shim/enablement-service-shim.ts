@@ -33,10 +33,10 @@ import {
 } from "vs/workbench/api/common/extHost.protocol";
 import {
 	EnablementState,
-	// Common interface for ExtHost side
-	type IGlobalExtensionEnablementService,
 	// Service ID for DI
 	IWorkbenchExtensionEnablementService,
+	// Common interface for ExtHost side
+	type IGlobalExtensionEnablementService,
 	// For event payload if main thread sends rich delta
 	// IExtensionEnablementServiceDelta,
 } from "vs/workbench/services/extensionManagement/common/extensionManagement";
@@ -45,10 +45,10 @@ import type { Extension as VscodeExtensionApi } from "vscode";
 
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
-	refineError,
 } from "./_baseShim";
 
 // --- Type Definitions ---

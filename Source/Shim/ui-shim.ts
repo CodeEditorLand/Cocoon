@@ -35,10 +35,10 @@ import type {
 
 import {
 	BaseCocoonShim,
-	type IExtHostRpcService,
-	type ILogService,
 	ProxyIdentifier,
 	refineError,
+	type IExtHostRpcService,
+	type ILogService,
 } from "./_baseShim";
 
 // Assuming API types from 'vscode' shim or real API

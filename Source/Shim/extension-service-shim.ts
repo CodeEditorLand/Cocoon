@@ -21,8 +21,8 @@ import {
 } from "vs/base/common/event";
 import {
 	DisposableStore,
-	IDisposable,
 	dispose,
+	IDisposable,
 } from "vs/base/common/lifecycle";
 // For Schemas.file etc.
 import { Schemas } from "vs/base/common/network";
@@ -35,31 +35,31 @@ import {
 	CanonicalExtensionIdentifier,
 	ExtensionIdentifier,
 	IEnabledApiProposals,
+	MissingExtensionDependency,
 	type IExtensionDescription,
 	type ISerializedExtension,
-	MissingExtensionDependency,
 } from "vs/platform/extensions/common/extensions";
 import {
-	type ActivatedExtension,
 	ActivationKind,
 	EmptyExtension,
-	type ExtensionActivationReason,
 	ExtensionActivationTimes,
 	ExtensionActivationTimesBuilder,
 	IExtensionAPI,
+	type ActivatedExtension,
+	type ExtensionActivationReason,
 	type IExtensionModule,
 } from "vs/workbench/api/common/extHostExtensionActivator";
 import {
-	type ExtHostInitData,
 	IExtHostInitDataService,
+	type ExtHostInitData,
 	// For initData
 } from "vs/workbench/api/common/extHostInitDataService";
 import { IExtHostLanguageModels } from "vs/workbench/api/common/extHostLanguageModels";
 // For localized messages
 import { IExtHostLocalizationService } from "vs/workbench/api/common/extHostLocalizationService";
 import {
-	IExtHostSecretState,
 	IExtHostSecrets,
+	IExtHostSecretState,
 	// IExtHostSecrets might be the DI key
 } from "vs/workbench/api/common/extHostSecretState";
 // --- Service Interface Imports (for DI access during ExtensionContext creation) ---
@@ -79,22 +79,22 @@ import {
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry";
 import { checkProposedApiEnabled as vscodeCheckProposedApiEnabled } from "vs/workbench/services/extensions/common/extensions";
 
+import { sendNotificationToMountain } from "../cocoon-ipc";
 import {
-	type EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
-	type Extension as VscodeExtension,
-	type ExtensionContext as VscodeExtensionContext,
 	ExtensionKind as VscodeExtensionKind,
 	ExtensionMode as VscodeExtensionMode,
 	ExtensionRuntime as VscodeExtensionRuntime,
+	Uri as VscodeUri,
+	type EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
+	type Extension as VscodeExtension,
+	type ExtensionContext as VscodeExtensionContext,
 	// For ExtensionContext.languageModelAccessInformation
 	type LanguageModelAccessInformation as VscodeLanguageModelAccessInformation,
 	type Memento as VscodeMemento,
 	type SecretStorage as VscodeSecretStorage,
-	Uri as VscodeUri,
 	// For MessagePassingProtocol if used in ExtensionContext
 	// MessagePassingProtocol as VscodeMessagePassingProtocol,
 } from "../Shim/out/vscode";
-import { sendNotificationToMountain } from "../cocoon-ipc";
 // vscode API types
 import { BaseCocoonShim, type ILogService } from "./_baseShim";
 

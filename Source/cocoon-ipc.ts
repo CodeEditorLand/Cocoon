@@ -9,8 +9,8 @@ import {
 	// For typed RPC adapter events
 } from "vs/base/common/event";
 import {
-	type IMessagePassingProtocol,
 	MessagePassingProtocol as VSCodeMessagePassingProtocol,
+	type IMessagePassingProtocol,
 	// For RPC adapter type
 } from "vs/workbench/services/extensions/common/rpcProtocol";
 

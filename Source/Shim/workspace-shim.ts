@@ -30,16 +30,16 @@ import {
 } from "vs/base/common/event";
 import {
 	DisposableStore,
-	type IDisposable,
 	toDisposable,
+	type IDisposable,
 } from "vs/base/common/lifecycle";
 import { Schemas } from "vs/base/common/network";
 import {
-	ExtUri,
-	type IExtUri,
 	basenameOrAuthority,
 	dirname,
+	ExtUri,
 	relativePath as resourcesRelativePath,
+	type IExtUri,
 } from "vs/base/common/resources";
 import { compare } from "vs/base/common/strings";
 import { TernarySearchTree } from "vs/base/common/ternarySearchTree";
@@ -70,43 +70,43 @@ import {
 // Interface for dependency
 import type { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
 
+// For IPC events like onWorkspaceFoldersChanged
+import * as ipc from "../cocoon-ipc";
 // vscode API types (from ../Shim/out/vscode or actual vscode namespace)
 import {
 	CanonicalUriProvider,
-	type ConfigurationScope,
 	EditSessionIdentityProvider,
-	type FileSystem,
-	type FileSystemProvider,
 	FindTextInFilesOptions,
 	PortAttributesProvider,
 	QuickDiffProvider,
-	type TaskProvider,
-	type TextDocument,
-	type TextDocumentChangeEvent,
-	type TextDocumentContentProvider,
 	// Stubs for less critical/complex APIs for now
 	TextSearchQuery,
 	TextSearchResult,
 	TimelineProvider,
 	TunnelProvider,
 	UriHandler,
-	type GlobPattern as VscodeApiGlobPattern,
 	RelativePattern as VscodeApiRelativePattern,
 	Uri as VscodeApiUri,
+	type ConfigurationScope,
+	type FileSystem,
+	type FileSystemProvider,
+	type TaskProvider,
+	type TextDocument,
+	type TextDocumentChangeEvent,
+	type TextDocumentContentProvider,
+	type GlobPattern as VscodeApiGlobPattern,
 	type WorkspaceFolder as VscodeApiWorkspaceFolder,
 	type WorkspaceFoldersChangeEvent as VscodeWorkspaceFoldersChangeEvent,
 	type WorkspaceConfiguration,
 	type WorkspaceTrustRequestOptions,
 	// TODO: Add other types from vscode.d.ts as needed for the API surface
 } from "../Shim/out/vscode";
-// For IPC events like onWorkspaceFoldersChanged
-import * as ipc from "../cocoon-ipc";
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
-	refineError,
 } from "./_baseShim";
 // For IExtHostConfiguration type
 import type { ShimExtHostConfiguration } from "./configuration-shim";

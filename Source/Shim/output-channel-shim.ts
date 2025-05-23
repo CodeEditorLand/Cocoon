@@ -35,10 +35,10 @@ import {
 	// For RPC context
 } from "vs/workbench/api/common/extHost.protocol";
 import {
-	// For show options
-	type ViewColumn,
 	// The vscode.LogLevel enum from the API
 	LogLevel as VscodeApiLogLevel,
+	// For show options
+	type ViewColumn,
 	type LogOutputChannel as VscodeLogOutputChannel,
 	type OutputChannel as VscodeOutputChannel,
 	// Renamed to avoid conflict with internal URI if used
@@ -47,10 +47,10 @@ import {
 
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
-	refineError,
 } from "./_baseShim";
 
 // --- Type Definitions ---

@@ -34,8 +34,8 @@ import {
 } from "vs/base/common/event";
 import {
 	DisposableStore,
-	type IDisposable,
 	dispose,
+	type IDisposable,
 } from "vs/base/common/lifecycle";
 // VS Code internal utility
 import { splitLines } from "vs/base/common/strings";
@@ -51,10 +51,10 @@ import {
 	IDocumentsAndEditorsDelta as RpcDocumentsAndEditorsDelta,
 	// From extHost.protocol.ts (or local definitions if not directly importable)
 	IModelAddedData as RpcModelAddedData,
+	ExtHostDocumentsAndEditorsShape as VscodeExtHostDocumentsAndEditorsShape,
 	// Contains versionId, changes, eol, etc.
 	type IModelChangedEvent as RpcModelChangedEvent,
 	type IModelContentChange as RpcModelContentChange,
-	ExtHostDocumentsAndEditorsShape as VscodeExtHostDocumentsAndEditorsShape,
 	// RPC methods on this service called by main
 	type ExtHostDocumentsShape as VscodeExtHostDocumentsShape,
 	// RPC proxy to main thread
@@ -65,11 +65,11 @@ import {
 	EndOfLine as VscodeEndOfLine,
 	Position as VscodePosition,
 	Range as VscodeRange,
+	Uri as VscodeUri,
 	type TextDocument as VscodeTextDocument,
 	type TextDocumentChangeEvent as VscodeTextDocumentChangeEvent,
 	type TextDocumentContentChangeEvent as VscodeTextDocumentContentChangeEvent,
 	type TextLine as VscodeTextLine,
-	Uri as VscodeUri,
 	// Not directly used in TextDocument API here
 	// Location as VscodeLocation,
 	// For more complex changes
@@ -77,10 +77,10 @@ import {
 } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
-	refineError,
 } from "./_baseShim";
 
 // Word helpers (from original JS, assuming these are still the best available source for Cocoon)

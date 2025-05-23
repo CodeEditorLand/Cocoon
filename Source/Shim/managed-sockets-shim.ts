@@ -23,9 +23,9 @@ import type {
 
 import {
 	BaseCocoonShim,
+	ProxyIdentifier,
 	type IExtHostRpcService,
 	type ILogService,
-	ProxyIdentifier,
 } from "./_baseShim";
 
 // TODO: Import MainContext, ExtHostContext, and DTOs if RPC calls are made

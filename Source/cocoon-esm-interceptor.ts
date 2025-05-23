@@ -46,8 +46,8 @@ import nodeModule from "node:module";
 import { MessageChannel, type MessagePort } from "node:worker_threads";
 import {
 	DisposableStore,
-	type IDisposable,
 	toDisposable,
+	type IDisposable,
 } from "vs/base/common/lifecycle";
 import { BidirectionalMap } from "vs/base/common/map";
 // VS Code's URI

@@ -15,30 +15,30 @@
 import type { Event as VscodeEvent } from "vs/base/common/event";
 import {
 	ConfigurationTargetDto,
+	MainContext,
 	type IConfigurationChange,
 	type IConfigurationInitData,
 	type IConfigurationOverridesDto,
-	MainContext,
 	type ExtHostConfigurationShape as VscodeExtHostConfigurationShape,
 	// Protocol DTOs and shapes
 } from "vs/workbench/api/common/extHost.protocol";
 
+// For onConfigurationChanged IPC event
+import * as ipc from "../cocoon-ipc";
 // EventEmitter from 'events' is used by _createEventEmitter from BaseCocoonShim
 import {
-	type ConfigurationChangeEvent as VscodeConfigurationChangeEvent,
 	ConfigurationTarget as VscodeConfigurationTarget,
 	Uri as VscodeUri,
+	type ConfigurationChangeEvent as VscodeConfigurationChangeEvent,
 	type WorkspaceConfiguration as VscodeWorkspaceConfiguration,
 	// vscode API types
 } from "../Shim/out/vscode";
-// For onConfigurationChanged IPC event
-import * as ipc from "../cocoon-ipc";
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
-	refineError,
 } from "./_baseShim";
 
 // --- Type Definitions ---

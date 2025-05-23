@@ -41,9 +41,9 @@ import type { IExtHostFileSystemInfo as VscodeIExtHostFileSystemInfo } from "vs/
 
 import {
 	BaseCocoonShim,
+	ProxyIdentifier,
 	type IExtHostRpcService,
 	type ILogService,
-	ProxyIdentifier,
 } from "./_baseShim";
 
 // Ensure local interface matches the one from VS Code if not directly implementing the imported one

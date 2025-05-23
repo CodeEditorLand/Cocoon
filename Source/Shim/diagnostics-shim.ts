@@ -44,7 +44,6 @@ import {
 } from "vs/workbench/api/common/extHost.protocol";
 import {
 	Diagnostic,
-	type DiagnosticCollection,
 	DiagnosticRelatedInformation,
 	DiagnosticSeverity,
 	DiagnosticTag,
@@ -52,6 +51,7 @@ import {
 	Location as VscodeLocation,
 	// Renamed to avoid conflict if Range is used internally
 	Range as VscodeRange,
+	type DiagnosticCollection,
 	// For onDidChangeDiagnostics event payload
 	// Already imported
 	// Uri as VscodeUri,
@@ -59,10 +59,10 @@ import {
 
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
-	refineError,
 } from "./_baseShim";
 
 // TODO: Ensure IMarkerData, MarkerSeverity, MarkerTag, RelatedInformation interfaces/enums are correctly imported or defined

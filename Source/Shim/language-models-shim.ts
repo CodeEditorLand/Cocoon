@@ -33,8 +33,8 @@ import {
 import { Iterable } from "vs/base/common/iterator";
 import {
 	DisposableStore,
-	type IDisposable,
 	toDisposable,
+	type IDisposable,
 } from "vs/base/common/lifecycle";
 // For internal URI handling
 import { URI, UriComponents } from "vs/base/common/uri";
@@ -49,9 +49,9 @@ import { Progress } from "vs/platform/progress/common/progress";
 import {
 	// RPC Contexts
 	ExtHostContext,
+	MainContext,
 	// The RPC interface this service implements (calls from MainThread)
 	type ExtHostLanguageModelsShape,
-	MainContext,
 	// The RPC interface for calling MainThread
 	type MainThreadLanguageModelsShape,
 	// DTOs from protocol - these should be used for RPC if defined
@@ -68,8 +68,8 @@ import * as typeConvert from "vs/workbench/api/common/extHostTypeConverters";
 // For LanguageModelError etc.
 import * as extHostTypes from "vs/workbench/api/common/extHostTypes";
 import {
-	type ChatImageMimeType,
 	IChatResponsePart,
+	type ChatImageMimeType,
 } from "vs/workbench/contrib/chat/common/languageModels";
 // For types used in streaming
 
@@ -80,6 +80,8 @@ import { INTERNAL_AUTH_PROVIDER_PREFIX } from "vs/workbench/services/authenticat
 import { checkProposedApiEnabled } from "vs/workbench/services/extensions/common/extensions";
 
 import {
+	LanguageModelChatMessageRole as VscodeLanguageModelChatMessageRole,
+	LanguageModelError as VscodeLanguageModelError,
 	type CancellationToken as VscodeCancellationToken,
 	type ChatResponseProvider as VscodeChatResponseProvider,
 	type ChatResponseProviderMetadata as VscodeChatResponseProviderMetadata,
@@ -88,13 +90,11 @@ import {
 	type LanguageModelChat as VscodeLanguageModelChat,
 	// Note the '2'
 	type LanguageModelChatMessage2 as VscodeLanguageModelChatMessage2,
-	LanguageModelChatMessageRole as VscodeLanguageModelChatMessageRole,
 	type LanguageModelChatRequestOptions as VscodeLanguageModelChatRequestOptions,
 	type LanguageModelChatResponse as VscodeLanguageModelChatResponse,
 	type LanguageModelChatSelector as VscodeLanguageModelChatSelector,
 	// Added
 	type LanguageModelDataPart as VscodeLanguageModelDataPart,
-	LanguageModelError as VscodeLanguageModelError,
 	// Added
 	type LanguageModelIgnoredFileProvider as VscodeLanguageModelIgnoredFileProvider,
 	type LanguageModelTextPart as VscodeLanguageModelTextPart,
@@ -104,10 +104,10 @@ import {
 } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
-	refineError,
 } from "./_baseShim";
 
 // --- Type Definitions based on ExtHostLanguageModels.ts ---

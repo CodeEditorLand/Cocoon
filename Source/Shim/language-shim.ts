@@ -28,6 +28,9 @@ import { URI } from "vs/base/common/uri";
 
 // Import vscode API types for providers, selectors, and other language-related interfaces/enums
 import {
+	// For setLanguageStatus
+	LanguageStatusSeverity,
+	OnTypeFormattingEditProviderOptions,
 	type CallHierarchyProvider,
 	type CodeActionProvider,
 	type CodeActionProviderMetadata,
@@ -46,11 +49,8 @@ import {
 	type ImplementationProvider,
 	type InlayHintsProvider,
 	type LanguageStatusItem,
-	// For setLanguageStatus
-	LanguageStatusSeverity,
 	type LinkedEditingRangeProvider,
 	type OnTypeFormattingEditProvider,
-	OnTypeFormattingEditProviderOptions,
 	type ReferenceProvider,
 	type RenameProvider,
 	type SelectionRangeProvider,
@@ -65,9 +65,9 @@ import {
 } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
-	refineError,
 } from "./_baseShim";
 import {
 	ExtHostLanguageFeaturesServiceShape,

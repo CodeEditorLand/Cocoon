@@ -28,10 +28,10 @@ import { SerializableObjectWithBuffers } from "vs/workbench/services/extensions/
 
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
-	refineError,
 } from "./_baseShim";
 // Placeholder for vscode.Disposable etc.
 import * as extHostTypes from "./extHostTypes";

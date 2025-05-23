@@ -25,9 +25,9 @@ import type { IExtHostLocalizationService as VscodeIExtHostLocalizationService }
 
 import {
 	BaseCocoonShim,
+	ProxyIdentifier,
 	type IExtHostRpcService,
 	type ILogService,
-	ProxyIdentifier,
 } from "./_baseShim";
 
 // TODO: Import MainContext if RPC calls are made to MainThreadLocalization

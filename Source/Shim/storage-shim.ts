@@ -27,8 +27,8 @@ import { MainContext } from "vs/workbench/api/common/extHost.protocol";
 // TODO: Ensure VscodeMemento is correctly imported or defined if 'vscode' types are not globally available.
 // For VS Code internal IExtHostStorage:
 import {
-	type MementoKeysOptions,
 	MementoUpdateArguments,
+	type MementoKeysOptions,
 	type IExtHostStorage as VscodeIExtHostStorage,
 } from "vs/workbench/api/common/extHostStorage";
 // Use vscode.Memento interface from the API
@@ -36,10 +36,10 @@ import type { Memento as VscodeMemento } from "vscode";
 
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
-	refineError,
 } from "./_baseShim";
 
 // --- Type Definitions ---

@@ -37,25 +37,25 @@ import {
 	MainContext,
 } from "vs/workbench/api/common/extHost.protocol";
 import {
-	type EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
-	type EnvironmentVariableMutator as VscodeEnvironmentVariableMutator,
 	EnvironmentVariableMutatorType as VscodeEnvironmentVariableMutatorType,
-	type Extension as VscodeExtension,
-	type ExtensionTerminalOptions as VscodeExtensionTerminalOptions,
 	// For ExtensionTerminalOptions.pty
 	Pseudoterminal as VscodePseudoterminal,
-	// Use VscodeTerminal to distinguish from internal types
-	type Terminal as VscodeTerminal,
 	// For pty data events
 	Event as VscodeTerminalDataEvent,
 	// For ExtensionTerminalOptions.pty
 	TerminalDimensions as VscodeTerminalDimensions,
 	TerminalExitReason as VscodeTerminalExitReason,
+	// For cwd or iconPath
+	Uri as VscodeUri,
+	type EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
+	type EnvironmentVariableMutator as VscodeEnvironmentVariableMutator,
+	type Extension as VscodeExtension,
+	type ExtensionTerminalOptions as VscodeExtensionTerminalOptions,
+	// Use VscodeTerminal to distinguish from internal types
+	type Terminal as VscodeTerminal,
 	type TerminalExitStatus as VscodeTerminalExitStatus,
 	type TerminalOptions as VscodeTerminalOptions,
 	type TerminalState as VscodeTerminalState,
-	// For cwd or iconPath
-	Uri as VscodeUri,
 	// Not used directly if passing options object
 	// TerminalLocation as VscodeApiTerminalLocation,
 
@@ -68,10 +68,10 @@ import {
 import * as ipc from "../cocoon-ipc";
 import {
 	BaseCocoonShim,
+	refineError,
 	type IExtHostRpcService,
 	type ILogService,
 	type ProxyIdentifier,
-	refineError,
 } from "./_baseShim";
 
 // --- Type Definitions ---
