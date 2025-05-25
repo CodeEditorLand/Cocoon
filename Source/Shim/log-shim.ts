@@ -1,130 +1,159 @@
-// --- START OF FILE log-shim.ts ---
+// ORIGIN INFORMATION:
+// This code block was extracted by a script.
+// Source Markdown File: Backup/TSFMSC/Document/150_MODEL.md
+// Source Block Index in MD (Overall): 1
+// Original Fence Info String: (empty)
+// Content SHA256 (of this block): cdd0844c0bb020db7d335dec15437419d47308ca4d5f9da9da53abeffded6f38
+// Extracted to File: Backup/TSFMSC/Code/log-shim.ts
+// Extraction Timestamp: 2025-05-25T14:02:57.067Z
+// --- END OF ORIGIN INFORMATION ---
+
+--- START OF FILE log-shim.ts ---
 
 /*---------------------------------------------------------------------------------------------
- // Header: Updated to reflect it contains multiple shims 
-* Cocoon Log Shims (log-shim.ts)
+ * Cocoon Logging Shims (log-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Provides shim implementations for VS Code's logging services:
- * - `ShimLogService`: Implements `ILogService`, typically used by most ExtHost services.
- *   It writes logs to the console and supports basic log level filtering.
- * - `ShimLoggerService`: Implements `ILoggerService`, used by `ExtHostLogService` to create
- *   loggers, often associated with resources (like file output URIs). This shim's
- *   `createLogger` returns instances of `ShimLogService`.
+ * Provides shim implementations for VS Code's primary logging service interfaces,
+ * enabling consistent logging across the Cocoon extension host environment.
+ * All log messages are currently directed to the console.
+ *
+ * Contains:
+ * - `ShimLogService`: Implements `ILogService` (and by extension `ILogger`). This is the
+ *   most commonly injected logging service used by various ExtHost components and shims.
+ *   It supports basic log level filtering and can be named for contextual logging.
+ *
+ * - `ShimLoggerService`: Implements `ILoggerService`. In VS Code, `ExtHostLogService`
+ *   (which might use `ILoggerService`) is responsible for creating and managing more
+ *   specialized loggers, often associated with specific resources (like output file URIs)
+ *   or capabilities (e.g., spdlog-based file logging). This shim's `createLogger`
+ *   method returns instances of `ShimLogService`, effectively providing named,
+ *   console-based loggers.
+ *
+ * Responsibilities:
+ * - `ShimLogService`:
+ *   - Filtering messages based on the current log level.
+ *   - Formatting and writing log messages to the console (`console.log`, `console.warn`, etc.).
+ *   - Handling `Error` objects appropriately to include stack traces.
+ *   - Managing its own log level and emitting an event when it changes.
+ * - `ShimLoggerService`:
+ *   - Creating and caching `ShimLogService` instances per resource URI.
+ *   - Managing a default log level and per-resource log levels.
+ *   - Emitting an event when log levels change.
  *
  * Key Interactions:
- * - `ShimLogService` is injected into many other shims.
- * - `ShimLoggerService` might be injected into a (potentially real) `ExtHostLogService`.
- * - Uses VS Code's `LogLevel` enum and `Event` type.
+ * - `ShimLogService` is typically instantiated directly in `index.ts` and registered as
+ *   the `ILogService` implementation for Dependency Injection.
+ * - `ShimLoggerService` can be registered as the `ILoggerService` implementation. If a real
+ *   `ExtHostLogService` from VS Code sources were used, it might consume `ILoggerService`.
+ * - Both shims use `vs/platform/log/common/log.LogLevel` and `vs/base/common/event`.
+ *
+ * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
+import * as path from "node:path"; // For path.sep in deriving logger name
 import {
 	Emitter as VscodeEmitter,
 	type Event as VscodeEvent,
 } from "vs/base/common/event";
-import { dispose, IDisposable } from "vs/base/common/lifecycle";
-// TODO: Ensure 'vs/platform/log/common/log' provides these interfaces and enums.
-// If not, they need to be defined locally matching VS Code's structure.
-// For ILoggerService createLogger resource URI
+import { dispose, type IDisposable } from "vs/base/common/lifecycle";
+// For ILoggerService createLogger resource URI type
 import { URI } from "vs/base/common/uri";
+// Import VS Code's log level definitions and service interfaces
 import {
-	parseLogLevel,
 	LogLevel as VscodeLogLevel,
+	parseLogLevel, // Helper to parse string log levels
 	type ILogger as VscodeILogger,
 	type ILoggerService as VscodeILoggerService,
 	type ILogService as VscodeILogService,
 } from "vs/platform/log/common/log";
 
-// --- ShimLogService: Implements VscodeILogService and VscodeILogger ---
+/**
+ * A shim implementation of `ILogService` and `ILogger` that writes to the console.
+ */
 export class ShimLogService implements VscodeILogService {
-	// VscodeILogService extends VscodeILogger and IDisposable
-	public readonly _serviceBrand: undefined;
+	public readonly _serviceBrand: undefined; // Required by VS Code's service types
 
 	private currentLogLevel: VscodeLogLevel;
-
 	private readonly _onDidChangeLogLevel: VscodeEmitter<VscodeLogLevel>;
-
 	public readonly onDidChangeLogLevel: VscodeEvent<VscodeLogLevel>;
+	private readonly loggerInstanceName?: string; // Optional name for this logger instance
 
-	// Optional name for this logger instance
-	private readonly name?: string;
-
+	/**
+	 * Creates an instance of ShimLogService.
+	 * @param initialLogLevel The initial log level for this logger. Defaults to `Info`.
+	 * @param name An optional name for this logger instance, used as a prefix in log messages.
+	 */
 	constructor(
 		initialLogLevel: VscodeLogLevel = VscodeLogLevel.Info,
-
 		name?: string,
 	) {
 		this.currentLogLevel = initialLogLevel;
-
-		this.name = name;
-
+		this.loggerInstanceName = name;
 		this._onDidChangeLogLevel = new VscodeEmitter<VscodeLogLevel>();
-
 		this.onDidChangeLogLevel = this._onDidChangeLogLevel.event;
 
-		const prefix = this.name ? `[${this.name}] ` : "";
-
-		this.trace(
-			`${prefix}Cocoon LogService Instance Initialized. Level: ${VscodeLogLevel[this.currentLogLevel]}`,
+		// Initial log message to confirm logger creation and level
+		const namePrefix = this.loggerInstanceName ? `[${this.loggerInstanceName}] ` : "";
+		this.trace( // Use trace to avoid noise if initial level is higher
+			`${namePrefix}Cocoon LogService Instance Initialized. Level: ${VscodeLogLevel[this.currentLogLevel]}`,
 		);
 	}
 
-	private _formatMessage(
-		level: string,
+	/**
+	 * Formats a log message with level, optional name prefix, and arguments.
+	 * @param levelLabel The string label for the log level (e.g., "Trace", "Info").
+	 * @param message The main log message or an Error object.
+	 * @param args Additional arguments to log.
+	 * @returns The formatted log string.
+	 */
+	private _formatMessage(levelLabel: string, message: string | Error, ...args: any[]): string {
+		const namePrefix = this.loggerInstanceName ? `[${this.loggerInstanceName}]` : "";
+		const levelPrefix = `[${levelLabel}]`;
+		const fullPrefix = namePrefix ? `${levelPrefix}${namePrefix}` : levelPrefix;
 
-		message: string | Error,
-
-		...args: any[]
-	): string {
-		// TODO: FIX THIS
-		// const prefix = this.name ? `[${VscodeLogLevel[this.getLevel()] VscodeLogLevel[this.getLevel()]}] [${this.name}]` : `[${VscodeLogLevel[this.getLevel()] VscodeLogLevel[this.getLevel()]}]`;
-
-		let mainMsg: string;
-
-		let stack = "";
+		let mainLogMessage: string;
+		let stackTrace = "";
 
 		if (message instanceof Error) {
-			mainMsg = message.message;
-
-			stack = message.stack ? `\n${message.stack}` : "";
+			mainLogMessage = message.message;
+			stackTrace = message.stack ? `\nStack: ${message.stack}` : "";
 		} else {
-			mainMsg = message;
+			mainLogMessage = message;
 		}
 
-		const argsStr =
-			args.length > 0
-				? ` ${args.map((a) => (typeof a === "object" ? JSON.stringify(a) : String(a))).join(" ")}`
-				: "";
+		const argsString = args.length > 0
+			? ` ${args.map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg))).join(" ")}`
+			: "";
 
-		return `${prefix} ${mainMsg}${argsStr}${stack}`;
+		return `${fullPrefix} ${mainLogMessage}${argsString}${stackTrace}`;
 	}
 
 	// --- VscodeILogger methods ---
+	/**
+	 * Checks if the logger is enabled at the current level.
+	 * This property is often used by more complex logger implementations; for console logging,
+	 * the level check is done in each specific log method.
+	 */
 	public get enabled(): boolean {
-		// In VS Code, lower enum value means more verbose.
-		// So, if currentLevel is Info (2), Trace (0) and Debug (1) should not log.
-		// This interpretation might be reversed from original; let's assume higher value = higher severity (less logging).
-		// VS Code standard: Trace = 0, Debug = 1, Info = 2, Warning = 3, Error = 4, Critical = 5, Off = 6
-		// So, `this.currentLogLevel <= targetLevel` means "log if current setting is at least as verbose as target".
-		// Simplification: let individual methods check level.
-		return true;
+		// A logger is generally "enabled" if its level is not OFF.
+		// Specific methods then check against their target level.
+		return this.currentLogLevel !== VscodeLogLevel.Off;
 	}
 
 	public trace(message: string, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Trace) {
-			console.log(this._formatMessage("Trace", message, ...args));
+			console.trace(this._formatMessage("Trace", message, ...args)); // console.trace for stack
 		}
 	}
 
 	public debug(message: string, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Debug) {
-			// Use console.debug
 			console.debug(this._formatMessage("Debug", message, ...args));
 		}
 	}
 
 	public info(message: string, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Info) {
-			// Use console.info
 			console.info(this._formatMessage("Info", message, ...args));
 		}
 	}
@@ -136,31 +165,34 @@ export class ShimLogService implements VscodeILogService {
 	}
 
 	public error(message: string | Error, ...args: any[]): void {
+		// Error objects are passed directly to _formatMessage
 		if (this.currentLogLevel <= VscodeLogLevel.Error) {
 			console.error(this._formatMessage("Error", message, ...args));
 		}
 	}
 
-	// VscodeILogService has critical, not directly on VscodeILogger typically
+	/**
+	 * Logs a critical message. In this shim, treated similar to an error.
+	 */
 	public critical(message: string | Error, ...args: any[]): void {
-		if (this.currentLogLevel <= VscodeLogLevel.Error) {
-			// Treat critical as at least Error level
+		// VscodeILogService has 'critical', typically logs at Error level or higher.
+		if (this.currentLogLevel <= VscodeLogLevel.Critical) { // Check against Critical if it's distinct from Error
 			console.error(this._formatMessage("Critical", message, ...args));
 		}
 	}
 
+	/**
+	 * Flushes any buffered log messages. NOP for console logging.
+	 */
 	public flush(): void {
-		// console.log("[Cocoon Log Shim] Flush called (No-op for console logging).");
-		// No-op for console, but good to have for API compliance.
+		// console.debug("[Cocoon Log Shim] Flush called (No-op for console logging).");
 	}
 
 	// --- VscodeILogService specific methods ---
 	public dispose(): void {
-		// console.log("[Cocoon Log Shim] Dispose called.");
-
+		// const namePrefix = this.loggerInstanceName ? `[${this.loggerInstanceName}] ` : "";
+		// this.trace(`${namePrefix}Cocoon LogService Instance Disposed.`);
 		this._onDidChangeLogLevel.dispose();
-
-		// Cleanup if any resources were held
 	}
 
 	public getLevel(): VscodeLogLevel {
@@ -168,210 +200,194 @@ export class ShimLogService implements VscodeILogService {
 	}
 
 	public setLevel(level: VscodeLogLevel | string): void {
-		// Allow string to parse
-		const newLevel =
-			typeof level === "string" ? parseLogLevel(level) : level;
+		const newLevel = typeof level === "string" ? parseLogLevel(level) : level;
 
-		if (newLevel === undefined) {
-			// parseLogLevel returns undefined for invalid string
-			console.warn(
-				`[Cocoon Log Shim] Invalid log level string: ${level}`,
-			);
-
+		if (newLevel === undefined || !Object.values(VscodeLogLevel).includes(newLevel)) {
+			const namePrefix = this.loggerInstanceName ? `[${this.loggerInstanceName}] ` : "";
+			console.warn(`${namePrefix}[Cocoon Log Shim] Invalid log level string or value: ${level}. Level not changed.`);
 			return;
 		}
 
-		// this.trace(`[Cocoon Log Shim] setLevel called with ${VscodeLogLevel[newLevel]}. Current: ${VscodeLogLevel[this.currentLogLevel]}`);
-
 		if (this.currentLogLevel !== newLevel) {
+			const oldLevel = this.currentLogLevel;
 			this.currentLogLevel = newLevel;
-
 			this._onDidChangeLogLevel.fire(this.currentLogLevel);
-
-			// Log the change at new Info level
-			this.info(`Log level set to ${VscodeLogLevel[newLevel]}`);
+			// Log the change itself at the new Info level (if enabled), or old Info level.
+			const message = `Log level changed from ${VscodeLogLevel[oldLevel]} to ${VscodeLogLevel[newLevel]}.`;
+            if (this.currentLogLevel <= VscodeLogLevel.Info) {
+                this.info(message);
+            } else if (oldLevel <= VscodeLogLevel.Info) {
+                // If new level is too restrictive, log with old level's Info permission
+                console.info(this._formatMessage("Info", message));
+            }
 		}
 	}
 
-	// createLogger from VscodeILogService (often deprecated for ILoggerService.createLogger)
-	// but some older services might still use it.
-	public createLogger(
-		resource: URI,
-
-		options?: { name?: string },
-	): VscodeILogger {
-		// this.trace(`[Cocoon Log Shim] createLogger (on LogService) called for resource: ${resource.toString()}. Options: ${JSON.stringify(options)}.`);
-
-		// Create a new logger instance with a name.
-		return new ShimLogService(
-			this.currentLogLevel,
-
-			options?.name ||
-				resource.fsPath.substring(
-					resource.fsPath.lastIndexOf(path.sep) + 1,
-				),
-		);
+	/**
+	 * Creates a new logger instance, typically for a specific resource or component.
+	 * In this shim, it creates another `ShimLogService` instance.
+	 */
+	public createLogger(resource: URI, options?: { name?: string; logLevel?: VscodeLogLevel }): VscodeILogger {
+		const loggerName = options?.name || resource.fsPath.substring(resource.fsPath.lastIndexOf(path.sep) + 1) || "child-logger";
+		const logLevel = options?.logLevel ?? this.currentLogLevel; // Inherit parent's level by default
+		// this.trace(`Creating child logger: Name='${loggerName}', Resource='${resource.toString()}', Level=${VscodeLogLevel[logLevel]}`);
+		return new ShimLogService(logLevel, loggerName);
 	}
 
+	/**
+	 * Gets an existing logger for a resource or creates one.
+	 * This LogService shim doesn't maintain a cache of loggers by resource;
+	 * that's more the role of ILoggerService. This method will behave like `createLogger`.
+	 */
 	public getLogger(resource: URI): VscodeILogger | undefined {
-		// ILogService in VS Code often doesn't manage a map of loggers by resource itself;
-
-		// that's more ILoggerService's role. It might return a default or resource-specific one.
-		// For this shim, let's just create one like `createLogger`.
-		this.warn(
-			`[Cocoon Log Shim] getLogger (on LogService) for resource ${resource.toString()} - returning new logger instance.`,
+		this.warnOnce(
+			`getLogger(resource) on ILogService is typically for managed loggers. This shim will create a new logger instance for resource: ${resource.toString()}`,
 		);
-
 		return this.createLogger(resource);
 	}
 
+    private _warnOnceMessages = new Set<string>();
+    private warnOnce(message: string): void { // Helper for getLogger warning
+        if (!this._warnOnceMessages.has(message)) {
+            this._warnOnceMessages.add(message);
+            this.warn(message);
+        }
+    }
+
+	/**
+	 * Gets the default logger instance, which is this `LogService` instance itself.
+	 */
 	public getDefaultLogger(): VscodeILogger {
-		// The LogService itself can act as the default logger
 		return this;
 	}
 }
 
-// --- ShimLoggerService: Implements VscodeILoggerService ---
+/**
+ * A shim implementation of `ILoggerService` that creates `ShimLogService` instances.
+ */
 export class ShimLoggerService implements VscodeILoggerService {
-	public readonly _serviceBrand: undefined;
+	public readonly _serviceBrand: undefined; // Required by VS Code's service types
 
 	private defaultLogLevel: VscodeLogLevel = VscodeLogLevel.Info;
-
-	// Cache loggers by resource URI string
-	private readonly loggers = new Map<string, ShimLogService>();
-
-	private readonly _onDidChangeLogLevel: VscodeEmitter<
-		[URI | undefined, VscodeLogLevel]
-		// Payload: [resource, newLevel]
-	>;
-
-	public readonly onDidChangeLogLevel: VscodeEvent<
-		[URI | undefined, VscodeLogLevel]
-	>;
+	private readonly loggersByResource = new Map<string, ShimLogService>(); // Cache loggers by resource URI string
+	private readonly _onDidChangeLogLevel = new VscodeEmitter<[URI | undefined, VscodeLogLevel]>(); // Payload: [resource URI | undefined for default, newLevel]
+	public readonly onDidChangeLogLevel: VscodeEvent<[URI | undefined, VscodeLogLevel]> = this._onDidChangeLogLevel.event;
 
 	constructor() {
-		// TODO: Potentially take IEnvironmentService or similar to get default log path or initial level.
-		this._onDidChangeLogLevel = new VscodeEmitter<
-			[URI | undefined, VscodeLogLevel]
-		>();
-
-		this.onDidChangeLogLevel = this._onDidChangeLogLevel.event;
-
+		// TODO: Potentially take IEnvironmentService or similar to get default log path or initial log level.
 		console.log(
-			`[Cocoon LoggerService Shim] Initialized. Default LogLevel: ${VscodeLogLevel[this.defaultLogLevel]}`,
+			`[Cocoon LoggerService Shim] Initialized. Default LogLevel for new loggers: ${VscodeLogLevel[this.defaultLogLevel]}`,
 		);
 	}
 
+	/**
+	 * Creates a logger, typically associated with a resource (e.g., a file path for log output).
+	 * This shim creates console-based `ShimLogService` instances.
+	 * @param resource The URI identifying the resource this logger is for.
+	 * @param options Optional configuration for the logger.
+	 * @returns An `ILogger` instance (specifically, a `ShimLogService`).
+	 */
 	public createLogger(
 		resource: URI,
-
-		options?: {
-			name?: string;
-
-			logLevel?: VscodeLogLevel;
-
-			File?: any /* FileLoggerOptions */;
-		},
+		options?: { name?: string; logLevel?: VscodeLogLevel /* ; File?: any FileLoggerOptions */ },
 	): VscodeILogger {
-		const key = resource.toString();
+		const resourceKey = resource.toString();
+		// If a specific log level is requested in options, or if logger doesn't exist, create/recreate.
+		if (!this.loggersByResource.has(resourceKey) || options?.logLevel !== undefined) {
+			const name = options?.name || resource.fsPath.substring(resource.fsPath.lastIndexOf(path.sep) + 1) || `logger-${resource.scheme}`;
+			const logLevel = options?.logLevel ?? this.getLogLevel(resource) ?? this.defaultLogLevel;
 
-		if (!this.loggers.has(key) || options?.logLevel) {
-			// Create new if not exists or if specific log level is requested
-			const name =
-				options?.name ||
-				resource.fsPath.substring(
-					resource.fsPath.lastIndexOf(path.sep) + 1,
-				) ||
-				"default-logger";
-
-			// Use resource-specific or default
-			const logLevel = options?.logLevel ?? this.getLogLevel(resource);
-
+			// console.debug(`[Cocoon LoggerService Shim] Creating/Recreating logger for resource '${resourceKey}', Name='${name}', Level=${VscodeLogLevel[logLevel]}.`);
 			const newLogger = new ShimLogService(logLevel, name);
-
-			this.loggers.set(key, newLogger);
-
-			// If file logging were supported, options.File would be used here.
-			// console.log(`[Cocoon LoggerService Shim] Created logger for ${key} with name ${name} at level ${VscodeLogLevel[logLevel]}.`);
-
+            // Listen to level changes on this specific logger if we want ILoggerService.onDidChangeLogLevel to reflect individual logger changes
+            // This part can be complex if individual loggers can change their level independently of the service setting it.
+            // For now, ILoggerService.onDidChangeLogLevel is fired when setLogLevel is called on the service.
+			this.loggersByResource.set(resourceKey, newLogger);
 			return newLogger;
 		}
-
-		return this.loggers.get(key)!;
+		return this.loggersByResource.get(resourceKey)!;
 	}
 
+	/**
+	 * Retrieves an existing logger for the given resource, if one was created.
+	 * @param resource The URI of the resource.
+	 * @returns The `ILogger` instance, or `undefined` if not found.
+	 */
 	public getLogger(resource: URI): VscodeILogger | undefined {
-		return this.loggers.get(resource.toString());
+		return this.loggersByResource.get(resource.toString());
 	}
 
 	public dispose(): void {
-		// console.log("[Cocoon LoggerService Shim] Dispose called.");
-
-		this.loggers.forEach((logger) => logger.dispose());
-
-		this.loggers.clear();
-
+		console.log("[Cocoon LoggerService Shim] Dispose called.");
+		dispose([...this.loggersByResource.values()]); // Dispose all cached loggers
+		this.loggersByResource.clear();
 		this._onDidChangeLogLevel.dispose();
 	}
 
-	public getLogLevel(resource?: URI): VscodeLogLevel {
+	public getLogLevel(resource?: URI): VscodeLogLevel | undefined { // Can return undefined if no specific level set
 		if (resource) {
-			const logger = this.loggers.get(resource.toString());
-
+			const logger = this.loggersByResource.get(resource.toString());
 			if (logger) return logger.getLevel();
+            return undefined; // No specific logger, so no specific level known by LoggerService itself
 		}
-
 		return this.defaultLogLevel;
 	}
 
 	public setLogLevel(level: VscodeLogLevel): void;
-
 	public setLogLevel(resource: URI, level: VscodeLogLevel): void;
-
 	public setLogLevel(
 		resourceOrLevel: URI | VscodeLogLevel,
-
-		level?: VscodeLogLevel,
+		levelValue?: VscodeLogLevel,
 	): void {
-		if (level !== undefined && resourceOrLevel instanceof URI) {
-			// resource, level
-			const logger = this.loggers.get(resourceOrLevel.toString());
+		let targetResource: URI | undefined = undefined;
+		let newLevel: VscodeLogLevel;
 
-			if (logger) {
-				// This will fire logger's onDidChangeLogLevel if it has one
-				logger.setLevel(level);
-			} else {
-				// If logger doesn't exist, should we create it or just set a default for future creations?
-				// For now, log a warning. If createLogger is called next, it will use this level.
-				console.warn(
-					`[Cocoon LoggerService Shim] setLogLevel for non-existent logger resource ${resourceOrLevel.toString()}. Level not applied to specific instance.`,
-				);
-
-				// To make this effective for future creations, store overrides:
-				// this.levelOverrides.set(resourceOrLevel.toString(), level);
-			}
-
-			this._onDidChangeLogLevel.fire([resourceOrLevel, level]);
+		if (resourceOrLevel instanceof URI) {
+			targetResource = resourceOrLevel;
+			if (levelValue === undefined) { // Should not happen with TS overload, but guard
+                console.warn("[Cocoon LoggerService Shim] setLogLevel called with URI but no level value.");
+                return;
+            }
+			newLevel = levelValue;
 		} else {
-			// level only (sets default)
-			this.defaultLogLevel = resourceOrLevel as VscodeLogLevel;
+			newLevel = resourceOrLevel; // Setting default log level
+		}
 
-			// console.log(`[Cocoon LoggerService Shim] Default log level set to ${VscodeLogLevel[this.defaultLogLevel]}`);
+        if (newLevel === undefined || !Object.values(VscodeLogLevel).includes(newLevel)) {
+            console.warn(`[Cocoon LoggerService Shim] Invalid log level value: ${newLevel}. Level not changed.`);
+            return;
+        }
 
-			// Optionally update all existing loggers to the new default if they weren't specifically set
-			this.loggers.forEach((logger) => {
-				// Only update if it was using the old default or some other logic
-				// This part is complex: should it override individually set levels?
-				// Typically, setDefault affects loggers created *after* or those not explicitly set.
-			});
-
+		if (targetResource) {
+			// Set level for a specific resource's logger
+			let logger = this.loggersByResource.get(targetResource.toString());
+			if (!logger) {
+                // If logger doesn't exist, create it with the specified level.
+                // This ensures subsequent getLogger/createLogger for this resource respects this level.
+                // console.debug(`[Cocoon LoggerService Shim] setLogLevel: Logger for ${targetResource.toString()} not found. Creating with level ${VscodeLogLevel[newLevel]}.`);
+                logger = this.createLogger(targetResource, {logLevel: newLevel}) as ShimLogService;
+            } else {
+                logger.setLevel(newLevel);
+            }
+			this._onDidChangeLogLevel.fire([targetResource, newLevel]);
+		} else {
+			// Set default log level for the service
+			const oldDefaultLevel = this.defaultLogLevel;
+			this.defaultLogLevel = newLevel;
+			// console.log(`[Cocoon LoggerService Shim] Default log level set from ${VscodeLogLevel[oldDefaultLevel]} to ${VscodeLogLevel[this.defaultLogLevel]}`);
+			// Optionally, update all existing loggers that were using the old default level.
+			// This is a policy decision: should changing default affect existing loggers not explicitly set?
+			// For simplicity, current ShimLogService instances manage their own levels.
+			// This event signals the *default* has changed.
 			this._onDidChangeLogLevel.fire([undefined, this.defaultLogLevel]);
 		}
 	}
 
+	/**
+	 * Gets the default log level for new loggers created by this service.
+	 */
 	public getDefaultLogLevel(): VscodeLogLevel {
 		return this.defaultLogLevel;
 	}
 }
-
-// --- END OF FILE log-shim.ts ---
+--- END OF FILE log-shim.ts ---
