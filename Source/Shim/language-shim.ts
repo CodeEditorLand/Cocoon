@@ -1,36 +1,50 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Languages API Shim (shims/language-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements parts of the `vscode.languages` API namespace, primarily focusing on
- * registering language feature providers defined by extensions. It interacts with the
- * `ShimLanguageFeatures` service (which handles provider storage, RPC, and execution).
+ * Implements the `vscode.languages` API namespace. Its primary responsibility is to provide
+ * the `register<Feature>Provider` methods that extensions use to contribute language-specific
+ * functionalities like hovers, completions, definitions, code actions, etc.
+ *
+ * This shim acts as a facade, delegating the actual registration logic (including
+ * communication with the MainThread/Mountain) to an injected `ShimLanguageFeatures`
+ * service instance. `ShimLanguageFeatures` manages the provider store and RPC calls.
  *
  * Responsibilities:
- * - Providing `register*Provider` methods that extensions call (e.g., `registerHoverProvider`).
- * - Delegating these calls to corresponding `$register*Provider` methods on the injected
- *   `ShimLanguageFeatures` service, passing the selector, metadata, and the provider object.
- * - Receiving a numeric handle from `ShimLanguageFeatures` post-registration.
- * - Returning a `vscode.Disposable` to the extension. When disposed, this calls
- *   `$unregisterProvider` on `ShimLanguageFeatures` using the handle.
+ * - Providing the public `vscode.languages.register*Provider` methods.
+ * - When a provider is registered:
+ *   - It calls the corresponding `$register*Provider` method on the `ShimLanguageFeatures` service.
+ *   - It receives a numeric handle (or a promise thereof) for the registration from `ShimLanguageFeatures`.
+ *   - It returns a `vscode.Disposable` to the calling extension. Disposing this
+ *     `Disposable` will trigger an unregistration call (`$unregisterProvider`) on
+ *     `ShimLanguageFeatures` using the obtained handle.
+ * - Providing stubs or basic implementations for other `vscode.languages` utilities like
+ *   `getLanguages()`, `match()`, and `setTextDocumentsLanguage()`.
+ * - `createDiagnosticCollection` and related diagnostic APIs are typically handled by a
+ *   dedicated `DiagnosticsService`, not directly by this `Languages` shim, although
+ *   the `vscode.languages` namespace might expose them for convenience.
  *
  * Key Interactions:
- * - Provides parts of the `vscode.languages` API surface to extensions.
- * - Injected with and heavily relies on `ShimLanguageFeatures`.
- * - Uses `vscode.Disposable` for registration lifecycle management.
+ * - An instance of `ShimLanguages` is typically created by the API factory in `index.ts`
+ *   and forms part of the `vscode` API object provided to extensions.
+ * - It is injected with and heavily relies on an instance of `ShimLanguageFeatures`.
+ * - Uses `vscode.Disposable` for managing the lifecycle of provider registrations.
+ * - Uses `BaseCocoonShim` for logging.
+ *
+ * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
-// Assuming these come from the vscode API shim
-// For event type signatures (e.g., onDidChangeDiagnostics)
+// For vscode.Event and vscode.Disposable types
 import { Event as VscodeEvent } from "vs/base/common/event";
 import { Disposable, type IDisposable } from "vs/base/common/lifecycle";
-// VS Code internal URI
-import { URI } from "vs/base/common/uri";
+// For URI type if used in any language API methods (e.g., for a hypothetical getDiagnostics here)
+// import { URI as VSCodeInternalURI } from "vs/base/common/uri";
+import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions"; // For passing to ShimLanguageFeatures
 
-// Import vscode API types for providers, selectors, and other language-related interfaces/enums
+// Import all necessary vscode API types for provider interfaces, selectors, etc.
+// These are typically from `../Shim/out/vscode.js` or the `vscode` namespace.
 import {
-	// For setLanguageStatus
-	LanguageStatusSeverity,
-	OnTypeFormattingEditProviderOptions,
+	LanguageStatusSeverity, // Enum for setLanguageStatus
+	// OnTypeFormattingEditProviderOptions, // If supporting the options object variant
 	type CallHierarchyProvider,
 	type CodeActionProvider,
 	type CodeActionProviderMetadata,
@@ -43,892 +57,782 @@ import {
 	type DocumentHighlightProvider,
 	type DocumentLinkProvider,
 	type DocumentRangeFormattingEditProvider,
-	type DocumentSelector,
+	type DocumentSelector, // Crucial for all provider registrations
 	type FoldingRangeProvider,
 	type HoverProvider,
 	type ImplementationProvider,
 	type InlayHintsProvider,
-	type LanguageStatusItem,
+	type LanguageStatusItem, // For setLanguageStatus
 	type LinkedEditingRangeProvider,
 	type OnTypeFormattingEditProvider,
+	type OnTypeFormattingEditProviderOptions, // For registerOnTypeFormattingEditProvider
 	type ReferenceProvider,
 	type RenameProvider,
 	type SelectionRangeProvider,
 	type SignatureHelpProvider,
 	type SignatureHelpProviderMetadata,
+	type TextDocument, // For setTextDocumentsLanguage, match
 	type TypeDefinitionProvider,
 	type TypeHierarchyProvider,
+	type Diagnostic as VscodeDiagnostic, // If getDiagnostics were here
+	type DiagnosticCollection as VscodeDiagnosticCollection, // If createDiagnosticCollection were here
+	type Uri as VscodeUri, // For onDidChangeDiagnostics event payload
 	type WorkspaceSymbolProvider,
-	// For getLanguages, matchLanguages, etc.
-	// LanguageFilter,
-	// TODO: Add any other provider or language API types that vscode.languages exposes.
-} from "../Shim/out/vscode";
+} from "vscode";
+
 import {
 	BaseCocoonShim,
-	refineError,
-	type IExtHostRpcService,
-	type ILogService,
+	refineErrorForShim,
+	type ILogServiceForShim,
+	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
-import {
-	ExtHostLanguageFeaturesServiceShape,
-	type ShimLanguageFeatures,
-} from "./shims/language-features-shim";
+// Import the concrete ShimLanguageFeatures class and its RPC shape if directly calling its methods.
+import type { ShimLanguageFeatures } from "./language-features-shim";
 
-// Import concrete class and its RPC shape
-
-// If getDiagnostics is part of this API
-// import { Diagnostic } from "vscode";
-
-// --- Type Definition for vscode.languages API surface ---
-// This interface defines the subset of `vscode.languages` that this shim aims to provide.
-// TODO: This should be comprehensive based on the target VS Code API version.
+/**
+ * Defines the subset of the `vscode.languages` API namespace that this shim implements.
+ */
 export interface VscodeLanguagesApiSubset {
+	// Provider registration methods
 	registerHoverProvider(
 		selector: DocumentSelector,
-
 		provider: HoverProvider,
 	): IDisposable;
-
 	registerCompletionItemProvider(
 		selector: DocumentSelector,
-
 		provider: CompletionItemProvider,
-
 		...triggerCharacters: string[]
 	): IDisposable;
-
 	registerDefinitionProvider(
 		selector: DocumentSelector,
-
 		provider: DefinitionProvider,
 	): IDisposable;
-
 	registerCodeActionsProvider(
 		selector: DocumentSelector,
-
 		provider: CodeActionProvider,
-
 		metadata?: CodeActionProviderMetadata,
 	): IDisposable;
-
 	registerCodeLensProvider(
 		selector: DocumentSelector,
-
 		provider: CodeLensProvider,
 	): IDisposable;
-
 	registerDeclarationProvider(
 		selector: DocumentSelector,
-
 		provider: DeclarationProvider,
 	): IDisposable;
-
 	registerDocumentFormattingEditProvider(
 		selector: DocumentSelector,
-
 		provider: DocumentFormattingEditProvider,
 	): IDisposable;
-
 	registerDocumentHighlightProvider(
 		selector: DocumentSelector,
-
 		provider: DocumentHighlightProvider,
 	): IDisposable;
-
 	registerDocumentLinkProvider(
 		selector: DocumentSelector,
-
 		provider: DocumentLinkProvider,
 	): IDisposable;
-
 	registerDocumentRangeFormattingEditProvider(
 		selector: DocumentSelector,
-
 		provider: DocumentRangeFormattingEditProvider,
 	): IDisposable;
-
 	registerOnTypeFormattingEditProvider(
 		selector: DocumentSelector,
-
 		provider: OnTypeFormattingEditProvider,
-
 		firstTriggerCharacter: string,
-
 		...moreTriggerCharacters: string[]
-		// Or OnTypeFormattingEditProviderOptions
 	): IDisposable;
-
+	registerOnTypeFormattingEditProvider(
+		selector: DocumentSelector,
+		provider: OnTypeFormattingEditProvider,
+		options: OnTypeFormattingEditProviderOptions,
+	): IDisposable; // Newer overload
 	registerReferenceProvider(
 		selector: DocumentSelector,
-
 		provider: ReferenceProvider,
 	): IDisposable;
-
 	registerRenameProvider(
 		selector: DocumentSelector,
-
 		provider: RenameProvider,
 	): IDisposable;
-
 	registerSignatureHelpProvider(
 		selector: DocumentSelector,
-
 		provider: SignatureHelpProvider,
-
 		metadataOrTriggerChars?: SignatureHelpProviderMetadata | string[],
 	): IDisposable;
-
 	registerImplementationProvider(
 		selector: DocumentSelector,
-
 		provider: ImplementationProvider,
 	): IDisposable;
-
 	registerTypeDefinitionProvider(
 		selector: DocumentSelector,
-
 		provider: TypeDefinitionProvider,
 	): IDisposable;
-
 	registerWorkspaceSymbolProvider(
 		provider: WorkspaceSymbolProvider,
-	): IDisposable;
-
+	): IDisposable; // No selector
 	registerSelectionRangeProvider(
 		selector: DocumentSelector,
-
 		provider: SelectionRangeProvider,
 	): IDisposable;
-
 	registerCallHierarchyProvider(
 		selector: DocumentSelector,
-
 		provider: CallHierarchyProvider,
 	): IDisposable;
-
 	registerTypeHierarchyProvider(
 		selector: DocumentSelector,
-
 		provider: TypeHierarchyProvider,
 	): IDisposable;
-
 	registerLinkedEditingRangeProvider(
 		selector: DocumentSelector,
-
 		provider: LinkedEditingRangeProvider,
 	): IDisposable;
-
 	registerInlayHintsProvider(
 		selector: DocumentSelector,
-
 		provider: InlayHintsProvider,
 	): IDisposable;
-
 	registerDocumentColorProvider(
 		selector: DocumentSelector,
-
 		provider: DocumentColorProvider,
 	): IDisposable;
-
 	registerFoldingRangeProvider(
 		selector: DocumentSelector,
-
 		provider: FoldingRangeProvider,
 	): IDisposable;
 
-	// Other methods typically on vscode.languages
+	// Other utility methods
 	getLanguages(): Promise<string[]>;
-
 	setTextDocumentsLanguage(
 		document: TextDocument,
-
 		languageId: string,
-
-		// Assuming TextDocument is vscode.TextDocument
 	): Promise<TextDocument>;
-
-	// Score
-	match(selector: DocumentSelector, document: TextDocument): number;
-
-	createDiagnosticCollection?(
-		name?: string,
-
-		// Usually on its own service
-	): /*vscode.DiagnosticCollection*/ any;
-
-	// Usually on Diagnostics service
-	// getDiagnostics?(resource?: VscodeUri): readonly Diagnostic[];
-
-	// Usually on Diagnostics service
-	// onDidChangeDiagnostics?: VscodeEvent<readonly VscodeUri[]>;
-
+	match(selector: DocumentSelector, document: TextDocument): number; // Returns a score
 	setLanguageStatus(
 		selector: DocumentSelector,
-
 		status: LanguageStatusItem,
 	): IDisposable;
+	createLanguageStatusItem(
+		id: string,
+		selector: DocumentSelector,
+	): LanguageStatusItem; // Added from newer API
 
-	// ... and more, e.g., for LanguageConfiguration, Indentation Rules
+	// Diagnostics related APIs are typically on a separate service (e.g., ExtHostDiagnostics)
+	// but sometimes exposed via `vscode.languages` for convenience in the API.
+	// This shim assumes they are handled by `ShimDiagnosticsService` and exposed elsewhere
+	// by the main API factory in `index.ts`.
+	// createDiagnosticCollection?(name?: string): VscodeDiagnosticCollection;
+	// getDiagnostics?(resource?: VscodeUri): readonly VscodeDiagnostic[];
+	// onDidChangeDiagnostics?: VscodeEvent<readonly VscodeUri[]>;
 }
 
+/**
+ * Cocoon's implementation of the `vscode.languages` API namespace.
+ * It delegates provider registrations to an injected `ShimLanguageFeatures` service.
+ */
 export class ShimLanguages
 	extends BaseCocoonShim
 	implements VscodeLanguagesApiSubset
 {
-	// Use the concrete ShimLanguageFeatures type for #languageFeaturesService for direct calls to its $register methods.
-	// ShimLanguageFeatures itself implements ExtHostLanguageFeaturesServiceShape
+	// Use the concrete ShimLanguageFeatures type for direct calls to its $register methods.
 	readonly #languageFeaturesService: ShimLanguageFeatures;
+	// Store the extension ID for which this `vscode.languages` object is being created.
+	// This is crucial for attributing provider registrations.
+	readonly #extensionContextId: ExtensionIdentifier;
 
+	/**
+	 * Creates an instance of ShimLanguages.
+	 * @param rpcService The RPC service adapter (passed to base, not directly used here).
+	 * @param logService The logging service.
+	 * @param languageFeaturesService The instance of `ShimLanguageFeatures` to delegate registrations to.
+	 * @param extensionContextId The `ExtensionIdentifier` of the extension this API object is for.
+	 */
 	constructor(
-		// Inherited, not directly used by this shim's methods
-		rpcService: IExtHostRpcService | undefined,
-
-		// Inherited for logging
-		logService: ILogService | undefined,
-
-		// Injected ShimLanguageFeatures instance
+		rpcService: IRpcProtocolServiceAdapter | undefined,
+		logService: ILogServiceForShim | undefined,
 		languageFeaturesService: ShimLanguageFeatures,
+		extensionContextId: ExtensionIdentifier,
 	) {
-		// Service identifier for logging
 		super("LanguagesAPI", rpcService, logService);
-
 		this.#languageFeaturesService = languageFeaturesService;
-
-		this._log("Initializing Languages API Shim...");
+		this.#extensionContextId = extensionContextId;
+		this._log(
+			`Initialized for extension '${this.#extensionContextId.value}'.`,
+		);
 
 		if (!this.#languageFeaturesService) {
 			this._logError(
-				"CRITICAL: ShimLanguageFeatures service not provided! Language provider registration will fail.",
+				"CRITICAL: ShimLanguageFeatures service instance not provided! All language provider registrations will fail.",
 			);
-
-			// Consider throwing an error here as this is a critical dependency.
+			// Consider throwing an error here as this is a fundamental dependency for this shim to function.
 		}
 	}
 
+	/**
+	 * This shim primarily delegates to another local ExtHost service (`ShimLanguageFeatures`)
+	 * and does not make direct RPC calls itself.
+	 */
+	protected override _requiresRpc(): boolean {
+		return false;
+	}
+
+	/**
+	 * Generic helper to handle the registration of a language feature provider.
+	 * It calls the asynchronous registration function on `ShimLanguageFeatures` and
+	 * returns a `Disposable` that will unregister the provider when disposed.
+	 *
+	 * @template P The type of the provider being registered.
+	 * @param providerType A string identifying the type of provider (e.g., "Hover", "Completion"), for logging.
+	 * @param registrationFn A function that, when called, performs the asynchronous registration
+	 *                       with `ShimLanguageFeatures` and returns a Promise for the provider handle.
+	 * @returns An `IDisposable` to unregister the provider.
+	 */
 	private _handleProviderRegistration<P>(
 		providerType: string,
-
-		// The function that calls ShimLanguageFeatures.$register...
 		registrationFn: () => Promise<number>,
 	): IDisposable {
 		if (!this.#languageFeaturesService) {
+			// Should have been caught in constructor, but double-check
 			this._logError(
-				`Cannot register ${providerType} provider: LanguageFeatures service unavailable. Returning NOP disposable.`,
+				`Cannot register ${providerType}Provider: ShimLanguageFeatures service is unavailable. Returning NOP disposable.`,
 			);
-
-			// Return a NOP disposable
 			return Disposable.None;
 		}
 
-		this._log(`vscode.languages.register${providerType}Provider called.`);
+		// this._logService?.trace(`vscode.languages.register${providerType}Provider called by ext '${this.#extensionContextId.value}'.`);
 
-		// The actual registration call is now async.
-		// We need to return a disposable immediately.
-		// The disposable's dispose method will use the handle obtained from the promise.
-		let handle = -1;
+		let handle = -1; // Sentinel for "handle not yet received" or "registration failed"
+		let registrationSucceeded = false;
 
-		let registrationAttempted = false;
+		// Start the registration process. The promise might not resolve immediately.
+		const registrationPromise = registrationFn();
 
-		let registrationPromise: Promise<number> | undefined;
-
-		const tryRegister = () => {
-			if (registrationAttempted) return registrationPromise!;
-
-			registrationAttempted = true;
-
-			registrationPromise = registrationFn();
-
-			registrationPromise
-				.then(
-					(resolvedHandle) => {
-						handle = resolvedHandle;
-
-						this._log(
-							`${providerType}Provider registration with ShimLanguageFeatures successful (handle: ${handle})`,
-						);
-					},
-
-					(registrationError: any) => {
-						// Handle remains -1, dispose will be a NOP for main thread unregistration.
-						this._logError(
-							`${providerType}Provider registration with ShimLanguageFeatures failed:`,
-
-							registrationError,
-						);
-
-						// TODO: Should this error be propagated to the extension?
-						// VS Code's API usually returns Disposable and errors might be logged or silent.
-					},
-				)
-				.catch((e) => {
+		registrationPromise
+			.then(
+				(resolvedHandle) => {
+					handle = resolvedHandle;
+					registrationSucceeded = true;
+					// this._logService?.trace(`${providerType}Provider registration with ShimLanguageFeatures for ext '${this.#extensionContextId.value}' succeeded (Handle: ${handle})`);
+				},
+				(registrationError: any) => {
+					// `handle` remains -1, `registrationSucceeded` remains false.
 					this._logError(
-						`Unexpected error in ${providerType}Provider registration promise chain:`,
-
-						e,
+						`${providerType}Provider registration with ShimLanguageFeatures for ext '${this.#extensionContextId.value}' failed:`,
+						registrationError,
 					);
-				});
-
-			return registrationPromise;
-		};
-
-		// Call immediately to start registration
-		tryRegister();
+					// The error is logged by ShimLanguageFeatures or the _registerProviderOnMainThread helper.
+					// Extensions typically don't get immediate feedback on registration failure from `vscode.languages.register*`.
+				},
+			)
+			.catch((unhandledPromiseErr) => {
+				// Catch any unhandled rejection from the then() blocks themselves
+				this._logError(
+					`Unexpected error in ${providerType}Provider registration promise chain for ext '${this.#extensionContextId.value}':`,
+					unhandledPromiseErr,
+				);
+			});
 
 		return new Disposable(() => {
-			// If handle is set, registration succeeded (or is in flight and will succeed)
-			if (handle !== -1) {
-				this._log(
-					`Disposing ${providerType}Provider registration (handle: ${handle})`,
-				);
-
+			// This dispose function is called by the extension.
+			// If registration succeeded and we have a valid handle, unregister.
+			if (registrationSucceeded && handle !== -1) {
+				// this._logService?.trace(`Disposing ${providerType}Provider registration for ext '${this.#extensionContextId.value}' (Handle: ${handle})`);
 				this.#languageFeaturesService
-					.$unregisterProvider(handle)
+					.$unregister(handle) // Use generic $unregister
 					.catch((e: any) =>
 						this._logError(
-							`Failed to unregister ${providerType}Provider handle ${handle}:`,
-
-							refineError(
+							`Failed to unregister ${providerType}Provider (Handle: ${handle}) for ext '${this.#extensionContextId.value}':`,
+							refineErrorForShim(
 								e,
-
 								this._logService,
-
 								"unregisterProvider",
 							),
 						),
 					);
-			} else {
-				// Registration might not have completed or failed.
-				// If it's still in flight, ensure it gets unregistered once handle is known.
-				if (registrationPromise) {
-					this._log(
-						`Dispose called for ${providerType}Provider before registration completed or handle known. Scheduling unregistration.`,
-					);
-
-					registrationPromise
-						.then(
-							(resolvedHandleAfterDispose) => {
-								if (resolvedHandleAfterDispose !== -1) {
-									// Check if it's a valid handle
-									this._log(
-										`Unregistering ${providerType}Provider (handle: ${resolvedHandleAfterDispose}) post-dispose after registration completed.`,
-									);
-
-									this.#languageFeaturesService
-										.$unregisterProvider(
-											resolvedHandleAfterDispose,
-										)
-										.catch((e: any) =>
-											this._logError(
-												`Failed to unregister ${providerType}Provider handle ${resolvedHandleAfterDispose} post-dispose:`,
-
-												refineError(
-													e,
-
-													this._logService,
-
-													"unregisterProvider",
-												),
-											),
-										);
-								}
-							},
-
-							(_registrationError) => {
-								// If registration failed, nothing to unregister on main thread.
-								this._log(
-									`${providerType}Provider registration failed, no unregistration needed for failed handle.`,
-								);
-							},
-						)
-						.catch((e) => {
-							this._logError(
-								`Error in post-dispose unregistration logic for ${providerType}Provider:`,
-
-								e,
+			} else if (!registrationSucceeded && handle === -1) {
+				// Registration might have failed or is still pending but dispose was called early.
+				// If it's still pending and then succeeds, we need to unregister it then.
+				registrationPromise
+					.then((resolvedHandleAfterDispose) => {
+						if (resolvedHandleAfterDispose !== -1) {
+							// If it eventually succeeded
+							this._logWarn(
+								`Unregistering ${providerType}Provider (Handle: ${resolvedHandleAfterDispose}) for ext '${this.#extensionContextId.value}' post-dispose, as registration completed after dispose was called.`,
 							);
-						});
-				} else {
-					this._logWarn(
-						`Disposing ${providerType}Provider but registration was not attempted or promise is missing.`,
-					);
-				}
+							this.#languageFeaturesService
+								.$unregister(resolvedHandleAfterDispose)
+								.catch((e: any) =>
+									this._logError(
+										`Post-dispose unregistration failed for ${providerType}Provider (Handle: ${resolvedHandleAfterDispose}):`,
+										e,
+									),
+								);
+						}
+					})
+					.catch(() => {
+						/* Registration ultimately failed, nothing to unregister */
+					});
 			}
 		});
 	}
 
 	// --- vscode.languages API Registration Methods ---
-	// Each method delegates to ShimLanguageFeatures and wraps the unregistration in a Disposable.
+	// Each method delegates to ShimLanguageFeatures, passing the extension ID.
 
 	public registerHoverProvider(
 		selector: DocumentSelector,
-
 		provider: HoverProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("Hover", () =>
 			this.#languageFeaturesService.$registerHoverProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerCompletionItemProvider(
 		selector: DocumentSelector,
-
 		provider: CompletionItemProvider,
-
 		...triggerCharacters: string[]
 	): IDisposable {
 		return this._handleProviderRegistration("CompletionItem", () =>
-			this.#languageFeaturesService.$registerCompletionProvider(
+			this.#languageFeaturesService.$registerCompletionItemProvider(
 				selector,
-
 				provider,
-
 				triggerCharacters,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerDefinitionProvider(
 		selector: DocumentSelector,
-
 		provider: DefinitionProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("Definition", () =>
 			this.#languageFeaturesService.$registerDefinitionProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerCodeActionsProvider(
 		selector: DocumentSelector,
-
 		provider: CodeActionProvider,
-
 		metadata?: CodeActionProviderMetadata,
 	): IDisposable {
 		return this._handleProviderRegistration("CodeActions", () =>
 			this.#languageFeaturesService.$registerCodeActionProvider(
 				selector,
-
 				provider,
-
 				metadata,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerCodeLensProvider(
 		selector: DocumentSelector,
-
 		provider: CodeLensProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("CodeLens", () =>
 			this.#languageFeaturesService.$registerCodeLensProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerDeclarationProvider(
 		selector: DocumentSelector,
-
 		provider: DeclarationProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("Declaration", () =>
 			this.#languageFeaturesService.$registerDeclarationProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerDocumentFormattingEditProvider(
 		selector: DocumentSelector,
-
 		provider: DocumentFormattingEditProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("DocumentFormattingEdit", () =>
 			this.#languageFeaturesService.$registerDocumentFormattingEditProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerDocumentHighlightProvider(
 		selector: DocumentSelector,
-
 		provider: DocumentHighlightProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("DocumentHighlight", () =>
 			this.#languageFeaturesService.$registerDocumentHighlightProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerDocumentLinkProvider(
 		selector: DocumentSelector,
-
 		provider: DocumentLinkProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("DocumentLink", () =>
 			this.#languageFeaturesService.$registerDocumentLinkProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerDocumentRangeFormattingEditProvider(
 		selector: DocumentSelector,
-
 		provider: DocumentRangeFormattingEditProvider,
 	): IDisposable {
 		return this._handleProviderRegistration(
 			"DocumentRangeFormattingEdit",
-
 			() =>
 				this.#languageFeaturesService.$registerDocumentRangeFormattingEditProvider(
 					selector,
-
 					provider,
+					this.#extensionContextId,
 				),
 		);
 	}
 
 	public registerOnTypeFormattingEditProvider(
 		selector: DocumentSelector,
-
 		provider: OnTypeFormattingEditProvider,
-
-		firstTriggerCharacter: string,
-
-		// Note: VS Code API might also take OnTypeFormattingEditProviderOptions here.
-		// This shim currently only handles trigger characters.
+		firstTriggerCharacterOrOptions:
+			| string
+			| OnTypeFormattingEditProviderOptions,
 		...moreTriggerCharacters: string[]
 	): IDisposable {
-		const triggerChars = [firstTriggerCharacter, ...moreTriggerCharacters];
-
-		// TODO: If OnTypeFormattingEditProviderOptions needs to be supported, adapt ShimLanguageFeatures
-		// and this call.
-		return this._handleProviderRegistration("OnTypeFormattingEdit", () =>
-			this.#languageFeaturesService.$registerOnTypeFormattingEditProvider(
-				selector,
-
-				provider,
-
-				triggerChars,
-			),
-		);
+		if (typeof firstTriggerCharacterOrOptions === "string") {
+			const triggerChars = [
+				firstTriggerCharacterOrOptions,
+				...moreTriggerCharacters,
+			];
+			return this._handleProviderRegistration(
+				"OnTypeFormattingEdit",
+				() =>
+					this.#languageFeaturesService.$registerOnTypeFormattingEditProvider(
+						selector,
+						provider,
+						triggerChars,
+						this.#extensionContextId,
+					),
+			);
+		} else {
+			// It's OnTypeFormattingEditProviderOptions
+			return this._handleProviderRegistration(
+				"OnTypeFormattingEdit",
+				() =>
+					this.#languageFeaturesService.$registerOnTypeFormattingEditProvider(
+						selector,
+						provider,
+						firstTriggerCharacterOrOptions,
+						this.#extensionContextId,
+					),
+			);
+		}
 	}
 
 	public registerReferenceProvider(
 		selector: DocumentSelector,
-
 		provider: ReferenceProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("Reference", () =>
 			this.#languageFeaturesService.$registerReferenceProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerRenameProvider(
 		selector: DocumentSelector,
-
 		provider: RenameProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("Rename", () =>
 			this.#languageFeaturesService.$registerRenameProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerSignatureHelpProvider(
 		selector: DocumentSelector,
-
 		provider: SignatureHelpProvider,
-
 		metadataOrTriggerChars?: SignatureHelpProviderMetadata | string[],
 	): IDisposable {
-		let actualMetadata: SignatureHelpProviderMetadata | undefined;
-
-		if (
-			typeof metadataOrTriggerChars === "object" &&
-			!Array.isArray(metadataOrTriggerChars)
-		) {
-			// It's SignatureHelpProviderMetadata
-			actualMetadata = metadataOrTriggerChars;
-		} else if (Array.isArray(metadataOrTriggerChars)) {
-			// It's the old API: string[] for trigger characters
-			actualMetadata = {
-				triggerCharacters: metadataOrTriggerChars,
-
-				retriggerCharacters: [],
-
-				// Adapt to new metadata structure
-			};
-		}
-
-		// TODO: Ensure ShimLanguageFeatures.$registerSignatureHelpProvider expects SignatureHelpProviderMetadata
 		return this._handleProviderRegistration("SignatureHelp", () =>
 			this.#languageFeaturesService.$registerSignatureHelpProvider(
 				selector,
-
 				provider,
-
-				actualMetadata,
+				metadataOrTriggerChars,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerImplementationProvider(
 		selector: DocumentSelector,
-
 		provider: ImplementationProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("Implementation", () =>
 			this.#languageFeaturesService.$registerImplementationProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerTypeDefinitionProvider(
 		selector: DocumentSelector,
-
 		provider: TypeDefinitionProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("TypeDefinition", () =>
 			this.#languageFeaturesService.$registerTypeDefinitionProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerWorkspaceSymbolProvider(
 		provider: WorkspaceSymbolProvider,
 	): IDisposable {
-		// WorkspaceSymbolProvider does not take a selector.
-		// Pass null or a specific convention to ShimLanguageFeatures if needed.
 		return this._handleProviderRegistration("WorkspaceSymbol", () =>
 			this.#languageFeaturesService.$registerWorkspaceSymbolProvider(
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerSelectionRangeProvider(
 		selector: DocumentSelector,
-
 		provider: SelectionRangeProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("SelectionRange", () =>
 			this.#languageFeaturesService.$registerSelectionRangeProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerCallHierarchyProvider(
 		selector: DocumentSelector,
-
 		provider: CallHierarchyProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("CallHierarchy", () =>
 			this.#languageFeaturesService.$registerCallHierarchyProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerTypeHierarchyProvider(
 		selector: DocumentSelector,
-
 		provider: TypeHierarchyProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("TypeHierarchy", () =>
 			this.#languageFeaturesService.$registerTypeHierarchyProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerLinkedEditingRangeProvider(
 		selector: DocumentSelector,
-
 		provider: LinkedEditingRangeProvider,
 	): IDisposable {
 		return this._handleProviderRegistration("LinkedEditingRange", () =>
 			this.#languageFeaturesService.$registerLinkedEditingRangeProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
-
 	public registerInlayHintsProvider(
 		selector: DocumentSelector,
-
 		provider: InlayHintsProvider,
 	): IDisposable {
-		// TODO: Ensure ShimLanguageFeatures.$registerInlayHintsProvider is implemented.
 		return this._handleProviderRegistration("InlayHints", () =>
-			(this.#languageFeaturesService as any).$registerInlayHintsProvider(
+			this.#languageFeaturesService.$registerInlayHintsProvider(
 				selector,
-
 				provider,
+				this.#extensionContextId,
+			),
+		);
+	}
+	public registerDocumentColorProvider(
+		selector: DocumentSelector,
+		provider: DocumentColorProvider,
+	): IDisposable {
+		return this._handleProviderRegistration("DocumentColor", () =>
+			this.#languageFeaturesService.$registerDocumentColorProvider(
+				selector,
+				provider,
+				this.#extensionContextId,
+			),
+		);
+	}
+	public registerFoldingRangeProvider(
+		selector: DocumentSelector,
+		provider: FoldingRangeProvider,
+	): IDisposable {
+		return this._handleProviderRegistration("FoldingRange", () =>
+			this.#languageFeaturesService.$registerFoldingRangeProvider(
+				selector,
+				provider,
+				this.#extensionContextId,
 			),
 		);
 	}
 
-	public registerDocumentColorProvider(
-		selector: DocumentSelector,
-
-		provider: DocumentColorProvider,
-	): IDisposable {
-		// TODO: Ensure ShimLanguageFeatures.$registerDocumentColorProvider is implemented.
-		return this._handleProviderRegistration("DocumentColor", () =>
-			(
-				this.#languageFeaturesService as any
-			).$registerDocumentColorProvider(selector, provider),
-		);
-	}
-
-	public registerFoldingRangeProvider(
-		selector: DocumentSelector,
-
-		provider: FoldingRangeProvider,
-	): IDisposable {
-		// TODO: Ensure ShimLanguageFeatures.$registerFoldingRangeProvider is implemented.
-		return this._handleProviderRegistration("FoldingRange", () =>
-			(
-				this.#languageFeaturesService as any
-			).$registerFoldingRangeProvider(selector, provider),
-		);
-	}
-
-	// --- Other vscode.languages methods ---
+	// --- Other vscode.languages methods (Stubs or requiring MainThread interaction) ---
 	public async getLanguages(): Promise<string[]> {
 		this._logWarnOnce(
-			"API not fully implemented by ShimLanguageFeatures/MainThread: languages.getLanguages",
+			"API STUB: vscode.languages.getLanguages() called. Returning empty array. Full implementation requires RPC to MainThread.",
 		);
-
-		// TODO: This would typically call a method on MainThreadLanguages or similar via RPC.
-		// For example: return this._rpcService?.getProxy(MainContext.MainThreadLanguages)?.$getLanguages() || Promise.resolve([]);
-
-		// Stub
+		// TODO: Proxy to `this.#mainThreadLanguagesProxy?.$getLanguages()` if such a proxy exists.
 		return Promise.resolve([]);
 	}
 
 	public async setTextDocumentsLanguage(
 		document: TextDocument,
-
 		languageId: string,
 	): Promise<TextDocument> {
 		this._logWarnOnce(
-			"API not fully implemented by ShimLanguageFeatures/MainThread: languages.setTextDocumentsLanguage",
+			`API STUB: vscode.languages.setTextDocumentsLanguage() called for URI '${document.uri.toString()}' to LangID '${languageId}'. This is a NOP in the current shim.`,
 		);
-
-		// TODO: This would involve an RPC call to MainThreadLanguages to change the language mode.
-		// After the change, Mountain should send an update ($acceptModelLanguageChanged),
-
-		// which ShimDocumentService handles, updating the document.
-		// The returned TextDocument should be the updated one.
+		// TODO: Proxy to `MainThreadDocuments.$setLanguageId(uri, languageId)`.
+		// The document object itself might not change instance but its `languageId` property should reflect the new ID
+		// after the main thread confirms the change and CocoonDocumentService updates its model.
 		// For now, return the original document as a NOP.
 		if (document.languageId !== languageId) {
-			console.warn(
-				`ShimLanguages: Pretending to change language of ${document.uri.toString()} to ${languageId}, but it's a NOP.`,
+			this._logWarn(
+				`Simulating language change for ${document.uri.toString()} to ${languageId} (actual change depends on MainThread update).`,
 			);
+			// If we could mutate it (which we shouldn't for an API object):
+			// Object.defineProperty(document, 'languageId', { value: languageId });
 		}
-
 		return document;
 	}
 
 	public match(selector: DocumentSelector, document: TextDocument): number {
-		this._logWarnOnce(
-			"API not fully implemented or needs VS Code's internal matcher: languages.match",
-		);
-
-		// TODO: This requires VS Code's internal document selector matching logic.
-		// (typically found in vs/base/common/glob or vs/editor/common/services/modelService).
-		// For a basic shim, this might always return 0 or 1 if the languageId matches.
+		// this._logService?.trace(`vscode.languages.match called. Selector: ${JSON.stringify(selector)}, DocURI: ${document.uri.toString()}`);
+		// TODO: This requires VS Code's internal document selector matching logic, which can be complex
+		// (handling globs, language filters, scheme filters). Found in `vs/base/common/glob.ts` or
+		// `vs/editor/common/services/modelService.ts` (matchLanguage).
+		// For a basic shim:
 		if (typeof selector === "string") {
 			// Simple language ID match
-			return document.languageId === selector ? 1 : 0;
+			return document.languageId === selector ? 10 : 0; // VS Code often returns a score
 		}
-
 		if (Array.isArray(selector)) {
-			// Array of selectors
-			return Math.max(...selector.map((s) => this.match(s, document)));
+			// Array of selectors, take max score
+			return Math.max(0, ...selector.map((s) => this.match(s, document)));
 		}
-
 		if (typeof selector === "object" && selector !== null) {
 			// LanguageFilter
-			if (selector.language && document.languageId !== selector.language)
-				return 0;
+			let score = 0;
+			if (selector.language && document.languageId === selector.language)
+				score += 5;
+			else if (selector.language) return 0; // Language mismatch
 
-			if (selector.scheme && document.uri.scheme !== selector.scheme)
-				return 0;
+			if (selector.scheme && document.uri.scheme === selector.scheme)
+				score += 5;
+			else if (selector.scheme) return 0; // Scheme mismatch
 
-			// Pattern matching is complex
 			if (selector.pattern)
-				this._logWarn(
-					"Pattern matching in languages.match selector not implemented.",
+				this._logWarnOnce(
+					"Pattern matching in vscode.languages.match selector not fully implemented in shim.",
 				);
-
-			// Simplified: if language/scheme match (or not specified), assume match
-			return 1;
+			// If language/scheme matched or weren't specified, give some score.
+			return score > 0 || (!selector.language && !selector.scheme)
+				? score || 1
+				: 0;
 		}
-
-		return 0;
+		return 0; // No match
 	}
 
 	public setLanguageStatus(
 		selector: DocumentSelector,
-
-		statusItem: LanguageStatusItem,
+		status: LanguageStatusItem,
 	): IDisposable {
-		this._logWarnOnce("API not implemented: languages.setLanguageStatus");
-
-		// TODO: This would require an RPC call to MainThreadLanguageStatus service.
-		// The LanguageStatusItem also has a command which might need to be registered.
+		this._logWarnOnce(
+			`API STUB: vscode.languages.setLanguageStatus called for selector ${JSON.stringify(selector)}. Status item ID: '${status.id}'. This is a NOP.`,
+		);
+		// TODO: This would require an RPC call to a MainThreadLanguageStatus service.
+		// The LanguageStatusItem also has a `command` which might need to be handled.
 		return Disposable.None;
 	}
 
-	// createDiagnosticCollection, getDiagnostics, onDidChangeDiagnostics are typically
-	// provided by a dedicated Diagnostics service (ShimDiagnosticsService in this project).
-	// They are not usually directly on `vscode.languages` in the ExtHost implementation.
-	// If they need to be exposed here for API compatibility, they should delegate.
+	public createLanguageStatusItem(
+		id: string,
+		selector: DocumentSelector,
+	): LanguageStatusItem {
+		this._logWarnOnce(
+			`API STUB: vscode.languages.createLanguageStatusItem called for id '${id}'. Returning NOP LanguageStatusItem.`,
+		);
+		// TODO: This would involve MainThreadLanguageStatus.$createStatusItem(id, selectorDto)
+		// and returning a proxy object that updates the main thread on property changes.
+		const itemEmitter = new VscodeEmitter<void>();
+		const NOP_STATUS_ITEM: LanguageStatusItem = {
+			id,
+			selector,
+			get name() {
+				return undefined;
+			},
+			set name(_value) {},
+			get text() {
+				return "";
+			},
+			set text(_value) {},
+			get detail() {
+				return undefined;
+			},
+			set detail(_value) {},
+			get severity() {
+				return LanguageStatusSeverity.Information;
+			},
+			set severity(_value) {},
+			get command() {
+				return undefined;
+			},
+			set command(_value) {},
+			get accessibilityInformation() {
+				return undefined;
+			},
+			set accessibilityInformation(_value) {},
+			get busy() {
+				return false;
+			},
+			set busy(_value) {},
+			onDidChange: itemEmitter.event,
+			dispose: () => itemEmitter.dispose(),
+		};
+		return NOP_STATUS_ITEM;
+	}
+
+	/**
+	 * Disposes of resources held by this shim instance.
+	 */
+	public override dispose(): void {
+		super.dispose(); // From BaseCocoonShim
+		// No specific event emitters owned directly by ShimLanguages to dispose here.
+		// Disposables for provider registrations are handled by their respective IDisposable returns.
+		this._log("Disposed.");
+	}
 }
