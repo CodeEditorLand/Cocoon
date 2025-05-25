@@ -1,454 +1,503 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Diagnostics Shim (shims/diagnostics-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements the `vscode.languages.createDiagnosticCollection` API (`IExtHostDiagnostics`)
- * and the returned `vscode.DiagnosticCollection` interface for Cocoon. Allows extensions
- * to report problems (diagnostics/markers) to the core editor.
+ * Implements the `vscode.languages.createDiagnosticCollection` API (which returns a
+ * `vscode.DiagnosticCollection`) and other diagnostics-related parts of the
+ * `vscode.languages` namespace, such as `getDiagnostics` and `onDidChangeDiagnostics`.
+ * This functionality is typically managed by an `IExtHostDiagnostics` service.
+ *
+ * This shim allows extensions to report problems (diagnostics or markers) for specific
+ * document URIs. These diagnostics are then proxied to the Mountain host process,
+ *
+ * which is responsible for displaying them in the editor's UI (e.g., in the Problems panel
+ * and as squigglies in the editor).
  *
  * Responsibilities:
- * - `ShimDiagnosticsService`:
- *   - `createDiagnosticCollection(name?)`: Creates a new `ShimDiagnosticCollectionImpl` instance
- *     with a unique owner ID. Manages multiple collections.
- *   - `getDiagnostics()`: Proxies to Mountain to get aggregated diagnostics for a resource.
- *   - `onDidChangeDiagnostics`: Event that fires when diagnostics change (needs notifications from Mountain).
- * - `ShimDiagnosticCollectionImpl`:
- *   - Implements `vscode.DiagnosticCollection`.
- *   - `set(uri | entries)`: Updates diagnostics, converts to `IMarkerData`, and sends to Mountain via `$changeMany`.
- *   - `delete(uri)`: Removes diagnostics for a URI, calls `$changeMany` with `undefined` markers.
- *   - `clear()`: Removes all diagnostics for this collection, calls `$clear` RPC.
- *   - `get()`, `has()`, `forEach()`: Operate on the local cache.
- *   - `dispose()`: Clears the collection on the main thread via `$clear`.
+ * - `ShimDiagnosticsService` (implements `IExtHostDiagnostics`):
+ *   - Provides `createDiagnosticCollection(name?)`: Creates and returns an instance
+ *     of `ShimDiagnosticCollectionImpl`. Each collection is associated with a unique
+ *     owner ID for communication with the main thread.
+ *   - Implements `getDiagnostics(resource?)`: Proxies to Mountain (`$getMany`) to fetch
+ *     aggregated diagnostics for a given resource URI.
+ *   - Manages and fires `onDidChangeDiagnostics`: An event that signals when diagnostics
+ *     for one or more resources have changed, typically triggered by an RPC call
+ *     (`$acceptDiagnosticsChanged`) from Mountain.
+ * - `ShimDiagnosticCollectionImpl` (implements `vscode.DiagnosticCollection`):
+ *   - Provides the API for managing diagnostics within a specific collection (e.g.,
+ *
+ *     `set(uri, diagnostics)`, `delete(uri)`, `clear()`).
+ *   - Converts `vscode.Diagnostic` objects into an internal `IMarkerData`-like DTO format.
+ *   - Sends batches of diagnostic changes to Mountain via the `$changeMany` RPC call.
+ *   - Clears all diagnostics for its collection on the main thread via `$clear` RPC.
+ *   - Provides local cache access methods (`get()`, `has()`, `forEach()`).
+ *   - Handles its own disposal, notifying the main thread.
  *
  * Key Interactions:
- * - Provides `vscode.languages.createDiagnosticCollection`, `vscode.languages.getDiagnostics`, `vscode.languages.onDidChangeDiagnostics`.
- * - Interacts with `RPCProtocol` via `this._rpcService.getProxy(MainContext.MainThreadDiagnostics)`.
- * - Converts `vscode.Diagnostic` to `IMarkerData` format.
- * - Mountain would call `$onDidChangeDiagnostics` on `ExtHostDiagnostics` (this service) to signal changes.
+ * - `ShimDiagnosticsService` is registered with DI in `Cocoon/index.ts` as `IExtHostDiagnostics`.
+ * - The `vscode.languages.createDiagnosticCollection` API (and related diagnostics features)
+ *   provided to extensions (via the API factory) delegate to this service.
+ * - All operations that modify or query persistent diagnostic state are proxied to
+ *   `MainContext.MainThreadDiagnostics` on Mountain via RPC.
+ * - Uses `BaseCocoonShim` for common utilities.
+ *
+ * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
-// Assuming API objects from 'vscode' shim
 import {
 	Emitter as VscodeEmitter,
 	type Event as VscodeEvent,
 } from "vs/base/common/event";
+import type { UriComponents as VSCodeInternalUriComponents } from "vs/base/common/uri"; // For RPC DTOs
+
+// VS Code internal types for markers, which diagnostics are converted to for the main thread.
 import {
-	IMarkerData,
-	RelatedInformation as MarkerRelatedInformation,
-	MarkerSeverity,
-	MarkerTag,
-	// For IMarkerData structure
+	MarkerSeverity as InternalMarkerSeverity, // VS Code's internal enum
+	MarkerTag as InternalMarkerTag, // VS Code's internal enum
+	// Assuming IMarkerData, MarkerSeverity, MarkerTag are available or accurately defined locally.
+	// If importing from 'vs/platform/markers/common/markers':
+	type IMarkerData, // Using ILocalMarkerData as a DTO, but IMarkerData is the target structure.
+	// RelatedInformation as MarkerRelatedInformation, // Using ILocalRelatedInformation
 } from "vs/platform/markers/common/markers";
 import {
-	ExtHostContext,
-	MainContext,
+	ExtHostContext, // For registering this service for RPC calls from MainThread
+	MainContext, // For proxying to MainThreadDiagnostics
 } from "vs/workbench/api/common/extHost.protocol";
+// Import types from the public 'vscode' API
 import {
 	Diagnostic,
 	DiagnosticRelatedInformation,
-	DiagnosticSeverity,
-	DiagnosticTag,
-	Uri,
-	Location as VscodeLocation,
-	// Renamed to avoid conflict if Range is used internally
-	Range as VscodeRange,
+	DiagnosticSeverity, // API enum
+	DiagnosticTag, // API enum
+	ThemeColor, // For Diagnostic.tags, though not directly used in conversion here
+	Location as VscodeLocation, // API type
+	Range as VscodeRange, // API type
+	Uri as VscodeUri, // API type
 	type DiagnosticCollection,
-	// For onDidChangeDiagnostics event payload
-	// Already imported
-	// Uri as VscodeUri,
 } from "vscode";
 
 import {
 	BaseCocoonShim,
-	refineError,
-	type IExtHostRpcService,
-	type ILogService,
+	refineErrorForShim,
+	type ILogServiceForShim,
+	type IRpcProtocolServiceAdapter,
 	type ProxyIdentifier,
 } from "./_baseShim";
 
-// TODO: Ensure IMarkerData, MarkerSeverity, MarkerTag, RelatedInformation interfaces/enums are correctly imported or defined
-// if 'vs/platform/markers/common/markers' is not available. For now, I'll define simplified local versions.
+// --- Local DTO and Enum Definitions (if not directly using VS Code internals) ---
+// These should accurately mirror the structures expected by MainThreadDiagnostics
+// and produced by this shim's conversion logic.
 
-// --- Local type definitions if VS Code internals are not directly available ---
-// These should match the actual structures used by the MainThreadDiagnostics service.
+/** DTO for URI components sent over RPC. */
+interface ILocalUriComponents extends VSCodeInternalUriComponents {
+	// $mid is often added by marshallers, ensure it's compatible
+}
 
+/** DTO for individual diagnostic/marker data sent to MainThread. */
 interface ILocalMarkerData {
-	// Simplified version of IMarkerData
-	// Corresponds to MarkerSeverity
-	severity: number;
-
+	severity: InternalMarkerSeverity; // Use VS Code's internal MarkerSeverity enum values
 	message: string;
 
-	startLineNumber: number;
-
-	startColumn: number;
-
+	startLineNumber: number; // 1-based
+	startColumn: number; // 1-based
 	endLineNumber: number;
 
 	endColumn: number;
 
 	source?: string;
 
-	// target is IUriComponents
-	code?: string | { value: string; target: ILocalUriComponents };
-
+	code?: string | { value: string; target: ILocalUriComponents }; // target is URI DTO
 	relatedInformation?: ILocalRelatedInformation[];
 
-	// Corresponds to MarkerTag[]
-	tags?: number[];
-
-	// owner is usually implicit or part of the RPC call itself
-	// owner?: string;
-
-	// resource is usually part of the entry tuple [uri, markers]
-	// resource?: ILocalUriComponents;
+	tags?: InternalMarkerTag[]; // Use VS Code's internal MarkerTag enum values
+	// owner: string; // Owner is usually the collection's ownerId, sent with $changeMany
+	// resource: ILocalUriComponents; // Resource is part of the [uri, markers[]] entry
 }
 
+/** DTO for related information within a diagnostic/marker. */
 interface ILocalRelatedInformation {
-	resource: ILocalUriComponents;
-
+	resource: ILocalUriComponents; // URI DTO
 	message: string;
 
-	startLineNumber: number;
-
-	startColumn: number;
-
+	startLineNumber: number; // 1-based
+	startColumn: number; // 1-based
 	endLineNumber: number;
 
 	endColumn: number;
 }
 
-interface ILocalUriComponents {
-	// Used for RPC, can be simplified from full Uri if needed
-	scheme: string;
-
-	authority?: string;
-
-	path: string;
-
-	query?: string;
-
-	fragment?: string;
-
-	// Often included for debugging or by marshallers
-	external?: string;
-
-	// MarshalledId.Uri a common pattern
-	$mid?: 1;
-}
-
-// Local enum mapping (ensure these values match VS Code's MarkerSeverity)
-enum LocalMarkerSeverity {
-	Hint = 1,
-
-	Info = 2,
-
-	Warning = 4,
-
-	Error = 8,
-}
-
-// Ensure these values match VS Code's MarkerTag
-enum LocalMarkerTag {
-	Unnecessary = 1,
-
-	Deprecated = 2,
-}
-
-// For MainThreadDiagnostics RPC proxy
+/**
+ * Defines the RPC interface for the `MainThreadDiagnostics` service expected on Mountain.
+ */
 interface MainThreadDiagnosticsShape {
+	/**
+	 * Applies diagnostic changes for multiple resources from a specific owner.
+	 * @param owner The unique identifier of the diagnostic collection.
+	 * @param entries An array of tuples: `[uriComponents, markerDataArray | undefined]`.
+	 *                If `markerDataArray` is `undefined`, all diagnostics for that URI from this owner are cleared.
+	 */
 	$changeMany(
 		owner: string,
 
 		entries: [ILocalUriComponents, ILocalMarkerData[] | undefined][],
 	): Promise<void>;
 
+	/**
+	 * Clears all diagnostics from a specific owner.
+	 * @param owner The unique identifier of the diagnostic collection.
+	 */
 	$clear(owner: string): Promise<void>;
 
-	// For getDiagnostics():
+	/**
+	 * Retrieves all markers (diagnostics) for a given resource URI, aggregated from all owners.
+	 * @param resourceFilter Optional URI (as components) to filter diagnostics for. If undefined, gets all.
+	 * @returns A promise resolving to an array of marker data.
+	 */
 	$getMany(resourceFilter?: ILocalUriComponents): Promise<ILocalMarkerData[]>;
 }
 
-// For ExtHostDiagnostics (methods called BY Mountain)
-interface ExtHostDiagnosticsShape {
-	// Method for Mountain to push diagnostic changes to this ExtHost instance
+/**
+ * Defines the RPC interface for this `ExtHostDiagnostics` service, for methods called BY Mountain.
+ */
+interface ExtHostDiagnosticsRpcShape {
+	/**
+	 * Called by Mountain to notify the extension host that diagnostics for certain URIs have changed.
+	 * @param uris An array of URI components for which diagnostics have changed.
+	 */
 	$acceptDiagnosticsChanged(uris: ILocalUriComponents[]): void;
 }
 
-type DiagnosticEntry = [Uri, readonly Diagnostic[] | undefined | null];
+type DiagnosticEntryTuple = [
+	VscodeUri,
 
+	readonly Diagnostic[] | undefined | null,
+]; // From vscode.DiagnosticCollection.set
+
+/**
+ * Cocoon's implementation of `vscode.DiagnosticCollection`.
+ */
 class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
-	readonly #nameProp?: string;
+	readonly #collectionName?: string; // The human-readable name of the collection.
+	readonly #ownerId: string; // Unique ID for this collection, used in RPC calls.
+	#mainThreadDiagnosticsProxy: MainThreadDiagnosticsShape | null;
 
-	readonly #owner: string;
-
-	#proxy: MainThreadDiagnosticsShape | null;
-
-	#logService?: ILogService;
+	#logService?: ILogServiceForShim;
 
 	#isDisposed = false;
 
-	// Key: uri.toString()
-	readonly #data = new Map<string, Diagnostic[]>();
+	// Local cache of diagnostics: Map<uri.toString(), vscode.Diagnostic[]>
+	readonly #diagnosticsCache = new Map<string, Diagnostic[]>();
 
+	/**
+	 * Creates an instance of ShimDiagnosticCollectionImpl.
+	 * @param name The optional human-readable name of this collection.
+	 * @param ownerId A unique identifier for this collection on the main thread.
+	 * @param proxy The RPC proxy to `MainThreadDiagnostics`.
+	 * @param logService The logging service.
+	 */
 	constructor(
 		name: string | undefined,
 
-		owner: string,
+		ownerId: string,
 
 		proxy: MainThreadDiagnosticsShape | null,
 
-		logService?: ILogService,
+		logService?: ILogServiceForShim,
 	) {
-		this.#nameProp = name;
+		this.#collectionName = name;
 
-		this.#owner = owner;
+		this.#ownerId = ownerId;
 
-		this.#proxy = proxy;
+		this.#mainThreadDiagnosticsProxy = proxy;
 
 		this.#logService = logService;
 
 		this._log(
-			`Created: name='${name || "(unnamed)"}', owner='${this.#owner}'`,
+			`Created collection. Name='${name || "(unnamed)"}', OwnerID='${this.#ownerId}'`,
 		);
 	}
 
-	private _log(msg: string, ...args: any[]): void {
+	private _log(message: string, ...args: any[]): void {
 		this.#logService?.trace(
-			`[DiagCol][${this.#nameProp || "unnamed"}(${this.#owner})] ${msg}`,
+			`[DiagCol][${this.#collectionName || this.#ownerId}] ${message}`,
 
 			...args,
 		);
 	}
 
-	private _logError(msg: string, ...args: any[]): void {
-		this.#logService?.error(
-			`[DiagCol][${this.#nameProp || "unnamed"}(${this.#owner})] ${msg}`,
+	private _logError(message: string | Error, ...args: any[]): void {
+		const prefix = `[DiagCol][${this.#collectionName || this.#ownerId}]`;
 
-			...args,
-		);
+		if (this.#logService) {
+			this.#logService.error(
+				message instanceof Error ? message : `${prefix} ${message}`,
+
+				...args,
+			);
+		} else {
+			if (message instanceof Error)
+				console.error(
+					`${prefix} ${message.message}`,
+
+					message.stack,
+
+					...args,
+				);
+			else console.error(`${prefix} ${message}`, ...args);
+		}
 	}
 
-	private _logWarn(msg: string, ...args: any[]): void {
+	private _logWarn(message: string, ...args: any[]): void {
 		this.#logService?.warn(
-			`[DiagCol][${this.#nameProp || "unnamed"}(${this.#owner})] ${msg}`,
+			`[DiagCol][${this.#collectionName || this.#ownerId}] ${message}`,
 
 			...args,
 		);
 	}
 
-	private _validate(): void {
-		if (this.#isDisposed)
-			throw new Error("DiagnosticCollection has been disposed");
+	/** Throws an error if the collection has been disposed. */
+	private _validateNotDisposed(): void {
+		if (this.#isDisposed) {
+			throw new Error(
+				`DiagnosticCollection '${this.#collectionName || this.#ownerId}' has been disposed.`,
+			);
+		}
 	}
 
+	/** Name of this diagnostic collection. */
 	get name(): string {
-		return this.#nameProp || "";
+		return this.#collectionName || ""; // VS Code API expects string, even if unnamed.
 	}
 
+	/** {@inheritDoc vscode.DiagnosticCollection.set} */
 	public set(
-		uri: Uri,
+		uri: VscodeUri,
 
 		diagnostics: readonly Diagnostic[] | undefined | null,
 	): void;
 
-	public set(entries: readonly DiagnosticEntry[]): void;
+	public set(entries: readonly DiagnosticEntryTuple[]): void;
 
 	public set(
-		first: Uri | readonly DiagnosticEntry[],
+		firstParam: VscodeUri | readonly DiagnosticEntryTuple[],
 
-		diagnostics?: readonly Diagnostic[] | undefined | null,
+		diagnosticsOrUndefined?: readonly Diagnostic[] | undefined | null,
 	): void {
-		this._validate();
+		this._validateNotDisposed();
 
-		const toSync = new Map<string, Diagnostic[] | undefined>();
+		const entriesToSyncWithMainThread = new Map<
+			string,
+			ILocalMarkerData[] | undefined
+		>();
 
-		if (first instanceof Uri) {
-			const uriStr = first.toString();
+		const processEntry = (
+			uri: VscodeUri,
 
-			// this._log(`set single: ${uriStr}, count: ${diagnostics?.length ?? 0}`);
+			diags: readonly Diagnostic[] | undefined | null,
+		): void => {
+			if (!(uri instanceof VscodeUri)) {
+				this._logWarn(
+					"Skipping invalid URI in DiagnosticCollection.set():",
 
-			if (
-				diagnostics === undefined ||
-				diagnostics === null ||
-				diagnostics.length === 0
-			) {
-				if (this.#data.delete(uriStr)) toSync.set(uriStr, undefined);
-			} else {
-				const diagsCopy = [...diagnostics];
+					uri,
+				);
 
-				this.#data.set(uriStr, diagsCopy);
-
-				toSync.set(uriStr, diagsCopy);
+				return;
 			}
-		} else if (Array.isArray(first)) {
-			// this._log(`set multiple: ${first.length} entries`);
 
-			for (const [uri, diags] of first) {
-				if (uri instanceof Uri) {
-					const uriStr = uri.toString();
+			const uriString = uri.toString();
 
-					if (
-						diags === undefined ||
-						diags === null ||
-						diags.length === 0
-					) {
-						if (this.#data.delete(uriStr))
-							toSync.set(uriStr, undefined);
-					} else {
-						const diagsCopy = [...diags];
+			let newDiagnosticsForUri: Diagnostic[] | undefined;
 
-						this.#data.set(uriStr, diagsCopy);
+			if (diags === undefined || diags === null || diags.length === 0) {
+				if (this.#diagnosticsCache.delete(uriString)) {
+					// Changed from previous state
+					entriesToSyncWithMainThread.set(uriString, undefined); // Undefined means clear for this URI
+				}
+			} else {
+				newDiagnosticsForUri = [...diags]; // Create a mutable copy
+				this.#diagnosticsCache.set(uriString, newDiagnosticsForUri);
 
-						toSync.set(uriStr, diagsCopy);
-					}
-				} else {
-					this._logWarn(
-						"Skipping invalid URI in 'set' entries:",
-
-						uri,
+				try {
+					const markerData = newDiagnosticsForUri.map((d) =>
+						this._convertDiagnosticToMarkerData(d),
 					);
+
+					entriesToSyncWithMainThread.set(uriString, markerData);
+				} catch (conversionError: any) {
+					this._logError(
+						`Error converting diagnostics to marker data for URI '${uriString}'. Diagnostics for this URI will not be synced. Error: ${conversionError.message}`,
+
+						conversionError,
+					);
+
+					// Optionally, clear this URI on main thread if previously set, or leave as is.
+					// For safety, perhaps don't send a clear if conversion fails, to avoid unintended deletion.
 				}
 			}
+		};
+
+		if (firstParam instanceof VscodeUri) {
+			processEntry(firstParam, diagnosticsOrUndefined);
+		} else if (Array.isArray(firstParam)) {
+			for (const [uri, diags] of firstParam) {
+				processEntry(uri, diags);
+			}
 		} else {
-			this._logError("Invalid arguments to DiagnosticCollection.set");
+			this._logError(
+				"Invalid arguments to DiagnosticCollection.set(). Expected URI or array of entries.",
+			);
 
 			return;
 		}
 
-		if (toSync.size > 0 && this.#proxy) {
-			const entriesForProxy: [
+		if (
+			entriesToSyncWithMainThread.size > 0 &&
+			this.#mainThreadDiagnosticsProxy
+		) {
+			const rpcEntries: [
 				ILocalUriComponents,
+
 				ILocalMarkerData[] | undefined,
 			][] = [];
 
-			for (const [uriStr, diags] of toSync) {
-				let markers: ILocalMarkerData[] | undefined = undefined;
+			for (const [
+				uriStr,
 
-				if (diags) {
-					try {
-						markers = diags.map((d) =>
-							this._convertDiagnosticToMarkerData(d),
-						);
-					} catch (conversionError: any) {
-						this._logError(
-							`Error converting diagnostics to markers for ${uriStr}: ${conversionError.message || conversionError}`,
-						);
-
-						continue;
-					}
-				}
-
+				markerDataArray,
+			] of entriesToSyncWithMainThread) {
 				try {
-					const uri = Uri.parse(uriStr);
-
-					const uriComponents = this._uriToComponents(uri);
-
-					if (uriComponents)
-						entriesForProxy.push([uriComponents, markers]);
-					else
+					const uriForRpc = this._uriToComponentsDto(
+						VscodeUri.parse(uriStr),
+					); // Parse back to VscodeUri then to DTO
+					if (uriForRpc) {
+						rpcEntries.push([uriForRpc, markerDataArray]);
+					} else {
 						this._logError(
-							`Failed to convert URI '${uriStr}' to components. Skipping sync.`,
+							`Failed to convert URI string '${uriStr}' to DTO for RPC. Skipping sync for this URI.`,
 						);
+					}
 				} catch (e: any) {
 					this._logError(
-						`Error parsing URI '${uriStr}' for proxy: ${e.message || e}. Skipping sync.`,
+						`Error parsing URI string '${uriStr}' during sync preparation: ${e.message}. Skipping sync for this URI.`,
 					);
 				}
 			}
 
-			if (entriesForProxy.length > 0) {
-				this._log(
-					`Sending ${entriesForProxy.length} diagnostic change(s) via $changeMany.`,
-				);
+			if (rpcEntries.length > 0) {
+				// this._log(`Sending ${rpcEntries.length} diagnostic change(s) to MainThread via $changeMany.`);
 
-				this.#proxy
-					.$changeMany(this.#owner, entriesForProxy)
+				this.#mainThreadDiagnosticsProxy
+					.$changeMany(this.#ownerId, rpcEntries)
 					.catch((err) =>
 						this._logError(
-							`$changeMany RPC call failed:`,
+							`RPC $changeMany call failed:`,
 
-							refineError(err, this.#logService, "$changeMany"),
+							refineErrorForShim(
+								err,
+
+								this.#logService,
+
+								"$changeMany",
+							),
 						),
 					);
 			}
 		}
+
+		// TODO: If ShimDiagnosticsService holds onDidChangeDiagnostics, it should be notified here.
+		// Get the parent service instance and call a method like:
+		// this._diagnosticsServiceInstance.$notifyDiagnosticsChangedForOwner(this.#ownerId, Array.from(entriesToSyncWithMainThread.keys()).map(s => VscodeUri.parse(s)));
 	}
 
-	public delete(uri: Uri): void {
-		this._validate();
+	/** {@inheritDoc vscode.DiagnosticCollection.delete} */
+	public delete(uri: VscodeUri): void {
+		this._validateNotDisposed();
 
-		if (!(uri instanceof Uri)) {
-			this._logError("Invalid URI to delete:", uri);
+		if (!(uri instanceof VscodeUri)) {
+			this._logError(
+				"Invalid URI passed to DiagnosticCollection.delete():",
+
+				uri,
+			);
 
 			return;
 		}
 
-		const uriStr = uri.toString();
+		const uriString = uri.toString();
 
-		if (this.#data.delete(uriStr)) {
-			this._log(`Deleted diagnostics locally for ${uriStr}`);
+		if (this.#diagnosticsCache.delete(uriString)) {
+			// If it existed locally
+			// this._log(`Deleted diagnostics locally for URI: ${uriString}`);
 
-			if (this.#proxy) {
-				const uriComponents = this._uriToComponents(uri);
+			if (this.#mainThreadDiagnosticsProxy) {
+				const uriDto = this._uriToComponentsDto(uri);
 
-				if (uriComponents) {
-					this._log(
-						`Sending deletion via $changeMany for URI: ${uriStr}`,
-					);
+				if (uriDto) {
+					// this._log(`Sending deletion to MainThread for URI: ${uriString}`);
 
-					this.#proxy
-						.$changeMany(this.#owner, [[uriComponents, undefined]])
+					this.#mainThreadDiagnosticsProxy
+						.$changeMany(this.#ownerId, [[uriDto, undefined]]) // undefined markers means clear
 						.catch((err) =>
 							this._logError(
-								`$changeMany RPC for delete failed:`,
+								`RPC $changeMany for delete failed on URI '${uriString}':`,
 
-								refineError(err, this.#logService, "delete"),
+								refineErrorForShim(
+									err,
+
+									this.#logService,
+
+									"delete",
+								),
 							),
 						);
 				} else {
 					this._logError(
-						`Failed to convert URI ${uriStr} to components for delete sync.`,
+						`Failed to convert URI '${uriString}' to DTO for delete RPC. Diagnostics on MainThread may persist.`,
 					);
 				}
 			}
+
+			// TODO: Notify parent service about change for this URI.
 		}
 	}
 
+	/** {@inheritDoc vscode.DiagnosticCollection.clear} */
 	public clear(): void {
-		this._validate();
+		this._validateNotDisposed();
 
-		if (this.#data.size > 0) {
-			this._log(`Clearing all ${this.#data.size} URIs locally.`);
+		if (this.#diagnosticsCache.size > 0) {
+			const clearedUris = Array.from(this.#diagnosticsCache.keys());
 
-			// For potential event
-			const urisCleared = Array.from(this.#data.keys());
+			this._log(
+				`Clearing all ${this.#diagnosticsCache.size} URIs locally from collection '${this.#collectionName || this.#ownerId}'.`,
+			);
 
-			this.#data.clear();
+			this.#diagnosticsCache.clear();
 
-			if (this.#proxy) {
-				this._log(`Sending $clear notification.`);
+			if (this.#mainThreadDiagnosticsProxy) {
+				// this._log(`Sending $clear request to MainThread for owner '${this.#ownerId}'.`);
 
-				this.#proxy.$clear(this.#owner).catch((err) =>
-					this._logError(
-						`$clear RPC call failed:`,
+				this.#mainThreadDiagnosticsProxy
+					.$clear(this.#ownerId)
+					.catch((err) =>
+						this._logError(
+							`RPC $clear call failed for owner '${this.#ownerId}':`,
 
-						refineError(err, this._logService, "clear"),
-					),
-				);
-
-				// TODO: If onDidChangeDiagnostics is implemented in ShimDiagnosticsService,
-
-				// it should be notified here about the cleared URIs.
-				// (this as any)._diagnosticsService?.$notifyDiagnosticsChanged(urisCleared.map(u => Uri.parse(u)));
+							refineErrorForShim(err, this.#logService, "clear"),
+						),
+					);
 			}
+
+			// TODO: Notify parent service about changes for all clearedUris.
 		} else {
-			this._log("clear() called, but collection was already empty.");
+			// this._log("clear() called, but collection was already empty locally.");
 		}
 	}
 
+	/** {@inheritDoc vscode.DiagnosticCollection.forEach} */
 	public forEach(
 		callback: (
-			uri: Uri,
+			uri: VscodeUri,
 
 			diagnostics: readonly Diagnostic[],
 
@@ -457,142 +506,173 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 
 		thisArg?: any,
 	): void {
-		this._validate();
+		this._validateNotDisposed();
 
-		this.#data.forEach((diags, uriStr) => {
-			let uri: Uri;
+		this.#diagnosticsCache.forEach((diagnosticsArray, uriString) => {
+			let uriInstance: VscodeUri;
 
 			try {
-				uri = Uri.parse(uriStr);
+				uriInstance = VscodeUri.parse(uriString);
 			} catch (e: any) {
-				this._logError(`Error parsing URI '${uriStr}' in forEach:`, e);
+				this._logError(
+					`Error parsing cached URI string '${uriString}' in forEach. Skipping entry.`,
 
-				return;
+					e,
+				);
+
+				return; // Skip this entry
 			}
 
 			try {
-				callback.call(thisArg, uri, Object.freeze([...diags]), this);
+				// Provide a readonly array to the callback, as per vscode.d.ts.
+				callback.call(
+					thisArg,
+
+					uriInstance,
+
+					Object.freeze([...diagnosticsArray]),
+
+					this,
+				);
 			} catch (cbError: any) {
 				this._logError(
-					`Error in forEach callback for URI ${uriStr}:`,
+					`Error in DiagnosticCollection.forEach callback for URI ${uriString}:`,
 
 					cbError,
 				);
+
+				// Continue to next item even if one callback fails.
 			}
 		});
 	}
 
-	public get(uri: Uri): readonly Diagnostic[] | undefined {
-		this._validate();
+	/** {@inheritDoc vscode.DiagnosticCollection.get} */
+	public get(uri: VscodeUri): readonly Diagnostic[] | undefined {
+		this._validateNotDisposed();
 
-		if (!(uri instanceof Uri)) {
-			this._logError("Invalid URI to get:", uri);
+		if (!(uri instanceof VscodeUri)) {
+			this._logError(
+				"Invalid URI passed to DiagnosticCollection.get():",
+
+				uri,
+			);
 
 			return undefined;
 		}
 
-		const diags = this.#data.get(uri.toString());
+		const diagnosticsArray = this.#diagnosticsCache.get(uri.toString());
 
-		return diags ? Object.freeze([...diags]) : undefined;
+		// Return a readonly copy if found.
+		return diagnosticsArray
+			? Object.freeze([...diagnosticsArray])
+			: undefined;
 	}
 
-	public has(uri: Uri): boolean {
-		this._validate();
+	/** {@inheritDoc vscode.DiagnosticCollection.has} */
+	public has(uri: VscodeUri): boolean {
+		this._validateNotDisposed();
 
-		if (!(uri instanceof Uri)) {
-			this._logError("Invalid URI to has:", uri);
+		if (!(uri instanceof VscodeUri)) {
+			this._logError(
+				"Invalid URI passed to DiagnosticCollection.has():",
+
+				uri,
+			);
 
 			return false;
 		}
 
-		return this.#data.has(uri.toString());
+		return this.#diagnosticsCache.has(uri.toString());
 	}
 
+	/** {@inheritDoc vscode.DiagnosticCollection.dispose} */
 	public dispose(): void {
 		if (!this.#isDisposed) {
-			this._log(`dispose called`);
+			this._log(
+				`dispose() called for collection '${this.#collectionName || this.#ownerId}'.`,
+			);
 
 			this.#isDisposed = true;
 
-			// Clears diagnostics on main thread
-			this.clear();
+			this.clear(); // Clear diagnostics on main thread as part of disposal.
+			this.#mainThreadDiagnosticsProxy = null; // Release proxy reference
+			this.#logService = undefined; // Release log service reference
+			this.#diagnosticsCache.clear(); // Clear local cache
+			// TODO: Notify ShimDiagnosticsService that this collection instance is disposed,
 
-			this.#proxy = null;
-
-			this.#logService = undefined;
-
-			this.#data.clear();
-
-			// TODO: Notify ShimDiagnosticsService that this collection is disposed
-			// so it can be removed from any internal tracking if needed.
+			// so it can be removed from any internal tracking if the service manages collection instances.
 		}
 	}
 
-	private _uriToComponents(uri: Uri): ILocalUriComponents | undefined {
+	/** Converts a vscode.Uri to ILocalUriComponents DTO for RPC. */
+	private _uriToComponentsDto(
+		uri: VscodeUri,
+	): ILocalUriComponents | undefined {
+		// Use _convertApiArgToInternal from BaseCocoonShim, which should handle Uri marshalling.
+		// It's expected to return an object that matches ILocalUriComponents (or VSCodeInternalUriComponents).
 		const components = (
 			this as any as BaseCocoonShim
 		)._convertApiArgToInternal(uri);
 
 		if (
-			components?.$mid === 1 /* MarshalledId.UriSimple */ ||
-			(components?.scheme && components?.path)
+			components &&
+			(components.$mid === 1 /* MarshalledId.UriSimple */ ||
+				(components.scheme && components.path))
 		) {
 			return components as ILocalUriComponents;
 		}
 
 		this._logError(
-			"Failed to convert Uri to ILocalUriComponents via base shim.",
+			"Failed to convert VscodeUri to ILocalUriComponents DTO for RPC via BaseCocoonShim.",
 
 			uri,
+
+			"Resulting components:",
+
+			components,
 		);
 
-		// Fallback if base shim doesn't produce desired structure
-		if (uri instanceof Uri) {
-			return {
-				scheme: uri.scheme,
-
-				authority: uri.authority,
-
-				path: uri.path,
-
-				query: uri.query,
-
-				fragment: uri.fragment,
-
-				external: uri.toString(true),
-			};
-		}
-
-		return undefined;
+		return undefined; // Fallback if conversion fails
 	}
 
+	/** Converts a vscode.Diagnostic object to an ILocalMarkerData DTO for RPC. */
 	private _convertDiagnosticToMarkerData(diag: Diagnostic): ILocalMarkerData {
-		const convertSeverity = (
-			sev: DiagnosticSeverity,
-		): LocalMarkerSeverity => {
-			switch (sev) {
+		if (!diag.range) {
+			// Should always have a range
+			this._logError(
+				"Diagnostic is missing 'range'. Defaulting to line 1, char 1.",
+
+				diag,
+			);
+
+			// Create a default range to prevent crashes, though this indicates an issue with the diagnostic source.
+			diag.range = new VscodeRange(0, 0, 0, 0);
+		}
+
+		const severity = (): InternalMarkerSeverity => {
+			switch (diag.severity) {
 				case DiagnosticSeverity.Error:
-					return LocalMarkerSeverity.Error;
+					return InternalMarkerSeverity.Error;
 
 				case DiagnosticSeverity.Warning:
-					return LocalMarkerSeverity.Warning;
+					return InternalMarkerSeverity.Warning;
 
 				case DiagnosticSeverity.Information:
-					return LocalMarkerSeverity.Info;
+					return InternalMarkerSeverity.Info;
 
 				case DiagnosticSeverity.Hint:
-					return LocalMarkerSeverity.Hint;
+					return InternalMarkerSeverity.Hint;
 
 				default:
 					this._logWarn(
-						`Unknown DiagnosticSeverity: ${sev}, defaulting to Error.`,
+						`Unknown vscode.DiagnosticSeverity: ${diag.severity}. Defaulting to InternalMarkerSeverity.Error.`,
 					);
 
-					return LocalMarkerSeverity.Error;
+					return InternalMarkerSeverity.Error;
 			}
 		};
 
-		let markerCode:
+		let markerCodeDto:
 			| string
 			| { value: string; target: ILocalUriComponents }
 			| undefined = undefined;
@@ -600,39 +680,42 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 		if (diag.code !== undefined && diag.code !== null) {
 			if (
 				typeof diag.code === "object" &&
-				diag.code.target instanceof Uri
+				diag.code.target instanceof VscodeUri
 			) {
-				const targetUriComponents = this._uriToComponents(
-					diag.code.target,
-				);
+				const targetUriDto = this._uriToComponentsDto(diag.code.target);
 
-				if (targetUriComponents)
-					markerCode = {
+				if (targetUriDto) {
+					markerCodeDto = {
 						value: String(diag.code.value),
 
-						target: targetUriComponents,
+						target: targetUriDto,
 					};
-				else {
+				} else {
 					this._logWarn(
-						"Failed to convert target URI in diagnostic code.",
+						"Failed to convert target URI in diagnostic code to DTO. Storing code value only.",
 
 						diag.code,
 					);
 
-					markerCode = String(diag.code.value);
+					markerCodeDto = String(diag.code.value); // Fallback
 				}
-			} else if (typeof diag.code === "object")
-				markerCode = String(diag.code.value);
-			else markerCode = String(diag.code);
+			} else if (typeof diag.code === "object") {
+				// e.g. { value: number | string; target: string_uri_deprecated }
+
+				markerCodeDto = String(diag.code.value);
+			} else {
+				// string or number
+				markerCodeDto = String(diag.code);
+			}
 		}
 
-		const relatedInformation = diag.relatedInformation
+		const relatedInformationDto = diag.relatedInformation
 			?.map((ri) => {
-				const resource = this._uriToComponents(ri.location.uri);
+				const resourceDto = this._uriToComponentsDto(ri.location.uri);
 
-				if (!resource) {
+				if (!resourceDto) {
 					this._logWarn(
-						"Failed to convert URI for relatedInformation:",
+						"Failed to convert URI for relatedInformation to DTO. Skipping related info item.",
 
 						ri.location.uri,
 					);
@@ -641,12 +724,11 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 				}
 
 				return {
-					resource,
+					resource: resourceDto,
 
 					message: ri.message,
 
-					startLineNumber: ri.location.range.start.line + 1,
-
+					startLineNumber: ri.location.range.start.line + 1, // Convert 0-based to 1-based
 					startColumn: ri.location.range.start.character + 1,
 
 					endLineNumber: ri.location.range.end.line + 1,
@@ -658,33 +740,28 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 			| ILocalRelatedInformation[]
 			| undefined;
 
-		const tags = diag.tags
-			?.map((tag) => {
-				if (tag === DiagnosticTag.Unnecessary)
-					return LocalMarkerTag.Unnecessary;
+		const tagsDto = diag.tags
+			?.map((tagValue) => {
+				if (tagValue === DiagnosticTag.Unnecessary)
+					return InternalMarkerTag.Unnecessary;
 
-				if (tag === DiagnosticTag.Deprecated)
-					return LocalMarkerTag.Deprecated;
+				if (tagValue === DiagnosticTag.Deprecated)
+					return InternalMarkerTag.Deprecated;
 
-				// TODO: Add other MarkerTag mappings if VS Code introduces more.
-				this._logWarn(`Unsupported DiagnosticTag: ${tag}, omitting.`);
+				// TODO: Map other DiagnosticTags if VS Code API adds more that correspond to InternalMarkerTag.
+				this._logWarn(
+					`Unsupported vscode.DiagnosticTag: ${tagValue}. Omitting tag from DTO.`,
+				);
 
 				return undefined;
 			})
-			.filter((t) => t !== undefined) as LocalMarkerTag[] | undefined;
-
-		if (!diag.range)
-			throw new Error(
-				`Diagnostic is missing 'range': ${JSON.stringify(diag)}`,
-			);
+			.filter((t) => t !== undefined) as InternalMarkerTag[] | undefined;
 
 		return {
-			severity: convertSeverity(diag.severity),
+			severity: severity(),
 
-			message: diag.message || "",
-
-			startLineNumber: diag.range.start.line + 1,
-
+			message: diag.message || "", // Ensure message is a string
+			startLineNumber: diag.range.start.line + 1, // API is 0-based, IMarkerData is 1-based
 			startColumn: diag.range.start.character + 1,
 
 			endLineNumber: diag.range.end.line + 1,
@@ -693,85 +770,107 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 
 			source: diag.source,
 
-			code: markerCode,
+			code: markerCodeDto,
 
-			relatedInformation,
+			relatedInformation: relatedInformationDto,
 
-			tags,
+			tags: tagsDto,
 		};
 	}
 }
 
+/**
+ * Cocoon's implementation of `IExtHostDiagnostics`.
+ * Manages diagnostic collections and aggregates diagnostics.
+ */
 export class ShimDiagnosticsService
 	extends BaseCocoonShim
-	implements ExtHostDiagnosticsShape
+	implements ExtHostDiagnosticsRpcShape
 {
-	public readonly _serviceBrand: undefined;
+	public readonly _serviceBrand: undefined; // For IExtHostDiagnostics if registered with DI
 
 	#mainThreadDiagnosticsProxy: MainThreadDiagnosticsShape | null = null;
 
-	#collectionCounter = 0;
+	#collectionOwnerCounter = 0; // To generate unique owner IDs for collections
 
 	readonly #onDidChangeDiagnosticsEmitter = new VscodeEmitter<
-		readonly Uri[]
-		// Uri from vscode API
+		readonly VscodeUri[]
 	>();
 
-	constructor(
-		rpcService: IExtHostRpcService | undefined,
+	public readonly onDidChangeDiagnostics: VscodeEvent<readonly VscodeUri[]> =
+		this.#onDidChangeDiagnosticsEmitter.event;
 
-		logService: ILogService | undefined,
+	/**
+	 * Creates an instance of ShimDiagnosticsService.
+	 * @param rpcService The RPC service adapter.
+	 * @param logService The logging service.
+	 */
+	constructor(
+		rpcService: IRpcProtocolServiceAdapter | undefined,
+
+		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostDiagnostics", rpcService, logService);
+
+		this._log("Initialized.");
 
 		if (this._rpcService) {
 			this.#mainThreadDiagnosticsProxy = this._getProxy(
 				MainContext.MainThreadDiagnostics as ProxyIdentifier<MainThreadDiagnosticsShape>,
 			);
 
-			// Register self for RPC calls from MainThread
+			// Register self to handle RPC calls from MainThreadDiagnostics (e.g., $acceptDiagnosticsChanged)
 			try {
 				this._rpcService.set(
-					ExtHostContext.ExtHostDiagnostics as ProxyIdentifier<ExtHostDiagnosticsShape>,
+					ExtHostContext.ExtHostDiagnostics as ProxyIdentifier<ExtHostDiagnosticsRpcShape>,
 
 					this,
 				);
 
 				this._log(
-					"Registered self for incoming RPC calls (ExtHostDiagnostics).",
+					"Registered self for RPC calls from MainThread (ExtHostDiagnostics).",
 				);
 			} catch (e: any) {
-				this._logError("Failed to set ExtHostDiagnostics for RPC:", e);
+				this._logError(
+					"Failed to set self for RPC (ExtHostDiagnostics):",
+
+					e,
+				);
 			}
 		}
 
 		if (!this.#mainThreadDiagnosticsProxy) {
 			this._logError(
-				"Failed to get MainThreadDiagnostics proxy! Diagnostic collections will not sync effectively.",
+				"Failed to get MainThreadDiagnostics RPC proxy! Diagnostic collections will not sync effectively, and getDiagnostics will fail.",
 			);
 		}
 	}
 
+	/**
+	 * Creates a new diagnostic collection.
+	 * @param name Optional human-readable name for the collection.
+	 * @returns A `vscode.DiagnosticCollection` instance.
+	 */
 	public createDiagnosticCollection(name?: string): DiagnosticCollection {
-		this._log(`createDiagnosticCollection called: name='${name}'`);
+		// this._log(`createDiagnosticCollection called: Name='${name || "(unnamed)"}'`);
 
 		if (!this.#mainThreadDiagnosticsProxy) {
 			this._logError(
-				`Cannot create DiagnosticCollection '${name || ""}', RPC proxy unavailable. Returning NOP collection.`,
+				`Cannot create DiagnosticCollection '${name || "(unnamed)"}': MainThreadDiagnostics RPC proxy unavailable. Returning NOP collection.`,
 			);
 
-			return this._createNopCollection(name);
+			return this._createNopDiagnosticCollection(name);
 		}
 
-		const owner = `cocoon_diag_${name || "anon"}_${this.#collectionCounter++}`;
+		// Generate a unique owner ID for this collection for MainThread tracking.
+		const ownerId = `cocoon_diag_owner_${this.#collectionOwnerCounter++}_${name || "anon"}`;
 
-		this._log(`Assigning owner ID: ${owner}`);
+		// this._log(`Assigning OwnerID='${ownerId}' to new collection.`);
 
-		// Pass a reference to this service if the collection needs to notify it (e.g., for onDidChangeDiagnostics)
 		return new ShimDiagnosticCollectionImpl(
 			name,
 
-			owner,
+			ownerId,
 
 			this.#mainThreadDiagnosticsProxy,
 
@@ -779,13 +878,16 @@ export class ShimDiagnosticsService
 		);
 	}
 
-	private _createNopCollection(name?: string): DiagnosticCollection {
-		// Implementation from previous step, ensure it matches DiagnosticCollection interface
+	private _createNopDiagnosticCollection(
+		name?: string,
+	): DiagnosticCollection {
 		this._logWarn(
-			`Creating NOP DiagnosticCollection: name='${name || ""}'`,
+			`Creating NOP (No-Operation) DiagnosticCollection: Name='${name || "(unnamed)"}' due to unavailable RPC proxy.`,
 		);
 
-		const nopMethods = {
+		return Object.freeze({
+			name: name || "",
+
 			set: () => {},
 
 			delete: () => {},
@@ -799,94 +901,92 @@ export class ShimDiagnosticsService
 			has: () => false,
 
 			dispose: () => {},
-		};
-
-		return Object.freeze({
-			name: name || "",
-
-			...nopMethods,
 		}) as DiagnosticCollection;
 	}
 
+	/**
+	 * Retrieves all diagnostics for a given resource, aggregated from all collections.
+	 * @param resource Optional URI of the resource to get diagnostics for. If undefined,
+	 *
+	 *                 VS Code's API typically doesn't support fetching *all* diagnostics
+	 *                 across all files easily; this might be a NOP or error.
+	 *                 This shim's `$getMany` proxy assumes it might get all if `resourceFilter` is undefined.
+	 * @returns A promise resolving to a readonly array of `vscode.Diagnostic` objects.
+	 */
 	public async getDiagnostics(
-		resource?: Uri,
+		resource?: VscodeUri,
 	): Promise<readonly Diagnostic[]> {
-		this._log(`getDiagnostics for resource: ${resource?.toString()}`);
-
-		if (resource && !(resource instanceof Uri)) {
-			this._logError(
-				"Invalid resource URI passed to getDiagnostics:",
-
-				resource,
-			);
-
-			return [];
-		}
+		this._log(
+			`getDiagnostics called for resource: ${resource ? resource.toString() : "(all resources - if supported by MainThread)"}`,
+		);
 
 		if (!this.#mainThreadDiagnosticsProxy?.$getMany) {
-			// Using the Greek name
-			this._logWarn(
-				"MainThreadDiagnostics.$getMany not available. Cannot fetch diagnostics.",
+			this._logError(
+				"Cannot getDiagnostics: MainThreadDiagnosticsProxy.$getMany is not available or proxy is null. Returning empty array.",
 			);
 
-			return [];
+			return Object.freeze([]);
 		}
 
 		try {
-			const uriComponents = resource
+			const resourceFilterDto = resource
 				? ((this as any as BaseCocoonShim)._convertApiArgToInternal(
 						resource,
 					) as ILocalUriComponents)
 				: undefined;
 
-			const markersData =
-				await this.#mainThreadDiagnosticsProxy.$getMany(uriComponents);
+			const markersDataArray =
+				await this.#mainThreadDiagnosticsProxy.$getMany(
+					resourceFilterDto,
+				);
 
-			return this._convertMarkersToDiagnostics(markersData || []);
+			return Object.freeze(
+				this._convertMarkersArrayToDiagnosticsArray(
+					markersDataArray || [],
+				),
+			);
 		} catch (e: any) {
 			this._logError(
-				"Failed to get diagnostics from main thread:",
+				"Failed to get diagnostics from MainThread via RPC $getMany:",
 
-				refineError(e, this._logService, "getDiagnostics"),
+				refineErrorForShim(e, this._logService, "getDiagnostics"),
 			);
 
-			return [];
+			return Object.freeze([]);
 		}
 	}
 
-	public get onDidChangeDiagnostics(): VscodeEvent<readonly Uri[]> {
-		return this.#onDidChangeDiagnosticsEmitter.event;
-	}
-
-	// RPC method called by MainThreadDiagnostics when diagnostics change on main side
+	// --- RPC Method called BY MainThread (ExtHostDiagnosticsRpcShape) ---
+	/**
+	 * Called by Mountain to notify that diagnostics for specified URIs have changed.
+	 * This triggers the `onDidChangeDiagnostics` event.
+	 * @param uriComponentsArray An array of URI components (DTOs) for affected resources.
+	 */
 	public $acceptDiagnosticsChanged(
 		uriComponentsArray: ILocalUriComponents[],
 	): void {
-		this._log(
-			`Received $acceptDiagnosticsChanged for ${uriComponentsArray.length} URIs.`,
-		);
+		// this._log(`RPC $acceptDiagnosticsChanged received for ${uriComponentsArray.length} URIs.`);
 
-		const changedUris: Uri[] = [];
+		const changedVscodeUris: VscodeUri[] = [];
 
 		for (const uriComp of uriComponentsArray) {
 			try {
-				// Use BaseCocoonShim's _reviveApiArgument for URI revival
 				const revivedUri = (
 					this as any as BaseCocoonShim
-				)._reviveApiArgument<Uri>(uriComp);
+				)._reviveApiArgument<VscodeUri>(uriComp);
 
-				if (revivedUri) {
-					changedUris.push(revivedUri);
+				if (revivedUri instanceof VscodeUri) {
+					changedVscodeUris.push(revivedUri);
 				} else {
 					this._logWarn(
-						"$acceptDiagnosticsChanged: Failed to revive URI component",
+						"$acceptDiagnosticsChanged: Failed to revive URI component from MainThread notification.",
 
 						uriComp,
 					);
 				}
-			} catch (e) {
+			} catch (e: any) {
 				this._logError(
-					"$acceptDiagnosticsChanged: Error reviving URI component",
+					"$acceptDiagnosticsChanged: Error reviving URI component during notification processing.",
 
 					uriComp,
 
@@ -895,100 +995,116 @@ export class ShimDiagnosticsService
 			}
 		}
 
-		if (changedUris.length > 0) {
+		if (changedVscodeUris.length > 0) {
 			this.#onDidChangeDiagnosticsEmitter.fire(
-				Object.freeze(changedUris),
+				Object.freeze(changedVscodeUris),
 			);
 		}
 	}
 
-	private _convertMarkersToDiagnostics(
-		markers: ILocalMarkerData[],
+	/** Converts an array of ILocalMarkerData DTOs to an array of vscode.Diagnostic objects. */
+	private _convertMarkersArrayToDiagnosticsArray(
+		markersDataArray: ILocalMarkerData[],
 	): Diagnostic[] {
-		return markers.map((marker) => {
-			// Use VscodeRange alias
-			const range = new VscodeRange(
-				marker.startLineNumber - 1,
+		return markersDataArray.map((markerData) => {
+			const range = new VscodeRange( // Convert 1-based from IMarkerData to 0-based for vscode.Range
+				markerData.startLineNumber - 1,
 
-				marker.startColumn - 1,
+				markerData.startColumn - 1,
 
-				marker.endLineNumber - 1,
+				markerData.endLineNumber - 1,
 
-				marker.endColumn - 1,
+				markerData.endColumn - 1,
 			);
 
 			let severity: DiagnosticSeverity;
 
-			switch (marker.severity) {
-				case LocalMarkerSeverity.Error:
+			switch (
+				markerData.severity // Map from InternalMarkerSeverity
+			) {
+				case InternalMarkerSeverity.Error:
 					severity = DiagnosticSeverity.Error;
 
 					break;
 
-				case LocalMarkerSeverity.Warning:
+				case InternalMarkerSeverity.Warning:
 					severity = DiagnosticSeverity.Warning;
 
 					break;
 
-				case LocalMarkerSeverity.Info:
+				case InternalMarkerSeverity.Info:
 					severity = DiagnosticSeverity.Information;
 
 					break;
 
-				case LocalMarkerSeverity.Hint:
+				case InternalMarkerSeverity.Hint:
 					severity = DiagnosticSeverity.Hint;
 
 					break;
 
 				default:
-					severity = DiagnosticSeverity.Error;
+					this._logWarn(
+						"Unknown InternalMarkerSeverity from MainThread:",
 
-					this._logWarn("Unknown marker severity:", marker.severity);
+						markerData.severity,
+
+						"Defaulting to DiagnosticSeverity.Error.",
+					);
+
+					severity = DiagnosticSeverity.Error;
 			}
 
-			const diag = new Diagnostic(range, marker.message, severity);
+			const diagnostic = new Diagnostic(
+				range,
 
-			if (marker.source) diag.source = marker.source;
+				markerData.message || "",
 
-			if (typeof marker.code === "string") {
-				diag.code = marker.code;
-			} else if (marker.code && typeof marker.code === "object") {
-				// { value, target }
+				severity,
+			);
 
-				// Use BaseCocoonShim's _reviveApiArgument for URI revival
+			if (markerData.source) diagnostic.source = markerData.source;
+
+			if (typeof markerData.code === "string") {
+				diagnostic.code = markerData.code;
+			} else if (markerData.code && typeof markerData.code === "object") {
+				// { value, target: ILocalUriComponents }
+
 				const targetUri = (
 					this as any as BaseCocoonShim
-				)._reviveApiArgument<Uri>(marker.code.target);
+				)._reviveApiArgument<VscodeUri>(markerData.code.target);
 
-				if (targetUri) {
-					diag.code = { value: marker.code.value, target: targetUri };
+				if (targetUri instanceof VscodeUri) {
+					diagnostic.code = {
+						value: markerData.code.value,
+
+						target: targetUri,
+					};
 				} else {
-					// Fallback to just value
-					diag.code = marker.code.value;
-
 					this._logWarn(
-						"Failed to revive target URI for diagnostic code:",
+						"Failed to revive target URI for diagnostic code from MainThread DTO:",
 
-						marker.code.target,
+						markerData.code.target,
 					);
+
+					diagnostic.code = markerData.code.value; // Fallback to just the value
 				}
 			}
 
-			if (marker.relatedInformation) {
-				diag.relatedInformation = marker.relatedInformation
+			if (markerData.relatedInformation) {
+				diagnostic.relatedInformation = markerData.relatedInformation
 					.map((riDto) => {
 						const locUri = (
 							this as any as BaseCocoonShim
-						)._reviveApiArgument<Uri>(riDto.resource);
+						)._reviveApiArgument<VscodeUri>(riDto.resource);
 
-						if (!locUri) {
+						if (!(locUri instanceof VscodeUri)) {
 							this._logWarn(
-								"Failed to revive URI for relatedInformation:",
+								"Failed to revive URI for relatedInformation from MainThread DTO:",
 
 								riDto.resource,
 							);
 
-							return null;
+							return null; // Skip this item
 						}
 
 						const locRange = new VscodeRange(
@@ -1012,25 +1128,40 @@ export class ShimDiagnosticsService
 					) as DiagnosticRelatedInformation[];
 			}
 
-			if (marker.tags) {
-				diag.tags = marker.tags
-					.map((tagValue) => {
-						if (tagValue === LocalMarkerTag.Unnecessary)
+			if (markerData.tags) {
+				diagnostic.tags = markerData.tags
+					.map((tagValue_internal) => {
+						// Map from InternalMarkerTag
+						if (tagValue_internal === InternalMarkerTag.Unnecessary)
 							return DiagnosticTag.Unnecessary;
 
-						if (tagValue === LocalMarkerTag.Deprecated)
+						if (tagValue_internal === InternalMarkerTag.Deprecated)
 							return DiagnosticTag.Deprecated;
 
-						// TODO: Map other MarkerTags if VS Code introduces more.
-						// Unknown tag
+						this._logWarn(
+							"Unknown InternalMarkerTag from MainThread:",
+
+							tagValue_internal,
+
+							"Omitting tag.",
+						);
+
 						return undefined;
 					})
 					.filter((t) => t !== undefined) as DiagnosticTag[];
 			}
 
-			return diag;
+			return diagnostic;
 		});
 	}
-}
 
-// --- END OF FILE diagnostics-shim.ts ---
+	/**
+	 * Disposes of resources held by this shim instance.
+	 */
+	public override dispose(): void {
+		super.dispose(); // From BaseCocoonShim
+		this.#onDidChangeDiagnosticsEmitter.dispose();
+
+		this._log("Disposed.");
+	}
+}
