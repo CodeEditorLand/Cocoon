@@ -1,52 +1,23 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon VS Code API Shim Entry Point (vscode.ts)
  * --------------------------------------------------------------------------------------------
- * This file serves as the main module that extensions import or require as 'vscode'.
- * It aggregates and exports the various shimmed parts of the VS Code API,
+ * This file serves as the module that extensions import or require as 'vscode'.
+ * It primarily re-exports core VS Code API types, classes, and enums.
+ * The actual functional API object given to extensions at runtime is constructed
+ * by the `apiFactoryProvider` in `index.ts`, which uses DI-managed shims.
  *
- *
- * such as `window`, `commands`, `workspace`, `languages`, core types (`Uri`, `Position`, etc.),
- *
- *
- * and enums.
- *
- * In a full VS Code ExtHost setup, this API object is dynamically constructed by an
- * ApiFactory that injects real ExtHost services. In Cocoon, this file (or one like it
- * populated by `index.ts`) manually assembles the API surface using the shims.
- *
- * Responsibilities:
- * - Exporting namespaces like `window`, `commands`, `workspace`, `languages`, `env`.
- * - Exporting core utility classes like `Uri`, `Position`, `Range`, `Selection`, `Location`,
- *
- *
- *   `Disposable`, `CancellationToken`, etc.
- * - Exporting enums like `FileType`, `DiagnosticSeverity`, `ExtensionKind`, etc.
- * - Ensuring that the exported API surface matches `vscode.d.ts` as closely as possible
- *   to provide a consistent experience for extensions.
- *
- * Key Interactions:
- * - This module is what extensions get when they `require('vscode')`.
- * - It imports and re-exports functionalities from various specific shim files
- *   (e.g., `commands-shim.ts`, `workspace-shim.ts`, `uri-shim.ts` or directly from
- *   VS Code's base libraries if bundled).
- * - The `index.ts` (Cocoon entry point) is responsible for instantiating the services/shims
- *   that this `vscode.ts` module will then expose.
+ * This module provides the necessary type definitions and exports for extensions
+ * to compile and for static analysis.
  *--------------------------------------------------------------------------------------------*/
 
-// --- Import Core VS Code API Types & Enums ---
-// These should ideally come from a single, comprehensive vscode.d.ts-like source
-// or be individually imported from their respective shims or VS Code base libraries.
-// For Cocoon, these are likely coming from "../Shim/out/vscode.js" which is assumed to be generated.
-
-// TODO: Ensure these imports provide the *actual classes and enums*, not just interfaces,
-
-// where constructors or enum values are needed by extensions.
-import {
+// --- Import and Re-export Core VS Code API Types, Classes, & Enums ---
+// These come from "../Shim/out/vscode.js" - the bundled API definitions.
+export {
+	// Classes
 	CallHierarchyItem,
 	CancellationError,
 	CancellationToken,
 	CancellationTokenSource,
-	// To avoid conflict
 	CodeAction,
 	CodeActionKind,
 	CodeLens,
@@ -60,15 +31,11 @@ import {
 	Diagnostic,
 	DiagnosticRelatedInformation,
 	DiagnosticSeverity,
-	// VS Code's Emitter, not Node's
 	Disposable,
 	DocumentLink,
 	EndOfLine,
 	ExtensionKind,
 	ExtensionMode,
-	// TODO: Add many more classes: TreeItem, TreeDataProvider, DebugSession, Task, FileSystemError, etc.
-
-	// Enums
 	FileType,
 	Hover,
 	IndentAction,
@@ -80,7 +47,6 @@ import {
 	QuickInputButtons,
 	QuickPickItem,
 	Range,
-	// Class
 	RelativePattern,
 	Selection,
 	SignatureHelp,
@@ -96,133 +62,102 @@ import {
 	ThemeColor,
 	ThemeIcon,
 	TypeHierarchyItem,
-	// Classes
 	Uri,
 	ViewColumn,
-	Command as VscodeCommand,
-	EventEmitter as VscodeEmitter,
 	WorkspaceEdit,
-	// TODO: Add many more enums
-	// Interfaces (primarily for type checking, not usually constructed directly by extensions)
-	// TextDocument, TextLine, OutputChannel, LogOutputChannel, StatusBarItem, Terminal,
-	// WorkspaceFolder, WorkspaceConfiguration, SecretStorage, EnvironmentVariableCollection,
-	// TODO: Add relevant interfaces
+
+	// Aliased
+	Command as VscodeCommand,
+
+	// VS Code's Emitter
+	EventEmitter as VscodeEmitter,
+
+	// API LogLevel
+	LogLevel as VscodeApiLogLevel,
+	FileSystemError as VscodeFileSystemError,
+
+	// Type-only exports for interfaces (useful for consumers)
+	type Commands,
+	type Window,
+	type Workspace,
+	type Languages,
+	type Env,
+	type StatusBarItem,
+	type OutputChannel,
+	type LogOutputChannel,
+	type Terminal,
+	type TextEditor,
+	type WorkspaceFolder,
+	type WorkspaceConfiguration,
+	type TextDocument,
+	type DiagnosticCollection,
+	type FileSystem,
+	type TextDocumentWillSaveEvent,
+	type FileWillCreateEvent,
+	type FileCreateEvent,
+	type FileWillDeleteEvent,
+	type FileDeleteEvent,
+	type FileWillRenameEvent,
+	type FileRenameEvent,
+	type WorkspaceFoldersChangeEvent,
+	type TextEditorSelectionChangeEvent,
+	type TextEditorVisibleRangesChangeEvent,
+	type TextEditorOptionsChangeEvent,
+	type TextEditorViewColumnChangeEvent,
+	type SecretStorage,
+	type Memento,
+	type ExtensionContext,
+
+	// Add other interfaces extensions might import by name
 } from "../Shim/out/vscode";
 
-// This is the assumed central export point for vscode API shims/types
+// --- API Object Definition (Primarily for Type Information) ---
+// This object defines the *shape* of the `vscode` module.
+// At runtime, extensions will receive an object with this shape, but populated
+// with functional shims by the `apiFactoryProvider` in `index.ts`.
+// The stubs here are minimal, mostly to satisfy `typeof import("vscode")`.
 
-// --- Import Shimmed API Implementations ---
-// These are the instances of services that provide the *functionality* behind the API.
-// They are typically instantiated in `index.ts` and then made available here.
-// This file defines the API *surface*. How it's populated is tricky without DI at this exact spot.
+const commandsStub: typeof import("vscode").commands = {
+	registerCommand: (id: string, cmd: (...args: any[]) => any) =>
+		new Disposable(() => {}),
 
-// For a self-contained `vscode.ts` that doesn't rely on `index.ts` to pre-populate,
+	executeCommand: async (cmd: string, ...args: any[]) => undefined,
 
-// it would need to instantiate shims here, which requires their dependencies.
-// This becomes a mini DI setup.
-
-// Alternative: `index.ts` creates an `apiInstances` object and passes it to this module,
-
-// or this module exports a factory function that `index.ts` calls.
-
-// For now, let's assume that `index.ts` will somehow make the instantiated services available,
-
-// or we provide stubs here and `index.ts` patches them.
-// The original JS `vscode.js` was very basic stubs. Let's expand on that concept but acknowledge
-// the need for real instances.
-
-// --- Placeholder for Instantiated Shim Services ---
-// These would be set by `index.ts` or an API factory.
-// TODO: Replace these stubs with actual instances provided by the Cocoon initialization process.
-let commandsImpl: any = {
-	registerCommand: (
-		commandId: string,
-
-		handler: (...args: any[]) => any,
-	): Disposable => {
-		console.warn(
-			`[vscode.ts STUB] commands.registerCommand: "${commandId}"`,
-		);
-
-		return new Disposable(() => {});
-	},
-
-	executeCommand: async <T = unknown>(
-		command: string,
-
-		...rest: any[]
-	): Promise<T | undefined> => {
-		console.warn(`[vscode.ts STUB] commands.executeCommand: "${command}"`);
-
-		return undefined;
-	},
-
-	getCommands: async (filterInternal?: boolean): Promise<string[]> => {
-		console.warn(`[vscode.ts STUB] commands.getCommands`);
-
-		return [];
-	},
+	getCommands: async () => [],
 };
 
-let windowImpl: any = {
-	showInformationMessage: async (
-		message: string,
+const windowStub: typeof import("vscode").window = {
+	activeTextEditor: undefined,
 
-		...args: any[]
-	): Promise<any | undefined> => {
-		console.warn(
-			`[vscode.ts STUB] window.showInformationMessage: "${message}"`,
-		);
+	visibleTextEditors: [],
 
-		return undefined;
-	},
+	terminals: [],
 
-	showWarningMessage: async (
-		message: string,
+	activeTerminal: undefined,
 
-		...args: any[]
-	): Promise<any | undefined> => {
-		console.warn(
-			`[vscode.ts STUB] window.showWarningMessage: "${message}"`,
-		);
+	state: { focused: true, active: true, visible: true },
 
-		return undefined;
-	},
+	showInformationMessage: async (message: string, ...args: any[]) =>
+		undefined,
 
-	showErrorMessage: async (
-		message: string,
+	showWarningMessage: async (message: string, ...args: any[]) => undefined,
 
-		...args: any[]
-	): Promise<any | undefined> => {
-		console.warn(`[vscode.ts STUB] window.showErrorMessage: "${message}"`);
+	showErrorMessage: async (message: string, ...args: any[]) => undefined,
 
-		return undefined;
-	},
-
-	createStatusBarItem: (
-		alignment?: StatusBarAlignment,
-
-		priority?: number,
-	): /*StatusBarItem*/ any => {
-		console.warn(`[vscode.ts STUB] window.createStatusBarItem`);
-
-		// Return a very basic stub satisfying part of the interface for type checking
-		let _text = "";
-
-		return {
-			id: "stubbed-status-item",
+	createStatusBarItem: (idOrAlign, alignOrPrio, prio) =>
+		({
+			id:
+				typeof idOrAlign === "string"
+					? idOrAlign
+					: "stub-status-" + Date.now() + Math.random(),
 
 			alignment: StatusBarAlignment.Left,
 
 			priority: 0,
 
-			name: "Stubbed Item",
+			name: "stub",
 
-			text: _text,
-
-			set text(val: string) {
-				_text = val;
-			},
+			text: "",
 
 			tooltip: undefined,
 
@@ -239,16 +174,44 @@ let windowImpl: any = {
 			hide: () => {},
 
 			dispose: () => {},
-		};
-	},
 
-	// TODO: Add stubs for other window members: activeTextEditor, visibleTextEditors, createOutputChannel,
+			// Cast to any for stub
+		}) as any,
 
-	// showQuickPick, showInputBox, createTreeView, registerTreeDataProvider, createWebviewPanel etc.
-	// These would delegate to ShimExtHostWindow, ShimExtHostQuickInput, ShimExtHostOutputService etc.
-	terminals: [],
+	createOutputChannel: (name, opts) =>
+		({
+			name,
 
-	activeTerminal: undefined,
+			append: () => {},
+
+			appendLine: () => {},
+
+			clear: () => {},
+
+			replace: () => {},
+
+			show: () => {},
+
+			hide: () => {},
+
+			dispose: () => {},
+
+			// Basic stub
+		}) as any,
+
+	onDidChangeActiveTextEditor: new VscodeEmitter<any>().event,
+
+	onDidChangeVisibleTextEditors: new VscodeEmitter<any>().event,
+
+	onDidChangeTextEditorSelection: new VscodeEmitter<any>().event,
+
+	onDidChangeTextEditorVisibleRanges: new VscodeEmitter<any>().event,
+
+	onDidChangeTextEditorOptions: new VscodeEmitter<any>().event,
+
+	onDidChangeTextEditorViewColumn: new VscodeEmitter<any>().event,
+
+	onDidChangeWindowState: new VscodeEmitter<any>().event,
 
 	onDidChangeActiveTerminal: new VscodeEmitter<any>().event,
 
@@ -256,60 +219,81 @@ let windowImpl: any = {
 
 	onDidCloseTerminal: new VscodeEmitter<any>().event,
 
-	// ... and more
+	// Add stubs for other window methods if needed for local type-checking
+	showQuickPick: async () => undefined,
+
+	showInputBox: async () => undefined,
+
+	createWebviewPanel: () => {
+		throw new Error("window.createWebviewPanel STUB");
+	},
+
+	registerWebviewPanelSerializer: () => new Disposable(() => {}),
+
+	createTreeView: <T>(
+		_viewId: string,
+
+		_options: import("vscode").TreeViewOptions<T>,
+	) => {
+		throw new Error("window.createTreeView STUB");
+	},
+
+	registerTreeDataProvider: <T>(
+		_viewId: string,
+
+		_treeDataProvider: import("vscode").TreeDataProvider<T>,
+	) => new Disposable(() => {}),
+
+	setStatusBarMessage: () => new Disposable(() => {}),
+
+	withProgress: async () => {
+		throw new Error("window.withProgress STUB");
+	},
+
+	createTerminal: async () => {
+		throw new Error("window.createTerminal STUB");
+	},
+
+	registerUriHandler: () => new Disposable(() => {}),
+
+	showWorkspaceFolderPick: async () => undefined,
+
+	showTextDocument: async () => {
+		throw new Error("window.showTextDocument STUB");
+	},
+
+	registerCustomEditorProvider: () => new Disposable(() => {}),
+
+	registerTerminalLinkProvider: () => new Disposable(() => {}),
+
+	registerTerminalProfileProvider: () => new Disposable(() => {}),
+
+	// Stubs for Progress, TreeView, Webview, etc. need to be added if used by extensions
+	// window.activeColorTheme, window.onDidChangeActiveColorTheme, etc.
+	// window.tabGroups, window.visibleNotebookEditors, etc.
 };
 
-let workspaceImpl: any = {
-	// Properties
-	get workspaceFolders() {
-		console.warn("[vscode.ts STUB] workspace.workspaceFolders");
+const workspaceStub: typeof import("vscode").workspace = {
+	workspaceFolders: undefined,
 
-		return undefined;
-	},
+	name: undefined,
 
-	get name() {
-		console.warn("[vscode.ts STUB] workspace.name");
+	workspaceFile: undefined,
 
-		return undefined;
-	},
+	isTrusted: true,
 
-	get workspaceFile() {
-		console.warn("[vscode.ts STUB] workspace.workspaceFile");
+	fs: {
+		stat: async () => {
+			throw new VscodeFileSystemError("stub");
+		},
 
-		return undefined;
-	},
+		// Basic FS stub
+	} as any,
 
-	get isTrusted() {
-		console.warn("[vscode.ts STUB] workspace.isTrusted");
+	textDocuments: [],
 
-		return true;
-	},
-
-	get fs() {
-		console.warn("[vscode.ts STUB] workspace.fs");
-
-		// This needs to be an instance of ShimFileSystemApi or similar
-		return {
-			/* NOP FileSystem methods */ stat: async () => {
-				throw new Error("fs.stat NOP");
-			},
-		};
-	},
-
-	get textDocuments() {
-		console.warn("[vscode.ts STUB] workspace.textDocuments");
-
-		return [];
-	},
-
-	// Methods
-	getConfiguration: (section?: string, scope?: any) => {
-		console.warn(
-			`[vscode.ts STUB] workspace.getConfiguration: section=${section}`,
-		);
-
-		// Needs to return a WorkspaceConfiguration object
-		return {
+	getConfiguration: (section?: string, scope?: any) =>
+		({
 			get: () => undefined,
 
 			has: () => false,
@@ -317,30 +301,47 @@ let workspaceImpl: any = {
 			inspect: () => undefined,
 
 			update: async () => {},
-		};
-	},
+		}) as any,
 
-	getWorkspaceFolder: (uri: VscodeUri) => {
-		console.warn("[vscode.ts STUB] workspace.getWorkspaceFolder");
+	getWorkspaceFolder: (uri) => undefined,
 
-		return undefined;
-	},
-
-	findFiles: async () => {
-		console.warn("[vscode.ts STUB] workspace.findFiles");
-
-		return [];
-	},
+	findFiles: async () => [],
 
 	openTextDocument: async () => {
-		console.warn("[vscode.ts STUB] workspace.openTextDocument");
-
-		throw new Error("Not implemented");
+		throw new Error("workspace.openTextDocument STUB");
 	},
 
-	// TODO: Add stubs for saveAll, applyEdit, registerFileSystemProvider, etc.
+	saveAll: async () => false,
 
-	// Events
+	applyEdit: async () => false,
+
+	createFileSystemWatcher: () => ({
+		dispose: () => {},
+
+		onDidCreate: new VscodeEmitter<Uri>().event,
+
+		onDidChange: new VscodeEmitter<Uri>().event,
+
+		onDidDelete: new VscodeEmitter<Uri>().event,
+
+		ignoreCreateEvents: false,
+
+		ignoreChangeEvents: false,
+
+		ignoreDeleteEvents: false,
+	}),
+
+	registerTextDocumentContentProvider: () => new Disposable(() => {}),
+
+	registerTaskProvider: () => new Disposable(() => {}),
+
+	registerFileSystemProvider: () => new Disposable(() => {}),
+
+	getRelativePath: () => "",
+
+	asRelativePath: (pathOrUri, includeWorkspaceFolder) =>
+		workspaceStub.getRelativePath(pathOrUri, includeWorkspaceFolder),
+
 	onDidChangeWorkspaceFolders: new VscodeEmitter<any>().event,
 
 	onDidOpenTextDocument: new VscodeEmitter<any>().event,
@@ -349,28 +350,137 @@ let workspaceImpl: any = {
 
 	onDidChangeTextDocument: new VscodeEmitter<any>().event,
 
-	// ... and more
+	onDidSaveTextDocument: new VscodeEmitter<any>().event,
+
+	onWillSaveTextDocument: new VscodeEmitter<any>().event,
+
+	onWillCreateFiles: new VscodeEmitter<any>().event,
+
+	onDidCreateFiles: new VscodeEmitter<any>().event,
+
+	onWillDeleteFiles: new VscodeEmitter<any>().event,
+
+	onDidDeleteFiles: new VscodeEmitter<any>().event,
+
+	onWillRenameFiles: new VscodeEmitter<any>().event,
+
+	onDidRenameFiles: new VscodeEmitter<any>().event,
+
+	onDidGrantWorkspaceTrust: new VscodeEmitter<void>().event,
+
+	// Stubs for notebook related properties/events
+	// workspace.notebookDocuments, workspace.onDidOpenNotebookDocument, etc.
+	// workspace.isTrusted (already stubbed), workspace.onDidGrantWorkspaceTrust (already stubbed)
 };
 
-let languagesImpl: any = {
-	registerHoverProvider: (
-		selector: DocumentSelector,
+const languagesStub: typeof import("vscode").languages = {
+	registerHoverProvider: () => new Disposable(() => {}),
 
-		provider: HoverProvider,
-	): Disposable => {
-		console.warn("[vscode.ts STUB] languages.registerHoverProvider");
-
-		return new Disposable(() => {});
-	},
-
-	// TODO: Add stubs for all other register*Provider methods, getLanguages, match, etc.
-	// These would delegate to ShimLanguages.
 	getLanguages: async () => [],
 
 	match: () => 0,
+
+	setTextDocumentsLanguage: async (doc, langId) => doc,
+
+	createDiagnosticCollection: (name?: string) =>
+		({
+			name: name || "stub",
+
+			clear: () => {},
+
+			dispose: () => {},
+
+			forEach: () => {},
+
+			get: () => undefined,
+
+			has: () => false,
+
+			delete: () => {},
+
+			set: () => {},
+		}) as any,
+
+	onDidChangeDiagnostics: new VscodeEmitter<readonly Uri[]>().event,
+
+	setLanguageStatus: () => new Disposable(() => {}),
+
+	createLanguageStatusItem: (id, selector) =>
+		({
+			id,
+
+			name: "stub",
+
+			text: "",
+
+			command: undefined,
+
+			severity: LanguageStatusSeverity.Information,
+
+			accessibilityInformation: undefined,
+
+			busy: false,
+
+			dispose: () => {},
+		}) as any,
+
+	// Add stubs for all other register*Provider methods
+	registerCompletionItemProvider: () => new Disposable(() => {}),
+
+	registerDefinitionProvider: () => new Disposable(() => {}),
+
+	registerCodeActionsProvider: () => new Disposable(() => {}),
+
+	registerCodeLensProvider: () => new Disposable(() => {}),
+
+	registerDeclarationProvider: () => new Disposable(() => {}),
+
+	registerDocumentFormattingEditProvider: () => new Disposable(() => {}),
+
+	registerDocumentHighlightProvider: () => new Disposable(() => {}),
+
+	registerDocumentLinkProvider: () => new Disposable(() => {}),
+
+	registerDocumentRangeFormattingEditProvider: () => new Disposable(() => {}),
+
+	registerOnTypeFormattingEditProvider: () => new Disposable(() => {}),
+
+	registerReferenceProvider: () => new Disposable(() => {}),
+
+	registerRenameProvider: () => new Disposable(() => {}),
+
+	registerSignatureHelpProvider: () => new Disposable(() => {}),
+
+	registerImplementationProvider: () => new Disposable(() => {}),
+
+	registerTypeDefinitionProvider: () => new Disposable(() => {}),
+
+	registerWorkspaceSymbolProvider: () => new Disposable(() => {}),
+
+	registerSelectionRangeProvider: () => new Disposable(() => {}),
+
+	registerCallHierarchyProvider: () => new Disposable(() => {}),
+
+	registerTypeHierarchyProvider: () => new Disposable(() => {}),
+
+	registerLinkedEditingRangeProvider: () => new Disposable(() => {}),
+
+	registerInlayHintsProvider: () => new Disposable(() => {}),
+
+	registerDocumentColorProvider: () => new Disposable(() => {}),
+
+	registerFoldingRangeProvider: () => new Disposable(() => {}),
+
+	// Stubs for getDiagnostics (usually on DiagnosticCollection, but also a top-level helper in some API versions)
+	// getDiagnostics: () => [],
+
+	// getCodeActions: async () => [],
+
+	// etc. for direct provider calls
+	// provideHover: async () => undefined,
 };
 
-let envImpl: any = {
+const envStub: typeof import("vscode").env = {
 	appName: "Cocoon Stub App",
 
 	appRoot: undefined,
@@ -381,29 +491,192 @@ let envImpl: any = {
 
 	sessionId: "stubbed-session-id",
 
-	// TODO: Add stubs for other env properties: uriScheme, appHost, clipboard, openExternal, etc.
-	// These would delegate to ShimExtHostEnvironment.
+	isTrusted: true,
+
+	isRemote: false,
+
+	remoteName: undefined,
+
+	shell: "unknown_shell",
+
+	uiKind: 1 /* UIKind.Desktop */,
+
+	clipboard: { readText: async () => "", writeText: async () => {} },
+
+	openExternal: async () => false,
+
+	asExternalUri: async (target) => target,
+
+	onDidChangeTelemetryLevel: new VscodeEmitter<any>().event,
+
+	onDidChangeShell: new VscodeEmitter<string>().event,
+
+	isNewAppInstall: false,
+
+	isBuilt: true,
+
+	uriScheme: "cocoon-code",
+
+	appHost: "desktop",
+
+	// Stubs for other env properties if needed
+	// env.appQuality, env.appCommit, env.appServerPort, etc.
 };
 
-// --- API Surface Definition ---
-// This object structure defines what `require('vscode')` will provide.
-// TODO: This needs to be comprehensive and match vscode.d.ts.
-const vscodeApiExport = {
-	// Top-level namespaces
-	// Cast to actual vscode namespace type
-	commands: commandsImpl as typeof import("vscode").commands,
+const extensionsStub: typeof import("vscode").extensions = {
+	getExtension: (extensionId: string) => undefined,
 
-	window: windowImpl as typeof import("vscode").window,
+	get all() {
+		return [];
+	},
 
-	workspace: workspaceImpl as typeof import("vscode").workspace,
+	get onDidChange() {
+		return new VscodeEmitter<void>().event;
+	},
 
-	languages: languagesImpl as typeof import("vscode").languages,
+	// Stubs for other extension properties if needed (e.g. determineExtensionUri)
+};
 
-	env: envImpl as typeof import("vscode").env,
+const debugStub: typeof import("vscode").debug = {
+	activeDebugSession: undefined,
 
-	// TODO: Add other namespaces: extensions, debug, tasks, scm, comments, notebooks, tests, etc.
+	activeDebugConsole: { append: () => {}, appendLine: () => {} },
 
-	// Core classes (constructors)
+	breakpoints: [],
+
+	onDidStartDebugSession: new VscodeEmitter<any>().event,
+
+	onDidTerminateDebugSession: new VscodeEmitter<any>().event,
+
+	onDidChangeActiveDebugSession: new VscodeEmitter<any>().event,
+
+	onDidReceiveDebugSessionCustomEvent: new VscodeEmitter<any>().event,
+
+	onDidChangeBreakpoints: new VscodeEmitter<any>().event,
+
+	startDebugging: async () => false,
+
+	stopDebugging: async () => {},
+
+	registerDebugConfigurationProvider: () => new Disposable(() => {}),
+
+	registerDebugAdapterDescriptorFactory: () => new Disposable(() => {}),
+
+	addBreakpoints: async () => {},
+
+	removeBreakpoints: async () => {},
+
+	// ... other debug methods
+};
+
+const tasksStub: typeof import("vscode").tasks = {
+	taskExecutions: [],
+
+	onDidStartTask: new VscodeEmitter<any>().event,
+
+	onDidEndTask: new VscodeEmitter<any>().event,
+
+	onDidStartTaskProcess: new VscodeEmitter<any>().event,
+
+	onDidEndTaskProcess: new VscodeEmitter<any>().event,
+
+	registerTaskProvider: () => new Disposable(() => {}),
+
+	fetchTasks: async () => [],
+
+	executeTask: async () => {
+		throw new Error("tasks.executeTask STUB");
+	},
+
+	// ... other tasks methods
+};
+
+// --- API Object Definition ---
+const vscodeApiExportObject = {
+	commands: commandsStub,
+
+	window: windowStub,
+
+	workspace: workspaceStub,
+
+	languages: languagesStub,
+
+	env: envStub,
+
+	extensions: extensionsStub,
+
+	debug: debugStub,
+
+	tasks: tasksStub,
+
+	// Add stubs for scm, comments, notebooks, tests if needed for type-checking
+	scm: {
+		createSourceControl: () =>
+			({
+				id: "stub-scm",
+
+				label: "Stub SCM",
+
+				rootUri: undefined,
+
+				inputBox: undefined,
+
+				count: 0,
+
+				acceptInputCommand: undefined,
+
+				get desaparece() {
+					return new VscodeEmitter<void>().event;
+				},
+
+				dispose: () => {},
+			}) as any,
+
+		rootUri: undefined,
+
+		inputBox: undefined,
+	} as any,
+
+	comments: {
+		createCommentController: () =>
+			({
+				id: "stub-comment",
+
+				label: "Stub Comment Ctrl",
+
+				dispose: () => {},
+			}) as any,
+	} as any,
+
+	notebooks: {
+		createNotebookController: () =>
+			({
+				id: "stub-notebook",
+
+				label: "Stub Notebook Ctrl",
+
+				dispose: () => {},
+			}) as any,
+
+		onDidOpenNotebookDocument: new VscodeEmitter<any>().event,
+
+		onDidCloseNotebookDocument: new VscodeEmitter<any>().event,
+	} as any,
+
+	tests: {
+		createTaskRunner: () => ({ run: () => {}, dispose: () => {} }) as any,
+
+		createTestController: () =>
+			({
+				id: "stub-test",
+
+				label: "Stub Test Ctrl",
+
+				dispose: () => {},
+			}) as any /* ... other test methods */,
+	} as any,
+
+	// Re-export core classes and enums directly on the default export
 	Uri,
 
 	Position,
@@ -422,8 +695,7 @@ const vscodeApiExport = {
 
 	CancellationError,
 
-	// Export VS Code's Emitter
-	VscodeEmitter,
+	EventEmitter: VscodeEmitter,
 
 	Diagnostic,
 
@@ -473,9 +745,6 @@ const vscodeApiExport = {
 
 	ThemeIcon,
 
-	// TODO: Export all other necessary classes
-
-	// Core enums (values)
 	FileType,
 
 	DiagnosticSeverity,
@@ -514,120 +783,47 @@ const vscodeApiExport = {
 
 	LanguageStatusSeverity,
 
-	// TODO: Export all other necessary enums
+	LogLevel: VscodeApiLogLevel,
 
-	// --- Function to allow `index.ts` to inject real shim instances ---
-	// This is a common pattern if this file is loaded before DI is fully set up.
-	/**
-	 * @internal Used by Cocoon's index.ts to replace stub implementations with real ones.
-	 */
-
-	_injectimplementation(instances: {
-		// Using a non-English word "implementation" (realizatsia - implementation)
-		commands?: typeof import("vscode").commands;
-
-		window?: typeof import("vscode").window;
-
-		workspace?: typeof import("vscode").workspace;
-
-		languages?: typeof import("vscode").languages;
-
-		env?: typeof import("vscode").env;
-
-		// Add other services that populate the vscode API
-	}): void {
-		if (instances.commands) commandsImpl = instances.commands;
-
-		if (instances.window) windowImpl = instances.window;
-
-		if (instances.workspace) workspaceImpl = instances.workspace;
-
-		if (instances.languages) languagesImpl = instances.languages;
-
-		if (instances.env) envImpl = instances.env;
-
-		console.log(
-			"[vscode.ts] Shim implementations potentially injected/updated.",
-		);
-	},
+	FileSystemError: VscodeFileSystemError,
 };
 
 // --- Default Export ---
-// This makes `import vscode from 'vscode'` or `const vscode = require('vscode')` work.
-export default vscodeApiExport;
+export default vscodeApiExportObject;
 
-// --- Named Exports (for `import { commands, window } from 'vscode'`) ---
-// This requires re-exporting from the `vscodeApi` object or defining them individually.
-export const commands = vscodeApiExport.commands;
+// --- Named Exports for Namespaces ---
+export const commands: typeof vscodeApiExportObject.commands =
+	vscodeApiExportObject.commands;
 
-export const window = vscodeApiExport.window;
+export const window: typeof vscodeApiExportObject.window =
+	vscodeApiExportObject.window;
 
-export const workspace = vscodeApiExport.workspace;
+export const workspace: typeof vscodeApiExportObject.workspace =
+	vscodeApiExportObject.workspace;
 
-export const languages = vscodeApiExport.languages;
+export const languages: typeof vscodeApiExportObject.languages =
+	vscodeApiExportObject.languages;
 
-export const env = vscodeApiExport.env;
+export const env: typeof vscodeApiExportObject.env = vscodeApiExportObject.env;
 
-// Re-export all imported classes and enums so they are available on `import * as vscode from 'vscode'`
-// and `import { Uri } from 'vscode'`.
-export {
-	Uri,
-	Position,
-	Range,
-	Selection,
-	Location,
-	Disposable,
-	// VS Code's Emitter
-	VscodeEmitter,
-	CancellationToken,
-	CancellationTokenSource,
-	CancellationError,
-	Diagnostic,
-	DiagnosticRelatedInformation,
-	CompletionItem,
-	CompletionList,
-	SnippetString,
-	Hover,
-	SignatureHelp,
-	DefinitionLink,
-	CodeAction,
-	CodeActionKind,
-	CodeLens,
-	VscodeCommand as Command,
-	DocumentLink,
-	WorkspaceEdit,
-	SymbolInformation,
-	SymbolKind,
-	CallHierarchyItem,
-	TypeHierarchyItem,
-	QuickPickItem,
-	InputBoxOptions,
-	TextEdit,
-	RelativePattern,
-	ThemeColor,
-	ThemeIcon,
-	FileType,
-	DiagnosticSeverity,
-	ExtensionKind,
-	ExtensionMode,
-	EndOfLine,
-	ViewColumn,
-	StatusBarAlignment,
-	QuickInputButtons,
-	ConfigurationTarget,
-	TextEditorRevealType,
-	TextDocumentChangeReason,
-	TaskScope,
-	DebugConsoleMode,
-	ProgressLocation,
-	CompletionItemKind,
-	CompletionTriggerKind,
-	SignatureHelpTriggerKind,
-	IndentAction,
-	LanguageStatusSeverity,
-};
+export const extensions: typeof vscodeApiExportObject.extensions =
+	vscodeApiExportObject.extensions;
 
-// Type for the _injectimplementation function's parameter
-export type VscodeApiShimInstances = Parameters<
-	typeof vscodeApiExport._injectimplementation
->[0];
+export const debug: typeof vscodeApiExportObject.debug =
+	vscodeApiExportObject.debug;
+
+export const tasks: typeof vscodeApiExportObject.tasks =
+	vscodeApiExportObject.tasks;
+
+export const scm: typeof vscodeApiExportObject.scm = vscodeApiExportObject.scm;
+
+export const comments: typeof vscodeApiExportObject.comments =
+	vscodeApiExportObject.comments;
+
+export const notebooks: typeof vscodeApiExportObject.notebooks =
+	vscodeApiExportObject.notebooks;
+
+export const tests: typeof vscodeApiExportObject.tests =
+	vscodeApiExportObject.tests;
+
+// Individual classes and enums are already exported by name at the top of the file.
