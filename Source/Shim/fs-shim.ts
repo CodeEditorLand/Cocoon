@@ -1,775 +1,405 @@
-// Node.js Buffer
-import { Buffer } from "buffer";
+// ORIGIN INFORMATION:
+// This code block was extracted by a script.
+// Source Markdown File: Backup/TSFMSC/Document/132_MODEL.md
+// Source Block Index in MD (Overall): 1
+// Original Fence Info String: (empty)
+// Content SHA256 (of this block): 189378bc60740a2594efa1e807d8d698703cf91cfb1648556e1ed19949852d72
+// Extracted to File: Backup/TSFMSC/Code/fs-shim.ts
+// Extraction Timestamp: 2025-05-25T14:02:57.037Z
+// --- END OF ORIGIN INFORMATION ---
+
+--- START OF FILE fs-shim.ts ---
+
+/*---------------------------------------------------------------------------------------------
+ * Cocoon Node.js 'fs' Module Shim (fs-shim.ts)
+ * --------------------------------------------------------------------------------------------
+ * Provides a shim for Node.js's built-in 'fs' module, with a primary focus on implementing
+ * the asynchronous `fs.promises` API. This shim is utilized when extensions or VS Code
+ * platform code directly execute `require('fs')`.
+ *
+ * Filesystem operations are proxied to the Mountain host process via `fs_*` IPC calls.
+ * This is distinct from `fs-api-shim.ts`, which implements the `vscode.workspace.fs` API
+ * and typically interacts with `workspacefs_*` IPC methods (often via effects in Mountain's
+ * environment layer for a more structured, URI-based filesystem access). This `fs-shim.ts`
+ * targets direct Node.js `fs` module usage, which is path-based.
+ *
+ * Responsibilities:
+ * - Mimicking the structure of the Node.js `fs` module, especially `fs.promises`.
+ * - Implementing `fs.promises` methods by making asynchronous IPC calls to Mountain's
+ *   `fs_*` handlers (e.g., `fs_stat`, `fs_readFile`).
+ * - Handling data encoding (e.g., to base64 for `writeFile`) and decoding (e.g., from
+ *   base64 for `readFile`) for IPC transport.
+ * - Mapping error responses received from Mountain into Node.js-style filesystem errors
+ *   (e.g., `ENOENT`, `EACCES`).
+ * - Strongly discouraging the use of synchronous `fs` methods by providing stubs that
+ *   throw errors, guiding users towards the asynchronous `fs.promises` API.
+ * - Providing Node.js `fs.constants`.
+ *
+ * Key Interactions:
+ * - Exported as an instance and provided by `FsModuleShimFactory` when `require('fs')`
+ *   is intercepted.
+ * - Uses `sendToMountainAndWait` from `cocoon-ipc.ts` for all proxied filesystem operations.
+ * - Relies on corresponding `fs_*` handlers being implemented in Mountain (e.g., within
+ *   `handlers/native_fs.rs`, although that was marked deprecated in some contexts; this
+ *   shim assumes such handlers are active or replaced by equivalents).
+ *
+ * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+ *--------------------------------------------------------------------------------------------*/
+
+// Node.js Buffer for encoding/decoding
+import { Buffer } from "node:buffer"; // Explicitly import from node:buffer
 // For constants and type reference
 import * as nodeFs from "node:fs";
-// For type information from @types/node
+// For type information from @types/node, assuming it's a dev dependency.
 import type * as NodeFsTypes from "node:fs";
 
 import { sendToMountainAndWait } from "../cocoon-ipc";
 
-/*---------------------------------------------------------------------------------------------
- * Cocoon Node 'fs' Shim (shims/fs-shim.ts)
- * --------------------------------------------------------------------------------------------
- * Provides a shim for Node.js's built-in 'fs' module, primarily focusing on the
- * asynchronous `fs.promises` API. This is used when extensions directly `require('fs')`.
- * Operations are proxied to Mountain via `fs_*` IPC calls.
- *
- * Note: For `vscode.workspace.fs` API usage by extensions, `fs-api-shim.ts` is used,
- *
- * which calls `workspacefs_*` IPC methods that are typically implemented via effects
- * in Mountain's `environment.rs`. This `fs-shim.ts` targets direct Node `fs` usage.
- *
- * Responsibilities:
- * - Mimicking the Node.js `fs` module structure (especially `fs.promises`).
- * - Implementing `fs.promises` methods by proxying to Mountain's `fs_*` handlers.
- * - Handling data encoding/decoding for IPC.
- * - Mapping error responses from Mountain to Node.js-style errors.
- * - Discouraging synchronous `fs` methods.
- *
- * Key Interactions:
- * - Returned by `FsModuleShimFactory`.
- * - Uses `sendToMountainAndWait` from `cocoon-ipc.ts`.
- * - Mountain's `handlers/native_fs.rs` would implement the `fs_*` handlers (though
- *   marked deprecated, this shim would rely on them if active).
- *--------------------------------------------------------------------------------------------*/
-
-console.log("[Cocoon FS Shim] Initializing Node 'fs' module shim...");
+console.log("[Cocoon FS Shim] Initializing Node 'fs' module shim (for require('fs')).");
 
 // --- Type Definitions ---
 // These should align with @types/node fs.promises and fs module structure.
-// Using `NodeFsTypes` for better alignment.
 
-// PathLike type from Node.js
 type PathLike = NodeFsTypes.PathLike;
-
-// For fs.promises.stat and fs.statSync
-// TODO: If @types/node is a dev dependency, use `NodeFsTypes.Stats` directly.
-// The previous `FsStatsShim` tried to define it; using NodeFsTypes.Stats is better.
-// Or `extends NodeFsTypes.Stats` if adding custom fields
-type StatsShim = NodeFsTypes.Stats;
-
-// Options for fs.promises.readFile / fs.readFileSync
+type StatsShim = NodeFsTypes.Stats; // Directly use Node's Stats type.
 type ReadFileOptionsShim = Parameters<typeof nodeFs.promises.readFile>[1];
-
-// Options for fs.promises.writeFile / fs.writeFileSync
 type WriteFileOptionsShim = Parameters<typeof nodeFs.promises.writeFile>[2];
-
-// Options for fs.promises.mkdir / fs.mkdirSync
 type MkdirOptionsShim = Parameters<typeof nodeFs.promises.mkdir>[1];
-
-// Options for fs.promises.rmdir / fs.rmdirSync
 type RmdirOptionsShim = Parameters<typeof nodeFs.promises.rmdir>[1];
-
-// Options for fs.promises.readdir / fs.readdirSync
 type ReaddirOptionsShim = Parameters<typeof nodeFs.promises.readdir>[1];
+type DirentShim = NodeFsTypes.Dirent; // Directly use Node's Dirent type.
 
-// For fs.promises.readdir with withFileTypes:true / fs.readdirSync with withFileTypes:true
-// TODO: If @types/node is a dev dependency, use `NodeFsTypes.Dirent` directly.
-type DirentShim = NodeFsTypes.Dirent;
-
-// fs.promises API part of the shim
-// TODO: This interface should comprehensively match `typeof nodeFs.promises` for the implemented methods.
+/**
+ * Defines the interface for the `fs.promises` API part of the shim.
+ * Methods match `typeof nodeFs.promises`.
+ */
 export interface FsPromisesApiShim {
 	access: (path: PathLike, mode?: number) => Promise<void>;
-
-	stat: (
-		path: PathLike,
-
-		opts?: NodeFsTypes.StatOptions,
-	) => Promise<StatsShim>;
-
-	realpath: (
-		path: PathLike,
-
-		options?: NodeFsTypes.ObjectEncodingOptions | BufferEncoding,
-	) => Promise<string>;
-
-	readFile: (
-		path: PathLike | NodeFsTypes.promises.FileHandle,
-
-		options?: ReadFileOptionsShim,
-	) => Promise<string | Buffer>;
-
-	writeFile: (
-		path: PathLike | NodeFsTypes.promises.FileHandle,
-
-		data: string | Uint8Array,
-
-		options?: WriteFileOptionsShim,
-	) => Promise<void>;
-
-	mkdir: (
-		path: PathLike,
-
-		options?: MkdirOptionsShim,
-	) => Promise<string | undefined>;
-
+	stat: (path: PathLike, opts?: NodeFsTypes.StatOptions) => Promise<StatsShim>;
+	lstat?: (path: PathLike, opts?: NodeFsTypes.StatOptions) => Promise<StatsShim>; // Added lstat
+	realpath: (path: PathLike, options?: NodeFsTypes.ObjectEncodingOptions | BufferEncoding) => Promise<string>;
+	readFile: (path: PathLike | NodeFsTypes.promises.FileHandle, options?: ReadFileOptionsShim) => Promise<string | Buffer>;
+	writeFile: (path: PathLike | NodeFsTypes.promises.FileHandle, data: string | Uint8Array, options?: WriteFileOptionsShim) => Promise<void>;
+	mkdir: (path: PathLike, options?: MkdirOptionsShim) => Promise<string | undefined>;
 	unlink: (path: PathLike) => Promise<void>;
-
+	rm: ((path: PathLike, options?: NodeFsTypes.RmOptions) => Promise<void>) | undefined; // `rm` is newer replacement for rmdir/unlink
 	rmdir: (path: PathLike, options?: RmdirOptionsShim) => Promise<void>;
-
-	readdir: (
-		path: PathLike,
-
-		options?: ReaddirOptionsShim,
-	) => Promise<string[] | Buffer[] | DirentShim[]>;
-
+	readdir: (path: PathLike, options?: ReaddirOptionsShim) => Promise<string[] | Buffer[] | DirentShim[]>;
 	rename: (oldPath: PathLike, newPath: PathLike) => Promise<void>;
-
-	// TODO: Add other commonly used fs.promises methods: lstat, copyFile, chmod, chown, readlink, etc.
-	// Ensure their signatures match @types/node.
+	copyFile?: (src: PathLike, dest: PathLike, mode?: number) => Promise<void>;
+	// TODO: Add other commonly used fs.promises methods: chmod, chown, readlink, etc.
 }
 
-// Overall structure of the fs shim module
-// TODO: This interface should comprehensively match `typeof nodeFs` for the implemented parts.
+/**
+ * Defines the overall structure of the 'fs' shim module provided to extensions.
+ * Includes the `promises` API and stubs for synchronous methods.
+ */
 export interface FsShimStructure {
 	promises: FsPromisesApiShim;
-
 	constants: typeof nodeFs.constants;
 
-	// Synchronous stubs
+	// Synchronous stubs - these should strongly discourage usage.
 	existsSync: (path: PathLike) => boolean;
-
-	statSync: (
-		path: PathLike,
-
-		options?: NodeFsTypes.StatSyncOptions,
-	) => StatsShim | undefined;
-
-	realpathSync: (
-		path: PathLike,
-
-		options?: NodeFsTypes.realpathSyncOptions | BufferEncoding,
-	) => string;
-
-	readFileSync: (
-		path: PathLike | number,
-
-		options?: ReadFileOptionsShim,
-	) => string | Buffer;
-
-	writeFileSync: (
-		path: PathLike | number,
-
-		data: string | Uint8Array,
-
-		options?: WriteFileOptionsShim,
-	) => void;
-
-	mkdirSync: (
-		path: PathLike,
-
-		options?: MkdirOptionsShim,
-	) => string | undefined;
-
+	statSync: (path: PathLike, options?: NodeFsTypes.StatSyncOptions) => StatsShim | undefined; // Or throw
+	lstatSync?: (path: PathLike, options?: NodeFsTypes.StatSyncOptions) => StatsShim | undefined; // Or throw
+	realpathSync: (path: PathLike, options?: NodeFsTypes.realpathSyncOptions | BufferEncoding) => string;
+	readFileSync: (path: PathLike | number, options?: ReadFileOptionsShim) => string | Buffer;
+	writeFileSync: (path: PathLike | number, data: string | Uint8Array, options?: WriteFileOptionsShim) => void;
+	mkdirSync: (path: PathLike, options?: MkdirOptionsShim) => string | undefined;
 	unlinkSync: (path: PathLike) => void;
-
+	rmSync?: (path: PathLike, options?: NodeFsTypes.RmOptions) => void; // Or throw
 	rmdirSync: (path: PathLike, options?: RmdirOptionsShim) => void;
-
-	readdirSync: (
-		path: PathLike,
-
-		options?: ReaddirOptionsShim,
-	) => string[] | Buffer[] | DirentShim[];
-
+	readdirSync: (path: PathLike, options?: ReaddirOptionsShim) => string[] | Buffer[] | DirentShim[];
 	renameSync: (oldPath: PathLike, newPath: PathLike) => void;
+	accessSync?: (path: PathLike, mode?: number) => void; // Or throw
 
-	accessSync?: (path: PathLike, mode?: number) => void;
-
-	// Stream and Watcher stubs (complex to shim, throw for now)
-	createReadStream: (
-		path: PathLike,
-
-		options?: NodeFsTypes.ReadStreamOptions | string,
-	) => NodeFsTypes.ReadStream;
-
-	createWriteStream: (
-		path: PathLike,
-
-		options?: NodeFsTypes.WriteStreamOptions | string,
-	) => NodeFsTypes.WriteStream;
-
-	watch: (
-		filename: PathLike,
-
-		options?: NodeFsTypes.WatchOptions | string | null,
-
-		listener?: (
-			eventType: string,
-
-			filename: string | Buffer | null,
-		) => void,
-	) => NodeFsTypes.FSWatcher;
-
-	// TODO: Add other fs module exports if needed (watchFile, unwatchFile, etc.)
+	// Stream and Watcher stubs - these are complex to shim and typically throw.
+	createReadStream: (path: PathLike, options?: NodeFsTypes.ReadStreamOptions | string) => NodeFsTypes.ReadStream;
+	createWriteStream: (path: PathLike, options?: NodeFsTypes.WriteStreamOptions | string) => NodeFsTypes.WriteStream;
+	watch: (filename: PathLike, options?: NodeFsTypes.WatchOptions | string | null, listener?: (eventType: string, filename: string | Buffer | null) => void) => NodeFsTypes.FSWatcher;
 }
 
-async function requestFsOpAsync(
-	ipcMethod: string,
-
-	ipcParams: any,
-): Promise<any> {
-	// console.log(`[Node FS Shim -> Mtn] IPC Req: '${ipcMethod}', Params: ${JSON.stringify(ipcParams).substring(0,100)}`);
-
+/**
+ * Helper function to make an asynchronous IPC request for a filesystem operation.
+ * It also attempts to map common error messages/codes from the IPC response
+ * to standard Node.js filesystem error codes.
+ *
+ * @param ipcMethod The IPC method name (e.g., "fs_stat", "fs_readFile").
+ * @param ipcParams The parameters to send with the IPC request.
+ * @returns A promise that resolves with the response from Mountain.
+ * @throws An `Error` (potentially with a `code` property like `ENOENT`) if the operation fails.
+ */
+async function requestFsOpAsync(ipcMethod: string, ipcParams: any): Promise<any> {
+	// console.debug(`[Node FS Shim -> Mtn] IPC Req: '${ipcMethod}', Params: ${JSON.stringify(ipcParams).substring(0, 100)}`);
 	try {
-		// Using a longer timeout for FS operations that might involve network or slower disks.
-		const response = await sendToMountainAndWait(
-			ipcMethod,
-
-			ipcParams,
-
-			20000,
-		);
-
+		const response = await sendToMountainAndWait(ipcMethod, ipcParams, 20000); // 20s timeout for FS ops
 		return response;
 	} catch (e: any) {
-		const err = new Error(
-			e.message || `IPC Error during fs operation: ${ipcMethod}`,
-		) as NodeJS.ErrnoException;
+		// Attempt to normalize the error from IPC to a NodeJS.ErrnoException
+		const err = new Error(e.message || `IPC Error during fs operation: ${ipcMethod}`) as NodeJS.ErrnoException;
+		if (e.name) err.name = e.name; // Preserve original error name if available
+		if (e.stack) err.stack = e.stack; // Preserve original stack
 
+		// Map common error messages/codes from Mountain to Node.js fs error codes
 		const msgLower = String(e.message).toLowerCase();
+		const codeLower = String(e.code).toLowerCase();
 
-		if (msgLower.includes("notfound") || msgLower.includes("enoent"))
-			err.code = "ENOENT";
-		else if (
-			msgLower.includes("permissiondenied") ||
-			msgLower.includes("eacces") ||
-			msgLower.includes("eperm")
-		)
-			err.code = "EACCES";
-		else if (
-			msgLower.includes("alreadyexists") ||
-			msgLower.includes("eexist")
-		)
-			err.code = "EEXIST";
-		else if (
-			msgLower.includes("isdirectory") ||
-			msgLower.includes("eisdir")
-		)
-			err.code = "EISDIR";
-		else if (
-			msgLower.includes("notdirectory") ||
-			msgLower.includes("enotdir")
-		)
-			err.code = "ENOTDIR";
-		else if (
-			msgLower.includes("notempty") ||
-			msgLower.includes("enotempty")
-		)
-			err.code = "ENOTEMPTY";
-		else if (msgLower.includes("timed") && msgLower.includes("out"))
-			err.code = "ETIMEDOUT";
-		else if (!err.code) err.code = "EIO";
+		if (msgLower.includes("not found") || msgLower.includes("enoent") || codeLower === "enoent") err.code = "ENOENT";
+		else if (msgLower.includes("permission denied") || msgLower.includes("eacces") || codeLower === "eacces") err.code = "EACCES";
+		else if (msgLower.includes("already exists") || msgLower.includes("eexist") || codeLower === "eexist") err.code = "EEXIST";
+		else if (msgLower.includes("is a directory") || msgLower.includes("eisdir") || codeLower === "eisdir") err.code = "EISDIR";
+		else if (msgLower.includes("not a directory") || msgLower.includes("enotdir") || codeLower === "enotdir") err.code = "ENOTDIR";
+		else if (msgLower.includes("not empty") || msgLower.includes("enotempty") || codeLower === "enotempty") err.code = "ENOTEMPTY";
+		else if (msgLower.includes("timed out") || msgLower.includes("timeout") || codeLower === "etimedout") err.code = "ETIMEDOUT";
+		else if (e.code) err.code = String(e.code); // Preserve original code if specific
+		else err.code = "EIO"; // Generic I/O error
 
-		// console.error(`[Node FS Shim <- Mtn] Mapped IPC Error for '${ipcMethod}':`, err.code, err.message);
-
+		// console.warn(`[Node FS Shim <- Mtn] Mapped IPC Error for '${ipcMethod}': Code='${err.code}', Message='${err.message}'`);
 		throw err;
 	}
 }
 
 const fsPromisesImpl: FsPromisesApiShim = {
 	access: async (path: PathLike, mode?: number): Promise<void> => {
-		await requestFsOpAsync("fs_access", {
-			path: String(path),
-
-			mode: mode ?? nodeFs.constants.F_OK,
-		});
+		await requestFsOpAsync("fs_access", { path: String(path), mode: mode ?? nodeFs.constants.F_OK });
 	},
 
-	stat: async (
-		path: PathLike,
-
-		opts?: NodeFsTypes.StatOptions,
-	): Promise<StatsShim> => {
-		// TODO: If Mountain's `fs_stat` supports bigint option, pass it.
-		const result = (await requestFsOpAsync("fs_stat", {
-			path: String(path) /*, opts */,
-
-			// Raw result from Mountain
-		})) as any;
-
+	stat: async (path: PathLike, opts?: NodeFsTypes.StatOptions): Promise<StatsShim> => {
+		const result = await requestFsOpAsync("fs_stat", { path: String(path), bigint: opts?.bigint }) as any;
 		if (result && typeof result === "object") {
-			// VS Code's ExtHostWorkspace.ts returns a FileStat-like object for its own stat,
+			// Convert raw stat data from Mountain (assumed structure) to a NodeFsTypes.Stats object.
+			// This requires Mountain to send fields that can be mapped to Node's Stats.
+			// Example assuming Mountain sends: { dev, ino, mode, nlink, uid, gid, rdev, size, blksize, blocks, atimeMs, mtimeMs, ctimeMs, birthtimeMs, isFile, isDirectory, isSymbolicLink, ... }
+			const stats = new nodeFs.Stats(); // Create a real Stats object if possible, or duck-type
+			Object.assign(stats, { // Assign known properties
+				dev: BigInt(result.dev ?? 0), ino: BigInt(result.ino ?? 0), mode: BigInt(result.mode ?? 0),
+				nlink: BigInt(result.nlink ?? 1), uid: BigInt(result.uid ?? 0), gid: BigInt(result.gid ?? 0),
+				rdev: BigInt(result.rdev ?? 0), size: BigInt(result.size ?? 0), blksize: BigInt(result.blksize ?? 4096),
+				blocks: BigInt(result.blocks ?? Math.ceil((Number(result.size) || 0) / 4096)),
+				atimeMs: BigInt(result.atimeMs ?? Date.now()), mtimeMs: BigInt(result.mtimeMs ?? Date.now()),
+				ctimeMs: BigInt(result.ctimeMs ?? Date.now()), birthtimeMs: BigInt(result.birthtimeMs ?? Date.now()),
+                atimeNs: BigInt(result.atimeNs ?? (result.atimeMs ?? Date.now()) * 1_000_000),
+                mtimeNs: BigInt(result.mtimeNs ?? (result.mtimeMs ?? Date.now()) * 1_000_000),
+                ctimeNs: BigInt(result.ctimeNs ?? (result.ctimeMs ?? Date.now()) * 1_000_000),
+                birthtimeNs: BigInt(result.birthtimeNs ?? (result.birthtimeMs ?? Date.now()) * 1_000_000),
+			});
+            // Ensure date properties are set
+            stats.atime = new Date(Number(stats.atimeMs));
+            stats.mtime = new Date(Number(stats.mtimeMs));
+            stats.ctime = new Date(Number(stats.ctimeMs));
+            stats.birthtime = new Date(Number(stats.birthtimeMs));
 
-			// which includes `type` (FileType enum), `ctime`, `mtime`, `size`.
-			// Node.js `fs.Stats` has methods like isFile(), isDirectory() and properties like birthtimeMs.
-			// Mountain's `handlers/native_fs.rs::handle_fs_stat` was designed to return:
-			// `{ type: fileTypeNumeric, ctime: Date, mtime: Date, birthtime: Date, atime: Date, size: number }`
-			// where fileTypeNumeric maps to VSCode FileType.
-			// This needs to be mapped to a NodeFsTypes.Stats object.
-			// This is complex because NodeFsTypes.Stats is a class instance with methods.
-			// For a shim, returning a plain object that Duck-Types to Stats is common,
-
-			// but methods won't be real class methods.
-			// A more faithful shim might try to construct a mock Stats object.
-			const now = Date.now();
-
-			const modeFromType = (type: number | undefined): number => {
-				// Map vscode.FileType back to Node.js S_IFMT type bits (approximate)
-				if (type === 1 /* File */) return nodeFs.constants.S_IFREG;
-
-				if (type === 2 /* Directory */) return nodeFs.constants.S_IFDIR;
-
-				if (type === 64 /* SymbolicLink */)
-					return nodeFs.constants.S_IFLNK;
-
-				// Unknown
-				return 0;
-			};
-
-			const mode = result.mode ?? modeFromType(result.type);
-
-			const statsObject: Partial<StatsShim> & Record<string, any> = {
-				dev: result.dev ?? 0,
-
-				ino: result.ino ?? 0,
-
-				mode: mode,
-
-				nlink: result.nlink ?? 1,
-
-				uid: result.uid ?? 0,
-
-				gid: result.gid ?? 0,
-
-				rdev: result.rdev ?? 0,
-
-				size: typeof result.size === "number" ? result.size : 0,
-
-				blksize: result.blksize ?? 4096,
-
-				blocks: result.blocks ?? Math.ceil((result.size ?? 0) / 4096),
-
-				atimeMs: result.atime
-					? new Date(result.atime).getTime()
-					: (result.atimeMs ?? now),
-
-				mtimeMs: result.mtime
-					? new Date(result.mtime).getTime()
-					: (result.mtimeMs ?? now),
-
-				ctimeMs: result.ctime
-					? new Date(result.ctime).getTime()
-					: (result.ctimeMs ?? now),
-
-				birthtimeMs: result.birthtime
-					? new Date(result.birthtime).getTime()
-					: (result.birthtimeMs ?? now),
-			};
-
-			statsObject.atime = new Date(statsObject.atimeMs!);
-
-			statsObject.mtime = new Date(statsObject.mtimeMs!);
-
-			statsObject.ctime = new Date(statsObject.ctimeMs!);
-
-			statsObject.birthtime = new Date(statsObject.birthtimeMs!);
-
-			statsObject.isFile = () =>
-				(mode & nodeFs.constants.S_IFMT) === nodeFs.constants.S_IFREG;
-
-			statsObject.isDirectory = () =>
-				(mode & nodeFs.constants.S_IFMT) === nodeFs.constants.S_IFDIR;
-
-			statsObject.isSymbolicLink = () =>
-				(mode & nodeFs.constants.S_IFMT) === nodeFs.constants.S_IFLNK;
-
-			statsObject.isBlockDevice = () =>
-				(mode & nodeFs.constants.S_IFMT) === nodeFs.constants.S_IFBLK;
-
-			statsObject.isCharacterDevice = () =>
-				(mode & nodeFs.constants.S_IFMT) === nodeFs.constants.S_IFCHR;
-
-			statsObject.isFIFO = () =>
-				(mode & nodeFs.constants.S_IFMT) === nodeFs.constants.S_IFIFO;
-
-			statsObject.isSocket = () =>
-				(mode & nodeFs.constants.S_IFMT) === nodeFs.constants.S_IFSOCK;
-
-			return statsObject as StatsShim;
+            // Methods like isFile() are on the prototype of nodeFs.Stats.
+            // If Mountain sends pre-calculated booleans for these, they can be assigned.
+            // Otherwise, they are derived from `mode`.
+            // if (typeof result.isFile === 'boolean') (stats as any)._isFile = result.isFile;
+            // ...
+			return stats as StatsShim; // Cast as the fully typed StatsShim
 		}
-
 		throw new Error("Invalid stat result received from host (fs_stat)");
 	},
 
-	realpath: async (
-		path: PathLike,
+    lstat: async (path: PathLike, opts?: NodeFsTypes.StatOptions): Promise<StatsShim> => {
+        // Similar to stat, but Mountain's fs_lstat should handle symlinks correctly.
+		const result = await requestFsOpAsync("fs_lstat", { path: String(path), bigint: opts?.bigint }) as any;
+        // ... (conversion logic similar to stat) ...
+        if (result && typeof result === 'object') {
+            const stats = new nodeFs.Stats(); Object.assign(stats, { /* ... map fields ... */ });
+            return stats as StatsShim;
+        }
+		throw new Error("Invalid lstat result received from host (fs_lstat)");
+    },
 
-		options?: NodeFsTypes.realpathSyncOptions | BufferEncoding,
-	): Promise<string> => {
-		// `options` for realpath is usually just encoding, defaults to 'utf8'.
-		// The native_fs handler only took path.
+	realpath: async (path: PathLike, _options?: NodeFsTypes.ObjectEncodingOptions | BufferEncoding): Promise<string> => {
+		// Node's realpath options primarily affect encoding of the result, default is 'utf8'.
+		// IPC typically returns string directly.
 		return await requestFsOpAsync("fs_realpath", { path: String(path) });
 	},
 
-	readFile: async (
-		pathHandle: PathLike | NodeFsTypes.promises.FileHandle,
-
-		options?: ReadFileOptionsShim,
-	): Promise<string | Buffer> => {
-		if (
-			typeof pathHandle !== "string" &&
-			!Buffer.isBuffer(pathHandle) &&
-			!(pathHandle instanceof URL)
-		) {
-			throw new Error(
-				"readFile with FileHandle input not supported in this shim.",
-			);
+	readFile: async (pathHandle: PathLike | NodeFsTypes.promises.FileHandle, options?: ReadFileOptionsShim): Promise<string | Buffer> => {
+		if (typeof pathHandle !== "string" && !Buffer.isBuffer(pathHandle) && !(pathHandle instanceof URL)) {
+			throw Object.assign(new Error("readFile with FileHandle input not supported in this shim."), { code: "ERR_INVALID_ARG_TYPE" });
 		}
+		const encoding = (typeof options === "string" ? options : options?.encoding) || null; // null for Buffer
+		const flag = typeof options === "object" && options !== null ? options.flag : undefined;
 
-		const encoding =
-			// null means Buffer
-			(typeof options === "string" ? options : options?.encoding) || null;
-
-		const flag =
-			typeof options === "object" && options !== null
-				? options.flag
-				: undefined;
-
-		const resultBase64 = (await requestFsOpAsync("fs_readFile", {
-			path: String(pathHandle),
-
-			options: { flag },
-		})) as string;
-
-		if (typeof resultBase64 !== "string")
-			throw new Error(
-				"Invalid readFile result (expected base64 string from fs_readFile)",
-			);
+		const resultBase64 = await requestFsOpAsync("fs_readFile", { path: String(pathHandle), options: { flag } }) as string;
+		if (typeof resultBase64 !== "string") throw new Error("Invalid readFile result (expected base64 string from fs_readFile)");
 
 		const buffer = Buffer.from(resultBase64, "base64");
-
-		return encoding && encoding !== "buffer"
-			? buffer.toString(encoding)
-			: buffer;
+		return encoding && encoding !== "buffer" ? buffer.toString(encoding as BufferEncoding) : buffer;
 	},
 
-	writeFile: async (
-		pathHandle: PathLike | NodeFsTypes.promises.FileHandle,
-
-		data: string | Uint8Array,
-
-		options?: WriteFileOptionsShim,
-	): Promise<void> => {
-		if (
-			typeof pathHandle !== "string" &&
-			!Buffer.isBuffer(pathHandle) &&
-			!(pathHandle instanceof URL)
-		) {
-			throw new Error(
-				"writeFile with FileHandle input not supported in this shim.",
-			);
+	writeFile: async (pathHandle: PathLike | NodeFsTypes.promises.FileHandle, data: string | Uint8Array, options?: WriteFileOptionsShim): Promise<void> => {
+		if (typeof pathHandle !== "string" && !Buffer.isBuffer(pathHandle) && !(pathHandle instanceof URL)) {
+			throw Object.assign(new Error("writeFile with FileHandle input not supported in this shim."), { code: "ERR_INVALID_ARG_TYPE" });
 		}
-
-		let dataBase64: string;
-
-		const encodingFromFileOptions =
-			(typeof options === "string" ? options : options?.encoding) ||
-			"utf8";
-
-		dataBase64 = Buffer.from(
-			data,
-
-			typeof data === "string" ? encodingFromFileOptions : undefined,
-		).toString("base64");
-
+		const encodingFromFileOptions = (typeof options === "string" ? options : options?.encoding) || "utf8";
+		const dataBase64 = Buffer.from(data, typeof data === "string" ? encodingFromFileOptions as BufferEncoding : undefined).toString("base64");
 		const ipcOptions: { mode?: NodeFsTypes.Mode; flag?: string } = {};
-
 		if (typeof options === "object" && options !== null) {
 			if (options.mode !== undefined) ipcOptions.mode = options.mode;
-
 			if (options.flag !== undefined) ipcOptions.flag = options.flag;
-
-			// TODO: AbortSignal (options.signal) is complex to proxy.
+			// TODO: AbortSignal (options.signal) is complex to proxy. Warn if present.
+			if ((options as any).signal) console.warn("[Node FS Shim] writeFile: AbortSignal option is not supported by this shim.");
 		}
-
-		await requestFsOpAsync("fs_writeFile", {
-			path: String(pathHandle),
-
-			data: dataBase64,
-
-			options: ipcOptions,
-		});
+		await requestFsOpAsync("fs_writeFile", { path: String(pathHandle), data: dataBase64, options: ipcOptions });
 	},
 
-	mkdir: async (
-		path: PathLike,
-
-		options?: NodeFsTypes.Mode | MkdirOptionsShim,
-	): Promise<string | undefined> => {
-		const ipcOptions: MkdirOptionsShim =
-			typeof options === "number" ? { mode: options } : options || {};
-
-		await requestFsOpAsync("fs_mkdir", {
-			path: String(path),
-
-			options: ipcOptions,
-		});
-
-		// Node's fs.promises.mkdir returns the first directory path created if recursive is true and path was created.
-		// If path already exists and recursive, returns undefined. If not recursive and path exists, throws.
-		// This shim simplifies: returns path if recursive, else undefined.
-		// TODO: For full fidelity, Mountain's fs_mkdir should return the path or signal if it already existed.
-		return ipcOptions.recursive ? String(path) : undefined;
+	mkdir: async (path: PathLike, options?: MkdirOptionsShim): Promise<string | undefined> => {
+		const ipcOptions: NodeFsTypes.MakeDirectoryOptions = typeof options === "number" ? { mode: options } : options || {};
+		// Mountain's fs_mkdir should handle the recursive logic.
+		const result = await requestFsOpAsync("fs_mkdir", { path: String(path), options: ipcOptions });
+        // Node's fs.promises.mkdir returns:
+        // - path if options.recursive is true and path was created (or first path created)
+        // - undefined if options.recursive is true and path already existed
+        // - undefined if options.recursive is false (or not set) and path was created
+        // - Throws if options.recursive is false and path already exists (EEXIST)
+        // This shim relies on Mountain to return the path or specific signal.
+        // If Mountain returns the path string when created recursively:
+        if (ipcOptions.recursive && typeof result === 'string') return result;
+        return undefined; // Default for non-recursive success or recursive existing path
 	},
 
 	unlink: async (path: PathLike): Promise<void> => {
 		await requestFsOpAsync("fs_unlink", { path: String(path) });
 	},
 
-	rmdir: async (
-		path: PathLike,
+    rm: nodeFs.promises.rm ? async (path: PathLike, options?: NodeFsTypes.RmOptions): Promise<void> => {
+        // If nodeFs.promises.rm exists, assume Mountain has a corresponding fs_rm handler
+        console.warn("[Node FS Shim] fs.promises.rm is being used. Ensure Mountain has a corresponding 'fs_rm' handler.");
+        await requestFsOpAsync("fs_rm", { path: String(path), options });
+    } : undefined, // rm is undefined if not in current Node version
 
-		options?: RmdirOptionsShim,
-	): Promise<void> => {
-		// TODO: Mountain's `fs_rmdir` handler needs to exist and support RmdirOptions.
+	rmdir: async (path: PathLike, options?: RmdirOptionsShim): Promise<void> => {
 		await requestFsOpAsync("fs_rmdir", { path: String(path), options });
 	},
 
-	readdir: async (
-		path: PathLike,
-
-		options?: ReaddirOptionsShim,
-	): Promise<string[] | Buffer[] | DirentShim[]> => {
-		const ipcReadOptions: {
-			withFileTypes?: boolean;
-
-			recursive?: boolean;
-
-			encoding?: BufferEncoding | "buffer";
-		} = {};
-
+	readdir: async (path: PathLike, options?: ReaddirOptionsShim): Promise<string[] | Buffer[] | DirentShim[]> => {
+		const ipcReadOptions: { encoding?: BufferEncoding | "buffer"; withFileTypes?: boolean; recursive?: boolean } = {};
 		let returnAsBuffer = false;
+		let withFileTypes = false;
 
 		if (typeof options === "string") {
-			// options is encoding
-			ipcReadOptions.encoding = options;
-
+			ipcReadOptions.encoding = options as BufferEncoding;
 			if (options === "buffer") returnAsBuffer = true;
 		} else if (options && typeof options === "object") {
-			ipcReadOptions.withFileTypes =
-				// Cast for withFileTypes
-				(
-					options as NodeFsTypes.ObjectEncodingOptions & {
-						withFileTypes: true;
-					}
-				).withFileTypes;
-
-			// `recursive` is on DirentQueryOptions in newer node
-			ipcReadOptions.recursive = (options as any).recursive;
-
-			if (options.encoding) {
-				ipcReadOptions.encoding = options.encoding;
-
-				if (options.encoding === "buffer") returnAsBuffer = true;
-			}
+			ipcReadOptions.encoding = options.encoding as BufferEncoding | "buffer" | undefined;
+			if (options.encoding === "buffer") returnAsBuffer = true;
+			withFileTypes = !!options.withFileTypes;
+			ipcReadOptions.withFileTypes = withFileTypes;
+			ipcReadOptions.recursive = (options as any).recursive; // For newer Node versions
 		}
 
-		const result = (await requestFsOpAsync("fs_readdir", {
-			path: String(path),
+		const result = await requestFsOpAsync("fs_readdir", { path: String(path), options: ipcReadOptions }) as any[];
+		if (!Array.isArray(result)) throw new Error("readdir IPC response was not an array.");
 
-			options: ipcReadOptions,
-		})) as any[];
-
-		if (!Array.isArray(result))
-			throw new Error("readdir IPC response was not an array.");
-
-		if (ipcReadOptions.withFileTypes) {
-			return result.map(
-				(item: { name: string; type: number }): DirentShim => {
-					// Mountain sends {name, type (Node's d_type)}
-
-					if (
-						typeof item !== "object" ||
-						item === null ||
-						typeof item.name !== "string" ||
-						typeof item.type !== "number"
-					) {
-						console.warn(
-							"[Node FS Shim] Invalid Dirent structure from Mountain for readdir:",
-
-							item,
-						);
-
-						return {
-							name: String(item?.name || "unknown"),
-
-							isDirectory: () => false,
-
-							isFile: () =>
-								false /*... other methods return false */,
-						} as DirentShim;
-					}
-
-					// Create a Dirent-like object. For full fidelity, this would be an instance of NodeFsTypes.Dirent.
-					// This requires `nodeFs.Dirent` class to be available or a good mock.
-					// For now, a plain object with methods.
-					const type = item.type;
-
-					return {
-						name: item.name,
-
-						isFile: () => type === nodeFs.constants.UV_DIRENT_FILE,
-
-						isDirectory: () =>
-							type === nodeFs.constants.UV_DIRENT_DIR,
-
-						isSymbolicLink: () =>
-							type === nodeFs.constants.UV_DIRENT_LNK,
-
-						isBlockDevice: () =>
-							type === nodeFs.constants.UV_DIRENT_BLOCK,
-
-						isCharacterDevice: () =>
-							type === nodeFs.constants.UV_DIRENT_CHAR,
-
-						isFIFO: () => type === nodeFs.constants.UV_DIRENT_FIFO,
-
-						isSocket: () =>
-							type === nodeFs.constants.UV_DIRENT_SOCKET,
-
-						// Cast to DirentShim, acknowledging it's not a true class instance.
-					} as DirentShim;
-				},
-			);
+		if (withFileTypes) {
+			return result.map((item: { name: string; type: number }): DirentShim => {
+				if (typeof item !== "object" || item === null || typeof item.name !== "string" || typeof item.type !== "number") {
+					console.warn("[Node FS Shim] Invalid Dirent structure from Mountain for readdir withFileTypes:", item);
+                    const dirent = new nodeFs.Dirent(); // Create a real Dirent
+                    (dirent as any).name = String(item?.name || "unknown_dirent");
+                    // Set type to unknown or default
+					return dirent;
+				}
+                const dirent = new nodeFs.Dirent(); // Create a real Dirent
+                (dirent as any).name = item.name; // Assign name
+                (dirent as any).type = item.type; // Assign type (Node's d_type constants)
+				return dirent;
+			});
 		} else if (returnAsBuffer) {
-			// Assuming names are strings if not Dirent
 			return result.map((name) => Buffer.from(String(name)));
 		}
-
-		// Default is string[]
-		return result.map((name) => String(name));
+		return result.map((name) => String(name)); // Default is string[]
 	},
 
 	rename: async (oldPath: PathLike, newPath: PathLike): Promise<void> => {
-		await requestFsOpAsync("fs_rename", {
-			oldPath: String(oldPath),
-
-			newPath: String(newPath),
-		});
+		await requestFsOpAsync("fs_rename", { oldPath: String(oldPath), newPath: String(newPath) });
 	},
+
+    copyFile: nodeFs.promises.copyFile ? async (src: PathLike, dest: PathLike, mode?: number): Promise<void> => {
+        console.warn("[Node FS Shim] fs.promises.copyFile is being used. Ensure Mountain has a corresponding 'fs_copyFile' handler.");
+        await requestFsOpAsync("fs_copyFile", { src: String(src), dest: String(dest), mode });
+    } : undefined,
 };
 
 const fsShimModuleInstance: FsShimStructure = {
 	promises: fsPromisesImpl,
-
 	constants: nodeFs.constants,
 
-	// --- Synchronous API Stubs (Discouraged) ---
-	// TODO: For any sync methods that *must* be supported, they would require a synchronous IPC mechanism
-	// to Mountain, which is generally not feasible or advisable. Alternatively, Mountain could provide
-	// initial filesystem snapshots or data that these sync methods could query locally.
-	// For now, they all throw, guiding users to the async API.
+	// --- Synchronous API Stubs (Discouraged: Throw errors) ---
 	existsSync: (path) => {
-		console.warn(
-			"fs.existsSync is not reliably shimmed; use fs.promises.access or fs.promises.stat.",
-		);
-
-		throw new Error("fs.existsSync sync call not supported in Cocoon shim");
+		const msg = "fs.existsSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.access or fs.promises.stat.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
 	},
-
 	statSync: (path, opts) => {
-		console.warn(
-			"fs.statSync is not reliably shimmed; use fs.promises.stat.",
-		);
-
-		throw new Error("fs.statSync sync call not supported in Cocoon shim");
+		const msg = "fs.statSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.stat.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
 	},
-
+    lstatSync: (path, opts) => {
+		const msg = "fs.lstatSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.lstat.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
+    },
 	realpathSync: (path, opts) => {
-		console.warn(
-			"fs.realpathSync is not reliably shimmed; use fs.promises.realpath.",
-		);
-
-		throw new Error(
-			"fs.realpathSync sync call not supported in Cocoon shim",
-		);
+		const msg = "fs.realpathSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.realpath.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
 	},
-
 	readFileSync: (path, opts) => {
-		console.warn(
-			"fs.readFileSync is not reliably shimmed; use fs.promises.readFile.",
-		);
-
-		throw new Error(
-			"fs.readFileSync sync call not supported in Cocoon shim",
-		);
+		const msg = "fs.readFileSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.readFile.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
 	},
-
 	writeFileSync: (path, data, opts) => {
-		console.warn(
-			"fs.writeFileSync is not reliably shimmed; use fs.promises.writeFile.",
-		);
-
-		throw new Error(
-			"fs.writeFileSync sync call not supported in Cocoon shim",
-		);
+		const msg = "fs.writeFileSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.writeFile.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
 	},
-
 	mkdirSync: (path, opts) => {
-		console.warn(
-			"fs.mkdirSync is not reliably shimmed; use fs.promises.mkdir.",
-		);
-
-		throw new Error("fs.mkdirSync sync call not supported in Cocoon shim");
+		const msg = "fs.mkdirSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.mkdir.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
 	},
-
 	unlinkSync: (path) => {
-		console.warn(
-			"fs.unlinkSync is not reliably shimmed; use fs.promises.unlink.",
-		);
-
-		throw new Error("fs.unlinkSync sync call not supported in Cocoon shim");
+		const msg = "fs.unlinkSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.unlink.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
 	},
-
+    rmSync: nodeFs.rmSync ? (path, opts) => {
+		const msg = "fs.rmSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.rm.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
+    } : undefined,
 	rmdirSync: (path, opts) => {
-		console.warn(
-			"fs.rmdirSync is not reliably shimmed; use fs.promises.rmdir.",
-		);
-
-		throw new Error("fs.rmdirSync sync call not supported in Cocoon shim");
+		const msg = "fs.rmdirSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.rmdir or fs.promises.rm.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
 	},
-
 	readdirSync: (path, opts) => {
-		console.warn(
-			"fs.readdirSync is not reliably shimmed; use fs.promises.readdir.",
-		);
-
-		throw new Error(
-			"fs.readdirSync sync call not supported in Cocoon shim",
-		);
+		const msg = "fs.readdirSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.readdir.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
 	},
-
 	renameSync: (oldP, newP) => {
-		console.warn(
-			"fs.renameSync is not reliably shimmed; use fs.promises.rename.",
-		);
-
-		throw new Error("fs.renameSync sync call not supported in Cocoon shim");
+		const msg = "fs.renameSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.rename.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${oldP}`);
+		throw new Error(msg);
 	},
+	accessSync: nodeFs.accessSync ? (path, mode) => {
+		const msg = "fs.accessSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.access.";
+		console.warn(`[Node FS Shim] Attempted to call ${msg} for path: ${path}`);
+		throw new Error(msg);
+	} : undefined,
 
-	accessSync: (path, mode) => {
-		console.warn(
-			"fs.accessSync is not reliably shimmed; use fs.promises.access.",
-		);
-
-		throw new Error("fs.accessSync sync call not supported in Cocoon shim");
-	},
-
-	// Stream and Watcher stubs (complex to shim over IPC)
-	createReadStream: (_p, _o) => {
-		throw new Error("fs.createReadStream not supported in Cocoon shim");
-	},
-
-	createWriteStream: (_p, _o) => {
-		throw new Error("fs.createWriteStream not supported in Cocoon shim");
-	},
-
-	watch: (_f, _o, _l) => {
-		throw new Error("fs.watch not supported in Cocoon shim");
-	},
-
-	// TODO: Consider if basic watch functionality could be proxied if essential for some extensions.
+	// Stream and Watcher stubs - these are complex to shim over IPC and typically throw.
+	createReadStream: (_p, _o) => { throw new Error("fs.createReadStream not supported in Cocoon's proxied fs shim."); },
+	createWriteStream: (_p, _o) => { throw new Error("fs.createWriteStream not supported in Cocoon's proxied fs shim."); },
+	watch: (_f, _o, _l) => { throw new Error("fs.watch not supported in Cocoon's proxied fs shim."); },
 };
 
 export default fsShimModuleInstance;
+--- END OF FILE fs-shim.ts ---
