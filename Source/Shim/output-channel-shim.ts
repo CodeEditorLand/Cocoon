@@ -1,185 +1,183 @@
+// ORIGIN INFORMATION:
+// This code block was extracted by a script.
+// Source Markdown File: Backup/TSFMSC/Document/152_MODEL.md
+// Source Block Index in MD (Overall): 1
+// Original Fence Info String: (empty)
+// Content SHA256 (of this block): ba505fe8093c04c092048a32fb232220397a6a12bbe769d0d1a73f04b3dcdc8f
+// Extracted to File: Backup/TSFMSC/Code/output-channel-shim.ts
+// Extraction Timestamp: 2025-05-25T14:02:57.070Z
+// --- END OF ORIGIN INFORMATION ---
+
+--- START OF FILE output-channel-shim.ts ---
+
 /*---------------------------------------------------------------------------------------------
  * Cocoon Output Channel Shims (output-channel-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements the `vscode.window.createOutputChannel` API (via `IExtHostOutputService`) and
- * the returned `vscode.OutputChannel` / `vscode.LogOutputChannel` interfaces for Cocoon.
- * Allows extensions to create and write to output channels displayed in the UI.
+ * Implements the `vscode.window.createOutputChannel` API (provided by an instance of
+ * `ShimOutputService` which acts like `IExtHostOutputService`) and the returned
+ * `vscode.OutputChannel` and `vscode.LogOutputChannel` interfaces.
+ *
+ * This allows extensions to create named output channels that can be displayed in the
+ * editor's UI (typically in the Output panel). All content written to these channels
+ * is proxied to the Mountain host process for display.
  *
  * Responsibilities:
  * - `ShimOutputService`:
- *   - Implements `createOutputChannel(name, options?)`.
- *   - Calls `$register` RPC on `MainThreadOutputService` to inform Mountain about the new channel.
- *   - Instantiates and returns a `ShimOutputChannelImpl` or `ShimLogOutputChannelImpl` facade.
+ *   - Implements `createOutputChannel(name, options?)`, which is the factory method
+ *     exposed as `vscode.window.createOutputChannel`.
+ *   - When a channel is created, it makes an RPC call (`$register`) to the
+ *     `MainThreadOutputService` in Mountain to inform it about the new channel.
+ *   - Instantiates and returns either a `ShimOutputChannelImpl` (for standard channels)
+ *     or a `ShimLogOutputChannelImpl` (for log-focused channels) facade.
  * - `ShimOutputChannelImpl` / `ShimLogOutputChannelImpl`:
- *   - Implement the `vscode.OutputChannel` / `vscode.LogOutputChannel` API.
- *   - Forward actions (`append`, `clear`, etc.) to Mountain via RPC on `MainThreadOutputService`.
- *   - `ShimLogOutputChannelImpl` handles log levels locally for filtering console output.
+ *   - Implement the public API of `vscode.OutputChannel` / `vscode.LogOutputChannel`.
+ *   - Actions like `append`, `clear`, `show`, `hide`, `dispose` are forwarded as RPC
+ *     calls to the `MainThreadOutputService` on Mountain.
+ *   - `ShimLogOutputChannelImpl` additionally handles log level filtering locally for
+ *     its `trace`, `debug`, `info`, `warn`, `error` methods before appending to the channel,
+ *     and manages its `logLevel` property and `onDidChangeLogLevel` event.
  *
  * Key Interactions:
- * - Provides `vscode.window.createOutputChannel` (via DI of `IExtHostOutputService`).
- * - Interacts with `RPCProtocol` via `this._getProxy(MainContext.MainThreadOutputService)`.
- * - Relies on Mountain's `MainThreadOutputService` for UI updates.
+ * - `ShimOutputService` is registered with DI in `Cocoon/index.ts` and provides the
+ *   `vscode.window.createOutputChannel` functionality via the API factory.
+ * - All channel operations that affect UI or persistent state are proxied to
+ *   `MainContext.MainThreadOutputService` on Mountain via RPC.
+ * - Uses `BaseCocoonShim` for common utilities like RPC proxy retrieval and logging.
+ *
+ * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
 import {
 	Emitter as VscodeEmitter,
 	Event as VscodeEvent,
 } from "vs/base/common/event";
-// Assuming API objects from 'vscode' shim
-import { IDisposable } from "vs/base/common/lifecycle";
-// VS Code internal LogLevel enum
+import { Disposable, type IDisposable } from "vs/base/common/lifecycle"; // IDisposable for return types
+// VS Code internal LogLevel enum for MainThread RPC, if different from API's LogLevel
 import type { LogLevel as VscodeInternalLogLevel } from "vs/platform/log/common/log";
 import {
-	ExtHostContext,
-	MainContext,
-	// For RPC context
+	ExtHostContext, // For registering this service if it receives RPC calls
+	MainContext,    // For proxying to MainThreadOutputService
 } from "vs/workbench/api/common/extHost.protocol";
+
+// Import types from the public 'vscode' API
 import {
-	// The vscode.LogLevel enum from the API
-	LogLevel as VscodeApiLogLevel,
-	// For show options
-	type ViewColumn,
+	LogLevel as VscodeApiLogLevel, // The vscode.LogLevel enum used by LogOutputChannel API
 	type LogOutputChannel as VscodeLogOutputChannel,
 	type OutputChannel as VscodeOutputChannel,
-	// Renamed to avoid conflict with internal URI if used
-	type Uri as VscodeUri,
+	type Uri as VscodeUri, // For file-backed log channels (future)
+	type ViewColumn,       // For show() options
+    type Command as VscodeCommand, // For StatusBarItem.command (though not directly used here, good for type consistency)
+    type ThemeColor, // For StatusBarItem.color
 } from "vscode";
 
 import {
 	BaseCocoonShim,
-	refineError,
-	type IExtHostRpcService,
-	type ILogService,
+	refineErrorForShim, // Use the more specific refineError
+	type IRpcProtocolServiceAdapter,
+	type ILogServiceForShim,
 	type ProxyIdentifier,
 } from "./_baseShim";
 
 // --- Type Definitions ---
 
-// For MainThreadOutputService RPC proxy
-// TODO: This must align with the actual MainThreadOutputService methods in Mountain.
-interface MainThreadOutputServiceShape {
-	$register(
-		name: string,
-
-		file?: ILocalUriComponents | null,
-
-		languageId?: string | null,
-
-		extensionId?: string,
-
-		// Returns actual channel ID
-	): Promise<string>;
-
-	$append(channelId: string, value: string): Promise<void>;
-
-	$clear(channelId: string): Promise<void>;
-
-	$replace(channelId: string, value: string): Promise<void>;
-
-	$reveal(
-		channelId: string,
-
-		preserveFocus?: boolean,
-
-		viewColumn?: ViewColumn,
-
-		// Added viewColumn
-	): Promise<void>;
-
-	$close(channelId: string): Promise<void>;
-
-	$dispose(channelId: string): Promise<void>;
-
-	$setLogLevel?(
-		channelId: string,
-
-		level: VscodeInternalLogLevel,
-
-		// Optional, for LogOutputChannel
-	): Promise<void>;
-}
-
-// For URI components passed to $register
+/**
+ * Represents URI components for RPC, particularly if log channels are file-backed.
+ * Should align with `VSCodeInternalUriComponents` or a compatible DTO structure.
+ */
 interface ILocalUriComponents {
 	scheme: string;
-
 	path: string;
-
 	authority?: string;
-
 	query?: string;
-
 	fragment?: string;
-
-	$mid?: 1;
+	$mid?: number; // MarshalledId.Uri or UriSimple often used
 }
 
-// Options for createOutputChannel (vscode.d.ts)
-type CreateOutputChannelOptions =
-	| string
-	| { log: true; languageId?: string }
-	| { log?: false; languageId?: string };
+/**
+ * Defines the RPC interface for the `MainThreadOutputService` expected on Mountain.
+ */
+interface MainThreadOutputServiceShape {
+	/**
+	 * Registers a new output channel with the main thread.
+	 * @param name The human-readable name of the channel.
+	 * @param file URI (as components) if this is a file-backed log channel (optional).
+	 * @param languageId The language ID to associate for syntax highlighting (optional).
+	 * @param extensionId The ID of the extension creating the channel (optional, often implicit).
+	 * @returns A promise resolving to the actual channel ID used by the main thread.
+	 */
+	$register(
+		name: string,
+		file?: ILocalUriComponents | null,
+		languageId?: string | null,
+		extensionId?: string,
+	): Promise<string>; // Returns actual channel ID
 
+	$append(channelId: string, value: string): Promise<void>;
+	$clear(channelId: string): Promise<void>;
+	$replace(channelId: string, value: string): Promise<void>;
+	$reveal(channelId: string, preserveFocus?: boolean, viewColumn?: ViewColumn): Promise<void>;
+	$close(channelId: string): Promise<void>; // Corresponds to hide()
+	$dispose(channelId: string): Promise<void>;
+	$setLogLevel?(channelId: string, level: VscodeInternalLogLevel): Promise<void>; // For LogOutputChannel
+}
+
+/**
+ * Options for `createOutputChannel` as defined in `vscode.d.ts`.
+ * Can be a languageId string (deprecated), or an options object.
+ */
+type CreateOutputChannelOptions = string | { log: true; languageId?: string; file?: VscodeUri } | { log?: false; languageId?: string };
+
+
+/**
+ * Base implementation for an output channel, handling common RPC proxy interactions.
+ */
 class ShimOutputChannelImpl implements VscodeOutputChannel {
-	// The ID (often the name) used for RPC calls to MainThread
-	readonly #idForRpc: string;
-
-	readonly #displayName: string;
-
+	// The ID used for RPC calls. This might be the 'name' or an ID returned by MainThread upon registration.
+	readonly _idForRpc: string; // Made protected for ShimLogOutputChannelImpl to access if needed for $setLogLevel
+	readonly #displayName: string; // The human-readable name.
 	#proxy: MainThreadOutputServiceShape | null;
-
-	// For internal logging of the shim itself
-	#logService?: ILogService;
-
+	#logService?: ILogServiceForShim;
 	#isDisposed = false;
 
 	constructor(
 		idForRpc: string,
-
 		displayName: string,
-
 		proxy: MainThreadOutputServiceShape | null,
-
-		logService?: ILogService,
+		logService?: ILogServiceForShim,
 	) {
-		this.#idForRpc = idForRpc;
-
+		this._idForRpc = idForRpc;
 		this.#displayName = displayName;
-
 		this.#proxy = proxy;
-
 		this.#logService = logService;
-
-		this._logShimInternals(`Created`);
+		this._logShimInternals(`Created channel.`);
 	}
 
-	private _logShimInternals(msg: string, ...args: any[]): void {
+	protected _logShimInternals(message: string, ...args: any[]): void { // Changed to protected
 		this.#logService?.trace(
-			`[OutputChannel][${this.#displayName}(${this.#idForRpc})] ${msg}`,
-
+			`[OutputChannel][${this.#displayName}(${this._idForRpc})] ${message}`,
 			...args,
 		);
 	}
-
-	private _logShimError(msg: string, ...args: any[]): void {
-		this.#logService?.error(
-			`[OutputChannel][${this.#displayName}(${this.#idForRpc})] ${msg}`,
-
-			...args,
-		);
+	protected _logShimError(message: string | Error, ...args: any[]): void { // Changed to protected
+		const prefix = `[OutputChannel][${this.#displayName}(${this._idForRpc})]`;
+        if (this.#logService) {
+            this.#logService.error(message instanceof Error ? message : `${prefix} ${message}`, ...args);
+        } else {
+            if (message instanceof Error) console.error(`${prefix} ${message.message}`, message.stack, ...args);
+            else console.error(`${prefix} ${message}`, ...args);
+        }
 	}
 
-	private _validateAndGetProxy(): MainThreadOutputServiceShape {
-		if (this.#isDisposed)
-			throw new Error(
-				`OutputChannel '${this.#displayName}' has been disposed.`,
-			);
-
-		if (!this.#proxy)
-			throw new Error(
-				`OutputChannel '${this.#displayName}' RPC proxy is unavailable.`,
-			);
-
+	/** Validates that the channel is not disposed and the RPC proxy is available. */
+	protected _validateAndGetProxy(): MainThreadOutputServiceShape { // Changed to protected
+		if (this.#isDisposed) {
+			throw new Error(`OutputChannel '${this.#displayName}' (ID: ${this._idForRpc}) has been disposed.`);
+		}
+		if (!this.#proxy) {
+			// This scenario implies a critical failure during setup if proxy was expected.
+			this._logShimError("RPC proxy is unavailable. Output channel operations will fail.");
+			throw new Error(`OutputChannel '${this.#displayName}' (ID: ${this._idForRpc}) RPC proxy is unavailable.`);
+		}
 		return this.#proxy;
 	}
 
@@ -190,23 +188,14 @@ class ShimOutputChannelImpl implements VscodeOutputChannel {
 	append(value: string): void {
 		try {
 			const proxy = this._validateAndGetProxy();
-
-			// Can be too verbose
-			// this._logShimInternals(`append: "${value.substring(0, 50)}..."`);
-
-			proxy.$append(this.#idForRpc, String(value)).catch((e) =>
-				this._logShimError(
-					"Error in $append RPC:",
-
-					refineError(e, this.#logService),
-				),
+			// Logging every append can be too verbose, consider trace or conditional logging.
+			// this._logShimInternals(`append: "${String(value).substring(0, 50)}..."`);
+			proxy.$append(this._idForRpc, String(value)).catch((e) =>
+				this._logShimError("Error in $append RPC:", refineErrorForShim(e, this.#logService)),
 			);
 		} catch (e: any) {
-			this._logShimError(
-				"append validation failed:",
-
-				e,
-			); /* Optionally rethrow */
+			this._logShimError("Validation failed before append RPC call:", e);
+			// Depending on desired strictness, could rethrow `e` here.
 		}
 	}
 
@@ -217,478 +206,295 @@ class ShimOutputChannelImpl implements VscodeOutputChannel {
 	clear(): void {
 		try {
 			const proxy = this._validateAndGetProxy();
-
-			this._logShimInternals(`clear`);
-
-			proxy.$clear(this.#idForRpc).catch((e) =>
-				this._logShimError(
-					"Error in $clear RPC:",
-
-					refineError(e, this.#logService),
-				),
+			this._logShimInternals(`clear()`);
+			proxy.$clear(this._idForRpc).catch((e) =>
+				this._logShimError("Error in $clear RPC:", refineErrorForShim(e, this.#logService)),
 			);
 		} catch (e: any) {
-			this._logShimError("clear validation failed:", e);
+			this._logShimError("Validation failed before clear RPC call:", e);
 		}
 	}
 
 	replace(value: string): void {
 		try {
 			const proxy = this._validateAndGetProxy();
-
-			this._logShimInternals(`replace: "${value.substring(0, 50)}..."`);
-
-			proxy.$replace(this.#idForRpc, String(value)).catch((e) =>
-				this._logShimError(
-					"Error in $replace RPC:",
-
-					refineError(e, this.#logService),
-				),
+			this._logShimInternals(`replace(): "${String(value).substring(0, 50)}..."`);
+			proxy.$replace(this._idForRpc, String(value)).catch((e) =>
+				this._logShimError("Error in $replace RPC:", refineErrorForShim(e, this.#logService)),
 			);
 		} catch (e: any) {
-			this._logShimError("replace validation failed:", e);
+			this._logShimError("Validation failed before replace RPC call:", e);
 		}
 	}
 
-	show(
-		columnOrPreserveFocus?: ViewColumn | boolean,
-
-		preserveFocus?: boolean,
-	): void {
+	show(columnOrPreserveFocus?: ViewColumn | boolean, preserveFocusArgs?: boolean): void {
 		try {
 			const proxy = this._validateAndGetProxy();
-
 			let targetViewColumn: ViewColumn | undefined;
-
 			let actualPreserveFocus: boolean | undefined;
 
 			if (typeof columnOrPreserveFocus === "boolean") {
 				actualPreserveFocus = columnOrPreserveFocus;
-			} else if (typeof columnOrPreserveFocus === "number") {
-				// ViewColumn enum
+			} else if (typeof columnOrPreserveFocus === "number") { // ViewColumn is an enum, typically number
 				targetViewColumn = columnOrPreserveFocus;
-
-				actualPreserveFocus = preserveFocus;
-			} else {
-				// preserveFocus is undefined or boolean
-				actualPreserveFocus = preserveFocus;
+				actualPreserveFocus = preserveFocusArgs;
+			} else { // columnOrPreserveFocus is undefined
+				actualPreserveFocus = preserveFocusArgs; // This would be the only preserveFocus if first arg is undefined
 			}
 
-			this._logShimInternals(
-				`show: column=${targetViewColumn}, preserveFocus=${actualPreserveFocus}`,
+			this._logShimInternals(`show(): Column=${targetViewColumn}, PreserveFocus=${actualPreserveFocus}`);
+			proxy.$reveal(this._idForRpc, actualPreserveFocus, targetViewColumn).catch((e) =>
+				this._logShimError("Error in $reveal RPC:", refineErrorForShim(e, this.#logService)),
 			);
-
-			proxy
-				// $reveal may take column
-				.$reveal(this.#idForRpc, actualPreserveFocus, targetViewColumn)
-				.catch((e) =>
-					this._logShimError(
-						"Error in $reveal RPC:",
-
-						refineError(e, this.#logService),
-					),
-				);
 		} catch (e: any) {
-			this._logShimError("show validation failed:", e);
+			this._logShimError("Validation failed before show RPC call:", e);
 		}
 	}
 
 	hide(): void {
 		try {
 			const proxy = this._validateAndGetProxy();
-
-			this._logShimInternals(`hide`);
-
-			proxy.$close(this.#idForRpc).catch((e) =>
-				this._logShimError(
-					"Error in $close RPC:",
-
-					refineError(e, this.#logService),
-				),
+			this._logShimInternals(`hide()`);
+			proxy.$close(this._idForRpc).catch((e) => // $close corresponds to hide
+				this._logShimError("Error in $close (hide) RPC:", refineErrorForShim(e, this.#logService)),
 			);
 		} catch (e: any) {
-			this._logShimError("hide validation failed:", e);
+			this._logShimError("Validation failed before hide RPC call:", e);
 		}
 	}
 
 	dispose(): void {
 		if (!this.#isDisposed) {
-			this._logShimInternals(`dispose`);
-
+			this._logShimInternals(`dispose()`);
 			this.#isDisposed = true;
-
-			this.#proxy
-				// Use optional chaining as proxy might be nulled
-				?.$dispose(this.#idForRpc)
-				.catch((e) =>
-					this._logShimError(
-						"Error in $dispose RPC:",
-
-						refineError(e, this.#logService),
-					),
-				);
-
+			// Attempt to notify MainThread even if proxy validation might fail (e.g., if proxy became null).
+			this.#proxy?.$dispose(this._idForRpc).catch((e) =>
+				// Log error if dispose fails, but don't throw from dispose().
+				this._logShimError("Error in $dispose RPC:", refineErrorForShim(e, this.#logService)),
+			);
+			// Release references
 			this.#proxy = null;
-
 			this.#logService = undefined;
 		}
 	}
 }
 
-class ShimLogOutputChannelImpl
-	extends ShimOutputChannelImpl
-	implements VscodeLogOutputChannel
-{
-	// Use vscode.LogLevel from API
-	#currentLogLevel: VscodeApiLogLevel;
-
+/**
+ * Shim implementation for `vscode.LogOutputChannel`.
+ * Extends `ShimOutputChannelImpl` to add log level management and level-specific logging methods.
+ */
+class ShimLogOutputChannelImpl extends ShimOutputChannelImpl implements VscodeLogOutputChannel {
+	#currentLogLevel: VscodeApiLogLevel; // Use VscodeApiLogLevel from 'vscode'
 	readonly #onDidChangeLogLevelEmitter: VscodeEmitter<VscodeApiLogLevel>;
-
 	public readonly onDidChangeLogLevel: VscodeEvent<VscodeApiLogLevel>;
-
-	// Keep a ref for $setLogLevel
-	readonly #proxyRefForLog: MainThreadOutputServiceShape | null;
 
 	constructor(
 		idForRpc: string,
-
 		displayName: string,
-
 		proxy: MainThreadOutputServiceShape | null,
-
-		logService?: ILogService,
-
-		// Default to Info from vscode API
-		initialLogLevel: VscodeApiLogLevel = VscodeApiLogLevel.Info,
+		logService: ILogServiceForShim | undefined,
+		initialLogLevel: VscodeApiLogLevel = VscodeApiLogLevel.Info, // Default to Info from vscode.LogLevel
 	) {
 		super(idForRpc, displayName, proxy, logService);
-
 		this.#currentLogLevel = initialLogLevel;
-
-		this.#onDidChangeLogLevelEmitter =
-			new VscodeEmitter<VscodeApiLogLevel>();
-
+		this.#onDidChangeLogLevelEmitter = new VscodeEmitter<VscodeApiLogLevel>();
 		this.onDidChangeLogLevel = this.#onDidChangeLogLevelEmitter.event;
-
-		// Store for potential $setLogLevel
-		this.#proxyRefForLog = proxy;
+		this._logShimInternals(`Created LogOutputChannel. Initial LogLevel: ${VscodeApiLogLevel[this.#currentLogLevel]}`);
 	}
 
 	get logLevel(): VscodeApiLogLevel {
 		return this.#currentLogLevel;
 	}
 
-	public setLogLevel(level: VscodeApiLogLevel): void {
+	setLogLevel(level: VscodeApiLogLevel): void {
+        if (!Object.values(VscodeApiLogLevel).includes(level)) {
+            this._logShimError(`Invalid VscodeApiLogLevel value passed to setLogLevel: ${level}`);
+            return;
+        }
 		if (this.#currentLogLevel !== level) {
 			const oldLevel = this.#currentLogLevel;
-
 			this.#currentLogLevel = level;
-
-			super["_logShimInternals"](
-				`Log level changed from ${VscodeApiLogLevel[oldLevel]} to ${VscodeApiLogLevel[level]}`,
-			);
-
+			this._logShimInternals(`LogLevel changed from ${VscodeApiLogLevel[oldLevel]} to ${VscodeApiLogLevel[level]}`);
 			this.#onDidChangeLogLevelEmitter.fire(this.#currentLogLevel);
 
-			// TODO: If MainThreadOutputService supports setting log level per channel, call it.
-			// This requires mapping vscode.LogLevel to VscodeInternalLogLevel if they differ.
-			// const internalLevel = VscodeInternalLogLevel[VscodeApiLogLevel[level] as keyof typeof VscodeInternalLogLevel];
-
-			// if (this.#proxyRefForLog?.$setLogLevel && internalLevel !== undefined) {
-
-			// Accessing private member; need getter or pass id
-			//     this.#proxyRefForLog.$setLogLevel(super["_idForRpc"], internalLevel)
-			//         .catch(e => super["_logShimError"]("Error in $setLogLevel RPC:", refineError(e, super["_logService"])));
-
-			// }
+			// Notify MainThread if $setLogLevel is supported by the proxy
+            const proxy = this._validateAndGetProxy(); // Get proxy, will throw if disposed/null
+			if (proxy?.$setLogLevel) {
+                // Map VscodeApiLogLevel (0-5 typically) to VscodeInternalLogLevel if they differ.
+                // Assuming direct mapping for simplicity, but this needs verification.
+                // Example: if VscodeApiLogLevel.Error (numeric value) matches VscodeInternalLogLevel.Error.
+                // If values differ, a switch/map is needed.
+                const internalLevel = level as unknown as VscodeInternalLogLevel; // This cast is risky if enums differ.
+				proxy.$setLogLevel(this._idForRpc, internalLevel).catch(e =>
+					this._logShimError("Error in $setLogLevel RPC:", refineErrorForShim(e, this["_logService"] as ILogServiceForShim | undefined))
+				);
+			}
 		}
 	}
 
-	public trace(message: string, ...args: any[]): void {
-		if (this.logLevel <= VscodeApiLogLevel.Trace)
-			this._logWithLevel("Trace", message, ...args);
+	trace(message: string, ...args: any[]): void {
+		if (this.logLevel <= VscodeApiLogLevel.Trace) this._logWithLevel("Trace", message, ...args);
+	}
+	debug(message: string, ...args: any[]): void {
+		if (this.logLevel <= VscodeApiLogLevel.Debug) this._logWithLevel("Debug", message, ...args);
+	}
+	info(message: string, ...args: any[]): void {
+		if (this.logLevel <= VscodeApiLogLevel.Info) this._logWithLevel("Info", message, ...args);
+	}
+	warn(message: string, ...args: any[]): void {
+		if (this.logLevel <= VscodeApiLogLevel.Warning) this._logWithLevel("Warn", message, ...args);
+	}
+	error(message: string | Error, ...args: any[]): void {
+		if (this.logLevel <= VscodeApiLogLevel.Error) this._logWithLevel("Error", message, ...args);
 	}
 
-	public debug(message: string, ...args: any[]): void {
-		if (this.logLevel <= VscodeApiLogLevel.Debug)
-			this._logWithLevel("Debug", message, ...args);
-	}
-
-	public info(message: string, ...args: any[]): void {
-		if (this.logLevel <= VscodeApiLogLevel.Info)
-			this._logWithLevel("Info", message, ...args);
-	}
-
-	public warn(message: string, ...args: any[]): void {
-		if (this.logLevel <= VscodeApiLogLevel.Warning)
-			this._logWithLevel("Warn", message, ...args);
-	}
-
-	public error(message: string | Error, ...args: any[]): void {
-		if (this.logLevel <= VscodeApiLogLevel.Error)
-			this._logWithLevel("Error", message, ...args);
-	}
-
-	private _logWithLevel(
-		levelLabel: string,
-
-		message: string | Error,
-
-		...args: any[]
-	): void {
-		const fullMessage =
-			message instanceof Error
-				? `${message.message}${message.stack ? `\n${message.stack}` : ""}`
-				: message;
-
-		const formattedArgs = args
-			.map((arg) =>
-				typeof arg === "object" ? JSON.stringify(arg) : String(arg),
-			)
-			.join(" ");
-
-		this.appendLine(
-			`[${levelLabel}] ${fullMessage}${args.length > 0 ? " " + formattedArgs : ""}`,
-		);
+	private _logWithLevel(levelLabel: string, message: string | Error, ...args: any[]): void {
+		let fullMessage = message instanceof Error ? `${message.message}${message.stack ? `\n${message.stack}` : ""}` : message;
+		const formattedArgs = args.map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg))).join(" ");
+		if (args.length > 0) {
+			fullMessage += ` ${formattedArgs}`;
+		}
+		// Prepend the log level to the message before appending to the channel.
+		this.appendLine(`[${levelLabel}] ${fullMessage}`);
 	}
 
 	override dispose(): void {
-		// Use override keyword
 		super.dispose();
-
 		this.#onDidChangeLogLevelEmitter.dispose();
 	}
 }
 
+/**
+ * Defines the interface for the ExtHost service that creates output channels.
+ * Aligns with VS Code's `IExtHostOutputService`.
+ */
 export interface IExtHostOutputServiceShape {
-	// Based on VS Code's IExtHostOutputService
 	readonly _serviceBrand: undefined;
-
 	createOutputChannel(name: string): VscodeOutputChannel;
-
-	createOutputChannel(
-		name: string,
-
-		options: { log: true; languageId?: string },
-	): VscodeLogOutputChannel;
-
-	// Deprecated form
-	createOutputChannel(name: string, languageId: string): VscodeOutputChannel;
-
-	// If main thread notifies visibility
+	createOutputChannel(name: string, options: { log: true; languageId?: string; file?: VscodeUri }): VscodeLogOutputChannel;
+	createOutputChannel(name: string, languageId: string): VscodeOutputChannel; // Deprecated form
+	// Optional RPC methods called by MainThread:
 	// $setVisible?(channelId: string, visible: boolean): void;
-
-	// If main thread pushes log level
 	// $setLogLevel?(channelId: string, level: VscodeInternalLogLevel): void;
 }
 
-export class ShimOutputService
-	extends BaseCocoonShim
-	implements IExtHostOutputServiceShape
-{
+/**
+ * Cocoon's implementation of `IExtHostOutputService`.
+ * It acts as a factory for creating `OutputChannel` and `LogOutputChannel` instances.
+ */
+export class ShimOutputService extends BaseCocoonShim implements IExtHostOutputServiceShape {
 	public readonly _serviceBrand: undefined;
-
 	#mainThreadOutputProxy: MainThreadOutputServiceShape | null = null;
-
-	// TODO: Potentially maintain a map of active channels if needed for internal management or cleanup.
+	// TODO: Consider maintaining a map of active channels if needed for internal management (e.g., for $setVisible).
 	// readonly #activeChannels = new Map<string, ShimOutputChannelImpl | ShimLogOutputChannelImpl>();
 
 	constructor(
-		rpcService: IExtHostRpcService | undefined,
-
-		logService: ILogService | undefined,
+		rpcService: IRpcProtocolServiceAdapter | undefined,
+		logService: ILogServiceForShim | undefined,
 	) {
-		// Service Identifier for logging
-		super("ExtHostOutputService", rpcService, logService);
-
+		super("ExtHostOutputService", rpcService, logService); // Service Identifier for logging
+		this._log("Initializing...");
 		if (this._rpcService) {
 			this.#mainThreadOutputProxy = this._getProxy(
 				MainContext.MainThreadOutputService as ProxyIdentifier<MainThreadOutputServiceShape>,
 			);
 		}
-
 		if (!this.#mainThreadOutputProxy) {
-			this._logError(
-				"Failed to get MainThreadOutputService proxy! Output channels will be impaired.",
-			);
+			this._logError("Failed to get MainThreadOutputService proxy! Output channels will be impaired or non-functional.");
 		}
 	}
 
 	public createOutputChannel(name: string): VscodeOutputChannel;
-
+	public createOutputChannel(name: string, options: { log: true; languageId?: string; file?: VscodeUri }): VscodeLogOutputChannel;
+	public createOutputChannel(name: string, languageId: string): VscodeOutputChannel; // Deprecated form
 	public createOutputChannel(
 		name: string,
-
-		options: { log: true; languageId?: string },
-	): VscodeLogOutputChannel;
-
-	public createOutputChannel(
-		name: string,
-
-		languageId: string, // Deprecated form
-	): VscodeOutputChannel;
-
-	public createOutputChannel(
-		name: string,
-
 		optionsOrLangId?: CreateOutputChannelOptions,
 	): VscodeOutputChannel | VscodeLogOutputChannel {
 		name = String(name).trim();
-
 		if (!name) throw new Error("Output channel name cannot be empty.");
 
 		let isLogChannel = false;
-
 		let languageId: string | undefined = undefined;
+		let fileUriForLog: VscodeUri | undefined = undefined;
 
-		// For file-backed log channels (advanced)
-		const fileUri: VscodeUri | undefined = undefined;
-
-		if (typeof optionsOrLangId === "string") {
+		if (typeof optionsOrLangId === "string") { // Deprecated: createOutputChannel(name, languageId)
 			languageId = optionsOrLangId;
-		} else if (typeof optionsOrLangId === "object") {
+		} else if (typeof optionsOrLangId === "object" && optionsOrLangId !== null) {
 			isLogChannel = optionsOrLangId.log === true;
-
 			languageId = optionsOrLangId.languageId;
-
-			// TODO: If optionsOrLangId can include a file URI for log channels, extract it here.
-			// fileUri = (optionsOrLangId as any).file;
+			if (isLogChannel && 'file' in optionsOrLangId) {
+                fileUriForLog = (optionsOrLangId as { file?: VscodeUri }).file;
+            }
 		}
 
-		this._log(
-			`createOutputChannel: name='${name}', isLog=${isLogChannel}, langId=${languageId}, file=${fileUri?.toString()}`,
-		);
+		this._log(`createOutputChannel: Name='${name}', IsLogChannel=${isLogChannel}, LanguageId='${languageId}', File='${fileUriForLog?.toString() ?? 'N/A'}'`);
 
 		if (!this.#mainThreadOutputProxy) {
-			this._logError(
-				"RPC proxy for MainThreadOutputService unavailable. Returning NOP channel.",
-			);
-
+			this._logError("RPC proxy for MainThreadOutputService unavailable. Returning a NOP OutputChannel.");
 			return this._createNopChannel(name, isLogChannel);
 		}
 
-		// The channelIdForRpc will be used by the ShimOutputChannelImpl instance to communicate with the main thread.
-		// VS Code's $register typically returns the actual ID used by the main thread.
-		// For simplicity, this shim might use the `name` as the `channelIdForRpc` and rely on
-		// Mountain to map it, OR it could make $register async and pass the real ID.
-		// The current ShimOutputChannelImpl constructor takes `idForRpc`.
-		// Let's use `name` as the `idForRpc` initially, and log the ID returned by `$register`.
-		const channelIdForRpc = name;
+		// The channelIdForRpc is used by the ShimOutputChannelImpl to communicate.
+		// VS Code's $register typically returns the *actual* ID used by the main thread.
+		// For this shim, we'll use the `name` as the initial `idForRpc` and log the ID from $register.
+		// A more robust shim might await $register and use the returned ID for the channel instance.
+		const idForRpcUsedByShim = name; // Could be an interim ID
 
-		// TODO: Convert fileUri to ILocalUriComponents if it's a VscodeUri.
-		const fileUriDto = fileUri
-			? (this._convertApiArgToInternal(fileUri) as ILocalUriComponents)
-			: null;
+        let fileUriDto: ILocalUriComponents | null = null;
+        if (fileUriForLog instanceof VscodeUri) {
+            fileUriDto = this._convertApiArgToInternal(fileUriForLog) as ILocalUriComponents;
+        }
 
-		this.#mainThreadOutputProxy
-			.$register(
-				name,
-
-				fileUriDto,
-
-				languageId,
-
-				undefined /* extensionId, usually implicit on main thread */,
-			)
+		this.#mainThreadOutputProxy.$register(name, fileUriDto, languageId /*, extensionId if needed */)
 			.then((mainThreadActualId) => {
-				this._log(
-					`Channel '${name}' registered on main thread with actual ID: ${mainThreadActualId}. Shim uses '${channelIdForRpc}' for RPC.`,
-				);
-
-				// If the mainThreadActualId differs and is essential for subsequent RPC calls,
-
-				// the ShimOutputChannelImpl instance would need to be updated or use this actualId.
-				// For now, assuming `channelIdForRpc` (which is `name`) is sufficient.
+				this._log(`Channel '${name}' registered on MainThread with actual ID: '${mainThreadActualId}'. Shim uses '${idForRpcUsedByShim}' for RPC. Consider aligning if different.`);
+				// If mainThreadActualId differs and is essential for subsequent RPC calls,
+				// the ShimOutputChannelImpl instance would ideally use mainThreadActualId.
+				// For now, this shim assumes idForRpcUsedByShim (which is `name`) is sufficient.
 			})
 			.catch((err: any) => {
-				this._logError(
-					`Failed to register output channel '${name}' on main thread:`,
-
-					refineError(err, this._logService),
-				);
+				this._logError(`Failed to register output channel '${name}' on MainThread:`, refineErrorForShim(err, this._logService));
+				// If registration fails, the channel created below will make failing RPC calls.
 			});
 
 		if (isLogChannel) {
-			return new ShimLogOutputChannelImpl(
-				channelIdForRpc,
-
-				name,
-
-				this.#mainThreadOutputProxy,
-
-				this._logService,
-			);
+			return new ShimLogOutputChannelImpl(idForRpcUsedByShim, name, this.#mainThreadOutputProxy, this._logService);
 		} else {
-			return new ShimOutputChannelImpl(
-				channelIdForRpc,
-
-				name,
-
-				this.#mainThreadOutputProxy,
-
-				this._logService,
-			);
+			return new ShimOutputChannelImpl(idForRpcUsedByShim, name, this.#mainThreadOutputProxy, this._logService);
 		}
 	}
 
-	private _createNopChannel(
-		name: string,
-
-		isLogChannel: boolean,
-	): VscodeOutputChannel | VscodeLogOutputChannel {
+	private _createNopChannel(name: string, isLogChannel: boolean): VscodeOutputChannel | VscodeLogOutputChannel {
 		const nopBase: VscodeOutputChannel = {
-			name: name,
-
-			append: () => {},
-
-			appendLine: () => {},
-
-			clear: () => {},
-
-			replace: () => {},
-
-			show: () => {},
-
-			hide: () => {},
-
-			dispose: () => {},
+			name: name, append: () => {}, appendLine: () => {}, clear: () => {}, replace: () => {},
+			show: () => {}, hide: () => {}, dispose: () => {},
 		};
-
 		if (isLogChannel) {
 			return {
 				...nopBase,
-
-				// Use API LogLevel
-				logLevel: VscodeApiLogLevel.Off,
-
+				logLevel: VscodeApiLogLevel.Off, // Use API LogLevel
 				onDidChangeLogLevel: VscodeEvent.None,
-
-				trace: () => {},
-
-				debug: () => {},
-
-				info: () => {},
-
-				warn: () => {},
-
-				error: () => {},
-
-				setLogLevel: () => {},
+				trace: () => {}, debug: () => {}, info: () => {}, warn: () => {}, error: () => {},
+                setLogLevel: () => {}, // NOP for setLogLevel on a NOP channel
 			} as VscodeLogOutputChannel;
 		}
-
 		return nopBase;
 	}
 
-	// --- RPC methods called BY MainThread (if any for this service) ---
-	// Example:
+	// --- RPC methods called BY MainThread (if any for this service, e.g., to update visibility) ---
 	// public $setVisible(channelId: string, visible: boolean): void {
-
-	//     this._log(`$setVisible called for channel ${channelId} to ${visible}`);
-
-	//     const channel = this.#activeChannels.get(channelId);
-
-	// channel?._updateVisibility(visible); // Internal method on ShimOutputChannelImpl
-	//
+	//     this._log(`RPC $setVisible called for channel '${channelId}' to visible=${visible}`);
+	//     const channel = this.#activeChannels.get(channelId); // Requires #activeChannels map
+	//     // channel?._someInternalMethodToUpdateVisibility(visible); // Internal method on ShimOutputChannelImpl
 	// }
+    // public $setLogLevel(channelId: string, level: VscodeInternalLogLevel): void {
+    //     this._log(`RPC $setLogLevel called for channel '${channelId}' to level=${level}`);
+    //     const channel = this.#activeChannels.get(channelId);
+    //     if (channel instanceof ShimLogOutputChannelImpl) {
+    //         // Map VscodeInternalLogLevel to VscodeApiLogLevel if they differ
+    //         channel.setLogLevel(level as unknown as VscodeApiLogLevel);
+    //     }
+    // }
 }
+--- END OF FILE output-channel-shim.ts ---
