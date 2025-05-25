@@ -1,60 +1,79 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon UI & Environment Shim (ui-shim.ts)
+ * Cocoon UI & Environment Shim (ui-shim.ts) - Legacy/Conceptual
  * --------------------------------------------------------------------------------------------
- * Provides shims for parts of the `vscode.window` and `vscode.env` API namespaces.
- * This is a conceptual grouping rather than a direct implementation of a single
- * ExtHost service. In a full DI setup, these functionalities would be provided by
- * more specific services like `ExtHostMessageService`, `ExtHostWindow`, `ExtHostEnvironment`.
+ * NOTE: This monolithic shim is now considered LEGACY or OBSOLETE in the current Cocoon
+ * architecture. Its responsibilities have been refactored into more granular shims:
+ * - `message-service-shim.ts` (for vscode.window.show[Information|Warning|Error]Message)
+ * - `env-shim.ts` (for vscode.env.* properties and methods)
+ * - `quick-input-shim.ts` (for vscode.window.showQuickPick/showInputBox)
+ * - `dialog-service-shim.ts` (for vscode.window.showOpenDialog/showSaveDialog)
+ * - `window-parts-shim.ts` (for miscellaneous vscode.window elements like status bar)
  *
- * Responsibilities:
- * - `vscode.window.showInformationMessage` (and warnings/errors): Proxied to Mountain,
+ * This file is preserved and documented based on its original structure for historical
+ * reference or if a simpler, combined approach were ever reconsidered.
  *
- *   likely via direct IPC or a dedicated `MainThreadMessageService` RPC.
- * - `vscode.env` properties: Populated from `initData` received from Mountain.
- * - Stubbing other `vscode.window` members as needed (e.g., `createStatusBarItem`).
+ * Original Responsibilities:
+ * - Conceptually grouped parts of the `vscode.window` (message dialogs) and
+ *   `vscode.env` API namespaces. This was not a direct implementation of a single
+ *   VS Code ExtHost service but rather a collection of functionalities.
+ * - `vscode.window.showInformationMessage` (and warnings/errors) were proxied to
+ *   Mountain via direct IPC.
+ * - `vscode.env` properties were populated from `initData` received from Mountain.
+ * - Other `vscode.window` members were intended to be stubbed here.
  *
- * Key Interactions:
- * - Relies on `initData` for `vscode.env` properties.
- * - Uses `_ipcRequestResponse` (from `BaseCocoonShim`) for message dialogs if direct IPC is used.
- * - Could use RPC proxies for more complex `vscode.window` interactions if a corresponding
- *   MainThread service exists (e.g., `MainThreadQuickInput`, `MainThreadStatusBar`).
+ * Key Interactions (Original Intent):
+ * - Relied on `initData` for `vscode.env` properties.
+ * - Used `_ipcRequestResponse` (from `BaseCocoonShim`) for message dialogs.
+ * - Could have used RPC proxies for more complex `vscode.window` interactions if
+ *   corresponding MainThread services existed.
+ *
+ * Last Reviewed/Updated (as Legacy): [Your Last Review Date or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
+// For URI scheme checks if appRoot is URI
+import { Schemas } from "vs/base/common/network";
+// For reviving URIs from initData
+import { URI as VSCodeInternalURI } from "vs/base/common/uri";
+// For `ExtHostInitData` to define `UiShimInitData` structure more accurately
+import type { ExtHostInitData } from "vs/workbench/api/common/extHostInitDataService";
 import type {
 	MessageItem as VscodeMessageItem,
-	// vscode API types for window methods
 	MessageOptions as VscodeMessageOptions,
-	// QuickPickOptions, QuickPickItem, InputBoxOptions, OpenDialogOptions, SaveDialogOptions,
-	// StatusBarItem as VscodeStatusBarItem, StatusBarAlignment as VscodeStatusBarAlignment,
-	// WindowState as VscodeWindowState,
-	// TextEditor as VscodeTextEditor,
-	// OutputChannel as VscodeOutputChannel,
-	// For env.openExternal etc.
-	// Uri as VscodeUri,
+	// Other vscode API types that were previously commented out, relevant if this shim were active:
+	// type QuickPickOptions, type QuickPickItem, type InputBoxOptions, type OpenDialogOptions,
+	// type SaveDialogOptions, type StatusBarItem, type StatusBarAlignment, type WindowState,
+	// type TextEditor, type OutputChannel, type Uri as VscodeUri,
 } from "vscode";
+
+// API types
 
 import {
 	BaseCocoonShim,
-	ProxyIdentifier,
-	refineError,
-	type IExtHostRpcService,
-	type ILogService,
-} from "./_baseShim";
+	// If RPC were used
+	// ProxyIdentifier,
 
-// Assuming API types from 'vscode' shim or real API
+	// Use the more specific refineError
+	refineErrorForShim,
+	type ILogServiceForShim,
+	type IRpcProtocolServiceAdapter,
+} from "./_baseShim";
 
 // TODO: If using RPC for messages, define MainThreadMessageServiceShape
 // import { MainContext } from "vs/workbench/api/common/extHost.protocol";
 
+// import { Severity } from "vs/platform/notification/common/notification";
+
 // interface MainThreadMessageServiceShape {
+
 //  $showMessage(severity: Severity, message: string, options: VscodeMessageOptions, items: (string | VscodeMessageItem)[]): Promise<string | VscodeMessageItem | undefined>;
 
 // }
 
-// Severity enum values (from vs/platform/notification/common/notification.ts or similar)
-// TODO: Use actual Severity enum from VS Code internals if available, or ensure these values match.
-// Renamed to avoid conflict if vscode.Severity exists
-enum NotificationSeverity {
+/**
+ * Severity levels for notifications sent via IPC to Mountain.
+ * These values should align with what Mountain's `ui_showMessage` handler expects.
+ */
+enum NotificationSeverityForIpc {
 	// Not typically used for showMessage
 	Ignore = 0,
 
@@ -65,212 +84,252 @@ enum NotificationSeverity {
 	Error = 3,
 }
 
-// Define a simplified InitData structure relevant to this shim
-interface UiShimInitData {
-	environment: {
-		appName?: string;
-
-		// Simplified UriComponents for fsPath
-		appRoot?: { fsPath: string; [key: string]: any };
-
-		// More specific types
-		appHost?: "desktop" | "web" | "codespaces" | string;
-
-		appUriScheme?: string;
-
-		// BCP 47 language tag
-		appLanguage?: string;
-
-		// For env.isTrusted
-		isTrusted?: boolean;
-
-		// TODO: Add other env properties from VS Code's IEnvironmentService if needed (e.g., userSettingsHome, stateHome)
-		[key: string]: any;
-	};
-
-	machineId?: string;
-
-	sessionId?: string;
-
-	// ... other initData properties
+/**
+ * Defines the structure of initialization data relevant to this (legacy) shim.
+ * Primarily contains environment properties for `vscode.env`.
+ */
+interface UiShimInitData extends ExtHostInitData {
+	// Extend ExtHostInitData for broader compatibility
+	// environment property is already part of ExtHostInitData and is typed as IEnvironment
+	// We'll access its properties directly.
+	// For clarity, if specific properties were always expected:
+	// environment: {
+	// 	appName?: string;
+	// VS Code's initData uses UriComponents
+	// 	appRoot?: VSCodeInternalUriComponents;
+	// 	appHost?: "desktop" | "web" | "codespaces" | string;
+	// 	appUriScheme?: string;
+	// BCP 47
+	// 	appLanguage?: string;
+	// 	isTrusted?: boolean;
+	// Allow other env properties
+	// 	[key: string]: any;
+	// };
+	// machineId and sessionId are part of ExtHostInitData.telemetryInfo
+	// remote is part of ExtHostInitData
 }
 
-// This class doesn't implement a single ExtHost service, but groups API parts.
-// For DI, individual services (ExtHostMessageService, ExtHostEnvironment) would be better.
+/**
+ * (Legacy Shim) Conceptually grouped parts of `vscode.window` and `vscode.env`.
+ * NOTE: This class is considered obsolete; its functionality is now in more specific shims.
+ */
 export class ShimExtHostUiAndEnv extends BaseCocoonShim {
+	// Store the full initData for convenience
 	readonly #initData: UiShimInitData;
 
-	// If using RPC
+	// If using RPC for messages:
 	// #messageServiceProxy: MainThreadMessageServiceShape | null = null;
 
+	/**
+	 * Creates an instance of ShimExtHostUiAndEnv.
+	 * @param rpcService The RPC service adapter (passed to base).
+	 * @param initData The initialization data from Mountain.
+	 * @param logService The logging service.
+	 */
 	constructor(
-		rpcService: IExtHostRpcService | undefined,
+		rpcService: IRpcProtocolServiceAdapter | undefined,
 
+		// Expect the full ExtHostInitData structure
 		initData: UiShimInitData,
 
-		logService: ILogService | undefined,
+		logService: ILogServiceForShim | undefined,
 	) {
 		// Conceptual service identifier
-		super("ExtHostUiEnv", rpcService, logService);
+		super("LegacyExtHostUiEnv", rpcService, logService);
 
 		this.#initData = initData;
 
+		this._log(
+			"Initialized (Legacy Conceptual UI & Env Shim). This shim is OBSOLETE.",
+		);
+
 		// if (this._rpcService) {
+
 		//    this.#messageServiceProxy = this._getProxy(MainContext.MainThreadMessageService as ProxyIdentifier<MainThreadMessageServiceShape>);
 
 		// }
-
-		this._log("Initialized (Conceptual UI & Env Shim).");
 	}
 
-	// --- vscode.window members (subset) ---
+	/** This shim, in its message-proxying part, uses direct IPC. */
+	protected override _requiresRpc(): boolean {
+		// As it primarily uses direct IPC for messages.
+		return false;
+	}
 
-	// Helper to parse options and items for showMessage* calls
-	private _parseMessageRestArgs(rest: any[]): {
+	// --- vscode.window.show[Information|Warning|Error]Message Implementations ---
+
+	/** Helper to parse message arguments (options and items). */
+	private _parseMessageRestArgs(
+		rest: (VscodeMessageOptions | string | VscodeMessageItem)[],
+	): {
 		options: VscodeMessageOptions;
 
 		items: (string | VscodeMessageItem)[];
 	} {
 		let options: VscodeMessageOptions = {};
 
-		let items: (string | VscodeMessageItem)[] = [];
+		const items: (string | VscodeMessageItem)[] = [];
 
 		if (rest.length > 0) {
-			// First check if the first arg is MessageOptions (and not a MessageItem string/object)
+			// Check if the first arg is MessageOptions. A MessageItem object must have a 'title' string.
 			if (
 				typeof rest[0] === "object" &&
 				rest[0] !== null &&
-				!("title" in rest[0] && typeof rest[0].title === "string")
+				!(typeof (rest[0] as VscodeMessageItem).title === "string")
 			) {
 				options = rest.shift() as VscodeMessageOptions;
 			}
 
-			// Remaining args are items
-			items = rest
-				.map((item) => {
-					if (typeof item === "string") return item;
-
-					if (
-						typeof item === "object" &&
-						item !== null &&
-						typeof item.title === "string"
-					)
-						return item as VscodeMessageItem;
-
+			// Remaining args are items.
+			for (const itemCandidate of rest) {
+				if (typeof itemCandidate === "string") {
+					items.push(itemCandidate);
+				} else if (
+					typeof itemCandidate === "object" &&
+					itemCandidate !== null &&
+					typeof itemCandidate.title === "string"
+				) {
+					items.push(itemCandidate as VscodeMessageItem);
+				} else {
 					this._logWarn(
-						"Invalid message item in showMessage, skipping:",
+						"Invalid message item in showMessage arguments, skipping:",
 
-						item,
+						itemCandidate,
 					);
-
-					return null;
-				})
-				.filter((item) => item !== null) as (
-				| string
-				| VscodeMessageItem
-			)[];
+				}
+			}
 		}
 
 		return { options, items };
 	}
 
+	/**
+	 * Shows an information message to the user.
+	 * @param message The message to show.
+	 * @param rest Optional: A `MessageOptions` object, or a list of `MessageItem` objects or action strings.
+	 * @returns A promise that resolves to the selected `MessageItem` or action string, or `undefined` if dismissed.
+	 */
 	public async showInformationMessage(
 		message: string,
 
 		...rest: (VscodeMessageOptions | string | VscodeMessageItem)[]
 	): Promise<string | VscodeMessageItem | undefined> {
-		this._log(`showInformationMessage: "${message}"`);
+		// this._log(`showInformationMessage: "${message}"`);
 
 		const { options, items } = this._parseMessageRestArgs(rest);
 
-		// Using direct IPC as in original, but with refined error handling and types
 		const params = {
-			severity: NotificationSeverity.Info,
+			severity: NotificationSeverityForIpc.Info,
 
 			message,
 
-			// Send only relevant options
+			// Send only relevant serializable options
 			options: { modal: options.modal, detail: options.detail },
 
-			items: items.map(
-				(item) => (typeof item === "string" ? item : item.title),
+			items: items.map((item) => ({
+				title: typeof item === "string" ? item : item.title,
 
-				// Send item titles for IPC
-			),
+				isCloseAffordance:
+					typeof item === "object" ? !!item.isCloseAffordance : false,
+
+				handle: 0 /* placeholder handle */,
+			})),
 		};
 
 		try {
-			const resultTitle = (await this._ipcRequestResponse(
+			const resultTitleOrHandle = (await this._ipcRequestResponse(
 				"ui_showMessage",
 
 				params,
 
 				120000,
+			)) as string | number | undefined;
 
-				// Long timeout
-			)) as string | undefined;
+			if (resultTitleOrHandle === undefined) return undefined;
 
-			if (resultTitle) {
+			// Assuming Mountain returns the title of the clicked item for simplicity in this legacy shim.
+			// A more robust system would use handles.
+			if (typeof resultTitleOrHandle === "string") {
 				const selectedItem = items.find(
 					(item) =>
 						(typeof item === "string" ? item : item.title) ===
-						resultTitle,
+						resultTitleOrHandle,
 				);
 
-				// Return MessageItem if found, else the title string
-				return selectedItem || resultTitle;
+				return selectedItem || resultTitleOrHandle;
 			}
 
+			// If Mountain were to return a handle (index based on items sent)
+			// const selectedItemByHandle = items[resultTitleOrHandle as number];
+
+			// return selectedItemByHandle;
+
+			// Fallback if response format is unexpected
 			return undefined;
 		} catch (e: any) {
 			this._logError(
 				"showInformationMessage IPC failed:",
 
-				refineError(e, this._logService, "showInformationMessage"),
+				refineErrorForShim(
+					e,
+
+					this._logService,
+
+					"showInformationMessage",
+				),
 			);
 
+			// API expects undefined on error/dismissal
 			return undefined;
 		}
 	}
 
+	/** Shows a warning message. See `showInformationMessage`. */
 	public async showWarningMessage(
 		message: string,
 
 		...rest: (VscodeMessageOptions | string | VscodeMessageItem)[]
 	): Promise<string | VscodeMessageItem | undefined> {
-		this._log(`showWarningMessage: "${message}"`);
+		// this._log(`showWarningMessage: "${message}"`);
 
 		const { options, items } = this._parseMessageRestArgs(rest);
 
 		const params = {
-			severity: NotificationSeverity.Warning,
+			severity: NotificationSeverityForIpc.Warning,
 
 			message,
 
 			options: { modal: options.modal, detail: options.detail },
 
-			items: items.map((item) =>
-				typeof item === "string" ? item : item.title,
-			),
+			items: items.map((item) => ({
+				title: typeof item === "string" ? item : item.title,
+
+				isCloseAffordance:
+					typeof item === "object" ? !!item.isCloseAffordance : false,
+
+				handle: 0,
+			})),
 		};
 
 		try {
-			const resultTitle = (await this._ipcRequestResponse(
+			const resultTitleOrHandle = (await this._ipcRequestResponse(
 				"ui_showMessage",
 
 				params,
 
 				120000,
-			)) as string | undefined;
+			)) as string | number | undefined;
 
-			if (resultTitle) {
+			if (resultTitleOrHandle === undefined) return undefined;
+
+			if (typeof resultTitleOrHandle === "string") {
 				const selectedItem = items.find(
 					(item) =>
 						(typeof item === "string" ? item : item.title) ===
-						resultTitle,
+						resultTitleOrHandle,
 				);
 
-				return selectedItem || resultTitle;
+				return selectedItem || resultTitleOrHandle;
 			}
 
 			return undefined;
@@ -278,51 +337,59 @@ export class ShimExtHostUiAndEnv extends BaseCocoonShim {
 			this._logError(
 				"showWarningMessage IPC failed:",
 
-				refineError(e, this._logService, "showWarningMessage"),
+				refineErrorForShim(e, this._logService, "showWarningMessage"),
 			);
 
 			return undefined;
 		}
 	}
 
+	/** Shows an error message. See `showInformationMessage`. */
 	public async showErrorMessage(
 		message: string,
 
 		...rest: (VscodeMessageOptions | string | VscodeMessageItem)[]
 	): Promise<string | VscodeMessageItem | undefined> {
-		this._log(`showErrorMessage: "${message}"`);
+		// this._log(`showErrorMessage: "${message}"`);
 
 		const { options, items } = this._parseMessageRestArgs(rest);
 
 		const params = {
-			severity: NotificationSeverity.Error,
+			severity: NotificationSeverityForIpc.Error,
 
 			message,
 
 			options: { modal: options.modal, detail: options.detail },
 
-			items: items.map((item) =>
-				typeof item === "string" ? item : item.title,
-			),
+			items: items.map((item) => ({
+				title: typeof item === "string" ? item : item.title,
+
+				isCloseAffordance:
+					typeof item === "object" ? !!item.isCloseAffordance : false,
+
+				handle: 0,
+			})),
 		};
 
 		try {
-			const resultTitle = (await this._ipcRequestResponse(
+			const resultTitleOrHandle = (await this._ipcRequestResponse(
 				"ui_showMessage",
 
 				params,
 
 				120000,
-			)) as string | undefined;
+			)) as string | number | undefined;
 
-			if (resultTitle) {
+			if (resultTitleOrHandle === undefined) return undefined;
+
+			if (typeof resultTitleOrHandle === "string") {
 				const selectedItem = items.find(
 					(item) =>
 						(typeof item === "string" ? item : item.title) ===
-						resultTitle,
+						resultTitleOrHandle,
 				);
 
-				return selectedItem || resultTitle;
+				return selectedItem || resultTitleOrHandle;
 			}
 
 			return undefined;
@@ -330,34 +397,33 @@ export class ShimExtHostUiAndEnv extends BaseCocoonShim {
 			this._logError(
 				"showErrorMessage IPC failed:",
 
-				refineError(e, this._logService, "showErrorMessage"),
+				refineErrorForShim(e, this._logService, "showErrorMessage"),
 			);
 
 			return undefined;
 		}
 	}
 
-	// TODO: Implement other vscode.window members as needed, delegating to specific ExtHost services or MainThread proxies.
-	// Examples:
-	// public get state(): VscodeWindowState { /* Get from initData or MainThreadWindow proxy */ return { focused: true, active: true }; }
-
-	// public createStatusBarItem(...): VscodeStatusBarItem { /* Delegate to ShimExtHostStatusBar or MainThreadStatusBar proxy */ }
-
-	// public showQuickPick(...)
-	// public showInputBox(...)
-	// public createWebviewPanel(...)
-	// public registerWebviewPanelSerializer(...)
-	// public createTreeView(...)
-	// public registerTreeDataProvider(...)
-	// etc.
-
-	// --- vscode.env members (read-only, from initData) ---
+	// --- vscode.env properties (read-only, derived from initData) ---
 	public get appName(): string {
-		return this.#initData.environment.appName || "Cocoon Editor";
+		return (
+			this.#initData.environment.appName || "Cocoon Editor (Legacy Shim)"
+		);
 	}
 
 	public get appRoot(): string | undefined {
-		return this.#initData.environment.appRoot?.fsPath;
+		const appRootUriComponents = this.#initData.environment.appRoot;
+
+		if (appRootUriComponents) {
+			// initData.environment.appRoot is UriComponents, needs revival
+			const revivedUri = VSCodeInternalURI.revive(appRootUriComponents);
+
+			return revivedUri.scheme === Schemas.file
+				? revivedUri.fsPath
+				: undefined;
+		}
+
+		return undefined;
 	}
 
 	public get appHost(): "desktop" | "web" | "codespaces" | string {
@@ -365,47 +431,64 @@ export class ShimExtHostUiAndEnv extends BaseCocoonShim {
 	}
 
 	public get uriScheme(): string {
-		return this.#initData.environment.appUriScheme || "cocoon-code";
+		return this.#initData.environment.appUriScheme || "cocoon-legacy";
 	}
 
 	public get language(): string {
+		// BCP 47 language tag
 		return this.#initData.environment.appLanguage || "en";
-
-		// BCP 47
 	}
 
 	public get machineId(): string {
-		return this.#initData.machineId || "shim-machine-id";
+		return (
+			this.#initData.telemetryInfo.machineId || "legacy-shim-machine-id"
+		);
 	}
 
 	public get sessionId(): string {
-		return this.#initData.sessionId || "shim-session-id";
+		return (
+			this.#initData.telemetryInfo.sessionId || "legacy-shim-session-id"
+		);
 	}
 
 	public get isTrusted(): boolean {
-		return this.#initData.environment.isTrusted ?? true;
-
-		// Default to true if not specified
+		return (
+			this.#initData.workspace?.trusted ??
+			this.#initData.environment.isTrusted ??
+			true
+		);
 	}
 
 	public get isRemote(): boolean {
 		return !!this.#initData.remote?.isRemote;
-
-		// From initData.remote.isRemote
 	}
 
 	public get remoteName(): string | undefined {
 		return this.#initData.remote?.authority?.split("+")[0];
-
-		// e.g., 'ssh-remote', 'wsl'
 	}
 
-	// TODO: Implement other vscode.env properties:
-	// clipboard: vscode.Clipboard; (needs ExtHostClipboard service)
-	// openExternal(target: vscode.Uri): Promise<boolean>; (needs ExtHostWindow.$openUri)
-	// asExternalUri(target: vscode.Uri): Promise<vscode.Uri>; (needs ExtHostWindow.$asExternalUri)
-	// UIKind: vscode.UIKind; (from initData)
-	// shell: string; (from initData)
-	// appNameLong: string (if available in initData)
-	// ... and more.
+	public get shell(): string {
+		return (
+			(process.platform === "win32"
+				? process.env.ComSpec
+				: process.env.SHELL) || "unknown_shell_in_legacy_cocoon"
+		);
+	}
+
+	public get uiKind(): import("vscode").UIKind {
+		const uiKindNum = this.#initData.uiKind;
+
+		// vscode.UIKind.Desktop
+		if (uiKindNum === 1) return 1;
+
+		// vscode.UIKind.Web
+		if (uiKindNum === 2) return 2;
+
+		// Default
+		return 1;
+	}
+
+	// TODO: Other vscode.env properties like `clipboard`, `openExternal`, `asExternalUri`, `isNewAppInstall`, `isBuilt`
+	// would require their respective shims or direct data from initData.
+	// This legacy shim does not implement them.
 }
