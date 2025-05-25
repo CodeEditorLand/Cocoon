@@ -1,1159 +1,628 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Terminal Service Shim (shims/terminal-service-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements parts of the `vscode.window` terminal-related APIs (via `IExtHostTerminalService`).
- * Handles terminal creation, state management, and environment variable collections,
+ * Implements parts of the `vscode.window` terminal-related APIs, primarily governed by
+ * the `IExtHostTerminalService` interface. This shim manages the lifecycle of terminals,
  *
  *
- * proxying most actions to Mountain.
+ * interaction with them (sending text, showing/hiding), and handles terminal-related
+ * environment variable collections.
+ *
+ * Most actions that involve creating or interacting with actual terminal backends are
+ * proxied to a `MainThreadTerminalService` in the Mountain host process via RPC.
+ * Environment variable changes, however, are typically sent via direct Vine IPC
+ * notifications.
  *
  * Responsibilities:
- * - `createTerminal()`: Proxies to Mountain via RPC to create a terminal backend.
- * - `ShimTerminalImpl`: Represents a terminal instance, proxying actions (`show`, `sendText`, `dispose`)
- *   to Mountain via RPC. Manages `processId` and `exitStatus`.
- * - Terminal Lifecycle Events (`onDidOpenTerminal`, etc.): Fired based on RPC notifications from Mountain.
- * - `getEnvironmentVariableCollection()`: Returns `ShimEnvironmentVariableCollectionImpl`.
- * - `ShimEnvironmentVariableCollectionImpl`: Manages environment changes for an extension,
+ * - `ShimExtHostTerminalService`:
+ *   - Implements `createTerminal()`: Proxies to Mountain via RPC to create a terminal backend.
+ *   - Manages a collection of active `ShimTerminalImpl` instances.
+ *   - Provides `vscode.window.terminals` and `vscode.window.activeTerminal` (state updated by Mountain).
+ *   - Exposes terminal lifecycle events (`onDidOpenTerminal`, `onDidCloseTerminal`, etc.),
  *
  *
- *   notifying Mountain via Vine IPC.
+ *     fired based on RPC notifications from Mountain.
+ *   - Implements `getEnvironmentVariableCollection()`: Returns an instance of
+ *     `ShimEnvironmentVariableCollectionImpl` for a given extension.
+ *   - Handles RPC calls from Mountain (e.g., `$acceptTerminalOpened`, `$acceptTerminalClosed`).
+ * - `ShimTerminalImpl` (implements `vscode.Terminal`):
+ *   - Represents a single terminal instance.
+ *   - Proxies actions like `show()`, `hide()`, `sendText()`, `dispose()` to Mountain via RPC.
+ *   - Manages properties like `name`, `processId` (as a promise), and `exitStatus`,
+ *
+ *
+ *     which are updated by RPC calls from Mountain.
+ * - `ShimEnvironmentVariableCollectionImpl` (implements `vscode.EnvironmentVariableCollection`):
+ *   - Manages environment variable mutators for a specific extension.
+ *   - Notifies Mountain of changes to the collection via direct Vine IPC calls
+ *     (e.g., `terminal_setEnvironmentVariable`).
  *
  * Key Interactions:
- * - Provides terminal APIs accessible via `vscode.window`.
- * - Uses `RPCProtocol` for terminal actions and lifecycle events.
- * - Uses direct Vine IPC (`cocoon-ipc.ts`) for environment variable changes.
- * - Relies on `MainThreadTerminalService` in Mountain.
+ * - `ShimExtHostTerminalService` is registered with DI in `Cocoon/index.ts` and its
+ *   methods contribute to the `vscode.window` API namespace.
+ * - Uses `RPCProtocol` for terminal creation, actions, and lifecycle events with
+ *   `MainContext.MainThreadTerminalService`.
+ * - Uses direct Vine IPC (`cocoon-ipc.ts`) for `ShimEnvironmentVariableCollectionImpl`
+ *   to notify Mountain of environment changes.
+ * - Relies on `BaseCocoonShim` for common utilities.
+ *
+ * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
 import {
 	Emitter as VscodeEmitter,
 	type Event as VscodeEvent,
 } from "vs/base/common/event";
-import { IDisposable } from "vs/base/common/lifecycle";
-// For URI marshalling checks
-import { MarshalledId } from "vs/base/common/marshallingIds";
+
+// IDisposable for return types
+import { Disposable, type IDisposable } from "vs/base/common/lifecycle";
+
+// For URI marshalling if URIs are part of options (e.g., cwd, iconPath)
+// Not directly used if relying on _convertApiArgToInternal
+// import { MarshalledId } from "vs/base/common/marshallingIds";
+
 import {
+	// For registering this service for RPC calls from MainThread
 	ExtHostContext,
+
+	// For proxying to MainThreadTerminalService
 	MainContext,
 } from "vs/workbench/api/common/extHost.protocol";
+
+// Import types from the public 'vscode' API
 import {
 	EnvironmentVariableMutatorType as VscodeEnvironmentVariableMutatorType,
-	// For ExtensionTerminalOptions.pty
+
+	// For ExtensionTerminalOptions.pty (if PTYs supported)
 	Pseudoterminal as VscodePseudoterminal,
-	// For pty data events
-	Event as VscodeTerminalDataEvent,
-	// For ExtensionTerminalOptions.pty
+
+	// If PTY data events were handled
+	// Event as VscodeTerminalDataEvent,
+
+	// For PTY options
 	TerminalDimensions as VscodeTerminalDimensions,
 	TerminalExitReason as VscodeTerminalExitReason,
-	// For cwd or iconPath
+
+	// For cwd or iconPath options
 	Uri as VscodeUri,
 	type EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
 	type EnvironmentVariableMutator as VscodeEnvironmentVariableMutator,
+
+	// For getEnvironmentVariableCollection parameter
 	type Extension as VscodeExtension,
 	type ExtensionTerminalOptions as VscodeExtensionTerminalOptions,
-	// Use VscodeTerminal to distinguish from internal types
+
+	// The API type this shim implements parts of
 	type Terminal as VscodeTerminal,
 	type TerminalExitStatus as VscodeTerminalExitStatus,
 	type TerminalOptions as VscodeTerminalOptions,
 	type TerminalState as VscodeTerminalState,
-	// Not used directly if passing options object
-	// TerminalLocation as VscodeApiTerminalLocation,
 
 	// For TerminalOptions.location
 	type ViewColumn as VscodeViewColumn,
+
+	// For future use: getProfiles, onDidChangeAvailableProfiles
+	type TerminalProfile as VscodeTerminalProfile,
+
+	// For future use
+	type TerminalProfileProvider as VscodeTerminalProfileProvider,
 } from "vscode";
 
-// Assuming API objects from 'vscode' shim or real API
-// For environment variable IPC
-import * as ipc from "../cocoon-ipc";
+/*
+import *_getProxy` and `_convertApiArgToInternal`.
+ * - Relies on Mountain's `MainThreadQuickInput` (or similar) for UI display and interaction.
+ *--------------------------------------------------------------------------------------------*/
+
+import {
+	// For event implementations
+	Emitter as VscodeEmitter,
+	Event as VscodeEvent,
+} from "vs/base/common/event";
+
+import { Disposable, type IDisposable } from "vs/base/common/lifecycle";
+
+// For API types and enums
+import {
+	// API type
+	CancellationToken,
+
+	// API enum
+	QuickInputButtons,
+	type InputBox,
+	type InputBoxOptions,
+	type QuickPick,
+	type QuickPickItem,
+	type QuickPickOptions,
+
+	// If using withProgress inside QuickInput UI
+	// ProgressLocation,
+} from "vscode";
+
 import {
 	BaseCocoonShim,
-	refineError,
-	type IExtHostRpcService,
-	type ILogService,
-	type ProxyIdentifier,
+
+	// Use the more specific refineError
+	refineErrorForShim,
+	type IRpcProtocolServiceAdapter,
+	type ILogServiceForShim,
 } from "./_baseShim";
 
 // --- Type Definitions ---
 
-// For URI components (used in RPC), should align with BaseCocoonShim's output
-interface ILocalUriComponents {
-	$mid?: number;
+/**
+ * Serializable options for `showQuickPick` sent via IPC to Mountain.
+ * Functions like `onDidSelectItem` are omitted as they are not directly serializable.
+ */
+interface QuickPickOptionsForIpc
+	extends Omit<
+		QuickPickOptions<any>,
+		| "onDidSelectItem"
+		| "onDidChangeSelection"
+		| "onDidAccept"
+		| "onDidTriggerButton"
+		| "onDidTriggerItemButton"
+		| "buttons"
+		| "step"
+		| "totalSteps"
+	> {
+	items: {
+		label: string;
 
-	scheme: string;
+		description?: string;
 
-	path: string;
+		detail?: string;
 
-	authority?: string;
+		picked?: boolean;
 
-	query?: string;
+		alwaysShow?: boolean;
 
-	fragment?: string;
+		// To store original item or unique ID for roundtrip matching
+		data?: any;
 
-	external?: string;
+		// For QuickPickItemKind (Separator)
+		kind?: number;
+	}[];
 
-	fsPath?: string;
+	buttons?: {
+		iconPath: any /* Marshalled UriComponents | ThemeIcon */;
+
+		tooltip?: string;
+
+		handle: number;
+
+		// Simplified buttons
+	}[];
 }
 
-// Options for $createTerminal RPC call (subset of vscode.TerminalOptions & ExtensionTerminalOptions)
-// TODO: This MUST align with what MainThreadTerminalService.$createTerminal expects.
-interface ICreateTerminalRpcOptions {
-	name?: string;
+/**
+ * Serializable options for `showInputBox` sent via IPC to Mountain.
+ * Functions like `validateInput` are omitted.
+ */
+interface InputBoxOptionsForIpc
+	extends Omit<
+		InputBoxOptions,
+		| "validateInput"
+		| "onDidChangeValue"
+		| "onDidAccept"
+		| "onDidTriggerButton"
+		| "buttons"
+		| "step"
+		| "totalSteps"
+	> {
+	buttons?: {
+		iconPath: any /* Marshalled UriComponents | ThemeIcon */;
 
-	shellPath?: string;
+		tooltip?: string;
 
-	shellArgs?: string[] | string;
+		handle: number;
 
-	// Path string or URI components
-	cwd?: string | ILocalUriComponents;
-
-	// null value means delete
-	env?: { [key: string]: string | null };
-
-	iconPath?:
-		| ILocalUriComponents
-		| { light: ILocalUriComponents; dark: ILocalUriComponents };
-
-	// TerminalColor.id
-	color?: string;
-
-	message?: string;
-
-	location?:
-		| VscodeViewColumn
-		| /* vscode.TerminalEditorLocationOptions */ {
-				viewColumn?: VscodeViewColumn;
-
-				preserveFocus?: boolean;
-		  }
-		| /* vscode.TerminalLocation */ number;
-
-	isTransient?: boolean;
-
-	// For PTY:
-	// Indicate if it's a PTY-backed terminal
-	isPty?: boolean;
-
-	// If PTYs are managed with handles
-	ptyId?: number;
-
-	// Part of TerminalOptions
-	// useShellEnvironment?: boolean;
-
-	// Part of TerminalOptions
-	// strictEnv?: boolean;
-
-	// Part of TerminalOptions
-	hideFromUser?: boolean;
+		// Simplified buttons
+	}[];
 }
 
-// Result from $createTerminal RPC call
-// TODO: This MUST align with what MainThreadTerminalService.$createTerminal returns.
-interface ITerminalLaunchRpcResult {
-	id: number;
+/** Expected response structure from Mountain for `ui_showQuickPick`. */
+// Selected label(s) or undefined if cancelled.
+type QuickPickResponseFromMountain = string | string[] | undefined;
 
-	name: string;
+/** Expected response structure from Mountain for `ui_showInputBox`. */
+// Entered string or undefined if cancelled.
+type InputBoxResponseFromMountain = string | undefined;
 
-	// Optional: PID might be sent later via $acceptTerminalProcessId
-	pid?: number;
+/**
+ * Defines the service interface for Quick Input operations, primarily part of `vscode.window`.
+ */
+export interface IExtHostQuickInputServiceShape {
+	// For DI
+	readonly _serviceBrand: undefined;
 
-	// Initial title might differ from name
-	// title?: string;
+	showQuickPick<T extends QuickPickItem>(
+		items: readonly T[] | Promise<readonly T[]>,
 
-	// If this distinction is made on main thread
-	// isFeatureTerminal?: boolean;
+		options?: QuickPickOptions<T> & { canPickMany?: false },
+
+		token?: CancellationToken,
+	): Promise<T | undefined>;
+
+	showQuickPick<T extends QuickPickItem>(
+		items: readonly T[] | Promise<readonly T[]>,
+
+		options: QuickPickOptions<T> & { canPickMany: true },
+
+		token?: CancellationToken,
+	): Promise<T[] | undefined>;
+
+	showQuickPick(
+		items: readonly string[] | Promise<readonly string[]>,
+
+		options?: QuickPickOptions<QuickPickItem & { label: string }> & {
+			canPickMany?: false;
+		},
+
+		token?: CancellationToken,
+	): Promise<string | undefined>;
+
+	showQuickPick(
+		items: readonly string[] | Promise<readonly string[]>,
+
+		options: QuickPickOptions<QuickPickItem & { label: string }> & {
+			canPickMany: true;
+		},
+
+		token?: CancellationToken,
+	): Promise<string[] | undefined>;
+
+	showInputBox(
+		options?: InputBoxOptions,
+
+		token?: CancellationToken,
+	): Promise<string | undefined>;
+
+	// Complex lifecycle, stubbed for MVP
+	// createQuickPick<T extends QuickPickItem>(): QuickPick<T>;
+
+	// Complex lifecycle, stubbed for MVP
+	// createInputBox(): InputBox;
 }
 
-// For MainThreadTerminalService RPC proxy
-interface MainThreadTerminalServiceShape {
-	$createTerminal(
-		options: ICreateTerminalRpcOptions,
-	): Promise<ITerminalLaunchRpcResult | undefined>;
-
-	// viewColumn was here, but show in API doesn't always take it. $reveal might.
-	$show(terminalId: number, preserveFocus?: boolean): Promise<void>;
-
-	$hide(terminalId: number): Promise<void>;
-
-	$sendText(terminalId: number, text: string): Promise<void>;
-
-	$dispose(terminalId: number): Promise<void>;
-
-	// TODO: Add methods for PTY interaction if supported: $sendProcessInput, $resize, $shutdown
-	// For PTY data flow
-	// $pty maternelle(id:number, initialDimensions: VscodeTerminalDimensions | undefined): Promise<void>
-	// For flow control with PTY
-	// $acknowledgeDataEvent(id: number, charCount: number): void;
-}
-
-// For ExtHostTerminalService (methods called BY Mountain)
-// TODO: This MUST align with VS Code's ExtHostTerminalServiceShape
-interface ExtHostTerminalServiceRpcShape {
-	$acceptTerminalOpened(
-		id: number,
-
-		name: string,
-
-		shellLaunchConfigName?: string /* for title */,
-
-		isFeatureTerminal?: boolean,
-	): void;
-
-	$acceptTerminalClosed(
-		id: number,
-
-		exitCode: number | undefined,
-
-		exitReason: VscodeTerminalExitReason | undefined,
-	): void;
-
-	$acceptTerminalProcessId(id: number, processId: number): void;
-
-	$acceptActiveTerminalChanged(id: number | null): void;
-
-	$acceptTerminalTitleChanged(id: number, name: string): void;
-
-	// For PTY output
-	$acceptTerminalData?(id: number, data: string): void;
-
-	// $acceptProcessStateChange?(id: number, /* ProcessState */ any): void;
-
-	// $acceptTerminalDimensions?(id: number, cols: number, rows: number): void;
-
-	// $acceptTaskDetection?(id: number, name: string, shellType: string): void;
-}
-
-// Options for ShimEnvironmentVariableCollectionImpl constructor
-interface EnvVarCollectionOptions {
-	persistent?: boolean;
-
-	description?: string;
-
-	// VS Code internal also has `scope: EnvironmentVariableScope | undefined`
-}
-
-class ShimTerminalImpl implements VscodeTerminal {
-	readonly #proxy: MainThreadTerminalServiceShape | null;
-
-	readonly #id: number;
-
-	#nameInternal: string;
-
-	readonly #onDidDisposeEmitter = new VscodeEmitter<void>();
-
-	#logService?: ILogService;
-
-	#isDisposed = false;
-
-	readonly #processIdPromise: Promise<number | undefined>;
-
-	// Asserted: set in constructor
-	#processIdPromiseResolver!: (pid: number | undefined) => void;
-
-	#exitStatusInternal: VscodeTerminalExitStatus | undefined = undefined;
-
-	readonly #creationOptionsInternal: Readonly<
-		VscodeTerminalOptions | VscodeExtensionTerminalOptions
-	>;
+/**
+ * Cocoon's implementation of Quick Input services (`showQuickPick`, `showInputBox`).
+ * It proxies UI interactions to the Mountain host process via direct IPC.
+ */
+export class ShimExtHostQuickInputService
+	extends BaseCocoonShim
+	implements IExtHostQuickInputServiceShape
+{
+	public readonly _serviceBrand: undefined;
 
 	constructor(
-		id: number,
+		// Passed to BaseCocoonShim
+		rpcService: IRpcProtocolServiceAdapter | undefined,
 
-		initialName: string,
+		logService: ILogServiceForShim | undefined,
+	) {
+		super("ExtHostQuickInputService", rpcService, logService);
 
-		creationOptions: Readonly<
-			VscodeTerminalOptions | VscodeExtensionTerminalOptions
+		this._log("Initialized.");
+	}
+
+	/**
+	 * This shim uses direct IPC and does not strictly require RPC for its core functionality.
+	 */
+	protected override _requiresRpc(): boolean {
+		return false;
+	}
+
+	/**
+	 * Serializes `QuickPickItem` or string items into a DTO suitable for IPC.
+	 * @param items The array of items to serialize.
+	 * @returns An array of serialized item DTOs.
+	 */
+	private _serializeQuickPickItemsForIpc<T extends QuickPickItem | string>(
+		items: readonly T[],
+	): QuickPickOptionsForIpc["items"] {
+		return items.map((item, index) => {
+			if (typeof item === "string") {
+				// Store original index
+				return { label: item, data: { _cocoonOriginalIndex: index } };
+			}
+
+			const qpItem = item as QuickPickItem;
+
+			return {
+				label: qpItem.label,
+
+				description: qpItem.description,
+
+				detail: qpItem.detail,
+
+				picked: qpItem.picked,
+
+				alwaysShow: qpItem.alwaysShow,
+
+				// Pass through QuickPickItemKind (e.g., Separator)
+				kind: qpItem.kind,
+
+				// Store original index to reliably map back, as labels might not be unique.
+				data: { _cocoonOriginalIndex: index },
+			};
+		});
+	}
+
+	/**
+	 * Serializes QuickInputButton DTOs for IPC.
+	 * @param buttons Array of vscode.QuickInputButton.
+	 * @returns Array of simplified button DTOs with handles.
+	 */
+	private _serializeButtonsForIpc(
+		buttons?: readonly QuickInputButton[],
+	): QuickPickOptionsForIpc["buttons"] {
+		if (!buttons) return undefined;
+
+		return buttons.map((button, index) => ({
+			// iconPath needs to be marshalled if it's a Uri
+			// Assuming iconPath is on the internal type
+			iconPath: this._convertApiArgToInternal((button as any).iconPath),
+
+			tooltip: button.tooltip,
+
+			// Assign a handle for Mountain to report back which button was clicked
+			handle: index,
+		}));
+	}
+
+	/** {@inheritDoc IExtHostQuickInputServiceShape.showQuickPick} */
+	async showQuickPick<T extends QuickPickItem>(
+		items: readonly T[] | Promise<readonly T[]>,
+
+		options?: QuickPickOptions<T> & { canPickMany?: false },
+
+		token?: CancellationToken,
+	): Promise<T | undefined>;
+
+	async showQuickPick<T extends QuickPickItem>(
+		items: readonly T[] | Promise<readonly T[]>,
+
+		options: QuickPickOptions<T> & { canPickMany: true },
+
+		token?: CancellationToken,
+	): Promise<T[] | undefined>;
+
+	async showQuickPick(
+		items: readonly string[] | Promise<readonly string[]>,
+
+		options?: QuickPickOptions<QuickPickItem & { label: string }> & {
+			canPickMany?: false;
+		},
+
+		token?: CancellationToken,
+	): Promise<string | undefined>;
+
+	async showQuickPick(
+		items: readonly string[] | Promise<readonly string[]>,
+
+		options: QuickPickOptions<QuickPickItem & { label: string }> & {
+			canPickMany: true;
+		},
+
+		token?: CancellationToken,
+	): Promise<string[] | undefined>;
+
+	async showQuickPick<T extends QuickPickItem | string>(
+		items: readonly T[] | Promise<readonly T[]>,
+
+		options?: QuickPickOptions<
+			T extends string ? QuickPickItem & { label: string } : T
 		>,
 
-		proxy: MainThreadTerminalServiceShape | null,
+		token?: CancellationToken,
+	): Promise<T | T[] | undefined> {
+		const resolvedItems = await Promise.resolve(items);
 
-		logService?: ILogService,
-	) {
-		this.#id = id;
+		if (token?.isCancellationRequested) {
+			this._log("showQuickPick cancelled by token before IPC call.");
 
-		this.#nameInternal = initialName;
-
-		// Store a copy
-		this.#creationOptionsInternal = { ...creationOptions };
-
-		this.#proxy = proxy;
-
-		this.#logService = logService;
-
-		this.#processIdPromise = new Promise<number | undefined>((resolve) => {
-			this.#processIdPromiseResolver = resolve;
-		});
-
-		this._logShimOp(`Created (id: ${this.#id})`);
-	}
-
-	private _logShimOp(msg: string, ...args: any[]): void {
-		this.#logService?.trace(
-			`[Terminal][${this.#nameInternal}(${this.#id})] ${msg}`,
-
-			...args,
-		);
-	}
-
-	private _logShimError(msg: string, ...args: any[]): void {
-		this.#logService?.error(
-			`[Terminal][${this.#nameInternal}(${this.#id})] ${msg}`,
-
-			...args,
-		);
-	}
-
-	private _validateAndGetProxy(): MainThreadTerminalServiceShape {
-		if (this.#isDisposed)
-			throw new Error(
-				`Terminal '${this.#nameInternal}' (id: ${this.#id}) has been disposed.`,
-			);
-
-		if (!this.#proxy)
-			throw new Error(
-				`Terminal '${this.#nameInternal}' (id: ${this.#id}) RPC proxy is unavailable.`,
-			);
-
-		return this.#proxy;
-	}
-
-	get name(): string {
-		return this.#nameInternal;
-	}
-
-	_setNameInternal(newName: string): void {
-		this.#nameInternal = newName;
-
-		// Called by $acceptTerminalTitleChanged
-	}
-
-	get exitStatus(): VscodeTerminalExitStatus | undefined {
-		return this.#exitStatusInternal;
-	}
-
-	_setExitStatusInternal(status: VscodeTerminalExitStatus): void {
-		this.#exitStatusInternal = status;
-	}
-
-	get processId(): Promise<number | undefined> {
-		return this.#processIdPromise;
-	}
-
-	_setProcessIdInternal(pid: number | undefined): void {
-		if (this.#processIdPromiseResolver) {
-			// Check if already resolved
-			this.#processIdPromiseResolver(pid);
-
-			// Prevent future resolution
-			(this.#processIdPromiseResolver as any) = null;
-		} else if (pid !== undefined) {
-			// If trying to set a new PID after initial resolution
-			this._logShimOp(
-				`ProcessId already resolved, new PID ${pid} ignored.`,
-			);
+			return undefined;
 		}
-	}
 
-	get creationOptions(): Readonly<
-		VscodeTerminalOptions | VscodeExtensionTerminalOptions
-	> {
-		return this.#creationOptionsInternal;
-	}
+		const serializedItems =
+			this._serializeQuickPickItemsForIpc(resolvedItems);
 
-	get state(): VscodeTerminalState {
-		return Object.freeze({
-			isInteractedWith: false,
-		}); /* TODO: Sync state from MainThread */
-	}
+		const ipcOptions: QuickPickOptionsForIpc = {
+			// Spread options first
+			...(options || {}),
 
-	// get pty(): VscodePseudoterminal | undefined { /* TODO: If PTYs fully supported */ return undefined; }
+			items: serializedItems,
 
-	public sendText(text: string, addNewLine = true): void {
-		try {
-			const proxy = this._validateAndGetProxy();
-
-			const message = text + (addNewLine ? "\r" : "");
-
-			// this._logShimOp(`sendText: "${message.substring(0, 30)}..."`);
-
-			proxy.$sendText(this.#id, message).catch((e) =>
-				this._logShimError(
-					"RPC $sendText failed:",
-
-					refineError(e, this.#logService),
-				),
-			);
-		} catch (e: any) {
-			this._logShimError("sendText validation failed:", e);
-		}
-	}
-
-	public show(preserveFocus = false): void {
-		try {
-			const proxy = this._validateAndGetProxy();
-
-			// this._logShimOp(`show(preserveFocus=${preserveFocus})`);
-
-			proxy.$show(this.#id, preserveFocus).catch((e) =>
-				this._logShimError(
-					"RPC $show failed:",
-
-					refineError(e, this.#logService),
-				),
-			);
-		} catch (e: any) {
-			this._logShimError("show validation failed:", e);
-		}
-	}
-
-	public hide(): void {
-		try {
-			const proxy = this._validateAndGetProxy();
-
-			// this._logShimOp(`hide`);
-
-			proxy.$hide(this.#id).catch((e) =>
-				this._logShimError(
-					"RPC $hide failed:",
-
-					refineError(e, this.#logService),
-				),
-			);
-		} catch (e: any) {
-			this._logShimError("hide validation failed:", e);
-		}
-	}
-
-	public dispose(): void {
-		if (!this.#isDisposed) {
-			this._logShimOp(`dispose`);
-
-			this.#isDisposed = true;
-
-			this.#proxy?.$dispose(this.#id).catch((e) =>
-				this._logShimError(
-					"RPC $dispose failed:",
-
-					refineError(e, this.#logService),
-				),
-			);
-
-			this.#onDidDisposeEmitter.fire();
-
-			this.#onDidDisposeEmitter.dispose();
-
-			if (this.#processIdPromiseResolver) {
-				this._setProcessIdInternal(undefined);
-			}
-
-			this.#proxy = null;
-
-			this.#logService = undefined;
-		}
-	}
-
-	public readonly onDidDispose: VscodeEvent<void> =
-		this.#onDidDisposeEmitter.event;
-
-	// TODO: Implement other events like onDidWriteData, onDidChangeState if PTYs/state sync are added.
-}
-
-class ShimEnvironmentVariableCollectionImpl
-	implements VscodeEnvironmentVariableCollection
-{
-	readonly #extensionId: string;
-
-	#persistentInternal: boolean;
-
-	readonly #map = new Map<string, VscodeEnvironmentVariableMutator>();
-
-	readonly #ipcLayer: typeof ipc;
-
-	#logService?: ILogService;
-
-	readonly #descriptionInternal?: string;
-
-	// EnvironmentVariableScope if used
-	readonly #scopeInternal?: any;
-
-	// TODO: onDidChange event for EnvVarCollection
-	// private readonly _onDidChangeCollection: VscodeEmitter<void> = new VscodeEmitter<void>();
-
-	// public readonly onDidChange: VscodeEvent<void> = this._onDidChangeCollection.event;
-
-	constructor(
-		extension: VscodeExtension<any>,
-
-		options: EnvVarCollectionOptions | undefined,
-
-		ipcLayer: typeof ipc,
-
-		logService?: ILogService,
-	) {
-		this.#extensionId = extension.id;
-
-		this.#persistentInternal = options?.persistent ?? true;
-
-		this.#descriptionInternal = options?.description;
-
-		// If scope is part of options
-		// this.#scopeInternal = options?.scope;
-
-		this.#ipcLayer = ipcLayer;
-
-		this.#logService = logService;
-
-		this._logShimOp(
-			`Created (persistent=${this.#persistentInternal}, desc='${this.#descriptionInternal || ""}')`,
-		);
-	}
-
-	private _logShimOp(msg: string, ...args: any[]): void {
-		this.#logService?.trace(
-			`[EnvVarCol][${this.#extensionId}] ${msg}`,
-
-			...args,
-		);
-	}
-
-	private _logShimError(msg: string, ...args: any[]): void {
-		this.#logService?.error(
-			`[EnvVarCol][${this.#extensionId}] ${msg}`,
-
-			...args,
-		);
-	}
-
-	get persistent(): boolean {
-		return this.#persistentInternal;
-	}
-
-	get description(): string | undefined {
-		return this.#descriptionInternal;
-	}
-
-	// get scope(): EnvironmentVariableScope | undefined { return this.#scopeInternal; }
-
-	public replace(variable: string, value: string): void {
-		this._set(variable, {
-			value,
-
-			type: VscodeEnvironmentVariableMutatorType.Replace,
-		});
-	}
-
-	public append(variable: string, value: string): void {
-		this._set(variable, {
-			value,
-
-			type: VscodeEnvironmentVariableMutatorType.Append,
-		});
-	}
-
-	public prepend(variable: string, value: string): void {
-		this._set(variable, {
-			value,
-
-			type: VscodeEnvironmentVariableMutatorType.Prepend,
-		});
-	}
-
-	private _set(
-		variable: string,
-
-		mutator: VscodeEnvironmentVariableMutator,
-	): void {
-		if (typeof variable !== "string" || !variable)
-			throw new Error(
-				"Invalid variable name for environment collection.",
-			);
-
-		// this._logShimOp(`set: var='${variable}', mutatorType=${VscodeEnvironmentVariableMutatorType[mutator.type]}`);
-
-		// Store a copy
-		this.#map.set(variable, { ...mutator });
-
-		try {
-			this.#ipcLayer.sendNotificationToMountain(
-				"terminal_setEnvironmentVariable",
-
-				{
-					extensionId: this.#extensionId,
-
-					variable,
-
-					mutator: { ...mutator },
-
-					persistent:
-						this
-							.#persistentInternal /* scope: this.#scopeInternal */,
-				},
-			);
-
-			// this._onDidChangeCollection.fire();
-		} catch (e: any) {
-			this._logShimError("IPC sendNotification for setEnvVar failed:", e);
-		}
-	}
-
-	public get(variable: string): VscodeEnvironmentVariableMutator | undefined {
-		const mutator = this.#map.get(variable);
-
-		return mutator ? Object.freeze({ ...mutator }) : undefined;
-	}
-
-	public delete(variable: string): void {
-		if (typeof variable !== "string" || !variable)
-			throw new Error("Invalid variable name for delete.");
-
-		// this._logShimOp(`delete: var='${variable}'`);
-
-		if (this.#map.delete(variable)) {
-			try {
-				this.#ipcLayer.sendNotificationToMountain(
-					"terminal_deleteEnvironmentVariable",
-
-					{
-						extensionId: this.#extensionId,
-
-						variable,
-
-						persistent:
-							this
-								.#persistentInternal /* scope: this.#scopeInternal */,
-					},
-				);
-
-				// this._onDidChangeCollection.fire();
-			} catch (e: any) {
-				this._logShimError(
-					"IPC sendNotification for deleteEnvVar failed:",
-
-					e,
-				);
-			}
-		} else {
-			// Even if not in local cache, notify Mountain to ensure consistency if it had state.
-			// this._logShimOp(`delete: var='${variable}' not in local cache, notifying Mountain.`);
-
-			try {
-				this.#ipcLayer.sendNotificationToMountain(
-					"terminal_deleteEnvironmentVariable",
-
-					{
-						extensionId: this.#extensionId,
-
-						variable,
-
-						persistent:
-							this
-								.#persistentInternal /* scope: this.#scopeInternal */,
-					},
-				);
-			} catch (e: any) {
-				this._logShimError(
-					"IPC sendNotification for deleteEnvVar (not cached) failed:",
-
-					e,
-				);
-			}
-		}
-	}
-
-	public clear(): void {
-		// this._logShimOp(`clear`);
-
-		if (this.#map.size > 0) {
-			this.#map.clear();
-
-			try {
-				this.#ipcLayer.sendNotificationToMountain(
-					"terminal_clearEnvironmentVariableCollection",
-
-					{
-						extensionId: this.#extensionId,
-
-						persistent:
-							this
-								.#persistentInternal /* scope: this.#scopeInternal */,
-					},
-				);
-
-				// this._onDidChangeCollection.fire();
-			} catch (e: any) {
-				this._logShimError(
-					"IPC sendNotification for clearEnvVarCol failed:",
-
-					e,
-				);
-			}
-		}
-	}
-
-	public forEach(
-		callback: (
-			variable: string,
-
-			mutator: VscodeEnvironmentVariableMutator,
-
-			collection: VscodeEnvironmentVariableCollection,
-		) => any,
-
-		thisArg?: any,
-	): void {
-		this.#map.forEach((mutator, variable) => {
-			callback.call(
-				thisArg,
-
-				variable,
-
-				Object.freeze({ ...mutator }),
-
-				this,
-			);
-		});
-	}
-
-	public [Symbol.iterator](): IterableIterator<
-		[string, VscodeEnvironmentVariableMutator]
-	> {
-		const mapIter = this.#map.entries();
-
-		return {
-			next: () => {
-				const result = mapIter.next();
-
-				if (result.done)
-					return {
-						value: undefined,
-
-						done: true,
-					} as IteratorReturnResult<undefined>;
-
-				const [key, value] = result.value;
-
-				return {
-					value: [key, Object.freeze({ ...value })] as [
-						string,
-						VscodeEnvironmentVariableMutator,
-					],
-
-					done: false,
-				};
-			},
-
-			[Symbol.iterator]: function () {
-				return this;
-			},
+			buttons: this._serializeButtonsForIpc(options?.buttons),
 		};
-	}
 
-	public toArray(): ReadonlyArray<
-		[string, VscodeEnvironmentVariableMutator]
-	> {
-		return Object.freeze(
-			Array.from(this.#map.entries()).map(([key, value]) => [
-				key,
+		// Remove properties that are functions or complex objects not suitable for IPC
+		delete (ipcOptions as any).onDidSelectItem;
 
-				{ ...value },
-			]),
-		);
-	}
-}
+		delete (ipcOptions as any).onDidChangeSelection;
 
-// This should implement vscode.window.terminals API parts + IExtHostTerminalService (for DI)
-// and ExtHostTerminalServiceRpcShape (for calls from MainThread)
-export class ShimExtHostTerminalService
-	extends BaseCocoonShim
-	implements ExtHostTerminalServiceRpcShape
-{
-	// For IExtHostTerminalService
-	/*, IExtHostTerminalService */ public readonly _serviceBrand: undefined;
+		delete (ipcOptions as any).onDidAccept;
 
-	#mainThreadTerminalProxy: MainThreadTerminalServiceShape | null = null;
+		delete (ipcOptions as any).onDidTriggerButton;
 
-	readonly #terminals = new Map<number, ShimTerminalImpl>();
+		delete (ipcOptions as any).onDidTriggerItemButton;
 
-	readonly #envVariableCollections = new Map<
-		string,
-		ShimEnvironmentVariableCollectionImpl
-	>();
+		delete (ipcOptions as any).step;
 
-	readonly #onDidOpenTerminalEmitter = new VscodeEmitter<VscodeTerminal>();
+		delete (ipcOptions as any).totalSteps;
 
-	// API uses Terminal, not complex event obj
-	readonly #onDidCloseTerminalEmitter = new VscodeEmitter<VscodeTerminal>();
+		const optionsSummary = {
+			...ipcOptions,
 
-	readonly #onDidChangeActiveTerminalEmitter = new VscodeEmitter<
-		VscodeTerminal | undefined
-	>();
-
-	readonly #onDidChangeTerminalStateEmitter =
-		new VscodeEmitter<VscodeTerminal>();
-
-	// TODO: Add other emitters like onDidWriteTerminalData, onDidChangeShell
-
-	constructor(
-		rpcService: IExtHostRpcService | undefined,
-
-		logService: ILogService | undefined,
-	) {
-		super("ExtHostTerminalService", rpcService, logService);
-
-		if (this._rpcService) {
-			this.#mainThreadTerminalProxy = this._getProxy(
-				MainContext.MainThreadTerminalService as ProxyIdentifier<MainThreadTerminalServiceShape>,
-			);
-
-			try {
-				this._rpcService.set(
-					ExtHostContext.ExtHostTerminalService as ProxyIdentifier<ExtHostTerminalServiceRpcShape>,
-
-					this,
-				);
-
-				this._log(
-					"Registered self for incoming RPC calls (ExtHostTerminalService).",
-				);
-			} catch (e: any) {
-				this._logError(
-					"Failed to set ExtHostTerminalService for RPC:",
-
-					e,
-				);
-			}
-		}
-
-		if (!this.#mainThreadTerminalProxy) {
-			this._logError(
-				"Failed to get MainThreadTerminalService proxy! Terminal features will be severely impaired.",
-			);
-		}
-	}
-
-	// --- vscode.window API (subset for terminals) ---
-	public async createTerminal(
-		nameOrOptions?: CreateTerminalOptions,
-
-		shellPath?: string,
-
-		shellArgs?: string[] | string,
-	): Promise<VscodeTerminal> {
-		let options: VscodeTerminalOptions | VscodeExtensionTerminalOptions;
-
-		if (typeof nameOrOptions === "string") {
-			options = { name: nameOrOptions, shellPath, shellArgs };
-		} else {
-			options = nameOrOptions || {};
-		}
+			items: `[${serializedItems.length} items]`,
+		};
 
 		this._log(
-			`createTerminal: name='${options.name}', shellPath='${options.shellPath}'`,
+			`showQuickPick: Sending ${serializedItems.length} items, options: ${JSON.stringify(optionsSummary)}`,
 		);
-
-		if (!this.#mainThreadTerminalProxy) {
-			this._logError(
-				"Cannot create terminal: MainThreadTerminalService proxy unavailable.",
-			);
-
-			throw new Error(
-				"Cannot create terminal: Terminal service proxy is not available.",
-			);
-		}
 
 		try {
-			const internalOptions: ICreateTerminalRpcOptions = {
-				// Map to RPC DTO
-				name: options.name,
+			const resultFromMountain = (await this._ipcRequestResponse(
+				"ui_showQuickPick",
 
-				shellPath: options.shellPath,
+				ipcOptions,
 
-				shellArgs: options.shellArgs,
+				0,
 
-				cwd: options.cwd
-					? options.cwd instanceof VscodeUri
-						? (this._convertApiArgToInternal(
-								options.cwd,
-							) as ILocalUriComponents)
-						: String(options.cwd)
-					: undefined,
+				// 0 for indefinite timeout for user interaction
+			)) as QuickPickResponseFromMountain;
 
-				env: options.env,
+			if (token?.isCancellationRequested) {
+				this._log("showQuickPick cancelled by token after IPC call.");
 
-				iconPath: options.iconPath
-					? options.iconPath instanceof VscodeUri
-						? this._convertApiArgToInternal(options.iconPath)
-						: this._convertApiArgToInternal({
-								light: options.iconPath.light,
-
-								dark: options.iconPath.dark,
-							})
-					: undefined,
-
-				// Not standard on TerminalOptions
-				message: (options as any).message,
-
-				hideFromUser: options.hideFromUser,
-
-				// Not standard on TerminalOptions
-				isTransient: (options as any).isTransient,
-
-				// PTY specific options
-				isPty: !!(options as VscodeExtensionTerminalOptions).pty,
-
-				// If PTYs are pre-registered and have IDs
-				// ptyId: ...
-			};
-
-			if (options.location && typeof options.location === "object") {
-				// TerminalEditorLocationOptions
-				internalOptions.location = {
-					viewColumn: options.location.viewColumn,
-
-					preserveFocus: options.location.preserveFocus,
-				};
-			} else if (typeof options.location === "number") {
-				// TerminalLocation enum
-				internalOptions.location = options.location;
+				return undefined;
 			}
 
-			const result =
-				await this.#mainThreadTerminalProxy.$createTerminal(
-					internalOptions,
+			if (resultFromMountain === undefined) {
+				this._log(
+					"showQuickPick dismissed by user or no selection made.",
 				);
 
-			if (!result || typeof result.id !== "number") {
-				this._logError(
-					"Failed to create terminal via RPC: Main thread returned invalid result.",
-
-					result,
-				);
-
-				throw new Error("Failed to create terminal backend.");
+				return undefined;
 			}
 
-			const terminal = new ShimTerminalImpl(
-				result.id,
+			if (options?.canPickMany) {
+				if (!Array.isArray(resultFromMountain)) {
+					this._logError(
+						"showQuickPick (canPickMany:true) expected array of selected indices/data from Mountain, got:",
 
-				result.name || options.name || `Terminal ${result.id}`,
+						resultFromMountain,
+					);
 
-				options,
+					return undefined;
+				}
 
-				this.#mainThreadTerminalProxy,
+				// Assuming Mountain returns an array of original indices stored in `data._cocoonOriginalIndex`
+				const selectedIndices = new Set(resultFromMountain as number[]);
 
-				this._logService,
-			);
+				return resolvedItems.filter((_item, index) =>
+					selectedIndices.has(index),
+				) as T[] | undefined;
+			} else {
+				// Assuming Mountain returns the original index for single pick
+				if (typeof resultFromMountain !== "number") {
+					this._logError(
+						"showQuickPick (canPickMany:false) expected a single original index (number) from Mountain, got:",
 
-			this.#terminals.set(result.id, terminal);
+						resultFromMountain,
+					);
 
-			// $acceptTerminalOpened (called by main thread) will fire the onDidOpenTerminal event.
-			return terminal;
+					return undefined;
+				}
+
+				return resolvedItems[resultFromMountain as number] as
+					| T
+					| undefined;
+			}
 		} catch (e: any) {
-			this._logError("Failed to create terminal via RPC:", e);
+			// Check again after await
+			if (token?.isCancellationRequested) return undefined;
 
-			throw refineError(e, this._logService, "createTerminal");
+			this._logError(
+				"showQuickPick IPC request failed:",
+
+				refineErrorForShim(e, this._logService, "showQuickPick"),
+			);
+
+			// API usually returns undefined on UI error/cancellation, rather than throwing.
+			return undefined;
 		}
 	}
 
-	get terminals(): readonly VscodeTerminal[] {
-		return Object.freeze([...this.#terminals.values()]);
-	}
+	/** {@inheritDoc IExtHostQuickInputServiceShape.showInputBox} */
+	async showInputBox(
+		options?: InputBoxOptions,
 
-	get activeTerminal(): VscodeTerminal | undefined {
-		// This needs to be updated by $acceptActiveTerminalChanged from Mountain.
-		// TODO: Store active terminal ID and look it up.
-		this._logWarnOnce(
-			"activeTerminal is based on incoming RPC events, may not be up-to-date if events missed.",
-		);
+		token?: CancellationToken,
+	): Promise<string | undefined> {
+		if (token?.isCancellationRequested) {
+			this._log("showInputBox cancelled by token before IPC call.");
 
-		// Placeholder until state is synced
-		return undefined;
-	}
-
-	public getEnvironmentVariableCollection(
-		extension: VscodeExtension<any>,
-
-		options?: EnvVarCollectionOptions,
-	): VscodeEnvironmentVariableCollection {
-		// The `options` for vscode.EnvironmentVariableCollection in the API includes `scope`.
-		// The original shim's EnvVarCollectionOptions only had `persistent`.
-		// TODO: Align EnvVarCollectionOptions with vscode.EnvironmentVariableCollectionOptions if `scope` is needed.
-		if (!extension?.id)
-			throw new Error(
-				"Invalid extension provided to getEnvironmentVariableCollection",
-			);
-
-		const extId = extension.id;
-
-		// Can be verbose
-		// this._log(`getEnvironmentVariableCollection: extId=${extId}`);
-
-		if (!this.#envVariableCollections.has(extId)) {
-			this.#envVariableCollections.set(
-				extId,
-
-				new ShimEnvironmentVariableCollectionImpl(
-					extension,
-
-					options,
-
-					ipc,
-
-					this._logService,
-				),
-			);
+			return undefined;
 		}
 
-		return this.#envVariableCollections.get(extId)!;
-	}
+		const ipcOptions: InputBoxOptionsForIpc = { ...(options || {}) };
 
-	// --- Events ---
-	get onDidOpenTerminal(): VscodeEvent<VscodeTerminal> {
-		return this.#onDidOpenTerminalEmitter.event;
-	}
+		// Remove properties not suitable for IPC
+		delete (ipcOptions as any).validateInput;
 
-	get onDidCloseTerminal(): VscodeEvent<VscodeTerminal> {
-		return this.#onDidCloseTerminalEmitter.event;
-	}
+		delete (ipcOptions as any).onDidChangeValue;
 
-	get onDidChangeActiveTerminal(): VscodeEvent<VscodeTerminal | undefined> {
-		return this.#onDidChangeActiveTerminalEmitter.event;
-	}
+		delete (ipcOptions as any).onDidAccept;
 
-	get onDidChangeTerminalState(): VscodeEvent<VscodeTerminal> {
-		return this.#onDidChangeTerminalStateEmitter.event;
-	}
+		delete (ipcOptions as any).onDidTriggerButton;
 
-	// TODO: get onDidWriteData, onDidChangeShellType etc.
+		delete (ipcOptions as any).step;
 
-	// --- RPC Methods Called BY Mountain (ExtHostTerminalServiceRpcShape) ---
-	public $acceptTerminalOpened(
-		id: number,
+		delete (ipcOptions as any).totalSteps;
 
-		name: string,
-
-		_shellLaunchConfigName?: string,
-
-		_isFeatureTerminal?: boolean,
-	): void {
-		this._log(`$acceptTerminalOpened: id=${id}, name=${name}`);
-
-		let terminal = this.#terminals.get(id);
-
-		if (!terminal) {
-			// Terminal might have been created by main thread directly or createTerminal promise not yet resolved on ext host side.
-			// Need creationOptions to properly create ShimTerminalImpl.
-			// For now, use defaults if creating implicitly.
-			// TODO: MainThread should ideally send enough info (like original options) if it expects ExtHost to create the object.
-			// Or, ExtHost's createTerminal should fully await the MainThread creation and then $acceptTerminalOpened is just a confirmation/update.
-			// Minimal
-			const creationOpts: VscodeTerminalOptions = { name };
-
-			terminal = new ShimTerminalImpl(
-				id,
-
-				name,
-
-				creationOpts,
-
-				this.#mainThreadTerminalProxy,
-
-				this._logService,
-			);
-
-			this.#terminals.set(id, terminal);
-
-			this._log(
-				`   Terminal shim for ID ${id} implicitly created by $acceptTerminalOpened.`,
-			);
-		} else {
-			// Update name if different
-			terminal._setNameInternal(name);
-		}
-
-		this.#onDidOpenTerminalEmitter.fire(terminal);
-
-		// Opening is a state change
-		this.#onDidChangeTerminalStateEmitter.fire(terminal);
-	}
-
-	public $acceptTerminalClosed(
-		id: number,
-
-		exitCode: number | undefined,
-
-		exitReason: VscodeTerminalExitReason | undefined,
-	): void {
-		const reasonStr =
-			exitReason !== undefined
-				? VscodeTerminalExitReason[exitReason]
-				: "Unknown";
+		ipcOptions.buttons = this._serializeButtonsForIpc(options?.buttons);
 
 		this._log(
-			`$acceptTerminalClosed: id=${id}, code=${exitCode}, reason=${reasonStr}`,
+			`showInputBox: Sending options: ${JSON.stringify(ipcOptions)}`,
 		);
 
-		const terminal = this.#terminals.get(id);
+		try {
+			const result = (await this._ipcRequestResponse(
+				"ui_showInputBox",
 
-		if (terminal) {
-			terminal._setExitStatusInternal({
-				code: exitCode,
+				ipcOptions,
 
-				reason: exitReason ?? VscodeTerminalExitReason.Unknown,
-			});
+				0,
 
-			this.#terminals.delete(id);
+				// 0 for indefinite timeout
+			)) as InputBoxResponseFromMountain;
 
-			// API expects the Terminal instance
-			this.#onDidCloseTerminalEmitter.fire(terminal);
+			if (token?.isCancellationRequested) {
+				this._log("showInputBox cancelled by token after IPC call.");
 
-			// Ensure internal cleanup
-			terminal.dispose();
-		} else {
-			this._logWarn(
-				`Received $acceptTerminalClosed for unknown terminal ID: ${id}`,
+				return undefined;
+			}
+
+			// Mountain returns the entered string or undefined if cancelled.
+			return result;
+		} catch (e: any) {
+			if (token?.isCancellationRequested) return undefined;
+
+			this._logError(
+				"showInputBox IPC request failed:",
+
+				refineErrorForShim(e, this._logService, "showInputBox"),
 			);
+
+			return undefined;
 		}
 	}
 
-	public $acceptTerminalProcessId(id: number, processId: number): void {
-		this._log(`$acceptTerminalProcessId: id=${id}, pid=${processId}`);
+	// --- Stubs for createQuickPick and createInputBox (complex lifecycle UI) ---
+	// createQuickPick<T extends QuickPickItem>(): QuickPick<T> {
 
-		this.#terminals.get(id)?._setProcessIdInternal(processId);
-	}
+	// 	this._logError("API not implemented: window.createQuickPick. This involves a complex UI lifecycle not supported in MVP.");
 
-	public $acceptActiveTerminalChanged(id: number | null): void {
-		this._log(`$acceptActiveTerminalChanged: new active ID=${id}`);
+	// 	throw new Error("window.createQuickPick is not implemented in this version of Cocoon.");
 
-		const activeTerminal =
-			id === null ? undefined : this.#terminals.get(id);
-
-		// TODO: Update internal state for `this.activeTerminal` getter.
-		this.#onDidChangeActiveTerminalEmitter.fire(activeTerminal);
-	}
-
-	public $acceptTerminalTitleChanged(id: number, name: string): void {
-		this._log(`$acceptTerminalTitleChanged: id=${id}, newName=${name}`);
-
-		const terminal = this.#terminals.get(id);
-
-		if (terminal) {
-			terminal._setNameInternal(name);
-
-			this.#onDidChangeTerminalStateEmitter.fire(terminal);
-		} else {
-			this._logWarn(
-				`Received $acceptTerminalTitleChange for unknown terminal ID: ${id}`,
-			);
-		}
-	}
-
-	// TODO: Implement other $accept* methods if PTY data, dimensions, process state changes are proxied.
-	// public $acceptTerminalData(id: number, data: string): void {
-
-	//     const terminal = this.#terminals.get(id);
-
-	// terminal?._onDidWriteDataEmitter.fire(data); // If terminal has this emitter
-	//
 	// }
+
+	// createInputBox(): InputBox {
+
+	// 	this._logError("API not implemented: window.createInputBox. This involves a complex UI lifecycle not supported in MVP.");
+
+	// 	throw new Error("window.createInputBox is not implemented in this version of Cocoon.");
+
+	// }
+
+	/**
+	 * Disposes of resources held by this shim instance.
+	 */
+	public override dispose(): void {
+		// From BaseCocoonShim
+		super.dispose();
+
+		// Dispose any event emitters or resources specific to this shim if they were created.
+	}
 }
