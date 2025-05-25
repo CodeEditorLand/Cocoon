@@ -1,162 +1,202 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Host Utils Shim (host-utils-shim.ts)
+ * Cocoon Host Utilities Shim (host-utils-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Provides a shim for the `IHostUtils` service. This service typically offers
- * utilities related to the host process environment, such as process ID, an exit function
- * (though usually restricted), and basic synchronous-like filesystem checks.
+ * Provides a shim implementation for the `IHostUtils` service interface. In VS Code,
+ * this service typically offers utilities related to the host process environment,
+ * such as retrieving the process ID (PID), providing a controlled way to request
+ * process termination, and performing basic synchronous-like filesystem existence
+ * or path resolution checks (though often implemented asynchronously).
  *
- * This shim delegates its functionalities to other shims:
- * - `process-shim.ts` for `pid`.
- * - `fs-shim.ts` (specifically `fs.promises`) for `fsExists` and `fsRealpath`.
+ * This shim delegates most of its functionalities to other, more specialized shims:
+ * - `pid`: Delegates to `process-shim.ts`.
+ * - `exit(code)`: Delegates to the global `process.exit`, which is patched by
+ *   `cocoon-bootstrap.ts` to be conditional.
+ * - `fsExists(path)`: Uses `fs-shim.ts` (specifically `fs.promises.stat`).
+ * - `fsRealpath(path)`: Uses `fs-shim.ts` (specifically `fs.promises.realpath`).
+ *
+ * Responsibilities:
+ * - Implementing the `IHostUtils` interface (or a compatible subset, `IHostUtilsShim`).
+ * - Providing access to the host process's PID via the `process-shim`.
+ * - Offering a controlled `exit` method that respects Cocoon's termination policy.
+ * - Providing asynchronous filesystem checks (`fsExists`, `fsRealpath`) by leveraging
+ *   the `fs-shim`.
  *
  * Key Interactions:
- * - Implements the `IHostUtils` interface (or a relevant subset).
- * - Used by other ExtHost services, notably `ExtHostExtensionService`.
- * - Registered with DI in `index.ts`.
+ * - Registered with Dependency Injection in `Cocoon/index.ts`.
+ * - Used by other ExtHost services, notably `ExtHostExtensionService`, for environment
+ *   information and utility functions.
+ * - Relies on `fs-shim.ts` (for filesystem operations) and `process-shim.ts` (for PID).
+ * - The `exit` method indirectly interacts with the patched global `process.exit`
+ *   from `cocoon-bootstrap.ts`.
+ *
+ * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
-// Default import from fs-shim.ts
+// Default import of the fs-shim object instance
 import fsShimInstance from "./fs-shim";
-// Default import from process-shim.ts
+// Default import of the process-shim object instance
 import processShimInstance from "./process-shim";
 
 // IHostUtils interface should ideally be imported from VS Code's type definitions.
 // e.g., import { IHostUtils } from 'vs/platform/native/common/native'; (path can vary)
-// Or from 'vs/workbench/api/common/extHostExtensionService.ts' as it's often defined or used there.
+// or from 'vs/workbench/api/common/extHostExtensionService.ts' as it's often defined there.
 
 // --- Type Definitions ---
 
-// TODO: Ensure this local IHostUtils definition accurately matches the canonical
-// VS Code interface that `ExtHostExtensionService` and other consumers expect.
+/**
+ * Defines the interface for host utility functions provided by this shim.
+ * This should align with the relevant parts of VS Code's `IHostUtils` interface.
+ */
 export interface IHostUtilsShim {
-	// Renamed to avoid conflict if real IHostUtils is imported for comparison
-	readonly _serviceBrand: undefined;
+	readonly _serviceBrand: undefined; // For DI compatibility
 
+	/** The process ID (PID) of the Cocoon host process. */
 	readonly pid?: number;
 
 	/**
-	 * Attempts to exit the host process. In Cocoon, this is typically prevented.
-	 * @param code The exit code.
+	 * Requests termination of the Cocoon host process with a given exit code.
+	 * This call delegates to the global `process.exit`, which is patched by
+	 * `cocoon-bootstrap.ts` and may be prevented by the host policy.
+	 * @param code The exit code for the process.
 	 */
-	// Note: process.exit is `never`, but IHostUtils.exit might be `void` if it doesn't guarantee exit.
-	exit(code: number): void;
+	exit(code: number): void; // `process.exit` is `never`, but this utility method might not guarantee exit.
 
 	/**
-	 * Asynchronously checks if a file or directory exists.
+	 * Asynchronously checks if a file or directory exists at the given path.
 	 * @param path The absolute path to check.
+	 * @returns A promise that resolves to `true` if the path exists, `false` otherwise.
 	 */
 	fsExists(path: string): Promise<boolean>;
 
 	/**
 	 * Asynchronously resolves a path to its canonical absolute path.
+	 * This typically resolves symbolic links.
 	 * @param path The path to resolve.
+	 * @returns A promise that resolves to the canonical absolute path string, or rejects
+	 *          if the path does not exist or an error occurs.
 	 */
 	fsRealpath(path: string): Promise<string>;
 
-	// TODO: Add other methods from the real IHostUtils if they exist and are needed by Cocoon.
-	// e.g., methods related to trash, revealing files in OS, etc.
+	// TODO: Add other methods from the real IHostUtils if they are necessary for Cocoon's
+	// supported extensions or VS Code platform code it runs (e.g., methods related to
+	// trash, revealing files in OS, etc.).
 }
 
+/**
+ * Cocoon's implementation of `IHostUtils`.
+ * It provides host process utilities by delegating to other shims or Node.js primitives.
+ */
 export class ShimHostUtils implements IHostUtilsShim {
-	public readonly _serviceBrand: undefined;
+	public readonly _serviceBrand: undefined; // Required by VS Code's service types
 
-	constructor() {
-		// Optional logging
-		// private readonly logService?: ILogService
-		// this.logService?.trace("[Cocoon HostUtils Shim] Initialized.");
+	// Optional logger, can be injected if BaseCocoonShim is used as a base.
+	// For this standalone shim, direct console logging is used for simplicity if no logger passed.
+	// private readonly _logService?: ILogServiceForShim;
+
+	/**
+	 * Creates an instance of ShimHostUtils.
+	 * @param _logService Optional logging service (currently unused in this direct implementation).
+	 */
+	constructor(_logService?: {
+		trace: (message: string, ...args: any[]) => void;
+		error: (message: string | Error, ...args: any[]) => void;
+		warn: (message: string, ...args: any[]) => void;
+	}) {
+		// this._logService = _logService;
+		// this._logService?.trace("[Cocoon HostUtils Shim] Initialized.");
+		console.log("[Cocoon HostUtils Shim] Initialized.");
 	}
 
+	/**
+	 * Gets the process ID (PID) of the Cocoon host process.
+	 * Retrieves the PID from the `process-shim`.
+	 */
 	public get pid(): number | undefined {
-		// `processShimInstance` is the default export of `process-shim.ts`.
-		// Ensure it correctly exposes `pid`.
 		try {
+			// `processShimInstance` is the default export of `process-shim.ts`.
 			return processShimInstance.pid;
 		} catch (e: any) {
-			// this.logService?.error("[Cocoon HostUtils Shim] Error accessing processShimInstance.pid:", e);
-
 			console.error(
 				"[Cocoon HostUtils Shim] Error accessing processShimInstance.pid:",
-
 				e.message,
+				e.stack,
 			);
-
 			return undefined;
 		}
 	}
 
+	/**
+	 * Requests termination of the Cocoon host process.
+	 * This method calls the global `process.exit()`, which is patched by `cocoon-bootstrap.ts`.
+	 * The bootstrap patch will consult `allowExitFn` (provided by `index.ts`) to determine
+	 * if the process is actually allowed to terminate.
+	 * @param code The exit code.
+	 */
 	public exit(code: number): void {
-		// This shim's `exit` method should align with the intended behavior for extensions
-		// calling this utility. VS Code's `IHostUtils.exit` typically *does* terminate the
-		// extension host process.
-		// However, `cocoon-bootstrap.ts` patches the global `process.exit`.
-		// If `IHostUtils.exit` is meant to be a *controlled* exit, it should perhaps call
-		// the *original* `nativeProcessExit` from `cocoon-bootstrap.ts` after notifying Mountain,
-
-		// or simply call the (now patched) `process.exit`.
-
-		// Current behavior from original JS: Warn and ignore.
-		// This effectively makes `IHostUtils.exit()` a NOP from the extension's perspective via this service.
+		// This call delegates to the globally patched `process.exit`.
+		// `cocoon-bootstrap.ts` handles the logic of whether to allow the exit or prevent it.
 		console.warn(
-			`[Cocoon HostUtils Shim] IHostUtils.exit(${code}) called. Shim is configured to prevent direct exit through this utility. Global process.exit is patched separately.`,
+			`[Cocoon HostUtils Shim] IHostUtils.exit(${code}) called. Delegating to global process.exit(), which is subject to Cocoon's host policy.`,
 		);
-
-		// If a real exit was intended here under specific circumstances, the `allowExitFn`
-		// from `cocoon-bootstrap.ts` would need to be accessible and checked.
-		// For now, it's a NOP, aligning with the idea of preventing unintentional exits.
+		process.exit(code); // This will trigger the patched global exit.
 	}
 
-	public async fsExists(path: string): Promise<boolean> {
+	/**
+	 * Asynchronously checks if a file or directory exists at the given path.
+	 * Uses the `fs-shim` (which proxies to Mountain) to perform a `stat` operation.
+	 * @param targetPath The absolute path to check.
+	 * @returns A promise resolving to `true` if the path exists, `false` otherwise.
+	 */
+	public async fsExists(targetPath: string): Promise<boolean> {
 		if (!fsShimInstance?.promises?.stat) {
 			console.error(
-				"[Cocoon HostUtils Shim] fs-shim.promises.stat is not available for fsExists check.",
+				"[Cocoon HostUtils Shim] fs-shim.promises.stat is not available for fsExists check. Returning false.",
 			);
-
 			return false;
 		}
-
 		try {
-			await fsShimInstance.promises.stat(path);
-
-			return true;
+			await fsShimInstance.promises.stat(targetPath);
+			return true; // If stat succeeds, the path exists.
 		} catch (err: any) {
+			// Common error codes for non-existence from fs.stat.
 			if (err.code === "ENOENT" || err.code === "ENOTDIR") {
-				// Common codes for non-existence
 				return false;
 			}
-
-			// Log other unexpected errors but still treat as "does not exist" for fsExists's boolean contract.
+			// For other unexpected errors during stat (e.g., permission issues),
+			// log the error but still treat as "does not exist" for `fsExists` contract.
 			console.warn(
-				`[Cocoon HostUtils Shim] fsExists check for "${path}" encountered an unexpected error during stat:`,
-
+				`[Cocoon HostUtils Shim] fsExists check for path "${targetPath}" encountered an unexpected error during 'stat' operation (path may exist but be inaccessible). Error:`,
 				err.message,
 			);
-
 			return false;
 		}
 	}
 
-	public async fsRealpath(path: string): Promise<string> {
+	/**
+	 * Asynchronously resolves a path to its canonical absolute path using the `fs-shim`.
+	 * This will typically resolve symbolic links.
+	 * @param targetPath The path to resolve.
+	 * @returns A promise that resolves to the canonical absolute path string.
+	 * @throws An error (propagated from `fs-shim`) if the path does not exist or an error occurs during resolution.
+	 */
+	public async fsRealpath(targetPath: string): Promise<string> {
 		if (!fsShimInstance?.promises?.realpath) {
 			const errorMsg =
 				"[Cocoon HostUtils Shim] fs-shim.promises.realpath is not available.";
-
 			console.error(errorMsg);
-
+			// Match typical fs promise rejection with an Error object.
 			return Promise.reject(new Error(errorMsg));
 		}
-
 		try {
-			return await fsShimInstance.promises.realpath(path);
+			return await fsShimInstance.promises.realpath(targetPath);
 		} catch (err: any) {
-			// fs.promises.realpath throws for non-existent paths.
-			// The error from fs-shim should already be NodeJS.ErrnoException-like.
+			// `fs.promises.realpath` is expected to throw if the path doesn't exist or other errors occur.
+			// The error from `fs-shim` should already be an `Error` (potentially NodeJS.ErrnoException-like).
+			// Log it here for context but rethrow it as the caller expects.
 			console.warn(
-				`[Cocoon HostUtils Shim] fsRealpath for "${path}" failed:`,
-
+				`[Cocoon HostUtils Shim] fsRealpath for path "${targetPath}" failed (this is expected if path does not exist). Error:`,
 				err.message,
 			);
-
-			// Rethrow the error as fs.realpath is expected to throw.
 			throw err;
 		}
 	}
