@@ -1,17 +1,46 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Language Models Shim (language-models-shim.ts)
+ * Cocoon Language Models Shim (shims/language-models-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements `IExtHostLanguageModels` (based on VS Code's `ExtHostLanguageModels.ts`),
- *
- *
- * managing language model access and interactions for extensions.
+ * Implements the `IExtHostLanguageModels` service interface, which underpins the
+ * `vscode.lm` (or a similar future namespace) API for Large Language Models (LLMs).
+ * This service manages the registration of language model providers by extensions,
+ * handles requests from extensions to specific language models, and facilitates
+ * streaming responses.
  *
  * For Cocoon's MVP, this shim focuses on:
- * - Providing a more accurate `createLanguageModelAccessInformation()`.
- * - Defining the correct RPC shapes for communication with `MainThreadLanguageModels`.
- * - Stubbing the complex logic for provider registration, request streaming, and auth.
+ * - Providing the structural basis for the `vscode.lm` API.
+ * - Defining the correct RPC shapes for communication with `MainThreadLanguageModels`
+ *   in Mountain.
+ * - Implementing `createLanguageModelAccessInformation()` for extensions to check
+ *   their access rights.
+ * - Basic provider registration (`registerChatResponseProvider`) and request initiation
+ *   (`sendChatRequest`), with streaming response handling.
+ * - Many advanced features, full authentication flows beyond a basic check, and
+ *   complex error handling or model capabilities are simplified or stubbed.
  *
- * This shim needs to be significantly expanded for full language model functionality.
+ * Responsibilities:
+ * - Registering `ChatResponseProvider` instances contributed by extensions.
+ * - Notifying `MainThreadLanguageModels` about new providers.
+ * - Handling `selectLanguageModels` requests by querying `MainThreadLanguageModels`.
+ * - Managing `sendChatRequest` calls:
+ *   - Performing access/authentication checks (simplified).
+ *   - Proxying requests to `MainThreadLanguageModels` (`$tryStartChatRequest`).
+ *   - Managing streaming responses via `LanguageModelResponseShim` and handling
+ *     `$provideLanguageModelResponse` RPC calls from Mountain.
+ * - Providing token counting capabilities, either locally or via RPC.
+ * - Implementing `createLanguageModelAccessInformation` for extensions.
+ * - Handling updates to model metadata and access lists from Mountain.
+ *
+ * Key Interactions:
+ * - Registered with DI in `Cocoon/index.ts` as `IExtHostLanguageModels`.
+ * - The `vscode.lm` API (when available to extensions) delegates to this service.
+ * - Communicates extensively with `MainContext.MainThreadLanguageModels` on Mountain.
+ * - Is an RPC service target for calls from Mountain, identified by
+ *   `ExtHostContext.ExtHostChatProvider` (as per VS Code's naming).
+ * - May interact with `IExtHostAuthentication` for access control (simplified in MVP).
+ * - Uses `BaseCocoonShim` and relies on (currently MOCK) `typeConvert` utilities.
+ *
+ * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
 import { AsyncIterableObject, AsyncIterableSource } from "vs/base/common/async";
@@ -36,177 +65,215 @@ import {
 	toDisposable,
 	type IDisposable,
 } from "vs/base/common/lifecycle";
-// For internal URI handling
-import { URI, UriComponents } from "vs/base/common/uri";
+import { URI, type UriComponents } from "vs/base/common/uri"; // Internal URI for consistency
 import {
 	ExtensionIdentifier,
 	ExtensionIdentifierMap,
 	ExtensionIdentifierSet,
 	type IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
-// For Progress<T> type
-import { Progress } from "vs/platform/progress/common/progress";
+import { Progress } from "vs/platform/progress/common/progress"; // For Progress<T> type in options
 import {
-	// RPC Contexts
 	ExtHostContext,
 	MainContext,
-	// The RPC interface this service implements (calls from MainThread)
-	type ExtHostLanguageModelsShape,
-	// The RPC interface for calling MainThread
+	SerializableObjectWithBuffers, // For sending complex data with buffers
+	type ExtHostLanguageModelsShape, // This service implements this RPC shape
 	type MainThreadLanguageModelsShape,
-	// DTOs from protocol - these should be used for RPC if defined
 	type IChatMessage as RpcChatMessage,
 	type IChatResponseFragment as RpcChatResponseFragment,
 	type ILanguageModelChatMetadata as RpcLanguageModelChatMetadata,
 	type ILanguageModelsChangeEvent as RpcLanguageModelsChangeEvent,
-	// TODO: Add other DTOs used by Main/ExtHostLanguageModelsShape
+	// Other DTOs from extHost.protocol.ts:
+	// type IChatRequestVariableData, type IChatVariableData, type IChatVariableResolverProgressDto,
+	// type IRelaxedChatMessage, type IChatDto, type IChatResponseDto, type IChatWelcomeMessage,
+	// type ILanguageModelToolsCandidate, type IToolCallHistory,
 } from "vs/workbench/api/common/extHost.protocol";
-// Dependency for auth hack
-import type { IExtHostAuthentication } from "vs/workbench/api/common/extHostAuthentication";
-// For type conversions
-import * as typeConvert from "vs/workbench/api/common/extHostTypeConverters";
-// For LanguageModelError etc.
-import * as extHostTypes from "vs/workbench/api/common/extHostTypes";
+import type { IExtHostAuthentication } from "vs/workbench/api/common/extHostAuthentication"; // For auth logic
+
+// Assuming typeConvert provides necessary DTO <-> API type conversions.
+// In a real setup: import * as typeConvert from 'vs/workbench/api/common/extHostTypeConverters';
+import * as extHostTypes from "vs/workbench/api/common/extHostTypes"; // For LanguageModelError, etc.
 import {
+	type ChatRequestAgentPart,
+	type ChatRequestTextPart,
+	type ChatRequestToolPart,
+} from "vs/workbench/contrib/chat/common/chatRequestParser";
+import type {
+	ChatAgentHover,
+	ChatAgentKakkarHistoryEntry,
 	IChatResponsePart,
-	type ChatImageMimeType,
 } from "vs/workbench/contrib/chat/common/languageModels";
-// For types used in streaming
-
+// For streaming parts
 import { DEFAULT_MODEL_PICKER_CATEGORY } from "vs/workbench/contrib/chat/common/modelPicker/modelPickerWidget";
-// For auth hack
-import { INTERNAL_AUTH_PROVIDER_PREFIX } from "vs/workbench/services/authentication/common/authentication";
-// For proposed API checks
-import { checkProposedApiEnabled } from "vs/workbench/services/extensions/common/extensions";
+import { INTERNAL_AUTH_PROVIDER_PREFIX } from "vs/workbench/services/authentication/common/authentication"; // For auth hack
+import { checkProposedApiEnabled } from "vs/workbench/services/extensions/common/extensions"; // For proposed API checks
 
+// Import from public 'vscode' API definition
 import {
 	LanguageModelChatMessageRole as VscodeLanguageModelChatMessageRole,
-	LanguageModelError as VscodeLanguageModelError,
+	LanguageModelError as VscodeLanguageModelError, // API Error type
 	type CancellationToken as VscodeCancellationToken,
 	type ChatResponseProvider as VscodeChatResponseProvider,
 	type ChatResponseProviderMetadata as VscodeChatResponseProviderMetadata,
-	// vscode API types
 	type LanguageModelAccessInformation as VscodeLanguageModelAccessInformation,
 	type LanguageModelChat as VscodeLanguageModelChat,
-	// Note the '2'
-	type LanguageModelChatMessage2 as VscodeLanguageModelChatMessage2,
+	type LanguageModelChatMessage2 as VscodeLanguageModelChatMessage2, // Using the '2' version
 	type LanguageModelChatRequestOptions as VscodeLanguageModelChatRequestOptions,
 	type LanguageModelChatResponse as VscodeLanguageModelChatResponse,
+	type LanguageModelChatResponsePart as VscodeLanguageModelChatResponsePart, // Union of Text, Tool, Data parts
 	type LanguageModelChatSelector as VscodeLanguageModelChatSelector,
-	// Added
 	type LanguageModelDataPart as VscodeLanguageModelDataPart,
-	// Added
-	type LanguageModelIgnoredFileProvider as VscodeLanguageModelIgnoredFileProvider,
+	type LanguageModelIgnoredFileProvider as VscodeLanguageModelIgnoredFileProvider, // For proposed API
 	type LanguageModelTextPart as VscodeLanguageModelTextPart,
-	// Added
 	type LanguageModelToolCallPart as VscodeLanguageModelToolCallPart,
-	// TODO: Add other vscode types if needed (e.g., ChatResponseFragment2)
-} from "../Shim/out/vscode";
+} from "vscode";
+
 import {
 	BaseCocoonShim,
-	refineError,
-	type IExtHostRpcService,
-	type ILogService,
+	refineErrorForShim,
+	type ILogServiceForShim,
+	type IRpcProtocolServiceAdapter,
 	type ProxyIdentifier,
 } from "./_baseShim";
 
-// --- Type Definitions based on ExtHostLanguageModels.ts ---
-
-type LanguageModelProviderData = {
-	// The short ID given by the extension
-	readonly languageModelId: string;
-
-	readonly extension: ExtensionIdentifier;
-
-	readonly provider: VscodeChatResponseProvider;
-
-	// Store full metadata
-	readonly metadata: VscodeChatResponseProviderMetadata;
+// --- Placeholder for extHostTypeConverters ---
+// TODO: Replace with actual converters from 'vs/workbench/api/common/extHostTypeConverters'.
+const localApiTypeConverters = {
+	LanguageModelChatMessage2: {
+		from: (message: VscodeLanguageModelChatMessage2): RpcChatMessage => {
+			// MOCK CONVERSION: Needs to handle different message part types (text, tool, data)
+			// and convert them to the RpcChatMessage DTO structure.
+			let content: string | RpcChatMessage["content"][0][] = ""; // Simplified
+			if (typeof message.content === "string") {
+				content = message.content;
+			} else if (Array.isArray(message.content)) {
+				content = message.content.map((part) => {
+					if (part instanceof extHostTypes.LanguageModelTextPart) {
+						return {
+							type: "text",
+							text: part.value,
+						} as ChatRequestTextPart; // Aligns with internal part types
+					}
+					// TODO: Handle LanguageModelDataPart, LanguageModelToolCallPart conversion to their respective DTO/internal part types
+					return {
+						type: "text",
+						text: "[unsupported part]",
+					} as ChatRequestTextPart;
+				});
+			}
+			return {
+				role:
+					message.role === VscodeLanguageModelChatMessageRole.User
+						? 0
+						: 1, // Map User/Assistant to 0/1 if that's the DTO
+				content: content as any, // Ensure this matches RpcChatMessage content type
+				name: message.name,
+			};
+		},
+		to: (dto: RpcChatMessage): VscodeLanguageModelChatMessage2 => {
+			// MOCK CONVERSION from RpcChatMessage DTO to VscodeLanguageModelChatMessage2
+			let content: string | VscodeLanguageModelChatResponsePart[] = "";
+			if (typeof dto.content === "string") {
+				content = dto.content;
+			} else if (Array.isArray(dto.content)) {
+				// This is complex: dto.content is (ChatRequestTextPart | ChatRequestToolPart | ChatRequestAgentPart)[]
+				// Needs mapping to VscodeLanguageModelTextPart | VscodeLanguageModelToolCallPart | VscodeLanguageModelDataPart
+				content = (dto.content as any[]).map((partDto) => {
+					if (partDto.type === "text")
+						return new extHostTypes.LanguageModelTextPart(
+							partDto.text,
+						);
+					// TODO: Handle tool_call, data parts
+					return new extHostTypes.LanguageModelTextPart(
+						"[unsupported DTO part]",
+					);
+				});
+			}
+			return new extHostTypes.LanguageModelChatMessage(
+				dto.role === 0
+					? VscodeLanguageModelChatMessageRole.User
+					: VscodeLanguageModelChatMessageRole.System, // Adjust mapping
+				content,
+				dto.name,
+			) as VscodeLanguageModelChatMessage2;
+		},
+	},
+	// ... other necessary converters ...
 };
 
-// Structure for _allLanguageModelData (all models known from main thread)
-interface AllLanguageModelEntry {
-	// DTO from main thread
-	metadata: RpcLanguageModelChatMetadata;
+// --- Internal Data Structures ---
 
-	// Cache of API objects per requesting extension
+/** Stores data for a language model provider registered by an extension. */
+type LanguageModelProviderData = {
+	readonly languageModelId: string; // The short ID given by the extension (e.g., "copilot-gpt-3.5-turbo")
+	readonly extension: ExtensionIdentifier; // Extension that contributed this provider
+	readonly provider: VscodeChatResponseProvider; // The actual provider instance
+	readonly metadata: VscodeChatResponseProviderMetadata; // Metadata provided at registration
+};
+
+/** Stores data for all language models known to the system (typically synced from MainThread). */
+interface AllLanguageModelEntry {
+	metadata: RpcLanguageModelChatMetadata; // DTO received from MainThread
+	// Cache of VscodeLanguageModelChat API objects, keyed by the requesting extension's ID.
+	// This allows different extensions to get distinct API objects if needed, though often they share.
 	apiObjects: ExtensionIdentifierMap<VscodeLanguageModelChat>;
 }
 
-// For streaming responses
+/** Manages the streaming response for a single language model request option. */
 class LanguageModelResponseStreamShim {
-	readonly stream = new AsyncIterableSource<
-		| VscodeLanguageModelTextPart
-		| VscodeLanguageModelToolCallPart
-		| VscodeLanguageModelDataPart
-	>();
-
+	readonly stream: AsyncIterableSource<VscodeLanguageModelChatResponsePart>;
 	constructor(
-		// Corresponds to fragment.index
-		readonly optionIndex: number,
-
-		// If this is the first/default stream, it can be pre-assigned by LanguageModelResponseShim
-		preassignedStream?: AsyncIterableSource<
-			| VscodeLanguageModelTextPart
-			| VscodeLanguageModelToolCallPart
-			| VscodeLanguageModelDataPart
-		>,
+		readonly optionIndex: number, // Corresponds to RpcChatResponseFragment.index
+		preassignedStream?: AsyncIterableSource<VscodeLanguageModelChatResponsePart>,
 	) {
 		this.stream =
 			preassignedStream ||
-			new AsyncIterableSource<
-				| VscodeLanguageModelTextPart
-				| VscodeLanguageModelToolCallPart
-				| VscodeLanguageModelDataPart
-			>();
+			new AsyncIterableSource<VscodeLanguageModelChatResponsePart>();
 	}
 }
 
+/**
+ * Manages the overall streaming response for a `sendChatRequest` call, which might
+ * involve multiple response options (though typically one for most models).
+ */
 class LanguageModelResponseShim {
-	readonly apiObject: VscodeLanguageModelChatResponse;
-
+	readonly apiObject: VscodeLanguageModelChatResponse; // The public API object returned to the extension.
 	private readonly _responseStreams = new Map<
 		number,
 		LanguageModelResponseStreamShim
-	>();
-
-	// The primary stream
-	private readonly _defaultStream: LanguageModelResponseStreamShim;
-
-	private _isDone = false;
+	>(); // Key: optionIndex
+	private readonly _defaultStream: LanguageModelResponseStreamShim; // Primary stream (usually index 0)
+	private _isDone = false; // Flag to indicate if the response is complete (resolved or rejected)
 
 	constructor() {
-		// Default stream for index 0 or first one
 		this._defaultStream = new LanguageModelResponseStreamShim(0);
-
-		// Ensure default stream is in map if index 0 is used
-		this._responseStreams.set(0, this._defaultStream);
+		this._responseStreams.set(0, this._defaultStream); // Pre-populate for index 0
 
 		const that = this;
-
-		this.apiObject = {
+		this.apiObject = Object.freeze({
+			// Public API object should be immutable
 			get stream() {
 				return that._defaultStream.stream.asyncIterable;
 			},
-
 			get text() {
-				// Concatenate all text parts from the default stream
+				// Asynchronously concatenates all text parts from the default stream
 				return AsyncIterableObject.map(
 					that._defaultStream.stream.asyncIterable,
-
 					(part) =>
 						part instanceof extHostTypes.LanguageModelTextPart
 							? part.value
 							: undefined,
 				).coalesce();
 			},
-
-			// TODO: Implement other properties like `result`, `error` on VscodeLanguageModelChatResponse if they exist
-		};
+			// TODO: Implement other properties on VscodeLanguageModelChatResponse if they exist,
+			// e.g., `result` (for final aggregated result), `error` (if request failed).
+			// These would be populated when `resolve()` or `reject()` is called.
+		});
 	}
 
-	private *_getUsedStreams() {
-		// Iterate over streams that have received data or the default
+	private *_getActiveStreams(): Iterable<
+		AsyncIterableSource<VscodeLanguageModelChatResponsePart>
+	> {
 		if (this._responseStreams.size > 0) {
 			for (const streamHolder of this._responseStreams.values())
 				yield streamHolder.stream;
@@ -216,201 +283,154 @@ class LanguageModelResponseShim {
 		}
 	}
 
+	/** Handles an incoming response fragment from the MainThread. */
 	handleFragment(fragmentDto: RpcChatResponseFragment): void {
-		// fragmentDto from main thread
-		if (this._isDone) return;
+		if (this._isDone) return; // Ignore fragments if response is already marked done
 
 		let streamHolder = this._responseStreams.get(fragmentDto.index);
-
 		if (!streamHolder) {
-			// If this is the first fragment for a new index AND the default stream hasn't been "claimed" by index 0
-			if (
-				fragmentDto.index !== 0 &&
-				this._responseStreams.get(0) === this._defaultStream &&
-				this._defaultStream.stream.isEmpty()
-			) {
-				// If index 0 was default but unused, and now a different index fragment arrives first,
-
-				// we might re-assign the default stream or just create a new one.
-				// VS Code's logic might be more nuanced here about which stream is "default".
-				// For simplicity, let's always create a new stream if index doesn't match an existing one.
-				streamHolder = new LanguageModelResponseStreamShim(
-					fragmentDto.index,
-				);
-			} else if (
-				fragmentDto.index === 0 &&
-				!this._responseStreams.has(0)
-			) {
-				// This case means index 0 came but defaultStream wasn't in map, re-add
-				streamHolder = this._defaultStream;
-			} else {
-				streamHolder = new LanguageModelResponseStreamShim(
-					fragmentDto.index,
-				);
-			}
-
+			// Create a new stream if this fragment index is new
+			streamHolder = new LanguageModelResponseStreamShim(
+				fragmentDto.index,
+			);
 			this._responseStreams.set(fragmentDto.index, streamHolder);
 		}
 
-		// Convert RpcChatResponseFragment.part to vscode API part type
-		let apiPart:
-			| VscodeLanguageModelTextPart
-			| VscodeLanguageModelToolCallPart
-			| VscodeLanguageModelDataPart;
+		// Convert RpcChatResponseFragment.part (DTO) to a vscode.LanguageModelChatResponsePart (API type)
+		let apiPart: VscodeLanguageModelChatResponsePart;
+		const partDto = fragmentDto.part as IChatResponsePart; // Cast to VS Code's internal part type for easier handling
 
-		if (fragmentDto.part.type === "text") {
+		if (partDto.kind === "text") {
 			apiPart = new extHostTypes.LanguageModelTextPart(
-				fragmentDto.part.value,
+				partDto.content.value,
 			);
-		} else if (fragmentDto.part.type === "data") {
-			// Assuming 'data' type for images
-			// RpcChatResponseFragment.part for data: { type: 'data', value: { mimeType: ChatImageMimeType, data: VSBuffer } }
-
-			const dataPartPayload = fragmentDto.part.value as {
-				mimeType: ChatImageMimeType;
-
+		} else if (partDto.kind === "toolComamén") {
+			// Note: Protocol uses 'toolComamén', API uses 'tool_code' or 'tool_use'
+			// Assuming 'toolComamén' maps to 'tool_use' for API.
+			// This DTO structure for tool calls needs to match what MainThreadLanguageModels sends.
+			// VS Code's internal IChatResponseToolPart has `id`, `name`, `args`.
+			const toolPartPayload = partDto.content as any; // Adjust cast based on actual DTO
+			apiPart = new extHostTypes.LanguageModelToolCallPart(
+				toolPartPayload.id ||
+					`tool_${Date.now()}_${Math.random().toString(36).substring(2)}`, // Ensure unique ID
+				toolPartPayload.name || "",
+				toolPartPayload.args || {}, // Assuming args is the parameters object
+			);
+		} else if (partDto.kind === "dataBuffer") {
+			// Assuming 'dataBuffer' maps to LanguageModelDataPart
+			const dataPartPayload = partDto.content as {
+				mimeType: string;
 				data: VSBuffer;
 			};
-
 			apiPart = new extHostTypes.LanguageModelDataPart(
 				dataPartPayload.data.buffer,
-
 				dataPartPayload.mimeType,
-			);
-		} else if (fragmentDto.part.type === "tool_use") {
-			// Assuming 'tool_use' type
-			// Cast from IChatResponsePart
-			const toolPartPayload = fragmentDto.part as any;
-
-			apiPart = new extHostTypes.LanguageModelToolCallPart(
-				// Ensure toolCallId
-				toolPartPayload.toolCallId || `tool_${Date.now()}`,
-
-				// Ensure name
-				toolPartPayload.name || "",
-
-				// Ensure parameters
-				toolPartPayload.parameters || {},
 			);
 		} else {
 			console.warn(
-				`[LM Shim] Unknown fragment part type: ${fragmentDto.part.type}`,
+				`[LM Shim] Unknown/unsupported chat response fragment part kind: '${partDto.kind}'. Skipping fragment.`,
 			);
-
-			// Skip unknown parts
 			return;
 		}
-
 		streamHolder.stream.emitOne(apiPart);
 	}
 
+	/** Rejects all active streams with the given error. */
 	reject(err: Error): void {
+		if (this._isDone) return;
 		this._isDone = true;
-
-		for (const stream of this._getUsedStreams()) stream.reject(err);
+		for (const stream of this._getActiveStreams()) stream.reject(err);
 	}
 
+	/** Resolves (completes) all active streams. */
 	resolve(): void {
+		if (this._isDone) return;
 		this._isDone = true;
-
-		for (const stream of this._getUsedStreams()) stream.resolve();
+		for (const stream of this._getActiveStreams()) stream.resolve();
 	}
 }
 
+/**
+ * Cocoon's implementation of `IExtHostLanguageModels`.
+ * Manages language model providers, requests, and access information.
+ */
 export class ShimExtHostLanguageModels
 	extends BaseCocoonShim
-	implements IExtHostLanguageModelsService, ExtHostLanguageModelsShape
+	implements ExtHostLanguageModelsShape
 {
-	public readonly _serviceBrand: undefined;
+	// Implements RPC shape for calls from MainThread
+	public readonly _serviceBrand: undefined; // For IExtHostLanguageModels DI
 
-	// Handles for registered providers
-	private static _providerHandlePool = 1;
+	private static _providerHandlePool = 1; // Static counter for unique provider handles
+	readonly #mainThreadLmProxy: MainThreadLanguageModelsShape | null = null;
 
-	readonly #proxy: MainThreadLanguageModelsShape | null = null;
-
-	readonly #onDidChangeProvidersEmitter = new VscodeEmitter<void>();
-
+	readonly #onDidChangeProvidersEmitter = new VscodeEmitter<void>(); // For vscode.lm.onDidChangeProviders (if API has it)
 	public readonly onDidChangeProviders: VscodeEvent<void> =
 		this.#onDidChangeProvidersEmitter.event;
 
-	// Stores providers registered by extensions in this ExtHost
-	readonly #localProviders = new Map<number, LanguageModelProviderData>();
-
-	// Stores metadata for ALL models known in the system (from MainThread)
-	// Key: full model ID
-	readonly #allLanguageModelsData = new Map<string, AllLanguageModelEntry>();
-
-	// Stores access grants: Map<requestingExtId, Set<providingExtId>>
+	readonly #localProviders = new Map<number, LanguageModelProviderData>(); // Key: handle
+	readonly #allLanguageModelsData = new Map<string, AllLanguageModelEntry>(); // Key: fullModelId (e.g., "ext.id/modelId")
 	readonly #modelAccessList =
-		new ExtensionIdentifierMap<ExtensionIdentifierSet>();
-
-	// Tracks extensions that created LanguageModelAccessInformation to notify them
+		new ExtensionIdentifierMap<ExtensionIdentifierSet>(); // Tracks access grants: Map<requestingExtId, Set<providingExtId>>
 	readonly #languageAccessInformationRequestingExtensions = new Set<
 		Readonly<IExtensionDescription>
-	>();
+	>(); // For LMAI.onDidChange
 
 	readonly #onDidChangeModelAccessEmitter = new VscodeEmitter<{
 		from: ExtensionIdentifier;
-
 		to: ExtensionIdentifier;
+	}>(); // Internal event
 
-		// Internal event
-	}>();
-
-	// Stores pending requests from extensions to language models
 	readonly #pendingChatRequests = new Map<
 		number,
 		{ languageModelId: string; responseStream: LanguageModelResponseShim }
+	>(); // Key: requestId
+	#chatRequestIdPool = 0; // Counter for unique chat request IDs
 
-		// Key: requestId
-	>();
-
-	#chatRequestIdPool = 0;
-
-	// For ignored file providers
 	readonly #ignoredFileProviders = new Map<
 		number,
 		VscodeLanguageModelIgnoredFileProvider
-	>();
+	>(); // For proposed API
 
+	/**
+	 * Creates an instance of ShimExtHostLanguageModels.
+	 * @param rpcService The RPC service adapter.
+	 * @param logService The logging service.
+	 * @param _extHostAuthentication Optional: Authentication service for access control (simplified in MVP).
+	 */
 	constructor(
-		rpcService: IExtHostRpcService | undefined,
-
-		logService: ILogService | undefined,
-
-		// TODO: Inject IExtHostAuthentication if the auth hack needs to be fully implemented.
-		private readonly _extHostAuthentication?: IExtHostAuthentication,
+		rpcService: IRpcProtocolServiceAdapter | undefined,
+		logService: ILogServiceForShim | undefined,
+		private readonly _extHostAuthentication?: IExtHostAuthentication, // Optional for auth logic
 	) {
 		super("ExtHostLanguageModels", rpcService, logService);
-
-		this._log("Initializing Language Models Shim...");
+		this._log("Initializing...");
 
 		if (this._rpcService) {
-			this.#proxy = this._getProxy(
+			this.#mainThreadLmProxy = this._getProxy(
 				MainContext.MainThreadLanguageModels as ProxyIdentifier<MainThreadLanguageModelsShape>,
 			);
-
 			try {
+				// VS Code uses ExtHostChatProvider as the context ID for this service.
 				this._rpcService.set(
 					ExtHostContext.ExtHostChatProvider as ProxyIdentifier<ExtHostLanguageModelsShape>,
-
 					this,
-
-					// VS Code uses ExtHostChatProvider
 				);
-
 				this._log(
-					"Registered self for RPC calls (ExtHostLanguageModels/ChatProvider).",
+					"Registered self for RPC calls (ExtHostChatProvider for Language Models).",
 				);
 			} catch (e: any) {
-				this._logError("Failed to set self for RPC:", e);
+				this._logError(
+					"Failed to set self for RPC (ExtHostChatProvider):",
+					e,
+				);
 			}
 		}
-
-		if (!this.#proxy)
+		if (!this.#mainThreadLmProxy) {
 			this._logWarn(
-				"MainThreadLanguageModels proxy not available. LM features will be non-functional.",
+				"MainThreadLanguageModels RPC proxy not available. Language Model features will be non-functional.",
 			);
+		}
 
 		// Listen to internal access change events to update relevant LanguageModelAccessInformation instances
 		this._instanceDisposables.add(
@@ -420,15 +440,12 @@ export class ShimExtHostLanguageModels
 						if (
 							ExtensionIdentifier.equals(
 								e.from,
-
 								extDesc.identifier,
 							)
 						) {
-							// This specific extension's access to 'to' might have changed.
-							// The onDidChange event on LanguageModelAccessInformation needs to fire.
-							// This requires LanguageModelAccessInformation to hold its own emitter.
-							// For simplicity, the current LMAI.onDidChange is VscodeEvent.None.
-							// TODO: Implement individual LMAI.onDidChange emitters.
+							// TODO: If LanguageModelAccessInformation instances had their own emitters,
+							// they would be fired here to signal a potential change in `accessAllowed`.
+							// For now, LMAI.onDidChange is VscodeEvent.None.
 						}
 					},
 				);
@@ -436,435 +453,397 @@ export class ShimExtHostLanguageModels
 		);
 	}
 
-	// --- vscode.lm.* API implementation (called by extensions) ---
+	// --- vscode.lm.* API implementation (methods called by extensions) ---
 
+	/**
+	 * Registers a chat response provider.
+	 * @param extension The extension contributing the provider.
+	 * @param identifier A unique identifier for the language model within the extension.
+	 * @param provider The chat response provider implementation.
+	 * @param metadata Metadata about the language model.
+	 * @returns A disposable to unregister the provider.
+	 */
 	public registerChatResponseProvider(
 		extension: IExtensionDescription,
-
-		// Model ID within the extension
-		identifier: string,
-
+		identifier: string, // Model ID within the extension (e.g., "gpt-3.5-turbo")
 		provider: VscodeChatResponseProvider,
-
 		metadata: VscodeChatResponseProviderMetadata,
 	): IDisposable {
 		const handle = ShimExtHostLanguageModels._providerHandlePool++;
+		const fullModelId = `${extension.identifier.value}/${identifier}`; // Globally unique ID
+		this._log(
+			`Registering ChatResponseProvider: Handle=${handle}, FullID='${fullModelId}', Name='${metadata.name || identifier}'`,
+		);
 
 		this.#localProviders.set(handle, {
 			extension: extension.identifier,
-
 			provider,
-
 			languageModelId: identifier,
-
 			metadata,
 		});
 
-		// Globally unique model ID
-		const fullModelId = `${extension.identifier.value}/${identifier}`;
-
-		// TODO: Convert metadata to RpcLanguageModelChatMetadata DTO if necessary.
-		// Assuming VscodeChatResponseProviderMetadata is compatible or parts are extracted.
+		// Convert VscodeChatResponseProviderMetadata (API type) to RpcLanguageModelChatMetadata (DTO for RPC)
 		const rpcMetadata: RpcLanguageModelChatMetadata = {
-			extension: extension.identifier,
-
-			// Short ID
-			id: identifier,
-
-			// Default vendor to ext publisher
-			vendor: metadata.vendor ?? extension.identifier.value,
-
-			// Default to empty if not provided
-			name: metadata.name ?? "",
-
-			// Can be undefined
+			extension: extension.identifier, // The contributing extension
+			id: identifier, // The model's short ID within the extension
+			vendor:
+				metadata.vendor ??
+				extension.publisher ??
+				extension.identifier.value, // Default vendor to publisher or ext ID
+			name: metadata.name ?? identifier, // Default name to identifier
 			version: metadata.version,
-
 			family: metadata.family,
-
 			maxInputTokens: metadata.maxInputTokens,
-
-			maxOutputTokens: metadata.maxOutputTokens,
-
+			maxOutputTokens: metadata.maxOutputTokens, // Note: VscodeChatResponseProviderMetadata might not have maxOutputTokens directly.
 			auth: metadata.auth
 				? {
-						// Convert auth options if structure differs
-						providerLabel: extension.displayName || extension.name,
-
+						providerLabel:
+							typeof metadata.auth === "object"
+								? metadata.auth.providerLabel
+								: extension.displayName || extension.name,
 						accountLabel:
 							typeof metadata.auth === "object"
-								? metadata.auth.label
+								? metadata.auth.accountLabel
 								: undefined,
 					}
 				: undefined,
-
 			targetExtensions: metadata.extensions?.map(
-				(extId) => new ExtensionIdentifier(extId),
-
-				// Convert string IDs to ExtensionIdentifier
+				(extIdStr) => new ExtensionIdentifier(extIdStr),
 			),
-
 			isDefault: metadata.isDefault,
-
-			isUserSelectable: metadata.isUserSelectable,
-
+			isUserSelectable: metadata.isUserSelectable !== false, // Default true if not specified
 			modelPickerCategory:
-				metadata.category ?? DEFAULT_MODEL_PICKER_CATEGORY,
-
+				metadata.category || DEFAULT_MODEL_PICKER_CATEGORY,
 			capabilities: metadata.capabilities
 				? {
-						vision: metadata.capabilities.vision,
-
-						toolCalling: metadata.capabilities.toolCalling,
-
-						chaining: metadata.capabilities.chaining,
+						vision: !!metadata.capabilities.vision,
+						toolCalling: !!metadata.capabilities.toolCalling,
+						chaining: !!metadata.capabilities.chaining,
 					}
 				: undefined,
 		};
 
-		this.#proxy
+		this.#mainThreadLmProxy
 			?.$registerLanguageModelProvider(handle, fullModelId, rpcMetadata)
 			.catch((e) =>
 				this._logError(
-					`RPC $registerLanguageModelProvider for ${fullModelId} failed:`,
-
-					refineError(e, this._logService),
+					`RPC $registerLanguageModelProvider for '${fullModelId}' (Handle ${handle}) failed:`,
+					refineErrorForShim(e, this._logService),
 				),
 			);
 
-		// Handle onDidReceiveLanguageModelResponse2 for telemetry/logging
-		const responseReceivedListener =
-			provider.onDidReceiveLanguageModelResponse2?.(
-				({ extensionId, participant, tokenCount }) => {
-					this.#proxy?.$whenLanguageModelChatRequestMade(
-						// The full model ID
-						fullModelId,
-
-						// Requesting extension
-						new ExtensionIdentifier(extensionId),
-
-						participant,
-
-						tokenCount,
-					);
-				},
-			);
-
-		if (responseReceivedListener)
-			this._instanceDisposables.add(responseReceivedListener);
+		const responseListener = provider.onDidReceiveLanguageModelResponse2?.(
+			({ extensionId, participant, tokenCount }) => {
+				this.#mainThreadLmProxy?.$whenLanguageModelChatRequestMade(
+					fullModelId,
+					new ExtensionIdentifier(extensionId), // Requesting extension
+					participant,
+					tokenCount,
+				);
+			},
+		);
+		if (responseListener) this._instanceDisposables.add(responseListener);
 
 		return toDisposable(() => {
-			this.#localProviders.delete(handle);
-
-			this.#proxy?.$unregisterProvider(handle).catch((e) =>
-				this._logError(
-					`RPC $unregisterProvider for handle ${handle} failed:`,
-
-					refineError(e, this._logService),
-				),
+			this._log(
+				`Unregistering ChatResponseProvider: Handle=${handle}, FullID='${fullModelId}'`,
 			);
-
-			if (responseReceivedListener) responseReceivedListener.dispose();
+			this.#localProviders.delete(handle);
+			this.#mainThreadLmProxy
+				?.$unregisterProvider(handle)
+				.catch((e) =>
+					this._logError(
+						`RPC $unregisterProvider for Handle ${handle} failed:`,
+						refineErrorForShim(e, this._logService),
+					),
+				);
+			if (responseListener) responseListener.dispose();
 		});
 	}
 
+	/**
+	 * Allows an extension to select language models based on specified criteria.
+	 * @param extension The extension making the selection request.
+	 * @param selector Criteria for selecting models.
+	 * @returns A promise resolving to an array of `vscode.LanguageModelChat` API objects.
+	 */
 	public async selectLanguageModels(
 		extension: IExtensionDescription,
-
 		selector: VscodeLanguageModelChatSelector,
 	): Promise<VscodeLanguageModelChat[]> {
 		this._log(
-			`API selectLanguageModels by ${extension.identifier.value}, selector:`,
-
-			selector,
+			`API selectLanguageModels by Ext='${extension.identifier.value}', Selector=${JSON.stringify(selector)}`,
 		);
-
-		if (!this.#proxy) {
+		if (!this.#mainThreadLmProxy) {
 			this._logError(
-				"Cannot selectLanguageModels: MainThread proxy unavailable.",
+				"Cannot selectLanguageModels: MainThreadLanguageModels RPC proxy unavailable.",
 			);
-
 			return [];
 		}
-
 		try {
-			// TODO: Convert VscodeLanguageModelChatSelector to DTO if protocol requires.
-			const selectedModelIds = await this.#proxy.$selectChatModels({
-				...selector,
-
-				extension: extension.identifier,
-			});
-
+			// The selector DTO might need conversion if VscodeLanguageModelChatSelector is not directly compatible.
+			// Assuming VscodeLanguageModelChatSelector is compatible with protocol.ILanguageModelChatSelector DTO.
+			const selectedModelIds =
+				await this.#mainThreadLmProxy.$selectChatModels({
+					...selector, // Spread selector properties
+					extension: extension.identifier, // Add requesting extension ID
+				});
 			const result: VscodeLanguageModelChat[] = [];
-
-			for (const id of selectedModelIds) {
-				const modelApi = this._createApiObjectForModel(extension, id);
-
-				if (modelApi) result.push(modelApi);
+			for (const modelId of selectedModelIds) {
+				// modelId here is the full ID like "publisher.name/modelShortId"
+				const modelApiObject = this._createApiObjectForModel(
+					extension,
+					modelId,
+				);
+				if (modelApiObject) result.push(modelApiObject);
 			}
-
 			return result;
-		} catch (e) {
+		} catch (e: any) {
 			this._logError(
 				"RPC $selectChatModels failed:",
-
-				refineError(e, this._logService),
+				refineErrorForShim(e, this._logService),
 			);
-
 			return [];
 		}
 	}
 
-	// This method would be part of the `vscode.lm` object that extensions use.
+	/**
+	 * Sends a chat request to a specified language model. This is the implementation
+	 * backing `VscodeLanguageModelChat.sendRequest`.
+	 * @param requestingExtension The extension initiating the request.
+	 * @param modelId The full identifier of the target language model.
+	 * @param requestMessages An array of chat messages forming the request.
+	 * @param options Additional options for the request.
+	 * @param token A cancellation token for the request.
+	 * @returns A promise resolving to a `VscodeLanguageModelChatResponse` object, which includes the streaming response.
+	 */
 	public async sendChatRequest(
-		// The extension making the request
-		extension: IExtensionDescription,
-
-		// Full model ID like 'publisher.name/modelShortId'
-		modelId: string,
-
+		requestingExtension: IExtensionDescription,
+		modelId: string, // Full model ID
 		requestMessages: VscodeLanguageModelChatMessage2[],
-
 		options: VscodeLanguageModelChatRequestOptions,
-
 		token: VscodeCancellationToken,
 	): Promise<VscodeLanguageModelChatResponse> {
-		// this._log(`API sendChatRequest from ${extension.identifier.value} to model ${modelId}`);
+		// this._log(`API sendChatRequest from Ext='${requestingExtension.identifier.value}' to Model='${modelId}', Messages=${requestMessages.length}`);
 
 		const modelDataEntry = this.#allLanguageModelsData.get(modelId);
-
-		if (!modelDataEntry)
-			throw extHostTypes.LanguageModelError.NotFound(
-				`Language model '${modelId}' is unknown.`,
+		if (!modelDataEntry) {
+			throw VscodeLanguageModelError.NotFound(
+				`Language model '${modelId}' is unknown or not available.`,
 			);
+		}
 
-		// Access check (simplified from VS Code's _getAuthAccess)
-		if (this._isAuthNeeded(extension.identifier, modelDataEntry.metadata)) {
-			// TODO: Implement the auth flow similar to VS Code's _getAuthAccess
-			// This involves checking this.#modelAccessList and potentially calling
-			// this._extHostAuthentication.getSession if not already granted.
-			// For MVP shim, assume access or always deny if auth needed.
+		// Simplified Access Check (based on VS Code's _getAuthAccess)
+		if (
+			this._isAuthNeeded(
+				requestingExtension.identifier,
+				modelDataEntry.metadata,
+			)
+		) {
 			const hasAccess = this.#modelAccessList
-				.get(extension.identifier)
+				.get(requestingExtension.identifier)
 				?.has(modelDataEntry.metadata.extension);
-
 			if (!hasAccess) {
+				// TODO: A full implementation would trigger an auth flow here using this._extHostAuthentication.getSession(...)
+				// and then update #modelAccessList upon success.
 				this._logWarn(
-					`Extension ${extension.identifier.value} does not have (or auth check stubbed) access to ${modelId}. Auth needed by ${modelDataEntry.metadata.extension.value}`,
+					`Auth check: Extension '${requestingExtension.identifier.value}' needs access to model '${modelId}' (from ext '${modelDataEntry.metadata.extension.value}'), but no grant found. Access denied (MVP stub).`,
 				);
-
-				throw extHostTypes.LanguageModelError.NoPermissions(
-					`Access to language model '${modelId}' denied for extension '${extension.identifier.value}'.`,
+				throw VscodeLanguageModelError.NoPermissions(
+					`Access to language model '${modelId}' denied for extension '${requestingExtension.identifier.value}'. Authentication or grant may be required.`,
 				);
 			}
 		}
 
 		const requestId = ++this.#chatRequestIdPool;
-
 		const responseShim = new LanguageModelResponseShim();
-
 		this.#pendingChatRequests.set(requestId, {
 			languageModelId: modelId,
-
 			responseStream: responseShim,
 		});
 
 		const rpcMessages: RpcChatMessage[] = requestMessages.map((m) =>
-			typeConvert.LanguageModelChatMessage2.from(m),
+			localApiTypeConverters.LanguageModelChatMessage2.from(m),
 		);
+		// Wrap if messages contain buffers (e.g., from LanguageModelDataPart)
+		const messagesPayload = this._wrapIfContainsBuffer(rpcMessages);
 
-		const serializedMessages = new SerializableObjectWithBuffers<
-			RpcChatMessage[]
-		>(rpcMessages);
-
-		// CancellationToken handling: If the token is already cancelled, don't even make the RPC call.
 		if (token.isCancellationRequested) {
+			// Check token before making RPC call
 			this.#pendingChatRequests.delete(requestId);
-
 			responseShim.reject(new CancellationError());
-
 			return responseShim.apiObject;
 		}
 
-		// TODO: If cancellation needs to be propagated to MainThread, the token needs to be marshalled (e.g. by ID)
-		// and MainThread needs to observe it. For now, ExtHost cancellation stops further processing here.
-		const unregisterTokenListener = token.onCancellationRequested(() => {
-			const pending = this.#pendingChatRequests.get(requestId);
-
-			if (pending) {
-				pending.responseStream.reject(new CancellationError());
-
+		const cancellationListener = token.onCancellationRequested(() => {
+			const pendingRequest = this.#pendingChatRequests.get(requestId);
+			if (pendingRequest) {
+				pendingRequest.responseStream.reject(new CancellationError());
 				this.#pendingChatRequests.delete(requestId);
-
-				// TODO: Send $cancelChatRequest(requestId) to main thread if protocol supports it
+				this.#mainThreadLmProxy
+					?.$cancelChatRequest(requestId) // Notify MainThread if protocol supports it
+					.catch((e) =>
+						this._logWarn(
+							`Failed to send $cancelChatRequest for ID ${requestId}:`,
+							e,
+						),
+					);
 			}
 		});
+		// Ensure listener is disposed when request completes or is rejected by other means
+		const ensureListenerDisposed = () => cancellationListener.dispose();
 
-		this.#proxy!.$tryStartChatRequest(
-			extension.identifier,
-
+		this.#mainThreadLmProxy!.$tryStartChatRequest(
+			// Assert proxy exists, checked earlier or throw
+			requestingExtension.identifier,
 			modelId,
-
 			requestId,
-
-			serializedMessages,
-
-			options,
-
-			undefined /* token ID */,
-		).catch((err) => {
-			const pending = this.#pendingChatRequests.get(requestId);
-
-			if (pending) {
-				pending.responseStream.reject(
-					extHostTypes.LanguageModelError.tryDeserialize(err) ??
+			messagesPayload,
+			options, // Assuming VscodeLanguageModelChatRequestOptions is compatible with protocol DTO
+			undefined, // No explicit CancellationToken ID passed for MVP, cancellation handled ExtHost-side
+		).then(ensureListenerDisposed, (err) => {
+			// Handle promise rejection from $tryStartChatRequest
+			const pendingRequest = this.#pendingChatRequests.get(requestId);
+			if (pendingRequest) {
+				// Error might be a SerializedError from RPC
+				pendingRequest.responseStream.reject(
+					VscodeLanguageModelError.tryDeserialize(err) ??
 						transformErrorFromSerialization(err),
 				);
-
 				this.#pendingChatRequests.delete(requestId);
 			}
-
-			unregisterTokenListener.dispose();
+			ensureListenerDisposed();
 		});
 
 		return responseShim.apiObject;
 	}
 
+	/** Helper to wrap data in SerializableObjectWithBuffers if it contains VSBuffer. */
+	private _wrapIfContainsBuffer<T>(
+		data: T,
+	): T | SerializableObjectWithBuffers<T> {
+		let containsBuffer = false;
+		if (Array.isArray(data)) {
+			containsBuffer = data.some(
+				(item) =>
+					VSBuffer.isVSBuffer(item) ||
+					(typeof item === "object" &&
+						item !== null &&
+						Object.values(item).some(VSBuffer.isVSBuffer)),
+			);
+		} else if (typeof data === "object" && data !== null) {
+			containsBuffer = Object.values(data).some(VSBuffer.isVSBuffer);
+		}
+		return containsBuffer ? new SerializableObjectWithBuffers(data) : data;
+	}
+
+	/** Creates or retrieves a cached `vscode.LanguageModelChat` API object for a model. */
 	private _createApiObjectForModel(
 		requestingExtension: IExtensionDescription,
-
 		modelId: string,
 	): VscodeLanguageModelChat | undefined {
 		const modelEntry = this.#allLanguageModelsData.get(modelId);
-
-		if (!modelEntry) return undefined;
+		if (!modelEntry) {
+			this._logWarn(
+				`_createApiObjectForModel: No metadata found for model ID '${modelId}'. Cannot create API object.`,
+			);
+			return undefined;
+		}
 
 		let apiObject = modelEntry.apiObjects.get(
 			requestingExtension.identifier,
 		);
-
 		if (!apiObject) {
-			const metadata = modelEntry.metadata;
+			const metadata = modelEntry.metadata; // RpcLanguageModelChatMetadata
+			const self = this; // For closure
 
 			apiObject = Object.freeze({
-				// Ensure API object is immutable
-				// This is the full ID from main thread like 'publisher.name/modelShortId'
-				id: metadata.id,
-
+				id: metadata.id, // This is the full model ID (e.g., "publisher.name/modelShortId")
 				vendor: metadata.vendor,
-
 				name: metadata.name,
-
 				family: metadata.family,
-
 				version: metadata.version,
-
 				maxInputTokens: metadata.maxInputTokens,
-
-				// maxOutputTokens is often on metadata directly, not part of VscodeLanguageModelChat
+				// maxOutputTokens is often on the provider metadata, not directly on VscodeLanguageModelChat
 				get capabilities() {
-					// Use getter for dynamic capabilities if they can change
-					// TODO: Ensure VscodeLanguageModelChatCapabilities matches RpcLanguageModelChatMetadata.capabilities
+					// Getter for dynamic capabilities if they could change
 					return Object.freeze({
-						supportsImageToText: !!metadata.capabilities?.vision,
-
-						supportsToolCalling:
-							!!metadata.capabilities?.toolCalling,
-
-						supportsChaining: !!metadata.capabilities?.chaining,
+						// Map from RpcLanguageModelChatMetadata.capabilities
+						vision: !!metadata.capabilities?.vision,
+						toolCalling: !!metadata.capabilities?.toolCalling,
+						chaining: !!metadata.capabilities?.chaining,
 					});
 				},
-
 				countTokens: (
 					textOrMessages:
 						| string
 						| VscodeLanguageModelChatMessage2
 						| VscodeLanguageModelChatMessage2[],
-
-					token = CancellationToken.None,
+					token: VscodeCancellationToken = CancellationToken.None,
 				): Promise<number> => {
-					return this._countTokensForModel(
+					return self._countTokensForModel(
 						modelId,
-
 						textOrMessages,
-
 						token,
 					);
 				},
-
 				sendRequest: (
 					messages: VscodeLanguageModelChatMessage2[],
-
 					options?: VscodeLanguageModelChatRequestOptions,
-
-					token = CancellationToken.None,
+					token: VscodeCancellationToken = CancellationToken.None,
 				): Promise<VscodeLanguageModelChatResponse> => {
-					return this.sendChatRequest(
+					return self.sendChatRequest(
 						requestingExtension,
-
 						modelId,
-
 						messages,
-
 						options || {},
-
 						token,
 					);
 				},
 			});
-
 			modelEntry.apiObjects.set(
 				requestingExtension.identifier,
-
 				apiObject,
 			);
 		}
-
 		return apiObject;
 	}
 
+	/** Helper to count tokens, either locally or via RPC. */
 	private async _countTokensForModel(
-		modelId: string,
-
+		modelId: string, // Full model ID
 		textOrMessages:
 			| string
 			| VscodeLanguageModelChatMessage2
 			| VscodeLanguageModelChatMessage2[],
-
 		token: VscodeCancellationToken,
 	): Promise<number> {
-		// this._log(`API countTokens for model ${modelId}`);
+		// this._logService?.trace(`_countTokensForModel: Model='${modelId}'`);
 
-		// Check if the provider is local (registered in this ExtHost)
+		// Check if the provider for this modelId is local (registered in this ExtHost)
 		const localProviderData = Iterable.find(
 			this.#localProviders.values(),
-
 			(p) => `${p.extension.value}/${p.languageModelId}` === modelId,
 		);
 
 		if (localProviderData?.provider.provideTokenCount) {
 			try {
-				// TODO: VS Code's extHostTypes.LanguageModelChatMessage is different from internal one.
-				// Need to convert if `textOrMessages` contains API chat messages.
-				// provider expects API type
+				// The provider expects API types (VscodeLanguageModelChatMessage2 or string).
+				// VscodeLanguageModelChatMessage2 itself might be a simple string or an array of parts.
+				// The `provideTokenCount` signature is `(value: string | LanguageModelChatMessage, token: CancellationToken) => ProviderResult<number>;`
+				// We need to ensure `textOrMessages` is correctly passed.
 				let inputForProvider: string | VscodeLanguageModelChatMessage2;
-
 				if (typeof textOrMessages === "string") {
 					inputForProvider = textOrMessages;
 				} else if (Array.isArray(textOrMessages)) {
-					// provideTokenCount typically takes one message or string, not array.
-					// This scenario needs clarification from vscode.d.ts for LanguageModelChat.countTokens
-					this._logWarn(
-						"countTokens with array of messages for local provider not standard, using first message content or joining.",
+					// If it's an array, the API implies counting for the whole array, but provider takes single message.
+					// This might need clarification or joining content if provider doesn't handle array.
+					// For now, assume provider can handle array or we send the first message.
+					// VS Code's `provideTokenCount` often takes just one `LanguageModelChatMessage`.
+					this._logWarnOnce(
+						`_countTokensForModel: Passing array of messages to local provider.provideTokenCount. Ensure provider handles this or adapt.`,
 					);
-
-					inputForProvider = textOrMessages[0] || {
-						role: VscodeLanguageModelChatMessageRole.User,
-
-						content: "",
-
-						// Default to first or empty
-					};
+					inputForProvider = textOrMessages[0]; // Simplification: use first message if array
 				} else {
 					inputForProvider = textOrMessages;
 				}
@@ -872,315 +851,301 @@ export class ShimExtHostLanguageModels
 				return await Promise.resolve(
 					localProviderData.provider.provideTokenCount(
 						inputForProvider,
-
 						token,
 					),
 				);
 			} catch (e: any) {
 				this._logError(
-					`Error in local provider provideTokenCount for ${modelId}:`,
-
+					`Error in local provider's provideTokenCount for model '${modelId}':`,
 					e,
 				);
-
-				// Rethrow
-				throw e;
+				throw VscodeLanguageModelError.Internal(
+					"Token counting failed due to provider error.",
+				);
 			}
 		}
 
-		// If not local, proxy to main thread
-		if (!this.#proxy)
-			throw new Error(
-				"MainThreadLanguageModels proxy unavailable for countTokens.",
+		// If not local, or local provider doesn't have provideTokenCount, proxy to main thread.
+		if (!this.#mainThreadLmProxy) {
+			throw VscodeLanguageModelError.Internal(
+				"MainThreadLanguageModels proxy unavailable for countTokens operation.",
 			);
-
+		}
+		// Convert to DTO for RPC. $countTokens likely expects string or a single RpcChatMessage.
 		const rpcValue =
 			typeof textOrMessages === "string"
 				? textOrMessages
-				: typeConvert.LanguageModelChatMessage2.from(
+				: localApiTypeConverters.LanguageModelChatMessage2.from(
 						Array.isArray(textOrMessages)
 							? textOrMessages[0]
-							: // RPC takes single message or string
-								textOrMessages,
+							: textOrMessages, // Send first message if array
 					);
-
-		return this.#proxy.$countTokens(modelId, rpcValue, token);
+		return this.#mainThreadLmProxy.$countTokens(modelId, rpcValue, token);
 	}
 
-	// --- createLanguageModelAccessInformation (called by ExtHostExtensionService) ---
+	// --- createLanguageModelAccessInformation (Called by ExtHostExtensionService) ---
+	/**
+	 * Creates an `LanguageModelAccessInformation` object for a given extension.
+	 * This object allows the extension to check its access status to language models.
+	 * @param requestingExtension The extension for which to create access information.
+	 */
 	public createLanguageModelAccessInformation(
 		requestingExtension: IExtensionDescription,
 	): VscodeLanguageModelAccessInformation {
-		// this._log(`createLanguageModelAccessInformation for ${requestingExtension.identifier.value}`);
-
+		// this._log(`createLanguageModelAccessInformation for Ext='${requestingExtension.identifier.value}'`);
 		this.#languageAccessInformationRequestingExtensions.add(
 			requestingExtension,
+		); // Track for onDidChange updates
 
-			// Track who needs updates
-		);
-
+		const self = this;
 		return Object.freeze({
-			// `accessAllowed` should ideally check #modelAccessList for *any* model the extension might want to use.
-			// This is complex. VS Code's API has `canSendRequest(model)` on LMAI.
-			// For a simple `accessAllowed` boolean, it might mean "has access to at least one model".
 			get accessAllowed(): boolean {
-				// For MVP, if any auth is configured for any model, this implies a check is needed.
-				// A simple true/false based on general access would be a coarse approximation.
-				// Let's default to true if no models require auth from this ext, else require specific grant.
-				for (const modelEntry of this.#allLanguageModelsData.values()) {
+				// `accessAllowed` means: can this extension potentially access *any* model that might require auth?
+				// If there's at least one model that requires auth FROM this extension, and this extension
+				// doesn't have a grant TO that model's provider, then access might be "false" until granted.
+				// This is a simplification. VS Code's `canSendRequest(modelId)` is more granular.
+				for (const modelEntry of self.#allLanguageModelsData.values()) {
 					if (
-						this._isAuthNeeded(
+						self._isAuthNeeded(
 							requestingExtension.identifier,
-
 							modelEntry.metadata,
 						)
 					) {
 						if (
-							!this.#modelAccessList
+							!self.#modelAccessList
 								.get(requestingExtension.identifier)
 								?.has(modelEntry.metadata.extension)
 						) {
-							// console.log(`LMAI: ${requestingExtension.identifier.value} needs access to model from ${modelEntry.metadata.extension.value}`);
-
-							// Needs specific grant for at least one model
+							// This extension needs access to at least one model from another ext, and doesn't have it.
 							return false;
 						}
 					}
 				}
-
-				// Access granted or no models require specific auth from this ext
-				return true;
+				return true; // Access granted or no models require specific auth from this extension.
 			},
-
 			// TODO: This onDidChange should fire when the result of `accessAllowed` might change
-			// for this specific `requestingExtension`. This means listening to #onDidChangeModelAccessEmitter
-			// and filtering for events relevant to `requestingExtension`.
-			// Placeholder, requires more complex eventing
-			onDidChange: VscodeEvent.None,
+			// for this specific `requestingExtension`. This requires LanguageModelAccessInformation
+			// to hold its own emitter and listen to `this.#onDidChangeModelAccessEmitter`, filtering for relevant events.
+			onDidChange: VscodeEvent.None, // Placeholder for MVP
 		});
 	}
 
 	// --- RPC methods called BY MainThread (ExtHostLanguageModelsShape) ---
-	public $acceptChatModelMetadata(data: RpcLanguageModelsChangeEvent): void {
-		// this._log(`RPC $acceptChatModelMetadata: Added=${data.added?.length}, Removed=${data.removed?.length}`);
 
+	/** {@inheritDoc ExtHostLanguageModelsShape.$acceptChatModelMetadata} */
+	public $acceptChatModelMetadata(data: RpcLanguageModelsChangeEvent): void {
+		// this._logService?.trace(`RPC $acceptChatModelMetadata: Added=${data.added?.length ?? 0}, Removed=${data.removed?.length ?? 0}`);
+		let changed = false;
 		if (data.added) {
 			for (const { identifier: fullModelId, metadata } of data.added) {
-				this.#allLanguageModelsData.set(fullModelId, {
-					metadata,
-
-					apiObjects: new ExtensionIdentifierMap(),
-				});
-
-				// TODO: If auth is used, call _fakeAuthPopulate or similar to pre-check/establish sessions silently.
-				// VS Code's original does this: data.added?.forEach(added => this._fakeAuthPopulate(added.metadata));
+				if (
+					!this.#allLanguageModelsData.has(fullModelId) ||
+					JSON.stringify(
+						this.#allLanguageModelsData.get(fullModelId)?.metadata,
+					) !== JSON.stringify(metadata)
+				) {
+					this.#allLanguageModelsData.set(fullModelId, {
+						metadata,
+						apiObjects: new ExtensionIdentifierMap(),
+					});
+					changed = true;
+				}
+				// TODO: VS Code's original does this: data.added?.forEach(added => this._fakeAuthPopulate(added.metadata));
+				// This pre-checks/establishes auth sessions silently. For MVP, this is skipped.
 			}
 		}
-
 		if (data.removed) {
 			for (const fullModelId of data.removed) {
-				this.#allLanguageModelsData.delete(fullModelId);
-
-				for (const [reqId, pending] of this.#pendingChatRequests) {
-					if (pending.languageModelId === fullModelId) {
-						pending.responseStream.reject(
-							extHostTypes.LanguageModelError.NotFound(
+				if (this.#allLanguageModelsData.delete(fullModelId)) {
+					changed = true;
+				}
+				// Cancel any pending requests for removed models
+				for (const [requestId, pendingRequest] of this
+					.#pendingChatRequests) {
+					if (pendingRequest.languageModelId === fullModelId) {
+						pendingRequest.responseStream.reject(
+							VscodeLanguageModelError.NotFound(
 								`Language model '${fullModelId}' was removed.`,
 							),
 						);
-
-						this.#pendingChatRequests.delete(reqId);
+						this.#pendingChatRequests.delete(requestId);
 					}
 				}
 			}
 		}
-
-		this.#onDidChangeProvidersEmitter.fire();
-	}
-
-	public $updateModelAccesslist(
-		data: {
-			from: ExtensionIdentifier;
-
-			to: ExtensionIdentifier;
-
-			enabled: boolean;
-		}[],
-	): void {
-		// this._log(`RPC $updateModelAccesslist: ${data.length} entries`);
-
-		for (const { from, to, enabled } of data) {
-			let set = this.#modelAccessList.get(from);
-
-			if (!set) {
-				// No need to create set for a disable if it doesn't exist
-				if (!enabled) continue;
-
-				set = new ExtensionIdentifierSet();
-
-				this.#modelAccessList.set(from, set);
-			}
-
-			const changed = enabled ? set.add(to) : set.delete(to);
-
-			if (changed) this.#onDidChangeModelAccessEmitter.fire({ from, to });
+		if (changed) {
+			this.#onDidChangeProvidersEmitter.fire();
 		}
 	}
 
+	/** {@inheritDoc ExtHostLanguageModelsShape.$updateModelAccesslist} */
+	public $updateModelAccesslist(
+		entries: {
+			from: ExtensionIdentifier;
+			to: ExtensionIdentifier;
+			enabled: boolean;
+		}[],
+	): void {
+		// this._logService?.trace(`RPC $updateModelAccesslist: ${entries.length} entries`);
+		for (const { from, to, enabled } of entries) {
+			let accessSet = this.#modelAccessList.get(from);
+			if (!accessSet) {
+				if (!enabled) continue; // No need to create set for a disable if it doesn't exist
+				accessSet = new ExtensionIdentifierSet();
+				this.#modelAccessList.set(from, accessSet);
+			}
+			const changed = enabled ? accessSet.add(to) : accessSet.delete(to);
+			if (changed) this.#onDidChangeModelAccessEmitter.fire({ from, to }); // Fire internal event
+		}
+	}
+
+	/** {@inheritDoc ExtHostLanguageModelsShape.$provideLanguageModelResponse} */
 	public async $provideLanguageModelResponse(
-		// In VS Code, this is not used, requestId is primary key for pending.
-		_chatHandle: number,
-
+		_chatHandle_unused: number,
 		requestId: number,
-
-		// DTO from extHost.protocol
 		responseDto: RpcChatResponseFragment,
-
-		// This indicates end of stream for this request
 		isLast: boolean,
 	): Promise<void> {
-		// this._log(`RPC $provideLanguageModelResponse for requestId ${requestId}, IsLast: ${isLast}`);
-
-		const pending = this.#pendingChatRequests.get(requestId);
-
-		if (pending) {
+		// this._logService?.trace(`RPC $provideLanguageModelResponse for RequestID ${requestId}, Index ${responseDto.index}, IsLast: ${isLast}`);
+		const pendingRequest = this.#pendingChatRequests.get(requestId);
+		if (pendingRequest) {
 			try {
-				pending.responseStream.handleFragment(responseDto);
-
+				pendingRequest.responseStream.handleFragment(responseDto);
 				if (isLast) {
-					pending.responseStream.resolve();
-
+					pendingRequest.responseStream.resolve();
 					this.#pendingChatRequests.delete(requestId);
 				}
 			} catch (e: any) {
 				this._logError(
-					`Error handling fragment for requestId ${requestId}:`,
-
+					`Error handling response fragment for RequestID ${requestId}:`,
 					e,
 				);
-
-				pending.responseStream.reject(
+				pendingRequest.responseStream.reject(
 					new Error(
-						`Failed to process response fragment: ${e.message}`,
+						`Failed to process response fragment: ${e.message || String(e)}`,
 					),
 				);
-
 				this.#pendingChatRequests.delete(requestId);
 			}
 		} else {
 			this._logWarn(
-				`Received response for unknown/completed requestId: ${requestId}`,
+				`Received response fragment for unknown or completed RequestID: ${requestId}. Ignoring.`,
 			);
 		}
 	}
 
+	/** {@inheritDoc ExtHostLanguageModelsShape.$provideTokenLength} */
 	public async $provideTokenLength(
 		handle: number,
-
 		valueOrMessageDto: string | RpcChatMessage,
-
 		token: CancellationToken,
 	): Promise<number> {
 		const providerData = this.#localProviders.get(handle);
-
 		if (!providerData?.provider.provideTokenCount) {
 			this._logError(
-				`No provideTokenCount for local provider handle ${handle}`,
+				`$provideTokenLength: No local provider or provideTokenCount method for Handle ${handle}.`,
 			);
-
-			throw new Error("Provider does not support token counting.");
+			throw new Error(
+				"Provider does not support token counting or not found.",
+			);
 		}
-
-		// Convert RpcChatMessage DTO back to vscode.LanguageModelChatMessage2
-		let apiValue: string | VscodeLanguageModelChatMessage2;
-
-		if (typeof valueOrMessageDto === "string") {
-			apiValue = valueOrMessageDto;
-		} else {
-			apiValue =
-				typeConvert.LanguageModelChatMessage2.to(valueOrMessageDto);
-		}
+		// Convert RpcChatMessage DTO back to vscode.LanguageModelChatMessage2 API type
+		let apiValue: string | VscodeLanguageModelChatMessage2 =
+			typeof valueOrMessageDto === "string"
+				? valueOrMessageDto
+				: localApiTypeConverters.LanguageModelChatMessage2.to(
+						valueOrMessageDto,
+					);
 
 		return providerData.provider.provideTokenCount(apiValue, token);
 	}
 
-	// --- Auth "Hack" related (simplified from VS Code) ---
+	// --- Auth "Hack" related (simplified from VS Code's ExtHostLanguageModels) ---
+	/** Checks if authentication might be needed for a requesting extension to use a model from a providing extension. */
 	private _isAuthNeeded(
 		requestingExtensionId: ExtensionIdentifier,
-
 		modelOwnerMetadata: RpcLanguageModelChatMetadata,
 	): modelOwnerMetadata is RpcLanguageModelChatMetadata & {
 		auth: NonNullable<RpcLanguageModelChatMetadata["auth"]>;
 	} {
 		return (
-			!!modelOwnerMetadata.auth &&
+			!!modelOwnerMetadata.auth && // Model declares it might need auth
 			!ExtensionIdentifier.equals(
 				modelOwnerMetadata.extension,
-
 				requestingExtensionId,
-			)
+			) && // Not the same extension
+			!modelOwnerMetadata.extension.value.startsWith(
+				INTERNAL_AUTH_PROVIDER_PREFIX,
+			) // Provider is not an internal auth provider
 		);
 	}
+	// Full _fakeAuthPopulate and _getAuthAccess methods (which use IExtHostAuthentication.getSession) are complex
+	// and depend on Mountain's auth flow. For MVP, they are simplified or omitted.
 
-	// _fakeAuthPopulate and _getAuthAccess would require IExtHostAuthentication. For shim, these are complex.
-
-	// --- Ignored File Provider Logic ---
+	// --- Ignored File Provider Logic (Proposed API) ---
+	/** {@inheritDoc vscode.lm.registerIgnoredFileProvider} (Conceptual location) */
 	public registerIgnoredFileProvider(
 		extension: IExtensionDescription,
-
 		provider: VscodeLanguageModelIgnoredFileProvider,
 	): IDisposable {
-		// Check proposed API
-		checkProposedApiEnabled(extension, "chatParticipantPrivate");
-
+		// checkProposedApiEnabled(extension, "chatParticipantPrivate"); // Or similar proposal name
+		this._logWarnOnce(
+			"registerIgnoredFileProvider is a proposed API and may have limited support or require specific enablement.",
+		);
 		const handle = ShimExtHostLanguageModels._providerHandlePool++;
-
-		this.#proxy?.$registerFileIgnoreProvider(handle);
-
+		this.#mainThreadLmProxy
+			?.$registerFileIgnoreProvider(handle, extension.identifier)
+			.catch((e) =>
+				this._logError(
+					`RPC $registerFileIgnoreProvider for Handle ${handle} failed:`,
+					e,
+				),
+			);
 		this.#ignoredFileProviders.set(handle, provider);
-
 		return toDisposable(() => {
-			this.#proxy?.$unregisterFileIgnoreProvider(handle);
-
+			this.#mainThreadLmProxy
+				?.$unregisterFileIgnoreProvider(handle)
+				.catch((e) =>
+					this._logError(
+						`RPC $unregisterFileIgnoreProvider for Handle ${handle} failed:`,
+						e,
+					),
+				);
 			this.#ignoredFileProviders.delete(handle);
 		});
 	}
 
+	/** {@inheritDoc ExtHostLanguageModelsShape.$isFileIgnored} */
 	public async $isFileIgnored(
 		handle: number,
-
 		uriComponents: VSCodeInternalUriComponents,
-
 		token: CancellationToken,
 	): Promise<boolean> {
 		const provider = this.#ignoredFileProviders.get(handle);
-
-		if (!provider)
+		if (!provider) {
+			this._logError(
+				`$isFileIgnored: Unknown LanguageModelIgnoredFileProvider Handle ${handle}.`,
+			);
 			throw new Error("Unknown LanguageModelIgnoredFileProvider handle.");
-
-		const uri = VscodeApiUri.from(VSCodeInternalURI.revive(uriComponents));
-
-		return (await provider.provideFileIgnored(uri, token)) ?? false;
+		}
+		const uri = VscodeApiUri.from(URI.revive(uriComponents)); // Revive to internal URI, then convert to API URI
+		return (await provider.provideFileIgnored(uri, token)) ?? false; // Default to false if provider returns undefined
 	}
 
-	public dispose(): void {
-		// From BaseCocoonShim if it has one
-		super.dispose();
-
-		this._onDidRegisterExtensions.dispose();
-
-		this._onDidChangeProviders.dispose();
-
+	/** Disposes of resources held by this service. */
+	public override dispose(): void {
+		super.dispose(); // Handles _instanceDisposables
+		this.#onDidChangeProvidersEmitter.dispose();
 		this.#onDidChangeModelAccessEmitter.dispose();
-
-		this.#pendingChatRequests.forEach((p) =>
-			p.responseStream.reject(
+		this.#pendingChatRequests.forEach((pending) =>
+			pending.responseStream.reject(
 				new Error("Language Model Service disposed."),
 			),
 		);
-
 		this.#pendingChatRequests.clear();
-
+		this.#localProviders.clear();
+		this.#allLanguageModelsData.clear();
+		this.#ignoredFileProviders.clear();
 		this._log("Disposed.");
 	}
 }
