@@ -6,409 +6,454 @@
  * `import ... from 'vscode'` to provide the correct, extension-specific instance
  * of the VS Code API.
  *
- * This mechanism is crucial for supporting modern VS Code extensions that use ESM.
- * It leverages Node.js's experimental loader hooks (`module.register`) and
- * inter-thread communication (via `MessageChannel`) to dynamically resolve the
- * 'vscode' module specifier to a dynamically generated `data:` URI. This `data:`
- * URI contains a script that exports the API object tailored for the importing
- * extension.
+ * This mechanism is crucial for supporting modern VS Code extensions that utilize ESM.
+ * It leverages Node.js's experimental loader hooks (via `module.register`) and
+ * inter-thread communication (using `MessageChannel`) to dynamically resolve the
+ * 'vscode' module specifier. When an extension imports 'vscode', this interceptor
+ * communicates with the main Cocoon thread to obtain a dynamically generated `data:` URI.
+ * This `data:` URI contains a script that exports the `vscode` API object tailored for
+ * the importing extension.
  *
  * Responsibilities:
- * - Registering a custom Node.js loader hook.
- * - Communicating with the main Cocoon thread (via `MessageChannel`) when an
- *   `import 'vscode'` is encountered by an extension:
- *     - Loader thread sends the `parentURL` (importing module's path) to the main thread.
- *     - Main thread uses an API factory to get/create the `vscode` API instance for
- *       that extension.
- *     - Main thread generates a unique key for this API instance and a JavaScript
- *       module string (as a `data:` URI) that exports this instance.
- *     - Main thread sends the `data:` URI back to the loader thread.
- * - The loader hook resolves `import 'vscode'` to this dynamic `data:` URI.
- * - Defining a global function (`_COCOON_IMPORT_VSCODE_API`) that the dynamic
- *   `data:` URI module calls to retrieve its specific API instance.
+ * - Registering a custom Node.js loader hook using `node:module.register`.
+ * - Establishing a `MessageChannel` for communication between the loader hook thread
+ *   and the main Cocoon application thread.
+ * - When an `import 'vscode'` is encountered by an extension:
+ *     - The loader hook (running in a separate thread) sends the `parentURL` (path of the
+ *       importing module) to the main Cocoon thread via the `MessageChannel`.
+ *     - The main Cocoon thread uses an `IExtensionApiFactory` (provided during
+ *       initialization) to get or create the `vscode` API instance specific to that extension.
+ *     - The main thread generates a unique key for this API instance and a JavaScript
+ *       module string (exported as a `data:` URI). This `data:` URI module will, when
+ *       executed, retrieve its specific API instance using the unique key.
+ *     - The main thread sends this `data:` URI back to the loader hook thread.
+ * - The loader hook's `resolve` function then resolves `import 'vscode'` to this
+ *   dynamically generated `data:` URI.
+ * - Defining a global function (e.g., `_COCOON_IMPORT_VSCODE_API`) on `globalThis` that
+ *   the script within the `data:` URI module calls to retrieve its specific API instance,
+ *   using the unique key.
  *
  * Key Interactions:
- * - Instantiated and installed by `Cocoon/index.ts`.
- * - Uses `node:module.register` (requires compatible Node.js version/flags).
- * - Uses `node:worker_threads.MessageChannel` for communication with the loader hook.
- * - Relies on an `IExtensionApiFactory` (provided by `index.ts`) to obtain
- *   extension-specific `vscode` API instances.
- * - Inspired by and adapted from VS Code's internal `NodeModuleESMInterceptor`
- *   (found in `vs/workbench/api/node/extHostExtensionService.ts`).
+ * - Instantiated and its `install()` method is called by `Cocoon/index.ts`.
+ * - Uses `node:module.register` (requires Node.js >= 18.19.0 or >= 20.6.0, or
+ *   appropriate experimental flags for older versions like `--experimental-loader`).
+ * - Uses `node:worker_threads.MessageChannel` for robust inter-thread communication.
+ * - Relies on an `IExtensionApiFactory` (provided by `Cocoon/index.ts` via the
+ *   `CocoonInterceptorContext`) to obtain extension-specific `vscode` API instances.
+ * - The design is inspired by and adapted from VS Code's internal
+ *   `NodeModuleESMInterceptor` (found in `vs/workbench/api/node/extHostExtensionService.ts`).
+ *
+ * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
-// For Buffer.from for data URI
+// For Buffer.from, used in creating data URIs.
 import { Buffer } from "node:buffer";
-// Node.js specific modules
-// For nodeModule.register
+// Node.js specific module for loader registration.
 import nodeModule from "node:module";
-// For MessageChannel
+// Node.js specific module for inter-thread communication.
 import { MessageChannel, type MessagePort } from "node:worker_threads";
+// VS Code common utilities
 import {
 	DisposableStore,
 	toDisposable,
 	type IDisposable,
 } from "vs/base/common/lifecycle";
 import { BidirectionalMap } from "vs/base/common/map";
-// VS Code's URI
-import { URI } from "vs/base/common/uri";
+import { URI } from "vs/base/common/uri"; // VS Code's URI implementation
 import { generateUuid } from "vs/base/common/uuid";
+// VS Code platform services (used for type annotations and DI)
 import { IInstantiationService } from "vs/platform/instantiation/common/instantiation.js";
 import { ILogService } from "vs/platform/log/common/log.js";
-// For the typeof vscode type
+// Type definition for the API factory provided by Cocoon's main setup.
+// This factory is responsible for creating or retrieving the `vscode` API instance
+// tailored for a specific extension.
+import type { IExtensionApiFactory } from "vs/workbench/api/common/extHost.api.impl";
+// Type definition for the `vscode` API object.
 import type * as vscode from "vscode";
 
-// Types from your existing setup or VS Code
-// Assuming your INodeModuleFactory is here or compatible
-import { INodeModuleFactory } from "./node-module-shim-factory";
+// The context expected by this interceptor, containing the API factory.
+// This is slightly different from INodeModuleFactory context for CJS.
 
-// This interface would be similar to what the original RequireInterceptor takes,
-
-// allowing access to the API factory.
-interface CocoonInterceptorContext {
-	// The factory you create in index.ts
+/**
+ * Context object provided to the `CocoonNodeModuleESMInterceptor` during its instantiation.
+ * It allows access to essential services and factories needed for the interceptor's operation.
+ */
+export interface CocoonESMInterceptorContext {
+	/**
+	 * The factory responsible for creating or retrieving an extension-specific
+	 * instance of the `vscode` API.
+	 */
 	apiFactory: IExtensionApiFactory;
-
-	// Potentially other services if needed by the factories when `load` is called
+	// TODO: Consider adding other services if the apiFactory or interceptor logic requires more context,
+	// e.g., IExtHostExtensionService for resolving extension descriptions if the apiFactory needs it directly
+	// and cannot get it from the parentURL alone.
+	// For example:
+	// extensionService?: IExtHostExtensionService;
+	// configurationService?: IExtHostConfiguration;
+	// logService?: ILogService; // If context needs its own logger different from DI one.
 }
 
+/**
+ * Implements an interceptor for ESM `import 'vscode'` statements to provide
+ * extension-specific instances of the VS Code API.
+ */
 export class CocoonNodeModuleESMInterceptor implements IDisposable {
-	private readonly _store = new DisposableStore();
-
+	private readonly _disposables = new DisposableStore(); // Renamed from _store for clarity
 	private _isInstalled = false;
+	private readonly _logService: ILogService;
 
-	private _logService: ILogService;
+	/**
+	 * A unique name for the global function that dynamically created `data:` URI modules
+	 * will call to retrieve their specific `vscode` API instance.
+	 * This name should be unique enough to avoid collisions in the global scope.
+	 */
+	private static readonly _VSCODE_API_GLOBAL_FUNCTION_NAME = `_COCOON_GET_EXTENSION_SPECIFIC_VSCODE_API`;
 
-	// Static parts similar to the original
-	// Unique global name
-	private static readonly _vscodeImportFnName = `_COCOON_IMPORT_VSCODE_API`;
-
+	/**
+	 * Creates a `data:` URI from a given JavaScript script content.
+	 * The script is Base64 encoded.
+	 * @param scriptContent The JavaScript content for the data URI.
+	 * @returns A `data:` URI string.
+	 */
 	private static _createDataUri(scriptContent: string): string {
 		return `data:text/javascript;base64,${Buffer.from(scriptContent).toString("base64")}`;
 	}
 
-	// Loader script remains largely the same, but might use a different global function name if desired
-	private static _loaderScript = `
-        let lookup;
-		
-        export const initialize = async (context) => {
-            let requestIds = 0;
-			
-            const { port } = context;
-			
-            const pendingRequests = new Map();
-			
-            port.onmessage = (event) => {
-                const { id, url } = event.data;
-				
-                pendingRequests.get(id)?.(url);
-				
-                 // Clean up
-				pendingRequests.delete(id);
-				
-            };
-			
-            lookup = url => {
-                const myId = requestIds++;
-				
-                return new Promise((resolve) => {
-                    pendingRequests.set(myId, resolve);
-					
-                    port.postMessage({ id: myId, url });
-					
-                });
-				
-            };
-			
-            console.log('[Cocoon ESM Loader] Initialized with port.');
-			
-        };
-		
-        export const resolve = async (specifier, context, nextResolve) => {
-            if (specifier !== 'vscode' || !context.parentURL) {
- // console.log('[Cocoon ESM Loader] Passing to nextResolve:', specifier, context.parentURL);
- 
-			
-                return nextResolve(specifier, context);
-				
+	/**
+	 * The JavaScript code for the Node.js loader hook. This script runs in a separate
+	 * loader thread and communicates with the main Cocoon thread via a `MessageChannel`.
+	 *
+	 * - `initialize(context)`: Receives the `MessagePort` from the main thread. Sets up
+	 *   an `onmessage` handler to receive resolved `data:` URIs from the main thread
+	 *   and fulfill pending promises.
+	 * - `resolve(specifier, context, nextResolve)`: The core hook.
+	 *   - If `specifier` is not 'vscode' or `parentURL` is missing, it delegates to the
+	 *     next loader in the chain (`nextResolve`).
+	 *   - If 'vscode' is imported, it sends the `parentURL` (importing module's path)
+	 *     to the main thread via the port.
+	 *   - It then waits for a promise that will be resolved with the `data:` URI
+	 *     sent back by the main thread.
+	 *   - Returns the `data:` URI with `shortCircuit: true` to indicate that Node.js
+	 *     should use this URL directly, bypassing further resolution.
+	 */
+	private static readonly _LOADER_HOOK_SCRIPT = `
+        // --- Cocoon ESM Loader Hook Script ---
+        let portForMainThreadCommunication;
+        let nextRequestId = 0;
+        const pendingApiRequests = new Map(); // Maps requestId to { resolve, reject }
+
+        // Called by Node.js when this loader is registered.
+        // The 'context' here is the 'data' object passed to 'module.register()'.
+        export const initialize = (context) => {
+            if (!context || !context.port) {
+                console.error('[Cocoon ESM Loader Hook] Initialization failed: MessagePort not received from main thread.');
+                return;
             }
-				
-				
- // console.log('[Cocoon ESM Loader] Intercepting "vscode" from:', context.parentURL);
- 
-			
-            const otherUrl = await lookup(context.parentURL);
-			
- // console.log('[Cocoon ESM Loader] Resolved "vscode" to data URI:', otherUrl.substring(0, 100) + '...');
- 
-			
-            return {
-                url: otherUrl,
-				
-                shortCircuit: true,
-				
-            };
-			
+            portForMainThreadCommunication = context.port;
+
+            portForMainThreadCommunication.on('message', (event) => {
+                const { id, url, error } = event.data; // Main thread sends back { id, url } or { id, error }
+                const request = pendingApiRequests.get(id);
+                if (request) {
+                    if (error) {
+                        request.reject(new Error(error.message || 'Failed to resolve vscode API from main thread'));
+                    } else {
+                        request.resolve(url);
+                    }
+                    pendingApiRequests.delete(id); // Clean up
+                }
+            });
+
+            // Optional: Send a confirmation back to the main thread if needed, though console.log is often sufficient for bootstrap.
+            // portForMainThreadCommunication.postMessage({ type: 'loaderInitialized' });
+            console.log('[Cocoon ESM Loader Hook] Initialized successfully with MessagePort.');
         };
-		
-        console.log('[Cocoon ESM Loader] Loader script registered.');
-		
+
+        // The 'resolve' hook, called by Node.js for each ESM import.
+        export const resolve = async (specifier, context, nextResolve) => {
+            // We only care about 'vscode' imports from valid parent modules.
+            if (specifier !== 'vscode' || !context.parentURL) {
+                // console.debug('[Cocoon ESM Loader Hook] Passing to nextResolve:', specifier, context.parentURL);
+                return nextResolve(specifier, context); // Delegate to the next loader in the chain.
+            }
+
+            if (!portForMainThreadCommunication) {
+                console.error('[Cocoon ESM Loader Hook] Cannot resolve "vscode": MessagePort to main thread is not available. Falling back to nextResolve.');
+                return nextResolve(specifier, context);
+            }
+
+            // console.debug('[Cocoon ESM Loader Hook] Intercepting "vscode" import from:', context.parentURL);
+
+            const currentRequestId = nextRequestId++;
+            const apiPromise = new Promise((resolve, reject) => {
+                pendingApiRequests.set(currentRequestId, { resolve, reject });
+            });
+
+            // Request the 'vscode' API data URI from the main thread.
+            portForMainThreadCommunication.postMessage({
+                id: currentRequestId,
+                importingModuleUrl: context.parentURL // Send the URL of the module that is importing 'vscode'
+            });
+
+            try {
+                const dynamicApiModuleUrl = await apiPromise;
+                // console.debug('[Cocoon ESM Loader Hook] Resolved "vscode" to dynamic data URI (first 100 chars):', String(dynamicApiModuleUrl).substring(0, 100) + '...');
+                return {
+                    url: dynamicApiModuleUrl, // The data: URI provided by the main thread
+                    shortCircuit: true,       // Tell Node.js to use this URL directly
+                    format: 'module'          // Ensure it's treated as an ES module
+                };
+            } catch (error) {
+                console.error(\`[Cocoon ESM Loader Hook] Error resolving "vscode" for \${context.parentURL}: \${error.message}. Falling back to nextResolve.\`);
+                pendingApiRequests.delete(currentRequestId); // Clean up failed request
+                return nextResolve(specifier, context); // Fallback on error
+            }
+        };
+        console.log('[Cocoon ESM Loader Hook] Loader script itself has been parsed by Node.js.');
     `;
 
+	/**
+	 * Creates an instance of CocoonNodeModuleESMInterceptor.
+	 * @param _interceptorContext Context providing the `IExtensionApiFactory`.
+	 * @param _instantiationService VS Code's instantiation service, used here to get `ILogService`.
+	 */
 	constructor(
-		// Provide API factory here
-		private readonly _interceptorContext: CocoonInterceptorContext,
-
+		private readonly _interceptorContext: CocoonESMInterceptorContext,
 		@IInstantiationService
-		// For logging
-		private readonly _instaService: IInstantiationService,
-
-		// Add other DI services if needed, e.g., ILogService
+		private readonly _instantiationService: IInstantiationService,
 	) {
-		this._logService = this._instaService.get(ILogService);
-
-		this._logService.trace("[CocoonESMInterceptor] Created.");
+		this._logService = this._instantiationService.get(ILogService);
+		this._logService.trace("[CocoonNodeModuleESMInterceptor] Created.");
 	}
 
+	/**
+	 * Disposes of resources held by the interceptor, primarily the `MessageChannel`
+	 * and the global API retrieval function.
+	 * Note: Node.js loader hooks, once registered, cannot be cleanly "unregistered"
+	 * for the lifetime of the process. This dispose method cleans up Cocoon's side.
+	 */
 	public dispose(): void {
 		if (this._isInstalled) {
 			this._logService.warn(
-				'[CocoonESMInterceptor] Disposing, but Node.js loader hooks cannot be cleanly "unregistered". Active interception might persist for the lifetime of the process.',
+				'[CocoonNodeModuleESMInterceptor] Disposing. Note: Node.js loader hooks cannot be cleanly "unregistered". Active interception might persist for the process lifetime, though the communication channel and global function will be removed.',
 			);
-
-			// Node.js currently doesn't provide a way to unregister loader hooks.
-			// The best we can do is clean up our side.
 		}
-
-		this._store.dispose();
-
-		this._logService.trace("[CocoonESMInterceptor] Disposed.");
+		this._disposables.dispose(); // This will close ports and delete the global function
+		this._logService.trace("[CocoonNodeModuleESMInterceptor] Disposed.");
 	}
 
+	/**
+	 * Installs the ESM interceptor by registering the custom Node.js loader hook.
+	 * This method is asynchronous and should be called once during Cocoon initialization.
+	 */
 	public async install(): Promise<void> {
 		if (this._isInstalled) {
-			this._logService.warn("[CocoonESMInterceptor] Already installed.");
-
+			this._logService.warn(
+				"[CocoonNodeModuleESMInterceptor] Interceptor already installed. Skipping.",
+			);
 			return;
 		}
 
 		if (typeof nodeModule.register !== "function") {
 			this._logService.error(
-				'[CocoonESMInterceptor] nodeModule.register is not available. ESM "vscode" imports will not be intercepted. Ensure Node.js version is >= 18.19.0 or >=20.6.0 or appropriate flags are used.',
+				'[CocoonNodeModuleESMInterceptor] `node:module.register` is not available. ESM "vscode" imports will NOT be intercepted. Ensure Node.js version is >= 18.19.0 or >= 20.6.0, or that appropriate experimental flags (e.g., --experimental-loader) are used for older versions.',
 			);
-
 			return;
 		}
 
 		this._logService.info(
-			"[CocoonESMInterceptor] Installing ESM interceptor...",
+			"[CocoonNodeModuleESMInterceptor] Installing ESM interceptor via node:module.register...",
 		);
 
-		// Cache for API instances and their corresponding dynamic module data URIs
-		// Maps API object to unique key
-		const apiInstances = new BidirectionalMap<typeof vscode, string>();
+		// Cache for `vscode` API instances and their corresponding dynamic module data URIs.
+		// BidirectionalMap: Maps (vscode.API object instance) <-> (unique string key)
+		const apiInstanceToKeyCache = new BidirectionalMap<
+			typeof vscode,
+			string
+		>();
+		// Map: Maps (unique string key) -> (data: URI string for the ESM module)
+		const apiKeyToDataUriCache = new Map<string, string>();
 
-		// Maps unique key to data: URI
-		const apiModuleDataUris = new Map<string, string>();
-
-		// Define the global function that the dynamically generated ESM module will call
-		// This function needs to be on globalThis BEFORE the loader hook tries to use it.
-		if (
-			(globalThis as any)[
-				CocoonNodeModuleESMInterceptor._vscodeImportFnName
-			]
-		) {
+		// Define the global function that dynamically generated ESM `data:` URI modules will call.
+		// This function must exist on `globalThis` *before* any loader hook attempts to execute a
+		// `data:` URI module that calls it.
+		const globalApiFunctionName =
+			CocoonNodeModuleESMInterceptor._VSCODE_API_GLOBAL_FUNCTION_NAME;
+		if ((globalThis as any)[globalApiFunctionName]) {
 			this._logService.warn(
-				`[CocoonESMInterceptor] Global function ${CocoonNodeModuleESMInterceptor._vscodeImportFnName} already exists. Overwriting.`,
+				`[CocoonNodeModuleESMInterceptor] Global function ${globalApiFunctionName} already exists on globalThis. It will be overwritten. This might indicate a re-installation attempt without proper cleanup or a name collision.`,
 			);
 		}
 
-		Object.defineProperty(
-			globalThis,
-
-			CocoonNodeModuleESMInterceptor._vscodeImportFnName,
-
-			{
-				enumerable: false,
-
-				// Allow re-definition if re-installing (though unregistering is tricky)
-				configurable: true,
-
-				writable: false,
-
-				value: (key: string): typeof vscode | undefined => {
-					const api = apiInstances.getKey(key);
-
-					// this._logService.trace(`[CocoonESMInterceptor] Global _COCOON_IMPORT_VSCODE_API called with key "${key}", found API: ${!!api}`);
-
-					return api;
-				},
+		Object.defineProperty(globalThis, globalApiFunctionName, {
+			enumerable: false,
+			configurable: true, // Allow re-definition for testing or re-installation scenarios.
+			writable: false, // Make the function itself read-only.
+			value: (apiKey: string): typeof vscode | undefined => {
+				const apiInstance = apiInstanceToKeyCache.getKey(apiKey);
+				// this._logService.trace(`[CocoonNodeModuleESMInterceptor] Global function ${globalApiFunctionName} called with key "${apiKey}". API instance ${apiInstance ? "found" : "NOT found"}.`);
+				if (!apiInstance) {
+					console.error(
+						`[Cocoon ESM Interceptor Global] CRITICAL: No API instance found for key "${apiKey}". This should not happen if data URIs are generated correctly.`,
+					);
+				}
+				return apiInstance;
 			},
-		);
-
-		const { port1, port2 } = new MessageChannel();
-
-		this._store.add(
+		});
+		this._disposables.add(
 			toDisposable(() => {
-				port1.close();
-
-				port2.close();
-
-				delete (globalThis as any)[
-					CocoonNodeModuleESMInterceptor._vscodeImportFnName
-					// Clean up global
-				];
-
+				delete (globalThis as any)[globalApiFunctionName];
 				this._logService.trace(
-					"[CocoonESMInterceptor] Cleaned up MessageChannel and global function.",
+					`[CocoonNodeModuleESMInterceptor] Cleaned up global API function: ${globalApiFunctionName}`,
 				);
 			}),
 		);
 
-		// Cast for Node.js MessagePort type
-		const port1ForNodeJS: MessagePort = port1 as any;
-
-		port1ForNodeJS.on("message", (e: { id: string; url: string }) => {
-			try {
-				// this._logService.trace(`[CocoonESMInterceptor] Main thread received message from loader: id=${e.id}, url=${e.url}`);
-
-				// URL of the importing module
-				const parentUri = URI.parse(e.url);
-
-				// Use the provided apiFactory to get/create the vscode API instance
-				// The apiFactory itself uses ExtensionPaths to find the extension for the parentUri
-				const apiInstance = this._interceptorContext.apiFactory(
-					// The API factory needs to handle URI or IExtensionDescription
-					parentUri as any,
-
-					// ExtensionRegistries, might need to pass this from index.ts
-					undefined as any,
-
-					// ConfigProvider, might need to pass this from index.ts
-					undefined as any,
+		// Create a MessageChannel for communication between the main thread and the loader hook thread.
+		const { port1: mainThreadPort, port2: loaderHookPort } =
+			new MessageChannel();
+		this._disposables.add(
+			toDisposable(() => {
+				mainThreadPort.close();
+				loaderHookPort.close();
+				this._logService.trace(
+					"[CocoonNodeModuleESMInterceptor] MessageChannel ports closed.",
 				);
+			}),
+		);
 
-				// ^-- IMPORTANT: The arguments to apiFactory need to be correctly supplied.
-				// The original VSCodeNodeModuleFactory passes (extDescription, extensionRegistries, configProvider).
-				// You'll need to adapt this to how your apiFactoryProvider in index.ts expects to be called,
+		// Type assertion for Node.js MessagePort compatibility if TS is strict about WorkerMessagePort vs NodeMessagePort
+		const mainThreadNodeJsPort: MessagePort = mainThreadPort as any;
 
-				// or make your CocoonInterceptorContext richer.
-				// For simplicity, I'm assuming your apiFactory in index.ts can handle being called like this
-				// or you adjust your `this._interceptorContext.apiFactory`.
-				// The key is that it must return the correct `typeof vscode` object for the `parentUri`.
+		// Handler for messages received on the main thread from the loader hook.
+		mainThreadNodeJsPort.on(
+			"message",
+			async (eventFromLoader: {
+				id: string;
+				importingModuleUrl: string;
+			}) => {
+				const { id: requestId, importingModuleUrl } = eventFromLoader;
+				// this._logService.trace(`[CocoonNodeModuleESMInterceptor] Main thread received message from loader: RequestID=${requestId}, ImportingModuleURL=${importingModuleUrl}`);
 
-				if (!apiInstance) {
-					this._logService.error(
-						`[CocoonESMInterceptor] API factory returned undefined for ${parentUri.toString()}`,
+				try {
+					const parentUri = URI.parse(importingModuleUrl); // URL of the module importing 'vscode'
+
+					// Use the provided apiFactory to get/create the vscode API instance.
+					// The apiFactory itself might use ExtensionPaths or similar to find the extension
+					// description associated with the parentUri.
+					const apiInstance = this._interceptorContext.apiFactory(
+						parentUri, // The API factory needs to handle being called with a URI
+						// The original VSCodeNodeModuleFactory passed (extDescription, extensionRegistries, configProvider).
+						// The apiFactoryProvider in index.ts must be designed to work with just the parentUri if these are not available
+						// or if the ESM interceptor context doesn't provide them.
+						// For ESM, ExtensionRegistries and ConfigProvider might need to be pre-resolved or globally available
+						// to the apiFactory if it strictly requires them beyond what it can infer from parentUri.
+						undefined, // Placeholder for IExtensionRegistries
+						undefined, // Placeholder for ExtHostConfigProvider
 					);
 
-					port1.postMessage({
-						id: e.id,
+					if (!apiInstance) {
+						this._logService.error(
+							`[CocoonNodeModuleESMInterceptor] API factory returned undefined for importing module ${parentUri.toString()}. Responding with empty module.`,
+						);
+						mainThreadPort.postMessage({
+							id: requestId,
+							error: {
+								message: `API factory failed for ${parentUri.toString()}`,
+							},
+						});
+						return;
+					}
 
-						url: CocoonNodeModuleESMInterceptor._createDataUri(
-							"export default {};",
-						),
+					let apiKey = apiInstanceToKeyCache.get(apiInstance);
+					if (!apiKey) {
+						apiKey = generateUuid();
+						apiInstanceToKeyCache.set(apiInstance, apiKey);
+					}
 
-						// Send empty module on error
-					});
+					let dynamicModuleDataUri = apiKeyToDataUriCache.get(apiKey);
+					if (!dynamicModuleDataUri) {
+						// Dynamically generate the ESM module content as a string.
+						// This module will call the global function to get its specific API instance.
+						const exportStatements = Object.keys(apiInstance)
+							.map(
+								(propName) =>
+									`export const ${propName} = __apiInstance['${propName}'];`,
+							)
+							.join("\n");
 
-					return;
-				}
-
-				let key = apiInstances.get(apiInstance);
-
-				if (!key) {
-					key = generateUuid();
-
-					apiInstances.set(apiInstance, key);
-				}
-
-				let scriptDataUrlSrc = apiModuleDataUris.get(key);
-
-				if (!scriptDataUrlSrc) {
-					// Dynamically generate the ESM module content
-					const exportStatements = Object.keys(apiInstance)
-						.map(
-							(name) =>
-								`export const ${name} = _vscodeInstance['${name}'];`,
-						)
-						.join("\n");
-
-					const jsCode = `
-                        const _vscodeInstance = globalThis.${CocoonNodeModuleESMInterceptor._vscodeImportFnName}('${key}');
-						
-                        if (!_vscodeInstance) { throw new Error('Failed to retrieve vscode API instance for ESM module via key ${key}'); }
-						
-						
- // console.log('[Cocoon ESM vscode Module] Instance retrieved:', !!_vscodeInstance, 'keys:', Object.keys(_vscodeInstance).length);
- 
-						
+						const moduleScriptContent = `
+                        // --- Cocoon Dynamic 'vscode' API Module ---
+                        const __apiInstance = globalThis.${globalApiFunctionName}('${apiKey}');
+                        if (!__apiInstance) {
+                            throw new Error('Cocoon Error: Failed to retrieve vscode API instance for ESM module via key "${apiKey}". Global function ${globalApiFunctionName} might be missing or API key is invalid.');
+                        }
+                        // console.log('[Cocoon ESM vscode Module] API instance retrieved successfully for key "${apiKey}". Exporting ${Object.keys(__apiInstance).length} properties.');
                         ${exportStatements}
-						
-						
-                         // Also provide a default export
-						export default _vscodeInstance;
-						
+                        export default __apiInstance; // Provide a default export for "import vscode from 'vscode'"
                     `;
 
-					scriptDataUrlSrc =
-						CocoonNodeModuleESMInterceptor._createDataUri(jsCode);
+						dynamicModuleDataUri =
+							CocoonNodeModuleESMInterceptor._createDataUri(
+								moduleScriptContent,
+							);
+						apiKeyToDataUriCache.set(apiKey, dynamicModuleDataUri);
+						// this._logService.trace(`[CocoonNodeModuleESMInterceptor] Created dynamic data URI for API key ${apiKey}.`);
+					}
 
-					apiModuleDataUris.set(key, scriptDataUrlSrc);
-
-					// this._logService.trace(`[CocoonESMInterceptor] Created data URI for key ${key}`);
+					mainThreadPort.postMessage({
+						id: requestId,
+						url: dynamicModuleDataUri,
+					});
+				} catch (error: any) {
+					this._logService.error(
+						`[CocoonNodeModuleESMInterceptor] Error in mainThreadPort.onmessage handler: ${error.message}`,
+						error,
+					);
+					mainThreadPort.postMessage({
+						id: requestId,
+						error: {
+							message:
+								error.message ||
+								"Unknown error processing vscode import.",
+						},
+					});
 				}
+			},
+		);
 
-				port1.postMessage({ id: e.id, url: scriptDataUrlSrc });
-			} catch (err: any) {
-				this._logService.error(
-					`[CocoonESMInterceptor] Error in port1.onmessage: ${err.message}`,
-
-					err,
-				);
-
-				port1.postMessage({
-					id: e.id,
-
-					url: CocoonNodeModuleESMInterceptor._createDataUri(
-						"export default {};",
-					),
-
-					// Send empty module on error
-				});
-			}
+		mainThreadNodeJsPort.on("close", () => {
+			this._logService.info(
+				"[CocoonNodeModuleESMInterceptor] Main thread port closed. Loader hook will no longer be able to communicate.",
+			);
 		});
 
 		try {
+			// Register the loader hook script.
+			// `import.meta.url` provides the URL of the current module (cocoon-esm-interceptor.ts),
+			// which is a valid requirement for `parentURL` in `module.register`.
 			nodeModule.register(
 				CocoonNodeModuleESMInterceptor._createDataUri(
-					CocoonNodeModuleESMInterceptor._loaderScript,
+					CocoonNodeModuleESMInterceptor._LOADER_HOOK_SCRIPT,
 				),
-
 				{
-					// Correctly reference the CJS module's URL
 					parentURL: import.meta.url,
-
-					data: { port: port2 },
-
-					transferList: [port2],
+					data: { port: loaderHookPort }, // Pass one end of the MessageChannel to the loader hook.
+					transferList: [loaderHookPort], // Transfer ownership of the port to the loader thread.
 				},
 			);
 
 			this._isInstalled = true;
-
 			this._logService.info(
-				"[CocoonESMInterceptor] ESM interceptor successfully registered with Node.js loader hooks.",
+				"[CocoonNodeModuleESMInterceptor] ESM interceptor successfully registered with Node.js loader hooks. `import 'vscode'` will now be intercepted.",
 			);
 		} catch (err: any) {
 			this._logService.error(
-				'[CocoonESMInterceptor] Failed to register ESM interceptor with Node.js loader hooks. ESM "vscode" imports will fail.',
-
+				'[CocoonNodeModuleESMInterceptor] CRITICAL: Failed to register ESM interceptor with Node.js loader hooks. ESM "vscode" imports will fail or use standard resolution.',
 				err,
 			);
-
-			// Clean up if registration failed
-			this._store.dispose();
+			// If registration fails, clean up resources that were set up before the attempt.
+			this.dispose(); // Call dispose to clean up channel and global function.
 		}
 	}
 }
