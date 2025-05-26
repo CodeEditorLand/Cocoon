@@ -18,9 +18,11 @@
  *   methods (`$initializeWorkspace`, `$acceptWorkspaceData`).
  * - Maintaining an internal model (`CocoonInternalWorkspace`) of the current workspace,
  *
+ *
  *   including its folders, name, and configuration URI, using `VSCodeInternalURI` and
  *   `ExtUri` for path comparisons and operations.
  * - Providing getters for `vscode.workspace` properties: `workspaceFolders`, `name`,
+ *
  *
  *   `workspaceFile`, `isTrusted`.
  * - Implementing `vscode.workspace.getWorkspaceFolder(uri)` using efficient lookups
@@ -38,6 +40,7 @@
  * - Stubbing or marking as not implemented several advanced or less critical
  *   `vscode.workspace` APIs for the Cocoon MVP (e.g., full text search, edit sessions,
  *
+ *
  *   `updateWorkspaceFolders` from extensions).
  *
  * Key Interactions:
@@ -50,11 +53,12 @@
  *   `ExtHostContext.ExtHostWorkspace`.
  * - Depends on injected services: `IExtHostInitDataService`, `IExtHostFileSystemInfo`,
  *
+ *
  *   `CocoonDocumentService`, `ShimFileSystemApi` (for `workspace.fs`), and
  *   `IInstantiationService` (for `getConfiguration`).
  * - Uses `BaseCocoonShim` for common utilities.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 // For path.sep in getRelativePath
