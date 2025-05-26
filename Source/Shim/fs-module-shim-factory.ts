@@ -1,19 +1,9 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/130_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): 63a48d112feffbdf5c4cb39dc818e93f827f99ee88c2613c8deb8d4b6506c7d6
-// Extracted to File: Backup/TSFMSC/Code/fs-module-shim-factory.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.034Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE fs-module-shim-factory.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Node.js 'fs' Module Shim Factory (fs-module-shim-factory.ts)
  * --------------------------------------------------------------------------------------------
  * Implements the `INodeModuleFactory` interface (or a specific variant of it),
+ * 
+ * 
  * specifically for intercepting `require('fs')` calls within the Cocoon environment.
  *
  * This factory's sole responsibility is to provide the Cocoon `fs-shim.ts` implementation
@@ -32,18 +22,20 @@
  *   for code that directly uses Node.js's 'fs' module. It does not delegate to the
  *   original 'fs' module via `originalLoad` for top-level 'fs' requests.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 // For parentUri type in INodeModuleFactory, assuming from vscode API shim or VS Code internals.
-import type { Uri as VscodeUri } from "vscode"; // Or `../Shim/out/vscode`
+// Or `../Shim/out/vscode`
+import type { Uri as VscodeUri } from "vscode";
 
 // Import the default export (the fsShimInstance object) and the type structure from fs-shim.ts.
 import fsShimInstanceFromFile, { type FsShimStructure } from "./fs-shim";
 // The `INodeModuleFactory` interface is also defined in `node-module-shim-factory.ts`.
 // For consistency, it should be defined in one central place and imported.
 // Assuming INodeModuleFactory from the other file is compatible or this specific one is used.
-import type { INodeModuleFactory } from "./node-module-shim-factory"; // Use the general one for type compatibility
+// Use the general one for type compatibility
+import type { INodeModuleFactory } from "./node-module-shim-factory";
 
 // --- Type Definitions ---
 
@@ -56,7 +48,8 @@ import type { INodeModuleFactory } from "./node-module-shim-factory"; // Use the
  */
 export interface INodeModuleFactoryForFs extends INodeModuleFactory {
 	/** Must be "fs" for this factory. */
-	readonly nodeModuleName: "fs"; // More specific than string | readonly string[]
+	// More specific than string | readonly string[]
+	readonly nodeModuleName: "fs";
 
 	/**
 	 * Loads the 'fs' module shim.
@@ -66,8 +59,11 @@ export interface INodeModuleFactoryForFs extends INodeModuleFactory {
 	 * @returns The `FsShimStructure` instance from `fs-shim.ts`.
 	 */
 	load(
-		request: "fs", // Specifically "fs"
+		// Specifically "fs"
+		request: "fs",
+
 		parentUri: VscodeUri | undefined,
+
 		originalLoad: (request: string) => any,
 	): FsShimStructure;
 }
@@ -90,9 +86,13 @@ export class FsModuleShimFactory implements INodeModuleFactoryForFs {
 	 * @returns The `FsShimStructure` instance (the Cocoon 'fs' shim).
 	 */
 	public load(
-		request: "fs", // Parameter `request` will always be "fs" for this factory.
+		// Parameter `request` will always be "fs" for this factory.
+		request: "fs",
+
 		parentUri: VscodeUri | undefined,
-		_originalLoad: (request: string) => any, // Marked as unused.
+
+		// Marked as unused.
+		_originalLoad: (request: string) => any,
 	): FsShimStructure {
 		const requesterModulePath = parentUri
 			? parentUri.fsPath || parentUri.toString()
@@ -119,4 +119,3 @@ export class FsModuleShimFactory implements INodeModuleFactoryForFs {
 	// `alternativeModuleName` is optional and not needed here as "fs" is the canonical name.
 	// public alternativeModuleName(name: string): string | undefined { return undefined; }
 }
---- END OF FILE fs-module-shim-factory.ts ---

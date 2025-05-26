@@ -8,6 +8,10 @@
  *
  * This shim allows extensions to report problems (diagnostics or markers) for specific
  * document URIs. These diagnostics are then proxied to the Mountain host process,
+ * 
+ * 
+ * 
+ * 
  *
  * which is responsible for displaying them in the editor's UI (e.g., in the Problems panel
  * and as squigglies in the editor).
@@ -24,6 +28,10 @@
  *     (`$acceptDiagnosticsChanged`) from Mountain.
  * - `ShimDiagnosticCollectionImpl` (implements `vscode.DiagnosticCollection`):
  *   - Provides the API for managing diagnostics within a specific collection (e.g.,
+ * 
+ * 
+ * 
+ * 
  *
  *     `set(uri, diagnostics)`, `delete(uri)`, `clear()`).
  *   - Converts `vscode.Diagnostic` objects into an internal `IMarkerData`-like DTO format.
@@ -40,38 +48,51 @@
  *   `MainContext.MainThreadDiagnostics` on Mountain via RPC.
  * - Uses `BaseCocoonShim` for common utilities.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 import {
 	Emitter as VscodeEmitter,
 	type Event as VscodeEvent,
 } from "vs/base/common/event";
-import type { UriComponents as VSCodeInternalUriComponents } from "vs/base/common/uri"; // For RPC DTOs
+// For RPC DTOs
 
+import type { UriComponents as VSCodeInternalUriComponents } from "vs/base/common/uri";
 // VS Code internal types for markers, which diagnostics are converted to for the main thread.
 import {
-	MarkerSeverity as InternalMarkerSeverity, // VS Code's internal enum
-	MarkerTag as InternalMarkerTag, // VS Code's internal enum
+	// VS Code's internal enum
+	MarkerSeverity as InternalMarkerSeverity,
+	// VS Code's internal enum
+	MarkerTag as InternalMarkerTag,
 	// Assuming IMarkerData, MarkerSeverity, MarkerTag are available or accurately defined locally.
 	// If importing from 'vs/platform/markers/common/markers':
-	type IMarkerData, // Using ILocalMarkerData as a DTO, but IMarkerData is the target structure.
-	// RelatedInformation as MarkerRelatedInformation, // Using ILocalRelatedInformation
+	// Using ILocalMarkerData as a DTO, but IMarkerData is the target structure.
+	type IMarkerData,
+	// Using ILocalRelatedInformation
+	// RelatedInformation as MarkerRelatedInformation,
 } from "vs/platform/markers/common/markers";
 import {
-	ExtHostContext, // For registering this service for RPC calls from MainThread
-	MainContext, // For proxying to MainThreadDiagnostics
+	// For registering this service for RPC calls from MainThread
+	ExtHostContext,
+	// For proxying to MainThreadDiagnostics
+	MainContext,
 } from "vs/workbench/api/common/extHost.protocol";
 // Import types from the public 'vscode' API
 import {
 	Diagnostic,
 	DiagnosticRelatedInformation,
-	DiagnosticSeverity, // API enum
-	DiagnosticTag, // API enum
-	ThemeColor, // For Diagnostic.tags, though not directly used in conversion here
-	Location as VscodeLocation, // API type
-	Range as VscodeRange, // API type
-	Uri as VscodeUri, // API type
+	// API enum
+	DiagnosticSeverity,
+	// API enum
+	DiagnosticTag,
+	// For Diagnostic.tags, though not directly used in conversion here
+	ThemeColor,
+	// API type
+	Location as VscodeLocation,
+	// API type
+	Range as VscodeRange,
+	// API type
+	Uri as VscodeUri,
 	type DiagnosticCollection,
 } from "vscode";
 
@@ -94,32 +115,51 @@ interface ILocalUriComponents extends VSCodeInternalUriComponents {
 
 /** DTO for individual diagnostic/marker data sent to MainThread. */
 interface ILocalMarkerData {
-	severity: InternalMarkerSeverity; // Use VS Code's internal MarkerSeverity enum values
+	// Use VS Code's internal MarkerSeverity enum values
+	severity: InternalMarkerSeverity;
+
 	message: string;
 
-	startLineNumber: number; // 1-based
-	startColumn: number; // 1-based
+	// 1-based
+	startLineNumber: number;
+
+	// 1-based
+	startColumn: number;
+
 	endLineNumber: number;
 
 	endColumn: number;
 
 	source?: string;
 
-	code?: string | { value: string; target: ILocalUriComponents }; // target is URI DTO
+	// target is URI DTO
+	code?: string | { value: string; target: ILocalUriComponents };
+
 	relatedInformation?: ILocalRelatedInformation[];
 
-	tags?: InternalMarkerTag[]; // Use VS Code's internal MarkerTag enum values
-	// owner: string; // Owner is usually the collection's ownerId, sent with $changeMany
-	// resource: ILocalUriComponents; // Resource is part of the [uri, markers[]] entry
+	// Use VS Code's internal MarkerTag enum values
+	tags?: InternalMarkerTag[];
+
+	// Owner is usually the collection's ownerId, sent with $changeMany
+	// owner: string;
+
+	// Resource is part of the [uri, markers[]] entry
+	// resource: ILocalUriComponents;
 }
 
 /** DTO for related information within a diagnostic/marker. */
 interface ILocalRelatedInformation {
-	resource: ILocalUriComponents; // URI DTO
+	// URI DTO
+	resource: ILocalUriComponents;
+
 	message: string;
 
-	startLineNumber: number; // 1-based
-	startColumn: number; // 1-based
+	// 1-based
+	startLineNumber: number;
+
+	// 1-based
+	startColumn: number;
+
 	endLineNumber: number;
 
 	endColumn: number;
@@ -170,14 +210,20 @@ type DiagnosticEntryTuple = [
 	VscodeUri,
 
 	readonly Diagnostic[] | undefined | null,
-]; // From vscode.DiagnosticCollection.set
+
+	// From vscode.DiagnosticCollection.set
+];
 
 /**
  * Cocoon's implementation of `vscode.DiagnosticCollection`.
  */
 class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
-	readonly #collectionName?: string; // The human-readable name of the collection.
-	readonly #ownerId: string; // Unique ID for this collection, used in RPC calls.
+	// The human-readable name of the collection.
+	readonly #collectionName?: string;
+
+	// Unique ID for this collection, used in RPC calls.
+	readonly #ownerId: string;
+
 	#mainThreadDiagnosticsProxy: MainThreadDiagnosticsShape | null;
 
 	#logService?: ILogServiceForShim;
@@ -265,7 +311,8 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 
 	/** Name of this diagnostic collection. */
 	get name(): string {
-		return this.#collectionName || ""; // VS Code API expects string, even if unnamed.
+		// VS Code API expects string, even if unnamed.
+		return this.#collectionName || "";
 	}
 
 	/** {@inheritDoc vscode.DiagnosticCollection.set} */
@@ -311,10 +358,13 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 			if (diags === undefined || diags === null || diags.length === 0) {
 				if (this.#diagnosticsCache.delete(uriString)) {
 					// Changed from previous state
-					entriesToSyncWithMainThread.set(uriString, undefined); // Undefined means clear for this URI
+					// Undefined means clear for this URI
+					entriesToSyncWithMainThread.set(uriString, undefined);
 				}
 			} else {
-				newDiagnosticsForUri = [...diags]; // Create a mutable copy
+				// Create a mutable copy
+				newDiagnosticsForUri = [...diags];
+
 				this.#diagnosticsCache.set(uriString, newDiagnosticsForUri);
 
 				try {
@@ -368,7 +418,10 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 				try {
 					const uriForRpc = this._uriToComponentsDto(
 						VscodeUri.parse(uriStr),
-					); // Parse back to VscodeUri then to DTO
+
+						// Parse back to VscodeUri then to DTO
+					);
+
 					if (uriForRpc) {
 						rpcEntries.push([uriForRpc, markerDataArray]);
 					} else {
@@ -436,7 +489,8 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 					// this._log(`Sending deletion to MainThread for URI: ${uriString}`);
 
 					this.#mainThreadDiagnosticsProxy
-						.$changeMany(this.#ownerId, [[uriDto, undefined]]) // undefined markers means clear
+						// undefined markers means clear
+						.$changeMany(this.#ownerId, [[uriDto, undefined]])
 						.catch((err) =>
 							this._logError(
 								`RPC $changeMany for delete failed on URI '${uriString}':`,
@@ -520,7 +574,8 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 					e,
 				);
 
-				return; // Skip this entry
+				// Skip this entry
+				return;
 			}
 
 			try {
@@ -594,10 +649,18 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 
 			this.#isDisposed = true;
 
-			this.clear(); // Clear diagnostics on main thread as part of disposal.
-			this.#mainThreadDiagnosticsProxy = null; // Release proxy reference
-			this.#logService = undefined; // Release log service reference
-			this.#diagnosticsCache.clear(); // Clear local cache
+			// Clear diagnostics on main thread as part of disposal.
+			this.clear();
+
+			// Release proxy reference
+			this.#mainThreadDiagnosticsProxy = null;
+
+			// Release log service reference
+			this.#logService = undefined;
+
+			// Clear local cache
+			this.#diagnosticsCache.clear();
+
 			// TODO: Notify ShimDiagnosticsService that this collection instance is disposed,
 
 			// so it can be removed from any internal tracking if the service manages collection instances.
@@ -632,7 +695,8 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 			components,
 		);
 
-		return undefined; // Fallback if conversion fails
+		// Fallback if conversion fails
+		return undefined;
 	}
 
 	/** Converts a vscode.Diagnostic object to an ILocalMarkerData DTO for RPC. */
@@ -697,7 +761,8 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 						diag.code,
 					);
 
-					markerCodeDto = String(diag.code.value); // Fallback
+					// Fallback
+					markerCodeDto = String(diag.code.value);
 				}
 			} else if (typeof diag.code === "object") {
 				// e.g. { value: number | string; target: string_uri_deprecated }
@@ -728,7 +793,9 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 
 					message: ri.message,
 
-					startLineNumber: ri.location.range.start.line + 1, // Convert 0-based to 1-based
+					// Convert 0-based to 1-based
+					startLineNumber: ri.location.range.start.line + 1,
+
 					startColumn: ri.location.range.start.character + 1,
 
 					endLineNumber: ri.location.range.end.line + 1,
@@ -760,8 +827,12 @@ class ShimDiagnosticCollectionImpl implements DiagnosticCollection {
 		return {
 			severity: severity(),
 
-			message: diag.message || "", // Ensure message is a string
-			startLineNumber: diag.range.start.line + 1, // API is 0-based, IMarkerData is 1-based
+			// Ensure message is a string
+			message: diag.message || "",
+
+			// API is 0-based, IMarkerData is 1-based
+			startLineNumber: diag.range.start.line + 1,
+
 			startColumn: diag.range.start.character + 1,
 
 			endLineNumber: diag.range.end.line + 1,
@@ -787,11 +858,13 @@ export class ShimDiagnosticsService
 	extends BaseCocoonShim
 	implements ExtHostDiagnosticsRpcShape
 {
-	public readonly _serviceBrand: undefined; // For IExtHostDiagnostics if registered with DI
+	// For IExtHostDiagnostics if registered with DI
+	public readonly _serviceBrand: undefined;
 
 	#mainThreadDiagnosticsProxy: MainThreadDiagnosticsShape | null = null;
 
-	#collectionOwnerCounter = 0; // To generate unique owner IDs for collections
+	// To generate unique owner IDs for collections
+	#collectionOwnerCounter = 0;
 
 	readonly #onDidChangeDiagnosticsEmitter = new VscodeEmitter<
 		readonly VscodeUri[]
@@ -908,6 +981,10 @@ export class ShimDiagnosticsService
 	 * Retrieves all diagnostics for a given resource, aggregated from all collections.
 	 * @param resource Optional URI of the resource to get diagnostics for. If undefined,
 	 *
+	 *
+	 *
+	 *
+	 *
 	 *                 VS Code's API typically doesn't support fetching *all* diagnostics
 	 *                 across all files easily; this might be a NOP or error.
 	 *                 This shim's `$getMany` proxy assumes it might get all if `resourceFilter` is undefined.
@@ -1007,7 +1084,8 @@ export class ShimDiagnosticsService
 		markersDataArray: ILocalMarkerData[],
 	): Diagnostic[] {
 		return markersDataArray.map((markerData) => {
-			const range = new VscodeRange( // Convert 1-based from IMarkerData to 0-based for vscode.Range
+			// Convert 1-based from IMarkerData to 0-based for vscode.Range
+			const range = new VscodeRange(
 				markerData.startLineNumber - 1,
 
 				markerData.startColumn - 1,
@@ -1020,7 +1098,8 @@ export class ShimDiagnosticsService
 			let severity: DiagnosticSeverity;
 
 			switch (
-				markerData.severity // Map from InternalMarkerSeverity
+				// Map from InternalMarkerSeverity
+				markerData.severity
 			) {
 				case InternalMarkerSeverity.Error:
 					severity = DiagnosticSeverity.Error;
@@ -1086,7 +1165,8 @@ export class ShimDiagnosticsService
 						markerData.code.target,
 					);
 
-					diagnostic.code = markerData.code.value; // Fallback to just the value
+					// Fallback to just the value
+					diagnostic.code = markerData.code.value;
 				}
 			}
 
@@ -1104,7 +1184,8 @@ export class ShimDiagnosticsService
 								riDto.resource,
 							);
 
-							return null; // Skip this item
+							// Skip this item
+							return null;
 						}
 
 						const locRange = new VscodeRange(
@@ -1159,7 +1240,9 @@ export class ShimDiagnosticsService
 	 * Disposes of resources held by this shim instance.
 	 */
 	public override dispose(): void {
-		super.dispose(); // From BaseCocoonShim
+		// From BaseCocoonShim
+		super.dispose();
+
 		this.#onDidChangeDiagnosticsEmitter.dispose();
 
 		this._log("Disposed.");

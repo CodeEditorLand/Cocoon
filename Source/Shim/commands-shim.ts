@@ -36,19 +36,22 @@
  *   `ExtHostContext.ExtHostCommands`.
  * - Uses `BaseCocoonShim` for common utilities (logging, RPC proxy, marshalling).
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 // For VSBuffer and SerializableObjectWithBuffers if complex arguments are passed via RPC.
 import { VSBuffer } from "vs/base/common/buffer";
 import type { ICommandMetadata } from "vs/platform/commands/common/commands";
 import {
-	ExtensionIdentifier, // For options.extension type
+	// For options.extension type
+	ExtensionIdentifier,
 	type IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 import {
-	ExtHostContext, // For registering this service for RPC calls from MainThread
-	MainContext, // For proxying to MainThreadCommands
+	// For registering this service for RPC calls from MainThread
+	ExtHostContext,
+	// For proxying to MainThreadCommands
+	MainContext,
 } from "vs/workbench/api/common/extHost.protocol";
 // For wrapping arguments that include Buffers for RPC
 import { SerializableObjectWithBuffers } from "vs/workbench/services/extensions/common/proxyIdentifier";
@@ -57,7 +60,8 @@ import { Disposable as VscodeDisposable } from "vscode";
 
 import {
 	BaseCocoonShim,
-	refineErrorForShim, // Use the more specific refineError
+	// Use the more specific refineError
+	refineErrorForShim,
 	type ILogServiceForShim,
 	type IRpcProtocolServiceAdapter,
 	type ProxyIdentifier,
@@ -95,8 +99,10 @@ interface MainThreadCommandsProxyServiceShape {
 	$executeCommand(
 		params: {
 			id: string;
+
 			args: any[] | SerializableObjectWithBuffers<any[]>;
 		},
+
 		retry?: boolean,
 	): Promise<any>;
 
@@ -126,6 +132,7 @@ interface CocoonExtHostCommandsRpcShape {
 	 */
 	$executeContributedCommand(
 		commandId: string,
+
 		marshalledArgs: any,
 	): Promise<any>;
 
@@ -152,9 +159,13 @@ interface CommandMetadataDtoShim extends ICommandMetadata {
  */
 interface CommandHandlerEntry {
 	callback: Function;
+
 	thisArg: any;
+
 	metadata?: ICommandMetadata;
-	extension?: IExtensionDescription; // The extension that registered this command
+
+	// The extension that registered this command
+	extension?: IExtensionDescription;
 }
 
 /**
@@ -166,11 +177,14 @@ export class ShimExtHostCommands
 	implements CocoonExtHostCommandsRpcShape
 {
 	// Implements RPC shape for calls from Mountain
-	public readonly _serviceBrand: undefined; // Required by VS Code's service types
+	// Required by VS Code's service types
+	public readonly _serviceBrand: undefined;
 
 	readonly #mainThreadCmdProxy: MainThreadCommandsProxyServiceShape | null =
 		null;
-	readonly #commands = new Map<string, CommandHandlerEntry>(); // Local command registry
+
+	// Local command registry
+	readonly #commands = new Map<string, CommandHandlerEntry>();
 
 	/**
 	 * Creates an instance of ShimExtHostCommands.
@@ -179,15 +193,18 @@ export class ShimExtHostCommands
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
+
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostCommands", rpcService, logService);
+
 		this._log("Initializing...");
 
 		if (this._rpcService) {
 			this.#mainThreadCmdProxy = this._getProxy(
 				MainContext.MainThreadCommands as ProxyIdentifier<MainThreadCommandsProxyServiceShape>,
 			);
+
 			if (this.#mainThreadCmdProxy) {
 				this._log("MainThreadCommands RPC proxy obtained.");
 			} else {
@@ -200,14 +217,17 @@ export class ShimExtHostCommands
 			try {
 				this._rpcService.set(
 					ExtHostContext.ExtHostCommands as ProxyIdentifier<CocoonExtHostCommandsRpcShape>,
+
 					this,
 				);
+
 				this._log(
 					"Registered self for RPC calls from Mountain (ExtHostContext.ExtHostCommands).",
 				);
 			} catch (e: any) {
 				this._logError(
 					"Failed to set self for RPC (ExtHostCommands):",
+
 					e,
 				);
 			}
@@ -231,17 +251,23 @@ export class ShimExtHostCommands
 	 */
 	public registerCommand(
 		commandId: string,
+
 		callback: <T>(...args: any[]) => T | Promise<T>,
+
 		thisArg?: any,
+
 		options?: {
 			metadata?: ICommandMetadata;
+
 			extension?: IExtensionDescription;
+
 			global?: boolean;
 		},
 	): VscodeDisposable {
 		// Return type is vscode.Disposable
 		const extensionIdStr =
 			options?.extension?.identifier.value || "unknown_extension";
+
 		this._logService?.trace(
 			`Registering command: ID='${commandId}', Global=${options?.global ?? true}, FromExt='${extensionIdStr}'`,
 		);
@@ -253,6 +279,7 @@ export class ShimExtHostCommands
 		) {
 			throw new Error("Command ID cannot be empty or invalid.");
 		}
+
 		if (typeof callback !== "function") {
 			throw new Error("Command callback must be a function.");
 		}
@@ -265,8 +292,11 @@ export class ShimExtHostCommands
 
 		this.#commands.set(commandId, {
 			callback,
+
 			thisArg,
+
 			metadata: options?.metadata,
+
 			extension: options?.extension,
 		});
 
@@ -281,7 +311,9 @@ export class ShimExtHostCommands
 			this.#mainThreadCmdProxy.$registerCommand([commandId]).catch((e) =>
 				this._logError(
 					`RPC $registerCommand for '${commandId}' failed:`,
-					refineErrorForShim(e, this._logService), // Use refineErrorForShim
+
+					// Use refineErrorForShim
+					refineErrorForShim(e, this._logService),
 				),
 			);
 		} else if (isGlobalCommand && !this.#mainThreadCmdProxy) {
@@ -291,19 +323,26 @@ export class ShimExtHostCommands
 		}
 
 		let isDisposed = false;
+
 		return new VscodeDisposable(() => {
 			if (isDisposed) return;
+
 			isDisposed = true;
+
 			// this._logService?.trace(`Disposing registration for command '${commandId}'`);
+
 			if (this.#commands.delete(commandId)) {
 				// this._log(`Command '${commandId}' unregistered locally.`);
+
 				if (isGlobalCommand && this.#mainThreadCmdProxy) {
 					this.#mainThreadCmdProxy
 						.$unregisterCommand([commandId])
 						.catch((e) =>
 							this._logError(
 								`RPC $unregisterCommand for '${commandId}' failed:`,
-								refineErrorForShim(e, this._logService), // Use refineErrorForShim
+
+								// Use refineErrorForShim
+								refineErrorForShim(e, this._logService),
 							),
 						);
 				}
@@ -319,57 +358,76 @@ export class ShimExtHostCommands
 	 */
 	public async executeCommand<T = any>(
 		commandId: string,
+
 		...args: any[]
 	): Promise<T> {
 		// this._logService?.trace(`executeCommand: ID='${commandId}'`, args.length > 0 ? args : '(no args)');
+
 		return this._doExecuteCommand<T>(
 			commandId,
+
 			args,
+
 			true /* allow retry */,
 		);
 	}
 
 	private async _doExecuteCommand<T>(
 		commandId: string,
+
 		args: any[],
+
 		retry: boolean,
 	): Promise<T> {
 		if (this.#commands.has(commandId)) {
 			this._logService?.trace(
 				`Executing command '${commandId}' locally in Cocoon.`,
 			);
+
 			// Notify main thread about activation (fire-and-forget, if proxy method exists)
 			this.#mainThreadCmdProxy?.$fireCommandActivationEvent?.(commandId);
+
 			return this._executeContributedCommandLocal<T>(
 				commandId,
+
 				args,
+
 				false,
 			);
 		} else {
 			this._logService?.trace(
 				`Command '${commandId}' not found locally. Proxying execution to Mountain...`,
 			);
+
 			if (!this.#mainThreadCmdProxy) {
 				const errorMsg = `Cannot execute remote command '${commandId}': MainThreadCommands RPC proxy unavailable.`;
+
 				this._logError(errorMsg);
+
 				return Promise.reject(new Error(errorMsg));
 			}
 
 			// Marshall arguments for RPC.
 			// VS Code's `SerializableObjectWithBuffers` is used if any argument is a binary buffer.
 			let hasBuffers = false;
+
 			const marshalledIndividualArgs = args.map((arg) => {
-				const converted = this._convertApiArgToInternal(arg); // From BaseCocoonShim
+				// From BaseCocoonShim
+				const converted = this._convertApiArgToInternal(arg);
+
 				if (
 					arg instanceof ArrayBuffer ||
 					arg instanceof Uint8Array ||
 					converted instanceof VSBuffer
 				) {
 					hasBuffers = true;
+
 					if (arg instanceof ArrayBuffer)
 						return VSBuffer.wrap(new Uint8Array(arg));
+
 					if (arg instanceof Uint8Array) return VSBuffer.wrap(arg);
 				}
+
 				return converted;
 			});
 
@@ -382,10 +440,14 @@ export class ShimExtHostCommands
 			try {
 				const result = await this.#mainThreadCmdProxy.$executeCommand(
 					rpcParams,
+
 					retry,
 				);
+
 				// this._logService?.trace(`Remote command '${commandId}' executed by Mountain. Reviving result...`);
-				return this._reviveApiArgument(result); // From BaseCocoonShim
+
+				// From BaseCocoonShim
+				return this._reviveApiArgument(result);
 			} catch (e: any) {
 				// Handle VS Code's internal retry signal if received from MainThread.
 				if (
@@ -396,21 +458,30 @@ export class ShimExtHostCommands
 					this._log(
 						`Retrying command '${commandId}' as requested by Mountain.`,
 					);
+
 					return this._doExecuteCommand<T>(
 						commandId,
+
 						args,
+
 						false /* no more retries */,
 					);
 				}
+
 				const refined = refineErrorForShim(
 					e,
+
 					this._logService,
+
 					`executeRemoteCmd(${commandId})`,
 				);
+
 				this._logError(
 					`Error executing remote command '${commandId}' via RPC:`,
+
 					refined,
 				);
+
 				throw refined;
 			}
 		}
@@ -419,10 +490,13 @@ export class ShimExtHostCommands
 	/** Executes a command that is locally registered in this Cocoon instance. */
 	private async _executeContributedCommandLocal<T = unknown>(
 		commandId: string,
+
 		args: any[],
+
 		_annotateErrorSource: boolean,
 	): Promise<T> {
 		const commandReg = this.#commands.get(commandId);
+
 		if (!commandReg) {
 			// Should not happen if #commands.has(commandId) was true before calling
 			throw new Error(
@@ -431,22 +505,27 @@ export class ShimExtHostCommands
 		}
 
 		const { callback, thisArg, extension } = commandReg;
+
 		// TODO: Argument validation against `commandReg.metadata.args` if structure is defined.
 
 		try {
 			return await callback.apply(thisArg, args);
 		} catch (err: any) {
 			const extIdStr = extension?.identifier.value || "unknown_source";
+
 			if (!(err instanceof Error && err.name === "Canceled")) {
 				// Don't log cancellation errors excessively
 				this._logError(
 					`Error during local execution of command '${commandId}' (from extension: ${extIdStr}):`,
+
 					err,
 				);
 			}
+
 			// TODO: For fuller VS Code fidelity, wrap error with source extension info (e.g., as CommandError).
 			// TODO: Report error to telemetry via IExtHostTelemetry.
-			throw err; // Rethrow the original error.
+			// Rethrow the original error.
+			throw err;
 		}
 	}
 
@@ -459,21 +538,28 @@ export class ShimExtHostCommands
 	 */
 	public async $executeContributedCommand(
 		commandId: string,
+
 		marshalledArgsFromMain: any,
 	): Promise<any> {
 		this._logService?.trace(
 			`RPC $executeContributedCommand: ID='${commandId}' from Mountain.`,
 		);
+
 		const cmdHandler = this.#commands.get(commandId);
+
 		if (!cmdHandler) {
 			const errMsg = `RPC $executeContributedCommand: Command '${commandId}' not found locally in Cocoon.`;
+
 			this._logError(errMsg);
-			return Promise.reject(new Error(errMsg)); // Important to reject for RPC error handling on Mountain side.
+
+			// Important to reject for RPC error handling on Mountain side.
+			return Promise.reject(new Error(errMsg));
 		}
 
 		// `marshalledArgsFromMain` is the "args" array from Mountain's request payload.
 		// It needs revival using `_reviveApiArgument` from BaseCocoonShim.
 		let revivedArgs = this._reviveApiArgument(marshalledArgsFromMain);
+
 		if (!Array.isArray(revivedArgs)) {
 			// Ensure args is an array for .apply()
 			revivedArgs =
@@ -481,9 +567,12 @@ export class ShimExtHostCommands
 					? []
 					: [revivedArgs];
 		}
+
 		return this._executeContributedCommandLocal(
 			commandId,
+
 			revivedArgs,
+
 			true /* annotate error source for external calls */,
 		);
 	}
@@ -495,16 +584,20 @@ export class ShimExtHostCommands
 		[id: string]: CommandMetadataDtoShim;
 	}> {
 		// this._logService?.trace("RPC $getContributedCommandMetadata: Providing metadata for Cocoon-registered commands.");
+
 		const allMetadata: { [id: string]: CommandMetadataDtoShim } = {};
+
 		for (const [id, commandReg] of this.#commands) {
 			// Provide metadata if available, otherwise a minimal descriptor.
 			allMetadata[id] =
 				commandReg.metadata ||
 				({
 					description: `Command '${id}' registered in Cocoon (ExtHost).`,
+
 					// Other ICommandMetadata fields can be added here if known or defaulted.
 				} as CommandMetadataDtoShim);
 		}
+
 		return allMetadata;
 	}
 
@@ -517,7 +610,9 @@ export class ShimExtHostCommands
 		filterUnderscoreCommands = false,
 	): Promise<string[]> {
 		// this._logService?.trace(`getCommands (API call): filterUnderscore=${filterUnderscoreCommands}`);
+
 		let remoteCommands: string[] = [];
+
 		if (this.#mainThreadCmdProxy) {
 			try {
 				remoteCommands =
@@ -525,6 +620,7 @@ export class ShimExtHostCommands
 			} catch (e: any) {
 				this._logError(
 					"Failed to fetch remote commands via RPC $getCommands:",
+
 					refineErrorForShim(e, this._logService),
 				);
 			}
@@ -535,22 +631,29 @@ export class ShimExtHostCommands
 		}
 
 		const localCommands = Array.from(this.#commands.keys());
-		let allCommands = [...new Set([...remoteCommands, ...localCommands])]; // Merge and deduplicate
+
+		// Merge and deduplicate
+		let allCommands = [...new Set([...remoteCommands, ...localCommands])];
 
 		if (filterUnderscoreCommands) {
 			allCommands = allCommands.filter(
 				(commandId) => !commandId.startsWith("_"),
 			);
 		}
-		return allCommands.sort(); // Sort for consistent ordering
+
+		// Sort for consistent ordering
+		return allCommands.sort();
 	}
 
 	/**
 	 * Disposes of resources held by this shim instance.
 	 */
 	public override dispose(): void {
-		super.dispose(); // From BaseCocoonShim, handles _instanceDisposables
+		// From BaseCocoonShim, handles _instanceDisposables
+		super.dispose();
+
 		this.#commands.clear();
+
 		// Any other specific cleanup for commands shim
 		this._log("Disposed.");
 	}

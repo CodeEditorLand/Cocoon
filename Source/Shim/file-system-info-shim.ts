@@ -1,15 +1,3 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/148_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): 68d6730404cf0dbb6f05543a749b990a28e32ee5bb1ec730c8eb50e07b458331
-// Extracted to File: Backup/TSFMSC/Code/file-system-info-shim.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.064Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE file-system-info-shim.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon File System Information Shim (file-system-info-shim.ts)
  * --------------------------------------------------------------------------------------------
@@ -21,6 +9,9 @@
  *
  * The shim determines case sensitivity for the local 'file' scheme based on the
  * operating system (`process.platform`) where Cocoon is running. For other URI schemes,
+ * 
+ * 
+ * 
  * it can receive capability updates from the Mountain host via RPC.
  *
  * It also instantiates and exposes an `ExtUri` instance (`this.extUri`), which is a
@@ -48,7 +39,7 @@
  * - Receives RPC calls from `MainThreadFileSystemInfo` (or similar) on Mountain
  *   via the `$acceptProviderInfos` method.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 // For Schemas.file and other standard URI schemes
@@ -62,8 +53,10 @@ import type { UriComponents as VSCodeInternalUriComponents } from "vs/base/commo
 // Enum for filesystem provider capabilities
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files";
 import {
-	ExtHostContext, // For registering this service for RPC calls from MainThread
-	// MainContext, // Not used for getting a proxy *from* this service
+	// For registering this service for RPC calls from MainThread
+	ExtHostContext,
+	// Not used for getting a proxy *from* this service
+	// MainContext,
 	type ExtHostFileSystemInfoShape as VscodeExtHostFileSystemInfoShape,
 } from "vs/workbench/api/common/extHost.protocol";
 // Actual VS Code interface this shim implements for DI and API consistency
@@ -71,9 +64,10 @@ import type { IExtHostFileSystemInfo as VscodeIExtHostFileSystemInfo } from "vs/
 
 import {
 	BaseCocoonShim,
-	ProxyIdentifier, // Though not used to get a proxy *from* this service
-	type IRpcProtocolServiceAdapter,
+	// Though not used to get a proxy *from* this service
+	ProxyIdentifier,
 	type ILogServiceForShim,
+	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
 
 /**
@@ -84,7 +78,8 @@ export class ShimExtHostFileSystemInfo
 	extends BaseCocoonShim
 	implements VscodeIExtHostFileSystemInfo, VscodeExtHostFileSystemInfoShape
 {
-	public readonly _serviceBrand: undefined; // Required by VS Code's service types
+	// Required by VS Code's service types
+	public readonly _serviceBrand: undefined;
 
 	/**
 	 * A URI utility instance (`ExtUri`) that performs comparisons and path operations
@@ -95,7 +90,10 @@ export class ShimExtHostFileSystemInfo
 	// Stores capabilities for various URI schemes.
 	// Key: URI scheme string (e.g., "file", "untitled", "vscode-remote").
 	// Value: FileSystemProviderCapabilities bitmask.
-	private readonly _providerCapabilities = new Map<string, FileSystemProviderCapabilities>();
+	private readonly _providerCapabilities = new Map<
+		string,
+		FileSystemProviderCapabilities
+	>();
 
 	/**
 	 * Creates an instance of ShimExtHostFileSystemInfo.
@@ -104,9 +102,11 @@ export class ShimExtHostFileSystemInfo
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
+
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostFileSystemInfo", rpcService, logService);
+
 		this._log("Initializing...");
 
 		// Initialize extUri. The callback it takes determines if path casing should be ignored (case-insensitive)
@@ -114,59 +114,88 @@ export class ShimExtHostFileSystemInfo
 		this.extUri = new ExtUri((uriComponents) => {
 			// The uriComponents here can be `vscode.Uri` or `vs/base/common/uri.URI` or `UriComponents`.
 			// We need its scheme to get capabilities.
-			const scheme = typeof uriComponents.scheme === "string" ? uriComponents.scheme : Schemas.file; // Default to 'file' if scheme is missing
+			// Default to 'file' if scheme is missing
+			const scheme =
+				typeof uriComponents.scheme === "string"
+					? uriComponents.scheme
+					: Schemas.file;
+
 			const capabilities = this.getCapabilities(scheme);
 
 			if (capabilities === undefined) {
 				// For unknown schemes, VS Code's ExtUri defaults to case-sensitive behavior.
 				// Case-sensitive means NOT ignoring case.
-				return false; // false means: "do not ignore casing" (i.e., case-sensitive)
+				// false means: "do not ignore casing" (i.e., case-sensitive)
+				return false;
 			}
+
 			// If PathCaseSensitive capability is NOT set, then ignore case (case-insensitive).
 			// `!(capabilities & FileSystemProviderCapabilities.PathCaseSensitive)`
 			//   true = ignore case (case-insensitive)
 			//   false = do not ignore case (case-sensitive)
-			return !(capabilities & FileSystemProviderCapabilities.PathCaseSensitive);
+			return !(
+				capabilities & FileSystemProviderCapabilities.PathCaseSensitive
+			);
 		});
 
 		// Set default capabilities for the local 'file' scheme based on the host OS.
 		this._providerCapabilities.set(
 			Schemas.file,
+
 			isWindows
-				? FileSystemProviderCapabilities.FileReadWrite // Windows is typically case-insensitive.
-				: FileSystemProviderCapabilities.FileReadWrite | FileSystemProviderCapabilities.PathCaseSensitive, // Other OS (Linux, macOS) are case-sensitive.
+				? // Windows is typically case-insensitive.
+					FileSystemProviderCapabilities.FileReadWrite
+				: // Other OS (Linux, macOS) are case-sensitive.
+					FileSystemProviderCapabilities.FileReadWrite |
+						FileSystemProviderCapabilities.PathCaseSensitive,
 		);
 
 		// Set default capabilities for 'untitled' scheme (typically case-sensitive like an in-memory store).
 		this._providerCapabilities.set(
 			Schemas.untitled,
-			FileSystemProviderCapabilities.FileReadWrite | FileSystemProviderCapabilities.PathCaseSensitive,
+
+			FileSystemProviderCapabilities.FileReadWrite |
+				FileSystemProviderCapabilities.PathCaseSensitive,
 		);
-		
+
 		// Set default capabilities for 'vscode-interactive-input' scheme
 		this._providerCapabilities.set(
 			Schemas.vscodeInteractiveInput,
-			FileSystemProviderCapabilities.FileReadWrite | FileSystemProviderCapabilities.PathCaseSensitive,
-		);
 
+			FileSystemProviderCapabilities.FileReadWrite |
+				FileSystemProviderCapabilities.PathCaseSensitive,
+		);
 
 		// Register this service with RPC so MainThread can call `$acceptProviderInfos`.
 		if (this._rpcService) {
 			try {
 				this._rpcService.set(
 					ExtHostContext.ExtHostFileSystemInfo as ProxyIdentifier<VscodeExtHostFileSystemInfoShape>,
+
 					this,
 				);
-				this._log("Registered self for RPC calls from MainThread (ExtHostFileSystemInfo).");
-			} catch (e:any) {
-				this._logError("Failed to set self for RPC (ExtHostFileSystemInfo):", e);
+
+				this._log(
+					"Registered self for RPC calls from MainThread (ExtHostFileSystemInfo).",
+				);
+			} catch (e: any) {
+				this._logError(
+					"Failed to set self for RPC (ExtHostFileSystemInfo):",
+
+					e,
+				);
 			}
 		} else {
-            // If no RPC, $acceptProviderInfos will not be callable from MainThread.
-            this._logWarn("RPCService not available. Dynamic updates to provider capabilities via $acceptProviderInfos will not be possible.");
-        }
+			// If no RPC, $acceptProviderInfos will not be callable from MainThread.
 
-		this._log(`Initialized. 'file' scheme case-sensitive: ${!isWindows}. extUri configured with dynamic capability lookup.`);
+			this._logWarn(
+				"RPCService not available. Dynamic updates to provider capabilities via $acceptProviderInfos will not be possible.",
+			);
+		}
+
+		this._log(
+			`Initialized. 'file' scheme case-sensitive: ${!isWindows}. extUri configured with dynamic capability lookup.`,
+		);
 	}
 
 	// --- IExtHostFileSystemInfo Implementation ---
@@ -176,7 +205,9 @@ export class ShimExtHostFileSystemInfo
 	 * @param scheme The URI scheme (e.g., "file", "untitled", "vscode-remote").
 	 * @returns The `FileSystemProviderCapabilities` for the scheme, or `undefined` if unknown.
 	 */
-	public getCapabilities(scheme: string): FileSystemProviderCapabilities | undefined {
+	public getCapabilities(
+		scheme: string,
+	): FileSystemProviderCapabilities | undefined {
 		return this._providerCapabilities.get(scheme);
 	}
 
@@ -189,14 +220,23 @@ export class ShimExtHostFileSystemInfo
 	 * @param capabilities The new capabilities bitmask, or `null` if the provider is being unregistered.
 	 */
 	public $acceptProviderInfos(
-		uriComponents: VSCodeInternalUriComponents, // Only scheme is typically used from here.
-		capabilities: FileSystemProviderCapabilities | null, // Type is number (bitmask)
+		// Only scheme is typically used from here.
+		uriComponents: VSCodeInternalUriComponents,
+
+		// Type is number (bitmask)
+		capabilities: FileSystemProviderCapabilities | null,
 	): void {
 		const scheme = uriComponents.scheme;
+
 		if (!scheme) {
-			this._logError("$acceptProviderInfos called with URI components lacking a scheme.", uriComponents);
+			this._logError(
+				"$acceptProviderInfos called with URI components lacking a scheme.",
+
+				uriComponents,
+			);
+
 			return;
-        }
+		}
 
 		// this._log(`RPC $acceptProviderInfos: scheme='${scheme}', new capabilities=${capabilities === null ? "'removed'" : capabilities}`);
 
@@ -207,19 +247,23 @@ export class ShimExtHostFileSystemInfo
 			}
 		} else {
 			this._providerCapabilities.set(scheme, capabilities);
-			this._log(`Capabilities for scheme '${scheme}' updated to: ${capabilities}. Current map size: ${this._providerCapabilities.size}`);
+
+			this._log(
+				`Capabilities for scheme '${scheme}' updated to: ${capabilities}. Current map size: ${this._providerCapabilities.size}`,
+			);
 		}
 
 		// Note: `this.extUri`'s behavior is dynamic because its callback calls `this.getCapabilities()`
 		// each time it needs to determine case sensitivity. So, no explicit update to `extUri` itself is needed here.
 	}
 
-    /**
-     * Disposes of resources held by this shim instance.
-     */
-    public override dispose(): void {
-        super.dispose(); // From BaseCocoonShim
-        // No specific event emitters or complex resources in this shim to dispose beyond what base handles.
-    }
+	/**
+	 * Disposes of resources held by this shim instance.
+	 */
+	public override dispose(): void {
+		// From BaseCocoonShim
+		super.dispose();
+
+		// No specific event emitters or complex resources in this shim to dispose beyond what base handles.
+	}
 }
---- END OF FILE file-system-info-shim.ts ---

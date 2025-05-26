@@ -15,6 +15,13 @@
  *   returns a `vscode.WorkspaceConfiguration` object.
  * - Managing an internal cache of the effective configuration values, initialized from
  *   `initData` and updated by RPC calls from Mountain (`$initializeConfiguration`,
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
  *   `$acceptConfigurationChanged`) or IPC events.
  * - `ShimWorkspaceConfigurationImpl` (internal class returned by `getConfiguration`):
  *   - Implements `vscode.WorkspaceConfiguration` methods (`get`, `has`, `inspect`, `update`).
@@ -36,27 +43,38 @@
  *   alternative or supplement to RPC push from Mountain.
  * - Uses `BaseCocoonShim` for common utilities.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
-import { EventEmitter } from "events"; // Node.js EventEmitter for onDidChangeConfiguration
+// Node.js EventEmitter for onDidChangeConfiguration
+import { EventEmitter } from "events";
 import type { Event as VscodeEvent } from "vs/base/common/event";
-import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions"; // For getConfigProvider (if extId is used)
+// For getConfigProvider (if extId is used)
+import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions";
 import {
-	ConfigurationTargetDto, // Protocol DTO for configuration target
-	ExtHostContext, // For registering this service for RPC from MainThread (if VscodeExtHostConfigurationShape is implemented)
-	MainContext, // For proxying to MainThreadConfiguration
-	type IConfigurationChange, // DTO for configuration change details (from protocol)
-	type IConfigurationInitData, // DTO for initial configuration data (from protocol)
-	type IConfigurationOverridesDto, // DTO for scope overrides (from protocol)
-	type ExtHostConfigurationShape as VscodeExtHostConfigurationShape, // RPC shape for methods called by MainThread
+	// Protocol DTO for configuration target
+	ConfigurationTargetDto,
+	// For registering this service for RPC from MainThread (if VscodeExtHostConfigurationShape is implemented)
+	ExtHostContext,
+	// For proxying to MainThreadConfiguration
+	MainContext,
+	// DTO for configuration change details (from protocol)
+	type IConfigurationChange,
+	// DTO for initial configuration data (from protocol)
+	type IConfigurationInitData,
+	// DTO for scope overrides (from protocol)
+	type IConfigurationOverridesDto,
+	// RPC shape for methods called by MainThread
+	type ExtHostConfigurationShape as VscodeExtHostConfigurationShape,
 } from "vs/workbench/api/common/extHost.protocol";
 
 // For onConfigurationChanged IPC event subscription
 import * as ipc from "../cocoon-ipc";
 import {
-	ConfigurationTarget as VscodeConfigurationTarget, // Public API enum
-	Uri as VscodeUri, // Public API URI type
+	// Public API enum
+	ConfigurationTarget as VscodeConfigurationTarget,
+	// Public API URI type
+	Uri as VscodeUri,
 	type ConfigurationChangeEvent as VscodeConfigurationChangeEvent,
 	type WorkspaceConfiguration as VscodeWorkspaceConfiguration,
 } from "../Shim/out/vscode";
@@ -82,10 +100,13 @@ interface MainThreadConfigurationProxyShape {
 	$getConfiguration(
 		args: [
 			string | null,
+
 			IConfigurationOverridesDto | null,
+
 			boolean | undefined,
 		],
 	): Promise<any>;
+
 	/**
 	 * Inspects configuration keys.
 	 * @param args Tuple: [keysArray]
@@ -93,6 +114,7 @@ interface MainThreadConfigurationProxyShape {
 	$inspect(
 		args: [string[]],
 	): Promise<{ [key: string]: any /* IConfigurationInspect<any> DTO */ }>;
+
 	/**
 	 * Updates a configuration option.
 	 * @param args Tuple: [targetDto, key, value, overridesDto, scopeToLanguageBoolean]
@@ -100,9 +122,13 @@ interface MainThreadConfigurationProxyShape {
 	$updateConfigurationOption(
 		args: [
 			ConfigurationTargetDto | null | undefined,
+
 			string,
+
 			any,
+
 			IConfigurationOverridesDto | null,
+
 			boolean | undefined,
 		],
 	): Promise<void>;
@@ -114,7 +140,9 @@ interface MainThreadConfigurationProxyShape {
  */
 interface ShimInitDataForConfig {
 	/** Snapshot of effective configuration values. */
-	effective?: { [key: string]: any }; // Aligns with IConfigurationInitData.effective
+	// Aligns with IConfigurationInitData.effective
+	effective?: { [key: string]: any };
+
 	// Or if a simpler structure like `values` was used in older shims:
 	// values?: any;
 }
@@ -123,10 +151,13 @@ interface ShimInitDataForConfig {
 interface MountainConfigNotificationPayload {
 	values: any;
 }
+
 /** Payload from Mountain's `$acceptConfigurationChanged` IPC notification: change details. */
 interface MountainConfigChangeDetails {
 	keys: string[];
-	overrides: [string, string[]][]; // [identifier, keys[]][]
+
+	// [identifier, keys[]][]
+	overrides: [string, string[]][];
 }
 
 /** Represents the scope for `vscode.workspace.getConfiguration`. */
@@ -145,14 +176,20 @@ export class ShimExtHostConfiguration
 	implements VscodeExtHostConfigurationShape
 {
 	// Implements RPC shape for calls from MainThread
-	public readonly _serviceBrand: undefined; // Required by VS Code's service types
+	// Required by VS Code's service types
+	public readonly _serviceBrand: undefined;
 
 	#mainThreadConfigurationProxy: MainThreadConfigurationProxyShape | null =
 		null;
-	#currentConfigurationState: any = {}; // Cache of the latest full effective configuration.
-	// #initDataSnapshot: any = {}; // If needed for comparison or reset to initial state.
 
-	readonly #onDidChangeConfigurationEmitter = new EventEmitter(); // Node.js EventEmitter
+	// Cache of the latest full effective configuration.
+	#currentConfigurationState: any = {};
+
+	// If needed for comparison or reset to initial state.
+	// #initDataSnapshot: any = {};
+
+	// Node.js EventEmitter
+	readonly #onDidChangeConfigurationEmitter = new EventEmitter();
 
 	/**
 	 * Creates an instance of ShimExtHostConfiguration.
@@ -162,16 +199,23 @@ export class ShimExtHostConfiguration
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
-		configurationInitData: IConfigurationInitData | undefined, // Expecting IConfigurationInitData from ExtHostInitData
+
+		// Expecting IConfigurationInitData from ExtHostInitData
+		configurationInitData: IConfigurationInitData | undefined,
+
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostConfiguration", rpcService, logService);
+
 		this._log("Initializing...");
 
 		if (configurationInitData?.effective) {
 			this.#currentConfigurationState = JSON.parse(
 				JSON.stringify(configurationInitData.effective),
-			); // Deep clone
+
+				// Deep clone
+			);
+
 			this._log(
 				"Initial configuration cache populated from initData.configurationData.effective.",
 			);
@@ -185,6 +229,7 @@ export class ShimExtHostConfiguration
 			this.#mainThreadConfigurationProxy = this._getProxy(
 				MainContext.MainThreadConfiguration as ProxyIdentifier<MainThreadConfigurationProxyShape>,
 			);
+
 			if (this.#mainThreadConfigurationProxy) {
 				this._log("MainThreadConfiguration RPC proxy obtained.");
 			} else {
@@ -192,18 +237,22 @@ export class ShimExtHostConfiguration
 					"MainThreadConfiguration RPC proxy NOT obtained. Configuration features will be severely impaired.",
 				);
 			}
+
 			// Register self for RPC calls from MainThreadConfiguration
 			try {
 				this._rpcService.set(
 					ExtHostContext.ExtHostConfiguration as ProxyIdentifier<VscodeExtHostConfigurationShape>,
+
 					this,
 				);
+
 				this._log(
 					"Registered self for RPC calls from MainThread (ExtHostConfiguration).",
 				);
 			} catch (e: any) {
 				this._logError(
 					"Failed to set self for RPC (ExtHostConfiguration):",
+
 					e,
 				);
 			}
@@ -219,6 +268,7 @@ export class ShimExtHostConfiguration
 			ipc.onConfigurationChanged(
 				([newConfigPayload, changeDetails]: [
 					MountainConfigNotificationPayload | null,
+
 					MountainConfigChangeDetails | undefined,
 				]) => {
 					if (
@@ -227,20 +277,27 @@ export class ShimExtHostConfiguration
 					) {
 						this._logError(
 							"IPC $acceptConfigurationChanged: Invalid newConfigPayload received.",
+
 							newConfigPayload,
 						);
+
 						return;
 					}
+
 					this._log(
 						`IPC $acceptConfigurationChanged: Updating cache. Affected keys from details: [${changeDetails?.keys?.join(", ") ?? "N/A"}]`,
 					);
+
 					this.#currentConfigurationState = JSON.parse(
 						JSON.stringify(newConfigPayload.values),
-					); // Deep clone
+
+						// Deep clone
+					);
 
 					const affectedKeysForEvent = new Set<string>(
 						changeDetails?.keys || [],
 					);
+
 					changeDetails?.overrides?.forEach(
 						([_identifier, overrideKeys]) => {
 							overrideKeys.forEach((key) =>
@@ -252,6 +309,7 @@ export class ShimExtHostConfiguration
 					const eventArg: VscodeConfigurationChangeEvent = {
 						affectsConfiguration: (
 							section: string,
+
 							scope?: VscodeUri,
 						): boolean => {
 							if (scope) {
@@ -259,7 +317,10 @@ export class ShimExtHostConfiguration
 									`ConfigurationChangeEvent.affectsConfiguration with scope checking is NOT fully implemented for IPC-triggered changes. Scope: ${scope.toString()}`,
 								);
 							}
-							if (!section) return true; // Any change affects root if section is empty/null.
+
+							// Any change affects root if section is empty/null.
+							if (!section) return true;
+
 							for (const key of affectedKeysForEvent) {
 								if (
 									key === section ||
@@ -267,19 +328,24 @@ export class ShimExtHostConfiguration
 								)
 									return true;
 							}
+
 							return false;
 						},
 					};
+
 					this.#onDidChangeConfigurationEmitter.emit(
 						"fire",
+
 						Object.freeze(eventArg),
 					);
+
 					this._log(
 						"Fired public onDidChangeConfiguration event due to IPC update.",
 					);
 				},
 			),
 		);
+
 		this._log(
 			"Subscribed to IPC configuration change events from Mountain.",
 		);
@@ -296,14 +362,22 @@ export class ShimExtHostConfiguration
 		this._log(
 			`RPC $initializeConfiguration received. Effective keys count: ${Object.keys(data.effective || {}).length}`,
 		);
+
 		this.#currentConfigurationState = JSON.parse(
 			JSON.stringify(data.effective || {}),
-		); // Deep clone
-		// this.#initDataSnapshot = JSON.parse(JSON.stringify(data.effective || {})); // Update initial snapshot too
+
+			// Deep clone
+		);
+
+		// Update initial snapshot too
+		// this.#initDataSnapshot = JSON.parse(JSON.stringify(data.effective || {}));
+
 		this._log(
 			"Configuration cache initialized/updated via $initializeConfiguration RPC.",
 		);
+
 		// Note: An onDidChangeConfiguration event is typically NOT fired for the initial load,
+
 		// unless this significantly differs from what was in the constructor's initData.
 		// VS Code's behavior is that getConfiguration calls before this often block or return empty.
 	}
@@ -316,29 +390,36 @@ export class ShimExtHostConfiguration
 	 */
 	public $acceptConfigurationChanged(
 		data: IConfigurationInitData,
+
 		change: IConfigurationChange,
 	): void {
 		this._log(
 			`RPC $acceptConfigurationChanged. Changed keys: [${change.keys.join(", ")}], Overrides affected: ${change.overrides?.length ?? 0}`,
 		);
+
 		this.#currentConfigurationState = JSON.parse(
 			JSON.stringify(data.effective || {}),
-		); // Update with new effective config
+
+			// Update with new effective config
+		);
 
 		const eventArg: VscodeConfigurationChangeEvent = {
 			affectsConfiguration: (
 				section: string,
+
 				scope?: VscodeUri,
 			): boolean => {
 				// Logic from VS Code's ExtHostConfiguration._lookUp(config, section, scopeURI)
 				// This checks if any of the changed keys or override changes affect the given section/scope.
-				if (!section) return true; // Empty section means "any change"
+				// Empty section means "any change"
+				if (!section) return true;
 
 				for (const key of change.keys) {
 					// Check top-level key changes
 					if (key === section || key.startsWith(section + "."))
 						return true;
 				}
+
 				if (change.overrides) {
 					// Check override changes
 					for (const override of change.overrides) {
@@ -346,12 +427,15 @@ export class ShimExtHostConfiguration
 						const scopeIdentifier = scope
 							? scope.languageId || scope.toString()
 							: undefined;
+
 						if (
 							scopeIdentifier &&
 							!override.identifiers.includes(scopeIdentifier)
 						) {
-							continue; // This override change doesn't apply to the queried scope.
+							// This override change doesn't apply to the queried scope.
+							continue;
 						}
+
 						// If the override applies to the scope (or scope is undefined, meaning any scope), check its keys.
 						for (const key of override.keys) {
 							if (
@@ -362,13 +446,17 @@ export class ShimExtHostConfiguration
 						}
 					}
 				}
+
 				return false;
 			},
 		};
+
 		this.#onDidChangeConfigurationEmitter.emit(
 			"fire",
+
 			Object.freeze(eventArg),
 		);
+
 		this._log(
 			"Fired public onDidChangeConfiguration event via RPC update ($acceptConfigurationChanged).",
 		);
@@ -384,9 +472,11 @@ export class ShimExtHostConfiguration
 	 */
 	public async getConfiguration(
 		section?: string,
+
 		scope?: VscodeConfigurationScope,
 	): Promise<VscodeWorkspaceConfiguration> {
 		let resourceFromScope: VscodeUri | undefined = undefined;
+
 		let languageIdFromScope: string | undefined = undefined;
 
 		if (scope instanceof VscodeUri) {
@@ -397,73 +487,100 @@ export class ShimExtHostConfiguration
 			(scope.uri || scope.languageId)
 		) {
 			resourceFromScope = scope.uri;
+
 			languageIdFromScope = scope.languageId;
 		}
 
 		// const scopeForLog = resourceFromScope ? resourceFromScope.toString() : (languageIdFromScope || "global");
+
 		// this._logService?.trace(`getConfiguration: Section='${section || "(root)"}', Scope='${scopeForLog}'`);
 
 		if (!this.#mainThreadConfigurationProxy) {
 			this._logError(
 				"Cannot getConfiguration: RPC proxy unavailable. Using potentially stale/initial cache.",
 			);
+
 			const cachedSectionValues = this._getSectionFromCache(
 				this.#currentConfigurationState,
+
 				section,
 			);
+
 			return this._createShimVscodeWorkspaceConfiguration(
 				cachedSectionValues || {},
+
 				section || "",
+
 				scope,
 			);
 		}
 
 		let configValuesFromMain: any = {};
+
 		try {
 			const resourceDto = resourceFromScope
 				? (this._convertApiArgToInternal(
 						resourceFromScope,
 					) as IConfigurationOverridesDto["resource"])
 				: undefined;
+
 			const overridesDto: IConfigurationOverridesDto = {
 				resource: resourceDto,
+
 				languageId: languageIdFromScope,
 			};
+
 			// `scopeToLanguage` (third param for $getConfiguration) is an internal VS Code concept,
+
 			// typically true if only languageId is provided in scope without a resource URI.
 			// For this shim, passing undefined as it's less critical for basic getConfiguration.
 			configValuesFromMain =
 				await this.#mainThreadConfigurationProxy.$getConfiguration([
 					section || null,
+
 					overridesDto,
+
 					undefined,
 				]);
 		} catch (error: any) {
 			const refinedError = refineErrorForShim(
 				error,
+
 				this._logService,
+
 				`getConfiguration(${section})`,
 			);
+
 			this._logError(
 				`getConfiguration RPC failed for Section='${section || "(root)"}', Scope=${JSON.stringify(scope)}. Error: ${refinedError.message}. Falling back to cache.`,
 			);
+
 			const cachedSectionValues = this._getSectionFromCache(
 				this.#currentConfigurationState,
+
 				section,
 			);
-			configValuesFromMain = cachedSectionValues || {}; // Fallback to cache on error
+
+			// Fallback to cache on error
+			configValuesFromMain = cachedSectionValues || {};
 		}
+
 		return this._createShimVscodeWorkspaceConfiguration(
 			configValuesFromMain || {},
+
 			section || "",
+
 			scope,
 		);
 	}
 
 	/** Extracts a specific section from a full configuration object. */
 	private _getSectionFromCache(fullConfig: any, section?: string): any {
-		if (!section) return fullConfig; // Return full object if no section specified.
+		// Return full object if no section specified.
+		if (!section) return fullConfig;
+
 		let current = fullConfig;
+
 		for (const part of section.split(".")) {
 			if (
 				current &&
@@ -473,19 +590,27 @@ export class ShimExtHostConfiguration
 			) {
 				current = current[part];
 			} else {
-				return undefined; // Section part not found
+				// Section part not found
+				return undefined;
 			}
 		}
+
 		return current;
 	}
 
 	/** Creates the `vscode.WorkspaceConfiguration` facade object. */
 	private _createShimVscodeWorkspaceConfiguration(
-		configSnapshotValues: any, // Values for the current section (or all if sectionPrefix is empty)
-		sectionPrefix: string, // The section prefix this configuration object represents (e.g., "editor")
-		originalScope?: VscodeConfigurationScope, // The scope this configuration was fetched for (for `update`)
+		// Values for the current section (or all if sectionPrefix is empty)
+		configSnapshotValues: any,
+
+		// The section prefix this configuration object represents (e.g., "editor")
+		sectionPrefix: string,
+
+		// The scope this configuration was fetched for (for `update`)
+		originalScope?: VscodeConfigurationScope,
 	): VscodeWorkspaceConfiguration {
-		const self = this; // For use in proxy and methods
+		// For use in proxy and methods
+		const self = this;
 
 		const lookupValue = <T>(key: string): T | undefined => {
 			// If key is empty, we are asking for the root of this configuration snapshot.
@@ -500,10 +625,13 @@ export class ShimExtHostConfiguration
 					this._logWarn(
 						`Failed to deep clone section root for '${sectionPrefix}': ${e.message}. Returning potentially mutable snapshot.`,
 					);
+
 					return configSnapshotValues;
 				}
 			}
+
 			let current = configSnapshotValues;
+
 			for (const part of key.split(".")) {
 				if (
 					current &&
@@ -516,6 +644,7 @@ export class ShimExtHostConfiguration
 					return undefined;
 				}
 			}
+
 			try {
 				// Deep clone to prevent mutation by extensions
 				return typeof current === "object" && current !== null
@@ -525,6 +654,7 @@ export class ShimExtHostConfiguration
 				this._logWarn(
 					`Failed to deep clone config value for '${sectionPrefix ? sectionPrefix + "." : ""}${key}': ${e.message}. Returning potentially mutable value.`,
 				);
+
 				return current;
 			}
 		};
@@ -532,24 +662,36 @@ export class ShimExtHostConfiguration
 		const workspaceConfigShim: VscodeWorkspaceConfiguration = {
 			get: <T>(key: string, defaultValue?: T): T | undefined => {
 				const value = lookupValue<T>(key);
+
 				return value !== undefined ? value : defaultValue;
 			},
+
 			has: (key: string): boolean => {
 				return lookupValue<any>(key) !== undefined;
 			},
+
 			inspect: async <T>(
 				key: string,
 			): Promise<
 				| {
 						/* ... IConfigurationInspect<T> properties ... */ key: string;
+
 						defaultValue?: T;
+
 						globalValue?: T;
+
 						workspaceValue?: T;
+
 						workspaceFolderValue?: T;
+
 						languageIds?: string[];
+
 						defaultLanguageValue?: T;
+
 						globalLanguageValue?: T;
+
 						workspaceLanguageValue?: T;
+
 						workspaceFolderLanguageValue?: T;
 				  }
 				| undefined
@@ -557,22 +699,28 @@ export class ShimExtHostConfiguration
 				const fullKeyToInspect = sectionPrefix
 					? `${sectionPrefix}.${key}`
 					: key;
+
 				if (!self.#mainThreadConfigurationProxy) {
 					self._logError(
 						"Cannot inspect configuration: RPC proxy unavailable.",
 					);
+
 					return undefined;
 				}
+
 				try {
 					// $inspect expects an array of keys.
 					const inspectResultMap =
 						await self.#mainThreadConfigurationProxy.$inspect([
 							[fullKeyToInspect],
 						]);
+
 					const inspectInfo = inspectResultMap
 						? inspectResultMap[fullKeyToInspect]
 						: undefined;
+
 					if (!inspectInfo) return undefined;
+
 					// Deep clone the result to prevent mutation.
 					// TODO: Revive any UriComponents within inspectInfo if present (e.g., for languageIds if they were URIs).
 					return typeof inspectInfo === "object" &&
@@ -582,35 +730,49 @@ export class ShimExtHostConfiguration
 				} catch (error: any) {
 					const refinedError = refineErrorForShim(
 						error,
+
 						self._logService,
+
 						`inspect(${fullKeyToInspect})`,
 					);
+
 					self._logError(
 						`Configuration.inspect RPC failed for key='${fullKeyToInspect}': ${refinedError.message}`,
 					);
+
 					return undefined;
 				}
 			},
+
 			update: async (
 				key: string,
+
 				value: any,
+
 				configurationTargetOrScope?:
 					| VscodeConfigurationTarget
 					| boolean
 					| VscodeConfigurationScope,
+
 				overrideInLanguageOrScope?: boolean | VscodeConfigurationScope,
 			): Promise<void> => {
 				const fullKeyToUpdate = sectionPrefix
 					? `${sectionPrefix}.${key}`
 					: key;
+
 				let targetDto: ConfigurationTargetDto | null | undefined = null;
+
 				let overridesDto: IConfigurationOverridesDto | null = null;
-				let scopeToLangDto: boolean | undefined = undefined; // VS Code internal flag
+
+				// VS Code internal flag
+				let scopeToLangDto: boolean | undefined = undefined;
 
 				let finalConfigurationTarget:
 					| VscodeConfigurationTarget
 					| undefined;
+
 				let finalOverrideInLanguage: boolean | undefined;
+
 				let finalScopeForOverrides:
 					| VscodeConfigurationScope
 					| undefined = originalScope;
@@ -618,6 +780,7 @@ export class ShimExtHostConfiguration
 				if (typeof configurationTargetOrScope === "number") {
 					// VscodeConfigurationTarget enum
 					finalConfigurationTarget = configurationTargetOrScope;
+
 					if (typeof overrideInLanguageOrScope === "boolean") {
 						finalOverrideInLanguage = overrideInLanguageOrScope;
 					} else if (overrideInLanguageOrScope) {
@@ -629,13 +792,17 @@ export class ShimExtHostConfiguration
 					finalConfigurationTarget = configurationTargetOrScope
 						? VscodeConfigurationTarget.Global
 						: VscodeConfigurationTarget.Workspace;
+
 					if (typeof overrideInLanguageOrScope === "boolean") {
 						// This would be overrideInLanguage
 						finalOverrideInLanguage = overrideInLanguageOrScope;
-					} // else if it's a scope, it's unusual here, but possible
+
+						// else if it's a scope, it's unusual here, but possible
+					}
 				} else if (configurationTargetOrScope) {
 					// It's a ConfigurationScope
 					finalScopeForOverrides = configurationTargetOrScope;
+
 					// If the first scope-like arg is a ConfigurationScope, the target is inferred or default.
 					// The second scope-like arg (overrideInLanguageOrScope) if boolean is overrideInLanguage.
 					if (typeof overrideInLanguageOrScope === "boolean") {
@@ -657,7 +824,8 @@ export class ShimExtHostConfiguration
 					finalConfigurationTarget ===
 					VscodeConfigurationTarget.Global
 				)
-					targetDto = ConfigurationTargetDto.UserLocal; // Or User if that's the mapping
+					// Or User if that's the mapping
+					targetDto = ConfigurationTargetDto.UserLocal;
 				else if (
 					finalConfigurationTarget ===
 					VscodeConfigurationTarget.Workspace
@@ -687,6 +855,7 @@ export class ShimExtHostConfiguration
 						resource: self._convertApiArgToInternal(
 							finalScopeForOverrides,
 						) as IConfigurationOverridesDto["resource"],
+
 						languageId: undefined,
 					};
 				} else if (
@@ -699,12 +868,14 @@ export class ShimExtHostConfiguration
 									finalScopeForOverrides.uri,
 								) as IConfigurationOverridesDto["resource"])
 							: undefined,
+
 						languageId: finalScopeForOverrides.languageId,
 					};
 				}
 
 				// Determine scopeToLangDto (for RPC - VS Code internal concept)
 				scopeToLangDto = finalOverrideInLanguage;
+
 				if (
 					finalOverrideInLanguage === undefined &&
 					overridesDto?.languageId &&
@@ -716,29 +887,41 @@ export class ShimExtHostConfiguration
 
 				if (!self.#mainThreadConfigurationProxy) {
 					const msg = `Cannot update configuration key='${fullKeyToUpdate}': RPC proxy unavailable.`;
+
 					self._logError(msg);
+
 					throw new Error(msg);
 				}
+
 				try {
 					await self.#mainThreadConfigurationProxy.$updateConfigurationOption(
 						[
 							targetDto,
+
 							fullKeyToUpdate,
+
 							value,
+
 							overridesDto,
+
 							scopeToLangDto,
 						],
 					);
+
 					// Configuration is updated on main thread; this ExtHost cache will be updated via $acceptConfigurationChanged.
 				} catch (error: any) {
 					const refinedError = refineErrorForShim(
 						error,
+
 						self._logService,
+
 						`update(${fullKeyToUpdate})`,
 					);
+
 					self._logError(
 						`Configuration.update RPC failed for key='${fullKeyToUpdate}': ${refinedError.message}`,
 					);
+
 					throw refinedError;
 				}
 			},
@@ -755,24 +938,33 @@ export class ShimExtHostConfiguration
 				) {
 					return Reflect.get(target, prop, receiver);
 				}
+
 				if (typeof prop === "string") {
 					// For direct property access like `config.editor` or `config.editor.fontSize`.
 					// `target.get(prop)` will return the value of `prop` within the current section.
 					// If `prop` itself represents a sub-section (e.g., `editor` from `config.editor`),
+
 					// `lookupValue(prop)` would return that sub-object.
 					// To support `config.editor.fontSize`, if `config.editor` returns an object,
+
 					// we'd need that object to also be a WorkspaceConfiguration or a proxy.
 					// Simpler for MVP: direct access `config.someKey` calls `config.get('someKey')`.
 					// Nested access `config.section.key` relies on `config.get('section')` returning an object,
+
 					// from which `key` is then accessed by JavaScript's property accessor.
 					return target.get(prop);
 				}
+
 				return Reflect.get(target, prop, receiver);
 			},
+
 			has(target, prop: string | symbol) {
 				if (prop in target || typeof prop === "symbol")
 					return Reflect.has(target, prop);
-				if (typeof prop === "string") return target.has(prop); // Calls target.has(prop)
+
+				// Calls target.has(prop)
+				if (typeof prop === "string") return target.has(prop);
+
 				return Reflect.has(target, prop);
 			},
 		}) as VscodeWorkspaceConfiguration;
@@ -782,6 +974,7 @@ export class ShimExtHostConfiguration
 	get onDidChangeConfiguration(): VscodeEvent<VscodeConfigurationChangeEvent> {
 		return this._createEventFromEmitter<VscodeConfigurationChangeEvent>(
 			this.#onDidChangeConfigurationEmitter,
+
 			"fire",
 		);
 	}
@@ -796,16 +989,21 @@ export class ShimExtHostConfiguration
 		return {
 			getConfiguration: (
 				section?: string,
+
 				scope?: VscodeConfigurationScope | ExtensionIdentifier,
+
 				_extensionId_unused?: ExtensionIdentifier,
 			) => {
 				// The VSCodeNodeModuleFactory might pass extensionId as the third param,
+
 				// but our getConfiguration takes scope as the second.
 				// We need to correctly interpret `scopeOrExtensionId`.
 				let actualScope: VscodeConfigurationScope | undefined =
 					undefined;
+
 				if (scope instanceof ExtensionIdentifier) {
 					// If second arg is ExtensionId, it implies no specific scope was passed by the require('vscode') call,
+
 					// or it's an older API. For modern getConfiguration, scope is Uri or {uri, langId}.
 					// We'll treat this as no scope.
 					this._logWarnOnce(
@@ -814,6 +1012,7 @@ export class ShimExtHostConfiguration
 				} else {
 					actualScope = scope;
 				}
+
 				return this.getConfiguration(section, actualScope);
 			},
 		};
@@ -823,8 +1022,12 @@ export class ShimExtHostConfiguration
 	 * Disposes of resources held by this shim instance.
 	 */
 	public override dispose(): void {
-		super.dispose(); // Disposes _instanceDisposables (which includes IPC listener)
-		this.#onDidChangeConfigurationEmitter.removeAllListeners(); // Clean up Node EventEmitter
+		// Disposes _instanceDisposables (which includes IPC listener)
+		super.dispose();
+
+		// Clean up Node EventEmitter
+		this.#onDidChangeConfigurationEmitter.removeAllListeners();
+
 		this._log("Disposed.");
 	}
 }
