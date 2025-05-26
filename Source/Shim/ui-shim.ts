@@ -27,7 +27,7 @@
  * - Could have used RPC proxies for more complex `vscode.window` interactions if
  *   corresponding MainThread services existed.
  *
- * Last Reviewed/Updated (as Legacy): [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 // For URI scheme checks if appRoot is URI
