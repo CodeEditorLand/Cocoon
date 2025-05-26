@@ -1,15 +1,3 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/136_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): 516b46ab77b018bc7d600afef55d63ccf3dfc754399890f304f80ceb4bc11828
-// Extracted to File: Backup/TSFMSC/Code/storage-paths-shim.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.044Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE storage-paths-shim.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Extension Storage Paths Shim (storage-paths-shim.ts)
  * --------------------------------------------------------------------------------------------
@@ -43,18 +31,21 @@
  *   simulated version) when creating `ExtensionContext` instances for extensions.
  * - Registered with Dependency Injection in `Cocoon/index.ts`.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
-import * as path from "path"; // Node.js path module for joining paths
+// Node.js path module for joining paths
+import * as path from "path";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions";
 
 // Use vscode.Uri from the API shim for consistency with what extensions expect
 import { Uri as VscodeUri } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
-	type IRpcProtocolServiceAdapter, // Renamed from IExtHostRpcService
-	type ILogServiceForShim,       // Renamed from ILogService
+	// Renamed from ILogService
+	type ILogServiceForShim,
+	// Renamed from IExtHostRpcService
+	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
 // Default import of the fs-shim object for directory creation
 import fsShimInstance from "./fs-shim";
@@ -82,6 +73,7 @@ interface StoragePathsEnvironment {
 	 * This may be undefined if no workspace is open.
 	 */
 	workspaceStorageHome?: UriComponentsForStorage | string;
+
 	// other environment properties might exist but are not used by this shim.
 }
 
@@ -90,20 +82,31 @@ interface StoragePathsEnvironment {
  * provides storage home locations as structured URI objects.
  */
 interface UriComponentsForStorage {
-	scheme: string;      // Should typically be 'file' for local storage paths.
-	fsPath: string;      // The absolute filesystem path.
-	path?: string;       // Often the same as fsPath for file URIs.
+	// Should typically be 'file' for local storage paths.
+	scheme: string;
+
+	// The absolute filesystem path.
+	fsPath: string;
+
+	// Often the same as fsPath for file URIs.
+	path?: string;
+
 	authority?: string;
+
 	query?: string;
+
 	fragment?: string;
-	external?: string;   // String representation, e.g., from URI.toString(true)
+
+	// String representation, e.g., from URI.toString(true)
+	external?: string;
 }
 
 /**
  * The public interface provided by this shim, aligning with VS Code's `IExtensionStoragePaths`.
  */
 export interface IExtensionStoragePathsShim {
-	readonly _serviceBrand: undefined; // For DI compatibility
+	// For DI compatibility
+	readonly _serviceBrand: undefined;
 
 	/**
 	 * Returns the workspace-specific storage URI for the given extension.
@@ -149,6 +152,7 @@ export class ShimExtensionStoragePaths
 
 	// Resolved absolute string path for the base global storage directory.
 	readonly #globalStoragePath: string;
+
 	// Resolved absolute string path for the base workspace storage directory, or null if not applicable.
 	readonly #workspaceStoragePath: string | null;
 
@@ -160,48 +164,75 @@ export class ShimExtensionStoragePaths
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
+
 		environment: StoragePathsEnvironment | undefined,
+
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtensionStoragePaths", rpcService, logService);
+
 		this._log("Initializing...");
 
 		// Define a default root for Cocoon data if specific paths are not provided.
 		// This helps ensure that storage paths can always be resolved, even in minimal setups.
-		const defaultCocoonDataRoot = path.resolve(process.cwd(), ".cocoon-data");
+		const defaultCocoonDataRoot = path.resolve(
+			process.cwd(),
+
+			".cocoon-data",
+		);
 
 		this.#globalStoragePath = this._resolvePathFromEnvData(
 			environment?.globalStorageHome,
-			path.join(defaultCocoonDataRoot, "globalStorage"), // Fallback for global path
-		) as string; // Cast as string because global always has a fallback
+
+			// Fallback for global path
+			path.join(defaultCocoonDataRoot, "globalStorage"),
+
+			// Cast as string because global always has a fallback
+		) as string;
 
 		this.#workspaceStoragePath = this._resolvePathFromEnvData(
 			environment?.workspaceStorageHome,
-			null, // No fallback for workspace path; it remains null if not provided by Mountain.
+
+			// No fallback for workspace path; it remains null if not provided by Mountain.
+			null,
 		);
 
 		this._log(`Global Storage Path Base: ${this.#globalStoragePath}`);
-		this._log(`Workspace Storage Path Base: ${this.#workspaceStoragePath ?? "N/A (No workspace or path provided from Mountain)"}`);
+
+		this._log(
+			`Workspace Storage Path Base: ${this.#workspaceStoragePath ?? "N/A (No workspace or path provided from Mountain)"}`,
+		);
 
 		// Asynchronously try to ensure the base directories exist.
 		// These calls are fire-and-forget from the constructor's perspective;
+
 		// `whenReady()` does not await their completion.
 		this._ensureDirectoryExists(this.#globalStoragePath).catch((err) =>
-			this._logError(`Background check/creation of global storage base directory failed: ${this.#globalStoragePath}`, err),
+			this._logError(
+				`Background check/creation of global storage base directory failed: ${this.#globalStoragePath}`,
+
+				err,
+			),
 		);
+
 		if (this.#workspaceStoragePath) {
-			this._ensureDirectoryExists(this.#workspaceStoragePath).catch((err) =>
-				this._logError(`Background check/creation of workspace storage base directory failed: ${this.#workspaceStoragePath}`, err),
+			this._ensureDirectoryExists(this.#workspaceStoragePath).catch(
+				(err) =>
+					this._logError(
+						`Background check/creation of workspace storage base directory failed: ${this.#workspaceStoragePath}`,
+
+						err,
+					),
 			);
 		}
 	}
 
-    /**
-     * This shim does not require RPC for its core functionality.
-     */
-    protected override _requiresRpc(): boolean {
-        return false;
-    }
+	/**
+	 * This shim does not require RPC for its core functionality.
+	 */
+	protected override _requiresRpc(): boolean {
+		return false;
+	}
 
 	/**
 	 * Resolves an absolute filesystem path from environment data.
@@ -213,19 +244,28 @@ export class ShimExtensionStoragePaths
 	 */
 	private _resolvePathFromEnvData(
 		envPathData: UriComponentsForStorage | string | undefined,
+
 		fallbackPathIfUnset: string | null,
 	): string | null {
 		if (envPathData) {
-			if (typeof envPathData === "object" && typeof envPathData.fsPath === "string") {
-				return path.resolve(envPathData.fsPath); // Use fsPath from UriComponents
+			if (
+				typeof envPathData === "object" &&
+				typeof envPathData.fsPath === "string"
+			) {
+				// Use fsPath from UriComponents
+				return path.resolve(envPathData.fsPath);
 			} else if (typeof envPathData === "string") {
-				return path.resolve(envPathData); // It's a direct string path
+				// It's a direct string path
+				return path.resolve(envPathData);
 			}
+
 			this._logWarn(
 				"envPathData for storage path was an object but not valid UriComponents with fsPath, or an unexpected type. Using fallback.",
+
 				envPathData,
 			);
 		}
+
 		return fallbackPathIfUnset ? path.resolve(fallbackPathIfUnset) : null;
 	}
 
@@ -235,27 +275,46 @@ export class ShimExtensionStoragePaths
 	 *
 	 * @param dirPath The absolute path of the directory to ensure. If `null`, the method is a NOP.
 	 */
-	private async _ensureDirectoryExists(dirPath: string | null): Promise<void> {
+	private async _ensureDirectoryExists(
+		dirPath: string | null,
+	): Promise<void> {
 		if (!dirPath) return;
 
 		try {
 			await fsShimInstance.promises.stat(dirPath);
+
 			// this._log(`Storage directory already exists: ${dirPath}`);
 		} catch (err: any) {
-			if (err.code === "ENOENT") { // "Error NO ENTry" (does not exist)
+			if (err.code === "ENOENT") {
+				// "Error NO ENTry" (does not exist)
 				this._log(`Attempting to create storage directory: ${dirPath}`);
+
 				try {
 					// Use fs-shim's mkdir, which is proxied to Mountain.
-					await fsShimInstance.promises.mkdir(dirPath, { recursive: true });
-					this._log(`Successfully created storage directory via fs-shim: ${dirPath}`);
+					await fsShimInstance.promises.mkdir(dirPath, {
+						recursive: true,
+					});
+
+					this._log(
+						`Successfully created storage directory via fs-shim: ${dirPath}`,
+					);
 				} catch (mkdirErr: any) {
-					this._logError(`Failed to create storage directory ${dirPath} via fs-shim:`, mkdirErr);
+					this._logError(
+						`Failed to create storage directory ${dirPath} via fs-shim:`,
+
+						mkdirErr,
+					);
+
 					// This failure might impact extensions relying on these paths.
 					// Depending on Cocoon's error strategy, this could be logged more severely or throw.
 				}
 			} else {
 				// Other errors during stat (e.g., permission issues).
-				this._logError(`Error during fs.promises.stat for directory ${dirPath} (it may exist but be inaccessible):`, err);
+				this._logError(
+					`Error during fs.promises.stat for directory ${dirPath} (it may exist but be inaccessible):`,
+
+					err,
+				);
 			}
 		}
 	}
@@ -269,14 +328,21 @@ export class ShimExtensionStoragePaths
 	 */
 	private _getPathUriForExtension(
 		extension: IExtensionDescription,
+
 		scopeIsGlobal: boolean,
 	): VscodeUri | undefined {
-		if (!extension?.identifier?.value) { // Check for valid extension identifier
-			this._logError("Cannot get storage path: Invalid extension descriptor or identifier provided.");
+		if (!extension?.identifier?.value) {
+			// Check for valid extension identifier
+			this._logError(
+				"Cannot get storage path: Invalid extension descriptor or identifier provided.",
+			);
+
 			return undefined;
 		}
 
-		const baseDir = scopeIsGlobal ? this.#globalStoragePath : this.#workspaceStoragePath;
+		const baseDir = scopeIsGlobal
+			? this.#globalStoragePath
+			: this.#workspaceStoragePath;
 
 		if (!baseDir) {
 			if (!scopeIsGlobal) {
@@ -288,35 +354,49 @@ export class ShimExtensionStoragePaths
 					`CRITICAL: Global storage base path is unexpectedly undefined! Cannot provide path for extension '${extension.identifier.value}'.`,
 				);
 			}
+
 			return undefined;
 		}
 
 		try {
 			// VS Code convention: use the lowercased extension ID for the subdirectory name.
 			const extensionSubDir = extension.identifier.value.toLowerCase();
+
 			const fullStoragePath = path.join(baseDir, extensionSubDir);
-			return VscodeUri.file(fullStoragePath); // Create a file URI
+
+			// Create a file URI
+			return VscodeUri.file(fullStoragePath);
 		} catch (e: any) {
 			this._logError(
 				`Failed to create file URI for storage path. Base: '${baseDir}', Extension ID: '${extension.identifier.value}'. Error:`,
+
 				e,
 			);
+
 			return undefined;
 		}
 	}
 
 	/**
 	 * {@inheritDoc IExtensionStoragePathsShim.workspaceValue}
+	 *
 	 */
-	public workspaceValue(extension: IExtensionDescription): VscodeUri | undefined {
+	public workspaceValue(
+		extension: IExtensionDescription,
+	): VscodeUri | undefined {
 		return this._getPathUriForExtension(extension, false /* not global */);
 	}
 
 	/**
 	 * {@inheritDoc IExtensionStoragePathsShim.globalValue}
+	 *
 	 */
 	public globalValue(extension: IExtensionDescription): VscodeUri {
-		const uri = this._getPathUriForExtension(extension, true /* is global */);
+		const uri = this._getPathUriForExtension(
+			extension,
+
+			true /* is global */,
+		);
 
 		if (!uri) {
 			// This should not happen if #globalStoragePath is always initialized.
@@ -324,17 +404,28 @@ export class ShimExtensionStoragePaths
 			this._logError(
 				`FATAL: globalValue for extension '${extension.identifier.value}' resulted in an undefined URI. This indicates a problem with globalStoragePath initialization. Returning emergency fallback URI.`,
 			);
+
 			// Provide a "best effort" emergency URI to satisfy the API contract (must return Uri).
 			// Extensions relying on this path for actual storage will likely fail.
-			const emergencyBase = this.#globalStoragePath || path.join(process.cwd(), ".cocoon-data-ERROR", "globalStorage");
-			const emergencyPath = path.join(emergencyBase, extension.identifier.value.toLowerCase());
+			const emergencyBase =
+				this.#globalStoragePath ||
+				path.join(process.cwd(), ".cocoon-data-ERROR", "globalStorage");
+
+			const emergencyPath = path.join(
+				emergencyBase,
+
+				extension.identifier.value.toLowerCase(),
+			);
+
 			return VscodeUri.file(emergencyPath);
 		}
+
 		return uri;
 	}
 
 	/**
 	 * {@inheritDoc IExtensionStoragePathsShim.whenReady}
+	 *
 	 */
 	public async whenReady(): Promise<void> {
 		// In this shim, storage paths are determined synchronously in the constructor.
@@ -350,13 +441,17 @@ export class ShimExtensionStoragePaths
 
 	/**
 	 * {@inheritDoc IExtensionStoragePathsShim.onWillDeactivateAll}
+	 *
 	 */
 	public onWillDeactivateAll(): void {
-		this._log("onWillDeactivateAll called (No-op in this shim regarding file locks).");
+		this._log(
+			"onWillDeactivateAll called (No-op in this shim regarding file locks).",
+		);
+
 		// In a full VS Code environment, this might be used to release file locks on storage
 		// directories if any were held by the extension host.
 		// The initData mock for Cocoon typically includes `skipWorkspaceStorageLock: true`,
+
 		// implying such locks are not a primary concern for this simplified host.
 	}
 }
---- END OF FILE storage-paths-shim.ts ---
