@@ -5,6 +5,7 @@
  * the `IExtHostTerminalService` interface. This shim manages the lifecycle of terminals,
  *
  *
+ *
  * interaction with them (sending text, showing/hiding), and handles terminal-related
  * environment variable collections.
  *
@@ -21,6 +22,7 @@
  *   - Exposes terminal lifecycle events (`onDidOpenTerminal`, `onDidCloseTerminal`, etc.),
  *
  *
+ *
  *     fired based on RPC notifications from Mountain.
  *   - Implements `getEnvironmentVariableCollection()`: Returns an instance of
  *     `ShimEnvironmentVariableCollectionImpl` for a given extension.
@@ -29,6 +31,7 @@
  *   - Represents a single terminal instance.
  *   - Proxies actions like `show()`, `hide()`, `sendText()`, `dispose()` to Mountain via RPC.
  *   - Manages properties like `name`, `processId` (as a promise), and `exitStatus`,
+ *
  *
  *
  *     which are updated by RPC calls from Mountain.
@@ -46,7 +49,7 @@
  *   to notify Mountain of environment changes.
  * - Relies on `BaseCocoonShim` for common utilities.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 import {
