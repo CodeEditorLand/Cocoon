@@ -1,15 +1,3 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/128_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): b7ac91798fc2567445f602b094c1b5dc94dc0325d3117383685559a279a975d9
-// Extracted to File: Backup/TSFMSC/Code/node-module-shim-factory.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.031Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE node-module-shim-factory.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Node.js Built-in Modules Shim Factory (node-module-shim-factory.ts)
  * --------------------------------------------------------------------------------------------
@@ -28,6 +16,7 @@
  * - Implementing the `load` method, which is invoked by the `NodeRequireInterceptor`
  *   when a `require()` call targets one of the handled module names.
  * - Returning the appropriate Cocoon shim module instance (e.g., from `fs-shim.ts`,
+ * 
  *   `os-shim.ts`, etc.) for the requested module.
  * - For modules not explicitly handled by this factory, it delegates to the original
  *   Node.js `require` mechanism via the `originalLoad` function provided by the interceptor.
@@ -38,27 +27,32 @@
  * - Relies on individual shim files (e.g., `fs-shim.ts`, `os-shim.ts`) to provide the
  *   actual shim implementations.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 // Import the shims for Node.js built-in modules.
 // These are typically default exports from their respective shim files.
-import cryptoShimInstance from "./crypto-shim";
-import fsShimInstanceFromFile from "./fs-shim"; // Default export from fs-shim.ts
-import osShimInstance from "./os-shim";
-import processShimInstance from "./process-shim";
 
 // For parentUri type in INodeModuleFactory, assuming from vscode API shim or VS Code internals.
 // If using the actual vscode.Uri from the `vscode` module shim, ensure it's compatible.
-import type { Uri as VscodeUri } from "vscode"; // Or `../Shim/out/vscode`
+// Or `../Shim/out/vscode`
+import type { Uri as VscodeUri } from "vscode";
+
+import cryptoShimInstance from "./crypto-shim";
+// Default export from fs-shim.ts
+import fsShimInstanceFromFile from "./fs-shim";
+import osShimInstance from "./os-shim";
+import processShimInstance from "./process-shim";
 
 // --- Type Definitions ---
 
 /**
  * Interface for a factory that can provide modules, typically shims,
+ *
  * for Node.js built-in module names when intercepted by `NodeRequireInterceptor`.
  *
  * TODO: This interface should ideally be defined in a central location (e.g.,
+ *
  * alongside `NodeRequireInterceptor`'s definition or in a shared `types.ts`)
  * if it's used by multiple module factories within the Cocoon project.
  */
@@ -86,7 +80,9 @@ export interface INodeModuleFactory {
 	 */
 	load(
 		request: string,
+
 		parentUri: VscodeUri | undefined,
+
 		originalLoad: (request: string) => any,
 	): any;
 
@@ -111,9 +107,13 @@ export class NodeModuleShimFactory implements INodeModuleFactory {
 	 */
 	public readonly nodeModuleName: readonly string[] = [
 		"fs",
+
 		"os",
+
 		"crypto",
+
 		"process",
+
 		// TODO: Consider adding other Node.js built-ins if they require shimming or controlled access:
 		// 'path', 'child_process', 'http', 'https', 'url', 'util', 'assert', 'stream', 'zlib', 'vm', 'worker_threads'.
 		// For each, a decision must be made:
@@ -133,11 +133,14 @@ export class NodeModuleShimFactory implements INodeModuleFactory {
 	 */
 	public load(
 		request: string,
+
 		parentUri: VscodeUri | undefined,
+
 		originalLoad: (request: string) => any,
 	): any {
 		const requesterPath = parentUri
-			? parentUri.fsPath || parentUri.toString() // Prefer fsPath for readability
+			? // Prefer fsPath for readability
+				parentUri.fsPath || parentUri.toString()
 			: "an unknown module";
 
 		// Log sparingly, or make this a trace log, as it can be very frequent.
@@ -149,17 +152,22 @@ export class NodeModuleShimFactory implements INodeModuleFactory {
 			case "fs":
 				// Note: `fsShimInstanceFromFile` is the default export from `./fs-shim.ts`
 				return fsShimInstanceFromFile;
+
 			case "process":
 				return processShimInstance;
+
 			case "os":
 				return osShimInstance;
+
 			case "crypto":
 				return cryptoShimInstance;
 
 			// Example: How 'path' might be handled if direct pass-through is acceptable.
 			// case "path":
 			//   console.log(`[Cocoon Node Shim Factory] Delegating require('path') to original Node.js loader.`);
-			//   return originalLoad("node:path"); // Prefer `node:` prefix for built-ins if using originalLoad
+
+			// Prefer `node:` prefix for built-ins if using originalLoad
+			//   return originalLoad("node:path");
 
 			default:
 				// This case should ideally not be hit if `NodeRequireInterceptor` only calls this factory
@@ -169,16 +177,22 @@ export class NodeModuleShimFactory implements INodeModuleFactory {
 				console.warn(
 					`[Cocoon Node Shim Factory] Module '${request}' was expected to be handled but no specific shim is defined in the factory. Attempting original load. This might indicate a configuration mismatch.`,
 				);
+
 				try {
 					// Attempt to load using the original Node.js require mechanism.
 					// Prefer using the `node:` prefix for clarity if `request` doesn't already have it.
-					const prefixedRequest = request.startsWith("node:") ? request : `node:${request}`;
+					const prefixedRequest = request.startsWith("node:")
+						? request
+						: `node:${request}`;
+
 					return originalLoad(prefixedRequest);
 				} catch (e: any) {
 					console.error(
 						`[Cocoon Node Shim Factory] Original loader failed for unshimmed module '${request}':`,
+
 						e.message,
 					);
+
 					// Rethrow the error so the `require()` call fails as it would in a standard Node environment.
 					throw e;
 				}
@@ -189,9 +203,12 @@ export class NodeModuleShimFactory implements INodeModuleFactory {
 	// It could be useful if, for example, an extension requires 'node:fs' but the factory is
 	// registered only for 'fs'. In such a case, this method could return 'fs'.
 	// public alternativeModuleName(requestedName: string): string | undefined {
+
 	//    if (requestedName === "node:fs" && this.nodeModuleName.includes("fs")) return "fs";
-	//    // ... other aliases
+
+	// ... other aliases
+	//
 	//    return undefined;
+
 	// }
 }
---- END OF FILE node-module-shim-factory.ts ---

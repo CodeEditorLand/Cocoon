@@ -1,15 +1,3 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/124_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): e7eac5777d3ce98229ab09b88de486f45ff5516bd2fd3e20639b2ef194531502
-// Extracted to File: Backup/TSFMSC/Code/os-shim.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.025Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE os-shim.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon OS Shim (os-shim.ts)
  * --------------------------------------------------------------------------------------------
@@ -18,12 +6,16 @@
  *
  * It delegates most functions and constants directly to the native Node.js 'os' module.
  * However, certain sensitive or environment-specific properties, like `hostname`,
+ * 
+ * 
  * are proxied to the Mountain host process to ensure extensions receive a consistent
  * or controlled view of the OS environment, rather than Cocoon's direct OS view.
  *
  * Responsibilities:
  * - Mimicking the interface of the Node.js 'os' module for commonly used functions.
  * - Directly delegating most OS information functions (e.g., `platform`, `arch`, `EOL`,
+ * 
+ * 
  *   `type`, `release`, `totalmem`, `freemem`, `cpus`, `networkInterfaces`, `userInfo`, `constants`)
  *   to the `node:os` module or `process` object.
  * - Proxying `hostname()` to Mountain via IPC, with fallbacks.
@@ -34,7 +26,7 @@
  * - Directly uses the `node:os` module and `process` object from the Node.js environment.
  * - Uses `sendToMountainAndWait` from `cocoon-ipc.ts` for the proxied `hostname()` call.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 // For direct delegation and constants
@@ -54,37 +46,54 @@ import { sendToMountainAndWait } from "../cocoon-ipc";
 export interface OsShim {
 	/** The operating system-specific end-of-line marker. */
 	EOL: string;
+
 	/** Returns the operating system CPU architecture for which the Node.js binary was compiled. */
 	arch(): string;
+
 	/** Returns the operating system platform. */
 	platform(): NodeJS.Platform;
+
 	/** Returns the hostname of the operating system, potentially proxied from Mountain. */
 	hostname(): Promise<string>;
+
 	/** Returns the string path of the current user's home directory. */
 	homedir(): string;
+
 	/** Returns the operating system's default directory for temporary files as a string. */
 	tmpdir(): string;
+
 	/** Contains commonly used operating system-specific constants. */
 	constants: typeof nodeOs.constants;
+
 	/** Returns the operating system name as returned by `uname`. */
 	type(): string;
+
 	/** Returns the operating system release. */
 	release(): string;
+
 	/** Returns the total amount of system memory in bytes as an integer. */
 	totalmem(): number;
+
 	/** Returns the amount of free system memory in bytes as an integer. */
 	freemem(): number;
+
 	/** Returns an array of objects containing information about each logical CPU core. */
 	cpus(): NodeOsTypes.CpuInfo[];
+
 	/** Returns an object containing network interfaces that have been assigned a network address. */
 	networkInterfaces(): NodeJS.Dict<NodeOsTypes.NetworkInterfaceInfo[]>;
+
 	/**
 	 * Returns information about the currently effective user.
 	 * On POSIX platforms, this is typically a subset of the password file.
 	 * On Windows, the `uid` and `gid` fields are -1, and `shell` is null.
 	 */
-	userInfo(options?: { encoding: BufferEncoding }): NodeOsTypes.UserInfo<string>;
+	userInfo(options?: {
+		encoding: BufferEncoding;
+	}): NodeOsTypes.UserInfo<string>;
+
 	userInfo(options: { encoding: "buffer" }): NodeOsTypes.UserInfo<Buffer>;
+
 	// TODO: Add other os functions as needed by extensions, deciding for each:
 	// 1. Delegate to `nodeOs.<function>` (if safe and provides correct info for Cocoon's context).
 	// 2. Proxy to Mountain via `sendToMountainAndWait("os_<functionName>", params)`.
@@ -100,26 +109,38 @@ const osShimInstance: OsShim = {
 
 	// `process.platform` and `process.arch` are generally reliable for the Cocoon environment itself.
 	platform: (): NodeJS.Platform => process.platform,
+
 	arch: (): string => process.arch,
 
 	hostname: async (): Promise<string> => {
 		try {
 			const mountainHostname = await sendToMountainAndWait(
-				"os_hostname", // IPC method name
-				{},            // No parameters needed for hostname
-				2000,          // 2-second timeout
+				// IPC method name
+				"os_hostname",
+
+				// No parameters needed for hostname
+				{},
+
+				// 2-second timeout
+				2000,
 			);
 
-			if (typeof mountainHostname === "string" && mountainHostname.length > 0) {
+			if (
+				typeof mountainHostname === "string" &&
+				mountainHostname.length > 0
+			) {
 				return mountainHostname;
 			}
+
 			console.warn(
 				"[Cocoon OS Shim] os_hostname from Mountain returned invalid data, falling back to nodeOs.hostname(). Response:",
+
 				mountainHostname,
 			);
 		} catch (error: any) {
 			console.warn(
 				"[Cocoon OS Shim] Failed to get hostname from Mountain via IPC, falling back to nodeOs.hostname(). Error:",
+
 				error.message,
 			);
 		}
@@ -130,9 +151,12 @@ const osShimInstance: OsShim = {
 		} catch (nodeError: any) {
 			console.error(
 				"[Cocoon OS Shim] Fallback nodeOs.hostname() also failed. Returning 'localhost' as ultimate fallback. Error:",
+
 				nodeError.message,
 			);
-			return "localhost"; // Ultimate fallback
+
+			// Ultimate fallback
+			return "localhost";
 		}
 	},
 
@@ -145,7 +169,8 @@ const osShimInstance: OsShim = {
 		return (
 			process.env.HOME ||
 			process.env.USERPROFILE ||
-			(typeof nodeOs.homedir === 'function' ? nodeOs.homedir() : '') || // Check if homedir function exists
+			// Check if homedir function exists
+			(typeof nodeOs.homedir === "function" ? nodeOs.homedir() : "") ||
 			""
 		);
 	},
@@ -154,19 +179,23 @@ const osShimInstance: OsShim = {
 		// Node's os.tmpdir() usually provides a suitable temporary directory.
 		// Add fallbacks for robustness.
 		try {
-			let dir = typeof nodeOs.tmpdir === 'function' ? nodeOs.tmpdir() : '';
+			let dir =
+				typeof nodeOs.tmpdir === "function" ? nodeOs.tmpdir() : "";
+
 			if (dir) return dir;
 		} catch (e: any) {
 			console.warn(
 				`[Cocoon OS Shim] nodeOs.tmpdir() failed, attempting fallbacks. Error: ${e.message}`,
 			);
 		}
+
 		// Common environment variables for temp directory.
 		return (
 			process.env.TMPDIR ||
 			process.env.TMP ||
 			process.env.TEMP ||
-			(process.platform === "win32" ? "C:\\Windows\\Temp" : "/tmp") // Platform-specific common fallbacks
+			// Platform-specific common fallbacks
+			(process.platform === "win32" ? "C:\\Windows\\Temp" : "/tmp")
 		);
 	},
 
@@ -174,42 +203,86 @@ const osShimInstance: OsShim = {
 	constants: nodeOs.constants,
 
 	// --- Direct delegations for common, generally safe OS functions ---
-	type: (): string => (typeof nodeOs.type === 'function' ? nodeOs.type() : process.platform), // Fallback for type
-	release: (): string => (typeof nodeOs.release === 'function' ? nodeOs.release() : ''),
-	totalmem: (): number => (typeof nodeOs.totalmem === 'function' ? nodeOs.totalmem() : 0),
-	freemem: (): number => (typeof nodeOs.freemem === 'function' ? nodeOs.freemem() : 0),
-	cpus: (): NodeOsTypes.CpuInfo[] => (typeof nodeOs.cpus === 'function' ? nodeOs.cpus() : []),
+	// Fallback for type
+	type: (): string =>
+		typeof nodeOs.type === "function" ? nodeOs.type() : process.platform,
+
+	release: (): string =>
+		typeof nodeOs.release === "function" ? nodeOs.release() : "",
+
+	totalmem: (): number =>
+		typeof nodeOs.totalmem === "function" ? nodeOs.totalmem() : 0,
+
+	freemem: (): number =>
+		typeof nodeOs.freemem === "function" ? nodeOs.freemem() : 0,
+
+	cpus: (): NodeOsTypes.CpuInfo[] =>
+		typeof nodeOs.cpus === "function" ? nodeOs.cpus() : [],
+
 	networkInterfaces: (): NodeJS.Dict<NodeOsTypes.NetworkInterfaceInfo[]> =>
-		(typeof nodeOs.networkInterfaces === 'function' ? nodeOs.networkInterfaces() : {}),
+		typeof nodeOs.networkInterfaces === "function"
+			? nodeOs.networkInterfaces()
+			: {},
 
 	// userInfo needs to handle overloaded signature based on options.encoding
-	userInfo: (
-		options?: { encoding?: BufferEncoding | "buffer" },
-	): NodeOsTypes.UserInfo<string> | NodeOsTypes.UserInfo<Buffer> => {
+	userInfo: (options?: {
+		encoding?: BufferEncoding | "buffer";
+	}): NodeOsTypes.UserInfo<string> | NodeOsTypes.UserInfo<Buffer> => {
 		try {
-            if (typeof nodeOs.userInfo !== 'function') {
-                throw new Error("nodeOs.userInfo is not available in this Node.js version/environment.");
-            }
+			if (typeof nodeOs.userInfo !== "function") {
+				throw new Error(
+					"nodeOs.userInfo is not available in this Node.js version/environment.",
+				);
+			}
+
 			if (options?.encoding === "buffer") {
 				return nodeOs.userInfo({ encoding: "buffer" });
 			}
+
 			// The type `NodeOsTypes.UserInfoOptions` covers `{ encoding: BufferEncoding }`.
 			// If options is undefined, it defaults to UTF-8 string result.
-			return nodeOs.userInfo(options as { encoding: BufferEncoding } | undefined);
+			return nodeOs.userInfo(
+				options as { encoding: BufferEncoding } | undefined,
+			);
 		} catch (e: any) {
 			// userInfo can throw if user info is unavailable (e.g., in some sandboxed environments)
 			console.warn(
 				`[Cocoon OS Shim] nodeOs.userInfo() failed. Error: ${e.message}. Returning default/empty UserInfo.`,
 			);
+
 			// Return a default/empty UserInfo object to prevent crashes,
+
 			// matching Node's behavior of returning -1/null for some fields on Windows.
-            const emptyInfoString: NodeOsTypes.UserInfo<string> = { uid: -1, gid: -1, username: '', homedir: '', shell: null };
-            const emptyInfoBuffer: NodeOsTypes.UserInfo<Buffer> = { uid: -1, gid: -1, username: Buffer.from(''), homedir: Buffer.from(''), shell: null };
-			return options?.encoding === "buffer" ? emptyInfoBuffer : emptyInfoString;
+			const emptyInfoString: NodeOsTypes.UserInfo<string> = {
+				uid: -1,
+
+				gid: -1,
+
+				username: "",
+
+				homedir: "",
+
+				shell: null,
+			};
+
+			const emptyInfoBuffer: NodeOsTypes.UserInfo<Buffer> = {
+				uid: -1,
+
+				gid: -1,
+
+				username: Buffer.from(""),
+
+				homedir: Buffer.from(""),
+
+				shell: null,
+			};
+
+			return options?.encoding === "buffer"
+				? emptyInfoBuffer
+				: emptyInfoString;
 		}
 	},
 };
 
 // Default export for easy import by NodeModuleShimFactory.
 export default osShimInstance;
---- END OF FILE os-shim.ts ---
