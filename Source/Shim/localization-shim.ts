@@ -1,15 +1,3 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/140_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): 84de5b8c7922a903f9fb468ac42b7332b95e66594357347f371ca168667d8bb4
-// Extracted to File: Backup/TSFMSC/Code/localization-shim.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.051Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE localization-shim.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Localization Shim (localization-shim.ts)
  * --------------------------------------------------------------------------------------------
@@ -21,6 +9,8 @@
  * For Cocoon's MVP (Minimum Viable Product), this shim provides minimal functionality.
  * It typically returns unlocalized (default) strings or empty/undefined bundles, as
  * implementing full NLS, including bundle loading, parsing, and language negotiation,
+ * 
+ * 
  * is complex and often deferred.
  *
  * Responsibilities (as a stub):
@@ -35,27 +25,30 @@
  *   via RPC to fetch NLS bundles and language information.
  * - Uses `BaseCocoonShim` for logging.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 import { Event as VscodeEvent } from "vs/base/common/event";
 // For URI type if bundle URIs are handled
-import { URI as VSCodeInternalURI, type UriComponents as VSCodeInternalUriComponents } from "vs/base/common/uri";
+import {
+	URI as VSCodeInternalURI,
+	type UriComponents as VSCodeInternalUriComponents,
+} from "vs/base/common/uri";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
 // Actual VS Code interface definition
 import type { IExtHostLocalizationService as VscodeIExtHostLocalizationService } from "vs/workbench/api/common/extHostLocalizationService";
+
 // For vscode.Uri type consistency in API
 import { Uri as VscodeApiUri } from "../Shim/out/vscode";
-
-
 import {
 	BaseCocoonShim,
-	// ProxyIdentifier, // Uncomment if RPC is used
-	type IRpcProtocolServiceAdapter,
 	type ILogServiceForShim,
+	// Uncomment if RPC is used
+	// ProxyIdentifier,
+	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
 
 // TODO: Import MainContext if RPC calls are made to MainThreadLocalization
@@ -66,11 +59,15 @@ import {
  * This would define methods for fetching NLS bundle information and content.
  */
 // interface MainThreadLocalizationProxyShape {
+
 //     /** Fetches the URI for a built-in NLS bundle. */
 //     $fetchBuiltInBundleUri(id: string, language: string): Promise<VSCodeInternalUriComponents | undefined>;
+
 //     /** Fetches the content of an NLS bundle given its URI. */
 //     $fetchBundleContents(uriComponents: VSCodeInternalUriComponents): Promise<string>;
-//     // Potentially other methods for language packs, pseudotranslation status, etc.
+
+// Potentially other methods for language packs, pseudotranslation status, etc.
+//
 // }
 
 /**
@@ -79,9 +76,11 @@ import {
  */
 export class ShimExtHostLocalizationService
 	extends BaseCocoonShim
-	implements VscodeIExtHostLocalizationService // Implement the actual VS Code interface
+	implements VscodeIExtHostLocalizationService
 {
-	public readonly _serviceBrand: undefined; // Required by VS Code's service types
+	// Implement the actual VS Code interface
+	// Required by VS Code's service types
+	public readonly _serviceBrand: undefined;
 
 	// #mainThreadLocalizationProxy: MainThreadLocalizationProxyShape | null = null;
 
@@ -92,28 +91,35 @@ export class ShimExtHostLocalizationService
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
+
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostLocalizationService", rpcService, logService);
+
 		// this._log("Initialized (basic stub implementation).");
 
 		// If this service were to make RPC calls:
 		// if (this._rpcService) {
+
 		//     this.#mainThreadLocalizationProxy = this._getProxy(
 		//         MainContext.MainThreadLocalization as ProxyIdentifier<MainThreadLocalizationProxyShape>
 		//     );
+
 		// }
+
 		// if (!this.#mainThreadLocalizationProxy) {
+
 		//     this._logWarn("MainThreadLocalization proxy not available. Full NLS will be unavailable.");
+
 		// }
 	}
 
-    /**
-     * This shim, in its stubbed form, does not require RPC.
-     */
-    protected override _requiresRpc(): boolean {
-        return false;
-    }
+	/**
+	 * This shim, in its stubbed form, does not require RPC.
+	 */
+	protected override _requiresRpc(): boolean {
+		return false;
+	}
 
 	/**
 	 * Gets system-level translations for a given extension.
@@ -121,10 +127,13 @@ export class ShimExtHostLocalizationService
 	 * @param _extensionId The identifier of the extension (unused in stub).
 	 * @returns A promise resolving to `undefined`.
 	 */
-	public async getSystemTranslations(_extensionId: ExtensionIdentifier): Promise<Record<string, string> | undefined> {
+	public async getSystemTranslations(
+		_extensionId: ExtensionIdentifier,
+	): Promise<Record<string, string> | undefined> {
 		this._logWarnOnce(
 			"getSystemTranslations() STUB - returning undefined. Full NLS (system translations) not supported in Cocoon MVP.",
 		);
+
 		return undefined;
 	}
 
@@ -139,6 +148,7 @@ export class ShimExtHostLocalizationService
 		this._logWarnOnce(
 			`getBundle('${extensionId}') STUB - returning undefined. Full NLS (extension-specific bundles) not supported in Cocoon MVP.`,
 		);
+
 		return undefined;
 	}
 
@@ -149,10 +159,12 @@ export class ShimExtHostLocalizationService
 	 * @param extensionId The identifier string of the extension.
 	 * @returns `undefined` in this stub implementation.
 	 */
-	public getBundleUri(extensionId: string): VscodeApiUri | undefined { // Return type is vscode.Uri
+	public getBundleUri(extensionId: string): VscodeApiUri | undefined {
+		// Return type is vscode.Uri
 		this._logWarnOnce(
 			`getBundleUri('${extensionId}') STUB - returning undefined. Bundle URIs are not resolved in Cocoon MVP.`,
 		);
+
 		return undefined;
 	}
 
@@ -168,20 +180,24 @@ export class ShimExtHostLocalizationService
 	 * @param extension The description of the extension for which to initialize messages.
 	 * @returns A promise that resolves when initialization is complete (immediately in this stub).
 	 */
-	public async initializeLocalizedMessages(extension: IExtensionDescription): Promise<void> {
+	public async initializeLocalizedMessages(
+		extension: IExtensionDescription,
+	): Promise<void> {
 		// Log if an extension *expects* to have localized messages.
 		if (extension.localizedMessages?.default) {
 			this._log(
 				`Extension ${extension.identifier.value} has a default localizedMessages URI declared in its manifest: ${extension.localizedMessages.default.toString()}. NLS loading is currently stubbed.`,
 			);
+
 			// TODO: In a fuller implementation, this would involve:
 			// 1. Constructing the correct bundle URI (e.g., using `this.#mainThreadLocalizationProxy?.$fetchBuiltInBundleUri(...)` or resolving locally).
 			// 2. Fetching the bundle content (e.g., `this.#mainThreadLocalizationProxy?.$fetchBundleContents(...)`).
 			// 3. Parsing the JSON content and storing it (e.g., in a Map<extensionId, NlsBundle>) for `getBundle` to use.
 		} else {
-            // Can be verbose if many extensions don't have NLS
+			// Can be verbose if many extensions don't have NLS
 			// this._log(`initializeLocalizedMessages for ${extension.identifier.value} (extension has no default NLS bundle specified or NLS loading is stubbed).`);
-        }
+		}
+
 		return Promise.resolve();
 	}
 
@@ -189,14 +205,16 @@ export class ShimExtHostLocalizationService
 	 * An event that fires when localization has been initialized.
 	 * In this stub, it's a NOP event that never fires.
 	 */
-	public readonly onDidInitializeLocalization: VscodeEvent<void> = VscodeEvent.None;
+	public readonly onDidInitializeLocalization: VscodeEvent<void> =
+		VscodeEvent.None;
 
-    /**
-     * Disposes of resources held by this shim instance.
-     */
-    public override dispose(): void {
-        super.dispose(); // From BaseCocoonShim
-        // Dispose any event emitters or resources specific to this shim if they were created.
-    }
+	/**
+	 * Disposes of resources held by this shim instance.
+	 */
+	public override dispose(): void {
+		// From BaseCocoonShim
+		super.dispose();
+
+		// Dispose any event emitters or resources specific to this shim if they were created.
+	}
 }
---- END OF FILE localization-shim.ts ---
