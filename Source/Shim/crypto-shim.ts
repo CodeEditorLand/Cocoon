@@ -5,9 +5,9 @@
  * supplied by the `NodeModuleShimFactory` when an extension executes `require('crypto')`.
  *
  * For most common and generally safe cryptographic operations (such as hashing, HMAC,
- * 
- * 
- * 
+ *
+ *
+ *
  * random byte generation, and UUID creation), this shim delegates directly to the
  * native Node.js 'crypto' module available in the Cocoon environment.
  *
