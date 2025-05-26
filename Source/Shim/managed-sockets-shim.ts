@@ -1,15 +1,3 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/142_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): d67188d0d7acdc10a623ef583ede0de4edfd2f1d2c66649046da27148c003eb1
-// Extracted to File: Backup/TSFMSC/Code/managed-sockets-shim.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.054Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE managed-sockets-shim.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Managed Sockets Shim (managed-sockets-shim.ts)
  * --------------------------------------------------------------------------------------------
@@ -34,46 +22,59 @@
  *   service via RPC.
  * - Uses `BaseCocoonShim` for logging.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
-import { Event as VscodeEvent } from "vs/base/common/event"; // For VscodeEvent.None
+// For VscodeEvent.None
 import type { VSBuffer } from "vs/base/common/buffer";
+import { Event as VscodeEvent } from "vs/base/common/event";
 // Actual VS Code interface definition
 import type {
 	IExtHostManagedSockets as VscodeIExtHostManagedSockets,
-    // Import other related types from VS Code if used in method signatures, e.g.,
-    // type ManagedSocketContext, type SocketDetails,
+	// Import other related types from VS Code if used in method signatures, e.g.,
+	// type ManagedSocketContext, type SocketDetails,
 } from "vs/workbench/api/common/extHostManagedSockets";
 
 import {
 	BaseCocoonShim,
-	// ProxyIdentifier, // Uncomment if RPC is used
-	type IRpcProtocolServiceAdapter,
 	type ILogServiceForShim,
+	// Uncomment if RPC is used
+	// ProxyIdentifier,
+	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
 
 // TODO: Import MainContext, ExtHostContext, and DTOs if RPC calls are implemented.
 // import { MainContext, ExtHostContext } from "vs/workbench/api/common/extHost.protocol";
+
 // import type { MainThreadManagedSocketsShape, ExtHostManagedSocketsShape } from "vs/workbench/api/common/extHost.protocol";
 
 /**
  * Placeholder for the RPC shape of `MainThreadManagedSockets`.
  */
 // interface MainThreadManagedSocketsProxyShape {
-//     // Example methods:
+
+// Example methods:
+//
 //     $registerSocketFactory(socketFactoryId: number): Promise<void>;
+
 //     $unregisterSocketFactory(socketFactoryId: number): Promise<void>;
+
 //     $connect(remoteAuthority: string, host: string, port: number, isSSL: boolean, proposedHandle?: number): Promise<number>;
-//     // ... other methods for socket lifecycle and data transfer
+
+// ... other methods for socket lifecycle and data transfer
+//
 // }
 
 /**
  * Placeholder for the RPC shape of methods on this ExtHost service called by Mountain.
  */
 // interface CocoonExtHostManagedSocketsRpcShape extends ExtHostManagedSocketsShape {
-//     // Example (from VscodeExtHostManagedSocketsShape):
-//     // $openRemoteSocket(socketFactoryId: number, req: remoteExtensionsUtil.Request): Promise<number>;
+
+// Example (from VscodeExtHostManagedSocketsShape):
+//
+// $openRemoteSocket(socketFactoryId: number, req: remoteExtensionsUtil.Request): Promise<number>;
+
+//
 // }
 
 /**
@@ -82,9 +83,11 @@ import {
  */
 export class ShimExtHostManagedSockets
 	extends BaseCocoonShim
-	implements VscodeIExtHostManagedSockets // VscodeIExtHostManagedSockets might also extend an RPC shape
+	// VscodeIExtHostManagedSockets might also extend an RPC shape
+	implements VscodeIExtHostManagedSockets
 {
-	public readonly _serviceBrand: undefined; // Required by VS Code's service types
+	// Required by VS Code's service types
+	public readonly _serviceBrand: undefined;
 
 	// #mainThreadManagedSocketsProxy: MainThreadManagedSocketsProxyShape | null = null;
 
@@ -95,30 +98,39 @@ export class ShimExtHostManagedSockets
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
+
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostManagedSockets", rpcService, logService);
+
 		// this._log("Initialized (basic stub implementation).");
 
 		// If this service were to make RPC calls or receive them:
 		// if (this._rpcService) {
+
 		//     this.#mainThreadManagedSocketsProxy = this._getProxy(
 		//         MainContext.MainThreadManagedSockets as ProxyIdentifier<MainThreadManagedSocketsProxyShape>
 		//     );
-		//     // If this service has methods called BY MainThread:
+
+		// If this service has methods called BY MainThread:
+		//
 		//     this._rpcService.set(ExtHostContext.ExtHostManagedSockets as ProxyIdentifier<CocoonExtHostManagedSocketsRpcShape>, this);
+
 		// }
+
 		// if (!this.#mainThreadManagedSocketsProxy) {
+
 		//     this._logWarn("MainThreadManagedSockets proxy not available. Managed socket features will be non-functional.");
+
 		// }
 	}
 
-    /**
-     * This shim, in its stubbed form, does not require RPC.
-     */
-    protected override _requiresRpc(): boolean {
-        return false;
-    }
+	/**
+	 * This shim, in its stubbed form, does not require RPC.
+	 */
+	protected override _requiresRpc(): boolean {
+		return false;
+	}
 
 	// --- IExtHostManagedSockets Implementation (Stubs for MVP) ---
 
@@ -127,7 +139,10 @@ export class ShimExtHostManagedSockets
 	 * This is a NOP event in the current stub.
 	 */
 	public get onDidResurrectConnection(): VscodeEvent<number> {
-		this._logWarnOnce("onDidResurrectConnection STUB - returning NOP event (VscodeEvent.None).");
+		this._logWarnOnce(
+			"onDidResurrectConnection STUB - returning NOP event (VscodeEvent.None).",
+		);
+
 		return VscodeEvent.None;
 	}
 
@@ -137,13 +152,20 @@ export class ShimExtHostManagedSockets
 	 */
 	public connectPort(
 		remoteAuthority: string,
+
 		host: string,
+
 		port: number,
+
 		isSSL: boolean,
-		_proposedHandle?: number, // proposedHandle is often for internal VS Code use
+
+		// proposedHandle is often for internal VS Code use
+		_proposedHandle?: number,
 	): Promise<number> {
 		const message = `Managed Sockets: connectPort(${remoteAuthority}, ${host}:${port}, ssl=${isSSL}) is not supported in Cocoon MVP.`;
+
 		this._logWarn(message);
+
 		return Promise.reject(new Error(message));
 	}
 
@@ -153,14 +175,22 @@ export class ShimExtHostManagedSockets
 	 */
 	public createServer(
 		remoteAuthority: string,
+
 		host: string,
+
 		port: number,
+
 		isSSL: boolean,
+
 		_proposedHandle?: number,
-		_options?: any, // e.g., ServerListenOptions
+
+		// e.g., ServerListenOptions
+		_options?: any,
 	): Promise<number> {
 		const message = `Managed Sockets: createServer(${remoteAuthority}, ${host}:${port}, ssl=${isSSL}) is not supported in Cocoon MVP.`;
+
 		this._logWarn(message);
+
 		return Promise.reject(new Error(message));
 	}
 
@@ -170,11 +200,17 @@ export class ShimExtHostManagedSockets
 	 */
 	public async setTunnelSocket(
 		handle: number,
+
 		_socket: any /* net.Socket | NodeJsSocket */,
+
 		_localHost: string,
+
 		_localPort: number,
 	): Promise<void> {
-		this._logWarn(`setTunnelSocket for handle ${handle} STUB - No-Operation.`);
+		this._logWarn(
+			`setTunnelSocket for handle ${handle} STUB - No-Operation.`,
+		);
+
 		return Promise.resolve();
 	}
 
@@ -183,7 +219,10 @@ export class ShimExtHostManagedSockets
 	 * This is a NOP in the current stub.
 	 */
 	public async disposeSocket(handle: number): Promise<void> {
-		this._logWarn(`disposeSocket for handle ${handle} STUB - No-Operation.`);
+		this._logWarn(
+			`disposeSocket for handle ${handle} STUB - No-Operation.`,
+		);
+
 		return Promise.resolve();
 	}
 
@@ -193,10 +232,15 @@ export class ShimExtHostManagedSockets
 	 */
 	public async writeSocket(
 		handle: number,
+
 		buffer: VSBuffer,
+
 		_options?: { fin?: boolean | undefined } | undefined,
 	): Promise<void> {
-		this._logWarn(`writeSocket for handle ${handle} (data length: ${buffer.byteLength}) STUB - No-Operation.`);
+		this._logWarn(
+			`writeSocket for handle ${handle} (data length: ${buffer.byteLength}) STUB - No-Operation.`,
+		);
+
 		return Promise.resolve();
 	}
 
@@ -206,6 +250,7 @@ export class ShimExtHostManagedSockets
 	 */
 	public async endSocket(handle: number): Promise<void> {
 		this._logWarn(`endSocket for handle ${handle} STUB - No-Operation.`);
+
 		return Promise.resolve();
 	}
 
@@ -213,11 +258,15 @@ export class ShimExtHostManagedSockets
 	 * Retrieves the underlying local socket for a managed handle.
 	 * Returns `undefined` in the current stub.
 	 */
-	public async getSocket(handle: number): Promise<any /* net.Socket | NodeJsSocket */ | undefined> {
-		this._logWarn(`getSocket for handle ${handle} STUB - returning undefined.`);
+	public async getSocket(
+		handle: number,
+	): Promise<any /* net.Socket | NodeJsSocket */ | undefined> {
+		this._logWarn(
+			`getSocket for handle ${handle} STUB - returning undefined.`,
+		);
+
 		return Promise.resolve(undefined);
 	}
-
 
 	// --- Methods from ExtHostManagedSocketsShape (called by MainThread, if implemented) ---
 	// These would handle actual socket operations if proxied from Mountain.
@@ -227,9 +276,14 @@ export class ShimExtHostManagedSockets
 	 * (RPC Stub) Called by MainThread to request opening a remote socket via a factory.
 	 * Throws an error as this is not implemented.
 	 */
-	public async $openRemoteSocket(_socketFactoryId: number, /* _req: remoteExtensionsUtil.Request */): Promise<number> {
-		const message = "RPC $openRemoteSocket called, but not implemented in Cocoon ExtHostManagedSockets shim.";
+	public async $openRemoteSocket(
+		_socketFactoryId: number /* _req: remoteExtensionsUtil.Request */,
+	): Promise<number> {
+		const message =
+			"RPC $openRemoteSocket called, but not implemented in Cocoon ExtHostManagedSockets shim.";
+
 		this._logWarn(message);
+
 		throw new Error(message);
 	}
 
@@ -252,15 +306,17 @@ export class ShimExtHostManagedSockets
 	 */
 	public async $remoteSocketDrain(_socketId: number): Promise<void> {
 		this._logWarnOnce("RPC $remoteSocketDrain STUB - No-Operation.");
+
 		return Promise.resolve();
 	}
 
-    /**
-     * Disposes of resources held by this shim instance.
-     */
-    public override dispose(): void {
-        super.dispose(); // From BaseCocoonShim
-        // Dispose any event emitters or resources specific to this shim if they were created.
-    }
+	/**
+	 * Disposes of resources held by this shim instance.
+	 */
+	public override dispose(): void {
+		// From BaseCocoonShim
+		super.dispose();
+
+		// Dispose any event emitters or resources specific to this shim if they were created.
+	}
 }
---- END OF FILE managed-sockets-shim.ts ---
