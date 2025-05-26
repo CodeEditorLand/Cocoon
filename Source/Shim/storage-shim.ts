@@ -1,15 +1,3 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/138_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): defcc648915807a7a821a9835d2423896ed7dbc5231dd6a47f2c27051871446f
-// Extracted to File: Backup/TSFMSC/Code/storage-shim.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.047Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE storage-shim.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Storage (Memento) Shim (storage-shim.ts)
  * --------------------------------------------------------------------------------------------
@@ -41,14 +29,17 @@
  * - All data operations are RPC calls to `MainContext.MainThreadStorage` on Mountain.
  * - Uses `BaseCocoonShim` for common utilities like RPC proxy retrieval and logging.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 import { MainContext } from "vs/workbench/api/common/extHost.protocol";
 // Import VS Code's internal IExtHostStorage interface for type compatibility if this shim is registered as such.
 import {
-	// MementoUpdateArguments, // Not directly used by this shim's public API consumption
-	type MementoKeysOptions,    // Options for Memento.keys()
+	// Not directly used by this shim's public API consumption
+	// MementoUpdateArguments,
+
+	// Options for Memento.keys()
+	type MementoKeysOptions,
 	type IExtHostStorage as VscodeIExtHostStorage,
 } from "vs/workbench/api/common/extHostStorage";
 // Use vscode.Memento interface from the public API definitions.
@@ -56,9 +47,10 @@ import type { Memento as VscodeMemento } from "vscode";
 
 import {
 	BaseCocoonShim,
-	refineErrorForShim, // Using the more specific refineError from BaseCocoonShim
-	type IRpcProtocolServiceAdapter,
+	// Using the more specific refineError from BaseCocoonShim
+	refineErrorForShim,
 	type ILogServiceForShim,
+	type IRpcProtocolServiceAdapter,
 	type ProxyIdentifier,
 } from "./_baseShim";
 
@@ -72,8 +64,11 @@ import {
  * - `APPLICATION` (1) typically corresponds to global, application-wide storage.
  */
 enum InternalMementoScope {
-	PROFILE = 0,     // Workspace or Profile-specific
-	APPLICATION = 1, // Global/Application-wide
+	// Workspace or Profile-specific
+	PROFILE = 0,
+
+	// Global/Application-wide
+	APPLICATION = 1,
 }
 
 /**
@@ -86,7 +81,11 @@ interface MainThreadStorageShape {
 	 * @param target An object specifying the scope and key.
 	 * @returns A promise resolving to the value, or `undefined` if not found.
 	 */
-	$getValue<T>(target: { scope: InternalMementoScope; key: string }): Promise<T | undefined>;
+	$getValue<T>(target: {
+		scope: InternalMementoScope;
+
+		key: string;
+	}): Promise<T | undefined>;
 
 	/**
 	 * Sets or deletes a value in storage.
@@ -94,7 +93,11 @@ interface MainThreadStorageShape {
 	 * @param target An object specifying the scope and key.
 	 * @param value The value to store, or `undefined` to delete the key.
 	 */
-	$setValue(target: { scope: InternalMementoScope; key: string }, value: any): Promise<void>;
+	$setValue(
+		target: { scope: InternalMementoScope; key: string },
+
+		value: any,
+	): Promise<void>;
 
 	/**
 	 * Retrieves all keys for a given storage scope.
@@ -102,10 +105,17 @@ interface MainThreadStorageShape {
 	 * @param options Optional filtering options for keys (new in VS Code 1.87+).
 	 * @returns A promise resolving to an array of key strings.
 	 */
-	$keys?(target: { scope: InternalMementoScope }, options?: MementoKeysOptions): Promise<string[]>;
+	$keys?(
+		target: { scope: InternalMementoScope },
 
-	// Optional: $initialize?(): Promise<void>; // If main thread needs explicit init
-	// Optional: $optimize?(): Promise<void>;   // If main thread supports compaction
+		options?: MementoKeysOptions,
+	): Promise<string[]>;
+
+	// If main thread needs explicit init
+	// Optional: $initialize?(): Promise<void>;
+
+	// If main thread supports compaction
+	// Optional: $optimize?(): Promise<void>;
 }
 
 /**
@@ -114,10 +124,16 @@ interface MainThreadStorageShape {
  */
 class ShimMementoImpl implements VscodeMemento {
 	readonly #scope: InternalMementoScope;
-	readonly #extensionId: string; // Used for logging and context.
+
+	// Used for logging and context.
+	readonly #extensionId: string;
+
 	readonly #mainThreadStorageProxy: MainThreadStorageShape | null;
+
 	readonly #logService?: ILogServiceForShim;
-	readonly #whenReadyPromise: Promise<void>; // API compatibility
+
+	// API compatibility
+	readonly #whenReadyPromise: Promise<void>;
 
 	/**
 	 * Creates an instance of ShimMementoImpl.
@@ -128,13 +144,21 @@ class ShimMementoImpl implements VscodeMemento {
 	 */
 	constructor(
 		extensionId: string,
+
 		isGlobalScope: boolean,
+
 		mainThreadStorageProxy: MainThreadStorageShape | null,
+
 		logService?: ILogServiceForShim,
 	) {
 		this.#extensionId = extensionId;
-		this.#scope = isGlobalScope ? InternalMementoScope.APPLICATION : InternalMementoScope.PROFILE;
+
+		this.#scope = isGlobalScope
+			? InternalMementoScope.APPLICATION
+			: InternalMementoScope.PROFILE;
+
 		this.#mainThreadStorageProxy = mainThreadStorageProxy;
+
 		this.#logService = logService;
 
 		// In this shim, Memento is "ready" immediately as data is fetched on demand.
@@ -147,18 +171,23 @@ class ShimMementoImpl implements VscodeMemento {
 	private _log(message: string, ...args: any[]): void {
 		this.#logService?.trace(
 			`[Memento][${this.#extensionId}][${InternalMementoScope[this.#scope]}] ${message}`,
+
 			...args,
 		);
 	}
+
 	private _logError(message: string, ...args: any[]): void {
 		this.#logService?.error(
 			`[Memento][${this.#extensionId}][${InternalMementoScope[this.#scope]}] ${message}`,
+
 			...args,
 		);
 	}
+
 	private _logWarn(message: string, ...args: any[]): void {
 		this.#logService?.warn(
 			`[Memento][${this.#extensionId}][${InternalMementoScope[this.#scope]}] ${message}`,
+
 			...args,
 		);
 	}
@@ -173,20 +202,31 @@ class ShimMementoImpl implements VscodeMemento {
 
 	/**
 	 * {@inheritDoc vscode.Memento.get}
+	 *
 	 */
 	public get<T>(key: string): T | undefined;
+
 	public get<T>(key: string, defaultValue: T): T;
+
 	public get<T>(key: string, defaultValue?: T): T | undefined {
 		if (!key || typeof key !== "string") {
-			this._logError(`Invalid key provided to Memento.get: '${String(key)}'. Returning defaultValue.`);
+			this._logError(
+				`Invalid key provided to Memento.get: '${String(key)}'. Returning defaultValue.`,
+			);
+
 			return defaultValue;
 		}
 
-		const storageKey = key; // Already a string
+		// Already a string
+		const storageKey = key;
+
 		// this._log(`get: key='${storageKey}'`);
 
 		if (!this.#mainThreadStorageProxy) {
-			this._logError(`Cannot Memento.get key='${storageKey}': MainThreadStorage RPC proxy unavailable. Returning defaultValue.`);
+			this._logError(
+				`Cannot Memento.get key='${storageKey}': MainThreadStorage RPC proxy unavailable. Returning defaultValue.`,
+			);
+
 			return defaultValue;
 		}
 
@@ -198,19 +238,31 @@ class ShimMementoImpl implements VscodeMemento {
 			.catch((err: any) => {
 				this._logError(
 					`Memento.get: Error fetching key='${storageKey}' via RPC:`,
-					refineErrorForShim(err, this.#logService, `Memento.get(${storageKey})`),
+
+					refineErrorForShim(
+						err,
+
+						this.#logService,
+
+						`Memento.get(${storageKey})`,
+					),
 				);
-				return defaultValue; // Return defaultValue on RPC error.
+
+				// Return defaultValue on RPC error.
+				return defaultValue;
 			});
 	}
 
 	/**
 	 * {@inheritDoc vscode.Memento.update}
+	 *
 	 */
 	public async update(key: string, value: any): Promise<void> {
 		if (!key || typeof key !== "string") {
 			const errorMsg = `Invalid key provided to Memento.update: '${String(key)}'`;
+
 			this._logError(errorMsg);
+
 			return Promise.reject(new Error(errorMsg));
 		}
 
@@ -226,7 +278,10 @@ class ShimMementoImpl implements VscodeMemento {
 				JSON.stringify(value);
 			} catch (e: any) {
 				const errorMsg = `Value for Memento key '${storageKey}' is not JSON serializable. Value type: ${typeof value}. Error: ${e.message}`;
-				this._logError(errorMsg); // Avoid logging the value itself if it's large or sensitive.
+
+				// Avoid logging the value itself if it's large or sensitive.
+				this._logError(errorMsg);
+
 				return Promise.reject(new Error(errorMsg));
 			}
 		}
@@ -235,38 +290,81 @@ class ShimMementoImpl implements VscodeMemento {
 
 		if (!this.#mainThreadStorageProxy) {
 			const errorMsg = `Cannot Memento.update key='${storageKey}': MainThreadStorage RPC proxy unavailable.`;
+
 			this._logError(errorMsg);
+
 			return Promise.reject(new Error(errorMsg));
 		}
 
 		try {
-			await this.#mainThreadStorageProxy.$setValue({ scope: this.#scope, key: storageKey }, value);
+			await this.#mainThreadStorageProxy.$setValue(
+				{ scope: this.#scope, key: storageKey },
+
+				value,
+			);
+
 			// this._log(`update: key='${storageKey}' successful.`);
 		} catch (err: any) {
-			const refinedError = refineErrorForShim(err, this.#logService, `Memento.update(${storageKey})`);
-			this._logError(`Memento.update: Error setting key='${storageKey}' via RPC:`, refinedError.message);
-			throw refinedError; // Rethrow to signal failure to the extension.
+			const refinedError = refineErrorForShim(
+				err,
+
+				this.#logService,
+
+				`Memento.update(${storageKey})`,
+			);
+
+			this._logError(
+				`Memento.update: Error setting key='${storageKey}' via RPC:`,
+
+				refinedError.message,
+			);
+
+			// Rethrow to signal failure to the extension.
+			throw refinedError;
 		}
 	}
 
 	/**
 	 * {@inheritDoc vscode.Memento.keys}
+	 *
 	 */
-	public async keys(options?: MementoKeysOptions): Promise<readonly string[]> {
-		this._log(`keys() called with options: ${options ? JSON.stringify(options) : '(none)'}`);
+	public async keys(
+		options?: MementoKeysOptions,
+	): Promise<readonly string[]> {
+		this._log(
+			`keys() called with options: ${options ? JSON.stringify(options) : "(none)"}`,
+		);
 
 		if (!this.#mainThreadStorageProxy?.$keys) {
-			this._logWarn("Memento.keys() not available: MainThreadStorageProxy.$keys is not defined or proxy unavailable. Returning empty array.");
+			this._logWarn(
+				"Memento.keys() not available: MainThreadStorageProxy.$keys is not defined or proxy unavailable. Returning empty array.",
+			);
+
 			return Object.freeze([]);
 		}
 
 		try {
-			const result = await this.#mainThreadStorageProxy.$keys({ scope: this.#scope }, options);
-			return Object.freeze(result || []); // Ensure readonly array and handle null/undefined result.
+			const result = await this.#mainThreadStorageProxy.$keys(
+				{ scope: this.#scope },
+
+				options,
+			);
+
+			// Ensure readonly array and handle null/undefined result.
+			return Object.freeze(result || []);
 		} catch (err: any) {
-			const refinedError = refineErrorForShim(err, this.#logService, "Memento.keys()");
+			const refinedError = refineErrorForShim(
+				err,
+
+				this.#logService,
+
+				"Memento.keys()",
+			);
+
 			this._logError("Memento.keys() RPC failed:", refinedError.message);
-			return Object.freeze([]); // Return empty array on error.
+
+			// Return empty array on error.
+			return Object.freeze([]);
 		}
 	}
 
@@ -275,7 +373,9 @@ class ShimMementoImpl implements VscodeMemento {
 	 * and typically should not be called by extensions. It's a NOP in this shim.
 	 */
 	public setKeysForSync(keys: readonly string[]): void {
-		this._logWarn(`Memento.setKeysForSync([${keys.join(", ")}]) called. This is related to VS Code settings sync and is a No-Operation in this shim.`);
+		this._logWarn(
+			`Memento.setKeysForSync([${keys.join(", ")}]) called. This is related to VS Code settings sync and is a No-Operation in this shim.`,
+		);
 	}
 }
 
@@ -287,7 +387,9 @@ export class ShimExtHostStorage
 	extends BaseCocoonShim
 	implements VscodeIExtHostStorage
 {
-	public readonly _serviceBrand: undefined; // Required by VS Code's service types
+	// Required by VS Code's service types
+	public readonly _serviceBrand: undefined;
+
 	#mainThreadStorageProxy: MainThreadStorageShape | null = null;
 
 	/**
@@ -297,9 +399,11 @@ export class ShimExtHostStorage
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
+
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostStorage", rpcService, logService);
+
 		this._log("Initializing...");
 
 		if (this._rpcService) {
@@ -322,23 +426,38 @@ export class ShimExtHostStorage
 	 * @returns A `vscode.Memento` instance.
 	 * @throws Error if the MainThreadStorage RPC proxy is unavailable.
 	 */
-	public createMemento(extensionId: string, isGlobal: boolean): VscodeMemento {
-		const scopeName = isGlobal ? "Global (Application)" : "Workspace (Profile)";
-		this._log(`Creating Memento for extensionId='${extensionId}', Scope: ${scopeName}`);
+	public createMemento(
+		extensionId: string,
+
+		isGlobal: boolean,
+	): VscodeMemento {
+		const scopeName = isGlobal
+			? "Global (Application)"
+			: "Workspace (Profile)";
+
+		this._log(
+			`Creating Memento for extensionId='${extensionId}', Scope: ${scopeName}`,
+		);
 
 		if (!this.#mainThreadStorageProxy) {
 			this._logError(
 				`Cannot create Memento for '${extensionId}' (Scope: ${scopeName}): MainThreadStorage RPC proxy is unavailable. This is critical for extension state persistence.`,
 			);
+
 			// VS Code might return a Memento that always fails its operations, or throw.
 			// Throwing makes the failure explicit early on.
-			throw new Error("Cannot create Memento: MainThreadStorage RPC proxy is unavailable. Extension state will not be saved or loaded.");
+			throw new Error(
+				"Cannot create Memento: MainThreadStorage RPC proxy is unavailable. Extension state will not be saved or loaded.",
+			);
 		}
 
 		return new ShimMementoImpl(
 			extensionId,
+
 			isGlobal,
+
 			this.#mainThreadStorageProxy,
+
 			this._logService,
 		);
 	}
@@ -350,10 +469,14 @@ export class ShimExtHostStorage
 	 */
 	public async initialize(): Promise<void> {
 		this._log("initialize() called (No-Operation in this shim).");
+
 		// If MainThreadStorage required an explicit initialization call:
 		// if (this.#mainThreadStorageProxy?.$initialize) {
+
 		//    await this.#mainThreadStorageProxy.$initialize();
+
 		// }
+
 		return Promise.resolve();
 	}
 
@@ -364,21 +487,27 @@ export class ShimExtHostStorage
 	 */
 	public async optimize(): Promise<void> {
 		this._log("optimize() called (No-Operation in this shim).");
+
 		// If MainThreadStorage supported an optimize call:
 		// if (this.#mainThreadStorageProxy?.$optimize) {
+
 		//    await this.#mainThreadStorageProxy.$optimize();
+
 		// }
+
 		return Promise.resolve();
 	}
 
 	// `updateWorkspaceStorageData` is an internal method for IExtHostStorage,
+
 	// typically called by the main thread to push initial workspace-specific Memento data.
 	// This shim's Memento fetches data on demand, so this method might be a NOP
 	// unless Mountain uses a push model for initial Memento state.
 	// public $updateWorkspaceStorageData(data: IStringDictionary<any>): void {
+
 	// this._logWarn("$updateWorkspaceStorageData called by MainThread - STUBBED in this shim. Memento data is fetched on demand.");
+
 	// If used, this would involve populating a cache or directly updating the
 	// relevant workspace Memento instance(s) if they were pre-created.
 	// }
 }
---- END OF FILE storage-shim.ts ---
