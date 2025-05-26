@@ -1,21 +1,10 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/120_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): 36f1f2f372ff08ae3b990b618ef4c8072069e547d21e7341a566afb0c1c2f517
-// Extracted to File: Backup/TSFMSC/Code/host-kind-picker-shim.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.019Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE host-kind-picker-shim.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Extension Host Kind Picker Shim (host-kind-picker-shim.ts)
  * --------------------------------------------------------------------------------------------
  * Implements the `IExtensionHostKindPicker` service interface. In VS Code, this service
  * determines the appropriate extension host (e.g., LocalProcess, WebWorker, Remote)
  * for running a given extension based on its manifest declarations, installation status,
+ * 
  * and workspace context.
  *
  * For Cocoon, which primarily acts as a Node.js sidecar (simulating an `ExtensionHostKind.LocalProcess`
@@ -38,7 +27,7 @@
  * - Registered with Dependency Injection in `Cocoon/index.ts`.
  * - Uses `BaseCocoonShim` for logging.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 // For checking URI schemes (e.g., vscode-remote)
@@ -51,14 +40,17 @@ import type {
 import {
 	ExtensionHostKind,
 	type IExtensionHostKindPicker,
-	// WorkspaceFolderSchemes, // Might be relevant if decisions depend on workspace type
+	// Might be relevant if decisions depend on workspace type
+	// WorkspaceFolderSchemes,
 } from "vs/workbench/services/extensions/common/extensionHostKind";
 
 // Base for logging
 import {
 	BaseCocoonShim,
-	type IRpcProtocolServiceAdapter, // Renamed from IExtHostRpcService
-	type ILogServiceForShim,       // Renamed from ILogService
+	// Renamed from ILogService
+	type ILogServiceForShim,
+	// Renamed from IExtHostRpcService
+	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
 
 /**
@@ -66,7 +58,8 @@ import {
  * In a full VS Code environment, this might be an enum like `ExtensionRunningPreference`
  * or a more specific type indicating user or workspace preferences for where an extension runs.
  */
-type ExtensionRunningPreference = any; // TODO: Use actual VS Code type if available and relevant.
+// TODO: Use actual VS Code type if available and relevant.
+type ExtensionRunningPreference = any;
 
 /**
  * Cocoon's implementation of `IExtensionHostKindPicker`.
@@ -76,7 +69,8 @@ export class ShimExtensionHostKindPicker
 	extends BaseCocoonShim
 	implements IExtensionHostKindPicker
 {
-	public readonly _serviceBrand: undefined; // Required by VS Code's service types
+	// Required by VS Code's service types
+	public readonly _serviceBrand: undefined;
 
 	/**
 	 * Creates an instance of ShimExtensionHostKindPicker.
@@ -85,22 +79,25 @@ export class ShimExtensionHostKindPicker
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
+
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtensionHostKindPicker", rpcService, logService);
+
 		this._log(`Initialized.`);
 	}
 
-    /**
-     * This shim does not require RPC for its core decision logic.
-     */
-    protected override _requiresRpc(): boolean {
-        return false;
-    }
+	/**
+	 * This shim does not require RPC for its core decision logic.
+	 */
+	protected override _requiresRpc(): boolean {
+		return false;
+	}
 
 	/**
 	 * Normalizes the `extensionKind` property from an extension's manifest into an array
 	 * of `ExtensionHostKind` enum values. Manifests can specify a string (e.g., "ui",
+	 *
 	 * "workspace", "web") or an array of these.
 	 *
 	 * @param extensionId The identifier of the extension, for logging purposes.
@@ -109,10 +106,12 @@ export class ShimExtensionHostKindPicker
 	 */
 	private _normalizeExtensionManifestKinds(
 		extensionId: ExtensionIdentifier,
+
 		manifestKinds: string | string[] | ExtensionHostKind[] | undefined,
 	): ExtensionHostKind[] {
 		if (!manifestKinds) {
 			// VS Code Default Behavior: If an extension has a `main` (Node.js) entry point,
+
 			// it often defaults to `workspace` kind. If it only has `browser`, it defaults to `web`.
 			// This defaulting logic is usually handled by `ExtensionDescription.constructor` or similar.
 			// If this picker receives empty/undefined `manifestKinds`, it implies either the manifest
@@ -120,6 +119,7 @@ export class ShimExtensionHostKindPicker
 			this._logWarn(
 				`No extension kinds declared in manifest for ${extensionId.value}. Assuming potential LocalProcess compatibility for shim evaluation. This relies on higher-level defaulting.`,
 			);
+
 			// Default assumption for Cocoon: if no kind is specified, it might be an older Node extension.
 			return [ExtensionHostKind.LocalProcess];
 		}
@@ -129,6 +129,7 @@ export class ShimExtensionHostKindPicker
 			: [manifestKinds];
 
 		const normalizedKinds: ExtensionHostKind[] = [];
+
 		for (const kind of kindsArray) {
 			if (typeof kind === "string") {
 				switch (kind.toLowerCase()) {
@@ -139,24 +140,35 @@ export class ShimExtensionHostKindPicker
 						// that are Node-compatible might target it.
 						// TODO: Confirm the precise desired mapping for "ui" in Cocoon's architecture.
 						// If Cocoon is *not* intended for UI-specific extensions that require renderer access,
+
 						// this mapping might need adjustment or filtering based on other extension properties.
 						normalizedKinds.push(ExtensionHostKind.LocalProcess);
+
 						break;
+
 					case "workspace":
 						normalizedKinds.push(ExtensionHostKind.LocalProcess);
+
 						break;
+
 					case "web":
 						normalizedKinds.push(ExtensionHostKind.Web);
+
 						break;
+
 					default:
 						this._logWarn(
 							`Unknown string value '${kind}' in extensionKind for ${extensionId.value}. Ignoring.`,
 						);
+
 						break;
 				}
 			} else if (
-				typeof kind === "number" && // Check if it's already an ExtensionHostKind enum value
-				Object.values(ExtensionHostKind).includes(kind as ExtensionHostKind)
+				// Check if it's already an ExtensionHostKind enum value
+				typeof kind === "number" &&
+				Object.values(ExtensionHostKind).includes(
+					kind as ExtensionHostKind,
+				)
 			) {
 				normalizedKinds.push(kind as ExtensionHostKind);
 			} else {
@@ -165,6 +177,7 @@ export class ShimExtensionHostKindPicker
 				);
 			}
 		}
+
 		// Deduplicate and return
 		return [...new Set(normalizedKinds)];
 	}
@@ -184,13 +197,19 @@ export class ShimExtensionHostKindPicker
 	 */
 	public pickExtensionHostKind(
 		extensionId: ExtensionIdentifier,
-		extensionManifestKinds: (string | ExtensionHostKind)[], // From IExtensionDescription.extensionKinds or older string[]
+
+		// From IExtensionDescription.extensionKinds or older string[]
+		extensionManifestKinds: (string | ExtensionHostKind)[],
+
 		_isInstalledLocally: boolean,
+
 		_isInstalledRemotely: boolean,
+
 		_preference: ExtensionRunningPreference,
 	): ExtensionHostKind | null {
 		const declaredHostKinds = this._normalizeExtensionManifestKinds(
 			extensionId,
+
 			extensionManifestKinds,
 		);
 
@@ -201,6 +220,7 @@ export class ShimExtensionHostKindPicker
 			this._log(
 				`No valid host kinds resolved for ${extensionId.value} after normalization. Cannot determine host.`,
 			);
+
 			return null;
 		}
 
@@ -211,11 +231,13 @@ export class ShimExtensionHostKindPicker
 		// are compatible with a LocalProcess environment.
 
 		// If the extension can run in a LocalProcess environment (typical for 'workspace' extensions,
+
 		// or 'ui' extensions if Cocoon is the main non-web Node host).
 		if (declaredHostKinds.includes(ExtensionHostKind.LocalProcess)) {
 			this._log(
 				` -> Extension ${extensionId.value} declares or implies LocalProcess compatibility. Selecting LocalProcess for Cocoon.`,
 			);
+
 			return ExtensionHostKind.LocalProcess;
 		}
 
@@ -227,6 +249,7 @@ export class ShimExtensionHostKindPicker
 			this._log(
 				` -> Extension ${extensionId.value} is Web-only. Cocoon (LocalProcess) is not suitable. Returning null.`,
 			);
+
 			return null;
 		}
 
@@ -236,12 +259,14 @@ export class ShimExtensionHostKindPicker
 		this._logError(
 			` -> Extension ${extensionId.value} declares kinds [${declaredHostKinds.map((k) => ExtensionHostKind[k]).join(", ")}] which are not suitable for Cocoon (primarily LocalProcess). Returning null.`,
 		);
+
 		return null;
 	}
 
 	/**
 	 * A convenience method that takes a full `IExtensionDescription` and calls `pickExtensionHostKind`.
 	 * It considers the `extensionLocation` scheme to potentially influence kind decisions,
+	 *
 	 * though the primary logic relies on `extensionKinds`.
 	 *
 	 * @param extensionDescription The full description of the extension.
@@ -252,8 +277,11 @@ export class ShimExtensionHostKindPicker
 	 */
 	public pickExtensionHostKindForDescription(
 		extensionDescription: IExtensionDescription,
+
 		isInstalledLocally: boolean,
+
 		isInstalledRemotely: boolean,
+
 		preference: ExtensionRunningPreference,
 	): ExtensionHostKind | null {
 		// `extensionDescription.extensionKinds` should ideally be `ExtensionHostKind[]` if processed
@@ -262,28 +290,47 @@ export class ShimExtensionHostKindPicker
 
 		// If an extension is explicitly located on a remote, it's primarily a candidate for a Remote extension host.
 		// However, it might also declare `ui` or `workspace` kinds if it has parts that can run in those contexts.
-		if (extensionDescription.extensionLocation.scheme === Schemas.vscodeRemote) {
+		if (
+			extensionDescription.extensionLocation.scheme ===
+			Schemas.vscodeRemote
+		) {
 			// If it's from a remote location, it's generally not for Cocoon (a local sidecar)
 			// UNLESS it *also* explicitly declares a LocalProcess compatible kind (e.g., 'ui' or 'workspace')
 			// AND Cocoon is configured to handle such parts of remote extensions.
 			// For a simpler Cocoon setup, remote-located extensions are typically not run in Cocoon.
-			const normalizedLocalCandidateKinds = this._normalizeExtensionManifestKinds(extensionDescription.identifier, manifestBasedKinds);
-			if (!normalizedLocalCandidateKinds.includes(ExtensionHostKind.LocalProcess)) {
+			const normalizedLocalCandidateKinds =
+				this._normalizeExtensionManifestKinds(
+					extensionDescription.identifier,
+
+					manifestBasedKinds,
+				);
+
+			if (
+				!normalizedLocalCandidateKinds.includes(
+					ExtensionHostKind.LocalProcess,
+				)
+			) {
 				this._log(
 					`Extension ${extensionDescription.identifier.value} is primarily remote (location: ${extensionDescription.extensionLocation.toString()}) and does not declare LocalProcess compatibility. Not for Cocoon.`,
 				);
+
 				return null;
 			}
+
 			// If it's remote BUT also declares LocalProcess, proceed to standard picking.
 		}
 
 		return this.pickExtensionHostKind(
 			extensionDescription.identifier,
-			manifestBasedKinds, // Pass the kinds from the description
+
+			// Pass the kinds from the description
+			manifestBasedKinds,
+
 			isInstalledLocally,
+
 			isInstalledRemotely,
+
 			preference,
 		);
 	}
 }
---- END OF FILE host-kind-picker-shim.ts ---
