@@ -28,7 +28,7 @@
  *   manually transform URIs before sending them via RPC or when interpreting URIs
  *   received from the main thread.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 // Use vscode.Uri from the API shim for public interface consistency.
@@ -124,15 +124,15 @@ export class ShimUriTransformerService implements ICocoonUriTransformerService {
 	/**
 	 * {@inheritDoc CocoonUriTransformer.transformIncoming}
 	 *
+	 *
+	 *
 	 * In this NO-OP implementation, returns the URI unchanged.
 	 */
 	public transformIncoming(uri: VscodeUri): VscodeUri {
 		// Example of real logic:
 		// if (this._remoteAuthority && uri.scheme === 'vscode-remote' && uri.authority === this._remoteAuthority) {
-
 		// Convert to local 'file' URI
 		//   return VscodeUri.file(uri.path);
-
 		// }
 
 		return uri;
@@ -141,14 +141,14 @@ export class ShimUriTransformerService implements ICocoonUriTransformerService {
 	/**
 	 * {@inheritDoc CocoonUriTransformer.transformOutgoing}
 	 *
+	 *
+	 *
 	 * In this NO-OP implementation, returns the URI unchanged.
 	 */
 	public transformOutgoing(uri: VscodeUri): VscodeUri {
 		// Example of real logic:
 		// if (this._remoteAuthority && uri.scheme === 'file') {
-
 		//   return VscodeUri.from({ scheme: 'vscode-remote', authority: this._remoteAuthority, path: uri.path });
-
 		// }
 
 		return uri;
@@ -156,6 +156,7 @@ export class ShimUriTransformerService implements ICocoonUriTransformerService {
 
 	/**
 	 * {@inheritDoc CocoonUriTransformer.transformOutgoingToString}
+	 *
 	 *
 	 * In this NO-OP implementation, converts the original URI to string.
 	 */
@@ -168,14 +169,13 @@ export class ShimUriTransformerService implements ICocoonUriTransformerService {
 	/**
 	 * {@inheritDoc CocoonUriTransformer.transformOutgoingScheme}
 	 *
+	 *
 	 * In this NO-OP implementation, returns the scheme unchanged.
 	 */
 	public transformOutgoingScheme(scheme: string): string {
 		// Example of real logic:
 		// if (this._remoteAuthority && scheme === 'file') {
-
 		//   return 'vscode-remote';
-
 		// }
 
 		return scheme;
