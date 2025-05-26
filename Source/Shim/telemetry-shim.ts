@@ -32,7 +32,7 @@
  * - Uses `BaseCocoonShim` for logging and RPC proxy retrieval.
  * - Relies on `TelemetryLevel` enum and GDPR types from VS Code platform.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 import type { SerializedError } from "vs/base/common/errors";
@@ -185,6 +185,7 @@ export class ShimExtHostTelemetry
 				// Update local state and log
 			);
 		}
+
 		// Note: VS Code's `ExtHostTelemetry` uses this to potentially update its `_telemetryEnablementBroadcaster`.
 	}
 
