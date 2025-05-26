@@ -29,7 +29,7 @@
  * - Registered with Dependency Injection in `Cocoon/index.ts` (e.g., as `IExtHostProposedApis`).
  * - Uses `BaseCocoonShim` for logging.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 import {
@@ -241,6 +241,7 @@ export class ShimExtensionsProposedApi
 
 	/**
 	 * {@inheritDoc IExtHostProposedApisShape.isProposedApiEnabled}
+	 *
 	 *
 	 */
 	public isProposedApiEnabled(
