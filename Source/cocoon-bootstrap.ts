@@ -1,15 +1,3 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/114_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): ab57ff3522ea17bf5c2660406dc1c035ad930faf483d577447a6d575d9e2bf39
-// Extracted to File: Backup/TSFMSC/Code/cocoon-bootstrap.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.009Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE cocoon-bootstrap.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon Bootstrap Utilities (cocoon-bootstrap.ts)
  * --------------------------------------------------------------------------------------------
@@ -33,7 +21,7 @@
  * - Modifies the global Node.js `process` object.
  * - Modifies `Module._load` (a Node.js internal).
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 console.log("[Cocoon Bootstrap] Initializing bootstrap utilities...");
@@ -53,18 +41,33 @@ console.log("[Cocoon Bootstrap] Initializing bootstrap utilities...");
 
 			Module._load = function (
 				request: string,
-				parentModule: any, // Node's internal parent module object
+
+				// Node's internal parent module object
+				parentModule: any,
+
 				isMain: boolean,
 			): any {
 				if (request === "natives") {
 					const errorMessage =
 						"[Cocoon Bootstrap] Attempt to load deprecated 'natives' module blocked. This module is not available. See https://go.microsoft.com/fwlink/?linkid=871887 for more details.";
+
 					console.warn(errorMessage);
+
 					throw new Error(errorMessage);
 				}
+
 				// Call original with original arguments and `this` context.
-				return originalModuleLoad.call(this, request, parentModule, isMain);
+				return originalModuleLoad.call(
+					this,
+
+					request,
+
+					parentModule,
+
+					isMain,
+				);
 			};
+
 			console.log(
 				"[Cocoon Bootstrap] Patched Module._load to block 'natives' module.",
 			);
@@ -76,6 +79,7 @@ console.log("[Cocoon Bootstrap] Initializing bootstrap utilities...");
 	} catch (error: any) {
 		console.error(
 			"[Cocoon Bootstrap] Failed to patch Module._load for 'natives' module:",
+
 			error.message || error,
 		);
 	}
@@ -105,19 +109,25 @@ const nativeProcessCrash: (() => void) | undefined =
  *                    called when `process.exit()` is invoked.
  */
 export function patchProcess(allowExitFn: () => boolean): void {
-	console.log("[Cocoon Bootstrap] Applying patches to global 'process' object...");
+	console.log(
+		"[Cocoon Bootstrap] Applying patches to global 'process' object...",
+	);
 
 	// Patch process.exit
 	process.exit = (code?: number): never => {
 		if (allowExitFn()) {
 			const exitCodeStr = code !== undefined ? String(code) : "(no code)";
+
 			console.log(
 				`[Cocoon Bootstrap] process.exit(${exitCodeStr}) called and ALLOWED by host policy. Terminating process.`,
 			);
-			nativeProcessExit(code); // Call the original, unpatched exit function.
+
+			// Call the original, unpatched exit function.
+			nativeProcessExit(code);
 		} else {
 			const errorMessage =
 				"process.exit() was called but PREVENTED by Cocoon's host policy. The Cocoon process will continue running.";
+
 			// Log as a warning because this is an attempt to exit that's being gracefully handled (prevented).
 			// Include a stack trace to help identify the source of the `process.exit()` call.
 			console.warn(
@@ -138,13 +148,16 @@ export function patchProcess(allowExitFn: () => boolean): void {
 		(process as any).crash = (): void => {
 			const errorMessage =
 				"process.crash() was called but PREVENTED by Cocoon's host policy. The Cocoon process will continue running.";
+
 			console.warn(
 				`[Cocoon Bootstrap] ${errorMessage}\nCall stack:\n${new Error("Stack trace for prevented process.crash()").stack || "(No stack trace for this error object)"}`,
 			);
+
 			// The goal is to prevent the crash. A warning is usually sufficient.
 			// If `process.crash` were typed as `() => never`, we might need to throw.
 			// Assuming it's `() => void` (or can be treated as such for prevention).
 		};
+
 		console.log("[Cocoon Bootstrap] Patched process.crash().");
 	} else {
 		console.log(
@@ -162,6 +175,7 @@ export function patchProcess(allowExitFn: () => boolean): void {
 		// process.env might not be writable in some very restricted environments.
 		console.error(
 			"[Cocoon Bootstrap] Failed to set ELECTRON_RUN_AS_NODE environment variable:",
+
 			envError.message,
 		);
 	}
@@ -172,9 +186,11 @@ export function patchProcess(allowExitFn: () => boolean): void {
 
 	// Note on `process.on('uncaughtException')`:
 	// The original Cocoon design correctly omits patching 'uncaughtException' here,
+
 	// as `index.ts` sets up VS Code's `ErrorHandler` for comprehensive error management
 	// in the fully initialized environment. This remains the recommended approach.
 }
 
-console.log("[Cocoon Bootstrap] Bootstrap utilities loaded and self-executed patches (like 'natives' block) applied.");
---- END OF FILE cocoon-bootstrap.ts ---
+console.log(
+	"[Cocoon Bootstrap] Bootstrap utilities loaded and self-executed patches (like 'natives' block) applied.",
+);
