@@ -1,15 +1,3 @@
-// ORIGIN INFORMATION:
-// This code block was extracted by a script.
-// Source Markdown File: Backup/TSFMSC/Document/118_MODEL.md
-// Source Block Index in MD (Overall): 1
-// Original Fence Info String: (empty)
-// Content SHA256 (of this block): 7bb90928592c3f5d74cffa29dad47f9c60f1af486681c5dc5383c475efd3f307
-// Extracted to File: Backup/TSFMSC/Code/api-deprecation-shim.ts
-// Extraction Timestamp: 2025-05-25T14:02:57.016Z
-// --- END OF ORIGIN INFORMATION ---
-
---- START OF FILE api-deprecation-shim.ts ---
-
 /*---------------------------------------------------------------------------------------------
  * Cocoon API Deprecation Shim (api-deprecation-shim.ts)
  * --------------------------------------------------------------------------------------------
@@ -33,7 +21,7 @@
  *   API object are accessed by extensions.
  * - Uses `BaseCocoonShim` for logging.
  *
- * Last Reviewed/Updated: [Your Last Review Date or Placeholder]
+
  *--------------------------------------------------------------------------------------------*/
 
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions";
@@ -42,8 +30,10 @@ import type { IExtHostApiDeprecationService as VscodeIExtHostApiDeprecationServi
 
 import {
 	BaseCocoonShim,
-	type IRpcProtocolServiceAdapter, // Renamed from IExtHostRpcService for clarity in BaseCocoonShim
-	type ILogServiceForShim, // Renamed from ILogService for clarity in BaseCocoonShim
+	// Renamed from ILogService for clarity in BaseCocoonShim
+	type ILogServiceForShim,
+	// Renamed from IExtHostRpcService for clarity in BaseCocoonShim
+	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
 
 /**
@@ -52,9 +42,11 @@ import {
  */
 export class ShimExtHostApiDeprecationService
 	extends BaseCocoonShim
-	implements VscodeIExtHostApiDeprecationService // Implement the actual VS Code interface
+	implements VscodeIExtHostApiDeprecationService
 {
-	public readonly _serviceBrand: undefined; // Required by VS Code's service types
+	// Implement the actual VS Code interface
+	// Required by VS Code's service types
+	public readonly _serviceBrand: undefined;
 
 	/**
 	 * Creates an instance of ShimExtHostApiDeprecationService.
@@ -65,20 +57,22 @@ export class ShimExtHostApiDeprecationService
 		// rpcService is optional for this shim as it only logs locally for MVP.
 		// It's passed to BaseCocoonShim which might log a warning if it's missing and _requiresRpc() is true.
 		rpcService: IRpcProtocolServiceAdapter | undefined,
+
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostApiDeprecationService", rpcService, logService);
+
 		// Initial log can be verbose for a simple service.
 		// this._log("Initialized (logging-only implementation).");
 	}
 
-    /**
-     * This shim does not strictly require RPC for its current logging-only functionality.
-     * Override base to reflect this.
-     */
-    protected override _requiresRpc(): boolean {
-        return false;
-    }
+	/**
+	 * This shim does not strictly require RPC for its current logging-only functionality.
+	 * Override base to reflect this.
+	 */
+	protected override _requiresRpc(): boolean {
+		return false;
+	}
 
 	/**
 	 * Reports the usage of a deprecated API feature by an extension.
@@ -88,12 +82,15 @@ export class ShimExtHostApiDeprecationService
 	 */
 	public report(
 		extensionId: ExtensionIdentifier,
+
 		deprecatedUsage: string,
+
 		message: string,
 	): void {
 		this._logWarn(
 			`Extension '${extensionId.value}' uses deprecated API: '${deprecatedUsage}'. Message: ${message}`,
 		);
+
 		// In a fuller implementation, this might:
 		// - Send telemetry about the deprecated API usage.
 		// - Trigger a UI notification to the developer if the extension is in development mode.
@@ -108,7 +105,9 @@ export class ShimExtHostApiDeprecationService
 	 */
 	public reportUsage(
 		identifier: ExtensionIdentifier,
+
 		feature: string,
+
 		message: string,
 	): void {
 		this._logWarn(
@@ -127,7 +126,9 @@ export class ShimExtHostApiDeprecationService
 	 */
 	public Deprecated(
 		extensionId: ExtensionIdentifier,
+
 		name: string,
+
 		message: string,
 	): PropertyDecorator {
 		// Bind `this.report` to ensure correct `this` context when the decorator is applied and used.
@@ -137,14 +138,21 @@ export class ShimExtHostApiDeprecationService
 			let backingFieldValue: any;
 
 			Object.defineProperty(target, propertyKey, {
-				configurable: true, // Allow redefinition if needed
-				enumerable: true,   // Typically true for public properties
+				// Allow redefinition if needed
+				configurable: true,
+
+				// Typically true for public properties
+				enumerable: true,
+
 				get() {
 					reportFn();
+
 					return backingFieldValue;
 				},
+
 				set(newValue: any) {
 					reportFn();
+
 					backingFieldValue = newValue;
 				},
 			});
@@ -163,9 +171,10 @@ export class ShimExtHostApiDeprecationService
 		// It returns the original property descriptor unchanged.
 		return (
 			_target: Object,
+
 			_propertyKey: string | symbol,
+
 			descriptor: PropertyDescriptor,
 		): PropertyDescriptor => descriptor;
 	}
 }
---- END OF FILE api-deprecation-shim.ts ---
