@@ -1,233 +1,250 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Workspace Shim (shims/workspace-shim.ts)
+ * Cocoon Workspace Shim (workspace-shim.ts)
  * --------------------------------------------------------------------------------------------
  * Implements the `IExtHostWorkspace` service interface, providing the core functionalities
- * for the `vscode.workspace` API namespace in the Cocoon environment. This includes
- * managing workspace folder information, workspace name, configuration file URI, trust
- * state, and proxying operations like finding files or opening documents to the
- * Mountain host process.
+ * for the `vscode.workspace` API namespace in the Cocoon extension host environment.
+ * This service is central to how extensions perceive and interact with the workspace,
  *
- * It maintains an internal representation of the workspace (`CocoonInternalWorkspace`)
- * and synchronizes this state with Mountain via RPC calls. Document-related aspects of
- * `vscode.workspace` (like `textDocuments` and document lifecycle events) are delegated
- * to an injected `CocoonDocumentService` instance. The `vscode.workspace.fs` API is
- * provided by an injected `ShimFileSystemApi` instance.
+ * including its structure (folders, name, configuration file), trust state, and file system.
  *
- * Responsibilities:
- * - Receiving initial workspace data and subsequent updates from Mountain via RPC
- *   methods (`$initializeWorkspace`, `$acceptWorkspaceData`).
- * - Maintaining an internal model (`CocoonInternalWorkspace`) of the current workspace,
+ * It maintains an internal representation of the workspace (`CocoonInternalWorkspace`) and
+ * synchronizes this state with the Mountain host process (main process) via RPC calls.
+ * Document-related aspects of `vscode.workspace` (such as `textDocuments` and document
+ * lifecycle events like `onDidOpenTextDocument`) are delegated to an injected
+ * `CocoonDocumentService` instance. The `vscode.workspace.fs` API, providing structured
+ * filesystem access, is exposed via an injected `ShimFileSystemApi` instance.
  *
- *
- *   including its folders, name, and configuration URI, using `VSCodeInternalURI` and
- *   `ExtUri` for path comparisons and operations.
- * - Providing getters for `vscode.workspace` properties: `workspaceFolders`, `name`,
- *
- *
- *   `workspaceFile`, `isTrusted`.
- * - Implementing `vscode.workspace.getWorkspaceFolder(uri)` using efficient lookups
- *   (TernarySearchTree).
- * - Proxying `vscode.workspace.findFiles(...)` and `vscode.workspace.requestWorkspaceTrust(...)`
- *   to Mountain via RPC, using appropriate DTOs for arguments and results.
- * - Implementing `vscode.workspace.openTextDocument(...)` by coordinating with
- *   `MainThreadDocuments` on Mountain (for opening or creating untitled files) and
- *   then retrieving the document from `CocoonDocumentService`.
- * - Delegating `vscode.workspace.getConfiguration(...)` to an injected `IExtHostConfiguration` service.
- * - Delegating `vscode.workspace.textDocuments` and document lifecycle events
- *   (`onDidOpenTextDocument`, etc.) to the injected `CocoonDocumentService`.
- * - Providing `vscode.workspace.fs` via an injected `ShimFileSystemApi` instance.
- * - Managing and firing `onDidChangeWorkspaceFolders` and `onDidGrantWorkspaceTrust` events.
- * - Stubbing or marking as not implemented several advanced or less critical
- *   `vscode.workspace` APIs for the Cocoon MVP (e.g., full text search, edit sessions,
- *
- *
- *   `updateWorkspaceFolders` from extensions).
+ * Core Responsibilities:
+ * - Receiving initial workspace data (e.g., folders, name, configuration URI, trust state)
+ *   and subsequent updates from Mountain through RPC methods like `$initializeWorkspace`
+ *   and `$acceptWorkspaceData`.
+ * - Maintaining an internal model (`CocoonInternalWorkspace`) of the current workspace.
+ *   This model uses `VSCodeInternalURI` (VS Code's internal URI class) and `IExtUri`
+ *   (for case-sensitive path operations) to manage workspace folders and metadata.
+ * - Providing getters for `vscode.workspace` properties, including:
+ *   - `workspaceFolders`: A readonly array of `vscode.WorkspaceFolder` objects.
+ *   - `name`: The name of the workspace (e.g., from a `.code-workspace` file or the root folder name).
+ *   - `workspaceFile`: The `vscode.Uri` of the `.code-workspace` file, if applicable.
+ *   - `isTrusted`: A boolean indicating if the workspace is trusted.
+ * - Implementing `vscode.workspace.getWorkspaceFolder(uri)` using an efficient
+ *   `TernarySearchTree` for URI-to-folder lookups, respecting filesystem case sensitivity
+ *   via the injected `IExtHostFileSystemInfo.extUri`.
+ * - Proxying operations to Mountain via RPC:
+ *   - `vscode.workspace.findFiles(...)`: For searching files based on glob patterns.
+ *   - `vscode.workspace.requestWorkspaceTrust(...)`: For requesting the user to trust the workspace.
+ * - Implementing `vscode.workspace.openTextDocument(...)` by:
+ *   - Coordinating with `MainThreadDocuments` on Mountain (via RPC calls like
+ *     `$tryOpenDocument` or `$tryCreateDocument`) to ensure the document model exists
+ *     on the main thread.
+ *   - Retrieving the corresponding `vscode.TextDocument` object from the local
+ *     `CocoonDocumentService` after Mountain acknowledges the document.
+ * - Delegating `vscode.workspace.getConfiguration(...)` to an injected `IExtHostConfiguration`
+ *   service instance (obtained via `IInstantiationService`).
+ * - Delegating `vscode.workspace.textDocuments` property and all document lifecycle events
+ *   (e.g., `onDidOpenTextDocument`, `onDidChangeTextDocument`) to the injected
+ *   `CocoonDocumentService`.
+ * - Exposing `vscode.workspace.fs` by returning the injected `ShimFileSystemApi` instance.
+ * - Managing and firing `onDidChangeWorkspaceFolders` and `onDidGrantWorkspaceTrust` events
+ *   when notified by Mountain.
+ * - Stubbing or marking as "not implemented" several advanced or less critical
+ *   `vscode.workspace` APIs for the Cocoon MVP. This includes features like full text
+ *   search within files, edit session management, and programmatic updates to workspace
+ *   folders by extensions (`updateWorkspaceFolders`).
  *
  * Key Interactions:
- * - Registered with DI in `Cocoon/index.ts` as `IExtHostWorkspace`.
- * - The `vscode.workspace` API object provided to extensions (via the API factory)
+ * - An instance of `ShimExtHostWorkspace` is registered with Dependency Injection (DI)
+ *   in `Cocoon/index.ts` as `IExtHostWorkspace`.
+ * - The `vscode.workspace` API object, as provided to extensions via the API factory,
+ *
  *   delegates its calls to this service instance.
- * - Communicates with `MainContext.MainThreadWorkspace` and `MainContext.MainThreadDocuments`
- *   on Mountain via RPC.
- * - Is an RPC service target for calls from Mountain, identified by
- *   `ExtHostContext.ExtHostWorkspace`.
- * - Depends on injected services: `IExtHostInitDataService`, `IExtHostFileSystemInfo`,
+ * - Communicates with `MainContext.MainThreadWorkspace` (for workspace structure, findFiles, trust)
+ *   and `MainContext.MainThreadDocuments` (for opening documents) on Mountain via RPC.
+ * - Implements `VscodeExtHostWorkspaceShape` and registers itself as an RPC service target
+ *   for calls from Mountain (identified by `ExtHostContext.ExtHostWorkspace`), allowing
+ *   Mountain to push workspace state updates.
+ * - Depends on several injected services:
+ *   - `IExtHostInitDataService`: For initial workspace data from Mountain.
+ *   - `IExtHostFileSystemInfo`: For the `extUri` instance used for case-sensitive URI operations.
+ *   - `CocoonDocumentService`: For all document-related aspects of `vscode.workspace`.
+ *   - `ShimFileSystemApi`: To provide the `vscode.workspace.fs` implementation.
+ *   - `IInstantiationService`: To dynamically retrieve other services like `IExtHostConfiguration`.
+ * - Uses `BaseCocoonShim` for common utilities (logging, RPC proxy, marshalling/revival).
  *
- *
- *   `CocoonDocumentService`, `ShimFileSystemApi` (for `workspace.fs`), and
- *   `IInstantiationService` (for `getConfiguration`).
- * - Uses `BaseCocoonShim` for common utilities.
- *
-
  *--------------------------------------------------------------------------------------------*/
 
 // For path.sep in getRelativePath
 import * as path from "node:path";
-
+// For diffing workspace folder arrays
 import { delta as arrayDelta } from "vs/base/common/arrays";
-
+// For synchronizing initialization
 import { Barrier } from "vs/base/common/async";
-
 import type { CancellationToken } from "vs/base/common/cancellation";
-
 import { isCancellationError } from "vs/base/common/errors";
-
 import {
 	Emitter as VscodeEmitter,
 	Event as VscodeEvent,
 } from "vs/base/common/event";
-
 import {
-	DisposableStore,
-	toDisposable,
+	DisposableStore /* toDisposable, */,
 	type IDisposable,
 } from "vs/base/common/lifecycle";
-
+// For URI DTO $mid property
+import { MarshalledId } from "vs/base/common/marshalling";
+// For URI schemes like 'file', 'untitled'
 import { Schemas } from "vs/base/common/network";
-
 import {
+	// URI utility
 	basenameOrAuthority,
+	// URI utility
 	dirname,
+	// Interface for case-sensitive URI operations
 	type IExtUri,
-
-	// ExtUri is via IExtHostFileSystemInfo
 } from "vs/base/common/resources";
-
+// For string comparison
 import { compare } from "vs/base/common/strings";
-
+// For efficient folder lookup
 import { TernarySearchTree } from "vs/base/common/ternarySearchTree";
-
 import {
+	// VS Code's internal URI class
 	URI as VSCodeInternalURI,
+	// DTO for URI components
 	type UriComponents as VSCodeInternalUriComponents,
 } from "vs/base/common/uri";
+// ExtensionIdentifier and IExtensionDescription not directly used in this shim's core logic, but often related to workspace context
+// import { ExtensionIdentifier, type IExtensionDescription } from "vs/platform/extensions/common/extensions";
 
 import {
-	ExtensionIdentifier,
-	type IExtensionDescription,
-} from "vs/platform/extensions/common/extensions";
-
-// FileSystemProviderCapabilities not directly used here, but relevant to IExtHostFileSystemInfo
-// import { FileSystemProviderCapabilities } from "vs/platform/files/common/files";
-
-import {
-	createDecorator,
-	type IInstantiationService,
+	/* createDecorator, */ type IInstantiationService,
 } from "vs/platform/instantiation/common/instantiation";
-
 import {
+	// RPC context identifiers
 	ExtHostContext,
 	MainContext,
+	// DTO for glob patterns
 	type IRelativePatternDto as RpcRelativePattern,
+	// Base DTO for workspace data
 	type IWorkspaceData as RpcWorkspaceData,
+	// Base DTO for workspace folder data
 	type IWorkspaceFolderData as RpcWorkspaceFolderData,
+	// RPC shape this service implements
 	type ExtHostWorkspaceShape as VscodeExtHostWorkspaceShape,
 } from "vs/workbench/api/common/extHost.protocol";
-
-import type { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
-
-// For getConfiguration type
+// For getConfiguration delegation
 import type { IExtHostConfiguration } from "vs/workbench/api/common/extHostConfiguration";
-
+// Dependency
+import type { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
 import type {
 	ExtHostInitData,
 	IExtHostInitDataService,
-
-	// For constructor
 } from "vs/workbench/api/common/extHostInitDataService";
+// Dependency for initial data
 
 // Import from public 'vscode' API definition for types used in the public surface
 import {
+	// Public API type for relative glob patterns
 	RelativePattern as VscodeApiRelativePattern,
+	// Public API URI type
 	Uri as VscodeApiUri,
+	// For getConfiguration scope parameter
 	type ConfigurationScope,
-
-	// The vscode.FileSystem type provided by fs-api-shim
+	type FileCreateEvent,
+	type FileDeleteEvent,
+	type FileRenameEvent,
+	// The vscode.FileSystem type, provided by ShimFileSystemApi
 	type FileSystem,
-	type GlobPattern as VscodeApiGlobPattern,
-	type WorkspaceFolder as VscodeApiWorkspaceFolder,
-	type WorkspaceFoldersChangeEvent as VscodeWorkspaceFoldersChangeEvent,
+	// For stubbed APIs (types for methods that are NOPs or throw)
+	type FileSystemProvider,
+	type FileWillCreateEvent,
+	type FileWillDeleteEvent,
+	type FileWillRenameEvent,
+	type TaskProvider,
 	type TextDocument,
 	type TextDocumentChangeEvent,
-	type WorkspaceConfiguration,
-	type WorkspaceTrustRequestOptions,
-
-	// For stubbed APIs
-	type FileSystemProvider,
-	type TaskProvider,
 	type TextDocumentContentProvider,
 	type TextDocumentWillSaveEvent,
-	type FileWillCreateEvent,
-	type FileCreateEvent,
-	type FileWillDeleteEvent,
-	type FileDeleteEvent,
-	type FileWillRenameEvent,
-	type FileRenameEvent,
+	// Union type for glob patterns
+	type GlobPattern as VscodeApiGlobPattern,
+	// Public API type for workspace folders
+	type WorkspaceFolder as VscodeApiWorkspaceFolder,
+	// Event payload type
+	type WorkspaceFoldersChangeEvent as VscodeWorkspaceFoldersChangeEvent,
+	type WorkspaceConfiguration,
+	type WorkspaceTrustRequestOptions,
 } from "vscode";
 
 import {
 	BaseCocoonShim,
 	refineErrorForShim,
-	type IRpcProtocolServiceAdapter,
+	// Updated type from BaseCocoonShim
 	type ILogServiceForShim,
+	// Updated type from BaseCocoonShim
+	type IRpcProtocolServiceAdapter,
 	type ProxyIdentifier,
 } from "./_baseShim";
-
-// Use concrete class
+// Dependency (concrete class)
 import type { CocoonDocumentService } from "./document-shim";
-
-// Type for injected fs API
+// Dependency (concrete class for workspace.fs)
 import type { ShimFileSystemApi } from "./fs-api-shim";
 
-// --- Type Definitions ---
+// --- Type Definitions for RPC and Internal State ---
 
-/** DTO for URI components sent/received over RPC, aligning with VS Code internals. */
+/** DTO for URI components sent/received over RPC, aligning with VS Code's internal `UriComponents`. */
 type UriComponentsForRpc = VSCodeInternalUriComponents;
 
-/** DTO for a single workspace folder sent/received over RPC. */
+/** DTO for a single workspace folder sent/received over RPC, extending VS Code's `RpcWorkspaceFolderData`. */
 interface WorkspaceFolderDtoForRpc extends RpcWorkspaceFolderData {
-	// Ensure uri is typed as the RPC DTO
+	// Ensures `uri` is the DTO type, not a live URI object.
 	uri: UriComponentsForRpc;
 }
 
-/** DTO for the entire workspace data sent/received over RPC. */
+/** DTO for the entire workspace data structure sent/received over RPC, extending `RpcWorkspaceData`. */
 interface WorkspaceDataDtoForRpc extends RpcWorkspaceData {
+	// Array of workspace folder DTOs.
 	folders: WorkspaceFolderDtoForRpc[];
 
-	// Workspace configuration file URI
+	// URI DTO of the .code-workspace file, if applicable.
 	configuration?: UriComponentsForRpc | null;
 }
 
-/** Defines the RPC interface for `MainThreadWorkspace` relevant to this shim. */
+/** Defines the RPC interface for `MainThreadWorkspace` methods relevant to this shim. */
 interface MainThreadWorkspaceProxyShim {
 	$findFiles(
+		// Glob pattern or string
 		include: RpcRelativePattern | string,
 
+		// Optional exclude pattern
 		exclude?: RpcRelativePattern | string | null,
 
 		options?: {
+			// Search options
 			maxResults?: number | null;
 
+			// Respect .gitignore, etc.
 			useIgnoreFiles?: boolean;
 
+			// Follow symbolic links
 			followSymlinks?: boolean;
 
+			// Allow other potential options
 			[key: string]: any;
 		},
+
+		// token?: CancellationToken - VS Code RPC often handles cancellation implicitly via message IDs
+		// Returns array of URI DTOs
 	): Promise<UriComponentsForRpc[]>;
 
 	$requestWorkspaceTrust(
 		options?: WorkspaceTrustRequestOptions,
 	): Promise<boolean | undefined>;
 
-	// If full updates were supported
+	// If extensions could update folders
 	// $updateWorkspaceFolders?(extensionId: string, start: number, deleteCount: number | null, foldersToAddDto: { uri: UriComponentsForRpc, name?: string }[]): Promise<void>;
 
-	// If pull model were used
+	// If using a pull model for initial folders
 	// $getWorkspaceFolders?(): Promise<WorkspaceFolderDtoForRpc[]>;
 }
 
-/** Defines the RPC interface for `MainThreadDocuments` relevant to opening documents. */
+/** Defines the RPC interface for `MainThreadDocuments` methods relevant to opening documents. */
 interface MainThreadDocumentsProxyShim {
 	// For existing files
 	$tryOpenDocument(uri: UriComponentsForRpc): Promise<void>;
@@ -237,45 +254,48 @@ interface MainThreadDocumentsProxyShim {
 
 		content?: string;
 
-		// For new untitled files
+		// For new untitled files, returns URI DTO of new doc
 	}): Promise<UriComponentsForRpc>;
 }
 
 /**
- * Internal representation of the workspace state, managing folders and metadata.
- * Similar to VS Code's internal `ExtHostWorkspaceImpl._actual`.
+ * Internal representation of the workspace state, managing folders, name, configuration URI,
+ *
+ * and other metadata. This class is similar in concept to VS Code's internal `ExtHostWorkspaceImpl._actual`.
  */
 class CocoonInternalWorkspace {
+	// TernarySearchTree for efficient prefix-based lookup of workspace folders by URI.
 	private readonly _structure: TernarySearchTree<
 		VSCodeInternalURI,
 		VscodeApiWorkspaceFolder
 	>;
 
-	// Stores vscode.WorkspaceFolder API objects
+	// Array of `vscode.WorkspaceFolder` API objects, kept sorted by index.
 	public readonly foldersApiObjects: VscodeApiWorkspaceFolder[];
 
-	// For case-sensitive URI operations
+	// `IExtUri` instance for case-sensitive and scheme-aware URI operations.
 	public readonly extUri: IExtUri;
 
 	constructor(
+		// Unique ID of the workspace.
 		public readonly id: string,
 
-		// Mutable name
+		// Mutable display name of the workspace.
 		public nameInternal: string,
 
-		// Expects folders with VscodeApiUri
+		// Initial set of workspace folders (API type).
 		initialFoldersData: VscodeApiWorkspaceFolder[],
 
-		// True if the workspace is not persisted (e.g., empty window)
+		// True if the workspace is not persisted (e.g., an empty window).
 		public readonly transient: boolean,
 
-		// URI of the .code-workspace file
+		// `VSCodeInternalURI` of the .code-workspace file, or null.
 		public configurationInternal: VSCodeInternalURI | null,
 
-		// True if it's an untitled workspace (folder with no .code-workspace)
+		// True if it's an untitled workspace (e.g., a folder opened without a .code-workspace file).
 		public isUntitledInternal: boolean,
 
-		// Injected for extUri
+		// Injected for `extUri`.
 		extHostFileSystemInfo: IExtHostFileSystemInfo,
 	) {
 		this.extUri = extHostFileSystemInfo.extUri;
@@ -283,33 +303,38 @@ class CocoonInternalWorkspace {
 		this.foldersApiObjects = [];
 
 		this._structure = TernarySearchTree.forUris<VscodeApiWorkspaceFolder>(
-			// TernarySearchTree often uses internal URI
+			// Callback to determine if URI path casing should be ignored for tree lookups.
+			// It uses the `extUri` instance, which is configured by `ShimExtHostFileSystemInfo`
+			// to respect the case-sensitivity of the URI's scheme.
 			(uri) => this.extUri.ignorePathCasing(uri as VSCodeInternalURI),
 
-			// useDefaultUriIgnorePathCasing (based on scheme)
+			// useCanonical बताता है कि क्या tree को यूआरआई को canonicalize करना चाहिए।
+			// Default is true, but can be set to a function if specific canonicalization needed.
+			// For `resources.ts` TernarySearchTree, this is `useKeyResourcePath`.
 			() => true,
 		);
 
-		// Populate folders and tree
+		// Populate initial folders.
 		this.updateFolders(initialFoldersData);
 	}
 
+	/** Updates the internal list of workspace folders and the TernarySearchTree. */
 	public updateFolders(newApiFolders: VscodeApiWorkspaceFolder[]): void {
-		// Clear array in-place
+		// Clear array in-place while keeping reference.
 		(this.foldersApiObjects as VscodeApiWorkspaceFolder[]).length = 0;
 
+		// Clear the search tree.
 		this._structure.clear();
 
 		newApiFolders.forEach((folder) => {
-			// folder.uri is VscodeApiUri
+			// folder.uri is already VscodeApiUri
 			this.foldersApiObjects.push(folder);
 
-			// For TernarySearchTree, key should be VSCodeInternalURI if extUri callback expects it.
-			// Assuming VscodeApiUri can be used or converted if needed by extUri.
+			// The TernarySearchTree keys should be VSCodeInternalURI for consistency with extUri operations.
 			this._structure.set(VSCodeInternalURI.from(folder.uri), folder);
 		});
 
-		// Ensure sorted by index
+		// Ensure sorted by index.
 		this.foldersApiObjects.sort((a, b) => a.index - b.index);
 	}
 
@@ -329,35 +354,47 @@ class CocoonInternalWorkspace {
 		return Object.freeze([...this.foldersApiObjects]);
 	}
 
+	/**
+	 * Finds the `vscode.WorkspaceFolder` that contains the given URI.
+	 * @param uri The URI to find the folder for.
+	 * @param resolveParent If true, and `uri` directly matches a folder's URI, try its parent. (Not standard VS Code behavior for `getWorkspaceFolder`).
+	 * @returns The `VscodeApiWorkspaceFolder` or `undefined`.
+	 */
 	public getWorkspaceFolder(
 		uri: VscodeApiUri,
 
-		resolveParent?: boolean,
+		resolveParent_custom?: boolean,
 	): VscodeApiWorkspaceFolder | undefined {
-		// Convert to internal URI for tree
+		// Convert API URI to internal URI for tree.
 		const internalCandidateUri = VSCodeInternalURI.from(uri);
 
-		let candidateForTree = internalCandidateUri;
+		let candidateForTreeLookup = internalCandidateUri;
 
-		if (resolveParent) {
-			const directMatch = this._structure.get(candidateForTree);
+		// This `resolveParent_custom` logic is specific and not part of standard `getWorkspaceFolder`.
+		// Standard `getWorkspaceFolder` finds the folder whose URI is a prefix of the input URI.
+		if (resolveParent_custom) {
+			const directMatch = this._structure.get(candidateForTreeLookup);
 
 			if (
 				directMatch &&
 				this.extUri.isEqual(
 					VSCodeInternalURI.from(directMatch.uri),
 
-					candidateForTree,
+					candidateForTreeLookup,
 				)
 			) {
-				// Get parent directory
-				candidateForTree = this.extUri.dirname(candidateForTree);
+				// If the URI *is* a folder URI, look for a folder containing its parent.
+				candidateForTreeLookup = this.extUri.dirname(
+					candidateForTreeLookup,
+				);
 			}
 		}
 
-		return this._structure.findSubstr(candidateForTree);
+		// `findSubstr` finds the longest prefix match, which is correct for `getWorkspaceFolder`.
+		return this._structure.findSubstr(candidateForTreeLookup);
 	}
 
+	/** Resolves a URI to a workspace folder if the URI exactly matches a folder's URI. */
 	public resolveWorkspaceFolder(
 		uri: VscodeApiUri,
 	): VscodeApiWorkspaceFolder | undefined {
@@ -366,73 +403,67 @@ class CocoonInternalWorkspace {
 }
 
 /**
- * Cocoon's implementation of `IExtHostWorkspace`.
- * Provides the `vscode.workspace` API functionalities.
+ * Cocoon's implementation of `IExtHostWorkspace` (and `VscodeExtHostWorkspaceShape` for RPC).
+ * This service provides the functionalities for the `vscode.workspace` API namespace.
  */
 export class ShimExtHostWorkspace
 	extends BaseCocoonShim
 	implements VscodeExtHostWorkspaceShape
 {
+	// For DI registration if using VS Code's IExtHostWorkspace key.
 	public readonly _serviceBrand: undefined;
 
-	// Store full init data
+	// Store full, revived initData.
 	readonly #initData: ExtHostInitData;
 
-	#confirmedWorkspaceState: CocoonInternalWorkspace | undefined;
+	// State confirmed by MainThread.
+	#confirmedWorkspaceState: CocoonInternalWorkspace | undefined = undefined;
 
-	// For optimistic updates
-	#unconfirmedWorkspaceState: CocoonInternalWorkspace | undefined;
+	// For optimistic updates before MainThread confirmation.
+	#unconfirmedWorkspaceState: CocoonInternalWorkspace | undefined = undefined;
 
+	// Local cache of workspace trust state.
 	#isWorkspaceTrusted = false;
 
-	// Resolves when $initializeWorkspace is called
+	// Barrier to ensure critical operations wait for `$initializeWorkspace` from MainThread.
 	readonly #initializedBarrier = new Barrier();
 
+	// RPC Proxies to MainThread services.
 	readonly #mainThreadWorkspaceProxy: MainThreadWorkspaceProxyShim | null =
 		null;
 
 	readonly #mainThreadDocsProxy: MainThreadDocumentsProxyShim | null = null;
 
+	// Injected dependencies.
 	readonly #extHostDocuments: CocoonDocumentService;
 
 	readonly #extHostFileSystemInfo: IExtHostFileSystemInfo;
 
-	// The vscode.workspace.fs implementation
+	// Provides vscode.workspace.fs.
 	readonly #fileSystemApiService: FileSystem;
 
-	// For getConfiguration
+	// For DI, e.g., to get IExtHostConfiguration.
 	readonly #instantiationService: IInstantiationService;
 
-	// Event Emitters for vscode.workspace events
+	// Event Emitters for `vscode.workspace` events.
 	readonly #onDidChangeWorkspaceFoldersEmitter =
 		new VscodeEmitter<VscodeWorkspaceFoldersChangeEvent>();
 
 	readonly #onDidGrantWorkspaceTrustEmitter = new VscodeEmitter<void>();
 
-	// Document events are forwarded from CocoonDocumentService
+	// Document-related events are forwarded from CocoonDocumentService.
 	public readonly onDidOpenTextDocument: VscodeEvent<TextDocument>;
 
 	public readonly onDidCloseTextDocument: VscodeEvent<TextDocument>;
 
 	public readonly onDidChangeTextDocument: VscodeEvent<TextDocumentChangeEvent>;
 
-	// Added
 	public readonly onDidSaveTextDocument: VscodeEvent<TextDocument>;
 
-	/**
-	 * Creates an instance of ShimExtHostWorkspace.
-	 * @param rpcService RPC adapter.
-	 * @param initDataService Service providing initial host data.
-	 * @param extHostFileSystemInfo Service for filesystem info (e.g., case sensitivity).
-	 * @param logService Logging service.
-	 * @param extHostDocuments Document management service.
-	 * @param fileSystemApiService The implementation for `vscode.workspace.fs`.
-	 * @param instantiationService For instantiating services like IExtHostConfiguration.
-	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
 
-		// Changed from raw ExtHostInitData to service
+		// Provides revived ExtHostInitData.
 		initDataService: IExtHostInitDataService,
 
 		extHostFileSystemInfo: IExtHostFileSystemInfo,
@@ -441,15 +472,15 @@ export class ShimExtHostWorkspace
 
 		extHostDocuments: CocoonDocumentService,
 
-		// Injected
+		// For vscode.workspace.fs
 		fileSystemApiService: FileSystem,
 
-		// Injected
+		// For getConfiguration()
 		instantiationService: IInstantiationService,
 	) {
 		super("ExtHostWorkspace", rpcService, logService);
 
-		// Get raw initData
+		// Store the revived initData.
 		this.#initData = initDataService.value;
 
 		this.#extHostDocuments = extHostDocuments;
@@ -460,7 +491,8 @@ export class ShimExtHostWorkspace
 
 		this.#instantiationService = instantiationService;
 
-		this._log("Initializing...");
+		// Use Info for major lifecycle events.
+		this._logInfo("Initializing...");
 
 		if (this._rpcService) {
 			this.#mainThreadWorkspaceProxy = this._getProxy(
@@ -478,54 +510,60 @@ export class ShimExtHostWorkspace
 					this,
 				);
 
-				this._log("Registered self for RPC calls (ExtHostWorkspace).");
+				this._logInfo(
+					"Registered self for RPC calls from MainThread (ExtHostContext.ExtHostWorkspace).",
+				);
 			} catch (e: any) {
 				this._logError(
-					"Failed to set self for RPC (ExtHostWorkspace):",
+					"Failed to register self as RPC target for ExtHostWorkspace:",
 
 					e,
 				);
 			}
 		}
 
-		if (!this.#mainThreadWorkspaceProxy)
+		if (!this.#mainThreadWorkspaceProxy) {
 			this._logError(
-				"MainThreadWorkspace RPC proxy unavailable! `findFiles` and `requestTrust` will fail.",
+				"MainThreadWorkspace RPC proxy is unavailable. Features like `findFiles` and `requestWorkspaceTrust` will fail.",
 			);
+		}
 
-		if (!this.#mainThreadDocsProxy)
+		if (!this.#mainThreadDocsProxy) {
 			this._logError(
-				"MainThreadDocuments RPC proxy unavailable! `openTextDocument` will fail.",
+				"MainThreadDocuments RPC proxy is unavailable. `openTextDocument` will fail.",
 			);
+		}
 
+		// Initialize trust state from initData.
 		this.#isWorkspaceTrusted =
 			this.#initData.workspace?.trusted ??
 			this.#initData.environment.isTrusted ??
+			// Default to trusted.
 			true;
 
-		// Initial workspace state (pre-$initializeWorkspace)
+		// Set up a preliminary workspace state from `initData` if available.
+		// This state is "unconfirmed" until `$initializeWorkspace` is called by MainThread.
 		if (this.#initData.workspace) {
-			const { workspace } = this._convertDtoToInternalWorkspace(
-				this.#initData.workspace,
+			const { workspace: preliminaryWorkspace } =
+				this._convertDtoToInternalWorkspace(
+					// Cast: initData.workspace is IWorkspaceData, should be compatible.
+					this.#initData.workspace as WorkspaceDataDtoForRpc,
 
-				undefined,
+					// No previous confirmed state yet.
+					undefined,
 
-				undefined,
+					// No previous unconfirmed state yet.
+					undefined,
+				);
+
+			this.#unconfirmedWorkspaceState = preliminaryWorkspace ?? undefined;
+
+			this._logDebug(
+				`Preliminary workspace state set from initData. Name='${this.#unconfirmedWorkspaceState?.name ?? "N/A"}', Folders=${this.#unconfirmedWorkspaceState?.workspaceFolders.length ?? 0}. Awaiting $initializeWorkspace confirmation.`,
 			);
-
-			// Start with unconfirmed
-			this.#unconfirmedWorkspaceState = workspace ?? undefined;
-
-			// this._log(`Preliminary workspace state set from initData: Name='${this.#unconfirmedWorkspaceState?.name}'`);
 		}
 
-		// Forward document events from CocoonDocumentService
-		this._instanceDisposables.add(
-			this.#extHostDocuments.onDidOpenTextDocument((e) =>
-				this.#onDidOpenTextDocumentEmitter.fire(e),
-			),
-		);
-
+		// Forward document lifecycle events from CocoonDocumentService to be exposed on `vscode.workspace`.
 		this.onDidOpenTextDocument =
 			this.#extHostDocuments.onDidOpenTextDocument;
 
@@ -536,13 +574,14 @@ export class ShimExtHostWorkspace
 			this.#extHostDocuments.onDidChangeTextDocument;
 
 		this.onDidSaveTextDocument =
-			// Forward save event
 			this.#extHostDocuments.onDidSaveTextDocument;
 
-		this._log("Document event subscriptions configured.");
+		this._logDebug(
+			"Document event subscriptions configured to forward from CocoonDocumentService.",
+		);
 	}
 
-	// --- RPC Methods Called by MainThread (VscodeExtHostWorkspaceShape) ---
+	// --- RPC Methods Called by MainThread (Implementation of VscodeExtHostWorkspaceShape) ---
 
 	/** {@inheritDoc VscodeExtHostWorkspaceShape.$initializeWorkspace} */
 	public $initializeWorkspace(
@@ -550,19 +589,28 @@ export class ShimExtHostWorkspace
 
 		trusted: boolean,
 	): void {
-		this._log(
-			`RPC $initializeWorkspace: Name='${workspaceDto?.name ?? "None"}', Folders=${workspaceDto?.folders?.length ?? 0}, Trusted=${trusted}`,
+		const folderCount = workspaceDto?.folders?.length ?? 0;
+
+		this._logInfo(
+			`RPC $initializeWorkspace received. Workspace Name='${workspaceDto?.name ?? "None"}', Folders=${folderCount}, IsTrusted=${trusted}`,
 		);
 
 		this.#isWorkspaceTrusted = trusted;
 
-		// This call will update #confirmedWorkspaceState and fire events if needed.
+		// This call processes the DTO, updates `#confirmedWorkspaceState`, and fires events if needed.
 		this.$acceptWorkspaceData(workspaceDto);
 
 		if (!this.#initializedBarrier.isOpen()) {
+			// Signal that the workspace is now fully initialized.
 			this.#initializedBarrier.open();
 
-			this._log("Workspace initialized barrier opened.");
+			this._logInfo(
+				"Workspace initialized barrier opened. `vscode.workspace` is now fully ready.",
+			);
+		} else {
+			this._logWarn(
+				"$initializeWorkspace called after already initialized. State will be updated.",
+			);
 		}
 	}
 
@@ -570,30 +618,45 @@ export class ShimExtHostWorkspace
 	public $acceptWorkspaceData(
 		workspaceDto: WorkspaceDataDtoForRpc | null,
 	): void {
-		// this._logService?.trace(`RPC $acceptWorkspaceData: Name='${workspaceDto?.name ?? "None"}', Folders=${workspaceDto?.folders?.length ?? 0}`);
+		const folderCount = workspaceDto?.folders?.length ?? 0;
 
-		const { workspace, added, removed } =
-			this._convertDtoToInternalWorkspace(
-				workspaceDto,
+		this._logDebug(
+			`RPC $acceptWorkspaceData received. Workspace Name='${workspaceDto?.name ?? "None"}', Folders=${folderCount}`,
+		);
 
-				this.#confirmedWorkspaceState,
+		// Convert the DTO from MainThread into the internal `CocoonInternalWorkspace` representation.
+		// This diffs against the current state to determine what changed (added/removed folders).
+		const {
+			workspace: newWorkspace,
 
-				// Diff against unconfirmed if it exists (optimistic update)
-				this.#unconfirmedWorkspaceState,
-			);
+			added,
 
-		this.#confirmedWorkspaceState = workspace ?? undefined;
+			removed,
+		} = this._convertDtoToInternalWorkspace(
+			workspaceDto,
 
-		// Clear unconfirmed state after confirmation
+			// Diff against the last confirmed state.
+			this.#confirmedWorkspaceState,
+
+			// If an optimistic update was pending, diff against that too.
+			this.#unconfirmedWorkspaceState,
+		);
+
+		// Update the confirmed state.
+		this.#confirmedWorkspaceState = newWorkspace ?? undefined;
+
+		// Clear any unconfirmed state as we now have a new confirmed one.
 		this.#unconfirmedWorkspaceState = undefined;
 
+		// If workspace folders were added or removed, fire the `onDidChangeWorkspaceFolders` event.
 		if (added.length > 0 || removed.length > 0) {
-			this._log(
-				`Firing onDidChangeWorkspaceFolders: Added=${added.length}, Removed=${removed.length}`,
+			this._logInfo(
+				`Firing onDidChangeWorkspaceFolders: Added ${added.length} folder(s), Removed ${removed.length} folder(s).`,
 			);
 
 			this.#onDidChangeWorkspaceFoldersEmitter.fire(
 				Object.freeze({
+					// Ensure event payload is immutable.
 					added: Object.freeze(added),
 
 					removed: Object.freeze(removed),
@@ -604,40 +667,53 @@ export class ShimExtHostWorkspace
 
 	/** {@inheritDoc VscodeExtHostWorkspaceShape.$onDidGrantWorkspaceTrust} */
 	public $onDidGrantWorkspaceTrust(): void {
-		this._log("RPC $onDidGrantWorkspaceTrust received.");
+		this._logInfo(
+			"RPC $onDidGrantWorkspaceTrust received from MainThread.",
+		);
 
 		if (!this.#isWorkspaceTrusted) {
+			// If trust state actually changed.
 			this.#isWorkspaceTrusted = true;
 
 			this.#onDidGrantWorkspaceTrustEmitter.fire();
 
-			this._log(
+			this._logInfo(
 				"Workspace trust granted. Fired onDidGrantWorkspaceTrust event.",
+			);
+		} else {
+			this._logDebug(
+				"Received $onDidGrantWorkspaceTrust, but workspace was already trusted. No event fired.",
 			);
 		}
 	}
 
-	// --- Helper to convert DTO to internal workspace representation ---
+	// --- Helper to convert DTO to internal workspace representation and diff changes ---
 	private _convertDtoToInternalWorkspace(
+		// New workspace data DTO from MainThread
 		dto: WorkspaceDataDtoForRpc | null,
 
+		// Last confirmed workspace state
 		previousConfirmed: CocoonInternalWorkspace | undefined,
 
+		// Optimistically updated state (if any)
 		previousUnconfirmed: CocoonInternalWorkspace | undefined,
 	): {
+		// The new internal workspace object, or null if no workspace
 		workspace: CocoonInternalWorkspace | null;
 
+		// Array of workspace folders that were added
 		added: VscodeApiWorkspaceFolder[];
 
+		// Array of workspace folders that were removed
 		removed: VscodeApiWorkspaceFolder[];
 	} {
 		if (!dto) {
-			// No workspace (e.g., empty window)
-			const removed = previousConfirmed?.workspaceFolders
+			// No workspace data means it's an empty workspace (e.g., empty VS Code window).
+			const removedFolders = previousConfirmed?.workspaceFolders
 				? [...previousConfirmed.workspaceFolders]
 				: [];
 
-			return { workspace: null, added: [], removed };
+			return { workspace: null, added: [], removed: removedFolders };
 		}
 
 		const {
@@ -647,7 +723,7 @@ export class ShimExtHostWorkspace
 
 			folders: folderDtos,
 
-			configuration: configDtoVscodeInternal,
+			configuration: configDto,
 
 			transient,
 
@@ -656,64 +732,74 @@ export class ShimExtHostWorkspace
 
 		const newApiFolders: VscodeApiWorkspaceFolder[] = [];
 
-		// Diff against unconfirmed state if it exists (from an optimistic update), otherwise against confirmed.
+		// Determine the "old" state to diff against: prefer unconfirmed if it exists (from an optimistic update),
+
+		// otherwise use the last confirmed state.
 		const oldWorkspaceForDiff = previousUnconfirmed || previousConfirmed;
 
 		if (Array.isArray(folderDtos)) {
-			folderDtos.forEach((folderData, index) => {
+			folderDtos.forEach((folderDataDto, index) => {
+				// Revive folder URI DTO to a vscode.Uri (API type)
 				const folderApiUri = this._reviveUriDtoToVscodeApiUri(
-					folderData.uri,
-
-					// Convert DTO to VscodeApiUri
+					folderDataDto.uri,
 				);
 
 				if (!folderApiUri) {
 					this._logError(
-						"Failed to revive workspace folder URI DTO to VscodeApiUri during DTO conversion.",
+						"Failed to revive workspace folder URI DTO to VscodeApiUri during DTO conversion. Skipping this folder.",
 
-						folderData.uri,
+						"Received DTO:",
+
+						folderDataDto.uri,
 					);
 
-					// Skip this folder
+					// Skip this folder if its URI is invalid.
 					return;
 				}
 
-				// Try to reuse existing vscode.WorkspaceFolder API objects to maintain identity if URI matches.
+				// Try to reuse existing vscode.WorkspaceFolder API objects to maintain object identity if the URI matches.
+				// This helps extensions that might hold references to WorkspaceFolder objects.
 				const existingApiFolder =
 					oldWorkspaceForDiff?.workspaceFolders.find((f) =>
 						this.#extHostFileSystemInfo.extUri.isEqual(
 							f.uri,
 
 							folderApiUri,
+
+							// Case-sensitive comparison via extUri
 						),
 					);
 
 				if (existingApiFolder) {
-					// Mutate name if changed
-					(existingApiFolder as any).name = folderData.name;
+					// If folder with same URI existed, update its properties in-place.
+					// Mutable cast for update
+					(existingApiFolder as any).name = folderDataDto.name;
 
 					(existingApiFolder as any).index =
-						// Mutate index
-						folderData.index ?? index;
+						// Update index
+						folderDataDto.index ?? index;
 
 					newApiFolders.push(existingApiFolder);
 				} else {
+					// New folder, create a new API object.
 					newApiFolders.push({
 						uri: folderApiUri,
 
-						name: folderData.name,
+						name: folderDataDto.name,
 
-						index: folderData.index ?? index,
+						// Use provided index or array index as fallback.
+						index: folderDataDto.index ?? index,
 					});
 				}
 			});
 		}
 
-		// Ensure sorted by index
+		// Ensure folders are sorted by index for consistency.
 		newApiFolders.sort((a, b) => a.index - b.index);
 
-		const internalConfigUri = configDtoVscodeInternal
-			? this._reviveUriDtoToInternalVSCodeUri(configDtoVscodeInternal)
+		// Revive the workspace configuration file URI DTO (if present) to an internal VSCodeInternalURI.
+		const internalConfigUri = configDto
+			? this._reviveUriDtoToInternalVSCodeUri(configDto)
 			: null;
 
 		const newInternalWorkspace = new CocoonInternalWorkspace(
@@ -729,33 +815,38 @@ export class ShimExtHostWorkspace
 
 			!!isUntitled,
 
+			// Pass IExtHostFileSystemInfo for extUri usage
 			this.#extHostFileSystemInfo,
 		);
 
+		// Calculate the delta (added/removed folders) compared to the old state.
 		const { added, removed } = arrayDelta(
 			oldWorkspaceForDiff ? oldWorkspaceForDiff.workspaceFolders : [],
 
 			// This is already readonly VscodeApiWorkspaceFolder[]
 			newInternalWorkspace.workspaceFolders,
 
+			// Comparator function
 			(a, b) => this._compareVscodeWorkspaceFoldersByUri(a, b),
 		);
 
 		return { workspace: newInternalWorkspace, added, removed };
 	}
 
+	/** Comparator for VscodeApiWorkspaceFolder objects based on their URI, using extUri for correct case handling. */
 	private _compareVscodeWorkspaceFoldersByUri(
 		a: VscodeApiWorkspaceFolder,
 
 		b: VscodeApiWorkspaceFolder,
 	): number {
-		// Use extUri for case-insensitive comparison on Windows for file URIs, etc.
 		return this.#extHostFileSystemInfo.extUri.isEqual(a.uri, b.uri)
-			? 0
-			: compare(a.uri.toString(), b.uri.toString());
+			? // URIs are equal according to extUri rules
+				0
+			: // Fallback to string comparison if not equal
+				compare(a.uri.toString(), b.uri.toString());
 	}
 
-	// --- URI Conversion Helpers ---
+	// --- URI Conversion Helpers (DTO <-> API Uri <-> Internal Uri) ---
 	private _reviveUriDtoToVscodeApiUri(
 		uriDto: UriComponentsForRpc | null | undefined,
 	): VscodeApiUri | undefined {
@@ -766,13 +857,17 @@ export class ShimExtHostWorkspace
 				uriDto as VSCodeInternalUriComponents,
 			);
 
-			// Convert internal URI to API URI
+			// Convert internal VSCodeInternalURI to public VscodeApiUri
 			return VscodeApiUri.from(internalUri);
 		} catch (e: any) {
 			this._logError(
 				"Failed to revive URI DTO to VscodeApiUri:",
 
+				"DTO:",
+
 				uriDto,
+
+				"Error:",
 
 				e,
 			);
@@ -794,7 +889,11 @@ export class ShimExtHostWorkspace
 			this._logError(
 				"Failed to revive URI DTO to VSCodeInternalURI:",
 
+				"DTO:",
+
 				uriDto,
+
+				"Error:",
 
 				e,
 			);
@@ -808,7 +907,9 @@ export class ShimExtHostWorkspace
 	): UriComponentsForRpc | undefined {
 		if (!(uri instanceof VscodeApiUri)) {
 			this._logError(
-				"Cannot convert non-VscodeApiUri to DTO for RPC",
+				"Cannot convert non-VscodeApiUri to DTO for RPC. Input type invalid.",
+
+				"Received:",
 
 				uri,
 			);
@@ -816,18 +917,21 @@ export class ShimExtHostWorkspace
 			return undefined;
 		}
 
-		// Convert VscodeApiUri to VSCodeInternalURI
+		// Convert public VscodeApiUri to internal VSCodeInternalURI
 		const internalUri = VSCodeInternalURI.from(uri);
 
-		// Then marshal to DTO
+		// Then marshal internal URI to DTO
 		return this._internalUriToMarshalledDto(internalUri);
 	}
 
+	/** Converts an internal VSCodeInternalURI to a marshalled DTO suitable for RPC. */
 	private _internalUriToMarshalledDto(
 		uri: VSCodeInternalURI,
 	): UriComponentsForRpc {
+		// `_convertApiArgToInternal` from BaseCocoonShim should handle this correctly if URI is passed.
+		// This explicit version ensures the DTO structure matches VSCodeInternalUriComponents with a $mid.
 		return {
-			// Ensure this DTO is what MainThread expects
+			// Or MarshalledId.Uri if full components are always needed by MainThread
 			$mid: MarshalledId.UriSimple,
 
 			scheme: uri.scheme,
@@ -840,38 +944,57 @@ export class ShimExtHostWorkspace
 
 			fragment: uri.fragment,
 
-			// Only include if strictly needed by MainThread
-			// external: uri.toString(true), fsPath: uri.fsPath,
+			// Optional: external (string representation) and fsPath can be added if MainThread specifically needs them
+			// and cannot derive them reliably from the basic components.
+			// external: uri.toString(true),
+
+			// fsPath: uri.scheme === Schemas.file ? uri.fsPath : undefined,
 		};
 	}
 
+	/** Converts a vscode.GlobPattern (string or RelativePattern) to an RPC DTO. */
 	private _convertGlobDtoForRpc(
 		pattern: VscodeApiGlobPattern,
 	): RpcRelativePattern | string | undefined {
+		// Simple string glob
 		if (typeof pattern === "string") return pattern;
 
 		if (pattern instanceof VscodeApiRelativePattern) {
-			// VscodeApiRelativePattern.baseUri is VscodeApiUri. Convert to DTO.
 			const baseUriDto = this._vscodeApiUriToComponentsDto(
 				pattern.baseUri,
+
+				// Convert baseUri to DTO
 			);
 
+			if (!baseUriDto) {
+				this._logWarn(
+					`Failed to convert baseUri of RelativePattern to DTO. Pattern: ${pattern.patternString}, BaseUri: ${pattern.baseUri.toString()}. ` +
+						`The relative pattern might not be correctly interpreted by MainThread.`,
+				);
+
+				// Proceed with pattern string only, or return undefined if base is critical.
+				// For now, let's proceed with just the pattern if base URI conversion fails.
+			}
+
 			return {
-				// patternString from RelativePattern API
+				// The glob pattern string itself
 				pattern: pattern.patternString,
 
-				// DTO might want string path
-				base: baseUriDto?.external ?? pattern.baseUri.toString(),
+				// `base` in RpcRelativePattern is often the string path of the base URI.
+				// `baseUriMarker` is the full UriComponents DTO for more precise revival on MainThread.
+				// Fallback to direct fsPath if DTO conversion failed but path is available
+				base: baseUriDto?.fsPath ?? pattern.baseUri.fsPath,
 
-				// Send full DTO as baseUriMarker if protocol supports it
 				baseUriMarker: baseUriDto,
 
-				// Cast, ensure RpcRelativePattern matches this structure
+				// Ensure this structure matches RpcRelativePattern
 			} as RpcRelativePattern;
 		}
 
 		this._logWarn(
-			"Unsupported VscodeApiGlobPattern type for DTO conversion:",
+			"Unsupported VscodeApiGlobPattern type encountered for DTO conversion. Expected string or RelativePattern instance.",
+
+			"Pattern:",
 
 			pattern,
 		);
@@ -879,61 +1002,80 @@ export class ShimExtHostWorkspace
 		return undefined;
 	}
 
-	// --- Public API Getters (for vscode.workspace) ---
+	// --- Public API Getters (for `vscode.workspace.*`) ---
+	/** Gets the current internal workspace state, preferring unconfirmed (optimistic) if available. */
 	private get _currentInternalWorkspace():
 		| CocoonInternalWorkspace
 		| undefined {
 		return this.#unconfirmedWorkspaceState || this.#confirmedWorkspaceState;
 	}
 
+	/** {@inheritDoc vscode.workspace.workspaceFile} */
 	get workspaceFile(): VscodeApiUri | undefined {
 		const internalWs = this._currentInternalWorkspace;
 
+		// No configuration URI means no .code-workspace file.
 		if (!internalWs?.configurationUri) return undefined;
 
-		// If it's an untitled workspace, the configurationUri might point to a temporary location,
-
-		// but workspaceFile should reflect an untitled scheme.
+		// If it's an untitled workspace, VS Code's API behavior is to return an 'untitled:' schemed URI
+		// that often points to where the temporary workspace config *would* be saved if it were a file.
+		// The actual `internalWs.configurationUri` might be a `file:` URI to a temp location for untitled workspaces.
 		if (
 			internalWs.isUntitled &&
 			internalWs.configurationUri.scheme === Schemas.file
 		) {
-			// VS Code's logic for untitled workspace file URI
+			// Try to mimic VS Code's untitled workspace file URI generation if possible.
+			// This often involves using the parent directory of the temporary workspace file path.
+			// Example: if temp file is /tmp/workspace-XYZ/.vscode/settings.json, then path might be /tmp/workspace-XYZ
+			// This logic can be complex and platform-dependent.
+			// A simpler approach for the shim if `configurationUri` points to a temp file:
+			// Get parent dir of the temp config
 			const dirOfTempWorkspaceFile = dirname(internalWs.configurationUri);
 
 			return VscodeApiUri.from({
+				// Construct an 'untitled:' URI
 				scheme: Schemas.untitled,
 
-				path: basenameOrAuthority(dirOfTempWorkspaceFile),
+				// Path might be basename of temp dir or a placeholder
+				path:
+					basenameOrAuthority(dirOfTempWorkspaceFile) ||
+					"UntitledWorkspace",
 			});
 		}
 
-		// Convert internal URI to API URI
+		// For titled workspaces, convert the internal VSCodeInternalURI of the .code-workspace file to a VscodeApiUri.
 		return VscodeApiUri.from(internalWs.configurationUri);
 	}
 
+	/** {@inheritDoc vscode.workspace.name} */
 	get name(): string | undefined {
 		return this._currentInternalWorkspace?.name;
 	}
 
+	/** {@inheritDoc vscode.workspace.workspaceFolders} */
 	get workspaceFolders(): readonly VscodeApiWorkspaceFolder[] | undefined {
 		return this._currentInternalWorkspace?.workspaceFolders;
 	}
 
+	/** {@inheritDoc vscode.workspace.isTrusted} */
 	get isTrusted(): boolean {
 		return this.#isWorkspaceTrusted;
 	}
 
-	// --- Public API Methods (for vscode.workspace) ---
+	// --- Public API Methods (for `vscode.workspace.*`) ---
+
+	/** {@inheritDoc vscode.workspace.getWorkspaceFolder} */
 	public async getWorkspaceFolder(
 		uri: VscodeApiUri,
 	): Promise<VscodeApiWorkspaceFolder | undefined> {
-		// Ensure workspace data is initialized
+		// Ensure workspace data is fully initialized from MainThread.
 		await this.#initializedBarrier.wait();
 
 		if (!(uri instanceof VscodeApiUri)) {
 			this._logWarn(
-				"getWorkspaceFolder called with invalid URI type:",
+				"getWorkspaceFolder called with an invalid URI type (expected vscode.Uri). Returning undefined.",
+
+				"Received:",
 
 				uri,
 			);
@@ -944,14 +1086,17 @@ export class ShimExtHostWorkspace
 		return this._currentInternalWorkspace?.getWorkspaceFolder(uri);
 	}
 
+	/** {@inheritDoc vscode.workspace.getConfiguration} */
 	public async getConfiguration(
 		section?: string,
 
 		scope?: ConfigurationScope | VscodeApiUri,
 	): Promise<WorkspaceConfiguration> {
-		// this._logService?.trace(`getConfiguration (Section: ${section}) -> delegating to IExtHostConfiguration via InstantiationService.`);
+		this._logDebug(
+			`API getConfiguration called (Section: '${section ?? "(root)"}', Scope: ${scope ? JSON.stringify(scope) : "none"}) -> delegating to IExtHostConfiguration via InstantiationService.`,
+		);
 
-		// Use the injected IInstantiationService to get IExtHostConfiguration
+		// Use the injected IInstantiationService to get the IExtHostConfiguration service instance.
 		const configService = this.#instantiationService.get(
 			IExtHostConfiguration,
 		);
@@ -959,28 +1104,39 @@ export class ShimExtHostWorkspace
 		return configService.getConfiguration(section, scope);
 	}
 
+	/** {@inheritDoc vscode.workspace.findFiles} */
 	public async findFiles(
 		include: VscodeApiGlobPattern,
 
+		// Can be string, RelativePattern, or null
 		exclude?: VscodeApiGlobPattern | null,
 
 		maxResults?: number | null,
 
 		token?: CancellationToken,
 	): Promise<VscodeApiUri[]> {
+		// Ensure workspace is initialized.
 		await this.#initializedBarrier.wait();
 
 		if (!this.#mainThreadWorkspaceProxy) {
-			this._logWarn(
-				"findFiles: MainThreadWorkspace RPC proxy unavailable. Returning empty array.",
+			this._logError(
+				"Cannot findFiles: MainThreadWorkspace RPC proxy is unavailable. Returning empty array.",
 			);
 
 			return [];
 		}
 
-		// this._logService?.trace(`findFiles: Include='${String(include)}', Exclude='${String(exclude)}', MaxResults=${maxResults}`);
+		this._logDebug(
+			`API findFiles: Include='${String(include)}', Exclude='${String(exclude ?? "null")}', MaxResults=${maxResults ?? "unlimited"}`,
+		);
 
-		if (token?.isCancellationRequested) return [];
+		if (token?.isCancellationRequested) {
+			this._logDebug(
+				"findFiles operation cancelled by token before RPC call.",
+			);
+
+			return [];
+		}
 
 		try {
 			const includeDto = this._convertGlobDtoForRpc(include);
@@ -989,138 +1145,186 @@ export class ShimExtHostWorkspace
 				? this._convertGlobDtoForRpc(exclude)
 				: null;
 
+			// Default search options, similar to VS Code's typical behavior.
 			const rpcOptions = {
-				maxResults,
+				// Send undefined if null, as protocol might expect number or undefined
+				maxResults: maxResults ?? undefined,
 
+				// Typically true by default
 				useIgnoreFiles: true,
 
-				followSymlinks: true /* Common defaults */,
+				// Typically true by default
+				followSymlinks: true,
+
+				// TODO: Add other options if supported by MainThreadWorkspaceProxyShim.$findFiles
 			};
 
 			if (!includeDto) {
-				// If include pattern conversion failed
 				this._logWarn(
-					"findFiles: Invalid 'include' pattern. Returning empty array.",
+					"findFiles: Invalid 'include' pattern provided. Cannot proceed with search. Returning empty array.",
 				);
 
 				return [];
 			}
 
-			const resultsDto = await this.#mainThreadWorkspaceProxy.$findFiles(
-				includeDto as string | RpcRelativePattern,
+			const resultsDtoArray =
+				await this.#mainThreadWorkspaceProxy.$findFiles(
+					// Cast after check
+					includeDto as string | RpcRelativePattern,
 
-				excludeDto as string | RpcRelativePattern | null,
+					// Cast after check
+					excludeDto as string | RpcRelativePattern | null,
 
-				rpcOptions,
-			);
+					rpcOptions,
+				);
 
-			if (token?.isCancellationRequested) return [];
+			if (token?.isCancellationRequested) {
+				// Check again after await
+				this._logDebug(
+					"findFiles operation cancelled by token after RPC call completion.",
+				);
 
-			return Array.isArray(resultsDto)
-				? (resultsDto
+				return [];
+			}
+
+			return Array.isArray(resultsDtoArray)
+				? resultsDtoArray
+						// Revive URI DTOs to VscodeApiUri
 						.map((dto) => this._reviveUriDtoToVscodeApiUri(dto))
-						// Filter out undefined from failed revival
-						.filter(Boolean) as VscodeApiUri[])
-				: [];
+						// Filter out any undefined results from failed revival
+						.filter((uri): uri is VscodeApiUri => !!uri)
+				: // Return empty array if result is not an array.
+					[];
 		} catch (e: any) {
 			if (isCancellationError(e)) {
-				this._log("findFiles cancelled by token during RPC.");
+				this._logDebug(
+					"findFiles operation cancelled by token during RPC execution.",
+
+					e,
+				);
 
 				return [];
 			}
 
 			this._logError(
-				"workspace.findFiles RPC failed:",
+				"workspace.findFiles RPC call failed:",
 
-				refineErrorForShim(e, this._logService),
+				refineErrorForShim(e, this._logService, "findFiles RPC"),
 			);
 
+			// Return empty array on error.
 			return [];
 		}
 	}
 
+	/** {@inheritDoc vscode.workspace.requestWorkspaceTrust} */
 	public async requestWorkspaceTrust(
 		options?: WorkspaceTrustRequestOptions,
 	): Promise<boolean | undefined> {
+		// Ensure workspace context is available.
 		await this.#initializedBarrier.wait();
 
 		if (!this.#mainThreadWorkspaceProxy) {
-			this._logWarn(
-				"requestWorkspaceTrust: MainThreadWorkspace RPC proxy unavailable. Cannot request trust.",
+			this._logError(
+				"Cannot requestWorkspaceTrust: MainThreadWorkspace RPC proxy is unavailable. Trust cannot be requested.",
 			);
 
-			// Or false, depending on desired behavior for unavailability
+			// API contract suggests undefined if trust cannot be determined/requested.
 			return undefined;
 		}
 
-		this._log("requestWorkspaceTrust called with options:", options);
+		this._logInfo(
+			"API requestWorkspaceTrust called with options:",
+
+			options,
+		);
 
 		return this.#mainThreadWorkspaceProxy.$requestWorkspaceTrust(options);
 	}
 
+	/** {@inheritDoc vscode.workspace.updateWorkspaceFolders} (Stubbed) */
 	public updateWorkspaceFolders(
+		// Extension attempting the change (for permission checks on MainThread)
 		_extension: IExtensionDescription,
 
+		// Start index in workspaceFolders array to modify
 		_start: number | undefined,
 
+		// Number of folders to delete from start index
 		_deleteCount: number | null | undefined,
 
 		..._workspaceFoldersToAdd: ReadonlyArray<{
 			uri: VscodeApiUri;
 
 			name?: string;
+
+			// Folders to add
 		}>
 	): boolean {
+		// Returns true if the update was accepted (MainThread will confirm asynchronously)
 		this._logError(
-			"API Not Implemented: vscode.workspace.updateWorkspaceFolders. This is a complex, restricted API and is not supported in Cocoon MVP. Returning false.",
+			"API Not Implemented: vscode.workspace.updateWorkspaceFolders. " +
+				"This is a complex and restricted API, primarily for internal use or trusted extensions, and is not supported in Cocoon MVP. " +
+				"Operation will not be performed. Returning false.",
 		);
 
 		// A full implementation would involve:
-		// 1. Validating inputs (as in VS Code's ExtHostWorkspace.updateWorkspaceFolders).
-		// 2. Creating an `_unconfirmedWorkspaceState` by applying the changes optimistically.
-		// 3. Firing `_onDidChangeWorkspaceFoldersEmitter` with the optimistic change.
-		// 4. Calling `this.#mainThreadWorkspaceProxy.$updateWorkspaceFolders(...)` with DTOs.
-		// 5. `MainThreadWorkspace` would attempt the change and then call back with `$acceptWorkspaceData` to confirm or reject.
-		// Indicate operation was not successful or not allowed.
+		// 1. Validating inputs (e.g., ensuring `_start` and `_deleteCount` are valid).
+		// 2. Creating an optimistic `_unconfirmedWorkspaceState` by applying the changes locally.
+		// 3. Firing `_onDidChangeWorkspaceFoldersEmitter` with the optimistic change (added/removed folders).
+		// 4. Making an RPC call like `this.#mainThreadWorkspaceProxy.$updateWorkspaceFolders(...)` with DTOs of folders to add/remove.
+		// 5. `MainThreadWorkspace` would attempt the change (e.g., update the .code-workspace file) and then
+		//    call back with `$acceptWorkspaceData` to confirm or reject the change, which would then update
+		//    `#confirmedWorkspaceState`.
+		// Indicate operation was not successful or not allowed in this shim.
 		return false;
 	}
 
+	/** {@inheritDoc vscode.workspace.onDidChangeWorkspaceFolders} */
 	get onDidChangeWorkspaceFolders(): VscodeEvent<VscodeWorkspaceFoldersChangeEvent> {
 		return this.#onDidChangeWorkspaceFoldersEmitter.event;
 	}
 
+	/** {@inheritDoc vscode.workspace.onDidGrantWorkspaceTrust} */
 	get onDidGrantWorkspaceTrust(): VscodeEvent<void> {
 		return this.#onDidGrantWorkspaceTrustEmitter.event;
 	}
 
+	/** {@inheritDoc vscode.workspace.textDocuments} */
 	get textDocuments(): readonly TextDocument[] {
 		return this.#extHostDocuments.getTextDocuments();
 	}
 
+	/** {@inheritDoc vscode.workspace.openTextDocument} */
 	public async openTextDocument(
 		uriOrPathOrOptions?:
 			| VscodeApiUri
 			| string
 			| { language?: string; content?: string },
 	): Promise<TextDocument> {
+		// Ensure ExtHost is ready for operations involving MainThread.
 		await this.#initializedBarrier.wait();
 
 		if (!this.#mainThreadDocsProxy) {
+			this._logError(
+				"Cannot openTextDocument: MainThreadDocuments RPC proxy is unavailable. Document cannot be opened or created.",
+			);
+
 			throw new Error(
-				"openTextDocument: MainThreadDocuments RPC proxy unavailable. Cannot open or create document.",
+				"MainThreadDocuments RPC proxy is unavailable. Cannot open or create document.",
 			);
 		}
 
 		let targetUriDto: UriComponentsForRpc | undefined;
 
-		let untitledOptions:
-			| { languageId?: string; content?: string }
-			| undefined;
+		let isUntitledCreation = false;
 
 		if (uriOrPathOrOptions instanceof VscodeApiUri) {
+			// `vscode.Uri` instance provided.
 			targetUriDto =
 				this._vscodeApiUriToComponentsDto(uriOrPathOrOptions);
 		} else if (typeof uriOrPathOrOptions === "string") {
+			// Filesystem path string provided.
 			targetUriDto = this._vscodeApiUriToComponentsDto(
 				VscodeApiUri.file(uriOrPathOrOptions),
 			);
@@ -1130,74 +1334,93 @@ export class ShimExtHostWorkspace
 			(uriOrPathOrOptions.content !== undefined ||
 				uriOrPathOrOptions.language !== undefined)
 		) {
-			// This is for creating a new untitled document with content/language.
-			untitledOptions = {
+			// Options for creating a new untitled document.
+			isUntitledCreation = true;
+
+			const untitledOptions = {
 				languageId: uriOrPathOrOptions.language,
 
 				content: uriOrPathOrOptions.content,
 			};
 
-			this._log(
-				`openTextDocument: Requesting creation of untitled document. Lang='${untitledOptions.languageId}', HasContent=${!!untitledOptions.content}`,
+			this._logDebug(
+				`API openTextDocument: Requesting creation of new untitled document. ` +
+					`Language='${untitledOptions.languageId ?? "default"}', HasContent=${untitledOptions.content !== undefined}`,
 			);
 
-			targetUriDto = await this.#mainThreadDocsProxy.$tryCreateDocument(
-				untitledOptions,
+			targetUriDto =
+				await this.#mainThreadDocsProxy.$tryCreateDocument(
+					untitledOptions,
+				);
 
-				// Returns URI DTO for the new untitled file
-			);
+			// $tryCreateDocument returns the URI DTO of the newly created untitled file on MainThread.
 		}
 
 		if (!targetUriDto) {
+			// If URI could not be determined or created.
 			throw new Error(
-				"Invalid URI or options provided to openTextDocument, or failed to create untitled document URI.",
+				"Invalid URI or options provided to openTextDocument, or failed to create URI for untitled document.",
 			);
 		}
 
-		// this._logService?.trace(`openTextDocument: Attempting to open/ensure document via RPC: Path='${targetUriDto.path || targetUriDto.scheme}'`);
+		this._logDebug(
+			`API openTextDocument: Attempting to open/ensure document model exists on MainThread via RPC. URI Path/Scheme: '${targetUriDto.path || targetUriDto.scheme}'`,
+		);
 
-		// For existing files, $tryOpenDocument ensures it's known on MainThread.
-		// For untitled created via $tryCreateDocument, it's already known.
-		// If it was an existing file URI and not an untitled creation, call $tryOpenDocument.
-		if (!untitledOptions) {
-			// Only call $tryOpenDocument if not creating new untitled (as $tryCreateDocument handles it)
+		// If it was an existing file URI (not an untitled creation), call $tryOpenDocument to ensure MainThread knows about it.
+		// For untitled documents created via $tryCreateDocument, MainThread already created the model.
+		if (!isUntitledCreation) {
 			await this.#mainThreadDocsProxy.$tryOpenDocument(targetUriDto);
 		}
 
-		// After RPC ensures the document model exists on MainThread (and thus $acceptModelAdded was called),
-
-		// retrieve the document from our local cache via CocoonDocumentService.
+		// After the RPC call ensures the document model exists on MainThread (which should trigger
+		// `$acceptModelAdded` on `CocoonDocumentService`), retrieve the document from the local cache
+		// via `CocoonDocumentService`.
 		const documentVscodeApiUri =
 			this._reviveUriDtoToVscodeApiUri(targetUriDto);
 
 		if (!documentVscodeApiUri) {
 			throw new Error(
-				"Failed to revive URI after openTextDocument RPC call. Cannot retrieve document.",
+				"Failed to revive URI DTO to VscodeApiUri after openTextDocument RPC call. Cannot retrieve document from local cache.",
 			);
 		}
 
+		// Wait a very brief moment to allow for the asynchronous $acceptModelAdded to potentially complete.
+		// This is a pragmatic workaround for potential race conditions if $tryOpenDocument resolves before $acceptModelAdded fully processes.
+		// A more robust solution might involve a promise from CocoonDocumentService specific to the URI.
+		// Yield to event loop
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
 		const docData =
-			// getDocumentData uses VscodeApiUri
+			// getDocumentData expects VscodeApiUri
 			this.#extHostDocuments.getDocumentData(documentVscodeApiUri);
 
 		if (!docData?.document) {
+			this._logError(
+				`Document with URI '${documentVscodeApiUri.toString()}' not found in local cache after open/create attempt. ` +
+					`This may indicate a synchronization issue with MainThread or that $acceptModelAdded was not yet processed.`,
+			);
+
 			throw new Error(
-				`Document ${documentVscodeApiUri.toString()} not found in local cache after open/create attempt. This indicates a sync issue with MainThread.`,
+				`Document ${documentVscodeApiUri.toString()} not found locally after open/create. Check CocoonDocumentService synchronization.`,
 			);
 		}
 
 		return docData.document;
 	}
 
+	/** {@inheritDoc vscode.workspace.fs} */
 	get fs(): FileSystem {
 		return this.#fileSystemApiService;
 
-		// Return injected instance
+		// Return the injected ShimFileSystemApi instance.
 	}
 
+	/** {@inheritDoc vscode.workspace.getRelativePath} */
 	public getRelativePath = (
 		pathOrUri: string | VscodeApiUri,
 
+		// If true and path is in a folder, prepends folder name.
 		includeWorkspaceFolder?: boolean,
 	): string => {
 		const resourceToCompare =
@@ -1205,16 +1428,18 @@ export class ShimExtHostWorkspace
 				? pathOrUri
 				: VscodeApiUri.file(pathOrUri);
 
-		// Sync variant, uses _currentInternalWorkspace
+		// Use a synchronous version of getWorkspaceFolder for this utility method.
 		const folder = this.getWorkspaceFolderSync(resourceToCompare);
 
 		if (!folder) {
-			// If not within any workspace folder, return original path/fsPath
-			// fsPath is safe for both file and non-file URIs (might be path part)
+			// If the resource is not within any known workspace folder.
+			// Return the original fsPath (for file URIs) or path (for other schemes) as is.
+			// fsPath is generally safe.
 			return resourceToCompare.fsPath;
 		}
 
-		// Determine if workspace folder name should be prepended
+		// Determine if the workspace folder name should be prepended to the relative path.
+		// VS Code's default is to include it if there are multiple workspace folders.
 		if (typeof includeWorkspaceFolder === "undefined") {
 			includeWorkspaceFolder =
 				(this._currentInternalWorkspace?.foldersApiObjects.length ??
@@ -1222,8 +1447,10 @@ export class ShimExtHostWorkspace
 		}
 
 		// Use extUri from IExtHostFileSystemInfo for correct case-insensitivity and path operations.
+		// Convert API URI to internal
 		const internalFolderUri = VSCodeInternalURI.from(folder.uri);
 
+		// Convert API URI to internal
 		const internalResourceUri = VSCodeInternalURI.from(resourceToCompare);
 
 		let relativePathString =
@@ -1234,40 +1461,43 @@ export class ShimExtHostWorkspace
 			);
 
 		if (includeWorkspaceFolder && relativePathString) {
-			// Prepend folder name if needed and relative path exists
+			// Prepend folder name if requested and a relative path was actually computed.
 			relativePathString = `${folder.name}${path.sep}${relativePathString}`;
 		}
 
-		// Fallback if relativePath is empty (e.g., resource is the folder itself) or null
+		// Fallback if relativePathString is empty (e.g., resource is the folder itself) or null.
+		// In such cases, returning the original path string or fsPath is a reasonable default.
 		return (
 			relativePathString ||
 			(pathOrUri instanceof VscodeApiUri ? pathOrUri.fsPath : pathOrUri)
 		);
 	};
 
+	/** Synchronous variant of getWorkspaceFolder, uses current internal state. */
 	private getWorkspaceFolderSync(
 		uri: VscodeApiUri,
 	): VscodeApiWorkspaceFolder | undefined {
-		// This uses the current state without await, suitable for synchronous utility functions.
 		return this._currentInternalWorkspace?.getWorkspaceFolder(uri);
 	}
 
+	/** {@inheritDoc vscode.workspace.dispose} */
 	public override dispose(): void {
-		// Handles _instanceDisposables
+		// Handles _instanceDisposables from BaseCocoonShim
 		super.dispose();
 
 		this.#onDidChangeWorkspaceFoldersEmitter.dispose();
 
 		this.#onDidGrantWorkspaceTrustEmitter.dispose();
 
-		// Document event emitters are owned and disposed by CocoonDocumentService.
-		this._log("Disposed.");
+		// Note: Document-related event emitters are owned and disposed by CocoonDocumentService.
+		// Use Info for major lifecycle
+		this._logInfo("Disposed.");
 	}
 
 	// --- Stubs for APIs not fully shimmed / out of scope for Cocoon MVP ---
 	get onWillSaveTextDocument(): VscodeEvent<TextDocumentWillSaveEvent> {
 		this._logWarnOnce(
-			"Event not implemented: onWillSaveTextDocument. Returning NOP event.",
+			"API STUB: vscode.workspace.onWillSaveTextDocument. Returning NOP event (VscodeEvent.None).",
 		);
 
 		return VscodeEvent.None;
@@ -1275,7 +1505,7 @@ export class ShimExtHostWorkspace
 
 	get notebookDocuments(): readonly any[] /* vscode.NotebookDocument[] */ {
 		this._logWarnOnce(
-			"API not implemented: workspace.notebookDocuments. Returning empty array.",
+			"API STUB: vscode.workspace.notebookDocuments. Returning empty array.",
 		);
 
 		return [];
@@ -1285,10 +1515,12 @@ export class ShimExtHostWorkspace
 		_uriOrType?: VscodeApiUri | string,
 	): Promise<any /*vscode.NotebookDocument*/> {
 		this._logWarnOnce(
-			"API not implemented: workspace.openNotebookDocument. Throwing error.",
+			"API STUB: vscode.workspace.openNotebookDocument. This will throw an error.",
 		);
 
-		throw new Error("openNotebookDocument not implemented in Cocoon.");
+		throw new Error(
+			"workspace.openNotebookDocument is not implemented in Cocoon.",
+		);
 	}
 
 	public registerTextDocumentContentProvider(
@@ -1297,10 +1529,10 @@ export class ShimExtHostWorkspace
 		_provider: TextDocumentContentProvider,
 	): IDisposable {
 		this._logWarnOnce(
-			"API not implemented: workspace.registerTextDocumentContentProvider. Returning NOP disposable.",
+			"API STUB: vscode.workspace.registerTextDocumentContentProvider. Returning NOP disposable.",
 		);
 
-		return Disposable.None;
+		return DisposableStore.None;
 	}
 
 	public registerTaskProvider(
@@ -1309,10 +1541,10 @@ export class ShimExtHostWorkspace
 		_provider: TaskProvider,
 	): IDisposable {
 		this._logWarnOnce(
-			"API not implemented: workspace.registerTaskProvider. Returning NOP disposable.",
+			"API STUB: vscode.workspace.registerTaskProvider. Returning NOP disposable.",
 		);
 
-		return Disposable.None;
+		return DisposableStore.None;
 	}
 
 	public registerFileSystemProvider(
@@ -1323,15 +1555,15 @@ export class ShimExtHostWorkspace
 		_options?: { isCaseSensitive?: boolean; isReadonly?: boolean },
 	): IDisposable {
 		this._logWarnOnce(
-			"API not implemented: workspace.registerFileSystemProvider. Returning NOP disposable.",
+			"API STUB: vscode.workspace.registerFileSystemProvider. Returning NOP disposable.",
 		);
 
-		return Disposable.None;
+		return DisposableStore.None;
 	}
 
 	get onWillCreateFiles(): VscodeEvent<FileWillCreateEvent> {
 		this._logWarnOnce(
-			"Event not implemented: onWillCreateFiles. Returning NOP event.",
+			"API STUB: vscode.workspace.onWillCreateFiles. Returning NOP event.",
 		);
 
 		return VscodeEvent.None;
@@ -1339,7 +1571,7 @@ export class ShimExtHostWorkspace
 
 	get onDidCreateFiles(): VscodeEvent<FileCreateEvent> {
 		this._logWarnOnce(
-			"Event not implemented: onDidCreateFiles. Returning NOP event.",
+			"API STUB: vscode.workspace.onDidCreateFiles. Returning NOP event.",
 		);
 
 		return VscodeEvent.None;
@@ -1347,7 +1579,7 @@ export class ShimExtHostWorkspace
 
 	get onWillDeleteFiles(): VscodeEvent<FileWillDeleteEvent> {
 		this._logWarnOnce(
-			"Event not implemented: onWillDeleteFiles. Returning NOP event.",
+			"API STUB: vscode.workspace.onWillDeleteFiles. Returning NOP event.",
 		);
 
 		return VscodeEvent.None;
@@ -1355,7 +1587,7 @@ export class ShimExtHostWorkspace
 
 	get onDidDeleteFiles(): VscodeEvent<FileDeleteEvent> {
 		this._logWarnOnce(
-			"Event not implemented: onDidDeleteFiles. Returning NOP event.",
+			"API STUB: vscode.workspace.onDidDeleteFiles. Returning NOP event.",
 		);
 
 		return VscodeEvent.None;
@@ -1363,7 +1595,7 @@ export class ShimExtHostWorkspace
 
 	get onWillRenameFiles(): VscodeEvent<FileWillRenameEvent> {
 		this._logWarnOnce(
-			"Event not implemented: onWillRenameFiles. Returning NOP event.",
+			"API STUB: vscode.workspace.onWillRenameFiles. Returning NOP event.",
 		);
 
 		return VscodeEvent.None;
@@ -1371,18 +1603,9 @@ export class ShimExtHostWorkspace
 
 	get onDidRenameFiles(): VscodeEvent<FileRenameEvent> {
 		this._logWarnOnce(
-			"Event not implemented: onDidRenameFiles. Returning NOP event.",
+			"API STUB: vscode.workspace.onDidRenameFiles. Returning NOP event.",
 		);
 
 		return VscodeEvent.None;
 	}
 }
-
-// Make cocoonInstantiationService globally available for shims that might need it (like getConfiguration)
-// This is a workaround for direct `global.DI` access. It's better if services get IInstantiationService injected.
-// This global is now REMOVED in favor of injecting IInstantiationService directly where needed.
-// declare var cocoonInstantiationService: IInstantiationService | undefined;
-
-// And a new one for the fs service if it's injected this way.
-// This is also REMOVED. workspace.fs gets it via DI.
-// declare var cocoonFileSystemApiService: FileSystem | undefined;
