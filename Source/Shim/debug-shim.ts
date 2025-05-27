@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Debug API Shim (shims/debug-shim.ts)
+ * Cocoon Debug API Shim (debug-shim.ts)
  * --------------------------------------------------------------------------------------------
  * Provides a basic stub implementation for the `vscode.debug` API namespace.
  * The `vscode.debug` API allows extensions to interact with VS Code's debugging
@@ -21,8 +21,8 @@
  * Key Interactions:
  * - An instance is made available as `vscode.debug` via the API factory (e.g., in `index.ts`).
  * - In a full implementation, it would interact heavily with a `MainThreadDebugService`
- *   on the main thread (Mountain) via RPC.
- * - Uses `BaseCocoonShim` for common utilities like logging and RPC proxy acquisition.
+ *   on Mountain via RPC.
+ * - Uses `BaseCocoonShim` for logging.
  *
  *--------------------------------------------------------------------------------------------*/
 
@@ -72,31 +72,30 @@ import {
 	type WorkspaceFolder as VscodeWorkspaceFolder,
 } from "vscode";
 
-// Assuming path to the API type definitions
+// Assuming path to the API type definitions for vscode namespace
 
 import {
 	BaseCocoonShim,
-	// Specific logger type for shims
+	// Updated type from BaseCocoonShim
 	type ILogServiceForShim,
-	// Use if RPC calls are made and errors need refinement
-	// refineErrorForShim,
-
-	// For RPC communication
+	// Updated type from BaseCocoonShim
 	type IRpcProtocolServiceAdapter,
-	// Uncomment if RPC proxy is used
+	// Not used if RPC calls are not made in stub
+	// refineErrorForShim,
+	// Uncomment if RPC is used
 	// type ProxyIdentifier,
 } from "./_baseShim";
 
-// If RPCing
-// import { MainContext, ExtHostContext } from "vs/workbench/api/common/extHost.protocol";
+// If RPCing to MainThreadDebugService:
+// import { MainContext } from "vs/workbench/api/common/extHost.protocol";
+
+// Example
+// import type { MainThreadDebugServiceShape } from "vs/workbench/api/common/extHost.protocol";
 
 // --- Type Definitions ---
 
-/**
- * Placeholder for the RPC shape of `MainThreadDebugService`.
- * This interface would define the methods callable on the main thread service.
- */
-// interface MainThreadDebugServiceShape {
+// Placeholder for the RPC shape of `MainThreadDebugService`.
+// interface MainThreadDebugServiceProxyShape {
 
 //     $startDebugging(folderUriComponents: any | undefined, nameOrConfiguration: string | DebugConfiguration, options?: DebugSessionOptions): Promise<boolean>;
 
@@ -104,12 +103,7 @@ import {
 
 //     $customDebugAdapterRequest(sessionId: string, command: string, args?: any): Promise<any>;
 
-// Example, DTOs would be used
-//     $addBreakpoints(breakpoints: DebugProtocolBreakpoint[]): Promise<DebugProtocolBreakpoint[]>;
-
-//     $removeBreakpoints(breakpointIds: string[]): Promise<void>;
-
-// ... other RPC methods for configurations, adapter factories, trackers, etc.
+// ... other RPC methods for breakpoints, configurations, adapter factories, etc.
 //
 // }
 
@@ -190,7 +184,7 @@ export interface IExtHostDebugServiceShape {
 }
 
 /**
- * Cocoon's stub implementation of the `vscode.debug` API.
+ * Cocoon's stub implementation of the `vscode.debug` API for the extension host.
  * Most methods are NOPs (No Operations) or return default/failure values in this
  * MVP (Minimum Viable Product) version, primarily to allow extensions to compile
  * and run without crashing, rather than providing full debugging functionality.
@@ -201,8 +195,7 @@ export class ShimExtHostDebugService
 {
 	public readonly _serviceBrand: undefined;
 
-	// RPC proxy instance
-	// private _mainThreadDebugProxy: MainThreadDebugServiceShape | null = null;
+	// private _mainThreadDebugProxy: MainThreadDebugServiceProxyShape | null = null;
 
 	// --- Stubbed Properties ---
 	public activeDebugSession: DebugSession | undefined = undefined;
@@ -256,7 +249,7 @@ export class ShimExtHostDebugService
 	) {
 		super("ExtHostDebugService", rpcService, logService);
 
-		this._log(
+		this._logInfo(
 			"Initialized (STUBBED implementation). Debug functionality is minimal.",
 		);
 
@@ -264,7 +257,7 @@ export class ShimExtHostDebugService
 		// if (this._rpcService) {
 
 		//     this._mainThreadDebugProxy = this._getProxy(
-		//         MainContext.MainThreadDebugService as ProxyIdentifier<MainThreadDebugServiceShape>
+		//         MainContext.MainThreadDebugService as ProxyIdentifier<MainThreadDebugServiceProxyShape>
 		//     );
 
 		// }
@@ -293,9 +286,9 @@ export class ShimExtHostDebugService
 	 * Indicates whether this shim requires RPC communication.
 	 * For the current stub implementation, RPC is not strictly required as most operations are NOPs.
 	 * A full implementation would return `true`.
+	 * @returns `false` as RPC is not required for the current stub functionality.
 	 */
 	protected override _requiresRpc(): boolean {
-		// Set to true if/when RPC calls to MainThreadDebugService are implemented.
 		return false;
 	}
 
@@ -523,6 +516,6 @@ export class ShimExtHostDebugService
 
 		this._onDidChangeBreakpointsEmitter.dispose();
 
-		this._log("Disposed.");
+		this._logInfo("Disposed.");
 	}
 }
