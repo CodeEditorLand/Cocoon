@@ -1,59 +1,72 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Node.js 'fs' Module Shim (fs-shim.ts)
+ * Cocoon Node.js 'fs' Module Shim (fs-shim.ts) - For `require('fs')`
  * --------------------------------------------------------------------------------------------
- * Provides a shim for Node.js's built-in 'fs' module, with a primary focus on implementing
- * the asynchronous `fs.promises` API. This shim is utilized when extensions or VS Code
- * platform code directly execute `require('fs')`.
+ * ##########################################################################################
+ * # CRITICAL WARNING: DEPENDENCY ON DEPRECATED MOUNTAIN BACKEND                            #
+ * ##########################################################################################
+ * This shim is designed to provide a proxied implementation for Node.js's built-in
+ * 'fs' module, primarily by making IPC calls (e.g., "fs_stat", "fs_readFile") to
+ * corresponding handlers expected on the Mountain host process (originally in
+ * `handlers/native_fs.rs`).
  *
- * Filesystem operations are proxied to the Mountain host process via `fs_*` IPC calls.
- * This is distinct from `fs-api-shim.ts`, which implements the `vscode.workspace.fs` API
- * and typically interacts with `workspacefs_*` IPC methods (often via effects in Mountain's
- * environment layer for a more structured, URI-based filesystem access). This `fs-shim.ts`
- * targets direct Node.js `fs` module usage, which is path-based.
+ * HOWEVER, THE INTENDED MOUNTAIN BACKEND (`handlers/native_fs.rs`) FOR THESE `fs_*`
+ * IPC CALLS IS CURRENTLY MARKED AS **DEPRECATED AND NON-FUNCTIONAL**. Its stubbed
+ * functions return errors, indicating that extensions should use the
+ * `vscode.workspace.fs` API instead (which is handled by `fs-api-shim.ts` on Cocoon's
+ * side and Mountain's `handlers/workspace_fs_api.rs`).
  *
- * Responsibilities:
- * - Mimicking the structure of the Node.js `fs` module, especially `fs.promises`.
- * - Implementing `fs.promises` methods by making asynchronous IPC calls to Mountain's
- *   `fs_*` handlers (e.g., `fs_stat`, `fs_readFile`).
+ * CONSEQUENTLY, THIS `fs-shim.ts` WILL **NOT FUNCTION CORRECTLY** WITH THE CURRENT
+ * MOUNTAIN ARCHITECTURE. Calls made through it are expected to fail because their
+ * backend handlers in Mountain are deprecated.
+ *
+ * A STRATEGIC DECISION IS REQUIRED:
+ * 1. **RECOMMENDED: Remove this `fs-shim.ts` and `FsModuleShimFactory.ts`**.
+ *    Modify `NodeModuleShimFactory.ts` to make `require('fs')` throw an error that
+ *    clearly directs extensions to use `vscode.workspace.fs`. This aligns with modern
+ *    VS Code practices (which discourage direct `require('fs')` by extensions) and
+ *    enhances security and abstraction by routing FS operations through the
+ *    `vscode.workspace.fs` API.
+ * 2. **ALTERNATIVE: Revive and Fully Implement `fs_*` Handlers in Mountain.**
+ *    This would involve removing the deprecation from `handlers/native_fs.rs` (or
+ *    creating a new, fully functional equivalent) and implementing all backend logic
+ *    with robust security measures (path canonicalization, workspace confinement checks)
+ *    and correct DTOs for all `fs` operations. This is a significant undertaking and
+ *    generally less preferable than guiding extensions to the structured `vscode.workspace.fs` API.
+ *
+ * This file is documented below based on its original intended functionality, * assuming its backend IPC handlers were operational, but with added warnings
+ * reflecting the current deprecated state of its backend.
+ *
+ * Original Intended Responsibilities (if backend were functional):
+ * - Mimicking the `fs.promises` API by making asynchronous IPC calls to Mountain.
  * - Handling data encoding (e.g., to base64 for `writeFile`) and decoding (e.g., from
  *   base64 for `readFile`) for IPC transport.
  * - Mapping error responses received from Mountain into Node.js-style filesystem errors
  *   (e.g., `ENOENT`, `EACCES`).
  * - Strongly discouraging the use of synchronous `fs` methods by providing stubs that
- *   throw errors, guiding users towards the asynchronous `fs.promises` API.
+ *   throw errors.
  * - Providing Node.js `fs.constants`.
  *
- * Key Interactions:
- * - Exported as an instance and provided by `FsModuleShimFactory` when `require('fs')`
- *   is intercepted.
- * - Uses `sendToMountainAndWait` from `cocoon-ipc.ts` for all proxied filesystem operations.
- * - Relies on corresponding `fs_*` handlers being implemented in Mountain (e.g., within
- *   `handlers/native_fs.rs`, although that was marked deprecated in some contexts; this
- *   shim assumes such handlers are active or replaced by equivalents).
- *
-
  *--------------------------------------------------------------------------------------------*/
 
-// Node.js Buffer for encoding/decoding
-// Explicitly import from node:buffer
+// Explicit import for Buffer operations
 import { Buffer } from "node:buffer";
-// For constants and type reference
+// For fs.constants and creating new nodeFs.Stats/Dirent instances
 import * as nodeFs from "node:fs";
-// For type information from @types/node, assuming it's a dev dependency.
+// For comprehensive type information from @types/node
 import type * as NodeFsTypes from "node:fs";
 
 import { sendToMountainAndWait } from "../cocoon-ipc";
 
-console.log(
-	"[Cocoon FS Shim] Initializing Node 'fs' module shim (for require('fs')).",
+console.warn(
+	"[Cocoon FS Shim] Initializing Node 'fs' module shim (for `require('fs')`). " +
+		"WARNING: Its corresponding backend handlers in Mountain (previously `handlers/native_fs.rs`) are DEPRECATED and likely NON-FUNCTIONAL. " +
+		"This shim will therefore NOT work as expected. Extensions should use `vscode.workspace.fs` for filesystem operations.",
 );
 
 // --- Type Definitions ---
-// These should align with @types/node fs.promises and fs module structure.
-
 type PathLike = NodeFsTypes.PathLike;
 
-// Directly use Node's Stats type.
+// Using Node's own Stats type
 type StatsShim = NodeFsTypes.Stats;
 
 type ReadFileOptionsShim = Parameters<typeof nodeFs.promises.readFile>[1];
@@ -66,13 +79,10 @@ type RmdirOptionsShim = Parameters<typeof nodeFs.promises.rmdir>[1];
 
 type ReaddirOptionsShim = Parameters<typeof nodeFs.promises.readdir>[1];
 
-// Directly use Node's Dirent type.
+// Using Node's own Dirent type
 type DirentShim = NodeFsTypes.Dirent;
 
-/**
- * Defines the interface for the `fs.promises` API part of the shim.
- * Methods match `typeof nodeFs.promises`.
- */
+/** Defines the interface for the `fs.promises` API part of the shim. */
 export interface FsPromisesApiShim {
 	access: (path: PathLike, mode?: number) => Promise<void>;
 
@@ -82,7 +92,6 @@ export interface FsPromisesApiShim {
 		opts?: NodeFsTypes.StatOptions,
 	) => Promise<StatsShim>;
 
-	// Added lstat
 	lstat?: (
 		path: PathLike,
 
@@ -117,10 +126,8 @@ export interface FsPromisesApiShim {
 
 	unlink: (path: PathLike) => Promise<void>;
 
-	// `rm` is newer replacement for rmdir/unlink
-	rm:
-		| ((path: PathLike, options?: NodeFsTypes.RmOptions) => Promise<void>)
-		| undefined;
+	// `rm` is newer, may not be in all Node versions
+	rm?: (path: PathLike, options?: NodeFsTypes.RmOptions) => Promise<void>;
 
 	rmdir: (path: PathLike, options?: RmdirOptionsShim) => Promise<void>;
 
@@ -132,31 +139,27 @@ export interface FsPromisesApiShim {
 
 	rename: (oldPath: PathLike, newPath: PathLike) => Promise<void>;
 
+	// `copyFile` may not be in all Node versions
 	copyFile?: (src: PathLike, dest: PathLike, mode?: number) => Promise<void>;
 
-	// TODO: Add other commonly used fs.promises methods: chmod, chown, readlink, etc.
+	// TODO: Add other fs.promises methods as needed, BUT ONLY IF the Mountain backend is revived and supports them.
 }
 
-/**
- * Defines the overall structure of the 'fs' shim module provided to extensions.
- * Includes the `promises` API and stubs for synchronous methods.
- */
+/** Defines the overall structure of the 'fs' shim module provided when `require('fs')` is called. */
 export interface FsShimStructure {
 	promises: FsPromisesApiShim;
 
 	constants: typeof nodeFs.constants;
 
-	// Synchronous stubs - these should strongly discourage usage.
+	// Synchronous API stubs - these strongly discourage usage and will throw errors.
 	existsSync: (path: PathLike) => boolean;
 
-	// Or throw
 	statSync: (
 		path: PathLike,
 
 		options?: NodeFsTypes.StatSyncOptions,
 	) => StatsShim | undefined;
 
-	// Or throw
 	lstatSync?: (
 		path: PathLike,
 
@@ -191,7 +194,6 @@ export interface FsShimStructure {
 
 	unlinkSync: (path: PathLike) => void;
 
-	// Or throw
 	rmSync?: (path: PathLike, options?: NodeFsTypes.RmOptions) => void;
 
 	rmdirSync: (path: PathLike, options?: RmdirOptionsShim) => void;
@@ -204,10 +206,9 @@ export interface FsShimStructure {
 
 	renameSync: (oldPath: PathLike, newPath: PathLike) => void;
 
-	// Or throw
 	accessSync?: (path: PathLike, mode?: number) => void;
 
-	// Stream and Watcher stubs - these are complex to shim and typically throw.
+	// Stream and Watcher stubs - these are complex to shim and will throw.
 	createReadStream: (
 		path: PathLike,
 
@@ -234,9 +235,12 @@ export interface FsShimStructure {
 }
 
 /**
- * Helper function to make an asynchronous IPC request for a filesystem operation.
+ * Internal helper to make an asynchronous IPC request for a filesystem operation to Mountain.
  * It also attempts to map common error messages/codes from the IPC response
  * to standard Node.js filesystem error codes.
+ *
+ * WARNING: This function will likely encounter errors if Mountain's `native_fs.rs`
+ *          handlers (e.g., `fs_stat`, `fs_readFile`) are deprecated or non-functional.
  *
  * @param ipcMethod The IPC method name (e.g., "fs_stat", "fs_readFile").
  * @param ipcParams The parameters to send with the IPC request.
@@ -250,21 +254,18 @@ async function requestFsOpAsync(
 ): Promise<any> {
 	// console.debug(`[Node FS Shim -> Mtn] IPC Req: '${ipcMethod}', Params: ${JSON.stringify(ipcParams).substring(0, 100)}`);
 
+	console.warn(
+		`[Node FS Shim] Attempting IPC call to Mountain for '${ipcMethod}'. This relies on backend handlers in 'native_fs.rs' which are DEPRECATED and likely to fail.`,
+	);
+
 	try {
-		// 20s timeout for FS ops
-		const response = await sendToMountainAndWait(
-			ipcMethod,
-
-			ipcParams,
-
-			20000,
-		);
-
-		return response;
+		// Use a reasonable timeout for FS operations, e.g., 20 seconds.
+		return await sendToMountainAndWait(ipcMethod, ipcParams, 20000);
 	} catch (e: any) {
 		// Attempt to normalize the error from IPC to a NodeJS.ErrnoException
 		const err = new Error(
-			e.message || `IPC Error during fs operation: ${ipcMethod}`,
+			e.message ||
+				`IPC Error during fs operation: ${ipcMethod}. Backend handler in Mountain for this ('${ipcMethod}' in native_fs.rs) is likely deprecated and non-functional.`,
 		) as NodeJS.ErrnoException;
 
 		// Preserve original error name if available
@@ -276,10 +277,12 @@ async function requestFsOpAsync(
 		// Map common error messages/codes from Mountain to Node.js fs error codes
 		const msgLower = String(e.message).toLowerCase();
 
+		// Check e.code if Mountain sends it
 		const codeLower = String(e.code).toLowerCase();
 
 		if (
 			msgLower.includes("not found") ||
+			msgLower.includes("no such file") ||
 			msgLower.includes("enoent") ||
 			codeLower === "enoent"
 		)
@@ -320,12 +323,15 @@ async function requestFsOpAsync(
 			codeLower === "etimedout"
 		)
 			err.code = "ETIMEDOUT";
-		// Preserve original code if specific
-		else if (e.code) err.code = String(e.code);
-		// Generic I/O error
+		else if (e.code)
+			// Preserve original code if specific and not mapped
+			err.code = String(e.code);
+		// Generic I/O error if no other code fits
 		else err.code = "EIO";
 
-		// console.warn(`[Node FS Shim <- Mtn] Mapped IPC Error for '${ipcMethod}': Code='${err.code}', Message='${err.message}'`);
+		console.error(
+			`[Node FS Shim <- Mtn] Mapped IPC Error for '${ipcMethod}': Code='${err.code}', Message='${err.message}'`,
+		);
 
 		throw err;
 	}
@@ -333,6 +339,10 @@ async function requestFsOpAsync(
 
 const fsPromisesImpl: FsPromisesApiShim = {
 	access: async (path: PathLike, mode?: number): Promise<void> => {
+		console.warn(
+			`[Node FS Shim] promises.access: Calling DEPRECATED Mountain backend for path '${String(path)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
 		await requestFsOpAsync("fs_access", {
 			path: String(path),
 
@@ -345,6 +355,10 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 		opts?: NodeFsTypes.StatOptions,
 	): Promise<StatsShim> => {
+		console.warn(
+			`[Node FS Shim] promises.stat: Calling DEPRECATED Mountain backend for path '${String(path)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
 		const result = (await requestFsOpAsync("fs_stat", {
 			path: String(path),
 
@@ -352,15 +366,110 @@ const fsPromisesImpl: FsPromisesApiShim = {
 		})) as any;
 
 		if (result && typeof result === "object") {
-			// Convert raw stat data from Mountain (assumed structure) to a NodeFsTypes.Stats object.
-			// This requires Mountain to send fields that can be mapped to Node's Stats.
-			// Example assuming Mountain sends: { dev, ino, mode, nlink, uid, gid, rdev, size, blksize, blocks, atimeMs, mtimeMs, ctimeMs, birthtimeMs, isFile, isDirectory, isSymbolicLink, ... }
+			// Mountain must return all fields necessary to reconstruct a Stats object.
+			// This includes dev, ino, mode, nlink, uid, gid, rdev, size, blksize, blocks,
 
-			// Create a real Stats object if possible, or duck-type
+			// and timestamp properties (atimeMs, mtimeMs, ctimeMs, birthtimeMs).
+			// The isFile(), isDirectory() etc. methods are derived from `mode` on the Stats object.
+			// Create a new Stats object
 			const stats = new nodeFs.Stats();
 
-			// Assign known properties
+			// Assign properties from the result DTO. Ensure BigInt for numeric stat fields if bigint option is used.
 			Object.assign(stats, {
+				dev: BigInt(result.dev ?? 0),
+
+				ino: BigInt(result.ino ?? 0),
+
+				mode: BigInt(result.mode ?? 0),
+
+				nlink: BigInt(result.nlink ?? 1),
+
+				uid: BigInt(result.uid ?? 0),
+
+				gid: BigInt(result.gid ?? 0),
+
+				rdev: BigInt(result.rdev ?? 0),
+
+				size: BigInt(result.size ?? 0),
+
+				blksize: BigInt(result.blksize ?? 4096),
+
+				blocks: BigInt(
+					result.blocks ??
+						Math.ceil((Number(result.size) || 0) / 4096),
+
+					// Calculate blocks if not provided
+				),
+
+				atimeMs: BigInt(result.atimeMs ?? Date.now()),
+
+				mtimeMs: BigInt(result.mtimeMs ?? Date.now()),
+
+				ctimeMs: BigInt(result.ctimeMs ?? Date.now()),
+
+				birthtimeMs: BigInt(result.birthtimeMs ?? Date.now()),
+
+				atimeNs: BigInt(
+					result.atimeNs ??
+						(result.atimeMs ?? Date.now()) * 1_000_000,
+
+					// Convert ms to ns if ns not provided
+				),
+
+				mtimeNs: BigInt(
+					result.mtimeNs ??
+						(result.mtimeMs ?? Date.now()) * 1_000_000,
+				),
+
+				ctimeNs: BigInt(
+					result.ctimeNs ??
+						(result.ctimeMs ?? Date.now()) * 1_000_000,
+				),
+
+				birthtimeNs: BigInt(
+					result.birthtimeNs ??
+						(result.birthtimeMs ?? Date.now()) * 1_000_000,
+				),
+			});
+
+			// Ensure Date properties are also set from their Ms counterparts
+			stats.atime = new Date(Number(stats.atimeMs));
+
+			stats.mtime = new Date(Number(stats.mtimeMs));
+
+			stats.ctime = new Date(Number(stats.ctimeMs));
+
+			stats.birthtime = new Date(Number(stats.birthtimeMs));
+
+			return stats as StatsShim;
+		}
+
+		throw new Error(
+			`Invalid stat result received from host for 'fs_stat' on path '${String(path)}'. Backend is likely deprecated.`,
+		);
+	},
+
+	lstat: async (
+		path: PathLike,
+
+		opts?: NodeFsTypes.StatOptions,
+	): Promise<StatsShim> => {
+		console.warn(
+			`[Node FS Shim] promises.lstat: Calling DEPRECATED Mountain backend for path '${String(path)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
+		const result = (await requestFsOpAsync("fs_lstat", {
+			path: String(path),
+
+			bigint: opts?.bigint,
+		})) as any;
+
+		if (result && typeof result === "object") {
+			// Create a new Stats object
+			const stats = new nodeFs.Stats();
+
+			Object.assign(stats, {
+				/* ... map all fields as in stat() ... */
 				dev: BigInt(result.dev ?? 0),
 
 				ino: BigInt(result.ino ?? 0),
@@ -413,8 +522,6 @@ const fsPromisesImpl: FsPromisesApiShim = {
 				),
 			});
 
-			// Ensure date properties are set
-
 			stats.atime = new Date(Number(stats.atimeMs));
 
 			stats.mtime = new Date(Number(stats.mtimeMs));
@@ -423,49 +530,12 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 			stats.birthtime = new Date(Number(stats.birthtimeMs));
 
-			// Methods like isFile() are on the prototype of nodeFs.Stats.
-
-			// If Mountain sends pre-calculated booleans for these, they can be assigned.
-
-			// Otherwise, they are derived from `mode`.
-
-			// if (typeof result.isFile === 'boolean') (stats as any)._isFile = result.isFile;
-
-			// ...
-
-			// Cast as the fully typed StatsShim
 			return stats as StatsShim;
 		}
 
-		throw new Error("Invalid stat result received from host (fs_stat)");
-	},
-
-	lstat: async (
-		path: PathLike,
-
-		opts?: NodeFsTypes.StatOptions,
-	): Promise<StatsShim> => {
-		// Similar to stat, but Mountain's fs_lstat should handle symlinks correctly.
-
-		const result = (await requestFsOpAsync("fs_lstat", {
-			path: String(path),
-
-			bigint: opts?.bigint,
-		})) as any;
-
-		// ... (conversion logic similar to stat) ...
-
-		if (result && typeof result === "object") {
-			const stats = new nodeFs.Stats();
-
-			Object.assign(stats, {
-				/* ... map fields ... */
-			});
-
-			return stats as StatsShim;
-		}
-
-		throw new Error("Invalid lstat result received from host (fs_lstat)");
+		throw new Error(
+			`Invalid lstat result received from host for 'fs_lstat' on path '${String(path)}'. Backend is likely deprecated.`,
+		);
 	},
 
 	realpath: async (
@@ -473,8 +543,10 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 		_options?: NodeFsTypes.ObjectEncodingOptions | BufferEncoding,
 	): Promise<string> => {
-		// Node's realpath options primarily affect encoding of the result, default is 'utf8'.
-		// IPC typically returns string directly.
+		console.warn(
+			`[Node FS Shim] promises.realpath: Calling DEPRECATED Mountain backend for path '${String(path)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
 		return await requestFsOpAsync("fs_realpath", { path: String(path) });
 	},
 
@@ -483,28 +555,34 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 		options?: ReadFileOptionsShim,
 	): Promise<string | Buffer> => {
+		console.warn(
+			`[Node FS Shim] promises.readFile: Calling DEPRECATED Mountain backend for path/handle '${String(pathHandle)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
 		if (
 			typeof pathHandle !== "string" &&
 			!Buffer.isBuffer(pathHandle) &&
 			!(pathHandle instanceof URL)
 		) {
+			// FileHandle operations are not straightforward to proxy via simple IPC.
 			throw Object.assign(
 				new Error(
-					"readFile with FileHandle input not supported in this shim.",
+					"fs.promises.readFile with FileHandle input is not supported by this shim.",
 				),
 
 				{ code: "ERR_INVALID_ARG_TYPE" },
 			);
 		}
 
-		// null for Buffer
 		const encoding =
+			// null means return Buffer
 			(typeof options === "string" ? options : options?.encoding) || null;
 
 		const flag =
 			typeof options === "object" && options !== null
 				? options.flag
-				: undefined;
+				: // Pass flag if provided
+					undefined;
 
 		const resultBase64 = (await requestFsOpAsync("fs_readFile", {
 			path: String(pathHandle),
@@ -512,10 +590,11 @@ const fsPromisesImpl: FsPromisesApiShim = {
 			options: { flag },
 		})) as string;
 
-		if (typeof resultBase64 !== "string")
+		if (typeof resultBase64 !== "string") {
 			throw new Error(
-				"Invalid readFile result (expected base64 string from fs_readFile)",
+				`Invalid readFile result (expected base64 string) for '${String(pathHandle)}'. Backend is likely deprecated.`,
 			);
+		}
 
 		const buffer = Buffer.from(resultBase64, "base64");
 
@@ -531,6 +610,10 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 		options?: WriteFileOptionsShim,
 	): Promise<void> => {
+		console.warn(
+			`[Node FS Shim] promises.writeFile: Calling DEPRECATED Mountain backend for path/handle '${String(pathHandle)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
 		if (
 			typeof pathHandle !== "string" &&
 			!Buffer.isBuffer(pathHandle) &&
@@ -538,7 +621,7 @@ const fsPromisesImpl: FsPromisesApiShim = {
 		) {
 			throw Object.assign(
 				new Error(
-					"writeFile with FileHandle input not supported in this shim.",
+					"fs.promises.writeFile with FileHandle input is not supported by this shim.",
 				),
 
 				{ code: "ERR_INVALID_ARG_TYPE" },
@@ -564,11 +647,12 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 			if (options.flag !== undefined) ipcOptions.flag = options.flag;
 
-			// TODO: AbortSignal (options.signal) is complex to proxy. Warn if present.
-			if ((options as any).signal)
+			// AbortSignal (options.signal) is complex to proxy over simple IPC. Log if present.
+			if ((options as any).signal) {
 				console.warn(
-					"[Node FS Shim] writeFile: AbortSignal option is not supported by this shim.",
+					"[Node FS Shim] writeFile: AbortSignal option is provided but not supported by this shim's IPC mechanism.",
 				);
+			}
 		}
 
 		await requestFsOpAsync("fs_writeFile", {
@@ -585,10 +669,13 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 		options?: MkdirOptionsShim,
 	): Promise<string | undefined> => {
+		console.warn(
+			`[Node FS Shim] promises.mkdir: Calling DEPRECATED Mountain backend for path '${String(path)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
 		const ipcOptions: NodeFsTypes.MakeDirectoryOptions =
 			typeof options === "number" ? { mode: options } : options || {};
 
-		// Mountain's fs_mkdir should handle the recursive logic.
 		const result = await requestFsOpAsync("fs_mkdir", {
 			path: String(path),
 
@@ -596,19 +683,10 @@ const fsPromisesImpl: FsPromisesApiShim = {
 		});
 
 		// Node's fs.promises.mkdir returns:
-
-		// - path if options.recursive is true and path was created (or first path created)
-
-		// - undefined if options.recursive is true and path already existed
-
-		// - undefined if options.recursive is false (or not set) and path was created
-
-		// - Throws if options.recursive is false and path already exists (EEXIST)
-
-		// This shim relies on Mountain to return the path or specific signal.
-
-		// If Mountain returns the path string when created recursively:
-
+		// - `path` (string) if `options.recursive` is true and the first directory was created.
+		// - `undefined` if `options.recursive` is true and the path already existed.
+		// - `undefined` if `options.recursive` is false (or not set) and the path was created.
+		// This shim relies on Mountain to return the path string if it was created recursively and was the first.
 		if (ipcOptions.recursive && typeof result === "string") return result;
 
 		// Default for non-recursive success or recursive existing path
@@ -616,6 +694,10 @@ const fsPromisesImpl: FsPromisesApiShim = {
 	},
 
 	unlink: async (path: PathLike): Promise<void> => {
+		console.warn(
+			`[Node FS Shim] promises.unlink: Calling DEPRECATED Mountain backend for path '${String(path)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
 		await requestFsOpAsync("fs_unlink", { path: String(path) });
 	},
 
@@ -625,10 +707,9 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 				options?: NodeFsTypes.RmOptions,
 			): Promise<void> => {
-				// If nodeFs.promises.rm exists, assume Mountain has a corresponding fs_rm handler
-
+				// `rm` is a newer API (Node 14.14.0+) that can remove files and directories (recursively).
 				console.warn(
-					"[Node FS Shim] fs.promises.rm is being used. Ensure Mountain has a corresponding 'fs_rm' handler.",
+					`[Node FS Shim] promises.rm: Calling DEPRECATED Mountain backend for path '${String(path)}'. Ensure Mountain has a corresponding 'fs_rm' handler if this shim were functional.`,
 				);
 
 				await requestFsOpAsync("fs_rm", {
@@ -636,16 +717,19 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 					options,
 				});
-
-				// rm is undefined if not in current Node version
 			}
-		: undefined,
+		: // `rm` is undefined if not available in the running Node.js version.
+			undefined,
 
 	rmdir: async (
 		path: PathLike,
 
 		options?: RmdirOptionsShim,
 	): Promise<void> => {
+		console.warn(
+			`[Node FS Shim] promises.rmdir: Calling DEPRECATED Mountain backend for path '${String(path)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
 		await requestFsOpAsync("fs_rmdir", { path: String(path), options });
 	},
 
@@ -654,6 +738,10 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 		options?: ReaddirOptionsShim,
 	): Promise<string[] | Buffer[] | DirentShim[]> => {
+		console.warn(
+			`[Node FS Shim] promises.readdir: Calling DEPRECATED Mountain backend for path '${String(path)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
 		const ipcReadOptions: {
 			encoding?: BufferEncoding | "buffer";
 
@@ -667,10 +755,12 @@ const fsPromisesImpl: FsPromisesApiShim = {
 		let withFileTypes = false;
 
 		if (typeof options === "string") {
+			// `options` is encoding string
 			ipcReadOptions.encoding = options as BufferEncoding;
 
 			if (options === "buffer") returnAsBuffer = true;
 		} else if (options && typeof options === "object") {
+			// `options` is an object
 			ipcReadOptions.encoding = options.encoding as
 				| BufferEncoding
 				| "buffer"
@@ -682,7 +772,7 @@ const fsPromisesImpl: FsPromisesApiShim = {
 
 			ipcReadOptions.withFileTypes = withFileTypes;
 
-			// For newer Node versions
+			// For newer Node versions that support recursive readdir
 			ipcReadOptions.recursive = (options as any).recursive;
 		}
 
@@ -692,57 +782,73 @@ const fsPromisesImpl: FsPromisesApiShim = {
 			options: ipcReadOptions,
 		})) as any[];
 
-		if (!Array.isArray(result))
-			throw new Error("readdir IPC response was not an array.");
+		if (!Array.isArray(result)) {
+			throw new Error(
+				`readdir IPC response for '${String(path)}' was not an array. Backend is likely deprecated.`,
+			);
+		}
 
 		if (withFileTypes) {
 			return result.map(
-				(item: { name: string; type: number }): DirentShim => {
+				(
+					itemDto: {
+						name: string;
+
+						type: number;
+					} /* DTO for Dirent from Mountain */,
+				): DirentShim => {
+					// Mountain must send `name` (string) and `type` (number corresponding to Node's d_type constants like UV_DIRENT_FILE, UV_DIRENT_DIR).
 					if (
-						typeof item !== "object" ||
-						item === null ||
-						typeof item.name !== "string" ||
-						typeof item.type !== "number"
+						typeof itemDto?.name !== "string" ||
+						typeof itemDto?.type !== "number"
 					) {
 						console.warn(
-							"[Node FS Shim] Invalid Dirent structure from Mountain for readdir withFileTypes:",
+							"[Node FS Shim] Invalid Dirent DTO received from Mountain for readdir (withFileTypes:true):",
 
-							item,
+							itemDto,
+
+							". Backend is likely deprecated.",
 						);
 
-						// Create a real Dirent
-						const dirent = new nodeFs.Dirent();
+						// Create a real Dirent instance
+						const d = new nodeFs.Dirent();
 
-						(dirent as any).name = String(
-							item?.name || "unknown_dirent",
+						(d as any).name = String(
+							itemDto?.name ||
+								"unknown_dirent_from_deprecated_backend",
 						);
 
-						// Set type to unknown or default
+						// Or some default if type is bad
+						// (d as any).type = nodeFs.constants.UV_DIRENT_UNKNOWN;
 
-						return dirent;
+						return d;
 					}
 
-					// Create a real Dirent
 					const dirent = new nodeFs.Dirent();
 
-					// Assign name
-					(dirent as any).name = item.name;
+					// Node's Dirent objects are class instances, direct field assignment might not set internal state.
+					(dirent as any).name = itemDto.name;
 
-					// Assign type (Node's d_type constants)
-					(dirent as any).type = item.type;
+					// This internal `type` field is what `isFile()`, `isDirectory()` etc. use.
+					(dirent as any).type = itemDto.type;
 
 					return dirent;
 				},
 			);
 		} else if (returnAsBuffer) {
+			// Ensure names are strings before Buffer.from
 			return result.map((name) => Buffer.from(String(name)));
 		}
 
-		// Default is string[]
+		// Default return is string[]
 		return result.map((name) => String(name));
 	},
 
 	rename: async (oldPath: PathLike, newPath: PathLike): Promise<void> => {
+		console.warn(
+			`[Node FS Shim] promises.rename: Calling DEPRECATED Mountain backend for '${String(oldPath)}' -> '${String(newPath)}'. This will likely fail. Use vscode.workspace.fs instead.`,
+		);
+
 		await requestFsOpAsync("fs_rename", {
 			oldPath: String(oldPath),
 
@@ -759,7 +865,7 @@ const fsPromisesImpl: FsPromisesApiShim = {
 				mode?: number,
 			): Promise<void> => {
 				console.warn(
-					"[Node FS Shim] fs.promises.copyFile is being used. Ensure Mountain has a corresponding 'fs_copyFile' handler.",
+					`[Node FS Shim] promises.copyFile: Calling DEPRECATED Mountain backend for '${String(src)}' -> '${String(dest)}'. Ensure Mountain has 'fs_copyFile' handler if this shim were functional.`,
 				);
 
 				await requestFsOpAsync("fs_copyFile", {
@@ -770,177 +876,161 @@ const fsPromisesImpl: FsPromisesApiShim = {
 					mode,
 				});
 			}
-		: undefined,
+		: // `copyFile` is undefined if not available in the running Node.js version.
+			undefined,
 };
 
 const fsShimModuleInstance: FsShimStructure = {
 	promises: fsPromisesImpl,
 
+	// Safe to pass through Node's own constants.
 	constants: nodeFs.constants,
 
-	// --- Synchronous API Stubs (Discouraged: Throw errors) ---
+	// --- Synchronous API Stubs ---
+	// All synchronous methods throw errors, strongly discouraging their use and highlighting the deprecated backend.
+	// The error messages now consistently point to the deprecated backend and suggest vscode.workspace.fs.
 	existsSync: (path) => {
 		const msg =
-			"fs.existsSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.access or fs.promises.stat.";
+			"fs.existsSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(path)}`);
 
 		throw new Error(msg);
 	},
 
-	statSync: (path, opts) => {
+	statSync: (path) => {
 		const msg =
-			"fs.statSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.stat.";
+			"fs.statSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(path)}`);
 
 		throw new Error(msg);
 	},
 
-	lstatSync: (path, opts) => {
+	lstatSync: (path) => {
 		const msg =
-			"fs.lstatSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.lstat.";
+			"fs.lstatSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(path)}`);
 
 		throw new Error(msg);
 	},
 
-	realpathSync: (path, opts) => {
+	realpathSync: (path) => {
 		const msg =
-			"fs.realpathSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.realpath.";
+			"fs.realpathSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(path)}`);
 
 		throw new Error(msg);
 	},
 
-	readFileSync: (path, opts) => {
+	readFileSync: (path) => {
 		const msg =
-			"fs.readFileSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.readFile.";
+			"fs.readFileSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(path)}`);
 
 		throw new Error(msg);
 	},
 
-	writeFileSync: (path, data, opts) => {
+	writeFileSync: (path) => {
 		const msg =
-			"fs.writeFileSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.writeFile.";
+			"fs.writeFileSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(path)}`);
 
 		throw new Error(msg);
 	},
 
-	mkdirSync: (path, opts) => {
+	mkdirSync: (path) => {
 		const msg =
-			"fs.mkdirSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.mkdir.";
+			"fs.mkdirSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(path)}`);
 
 		throw new Error(msg);
 	},
 
 	unlinkSync: (path) => {
 		const msg =
-			"fs.unlinkSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.unlink.";
+			"fs.unlinkSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(path)}`);
 
 		throw new Error(msg);
 	},
 
 	rmSync: nodeFs.rmSync
-		? (path, opts) => {
+		? (path) => {
 				const msg =
-					"fs.rmSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.rm.";
+					"fs.rmSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-				console.warn(
-					`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
+				console.error(
+					`[Node FS Shim] Call to ${msg} Path: ${String(path)}`,
 				);
 
 				throw new Error(msg);
 			}
 		: undefined,
 
-	rmdirSync: (path, opts) => {
+	rmdirSync: (path) => {
 		const msg =
-			"fs.rmdirSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.rmdir or fs.promises.rm.";
+			"fs.rmdirSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(path)}`);
 
 		throw new Error(msg);
 	},
 
-	readdirSync: (path, opts) => {
+	readdirSync: (path) => {
 		const msg =
-			"fs.readdirSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.readdir.";
+			"fs.readdirSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(path)}`);
 
 		throw new Error(msg);
 	},
 
-	renameSync: (oldP, newP) => {
+	renameSync: (oldP) => {
 		const msg =
-			"fs.renameSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.rename.";
+			"fs.renameSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-		console.warn(
-			`[Node FS Shim] Attempted to call ${msg} for path: ${oldP}`,
-		);
+		console.error(`[Node FS Shim] Call to ${msg} Path: ${String(oldP)}`);
 
 		throw new Error(msg);
 	},
 
 	accessSync: nodeFs.accessSync
-		? (path, mode) => {
+		? (path) => {
 				const msg =
-					"fs.accessSync is synchronous and not supported in Cocoon's proxied fs shim; use fs.promises.access.";
+					"fs.accessSync is synchronous and its backend is DEPRECATED; prefer asynchronous `vscode.workspace.fs` operations or ensure Mountain's native_fs.rs is functional and un-deprecated.";
 
-				console.warn(
-					`[Node FS Shim] Attempted to call ${msg} for path: ${path}`,
+				console.error(
+					`[Node FS Shim] Call to ${msg} Path: ${String(path)}`,
 				);
 
 				throw new Error(msg);
 			}
 		: undefined,
 
-	// Stream and Watcher stubs - these are complex to shim over IPC and typically throw.
-	createReadStream: (_p, _o) => {
+	// Stream and Watcher stubs also throw, as they are complex to shim via async IPC and rely on a functional backend.
+	createReadStream: () => {
 		throw new Error(
-			"fs.createReadStream not supported in Cocoon's proxied fs shim.",
+			"fs.createReadStream not supported in Cocoon's proxied fs shim (due to deprecated backend). Use vscode.workspace.fs for stream-like operations if available, or read file content in chunks.",
 		);
 	},
 
-	createWriteStream: (_p, _o) => {
+	createWriteStream: () => {
 		throw new Error(
-			"fs.createWriteStream not supported in Cocoon's proxied fs shim.",
+			"fs.createWriteStream not supported in Cocoon's proxied fs shim (due to deprecated backend). Use vscode.workspace.fs for writing files.",
 		);
 	},
 
-	watch: (_f, _o, _l) => {
-		throw new Error("fs.watch not supported in Cocoon's proxied fs shim.");
+	watch: () => {
+		throw new Error(
+			"fs.watch not supported in Cocoon's proxied fs shim (due to deprecated backend). Use vscode.workspace.createFileSystemWatcher instead.",
+		);
 	},
 };
 
