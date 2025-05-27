@@ -27,15 +27,21 @@
  *   - `sendCancelToMountain`: Sends a cancellation for a request previously sent by Cocoon.
  * - Providing `createHostProtocolInterface`: An adapter that conforms to VS Code's
  *   `IMessagePassingProtocol`, allowing `RPCProtocol` to operate over Vine notifications.
+ *   RPC data (`VSBuffer`) is base64 encoded and transmitted within Vine notifications
+ *   (method: "rpcData").
  * - Emitting specific internal events (e.g., for configuration changes, workspace folder
- *   changes, generic messages) for consumption by other parts of Cocoon (e.g., `index.ts`, shims).
+ *   changes, generic messages, cancellation requests from Mountain) for consumption by
+ *   other parts of Cocoon (e.g., `index.ts`, shims, RPC server handlers).
  *
  * Key Interactions:
  * - Interacts directly with Node.js `process.stdin` and `process.stdout`.
  * - Uses Node.js `readline` module for efficient line-by-line processing of stdin.
  * - Manages a `Map` of pending requests for `sendToMountainAndWait`.
- * - Bridges VS Code's `RPCProtocol` (which expects `VSBuffer`s) by encoding/decoding
- *   buffers to/from base64 strings transmitted within Vine notifications (method: "rpcData").
+ * - Bridges VS Code's `RPCProtocol` by encoding/decoding `VSBuffer`s to/from base64
+ *   strings transmitted within Vine notifications (method: "rpcData").
+ * - Provides typed event subscription functions (`onConfigurationChanged`, etc.) for
+ *   other Cocoon modules.
+ *
  *--------------------------------------------------------------------------------------------*/
 
 // Node.js EventEmitter for internal event distribution
@@ -47,8 +53,9 @@ import {
 	Emitter as VscodeEmitter,
 	Event as VscodeEvent,
 } from "vs/base/common/event";
+// For typed RPC adapter events
 import { toDisposable, type IDisposable } from "vs/base/common/lifecycle";
-// MessagePassingProtocol is the concrete class
+// For RPC adapter type. MessagePassingProtocol is not directly used but IMessagePassingProtocol is the interface.
 import { type IMessagePassingProtocol } from "vs/workbench/services/extensions/common/rpcProtocol";
 
 console.log("[Cocoon IPC] Initializing IPC layer...");
@@ -56,10 +63,10 @@ console.log("[Cocoon IPC] Initializing IPC layer...");
 // --- Type Definitions for Vine Protocol ---
 
 /** Defines the allowed message type identifiers for the Vine protocol. */
-type VineMsgType = 1 | 3 | 4 | 5 | 6;
+export type VineMsgType = 1 | 3 | 4 | 5 | 6;
 
 /** Base structure for all Vine messages. */
-interface VineMessageBase {
+export interface VineMessageBase {
 	msg_type: VineMsgType;
 
 	/** Unique identifier for requests and their corresponding responses/errors/cancellations. Null for notifications. */
@@ -70,7 +77,7 @@ interface VineMessageBase {
 }
 
 /** Represents a request message (msg_type: 1). */
-interface VineRequest extends VineMessageBase {
+export interface VineRequest extends VineMessageBase {
 	msg_type: 1;
 
 	// Always present and unique for requests.
@@ -84,7 +91,7 @@ interface VineRequest extends VineMessageBase {
 }
 
 /** Represents a successful response message (msg_type: 3). */
-interface VineResponse extends VineMessageBase {
+export interface VineResponse extends VineMessageBase {
 	msg_type: 3;
 
 	// Corresponds to the ID of the original request.
@@ -99,7 +106,7 @@ interface VineResponse extends VineMessageBase {
 }
 
 /** Structure for the error payload within a VineErrorResponse. */
-interface VineErrorPayload {
+export interface VineErrorPayload {
 	message: string;
 
 	stack?: string;
@@ -111,7 +118,7 @@ interface VineErrorPayload {
 }
 
 /** Represents an error response message (msg_type: 4). */
-interface VineErrorResponse extends VineMessageBase {
+export interface VineErrorResponse extends VineMessageBase {
 	msg_type: 4;
 
 	// Corresponds to the ID of the original request.
@@ -126,7 +133,7 @@ interface VineErrorResponse extends VineMessageBase {
 }
 
 /** Represents a cancellation message (msg_type: 5). */
-interface VineCancel extends VineMessageBase {
+export interface VineCancel extends VineMessageBase {
 	// Used by the initiator to cancel a previously sent request.
 	msg_type: 5;
 
@@ -139,7 +146,7 @@ interface VineCancel extends VineMessageBase {
 }
 
 /** Represents a notification message (msg_type: 6). */
-interface VineNotification extends VineMessageBase {
+export interface VineNotification extends VineMessageBase {
 	msg_type: 6;
 
 	// Notifications do not have IDs as they don't expect responses.
@@ -153,7 +160,7 @@ interface VineNotification extends VineMessageBase {
 }
 
 /** Union type representing any valid Vine protocol message. */
-type VineMessage =
+export type VineMessage =
 	| VineRequest
 	| VineResponse
 	| VineErrorResponse
@@ -181,17 +188,20 @@ let nextRequestId = 1;
 // --- Event Emitter for distributing specific incoming messages/notifications from Mountain ---
 const internalAppEmitter = new EventEmitter();
 
+// Increase max listeners if many parts of Cocoon subscribe to generic 'message' or specific events.
+// internalAppEmitter.setMaxListeners(50);
+
 // --- Core IPC Functions ---
 
 /**
  * Sends a raw VineMessage object to the Mountain host process via stdout.
+ * This is the lowest-level send function.
  * @param payload The VineMessage to send.
  */
 function sendToMountainRaw(payload: VineMessage): void {
 	try {
 		const jsonString = JSON.stringify(payload);
 
-		// Construct a concise log message
 		const methodInfo = payload.method ? ` Method=${payload.method}` : "";
 
 		const idInfo = payload.id !== null ? ` ID=${payload.id}` : "";
@@ -202,11 +212,12 @@ function sendToMountainRaw(payload: VineMessage): void {
 					`... (len ${jsonString.length})`
 				: jsonString;
 
-		console.log(
+		// Use console.debug or trace for very frequent messages to reduce log noise.
+		console.debug(
 			`[Cocoon IPC -> Mtn] Type=${payload.msg_type}${idInfo}${methodInfo}, Payload=${logPayloadSummary}`,
 		);
 
-		// Newline delimiter is crucial
+		// Newline delimiter is crucial for Vine protocol.
 		process.stdout.write(jsonString + "\n");
 	} catch (e: any) {
 		// This is a critical failure, as basic communication is broken.
@@ -217,16 +228,19 @@ function sendToMountainRaw(payload: VineMessage): void {
 
 			e.stack,
 		);
+
+		// Depending on Cocoon's overall error strategy, this might warrant a process exit or
+		// an attempt to notify Mountain through an alternative channel if one existed.
 	}
 }
 
 /**
  * Sends a request to Mountain and returns a Promise that resolves with the response
  * or rejects on error or timeout.
- * @param method The method name for the request.
- * @param params The parameters for the request.
- * @param timeoutMs The timeout duration in milliseconds. Defaults to 5000ms.
- * @returns A Promise resolving with the response parameters or rejecting with an error.
+ * @param method The method name for the request (e.g., "fs_stat", "ui_showQuickPick").
+ * @param params The parameters/payload for the request.
+ * @param timeoutMs The timeout duration in milliseconds for awaiting a response. Defaults to 5000ms.
+ * @returns A Promise resolving with the response parameters from Mountain, or rejecting with an Error.
  */
 export function sendToMountainAndWait(
 	method: string,
@@ -249,8 +263,12 @@ export function sendToMountainAndWait(
 
 				console.error(errorMsg);
 
-				// Use a standard Error object for timeouts
-				reject(new Error(errorMsg));
+				const timeoutError = new Error(errorMsg);
+
+				// Common error code for timeouts
+				(timeoutError as NodeJS.ErrnoException).code = "ETIMEDOUT";
+
+				reject(timeoutError);
 			}
 		}, timeoutMs);
 
@@ -270,8 +288,8 @@ export function sendToMountainAndWait(
 
 /**
  * Sends a fire-and-forget notification to Mountain.
- * @param method The method name for the notification.
- * @param params The parameters for the notification.
+ * @param method The method name for the notification (e.g., "rpcData", "extensionActivationResult").
+ * @param params The parameters/payload for the notification.
  */
 export function sendNotificationToMountain(method: string, params: any): void {
 	const notificationMessage: VineNotification = {
@@ -289,12 +307,12 @@ export function sendNotificationToMountain(method: string, params: any): void {
 
 /**
  * Sends a response (success or error) to a request previously received from Mountain.
- * @param requestId The ID of the request being responded to.
+ * This is used when Mountain initiates a request to Cocoon (e.g., via RPC call to an ExtHost service).
+ * @param requestId The ID of the request from Mountain that is being responded to.
  * @param result The result payload if the request was successful.
- * @param errorObj The error details if the request failed. Can be an Error instance,
+ * @param errorObj The error details if the request failed. Can be an `Error` instance,
  *
- *
- *                 a string message, or a pre-formed VineErrorPayload.
+ *                 a string message, or a pre-formed `VineErrorPayload`.
  */
 export function sendResponseToMountain(
 	requestId: number,
@@ -327,6 +345,7 @@ export function sendResponseToMountain(
 		}
 
 		responseMessage = {
+			// Error response
 			msg_type: 4,
 
 			id: requestId,
@@ -339,6 +358,7 @@ export function sendResponseToMountain(
 		};
 	} else {
 		responseMessage = {
+			// Successful response
 			msg_type: 3,
 
 			id: requestId,
@@ -362,7 +382,7 @@ export function sendResponseToMountain(
 export function sendCancelToMountain(requestId: number): void {
 	if (!pendingRequests.has(requestId)) {
 		console.warn(
-			`[Cocoon IPC] Attempted to cancel non-existent or already completed request ID: ${requestId}. No CANCEL message sent.`,
+			`[Cocoon IPC] Attempted to cancel non-existent or already completed/timed-out Cocoon-initiated request ID: ${requestId}. No CANCEL message sent.`,
 		);
 
 		return;
@@ -380,27 +400,34 @@ export function sendCancelToMountain(requestId: number): void {
 
 	sendToMountainRaw(cancelMessage);
 
-	// Log the cancellation attempt. The actual promise resolution/rejection for this request
-	// will still depend on Mountain's acknowledgment of the cancel (e.g., via an error response) or timeout.
 	const pendingEntry = pendingRequests.get(requestId);
 
 	console.log(
-		`[Cocoon IPC] Sent CANCEL for Cocoon-initiated request ID: ${requestId} (Method: ${pendingEntry?.methodForLog}).`,
+		`[Cocoon IPC] Sent CANCEL message to Mountain for Cocoon-initiated request ID: ${requestId} (Method: ${pendingEntry?.methodForLog}). ` +
+			`Resolution of this request now depends on Mountain's handling of the cancellation or eventual timeout.`,
 	);
+
+	// Note: The promise in pendingRequests still exists. Mountain might respond with an error due to cancellation,
+
+	// or the original request might still time out if Mountain doesn't acknowledge the cancel.
 }
 
 // --- RPC Protocol Adapter ---
 let rpcMessagePassingProtocolInstance: IMessagePassingProtocol | null = null;
 
-/** Callback to be invoked when RPC data (as a base64 string) is received from Mountain. */
-let rpcAdapterReceiveDataCallback: ((base64Buffer: string) => void) | null =
-	null;
+/** Callback to be invoked when RPC data (as a base64 string) is received from Mountain via an "rpcData" notification. */
+let rpcAdapterReceiveDataCallback:
+	| ((base64EncodedBuffer: string) => void)
+	| null = null;
 
 /**
  * Creates or returns a singleton instance of an `IMessagePassingProtocol` adapter.
  * This adapter allows VS Code's `RPCProtocol` to communicate over the Vine IPC channel
  * by tunneling `VSBuffer` data within Vine notifications (method: "rpcData").
- * @returns An `IMessagePassingProtocol` instance.
+ * `VSBuffer`s sent by `RPCProtocol` are base64 encoded into strings for JSON transport,
+ *
+ * and incoming base64 strings are decoded back into `VSBuffer`s.
+ * @returns An `IMessagePassingProtocol` instance suitable for `RPCProtocol`.
  */
 export function createHostProtocolInterface(): IMessagePassingProtocol {
 	if (rpcMessagePassingProtocolInstance) {
@@ -408,19 +435,20 @@ export function createHostProtocolInterface(): IMessagePassingProtocol {
 	}
 
 	console.log(
-		"[Cocoon IPC] Creating RPCProtocol Adapter (IMessagePassingProtocol) for communication with host...",
+		"[Cocoon IPC] Creating RPCProtocol Adapter (IMessagePassingProtocol) for communication with Mountain host...",
 	);
 
 	// Emitter for incoming RPC data buffers
 	const onMessageEvent = new VscodeEmitter<VSBuffer>();
 
-	/** Handles sending a VSBuffer from RPCProtocol to Mountain. */
+	/** Handles sending a VSBuffer from RPCProtocol to Mountain via a Vine notification. */
 	const sendBufferToMountainViaNotification = (buffer: VSBuffer): void => {
 		try {
 			// Convert VSBuffer to Node.js Buffer, then to base64 string for JSON transport.
 			const base64Encoded = Buffer.from(
 				buffer.buffer,
 
+				// Use byteOffset and byteLength for correct slicing if buffer is a view
 				buffer.byteOffset,
 
 				buffer.byteLength,
@@ -429,7 +457,7 @@ export function createHostProtocolInterface(): IMessagePassingProtocol {
 			sendNotificationToMountain("rpcData", { buffer: base64Encoded });
 		} catch (e: any) {
 			console.error(
-				"[Cocoon IPC Adapter] Failed to serialize and send VSBuffer to Mountain:",
+				"[Cocoon IPC Adapter] Failed to serialize and send VSBuffer to Mountain via 'rpcData' notification:",
 
 				e.message,
 
@@ -438,16 +466,17 @@ export function createHostProtocolInterface(): IMessagePassingProtocol {
 		}
 	};
 
-	// This callback is set here and will be called by the main lineReader when an "rpcData"
-	// notification arrives from Mountain.
-	rpcAdapterReceiveDataCallback = (base64Buffer: string): void => {
+	// This callback is set here and will be invoked by the main lineReader logic
+	// when an "rpcData" notification arrives from Mountain.
+	rpcAdapterReceiveDataCallback = (base64EncodedBuffer: string): void => {
 		try {
-			const nodeBuffer = Buffer.from(base64Buffer, "base64");
+			const nodeBuffer = Buffer.from(base64EncodedBuffer, "base64");
 
+			// Wrap Node.js Buffer in VSBuffer
 			onMessageEvent.fire(VSBuffer.wrap(nodeBuffer));
 		} catch (e: any) {
 			console.error(
-				"[Cocoon IPC Adapter] Failed to decode/emit received RPC VSBuffer from Mountain:",
+				"[Cocoon IPC Adapter] Failed to decode/emit received RPC VSBuffer from Mountain ('rpcData' notification):",
 
 				e.message,
 
@@ -462,7 +491,8 @@ export function createHostProtocolInterface(): IMessagePassingProtocol {
 		onMessage: onMessageEvent.event,
 
 		// For MVP, we don't explicitly signal dispose from this adapter side.
-		// The connection is considered alive as long as stdio is open.
+		// The connection is considered alive as long as stdio is open and Cocoon is running.
+		// If needed, a dispose mechanism for the RPC adapter could be added.
 		onDidDispose: VscodeEvent.None,
 	};
 
@@ -476,6 +506,8 @@ const lineReader = readline.createInterface({
 	// `output` is required by `readline.createInterface` but not used for IPC output here,
 
 	// as `sendToMountainRaw` writes directly to `process.stdout`.
+	// Setting to null or undefined if readline allows, or a dummy stream, to avoid unintentional writes.
+	// Still required, but we won't use its output capabilities for IPC.
 	output: process.stdout,
 
 	// Important for non-interactive stdio processing.
@@ -488,24 +520,24 @@ console.log(
 
 lineReader.on("line", (line: string) => {
 	if (!line.trim()) {
-		// Ignore empty lines which might occur.
+		// Ignore empty lines which might occasionally occur.
 		return;
 	}
 
 	try {
+		// Parse the incoming JSON line.
 		const message = JSON.parse(line) as VineMessage;
 
-		// Verbose raw message logging (uncomment for deep debugging):
-		// const methodInfo = message.method ? ` Method=${message.method}` : "";
+		// Verbose raw message logging (uncomment for deep debugging if needed):
+		// const methodInfoForLog = message.method ? ` Method=${message.method}` : "";
 
-		// const idInfo = message.id !== null ? ` ID=${message.id}` : "";
+		// const idInfoForLog = message.id !== null ? ` ID=${message.id}` : "";
 
-		// console.log(`[Cocoon IPC <- Mtn] Raw: Type=${message.msg_type}${idInfo}${methodInfo}`);
+		// console.debug(`[Cocoon IPC <- Mtn] RawMsg: Type=${message.msg_type}${idInfoForLog}${methodInfoForLog}`);
 
 		switch (message.msg_type) {
 			// Response (Successful)
 			case 3:
-
 			// Error Response
 			case 4:
 				if (message.id !== null && pendingRequests.has(message.id)) {
@@ -517,8 +549,8 @@ lineReader.on("line", (line: string) => {
 					pendingRequests.delete(message.id);
 
 					if (message.msg_type === 3) {
-						// VineResponse
-						// console.log(`[Cocoon IPC <- Mtn] Received RESULT for Request '${pending.methodForLog}' (ID ${message.id}).`);
+						// VineResponse (Success)
+						// console.debug(`[Cocoon IPC <- Mtn] Received RESULT for Request '${pending.methodForLog}' (ID ${message.id}).`);
 
 						pending.resolve(
 							message.params === undefined
@@ -533,7 +565,7 @@ lineReader.on("line", (line: string) => {
 							message.error,
 						);
 
-						// Construct a standard Error object from the payload
+						// Construct a standard Error object from the payload for consistent error handling.
 						const error = new Error(
 							message.error?.message ||
 								"Unknown error from Mountain",
@@ -546,14 +578,14 @@ lineReader.on("line", (line: string) => {
 							error.name = message.error.name;
 
 						if (message.error?.code !== undefined)
-							// Ensure code is string if present
+							// Ensure code is string type
 							error.code = String(message.error.code);
 
 						pending.reject(error);
 					}
 				} else {
 					console.warn(
-						`[Cocoon IPC <- Mtn] Received response/error for unknown, already processed, or timed-out Request ID: ${message.id}`,
+						`[Cocoon IPC <- Mtn] Received response/error for unknown, already processed, or timed-out Request ID: ${message.id}. Discarding.`,
 					);
 				}
 
@@ -561,7 +593,7 @@ lineReader.on("line", (line: string) => {
 
 			// Notification (from Mountain)
 			case 6:
-				// console.log(`[Cocoon IPC <- Mtn] Received NOTIFICATION: ${message.method}`);
+				// console.debug(`[Cocoon IPC <- Mtn] Received NOTIFICATION: Method='${message.method}'`);
 
 				if (
 					message.method === "rpcData" &&
@@ -572,7 +604,7 @@ lineReader.on("line", (line: string) => {
 						rpcAdapterReceiveDataCallback(message.params.buffer);
 					} else {
 						console.warn(
-							"[Cocoon IPC <- Mtn] Received 'rpcData' notification, but RPC adapter callback is not set. RPC may not be initialized yet.",
+							"[Cocoon IPC <- Mtn] Received 'rpcData' notification, but RPC adapter callback is not set up. RPC communication might not be initialized yet or there's an issue in setup.",
 						);
 					}
 				} else if (
@@ -590,7 +622,7 @@ lineReader.on("line", (line: string) => {
 						message.params,
 					);
 				} else {
-					// Emit as a generic message for other handlers if any
+					// Emit as a generic 'message' event for other potential handlers (e.g., custom notifications)
 					internalAppEmitter.emit("message", message);
 				}
 
@@ -598,11 +630,12 @@ lineReader.on("line", (line: string) => {
 
 			// Request (from Mountain to Cocoon)
 			case 1:
-				// console.log(`[Cocoon IPC <- Mtn] Received REQUEST: ${message.method} (ID: ${message.id})`);
+				// console.debug(`[Cocoon IPC <- Mtn] Received REQUEST: Method='${message.method}' (ID: ${message.id})`);
 
-				// These requests are typically handled by the RPCProtocol server side in Cocoon,
-
-				// or by specific listeners for non-RPC requests.
+				// These requests are typically handled by the RPCProtocol server-side logic in Cocoon
+				// (e.g., when an ExtHost service method is called by a MainThread proxy).
+				// The `RPCProtocol` instance itself listens for these via the `IMessagePassingProtocol` adapter.
+				// Emitting as a generic 'message' allows `RPCProtocol` or other handlers to pick it up.
 				internalAppEmitter.emit("message", message);
 
 				break;
@@ -610,17 +643,19 @@ lineReader.on("line", (line: string) => {
 			// Cancellation (from Mountain, for a request Mountain sent to Cocoon)
 			case 5:
 				if (message.id !== null) {
-					console.log(
-						`[Cocoon IPC <- Mtn] Received CANCEL from Mountain for their Request ID: ${message.id}. Emitting 'cancel' event.`,
+					// console.debug(`[Cocoon IPC <- Mtn] Received CANCEL message from Mountain for their Request ID: ${message.id}. Emitting 'cancelRequestFromMountain' event.`);
+
+					// This event would be listened to by whatever is handling requests *from* Mountain,
+
+					// e.g., to cancel a long-running operation in a Cocoon service that was invoked by Mountain.
+					internalAppEmitter.emit(
+						"cancelRequestFromMountain",
+
+						message.id,
 					);
-
-					// This event would be listened to by whatever is handling requests from Mountain,
-
-					// e.g., to cancel a long-running operation in a Cocoon service.
-					internalAppEmitter.emit("cancel", message.id);
 				} else {
 					console.warn(
-						"[Cocoon IPC <- Mtn] Received Cancel message from Mountain without a valid Request ID:",
+						"[Cocoon IPC <- Mtn] Received Cancel message from Mountain without a valid Request ID (message.id was null):",
 
 						message,
 					);
@@ -629,7 +664,7 @@ lineReader.on("line", (line: string) => {
 				break;
 
 			default:
-				// Should not happen if Mountain sends valid messages.
+				// This case should ideally not be reached if Mountain sends valid Vine messages.
 				console.warn(
 					"[Cocoon IPC <- Mtn] Received message from Mountain with unknown or invalid msg_type:",
 
@@ -639,9 +674,11 @@ lineReader.on("line", (line: string) => {
 				break;
 		}
 	} catch (e: any) {
-		// This indicates a malformed JSON line or an error in the dispatch logic.
+		// This indicates a malformed JSON line or an error in the dispatch logic itself.
 		console.error(
-			"[Cocoon IPC] Fatal error processing incoming line from Mountain:",
+			"[Cocoon IPC] Fatal error processing incoming line from Mountain. This may indicate a protocol mismatch or corrupted data stream.",
+
+			"Error:",
 
 			e.message,
 
@@ -661,17 +698,19 @@ lineReader.on("close", () => {
 		"[Cocoon IPC] Stdin stream closed by Mountain. Cocoon process will now exit.",
 	);
 
-	// This is a definitive signal that the host process has terminated or closed the pipe.
-	// Cocoon should exit cleanly. The `initializationFailedOrExited` flag in `index.ts`
-	// might control `process.exit` patching, but direct exit here is appropriate
-	// as the communication channel is gone.
+	// This is a definitive signal that the host process has terminated or closed the communication channel.
+	// Cocoon should exit cleanly. The `initializationFailedOrExited` flag in `index.ts` might
+	// control `process.exit` patching behavior, but a direct exit here is appropriate
+	// as the primary communication channel is gone.
 	process.exit(0);
 });
 
 // --- Named Event Emitter Exports for typed, specific events ---
 
 /**
- * Registers a listener for generic Vine messages (Requests or Notifications) received from Mountain.
+ * Registers a listener for generic Vine messages (Requests or Notifications other than 'rpcData',
+ *
+ * 'configChanged', or 'workspaceFoldersChanged') received from Mountain.
  * @param listener Callback function to handle the message.
  * @returns An `IDisposable` to remove the listener.
  */
@@ -686,33 +725,41 @@ export function onMessageFromMountain(
 }
 
 /**
- * Registers a listener for 'cancel' messages received from Mountain, indicating Mountain
- * wants to cancel a request it previously sent to Cocoon.
- * @param listener Callback function to handle the cancellation, taking the request ID.
+ * Registers a listener for 'cancelRequestFromMountain' events. This event fires when Mountain
+ * sends a cancellation (VineMsgType 5) for a request it previously initiated towards Cocoon.
+ * @param listener Callback function to handle the cancellation, taking the request ID to be cancelled.
  * @returns An `IDisposable` to remove the listener.
  */
-export function onCancelFromMountain(
+export function onCancelRequestFromMountain(
 	listener: (requestId: number) => void,
 ): IDisposable {
-	internalAppEmitter.on("cancel", listener);
+	internalAppEmitter.on("cancelRequestFromMountain", listener);
 
 	return toDisposable(() =>
-		internalAppEmitter.removeListener("cancel", listener),
+		internalAppEmitter.removeListener(
+			"cancelRequestFromMountain",
+
+			listener,
+		),
 	);
 }
 
 /**
- * Registers a listener for configuration change notifications from Mountain.
- * @param listener Callback function. `params` structure depends on the contract with Mountain,
- *
- *
- *                 typically `[newConfigSnapshot, changedKeysDetails]`.
+ * Placeholder type for configuration change event parameters.
+ * This should be refined based on the actual DTO structure sent by Mountain.
+ * Example: `[newConfigSnapshot: any, changedKeysDetails: { keys: string[], overrides: [string, string[]][] } | undefined]`
+ */
+export type ConfigurationChangeEventParams = [any, any | undefined];
+
+/**
+ * Registers a listener for configuration change notifications from Mountain
+ * (method: "$acceptConfigurationChanged").
+ * @param listener Callback function. The `params` argument structure depends on the
+ *                 contract with Mountain; typically an array: `[newConfigSnapshot, changedKeysDetails]`.
  * @returns An `IDisposable` to remove the listener.
  */
 export function onConfigurationChanged(
-	listener: (
-		params: /* e.g., [configSnapshot: any, changes: any] */ any,
-	) => void,
+	listener: (params: ConfigurationChangeEventParams) => void,
 ): IDisposable {
 	internalAppEmitter.on("configChanged", listener);
 
@@ -722,15 +769,22 @@ export function onConfigurationChanged(
 }
 
 /**
- * Registers a listener for workspace folder change notifications from Mountain.
- * @param listener Callback function. `params` structure depends on the contract with Mountain,
- *
- *
- *                 typically an event object describing added/removed/changed folders.
+ * Placeholder type for workspace folders change event parameters.
+ * This should be refined based on the actual DTO structure sent by Mountain
+ * (e.g., `IWorkspaceFoldersChangeEventDto` from VS Code protocol).
+ */
+export type WorkspaceFoldersChangeEventParams = any;
+
+/**
+ * Registers a listener for workspace folder change notifications from Mountain
+ * (method: "$onDidChangeWorkspaceFolders").
+ * @param listener Callback function. The `params` argument structure depends on the
+ *                 contract with Mountain; typically an event object describing
+ *                 added, removed, or changed workspace folders.
  * @returns An `IDisposable` to remove the listener.
  */
 export function onWorkspaceFoldersChanged(
-	listener: (params: /* e.g., IWorkspaceFoldersChangeEventDto */ any) => void,
+	listener: (params: WorkspaceFoldersChangeEventParams) => void,
 ): IDisposable {
 	internalAppEmitter.on("workspaceFoldersChanged", listener);
 
@@ -751,16 +805,20 @@ const ipcInterface = {
 
 	createHostProtocolInterface,
 
-	// Expose specific event listener registration functions directly for convenience
+	// Expose specific event listener registration functions directly for convenience and type safety
 	onMessageFromMountain,
 
-	onCancelFromMountain,
+	onCancelRequestFromMountain,
 
 	onConfigurationChanged,
 
 	onWorkspaceFoldersChanged,
 };
 
+/**
+ * Type definition for the primary Cocoon IPC interface, allowing other modules
+ * to type their dependency on this IPC layer.
+ */
 export type CocoonPrimaryIpc = typeof ipcInterface;
 
 export default ipcInterface;
