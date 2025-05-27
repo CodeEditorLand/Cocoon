@@ -84,7 +84,6 @@ export class ShimExtHostClipboardService
 	/**
 	 * {@inheritDoc vscode.Clipboard.readText}
 	 *
-	 *
 	 * Reads text from the system clipboard by proxying the request to Mountain.
 	 * @returns A promise that resolves to the text content of the clipboard, or an empty string if empty or inaccessible after an error.
 	 * @throws An error if the IPC operation fails fundamentally (e.g., timeout, protocol error), consistent with "Rejects if clipboard is inaccessible".
@@ -130,7 +129,6 @@ export class ShimExtHostClipboardService
 
 	/**
 	 * {@inheritDoc vscode.Clipboard.writeText}
-	 *
 	 *
 	 * Writes text to the system clipboard by proxying the request to Mountain.
 	 * @param text The string to write to the clipboard.
