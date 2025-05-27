@@ -1,23 +1,21 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Environment API Shim (shims/env-shim.ts)
+ * Cocoon Environment API Shim (env-shim.ts)
  * --------------------------------------------------------------------------------------------
  * Implements the `vscode.env` API namespace. This service provides extensions with
- * information about the application environment (e.g., app name, machine ID, UI kind),
- *
+ * information about the application environment (e.g., app name, machine ID, UI kind), *
  * and functionalities such as clipboard access, opening external URIs, and URI scheme
  * handling.
  *
  * Most environment properties are derived from initialization data (`ExtHostInitData`)
- * received from the Mountain host (main process). Operations like clipboard access and opening
- * external URIs are proxied: clipboard to a dedicated clipboard shim (which might use IPC),
- *
- * and external URI operations via RPC to `MainThreadWindow`.
+ * received from the Mountain host. Operations like clipboard access and opening
+ * external URIs are proxied: clipboard access is delegated to an injected
+ * `IExtHostClipboardServiceShape` (which typically uses direct IPC), and external URI
+ * operations are proxied via RPC to `MainThreadWindow` on Mountain.
  *
  * Responsibilities:
  * - Implementing the `vscode.env` API interface.
- * - Populating read-only environment properties (e.g., `appName`, `machineId`, `language`,
- *
- *   `isRemote`, `uiKind`) from `ExtHostInitData`.
+ * - Populating read-only environment properties (e.g., `appName`, `appRoot`, `machineId`, *
+ *   `language`, `isRemote`, `uiKind`) from `ExtHostInitData`.
  * - Providing `env.clipboard` by using an injected `IExtHostClipboardServiceShape` instance.
  * - Implementing `env.openExternal(uri)` and `env.asExternalUri(uri)` by making RPC calls
  *   to `MainThreadWindow`.
@@ -25,12 +23,14 @@
  *   notified by Mountain (via RPC calls to this service's `$setTelemetryLevel` and `$setShell`).
  *
  * Key Interactions:
- * - Registered with Dependency Injection (e.g., in `Cocoon/index.ts`) as `IExtHostEnv` (VS Code internal DI key).
+ * - Registered with Dependency Injection (e.g., in `Cocoon/index.ts`) as `IExtHostEnv`
+ *   (a VS Code internal DI key).
  * - An instance is made available to extensions as `vscode.env` via the API factory.
  * - Relies on `IExtHostInitDataService` (for `_initData`) and `IExtHostClipboardServiceShape`
  *   (for `env.clipboard`), both injected via DI.
  * - Uses an RPC proxy to `MainContext.MainThreadWindow` for `openExternal` and `asExternalUri`.
- * - Exposes methods like `$setTelemetryLevel` to be callable from the main thread via RPC.
+ * - Implements `VscodeExtHostEnvShape` and registers itself with the RPC service to handle
+ *   calls from the main thread (e.g., for telemetry level or shell updates).
  * - Uses `BaseCocoonShim` for common utilities like logging and RPC proxy acquisition.
  *
  *--------------------------------------------------------------------------------------------*/
@@ -39,29 +39,29 @@ import {
 	Emitter as VscodeEmitter,
 	Event as VscodeEvent,
 } from "vs/base/common/event";
-// For URI DTO creation (e.g., $mid)
+// For URI DTO creation
 import { MarshalledId } from "vs/base/common/marshalling";
-// For URI scheme checks (e.g., appRoot)
+// For appRoot scheme check
 import { Schemas } from "vs/base/common/network";
 import {
 	URI as VSCodeInternalURI,
 	type UriComponents as VSCodeInternalUriComponents,
 } from "vs/base/common/uri";
-// For onDidChangeTelemetryLevel event type
+// For onDidChangeTelemetryLevel type
 import type { TelemetryLevel } from "vs/platform/telemetry/common/telemetry";
 import {
 	ExtHostContext,
 	MainContext,
 	type ExtHostEnvShape as VscodeExtHostEnvShape,
 } from "vs/workbench/api/common/extHost.protocol";
-// For MainThread/ExtHost contexts and RPC shapes
+// For MainThreadWindow proxy, ExtHostContext for self-registration, and RPC shape
 import {
 	IExtHostInitDataService,
 	type ExtHostInitData,
 } from "vs/workbench/api/common/extHostInitDataService";
 // Import from public 'vscode' API definition
 import {
-	// The full vscode.env API type, useful for type checking
+	// The full vscode.env API type
 	env as VscodeEnvAPI,
 	Uri as VscodeUri,
 	// Enum from vscode namespace (UIKind.Desktop, UIKind.Web)
@@ -71,11 +71,10 @@ import {
 
 import {
 	BaseCocoonShim,
-	// Use the shim-specific error refiner
 	refineErrorForShim,
-	// Use the specific shim logger type
+	// Updated type from BaseCocoonShim
 	type ILogServiceForShim,
-	// Use the specific shim RPC adapter type
+	// Updated type from BaseCocoonShim
 	type IRpcProtocolServiceAdapter,
 	type ProxyIdentifier,
 } from "./_baseShim";
@@ -85,17 +84,17 @@ import type { IExtHostClipboardServiceShape } from "./clipboard-shim";
 // --- Type Definitions ---
 
 /**
- * Defines the service interface for `vscode.env` that this shim implements.
+ * Defines the service interface for `vscode.env` that this shim implements for DI.
  * It directly matches the `vscode.env` API surface exposed to extensions.
  */
 export interface IExtHostEnvServiceShape extends VscodeEnvAPI {
-	// Standard mechanism for type-safe DI
+	// Standard DI mechanism for type-safe DI
 	readonly _serviceBrand: undefined;
 }
 
 /**
  * RPC shape for methods on `MainThreadWindow` relevant to `vscode.env` operations
- * like opening external URIs.
+ * like opening external URIs and resolving them for external use.
  */
 interface MainThreadWindowProxyForEnv {
 	$openUri(
@@ -117,17 +116,18 @@ interface MainThreadWindowProxyForEnv {
 
 /**
  * Cocoon's implementation of the `vscode.env` API namespace.
- * It sources data from `ExtHostInitData` and delegates some operations via RPC.
+ * It sources data from `ExtHostInitData` and delegates some operations via RPC or to other shims.
  */
 export class ShimExtHostEnvService
 	extends BaseCocoonShim
 	implements IExtHostEnvServiceShape, VscodeExtHostEnvShape
 {
+	// Implements public API shape and RPC shape for MainThread calls
 	public readonly _serviceBrand: undefined;
 
 	private readonly _initData: ExtHostInitData;
 
-	// Instance of the clipboard shim service
+	// Instance of ShimExtHostClipboardService
 	public readonly clipboard: VscodeClipboard;
 
 	private _mainThreadWindowProxy: MainThreadWindowProxyForEnv | null = null;
@@ -156,8 +156,10 @@ export class ShimExtHostEnvService
 
 		logService: ILogServiceForShim | undefined,
 
+		// Injected
 		initDataService: IExtHostInitDataService,
 
+		// Injected
 		clipboardService: IExtHostClipboardServiceShape,
 	) {
 		super("ExtHostEnvService", rpcService, logService);
@@ -168,7 +170,8 @@ export class ShimExtHostEnvService
 		// Use the injected clipboard service
 		this.clipboard = clipboardService;
 
-		this._log("Initialized.");
+		// Use Info for major lifecycle
+		this._logInfo("Initialized.");
 
 		if (this._rpcService) {
 			this._mainThreadWindowProxy = this._getProxy(
@@ -176,11 +179,24 @@ export class ShimExtHostEnvService
 			);
 
 			// Register this service instance with the RPC system to handle calls from the main thread (e.g., MainThreadEnvService)
-			this._rpcService.set(
-				ExtHostContext.ExtHostEnv as ProxyIdentifier<VscodeExtHostEnvShape>,
+			// This is necessary for methods like $setTelemetryLevel and $setShell to be callable by Mountain.
+			try {
+				this._rpcService.set(
+					ExtHostContext.ExtHostEnv as ProxyIdentifier<VscodeExtHostEnvShape>,
 
-				this,
-			);
+					this,
+				);
+
+				this._logInfo(
+					"Registered self for RPC calls from MainThread (ExtHostEnv).",
+				);
+			} catch (e: any) {
+				this._logError(
+					"Failed to register self as RPC target for ExtHostEnv:",
+
+					e,
+				);
+			}
 		}
 
 		if (!this._mainThreadWindowProxy) {
@@ -241,8 +257,9 @@ export class ShimExtHostEnvService
 	}
 
 	get isTrusted(): boolean {
-		// Workspace trust state. Prefer workspace-specific trust if available, fallback to environment global.
-		// Default to true if no trust information is provided.
+		// Workspace trust state. Prefer workspace-specific trust if available from initData,
+
+		// fallback to environment global trust, then default to true if no trust info provided.
 		return (
 			this._initData.workspace?.trusted ??
 			this._initData.environment.isTrusted ??
@@ -269,9 +286,12 @@ export class ShimExtHostEnvService
 
 	get shell(): string {
 		// The path to the shell executable.
-		// For a Node.js based environment like Cocoon, this defaults to the system's shell.
+		// For a Node.js based environment like Cocoon, this typically defaults to the system's shell.
 		// The main process (Mountain) might provide a user-configured shell via initData if it's relevant
 		// for contexts like an integrated terminal, but `env.shell` usually refers to a more general default.
+		// The `$setShell` RPC call allows Mountain to update this if it changes.
+		// TODO: If Mountain pushes shell updates via `$setShell`, this getter should ideally reflect that pushed value.
+		// For now, it reflects the environment of the Cocoon process.
 		return (
 			(process.platform === "win32"
 				? process.env.ComSpec
@@ -280,23 +300,26 @@ export class ShimExtHostEnvService
 	}
 
 	get uiKind(): UIKind {
-		// `this._initData.uiKind` is a number from IExtensionHostInitData (typically 0 for Desktop, 1 for Web in older VS Code internal defs).
-		// The public `vscode.UIKind` enum is 1 for Desktop, 2 for Web. We must map correctly.
+		// `this._initData.uiKind` is a number from IExtensionHostInitData.
+		// The public `vscode.UIKind` enum is 1 for Desktop, 2 for Web.
+		// Ensure mapping is correct based on how `_initData.uiKind` is populated by Mountain.
+		// Assuming Mountain uses 0 for Desktop and 1 for Web (older VS Code internal pattern), map to public API values.
+		// If Mountain uses 1 for Desktop, 2 for Web directly, adjust mapping.
 		const internalUiKindNum = this._initData.uiKind;
 
-		// Map internal 0 (Desktop) to vscode.UIKind.Desktop (1)
+		// Internal 0 (Desktop) -> vscode.UIKind.Desktop (1)
 		if (internalUiKindNum === 0) return 1;
 
-		// Map internal 1 (Web) to vscode.UIKind.Web (2)
+		// Internal 1 (Web) -> vscode.UIKind.Web (2)
 		if (internalUiKindNum === 1) return 2;
 
-		// If _initData provides values already matching vscode.UIKind:
-		// if (internalUiKindNum === 1 /* vscode.UIKind.Desktop */) return 1;
+		// Fallback if Mountain sends values already matching vscode.UIKind enum
+		if (internalUiKindNum === 1 /* vscode.UIKind.Desktop */) return 1;
 
-		// if (internalUiKindNum === 2 /* vscode.UIKind.Web */) return 2;
+		if (internalUiKindNum === 2 /* vscode.UIKind.Web */) return 2;
 
 		this._logWarn(
-			`Unknown uiKind value ('${internalUiKindNum}') from initData. Defaulting to UIKind.Desktop (1). Check initData.uiKind mapping.`,
+			`Unknown uiKind value ('${internalUiKindNum}') from initData. Defaulting to UIKind.Desktop (1). Check initData.uiKind mapping from Mountain.`,
 		);
 
 		// UIKind.Desktop (safe default)
@@ -319,7 +342,7 @@ export class ShimExtHostEnvService
 
 	get isBuilt(): boolean {
 		// Determines if this is a "built" (release/stable/insiders) version vs. a "development" one.
-		// Check `product.quality` first, then fallback to a top-level `quality` property in initData.
+		// Check `product.quality` first (standard in VS Code), then fallback to a top-level `quality` property in initData.
 		const quality =
 			(this._initData as any).product?.quality ||
 			(this._initData as any).quality;
@@ -341,13 +364,15 @@ export class ShimExtHostEnvService
 			this._logError(
 				"env.openExternal: Invalid target URI provided. Must be a vscode.Uri instance.",
 
-				{ targetValue: target },
+				"Received:",
+
+				target,
 			);
 
 			return false;
 		}
 
-		this._log(
+		this._logDebug(
 			`env.openExternal: Attempting to open URI='${target.toString(true)}' (skipEncoding=true for logging)`,
 		);
 
@@ -377,7 +402,7 @@ export class ShimExtHostEnvService
 			this._logError(
 				"env.openExternal: RPC call failed or URI conversion error:",
 
-				refineErrorForShim(e, this._logService, "openExternal"),
+				refineErrorForShim(e, this._logService, "openExternal RPC"),
 			);
 
 			return false;
@@ -387,16 +412,18 @@ export class ShimExtHostEnvService
 	async asExternalUri(target: VscodeUri): Promise<VscodeUri> {
 		if (!(target instanceof VscodeUri)) {
 			this._logError(
-				"env.asExternalUri: Invalid target URI provided. Must be a vscode.Uri instance. Returning original.",
+				"env.asExternalUri: Invalid target URI provided. Must be a vscode.Uri instance. Returning original URI.",
 
-				{ targetValue: target },
+				"Received:",
+
+				target,
 			);
 
 			// Return original if invalid input
 			return target;
 		}
 
-		this._log(
+		this._logDebug(
 			`env.asExternalUri: Resolving URI='${target.toString(true)}' (skipEncoding=true for logging)`,
 		);
 
@@ -413,7 +440,8 @@ export class ShimExtHostEnvService
 
 			const uriDto = this._internalUriToMarshalledDto(internalUri);
 
-			// `allowContributedOpeners: false` is typical for `asExternalUri` unless specifically wanting app-level openers.
+			// `allowContributedOpeners: false` is typical for `asExternalUri` when the intent is to get a
+			// URL for external OS handling, not for opening within VS Code via a contributed opener.
 			const resultUriDto =
 				await this._mainThreadWindowProxy.$asExternalUri(uriDto, {
 					allowContributedOpeners: false,
@@ -428,7 +456,7 @@ export class ShimExtHostEnvService
 			this._logError(
 				"env.asExternalUri: RPC call failed or URI conversion error:",
 
-				refineErrorForShim(e, this._logService, "asExternalUri"),
+				refineErrorForShim(e, this._logService, "asExternalUri RPC"),
 			);
 
 			// Fallback to original target URI on error
@@ -439,14 +467,14 @@ export class ShimExtHostEnvService
 	/**
 	 * Helper to convert an internal `VSCodeInternalURI` to a marshalled DTO suitable for RPC.
 	 * This ensures a consistent DTO structure, including `$mid` for VS Code's marshalling.
-	 * @param uri The internal URI to convert.
-	 * @returns URI components suitable for RPC transfer.
+	 * @param uri The internal URI (`vs/base/common/uri.URI`) to convert.
+	 * @returns URI components DTO (`VSCodeInternalUriComponents`) suitable for RPC transfer.
 	 */
 	private _internalUriToMarshalledDto(
 		uri: VSCodeInternalURI,
 	): VSCodeInternalUriComponents {
 		// This should produce a structure compatible with what RPCProtocol expects
-		// and what MainThread services can revive using URI.revive().
+		// and what MainThread services can revive using `URI.revive()`.
 		return {
 			// Using UriSimple for a lighter payload. MainThread can revive this.
 			$mid: MarshalledId.UriSimple,
@@ -462,50 +490,57 @@ export class ShimExtHostEnvService
 			fragment: uri.fragment,
 
 			// `external` and `fsPath` are not part of UriSimple DTO.
-			// If full components (like those from `uri.toJSON()`) are needed, use `MarshalledId.Uri` and include them.
+			// If full components (like those from `uri.toJSON()`) are needed by Mountain,
+
+			// use `MarshalledId.Uri` and include them, or ensure Mountain can handle UriSimple.
 		};
 	}
 
 	// --- Methods for VscodeExtHostEnvShape (these are called by MainThread via RPC) ---
 	/**
+	 * {@inheritDoc VscodeExtHostEnvShape.$setTelemetryLevel}
+	 *
+	 *
 	 * Called by the MainThread (e.g., MainThreadEnvService) to update the telemetry level
 	 * in the extension host. This then fires the `onDidChangeTelemetryLevel` event.
-	 * @param level The new telemetry level.
+	 * @param level The new telemetry level (e.g., All, Error, Crash, Off).
 	 */
 	public $setTelemetryLevel(level: TelemetryLevel): void {
-		// Assuming telemetryInfo might be part of _initData and could be updated,
+		const currentLevelInInitData =
+			(this._initData.telemetryInfo as any).telemetryLevel ??
+			TelemetryLevel.NONE;
 
-		// or it's just for logging the change.
-		const currentLevel =
-			(this._initData.telemetryInfo as any).telemetryLevel ?? "Unknown";
-
-		this._log(
-			`RPC $setTelemetryLevel: Level changed from '${currentLevel}' to '${level}' (Enum values: ${TelemetryLevel[currentLevel]} -> ${TelemetryLevel[level]})`,
+		this._logInfo(
+			`RPC $setTelemetryLevel: Level received from MainThread: ${TelemetryLevel[level]}. Previous effective level in initData: ${TelemetryLevel[currentLevelInInitData]}.`,
 		);
 
-		// Optionally update a local cache if _initData.telemetryInfo is meant to be the source of truth
-		// (this._initData.telemetryInfo as any).telemetryLevel = level;
+		// Update a local cache if _initData.telemetryInfo is meant to be the source of truth for telemetry level.
+		// This makes `this.telemetryInfo.telemetryLevel` (if exposed) reflect the latest.
+		(this._initData.telemetryInfo as any).telemetryLevel = level;
 
 		this._onDidChangeTelemetryLevelEmitter.fire(level);
 	}
 
 	/**
+	 * {@inheritDoc VscodeExtHostEnvShape.$setShell}
+	 *
+	 *
 	 * Called by the MainThread to update the shell path in the extension host.
 	 * This then fires the `onDidChangeShell` event.
 	 * @param shellPath The new shell path.
 	 */
 	public $setShell(shellPath: string): void {
-		// Get current value from the getter
+		// Get current value from the getter (which reads process.env)
 		const oldShell = this.shell;
 
-		this._log(
-			`RPC $setShell: Shell changed from '${oldShell}' to '${shellPath}'`,
+		this._logInfo(
+			`RPC $setShell: Shell path received from MainThread: '${shellPath}'. Previous effective shell: '${oldShell}'.`,
 		);
 
-		// If `this.shell` were derived from a mutable property in `_initData`, update it here.
-		// Since it's derived from process.env, this RPC implies an override or a notification
-		// of a change detected by the main process.
-		// For this shim, we primarily fire the event. A more complex state management might store this override.
+		// If `this.shell` were derived from a mutable property in `_initData`, we would update it here.
+		// Since it's currently derived directly from `process.env`, this RPC call primarily serves
+		// to fire the `onDidChangeShell` event, notifying extensions that the host-recognized shell has changed.
+		// A more complex state management might store this `shellPath` as an override.
 		this._onDidChangeShellEmitter.fire(shellPath);
 	}
 
@@ -521,6 +556,6 @@ export class ShimExtHostEnvService
 
 		this._onDidChangeShellEmitter.dispose();
 
-		this._log("Disposed.");
+		this._logInfo("Disposed.");
 	}
 }
