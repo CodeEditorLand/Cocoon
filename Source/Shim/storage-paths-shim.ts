@@ -1,148 +1,156 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Extension Storage Paths Shim (storage-paths-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements the `IExtensionStoragePaths` service interface for Cocoon. This service
- * is responsible for providing extensions with well-defined, unique filesystem URI
- * locations where they can store global state (persisting across all workspaces)
- * and workspace-specific state.
+ * Implements the `IExtensionStoragePaths` service interface for the Cocoon environment.
+ * This service is crucial for providing extensions with well-defined, unique, and
+ * persistent filesystem URI locations where they can store their state. It distinguishes
+ * between global storage (shared across all workspaces for an extension) and
+ * workspace-specific storage.
  *
- * The paths provided are crucial for the `vscode.ExtensionContext.globalStorageUri`
- * and `vscode.ExtensionContext.storageUri` properties.
+ * The paths provided by this service are consumed by `ExtHostExtensionService` (or its
+ * shim) when creating `ExtensionContext` instances, populating properties like
+ * `ExtensionContext.globalStorageUri` and `ExtensionContext.storageUri`. These URIs
+ * point to directories where extensions can then use `vscode.workspace.fs` (handled by
+ * `fs-api-shim.ts`) or potentially `require('fs')` (handled by `fs-shim.ts`, though
+ * with caveats) to manage their files.
  *
  * Responsibilities:
- * - Receiving base storage path URIs (typically `globalStorageHome` and
- *   `workspaceStorageHome`) from the Mountain host via `initData.environment`.
- * - Resolving these base paths and constructing specific storage path URIs for each
- *   extension by appending its lowercased identifier as a subdirectory name.
- * - Providing methods (`workspaceValue(extension)`, `globalValue(extension)`) that
+ * - Receiving base storage path URIs (typically `globalStorageHome` for global storage
+ *   and `workspaceStorageHome` for workspace-specific storage) from the Mountain host
+ *   via `initData.environment`.
+ * - Resolving these base paths into absolute filesystem paths. If paths are not
+ *   provided by Mountain, it uses sensible fallbacks within a `.cocoon-data-storage`
+ *   directory relative to Cocoon's current working directory.
+ * - Constructing specific storage path URIs for each extension by creating a subdirectory
+ *   named after the extension's lowercased identifier (e.g., `publisher.name`)
+ *   under the appropriate base global or workspace storage path.
+ * - Providing `workspaceValue(extension)` and `globalValue(extension)` methods that
  *   return these extension-specific storage locations as `vscode.Uri` objects.
- * - Attempting to ensure that the base storage directories exist on the filesystem
- *   using the `fs-shim` (Node 'fs' proxy) during initialization.
+ * - Attempting to ensure that the base storage directories exist on the filesystem.
+ *   This is done asynchronously in the background during initialization using the
+ *   `fs-shim.ts` (Node 'fs' proxy) via its `_ensureDirectoryExists` helper.
+ *   **WARNING:** The functionality of `_ensureDirectoryExists` (and thus background
+ *   directory creation) is currently compromised due to `fs-shim.ts` relying on a
+ *   deprecated backend (`handlers/native_fs.rs`) in Mountain. Extensions should not
+ *   rely on these directories being auto-created by this service at this time.
  *
  * Key Interactions:
  * - Relies on initialization data (`ExtHostInitData.environment`) provided by `index.ts`
- *   (originating from Mountain) for base storage paths.
- * - Uses Node.js `path` module for path manipulation.
- * - Uses `vscode.Uri` (from `../Shim/out/vscode.js` or a similar API shim) for the
- *   URIs it returns.
- * - Utilizes `fs-shim.ts` (specifically `fsShimInstance.promises.mkdir`) to attempt
- *   creation of the base storage directories.
- * - The URIs provided by this service are consumed by `ExtHostExtensionService` (or a
- *   simulated version) when creating `ExtensionContext` instances for extensions.
- * - Registered with Dependency Injection in `Cocoon/index.ts`.
+ *   (originating from Mountain) for the base storage paths.
+ * - Uses the Node.js `path` module for robust path manipulation and resolution.
+ * - Returns `vscode.Uri` objects (from `../Shim/out/vscode.js` or a similar API shim)
+ *   as per the VS Code API contract.
+ * - Utilizes `fs-shim.ts` (specifically `fsShimInstance.promises.mkdir`) for its
+ *   attempt to create base storage directories. The success of this depends on the
+ *   `fs-shim.ts` backend being functional.
+ * - An instance of `ShimExtensionStoragePaths` is registered with Dependency Injection
+ *   in `Cocoon/index.ts` and is used by the extension host lifecycle, particularly
+ *   for populating `ExtensionContext`.
  *
-
  *--------------------------------------------------------------------------------------------*/
 
-// Node.js path module for joining paths
+// Node.js path module for joining and resolving paths
 import * as path from "path";
+// For initData type
+import type { UriComponents as VSCodeInternalUriComponents } from "vs/base/common/uri";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions";
 
-// Use vscode.Uri from the API shim for consistency with what extensions expect
+// Use vscode.Uri from the API shim for consistency with what extensions and ExtensionContext expect.
 import { Uri as VscodeUri } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
-	// Renamed from ILogService
+	// For BaseCocoonShim constructor
 	type ILogServiceForShim,
-	// Renamed from IExtHostRpcService
+	// For BaseCocoonShim constructor
 	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
-// Default import of the fs-shim object for directory creation
+// Default import of the fs-shim object instance for directory creation operations.
+// WARNING: Backend for fs-shim (native_fs.rs) is deprecated.
 import fsShimInstance from "./fs-shim";
 
-// VS Code's internal IExtensionStoragePaths for type compatibility if registered with DI
+// VS Code's internal IExtensionStoragePaths interface for type compatibility if this shim is registered with DI under that key.
 // import { IExtensionStoragePaths as VscodeIExtensionStoragePaths } from 'vs/platform/extensionManagement/common/extensionStorage';
 
 // --- Type Definitions ---
 
 /**
  * Defines the structure of `initData.environment` relevant to this storage paths shim.
- * It expects paths to the home directories for global and workspace-specific storage.
+ * It expects URIs (as `VSCodeInternalUriComponents` after revival, or path strings pre-revival)
+ * pointing to the home directories for global and workspace-specific extension storage.
  */
 interface StoragePathsEnvironment {
 	/**
-	 * The base URI (or path string) for global extension storage.
-	 * Can be `UriComponentsForStorage` (if sent as a structured URI object from Mountain)
-	 * or a direct filesystem path string.
+	 * The base URI (typically `VSCodeInternalUriComponents` if revived from JSON by `index.ts`,
+	 *
+	 *
+	 * or a path string if consumed before full revival) for global extension storage.
 	 */
-	globalStorageHome?: UriComponentsForStorage | string;
+	globalStorageHome?: VSCodeInternalUriComponents | string;
 
 	/**
-	 * The base URI (or path string) for workspace-specific extension storage.
-	 * Can be `UriComponentsForStorage` or a direct filesystem path string.
-	 * This may be undefined if no workspace is open.
+	 * The base URI (similarly, `VSCodeInternalUriComponents` or path string) for
+	 * workspace-specific extension storage. This may be undefined if no workspace is open.
 	 */
-	workspaceStorageHome?: UriComponentsForStorage | string;
+	workspaceStorageHome?: VSCodeInternalUriComponents | string;
 
-	// other environment properties might exist but are not used by this shim.
-}
-
-/**
- * Represents URI components, primarily focusing on `fsPath`, if `initData`
- * provides storage home locations as structured URI objects.
- */
-interface UriComponentsForStorage {
-	// Should typically be 'file' for local storage paths.
-	scheme: string;
-
-	// The absolute filesystem path.
-	fsPath: string;
-
-	// Often the same as fsPath for file URIs.
-	path?: string;
-
-	authority?: string;
-
-	query?: string;
-
-	fragment?: string;
-
-	// String representation, e.g., from URI.toString(true)
-	external?: string;
+	// Other environment properties might exist but are not directly used by this shim.
 }
 
 /**
  * The public interface provided by this shim, aligning with VS Code's `IExtensionStoragePaths`.
+ * This interface is what `ExtensionContext` and other services rely on for obtaining
+ * standardized storage path URIs for extensions.
  */
 export interface IExtensionStoragePathsShim {
-	// For DI compatibility
+	// For DI compatibility if registered as a VS Code service.
 	readonly _serviceBrand: undefined;
 
 	/**
 	 * Returns the workspace-specific storage URI for the given extension.
-	 * @param extension The extension description.
-	 * @returns A `vscode.Uri` pointing to the workspace storage location, or `undefined`
-	 *          if no workspace storage is available (e.g., no workspace open).
+	 * This location is intended for data that should only be available when the current
+	 * workspace (or workspace folder, depending on VS Code's exact scoping rules) is active.
+	 * @param extension The `IExtensionDescription` of the extension for which to get the storage path.
+	 * @returns A `vscode.Uri` pointing to the workspace storage location for the extension,
+	 *
+	 *
+	 *          or `undefined` if no workspace storage is available (e.g., when no folder
+	 *          is opened or if Mountain does not provide a `workspaceStorageHome`).
 	 */
 	workspaceValue(extension: IExtensionDescription): VscodeUri | undefined;
 
 	/**
 	 * Returns the global storage URI for the given extension.
-	 * This location is shared across all workspaces.
-	 * @param extension The extension description.
-	 * @returns A `vscode.Uri` pointing to the global storage location. This method
-	 *          is guaranteed to return a URI (uses a fallback if necessary).
+	 * This location is intended for data that should persist across all workspaces and
+	 * sessions for that particular extension (e.g., user-wide settings or caches).
+	 * @param extension The `IExtensionDescription` of the extension for which to get the storage path.
+	 * @returns A `vscode.Uri` pointing to the global storage location for the extension.
+	 *          This method is guaranteed to return a URI (it uses a fallback mechanism if the primary
+	 *          global storage path cannot be determined from `initData`).
 	 */
 	globalValue(extension: IExtensionDescription): VscodeUri;
 
 	/**
-	 * A promise that resolves when the storage paths service is ready.
-	 * In this shim, paths are determined synchronously, so it resolves immediately.
-	 * Directory creation is attempted asynchronously in the background.
+	 * A promise that resolves when the storage paths service is considered "ready" to provide paths.
+	 * In this shim, storage paths are determined synchronously during constructor initialization.
+	 * The asynchronous background task of attempting to ensure base directories exist does not block
+	 * this promise. Thus, it resolves immediately, indicating paths can be requested.
+	 * @returns A promise that resolves when paths are available for resolution.
 	 */
 	whenReady(): Promise<void>;
 
 	/**
-	 * Called when all extensions are about to be deactivated, e.g., during shutdown.
-	 * In VS Code, this might be used to release file locks on storage.
-	 * This is a NOP in the current shim.
+	 * A lifecycle hook called by the extension host when all extensions are about to be deactivated
+	 * (e.g., during a shutdown sequence). In a full VS Code environment, services managing
+	 * storage (like an SQLite-backed Memento service) might use this to flush buffers or
+	 * release file locks. This is a No-Operation (NOP) in the current shim, as it only
+	 * provides paths and doesn't manage locks itself.
 	 */
 	onWillDeactivateAll(): void;
 }
 
 /**
  * Cocoon's implementation of `IExtensionStoragePaths`.
- * It resolves and provides filesystem URIs for extension-specific storage.
+ * It resolves and provides filesystem URIs for extension-specific global and workspace storage, * based on paths received from Mountain or sensible defaults.
  */
 export class ShimExtensionStoragePaths
 	extends BaseCocoonShim
@@ -150,100 +158,130 @@ export class ShimExtensionStoragePaths
 {
 	public readonly _serviceBrand: undefined;
 
-	// Resolved absolute string path for the base global storage directory.
+	// Resolved absolute string path for the base global storage directory. Guaranteed to be set due to fallbacks.
 	readonly #globalStoragePath: string;
 
-	// Resolved absolute string path for the base workspace storage directory, or null if not applicable.
+	// Resolved absolute string path for the base workspace storage directory, or `null` if not applicable/provided.
 	readonly #workspaceStoragePath: string | null;
 
 	/**
 	 * Creates an instance of ShimExtensionStoragePaths.
-	 * @param rpcService The RPC service adapter (passed to base, not directly used here).
-	 * @param environment The environment data from `initData`, containing base storage paths.
-	 * @param logService The logging service.
+	 * @param rpcService The RPC service adapter (passed to `BaseCocoonShim`, not directly used by this service's core logic).
+	 * @param environment The environment data from `initData` (e.g., `revivedInitData.environment`),
+	 *
+	 *
+	 *                    which should contain `globalStorageHome` and `workspaceStorageHome` URI components or paths.
+	 * @param logService The logging service instance.
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
 
+		// Expects ExtHostInitData.environment
 		environment: StoragePathsEnvironment | undefined,
 
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtensionStoragePaths", rpcService, logService);
 
-		this._log("Initializing...");
+		// Use Info for major lifecycle events.
+		this._logInfo("Initializing...");
 
-		// Define a default root for Cocoon data if specific paths are not provided.
-		// This helps ensure that storage paths can always be resolved, even in minimal setups.
+		// Define a default root directory for Cocoon's persistent data if specific paths are not provided by Mountain.
+		// This ensures that storage paths can always be resolved, even in minimal or fallback scenarios.
 		const defaultCocoonDataRoot = path.resolve(
 			process.cwd(),
 
-			".cocoon-data",
+			".cocoon-data-storage",
+
+			// More specific name
 		);
 
 		this.#globalStoragePath = this._resolvePathFromEnvData(
 			environment?.globalStorageHome,
 
-			// Fallback for global path
+			// Fallback path for global storage.
 			path.join(defaultCocoonDataRoot, "globalStorage"),
 
-			// Cast as string because global always has a fallback
+			// Cast to string: global path is guaranteed to resolve due to the fallback.
 		) as string;
 
 		this.#workspaceStoragePath = this._resolvePathFromEnvData(
 			environment?.workspaceStorageHome,
 
-			// No fallback for workspace path; it remains null if not provided by Mountain.
+			// No fallback for workspace path; it remains `null` if not provided by Mountain (e.g., no workspace open).
 			null,
 		);
 
-		this._log(`Global Storage Path Base: ${this.#globalStoragePath}`);
-
-		this._log(
-			`Workspace Storage Path Base: ${this.#workspaceStoragePath ?? "N/A (No workspace or path provided from Mountain)"}`,
+		this._logInfo(
+			`Resolved Global Storage Base Path: '${this.#globalStoragePath}'`,
 		);
 
-		// Asynchronously try to ensure the base directories exist.
-		// These calls are fire-and-forget from the constructor's perspective;
+		this._logInfo(
+			`Resolved Workspace Storage Base Path: '${this.#workspaceStoragePath ?? "N/A (No workspace or no workspace storage home provided)"}'`,
+		);
 
-		// `whenReady()` does not await their completion.
-		this._ensureDirectoryExists(this.#globalStoragePath).catch((err) =>
-			this._logError(
-				`Background check/creation of global storage base directory failed: ${this.#globalStoragePath}`,
+		// Asynchronously attempt to ensure the base storage directories exist.
+		// These operations run in the background and do not block constructor completion or `whenReady()`.
+		// Errors during this process are logged but don't prevent the service from providing path URIs.
+		// CRITICAL WARNING: This relies on fs-shim.ts, whose backend is deprecated.
+		this._logWarnOnce(
+			"Attempting to ensure storage directories exist using fs-shim.ts. " +
+				"WARNING: The backend for fs-shim.ts (native_fs.rs in Mountain) is DEPRECATED. " +
+				"Directory creation may fail or be unreliable.",
+		);
 
-				err,
-			),
+		this._ensureDirectoryExists(this.#globalStoragePath, "Global").catch(
+			(err) =>
+				this._logError(
+					`Background task to ensure Global storage base directory ('${this.#globalStoragePath}') failed. ` +
+						`This might be due to the deprecated 'fs-shim' backend or permissions. Error:`,
+
+					err,
+				),
 		);
 
 		if (this.#workspaceStoragePath) {
-			this._ensureDirectoryExists(this.#workspaceStoragePath).catch(
-				(err) =>
-					this._logError(
-						`Background check/creation of workspace storage base directory failed: ${this.#workspaceStoragePath}`,
+			this._ensureDirectoryExists(
+				this.#workspaceStoragePath,
 
-						err,
-					),
+				"Workspace",
+			).catch((err) =>
+				this._logError(
+					`Background task to ensure Workspace storage base directory ('${this.#workspaceStoragePath}') failed. ` +
+						`This might be due to the deprecated 'fs-shim' backend or permissions. Error:`,
+
+					err,
+				),
 			);
 		}
 	}
 
 	/**
-	 * This shim does not require RPC for its core functionality.
+	 * This shim's core logic relies on `initData` (passed to constructor) and local path manipulation;
+	 *
+	 *
+	 *
+	 * it does not require RPC for its primary functionality of resolving storage paths.
+	 * @returns `false`.
 	 */
 	protected override _requiresRpc(): boolean {
 		return false;
 	}
 
 	/**
-	 * Resolves an absolute filesystem path from environment data.
-	 * The environment data can be a structured URI object (with `fsPath`) or a direct path string.
+	 * Resolves an absolute filesystem path from environment data provided in `initData`.
+	 * The environment data for a path can be a structured URI object (typically `VSCodeInternalUriComponents`
+	 * after `initData` revival, containing an `fsPath`) or a direct path string.
 	 *
-	 * @param envPathData The path data from the environment (initData).
-	 * @param fallbackPathIfUnset The fallback path to use if `envPathData` is not provided or invalid. Can be `null`.
-	 * @returns The resolved absolute path string, or `null` if no valid path could be determined and `fallbackPathIfUnset` was `null`.
+	 * @param envPathData The path data from `initData.environment` (e.g., `globalStorageHome`).
+	 *                    This could be `VSCodeInternalUriComponents` or a `string`.
+	 * @param fallbackPathIfUnset The absolute path string to use as a fallback if `envPathData`
+	 *                              is not provided, invalid, or doesn't yield a usable path. Can be `null`.
+	 * @returns The resolved absolute path string, or `null` if no valid path could be determined
+	 *          and `fallbackPathIfUnset` was also `null`.
 	 */
 	private _resolvePathFromEnvData(
-		envPathData: UriComponentsForStorage | string | undefined,
+		envPathData: VSCodeInternalUriComponents | string | undefined,
 
 		fallbackPathIfUnset: string | null,
 	): string | null {
@@ -252,68 +290,91 @@ export class ShimExtensionStoragePaths
 				typeof envPathData === "object" &&
 				typeof envPathData.fsPath === "string"
 			) {
-				// Use fsPath from UriComponents
+				// If envPathData is UriComponents (revived from JSON), use its fsPath.
 				return path.resolve(envPathData.fsPath);
 			} else if (typeof envPathData === "string") {
-				// It's a direct string path
+				// If it's a direct path string.
 				return path.resolve(envPathData);
 			}
 
+			// If envPathData is an object but not a valid UriComponents DTO with an `fsPath`, or an unexpected type.
 			this._logWarn(
-				"envPathData for storage path was an object but not valid UriComponents with fsPath, or an unexpected type. Using fallback.",
+				"envPathData for a storage home location was provided but was not a valid UriComponents object with an 'fsPath' string, nor a direct path string. Using fallback path if available.",
+
+				"Received envPathData:",
 
 				envPathData,
 			);
 		}
 
+		// If envPathData was not usable or not provided, use the fallback.
 		return fallbackPathIfUnset ? path.resolve(fallbackPathIfUnset) : null;
 	}
 
 	/**
-	 * Asynchronously ensures that a given directory path exists, creating it recursively if necessary.
-	 * Uses the `fs-shim` for filesystem operations.
+	 * Asynchronously ensures that a given directory path exists on the filesystem.
+	 * If the directory (or its parent directories) do not exist, it attempts to create them
+	 * recursively using the `fs-shim` (which proxies to Mountain's `fs_mkdir` handler).
+	 *
+	 * **WARNING:** This method's reliability depends on `fs-shim.ts` and its backend in Mountain
+	 * (`handlers/native_fs.rs`), which is currently marked as DEPRECATED and may be non-functional.
+	 * Directory creation attempts via this method are therefore likely to fail or be unreliable
+	 * until the `fs-shim` backend dependency is resolved (e.g., by reviving `native_fs.rs` or
+	 * by this service using `vscode.workspace.fs` which has a functional backend).
+	 * Errors during this background operation are logged.
 	 *
 	 * @param dirPath The absolute path of the directory to ensure. If `null`, the method is a NOP.
+	 * @param scopeNameForLog A descriptive name for the scope (e.g., "Global", "Workspace") for logging purposes.
 	 */
 	private async _ensureDirectoryExists(
 		dirPath: string | null,
+
+		scopeNameForLog: string,
 	): Promise<void> {
 		if (!dirPath) return;
 
+		this._logService?.trace(
+			`[${scopeNameForLog} Storage Setup] Attempting to ensure base directory exists (via fs-shim): '${dirPath}'. NOTE: fs-shim backend is currently DEPRECATED.`,
+		);
+
 		try {
+			// Check if directory exists using fs-shim (which proxies a `stat` operation).
 			await fsShimInstance.promises.stat(dirPath);
 
-			// this._log(`Storage directory already exists: ${dirPath}`);
-		} catch (err: any) {
-			if (err.code === "ENOENT") {
-				// "Error NO ENTry" (does not exist)
-				this._log(`Attempting to create storage directory: ${dirPath}`);
+			this._logService?.trace(
+				`[${scopeNameForLog} Storage Setup] Base directory verified to exist: '${dirPath}' (via fs-shim stat).`,
+			);
+		} catch (statError: any) {
+			if (statError.code === "ENOENT") {
+				// "Error NO ENTry" (path does not exist)
+				this._logInfo(
+					`[${scopeNameForLog} Storage Setup] Base directory not found at '${dirPath}'. Attempting to create it via fs-shim (note: fs-shim backend is deprecated)...`,
+				);
 
 				try {
-					// Use fs-shim's mkdir, which is proxied to Mountain.
+					// Use fs-shim's mkdir, which is proxied to Mountain's `fs_mkdir` handler.
 					await fsShimInstance.promises.mkdir(dirPath, {
 						recursive: true,
 					});
 
-					this._log(
-						`Successfully created storage directory via fs-shim: ${dirPath}`,
+					this._logInfo(
+						`[${scopeNameForLog} Storage Setup] fs-shim mkdir call completed for '${dirPath}'. Actual success depends on the (deprecated) functional backend in Mountain.`,
 					);
-				} catch (mkdirErr: any) {
+				} catch (mkdirError: any) {
 					this._logError(
-						`Failed to create storage directory ${dirPath} via fs-shim:`,
+						`[${scopeNameForLog} Storage Setup] CRITICAL: Failed to create base directory '${dirPath}' via fs-shim. ` +
+							`Storage for this scope may be unreliable or fail. This is likely due to the deprecated 'fs-shim' backend. mkdir Error:`,
 
-						mkdirErr,
+						mkdirError,
 					);
-
-					// This failure might impact extensions relying on these paths.
-					// Depending on Cocoon's error strategy, this could be logged more severely or throw.
 				}
 			} else {
-				// Other errors during stat (e.g., permission issues).
+				// Other errors during stat (e.g., permission issues preventing access, or backend failure).
 				this._logError(
-					`Error during fs.promises.stat for directory ${dirPath} (it may exist but be inaccessible):`,
+					`[${scopeNameForLog} Storage Setup] Error checking base directory '${dirPath}' with fs.promises.stat. ` +
+						`The path may exist but be inaccessible, or the fs-shim backend may have failed (it is deprecated). Error:`,
 
-					err,
+					statError,
 				);
 			}
 		}
@@ -321,10 +382,15 @@ export class ShimExtensionStoragePaths
 
 	/**
 	 * Constructs the full storage path URI for a given extension and scope (global or workspace).
+	 * The path is formed by appending the lowercased extension ID (publisher.name) as a subdirectory
+	 * to the relevant base global or workspace storage directory.
 	 *
-	 * @param extension The extension description.
-	 * @param scopeIsGlobal `true` for global storage, `false` for workspace storage.
-	 * @returns A `VscodeUri` for the storage path, or `undefined` if a base path is unavailable (e.g., no workspace storage path).
+	 * @param extension The `IExtensionDescription` of the extension for which to create the path.
+	 * @param scopeIsGlobal `true` to get the global storage path, `false` for the workspace-specific path.
+	 * @returns A `VscodeUri` (of scheme 'file') for the extension's storage path in the specified scope,
+	 *
+	 *
+	 *          or `undefined` if a base path for that scope is unavailable (e.g., no workspace storage path defined).
 	 */
 	private _getPathUriForExtension(
 		extension: IExtensionDescription,
@@ -332,26 +398,32 @@ export class ShimExtensionStoragePaths
 		scopeIsGlobal: boolean,
 	): VscodeUri | undefined {
 		if (!extension?.identifier?.value) {
-			// Check for valid extension identifier
 			this._logError(
-				"Cannot get storage path: Invalid extension descriptor or identifier provided.",
+				"Cannot get storage path: Invalid IExtensionDescription or missing 'identifier.value' provided.",
 			);
 
 			return undefined;
 		}
 
-		const baseDir = scopeIsGlobal
+		const baseDirectoryPath = scopeIsGlobal
 			? this.#globalStoragePath
 			: this.#workspaceStoragePath;
 
-		if (!baseDir) {
+		if (!baseDirectoryPath) {
 			if (!scopeIsGlobal) {
-				// This is normal if no workspace is open or workspace storage isn't configured by Mountain.
-				// this._log(`Workspace storage path is N/A for extension: ${extension.identifier.value}`);
+				// This is an expected and normal scenario if no workspace is open or if Mountain
+				// does not configure/provide a workspace-specific storage home.
+				// Extensions will receive `undefined` for `ExtensionContext.storageUri` in this case.
+				this._logService?.trace(
+					`Workspace storage path is N/A (no base path defined) for extension: '${extension.identifier.value}'.`,
+				);
 			} else {
-				// Global storage path *should* always resolve due to fallbacks. This indicates an issue.
+				// This case (global base path being null or undefined) should ideally not occur
+				// due to the fallback mechanism in the constructor for #globalStoragePath.
+				// If it does, it signals a critical problem in the initialization logic for global storage.
 				this._logError(
-					`CRITICAL: Global storage base path is unexpectedly undefined! Cannot provide path for extension '${extension.identifier.value}'.`,
+					`CRITICAL FAILURE: Global storage base path (#globalStoragePath) is unexpectedly null or undefined. ` +
+						`Cannot provide a global storage path for extension '${extension.identifier.value}'. Check initData and fallback logic.`,
 				);
 			}
 
@@ -359,57 +431,73 @@ export class ShimExtensionStoragePaths
 		}
 
 		try {
-			// VS Code convention: use the lowercased extension ID for the subdirectory name.
-			const extensionSubDir = extension.identifier.value.toLowerCase();
+			// VS Code convention: use the lowercased extension ID (format: "publisher.name")
+			// as the name of the subdirectory for that extension's storage.
+			const extensionSubdirectoryName =
+				extension.identifier.value.toLowerCase();
 
-			const fullStoragePath = path.join(baseDir, extensionSubDir);
+			const fullExtensionStoragePath = path.join(
+				baseDirectoryPath,
 
-			// Create a file URI
-			return VscodeUri.file(fullStoragePath);
-		} catch (e: any) {
+				extensionSubdirectoryName,
+			);
+
+			// Create a `vscode.Uri` (which will be a 'file://' URI) from the resolved absolute filesystem path.
+			return VscodeUri.file(fullExtensionStoragePath);
+		} catch (uriCreationError: any) {
+			// Catch errors from path.join or VscodeUri.file if paths are malformed.
 			this._logError(
-				`Failed to create file URI for storage path. Base: '${baseDir}', Extension ID: '${extension.identifier.value}'. Error:`,
+				`Failed to create file URI for extension storage path. Base Directory: '${baseDirectoryPath}', ` +
+					`Extension ID: '${extension.identifier.value}'. Error:`,
 
-				e,
+				uriCreationError,
 			);
 
 			return undefined;
 		}
 	}
 
-	/**
-	 * {@inheritDoc IExtensionStoragePathsShim.workspaceValue}
-	 *
-	 */
+	/** {@inheritDoc IExtensionStoragePathsShim.workspaceValue} */
 	public workspaceValue(
 		extension: IExtensionDescription,
 	): VscodeUri | undefined {
-		return this._getPathUriForExtension(extension, false /* not global */);
+		return this._getPathUriForExtension(
+			extension,
+
+			false /* isGlobalScope = false */,
+		);
 	}
 
-	/**
-	 * {@inheritDoc IExtensionStoragePathsShim.globalValue}
-	 *
-	 */
+	/** {@inheritDoc IExtensionStoragePathsShim.globalValue} */
 	public globalValue(extension: IExtensionDescription): VscodeUri {
 		const uri = this._getPathUriForExtension(
 			extension,
 
-			true /* is global */,
+			true /* isGlobalScope = true */,
 		);
 
 		if (!uri) {
-			// This should not happen if #globalStoragePath is always initialized.
-			// If it does, it's a critical failure in initialization logic.
+			// This situation should be extremely rare for globalValue due to constructor fallbacks for #globalStoragePath.
+			// If #globalStoragePath was somehow nullified post-construction or the fallback failed,
+
+			// this indicates a severe internal error in the service's initialization.
 			this._logError(
-				`FATAL: globalValue for extension '${extension.identifier.value}' resulted in an undefined URI. This indicates a problem with globalStoragePath initialization. Returning emergency fallback URI.`,
+				`FATAL: globalValue for extension '${extension.identifier.value}' resulted in an undefined URI, ` +
+					`despite globalStoragePath being expected to always resolve. This indicates a critical problem with ` +
+					`storage path initialization. Returning an emergency fallback URI to satisfy API contract, but storage will likely fail.`,
 			);
 
-			// Provide a "best effort" emergency URI to satisfy the API contract (must return Uri).
-			// Extensions relying on this path for actual storage will likely fail.
+			// Provide a "best effort" emergency fallback URI to satisfy the API contract (which mandates returning a Uri).
+			// Extensions attempting to use this path for actual storage will likely encounter I/O errors.
 			const emergencyBase =
 				this.#globalStoragePath ||
-				path.join(process.cwd(), ".cocoon-data-ERROR", "globalStorage");
+				path.join(
+					process.cwd(),
+
+					".cocoon-data-ERROR",
+
+					"globalStorage-critical-fallback",
+				);
 
 			const emergencyPath = path.join(
 				emergencyBase,
@@ -423,35 +511,43 @@ export class ShimExtensionStoragePaths
 		return uri;
 	}
 
-	/**
-	 * {@inheritDoc IExtensionStoragePathsShim.whenReady}
-	 *
-	 */
+	/** {@inheritDoc IExtensionStoragePathsShim.whenReady} */
 	public async whenReady(): Promise<void> {
-		// In this shim, storage paths are determined synchronously in the constructor.
-		// The _ensureDirectoryExists calls are initiated asynchronously (fire-and-forget).
-		// `whenReady` in VS Code's IExtensionStoragePaths typically means the paths are resolvable
-		// and the underlying storage system is prepared (e.g., for Memento operations by IExtHostStorage).
-		// For this specific service, "ready" primarily means paths can be calculated.
-		// If directory creation *must* complete before these paths are considered truly "usable"
-		// by dependent services like Memento, then this method would need to await those operations.
-		// However, the fs-shim operations are themselves async and proxied.
+		// In this shim, storage paths are determined synchronously during the constructor.
+		// The background task of attempting to ensure base directories exist (`_ensureDirectoryExists`)
+		// is asynchronous and fire-and-forget; `whenReady()` does not and should not await its completion.
+		// For the `IExtensionStoragePaths` service, "ready" primarily means that path URIs can be resolved
+		// and provided to consumers like `ExtensionContext`. The actual writability or physical existence
+		// of these paths is a concern for filesystem operations themselves, not for this path provider service.
 		return Promise.resolve();
 	}
 
-	/**
-	 * {@inheritDoc IExtensionStoragePathsShim.onWillDeactivateAll}
-	 *
-	 */
+	/** {@inheritDoc IExtensionStoragePathsShim.onWillDeactivateAll} */
 	public onWillDeactivateAll(): void {
-		this._log(
-			"onWillDeactivateAll called (No-op in this shim regarding file locks).",
+		this._logService?.trace(
+			"onWillDeactivateAll called (No-Operation in this storage paths shim).",
 		);
 
-		// In a full VS Code environment, this might be used to release file locks on storage
-		// directories if any were held by the extension host.
-		// The initData mock for Cocoon typically includes `skipWorkspaceStorageLock: true`,
+		// In a full VS Code environment, this lifecycle hook might be used by services that manage
+		// storage state directly (e.g., an SQLite-backed Memento service) to flush write-buffers
+		// to disk or release file locks on storage databases before shutdown.
+		// Since this `ShimExtensionStoragePaths` service only *provides paths* and Cocoon's Memento
+		// implementation (`storage-shim.ts`) relies on Mountain for actual data persistence, this
+		// service itself has no locks to release or buffers to flush.
+		// Note: The `initData` for Cocoon often includes `skipWorkspaceStorageLock: true`, implying that
+		// such low-level storage locks are not a primary concern for Cocoon's simplified host model.
+	}
 
-		// implying such locks are not a primary concern for this simplified host.
+	/**
+	 * Disposes of resources held by this shim instance.
+	 * (Currently, this shim holds no complex resources like event emitters that require
+	 * explicit disposal beyond what `BaseCocoonShim` handles via `_instanceDisposables`).
+	 */
+	public override dispose(): void {
+		// From BaseCocoonShim, handles _instanceDisposables.
+		super.dispose();
+
+		// Use Info for major lifecycle.
+		this._logInfo("Disposed.");
 	}
 }
