@@ -1,34 +1,38 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Extensions API Shim (shims/extensions-shim.ts)
+ * Cocoon Extensions API Shim (extensions-shim.ts)
  * --------------------------------------------------------------------------------------------
  * Implements the `vscode.extensions` API namespace. This service allows extensions to
  * query information about other installed and running extensions, get their exported APIs,
  *
  * and listen for changes in the set of available extensions.
  *
- * Unlike many other shims that might simulate or proxy functionality, this shim heavily
- * relies on the *real* `IExtHostExtensionService` (from VS Code's sources, instantiated
- * in the Cocoon environment) as its backend. It acts as an adapter, transforming the
- * internal representations and methods of `IExtHostExtensionService` into the public
- * `vscode.extensions` API surface.
+ * Unlike many other shims that might simulate or proxy functionality to Mountain, this
+ * shim primarily acts as an **adapter** to the *real* `IExtHostExtensionService`
+ * (from VS Code's sources, instantiated and managed by Cocoon's `index.ts`). It
+ * transforms the internal representations and methods of the real `IExtHostExtensionService`
+ * into the public `vscode.extensions` API surface that extensions consume.
  *
  * Responsibilities:
- * - Implementing the `vscode.extensions` API interface.
- * - Providing `getExtension(extensionId)`: Fetches an extension's description from the
- *   real `IExtHostExtensionService` and wraps it in a `vscode.Extension<T>` object.
- * - Providing `extensions.all`: Returns a list of all known extensions, wrapped as
- *   `vscode.Extension<any>` objects.
+ * - Implementing the `vscode.extensions` API interface (as defined by `IExtHostExtensionsShape`).
+ * - Providing `getExtension(extensionId)`: Fetches an extension's internal description
+ *   (`IExtensionDescription`) from the real `IExtHostExtensionService` and wraps it
+ *   in a public `vscode.Extension<T>` API object.
+ * - Providing `extensions.all`: Returns a list of all known extensions, obtained from the
+ *   real service and wrapped as `vscode.Extension<any>` objects.
  * - Providing `extensions.onDidChange`: An event that fires when the list of known
- *   extensions changes (triggered by `IExtHostExtensionService.onDidRegisterExtensions`).
+ *   extensions changes. This event is triggered by subscribing to the
+ *   `IExtHostExtensionService.onDidRegisterExtensions` event from the real service.
  * - Constructing `vscode.Extension<T>` API objects that correctly delegate properties
  *   (like `isActive`, `exports`) and the `activate()` method to the underlying
- *   `IExtHostExtensionService`.
+ *   real `IExtHostExtensionService`.
  *
  * Key Interactions:
- * - Registered with Dependency Injection (e.g., in `Cocoon/index.ts`) as `IExtHostExtensions` (a VS Code internal service ID).
- * - An instance is made available to extensions as `vscode.extensions` via the API factory (e.g., in `index.ts`).
- * - Crucially depends on an injected instance of the real `IExtHostExtensionService`.
- * - Uses `BaseCocoonShim` for logging and disposable management.
+ * - Registered with Dependency Injection (DI) in `Cocoon/index.ts` as `IExtHostExtensions`
+ *   (a VS Code internal service DI key, if this shim is registered under that key).
+ * - An instance is made available to extensions as `vscode.extensions` via the main API
+ *   factory provider in `Cocoon/index.ts`.
+ * - Critically depends on an injected instance of the real `IExtHostExtensionService`.
+ * - Uses `BaseCocoonShim` for logging and management of disposables (like event subscriptions).
  *
  *--------------------------------------------------------------------------------------------*/
 
@@ -36,15 +40,14 @@ import {
 	Emitter as VscodeEmitter,
 	Event as VscodeEvent,
 } from "vs/base/common/event";
-import { Disposable } from "vs/base/common/lifecycle";
 // For Extension.extensionUri scheme evaluation
 import { Schemas } from "vs/base/common/network";
 import { type IExtensionDescription } from "vs/platform/extensions/common/extensions";
-// For ActivationKind when an extension calls another's activate() method.
+// For ActivationKind when an extension calls another's activate() method via the API.
 import { ActivationKind } from "vs/workbench/api/common/extHostExtensionActivator";
-// DI Key for the real ExtHostExtensionService. This is the service this shim adapts.
+// DI Key for the real ExtHostExtensionService. This is the core service this shim adapts.
 import { IExtHostExtensionService } from "vs/workbench/api/common/extHostExtensionService";
-// Import vscode API types
+// Import public vscode API types from Cocoon's bundled API definitions
 import {
 	// The public API enum
 	ExtensionKind as VscodeExtensionKind,
@@ -53,49 +56,50 @@ import {
 	type Extension as VscodeExtension,
 } from "vscode";
 
-// Assuming path to the API type definitions
-
 import { BaseCocoonShim, type ILogServiceForShim } from "./_baseShim";
+
+// IDisposable is used for the event subscription.
+// Disposable from lifecycle might be needed for NOP disposables if any were used, but not directly here.
 
 // --- Type Definitions ---
 
 /**
- * Defines the service interface for `vscode.extensions` that this shim implements for DI.
- * Aligns with the public `vscode.extensions` namespace.
+ * Defines the service interface for `vscode.extensions` that this shim implements.
+ * This aligns with the public `vscode.extensions` namespace and can be used for DI.
  */
 export interface IExtHostExtensionsShape {
-	// For DI registration (VS Code pattern)
+	// Standard VS Code DI mechanism pattern
 	readonly _serviceBrand: undefined;
 
 	getExtension<T>(extensionId: string): VscodeExtension<T> | undefined;
 
 	/**
-	 * Gets an extension by its full identifier.
-	 * @param extensionId Extension id.
-	 * @param includeNonListed_INTERNAL_USE_ONLY_ Internal VS Code parameter, typically ignored by public API.
+	 * Gets an extension by its full identifier (e.g., "publisher.name").
+	 * @param extensionId The extension identifier string.
+	 * @param _includeNonListed_INTERNAL_USE_ONLY_ An internal VS Code parameter, typically ignored by public API consumers.
 	 */
 	getExtension<T>(
 		extensionId: string,
 
-		includeNonListed_INTERNAL_USE_ONLY_?: boolean,
+		_includeNonListed_INTERNAL_USE_ONLY_?: boolean,
 	): VscodeExtension<T> | undefined;
 
+	/** A readonly array of all known extensions. */
 	readonly all: readonly VscodeExtension<any>[];
 
+	/** An event that fires when the list of extensions changed (extensions are added or removed). */
 	readonly onDidChange: VscodeEvent<void>;
 
-	// TODO: Add other methods like `getExtensionUri(extensionId, relativePath)` if they are part of the
-	// ExtHost service interface this shim might be adapting for (less common on public API).
+	// TODO: Consider adding other methods like `getExtensionUri(extensionId, relativePath)`
+	// if they are part of a more complete `IExtHostExtensions` service interface this shim aims to adapt,
+
+	// though such methods are less common on the direct `vscode.extensions` public API.
 }
 
 /**
  * Cocoon's implementation of the `vscode.extensions` API.
- * It delegates to the real `IExtHostExtensionService` for extension information,
- *
- *
- *
- *
- * acting as an adapter to the public API shape.
+ * It acts as an adapter, delegating to the real `IExtHostExtensionService` for
+ * retrieving extension information and managing their lifecycle.
  */
 export class ShimExtHostExtensions
 	extends BaseCocoonShim
@@ -103,7 +107,7 @@ export class ShimExtHostExtensions
 {
 	public readonly _serviceBrand: undefined;
 
-	// The REAL service instance
+	// The REAL IExtHostExtensionService instance, injected via constructor.
 	private readonly _extHostExtensionService: IExtHostExtensionService;
 
 	private readonly _onDidChangeExtensionsEmitter = new VscodeEmitter<void>();
@@ -113,8 +117,9 @@ export class ShimExtHostExtensions
 
 	/**
 	 * Creates an instance of ShimExtHostExtensions.
-	 * @param logService The logging service for shim-specific messages.
+	 * @param logService The logging service instance.
 	 * @param extHostExtensionService The real `IExtHostExtensionService` instance, injected via DI.
+	 *                                This is the backbone for all functionality provided by this shim.
 	 */
 	constructor(
 		logService: ILogServiceForShim | undefined,
@@ -125,7 +130,7 @@ export class ShimExtHostExtensions
 			// Service identifier for logging
 			"ExtHostExtensions",
 
-			// rpcService is not directly used by this shim for its primary functions
+			// rpcService is not directly used by this shim for its primary functions.
 			undefined,
 
 			logService,
@@ -133,21 +138,21 @@ export class ShimExtHostExtensions
 
 		this._extHostExtensionService = extHostExtensionService;
 
-		this._log(
-			"Initialized. Adapting real IExtHostExtensionService for vscode.extensions API.",
+		this._logInfo(
+			"Initialized. Adapting the real IExtHostExtensionService for the vscode.extensions API.",
 		);
 
 		// Listen to the real ExtHostExtensionService's onDidRegisterExtensions event.
-		// This event fires when the set of known extensions changes (e.g., after a delta update).
+		// This event signals that the set of known extensions has changed (e.g., after a delta update from MainThread).
 		if (
 			this._extHostExtensionService &&
 			this._extHostExtensionService.onDidRegisterExtensions
 		) {
 			this._instanceDisposables.add(
-				// Manage this subscription using disposables from BaseCocoonShim
+				// Manage this subscription using _instanceDisposables from BaseCocoonShim
 				this._extHostExtensionService.onDidRegisterExtensions(() => {
-					this._log(
-						"Received onDidRegisterExtensions from real IExtHostExtensionService. Firing vscode.extensions.onDidChange.",
+					this._logDebug(
+						"Received onDidRegisterExtensions event from real IExtHostExtensionService. Firing vscode.extensions.onDidChange.",
 					);
 
 					this._onDidChangeExtensionsEmitter.fire();
@@ -155,63 +160,72 @@ export class ShimExtHostExtensions
 			);
 		} else {
 			this._logError(
-				"Critical dependency IExtHostExtensionService or its onDidRegisterExtensions event is unavailable. `vscode.extensions.onDidChange` will not function.",
+				"Critical dependency IExtHostExtensionService or its onDidRegisterExtensions event is unavailable. " +
+					"`vscode.extensions.onDidChange` will not function, and extensions relying on it may behave unexpectedly.",
 			);
 		}
 	}
 
 	/**
-	 * Indicates whether this shim requires RPC communication.
 	 * This shim primarily adapts a local service (`IExtHostExtensionService`) and
 	 * does not make RPC calls itself for its core functions.
+	 * @returns `false` as RPC is not required by this shim.
 	 */
 	protected override _requiresRpc(): boolean {
 		return false;
 	}
 
 	/**
-	 * Converts an internal `IExtensionDescription` (VS Code's internal representation of an extension)
-	 * into the public `vscode.Extension<T>` API object that extensions can interact with.
-	 * @param description The internal extension description.
-	 * @returns The `vscode.Extension<T>` object, frozen to prevent modification.
+	 * Converts an internal `IExtensionDescription` (VS Code's comprehensive internal
+	 * representation of an extension) into the public `vscode.Extension<T>` API object
+	 * that extensions interact with.
+	 * @param description The internal `IExtensionDescription` of the extension.
+	 * @returns The `vscode.Extension<T>` API object, frozen to prevent modification by extensions.
 	 */
 	private _createApiExtensionObject<T>(
 		description: IExtensionDescription,
 	): VscodeExtension<T> {
-		// Capture `this` for use in closures (getters, activate method).
+		// Capture `this` (ShimExtHostExtensions instance) for use in closures (getters, activate method).
 		const self = this;
 
+		// Canonical "publisher.name" string.
 		const extensionIdString = description.identifier.value;
 
 		return Object.freeze({
+			// Ensure the returned API object is immutable.
 			get id(): string {
 				return extensionIdString;
 			},
 
 			get extensionUri(): VscodeUri {
 				return VscodeUri.from(description.extensionLocation);
+
+				// Convert internal URI to API URI
 			},
 
 			get extensionPath(): string {
 				return description.extensionLocation.fsPath;
+
+				// Filesystem path
 			},
 
 			get isActive(): boolean {
+				// Delegate to the real service to check activation status.
 				return self._extHostExtensionService.isActivated(
-					description.identifier,
+					extensionIdString,
 				);
 			},
 
-			// The `packageJSON` for the public API is the `IExtensionDescription` itself in VS Code's ExtHost,
-
-			// as it contains all manifest data plus resolved paths and other metadata.
 			get packageJSON(): any {
+				// The IExtensionDescription itself contains all manifest data plus resolved paths and other metadata,
+
+				// serving as the packageJSON for the public API in VS Code's ExtHost.
 				return description;
 			},
 
 			get extensionKind(): VscodeExtensionKind {
-				// Determine VscodeExtensionKind based on IExtensionDescription.extensionKind (which is ExtensionHostKind[])
-				// or fallback to location.
+				// Determine VscodeExtensionKind based on IExtensionDescription.extensionKind (string[])
+				// or fallback based on the extension's location.
 				if (
 					description.extensionKind &&
 					description.extensionKind.length > 0
@@ -237,46 +251,46 @@ export class ShimExtHostExtensions
 				}
 
 				// Fallback logic if `extensionKind` array is not definitive or not present.
-				// Typically, remote extensions are Workspace. Local extensions in a Node-based host
-				// that are not UI specific can also be considered Workspace.
+				// For Cocoon (local Node.js host), most extensions are Workspace unless explicitly remote.
 				return description.extensionLocation.scheme ===
 					Schemas.vscodeRemote
 					? // Extension runs in a remote workspace context
 						VscodeExtensionKind.Workspace
-					: // Default for Cocoon-like environment (local Node host implies workspace context for non-UI)
+					: // Default for Cocoon-like environment
 						VscodeExtensionKind.Workspace;
 			},
 
 			get exports(): T {
+				// Delegate to the real service to get the extension's exported API.
 				return self._extHostExtensionService.getExtensionExports(
-					description.identifier,
+					extensionIdString,
 				) as T;
 			},
 
 			async activate(): Promise<T> {
 				// Activation requested via `vscode.Extension<T>.activate()`.
-				// This should call the underlying ExtHostExtensionService to perform activation.
+				// This should call the underlying ExtHostExtensionService to perform the activation if not already active.
 				await self._extHostExtensionService.activateById(
 					description.identifier,
 
 					{
-						// Not a startup activation
+						// This is not a startup-triggered activation.
 						startup: false,
 
-						// The extension being activated
+						// The extension being programmatically activated.
 						extensionId: description.identifier,
 
-						// Indicates activation was triggered by an API call (standard reason string)
+						// Standard reason string for API-triggered activation.
 						activationEvent: `api`,
 
-						// Explicitly an API-triggered activation
+						// Explicitly an API-triggered activation.
 						activationKind: ActivationKind.Api,
 					},
 				);
 
-				// After successful activation, return the exports.
+				// After successful activation (or if already active), return the exports.
 				return self._extHostExtensionService.getExtensionExports(
-					description.identifier,
+					extensionIdString,
 				) as T;
 			},
 		}) as VscodeExtension<T>;
@@ -285,32 +299,32 @@ export class ShimExtHostExtensions
 	/**
 	 * {@inheritDoc IExtHostExtensionsShape.getExtension}
 	 *
-	 *
-	 *
+	 * Retrieves an extension by its identifier string (e.g., "publisher.name").
+	 * @param extensionId The identifier of the extension to retrieve.
+	 * @param _includeNonListed_INTERNAL_USE_ONLY_ An internal VS Code parameter, typically ignored.
+	 * @returns The `vscode.Extension<T>` API object if the extension is found, otherwise `undefined`.
 	 */
 	public getExtension<T>(
 		extensionId: string,
 
 		_includeNonListed_INTERNAL_USE_ONLY_?: boolean,
 	): VscodeExtension<T> | undefined {
-		// The `_includeNonListed_INTERNAL_USE_ONLY_` parameter is an internal VS Code detail related to
-		// extensions not meant to be listed in UI, usually ignored by public API consumers.
-		// Verbose logging, uncomment if needed for debugging:
-		// this._log(`getExtension requested for ID: '${extensionId}'`);
+		// The `_includeNonListed_INTERNAL_USE_ONLY_` parameter is an internal VS Code detail
+		// related to extensions not meant to be listed in UI, usually ignored by public API consumers.
+		this._logDebug(`API getExtension requested for ID: '${extensionId}'`);
 
 		// Delegate to the real IExtHostExtensionService to find the extension description.
-		const desc = this._extHostExtensionService.getExtensionDescriptionById(
-			extensionId,
-
-			// Synchronous call
-		);
+		// `getExtensionDescription` is a synchronous call on the real service.
+		const desc =
+			this._extHostExtensionService.getExtensionDescription(extensionId);
 
 		if (desc) {
 			return this._createApiExtensionObject<T>(desc);
 		}
 
-		// Verbose logging, uncomment if needed for debugging:
-		// this._logWarn(`Extension with ID '${extensionId}' not found by real IExtHostExtensionService.`);
+		this._logDebug(
+			`Extension with ID '${extensionId}' not found by real IExtHostExtensionService.`,
+		);
 
 		return undefined;
 	}
@@ -318,16 +332,15 @@ export class ShimExtHostExtensions
 	/**
 	 * {@inheritDoc IExtHostExtensionsShape.all}
 	 *
-	 *
-	 *
+	 * A readonly array of all known extensions.
 	 */
 	get all(): readonly VscodeExtension<any>[] {
-		// Verbose logging, uncomment if needed for debugging:
-		// this._log("Getting all extensions from real IExtHostExtensionService.");
+		this._logDebug(
+			"API vscode.extensions.all accessed. Retrieving all extensions from real IExtHostExtensionService.",
+		);
 
-		// Get all known extension descriptions from the real service.
+		// Get all known extension descriptions from the real service. This is a synchronous call.
 		const allDescriptions =
-			// Synchronous call
 			this._extHostExtensionService.getExtensionDescriptions();
 
 		// Convert each description to the public API `vscode.Extension` object and freeze the array.
@@ -340,15 +353,16 @@ export class ShimExtHostExtensions
 
 	/**
 	 * Disposes of resources held by this shim instance.
-	 * This primarily involves disposing of the event emitter and any subscriptions
-	 * managed by `_instanceDisposables` from `BaseCocoonShim`.
+	 * This primarily involves disposing of the event emitter for `onDidChange` and
+	 * any subscriptions managed by `_instanceDisposables` from `BaseCocoonShim`
+	 * (which includes the listener for `onDidRegisterExtensions` from the real service).
 	 */
 	public override dispose(): void {
-		// Disposes _instanceDisposables, which includes the listener for onDidRegisterExtensions
+		// Disposes _instanceDisposables, which includes the listener for onDidRegisterExtensions.
 		super.dispose();
 
 		this._onDidChangeExtensionsEmitter.dispose();
 
-		this._log("Disposed.");
+		this._logInfo("Disposed.");
 	}
 }
