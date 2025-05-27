@@ -66,8 +66,8 @@ import {
 	Uri as VscodeUri,
 	type ConfigurationChangeEvent as VscodeConfigurationChangeEvent,
 	type WorkspaceConfiguration as VscodeWorkspaceConfiguration,
-	// Public vscode API types
 } from "../Shim/out/vscode";
+// Public vscode API types
 import {
 	BaseCocoonShim,
 	refineErrorForShim,
@@ -334,8 +334,8 @@ export class ShimExtHostConfiguration
 
 		this.#currentConfigurationState = deepClone(data.effective || {});
 
-		// Also update scopes if provided
 		if (data.configurationScopes) {
+			// Also update scopes if provided
 			this.#configurationKeyScopes = new Map(data.configurationScopes);
 		}
 
@@ -354,8 +354,8 @@ export class ShimExtHostConfiguration
 
 				if (change.overrides && scope) {
 					for (const override of change.overrides) {
-						// Simplified scope check
 						const scopeIdentifier =
+							// Simplified scope check
 							scope.languageId || scope.toString();
 
 						if (
@@ -550,8 +550,8 @@ export class ShimExtHostConfiguration
 				extensionIdForValidationLog,
 			);
 
-			// Requesting the root of a prefixed section
 			if (!key && sectionPrefix) {
+				// Requesting the root of a prefixed section
 				return typeof configSnapshotValues === "object" &&
 					configSnapshotValues !== null
 					? deepClone(configSnapshotValues)
@@ -561,8 +561,8 @@ export class ShimExtHostConfiguration
 			// If key is empty, current is the whole snapshot for this section
 			let current = configSnapshotValues;
 
-			// If key is not empty, traverse into the snapshot
 			if (key) {
+				// If key is not empty, traverse into the snapshot
 				for (const part of key.split(".")) {
 					if (
 						current &&
@@ -591,8 +591,8 @@ export class ShimExtHostConfiguration
 
 			has: (key: string): boolean => lookupValue<any>(key) !== undefined,
 
-			// Return type matches vscode.d.ts
 			inspect: async <T>(key: string): Promise<any | undefined> => {
+				// Return type matches vscode.d.ts
 				if (isProxyUnavailable || !self.#mainThreadConfigurationProxy) {
 					self._logError(
 						"Cannot inspect configuration: RPC proxy unavailable.",
@@ -671,20 +671,18 @@ export class ShimExtHostConfiguration
 					| VscodeConfigurationScope
 					| undefined = originalScope;
 
-				// VscodeConfigurationTarget enum
 				if (typeof configurationTargetOrScope === "number") {
+					// VscodeConfigurationTarget enum
 					finalConfigurationTarget = configurationTargetOrScope;
 
 					if (typeof overrideInLanguageOrScope === "boolean") {
 						finalOverrideInLanguage = overrideInLanguageOrScope;
-
-						// VscodeConfigurationScope
 					} else if (overrideInLanguageOrScope) {
+						// VscodeConfigurationScope
 						finalScopeForOverrides = overrideInLanguageOrScope;
 					}
-
-					// globalOrWorkspace (deprecated)
 				} else if (typeof configurationTargetOrScope === "boolean") {
+					// globalOrWorkspace (deprecated)
 					finalConfigurationTarget = configurationTargetOrScope
 						? VscodeConfigurationTarget.Global
 						: VscodeConfigurationTarget.Workspace;
@@ -692,17 +690,15 @@ export class ShimExtHostConfiguration
 					if (typeof overrideInLanguageOrScope === "boolean") {
 						finalOverrideInLanguage = overrideInLanguageOrScope;
 					}
-
-					// VscodeConfigurationScope
 				} else if (configurationTargetOrScope) {
+					// VscodeConfigurationScope
 					finalScopeForOverrides = configurationTargetOrScope;
 
 					if (typeof overrideInLanguageOrScope === "boolean") {
 						finalOverrideInLanguage = overrideInLanguageOrScope;
 					}
-
-					// configurationTargetOrScope is undefined/null
 				} else {
+					// configurationTargetOrScope is undefined/null
 					if (typeof overrideInLanguageOrScope === "boolean") {
 						finalOverrideInLanguage = overrideInLanguageOrScope;
 					} else if (overrideInLanguageOrScope) {
@@ -860,7 +856,6 @@ export class ShimExtHostConfiguration
 
 	private _reviveInspectResult(inspectInfo: any): any {
 		// Recursively revive URIs in the inspect result object
-
 		if (!inspectInfo || typeof inspectInfo !== "object") {
 			return inspectInfo;
 		}
@@ -872,9 +867,7 @@ export class ShimExtHostConfiguration
 				const value = inspectInfo[key];
 
 				// Example: if a property could be a URI or contain URI components
-
 				// This is a simplified check; a more robust one would check for specific DTO structures.
-
 				if (
 					typeof value === "object" &&
 					value !== null &&
@@ -891,7 +884,6 @@ export class ShimExtHostConfiguration
 					)
 				) {
 					// Unlikely for languageIds to be URIs, but as an example of array revival
-
 					result[key] = value.map((item) =>
 						this._reviveApiArgument(item),
 					);
