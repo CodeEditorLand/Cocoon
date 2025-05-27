@@ -2,36 +2,45 @@
  * Cocoon Extension Enablement Shim (enablement-service-shim.ts)
  * --------------------------------------------------------------------------------------------
  * Implements the `IWorkbenchExtensionEnablementService` interface (or a compatible
- * ExtHost version like `IGlobalExtensionEnablementService`). This service is responsible
- * for managing the enablement state of extensions (e.g., enabled globally, enabled for
- * the current workspace, disabled).
+ * ExtHost version like `IGlobalExtensionEnablementService` from VS Code). This service
+ * is responsible for managing and querying the enablement state of extensions (e.g.,
+ *
+ * enabled globally, enabled for the current workspace, disabled).
  *
  * In a typical VS Code architecture, the extension host (ExtHost) version of this service
- * would synchronize enablement states with the MainThread. For Cocoon, this shim
- * proxies requests to determine or change enablement states to a
- * `MainThreadExtensionEnablementService` running in the Mountain host process via RPC.
+ * would synchronize enablement states with its counterpart on the MainThread. For Cocoon,
+ *
+ * this shim proxies requests to determine or change enablement states to a
+ * `MainThreadExtensionEnablementService` (assumed to exist on Mountain) via RPC.
  *
  * Responsibilities:
- * - Implementing methods like `getEnablementState(extension)`, `setEnablement(extensions, state)`,
+ * - Implementing methods such as `getEnablementState(extension)`,
  *
- *
- *
- *   and `isEnabled(extension)`.
- * - Proxying these operations to Mountain via RPC.
- * - Managing and firing the `onDidChangeEnablement` event when Mountain signals that
- *   extension enablement states have changed (via an RPC call like `$acceptEnablementChanged`).
- * - Handling the challenge of synchronous API methods (`getEnablementState`, `isEnabled`)
- *   that ideally rely on asynchronously fetched or cached data.
+ *   `setEnablement(extensions, state)`, and `isEnabled(extension)`.
+ * - Proxying these state-changing or query operations to Mountain via RPC calls.
+ * - Managing and firing the `onDidChangeEnablement` event when Mountain signals (via an
+ *   RPC call like `$acceptEnablementChanged`) that the enablement states of one or
+ *   more extensions have changed.
+ * - Addressing the challenge of synchronous API methods like `getEnablementState()` and
+ *   `isEnabled()`. These methods, by VS Code API design, are synchronous, but in a
+ *   distributed environment, the underlying data is often fetched asynchronously.
+ *   A robust implementation requires a local cache that is kept synchronized with the
+ *   MainThread. This shim currently STUBS the synchronous methods due to the lack
+ *   of such a cache, returning default values and logging warnings.
  *
  * Key Interactions:
- * - Registered with Dependency Injection in `Cocoon/index.ts`. It's often a dependency
- *   for the real `ExtHostExtensionService`.
+ * - Registered with DependencyInjection (DI) in `Cocoon/index.ts`, typically as
+ *   `IWorkbenchExtensionEnablementService` or `IGlobalExtensionEnablementService`.
+ *   It's often a dependency for the real `ExtHostExtensionService`.
  * - Makes RPC calls to `MainContext.MainThreadExtensionEnablement` on Mountain.
- * - Receives RPC calls from Mountain (e.g., `$acceptEnablementChanged`) to trigger
- *   its `onDidChangeEnablement` event.
- * - Critically depends on `IExtHostExtensionService` (the real one) to resolve extension IDs
- *   to full `vscode.Extension` API objects for the `onDidChangeEnablement` event payload.
- * - Uses `BaseCocoonShim` for common utilities.
+ * - Implements `ExtHostExtensionEnablementRpcShape` to receive RPC calls from Mountain
+ *   (e.g., `$acceptEnablementChanged`) which trigger its `onDidChangeEnablement` event.
+ * - Critically depends on an injected instance of the real `IExtHostExtensionService` to
+ *   resolve extension IDs to full `vscode.Extension` API objects, which are needed for
+ *   the payload of the `onDidChangeEnablement` event.
+ * - Uses `BaseCocoonShim` for common utilities like logging, RPC proxy management,
+ *
+ *   and error refinement.
  *
  *--------------------------------------------------------------------------------------------*/
 
@@ -49,22 +58,29 @@ import {
 	// For proxying to MainThreadExtensionEnablement
 	MainContext,
 } from "vs/workbench/api/common/extHost.protocol";
+// For ActivationKind in _convertDescriptionToApiExtension
+import { ActivationKind } from "vs/workbench/api/common/extHostExtensionActivator";
 // Dependency to resolve extension IDs to full API objects
 import type { IExtHostExtensionService } from "vs/workbench/api/common/extHostExtensionService";
-// Import VS Code's service interfaces and enums
+// Import VS Code's service interfaces and enums related to extension enablement
 import {
-	// Enum for enablement states
+	// Enum for enablement states (e.g., EnabledGlobally, Disabled)
 	EnablementState,
-	// This is often the MainThread/Workbench service ID
-	// IWorkbenchExtensionEnablementService,
-
 	// Common interface for ExtHost side
 	type IGlobalExtensionEnablementService,
-	// For richer event payload if used
-	// IExtensionEnablementServiceDelta,
+	// This is often the MainThread/Workbench service DI key
+	// IWorkbenchExtensionEnablementService,
+	// For richer event payload if used in onDidChangeEnablement
+	// type IExtensionEnablementServiceDelta,
 } from "vs/workbench/services/extensionManagement/common/extensionManagement";
 // For onDidChangeEnablement event payload type `vscode.Extension[]`
-import type { Extension as VscodeExtensionApi } from "vscode";
+import {
+	// Needed for _convertDescriptionToApiExtension
+	ExtensionKind as VscodeExtensionKind,
+	// Needed for _convertDescriptionToApiExtension
+	Uri as VscodeUri,
+	type Extension as VscodeExtensionApi,
+} from "vscode";
 
 import {
 	BaseCocoonShim,
@@ -76,18 +92,22 @@ import {
 
 // --- Type Definitions ---
 
-/** Alias for IExtensionDescription, representing the extension info this service operates on. */
+/** Alias for `IExtensionDescription`, representing the extension information this service operates on. */
 type ExtensionForEnablement = IExtensionDescription;
 
 /**
  * Defines the RPC interface for the `MainThreadExtensionEnablementService` expected on Mountain.
+ * Method names and parameters must align with Mountain's implementation.
  */
 interface MainThreadExtensionEnablementProxyShape {
 	/**
-	 * Retrieves the enablement states for multiple extensions.
-	 * @param extensionIds An array of canonical extension ID strings.
-	 * @param workspaceType Optional parameter indicating workspace context (not fully used in this shim).
-	 * @returns A promise resolving to an array of `EnablementState` values, corresponding to `extensionIds`.
+	 * Retrieves the enablement states for multiple extensions from the main thread.
+	 * @param extensionIds An array of canonical extension ID strings (e.g., "publisher.name").
+	 * @param workspaceType Optional parameter indicating workspace context (e.g., UI, Workspace).
+	 *                      This shim currently does not make deep use of `workspaceType`.
+	 * @returns A promise resolving to an array of `EnablementState` enum values,
+	 *
+	 *          corresponding to the order of `extensionIds`.
 	 */
 	$getEnablementStates(
 		extensionIds: string[],
@@ -96,10 +116,11 @@ interface MainThreadExtensionEnablementProxyShape {
 	): Promise<EnablementState[]>;
 
 	/**
-	 * Sets the enablement state for multiple extensions.
+	 * Sets the enablement state for multiple extensions on the main thread.
 	 * @param extensionIds An array of canonical extension ID strings.
-	 * @param newState The new `EnablementState` to apply.
-	 * @returns A promise resolving to an array of booleans, indicating success for each extension.
+	 * @param newState The new `EnablementState` to apply to these extensions.
+	 * @returns A promise resolving to an array of booleans, where each boolean indicates
+	 *          whether the enablement state was successfully changed for the corresponding extension.
 	 */
 	$setEnablement(
 		extensionIds: string[],
@@ -107,8 +128,8 @@ interface MainThreadExtensionEnablementProxyShape {
 		newState: EnablementState,
 	): Promise<boolean[]>;
 
-	// If VS Code uses this
-	// Optional: $isIgnored?(extensionId: string): Promise<boolean>;
+	// Optional: If VS Code's protocol includes checking if an extension is ignored by policy:
+	// $isIgnored?(extensionId: string): Promise<boolean>;
 }
 
 /**
@@ -116,15 +137,18 @@ interface MainThreadExtensionEnablementProxyShape {
  */
 interface ExtHostExtensionEnablementRpcShape {
 	/**
-	 * Called by the main thread when the enablement of one or more extensions changes.
-	 * @param changedExtensionIds An array of canonical string identifiers for extensions whose enablement changed.
+	 * Called by the main thread (Mountain) when the enablement state of one or more extensions
+	 * has changed (e.g., due to user action in VS Code UI, settings sync, or CLI).
+	 * @param changedExtensionIds An array of canonical string identifiers for extensions
+	 *                            whose enablement state has changed.
 	 */
 	$acceptEnablementChanged(changedExtensionIds: string[]): Promise<void>;
 }
 
 /**
  * Cocoon's implementation of `IGlobalExtensionEnablementService`.
- * Manages and proxies extension enablement states.
+ * It manages and proxies extension enablement states to/from Mountain and handles
+ * related events.
  */
 export class ShimExtensionEnablementService
 	extends BaseCocoonShim
@@ -132,7 +156,7 @@ export class ShimExtensionEnablementService
 		IGlobalExtensionEnablementService,
 		ExtHostExtensionEnablementRpcShape
 {
-	// Required by VS Code's service types
+	// Required by VS Code's service types for DI
 	public readonly _serviceBrand: undefined;
 
 	readonly #mainThreadEnablementProxy: MainThreadExtensionEnablementProxyShape | null =
@@ -142,15 +166,16 @@ export class ShimExtensionEnablementService
 		readonly VscodeExtensionApi[]
 	>();
 
-	// Dependency on the real ExtHostExtensionService to convert IDs to VscodeExtensionApi objects for events.
-	// This should be injected via DI.
+	// Dependency on the real ExtHostExtensionService to convert extension IDs to VscodeExtensionApi objects for events.
+	// This is crucial for providing meaningful event payloads to extensions.
 	private readonly _extHostExtensionService: IExtHostExtensionService;
 
 	/**
 	 * Creates an instance of ShimExtensionEnablementService.
-	 * @param rpcService The RPC service adapter.
-	 * @param logService The logging service.
-	 * @param extHostExtensionService The real IExtHostExtensionService, required for event payloads.
+	 * @param rpcService The RPC service adapter for communication with Mountain.
+	 * @param logService The logging service instance.
+	 * @param extHostExtensionService The real `IExtHostExtensionService` instance, injected via DI.
+	 *                                This is required for resolving extension descriptions for event payloads.
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
@@ -164,10 +189,10 @@ export class ShimExtensionEnablementService
 
 		this._extHostExtensionService = extHostExtensionService;
 
-		this._log(`Initializing...`);
+		// Use Info for major lifecycle events
+		this._logInfo(`Initializing...`);
 
 		if (this._rpcService) {
-			// Assuming standard MainContext identifier. Adjust if custom.
 			const mainThreadProxyId =
 				MainContext.MainThreadExtensionEnablement as ProxyIdentifier<MainThreadExtensionEnablementProxyShape>;
 
@@ -175,13 +200,14 @@ export class ShimExtensionEnablementService
 				this.#mainThreadEnablementProxy =
 					this._getProxy(mainThreadProxyId);
 			} else {
+				// This is less critical if `getEnablementState` relies purely on a cache populated by `$acceptEnablementChanged`.
+				// However, `setEnablement` would fail.
 				this._logError(
-					"ProxyIdentifier for MainThreadExtensionEnablementService not found in MainContext. RPC calls will fail.",
+					"ProxyIdentifier for MainThreadExtensionEnablementService not found in MainContext. RPC calls for enablement will fail.",
 				);
 			}
 
-			// Register self for RPC calls from Mountain (e.g., $acceptEnablementChanged)
-			// Assuming standard ExtHostContext identifier.
+			// Register self to handle RPC calls from Mountain (e.g., $acceptEnablementChanged).
 			const selfRpcId =
 				ExtHostContext.ExtHostExtensionEnablement as ProxyIdentifier<ExtHostExtensionEnablementRpcShape>;
 
@@ -189,32 +215,35 @@ export class ShimExtensionEnablementService
 				try {
 					this._rpcService.set(selfRpcId, this);
 
-					this._log(
-						"Registered self for RPC calls (ExtHostExtensionEnablement).",
+					this._logInfo(
+						"Registered self for RPC calls from Mountain (ExtHostExtensionEnablement).",
 					);
 				} catch (e: any) {
 					this._logError(
-						"Failed to set self for RPC (ExtHostExtensionEnablement):",
+						"Failed to register self as RPC target for ExtHostExtensionEnablement:",
 
 						e,
 					);
 				}
 			} else {
 				this._logError(
-					"ProxyIdentifier for self (ExtHostExtensionEnablement) not found in ExtHostContext.",
+					"ProxyIdentifier for self (ExtHostExtensionEnablement) not found in ExtHostContext. Cannot receive enablement updates from Mountain via RPC.",
 				);
 			}
 		}
 
 		if (!this.#mainThreadEnablementProxy) {
 			this._logWarn(
-				"MainThreadExtensionEnablementService RPC proxy not available. Enablement state will be STUBBED and rely on defaults.",
+				"MainThreadExtensionEnablementService RPC proxy is not available. " +
+					"Setting enablement states will fail. Getting states will rely on defaults or cached values if implemented.",
 			);
 		}
 
 		if (!this._extHostExtensionService) {
+			// This is a critical issue for the `onDidChangeEnablement` event.
 			this._logError(
-				"CRITICAL: IExtHostExtensionService dependency not provided. `onDidChangeEnablement` event may not function correctly.",
+				"CRITICAL DEPENDENCY MISSING: IExtHostExtensionService was not provided. " +
+					"The `onDidChangeEnablement` event will not be able to provide `vscode.Extension` objects in its payload and may malfunction.",
 			);
 		}
 	}
@@ -223,89 +252,108 @@ export class ShimExtensionEnablementService
 
 	/**
 	 * Gets the enablement state of a single extension.
-	 * NOTE: This is a synchronous API method. In a real distributed environment,
 	 *
+	 * **NOTE:** This is a synchronous API method. In a distributed environment like Cocoon,
 	 *
+	 * fetching this state accurately from Mountain is an asynchronous operation. A correct
+	 * implementation of this synchronous method relies on a local cache of enablement states
+	 * that is kept synchronized by the main thread (Mountain) via RPC calls (e.g.,
 	 *
-	 * fetching this state is asynchronous. A proper implementation relies on a
-	 * cache populated by the main thread. This shim currently returns a default
-	 * stubbed value and logs a warning.
-	 * @param extension The extension description.
-	 * @returns The `EnablementState` of the extension (stubbed).
+	 * `$acceptEnablementChanged` and potentially an initial bulk update).
+	 *
+	 * This shim currently **STUBS** this method due to the absence of such a cache.
+	 * It returns a default value (`EnablementState.EnabledGlobally`) and logs a warning.
+	 *
+	 * @param extension The `IExtensionDescription` of the extension to query.
+	 * @returns The `EnablementState` of the extension. In this stub, it defaults to `EnabledGlobally`.
 	 */
 	public getEnablementState(
 		extension: ExtensionForEnablement,
 	): EnablementState {
 		this._logWarnOnce(
-			`getEnablementState for '${extension.identifier.value}' - STUBBED. This synchronous API relies on a cache not fully implemented in this shim. Returning EnabledGlobally as default.`,
+			`getEnablementState for '${extension.identifier.value}' - STUBBED. ` +
+				"This synchronous API method currently returns a default value (EnabledGlobally) as a " +
+				"full enablement state cache is not yet implemented in this shim. " +
+				"For accurate state, an asynchronous query or a synchronized cache is required.",
 		);
 
-		// TODO: Implement a cache that is updated by `$acceptEnablementChanged` or an initial fetch.
-		// For now, assume enabled if no proxy or error.
+		// TODO: Implement a local cache for enablement states. This cache should be:
+		// 1. Populated initially, perhaps by an RPC call like `$getAllEnablementStates()` from MainThread or during `$initialize`.
+		// 2. Updated whenever `$acceptEnablementChanged` is called by MainThread.
+		// Without a cache, this synchronous method cannot provide real-time accurate data from Mountain.
+
+		// Fallback behavior if the proxy to MainThread is unavailable (though this method should use a cache).
 		if (!this.#mainThreadEnablementProxy) {
-			// Fallback if no proxy
 			return EnablementState.EnabledGlobally;
 		}
 
-		// A synchronous call to an async backend is problematic.
-		// A real implementation would consult a local, synchronized cache.
-		// As a temporary measure, we can't make an async call here.
-		// Placeholder
+		// Placeholder: A real implementation would consult its synchronized local cache here.
 		return EnablementState.EnabledGlobally;
 	}
 
 	/**
-	 * Sets the enablement state for one or more extensions.
-	 * @param extensions An array of extension descriptions.
-	 * @param newState The desired `EnablementState`.
-	 * @returns A promise resolving to an array of booleans indicating success for each extension.
+	 * Sets the enablement state for one or more extensions. This operation is asynchronous
+	 * and proxies the request to Mountain.
+	 * @param extensions An array of `IExtensionDescription` objects for the extensions whose state is to be changed.
+	 * @param newState The desired `EnablementState` to apply.
+	 * @returns A promise resolving to an array of booleans, where each boolean indicates
+	 *          whether the enablement state change was successful for the corresponding extension.
+	 *          Failures can occur if the RPC proxy is unavailable or if Mountain reports an issue.
 	 */
 	public async setEnablement(
 		extensions: ExtensionForEnablement[],
 
 		newState: EnablementState,
 	): Promise<boolean[]> {
-		// Use .id for canonical string
+		// Use canonical .id for RPC
 		const extensionIds = extensions.map((ext) => ext.identifier.id);
 
-		this._log(
-			`setEnablement for [${extensionIds.join(", ")}] to state ${EnablementState[newState]}`,
+		this._logInfo(
+			`API setEnablement called for [${extensionIds.join(", ")}] to state ${EnablementState[newState]}`,
 		);
 
 		if (!this.#mainThreadEnablementProxy) {
 			this._logError(
-				`setEnablement for [${extensionIds.join(", ")}] - RPC Proxy unavailable. Operation failed.`,
+				`Cannot setEnablement for [${extensionIds.join(", ")}]: MainThreadExtensionEnablement RPC Proxy is unavailable. Operation failed.`,
 			);
 
-			// Indicate failure for all
+			// Indicate failure for all if proxy is missing.
 			return extensions.map(() => false);
 		}
 
 		try {
-			return await this.#mainThreadEnablementProxy.$setEnablement(
-				extensionIds,
+			const results =
+				await this.#mainThreadEnablementProxy.$setEnablement(
+					extensionIds,
 
-				newState,
+					newState,
+				);
+
+			this._logDebug(
+				`RPC $setEnablement for [${extensionIds.join(", ")}] completed. Results: [${results.join(", ")}]`,
 			);
+
+			return results;
 		} catch (e: any) {
 			this._logError(
-				`RPC $setEnablement failed:`,
+				`RPC call $setEnablement for [${extensionIds.join(", ")}] failed:`,
 
-				refineErrorForShim(e, this._logService),
+				refineErrorForShim(e, this._logService, "$setEnablement RPC"),
 			);
 
+			// Indicate failure for all on RPC error.
 			return extensions.map(() => false);
 		}
 	}
 
 	/**
-	 * Checks if an extension is currently enabled (either globally or for the workspace).
-	 * Relies on `getEnablementState`.
-	 * @param extension The extension description.
-	 * @returns `true` if the extension is considered enabled, `false` otherwise.
+	 * Checks if an extension is currently considered enabled (i.e., its state is
+	 * `EnablementState.EnabledGlobally` or `EnablementState.EnabledWorkspace`).
+	 * This method relies on the (currently stubbed) synchronous `getEnablementState`.
+	 * @param extension The `IExtensionDescription` of the extension to check.
+	 * @returns `true` if the extension is considered enabled based on its `EnablementState`, `false` otherwise.
 	 */
 	public isEnabled(extension: ExtensionForEnablement): boolean {
-		// Uses the (currently stubbed) synchronous method
 		const state = this.getEnablementState(extension);
 
 		return (
@@ -315,9 +363,10 @@ export class ShimExtensionEnablementService
 	}
 
 	/**
-	 * Helper to check if a given `EnablementState` means the extension is effectively enabled.
-	 * @param state The `EnablementState`.
-	 * @returns `true` if the state represents an enabled extension.
+	 * Helper method to determine if a given `EnablementState` signifies that an
+	 * extension is effectively enabled.
+	 * @param state The `EnablementState` to check.
+	 * @returns `true` if the state represents an enabled extension, `false` otherwise.
 	 */
 	public isEnablementStateEnabled(state: EnablementState): boolean {
 		return (
@@ -328,24 +377,28 @@ export class ShimExtensionEnablementService
 
 	/**
 	 * Gets the enablement states for multiple extensions.
-	 * NOTE: Synchronous API, relies on stubbed `getEnablementState` and would need a cache.
-	 * @param extensions Array of extension descriptions.
-	 * @param _workspaceType Optional workspace context (unused in this shim).
-	 * @returns An array of `EnablementState` values.
+	 * **NOTE:** This is a synchronous API method and currently relies on the stubbed
+	 * `getEnablementState`. It would require a synchronized cache for accurate results.
+	 * @param extensions An array of `IExtensionDescription` objects.
+	 * @param _workspaceType Optional workspace context (currently unused by this shim).
+	 * @returns An array of `EnablementState` values, corresponding to the input extensions.
 	 */
 	public getEnablementStates(
 		extensions: ExtensionForEnablement[],
 
 		_workspaceType?: any,
 	): EnablementState[] {
-		// this._logService?.trace(`getEnablementStates for ${extensions.length} extensions (using stubbed getEnablementState).`);
+		this._logDebug(
+			`API getEnablementStates called for ${extensions.length} extensions (using stubbed getEnablementState).`,
+		);
 
 		return extensions.map((ext) => this.getEnablementState(ext));
 	}
 
 	/**
 	 * An event that fires when the enablement state of any extension changes.
-	 * The event payload is an array of `vscode.Extension` API objects.
+	 * The event payload is a readonly array of `vscode.Extension` API objects
+	 * for the extensions whose states have changed.
 	 */
 	get onDidChangeEnablement(): VscodeEvent<readonly VscodeExtensionApi[]> {
 		return this.#onDidChangeEnablementEmitter.event;
@@ -354,21 +407,32 @@ export class ShimExtensionEnablementService
 	// --- ExtHostExtensionEnablementRpcShape methods (called BY Mountain) ---
 
 	/**
-	 * Called by Mountain when extension enablement states have changed.
-	 * It resolves the extension IDs to `vscode.Extension` API objects and fires the
+	 * {@inheritDoc ExtHostExtensionEnablementRpcShape.$acceptEnablementChanged}
+	 *
+	 *
+	 * Called by Mountain when the enablement states of one or more extensions have changed.
+	 * This method resolves the provided extension IDs to `vscode.Extension` API objects
+	 * (using the injected `IExtHostExtensionService`) and then fires the
 	 * `onDidChangeEnablement` event.
-	 * @param changedExtensionIdsFromMain An array of canonical string IDs of extensions whose enablement changed.
+	 * @param changedExtensionIdsFromMain An array of canonical string IDs (e.g., "publisher.name")
+	 *                                    of extensions whose enablement state has changed on Mountain.
 	 */
 	public async $acceptEnablementChanged(
 		changedExtensionIdsFromMain: string[],
 	): Promise<void> {
-		this._log(
-			`RPC $acceptEnablementChanged received for IDs: [${changedExtensionIdsFromMain.join(", ")}]`,
+		this._logInfo(
+			`RPC $acceptEnablementChanged received from Mountain for IDs: [${changedExtensionIdsFromMain.join(", ")}]`,
 		);
+
+		// TODO: If a cache for `getEnablementState` is implemented, this is the place to invalidate
+		// or update the cache entries for `changedExtensionIdsFromMain`. This might involve
+		// an RPC call like `$getEnablementStates(changedExtensionIdsFromMain)` if Mountain doesn't
+		// push the new states directly with this event.
 
 		if (!this._extHostExtensionService) {
 			this._logError(
-				"Cannot process $acceptEnablementChanged: IExtHostExtensionService (real) is not available to resolve extension descriptions for the event payload.",
+				"Cannot process $acceptEnablementChanged: The real IExtHostExtensionService dependency is not available. " +
+					"Unable to resolve extension descriptions to create vscode.Extension objects for the onDidChangeEnablement event payload.",
 			);
 
 			return;
@@ -377,24 +441,32 @@ export class ShimExtensionEnablementService
 		const changedVscodeExtensions: VscodeExtensionApi[] = [];
 
 		for (const idStr of changedExtensionIdsFromMain) {
-			// The real ExtHostExtensionService.getExtension(id) returns a promise of IExtensionDescription | undefined
-			// Then, this IExtensionDescription needs to be converted to a vscode.Extension object.
-			// ShimExtHostExtensions._createApiExtensionObject is a good example of this conversion.
-			const extDesc =
-				await this._extHostExtensionService.getExtension(idStr);
+			try {
+				// The real ExtHostExtensionService.getExtension(id) returns a promise of IExtensionDescription | undefined.
+				const extDesc =
+					await this._extHostExtensionService.getExtension(idStr);
 
-			if (extDesc) {
-				// This conversion logic should ideally live within ExtHostExtensionService or a shared utility.
-				// For now, using a simplified conversion.
-				const apiExtension =
-					this._convertDescriptionToApiExtension(extDesc);
+				if (extDesc) {
+					const apiExtension =
+						this._convertDescriptionToApiExtension(extDesc);
 
-				if (apiExtension) {
-					changedVscodeExtensions.push(apiExtension);
+					if (apiExtension) {
+						changedVscodeExtensions.push(apiExtension);
+					} else {
+						this._logWarn(
+							`$acceptEnablementChanged: Failed to convert IExtensionDescription to VscodeExtensionApi for ID '${idStr}'.`,
+						);
+					}
+				} else {
+					this._logWarn(
+						`$acceptEnablementChanged: Could not find IExtensionDescription for ID '${idStr}' via IExtHostExtensionService. It might have been uninstalled or is not known.`,
+					);
 				}
-			} else {
-				this._logWarn(
-					`$acceptEnablementChanged: Could not find extension description for ID '${idStr}' via IExtHostExtensionService.`,
+			} catch (error) {
+				this._logError(
+					`$acceptEnablementChanged: Error processing extension ID '${idStr}':`,
+
+					error,
 				);
 			}
 		}
@@ -402,73 +474,101 @@ export class ShimExtensionEnablementService
 		if (changedVscodeExtensions.length > 0) {
 			this.#onDidChangeEnablementEmitter.fire(
 				Object.freeze(changedVscodeExtensions),
+
+				// Ensure payload is immutable
 			);
 
-			this._log(
-				`Fired onDidChangeEnablement event with ${changedVscodeExtensions.length} extensions.`,
+			this._logInfo(
+				`Fired onDidChangeEnablement event with ${changedVscodeExtensions.length} affected extensions.`,
 			);
 		} else if (changedExtensionIdsFromMain.length > 0) {
 			this._logWarn(
-				`$acceptEnablementChanged: Received IDs, but none could be resolved to VscodeExtensionApi objects. Event not fired.`,
+				`$acceptEnablementChanged: Received ${changedExtensionIdsFromMain.length} changed IDs, but none could be resolved to ` +
+					`VscodeExtensionApi objects. The onDidChangeEnablement event was not fired.`,
 			);
 		}
-
-		// TODO: If implementing a cache for getEnablementState, this is where the cache should be updated
-		// by fetching the new states for `changedExtensionIdsFromMain` via RPC.
 	}
 
 	/**
-	 * Simplified helper to convert `IExtensionDescription` to a `VscodeExtensionApi`-like object.
-	 * A more complete version exists in `ShimExtHostExtensions` or the real `ExtHostExtensionService`.
+	 * Simplified helper to convert an `IExtensionDescription` (internal VS Code type)
+	 * to a `VscodeExtensionApi`-like object (public API type for `vscode.Extension`).
+	 * A more complete and accurate conversion is typically handled by the real `ExtHostExtensionService`
+	 * or a dedicated utility within VS Code's API implementation.
+	 * @param desc The `IExtensionDescription` to convert.
+	 * @returns A `VscodeExtensionApi` object, or `undefined` if conversion is not possible (e.g., missing dependencies).
 	 */
 	private _convertDescriptionToApiExtension(
 		desc: IExtensionDescription,
 	): VscodeExtensionApi | undefined {
-		// Guard
-		if (!this._extHostExtensionService) return undefined;
+		if (!this._extHostExtensionService) {
+			this._logError(
+				"_convertDescriptionToApiExtension: IExtHostExtensionService unavailable, cannot create API extension object.",
+			);
 
-		// This is a simplified mock. The real conversion is more complex and handled by ExtHostExtensionService.
-		// It should ideally reuse the logic from `ShimExtHostExtensions._createApiExtensionObject` or similar.
-		return {
+			return undefined;
+		}
+
+		// This conversion should align with how `vscode.Extension<T>` is structured.
+		// The real ExtHostExtensionService has more sophisticated logic for determining extensionKind, etc.
+		const isActive = this._extHostExtensionService.isActivated(
+			desc.identifier,
+
+			// Check activation status
+		);
+
+		const exports = isActive
+			? this._extHostExtensionService.getExtensionExports(desc.identifier)
+			: // Get exports only if active
+				undefined;
+
+		return Object.freeze({
+			// Ensure the API object is immutable
 			id: desc.identifier.value,
 
-			// Assuming local file path
+			// Convert internal URI to API URI
+			extensionUri: VscodeUri.from(desc.extensionLocation),
+
+			// fsPath for local file system paths
 			extensionPath: desc.extensionLocation.fsPath,
 
-			isActive: this._extHostExtensionService.isActivated(
-				desc.identifier.value,
-			),
+			isActive: isActive,
 
-			// IExtensionDescription is close enough for packageJSON
+			// IExtensionDescription is largely compatible with the packageJSON shape expected by the API
 			packageJSON: desc as any,
 
-			// Simplified default
-			extensionKind: VscodeExtensionKind.Workspace,
+			extensionKind: desc.extensionKind?.includes("ui")
+				? VscodeExtensionKind.UI
+				: // Simplified mapping
+					VscodeExtensionKind.Workspace,
 
-			exports: this._extHostExtensionService.getExtensionExports(
-				desc.identifier.value,
-			),
+			exports: exports,
 
-			activate: () =>
-				this._extHostExtensionService
-					.activateById(desc.identifier, {
-						startup: false,
+			activate: async (): Promise<any> => {
+				// Activation from vscode.Extension<T>.activate()
+				if (
+					!this._extHostExtensionService.isActivated(desc.identifier)
+				) {
+					await this._extHostExtensionService.activateById(
+						desc.identifier,
 
-						activationEvent: `api`,
+						{
+							startup: false,
 
-						activationKind: ActivationKind.Api,
+							extensionId: desc.identifier,
 
-						extensionId: desc.identifier,
-					})
-					.then(() =>
-						this._extHostExtensionService.getExtensionExports(
-							desc.identifier.value,
-						),
-					),
+							// Example activation reason
+							activationEvent: `onLanguage:${desc.identifier.value}`,
 
-			// Added
-			extensionUri: VscodeUri.from(desc.extensionLocation),
-		} as VscodeExtensionApi;
+							activationKind: ActivationKind.Api,
+						},
+					);
+				}
+
+				return this._extHostExtensionService.getExtensionExports(
+					desc.identifier,
+				);
+			},
+		}) as VscodeExtensionApi;
 	}
 
 	/**
@@ -479,5 +579,7 @@ export class ShimExtensionEnablementService
 		super.dispose();
 
 		this.#onDidChangeEnablementEmitter.dispose();
+
+		this._logInfo("Disposed.");
 	}
 }
