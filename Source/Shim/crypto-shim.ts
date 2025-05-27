@@ -4,29 +4,35 @@
  * Provides a shim for Node.js's built-in 'crypto' module. This shim is intended to be
  * supplied by the `NodeModuleShimFactory` when an extension executes `require('crypto')`.
  *
- * For most common and generally safe cryptographic operations (such as hashing, HMAC,
+ * The primary goal is to offer a controlled and safe subset of the native 'crypto'
+ * module's capabilities. For most common and generally secure cryptographic operations
+ * (such as hashing, HMAC, random byte generation, UUID creation, and various getters for
+ * supported algorithms), this shim delegates directly to the native Node.js 'crypto'
+ * module available in the Cocoon environment.
  *
- *
- *
- * random byte generation, and UUID creation), this shim delegates directly to the
- * native Node.js 'crypto' module available in the Cocoon environment.
- *
- * More sensitive or platform-dependent crypto operations (e.g., those requiring
- * system-specific key stores or entropy sources not directly available or trusted
- * in a sandboxed Cocoon environment) would need to be proxied to the Mountain host
- * if such functionality were required by extensions. Currently, this shim does not
- * proxy any operations to Mountain.
+ * Operations deemed more sensitive, platform-dependent, or those that might require
+ * access to system-level key stores or entropy sources not directly available/trusted
+ * in a sandboxed Cocoon environment, are currently NOT implemented for proxying to the
+ * Mountain host. Placeholders or stubs might exist for such functions, indicating
+ * they would require an IPC mechanism if their functionality were needed.
  *
  * Responsibilities:
- * - Mimicking the interface of the Node.js 'crypto' module for commonly used functions.
- * - Delegating safe operations directly to `node:crypto`.
- * - Handling the overloaded signature of `randomBytes`.
- * - Providing stubs or placeholders for operations that might require proxying.
+ * - Mimicking the interface of the Node.js 'crypto' module for a curated set of
+ *   commonly used and safe functions.
+ * - Delegating these safe operations directly to the corresponding methods in `node:crypto`.
+ * - Correctly handling the overloaded signature of `crypto.randomBytes` (synchronous
+ *   and asynchronous callback-based versions).
+ * - Exposing Node.js `crypto.constants`.
+ * - Providing clear stubs or placeholders for crypto operations that are not currently
+ *   supported or would require proxying to Mountain.
  *
  * Key Interactions:
- * - Returned by `NodeModuleShimFactory` when `require('crypto')` is intercepted.
- * - Directly uses the `node:crypto` module from the Node.js environment.
- * - (Placeholder) Could use `sendToMountainAndWait` from `cocoon-ipc.ts` for proxied operations.
+ * - An instance of this shim is returned by `NodeModuleShimFactory` when an extension
+ *   issues `require('crypto')`.
+ * - It directly utilizes the `node:crypto` module from the Node.js runtime environment
+ *   in which Cocoon operates.
+ * - (Future) If any operations were proxied, it would use `sendToMountainAndWait` from
+ *   `../cocoon-ipc.ts`.
  *
  *--------------------------------------------------------------------------------------------*/
 
@@ -34,76 +40,111 @@ import * as nodeCrypto from "node:crypto";
 // For type information from @types/node, assuming it's a dev dependency for accurate types.
 import type * as NodeCryptoTypes from "node:crypto";
 
-// Uncomment if proxying is implemented:
+// Uncomment if proxying is implemented in the future:
 // import { sendToMountainAndWait } from "../cocoon-ipc";
 
 // --- Type Definitions ---
 
 /**
  * Defines the public interface of the Cocoon crypto shim.
- * This interface aims to match relevant parts of the Node.js 'crypto' module API.
- * It includes directly delegated functions and placeholders for potentially proxied ones.
+ * This interface aims to match relevant and commonly used parts of the Node.js 'crypto' module API,
+ *
+ * focusing on operations that are generally safe to expose directly from the Cocoon environment.
  */
 export interface CocoonCryptoShim {
-	// Directly delegated from node:crypto
+	/** @see {@link nodeCrypto.createHash} */
 	createHash: typeof nodeCrypto.createHash;
 
+	/** @see {@link nodeCrypto.createHmac} */
 	createHmac: typeof nodeCrypto.createHmac;
 
 	/**
 	 * Generates cryptographically strong pseudo-random data.
-	 * Supports both synchronous and asynchronous (callback-based) invocation.
+	 * Supports both synchronous invocation (returns a `Buffer`) and asynchronous
+	 * invocation (takes a callback and effectively returns `void`).
+	 * @param size The number of bytes to generate.
+	 * @param callback Optional callback `(err, buf) => void`. If provided, the operation is asynchronous.
+	 * @returns A `Buffer` containing the random data if invoked synchronously.
+	 *          If a callback is provided, the return value of this shimmed function is a dummy
+	 *          buffer to satisfy TypeScript; the actual result is passed to the callback.
+	 * @see {@link nodeCrypto.randomBytes}
+	 *
 	 */
 	randomBytes: (
 		size: number,
 
 		callback?: (err: Error | null, buf: Buffer) => void,
-
-		// Synchronous version returns Buffer; callback version has void return managed by shim logic.
 	) => Buffer;
 
 	/**
-	 * Fills the provided TypedArray with cryptographically strong random values.
-	 * Available in Node.js v15.0.0+ / v14.17.0+. Part of the Web Crypto API.
+	 * Fills the provided `TypedArray` with cryptographically strong random values.
+	 * This method is part of the Web Crypto API and is available in Node.js v15.0.0+ / v14.17.0+.
+	 * Will be `undefined` if the running Node.js version does not support it.
+	 * @see {@link nodeCrypto.getRandomValues}
+	 *
 	 */
 	getRandomValues?: typeof nodeCrypto.getRandomValues;
 
 	/**
-	 * Generates a random UUID.
+	 * Generates a random RFC 4122 version 4 UUID.
 	 * Available in Node.js v15.6.0+ / v14.17.0+.
+	 * @see {@link nodeCrypto.randomUUID}
+	 *
 	 */
 	randomUUID: typeof nodeCrypto.randomUUID;
 
-	/** Exposes Node.js crypto constants (e.g., for OpenSSL). */
+	/**
+	 * Exposes Node.js crypto constants (e.g., for OpenSSL options, padding modes).
+	 * @see {@link nodeCrypto.constants}
+	 *
+	 */
 	constants: typeof nodeCrypto.constants;
 
-	// Commonly used, safe crypto functions that can be directly delegated:
+	/**
+	 * Performs a timing-safe equality comparison of two Buffers.
+	 * @see {@link nodeCrypto.timingSafeEqual}
+	 *
+	 */
 	timingSafeEqual: typeof nodeCrypto.timingSafeEqual;
 
+	/**
+	 * Returns an array of the names of the supported hash algorithms.
+	 * @see {@link nodeCrypto.getHashes}
+	 *
+	 */
 	getHashes: typeof nodeCrypto.getHashes;
 
+	/**
+	 * Returns an array of the names of the supported cipher algorithms.
+	 * @see {@link nodeCrypto.getCiphers}
+	 *
+	 */
 	getCiphers: typeof nodeCrypto.getCiphers;
 
-	// TODO: Add other commonly used, safe crypto functions if needed by extensions, e.g.,
+	// TODO: Consider adding other commonly used, generally safe crypto functions from node:crypto as needed.
+	// Examples:
+	// - `pbkdf2`, `scrypt` (for password-based key derivation)
+	// - `randomFill` (similar to randomBytes but fills an existing buffer)
+	// - `generateKey` (for symmetric key generation)
+	// - `createCipheriv`, `createDecipheriv`, `createSign`, `createVerify` (for symmetric/asymmetric crypto if IVs/keys are managed locally)
+	// Each addition should be evaluated for security implications in the Cocoon context and whether
+	// direct delegation is appropriate versus needing proxying or being omitted.
 
-	// pbkdf2, scrypt, randomFill, generateKey, createCipheriv, createDecipheriv, etc.
-	// Each should be evaluated for safety and whether proxying might be necessary.
-
-	// Example of a function that might need proxying if it involved system specifics
-	// or if Cocoon's environment has insufficient/untrusted entropy for key generation.
+	// Placeholder for a function that might require proxying to Mountain due to system dependencies or entropy concerns.
 	// generateKeyPairProxied?(
-	// NodeCryptoTypes.KeyType
-	//    type: 'rsa' | 'dsa' | 'ec' | string,
+	// e.g., 'rsa', 'ec'
+	//    type: NodeCryptoTypes.KeyType,
 
 	//    options: NodeCryptoTypes.GenerateKeyPairKeyObjectOptions | NodeCryptoTypes.GenerateKeyPairStringOptions
 	// ): Promise<{ publicKey: string | Buffer; privateKey: string | Buffer }>;
 }
 
 /**
- * The actual instance of the crypto shim.
+ * The singleton instance of the Cocoon crypto shim, implementing `CocoonCryptoShim`.
+ * This instance is what `NodeModuleShimFactory` provides when `require('crypto')` is called.
  */
 const cryptoShimInstance: CocoonCryptoShim = {
-	// Functions delegated directly to Node.js's crypto module:
+	// Direct delegations to the native node:crypto module:
 	createHash: nodeCrypto.createHash,
 
 	createHmac: nodeCrypto.createHmac,
@@ -114,47 +155,40 @@ const cryptoShimInstance: CocoonCryptoShim = {
 		callback?: (err: Error | null, buf: Buffer) => void,
 	): Buffer => {
 		if (callback) {
-			// Asynchronous (callback-based) version
+			// Asynchronous (callback-based) invocation.
 			try {
-				const buf = nodeCrypto.randomBytes(size);
+				const randomBuffer = nodeCrypto.randomBytes(size);
 
-				// Defer the callback to the next tick to better mimic Node.js's async behavior
-				// for I/O-bound operations, even though randomBytes can be CPU-bound.
-				process.nextTick(() => callback(null, buf));
-			} catch (err: any) {
-				// If nodeCrypto.randomBytes throws synchronously (e.g., bad size),
+				// Defer the callback to the next tick of the event loop to better mimic
+				// the asynchronous nature expected by callers of the callback version.
+				process.nextTick(() => callback(null, randomBuffer));
+			} catch (error: any) {
+				// If nodeCrypto.randomBytes throws synchronously (e.g., invalid size argument),
 
-				// pass the error to the callback in the next tick.
-				// Pass empty buffer on error
-				process.nextTick(() => callback(err, Buffer.alloc(0)));
+				// capture the error and pass it to the callback in the next tick.
+				// Provide an empty Buffer on error.
+				process.nextTick(() => callback(error, Buffer.alloc(0)));
 			}
 
-			// The signature for the callback version in Node.js is `void`.
-			// However, to satisfy the union type `Buffer | void` (if we were stricter),
-
-			// this branch should effectively return `void`.
-			// Since the sync version *must* return a Buffer, and callers of the async
-			// version ignore the return value, returning a dummy buffer here is acceptable
-			// if the function must return Buffer.
-			// Best approach for overloaded functions like this in a shim is often to
-			// directly call the overloaded native function if types align, or pick one path.
-			// Here, we handle both explicitly.
-			// If a Buffer must be returned even for the async path (due to TS typing of the shim):
-			// Or throw if strict void return is needed for async.
+			// The actual Node.js `randomBytes` with a callback has a `void` return type.
+			// To satisfy the `CocoonCryptoShim.randomBytes` signature which must return `Buffer`
+			// (due to the synchronous overload), we return a dummy empty buffer here.
+			// Callers of the asynchronous version will ignore this return value and rely on the callback.
 			return Buffer.alloc(0);
 		} else {
-			// Synchronous version
+			// Synchronous invocation.
 			return nodeCrypto.randomBytes(size);
 		}
 	},
 
-	// randomUUID is available in Node.js v15.6.0+ / v14.17.0+.
-	// Ensure Cocoon's target Node.js version supports this.
+	// `nodeCrypto.randomUUID` is available in Node.js v15.6.0+ and v14.17.0+.
+	// Ensure Cocoon's target Node.js environment version supports this.
 	randomUUID: nodeCrypto.randomUUID,
 
-	// getRandomValues is part of Web Crypto API and also in Node's crypto since v15.0.0 / v14.17.0
-	// It might not exist in older Node versions targeted by some VS Code code.
-	// Provide it if available; otherwise, it will be undefined on the shim if nodeCrypto itself doesn't have it.
+	// `nodeCrypto.getRandomValues` is available in Node.js v15.0.0+ and v14.17.0+.
+	// If running on an older Node.js version where `nodeCrypto.getRandomValues` is undefined,
+
+	// then `cryptoShimInstance.getRandomValues` will also be undefined, matching native behavior.
 	getRandomValues: nodeCrypto.getRandomValues,
 
 	constants: nodeCrypto.constants,
@@ -165,14 +199,14 @@ const cryptoShimInstance: CocoonCryptoShim = {
 
 	getCiphers: nodeCrypto.getCiphers,
 
-	// --- Example of a function that MIGHT need proxying (Placeholder) ---
+	// --- Placeholder for a function that might require proxying to Mountain ---
 	// generateKeyPairProxied: async (type, options) => {
 
-	//    console.warn("[Cocoon Crypto Shim] generateKeyPairProxied - This is a placeholder and would proxy to Mountain if implemented.");
+	//    console.warn("[Cocoon Crypto Shim] generateKeyPairProxied - This is a placeholder function and would require IPC to Mountain.");
 
-	// Example of how proxying might look:
+	// Example of how proxying might look if implemented:
 	//
-	// return sendToMountainAndWait('crypto_generateKeyPair', { type, options }, 15000);
+	// return sendToMountainAndWait('mountain_crypto_generateKeyPair', { type, options }, 15000);
 
 	//
 	//    throw new Error("generateKeyPairProxied is not implemented in this crypto-shim.");
@@ -180,5 +214,5 @@ const cryptoShimInstance: CocoonCryptoShim = {
 	// }
 };
 
-// Default export for easy import by NodeModuleShimFactory.
+// Export the singleton instance for use by NodeModuleShimFactory.
 export default cryptoShimInstance;
