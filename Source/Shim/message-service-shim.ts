@@ -1,44 +1,76 @@
 /*---------------------------------------------------------------------------------------------
- * Cocoon Message Service Shim (shims/message-service-shim.ts)
+ * Cocoon Message Service Shim (message-service-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Implements the `vscode.window.showInformationMessage`, `showWarningMessage`,
+ * Implements the `vscode.window.showInformationMessage`, `showWarningMessage`, *
+ * and `showErrorMessage` APIs. These methods provide the functionality for extensions
+ * to display notifications (messages with different severity levels and optional action
+ * items/buttons) to the user.
  *
+ * This service proxies these calls to the Mountain host process via direct IPC, *
+ * using the `_ipcRequestResponse` helper from `BaseCocoonShim`. Mountain is then
+ * responsible for rendering the native notification UI and returning the user's selection.
  *
- * and `showErrorMessage` APIs, providing the functionality for extensions to display
- * notifications to the user.
+ * Responsibilities:
+ * - Implementing the public `showInformationMessage`, `showWarningMessage`, and
+ *   `showErrorMessage` methods as defined in the `vscode.d.ts` API.
+ * - Parsing the variadic arguments of these methods to distinguish between
+ *   `vscode.MessageOptions` and the actual message items (which can be strings
+ *   or `vscode.MessageItem` objects).
+ * - Constructing a serializable payload for the `ui_showMessage` IPC call to Mountain, *
+ *   including the message, severity, relevant options (like `modal` or `detail`), *
+ *   and a list of action items (where each item includes its title, a handle/index, *
+ *   and an `isCloseAffordance` flag).
+ * - Handling the response from Mountain, which indicates which action item (if any)
+ *   the user selected. This involves mapping Mountain's response (potentially an item
+ *   handle/index or an item title string) back to the original `vscode.MessageItem`
+ *   or string provided by the extension.
+ * - Returning `undefined` if the user dismisses the notification or if an error occurs
+ *   during the IPC communication, as per the `vscode.window.show...Message` API contract.
  *
- * This service proxies these calls to the Mountain host process.
+ * Key Interactions:
+ * - An instance of `ShimExtHostMessageService` is typically made available as part of
+ *   the `vscode.window` API namespace through the main API factory provider in
+ *   `Cocoon/index.ts`.
+ * - Uses `BaseCocoonShim` for common utilities:
+ *   - `_ipcRequestResponse` for direct IPC communication.
+ *   - Logging methods (`_logDebug`, `_logWarn`, `_logError`).
+ *   - `refineErrorForShim` for consistent error handling of IPC failures.
+ * - Relies on a corresponding `ui_showMessage` IPC handler implemented in the Mountain
+ *   host process to display the native notification UI.
+ *
  *--------------------------------------------------------------------------------------------*/
 
-import {
-	// For RPC if used with MainThreadMessageService
+// Import Severity enum from VS Code's platform layer if needed for mapping, though
+// this shim uses its own NotificationSeverityForIpc for the direct IPC call.
+// import { Severity } from "vs/platform/notification/common/notification";
 
-	// MainContext,
-
-	// MainThreadMessageServiceShape as VscodeMainThreadMessageServiceShape, // Example if using strict shapes
-
-	// VS Code's Severity enum for mapping
-	Severity,
-	// Assuming Severity is here
-} from "vs/platform/notification/common/notification";
 import type {
 	MessageItem as VscodeMessageItem,
 	MessageOptions as VscodeMessageOptions,
-	// API types
 } from "vscode";
+
+// Public vscode API types
 
 import {
 	BaseCocoonShim,
-	refineError,
-	type IExtHostRpcService,
-	type ILogService,
-	type ProxyIdentifier,
+	// Use the more specific error refiner
+	refineErrorForShim,
+	// Updated type from BaseCocoonShim
+	type ILogServiceForShim,
+	// Updated type from BaseCocoonShim
+	type IRpcProtocolServiceAdapter,
+	// Not used as this shim prefers direct IPC for messages
+	// type ProxyIdentifier,
 } from "./_baseShim";
 
 // --- Type Definitions ---
 
-// NotificationSeverity matches values used in previous ShimExtHostUiAndEnv for IPC
+/**
+ * Internal enum for notification severity levels sent via IPC to Mountain.
+ * These values must align with what Mountain's `ui_showMessage` IPC handler expects.
+ */
 enum NotificationSeverityForIpc {
+	// Not typically used directly by show...Message APIs
 	Ignore = 0,
 
 	Info = 1,
@@ -48,25 +80,31 @@ enum NotificationSeverityForIpc {
 	Error = 3,
 }
 
-// If using RPC, this would be the shape of MainThreadMessageService
+// If RPC were used instead of direct IPC, this would be the shape of MainThreadMessageService.
 // interface MainThreadMessageServiceProxyShape {
 
 //     $showMessage(
+// VS Code's platform Severity enum
 //         severity: Severity,
 
 //         message: string,
 
-// Or a DTO
+// Or a DTO for options
 //         options: VscodeMessageOptions,
 
-// Items with handles for callback
+// Items with handles
 //         items: ({ title: string, handle: number, isCloseAffordance?: boolean })[]
-// Returns selected item handle
+// Returns handle of selected item or undefined
 //     ): Promise<number | undefined>;
 
 // }
 
+/**
+ * Defines the service interface for user notification messages, primarily part of `vscode.window`.
+ * This is used for Dependency Injection if this service is registered.
+ */
 export interface IExtHostMessageServiceInterface {
+	// Standard DI mechanism
 	readonly _serviceBrand: undefined;
 
 	showInformationMessage(
@@ -87,44 +125,71 @@ export interface IExtHostMessageServiceInterface {
 		...args: (VscodeMessageOptions | string | VscodeMessageItem)[]
 	): Promise<string | VscodeMessageItem | undefined>;
 
-	// TODO: Add withProgress if it's part of this service in VS Code
+	// TODO: Consider adding `window.withProgress` here if it's managed by a unified message/notification service,
+
+	// or keep it separate in `window-parts-shim.ts` if it's considered distinct.
 }
 
+/**
+ * Cocoon's implementation of the message notification service (`vscode.window.show...Message` APIs).
+ * It proxies calls to the Mountain host process via direct IPC.
+ */
 export class ShimExtHostMessageService
 	extends BaseCocoonShim
 	implements IExtHostMessageServiceInterface
 {
 	public readonly _serviceBrand: undefined;
 
-	// #mainThreadMessageServiceProxy: MainThreadMessageServiceProxyShape | null = null;
+	// private _mainThreadMessageServiceProxy: MainThreadMessageServiceProxyShape | null = null;
 
+	/**
+	 * Creates an instance of ShimExtHostMessageService.
+	 * @param rpcService The RPC service adapter (passed to BaseCocoonShim, though this shim primarily uses direct IPC for messages).
+	 * @param logService The logging service instance.
+	 */
 	constructor(
-		// Optional for direct IPC, required for RPC proxy
-		rpcService: IExtHostRpcService | undefined,
+		rpcService: IRpcProtocolServiceAdapter | undefined,
 
-		logService: ILogService | undefined,
+		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostMessageService", rpcService, logService);
 
-		this._log("Initialized.");
+		// Use Info for major lifecycle
+		this._logInfo("Initialized.");
 
+		// If RPC were the primary mechanism for messages:
 		// if (this._rpcService) {
 
-		//     this.#mainThreadMessageServiceProxy = this._getProxy(
-
+		//     this._mainThreadMessageServiceProxy = this._getProxy(
 		//         MainContext.MainThreadMessageService as ProxyIdentifier<MainThreadMessageServiceProxyShape>
-
 		//     );
 
 		// }
 
-		// if (!this.#mainThreadMessageServiceProxy) {
+		// if (!this._mainThreadMessageServiceProxy) {
 
-		//     this._logWarn("MainThreadMessageService proxy NOT available. Messages will use direct IPC if available, or fail.");
+		//     this._logWarn("MainThreadMessageService RPC proxy NOT available. Messages will rely on direct IPC (if implemented) or fail.");
 
 		// }
 	}
 
+	/**
+	 * This shim uses direct IPC (`_ipcRequestResponse`) for its core message dialog functionality
+	 * and does not strictly require the main RPC proxy setup for these functions.
+	 * @returns `false` as RPC is not required for core functionality.
+	 */
+	protected override _requiresRpc(): boolean {
+		return false;
+	}
+
+	/**
+	 * Parses the variadic arguments (`...rest`) of the `show...Message` methods.
+	 * It distinguishes between `VscodeMessageOptions` (if present as the first object argument
+	 * without a 'title' property) and the subsequent action items (which can be strings or
+	 * `VscodeMessageItem` objects).
+	 * @param rest The array of arguments after the main message string.
+	 * @returns An object containing the parsed `options` and `items`.
+	 */
 	private _parseMessageArgs(
 		rest: (VscodeMessageOptions | string | VscodeMessageItem)[],
 	): {
@@ -132,25 +197,27 @@ export class ShimExtHostMessageService
 
 		items: (string | VscodeMessageItem)[];
 	} {
+		// Default to empty options
 		let options: VscodeMessageOptions = {};
 
 		const items: (string | VscodeMessageItem)[] = [];
 
 		if (rest.length > 0) {
-			// Check if the first arg is MessageOptions (and not a MessageItem string/object)
-
-			// A MessageItem object must have a 'title' string property.
-
+			// The first element in `rest` could be `MessageOptions` or the first action item.
+			// `MessageOptions` is an object but does NOT have a `title: string` property itself.
+			// `MessageItem` (if an object) *must* have a `title: string` property.
+			// A string item is just a string.
 			if (
 				typeof rest[0] === "object" &&
 				rest[0] !== null &&
+				// If it's an object and NOT a MessageItem (lacks title)
 				!(typeof (rest[0] as VscodeMessageItem).title === "string")
 			) {
+				// Assume it's MessageOptions
 				options = rest.shift() as VscodeMessageOptions;
 			}
 
-			// Remaining args are items (string or VscodeMessageItem objects)
-
+			// Any remaining arguments in `rest` are considered action items.
 			for (const itemCandidate of rest) {
 				if (typeof itemCandidate === "string") {
 					items.push(itemCandidate);
@@ -159,10 +226,11 @@ export class ShimExtHostMessageService
 					itemCandidate !== null &&
 					typeof itemCandidate.title === "string"
 				) {
+					// It's a valid MessageItem object
 					items.push(itemCandidate as VscodeMessageItem);
 				} else {
 					this._logWarn(
-						"Invalid message item in showMessage arguments, skipping:",
+						"Invalid message item encountered in showMessage arguments. It will be skipped. Item:",
 
 						itemCandidate,
 					);
@@ -173,6 +241,19 @@ export class ShimExtHostMessageService
 		return { options, items };
 	}
 
+	/**
+	 * Internal helper to show a message with a given severity, options, and action items.
+	 * This method constructs the IPC payload and handles the response from Mountain.
+	 * @param severityForIpc The severity level for the IPC message.
+	 * @param message The main message string.
+	 * @param options Parsed `VscodeMessageOptions`.
+	 * @param items Parsed array of action items (strings or `VscodeMessageItem` objects).
+	 * @returns A promise resolving to the selected action item (string or `VscodeMessageItem`),
+	 *
+	 *
+	 *
+	 *          or `undefined` if the message was dismissed.
+	 */
 	private async _showMessage(
 		severityForIpc: NotificationSeverityForIpc,
 
@@ -182,103 +263,127 @@ export class ShimExtHostMessageService
 
 		items: (string | VscodeMessageItem)[],
 	): Promise<string | VscodeMessageItem | undefined> {
-		// Matches direct IPC method previously used
+		// Assumed IPC method name on Mountain
 		const ipcMethodName = "ui_showMessage";
 
+		// Prepare action items for IPC: assign a handle (index) for robust response mapping.
 		const itemsForIpc = items.map((item, index) => ({
 			title: typeof item === "string" ? item : item.title,
 
-			// Simple handle for now, Mountain can use this to report back
+			// Use index as a simple, unique handle for this request.
 			handle: index,
 
 			isCloseAffordance:
 				typeof item === "object" ? !!item.isCloseAffordance : false,
 		}));
 
+		// Construct the IPC parameters. Only include serializable options.
 		const params = {
 			severity: severityForIpc,
 
 			message,
 
-			// Send relevant options
-			options: { modal: options.modal, detail: options.detail },
+			options: {
+				// Send only relevant and serializable options to Mountain.
+				// If true, dialog should be modal.
+				modal: options.modal,
 
-			// Send structured items for Mountain to display as buttons
+				// Additional detail string.
+				detail: options.detail,
+			},
+
 			items: itemsForIpc,
 		};
 
-		this._log(
-			`_showMessage (IPC: ${ipcMethodName}): Sev=${NotificationSeverityForIpc[severityForIpc]}, Msg="${message.substring(0, 50)}...", Items=${itemsForIpc.length}`,
+		this._logDebug(
+			`Calling _showMessage (IPC method: '${ipcMethodName}'): Severity=${NotificationSeverityForIpc[severityForIpc]}, ` +
+				`Message="${message.substring(0, 50)}...", Items=${itemsForIpc.length}, Options=${JSON.stringify(params.options)}`,
 		);
 
 		try {
-			// Using direct IPC method `_ipcRequestResponse` inherited from BaseCocoonShim
-
-			// Mountain might return the handle (index) or the title of the selected item.
-
-			const resultHandleOrTitle = (await this._ipcRequestResponse(
+			// Use direct IPC method `_ipcRequestResponse` inherited from BaseCocoonShim.
+			// A long timeout is used as user interaction is involved. Mountain may have its own timeout.
+			const resultFromMountain = (await this._ipcRequestResponse(
 				ipcMethodName,
 
 				params,
 
-				300000,
+				300000 /* 5 minutes */,
 			)) as number | string | undefined;
 
 			if (
-				resultHandleOrTitle === undefined ||
-				resultHandleOrTitle === null
+				resultFromMountain === undefined ||
+				resultFromMountain === null
 			) {
-				// No selection or dialog dismissed
+				this._logDebug(
+					`Message dialog (IPC: ${ipcMethodName}) dismissed by user or no action taken.`,
+				);
+
+				// No selection or dialog dismissed by user.
 				return undefined;
 			}
 
-			// Mountain returned a handle (index)
-			if (typeof resultHandleOrTitle === "number") {
+			// Process the result from Mountain.
+			// Contract: Mountain should ideally return the `handle` (index) of the selected item.
+			// If it returns a string, assume it's the title of the selected item.
+			if (typeof resultFromMountain === "number") {
+				// Mountain returned a handle (index).
 				const selectedItemDto = itemsForIpc.find(
-					(item) => item.handle === resultHandleOrTitle,
+					(item) => item.handle === resultFromMountain,
 				);
 
 				if (selectedItemDto) {
-					// Find the original VscodeMessageItem or string from the `items` array
+					// The `handle` corresponds to the index in the original `items` array.
+					// Return the original item from the extension.
+					return items[resultFromMountain];
+				} else {
+					this._logWarn(
+						`Received a numeric handle (${resultFromMountain}) from '${ipcMethodName}' that does not match any sent item.`,
 
-					return items.find(
-						(origItem) =>
-							(typeof origItem === "string"
-								? origItem
-								: origItem.title) === selectedItemDto.title,
+						"Sent items DTO:",
+
+						itemsForIpc,
 					);
 				}
-
-				// Mountain returned the title string
-			} else if (typeof resultHandleOrTitle === "string") {
-				const selectedItem = items.find(
+			} else if (typeof resultFromMountain === "string") {
+				// Mountain returned the title string.
+				const selectedItemByTitle = items.find(
 					(origItem) =>
 						(typeof origItem === "string"
 							? origItem
-							: origItem.title) === resultHandleOrTitle,
+							: origItem.title) === resultFromMountain,
 				);
 
-				// Return item if matched, else the title itself (though API expects MessageItem if object was passed)
-				return selectedItem || resultHandleOrTitle;
+				if (selectedItemByTitle) {
+					return selectedItemByTitle;
+				}
+
+				// If the returned string matches a simple string item, that's also valid.
+				if (items.includes(resultFromMountain as string)) {
+					return resultFromMountain as string;
+				}
+
+				this._logWarn(
+					`Received a title string ('${resultFromMountain}') from '${ipcMethodName}' that does not match any original item title or string directly.`,
+				);
+			} else {
+				this._logWarn(
+					`Unexpected response type received from '${ipcMethodName}'. Expected number (handle) or string (title). Got:`,
+
+					resultFromMountain,
+				);
 			}
 
-			this._logWarn(
-				"Unexpected response type from ui_showMessage:",
-
-				resultHandleOrTitle,
-			);
-
-			// Fallback
+			// Fallback if response processing fails.
 			return undefined;
 		} catch (e: any) {
 			this._logError(
-				`IPC call to ${ipcMethodName} failed:`,
+				`IPC call to '${ipcMethodName}' failed:`,
 
-				refineError(e, this._logService, ipcMethodName),
+				refineErrorForShim(e, this._logService, ipcMethodName),
 			);
 
-			// Do not rethrow, as showMessage in vscode.d.ts typically returns undefined on failure/dismissal by user
-
+			// As per `vscode.window.show...Message` API contract, return undefined on error or dismissal.
 			return undefined;
 		}
 	}
@@ -337,16 +442,32 @@ export class ShimExtHostMessageService
 		);
 	}
 
-	// TODO: Implement withProgress if it belongs to this service according to VS Code's IExtHostMessageService.
+	/**
+	 * Disposes of resources held by this shim instance.
+	 */
+	public override dispose(): void {
+		// From BaseCocoonShim
+		super.dispose();
 
-	// public withProgress<R>(options: VscodeProgressOptions, task: (progress: VscodeProgress<{ message?: string; increment?: number }>, token: VscodeCancellationToken) => Thenable<R>): Thenable<R> {
+		this._logInfo("Disposed.");
+	}
 
-	//     this._logWarnOnce("window.withProgress is not fully implemented in Cocoon shim.");
+	// TODO: Implement `window.withProgress` if it is considered part of this message/notification service
+	// according to VS Code's `IExtHostMessageService` (or `IExtHostProgress` if separate).
+	// Example stub:
+	// public withProgress<R>(
+	//     options: vscode.ProgressOptions,
 
-	//     // Minimal implementation: run the task, ignore progress reporting
+	//     task: (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => Thenable<R>
+	// ): Thenable<R> {
 
+	//     this._logWarnOnce("API STUB: window.withProgress is not fully implemented in Cocoon. Task will run without UI progress.");
+
+	// Minimal implementation: run the task, ignore progress reporting for now.
+	//
 	//     const cancellationTokenSource = new CancellationTokenSource();
 
+	// NOP progress reporter
 	//     const progressStub = { report: () => {} };
 
 	//     try {
@@ -359,6 +480,7 @@ export class ShimExtHostMessageService
 
 	//     } finally {
 
+	// Clean up token source
 	//          cancellationTokenSource.dispose();
 
 	//     }
