@@ -16,10 +16,12 @@
  * - Implementing the `vscode.debug` API interface shape.
  * - Providing NOP or default-returning stubs for all `vscode.debug` methods and properties.
  * - Logging warnings when unimplemented debugging methods are called.
+ * - Explicitly throwing an error for `executeTask` (though this is a tasks API method) if debug
+ *   were to invoke it, and for `startDebugging`'s core promise if it cannot proceed.
  * - Exposing NOP event emitters for debug-related lifecycle events.
  *
  * Key Interactions:
- * - An instance is made available as `vscode.debug` via the API factory (e.g., in `index.ts`).
+ * - An instance is made available as `vscode.debug` via the API factory.
  * - In a full implementation, it would interact heavily with a `MainThreadDebugService`
  *   on Mountain via RPC.
  * - Uses `BaseCocoonShim` for logging.
@@ -31,88 +33,62 @@ import {
 	Event as VscodeEvent,
 } from "vs/base/common/event";
 import { Disposable, type IDisposable } from "vs/base/common/lifecycle";
+import {
+	// Assuming this shape from extHost.protocol.ts
+	MainContext,
+	MainThreadDebugServiceShape,
+	// DTO for DebugConfiguration
+	IDebugConfiguration as RpcDebugConfiguration,
+	// Add other DTOs as needed, e.g., for Breakpoint, DebugSession
+} from "vs/workbench/api/common/extHost.protocol";
 // Import vscode API types for the debug namespace
 import {
-	// Enum from vscode API
 	DebugConfigurationProviderTriggerKind,
-	// For asDebugSourceUri return type
 	Uri as VscodeUri,
-	// Interfaces for providers and sessions that define the API surface
-	// Base type for various breakpoint kinds (SourceBreakpoint, FunctionBreakpoint, etc.)
 	type Breakpoint,
 	type BreakpointsChangeEvent,
-	// Abstract type, specific implementations below
-	// type DebugAdapterDescriptor,
 	type DebugAdapterDescriptorFactory,
-	// Example of DebugAdapterDescriptor content
-	// type DebugAdapterExecutable,
-
-	// Example of DebugAdapterDescriptor content
-	// type DebugAdapterInlineImplementation,
-
-	// Example of DebugAdapterDescriptor content
-	// type DebugAdapterNamedPipeServer,
-
-	// Example of DebugAdapterDescriptor content
-	// type DebugAdapterServer,
-	type DebugAdapterTrackerFactory,
 	type DebugConfiguration,
 	type DebugConfigurationProvider,
 	type DebugConsole,
-	// Return type for getDebugProtocolBreakpoint
 	type DebugProtocolBreakpoint,
-	// Parameter type for asDebugSourceUri
 	type DebugProtocolSource,
-	// This is an enum, usually imported directly if used
-	// type DebugConsoleMode,
 	type DebugSession,
 	type DebugSessionCustomEvent,
 	type DebugSessionOptions,
-	// Parameter type for startDebugging
 	type WorkspaceFolder as VscodeWorkspaceFolder,
 } from "vscode";
 
-// Assuming path to the API type definitions for vscode namespace
-
 import {
 	BaseCocoonShim,
-	// Updated type from BaseCocoonShim
+	// For future RPC error handling
+	refineErrorForShim,
 	type ILogServiceForShim,
-	// Updated type from BaseCocoonShim
 	type IRpcProtocolServiceAdapter,
-	// Not used if RPC calls are not made in stub
-	// refineErrorForShim,
-	// Uncomment if RPC is used
-	// type ProxyIdentifier,
+	type ProxyIdentifier,
 } from "./_baseShim";
 
-// If RPCing to MainThreadDebugService:
-// import { MainContext } from "vs/workbench/api/common/extHost.protocol";
+// --- Type Definitions & Placeholders ---
 
-// Example
-// import type { MainThreadDebugServiceShape } from "vs/workbench/api/common/extHost.protocol";
+// Placeholder for the DTO of vscode.DebugSession if sent over RPC
+interface RpcDebugSessionDto {
+	id: string;
 
-// --- Type Definitions ---
+	type: string;
 
-// Placeholder for the RPC shape of `MainThreadDebugService`.
-// interface MainThreadDebugServiceProxyShape {
+	name: string;
 
-//     $startDebugging(folderUriComponents: any | undefined, nameOrConfiguration: string | DebugConfiguration, options?: DebugSessionOptions): Promise<boolean>;
+	workspaceFolderUri?: import("vs/base/common/uri").UriComponents;
 
-//     $stopDebugging(sessionId?: string): Promise<void>;
+	configuration: RpcDebugConfiguration;
 
-//     $customDebugAdapterRequest(sessionId: string, command: string, args?: any): Promise<any>;
-
-// ... other RPC methods for breakpoints, configurations, adapter factories, etc.
-//
-// }
+	// Add other relevant fields from MainThreadDebugService's view of a session
+}
 
 /**
  * Defines the service interface for `vscode.debug` that this shim implements for DI.
- * This aligns with the public `vscode.debug` API surface that extensions consume.
  */
 export interface IExtHostDebugServiceShape {
-	// Standard mechanism for type-safe DI
 	readonly _serviceBrand: undefined;
 
 	readonly activeDebugSession: DebugSession | undefined;
@@ -139,6 +115,8 @@ export interface IExtHostDebugServiceShape {
 		nameOrConfiguration: string | DebugConfiguration,
 
 		options?: DebugSessionOptions | undefined,
+
+		// Returns true if debugging started, false otherwise
 	): Promise<boolean>;
 
 	stopDebugging(session?: DebugSession): Promise<void>;
@@ -160,7 +138,7 @@ export interface IExtHostDebugServiceShape {
 	registerDebugAdapterTrackerFactory(
 		debugType: string,
 
-		factory: DebugAdapterTrackerFactory,
+		factory: import("vscode").DebugAdapterTrackerFactory,
 	): IDisposable;
 
 	addBreakpoints(breakpoints: readonly Breakpoint[]): Promise<void>;
@@ -179,15 +157,59 @@ export interface IExtHostDebugServiceShape {
 		session?: DebugSession,
 	): Promise<DebugProtocolBreakpoint | undefined>;
 
-	// TODO: Add stubs for other vscode.debug methods as needed by extensions:
-	// customDebugAdapterRequest, saveState, readMemory, writeMemory, etc.
+	// TODO: Add stubs for other vscode.debug methods: customDebugAdapterRequest, saveState, etc.
 }
 
 /**
- * Cocoon's stub implementation of the `vscode.debug` API for the extension host.
- * Most methods are NOPs (No Operations) or return default/failure values in this
- * MVP (Minimum Viable Product) version, primarily to allow extensions to compile
- * and run without crashing, rather than providing full debugging functionality.
+ * Stub implementation for vscode.DebugSession
+ */
+class StubDebugSessionImpl implements DebugSession {
+	constructor(
+		public readonly id: string,
+
+		public readonly type: string,
+
+		// Can be changed by MainThread via $acceptDebugSessionNameChanged
+		public name: string,
+
+		public readonly workspaceFolder: VscodeWorkspaceFolder | undefined,
+
+		public readonly configuration: DebugConfiguration,
+
+		// For logging NOP calls
+		private _logService?: ILogServiceForShim,
+	) {}
+
+	customRequest(_command: string, _args?: any): Promise<any> {
+		this._logService?.warn(
+			`[StubDebugSession(${this.id})] STUB: customRequest('${_command}') called. Not implemented.`,
+		);
+
+		return Promise.reject(
+			new Error(
+				`DebugSession.customRequest for command '${_command}' is not implemented in Cocoon.`,
+			),
+		);
+	}
+
+	getDebugProtocolBreakpoint(
+		_breakpoint: Breakpoint,
+	): Promise<DebugProtocolBreakpoint | undefined> {
+		this._logService?.warn(
+			`[StubDebugSession(${this.id})] STUB: getDebugProtocolBreakpoint called. Not implemented.`,
+		);
+
+		return Promise.resolve(undefined);
+	}
+
+	// Stubs for proposed API parts if they were to be added
+	// readMemory?(memoryReference: string, offset?: number, count?: number): Promise<vscode.DebugMemoryRegion | undefined>;
+
+	// writeMemory?(memoryReference: string, offset: number, data: Uint8Array, options?: vscode.DebugMemoryWriteOptions): Promise<{ bytesWritten?: number; } | undefined>;
+}
+
+/**
+ * Cocoon's stub implementation of the `vscode.debug` API.
  */
 export class ShimExtHostDebugService
 	extends BaseCocoonShim
@@ -195,13 +217,14 @@ export class ShimExtHostDebugService
 {
 	public readonly _serviceBrand: undefined;
 
-	// private _mainThreadDebugProxy: MainThreadDebugServiceProxyShape | null = null;
+	#mainThreadDebugProxy: MainThreadDebugServiceShape | null = null;
 
 	// --- Stubbed Properties ---
 	public activeDebugSession: DebugSession | undefined = undefined;
 
 	public readonly activeDebugConsole: DebugConsole;
 
+	// Mutable array for internal updates
 	public breakpoints: readonly Breakpoint[] = [];
 
 	// --- Stubbed Event Emitters ---
@@ -237,11 +260,21 @@ export class ShimExtHostDebugService
 	public readonly onDidChangeBreakpoints: VscodeEvent<BreakpointsChangeEvent> =
 		this._onDidChangeBreakpointsEmitter.event;
 
-	/**
-	 * Creates an instance of ShimExtHostDebugService.
-	 * @param rpcService The RPC service adapter (passed to base, currently unused by this stub for its primary functions).
-	 * @param logService The logging service for shim-specific messages.
-	 */
+	// For managing locally "stub-registered" providers
+	private readonly _debugConfigProviders = new Map<
+		string,
+		{
+			provider: DebugConfigurationProvider;
+
+			trigger: DebugConfigurationProviderTriggerKind;
+		}
+	>();
+
+	private readonly _debugAdapterFactories = new Map<
+		string,
+		DebugAdapterDescriptorFactory
+	>();
+
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
 
@@ -253,46 +286,36 @@ export class ShimExtHostDebugService
 			"Initialized (STUBBED implementation). Debug functionality is minimal.",
 		);
 
-		// Example of RPC proxy initialization (currently commented out as it's a stub)
-		// if (this._rpcService) {
+		if (this._rpcService) {
+			this.#mainThreadDebugProxy = this._getProxy(
+				MainContext.MainThreadDebugService as ProxyIdentifier<MainThreadDebugServiceShape>,
+			);
+		}
 
-		//     this._mainThreadDebugProxy = this._getProxy(
-		//         MainContext.MainThreadDebugService as ProxyIdentifier<MainThreadDebugServiceProxyShape>
-		//     );
+		if (!this.#mainThreadDebugProxy) {
+			this._logWarn(
+				"MainThreadDebugService proxy NOT available. All debugging features will be non-functional.",
+			);
+		}
 
-		// }
-
-		// if (!this._mainThreadDebugProxy) {
-
-		//     this._logWarn("MainThreadDebugService proxy NOT available. All debugging features will be non-functional.");
-
-		// }
-
-		// Stub for activeDebugConsole
 		this.activeDebugConsole = Object.freeze({
 			append: (value: string) =>
 				this._logWarnOnce(
-					`activeDebugConsole.append STUB: "${String(value).substring(0, 50)}..."`,
+					`STUB: activeDebugConsole.append: "${String(value).substring(0, 50)}..."`,
 				),
 
 			appendLine: (value: string) =>
 				this._logWarnOnce(
-					`activeDebugConsole.appendLine STUB: "${String(value).substring(0, 50)}..."`,
+					`STUB: activeDebugConsole.appendLine: "${String(value).substring(0, 50)}..."`,
 				),
 		});
 	}
 
-	/**
-	 * Indicates whether this shim requires RPC communication.
-	 * For the current stub implementation, RPC is not strictly required as most operations are NOPs.
-	 * A full implementation would return `true`.
-	 * @returns `false` as RPC is not required for the current stub functionality.
-	 */
 	protected override _requiresRpc(): boolean {
+		// For MVP stub. Would be true for a functional version.
 		return false;
 	}
 
-	/** {@inheritDoc IExtHostDebugServiceShape.startDebugging} */
 	public async startDebugging(
 		folder: VscodeWorkspaceFolder | undefined,
 
@@ -302,153 +325,148 @@ export class ShimExtHostDebugService
 	): Promise<boolean> {
 		const folderUriString = folder ? folder.uri.toString() : "undefined";
 
-		const configNameOrType =
+		const configName =
 			typeof nameOrConfiguration === "string"
 				? nameOrConfiguration
 				: nameOrConfiguration.name;
 
-		const optionsString = options ? JSON.stringify(options) : "undefined";
+		const parentSessionId =
+			options && "parentSession" in options
+				? options.parentSession?.id
+				: undefined;
 
 		this._logWarn(
-			`vscode.debug.startDebugging STUB: folder='${folderUriString}', config='${configNameOrType}', options=${optionsString}. Returning false.`,
+			`API STUB: vscode.debug.startDebugging called. Folder='${folderUriString}', ConfigName='${configName}', ParentSessionID='${parentSessionId ?? "N/A"}'. ` +
+				`This will NOT start a real debug session. Returning false.`,
+
+			"Full Config/Options:",
+
+			nameOrConfiguration,
+
+			options,
 		);
 
-		// In a real implementation:
-		// if (!this._mainThreadDebugProxy) {
+		if (!this.#mainThreadDebugProxy) {
+			this._logError(
+				"Cannot start debugging: MainThreadDebugService proxy unavailable.",
+			);
 
-		//     this._logError("Cannot start debugging: MainThreadDebugService proxy unavailable.");
+			return false;
+		}
 
-		//     return false;
+		// TODO (Full Implementation):
+		// 1. Convert `folder?.uri` to UriComponentsDto.
+		// 2. Convert `nameOrConfiguration` (string or DebugConfiguration API type) to RpcDebugConfiguration DTO.
+		// 3. Convert `options` (DebugSessionOptions API type) to RpcDebugSessionOptions DTO.
+		// 4. Call `this.#mainThreadDebugProxy.$startDebugging(folderDto, configDto, optionsDto)`.
+		// 5. MainThread would attempt to launch, then call `$acceptDebugSessionStarted` back to this service.
+		//    That callback would create the `StubDebugSessionImpl`, update `activeDebugSession`, and fire events.
 
-		// }
-
-		// try {
-
-		//     const folderUriDto = folder ? this._convertApiArgToInternal(folder.uri) : undefined;
-
-		//     const success = await this._mainThreadDebugProxy.$startDebugging(folderUriDto, nameOrConfiguration, options);
-
-		// If successful, MainThread would later call $acceptDebugSessionStarted, which updates activeDebugSession
-		//
-		// and fires onDidStartDebugSession/onDidChangeActiveDebugSession.
-		//
-		//     return success;
-
-		// } catch (e: any) {
-
-		//     this._logError("startDebugging RPC failed:", refineErrorForShim(e, this._logService, "startDebugging"));
-
-		//     return false;
-
-		// }
-
-		// Simulate failure or no debugger available/attached.
+		// Simulate failure or no debugger available/attached for the stub.
 		return Promise.resolve(false);
 	}
 
-	/** {@inheritDoc IExtHostDebugServiceShape.stopDebugging} */
 	public async stopDebugging(session?: DebugSession): Promise<void> {
 		this._logWarn(
-			`vscode.debug.stopDebugging STUB: session_id='${session?.id ?? "active (or undefined)"}'. NOP.`,
+			`API STUB: vscode.debug.stopDebugging called. SessionID='${session?.id ?? "active (or undefined)"}'. NOP.`,
 		);
 
-		// In a real implementation:
-		// if (!this._mainThreadDebugProxy) { /* ... handle error ... */ return; }
-
-		// try {
-
-		//     await this._mainThreadDebugProxy.$stopDebugging(session?.id);
-
-		// MainThread would later call $acceptDebugSessionTerminated.
-		//
-		// } catch (e: any) { /* ... handle error ... */ }
-
+		// TODO (Full Implementation): RPC to `this.#mainThreadDebugProxy?.$stopDebugging(session?.id)`.
 		return Promise.resolve();
 	}
 
-	/** {@inheritDoc IExtHostDebugServiceShape.registerDebugConfigurationProvider} */
 	public registerDebugConfigurationProvider(
 		debugType: string,
 
-		// Provider argument kept for API compliance
 		provider: DebugConfigurationProvider,
 
 		triggerKind?: DebugConfigurationProviderTriggerKind,
 	): IDisposable {
-		const triggerKindString =
-			triggerKind !== undefined
-				? DebugConfigurationProviderTriggerKind[triggerKind]
-				: "undefined";
+		const actualTrigger =
+			triggerKind ?? DebugConfigurationProviderTriggerKind.Initial;
 
-		this._logWarn(
-			`vscode.debug.registerDebugConfigurationProvider STUB: type='${debugType}', triggerKind=${triggerKindString}. Provider not registered. Returning NOP disposable.`,
+		this._logWarnOnce(
+			`API STUB: vscode.debug.registerDebugConfigurationProvider called. Type='${debugType}', Trigger=${DebugConfigurationProviderTriggerKind[actualTrigger]}. Provider is stored locally but NOT registered with MainThread.`,
 		);
 
-		// TODO: In a real implementation:
-		// 1. Store the provider locally.
-		// 2. Generate a handle.
-		// 3. Call `this._mainThreadDebugProxy?.$registerDebugConfigurationProvider(handle, debugType, hasProvideMethod, hasResolveMethod, hasResolve2Method, triggerKind);`
-		// 4. Return a Disposable that calls `$unregisterDebugConfigurationProvider(handle)`.
-		// NOP disposable
-		return Disposable.None;
+		this._debugConfigProviders.set(debugType, {
+			provider,
+
+			trigger: actualTrigger,
+		});
+
+		// TODO (Full Implementation): RPC to `this.#mainThreadDebugProxy?.$registerDebugConfigurationProvider(...)`.
+		return toDisposable(() => {
+			this._logDebug(
+				`Disposing stub registration for DebugConfigurationProvider type='${debugType}'.`,
+			);
+
+			this._debugConfigProviders.delete(debugType);
+
+			// TODO: RPC to `$unregisterDebugConfigurationProvider(handle)`.
+		});
 	}
 
-	/** {@inheritDoc IExtHostDebugServiceShape.registerDebugAdapterDescriptorFactory} */
 	public registerDebugAdapterDescriptorFactory(
 		debugType: string,
 
 		factory: DebugAdapterDescriptorFactory,
 	): IDisposable {
-		this._logWarn(
-			`vscode.debug.registerDebugAdapterDescriptorFactory STUB: type='${debugType}'. Factory not registered. Returning NOP disposable.`,
+		this._logWarnOnce(
+			`API STUB: vscode.debug.registerDebugAdapterDescriptorFactory called. Type='${debugType}'. Factory is stored locally but NOT registered with MainThread.`,
 		);
 
-		// TODO: In a real implementation, store the factory, handle its calls, and register with MainThread.
-		return Disposable.None;
+		this._debugAdapterFactories.set(debugType, factory);
+
+		// TODO (Full Implementation): RPC to `this.#mainThreadDebugProxy?.$registerDebugAdapterDescriptorFactory(...)`.
+		return toDisposable(() => {
+			this._logDebug(
+				`Disposing stub registration for DebugAdapterDescriptorFactory type='${debugType}'.`,
+			);
+
+			this._debugAdapterFactories.delete(debugType);
+
+			// TODO: RPC to `$unregisterDebugAdapterDescriptorFactory(handle)`.
+		});
 	}
 
-	/** {@inheritDoc IExtHostDebugServiceShape.registerDebugAdapterTrackerFactory} */
 	public registerDebugAdapterTrackerFactory(
 		debugType: string,
 
-		factory: DebugAdapterTrackerFactory,
+		// _factory marked unused
+		_factory: import("vscode").DebugAdapterTrackerFactory,
 	): IDisposable {
-		this._logWarn(
-			`vscode.debug.registerDebugAdapterTrackerFactory STUB: type='${debugType}'. Factory not registered. Returning NOP disposable.`,
+		this._logWarnOnce(
+			`API STUB: vscode.debug.registerDebugAdapterTrackerFactory called. Type='${debugType}'. This is a No-Operation.`,
 		);
 
-		// TODO: Similar to other factories, store and potentially notify MainThread.
+		// NOP
 		return Disposable.None;
 	}
 
-	/** {@inheritDoc IExtHostDebugServiceShape.addBreakpoints} */
 	public async addBreakpoints(
 		breakpointsToAdd: readonly Breakpoint[],
 	): Promise<void> {
 		this._logWarn(
-			`vscode.debug.addBreakpoints STUB: count=${breakpointsToAdd.length}. NOP.`,
+			`API STUB: vscode.debug.addBreakpoints called. Count=${breakpointsToAdd.length}. NOP.`,
 		);
 
-		// In a real implementation:
-		// 1. Convert `Breakpoint[]` (API type) to `DebugProtocolBreakpoint[]` (DTOs).
-		// 2. Call `this._mainThreadDebugProxy?.$addBreakpoints(dtos)`.
-		// 3. MainThread would respond, and this service would update `this.breakpoints` and fire `onDidChangeBreakpoints`.
+		// TODO (Full Implementation): Convert Breakpoint[] to DTOs, RPC to `this.#mainThreadDebugProxy?.$addBreakpoints(dtos)`.
+		// MainThread would then call `$acceptBreakpointsDelta`.
 		return Promise.resolve();
 	}
 
-	/** {@inheritDoc IExtHostDebugServiceShape.removeBreakpoints} */
 	public async removeBreakpoints(
 		breakpointsToRemove: readonly Breakpoint[],
 	): Promise<void> {
 		this._logWarn(
-			`vscode.debug.removeBreakpoints STUB: count=${breakpointsToRemove.length}. NOP.`,
+			`API STUB: vscode.debug.removeBreakpoints called. Count=${breakpointsToRemove.length}. NOP.`,
 		);
 
-		// Similar to addBreakpoints, convert to IDs or DTOs and call MainThread.
+		// TODO (Full Implementation): Convert to IDs or DTOs, RPC to `this.#mainThreadDebugProxy?.$removeBreakpoints(idsOrDtos)`.
 		return Promise.resolve();
 	}
 
-	/** {@inheritDoc IExtHostDebugServiceShape.asDebugSourceUri} */
 	public asDebugSourceUri(
 		source: DebugProtocolSource,
 
@@ -456,54 +474,81 @@ export class ShimExtHostDebugService
 	): VscodeUri {
 		const sessionPart = session ? ` (session: ${session.id})` : "";
 
-		this._logWarn(
-			`vscode.debug.asDebugSourceUri STUB: source name='${source.name}', path='${source.path}'${sessionPart}. Returning dummy URI.`,
+		const sourcePath = source.path || `ref:${source.sourceReference}`;
+
+		this._logWarnOnce(
+			`API STUB: vscode.debug.asDebugSourceUri called. SourcePath='${sourcePath}'${sessionPart}. Returning dummy URI.`,
 		);
 
-		// This is a complex conversion potentially involving source maps, adapter specific logic, and remote paths.
-		// Return a dummy, uniquely identifiable URI for stub purposes.
-		const sourceIdentifier =
-			source.path ||
-			source.sourceReference?.toString() ||
-			source.name ||
-			"unknown_source_" + Date.now();
-
 		return VscodeUri.parse(
-			`debug-source-stub:${encodeURIComponent(sourceIdentifier)}`,
+			`debug-source-stub:${encodeURIComponent(sourcePath)}?session=${session?.id || "none"}`,
 		);
 	}
 
-	/** {@inheritDoc IExtHostDebugServiceShape.getDebugProtocolBreakpoint} */
 	public async getDebugProtocolBreakpoint(
 		breakpoint: Breakpoint,
 
 		session?: DebugSession,
 	): Promise<DebugProtocolBreakpoint | undefined> {
-		// Breakpoint objects typically have an `id` property.
-		const bpId = (breakpoint as any).id || "unknown_id";
+		const bpId = (breakpoint as any).id || "unknown_bp_id";
 
-		const sessionPart = session ? ` (session: ${session.id})` : "";
-
-		this._logWarn(
-			`vscode.debug.getDebugProtocolBreakpoint STUB for breakpoint ID '${bpId}'${sessionPart}. Returning undefined.`,
+		this._logWarnOnce(
+			`API STUB: vscode.debug.getDebugProtocolBreakpoint called for BreakpointID='${bpId}', SessionID='${session?.id || "none"}'. Returning undefined.`,
 		);
 
-		// TODO: Would involve RPC to MainThread to get the DAP representation for a given API Breakpoint.
+		// TODO (Full Implementation): RPC to `this.#mainThreadDebugProxy?.$getDebugProtocolBreakpoint(sessionId, apiBpId)`
 		return Promise.resolve(undefined);
 	}
 
-	// TODO: Add stubs for other methods on `vscode.debug` as they become relevant or are encountered by extensions:
-	// - `customDebugAdapterRequest(sessionId: string, command: string, args?: any): Promise<any>;`
-	// - `startProfiling(sessionId?: string): Promise<void>;`
-	// - `stopProfiling(sessionId?: string): Promise<void>;`
-	// - `getDebugAdapterImplementationName(debugType: string): Promise<string | undefined>;`
-	// - etc.
+	// --- RPC Callbacks from MainThread (ExtHostDebugServiceShape) ---
+	// These would be called by MainThreadDebugService to update Cocoon's state.
+	// For MVP stubs, they mostly log.
 
-	/**
-	 * Disposes of resources held by this shim instance, primarily event emitters.
-	 */
+	public $acceptDebugSessionStarted(sessionDto: RpcDebugSessionDto): void {
+		this._logInfo(
+			`RPC STUB: $acceptDebugSessionStarted received from MainThread. SessionID='${sessionDto.id}', Type='${sessionDto.type}', Name='${sessionDto.name}'.`,
+		);
+
+		// TODO (Full Implementation):
+		// const workspaceFolder = sessionDto.workspaceFolderUri ? this._extHostWorkspace.getWorkspaceFolder(URI.revive(sessionDto.workspaceFolderUri)) : undefined;
+
+		// const revivedConfig = this._reviveRpcDebugConfiguration(sessionDto.configuration);
+
+		// const session = new StubDebugSessionImpl(sessionDto.id, sessionDto.type, sessionDto.name, workspaceFolder, revivedConfig, this._logService);
+
+		// Clear breakpoints for new session? Or are they global?
+		// (this.breakpoints as Breakpoint[]) = [];
+
+		// this.activeDebugSession = session;
+
+		// this._onDidStartDebugSessionEmitter.fire(session);
+
+		// this._onDidChangeActiveDebugSessionEmitter.fire(session);
+	}
+
+	public $acceptDebugSessionTerminated(sessionDto: RpcDebugSessionDto): void {
+		this._logInfo(
+			`RPC STUB: $acceptDebugSessionTerminated received from MainThread. SessionID='${sessionDto.id}'.`,
+		);
+
+		// TODO (Full Implementation):
+		// Or find by ID if managing multiple
+		// const session = this.activeDebugSession;
+
+		// if (session && session.id === sessionDto.id) {
+
+		//     this.activeDebugSession = undefined;
+
+		//     this._onDidTerminateDebugSessionEmitter.fire(session);
+
+		//     this._onDidChangeActiveDebugSessionEmitter.fire(undefined);
+
+		// }
+	}
+
+	// ... other $accept* methods from ExtHostDebugServiceShape would be stubbed similarly ...
+
 	public override dispose(): void {
-		// From BaseCocoonShim, handles _instanceDisposables
 		super.dispose();
 
 		this._onDidStartDebugSessionEmitter.dispose();
@@ -515,6 +560,10 @@ export class ShimExtHostDebugService
 		this._onDidReceiveDebugSessionCustomEventEmitter.dispose();
 
 		this._onDidChangeBreakpointsEmitter.dispose();
+
+		this._debugConfigProviders.clear();
+
+		this._debugAdapterFactories.clear();
 
 		this._logInfo("Disposed.");
 	}
