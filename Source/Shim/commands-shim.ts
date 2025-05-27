@@ -853,9 +853,10 @@ export class ShimExtHostCommands
 			};
 
 			const data: CommandExecutedTelemetryData = {
-				// Cast if TelemetryTrustedValue is not directly string
 				id: new TelemetryTrustedValue(
 					commandId,
+
+					// Cast if TelemetryTrustedValue is not directly string
 				) as TelemetryTrustedValue<string>,
 
 				extensionId:
