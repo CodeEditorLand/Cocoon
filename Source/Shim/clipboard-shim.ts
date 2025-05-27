@@ -42,7 +42,6 @@ import {
  * This interface can be used for Dependency Injection if this shim is registered as a standalone service.
  */
 export interface IExtHostClipboardServiceShape extends VscodeClipboard {
-	// No additional methods beyond vscode.Clipboard for this service itself.
 	// Standard DI mechanism for VS Code services.
 	readonly _serviceBrand: undefined;
 }
@@ -56,6 +55,8 @@ export class ShimExtHostClipboardService
 {
 	public readonly _serviceBrand: undefined;
 
+	private static readonly DEFAULT_CLIPBOARD_TIMEOUT_MS = 2000;
+
 	/**
 	 * Creates an instance of ShimExtHostClipboardService.
 	 * @param rpcService The RPC service adapter, passed to `BaseCocoonShim`. Not directly used by this shim's core IPC logic.
@@ -68,11 +69,7 @@ export class ShimExtHostClipboardService
 	) {
 		super("ExtHostClipboardService", rpcService, logService);
 
-		// Use _logDebug for routine initialization messages.
 		this._logDebug("Initialized.");
-
-		// This service primarily makes outgoing IPC calls and doesn't usually need to register
-		// itself for RPC calls *from* the MainThread for its core clipboard functions.
 	}
 
 	/**
@@ -89,8 +86,8 @@ export class ShimExtHostClipboardService
 	 *
 	 *
 	 * Reads text from the system clipboard by proxying the request to Mountain.
-	 * @returns A promise that resolves to the text content of the clipboard, or an empty string if empty.
-	 * @throws An error if the IPC operation fails.
+	 * @returns A promise that resolves to the text content of the clipboard, or an empty string if empty or inaccessible after an error.
+	 * @throws An error if the IPC operation fails fundamentally (e.g., timeout, protocol error), consistent with "Rejects if clipboard is inaccessible".
 	 */
 	async readText(): Promise<string> {
 		this._logDebug(
@@ -103,9 +100,10 @@ export class ShimExtHostClipboardService
 			const text = (await this._ipcRequestResponse(
 				"env_clipboardReadText",
 
+				// No parameters
 				{},
 
-				2000,
+				ShimExtHostClipboardService.DEFAULT_CLIPBOARD_TIMEOUT_MS,
 			)) as string | null | undefined;
 
 			// Ensure string return, defaulting to empty string if null/undefined.
@@ -125,7 +123,7 @@ export class ShimExtHostClipboardService
 				error.stack,
 			);
 
-			// The vscode.env.clipboard.readText API contract typically throws if the operation itself fails.
+			// The vscode.env.clipboard.readText API contract implies rejection on inaccessibility/failure.
 			throw error;
 		}
 	}
@@ -140,13 +138,18 @@ export class ShimExtHostClipboardService
 	 * @throws An error if the IPC operation fails.
 	 */
 	async writeText(text: string): Promise<void> {
-		// Be careful about logging potentially sensitive clipboard content.
-		// Log only a summary or length.
-		const textSummary =
-			text.length > 50 ? text.substring(0, 50) + "..." : text;
+		const textLength = text.length;
+
+		const textSummaryForTrace =
+			textLength > 50 ? text.substring(0, 50) + "..." : text;
 
 		this._logDebug(
-			`clipboard.writeText: Sending to Mountain via IPC 'env_clipboardWriteText' (text length: ${text.length}, summary: "${textSummary}")`,
+			`clipboard.writeText: Sending to Mountain via IPC 'env_clipboardWriteText' (text length: ${textLength})`,
+		);
+
+		// For more detailed debugging, log the summary at trace level if needed.
+		this._logService?.trace(
+			`clipboard.writeText content summary: "${textSummaryForTrace}"`,
 		);
 
 		try {
@@ -156,7 +159,7 @@ export class ShimExtHostClipboardService
 
 				{ text },
 
-				2000,
+				ShimExtHostClipboardService.DEFAULT_CLIPBOARD_TIMEOUT_MS,
 			);
 		} catch (e: any) {
 			const error = refineErrorForShim(
@@ -179,8 +182,6 @@ export class ShimExtHostClipboardService
 
 	/**
 	 * Disposes of resources held by this shim instance.
-	 * (Currently, this shim holds no complex resources like event emitters that require
-	 * explicit disposal beyond what `BaseCocoonShim` handles).
 	 */
 	public override dispose(): void {
 		// From BaseCocoonShim, handles _instanceDisposables
