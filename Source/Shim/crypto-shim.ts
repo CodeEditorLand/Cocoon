@@ -215,6 +215,8 @@ export default cryptoShimInstance;
 // This is a compile-time check. If NodeCryptoTypes.Crypto has more overloads or different
 // optionality for properties than CocoonCryptoShim, this might need adjustment or explicit `Partial<>`.
 // For instance, if NodeCryptoTypes.Crypto makes `randomUUID` optional due to versioning,
+
 // but CocoonCryptoShim declares it non-optional (assuming target Node version has it),
+
 // this assertion would guide us.
 // const _typeCheck: Partial<NodeCryptoTypes.Crypto> = cryptoShimInstance;
