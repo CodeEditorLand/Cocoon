@@ -14,13 +14,12 @@
  *
  * Responsibilities:
  * - Implementing the `vscode.env` API interface.
- * - Populating read-only environment properties (e.g., `appName`, `appRoot`, `machineId`, *
- *   `language`, `isRemote`, `uiKind`) from `ExtHostInitData`.
+ * - Populating read-only environment properties (e.g., `appName`, `appRoot`, `machineId`, *   `language`, `isRemote`, `uiKind`) from `ExtHostInitData`.
  * - Providing `env.clipboard` by using an injected `IExtHostClipboardServiceShape` instance.
  * - Implementing `env.openExternal(uri)` and `env.asExternalUri(uri)` by making RPC calls
  *   to `MainThreadWindow`.
- * - Managing and firing `onDidChangeTelemetryLevel` and `onDidChangeShell` events when
- *   notified by Mountain (via RPC calls to this service's `$setTelemetryLevel` and `$setShell`).
+ * - Managing and firing `onDidChangeTelemetryLevel`, `onDidChangeTelemetryEnabled`, and `onDidChangeShell` events when
+ *   notified by Mountain (via RPC calls to this service's `$setTelemetryLevel`, `$onDidChangeTelemetryLevel`, and `$setShell`).
  *
  * Key Interactions:
  * - Registered with Dependency Injection (e.g., in `Cocoon/index.ts`) as `IExtHostEnv`
@@ -39,166 +38,139 @@ import {
 	Emitter as VscodeEmitter,
 	Event as VscodeEvent,
 } from "vs/base/common/event";
-// For URI DTO creation
-import { MarshalledId } from "vs/base/common/marshalling";
-// For appRoot scheme check
-import { Schemas } from "vs/base/common/network";
+import { MarshalledId } from "vs/base/common/marshalling"; // For URI DTO creation
+import { Schemas } from "vs/base/common/network"; // For appRoot scheme check
 import {
 	URI as VSCodeInternalURI,
 	type UriComponents as VSCodeInternalUriComponents,
 } from "vs/base/common/uri";
-// For onDidChangeTelemetryLevel type
-import type { TelemetryLevel } from "vs/platform/telemetry/common/telemetry";
+import {
+	TelemetryLevel, // VS Code internal enum for telemetry levels
+	type TelemetryLevel as VscodePlatformTelemetryLevel, // Explicit type alias for platform level
+} from "vs/platform/telemetry/common/telemetry";
 import {
 	ExtHostContext,
 	MainContext,
-	type ExtHostEnvShape as VscodeExtHostEnvShape,
+	type ExtHostEnvShape as VscodeExtHostEnvShape, // RPC shape this service implements
+	// type MainThreadEnvShape, // Not directly used as proxy target, MainThreadWindow is used
 } from "vs/workbench/api/common/extHost.protocol";
-// For MainThreadWindow proxy, ExtHostContext for self-registration, and RPC shape
 import {
 	IExtHostInitDataService,
 	type ExtHostInitData,
 } from "vs/workbench/api/common/extHostInitDataService";
 // Import from public 'vscode' API definition
 import {
-	// The full vscode.env API type
-	env as VscodeEnvAPI,
+	LogLevel as VscodeApiLogLevel, // Public API LogLevel enum
+	env as VscodeEnvAPI, // The full vscode.env API type
+	UIKind as VscodeUIKind, // Public API UIKind enum
 	Uri as VscodeUri,
-	// Enum from vscode namespace (UIKind.Desktop, UIKind.Web)
-	type UIKind,
 	type Clipboard as VscodeClipboard,
 } from "vscode";
+
+// Assuming resolved to API shim
 
 import {
 	BaseCocoonShim,
 	refineErrorForShim,
-	// Updated type from BaseCocoonShim
 	type ILogServiceForShim,
-	// Updated type from BaseCocoonShim
 	type IRpcProtocolServiceAdapter,
 	type ProxyIdentifier,
 } from "./_baseShim";
-// Shape for the injected clipboard service
-import type { IExtHostClipboardServiceShape } from "./clipboard-shim";
+import type { IExtHostClipboardServiceShape } from "./clipboard-shim"; // Shape for the injected clipboard service
 
 // --- Type Definitions ---
 
-/**
- * Defines the service interface for `vscode.env` that this shim implements for DI.
- * It directly matches the `vscode.env` API surface exposed to extensions.
- */
+/** Defines the service interface for `vscode.env` that this shim implements for DI. */
 export interface IExtHostEnvServiceShape extends VscodeEnvAPI {
-	// Standard DI mechanism for type-safe DI
-	readonly _serviceBrand: undefined;
+	readonly _serviceBrand: undefined; // Standard DI mechanism for type-safe DI
 }
 
-/**
- * RPC shape for methods on `MainThreadWindow` relevant to `vscode.env` operations
- * like opening external URIs and resolving them for external use.
- */
+/** RPC shape for methods on `MainThreadWindow` relevant to `vscode.env` operations. */
 interface MainThreadWindowProxyForEnv {
 	$openUri(
 		uriDto: VSCodeInternalUriComponents,
-
 		options?: {
 			allowExternalSchemes?: boolean;
-
 			allowContributedOpeners?: boolean | string;
 		},
 	): Promise<boolean>;
-
 	$asExternalUri(
 		uriDto: VSCodeInternalUriComponents,
-
 		options?: { allowContributedOpeners?: boolean },
 	): Promise<VSCodeInternalUriComponents>;
 }
 
-/**
- * Cocoon's implementation of the `vscode.env` API namespace.
- * It sources data from `ExtHostInitData` and delegates some operations via RPC or to other shims.
- */
+/** Cocoon's implementation of the `vscode.env` API namespace. */
 export class ShimExtHostEnvService
 	extends BaseCocoonShim
 	implements IExtHostEnvServiceShape, VscodeExtHostEnvShape
 {
-	// Implements public API shape and RPC shape for MainThread calls
+	// Implements public API shape and RPC shape
 	public readonly _serviceBrand: undefined;
-
 	private readonly _initData: ExtHostInitData;
-
-	// Instance of ShimExtHostClipboardService
-	public readonly clipboard: VscodeClipboard;
-
+	public readonly clipboard: VscodeClipboard; // Instance of ShimExtHostClipboardService
 	private _mainThreadWindowProxy: MainThreadWindowProxyForEnv | null = null;
+
+	#currentTelemetryLevel: VscodePlatformTelemetryLevel = TelemetryLevel.NONE; // Default until initialized
+	#currentShellPath: string;
 
 	// Event Emitters for vscode.env events
 	private readonly _onDidChangeTelemetryLevelEmitter =
-		new VscodeEmitter<TelemetryLevel>();
-
-	public readonly onDidChangeTelemetryLevel: VscodeEvent<TelemetryLevel> =
+		this._instanceDisposables.add(new VscodeEmitter<VscodeApiLogLevel>());
+	public readonly onDidChangeTelemetryLevel: VscodeEvent<VscodeApiLogLevel> =
 		this._onDidChangeTelemetryLevelEmitter.event;
 
-	private readonly _onDidChangeShellEmitter = new VscodeEmitter<string>();
+	private readonly _onDidChangeTelemetryEnabledEmitter =
+		this._instanceDisposables.add(new VscodeEmitter<boolean>());
+	public readonly onDidChangeTelemetryEnabled: VscodeEvent<boolean> =
+		this._onDidChangeTelemetryEnabledEmitter.event;
 
+	private readonly _onDidChangeShellEmitter = this._instanceDisposables.add(
+		new VscodeEmitter<string>(),
+	);
 	public readonly onDidChangeShell: VscodeEvent<string> =
 		this._onDidChangeShellEmitter.event;
 
-	/**
-	 * Creates an instance of ShimExtHostEnvService.
-	 * @param rpcService The RPC service adapter for communication with the main thread.
-	 * @param logService The logging service for shim-specific messages.
-	 * @param initDataService Service providing initialization data from the main process (Mountain).
-	 * @param clipboardService The clipboard service implementation (shim).
-	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
-
 		logService: ILogServiceForShim | undefined,
-
-		// Injected
-		initDataService: IExtHostInitDataService,
-
-		// Injected
-		clipboardService: IExtHostClipboardServiceShape,
+		initDataService: IExtHostInitDataService, // Injected
+		clipboardService: IExtHostClipboardServiceShape, // Injected
 	) {
 		super("ExtHostEnvService", rpcService, logService);
-
-		// Get the raw init data
 		this._initData = initDataService.value;
-
-		// Use the injected clipboard service
 		this.clipboard = clipboardService;
+		this.#currentShellPath =
+			(process.platform === "win32"
+				? process.env.ComSpec
+				: process.env.SHELL) || "unknown_shell_in_cocoon_env";
+		// Set initial telemetry level from initData if available, to inform `isTelemetryEnabled` getter correctly from start.
+		this.#currentTelemetryLevel =
+			this._initData.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
 
-		// Use Info for major lifecycle
-		this._logInfo("Initialized.");
+		this._logInfo(
+			`Initialized. Initial shell: '${this.#currentShellPath}', Initial TelemetryLevel: ${TelemetryLevel[this.#currentTelemetryLevel]}`,
+		);
 
 		if (this._rpcService) {
 			this._mainThreadWindowProxy = this._getProxy(
 				MainContext.MainThreadWindow as ProxyIdentifier<MainThreadWindowProxyForEnv>,
 			);
-
-			// Register this service instance with the RPC system to handle calls from the main thread (e.g., MainThreadEnvService)
-			// This is necessary for methods like $setTelemetryLevel and $setShell to be callable by Mountain.
 			try {
 				this._rpcService.set(
 					ExtHostContext.ExtHostEnv as ProxyIdentifier<VscodeExtHostEnvShape>,
-
 					this,
 				);
-
 				this._logInfo(
 					"Registered self for RPC calls from MainThread (ExtHostEnv).",
 				);
 			} catch (e: any) {
 				this._logError(
 					"Failed to register self as RPC target for ExtHostEnv:",
-
 					e,
 				);
 			}
 		}
-
 		if (!this._mainThreadWindowProxy) {
 			this._logWarn(
 				"MainThreadWindow RPC proxy NOT available. `env.openExternal` and `env.asExternalUri` will be impaired or fail.",
@@ -211,200 +183,165 @@ export class ShimExtHostEnvService
 			this._initData.environment.appName || "Cocoon Hosted Application"
 		);
 	}
-
 	get appRoot(): string | undefined {
 		const appRootUriComponents = this._initData.environment.appRoot;
-
 		if (appRootUriComponents) {
 			const revivedUri = VSCodeInternalURI.revive(appRootUriComponents);
-
-			// Consistent with VS Code: only return fsPath if it's a file URI.
 			return revivedUri.scheme === Schemas.file
 				? revivedUri.fsPath
 				: undefined;
 		}
-
 		return undefined;
 	}
-
 	get appHost(): string {
-		// Typically 'desktop' | 'web' | 'codespaces'
-		// Default to 'desktop' if not provided
 		return this._initData.environment.appHost || "desktop";
 	}
-
 	get uriScheme(): string {
-		// The main URI scheme of the application (e.g., 'vscode', 'vscode-insiders', 'cocoon-code').
 		return this._initData.environment.appUriScheme || "cocoon-code-editor";
 	}
-
 	get language(): string {
-		// BCP 47 language tag (e.g., "en", "de", "zh-cn").
-		// Default to 'en'
 		return this._initData.environment.appLanguage || "en";
 	}
-
 	get machineId(): string {
 		return (
 			this._initData.telemetryInfo.machineId || "cocoon-shim-machine-id"
 		);
 	}
-
 	get sessionId(): string {
 		return (
 			this._initData.telemetryInfo.sessionId || "cocoon-shim-session-id"
 		);
 	}
-
 	get isTrusted(): boolean {
-		// Workspace trust state. Prefer workspace-specific trust if available from initData,
-
-		// fallback to environment global trust, then default to true if no trust info provided.
 		return (
 			this._initData.workspace?.trusted ??
 			this._initData.environment.isTrusted ??
 			true
 		);
 	}
-
 	get isRemote(): boolean {
 		return !!this._initData.remote?.isRemote;
 	}
-
 	get remoteName(): string | undefined {
 		const authority = this._initData.remote?.authority;
-
 		if (authority) {
 			const plusIdx = authority.indexOf("+");
-
-			// Extracts the resolver name, e.g., 'ssh-remote' from 'ssh-remote+myhost'.
 			return plusIdx === -1 ? authority : authority.substring(0, plusIdx);
 		}
-
 		return undefined;
 	}
-
 	get shell(): string {
-		// The path to the shell executable.
-		// For a Node.js based environment like Cocoon, this typically defaults to the system's shell.
-		// The main process (Mountain) might provide a user-configured shell via initData if it's relevant
-		// for contexts like an integrated terminal, but `env.shell` usually refers to a more general default.
-		// The `$setShell` RPC call allows Mountain to update this if it changes.
-		// TODO: If Mountain pushes shell updates via `$setShell`, this getter should ideally reflect that pushed value.
-		// For now, it reflects the environment of the Cocoon process.
-		return (
-			(process.platform === "win32"
-				? process.env.ComSpec
-				: process.env.SHELL) || "unknown_shell_in_cocoon_env"
+		return this.#currentShellPath;
+	} // Returns potentially overridden shell
+	get uiKind(): VscodeUIKind {
+		const internalUiKindNum = this._initData.uiKind; // This is number from IExtensionHostInitData
+		if (internalUiKindNum === VscodeUIKind.Desktop)
+			return VscodeUIKind.Desktop; // Typically 1
+		if (internalUiKindNum === VscodeUIKind.Web) return VscodeUIKind.Web; // Typically 2
+		this._logWarnOnce(
+			`Unknown uiKind value ('${internalUiKindNum}') from initData. Defaulting to UIKind.Desktop.`,
 		);
+		return VscodeUIKind.Desktop; // Safe default
 	}
-
-	get uiKind(): UIKind {
-		// `this._initData.uiKind` is a number from IExtensionHostInitData.
-		// The public `vscode.UIKind` enum is 1 for Desktop, 2 for Web.
-		// Ensure mapping is correct based on how `_initData.uiKind` is populated by Mountain.
-		// Assuming Mountain uses 0 for Desktop and 1 for Web (older VS Code internal pattern), map to public API values.
-		// If Mountain uses 1 for Desktop, 2 for Web directly, adjust mapping.
-		const internalUiKindNum = this._initData.uiKind;
-
-		// Internal 0 (Desktop) -> vscode.UIKind.Desktop (1)
-		if (internalUiKindNum === 0) return 1;
-
-		// Internal 1 (Web) -> vscode.UIKind.Web (2)
-		if (internalUiKindNum === 1) return 2;
-
-		// Fallback if Mountain sends values already matching vscode.UIKind enum
-		if (internalUiKindNum === 1 /* vscode.UIKind.Desktop */) return 1;
-
-		if (internalUiKindNum === 2 /* vscode.UIKind.Web */) return 2;
-
-		this._logWarn(
-			`Unknown uiKind value ('${internalUiKindNum}') from initData. Defaulting to UIKind.Desktop (1). Check initData.uiKind mapping from Mountain.`,
-		);
-
-		// UIKind.Desktop (safe default)
-		return 1;
-	}
-
 	get isNewAppInstall(): boolean {
-		// This information must be provided by the main process (Mountain) in initData.
-		// Cast if not standard in ExtHostInitData type
-		const isNew = (this._initData as any).isNewAppInstall;
-
+		const isNew = (this._initData as any).isNewAppInstall; // Cast if not standard in ExtHostInitData
 		if (isNew === undefined) {
 			this._logWarnOnce(
-				"env.isNewAppInstall: Value not provided by Mountain in initData. Defaulting to false.",
+				"env.isNewAppInstall: Value not provided. Defaulting to false.",
 			);
 		}
-
 		return isNew === true;
 	}
-
 	get isBuilt(): boolean {
-		// Determines if this is a "built" (release/stable/insiders) version vs. a "development" one.
-		// Check `product.quality` first (standard in VS Code), then fallback to a top-level `quality` property in initData.
 		const quality =
 			(this._initData as any).product?.quality ||
 			(this._initData as any).quality;
-
 		if (quality === undefined) {
 			this._logWarnOnce(
-				"env.isBuilt: Product quality not provided by Mountain in initData. Assuming not a release build (isBuilt=false).",
+				"env.isBuilt: Product quality not provided. Assuming dev build (isBuilt=false).",
 			);
-
-			// Safe default if quality is unknown
 			return false;
 		}
-
 		return quality !== "development";
+	}
+
+	// --- Telemetry Level and Enabled ---
+	get logLevel(): VscodeApiLogLevel {
+		// TODO: This should reflect the log level of the *extension host process* itself,
+		// which might be different from specific logger instances.
+		// For now, defer to a global log service if one is accessible here, or a default.
+		// This is NOT the telemetry level.
+		// This might need an IExtHostLogService dependency to get its current level.
+		// Or if `ILogService` DI in BaseCocoonShim is for the main ExtHost log, use that.
+		const mainLoggerLevel = this._logService?.getLevel(); // If BaseCocoonShim's logger is the main one
+		if (mainLoggerLevel !== undefined) {
+			// Map platform LogLevel to API LogLevel
+			switch (mainLoggerLevel) {
+				case LogLevel.Trace:
+					return VscodeApiLogLevel.Trace;
+				case LogLevel.Debug:
+					return VscodeApiLogLevel.Debug;
+				case LogLevel.Info:
+					return VscodeApiLogLevel.Info;
+				case LogLevel.Warning:
+					return VscodeApiLogLevel.Warning;
+				case LogLevel.Error:
+					return VscodeApiLogLevel.Error;
+				case LogLevel.Off:
+					return VscodeApiLogLevel.Off;
+				default:
+					return VscodeApiLogLevel.Info; // Fallback
+			}
+		}
+		this._logWarnOnce(
+			"env.logLevel: Cannot determine main ExtHost log level. Defaulting to Info.",
+		);
+		return VscodeApiLogLevel.Info; // Default
+	}
+	// onDidChangeLogLevel is for the *extension host's* general log level, not telemetry.
+	// This event should be fired if the main ExtHost log level can change.
+	// This is complex as it's not tied to telemetry level. For now, NOP.
+	// public readonly onDidChangeLogLevel: VscodeEvent<VscodeApiLogLevel> = VscodeEvent.None;
+
+	get isTelemetryEnabled(): boolean {
+		return (
+			this.#currentTelemetryLevel !== TelemetryLevel.NONE &&
+			this.#currentTelemetryLevel !== TelemetryLevel.OFF
+		); //OFF is also considered disabled
 	}
 
 	async openExternal(target: VscodeUri): Promise<boolean> {
 		if (!(target instanceof VscodeUri)) {
 			this._logError(
-				"env.openExternal: Invalid target URI provided. Must be a vscode.Uri instance.",
-
+				"env.openExternal: Invalid target URI. Must be vscode.Uri instance.",
 				"Received:",
-
 				target,
 			);
-
 			return false;
 		}
-
 		this._logDebug(
-			`env.openExternal: Attempting to open URI='${target.toString(true)}' (skipEncoding=true for logging)`,
+			`env.openExternal: Attempting to open URI='${target.toString(true)}'`,
 		);
-
 		if (!this._mainThreadWindowProxy) {
 			this._logError(
 				"Cannot env.openExternal: MainThreadWindow RPC proxy is unavailable.",
 			);
-
-			// API expects Promise<boolean>
-			return Promise.resolve(false);
+			return false;
 		}
-
 		try {
-			// Convert vscode.Uri (API type) to VSCodeInternalURI, then to VSCodeInternalUriComponents for RPC.
-			// Throws if `target` is not a valid URI structure
 			const internalUri = VSCodeInternalURI.from(target);
-
 			const uriDto = this._internalUriToMarshalledDto(internalUri);
-
-			// For `env.openExternal`, `allowExternalSchemes: true` is usually implied/safe,
-
-			// allowing schemes like http, https, mailto to be handled by the OS.
+			// For `env.openExternal`, `allowExternalSchemes: true` is usually implied.
+			// `allowContributedOpeners` can be controlled if the API supports it.
 			return await this._mainThreadWindowProxy.$openUri(uriDto, {
-				allowExternalSchemes: true,
+				allowExternalSchemes:
+					true /*, allowContributedOpeners: if_api_supports_options */,
 			});
 		} catch (e: any) {
 			this._logError(
 				"env.openExternal: RPC call failed or URI conversion error:",
-
 				refineErrorForShim(e, this._logService, "openExternal RPC"),
 			);
-
 			return false;
 		}
 	}
@@ -412,150 +349,110 @@ export class ShimExtHostEnvService
 	async asExternalUri(target: VscodeUri): Promise<VscodeUri> {
 		if (!(target instanceof VscodeUri)) {
 			this._logError(
-				"env.asExternalUri: Invalid target URI provided. Must be a vscode.Uri instance. Returning original URI.",
-
+				"env.asExternalUri: Invalid target URI. Must be vscode.Uri instance. Returning original.",
 				"Received:",
-
 				target,
 			);
-
-			// Return original if invalid input
 			return target;
 		}
-
 		this._logDebug(
-			`env.asExternalUri: Resolving URI='${target.toString(true)}' (skipEncoding=true for logging)`,
+			`env.asExternalUri: Resolving URI='${target.toString(true)}'`,
 		);
-
 		if (!this._mainThreadWindowProxy) {
 			this._logError(
-				"Cannot env.asExternalUri: MainThreadWindow RPC proxy is unavailable. Returning original URI.",
+				"Cannot env.asExternalUri: MainThreadWindow RPC proxy unavailable. Returning original URI.",
 			);
-
 			return target;
 		}
-
 		try {
 			const internalUri = VSCodeInternalURI.from(target);
-
 			const uriDto = this._internalUriToMarshalledDto(internalUri);
-
-			// `allowContributedOpeners: false` is typical for `asExternalUri` when the intent is to get a
-			// URL for external OS handling, not for opening within VS Code via a contributed opener.
 			const resultUriDto =
 				await this._mainThreadWindowProxy.$asExternalUri(uriDto, {
 					allowContributedOpeners: false,
 				});
-
-			// Revive DTO to internal URI
-			const revivedInternalUri = VSCodeInternalURI.revive(resultUriDto);
-
-			// Convert internal URI back to API URI (VscodeUri)
-			return VscodeUri.from(revivedInternalUri);
+			return VscodeUri.from(VSCodeInternalURI.revive(resultUriDto));
 		} catch (e: any) {
 			this._logError(
 				"env.asExternalUri: RPC call failed or URI conversion error:",
-
 				refineErrorForShim(e, this._logService, "asExternalUri RPC"),
 			);
-
-			// Fallback to original target URI on error
-			return target;
+			return target; // Fallback to original
 		}
 	}
 
-	/**
-	 * Helper to convert an internal `VSCodeInternalURI` to a marshalled DTO suitable for RPC.
-	 * This ensures a consistent DTO structure, including `$mid` for VS Code's marshalling.
-	 * @param uri The internal URI (`vs/base/common/uri.URI`) to convert.
-	 * @returns URI components DTO (`VSCodeInternalUriComponents`) suitable for RPC transfer.
-	 */
 	private _internalUriToMarshalledDto(
 		uri: VSCodeInternalURI,
 	): VSCodeInternalUriComponents {
-		// This should produce a structure compatible with what RPCProtocol expects
-		// and what MainThread services can revive using `URI.revive()`.
 		return {
-			// Using UriSimple for a lighter payload. MainThread can revive this.
-			$mid: MarshalledId.UriSimple,
-
+			$mid: MarshalledId.UriSimple, // Standard for lighter payload if full components not strictly needed
 			scheme: uri.scheme,
-
 			authority: uri.authority,
-
 			path: uri.path,
-
 			query: uri.query,
-
 			fragment: uri.fragment,
-
-			// `external` and `fsPath` are not part of UriSimple DTO.
-			// If full components (like those from `uri.toJSON()`) are needed by Mountain,
-
-			// use `MarshalledId.Uri` and include them, or ensure Mountain can handle UriSimple.
 		};
 	}
 
-	// --- Methods for VscodeExtHostEnvShape (these are called by MainThread via RPC) ---
-	/**
-	 * {@inheritDoc VscodeExtHostEnvShape.$setTelemetryLevel}
-	 *
-	 *
-	 * Called by the MainThread (e.g., MainThreadEnvService) to update the telemetry level
-	 * in the extension host. This then fires the `onDidChangeTelemetryLevel` event.
-	 * @param level The new telemetry level (e.g., All, Error, Crash, Off).
-	 */
-	public $setTelemetryLevel(level: TelemetryLevel): void {
-		const currentLevelInInitData =
-			(this._initData.telemetryInfo as any).telemetryLevel ??
-			TelemetryLevel.NONE;
+	// --- Methods for VscodeExtHostEnvShape (called by MainThread via RPC) ---
+	public $setTelemetryLevel(level: VscodePlatformTelemetryLevel): void {
+		// Renamed from VscodeExtHostEnvShape for clarity; protocol uses platform level
+		const oldIsEnabled = this.isTelemetryEnabled;
+		const oldPlatformLevel = this.#currentTelemetryLevel;
+
+		this.#currentTelemetryLevel = level; // Update stored platform level
+		const newIsEnabled = this.isTelemetryEnabled;
 
 		this._logInfo(
-			`RPC $setTelemetryLevel: Level received from MainThread: ${TelemetryLevel[level]}. Previous effective level in initData: ${TelemetryLevel[currentLevelInInitData]}.`,
+			`RPC $setTelemetryLevel: Platform TelemetryLevel changed from ${TelemetryLevel[oldPlatformLevel]} to ${TelemetryLevel[level]}. isTelemetryEnabled change: ${oldIsEnabled} -> ${newIsEnabled}.`,
 		);
 
-		// Update a local cache if _initData.telemetryInfo is meant to be the source of truth for telemetry level.
-		// This makes `this.telemetryInfo.telemetryLevel` (if exposed) reflect the latest.
-		(this._initData.telemetryInfo as any).telemetryLevel = level;
+		// Map platform level to API LogLevel for the onDidChangeTelemetryLevel event
+		let apiLogLevel: VscodeApiLogLevel;
+		switch (level) {
+			case TelemetryLevel.NONE:
+			case TelemetryLevel.OFF: // Treat OFF same as NONE for this API event's level
+				apiLogLevel = VscodeApiLogLevel.Off;
+				break;
+			case TelemetryLevel.ERROR:
+				apiLogLevel = VscodeApiLogLevel.Error;
+				break;
+			case TelemetryLevel.USAGE:
+				apiLogLevel = VscodeApiLogLevel.Info;
+				break; // USAGE often maps to Info for general logging
+			case TelemetryLevel.ALL:
+				apiLogLevel = VscodeApiLogLevel.Trace;
+				break; // ALL maps to Trace for max verbosity
+			default:
+				apiLogLevel = VscodeApiLogLevel.Info; // Fallback
+		}
+		this._onDidChangeTelemetryLevelEmitter.fire(apiLogLevel);
 
-		this._onDidChangeTelemetryLevelEmitter.fire(level);
+		if (oldIsEnabled !== newIsEnabled) {
+			this._onDidChangeTelemetryEnabledEmitter.fire(newIsEnabled);
+		}
 	}
 
-	/**
-	 * {@inheritDoc VscodeExtHostEnvShape.$setShell}
-	 *
-	 *
-	 * Called by the MainThread to update the shell path in the extension host.
-	 * This then fires the `onDidChangeShell` event.
-	 * @param shellPath The new shell path.
-	 */
+	// This is VS Code's protocol method name, $setTelemetryLevel is often for initialization.
+	public $onDidChangeTelemetryLevel(
+		level: VscodePlatformTelemetryLevel,
+	): void {
+		this.$setTelemetryLevel(level); // Reuse the logic, as effect is the same.
+	}
+
 	public $setShell(shellPath: string): void {
-		// Get current value from the getter (which reads process.env)
-		const oldShell = this.shell;
-
+		const oldShell = this.#currentShellPath;
+		this.#currentShellPath = shellPath;
 		this._logInfo(
-			`RPC $setShell: Shell path received from MainThread: '${shellPath}'. Previous effective shell: '${oldShell}'.`,
+			`RPC $setShell: Shell path updated by MainThread from '${oldShell}' to '${shellPath}'.`,
 		);
-
-		// If `this.shell` were derived from a mutable property in `_initData`, we would update it here.
-		// Since it's currently derived directly from `process.env`, this RPC call primarily serves
-		// to fire the `onDidChangeShell` event, notifying extensions that the host-recognized shell has changed.
-		// A more complex state management might store this `shellPath` as an override.
-		this._onDidChangeShellEmitter.fire(shellPath);
+		if (oldShell !== shellPath) {
+			this._onDidChangeShellEmitter.fire(shellPath);
+		}
 	}
 
-	/**
-	 * Disposes of resources held by this shim instance, primarily event emitters
-	 * and any subscriptions managed by the base class.
-	 */
 	public override dispose(): void {
-		// From BaseCocoonShim, handles _instanceDisposables
-		super.dispose();
-
-		this._onDidChangeTelemetryLevelEmitter.dispose();
-
-		this._onDidChangeShellEmitter.dispose();
-
+		super.dispose(); // Handles _instanceDisposables which includes emitters
 		this._logInfo("Disposed.");
 	}
 }
