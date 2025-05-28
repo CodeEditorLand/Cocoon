@@ -1,295 +1,313 @@
 /*---------------------------------------------------------------------------------------------
  * Cocoon Localization Shim (localization-shim.ts)
  * --------------------------------------------------------------------------------------------
- * Provides a basic stub implementation for the `IExtHostLocalizationService`.
+ * Provides an implementation for the `IExtHostLocalizationService`.
  * In a full VS Code environment, this service is essential for National Language Support (NLS).
- * It is responsible for:
- *  - Fetching localized string bundles (typically from `package.nls.json` and
- *    `package.nls.<language_code>.json` files within extensions or core components).
- *  - Providing extensions with access to these localized strings via `vscode.l10n.t()`
- *    (which would internally use this service or a related NLS utility).
- *  - Managing information about available language packs and the current application language.
+ * It loads localized string bundles from extensions and core components.
  *
- * For Cocoon's MVP (Minimum Viable Product), this shim provides minimal functionality.
- * It generally returns unlocalized (default) strings or empty/undefined bundles, as
- * implementing full NLS support (including bundle loading from potentially varied
- * sources, parsing, language negotiation, and integration with a translation system)
- * is a complex undertaking beyond the initial scope.
+ * This Cocoon shim implements:
+ *  - Fetching localized string bundles (`package.nls.<language_code>.json` and `package.nls.json`)
+ *    from an extension's specified l10n path (or its root) via RPC calls to Mountain.
+ *  - Providing extensions with access to these localized strings via `getBundle()`.
+ *  - `getBundleUri()` to provide the URI of the localization bundle that would be used.
+ *  - `initializeLocalizedMessages()` to trigger the loading for a given extension.
+ *  - `onDidInitializeLocalization` event, signaled after initial setup.
  *
- * Responsibilities (as a stub):
- * - Implementing the `IExtHostLocalizationService` interface with No-Operation (NOP)
- *   methods or methods that return default/empty values.
- * - Logging warnings (typically once per method) when its API methods are called,
- *
- *   to indicate that full localization functionality is not currently supported.
- * - Providing a NOP `onDidInitializeLocalization` event, which in a real system would
- *   signal when localization data is ready.
- * - The `initializeLocalizedMessages` method (called by `ExtHostExtensionService`
- *   before extension activation) is a NOP but logs if an extension manifest
- *   indicates it has localized messages.
+ * Limitations:
+ *  - Does not yet directly provide the `vscode.l10n.t()` API; that requires a separate `ExtHostL10nService`
+ *    shim that would consume the bundles loaded by this service.
+ *  - `getSystemTranslations()` is stubbed.
  *
  * Key Interactions:
- * - An instance of `ShimExtHostLocalizationService` is registered with DI in
- *   `Cocoon/index.ts` and is typically injected into the `ExtHostExtensionService`
- *   (or its shim) and potentially used by the API factory constructing the `vscode` object.
- * - In a full implementation, this service would interact heavily with a
- *   `MainThreadLocalization` service on the Mountain host via RPC to fetch NLS
- *   bundles, language pack information, and the current application language.
- * - Uses `BaseCocoonShim` for standardized logging utilities.
+ * - An instance is registered with DI and typically injected into `ExtHostExtensionService`.
+ * - Uses RPC to `MainThreadLocalization` on Mountain to fetch NLS bundle contents.
+ * - Uses `BaseCocoonShim` for logging and RPC.
  *
+ * TODO:
+ *  - Implement `getSystemTranslations()` if needed, likely requiring new RPCs.
+ *  - Refine `signalLocalizationInitialized()` call point in `index.ts` for accuracy.
+ *  - Create and integrate `l10n-shim.ts` for `vscode.l10n.t()` API.
  *--------------------------------------------------------------------------------------------*/
 
-// For VscodeEvent.None
-import { Event as VscodeEvent } from "vs/base/common/event";
-// For URI type if bundle URIs are handled (e.g., in a full implementation or for initData)
-// import { URI as VSCodeInternalURI, type UriComponents as VSCodeInternalUriComponents } from "vs/base/common/uri";
-
+import * as path from "node:path"; // For joining paths for bundle URIs
+import { Barrier } from "vs/base/common/async";
+import {
+	Emitter as VscodeEmitter,
+	Event as VscodeEvent,
+} from "vs/base/common/event";
+import {
+	URI as VSCodeInternalURI,
+	type UriComponents as VSCodeInternalUriComponents,
+} from "vs/base/common/uri";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
-// Import the actual VS Code interface definition for IExtHostLocalizationService
+import { MainContext } from "vs/workbench/api/common/extHost.protocol"; // For MainThread RPC
+import type { ExtHostInitData } from "vs/workbench/api/common/extHostInitDataService"; // For initData.environment.appLanguage
 import type { IExtHostLocalizationService as VscodeIExtHostLocalizationService } from "vs/workbench/api/common/extHostLocalizationService";
+import { Uri as VscodeApiUri } from "vscode"; // Public API type
 
-// For `vscode.Uri` type consistency in public API signatures (e.g., getBundleUri)
-import { Uri as VscodeApiUri } from "../Shim/out/vscode";
 import {
 	BaseCocoonShim,
-	// Updated type from BaseCocoonShim
+	refineErrorForShim,
 	type ILogServiceForShim,
-	// Updated type from BaseCocoonShim
 	type IRpcProtocolServiceAdapter,
-	// Uncomment if/when RPC is used
-	// type ProxyIdentifier,
+	type ProxyIdentifier,
 } from "./_baseShim";
 
-// TODO: Import MainContext from `extHost.protocol.ts` if RPC calls are implemented for full NLS.
-// import { MainContext } from "vs/workbench/api/common/extHost.protocol";
+/** RPC interface for MainThreadLocalization service on Mountain. */
+interface MainThreadLocalizationProxyShape {
+	$fetchBundleContents(
+		uriComponents: VSCodeInternalUriComponents,
+	): Promise<string | null>;
+	// $getUILanguage?(): Promise<string>; // Optional: if language isn't reliably in initData
+}
 
-/**
- * Placeholder for the RPC interface of a `MainThreadLocalization` service on Mountain.
- * This would define methods for fetching NLS bundle information and their content if
- * Cocoon were to implement full NLS by proxying requests.
- */
-// interface MainThreadLocalizationProxyShape {
-
-//     /**
-//      * Fetches the URI (as components) for a built-in NLS bundle for a given extension/component ID and language.
-//      * @param id The identifier of the extension or component (e.g., "vscode.git").
-//      * @param language The BCP 47 language tag (e.g., "de", "zh-cn").
-//      */
-//     $fetchBuiltInBundleUri(id: string, language: string): Promise<VSCodeInternalUriComponents | undefined>;
-
-//
-//     /**
-//      * Fetches the string content of an NLS bundle given its URI components.
-//      * @param uriComponents The URI components of the NLS bundle file.
-//      */
-//     $fetchBundleContents(uriComponents: VSCodeInternalUriComponents): Promise<string>;
-
-//
-// Potentially other methods for language packs, pseudotranslation status, user language, etc.
-//
-// $getLanguage(): Promise<string>; // To get the current application language from MainThread.
-//
-// }
-
-/**
- * Cocoon's stub implementation of `IExtHostLocalizationService`.
- * It provides NOPs or default placeholder values for localization-related API calls,
- *
- * as full NLS support is not part of Cocoon's MVP.
- */
+/** Cocoon's implementation of `IExtHostLocalizationService`. */
 export class ShimExtHostLocalizationService
 	extends BaseCocoonShim
 	implements VscodeIExtHostLocalizationService
 {
-	// Ensure implementation of the VS Code interface
-	// Required by VS Code's service type system for DI.
 	public readonly _serviceBrand: undefined;
+	private _mainThreadLocalizationProxy: MainThreadLocalizationProxyShape | null =
+		null;
 
-	// private _mainThreadLocalizationProxy: MainThreadLocalizationProxyShape | null = null;
+	// Key: extensionId.value (string), Value: Record<string, string> (parsed NLS JSON)
+	readonly #nlsBundlesCache = new Map<string, Record<string, string>>();
+	#currentLanguage: string = "en"; // Default, updated from initData
 
-	/**
-	 * Creates an instance of ShimExtHostLocalizationService.
-	 * @param rpcService The RPC service adapter (passed to `BaseCocoonShim`, currently unused by this stub's core logic).
-	 * @param logService The logging service instance.
-	 */
+	// Barrier to signal when initial localization phase (e.g., after first extensions load) is done.
+	readonly #initializationBarrier = new Barrier();
+	public readonly onDidInitializeLocalization: VscodeEvent<void> =
+		this.#initializationBarrier.onisOpen;
+
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
-
 		logService: ILogServiceForShim | undefined,
+		initData: ExtHostInitData, // To get current language
 	) {
 		super("ExtHostLocalizationService", rpcService, logService);
-
+		this.#currentLanguage = initData.environment.appLanguage || "en";
 		this._logInfo(
-			"Initialized (basic STUB implementation). Full NLS is not supported.",
+			`Initialized. Current UI language: '${this.#currentLanguage}'. NLS bundle loading is active.`,
 		);
 
-		// If this service were to make RPC calls for NLS data:
-		// if (this._rpcService) {
-
-		//     this._mainThreadLocalizationProxy = this._getProxy(
-		//         MainContext.MainThreadLocalization as ProxyIdentifier<MainThreadLocalizationProxyShape>
-		//     );
-
-		// }
-
-		// if (!this._mainThreadLocalizationProxy) {
-
-		//     this._logWarn("MainThreadLocalization RPC proxy not available. Full NLS functionality will be unavailable; only default (unlocalized) strings will effectively be used.");
-
-		// }
+		if (this._rpcService) {
+			this._mainThreadLocalizationProxy = this._getProxy(
+				MainContext.MainThreadLocalization as ProxyIdentifier<MainThreadLocalizationProxyShape>,
+			);
+		}
+		if (!this._mainThreadLocalizationProxy) {
+			this._logError(
+				"MainThreadLocalization RPC proxy NOT available. NLS bundle loading will FAIL.",
+			);
+		}
 	}
 
-	/**
-	 * This shim, in its current stubbed form, does not require RPC for its core functionality.
-	 * @returns `false`, as RPC is not currently required by this shim.
-	 */
-	protected override _requiresRpc(): boolean {
-		return false;
+	/** Signals that the initial batch of localizations can be considered loaded. */
+	public signalLocalizationInitialized(): void {
+		if (!this.#initializationBarrier.isOpen()) {
+			this._logInfo("Signaling that localization has been initialized.");
+			this.#initializationBarrier.open();
+		}
 	}
 
-	/**
-	 * {@inheritDoc VscodeIExtHostLocalizationService.getSystemTranslations}
-	 *
-	 *
-	 * Retrieves system-level translations for a given extension.
-	 * In this stub implementation, it always returns `undefined`, indicating that no
-	 * system-level translations are available or provided by Cocoon for extensions.
-	 * @param _extensionId The identifier of the extension (currently unused in this stub).
-	 * @returns A promise that resolves to `undefined`.
-	 */
 	public async getSystemTranslations(
 		_extensionId: ExtensionIdentifier,
 	): Promise<Record<string, string> | undefined> {
 		this._logWarnOnce(
-			"API STUB: getSystemTranslations() called. Returning undefined. System-level NLS translations are not supported in Cocoon MVP.",
+			"API STUB: getSystemTranslations() called. Returning undefined. System-level NLS not supported.",
 		);
-
 		return undefined;
 	}
 
-	/**
-	 * {@inheritDoc VscodeIExtHostLocalizationService.getBundle}
-	 *
-	 *
-	 * Gets the NLS (National Language Support) string bundle for a given extension ID.
-	 * In this stub implementation, it returns `undefined`, indicating that no NLS bundle
-	 * is found or loaded for the specified extension. A full implementation would involve
-	 * fetching and parsing the appropriate `package.nls.<language_code>.json` file associated
-	 * with the extension.
-	 *
-	 * @param extensionId The identifier string of the extension (e.g., "publisher.name").
-	 * @returns `undefined` in this stub implementation, signifying no bundle is available.
-	 */
 	public getBundle(extensionId: string): Record<string, string> | undefined {
-		this._logWarnOnce(
-			`API STUB: getBundle(for extensionId: '${extensionId}') called. Returning undefined. Extension-specific NLS bundles are not loaded in Cocoon MVP.`,
-		);
-
-		return undefined;
+		return this.#nlsBundlesCache.get(extensionId);
 	}
 
-	/**
-	 * {@inheritDoc VscodeIExtHostLocalizationService.getBundleUri}
-	 *
-	 *
-	 * Gets the URI for the NLS bundle of a given extension.
-	 * In this stub implementation, it returns `undefined`. A full implementation would
-	 * construct the URI based on the extension's installation location, the current
-	 * application language, and VS Code's NLS conventions.
-	 *
-	 * @param extensionId The identifier string of the extension.
-	 * @returns `undefined` in this stub implementation, as bundle URIs are not resolved.
-	 */
 	public getBundleUri(extensionId: string): VscodeApiUri | undefined {
-		// Return type is vscode.Uri
-		this._logWarnOnce(
-			`API STUB: getBundleUri(for extensionId: '${extensionId}') called. Returning undefined. NLS Bundle URIs are not resolved in Cocoon MVP.`,
-		);
-
-		return undefined;
+		const extension = this._findExtensionDescription(extensionId); // Helper needed or assume access
+		if (!extension) {
+			this._logWarn(
+				`getBundleUri: Extension description not found for ID '${extensionId}'.`,
+			);
+			return undefined;
+		}
+		const { l10nBundleLanguageSpecific, l10nBundleDefault } =
+			this._getPotentialBundleUris(extension);
+		// Prefer language-specific URI if it exists, otherwise default.
+		// This doesn't check for file existence, just conventional URI.
+		return l10nBundleLanguageSpecific
+			? VscodeApiUri.from(l10nBundleLanguageSpecific)
+			: l10nBundleDefault
+				? VscodeApiUri.from(l10nBundleDefault)
+				: undefined;
 	}
 
-	/**
-	 * {@inheritDoc VscodeIExtHostLocalizationService.initializeLocalizedMessages}
-	 *
-	 *
-	 * Initializes localized messages for a specific extension. This method is typically
-	 * called by the `ExtHostExtensionService` *before* an extension's `activate()`
-	 * function is invoked. A real implementation would asynchronously load the NLS JSON
-	 * content (e.g., from the main thread via RPC or directly from disk if paths are known)
-	 * and make it available for subsequent calls to `getBundle` or for direct use by
-	 * an `l10n.t()`-like function.
-	 *
-	 * This stub implementation is a No-Operation but will log a message if an extension's
-	 * manifest (`package.json`) indicates that it has a default NLS bundle path defined.
-	 *
-	 * @param extension The `IExtensionDescription` of the extension for which to initialize messages.
-	 * @returns A promise that resolves immediately in this stub, as no actual loading occurs.
-	 */
 	public async initializeLocalizedMessages(
 		extension: IExtensionDescription,
 	): Promise<void> {
-		// Log if an extension *is* NLS-aware by declaring `localizedMessages` in its manifest.
-		if (extension.localizedMessages?.default) {
-			this._logDebug(
-				// Use Debug as this can be frequent during startup for many extensions
-				`initializeLocalizedMessages for extension '${extension.identifier.value}': Extension declares a default NLS bundle URI at ` +
-					`'${extension.localizedMessages.default.toString()}'. However, NLS bundle loading and message localization are currently STUBBED in Cocoon. ` +
-					`The application will use default (likely English) strings from the extension if available, or manifest values.`,
+		// Wait for the service to be fully "ready" (e.g., after initial extensions processed in index.ts)
+		// This prevents trying to load bundles too early if initializationBarrier is used.
+		await this.#initializationBarrier.wait();
+
+		if (!this._mainThreadLocalizationProxy) {
+			this._logWarn(
+				`Cannot initialize messages for '${extension.identifier.value}': RPC proxy unavailable.`,
 			);
+			return;
+		}
 
-			// TODO (Future Full NLS Implementation):
-			// 1. Determine the correct bundle URI to load based on `extension.localizedMessages`,
+		const { l10nBundleLanguageSpecific, l10nBundleDefault } =
+			this._getPotentialBundleUris(extension);
+		let loadedBundle: Record<string, string> | undefined = undefined;
+		let mergedBundle: Record<string, string> = {};
 
-			//    the current application language (e.g., from `this._initData.environment.appLanguage`),
+		// 1. Try to load default `package.nls.json`
+		if (l10nBundleDefault) {
+			try {
+				this._logDebug(
+					`Fetching default NLS bundle for '${extension.identifier.value}' from ${l10nBundleDefault.toString()}`,
+				);
+				const defaultContent =
+					await this._mainThreadLocalizationProxy.$fetchBundleContents(
+						l10nBundleDefault.toJSON(),
+					);
+				if (defaultContent) {
+					mergedBundle = {
+						...mergedBundle,
+						...JSON.parse(defaultContent),
+					};
+					loadedBundle = mergedBundle; // Mark as loaded if default exists
+					this._logDebug(
+						`Successfully loaded and parsed default NLS bundle for '${extension.identifier.value}'.`,
+					);
+				}
+			} catch (e: any) {
+				this._logWarn(
+					`Failed to load or parse default NLS bundle for '${extension.identifier.value}' from ${l10nBundleDefault.toString()}:`,
+					e.message,
+				);
+			}
+		}
 
-			//    and VS Code's NLS fallback rules (e.g., `package.nls.<lang>.json` -> `package.nls.json`).
-			//    This might involve RPC calls like `this._mainThreadLocalizationProxy?.$fetchBuiltInBundleUri(...)`
-			//    or resolving the path locally relative to `extension.extensionLocation`.
-			// 2. Fetch the content of the determined NLS bundle URI (e.g., via
-			//    `this._mainThreadLocalizationProxy?.$fetchBundleContents(...)` or local file read if path is known).
-			// 3. Parse the fetched JSON content.
-			// 4. Store the parsed NLS bundle (e.g., in a `Map<extensionIdString, NlsBundleObject>`)
-			//    so that `getBundle(extensionId)` can return it.
-			// 5. If VS Code's `vscode.l10n.t()` API is to be supported, this loaded bundle would also
-			//    need to be made available to the `l10n` object provided to the extension, likely
-			//    managed by `ExtHostL10n` or a similar dedicated service.
+		// 2. Try to load language-specific `package.nls.<language>.json` and merge if found
+		if (
+			l10nBundleLanguageSpecific &&
+			this.#currentLanguage.toLowerCase() !== "en"
+		) {
+			// No need to load en specific if default is en
+			try {
+				this._logDebug(
+					`Fetching language-specific NLS bundle ('${this.#currentLanguage}') for '${extension.identifier.value}' from ${l10nBundleLanguageSpecific.toString()}`,
+				);
+				const specificContent =
+					await this._mainThreadLocalizationProxy.$fetchBundleContents(
+						l10nBundleLanguageSpecific.toJSON(),
+					);
+				if (specificContent) {
+					// Language-specific overrides default
+					mergedBundle = {
+						...mergedBundle,
+						...JSON.parse(specificContent),
+					};
+					loadedBundle = mergedBundle; // Mark as loaded if specific exists
+					this._logDebug(
+						`Successfully loaded and merged language-specific NLS bundle ('${this.#currentLanguage}') for '${extension.identifier.value}'.`,
+					);
+				}
+			} catch (e: any) {
+				this._logWarn(
+					`Failed to load or parse language-specific NLS bundle ('${this.#currentLanguage}') for '${extension.identifier.value}' from ${l10nBundleLanguageSpecific.toString()}:`,
+					e.message,
+				);
+			}
+		}
+
+		if (loadedBundle) {
+			this.#nlsBundlesCache.set(extension.identifier.value, loadedBundle);
 		} else {
-			this._logService?.trace(
-				// Trace for extensions without NLS declarations, to avoid log spam.
-				`initializeLocalizedMessages for extension '${extension.identifier.value}' (extension has no default NLS bundle specified, or NLS loading is stubbed).`,
+			if (extension.l10n) {
+				// Only log if l10n was configured but nothing loaded
+				this._logWarn(
+					`No NLS bundle content found or loaded for extension '${extension.identifier.value}' (l10n path: ${extension.l10n}).`,
+				);
+			} else {
+				this._logService?.trace(
+					`Extension '${extension.identifier.value}' does not specify an l10n path.`,
+				);
+			}
+		}
+	}
+
+	private _getPotentialBundleUris(extension: IExtensionDescription): {
+		l10nBundleLanguageSpecific: VSCodeInternalURI | undefined;
+		l10nBundleDefault: VSCodeInternalURI | undefined;
+	} {
+		const l10nLocationPath = extension.l10n
+			? path.join(extension.extensionLocation.fsPath, extension.l10n) // Relative to extension root
+			: extension.extensionLocation.fsPath; // Assumed to be in root if no l10n path
+
+		let l10nBundleDefault: VSCodeInternalURI | undefined = undefined;
+		try {
+			l10nBundleDefault = VSCodeInternalURI.file(
+				path.join(l10nLocationPath, `package.nls.json`),
+			);
+		} catch (e) {
+			this._logWarn(
+				`Could not form default NLS bundle URI for ${extension.identifier.value}`,
+				e,
 			);
 		}
 
-		// Resolves immediately as it's a NOP for now.
-		return Promise.resolve();
+		let l10nBundleLanguageSpecific: VSCodeInternalURI | undefined =
+			undefined;
+		if (this.#currentLanguage.toLowerCase() !== "en") {
+			// Often, 'en' is in the default bundle
+			try {
+				l10nBundleLanguageSpecific = VSCodeInternalURI.file(
+					path.join(
+						l10nLocationPath,
+						`package.nls.${this.#currentLanguage}.json`,
+					),
+				);
+			} catch (e) {
+				this._logWarn(
+					`Could not form lang-specific NLS bundle URI for ${extension.identifier.value} (${this.#currentLanguage})`,
+					e,
+				);
+			}
+		}
+		return { l10nBundleLanguageSpecific, l10nBundleDefault };
 	}
 
-	/**
-	 * An event that fires when localization (e.g., loading of language packs or
-	 * initial NLS bundles) has been initialized for the extension host.
-	 * In this stub implementation, it's a NOP event (`VscodeEvent.None`) that never fires,
-	 *
-	 * as full asynchronous NLS initialization is not implemented.
-	 */
-	public readonly onDidInitializeLocalization: VscodeEvent<void> =
-		VscodeEvent.None;
+	// Helper to find IExtensionDescription, needed for getBundleUri.
+	// This suggests a dependency or helper method access to IExtHostExtensionService might be needed
+	// if this service doesn't already have all IExtensionDescriptions.
+	// For now, assuming it's passed in where needed or a placeholder strategy.
+	private _findExtensionDescription(
+		extensionId: string,
+	): IExtensionDescription | undefined {
+		// TODO: This needs a way to access all known IExtensionDescriptions.
+		// This might come from IExtHostExtensionService.getExtensions() or similar.
+		// For this shim in isolation, this is a gap.
+		// In index.ts, `initializeLocalizedMessages` is called with the IExtensionDescription.
+		this._logWarnOnce(
+			`_findExtensionDescription for '${extensionId}' is a STUB. Full implementation needs access to IExtHostExtensionService or similar.`,
+		);
+		// Placeholder:
+		const placeholderInitData = (this as any)._initData as
+			| ExtHostInitData
+			| undefined; // Access initData if possible
+		return placeholderInitData?.extensions.allExtensions.find(
+			(ext) => ext.identifier.value === extensionId,
+		);
+	}
 
-	/**
-	 * Disposes of resources held by this shim instance.
-	 * (Currently, this shim holds no complex resources like event emitters that require
-	 * explicit disposal beyond what `BaseCocoonShim` handles via `_instanceDisposables`).
-	 */
 	public override dispose(): void {
-		// From BaseCocoonShim, handles _instanceDisposables.
 		super.dispose();
-
-		// If any event emitters specific to this service were created (they are not currently), dispose them here.
-		// (onDidInitializeLocalization is VscodeEvent.None, so no VscodeEmitter instance to dispose for it).
-		// Use Info for major lifecycle.
+		this.#nlsBundlesCache.clear();
 		this._logInfo("Disposed.");
 	}
 }
