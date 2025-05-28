@@ -7,17 +7,33 @@
  * Responsibilities:
  * - Implementing `showOpenDialog` and `showSaveDialog` APIs.
  * - Marshalling dialog options (e.g., `defaultUri`, `filters`, titles, labels) for IPC.
- * - Sending requests to Mountain (`ui_showOpenDialog`, `ui_showSaveDialog`).
+ *   `defaultUri` (a `VscodeUri`) is converted to `UriComponents` DTO.
+ *   `filters` (`{ [name: string]: readonly string[] }`) are converted to
+ *   `{ name: string, extensions: readonly string[] }[]`.
+ * - Sending requests to Mountain (`ui_showOpenDialog`, `ui_showSaveDialog`) via IPC.
  * - Receiving URI DTOs from Mountain and reviving them to `vscode.Uri`.
- * - Handling user cancellation, `CancellationToken`, and IPC errors.
+ * - Handling user cancellation, `CancellationToken`, and IPC errors gracefully by returning
+ *   `undefined` as per the API contract.
  *
  * Key Interactions:
  * - Part of `vscode.window` API via API factory.
  * - Uses `BaseCocoonShim` for IPC, marshalling, logging, error refinement.
  * - Relies on Mountain IPC handlers for native dialog display.
  *
+ * IPC Contract with Mountain (Assumed):
+ * - Method "ui_showOpenDialog":
+ *   - Cocoon Params: `OpenDialogOptionsForIpc`
+ *   - Mountain Response (Success): `{ params: UriComponentsDto[] | null | undefined }`
+ *   - Mountain Response (Error): VineErrorPayload
+ * - Method "ui_showSaveDialog":
+ *   - Cocoon Params: `SaveDialogOptionsForIpc`
+ *   - Mountain Response (Success): `{ params: UriComponentsDto | null | undefined }`
+ *   - Mountain Response (Error): VineErrorPayload
+ *
  *--------------------------------------------------------------------------------------------*/
 
+// For URI DTOs
+import type { UriComponents as VSCodeInternalUriComponents } from "vs/base/common/uri";
 import {
 	// API URI type
 	Uri as VscodeUri,
@@ -26,9 +42,11 @@ import {
 	type SaveDialogOptions as VscodeSaveDialogOptions,
 } from "vscode";
 
+// Assuming resolved to API shim
+
 import {
 	BaseCocoonShim,
-	refineErrorForShim,
+	refineErrorForShim, // Use the more specific error refiner
 	type ILogServiceForShim,
 	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
@@ -38,10 +56,10 @@ import {
 /**
  * Serializable DTO for `VscodeOpenDialogOptions.filters`.
  * Example: `[{ name: 'Images', extensions: ['png', 'jpg'] }]`
+ * This matches VS Code's internal `IFileDialogFilter`.
  */
 interface FileFilterForIpc {
 	name: string;
-
 	extensions: readonly string[];
 }
 
@@ -50,11 +68,8 @@ interface FileFilterForIpc {
  */
 interface OpenDialogOptionsForIpc
 	extends Omit<VscodeOpenDialogOptions, "defaultUri" | "filters"> {
-	// Marshalled VscodeUri (e.g., UriComponents DTO)
-	defaultUri?: any;
-
-	// Serialized filters
-	filters?: FileFilterForIpc[];
+	defaultUri?: VSCodeInternalUriComponents; // Marshalled VscodeUri
+	filters?: FileFilterForIpc[]; // Serialized filters
 }
 
 /**
@@ -62,64 +77,53 @@ interface OpenDialogOptionsForIpc
  */
 interface SaveDialogOptionsForIpc
 	extends Omit<VscodeSaveDialogOptions, "defaultUri" | "filters"> {
-	// Marshalled VscodeUri DTO
-	defaultUri?: any;
-
-	// Serialized filters
-	filters?: FileFilterForIpc[];
+	defaultUri?: VSCodeInternalUriComponents; // Marshalled VscodeUri DTO
+	filters?: FileFilterForIpc[]; // Serialized filters
 }
 
-// Array of UriComponents DTOs or undefined
-type OpenDialogResponseFromMountain = any[] | undefined;
+// Array of UriComponents DTOs or undefined/null
+type OpenDialogResponseFromMountain =
+	| VSCodeInternalUriComponents[]
+	| null
+	| undefined;
+// Single UriComponents DTO or undefined/null
+type SaveDialogResponseFromMountain =
+	| VSCodeInternalUriComponents
+	| null
+	| undefined;
 
-// Single UriComponents DTO or undefined
-type SaveDialogResponseFromMountain = any | undefined;
-
-/**
- * Defines the service interface for Dialog operations.
- */
+/** Defines the service interface for Dialog operations. */
 export interface IExtHostDialogServiceShape {
 	readonly _serviceBrand: undefined;
-
 	showOpenDialog(
 		options?: VscodeOpenDialogOptions,
-
 		token?: CancellationToken,
 	): Promise<VscodeUri[] | undefined>;
-
 	showSaveDialog(
 		options?: VscodeSaveDialogOptions,
-
 		token?: CancellationToken,
 	): Promise<VscodeUri | undefined>;
 }
 
-/**
- * Cocoon's implementation of Dialog services.
- */
+/** Cocoon's implementation of Dialog services. */
 export class ShimExtHostDialogService
 	extends BaseCocoonShim
 	implements IExtHostDialogServiceShape
 {
 	public readonly _serviceBrand: undefined;
-
-	// 0 for indefinite, as user interaction time is unknown
-	private static readonly DEFAULT_DIALOG_TIMEOUT_MS = 0;
+	private static readonly DEFAULT_DIALOG_TIMEOUT_MS = 0; // 0 for indefinite, as user interaction time is unknown
 
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
-
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostDialogService", rpcService, logService);
-
 		this._logDebug("Initialized.");
 	}
 
 	protected override _requiresRpc(): boolean {
-		// Uses direct IPC
 		return false;
-	}
+	} // Uses direct IPC
 
 	private _serializeFiltersForIpc(filters?: {
 		[name: string]: readonly string[];
@@ -127,10 +131,8 @@ export class ShimExtHostDialogService
 		if (!filters || Object.keys(filters).length === 0) {
 			return undefined;
 		}
-
 		return Object.entries(filters).map(([name, extensions]) => ({
 			name,
-
 			extensions,
 		}));
 	}
@@ -138,185 +140,183 @@ export class ShimExtHostDialogService
 	/** {@inheritDoc IExtHostDialogServiceShape.showOpenDialog} */
 	async showOpenDialog(
 		options?: VscodeOpenDialogOptions,
-
 		token?: CancellationToken,
 	): Promise<VscodeUri[] | undefined> {
 		if (token?.isCancellationRequested) {
 			this._logDebug(
 				"showOpenDialog cancelled by token before IPC call.",
 			);
-
 			return undefined;
 		}
 
 		const ipcOptions: OpenDialogOptionsForIpc = { ...(options || {}) };
-
 		if (options?.defaultUri) {
-			// _convertApiArgToInternal should produce UriComponents DTO for VscodeUri
-			ipcOptions.defaultUri = this._convertApiArgToInternal(
+			const defaultUriDto = this._convertApiArgToInternal(
 				options.defaultUri,
 			);
+			if (defaultUriDto && typeof defaultUriDto === "object") {
+				// Ensure it's a DTO
+				ipcOptions.defaultUri =
+					defaultUriDto as VSCodeInternalUriComponents;
+			} else {
+				this._logWarn(
+					"Failed to marshal defaultUri for showOpenDialog, it will be omitted.",
+					options.defaultUri,
+				);
+				delete ipcOptions.defaultUri;
+			}
 		} else {
-			delete ipcOptions.defaultUri;
+			delete ipcOptions.defaultUri; // Ensure it's not present if options.defaultUri was null/undefined
 		}
-
 		ipcOptions.filters = this._serializeFiltersForIpc(options?.filters);
 
 		this._logDebug(
-			`showOpenDialog: Sending to Mountain via IPC 'ui_showOpenDialog'. Options:`,
-
-			JSON.stringify(ipcOptions).substring(0, 200) + "...",
+			`showOpenDialog: Sending to Mountain via IPC 'ui_showOpenDialog'. Options (summary):`,
+			JSON.stringify({
+				...ipcOptions,
+				filters: ipcOptions.filters
+					? `${ipcOptions.filters.length} filter(s)`
+					: "none",
+			}).substring(0, 200) + "...",
 		);
 
 		try {
 			const resultFromMountain = (await this._ipcRequestResponse(
 				"ui_showOpenDialog",
-
 				ipcOptions,
-
 				ShimExtHostDialogService.DEFAULT_DIALOG_TIMEOUT_MS,
 			)) as OpenDialogResponseFromMountain;
 
 			if (token?.isCancellationRequested) {
-				this._logDebug("showOpenDialog cancelled post-IPC call.");
-
+				this._logDebug(
+					"showOpenDialog cancelled post-IPC call before result processing.",
+				);
 				return undefined;
 			}
-
 			if (
 				resultFromMountain === undefined ||
 				resultFromMountain === null
 			) {
 				this._logDebug(
-					"showOpenDialog dismissed by user (Mountain returned undefined/null).",
+					"showOpenDialog dismissed by user or no selection (Mountain returned undefined/null).",
 				);
-
 				return undefined;
 			}
-
 			if (!Array.isArray(resultFromMountain)) {
 				this._logError(
 					"showOpenDialog IPC response was not an array of URI components.",
-
 					"Received:",
-
 					resultFromMountain,
 				);
-
 				return undefined;
 			}
 
 			const uris: VscodeUri[] = [];
-
 			for (const uriComponent of resultFromMountain) {
 				const revivedUri =
-					this._reviveApiArgument<VscodeUri>(uriComponent);
-
+					this._reviveApiArgument<VscodeUri>(uriComponent); // BaseCocoonShim handles revival
 				if (revivedUri instanceof VscodeUri) {
 					uris.push(revivedUri);
 				} else {
 					this._logWarn(
 						"showOpenDialog: Failed to revive URI component from Mountain's response.",
-
 						"Component:",
-
 						uriComponent,
 					);
 				}
 			}
-
-			return uris.length > 0 ? uris : undefined;
+			return uris.length > 0 ? uris : undefined; // Return undefined if no valid URIs were revived
 		} catch (e: any) {
 			if (token?.isCancellationRequested) {
 				this._logDebug(
 					"showOpenDialog cancelled during/after IPC error.",
 				);
-
 				return undefined;
 			}
-
+			// Error already refined by _ipcRequestResponse
 			this._logError(
 				"showOpenDialog IPC request 'ui_showOpenDialog' failed:",
-
-				refineErrorForShim(e, this._logService, "showOpenDialog IPC"),
+				e as Error,
 			);
-
-			return undefined;
+			return undefined; // API contract: return undefined on UI error
 		}
 	}
 
 	/** {@inheritDoc IExtHostDialogServiceShape.showSaveDialog} */
 	async showSaveDialog(
 		options?: VscodeSaveDialogOptions,
-
 		token?: CancellationToken,
 	): Promise<VscodeUri | undefined> {
 		if (token?.isCancellationRequested) {
 			this._logDebug(
 				"showSaveDialog cancelled by token before IPC call.",
 			);
-
 			return undefined;
 		}
 
 		const ipcOptions: SaveDialogOptionsForIpc = { ...(options || {}) };
-
 		if (options?.defaultUri) {
-			ipcOptions.defaultUri = this._convertApiArgToInternal(
+			const defaultUriDto = this._convertApiArgToInternal(
 				options.defaultUri,
 			);
+			if (defaultUriDto && typeof defaultUriDto === "object") {
+				ipcOptions.defaultUri =
+					defaultUriDto as VSCodeInternalUriComponents;
+			} else {
+				this._logWarn(
+					"Failed to marshal defaultUri for showSaveDialog, it will be omitted.",
+					options.defaultUri,
+				);
+				delete ipcOptions.defaultUri;
+			}
 		} else {
 			delete ipcOptions.defaultUri;
 		}
-
 		ipcOptions.filters = this._serializeFiltersForIpc(options?.filters);
 
 		this._logDebug(
-			`showSaveDialog: Sending to Mountain via IPC 'ui_showSaveDialog'. Options:`,
-
-			JSON.stringify(ipcOptions).substring(0, 200) + "...",
+			`showSaveDialog: Sending to Mountain via IPC 'ui_showSaveDialog'. Options (summary):`,
+			JSON.stringify({
+				...ipcOptions,
+				filters: ipcOptions.filters
+					? `${ipcOptions.filters.length} filter(s)`
+					: "none",
+			}).substring(0, 200) + "...",
 		);
 
 		try {
 			const resultFromMountain = (await this._ipcRequestResponse(
 				"ui_showSaveDialog",
-
 				ipcOptions,
-
 				ShimExtHostDialogService.DEFAULT_DIALOG_TIMEOUT_MS,
 			)) as SaveDialogResponseFromMountain;
 
 			if (token?.isCancellationRequested) {
-				this._logDebug("showSaveDialog cancelled post-IPC call.");
-
+				this._logDebug(
+					"showSaveDialog cancelled post-IPC call before result processing.",
+				);
 				return undefined;
 			}
-
 			if (
 				resultFromMountain === undefined ||
 				resultFromMountain === null
 			) {
 				this._logDebug(
-					"showSaveDialog dismissed by user (Mountain returned undefined/null).",
+					"showSaveDialog dismissed by user or no selection (Mountain returned undefined/null).",
 				);
-
 				return undefined;
 			}
 
 			const revivedUri =
 				this._reviveApiArgument<VscodeUri>(resultFromMountain);
-
 			if (revivedUri instanceof VscodeUri) {
 				return revivedUri;
 			} else {
 				this._logError(
 					"showSaveDialog: Failed to revive URI component from Mountain's response.",
-
 					"Received:",
-
 					resultFromMountain,
 				);
-
 				return undefined;
 			}
 		} catch (e: any) {
@@ -324,23 +324,18 @@ export class ShimExtHostDialogService
 				this._logDebug(
 					"showSaveDialog cancelled during/after IPC error.",
 				);
-
 				return undefined;
 			}
-
 			this._logError(
 				"showSaveDialog IPC request 'ui_showSaveDialog' failed:",
-
-				refineErrorForShim(e, this._logService, "showSaveDialog IPC"),
+				e as Error,
 			);
-
-			return undefined;
+			return undefined; // API contract: return undefined on UI error
 		}
 	}
 
 	public override dispose(): void {
 		super.dispose();
-
 		this._logDebug("Disposed.");
 	}
 }
