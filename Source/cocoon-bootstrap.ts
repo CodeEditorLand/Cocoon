@@ -3,19 +3,23 @@
  * --------------------------------------------------------------------------------------------
  * Provides essential utilities executed very early in the Cocoon sidecar's startup process,
  *
+ *
  * before most other modules are loaded or services initialized. Its primary functions are to
  * patch global Node.js `process` object behaviors to prevent unintentional termination or
  * crashes initiated by extensions, and to set up critical environment configurations
  * expected by VS Code platform code or extensions running within Cocoon.
  *
  * Responsibilities:
+ * - Increasing `Error.stackTraceLimit` for more detailed debugging information.
  * - Patching `process.exit(code?)`: Replaces the global `process.exit` function to make
  *   termination conditional. The patched version consults a host-provided `allowExitFn`
  *   before allowing the process to terminate. If exit is disallowed, a warning is logged,
  *
- *   and an error is thrown to halt the exiting code path.
+ *
+ *   and a custom `CocoonExitPreventedError` is thrown to halt the exiting code path.
  * - Patching `process.crash()`: If this Electron-specific method exists on the `process`
  *   object (less common in a pure Node.js sidecar like Cocoon but handled for robustness),
+ *
  *
  *   it's replaced to log a warning and prevent the actual crash, allowing Cocoon to
  *   continue running.
@@ -38,10 +42,48 @@
 
 console.log("[Cocoon Bootstrap] Initializing bootstrap utilities...");
 
+// --- Increase Stack Trace Limit ---
+// Standard practice in VS Code extension hosts for better debugging.
+// Default is 10, which is often insufficient for complex call stacks.
+try {
+	Error.stackTraceLimit = 100;
+
+	console.log("[Cocoon Bootstrap] Error.stackTraceLimit set to 100.");
+} catch (e: any) {
+	// Should not fail, but good to log if it does for some reason.
+	console.warn(
+		`[Cocoon Bootstrap] Failed to set Error.stackTraceLimit: ${e.message || e}`,
+	);
+}
+
+// --- Custom Error for Prevented Exits ---
+/**
+ * Custom error thrown when `process.exit()` is called but prevented by host policy.
+ */
+export class CocoonExitPreventedError extends Error {
+	// The exit code that was attempted.
+	public readonly code?: number;
+
+	constructor(message: string, attemptedExitCode?: number) {
+		super(message);
+
+		this.name = "CocoonExitPreventedError";
+
+		this.code = attemptedExitCode;
+
+		// Ensure the prototype chain is correct for instanceof checks.
+		Object.setPrototypeOf(this, CocoonExitPreventedError.prototype);
+	}
+}
+
 // --- Block deprecated 'natives' module ---
 // This IIFE attempts to patch Node.js's internal module loading mechanism
 // to prevent extensions from loading the deprecated 'natives' module.
 // This pattern is based on VS Code's own bootstrap logic.
+// TODO (Maintenance): Monitor Node.js internal module API changes. This patch targets
+// `Module._load`, which is an internal API and could change in future Node.js versions,
+
+// potentially breaking this patch or making it ineffective.
 (() => {
 	try {
 		// Dynamically require 'node:module' for patching Node.js internals.
@@ -85,7 +127,7 @@ console.log("[Cocoon Bootstrap] Initializing bootstrap utilities...");
 			);
 		} else {
 			console.warn(
-				"[Cocoon Bootstrap] Could not patch 'natives' module: Module._load not found or not a function. This might occur in non-standard Node.js environments or future versions.",
+				"[Cocoon Bootstrap] Could not patch 'natives' module: Module._load not found or not a function. This might occur in non-standard Node.js environments or future versions. The 'natives' module, if loaded by an extension, might cause issues.",
 			);
 		}
 	} catch (error: any) {
@@ -114,8 +156,8 @@ const nativeProcessCrash: (() => void) | undefined =
  *
  * Key patches:
  * - `process.exit(code?)`: Replaced to make termination conditional based on `allowExitFn`.
- *   If `allowExitFn` returns `false`, the exit is prevented, a warning is logged, and an
- *   error is thrown to halt the code path that attempted the exit.
+ *   If `allowExitFn` returns `false`, the exit is prevented, a warning is logged, and a
+ *   `CocoonExitPreventedError` is thrown to halt the code path that attempted the exit.
  * - `process.crash()`: If this Electron-specific method is present, it is replaced to log a
  *   warning and prevent the actual crash, allowing Cocoon to continue operating.
  * - `process.env.ELECTRON_RUN_AS_NODE`: This environment variable is set to '1'. This is a
@@ -135,9 +177,9 @@ export function patchProcess(allowExitFn: () => boolean): void {
 
 	// Patch process.exit
 	process.exit = (code?: number): never => {
-		if (allowExitFn()) {
-			const exitCodeStr = code !== undefined ? String(code) : "(no code)";
+		const exitCodeStr = code !== undefined ? String(code) : "(no code)";
 
+		if (allowExitFn()) {
 			console.log(
 				`[Cocoon Bootstrap] process.exit(${exitCodeStr}) called and ALLOWED by host policy. Terminating process.`,
 			);
@@ -145,23 +187,29 @@ export function patchProcess(allowExitFn: () => boolean): void {
 			// Call the original, unpatched exit function.
 			nativeProcessExit(code);
 		} else {
-			const errorMessage =
-				"process.exit() was called but PREVENTED by Cocoon's host policy. The Cocoon process will continue running.";
+			const errorMessage = `process.exit(${exitCodeStr}) was called but PREVENTED by Cocoon's host policy. The Cocoon process will continue running.`;
 
 			// Log as a warning because this is an attempt to exit that's being gracefully handled (prevented).
 			// Include a stack trace to help identify the source of the `process.exit()` call.
+			const preventionStack = new Error(
+				`Stack trace for prevented process.exit(${exitCodeStr})`,
+			).stack;
+
 			console.warn(
-				`[Cocoon Bootstrap] ${errorMessage}\nCall stack for prevented exit:\n${new Error("Stack trace for prevented process.exit()").stack || "(Stack trace unavailable)"}`,
+				`[Cocoon Bootstrap] ${errorMessage}\nCall stack for prevented exit:\n${preventionStack || "(Stack trace unavailable)"}`,
 			);
 
-			// To satisfy the `never` return type when not exiting, we must throw an error.
-			// This makes the call to process.exit() behave like it failed if not allowed.
-			// The primary goal is to prevent the exit and log the attempt.
-			throw new Error(
-				`Blocked call to process.exit(${code ?? ""}) by Cocoon host policy.`,
+			// Throw a custom error to halt the exiting code path and clearly indicate why.
+			// This satisfies the `never` return type.
+			throw new CocoonExitPreventedError(
+				`Blocked call to process.exit(${exitCodeStr}) by Cocoon host policy.`,
+
+				code,
 			);
 		}
 	};
+
+	console.log("[Cocoon Bootstrap] Patched process.exit().");
 
 	// Patch process.crash (Electron-specific, but good to handle if it ever appears)
 	if (nativeProcessCrash) {
@@ -169,13 +217,20 @@ export function patchProcess(allowExitFn: () => boolean): void {
 			const errorMessage =
 				"process.crash() was called but PREVENTED by Cocoon's host policy. The Cocoon process will continue running.";
 
+			const preventionStack = new Error(
+				"Stack trace for prevented process.crash()",
+			).stack;
+
 			console.warn(
-				`[Cocoon Bootstrap] ${errorMessage}\nCall stack for prevented crash:\n${new Error("Stack trace for prevented process.crash()").stack || "(Stack trace unavailable)"}`,
+				`[Cocoon Bootstrap] ${errorMessage}\nCall stack for prevented crash:\n${preventionStack || "(Stack trace unavailable)"}`,
 			);
 
 			// The goal is to prevent the crash. A warning is usually sufficient.
 			// If `process.crash` were typed as `() => never`, we might need to throw.
 			// Assuming it's `() => void` (or can be treated as such for prevention).
+			// We don't throw here to avoid potentially crashing the host for a prevented crash,
+
+			// unless the contract of crash() always implies termination.
 		};
 
 		console.log("[Cocoon Bootstrap] Patched process.crash().");
@@ -191,12 +246,16 @@ export function patchProcess(allowExitFn: () => boolean): void {
 	// more standard Node.js environment.
 	try {
 		process.env["ELECTRON_RUN_AS_NODE"] = "1";
+
+		console.log(
+			"[Cocoon Bootstrap] Environment variable ELECTRON_RUN_AS_NODE set to '1'.",
+		);
 	} catch (envError: any) {
 		// process.env might not be writable in some very restricted environments, though unlikely for Node.js.
 		console.error(
 			"[Cocoon Bootstrap] Failed to set ELECTRON_RUN_AS_NODE environment variable:",
 
-			envError.message,
+			envError.message || envError,
 		);
 	}
 
