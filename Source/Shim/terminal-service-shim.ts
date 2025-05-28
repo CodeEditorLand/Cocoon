@@ -2,60 +2,38 @@
  * Cocoon Terminal Service Shim (terminal-service-shim.ts)
  * --------------------------------------------------------------------------------------------
  * Implements parts of the `vscode.window` terminal-related APIs, primarily governed by
- * the `IExtHostTerminalService` interface (or a compatible shape for DI). This shim is
- * responsible for managing the lifecycle of terminals (creation, disposal), interactions
- * with them (sending text, showing/hiding), and handling terminal-specific environment
- * variable collections for extensions.
+ * the `IExtHostTerminalService` interface. This shim manages terminal lifecycle,
+ * interactions, and environment variable collections.
  *
- * Most actions that involve creating or interacting with actual terminal backends
- * (e.g., the underlying pseudoterminal or shell process) are proxied to a
- * `MainThreadTerminalService` running in the Mountain host process via RPC.
- * Environment variable changes made by extensions through the
- * `vscode.EnvironmentVariableCollection` API are typically sent to Mountain via
- * direct Vine IPC notifications (e.g., "terminal_setEnvironmentVariableCollection").
+ * Most actions involving actual terminal backends are proxied to a
+ * `MainThreadTerminalService` in Mountain via RPC. Environment variable changes
+ * are notified to Mountain via direct Vine IPC.
  *
  * Responsibilities:
  * - `ShimExtHostTerminalService`:
- *   - Implements `createTerminal()` (and its overloads for `TerminalOptions` and
- *     `ExtensionTerminalOptions` which may include a `Pseudoterminal` for custom PTYs).
- *     Terminal creation requests are proxied to Mountain via RPC.
- *   - Manages a collection of active `ShimTerminalImpl` instances, representing
- *     terminals known to the extension host.
- *   - Provides the `vscode.window.terminals` (readonly array of active terminals) and
- *     `vscode.window.activeTerminal` properties. The state of these is updated based
- *     on RPC notifications from Mountain.
- *   - Exposes terminal lifecycle events (`onDidOpenTerminal`, `onDidCloseTerminal`, *     `onDidChangeActiveTerminal`, `onDidChangeTerminalState`, etc.), which are fired
- *     based on RPC notifications from Mountain.
- *   - Implements `getEnvironmentVariableCollection()`: Returns an instance of
- *     `ShimEnvironmentVariableCollectionImpl` scoped to a given extension.
- *   - Handles RPC calls from Mountain (as part of `ExtHostTerminalServiceShape`) to
- *     update terminal states, process IDs, exit statuses, and trigger events
- *     (e.g., `$acceptTerminalOpened`, `$acceptTerminalClosed`, `$acceptTerminalProcessId`, *     `$acceptTerminalTitleChange`).
- * - `ShimTerminalImpl` (implements `vscode.Terminal`):
- *   - Represents a single terminal instance within the extension host.
- *   - Proxies actions like `show()`, `hide()`, `sendText(text, addNewLine?)`, and
- *     `dispose()` to Mountain via RPC calls to `MainThreadTerminalService`.
- *   - Manages properties like `name`, `processId` (as a promise that resolves when
- *     Mountain provides the PID), `state` (e.g., `isInteractedWith`), and `exitStatus`, *     all of which are updated by RPC calls from Mountain.
- * - `ShimEnvironmentVariableCollectionImpl` (implements `vscode.EnvironmentVariableCollection`):
- *   - Manages a collection of environment variable mutators (replace, append, prepend)
- *     for a specific extension.
- *   - When the collection changes, it notifies Mountain via a direct Vine IPC call
- *     (e.g., `terminal_setEnvironmentVariableCollection`) with the serialized collection.
+ *   - Implements `createTerminal()`. Shell terminal creation is proxied to Mountain via RPC.
+ *     PTY terminal creation is heavily stubbed for MVP.
+ *   - Manages `ExtHostTerminal` instances (internal representation for `vscode.Terminal`).
+ *   - Provides `vscode.window.terminals` and `vscode.window.activeTerminal`, updated by RPC.
+ *   - Exposes terminal lifecycle events, fired based on RPCs from Mountain.
+ *   - Implements `getEnvironmentVariableCollection()`, returning `ShimEnvironmentVariableCollectionImpl`.
+ *   - Handles RPC calls from Mountain (`ExtHostTerminalServiceShape`) to update terminal states.
+ * - `ExtHostTerminal` (internal class): Wraps `vscode.Terminal` API object, proxies actions.
+ * - `ShimEnvironmentVariableCollectionImpl`: Implements `vscode.EnvironmentVariableCollection`,
+ *   sends changes to Mountain via direct IPC ("terminal_setEnvironmentVariableCollection").
  *
  * Key Interactions:
- * - `ShimExtHostTerminalService` is registered with Dependency Injection (DI) in
- *   `Cocoon/index.ts` (e.g., as `IExtHostTerminalService`). Its methods and properties
- *   contribute to the `vscode.window` API namespace provided to extensions.
- * - Uses `RPCProtocol` for most terminal operations (creation, actions, lifecycle events)
- *   by communicating with `MainContext.MainThreadTerminalService` on Mountain.
- * - Uses direct Vine IPC (via `cocoon-ipc.ts`) for `ShimEnvironmentVariableCollectionImpl`
- *   to notify Mountain of environment variable changes for terminals.
- * - Relies on `BaseCocoonShim` for common utilities (logging, RPC proxy, IPC calls).
- * - PTY (Pseudoterminal) support for custom terminal backends (`ExtensionTerminalOptions.pty`)
- *   is a complex feature involving bi-directional data streaming over RPC and is
- *   likely STUBBED or partially implemented in an MVP.
+ * - Registered with DI. Its methods contribute to `vscode.window`.
+ * - RPC with `MainContext.MainThreadTerminalService`.
+ * - Direct IPC for environment variable collection changes.
+ * - PTY support is a major TODO for full functionality.
+ * - Terminal Profiles API is stubbed.
  *
+ * TODO (Major Features for Full Implementation):
+ * - Full PTY data streaming and lifecycle management via RPC.
+ * - Complete DTO conversions for all `TerminalOptions` and `ExtensionTerminalOptions`.
+ * - Implement Terminal Profiles API (`getProfiles`, `registerTerminalProfileProvider`, etc.).
+ * - Implement Shell Integration event propagation from MainThread.
  *--------------------------------------------------------------------------------------------*/
 
 import {
@@ -65,67 +43,58 @@ import {
 import {
 	Disposable,
 	DisposableStore,
+	MutableDisposable,
 	toDisposable,
 	type IDisposable,
 } from "vs/base/common/lifecycle";
-// For URI DTOs if iconPath is URI
-import { MarshalledId } from "vs/base/common/marshalling";
-// For TerminalOptions.iconPath if it's a ThemeIcon
-import { ThemeIcon } from "vs/base/common/themables";
+import { ThemeColor, ThemeIcon } from "vs/base/common/themables"; // For TerminalOptions.iconPath
 import {
-	// For registering this service for RPC calls from MainThread
+	URI,
+	type UriComponents as VSCodeInternalUriComponents,
+} from "vs/base/common/uri";
+import { generateUuid } from "vs/base/common/uuid";
+import {
 	ExtHostContext,
-	// For proxying to MainThreadTerminalService
 	MainContext,
-	// For env var collection DTO
 	type EnvironmentVariableCollectionSerialized,
-	// For env var collection DTO
 	type EnvironmentVariableScopeTuple,
-	// Import DTOs and RPC shapes from extHost.protocol.ts
-	// RPC shape this service implements for calls from MainThread
+	type ExtHostTerminalIdentifier, // Represents the terminal ID used across RPC
 	type ExtHostTerminalServiceShape,
-	// DTO for environment variable collection
 	type IProcessPropertyMapDto,
-	// DTO for terminal quick fix commands
-	type ITerminalCommandDto,
-	// DTO for terminal dimensions
-	type ITerminalDimensionsDto,
-	// DTO for terminal launch errors
-	type ITerminalLaunchErrorDto,
-	// DTO for terminal profiles
-	type ITerminalProfileDto,
-	// RPC shape of the MainThread service
+	type IShellLaunchConfigDto, // DTO for terminal creation options
+	// type ITerminalCommandDto, type ITerminalDimensionsDto, type ITerminalLaunchErrorDto,
+	// type ITerminalProfileDto,
 	type MainThreadTerminalServiceShape,
 } from "vs/workbench/api/common/extHost.protocol";
-// Import types from the public 'vscode' API
+// Placeholder for a more specific ITerminalInternalOptions if needed for differentiating API options from internal flags
+import type { ITerminalInternalOptions as InternalTerminalOptions } from "vs/workbench/api/node/extHostTerminalService"; // Borrowing type
 import {
 	EnvironmentVariableMutatorType as VscodeEnvironmentVariableMutatorType,
-	// For ExtensionTerminalOptions.pty
 	Pseudoterminal as VscodePseudoterminal,
-	// For PTY onDidOpen dimensions
-	TerminalDimensions as VscodeTerminalDimensions,
+	TerminalDimensions as VscodeTerminalDimensions, // For PTY onDidOpen dimensions
 	TerminalExitReason as VscodeTerminalExitReason,
-	// For TerminalOptions.cwd or iconPath
 	Uri as VscodeUri,
+	ViewColumn as VscodeViewColumn, // For TerminalOptions.location
 	type EnvironmentVariableCollection as VscodeEnvironmentVariableCollection,
 	type EnvironmentVariableMutator as VscodeEnvironmentVariableMutator,
-	// For getEnvironmentVariableCollection parameter
 	type Extension as VscodeExtension,
 	type ExtensionTerminalOptions as VscodeExtensionTerminalOptions,
 	type Terminal as VscodeTerminal,
-	// Union of TerminalOptions and ExtensionTerminalOptions
-	type TerminalCreationOptions as VscodeTerminalCreationOptions,
-	// For PTY event
+	type TerminalCreationOptions as VscodeTerminalCreationOptions, // Union type
 	type TerminalDimensionsChangeEvent as VscodeTerminalDimensionsChangeEvent,
 	type TerminalExitStatus as VscodeTerminalExitStatus,
 	type TerminalOptions as VscodeTerminalOptions,
 	type TerminalProfile as VscodeTerminalProfile,
 	type TerminalProfileProvider as VscodeTerminalProfileProvider,
+	// TerminalShellIntegration related types
+	type TerminalShellExecution as VscodeTerminalShellExecution,
+	type TerminalShellIntegration as VscodeTerminalShellIntegration,
+	type TerminalShellIntegrationContext as VscodeTerminalShellIntegrationContext,
+	type TerminalShellIntegrationShellExecutionContext as VscodeTerminalShellIntegrationShellExecutionContext,
 	type TerminalState as VscodeTerminalState,
-	// For TerminalOptions.location (if it were a ViewColumn directly)
-	// type ViewColumn as VscodeViewColumn,
-	// Note: TerminalOptions.location can be TerminalEditorLocationOptions | TerminalViewColumn, handle appropriately.
 } from "vscode";
+
+// API types
 
 import {
 	BaseCocoonShim,
@@ -135,308 +104,267 @@ import {
 	type ProxyIdentifier,
 } from "./_baseShim";
 
-// --- Type Definitions ---
+// For asTerminalColor helper
 
-/**
- * Internal representation of an active terminal within the ExtHost.
- */
-interface ActiveTerminal {
-	// Terminal ID from MainThread
-	id: string;
-
-	name?: string;
-
-	// The vscode.Terminal API object
-	apiTerminal: VscodeTerminal;
-
-	// If it's a PTY-backed terminal
-	ptyId?: number;
-
-	// PID of the terminal process
-	processIdPromise?: Promise<number | undefined>;
-
-	processIdResolve?: (pid: number | undefined) => void;
-
-	exitStatus?: VscodeTerminalExitStatus;
-
-	state?: VscodeTerminalState;
+// --- Helper Functions ---
+function asTerminalIcon(
+	iconPath?: VscodeUri | { light: VscodeUri; dark: VscodeUri } | ThemeIcon,
+):
+	| VSCodeInternalUriComponents
+	| { light: VSCodeInternalUriComponents; dark: VSCodeInternalUriComponents }
+	| { id: string; color?: string }
+	| undefined {
+	if (!iconPath) return undefined;
+	if (iconPath instanceof VscodeUri) return iconPath.toJSON(); // Converts to UriComponents
+	if (iconPath instanceof ThemeIcon)
+		return { id: iconPath.id, color: iconPath.color?.id };
+	if (
+		"light" in iconPath &&
+		"dark" in iconPath &&
+		iconPath.light instanceof VscodeUri &&
+		iconPath.dark instanceof VscodeUri
+	) {
+		return { light: iconPath.light.toJSON(), dark: iconPath.dark.toJSON() };
+	}
+	return undefined; // Or log warning for unsupported type
+}
+function asTerminalColor(color?: ThemeColor | string): string | undefined {
+	if (!color) return undefined;
+	return typeof color === "string" ? color : color.id;
 }
 
-/**
- * Shim implementation for `vscode.EnvironmentVariableCollection`.
- * Manages environment variable mutators for a specific extension and notifies Mountain of changes.
- */
+// --- Internal Classes ---
+interface ActiveTerminal {
+	id: ExtHostTerminalIdentifier; // Can be string (extHost-generated UUID) or number (MainThread-assigned)
+	name?: string;
+	apiTerminal: VscodeTerminal;
+	ptyId?: number; // If PTY-backed, for ExtHostPseudoterminal mapping
+	processIdPromise: Promise<number | undefined>;
+	processIdResolve?: (pid: number | undefined) => void;
+	processIdReject?: (reason?: any) => void; // For PTY launch failures reported by MainThread
+	exitStatus?: VscodeTerminalExitStatus;
+	state: VscodeTerminalState; // Mutable state
+	_lastDimensions?: VscodeTerminalDimensions; // For onDidChangeTerminalDimensions
+	_creationOptions: VscodeTerminalCreationOptions; // Store for API object
+}
+
 class ShimEnvironmentVariableCollectionImpl
 	implements VscodeEnvironmentVariableCollection
 {
 	readonly #map: Map<string, VscodeEnvironmentVariableMutator> = new Map();
-
-	// Default for extension-contributed env vars
-	readonly #persistent = true;
-
-	// Optional description
+	readonly #persistent = true; // Default for extension-contributed env vars
 	readonly #description?: string;
-
-	// Optional scope
-	readonly #scope?: import("vscode").EnvironmentVariableScope;
-
+	readonly #scope?: import("vscode").EnvironmentVariableScope; // VS Code API type
 	readonly #onDidChangeCollectionEmitter = new VscodeEmitter<void>();
-
 	public readonly onDidChange: VscodeEvent<void> =
 		this.#onDidChangeCollectionEmitter.event;
+	private readonly _disposables = new DisposableStore();
 
 	constructor(
-		// For logging/context
-		private readonly _extension: VscodeExtension<any>,
-
-		// Parent service to call IPC
-		private readonly _service: ShimExtHostTerminalService,
-
-		// VS Code API type
+		private readonly _extensionId: string, // Changed from VscodeExtension<any> to string ID
+		private readonly _service: ShimExtHostTerminalService, // Parent service to call IPC
+		private readonly _logService?: ILogServiceForShim,
 		scope?: import("vscode").EnvironmentVariableScope,
 	) {
-		// Store scope
 		this.#scope = scope;
-
-		// TODO: Description (if API supports it more directly than just for logging)
+		this._disposables.add(this.#onDidChangeCollectionEmitter);
 	}
-
 	private _serializeAndNotify(): void {
 		const serializedCollection: EnvironmentVariableCollectionSerialized =
 			[];
-
 		this.#map.forEach((mutator, variable) => {
 			serializedCollection.push([
 				variable,
-
-				{ value: mutator.value, type: mutator.type },
+				{
+					value: mutator.value,
+					type: mutator.type,
+					options: mutator.options,
+				},
 			]);
 		});
-
-		// Construct the scope DTO for IPC
 		let scopeDto: EnvironmentVariableScopeTuple | undefined = undefined;
-
-		if (this.#scope) {
-			if (this.#scope.workspaceFolder) {
-				// Assume _service has a way to convert VscodeUri to UriComponents DTO
-				const workspaceFolderUriDto = (
-					this._service as any as BaseCocoonShim
-				)._convertApiArgToInternal(this.#scope.workspaceFolder.uri);
-
-				scopeDto = [{ workspaceFolder: workspaceFolderUriDto }];
-			}
-
-			// Add other scope properties if present (e.g., a specific shell integration context)
+		if (this.#scope?.workspaceFolder) {
+			const workspaceFolderUriDto = (
+				this._service as any as BaseCocoonShim
+			)._convertApiArgToInternal(this.#scope.workspaceFolder.uri) as
+				| VSCodeInternalUriComponents
+				| undefined;
+			scopeDto = workspaceFolderUriDto
+				? [{ workspaceFolder: workspaceFolderUriDto }]
+				: undefined;
 		}
-
 		const ipcParams: IProcessPropertyMapDto = {
 			envCollection: serializedCollection,
-
 			scope: scopeDto,
-
-			extensionIdentifier: this._extension.id,
+			extensionIdentifier: this._extensionId,
 		};
-
-		// Use direct IPC notification to Mountain (method name TBD, e.g., "terminal_setEnvironmentVariableCollection")
 		this._service._ipcNotify(
 			"terminal_setEnvironmentVariableCollection",
-
 			ipcParams,
 		);
-
 		this.#onDidChangeCollectionEmitter.fire();
 	}
-
-	public get persistent(): boolean {
+	get persistent(): boolean {
 		return this.#persistent;
 	}
-
-	public get description(): string | undefined {
+	get description(): string | undefined {
 		return this.#description;
-	}
-
-	public get scope(): import("vscode").EnvironmentVariableScope | undefined {
+	} // API field
+	get scope(): import("vscode").EnvironmentVariableScope | undefined {
 		return this.#scope;
-	}
-
-	replace(variable: string, value: string): void {
-		this.#map.set(variable, {
-			value,
-
+	} // API field
+	replace(v: string, val: string, opt?: any): void {
+		this.#map.set(v, {
+			value: val,
 			type: VscodeEnvironmentVariableMutatorType.Replace,
+			options: opt,
 		});
-
 		this._serializeAndNotify();
 	}
-
-	append(variable: string, value: string): void {
-		this.#map.set(variable, {
-			value,
-
+	append(v: string, val: string, opt?: any): void {
+		this.#map.set(v, {
+			value: val,
 			type: VscodeEnvironmentVariableMutatorType.Append,
+			options: opt,
 		});
-
 		this._serializeAndNotify();
 	}
-
-	prepend(variable: string, value: string): void {
-		this.#map.set(variable, {
-			value,
-
+	prepend(v: string, val: string, opt?: any): void {
+		this.#map.set(v, {
+			value: val,
 			type: VscodeEnvironmentVariableMutatorType.Prepend,
+			options: opt,
 		});
-
 		this._serializeAndNotify();
 	}
-
-	get(variable: string): VscodeEnvironmentVariableMutator | undefined {
-		return this.#map.get(variable);
+	get(v: string): VscodeEnvironmentVariableMutator | undefined {
+		return this.#map.get(v);
 	}
-
 	forEach(
-		callback: (
-			variable: string,
-
-			mutator: VscodeEnvironmentVariableMutator,
-
-			collection: VscodeEnvironmentVariableCollection,
+		cb: (
+			v: string,
+			m: VscodeEnvironmentVariableMutator,
+			c: VscodeEnvironmentVariableCollection,
 		) => any,
-
 		thisArg?: any,
 	): void {
-		this.#map.forEach((mutator, variable) =>
-			callback.call(thisArg, variable, mutator, this),
-		);
+		this.#map.forEach((m, v) => cb.call(thisArg, v, m, this));
 	}
-
-	delete(variable: string): void {
-		if (this.#map.delete(variable)) {
+	delete(v: string): void {
+		if (this.#map.delete(v)) {
 			this._serializeAndNotify();
 		}
 	}
-
 	clear(): void {
 		if (this.#map.size > 0) {
 			this.#map.clear();
-
 			this._serializeAndNotify();
 		}
 	}
-
 	[Symbol.iterator](): IterableIterator<
 		[string, VscodeEnvironmentVariableMutator]
 	> {
 		return this.#map.entries();
 	}
-
 	public toArray(): [string, VscodeEnvironmentVariableMutator][] {
 		return Array.from(this.#map.entries());
 	}
+	public dispose(): void {
+		this._disposables.dispose();
+	}
 }
 
-/**
- * Cocoon's implementation of the `IExtHostTerminalService` interface (or its shape).
- * Manages terminals and their interaction with the Mountain host via RPC and IPC.
- */
 export class ShimExtHostTerminalService
 	extends BaseCocoonShim
 	implements ExtHostTerminalServiceShape
 {
-	// Implements RPC shape for calls from MainThread
-	// For DI registration as IExtHostTerminalService
 	public readonly _serviceBrand: undefined;
-
 	readonly #mainThreadTerminalServiceProxy: MainThreadTerminalServiceShape | null =
 		null;
-
-	// Key: Terminal ID from MainThread
-	readonly #terminals: Map<string, ActiveTerminal> = new Map();
-
-	#activeTerminalId: string | undefined = undefined;
-
-	// Environment variable collections, keyed by extension ID string
-	readonly #envVariableCollections: Map<
+	readonly #terminals: Map<ExtHostTerminalIdentifier, ActiveTerminal> =
+		new Map(); // Key: MainThread ID (number) or ExtHost UUID (string)
+	#activeTerminalId: ExtHostTerminalIdentifier | undefined = undefined;
+	readonly #envVariableCollections = new Map<
 		string,
 		ShimEnvironmentVariableCollectionImpl
-	> = new Map();
-
-	// --- Event Emitters for vscode.window.onDid...Terminal ---
-	readonly #onDidOpenTerminalEmitter = new VscodeEmitter<VscodeTerminal>();
-
+	>(); // Key: composite key (extId + scope)
+	readonly #onDidOpenTerminalEmitter = this._instanceDisposables.add(
+		new VscodeEmitter<VscodeTerminal>(),
+	);
 	public readonly onDidOpenTerminal: VscodeEvent<VscodeTerminal> =
 		this.#onDidOpenTerminalEmitter.event;
-
-	readonly #onDidCloseTerminalEmitter = new VscodeEmitter<VscodeTerminal>();
-
+	readonly #onDidCloseTerminalEmitter = this._instanceDisposables.add(
+		new VscodeEmitter<VscodeTerminal>(),
+	);
 	public readonly onDidCloseTerminal: VscodeEvent<VscodeTerminal> =
 		this.#onDidCloseTerminalEmitter.event;
-
-	readonly #onDidChangeActiveTerminalEmitter = new VscodeEmitter<
-		VscodeTerminal | undefined
-	>();
-
+	readonly #onDidChangeActiveTerminalEmitter = this._instanceDisposables.add(
+		new VscodeEmitter<VscodeTerminal | undefined>(),
+	);
 	public readonly onDidChangeActiveTerminal: VscodeEvent<
 		VscodeTerminal | undefined
 	> = this.#onDidChangeActiveTerminalEmitter.event;
-
-	readonly #onDidChangeTerminalStateEmitter =
-		new VscodeEmitter<VscodeTerminal>();
-
+	readonly #onDidChangeTerminalStateEmitter = this._instanceDisposables.add(
+		new VscodeEmitter<VscodeTerminal>(),
+	);
 	public readonly onDidChangeTerminalState: VscodeEvent<VscodeTerminal> =
 		this.#onDidChangeTerminalStateEmitter.event;
-
-	// For PTYs
-	readonly #onDidWriteDataEmitter = new VscodeEmitter<{
-		id: number;
-
-		data: string;
-	}>();
+	readonly #onDidWriteDataEmitterForPty = this._instanceDisposables.add(
+		new VscodeEmitter<{ id: number /*ptyId*/; data: string }>(),
+	); // For PTY output
+	// New events from VscodeExtHostTerminalServiceShape
+	readonly #onDidChangeShellEmitter = this._instanceDisposables.add(
+		new Emitter<string>(),
+	);
+	public readonly onDidChangeShell: Event<string> =
+		this.#onDidChangeShellEmitter.event;
+	readonly #onDidWriteTerminalDataEmitter = this._instanceDisposables.add(
+		new Emitter<vscode.TerminalDataWriteEvent>(),
+	);
+	public readonly onDidWriteTerminalData: Event<vscode.TerminalDataWriteEvent> =
+		this.#onDidWriteTerminalDataEmitter.event;
+	readonly #onDidChangeTerminalDimensionsEmitter =
+		this._instanceDisposables.add(
+			new Emitter<vscode.TerminalDimensionsChangeEvent>(),
+		);
+	public readonly onDidChangeTerminalDimensions: Event<vscode.TerminalDimensionsChangeEvent> =
+		this._onDidChangeTerminalDimensionsEmitter.event;
 
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
-
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostTerminalService", rpcService, logService);
-
 		this._logInfo("Initializing...");
-
 		if (this._rpcService) {
 			this.#mainThreadTerminalServiceProxy = this._getProxy(
 				MainContext.MainThreadTerminalService as ProxyIdentifier<MainThreadTerminalServiceShape>,
 			);
-
 			try {
 				this._rpcService.set(
 					ExtHostContext.ExtHostTerminalService as ProxyIdentifier<ExtHostTerminalServiceShape>,
-
 					this,
 				);
-
 				this._logInfo(
 					"Registered self for RPC calls from MainThread (ExtHostTerminalService).",
 				);
 			} catch (e: any) {
 				this._logError(
 					"Failed to register self as RPC target for ExtHostTerminalService:",
-
 					e,
 				);
 			}
 		}
-
 		if (!this.#mainThreadTerminalServiceProxy) {
 			this._logError(
-				"MainThreadTerminalService RPC proxy NOT obtained. Terminal features will be severely impaired or non-functional.",
+				"MainThreadTerminalService RPC proxy NOT obtained. Terminal features will fail.",
 			);
 		}
 	}
 
-	// --- Public API (vscode.window.terminals, activeTerminal, createTerminal) ---
 	get terminals(): readonly VscodeTerminal[] {
 		return Array.from(this.#terminals.values()).map((t) => t.apiTerminal);
 	}
-
 	get activeTerminal(): VscodeTerminal | undefined {
 		return this.#activeTerminalId
 			? this.#terminals.get(this.#activeTerminalId)?.apiTerminal
@@ -445,719 +373,777 @@ export class ShimExtHostTerminalService
 
 	public createTerminal(
 		name?: string,
-
 		shellPath?: string,
-
 		shellArgs?: string[] | string,
 	): VscodeTerminal;
-
 	public createTerminal(options: VscodeTerminalOptions): VscodeTerminal;
-
 	public createTerminal(
 		options: VscodeExtensionTerminalOptions,
 	): VscodeTerminal;
-
 	public createTerminal(
 		nameOrOptions?:
 			| string
 			| VscodeTerminalOptions
 			| VscodeExtensionTerminalOptions,
-
 		shellPath?: string,
-
 		shellArgs?: string[] | string,
 	): VscodeTerminal {
-		let terminalName: string | undefined;
-
 		let terminalOptions:
 			| VscodeTerminalOptions
-			| VscodeExtensionTerminalOptions = {};
-
+			| VscodeExtensionTerminalOptions;
 		if (typeof nameOrOptions === "string") {
-			terminalName = nameOrOptions;
-
-			// Set name in options
-			terminalOptions.name = terminalName;
-
-			terminalOptions.shellPath = shellPath;
-
-			terminalOptions.shellArgs = shellArgs;
-		} else if (nameOrOptions) {
-			// It's VscodeTerminalOptions or VscodeExtensionTerminalOptions
-			terminalOptions = nameOrOptions;
-
-			terminalName = terminalOptions.name;
+			terminalOptions = { name: nameOrOptions, shellPath, shellArgs };
+		} else {
+			terminalOptions = nameOrOptions || {};
 		}
-
 		this._logDebug(
-			`API createTerminal called. Name: '${terminalName}', Options:`,
-
+			`API createTerminal called. Name: '${terminalOptions.name}', Options:`,
 			terminalOptions,
 		);
 
 		if (!this.#mainThreadTerminalServiceProxy) {
 			this._logError(
-				"Cannot create terminal: MainThreadTerminalService RPC proxy is unavailable. Throwing error.",
+				"Cannot create terminal: MainThread RPC proxy unavailable.",
 			);
-
 			throw new Error("Terminal service is currently unavailable.");
 		}
 
-		// For standard terminals (not PTY), ExtHost sends request, MainThread creates and calls back with $acceptTerminalOpened.
-		// For PTY terminals, the flow is more complex.
 		if ((terminalOptions as VscodeExtensionTerminalOptions).pty) {
 			return this._createTerminalPty(
 				terminalOptions as VscodeExtensionTerminalOptions,
 			);
 		} else {
-			// Convert options to DTO for RPC. This requires careful marshalling.
-			// TODO: Implement robust options to DTO conversion.
-			const optionsDto =
-				this._serializeTerminalOptionsForRpc(terminalOptions);
-
-			this._logDebug(
-				"Requesting MainThread to create shell terminal with DTO:",
-
-				optionsDto,
-			);
-
-			this.#mainThreadTerminalServiceProxy
-				.$createTerminal(optionsDto)
-				.catch((e) =>
-					this._logError(
-						"RPC $createTerminal failed:",
-
-						refineErrorForShim(
-							e,
-
-							this._logService,
-
-							"$createTerminal RPC",
-						),
-					),
-				);
-
-			// The actual VscodeTerminal object is created and returned *after* MainThread calls $acceptTerminalOpened.
-			// This means createTerminal() in ExtHost is effectively async in its effect, even if API is sync.
-			// For a shim, we might need to return a placeholder that gets populated, or make createTerminal async.
-			// VS Code's real ExtHostTerminalService returns a proxy object immediately.
-			// Let's create a temporary placeholder and wait for $acceptTerminalOpened. This is complex.
-
-			// Simplified for MVP: Assume $acceptTerminalOpened will be called quickly.
-			// A more robust solution might involve a temporary proxy or making this method async if API allowed.
-			this._logWarn(
-				"createTerminal for non-PTY is simplified. It relies on a subsequent $acceptTerminalOpened call from MainThread to fully initialize.",
-			);
-
-			// Create a "dummy" terminal for now that will be replaced or updated. This is not ideal.
-			// The real ExtHostTerminalService creates a _TerminalProcess proxy.
-			// For now, let's throw until $acceptTerminalOpened flow is fully integrated for non-PTY return.
-			throw new Error(
-				"Non-PTY terminal creation flow not fully shimmed for synchronous return. Awaiting $acceptTerminalOpened.",
-			);
+			return this._createShellTerminal(terminalOptions);
 		}
 	}
 
-	public getEnvironmentVariableCollection(
-		extension: VscodeExtension<any>,
+	private _createShellTerminal(
+		options: VscodeTerminalOptions,
+	): VscodeTerminal {
+		const extHostTerminalId = generateUuid(); // ExtHost generates a UUID for tracking before MainThread ID is known
+		const { apiTerminal, pidPromiseResolve, pidPromiseReject } =
+			this._createTerminalApiObjectAndState(extHostTerminalId, options);
 
-		scope?: import("vscode").EnvironmentVariableScope | undefined,
-	): VscodeEnvironmentVariableCollection {
+		const activeTerminal: ActiveTerminal = {
+			id: extHostTerminalId,
+			name: options.name,
+			apiTerminal,
+			processIdPromise: apiTerminal.processId,
+			processIdResolve: pidPromiseResolve,
+			processIdReject,
+			state: { isInteractedWith: false },
+			_creationOptions: options,
+		};
+		this.#terminals.set(extHostTerminalId, activeTerminal); // Store with temporary ExtHost ID
+
+		const optionsDto = this._serializeTerminalOptionsForRpc(
+			options,
+			extHostTerminalId,
+		);
 		this._logDebug(
-			`API getEnvironmentVariableCollection called for extension: ${extension.id}`,
+			"Requesting MainThread to create shell terminal with DTO:",
+			optionsDto,
 		);
 
-		// Simple key based on extId and workspaceFolder
-		const key = `${extension.id}${scope?.workspaceFolder?.uri.toString() ?? ""}`;
-
-		let collection = this.#envVariableCollections.get(key);
-
-		if (!collection) {
-			collection = new ShimEnvironmentVariableCollectionImpl(
-				extension,
-
-				this,
-
-				scope,
-			);
-
-			this.#envVariableCollections.set(key, collection);
-		}
-
-		return collection;
+		this.#mainThreadTerminalServiceProxy!.$createTerminal(optionsDto)
+			.then((mainThreadId) => {
+				// MainThread returns its internal ID upon successful request (not opening yet)
+				// This ID is not usually the one used to identify the terminal instance,
+				// $acceptTerminalOpened provides the final `id` that matches `_id` on the terminal.
+				// For now, we assume the extHostTerminalId IS the tracking ID until $acceptTerminalOpened potentially updates it.
+				// This part of the flow needs to be robustly handled with $acceptTerminalOpened.
+				// If `$createTerminal` directly returns the ID that `$acceptTerminalOpened` will use, that's simpler.
+				// Let's assume `$createTerminal` is fire-and-forget here, and `$acceptTerminalOpened` provides the real MainThread ID.
+				this._logDebug(
+					`$createTerminal RPC sent for ExtHost ID '${extHostTerminalId}'. Awaiting $acceptTerminalOpened with MainThread ID.`,
+				);
+			})
+			.catch((e) => {
+				const error = refineErrorForShim(
+					e,
+					this._logService,
+					"$createTerminal RPC",
+				);
+				this._logError(
+					`RPC $createTerminal for ExtHost ID '${extHostTerminalId}' failed:`,
+					error,
+				);
+				// If creation request fails, reject the PID promise and remove the terminal
+				activeTerminal.processIdReject?.(error);
+				this.#terminals.delete(extHostTerminalId);
+				// TODO: Should an onDidCloseTerminal event be fired here or an error thrown from createTerminal?
+				// For now, the promise for PID will reject. Extensions might not get a terminal object.
+			});
+		return apiTerminal;
 	}
 
-	// --- PTY Handling (complex, mostly stubbed for MVP) ---
 	private _createTerminalPty(
 		options: VscodeExtensionTerminalOptions,
 	): VscodeTerminal {
 		const pty = options.pty;
+		if (!pty) {
+			this._logError(
+				"PTY object missing in ExtensionTerminalOptions for _createTerminalPty",
+			);
+			throw new Error("PTY object missing.");
+		}
 
-		if (!pty)
-			throw new Error("PTY object missing in ExtensionTerminalOptions");
-
-		// Simple unique ID for PTY for now
-		const ptyId = Date.now();
-
+		const extHostPtyId = Date.now(); // Simple unique ID for PTY for now, not sent to MainThread this way
+		const extHostTerminalId = generateUuid();
 		this._logInfo(
-			`Creating PTY-backed terminal. PTY ID (ExtHost-side): ${ptyId}, Name: '${options.name}'`,
+			`Creating PTY-backed terminal. ExtHost PTY ID: ${extHostPtyId}, ExtHostTerminalID: ${extHostTerminalId}, Name: '${options.name}'`,
 		);
 
-		// TODO: Full PTY Implementation
-		// 1. Call MainThread: `$startPty(ptyId, optionsDto)` to inform MainThread a PTY is starting.
-		// 2. MainThread creates its side of the PTY.
-		// 3. Data flow:
-		//    - ExtHost (pty.onDidWrite) -> RPC `$sendProcessData(ptyId, data)` to MainThread.
-		//    - MainThread (native PTY output) -> RPC `$acceptProcessData(ptyId, data)` to ExtHost -> pty.handleInput(data).
-		//    - MainThread (user input in UI) -> RPC `$sendProcessInput(ptyId, data)` to ExtHost -> pty.handleInput(data).
-		// 4. Lifecycle:
-		//    - pty.open() -> RPC `$sendProcessReady(ptyId, initialDimensions)`
-		//    - pty.close() -> RPC `$sendProcessExit(ptyId, exitCode?)`
-		//    - Terminal.dispose() from extension -> RPC `$disposePty(ptyId)`
+		// TODO: Full PTY Implementation (as outlined in previous analysis)
+		// 1. RPC $createTerminal with pty-specific options DTO (includes extHostTerminalId, extHostPtyId)
+		//    MainThread returns its mainThreadId for the terminal.
+		// 2. ShimExtHostTerminalService then calls $startPty on MainThread, passing mainThreadId and initial dimensions.
+		// 3. Setup bi-directional data flow via RPCs:
+		//    - ExtHost (pty.onDidWrite) -> $ptyWriteData(mainThreadId, data)
+		//    - MainThread (pty output)  -> $acceptPtyData(mainThreadId, data) -> pty.handleInput() (on ext's pty)
+		//    - MainThread (UI input)    -> $acceptPtyInput(mainThreadId, data) -> pty.handleInput()
+		this._logWarn(
+			`PTY terminal creation for '${options.name}' is STUBBED. Data flow and full lifecycle not implemented.`,
+		);
 
-		// For this shim, we'll create a local API object but without full RPC data flow.
-		const terminalName = options.name || `pty-${ptyId}`;
-
-		const processIdPromise = new Promise<number | undefined>((resolve) => {
-			/* TODO: Resolve with PID from MainThread */
-		});
-
-		const apiTerminal: VscodeTerminal = {
-			name: terminalName,
-
-			processId: processIdPromise,
-
-			// Store creation options
-			creationOptions: Object.freeze(options),
-
-			// To be updated by $acceptTerminalClosed
-			exitStatus: undefined,
-
-			// To be updated by $acceptTerminalState
-			state: { isInteractedWith: false },
-
-			sendText: (text: string, addNewLine?: boolean) => {
-				this._logWarn(
-					`PTY Terminal (${terminalName}): sendText STUB. Data: "${text.substring(0, 50)}...", AddNewline: ${addNewLine}`,
-				);
-
-				// Real: RPC to MainThread `$sendProcessInput(ptyId, text + (addNewLine ? '\r' : ''))` -> pty.handleInput()
-				// Simulate direct call for stub
-				pty.handleInput?.(text + (addNewLine ? "\r" : ""));
-			},
-
-			show: (preserveFocus?: boolean) => {
-				this._logWarn(
-					`PTY Terminal (${terminalName}): show STUB. PreserveFocus: ${preserveFocus}`,
-				); /* RPC $showTerminal(ptyId) */
-			},
-
-			hide: () => {
-				this._logWarn(
-					`PTY Terminal (${terminalName}): hide STUB.`,
-				); /* RPC $hideTerminal(ptyId) */
-			},
-
-			dispose: () => {
-				this._logWarn(`PTY Terminal (${terminalName}): dispose STUB.`);
-
-				// RPC `$disposePty(ptyId)`
-				// This would also trigger $acceptTerminalClosed from MainThread if not already.
-				this.$acceptTerminalClosed(
-					String(ptyId) /* Use PTY ID as terminal ID for stub */,
-
-					undefined,
-				);
-			},
-
-			// This is for when *this* PTY writes data
-			onDidWriteData: this.#onDidWriteDataEmitter.event,
-
-			onDidOpen: pty.onDidOpen
-				? pty.onDidOpen.bind(pty)
-				: VscodeEvent.None,
-
-			onDidClose: pty.onDidClose
-				? pty.onDidClose.bind(pty)
-				: VscodeEvent.None,
-
-			onDidChangeDimensions: pty.onDidChangeDimensions
-				? pty.onDidChangeDimensions.bind(pty)
-				: VscodeEvent.None,
-
-			// TODO
-			onDidFocus: VscodeEvent.None,
-
-			// TODO
-			onDidBlur: VscodeEvent.None,
-
-			// TODO
-			onDidInput: VscodeEvent.None,
-
-			// TODO
-			onDidSendText: VscodeEvent.None,
-		};
-
-		const activePtyTerminal: ActiveTerminal = {
-			// Use PTY ID as main terminal ID for this stub
-			id: String(ptyId),
-
-			name: terminalName,
-
+		const { apiTerminal, pidPromiseResolve, pidPromiseReject } =
+			this._createTerminalApiObjectAndState(
+				extHostTerminalId,
+				options,
+				true /* isPty */,
+				pty,
+			);
+		const activeTerminal: ActiveTerminal = {
+			id: extHostTerminalId,
+			name: options.name,
 			apiTerminal,
-
-			ptyId,
-
-			processIdPromise,
-
-			processIdResolve: (pid) => {
-				/* Resolve the promise */
-			},
+			ptyId: extHostPtyId,
+			processIdPromise: apiTerminal.processId,
+			processIdResolve,
+			processIdReject,
+			state: { isInteractedWith: false },
+			_creationOptions: options,
 		};
+		this.#terminals.set(extHostTerminalId, activeTerminal);
 
-		this.#terminals.set(activePtyTerminal.id, activePtyTerminal);
-
-		// Fire event immediately for PTY stub
-		this.#onDidOpenTerminalEmitter.fire(apiTerminal);
-
-		// Simulate initial dimensions or ready signal
-		// Call onDidOpen if provider has it
-		pty.onDidOpen?.(options.initialDimensions || { rows: 24, cols: 80 });
+		// Simulate async PTY opening and PID resolution for stub
+		setTimeout(() => {
+			try {
+				pty.onDidOpen?.(
+					options.initialDimensions || { rows: 24, cols: 80 },
+				); // Call onDidOpen
+				pidPromiseResolve(undefined); // PTYs often don't have a real PID visible this way, or it's -1
+				this.$acceptTerminalOpened(
+					extHostTerminalId as any,
+					extHostTerminalId,
+					options.name || `pty-${extHostPtyId}`,
+					this._serializeTerminalOptionsForRpc(
+						options,
+						extHostTerminalId,
+					) as IShellLaunchConfigDto,
+				);
+			} catch (e: any) {
+				pidPromiseReject(e);
+			}
+		}, 10);
 
 		return apiTerminal;
 	}
 
-	// --- RPC Methods Called by MainThread (ExtHostTerminalServiceShape) ---
-	public $acceptTerminalOpened(
-		id: string,
-
-		name: string,
-
-		shellLaunchConfigData: any /* DTO for ShellLaunchConfig */,
-	): void {
-		this._logInfo(`RPC $acceptTerminalOpened: ID='${id}', Name='${name}'`);
-
-		if (this.#terminals.has(id)) {
-			this._logWarn(
-				`Terminal with ID ${id} already exists. Updating its properties.`,
-			);
-
-			// Potentially update name or other properties if MainThread can change them post-creation.
-			const existing = this.#terminals.get(id)!;
-
-			// Update name if mutable
-			(existing.apiTerminal as any).name = name;
-
-			return;
-		}
-
-		let pidPromiseResolve: ((pid: number | undefined) => void) | undefined;
-
-		const pidPromise = new Promise<number | undefined>((resolve) => {
-			pidPromiseResolve = resolve;
-		});
+	private _createTerminalApiObjectAndState(
+		currentId: ExtHostTerminalIdentifier, // Initially ExtHost UUID, later MainThread ID (number)
+		options: VscodeTerminalCreationOptions,
+		isPty: boolean = false,
+		ptyInstance?: VscodePseudoterminal, // Only for PTY
+	): {
+		apiTerminal: VscodeTerminal;
+		pidPromiseResolve: (pid: number | undefined) => void;
+		pidPromiseReject: (reason?: any) => void;
+	} {
+		let pidPromiseResolve!: (pid: number | undefined) => void;
+		let pidPromiseReject!: (reason?: any) => void;
+		const pidPromise = new Promise<number | undefined>(
+			(resolve, reject) => {
+				pidPromiseResolve = resolve;
+				pidPromiseReject = reject;
+			},
+		);
+		const self = this; // For closures
 
 		const apiTerminal: VscodeTerminal = {
-			name: name,
-
+			get name(): string {
+				return (
+					self.#terminals.get(currentId)?.name || options.name || ""
+				);
+			},
 			processId: pidPromise,
-
-			creationOptions: Object.freeze(
-				this._deserializeShellLaunchConfig(shellLaunchConfigData),
-			),
-
-			exitStatus: undefined,
-
-			// Initial state
-			state: { isInteractedWith: false },
-
-			sendText: (text: string, addNewLine?: boolean) =>
-				this.#mainThreadTerminalServiceProxy
-					?.$sendText(id, text, addNewLine ?? true)
+			creationOptions: Object.freeze(options), // Store a copy of the options
+			get exitStatus(): VscodeTerminalExitStatus | undefined {
+				return self.#terminals.get(currentId)?.exitStatus;
+			},
+			get state(): VscodeTerminalState {
+				return (
+					self.#terminals.get(currentId)?.state || {
+						isInteractedWith: false,
+					}
+				);
+			},
+			sendText: (text: string, addNewLine: boolean = true) => {
+				const term = self.#terminals.get(currentId);
+				if (!term) {
+					self._logWarn(
+						`sendText on potentially disposed/unknown terminal (currentId: ${currentId})`,
+					);
+					return;
+				}
+				if (isPty && ptyInstance?.handleInput) {
+					// PTY: route to local PTY's handleInput
+					ptyInstance.handleInput(
+						text +
+							(addNewLine
+								? ptyInstance.onDidWriteData
+									? "\r\n"
+									: "\r"
+								: ""),
+					); // PTYs might expect \r or \r\n
+				} else if (!isPty && self.#mainThreadTerminalServiceProxy) {
+					// Shell: RPC
+					self.#mainThreadTerminalServiceProxy
+						.$sendText(term.id as number, text, addNewLine)
+						.catch((e) =>
+							self._logError(
+								`RPC $sendText for terminal ${term.id} failed:`,
+								e,
+							),
+						);
+				} else {
+					self._logWarn(
+						`sendText for terminal ${term.id} NOP (no proxy or not shell).`,
+					);
+				}
+			},
+			show: (preserveFocus?: boolean) => {
+				const term = self.#terminals.get(currentId);
+				if (!term) return;
+				self.#mainThreadTerminalServiceProxy
+					?.$show(term.id as number, preserveFocus)
 					.catch((e) =>
-						this._logError(
-							`RPC $sendText for terminal ${id} failed:`,
-
+						self._logError(
+							`RPC $show for terminal ${term.id} failed:`,
 							e,
 						),
-					),
-
-			show: (preserveFocus?: boolean) =>
-				this.#mainThreadTerminalServiceProxy
-					?.$show(id, preserveFocus)
+					);
+			},
+			hide: () => {
+				const term = self.#terminals.get(currentId);
+				if (!term) return;
+				self.#mainThreadTerminalServiceProxy
+					?.$hide(term.id as number)
 					.catch((e) =>
-						this._logError(
-							`RPC $show for terminal ${id} failed:`,
-
+						self._logError(
+							`RPC $hide for terminal ${term.id} failed:`,
 							e,
 						),
-					),
-
-			hide: () =>
-				this.#mainThreadTerminalServiceProxy?.$hide(id).catch((e) =>
-					this._logError(
-						`RPC $hide for terminal ${id} failed:`,
-
-						e,
-					),
-				),
-
-			dispose: () =>
-				this.#mainThreadTerminalServiceProxy?.$dispose(id).catch((e) =>
-					this._logError(
-						`RPC $dispose for terminal ${id} failed:`,
-
-						e,
-					),
-				),
-
-			// Events for standard terminals are harder to shim without full PTY proxying
-			// TODO: This would require MainThread to stream data back
-			onDidWriteData: VscodeEvent.None,
-
-			// Open is signified by $acceptTerminalOpened
-			onDidOpen: VscodeEvent.None,
-
-			// Close is signified by $acceptTerminalClosed
-			onDidClose: VscodeEvent.None,
-
-			// Would need $acceptTerminalDimensions
-			onDidChangeDimensions: VscodeEvent.None,
-
-			// TODO
-			onDidFocus: VscodeEvent.None,
-
-			// TODO
-			onDidBlur: VscodeEvent.None,
-
-			// TODO
-			onDidInput: VscodeEvent.None,
-
-			// TODO
-			onDidSendText: VscodeEvent.None,
+					);
+			},
+			dispose: () => {
+				const term = self.#terminals.get(currentId);
+				if (!term) return;
+				self.#mainThreadTerminalServiceProxy
+					?.$dispose(term.id as number)
+					.catch((e) =>
+						self._logError(
+							`RPC $dispose for terminal ${term.id} failed:`,
+							e,
+						),
+					);
+				// MainThread will call $acceptTerminalClosed, which handles local cleanup.
+			},
+			get dimensions(): VscodeTerminalDimensions | undefined {
+				return self.#terminals.get(currentId)?._lastDimensions;
+			},
+			// PTY specific events (on the API object itself)
+			onDidWriteData: isPty
+				? this.#onDidWriteDataEmitterForPty.event
+				: VscodeEvent.None, // Only for PTY, needs filtering by ptyId
+			onDidOpen:
+				isPty && ptyInstance?.onDidOpen
+					? ptyInstance.onDidOpen.bind(ptyInstance)
+					: VscodeEvent.None,
+			onDidClose:
+				isPty && ptyInstance?.onDidClose
+					? ptyInstance.onDidClose.bind(ptyInstance)
+					: VscodeEvent.None,
+			onDidChangeDimensions:
+				isPty && ptyInstance?.onDidChangeDimensions
+					? ptyInstance.onDidChangeDimensions.bind(ptyInstance)
+					: VscodeEvent.None,
 		};
+		return { apiTerminal, pidPromiseResolve, pidPromiseReject };
+	}
 
-		this.#terminals.set(id, {
-			id,
+	public getEnvironmentVariableCollection(
+		extension: VscodeExtension<any>,
+		scope?: import("vscode").EnvironmentVariableScope | undefined,
+	): VscodeEnvironmentVariableCollection {
+		this._logDebug(
+			`API getEnvironmentVariableCollection called for extension: ${extension.id}, Scope: ${JSON.stringify(scope)}`,
+		);
+		// Key by extension ID and a scope identifier (e.g., workspace folder URI string)
+		const workspaceFolderUriString =
+			scope?.workspaceFolder?.uri.toString() ?? "";
+		const collectionKey = `${extension.id}:${workspaceFolderUriString}`;
 
-			name,
+		let collection = this.#envVariableCollections.get(collectionKey);
+		if (!collection) {
+			collection = new ShimEnvironmentVariableCollectionImpl(
+				extension.id,
+				this,
+				this._logService,
+				scope,
+			);
+			this.#envVariableCollections.set(collectionKey, collection);
+		}
+		return collection;
+	}
 
-			apiTerminal,
+	// --- RPC Methods Called by MainThread (ExtHostTerminalServiceShape) ---
+	public $acceptTerminalOpened(
+		mainThreadId: number,
+		extHostTerminalId: string | undefined,
+		name: string,
+		shellLaunchConfigDto: IShellLaunchConfigDto,
+	): void {
+		this._logInfo(
+			`RPC $acceptTerminalOpened: MainThreadID='${mainThreadId}', ExtHostID='${extHostTerminalId}', Name='${name}'`,
+		);
+		let activeTerminalEntry = extHostTerminalId
+			? this.#terminals.get(extHostTerminalId)
+			: undefined;
 
-			processIdPromise: pidPromise,
+		if (activeTerminalEntry) {
+			// This is a shell terminal created by extHost via $createTerminal
+			if (activeTerminalEntry.id !== extHostTerminalId) {
+				// Should not happen if map key is extHostTerminalId
+				this._logError(
+					`Internal ID mismatch for terminal! Initial ExtHostID='${extHostTerminalId}', existing entry ID='${activeTerminalEntry.id}'. MainThreadID='${mainThreadId}'. This is a bug.`,
+				);
+			}
+			// Update the map to use MainThread ID as the primary key now
+			this.#terminals.delete(extHostTerminalId);
+			activeTerminalEntry.id = mainThreadId;
+			this.#terminals.set(mainThreadId, activeTerminalEntry);
+			// Update properties on the existing API object
+			(activeTerminalEntry.apiTerminal as any).name = name; // Assuming name can be updated by MainThread
+			// creationOptions should reflect what MainThread used, deserialize DTO
+			(activeTerminalEntry.apiTerminal as any).creationOptions =
+				Object.freeze(
+					this._deserializeShellLaunchConfig(shellLaunchConfigDto),
+				);
+			this._logDebug(
+				`Finalized shell terminal: MainThreadID='${mainThreadId}', Name='${name}'.`,
+			);
+		} else {
+			// This terminal was likely created by the user directly in the UI, or PTY flow
+			const options =
+				this._deserializeShellLaunchConfig(shellLaunchConfigDto);
+			const { apiTerminal, pidPromiseResolve, pidPromiseReject } =
+				this._createTerminalApiObjectAndState(mainThreadId, options);
+			activeTerminalEntry = {
+				id: mainThreadId,
+				name,
+				apiTerminal,
+				processIdPromise: apiTerminal.processId,
+				processIdResolve,
+				processIdReject,
+				state: { isInteractedWith: false },
+				_creationOptions: options,
+			};
+			this.#terminals.set(mainThreadId, activeTerminalEntry);
+			this._logDebug(
+				`Accepted new terminal from MainThread: MainThreadID='${mainThreadId}', Name='${name}'.`,
+			);
+		}
+		activeTerminalEntry.state.isInteractedWith = false; // Reset on open
+		(activeTerminalEntry.apiTerminal.state as any).isInteractedWith = false;
 
-			processIdResolve: pidPromiseResolve,
-		});
-
-		this.#onDidOpenTerminalEmitter.fire(apiTerminal);
+		this.#onDidOpenTerminalEmitter.fire(activeTerminalEntry.apiTerminal);
 	}
 
 	public $acceptTerminalClosed(
-		id: string,
-
+		id: number,
 		exitCode: number | undefined,
-
 		exitReason: VscodeTerminalExitReason | undefined,
 	): void {
 		this._logInfo(
-			`RPC $acceptTerminalClosed: ID='${id}', ExitCode=${exitCode}, Reason=${exitReason ? VscodeTerminalExitReason[exitReason] : "undefined"}`,
+			`RPC $acceptTerminalClosed: ID='${id}', ExitCode=${exitCode}, Reason=${exitReason !== undefined ? VscodeTerminalExitReason[exitReason] : "N/A"}`,
 		);
-
 		const activeTerminal = this.#terminals.get(id);
-
 		if (activeTerminal) {
 			activeTerminal.exitStatus = { code: exitCode, reason: exitReason };
-
 			(activeTerminal.apiTerminal as any).exitStatus =
-				// Update API object
-				activeTerminal.exitStatus;
-
+				activeTerminal.exitStatus; // Update API object
 			this.#onDidCloseTerminalEmitter.fire(activeTerminal.apiTerminal);
-
-			// Remove from active list
 			this.#terminals.delete(id);
-
 			if (this.#activeTerminalId === id) {
-				// No active terminal if current one closed
-				this.$acceptActiveTerminalChanged(undefined);
+				this.$acceptActiveTerminalChanged(undefined); // Clear active terminal
 			}
 		} else {
 			this._logWarn(
-				`Received $acceptTerminalClosed for unknown or already closed terminal ID: ${id}`,
+				`$acceptTerminalClosed for unknown terminal ID: ${id}`,
 			);
 		}
 	}
 
-	public $acceptActiveTerminalChanged(id: string | undefined): void {
+	public $acceptActiveTerminalChanged(id: number | undefined): void {
+		const newActiveId = id; // id from MainThread is number (or undefined)
 		this._logInfo(
-			`RPC $acceptActiveTerminalChanged: New Active ID='${id ?? "none"}'`,
+			`RPC $acceptActiveTerminalChanged: New Active ID='${newActiveId ?? "none"}'`,
 		);
-
 		const oldActiveTerminalApi = this.activeTerminal;
-
-		this.#activeTerminalId = id;
-
+		this.#activeTerminalId = newActiveId;
 		const newActiveTerminalApi = this.activeTerminal;
-
 		if (oldActiveTerminalApi !== newActiveTerminalApi) {
 			this.#onDidChangeActiveTerminalEmitter.fire(newActiveTerminalApi);
 		}
 	}
 
-	public $acceptTerminalProcessId(id: string, processId: number): void {
+	public $acceptTerminalProcessId(id: number, processId: number): void {
 		this._logInfo(
 			`RPC $acceptTerminalProcessId: ID='${id}', PID=${processId}`,
 		);
-
 		const activeTerminal = this.#terminals.get(id);
-
-		if (activeTerminal && activeTerminal.processIdResolve) {
+		if (activeTerminal?.processIdResolve) {
 			activeTerminal.processIdResolve(processId);
 		} else {
 			this._logWarn(
-				`Received $acceptTerminalProcessId for unknown terminal ID ${id} or PID already resolved.`,
+				`$acceptTerminalProcessId for unknown terminal ID ${id} or PID promise already resolved.`,
 			);
 		}
 	}
 
-	public $acceptTerminalTitleChange(id: string, name: string): void {
+	public $acceptTerminalTitleChange(id: number, name: string): void {
 		this._logInfo(
 			`RPC $acceptTerminalTitleChange: ID='${id}', New Name='${name}'`,
 		);
-
 		const activeTerminal = this.#terminals.get(id);
-
 		if (activeTerminal) {
 			activeTerminal.name = name;
-
-			// Update the API object (if name is mutable)
-			(activeTerminal.apiTerminal as any).name = name;
-
-			// TODO: Fire onDidChangeTerminalState if name change implies state change for API
+			(activeTerminal.apiTerminal as any).name = name; // Update API object
+			// TODO: VS Code fires onDidChangeTerminalState for title changes.
 			// this.#onDidChangeTerminalStateEmitter.fire(activeTerminal.apiTerminal);
 		}
 	}
 
 	public $acceptTerminalDimensions(
-		id: string,
-
+		id: number,
 		columns: number,
-
 		rows: number,
 	): void {
 		this._logInfo(
 			`RPC $acceptTerminalDimensions: ID='${id}', Cols=${columns}, Rows=${rows}`,
 		);
-
 		const activeTerminal = this.#terminals.get(id);
+		if (activeTerminal) {
+			const newDimensions = { columns, rows };
+			activeTerminal._lastDimensions = newDimensions;
+			this.#onDidChangeTerminalDimensionsEmitter.fire({
+				terminal: activeTerminal.apiTerminal,
+				dimensions: newDimensions,
+			});
 
-		if (activeTerminal?.ptyId) {
-			// This is primarily for PTYs
-			const pty = (
-				activeTerminal.apiTerminal
-					.creationOptions as VscodeExtensionTerminalOptions
-			).pty;
-
-			if (pty && pty.onDidChangeDimensions) {
-				// If the PTY provider has onDidChangeDimensions, it should be an Emitter.
-				// This assumes pty.onDidChangeDimensions is an Emitter.
-				// For ExtHost -> Provider, we'd call pty.setDimensions()
-				// For Provider -> ExtHost -> MainThread, provider fires event, ExtHost might inform MainThread.
-				// This $accept is MainThread -> ExtHost -> Provider.
-				if (typeof (pty as any).setDimensions === "function") {
-					// If PTY has setDimensions method
-					(pty as any).setDimensions({
-						columns,
-
-						rows,
-					} as VscodeTerminalDimensions);
-				} else {
-					this._logWarn(
-						`PTY for terminal ID ${id} does not have a setDimensions method to accept new dimensions.`,
-					);
-				}
+			if (activeTerminal.ptyId) {
+				// If it's a PTY-backed terminal
+				const pty = (
+					activeTerminal._creationOptions as VscodeExtensionTerminalOptions
+				).pty;
+				pty?.setDimensions?.(newDimensions); // Notify the extension's PTY
 			}
-		} else {
-			this._logDebug(
-				`Received $acceptTerminalDimensions for non-PTY terminal ID ${id} or PTY has no listener.`,
-			);
 		}
 	}
-
 	public $acceptTerminalMaximumDimensions(
-		id: string,
-
+		id: number,
 		columns: number,
-
 		rows: number,
 	): void {
 		this._logInfo(
 			`RPC $acceptTerminalMaximumDimensions: ID='${id}', MaxCols=${columns}, MaxRows=${rows}`,
 		);
-
-		// TODO: Store and potentially expose max dimensions if API supports it, or pass to PTY.
-	}
-
-	public $acceptTerminalInteraction(id: string): void {
-		this._logInfo(`RPC $acceptTerminalInteraction: ID='${id}'`);
-
 		const activeTerminal = this.#terminals.get(id);
-
-		if (
-			activeTerminal &&
-			activeTerminal.state &&
-			!activeTerminal.state.isInteractedWith
-		) {
+		if (activeTerminal?.ptyId) {
+			const pty = (
+				activeTerminal._creationOptions as VscodeExtensionTerminalOptions
+			).pty;
+			// VS Code's ExtHostPseudoterminal calls pty.setMaximumDimensions if it exists
+			if (typeof (pty as any).setMaximumDimensions === "function") {
+				(pty as any).setMaximumDimensions({ columns, rows });
+			}
+		}
+	}
+	public $acceptTerminalInteraction(id: number): void {
+		this._logInfo(`RPC $acceptTerminalInteraction: ID='${id}'`);
+		const activeTerminal = this.#terminals.get(id);
+		if (activeTerminal && !activeTerminal.state.isInteractedWith) {
 			activeTerminal.state.isInteractedWith = true;
-
-			(activeTerminal.apiTerminal as any).state.isInteractedWith = true;
-
+			// No direct (activeTerminal.apiTerminal.state as any).isInteractedWith = true;
+			// because state is a getter. The public event is the signal.
 			this.#onDidChangeTerminalStateEmitter.fire(
 				activeTerminal.apiTerminal,
 			);
 		}
 	}
-
-	public $acceptTerminalData(id: string, data: string): void {
-		// This is for data flowing FROM the terminal process TO the UI (via ExtHost if PTY)
+	public $acceptTerminalData(id: number, data: string): void {
+		// Data from terminal process to UI
 		this._logDebug(
-			`RPC $acceptTerminalData: ID='${id}', Data (first 50 chars)='${data.substring(0, 50)}...'`,
+			`RPC $acceptTerminalData: ID='${id}', Data (len)=${data.length}`,
 		);
-
 		const activeTerminal = this.#terminals.get(id);
-
-		if (activeTerminal?.ptyId) {
-			const pty = (
-				activeTerminal.apiTerminal
-					.creationOptions as VscodeExtensionTerminalOptions
-			).pty;
-
-			// The PTY should be listening to an onDidWrite event from this service
-			// or this service directly calls a method on the PTY.
-			// VS Code ExtHost uses an emitter on ExtHostPseudoterminal: `pty._onProcessData.fire(data);`
-			this.#onDidWriteDataEmitter.fire({
-				id: activeTerminal.ptyId,
-
+		if (activeTerminal) {
+			this.#onDidWriteTerminalDataEmitter.fire({
+				terminal: activeTerminal.apiTerminal,
 				data,
-
-				// Internal event for PTY's onDidWrite
 			});
+			if (activeTerminal.ptyId) {
+				// If PTY, forward to its _onProcessData emitter
+				this.#onDidWriteDataEmitterForPty.fire({
+					id: activeTerminal.ptyId,
+					data,
+				});
+			}
 		} else {
 			this._logWarn(
-				`Received $acceptTerminalData for non-PTY terminal ID '${id}' or PTY not found.`,
+				`$acceptTerminalData for unknown terminal ID '${id}'.`,
 			);
 		}
 	}
-
-	// --- Helper for Deserializing Options ---
-	private _deserializeShellLaunchConfig(
-		dto: any,
-	): VscodeTerminalOptions | VscodeExtensionTerminalOptions {
-		// TODO: Robustly convert DTO back to VscodeTerminalOptions / VscodeExtensionTerminalOptions.
-		// This needs to handle `cwd` (UriComponents to VscodeUri), `iconPath` (UriComponents/ThemeIcon DTO to VscodeUri/ThemeIcon),
-
-		// `env` (object), `strictEnv`, `hideFromUser`, `isFeatureTerminal`, `useShellEnvironment`, etc.
-		// For PTYs, it would need to find the local PTY instance if `ptyId` were part of DTO (which it isn't here).
-		this._logWarnOnce(
-			"_deserializeShellLaunchConfig is a STUB. Full DTO to API options conversion needed.",
+	public $acceptTerminalProcessRequestInitialCwd(id: number): void {
+		/* TODO for PTYs */ this._logWarn(
+			`RPC STUB: $acceptTerminalProcessRequestInitialCwd for ID ${id}.`,
 		);
-
-		return {
-			name: dto?.name,
-
-			// Assuming DTO maps 'executable' to 'shellPath'
-			shellPath: dto?.executable,
-
-			shellArgs: dto?.args,
-
-			// Example for URI revival
-			// cwd: dto.cwd ? VscodeUri.revive(dto.cwd) : undefined,
-
-			// env: dto.env,
-		} as VscodeTerminalOptions;
+	}
+	public $acceptTerminalProcessRequestCwd(id: number): void {
+		/* TODO for PTYs */ this._logWarn(
+			`RPC STUB: $acceptTerminalProcessRequestCwd for ID ${id}.`,
+		);
+	}
+	public async $acceptProcessRequestLatency(id: number): Promise<number> {
+		this._logWarn(`RPC STUB: $acceptProcessRequestLatency for ID ${id}.`);
+		return id;
+	}
+	public $acceptProcessAckDataEvent(_id: number, _charCount: number): void {
+		/* NOP in this shim, for flow control */
+	}
+	public $acceptProcessInput(_id: number, _data: string): void {
+		/* TODO for PTYs: forward to pty.handleInput */ this._logWarn(
+			`RPC STUB: $acceptProcessInput for ID ${_id}.`,
+		);
+	}
+	public $acceptProcessResize(
+		_id: number,
+		_cols: number,
+		_rows: number,
+	): void {
+		/* TODO for PTYs: forward to pty.setDimensions */ this._logWarn(
+			`RPC STUB: $acceptProcessResize for ID ${_id}.`,
+		);
+	}
+	public $acceptProcessShutdown(_id: number, _immediate: boolean): void {
+		/* TODO for PTYs: forward to pty.close */ this._logWarn(
+			`RPC STUB: $acceptProcessShutdown for ID ${_id}.`,
+		);
+	}
+	public $acceptProcessTitle(_id: number, _title: string): void {
+		this.$acceptTerminalTitleChange(_id, _title);
+	} // Alias
+	public $acceptProcessOverrideDimensions(
+		_id: number,
+		_dimensions: ITerminalDimensionsDto | undefined,
+	): void {
+		/* TODO for PTYs if they support this */ this._logWarn(
+			`RPC STUB: $acceptProcessOverrideDimensions for ID ${_id}.`,
+		);
+	}
+	public $acceptProcessShellIntegration(
+		_id: number,
+		_data: any /*IShellIntegrationDataDto*/,
+	): void {
+		/* TODO for shell integration */ this._logWarn(
+			`RPC STUB: $acceptProcessShellIntegration for ID ${_id}.`,
+		);
+	}
+	public $triggerTerminalRenderer(
+		_id: number,
+		_cols: number,
+		_rows: number,
+		_data: VSBuffer,
+	): void {
+		/* TODO for specific renderer actions */ this._logWarn(
+			`RPC STUB: $triggerTerminalRenderer for ID ${_id}.`,
+		);
+	}
+	public $triggerRunCommand(
+		_id: number,
+		_commandId: string,
+		_commandLine: string,
+		_cwd: string,
+		_nonce: number,
+		_cwdUri: VSCodeInternalUriComponents | undefined,
+	): void {
+		/* TODO for run command feature */ this._logWarn(
+			`RPC STUB: $triggerRunCommand for ID ${_id}.`,
+		);
 	}
 
+	// --- Helpers ---
+	private _deserializeShellLaunchConfig(
+		dto: IShellLaunchConfigDto,
+	): VscodeTerminalOptions {
+		this._logService?.trace("Deserializing IShellLaunchConfigDto:", dto);
+		return {
+			name: dto.name,
+			shellPath: dto.executable,
+			shellArgs: dto.args,
+			cwd:
+				dto.cwd &&
+				(typeof dto.cwd === "string"
+					? dto.cwd
+					: VscodeUri.from(VSCodeInternalURI.revive(dto.cwd))),
+			env: dto.env,
+			strictEnv: dto.strictEnv,
+			hideFromUser: dto.hideFromUser,
+			isTransient: dto.isTransient,
+			// iconPath and color need DTO to API conversion
+			iconPath:
+				dto.iconPath &&
+				(typeof dto.iconPath === "string" /* old theme icon id */
+					? new ThemeIcon(dto.iconPath)
+					: VscodeUri.revive(
+							dto.iconPath as VSCodeInternalUriComponents,
+						)), // Simplified
+			color:
+				dto.color &&
+				(typeof dto.color === "string"
+					? new ThemeColor(dto.color)
+					: undefined), // Simplified
+			location:
+				dto.location &&
+				(typeof dto.location === "number"
+					? (dto.location as VscodeViewColumn)
+					: (dto.location as any).viewColumn !== undefined
+						? {
+								viewColumn: (dto.location as any)
+									.viewColumn as VscodeViewColumn,
+								preserveFocus: (dto.location as any)
+									.preserveFocus,
+							}
+						: undefined), // Simplified
+			message: dto.initialText,
+		};
+	}
 	private _serializeTerminalOptionsForRpc(
 		options: VscodeTerminalOptions | VscodeExtensionTerminalOptions,
-	): any {
-		// TODO: Robustly convert VscodeTerminalOptions / VscodeExtensionTerminalOptions to a serializable DTO.
-		// This needs to handle `cwd` (VscodeUri to UriComponents DTO), `iconPath` (VscodeUri/ThemeIcon to DTO), etc.
-		// For PTYs, the `pty` object itself is not sent; instead, a PTY is created on MainThread side based on info.
-		this._logWarnOnce(
-			"_serializeTerminalOptionsForRpc is a STUB. Full API options to DTO conversion needed.",
+		extHostTerminalId: string,
+	): IShellLaunchConfigDto {
+		this._logService?.trace(
+			"Serializing TerminalOptions to IShellLaunchConfigDto:",
+			options,
 		);
-
-		return {
+		const result: IShellLaunchConfigDto = {
 			name: options.name,
-
-			shellPath: options.shellPath,
-
-			shellArgs: options.shellArgs,
-
-			// Example
-			// cwd: options.cwd ? this._convertApiArgToInternal(options.cwd) : undefined,
-
-			// env: options.env,
+			executable: options.shellPath,
+			args: options.shellArgs,
+			cwd:
+				options.cwd &&
+				(typeof options.cwd === "string"
+					? options.cwd
+					: (this._convertApiArgToInternal(
+							options.cwd,
+						) as VSCodeInternalUriComponents)),
+			env: options.env,
+			strictEnv: options.strictEnv,
+			hideFromUser: options.hideFromUser,
+			isTransient: options.isTransient,
+			iconPath: options.iconPath
+				? asTerminalIcon(options.iconPath)
+				: undefined,
+			color: options.color ? asTerminalColor(options.color) : undefined,
+			initialText: (options as VscodeTerminalOptions).message, // `message` is on TerminalOptions
+			isFeatureTerminal: (options as InternalTerminalOptions)
+				.isFeatureTerminal, // Internal option
+			useShellEnvironment: (options as InternalTerminalOptions)
+				.useShellEnvironment, // Internal option
+			extHostTerminalId, // Pass our temporary ID
+			isPty: !!(options as VscodeExtensionTerminalOptions).pty,
 		};
+		if (options.location) {
+			if (typeof options.location === "number") {
+				// ViewColumn
+				result.location = options.location;
+			} else if ("viewColumn" in options.location) {
+				// TerminalEditorLocationOptions
+				result.location = {
+					viewColumn: (options.location as any).viewColumn,
+					preserveFocus: (options.location as any).preserveFocus,
+				};
+			} else if ("parentTerminal" in options.location) {
+				// TerminalSplitLocationOptions
+				const parentTerm = (options.location as any).parentTerminal as
+					| VscodeTerminal
+					| undefined;
+				const parentActiveTerm = parentTerm
+					? this.#terminals.get(
+							this._findTerminalIdByApiObject(parentTerm)!,
+						)
+					: undefined;
+				if (parentActiveTerm) {
+					result.location = { parentTerminal: parentActiveTerm.id };
+				} else {
+					this._logWarn(
+						"Could not find parentTerminal ID for split location.",
+					);
+				}
+			}
+		}
+		return result;
+	}
+	private _findTerminalIdByApiObject(
+		apiTerminal: VscodeTerminal,
+	): ExtHostTerminalIdentifier | undefined {
+		for (const [id, activeTerm] of this.#terminals) {
+			if (activeTerm.apiTerminal === apiTerminal) return id;
+		}
+		return undefined;
 	}
 
 	public override dispose(): void {
-		super.dispose();
-
-		this.#onDidOpenTerminalEmitter.dispose();
-
-		this.#onDidCloseTerminalEmitter.dispose();
-
-		this.#onDidChangeActiveTerminalEmitter.dispose();
-
-		this.#onDidChangeTerminalStateEmitter.dispose();
-
-		this.#onDidWriteDataEmitter.dispose();
-
-		// Dispose all active terminals
-		this.#terminals.forEach((t) => t.apiTerminal.dispose());
-
+		super.dispose(); // Handles emitters via _instanceDisposables
+		this.#terminals.forEach((t) => t.apiTerminal.dispose()); // Should trigger $dispose RPCs
 		this.#terminals.clear();
-
-		// If collections have dispose
-		this.#envVariableCollections.forEach((c) => (c as any).dispose?.());
-
+		this.#envVariableCollections.forEach((c) => c.dispose());
 		this.#envVariableCollections.clear();
-
 		this._logInfo("Disposed.");
 	}
 
-	// --- Proposed API: Terminal Profiles ---
-	public async getProfiles(options: {
+	// --- Proposed API: Terminal Profiles (Stubs) ---
+	public async getProfiles(_options: {
 		includeExtensionProfiles?: boolean;
 	}): Promise<VscodeTerminalProfile[]> {
-		this._logWarnOnce(
-			"API STUB: window.getProfiles. Returning empty array.",
-		);
-
-		// TODO: RPC to MainThread: $getProfiles(options)
+		this._logWarnOnce("API STUB: window.getProfiles. Returning [].");
 		return [];
 	}
-
 	public get onDidChangeAvailableProfiles(): VscodeEvent<void> {
 		this._logWarnOnce(
-			"API STUB: window.onDidChangeAvailableProfiles. Returning NOP event.",
+			"API STUB: window.onDidChangeAvailableProfiles. NOP event.",
 		);
-
 		return VscodeEvent.None;
 	}
-
 	public registerTerminalProfileProvider(
 		id: string,
-
-		provider: VscodeTerminalProfileProvider,
+		_provider: VscodeTerminalProfileProvider,
 	): IDisposable {
 		this._logWarnOnce(
-			`API STUB: window.registerTerminalProfileProvider (id: ${id}). Returning NOP disposable.`,
+			`API STUB: window.registerTerminalProfileProvider (id: ${id}). NOP disposable.`,
 		);
-
-		// TODO: RPC to MainThread: $registerTerminalProfileProvider(internalId, id, extensionId)
-		// And handle provider.provideTerminalProfiles calls via RPC $provideTerminalProfiles(internalId, cancellationToken)
 		return Disposable.None;
 	}
 }
