@@ -28,8 +28,6 @@
 			"vs/*": ["../../Dependency/Microsoft/Dependency/Editor/src/vs/*"]
 		},
 
-		// "rootDir": "Source",
-
 		"rootDirs": [".", "../../Dependency/Microsoft/Dependency/Editor/src/"],
 
 		"target": "ESNext"
