@@ -23,8 +23,6 @@
 		"paths": {
 			"@Source/*": ["Source/*"],
 
-			"@VSCode/*": ["../../Dependency/Microsoft/Dependency/Editor/src/*"],
-
 			"vs/*": ["../../Dependency/Microsoft/Dependency/Editor/src/vs/*"]
 		},
 
