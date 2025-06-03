@@ -5,29 +5,39 @@
  * This is one of the most complex areas.
  *--------------------------------------------------------------------------------------------*/
 
+import { VSBuffer } from "vs/base/common/buffer";
 import { DisposableStore } from "vs/base/common/lifecycle";
 import { URI, type UriComponents } from "vs/base/common/uri";
 import { IURITransformer } from "vs/base/common/uriIpc";
 import * as languages from "vs/editor/common/languages";
 import { ILogService } from "vs/platform/log/common/log";
 import * as extHostProtocol from "vs/workbench/api/common/extHost.protocol";
-import * as extHostTypeConverter from "vs/workbench/api/common/extHostTypeConverters"; // For FileEditType
+import * as extHostTypeConverter from "vs/workbench/api/common/extHostTypeConverters";
 import * as extHostTypes from "vs/workbench/api/common/extHostTypes";
 import type * as vscode from "vscode";
 
+// Import from other converter files
 import {
 	Range,
 	TextEdit,
 	type CommandsConverter,
-} from "./cocoon-type-converters-main"; // Assuming main file exports these
+} from "./cocoon-type-converters-main";
 
-// Local logger instance (can be set by initializeConverterLogger from main)
+// Local logger instance
 let _converterLogService: ILogService | undefined;
 export function initializeWorkspaceEditConverterLogger(
 	logger?: ILogService,
 ): void {
-	// Specific init for this file if needed
 	_converterLogService = logger;
+}
+function _warnStub(
+	converterName: string,
+	direction: "toApi" | "fromApi",
+	messageSuffix: string = "",
+) {
+	_converterLogService?.warn(
+		`[TypeConverter STUB] ${converterName}.${direction} is STUBBED/SIMPLIFIED. ${messageSuffix} May not handle all fields or cases correctly.`,
+	);
 }
 
 // --- WorkspaceEditEntryMetadata, WorkspaceFileEditOptions, ThemeIconConverter ---
@@ -152,7 +162,7 @@ export namespace WorkspaceEdit {
 		const resultDto: extHostProtocol.IWorkspaceEditDto = { edits: [] };
 		if (!(edit instanceof extHostTypes.WorkspaceEdit)) {
 			_converterLogService?.error(
-				"[WorkspaceEdit.fromApi] Input is not an instance of vscode.WorkspaceEdit.",
+				"[WE.fromApi] Input not vscode.WorkspaceEdit.",
 			);
 			return resultDto;
 		}
@@ -160,7 +170,7 @@ export namespace WorkspaceEdit {
 			._edits as ReadonlyArray<extHostTypeConverter.FileEditTypeExtHost>;
 		if (!Array.isArray(internalEdits)) {
 			_converterLogService?.error(
-				"[WorkspaceEdit.fromApi] Could not access internal _edits array.",
+				"[WE.fromApi] Cannot access internal _edits.",
 			);
 			return resultDto;
 		}
@@ -171,11 +181,9 @@ export namespace WorkspaceEdit {
 			let marshalledEditEntry:
 				| extHostProtocol.MainThreadWorkspaceEditDto
 				| undefined = undefined;
-			const entryMetadataDisposable = new DisposableStore(); // For commands in this specific entry's metadata
+			const entryMetadataDisposable = new DisposableStore();
 			const dtoMetadata = entry.metadata
-				? WorkspaceEditEntryMetadata.from(
-						entry.metadata /*, commandsConverter, entryMetadataDisposable - if metadata can have commands */,
-					)
+				? WorkspaceEditEntryMetadata.from(entry.metadata)
 				: undefined;
 
 			switch (entry._type) {
@@ -229,9 +237,64 @@ export namespace WorkspaceEdit {
 				case extHostTypes.FileEditType.CellMetadata:
 				case extHostTypes.FileEditType.DocumentMetadata:
 					_converterLogService?.warn(
-						`[WorkspaceEdit.fromApi] Notebook edit type ${entry._type} conversion STUBBED.`,
+						`[WE.fromApi] Notebook edit type ${entry._type} conversion STUBBED.`,
 					);
-					// TODO: Implement notebook cell/document metadata edits
+					// Placeholder for NotebookCellDataDto
+					interface NotebookCellDataDtoPlaceholder {
+						kind: languages.CellKind;
+						source: string;
+						language: string;
+						mime?: string;
+						outputs?: any[];
+						metadata?: Record<string, any>;
+					}
+					const cellBasedEntry = entry as any; // Simplified for stub
+					let cellEditOperationDto: any = {};
+					if (entry._type === extHostTypes.FileEditType.CellReplace) {
+						cellEditOperationDto = {
+							editType: languages.CellEditType.Replace,
+							index: cellBasedEntry.index,
+							count: cellBasedEntry.count,
+							cells: cellBasedEntry.cells.map((c: any) =>
+								NotebookCellDataConverter.fromApi(c),
+							),
+						};
+					} else if (
+						entry._type === extHostTypes.FileEditType.CellMetadata
+					) {
+						cellEditOperationDto = {
+							editType: languages.CellEditType.PartialMetadata,
+							index: cellBasedEntry.index,
+							metadata: cellBasedEntry.edit.newCellMetadata,
+						};
+					} else if (
+						entry._type ===
+						extHostTypes.FileEditType.DocumentMetadata
+					) {
+						cellEditOperationDto = {
+							editType: languages.CellEditType.DocumentMetadata,
+							metadata: cellBasedEntry.edit.newNotebookMetadata,
+						};
+					} else {
+						cellEditOperationDto = {
+							editType: -1,
+							data: cellBasedEntry.edit,
+						};
+					}
+					marshalledEditEntry = {
+						_type: extHostProtocol.FileEditType.सेल,
+						resource: uriTransformer
+							? uriTransformer.transformOutgoing(
+									cellBasedEntry.uri,
+								)
+							: cellBasedEntry.uri.toJSON(),
+						notebookVersionId:
+							versionProvider?.getNotebookDocumentVersion?.(
+								cellBasedEntry.uri,
+							),
+						edit: cellEditOperationDto,
+						metadata: dtoMetadata,
+					} as extHostProtocol.IWorkspaceCellEditDto;
 					break;
 			}
 			if (marshalledEditEntry) resultDto.edits.push(marshalledEditEntry);
@@ -376,7 +439,9 @@ export namespace WorkspaceEdit {
 
 // --- Notebook STUBS ---
 export namespace NotebookCellDataConverter {
-	export function fromApi(cellData: vscode.NotebookCellData): any {
+	export function fromApi(
+		cellData: vscode.NotebookCellData,
+	): NotebookCellDataDtoPlaceholder {
 		_warnStub("NotebookCellDataConverter.fromApi", "fromApi", "STUBBED.");
 		return {
 			kind: extHostTypeConverter.NotebookCellKind.from(cellData.kind),
@@ -405,7 +470,3 @@ export namespace NotebookCellOutputConverter {
 	}
 	// toApi STUBBED
 }
-
-console.warn(
-	"[Cocoon Type Converters - WorkspaceEdit] Module initialized. WorkspaceEdit and Notebook related types still have STUBBED parts.",
-);

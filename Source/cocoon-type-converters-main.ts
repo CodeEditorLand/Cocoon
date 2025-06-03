@@ -19,9 +19,10 @@ import { isUriComponents, URI, type UriComponents } from "vs/base/common/uri";
 import { IURITransformer } from "vs/base/common/uriIpc";
 import { generateUuid } from "vs/base/common/uuid";
 import type { ISingleEditOperation } from "vs/editor/common/core/editOperation";
-import type { IPosition } from "vs/editor/common/core/position";
-import * as editorRange from "vs/editor/common/core/range";
-import type { ISelection } from "vs/editor/common/core/selection";
+import type { IPosition as VSCodeInternalIPosition } from "vs/editor/common/core/position"; // Changed to VSCodeInternalIPosition for clarity with protocol types
+import type { IRange as VSCodeInternalIRange } from "vs/editor/common/core/range"; // Changed
+import type { ISelection as VSCodeInternalISelection } from "vs/editor/common/core/selection"; // Changed
+
 import * as languages from "vs/editor/common/languages";
 import { EndOfLineSequence } from "vs/editor/common/model";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions";
@@ -40,7 +41,7 @@ import {
 	Disposable as VscodeDisposableFromApi,
 } from "../Shim/vscode";
 
-// Logger and helpers (should be defined once, typically here or in a shared util)
+// Logger and helpers
 let _converterLogService: ILogService | undefined;
 
 export function initializeConverterLogger(logger?: ILogService): void {
@@ -105,11 +106,11 @@ export class CommandsConverter
 
 	constructor(
 		private readonly _commandsImpl: CocoonExtHostCommands,
-		private readonly _logService?: ILogService, // Already using ILogService from platform
+		private readonly _logService?: ILogService,
 		private readonly _lookupApiCommand?: (
 			id: string,
 		) => ApiCommand | undefined,
-		public readonly _uriTransformer?: IURITransformer | null, // Made public for ApiCommandArgument.convert
+		public readonly _uriTransformer?: IURITransformer | null,
 	) {
 		this.delegatingCommandId = `_cocoon.executeContributedCommandWithCachedArgs.${generateUuid()}`;
 		this._logService?.trace(
@@ -172,8 +173,6 @@ export class CommandsConverter
 				commandDto.id === this.delegatingCommandId
 					? `(original for ${commandDto.$ident})`
 					: commandDto.id;
-			// Arguments are already revived by RPCProtocol if they were simple types.
-			// For deeply nested commands or special objects, _reviveArguments in ExtHostCommands should handle it.
 			const revivedArgs = commandDto.arguments
 				? (this._commandsImpl as any)._reviveArgumentsFromRpc(
 						commandDto.arguments,
@@ -187,7 +186,7 @@ export class CommandsConverter
 				tooltip: commandDto.tooltip,
 			};
 		}
-		const Ctor = VscodeCommandCtor as any; // HACK: Access constructor for vscode.Command
+		const Ctor = VscodeCommandCtor as any;
 		const result = new Ctor(commandDto.id, commandDto.title);
 		result.tooltip = commandDto.tooltip;
 		if (commandDto.arguments) {
@@ -209,7 +208,7 @@ export class CommandsConverter
 			title: command.title,
 			tooltip: command.tooltip,
 		};
-		if (!command.command) return result; // No command ID, just return title/tooltip
+		if (!command.command) return result;
 
 		const apiCommand = this._lookupApiCommand
 			? this._lookupApiCommand(command.command)
@@ -256,7 +255,7 @@ export class CommandsConverter
 				this._cache.set(
 					ident,
 					cloneAndChange(command, () => undefined),
-				); // Cache a clone
+				);
 				disposables.add(
 					new VscodeDisposableFromApi(() => {
 						this._cache.delete(ident);
@@ -266,12 +265,14 @@ export class CommandsConverter
 				result.id = this.delegatingCommandId;
 				result.arguments = [ident];
 			} else {
-				// Use ExtHostCommands' helper to marshal arguments
-				result.arguments = (
-					this._commandsImpl as any
-				)._convertArgumentsToInternalForRpc(
-					command.arguments || [],
-					disposables,
+				result.arguments = command.arguments.map(
+					(arg) =>
+						(
+							this._commandsImpl as any
+						)._convertArgumentsToInternalForRpc(
+							[arg],
+							disposables,
+						)[0],
 				);
 			}
 		}
@@ -347,10 +348,12 @@ export namespace Selection {
 }
 
 export namespace location {
+	// Renamed to lowercase to match VS Code internal
 	export function from(
 		value: vscode.Location,
 		uriTransformer?: IURITransformer,
 	): languages.Location {
+		// DTO is languages.Location
 		return {
 			uri: uriTransformer
 				? uriTransformer.transformOutgoing(value.uri)
@@ -395,6 +398,7 @@ export namespace DefinitionLink {
 		value: extHostProtocol.ILocationLinkDto,
 		uriTransformer?: IURITransformer,
 	): vscode.LocationLink {
+		// API type is vscode.LocationLink
 		return {
 			targetUri: URI.revive(
 				uriTransformer
@@ -416,12 +420,15 @@ export namespace DefinitionLink {
 	): extHostProtocol.ILocationLinkDto[] {
 		return apiArray.map((item) => {
 			if ("targetUri" in item) {
+				// vscode.DefinitionLink
 				return DefinitionLink.from(
 					item as vscode.DefinitionLink,
 					uriTransformer,
 				);
 			} else {
+				// vscode.Location
 				return {
+					// Convert vscode.Location to ILocationLinkDto structure
 					uri: uriTransformer
 						? uriTransformer.transformOutgoing(item.uri)
 						: item.uri.toJSON(),
@@ -518,6 +525,7 @@ export namespace MarkdownString {
 // --- TextEdit & EndOfLine ---
 export namespace TextEdit {
 	export function from(edit: vscode.TextEdit): languages.TextEdit {
+		// DTO is languages.TextEdit
 		return {
 			text: edit.newText,
 			eol: edit.newEol && EndOfLine.from(edit.newEol),
@@ -525,6 +533,7 @@ export namespace TextEdit {
 		};
 	}
 	export function to(edit: languages.TextEdit): vscode.TextEdit {
+		// DTO is languages.TextEdit
 		const result = new extHostTypes.TextEdit(
 			Range.to(edit.range)!,
 			edit.text || "",
@@ -580,13 +589,7 @@ export namespace Hover {
 	}
 }
 
-// Re-export converters from other files
-export * from "./cocoon-type-converters-completion";
-export * from "./cocoon-type-converters-codeaction";
-export * from "./cocoon-type-converters-languagefeatures";
-export * from "./cocoon-type-converters-workspaceedit";
-
 export const placeholderForModuleSystem = true;
 console.warn(
-	"[Cocoon Type Converters - Main] Module initialized. Other converters are in separate files.",
+	"[Cocoon Type Converters - Main] Initialized. Other converters are in separate files.",
 );

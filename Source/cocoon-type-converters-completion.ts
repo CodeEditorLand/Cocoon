@@ -7,16 +7,18 @@
 import { DisposableStore } from "vs/base/common/lifecycle";
 import * as languages from "vs/editor/common/languages";
 import * as extHostProtocol from "vs/workbench/api/common/extHost.protocol";
-import * as extHostTypeConverter from "vs/workbench/api/common/extHostTypeConverters"; // For original enum converters
+import * as extHostTypeConverter from "vs/workbench/api/common/extHostTypeConverters";
 import * as extHostTypes from "vs/workbench/api/common/extHostTypes";
 import type * as vscode from "vscode";
 
+// Import from the main converter file
 import {
 	MarkdownString,
+	Position,
 	Range,
 	TextEdit,
 	type CommandsConverter,
-} from "./cocoon-type-converters-main"; // Assuming main file exports these
+} from "./cocoon-type-converters-main";
 
 function isDefined<T>(value: T | undefined | null): value is T {
 	return value !== undefined && value !== null;
@@ -57,7 +59,7 @@ export namespace Suggest {
 	): extHostProtocol.ISuggestDataDto {
 		const resultDto: extHostProtocol.ISuggestDataDto = Object.create(null);
 		resultDto[extHostProtocol.ISuggestDataDtoField.label] =
-			typeof item.label === "string" ? item.label : item.label; // Protocol DTO can take CompletionItemLabel
+			typeof item.label === "string" ? item.label : item.label;
 		resultDto[extHostProtocol.ISuggestDataDtoField.kind] =
 			CompletionItemKind.from(item.kind);
 		if (item.tags)

@@ -5,32 +5,28 @@
  * Formatting, Symbols, Hierarchies, SignatureHelp, InlayHints, etc.
  *--------------------------------------------------------------------------------------------*/
 
+import { asArray, coalesce, isNonEmptyArray } from "vs/base/common/arrays";
 import { DisposableStore } from "vs/base/common/lifecycle";
 import { URI, type UriComponents } from "vs/base/common/uri";
 import { IURITransformer } from "vs/base/common/uriIpc";
 import * as languages from "vs/editor/common/languages";
 import * as extHostProtocol from "vs/workbench/api/common/extHost.protocol";
-import * as extHostTypeConverter from "vs/workbench/api/common/extHostTypeConverters";
+import * as extHostTypeConverter from "vs/workbench/api/common/extHostTypeConverters"; // For some enums
 import * as extHostTypes from "vs/workbench/api/common/extHostTypes";
 import type * as vscode from "vscode";
 
+// Import from other converter files
 import {
 	DefinitionLink,
-	DiagnosticConverter,
-	DiagnosticSeverity,
-	DiagnosticTag,
 	EndOfLine,
 	Hover,
 	Location,
 	MarkdownString,
 	Position,
 	Range,
-	RelatedInformationConverter,
 	TextEdit,
 	type CommandsConverter,
 } from "./cocoon-type-converters-main";
-
-// Assuming main file exports these
 
 function isDefined<T>(value: T | undefined | null): value is T {
 	return value !== undefined && value !== null;
@@ -202,7 +198,7 @@ export namespace ReferenceContextConverter {
 		context: vscode.ReferenceContext,
 	): extHostProtocol.IReferenceContextDto {
 		return { includeDeclaration: context.includeDeclaration };
-	} // IReferenceContextDto in protocol
+	}
 	export function toApi(
 		dto: extHostProtocol.IReferenceContextDto,
 	): vscode.ReferenceContext {
@@ -362,9 +358,6 @@ export namespace SemanticTokens {
 		let dataArray: Uint32Array;
 		if (dto.data instanceof Uint8Array) {
 			if (dto.data.byteLength % 4 !== 0) {
-				_converterLogService?.error(
-					"[SemanticTokens.toApi] Uint8Array data not multiple of 4 bytes.",
-				);
 				dataArray = new Uint32Array();
 			} else
 				dataArray = new Uint32Array(
@@ -375,9 +368,6 @@ export namespace SemanticTokens {
 		} else if (Array.isArray(dto.data)) {
 			dataArray = new Uint32Array(dto.data as number[]);
 		} else {
-			_converterLogService?.error(
-				"[SemanticTokens.toApi] Unexpected data type for 'data'.",
-			);
 			dataArray = new Uint32Array();
 		}
 		return new extHostTypes.SemanticTokens(dataArray, dto.resultId);
@@ -393,7 +383,6 @@ export namespace SemanticTokensEdit {
 			data: edit.data ? Array.from(edit.data.data) : undefined,
 		};
 	}
-	// toApi for SemanticTokensEdit would take extHostProtocol.ISemanticTokensEditDto
 }
 export namespace SemanticTokensEdits {
 	export function fromApi(
@@ -404,7 +393,6 @@ export namespace SemanticTokensEdits {
 			edits: edits.edits.map(SemanticTokensEdit.fromApi),
 		};
 	}
-	// toApi for SemanticTokensEdits
 }
 
 // --- CallHierarchy & TypeHierarchy ---
@@ -741,6 +729,12 @@ export namespace InlayHint {
 		return { hints: resultHints, cacheId };
 	}
 }
+// --- End InlayHint ---
+
+// --- SymbolKind & SymbolTag ---
+// (Using extHostTypeConverter directly for these as they are mostly enum mappings)
+// export namespace SymbolKind { /* ... from extHostTypeConverter ... */ }
+// export namespace SymbolTag { /* ... from extHostTypeConverter ... */ }
 
 // --- DocumentSymbol & WorkspaceSymbol ---
 export namespace DocumentSymbol {
@@ -776,7 +770,6 @@ export namespace DocumentSymbol {
 		if (dto.children) result.children = dto.children.map(toApi);
 		return result;
 	}
-	// fromApiArray and toApiArray for SymbolInformation (used by old provider API) or DocumentSymbol[]
 	export function fromApiArray(
 		symbols: ReadonlyArray<
 			vscode.DocumentSymbol | vscode.SymbolInformation
@@ -786,7 +779,6 @@ export namespace DocumentSymbol {
 		return symbols.map((s) => {
 			if (extHostTypes.DocumentSymbol.isDocumentSymbol(s))
 				return DocumentSymbol.fromApi(s);
-			// Convert vscode.SymbolInformation to a flat IDocumentSymbolDto
 			return {
 				name: s.name,
 				detail: s.containerName || "",
@@ -795,8 +787,8 @@ export namespace DocumentSymbol {
 					?.map((t) => extHostTypeConverter.SymbolTag.from(t))
 					.filter(isDefined) as languages.SymbolTag[],
 				range: Range.from(s.location.range)!,
-				selectionRange: Range.from(s.location.range)!, // Use full range as selection range for SymbolInfo
-				children: undefined, // SymbolInformation is flat
+				selectionRange: Range.from(s.location.range)!,
+				children: undefined,
 			};
 		});
 	}

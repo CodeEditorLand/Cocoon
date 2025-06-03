@@ -11,15 +11,16 @@ import * as extHostProtocol from "vs/workbench/api/common/extHost.protocol";
 import * as extHostTypes from "vs/workbench/api/common/extHostTypes";
 import type * as vscode from "vscode";
 
+// Import from other converter files
 import {
 	DiagnosticConverter,
 	Range,
 	type CommandsConverter,
-} from "./cocoon-type-converters-main"; // Assuming main file exports these
+} from "./cocoon-type-converters-main";
 import {
 	WorkspaceEdit,
 	type WorkspaceEdit as WorkspaceEditConverterNS,
-} from "./cocoon-type-converters-workspaceedit"; // Import WorkspaceEdit from its file
+} from "./cocoon-type-converters-workspaceedit";
 
 // --- CodeActionTriggerKind, CodeActionContext, CodeActionProviderMetadata ---
 export namespace CodeActionTriggerKind {
