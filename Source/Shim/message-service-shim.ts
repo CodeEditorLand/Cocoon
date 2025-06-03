@@ -11,7 +11,7 @@
  *
  * Responsibilities:
  * - Implementing `showInformationMessage`, `showWarningMessage`, `showErrorMessage`.
- * - Parsing variadic arguments for `VscodeMessageOptions` and action items.
+ * - Parsing variadic arguments for `VscodeMessageOptions`, `ExtensionSourceInfo`, and action items.
  * - Constructing a serializable IPC payload for "ui_showMessage" to Mountain, *   including message, severity, options (modal, detail), action items (with handles), *   and the source extension's ID and display name.
  * - Handling Mountain's response (ideally the handle/index of the selected item)
  *   and mapping it back to the original `vscode.MessageItem` or string.
@@ -33,6 +33,8 @@
  *     }`
  *   - Mountain Response (Success): `{ params: number | string | null | undefined }` (number is preferred handle/index)
  *   - Mountain Response (Error): VineErrorPayload
+ *
+ * Last Reviewed/Updated: Based on latest extraction timestamp.
  *--------------------------------------------------------------------------------------------*/
 
 import type {
@@ -40,30 +42,43 @@ import type {
 	MessageOptions as VscodeMessageOptions,
 } from "vscode";
 
-// Public vscode API types
+// Public vscode API types (ensure this path resolves to Cocoon's 'vscode' shim)
 
 import {
 	BaseCocoonShim,
-	refineErrorForShim,
+	refineErrorForShim, // Using the more specific refiner from BaseCocoonShim
 	type ILogServiceForShim,
-	type IRpcProtocolServiceAdapter,
+	type IRpcProtocolServiceAdapter, // Passed to BaseCocoonShim, not directly used for IPC here
 } from "./_baseShim";
 
 // --- Type Definitions ---
+
+/**
+ * Severity levels for notifications sent via direct IPC to Mountain.
+ * These values must align with what Mountain's `ui_showMessage` IPC handler expects.
+ */
 enum NotificationSeverityForIpc {
-	Ignore = 0,
+	Ignore = 0, // Not typically used directly by `show...Message` APIs.
 	Info = 1,
 	Warning = 2,
 	Error = 3,
 }
 
+/**
+ * Information about the extension that is the source of the message.
+ * This can be passed to Mountain for display or logging purposes.
+ */
 export interface ExtensionSourceInfo {
-	id: string;
-	displayName: string;
+	id: string; // e.g., "publisher.name"
+	displayName: string; // Human-readable name of the extension
 }
 
+/**
+ * Defines the service interface for showing messages, aligning with parts of `vscode.window`.
+ */
 export interface IExtHostMessageServiceInterface {
-	readonly _serviceBrand: undefined;
+	readonly _serviceBrand: undefined; // For DI compatibility
+
 	showInformationMessage(
 		message: string,
 		options?: VscodeMessageOptions,
@@ -101,6 +116,10 @@ export interface IExtHostMessageServiceInterface {
 	): Promise<string | VscodeMessageItem | undefined>;
 }
 
+/**
+ * Cocoon's implementation of the message service.
+ * It proxies `show...Message` calls to the Mountain host via direct IPC.
+ */
 export class ShimExtHostMessageService
 	extends BaseCocoonShim
 	implements IExtHostMessageServiceInterface
@@ -115,21 +134,29 @@ export class ShimExtHostMessageService
 		this._logInfo("Initialized.");
 	}
 
+	/** This shim uses direct IPC and does not strictly require RPC for its core functionality. */
 	protected override _requiresRpc(): boolean {
 		return false;
-	} // Uses direct IPC
+	}
 
+	/**
+	 * Parses the variadic arguments passed to show...Message methods.
+	 * It correctly identifies `VscodeMessageOptions`, `ExtensionSourceInfo`, and action `items`.
+	 */
 	private _parseMessageArgs(
-		optionsOrExtensionSourceOrFirstItem?:
+		// The first argument after 'message'
+		arg1?:
 			| VscodeMessageOptions
 			| ExtensionSourceInfo
 			| string
 			| VscodeMessageItem,
-		extensionSourceOrFirstItemOrRest?:
+		// The second argument after 'message'
+		arg2?:
 			| ExtensionSourceInfo
 			| string
 			| VscodeMessageItem
 			| (string | VscodeMessageItem)[],
+		// All subsequent arguments
 		...restItems: (string | VscodeMessageItem)[]
 	): {
 		options: VscodeMessageOptions;
@@ -139,41 +166,43 @@ export class ShimExtHostMessageService
 		let options: VscodeMessageOptions = {};
 		let items: (string | VscodeMessageItem)[] = [];
 		let source: ExtensionSourceInfo | undefined = undefined;
-		let CppExploreParseArgsStartIdx = 0;
-		const allArgs = [
-			optionsOrExtensionSourceOrFirstItem,
-			extensionSourceOrFirstItemOrRest,
-			...restItems,
-		].filter((arg) => arg !== undefined);
+		let parseStartIndex = 0; // Index into the collected allArgs array
 
-		// 1. Check for VscodeMessageOptions (must not have 'title', but can be an object)
+		// Collect all potential optional arguments into a single array, filtering out undefined initial ones.
+		const allPotentialArgs = [arg1, arg2, ...restItems].filter(
+			(arg) => arg !== undefined,
+		);
+
+		// 1. Check for VscodeMessageOptions:
+		// It's an object, not null, and doesn't have a 'title' (to distinguish from MessageItem)
+		// and doesn't have an 'id' (to distinguish from ExtensionSourceInfo).
 		if (
-			allArgs.length > 0 &&
-			typeof allArgs[0] === "object" &&
-			allArgs[0] !== null &&
-			!(allArgs[0] as VscodeMessageItem).title &&
-			!(allArgs[0] as ExtensionSourceInfo).id
+			allPotentialArgs.length > parseStartIndex &&
+			typeof allPotentialArgs[parseStartIndex] === "object" &&
+			allPotentialArgs[parseStartIndex] !== null &&
+			!(allPotentialArgs[parseStartIndex] as VscodeMessageItem).title &&
+			!(allPotentialArgs[parseStartIndex] as ExtensionSourceInfo).id
 		) {
-			options = allArgs[0] as VscodeMessageOptions;
-			CppExploreParseArgsStartIdx = 1;
+			options = allPotentialArgs[parseStartIndex] as VscodeMessageOptions;
+			parseStartIndex++;
 		}
 
-		// 2. Check for ExtensionSourceInfo
+		// 2. Check for ExtensionSourceInfo:
+		// It's an object, not null, and has an 'id' property.
 		if (
-			allArgs.length > CppExploreParseArgsStartIdx &&
-			typeof allArgs[CppExploreParseArgsStartIdx] === "object" &&
-			allArgs[CppExploreParseArgsStartIdx] !== null &&
-			(allArgs[CppExploreParseArgsStartIdx] as ExtensionSourceInfo).id
+			allPotentialArgs.length > parseStartIndex &&
+			typeof allPotentialArgs[parseStartIndex] === "object" &&
+			allPotentialArgs[parseStartIndex] !== null &&
+			typeof (allPotentialArgs[parseStartIndex] as ExtensionSourceInfo)
+				.id === "string"
 		) {
-			source = allArgs[
-				CppExploreParseArgsStartIdx
-			] as ExtensionSourceInfo;
-			CppExploreParseArgsStartIdx++;
+			source = allPotentialArgs[parseStartIndex] as ExtensionSourceInfo;
+			parseStartIndex++;
 		}
 
-		// 3. Remaining are items
-		for (let i = CppExploreParseArgsStartIdx; i < allArgs.length; i++) {
-			const itemCandidate = allArgs[i];
+		// 3. Remaining arguments are considered action items (string or VscodeMessageItem).
+		for (let i = parseStartIndex; i < allPotentialArgs.length; i++) {
+			const itemCandidate = allPotentialArgs[i];
 			if (typeof itemCandidate === "string") {
 				items.push(itemCandidate);
 			} else if (
@@ -192,6 +221,9 @@ export class ShimExtHostMessageService
 		return { options, items, source };
 	}
 
+	/**
+	 * Internal helper to show a message by sending an IPC request to Mountain.
+	 */
 	private async _showMessage(
 		severityForIpc: NotificationSeverityForIpc,
 		message: string,
@@ -199,60 +231,64 @@ export class ShimExtHostMessageService
 		items: (string | VscodeMessageItem)[],
 		source?: ExtensionSourceInfo,
 	): Promise<string | VscodeMessageItem | undefined> {
-		const ipcMethodName = "ui_showMessage";
+		const ipcMethodName = "ui_showMessage"; // Assumed IPC method name on Mountain
+
 		const itemsForIpc = items.map((item, index) => ({
 			title: typeof item === "string" ? item : item.title,
-			handle: index, // Use index as handle
+			handle: index, // Use array index as the handle for Mountain to report back
 			isCloseAffordance:
 				typeof item === "object" ? !!item.isCloseAffordance : false,
 		}));
 
-		const params: any = {
-			// Build params dynamically
+		const paramsForIpc: any = {
+			// Build params dynamically to include source only if present
 			severity: severityForIpc,
 			message,
-			options: { modal: options.modal, detail: options.detail },
+			options: { modal: options.modal, detail: options.detail }, // Send only relevant serializable options
 			items: itemsForIpc,
 		};
 		if (source) {
-			params.source = source;
+			paramsForIpc.source = source; // Add extension source info if provided
 		}
 
 		this._logDebug(
 			`Calling _showMessage (IPC: '${ipcMethodName}'): Severity=${NotificationSeverityForIpc[severityForIpc]}, ` +
-				`Msg="${message.substring(0, 50)}...", Items=${itemsForIpc.length}, Opts=${JSON.stringify(params.options)}, Src=${source?.id || "N/A"}`,
+				`Msg="${message.substring(0, 50)}...", Items=${itemsForIpc.length}, Opts=${JSON.stringify(paramsForIpc.options)}, Src=${source?.id || "N/A"}`,
 		);
 
 		try {
+			// Timeout is generous as user interaction is involved.
 			const resultFromMountain = (await this._ipcRequestResponse(
 				ipcMethodName,
-				params,
-				300000 /* 5 min */,
+				paramsForIpc,
+				300000 /* 5 minutes */,
 			)) as number | string | undefined | null;
+
 			if (
 				resultFromMountain === undefined ||
 				resultFromMountain === null
 			) {
 				this._logDebug(
-					`Message dialog (IPC: ${ipcMethodName}) dismissed.`,
+					`Message dialog (IPC: ${ipcMethodName}) dismissed or no selection made.`,
 				);
-				return undefined;
+				return undefined; // User dismissed or no action taken
 			}
+
 			if (typeof resultFromMountain === "number") {
-				// Mountain returned handle (index)
+				// Mountain returned a handle (which we defined as the original index).
 				if (
 					resultFromMountain >= 0 &&
 					resultFromMountain < items.length
 				) {
-					return items[resultFromMountain];
+					return items[resultFromMountain]; // Return the original item.
 				}
 				this._logWarn(
-					`Received numeric handle (${resultFromMountain}) from '${ipcMethodName}' out of bounds for items.`,
+					`Received numeric handle (${resultFromMountain}) from '${ipcMethodName}' which is out of bounds for the sent items.`,
 					"Sent items:",
 					items,
 				);
 			} else if (typeof resultFromMountain === "string") {
-				// Mountain returned title string
+				// Mountain returned the title string of the selected item.
 				const selectedItemByTitle = items.find(
 					(origItem) =>
 						(typeof origItem === "string"
@@ -260,32 +296,37 @@ export class ShimExtHostMessageService
 							: origItem.title) === resultFromMountain,
 				);
 				if (selectedItemByTitle) return selectedItemByTitle;
+				// If the returned string was one of the simple string items.
 				if (items.includes(resultFromMountain as string))
 					return resultFromMountain as string;
 				this._logWarn(
-					`Received title string ('${resultFromMountain}') from '${ipcMethodName}' not matching any item.`,
+					`Received title string ('${resultFromMountain}') from '${ipcMethodName}' which does not match any of the provided item titles or string items.`,
 				);
 			} else {
 				this._logWarn(
-					`Unexpected response type from '${ipcMethodName}'. Expected number or string. Got:`,
+					`Unexpected response type from '${ipcMethodName}'. Expected number (handle/index) or string (title). Got:`,
 					resultFromMountain,
 				);
 			}
-			return undefined;
+			return undefined; // Fallback if response processing fails
 		} catch (e: any) {
+			// _ipcRequestResponse already refines and logs the error.
 			this._logError(
-				`IPC call to '${ipcMethodName}' failed:`,
-				e as Error,
-			); // Already refined by _ipcRequestResponse
+				`IPC call to '${ipcMethodName}' failed. Error was already logged by IPC layer.`,
+			);
+			// API contract for showMessage is to return undefined on error/dismissal.
 			return undefined;
 		}
 	}
 
-	// Overload implementation structure:
+	// --- Public API method implementations ---
+	// These use a common pattern: parse args, then call _showMessage.
+
 	public showInformationMessage(
 		message: string,
 		...args: any[]
 	): Promise<string | VscodeMessageItem | undefined> {
+		// args can be: [options, source, ...items], [options, ...items], [source, ...items], [...items]
 		const { options, items, source } = this._parseMessageArgs(
 			args[0],
 			args[1],
@@ -299,6 +340,7 @@ export class ShimExtHostMessageService
 			source,
 		);
 	}
+
 	public showWarningMessage(
 		message: string,
 		...args: any[]
@@ -316,6 +358,7 @@ export class ShimExtHostMessageService
 			source,
 		);
 	}
+
 	public showErrorMessage(
 		message: string,
 		...args: any[]

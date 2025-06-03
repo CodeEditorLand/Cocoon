@@ -17,6 +17,8 @@
  * for all filesystem operations.
  *
  * This file is preserved temporarily for context during the refactoring process.
+ * Its asynchronous operations have been modified to throw immediately to reflect
+ * the non-functional backend. Synchronous operations also throw.
  *
  * Original Intended Responsibilities (if backend were functional):
  * - Mimicking the `fs.promises` API by making asynchronous IPC calls to Mountain.
@@ -25,13 +27,14 @@
  * - Strongly discouraging the use of synchronous `fs` methods by providing stubs that throw.
  * - Providing Node.js `fs.constants`.
  *
+ * Last Reviewed/Updated: Based on latest extraction timestamp (reflecting obsolete status).
  *--------------------------------------------------------------------------------------------*/
 
 import { Buffer } from "node:buffer"; // Explicit import for Buffer operations
-import * as nodeFs from "node:fs"; // For fs.constants and creating new nodeFs.Stats/Dirent instances
+import * as nodeFs from "node:fs"; // For fs.constants and type reference
 import type * as NodeFsTypes from "node:fs"; // For comprehensive type information
 
-import { sendToMountainAndWait } from "../cocoon-ipc";
+// import { sendToMountainAndWait } from "../cocoon-ipc"; // No longer used as backend is deprecated
 
 console.error(
 	// Changed to console.error for high visibility
@@ -59,7 +62,7 @@ export interface FsPromisesApiShim {
 	lstat?: (
 		path: PathLike,
 		opts?: NodeFsTypes.StatOptions,
-	) => Promise<StatsShim>; // lstat is often present
+	) => Promise<StatsShim>;
 	realpath: (
 		path: PathLike,
 		options?: NodeFsTypes.ObjectEncodingOptions | BufferEncoding,
@@ -78,20 +81,19 @@ export interface FsPromisesApiShim {
 		options?: MkdirOptionsShim,
 	) => Promise<string | undefined>;
 	unlink: (path: PathLike) => Promise<void>;
-	rm?: (path: PathLike, options?: NodeFsTypes.RmOptions) => Promise<void>; // `rm` is newer
+	rm?: (path: PathLike, options?: NodeFsTypes.RmOptions) => Promise<void>;
 	rmdir: (path: PathLike, options?: RmdirOptionsShim) => Promise<void>;
 	readdir: (
 		path: PathLike,
 		options?: ReaddirOptionsShim,
 	) => Promise<string[] | Buffer[] | DirentShim[]>;
 	rename: (oldPath: PathLike, newPath: PathLike) => Promise<void>;
-	copyFile?: (src: PathLike, dest: PathLike, mode?: number) => Promise<void>; // `copyFile` might not be in all Node versions
+	copyFile?: (src: PathLike, dest: PathLike, mode?: number) => Promise<void>;
 }
 
 export interface FsShimStructure {
 	promises: FsPromisesApiShim;
 	constants: typeof nodeFs.constants;
-	// Synchronous API stubs
 	existsSync: (path: PathLike) => boolean;
 	statSync: (
 		path: PathLike,
@@ -127,7 +129,6 @@ export interface FsShimStructure {
 	) => string[] | Buffer[] | DirentShim[];
 	renameSync: (oldPath: PathLike, newPath: PathLike) => void;
 	accessSync?: (path: PathLike, mode?: number) => void;
-	// Stream and Watcher stubs
 	createReadStream: (
 		path: PathLike,
 		options?: NodeFsTypes.ReadStreamOptions | string,
@@ -146,32 +147,26 @@ export interface FsShimStructure {
 	) => NodeFsTypes.FSWatcher;
 }
 
-async function requestFsOpAsync(
+/**
+ * All asynchronous FS operations are now stubbed to throw immediately,
+ * reflecting the deprecated and non-functional backend.
+ */
+async function throwNonFunctionalError(
 	ipcMethod: string,
-	ipcParams: any,
+	ipcParams?: any,
 ): Promise<any> {
-	const NON_FUNCTIONAL_ERROR_MESSAGE = `[Node FS Shim - OBSOLETE & NON-FUNCTIONAL] Attempted IPC call to Mountain for '${ipcMethod}'. This relies on backend handlers in 'native_fs.rs' which are DEPRECATED. This operation WILL FAIL. Extensions MUST use 'vscode.workspace.fs'.`;
+	const NON_FUNCTIONAL_ERROR_MESSAGE = `[Node FS Shim - OBSOLETE & NON-FUNCTIONAL] Attempted FS operation '${ipcMethod}'. This relies on backend handlers in Mountain that are DEPRECATED. This operation WILL FAIL. Extensions MUST use 'vscode.workspace.fs'.`;
 	console.error(NON_FUNCTIONAL_ERROR_MESSAGE, "Params:", ipcParams);
-	// To make the failure very clear and immediate for developers.
 	const err = new Error(
 		NON_FUNCTIONAL_ERROR_MESSAGE,
 	) as NodeJS.ErrnoException;
 	err.code = "ENOSYS"; // Function not implemented - a fitting error code.
 	throw err;
-	// Original try-catch block for sendToMountainAndWait is commented out as it's non-functional.
-	/*
-	try {
-		return await sendToMountainAndWait(ipcMethod, ipcParams, 20000);
-	} catch (e: any) {
-		// ... error mapping logic ...
-		throw err;
-	}
-	*/
 }
 
 const fsPromisesImpl: FsPromisesApiShim = {
 	access: async (path: PathLike, mode?: number): Promise<void> => {
-		return requestFsOpAsync("fs_access", {
+		return throwNonFunctionalError("fs_access", {
 			path: String(path),
 			mode: mode ?? nodeFs.constants.F_OK,
 		});
@@ -180,25 +175,25 @@ const fsPromisesImpl: FsPromisesApiShim = {
 		path: PathLike,
 		opts?: NodeFsTypes.StatOptions,
 	): Promise<StatsShim> => {
-		return requestFsOpAsync("fs_stat", {
+		return throwNonFunctionalError("fs_stat", {
 			path: String(path),
 			bigint: opts?.bigint,
-		}) as Promise<StatsShim>; // DTO conversion was here
+		});
 	},
 	lstat: async (
 		path: PathLike,
 		opts?: NodeFsTypes.StatOptions,
 	): Promise<StatsShim> => {
-		return requestFsOpAsync("fs_lstat", {
+		return throwNonFunctionalError("fs_lstat", {
 			path: String(path),
 			bigint: opts?.bigint,
-		}) as Promise<StatsShim>; // DTO conversion was here
+		});
 	},
 	realpath: async (
 		path: PathLike,
 		_options?: NodeFsTypes.ObjectEncodingOptions | BufferEncoding,
 	): Promise<string> => {
-		return requestFsOpAsync("fs_realpath", { path: String(path) });
+		return throwNonFunctionalError("fs_realpath", { path: String(path) });
 	},
 	readFile: async (
 		pathHandle: PathLike | NodeFsTypes.promises.FileHandle,
@@ -216,20 +211,14 @@ const fsPromisesImpl: FsPromisesApiShim = {
 				{ code: "ERR_INVALID_ARG_TYPE" },
 			);
 		}
-		const encoding =
-			(typeof options === "string" ? options : options?.encoding) || null;
 		const flag =
 			typeof options === "object" && options !== null
 				? options.flag
 				: undefined;
-		const resultBase64 = (await requestFsOpAsync("fs_readFile", {
+		return throwNonFunctionalError("fs_readFile", {
 			path: String(pathHandle),
 			options: { flag },
-		})) as string;
-		const buffer = Buffer.from(resultBase64, "base64"); // This part will fail if requestFsOpAsync throws
-		return encoding && encoding !== "buffer"
-			? buffer.toString(encoding as BufferEncoding)
-			: buffer;
+		});
 	},
 	writeFile: async (
 		pathHandle: PathLike | NodeFsTypes.promises.FileHandle,
@@ -262,7 +251,7 @@ const fsPromisesImpl: FsPromisesApiShim = {
 			if (options.mode !== undefined) ipcOptions.mode = options.mode;
 			if (options.flag !== undefined) ipcOptions.flag = options.flag;
 		}
-		return requestFsOpAsync("fs_writeFile", {
+		return throwNonFunctionalError("fs_writeFile", {
 			path: String(pathHandle),
 			data: dataBase64,
 			options: ipcOptions,
@@ -274,20 +263,20 @@ const fsPromisesImpl: FsPromisesApiShim = {
 	): Promise<string | undefined> => {
 		const ipcOptions: NodeFsTypes.MakeDirectoryOptions =
 			typeof options === "number" ? { mode: options } : options || {};
-		return requestFsOpAsync("fs_mkdir", {
+		return throwNonFunctionalError("fs_mkdir", {
 			path: String(path),
 			options: ipcOptions,
 		});
 	},
 	unlink: async (path: PathLike): Promise<void> => {
-		return requestFsOpAsync("fs_unlink", { path: String(path) });
+		return throwNonFunctionalError("fs_unlink", { path: String(path) });
 	},
 	rm: nodeFs.promises.rm
 		? async (
 				path: PathLike,
 				options?: NodeFsTypes.RmOptions,
 			): Promise<void> => {
-				return requestFsOpAsync("fs_rm", {
+				return throwNonFunctionalError("fs_rm", {
 					path: String(path),
 					options,
 				});
@@ -297,20 +286,37 @@ const fsPromisesImpl: FsPromisesApiShim = {
 		path: PathLike,
 		options?: RmdirOptionsShim,
 	): Promise<void> => {
-		return requestFsOpAsync("fs_rmdir", { path: String(path), options });
+		return throwNonFunctionalError("fs_rmdir", {
+			path: String(path),
+			options,
+		});
 	},
 	readdir: async (
 		path: PathLike,
 		options?: ReaddirOptionsShim,
 	): Promise<string[] | Buffer[] | DirentShim[]> => {
-		// ... (original readdir logic with options parsing) ...
-		// This will also fail due to requestFsOpAsync throwing.
-		return requestFsOpAsync("fs_readdir", {
-			path: String(path) /* options for IPC */,
+		const ipcReadOptions: {
+			encoding?: BufferEncoding | "buffer";
+			withFileTypes?: boolean;
+			recursive?: boolean;
+		} = {};
+		if (typeof options === "string") {
+			ipcReadOptions.encoding = options as BufferEncoding;
+		} else if (options && typeof options === "object") {
+			ipcReadOptions.encoding = options.encoding as
+				| BufferEncoding
+				| "buffer"
+				| undefined;
+			ipcReadOptions.withFileTypes = !!options.withFileTypes;
+			ipcReadOptions.recursive = (options as any).recursive;
+		}
+		return throwNonFunctionalError("fs_readdir", {
+			path: String(path),
+			options: ipcReadOptions,
 		});
 	},
 	rename: async (oldPath: PathLike, newPath: PathLike): Promise<void> => {
-		return requestFsOpAsync("fs_rename", {
+		return throwNonFunctionalError("fs_rename", {
 			oldPath: String(oldPath),
 			newPath: String(newPath),
 		});
@@ -321,7 +327,7 @@ const fsPromisesImpl: FsPromisesApiShim = {
 				dest: PathLike,
 				mode?: number,
 			): Promise<void> => {
-				return requestFsOpAsync("fs_copyFile", {
+				return throwNonFunctionalError("fs_copyFile", {
 					src: String(src),
 					dest: String(dest),
 					mode,
@@ -333,6 +339,7 @@ const fsPromisesImpl: FsPromisesApiShim = {
 const fsShimModuleInstance: FsShimStructure = {
 	promises: fsPromisesImpl,
 	constants: nodeFs.constants, // Safe to pass through
+
 	// Synchronous API stubs now consistently throw an error indicating obsolescence and non-functionality.
 	existsSync: (_path) => {
 		const msg =

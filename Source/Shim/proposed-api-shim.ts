@@ -27,6 +27,8 @@
  *
  * TODO:
  *  - Consider dynamic updates to proposed API configuration via RPC if needed in the future.
+ *
+ * Last Reviewed/Updated: Based on latest extraction timestamp.
  *--------------------------------------------------------------------------------------------*/
 
 import {
@@ -38,18 +40,22 @@ import type { ExtHostInitData } from "vs/workbench/api/common/extHostInitDataSer
 import {
 	BaseCocoonShim,
 	type ILogServiceForShim,
-	type IRpcProtocolServiceAdapter,
+	type IRpcProtocolServiceAdapter, // Not used by this shim, but part of BaseCocoonShim constructor
 } from "./_baseShim";
 
 // --- Type Definitions ---
-// ShimInitDataForProposedApi is effectively ExtHostInitData, focusing on relevant fields.
+// ShimInitDataForProposedApi focuses on the parts of ExtHostInitData relevant to this service.
 type ShimInitDataForProposedApi = Pick<
 	ExtHostInitData,
 	"environment" | "product"
 >;
 
+/**
+ * Defines the service interface for checking proposed API enablement.
+ * This aligns with VS Code's internal service shape for this purpose.
+ */
 export interface IExtHostProposedApisShape {
-	readonly _serviceBrand: undefined;
+	readonly _serviceBrand: undefined; // For DI registration
 	isProposedApiEnabled(
 		extensionId: ExtensionIdentifier,
 		proposalName: string,
@@ -65,13 +71,18 @@ export class ShimExtensionsProposedApi
 	readonly #globallyEnabledProposedApis = new Set<string>(); // Stores globally enabled proposal names
 	readonly #perExtensionEnabledProposedApis = new Map<string, Set<string>>(); // Key: canonicalExtensionIdString
 
+	/**
+	 * Creates an instance of ShimExtensionsProposedApi.
+	 * @param initData The initialization data containing proposed API enablement configuration from product.json and environment.
+	 * @param logService The logging service.
+	 */
 	constructor(
-		initData: ShimInitDataForProposedApi | undefined,
+		initData: ShimInitDataForProposedApi | undefined, // Can be undefined if no initData provided
 		logService: ILogServiceForShim | undefined,
 	) {
 		super(
-			"ExtHostProposedApi",
-			undefined /* rpcService not used */,
+			"ExtHostProposedApi", // Service identifier for logging
+			undefined, // rpcService is not strictly needed for initData-based checks
 			logService,
 		);
 		this._logInfo("Initializing proposed API enablement state...");
@@ -94,7 +105,7 @@ export class ShimExtensionsProposedApi
 			);
 		}
 
-		// Process environment-defined proposed APIs (these can override/augment product)
+		// Process environment-defined proposed APIs (these can override/augment product defaults)
 		const environmentProposals =
 			initData?.environment?.extensionEnabledProposedApi;
 		if (environmentProposals) {
@@ -112,6 +123,7 @@ export class ShimExtensionsProposedApi
 			);
 		}
 
+		// Log the final state
 		if (this.#globallyEnabledProposedApis.size > 0) {
 			this._logInfo(
 				`Globally enabled proposed APIs: [${[...this.#globallyEnabledProposedApis].join(", ")}]`,
@@ -121,7 +133,7 @@ export class ShimExtensionsProposedApi
 			this._logInfo(
 				`Per-extension proposed API configurations loaded for ${this.#perExtensionEnabledProposedApis.size} specific extension(s).`,
 			);
-			// For verbose debugging of per-extension settings:
+			// For verbose debugging of per-extension settings (can be uncommented if needed):
 			// this.#perExtensionEnabledProposedApis.forEach((proposals, extId) => {
 			//     this._logDebug(`  Ext: ${extId}, Proposals: [${[...proposals].join(", ")}]`);
 			// });
@@ -135,16 +147,19 @@ export class ShimExtensionsProposedApi
 	}
 
 	/**
-	 * Parses an API proposal configuration (either array or object) and updates
-	 * the internal enablement sets.
-	 * @param config The configuration data (string[] or IEnabledApiProposals).
-	 * @param sourceName A string identifying the source of the configuration (for logging).
+	 * Parses an API proposal configuration (from product.json or environment variables)
+	 * and updates the internal enablement sets.
+	 * @param config The configuration data, which can be a simple array of proposal names
+	 *               (for global enablement) or an `IEnabledApiProposals` object for more
+	 *               granular per-extension or global enablement.
+	 * @param sourceName A string identifying the source of the configuration (for logging purposes).
 	 */
 	private _parseAndApplyApiProposalConfig(
 		config: string[] | IEnabledApiProposals,
 		sourceName: string,
 	): void {
 		if (Array.isArray(config)) {
+			// Case 1: `config` is a simple array of globally enabled proposal names.
 			config.forEach((proposalName) => {
 				if (
 					typeof proposalName === "string" &&
@@ -153,14 +168,17 @@ export class ShimExtensionsProposedApi
 					this.#globallyEnabledProposedApis.add(proposalName.trim());
 				} else {
 					this._logWarn(
-						`[${sourceName}] Ignoring invalid global proposed API entry: '${String(proposalName)}'`,
+						`[${sourceName}] Ignoring invalid global proposed API entry (empty or non-string): '${String(proposalName)}'`,
 					);
 				}
 			});
 		} else if (typeof config === "object" && config !== null) {
+			// Case 2: `config` is an `IEnabledApiProposals` object.
+			// Example: `{"*": ["globalProposal"], "publisher.extensionId": ["extSpecificProposal"]}`
 			for (const key in config) {
 				if (!Object.prototype.hasOwnProperty.call(config, key))
 					continue;
+
 				const proposalsForThisKey = (config as IEnabledApiProposals)[
 					key
 				];
@@ -178,15 +196,16 @@ export class ShimExtensionsProposedApi
 							);
 						}
 					});
-					if (validProposalsForKey.size === 0) continue;
+
+					if (validProposalsForKey.size === 0) continue; // Skip if no valid proposals for this key.
 
 					if (key === "*") {
-						// Global proposals from object config
+						// Key for globally enabled proposals within the object structure.
 						validProposalsForKey.forEach((p) =>
 							this.#globallyEnabledProposedApis.add(p),
 						);
 					} else {
-						// Per-extension proposals
+						// Key is an extension ID for per-extension proposals.
 						const existing =
 							this.#perExtensionEnabledProposedApis.get(key) ||
 							new Set<string>();
@@ -198,28 +217,41 @@ export class ShimExtensionsProposedApi
 					}
 				} else {
 					this._logWarn(
-						`[${sourceName}] Invalid proposal list for key '${key}' (expected array). Ignoring.`,
+						`[${sourceName}] Invalid proposal list for key '${key}' (expected array, got ${typeof proposalsForThisKey}). Ignoring.`,
 					);
 				}
 			}
 		} else if (config !== undefined) {
+			// Log error if the configuration is present but of an unexpected type.
 			this._logError(
-				`[${sourceName}] Proposed API config is an unexpected type: ${typeof config}. Expected string array or object.`,
+				`[${sourceName}] Proposed API config is an unexpected type: ${typeof config}. Expected string array or object. Configuration ignored.`,
 			);
 		}
 	}
 
+	/**
+	 * This shim does not require RPC for its core functionality of checking enablement
+	 * based on initialization data.
+	 */
 	protected override _requiresRpc(): boolean {
 		return false;
 	}
 
+	/**
+	 * {@inheritDoc IExtHostProposedApisShape.isProposedApiEnabled}
+	 * Checks if a specific proposed API is enabled for the given extension.
+	 * @param extensionIdentifier The `ExtensionIdentifier` of the extension making the API request.
+	 * @param proposalName The name of the proposed API feature (e.g., "chatProvider", "textSearchProvider").
+	 * @returns `true` if the proposed API is enabled for the extension (either globally or specifically),
+	 *          `false` otherwise.
+	 */
 	public isProposedApiEnabled(
 		extensionIdentifier: ExtensionIdentifier,
 		proposalName: string,
 	): boolean {
 		if (!(extensionIdentifier instanceof ExtensionIdentifier)) {
 			this._logError(
-				"isProposedApiEnabled called with invalid 'extensionIdentifier'.",
+				"isProposedApiEnabled called with invalid 'extensionIdentifier' type. It must be an instance of ExtensionIdentifier.",
 				"Received:",
 				extensionIdentifier,
 			);
@@ -227,19 +259,23 @@ export class ShimExtensionsProposedApi
 		}
 		if (typeof proposalName !== "string" || !proposalName.trim()) {
 			this._logWarn(
-				`isProposedApiEnabled called with invalid 'proposalName': '${String(proposalName)}' for ext '${extensionIdentifier.value}'.`,
+				`isProposedApiEnabled called with invalid 'proposalName' (empty or non-string): '${String(proposalName)}' for extension '${extensionIdentifier.value}'.`,
 			);
 			return false;
 		}
-		const trimmedProposalName = proposalName.trim();
-		const extensionIdString = extensionIdentifier.value;
 
+		const trimmedProposalName = proposalName.trim();
+		const extensionIdString = extensionIdentifier.value; // Get the canonical string ID (e.g., "publisher.name")
+
+		// 1. Check globally enabled proposals (from "*" key in object config or top-level array config)
 		if (this.#globallyEnabledProposedApis.has(trimmedProposalName)) {
 			this._logService?.trace(
 				`Proposed API '${trimmedProposalName}' for ext '${extensionIdString}' is GLOBALLY ENABLED.`,
 			);
 			return true;
 		}
+
+		// 2. Check per-extension enabled proposals
 		const extensionSpecificProposals =
 			this.#perExtensionEnabledProposedApis.get(extensionIdString);
 		if (extensionSpecificProposals?.has(trimmedProposalName)) {
@@ -248,14 +284,19 @@ export class ShimExtensionsProposedApi
 			);
 			return true;
 		}
+
 		this._logService?.trace(
 			`Proposed API '${trimmedProposalName}' for ext '${extensionIdString}' is NOT ENABLED.`,
 		);
 		return false;
 	}
 
+	/**
+	 * Disposes of resources held by this shim instance.
+	 * Clears the cached proposed API enablement sets.
+	 */
 	public override dispose(): void {
-		super.dispose();
+		super.dispose(); // From BaseCocoonShim
 		this.#globallyEnabledProposedApis.clear();
 		this.#perExtensionEnabledProposedApis.clear();
 		this._logInfo("Disposed and cleared proposed API enablement caches.");

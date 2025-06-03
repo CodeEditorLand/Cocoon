@@ -8,22 +8,20 @@
  * exposed to extensions. This allows parts of the `vscode` API that have been
  * deprecated to automatically report their usage when accessed by an extension.
  *
- * For Cocoon's current implementation (MVP), this shim focuses on providing the necessary
+ * For Cocoon's current implementation, this shim focuses on providing the necessary
  * API surface and primarily logs warnings to the console when a deprecated API feature
  * is reportedly used. It does not implement more advanced features like telemetry for
  * deprecation usage, UI notifications to developers about deprecated API use in their
  * extensions, or persistent tracking of such usage.
  *
  * Responsibilities:
- * - Implementing the `IExtHostApiDeprecationService` interface, ensuring type
- *   compatibility for services that depend on it (like the API factory).
- * - Providing a `report(extensionId, deprecatedUsage, message)` method that logs a
- *   warning message detailing the deprecated API usage.
- * - Providing a `reportUsage(identifier, feature, message)` method, also for logging.
- * - Offering a `Deprecated(extensionId, name, message)` property decorator factory.
- *   When this decorator is applied to a class property, any get or set access to
- *   that property will trigger a call to the `report` method.
- * - Providing a `Profiling(name)` method decorator, which is a No-Operation (NOP)
+ * - Implementing the `IExtHostApiDeprecationService` interface as defined by VS Code.
+ * - Logging a warning message via `_logWarn` when its `report` or `reportUsage`
+ *   methods are invoked by the API factory or other parts of the extension host.
+ * - Providing a `Deprecated` property decorator factory. When this decorator is applied
+ *   to a class property, any get or set access to that property will trigger a call
+ *   to the `report` method.
+ * - Providing a `Profiling` method decorator, which is a No-Operation (NOP)
  *   in this shim implementation, returning the original method descriptor unchanged.
  *
  * Key Interactions:
@@ -39,6 +37,7 @@
  *   `MainThreadApiDeprecationService` on Mountain via RPC if centralized tracking or
  *   more sophisticated reporting of deprecated API usage is desired.
  *
+ * Last Reviewed/Updated: 2025-05-26 (as per last provided snippet)
  *--------------------------------------------------------------------------------------------*/
 
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions";
@@ -48,23 +47,20 @@ import type { IExtHostApiDeprecationService as VscodeIExtHostApiDeprecationServi
 
 import {
 	BaseCocoonShim,
-	// For logging via BaseCocoonShim
 	type ILogServiceForShim,
-	// For BaseCocoonShim, though not directly used by this shim's logic
 	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
 
 /**
  * Cocoon's implementation of the `IExtHostApiDeprecationService`.
  * This service is responsible for handling and reporting the usage of deprecated APIs
- * by extensions. In this Minimum Viable Product (MVP) version, its primary action
+ * by extensions. In this version, its primary action
  * is to log warnings to the console when such usage is reported.
  */
 export class ShimExtHostApiDeprecationService
 	extends BaseCocoonShim
 	implements VscodeIExtHostApiDeprecationService
 {
-	// Ensure implementation of the VS Code interface
 	// Required by VS Code's service type system for DI.
 	public readonly _serviceBrand: undefined;
 
@@ -78,11 +74,9 @@ export class ShimExtHostApiDeprecationService
 	 */
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
-
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostApiDeprecationService", rpcService, logService);
-
 		// Initial log can be verbose for a service that's mostly passive until called.
 		// this._logDebug("Initialized (logging-only implementation for API deprecations).");
 	}
@@ -112,31 +106,23 @@ export class ShimExtHostApiDeprecationService
 	 */
 	public report(
 		extensionId: ExtensionIdentifier,
-
 		deprecatedUsage: string,
-
 		message: string,
 	): void {
 		this._logWarn(
-			`Extension '${extensionId.value}' used deprecated API feature: '${deprecatedUsage}'. Deprecation message: "${message}"`,
+			`Extension '${extensionId.value}' used deprecated API feature: '${deprecatedUsage}'. Deprecation message: ${message}`,
 		);
 
 		// TODO (Future Enhancement): If centralized telemetry for deprecated API usage is desired,
-
 		// this method could be extended to send this information to Mountain via an RPC call.
 		// This would require a corresponding `MainThreadApiDeprecationService` on Mountain.
 		// Example (conceptual):
 		// if (this._rpcService) {
-
-		// Assuming such a context ID
+		//   // Assuming a MainContext.MainThreadApiDeprecationService identifier
 		//   const proxy = this._rpcService.getProxy(MainContext.MainThreadApiDeprecationService);
-
 		//   proxy?.$reportDeprecatedApiUsage(extensionId.value, deprecatedUsage, message).catch(err => {
-
 		//     this._logError("Failed to send deprecation report to MainThread:", err);
-
 		//   });
-
 		// }
 	}
 
@@ -145,7 +131,6 @@ export class ShimExtHostApiDeprecationService
 	 *
 	 * Reports general API usage information. This method can be used for various reporting
 	 * purposes, including but not limited to deprecations, usage of experimental APIs,
-	 *
 	 * or other notable API interactions that warrant a report or log entry.
 	 *
 	 * @param identifier The `ExtensionIdentifier` of the extension whose API usage is being reported.
@@ -154,19 +139,16 @@ export class ShimExtHostApiDeprecationService
 	 */
 	public reportUsage(
 		identifier: ExtensionIdentifier,
-
 		feature: string,
-
 		message: string,
 	): void {
 		this._logWarn(
-			`API Usage Report for Extension '${identifier.value}': Feature='${feature}'. Message: "${message}"`,
+			`API Usage Report for Extension '${identifier.value}': Feature='${feature}'. Message: ${message}`,
 		);
 	}
 
 	/**
 	 * {@inheritDoc VscodeIExtHostApiDeprecationService.Deprecated}
-	 *
 	 *
 	 * A property decorator factory that marks a class property (which can be a data field
 	 * or an accessor with get/set) as deprecated. When a property that has been decorated
@@ -191,10 +173,8 @@ export class ShimExtHostApiDeprecationService
 	 */
 	public Deprecated(
 		extensionId: ExtensionIdentifier,
-
 		// The conceptual name of the deprecated feature for reporting
 		featureName: string,
-
 		message: string,
 	): PropertyDecorator {
 		// `reportFn` is created by binding `this.report` to the current service instance.
@@ -203,9 +183,7 @@ export class ShimExtHostApiDeprecationService
 		const reportFn = (actualPropertyName: string | symbol) => {
 			this.report(
 				extensionId,
-
 				`${featureName} (property: ${String(actualPropertyName)})`,
-
 				message,
 			);
 		};
@@ -219,21 +197,16 @@ export class ShimExtHostApiDeprecationService
 			Object.defineProperty(target, propertyKey, {
 				// Allows the property to be re-configured or deleted later if necessary.
 				configurable: true,
-
 				// Ensures the property appears in `for...in` loops and `Object.keys()`.
 				enumerable: true,
-
 				get() {
 					// Report access before returning the value.
 					reportFn(propertyKey);
-
 					return backingFieldValue;
 				},
-
 				set(newValue: any) {
 					// Report modification before setting the new value.
 					reportFn(propertyKey);
-
 					backingFieldValue = newValue;
 				},
 			});
@@ -242,7 +215,6 @@ export class ShimExtHostApiDeprecationService
 
 	/**
 	 * {@inheritDoc VscodeIExtHostApiDeprecationService.Profiling}
-	 *
 	 *
 	 * A method decorator factory, typically intended for use in performance profiling scenarios
 	 * or for logging detailed information about method calls (e.g., arguments, execution time).
@@ -263,10 +235,8 @@ export class ShimExtHostApiDeprecationService
 		return (
 			// The prototype of the class for instance methods, or the constructor for static methods.
 			_target: Object,
-
 			// The name of the method being decorated.
 			_propertyKey: string | symbol,
-
 			// The property descriptor of the method.
 			descriptor: PropertyDescriptor,
 		): PropertyDescriptor => descriptor;
@@ -280,7 +250,6 @@ export class ShimExtHostApiDeprecationService
 	public override dispose(): void {
 		// From BaseCocoonShim, handles _instanceDisposables
 		super.dispose();
-
 		// Can be verbose for a simple service
 		// this._logDebug("Disposed.");
 	}

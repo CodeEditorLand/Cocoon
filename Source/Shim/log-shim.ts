@@ -35,6 +35,7 @@
  * - Both shims use `LogLevel` enum and `parseLogLevel` utility from
  *   `vs/platform/log/common/log`, and eventing types from `vs/base/common/event`.
  *
+ * Last Reviewed/Updated: Based on latest extraction timestamp.
  *--------------------------------------------------------------------------------------------*/
 
 import * as path from "node:path"; // For path.sep in deriving logger names
@@ -42,11 +43,17 @@ import {
 	Emitter as VscodeEmitter,
 	type Event as VscodeEvent,
 } from "vs/base/common/event";
-import { dispose, type IDisposable } from "vs/base/common/lifecycle";
-import { URI } from "vs/base/common/uri"; // For ILoggerService createLogger resource URI type
 import {
-	parseLogLevel, // Helper utility
-	LogLevel as VscodeLogLevel, // The LogLevel enum
+	DisposableStore,
+	dispose,
+	type IDisposable,
+} from "vs/base/common/lifecycle";
+import { URI } from "vs/base/common/uri"; // For ILoggerService createLogger resource URI type
+
+// Import VS Code's log level definitions and service interfaces
+import {
+	parseLogLevel, // Helper to parse string log levels
+	LogLevel as VscodeLogLevel,
 	type ILogger as VscodeILogger,
 	type ILoggerOptions as VscodeILoggerOptions, // For ILoggerService.createLogger options
 	type ILoggerResource as VscodeILoggerResource, // For ILoggerService logger registration
@@ -54,17 +61,40 @@ import {
 	type ILogService as VscodeILogService,
 } from "vs/platform/log/common/log";
 
+// A simple Map to act as a ResourceMap for URI keys.
+// In a full VS Code environment, ResourceMap handles URI normalization.
+class ResourceMap<T> extends Map<string, T> {
+	get(resource: URI): T | undefined {
+		return super.get(resource.toString());
+	}
+	set(resource: URI, value: T): this {
+		super.set(resource.toString(), value);
+		return this;
+	}
+	has(resource: URI): boolean {
+		return super.has(resource.toString());
+	}
+	delete(resource: URI): boolean {
+		return super.delete(resource.toString());
+	}
+}
+
 /**
- * A shim implementation of `ILogService` that directs all log output to the console.
+ * A shim implementation of `ILogService` and `ILogger` that directs all log output to the console.
  */
 export class ShimLogService implements VscodeILogService {
-	public readonly _serviceBrand: undefined;
+	public readonly _serviceBrand: undefined; // Required by VS Code's service types
 	private currentLogLevel: VscodeLogLevel;
 	private readonly _onDidChangeLogLevel: VscodeEmitter<VscodeLogLevel>;
 	public readonly onDidChangeLogLevel: VscodeEvent<VscodeLogLevel>;
-	private readonly loggerInstanceName?: string;
-	private readonly _warnOnceMessages = new Set<string>(); // Moved from ILogService specific section
+	readonly loggerInstanceName?: string; // Optional name for this logger instance
+	private readonly _warnOnceMessages = new Set<string>(); // For warnOnce helper
 
+	/**
+	 * Creates an instance of ShimLogService.
+	 * @param initialLogLevel The initial log level for this logger. Defaults to `Info`.
+	 * @param name An optional name for this logger instance, used as a prefix in log messages.
+	 */
 	constructor(
 		initialLogLevel: VscodeLogLevel = VscodeLogLevel.Info,
 		name?: string,
@@ -77,8 +107,8 @@ export class ShimLogService implements VscodeILogService {
 		const namePrefix = this.loggerInstanceName
 			? `[${this.loggerInstanceName}] `
 			: "";
+		// Log initialization message at trace level to avoid noise if initial level is higher.
 		if (this.currentLogLevel <= VscodeLogLevel.Trace) {
-			// Avoid logging init if level is too high
 			console.trace(
 				this._formatMessage(
 					"Trace",
@@ -88,6 +118,9 @@ export class ShimLogService implements VscodeILogService {
 		}
 	}
 
+	/**
+	 * Formats a log message with level, optional name prefix, timestamp, and arguments.
+	 */
 	private _formatMessage(
 		levelLabel: string,
 		message: string | Error,
@@ -96,64 +129,105 @@ export class ShimLogService implements VscodeILogService {
 		const namePrefix = this.loggerInstanceName
 			? `[${this.loggerInstanceName}]`
 			: "";
-		const levelPrefix = `[${levelLabel.toUpperCase()}]`;
-		const fullPrefix = `${levelPrefix}${namePrefix}`;
+		const levelPrefix = `[${levelLabel.toUpperCase()}]`; // Ensure uppercase level
+		const fullPrefix = `${levelPrefix}${namePrefix}`; // Timestamp handled by console methods
+
 		let mainLogMessage: string;
 		let stackTraceInfo = "";
+
 		if (message instanceof Error) {
 			mainLogMessage = message.message;
 			stackTraceInfo = message.stack
-				? `\nStack Trace:\n${message.stack}`
+				? `\nStack Trace (see below if console auto-formats):\n${message.stack}`
 				: "";
 		} else {
 			mainLogMessage = message;
 		}
+
+		// JSON.stringify for objects, ensuring better readability than default [object Object]
 		const argsString =
 			args.length > 0
 				? ` ${args.map((arg) => (typeof arg === "object" && arg !== null ? JSON.stringify(arg, null, 2) : String(arg))).join(" ")}`
 				: "";
+
+		// For console, just return the core message. Console methods will add timestamps.
+		// If Error, console.error will handle stack trace better.
+		if (
+			message instanceof Error &&
+			(levelLabel === "Error" || levelLabel === "Critical")
+		) {
+			return `${fullPrefix} ${mainLogMessage}${argsString}`; // Console.error will handle stack
+		}
 		return `${fullPrefix} ${mainLogMessage}${argsString}${stackTraceInfo}`;
 	}
 
+	// --- VscodeILogger methods ---
 	public get enabled(): boolean {
 		return this.currentLogLevel !== VscodeLogLevel.Off;
 	}
+
 	public trace(message: string, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Trace) {
-			console.trace(this._formatMessage("Trace", message, ...args));
+			console.trace(this._formatMessage("Trace", message, ...args)); // console.trace for stack
 		}
 	}
+
 	public debug(message: string, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Debug) {
 			console.debug(this._formatMessage("Debug", message, ...args));
 		}
 	}
+
 	public info(message: string, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Info) {
 			console.info(this._formatMessage("Info", message, ...args));
 		}
 	}
+
 	public warn(message: string, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Warning) {
 			console.warn(this._formatMessage("Warn", message, ...args));
 		}
 	}
+
 	public error(message: string | Error, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Error) {
-			console.error(this._formatMessage("Error", message, ...args));
+			if (message instanceof Error) {
+				// Let console.error handle the Error object directly for better stack trace formatting
+				const prefix = this.loggerInstanceName
+					? `[ERROR][${this.loggerInstanceName}] `
+					: "[ERROR] ";
+				console.error(`${prefix}${message.message}`, ...args, message);
+			} else {
+				console.error(this._formatMessage("Error", message, ...args));
+			}
 		}
 	}
+
 	public critical(message: string | Error, ...args: any[]): void {
 		if (this.currentLogLevel <= VscodeLogLevel.Critical) {
-			console.error(this._formatMessage("Critical", message, ...args));
+			if (message instanceof Error) {
+				const prefix = this.loggerInstanceName
+					? `[CRITICAL][${this.loggerInstanceName}] `
+					: "[CRITICAL] ";
+				console.error(`${prefix}${message.message}`, ...args, message);
+			} else {
+				console.error(
+					this._formatMessage("Critical", message, ...args),
+				);
+			}
 		}
 	}
+
 	public flush(): void {
 		/* NOP for console logger */
 	}
+
+	// --- VscodeILogService specific methods ---
 	public dispose(): void {
 		this._onDidChangeLogLevel.dispose();
 	}
+
 	public getLevel(): VscodeLogLevel {
 		return this.currentLogLevel;
 	}
@@ -161,6 +235,7 @@ export class ShimLogService implements VscodeILogService {
 	public setLevel(level: VscodeLogLevel | string): void {
 		const newLevel =
 			typeof level === "string" ? parseLogLevel(level) : level;
+
 		if (
 			newLevel === undefined ||
 			!Object.values(VscodeLogLevel).includes(newLevel as VscodeLogLevel)
@@ -169,19 +244,22 @@ export class ShimLogService implements VscodeILogService {
 				? `[${this.loggerInstanceName}] `
 				: "";
 			console.warn(
-				`${namePrefix}[Cocoon LogService Shim] Invalid log level: '${level}'. Not changed from ${VscodeLogLevel[this.currentLogLevel]}.`,
+				`${namePrefix}[Cocoon LogService Shim] Invalid log level string or value: '${level}'. Level not changed from ${VscodeLogLevel[this.currentLogLevel]}.`,
 			);
 			return;
 		}
+
 		if (this.currentLogLevel !== newLevel) {
 			const oldLevel = this.currentLogLevel;
 			this.currentLogLevel = newLevel;
 			this._onDidChangeLogLevel.fire(this.currentLogLevel);
 			const levelChangeMessage = `Log level changed from ${VscodeLogLevel[oldLevel]} to ${VscodeLogLevel[newLevel]}.`;
+			// Log the change at the new Info level (if enabled), or at the old Info level if new level is more restrictive.
 			if (this.currentLogLevel <= VscodeLogLevel.Info) {
 				this.info(levelChangeMessage);
 			} else if (oldLevel <= VscodeLogLevel.Info) {
-				console.info(this._formatMessage("Info", levelChangeMessage));
+				// If new level is Warn/Error/Off, but old was Info or lower
+				console.info(this._formatMessage("Info", levelChangeMessage)); // Log with console.info
 			}
 		}
 	}
@@ -190,6 +268,7 @@ export class ShimLogService implements VscodeILogService {
 		resource: URI,
 		options?: VscodeILoggerOptions,
 	): VscodeILogger {
+		// Derive a name for the child logger if not provided in options
 		const derivedNameFromFsPath = resource.fsPath
 			? resource.fsPath.substring(
 					resource.fsPath.lastIndexOf(path.sep) + 1,
@@ -201,12 +280,18 @@ export class ShimLogService implements VscodeILogService {
 		const derivedName =
 			derivedNameFromFsPath ||
 			derivedNameFromPath ||
-			`child-${resource.scheme}`;
-		const loggerName = options?.name || derivedName;
+			`child-${resource.scheme || "unknown"}`;
+		const loggerName =
+			options?.name ||
+			(this.loggerInstanceName
+				? `${this.loggerInstanceName}.${derivedName}`
+				: derivedName);
+
+		// Determine log level for the child logger
 		const logLevel =
 			options?.logLevel === "always"
 				? VscodeLogLevel.Trace
-				: (options?.logLevel ?? this.currentLogLevel);
+				: (options?.logLevel ?? this.currentLogLevel); // Inherit parent's level by default if not specified
 
 		this.trace(
 			`Creating child logger: Name='${loggerName}', Resource='${resource.toString()}', InitialLevel=${VscodeLogLevel[logLevel]}`,
@@ -215,32 +300,39 @@ export class ShimLogService implements VscodeILogService {
 	}
 
 	public getLogger(resource: URI): VscodeILogger | undefined {
+		// ILogService.getLogger is often for retrieving managed loggers.
+		// This simple ShimLogService doesn't cache loggers by resource itself;
+		// that's typically a responsibility of ILoggerService.
+		// For ILogService, creating a new instance or returning `this` (if appropriate for "default") might be options.
 		this.warnOnce(
-			`ILogService.getLogger(resource) called. This ShimLogService does not cache loggers by resource; ` +
+			`ILogService.getLogger(resource) called. This ShimLogService implementation does not cache loggers by resource; ` +
 				`it will create a new logger instance for resource: ${resource.toString()}. ` +
-				`For cached, resource-specific loggers, use an ILoggerService implementation.`,
+				`For cached, resource-specific loggers, ensure an ILoggerService implementation is used and queried.`,
 		);
-		return this.createLogger(resource);
+		return this.createLogger(resource); // Behave like createLogger for now
 	}
 
 	private warnOnce(message: string): void {
 		if (!this._warnOnceMessages.has(message)) {
 			this._warnOnceMessages.add(message);
-			this.warn(message);
+			this.warn(message); // Use the instance's warn method
 		}
 	}
+
 	public getDefaultLogger(): VscodeILogger {
+		// The default logger provided by ILogService is often the service instance itself.
 		return this;
 	}
 }
 
 /**
  * A shim implementation of `ILoggerService`.
+ * This service manages multiple loggers, often associated with resources (e.g., files).
  */
 export class ShimLoggerService implements VscodeILoggerService {
-	public readonly _serviceBrand: undefined;
-	private defaultLogLevel: VscodeLogLevel = VscodeLogLevel.Info;
-	private readonly loggersByResource = new ResourceMap<ShimLogService>(); // Key: resource.toString()
+	public readonly _serviceBrand: undefined; // Required by VS Code's service types
+	private defaultLogLevel: VscodeLogLevel = VscodeLogLevel.Info; // Default level for new loggers
+	private readonly loggersByResource = new ResourceMap<ShimLogService>(); // Cache loggers by resource URI string
 	private readonly _onDidChangeLogLevel = new VscodeEmitter<
 		[URI | undefined, VscodeLogLevel]
 	>();
@@ -265,7 +357,7 @@ export class ShimLoggerService implements VscodeILoggerService {
 			typeof resourceOrId === "string"
 				? URI.file(
 						resourceOrId,
-					) /* Simplification: assume ID is a file path for console logger name */
+					) /* Assume ID is a file path for console logger name */
 				: resourceOrId;
 		const resourceKey = resource.toString();
 		const existingLogger = this.loggersByResource.get(resource);
@@ -275,6 +367,7 @@ export class ShimLoggerService implements VscodeILoggerService {
 				? VscodeLogLevel.Trace
 				: options?.logLevel;
 
+		// Create new or update if level changes or doesn't exist
 		if (
 			!existingLogger ||
 			(requestedLogLevel !== undefined &&
@@ -291,24 +384,25 @@ export class ShimLoggerService implements VscodeILoggerService {
 			const derivedName =
 				derivedNameFromFsPath ||
 				derivedNameFromPath ||
-				`logger-${resource.scheme}`;
-
+				`logger-${resource.scheme || "unknown"}`;
 			const name = options?.name || derivedName;
 			const logLevel =
 				requestedLogLevel ??
 				existingLogger?.getLevel() ??
 				this.defaultLogLevel;
 
-			// console.debug(`[Cocoon LoggerService] Creating/Updating logger for resource '${resourceKey}'. Name='${name}', Level=${VscodeLogLevel[logLevel]}.`);
-			const newLogger = new ShimLogService(logLevel, name);
-			// Dispose old logger for this resource if replacing
-			if (existingLogger) {
-				existingLogger.dispose();
+			if (existingLogger && logLevel !== existingLogger.getLevel()) {
+				// If updating level of existing logger
+				existingLogger.setLevel(logLevel);
+				return existingLogger;
+			} else if (!existingLogger) {
+				// console.debug(`[Cocoon LoggerService] Creating logger for resource '${resourceKey}'. Name='${name}', Level=${VscodeLogLevel[logLevel]}.`);
+				const newLogger = new ShimLogService(logLevel, name);
+				this.loggersByResource.set(resource, newLogger);
+				return newLogger;
 			}
-			this.loggersByResource.set(resource, newLogger);
-			return newLogger;
 		}
-		return existingLogger;
+		return existingLogger!; // Should exist if not created/updated
 	}
 
 	public getLogger(resourceOrId: URI | string): VscodeILogger | undefined {
@@ -329,12 +423,12 @@ export class ShimLoggerService implements VscodeILoggerService {
 	}
 
 	public getLogLevel(resource?: URI): VscodeLogLevel {
-		// Changed return to non-optional as there's always a default
+		// Changed return to non-optional as per first version's update
 		if (resource) {
 			const logger = this.loggersByResource.get(resource);
 			if (logger) return logger.getLevel();
 		}
-		return this.defaultLogLevel;
+		return this.defaultLogLevel; // Return default if no specific logger or no resource
 	}
 
 	public setLogLevel(level: VscodeLogLevel): void;
@@ -361,6 +455,7 @@ export class ShimLoggerService implements VscodeILoggerService {
 			}
 			newLevelToSet = levelValue;
 		} else {
+			// resourceOrLevel is VscodeLogLevel
 			if (
 				resourceOrLevel === undefined ||
 				!Object.values(VscodeLogLevel).includes(
@@ -378,14 +473,17 @@ export class ShimLoggerService implements VscodeILoggerService {
 		if (targetResource) {
 			let logger = this.loggersByResource.get(targetResource);
 			if (!logger) {
+				// If logger doesn't exist, create it with the specified level.
+				// This ensures subsequent getLogger/createLogger for this resource respects this level.
 				logger = this.createLogger(targetResource, {
 					logLevel: newLevelToSet,
 				}) as ShimLogService;
 			} else {
-				logger.setLevel(newLevelToSet);
+				logger.setLevel(newLevelToSet); // Set level on existing logger
 			}
 			this._onDidChangeLogLevel.fire([targetResource, newLevelToSet]);
 		} else {
+			// Setting default log level for the service
 			const oldDefaultLevel = this.defaultLogLevel;
 			if (oldDefaultLevel !== newLevelToSet) {
 				this.defaultLogLevel = newLevelToSet;
@@ -396,6 +494,8 @@ export class ShimLoggerService implements VscodeILoggerService {
 					undefined,
 					this.defaultLogLevel,
 				]);
+				// Optionally, one could iterate over all existing loggers and update those
+				// that were at the old default level, but this is often not desired.
 			}
 		}
 	}
@@ -404,26 +504,31 @@ export class ShimLoggerService implements VscodeILoggerService {
 		return this.defaultLogLevel;
 	}
 
-	// ILoggerService methods related to file-based logging or explicit registration are mostly NOPs or adapted for console.
-	// This shim's `createLogger` handles registration with its internal map.
-	// These are part of VscodeILoggerService but less relevant for a pure console shim.
+	// --- ILoggerService methods related to file-based logging or explicit registration ---
+	// These are mostly NOPs or adapted for a console-based shim, as advanced
+	// file logging, hidden loggers, etc., are not the focus here.
+
 	public registerLogger(_resource: VscodeILoggerResource): void {
 		this._logWarnOnce(
-			"LoggerService.registerLogger is a NOP for explicit registration in this console-based shim. Use createLogger.",
+			"LoggerService.registerLogger is a NOP for explicit registration in this console-based shim. Loggers are managed via createLogger/getLogger.",
 		);
 	}
+
 	public deregisterLogger(_resourceOrId: URI | string): void {
 		this._logWarnOnce(
 			"LoggerService.deregisterLogger is a NOP for explicit deregistration in this console-based shim. Loggers are disposed with the service or if recreated.",
 		);
-		// For full implementation: find by resourceOrId, dispose, remove from map, fire event.
+		// A full implementation would find the logger by resourceOrId (if it's an ID, needs a map from ID to URI/logger),
+		// dispose it, remove it from loggersByResource, and potentially fire an event.
 	}
+
 	public getRegisteredLoggers(): Iterable<VscodeILoggerResource> {
 		const resources: VscodeILoggerResource[] = [];
 		this.loggersByResource.forEach((logger, uri) => {
+			// uri is the key here
 			resources.push({
 				resource: uri, // URI is the key
-				id: logger.loggerInstanceName || uri.toString(), // Simplification for id
+				id: logger.loggerInstanceName || uri.toString(), // Use logger name or URI string as ID
 				name: logger.loggerInstanceName,
 				logLevel: logger.getLevel(),
 				// hidden, when, extensionId, group would need to be stored if createLogger supported them more fully
@@ -431,6 +536,7 @@ export class ShimLoggerService implements VscodeILoggerService {
 		});
 		return resources;
 	}
+
 	public getRegisteredLogger(
 		resource: URI,
 	): VscodeILoggerResource | undefined {
@@ -445,8 +551,9 @@ export class ShimLoggerService implements VscodeILoggerService {
 		}
 		return undefined;
 	}
-	// _onDidChangeVisibility and setVisibility are NOPs as console loggers are always "visible" in console.
-	// For a UI that shows/hides loggers, these would be relevant.
+
+	// _onDidChangeVisibility and setVisibility are NOPs as console loggers are always "visible" in the console.
+	// For a UI that shows/hides loggers in a list, these would be relevant.
 	public readonly onDidChangeVisibility: VscodeEvent<[URI, boolean]> =
 		VscodeEvent.None;
 	public setVisibility(_resourceOrId: URI | string, _visible: boolean): void {
@@ -454,12 +561,11 @@ export class ShimLoggerService implements VscodeILoggerService {
 			"LoggerService.setVisibility is a NOP for console-based loggers.",
 		);
 	}
+
+	private _warnOnceMessagesForService = new Set<string>();
 	private _logWarnOnce(message: string): void {
-		/* Helper to avoid spamming warnings */
-		if (!(this as any)._serviceWarnOnceMessages)
-			(this as any)._serviceWarnOnceMessages = new Set<string>();
-		if (!(this as any)._serviceWarnOnceMessages.has(message)) {
-			(this as any)._serviceWarnOnceMessages.add(message);
+		if (!this._warnOnceMessagesForService.has(message)) {
+			this._warnOnceMessagesForService.add(message);
 			console.warn(`[Cocoon LoggerService Shim] ${message}`);
 		}
 	}

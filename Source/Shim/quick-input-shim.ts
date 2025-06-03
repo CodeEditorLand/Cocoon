@@ -34,20 +34,24 @@
  *   - Cocoon Params: `InputBoxOptionsForIpc` (includes `buttons?: QuickInputButtonForIpc[]`)
  *   - Mountain Response (Success): `{ params: string | null | undefined }` (entered string or null/undefined for cancel)
  * Errors from Mountain are expected as VineErrorPayload.
+ *
+ * Last Reviewed/Updated: Based on latest extraction timestamp.
  *--------------------------------------------------------------------------------------------*/
 
+import { isCancellationError } from "vs/base/common/errors";
 import type { UriComponents as VSCodeInternalUriComponents } from "vs/base/common/uri"; // For DTOs
+
+// VS Code API types (ensure this path resolves to Cocoon's 'vscode' shim)
 import {
 	CancellationToken, // API type for cancellation tokens
-	// QuickInputButtons, // API enum for standard buttons - not directly used if creating custom buttons
+	type InputBox, // For createInputBox stub type
 	type InputBoxOptions,
 	type QuickInputButton,
+	type QuickPick, // For createQuickPick stub type
 	type QuickPickItem,
 	type QuickPickItemKind, // Enum for item kinds (e.g., Separator)
 	type QuickPickOptions,
 } from "vscode";
-
-// API types
 
 import {
 	BaseCocoonShim,
@@ -63,8 +67,8 @@ interface QuickPickItemForIpc {
 	detail?: string;
 	picked?: boolean;
 	alwaysShow?: boolean;
-	kind?: QuickPickItemKind;
-	data?: { _cocoonOriginalIndex: number }; // Stores original index
+	kind?: QuickPickItemKind; // vscode.QuickPickItemKind is an enum of numbers
+	data?: { _cocoonOriginalIndex: number }; // Stores original index for reliable mapping
 }
 interface QuickInputButtonForIpc {
 	iconPath:
@@ -73,40 +77,47 @@ interface QuickInputButtonForIpc {
 				light: VSCodeInternalUriComponents;
 				dark: VSCodeInternalUriComponents;
 		  }
-		| { id: string }; // Marshalled Uri(s) or ThemeIcon DTO
+		| { id: string } // Marshalled VscodeUri(s) or ThemeIcon DTO ({id: string})
+		| undefined; // Allow undefined if iconPath isn't set
 	tooltip?: string;
-	handle: number; // Internal handle (index)
+	handle: number; // Internal handle (original index of the button)
 }
 interface QuickPickOptionsForIpc
 	extends Omit<
 		QuickPickOptions<any>,
+		// Omit function-based and complex lifecycle properties not suitable for simple IPC
 		| "onDidSelectItem"
 		| "onDidChangeSelection"
 		| "onDidAccept"
 		| "onDidTriggerButton"
 		| "onDidTriggerItemButton"
-		| "buttons"
+		| "buttons" // Will be replaced by `QuickInputButtonForIpc[]`
 		| "step"
-		| "totalSteps"
+		| "totalSteps" // For multi-step input, not in MVP
 	> {
 	items: QuickPickItemForIpc[];
-	buttons?: QuickInputButtonForIpc[];
+	buttons?: QuickInputButtonForIpc[]; // Use the IPC-safe button DTO
 }
 interface InputBoxOptionsForIpc
 	extends Omit<
 		InputBoxOptions,
+		// Omit function-based and complex lifecycle properties
 		| "validateInput"
 		| "onDidChangeValue"
 		| "onDidAccept"
 		| "onDidTriggerButton"
-		| "buttons"
+		| "buttons" // Will be replaced by `QuickInputButtonForIpc[]`
 		| "step"
-		| "totalSteps"
+		| "totalSteps" // For multi-step input, not in MVP
 	> {
-	buttons?: QuickInputButtonForIpc[];
+	buttons?: QuickInputButtonForIpc[]; // Use the IPC-safe button DTO
 }
-type QuickPickResponseFromMountain = number | number[] | null | undefined;
-type InputBoxResponseFromMountain = string | null | undefined;
+
+// As per "Assumed IPC Contract"
+type QuickPickResponseFromMountain = {
+	params: number | number[] | null | undefined;
+};
+type InputBoxResponseFromMountain = { params: string | null | undefined };
 
 export interface IExtHostQuickInputServiceShape {
 	readonly _serviceBrand: undefined;
@@ -138,8 +149,8 @@ export interface IExtHostQuickInputServiceShape {
 		options?: InputBoxOptions,
 		token?: CancellationToken,
 	): Promise<string | undefined>;
-	// createQuickPick<T extends QuickPickItem>(): QuickPick<T>; // STUBBED
-	// createInputBox(): InputBox; // STUBBED
+	createQuickPick<T extends QuickPickItem>(): QuickPick<T>; // STUBBED for MVP
+	createInputBox(): InputBox; // STUBBED for MVP
 }
 
 export class ShimExtHostQuickInputService
@@ -157,15 +168,16 @@ export class ShimExtHostQuickInputService
 	}
 
 	protected override _requiresRpc(): boolean {
-		return false;
-	} // Uses direct IPC
+		return false; // Uses direct IPC for its core functionality
+	}
 
 	private _serializeQuickPickItemsForIpc<T extends QuickPickItem | string>(
 		items: readonly T[],
 	): QuickPickItemForIpc[] {
 		return items.map((item, index) => {
-			if (typeof item === "string")
+			if (typeof item === "string") {
 				return { label: item, data: { _cocoonOriginalIndex: index } };
+			}
 			const qpItem = item as QuickPickItem;
 			return {
 				label: qpItem.label,
@@ -174,7 +186,7 @@ export class ShimExtHostQuickInputService
 				picked: qpItem.picked,
 				alwaysShow: qpItem.alwaysShow,
 				kind: qpItem.kind,
-				data: { _cocoonOriginalIndex: index },
+				data: { _cocoonOriginalIndex: index }, // Store original index
 			};
 		});
 	}
@@ -185,15 +197,15 @@ export class ShimExtHostQuickInputService
 		if (!buttons || buttons.length === 0) return undefined;
 		return buttons.map((button, index) => {
 			// iconPath can be VscodeUri | { light: VscodeUri, dark: VscodeUri } | ThemeIcon
-			// _convertApiArgToInternal handles VscodeUri -> UriComponents and plain objects.
-			// ThemeIcon ({id: string}) will pass through if _convertApiArgToInternal treats it as plain.
+			// BaseCocoonShim._convertApiArgToInternal handles VscodeUri -> UriComponents and plain objects.
+			// For ThemeIcon ({id: string}), it should pass through if treated as a plain object.
 			const marshalledIconPath = this._convertApiArgToInternal(
 				(button as any).iconPath,
 			);
 			return {
-				iconPath: marshalledIconPath,
+				iconPath: marshalledIconPath, // Ensure this result is serializable
 				tooltip: button.tooltip,
-				handle: index,
+				handle: index, // Assign original index as handle
 			};
 		});
 	}
@@ -232,7 +244,7 @@ export class ShimExtHostQuickInputService
 		const resolvedItems = await Promise.resolve(items);
 		if (token?.isCancellationRequested) {
 			this._logDebug(
-				"showQuickPick cancelled by CancellationToken before IPC.",
+				"showQuickPick cancelled by CancellationToken before IPC call.",
 			);
 			return undefined;
 		}
@@ -243,11 +255,11 @@ export class ShimExtHostQuickInputService
 			options?.buttons,
 		);
 		const ipcOptions: QuickPickOptionsForIpc = {
-			...(options || {}),
+			...(options || {}), // Spread options first to allow overrides
 			items: serializedItemsForIpc,
 			buttons: serializedButtonsForIpc,
 		};
-		// Remove non-serializable/lifecycle properties
+		// Explicitly remove properties that are functions or complex objects not suitable for IPC
 		delete (ipcOptions as any).onDidSelectItem;
 		delete (ipcOptions as any).onDidChangeSelection;
 		delete (ipcOptions as any).onDidAccept;
@@ -257,68 +269,71 @@ export class ShimExtHostQuickInputService
 		delete (ipcOptions as any).totalSteps;
 
 		this._logDebug(
-			`showQuickPick: IPC 'ui_showQuickPick'. Items: ${serializedItemsForIpc.length}, Opts: ${JSON.stringify({ ...ipcOptions, items: "...", buttons: "..." }).substring(0, 150)}`,
+			`showQuickPick: IPC 'ui_showQuickPick'. Items: ${serializedItemsForIpc.length}, Opts: ${JSON.stringify({ ...ipcOptions, items: "...", buttons: "..." }).substring(0, 200)}`,
 		);
 
 		try {
-			const resultFromMountain = (await this._ipcRequestResponse(
+			// Indefinite timeout (0) for user interaction
+			const response = (await this._ipcRequestResponse(
 				"ui_showQuickPick",
 				ipcOptions,
 				0,
 			)) as QuickPickResponseFromMountain;
+			const resultIndices = response.params; // Extract indices from { params: ... }
+
 			if (token?.isCancellationRequested) {
-				this._logDebug("showQuickPick cancelled post-IPC.");
+				this._logDebug(
+					"showQuickPick cancelled by CancellationToken after IPC call.",
+				);
 				return undefined;
 			}
-			if (
-				resultFromMountain === undefined ||
-				resultFromMountain === null
-			) {
-				this._logDebug("showQuickPick dismissed by user.");
+			if (resultIndices === undefined || resultIndices === null) {
+				// null or undefined means cancel
+				this._logDebug(
+					"showQuickPick dismissed by user or no selection made from Mountain.",
+				);
 				return undefined;
 			}
 
 			if (options?.canPickMany) {
 				if (
-					!Array.isArray(resultFromMountain) ||
-					!resultFromMountain.every((idx) => typeof idx === "number")
+					!Array.isArray(resultIndices) ||
+					!resultIndices.every((idx) => typeof idx === "number")
 				) {
 					this._logError(
-						"showQuickPick (multi) expected array of indices from Mountain.",
-						"Received:",
-						resultFromMountain,
+						"showQuickPick (canPickMany:true) expected array of original indices (numbers) from Mountain, got:",
+						resultIndices,
 					);
 					return undefined;
 				}
-				const selectedIndices = new Set(resultFromMountain as number[]);
+				const selectedIndicesSet = new Set(resultIndices as number[]);
 				return resolvedItems.filter((_item, index) =>
-					selectedIndices.has(index),
+					selectedIndicesSet.has(index),
 				) as T[] | undefined;
 			} else {
-				if (typeof resultFromMountain !== "number") {
+				if (typeof resultIndices !== "number") {
 					this._logError(
-						"showQuickPick (single) expected single index from Mountain.",
-						"Received:",
-						resultFromMountain,
+						"showQuickPick (canPickMany:false) expected a single original index (number) from Mountain, got:",
+						resultIndices,
 					);
 					return undefined;
 				}
-				const selectedIndex = resultFromMountain as number;
+				const selectedIndex = resultIndices as number;
 				return selectedIndex >= 0 &&
 					selectedIndex < resolvedItems.length
 					? (resolvedItems[selectedIndex] as T | undefined)
 					: undefined;
 			}
 		} catch (e: any) {
-			if (token?.isCancellationRequested) {
+			if (token?.isCancellationRequested && isCancellationError(e)) {
 				this._logDebug(
-					"showQuickPick cancelled during/after IPC error.",
+					"showQuickPick cancelled during/after IPC error (isCancellationError).",
 				);
 				return undefined;
 			}
 			this._logError(
 				"showQuickPick IPC request 'ui_showQuickPick' failed:",
-				e as Error,
+				refineErrorForShim(e, this._logService, "showQuickPick IPC"),
 			);
 			return undefined;
 		}
@@ -330,7 +345,7 @@ export class ShimExtHostQuickInputService
 	): Promise<string | undefined> {
 		if (token?.isCancellationRequested) {
 			this._logDebug(
-				"showInputBox cancelled by CancellationToken before IPC.",
+				"showInputBox cancelled by CancellationToken before IPC call.",
 			);
 			return undefined;
 		}
@@ -342,7 +357,7 @@ export class ShimExtHostQuickInputService
 			...(options || {}),
 			buttons: serializedButtonsForIpc,
 		};
-		// Remove non-serializable/lifecycle properties
+		// Explicitly remove properties not suitable for IPC
 		delete (ipcOptions as any).validateInput;
 		delete (ipcOptions as any).onDidChangeValue;
 		delete (ipcOptions as any).onDidAccept;
@@ -351,44 +366,53 @@ export class ShimExtHostQuickInputService
 		delete (ipcOptions as any).totalSteps;
 
 		this._logDebug(
-			`showInputBox: IPC 'ui_showInputBox'. Options: ${JSON.stringify({ ...ipcOptions, buttons: "..." }).substring(0, 150)}`,
+			`showInputBox: IPC 'ui_showInputBox'. Options: ${JSON.stringify({ ...ipcOptions, buttons: "..." }).substring(0, 200)}`,
 		);
 
 		try {
-			const resultFromMountain = (await this._ipcRequestResponse(
+			const response = (await this._ipcRequestResponse(
 				"ui_showInputBox",
 				ipcOptions,
 				0,
 			)) as InputBoxResponseFromMountain;
-			if (token?.isCancellationRequested) {
-				this._logDebug("showInputBox cancelled post-IPC.");
-				return undefined;
-			}
-			return resultFromMountain ?? undefined; // Mountain returns string or null/undefined for cancel
-		} catch (e: any) {
+			const resultValue = response.params; // Extract value from { params: ... }
+
 			if (token?.isCancellationRequested) {
 				this._logDebug(
-					"showInputBox cancelled during/after IPC error.",
+					"showInputBox cancelled by CancellationToken after IPC call.",
+				);
+				return undefined;
+			}
+			// Mountain returns string, or null/undefined for cancellation
+			return resultValue ?? undefined;
+		} catch (e: any) {
+			if (token?.isCancellationRequested && isCancellationError(e)) {
+				this._logDebug(
+					"showInputBox cancelled during/after IPC error (isCancellationError).",
 				);
 				return undefined;
 			}
 			this._logError(
 				"showInputBox IPC request 'ui_showInputBox' failed:",
-				e as Error,
+				refineErrorForShim(e, this._logService, "showInputBox IPC"),
 			);
 			return undefined;
 		}
 	}
 
 	// --- Stubs for createQuickPick and createInputBox ---
-	// public createQuickPick<T extends QuickPickItem>(): QuickPick<T> {
-	// 	const errorMsg = "API method 'window.createQuickPick' (controller-based) is not implemented in Cocoon MVP.";
-	// 	this._logError(errorMsg); throw new Error(errorMsg);
-	// }
-	// public createInputBox(): InputBox {
-	// 	const errorMsg = "API method 'window.createInputBox' (controller-based) is not implemented in Cocoon MVP.";
-	// 	this._logError(errorMsg); throw new Error(errorMsg);
-	// }
+	public createQuickPick<T extends QuickPickItem>(): QuickPick<T> {
+		const errorMsg =
+			"API method 'window.createQuickPick' (controller-based QuickInput) is not implemented in Cocoon MVP.";
+		this._logError(errorMsg);
+		throw new Error(errorMsg);
+	}
+	public createInputBox(): InputBox {
+		const errorMsg =
+			"API method 'window.createInputBox' (controller-based QuickInput) is not implemented in Cocoon MVP.";
+		this._logError(errorMsg);
+		throw new Error(errorMsg);
+	}
 
 	public override dispose(): void {
 		super.dispose();

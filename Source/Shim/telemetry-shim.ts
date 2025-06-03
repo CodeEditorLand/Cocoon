@@ -28,6 +28,8 @@
  * TODO:
  *  - If `vscode.env.createTelemetryLogger` is implemented, ensure it integrates correctly
  *    with this service for event sending and level/productConfig checks.
+ *
+ * Last Reviewed/Updated: Based on latest extraction timestamp.
  *--------------------------------------------------------------------------------------------*/
 
 import {
@@ -44,7 +46,7 @@ import type {
 import {
 	TelemetryLevel,
 	type ITelemetryInfo,
-	type TelemetryLevel as VscodePlatformTelemetryLevel,
+	type TelemetryLevel as VscodePlatformTelemetryLevel, // Alias for clarity
 } from "vs/platform/telemetry/common/telemetry";
 import {
 	ExtHostContext,
@@ -53,15 +55,11 @@ import {
 	type MainThreadTelemetryShape as VscodeMainThreadTelemetryShape,
 } from "vs/workbench/api/common/extHost.protocol";
 import type {
-	ExtHostInitData,
+	ExtHostInitData, // Used for type hint
 	IExtHostInitDataService,
 } from "vs/workbench/api/common/extHostInitDataService";
-import {
-	isNewAppInstall,
-	type IExtHostTelemetry as VscodeIExtHostTelemetry,
-} from "vs/workbench/api/common/extHostTelemetry";
-
-// Import helper
+// Import IExtHostTelemetry to ensure interface implementation
+import type { IExtHostTelemetry as VscodeIExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry";
 
 import {
 	BaseCocoonShim,
@@ -70,34 +68,39 @@ import {
 	type ProxyIdentifier,
 } from "./_baseShim";
 
+/**
+ * Represents product-specific telemetry configuration, typically from product.json.
+ * This allows fine-grained opting out of specific telemetry categories.
+ */
 interface ProductTelemetryConfig {
-	// Subset of product.json telemetry config (e.g., product.telemetryOptOut)
 	usage?: boolean; // If true, opt-out of usage/publicLog data
 	error?: boolean; // If true, opt-out of error data
-	[key: string]: any;
+	[key: string]: any; // Allow other product-specific flags
 }
 
 export class ShimExtHostTelemetry
 	extends BaseCocoonShim
 	implements VscodeIExtHostTelemetry, VscodeExtHostTelemetryShape
 {
-	public readonly _serviceBrand: undefined;
+	public readonly _serviceBrand: undefined; // Required by VS Code's service type system
 	readonly #mainThreadTelemetryProxy: VscodeMainThreadTelemetryShape | null =
 		null;
-	#currentTelemetryLevel: VscodePlatformTelemetryLevel = TelemetryLevel.NONE;
+	#currentTelemetryLevel: VscodePlatformTelemetryLevel = TelemetryLevel.NONE; // Default to no telemetry until initialized
 	#productTelemetryConfig: ProductTelemetryConfig | undefined = undefined;
-	private readonly _initData: ExtHostInitData;
+	private readonly _initData: ExtHostInitData; // Store revived initData
 
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
 		logService: ILogServiceForShim | undefined,
-		initDataService: IExtHostInitDataService,
+		initDataService: IExtHostInitDataService, // Injected
 	) {
 		super("ExtHostTelemetry", rpcService, logService);
-		this._initData = initDataService.value;
+		this._initData = initDataService.value; // Store the raw, revived initData
+
+		// Initialize telemetry level and product config from initData
 		this.#currentTelemetryLevel =
 			this._initData.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
-		// Assuming product.telemetryOptOut or similar structure for fine-grained control
+		// Assuming product.json might have a 'telemetry' object or 'telemetryOptOut' for configuration
 		this.#productTelemetryConfig =
 			(this._initData.product as any)?.telemetryOptOut ||
 			(this._initData.product as any)?.telemetry;
@@ -127,51 +130,56 @@ export class ShimExtHostTelemetry
 		}
 		if (!this.#mainThreadTelemetryProxy) {
 			this._logWarn(
-				"MainThreadTelemetry RPC proxy NOT available. Telemetry events will only be logged locally.",
+				"MainThreadTelemetry RPC proxy NOT available. Telemetry events will only be logged locally (if telemetry level permits).",
 			);
 		}
 	}
 
+	/** {@inheritDoc VscodeIExtHostTelemetry.getTelemetryInfo} */
 	public async getTelemetryInfo(): Promise<ITelemetryInfo> {
 		this._logService?.trace("getTelemetryInfo() called.");
+		// Data is sourced from ExtHostInitData provided by Mountain.
 		return {
 			sessionId: this._initData.telemetryInfo.sessionId,
 			machineId: this._initData.telemetryInfo.machineId,
 			instanceId:
 				this._initData.telemetryInfo.instanceId ||
-				this._initData.telemetryInfo.sessionId,
+				this._initData.telemetryInfo.sessionId, // Fallback instanceId to sessionId
 			sqmId: this._initData.telemetryInfo.sqmId,
-			language: this._initData.environment.appLanguage || "en",
+			language: this._initData.environment.appLanguage || "en", // Typically BCP 47
 			firstSessionDate: this._initData.telemetryInfo.firstSessionDate,
 			msftInternal: this._initData.telemetryInfo.msftInternal,
-			commonProperties: {},
-			lastSessionDate: undefined,
+			commonProperties: {}, // Not typically populated by ExtHost side
+			lastSessionDate: undefined, // Not typically part of ExtHostInitData
 		};
 	}
 
+	/** {@inheritDoc VscodeIExtHostTelemetry.setEnabled} */
 	public setEnabled(isEnabled: boolean): void {
 		this._logInfo(
 			`API setEnabled(${isEnabled}) called. Current TelemetryLevel: ${TelemetryLevel[this.#currentTelemetryLevel]}.`,
 		);
+		// If telemetry is being explicitly disabled by this call, update local level to OFF.
+		// Mountain controls the actual level via $initializeTelemetryLevel/$onDidChangeTelemetryLevel.
 		if (
 			!isEnabled &&
 			this.#currentTelemetryLevel !== TelemetryLevel.NONE &&
 			this.#currentTelemetryLevel !== TelemetryLevel.OFF
 		) {
 			this._logInfo(
-				"setEnabled(false): Explicitly disabling telemetry. Setting local level to OFF.",
+				"setEnabled(false): Explicitly disabling telemetry. Setting local level to OFF pending MainThread confirmation.",
 			);
-			// Update local state and inform MainThread (if it needs this specific signal beyond level change)
 			this.$initializeTelemetryLevel(
 				TelemetryLevel.OFF,
 				this._initData.telemetryInfo.telemetryLevel !==
 					TelemetryLevel.NONE, // Previous supportsTelemetry state
-				this.#productTelemetryConfig,
+				this.#productTelemetryConfig, // Pass current product config
 			);
 		}
-		// If isEnabled is true, we don't change the level here; Mountain controls the actual level.
+		// If isEnabled is true, we don't unilaterally change the level here; Mountain dictates the actual level.
 	}
 
+	/** {@inheritDoc VscodeIExtHostTelemetry.publicLog} */
 	public publicLog(eventName: string, data?: Record<string, any>): void {
 		if (
 			this.#currentTelemetryLevel === TelemetryLevel.NONE ||
@@ -183,7 +191,7 @@ export class ShimExtHostTelemetry
 			return;
 		}
 		if (this.#productTelemetryConfig?.usage === true) {
-			// true in optOut means do NOT send
+			// true in optOut means DO NOT SEND usage telemetry
 			this._logService?.trace(
 				`publicLog: Product config opts out of usage telemetry. Event '${eventName}' logged locally ONLY.`,
 			);
@@ -192,6 +200,7 @@ export class ShimExtHostTelemetry
 			);
 			return;
 		}
+
 		this._logDebug(
 			`Telemetry publicLog: Event='${eventName}', DataSample=${JSON.stringify(data)?.substring(0, 100)}...`,
 		);
@@ -210,6 +219,7 @@ export class ShimExtHostTelemetry
 		}
 	}
 
+	/** {@inheritDoc VscodeIExtHostTelemetry.publicLog2} */
 	public publicLog2<
 		E extends ClassifiedEvent<OmitMetadata<T>> = never,
 		T extends IGDPRProperty = never,
@@ -224,7 +234,7 @@ export class ShimExtHostTelemetry
 			return;
 		}
 		if (this.#productTelemetryConfig?.usage === true) {
-			// true in optOut means do NOT send
+			// true in optOut means DO NOT SEND usage telemetry
 			this._logService?.trace(
 				`publicLog2: Product config opts out of usage telemetry. Event '${eventName}' logged locally ONLY.`,
 			);
@@ -233,6 +243,7 @@ export class ShimExtHostTelemetry
 			);
 			return;
 		}
+
 		this._logDebug(
 			`Telemetry publicLog2 (GDPR): Event='${eventName}', DataSample=${JSON.stringify(data)?.substring(0, 100)}...`,
 		);
@@ -251,6 +262,7 @@ export class ShimExtHostTelemetry
 		}
 	}
 
+	/** {@inheritDoc VscodeIExtHostTelemetry.onExtensionError} */
 	public onExtensionError(
 		extension: ExtensionIdentifier,
 		error: Error | SerializedError,
@@ -274,7 +286,7 @@ export class ShimExtHostTelemetry
 			return false;
 		}
 		if (this.#productTelemetryConfig?.error === true) {
-			// true in optOut means do NOT send
+			// true in optOut means DO NOT SEND error telemetry
 			this._logService?.trace(
 				`onExtensionError: Product config opts out of error telemetry. Error for '${extension.value}' logged locally ONLY.`,
 			);
@@ -297,25 +309,32 @@ export class ShimExtHostTelemetry
 					),
 				);
 		}
+		// Returning false indicates the error is not "handled" by telemetry alone.
 		return false;
 	}
 
+	// --- ExtHostTelemetryShape RPC Methods (called BY MainThread) ---
+
+	/** {@inheritDoc VscodeExtHostTelemetryShape.$initializeTelemetryLevel} */
 	public $initializeTelemetryLevel(
 		level: VscodePlatformTelemetryLevel,
-		supportsTelemetry: boolean,
-		productConfig?: ProductTelemetryConfig,
+		supportsTelemetry: boolean, // From product.json on MainThread
+		productConfig?: ProductTelemetryConfig, // Product-specific telemetry opt-out flags
 	): void {
 		const oldLevel = this.#currentTelemetryLevel;
 		this.#currentTelemetryLevel = level;
 		this.#productTelemetryConfig =
 			productConfig || this.#productTelemetryConfig; // Update if provided
+
 		this._logInfo(
 			`RPC $initializeTelemetryLevel: Effective TelemetryLevel set to ${TelemetryLevel[level]}. ` +
 				`ProductSupportsTelemetry=${supportsTelemetry}. Product Config: ${JSON.stringify(this.#productTelemetryConfig)}. OldLevel: ${TelemetryLevel[oldLevel]}.`,
 		);
-		// Events related to enabled status are fired by env-shim based on this level.
+		// Further actions based on level change (e.g., notifying other services or vscode.env)
+		// would be handled by the service responsible for vscode.env.onDidChangeTelemetryEnabled.
 	}
 
+	/** {@inheritDoc VscodeExtHostTelemetryShape.$onDidChangeTelemetryLevel} */
 	public $onDidChangeTelemetryLevel(
 		level: VscodePlatformTelemetryLevel,
 	): void {
@@ -324,11 +343,13 @@ export class ShimExtHostTelemetry
 		this._logInfo(
 			`RPC $onDidChangeTelemetryLevel: Effective TelemetryLevel changed from ${TelemetryLevel[oldLevel]} to ${TelemetryLevel[level]}.`,
 		);
-		// Events related to enabled status are fired by env-shim.
 	}
 
+	/**
+	 * Disposes of resources held by this shim instance.
+	 */
 	public override dispose(): void {
-		super.dispose();
+		super.dispose(); // From BaseCocoonShim
 		this._logInfo("Disposed.");
 	}
 }
