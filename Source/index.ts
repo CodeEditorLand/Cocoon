@@ -18,7 +18,9 @@
  *
  * - IPC Management: Initializes and utilizes the `cocoon-ipc.ts` module. This module
  *   manages newline-delimited JSON-based Inter-Process Communication (IPC) with the
- *   Mountain host process over standard input/output (stdio).
+ *   Mountain host process over standard input/output (stdio). It also includes
+ *   `skyToCocoonMessageBus` for communication between Cocoon and Sky (webview content)
+ *   if they are in the same process/context or proxied appropriately.
  *
  * - RPC Setup: Establishes VS Code's `RPCProtocol` on top of the Vine IPC layer.
  *   This integrates a URI transformer (`ShimUriTransformerService`) to handle URI
@@ -59,6 +61,7 @@
  *   `vscode.window.showInformationMessage(...)`, it is Cocoon's `ShimExtHostMessageService`
  *   that handles the call, forwarding it to Mountain via RPC. The factory also passes
  *   the `ExtensionIdentifier` to shims that require context about the calling extension.
+ *   It also shims `vscode.ipcRenderer` for extension<->Sky communication.
  *
  * - Extension Host Lifecycle: Initializes the real `ExtHostExtensionService` (from
  *   `vs/workbench/api/node/extHostExtensionService`). This service then takes over the
@@ -82,132 +85,114 @@
  *     to Mountain before exiting.
  *--------------------------------------------------------------------------------------------*/
 
-// --- Standard Node.js Module Imports ---
-import * as fs from "fs"; // File System module for path existence checks.
-import * as path from "path"; // Path module for path manipulation.
-import { performance } from "perf_hooks"; // For performance marking during startup.
-
-// --- VS Code Base Module Imports ---
-// These are core utilities from VS Code's `base` layer.
-import { Barrier } from "vs/base/common/async"; // For synchronization barriers, if needed.
-import { VSBuffer } from "vs/base/common/buffer"; // For handling binary data buffers.
-import { CancellationTokenSource } from "vs/base/common/cancellation"; // For creating cancellation tokens.
-import { MarshalledId, revive } from "vs/base/common/marshalling"; // For reviving complex objects (like URIs) from DTOs.
-import { Schemas } from "vs/base/common/network"; // Defines common URI schemes (e.g., 'file', 'untitled').
+import * as fs from "fs";
+import * as path from "path";
+import { performance } from "perf_hooks";
+import { Barrier } from "vs/base/common/async";
+import { VSBuffer } from "vs/base/common/buffer";
+import { CancellationTokenSource } from "vs/base/common/cancellation";
+import { MarshalledId, revive } from "vs/base/common/marshalling";
+import { Schemas } from "vs/base/common/network";
 import {
 	URI,
 	type UriComponents as VSCodeInternalUriComponents,
 } from "vs/base/common/uri";
-// VS Code's internal URI implementation.
-import { type IURITransformer } from "vs/base/common/uriIpc"; // Interface for URI transformation in RPC.
-
-// --- VS Code Platform Module Imports ---
-// These are from VS Code's `platform` layer, dealing with extensions, DI, logging, etc.
+import { type IURITransformer } from "vs/base/common/uriIpc";
 import {
-	ExtensionIdentifier, // Class for uniquely identifying extensions.
-	nullExtensionDescription, // A default placeholder for unknown extensions.
-	type IExtensionDescription, // Interface for detailed extension metadata.
-	type IRelaxedExtensionDescription, // A less strict version for API factory input.
+	ExtensionIdentifier,
+	nullExtensionDescription,
+	type IExtensionDescription,
+	type IRelaxedExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
-import { getSingletonServiceDescriptors } from "vs/platform/instantiation/common/extensions"; // For registering standard DI services.
+import { getSingletonServiceDescriptors } from "vs/platform/instantiation/common/extensions";
 import {
-	createDecorator, // Utility for creating DI service identifiers.
-	InstantiationService, // VS Code's Dependency Injection container.
-	type IInstantiationService, // Interface for the InstantiationService.
+	createDecorator,
+	InstantiationService,
+	type IInstantiationService,
 } from "vs/platform/instantiation/common/instantiationService";
 import {
 	ServiceCollection,
 	SyncDescriptor,
 } from "vs/platform/instantiation/common/serviceCollection";
-// For DI setup.
 import {
 	ILoggerService,
 	ILogService,
 	LogLevel,
 	parseLogLevel,
 } from "vs/platform/log/common/log";
-// Logging services and utilities.
-
-// --- VS Code Workbench API (ExtHost) Module Imports ---
-// These are specific to the extension host environment.
-import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain"; // Global error handling.
+import { ErrorHandler } from "vs/workbench/api/common/extensionHostMain";
 import {
-	createApiFactory as createVSCodeApiFactoryOriginal, // VS Code's original factory for the `vscode` API object.
-	type IExtensionApiFactory, // Type for the API factory function.
-	type IExtensionRegistries, // Type for extension registry data passed to the API factory.
+	createApiFactory as createVSCodeApiFactoryOriginal,
+	type IExtensionApiFactory,
+	type IExtensionRegistries,
 } from "vs/workbench/api/common/extHost.api.impl";
-import { ExtHostContext } from "vs/workbench/api/common/extHost.protocol"; // Enum for ExtHost RPC targets.
-import { IExtHostApiDeprecationService } from "vs/workbench/api/common/extHostApiDeprecationService"; // Service for API deprecation warnings.
-import { IExtHostAuthentication } from "vs/workbench/api/common/extHostAuthentication"; // Service for authentication.
-import { IExtHostCommands } from "vs/workbench/api/common/extHostCommands"; // Service for commands.
+import {
+	ExtHostContext,
+	type MainContext,
+} from "vs/workbench/api/common/extHost.protocol"; // MainContext for proxy types
+import { IExtHostApiDeprecationService } from "vs/workbench/api/common/extHostApiDeprecationService";
+import { IExtHostAuthentication } from "vs/workbench/api/common/extHostAuthentication";
+import { IExtHostCommands } from "vs/workbench/api/common/extHostCommands";
 import {
 	IExtHostConfiguration,
 	type ExtHostConfigProvider,
 } from "vs/workbench/api/common/extHostConfiguration";
-// Service for configuration.
-import { IExtHostDiagnostics } from "vs/workbench/api/common/extHostDiagnostics"; // Service for diagnostics (problems).
+import { IExtHostDiagnostics } from "vs/workbench/api/common/extHostDiagnostics";
 import {
 	IExtHostDocuments,
 	IExtHostDocumentsAndEditors,
 } from "vs/workbench/api/common/extHostDocuments";
-// Services for text documents and editors.
 import {
-	ExtensionPaths, // Utility for extension path lookups.
-	IExtHostExtensionService, // DI Key for the REAL ExtHostExtensionService.
-	IHostUtils, // Service for host utility functions (like clipboard, UI focus).
+	ExtensionPaths,
+	IExtHostExtensionService,
+	IHostUtils,
 } from "vs/workbench/api/common/extHostExtensionService";
-import { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo"; // Service for file system information.
+import { IExtHostFileSystemInfo } from "vs/workbench/api/common/extHostFileSystemInfo";
 import {
 	IExtHostInitDataService,
 	type ExtHostInitData,
 } from "vs/workbench/api/common/extHostInitDataService";
-// Service for initial data from MainThread.
-import { IExtHostLanguageFeatures } from "vs/workbench/api/common/extHostLanguageFeatures"; // Service for language features.
-import { IExtHostLanguageModels } from "vs/workbench/api/common/extHostLanguageModels"; // Service for language models.
-import { IExtHostLocalizationService } from "vs/workbench/api/common/extHostLocalizationService"; // Service for localization (NLS).
-import { IExtHostManagedSockets } from "vs/workbench/api/common/extHostManagedSockets"; // Service for managed sockets.
-import { IExtHostOutputService } from "vs/workbench/api/common/extHostOutput"; // Service for output channels.
-import { IExtHostRpcService } from "vs/workbench/api/common/extHostRpcService"; // Service for RPC communication.
-import { IExtHostSecretState } from "vs/workbench/api/common/extHostSecretState"; // Service for secret storage.
-import { IExtHostStorage } from "vs/workbench/api/common/extHostStorage"; // Service for extension storage (Memento).
-import { IExtensionStoragePaths } from "vs/workbench/api/common/extHostStoragePaths"; // Service for storage paths.
-import { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry"; // Service for telemetry.
-import { IExtHostTerminalService } from "vs/workbench/api/common/extHostTerminalService"; // Service for terminals.
-import { IURITransformerService } from "vs/workbench/api/common/extHostUriTransformerService"; // Service for URI transformation.
-import { IExtHostWorkspace } from "vs/workbench/api/common/extHostWorkspace"; // Service for workspace information.
+import { IExtHostLanguageFeatures } from "vs/workbench/api/common/extHostLanguageFeatures";
+import { IExtHostLanguageModels } from "vs/workbench/api/common/extHostLanguageModels";
+import { IExtHostLocalizationService } from "vs/workbench/api/common/extHostLocalizationService";
+import { IExtHostManagedSockets } from "vs/workbench/api/common/extHostManagedSockets";
+import { IExtHostOutputService } from "vs/workbench/api/common/extHostOutput";
+import { IExtHostRpcService } from "vs/workbench/api/common/extHostRpcService";
+import { IExtHostSecretState } from "vs/workbench/api/common/extHostSecretState";
+import { IExtHostStorage } from "vs/workbench/api/common/extHostStorage";
+import { IExtensionStoragePaths } from "vs/workbench/api/common/extHostStoragePaths";
+import { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry";
+import { IExtHostTerminalService } from "vs/workbench/api/common/extHostTerminalService";
+import { IURITransformerService } from "vs/workbench/api/common/extHostUriTransformerService";
+import { IExtHostWorkspace } from "vs/workbench/api/common/extHostWorkspace";
 import {
-	NodeModuleAliasingModuleFactory, // Factory for aliasing Node modules (e.g., 'vscode-textmate').
-	NodeRequireInterceptor, // Interceptor for CJS `require()` calls.
-	ExtHostExtensionService as RealExtHostExtensionService, // The real ExtHostExtensionService implementation.
-	VSCodeNodeModuleFactory, // Factory for the `require('vscode')` CJS module.
+	NodeModuleAliasingModuleFactory,
+	NodeRequireInterceptor,
+	ExtHostExtensionService as RealExtHostExtensionService,
+	VSCodeNodeModuleFactory,
 } from "vs/workbench/api/node/extHostExtensionService";
-import { IWorkbenchExtensionEnablementService } from "vs/workbench/services/extensionManagement/common/extensionManagement"; // Service for extension enablement state.
-import { IExtensionHostKindPicker } from "vs/workbench/services/extensions/common/extensionHostKind"; // Service for picking extension host kind.
+import { IWorkbenchExtensionEnablementService } from "vs/workbench/services/extensionManagement/common/extensionManagement";
+import { IExtensionHostKindPicker } from "vs/workbench/services/extensions/common/extensionHostKind";
 import {
 	RPCProtocol,
 	type IRPCProtocolLogger,
 } from "vs/workbench/services/extensions/common/rpcProtocol";
 
-// VS Code's RPC protocol implementation.
-
-import { CancellationTokenRegistry } from "./cancellation-token-registry"; // Registry for managing cancellation tokens.
-
-// --- Cocoon Specific Shim Imports ---
-// These are Cocoon's implementations or adaptations of VS Code services and utilities.
-import * as bootstrapUtils from "./cocoon-bootstrap"; // Utilities for bootstrapping the Cocoon process.
-
+import { CancellationTokenRegistry } from "./cancellation-token-registry";
+import * as bootstrapUtils from "./cocoon-bootstrap";
 import {
 	CocoonNodeModuleESMInterceptor,
 	type CocoonESMInterceptorContext,
 } from "./cocoon-esm-interceptor";
-// Interceptor for ESM `import` statements.
 import ipcApiInstance, {
-	type CocoonPrimaryIpc, // Type for Cocoon's primary IPC interface.
-	type ConfigurationChangedEventPayload, // Payload type for configuration change events.
-	type VineMessage, // Type for messages in the Vine IPC protocol.
-	type WorkspaceFoldersChangedEventPayload, // Payload type for workspace folder change events.
+	initializeSkyIpcRouter,
+	skyToCocoonMessageBus,
+	type CocoonPrimaryIpc,
+	type ConfigurationChangedEventPayload,
+	type VineMessage,
+	type WorkspaceFoldersChangedEventPayload,
 } from "./cocoon-ipc";
-// Cocoon's IPC implementation.
+import { initializeConverterLogger as initCocoonTypeConverterLogger } from "./cocoon-type-converters";
 import { ShimExtHostApiDeprecationService } from "./shims/api-deprecation-shim";
 import { ShimExtHostAuthentication } from "./shims/authentication-shim";
 import {
@@ -237,7 +222,7 @@ import {
 	type IExtHostExtensionsShape,
 } from "./shims/extensions-shim";
 import { ShimExtHostFileSystemInfo } from "./shims/file-system-info-shim";
-import { ShimFileSystemApi } from "./shims/fs-api-shim"; // Shim for `vscode.workspace.fs`.
+import { ShimFileSystemApi } from "./shims/fs-api-shim";
 import { ShimExtensionHostKindPicker } from "./shims/host-kind-picker-shim";
 import { ShimHostUtils } from "./shims/host-utils-shim";
 import { ShimLanguageFeatures } from "./shims/language-features-shim";
@@ -250,7 +235,7 @@ import {
 	type IExtHostMessageServiceInterface,
 	type ExtensionSourceInfo as MessageExtensionSourceInfo,
 } from "./shims/message-service-shim";
-import { NodeModuleShimFactory as NodeBuiltinsShimFactory } from "./shims/node-module-shim-factory"; // Factory for shimming/blocking Node.js built-ins.
+import { NodeModuleShimFactory as NodeBuiltinsShimFactory } from "./shims/node-module-shim-factory";
 import { ShimOutputService } from "./shims/output-channel-shim";
 import {
 	ShimExtensionsProposedApi,
@@ -275,14 +260,9 @@ import {
 	type IExtHostWindowPartsServiceShape,
 } from "./shims/window-parts-shim";
 import { ShimExtHostWorkspace } from "./shims/workspace-shim";
-// --- VS Code API Namespace Type Import ---
-// This imports the module that defines the shape of `import * as vscode from "vscode"`.
-// It's used to ensure type consistency for the API factory's return type.
 import type * as vscode from "./vscode";
-// Re-import key classes and enums from `./vscode` (Cocoon's `vscode` API facade)
-// specifically for use within the API factory. This ensures they are the public API versions.
 import {
-	LogLevel as VscodeApiLogLevelEnumPublic, // Renamed in ./vscode to avoid conflict with platform LogLevel.
+	LogLevel as VscodeApiLogLevelEnumPublic,
 	CallHierarchyItem as VscodeCallHierarchyItemPublic,
 	CancellationError as VscodeCancellationErrorPublic,
 	CancellationToken as VscodeCancellationTokenPublic,
@@ -290,7 +270,7 @@ import {
 	CodeActionKind as VscodeCodeActionKindPublic,
 	CodeAction as VscodeCodeActionPublic,
 	CodeLens as VscodeCodeLensPublic,
-	Command as VscodeCommandPublic, // This is the interface, not the namespace.
+	Command as VscodeCommandPublic,
 	CompletionItemKind as VscodeCompletionItemKindPublic,
 	CompletionItem as VscodeCompletionItemPublic,
 	CompletionList as VscodeCompletionListPublic,
@@ -301,13 +281,14 @@ import {
 	Diagnostic as VscodeDiagnosticPublic,
 	DiagnosticRelatedInformation as VscodeDiagnosticRelatedInformationPublic,
 	DiagnosticSeverity as VscodeDiagnosticSeverityPublic,
+	Disposable as VscodeDisposableFromApi, // Already imported as VscodeDisposablePublic
 	Disposable as VscodeDisposablePublic,
 	DocumentLink as VscodeDocumentLinkPublic,
-	EventEmitter as VscodeEmitterPublic, // VS Code's public Emitter class.
+	EventEmitter as VscodeEmitterPublic,
 	EndOfLine as VscodeEndOfLinePublic,
 	ExtensionKind as VscodeExtensionKindPublic,
 	ExtensionMode as VscodeExtensionModePublic,
-	FileSystemError as VscodeFileSystemErrorPublic, // Renamed in ./vscode.
+	FileSystemError as VscodeFileSystemErrorPublic,
 	FileType as VscodeFileTypePublic,
 	Hover as VscodeHoverPublic,
 	IndentAction as VscodeIndentActionPublic,
@@ -337,45 +318,35 @@ import {
 	Uri as VscodeUriPublic,
 	ViewColumn as VscodeViewColumnPublic,
 	WorkspaceEdit as VscodeWorkspaceEditPublic,
-	// Types for the structure of the `vscode` API object.
 	type Commands as VscodeCommandsAPIType,
 	type Debug as VscodeDebugAPIType,
 	type Env as VscodeEnvAPIType,
 	type Extensions as VscodeExtensionsAPIType,
+	// IPC Renderer related types
+	type IpcRenderer as VscodeIpcRendererAPIType,
 	type Languages as VscodeLanguagesAPIType,
 	type Tasks as VscodeTasksAPIType,
 	type Window as VscodeWindowAPIType,
 	type Workspace as VscodeWorkspaceAPIType,
 } from "./vscode";
 
-// --- Local Type Definition for API Factory Context ---
-// This combines types from different shims that require context about the calling extension.
-// It's used within the API factory to pass consistent source information to shims.
 type ApiFactoryExtensionSourceInfo = EnvExtensionSourceInfo &
 	MessageExtensionSourceInfo;
 
-// --- Startup Logging & Performance Mark ---
 console.log("[Cocoon] Node.js Sidecar Process Starting...");
+performance.mark(`code/extHost/willConnectToRenderer`);
 
-performance.mark(`code/extHost/willConnectToRenderer`); // Marks the beginning of connection attempt to MainThread.
-
-// --- Module Path Setup for VS Code Internal Dependencies ---
-// This section configures Node.js's module resolution to find VS Code's internal modules
-// (e.g., 'vs/base/common/uri') which are needed by the real ExtHost services.
-const VSCODE_OUT_DIR_ENV_VAR = "VSCODE_OUT_DIR"; // Environment variable to specify VS Code's 'out' directory.
-const configuredVsCodeOutDir = process.env[VSCODE_OUT_DIR_ENV_VAR]; // Read from environment.
-// Default path if the environment variable is not set. Adjust this if VS Code's structure changes.
+const VSCODE_OUT_DIR_ENV_VAR = "VSCODE_OUT_DIR";
+const configuredVsCodeOutDir = process.env[VSCODE_OUT_DIR_ENV_VAR];
 const defaultVsCodeOutDir = path.resolve(
 	__dirname,
 	"../../../Dependency/Microsoft/Dependency/Editor/out",
 );
+const vsCodeOutDirectory = configuredVsCodeOutDir || defaultVsCodeOutDir;
 
-const vsCodeOutDirectory = configuredVsCodeOutDir || defaultVsCodeOutDir; // Use configured path or default.
-
-// Log the determined path for VS Code's 'out' directory.
 if (configuredVsCodeOutDir) {
 	console.log(
-		`[Cocoon] Using VS Code 'out' directory from environment variable ${VSCODE_OUT_DIR_ENV_VAR}: ${vsCodeOutDirectory}`,
+		`[Cocoon] Using VS Code 'out' directory from env var ${VSCODE_OUT_DIR_ENV_VAR}: ${vsCodeOutDirectory}`,
 	);
 } else {
 	console.log(
@@ -383,278 +354,185 @@ if (configuredVsCodeOutDir) {
 	);
 }
 
-// Check if the directory exists and attempt to add it to Node's module search paths.
 if (fs.existsSync(vsCodeOutDirectory)) {
 	if (Array.isArray((module as any).paths)) {
-		(module as any).paths.unshift(vsCodeOutDirectory); // Prepend to give it priority.
+		(module as any).paths.unshift(vsCodeOutDirectory);
 		console.log(
 			"[Cocoon] VS Code 'out' directory successfully prepended to module.paths for CJS resolution.",
 		);
 	} else {
-		// This case should be rare in standard Node.js environments.
 		console.warn(
-			"[Cocoon] `module.paths` is not an array. Cannot prepend VS Code 'out' directory. Internal module resolution might fail.",
+			"[Cocoon] `module.paths` is not an array. Cannot prepend VS Code 'out' directory.",
 		);
 	}
 } else {
-	// This is a critical failure. Cocoon cannot proceed without VS Code's base modules.
 	console.error(
-		`[Cocoon] CRITICAL FAILURE: VS Code 'out' directory NOT FOUND at path: ${vsCodeOutDirectory}. ` +
-			`This path was derived from ${configuredVsCodeOutDir ? `env var ${VSCODE_OUT_DIR_ENV_VAR}` : "a default location"}. ` +
-			`Extensions and core ExtHost services may fail to load their internal dependencies (e.g., 'vs/base/common/uri'). ` +
-			`Ensure VS Code dependencies are correctly bundled or linked, or set the ${VSCODE_OUT_DIR_ENV_VAR} environment variable.`,
+		`[Cocoon] CRITICAL FAILURE: VS Code 'out' directory NOT FOUND at path: ${vsCodeOutDirectory}.`,
 	);
-
-	process.exit(1); // Terminate the Cocoon process.
+	process.exit(1);
 }
 
-// --- Global State Variables ---
-let cocoonDI: IInstantiationService | null = null; // The main DI container for Cocoon.
-let cocoonRpcProtocol: RPCProtocol | null = null; // The RPC protocol instance for communication with Mountain.
-const cocoonIpcAdapter = ipcApiInstance.createHostProtocolInterface(); // Adapter for the underlying IPC mechanism.
-let initializationFailedOrExited = false; // Flag to track if initialization has failed or if an exit is signaled.
+let cocoonDI: IInstantiationService | null = null;
+let cocoonRpcProtocol: RPCProtocol | null = null;
+const cocoonIpcAdapter = ipcApiInstance.createHostProtocolInterface();
+let initializationFailedOrExited = false;
 
-// Patch global `process.exit` early using cocoon-bootstrap utilities.
-// This allows controlled exits based on the `initializationFailedOrExited` flag.
-bootstrapUtils.patchProcess(() => {
-	// The callback determines if an exit is allowed.
-	// True means exit is allowed; false means the patched `process.exit` will be a no-op.
-	return initializationFailedOrExited;
-});
+bootstrapUtils.patchProcess(() => initializationFailedOrExited);
 
-// --- Early URI Revival Function (Pre-DI, Pre-RPC Transformer) ---
-// This function is a temporary, simplified URI reviver used ONLY for the raw `initDataFromMountain`
-// BEFORE the main RPCProtocol and its full IURITransformerService are set up.
-// It handles basic URI DTOs and string paths.
-// TODO: The ideal solution is to initialize IURITransformerService earlier to use VS Code's
-// standard `revive` function (which leverages the global RPC protocol) for all DTOs.
 function reviveUrisInObjectForEarlyInitData(
-	// The object (or part of it) to revive URIs in.
-	objectToRevive: any,
-	// An optional early logger for debugging this revival process.
+	obj: any,
 	earlyLogService?: ILogService,
 ): any {
-	// Base cases: if null, already a URI/Buffer/TokenSource, or not an object, return as is.
 	if (
-		!objectToRevive ||
-		objectToRevive instanceof URI ||
-		objectToRevive instanceof VSBuffer ||
-		objectToRevive instanceof CancellationTokenSource ||
-		typeof objectToRevive !== "object"
+		!obj ||
+		obj instanceof URI ||
+		obj instanceof VSBuffer ||
+		obj instanceof CancellationTokenSource ||
+		typeof obj !== "object"
 	) {
-		return objectToRevive;
+		return obj;
 	}
-
-	// If it's an array, revive each item recursively.
-	if (Array.isArray(objectToRevive)) {
-		return objectToRevive
+	if (Array.isArray(obj)) {
+		return obj
 			.map((item) =>
 				reviveUrisInObjectForEarlyInitData(item, earlyLogService),
 			)
 			.filter((item) => item !== undefined);
 	}
-
-	// Check if the object itself looks like a URI DTO (has scheme, path, and potentially $mid).
 	if (
-		typeof objectToRevive.scheme === "string" &&
-		objectToRevive.path !== undefined &&
-		(objectToRevive.$mid === MarshalledId.Uri ||
-			objectToRevive.$mid === MarshalledId.UriSimple ||
-			!objectToRevive.$mid)
+		typeof obj.scheme === "string" &&
+		obj.path !== undefined &&
+		(obj.$mid === MarshalledId.Uri ||
+			obj.$mid === MarshalledId.UriSimple ||
+			!obj.$mid)
 	) {
 		try {
-			// Attempt to revive using VSCodeInternalURI.revive, which is robust for standard URI DTOs.
-			const revivedUri = URI.revive(
-				objectToRevive as VSCodeInternalUriComponents,
-			);
-
-			// earlyLogService?.trace(`[Cocoon Early Revival] Revived URI DTO: ${JSON.stringify(objectToRevive)} -> ${revivedUri.toString()}`);
-
-			return revivedUri;
+			return URI.revive(obj as VSCodeInternalUriComponents);
 		} catch (error: any) {
 			earlyLogService?.warn(
-				`[Cocoon Early URI Revival] Failed to revive potential URI component: ${JSON.stringify(objectToRevive)}. Error: ${error.message}`,
+				`[Cocoon Early URI Revival] Failed to revive potential URI: ${JSON.stringify(obj)}. Error: ${error.message}`,
 			);
-
-			// Fall through to property-based revival if direct revival fails but it still looks like a DTO that might contain URIs.
 		}
 	}
-
-	// If it's a generic object, iterate over its properties and revive them recursively.
-	const newObject: { [key: string]: any } = {};
-
-	for (const key in objectToRevive) {
-		if (Object.prototype.hasOwnProperty.call(objectToRevive, key)) {
-			newObject[key] = reviveUrisInObjectForEarlyInitData(
-				objectToRevive[key],
+	const newObj: { [key: string]: any } = {};
+	for (const key in obj) {
+		if (Object.prototype.hasOwnProperty.call(obj, key)) {
+			newObj[key] = reviveUrisInObjectForEarlyInitData(
+				obj[key],
 				earlyLogService,
 			);
 		}
 	}
-	return newObject;
+	return newObj;
 }
 
-// --- Define DI Service Identifiers for Cocoon-specific or Granular Shims ---
-// These are used to register and retrieve shims from the DI container.
 export const IExtHostMessageService =
 	createDecorator<IExtHostMessageServiceInterface>("extHostMessageService");
-
 export const IExtHostQuickInput =
 	createDecorator<IExtHostQuickInputServiceShape>("extHostQuickInput");
-
 export const IExtHostDialogs =
 	createDecorator<IExtHostDialogServiceShape>("extHostDialogs");
-
 export const IExtHostClipboard =
 	createDecorator<IExtHostClipboardServiceShape>("extHostClipboard");
-
 export const IExtHostEnv =
 	createDecorator<IExtHostEnvServiceShape>("extHostEnv");
-
 export const IExtHostExtensions =
-	createDecorator<IExtHostExtensionsShape>("extHostExtensions"); // For `vscode.extensions` API
+	createDecorator<IExtHostExtensionsShape>("extHostExtensions");
 export const IExtHostDebugService = createDecorator<IExtHostDebugServiceShape>(
 	"extHostDebugService",
-); // For `vscode.debug` API
+);
 export const IExtHostTaskService =
-	createDecorator<IExtHostTaskServiceShape>("extHostTaskService"); // For `vscode.tasks` API
+	createDecorator<IExtHostTaskServiceShape>("extHostTaskService");
 export const IExtHostWindowParts =
-	createDecorator<IExtHostWindowPartsServiceShape>("extHostWindowParts"); // For miscellaneous `vscode.window` parts
+	createDecorator<IExtHostWindowPartsServiceShape>("extHostWindowParts");
 export const ICocoonExtHostProposedApis =
-	createDecorator<CocoonIExtHostProposedApis>("cocoonExtHostProposedApis"); // For proposed APIs
+	createDecorator<CocoonIExtHostProposedApis>("cocoonExtHostProposedApis");
 export const ICancellationTokenRegistry =
-	createDecorator<CancellationTokenRegistry>("cancellationTokenRegistry"); // DI Key for CancellationTokenRegistry
+	createDecorator<CancellationTokenRegistry>("cancellationTokenRegistry");
 
-// --- Main Initialization Function for Cocoon Extension Host ---
-// This function orchestrates the entire setup of the Cocoon extension host environment.
 async function initializeCocoonHost(
-	// Raw initialization data received from the Mountain host process.
-	// This data will be revived before full use.
 	rawInitDataFromMountain: any,
 ): Promise<void> {
 	console.log("[Cocoon] Initializing Cocoon Extension Host Environment...");
+	performance.mark(`code/extHost/didWaitForInitData`);
 
-	performance.mark(`code/extHost/didWaitForInitData`); // Mark completion of waiting for init data.
-
-	// If initialization has already failed or an exit is signaled, skip.
 	if (initializationFailedOrExited) {
 		console.warn(
-			"[Cocoon] Initialization skipped: Cocoon host has already failed or received an exit signal.",
+			"[Cocoon] Initialization skipped: Already failed or exited.",
 		);
-
 		return;
 	}
 
-	let logService: ILogService | undefined; // To be initialized and used for logging.
-	// let cancellationTokenRegistry: CancellationTokenRegistry | undefined; // Declared if instantiated directly here.
+	let logService: ILogService | undefined;
 
 	try {
-		// --- Step 1: Setup Early URI Transformer & RPC Protocol ---
-		// Initialize the URI Transformer Service. For local MVP, if `remote.authority` is undefined,
-		// it often acts as a NO-OP transformer. However, it's essential for the RPCProtocol.
 		const uriTransformerServiceInstance = new ShimUriTransformerService(
-			rawInitDataFromMountain?.remote?.authority, // Pass remote authority if available in early init data.
+			rawInitDataFromMountain?.remote?.authority,
 		);
-
-		// Optional logger for verbose RPC debugging. Set to `null` for no RPC logging.
 		const rpcLogger: IRPCProtocolLogger | null = null;
-
-		console.log(
-			"[Cocoon] Creating final RPCProtocol instance with configured URI transformer...",
-		);
-
-		// Create the RPCProtocol instance using Cocoon's IPC adapter and the URI transformer.
+		console.log("[Cocoon] Creating final RPCProtocol instance...");
 		cocoonRpcProtocol = new RPCProtocol(
-			cocoonIpcAdapter!, // Non-null assertion: adapter must be created by this point.
+			cocoonIpcAdapter!,
 			rpcLogger,
-			uriTransformerServiceInstance, // Pass the IURITransformer instance.
+			uriTransformerServiceInstance,
 		);
-
-		// Make the RPCProtocol instance globally available (as `__ラクマ_RPC_PROTOCOL__`).
-		// This is how VS Code's `revive` function (from `vs/base/common/marshalling`)
-		// finds the URI transformer when `MarshalledId.Uri` is encountered in DTOs.
 		(globalThis as any).__COC_RPC_PROTOCOL__ = cocoonRpcProtocol;
+		console.log("[Cocoon] RPCProtocol instance created and set globally.");
 
-		console.log(
-			"[Cocoon] RPCProtocol instance created and set globally for URI revival during DTO unmarshalling.",
-		);
-
-		// --- Step 2: Full InitData Revival using RPCProtocol's Transformer ---
-		console.log(
-			"[Cocoon] Reviving URIs in raw initData from Mountain using global RPCProtocol's transformer...",
-		);
-
-		// Now that the global RPC protocol (and its transformer) is set, use VS Code's standard `revive`
-		// to fully unmarshal the `initDataFromMountain`, correctly handling all URI components.
+		console.log("[Cocoon] Reviving URIs in raw initData from Mountain...");
 		const revivedFullyInitData = revive(
 			rawInitDataFromMountain,
 		) as ExtHostInitData;
-
 		console.log(
-			`[Cocoon] InitData URIs fully revived. Example - Logs Location: ${revivedFullyInitData.logsLocation.toString()}. ` +
-				`Workspace: ${revivedFullyInitData.workspace?.id ?? "none"}`,
+			`[Cocoon] InitData URIs fully revived. Logs: ${revivedFullyInitData.logsLocation.toString()}. Workspace: ${revivedFullyInitData.workspace?.id ?? "none"}`,
 		);
 
-		// --- Step 3: Setup Dependency Injection (DI) ServiceCollection ---
-		console.log(
-			"[Cocoon] Setting up ServiceCollection and registering core services and shims...",
-		);
-
-		const services = new ServiceCollection(); // Collection to hold service registrations.
-
-		// Determine the final log level from the (now fully revived) initData.
+		console.log("[Cocoon] Setting up ServiceCollection...");
+		const services = new ServiceCollection();
 		const finalLogLevel = revivedFullyInitData.logLevel
 			? (parseLogLevel(revivedFullyInitData.logLevel) ?? LogLevel.Info)
 			: LogLevel.Info;
-
-		logService = new ShimLogService(finalLogLevel, "CocoonMainLog"); // Main logger for Cocoon.
-		services.set(ILogService, logService); // Register ILogService.
-		services.set(ILoggerService, new ShimLoggerService(logService)); // Register ILoggerService (factory for named loggers).
+		logService = new ShimLogService(finalLogLevel, "CocoonMainLog");
+		services.set(ILogService, logService);
+		services.set(ILoggerService, new ShimLoggerService(logService));
 		logService.info(
-			`[Cocoon] Main LogService initialized. Logging Level: ${LogLevel[finalLogLevel]}.`,
+			`[Cocoon] Main LogService initialized. Level: ${LogLevel[finalLogLevel]}.`,
 		);
 
-		// Instantiate CancellationTokenRegistry and register it for DI.
-		// This registry will be injected into services like ShimLanguageFeatures.
+		initCocoonTypeConverterLogger(logService);
+		initializeSkyIpcRouter(logService); // Initialize Sky<->Cocoon bus router
+
 		const cancellationTokenRegistryInstance = new CancellationTokenRegistry(
 			logService,
 		);
-
 		services.set(
 			ICancellationTokenRegistry,
 			cancellationTokenRegistryInstance,
 		);
+		logService.info("[Cocoon] CancellationTokenRegistry initialized.");
 
-		logService.info(
-			"[Cocoon] CancellationTokenRegistry initialized and registered for DI.",
-		);
-
-		// Register core ExtHost services with their DI keys.
 		const initDataServiceInstance = {
 			_serviceBrand: undefined,
 			value: revivedFullyInitData,
 		};
+		services.set(IExtHostInitDataService, initDataServiceInstance);
+		services.set(IExtHostRpcService, cocoonRpcProtocol);
+		services.set(IURITransformerService, uriTransformerServiceInstance);
 
-		services.set(IExtHostInitDataService, initDataServiceInstance); // Provides access to ExtHostInitData.
-		services.set(IExtHostRpcService, cocoonRpcProtocol); // Provides access to the RPC protocol.
-		services.set(IURITransformerService, uriTransformerServiceInstance); // Provides URI transformation.
 		const fileSystemInfoService = new ShimExtHostFileSystemInfo(
 			cocoonRpcProtocol,
 			logService,
 		);
+		services.set(IExtHostFileSystemInfo, fileSystemInfoService);
+		cocoonRpcProtocol.set(
+			ExtHostContext.ExtHostFileSystemInfo as any,
+			fileSystemInfoService,
+		); // RPC registration
 
-		services.set(IExtHostFileSystemInfo, fileSystemInfoService); // Provides file system scheme info.
-
-		// Register shims for storage-related services.
-		// ShimExtHostStorage and ShimExtHostSecretState are often factories/contextual,
-		// used by ExtHostExtensionService to create per-extension Memento/SecretStorage.
-		// Registering them here makes their DI types available if needed by other services,
-		// and allows the real ExtHostExtensionService to potentially retrieve them if it expects these specific types.
 		services.set(
 			IExtHostStorage,
 			new ShimExtHostStorage(cocoonRpcProtocol, logService),
 		);
-
 		services.set(
 			IExtHostSecretState,
 			new ShimExtHostSecretState(
@@ -662,22 +540,17 @@ async function initializeCocoonHost(
 				logService,
 				"placeholderGlobalSecretStateContext",
 			),
-		); // Placeholder for global context.
-
-		// Register other essential shims.
+		);
 		const localizationServiceInstance = new ShimExtHostLocalizationService(
 			cocoonRpcProtocol,
 			logService,
 			revivedFullyInitData,
 		);
-
 		services.set(IExtHostLocalizationService, localizationServiceInstance);
-
 		services.set(
 			IExtHostManagedSockets,
 			new ShimExtHostManagedSockets(cocoonRpcProtocol, logService),
 		);
-
 		services.set(
 			IExtHostTelemetry,
 			new ShimExtHostTelemetry(
@@ -686,156 +559,121 @@ async function initializeCocoonHost(
 				initDataServiceInstance,
 			),
 		);
-
 		services.set(
 			IExtHostApiDeprecationService,
 			new ShimExtHostApiDeprecationService(cocoonRpcProtocol, logService),
 		);
 
-		// Create the main DI container (InstantiationService).
-		cocoonDI = new InstantiationService(
-			services,
-			true /* strict mode: true */,
+		cocoonDI = new InstantiationService(services, true);
+		logService.info("[Cocoon] InstantiationService created.");
+
+		cocoonDI.set(IHostUtils, cocoonDI.createInstance(ShimHostUtils));
+		cocoonDI.set(
+			IExtensionStoragePaths,
+			cocoonDI.createInstance(
+				ShimExtensionStoragePaths,
+				revivedFullyInitData.environment,
+			),
 		);
-
-		logService.info(
-			"[Cocoon] InstantiationService created with initial services.",
-		);
-
-		// --- Step 4: Instantiate and Register Shims that Require DI or Are Central ---
-		// These shims might have dependencies that need to be resolved by `cocoonDI`.
-
-		// HostUtils: Provides utility functions (e.g., clipboard, focus).
-		// Constructor: rpcProtocol, logService, instantiationService.
-		const hostUtilsInstance = new ShimHostUtils(
-			cocoonRpcProtocol,
-			logService,
-			cocoonDI,
-		);
-
-		cocoonDI.set(IHostUtils, hostUtilsInstance);
-
-		// ExtensionStoragePaths: Provides paths for extension storage.
-		// Constructor: rpc(opt), environment, log, instantiationService.
-		const extensionStoragePathsInstance = new ShimExtensionStoragePaths(
-			undefined,
-			revivedFullyInitData.environment,
-			logService,
-			cocoonDI,
-		);
-
-		cocoonDI.set(IExtensionStoragePaths, extensionStoragePathsInstance);
-
-		// DocumentService: Manages text documents.
-		// Constructor: rpcProtocol, logService, instantiationService (for events).
 		const documentServiceInstance = cocoonDI.createInstance(
 			CocoonDocumentService,
 		);
-
-		cocoonDI.set(IExtHostDocuments, documentServiceInstance); // For `vscode.workspace.textDocuments`, `onDidOpenTextDocument`, etc.
+		cocoonDI.set(IExtHostDocuments, documentServiceInstance);
 		cocoonDI.set(
 			IExtHostDocumentsAndEditors,
 			documentServiceInstance as any,
-		); // Cast if it fully implements both interfaces.
-
-		// FileSystem API Shim (`vscode.workspace.fs`).
-		// Constructor: logService, fileSystemInfoService.
+		);
 		const fsApiShimInstance = cocoonDI.createInstance(
 			ShimFileSystemApi,
 			fileSystemInfoService,
 		);
-
-		// Register granular UI/Env shims with DI.
 		cocoonDI.set(
 			IExtHostMessageService,
 			cocoonDI.createInstance(ShimExtHostMessageService),
-		); // For `vscode.window.showXMessage`.
+		);
 		cocoonDI.set(
 			IExtHostQuickInput,
 			cocoonDI.createInstance(ShimExtHostQuickInputService),
-		); // For `vscode.window.showQuickPick`, `showInputBox`.
+		);
 		cocoonDI.set(
 			IExtHostDialogs,
 			cocoonDI.createInstance(ShimExtHostDialogService),
-		); // For `vscode.window.showOpenDialog`, `showSaveDialog`.
+		);
 		const clipboardServiceInstance = cocoonDI.createInstance(
 			ShimExtHostClipboardService,
-		); // For `vscode.env.clipboard`.
-		cocoonDI.set(IExtHostClipboard, clipboardServiceInstance);
-
-		// EnvService: Provides environment information (`vscode.env`).
-		// Constructor: rpcService, logService, initDataService, clipboardService.
-		const envServiceInstance = new ShimExtHostEnvService(
-			cocoonRpcProtocol,
-			logService,
-			initDataServiceInstance,
-			clipboardServiceInstance,
 		);
-
-		cocoonDI.set(IExtHostEnv, envServiceInstance);
-
+		cocoonDI.set(IExtHostClipboard, clipboardServiceInstance);
+		cocoonDI.set(
+			IExtHostEnv,
+			cocoonDI.createInstance(
+				ShimExtHostEnvService,
+				initDataServiceInstance,
+				clipboardServiceInstance,
+			),
+		);
 		cocoonDI.set(
 			IExtHostWindowParts,
 			cocoonDI.createInstance(ShimExtHostWindowPartsService),
-		); // For status bar, tree views, etc.
-
-		// WorkspaceService: Provides workspace information (`vscode.workspace`).
-		// Constructor needs: rpc, initDataService, fsInfo, log, docs, fsApi, instantiationService.
-		const workspaceShimInstance = new ShimExtHostWorkspace(
-			cocoonRpcProtocol,
-			initDataServiceInstance,
-			fileSystemInfoService,
-			logService,
-			documentServiceInstance,
-			fsApiShimInstance,
-			cocoonDI,
+		);
+		cocoonDI.set(
+			IExtHostWorkspace,
+			cocoonDI.createInstance(
+				ShimExtHostWorkspace,
+				initDataServiceInstance,
+				fileSystemInfoService,
+				documentServiceInstance,
+				fsApiShimInstance,
+			),
 		);
 
-		cocoonDI.set(IExtHostWorkspace, workspaceShimInstance);
-
-		// ConfigurationService: Provides access to configuration (`vscode.workspace.getConfiguration`).
-		// Constructor needs: rpc, initialConfiguration, logService.
-		const configServiceInstance = new ShimExtHostConfiguration(
-			cocoonRpcProtocol,
-			revivedFullyInitData.configuration,
-			logService,
+		const initialConfigFromMainInitData =
+			revivedFullyInitData.configuration as
+				| RpcConfigurationInitData
+				| undefined;
+		const configServiceInstance = cocoonDI.createInstance(
+			ShimExtHostConfiguration,
+			initialConfigFromMainInitData,
 		);
-
 		cocoonDI.set(IExtHostConfiguration, configServiceInstance);
+		cocoonRpcProtocol.set(
+			ExtHostContext.ExtHostConfiguration as any,
+			configServiceInstance,
+		); // RPC registration
 
-		// Register other functional shims.
 		cocoonDI.set(
 			IExtHostCommands,
 			cocoonDI.createInstance(
 				ShimExtHostCommands,
 				cocoonDI.get(IExtHostTelemetry),
+				uriTransformerServiceInstance,
 			),
-		); // Pass IExtHostTelemetry.
+		);
 		cocoonDI.set(
 			IExtHostOutputService,
 			cocoonDI.createInstance(ShimOutputService),
-		); // For `vscode.window.createOutputChannel`.
+		);
 		cocoonDI.set(
 			IExtHostDiagnostics,
-			cocoonDI.createInstance(ShimDiagnosticsService),
-		); // For `vscode.languages.createDiagnosticCollection`.
+			cocoonDI.createInstance(
+				ShimDiagnosticsService,
+				uriTransformerServiceInstance,
+			),
+		);
 		cocoonDI.set(
 			IExtHostTerminalService,
 			cocoonDI.createInstance(ShimExtHostTerminalService),
-		); // For `vscode.window.createTerminal`.
+		);
 		cocoonDI.set(
 			IExtHostAuthentication,
 			cocoonDI.createInstance(ShimExtHostAuthentication),
-		); // For `vscode.authentication`.
+		);
 		cocoonDI.set(
 			IExtHostLanguageModels,
 			cocoonDI.createInstance(
 				ShimExtHostLanguageModels,
 				cocoonDI.get(IExtHostAuthentication),
 			),
-		); // For `vscode.lm`.
-		// LanguageFeaturesService: Manages language feature providers (`vscode.languages.register*Provider`).
-		// Constructor needs: rpc, log, docs, cancellationTokenRegistry.
+		);
 		cocoonDI.set(
 			IExtHostLanguageFeatures,
 			cocoonDI.createInstance(
@@ -845,25 +683,16 @@ async function initializeCocoonHost(
 			),
 		);
 
-		// --- Step 5: Register the REAL ExtHostExtensionService ---
-		// This is crucial for actual extension loading and lifecycle management.
-		// It's registered using a SyncDescriptor, which tells the DI container how to instantiate it.
-		// Parameters for RealExtHostExtensionService constructor:
-		// [isInitialProbed, rpc, instantiationService, ...other optional services via DI]
 		cocoonDI.set(
 			IExtHostExtensionService,
 			new SyncDescriptor(RealExtHostExtensionService, [
-				false, // `isInitialProbed` - false for normal Cocoon startup.
-				ipcApiInstance as CocoonPrimaryIpc, // Pass Cocoon's IPC implementation.
-				cocoonDI, // Pass the IInstantiationService instance itself.
+				false,
+				ipcApiInstance as CocoonPrimaryIpc,
+				cocoonDI,
 			]),
 		);
+		logService.info("[Cocoon] Real IExtHostExtensionService registered.");
 
-		logService.info(
-			"[Cocoon] Real IExtHostExtensionService registered with DI using SyncDescriptor.",
-		);
-
-		// Register shims that depend on IExtHostExtensionService (e.g., for getting extension info).
 		cocoonDI.set(
 			IWorkbenchExtensionEnablementService,
 			cocoonDI.createInstance(
@@ -871,60 +700,43 @@ async function initializeCocoonHost(
 				cocoonDI.get(IExtHostExtensionService),
 			),
 		);
-
 		cocoonDI.set(
 			IExtHostExtensions,
 			cocoonDI.createInstance(
 				ShimExtHostExtensions,
 				cocoonDI.get(IExtHostExtensionService),
 			),
-		); // For `vscode.extensions` API.
-
-		// Register remaining shims and standard VS Code services.
+		);
 		cocoonDI.set(
 			IExtensionHostKindPicker,
 			cocoonDI.createInstance(ShimExtensionHostKindPicker),
 		);
-
 		cocoonDI.set(
 			ICocoonExtHostProposedApis,
 			cocoonDI.createInstance(
 				ShimExtensionsProposedApi,
 				revivedFullyInitData,
 			),
-		); // For proposed APIs.
+		);
 		cocoonDI.set(
 			IExtHostDebugService,
 			cocoonDI.createInstance(ShimExtHostDebugService),
-		); // For `vscode.debug` API.
+		);
 		cocoonDI.set(
 			IExtHostTaskService,
 			cocoonDI.createInstance(ShimExtHostTaskService),
-		); // For `vscode.tasks` API.
-
-		// Register any other singleton services from VS Code's platform layer that might be needed
-		// by other platform code or the real ExtHostExtensionService.
-		for (const [
-			serviceIdentifier,
-			serviceDescriptor,
-		] of getSingletonServiceDescriptors()) {
-			if (!cocoonDI.has(serviceIdentifier)) {
-				// Only register if not already provided by Cocoon.
-				cocoonDI.set(serviceIdentifier, serviceDescriptor);
-			}
-		}
-		logService.info(
-			"[Cocoon] Standard VS Code singleton services registered if not already present.",
 		);
 
-		// --- Step 6: Prepare API Factory Provider ---
-		// This factory will create the `vscode` API object for each extension.
-		const extHostExtensionService = cocoonDI.get(IExtHostExtensionService); // Get the real service instance.
-		const extHostConfigService = cocoonDI.get(IExtHostConfiguration); // Get the config shim.
+		for (const [id, descriptor] of getSingletonServiceDescriptors()) {
+			if (!cocoonDI.has(id)) cocoonDI.set(id, descriptor);
+		}
+		logService.info(
+			"[Cocoon] Standard VS Code singleton services registered.",
+		);
 
+		const extHostExtensionService = cocoonDI.get(IExtHostExtensionService);
+		const extHostConfigService = cocoonDI.get(IExtHostConfiguration);
 		performance.mark("code/extHost/willWaitForConfigAndPaths");
-
-		// Fetch necessary data for the API factory (extension paths, config provider, registries).
 		const [
 			extensionPaths,
 			configProvider,
@@ -936,77 +748,51 @@ async function initializeCocoonHost(
 			extHostExtensionService.getGlobalExtensionRegistry(),
 			extHostExtensionService.getExtensionRegistry(),
 		]);
-
 		performance.mark("code/extHost/didWaitForConfigAndPaths");
-
-		// Pre-resolved extension registries for the API factory.
 		const preResolvedExtensionRegistries: IExtensionRegistries = {
 			mine: localExtensionRegistry,
 			all: globalExtensionRegistry,
 		};
+		logService.info("[Cocoon] Preparing API Factory Provider...");
 
-		logService.info(
-			"[Cocoon] Preparing API Factory Provider by augmenting VS Code's original factory...",
-		);
-
-		// Create the API factory provider using `cocoonDI.invokeFunction` to resolve `accessor`.
 		const apiFactoryProvider =
 			cocoonDI.invokeFunction<IExtensionApiFactory>((accessor) => {
-				// Get VS Code's original API factory.
 				const originalVSCodeApiFactory =
 					createVSCodeApiFactoryOriginal(accessor);
-
-				// Return the augmented factory function.
 				return (
-					// Description of the extension for which the API is being created, or URI for ESM imports.
 					extensionDescriptionOrUri:
 						| IRelaxedExtensionDescription
 						| URI,
-					// Optional override for extension registries.
 					extensionRegistriesOverride?: IExtensionRegistries,
-					// Optional override for config provider.
 					configProviderOverride?: ExtHostConfigProvider,
 				): typeof import("vscode") => {
-					// Returns the `vscode` API object.
 					let actualExtensionDescription: IRelaxedExtensionDescription =
 						nullExtensionDescription as any;
-
 					const finalExtensionRegistriesToUse =
 						extensionRegistriesOverride ||
 						preResolvedExtensionRegistries;
-
 					const finalConfigProviderToUse =
 						configProviderOverride || configProvider;
 
-					// Determine the extension description.
 					if (extensionDescriptionOrUri instanceof URI) {
-						// If a URI is provided (typically for ESM imports), find the extension description.
-						const parentModuleUri = extensionDescriptionOrUri;
-
-						const foundExtension =
-							extensionPaths.findSubstr(parentModuleUri);
-
-						if (foundExtension) {
+						const foundExtension = extensionPaths.findSubstr(
+							extensionDescriptionOrUri,
+						);
+						if (foundExtension)
 							actualExtensionDescription = foundExtension;
-						} else {
+						else
 							logService?.warn(
-								`[Cocoon API Factory] Could not identify extension for ESM import from URI: ${parentModuleUri.toString()}. ` +
-									`Using nullExtensionDescription, which may limit API access or cause issues.`,
+								`[Cocoon API Factory] Could not identify extension for ESM import URI: ${extensionDescriptionOrUri.toString()}.`,
 							);
-						}
 					} else if (extensionDescriptionOrUri) {
-						// If an extension description object is provided directly.
 						actualExtensionDescription = extensionDescriptionOrUri;
 					}
 
-					// Create the base `vscode` API object using VS Code's original factory.
 					const vscodeApiBaseObject = originalVSCodeApiFactory(
 						actualExtensionDescription,
 						finalExtensionRegistriesToUse,
 						finalConfigProviderToUse,
 					);
-
-					// Prepare source information for shims that need the calling extension's identity.
 					const extensionSourceInfo:
 						| ApiFactoryExtensionSourceInfo
 						| undefined =
@@ -1022,279 +808,306 @@ async function initializeCocoonHost(
 										actualExtensionDescription.name,
 								};
 
-					// Retrieve shim instances from DI to override/augment parts of the `vscode` API.
 					const languageFeaturesServiceShim = accessor.get(
 						IExtHostLanguageFeatures,
 					);
-
 					const messageServiceShim = accessor.get(
 						IExtHostMessageService,
 					);
-
 					const diagnosticsServiceShim =
 						accessor.get(IExtHostDiagnostics);
-
 					const outputServiceShim = accessor.get(
 						IExtHostOutputService,
 					);
-
-					const windowPartsServiceShim = accessor.get(
-						IExtHostWindowPartsService,
-					);
-
+					const windowPartsServiceShim =
+						accessor.get(IExtHostWindowParts);
 					const terminalServiceShim = accessor.get(
 						IExtHostTerminalService,
 					);
 
-					// Construct the final, complete `vscode` API object for the extension.
-					const completeVscodeApiObject = {
-						...vscodeApiBaseObject, // Start with VS Code's base API object.
+					const createExtensionIpcRenderer = (
+						currentExtensionDesc: IRelaxedExtensionDescription,
+					): typeof import("vscode").ipcRenderer => {
+						const extIdForLog =
+							currentExtensionDesc.identifier.value;
+						return {
+							on: (
+								channel: string,
+								listener: (event: any, ...args: any[]) => void,
+							): VscodeDisposablePublic => {
+								logService?.debug(
+									`[ExtIPC][${extIdForLog}] ipcRenderer.on('${channel}') registered.`,
+								);
+								skyToCocoonMessageBus.on(channel, listener);
+								return new VscodeDisposablePublic(() => {
+									logService?.debug(
+										`[ExtIPC][${extIdForLog}] ipcRenderer.on('${channel}') listener removed.`,
+									);
+									skyToCocoonMessageBus.removeListener(
+										channel,
+										listener,
+									);
+								});
+							},
+							once: (
+								channel: string,
+								listener: (event: any, ...args: any[]) => void,
+							): VscodeDisposablePublic => {
+								logService?.debug(
+									`[ExtIPC][${extIdForLog}] ipcRenderer.once('${channel}') registered.`,
+								);
+								const onceWrapper = (...args: any[]) => {
+									skyToCocoonMessageBus.removeListener(
+										channel,
+										onceWrapper,
+									);
+									listener(...args);
+								};
+								skyToCocoonMessageBus.once(
+									channel,
+									onceWrapper,
+								);
+								return new VscodeDisposablePublic(() => {
+									logService?.debug(
+										`[ExtIPC][${extIdForLog}] Disposing once listener for ipcRenderer.once('${channel}').`,
+									);
+									skyToCocoonMessageBus.removeListener(
+										channel,
+										onceWrapper,
+									);
+								});
+							},
+							send: (channel: string, ...args: any[]): void => {
+								logService?.warn(
+									`[ExtIPC][${extIdForLog}] ipcRenderer.send('${channel}') from extension. Forwarding to Mountain/Sky:`,
+									args,
+								);
+								ipcApiInstance.sendNotificationToMountain(
+									"extHostIpc:send",
+									{
+										target: "mountain",
+										originalChannel: channel,
+										originalArgs: args,
+									},
+								);
+							},
+							invoke: async (
+								channel: string,
+								...args: any[]
+							): Promise<any> => {
+								logService?.warn(
+									`[ExtIPC][${extIdForLog}] ipcRenderer.invoke('${channel}') from extension. Forwarding to Mountain/Sky:`,
+									args,
+								);
+								try {
+									return await ipcApiInstance.sendToMountainAndWait(
+										"extHostIpc:invoke",
+										{
+											target: "mountain",
+											originalChannel: channel,
+											originalArgs: args,
+										},
+										30000,
+									);
+								} catch (e) {
+									logService?.error(
+										`[ExtIPC][${extIdForLog}] Error invoking '${channel}' on Mountain/Sky:`,
+										e,
+									);
+									throw e;
+								}
+							},
+							removeListener: (
+								channel: string,
+								listener: (...args: any[]) => void,
+							): void => {
+								logService?.debug(
+									`[ExtIPC][${extIdForLog}] ipcRenderer.removeListener('${channel}') called.`,
+								);
+								skyToCocoonMessageBus.removeListener(
+									channel,
+									listener,
+								);
+							},
+							removeAllListeners: (channel?: string): void => {
+								logService?.debug(
+									`[ExtIPC][${extIdForLog}] ipcRenderer.removeAllListeners('${channel || "all"}') called.`,
+								);
+								if (channel)
+									skyToCocoonMessageBus.removeAllListeners(
+										channel,
+									);
+								else skyToCocoonMessageBus.removeAllListeners();
+							},
+						} as unknown as typeof import("vscode").ipcRenderer; // Cast needed due to complex types
+					};
 
-						// Override `vscode.commands` with Cocoon's shim.
+					const completeVscodeApiObject = {
+						...vscodeApiBaseObject,
 						commands: accessor.get(
 							IExtHostCommands,
 						) as VscodeCommandsAPIType,
-						// Override `vscode.workspace` with Cocoon's shim (which includes `.fs`).
 						workspace: accessor.get(
 							IExtHostWorkspace,
 						) as VscodeWorkspaceAPIType,
-
-						// Override `vscode.languages` namespace.
 						languages: {
-							...(vscodeApiBaseObject.languages || {}), // Include any base language properties.
-							// Bind provider registration methods to the LanguageFeatures shim instance,
-							// and pass the current extension's identifier for context.
-							registerHoverProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.HoverProvider,
-							) =>
+							...(vscodeApiBaseObject.languages || {}),
+							registerHoverProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerHoverProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerCompletionItemProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.CompletionItemProvider,
-								...triggerChars: string[]
-							) =>
+							registerCompletionItemProvider: (s, p, ...t) =>
 								languageFeaturesServiceShim.$registerCompletionItemProvider(
-									selector,
-									provider,
-									triggerChars,
+									s,
+									p,
+									t,
 									actualExtensionDescription.identifier,
 								),
-							registerDefinitionProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.DefinitionProvider,
-							) =>
+							registerDefinitionProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerDefinitionProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerCodeActionsProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.CodeActionProvider,
-								metadata?: vscode.CodeActionProviderMetadata,
-							) =>
+							registerCodeActionsProvider: (s, p, m) =>
 								languageFeaturesServiceShim.$registerCodeActionProvider(
-									selector,
-									provider,
-									metadata,
+									s,
+									p,
+									m,
 									actualExtensionDescription.identifier,
 								),
-							registerCodeLensProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.CodeLensProvider,
-							) =>
+							registerCodeLensProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerCodeLensProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerDeclarationProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.DeclarationProvider,
-							) =>
+							registerDeclarationProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerDeclarationProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerDocumentFormattingEditProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.DocumentFormattingEditProvider,
-							) =>
+							registerDocumentFormattingEditProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerDocumentFormattingEditProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerDocumentHighlightProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.DocumentHighlightProvider,
-							) =>
+							registerDocumentHighlightProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerDocumentHighlightProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerDocumentLinkProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.DocumentLinkProvider,
-							) =>
+							registerDocumentLinkProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerDocumentLinkProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
 							registerDocumentRangeFormattingEditProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.DocumentRangeFormattingEditProvider,
+								s,
+								p,
 							) =>
 								languageFeaturesServiceShim.$registerDocumentRangeFormattingEditProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
 							registerOnTypeFormattingEditProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.OnTypeFormattingEditProvider,
-								firstTriggerCharacter: string,
-								...moreTriggerCharacters: string[]
+								s,
+								p,
+								ft,
+								...mt
 							) =>
 								languageFeaturesServiceShim.$registerOnTypeFormattingEditProvider(
-									selector,
-									provider,
-									[
-										firstTriggerCharacter,
-										...moreTriggerCharacters,
-									],
-									undefined /* options */,
+									s,
+									p,
+									[ft, ...mt],
+									undefined,
 									actualExtensionDescription.identifier,
 								),
-							registerReferenceProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.ReferenceProvider,
-							) =>
+							registerReferenceProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerReferenceProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerRenameProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.RenameProvider,
-							) =>
+							registerRenameProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerRenameProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerSignatureHelpProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.SignatureHelpProvider,
-								metadata?:
-									| vscode.SignatureHelpProviderMetadata
-									| string[],
-							) =>
+							registerSignatureHelpProvider: (s, p, m) =>
 								languageFeaturesServiceShim.$registerSignatureHelpProvider(
-									selector,
-									provider,
-									metadata,
+									s,
+									p,
+									m,
 									actualExtensionDescription.identifier,
 								),
-							registerImplementationProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.ImplementationProvider,
-							) =>
+							registerImplementationProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerImplementationProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerTypeDefinitionProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.TypeDefinitionProvider,
-							) =>
+							registerTypeDefinitionProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerTypeDefinitionProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerWorkspaceSymbolProvider: (
-								provider: vscode.WorkspaceSymbolProvider, // No selector for workspace symbols.
-							) =>
+							registerWorkspaceSymbolProvider: (p) =>
 								languageFeaturesServiceShim.$registerWorkspaceSymbolProvider(
-									provider,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerSelectionRangeProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.SelectionRangeProvider,
-							) =>
+							registerSelectionRangeProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerSelectionRangeProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerCallHierarchyProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.CallHierarchyProvider,
-							) =>
+							registerCallHierarchyProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerCallHierarchyProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerTypeHierarchyProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.TypeHierarchyProvider,
-							) =>
+							registerTypeHierarchyProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerTypeHierarchyProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerLinkedEditingRangeProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.LinkedEditingRangeProvider,
-							) =>
+							registerLinkedEditingRangeProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerLinkedEditingRangeProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerInlayHintsProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.InlayHintsProvider,
-							) =>
+							registerInlayHintsProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerInlayHintsProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerDocumentColorProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.DocumentColorProvider,
-							) =>
+							registerDocumentColorProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerDocumentColorProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-							registerFoldingRangeProvider: (
-								selector: vscode.DocumentSelector,
-								provider: vscode.FoldingRangeProvider,
-							) =>
+							registerFoldingRangeProvider: (s, p) =>
 								languageFeaturesServiceShim.$registerFoldingRangeProvider(
-									selector,
-									provider,
+									s,
+									p,
 									actualExtensionDescription.identifier,
 								),
-
-							// Other language utilities.
 							getLanguages:
 								languageFeaturesServiceShim.getLanguages.bind(
 									languageFeaturesServiceShim,
@@ -1306,117 +1119,78 @@ async function initializeCocoonHost(
 							match: languageFeaturesServiceShim.match.bind(
 								languageFeaturesServiceShim,
 							),
-							// Diagnostics related APIs.
-							createDiagnosticCollection: (name?: string) =>
+							createDiagnosticCollection: (n) =>
 								diagnosticsServiceShim.createDiagnosticCollection(
-									name,
-								), // ExtId is handled by the service.
+									n,
+								),
 							get onDidChangeDiagnostics() {
 								return diagnosticsServiceShim.onDidChangeDiagnostics;
 							},
-							// Language status related APIs.
 							setLanguageStatus:
 								languageFeaturesServiceShim.setLanguageStatus.bind(
 									languageFeaturesServiceShim,
-								), // Needs extId if service method requires it.
+								),
 							createLanguageStatusItem:
 								languageFeaturesServiceShim.createLanguageStatusItem.bind(
 									languageFeaturesServiceShim,
-								), // Needs extId.
+								),
 						} as VscodeLanguagesAPIType,
-
-						// Override `vscode.window` namespace.
 						window: {
-							...(vscodeApiBaseObject.window || {}), // Include any base window properties.
-							// Message display methods, passing sourceInfo for context.
-							showInformationMessage: (
-								message: string,
-								...rawUserArguments: Array<
-									| vscode.MessageOptions
-									| string
-									| vscode.MessageItem
-								>
-							) => {
-								const optionsArgument =
-									rawUserArguments.length > 0 &&
-									typeof rawUserArguments[0] === "object" &&
-									rawUserArguments[0] !== null &&
-									!(rawUserArguments[0] as vscode.MessageItem)
-										.title &&
-									!(
-										rawUserArguments[0] as ApiFactoryExtensionSourceInfo
-									)?.id
-										? (rawUserArguments.shift() as vscode.MessageOptions)
+							...(vscodeApiBaseObject.window || {}),
+							showInformationMessage: (m, ...r) => {
+								const o =
+									r.length > 0 &&
+									typeof r[0] === "object" &&
+									r[0] !== null &&
+									!(r[0] as vscode.MessageItem).title &&
+									!(r[0] as ApiFactoryExtensionSourceInfo)?.id
+										? (r.shift() as vscode.MessageOptions)
 										: {};
-
 								return messageServiceShim.showInformationMessage(
-									message,
-									optionsArgument,
+									m,
+									o,
 									extensionSourceInfo,
-									...(rawUserArguments as Array<
+									...(r as Array<
 										string | vscode.MessageItem
 									>),
 								);
 							},
-							showWarningMessage: (
-								message: string,
-								...rawUserArguments: Array<
-									| vscode.MessageOptions
-									| string
-									| vscode.MessageItem
-								>
-							) => {
-								const optionsArgument =
-									rawUserArguments.length > 0 &&
-									typeof rawUserArguments[0] === "object" &&
-									rawUserArguments[0] !== null &&
-									!(rawUserArguments[0] as vscode.MessageItem)
-										.title &&
-									!(
-										rawUserArguments[0] as ApiFactoryExtensionSourceInfo
-									)?.id
-										? (rawUserArguments.shift() as vscode.MessageOptions)
+							showWarningMessage: (m, ...r) => {
+								const o =
+									r.length > 0 &&
+									typeof r[0] === "object" &&
+									r[0] !== null &&
+									!(r[0] as vscode.MessageItem).title &&
+									!(r[0] as ApiFactoryExtensionSourceInfo)?.id
+										? (r.shift() as vscode.MessageOptions)
 										: {};
-
 								return messageServiceShim.showWarningMessage(
-									message,
-									optionsArgument,
+									m,
+									o,
 									extensionSourceInfo,
-									...(rawUserArguments as Array<
+									...(r as Array<
 										string | vscode.MessageItem
 									>),
 								);
 							},
-							showErrorMessage: (
-								message: string,
-								...rawUserArguments: Array<
-									| vscode.MessageOptions
-									| string
-									| vscode.MessageItem
-								>
-							) => {
-								const optionsArgument =
-									rawUserArguments.length > 0 &&
-									typeof rawUserArguments[0] === "object" &&
-									rawUserArguments[0] !== null &&
-									!(rawUserArguments[0] as vscode.MessageItem)
-										.title &&
-									!(
-										rawUserArguments[0] as ApiFactoryExtensionSourceInfo
-									)?.id
-										? (rawUserArguments.shift() as vscode.MessageOptions)
+							showErrorMessage: (m, ...r) => {
+								const o =
+									r.length > 0 &&
+									typeof r[0] === "object" &&
+									r[0] !== null &&
+									!(r[0] as vscode.MessageItem).title &&
+									!(r[0] as ApiFactoryExtensionSourceInfo)?.id
+										? (r.shift() as vscode.MessageOptions)
 										: {};
-
 								return messageServiceShim.showErrorMessage(
-									message,
-									optionsArgument,
+									m,
+									o,
 									extensionSourceInfo,
-									...(rawUserArguments as Array<
+									...(r as Array<
 										string | vscode.MessageItem
 									>),
 								);
 							},
-							// QuickInput, Dialogs.
 							showQuickPick: accessor
 								.get(IExtHostQuickInput)
 								.showQuickPick.bind(
@@ -1437,22 +1211,17 @@ async function initializeCocoonHost(
 								.showSaveDialog.bind(
 									accessor.get(IExtHostDialogs),
 								),
-							// OutputChannel, passing extension identifier.
-							createOutputChannel: (
-								name: string,
-								optionsOrLanguageId?: bootstrapUtils.CreateOutputChannelOptions, // `bootstrapUtils.CreateOutputChannelOptions` might need to be `string | { log: boolean }` from `vscode` namespace for `options`.
-							) =>
+							createOutputChannel: (n, o) =>
 								outputServiceShim.createOutputChannel(
-									name,
-									optionsOrLanguageId as any,
+									n,
+									o as any,
 									actualExtensionDescription.identifier,
-								), // Pass extensionId.
-							// Terminals.
+								),
 							createTerminal: accessor
 								.get(IExtHostTerminalService)
 								.createTerminal.bind(
 									terminalServiceShim,
-								) as any, // ExtId might be implicit in options for PTY.
+								) as any,
 							get terminals() {
 								return terminalServiceShim.terminals;
 							},
@@ -1471,7 +1240,6 @@ async function initializeCocoonHost(
 							get onDidChangeTerminalState() {
 								return terminalServiceShim.onDidChangeTerminalState;
 							},
-							// Other window parts (status bar, tree views, webviews, URI handlers).
 							get state() {
 								return windowPartsServiceShim.state;
 							},
@@ -1514,8 +1282,6 @@ async function initializeCocoonHost(
 									actualExtensionDescription.identifier,
 								),
 						} as VscodeWindowAPIType,
-
-						// Other top-level API namespaces.
 						env: accessor.get(IExtHostEnv) as VscodeEnvAPIType,
 						extensions: accessor.get(
 							IExtHostExtensions,
@@ -1526,9 +1292,10 @@ async function initializeCocoonHost(
 						tasks: accessor.get(
 							IExtHostTaskService,
 						) as VscodeTasksAPIType,
-
-						// --- Re-export core VS Code API classes and enums from `./vscode` ---
-						// This ensures extensions get the correct, publicly defined types.
+						ipcRenderer: createExtensionIpcRenderer(
+							actualExtensionDescription,
+						), // Add shimmed ipcRenderer
+						// Re-export core types
 						Uri: VscodeUriPublic,
 						Position: VscodePositionPublic,
 						Range: VscodeRangePublic,
@@ -1591,294 +1358,194 @@ async function initializeCocoonHost(
 						LogLevel: VscodeApiLogLevelEnumPublic,
 						FileSystemError: VscodeFileSystemErrorPublic,
 					};
-
-					// Return the fully constructed and shimmed `vscode` API object.
 					return completeVscodeApiObject as typeof import("vscode");
 				};
 			});
+		logService.info("[Cocoon] API Factory Provider configured.");
 
-		logService.info("[Cocoon] API Factory Provider configured and ready.");
-
-		// --- Step 7: Setup CJS NodeRequireInterceptor ---
-		logService.info("[Cocoon] Setting up CJS NodeRequireInterceptor...");
-
-		// Create the interceptor instance, providing the API factory and context.
 		const cjsModuleInterceptor = cocoonDI.createInstance(
 			NodeRequireInterceptor,
 			apiFactoryProvider,
 			{
 				extensionRegistry: () => preResolvedExtensionRegistries,
 				extensionPaths: () => extensionPaths,
-				configProvider: () => finalConfigProviderToUse, // Use the one from API factory context
+				configProvider: () => configProvider,
 			},
 		);
-
-		// Register the factory for `require('vscode')`.
 		cjsModuleInterceptor.register(
 			new VSCodeNodeModuleFactory(
 				apiFactoryProvider,
 				extensionPaths,
 				preResolvedExtensionRegistries,
-				finalConfigProviderToUse,
+				configProvider,
 				logService!,
 			),
 		);
-
-		// Register factory for aliased Node modules.
 		cjsModuleInterceptor.register(
 			cocoonDI.createInstance(NodeModuleAliasingModuleFactory),
 		);
-
-		// Register factory for shimming/blocking Node.js built-ins (handles 'os', 'crypto', blocks 'fs', etc.).
 		cjsModuleInterceptor.register(new NodeBuiltinsShimFactory());
-
 		logService.info("[Cocoon] Installing CJS NodeRequireInterceptor...");
+		await cjsModuleInterceptor.install();
+		logService.info("[Cocoon] CJS NodeRequireInterceptor installed.");
 
-		await cjsModuleInterceptor.install(); // Install the interceptor.
-		logService.info(
-			"[Cocoon] CJS NodeRequireInterceptor installed successfully.",
-		);
-
-		// --- Step 8: Setup ESM Interceptor ---
-		logService.info(
-			"[Cocoon] Setting up ESM Interceptor for 'import vscode'...",
-		);
-
+		logService.info("[Cocoon] Setting up ESM Interceptor...");
 		const esmInterceptorContext: CocoonESMInterceptorContext = {
 			apiFactory: apiFactoryProvider,
 		};
-
 		const esmModuleInterceptor = cocoonDI.createInstance(
 			CocoonNodeModuleESMInterceptor,
 			esmInterceptorContext,
 		);
+		await esmModuleInterceptor.install();
+		logService.info("[Cocoon] ESM Interceptor installed.");
 
-		await esmModuleInterceptor.install(); // Registers Node.js loader hook for ESM.
-		logService.info("[Cocoon] ESM Interceptor installed successfully.");
-
-		// --- Step 9: Install Global Error Handlers ---
 		logService.info("[Cocoon] Installing global error handlers...");
-
 		const errorHandlerInstance = cocoonDI.createInstance(ErrorHandler);
-
-		// Install early handler for errors during DI instantiation or very early init.
 		ErrorHandler.installEarlyHandler(errorHandlerInstance, cocoonDI);
-
-		// Listen for uncaught exceptions and unhandled promise rejections.
 		process.on("uncaughtException", (error: Error) =>
 			ErrorHandler.onUnexpectedError(
 				error,
 				cocoonRpcProtocol || undefined,
 			),
 		);
-
 		process.on("unhandledRejection", (reason: any) =>
 			ErrorHandler.onUnexpectedError(
 				reason,
 				cocoonRpcProtocol || undefined,
 			),
 		);
+		logService.info("[Cocoon] Global error handlers installed.");
 
 		logService.info(
-			"[Cocoon] Global error handlers (uncaughtException, unhandledRejection) installed.",
+			"[Cocoon] Initializing real ExtHostExtensionService...",
 		);
-
-		// --- Step 10: Initialize the Real ExtHostExtensionService ---
-		// This is the point where extensions are actually loaded and activated.
-		logService.info(
-			"[Cocoon] Initializing real ExtHostExtensionService (this will load and activate extensions)...",
-		);
-
 		await extHostExtensionService.initialize();
-
-		logService.info(
-			"[Cocoon] Real ExtHostExtensionService initialized successfully. Extensions are being activated.",
-		);
-
-		// Signal that NLS (National Language Support) bundles for initially activated extensions can now be processed.
-		// The localization service might queue NLS requests until this signal.
+		logService.info("[Cocoon] Real ExtHostExtensionService initialized.");
 		localizationServiceInstance.signalLocalizationInitialized();
-
-		logService.info(
-			"[Cocoon] Signaled localization service that NLS initialization can proceed for activated extensions.",
-		);
-
-		// Upgrade the error handler to its full capabilities now that more services are available.
+		logService.info("[Cocoon] Signaled localization service.");
 		ErrorHandler.installFullHandler(errorHandlerInstance, cocoonDI);
-
 		logService.info("[Cocoon] Full ErrorHandler capabilities installed.");
 
-		// --- Step 11: Signal Mountain that Initialization is Complete ---
 		console.log(
 			"[Cocoon] Cocoon Extension Host Environment Initialized Successfully.",
 		);
-
 		logService.info(
 			"[Cocoon] Cocoon Extension Host Environment Initialized Successfully.",
 		);
-
-		// Send notification to Mountain.
 		ipcApiInstance.sendNotificationToMountain("extHostInitialized", {});
 	} catch (hostInitializationError: any) {
-		// --- Fatal Error Handling during Initialization ---
-		initializationFailedOrExited = true; // Allow process.exit if bootstrap patch is active.
+		initializationFailedOrExited = true;
 		const finalError =
 			hostInitializationError instanceof Error
 				? hostInitializationError
 				: new Error(String(hostInitializationError));
-
-		const errorMessageToLogAndSend =
-			`\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n` +
-			`[Cocoon] FATAL ERROR: Failed to initialize Cocoon Extension Host Environment:\n` +
-			`Message: ${finalError.message}\n` +
-			`Stack: ${finalError.stack || "No stack available"}\n` +
-			`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n`;
-
-		console.error(errorMessageToLogAndSend); // Log to stderr.
+		const errorMessageToLogAndSend = `\n!!!!!!!!!!!!!!!!!!\n[Cocoon] FATAL ERROR: Failed to initialize Cocoon ExtHost:\nMessage: ${finalError.message}\nStack: ${finalError.stack || "N/A"}\n!!!!!!!!!!!!!!!!!!\n`;
+		console.error(errorMessageToLogAndSend);
 		logService?.error(
 			"[Cocoon] FATAL ERROR during Cocoon initialization:",
 			finalError,
-		); // Log using ShimLogService if available.
-
-		// Attempt to send the error details to Mountain.
+		);
 		try {
 			ipcApiInstance.sendNotificationToMountain("extHostError", {
-				message: `Cocoon initialization failed catastrophically: ${finalError.message}`,
+				message: `Cocoon initialization failed: ${finalError.message}`,
 				stack: finalError.stack,
 				name: finalError.name,
 			});
 		} catch (errorSendingNotification: any) {
 			console.error(
-				"[Cocoon] Additionally, failed to send the fatal initialization error notification to Mountain:",
+				"[Cocoon] Additionally, failed to send fatal error notification to Mountain:",
 				errorSendingNotification,
 			);
 		}
-		process.exit(1); // Terminate the Cocoon process with an error code.
+		process.exit(1);
 	}
 }
 
-// --- Main IPC Message Listener & Readiness Signal ---
-let isInitializationStarted = false; // Flag to prevent re-initialization.
+let isInitializationStarted = false;
 console.log(
-	"[Cocoon] Setting up main IPC message listener for 'initExtensionHost' command from Mountain...",
+	"[Cocoon] Setting up main IPC message listener for 'initExtensionHost' from Mountain...",
 );
-
-// Listen for messages from the Mountain host process.
 ipcApiInstance.onMessageFromMountain((ipcMessage: VineMessage) => {
-	// Allow `rpcData` (part of ongoing RPC communication) and notifications (method starting with '$')
-	// to pass through even after initialization has started.
 	if (
 		isInitializationStarted &&
 		ipcMessage.method !== "rpcData" &&
-		ipcMessage.msg_type !== 6 /* Notification (Vine specific) */
-	) {
-		// console.debug(
-		// 	`[Cocoon] IPC message received after init started. Method: ${ipcMessage?.method}. Type: ${ipcMessage?.msg_type}. ` +
-		// 	`Ignoring if not rpcData or notification.`
-		// );
+		ipcMessage.msg_type !== 6
+	)
+		return;
 
-		return; // Ignore other messages if init already started.
-	}
-
-	// Check for the 'initExtensionHost' command from Mountain.
 	if (
-		ipcMessage?.msg_type === 1 /* Request (Vine specific) */ &&
+		ipcMessage?.msg_type === 1 &&
 		ipcMessage.method === "initExtensionHost" &&
 		ipcMessage.params
 	) {
 		if (isInitializationStarted) {
 			console.warn(
-				"[Cocoon] Received 'initExtensionHost' command again after initialization has already started. Ignoring duplicate request.",
+				"[Cocoon] Received 'initExtensionHost' again. Ignoring duplicate.",
 			);
-
 			return;
 		}
 		console.log(
-			"[Cocoon] Received 'initExtensionHost' command from Mountain with initialization data.",
+			"[Cocoon] Received 'initExtensionHost' command from Mountain.",
 		);
-
-		isInitializationStarted = true; // Set flag to prevent re-entry.
-
-		// Use a temporary, basic logger for the initial data revival if the main one isn't up yet.
+		isInitializationStarted = true;
 		const earlyLogServiceForRevival = new ShimLogService(
 			LogLevel.Info,
 			"CocoonEarlyInitDataReviver",
 		);
-
 		earlyLogServiceForRevival.info(
-			"[Cocoon] Attempting to revive URIs in raw initData from Mountain (pre-DI phase)...",
+			"[Cocoon] Attempting to revive URIs in raw initData (pre-DI)...",
 		);
-
-		// Perform early URI revival on the parameters.
 		const revivedParametersForEarlyStage =
 			reviveUrisInObjectForEarlyInitData(
 				ipcMessage.params,
 				earlyLogServiceForRevival,
 			);
-
 		earlyLogServiceForRevival.info(
-			"[Cocoon] Preliminary initData URI revival attempt complete. Proceeding with full host initialization.",
+			"[Cocoon] Preliminary initData URI revival complete. Proceeding with full host initialization.",
 		);
-
-		// Start the main initialization process with the (partially) revived parameters.
 		initializeCocoonHost(revivedParametersForEarlyStage).catch(
 			(unhandledErrorInAsyncInit: any) => {
-				// This catch block is a safety net for unhandled promise rejections from `initializeCocoonHost` itself.
 				if (!initializationFailedOrExited) {
-					// Check flag to avoid redundant error handling.
 					initializationFailedOrExited = true;
-
 					const finalError =
 						unhandledErrorInAsyncInit instanceof Error
 							? unhandledErrorInAsyncInit
 							: new Error(String(unhandledErrorInAsyncInit));
-
-					const errorMessageToLogAndSend =
-						`\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n` +
-						`[Cocoon] CATASTROPHIC UNHANDLED ERROR during async initializeCocoonHost execution:\n` +
-						`Message: ${finalError.message}\n` +
-						`Stack: ${finalError.stack || "No stack available"}\n` +
-						`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n`;
-
+					const errorMessageToLogAndSend = `\n!!!!!!!!!!!!!!!!!!\n[Cocoon] CATASTROPHIC UNHANDLED ERROR during async initializeCocoonHost:\nMessage: ${finalError.message}\nStack: ${finalError.stack || "N/A"}\n!!!!!!!!!!!!!!!!!!\n`;
 					console.error(errorMessageToLogAndSend);
-
-					// Attempt to send error to Mountain.
 					try {
 						ipcApiInstance.sendNotificationToMountain(
 							"extHostError",
 							{
-								message: `Cocoon async initialization catastrophically failed (unhandled): ${finalError.message}`,
+								message: `Cocoon async init catastrophically failed: ${finalError.message}`,
 								stack: finalError.stack,
 								name: finalError.name,
 							},
 						);
 					} catch (errorSendingNotification: any) {
 						console.error(
-							"[Cocoon] Additionally, failed to send the catastrophic async init error notification to Mountain:",
+							"[Cocoon] Additionally, failed to send catastrophic async init error notification to Mountain:",
 							errorSendingNotification,
 						);
 					}
-					process.exit(1); // Terminate due to unrecoverable error.
+					process.exit(1);
 				}
 			},
 		);
 	} else if (
 		ipcMessage &&
-		ipcMessage.msg_type !== 6 /* Notification */ &&
+		ipcMessage.msg_type !== 6 &&
 		ipcMessage.method !== "rpcData" &&
 		!isInitializationStarted
 	) {
-		// Log a warning for unexpected messages received before initialization.
 		console.warn(
-			`[Cocoon] Unexpected IPC message received before 'initExtensionHost' command. This might indicate an issue with the host (Mountain) communication sequence or an unexpected early message. ` +
-				`Method='${ipcMessage?.method}', Type=${ipcMessage?.msg_type}. Discarding.`,
+			`[Cocoon] Unexpected IPC message before 'initExtensionHost'. Method='${ipcMessage?.method}', Type=${ipcMessage?.msg_type}. Discarding.`,
 		);
 	}
 });
 
-// Send a notification to Mountain indicating that the Cocoon sidecar is ready for initialization.
 ipcApiInstance.sendNotificationToMountain("extHostReadyForInit", {});
-
 console.log(
-	"[Cocoon] Cocoon sidecar process is ready and waiting for the 'initExtensionHost' command from Mountain.",
+	"[Cocoon] Cocoon sidecar process is ready and waiting for 'initExtensionHost' from Mountain.",
 );
