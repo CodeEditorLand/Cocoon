@@ -33,48 +33,36 @@
  *   `$acceptConfigurationChanged` (delta with new effective state) RPC calls,
  *   and can also receive updates via direct IPC (`ipc.onConfigurationChanged`).
  * - Uses `BaseCocoonShim` for common utilities.
- * - TODO: Consider adopting VS Code's internal `Configuration` model class for more robust
- *   handling of configuration data and `IConfigurationOverrides`.
- * - TODO: Centralize `vscode.ConfigurationScope` to `IConfigurationOverridesDto` conversion.
  *
+ * Last Reviewed/Updated: [Date of Merge or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
-// Node.js EventEmitter
-import { EventEmitter } from "events";
-import {
-	// Emitter as VscodeEmitter, // Not used directly in this file
-	type Event as VscodeEvent,
-} from "vs/base/common/event";
-import { MarshalledId } from "vs/base/common/marshalling"; // For URI DTO $mid checks
-import { deepClone } from "vs/base/common/objects"; // For deep cloning config values for `get`
-
-import {
-	ConfigurationScope, // For validating access
-	// OVERRIDE_PROPERTY_REGEX, // Not directly used from here in the final version
-} from "vs/platform/configuration/common/configurationRegistry";
+import { EventEmitter } from "events"; // Node.js EventEmitter
+import { type Event as VscodeEvent } from "vs/base/common/event";
+import { MarshalledId } from "vs/base/common/marshalling";
+import { deepClone } from "vs/base/common/objects";
+import { ConfigurationScope } from "vs/platform/configuration/common/configurationRegistry";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions";
 import {
 	ConfigurationTargetDto,
-	// ExtHostContext, // Registration moved to index.ts as per update
+	ExtHostContext, // For RPC self-registration
 	MainContext,
 	type IConfigurationChange,
 	type IConfigurationOverridesDto,
-	type IConfigurationInitData as RpcConfigurationInitData, // DTO from extHost.protocol
+	type IConfigurationInitData as RpcConfigurationInitData,
 	type ExtHostConfigurationShape as VscodeExtHostConfigurationShape,
-	type UriComponents as VSCodeInternalUriComponents, // For DTOs
+	type UriComponents as VSCodeInternalUriComponents,
 	type MainThreadConfigurationShape as VscodeMainThreadConfigurationShape,
 } from "vs/workbench/api/common/extHost.protocol";
 
-// For direct IPC subscription
-import * as ipc from "../cocoon-ipc";
-// Public API types (ensure paths are correct for your build)
+import * as ipc from "../cocoon-ipc"; // For direct IPC subscription
 import {
-	Uri as VscodeApiUri, // Use VscodeApiUri for public API types
+	Uri as VscodeApiUri,
 	ConfigurationTarget as VscodeConfigurationTarget,
 	type ConfigurationChangeEvent as VscodeConfigurationChangeEvent,
 	type WorkspaceConfiguration as VscodeWorkspaceConfiguration,
 } from "../Shim/out/vscode";
-// Assuming this path is correct
+// Public API types
 
 import {
 	BaseCocoonShim,
@@ -86,21 +74,19 @@ import {
 
 // --- Type Definitions ---
 
-// Extended proxy shape to include optional $removeConfigurationOption for `update(key, undefined)`
 interface MainThreadConfigurationProxyShape
 	extends VscodeMainThreadConfigurationShape {
 	$removeConfigurationOption?(
 		target: ConfigurationTargetDto | null | undefined,
 		key: string,
 		overrides: IConfigurationOverridesDto | null,
-		scopeToLanguage?: boolean | undefined, // VS Code protocol doesn't use this for this call
+		scopeToLanguage?: boolean | undefined,
 	): Promise<void>;
 }
 
-// Payload for direct IPC config change events
 interface IpcConfigurationChangedPayload {
-	data: RpcConfigurationInitData; // Contains `effective` for new snapshot and `configurationScopes`
-	change: IConfigurationChange; // Contains `keys` and `overrides`
+	data: RpcConfigurationInitData;
+	change: IConfigurationChange;
 }
 
 type VscodeConfigurationScope =
@@ -109,25 +95,21 @@ type VscodeConfigurationScope =
 	| null
 	| undefined;
 
-/**
- * Cocoon's implementation of `IExtHostConfiguration`.
- */
 export class ShimExtHostConfiguration
 	extends BaseCocoonShim
 	implements VscodeExtHostConfigurationShape
 {
 	public readonly _serviceBrand: undefined;
-
 	#mainThreadConfigurationProxy: MainThreadConfigurationProxyShape | null =
 		null;
-	#currentConfigurationState: any = {}; // Cache of effective configuration values
-	readonly #onDidChangeConfigurationEmitter = new EventEmitter(); // For public vscode.workspace.onDidChangeConfiguration
+	#currentConfigurationState: any = {};
+	readonly #onDidChangeConfigurationEmitter = new EventEmitter();
 	#configurationKeyScopes: Map<string, ConfigurationScope | undefined> =
-		new Map(); // Map<configKey, ConfigurationScope> from initData
+		new Map();
 
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
-		initialConfigDataFromMainInit: RpcConfigurationInitData | undefined, // From main ExtHostInitData
+		initialConfigDataFromMainInit: RpcConfigurationInitData | undefined,
 		logService: ILogServiceForShim | undefined,
 	) {
 		super("ExtHostConfiguration", rpcService, logService);
@@ -158,20 +140,34 @@ export class ShimExtHostConfiguration
 			this.#mainThreadConfigurationProxy = this._getProxy(
 				MainContext.MainThreadConfiguration as ProxyIdentifier<MainThreadConfigurationProxyShape>,
 			);
-			if (!this.#mainThreadConfigurationProxy) {
+			if (this.#mainThreadConfigurationProxy) {
+				this._logDebug("MainThreadConfiguration RPC proxy obtained.");
+			} else {
 				this._logError(
 					"Failed to obtain MainThreadConfiguration RPC proxy. Configuration features will be impaired.",
 				);
 			}
-			// RPC self-registration (`this._rpcService.set(ExtHostContext.ExtHostConfiguration...`)
-			// is handled in Cocoon's main index.ts as per the update.
+			// Register self for RPC calls from MainThreadConfiguration
+			try {
+				this._rpcService.set(
+					ExtHostContext.ExtHostConfiguration as ProxyIdentifier<VscodeExtHostConfigurationShape>,
+					this,
+				);
+				this._logInfo(
+					"Registered self for RPC calls from MainThread (ExtHostConfiguration).",
+				);
+			} catch (e: any) {
+				this._logError(
+					"Failed to set self for RPC (ExtHostConfiguration):",
+					e,
+				);
+			}
 		} else {
 			this._logError(
-				"RPCService Adapter unavailable. Cannot proxy to MainThreadConfiguration.",
+				"RPCService Adapter unavailable. Cannot proxy to MainThreadConfiguration or receive RPC updates.",
 			);
 		}
 
-		// Subscribe to direct IPC configuration change events
 		this._instanceDisposables.add(
 			ipc.onConfigurationChanged(
 				(payload: IpcConfigurationChangedPayload) => {
@@ -189,11 +185,8 @@ export class ShimExtHostConfiguration
 						);
 						return;
 					}
-					// Use the $initializeConfiguration logic to update state from this payload type
-					// as it also contains the full 'effective' state.
-					this.$initializeConfiguration(payload.data);
-					// Then fire the change event with the specific delta.
-					this._fireChangeEvent(payload.change);
+					this.$initializeConfiguration(payload.data); // Use $initialize to update full state
+					this._fireChangeEvent(payload.change); // Then fire specific change
 				},
 			),
 		);
@@ -202,26 +195,33 @@ export class ShimExtHostConfiguration
 		);
 	}
 
-	// Common event firing logic, used by both RPC and direct IPC update paths.
 	private _fireChangeEvent(changeDetails: IConfigurationChange): void {
 		const affectedKeysForEvent = new Set<string>(changeDetails.keys);
-		changeDetails.overrides?.forEach(([, /*_identifier*/ overrideKeys]) => {
-			// _identifier (resource/language) is not directly used by VS Code's event.affectsConfiguration logic pattern.
+		changeDetails.overrides?.forEach((overrideTuple) => {
+			// The override tuple structure from VS Code is typically [identifier: string, keys: string[]]
+			// where identifier might be a language ID or a resource URI string.
+			// For `affectsConfiguration` logic, we care about the keys.
+			const overrideKeys =
+				Array.isArray(overrideTuple) &&
+				overrideTuple.length === 2 &&
+				Array.isArray(overrideTuple[1])
+					? overrideTuple[1]
+					: []; // Fallback if structure is unexpected
+
 			overrideKeys.forEach((key) => affectedKeysForEvent.add(key));
 		});
 
 		const eventArg: VscodeConfigurationChangeEvent = {
 			affectsConfiguration: (
 				section: string,
-				scope?: VscodeApiUri, // Changed from VscodeUri to VscodeApiUri
+				scope?: VscodeApiUri,
 			): boolean => {
 				if (scope) {
 					this._logWarnOnce(
-						`ConfigurationChangeEvent.affectsConfiguration called with a scope for section '${section}'. ` +
-							`Scope-aware checking in this shim is basic and might not be fully precise for override changes. Scope: ${scope.toString()}`,
+						`ConfigurationChangeEvent.affectsConfiguration called with a scope for section '${section}'. Scope-aware checking is basic. Scope: ${scope.toString()}`,
 					);
 				}
-				if (!section) return true; // An empty section implies global change.
+				if (!section) return true;
 				for (const key of affectedKeysForEvent) {
 					if (key === section || key.startsWith(section + "."))
 						return true;
@@ -235,11 +235,10 @@ export class ShimExtHostConfiguration
 			Object.freeze(eventArg),
 		);
 		this._logInfo(
-			`Fired public onDidChangeConfiguration event. Changed keys summary: [${changeDetails.keys.join(", ").substring(0, 100)}...]`,
+			`Fired public onDidChangeConfiguration event. Changed keys summary: [${Array.from(affectedKeysForEvent).join(", ").substring(0, 100)}...]`,
 		);
 	}
 
-	// --- VscodeExtHostConfigurationShape Methods (called by MainThread via RPC) ---
 	public $initializeConfiguration(dataDto: RpcConfigurationInitData): void {
 		this._logInfo(
 			`RPC $initializeConfiguration received. Effective keys count: ${Object.keys(dataDto.effective || {}).length}. Replacing local cache.`,
@@ -251,22 +250,19 @@ export class ShimExtHostConfiguration
 				`Updated with ${this.#configurationKeyScopes.size} configuration scope definitions from $initializeConfiguration.`,
 			);
 		} else {
-			this.#configurationKeyScopes.clear(); // If no scopes provided, clear existing ones.
+			this.#configurationKeyScopes.clear();
 			this._logWarn(
 				"No configurationScopes received in $initializeConfiguration. Scopes map cleared.",
 			);
 		}
-		// VS Code's extHostConfiguration only fires if it's not the first initialization.
-		// For simplicity here, we assume $initializeConfiguration itself doesn't trigger a _fireChangeEvent,
-		// as subsequent changes should come via $acceptConfigurationChanged or IPC.
 		this._logInfo(
 			"Full configuration cache (re)initialized via $initializeConfiguration RPC from Mountain.",
 		);
 	}
 
 	public $acceptConfigurationChanged(
-		data: RpcConfigurationInitData, // Contains new `effective` and `configurationScopes`
-		change: IConfigurationChange, // Contains `keys` and `overrides` (delta info)
+		data: RpcConfigurationInitData,
+		change: IConfigurationChange,
 	): void {
 		const changedKeysSummary = change.keys.join(", ");
 		this._logInfo(
@@ -279,10 +275,9 @@ export class ShimExtHostConfiguration
 		this._fireChangeEvent(change);
 	}
 
-	// --- vscode.workspace.getConfiguration API Implementation ---
 	public async getConfiguration(
 		section?: string,
-		scope?: VscodeConfigurationScope, // Uses VscodeApiUri
+		scope?: VscodeConfigurationScope,
 		extensionIdForValidationLog?: ExtensionIdentifier,
 	): Promise<VscodeWorkspaceConfiguration> {
 		let resourceFromScope: VscodeApiUri | undefined = undefined;
@@ -318,7 +313,7 @@ export class ShimExtHostConfiguration
 				section || "",
 				scope,
 				extensionIdForValidationLog,
-				true /* isProxyUnavailable */,
+				true,
 			);
 		}
 
@@ -326,22 +321,21 @@ export class ShimExtHostConfiguration
 		try {
 			const resourceDto = resourceFromScope
 				? (this._convertApiArgToInternal(
-						// BaseCocoonShim helper
 						resourceFromScope,
-					) as VSCodeInternalUriComponents) // Cast to DTO URI type
+					) as VSCodeInternalUriComponents)
 				: undefined;
 			const overridesDto: IConfigurationOverridesDto = {
 				resource: resourceDto,
-				overrideIdentifier: languageIdFromScope, // Use overrideIdentifier for languageId
+				overrideIdentifier: languageIdFromScope,
 			};
-			// VS Code's $getConfiguration args: [section: string | null, overrides: IConfigurationOverridesDto | null, extensionId: ExtensionIdentifier | undefined]
-			// The third argument `extensionId` is for when MainThread needs to know which extension is asking.
-			// For general `vscode.workspace.getConfiguration`, this is usually `undefined`.
+			// VS Code's $getConfiguration args tuple: [section: string | null, overrides: IConfigurationOverridesDto | null, extensionId: ExtensionIdentifier | undefined]
+			// We pass extensionId as undefined for general workspace.getConfiguration.
+			// Note: The protocol expects an array (tuple) as a single argument.
 			configValuesFromMain =
 				await this.#mainThreadConfigurationProxy.$getConfiguration([
 					section || null,
 					overridesDto,
-					undefined, // extensionId, if needed by specific MainThread logic
+					undefined,
 				]);
 		} catch (error: any) {
 			const refinedError = refineErrorForShim(
@@ -356,7 +350,7 @@ export class ShimExtHostConfiguration
 				this.#currentConfigurationState,
 				section,
 			);
-			configValuesFromMain = cachedSectionValues || {}; // Use cache on RPC error
+			configValuesFromMain = cachedSectionValues || {};
 		}
 		return this._createShimVscodeWorkspaceConfiguration(
 			configValuesFromMain || {},
@@ -387,7 +381,7 @@ export class ShimExtHostConfiguration
 	private _createShimVscodeWorkspaceConfiguration(
 		configSnapshotValues: any,
 		sectionPrefix: string,
-		originalScope?: VscodeConfigurationScope, // Uses VscodeApiUri
+		originalScope?: VscodeConfigurationScope,
 		extensionIdForValidationLog?: ExtensionIdentifier,
 		isProxyUnavailable = false,
 	): VscodeWorkspaceConfiguration {
@@ -401,13 +395,11 @@ export class ShimExtHostConfiguration
 			);
 			let current = configSnapshotValues;
 			if (!key && sectionPrefix) {
-				// Requesting the root of a prefixed section
 				return typeof current === "object" && current !== null
 					? deepClone(current)
 					: current;
 			}
 			if (key) {
-				// If key is not empty, traverse into the snapshot
 				for (const part of key.split(".")) {
 					if (
 						current &&
@@ -435,7 +427,6 @@ export class ShimExtHostConfiguration
 			inspect: async <T>(
 				key: string,
 			): Promise<
-				// Matches vscode.d.ts inspect return type
 				| {
 						key: string;
 						defaultValue?: T;
@@ -481,7 +472,6 @@ export class ShimExtHostConfiguration
 					: undefined;
 
 				try {
-					// VS Code's $inspectConfiguration args: [resourceComponents: UriComponents | null, languageId: string | null, key: string]
 					const inspectInfo =
 						await self.#mainThreadConfigurationProxy.$inspectConfiguration(
 							resourceDto ?? null,
@@ -509,8 +499,8 @@ export class ShimExtHostConfiguration
 				configurationTargetOrScope?:
 					| VscodeConfigurationTarget
 					| boolean
-					| VscodeConfigurationScope, // Uses VscodeApiUri
-				overrideInLanguageOrScope?: boolean | VscodeConfigurationScope, // Uses VscodeApiUri
+					| VscodeConfigurationScope,
+				overrideInLanguageOrScope?: boolean | VscodeConfigurationScope,
 			): Promise<void> => {
 				if (isProxyUnavailable || !self.#mainThreadConfigurationProxy) {
 					const msg = `Cannot update config key='${key}': RPC proxy unavailable.`;
@@ -523,13 +513,12 @@ export class ShimExtHostConfiguration
 				let targetDto: ConfigurationTargetDto | null | undefined = null;
 				let overridesDto: IConfigurationOverridesDto | null = null;
 
-				// --- Argument Parsing Logic for `update` Overloads (align with VS Code ExtHostConfiguration) ---
 				let targetArg: ConfigurationTargetDto | undefined;
 				let resourceArg: VscodeApiUri | undefined;
 				let languageIdArg: string | undefined;
+				let scopeToLanguageArg: boolean | undefined = undefined; // VS Code internal
 
 				if (typeof configurationTargetOrScope === "number") {
-					// VscodeConfigurationTarget
 					targetArg =
 						configurationTargetOrScope ===
 						VscodeConfigurationTarget.Global
@@ -542,8 +531,9 @@ export class ShimExtHostConfiguration
 									? ConfigurationTargetDto.WorkspaceFolder
 									: undefined;
 					if (typeof overrideInLanguageOrScope === "boolean") {
-						// scopeToLanguage (deprecated usage)
+						scopeToLanguageArg = overrideInLanguageOrScope;
 						if (overrideInLanguageOrScope === true) {
+							// implies language scope with original resource
 							resourceArg =
 								originalScope instanceof VscodeApiUri
 									? originalScope
@@ -554,7 +544,6 @@ export class ShimExtHostConfiguration
 								originalScope?.languageId;
 						}
 					} else if (overrideInLanguageOrScope) {
-						// VscodeConfigurationScope
 						resourceArg =
 							overrideInLanguageOrScope instanceof VscodeApiUri
 								? overrideInLanguageOrScope
@@ -562,7 +551,6 @@ export class ShimExtHostConfiguration
 						languageIdArg = overrideInLanguageOrScope.languageId;
 					}
 				} else if (typeof configurationTargetOrScope === "boolean") {
-					// globalOrWorkspace (deprecated)
 					targetArg = configurationTargetOrScope
 						? ConfigurationTargetDto.UserLocal
 						: ConfigurationTargetDto.Workspace;
@@ -570,7 +558,7 @@ export class ShimExtHostConfiguration
 						typeof overrideInLanguageOrScope === "boolean" &&
 						overrideInLanguageOrScope === true
 					) {
-						// scopeToLanguage
+						scopeToLanguageArg = overrideInLanguageOrScope;
 						resourceArg =
 							originalScope instanceof VscodeApiUri
 								? originalScope
@@ -581,14 +569,15 @@ export class ShimExtHostConfiguration
 							originalScope?.languageId;
 					}
 				} else if (configurationTargetOrScope) {
-					// VscodeConfigurationScope (target is implicit)
 					resourceArg =
 						configurationTargetOrScope instanceof VscodeApiUri
 							? configurationTargetOrScope
 							: configurationTargetOrScope.uri;
 					languageIdArg = configurationTargetOrScope.languageId;
+					if (typeof overrideInLanguageOrScope === "boolean") {
+						scopeToLanguageArg = overrideInLanguageOrScope;
+					}
 				} else {
-					// No target or scope arg -> use original scope of the WorkspaceConfiguration object
 					resourceArg =
 						originalScope instanceof VscodeApiUri
 							? originalScope
@@ -597,6 +586,9 @@ export class ShimExtHostConfiguration
 					languageIdArg =
 						typeof originalScope === "object" &&
 						originalScope?.languageId;
+					if (typeof overrideInLanguageOrScope === "boolean") {
+						scopeToLanguageArg = overrideInLanguageOrScope;
+					}
 				}
 
 				targetDto = targetArg;
@@ -606,10 +598,10 @@ export class ShimExtHostConfiguration
 								resourceArg,
 							) as VSCodeInternalUriComponents)
 						: undefined,
-					overrideIdentifier: languageIdArg, // VS Code protocol uses overrideIdentifier for languageId
+					overrideIdentifier: languageIdArg,
 				};
 
-				const valueForRpc = value === undefined ? null : value; // `null` signifies deletion to MainThread
+				const valueForRpc = value === undefined ? null : value;
 				const rpcCallPromise =
 					valueForRpc === null &&
 					self.#mainThreadConfigurationProxy!
@@ -618,15 +610,16 @@ export class ShimExtHostConfiguration
 								targetDto,
 								fullKeyToUpdate,
 								overridesDto,
-								undefined /* scopeToLanguage not used here in VS Code protocol */,
+								scopeToLanguageArg,
 							)
 						: self.#mainThreadConfigurationProxy!.$updateConfigurationOption(
+								// VS Code protocol for $updateConfigurationOption expects a tuple argument
 								[
 									targetDto,
 									fullKeyToUpdate,
 									valueForRpc,
 									overridesDto,
-									undefined /* scopeToLanguage not used here */,
+									scopeToLanguageArg,
 								],
 							);
 				try {
@@ -640,7 +633,7 @@ export class ShimExtHostConfiguration
 							`update(${fullKeyToUpdate})`,
 						),
 					);
-					throw error; // Rethrow to signal failure
+					throw error;
 				}
 			},
 		};
@@ -650,19 +643,17 @@ export class ShimExtHostConfiguration
 				if (
 					prop in target ||
 					typeof prop === "symbol" ||
-					prop === "then" || // Handle thenable for async operations on proxy
+					prop === "then" ||
 					typeof (target as any)[prop] === "function"
 				) {
 					return Reflect.get(target, prop, receiver);
 				}
-				// For direct property access, treat as a 'get' call
 				if (typeof prop === "string") return target.get(prop);
 				return Reflect.get(target, prop, receiver);
 			},
 			has(target, prop: string | symbol) {
 				if (prop in target || typeof prop === "symbol")
 					return Reflect.has(target, prop);
-				// For direct property 'has' check, treat as a 'has' call
 				if (typeof prop === "string") return target.has(prop);
 				return Reflect.has(target, prop);
 			},
@@ -675,25 +666,23 @@ export class ShimExtHostConfiguration
 		for (const key in inspectInfo) {
 			if (Object.prototype.hasOwnProperty.call(inspectInfo, key)) {
 				const value = inspectInfo[key];
-				// Check for URI DTOs (needs to align with how BaseCocoonShim._reviveApiArgument identifies URIs)
 				if (
 					value &&
 					typeof value === "object" &&
-					(value.$mid === MarshalledId.UriSimple || // Old marshalling ID
-						value.$mid === MarshalledId.Uri || // VS Code internal marshalling ID
-						(typeof value.scheme === "string" && // Heuristic for UriComponents
+					(value.$mid === MarshalledId.UriSimple ||
+						value.$mid === MarshalledId.Uri ||
+						(typeof value.scheme === "string" &&
 							typeof value.path === "string"))
 				) {
-					result[key] = this._reviveApiArgument(value); // Use base shim's reviver
+					result[key] = this._reviveApiArgument(value);
 				} else if (
 					Array.isArray(value) &&
-					key === "overrideIdentifiers" && // From IConfigurationInspectColors -> IConfigurationInspect<T>
+					key === "overrideIdentifiers" &&
 					value.every((item) => typeof item === "string")
 				) {
-					// `overrideIdentifiers` are language IDs (strings), no revival needed.
 					result[key] = value;
 				} else if (typeof value === "object" && value !== null) {
-					result[key] = this._reviveInspectResult(value); // Recurse for nested objects
+					result[key] = this._reviveInspectResult(value);
 				} else {
 					result[key] = value;
 				}
@@ -704,7 +693,7 @@ export class ShimExtHostConfiguration
 
 	private _validateConfigurationAccess(
 		key: string,
-		scope?: VscodeConfigurationScope | null, // Uses VscodeApiUri
+		scope?: VscodeConfigurationScope | null,
 		extensionId?: ExtensionIdentifier,
 	): void {
 		const configScopeMeta = this.#configurationKeyScopes.get(key);
@@ -742,7 +731,6 @@ export class ShimExtHostConfiguration
 				);
 			}
 		}
-		// Add checks for other scopes like MACHINE, MACHINE_OVERRIDABLE if needed.
 	}
 
 	get onDidChangeConfiguration(): VscodeEvent<VscodeConfigurationChangeEvent> {
@@ -759,7 +747,7 @@ export class ShimExtHostConfiguration
 			getConfiguration: (
 				section?: string,
 				scopeOrExtensionId?:
-					| VscodeConfigurationScope // Uses VscodeApiUri
+					| VscodeConfigurationScope
 					| ExtensionIdentifier,
 				_actualExtensionIdIfSecondWasScope?: ExtensionIdentifier,
 			): Promise<VscodeWorkspaceConfiguration> => {
@@ -771,7 +759,6 @@ export class ShimExtHostConfiguration
 				if (scopeOrExtensionId instanceof ExtensionIdentifier) {
 					extensionIdForValidationLog = scopeOrExtensionId;
 				} else {
-					// Type assertion needed if VscodeConfigurationScope is not directly assignable
 					actualScope = scopeOrExtensionId as
 						| VscodeConfigurationScope
 						| undefined;

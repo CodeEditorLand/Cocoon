@@ -2,7 +2,7 @@
  * Cocoon Environment API Shim (env-shim.ts)
  * --------------------------------------------------------------------------------------------
  * Implements the `vscode.env` API namespace. This service provides extensions with
- * information about the application environment (e.g., app name, machine ID, UI kind), *
+ * information about the application environment (e.g., app name, machine ID, UI kind),
  * and functionalities such as clipboard access, opening external URIs, and URI scheme
  * handling.
  *
@@ -14,7 +14,8 @@
  *
  * Responsibilities:
  * - Implementing the `vscode.env` API interface.
- * - Populating read-only environment properties (e.g., `appName`, `appRoot`, `machineId`, *   `language`, `isRemote`, `uiKind`) from `ExtHostInitData`.
+ * - Populating read-only environment properties (e.g., `appName`, `appRoot`, `machineId`,
+ *   `language`, `isRemote`, `uiKind`) from `ExtHostInitData`.
  * - Providing `env.clipboard` by using an injected `IExtHostClipboardServiceShape` instance.
  * - Implementing `env.openExternal(uri)` and `env.asExternalUri(uri)` by making RPC calls
  *   to `MainThreadWindow`.
@@ -32,6 +33,7 @@
  *   calls from the main thread (e.g., for telemetry level or shell updates).
  * - Uses `BaseCocoonShim` for common utilities like logging and RPC proxy acquisition.
  *
+ * Last Reviewed/Updated: [Date of Merge or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
 import {
@@ -40,10 +42,13 @@ import {
 } from "vs/base/common/event";
 import { MarshalledId } from "vs/base/common/marshalling"; // For URI DTO creation
 import { Schemas } from "vs/base/common/network"; // For appRoot scheme check
+
 import {
 	URI as VSCodeInternalURI,
 	type UriComponents as VSCodeInternalUriComponents,
 } from "vs/base/common/uri";
+import { LogLevel } from "vs/platform/log/common/log"; // For mapping platform LogLevel to API LogLevel
+
 import {
 	TelemetryLevel, // VS Code internal enum for telemetry levels
 	type TelemetryLevel as VscodePlatformTelemetryLevel, // Explicit type alias for platform level
@@ -52,7 +57,6 @@ import {
 	ExtHostContext,
 	MainContext,
 	type ExtHostEnvShape as VscodeExtHostEnvShape, // RPC shape this service implements
-	// type MainThreadEnvShape, // Not directly used as proxy target, MainThreadWindow is used
 } from "vs/workbench/api/common/extHost.protocol";
 import {
 	IExtHostInitDataService,
@@ -66,8 +70,6 @@ import {
 	Uri as VscodeUri,
 	type Clipboard as VscodeClipboard,
 } from "vscode";
-
-// Assuming resolved to API shim
 
 import {
 	BaseCocoonShim,
@@ -105,16 +107,14 @@ export class ShimExtHostEnvService
 	extends BaseCocoonShim
 	implements IExtHostEnvServiceShape, VscodeExtHostEnvShape
 {
-	// Implements public API shape and RPC shape
 	public readonly _serviceBrand: undefined;
 	private readonly _initData: ExtHostInitData;
 	public readonly clipboard: VscodeClipboard; // Instance of ShimExtHostClipboardService
 	private _mainThreadWindowProxy: MainThreadWindowProxyForEnv | null = null;
 
-	#currentTelemetryLevel: VscodePlatformTelemetryLevel = TelemetryLevel.NONE; // Default until initialized
+	#currentTelemetryLevel: VscodePlatformTelemetryLevel = TelemetryLevel.NONE;
 	#currentShellPath: string;
 
-	// Event Emitters for vscode.env events
 	private readonly _onDidChangeTelemetryLevelEmitter =
 		this._instanceDisposables.add(new VscodeEmitter<VscodeApiLogLevel>());
 	public readonly onDidChangeTelemetryLevel: VscodeEvent<VscodeApiLogLevel> =
@@ -131,11 +131,15 @@ export class ShimExtHostEnvService
 	public readonly onDidChangeShell: VscodeEvent<string> =
 		this._onDidChangeShellEmitter.event;
 
+	// For env.logLevel, not telemetry. Requires IExtHostLogService or similar. NOP for now.
+	public readonly onDidChangeLogLevel: VscodeEvent<VscodeApiLogLevel> =
+		VscodeEvent.None;
+
 	constructor(
 		rpcService: IRpcProtocolServiceAdapter | undefined,
 		logService: ILogServiceForShim | undefined,
-		initDataService: IExtHostInitDataService, // Injected
-		clipboardService: IExtHostClipboardServiceShape, // Injected
+		initDataService: IExtHostInitDataService,
+		clipboardService: IExtHostClipboardServiceShape,
 	) {
 		super("ExtHostEnvService", rpcService, logService);
 		this._initData = initDataService.value;
@@ -144,7 +148,6 @@ export class ShimExtHostEnvService
 			(process.platform === "win32"
 				? process.env.ComSpec
 				: process.env.SHELL) || "unknown_shell_in_cocoon_env";
-		// Set initial telemetry level from initData if available, to inform `isTelemetryEnabled` getter correctly from start.
 		this.#currentTelemetryLevel =
 			this._initData.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
 
@@ -232,19 +235,19 @@ export class ShimExtHostEnvService
 	}
 	get shell(): string {
 		return this.#currentShellPath;
-	} // Returns potentially overridden shell
+	}
 	get uiKind(): VscodeUIKind {
-		const internalUiKindNum = this._initData.uiKind; // This is number from IExtensionHostInitData
+		const internalUiKindNum = this._initData.uiKind;
 		if (internalUiKindNum === VscodeUIKind.Desktop)
-			return VscodeUIKind.Desktop; // Typically 1
-		if (internalUiKindNum === VscodeUIKind.Web) return VscodeUIKind.Web; // Typically 2
+			return VscodeUIKind.Desktop;
+		if (internalUiKindNum === VscodeUIKind.Web) return VscodeUIKind.Web;
 		this._logWarnOnce(
 			`Unknown uiKind value ('${internalUiKindNum}') from initData. Defaulting to UIKind.Desktop.`,
 		);
-		return VscodeUIKind.Desktop; // Safe default
+		return VscodeUIKind.Desktop;
 	}
 	get isNewAppInstall(): boolean {
-		const isNew = (this._initData as any).isNewAppInstall; // Cast if not standard in ExtHostInitData
+		const isNew = (this._initData as any).isNewAppInstall;
 		if (isNew === undefined) {
 			this._logWarnOnce(
 				"env.isNewAppInstall: Value not provided. Defaulting to false.",
@@ -265,17 +268,13 @@ export class ShimExtHostEnvService
 		return quality !== "development";
 	}
 
-	// --- Telemetry Level and Enabled ---
 	get logLevel(): VscodeApiLogLevel {
 		// TODO: This should reflect the log level of the *extension host process* itself,
 		// which might be different from specific logger instances.
-		// For now, defer to a global log service if one is accessible here, or a default.
-		// This is NOT the telemetry level.
 		// This might need an IExtHostLogService dependency to get its current level.
 		// Or if `ILogService` DI in BaseCocoonShim is for the main ExtHost log, use that.
-		const mainLoggerLevel = this._logService?.getLevel(); // If BaseCocoonShim's logger is the main one
+		const mainLoggerLevel = this._logService?.getLevel();
 		if (mainLoggerLevel !== undefined) {
-			// Map platform LogLevel to API LogLevel
 			switch (mainLoggerLevel) {
 				case LogLevel.Trace:
 					return VscodeApiLogLevel.Trace;
@@ -290,24 +289,20 @@ export class ShimExtHostEnvService
 				case LogLevel.Off:
 					return VscodeApiLogLevel.Off;
 				default:
-					return VscodeApiLogLevel.Info; // Fallback
+					return VscodeApiLogLevel.Info;
 			}
 		}
 		this._logWarnOnce(
 			"env.logLevel: Cannot determine main ExtHost log level. Defaulting to Info.",
 		);
-		return VscodeApiLogLevel.Info; // Default
+		return VscodeApiLogLevel.Info;
 	}
-	// onDidChangeLogLevel is for the *extension host's* general log level, not telemetry.
-	// This event should be fired if the main ExtHost log level can change.
-	// This is complex as it's not tied to telemetry level. For now, NOP.
-	// public readonly onDidChangeLogLevel: VscodeEvent<VscodeApiLogLevel> = VscodeEvent.None;
 
 	get isTelemetryEnabled(): boolean {
 		return (
 			this.#currentTelemetryLevel !== TelemetryLevel.NONE &&
 			this.#currentTelemetryLevel !== TelemetryLevel.OFF
-		); //OFF is also considered disabled
+		);
 	}
 
 	async openExternal(target: VscodeUri): Promise<boolean> {
@@ -331,11 +326,8 @@ export class ShimExtHostEnvService
 		try {
 			const internalUri = VSCodeInternalURI.from(target);
 			const uriDto = this._internalUriToMarshalledDto(internalUri);
-			// For `env.openExternal`, `allowExternalSchemes: true` is usually implied.
-			// `allowContributedOpeners` can be controlled if the API supports it.
 			return await this._mainThreadWindowProxy.$openUri(uriDto, {
-				allowExternalSchemes:
-					true /*, allowContributedOpeners: if_api_supports_options */,
+				allowExternalSchemes: true,
 			});
 		} catch (e: any) {
 			this._logError(
@@ -369,7 +361,7 @@ export class ShimExtHostEnvService
 			const uriDto = this._internalUriToMarshalledDto(internalUri);
 			const resultUriDto =
 				await this._mainThreadWindowProxy.$asExternalUri(uriDto, {
-					allowContributedOpeners: false,
+					allowContributedOpeners: false, // Typically false for `asExternalUri` which is about system handlers
 				});
 			return VscodeUri.from(VSCodeInternalURI.revive(resultUriDto));
 		} catch (e: any) {
@@ -377,7 +369,7 @@ export class ShimExtHostEnvService
 				"env.asExternalUri: RPC call failed or URI conversion error:",
 				refineErrorForShim(e, this._logService, "asExternalUri RPC"),
 			);
-			return target; // Fallback to original
+			return target;
 		}
 	}
 
@@ -385,7 +377,7 @@ export class ShimExtHostEnvService
 		uri: VSCodeInternalURI,
 	): VSCodeInternalUriComponents {
 		return {
-			$mid: MarshalledId.UriSimple, // Standard for lighter payload if full components not strictly needed
+			$mid: MarshalledId.UriSimple,
 			scheme: uri.scheme,
 			authority: uri.authority,
 			path: uri.path,
@@ -394,24 +386,20 @@ export class ShimExtHostEnvService
 		};
 	}
 
-	// --- Methods for VscodeExtHostEnvShape (called by MainThread via RPC) ---
 	public $setTelemetryLevel(level: VscodePlatformTelemetryLevel): void {
-		// Renamed from VscodeExtHostEnvShape for clarity; protocol uses platform level
 		const oldIsEnabled = this.isTelemetryEnabled;
 		const oldPlatformLevel = this.#currentTelemetryLevel;
-
-		this.#currentTelemetryLevel = level; // Update stored platform level
+		this.#currentTelemetryLevel = level;
 		const newIsEnabled = this.isTelemetryEnabled;
 
 		this._logInfo(
 			`RPC $setTelemetryLevel: Platform TelemetryLevel changed from ${TelemetryLevel[oldPlatformLevel]} to ${TelemetryLevel[level]}. isTelemetryEnabled change: ${oldIsEnabled} -> ${newIsEnabled}.`,
 		);
 
-		// Map platform level to API LogLevel for the onDidChangeTelemetryLevel event
 		let apiLogLevel: VscodeApiLogLevel;
 		switch (level) {
 			case TelemetryLevel.NONE:
-			case TelemetryLevel.OFF: // Treat OFF same as NONE for this API event's level
+			case TelemetryLevel.OFF:
 				apiLogLevel = VscodeApiLogLevel.Off;
 				break;
 			case TelemetryLevel.ERROR:
@@ -419,12 +407,12 @@ export class ShimExtHostEnvService
 				break;
 			case TelemetryLevel.USAGE:
 				apiLogLevel = VscodeApiLogLevel.Info;
-				break; // USAGE often maps to Info for general logging
+				break;
 			case TelemetryLevel.ALL:
 				apiLogLevel = VscodeApiLogLevel.Trace;
-				break; // ALL maps to Trace for max verbosity
+				break;
 			default:
-				apiLogLevel = VscodeApiLogLevel.Info; // Fallback
+				apiLogLevel = VscodeApiLogLevel.Info;
 		}
 		this._onDidChangeTelemetryLevelEmitter.fire(apiLogLevel);
 
@@ -433,11 +421,10 @@ export class ShimExtHostEnvService
 		}
 	}
 
-	// This is VS Code's protocol method name, $setTelemetryLevel is often for initialization.
 	public $onDidChangeTelemetryLevel(
 		level: VscodePlatformTelemetryLevel,
 	): void {
-		this.$setTelemetryLevel(level); // Reuse the logic, as effect is the same.
+		this.$setTelemetryLevel(level);
 	}
 
 	public $setShell(shellPath: string): void {
@@ -452,7 +439,7 @@ export class ShimExtHostEnvService
 	}
 
 	public override dispose(): void {
-		super.dispose(); // Handles _instanceDisposables which includes emitters
+		super.dispose();
 		this._logInfo("Disposed.");
 	}
 }

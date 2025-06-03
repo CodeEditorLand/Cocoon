@@ -1,9 +1,19 @@
 {
 	"compilerOptions": {
 		"baseUrl": "./",
+
 		"outDir": "Target",
-		"rootDir": "Source"
+
+		"paths": {
+			"@Source/*": ["Source/*"],
+
+			"vs/*": ["../../Dependency/Microsoft/Dependency/Editor/src/vs/*"]
+		},
+
+		"rootDirs": [".", "../../Dependency/Microsoft/Dependency/Editor/src/"]
 	},
+
 	"extends": "./tsconfig.json",
+
 	"include": ["Source"]
 }

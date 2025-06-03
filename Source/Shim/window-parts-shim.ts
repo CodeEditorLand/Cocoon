@@ -36,7 +36,7 @@
  *   This shim currently does not implement these RPC interactions.
  * - Uses `BaseCocoonShim` for standardized logging utilities.
  *
- * Last Reviewed/Updated: Based on latest extraction timestamp.
+ * Last Reviewed/Updated: [Date of Merge or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
 import { CancellationTokenSource } from "vs/base/common/cancellation";
@@ -45,19 +45,17 @@ import {
 	Event as VscodeEvent,
 } from "vs/base/common/event";
 import { Disposable, type IDisposable } from "vs/base/common/lifecycle";
-// Import vscode API types for the window namespace from Cocoon's bundled API definitions
+// Import vscode API types for the window namespace
 import {
-	// Enums
 	ProgressLocation,
 	StatusBarAlignment,
 	ViewColumn,
-	// Interfaces for API method signatures and return types
 	type AccessibilityInformation,
 	type Progress,
 	type ProgressOptions,
 	type StatusBarItem,
-	type StatusBarItemAffinity, // For newer createStatusBarItem overload options
-	type ThemeColor, // For StatusBarItem.color & StatusBarItem.backgroundColor
+	type StatusBarItemAffinity,
+	type ThemeColor,
 	type TreeDataProvider,
 	type TreeView,
 	type TreeViewOptions,
@@ -68,58 +66,28 @@ import {
 	type WebviewPanelOptions,
 	type WebviewPanelSerializer,
 	type WindowState,
-	// Types for other window APIs (even if stubbed, good for type consistency)
-	// type ExtensionTerminalOptions,
-	// type InputBoxOptions,
-	// type MessageItem, type MessageOptions,
-	// type OutputChannel, type LogOutputChannel,
-	// type QuickPick, type QuickPickItem, type QuickPickOptions,
-	// type Terminal, type TerminalOptions,
-	// type TextEditor, type TextEditorOptionsChangeEvent, type TextEditorRevealType,
-	// type TextEditorSelectionChangeEvent, type TextEditorViewColumnChangeEvent,
-	// type TextEditorVisibleRangesChangeEvent,
 } from "vscode";
-
-// Assuming this path resolves to Cocoon's shimmed 'vscode' API
 
 import {
 	BaseCocoonShim,
 	type ILogServiceForShim,
 	type IRpcProtocolServiceAdapter,
-	// type ProxyIdentifier, // Uncomment if RPC is used
 } from "./_baseShim";
 
-// If RPCing to MainThreadWindow or specific services:
-// import { MainContext } from "vs/workbench/api/common/extHost.protocol";
-// interface MainThreadWindowPartsProxyShape {
-//     $setStatusBarMessage?(message: string, hideAfterTimeout?: number, handle?: number): Promise<void>;
-//     $disposeStatusBarMessage?(handle: number): Promise<void>;
-// }
-
-/**
- * Defines the service interface for miscellaneous `vscode.window` parts that this shim implements.
- * This can be used for Dependency Injection if this service is registered.
- */
 export interface IExtHostWindowPartsServiceShape {
-	readonly _serviceBrand: undefined; // Standard DI mechanism for VS Code services.
-
-	// Properties
-	readonly state: WindowState; // Current state of the application window.
-
-	// Methods for UI elements not covered by more specific UI service shims
+	readonly _serviceBrand: undefined;
+	readonly state: WindowState;
 	createStatusBarItem(
 		alignment?: StatusBarAlignment,
 		priority?: number,
-	): StatusBarItem; // Older overload
+	): StatusBarItem;
 	createStatusBarItem(
 		id: string,
 		alignment?: StatusBarAlignment,
 		priority?: number,
-	): StatusBarItem; // Newer overload with ID
-
-	setStatusBarMessage(text: string, hideAfterTimeout?: number): IDisposable; // Timeout-based
-	setStatusBarMessage(text: string, hideWhenDone?: Promise<any>): IDisposable; // Promise-based
-
+	): StatusBarItem;
+	setStatusBarMessage(text: string, hideAfterTimeout?: number): IDisposable;
+	setStatusBarMessage(text: string, hideWhenDone?: Promise<any>): IDisposable;
 	withProgress<R>(
 		options: ProgressOptions,
 		task: (
@@ -127,15 +95,11 @@ export interface IExtHostWindowPartsServiceShape {
 			token: import("vscode").CancellationToken,
 		) => Thenable<R> | Promise<R>,
 	): Promise<R>;
-
-	// TreeView APIs (stubbed to throw)
 	createTreeView<T>(viewId: string, options: TreeViewOptions<T>): TreeView<T>;
 	registerTreeDataProvider<T>(
 		viewId: string,
 		treeDataProvider: TreeDataProvider<T>,
 	): IDisposable;
-
-	// Webview Panel APIs (stubbed to throw)
 	createWebviewPanel(
 		viewType: string,
 		title: string,
@@ -148,31 +112,15 @@ export interface IExtHostWindowPartsServiceShape {
 		viewType: string,
 		serializer: WebviewPanelSerializer,
 	): IDisposable;
-
-	// URI Handler API (stubbed)
 	registerUriHandler(handler: UriHandler): IDisposable;
-
-	// Events (those directly related to window state)
 	readonly onDidChangeWindowState: VscodeEvent<WindowState>;
 }
 
-/**
- * Cocoon's stub implementation for miscellaneous `vscode.window` API parts.
- * Many complex UI features are implemented as NOPs (No-Operations) or throw errors
- * in this MVP (Minimum Viable Product) version to indicate they are not available.
- */
 export class ShimExtHostWindowPartsService
 	extends BaseCocoonShim
 	implements IExtHostWindowPartsServiceShape
 {
 	public readonly _serviceBrand: undefined;
-	// private _mainThreadWindowPartsProxy: MainThreadWindowPartsProxyShape | null = null;
-
-	/**
-	 * Current window state. In a real VS Code extension host, this state would be
-	 * dynamically updated by the MainThread. For this MVP shim, it's a static,
-	 * default value assuming an active and focused window.
-	 */
 	public readonly state: WindowState = Object.freeze({
 		focused: true,
 		active: true,
@@ -180,7 +128,7 @@ export class ShimExtHostWindowPartsService
 	});
 
 	private readonly _onDidChangeWindowStateEmitter =
-		new VscodeEmitter<WindowState>();
+		this._instanceDisposables.add(new VscodeEmitter<WindowState>());
 	public readonly onDidChangeWindowState: VscodeEvent<WindowState> =
 		this._onDidChangeWindowStateEmitter.event;
 
@@ -192,25 +140,12 @@ export class ShimExtHostWindowPartsService
 		this._logInfo(
 			"Initialized (STUBBED implementation for miscellaneous vscode.window parts). Many features are NOPs or will throw.",
 		);
-		// if (this._rpcService) {
-		//     this._mainThreadWindowPartsProxy = this._getProxy(
-		//         MainContext.MainThreadWindowParts as ProxyIdentifier<MainThreadWindowPartsProxyShape>
-		//     );
-		// }
-		// if (!this._mainThreadWindowPartsProxy) {
-		//     this._logWarn("MainThreadWindowParts RPC proxy not available. UI features will be fully stubbed locally.");
-		// }
 	}
 
-	/**
-	 * This shim, in its current stubbed form, does not require RPC communication for
-	 * most of its implemented (stubbed) functionality.
-	 */
 	protected override _requiresRpc(): boolean {
 		return false;
 	}
 
-	/** {@inheritDoc IExtHostWindowPartsServiceShape.createStatusBarItem} */
 	public createStatusBarItem(
 		idOrAlignment?: string | StatusBarAlignment,
 		alignmentOrPriority?: StatusBarAlignment | number,
@@ -219,7 +154,7 @@ export class ShimExtHostWindowPartsService
 		let id: string;
 		let alignment: StatusBarAlignment;
 		let priority: number | undefined;
-		let itemAffinity: StatusBarItemAffinity | undefined = undefined; // Newer API property
+		let itemAffinity: StatusBarItemAffinity | undefined = undefined;
 
 		if (typeof idOrAlignment === "string") {
 			id = idOrAlignment;
@@ -228,21 +163,19 @@ export class ShimExtHostWindowPartsService
 				(alignmentOrPriority === StatusBarAlignment.Left ||
 					alignmentOrPriority === StatusBarAlignment.Right)
 					? (alignmentOrPriority as StatusBarAlignment)
-					: StatusBarAlignment.Left; // Default alignment
+					: StatusBarAlignment.Left;
 			priority = priorityArg;
+			// Note: affinity is usually part of an options object with the id overload,
+			// but this shim keeps it simple.
 		} else {
-			id =
-				"cocoon.stubStatusBarItem." +
-				Date.now() +
-				"_" +
-				Math.random().toString(36).substring(2, 7);
+			// Older overload: createStatusBarItem(alignment?: StatusBarAlignment, priority?: number)
+			id = `cocoon.stubStatusBarItem.${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 			alignment = idOrAlignment ?? StatusBarAlignment.Left;
 			priority = alignmentOrPriority as number | undefined;
 		}
 
 		this._logWarnOnce(
-			`API STUB: vscode.window.createStatusBarItem called (ID: ${id}, Alignment: ${StatusBarAlignment[alignment]}, Priority: ${priority}, Affinity: ${itemAffinity}). ` +
-				`Returning a NOP StatusBarItem. It will not appear in any UI.`,
+			`API STUB: vscode.window.createStatusBarItem called (ID: ${id}, Alignment: ${StatusBarAlignment[alignment]}, Priority: ${priority}, Affinity: ${itemAffinity}). Returning a NOP StatusBarItem.`,
 		);
 
 		let _text = "";
@@ -261,72 +194,63 @@ export class ShimExtHostWindowPartsService
 		let _accessibilityInformation: AccessibilityInformation | undefined =
 			undefined;
 
+		const logSet = (propName: string, value: any) =>
+			this._logWarnOnce(
+				`STUB: StatusBarItem (ID: ${id}).${propName} set to '${String(value).substring(0, 30)}...'. No UI update.`,
+			);
+
 		const statusBarItemStub: StatusBarItem = {
 			id,
 			alignment,
 			priority,
-			affinity: itemAffinity,
+			affinity: itemAffinity, // Stubbed, modern API uses options object for this.
 			get name() {
 				return _name;
 			},
 			set name(value: string | undefined) {
-				this._logWarnOnce(
-					`STUB: StatusBarItem (ID: ${id}).name set to '${value}'. No UI update.`,
-				);
+				logSet("name", value);
 				_name = value;
 			},
 			get text() {
 				return _text;
 			},
 			set text(value: string) {
-				this._logWarnOnce(
-					`STUB: StatusBarItem (ID: ${id}).text set to '${value.substring(0, 30)}...'. No UI update.`,
-				);
+				logSet("text", value);
 				_text = value;
 			},
 			get tooltip() {
 				return _tooltip;
 			},
 			set tooltip(value) {
-				this._logWarnOnce(
-					`STUB: StatusBarItem (ID: ${id}).tooltip set. No UI update.`,
-				);
+				logSet("tooltip", value);
 				_tooltip = value;
 			},
 			get color() {
 				return _color;
 			},
 			set color(value) {
-				this._logWarnOnce(
-					`STUB: StatusBarItem (ID: ${id}).color set. No UI update.`,
-				);
+				logSet("color", value);
 				_color = value;
 			},
 			get backgroundColor() {
 				return _backgroundColor;
 			},
 			set backgroundColor(value) {
-				this._logWarnOnce(
-					`STUB: StatusBarItem (ID: ${id}).backgroundColor set. No UI update.`,
-				);
+				logSet("backgroundColor", value);
 				_backgroundColor = value;
 			},
 			get command() {
 				return _command;
 			},
 			set command(value) {
-				this._logWarnOnce(
-					`STUB: StatusBarItem (ID: ${id}).command set. No UI update.`,
-				);
+				logSet("command", value);
 				_command = value;
 			},
 			get accessibilityInformation() {
 				return _accessibilityInformation;
 			},
 			set accessibilityInformation(value) {
-				this._logWarnOnce(
-					`STUB: StatusBarItem (ID: ${id}).accessibilityInformation set. No UI update.`,
-				);
+				logSet("accessibilityInformation", value);
 				_accessibilityInformation = value;
 			},
 			show: () =>
@@ -345,7 +269,6 @@ export class ShimExtHostWindowPartsService
 		return statusBarItemStub;
 	}
 
-	/** {@inheritDoc IExtHostWindowPartsServiceShape.setStatusBarMessage} */
 	public setStatusBarMessage(
 		text: string,
 		hideOrPromise?: number | Promise<any>,
@@ -356,17 +279,8 @@ export class ShimExtHostWindowPartsService
 			typeof hideOrPromise !== "number" ? hideOrPromise : undefined;
 
 		this._logWarnOnce(
-			`API STUB: vscode.window.setStatusBarMessage called: "${String(text).substring(0, 50)}...", ` +
-				`Timeout: ${hideAfterTimeout ?? "N/A"}, HideWhenDonePromise: ${!!hideWhenDonePromise}. ` +
-				`This is a No-Operation; no message will appear in UI.`,
+			`API STUB: vscode.window.setStatusBarMessage called: "${String(text).substring(0, 50)}...", Timeout: ${hideAfterTimeout ?? "N/A"}, HideWhenDonePromise: ${!!hideWhenDonePromise}. This is a No-Operation.`,
 		);
-		// const handle = await this._mainThreadWindowPartsProxy?.$setStatusBarMessage(text, hideAfterTimeout);
-		// if (hideWhenDonePromise && handle !== undefined) {
-		//   hideWhenDonePromise.finally(() => this._mainThreadWindowPartsProxy?.$disposeStatusBarMessage(handle));
-		// }
-		// return new Disposable(() => {
-		//   if (handle !== undefined) this._mainThreadWindowPartsProxy?.$disposeStatusBarMessage(handle);
-		// });
 		if (hideWhenDonePromise) {
 			hideWhenDonePromise
 				.then(() =>
@@ -383,7 +297,6 @@ export class ShimExtHostWindowPartsService
 		return Disposable.None;
 	}
 
-	/** {@inheritDoc IExtHostWindowPartsServiceShape.withProgress} */
 	public async withProgress<R>(
 		options: ProgressOptions,
 		task: (
@@ -396,17 +309,14 @@ export class ShimExtHostWindowPartsService
 				? ProgressLocation[options.location]
 				: JSON.stringify(options.location);
 		this._logWarn(
-			`API STUB: vscode.window.withProgress called (Title: '${options.title}', Location: '${locationName}', Cancellable: ${!!options.cancellable}). ` +
-				`Task will run without UI progress indication in Cocoon MVP.`,
+			`API STUB: vscode.window.withProgress called (Title: '${options.title}', Location: '${locationName}', Cancellable: ${!!options.cancellable}). Task will run without UI progress.`,
 		);
 		const tokenSource = new CancellationTokenSource();
 		const progressStub: Progress<{ message?: string; increment?: number }> =
 			{
 				report: (value) => {
 					this._logService?.trace(
-						`[Progress STUB][${options.title || "Untitled Progress"}] Reported: ` +
-							`${value.message ? `Message: '${value.message}', ` : ""}` +
-							`Increment: ${value.increment ?? "N/A"}`,
+						`[Progress STUB][${options.title || "Untitled Progress"}] Reported: Message: '${value.message ?? ""}', Increment: ${value.increment ?? "N/A"}`,
 					);
 				},
 			};
@@ -417,28 +327,25 @@ export class ShimExtHostWindowPartsService
 		}
 	}
 
-	/** {@inheritDoc IExtHostWindowPartsServiceShape.createTreeView} */
 	public createTreeView<T>(
 		viewId: string,
 		_options: TreeViewOptions<T>,
 	): TreeView<T> {
-		const errorMsg = `API Not Implemented: vscode.window.createTreeView(viewId: '${viewId}') is not supported in this version of Cocoon. Tree view UI is complex and not part of MVP.`;
+		const errorMsg = `API Not Implemented: vscode.window.createTreeView(viewId: '${viewId}') is not supported in Cocoon MVP.`;
 		this._logError(errorMsg);
 		throw new Error(errorMsg);
 	}
 
-	/** {@inheritDoc IExtHostWindowPartsServiceShape.registerTreeDataProvider} */
 	public registerTreeDataProvider<T>(
 		_viewId: string,
 		_treeDataProvider: TreeDataProvider<T>,
 	): IDisposable {
 		this._logWarnOnce(
-			`API Not Implemented: vscode.window.registerTreeDataProvider(viewId: '${_viewId}') called. This is a No-Operation. Returning NOP disposable.`,
+			`API Not Implemented: vscode.window.registerTreeDataProvider(viewId: '${_viewId}') called. NOP.`,
 		);
 		return Disposable.None;
 	}
 
-	/** {@inheritDoc IExtHostWindowPartsServiceShape.createWebviewPanel} */
 	public createWebviewPanel(
 		viewType: string,
 		_title: string,
@@ -447,37 +354,30 @@ export class ShimExtHostWindowPartsService
 			| { viewColumn: ViewColumn; preserveFocus?: boolean },
 		_options?: WebviewPanelOptions & WebviewOptions,
 	): WebviewPanel {
-		const errorMsg = `API Not Implemented: vscode.window.createWebviewPanel(viewType: '${viewType}') is not supported in this version of Cocoon. Webview UI is complex and not part of MVP.`;
+		const errorMsg = `API Not Implemented: vscode.window.createWebviewPanel(viewType: '${viewType}') is not supported in Cocoon MVP.`;
 		this._logError(errorMsg);
 		throw new Error(errorMsg);
 	}
 
-	/** {@inheritDoc IExtHostWindowPartsServiceShape.registerWebviewPanelSerializer} */
 	public registerWebviewPanelSerializer(
 		_viewType: string,
 		_serializer: WebviewPanelSerializer,
 	): IDisposable {
 		this._logWarnOnce(
-			`API Not Implemented: vscode.window.registerWebviewPanelSerializer(viewType: '${_viewType}') called. This is a No-Operation. Returning NOP disposable.`,
+			`API Not Implemented: vscode.window.registerWebviewPanelSerializer(viewType: '${_viewType}') called. NOP.`,
 		);
 		return Disposable.None;
 	}
 
-	/** {@inheritDoc IExtHostWindowPartsServiceShape.registerUriHandler} */
 	public registerUriHandler(_handler: UriHandler): IDisposable {
 		this._logWarnOnce(
-			`API Not Implemented: vscode.window.registerUriHandler called. This is a No-Operation. Returning NOP disposable.`,
+			`API Not Implemented: vscode.window.registerUriHandler called. NOP.`,
 		);
-		// TODO (Full Implementation): This would involve RPC calls to a MainThreadUriHandler service.
 		return Disposable.None;
 	}
 
-	/**
-	 * Disposes of resources held by this shim instance, primarily its event emitters.
-	 */
 	public override dispose(): void {
-		super.dispose(); // From BaseCocoonShim
-		this._onDidChangeWindowStateEmitter.dispose();
+		super.dispose(); // BaseCocoonShim handles _instanceDisposables which includes _onDidChangeWindowStateEmitter
 		this._logInfo("Disposed.");
 	}
 }

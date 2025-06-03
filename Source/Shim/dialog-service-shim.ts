@@ -30,6 +30,7 @@
  *   - Mountain Response (Success): `{ params: UriComponentsDto | null | undefined }`
  *   - Mountain Response (Error): VineErrorPayload
  *
+ * Last Reviewed/Updated: [Date of Merge or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
 // For URI DTOs
@@ -42,11 +43,9 @@ import {
 	type SaveDialogOptions as VscodeSaveDialogOptions,
 } from "vscode";
 
-// Assuming resolved to API shim
-
 import {
 	BaseCocoonShim,
-	refineErrorForShim, // Use the more specific error refiner
+	// refineErrorForShim, // refineErrorForShim is used internally by _ipcRequestResponse
 	type ILogServiceForShim,
 	type IRpcProtocolServiceAdapter,
 } from "./_baseShim";
@@ -154,19 +153,25 @@ export class ShimExtHostDialogService
 			const defaultUriDto = this._convertApiArgToInternal(
 				options.defaultUri,
 			);
-			if (defaultUriDto && typeof defaultUriDto === "object") {
-				// Ensure it's a DTO
+			if (
+				defaultUriDto &&
+				typeof defaultUriDto === "object" &&
+				"scheme" in defaultUriDto
+			) {
 				ipcOptions.defaultUri =
 					defaultUriDto as VSCodeInternalUriComponents;
 			} else {
 				this._logWarn(
 					"Failed to marshal defaultUri for showOpenDialog, it will be omitted.",
+					"Input URI:",
 					options.defaultUri,
+					"Marshalled:",
+					defaultUriDto,
 				);
 				delete ipcOptions.defaultUri;
 			}
 		} else {
-			delete ipcOptions.defaultUri; // Ensure it's not present if options.defaultUri was null/undefined
+			delete ipcOptions.defaultUri;
 		}
 		ipcOptions.filters = this._serializeFiltersForIpc(options?.filters);
 
@@ -174,16 +179,20 @@ export class ShimExtHostDialogService
 			`showOpenDialog: Sending to Mountain via IPC 'ui_showOpenDialog'. Options (summary):`,
 			JSON.stringify({
 				...ipcOptions,
+				defaultUri: ipcOptions.defaultUri
+					? `Scheme: ${ipcOptions.defaultUri.scheme}`
+					: "none",
 				filters: ipcOptions.filters
 					? `${ipcOptions.filters.length} filter(s)`
 					: "none",
-			}).substring(0, 200) + "...",
+			}).substring(0, 250) + "...",
 		);
 
 		try {
+			// The result from _ipcRequestResponse is already the `params` field of the IPC message.
 			const resultFromMountain = (await this._ipcRequestResponse(
 				"ui_showOpenDialog",
-				ipcOptions,
+				ipcOptions, // Send the whole options object as the single param for Mountain
 				ShimExtHostDialogService.DEFAULT_DIALOG_TIMEOUT_MS,
 			)) as OpenDialogResponseFromMountain;
 
@@ -213,8 +222,9 @@ export class ShimExtHostDialogService
 
 			const uris: VscodeUri[] = [];
 			for (const uriComponent of resultFromMountain) {
+				// BaseCocoonShim._reviveApiArgument handles the conversion from DTO to VscodeUri
 				const revivedUri =
-					this._reviveApiArgument<VscodeUri>(uriComponent); // BaseCocoonShim handles revival
+					this._reviveApiArgument<VscodeUri>(uriComponent);
 				if (revivedUri instanceof VscodeUri) {
 					uris.push(revivedUri);
 				} else {
@@ -225,7 +235,7 @@ export class ShimExtHostDialogService
 					);
 				}
 			}
-			return uris.length > 0 ? uris : undefined; // Return undefined if no valid URIs were revived
+			return uris.length > 0 ? uris : undefined;
 		} catch (e: any) {
 			if (token?.isCancellationRequested) {
 				this._logDebug(
@@ -233,10 +243,10 @@ export class ShimExtHostDialogService
 				);
 				return undefined;
 			}
-			// Error already refined by _ipcRequestResponse
+			// Error is already refined by _ipcRequestResponse to be an Error instance
 			this._logError(
 				"showOpenDialog IPC request 'ui_showOpenDialog' failed:",
-				e as Error,
+				e as Error, // refineErrorForShim is implicitly called by _ipcRequestResponse
 			);
 			return undefined; // API contract: return undefined on UI error
 		}
@@ -259,13 +269,20 @@ export class ShimExtHostDialogService
 			const defaultUriDto = this._convertApiArgToInternal(
 				options.defaultUri,
 			);
-			if (defaultUriDto && typeof defaultUriDto === "object") {
+			if (
+				defaultUriDto &&
+				typeof defaultUriDto === "object" &&
+				"scheme" in defaultUriDto
+			) {
 				ipcOptions.defaultUri =
 					defaultUriDto as VSCodeInternalUriComponents;
 			} else {
 				this._logWarn(
 					"Failed to marshal defaultUri for showSaveDialog, it will be omitted.",
+					"Input URI:",
 					options.defaultUri,
+					"Marshalled:",
+					defaultUriDto,
 				);
 				delete ipcOptions.defaultUri;
 			}
@@ -278,10 +295,13 @@ export class ShimExtHostDialogService
 			`showSaveDialog: Sending to Mountain via IPC 'ui_showSaveDialog'. Options (summary):`,
 			JSON.stringify({
 				...ipcOptions,
+				defaultUri: ipcOptions.defaultUri
+					? `Scheme: ${ipcOptions.defaultUri.scheme}`
+					: "none",
 				filters: ipcOptions.filters
 					? `${ipcOptions.filters.length} filter(s)`
 					: "none",
-			}).substring(0, 200) + "...",
+			}).substring(0, 250) + "...",
 		);
 
 		try {

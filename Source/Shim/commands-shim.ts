@@ -42,13 +42,12 @@
  * - Is itself an RPC service target for calls from Mountain, identified by
  *   `ExtHostContext.ExtHostCommands`.
  * - Uses `BaseCocoonShim` for common utilities (logging, RPC proxy, basic marshalling).
- * - Uses VS Code's `validateConstraint` for argument validation if
- *   command metadata specifies constraints.
  *
+ * Last Reviewed/Updated: [Date of Merge or Placeholder]
  *--------------------------------------------------------------------------------------------*/
 
 import { VSBuffer } from "vs/base/common/buffer";
-import { DisposableStore } from "vs/base/common/lifecycle";
+import { DisposableStore, IDisposable } from "vs/base/common/lifecycle";
 import { StopWatch } from "vs/base/common/stopwatch";
 import { validateConstraint as vscodeValidateConstraint } from "vs/base/common/types.js";
 import {
@@ -61,7 +60,6 @@ import {
 	ExtensionIdentifier,
 	type IExtensionDescription,
 } from "vs/platform/extensions/common/extensions";
-// import type { ILogService } from 'vs/platform/log/common/log'; // For direct use if BaseCocoonShim's logService isn't sufficient for converter
 import { TelemetryTrustedValue } from "vs/platform/telemetry/common/telemetryUtils";
 import {
 	ExtHostContext,
@@ -76,11 +74,11 @@ import {
 } from "vs/workbench/api/common/extHost.protocol";
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry";
 import * as extHostTypeConverter from "vs/workbench/api/common/extHostTypeConverters";
-import * as extHostTypes from "vs/workbench/api/common/extHostTypes";
+import * as extHostTypes from "vs/workbench/api/common/extHostTypes"; // Renamed to avoid clash with vscode namespace
 import { SerializableObjectWithBuffers } from "vs/workbench/services/extensions/common/proxyIdentifier";
 import {
-	Disposable as VscodeDisposable,
-	type Command as VscodeCommandFromApi,
+	Disposable as VscodeDisposable, // From 'vscode' API
+	type Command as VscodeCommandFromApi, // From 'vscode' API
 } from "vscode";
 
 import { CommandsConverter as CocoonCommandsConverterInternal } from "../cocoon-type-converters";
@@ -93,9 +91,6 @@ import {
 } from "./_baseShim";
 
 // --- Custom Error Type ---
-/**
- * Custom error class for errors originating from command execution within Cocoon.
- */
 export class CocoonCommandError extends Error {
 	public readonly commandId: string;
 	public readonly extensionId?: string;
@@ -129,35 +124,30 @@ export class CocoonCommandError extends Error {
 }
 
 // --- Type Definitions ---
-
-/** Defines the RPC interface for the `MainThreadCommands` service expected on Mountain. */
 interface MainThreadCommandsProxyServiceShape {
-	$registerCommand(id: string): Promise<void>;
-	$unregisterCommand(id: string): Promise<void>;
+	$registerCommand(id: string): Promise<void>; // VS Code protocol sends ID directly
+	$unregisterCommand(id: string): Promise<void>; // VS Code protocol sends ID directly
 	$executeCommand(
-		id: string,
-		args: any[] | SerializableObjectWithBuffers<any[]>,
+		id: string, // Command ID
+		args: any[] | SerializableObjectWithBuffers<any[]>, // Arguments payload
 		retry?: boolean,
 	): Promise<any>;
 	$getCommands(): Promise<string[]>;
 	$fireCommandActivationEvent?(commandId: string): void;
 }
 
-/** Defines the RPC interface for this `ExtHostCommands` service, for methods called BY Mountain. */
 interface CocoonExtHostCommandsRpcShape {
 	$executeContributedCommand(
 		commandId: string,
-		marshalledArgs: any[], // Expecting an array from RPC
+		marshalledArgs: any, // The raw marshalled arguments from MainThread (could be array or single item if only one arg)
 	): Promise<any>;
 	$getContributedCommandMetadata(): Promise<{
-		[id: string]: ICommandMetadataDto;
+		[id: string]: ICommandMetadataDto; // Ensure this DTO is serializable
 	}>;
 }
 
-/** DTO for command metadata sent over RPC. */
 type CommandMetadataDtoShim = ICommandMetadataDto;
 
-/** Internal structure for storing command registration details. */
 interface CommandHandlerEntry {
 	callback: Function;
 	thisArg: any;
@@ -165,7 +155,6 @@ interface CommandHandlerEntry {
 	extension?: IExtensionDescription;
 }
 
-/** Interface for argument processors used by $executeContributedCommand. */
 export interface ArgumentProcessor {
 	processArgument(
 		arg: any,
@@ -174,16 +163,16 @@ export interface ArgumentProcessor {
 	): any;
 }
 
-// --- API Command Definition (align with VS Code's internal structure) ---
+// --- API Command Definition ---
 export class ApiCommandArgument<V_ApiType, O_DtoType = V_ApiType> {
 	static readonly Uri = new ApiCommandArgument<
-		extHostTypes.URI,
-		UriComponents
+		extHostTypes.URI, // vscode.Uri (API type)
+		UriComponents // DTO for RPC
 	>(
 		"uri",
 		"Uri of a text document",
-		(v) => v instanceof VscodeUriInternal,
-		(v) => v.toJSON(),
+		(v): v is extHostTypes.URI => v instanceof VscodeUriInternal, // Check against VS Code's internal URI type
+		(v) => v.toJSON(), // Convert API type to DTO
 	);
 	static readonly Position = new ApiCommandArgument<
 		extHostTypes.Position,
@@ -191,7 +180,7 @@ export class ApiCommandArgument<V_ApiType, O_DtoType = V_ApiType> {
 	>(
 		"position",
 		"A position in a text document",
-		(v) => v instanceof extHostTypes.Position,
+		(v): v is extHostTypes.Position => v instanceof extHostTypes.Position,
 		extHostTypeConverter.Position.from,
 	);
 	static readonly Range = new ApiCommandArgument<
@@ -200,7 +189,7 @@ export class ApiCommandArgument<V_ApiType, O_DtoType = V_ApiType> {
 	>(
 		"range",
 		"A range in a text document",
-		(v) => v instanceof extHostTypes.Range,
+		(v): v is extHostTypes.Range => v instanceof extHostTypes.Range,
 		extHostTypeConverter.Range.from,
 	);
 	static readonly Selection = new ApiCommandArgument<
@@ -209,33 +198,33 @@ export class ApiCommandArgument<V_ApiType, O_DtoType = V_ApiType> {
 	>(
 		"selection",
 		"A selection in a text document",
-		(v) => v instanceof extHostTypes.Selection,
+		(v): v is extHostTypes.Selection => v instanceof extHostTypes.Selection,
 		extHostTypeConverter.Selection.from,
 	);
 	static readonly Number = new ApiCommandArgument<number>(
 		"number",
 		"",
-		(v) => typeof v === "number",
+		(v): v is number => typeof v === "number",
 		(v) => v,
 	);
 	static readonly String = new ApiCommandArgument<string>(
 		"string",
 		"",
-		(v) => typeof v === "string",
+		(v): v is string => typeof v === "string",
 		(v) => v,
 	);
 	static readonly Boolean = new ApiCommandArgument<boolean>(
 		"boolean",
 		"",
-		(v) => typeof v === "boolean",
+		(v): v is boolean => typeof v === "boolean",
 		(v) => v,
 	);
 	static readonly Object = new ApiCommandArgument<object>(
 		"object",
 		"",
-		(v) => typeof v === "object",
+		(v): v is object => typeof v === "object",
 		(v) => v,
-	); // Careful with 'object', might need deep conversion
+	);
 	static readonly StringArray: ApiCommandArgument<string[]> =
 		ApiCommandArgument.Arr(ApiCommandArgument.String);
 
@@ -256,7 +245,6 @@ export class ApiCommandArgument<V_ApiType, O_DtoType = V_ApiType> {
 		readonly name: string,
 		readonly description: string,
 		readonly validate: (v: V_ApiType) => boolean,
-		// Converts API type V_ApiType to internal/DTO type O_DtoType for sending TO MainThread
 		readonly convert: (
 			v: V_ApiType,
 			uriTransformer?: IURITransformer,
@@ -280,7 +268,6 @@ export class ApiCommandArgument<V_ApiType, O_DtoType = V_ApiType> {
 						: this.convert(value, uriTransformer),
 		);
 	}
-
 	public with(
 		name: string | undefined,
 		description: string | undefined,
@@ -307,73 +294,57 @@ export class ApiCommandResult<V_InternalDTO, R_ApiType = V_InternalDTO> {
 		"boolean result",
 		(v) => v,
 	);
-	// Add more static results as needed, e.g., for URI, Position, etc.
 
 	constructor(
 		readonly description: string,
-		// Converts internal/DTO type V_InternalDTO (received FROM MainThread) to API type R_ApiType
 		readonly convert: (
 			value: V_InternalDTO,
 			uriTransformer?: IURITransformer,
-			_originalApiArgs?: any[], // For reviving args originally passed if result conversion depends on them
-			_commandsConverter?: CocoonCommandsConverterInternal, // For reviving nested commands in results
+			_originalApiArgs?: any[],
+			_commandsConverter?: CocoonCommandsConverterInternal,
 		) => R_ApiType,
 	) {}
 }
 
 export class ApiCommand {
 	constructor(
-		readonly id: string, // Public API command ID
-		readonly internalId: string, // Internal command ID used for RPC (e.g., prefixed)
+		readonly id: string,
+		readonly internalId: string,
 		readonly description: string,
 		readonly args: ApiCommandArgument<any, any>[],
 		readonly result: ApiCommandResult<any, any>,
 	) {}
 }
 
-// Helper for stubs in BUILTIN_COMMANDS
-function _cocoonWarnStub(context: string, method: string, message?: string) {
-	console.warn(
-		`COCOON STUB: ${context}#${method} - ${message || "Not fully implemented or requires review."}`,
-	);
-}
-
-// --- Known API Commands (Examples - this list needs to be populated extensively) ---
 const BUILTIN_COMMANDS: ReadonlyArray<ApiCommand> = [
 	new ApiCommand(
-		"vscode.open", // Public ID
-		"_workbench.open", // Internal ID used for RPC with MainThread
+		"vscode.open",
+		"_workbench.open",
 		"Opens the given resource with the given options.",
 		[
-			new ApiCommandArgument<extHostTypes.URI, UriComponents>(
+			ApiCommandArgument.Uri.with(
 				"resourceUri",
 				"URI of the resource to open",
-				(v) => v instanceof VscodeUriInternal,
-				(v) => v.toJSON(),
 			),
 			new ApiCommandArgument<
 				| extHostTypes.ViewColumn
 				| extHostTypes.TextDocumentShowOptions
 				| undefined,
 				ExtHostProtocolEditorGroupColumn | any | undefined
-			>( // Second type is DTO
+			>(
 				"columnOrOptions",
 				"(optional) View column or editor options",
 				(v) =>
 					v === undefined ||
 					typeof v === "number" ||
-					typeof v === "object", // vscode.ViewColumn is number
+					typeof v === "object",
 				(v, uriTransformer) => {
 					if (typeof v === "object" && v !== null) {
-						// ITextDocumentShowOptions
-						// A real one would use a proper DTO and revive/marshal URIs in options
-						// Assuming extHostTypeConverter.TextEditorOpenOptions.from handles this
 						return extHostTypeConverter.TextEditorOpenOptions.from(
 							v as extHostTypes.TextDocumentShowOptions,
 							uriTransformer,
 						);
 					}
-					// If number, it's a ViewColumn
 					return v !== undefined
 						? extHostTypeConverter.ViewColumn.from(
 								v as extHostTypes.ViewColumn,
@@ -381,37 +352,23 @@ const BUILTIN_COMMANDS: ReadonlyArray<ApiCommand> = [
 						: undefined;
 				},
 			).optional(),
-			new ApiCommandArgument<string | undefined, string | undefined>( // label for the editor
+			ApiCommandArgument.String.with(
 				"label",
 				"(optional) Label for the editor",
-				(v) => v === undefined || typeof v === "string",
-				(v) => v,
 			).optional(),
 		],
-		ApiCommandResult.Void, // Typically opens editor, result not directly used by caller
+		ApiCommandResult.Void,
 	),
 	new ApiCommand(
 		"vscode.diff",
 		"_workbench.diff",
 		"Opens the diff editor for the given resources.",
 		[
-			new ApiCommandArgument<extHostTypes.URI, UriComponents>(
-				"left",
-				"Left resource URI",
-				(v) => v instanceof VscodeUriInternal,
-				(v) => v.toJSON(),
-			),
-			new ApiCommandArgument<extHostTypes.URI, UriComponents>(
-				"right",
-				"Right resource URI",
-				(v) => v instanceof VscodeUriInternal,
-				(v) => v.toJSON(),
-			),
-			new ApiCommandArgument<string | undefined, string | undefined>(
+			ApiCommandArgument.Uri.with("left", "Left resource URI"),
+			ApiCommandArgument.Uri.with("right", "Right resource URI"),
+			ApiCommandArgument.String.with(
 				"title",
 				"(optional) Title for diff editor",
-				(v) => v === undefined || typeof v === "string",
-				(v) => v,
 			).optional(),
 			new ApiCommandArgument<
 				extHostTypes.TextDocumentShowOptions | undefined,
@@ -429,24 +386,14 @@ const BUILTIN_COMMANDS: ReadonlyArray<ApiCommand> = [
 		ApiCommandResult.Void,
 	),
 	new ApiCommand(
-		"vscode.executeHoverProvider", // Example name, actual is different
-		"_editor.executeHoverProvider", // Example internal name
+		"vscode.executeHoverProvider",
+		"_editor.executeHoverProvider",
 		"Triggers hover provider execution.",
-		[
-			ApiCommandArgument.Uri, // resource
-			ApiCommandArgument.Position, // position
-		],
+		[ApiCommandArgument.Uri, ApiCommandArgument.Position],
 		new ApiCommandResult<ExtHostProtocolHoverDto[], extHostTypes.Hover[]>(
 			"Array of hovers",
-			(internalHovers, _uriTransformer, _origArgs, cmdConverter) => {
+			(internalHovers) => {
 				if (!internalHovers) return [];
-				// This is where a proper HoverConverter.toApiType would be used.
-				// extHostTypeConverter.Hover.to moves from DTO to API type
-				_cocoonWarnStub(
-					"ApiCommandResult(executeHoverProvider)",
-					"convert",
-					"Ensure extHostTypeConverter.Hover.to is correct.",
-				);
 				return internalHovers.map(
 					(h) =>
 						extHostTypeConverter.Hover.to(h) ||
@@ -456,19 +403,16 @@ const BUILTIN_COMMANDS: ReadonlyArray<ApiCommand> = [
 		),
 	),
 ];
-// --- End Known API Commands ---
 
-/** Cocoon's implementation of `IExtHostCommands`. */
 export class ShimExtHostCommands
 	extends BaseCocoonShim
 	implements CocoonExtHostCommandsRpcShape
 {
-	public readonly _serviceBrand: undefined; // Required for IExtHostCommands DI
-
+	public readonly _serviceBrand: undefined;
 	readonly #mainThreadCmdProxy: MainThreadCommandsProxyServiceShape | null =
 		null;
 	readonly #commands = new Map<string, CommandHandlerEntry>();
-	readonly #apiCommands = new Map<string, ApiCommand>(); // For known API commands with marshalling defs
+	readonly #apiCommands = new Map<string, ApiCommand>();
 	readonly #extHostTelemetry?: IExtHostTelemetry;
 	readonly #argumentProcessors: ArgumentProcessor[] = [];
 	readonly converter: CocoonCommandsConverterInternal;
@@ -477,23 +421,21 @@ export class ShimExtHostCommands
 		rpcService: IRpcProtocolServiceAdapter | undefined,
 		logService: ILogServiceForShim | undefined,
 		extHostTelemetry?: IExtHostTelemetry,
-		uriTransformer?: IURITransformer | null, // Injected for converter
+		uriTransformer?: IURITransformer | null,
 	) {
 		super("ExtHostCommands", rpcService, logService);
 		this._logInfo("Initializing with CocoonCommandsConverterInternal...");
 		this.#extHostTelemetry = extHostTelemetry;
-
 		this.converter = new CocoonCommandsConverterInternal(
-			this as any, // Pass self for executeCommand and _reviveApiArgument access from converter
+			this as any,
 			this._logService,
-			(id: string) => this.#apiCommands.get(id), // Provide lookup for API commands
-			uriTransformer || undefined, // Pass URI transformer
+			(id) => this.#apiCommands.get(id),
+			uriTransformer || undefined,
 		);
 		this._logInfo(
 			`CommandsConverter initialized. Delegating command ID: ${this.converter.delegatingCommandId}`,
 		);
 
-		// Populate #apiCommands with built-in definitions
 		for (const apiCmd of BUILTIN_COMMANDS) {
 			if (this.#apiCommands.has(apiCmd.id)) {
 				this._logWarn(
@@ -507,14 +449,8 @@ export class ShimExtHostCommands
 			`Initialized ${this.#apiCommands.size} built-in API command definitions.`,
 		);
 
-		// Default Argument Processor for arguments coming FROM MainThread TO an extension's command handler.
 		this.registerArgumentProcessor({
-			processArgument: (
-				arg: any,
-				_extensionSource: IExtensionDescription | undefined,
-				_commandId: string,
-			) => {
-				// If arg is an ICommandDto, convert it to vscode.Command
+			processArgument: (arg: any) => {
 				if (
 					arg &&
 					(arg.$ident ||
@@ -524,12 +460,8 @@ export class ShimExtHostCommands
 					const potentialCommand = this.converter.fromInternal(
 						arg as ICommandDto,
 					);
-					if (potentialCommand) {
-						// if fromInternal returns something, it's a command
-						return potentialCommand;
-					}
+					if (potentialCommand) return potentialCommand;
 				}
-				// Fallback to generic revival for other types (URIs, etc.)
 				return this._reviveApiArgument(arg);
 			},
 		});
@@ -574,25 +506,23 @@ export class ShimExtHostCommands
 		);
 		if (this.#apiCommands.has(apiCommand.id)) {
 			this._logService?.warn(
-				`[ExtHostCommands] API command '${apiCommand.id}' is already registered. Overwriting definition. Handler will also be overwritten if ID is the same.`,
+				`[ExtHostCommands] API command '${apiCommand.id}' is already registered. Overwriting definition.`,
 			);
 		}
 		this.#apiCommands.set(apiCommand.id, apiCommand);
 
-		// Register the public-facing command that an extension would call via vscode.commands.executeCommand(apiCommand.id, ...)
 		const registration = this.registerCommand(
-			false, // API commands are typically not "global" in the sense of needing explicit MainThread $registerCommand. Their internal counterparts are.
+			false,
 			apiCommand.id,
 			async (...apiArgs: any[]) => {
 				this._logService?.trace(
 					`[ExtHostCommands] API command '${apiCommand.id}' invoked with ${apiArgs.length} arguments.`,
 				);
-				// 1. Validate and Convert API arguments to internal/DTO types using ApiCommandArgument.convert
 				const internalArgs = apiCommand.args.map((argDef, i) => {
 					const apiArgValue = apiArgs[i];
 					if (!argDef.validate(apiArgValue)) {
 						const err = new Error(
-							`Invalid argument '${argDef.name}' provided for API command '${apiCommand.id}'. Failed validation for value: ${apiArgValue}`,
+							`Invalid argument '${argDef.name}' for API command '${apiCommand.id}'. Value: ${apiArgValue}`,
 						);
 						this._logService?.error(
 							`[ExtHostCommands] ${err.message}`,
@@ -606,7 +536,7 @@ export class ShimExtHostCommands
 						);
 					} catch (convErr: any) {
 						const err = new Error(
-							`Error converting argument '${argDef.name}' for API command '${apiCommand.id}': ${convErr.message}`,
+							`Error converting arg '${argDef.name}' for '${apiCommand.id}': ${convErr.message}`,
 						);
 						this._logService?.error(
 							`[ExtHostCommands] ${err.message}`,
@@ -619,8 +549,6 @@ export class ShimExtHostCommands
 					`[ExtHostCommands] API command '${apiCommand.id}', converted args:`,
 					internalArgs,
 				);
-
-				// 2. Execute the *internal* command (which might be an RPC call to MainThread)
 				const internalResult = await this.executeCommand(
 					apiCommand.internalId,
 					...internalArgs,
@@ -629,8 +557,6 @@ export class ShimExtHostCommands
 					`[ExtHostCommands] API command '${apiCommand.id}', internal result:`,
 					internalResult,
 				);
-
-				// 3. Convert internal/DTO result back to API type using ApiCommandResult.convert
 				try {
 					return apiCommand.result.convert(
 						internalResult,
@@ -640,7 +566,7 @@ export class ShimExtHostCommands
 					);
 				} catch (convErr: any) {
 					const err = new Error(
-						`Error converting result for API command '${apiCommand.id}': ${convErr.message}`,
+						`Error converting result for '${apiCommand.id}': ${convErr.message}`,
 					);
 					this._logService?.error(
 						`[ExtHostCommands] ${err.message}`,
@@ -649,9 +575,8 @@ export class ShimExtHostCommands
 					throw err;
 				}
 			},
-			undefined, // thisArg for the callback
+			undefined,
 			{
-				// Command metadata for the public API command visible to extensions
 				description: apiCommand.description,
 				args: apiCommand.args.map((a) => ({
 					name: a.name,
@@ -659,15 +584,13 @@ export class ShimExtHostCommands
 					constraint: undefined,
 					schema: undefined,
 				})),
-				// `returns` isn't a standard ICommandMetadata field but good for documentation
 				// @ts-ignore
 				returns: apiCommand.result.description,
 			},
 		);
-
 		return new VscodeDisposable(() => {
-			registration.dispose(); // Unregisters the command handler
-			this.#apiCommands.delete(apiCommand.id); // Remove the API command definition
+			registration.dispose();
+			this.#apiCommands.delete(apiCommand.id);
 			this._logService?.debug(
 				`[ExtHostCommands] Unregistered API command: ${apiCommand.id}`,
 			);
@@ -675,36 +598,66 @@ export class ShimExtHostCommands
 	}
 
 	public registerCommand(
-		global: boolean, // True if command should be advertised to MainThread via $registerCommand
-		commandId: string,
-		callback: <T>(...args: any[]) => T | Promise<T>,
-		thisArg?: any,
-		options?: {
-			// Options for the command registration itself
+		globalOrId: boolean | string, // Overload: `global` boolean or `id` string
+		idOrCallback: string | ((...args: any[]) => any),
+		callbackOrThisArg?: ((...args: any[]) => any) | any,
+		thisArgOrOptions?:
+			| any
+			| {
+					metadata?: ICommandMetadata;
+					extension?: IExtensionDescription;
+			  },
+		optionsParam?: {
 			metadata?: ICommandMetadata;
 			extension?: IExtensionDescription;
 		},
 	): VscodeDisposable {
+		let commandId: string;
+		let callback: (...args: any[]) => any;
+		let thisArg: any;
+		let options:
+			| {
+					metadata?: ICommandMetadata;
+					extension?: IExtensionDescription;
+					global?: boolean;
+			  }
+			| undefined;
+		let isGlobal: boolean = true; // Default global registration to true
+
+		if (typeof globalOrId === "string") {
+			// Standard signature: registerCommand(id, callback, thisArg?)
+			commandId = globalOrId;
+			callback = idOrCallback as (...args: any[]) => any;
+			thisArg = callbackOrThisArg;
+			// options = thisArgOrOptions as { metadata?: ICommandMetadata; extension?: IExtensionDescription; }; // VS Code doesn't have this overload
+		} else {
+			// Cocoon specific signature: registerCommand(globalBoolean, id, callback, thisArg?, options?)
+			isGlobal = globalOrId;
+			commandId = idOrCallback as string;
+			callback = callbackOrThisArg as (...args: any[]) => any;
+			thisArg = thisArgOrOptions;
+			options = optionsParam;
+		}
+		options = options || {};
+		if (typeof globalOrId !== "string") {
+			// If first arg was boolean for global
+			options.global = isGlobal;
+		}
+
 		const extensionIdStr =
 			options?.extension?.identifier.value || "unknown_extension";
 		this._logDebug(
-			`Registering command: ID='${commandId}', Global=${global}, FromExt='${extensionIdStr}'`,
+			`Registering command: ID='${commandId}', Global=${options?.global ?? true}, FromExt='${extensionIdStr}'`,
 		);
 
-		if (
-			!commandId ||
-			typeof commandId !== "string" ||
-			!commandId.trim().length
-		) {
-			throw new Error("Command ID cannot be empty or invalid.");
-		}
-		if (typeof callback !== "function") {
+		if (!commandId || !commandId.trim().length)
+			throw new Error("Command ID cannot be empty.");
+		if (typeof callback !== "function")
 			throw new Error("Command callback must be a function.");
-		}
 		if (this.#commands.has(commandId)) {
-			const errorMsg = `Command '${commandId}' from extension '${extensionIdStr}' is already registered. Overwriting. Note: VS Code typically throws here.`;
-			this._logError(errorMsg);
-			// For stricter compatibility, uncomment: throw new Error(errorMsg);
+			this._logError(
+				`Command '${commandId}' from ext '${extensionIdStr}' already registered. Overwriting. (VS Code might throw).`,
+			);
 		}
 
 		this.#commands.set(commandId, {
@@ -714,12 +667,12 @@ export class ShimExtHostCommands
 			extension: options?.extension,
 		});
 
-		if (global && this.#mainThreadCmdProxy) {
+		if ((options?.global ?? true) && this.#mainThreadCmdProxy) {
 			this.#mainThreadCmdProxy
 				.$registerCommand(commandId)
 				.then(() =>
 					this._logDebug(
-						`Command '${commandId}' successfully registered with MainThread.`,
+						`Command '${commandId}' registered with MainThread.`,
 					),
 				)
 				.catch((e) =>
@@ -732,9 +685,9 @@ export class ShimExtHostCommands
 						),
 					),
 				);
-		} else if (global && !this.#mainThreadCmdProxy) {
+		} else if ((options?.global ?? true) && !this.#mainThreadCmdProxy) {
 			this._logWarn(
-				`Cannot globally register command '${commandId}': MainThreadCommands proxy unavailable. Command is local only.`,
+				`Cannot globally register command '${commandId}': MainThread proxy unavailable. Local only.`,
 			);
 		}
 
@@ -747,12 +700,12 @@ export class ShimExtHostCommands
 			);
 			if (this.#commands.delete(commandId)) {
 				this._logDebug(`Command '${commandId}' unregistered locally.`);
-				if (global && this.#mainThreadCmdProxy) {
+				if ((options?.global ?? true) && this.#mainThreadCmdProxy) {
 					this.#mainThreadCmdProxy
 						.$unregisterCommand(commandId)
 						.then(() =>
 							this._logDebug(
-								`Command '${commandId}' successfully unregistered from MainThread.`,
+								`Command '${commandId}' unregistered from MainThread.`,
 							),
 						)
 						.catch((e) =>
@@ -781,14 +734,11 @@ export class ShimExtHostCommands
 		return this._doExecuteCommand<T>(commandId, args, true);
 	}
 
-	// Helper for ExtHostCommands to marshal arguments for sending to MainThread
-	// Used by _doExecuteCommand when calling this.#mainThreadCmdProxy.$executeCommand
 	public _convertArgumentsToInternal(
 		args: any[],
 		callDisposables: DisposableStore,
 	): any[] {
 		return args.map((arg) => {
-			// Check if it's a vscode.Command object using heuristic or type VscodeCommandFromApi
 			if (
 				arg &&
 				typeof arg.command === "string" &&
@@ -799,32 +749,24 @@ export class ShimExtHostCommands
 					callDisposables,
 				);
 			}
-			// For other types, use the basic marshaller from BaseCocoonShim
-			// This assumes _convertApiArgToInternal handles URIs, etc. correctly using uriTransformer if needed,
-			// or that such complex objects are handled by ApiCommand definitions.
 			return this._convertApiArgToInternal(arg);
 		});
 	}
 
-	// Helper for ExtHostCommands to revive arguments received from MainThread
-	// Used by $executeContributedCommand and for results in _doExecuteCommand
 	public _reviveArguments(marshalledArgs: any[] | undefined): any[] {
 		if (!marshalledArgs || !Array.isArray(marshalledArgs)) return [];
 		return marshalledArgs.map((arg) => {
-			// Check if the marshalled arg looks like an ICommandDto that needs specific revival
 			if (
 				arg &&
 				(arg.$ident ||
 					(typeof arg.id === "string" &&
 						typeof arg.title === "string"))
 			) {
-				// Heuristic for ICommandDto
 				const potentialCommand = this.converter.fromInternal(
 					arg as ICommandDto,
 				);
 				if (potentialCommand) return potentialCommand;
 			}
-			// Basic revival for other types (URIs, simple DTOs not handled by converter.fromInternal specifically)
 			return this._reviveApiArgument(arg);
 		});
 	}
@@ -841,15 +783,14 @@ export class ShimExtHostCommands
 			this._logDebug(
 				`Executing command '${commandId}' locally in Cocoon.`,
 			);
-			this.#mainThreadCmdProxy?.$fireCommandActivationEvent?.(commandId); // Fire-and-forget
+			this.#mainThreadCmdProxy?.$fireCommandActivationEvent?.(commandId);
 			try {
 				const result = await this._executeContributedCommandLocal<T>(
 					commandId,
-					args, // Args are already in API shape for local execution
-					false, // isExternalCall = false
+					args,
+					false,
 					commandHandlerEntry,
 				);
-				// Telemetry for local success
 				this._reportTelemetry(
 					commandHandlerEntry,
 					commandId,
@@ -858,12 +799,7 @@ export class ShimExtHostCommands
 				);
 				return result;
 			} catch (error) {
-				// Telemetry for local failure is handled by _executeContributedCommandLocal,
-				// but let's ensure it's comprehensive or add one here if _executeContributedCommandLocal only logs.
-				// _executeContributedCommandLocal calls _reportTelemetry on failure for its own error,
-				// but we might want a specific one here for the overall _doExecuteCommand context.
-				// For now, assuming _executeContributedCommandLocal's telemetry is sufficient.
-				throw error; // Rethrow the (potentially wrapped) error
+				throw error;
 			}
 		} else {
 			this._logDebug(
@@ -879,25 +815,20 @@ export class ShimExtHostCommands
 					true,
 					errorMsg,
 					false,
-				); // No command entry, so pass undefined
+				);
 				throw new Error(errorMsg);
 			}
 
 			const callDisposables = new DisposableStore();
 			let marshalledArgsForRpc: any[];
-			let hasBuffers = false;
-
-			// If this command is a known API command, use its specific argument converters
 			const apiCommandDef = this.#apiCommands.get(commandId);
+
 			if (apiCommandDef) {
 				this._logService?.trace(
 					`Using ApiCommand definition for marshalling args of '${commandId}'.`,
 				);
 				marshalledArgsForRpc = apiCommandDef.args.map((argDef, i) => {
 					const apiArgValue = args[i];
-					// We assume validation happened at a higher level if executeCommand was called directly
-					// with an API command ID. If not, validation should be added.
-					// For now, focus on conversion.
 					try {
 						return argDef.convert(
 							apiArgValue,
@@ -905,24 +836,20 @@ export class ShimExtHostCommands
 						);
 					} catch (convErr: any) {
 						this._logError(
-							`Error converting argument '${argDef.name}' for API command '${commandId}' during remote execution:`,
+							`Error converting arg '${argDef.name}' for API cmd '${commandId}':`,
 							convErr,
 						);
-						throw new Error(
-							`Failed to convert argument ${argDef.name} for ${commandId}`,
-						);
+						throw new Error(`Failed to convert arg ${argDef.name}`);
 					}
 				});
 			} else {
-				// Generic marshalling using _convertArgumentsToInternal (handles vscode.Command and basic types)
 				marshalledArgsForRpc = this._convertArgumentsToInternal(
 					args,
 					callDisposables,
 				);
 			}
 
-			// Check for buffers after conversion
-			hasBuffers = marshalledArgsForRpc.some(
+			const hasBuffers = marshalledArgsForRpc.some(
 				(arg) =>
 					arg instanceof VSBuffer ||
 					(arg &&
@@ -930,7 +857,6 @@ export class ShimExtHostCommands
 						arg.type === "Buffer" &&
 						arg.data),
 			);
-
 			const rpcArgsPayload = hasBuffers
 				? new SerializableObjectWithBuffers(marshalledArgsForRpc)
 				: marshalledArgsForRpc;
@@ -938,14 +864,13 @@ export class ShimExtHostCommands
 			try {
 				const resultFromRpc =
 					await this.#mainThreadCmdProxy.$executeCommand(
-						apiCommandDef ? apiCommandDef.internalId : commandId, // Use internalId if API command
+						apiCommandDef ? apiCommandDef.internalId : commandId,
 						rpcArgsPayload,
 						allowRetry,
 					);
 				this._logService?.trace(
-					`Remote command '${commandId}' executed by Mountain. Reviving result...`,
+					`Remote command '${commandId}' executed. Reviving result...`,
 				);
-
 				let finalResult: T;
 				if (apiCommandDef) {
 					try {
@@ -957,7 +882,7 @@ export class ShimExtHostCommands
 						) as T;
 					} catch (convErr: any) {
 						this._logError(
-							`Error converting result for API command '${commandId}' from remote execution:`,
+							`Error converting result for API cmd '${commandId}':`,
 							convErr,
 						);
 						throw new Error(
@@ -965,12 +890,10 @@ export class ShimExtHostCommands
 						);
 					}
 				} else {
-					// Generic revival using _reviveArguments (handles ICommandDto and basic types)
 					finalResult = this._reviveArguments([
 						resultFromRpc,
 					])[0] as T;
 				}
-
 				this._reportTelemetry(
 					undefined,
 					commandId,
@@ -978,7 +901,7 @@ export class ShimExtHostCommands
 					false,
 					undefined,
 					false,
-				); // No local command entry
+				);
 				return finalResult;
 			} catch (e: any) {
 				if (
@@ -986,11 +909,9 @@ export class ShimExtHostCommands
 					e.message === "$executeCommand:retry" &&
 					allowRetry
 				) {
-					this._logInfo(
-						`Retrying command '${commandId}' as requested by Mountain.`,
-					);
-					callDisposables.dispose(); // Dispose previous attempt's disposables
-					return this._doExecuteCommand<T>(commandId, args, false); // No more retries
+					this._logInfo(`Retrying command '${commandId}'.`);
+					callDisposables.dispose();
+					return this._doExecuteCommand<T>(commandId, args, false);
 				}
 				const refinedError = refineErrorForShim(
 					e,
@@ -998,7 +919,7 @@ export class ShimExtHostCommands
 					`executeRemoteCommand(${commandId})`,
 				);
 				this._logError(
-					`Error executing remote command '${commandId}' via RPC: ${refinedError.message}`,
+					`Error executing remote command '${commandId}': ${refinedError.message}`,
 					refinedError,
 				);
 				this._reportTelemetry(
@@ -1019,27 +940,23 @@ export class ShimExtHostCommands
 	private async _executeContributedCommandLocal<T = unknown>(
 		commandId: string,
 		args: any[],
-		isExternalCall: boolean, // True if called via RPC from Mountain
+		isExternalCall: boolean,
 		commandReg: CommandHandlerEntry,
 	): Promise<T> {
 		const { callback, thisArg, extension, metadata } = commandReg;
 		const extensionIdStr =
 			extension?.identifier.value || "unknown_source_extension";
-		const stopWatch = StopWatch.create(); // Timer for this specific local execution part
+		const stopWatch = StopWatch.create();
 
-		// Argument Validation (if metadata with constraints is provided)
 		if (metadata?.args) {
 			for (let i = 0; i < metadata.args.length; i++) {
 				const argMeta = metadata.args[i];
 				if (argMeta.constraint && args[i] !== undefined) {
-					// Only validate if arg provided
 					try {
 						vscodeValidateConstraint(args[i], argMeta.constraint);
 					} catch (validationError: any) {
-						const msg =
-							`Argument validation failed for command '${commandId}' (Ext: ${extensionIdStr}), argument '${argMeta.name || `index ${i}`}'. ` +
-							`Description: ${argMeta.description || "N/A"}. Error: ${validationError.message}`;
-						this._logError(msg, "Provided Arg:", args[i]);
+						const msg = `Arg validation failed for cmd '${commandId}' (Ext: ${extensionIdStr}), arg '${argMeta.name || `index ${i}`}'. Desc: ${argMeta.description || "N/A"}. Err: ${validationError.message}`;
+						this._logError(msg, "Arg:", args[i]);
 						const cocoonError = new CocoonCommandError(
 							new Error(
 								`Illegal argument '${argMeta.name || `index ${i}`}' - ${argMeta.description || "Validation failed"}. Reason: ${validationError.message}`,
@@ -1066,10 +983,7 @@ export class ShimExtHostCommands
 				`Invoking local command '${commandId}' from ext '${extensionIdStr}' (isExternalCall: ${isExternalCall}).`,
 			);
 			const result = await callback.apply(thisArg, args);
-			// Telemetry for successful local execution (if not already done by caller like _doExecuteCommand)
-			// This one is specifically for the contributed command's successful run.
 			if (isExternalCall) {
-				// If called from RPC, _doExecuteCommand path isn't taken.
 				this._reportTelemetry(
 					commandReg,
 					commandId,
@@ -1087,15 +1001,12 @@ export class ShimExtHostCommands
 					executionError.name === "Canceled"
 				)
 			) {
-				// VscodeCancellationError
 				this._logError(
-					`Error during local execution of command '${commandId}' (from ext: ${extensionIdStr}):`,
+					`Error during local execution of cmd '${commandId}' (from ext: ${extensionIdStr}):`,
 					executionError,
 				);
 			}
-
 			if (this.#extHostTelemetry && extension) {
-				// Report to extension error telemetry
 				this.#extHostTelemetry.onExtensionError(
 					extension.identifier,
 					executionError instanceof Error
@@ -1123,31 +1034,30 @@ export class ShimExtHostCommands
 		}
 	}
 
-	// --- RPC Methods called BY Mountain (CocoonExtHostCommandsRpcShape) ---
 	public async $executeContributedCommand(
 		commandId: string,
-		marshalledArgsFromMain: any[], // Expecting an array from RPC
+		marshalledArgsFromMain: any,
 	): Promise<any> {
 		this._logDebug(
-			`RPC $executeContributedCommand: Received call for ID='${commandId}' from Mountain.`,
+			`RPC $executeContributedCommand: ID='${commandId}' from Mountain.`,
 		);
 		const cmdHandlerEntry = this.#commands.get(commandId);
 		if (!cmdHandlerEntry) {
 			const errMsg = `RPC $executeContributedCommand: Command '${commandId}' not found locally in Cocoon.`;
 			this._logError(errMsg);
-			// Report telemetry for this failure case
 			this._reportTelemetry(undefined, commandId, 0, true, errMsg, true);
 			return Promise.reject(new Error(errMsg));
 		}
 
-		// Revive arguments using the new _reviveArguments helper which uses the converter
-		// These args are for the extension's callback.
 		const revivedArgsForCallback = this._reviveArguments(
-			marshalledArgsFromMain || [],
+			Array.isArray(marshalledArgsFromMain)
+				? marshalledArgsFromMain
+				: marshalledArgsFromMain === undefined ||
+					  marshalledArgsFromMain === null
+					? []
+					: [marshalledArgsFromMain],
 		);
 
-		// Use registered ArgumentProcessors (these are for deeper/custom transformations if needed)
-		// Typically, _reviveArguments should handle most cases like URIs and vscode.Command revival.
 		let processedArgsArray = revivedArgsForCallback;
 		for (const processor of this.#argumentProcessors) {
 			processedArgsArray = processedArgsArray.map((arg) =>
@@ -1160,19 +1070,14 @@ export class ShimExtHostCommands
 		}
 
 		try {
-			// _executeContributedCommandLocal handles its own detailed telemetry for success/failure of the callback
 			const result = await this._executeContributedCommandLocal(
 				commandId,
 				processedArgsArray,
-				true, // isExternalCall = true
+				true,
 				cmdHandlerEntry,
 			);
-
-			// Result needs to be marshalled back to MainThread.
-			// Use _convertArgumentsToInternal which uses the converter for vscode.Command etc.
 			const callDisposables = new DisposableStore();
 			try {
-				// _convertArgumentsToInternal expects an array and returns an array
 				const marshalledResultArray = this._convertArgumentsToInternal(
 					[result],
 					callDisposables,
@@ -1182,15 +1087,12 @@ export class ShimExtHostCommands
 				callDisposables.dispose();
 			}
 		} catch (error) {
-			// Error is already a CocoonCommandError from _executeContributedCommandLocal
-			// Telemetry already reported by _executeContributedCommandLocal for the failure.
-			// Refine for RPC transport if it's not already a plain serializable error.
 			const serializableError = refineErrorForShim(
 				error,
 				this._logService,
 				`$executeContributedCommand(${commandId}) RPC`,
 			);
-			throw serializableError; // This will be caught by RPCProtocol and sent as VineErrorResponse
+			throw serializableError;
 		}
 	}
 
@@ -1202,10 +1104,6 @@ export class ShimExtHostCommands
 		);
 		const allMetadata: { [id: string]: CommandMetadataDtoShim } = {};
 		for (const [id, commandReg] of this.#commands) {
-			// Ensure ICommandMetadata is serializable or convert to CommandMetadataDtoShim.
-			// VS Code's ICommandMetadataDto includes description, and array of args (name, description, constraint, schema).
-			// Our ICommandMetadata currently only has 'description' and 'args' as optional.
-			// For now, provide what we have.
 			const metadata: CommandMetadataDtoShim = {
 				description:
 					commandReg.metadata?.description ||
@@ -1214,10 +1112,11 @@ export class ShimExtHostCommands
 					commandReg.metadata?.args?.map((a) => ({
 						name: a.name || "",
 						description: a.description || "",
-						constraint: a.constraint as any, // May need proper mapping
-						schema: a.schema as any, // May need proper mapping
+						constraint: a.constraint as any,
+						schema: a.schema as any,
 					})) || [],
-				returns: (commandReg.metadata as any)?.returns, // If we added this
+				// @ts-ignore
+				returns: (commandReg.metadata as any)?.returns,
 			};
 			allMetadata[id] = metadata;
 		}
@@ -1247,8 +1146,7 @@ export class ShimExtHostCommands
 			);
 		}
 		const localCommands = Array.from(this.#commands.keys());
-		const apiCommandIds = Array.from(this.#apiCommands.keys()); // Include defined API commands
-
+		const apiCommandIds = Array.from(this.#apiCommands.keys());
 		let allCommands = [
 			...new Set([...remoteCommands, ...localCommands, ...apiCommandIds]),
 		];
@@ -1259,7 +1157,7 @@ export class ShimExtHostCommands
 	}
 
 	private _reportTelemetry(
-		commandHandlerEntry: CommandHandlerEntry | undefined, // Can be undefined for remote or failed lookups
+		commandHandlerEntry: CommandHandlerEntry | undefined,
 		commandId: string,
 		duration: number,
 		failed: boolean = false,
@@ -1268,71 +1166,68 @@ export class ShimExtHostCommands
 	): void {
 		if (!this.#extHostTelemetry) {
 			this._logService?.trace(
-				`Telemetry not available. Skipping report for command '${commandId}'.`,
+				`Telemetry N/A. Skip report for cmd '${commandId}'.`,
 			);
 			return;
 		}
-
 		const extension = commandHandlerEntry?.extension;
-		const isLocalExecution = !!commandHandlerEntry; // True if we have a local handler for it
-
-		type CommandExecutedTelemetryData = {
+		const isLocalExecution = !!commandHandlerEntry;
+		type CmdExecTelData = {
 			id: TelemetryTrustedValue<string>;
-			extensionId: string; // ID of the extension that registered the command, or a general source
-			isLocalToCocoon: boolean; // Was the command handler found and executed within Cocoon?
-			executedByExtension: boolean; // Was it a command registered by an extension (vs. an API command handler or remote)?
+			extensionId: string;
+			isLocalToCocoon: boolean;
+			executedByExtension: boolean;
 			duration: number;
 			failed: boolean;
 			failureReason?: string;
-			wasExternalCall: boolean; // Was this execution triggered by an RPC call from MainThread?
+			wasExternalCall: boolean;
 		};
-		type CommandExecutedTelemetryMeta = {
+		type CmdExecTelMeta = {
 			id: {
-				classification: "PublicNonPersonalData";
-				purpose: "FeatureInsight";
-				comment: "Command ID";
+				c: "PublicNonPersonalData";
+				p: "FeatureInsight";
+				comment: "Cmd ID";
 			};
 			extensionId: {
-				classification: "PublicNonPersonalData";
-				purpose: "FeatureInsight";
-				comment: "Extension ID or source";
+				c: "PublicNonPersonalData";
+				p: "FeatureInsight";
+				comment: "Ext ID/source";
 			};
 			isLocalToCocoon: {
-				classification: "SystemMetaData";
-				purpose: "PerformanceAndHealth";
-				comment: "Handler executed in Cocoon";
+				c: "SystemMetaData";
+				p: "PerformanceAndHealth";
+				comment: "Handler in Cocoon";
 			};
 			executedByExtension: {
-				classification: "SystemMetaData";
-				purpose: "PerformanceAndHealth";
-				comment: "Handler from an extension";
+				c: "SystemMetaData";
+				p: "PerformanceAndHealth";
+				comment: "Handler from ext";
 			};
 			duration: {
-				classification: "SystemMetaData";
-				purpose: "PerformanceAndHealth";
-				isMeasurement: true;
-				comment: "Execution time (ms)";
+				c: "SystemMetaData";
+				p: "PerformanceAndHealth";
+				m: true;
+				comment: "Exec time (ms)";
 			};
 			failed: {
-				classification: "SystemMetaData";
-				purpose: "PerformanceAndHealth";
-				comment: "Command execution failed";
+				c: "SystemMetaData";
+				p: "PerformanceAndHealth";
+				comment: "Cmd exec failed";
 			};
 			failureReason?: {
-				classification: "CallstackOrException";
-				purpose: "PerformanceAndHealth";
-				comment: "Error message if failed";
+				c: "CallstackOrException";
+				p: "PerformanceAndHealth";
+				comment: "Err msg if failed";
 			};
 			wasExternalCall: {
-				classification: "SystemMetaData";
-				purpose: "PerformanceAndHealth";
-				comment: "Execution triggered by RPC from MainThread";
+				c: "SystemMetaData";
+				p: "PerformanceAndHealth";
+				comment: "Exec by RPC";
 			};
 			owner: "CocoonTeam";
-			comment: "Telemetry for command executions within or proxied by Cocoon.";
+			comment: "Cmd exec telemetry.";
 		};
-
-		const data: CommandExecutedTelemetryData = {
+		const data: CmdExecTelData = {
 			id: new TelemetryTrustedValue(commandId),
 			extensionId:
 				extension?.identifier.value ||
@@ -1345,16 +1240,13 @@ export class ShimExtHostCommands
 			failed,
 			wasExternalCall,
 		};
-		if (failed && failureReason) {
-			data.failureReason = failureReason;
-		}
-
-		this.#extHostTelemetry.publicLog2<
-			CommandExecutedTelemetryData,
-			CommandExecutedTelemetryMeta
-		>("cocoon/commandExecuted", data);
+		if (failed && failureReason) data.failureReason = failureReason;
+		this.#extHostTelemetry.publicLog2<CmdExecTelData, CmdExecTelMeta>(
+			"cocoon/commandExecuted",
+			data,
+		);
 		this._logService?.trace(
-			`Telemetry reported for command '${commandId}'. Success: ${!failed}, Duration: ${duration}ms, Local: ${isLocalExecution}, ExternalCall: ${wasExternalCall}`,
+			`Telemetry for cmd '${commandId}'. Success: ${!failed}, Dur: ${duration}ms, Local: ${isLocalExecution}, ExtCall: ${wasExternalCall}`,
 		);
 	}
 
