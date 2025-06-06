@@ -271,7 +271,7 @@ graph LR
         CocoonIndex["index.ts (DI, RPC, ExtSvc Init, API Factory)"]
         CocoonIPC["cocoon-ipc.ts (Vine JS Layer, RPC Adapter)"]
         BaseShim["_baseShim.ts (Utilities)"]
-        Shims["Shims (*-shim.ts, *.module-shim-factory.ts)"]
+        Shims["Shims "]
         ESMInterceptor["cocoon-esm-interceptor.ts & Helpers"]
         VSCodeAPIStub["vscode.ts (Compile-Time API Shape)"]
 
@@ -308,7 +308,7 @@ graph LR
 
     subgraph "Mountain 🏞️ (Rust/Tauri Backend)"
         direction TB
-        TauriApp["Tauri App (main.rs)"]
+        TauriApp["Tauri App "]
         MountainTrack["track.rs (Vine Msg/RPC Dispatcher)"]
         VineIPC_Rust["vine.rs (Vine Rust Layer)"]
         RPCServerHandlers_Rust["rpc_handlers.rs (MainThread...Shape Impls)"]
