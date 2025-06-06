@@ -1,4 +1,4 @@
-// File: EsmInterceptor/Dynamic/Dynamic.ts
+
 // Defines the function responsible for creating the dynamic JavaScript module
 // content that shims the `vscode` API for ES Module imports.
 

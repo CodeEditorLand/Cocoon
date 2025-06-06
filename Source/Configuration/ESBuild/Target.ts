@@ -1,4 +1,4 @@
-// File: [e.g., build/esbuild.config.ts]
+
 // Purpose: ESBuild configuration for the project.
 //
 // Description:

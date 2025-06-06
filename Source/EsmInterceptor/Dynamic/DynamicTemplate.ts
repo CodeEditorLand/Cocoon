@@ -1,6 +1,6 @@
 
 
-// File: EsmInterceptor/Dynamic/DynamicTemplate.ts
+
 // Contains the template string for the dynamically generated ES module
 // that provides the `vscode` API to extensions.
 

@@ -1,4 +1,4 @@
-// File: EsmInterceptor/mod.rs
+
 // Declares and exports modules related to the ES Module (ESM) interception
 // mechanism. This system allows Cocoon to intercept `import "vscode"`
 // statements in extensions and provide the correct, shimmed API instance.

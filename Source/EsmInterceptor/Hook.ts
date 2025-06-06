@@ -1,4 +1,4 @@
-// File: EsmInterceptor/Hook.ts
+
 // This file contains the Node.js ESM loader hook implementation. It runs in a separate
 // thread and intercepts `import` statements. When it sees an import for "vscode",
 // it communicates with the main Cocoon thread to get a dynamically generated module

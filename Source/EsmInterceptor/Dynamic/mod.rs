@@ -1,4 +1,4 @@
-// File: EsmInterceptor/Dynamic/mod.rs
+
 // Declares and exports modules related to the dynamic generation of the
 // 'vscode' module script for ES Module imports.
 
