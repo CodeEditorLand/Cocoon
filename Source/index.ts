@@ -129,7 +129,8 @@ import {
 import {
 	ExtHostContext,
 	type MainContext,
-} from "vs/workbench/api/common/extHost.protocol"; // MainContext for proxy types
+} from "vs/workbench/api/common/extHost.protocol";
+// MainContext for proxy types
 import { IExtHostApiDeprecationService } from "vs/workbench/api/common/extHostApiDeprecationService";
 import { IExtHostAuthentication } from "vs/workbench/api/common/extHostAuthentication";
 import { IExtHostCommands } from "vs/workbench/api/common/extHostCommands";

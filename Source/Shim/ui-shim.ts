@@ -44,7 +44,9 @@ import type {
 	MessageItem as VscodeMessageItem,
 	MessageOptions as VscodeMessageOptions,
 	UIKind as VscodeUIKind,
-} from "vscode"; // Explicit import for UIKind
+} from "vscode";
+
+// Explicit import for UIKind
 
 // Assuming API types from 'vscode' shim or real API
 

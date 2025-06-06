@@ -110,7 +110,8 @@ import {
 import {
 	URI,
 	type UriComponents as VSCodeUriComponents,
-} from "vs/base/common/uri"; // VS Code internal URI
+} from "vs/base/common/uri";
+// VS Code internal URI
 import { generateUuid } from "vs/base/common/uuid";
 import type {
 	ExtensionIdentifier,
