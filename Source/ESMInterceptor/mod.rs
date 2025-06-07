@@ -1,5 +1,7 @@
 // File: Cocoon/Source/ESMInterceptor/mod.rs
-// Responsibility: Implements the ESM interception mechanism to redirect `import "vscode"` statements in extensions, providing a shimmed API instance that interfaces with the Cocoon sidecar and the VS Code extension ecosystem.
+// Responsibility: Implements the ESM interception mechanism to redirect `import
+// "vscode"` statements in extensions, providing a shimmed API instance that
+// interfaces with the Cocoon sidecar and the VS Code extension ecosystem.
 // Modified: 2025-06-07 02:59:17 UTC
 
 // Declares and exports modules related to the ES Module (ESM) interception

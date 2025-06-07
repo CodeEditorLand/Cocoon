@@ -1,6 +1,7 @@
 // File: Cocoon/Source/Shim/UI.rs
-// Responsibility: Provides the necessary interfaces and handlers for the Rust backend to interact with VS Code UI elements, enabling message displays, dialogs, and quick inputs through Tauri.
-// Modified: 2025-06-07 00:57:36 UTC
+// Responsibility: Provides the necessary interfaces and handlers for the Rust
+// backend to interact with VS Code UI elements, enabling message displays,
+// dialogs, and quick inputs through Tauri. Modified: 2025-06-07 00:57:36 UTC
 
 // Defines an OBSOLETE shim that previously handled various `vscode.window` and
 // `vscode.env` functionalities. This has been refactored into more specific

@@ -1,6 +1,8 @@
 // File: Cocoon/Source/ESMInterceptor/Dynamic/mod.rs
-// Responsibility: Generates the dynamic script content for the 'vscode' module, enabling the integration of VS Code extensions within the Land editor by dynamically creating the necessary ES Module script.
-// Modified: 2025-06-07 02:59:17 UTC
+// Responsibility: Generates the dynamic script content for the 'vscode' module,
+// enabling the integration of VS Code extensions within the Land editor by
+// dynamically creating the necessary ES Module script. Modified: 2025-06-07
+// 02:59:17 UTC
 
 // Declares and exports modules related to the dynamic generation of the
 // 'vscode' module script for ES Module imports.
