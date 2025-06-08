@@ -192,7 +192,7 @@ of changes specific to **Cocoon**.
 
 ---
 
-## Funding & Acknowledgements 🙏
+## Funding & Acknowledgements 🙏🏻
 
 **Cocoon** is a core element of the **Land** ecosystem. This project is funded
 through [NGI0 Commons Fund](https://nlnet.nl/commonsfund), a fund established by
