@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Dialog.ts
- * Responsibility: Provides a shim implementation for handling file dialog operations, enabling VS Code extensions to interact with the native file dialog through the Cocoon sidecar by communicating with the Mountain backend.
- * Modified: 2025-06-07 00:57:45 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:41 UTC
  * Dependency: vs/base/common/uri
  * Export: IExtHostDialogServiceShape, ShimExtHostDialogService
  */

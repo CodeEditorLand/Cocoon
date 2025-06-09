@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/LanguageFeatures.ts
- * Responsibility: Implements the VS Code language features interface to manage IntelliSense, formatting, and navigation providers, enabling seamless integration of VS Code extensions within the Land editor by bridging extension API calls to the native backend.
- * Modified: 2025-06-07 00:57:41 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:38 UTC
  * Dependency: ../cancellation-token-registry, ../cocoon-type-converters, ../index, ./commands-shim, ./document-shim, vs/base/common/cancellation, vs/base/common/uuid, vs/platform/log/common/log, vscode
  * Export: ShimLanguageFeatures
  */

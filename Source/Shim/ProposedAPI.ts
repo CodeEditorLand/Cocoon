@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/ProposedAPI.ts
- * Responsibility: Implements a service to manage and check the enablement status of proposed VS Code APIs for extensions in Cocoon, ensuring that only explicitly allowed APIs are accessible.
- * Modified: 2025-06-07 00:57:38 UTC
+ * Responsibility: Implements a service to manage and check the enablement status of proposed VS Code APIs for extensions in Cocoon, leveraging ExtHostInitData from Mountain to enforce access controls based on product configurations and environment settings.
+ * Modified: 2025-06-07 05:37:36 UTC
  * Dependency: vs/workbench/api/common/extHostInitDataService
  * Export: IExtHostProposedApisShape, ShimExtensionsProposedApi
  */

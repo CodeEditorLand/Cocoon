@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Crypto.ts
- * Responsibility: Provides a secure and controlled interface for cryptographic operations within the Cocoon sidecar, mimicking the Node.js crypto module while ensuring functionality and safety within the Land environment.
- * Modified: 2025-06-07 00:57:45 UTC
+ * Responsibility: Provides a secure interface for cryptographic operations within the Cocoon Node.js sidecar by delegating safe functions to the native Node.js crypto module and stubbing sensitive operations, ensuring controlled access while leveraging existing VS Code extension compatibility.
+ * Modified: 2025-06-07 05:37:41 UTC
  * Dependency: crypto, node:crypto
  * Export: CocoonCryptoShim
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/ESMInterceptor.ts
- * Responsibility: Implements a Node.js loader hook to intercept and provide extension-specific instances of the VS Code API, ensuring proper communication with the Mountain backend via Vine IPC.
- * Modified: 2025-06-07 02:59:17 UTC
+ * Responsibility: Implements a Node.js loader hook in the Cocoon sidecar to intercept and provide extension-specific shimmed instances of the VS Code API during ESM imports, enabling VS Code extension compatibility by leveraging Vine IPC for communication with the Mountain backend.
+ * Modified: 2025-06-07 05:37:44 UTC
  * Dependency: ./cocoon-esm-interceptor/dynamic-module-script-generator.js, node:buffer, node:fs, node:module, node:path, node:url, vs/base/common/map, vs/base/common/uri, vs/base/common/uuid, vs/platform/instantiation/common/instantiation, vs/platform/log/common/log, vs/workbench/api/common/extHost.api.impl, vscode
  * Export: COCOON_ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME, CocoonESMInterceptorContext, CocoonNodeModuleESMInterceptor
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/TerminalService.ts
- * Responsibility: Implements a TypeScript shim for VS Code's terminal service APIs, enabling the Cocoon sidecar to proxy terminal operations to the Mountain backend via IPC and manage terminal lifecycle and environment variables for extensions.
- * Modified: 2025-06-07 00:57:36 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:34 UTC
  * Dependency: vs/base/common/themables, vs/base/common/uuid, vs/workbench/api/node/extHostTerminalService
  * Export: ShimExtHostTerminalService
  */

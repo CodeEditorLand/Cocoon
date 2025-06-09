@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Command.ts
- * Responsibility: Models the structure of VS Code commands, enabling the `Shim` layer in `Cocoon` to intercept and route extension commands to the `Mountain` backend via `Vine` IPC.
- * Modified: 2025-06-07 00:57:46 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:42 UTC
  * Export: Command
  */
 

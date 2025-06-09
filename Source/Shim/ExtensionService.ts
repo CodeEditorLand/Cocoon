@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/ExtensionService.ts
- * Responsibility: Simulates the VS Code extension host environment within the Cocoon sidecar, enabling Node.js extensions to run and interact with the Mountain backend via Vine IPC.
- * Modified: 2025-06-07 00:57:43 UTC
+ * Responsibility: Simulates the VS Code extension host environment within the Cocoon sidecar, enabling Node.js extensions to run and interact with the Mountain backend via Vine IPC while providing activation, context management, and dependency injection for extension services.
+ * Modified: 2025-06-07 05:37:39 UTC
  * Dependency: ../cocoon-ipc, path, vs/base/common/network, vs/platform/instantiation/common/instantiation, vs/workbench/api/common/extHostLanguageModels, vs/workbench/api/common/extHostSecretState, vs/workbench/api/common/extHostSecrets, vs/workbench/api/common/extHostStorage, vs/workbench/api/common/extHostStoragePaths, vs/workbench/api/common/extHostTelemetry
  * Export: ShimExtHostExtensionService
  */

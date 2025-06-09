@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/ESMInterceptor/Dynamic/Dynamic.Template.ts
- * Responsibility: Provides a dynamic ESM module that enables extensions to access the VS Code API by intercepting calls and proxying them through the Vine IPC layer to the Mountain backend, ensuring compatibility with the existing VS Code extension ecosystem within the Land project.
- * Modified: 2025-06-07 02:59:17 UTC
+ * Responsibility: Provides a dynamic ESM module that intercepts VS Code API calls from extensions and proxies them through the Vine IPC layer to the Mountain backend, enabling compatibility with existing VS Code extensions in the Cocoon sidecar for Land's MVP Path A.
+ * Modified: 2025-06-07 05:37:45 UTC
  * Dependency: vscode
  * Export: commands, window
  */

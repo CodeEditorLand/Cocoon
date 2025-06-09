@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Document.ts
- * Responsibility: Implements the document management interface for the Cocoon sidecar, providing a shim that enables extensions to interact with documents as if running in VS Code, while proxying document operations to the Mountain backend via Vine IPC.
- * Modified: 2025-06-07 00:57:44 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:40 UTC
  * Dependency: vs/base/common/lifecycle, vs/base/common/network, vs/base/common/strings, vs/editor/common/core/range
  * Export: CocoonDocumentData, CocoonDocumentService
  */

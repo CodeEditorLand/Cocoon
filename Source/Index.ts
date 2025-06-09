@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Index.ts
- * Responsibility: Serves as the main entry point for the Node.js sidecar (`Cocoon`), initializing the environment, services, and IPC communication to host VS Code extensions within the Land code editor.
- * Modified: 2025-06-07 00:57:48 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:43 UTC
  * Dependency: ./Bootstrap, ./CancellationRegistry, ./Ipc, ./Shim, ./TypeConverter, ./vscode, node:fs, node:path, perf_hooks, vs/base/common/async, vs/base/common/buffer, vs/base/common/cancellation, vs/platform/instantiation/common/extensions, vs/workbench/api/common/extHostApiDeprecationService, vs/workbench/api/common/extHostAuthentication, vs/workbench/api/common/extHostCommands, vs/workbench/api/common/extHostDiagnostics, vs/workbench/api/common/extHostFileSystemInfo, vs/workbench/api/common/extHostLanguageFeatures, vs/workbench/api/common/extHostLanguageModels, vs/workbench/api/common/extHostLocalizationService, vs/workbench/api/common/extHostManagedSockets, vs/workbench/api/common/extHostOutput, vs/workbench/api/common/extHostRpcService, vs/workbench/api/common/extHostSecretState, vs/workbench/api/common/extHostStorage, vs/workbench/api/common/extHostStoragePaths, vs/workbench/api/common/extHostTelemetry, vs/workbench/api/common/extHostTerminalService, vs/workbench/api/common/extHostUriTransformerService, vs/workbench/api/common/extHostWorkspace, vs/workbench/api/common/extensionHostMain, vs/workbench/services/extensionManagement/common/extensionManagement, vs/workbench/services/extensions/common/extensionHostKind
  * Export: ICancellationTokenRegistry, ICocoonProposedApi, IExtHostClipboard, IExtHostDebug, IExtHostDialog, IExtHostEnvironment, IExtHostExtension, IExtHostMessageService, IExtHostQuickInput, IExtHostTask, IExtHostWindowPart
  */

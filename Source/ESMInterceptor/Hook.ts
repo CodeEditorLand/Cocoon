@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/ESMInterceptor/Hook.ts
- * Responsibility: Implements the Node.js ESM loader hooks to intercept and resolve 'vscode' or 'land' imports, ensuring they reference the main Cocoon API object provided by the Node.js sidecar for the Land code editor.
- * Modified: 2025-06-07 02:59:17 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:44 UTC
  * Export: initialize
  */
 

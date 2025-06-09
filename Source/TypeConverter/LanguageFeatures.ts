@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/LanguageFeatures.ts
- * Responsibility: Defines the core Rust structs and enums for the Echo API contract, ensuring type-safe communication between the Sky frontend and the Mountain backend.
- * Modified: 2025-06-07 00:57:33 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:32 UTC
  * Dependency: vs/base/common/arrays, vs/base/common/lifecycle, vs/base/common/uri, vs/base/common/uriIpc, vs/editor/common/languages, vs/workbench/api/common/extHost.protocol, vs/workbench/api/common/extHostTypeConverters, vs/workbench/api/common/extHostTypes, vscode
  * Export: contextToApi, from, fromApi, fromApiArray, fromApiList, fromApiPrepareRename, fromList, to, toApi, toApiPrepareRename
  */

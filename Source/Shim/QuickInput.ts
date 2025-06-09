@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/QuickInput.ts
- * Responsibility: Implements the VS Code `window.showQuickPick` and `window.showInputBox` APIs by intercepting and proxying calls to the Mountain backend via IPC, enabling extensions to display native UI elements while maintaining the VS Code extension ecosystem in the Cocoon sidecar.
- * Modified: 2025-06-07 00:57:37 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:36 UTC
  * Dependency: vs/base/common/errors, vs/base/common/uri
  * Export: IExtHostQuickInputServiceShape, ShimExtHostQuickInputService
  */

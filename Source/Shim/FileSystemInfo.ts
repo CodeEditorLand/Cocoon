@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/FileSystemInfo.ts
- * Responsibility: Implements the `IExtHostFileSystemInfo` service to provide filesystem capability information, particularly path case sensitivity, for the `Cocoon` sidecar, enabling correct URI handling and extension interactions.
- * Modified: 2025-06-07 00:57:42 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:39 UTC
  * Dependency: vs/base/common/network, vs/base/common/platform, vs/base/common/resources, vs/base/common/uri, vs/platform/files/common/files, vs/workbench/api/common/extHostFileSystemInfo
  * Export: ShimExtHostFileSystemInfo
  */

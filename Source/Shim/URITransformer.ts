@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/URITransformer.ts
- * Responsibility: Provides a shim implementation of VS Code's URI transformation interface for the Cocoon sidecar, enabling compatibility between local and remote URI perspectives in the Land editor.
- * Modified: 2025-06-07 00:57:35 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:33 UTC
  * Dependency: vs/base/common/uriIpc, vscode
  * Export: ICocoonUriTransformerService, ShimUriTransformerService
  */

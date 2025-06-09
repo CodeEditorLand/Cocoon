@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Extension.ts
- * Responsibility: Adapts the VS Code extensions API to interface with the IExtHostExtensionService, enabling Node.js extensions to integrate with the Land editor's architecture via the Cocoon sidecar.
- * Modified: 2025-06-07 00:57:43 UTC
+ * Responsibility: Implements the VS Code extensions API shim for the Cocoon sidecar, adapting the IExtHostExtensionService to provide extension management capabilities while bridging between VS Code's extension model and Land's architecture.
+ * Modified: 2025-06-07 05:37:39 UTC
  * Dependency: ./_BaseShim, vs/platform/extensions/common/extensions, vs/workbench/api/common/extHostExtensionActivator, vs/workbench/api/common/extHostExtensionService
  * Export: IExtHostExtensionsShape, ShimExtHostExtensions
  */

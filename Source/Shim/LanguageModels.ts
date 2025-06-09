@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/LanguageModels.ts
- * Responsibility: Implements the VS Code language models API as a shim in the Cocoon sidecar, enabling extensions to interact with language models by proxying requests to the Mountain backend and managing streaming responses.
- * Modified: 2025-06-07 00:57:40 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:37 UTC
  * Dependency: ../cocoon-type-converters, vs/base/common/async, vs/base/common/buffer, vs/base/common/iterator, vs/base/common/uri, vs/workbench/api/common/extHostAuthentication, vs/workbench/api/common/extHostTypes, vs/workbench/contrib/chat/common/chatRequestParser, vs/workbench/contrib/chat/common/languageModels, vs/workbench/contrib/chat/common/modelPicker/modelPickerWidget, vs/workbench/services/authentication/common/authentication, vs/workbench/services/extensions/common/extensions
  * Export: ShimExtHostLanguageModels
  */

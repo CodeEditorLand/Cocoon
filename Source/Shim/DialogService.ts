@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/DialogService.ts
- * Responsibility: Implements the VS Code dialog API methods, acting as a shim to proxy open/save dialog requests to the native Mountain backend for display using system-native UI elements.
- * Modified: 2025-06-07 00:57:44 UTC
+ * Responsibility: Implements the VS Code dialog API methods in the Cocoon sidecar, proxying open/save dialog requests to the Mountain backend via Vine IPC to display native system dialogs using serialized options and revived URI responses.
+ * Modified: 2025-06-07 05:37:40 UTC
  * Dependency: vs/base/common/uri
  * Export: IExtHostDialogServiceShape, ShimExtHostDialogService
  */

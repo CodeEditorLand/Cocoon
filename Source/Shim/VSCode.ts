@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/VSCode.ts
  * Responsibility: Provides a TypeScript definition and stub implementation of the VS Code API, enabling extensions to run in the Node.js sidecar (Cocoon) by intercepting and proxying API calls to the Rust backend (Mountain) via IPC.
- * Modified: 2025-06-07 00:57:34 UTC
+ * Modified: 2025-06-07 05:37:33 UTC
  * Export: // (vscode.Event)
 	type Event, // Crucial for extension activation
 	type ExtensionContext, // Type for `vscode.commands` namespace

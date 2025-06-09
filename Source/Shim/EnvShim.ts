@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/EnvShim.ts
- * Responsibility: Implements the VS Code environment API for the Cocoon sidecar, providing extensions with environment information and IPC-based operations to interact with the Mountain backend.
- * Modified: 2025-06-07 00:57:43 UTC
+ * Responsibility: Implements the vscode.env API for the Cocoon sidecar, proxying environment properties and operations like URI handling and telemetry to the Mountain backend via RPC while maintaining VS Code extension compatibility.
+ * Modified: 2025-06-07 05:37:40 UTC
  * Dependency: ./clipboard-shim, vs/base/common/marshalling, vs/base/common/network, vs/platform/log/common/log
  * Export: IExtHostEnvServiceShape, ShimExtHostEnvService
  */

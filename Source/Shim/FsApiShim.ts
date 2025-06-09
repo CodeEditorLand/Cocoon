@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/FsApiShim.ts
- * Responsibility: Implements the VS Code file system API as a shim, proxying file operations to the Mountain backend via Vine IPC to enable native file system access for extensions.
- * Modified: 2025-06-07 00:57:42 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:39 UTC
  * Dependency: ./_BaseShim, vs/base/common/buffer, vs/base/common/event, vs/base/common/marshalling, vs/base/common/uri, vs/platform/files/common/files, vs/workbench/api/common/extHostFileSystemInfo
  * Export: ShimFileSystemApi
  */

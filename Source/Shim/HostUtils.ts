@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/HostUtils.ts
- * Responsibility: Implements a shim for VS Code's IHostUtils interface, providing host utilities like process ID retrieval and file system operations, adapted for use within the Cocoon sidecar to interact with the Mountain backend via IPC.
- * Modified: 2025-06-07 00:57:41 UTC
+ * Responsibility: Implements the IHostUtils interface for the Cocoon sidecar, providing process information and filesystem utilities by leveraging Mountain's IPC layer (Vine) and the ShimFileSystemApi to interact with the native backend.
+ * Modified: 2025-06-07 05:37:38 UTC
  * Dependency: ./Process, vs/platform/instantiation/common/instantiation, vs/workbench/api/common/extHostWorkspace
  * Export: IHostUtilsShim, ShimHostUtils
  */

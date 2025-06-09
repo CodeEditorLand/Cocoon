@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/CodeAction.ts
- * Responsibility: Implements type conversion functions to translate between VSCode's CodeAction API types and the internal DTOs used for IPC communication, enabling seamless interaction between VSCode extensions and the Land editor's native components.
- * Modified: 2025-06-07 00:57:33 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:32 UTC
  * Dependency: ./Main, vs/base/common/lifecycle, vs/base/common/uriIpc, vs/editor/common/languages, vs/workbench/api/common/extHost.protocol, vs/workbench/api/common/extHostTypes, vscode
  * Export: ConvertFromApi, ConvertFromApiList, ConvertToApi, ConvertToApiType, ConvertToDto
  */

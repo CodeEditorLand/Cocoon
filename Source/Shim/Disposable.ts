@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Disposable.ts
- * Responsibility: Provides a utility for managing disposable resources in the Node.js sidecar, ensuring proper cleanup of resources such as event listeners or provider registrations when they are no longer needed.
- * Modified: 2025-06-07 00:57:44 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:40 UTC
  * Export: Disposable
  */
 

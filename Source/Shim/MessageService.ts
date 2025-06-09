@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/MessageService.ts
- * Responsibility: Implements the VS Code message service API for extensions, enabling them to display notifications using the native UI by proxying calls to the Mountain backend via IPC.
- * Modified: 2025-06-07 00:57:39 UTC
+ * Responsibility: Implements the VS Code extension message service API in the Cocoon sidecar, proxying showInformationMessage, showWarningMessage, and showErrorMessage calls to the Mountain backend via Vine IPC to display native notifications while maintaining extension compatibility.
+ * Modified: 2025-06-07 05:37:37 UTC
  * Export: ExtensionSourceInfo, IExtHostMessageServiceInterface, ShimExtHostMessageService
  */
 

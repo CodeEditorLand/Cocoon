@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/CancellationTokenRegistry.ts
- * Responsibility: Manages cancellation tokens for RPC operations initiated by the MainThread, enabling clean termination and resource cleanup for cancellable operations in the Cocoon sidecar.
- * Modified: 2025-06-07 02:59:17 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:45 UTC
  * Dependency: vs/platform/instantiation/common/instantiation, vs/platform/log/common/log
  * Export: CancellationTokenRegistry, ICancellationTokenRegistry
  */

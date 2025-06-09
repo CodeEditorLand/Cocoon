@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/UI.ts
- * Responsibility: Provides a legacy implementation that intercepts and proxies UI-related messages and environment properties from extensions in the Cocoon sidecar to the Mountain backend via IPC, ensuring compatibility with VS Code's API while now being obsolete in favor of more modular shims.
- * Modified: 2025-06-07 00:57:35 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:34 UTC
  * Dependency: vs/base/common/network, vs/base/common/uri, vs/platform/notification/common/notification, vs/workbench/api/common/extHost.protocol, vs/workbench/api/common/extHostInitDataService
  * Export: ShimExtHostUiAndEnv
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/APIDeprecation.ts
- * Responsibility: Implements the deprecation reporting service for the Cocoon sidecar, logging warnings when deprecated VS Code APIs are used by extensions to maintain compatibility and encourage updates.
- * Modified: 2025-06-07 00:57:47 UTC
+ * Responsibility: Implements the API deprecation reporting service for the Cocoon sidecar, logging warnings when deprecated VS Code APIs are used by extensions to maintain compatibility while encouraging updates.
+ * Modified: 2025-06-07 05:37:42 UTC
  * Dependency: vs/platform/extensions/common/extensions, vs/workbench/api/common/extHostApiDeprecationService
  * Export: ShimExtHostApiDeprecationService
  */

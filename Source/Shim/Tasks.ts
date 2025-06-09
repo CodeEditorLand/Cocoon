@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Tasks.ts
- * Responsibility: Provides a stub implementation of the vscode.tasks API to allow VS Code extensions to run in the Cocoon sidecar, intercepting and forwarding task-related calls to the Mountain backend via Vine IPC.
- * Modified: 2025-06-07 00:57:37 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:35 UTC
  * Dependency: vs/base/common/lifecycle
  * Export: IExtHostTaskServiceShape, ShimExtHostTaskService
  */

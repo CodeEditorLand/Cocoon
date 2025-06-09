@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Configuration/ESBuild/Cocoon.js
  * Responsibility: Configures the ESBuild module to bundle the VS Code platform code for the Node.js sidecar (Cocoon), ensuring clean and efficient code processing within the Land project.
- * Modified: 2025-06-07 02:59:17 UTC
+ * Modified: 2025-06-07 05:37:45 UTC
  * Export: Clean, On
  */
 

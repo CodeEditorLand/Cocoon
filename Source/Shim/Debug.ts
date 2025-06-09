@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Debug.ts
- * Responsibility: Provides a TypeScript shim implementation of the VS Code debug API namespace, allowing extensions to interact with the debugging system in the `Cocoon` sidecar while most functionality is stubbed or will be proxied to the `Mountain` backend in the future.
- * Modified: 2025-06-07 00:57:45 UTC
+ * Responsibility: Provides a TypeScript shim implementation of the VS Code debug API namespace for the Cocoon sidecar, stubbing critical debugging functionality to enable extension compatibility while preparing for future RPC integration with the Mountain backend.
+ * Modified: 2025-06-07 05:37:41 UTC
  * Dependency: vs/base/common/lifecycle, vs/base/common/uri
  * Export: IExtHostDebugServiceShapeApi, ShimExtHostDebugService
  */

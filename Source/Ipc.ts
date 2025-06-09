@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Ipc.ts
- * Responsibility: Implements the Node.js side of the Vine IPC protocol for communication between the Mountain backend and the Cocoon sidecar, enabling message passing and RPC handling for VS Code extensions.
- * Modified: 2025-06-07 00:57:48 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:43 UTC
  * Dependency: ./cancellation-token-registry, events, readline, vs/base/common/buffer, vs/base/common/lifecycle, vs/base/parts/ipc/common/ipc, vs/platform/log/common/log
  * Export: CocoonPrimaryIpc, ConfigurationChangedEventPayload, VineCancel, VineErrorPayload, VineErrorResponse, VineMessage, VineMessageBase, VineMsgType, VineNotification, VineRequest, VineResponse, WorkspaceFoldersChangedEventPayload, createHostProtocolInterface, initializeIpcCancellation, initializeSkyIpcRouter, onCancelRequestFromMountain, onConfigurationChanged, onMessageFromMountain, onWorkspaceFoldersChanged, registerCocoonInvokeHandler, sendCancelToMountain, sendNotificationToMountain, sendResponseToMountain, sendToMountainAndWait, skyToCocoonMessageBus
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/StoragePaths.ts
- * Responsibility: Implements the `IExtensionStoragePaths` interface to provide well-defined filesystem URIs for extension storage, distinguishing between global and workspace-specific locations, ensuring proper directory creation and path resolution within the `Cocoon` sidecar.
- * Modified: 2025-06-07 00:57:37 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:35 UTC
  * Dependency: path, vs/base/common/uri, vs/platform/extensions/common/extensions, vs/platform/instantiation/common/instantiation, vs/workbench/api/common/extHostWorkspace
  * Export: IExtensionStoragePathsShim, ShimExtensionStoragePaths
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/WindowParts.ts
- * Responsibility: Provides a stubbed implementation of the vscode.window API parts, allowing extensions to run in the Cocoon sidecar by intercepting and proxying UI-related calls to the Mountain backend via IPC.
- * Modified: 2025-06-07 00:57:34 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:33 UTC
  * Dependency: vs/base/common/cancellation, vs/base/common/lifecycle
  * Export: IExtHostWindowPartsServiceShape, ShimExtHostWindowPartsService
  */

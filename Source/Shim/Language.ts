@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Language.ts
- * Responsibility: Implements a shim for the VS Code languages API, managing language feature provider registrations and delegating to the native backend via IPC, ensuring extensions can contribute language-specific functionalities without direct access to the native components.
- * Modified: 2025-06-07 00:57:41 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:38 UTC
  * Dependency: ./language-features-shim, vs/base/common/event, vs/base/common/lifecycle, vs/platform/extensions/common/extensions
  * Export: ShimLanguages, VscodeLanguagesApiSubset
  */

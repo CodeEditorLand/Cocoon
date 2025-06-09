@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Localization.ts
- * Responsibility: Adapts and manages the localization services for VS Code extensions running in the `Cocoon` sidecar, enabling them to fetch and use localized strings via RPC communication with the `Mountain` backend.
- * Modified: 2025-06-07 00:57:40 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:37 UTC
  * Dependency: node:path, vs/base/common/async, vs/workbench/api/common/extHost.protocol, vs/workbench/api/common/extHostInitDataService, vs/workbench/api/common/extHostLocalizationService, vscode
  * Export: ShimExtHostLocalizationService
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Storage.ts
- * Responsibility: Provides a shim implementation of the VS Code Memento API, enabling extensions in the Cocoon sidecar to interact with persistent storage by proxying operations to the Mountain backend via IPC.
- * Modified: 2025-06-07 00:57:37 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:35 UTC
  * Dependency: vs/workbench/api/common/extHost.protocol
  * Export: ShimExtHostStorage
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Workspace.ts
- * Responsibility: Implements the VS Code workspace API in the `Cocoon` sidecar, providing a shim for the `vscode.workspace` namespace to enable extensions to interact with the workspace structure, documents, and file system while proxying operations to the native `Mountain` backend.
- * Modified: 2025-06-07 00:57:34 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:33 UTC
  * Dependency: ./document-shim, ./fs-api-shim, node:path, vs/base/common/arrays, vs/base/common/async, vs/base/common/cancellation, vs/base/common/errors, vs/base/common/lifecycle, vs/base/common/marshalling, vs/base/common/network, vs/base/common/strings, vs/base/common/ternarySearchTree, vs/platform/extensions/common/extensions, vs/platform/instantiation/common/instantiation, vs/workbench/api/common/extHostConfiguration, vs/workbench/api/common/extHostFileSystemInfo
  * Export: ShimExtHostWorkspace
  */

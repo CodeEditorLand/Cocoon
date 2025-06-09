@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Bootstrap.ts
- * Responsibility: Provides essential utilities to patch the Node.js process object, preventing unintentional termination and setting critical environment configurations for the Cocoon sidecar to ensure stable operation of VS Code extensions within the Land editor.
- * Modified: 2025-06-07 02:59:17 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:46 UTC
  * Dependency: natives, node:module
  * Export: CocoonExitPreventedError, patchProcess
  */

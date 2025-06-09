@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Telemetry.ts
- * Responsibility: Implements the Node.js sidecar's telemetry management, intercepting and forwarding extension events to the Mountain backend via IPC while adhering to user privacy settings and product telemetry configurations.
- * Modified: 2025-06-07 00:57:36 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:34 UTC
  * Dependency: vs/platform/extensions/common/extensions, vs/workbench/api/common/extHostTelemetry
  * Export: ShimExtHostTelemetry
  */

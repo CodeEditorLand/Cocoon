@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/Completion.ts
- * Responsibility: Defines TypeScript types mirroring VS Code's API to enable the Shim module in Cocoon to intercept and redirect API calls through Vine to the Mountain backend.
- * Modified: 2025-06-07 00:57:33 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:32 UTC
  * Dependency: vs/base/common/lifecycle, vs/editor/common/languages, vs/workbench/api/common/extHost.protocol, vs/workbench/api/common/extHostTypeConverters, vs/workbench/api/common/extHostTypes, vscode
  * Export: from, fromList, to, toApiType
  */

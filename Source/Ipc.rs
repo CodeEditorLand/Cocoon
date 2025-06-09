@@ -1,13 +1,6 @@
 // File: Cocoon/Source/Ipc.rs
-// Responsibility: Implements a Rust IPC shim that handles JSON-based
-// communication, facilitating interaction between components like Mountain and
-// sidecars via newline-delimited JSON over stdio. Modified: 2025-06-07 00:57:48
-// UTC
-
-// This file would conceptually contain IPC-related shims if needed, but given
-// the new gRPC architecture, the primary IPC logic resides in the `Ipc` module,
-// and shims directly use the IPC effects or client. This file is kept for
-// structural completeness but is likely empty or deprecated.
+// Responsibility: Deprecated placeholder for IPC shims in Rust, originally intended to facilitate JSON-based communication between Mountain and sidecars via the Vine IPC layer, now superseded by gRPC architecture in the current implementation.
+// Modified: 2025-06-07 05:37:43 UTC
 
 #![allow(non_snake_case, non_camel_case_types)]
 

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/WorkspaceEdit.ts
- * Responsibility: Implements type converters for WorkspaceEdit and related types, enabling communication between VS Code extensions in the Cocoon sidecar and the Mountain backend via Vine IPC.
- * Modified: 2025-06-07 00:57:32 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:31 UTC
  * Dependency: ./Main, vs/base/common/lifecycle, vs/base/common/uri, vs/base/common/uriIpc, vs/editor/common/languages, vs/platform/log/common/log, vs/workbench/api/common/extHost.protocol, vs/workbench/api/common/extHostTypes, vscode
  * Export: IVersionInformationProvider, from, fromApi, initializeWorkspaceEditConverterLogger, to, toApi
  */

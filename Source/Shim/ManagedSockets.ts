@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/ManagedSockets.ts
- * Responsibility: Provides a stub implementation of the VS Code managed sockets service API, ensuring compatibility with extensions while maintaining awareness of the underlying system architecture in the Land project.
- * Modified: 2025-06-07 00:57:39 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:37 UTC
  * Dependency: vs/base/common/buffer, vs/base/common/errors, vs/base/common/event
  * Export: ShimExtHostManagedSockets
  */

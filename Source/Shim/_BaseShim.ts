@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/_BaseShim.ts
- * Responsibility: Provides foundational utilities and abstract patterns for VS Code API shims in the Cocoon sidecar, enabling consistent logging, IPC communication, and resource management across extension host services.
- * Modified: 2025-06-07 00:57:34 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:32 UTC
  * Dependency: ../Ipc, events, vs/base/common/buffer, vs/base/common/htmlContent, vs/base/common/uri, vs/workbench/services/extensions/common/proxyIdentifier
  * Export: ILogServiceForShim, IRpcProtocolServiceAdapter, RefineErrorForShim
  */

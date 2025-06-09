@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Diagnostics.ts
- * Responsibility: Provides a TypeScript shim implementing VS Code's diagnostic collection APIs, enabling compatibility with extensions while bridging to the Mountain backend's native diagnostics handling.
- * Modified: 2025-06-07 00:57:45 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:41 UTC
  * Dependency: ../cocoon-type-converters, vs/base/common/uriIpc
  * Export: ShimDiagnosticsService
  */

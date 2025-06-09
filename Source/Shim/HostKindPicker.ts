@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/HostKindPicker.ts
- * Responsibility: Implements the `IExtensionHostKindPicker` service to determine if a VS Code extension is compatible with the Node.js-based LocalProcess environment provided by Cocoon, ensuring proper extension execution within the Land editor.
- * Modified: 2025-06-07 00:57:41 UTC
+ * Responsibility: Implements the VS Code IExtensionHostKindPicker interface to determine extension host compatibility for Cocoon, ensuring Node.js-based extensions can run in Land's LocalProcess environment by validating manifest declarations.
+ * Modified: 2025-06-07 05:37:38 UTC
  * Dependency: vs/base/common/network, vs/platform/extensions/common/extensions
  * Export: ShimExtensionHostKindPicker
  */

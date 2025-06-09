@@ -1,12 +1,6 @@
 // File: Cocoon/Source/Shim/VSCode.rs
-// Responsibility: Defines the TypeScript shim implementation for the VS Code
-// Extension Host Commands API, enabling command execution and management within
-// the Cocoon sidecar to proxy actions to the Mountain backend via Vine IPC.
-// Modified: 2025-06-07 00:57:35 UTC
-
-// This module constructs and exports a stubbed version of the entire `vscode`
-// API. It aggregates all the individual shim implementations into a single,
-// cohesive API object that can be provided to extensions during activation.
+// Responsibility: Implements the VS Code API shim structure in Rust for the Cocoon sidecar, providing stubbed interfaces to intercept extension commands and proxy them to the Mountain backend via the Vine IPC layer.
+// Modified: 2025-06-07 05:37:33 UTC
 
 #![allow(non_snake_case, non_camel_case_types)]
 

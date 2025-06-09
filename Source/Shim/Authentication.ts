@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Authentication.ts
- * Responsibility: Implements the shim for the VS Code authentication API, enabling extensions to request authentication sessions from various providers and proxying these requests to the Mountain backend via Vine IPC.
- * Modified: 2025-06-07 00:57:47 UTC
+ * Responsibility: Implements the shim for the VS Code authentication API, enabling extensions to request authentication sessions and proxying these requests between the Cocoon sidecar and Mountain backend via Vine IPC.
+ * Modified: 2025-06-07 05:37:42 UTC
  * Dependency: vs/base/common/lifecycle
  * Export: ShimExtHostAuthentication
  */

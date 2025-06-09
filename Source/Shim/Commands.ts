@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Shim/Commands.ts
- * Responsibility: Implements the VS Code commands API namespace for the Cocoon environment, managing command registration and execution to bridge extensions with the Mountain host process via IPC.
- * Modified: 2025-06-07 00:57:46 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-07 05:37:42 UTC
  * Dependency: ../cocoon-type-converters, vs/base/common/buffer, vs/base/common/lifecycle, vs/base/common/stopwatch, vs/base/common/types.js, vs/base/common/uriIpc, vs/platform/commands/common/commands, vs/platform/telemetry/common/telemetryUtils, vs/workbench/api/common/extHostTelemetry, vs/workbench/api/common/extHostTypeConverters, vs/workbench/api/common/extHostTypes, vs/workbench/services/extensions/common/proxyIdentifier
  * Export: ApiCommand, ApiCommandArgument, ApiCommandResult, ArgumentProcessor, CocoonCommandError, ShimExtHostCommands
  */
