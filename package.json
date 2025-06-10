@@ -24,13 +24,13 @@
 	},
 	"devDependencies": {
 		"@playform/build": "0.2.4",
-		"ulid": "3.0.0"
+		"ulid": "3.0.1"
 	},
 	"publishConfig": {
 		"access": "public",
 		"provenance": true
 	},
 	"dependencies": {
-		"@types/node": "22.15.30"
+		"@types/node": "24.0.0"
 	}
 }
