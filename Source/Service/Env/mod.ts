@@ -1,0 +1,24 @@
+/**
+ * @module Env
+ * @description This module provides the `vscode.env` API implementation, offering
+ * information about the application environment and core utilities.
+ */
+
+import { Layer } from "effect";
+
+import { Live as LiveClipboard } from "../Clipboard/mod.js";
+import { InitDataService } from "../InitData.js";
+import { Live as LiveIpc } from "../Ipc/mod.js";
+import { Definition } from "./Definition.js";
+import { Tag } from "./Service.js";
+
+export { Tag, type Interface } from "./Service.js";
+
+/**
+ * The live implementation Layer for the Env service.
+ * It depends on the InitData, Ipc, and Clipboard services.
+ */
+export const Live = Layer.effect(Tag, Definition).pipe(
+	Layer.provide(Layer.merge(LiveIpc, LiveClipboard)),
+	// The InitDataService must be provided by the top-level application layer.
+);

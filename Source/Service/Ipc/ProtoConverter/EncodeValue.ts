@@ -1,0 +1,44 @@
+/**
+ * @module EncodeValue
+ * @description An Effect-based function to encode a JavaScript value into a
+ * `google.protobuf.Value`.
+ */
+
+import { Effect } from "effect";
+import {
+	NullValue,
+	Value as ProtoValue,
+} from "google-protobuf/google/protobuf/struct_pb.js";
+
+import { ProtoSerializationError } from "./Error.js";
+
+/**
+ * An Effect that converts a JavaScript value into a `google.protobuf.Value`.
+ * This safely handles `null` and `undefined` and wraps the potentially-throwing
+ * `fromJavaScript` call in a typed error.
+ *
+ * @param JsValue - The JavaScript value to encode.
+ * @returns An `Effect` that resolves to a `ProtoValue` or fails with a `ProtoSerializationError`.
+ */
+export const EncodeValue = (
+	JsValue: any,
+): Effect.Effect<ProtoValue, ProtoSerializationError> =>
+	Effect.try({
+		try: () => {
+			if (JsValue === undefined) {
+				// gRPC fields should be omitted for undefined, handled by the caller.
+				// We throw here to indicate misuse if it reaches this point.
+				throw new Error(
+					"Cannot encode 'undefined'. It should be omitted from the payload.",
+				);
+			}
+			if (JsValue === null) {
+				const Value = new ProtoValue();
+				Value.setNullValue(NullValue.NULL_VALUE);
+				return Value;
+			}
+			return ProtoValue.fromJavaScript(JsValue);
+		},
+		catch: (cause) =>
+			new ProtoSerializationError({ cause, direction: "Encoding" }),
+	});
