@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Documents/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (Documents)\n * @description Defines the interface and Context.Tag for the Document service.\n */\n\nimport { Context, Effect, Stream } from \"effect\";\nimport type { TextDocument, TextDocumentChangeEvent, Uri } from \"vscode\";\n\nexport interface Interface {\n\t/** A read-only array of all text documents known to this extension host. */\n\treadonly TextDocuments: readonly TextDocument[];\n\n\t/** An event that is emitted when a text document is opened. */\n\treadonly OnDidOpenTextDocument: Stream.Stream<TextDocument, never>;\n\t/** An event that is emitted when a text document is closed. */\n\treadonly OnDidCloseTextDocument: Stream.Stream<TextDocument, never>;\n\t/** An event that is emitted when a text document is changed. */\n\treadonly OnDidChangeTextDocument: Stream.Stream<\n\t\tTextDocumentChangeEvent,\n\t\tnever\n\t>;\n\t/** An event that is emitted when a text document is saved. */\n\treadonly OnDidSaveTextDocument: Stream.Stream<TextDocument, never>;\n\n\t/**\n\t * Retrieves a text document for a given URI.\n\t * @returns An Effect that resolves to the document, or `undefined` if not found.\n\t */\n\treadonly GetDocument: (\n\t\tUri: Uri,\n\t) => Effect.Effect<TextDocument | undefined, never>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Documents\");\n"],
+  "mappings": "AAKA,SAAS,SAAS,QAAQ,cAAc;AA4BjC,MAAM,MAAM,QAAQ,IAAe,mBAAmB;",
+  "names": []
+}

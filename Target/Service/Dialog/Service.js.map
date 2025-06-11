@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Dialog/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (Dialog)\n * @description Defines the interface and Context.Tag for the Dialog service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type { CancellationToken, Uri } from \"vscode\";\n\nimport type { OpenDialogOptions, SaveDialogOptions } from \"./Type.js\";\n\nexport interface Interface {\n\treadonly ShowOpenDialog: (\n\t\tOptions?: OpenDialogOptions,\n\t\tToken?: CancellationToken,\n\t) => Effect.Effect<Uri[] | undefined, Error>;\n\n\treadonly ShowSaveDialog: (\n\t\tOptions?: SaveDialogOptions,\n\t\tToken?: CancellationToken,\n\t) => Effect.Effect<Uri | undefined, Error>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Dialog\");\n"],
+  "mappings": "AAKA,SAAS,SAAS,cAAc;AAiBzB,MAAM,MAAM,QAAQ,IAAe,gBAAgB;",
+  "names": []
+}

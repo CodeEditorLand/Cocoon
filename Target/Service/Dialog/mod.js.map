@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Dialog/mod.ts"],
+  "sourcesContent": ["/**\n * @module Dialog\n * @description This module provides the `vscode.window` dialog APIs, such as\n * `showOpenDialog` and `showSaveDialog`.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveIpc } from \"../Ipc/mod.js\";\nimport { Definition } from \"./Definition.js\";\nimport { Tag } from \"./Service.js\";\n\nexport { Tag, type Interface } from \"./Service.js\";\nexport * from \"./Type.js\"; // For dialog option types\nexport * from \"./Error.js\";\n\n/**\n * The live implementation Layer for the Dialog service.\n * It depends on the Ipc service for all communication.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIpc));\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,eAAe;AAChC,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAEpB,SAAS,OAAAA,YAA2B;AACpC,cAAc;AACd,cAAc;AAMP,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE,KAAK,MAAM,QAAQ,OAAO,CAAC;",
+  "names": ["Tag"]
+}

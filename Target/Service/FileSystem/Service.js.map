@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/FileSystem/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (FileSystem)\n * @description Defines the interface and Context.Tag for the FileSystem service.\n */\n\nimport { Context } from \"effect\";\nimport type { FileSystem } from \"vscode\";\n\n/**\n * The service interface for the `vscode.workspace.fs` API.\n * The methods return Promises to conform to the vscode API definition.\n */\nexport type Interface = FileSystem;\n\nexport const Tag = Context.Tag<Interface>(\"Service/FileSystem\");\n"],
+  "mappings": "AAKA,SAAS,eAAe;AASjB,MAAM,MAAM,QAAQ,IAAe,oBAAoB;",
+  "names": []
+}

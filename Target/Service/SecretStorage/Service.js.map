@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/SecretStorage/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (SecretStorage)\n * @description Defines the interface and Context.Tag for the SecretStorage service factory.\n */\n\nimport { Context } from \"effect\";\nimport type { SecretStorage } from \"vscode\";\n\n/**\n * The service interface for the SecretStorage factory.\n * Its primary role is to create `SecretStorage` instances scoped to a specific extension.\n */\nexport interface Interface {\n\treadonly CreateStorage: (ExtensionId: string) => SecretStorage;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/SecretStorage\");\n"],
+  "mappings": "AAKA,SAAS,eAAe;AAWjB,MAAM,MAAM,QAAQ,IAAe,uBAAuB;",
+  "names": []
+}

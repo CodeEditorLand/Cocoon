@@ -1,5 +1,3 @@
-
-
 /**
  * @module DynamicModuleTemplate (EsmInterceptor)
  * @description A raw text template for the dynamically generated 'vscode' module.
@@ -37,6 +35,6 @@ export const DynamicModuleTemplate = `
   // e.g., export const window = VscodeApiInstance['window'];
   __RUNTIME_EXPORT_STATEMENTS__
 
-  // The default export allows for `import vscode from 'vscode'`.
+  // The default export allows for \`import vscode from 'vscode'\`.
   export default VscodeApiInstance;
 `;

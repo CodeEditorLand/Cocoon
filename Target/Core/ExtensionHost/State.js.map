@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/ExtensionHost/State.ts"],
+  "sourcesContent": ["/**\n * @module State (ExtensionHost)\n * @description Defines the internal state representation for an activated extension.\n */\n\nimport { ExtensionIdentifier } from \"vs/platform/extensions/common/extensions.js\";\nimport type * as Vscode from \"vscode\";\n\n/**\n * Represents the complete state of an extension after it has been loaded and activated.\n */\nexport interface ActivatedExtension {\n\treadonly Id: ExtensionIdentifier;\n\treadonly Module: { activate?: Function; deactivate?: Function };\n\treadonly Exports: any;\n\treadonly Subscriptions: Vscode.Disposable[];\n\treadonly ActivationFailed: boolean;\n\treadonly ActivationError: Error | null;\n}\n"],
+  "mappings": "AAKA,SAAS,2BAA2B;",
+  "names": []
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/StoragePaths/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (StoragePaths)\n * @description Defines the interface and Context.Tag for the StoragePaths service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\nimport type { Uri } from \"vscode\";\n\n/**\n * The service interface for providing extension storage paths.\n */\nexport interface Interface {\n\t/**\n\t * Returns the URI for an extension's workspace-specific storage.\n\t * @returns A URI or `undefined` if no workspace is open.\n\t */\n\treadonly GetWorkspaceStorageUri: (\n\t\tExtension: IExtensionDescription,\n\t) => Uri | undefined;\n\n\t/**\n\t * Returns the URI for an extension's global storage.\n\t */\n\treadonly GetGlobalStorageUri: (Extension: IExtensionDescription) => Uri;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/StoragePaths\");\n"],
+  "mappings": "AAKA,SAAS,SAAS,cAAc;AAsBzB,MAAM,MAAM,QAAQ,IAAe,sBAAsB;",
+  "names": []
+}

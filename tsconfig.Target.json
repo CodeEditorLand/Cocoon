@@ -5,8 +5,6 @@
 		"outDir": "Target",
 
 		"paths": {
-			"@Source/*": ["Source/*"],
-
 			"vs/*": ["../../Dependency/Microsoft/Dependency/Editor/src/vs/*"]
 		},
 

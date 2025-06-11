@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Ipc/Error.ts"],
+  "sourcesContent": ["/**\n * @module Error\n * @description Defines custom, structured errors for the gRPC Inter-Process\n * Communication (IPC) layer.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A structured error indicating a failure during a gRPC connection attempt or\n * server setup.\n *\n * This error is tagged with \"GrpcConnectionError\" for precise handling with\n * `Effect.catchTag`. It captures the underlying `cause` and provides a `context`\n * string to indicate which part of the connection process failed.\n *\n * @property cause - The original, underlying error that was caught.\n * @property context - A string describing the operation that failed.\n */\nexport class GrpcConnectionError extends Data.TaggedError(\n\t\"GrpcConnectionError\",\n)<{\n\treadonly Cause: unknown;\n\treadonly context:\n\t\t| \"ProtoLoadFailed\"\n\t\t| \"ClientInstantiationFailed\"\n\t\t| \"ClientNotReady\"\n\t\t| \"ServerBindFailed\"\n\t\t| \"ServerStartFailed\";\n}> {}\n\n/**\n * A generic error for failures that occur during an IPC request or notification.\n */\nexport class IpcError extends Data.TaggedError(\"IpcError\")<{\n\treadonly cause: unknown;\n\treadonly context: string;\n}> {}\n"],
+  "mappings": ";;AAMA,SAAS,YAAY;AAad,MAAM,4BAA4B,KAAK;AAAA,EAC7C;AACD,EAQG;AAAA,EA7BH,OA6BG;AAAA;AAAA;AAAC;AAKG,MAAM,iBAAiB,KAAK,YAAY,UAAU,EAGtD;AAAA,EArCH,OAqCG;AAAA;AAAA;AAAC;",
+  "names": []
+}

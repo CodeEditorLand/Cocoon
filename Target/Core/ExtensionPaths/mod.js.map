@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/ExtensionPaths/mod.ts"],
+  "sourcesContent": ["/**\n * @module ExtensionPaths (Core)\n * @description The main module for the ExtensionPaths service, which maps file URIs\n * to their owner extension.\n */\n\nimport { Context, Effect, Layer } from \"effect\";\n\nimport { InitDataService } from \"../../Service/InitData.js\";\nimport { Definition } from \"./Definition.js\";\n\n/**\n * The interface for the ExtensionPaths service is the class definition itself.\n */\nexport type Interface = Definition;\n\n/**\n * The Context.Tag for the ExtensionPaths service.\n */\nexport const Tag = Context.Tag<Interface>(\"Core/ExtensionPaths\");\n\n/**\n * The live implementation layer for the ExtensionPaths service.\n * It depends on the InitDataService to get the list of all installed extensions.\n */\nexport const Live = Layer.effect(\n\tTag,\n\tEffect.map(\n\t\tInitDataService,\n\t\t(InitData) => new Definition(InitData.extensions),\n\t),\n);\n"],
+  "mappings": "AAMA,SAAS,SAAS,QAAQ,aAAa;AAEvC,SAAS,uBAAuB;AAChC,SAAS,kBAAkB;AAUpB,MAAM,MAAM,QAAQ,IAAe,qBAAqB;AAMxD,MAAM,OAAO,MAAM;AAAA,EACzB;AAAA,EACA,OAAO;AAAA,IACN;AAAA,IACA,CAAC,aAAa,IAAI,WAAW,SAAS,UAAU;AAAA,EACjD;AACD;",
+  "names": []
+}

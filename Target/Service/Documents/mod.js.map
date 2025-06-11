@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Documents/mod.ts"],
+  "sourcesContent": ["/**\n * @module Documents\n * @description This module provides the Document service, which is the single\n * source of truth for the state of all open text documents in the extension host.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveIpc } from \"../Ipc/mod.js\";\nimport { Definition } from \"./Definition.js\";\nimport { Tag } from \"./Service.js\";\n\nexport { Tag, type Interface } from \"./Service.js\";\nexport * from \"./Type.js\"; // For TextDocument, TextDocumentChangeEvent\n\n/**\n * The live implementation Layer for the Document service.\n * It depends on the Ipc service to receive updates from the host.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIpc));\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,eAAe;AAChC,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAEpB,SAAS,OAAAA,YAA2B;AACpC,cAAc;AAMP,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE,KAAK,MAAM,QAAQ,OAAO,CAAC;",
+  "names": ["Tag"]
+}

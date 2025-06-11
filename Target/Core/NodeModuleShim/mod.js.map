@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/NodeModuleShim/mod.ts"],
+  "sourcesContent": ["/**\n * @module NodeModuleShim (Core)\n * @description Provides the NodeModuleShim service, which intercepts requests for\n * built-in Node.js modules, blocking some and providing safe shims for others.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveLog } from \"../../Service/Log.js\";\nimport { Definition } from \"./Definition.js\";\nimport { Tag } from \"./Service.js\";\n\nexport { Tag, type Interface } from \"./Service.js\";\nexport * from \"./Error.js\";\n\n/**\n * The live implementation Layer for the NodeModuleShim service.\n * It depends on the Log service for reporting interception events.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveLog));\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,eAAe;AAChC,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAEpB,SAAS,OAAAA,YAA2B;AACpC,cAAc;AAMP,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE,KAAK,MAAM,QAAQ,OAAO,CAAC;",
+  "names": ["Tag"]
+}

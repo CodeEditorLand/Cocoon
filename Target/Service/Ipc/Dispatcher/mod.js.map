@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/Ipc/Dispatcher/mod.ts"],
+  "sourcesContent": ["/**\n * @module Dispatcher (IPC)\n * @description Provides the Dispatcher service, which routes all incoming RPC\n * messages from the Mountain host to the appropriate handlers within Cocoon.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveCancellation } from \"../../Cancellation/mod.js\";\nimport { Live as LiveProtocolAdapter } from \"../ProtocolAdapter/mod.js\";\nimport { Definition } from \"./Definition.js\";\nimport { Tag } from \"./Service.js\";\n\n/**\n * The live implementation Layer for the Dispatcher service.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(\n\tLayer.provide(Layer.merge(LiveProtocolAdapter, LiveCancellation)),\n);\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,wBAAwB;AACzC,SAAS,QAAQ,2BAA2B;AAC5C,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAKb,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE;AAAA,EACjD,MAAM,QAAQ,MAAM,MAAM,qBAAqB,gBAAgB,CAAC;AACjE;",
+  "names": []
+}

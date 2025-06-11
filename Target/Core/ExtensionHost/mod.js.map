@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/ExtensionHost/mod.ts"],
+  "sourcesContent": ["/**\n * @module ExtensionHost (Core)\n * @description The main module for the Extension Host service, which manages the\n * entire lifecycle of extensions.\n */\n\nimport { Layer } from \"effect\";\n\nimport { InitDataService } from \"../../Service/InitData.js\";\nimport { Live as LiveIpc } from \"../../Service/Ipc/mod.js\";\nimport { Live as LiveLog } from \"../../Service/Log.js\";\nimport { Live as LiveApiFactory } from \"../ApiFactory/mod.js\";\nimport { Definition } from \"./Definition.js\";\nimport { Tag } from \"./Service.js\";\n\n/**\n * The live implementation layer for the ExtensionHost service.\n * It depends on the ApiFactory, logging, IPC, and initialization data services.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(\n\tLayer.provide(LiveApiFactory),\n\tLayer.provide(LiveLog),\n\tLayer.provide(LiveIpc),\n\tLayer.provide(Layer.succeed(InitDataService, {} as any)), // Placeholder for real init data\n);\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,uBAAuB;AAChC,SAAS,QAAQ,eAAe;AAChC,SAAS,QAAQ,eAAe;AAChC,SAAS,QAAQ,sBAAsB;AACvC,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAMb,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE;AAAA,EACjD,MAAM,QAAQ,cAAc;AAAA,EAC5B,MAAM,QAAQ,OAAO;AAAA,EACrB,MAAM,QAAQ,OAAO;AAAA,EACrB,MAAM,QAAQ,MAAM,QAAQ,iBAAiB,CAAC,CAAQ,CAAC;AAAA;AACxD;",
+  "names": []
+}

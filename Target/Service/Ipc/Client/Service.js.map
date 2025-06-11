@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/Ipc/Client/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service\n * @description Defines the service interface and `Context.Tag` for the low-level\n * gRPC client that communicates with the `Mountain` backend.\n */\n\nimport { Context } from \"effect\";\n\n// This import assumes a tool like `ts-proto` has generated TypeScript types\n// from the `vine.proto` file.\nimport type { MountainServiceClient } from \"../../../Generated/vine.js\";\n\n/**\n * The service interface for the raw, generated gRPC client.\n *\n * Higher-level IPC services will use this client to make calls to `Mountain`.\n */\nexport type Service = MountainServiceClient;\n\n/**\n * The `Context.Tag` for the gRPC client service.\n *\n * This tag is used by other services to declare their dependency on the raw\n * gRPC client.\n */\nexport const Tag = Context.Tag<Service>(\"Ipc/Client\");\n"],
+  "mappings": "AAMA,SAAS,eAAe;AAmBjB,MAAM,MAAM,QAAQ,IAAa,YAAY;",
+  "names": []
+}

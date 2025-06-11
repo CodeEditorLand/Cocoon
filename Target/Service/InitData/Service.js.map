@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/InitData/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (InitData)\n * @description Defines the interface and Context.Tag for the InitData service.\n */\n\nimport { Context } from \"effect\";\n\nimport type { IExtensionHostInitData } from \"../../Type/vscode-proposed.js\";\n\n/**\n * The service interface for the InitData service. It is an alias for the\n * `IExtensionHostInitData` type, which represents the full configuration\n * payload from the host.\n */\nexport type Interface = IExtensionHostInitData;\n\n/**\n * The Context.Tag for the InitData service. Other services will use this Tag\n * to declare their dependency on the initial host configuration data.\n */\nexport const Tag = Context.Tag<Interface>(\"Service/InitData\");\n"],
+  "mappings": "AAKA,SAAS,eAAe;AAejB,MAAM,MAAM,QAAQ,IAAe,kBAAkB;",
+  "names": []
+}

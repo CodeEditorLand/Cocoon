@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Tasks/mod.ts"],
+  "sourcesContent": ["/**\n * @module Tasks\n * @description This module provides the `vscode.tasks` API implementation, allowing\n * extensions to define, provide, and execute custom build/run tasks.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveIpc } from \"../Ipc/mod.js\";\nimport { Definition } from \"./Definition.js\";\nimport { Tag } from \"./Service.js\";\n\nexport { Tag, type Interface } from \"./Service.js\";\nexport * from \"./Type.js\"; // Task, TaskExecution, etc.\n\n/**\n * The live implementation Layer for the Tasks service.\n * It depends on the Ipc service for communication.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIpc));\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,eAAe;AAChC,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAEpB,SAAS,OAAAA,YAA2B;AACpC,cAAc;AAMP,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE,KAAK,MAAM,QAAQ,OAAO,CAAC;",
+  "names": ["Tag"]
+}

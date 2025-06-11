@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/EsmInterceptor/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (EsmInterceptor)\n * @description Defines the interface and Context.Tag for the EsmInterceptor service.\n */\n\nimport { Context, Effect } from \"effect\";\n\n/**\n * The service interface for the ESM interceptor.\n * The `Install` effect is scoped and will automatically handle cleanup.\n */\nexport interface Interface {\n\t/**\n\t * An Effect that, when executed within a Scope, installs the ESM loader hook\n\t * and registers finalizers to clean up all resources (MessagePorts, globals)\n\t * when the scope is closed.\n\t */\n\treadonly Install: () => Effect.Effect<void, Error, Scope.Scope>;\n}\n\n/**\n * The Context.Tag for the EsmInterceptor service.\n */\nexport const Tag = Context.Tag<Interface>(\"Core/EsmInterceptor\");\n"],
+  "mappings": "AAKA,SAAS,SAAS,cAAc;AAkBzB,MAAM,MAAM,QAAQ,IAAe,qBAAqB;",
+  "names": []
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/Ipc/Server/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service\n * @description Defines the service type and `Context.Tag` for the `Cocoon` gRPC\n * server instance.\n */\n\nimport type * as Grpc from \"@grpc/grpc-js\";\nimport { Context } from \"effect\";\n\n/**\n * The service type, which is the underlying `grpc.Server` class.\n */\nexport type Service = Grpc.Server;\n\n/**\n * The `Context.Tag` for the gRPC server instance.\n *\n * This tag provides access to the raw server object if needed, for example,\n * by the `acquireRelease` logic that manages its lifecycle.\n */\nexport const Tag = Context.Tag<Service>(\"Ipc/Server\");\n"],
+  "mappings": "AAOA,SAAS,eAAe;AAajB,MAAM,MAAM,QAAQ,IAAa,YAAY;",
+  "names": []
+}

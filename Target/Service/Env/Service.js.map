@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Env/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (Env)\n * @description Defines the interface and Context.Tag for the Env service.\n */\n\nimport { Context, Effect, Stream } from \"effect\";\nimport type { Clipboard, Event, LogLevel, UIKind, Uri } from \"vscode\";\n\n/**\n * The service interface for the `vscode.env` API.\n * Note: `Event` properties are used here for direct vscode API compatibility.\n * Internally, these are powered by Effect `Stream`s.\n */\nexport interface Interface {\n\treadonly appName: string;\n\treadonly appRoot?: string;\n\treadonly appHost: string;\n\treadonly uriScheme: string;\n\treadonly language: string;\n\treadonly machineId: string;\n\treadonly sessionId: string;\n\treadonly isTrusted: boolean;\n\treadonly isRemote: boolean;\n\treadonly remoteName?: string;\n\treadonly shell: string;\n\treadonly uiKind: UIKind;\n\treadonly isNewAppInstall: boolean;\n\treadonly isBuilt: boolean;\n\treadonly logLevel: LogLevel;\n\treadonly onDidChangeLogLevel: Event<LogLevel>;\n\treadonly isTelemetryEnabled: boolean;\n\treadonly onDidChangeTelemetryEnabled: Event<boolean>;\n\treadonly onDidChangeShell: Event<string>;\n\treadonly clipboard: Clipboard;\n\treadonly openExternal: (target: Uri) => Promise<boolean>;\n\treadonly asExternalUri: (target: Uri) => Promise<Uri>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Env\");\n"],
+  "mappings": "AAKA,SAAS,SAAS,QAAQ,cAAc;AAiCjC,MAAM,MAAM,QAAQ,IAAe,aAAa;",
+  "names": []
+}

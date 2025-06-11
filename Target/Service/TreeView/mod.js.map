@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/TreeView/mod.ts"],
+  "sourcesContent": ["/**\n * @module TreeView\n * @description This module provides the `vscode.window.createTreeView` API, allowing\n * extensions to contribute custom tree views to the sidebar.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveCommands } from \"../Commands/mod.js\";\nimport { Live as LiveIpc } from \"../Ipc/mod.js\";\nimport { Definition } from \"./Definition.js\";\nimport { Tag } from \"./Service.js\";\n\nexport { Tag, type Interface } from \"./Service.js\";\nexport type { TreeView } from \"vscode\";\n\n/**\n * The live implementation Layer for the TreeView service.\n * It depends on the Ipc and Commands services.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(\n\tLayer.provide(Layer.merge(LiveIpc, LiveCommands)),\n);\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,oBAAoB;AACrC,SAAS,QAAQ,eAAe;AAChC,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAEpB,SAAS,OAAAA,YAA2B;AAO7B,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE;AAAA,EACjD,MAAM,QAAQ,MAAM,MAAM,SAAS,YAAY,CAAC;AACjD;",
+  "names": ["Tag"]
+}

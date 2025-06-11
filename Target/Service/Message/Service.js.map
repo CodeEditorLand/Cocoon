@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Message/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (Message)\n * @description Defines the interface and Context.Tag for the Message service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type { MessageItem } from \"vscode\";\n\nexport interface Interface {\n\treadonly ShowInformationMessage: (\n\t\tmessage: string,\n\t\t...args: any[]\n\t) => Effect.Effect<MessageItem | string | undefined, Error>;\n\n\treadonly ShowWarningMessage: (\n\t\tmessage: string,\n\t\t...args: any[]\n\t) => Effect.Effect<MessageItem | string | undefined, Error>;\n\n\treadonly ShowErrorMessage: (\n\t\tmessage: string,\n\t\t...args: any[]\n\t) => Effect.Effect<MessageItem | string | undefined, Error>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Message\");\n"],
+  "mappings": "AAKA,SAAS,SAAS,cAAc;AAoBzB,MAAM,MAAM,QAAQ,IAAe,iBAAiB;",
+  "names": []
+}

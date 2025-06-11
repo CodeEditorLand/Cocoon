@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../Source/PatchProcess/SetStackTraceLimit.ts"],
+  "sourcesContent": ["/**\n * @module SetStackTraceLimit (PatchProcess)\n * @description An Effect that increases the stack trace limit for more detailed debugging.\n */\n\nimport { Effect } from \"effect\";\n\nimport { ProcessPatchError } from \"./Error/mod.js\";\n\n/**\n * An Effect that increases `Error.stackTraceLimit` to 100.\n *\n * This is a standard practice in environments like VS Code's extension host.\n * A higher limit provides more detailed stack traces when errors are thrown,\n * which can be invaluable for debugging complex call chains within extensions.\n *\n * @returns An `Effect` that resolves when the limit is set, or fails with a\n *   `ProcessPatchError`.\n */\nexport const SetStackTraceLimit = Effect.try({\n\ttry: () => {\n\t\tError.stackTraceLimit = 100;\n\t},\n\tcatch: (cause) =>\n\t\tnew ProcessPatchError({\n\t\t\tcontext: \"SetStackTraceLimit\",\n\t\t\tcause,\n\t\t}),\n}).pipe(Effect.tap(() => Effect.logTrace(\"Error.stackTraceLimit set to 100.\")));\n"],
+  "mappings": ";;AAKA,SAAS,cAAc;AAEvB,SAAS,yBAAyB;AAY3B,MAAM,qBAAqB,OAAO,IAAI;AAAA,EAC5C,KAAK,6BAAM;AACV,UAAM,kBAAkB;AAAA,EACzB,GAFK;AAAA,EAGL,OAAO,wBAAC,UACP,IAAI,kBAAkB;AAAA,IACrB,SAAS;AAAA,IACT;AAAA,EACD,CAAC,GAJK;AAKR,CAAC,EAAE,KAAK,OAAO,IAAI,MAAM,OAAO,SAAS,mCAAmC,CAAC,CAAC;",
+  "names": []
+}
