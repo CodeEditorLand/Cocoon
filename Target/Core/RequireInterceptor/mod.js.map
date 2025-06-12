@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Core/RequireInterceptor/mod.ts"],
-  "sourcesContent": ["/**\n * @module RequireInterceptor (Core)\n * @description The main module for the RequireInterceptor service, which patches\n * Node.js's `require` to provide sandboxed APIs to extensions.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveLog } from \"../../Service/Log.js\";\nimport { Live as LiveApiFactory } from \"../ApiFactory/mod.js\";\nimport { Live as LiveExtensionPaths } from \"../ExtensionPaths/mod.js\";\nimport { Definition } from \"./Definition.js\";\nimport { Tag } from \"./Service.js\";\n\n/**\n * The live implementation layer for the RequireInterceptor service.\n * It has dependencies that need to be provided to it.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(\n\tLayer.provide(Layer.mergeAll(LiveApiFactory, LiveExtensionPaths, LiveLog)),\n);\n"],
-  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,eAAe;AAChC,SAAS,QAAQ,sBAAsB;AACvC,SAAS,QAAQ,0BAA0B;AAC3C,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAMb,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE;AAAA,EACjD,MAAM,QAAQ,MAAM,SAAS,gBAAgB,oBAAoB,OAAO,CAAC;AAC1E;",
-  "names": []
-}

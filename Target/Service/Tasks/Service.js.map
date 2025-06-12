@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Tasks/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (Tasks)\n * @description Defines the interface and Context.Tag for the Tasks service.\n */\n\nimport { Context, Effect, Stream } from \"effect\";\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\nimport type {\n\tDisposable,\n\tEvent,\n\tTask,\n\tTaskExecution,\n\tTaskFilter,\n\tTaskProvider,\n} from \"vscode\";\n\nexport interface Interface {\n\treadonly onDidStartTask: Event<any>;\n\treadonly onDidEndTask: Event<any>;\n\t// ... other events\n\n\t/**\n\t * Registers a task provider.\n\t */\n\treadonly RegisterTaskProvider: (\n\t\tType: string,\n\t\tProvider: TaskProvider,\n\t\tExtension: IExtensionDescription,\n\t) => Effect.Effect<Disposable, Error>;\n\n\t/**\n\t * Fetches tasks from all registered providers.\n\t */\n\treadonly FetchTasks: (Filter?: TaskFilter) => Effect.Effect<Task[], Error>;\n\n\t/**\n\t * Executes a task.\n\t */\n\treadonly ExecuteTask: (\n\t\tTaskToExecute: Task,\n\t\tExtension: IExtensionDescription,\n\t) => Effect.Effect<TaskExecution, Error>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Tasks\");\n"],
-  "mappings": "AAKA,SAAS,eAA+B;AAuCjC,MAAM,MAAM,QAAQ,IAAe,eAAe;",
-  "names": []
-}

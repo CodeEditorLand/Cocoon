@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/TypeConverter/Main/Position.ts"],
-  "sourcesContent": ["/**\n * @module Position (Main/TypeConverter)\n * @description Converts between `vscode.Position` and its DTO representation.\n */\n\nimport type { IPosition } from \"vs/editor/common/core/selection.js\";\n\nimport { Position as VscodePosition } from \"../../Type/ExtHostTypes.js\";\n\n/**\n * Converts a `vscode.Position` object into a plain DTO for IPC.\n * Note the conversion from 0-based (API) to 1-based (internal protocol) indexing.\n */\nexport const fromApi = (pos: VscodePosition): IPosition => ({\n\tlineNumber: pos.line + 1,\n\tcolumn: pos.character + 1,\n});\n\n/**\n * Revives a position DTO back into a `vscode.Position` class instance.\n * Note the conversion from 1-based (internal protocol) to 0-based (API) indexing.\n */\nexport const toApi = (dto: IPosition): VscodePosition =>\n\tnew VscodePosition(dto.lineNumber - 1, dto.column - 1);\n"],
-  "mappings": ";;AAOA,SAAS,YAAY,sBAAsB;AAMpC,MAAM,UAAU,wBAAC,SAAoC;AAAA,EAC3D,YAAY,IAAI,OAAO;AAAA,EACvB,QAAQ,IAAI,YAAY;AACzB,IAHuB;AAShB,MAAM,QAAQ,wBAAC,QACrB,IAAI,eAAe,IAAI,aAAa,GAAG,IAAI,SAAS,CAAC,GADjC;",
-  "names": []
-}

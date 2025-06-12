@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/WebviewPanel/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (WebviewPanel)\n * @description Defines the interface and Context.Tag for the WebviewPanel service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\nimport type {\n\tViewColumn,\n\tWebviewOptions,\n\tWebviewPanel,\n\tWebviewPanelOptions,\n} from \"vscode\";\n\nexport interface Interface {\n\t/**\n\t * Creates a new webview panel.\n\t */\n\treadonly CreateWebviewPanel: (\n\t\tExtension: IExtensionDescription,\n\t\tViewType: string,\n\t\tTitle: string,\n\t\tShowOptions:\n\t\t\t| ViewColumn\n\t\t\t| { viewColumn: ViewColumn; preserveFocus?: boolean },\n\t\tOptions?: WebviewPanelOptions & WebviewOptions,\n\t) => Effect.Effect<WebviewPanel, Error>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/WebviewPanel\");\n"],
-  "mappings": "AAKA,SAAS,eAAuB;AAwBzB,MAAM,MAAM,QAAQ,IAAe,sBAAsB;",
-  "names": []
-}

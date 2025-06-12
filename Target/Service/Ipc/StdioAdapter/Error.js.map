@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Ipc/StdioAdapter/Error.ts"],
-  "sourcesContent": ["/**\n * @module Error (StdioAdapter)\n * @description Defines custom errors for the Stdio IPC layer.\n */\n\nimport { Data } from \"effect\";\n\nexport class StdioError extends Data.TaggedError(\"StdioError\")<{\n\treadonly cause: unknown;\n\treadonly context: \"JsonParseFailed\" | \"RequestTimeout\" | \"WriteFailed\";\n}> {}\n"],
-  "mappings": ";;AAKA,SAAS,YAAY;AAEd,MAAM,mBAAmB,KAAK,YAAY,YAAY,EAG1D;AAAA,EAVH,OAUG;AAAA;AAAA;AAAC;",
-  "names": []
-}

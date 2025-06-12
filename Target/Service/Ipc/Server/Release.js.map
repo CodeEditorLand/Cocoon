@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Ipc/Server/Release.ts"],
-  "sourcesContent": ["/**\n * @module Release\n * @description Defines the `Effect` for gracefully shutting down the `Cocoon`\n * gRPC server.\n */\n\nimport { Effect } from \"effect\";\n\nimport { IpcError } from \"../Error.js\";\nimport type { Service } from \"./Service.js\";\n\n/**\n * An `Effect` that gracefully shuts down the gRPC server.\n *\n * This is designed to be used as the release action in an `acquireRelease`\n * constructor. It wraps the callback-based `tryShutdown` method in a promise,\n * ensuring it integrates cleanly into the `Effect` ecosystem.\n *\n * @param Server The gRPC server instance to shut down.\n */\nexport const Release = (Server: Service) =>\n\tEffect.tryPromise({\n\t\ttry: () =>\n\t\t\tnew Promise<void>((resolve) => Server.tryShutdown(() => resolve())),\n\t\tcatch: (Cause) =>\n\t\t\tnew IpcError({\n\t\t\t\tcause: Cause,\n\t\t\t\tcontext: \"gRPC server shutdown failed\",\n\t\t\t}),\n\t}).pipe(Effect.tap(() => Effect.logInfo(\"Cocoon gRPC server shut down.\")));\n"],
-  "mappings": ";;AAMA,SAAS,cAAc;AAEvB,SAAS,gBAAgB;AAYlB,MAAM,UAAU,wBAAC,WACvB,OAAO,WAAW;AAAA,EACjB,KAAK,6BACJ,IAAI,QAAc,CAAC,YAAY,OAAO,YAAY,MAAM,QAAQ,CAAC,CAAC,GAD9D;AAAA,EAEL,OAAO,wBAAC,UACP,IAAI,SAAS;AAAA,IACZ,OAAO;AAAA,IACP,SAAS;AAAA,EACV,CAAC,GAJK;AAKR,CAAC,EAAE,KAAK,OAAO,IAAI,MAAM,OAAO,QAAQ,+BAA+B,CAAC,CAAC,GATnD;",
-  "names": []
-}

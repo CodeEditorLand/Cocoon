@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/InitData/Live.ts"],
-  "sourcesContent": ["/**\n * @module Live (InitData)\n * @description Provides the live implementation layer for the InitData service.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Tag, type Interface } from \"./Service.js\";\n\n/**\n * A factory function that creates a live `Layer` for the `InitData` service.\n *\n * This layer simply succeeds with the provided `initData` object, making it\n * available in the context for all other services that depend on it. This\n * layer should be constructed exactly once during the application's initial\n * handshake process.\n *\n * @param InitDataObject - The `IExtensionHostInitData` object received from the Mountain host.\n * @returns A `Layer` that provides the `InitData.Service`.\n */\nexport const Live = (InitDataObject: Interface) =>\n\tLayer.succeed(Tag, InitDataObject);\n"],
-  "mappings": ";;AAKA,SAAS,aAAa;AAEtB,SAAS,WAA2B;AAa7B,MAAM,OAAO,wBAAC,mBACpB,MAAM,QAAQ,KAAK,cAAc,GADd;",
-  "names": []
-}

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/StatusBar/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (StatusBar)\n * @description Defines the interface and Context.Tag for the StatusBar service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\nimport type { Disposable, StatusBarAlignment, StatusBarItem } from \"vscode\";\n\nexport interface Interface {\n\t/**\n\t * Creates a new status bar item.\n\t * @param Extension - The extension creating the item.\n\t * @param Id - An optional identifier for the item.\n\t * @param Alignment - Optional alignment for the item.\n\t * @param Priority - Optional priority for the item.\n\t */\n\treadonly CreateStatusBarItem: (\n\t\tExtension: IExtensionDescription,\n\t\tId?: string,\n\t\tAlignment?: StatusBarAlignment,\n\t\tPriority?: number,\n\t) => Effect.Effect<StatusBarItem, never>;\n\n\t/**\n\t * Sets a temporary message in the status bar.\n\t * @param Text - The message to show.\n\t * @param HideOrPromise - Either a timeout in ms or a Promise that resolves when the message should be hidden.\n\t */\n\treadonly SetStatusBarMessage: (\n\t\tText: string,\n\t\tHideOrPromise?: number | Promise<any>,\n\t) => Disposable;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/StatusBar\");\n"],
-  "mappings": "AAKA,SAAS,eAAuB;AA8BzB,MAAM,MAAM,QAAQ,IAAe,mBAAmB;",
-  "names": []
-}

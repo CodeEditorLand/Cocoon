@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Workspace/State.ts"],
-  "sourcesContent": ["/**\n * @module State (Workspace)\n * @description Defines the internal state representation for the workspace.\n */\nimport type { Uri, WorkspaceFolder } from \"vscode\";\n\nexport class InternalWorkspace {\n\tconstructor(\n\t\tpublic readonly Id: string,\n\t\tpublic readonly Name: string,\n\t\tpublic readonly Folders: readonly WorkspaceFolder[],\n\t\tpublic readonly Configuration: Uri | undefined,\n\t) {}\n}\n"],
-  "mappings": ";;AAMO,MAAM,kBAAkB;AAAA,EAC9B,YACiB,IACA,MACA,SACA,eACf;AAJe;AACA;AACA;AACA;AAAA,EACd;AAAA,EAZJ,OAM+B;AAAA;AAAA;AAO/B;",
-  "names": []
-}

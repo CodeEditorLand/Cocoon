@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Window/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (Window)\n * @description Defines the interface and Context.Tag for the core Window service.\n */\n\nimport { Context, Effect, Stream } from \"effect\";\nimport type {\n\tEvent,\n\tTextDocumentShowOptions,\n\tTextEditor,\n\tViewColumn,\n\tWindowState,\n} from \"vscode\";\n\n/**\n * The service interface for the core `vscode.window` properties and methods.\n * Note: Does NOT include methods handled by other services like `showQuickPick`\n * or `createStatusBarItem`. This interface is for internal composition. The\n * final `vscode.window` object is assembled in the ApiFactory.\n */\nexport interface Interface {\n\treadonly state: WindowState;\n\treadonly onDidChangeWindowState: Stream.Stream<WindowState, never>;\n\n\treadonly activeTextEditor: TextEditor | undefined;\n\treadonly visibleTextEditors: readonly TextEditor[];\n\treadonly onDidChangeActiveTextEditor: Stream.Stream<\n\t\tTextEditor | undefined,\n\t\tnever\n\t>;\n\treadonly onDidChangeVisibleTextEditors: Stream.Stream<\n\t\treadonly TextEditor[],\n\t\tnever\n\t>;\n\n\treadonly ShowTextDocument: (\n\t\tdocumentOrUri: any,\n\t\tcolumnOrOptions?: ViewColumn | TextDocumentShowOptions,\n\t\tpreserveFocus?: boolean,\n\t) => Effect.Effect<TextEditor, Error>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Window\");\n"],
-  "mappings": "AAKA,SAAS,eAA+B;AAqCjC,MAAM,MAAM,QAAQ,IAAe,gBAAgB;",
-  "names": []
-}

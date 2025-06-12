@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/TypeConverter/Main/Uri.ts"],
-  "sourcesContent": ["/**\n * @module Uri (Main/TypeConverter)\n * @description Converts between `vscode.Uri` and its DTO representation.\n */\n\nimport type { UriComponents } from \"vs/base/common/uri.js\";\n\nimport { URI as VscodeUri } from \"../../Type/ExtHostTypes.js\";\n\n/**\n * Converts a `vscode.Uri` object into a plain JSON object for IPC.\n * This uses the canonical `.toJSON()` method.\n */\nexport const fromApi = (uri: VscodeUri): UriComponents => {\n\treturn uri.toJSON();\n};\n\n/**\n * Revives a URI DTO back into a `vscode.Uri` class instance.\n * This uses the canonical `Uri.revive()` static method.\n */\nexport const toApi = (dto: UriComponents): VscodeUri => {\n\treturn VscodeUri.revive(dto);\n};\n"],
-  "mappings": ";;AAOA,SAAS,OAAO,iBAAiB;AAM1B,MAAM,UAAU,wBAAC,QAAkC;AACzD,SAAO,IAAI,OAAO;AACnB,GAFuB;AAQhB,MAAM,QAAQ,wBAAC,QAAkC;AACvD,SAAO,UAAU,OAAO,GAAG;AAC5B,GAFqB;",
-  "names": []
-}

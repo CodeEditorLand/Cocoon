@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Cancellation/Error.ts"],
-  "sourcesContent": ["/**\n * @module Error (Cancellation)\n * @description Defines custom errors for the cancellation service.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A tagged error indicating that an invalid token ID was provided.\n */\nexport class InvalidTokenIdError extends Data.TaggedError(\n\t\"InvalidTokenIdError\",\n)<{\n\treadonly tokenId: number;\n}> {\n\tget message() {\n\t\treturn `Invalid tokenId ('${this.tokenId}') provided. Must be a positive number.`;\n\t}\n}\n"],
-  "mappings": ";;AAKA,SAAS,YAAY;AAKd,MAAM,4BAA4B,KAAK;AAAA,EAC7C;AACD,EAEG;AAAA,EAdH,OAcG;AAAA;AAAA;AAAA,EACF,IAAI,UAAU;AACb,WAAO,qBAAqB,KAAK,OAAO;AAAA,EACzC;AACD;",
-  "names": []
-}

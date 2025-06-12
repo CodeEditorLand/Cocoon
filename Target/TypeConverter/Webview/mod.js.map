@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/TypeConverter/Webview/mod.ts"],
-  "sourcesContent": ["/**\n * @module Webview (TypeConverter)\n * @description Aggregates and exports type converter functions for the\n * `Webview` and `WebviewPanel` APIs.\n *\n * These functions are responsible for translating rich `vscode` API objects\n * into plain, serializable Data Transfer Objects (DTOs) suitable for\n * Inter-Process Communication (IPC) with the `Mountain` backend.\n */\n\nexport { ConvertContentOptionsToDto } from \"./ConvertContentOptionsToDto.js\";\nexport { ConvertExtensionDataToDto } from \"./ConvertExtensionDataToDto.js\";\nexport { ConvertPanelOptionsToDto } from \"./ConvertPanelOptionsToDto.js\";\nexport { ConvertShowOptionsToDto } from \"./ConvertShowOptionsToDto.js\";\n"],
-  "mappings": "AAUA,SAAS,kCAAkC;AAC3C,SAAS,iCAAiC;AAC1C,SAAS,gCAAgC;AACzC,SAAS,+BAA+B;",
-  "names": []
-}

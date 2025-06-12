@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/FileSystem/Definition.ts"],
-  "sourcesContent": ["/**\n * @module Definition (FileSystem)\n * @description The live implementation of the FileSystem service.\n */\n\nimport { Effect } from \"effect\";\n\nimport { FileSystemInfoProvider } from \"../FileSystemInfo/mod.js\";\nimport { CreateStatEffect } from \"./CreateStatEffect.js\";\nimport type { Interface } from \"./Service.js\";\n\n// ... import other effect creators ...\n\nexport const Definition = Effect.gen(function* (_) {\n\tconst FsInfo = yield* _(FileSystemInfoProvider.Tag);\n\n\tconst ServiceImplementation: Interface = {\n\t\t// Each method builds and runs the corresponding Effect.\n\t\tstat: (uri) => Effect.runPromise(CreateStatEffect(uri)),\n\t\t// ... readFile, writeFile, delete, rename, copy, createDirectory ...\n\t\t// ... would all be implemented by calling their respective Effect creators ...\n\n\t\t// These are delegated from the FileSystemInfoProvider\n\t\tisWritableFileSystem: FsInfo.isWritableFileSystem,\n\t\tonDidChangeFile: FsInfo.onDidChangeFile,\n\t};\n\n\treturn ServiceImplementation;\n});\n"],
-  "mappings": ";;AAKA,SAAS,cAAc;AAEvB,SAAS,8BAA8B;AACvC,SAAS,wBAAwB;AAK1B,MAAM,aAAa,OAAO,IAAI,WAAW,GAAG;AAClD,QAAM,SAAS,OAAO,EAAE,uBAAuB,GAAG;AAElD,QAAM,wBAAmC;AAAA;AAAA,IAExC,MAAM,wBAAC,QAAQ,OAAO,WAAW,iBAAiB,GAAG,CAAC,GAAhD;AAAA;AAAA;AAAA;AAAA,IAKN,sBAAsB,OAAO;AAAA,IAC7B,iBAAiB,OAAO;AAAA,EACzB;AAEA,SAAO;AACR,CAAC;",
-  "names": []
-}

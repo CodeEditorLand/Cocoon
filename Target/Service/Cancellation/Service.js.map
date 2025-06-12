@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Cancellation/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (Cancellation)\n * @description Defines the interface and Context.Tag for the CancellationTokenProvider service.\n */\n\nimport { Context, Effect } from \"effect\";\n\nimport type { InvalidTokenIdError } from \"./Error.js\";\nimport type { TokenAndScope } from \"./Type.js\";\n\n/**\n * The service interface for the cancellation token provider.\n */\nexport interface Interface {\n\t/**\n\t * Acquires a CancellationToken for a given operation ID.\n\t * This returns a scoped Effect. When the scope is closed, the token\n\t * source is automatically disposed and cleaned up.\n\t */\n\treadonly ObtainToken: (\n\t\tTokenId: number,\n\t) => Effect.Effect<TokenAndScope, InvalidTokenIdError, Effect.Scope>;\n\n\t/**\n\t * Signals cancellation for a specific token ID.\n\t */\n\treadonly CancelToken: (TokenId: number) => Effect.Effect<void, never>;\n\n\t/**\n\t * Disposes of all currently managed cancellation token sources.\n\t */\n\treadonly DisposeAll: () => Effect.Effect<void, never>;\n}\n\n/**\n * The Context.Tag for the CancellationTokenProvider service.\n */\nexport const Tag = Context.Tag<Interface>(\"Service/CancellationTokenProvider\");\n"],
-  "mappings": "AAKA,SAAS,eAAuB;AAgCzB,MAAM,MAAM,QAAQ,IAAe,mCAAmC;",
-  "names": []
-}

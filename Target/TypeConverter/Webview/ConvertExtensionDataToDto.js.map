@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/TypeConverter/Webview/ConvertExtensionDataToDto.ts"],
-  "sourcesContent": ["/**\n * @module ConvertExtensionDataToDto\n * @description Converts an `IExtensionDescription` object into a simplified\n * DTO, typically used for webview creation.\n */\n\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\n\n/**\n * Extracts the necessary identification and location information from an\n * `IExtensionDescription` object for passing to the `Mountain` host process.\n *\n * @param Extension - The full description of the extension.\n * @returns A simplified DTO containing the extension's ID and location URI.\n */\nexport const ConvertExtensionDataToDto = (\n\tExtension: IExtensionDescription,\n) => ({\n\tId: Extension.identifier.value,\n\tLocation: Extension.extensionLocation,\n});\n"],
-  "mappings": ";;AAeO,MAAM,4BAA4B,wBACxC,eACK;AAAA,EACL,IAAI,UAAU,WAAW;AAAA,EACzB,UAAU,UAAU;AACrB,IALyC;",
-  "names": []
-}

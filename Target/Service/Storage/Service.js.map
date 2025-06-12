@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Storage/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (Storage)\n * @description Defines the interface and Context.Tag for the Storage service factory.\n */\n\nimport { Context } from \"effect\";\nimport type { Memento } from \"vscode\";\n\n/**\n * The service interface for the Storage factory.\n * Its role is to create Memento instances scoped to an extension and storage type.\n */\nexport interface Interface {\n\t/**\n\t * Creates a Memento instance.\n\t * @param ExtensionId - The ID of the extension requesting the storage.\n\t * @param IsGlobal - If `true`, creates a global storage memento; otherwise, a workspace-scoped one.\n\t */\n\treadonly CreateMemento: (ExtensionId: string, IsGlobal: boolean) => Memento;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Storage\");\n"],
-  "mappings": "AAKA,SAAS,eAAe;AAgBjB,MAAM,MAAM,QAAQ,IAAe,iBAAiB;",
-  "names": []
-}

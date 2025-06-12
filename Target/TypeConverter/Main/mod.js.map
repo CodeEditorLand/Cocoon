@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/TypeConverter/Main/mod.ts"],
-  "sourcesContent": ["/**\n * @module Main (TypeConverter)\n * @description Aggregates and exports all foundational type converters for the\n * most common, basic data types used throughout the vscode API.\n */\n\nexport * as Location from \"./Location.js\";\nexport * as MarkdownString from \"./MarkdownString.js\";\nexport * as Position from \"./Position.js\";\nexport * as Range from \"./Range.js\";\nexport * as Selection from \"./Selection.js\";\nexport * as TextEdit from \"./TextEdit.js\";\nexport * as Uri from \"./Uri.js\";\nexport * as ViewColumn from \"./ViewColumn.js\";\n"],
-  "mappings": "AAMA,YAAY,cAAc;AAC1B,YAAY,oBAAoB;AAChC,YAAY,cAAc;AAC1B,YAAY,WAAW;AACvB,YAAY,eAAe;AAC3B,YAAY,cAAc;AAC1B,YAAY,SAAS;AACrB,YAAY,gBAAgB;",
-  "names": []
-}

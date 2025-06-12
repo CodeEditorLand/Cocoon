@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Configuration/GetConfiguration.ts"],
-  "sourcesContent": ["/**\n * @module GetConfiguration\n * @description Defines an `Effect`-based wrapper for retrieving a VS Code\n * workspace configuration section.\n */\n\nimport { Effect } from \"effect\";\nimport type * as Vscode from \"vscode\";\n\n/**\n * An `Effect` that retrieves a workspace configuration object for a specific\n * section.\n *\n * This function wraps the synchronous `vscode.workspace.getConfiguration` API\n * call in an `Effect`, making configuration access a declarative and composable\n * part of the application's workflow.\n *\n * @param Section The configuration section to retrieve. If undefined, the root\n *   configuration object is returned.\n * @param Scope An optional `vscode.ConfigurationScope` for which to retrieve\n *   the configuration.\n * @returns An `Effect` that synchronously resolves to the\n *   `vscode.WorkspaceConfiguration`.\n */\nexport const GetConfiguration = (\n\tSection?: string,\n\tScope?: Vscode.ConfigurationScope | null,\n): Effect.Effect<Vscode.WorkspaceConfiguration> =>\n\tEffect.sync(() => Vscode.workspace.getConfiguration(Section, Scope));\n"],
-  "mappings": ";;AAMA,SAAS,cAAc;AAkBhB,MAAM,mBAAmB,wBAC/B,SACA,UAEA,OAAO,KAAK,MAAM,OAAO,UAAU,iBAAiB,SAAS,KAAK,CAAC,GAJpC;",
-  "names": []
-}

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Ipc/Generated/mod.ts"],
-  "sourcesContent": ["/**\n * @module Generated (IPC)\n * @description This module re-exports all the message and client types that are\n * automatically generated from the `vine.proto` file by a tool like `ts-proto`.\n * This provides a single, stable import path for the rest of the application.\n */\n\n// Example exports, assuming ts-proto generation:\nexport {\n\tGenericRequest,\n\tGenericResponse,\n\tGenericNotification,\n\tRpcDataPayload,\n\tCancelOperationRequest,\n\tEmpty,\n\tMountainServiceClient,\n\ttype MountainService,\n} from \"./vine.js\";\n"],
-  "mappings": "AAQA;AAAA,EACC;AAAA,EACA;AAAA,EACA;AAAA,EACA;AAAA,EACA;AAAA,EACA;AAAA,EACA;AAAA,OAEM;",
-  "names": []
-}

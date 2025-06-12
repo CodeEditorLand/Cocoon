@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Ipc/Client/mod.ts"],
-  "sourcesContent": ["/**\n * @module Client (IPC)\n * @description Provides a managed gRPC client connection from `Cocoon` to\n * `Mountain`, exposing the connection as a `Layer` that can be used by other\n * services.\n */\n\nimport { Layer } from \"effect\";\n\nimport type { Config } from \"../Config.js\";\nimport { Acquire } from \"./Acquire.js\";\nimport { Tag, type Service } from \"./Service.js\";\n\n/**\n * The live implementation `Layer` for the gRPC Client service.\n *\n * This is a scoped layer that uses the `Acquire` effect (which internally uses\n * `acquireRelease`) to manage the client's lifecycle. It ensures the gRPC\n * client is created and connected when the application starts and is\n * gracefully closed when the application shuts down.\n *\n * This layer depends on the `ConfigTag` to get the `Mountain` server address.\n */\nexport const Live: Layer.Layer<Service, never, Config> = Layer.scoped(\n\tTag,\n\tAcquire,\n);\n"],
-  "mappings": "AAOA,SAAS,aAAa;AAGtB,SAAS,eAAe;AACxB,SAAS,WAAyB;AAY3B,MAAM,OAA4C,MAAM;AAAA,EAC9D;AAAA,EACA;AACD;",
-  "names": []
-}

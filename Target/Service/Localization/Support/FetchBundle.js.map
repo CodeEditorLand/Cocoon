@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Localization/Support/FetchBundle.ts"],
-  "sourcesContent": ["/**\n * @module FetchBundle (Localization/Support)\n * @description An Effect for fetching an NLS bundle from the host.\n */\n\nimport { Effect } from \"effect\";\nimport type { Uri } from \"vscode\";\n\nimport * as TypeConverter from \"../../../TypeConverter/mod.js\";\nimport type { Ipc } from \"../../Ipc/mod.js\";\n\nexport const FetchBundleEffect = (IpcService: Ipc.Interface, BundleUri: Uri) =>\n\tIpcService.SendRequest<string | null>(\"$fetchBundleContents\", [\n\t\tTypeConverter.Uri.fromApi(BundleUri),\n\t]).pipe(\n\t\tEffect.map((content) => (content ? JSON.parse(content) : {})),\n\t\t// If the bundle doesn't exist or fails to parse, we treat it as an empty object.\n\t\tEffect.catchAll(() => Effect.succeed({})),\n\t);\n"],
-  "mappings": ";;AAKA,SAAS,cAAc;AAGvB,YAAY,mBAAmB;AAGxB,MAAM,oBAAoB,wBAAC,YAA2B,cAC5D,WAAW,YAA2B,wBAAwB;AAAA,EAC7D,cAAc,IAAI,QAAQ,SAAS;AACpC,CAAC,EAAE;AAAA,EACF,OAAO,IAAI,CAAC,YAAa,UAAU,KAAK,MAAM,OAAO,IAAI,CAAC,CAAE;AAAA;AAAA,EAE5D,OAAO,SAAS,MAAM,OAAO,QAAQ,CAAC,CAAC,CAAC;AACzC,GAPgC;",
-  "names": []
-}

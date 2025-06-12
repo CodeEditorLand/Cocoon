@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/SecretStorage/Definition.ts"],
-  "sourcesContent": ["/**\n * @module Definition (SecretStorage)\n * @description The live implementation of the SecretStorage service factory.\n */\n\nimport { Effect } from \"effect\";\n\nimport { IpcProvider } from \"../Ipc/mod.js\";\nimport { LogProvider } from \"../Log.js\";\nimport { SecretStorageImpl } from \"./SecretStorageImpl.js\";\nimport type { Interface } from \"./Service.js\";\n\nexport const Definition = Effect.gen(function* (_) {\n\tconst Ipc = yield* _(IpcProvider.Tag);\n\tconst Log = yield* _(LogProvider.Tag);\n\n\tconst ServiceImplementation: Interface = {\n\t\tCreateStorage: (ExtensionId: string) => {\n\t\t\tLog.Debug(`Created SecretStorage for extension: '${ExtensionId}'`);\n\t\t\treturn new SecretStorageImpl(ExtensionId, Ipc, Log);\n\t\t},\n\t};\n\n\treturn ServiceImplementation;\n});\n"],
-  "mappings": ";;AAKA,SAAS,cAAc;AAEvB,SAAS,mBAAmB;AAC5B,SAAS,mBAAmB;AAC5B,SAAS,yBAAyB;AAG3B,MAAM,aAAa,OAAO,IAAI,WAAW,GAAG;AAClD,QAAM,MAAM,OAAO,EAAE,YAAY,GAAG;AACpC,QAAM,MAAM,OAAO,EAAE,YAAY,GAAG;AAEpC,QAAM,wBAAmC;AAAA,IACxC,eAAe,wBAAC,gBAAwB;AACvC,UAAI,MAAM,yCAAyC,WAAW,GAAG;AACjE,aAAO,IAAI,kBAAkB,aAAa,KAAK,GAAG;AAAA,IACnD,GAHe;AAAA,EAIhB;AAEA,SAAO;AACR,CAAC;",
-  "names": []
-}

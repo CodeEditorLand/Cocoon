@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/QuickInput/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (QuickInput)\n * @description Defines the interface and Context.Tag for the QuickInput service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type {\n\tCancellationToken,\n\tInputBox,\n\tInputBoxOptions,\n\tQuickInputButton,\n\tQuickPick,\n\tQuickPickItem,\n} from \"vscode\";\n\nexport interface Interface {\n\treadonly ShowQuickPick: <T extends QuickPickItem | string>(\n\t\tItems: ReadonlyArray<T> | Promise<ReadonlyArray<T>>,\n\t\tOptions?: any,\n\t\tToken?: CancellationToken,\n\t) => Effect.Effect<T | T[] | undefined, Error>;\n\n\treadonly ShowInputBox: (\n\t\tOptions?: InputBoxOptions,\n\t\tToken?: CancellationToken,\n\t) => Effect.Effect<string | undefined, Error>;\n\n\treadonly CreateQuickPick: <T extends QuickPickItem>() => QuickPick<T>;\n\treadonly CreateInputBox: () => InputBox;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/QuickInput\");\n"],
-  "mappings": "AAKA,SAAS,eAAuB;AA0BzB,MAAM,MAAM,QAAQ,IAAe,oBAAoB;",
-  "names": []
-}
