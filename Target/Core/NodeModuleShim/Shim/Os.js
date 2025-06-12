@@ -1,7 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as NodeOs from "node:os";
-import { InitDataService } from "../../../Service/InitData.js";
 const CreateOsShim = /* @__PURE__ */ __name((InitData) => {
   const IsWindows = InitData.environment.isWindows;
   const OsShim = {

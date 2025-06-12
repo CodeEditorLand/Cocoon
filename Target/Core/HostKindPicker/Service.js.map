@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../../Source/Core/HostKindPicker/Service.ts"],
   "sourcesContent": ["/**\n * @module Service (HostKindPicker)\n * @description Defines the interface and Context.Tag for the HostKindPicker service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\nimport { ExtensionHostKind } from \"vs/workbench/services/extensions/common/extensionHostKind.js\";\n\n/**\n * The service interface for picking an extension host kind.\n */\nexport interface Interface {\n\t/**\n\t * Determines the appropriate extension host kind for a given extension based\n\t * on its manifest properties.\n\t *\n\t * @param Extension - The description of the extension to analyze.\n\t * @returns An `Effect` that resolves to an `ExtensionHostKind` or `null` if no\n\t *   suitable host is found for the Cocoon environment.\n\t */\n\treadonly PickHostKind: (\n\t\tExtension: IExtensionDescription,\n\t) => Effect.Effect<ExtensionHostKind | null, never>;\n}\n\n/**\n * The Context.Tag for the HostKindPicker service.\n */\nexport const Tag = Context.Tag<Interface>(\"Core/HostKindPicker\");\n"],
-  "mappings": "AAKA,SAAS,SAAS,cAAc;AAEhC,SAAS,yBAAyB;AAsB3B,MAAM,MAAM,QAAQ,IAAe,qBAAqB;",
+  "mappings": "AAKA,SAAS,eAAuB;AAwBzB,MAAM,MAAM,QAAQ,IAAe,qBAAqB;",
   "names": []
 }

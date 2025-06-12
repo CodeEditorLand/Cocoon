@@ -1,6 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Data, Effect } from "effect";
+import { Data } from "effect";
 import { FileSystemError as VscodeFileSystemError } from "vscode";
 class FileSystemError extends Data.TaggedError("FileSystemError") {
   static {

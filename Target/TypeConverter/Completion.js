@@ -1,10 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { DisposableStore } from "vs/base/common/lifecycle.js";
 import * as Languages from "vs/editor/common/languages.js";
-import * as ExtHostProtocol from "vs/workbench/api/common/extHost.protocol.js";
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Commands as CommandsConverter } from "./Commands/mod.js";
 import {
   MarkdownString as MarkdownStringConverter,
   Range as RangeConverter,

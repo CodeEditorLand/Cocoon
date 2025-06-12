@@ -1,6 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Ref, Stream } from "effect";
+import { Effect, Ref } from "effect";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
 import { IpcProvider } from "../Ipc/mod.js";
 import { RegisterProviderEffect } from "./RegisterProvider.js";

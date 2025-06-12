@@ -1,7 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Range as VscodeRange } from "../../Type/ExtHostTypes.js";
-import * as PositionConverter from "./Position.js";
 const fromApi = /* @__PURE__ */ __name((range) => ({
   startLineNumber: range.start.line + 1,
   startColumn: range.start.character + 1,

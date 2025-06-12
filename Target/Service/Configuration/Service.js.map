@@ -1,7 +1,7 @@
 {
   "version": 3,
-  "sources": ["../../../Source/Service/Configuration/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (Configuration)\n * @description Defines the interface and Context.Tag for the Configuration service.\n */\n\nimport { Context, Effect, Stream } from \"effect\";\nimport type { ConfigurationChangeEvent, ConfigurationScope } from \"vscode\";\n\nimport type { ConfigurationUpdateError } from \"./Error.js\";\nimport type { WorkspaceConfiguration } from \"./Type.js\";\n\nexport interface Interface {\n\t/**\n\t * Retrieves a `WorkspaceConfiguration` object for a given section and scope.\n\t */\n\treadonly GetConfiguration: (\n\t\tSection?: string,\n\t\tScope?: ConfigurationScope,\n\t) => Effect.Effect<WorkspaceConfiguration, Error>;\n\n\t/**\n\t * An event stream that fires when the effective configuration has changed.\n\t */\n\treadonly OnDidChangeConfiguration: Stream.Stream<\n\t\tConfigurationChangeEvent,\n\t\tnever\n\t>;\n}\n"],
-  "mappings": "AAKA,SAAS,SAAS,QAAQ,cAAc;",
+  "sources": [],
+  "sourcesContent": [],
+  "mappings": "",
   "names": []
 }

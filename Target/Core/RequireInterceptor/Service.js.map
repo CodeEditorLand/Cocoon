@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../../Source/Core/RequireInterceptor/Service.ts"],
   "sourcesContent": ["/**\n * @module Service (RequireInterceptor)\n * @description Defines the interface and Context.Tag for the RequireInterceptor service.\n */\n\nimport { Context, Effect } from \"effect\";\n\n/**\n * The service interface for the `require` interceptor.\n */\nexport interface Interface {\n\t/**\n\t * An Effect that, when executed, patches the global `Module.prototype.require`\n\t * function to enable interception. This should be run once at startup.\n\t */\n\treadonly Install: () => Effect.Effect<void, Error>;\n}\n\n/**\n * The Context.Tag for the RequireInterceptor service.\n */\nexport const Tag = Context.Tag<Interface>(\"Core/RequireInterceptor\");\n"],
-  "mappings": "AAKA,SAAS,SAAS,cAAc;AAgBzB,MAAM,MAAM,QAAQ,IAAe,yBAAyB;",
+  "mappings": "AAKA,SAAS,eAAuB;AAgBzB,MAAM,MAAM,QAAQ,IAAe,yBAAyB;",
   "names": []
 }

@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../../Source/Core/ExtensionHost/Service.ts"],
   "sourcesContent": ["/**\n * @module Service (ExtensionHost)\n * @description Defines the interface and Context.Tag for the ExtensionHost service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport {\n\tExtensionIdentifier,\n\ttype IExtensionDescription,\n} from \"vs/platform/extensions/common/extensions.js\";\nimport type { ExtensionActivationReason } from \"vs/workbench/api/common/extHostExtensionActivator.js\";\n\nexport interface Interface {\n\treadonly ActivateById: (\n\t\tId: ExtensionIdentifier,\n\t\tReason: ExtensionActivationReason,\n\t) => Effect.Effect<void, Error>;\n\n\treadonly GetExtensionDescription: (\n\t\tId: string | ExtensionIdentifier,\n\t) => Effect.Effect<IExtensionDescription | undefined>;\n\n\treadonly GetExtensionExports: (Id: ExtensionIdentifier) => any;\n\n\treadonly IsActivated: (Id: ExtensionIdentifier) => boolean;\n\n\treadonly DeactivateAll: () => Effect.Effect<void>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Core/ExtensionHost\");\n"],
-  "mappings": "AAKA,SAAS,SAAS,cAAc;AAChC;AAAA,EACC;AAAA,OAEM;AAoBA,MAAM,MAAM,QAAQ,IAAe,oBAAoB;",
+  "mappings": "AAKA,SAAS,eAAuB;AAwBzB,MAAM,MAAM,QAAQ,IAAe,oBAAoB;",
   "names": []
 }

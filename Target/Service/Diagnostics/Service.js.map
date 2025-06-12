@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../../Source/Service/Diagnostics/Service.ts"],
   "sourcesContent": ["/**\n * @module Service (Diagnostics)\n * @description Defines the interface and Context.Tag for the Diagnostics service.\n */\n\nimport { Context, Stream } from \"effect\";\nimport type { DiagnosticCollection, Event, Uri } from \"vscode\";\n\nexport interface Interface {\n\t/**\n\t * An event that fires when the diagnostics collection for a resource has changed.\n\t */\n\treadonly onDidChangeDiagnostics: Event<readonly Uri[]>;\n\n\t/**\n\t * Creates a new diagnostic collection.\n\t * @param name - An optional name for the collection.\n\t */\n\treadonly CreateDiagnosticCollection: (\n\t\tname?: string,\n\t) => DiagnosticCollection;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Diagnostics\");\n"],
-  "mappings": "AAKA,SAAS,SAAS,cAAc;AAkBzB,MAAM,MAAM,QAAQ,IAAe,qBAAqB;",
+  "mappings": "AAKA,SAAS,eAAuB;AAkBzB,MAAM,MAAM,QAAQ,IAAe,qBAAqB;",
   "names": []
 }

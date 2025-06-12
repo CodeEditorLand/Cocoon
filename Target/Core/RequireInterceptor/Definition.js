@@ -9,7 +9,6 @@ import { Tag as ExtensionPathsTag } from "../ExtensionPaths/mod.js";
 import {
   VscodeNodeModuleFactory
 } from "./Factory/mod.js";
-import {} from "./Service.js";
 const Definition = Effect.gen(function* (_) {
   const ApiFactory = yield* _(ApiFactoryTag);
   const ExtensionPaths = yield* _(ExtensionPathsTag);

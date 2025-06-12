@@ -3,9 +3,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import * as Path from "path";
 import * as Grpc from "@grpc/grpc-js";
 import {
-  GrpcObject,
-  loadPackageDefinition,
-  ServiceClientConstructor
+  loadPackageDefinition
 } from "@grpc/proto-loader";
 import { Effect } from "effect";
 import { ConfigTag } from "../Config.js";

@@ -2,7 +2,7 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Layer } from "effect";
 import { Live as LiveClient } from "./Client/mod.js";
-import { Config, ConfigTag } from "./Config.js";
+import { ConfigTag } from "./Config.js";
 import { Definition } from "./Definition.js";
 import { Live as LiveDispatcher } from "./Dispatcher/mod.js";
 import { Live as LiveProtocolAdapter } from "./ProtocolAdapter/mod.js";

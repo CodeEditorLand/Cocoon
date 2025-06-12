@@ -2,8 +2,6 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Stream } from "effect";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
-import { LogProvider } from "../Log.js";
 import { EmptyKeyError, InvalidValueError } from "./Error.js";
 class SecretStorageImpl {
   constructor(ExtensionId, Ipc, Log) {

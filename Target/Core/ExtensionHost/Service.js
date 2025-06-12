@@ -1,7 +1,4 @@
-import { Context, Effect } from "effect";
-import {
-  ExtensionIdentifier
-} from "vs/platform/extensions/common/extensions.js";
+import { Context } from "effect";
 const Tag = Context.Tag("Core/ExtensionHost");
 export {
   Tag

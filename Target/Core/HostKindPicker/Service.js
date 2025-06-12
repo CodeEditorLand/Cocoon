@@ -1,5 +1,4 @@
-import { Context, Effect } from "effect";
-import { ExtensionHostKind } from "vs/workbench/services/extensions/common/extensionHostKind.js";
+import { Context } from "effect";
 const Tag = Context.Tag("Core/HostKindPicker");
 export {
   Tag

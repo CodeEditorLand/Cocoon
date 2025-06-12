@@ -1,7 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { generateUuid } from "vs/base/common/uuid.js";
-import { Commands as CommandsService } from "../../Service/Commands/mod.js";
 class Definition {
   constructor(Commands, LookupApiCommand) {
     this.Commands = Commands;

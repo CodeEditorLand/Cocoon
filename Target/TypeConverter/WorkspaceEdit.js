@@ -1,8 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import * as ExtHostProtocol from "vs/workbench/api/common/extHost.protocol.js";
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Commands as CommandsConverter } from "./Commands/mod.js";
 import { TextEdit as TextEditConverter, Uri as UriConverter } from "./Main.js";
 var WorkspaceEdit;
 ((WorkspaceEdit2) => {

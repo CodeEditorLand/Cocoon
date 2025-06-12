@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as Readline from "node:readline";
-import { Effect, Layer, Ref, Schedule } from "effect";
+import { Effect, Layer, Ref } from "effect";
 import { Tag as DispatcherTag } from "../Dispatcher/Service.js";
 import { Tag as IpcServiceTag } from "../Service.js";
 import { StdioError } from "./Error.js";

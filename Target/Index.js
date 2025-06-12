@@ -1,5 +1,5 @@
 import * as Path from "path";
-import { Barrier, Context, Effect, Layer, Scope } from "effect";
+import { Barrier, Effect, Layer, Scope } from "effect";
 import { ExtensionHost } from "./Core/ExtensionHost.js";
 import { CoreServicesLayer } from "./Core/mod.js";
 import { RequireInterceptor } from "./Core/RequireInterceptor.js";

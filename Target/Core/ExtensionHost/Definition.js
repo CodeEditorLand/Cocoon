@@ -1,12 +1,11 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Context, Effect, Layer, Ref, Schedule, Stream } from "effect";
+import { Effect, Ref } from "effect";
 import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import { InitDataService } from "../../Service/InitData.js";
 import { IpcProvider } from "../../Service/Ipc.js";
 import { LogProvider } from "../../Service/Log.js";
 import { ApiFactoryProvider } from "../ApiFactory.js";
-import {} from "./Service.js";
 const Definition = Effect.gen(function* (_) {
   const Log = yield* _(LogProvider);
   const Ipc = yield* _(IpcProvider);

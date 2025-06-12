@@ -2,7 +2,7 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as Path from "path";
 import * as Grpc from "@grpc/grpc-js";
-import { GrpcObject, loadPackageDefinition } from "@grpc/proto-loader";
+import { loadPackageDefinition } from "@grpc/proto-loader";
 import { Effect } from "effect";
 import { ConfigTag } from "../Config.js";
 import { Tag as DispatcherTag } from "../Dispatcher/Service.js";

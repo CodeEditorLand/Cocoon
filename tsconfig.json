@@ -10,8 +10,6 @@
 
 		"experimentalDecorators": true,
 
-		"lib": ["ESNext"],
-
 		"module": "ESNext",
 
 		"moduleResolution": "Bundler",
@@ -26,7 +24,16 @@
 
 		"rootDirs": [".", "../../Dependency/Microsoft/Dependency/Editor/src/"],
 
-		"target": "ESNext"
+		"target": "ESNext",
+
+		// vs/compatbile
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"verbatimModuleSyntax": false,
+		"strict": false,
+		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
+		"skipLibCheck": true,
+		"isolatedModules": false
 	},
 
 	"exclude": ["Target"],

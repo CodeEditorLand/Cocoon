@@ -1,8 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { ThemeIcon as VscodeThemeIcon } from "vs/platform/theme/common/theme.js";
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Commands as CommandsConverter } from "./Commands/mod.js";
 import {
   MarkdownString as MarkdownStringConverter,
   Uri as UriConverter

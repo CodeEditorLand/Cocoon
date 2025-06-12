@@ -1,4 +1,4 @@
-import { Context, Effect, Stream } from "effect";
+import { Context } from "effect";
 const Tag = Context.Tag("Service/Authentication");
 export {
   Tag

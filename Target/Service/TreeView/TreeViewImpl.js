@@ -3,8 +3,6 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Effect, Stream } from "effect";
 import * as TypeConverter from "../../TypeConverter/mod.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { Commands } from "../Commands/mod.js";
-import { IpcProvider } from "../Ipc/mod.js";
 let HandleCounter = 0;
 class TreeViewImpl {
   constructor(ViewId, DataProvider, Ipc, CommandConverter, Extension) {

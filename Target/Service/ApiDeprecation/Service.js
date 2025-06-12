@@ -1,4 +1,4 @@
-import { Context, Effect } from "effect";
+import { Context } from "effect";
 const Tag = Context.Tag("Service/ApiDeprecation");
 export {
   Tag

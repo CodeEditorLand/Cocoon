@@ -1,9 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Context, Effect, HashMap, Layer, ReadonlySet } from "effect";
-import {
-  ExtensionIdentifier
-} from "vs/platform/extensions/common/extensions.js";
 import { InitDataService } from "./InitData.js";
 import { LogProvider } from "./Log.js";
 const Tag = Context.Tag("Service/ProposedApi");

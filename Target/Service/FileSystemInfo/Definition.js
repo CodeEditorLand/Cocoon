@@ -1,6 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, HashMap, Ref, Stream } from "effect";
+import { Effect, HashMap, Ref } from "effect";
 import { isWindows } from "vs/base/common/platform.js";
 import { ExtUri } from "vs/base/common/resources.js";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";

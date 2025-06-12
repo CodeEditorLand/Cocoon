@@ -7,7 +7,7 @@ import {
   ShowErrorMessage,
   ShowInformationMessage
 } from "../../Service/Window/mod.js";
-import { ActiveEditorNotFoundError, ProcessingServiceError } from "./Error.js";
+import { ActiveEditorNotFoundError } from "./Error.js";
 import { GetDocumentText } from "./GetDocumentText.js";
 const ProcessUserData = pipe(
   Effect.gen(function* (_) {

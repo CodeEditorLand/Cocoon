@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../../../Source/Service/Ipc/ProtocolAdapter/Service.ts"],
   "sourcesContent": ["/**\n * @module Service\n * @description Defines the service interface and `Context.Tag` for the\n * `IpcProtocolAdapter`.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type { IMessagePassingProtocol } from \"vs/base/parts/ipc/common/ipc.js\";\n\n/**\n * The interface for the protocol adapter service.\n *\n * It extends the standard VS Code `IMessagePassingProtocol` with a custom\n * method to handle incoming raw binary data from the `Mountain` host.\n */\nexport interface Service extends IMessagePassingProtocol {\n\t/**\n\t * An `Effect` that processes a raw binary buffer received from the host and\n\t * fires the `onMessage` event for the `RPCProtocol` to consume.\n\t * @param Data The raw `Uint8Array` received from `Mountain`.\n\t */\n\treadonly ProcessIncomingData: (\n\t\tData: Uint8Array,\n\t) => Effect.Effect<void, never>;\n}\n\n/**\n * The `Context.Tag` for the `IpcProtocolAdapter` service.\n */\nexport const Tag = Context.Tag<Service>(\"Ipc/ProtocolAdapter\");\n"],
-  "mappings": "AAMA,SAAS,SAAS,cAAc;AAuBzB,MAAM,MAAM,QAAQ,IAAa,qBAAqB;",
+  "mappings": "AAMA,SAAS,eAAuB;AAuBzB,MAAM,MAAM,QAAQ,IAAa,qBAAqB;",
   "names": []
 }

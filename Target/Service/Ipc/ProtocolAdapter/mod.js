@@ -1,6 +1,5 @@
 import { Layer } from "effect";
 import { Live as LiveClient } from "../Client/mod.js";
-import { Config } from "../Config.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
 const Live = Layer.effect(Tag, Definition).pipe(

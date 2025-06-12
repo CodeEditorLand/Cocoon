@@ -1,9 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { URI } from "vs/base/common/uri.js";
-import {
-  ExtensionIdentifier
-} from "vs/platform/extensions/common/extensions.js";
 class Definition {
   static {
     __name(this, "Definition");

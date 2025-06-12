@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as Path from "node:path";
-import { Barrier, Effect, Ref, Stream } from "effect";
+import { Barrier, Effect, Ref } from "effect";
 import { Uri } from "vscode";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
 import { InitDataService } from "../InitData.js";
