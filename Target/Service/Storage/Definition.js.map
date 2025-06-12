@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Storage/Definition.ts"],
+  "sourcesContent": ["/**\n * @module Definition (Storage)\n * @description The live implementation of the Storage service factory.\n */\n\nimport { Effect } from \"effect\";\n\nimport { IpcProvider } from \"../Ipc/mod.js\";\nimport { LogProvider } from \"../Log.js\";\nimport { MementoImpl } from \"./MementoImpl.js\";\nimport type { Interface } from \"./Service.js\";\n\nexport const Definition = Effect.gen(function* (_) {\n\tconst Ipc = yield* _(IpcProvider.Tag);\n\tconst Log = yield* _(LogProvider.Tag);\n\n\tconst ServiceImplementation: Interface = {\n\t\tCreateMemento: (ExtensionId: string, IsGlobal: boolean) => {\n\t\t\tconst ScopeName = IsGlobal ? \"Global\" : \"Workspace\";\n\t\t\tLog.Debug(\n\t\t\t\t`Created Memento for ExtId='${ExtensionId}', Scope='${ScopeName}'`,\n\t\t\t);\n\t\t\treturn new MementoImpl(ExtensionId, IsGlobal, Ipc, Log);\n\t\t},\n\t};\n\n\treturn ServiceImplementation;\n});\n"],
+  "mappings": ";;AAKA,SAAS,cAAc;AAEvB,SAAS,mBAAmB;AAC5B,SAAS,mBAAmB;AAC5B,SAAS,mBAAmB;AAGrB,MAAM,aAAa,OAAO,IAAI,WAAW,GAAG;AAClD,QAAM,MAAM,OAAO,EAAE,YAAY,GAAG;AACpC,QAAM,MAAM,OAAO,EAAE,YAAY,GAAG;AAEpC,QAAM,wBAAmC;AAAA,IACxC,eAAe,wBAAC,aAAqB,aAAsB;AAC1D,YAAM,YAAY,WAAW,WAAW;AACxC,UAAI;AAAA,QACH,8BAA8B,WAAW,aAAa,SAAS;AAAA,MAChE;AACA,aAAO,IAAI,YAAY,aAAa,UAAU,KAAK,GAAG;AAAA,IACvD,GANe;AAAA,EAOhB;AAEA,SAAO;AACR,CAAC;",
+  "names": []
+}

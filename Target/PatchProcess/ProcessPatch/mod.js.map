@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/PatchProcess/ProcessPatch/mod.ts"],
+  "sourcesContent": ["/**\n * @module ProcessPatch\n * @description This module defines the service that provides the necessary native\n * functions and configuration for the other process patching Effects.\n */\n\nexport { Live } from \"./Live.js\";\nexport { Tag, type Interface } from \"./Service.js\";\n"],
+  "mappings": "AAMA,SAAS,YAAY;AACrB,SAAS,WAA2B;",
+  "names": []
+}

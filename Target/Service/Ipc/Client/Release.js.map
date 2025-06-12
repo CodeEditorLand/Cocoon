@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/Ipc/Client/Release.ts"],
+  "sourcesContent": ["/**\n * @module Release\n * @description Defines the `Effect` for gracefully closing the gRPC client\n * connection.\n */\n\nimport { Effect } from \"effect\";\n\nimport type { Service } from \"./Service.js\";\n\n/**\n * An `Effect` that closes the gRPC client connection.\n *\n * This is designed to be used as the release action in an `acquireRelease`\n * constructor, ensuring that the connection to `Mountain` is properly torn\n * down when the application scope ends.\n *\n * @param Client The gRPC client instance to close.\n */\nexport const Release = (Client: Service) =>\n\tEffect.sync(() => {\n\t\tClient.close();\n\t}).pipe(Effect.tap(() => Effect.logInfo(\"gRPC client connection closed.\")));\n"],
+  "mappings": ";;AAMA,SAAS,cAAc;AAahB,MAAM,UAAU,wBAAC,WACvB,OAAO,KAAK,MAAM;AACjB,SAAO,MAAM;AACd,CAAC,EAAE,KAAK,OAAO,IAAI,MAAM,OAAO,QAAQ,gCAAgC,CAAC,CAAC,GAHpD;",
+  "names": []
+}

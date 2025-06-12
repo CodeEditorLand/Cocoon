@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../Source/TypeConverter/QuickInput.ts"],
+  "sourcesContent": ["/**\n * @module QuickInput (TypeConverter)\n * @description Type converters for the QuickInput APIs.\n */\n\nimport type { QuickInputButton, QuickPickItem } from \"vscode\";\n\nimport { Uri } from \"../Type/ExtHostTypes.js\";\n\nexport namespace QuickPick {\n\texport const SerializeItems = <T extends QuickPickItem | string>(\n\t\tItems: readonly T[],\n\t) =>\n\t\tItems.map((Item, Index) => {\n\t\t\tconst Base =\n\t\t\t\ttypeof Item === \"string\"\n\t\t\t\t\t? { label: Item }\n\t\t\t\t\t: (Item as QuickPickItem);\n\t\t\t// Attach our own index to map the result back later.\n\t\t\treturn { ...Base, data: { _cocoonOriginalIndex: Index } };\n\t\t});\n\n\texport const SerializeButtons = (Buttons?: readonly QuickInputButton[]) =>\n\t\tButtons?.map((Button, Index) => ({\n\t\t\ticonPath: (Button as any).iconPath\n\t\t\t\t? Uri.revive((Button as any).iconPath).toJSON()\n\t\t\t\t: undefined,\n\t\t\ttooltip: Button.tooltip,\n\t\t\thandle: Index,\n\t\t}));\n}\n"],
+  "mappings": ";;AAOA,SAAS,WAAW;AAEb,IAAU;AAAA,CAAV,CAAUA,eAAV;AACC,EAAMA,WAAA,iBAAiB,wBAC7B,UAEA,MAAM,IAAI,CAAC,MAAM,UAAU;AAC1B,UAAM,OACL,OAAO,SAAS,WACb,EAAE,OAAO,KAAK,IACb;AAEL,WAAO,EAAE,GAAG,MAAM,MAAM,EAAE,sBAAsB,MAAM,EAAE;AAAA,EACzD,CAAC,GAV4B;AAYvB,EAAMA,WAAA,mBAAmB,wBAAC,YAChC,SAAS,IAAI,CAAC,QAAQ,WAAW;AAAA,IAChC,UAAW,OAAe,WACvB,IAAI,OAAQ,OAAe,QAAQ,EAAE,OAAO,IAC5C;AAAA,IACH,SAAS,OAAO;AAAA,IAChB,QAAQ;AAAA,EACT,EAAE,GAP6B;AAAA,GAbhB;",
+  "names": ["QuickPick"]
+}

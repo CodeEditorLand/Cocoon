@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Commands/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (Commands)\n * @description Defines the interface and Context.Tag for the Commands service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\nimport type { IDisposable } from \"vscode\";\n\nimport type { CommandHandler } from \"./Type.js\";\n\nexport interface Interface {\n\treadonly RegisterCommand: (\n\t\tId: string,\n\t\tHandler: CommandHandler,\n\t\tThisArg?: any,\n\t\tExtension?: IExtensionDescription,\n\t) => IDisposable;\n\n\treadonly RegisterTextEditorCommand: (\n\t\tId: string,\n\t\tHandler: CommandHandler,\n\t\tThisArg?: any,\n\t\tExtension?: IExtensionDescription,\n\t) => IDisposable;\n\n\treadonly ExecuteCommand: <T>(\n\t\tId: string,\n\t\t...Args: any[]\n\t) => Effect.Effect<T, Error>;\n\n\treadonly GetCommands: (\n\t\tFilterInternal?: boolean,\n\t) => Effect.Effect<string[], Error>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Commands\");\n"],
+  "mappings": "AAKA,SAAS,eAAuB;AA+BzB,MAAM,MAAM,QAAQ,IAAe,kBAAkB;",
+  "names": []
+}

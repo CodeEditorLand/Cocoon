@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Extension/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (Extension)\n * @description Defines the interface and Context.Tag for the Extension service.\n */\n\nimport { Context, Stream } from \"effect\";\nimport type { Event, Extension } from \"vscode\";\n\n/**\n * The service interface for the `vscode.extensions` API.\n */\nexport interface Interface {\n\t/** An event which fires when `extensions` have been changed. */\n\treadonly onDidChange: Event<void>;\n\n\t/**\n\t * Get an extension by its full identifier in the form of: `publisher.name`.\n\t * @param extensionId - The extension identifier.\n\t * @returns The extension or `undefined`.\n\t */\n\treadonly getExtension: <T>(extensionId: string) => Extension<T> | undefined;\n\n\t/**\n\t * All extensions are listed in this array.\n\t */\n\treadonly all: readonly Extension<any>[];\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Extension\");\n"],
+  "mappings": "AAKA,SAAS,eAAuB;AAuBzB,MAAM,MAAM,QAAQ,IAAe,mBAAmB;",
+  "names": []
+}

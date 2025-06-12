@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/LanguageFeatures/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (LanguageFeatures)\n * @description Defines the interface and Context.Tag for the LanguageFeatures service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\nimport type {\n\tDisposable,\n\tDocumentSelector,\n\tHover,\n\tHoverProvider,\n} from \"vscode\";\n\n// This interface would be extremely large, listing every `register...Provider` method.\nexport interface Interface {\n\treadonly RegisterHoverProvider: (\n\t\tSelector: DocumentSelector,\n\t\tProvider: HoverProvider,\n\t\tExtension: IExtensionDescription,\n\t) => Effect.Effect<Disposable, Error>;\n\n\t// ... And so on for registerCompletionItemProvider, registerDefinitionProvider, etc.\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/LanguageFeatures\");\n"],
+  "mappings": "AAKA,SAAS,eAAuB;AAoBzB,MAAM,MAAM,QAAQ,IAAe,0BAA0B;",
+  "names": []
+}

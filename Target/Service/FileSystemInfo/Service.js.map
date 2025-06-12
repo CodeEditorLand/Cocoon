@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/FileSystemInfo/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (FileSystemInfo)\n * @description Defines the interface and Context.Tag for the FileSystemInfo service.\n */\n\nimport { Context, Effect, Stream } from \"effect\";\nimport type { IExtUri } from \"vs/base/common/resources.js\";\nimport type { FileChangeEvent, FileSystemProviderCapabilities } from \"vscode\";\n\n/**\n * The service interface for filesystem information.\n * This is a partial re-implementation of `vs/workbench/api/common/extHostFileSystemInfo`.\n */\nexport interface Interface {\n\t/**\n\t * An instance of `ExtUri` configured with the correct case-sensitivity\n\t * information for all registered filesystems. This should be used for all\n\t * URI comparisons and manipulations.\n\t */\n\treadonly ExtUri: IExtUri;\n\n\t/** An event that fires on file changes. */\n\treadonly onDidChangeFile: Stream.Stream<FileChangeEvent[], never>;\n\n\t/** Checks if a filesystem for a given scheme is writable. */\n\treadonly isWritableFileSystem: (scheme: string) => boolean | undefined;\n\n\t/**\n\t * Gets the capabilities of a filesystem provider for a given URI scheme.\n\t */\n\treadonly GetCapabilities: (\n\t\tScheme: string,\n\t) => Effect.Effect<FileSystemProviderCapabilities | undefined, never>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/FileSystemInfo\");\n"],
+  "mappings": "AAKA,SAAS,eAA+B;AA8BjC,MAAM,MAAM,QAAQ,IAAe,wBAAwB;",
+  "names": []
+}

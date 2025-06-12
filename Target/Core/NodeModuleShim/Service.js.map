@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/NodeModuleShim/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (NodeModuleShim)\n * @description Defines the interface and Context.Tag for the NodeModuleShim service.\n */\n\nimport { Context, Effect } from \"effect\";\nimport type { Uri } from \"vscode\";\n\nimport type { ModuleBlockedError, ModuleNotShimmedError } from \"./Error.js\";\n\nexport interface Interface {\n\t/**\n\t * Loads a shim for a requested built-in Node.js module.\n\t * This method acts as a dispatcher. It will either return a safe, shimmed\n\t * version of the module, or fail with a specific error if the module is\n\t * disallowed or not implemented.\n\t *\n\t * @param Request - The name of the module being requested (e.g., 'fs', 'node:os').\n\t * @param ParentUri - The URI of the file that made the `require` call.\n\t * @returns An `Effect` that resolves with the shim module object or fails.\n\t */\n\treadonly Load: (\n\t\tRequest: string,\n\t\tParentUri?: Uri,\n\t) => Effect.Effect<any, ModuleBlockedError | ModuleNotShimmedError>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Core/NodeModuleShim\");\n"],
+  "mappings": "AAKA,SAAS,eAAuB;AAsBzB,MAAM,MAAM,QAAQ,IAAe,qBAAqB;",
+  "names": []
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/TypeConverter/Commands/Type.ts"],
+  "sourcesContent": ["/**\n * @module Type (Commands/TypeConverter)\n * @description Defines types for describing command signatures.\n */\n\nexport class ApiCommandArgument<V, D> {\n\tconstructor(\n\t\tpublic readonly Name: string,\n\t\tpublic readonly Description: string,\n\t\tpublic readonly Validate: (v: V) => boolean,\n\t\tpublic readonly Convert: (v: V) => D,\n\t) {}\n}\n\nexport class ApiCommandResult<V, R> {\n\tconstructor(\n\t\tpublic readonly Name: string,\n\t\tpublic readonly Convert: (v: V) => R,\n\t) {}\n}\n\nexport class ApiCommand {\n\tconstructor(\n\t\tpublic readonly Id: string,\n\t\tpublic readonly InternalId: string,\n\t\tpublic readonly Description: string,\n\t\tpublic readonly Argument: ApiCommandArgument<any, any>[],\n\t\tpublic readonly Result: ApiCommandResult<any, any>,\n\t) {}\n}\n"],
+  "mappings": ";;AAKO,MAAM,mBAAyB;AAAA,EACrC,YACiB,MACA,aACA,UACA,SACf;AAJe;AACA;AACA;AACA;AAAA,EACd;AAAA,EAXJ,OAKsC;AAAA;AAAA;AAOtC;AAEO,MAAM,iBAAuB;AAAA,EACnC,YACiB,MACA,SACf;AAFe;AACA;AAAA,EACd;AAAA,EAlBJ,OAcoC;AAAA;AAAA;AAKpC;AAEO,MAAM,WAAW;AAAA,EACvB,YACiB,IACA,YACA,aACA,UACA,QACf;AALe;AACA;AACA;AACA;AACA;AAAA,EACd;AAAA,EA5BJ,OAqBwB;AAAA;AAAA;AAQxB;",
+  "names": []
+}
