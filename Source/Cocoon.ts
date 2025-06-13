@@ -1,5 +1,5 @@
 /**
- * @module Index (Cocoon)
+ * @module Cocoon
  * @description The main entry point for the Cocoon Node.js extension host.
  *
  * This file orchestrates the entire application lifecycle:
