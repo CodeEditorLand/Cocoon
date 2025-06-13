@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../../Source/Command/ProcessUserData/GetDocumentText.ts"],
-  "sourcesContent": ["/**\n * @module GetDocumentText\n * @description An Effect that retrieves the full text content of a document.\n */\n\nimport { Effect } from \"effect\";\nimport type * as Vscode from \"vscode\";\n\n/**\n * An Effect that gets the full text content of a given document.\n * @param Document - The `vscode.TextDocument` to read from.\n * @returns An `Effect` that synchronously resolves to the document's text content.\n */\nexport const GetDocumentText = (\n\tDocument: Vscode.TextDocument,\n): Effect.Effect<string> => Effect.sync(() => Document.getText());\n"],
-  "mappings": ";;AAKA,SAAS,cAAc;AAQhB,MAAM,kBAAkB,wBAC9B,aAC2B,OAAO,KAAK,MAAM,SAAS,QAAQ,CAAC,GAFjC;",
+  "sourcesContent": ["/**\n * @module GetDocumentText\n * @description An Effect that retrieves the full text content of a document.\n */\n\nimport { Effect } from \"effect\";\nimport type * as VSCode from \"vscode\";\n\n/**\n * An Effect that gets the full text content of a given document.\n * @param Document The `vscode.TextDocument` to read from.\n * @returns An `Effect` that synchronously resolves to the document's text content.\n */\nexport function GetDocumentText(\n\tDocument: VSCode.TextDocument,\n): Effect.Effect<string> {\n\treturn Effect.sync(() => Document.getText());\n}\n"],
+  "mappings": ";;AAKA,SAAS,cAAc;AAQhB,SAAS,gBACf,UACwB;AACxB,SAAO,OAAO,KAAK,MAAM,SAAS,QAAQ,CAAC;AAC5C;AAJgB;",
   "names": []
 }

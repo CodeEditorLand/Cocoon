@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Ipc/Config.ts"],
-  "sourcesContent": ["/**\n * @module Config\n * @description Defines the configuration interface and `Context.Tag` for the\n * IPC service, specifying the network addresses for communication.\n */\n\nimport { Context } from \"effect\";\n\n/**\n * The configuration required for the IPC service.\n */\nexport interface Config {\n\t/**\n\t * The network address of the `Mountain` gRPC server.\n\t * @example \"localhost:50051\"\n\t */\n\treadonly MountainAddress: string;\n\t/**\n\t * The network address where the `Cocoon` gRPC server should listen.\n\t * @example \"localhost:50052\"\n\t */\n\treadonly CocoonAddress: string;\n}\n\n/**\n * The `Context.Tag` for the IPC configuration.\n */\nexport const ConfigTag = Context.Tag<Config>(\"Ipc/Config\");\n"],
-  "mappings": "AAMA,SAAS,eAAe;AAqBjB,MAAM,YAAY,QAAQ,IAAY,YAAY;",
-  "names": []
-}

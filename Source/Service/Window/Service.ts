@@ -1,0 +1,46 @@
+/**
+ * @module Service (Window)
+ * @description Defines the interface and Context.Tag for the core Window service.
+ * This service manages properties like window state and orchestrates calls to
+ * sub-services like dialogs, messages, and quick input.
+ */
+
+import { Context, Effect } from "effect";
+import type {
+	Event,
+	TextDocumentShowOptions,
+	TextEditor,
+	Uri,
+	ViewColumn,
+	WindowState,
+} from "vscode";
+
+/**
+ * The service interface for the core `vscode.window` properties and methods.
+ * Note: Does NOT include methods handled by other services (e.g., `showQuickPick`).
+ * The final `vscode.window` object is assembled in the APIFactory.
+ */
+export interface Interface {
+	readonly state: WindowState;
+	readonly onDidChangeWindowState: Event<WindowState>;
+
+	readonly activeTextEditor: TextEditor | undefined;
+	readonly visibleTextEditors: readonly TextEditor[];
+	readonly onDidChangeActiveTextEditor: Event<TextEditor | undefined>;
+	readonly onDidChangeVisibleTextEditors: Event<readonly TextEditor[]>;
+
+	/**
+	 * Shows a text document in an editor.
+	 * @param documentOrURI The document or URI to show.
+	 * @param columnOrOptions The column or options for showing the document.
+	 * @param preserveFocus When `true`, the editor will not take focus.
+	 * @returns An `Effect` that resolves with the opened `TextEditor`.
+	 */
+	readonly ShowTextDocument: (
+		documentOrURI: Uri | any, // any is for TextDocument
+		columnOrOptions?: ViewColumn | TextDocumentShowOptions,
+		preserveFocus?: boolean,
+	) => Effect.Effect<TextEditor, Error>;
+}
+
+export const Tag = Context.Tag<Interface>("Service/Window");

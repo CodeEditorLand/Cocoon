@@ -1,8 +1,9 @@
 import { Effect, Option } from "effect";
-import * as Vscode from "vscode";
-const GetActiveTextDocument = Effect.sync(
-  () => Option.fromNullable(Vscode.window.activeTextEditor?.document)
-);
+import { Window } from "./Service.js";
+const GetActiveTextDocument = Effect.gen(function* (_) {
+  const WindowService = yield* _(Window.Tag);
+  return Option.fromNullable(WindowService.activeTextEditor?.document);
+});
 export {
   GetActiveTextDocument
 };

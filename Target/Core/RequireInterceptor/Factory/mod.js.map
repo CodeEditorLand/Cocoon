@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Core/RequireInterceptor/Factory/mod.ts"],
-  "sourcesContent": ["/**\n * @module Factory (RequireInterceptor)\n * @description Aggregates and exports all module factories used by the interceptor.\n */\n\nexport type { Interface as INodeModuleFactory } from \"./Interface.js\";\nexport { VscodeNodeModuleFactory } from \"./Vscode.js\";\n"],
-  "mappings": "AAMA,SAAS,+BAA+B;",
-  "names": []
-}

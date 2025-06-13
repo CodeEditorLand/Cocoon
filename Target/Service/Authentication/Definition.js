@@ -1,74 +1,81 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Ref } from "effect";
+import { Effect, Ref, Stream } from "effect";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
-import { LogProvider } from "../Log.js";
+import { IPC } from "../IPC.js";
+import { Log } from "../Log.js";
 import { AuthenticationProviderExistsError } from "./Error.js";
-import { ConvertInfoToSession, ConvertSessionToInfo } from "./Type.js";
+import { ConvertSessionToInternal, ConvertSessionToVSCode } from "./Type.js";
 const Definition = Effect.gen(function* (_) {
-  const Ipc = yield* _(IpcProvider.Tag);
-  const Log = yield* _(LogProvider.Tag);
+  const IPCService = yield* _(IPC.Tag);
+  const LogService = yield* _(Log.Tag);
   const LocalProviders = yield* _(
     Ref.make(/* @__PURE__ */ new Map())
   );
-  const OnDidChangeProviderEvent = CreateEventStream();
-  const OnDidChangeSessionEvent = CreateEventStream();
-  const $CreateSession = /* @__PURE__ */ __name((ProviderId, Scopes) => Effect.gen(function* (_2) {
+  const OnDidChangeProvidersEvent = CreateEventStream();
+  const OnDidChangeSessionsEvent = CreateEventStream();
+  const CreateSession = /* @__PURE__ */ __name((ProviderID, Scopes) => Effect.gen(function* (_2) {
     const provider = (yield* _2(Ref.get(LocalProviders))).get(
-      ProviderId
+      ProviderID
     );
-    if (!provider)
-      throw new Error(
-        `No auth provider with id '${ProviderId}' is registered.`
+    if (!provider) {
+      return yield* _2(
+        Effect.fail(
+          new Error(
+            `No auth provider with id '${ProviderID}' is registered.`
+          )
+        )
       );
+    }
     const session = yield* _2(
       Effect.tryPromise(() => provider.createSession(Scopes))
     );
-    return ConvertSessionToInfo(session);
-  }), "$CreateSession");
-  const $RemoveSession = /* @__PURE__ */ __name((ProviderId, SessionId) => Effect.gen(function* (_2) {
+    return ConvertSessionToInternal(session);
+  }), "CreateSession");
+  const RemoveSession = /* @__PURE__ */ __name((ProviderID, SessionID) => Effect.gen(function* (_2) {
     const provider = (yield* _2(Ref.get(LocalProviders))).get(
-      ProviderId
+      ProviderID
     );
-    if (!provider || !provider.removeSession) return;
+    if (!provider?.removeSession) {
+      return;
+    }
     yield* _2(
-      Effect.tryPromise(() => provider.removeSession(SessionId))
+      Effect.tryPromise(() => provider.removeSession(SessionID))
     );
-  }), "$RemoveSession");
-  Ipc.RegisterInvokeHandler(
+  }), "RemoveSession");
+  IPCService.RegisterInvokeHandler(
     "$createSession",
-    ([id, scopes]) => Effect.runPromise($CreateSession(id, scopes))
+    ([id, scopes]) => Effect.runPromise(CreateSession(id, scopes))
   );
-  Ipc.RegisterInvokeHandler(
+  IPCService.RegisterInvokeHandler(
     "$removeSession",
-    ([id, sid]) => Effect.runPromise($RemoveSession(id, sid))
+    ([id, sid]) => Effect.runPromise(RemoveSession(id, sid))
   );
   const ServiceImplementation = {
-    GetSession: /* @__PURE__ */ __name((ext, providerId, scopes, options) => Ipc.SendRequest("$getSession", [
-      ext.id,
+    GetSession: /* @__PURE__ */ __name((extension, providerId, scopes, options) => IPCService.SendRequest("$getSession", [
+      extension.id,
       providerId,
       scopes,
       options
     ]).pipe(
       Effect.map(
-        (info) => info ? ConvertInfoToSession(info) : void 0
+        (info) => info ? ConvertSessionToVSCode(info) : void 0
       ),
       Effect.tapError(
-        (err) => Log.Error(
+        (err) => LogService.Error(
           `GetSession for provider '${providerId}' failed.`,
           err
         )
       )
     ), "GetSession"),
-    ListSessions: /* @__PURE__ */ __name((ext, providerId, scopes) => Ipc.SendRequest("$getSessions", [
-      ext.id,
+    ListSessions: /* @__PURE__ */ __name((extension, providerId, scopes) => IPCService.SendRequest("$getSessions", [
+      extension.id,
       providerId,
       scopes
     ]).pipe(
-      Effect.map((infos) => infos.map(ConvertInfoToSession)),
+      Effect.map((infos) => infos.map(ConvertSessionToVSCode)),
       Effect.tapError(
-        (err) => Log.Error(
+        (err) => LogService.Error(
           `ListSessions for provider '${providerId}' failed.`,
           err
         )
@@ -76,38 +83,37 @@ const Definition = Effect.gen(function* (_) {
       Effect.catchAll(() => Effect.succeed([]))
       // Return empty array on failure
     ), "ListSessions"),
-    RegisterAuthenticationProvider: /* @__PURE__ */ __name((Id, Label, Provider, Options) => Effect.gen(function* (_2) {
+    RegisterAuthenticationProvider: /* @__PURE__ */ __name((ID, Label, Provider, Option) => Effect.gen(function* (_2) {
       const providers = yield* _2(Ref.get(LocalProviders));
-      if (providers.has(Id)) {
+      if (providers.has(ID)) {
         return yield* _2(
           Effect.fail(
             new AuthenticationProviderExistsError({
-              providerId: Id
+              ProviderID: ID
             })
           )
         );
       }
       yield* _2(
-        Ref.update(LocalProviders, (map) => map.set(Id, Provider))
+        Ref.update(LocalProviders, (map) => map.set(ID, Provider))
       );
       yield* _2(
-        Ipc.SendNotification("$registerAuthenticationProvider", [
-          Id,
-          Label,
-          !!Options?.supportsMultipleAccounts
-        ])
+        IPCService.SendNotification(
+          "$registerAuthenticationProvider",
+          [ID, Label, !!Option?.supportsMultipleAccounts]
+        )
       );
       const disposable = {
         dispose: /* @__PURE__ */ __name(() => {
           Effect.runFork(
             Ref.update(
               LocalProviders,
-              (map) => (map.delete(Id), map)
+              (map) => (map.delete(ID), map)
             ).pipe(
               Effect.flatMap(
-                () => Ipc.SendNotification(
+                () => IPCService.SendNotification(
                   "$unregisterAuthenticationProvider",
-                  [Id]
+                  [ID]
                 )
               )
             )
@@ -116,8 +122,10 @@ const Definition = Effect.gen(function* (_) {
       };
       return disposable;
     }), "RegisterAuthenticationProvider"),
-    OnDidChangeAuthenticationProvider: OnDidChangeProviderEvent.Stream,
-    OnDidChangeSession: OnDidChangeSessionEvent.Stream
+    onDidChangeAuthenticationProviders: OnDidChangeProvidersEvent.Stream.pipe(Stream.toEvent),
+    onDidChangeSessions: OnDidChangeSessionsEvent.Stream.pipe(
+      Stream.toEvent
+    )
   };
   return ServiceImplementation;
 });

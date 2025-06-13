@@ -1,22 +1,24 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import {
-  MarkdownString as MarkdownStringConverter,
-  Uri as UriConverter
-} from "./Main.js";
-var Options;
-((Options2) => {
-  Options2.fromApi = /* @__PURE__ */ __name((options) => ({
-    ShowCollapseAll: !!options.showCollapseAll,
-    CanSelectMany: !!options.canSelectMany,
-    HasHandleDrag: !!options.dragAndDropController?.handleDrag,
-    HasHandleDrop: !!options.dragAndDropController?.handleDrop
-  }), "fromApi");
-})(Options || (Options = {}));
+import * as MarkdownStringConverter from "./Main/MarkdownString.js";
+import * as URIConverter from "./Main/URI.js";
+var Option;
+((Option2) => {
+  function FromAPI(Option3) {
+    return {
+      showCollapseAll: !!Option3.showCollapseAll,
+      canSelectMany: !!Option3.canSelectMany,
+      hasHandleDrag: !!Option3.dragAndDropController?.handleDrag,
+      hasHandleDrop: !!Option3.dragAndDropController?.handleDrop
+    };
+  }
+  Option2.FromAPI = FromAPI;
+  __name(FromAPI, "FromAPI");
+})(Option || (Option = {}));
 var Item;
 ((Item2) => {
-  Item2.fromApi = /* @__PURE__ */ __name((Extension, Item3, Handle, ParentHandle, CommandConverter) => {
+  function FromAPI(Extension, Item3, Handle, ParentHandle, CommandConverter) {
     const {
       label,
       id,
@@ -30,37 +32,43 @@ var Item;
       accessibilityInformation
     } = Item3;
     let themeIcon;
+    let icon;
     if (iconPath instanceof ExtHostTypes.ThemeIcon) {
       themeIcon = { id: iconPath.id, color: iconPath.color?.id };
+    } else {
+      icon = iconPath;
     }
     return {
-      Handle,
-      ParentHandle,
-      Label: typeof label === "string" ? { label } : label,
-      Id: id,
-      Description: description,
-      ResourceUri: resourceUri ? UriConverter.fromApi(resourceUri) : void 0,
-      Tooltip: typeof tooltip === "string" ? tooltip : tooltip ? MarkdownStringConverter.fromApi(tooltip) : void 0,
-      Command: command ? CommandConverter.ToInternal(command, []) : void 0,
-      CollapsibleState: collapsibleState ?? ExtHostTypes.TreeItemCollapsibleState.None,
-      ContextValue: contextValue,
-      ThemeIcon: themeIcon,
-      AccessibilityInformation: accessibilityInformation
-      // The iconPath is more complex to serialize if it's a light/dark Uri pair.
-      // A full implementation would handle this.
+      handle: Handle,
+      parentHandle: ParentHandle,
+      label: typeof label === "string" ? { label } : label,
+      id,
+      description,
+      resourceUri: resourceUri ? URIConverter.FromAPI(resourceUri) : void 0,
+      tooltip: typeof tooltip === "string" ? tooltip : tooltip ? MarkdownStringConverter.FromAPI(tooltip) : void 0,
+      command: command ? CommandConverter.ToInternal(command, []) : void 0,
+      collapsibleState: collapsibleState ?? ExtHostTypes.TreeItemCollapsibleState.None,
+      contextValue,
+      themeIcon,
+      icon: icon ? URIConverter.FromAPI(icon) : void 0,
+      accessibilityInformation
     };
-  }, "fromApi");
-  Item2.toApi = /* @__PURE__ */ __name((dto) => {
-    const label = dto.Label.label;
-    const item = new ExtHostTypes.TreeItem(label, dto.CollapsibleState);
-    item.id = dto.Id;
-    item.description = dto.Description;
-    item.resourceUri = dto.ResourceUri ? UriConverter.toApi(dto.ResourceUri) : void 0;
+  }
+  Item2.FromAPI = FromAPI;
+  __name(FromAPI, "FromAPI");
+  function ToAPI(DTO) {
+    const label = DTO.label.label;
+    const item = new ExtHostTypes.TreeItem(label, DTO.collapsibleState);
+    item.id = DTO.id;
+    item.description = DTO.description;
+    item.resourceUri = DTO.resourceUri ? URIConverter.ToAPI(DTO.resourceUri) : void 0;
     return item;
-  }, "toApi");
+  }
+  Item2.ToAPI = ToAPI;
+  __name(ToAPI, "ToAPI");
 })(Item || (Item = {}));
 export {
   Item,
-  Options
+  Option
 };
 //# sourceMappingURL=TreeView.js.map

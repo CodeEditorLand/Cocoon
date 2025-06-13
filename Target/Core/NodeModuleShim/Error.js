@@ -6,7 +6,7 @@ class ModuleBlockedError extends Data.TaggedError("ModuleBlockedError") {
     __name(this, "ModuleBlockedError");
   }
   get message() {
-    return `[Cocoon] require('${this.moduleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`;
+    return `[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`;
   }
 }
 class ModuleNotShimmedError extends Data.TaggedError(
@@ -16,7 +16,7 @@ class ModuleNotShimmedError extends Data.TaggedError(
     __name(this, "ModuleNotShimmedError");
   }
   get message() {
-    return `Module '${this.moduleName}' was intercepted, but no shim is defined for it.`;
+    return `Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`;
   }
 }
 export {

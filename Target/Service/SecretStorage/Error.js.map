@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../../Source/Service/SecretStorage/Error.ts"],
-  "sourcesContent": ["/**\n * @module Error (SecretStorage)\n * @description Defines custom errors for the SecretStorage service.\n */\n\nimport { Data } from \"effect\";\n\nexport class EmptyKeyError extends Data.TaggedError(\"EmptyKeyError\")<{}> {\n\tget message() {\n\t\treturn \"Secret key cannot be empty.\";\n\t}\n}\n\nexport class InvalidValueError extends Data.TaggedError(\n\t\"InvalidValueError\",\n)<{}> {\n\tget message() {\n\t\treturn \"Secret value must be a string.\";\n\t}\n}\n"],
-  "mappings": ";;AAKA,SAAS,YAAY;AAEd,MAAM,sBAAsB,KAAK,YAAY,eAAe,EAAM;AAAA,EAPzE,OAOyE;AAAA;AAAA;AAAA,EACxE,IAAI,UAAU;AACb,WAAO;AAAA,EACR;AACD;AAEO,MAAM,0BAA0B,KAAK;AAAA,EAC3C;AACD,EAAM;AAAA,EAfN,OAeM;AAAA;AAAA;AAAA,EACL,IAAI,UAAU;AACb,WAAO;AAAA,EACR;AACD;",
+  "sourcesContent": ["/**\n * @module Error (SecretStorage)\n * @description Defines custom, tagged errors for the SecretStorage service.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that an empty string was provided as a key, which is invalid.\n */\nexport class EmptyKeyError extends Data.TaggedError(\"EmptyKeyError\")<{}> {\n\tget message() {\n\t\treturn \"Secret key cannot be empty.\";\n\t}\n}\n\n/**\n * An error indicating that a value other than a string was provided to be stored,\n * which is not allowed by the API.\n */\nexport class InvalidValueError extends Data.TaggedError(\n\t\"InvalidValueError\",\n)<{}> {\n\tget message() {\n\t\treturn \"Secret value must be a string.\";\n\t}\n}\n"],
+  "mappings": ";;AAKA,SAAS,YAAY;AAKd,MAAM,sBAAsB,KAAK,YAAY,eAAe,EAAM;AAAA,EAVzE,OAUyE;AAAA;AAAA;AAAA,EACxE,IAAI,UAAU;AACb,WAAO;AAAA,EACR;AACD;AAMO,MAAM,0BAA0B,KAAK;AAAA,EAC3C;AACD,EAAM;AAAA,EAtBN,OAsBM;AAAA;AAAA;AAAA,EACL,IAAI,UAAU;AACb,WAAO;AAAA,EACR;AACD;",
   "names": []
 }

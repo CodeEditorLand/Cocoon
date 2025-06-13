@@ -16,7 +16,8 @@ class ProcessingServiceError extends Data.TaggedError(
     __name(this, "ProcessingServiceError");
   }
   get message() {
-    return `Failed to connect to the processing service: ${this.cause}`;
+    const causeMessage = this.cause instanceof Error ? this.cause.message : String(this.cause);
+    return `Failed to connect to the processing service: ${causeMessage}`;
   }
 }
 export {

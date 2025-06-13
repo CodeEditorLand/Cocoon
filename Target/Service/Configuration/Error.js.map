@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Configuration/Error.ts"],
+  "sourcesContent": ["/**\n * @module Error (Configuration)\n * @description Defines custom, tagged errors for the Configuration service.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that an attempt to update a configuration value failed.\n * This could be due to permission issues, invalid values, or IPC failures.\n */\nexport class ConfigurationUpdateError extends Data.TaggedError(\n\t\"ConfigurationUpdateError\",\n)<{\n\treadonly key: string;\n\treadonly cause: unknown;\n}> {\n\tget message() {\n\t\treturn `Failed to update configuration for key '${this.key}'.`;\n\t}\n}\n"],
+  "mappings": ";;AAKA,SAAS,YAAY;AAMd,MAAM,iCAAiC,KAAK;AAAA,EAClD;AACD,EAGG;AAAA,EAhBH,OAgBG;AAAA;AAAA;AAAA,EACF,IAAI,UAAU;AACb,WAAO,2CAA2C,KAAK,GAAG;AAAA,EAC3D;AACD;",
+  "names": []
+}

@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../../Source/Service/Clipboard/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (Clipboard)\n * @description Defines the interface and Context.Tag for the Clipboard service.\n */\n\nimport { Context } from \"effect\";\nimport type { Clipboard } from \"vscode\";\n\n/**\n * The service interface for the `vscode.env.clipboard` API.\n * The methods return Promises to be compatible with the vscode API definition.\n */\nexport type Interface = Clipboard;\n\n/**\n * The Context.Tag for the Clipboard service.\n */\nexport const Tag = Context.Tag<Interface>(\"Service/Clipboard\");\n"],
-  "mappings": "AAKA,SAAS,eAAe;AAYjB,MAAM,MAAM,QAAQ,IAAe,mBAAmB;",
+  "sourcesContent": ["/**\n * @module Service (Clipboard)\n * @description Defines the interface and Context.Tag for the Clipboard service.\n * This service implements the `vscode.env.clipboard` API.\n */\n\nimport { Context } from \"effect\";\nimport type { Clipboard } from \"vscode\";\n\n/**\n * The service interface for the `vscode.env.clipboard` API.\n * The methods return Promises to be compatible with the vscode API definition.\n */\nexport type Interface = Clipboard;\n\n/**\n * The Context.Tag for the Clipboard service.\n */\nexport const Tag = Context.Tag<Interface>(\"Service/Clipboard\");\n"],
+  "mappings": "AAMA,SAAS,eAAe;AAYjB,MAAM,MAAM,QAAQ,IAAe,mBAAmB;",
   "names": []
 }

@@ -1,0 +1,34 @@
+/**
+ * @module Service (Configuration)
+ * @description Defines the interface and Context.Tag for the Configuration service.
+ * This service manages access to all workspace and user settings.
+ */
+
+import { Context, Effect } from "effect";
+import type {
+	ConfigurationChangeEvent,
+	ConfigurationScope,
+	Event,
+} from "vscode";
+
+import type { WorkSpaceConfiguration } from "./Type.js";
+
+export interface Interface {
+	/**
+	 * Retrieves a `WorkSpaceConfiguration` object for a given section and scope.
+	 * @param Section The configuration section to retrieve (e.g., 'files.autoSave').
+	 * @param Scope A resource URI or other scope for which to get the configuration.
+	 * @returns An `Effect` that resolves with the configuration object.
+	 */
+	readonly GetConfiguration: (
+		Section?: string,
+		Scope?: ConfigurationScope,
+	) => Effect.Effect<WorkSpaceConfiguration, Error>;
+
+	/**
+	 * An event that is fired when the configuration has changed.
+	 */
+	readonly onDidChangeConfiguration: Event<ConfigurationChangeEvent>;
+}
+
+export const Tag = Context.Tag<Interface>("Service/Configuration");

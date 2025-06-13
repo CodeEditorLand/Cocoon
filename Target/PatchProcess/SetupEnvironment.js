@@ -1,8 +1,18 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-import { ProcessPatchError } from "./Error/mod.js";
-const SetVscodeCwd = Effect.if(
+class ProcessPatchError extends Error {
+  constructor(context, cause) {
+    super(`Failed to patch Node.js process: ${context}`);
+    this.context = context;
+    this.cause = cause;
+  }
+  static {
+    __name(this, "ProcessPatchError");
+  }
+  _tag = "ProcessPatchError";
+}
+const SetVSCodeCWD = Effect.if(
   Effect.sync(() => typeof process.env["VSCODE_CWD"] !== "string"),
   {
     onTrue: Effect.sync(() => {
@@ -28,8 +38,7 @@ const ChangeWorkingDirectoryOnWindows = Effect.if(
         process.chdir(AppRoot);
         return AppRoot;
       }, "try"),
-      catch: /* @__PURE__ */ __name((cause) => new ProcessPatchError({
-        context: "ChangeWorkingDirectory",
+      catch: /* @__PURE__ */ __name((cause) => new ProcessPatchError("ChangeWorkingDirectory", {
         cause
       }), "catch")
     }).pipe(
@@ -43,7 +52,7 @@ const ChangeWorkingDirectoryOnWindows = Effect.if(
   }
 );
 const SetupEnvironment = Effect.all(
-  [SetVscodeCwd, ChangeWorkingDirectoryOnWindows],
+  [SetVSCodeCWD, ChangeWorkingDirectoryOnWindows],
   { discard: true }
 );
 export {

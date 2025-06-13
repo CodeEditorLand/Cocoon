@@ -1,13 +1,19 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Position as VscodePosition } from "../../Type/ExtHostTypes.js";
-const fromApi = /* @__PURE__ */ __name((pos) => ({
-  lineNumber: pos.line + 1,
-  column: pos.character + 1
-}), "fromApi");
-const toApi = /* @__PURE__ */ __name((dto) => new VscodePosition(dto.lineNumber - 1, dto.column - 1), "toApi");
+import { Position } from "../../Type/ExtHostTypes.js";
+function FromAPI(PositionInstance) {
+  return {
+    lineNumber: PositionInstance.line + 1,
+    column: PositionInstance.character + 1
+  };
+}
+__name(FromAPI, "FromAPI");
+function ToAPI(PositionDTO) {
+  return new Position(PositionDTO.lineNumber - 1, PositionDTO.column - 1);
+}
+__name(ToAPI, "ToAPI");
 export {
-  fromApi,
-  toApi
+  FromAPI,
+  ToAPI
 };
 //# sourceMappingURL=Position.js.map

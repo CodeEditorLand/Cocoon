@@ -1,10 +1,20 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Schedule } from "effect";
-import { ProcessPatchError } from "./Error/mod.js";
+class ProcessPatchError extends Error {
+  constructor(context, cause) {
+    super(`Failed to patch Node.js process: ${context}`);
+    this.context = context;
+    this.cause = cause;
+  }
+  static {
+    __name(this, "ProcessPatchError");
+  }
+  _tag = "ProcessPatchError";
+}
 const WatchdogLoop = Effect.gen(function* (_) {
-  const ParentPid = Number(process.env["VSCODE_PARENT_PID"]);
-  if (isNaN(ParentPid) || ParentPid <= 0) {
+  const ParentPID = Number(process.env["VSCODE_PARENT_PID"]);
+  if (isNaN(ParentPID) || ParentPID <= 0) {
     yield* _(
       Effect.logWarn(
         "VSCODE_PARENT_PID is invalid, cannot monitor parent process."
@@ -13,14 +23,13 @@ const WatchdogLoop = Effect.gen(function* (_) {
     return;
   }
   yield* _(
-    Effect.logDebug(`Monitoring parent process with PID: ${ParentPid}`)
+    Effect.logDebug(`Monitoring parent process with PID: ${ParentPID}`)
   );
   const CheckParent = Effect.try({
     try: /* @__PURE__ */ __name(() => {
-      process.kill(ParentPid, 0);
+      process.kill(ParentPID, 0);
     }, "try"),
-    catch: /* @__PURE__ */ __name((cause) => new ProcessPatchError({
-      context: "ParentProcessNotFound",
+    catch: /* @__PURE__ */ __name((cause) => new ProcessPatchError("ParentProcessNotFound", {
       cause
     }), "catch")
   });

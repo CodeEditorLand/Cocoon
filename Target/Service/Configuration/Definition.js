@@ -1,39 +1,45 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Ref } from "effect";
+import { Effect, Ref, Stream } from "effect";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
-import { LogProvider } from "../Log.js";
-import { CreateWorkspaceConfiguration } from "./CreateWorkspaceConfiguration.js";
+import { IPC } from "../IPC.js";
+import { Log } from "../Log.js";
+import { CreateWorkSpaceConfiguration } from "./CreateWorkSpaceConfiguration.js";
 const Definition = Effect.gen(function* (_) {
-  const Ipc = yield* _(IpcProvider.Tag);
-  const Log = yield* _(LogProvider.Tag);
+  const IPCService = yield* _(IPC.Tag);
+  const LogService = yield* _(Log.Tag);
   const ConfigCache = yield* _(Ref.make({}));
   const OnDidChangeEvent = CreateEventStream();
-  Ipc.RegisterInvokeHandler(
+  IPCService.RegisterInvokeHandler(
     "$acceptConfigurationChanged",
-    ([change, newConfig]) => Effect.gen(function* (_2) {
+    ([newConfig, change]) => Effect.gen(function* (_2) {
       yield* _2(Ref.set(ConfigCache, newConfig));
       yield* _2(
         OnDidChangeEvent.Fire({
-          affectsConfiguration: /* @__PURE__ */ __name((section, scope) => change.keys.includes(section), "affectsConfiguration")
+          affectsConfiguration: /* @__PURE__ */ __name((section, scope) => (
+            // A real implementation would need to check the scope properly.
+            change.keys.includes(section)
+          ), "affectsConfiguration")
         })
       );
     }).pipe(Effect.runPromise)
   );
   const ServiceImplementation = {
-    GetConfiguration: /* @__PURE__ */ __name((Section, Scope) => Ipc.SendRequest("$getConfiguration", [Section, Scope]).pipe(
+    GetConfiguration: /* @__PURE__ */ __name((Section, Scope) => IPCService.SendRequest("$getConfiguration", [
+      Section,
+      Scope
+    ]).pipe(
       Effect.tap((newConfig) => Ref.set(ConfigCache, newConfig)),
       Effect.map(
-        (newConfig) => CreateWorkspaceConfiguration(
+        (newConfig) => CreateWorkSpaceConfiguration(
           newConfig,
           Section ?? "",
-          Ipc,
-          Log
+          IPCService,
+          LogService
         )
       )
     ), "GetConfiguration"),
-    OnDidChangeConfiguration: OnDidChangeEvent.Stream
+    onDidChangeConfiguration: OnDidChangeEvent.Stream.pipe(Stream.toEvent)
   };
   return ServiceImplementation;
 });

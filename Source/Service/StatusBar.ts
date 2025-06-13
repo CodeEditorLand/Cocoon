@@ -1,0 +1,20 @@
+/**
+ * @module StatusBar
+ * @description This module provides the `vscode.window.createStatusBarItem` API
+ * implementation, allowing extensions to add items to the status bar.
+ */
+
+import { Layer } from "effect";
+
+import { Live as LiveIPC } from "./IPC.js";
+import { Definition } from "./StatusBar/Definition.js";
+import { Tag } from "./StatusBar/Service.js";
+
+export { Tag, type Interface } from "./StatusBar/Service.js";
+export type { StatusBarItem } from "vscode";
+
+/**
+ * The live implementation Layer for the StatusBar service.
+ * It depends on the IPC service for communication.
+ */
+export const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIPC));

@@ -1,17 +1,32 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Uri } from "../Type/ExtHostTypes.js";
+import { URI } from "../Type/ExtHostTypes.js";
 var QuickPick;
 ((QuickPick2) => {
-  QuickPick2.SerializeItems = /* @__PURE__ */ __name((Items) => Items.map((Item, Index) => {
-    const Base = typeof Item === "string" ? { label: Item } : Item;
-    return { ...Base, data: { _cocoonOriginalIndex: Index } };
-  }), "SerializeItems");
-  QuickPick2.SerializeButtons = /* @__PURE__ */ __name((Buttons) => Buttons?.map((Button, Index) => ({
-    iconPath: Button.iconPath ? Uri.revive(Button.iconPath).toJSON() : void 0,
-    tooltip: Button.tooltip,
-    handle: Index
-  })), "SerializeButtons");
+  function SerializeItems(Items) {
+    return Items.map((Item, Index) => {
+      const Base = typeof Item === "string" ? { label: Item } : Item;
+      return { ...Base, handle: Index };
+    });
+  }
+  QuickPick2.SerializeItems = SerializeItems;
+  __name(SerializeItems, "SerializeItems");
+  function SerializeButtons(Buttons) {
+    return Buttons?.map((Button, Index) => ({
+      iconPath: Button.iconPath ? {
+        dark: URI.revive(
+          Button.iconPath.dark
+        ).toJSON(),
+        light: URI.revive(
+          Button.iconPath.light
+        ).toJSON()
+      } : void 0,
+      tooltip: Button.tooltip,
+      handle: Index
+    }));
+  }
+  QuickPick2.SerializeButtons = SerializeButtons;
+  __name(SerializeButtons, "SerializeButtons");
 })(QuickPick || (QuickPick = {}));
 export {
   QuickPick

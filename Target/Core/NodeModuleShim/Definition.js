@@ -1,20 +1,20 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-import { InitDataService } from "../../Service/InitData.js";
-import { LogProvider } from "../../Service/Log.js";
+import { InitData } from "../../Service/InitData.js";
+import { Log } from "../../Service/Log.js";
 import { ModuleBlockedError, ModuleNotShimmedError } from "./Error.js";
 import { CryptoShim } from "./Shim/Crypto.js";
 import { CreateOsShim } from "./Shim/Os.js";
 import { ProcessShim } from "./Shim/Process.js";
 const Definition = Effect.gen(function* (_) {
-  const Log = yield* _(LogProvider.Tag);
-  const InitData = yield* _(InitDataService);
-  const OsShim = CreateOsShim(InitData);
-  const LoadEffect = /* @__PURE__ */ __name((Request, ParentUri) => Effect.gen(function* (_2) {
-    const RequesterPath = ParentUri?.fsPath || "unknown module";
+  const LogService = yield* _(Log.Tag);
+  const InitDataService = yield* _(InitData.Tag);
+  const OsShim = CreateOsShim(InitDataService);
+  const Load = /* @__PURE__ */ __name((Request, ParentURI) => Effect.gen(function* (_2) {
+    const RequesterPath = ParentURI?.fsPath || "unknown module";
     yield* _2(
-      Log.Trace(
+      LogService.Trace(
         `Intercepted require('${Request}') from '${RequesterPath}'.`
       )
     );
@@ -28,9 +28,15 @@ const Definition = Effect.gen(function* (_) {
       case "node:path":
       case "child_process":
       case "node:child_process":
+      case "worker_threads":
+      case "node:worker_threads":
+      case "cluster":
+      case "node:cluster":
+      case "vm":
+      case "node:vm":
         return yield* _2(
           Effect.fail(
-            new ModuleBlockedError({ moduleName: Request })
+            new ModuleBlockedError({ ModuleName: Request })
           )
         );
       // Safe, sandboxed shims.
@@ -47,13 +53,13 @@ const Definition = Effect.gen(function* (_) {
       default:
         return yield* _2(
           Effect.fail(
-            new ModuleNotShimmedError({ moduleName: Request })
+            new ModuleNotShimmedError({ ModuleName: Request })
           )
         );
     }
-  }), "LoadEffect");
+  }), "Load");
   const ServiceImplementation = {
-    Load: LoadEffect
+    Load
   };
   return ServiceImplementation;
 });

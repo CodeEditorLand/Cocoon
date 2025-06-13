@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../Source/Service/Configuration.ts"],
+  "sourcesContent": ["/**\n * @module Configuration\n * @description This module provides the `vscode.workspace.getConfiguration` API\n * implementation, managing access to configuration settings.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Definition } from \"./Configuration/Definition.js\";\nimport { Tag } from \"./Configuration/Service.js\";\nimport { Live as LiveIPC } from \"./IPC.js\";\nimport { Live as LiveLog } from \"./Log.js\";\n\nexport { Tag, type Interface } from \"./Configuration/Service.js\";\nexport * from \"./Configuration/Type.js\";\nexport * from \"./Configuration/Error.js\";\n\n/**\n * The live implementation Layer for the Configuration service.\n * It depends on the IPC and Log services.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(\n\tLayer.provide(Layer.merge(LiveIPC, LiveLog)),\n);\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AACpB,SAAS,QAAQ,eAAe;AAChC,SAAS,QAAQ,eAAe;AAEhC,SAAS,OAAAA,YAA2B;AACpC,cAAc;AACd,cAAc;AAMP,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE;AAAA,EACjD,MAAM,QAAQ,MAAM,MAAM,SAAS,OAAO,CAAC;AAC5C;",
+  "names": ["Tag"]
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/TypeConverter/Main/ViewColumn.ts"],
+  "sourcesContent": ["/**\n * @module ViewColumn (Main/TypeConverter)\n * @description Converts the `vscode.ViewColumn` enum to its internal DTO representation.\n */\n\nimport {\n\tActiveEditorGroup,\n\tEditorGroup,\n\tSIDE_GROUP,\n} from \"vs/workbench/services/editor/common/editorService.js\";\n\nimport { ViewColumn as VscViewColumn } from \"../../Type/ExtHostTypes.js\";\n\n/**\n * Converts a `vscode.ViewColumn` enum value into its internal numeric representation\n * used by the VS Code workbench services.\n * @param ViewColumn The `vscode.ViewColumn` enum value.\n * @returns The corresponding internal `EditorGroup` number.\n */\nexport function FromAPI(ViewColumn?: VscViewColumn): EditorGroup | undefined {\n\tif (typeof ViewColumn !== \"number\") {\n\t\treturn undefined;\n\t}\n\n\tswitch (ViewColumn) {\n\t\tcase VscViewColumn.Active:\n\t\t\treturn ActiveEditorGroup;\n\t\tcase VscViewColumn.Beside:\n\t\t\treturn SIDE_GROUP;\n\t\tdefault:\n\t\t\t// ViewColumn.One, Two, etc. are 1-based, but EditorGroup is 0-based.\n\t\t\tif (ViewColumn >= VscViewColumn.One) {\n\t\t\t\treturn ViewColumn - 1;\n\t\t\t}\n\t}\n\treturn undefined;\n}\n"],
+  "mappings": ";;AAKA;AAAA,EACC;AAAA,EAEA;AAAA,OACM;AAEP,SAAS,cAAc,qBAAqB;AAQrC,SAAS,QAAQ,YAAqD;AAC5E,MAAI,OAAO,eAAe,UAAU;AACnC,WAAO;AAAA,EACR;AAEA,UAAQ,YAAY;AAAA,IACnB,KAAK,cAAc;AAClB,aAAO;AAAA,IACR,KAAK,cAAc;AAClB,aAAO;AAAA,IACR;AAEC,UAAI,cAAc,cAAc,KAAK;AACpC,eAAO,aAAa;AAAA,MACrB;AAAA,EACF;AACA,SAAO;AACR;AAjBgB;",
+  "names": []
+}

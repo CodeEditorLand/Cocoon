@@ -1,15 +1,15 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as Path from "node:path";
-import { Barrier, Effect, Ref } from "effect";
+import { Barrier, Effect, Ref, Stream } from "effect";
 import { Uri } from "vscode";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { InitDataService } from "../InitData.js";
-import { IpcProvider } from "../Ipc/mod.js";
-import { FetchBundleEffect } from "./Support/FetchBundle.js";
+import { InitData } from "../InitData.js";
+import { IPC } from "../IPC.js";
+import { FetchBundle } from "./Support/FetchBundle.js";
 const Definition = Effect.gen(function* (_) {
-  const Ipc = yield* _(IpcProvider.Tag);
-  const InitData = yield* _(InitDataService);
+  const IPCService = yield* _(IPC.Tag);
+  const InitDataService = yield* _(InitData.Tag);
   const NlsCache = yield* _(
     Ref.make(/* @__PURE__ */ new Map())
   );
@@ -21,31 +21,35 @@ const Definition = Effect.gen(function* (_) {
       Effect.forkDaemon
     )
   );
-  const GetPotentialBundleUris = /* @__PURE__ */ __name((Extension) => {
-    const Language = InitData.environment.appLanguage || "en";
-    const BasePath = Extension.l10n ? Path.join(Extension.extensionLocation.fsPath, Extension.l10n) : Extension.extensionLocation.fsPath;
-    const DefaultBundleUri = Uri.file(
+  const GetPotentialBundleURIs = /* @__PURE__ */ __name((Extension) => {
+    const Language = InitDataService.environment.appLanguage || "en";
+    const BaseURI = Uri.revive(Extension.extensionLocation);
+    const BasePath = Extension.l10n ? Path.join(BaseURI.fsPath, Extension.l10n) : BaseURI.fsPath;
+    const DefaultBundleURI = Uri.file(
       Path.join(BasePath, "package.nls.json")
     );
-    const LangBundleUri = Language !== "en" ? Uri.file(Path.join(BasePath, `package.nls.${Language}.json`)) : void 0;
-    return { DefaultBundleUri, LangBundleUri };
-  }, "GetPotentialBundleUris");
+    const LanguageBundleURI = Language !== "en" ? Uri.file(Path.join(BasePath, `package.nls.${Language}.json`)) : void 0;
+    return { DefaultBundleURI, LanguageBundleURI };
+  }, "GetPotentialBundleURIs");
   const ServiceImplementation = {
-    GetBundle: /* @__PURE__ */ __name((ExtensionId) => Ref.get(NlsCache).pipe(
-      Effect.map((cache) => cache.get(ExtensionId))
+    GetBundle: /* @__PURE__ */ __name((ExtensionID) => Ref.get(NlsCache).pipe(
+      Effect.map((cache) => cache.get(ExtensionID))
     ), "GetBundle"),
-    GetBundleUri: /* @__PURE__ */ __name(() => Effect.succeed(void 0), "GetBundleUri"),
+    GetBundleURI: /* @__PURE__ */ __name((ExtensionID) => Effect.succeed(void 0), "GetBundleURI"),
     // This could be implemented to return one of the potential URIs.
     InitializeLocalizedMessages: /* @__PURE__ */ __name((Extension) => Effect.gen(function* (_2) {
       yield* _2(Barrier.await(InitBarrier));
-      const { DefaultBundleUri, LangBundleUri } = GetPotentialBundleUris(Extension);
-      const [DefaultContent, LangContent] = yield* _2(
-        Effect.all([
-          FetchBundleEffect(Ipc, DefaultBundleUri),
-          LangBundleUri ? FetchBundleEffect(Ipc, LangBundleUri) : Effect.succeed({})
-        ])
+      const { DefaultBundleURI, LanguageBundleURI } = GetPotentialBundleURIs(Extension);
+      const [DefaultContent, LanguageContent] = yield* _2(
+        Effect.all(
+          [
+            FetchBundle(IPCService, DefaultBundleURI),
+            LanguageBundleURI ? FetchBundle(IPCService, LanguageBundleURI) : Effect.succeed({})
+          ],
+          { concurrency: "unbounded" }
+        )
       );
-      const FinalBundle = { ...DefaultContent, ...LangContent };
+      const FinalBundle = { ...DefaultContent, ...LanguageContent };
       if (Object.keys(FinalBundle).length > 0) {
         yield* _2(
           Ref.update(
@@ -55,7 +59,9 @@ const Definition = Effect.gen(function* (_) {
         );
       }
     }), "InitializeLocalizedMessages"),
-    OnDidInitializeLocalization: OnDidInitializeEvent.Stream,
+    onDidInitializeLocalization: OnDidInitializeEvent.Stream.pipe(
+      Stream.toEvent
+    ),
     SignalLocalizationInitialized: /* @__PURE__ */ __name(() => Barrier.succeed(InitBarrier, void 0).pipe(Effect.asUnit), "SignalLocalizationInitialized")
   };
   return ServiceImplementation;

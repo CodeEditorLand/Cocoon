@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Authentication/Error.ts"],
+  "sourcesContent": ["/**\n * @module Error (Authentication)\n * @description Defines custom, tagged errors for the Authentication service.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that an extension attempted to register an authentication\n * provider with an ID that is already in use.\n */\nexport class AuthenticationProviderExistsError extends Data.TaggedError(\n\t\"AuthenticationProviderExistsError\",\n)<{\n\treadonly ProviderID: string;\n}> {\n\tget message() {\n\t\treturn `Authentication provider with ID '${this.ProviderID}' is already registered.`;\n\t}\n}\n\n/**\n * An error indicating a failure during the registration of an authentication provider.\n * This is a more generic error type.\n */\nexport class AuthenticationProviderRegistrationError extends Data.TaggedError(\n\t\"AuthenticationProviderRegistrationError\",\n)<{\n\treadonly cause: unknown;\n}> {}\n"],
+  "mappings": ";;AAKA,SAAS,YAAY;AAMd,MAAM,0CAA0C,KAAK;AAAA,EAC3D;AACD,EAEG;AAAA,EAfH,OAeG;AAAA;AAAA;AAAA,EACF,IAAI,UAAU;AACb,WAAO,oCAAoC,KAAK,UAAU;AAAA,EAC3D;AACD;AAMO,MAAM,gDAAgD,KAAK;AAAA,EACjE;AACD,EAEG;AAAA,EA7BH,OA6BG;AAAA;AAAA;AAAC;",
+  "names": []
+}

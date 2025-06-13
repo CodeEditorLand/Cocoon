@@ -1,0 +1,31 @@
+/**
+ * @module Service (Command/TypeConverter)
+ * @description Defines the interface for the CommandConverter. This service is
+ * responsible for marshalling `vscode.Command` objects into a serializable
+ * format for IPC and unmarshalling them back.
+ */
+
+import type { IDisposable } from "vs/base/common/lifecycle.js";
+import type { ICommand } from "vs/platform/commands/common/commands.js";
+import type * as VSCode from "vscode";
+
+/**
+ * The service interface for the CommandConverter.
+ */
+export interface Interface {
+	/**
+	 * Converts a `vscode.Command` into a serializable internal representation.
+	 * This handles argument marshalling and the delegation of complex commands.
+	 * @param Command The `vscode.Command` to convert.
+	 * @param Disposables A list to which any necessary disposables can be added.
+	 * @returns The internal `ICommand` DTO.
+	 */
+	ToInternal(Command: VSCode.Command, Disposables: IDisposable[]): ICommand;
+
+	/**
+	 * Converts an internal `ICommand` DTO back into a `vscode.Command`.
+	 * @param CommandDTO The internal `ICommand` DTO.
+	 * @returns The revived `vscode.Command` or `undefined`.
+	 */
+	FromInternal(CommandDTO: ICommand): VSCode.Command | undefined;
+}

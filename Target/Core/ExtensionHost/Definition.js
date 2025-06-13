@@ -1,93 +1,110 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Ref } from "effect";
-import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
-import { InitDataService } from "../../Service/InitData.js";
-import { IpcProvider } from "../../Service/Ipc.js";
-import { LogProvider } from "../../Service/Log.js";
-import { ApiFactoryProvider } from "../ApiFactory.js";
+import { ExtensionDescriptionRegistry } from "vs/workbenchservices/extensions/common/extensionDescriptionRegistry.js";
+import { InitData } from "../../Service/InitData.js";
+import { IPC } from "../../Service/IPC.js";
+import { Log } from "../../Service/Log.js";
+import { APIFactory } from "../APIFactory.js";
 const Definition = Effect.gen(function* (_) {
-  const Log = yield* _(LogProvider);
-  const Ipc = yield* _(IpcProvider);
-  const ApiFactory = yield* _(ApiFactoryProvider);
-  const InitData = yield* _(InitDataService);
+  const LogService = yield* _(Log.Tag);
+  const IPCService = yield* _(IPC.Tag);
+  const APIFactoryService = yield* _(APIFactory.Tag);
+  const InitDataService = yield* _(InitData.Tag);
   const ExtensionRegistry = new ExtensionDescriptionRegistry(
-    InitData.extensions
+    InitDataService.extensions
   );
   const ActivatedExtensions = yield* _(
     Ref.make(/* @__PURE__ */ new Map())
   );
-  const IsActivated = /* @__PURE__ */ __name((Id) => Ref.get(ActivatedExtensions).pipe(
-    Effect.map((map) => map.has(Id.value)),
+  const IsActivated = /* @__PURE__ */ __name((ID) => Ref.get(ActivatedExtensions).pipe(
+    Effect.map((map) => map.has(ID.value)),
     Effect.runSync
     // Safe because it's a synchronous Ref read
   ), "IsActivated");
-  const GetExtensionExports = /* @__PURE__ */ __name((Id) => Ref.get(ActivatedExtensions).pipe(
-    Effect.map((map) => map.get(Id.value)?.Exports),
+  const GetExtensionExports = /* @__PURE__ */ __name((ID) => Ref.get(ActivatedExtensions).pipe(
+    Effect.map((map) => map.get(ID.value)?.Exports),
     Effect.runSync
   ), "GetExtensionExports");
-  const GetExtensionDescription = /* @__PURE__ */ __name((Id) => Effect.succeed(ExtensionRegistry.getExtensionDescription(Id)), "GetExtensionDescription");
+  const GetExtensionDescription = /* @__PURE__ */ __name((ID) => Effect.succeed(ExtensionRegistry.getExtensionDescription(ID)), "GetExtensionDescription");
   const Deactivate = /* @__PURE__ */ __name((Extension) => Effect.gen(function* (_2) {
     yield* _2(
-      Log.Info(`Deactivating extension '${Extension.Id.value}'...`)
+      LogService.Info(
+        `Deactivating extension '${Extension.ID.value}'...`
+      )
     );
     for (const Subscription of Extension.Subscriptions) {
       yield* _2(
         Effect.try(() => Subscription.dispose()).pipe(
-          Effect.catchAll(() => Effect.unit)
+          Effect.catchAll(
+            (e) => LogService.Warn(
+              `Error during subscription disposal for ${Extension.ID.value}`,
+              e
+            )
+          )
         )
       );
     }
-    const DeactivateFn = Extension.Module.deactivate;
-    if (typeof DeactivateFn === "function") {
+    const DeactivateFunction = Extension.Module.deactivate;
+    if (typeof DeactivateFunction === "function") {
       yield* _2(
         Effect.tryPromise({
-          try: /* @__PURE__ */ __name(() => DeactivateFn(), "try"),
+          try: /* @__PURE__ */ __name(() => DeactivateFunction(), "try"),
           catch: /* @__PURE__ */ __name((e) => new Error(
-            `Deactivation function for '${Extension.Id.value}' failed: ${e}`
+            `Deactivation function for '${Extension.ID.value}' failed: ${e}`
           ), "catch")
-        }).pipe(Effect.catchAll((e) => Log.Error(e.message)))
+        }).pipe(
+          Effect.catchAll((e) => LogService.Error(e.message))
+        )
       );
     }
   }), "Deactivate");
   const DoActivateExtension = /* @__PURE__ */ __name((Description, Reason) => Effect.gen(function* (_2) {
     yield* _2(
-      Log.Info(
+      LogService.Info(
         `Activating extension '${Description.identifier.value}' (Reason: ${Reason.activationEvent}).`
       )
     );
     const Module = yield* _2(
       Effect.tryPromise({
         try: /* @__PURE__ */ __name(() => import(Description.main), "try"),
+        // main can be undefined, a real impl must guard
         catch: /* @__PURE__ */ __name((e) => new Error(
           `Failed to load module for '${Description.identifier.value}': ${e}`
         ), "catch")
       })
     );
-    const ExtensionApi = ApiFactory.CreateApi(Description);
-    const Context2 = {
+    const ExtensionAPI = APIFactoryService.CreateAPI(Description);
+    const Context = {
       subscriptions: [],
       extensionPath: Description.extensionLocation.fsPath,
-      extensionUri: Description.extensionLocation
+      extensionUri: Description.extensionLocation,
+      // Cast from internal URI
+      storageUri: void 0,
+      // Provided by StoragePath service
+      globalStorageUri: void 0,
+      // Provided by StoragePath service
+      logUri: void 0,
+      // Provided by Log service
+      extensionMode: 1
+      // Production
       // ... construct full context
     };
-    const ActivationFn = Module.activate;
-    const Exports = ActivationFn ? yield* _2(
+    const ActivationFunction = Module.activate;
+    const Exports = ActivationFunction ? yield* _2(
       Effect.tryPromise({
-        try: /* @__PURE__ */ __name(() => ActivationFn.apply(globalThis, [
-          Context2,
-          ExtensionApi
-        ]), "try"),
+        try: /* @__PURE__ */ __name(() => ActivationFunction.apply(globalThis, [Context]), "try"),
+        // VS Code API is passed implicitly now
         catch: /* @__PURE__ */ __name((e) => new Error(
           `Activation function for '${Description.identifier.value}' failed: ${e}`
         ), "catch")
       })
     ) : Module;
     const Activated = {
-      Id: Description.identifier,
+      ID: Description.identifier,
       Module,
       Exports,
-      Subscriptions: Context2.subscriptions,
+      Subscriptions: Context.subscriptions,
       ActivationFailed: false,
       ActivationError: null
     };
@@ -98,23 +115,21 @@ const Definition = Effect.gen(function* (_) {
       )
     );
     yield* _2(
-      Log.Info(
+      LogService.Info(
         `Successfully activated extension '${Description.identifier.value}'.`
       )
     );
     yield* _2(
-      Ipc.SendNotification("$onDidActivateExtension", [
-        Description.identifier,
-        Reason.startup,
-        Reason.extensionId,
-        Reason.activationEvent
+      IPCService.SendNotification("$onDidActivateExtension", [
+        Description.identifier
+        // DTOs would be converted here
       ])
     );
   }).pipe(
     Effect.catchAll(
       (error) => Effect.gen(function* (_2) {
         const Activated = {
-          Id: Description.identifier,
+          ID: Description.identifier,
           Module: {},
           Exports: void 0,
           Subscriptions: [],
@@ -128,25 +143,36 @@ const Definition = Effect.gen(function* (_) {
           )
         );
         yield* _2(
-          Ipc.SendNotification("$onExtensionActivationError", [
-            Description.identifier,
-            {
-              name: error.name,
-              message: error.message,
-              stack: error.stack
-            }
-          ])
+          IPCService.SendNotification(
+            "$onExtensionActivationError",
+            [
+              Description.identifier,
+              {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+              }
+            ]
+          )
         );
       })
     )
   ), "DoActivateExtension");
-  const ActivateById = /* @__PURE__ */ __name((Id, Reason) => Effect.gen(function* (_2) {
-    if (IsActivated(Id)) return;
-    const Description = yield* _2(GetExtensionDescription(Id));
+  const ActivateById = /* @__PURE__ */ __name((ID, Reason) => Effect.gen(function* (_2) {
+    if (IsActivated(ID)) return;
+    const Description = yield* _2(GetExtensionDescription(ID));
     if (!Description) {
       yield* _2(
-        Log.Warn(
-          `Cannot activate unknown extension '${Id.value}'.`
+        LogService.Warn(
+          `Cannot activate unknown extension '${ID.value}'.`
+        )
+      );
+      return;
+    }
+    if (!Description.main) {
+      yield* _2(
+        LogService.Warn(
+          `Cannot activate extension '${ID.value}' because it has no 'main' entry point.`
         )
       );
       return;
@@ -155,7 +181,10 @@ const Definition = Effect.gen(function* (_) {
   }), "ActivateById");
   const DeactivateAll = /* @__PURE__ */ __name(() => Ref.get(ActivatedExtensions).pipe(
     Effect.flatMap(
-      (map) => Effect.forEach([...map.values()], Deactivate)
+      (map) => Effect.forEach([...map.values()], Deactivate, {
+        concurrency: "unbounded",
+        discard: true
+      })
     ),
     Effect.flatMap(() => Ref.set(ActivatedExtensions, /* @__PURE__ */ new Map())),
     Effect.asUnit

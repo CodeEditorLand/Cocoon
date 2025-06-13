@@ -3,37 +3,48 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Effect } from "effect";
 import { isCancellationError } from "vs/base/common/errors.js";
 import * as DialogConverter from "../../TypeConverter/Dialog.js";
-import { IpcProvider } from "../Ipc/mod.js";
-const createDialogEffect = /* @__PURE__ */ __name((ipcMethod, options, token, optionsToDto, resultFromDto) => Effect.gen(function* (_) {
-  if (token?.isCancellationRequested) {
-    return yield* _(Effect.interrupt);
-  }
-  const Ipc = yield* _(IpcProvider.Tag);
-  const Dto = optionsToDto(options);
-  const RpcResult = yield* _(
-    Ipc.SendRequest(ipcMethod, Dto),
-    // Gracefully handle user cancellation as a success with an empty value.
-    Effect.catchIf(
-      isCancellationError,
-      () => Effect.succeed(void 0)
-    )
-  );
-  return resultFromDto(RpcResult);
-}), "createDialogEffect");
+import { IPC } from "../IPC.js";
+import { DialogError } from "./Error.js";
+function CreateDialogEffect(ipcMethod, options, token, optionsToDTO, resultFromDTO) {
+  return Effect.gen(function* (_) {
+    if (token?.isCancellationRequested) {
+      return yield* _(Effect.interrupt);
+    }
+    const IPCService = yield* _(IPC.Tag);
+    const DTO = optionsToDTO(options);
+    const RPCResult = yield* _(
+      IPCService.SendRequest(ipcMethod, [DTO]),
+      // User cancellation is not an error; it resolves to an empty value.
+      Effect.catchIf(
+        isCancellationError,
+        () => Effect.succeed(void 0)
+      ),
+      // Any other error is mapped to our specific DialogError.
+      Effect.mapError(
+        (cause) => new DialogError({
+          cause,
+          context: `IPC call to ${ipcMethod} failed`
+        })
+      )
+    );
+    return resultFromDTO(RPCResult);
+  });
+}
+__name(CreateDialogEffect, "CreateDialogEffect");
 const Definition = Effect.succeed({
-  ShowOpenDialog: /* @__PURE__ */ __name((Options, Token) => createDialogEffect(
-    "ui_showOpenDialog",
-    Options,
+  ShowOpenDialog: /* @__PURE__ */ __name((Option, Token) => CreateDialogEffect(
+    "$showOpenDialog",
+    Option,
     Token,
-    DialogConverter.OpenDialogOptions.ToDto,
-    DialogConverter.DialogResult.ToUriArray
+    DialogConverter.OpenDialogOption.ToDTO,
+    DialogConverter.DialogResult.ToURIArray
   ), "ShowOpenDialog"),
-  ShowSaveDialog: /* @__PURE__ */ __name((Options, Token) => createDialogEffect(
-    "ui_showSaveDialog",
-    Options,
+  ShowSaveDialog: /* @__PURE__ */ __name((Option, Token) => CreateDialogEffect(
+    "$showSaveDialog",
+    Option,
     Token,
-    DialogConverter.SaveDialogOptions.ToDto,
-    DialogConverter.DialogResult.ToUri
+    DialogConverter.SaveDialogOption.ToDTO,
+    DialogConverter.DialogResult.ToURI
   ), "ShowSaveDialog")
 });
 export {

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Ipc/ProtoConverter/mod.ts"],
-  "sourcesContent": ["/**\n * @module ProtoConverter (IPC)\n * @description Provides Effect-based utilities for converting between JavaScript\n * values and Google Protobuf `Value` structures for gRPC communication.\n */\n\nexport { EncodeValue } from \"./EncodeValue.js\";\nexport { DecodeValue } from \"./DecodeValue.js\";\n"],
-  "mappings": "AAMA,SAAS,mBAAmB;AAC5B,SAAS,mBAAmB;",
-  "names": []
-}

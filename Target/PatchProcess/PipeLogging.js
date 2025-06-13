@@ -1,24 +1,25 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-import { IpcProvider } from "../Service/Ipc/mod.js";
-const SafeToString = /* @__PURE__ */ __name((Args) => {
+import { IPC } from "../Service/IPC.js";
+function SafeToString(Arguments) {
   const Slices = [];
-  for (let i = 0; i < Args.length; i++) {
-    const Arg = Args[i];
-    if (typeof Arg === "object") {
+  for (let i = 0; i < Arguments.length; i++) {
+    const Argument = Arguments[i];
+    if (typeof Argument === "object") {
       try {
-        Slices.push(JSON.stringify(Arg));
+        Slices.push(JSON.stringify(Argument));
       } catch (e) {
         Slices.push(`[Unserializable Object: ${e}]`);
       }
     } else {
-      Slices.push(String(Arg));
+      Slices.push(String(Argument));
     }
   }
   return Slices.join(" ");
-}, "SafeToString");
-const PipeLoggingToParent = Effect.gen(function* (_) {
+}
+__name(SafeToString, "SafeToString");
+const PipeLogging = Effect.gen(function* (_) {
   if (process.env["VSCODE_PIPE_LOGGING"] !== "true") {
     yield* _(
       Effect.logTrace(
@@ -27,15 +28,15 @@ const PipeLoggingToParent = Effect.gen(function* (_) {
     );
     return;
   }
-  const Ipc = yield* _(IpcProvider.Tag);
-  const ForwardConsoleCallEffect = /* @__PURE__ */ __name((Severity, Args) => {
+  const IPCService = yield* _(IPC.Tag);
+  const ForwardConsoleCall = /* @__PURE__ */ __name((Severity, Arguments) => {
     const Payload = {
       type: "__$console",
       severity: Severity,
-      arguments: SafeToString(Args)
+      arguments: SafeToString(Arguments)
     };
-    return Ipc.SendNotification("$log", [Payload]);
-  }, "ForwardConsoleCallEffect");
+    return IPCService.SendNotification("$log", [Payload]);
+  }, "ForwardConsoleCall");
   const OriginalConsole = {
     log: console.log,
     warn: console.warn,
@@ -43,21 +44,21 @@ const PipeLoggingToParent = Effect.gen(function* (_) {
   };
   console.log = (...args) => {
     OriginalConsole.log.apply(console, args);
-    Effect.runFork(ForwardConsoleCallEffect("log", args));
+    Effect.runFork(ForwardConsoleCall("log", args));
   };
   console.warn = (...args) => {
     OriginalConsole.warn.apply(console, args);
-    Effect.runFork(ForwardConsoleCallEffect("warn", args));
+    Effect.runFork(ForwardConsoleCall("warn", args));
   };
   console.error = (...args) => {
     OriginalConsole.error.apply(console, args);
-    Effect.runFork(ForwardConsoleCallEffect("error", args));
+    Effect.runFork(ForwardConsoleCall("error", args));
   };
   yield* _(
     Effect.logTrace("Global console object patched to pipe logs to host.")
   );
 });
 export {
-  PipeLoggingToParent
+  PipeLogging
 };
 //# sourceMappingURL=PipeLogging.js.map

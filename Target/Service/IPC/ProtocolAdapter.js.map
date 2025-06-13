@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/IPC/ProtocolAdapter.ts"],
+  "sourcesContent": ["/**\n * @module ProtocolAdapter (IPC)\n * @description Provides a `Layer` for the `ProtocolAdapter` service. This\n * adapter makes the gRPC communication channel compatible with VS Code's\n * `IMessagePassingProtocol`, which is required by `RPCProtocol`.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveClient } from \"./Client.js\";\nimport { Definition } from \"./ProtocolAdapter/Definition.js\";\nimport { Tag } from \"./ProtocolAdapter/Service.js\";\n\n/**\n * The live implementation `Layer` for the `ProtocolAdapter` service.\n *\n * This layer builds the adapter by composing its `Definition` with the\n * `LiveClient` layer it depends on for the underlying gRPC transport.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(\n\tLayer.provide(LiveClient),\n);\n"],
+  "mappings": "AAOA,SAAS,aAAa;AAEtB,SAAS,QAAQ,kBAAkB;AACnC,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAQb,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE;AAAA,EACjD,MAAM,QAAQ,UAAU;AACzB;",
+  "names": []
+}

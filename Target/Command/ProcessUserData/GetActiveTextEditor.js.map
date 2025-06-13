@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../../Source/Command/ProcessUserData/GetActiveTextEditor.ts"],
-  "sourcesContent": ["/**\n * @module GetActiveTextEditor\n * @description An Effect that retrieves the active VS Code text editor.\n */\n\nimport { Effect, Option } from \"effect\";\nimport * as Vscode from \"vscode\";\n\n/**\n * An Effect that safely retrieves the active text editor.\n * @returns An `Effect` that resolves to an `Option<Vscode.TextEditor>`, which\n * will be `None` if no editor is active, and `Some` otherwise.\n */\nexport const GetActiveTextEditor = Effect.sync(() =>\n\tOption.fromNullable(Vscode.window.activeTextEditor),\n);\n"],
-  "mappings": "AAKA,SAAS,QAAQ,cAAc;AAC/B,YAAY,YAAY;AAOjB,MAAM,sBAAsB,OAAO;AAAA,EAAK,MAC9C,OAAO,aAAa,OAAO,OAAO,gBAAgB;AACnD;",
+  "sourcesContent": ["/**\n * @module GetActiveTextEditor\n * @description An Effect that retrieves the active VS Code text editor by\n * delegating to the Window service.\n */\n\nimport { Effect, Option } from \"effect\";\nimport type * as vscode from \"vscode\";\n\nimport { Window } from \"../../Service/Window.js\";\n\n/**\n * An Effect that safely retrieves the active text editor.\n * @returns An `Effect` that resolves to an `Option<vscode.TextEditor>`, which\n * will be `None` if no editor is active, and `Some` otherwise.\n */\nexport const GetActiveTextEditor = Effect.gen(function* (_) {\n\tconst WindowService = yield* _(Window.Tag);\n\treturn Option.fromNullable(WindowService.activeTextEditor);\n});\n"],
+  "mappings": "AAMA,SAAS,QAAQ,cAAc;AAG/B,SAAS,cAAc;AAOhB,MAAM,sBAAsB,OAAO,IAAI,WAAW,GAAG;AAC3D,QAAM,gBAAgB,OAAO,EAAE,OAAO,GAAG;AACzC,SAAO,OAAO,aAAa,cAAc,gBAAgB;AAC1D,CAAC;",
   "names": []
 }

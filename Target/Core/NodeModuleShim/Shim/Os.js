@@ -1,8 +1,9 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as NodeOs from "node:os";
-const CreateOsShim = /* @__PURE__ */ __name((InitData) => {
-  const IsWindows = InitData.environment.isWindows;
+function CreateOsShim(InitDataService) {
+  const IsWindows = InitDataService.environment.isWindows;
+  const UserHome = InitDataService.environment.userHome;
   const OsShim = {
     EOL: IsWindows ? "\r\n" : "\n",
     arch: /* @__PURE__ */ __name(() => process.arch, "arch"),
@@ -10,8 +11,9 @@ const CreateOsShim = /* @__PURE__ */ __name((InitData) => {
     constants: NodeOs.constants,
     cpus: /* @__PURE__ */ __name(() => NodeOs.cpus(), "cpus"),
     freemem: /* @__PURE__ */ __name(() => NodeOs.freemem(), "freemem"),
-    homedir: /* @__PURE__ */ __name(() => InitData.environment.userHome.fsPath || process.env["HOME"] || process.env["USERPROFILE"] || "", "homedir"),
-    hostname: /* @__PURE__ */ __name(() => InitData.environment.hostname || "localhost", "hostname"),
+    homedir: /* @__PURE__ */ __name(() => UserHome.fsPath || process.env["HOME"] || process.env["USERPROFILE"] || "", "homedir"),
+    hostname: /* @__PURE__ */ __name(() => InitDataService.environment.hostname || "localhost", "hostname"),
+    loadavg: /* @__PURE__ */ __name(() => NodeOs.loadavg(), "loadavg"),
     networkInterfaces: /* @__PURE__ */ __name(() => NodeOs.networkInterfaces(), "networkInterfaces"),
     release: /* @__PURE__ */ __name(() => NodeOs.release(), "release"),
     tmpdir: /* @__PURE__ */ __name(() => NodeOs.tmpdir(), "tmpdir"),
@@ -19,18 +21,20 @@ const CreateOsShim = /* @__PURE__ */ __name((InitData) => {
     totalmem: /* @__PURE__ */ __name(() => NodeOs.totalmem(), "totalmem"),
     type: /* @__PURE__ */ __name(() => NodeOs.type(), "type"),
     userInfo: /* @__PURE__ */ __name((_options) => {
-      const Username = InitData.environment.userHome.fsPath.split(/\/|\\/).pop() || "cocoon-user";
+      const Username = UserHome.fsPath.split(/\/|\\/).pop() || "cocoon-user";
       return {
         uid: -1,
         gid: -1,
         username: Username,
-        homedir: InitData.environment.userHome.fsPath,
+        homedir: UserHome.fsPath,
         shell: null
       };
-    }, "userInfo")
+    }, "userInfo"),
+    uptime: /* @__PURE__ */ __name(() => NodeOs.uptime(), "uptime")
   };
-  return OsShim;
-}, "CreateOsShim");
+  return Object.freeze(OsShim);
+}
+__name(CreateOsShim, "CreateOsShim");
 export {
   CreateOsShim
 };

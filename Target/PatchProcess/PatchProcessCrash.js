@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { ProcessPatch } from "./ProcessPatch/mod.js";
+import { ProcessPatch } from "./ProcessPatch.js";
 const PatchProcessCrash = Effect.gen(function* (_) {
   const { NativeCrash } = yield* _(ProcessPatch.Tag);
   if (NativeCrash) {

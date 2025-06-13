@@ -1,6 +1,6 @@
 import { Effect } from "effect";
-import { ExitPreventedError } from "./Error/mod.js";
-import { ProcessPatch } from "./ProcessPatch/mod.js";
+import { ExitPreventedError } from "./Error/ExitPreventedError.js";
+import { ProcessPatch } from "./ProcessPatch.js";
 const PatchProcessExit = Effect.gen(function* (_) {
   const { NativeExit, AllowExit } = yield* _(ProcessPatch.Tag);
   process.exit = (Code) => {
@@ -15,7 +15,7 @@ const PatchProcessExit = Effect.gen(function* (_) {
     const ErrorMessage = `'process.exit(${Code ?? ""})' was called but PREVENTED by host policy.`;
     const PreventionError = new ExitPreventedError({
       message: ErrorMessage,
-      attemptedCode: Code
+      AttemptedCode: Code
     });
     Effect.runSync(
       Effect.logWarning(

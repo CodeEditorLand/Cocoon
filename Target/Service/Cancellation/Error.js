@@ -1,17 +1,17 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Data } from "effect";
-class InvalidTokenIdError extends Data.TaggedError(
-  "InvalidTokenIdError"
+class InvalidTokenIDError extends Data.TaggedError(
+  "InvalidTokenIDError"
 ) {
   static {
-    __name(this, "InvalidTokenIdError");
+    __name(this, "InvalidTokenIDError");
   }
   get message() {
-    return `Invalid tokenId ('${this.tokenId}') provided. Must be a positive number.`;
+    return `Invalid TokenID ('${this.TokenID}') provided. Must be a positive number.`;
   }
 }
 export {
-  InvalidTokenIdError
+  InvalidTokenIDError
 };
 //# sourceMappingURL=Error.js.map

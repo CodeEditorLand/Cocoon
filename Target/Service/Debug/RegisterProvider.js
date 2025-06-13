@@ -3,37 +3,30 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Effect, Ref } from "effect";
 import { Disposable } from "vscode";
 let HandleCounter = 0;
-const RegisterProviderEffect = /* @__PURE__ */ __name((Registry, IpcService, RpcRegisterMethod, Data) => Effect.acquireRelease(
-  Effect.sync(() => {
+function RegisterProvider(Registry, IPCService, RPCRegisterMethod, Data) {
+  return Effect.sync(() => {
     const Handle = ++HandleCounter;
     Ref.update(Registry, (map) => map.set(Handle, Data)).pipe(
       Effect.runSync
     );
-    return Handle;
-  }).pipe(
-    Effect.flatMap(
-      (Handle) => IpcService.SendNotification(RpcRegisterMethod, [
-        Handle,
-        Data.type
-      ]).pipe(Effect.as(Handle))
-      // Pass the handle through
-    )
-  ),
-  (Handle) => {
-    const RpcUnregisterMethod = `$unregister${RpcRegisterMethod.substring(9)}`;
-    return IpcService.SendNotification(RpcUnregisterMethod, [Handle]);
-  }
-).pipe(
-  Effect.map(
-    (handle) => new Disposable(() => {
-      Ref.get(Registry).pipe(
-        Effect.map((map) => map.delete(handle)),
+    IPCService.SendNotification(RPCRegisterMethod, [
+      Handle,
+      Data.type
+      // Assumes the data object has a 'type' property (e.g., debug type)
+    ]).pipe(Effect.runFork);
+    return new Disposable(() => {
+      Ref.update(Registry, (map) => (map.delete(Handle), map)).pipe(
         Effect.runSync
       );
-    })
-  )
-), "RegisterProviderEffect");
+      const RPCUnregisterMethod = `$unregister${RPCRegisterMethod.slice(1)}`;
+      IPCService.SendNotification(RPCUnregisterMethod, [Handle]).pipe(
+        Effect.runFork
+      );
+    });
+  });
+}
+__name(RegisterProvider, "RegisterProvider");
 export {
-  RegisterProviderEffect
+  RegisterProvider
 };
 //# sourceMappingURL=RegisterProvider.js.map

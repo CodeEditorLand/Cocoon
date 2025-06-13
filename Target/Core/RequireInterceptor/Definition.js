@@ -3,41 +3,48 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import * as Module from "node:module";
 import { Effect } from "effect";
 import { URI } from "vs/base/common/uri.js";
-import { Tag as LogTag } from "../../Service/Log.js";
-import { Tag as ApiFactoryTag } from "../ApiFactory/mod.js";
-import { Tag as ExtensionPathsTag } from "../ExtensionPaths/mod.js";
-import {
-  VscodeNodeModuleFactory
-} from "./Factory/mod.js";
+import { Log } from "../../Service/Log.js";
+import { APIFactory } from "../APIFactory.js";
+import { ExtensionPath } from "../ExtensionPath.js";
+import { VscodeNodeModuleFactory } from "./Factory.js";
 const Definition = Effect.gen(function* (_) {
-  const ApiFactory = yield* _(ApiFactoryTag);
-  const ExtensionPaths = yield* _(ExtensionPathsTag);
-  const Log = yield* _(LogTag);
+  const APIFactoryService = yield* _(APIFactory.Tag);
+  const ExtensionPathService = yield* _(ExtensionPath.Tag);
+  const LogService = yield* _(Log.Tag);
   const Factories = /* @__PURE__ */ new Map();
   Factories.set(
     "vscode",
-    new VscodeNodeModuleFactory(ApiFactory, ExtensionPaths, Log)
+    new VscodeNodeModuleFactory(
+      APIFactoryService,
+      ExtensionPathService,
+      LogService
+    )
   );
   const OriginalRequire = Module.prototype.require;
-  const InstallEffect = /* @__PURE__ */ __name(() => Effect.sync(() => {
+  let isInstalled = false;
+  const Install = /* @__PURE__ */ __name(() => Effect.sync(() => {
+    if (isInstalled) {
+      return;
+    }
     Module.prototype.require = function(Request) {
       const Factory = Factories.get(Request);
       if (Factory) {
-        const ParentUri = this.filename ? URI.file(this.filename) : URI.file("/");
+        const ParentURI = this.filename ? URI.file(this.filename) : URI.parse("unknown:/unknown");
         return Factory.Load(
           Request,
-          ParentUri,
+          ParentURI,
           (req) => OriginalRequire.call(this, req)
         );
       }
       return OriginalRequire.call(this, Request);
     };
-    Log.Info(
+    isInstalled = true;
+    LogService.Info(
       "Node.js require() interceptor has been successfully installed."
     );
-  }), "InstallEffect");
+  }), "Install");
   const ServiceImplementation = {
-    Install: InstallEffect
+    Install
   };
   return ServiceImplementation;
 });

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/TypeConverter/WebView/ConvertShowOptionToDTO.ts"],
+  "sourcesContent": ["/**\n * @module ConvertShowOptionToDTO\n * @description Converts `vscode.WebViewPanel` show options into a\n * serializable DTO.\n */\n\nimport type { IEditorOptions } from \"vs/platform/editor/common/editor.js\";\nimport type * as VSCode from \"vscode\";\n\nimport * as ViewColumnConverter from \"../Main/ViewColumn.js\";\n\n/**\n * Converts the user-provided `showOption` for a webview panel into a\n * structured DTO suitable for sending to the `Mountain` host process.\n *\n * @param ViewColumn The target `vscode.ViewColumn` for the panel.\n * @param PreserveFocus A boolean indicating whether the panel should take\n *   focus when shown.\n * @returns A serializable DTO representing the showing behavior.\n */\nexport function ConvertShowOptionToDTO(\n\tViewColumn: VSCode.ViewColumn,\n\tPreserveFocus: boolean,\n): { viewColumn?: number; preserveFocus: boolean } & IEditorOptions {\n\treturn {\n\t\tviewColumn: ViewColumnConverter.FromAPI(ViewColumn),\n\t\tpreserveFocus: PreserveFocus,\n\t};\n}\n"],
+  "mappings": ";;AASA,YAAY,yBAAyB;AAW9B,SAAS,uBACf,YACA,eACmE;AACnE,SAAO;AAAA,IACN,YAAY,oBAAoB,QAAQ,UAAU;AAAA,IAClD,eAAe;AAAA,EAChB;AACD;AARgB;",
+  "names": []
+}

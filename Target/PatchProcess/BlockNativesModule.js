@@ -26,8 +26,8 @@ const BlockNativesModule = Effect.try({
         return OriginalLoad.call(this, Request, Parent, IsMain);
       };
     } else {
-      throw new Error(
-        "Module._load not found or is not a function. Cannot apply 'natives' block patch."
+      console.warn(
+        "[Cocoon PatchProcess] Module._load not found. Skipping 'natives' block patch."
       );
     }
   }, "try"),

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/FileSystem/mod.ts"],
-  "sourcesContent": ["/**\n * @module FileSystem\n * @description This module provides the `vscode.workspace.fs` API implementation,\n * proxying all filesystem operations to the Mountain host.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveFileSystemInfo } from \"../FileSystemInfo/mod.js\";\nimport { Live as LiveIpc } from \"../Ipc/mod.js\";\nimport { Definition } from \"./Definition.js\";\nimport { Tag } from \"./Service.js\";\n\nexport { Tag, type Interface } from \"./Service.js\";\nexport * from \"./Error.js\";\n\n/**\n * The live implementation Layer for the FileSystem service.\n * It depends on the Ipc and FileSystemInfo services.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(\n\tLayer.provide(Layer.merge(LiveIpc, LiveFileSystemInfo)),\n);\n"],
-  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,0BAA0B;AAC3C,SAAS,QAAQ,eAAe;AAChC,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAEpB,SAAS,OAAAA,YAA2B;AACpC,cAAc;AAMP,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE;AAAA,EACjD,MAAM,QAAQ,MAAM,MAAM,SAAS,kBAAkB,CAAC;AACvD;",
-  "names": ["Tag"]
-}

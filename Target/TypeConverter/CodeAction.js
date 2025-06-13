@@ -2,69 +2,78 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as Languages from "vs/editor/common/languages.js";
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Diagnostic as DiagnosticConverter } from "./Diagnostic.js";
+import * as DiagnosticConverter from "./Diagnostic.js";
 import {
-  WorkspaceEdit as WorkspaceEditConverter
-} from "./WorkspaceEdit.js";
+  WorkSpaceEdit as WorkSpaceEditConverter
+} from "./WorkSpaceEdit.js";
 var CodeActionKind;
 ((CodeActionKind2) => {
-  CodeActionKind2.toApi = /* @__PURE__ */ __name((kind) => new ExtHostTypes.CodeActionKind(kind), "toApi");
-  CodeActionKind2.fromApi = /* @__PURE__ */ __name((kind) => kind.value, "fromApi");
+  function ToAPI(kind) {
+    return new ExtHostTypes.CodeActionKind(kind);
+  }
+  CodeActionKind2.ToAPI = ToAPI;
+  __name(ToAPI, "ToAPI");
+  function FromAPI(kind) {
+    return kind.value;
+  }
+  CodeActionKind2.FromAPI = FromAPI;
+  __name(FromAPI, "FromAPI");
 })(CodeActionKind || (CodeActionKind = {}));
 var CodeActionTriggerKind;
 ((CodeActionTriggerKind2) => {
-  CodeActionTriggerKind2.toApi = /* @__PURE__ */ __name((trigger) => trigger === Languages.CodeActionTriggerType.Invoke ? ExtHostTypes.CodeActionTriggerKind.Invoke : ExtHostTypes.CodeActionTriggerKind.Automatic, "toApi");
+  function ToAPI(trigger) {
+    return trigger === Languages.CodeActionTriggerType.Invoke ? ExtHostTypes.CodeActionTriggerKind.Invoke : ExtHostTypes.CodeActionTriggerKind.Automatic;
+  }
+  CodeActionTriggerKind2.ToAPI = ToAPI;
+  __name(ToAPI, "ToAPI");
 })(CodeActionTriggerKind || (CodeActionTriggerKind = {}));
 var CodeActionContext;
 ((CodeActionContext2) => {
-  CodeActionContext2.toApi = /* @__PURE__ */ __name((dto, uriTransformer) => ({
-    diagnostics: dto.diagnostics.map(
-      (diag) => DiagnosticConverter.toApi(diag, uriTransformer)
-    ),
-    only: dto.only ? CodeActionKind.toApi(dto.only) : void 0,
-    triggerKind: dto.trigger ? CodeActionTriggerKind.toApi(dto.trigger) : ExtHostTypes.CodeActionTriggerKind.Invoke
-  }), "toApi");
+  function ToAPI(DTO) {
+    return {
+      diagnostics: DTO.diagnostics.map(
+        (diag) => DiagnosticConverter.ToAPI(diag)
+      ),
+      only: DTO.only ? CodeActionKind.ToAPI(DTO.only) : void 0,
+      triggerKind: DTO.trigger ? CodeActionTriggerKind.ToAPI(DTO.trigger) : ExtHostTypes.CodeActionTriggerKind.Invoke
+    };
+  }
+  CodeActionContext2.ToAPI = ToAPI;
+  __name(ToAPI, "ToAPI");
 })(CodeActionContext || (CodeActionContext = {}));
 var CodeAction;
 ((CodeAction2) => {
-  CodeAction2.fromApi = /* @__PURE__ */ __name((action, commandsConverter, disposables, uriTransformer, versionProvider) => ({
-    title: action.title,
-    kind: action.kind ? CodeActionKind.fromApi(action.kind) : void 0,
-    isPreferred: action.isPreferred,
-    disabled: action.disabled?.reason,
-    command: action.command ? commandsConverter.ToInternal(action.command, disposables) : void 0,
-    diagnostics: action.diagnostics ? DiagnosticConverter.fromApiArray(
-      action.diagnostics,
-      uriTransformer
-    ) : void 0,
-    edit: action.edit ? WorkspaceEditConverter.fromApi(
-      action.edit,
-      versionProvider,
-      commandsConverter,
-      disposables,
-      uriTransformer
-    ) : void 0
-  }), "fromApi");
-  CodeAction2.toApi = /* @__PURE__ */ __name((dto, commandsConverter, uriTransformer) => {
+  function FromAPI(Action, CommandsConverter, Disposables, VersionProvider) {
+    return {
+      title: Action.title,
+      kind: Action.kind ? CodeActionKind.FromAPI(Action.kind) : void 0,
+      isPreferred: Action.isPreferred,
+      disabled: Action.disabled?.reason,
+      command: Action.command ? CommandsConverter.ToInternal(Action.command, Disposables) : void 0,
+      diagnostics: Action.diagnostics ? DiagnosticConverter.FromAPIArray(Action.diagnostics) : void 0,
+      edit: Action.edit ? WorkSpaceEditConverter.FromAPI(Action.edit, VersionProvider) : void 0
+    };
+  }
+  CodeAction2.FromAPI = FromAPI;
+  __name(FromAPI, "FromAPI");
+  function ToAPI(DTO, CommandsConverter) {
     const action = new ExtHostTypes.CodeAction(
-      dto.title,
-      dto.kind ? CodeActionKind.toApi(dto.kind) : void 0
+      DTO.title,
+      DTO.kind ? CodeActionKind.ToAPI(DTO.kind) : void 0
     );
-    action.command = dto.command ? commandsConverter.FromInternal(dto.command) : void 0;
-    action.diagnostics = dto.diagnostics?.map(
-      (d) => DiagnosticConverter.toApi(d, uriTransformer)
+    action.command = DTO.command ? CommandsConverter.FromInternal(DTO.command) : void 0;
+    action.diagnostics = DTO.diagnostics?.map(
+      (d) => DiagnosticConverter.ToAPI(d)
     );
-    action.edit = dto.edit ? WorkspaceEditConverter.toApi(
-      dto.edit,
-      uriTransformer,
-      commandsConverter
-    ) : void 0;
-    action.isPreferred = dto.isPreferred;
-    if (dto.disabled) {
-      action.disabled = { reason: dto.disabled };
+    action.edit = DTO.edit ? WorkSpaceEditConverter.ToAPI(DTO.edit) : void 0;
+    action.isPreferred = DTO.isPreferred;
+    if (DTO.disabled) {
+      action.disabled = { reason: DTO.disabled };
     }
     return action;
-  }, "toApi");
+  }
+  CodeAction2.ToAPI = ToAPI;
+  __name(ToAPI, "ToAPI");
 })(CodeAction || (CodeAction = {}));
 export {
   CodeAction,

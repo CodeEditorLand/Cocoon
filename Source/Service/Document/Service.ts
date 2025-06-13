@@ -1,0 +1,34 @@
+/**
+ * @module Service (Document)
+ * @description Defines the interface and Context.Tag for the Document service.
+ * This service is the single source of truth for the state of all open text
+ * documents in the extension host.
+ */
+
+import { Context, Effect, Event } from "effect";
+import type { TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
+
+export interface Interface {
+	/** A read-only array of all text documents known to this extension host. */
+	readonly TextDocuments: readonly TextDocument[];
+
+	/** An event that is emitted when a text document is opened. */
+	readonly onDidOpenTextDocument: Event.Event<TextDocument>;
+	/** An event that is emitted when a text document is closed. */
+	readonly onDidCloseTextDocument: Event.Event<TextDocument>;
+	/** An event that is emitted when a text document is changed. */
+	readonly onDidChangeTextDocument: Event.Event<TextDocumentChangeEvent>;
+	/** An event that is emitted when a text document is saved. */
+	readonly onDidSaveTextDocument: Event.Event<TextDocument>;
+
+	/**
+	 * Retrieves a text document for a given URI.
+	 * @param URI The URI of the document to retrieve.
+	 * @returns An `Effect` that resolves to the document, or `undefined` if not found.
+	 */
+	readonly GetDocument: (
+		URI: Uri,
+	) => Effect.Effect<TextDocument | undefined, never>;
+}
+
+export const Tag = Context.Tag<Interface>("Service/Document");

@@ -28,7 +28,9 @@ const CryptoShim = {
   generateKeyPair: CreateStub("generateKeyPair"),
   generateKeyPairSync: CreateStub("generateKeyPairSync"),
   createCipheriv: CreateStub("createCipheriv"),
-  createDecipheriv: CreateStub("createDecipheriv")
+  createDecipheriv: CreateStub("createDecipheriv"),
+  createSign: CreateStub("createSign"),
+  createVerify: CreateStub("createVerify")
   // Add other sensitive functions to the blocklist as needed.
 };
 export {

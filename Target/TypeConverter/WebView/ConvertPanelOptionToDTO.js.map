@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/TypeConverter/WebView/ConvertPanelOptionToDTO.ts"],
+  "sourcesContent": ["/**\n * @module ConvertPanelOptionToDTO\n * @description Converts `vscode.WebViewPanelOption` into a serializable DTO.\n */\n\nimport type { IWebviewPanelOptions } from \"vs/workbench/contrib/webview/common/webview.js\";\nimport type * as VSCode from \"vscode\";\n\n/**\n * Converts the `vscode.WebViewPanelOption` object into a plain DTO suitable\n * for RPC transport.\n *\n * This includes options that control the behavior of the panel itself, such as\n * its persistence and UI features.\n *\n * @param Option The `vscode.WebViewPanelOption` provided by the extension.\n * @returns A serializable `IWebviewPanelOptions` DTO representing the webview panel's options.\n */\nexport function ConvertPanelOptionToDTO(\n\tOption: VSCode.WebViewPanelOption,\n): IWebviewPanelOptions {\n\treturn {\n\t\tenableFindWidget: Option.enableFindWidget,\n\t\tretainContextWhenHidden: Option.retainContextWhenHidden,\n\t};\n}\n"],
+  "mappings": ";;AAkBO,SAAS,wBACf,QACuB;AACvB,SAAO;AAAA,IACN,kBAAkB,OAAO;AAAA,IACzB,yBAAyB,OAAO;AAAA,EACjC;AACD;AAPgB;",
+  "names": []
+}

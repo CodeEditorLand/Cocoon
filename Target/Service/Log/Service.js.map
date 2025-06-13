@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Log/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (Log)\n * @description Defines the interface and Context.Tag for the Log service.\n * This is a simple, internal logging facade that other services can use,\n * which will eventually route to the main `Effect` logger.\n */\n\nimport { Context, Effect } from \"effect\";\n\nexport interface Interface {\n\treadonly Trace: (\n\t\tmessage: string,\n\t\t...data: any[]\n\t) => Effect.Effect<void, never>;\n\treadonly Debug: (\n\t\tmessage: string,\n\t\t...data: any[]\n\t) => Effect.Effect<void, never>;\n\treadonly Info: (\n\t\tmessage: string,\n\t\t...data: any[]\n\t) => Effect.Effect<void, never>;\n\treadonly Warn: (\n\t\tmessage: string,\n\t\t...data: any[]\n\t) => Effect.Effect<void, never>;\n\treadonly Error: (\n\t\tmessage: string,\n\t\t...data: any[]\n\t) => Effect.Effect<void, never>;\n\treadonly Fatal: (\n\t\tmessage: string,\n\t\t...data: any[]\n\t) => Effect.Effect<void, never>;\n}\n\nexport const Tag = Context.Tag<Interface>(\"Service/Log\");\n"],
+  "mappings": "AAOA,SAAS,eAAuB;AA6BzB,MAAM,MAAM,QAAQ,IAAe,aAAa;",
+  "names": []
+}

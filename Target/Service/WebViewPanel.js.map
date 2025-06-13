@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../Source/Service/WebViewPanel.ts"],
+  "sourcesContent": ["/**\n * @module WebViewPanel\n * @description This module provides the `vscode.window.createWebViewPanel` API,\n * allowing extensions to create and manage webview-based UI panels.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveIPC } from \"./IPC.js\";\nimport { Live as LiveLog } from \"./Log.js\";\nimport { Definition } from \"./WebViewPanel/Definition.js\";\nimport { Tag } from \"./WebViewPanel/Service.js\";\n\nexport { Tag, type Interface } from \"./WebViewPanel/Service.js\";\nexport type { WebviewPanel } from \"vscode\";\n\n/**\n * The live implementation Layer for the WebViewPanel service.\n * It depends on the IPC service for communication and Log for diagnostics.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(\n\tLayer.provide(Layer.merge(LiveIPC, LiveLog)),\n);\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,eAAe;AAChC,SAAS,QAAQ,eAAe;AAChC,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAEpB,SAAS,OAAAA,YAA2B;AAO7B,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE;AAAA,EACjD,MAAM,QAAQ,MAAM,MAAM,SAAS,OAAO,CAAC;AAC5C;",
+  "names": ["Tag"]
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../Source/Service/FileSystemInformation.ts"],
+  "sourcesContent": ["/**\n * @module FileSystemInformation\n * @description This module provides the FileSystemInformation service, which manages\n * filesystem provider capabilities, especially path case-sensitivity.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Definition } from \"./FileSystemInformation/Definition.js\";\nimport { Tag } from \"./FileSystemInformation/Service.js\";\nimport { Live as LiveIPC } from \"./IPC.js\";\nimport { Live as LiveLog } from \"./Log.js\";\n\nexport { Tag, type Interface } from \"./FileSystemInformation/Service.js\";\n\n/**\n * The live implementation Layer for the FileSystemInformation service.\n * It depends on the IPC and Log services.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(\n\tLayer.provide(Layer.merge(LiveIPC, LiveLog)),\n);\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AACpB,SAAS,QAAQ,eAAe;AAChC,SAAS,QAAQ,eAAe;AAEhC,SAAS,OAAAA,YAA2B;AAM7B,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE;AAAA,EACjD,MAAM,QAAQ,MAAM,MAAM,SAAS,OAAO,CAAC;AAC5C;",
+  "names": ["Tag"]
+}

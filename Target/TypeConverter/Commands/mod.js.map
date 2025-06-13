@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/TypeConverter/Commands/mod.ts"],
-  "sourcesContent": ["/**\n * @module Commands (TypeConverter)\n * @description This module provides the `CommandsConverter` for marshalling `vscode.Command`\n * objects for IPC, and the `ApiCommand` structure for defining built-in commands.\n */\n\nimport { Definition as CommandsConverterDefinition } from \"./Definition.js\";\nimport type { Interface as CommandsConverterInterface } from \"./Service.js\";\nimport * as Type from \"./Type.js\";\n\nexport const Definition = CommandsConverterDefinition;\nexport type Interface = CommandsConverterInterface;\nexport const ApiCommand = Type.ApiCommand;\nexport const ApiCommandArgument = Type.ApiCommandArgument;\nexport const ApiCommandResult = Type.ApiCommandResult;\n"],
-  "mappings": "AAMA,SAAS,cAAc,mCAAmC;AAE1D,YAAY,UAAU;AAEf,MAAM,aAAa;AAEnB,MAAM,aAAa,KAAK;AACxB,MAAM,qBAAqB,KAAK;AAChC,MAAM,mBAAmB,KAAK;",
-  "names": []
-}
