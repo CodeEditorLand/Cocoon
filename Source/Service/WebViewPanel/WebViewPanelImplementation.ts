@@ -1,6 +1,6 @@
 /**
- * @module WebviewPanelImpl
- * @description The concrete implementation of the `vscode.WebviewPanel` interface.
+ * @module WebViewPanelImpl
+ * @description The concrete implementation of the `vscode.WebViewPanel` interface.
  */
 
 import { Effect, Stream } from "effect";
@@ -10,16 +10,16 @@ import type {
 	Event,
 	Uri,
 	ViewColumn,
-	Webview,
-	WebviewPanel,
-	WebviewPanelOnDidChangeViewStateEvent,
+	WebView,
+	WebViewPanel,
+	WebViewPanelOnDidChangeViewStateEvent,
 } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import type { Ipc } from "../Ipc.js";
-import { WebviewImpl } from "../Webview2/WebviewImpl.js";
+import type { IPC } from "../IPC.js";
+import { WebViewImpl } from "../WebView/WebViewImpl.js";
 
-export class WebviewPanelImpl implements WebviewPanel {
+export class WebViewPanelImpl implements WebViewPanel {
 	private _isDisposed = false;
 	private _title: string;
 	private _iconPath: Uri | { light: Uri; dark: Uri } | undefined;
@@ -29,11 +29,11 @@ export class WebviewPanelImpl implements WebviewPanel {
 	public readonly onDidDispose: Event<void> =
 		this.OnDidDisposeEvent.Stream.pipe(Stream.toEvent);
 	private readonly OnDidChangeViewStateEvent =
-		CreateEventStream<WebviewPanelOnDidChangeViewStateEvent>();
-	public readonly onDidChangeViewState: Event<WebviewPanelOnDidChangeViewStateEvent> =
+		CreateEventStream<WebViewPanelOnDidChangeViewStateEvent>();
+	public readonly onDidChangeViewState: Event<WebViewPanelOnDidChangeViewStateEvent> =
 		this.OnDidChangeViewStateEvent.Stream.pipe(Stream.toEvent);
 
-	public readonly webview: Webview;
+	public readonly webview: WebView;
 	public readonly viewType: string;
 	public readonly viewColumn: ViewColumn; // This would be updated by events from the host
 	public readonly active: boolean; // Also updated by events
@@ -41,19 +41,19 @@ export class WebviewPanelImpl implements WebviewPanel {
 
 	constructor(
 		private readonly Handle: string,
-		private readonly IpcService: Ipc.Interface,
+		private readonly IPCService: IPC.Interface,
 		private readonly Extension: IExtensionDescription,
 		private readonly OnDidDisposeCallback: () => void,
 		InitialTitle: string,
-		InitialOptions: WebviewPanelOptions & WebviewOptions,
+		InitialOption: WebViewPanelOption & WebViewOption,
 		InitialViewColumn: ViewColumn,
 	) {
 		this.viewType = "unimplemented"; // Would come from options
-		this.webview = new WebviewImpl(
+		this.webview = new WebViewImpl(
 			Handle,
-			IpcService,
+			IPCService,
 			Extension,
-			InitialOptions,
+			InitialOption,
 		);
 		this._title = InitialTitle;
 		this.viewColumn = InitialViewColumn;
@@ -69,7 +69,7 @@ export class WebviewPanelImpl implements WebviewPanel {
 		if (this._title !== value) {
 			this._title = value;
 			Effect.runFork(
-				this.IpcService.SendNotification("$setWebviewTitle", [
+				this.IPCService.SendNotification("$setWebViewTitle", [
 					this.Handle,
 					value,
 				]),
@@ -85,7 +85,7 @@ export class WebviewPanelImpl implements WebviewPanel {
 			this._iconPath = value;
 			// Serialize icon paths to DTOs before sending
 			Effect.runFork(
-				this.IpcService.SendNotification("$setWebviewIconPath", [
+				this.IPCService.SendNotification("$setWebViewIconPath", [
 					this.Handle,
 					value,
 				]),
@@ -103,9 +103,9 @@ export class WebviewPanelImpl implements WebviewPanel {
 		this._isDisposed = true;
 		this.OnDidDisposeEvent.Fire();
 		this.OnDidDisposeCallback();
-		(this.webview as WebviewImpl).Dispose();
+		(this.webview as WebViewImpl).Dispose();
 		Effect.runFork(
-			this.IpcService.SendNotification("$disposeWebview", [this.Handle]),
+			this.IPCService.SendNotification("$disposeWebView", [this.Handle]),
 		);
 	}
 }

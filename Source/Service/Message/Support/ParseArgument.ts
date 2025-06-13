@@ -3,23 +3,23 @@
  * @description A helper function to parse the overloaded arguments of `show...Message` calls.
  */
 
-import type { MessageItem, MessageOptions } from "vscode";
+import type { MessageItem, MessageOption } from "vscode";
 
 import type { ExtensionSource } from "../Type.js";
 
 interface ParsedArguments {
-	Options: MessageOptions;
+	Option: MessageOption;
 	Items: (string | MessageItem)[];
 	Source?: ExtensionSource;
 }
 
 export const ParseArguments = (Args: any[]): ParsedArguments => {
-	let Options: MessageOptions = {};
+	let Option: MessageOption = {};
 	let Items: (string | MessageItem)[] = [];
 	let Source: ExtensionSource | undefined = undefined;
 	let CurrentIndex = 0;
 
-	// Check for MessageOptions
+	// Check for MessageOption
 	if (
 		Args.length > CurrentIndex &&
 		typeof Args[CurrentIndex] === "object" &&
@@ -27,7 +27,7 @@ export const ParseArguments = (Args: any[]): ParsedArguments => {
 		!(Args[CurrentIndex] as MessageItem).title &&
 		!(Args[CurrentIndex] as ExtensionSource).id
 	) {
-		Options = Args[CurrentIndex++];
+		Option = Args[CurrentIndex++];
 	}
 
 	// Check for ExtensionSource
@@ -49,5 +49,5 @@ export const ParseArguments = (Args: any[]): ParsedArguments => {
 				typeof item.title === "string"),
 	);
 
-	return { Options, Items, Source };
+	return { Option, Items, Source };
 };

@@ -5,7 +5,7 @@
  */
 
 import { Effect } from "effect";
-import type * as Vscode from "vscode";
+import type * as VSCode from "vscode";
 
 /**
  * An `Effect` that retrieves a workspace configuration object for a specific
@@ -20,10 +20,10 @@ import type * as Vscode from "vscode";
  * @param Scope An optional `vscode.ConfigurationScope` for which to retrieve
  *   the configuration.
  * @returns An `Effect` that synchronously resolves to the
- *   `vscode.WorkspaceConfiguration`.
+ *   `vscode.WorkSpaceConfiguration`.
  */
 export const GetConfiguration = (
 	Section?: string,
-	Scope?: Vscode.ConfigurationScope | null,
-): Effect.Effect<Vscode.WorkspaceConfiguration> =>
-	Effect.sync(() => Vscode.workspace.getConfiguration(Section, Scope));
+	Scope?: VSCode.ConfigurationScope | null,
+): Effect.Effect<VSCode.WorkSpaceConfiguration> =>
+	Effect.sync(() => VSCode.workspace.getConfiguration(Section, Scope));

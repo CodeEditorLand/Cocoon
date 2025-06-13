@@ -1,11 +1,11 @@
 /**
- * @module Service (Commands/TypeConverter)
- * @description Defines the interface for the CommandsConverter.
+ * @module Service (Command/TypeConverter)
+ * @description Defines the interface for the CommandConverter.
  */
 import type { IDisposable } from "vs/base/common/lifecycle.js";
-import type * as Vscode from "vscode";
+import type * as VSCode from "vscode";
 
 export interface Interface {
-	ToInternal(command: Vscode.Command, disposables: IDisposable[]): any;
-	FromInternal(dto: any): Vscode.Command | undefined;
+	ToInternal(command: VSCode.Command, disposables: IDisposable[]): any;
+	FromInternal(dto: any): VSCode.Command | undefined;
 }

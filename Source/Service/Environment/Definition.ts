@@ -12,12 +12,12 @@ import * as TypeConverter from "../../TypeConverter.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
 import { ClipboardProvider } from "../Clipboard.js";
 import { InitDataService } from "../InitData.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {
 	const InitData = yield* _(InitDataService);
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const Clipboard = yield* _(ClipboardProvider.Tag);
 
 	// --- State and Events ---
@@ -27,10 +27,10 @@ export const Definition = Effect.gen(function* (_) {
 	const OnDidChangeTelemetryEvent = CreateEventStream<boolean>();
 
 	// --- RPC Handlers ---
-	Ipc.RegisterInvokeHandler("$acceptShellChanged", ([shell]) =>
+	IPC.RegisterInvokeHandler("$acceptShellChanged", ([shell]) =>
 		OnDidChangeShellEvent.Fire(shell).pipe(Effect.runPromise),
 	);
-	Ipc.RegisterInvokeHandler("$acceptLogLevelChanged", ([level]) =>
+	IPC.RegisterInvokeHandler("$acceptLogLevelChanged", ([level]) =>
 		Ref.set(LogLevelRef, level).pipe(
 			Effect.flatMap(() => OnDidChangeLogLevelEvent.Fire(level)),
 			Effect.runPromise,
@@ -39,15 +39,15 @@ export const Definition = Effect.gen(function* (_) {
 
 	// --- Effects for Methods ---
 	const OpenExternalEffect = (Target: Uri) =>
-		Ipc.SendRequest<boolean>("$openUri", [
-			TypeConverter.Uri.fromApi(Target),
+		IPC.SendRequest<boolean>("$openUri", [
+			TypeConverter.Uri.fromAPI(Target),
 			{ allowExternalSchemes: true },
 		]).pipe(Effect.map((result) => !!result));
 
 	const AsExternalUriEffect = (Target: Uri) =>
-		Ipc.SendRequest<any>("$asExternalUri", [
-			TypeConverter.Uri.fromApi(Target),
-		]).pipe(Effect.map((dto) => TypeConverter.Uri.toApi(dto)));
+		IPC.SendRequest<any>("$asExternalUri", [
+			TypeConverter.Uri.fromAPI(Target),
+		]).pipe(Effect.map((dto) => TypeConverter.Uri.toAPI(dto)));
 
 	const GetAppRoot = () => {
 		const uri = InitData.environment.appRoot;

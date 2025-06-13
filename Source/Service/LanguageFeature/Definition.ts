@@ -5,19 +5,19 @@
 
 import { Effect, Ref } from "effect";
 
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import { RegisterProvider } from "./RegisterProvider.js";
-import { ProvideHover } from "./RpcHandlers/ProvideHover.js";
+import { ProvideHover } from "./RPCHandlers/ProvideHover.js";
 import type { Interface } from "./Service.js";
 
-// ... import other RpcHandlers
+// ... import other RPCHandlers
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const ProviderRegistry = yield* _(Ref.make(new Map<number, any>()));
 
 	// --- Register all RPC Handlers ---
-	Ipc.RegisterInvokeHandler("$provideHover", ([handle, uri, pos, token]) =>
+	IPC.RegisterInvokeHandler("$provideHover", ([handle, uri, pos, token]) =>
 		Effect.runPromise(
 			ProvideHover(ProviderRegistry, handle, uri, pos, token),
 		),
@@ -28,7 +28,7 @@ export const Definition = Effect.gen(function* (_) {
 		RegisterHoverProvider: (Selector, Provider, Extension) =>
 			RegisterProvider(
 				ProviderRegistry,
-				Ipc,
+				IPC,
 				"Hover",
 				Selector,
 				Provider,

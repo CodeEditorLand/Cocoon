@@ -8,7 +8,7 @@ import type { Extension } from "vscode";
 
 import { ExtensionHost } from "../../Core/ExtensionHost.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { CreateApiObject } from "./CreateApiObject.js";
+import { CreateAPIObject } from "./CreateAPIObject.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {
@@ -32,7 +32,7 @@ export const Definition = Effect.gen(function* (_) {
 				ExtensionHostService.GetExtensionDescription(extensionId),
 			);
 			return description
-				? CreateApiObject<T>(description, ExtensionHostService)
+				? CreateAPIObject<T>(description, ExtensionHostService)
 				: undefined;
 		},
 
@@ -42,7 +42,7 @@ export const Definition = Effect.gen(function* (_) {
 					ExtensionHostService.GetAllExtensionDescriptions(),
 				); // Assume this method exists on the service
 				allExtensionsCache = descriptions.map((desc) =>
-					CreateApiObject<any>(desc, ExtensionHostService),
+					CreateAPIObject<any>(desc, ExtensionHostService),
 				);
 			}
 			return allExtensionsCache;

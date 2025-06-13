@@ -7,9 +7,9 @@
 import { Layer } from "effect";
 
 import { Live as LiveCancellation } from "../Cancellation.js";
-import { Live as LiveCommands } from "../Commands.js";
+import { Live as LiveCommand } from "../Command.js";
 import { Live as LiveDocuments } from "../Documents.js";
-import { Live as LiveIpc } from "../Ipc.js";
+import { Live as LiveIPC } from "../IPC.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
 
@@ -21,6 +21,6 @@ export { Tag, type Interface } from "./Service.js";
  */
 export const Live = Layer.effect(Tag, Definition).pipe(
 	Layer.provide(
-		Layer.mergeAll(LiveIpc, LiveDocuments, LiveCancellation, LiveCommands),
+		Layer.mergeAll(LiveIPC, LiveDocuments, LiveCancellation, LiveCommand),
 	),
 );

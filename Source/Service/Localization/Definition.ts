@@ -10,12 +10,12 @@ import { Uri } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
 import { InitDataService } from "../InitData.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
 import { FetchBundleEffect } from "./Support/FetchBundle.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const InitData = yield* _(InitDataService);
 	const NlsCache = yield* _(
 		Ref.make(new Map<string, Record<string, string>>()),
@@ -63,9 +63,9 @@ export const Definition = Effect.gen(function* (_) {
 
 				const [DefaultContent, LangContent] = yield* _(
 					Effect.all([
-						FetchBundleEffect(Ipc, DefaultBundleUri),
+						FetchBundleEffect(IPC, DefaultBundleUri),
 						LangBundleUri
-							? FetchBundleEffect(Ipc, LangBundleUri)
+							? FetchBundleEffect(IPC, LangBundleUri)
 							: Effect.succeed({}),
 					]),
 				);

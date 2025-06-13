@@ -10,7 +10,7 @@ export {
 	GenericRequest,
 	GenericResponse,
 	GenericNotification,
-	RpcDataPayload,
+	RPCDataPayload,
 	CancelOperationRequest,
 	Empty,
 	MountainServiceClient,

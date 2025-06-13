@@ -1,5 +1,5 @@
 /**
- * @module ProposedApi
+ * @module ProposedAPI
  * @description This service manages and checks the enablement status of proposed
  * (experimental) VS Code APIs for extensions.
  */
@@ -7,7 +7,7 @@
 import { Context, Effect, HashMap, Layer, ReadonlySet } from "effect";
 import {
 	ExtensionIdentifier,
-	type IEnabledApiProposals,
+	type IEnabledAPIProposals,
 } from "vs/platform/extensions/common/extensions.js";
 
 import { InitDataService } from "./InitData.js";
@@ -28,41 +28,41 @@ export interface Interface {
 	) => boolean;
 }
 
-export const Tag = Context.Tag<Interface>("Service/ProposedApi");
+export const Tag = Context.Tag<Interface>("Service/ProposedAPI");
 
 // --- Live Implementation ---
 
 const ParseConfig = (
-	Config: string[] | IEnabledApiProposals | undefined,
-): { GlobalApis: Set<string>; ExtensionApis: Map<string, Set<string>> } => {
-	const GlobalApis = new Set<string>();
-	const ExtensionApis = new Map<string, Set<string>>();
+	Configuration: string[] | IEnabledAPIProposals | undefined,
+): { GlobalAPIs: Set<string>; ExtensionAPIs: Map<string, Set<string>> } => {
+	const GlobalAPIs = new Set<string>();
+	const ExtensionAPIs = new Map<string, Set<string>>();
 
-	if (Array.isArray(Config)) {
-		for (const Proposal of Config) {
-			GlobalApis.add(Proposal);
+	if (Array.isArray(Configuration)) {
+		for (const Proposal of Configuration) {
+			GlobalAPIs.add(Proposal);
 		}
-	} else if (typeof Config === "object" && Config !== null) {
-		for (const Key in Config) {
-			const Proposals = Config[Key];
+	} else if (typeof Configuration === "object" && Configuration !== null) {
+		for (const Key in Configuration) {
+			const Proposals = Configuration[Key];
 			if (Array.isArray(Proposals)) {
 				if (Key === "*") {
 					for (const Proposal of Proposals) {
-						GlobalApis.add(Proposal);
+						GlobalAPIs.add(Proposal);
 					}
 				} else {
 					const ExistingSet =
-						ExtensionApis.get(Key) ?? new Set<string>();
+						ExtensionAPIs.get(Key) ?? new Set<string>();
 					for (const Proposal of Proposals) {
 						ExistingSet.add(Proposal);
 					}
-					ExtensionApis.set(Key, ExistingSet);
+					ExtensionAPIs.set(Key, ExistingSet);
 				}
 			}
 		}
 	}
 
-	return { GlobalApis, ExtensionApis };
+	return { GlobalAPIs, ExtensionAPIs };
 };
 
 const Definition = Effect.gen(function* (_) {
@@ -71,44 +71,44 @@ const Definition = Effect.gen(function* (_) {
 
 	// Parse proposals defined in the product configuration and environment variables.
 	const ProductConfig = ParseConfig(
-		InitData.product?.extensionEnabledApiProposals,
+		InitData.product?.extensionEnabledAPIProposals,
 	);
 	const EnvConfig = ParseConfig(
-		InitData.environment.extensionEnabledProposedApi,
+		InitData.environment.extensionEnabledProposedAPI,
 	);
 
 	// Merge the two sources.
-	const AllGlobalApis = ReadonlySet.fromIterable([
-		...ProductConfig.GlobalApis,
-		...EnvConfig.GlobalApis,
+	const AllGlobalAPIs = ReadonlySet.fromIterable([
+		...ProductConfig.GlobalAPIs,
+		...EnvConfig.GlobalAPIs,
 	]);
 
-	const AllExtensionApis = new Map(ProductConfig.ExtensionApis);
-	EnvConfig.ExtensionApis.forEach((Proposals, ExtId) => {
-		const Existing = AllExtensionApis.get(ExtId) ?? new Set<string>();
+	const AllExtensionAPIs = new Map(ProductConfig.ExtensionAPIs);
+	EnvConfig.ExtensionAPIs.forEach((Proposals, ExtId) => {
+		const Existing = AllExtensionAPIs.get(ExtId) ?? new Set<string>();
 		Proposals.forEach((p) => Existing.add(p));
-		AllExtensionApis.set(ExtId, Existing);
+		AllExtensionAPIs.set(ExtId, Existing);
 	});
 
-	const ReadonlyExtensionApis = HashMap.fromEntries(
-		AllExtensionApis.entries(),
+	const ReadonlyExtensionAPIs = HashMap.fromEntries(
+		AllExtensionAPIs.entries(),
 	);
 
 	yield* _(
 		Log.Info(
-			`Proposed API provider initialized. Globally enabled: ${ReadonlySet.size(AllGlobalApis)}. Per-extension configs: ${HashMap.size(ReadonlyExtensionApis)}.`,
+			`Proposed API provider initialized. Globally enabled: ${ReadonlySet.size(AllGlobalAPIs)}. Per-extension configs: ${HashMap.size(ReadonlyExtensionAPIs)}.`,
 		),
 	);
 
 	const ServiceImplementation: Interface = {
 		IsEnabled: (ExtensionId, ProposalName) => {
 			// An API is enabled if it's in the global set...
-			if (ReadonlySet.has(AllGlobalApis, ProposalName)) {
+			if (ReadonlySet.has(AllGlobalAPIs, ProposalName)) {
 				return true;
 			}
 			// ...or if it's explicitly enabled for this specific extension.
 			const ExtensionProposals = HashMap.get(
-				ReadonlyExtensionApis,
+				ReadonlyExtensionAPIs,
 				ExtensionId.value,
 			);
 			return (

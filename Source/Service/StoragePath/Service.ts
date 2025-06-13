@@ -15,7 +15,7 @@ export interface Interface {
 	 * Returns the URI for an extension's workspace-specific storage.
 	 * @returns A URI or `undefined` if no workspace is open.
 	 */
-	readonly GetWorkspaceStorageUri: (
+	readonly GetWorkSpaceStorageUri: (
 		Extension: IExtensionDescription,
 	) => Uri | undefined;
 

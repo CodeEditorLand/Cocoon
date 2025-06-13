@@ -1,6 +1,6 @@
 /**
- * @module Service (Commands)
- * @description Defines the interface and Context.Tag for the Commands service.
+ * @module Service (Command)
+ * @description Defines the interface and Context.Tag for the Command service.
  */
 
 import { Context, Effect } from "effect";
@@ -29,9 +29,9 @@ export interface Interface {
 		...Args: any[]
 	) => Effect.Effect<T, Error>;
 
-	readonly GetCommands: (
+	readonly GetCommand: (
 		FilterInternal?: boolean,
 	) => Effect.Effect<string[], Error>;
 }
 
-export const Tag = Context.Tag<Interface>("Service/Commands");
+export const Tag = Context.Tag<Interface>("Service/Command");

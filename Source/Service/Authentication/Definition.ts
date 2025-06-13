@@ -8,14 +8,14 @@ import type { IDisposable } from "vs/base/common/lifecycle.js";
 import type { AuthenticationProvider, AuthenticationSession } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import { LogProvider } from "../Log.js";
 import { AuthenticationProviderExistsError } from "./Error.js";
 import type { Interface } from "./Service.js";
 import { ConvertInfoToSession, ConvertSessionToInfo } from "./Type.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const Log = yield* _(LogProvider.Tag);
 	const LocalProviders = yield* _(
 		Ref.make(new Map<string, AuthenticationProvider>()),
@@ -52,17 +52,17 @@ export const Definition = Effect.gen(function* (_) {
 		});
 
 	// Register these handlers with the dispatcher.
-	Ipc.RegisterInvokeHandler("$createSession", ([id, scopes]) =>
+	IPC.RegisterInvokeHandler("$createSession", ([id, scopes]) =>
 		Effect.runPromise($CreateSession(id, scopes)),
 	);
-	Ipc.RegisterInvokeHandler("$removeSession", ([id, sid]) =>
+	IPC.RegisterInvokeHandler("$removeSession", ([id, sid]) =>
 		Effect.runPromise($RemoveSession(id, sid)),
 	);
 	// TODO: Add handler for '$acceptProvidersChanged' to fire OnDidChangeProviderEvent
 
 	const ServiceImplementation: Interface = {
 		GetSession: (ext, providerId, scopes, options) =>
-			Ipc.SendRequest<any | undefined>("$getSession", [
+			IPC.SendRequest<any | undefined>("$getSession", [
 				ext.id,
 				providerId,
 				scopes,
@@ -80,7 +80,7 @@ export const Definition = Effect.gen(function* (_) {
 			),
 
 		ListSessions: (ext, providerId, scopes) =>
-			Ipc.SendRequest<any[]>("$getSessions", [
+			IPC.SendRequest<any[]>("$getSessions", [
 				ext.id,
 				providerId,
 				scopes,
@@ -95,7 +95,7 @@ export const Definition = Effect.gen(function* (_) {
 				Effect.catchAll(() => Effect.succeed([])), // Return empty array on failure
 			),
 
-		RegisterAuthenticationProvider: (Id, Label, Provider, Options) =>
+		RegisterAuthenticationProvider: (Id, Label, Provider, Option) =>
 			Effect.gen(function* (_) {
 				const providers = yield* _(Ref.get(LocalProviders));
 				if (providers.has(Id)) {
@@ -112,10 +112,10 @@ export const Definition = Effect.gen(function* (_) {
 					Ref.update(LocalProviders, (map) => map.set(Id, Provider)),
 				);
 				yield* _(
-					Ipc.SendNotification("$registerAuthenticationProvider", [
+					IPC.SendNotification("$registerAuthenticationProvider", [
 						Id,
 						Label,
-						!!Options?.supportsMultipleAccounts,
+						!!Option?.supportsMultipleAccounts,
 					]),
 				);
 
@@ -127,7 +127,7 @@ export const Definition = Effect.gen(function* (_) {
 								(map) => (map.delete(Id), map),
 							).pipe(
 								Effect.flatMap(() =>
-									Ipc.SendNotification(
+									IPC.SendNotification(
 										"$unregisterAuthenticationProvider",
 										[Id],
 									),

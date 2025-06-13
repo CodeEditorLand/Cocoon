@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 
-import { IpcError } from "../Error.js";
+import { IPCError } from "../Error.js";
 import type { Service } from "./Service.js";
 
 /**
@@ -23,7 +23,7 @@ export const Release = (Server: Service) =>
 		try: () =>
 			new Promise<void>((resolve) => Server.tryShutdown(() => resolve())),
 		catch: (Cause) =>
-			new IpcError({
+			new IPCError({
 				cause: Cause,
 				context: "gRPC server shutdown failed",
 			}),

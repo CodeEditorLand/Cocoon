@@ -12,23 +12,23 @@
 
 import * as Path from "path";
 import { Barrier, Context, Effect, Layer, Scope } from "effect";
+import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 import { CoreServicesLayer } from "./Core.js";
 import { ExtensionHost } from "./Core/ExtensionHost.js";
 import { RequireInterceptor } from "./Core/RequireInterceptor.js";
-import { RunProcessPatches } from "./PatchProcess.js";
+import { RunProcessPatch } from "./PatchProcess.js";
 import { AllServicesLayer } from "./Service.js";
 import { InitDataLayer } from "./Service/InitData.js";
-import { IpcProvider, Live as LiveIpc } from "./Service/Ipc.js";
-import type { IExtensionHostInitData } from "./Type/vscode-proposed.js";
+import { IPCProvider, Live as LiveIPC } from "./Service/IPC.js";
 
 // --- Pre-initialization Steps ---
 // Add the bundled VS Code module path to Node's search paths. This allows
 // imports like `vs/base/common/uri.js` to resolve correctly.
-const VscodeOutDir =
+const VSCodeOutDir =
 	process.env["VSCODE_OUT_DIR"] ??
 	Path.resolve(__dirname, "../../../Dependency/VSCode/out");
-(module as any).paths.unshift(VscodeOutDir);
+(module as any).paths.unshift(VSCodeOutDir);
 
 // --- Application Logic ---
 
@@ -58,13 +58,13 @@ const Main = Effect.gen(function* (_) {
 	const InitBarrier = yield* _(Barrier.make());
 
 	// 1. Apply all low-level process patches (e.g., console piping, termination hooks).
-	yield* _(RunProcessPatches);
+	yield* _(RunProcessPatch);
 
 	// 2. Get the IPC provider.
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 
 	// 3. Register the handler that will be called by Mountain to kick off initialization.
-	Ipc.RegisterInvokeHandler(
+	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
 		(InitData: IExtensionHostInitData) =>
 			Effect.gen(function* (_) {
@@ -90,7 +90,7 @@ const Main = Effect.gen(function* (_) {
 	);
 
 	// 4. Send the 'Ready' signal to Mountain, indicating we are ready for init data.
-	yield* _(Ipc.SendNotification("$initialHandshake", []));
+	yield* _(IPC.SendNotification("$initialHandshake", []));
 	yield* _(Effect.logInfo("Cocoon is ready. Sent handshake to Mountain."));
 
 	// 5. Wait for the `initExtensionHost` handler to open the barrier.
@@ -120,7 +120,7 @@ const AppConfig = {
  * The base Layer for the application, providing the IPC connection.
  * Other layers will be built on top of this.
  */
-const CocoonBaseLayer = LiveIpc(AppConfig);
+const CocoonBaseLayer = LiveIPC(AppConfig);
 
 // --- Run the Application ---
 

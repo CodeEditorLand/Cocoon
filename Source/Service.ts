@@ -4,7 +4,7 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveApiDeprecation } from "./ApiDeprecation.js";
+import { Live as LiveAPIDeprecation } from "./APIDeprecation.js";
 import { Live as LiveAuthentication } from "./Authentication.js";
 import { Live as LiveCancellation } from "./Cancellation.js";
 
@@ -17,11 +17,11 @@ import { Live as LiveCancellation } from "./Cancellation.js";
 
 // --- Re-exporting the full public API (Tag, Interface, Live Layer) for each service ---
 
-export * as ApiDeprecation from "./ApiDeprecation.js";
+export * as APIDeprecation from "./APIDeprecation.js";
 export * as Authentication from "./Authentication.js";
 export * as Cancellation from "./Cancellation.js";
 export * as Clipboard from "./Clipboard.js";
-export * as Commands from "./Commands.js";
+export * as Command from "./Command.js";
 export * as Configuration from "./Configuration.js";
 export * as CustomEditor from "./CustomEditor.js";
 export * as Debug from "./Debug.js";
@@ -32,12 +32,12 @@ export * as Env from "./Env.js";
 export * as Extension from "./Extension.js";
 export * as FileSystem from "./FileSystem.js";
 export * as FileSystemInfo from "./FileSystemInfo.js";
-export * as Ipc from "./Ipc.js";
+export * as IPC from "./IPC.js";
 export * as LanguageFeatures from "./LanguageFeatures.js";
 export * as Localization from "./Localization.js";
 export * as Log from "./Log.js"; // Simple log service
 export * as Message from "./Message.js";
-export * as ProposedApi from "./ProposedApi.js";
+export * as ProposedAPI from "./ProposedAPI.js";
 export * as QuickInput from "./QuickInput.js";
 export * as SecretStorage from "./SecretStorage.js";
 export * as StatusBar from "./StatusBar.js";
@@ -45,20 +45,20 @@ export * as Storage from "./Storage.js";
 export * as Tasks from "./Tasks.js";
 export * as Telemetry from "./Telemetry.js";
 export * as TreeView from "./TreeView.js";
-export * as Webview from "./Webview.js";
-export * as WebviewPanel from "./WebviewPanel.js";
+export * as WebView from "./WebView.js";
+export * as WebViewPanel from "./WebViewPanel.js";
 export * as Window from "./Window.js";
-export * as Vscode from "vscode";
+export * as VSCode from "vscode";
 
 // ... import all other Live layers ...
 
 /**
  * A single, composed layer that provides all services.
  * Note: This is a simplified composition. The final `AppLayer` in `Index.ts`
- * is responsible for providing the necessary configuration to layers like `Ipc`.
+ * is responsible for providing the necessary configuration to layers like `IPC`.
  */
 export const AllServicesLayer = Layer.mergeAll(
-	LiveApiDeprecation,
+	LiveAPIDeprecation,
 	LiveAuthentication,
 	LiveCancellation,
 	// ... and so on for every other service layer

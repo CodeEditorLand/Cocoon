@@ -5,22 +5,22 @@
 
 import { Effect } from "effect";
 
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import { LogProvider } from "../Log.js";
 import { MementoImpl } from "./MementoImpl.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const Log = yield* _(LogProvider.Tag);
 
 	const ServiceImplementation: Interface = {
 		CreateMemento: (ExtensionId: string, IsGlobal: boolean) => {
-			const ScopeName = IsGlobal ? "Global" : "Workspace";
+			const ScopeName = IsGlobal ? "Global" : "WorkSpace";
 			Log.Debug(
 				`Created Memento for ExtId='${ExtensionId}', Scope='${ScopeName}'`,
 			);
-			return new MementoImpl(ExtensionId, IsGlobal, Ipc, Log);
+			return new MementoImpl(ExtensionId, IsGlobal, IPC, Log);
 		},
 	};
 

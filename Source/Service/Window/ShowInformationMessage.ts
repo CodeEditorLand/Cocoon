@@ -4,7 +4,7 @@
  */
 
 import { Effect } from "effect";
-import * as Vscode from "vscode";
+import * as VSCode from "vscode";
 
 /**
  * An Effect that displays an informational message to the user.
@@ -13,28 +13,28 @@ import * as Vscode from "vscode";
  * It handles both simple string messages and messages with action items (buttons).
  *
  * @param Message - The informational message to display.
- * @param ItemsOrOptions - Either an array of `MessageItem` objects (buttons) or `MessageOptions`.
- * @param Items - An array of `MessageItem` objects if the second argument was `MessageOptions`.
+ * @param ItemsOrOption - Either an array of `MessageItem` objects (buttons) or `MessageOption`.
+ * @param Items - An array of `MessageItem` objects if the second argument was `MessageOption`.
  *
  * @returns An `Effect` that resolves with the selected `MessageItem` or `undefined` if
  *   the message was dismissed. It will fail if the underlying VS Code API call throws an error.
  */
-export function ShowInformationMessage<T extends Vscode.MessageItem>(
+export function ShowInformationMessage<T extends VSCode.MessageItem>(
 	Message: string,
 	...Items: T[]
 ): Effect.Effect<T | undefined>;
 export function ShowInformationMessage(
 	Message: string,
-	Options: Vscode.MessageOptions,
-	...Items: Vscode.MessageItem[]
-): Effect.Effect<Vscode.MessageItem | undefined>;
+	Option: VSCode.MessageOption,
+	...Items: VSCode.MessageItem[]
+): Effect.Effect<VSCode.MessageItem | undefined>;
 export function ShowInformationMessage(
 	Message: string,
-	...ItemsOrOptions: any[]
-): Effect.Effect<Vscode.MessageItem | undefined> {
+	...ItemsOrOption: any[]
+): Effect.Effect<VSCode.MessageItem | undefined> {
 	return Effect.tryPromise({
 		try: () =>
-			Vscode.window.showInformationMessage(Message, ...ItemsOrOptions),
+			VSCode.window.showInformationMessage(Message, ...ItemsOrOption),
 		catch: (error) =>
 			new Error(`Failed to show information message: ${error}`),
 	});

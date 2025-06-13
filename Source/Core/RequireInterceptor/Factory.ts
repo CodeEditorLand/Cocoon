@@ -4,4 +4,4 @@
  */
 
 export type { Interface as INodeModuleFactory } from "./Interface.js";
-export { VscodeNodeModuleFactory } from "./Vscode.js";
+export { VSCodeNodeModuleFactory } from "./VSCode.js";

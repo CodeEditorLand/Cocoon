@@ -1,6 +1,6 @@
 /**
- * @module CreateWorkspaceConfiguration
- * @description A factory function that creates the `vscode.WorkspaceConfiguration`
+ * @module CreateWorkSpaceConfiguration
+ * @description A factory function that creates the `vscode.WorkSpaceConfiguration`
  * object that extensions interact with.
  */
 
@@ -8,16 +8,16 @@ import { Effect } from "effect";
 import { deepClone } from "vs/base/common/objects.js";
 import type { ConfigurationTarget } from "vscode";
 
-import type { Ipc } from "../Ipc.js";
+import type { IPC } from "../IPC.js";
 import type { Log } from "../Log.js";
-import type { WorkspaceConfiguration } from "./Type.js";
+import type { WorkSpaceConfiguration } from "./Type.js";
 
-export const CreateWorkspaceConfiguration = (
+export const CreateWorkSpaceConfiguration = (
 	Snapshot: any,
 	SectionPrefix: string,
-	IpcService: Ipc.Interface,
+	IPCService: IPC.Interface,
 	LogService: Log.Interface,
-): WorkspaceConfiguration => {
+): WorkSpaceConfiguration => {
 	const get = <T>(key: string, defaultValue?: T): T | undefined => {
 		// Traverse the object path to get the value.
 		const value = key
@@ -32,7 +32,7 @@ export const CreateWorkspaceConfiguration = (
 		target?: ConfigurationTarget | boolean,
 		overrideInLanguage?: boolean,
 	) => {
-		const updateEffect = IpcService.SendNotification(
+		const updateEffect = IPCService.SendNotification(
 			"$updateConfigurationOption",
 			[target, `${SectionPrefix}.${key}`, value, overrideInLanguage],
 		).pipe(

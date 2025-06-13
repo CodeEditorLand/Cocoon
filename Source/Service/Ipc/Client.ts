@@ -7,7 +7,7 @@
 
 import { Layer } from "effect";
 
-import type { Config } from "../Config.js";
+import type { Configuration } from "../Configuration.js";
 import { Acquire } from "./Acquire.js";
 import { Tag, type Service } from "./Service.js";
 
@@ -21,7 +21,7 @@ import { Tag, type Service } from "./Service.js";
  *
  * This layer depends on the `ConfigTag` to get the `Mountain` server address.
  */
-export const Live: Layer.Layer<Service, never, Config> = Layer.scoped(
+export const Live: Layer.Layer<Service, never, Configuration> = Layer.scoped(
 	Tag,
 	Acquire,
 );

@@ -10,15 +10,15 @@ import { Data } from "effect";
  * A structured error indicating a failure during a gRPC connection attempt or
  * server setup.
  *
- * This error is tagged with "GrpcConnectionError" for precise handling with
+ * This error is tagged with "gRPCConnectionError" for precise handling with
  * `Effect.catchTag`. It captures the underlying `cause` and provides a `context`
  * string to indicate which part of the connection process failed.
  *
  * @property cause - The original, underlying error that was caught.
  * @property context - A string describing the operation that failed.
  */
-export class GrpcConnectionError extends Data.TaggedError(
-	"GrpcConnectionError",
+export class gRPCConnectionError extends Data.TaggedError(
+	"gRPCConnectionError",
 )<{
 	readonly Cause: unknown;
 	readonly context:
@@ -32,7 +32,7 @@ export class GrpcConnectionError extends Data.TaggedError(
 /**
  * A generic error for failures that occur during an IPC request or notification.
  */
-export class IpcError extends Data.TaggedError("IpcError")<{
+export class IPCError extends Data.TaggedError("IPCError")<{
 	readonly cause: unknown;
 	readonly context: string;
 }> {}

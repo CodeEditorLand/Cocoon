@@ -6,20 +6,20 @@
 import { Effect, Ref } from "effect";
 
 import * as TypeConverter from "../../TypeConverter.js";
-import { Commands } from "../Command.js";
-import { IpcProvider } from "../Ipc.js";
+import { Command } from "../Command.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
 import { TreeViewImpl } from "./TreeViewImpl.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
-	const CommandsService = yield* _(Commands.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
+	const CommandService = yield* _(Command.Tag);
 	const ActiveViews = yield* _(
 		Ref.make(new Map<string, TreeViewImpl<any>>()),
 	);
 
 	// Register RPC handler for when Mountain needs children
-	Ipc.RegisterInvokeHandler("$getChildren", ([ViewId, ParentHandle]) => {
+	IPC.RegisterInvokeHandler("$getChildren", ([ViewId, ParentHandle]) => {
 		return Effect.gen(function* (_) {
 			const view = (yield* _(Ref.get(ActiveViews))).get(ViewId);
 			if (!view) return [];
@@ -32,32 +32,32 @@ export const Definition = Effect.gen(function* (_) {
 	});
 
 	const ServiceImplementation: Interface = {
-		CreateTreeView: (ViewId, Options, Extension) =>
+		CreateTreeView: (ViewId, Option, Extension) =>
 			Effect.gen(function* (_) {
-				if (!Options.treeDataProvider) {
+				if (!Option.treeDataProvider) {
 					return yield* _(
 						Effect.fail(
 							new Error(
-								"TreeViewOptions must include a TreeDataProvider.",
+								"TreeViewOption must include a TreeDataProvider.",
 							),
 						),
 					);
 				}
 
-				const OptionsDto =
-					TypeConverter.TreeView.Options.fromApi(Options);
+				const OptionDTO =
+					TypeConverter.TreeView.Option.fromAPI(Option);
 				yield* _(
-					Ipc.SendNotification("$registerTreeDataProvider", [
+					IPC.SendNotification("$registerTreeDataProvider", [
 						ViewId,
-						OptionsDto,
+						OptionDTO,
 					]),
 				);
 
 				const ExtHostView = new TreeViewImpl(
 					ViewId,
-					Options.treeDataProvider,
-					Ipc,
-					(CommandsService as any).converter,
+					Option.treeDataProvider,
+					IPC,
+					(CommandService as any).converter,
 					Extension,
 				);
 				yield* _(

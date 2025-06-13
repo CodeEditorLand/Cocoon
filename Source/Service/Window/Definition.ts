@@ -7,11 +7,11 @@ import { Effect, Ref } from "effect";
 import type { WindowState } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 
 	// State and events are managed by Refs and Hubs, updated by host messages.
 	const WindowStateRef = yield* _(
@@ -20,7 +20,7 @@ export const Definition = Effect.gen(function* (_) {
 	const OnDidChangeWindowState = CreateEventStream<WindowState>();
 
 	// Register RPC handlers
-	Ipc.RegisterInvokeHandler("$acceptWindowStateChanged", ([state]) => {
+	IPC.RegisterInvokeHandler("$acceptWindowStateChanged", ([state]) => {
 		return Ref.set(WindowStateRef, state).pipe(
 			Effect.flatMap(() => OnDidChangeWindowState.Fire(state)),
 			Effect.runPromise,

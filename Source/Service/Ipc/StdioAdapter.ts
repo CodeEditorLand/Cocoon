@@ -10,7 +10,7 @@ import * as Readline from "node:readline";
 import { Effect, Layer, Ref, Schedule } from "effect";
 
 import { Tag as DispatcherTag } from "../Dispatcher/Service.js";
-import { Tag as IpcServiceTag } from "../Service.js";
+import { Tag as IPCServiceTag } from "../Service.js";
 import { StdioError } from "./Error.js";
 
 interface PendingRequest {
@@ -22,10 +22,10 @@ interface PendingRequest {
  * The live implementation Layer for the Stdio-based IPC Provider.
  *
  * This scoped layer sets up listeners on `process.stdin` and provides an
- * `Ipc.Service` implementation that writes JSON messages to `process.stdout`.
+ * `IPC.Service` implementation that writes JSON messages to `process.stdout`.
  */
 export const Live = Layer.scoped(
-	IpcServiceTag,
+	IPCServiceTag,
 	Effect.gen(function* (_) {
 		const Dispatcher = yield* _(DispatcherTag);
 		const PendingRequests = yield* _(
@@ -90,7 +90,7 @@ export const Live = Layer.scoped(
 			),
 		);
 
-		return IpcServiceTag.of({
+		return IPCServiceTag.of({
 			SendRequest: (Method, Parameters, TimeoutMs = 30000) =>
 				Effect.gen(function* (_) {
 					const RequestId = yield* _(
@@ -153,7 +153,7 @@ export const Live = Layer.scoped(
 					);
 				}),
 
-			// Stubs for other Ipc.Service methods not implemented by this adapter
+			// Stubs for other IPC.Service methods not implemented by this adapter
 			SendCancel: () => Effect.unit,
 			CreateProtocolAdapter: () => {
 				throw new Error(

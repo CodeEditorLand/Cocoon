@@ -1,23 +1,23 @@
 /**
- * @module WebviewImpl
- * @description The concrete implementation of the `vscode.Webview` interface. An
+ * @module WebViewImpl
+ * @description The concrete implementation of the `vscode.WebView` interface. An
  * instance of this class represents a single webview from the extension host's
  * perspective, proxying state changes to the Mountain host.
  */
 
 import { Effect, Stream } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type { Event, Uri, Webview, WebviewOptions } from "vscode";
+import type { Event, Uri, WebView, WebViewOption } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import type { Ipc } from "../Ipc.js";
+import type { IPC } from "../IPC.js";
 
-export class WebviewImpl implements Webview {
+export class WebViewImpl implements WebView {
 	// --- Private State ---
 	private IsDisposed = false;
 	private _Html = "";
-	private _Options: WebviewOptions;
+	private _Option: WebViewOption;
 
 	// --- Event Emitters ---
 	private readonly OnDidReceiveMessageEvent = CreateEventStream<any>();
@@ -26,11 +26,11 @@ export class WebviewImpl implements Webview {
 
 	constructor(
 		public readonly Handle: string, // A unique ID for this webview instance
-		private readonly IpcService: Ipc.Interface,
+		private readonly IPCService: IPC.Interface,
 		private readonly Extension: IExtensionDescription,
-		InitialOptions: WebviewOptions,
+		InitialOption: WebViewOption,
 	) {
-		this._Options = InitialOptions;
+		this._Option = InitialOption;
 	}
 
 	// --- Public API Properties ---
@@ -45,29 +45,29 @@ export class WebviewImpl implements Webview {
 		}
 		this._Html = value;
 		// Send a fire-and-forget notification to the host to update the UI.
-		const updateEffect = this.IpcService.SendNotification(
-			"$setWebviewHtml",
+		const updateEffect = this.IPCService.SendNotification(
+			"$setWebViewHtml",
 			[this.Handle, value],
 		);
 		Effect.runFork(updateEffect);
 	}
 
-	public get options(): WebviewOptions {
-		return this._Options;
+	public get options(): WebViewOption {
+		return this._Option;
 	}
 
-	public set options(newOptions: WebviewOptions) {
+	public set options(newOption: WebViewOption) {
 		if (this.IsDisposed) {
 			return;
 		}
-		this._Options = newOptions;
-		const OptionsDto = TypeConverter.Webview.ConvertContentOptionsToDto(
+		this._Option = newOption;
+		const OptionDTO = TypeConverter.WebView.ConvertContentOptionToDTO(
 			this.Extension,
-			newOptions,
+			newOption,
 		);
-		const updateEffect = this.IpcService.SendNotification(
-			"$setWebviewOptions",
-			[this.Handle, OptionsDto],
+		const updateEffect = this.IPCService.SendNotification(
+			"$setWebViewOption",
+			[this.Handle, OptionDTO],
 		);
 		Effect.runFork(updateEffect);
 	}
@@ -83,8 +83,8 @@ export class WebviewImpl implements Webview {
 		if (this.IsDisposed) {
 			return Promise.resolve(false);
 		}
-		const postEffect = this.IpcService.SendRequest<boolean>(
-			"$postMessageToWebview",
+		const postEffect = this.IPCService.SendRequest<boolean>(
+			"$postMessageToWebView",
 			[this.Handle, message],
 		).pipe(
 			Effect.catchAll(() => Effect.succeed(false)), // Return false on any failure
@@ -92,7 +92,7 @@ export class WebviewImpl implements Webview {
 		return Effect.runPromise(postEffect);
 	}
 
-	public asWebviewUri(localResource: Uri): Uri {
+	public asWebViewUri(localResource: Uri): Uri {
 		// This transforms a local file URI into a special URI that the host
 		// can serve securely inside the webview.
 		// This logic is typically local to the extension host.
@@ -107,7 +107,7 @@ export class WebviewImpl implements Webview {
 	// --- Internal Methods (called by other services) ---
 
 	/**
-	 * Called by the WebviewPanel service when a message is received from the host
+	 * Called by the WebViewPanel service when a message is received from the host
 	 * for this specific webview instance.
 	 */
 	public FireDidReceiveMessage(message: any): void {

@@ -1,6 +1,6 @@
 /**
- * @module Definition (Workspace)
- * @description The live implementation of the Workspace service.
+ * @module Definition (WorkSpace)
+ * @description The live implementation of the WorkSpace service.
  */
 
 import { Effect, Ref } from "effect";
@@ -10,47 +10,47 @@ import { CreateEventStream } from "../../Utility/CreateEventStream.js";
 import { ConfigurationProvider } from "../Configuration.js";
 import { DocumentsProvider } from "../Document.js";
 import { FileSystemProvider } from "../FileSystem.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
-import { InternalWorkspace } from "./State.js";
+import { InternalWorkSpace } from "./State.js";
 import { FindFilesEffect } from "./Support/FindFiles.js";
 import { OpenTextDocumentEffect } from "./Support/OpenTextDocument.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const Documents = yield* _(DocumentsProvider.Tag);
 	const Fs = yield* _(FileSystemProvider.Tag);
 	const Configuration = yield* _(ConfigurationProvider.Tag);
-	const InternalWorkspaceRef = yield* _(
-		Ref.make<InternalWorkspace | undefined>(undefined),
+	const InternalWorkSpaceRef = yield* _(
+		Ref.make<InternalWorkSpace | undefined>(undefined),
 	);
 	const OnDidChangeFoldersEvent = CreateEventStream<any>();
 
 	// --- RPC Handler ---
-	Ipc.RegisterInvokeHandler("$acceptWorkspaceData", ([data]) =>
+	IPC.RegisterInvokeHandler("$acceptWorkSpaceData", ([data]) =>
 		Effect.gen(function* (_) {
-			const OldWorkspace = yield* _(Ref.get(InternalWorkspaceRef));
-			const NewWorkspace = new InternalWorkspace(
+			const OldWorkSpace = yield* _(Ref.get(InternalWorkSpaceRef));
+			const NewWorkSpace = new InternalWorkSpace(
 				data.id,
 				data.name,
 				data.folders.map((f: any) =>
-					TypeConverter.WorkspaceFolder.fromDto(f),
+					TypeConverter.WorkSpaceFolder.fromDTO(f),
 				),
-				TypeConverter.Uri.fromDto(data.configuration),
+				TypeConverter.Uri.fromDTO(data.configuration),
 			);
-			yield* _(Ref.set(InternalWorkspaceRef, NewWorkspace));
+			yield* _(Ref.set(InternalWorkSpaceRef, NewWorkSpace));
 
 			// A more robust diffing logic would be needed here.
-			const Added = NewWorkspace.Folders.filter(
+			const Added = NewWorkSpace.Folders.filter(
 				(f) =>
-					!OldWorkspace?.Folders.some(
+					!OldWorkSpace?.Folders.some(
 						(of) => of.uri.toString() === f.uri.toString(),
 					),
 			);
 			const Removed =
-				OldWorkspace?.Folders.filter(
+				OldWorkSpace?.Folders.filter(
 					(f) =>
-						!NewWorkspace.Folders.some(
+						!NewWorkSpace.Folders.some(
 							(nf) => nf.uri.toString() === f.uri.toString(),
 						),
 				) ?? [];
@@ -69,19 +69,19 @@ export const Definition = Effect.gen(function* (_) {
 	const ServiceImplementation: Interface = {
 		// --- Properties ---
 		get name() {
-			return Ref.get(InternalWorkspaceRef).pipe(
+			return Ref.get(InternalWorkSpaceRef).pipe(
 				Effect.map((ws) => ws?.Name),
 				Effect.runSync,
 			);
 		},
 		get workspaceFile() {
-			return Ref.get(InternalWorkspaceRef).pipe(
+			return Ref.get(InternalWorkSpaceRef).pipe(
 				Effect.map((ws) => ws?.Configuration),
 				Effect.runSync,
 			);
 		},
 		get workspaceFolders() {
-			return Ref.get(InternalWorkspaceRef).pipe(
+			return Ref.get(InternalWorkSpaceRef).pipe(
 				Effect.map((ws) => ws?.Folders),
 				Effect.runSync,
 			);
@@ -91,11 +91,11 @@ export const Definition = Effect.gen(function* (_) {
 		}, // This would come from InitData
 
 		// --- Events ---
-		onDidChangeWorkspaceFolders: OnDidChangeFoldersEvent.Stream,
+		onDidChangeWorkSpaceFolders: OnDidChangeFoldersEvent.Stream,
 
 		// --- Methods ---
-		getWorkspaceFolder: (uri) =>
-			Ref.get(InternalWorkspaceRef).pipe(
+		getWorkSpaceFolder: (uri) =>
+			Ref.get(InternalWorkSpaceRef).pipe(
 				Effect.map((ws) =>
 					ws?.Folders.find((f) =>
 						uri.fsPath.startsWith(f.uri.fsPath),
@@ -103,9 +103,9 @@ export const Definition = Effect.gen(function* (_) {
 				),
 			),
 		findFiles: (include, exclude, max, token) =>
-			FindFilesEffect(Ipc, include, exclude, max, token),
+			FindFilesEffect(IPC, include, exclude, max, token),
 		openTextDocument: (options) =>
-			OpenTextDocumentEffect(Ipc, Documents, options),
+			OpenTextDocumentEffect(IPC, Documents, options),
 
 		// --- Delegated Services/Properties ---
 		getConfiguration: Configuration.GetConfiguration,

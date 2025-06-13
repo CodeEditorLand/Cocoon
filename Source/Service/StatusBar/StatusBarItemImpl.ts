@@ -15,7 +15,7 @@ import type {
 } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
-import type { Ipc } from "../Ipc.js";
+import type { IPC } from "../IPC.js";
 
 export class StatusBarItemImpl implements StatusBarItem {
 	private _isDisposed = false;
@@ -34,7 +34,7 @@ export class StatusBarItemImpl implements StatusBarItem {
 
 	constructor(
 		private readonly EntryId: string, // Internal unique ID
-		private readonly IpcService: Ipc.Interface,
+		private readonly IPCService: IPC.Interface,
 		private readonly OnDidDispose: () => void,
 		InitialId: string,
 		InitialAlignment: StatusBarAlignment,
@@ -115,7 +115,7 @@ export class StatusBarItemImpl implements StatusBarItem {
 			this._visible = false;
 			// Send a dispose notification to the host to hide the item.
 			Effect.runFork(
-				this.IpcService.SendNotification("$disposeEntry", [
+				this.IPCService.SendNotification("$disposeEntry", [
 					this.EntryId,
 				]),
 			);
@@ -136,7 +136,7 @@ export class StatusBarItemImpl implements StatusBarItem {
 			return;
 		}
 		// The update is a fire-and-forget notification to the host.
-		const Dto = TypeConverter.StatusBar.fromApi(this, this.EntryId);
-		Effect.runFork(this.IpcService.SendNotification("$setEntry", [Dto]));
+		const DTO = TypeConverter.StatusBar.fromAPI(this, this.EntryId);
+		Effect.runFork(this.IPCService.SendNotification("$setEntry", [DTO]));
 	}
 }

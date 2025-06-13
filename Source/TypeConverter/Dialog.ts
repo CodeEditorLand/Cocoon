@@ -4,8 +4,8 @@
  */
 
 import type {
-	OpenDialogOptions,
-	SaveDialogOptions,
+	OpenDialogOption,
+	SaveDialogOption,
 } from "../Service/Dialog/Type.js";
 import { Uri } from "../Type/ExtHostTypes.js";
 
@@ -17,8 +17,8 @@ const SerializeFilters = (filters?: { [name: string]: readonly string[] }) => {
 	}));
 };
 
-export namespace OpenDialogOptions {
-	export const ToDto = (options?: OpenDialogOptions) => {
+export namespace OpenDialogOption {
+	export const ToDTO = (options?: OpenDialogOption) => {
 		if (!options) return undefined;
 		return {
 			...options,
@@ -28,8 +28,8 @@ export namespace OpenDialogOptions {
 	};
 }
 
-export namespace SaveDialogOptions {
-	export const ToDto = (options?: SaveDialogOptions) => {
+export namespace SaveDialogOption {
+	export const ToDTO = (options?: SaveDialogOption) => {
 		if (!options) return undefined;
 		return {
 			...options,

@@ -6,18 +6,18 @@
 import { Effect } from "effect";
 import type { Clipboard } from "vscode";
 
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 
 /**
  * An Effect that builds the live implementation of the Clipboard service.
  */
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 
 	/**
 	 * An Effect that reads text from the host's clipboard.
 	 */
-	const ReadTextEffect = Ipc.SendRequest<string>(
+	const ReadTextEffect = IPC.SendRequest<string>(
 		"env_clipboardReadText",
 		{},
 	).pipe(
@@ -30,7 +30,7 @@ export const Definition = Effect.gen(function* (_) {
 	 * @param Text - The string to write.
 	 */
 	const WriteTextEffect = (Text: string) =>
-		Ipc.SendNotification("env_clipboardWriteText", { Text }).pipe(
+		IPC.SendNotification("env_clipboardWriteText", { Text }).pipe(
 			Effect.catchAll(() => Effect.unit), // Ignore errors for fire-and-forget
 		);
 

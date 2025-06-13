@@ -1,30 +1,30 @@
 /**
- * @module Service (WebviewPanel)
- * @description Defines the interface and Context.Tag for the WebviewPanel service.
+ * @module Service (WebViewPanel)
+ * @description Defines the interface and Context.Tag for the WebViewPanel service.
  */
 
 import { Context, Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type {
 	ViewColumn,
-	WebviewOptions,
-	WebviewPanel,
-	WebviewPanelOptions,
+	WebViewOption,
+	WebViewPanel,
+	WebViewPanelOption,
 } from "vscode";
 
 export interface Interface {
 	/**
 	 * Creates a new webview panel.
 	 */
-	readonly CreateWebviewPanel: (
+	readonly CreateWebViewPanel: (
 		Extension: IExtensionDescription,
 		ViewType: string,
 		Title: string,
-		ShowOptions:
+		ShowOption:
 			| ViewColumn
 			| { viewColumn: ViewColumn; preserveFocus?: boolean },
-		Options?: WebviewPanelOptions & WebviewOptions,
-	) => Effect.Effect<WebviewPanel, Error>;
+		Option?: WebViewPanelOption & WebViewOption,
+	) => Effect.Effect<WebViewPanel, Error>;
 }
 
-export const Tag = Context.Tag<Interface>("Service/WebviewPanel");
+export const Tag = Context.Tag<Interface>("Service/WebViewPanel");

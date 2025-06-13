@@ -1,19 +1,19 @@
 /**
- * @module Definition (Commands)
- * @description The live implementation of the Commands service.
+ * @module Definition (Command)
+ * @description The live implementation of the Command service.
  */
 
 import { Effect, Ref } from "effect";
 import { Disposable } from "vscode";
 
-import { CommandsConverter } from "../../TypeConverter/Command.js"; // Assume this exists
-import { IpcProvider } from "../Ipc.js";
+import { CommandConverter } from "../../TypeConverter/Command.js"; // Assume this exists
+import { IPCProvider } from "../IPC.js";
 import { TelemetryProvider } from "../Telemetry.js";
 import type { Interface } from "./Service.js";
 import type { CommandHandler, CommandHandlerEntry } from "./Type.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const Telemetry = yield* _(TelemetryProvider.Tag);
 	const CommandRegistry = yield* _(
 		Ref.make(new Map<string, CommandHandlerEntry>()),
@@ -21,7 +21,7 @@ export const Definition = Effect.gen(function* (_) {
 
 	// The converter is needed for marshalling args for RPC calls.
 	// In a real app, its dependencies would be properly injected.
-	const Converter = new CommandsConverter({} as any, {} as any);
+	const Converter = new CommandConverter({} as any, {} as any);
 
 	const ExecuteCommandEffect = <T>(
 		Id: string,
@@ -50,7 +50,7 @@ export const Definition = Effect.gen(function* (_) {
 			// If not found locally, proxy the command execution to the Mountain host.
 			const MarshalledArgs = Args.map((arg) => Converter.ToInternal(arg));
 			const Result = yield* _(
-				Ipc.SendRequest("$executeCommand", [Id, MarshalledArgs]),
+				IPC.SendRequest("$executeCommand", [Id, MarshalledArgs]),
 			);
 			return Converter.FromInternal(Result) as T;
 		});
@@ -64,7 +64,7 @@ export const Definition = Effect.gen(function* (_) {
 				map.set(Id, Entry),
 			).pipe(
 				Effect.flatMap(() =>
-					Ipc.SendNotification("$registerCommand", [Id]),
+					IPC.SendNotification("$registerCommand", [Id]),
 				),
 			);
 			Effect.runFork(registerEffect);
@@ -75,7 +75,7 @@ export const Definition = Effect.gen(function* (_) {
 					(map) => (map.delete(Id), map),
 				).pipe(
 					Effect.flatMap(() =>
-						Ipc.SendNotification("$unregisterCommand", [Id]),
+						IPC.SendNotification("$unregisterCommand", [Id]),
 					),
 				);
 				Effect.runFork(unregisterEffect);
@@ -92,25 +92,25 @@ export const Definition = Effect.gen(function* (_) {
 			);
 		},
 
-		GetCommands: (FilterInternal = false) =>
-			Ipc.SendRequest<string[]>("getCommands", []).pipe(
-				Effect.flatMap((RemoteCommands) =>
+		GetCommand: (FilterInternal = false) =>
+			IPC.SendRequest<string[]>("getCommand", []).pipe(
+				Effect.flatMap((RemoteCommand) =>
 					Ref.get(CommandRegistry).pipe(
 						Effect.map((LocalRegistry) => {
-							const LocalCommands = Array.from(
+							const LocalCommand = Array.from(
 								LocalRegistry.keys(),
 							);
-							const AllCommands = [
+							const AllCommand = [
 								...new Set([
-									...RemoteCommands,
-									...LocalCommands,
+									...RemoteCommand,
+									...LocalCommand,
 								]),
 							];
 							return FilterInternal
-								? AllCommands.filter(
+								? AllCommand.filter(
 										(cmd) => !cmd.startsWith("_"),
 									)
-								: AllCommands;
+								: AllCommand;
 						}),
 					),
 				),

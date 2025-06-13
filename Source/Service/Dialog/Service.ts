@@ -6,16 +6,16 @@
 import { Context, Effect } from "effect";
 import type { CancellationToken, Uri } from "vscode";
 
-import type { OpenDialogOptions, SaveDialogOptions } from "./Type.js";
+import type { OpenDialogOption, SaveDialogOption } from "./Type.js";
 
 export interface Interface {
 	readonly ShowOpenDialog: (
-		Options?: OpenDialogOptions,
+		Option?: OpenDialogOption,
 		Token?: CancellationToken,
 	) => Effect.Effect<Uri[] | undefined, Error>;
 
 	readonly ShowSaveDialog: (
-		Options?: SaveDialogOptions,
+		Option?: SaveDialogOption,
 		Token?: CancellationToken,
 	) => Effect.Effect<Uri | undefined, Error>;
 }

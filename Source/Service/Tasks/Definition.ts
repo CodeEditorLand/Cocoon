@@ -8,8 +8,8 @@ import { Disposable } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc.js";
-import { ProvideTasks } from "./RpcHandlers/ProvideTasks.js";
+import { IPCProvider } from "../IPC.js";
+import { ProvideTasks } from "./RPCHandlers/ProvideTasks.js";
 import type { Interface } from "./Service.js";
 
 // ... import other RPC handlers
@@ -17,11 +17,11 @@ import type { Interface } from "./Service.js";
 let HandleCounter = 0;
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const TaskProviders = yield* _(Ref.make(new Map<number, any>()));
 
 	// --- Register RPC Handlers ---
-	Ipc.RegisterInvokeHandler("$provideTasks", ([handle]) =>
+	IPC.RegisterInvokeHandler("$provideTasks", ([handle]) =>
 		Effect.runPromise(ProvideTasks(TaskProviders, handle)),
 	);
 	// ... register handlers for $resolveTask, etc. ...
@@ -40,12 +40,12 @@ export const Definition = Effect.gen(function* (_) {
 					Ref.update(TaskProviders, (map) =>
 						map.set(Handle, { Type, Provider, Extension }),
 					).pipe(Effect.runSync);
-					Ipc.SendNotification("$registerTaskProvider", [
+					IPC.SendNotification("$registerTaskProvider", [
 						Handle,
 						Type,
 					]).pipe(Effect.runFork);
 					return new Disposable(() =>
-						Ipc.SendNotification("$unregisterTaskProvider", [
+						IPC.SendNotification("$unregisterTaskProvider", [
 							Handle,
 						]).pipe(Effect.runFork),
 					);
@@ -54,18 +54,18 @@ export const Definition = Effect.gen(function* (_) {
 			),
 
 		FetchTasks: (Filter) =>
-			Ipc.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
+			IPC.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
 				Effect.map((dtos) =>
-					dtos.map((dto) => TypeConverter.Task.toApi(dto)),
+					dtos.map((dto) => TypeConverter.Task.toAPI(dto)),
 				),
 			),
 
 		ExecuteTask: (TaskToExecute, Extension) =>
-			Ipc.SendRequest<any>("$executeTask", [
-				TypeConverter.Task.fromApi(TaskToExecute, Extension),
+			IPC.SendRequest<any>("$executeTask", [
+				TypeConverter.Task.fromAPI(TaskToExecute, Extension),
 			]).pipe(
 				Effect.map((dto) =>
-					TypeConverter.TaskExecution.toApi(dto, TaskToExecute),
+					TypeConverter.TaskExecution.toAPI(dto, TaskToExecute),
 				),
 			),
 	};

@@ -1,6 +1,6 @@
 /**
  * @module Definition
- * @description The live implementation of the `IpcProtocolAdapter` service.
+ * @description The live implementation of the `IPCProtocolAdapter` service.
  * This adapter is responsible for handling raw binary data communication,
  * typically for VS Code's core RPC mechanism.
  */
@@ -10,12 +10,12 @@ import { VSBuffer } from "vs/base/common/buffer.js";
 import { Emitter } from "vs/base/common/event.js";
 
 import { Tag as ClientTag } from "../Client/Service.js";
-import { IpcError } from "../Error.js";
-import { RpcDataPayload } from "../Generated.js";
+import { IPCError } from "../Error.js";
+import { RPCDataPayload } from "../Generated.js";
 import type { Interface } from "./Service.js";
 
 /**
- * An `Effect` that builds the live implementation of the `IpcProtocolAdapter`
+ * An `Effect` that builds the live implementation of the `IPCProtocolAdapter`
  * service.
  *
  * It encapsulates the event emitters for incoming messages and the `send`
@@ -35,15 +35,15 @@ export const Definition = Effect.gen(function* (_) {
 	const SendEffect = (Buffer: VSBuffer) =>
 		Effect.tryPromise({
 			try: () => {
-				const Payload = new RpcDataPayload();
+				const Payload = new RPCDataPayload();
 				Payload.setBuffer(Buffer.buffer);
 				// The gRPC method is assumed to be available on the client service.
-				return Client.sendRpcDataToMountain(Payload);
+				return Client.sendRPCDataToMountain(Payload);
 			},
 			catch: (Cause) =>
-				new IpcError({
+				new IPCError({
 					cause: Cause,
-					context: "sendRpcDataToMountain failed",
+					context: "sendRPCDataToMountain failed",
 				}),
 		}).pipe(
 			Effect.catchAll((Error) =>

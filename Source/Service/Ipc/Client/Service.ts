@@ -23,4 +23,4 @@ export type Service = MountainServiceClient;
  * This tag is used by other services to declare their dependency on the raw
  * gRPC client.
  */
-export const Tag = Context.Tag<Service>("Ipc/Client");
+export const Tag = Context.Tag<Service>("IPC/Client");

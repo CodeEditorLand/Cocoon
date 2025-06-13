@@ -12,7 +12,7 @@ import { ProcessPatchError } from "./Error.js";
  * An Effect that sets the `VSCODE_CWD` environment variable if it is not already set.
  * This variable is used by some VS Code services and extensions to resolve relative paths.
  */
-const SetVscodeCwd = Effect.if(
+const SetVSCodeCwd = Effect.if(
 	Effect.sync(() => typeof process.env["VSCODE_CWD"] !== "string"),
 	{
 		onTrue: Effect.sync(() => {
@@ -67,6 +67,6 @@ const ChangeWorkingDirectoryOnWindows = Effect.if(
  * Note: `Error.stackTraceLimit` is set in a separate, dedicated patch.
  */
 export const SetupEnvironment = Effect.all(
-	[SetVscodeCwd, ChangeWorkingDirectoryOnWindows],
+	[SetVSCodeCwd, ChangeWorkingDirectoryOnWindows],
 	{ discard: true },
 );

@@ -1,5 +1,5 @@
 /**
- * @module ProvideTasks (RpcHandlers)
+ * @module ProvideTasks (RPCHandlers)
  * @description Implements the RPC handler for providing tasks from an extension.
  */
 
@@ -31,6 +31,6 @@ export const ProvideTasks = (Registry: any, Handle: number) =>
 		if (!Tasks) return [];
 
 		return Tasks.map((task) =>
-			TypeConverter.Task.fromApi(task, Entry.extension),
+			TypeConverter.Task.fromAPI(task, Entry.extension),
 		);
 	}).pipe(Effect.catchAll(() => Effect.succeed([])));

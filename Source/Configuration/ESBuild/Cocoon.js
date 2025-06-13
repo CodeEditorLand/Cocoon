@@ -34,7 +34,7 @@ export default {
         {
             name: "Target",
             // @ts-ignore
-            setup({ onStart, initialOptions: { outdir } }) {
+            setup({ onStart, initialOption: { outdir } }) {
                 switch (true) {
                     case Clean === true:
                         onStart(async () => {

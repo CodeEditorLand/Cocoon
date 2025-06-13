@@ -8,18 +8,18 @@ import * as Module from "node:module";
 import { MessageChannel, type MessagePort } from "node:worker_threads";
 import { BidirectionalMap, Effect, pipe, Ref, Scope } from "effect";
 
-import { Tag as ApiFactoryTag } from "../ApiFactory.js";
+import { Tag as APIFactoryTag } from "../APIFactory.js";
 import { LOADER_HOOK_SCRIPT_FILENAME } from "./Constants.js";
 import { HandleResolveRequest } from "./HandleResolveRequest.js";
 import { LoadHookScript } from "./LoadHookScript.js";
 import type { Interface } from "./Service.js";
-import { SetupGlobalApiRetriever } from "./SetupGlobalApiRetriever.js";
+import { SetupGlobalAPIRetriever } from "./SetupGlobalAPIRetriever.js";
 
 /**
  * An Effect that builds the live implementation of the EsmInterceptor service.
  */
 export const Definition = Effect.gen(function* (_) {
-	const ApiFactory = yield* _(ApiFactoryTag);
+	const APIFactory = yield* _(APIFactoryTag);
 
 	const InstallEffect = () =>
 		Effect.gen(function* (_) {
@@ -33,7 +33,7 @@ export const Definition = Effect.gen(function* (_) {
 				);
 			}
 
-			const VscodeApiCache = yield* _(
+			const VSCodeAPICache = yield* _(
 				Ref.make(BidirectionalMap.empty<object, string>()),
 			);
 			const DataUriCache = yield* _(Ref.make(new Map<string, string>()));
@@ -42,15 +42,15 @@ export const Definition = Effect.gen(function* (_) {
 			const { port1: MainThreadPort, port2: LoaderHookPort } =
 				new MessageChannel();
 
-			yield* _(SetupGlobalApiRetriever(VscodeApiCache));
+			yield* _(SetupGlobalAPIRetriever(VSCodeAPICache));
 
 			// Listen for module resolution requests from the hook thread.
 			MainThreadPort.on("message", (Message) => {
 				Effect.runFork(
 					HandleResolveRequest({
 						Message,
-						ApiFactory,
-						VscodeApiCache,
+						APIFactory,
+						VSCodeAPICache,
 						DataUriCache,
 						MainThreadPort,
 					}),

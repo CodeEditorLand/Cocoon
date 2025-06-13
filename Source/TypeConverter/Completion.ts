@@ -7,10 +7,10 @@
 import { DisposableStore, type IDisposable } from "vs/base/common/lifecycle.js";
 import * as Languages from "vs/editor/common/languages.js";
 import * as ExtHostProtocol from "vs/workbench/api/common/extHost.protocol.js";
-import type * as Vscode from "vscode";
+import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Commands as CommandsConverter } from "./Command.js";
+import { Command as CommandConverter } from "./Command.js";
 import {
 	MarkdownString as MarkdownStringConverter,
 	Range as RangeConverter,
@@ -19,36 +19,36 @@ import {
 
 // --- Namespace for CompletionItemKind ---
 export namespace CompletionItemKind {
-	export const fromApi = (
-		kind?: Vscode.CompletionItemKind,
+	export const fromAPI = (
+		kind?: VSCode.CompletionItemKind,
 	): Languages.CompletionItemKind => {
 		// VS Code's API uses a 0-based enum, while the internal one is 1-based, but they map closely.
 		// A direct cast is often sufficient, with a fallback.
 		return kind ?? Languages.CompletionItemKind.Text;
 	};
-	export const toApi = (
+	export const toAPI = (
 		kind: Languages.CompletionItemKind,
-	): Vscode.CompletionItemKind => {
-		return kind as number as Vscode.CompletionItemKind;
+	): VSCode.CompletionItemKind => {
+		return kind as number as VSCode.CompletionItemKind;
 	};
 }
 
 // --- Namespace for CompletionItemTag ---
 export namespace CompletionItemTag {
-	export const fromApi = (
-		tag: Vscode.CompletionItemTag,
+	export const fromAPI = (
+		tag: VSCode.CompletionItemTag,
 	): Languages.CompletionItemTag =>
 		tag as number as Languages.CompletionItemTag;
-	export const toApi = (
+	export const toAPI = (
 		tag: Languages.CompletionItemTag,
-	): Vscode.CompletionItemTag => tag as number as Vscode.CompletionItemTag;
+	): VSCode.CompletionItemTag => tag as number as VSCode.CompletionItemTag;
 }
 
 // --- Namespace for CompletionContext ---
 export namespace CompletionContext {
-	export const toApi = (
-		dto: ExtHostProtocol.CompletionContextDto,
-	): Vscode.CompletionContext => ({
+	export const toAPI = (
+		dto: ExtHostProtocol.CompletionContextDTO,
+	): VSCode.CompletionContext => ({
 		triggerKind: dto.triggerKind,
 		triggerCharacter: dto.triggerCharacter,
 	});
@@ -56,18 +56,18 @@ export namespace CompletionContext {
 
 // --- Namespace for CompletionItem ---
 export namespace CompletionItem {
-	export const fromApi = (
-		item: Vscode.CompletionItem,
-		commandsConverter: CommandsConverter.Interface,
+	export const fromAPI = (
+		item: VSCode.CompletionItem,
+		commandsConverter: CommandConverter.Interface,
 		disposables: IDisposable[],
-	): ExtHostProtocol.ISuggestDataDto => {
+	): ExtHostProtocol.ISuggestDataDTO => {
 		return {
 			label: typeof item.label === "string" ? item.label : item.label,
-			kind: CompletionItemKind.fromApi(item.kind),
-			tags: item.tags?.map(CompletionItemTag.fromApi),
+			kind: CompletionItemKind.fromAPI(item.kind),
+			tags: item.tags?.map(CompletionItemTag.fromAPI),
 			detail: item.detail,
 			documentation: item.documentation
-				? MarkdownStringConverter.fromApi(item.documentation)
+				? MarkdownStringConverter.fromAPI(item.documentation)
 				: undefined,
 			sortText: item.sortText,
 			filterText: item.filterText,
@@ -81,11 +81,11 @@ export namespace CompletionItem {
 					? Languages.CompletionItemInsertTextRule.InsertAsSnippet
 					: 0,
 			range: item.range
-				? RangeConverter.fromApi(item.range as Vscode.Range)
+				? RangeConverter.fromAPI(item.range as VSCode.Range)
 				: undefined,
 			commitCharacters: item.commitCharacters,
 			additionalTextEdits: item.additionalTextEdits?.map(
-				TextEditConverter.fromApi,
+				TextEditConverter.fromAPI,
 			),
 			command: item.command
 				? commandsConverter.ToInternal(
@@ -96,10 +96,10 @@ export namespace CompletionItem {
 		};
 	};
 
-	export const toApi = (
-		dto: ExtHostProtocol.ISuggestDataDto,
-		commandsConverter: CommandsConverter.Interface,
-	): Vscode.CompletionItem => {
+	export const toAPI = (
+		dto: ExtHostProtocol.ISuggestDataDTO,
+		commandsConverter: CommandConverter.Interface,
+	): VSCode.CompletionItem => {
 		const label =
 			typeof dto.label === "string"
 				? dto.label
@@ -110,12 +110,12 @@ export namespace CompletionItem {
 					};
 		const item = new ExtHostTypes.CompletionItem(
 			label,
-			CompletionItemKind.toApi(dto.kind!),
+			CompletionItemKind.toAPI(dto.kind!),
 		);
-		item.tags = dto.tags?.map(CompletionItemTag.toApi);
+		item.tags = dto.tags?.map(CompletionItemTag.toAPI);
 		item.detail = dto.detail;
 		item.documentation = dto.documentation
-			? MarkdownStringConverter.toApi(dto.documentation)
+			? MarkdownStringConverter.toAPI(dto.documentation)
 			: undefined;
 		item.sortText = dto.sortText;
 		item.filterText = dto.filterText;
@@ -133,10 +133,10 @@ export namespace CompletionItem {
 			item.insertText = dto.insertText as string;
 		}
 
-		item.range = dto.range ? RangeConverter.toApi(dto.range) : undefined;
+		item.range = dto.range ? RangeConverter.toAPI(dto.range) : undefined;
 		item.commitCharacters = dto.commitCharacters;
 		item.additionalTextEdits = dto.additionalTextEdits?.map(
-			TextEditConverter.toApi,
+			TextEditConverter.toAPI,
 		);
 		item.command = dto.command
 			? commandsConverter.FromInternal(dto.command)
@@ -147,20 +147,20 @@ export namespace CompletionItem {
 
 // --- Namespace for CompletionList ---
 export namespace CompletionList {
-	export const fromApi = (
+	export const fromAPI = (
 		list:
-			| Vscode.CompletionList
-			| readonly Vscode.CompletionItem[]
+			| VSCode.CompletionList
+			| readonly VSCode.CompletionItem[]
 			| null
 			| undefined,
-		commandsConverter: CommandsConverter.Interface,
+		commandsConverter: CommandConverter.Interface,
 		disposables: IDisposable[],
-	): ExtHostProtocol.ISuggestResultDto | undefined => {
+	): ExtHostProtocol.ISuggestResultDTO | undefined => {
 		if (!list) return undefined;
 		const items = Array.isArray(list) ? list : list.items;
 		return {
 			suggestions: items.map((item) =>
-				CompletionItem.fromApi(item, commandsConverter, disposables),
+				CompletionItem.fromAPI(item, commandsConverter, disposables),
 			),
 			incomplete: !Array.isArray(list) ? list.isIncomplete : false,
 			// duration is not part of the public API

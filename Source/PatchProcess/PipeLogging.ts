@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 
-import { IpcProvider } from "../Service/Ipc.js";
+import { IPCProvider } from "../Service/IPC.js";
 
 /**
  * A robust JSON stringifier that handles circular references and special types
@@ -53,7 +53,7 @@ export const PipeLoggingToParent = Effect.gen(function* (_) {
 		return;
 	}
 
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 
 	/**
 	 * Creates an Effect that sends a formatted log message to the host.
@@ -69,7 +69,7 @@ export const PipeLoggingToParent = Effect.gen(function* (_) {
 			severity: Severity,
 			arguments: SafeToString(Args),
 		};
-		return Ipc.SendNotification("$log", [Payload]);
+		return IPC.SendNotification("$log", [Payload]);
 	};
 
 	// Keep a reference to the original functions.

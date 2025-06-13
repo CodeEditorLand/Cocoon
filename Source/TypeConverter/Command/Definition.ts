@@ -1,30 +1,30 @@
 /**
- * @module Definition (Commands/TypeConverter)
- * @description The class implementation of the CommandsConverter.
+ * @module Definition (Command/TypeConverter)
+ * @description The class implementation of the CommandConverter.
  */
 
 import type { IDisposable } from "vs/base/common/lifecycle.js";
 import { generateUuid } from "vs/base/common/uuid.js";
-import type * as Vscode from "vscode";
+import type * as VSCode from "vscode";
 
-import { Commands as CommandsService } from "../../Service/Command.js";
+import { Command as CommandService } from "../../Service/Command.js";
 import type { Interface } from "./Service.js";
-import type { ApiCommand } from "./Type.js";
+import type { APICommand } from "./Type.js";
 
 export class Definition implements Interface {
 	private readonly DelegatingCommandId: string;
-	private readonly DelegatedCommands = new Map<string, Vscode.Command>();
+	private readonly DelegatedCommand = new Map<string, VSCode.Command>();
 
 	constructor(
-		private readonly Commands: CommandsService.Interface,
-		private readonly LookupApiCommand: (
+		private readonly Command: CommandService.Interface,
+		private readonly LookupAPICommand: (
 			Id: string,
-		) => ApiCommand | undefined,
+		) => APICommand | undefined,
 	) {
 		this.DelegatingCommandId = `_cocoon.delegate.${generateUuid()}`;
 
 		// Register the command that handles the delegated execution.
-		this.Commands.RegisterCommand(
+		this.Command.RegisterCommand(
 			this.DelegatingCommandId,
 			this.executeDelegatedCommand,
 			this,
@@ -32,18 +32,18 @@ export class Definition implements Interface {
 	}
 
 	private executeDelegatedCommand(Id: string, ...Args: any[]): any {
-		const command = this.DelegatedCommands.get(Id);
+		const command = this.DelegatedCommand.get(Id);
 		if (!command) {
 			throw new Error(`Unknown delegated command: ${Id}`);
 		}
-		return this.Commands.ExecuteCommand(
+		return this.Command.ExecuteCommand(
 			command.command,
 			...(command.arguments ?? []),
 		);
 	}
 
 	public ToInternal(
-		command: Vscode.Command,
+		command: VSCode.Command,
 		disposables: IDisposable[],
 	): any {
 		if (!command) {
@@ -51,15 +51,15 @@ export class Definition implements Interface {
 		}
 
 		// If the command is a built-in API command, we validate and convert its arguments.
-		const ApiCommand = this.LookupApiCommand(command.command);
-		if (ApiCommand) {
+		const APICommand = this.LookupAPICommand(command.command);
+		if (APICommand) {
 			const ConvertedArgs =
 				command.arguments?.map((arg, i) =>
-					ApiCommand.Argument[i].Convert(arg),
+					APICommand.Argument[i].Convert(arg),
 				) ?? [];
 			return {
 				$ident: undefined,
-				id: ApiCommand.InternalId,
+				id: APICommand.InternalId,
 				title: command.title,
 				tooltip: command.tooltip,
 				arguments: ConvertedArgs,
@@ -73,9 +73,9 @@ export class Definition implements Interface {
 			command.arguments.some((arg) => typeof arg === "function")
 		) {
 			const Id = generateUuid();
-			this.DelegatedCommands.set(Id, command);
+			this.DelegatedCommand.set(Id, command);
 			disposables.push({
-				dispose: () => this.DelegatedCommands.delete(Id),
+				dispose: () => this.DelegatedCommand.delete(Id),
 			});
 			return {
 				$ident: undefined,
@@ -96,7 +96,7 @@ export class Definition implements Interface {
 		};
 	}
 
-	public FromInternal(dto: any): Vscode.Command | undefined {
+	public FromInternal(dto: any): VSCode.Command | undefined {
 		if (!dto) {
 			return undefined;
 		}

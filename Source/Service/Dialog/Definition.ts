@@ -8,52 +8,52 @@ import { isCancellationError } from "vs/base/common/errors.js";
 import type { CancellationToken } from "vscode";
 
 import * as DialogConverter from "../../TypeConverter/Dialog.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
-import type { OpenDialogOptions, SaveDialogOptions } from "./Type.js";
+import type { OpenDialogOption, SaveDialogOption } from "./Type.js";
 
-const createDialogEffect = <Options, Dto, Result>(
+const createDialogEffect = <Option, DTO, Result>(
 	ipcMethod: string,
-	options: Options | undefined,
+	options: Option | undefined,
 	token: CancellationToken | undefined,
-	optionsToDto: (opts: Options | undefined) => Dto,
-	resultFromDto: (res: any) => Result,
+	optionsToDTO: (opts: Option | undefined) => DTO,
+	resultFromDTO: (res: any) => Result,
 ) =>
 	Effect.gen(function* (_) {
 		if (token?.isCancellationRequested) {
 			return yield* _(Effect.interrupt);
 		}
 
-		const Ipc = yield* _(IpcProvider.Tag);
-		const Dto = optionsToDto(options);
+		const IPC = yield* _(IPCProvider.Tag);
+		const DTO = optionsToDTO(options);
 
-		const RpcResult = yield* _(
-			Ipc.SendRequest<any>(ipcMethod, Dto),
+		const RPCResult = yield* _(
+			IPC.SendRequest<any>(ipcMethod, DTO),
 			// Gracefully handle user cancellation as a success with an empty value.
 			Effect.catchIf(isCancellationError, () =>
 				Effect.succeed(undefined),
 			),
 		);
 
-		return resultFromDto(RpcResult);
+		return resultFromDTO(RPCResult);
 	});
 
 export const Definition = Effect.succeed({
-	ShowOpenDialog: (Options, Token) =>
+	ShowOpenDialog: (Option, Token) =>
 		createDialogEffect(
 			"ui_showOpenDialog",
-			Options,
+			Option,
 			Token,
-			DialogConverter.OpenDialogOptions.ToDto,
+			DialogConverter.OpenDialogOption.ToDTO,
 			DialogConverter.DialogResult.ToUriArray,
 		),
 
-	ShowSaveDialog: (Options, Token) =>
+	ShowSaveDialog: (Option, Token) =>
 		createDialogEffect(
 			"ui_showSaveDialog",
-			Options,
+			Option,
 			Token,
-			DialogConverter.SaveDialogOptions.ToDto,
+			DialogConverter.SaveDialogOption.ToDTO,
 			DialogConverter.DialogResult.ToUri,
 		),
 } satisfies Interface);

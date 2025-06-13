@@ -6,8 +6,8 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveCommands } from "../Commands.js";
-import { Live as LiveIpc } from "../Ipc.js";
+import { Live as LiveCommand } from "../Command.js";
+import { Live as LiveIPC } from "../IPC.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
 
@@ -16,8 +16,8 @@ export type { TreeView } from "vscode";
 
 /**
  * The live implementation Layer for the TreeView service.
- * It depends on the Ipc and Commands services.
+ * It depends on the IPC and Command services.
  */
 export const Live = Layer.effect(Tag, Definition).pipe(
-	Layer.provide(Layer.merge(LiveIpc, LiveCommands)),
+	Layer.provide(Layer.merge(LiveIPC, LiveCommand)),
 );

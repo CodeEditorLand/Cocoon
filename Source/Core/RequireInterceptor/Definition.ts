@@ -8,10 +8,10 @@ import { Effect } from "effect";
 import { URI } from "vs/base/common/uri.js";
 
 import { Tag as LogTag } from "../../Service/Log.js";
-import { Tag as ApiFactoryTag } from "../ApiFactory.js";
+import { Tag as APIFactoryTag } from "../APIFactory.js";
 import { Tag as ExtensionPathsTag } from "../ExtensionPath.js";
 import {
-	VscodeNodeModuleFactory,
+	VSCodeNodeModuleFactory,
 	type INodeModuleFactory,
 } from "./Factory.js";
 import { type Interface } from "./Service.js";
@@ -20,14 +20,14 @@ import { type Interface } from "./Service.js";
  * An Effect that builds the live implementation of the RequireInterceptor service.
  */
 export const Definition = Effect.gen(function* (_) {
-	const ApiFactory = yield* _(ApiFactoryTag);
+	const APIFactory = yield* _(APIFactoryTag);
 	const ExtensionPaths = yield* _(ExtensionPathsTag);
 	const Log = yield* _(LogTag);
 
 	const Factories = new Map<string, INodeModuleFactory>();
 	Factories.set(
 		"vscode",
-		new VscodeNodeModuleFactory(ApiFactory, ExtensionPaths, Log),
+		new VSCodeNodeModuleFactory(APIFactory, ExtensionPaths, Log),
 	);
 	// Other factories, e.g., for 'open', would be registered here.
 

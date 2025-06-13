@@ -5,7 +5,7 @@
 
 import { Context, Effect, Stream } from "effect";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
-import type { AuthenticationGetSessionOptions } from "vs/workbench/api/common/extHost.protocol.js";
+import type { AuthenticationGetSessionOption } from "vs/workbench/api/common/extHost.protocol.js";
 import type {
 	AuthenticationProvider,
 	AuthenticationProviderInformation,
@@ -24,7 +24,7 @@ export interface Interface {
 		RequestingExtension: Extension,
 		ProviderId: string,
 		Scopes: readonly string[],
-		Options: AuthenticationGetSessionOptions,
+		Option: AuthenticationGetSessionOption,
 	) => Effect.Effect<AuthenticationSession | undefined, Error>;
 
 	/**
@@ -43,7 +43,7 @@ export interface Interface {
 		Id: string,
 		Label: string,
 		Provider: AuthenticationProvider,
-		Options?: { supportsMultipleAccounts?: boolean },
+		Option?: { supportsMultipleAccounts?: boolean },
 	) => Effect.Effect<IDisposable, AuthenticationProviderRegistrationError>;
 
 	/**

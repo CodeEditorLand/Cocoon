@@ -4,13 +4,13 @@
  */
 
 import { Effect, Option } from "effect";
-import * as Vscode from "vscode";
+import * as VSCode from "vscode";
 
 /**
  * An Effect that safely retrieves the active text editor.
- * @returns An `Effect` that resolves to an `Option<Vscode.TextEditor>`, which
+ * @returns An `Effect` that resolves to an `Option<VSCode.TextEditor>`, which
  * will be `None` if no editor is active, and `Some` otherwise.
  */
 export const GetActiveTextEditor = Effect.sync(() =>
-	Option.fromNullable(Vscode.window.activeTextEditor),
+	Option.fromNullable(VSCode.window.activeTextEditor),
 );

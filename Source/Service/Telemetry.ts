@@ -14,7 +14,7 @@ import {
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
 
 import { InitDataService } from "./InitData.js";
-import { IpcProvider } from "./Ipc.js";
+import { IPCProvider } from "./IPC.js";
 import { LogProvider } from "./Log.js";
 
 // --- Service Definition ---
@@ -26,7 +26,7 @@ export const Tag = Context.Tag<Interface>("Service/Telemetry");
 
 const Definition = Effect.gen(function* (_) {
 	const InitData = yield* _(InitDataService);
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const Log = yield* _(LogProvider.Tag);
 
 	const TelemetryLevelValue =
@@ -56,7 +56,7 @@ const Definition = Effect.gen(function* (_) {
 		Log.Debug(`Telemetry event: '${EventName}'`, Data).pipe(
 			Effect.flatMap(() =>
 				Effect.when(
-					Ipc.SendNotification("$publicLog", [EventName, Data]),
+					IPC.SendNotification("$publicLog", [EventName, Data]),
 					() => ShouldSendEvent("usage"),
 				),
 			),
@@ -82,7 +82,7 @@ const Definition = Effect.gen(function* (_) {
 		).pipe(
 			Effect.flatMap(() =>
 				Effect.when(
-					Ipc.SendNotification("$onExtensionError", [
+					IPC.SendNotification("$onExtensionError", [
 						Extension.value,
 						SerializableError,
 					]),
@@ -122,6 +122,6 @@ const Definition = Effect.gen(function* (_) {
 });
 
 export const Live = Layer.effect(Tag, Definition).pipe(
-	Layer.provide(Layer.merge(IpcProvider.Live, LogProvider.Live)),
+	Layer.provide(Layer.merge(IPCProvider.Live, LogProvider.Live)),
 	// InitDataService must be provided by the top-level AppLayer
 );

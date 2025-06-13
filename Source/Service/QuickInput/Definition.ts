@@ -8,21 +8,21 @@ import { isCancellationError } from "vs/base/common/errors.js";
 import type {
 	CancellationToken,
 	InputBox,
-	InputBoxOptions,
+	InputBoxOption,
 	QuickPick,
 	QuickPickItem,
 } from "vscode";
 
 import * as QuickInputConverter from "../../TypeConverter/QuickInput.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 
 	const ShowQuickPickEffect = <T extends QuickPickItem | string>(
 		Items: ReadonlyArray<T> | Promise<ReadonlyArray<T>>,
-		Options: any = {},
+		Option: any = {},
 		Token?: CancellationToken,
 	) =>
 		Effect.gen(function* (_) {
@@ -33,27 +33,27 @@ export const Definition = Effect.gen(function* (_) {
 				Effect.promise(() => Promise.resolve(Items)),
 			);
 
-			const IpcOptions = {
-				...Options,
+			const IPCOption = {
+				...Option,
 				items: QuickInputConverter.QuickPick.SerializeItems(
 					ResolvedItems,
 				),
 				buttons: QuickInputConverter.QuickPick.SerializeButtons(
-					Options.buttons,
+					Option.buttons,
 				),
 			};
 
 			const ResultHandles = yield* _(
-				Ipc.SendRequest<number[] | number | undefined>(
+				IPC.SendRequest<number[] | number | undefined>(
 					"ui_showQuickPick",
-					IpcOptions,
+					IPCOption,
 				),
 				Effect.catchIf(isCancellationError, () =>
 					Effect.succeed(undefined),
 				),
 			);
 
-			if (Options?.canPickMany) {
+			if (Option?.canPickMany) {
 				if (!Array.isArray(ResultHandles)) return undefined;
 				const SelectedIndices = new Set(ResultHandles as number[]);
 				return ResolvedItems.filter((_, index) =>
@@ -68,24 +68,24 @@ export const Definition = Effect.gen(function* (_) {
 		});
 
 	const ShowInputBoxEffect = (
-		Options?: InputBoxOptions,
+		Option?: InputBoxOption,
 		Token?: CancellationToken,
 	) =>
 		Effect.gen(function* (_) {
 			if (Token?.isCancellationRequested)
 				return yield* _(Effect.interrupt);
 
-			const IpcOptions = {
-				...Options,
+			const IPCOption = {
+				...Option,
 				buttons: QuickInputConverter.QuickPick.SerializeButtons(
-					Options?.buttons,
+					Option?.buttons,
 				),
 			};
 
 			return yield* _(
-				Ipc.SendRequest<string | undefined>(
+				IPC.SendRequest<string | undefined>(
 					"ui_showInputBox",
-					IpcOptions,
+					IPCOption,
 				),
 				Effect.catchIf(isCancellationError, () =>
 					Effect.succeed(undefined),

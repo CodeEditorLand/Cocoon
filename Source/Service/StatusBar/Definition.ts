@@ -7,20 +7,20 @@ import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Disposable, StatusBarAlignment } from "vscode";
 
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
 import { StatusBarItemImpl } from "./StatusBarItemImpl.js";
 
 let EntryIdCounter = 0;
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const ActiveEntries = yield* _(
 		Ref.make(new Map<string, StatusBarItemImpl>()),
 	);
 
 	// Register RPC handler for when Mountain needs a tooltip
-	Ipc.RegisterInvokeHandler("$provideStatusbarTooltip", ([entryId]) =>
+	IPC.RegisterInvokeHandler("$provideStatusbarTooltip", ([entryId]) =>
 		Effect.gen(function* (_) {
 			// Logic to find the entry in ActiveEntries and call a potential tooltip provider function.
 			return null;
@@ -43,7 +43,7 @@ export const Definition = Effect.gen(function* (_) {
 
 				const Entry = new StatusBarItemImpl(
 					EntryId,
-					Ipc,
+					IPC,
 					OnDispose,
 					ItemId,
 					FinalAlignment,
@@ -57,10 +57,10 @@ export const Definition = Effect.gen(function* (_) {
 			}),
 
 		SetStatusBarMessage: (text, hideOrPromise) => {
-			const ShowEffect = Ipc.SendNotification("$setStatusBarMessage", [
+			const ShowEffect = IPC.SendNotification("$setStatusBarMessage", [
 				text,
 			]);
-			const HideEffect = Ipc.SendNotification(
+			const HideEffect = IPC.SendNotification(
 				"$disposeStatusBarMessage",
 				[],
 			);

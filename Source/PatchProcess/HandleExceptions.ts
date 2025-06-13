@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 
-import { IpcProvider } from "../Service/Ipc.js";
+import { IPCProvider } from "../Service/IPC.js";
 
 /**
  * An Effect that, when executed, attaches listeners to the Node.js `process`
@@ -33,7 +33,7 @@ export const HandleExceptions = Effect.gen(function* (_) {
 		return;
 	}
 
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 
 	/**
 	 * Creates an Effect to log an error to the parent (Mountain) process.
@@ -52,7 +52,7 @@ export const HandleExceptions = Effect.gen(function* (_) {
 			arguments: `[${Type}] ${Message}`,
 		};
 
-		return Ipc.SendNotification("$log", [LogPayload]).pipe(
+		return IPC.SendNotification("$log", [LogPayload]).pipe(
 			Effect.catchAll((error) =>
 				// Fallback to console if IPC fails
 				Effect.sync(() =>

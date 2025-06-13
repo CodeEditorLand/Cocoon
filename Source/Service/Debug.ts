@@ -6,7 +6,7 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveIpc } from "../Ipc.js";
+import { Live as LiveIPC } from "../IPC.js";
 import { Live as LiveLog } from "../Log.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
@@ -17,8 +17,8 @@ export * from "./Error.js";
 
 /**
  * The live implementation Layer for the Debug service.
- * It depends on the Ipc and Log services.
+ * It depends on the IPC and Log services.
  */
 export const Live = Layer.effect(Tag, Definition).pipe(
-	Layer.provide(Layer.merge(LiveIpc, LiveLog)),
+	Layer.provide(Layer.merge(LiveIPC, LiveLog)),
 );

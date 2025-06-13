@@ -46,4 +46,4 @@ export interface Interface {
 	) => IDisposable;
 }
 
-export const Tag = Context.Tag<Interface>("Ipc/Dispatcher");
+export const Tag = Context.Tag<Interface>("IPC/Dispatcher");

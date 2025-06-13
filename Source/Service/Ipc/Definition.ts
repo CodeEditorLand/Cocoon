@@ -1,6 +1,6 @@
 /**
  * @module Definition
- * @description Provides the live implementation of the high-level `Ipc.Service`.
+ * @description Provides the live implementation of the high-level `IPC.Service`.
  * This definition constructs the service by delegating to its underlying
  * dependencies for client communication and request dispatching.
  */
@@ -16,7 +16,7 @@ import {
 	Tag as DispatcherTag,
 	type Interface as DispatcherInterface,
 } from "./Dispatcher/Service.js";
-import { IpcError } from "./Error.js";
+import { IPCError } from "./Error.js";
 import {
 	Tag as AdapterTag,
 	type Interface as AdapterInterface,
@@ -25,7 +25,7 @@ import { DecodeValue, EncodeValue } from "./ProtoConverter.js";
 import type { Interface } from "./Service.js";
 
 /**
- * An `Effect` that builds the live implementation of the `Ipc.Service`.
+ * An `Effect` that builds the live implementation of the `IPC.Service`.
  *
  * It acts as a facade, delegating its methods to the appropriate sub-services
  * (`Client`, `Dispatcher`, `ProtocolAdapter`) that contain the detailed logic.
@@ -39,7 +39,7 @@ export const Definition = Effect.gen(function* (_) {
 	/**
 	 * Sends a request to `Mountain` and awaits a response.
 	 */
-	const SendRequestEffect = <Res = unknown, Err = IpcError>(
+	const SendRequestEffect = <Res = unknown, Err = IPCError>(
 		Method: string,
 		Parameters: unknown,
 		_TimeoutMilliseconds?: number,
@@ -59,7 +59,7 @@ export const Definition = Effect.gen(function* (_) {
 				Effect.tryPromise({
 					try: () => Client.processCocoonRequest(RequestMessage),
 					catch: (Cause) =>
-						new IpcError({
+						new IPCError({
 							cause: Cause,
 							context: `gRPC request '${Method}' failed.`,
 						}),
@@ -75,7 +75,7 @@ export const Definition = Effect.gen(function* (_) {
 	/**
 	 * Sends a fire-and-forget notification to `Mountain`.
 	 */
-	const SendNotificationEffect = <Err = IpcError>(
+	const SendNotificationEffect = <Err = IPCError>(
 		Method: string,
 		Parameters: unknown,
 	): Effect.Effect<void, Err> =>
@@ -91,7 +91,7 @@ export const Definition = Effect.gen(function* (_) {
 					try: () =>
 						Client.sendCocoonNotification(NotificationMessage),
 					catch: (Cause) =>
-						new IpcError({
+						new IPCError({
 							cause: Cause,
 							context: `gRPC notification '${Method}' failed.`,
 						}),

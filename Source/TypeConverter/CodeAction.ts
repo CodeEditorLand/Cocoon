@@ -5,31 +5,31 @@
  */
 
 import { DisposableStore } from "vs/base/common/lifecycle.js";
-import type { IURITransformer } from "vs/base/common/uriIpc.js";
+import type { IURITransformer } from "vs/base/common/uriIPC.js";
 import * as Languages from "vs/editor/common/languages.js";
 import * as ExtHostProtocol from "vs/workbench/api/common/extHost.protocol.js";
-import type * as Vscode from "vscode";
+import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Commands as CommandsConverter } from "./Command.js";
+import { Command as CommandConverter } from "./Command.js";
 import { Diagnostic as DiagnosticConverter } from "./Diagnostic.js";
 import {
-	WorkspaceEdit as WorkspaceEditConverter,
+	WorkSpaceEdit as WorkSpaceEditConverter,
 	type IVersionInformationProvider,
-} from "./WorkspaceEdit.js";
+} from "./WorkSpaceEdit.js";
 
 // --- Namespace for CodeActionKind ---
 export namespace CodeActionKind {
-	export const toApi = (kind: string): Vscode.CodeActionKind =>
+	export const toAPI = (kind: string): VSCode.CodeActionKind =>
 		new ExtHostTypes.CodeActionKind(kind);
-	export const fromApi = (kind: Vscode.CodeActionKind): string => kind.value;
+	export const fromAPI = (kind: VSCode.CodeActionKind): string => kind.value;
 }
 
 // --- Namespace for CodeActionTriggerKind ---
 export namespace CodeActionTriggerKind {
-	export const toApi = (
+	export const toAPI = (
 		trigger: Languages.CodeActionTriggerType,
-	): Vscode.CodeActionTriggerKind =>
+	): VSCode.CodeActionTriggerKind =>
 		trigger === Languages.CodeActionTriggerType.Invoke
 			? ExtHostTypes.CodeActionTriggerKind.Invoke
 			: ExtHostTypes.CodeActionTriggerKind.Automatic;
@@ -37,44 +37,44 @@ export namespace CodeActionTriggerKind {
 
 // --- Namespace for CodeActionContext ---
 export namespace CodeActionContext {
-	export const toApi = (
-		dto: ExtHostProtocol.ExtHostCodeActionContextDto,
+	export const toAPI = (
+		dto: ExtHostProtocol.ExtHostCodeActionContextDTO,
 		uriTransformer?: IURITransformer,
-	): Vscode.CodeActionContext => ({
+	): VSCode.CodeActionContext => ({
 		diagnostics: dto.diagnostics.map((diag) =>
-			DiagnosticConverter.toApi(diag, uriTransformer),
+			DiagnosticConverter.toAPI(diag, uriTransformer),
 		),
-		only: dto.only ? CodeActionKind.toApi(dto.only) : undefined,
+		only: dto.only ? CodeActionKind.toAPI(dto.only) : undefined,
 		triggerKind: dto.trigger
-			? CodeActionTriggerKind.toApi(dto.trigger)
+			? CodeActionTriggerKind.toAPI(dto.trigger)
 			: ExtHostTypes.CodeActionTriggerKind.Invoke,
 	});
 }
 
 // --- Namespace for CodeAction ---
 export namespace CodeAction {
-	export const fromApi = (
-		action: Vscode.CodeAction,
-		commandsConverter: CommandsConverter.Interface,
+	export const fromAPI = (
+		action: VSCode.CodeAction,
+		commandsConverter: CommandConverter.Interface,
 		disposables: DisposableStore,
 		uriTransformer?: IURITransformer,
 		versionProvider?: IVersionInformationProvider,
-	): ExtHostProtocol.ICodeActionDto => ({
+	): ExtHostProtocol.ICodeActionDTO => ({
 		title: action.title,
-		kind: action.kind ? CodeActionKind.fromApi(action.kind) : undefined,
+		kind: action.kind ? CodeActionKind.fromAPI(action.kind) : undefined,
 		isPreferred: action.isPreferred,
 		disabled: action.disabled?.reason,
 		command: action.command
 			? commandsConverter.ToInternal(action.command, disposables)
 			: undefined,
 		diagnostics: action.diagnostics
-			? DiagnosticConverter.fromApiArray(
+			? DiagnosticConverter.fromAPIArray(
 					action.diagnostics,
 					uriTransformer,
 				)
 			: undefined,
 		edit: action.edit
-			? WorkspaceEditConverter.fromApi(
+			? WorkSpaceEditConverter.fromAPI(
 					action.edit,
 					versionProvider,
 					commandsConverter,
@@ -84,23 +84,23 @@ export namespace CodeAction {
 			: undefined,
 	});
 
-	export const toApi = (
-		dto: ExtHostProtocol.ICodeActionDto,
-		commandsConverter: CommandsConverter.Interface,
+	export const toAPI = (
+		dto: ExtHostProtocol.ICodeActionDTO,
+		commandsConverter: CommandConverter.Interface,
 		uriTransformer?: IURITransformer,
-	): Vscode.CodeAction => {
+	): VSCode.CodeAction => {
 		const action = new ExtHostTypes.CodeAction(
 			dto.title,
-			dto.kind ? CodeActionKind.toApi(dto.kind) : undefined,
+			dto.kind ? CodeActionKind.toAPI(dto.kind) : undefined,
 		);
 		action.command = dto.command
 			? commandsConverter.FromInternal(dto.command)
 			: undefined;
 		action.diagnostics = dto.diagnostics?.map((d) =>
-			DiagnosticConverter.toApi(d, uriTransformer),
+			DiagnosticConverter.toAPI(d, uriTransformer),
 		);
 		action.edit = dto.edit
-			? WorkspaceEditConverter.toApi(
+			? WorkSpaceEditConverter.toAPI(
 					dto.edit,
 					uriTransformer,
 					commandsConverter,

@@ -4,7 +4,7 @@
  */
 
 import { Effect } from "effect";
-import type * as Vscode from "vscode";
+import type * as VSCode from "vscode";
 
 /**
  * An Effect that gets the full text content of a given document.
@@ -12,5 +12,5 @@ import type * as Vscode from "vscode";
  * @returns An `Effect` that synchronously resolves to the document's text content.
  */
 export const GetDocumentText = (
-	Document: Vscode.TextDocument,
+	Document: VSCode.TextDocument,
 ): Effect.Effect<string> => Effect.sync(() => Document.getText());

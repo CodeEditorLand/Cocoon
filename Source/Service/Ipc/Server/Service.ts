@@ -4,13 +4,13 @@
  * server instance.
  */
 
-import type * as Grpc from "@grpc/grpc-js";
+import type * as gRPC from "@grpc/grpc-js";
 import { Context } from "effect";
 
 /**
  * The service type, which is the underlying `grpc.Server` class.
  */
-export type Service = Grpc.Server;
+export type Service = gRPC.Server;
 
 /**
  * The `Context.Tag` for the gRPC server instance.
@@ -18,4 +18,4 @@ export type Service = Grpc.Server;
  * This tag provides access to the raw server object if needed, for example,
  * by the `acquireRelease` logic that manages its lifecycle.
  */
-export const Tag = Context.Tag<Service>("Ipc/Server");
+export const Tag = Context.Tag<Service>("IPC/Server");

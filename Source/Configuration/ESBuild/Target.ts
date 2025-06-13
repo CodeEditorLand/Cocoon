@@ -33,7 +33,7 @@
 //
 //--------------------------------------------------------------------------------------------*/
 
-import type { BuildOptions } from "esbuild";
+import type { BuildOption } from "esbuild";
 
 // Import the global API function name constant from the compiled interceptor module.
 // This ensures the build configuration uses the exact same string that the interceptor expects.
@@ -53,10 +53,10 @@ export const On = (await import("./Cocoon.js")).On;
 /**
  * ESBuild configuration module.
  *
- * @param Current - The current BuildOptions, potentially passed from a preceding build step or CLI.
- * @returns A Promise resolving to the configured BuildOptions for esbuild.
+ * @param Current - The current BuildOption, potentially passed from a preceding build step or CLI.
+ * @returns A Promise resolving to the configured BuildOption for esbuild.
  */
-export default async (Current: BuildOptions): Promise<BuildOptions> => {
+export default async (Current: BuildOption): Promise<BuildOption> => {
 	// Asynchronously import dependencies for the configuration logic.
 	const [deepmergeMod, cocoonMod, ulidMod, playformBuildEntryMod] =
 		await Promise.all([
@@ -76,12 +76,12 @@ export default async (Current: BuildOptions): Promise<BuildOptions> => {
 	const { deepmerge } = deepmergeMod;
 
 	// Base configuration
-	const CocoonDefaultConfig = cocoonMod.default as BuildOptions;
+	const CocoonDefaultConfig = cocoonMod.default as BuildOption;
 
 	const { ulid } = ulidMod;
 
 	const getEntryPoints = playformBuildEntryMod.default as (
-		current: BuildOptions,
+		current: BuildOption,
 
 		patterns: string[],
 
@@ -89,7 +89,7 @@ export default async (Current: BuildOptions): Promise<BuildOptions> => {
 	) => string[] | Record<string, string>;
 
 	// Merge the base configuration with specific overrides and additions.
-	return deepmerge<[BuildOptions, BuildOptions]>(CocoonDefaultConfig, {
+	return deepmerge<[BuildOption, BuildOption]>(CocoonDefaultConfig, {
 		// Specifies the output directory for compiled files.
 		outdir: "Target",
 

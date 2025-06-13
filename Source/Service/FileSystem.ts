@@ -7,7 +7,7 @@
 import { Layer } from "effect";
 
 import { Live as LiveFileSystemInfo } from "../FileSystemInfo.js";
-import { Live as LiveIpc } from "../Ipc.js";
+import { Live as LiveIPC } from "../IPC.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
 
@@ -16,8 +16,8 @@ export * from "./Error.js";
 
 /**
  * The live implementation Layer for the FileSystem service.
- * It depends on the Ipc and FileSystemInfo services.
+ * It depends on the IPC and FileSystemInfo services.
  */
 export const Live = Layer.effect(Tag, Definition).pipe(
-	Layer.provide(Layer.merge(LiveIpc, LiveFileSystemInfo)),
+	Layer.provide(Layer.merge(LiveIPC, LiveFileSystemInfo)),
 );

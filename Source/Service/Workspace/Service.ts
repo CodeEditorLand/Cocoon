@@ -1,6 +1,6 @@
 /**
- * @module Service (Workspace)
- * @description Defines the interface and Context.Tag for the Workspace service.
+ * @module Service (WorkSpace)
+ * @description Defines the interface and Context.Tag for the WorkSpace service.
  * This is a simplified version of `vscode.workspace` for internal composition.
  */
 
@@ -10,24 +10,24 @@ import type {
 	TextDocument,
 	TextDocumentChangeEvent,
 	Uri,
-	WorkspaceConfiguration,
-	WorkspaceFolder,
-	WorkspaceFoldersChangeEvent,
+	WorkSpaceConfiguration,
+	WorkSpaceFolder,
+	WorkSpaceFoldersChangeEvent,
 } from "vscode";
 
 export interface Interface {
 	readonly name: string | undefined;
 	readonly workspaceFile: Uri | undefined;
-	readonly workspaceFolders: readonly WorkspaceFolder[] | undefined;
+	readonly workspaceFolders: readonly WorkSpaceFolder[] | undefined;
 	readonly isTrusted: boolean;
-	readonly onDidChangeWorkspaceFolders: Stream.Stream<
-		WorkspaceFoldersChangeEvent,
+	readonly onDidChangeWorkSpaceFolders: Stream.Stream<
+		WorkSpaceFoldersChangeEvent,
 		never
 	>;
 
-	readonly getWorkspaceFolder: (
+	readonly getWorkSpaceFolder: (
 		uri: Uri,
-	) => Effect.Effect<WorkspaceFolder | undefined, never>;
+	) => Effect.Effect<WorkSpaceFolder | undefined, never>;
 	readonly findFiles: (
 		include: any,
 		exclude?: any,
@@ -40,7 +40,7 @@ export interface Interface {
 	readonly getConfiguration: (
 		section?: string,
 		scope?: any,
-	) => Effect.Effect<WorkspaceConfiguration, Error>;
+	) => Effect.Effect<WorkSpaceConfiguration, Error>;
 	readonly fs: FileSystem;
 
 	readonly textDocuments: readonly TextDocument[];
@@ -52,4 +52,4 @@ export interface Interface {
 	>;
 }
 
-export const Tag = Context.Tag<Interface>("Service/Workspace");
+export const Tag = Context.Tag<Interface>("Service/WorkSpace");

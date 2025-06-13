@@ -1,16 +1,13 @@
 /**
- * @module WorkspaceEdit (TypeConverter)
- * @description Implements converters for `vscode.WorkspaceEdit` and its components,
+ * @module WorkSpaceEdit (TypeConverter)
+ * @description Implements converters for `vscode.WorkSpaceEdit` and its components,
  * handling complex transformations involving text edits, file operations, and versions.
  */
 
-import type { IDisposable } from "vs/base/common/lifecycle.js";
-import type { IURITransformer } from "vs/base/common/uriIpc.js";
 import * as ExtHostProtocol from "vs/workbench/api/common/extHost.protocol.js";
-import type * as Vscode from "vscode";
+import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Commands as CommandsConverter } from "./Command.js";
 import { TextEdit as TextEditConverter, Uri as UriConverter } from "./Main.js";
 
 /**
@@ -18,38 +15,38 @@ import { TextEdit as TextEditConverter, Uri as UriConverter } from "./Main.js";
  * This is required to ensure workspace edits are applied to the correct document state.
  */
 export interface IVersionInformationProvider {
-	GetTextDocumentVersion(uri: Vscode.Uri): number | undefined;
+	GetTextDocumentVersion(uri: VSCode.Uri): number | undefined;
 }
 
-export namespace WorkspaceEdit {
+export namespace WorkSpaceEdit {
 	/**
-	 * Converts a rich `vscode.WorkspaceEdit` object into a plain DTO for IPC.
+	 * Converts a rich `vscode.WorkSpaceEdit` object into a plain DTO for IPC.
 	 */
-	export const fromApi = (
-		edit: Vscode.WorkspaceEdit,
+	export const fromAPI = (
+		edit: VSCode.WorkSpaceEdit,
 		versionProvider?: IVersionInformationProvider,
-	): ExtHostProtocol.IWorkspaceEditDto => {
-		const result: ExtHostProtocol.IWorkspaceEditDto = { edits: [] };
+	): ExtHostProtocol.IWorkspaceEditDTO => {
+		const result: ExtHostProtocol.IWorkspaceEditDTO = { edits: [] };
 
 		for (const [uri, edits] of edit.entries()) {
 			if (edits.every((edit) => edit instanceof ExtHostTypes.TextEdit)) {
 				// This is a text edit for a single file
 				result.edits.push({
 					_type: 1, // Type 'Text'
-					resource: UriConverter.fromApi(uri),
-					edit: edits.map(TextEditConverter.fromApi),
+					resource: UriConverter.fromAPI(uri),
+					edit: edits.map(TextEditConverter.fromAPI),
 					versionId: versionProvider?.GetTextDocumentVersion(uri),
 				});
 			} else {
 				// This entry contains file operations (create, rename, delete)
-				for (const edit of edits as Vscode.WorkspaceFileEdit[]) {
+				for (const edit of edits as VSCode.WorkSpaceFileEdit[]) {
 					result.edits.push({
 						_type: 2, // Type 'File'
 						oldUri: edit.oldUri
-							? UriConverter.fromApi(edit.oldUri)
+							? UriConverter.fromAPI(edit.oldUri)
 							: undefined,
 						newUri: edit.newUri
-							? UriConverter.fromApi(edit.newUri)
+							? UriConverter.fromAPI(edit.newUri)
 							: undefined,
 						options: edit.options,
 						metadata: edit.metadata,
@@ -61,38 +58,38 @@ export namespace WorkspaceEdit {
 	};
 
 	/**
-	 * Revives a WorkspaceEdit DTO back into a `vscode.WorkspaceEdit` class instance.
+	 * Revives a WorkSpaceEdit DTO back into a `vscode.WorkSpaceEdit` class instance.
 	 */
-	export const toApi = (
-		dto: ExtHostProtocol.IWorkspaceEditDto,
-	): Vscode.WorkspaceEdit => {
-		const result = new ExtHostTypes.WorkspaceEdit();
+	export const toAPI = (
+		dto: ExtHostProtocol.IWorkspaceEditDTO,
+	): VSCode.WorkSpaceEdit => {
+		const result = new ExtHostTypes.WorkSpaceEdit();
 		for (const edit of dto.edits) {
 			switch (edit._type) {
 				case 1: // Text Edit
-					const uri = UriConverter.toApi(edit.resource);
+					const uri = UriConverter.toAPI(edit.resource);
 					const textEdits = (
-						edit as ExtHostProtocol.IWorkspaceTextEditDto
-					).edit.map(TextEditConverter.toApi);
+						edit as ExtHostProtocol.IWorkspaceTextEditDTO
+					).edit.map(TextEditConverter.toAPI);
 					result.set(uri, textEdits);
 					break;
 				case 2: // File Edit
 					const fileEdit =
-						edit as ExtHostProtocol.IWorkspaceFileEditDto;
+						edit as ExtHostProtocol.IWorkspaceFileEditDTO;
 					if (fileEdit.oldUri && fileEdit.newUri) {
 						result.renameFile(
-							UriConverter.toApi(fileEdit.oldUri),
-							UriConverter.toApi(fileEdit.newUri),
+							UriConverter.toAPI(fileEdit.oldUri),
+							UriConverter.toAPI(fileEdit.newUri),
 							fileEdit.options,
 						);
 					} else if (fileEdit.newUri) {
 						result.createFile(
-							UriConverter.toApi(fileEdit.newUri),
+							UriConverter.toAPI(fileEdit.newUri),
 							fileEdit.options,
 						);
 					} else if (fileEdit.oldUri) {
 						result.deleteFile(
-							UriConverter.toApi(fileEdit.oldUri),
+							UriConverter.toAPI(fileEdit.oldUri),
 							fileEdit.options,
 						);
 					}

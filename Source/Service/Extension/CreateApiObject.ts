@@ -1,5 +1,5 @@
 /**
- * @module CreateApiObject (Extension)
+ * @module CreateAPIObject (Extension)
  * @description A factory function that creates the public-facing `vscode.Extension` object.
  */
 
@@ -18,7 +18,7 @@ import type { ExtensionHost } from "../../Core/ExtensionHost.js";
  * @param ExtensionHostService - The core service that manages extension state.
  * @returns A frozen `vscode.Extension` object.
  */
-export const CreateApiObject = <T>(
+export const CreateAPIObject = <T>(
 	Description: IExtensionDescription,
 	ExtensionHostService: ExtensionHost.Interface,
 ): Extension<T> => {
@@ -28,7 +28,7 @@ export const CreateApiObject = <T>(
 			startup: false,
 			extensionId: Description.identifier,
 			activationEvent: "api",
-			activationKind: ActivationKind.Api,
+			activationKind: ActivationKind.API,
 		},
 	).pipe(
 		Effect.map(
@@ -43,11 +43,11 @@ export const CreateApiObject = <T>(
 		if (Description.extensionKind?.includes("web"))
 			return ExtensionKind.Web;
 		if (Description.extensionKind?.includes("workspace"))
-			return ExtensionKind.Workspace;
+			return ExtensionKind.WorkSpace;
 		return ExtensionKind.UI;
 	};
 
-	const ExtensionApiObject: Extension<T> = {
+	const ExtensionAPIObject: Extension<T> = {
 		id: Description.identifier.value,
 		extensionUri: Uri.from(Description.extensionLocation),
 		extensionPath: Description.extensionLocation.fsPath,
@@ -66,5 +66,5 @@ export const CreateApiObject = <T>(
 		activate: () => Effect.runPromise(ActivateEffect),
 	};
 
-	return Object.freeze(ExtensionApiObject);
+	return Object.freeze(ExtensionAPIObject);
 };

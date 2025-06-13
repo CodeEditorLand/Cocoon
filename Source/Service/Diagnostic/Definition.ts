@@ -7,21 +7,21 @@ import { Effect } from "effect";
 import type { Uri } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import { DiagnosticCollectionImpl } from "./DiagnosticCollectionImpl.js";
 import type { Interface } from "./Service.js";
 
 let OwnerCounter = 0;
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const OnDidChangeEvent = CreateEventStream<readonly Uri[]>();
 
 	// Register the RPC handler for when Mountain pushes diagnostic changes.
-	Ipc.RegisterInvokeHandler("$acceptMarkerData", ([uris]) => {
+	IPC.RegisterInvokeHandler("$acceptMarkerData", ([uris]) => {
 		// Assuming uris is an array of UriComponents DTOs
 		const revivedUris = uris.map((dto: any) =>
-			TypeConverter.Uri.toApi(dto),
+			TypeConverter.Uri.toAPI(dto),
 		);
 		return OnDidChangeEvent.Fire(revivedUris).pipe(Effect.runPromise);
 	});
@@ -31,7 +31,7 @@ export const Definition = Effect.gen(function* (_) {
 
 		CreateDiagnosticCollection: (Name?: string) => {
 			const OwnerId = `cocoon-diag-${OwnerCounter++}-${Name ?? "anon"}`;
-			return new DiagnosticCollectionImpl(Name, OwnerId, Ipc);
+			return new DiagnosticCollectionImpl(Name, OwnerId, IPC);
 		},
 	};
 

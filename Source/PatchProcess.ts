@@ -42,7 +42,7 @@ export * from "./TerminateOnParentExit.js";
  * environment is stable, secure, and properly configured before any extension
  * code is loaded.
  */
-export const RunProcessPatches = Effect.all(
+export const RunProcessPatch = Effect.all(
 	[
 		// These patches have no dependencies and can run immediately.
 		SetStackTraceLimit,
@@ -50,7 +50,7 @@ export const RunProcessPatches = Effect.all(
 		SetElectronRunAsNode,
 		BlockNativesModule,
 
-		// These patches may depend on services like IpcProvider.
+		// These patches may depend on services like IPCProvider.
 		PipeLoggingToParent,
 		HandleExceptions,
 

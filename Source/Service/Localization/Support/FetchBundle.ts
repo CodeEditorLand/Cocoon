@@ -7,11 +7,11 @@ import { Effect } from "effect";
 import type { Uri } from "vscode";
 
 import * as TypeConverter from "../../../TypeConverter.js";
-import type { Ipc } from "../../Ipc.js";
+import type { IPC } from "../../IPC.js";
 
-export const FetchBundleEffect = (IpcService: Ipc.Interface, BundleUri: Uri) =>
-	IpcService.SendRequest<string | null>("$fetchBundleContents", [
-		TypeConverter.Uri.fromApi(BundleUri),
+export const FetchBundleEffect = (IPCService: IPC.Interface, BundleUri: Uri) =>
+	IPCService.SendRequest<string | null>("$fetchBundleContents", [
+		TypeConverter.Uri.fromAPI(BundleUri),
 	]).pipe(
 		Effect.map((content) => (content ? JSON.parse(content) : {})),
 		// If the bundle doesn't exist or fails to parse, we treat it as an empty object.

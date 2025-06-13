@@ -1,15 +1,15 @@
 /**
- * @module Commands (TypeConverter)
- * @description This module provides the `CommandsConverter` for marshalling `vscode.Command`
- * objects for IPC, and the `ApiCommand` structure for defining built-in commands.
+ * @module Command (TypeConverter)
+ * @description This module provides the `CommandConverter` for marshalling `vscode.Command`
+ * objects for IPC, and the `APICommand` structure for defining built-in commands.
  */
 
-import { Definition as CommandsConverterDefinition } from "./Definition.js";
-import type { Interface as CommandsConverterInterface } from "./Service.js";
+import { Definition as CommandConverterDefinition } from "./Definition.js";
+import type { Interface as CommandConverterInterface } from "./Service.js";
 import * as Type from "./Type.js";
 
-export const Definition = CommandsConverterDefinition;
-export type Interface = CommandsConverterInterface;
-export const ApiCommand = Type.ApiCommand;
-export const ApiCommandArgument = Type.ApiCommandArgument;
-export const ApiCommandResult = Type.ApiCommandResult;
+export const Definition = CommandConverterDefinition;
+export type Interface = CommandConverterInterface;
+export const APICommand = Type.APICommand;
+export const APICommandArgument = Type.APICommandArgument;
+export const APICommandResult = Type.APICommandResult;

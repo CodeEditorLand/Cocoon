@@ -4,7 +4,7 @@
  * This object contains the handlers for all RPC methods callable by `Mountain`.
  */
 
-import * as Grpc from "@grpc/grpc-js";
+import * as gRPC from "@grpc/grpc-js";
 import type { UntypedServiceImplementation } from "@grpc/grpc-js";
 import { Effect } from "effect";
 
@@ -15,7 +15,7 @@ import {
 	GenericNotification,
 	GenericRequest,
 	GenericResponse,
-	RpcDataPayload,
+	RPCDataPayload,
 } from "../Generated.js";
 import { DecodeValue, EncodeValue } from "../ProtoConverter.js";
 
@@ -62,11 +62,11 @@ export const CreateServiceImplementation = (
 				callback(null, Exit.value);
 			} else {
 				// TODO: Serialize the failure cause into a meaningful gRPC error.
-				const RpcError = {
-					code: Grpc.status.INTERNAL,
+				const RPCError = {
+					code: gRPC.status.INTERNAL,
 					message: "Effect failed",
 				};
-				callback(RpcError, null);
+				callback(RPCError, null);
 			}
 		});
 	},
@@ -93,8 +93,8 @@ export const CreateServiceImplementation = (
 	/**
 	 * Handles incoming raw binary data for the `RPCProtocol` adapter.
 	 */
-	sendRpcDataToCocoon: (call, callback) => {
-		const Payload = call.request as RpcDataPayload;
+	sendRPCDataToCocoon: (call, callback) => {
+		const Payload = call.request as RPCDataPayload;
 		const ProcessEffect = DispatcherService.ProcessIncomingData(
 			Payload.getBuffer_asU8(),
 		);

@@ -216,8 +216,8 @@ export enum TreeItemCollapsibleState {
 }
 export enum ConfigurationTarget {
 	Global = 1,
-	Workspace = 2,
-	WorkspaceFolder = 3,
+	WorkSpace = 2,
+	WorkSpaceFolder = 3,
 }
 export enum EndOfLine {
 	LF = 1,

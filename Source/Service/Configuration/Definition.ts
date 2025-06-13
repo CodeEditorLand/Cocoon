@@ -7,19 +7,19 @@ import { Effect, Ref } from "effect";
 import type { ConfigurationChangeEvent } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import { LogProvider } from "../Log.js";
-import { CreateWorkspaceConfiguration } from "./CreateWorkspaceConfiguration.js";
+import { CreateWorkSpaceConfiguration } from "./CreateWorkSpaceConfiguration.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const Log = yield* _(LogProvider.Tag);
 	const ConfigCache = yield* _(Ref.make<object>({}));
 	const OnDidChangeEvent = CreateEventStream<ConfigurationChangeEvent>();
 
 	// Register the handler for when Mountain pushes a configuration update.
-	Ipc.RegisterInvokeHandler(
+	IPC.RegisterInvokeHandler(
 		"$acceptConfigurationChanged",
 		([change, newConfig]) =>
 			Effect.gen(function* (_) {
@@ -35,13 +35,13 @@ export const Definition = Effect.gen(function* (_) {
 
 	const ServiceImplementation: Interface = {
 		GetConfiguration: (Section, Scope) =>
-			Ipc.SendRequest<object>("$getConfiguration", [Section, Scope]).pipe(
+			IPC.SendRequest<object>("$getConfiguration", [Section, Scope]).pipe(
 				Effect.tap((newConfig) => Ref.set(ConfigCache, newConfig)),
 				Effect.map((newConfig) =>
-					CreateWorkspaceConfiguration(
+					CreateWorkSpaceConfiguration(
 						newConfig,
 						Section ?? "",
-						Ipc,
+						IPC,
 						Log,
 					),
 				),

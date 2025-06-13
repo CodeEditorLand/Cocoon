@@ -13,7 +13,7 @@ import type {
 } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
-import type { Ipc } from "../Ipc.js";
+import type { IPC } from "../IPC.js";
 
 export class DiagnosticCollectionImpl implements DiagnosticCollection {
 	private _isDisposed = false;
@@ -21,7 +21,7 @@ export class DiagnosticCollectionImpl implements DiagnosticCollection {
 	constructor(
 		public readonly name: string | undefined,
 		private readonly ownerId: string,
-		private readonly ipc: Ipc.Interface,
+		private readonly ipc: IPC.Interface,
 	) {}
 
 	private createSetEffect(
@@ -30,16 +30,16 @@ export class DiagnosticCollectionImpl implements DiagnosticCollection {
 	) {
 		if (this._isDisposed) return Effect.unit;
 
-		// Convert vscode.Diagnostic[] to MarkerDataDto[]
-		const Dto = diagnostics
-			? TypeConverter.Diagnostic.fromApiArray(diagnostics)
+		// Convert vscode.Diagnostic[] to MarkerDataDTO[]
+		const DTO = diagnostics
+			? TypeConverter.Diagnostic.fromAPIArray(diagnostics)
 			: undefined;
-		const UriDto = TypeConverter.Uri.fromApi(uri);
+		const UriDTO = TypeConverter.Uri.fromAPI(uri);
 
 		// Send notification to Mountain
 		return this.ipc.SendNotification("$changeMany", [
 			this.ownerId,
-			[[UriDto, Dto]],
+			[[UriDTO, DTO]],
 		]);
 	}
 

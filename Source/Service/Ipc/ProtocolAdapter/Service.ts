@@ -1,7 +1,7 @@
 /**
  * @module Service
  * @description Defines the service interface and `Context.Tag` for the
- * `IpcProtocolAdapter`.
+ * `IPCProtocolAdapter`.
  */
 
 import { Context, Effect } from "effect";
@@ -25,6 +25,6 @@ export interface Service extends IMessagePassingProtocol {
 }
 
 /**
- * The `Context.Tag` for the `IpcProtocolAdapter` service.
+ * The `Context.Tag` for the `IPCProtocolAdapter` service.
  */
-export const Tag = Context.Tag<Service>("Ipc/ProtocolAdapter");
+export const Tag = Context.Tag<Service>("IPC/ProtocolAdapter");

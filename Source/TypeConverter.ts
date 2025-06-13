@@ -4,25 +4,25 @@
  * It re-exports all specific converter namespaces, providing a single, consolidated
  * import point for services that need to marshal or unmarshal data for IPC.
  *
- * Each exported namespace contains functions like `fromApi` (to serialize rich
- * `vscode` objects into plain DTOs) and `toApi` (to revive DTOs back into
+ * Each exported namespace contains functions like `fromAPI` (to serialize rich
+ * `vscode` objects into plain DTOs) and `toAPI` (to revive DTOs back into
  * `vscode` class instances).
  */
 
-export * as CodeAction from "./CodeAction.js";
-export * as Commands from "./Commands.js";
-export * as Completion from "./Completion.js";
-export * as Diagnostic from "./Diagnostic.js";
-export * as Dialog from "./Dialog.js";
-export * as Hover from "./Hover.js";
-export * as Main from "./Main.js";
-export * as Notebook from "./Notebook.js";
-export * as QuickInput from "./QuickInput.js";
-export * as StatusBar from "./StatusBar.js";
-export * as Task from "./Task.js";
-export * as TreeView from "./TreeView.js";
-export * as Webview from "./Webview.js";
-export * as WorkspaceEdit from "./WorkspaceEdit.js";
+export * as CodeAction from "./TypeConverter/CodeAction.js";
+export * as Command from "./TypeConverter/Command.js";
+export * as Completion from "./TypeConverter/Completion.js";
+export * as Diagnostic from "./TypeConverter/Diagnostic.js";
+export * as Dialog from "./TypeConverter/Dialog.js";
+export * as Hover from "./TypeConverter/Hover.js";
+export * as Main from "./TypeConverter/Main.js";
+export * as Notebook from "./TypeConverter/Notebook.js";
+export * as QuickInput from "./TypeConverter/QuickInput.js";
+export * as StatusBar from "./TypeConverter/StatusBar.js";
+export * as Task from "./TypeConverter/Task.js";
+export * as TreeView from "./TypeConverter/TreeView.js";
+export * as WebView from "./TypeConverter/WebView.js";
+export * as WorkSpaceEdit from "./TypeConverter/WorkSpaceEdit.js";
 
 // Re-exporting specific converters from Main for convenience
 export {
@@ -34,4 +34,4 @@ export {
 	TextEdit as TextEditConverter,
 	MarkdownString as MarkdownStringConverter,
 	ViewColumn as ViewColumnConverter,
-} from "./Main.js";
+} from "./TypeConverter/Main.js";

@@ -1,5 +1,5 @@
 /**
- * @module ConvertExtensionDataToDto
+ * @module ConvertExtensionDataToDTO
  * @description Converts an `IExtensionDescription` object into a simplified
  * DTO, typically used for webview creation.
  */
@@ -13,7 +13,7 @@ import type { IExtensionDescription } from "vs/platform/extensions/common/extens
  * @param Extension - The full description of the extension.
  * @returns A simplified DTO containing the extension's ID and location URI.
  */
-export const ConvertExtensionDataToDto = (
+export const ConvertExtensionDataToDTO = (
 	Extension: IExtensionDescription,
 ) => ({
 	Id: Extension.identifier.value,

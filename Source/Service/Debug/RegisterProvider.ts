@@ -6,7 +6,7 @@
 import { Effect, Ref } from "effect";
 import { Disposable } from "vscode";
 
-import type { Ipc } from "../Ipc.js";
+import type { IPC } from "../IPC.js";
 
 let HandleCounter = 0;
 
@@ -17,8 +17,8 @@ let HandleCounter = 0;
  */
 export const RegisterProviderEffect = <T>(
 	Registry: Ref.Ref<Map<number, T>>,
-	IpcService: Ipc.Interface,
-	RpcRegisterMethod: string,
+	IPCService: IPC.Interface,
+	RPCRegisterMethod: string,
 	Data: T,
 ) =>
 	Effect.acquireRelease(
@@ -31,15 +31,15 @@ export const RegisterProviderEffect = <T>(
 		}).pipe(
 			Effect.flatMap(
 				(Handle) =>
-					IpcService.SendNotification(RpcRegisterMethod, [
+					IPCService.SendNotification(RPCRegisterMethod, [
 						Handle,
 						(Data as any).type,
 					]).pipe(Effect.as(Handle)), // Pass the handle through
 			),
 		),
 		(Handle) => {
-			const RpcUnregisterMethod = `$unregister${RpcRegisterMethod.substring(9)}`;
-			return IpcService.SendNotification(RpcUnregisterMethod, [Handle]);
+			const RPCUnregisterMethod = `$unregister${RPCRegisterMethod.substring(9)}`;
+			return IPCService.SendNotification(RPCUnregisterMethod, [Handle]);
 		},
 	).pipe(
 		Effect.map(

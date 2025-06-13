@@ -5,16 +5,16 @@
  */
 
 import * as Path from "path";
-import * as Grpc from "@grpc/grpc-js";
+import * as gRPC from "@grpc/grpc-js";
 import {
-	GrpcObject,
+	gRPCObject,
 	loadPackageDefinition,
 	ServiceClientConstructor,
 } from "@grpc/proto-loader";
 import { Effect } from "effect";
 
-import { ConfigTag } from "../Config.js";
-import { GrpcConnectionError } from "../Error.js";
+import { ConfigTag } from "../Configuration.js";
+import { gRPCConnectionError } from "../Error.js";
 import { Release } from "./Release.js";
 import type { Service } from "./Service.js";
 
@@ -26,7 +26,7 @@ const LoadProtoDefinition = (ProtoPath: string) =>
 	Effect.tryPromise({
 		try: () => loadPackageDefinition(ProtoPath),
 		catch: (Cause) =>
-			new GrpcConnectionError({ Cause, context: "ProtoLoadFailed" }),
+			new gRPCConnectionError({ Cause, context: "ProtoLoadFailed" }),
 	});
 
 /**
@@ -36,22 +36,22 @@ const LoadProtoDefinition = (ProtoPath: string) =>
  * @param ServerAddress The address of the `Mountain` gRPC server.
  */
 const CreateClientInstance = (
-	PackageDefinition: Grpc.PackageDefinition,
+	PackageDefinition: gRPC.PackageDefinition,
 	ServerAddress: string,
 ) =>
 	Effect.try({
 		try: () => {
-			const Proto = Grpc.loadPackageDefinition(PackageDefinition)
-				.vine_ipc as GrpcObject;
+			const Proto = gRPC.loadPackageDefinition(PackageDefinition)
+				.vine_ipc as gRPCObject;
 			const ClientConstructor =
 				Proto.MountainService as ServiceClientConstructor;
 			return new ClientConstructor(
 				ServerAddress,
-				Grpc.credentials.createInsecure(),
+				gRPC.credentials.createInsecure(),
 			) as Service;
 		},
 		catch: (Cause) =>
-			new GrpcConnectionError({
+			new gRPCConnectionError({
 				Cause,
 				context: "ClientInstantiationFailed",
 			}),
@@ -63,12 +63,12 @@ const CreateClientInstance = (
  * @param Client The gRPC client instance.
  */
 const WaitForClientReady = (Client: Service) =>
-	Effect.async<void, GrpcConnectionError>((Resume) => {
+	Effect.async<void, gRPCConnectionError>((Resume) => {
 		Client.waitForReady(Date.now() + 10000, (Error) => {
 			if (Error) {
 				Resume(
 					Effect.fail(
-						new GrpcConnectionError({
+						new gRPCConnectionError({
 							Cause: Error,
 							context: "ClientNotReady",
 						}),
@@ -89,19 +89,19 @@ const WaitForClientReady = (Client: Service) =>
  */
 export const Acquire = Effect.acquireRelease(
 	Effect.gen(function* (_) {
-		const Config = yield* _(ConfigTag);
+		const Configuration = yield* _(ConfigTag);
 		// Assume the proto file is copied to the dist output directory.
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
 		const Definition = yield* _(LoadProtoDefinition(ProtoPath));
 		const Client = yield* _(
-			CreateClientInstance(Definition, Config.MountainAddress),
+			CreateClientInstance(Definition, Configuration.MountainAddress),
 		);
 
 		yield* _(WaitForClientReady(Client));
 		yield* _(
 			Effect.logInfo(
-				`gRPC client connected to Mountain at ${Config.MountainAddress}.`,
+				`gRPC client connected to Mountain at ${Configuration.MountainAddress}.`,
 			),
 		);
 

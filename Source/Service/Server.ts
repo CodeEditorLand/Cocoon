@@ -6,9 +6,9 @@
 
 import { Layer } from "effect";
 
-import type { Config } from "../Config.js";
+import type { Configuration } from "../Configuration.js";
 import { Live as LiveDispatcher } from "../Dispatcher.js";
-import type { GrpcConnectionError } from "../Error.js";
+import type { gRPCConnectionError } from "../Error.js";
 import { Acquire } from "./Acquire.js";
 import { Tag, type Service } from "./Service.js";
 
@@ -20,5 +20,5 @@ import { Tag, type Service } from "./Service.js";
  * composes the `Acquire` effect with the `LiveDispatcher` layer, which is a
  * dependency for creating the server's request handlers.
  */
-export const Live: Layer.Layer<Service, GrpcConnectionError, Config> =
+export const Live: Layer.Layer<Service, gRPCConnectionError, Configuration> =
 	Layer.scoped(Tag, Acquire).pipe(Layer.provide(LiveDispatcher));

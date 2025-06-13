@@ -7,7 +7,7 @@ import { Context, Effect } from "effect";
 import type {
 	CancellationToken,
 	InputBox,
-	InputBoxOptions,
+	InputBoxOption,
 	QuickInputButton,
 	QuickPick,
 	QuickPickItem,
@@ -16,12 +16,12 @@ import type {
 export interface Interface {
 	readonly ShowQuickPick: <T extends QuickPickItem | string>(
 		Items: ReadonlyArray<T> | Promise<ReadonlyArray<T>>,
-		Options?: any,
+		Option?: any,
 		Token?: CancellationToken,
 	) => Effect.Effect<T | T[] | undefined, Error>;
 
 	readonly ShowInputBox: (
-		Options?: InputBoxOptions,
+		Option?: InputBoxOption,
 		Token?: CancellationToken,
 	) => Effect.Effect<string | undefined, Error>;
 

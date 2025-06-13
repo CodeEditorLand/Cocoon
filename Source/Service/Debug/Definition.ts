@@ -10,18 +10,18 @@ import type {
 } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import { RegisterProviderEffect } from "./RegisterProvider.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const ConfigProviders = yield* _(Ref.make(new Map<number, any>()));
 	const DescriptorFactories = yield* _(Ref.make(new Map<number, any>()));
 	const OnDidChangeActiveDebugSessionEvent = CreateEventStream<any>();
 
 	// --- Register RPC Handlers for calls FROM Mountain ---
-	Ipc.RegisterInvokeHandler(
+	IPC.RegisterInvokeHandler(
 		"$provideDebugConfigurations",
 		([handle, folder]) =>
 			Effect.gen(function* (_) {
@@ -30,7 +30,7 @@ export const Definition = Effect.gen(function* (_) {
 			}).pipe(Effect.runPromise),
 	);
 
-	Ipc.RegisterInvokeHandler(
+	IPC.RegisterInvokeHandler(
 		"$resolveDebugConfiguration",
 		([handle, folder, config]) =>
 			Effect.gen(function* (_) {
@@ -53,7 +53,7 @@ export const Definition = Effect.gen(function* (_) {
 		RegisterDebugConfigurationProvider: (Type, Provider, Extension) =>
 			RegisterProviderEffect(
 				ConfigProviders,
-				Ipc,
+				IPC,
 				"$registerDebugConfigurationProvider",
 				{ Type, Provider, Extension },
 			),
@@ -61,16 +61,16 @@ export const Definition = Effect.gen(function* (_) {
 		RegisterDebugAdapterDescriptorFactory: (Type, Factory, Extension) =>
 			RegisterProviderEffect(
 				DescriptorFactories,
-				Ipc,
+				IPC,
 				"$registerDebugAdapterDescriptorFactory",
 				{ Type, Factory, Extension },
 			),
 
-		StartDebugging: (Folder, Config, Options) =>
-			Ipc.SendRequest<boolean>("$startDebugging", [
+		StartDebugging: (Folder, Configuration, Option) =>
+			IPC.SendRequest<boolean>("$startDebugging", [
 				Folder?.uri,
-				Config,
-				Options,
+				Configuration,
+				Option,
 			]).pipe(Effect.map((result) => !!result)),
 	};
 

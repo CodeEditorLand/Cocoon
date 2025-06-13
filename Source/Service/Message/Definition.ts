@@ -4,9 +4,9 @@
  */
 
 import { Effect } from "effect";
-import type { MessageItem, MessageOptions } from "vscode";
+import type { MessageItem, MessageOption } from "vscode";
 
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
 import { ParseArgument } from "./Support/ParseArgument.js";
 import type { ExtensionSource } from "./Type.js";
@@ -14,14 +14,14 @@ import type { ExtensionSource } from "./Type.js";
 const ShowMessageEffect = (
 	Severity: "Info" | "Warning" | "Error",
 	Message: string,
-	Options: MessageOptions,
+	Option: MessageOption,
 	Items: (string | MessageItem)[],
 	Source: ExtensionSource | undefined,
 ) =>
 	Effect.gen(function* (_) {
-		const Ipc = yield* _(IpcProvider.Tag);
+		const IPC = yield* _(IPCProvider.Tag);
 
-		const ItemsForIpc = Items.map((item, index) => ({
+		const ItemsForIPC = Items.map((item, index) => ({
 			Title: typeof item === "string" ? item : item.title,
 			Handle: index,
 			IsCloseAffordance:
@@ -29,11 +29,11 @@ const ShowMessageEffect = (
 		}));
 
 		const Result = yield* _(
-			Ipc.SendRequest<number | string | undefined>("ui_showMessage", {
+			IPC.SendRequest<number | string | undefined>("ui_showMessage", {
 				Severity,
 				Message,
-				Options: { Modal: Options.modal, Detail: Options.detail },
-				Items: ItemsForIpc,
+				Option: { Modal: Option.modal, Detail: Option.detail },
+				Items: ItemsForIPC,
 				Source,
 			}),
 		);
@@ -60,15 +60,15 @@ const ShowMessageEffect = (
 
 export const Definition = Effect.succeed({
 	ShowInformationMessage: (message, ...args) => {
-		const { Options, Items, Source } = ParseArgument(args);
-		return ShowMessageEffect("Info", message, Options, Items, Source);
+		const { Option, Items, Source } = ParseArgument(args);
+		return ShowMessageEffect("Info", message, Option, Items, Source);
 	},
 	ShowWarningMessage: (message, ...args) => {
-		const { Options, Items, Source } = ParseArgument(args);
-		return ShowMessageEffect("Warning", message, Options, Items, Source);
+		const { Option, Items, Source } = ParseArgument(args);
+		return ShowMessageEffect("Warning", message, Option, Items, Source);
 	},
 	ShowErrorMessage: (message, ...args) => {
-		const { Options, Items, Source } = ParseArgument(args);
-		return ShowMessageEffect("Error", message, Options, Items, Source);
+		const { Option, Items, Source } = ParseArgument(args);
+		return ShowMessageEffect("Error", message, Option, Items, Source);
 	},
 } satisfies Interface);

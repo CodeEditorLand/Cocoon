@@ -1,5 +1,5 @@
 /**
- * @module Config
+ * @module Configuration
  * @description Defines the configuration interface and `Context.Tag` for the
  * IPC service, specifying the network addresses for communication.
  */
@@ -9,7 +9,7 @@ import { Context } from "effect";
 /**
  * The configuration required for the IPC service.
  */
-export interface Config {
+export interface Configuration {
 	/**
 	 * The network address of the `Mountain` gRPC server.
 	 * @example "localhost:50051"
@@ -25,4 +25,4 @@ export interface Config {
 /**
  * The `Context.Tag` for the IPC configuration.
  */
-export const ConfigTag = Context.Tag<Config>("Ipc/Config");
+export const ConfigTag = Context.Tag<Configuration>("IPC/Configuration");

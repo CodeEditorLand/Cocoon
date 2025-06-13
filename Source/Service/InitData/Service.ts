@@ -4,8 +4,7 @@
  */
 
 import { Context } from "effect";
-
-import type { IExtensionHostInitData } from "../../Type/vscode-proposed.js";
+import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 /**
  * The service interface for the InitData service. It is an alias for the

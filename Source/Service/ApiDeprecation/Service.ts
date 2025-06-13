@@ -1,6 +1,6 @@
 /**
- * @module Service (ApiDeprecation)
- * @description Defines the interface and Context.Tag for the ApiDeprecation service.
+ * @module Service (APIDeprecation)
+ * @description Defines the interface and Context.Tag for the APIDeprecation service.
  */
 
 import { Context, Effect } from "effect";
@@ -36,6 +36,6 @@ export interface Interface {
 }
 
 /**
- * The Context.Tag for the ApiDeprecation service.
+ * The Context.Tag for the APIDeprecation service.
  */
-export const Tag = Context.Tag<Interface>("Service/ApiDeprecation");
+export const Tag = Context.Tag<Interface>("Service/APIDeprecation");

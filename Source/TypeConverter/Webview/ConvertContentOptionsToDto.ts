@@ -1,25 +1,25 @@
 /**
- * @module ConvertContentOptionsToDto
- * @description Converts a `vscode.WebviewOptions` object into a serializable DTO.
+ * @module ConvertContentOptionToDTO
+ * @description Converts a `vscode.WebViewOption` object into a serializable DTO.
  */
 
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type * as Vscode from "vscode";
+import type * as VSCode from "vscode";
 
 /**
- * Converts the `vscode.WebviewOptions` object into a plain DTO suitable
+ * Converts the `vscode.WebViewOption` object into a plain DTO suitable
  * for sending over the RPC channel to `Mountain`.
  *
  * It includes security-relevant options and defines the root paths for local
  * resources, defaulting to the extension's location if not otherwise specified.
  *
  * @param Extension - The description of the extension that owns the webview.
- * @param Option - The `vscode.WebviewOptions` provided by the extension.
+ * @param Option - The `vscode.WebViewOption` provided by the extension.
  * @returns A serializable DTO representing the webview's content options.
  */
-export const ConvertContentOptionsToDto = (
+export const ConvertContentOptionToDTO = (
 	Extension: IExtensionDescription,
-	Option: Vscode.WebviewOptions,
+	Option: VSCode.WebViewOption,
 ) => ({
 	EnableCommandUri: Option.enableCommandUris,
 	EnableScript: Option.enableScripts,

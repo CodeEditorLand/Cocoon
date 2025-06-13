@@ -1,6 +1,6 @@
 /**
- * @module Definition (ApiDeprecation)
- * @description The live implementation of the ApiDeprecation service.
+ * @module Definition (APIDeprecation)
+ * @description The live implementation of the APIDeprecation service.
  */
 
 import { Effect } from "effect";
@@ -10,7 +10,7 @@ import { LogProvider } from "../Log.js";
 import type { Interface } from "./Service.js";
 
 /**
- * An Effect that builds the live implementation of the ApiDeprecation service.
+ * An Effect that builds the live implementation of the APIDeprecation service.
  */
 export const Definition = Effect.gen(function* (_) {
 	const Log = yield* _(LogProvider.Tag);

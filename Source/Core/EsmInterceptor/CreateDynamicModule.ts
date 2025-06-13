@@ -4,7 +4,7 @@
  * ESM module by populating a template with an API key and export statements.
  */
 
-import type * as Vscode from "vscode";
+import type * as VSCode from "vscode";
 
 import { ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME } from "./Constants.js";
 import { DynamicModuleTemplate } from "./DynamicModuleTemplate.js";
@@ -18,22 +18,22 @@ import { DynamicModuleTemplate } from "./DynamicModuleTemplate.js";
  * on the provided API instance to generate named exports for all of its
  * properties, ensuring full ESM compatibility.
  *
- * @param ApiKey - The unique key for retrieving the extension-specific `vscode` API instance
+ * @param APIKey - The unique key for retrieving the extension-specific `vscode` API instance
  *   from the global scope.
- * @param VscodeApiInstance - The actual `vscode` API object to export from this dynamic module.
+ * @param VSCodeAPIInstance - The actual `vscode` API object to export from this dynamic module.
  * @returns A string containing the complete JavaScript code for the dynamic module.
  */
 export const CreateDynamicModule = (
-	ApiKey: string,
-	VscodeApiInstance: typeof Vscode,
+	APIKey: string,
+	VSCodeAPIInstance: typeof VSCode,
 ): string => {
 	// Get all enumerable properties from the provided vscode API object.
-	const ExportablePropertyNames = Object.keys(VscodeApiInstance);
+	const ExportablePropertyNames = Object.keys(VSCodeAPIInstance);
 
 	// Generate an `export const ...` statement for each property.
 	const ExportStatements = ExportablePropertyNames.map(
 		(PropertyName) =>
-			`export const ${PropertyName} = VscodeApiInstance['${PropertyName}'];`,
+			`export const ${PropertyName} = VSCodeAPIInstance['${PropertyName}'];`,
 	).join("\n");
 
 	// Populate the template with the dynamic values.
@@ -41,6 +41,6 @@ export const CreateDynamicModule = (
 		"__BUILD_TIME_GLOBAL_API_FUNCTION_NAME__", // Placeholder in the template
 		`'${ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME}'`,
 	)
-		.replace("__RUNTIME_API_KEY__", ApiKey)
+		.replace("__RUNTIME_API_KEY__", APIKey)
 		.replace("__RUNTIME_EXPORT_STATEMENTS__", ExportStatements);
 };

@@ -7,16 +7,16 @@ import { Context, Effect, Layer, Ref, Schedule, Stream } from "effect";
 import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 
 import { InitDataService } from "../../Service/InitData.js";
-import { IpcProvider } from "../../Service/Ipc.js";
+import { IPCProvider } from "../../Service/IPC.js";
 import { LogProvider } from "../../Service/Log.js";
-import { ApiFactoryProvider } from "../APIFactory.js";
+import { APIFactoryProvider } from "../APIFactory.js";
 import { type Interface } from "./Service.js";
 import type { ActivatedExtension } from "./State.js";
 
 export const Definition = Effect.gen(function* (_) {
 	const Log = yield* _(LogProvider);
-	const Ipc = yield* _(IpcProvider);
-	const ApiFactory = yield* _(ApiFactoryProvider);
+	const IPC = yield* _(IPCProvider);
+	const APIFactory = yield* _(APIFactoryProvider);
 	const InitData = yield* _(InitDataService);
 
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
@@ -97,7 +97,7 @@ export const Definition = Effect.gen(function* (_) {
 				}),
 			);
 
-			const ExtensionApi = ApiFactory.CreateApi(Description);
+			const ExtensionAPI = APIFactory.CreateAPI(Description);
 			const Context: import("vscode").ExtensionContext = {
 				subscriptions: [],
 				extensionPath: Description.extensionLocation.fsPath,
@@ -112,7 +112,7 @@ export const Definition = Effect.gen(function* (_) {
 							try: () =>
 								ActivationFn.apply(globalThis, [
 									Context,
-									ExtensionApi,
+									ExtensionAPI,
 								]),
 							catch: (e) =>
 								new Error(
@@ -142,7 +142,7 @@ export const Definition = Effect.gen(function* (_) {
 				),
 			);
 			yield* _(
-				Ipc.SendNotification("$onDidActivateExtension", [
+				IPC.SendNotification("$onDidActivateExtension", [
 					Description.identifier,
 					Reason.startup,
 					Reason.extensionId,
@@ -166,7 +166,7 @@ export const Definition = Effect.gen(function* (_) {
 						),
 					);
 					yield* _(
-						Ipc.SendNotification("$onExtensionActivationError", [
+						IPC.SendNotification("$onExtensionActivationError", [
 							Description.identifier,
 							{
 								name: error.name,

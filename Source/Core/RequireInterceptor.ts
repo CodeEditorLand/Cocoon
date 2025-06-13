@@ -7,7 +7,7 @@
 import { Layer } from "effect";
 
 import { Live as LiveLog } from "../../Service/Log.js";
-import { Live as LiveApiFactory } from "../ApiFactory.js";
+import { Live as LiveAPIFactory } from "../APIFactory.js";
 import { Live as LiveExtensionPaths } from "../ExtensionPath.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
@@ -17,5 +17,5 @@ import { Tag } from "./Service.js";
  * It has dependencies that need to be provided to it.
  */
 export const Live = Layer.effect(Tag, Definition).pipe(
-	Layer.provide(Layer.mergeAll(LiveApiFactory, LiveExtensionPaths, LiveLog)),
+	Layer.provide(Layer.mergeAll(LiveAPIFactory, LiveExtensionPaths, LiveLog)),
 );

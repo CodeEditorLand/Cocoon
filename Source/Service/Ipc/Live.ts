@@ -7,7 +7,7 @@
 import { Layer } from "effect";
 
 import { Live as LiveClient } from "./Client.js";
-import { Config, ConfigTag } from "./Config.js";
+import { Configuration, ConfigTag } from "./Configuration.js";
 import { Definition } from "./Definition.js";
 import { Live as LiveDispatcher } from "./Dispatcher.js";
 import { Live as LiveProtocolAdapter } from "./ProtocolAdapter.js";
@@ -15,19 +15,19 @@ import { Live as LiveServer } from "./Server.js";
 import { Tag } from "./Service.js";
 
 /**
- * The composed "live" Layer for the IpcProvider service.
+ * The composed "live" Layer for the IPCProvider service.
  *
  * This master layer assembles all the necessary sub-layers for the gRPC client,
  * server, dispatcher, and protocol adapter. It is the single layer that should be
  * provided to the main application to enable IPC capabilities.
  *
- * It requires an `Ipc.Config` object to be provided to it, which contains the
+ * It requires an `IPC.Configuration` object to be provided to it, which contains the
  * necessary server addresses.
  *
  * @param Configuration - An object containing the `MountainAddress` and `CocoonAddress`.
- * @returns A self-contained `Layer` that provides the `Ipc.Service`.
+ * @returns A self-contained `Layer` that provides the `IPC.Service`.
  */
-export const Live = (Configuration: Config) => {
+export const Live = (Configuration: Configuration) => {
 	// Create a layer that provides the necessary configuration.
 	const ConfigLayer = Layer.succeed(ConfigTag, Configuration);
 

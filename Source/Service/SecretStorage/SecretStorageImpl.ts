@@ -7,7 +7,7 @@ import { Effect, Stream } from "effect";
 import type { Event, SecretStorage, SecretStorageChangeEvent } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import { LogProvider } from "../Log.js";
 import { EmptyKeyError, InvalidValueError } from "./Error.js";
 
@@ -18,7 +18,7 @@ export class SecretStorageImpl implements SecretStorage {
 
 	constructor(
 		private readonly ExtensionId: string,
-		private readonly Ipc: IpcProvider.Interface,
+		private readonly IPC: IPCProvider.Interface,
 		private readonly Log: LogProvider.Interface,
 	) {
 		this.onDidChange = this.OnDidChangeEvent.Stream.pipe(Stream.toEvent);
@@ -28,7 +28,7 @@ export class SecretStorageImpl implements SecretStorage {
 		Effect.gen(this, function* (_) {
 			if (!Key) return yield* _(Effect.fail(new EmptyKeyError()));
 			const result = yield* _(
-				this.Ipc.SendRequest<string | null>("$getPassword", [
+				this.IPC.SendRequest<string | null>("$getPassword", [
 					this.ExtensionId,
 					Key,
 				]),
@@ -50,7 +50,7 @@ export class SecretStorageImpl implements SecretStorage {
 			if (typeof Value !== "string")
 				return yield* _(Effect.fail(new InvalidValueError()));
 			yield* _(
-				this.Ipc.SendNotification("$setPassword", [
+				this.IPC.SendNotification("$setPassword", [
 					this.ExtensionId,
 					Key,
 					Value,
@@ -70,7 +70,7 @@ export class SecretStorageImpl implements SecretStorage {
 		Effect.gen(this, function* (_) {
 			if (!Key) return yield* _(Effect.fail(new EmptyKeyError()));
 			yield* _(
-				this.Ipc.SendNotification("$deletePassword", [
+				this.IPC.SendNotification("$deletePassword", [
 					this.ExtensionId,
 					Key,
 				]),

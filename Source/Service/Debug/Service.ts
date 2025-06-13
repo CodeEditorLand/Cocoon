@@ -10,9 +10,9 @@ import type {
 	DebugConfiguration,
 	DebugConfigurationProvider,
 	DebugSession,
-	DebugSessionOptions,
+	DebugSessionOption,
 	IDisposable,
-	WorkspaceFolder,
+	WorkSpaceFolder,
 } from "vscode";
 
 export interface Interface {
@@ -37,9 +37,9 @@ export interface Interface {
 	) => Effect.Effect<IDisposable, Error>;
 
 	readonly StartDebugging: (
-		Folder: WorkspaceFolder | undefined,
-		Config: string | DebugConfiguration,
-		Options?: DebugSessionOptions,
+		Folder: WorkSpaceFolder | undefined,
+		Configuration: string | DebugConfiguration,
+		Option?: DebugSessionOption,
 	) => Effect.Effect<boolean, Error>;
 }
 

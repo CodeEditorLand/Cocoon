@@ -1,5 +1,5 @@
 /**
- * @module ProvideHover (RpcHandlers)
+ * @module ProvideHover (RPCHandlers)
  * @description Implements the RPC handler for providing hover information.
  */
 
@@ -14,17 +14,17 @@ import { Tag as DocumentsTag } from "../../Document/Service.js";
  * An Effect that handles the `$provideHover` RPC call from Mountain.
  * @param Registry - The Ref containing all registered providers.
  * @param Handle - The handle of the specific provider to invoke.
- * @param UriDto - The URI DTO of the document.
- * @param PosDto - The Position DTO.
- * @param TokenDto - The CancellationToken DTO.
+ * @param UriDTO - The URI DTO of the document.
+ * @param PosDTO - The Position DTO.
+ * @param TokenDTO - The CancellationToken DTO.
  * @returns An Effect that resolves to a Hover DTO or undefined.
  */
 export const ProvideHover = (
 	Registry: any,
 	Handle: number,
-	UriDto: any,
-	PosDto: any,
-	TokenDto: any,
+	UriDTO: any,
+	PosDTO: any,
+	TokenDTO: any,
 ) =>
 	Effect.gen(function* (_) {
 		const Documents = yield* _(DocumentsTag);
@@ -36,15 +36,15 @@ export const ProvideHover = (
 				`Provider not found or wrong type for handle ${Handle}`,
 			);
 
-		const Uri = TypeConverter.Uri.toApi(UriDto);
+		const Uri = TypeConverter.Uri.toAPI(UriDTO);
 		const Document = yield* _(Documents.GetDocument(Uri));
 		if (!Document)
 			throw new Error(`Document not found for hover: ${Uri.toString()}`);
 
 		// Obtain a scoped cancellation token
-		const TokenData = yield* _(Cancellation.ObtainToken(TokenDto.id));
+		const TokenData = yield* _(Cancellation.ObtainToken(TokenDTO.id));
 
-		const Position = TypeConverter.Position.toApi(PosDto);
+		const Position = TypeConverter.Position.toAPI(PosDTO);
 		const Provider = Entry.provider as HoverProvider;
 
 		const Result = yield* _(
@@ -53,9 +53,9 @@ export const ProvideHover = (
 			),
 		);
 
-		// Assuming CommandsConverter is available in this scope
-		const CommandsConverter = {} as any;
-		return TypeConverter.Hover.fromApi(Result as Hover, CommandsConverter);
+		// Assuming CommandConverter is available in this scope
+		const CommandConverter = {} as any;
+		return TypeConverter.Hover.fromAPI(Result as Hover, CommandConverter);
 	}).pipe(
 		Effect.scoped, // Ensures the cancellation token's scope is properly handled
 		Effect.catchAll(() => Effect.succeed(undefined)), // Return undefined on any failure

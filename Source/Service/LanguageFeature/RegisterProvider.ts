@@ -8,7 +8,7 @@ import type { IExtensionDescription } from "vs/platform/extensions/common/extens
 import { Disposable, type DocumentSelector } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
-import type { Ipc } from "../Ipc.js";
+import type { IPC } from "../IPC.js";
 
 let HandleCounter = 0;
 
@@ -19,12 +19,12 @@ let HandleCounter = 0;
  */
 export const RegisterProvider = <T>(
 	Registry: Ref.Ref<Map<number, any>>,
-	IpcService: Ipc.Interface,
+	IPCService: IPC.Interface,
 	ProviderType: string,
 	Selector: DocumentSelector,
 	Provider: T,
 	Extension: IExtensionDescription,
-	Options?: any,
+	Option?: any,
 ) =>
 	Effect.acquireRelease(
 		Effect.sync(() => {
@@ -41,18 +41,18 @@ export const RegisterProvider = <T>(
 			return Handle;
 		}).pipe(
 			Effect.flatMap((Handle) =>
-				IpcService.SendNotification(
+				IPCService.SendNotification(
 					`$register${ProviderType}Provider`,
 					[
 						Handle,
-						TypeConverter.DocumentSelector.fromApi(Selector),
+						TypeConverter.DocumentSelector.fromAPI(Selector),
 						Extension.identifier.value,
-						Options, // Convert options to DTO
+						Option, // Convert options to DTO
 					],
 				).pipe(Effect.as(Handle)),
 			),
 		),
-		(Handle) => IpcService.SendNotification("$unregister", [Handle]),
+		(Handle) => IPCService.SendNotification("$unregister", [Handle]),
 	).pipe(
 		Effect.map(
 			(handle) =>

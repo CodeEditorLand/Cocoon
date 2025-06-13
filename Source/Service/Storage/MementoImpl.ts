@@ -8,15 +8,15 @@ import type {
 	Event,
 	Memento,
 	MementoChangeEvent,
-	MementoKeysOptions,
+	MementoKeysOption,
 } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import type { Ipc } from "../Ipc.js";
+import type { IPC } from "../IPC.js";
 import type { Log } from "../Log.js";
 
 enum MementoScope {
-	Profile = 0, // Workspace-level
+	Profile = 0, // WorkSpace-level
 	Application = 1, // Global-level
 }
 
@@ -28,7 +28,7 @@ export class MementoImpl implements Memento {
 	constructor(
 		private readonly ExtensionId: string,
 		IsGlobal: boolean,
-		private readonly IpcService: Ipc.Interface,
+		private readonly IPCService: IPC.Interface,
 		private readonly LogService: Log.Interface,
 	) {
 		this.Scope = IsGlobal ? MementoScope.Application : MementoScope.Profile;
@@ -36,7 +36,7 @@ export class MementoImpl implements Memento {
 	}
 
 	private createGetEffect = <T>(Key: string, DefaultValue?: T) =>
-		this.IpcService.SendRequest<T | undefined>("$getValue", {
+		this.IPCService.SendRequest<T | undefined>("$getValue", {
 			scope: this.Scope,
 			key: Key,
 		}).pipe(
@@ -54,12 +54,12 @@ export class MementoImpl implements Memento {
 
 	private createUpdateEffect = (Key: string, Value: any) =>
 		Effect.gen(this, function* (_) {
-			const ValueForRpc = Value === undefined ? null : Value;
+			const ValueForRPC = Value === undefined ? null : Value;
 			yield* _(
-				this.IpcService.SendNotification("$setValue", {
+				this.IPCService.SendNotification("$setValue", {
 					scope: this.Scope,
 					key: Key,
-					value: ValueForRpc,
+					value: ValueForRPC,
 				}),
 			);
 			yield* _(this.OnDidChangeEvent.Fire({ keys: [Key] }));
@@ -72,10 +72,10 @@ export class MementoImpl implements Memento {
 			),
 		);
 
-	private createKeysEffect = (Options?: MementoKeysOptions) =>
-		this.IpcService.SendRequest<readonly string[]>("$keys", {
+	private createKeysEffect = (Option?: MementoKeysOption) =>
+		this.IPCService.SendRequest<readonly string[]>("$keys", {
 			scope: this.Scope,
-			options: Options,
+			options: Option,
 		}).pipe(
 			Effect.map((result) => Object.freeze(result ?? [])),
 			Effect.catchAll((err) => {
@@ -95,7 +95,7 @@ export class MementoImpl implements Memento {
 
 	update = (key: string, value: any): Promise<void> =>
 		Effect.runPromise(this.createUpdateEffect(key, value));
-	keys = (options?: MementoKeysOptions): readonly string[] =>
+	keys = (options?: MementoKeysOption): readonly string[] =>
 		Effect.runSync(this.createKeysEffect(options));
 	get whenReady(): Promise<void> {
 		return Promise.resolve();

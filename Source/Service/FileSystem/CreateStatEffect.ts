@@ -7,15 +7,15 @@ import { Effect } from "effect";
 import { FileType, type FileStat, type Uri } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
-import { IpcProvider } from "../Ipc.js";
-import { FileSystemError, MapToVscodeError } from "./Error.js";
+import { IPCProvider } from "../IPC.js";
+import { FileSystemError, MapToVSCodeError } from "./Error.js";
 
 export const CreateStatEffect = (Uri: Uri) =>
 	Effect.gen(function* (_) {
-		const Ipc = yield* _(IpcProvider.Tag);
-		const UriDto = TypeConverter.Uri.fromApi(Uri);
+		const IPC = yield* _(IPCProvider.Tag);
+		const UriDTO = TypeConverter.Uri.fromAPI(Uri);
 		const RawStat = yield* _(
-			Ipc.SendRequest<any>("workspacefs_stat", [UriDto]),
+			IPC.SendRequest<any>("workspacefs_stat", [UriDTO]),
 		);
 		return {
 			type: RawStat.type ?? FileType.Unknown,
@@ -30,6 +30,6 @@ export const CreateStatEffect = (Uri: Uri) =>
 				new FileSystemError({ cause, operation: "Stat", uri: Uri }),
 		),
 		Effect.catchTag("FileSystemError", (e) =>
-			Effect.fail(MapToVscodeError(e)),
+			Effect.fail(MapToVSCodeError(e)),
 		),
 	);

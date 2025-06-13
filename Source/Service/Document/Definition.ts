@@ -7,12 +7,12 @@ import { Effect, Hub, Ref, Stream } from "effect";
 import type { TextDocument, Uri } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
 import type { DocumentEvent } from "./Type.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const DocumentMap = yield* _(Ref.make(new Map<string, TextDocument>()));
 	const EventHub = yield* _(Hub.unbounded<DocumentEvent>());
 
@@ -20,7 +20,7 @@ export const Definition = Effect.gen(function* (_) {
 
 	const AcceptModelAdded = (Data: any) =>
 		Effect.gen(function* (_) {
-			const Doc = TypeConverter.TextDocument.fromDto(Data);
+			const Doc = TypeConverter.TextDocument.fromDTO(Data);
 			yield* _(
 				Ref.update(DocumentMap, (map) =>
 					map.set(Doc.uri.toString(), Doc),
@@ -29,9 +29,9 @@ export const Definition = Effect.gen(function* (_) {
 			yield* _(Hub.publish(EventHub, { _tag: "Open", Document: Doc }));
 		});
 
-	const AcceptModelRemoved = (UriDto: any) =>
+	const AcceptModelRemoved = (UriDTO: any) =>
 		Effect.gen(function* (_) {
-			const Uri = TypeConverter.Uri.fromDto(UriDto);
+			const Uri = TypeConverter.Uri.fromDTO(UriDTO);
 			const Doc = (yield* _(Ref.get(DocumentMap))).get(Uri.toString());
 			if (Doc) {
 				yield* _(
@@ -46,16 +46,16 @@ export const Definition = Effect.gen(function* (_) {
 			}
 		});
 
-	const AcceptModelChanged = (UriDto: any, ChangeEventDto: any) =>
+	const AcceptModelChanged = (UriDTO: any, ChangeEventDTO: any) =>
 		Effect.gen(function* (_) {
-			const Uri = TypeConverter.Uri.fromDto(UriDto);
+			const Uri = TypeConverter.Uri.fromDTO(UriDTO);
 			const Doc = (yield* _(Ref.get(DocumentMap))).get(Uri.toString());
 			if (Doc) {
 				// A real implementation would update the document content here.
 				const ChangeEvent =
-					TypeConverter.TextDocumentChangeEvent.fromDto(
+					TypeConverter.TextDocumentChangeEvent.fromDTO(
 						Doc,
-						ChangeEventDto,
+						ChangeEventDTO,
 					);
 				yield* _(
 					Hub.publish(EventHub, {
@@ -67,13 +67,13 @@ export const Definition = Effect.gen(function* (_) {
 		});
 
 	// Register these handlers with the dispatcher
-	Ipc.RegisterInvokeHandler("$acceptModelAdded", ([data]) =>
+	IPC.RegisterInvokeHandler("$acceptModelAdded", ([data]) =>
 		Effect.runPromise(AcceptModelAdded(data)),
 	);
-	Ipc.RegisterInvokeHandler("$acceptModelRemoved", ([uri]) =>
+	IPC.RegisterInvokeHandler("$acceptModelRemoved", ([uri]) =>
 		Effect.runPromise(AcceptModelRemoved(uri)),
 	);
-	Ipc.RegisterInvokeHandler("$acceptModelChanged", ([uri, changes]) =>
+	IPC.RegisterInvokeHandler("$acceptModelChanged", ([uri, changes]) =>
 		Effect.runPromise(AcceptModelChanged(uri, changes)),
 	);
 

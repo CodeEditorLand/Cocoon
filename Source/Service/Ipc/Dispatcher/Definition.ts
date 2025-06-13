@@ -16,7 +16,7 @@ type InvokeHandler = (...Args: any[]) => Promise<any>;
 export const Definition = Effect.gen(function* (_) {
 	const Adapter = yield* _(ProtocolAdapterTag);
 	const Cancellation = yield* _(CancellationTokenTag);
-	const RpcProtocolInstance = new RPCProtocol(Adapter);
+	const RPCProtocolInstance = new RPCProtocol(Adapter);
 	const InvokeHandlers = yield* _(Ref.make(new Map<string, InvokeHandler>()));
 
 	const DispatchRequestEffect = (Method: string, Parameters: any[]) =>
@@ -34,7 +34,7 @@ export const Definition = Effect.gen(function* (_) {
 				return yield* _(
 					Effect.tryPromise(
 						() =>
-							(RpcProtocolInstance as any)._receiveRequest(
+							(RPCProtocolInstance as any)._receiveRequest(
 								0,
 								Method,
 								Parameters,
@@ -47,7 +47,7 @@ export const Definition = Effect.gen(function* (_) {
 	const DispatchNotificationEffect = (Method: string, Parameters: any[]) =>
 		Effect.sync(() => {
 			// VS Code's `_receiveNotification` is synchronous
-			(RpcProtocolInstance as any)._receiveNotification(
+			(RPCProtocolInstance as any)._receiveNotification(
 				Method,
 				Parameters,
 			);

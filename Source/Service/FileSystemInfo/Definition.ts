@@ -10,12 +10,12 @@ import type { UriComponents } from "vs/base/common/uri.js";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import { LogProvider } from "../Log.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const Log = yield* _(LogProvider.Tag);
 	const CapabilitiesMap = yield* _(
 		Ref.make(HashMap.empty<string, FileSystemProviderCapabilities>()),
@@ -89,10 +89,10 @@ export const Definition = Effect.gen(function* (_) {
 			}
 		});
 
-	Ipc.RegisterInvokeHandler("$acceptProviderInfos", ([uri, caps]) =>
+	IPC.RegisterInvokeHandler("$acceptProviderInfos", ([uri, caps]) =>
 		Effect.runPromise(AcceptProviderCapabilities(uri, caps)),
 	);
-	Ipc.RegisterInvokeHandler("$onFileEvent", ([events]) =>
+	IPC.RegisterInvokeHandler("$onFileEvent", ([events]) =>
 		OnDidChangeFileEvent.Fire(events).pipe(Effect.runPromise),
 	);
 

@@ -6,7 +6,7 @@
 import { Context, Effect, Stream } from "effect";
 import type {
 	Event,
-	TextDocumentShowOptions,
+	TextDocumentShowOption,
 	TextEditor,
 	ViewColumn,
 	WindowState,
@@ -16,7 +16,7 @@ import type {
  * The service interface for the core `vscode.window` properties and methods.
  * Note: Does NOT include methods handled by other services like `showQuickPick`
  * or `createStatusBarItem`. This interface is for internal composition. The
- * final `vscode.window` object is assembled in the ApiFactory.
+ * final `vscode.window` object is assembled in the APIFactory.
  */
 export interface Interface {
 	readonly state: WindowState;
@@ -35,7 +35,7 @@ export interface Interface {
 
 	readonly ShowTextDocument: (
 		documentOrUri: any,
-		columnOrOptions?: ViewColumn | TextDocumentShowOptions,
+		columnOrOption?: ViewColumn | TextDocumentShowOption,
 		preserveFocus?: boolean,
 	) => Effect.Effect<TextEditor, Error>;
 }

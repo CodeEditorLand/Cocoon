@@ -1,72 +1,72 @@
 /**
- * @module Definition (WebviewPanel)
- * @description The live implementation of the WebviewPanel service factory.
+ * @module Definition (WebViewPanel)
+ * @description The live implementation of the WebViewPanel service factory.
  */
 
 import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type { ViewColumn, WebviewOptions, WebviewPanelOptions } from "vscode";
+import type { ViewColumn, WebViewOption, WebViewPanelOption } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 import type { Interface } from "./Service.js";
-import { WebviewPanelImpl } from "./WebviewPanelImpl.js";
+import { WebViewPanelImpl } from "./WebViewPanelImplementation.js";
 
 export const Definition = Effect.gen(function* (_) {
-	const Ipc = yield* _(IpcProvider.Tag);
+	const IPC = yield* _(IPCProvider.Tag);
 	const ActivePanels = yield* _(
-		Ref.make(new Map<string, WebviewPanelImpl>()),
+		Ref.make(new Map<string, WebViewPanelImpl>()),
 	);
 
 	// --- RPC Handlers for events FROM Mountain ---
-	Ipc.RegisterInvokeHandler("$onDidDisposeWebview", ([handle]) => {
+	IPC.RegisterInvokeHandler("$onDidDisposeWebView", ([handle]) => {
 		// ... logic to find panel by handle and call its dispose() method ...
 	});
-	Ipc.RegisterInvokeHandler("$onDidReceiveMessage", ([handle, message]) => {
+	IPC.RegisterInvokeHandler("$onDidReceiveMessage", ([handle, message]) => {
 		// ... logic to find panel and call webview.FireDidReceiveMessage(message) ...
 	});
 
 	const ServiceImplementation: Interface = {
-		CreateWebviewPanel: (
+		CreateWebViewPanel: (
 			Extension,
 			ViewType,
 			Title,
-			ShowOptions,
-			Options = {},
+			ShowOption,
+			Option = {},
 		) =>
 			Effect.gen(function* (_) {
 				const ViewColumnValue =
-					typeof ShowOptions === "object"
-						? ShowOptions.viewColumn
-						: ShowOptions;
+					typeof ShowOption === "object"
+						? ShowOption.viewColumn
+						: ShowOption;
 				const PreserveFocus =
-					typeof ShowOptions === "object"
-						? !!ShowOptions.preserveFocus
+					typeof ShowOption === "object"
+						? !!ShowOption.preserveFocus
 						: false;
 
-				const SerializedShowOptions =
-					TypeConverter.Webview.ConvertShowOptionsToDto(
+				const SerializedShowOption =
+					TypeConverter.WebView.ConvertShowOptionToDTO(
 						ViewColumnValue,
 						PreserveFocus,
 					);
-				const SerializedPanelOptions =
-					TypeConverter.Webview.ConvertPanelOptionsToDto(Options);
-				const SerializedContentOptions =
-					TypeConverter.Webview.ConvertContentOptionsToDto(
+				const SerializedPanelOption =
+					TypeConverter.WebView.ConvertPanelOptionToDTO(Option);
+				const SerializedContentOption =
+					TypeConverter.WebView.ConvertContentOptionToDTO(
 						Extension,
-						Options,
+						Option,
 					);
 
 				const Handle = yield* _(
-					Ipc.SendRequest<string>("$createWebviewPanel", [
-						TypeConverter.Webview.ConvertExtensionDataToDto(
+					IPC.SendRequest<string>("$createWebViewPanel", [
+						TypeConverter.WebView.ConvertExtensionDataToDTO(
 							Extension,
 						),
 						ViewType,
 						Title,
-						SerializedShowOptions,
-						SerializedPanelOptions,
-						SerializedContentOptions,
+						SerializedShowOption,
+						SerializedPanelOption,
+						SerializedContentOption,
 						true,
 					]),
 				);
@@ -78,13 +78,13 @@ export const Definition = Effect.gen(function* (_) {
 					).pipe(Effect.runSync);
 				};
 
-				const Panel = new WebviewPanelImpl(
+				const Panel = new WebViewPanelImpl(
 					Handle,
-					Ipc,
+					IPC,
 					Extension,
 					onDispose,
 					Title,
-					Options,
+					Option,
 					ViewColumnValue,
 				);
 				yield* _(

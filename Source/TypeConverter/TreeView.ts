@@ -5,22 +5,21 @@
  */
 
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ThemeIcon as VscodeThemeIcon } from "vs/platform/theme/common/theme.js";
-import type * as Vscode from "vscode";
+import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Commands as CommandsConverter } from "./Command.js";
+import { Command as CommandConverter } from "./Command.js";
 import {
 	MarkdownString as MarkdownStringConverter,
 	Uri as UriConverter,
 } from "./Main.js";
 
-// --- Namespace for TreeViewOptions ---
-export namespace Options {
+// --- Namespace for TreeViewOption ---
+export namespace Option {
 	/**
-	 * Converts `vscode.TreeViewOptions` into a serializable DTO for the host.
+	 * Converts `vscode.TreeViewOption` into a serializable DTO for the host.
 	 */
-	export const fromApi = (options: Vscode.TreeViewOptions<any>): any => ({
+	export const fromAPI = (options: VSCode.TreeViewOption<any>): any => ({
 		ShowCollapseAll: !!options.showCollapseAll,
 		CanSelectMany: !!options.canSelectMany,
 		HasHandleDrag: !!options.dragAndDropController?.handleDrag,
@@ -33,13 +32,13 @@ export namespace Item {
 	/**
 	 * Converts a `vscode.TreeItem` object into a plain DTO for IPC.
 	 */
-	export const fromApi = (
-		Extension: IExtensionDescription,
-		Item: Vscode.TreeItem,
+	export const fromAPI = (
+		_Extension: IExtensionDescription,
+		Item: VSCode.TreeItem,
 		Handle: string,
 		ParentHandle: string | undefined,
-		CommandConverter: CommandsConverter.Interface,
-	): any /* returns a TreeItemDto */ => {
+		CommandConverter: CommandConverter.Interface,
+	): any /* returns a TreeItemDTO */ => {
 		const {
 			label,
 			id,
@@ -66,13 +65,13 @@ export namespace Item {
 			Id: id,
 			Description: description,
 			ResourceUri: resourceUri
-				? UriConverter.fromApi(resourceUri)
+				? UriConverter.fromAPI(resourceUri)
 				: undefined,
 			Tooltip:
 				typeof tooltip === "string"
 					? tooltip
 					: tooltip
-						? MarkdownStringConverter.fromApi(tooltip)
+						? MarkdownStringConverter.fromAPI(tooltip)
 						: undefined,
 			Command: command
 				? CommandConverter.ToInternal(command, [])
@@ -91,13 +90,13 @@ export namespace Item {
 	 * Revives a TreeItem DTO back into a `vscode.TreeItem` instance.
 	 * This is less common but needed for some API interactions.
 	 */
-	export const toApi = (dto: any): Vscode.TreeItem => {
+	export const toAPI = (dto: any): VSCode.TreeItem => {
 		const label = dto.Label.label;
 		const item = new ExtHostTypes.TreeItem(label, dto.CollapsibleState);
 		item.id = dto.Id;
 		item.description = dto.Description;
 		item.resourceUri = dto.ResourceUri
-			? UriConverter.toApi(dto.ResourceUri)
+			? UriConverter.toAPI(dto.ResourceUri)
 			: undefined;
 		// ... revive other properties ...
 		return item;

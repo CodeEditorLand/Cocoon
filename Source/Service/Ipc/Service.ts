@@ -8,7 +8,7 @@ import { Context, Effect } from "effect";
 import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
 import type { IDisposable } from "vscode";
 
-import type { IpcError } from "./Error.js";
+import type { IPCError } from "./Error.js";
 
 /**
  * The primary service interface for IPC.
@@ -21,7 +21,7 @@ import type { IpcError } from "./Error.js";
 export interface Interface {
 	/**
 	 * Sends a request to the `Mountain` host and returns an `Effect` that will
-	 * resolve with the response or fail with an `IpcError`.
+	 * resolve with the response or fail with an `IPCError`.
 	 *
 	 * @param Method The RPC method name to invoke on `Mountain`.
 	 * @param Parameter The parameters for the RPC method.
@@ -32,7 +32,7 @@ export interface Interface {
 		Method: string,
 		Parameter: unknown,
 		TimeoutMilliseconds?: number,
-	) => Effect.Effect<Res, IpcError>;
+	) => Effect.Effect<Res, IPCError>;
 
 	/**
 	 * Sends a fire-and-forget notification to the `Mountain` host.
@@ -44,13 +44,13 @@ export interface Interface {
 	readonly SendNotification: (
 		Method: string,
 		Parameter: unknown,
-	) => Effect.Effect<void, IpcError>;
+	) => Effect.Effect<void, IPCError>;
 
 	/**
 	 * Sends a cancellation signal for a previously sent request.
 	 * @param RequestId The ID of the request to cancel.
 	 */
-	readonly SendCancel: (RequestId: number) => Effect.Effect<void, IpcError>;
+	readonly SendCancel: (RequestId: number) => Effect.Effect<void, IPCError>;
 
 	/**
 	 * Creates an adapter that conforms to VS Code's `IMessagePassingProtocol`.
@@ -71,6 +71,6 @@ export interface Interface {
 }
 
 /**
- * The `Context.Tag` for the `Ipc.Service`.
+ * The `Context.Tag` for the `IPC.Service`.
  */
-export const Tag = Context.Tag<Interface>("Ipc/Service");
+export const Tag = Context.Tag<Interface>("IPC/Service");

@@ -18,11 +18,11 @@ export const Definition = Effect.gen(function* (_) {
 	const Log = yield* _(LogProvider.Tag);
 
 	const GlobalStorageUri = InitData.environment.globalStorageHome;
-	const WorkspaceStorageUri = InitData.environment.workspaceStorageHome;
+	const WorkSpaceStorageUri = InitData.environment.workspaceStorageHome;
 
 	// Ensure the base directories exist on startup.
 	yield* _(EnsureDirectory(GlobalStorageUri, "Global"));
-	yield* _(EnsureDirectory(WorkspaceStorageUri, "Workspace"));
+	yield* _(EnsureDirectory(WorkSpaceStorageUri, "WorkSpace"));
 
 	const GetPathForExtension = (
 		BaseUri: Uri | undefined,
@@ -39,8 +39,8 @@ export const Definition = Effect.gen(function* (_) {
 	};
 
 	const ServiceImplementation: Interface = {
-		GetWorkspaceStorageUri: (Extension) =>
-			GetPathForExtension(WorkspaceStorageUri, Extension),
+		GetWorkSpaceStorageUri: (Extension) =>
+			GetPathForExtension(WorkSpaceStorageUri, Extension),
 
 		GetGlobalStorageUri: (Extension) => {
 			const uri = GetPathForExtension(GlobalStorageUri, Extension);

@@ -5,13 +5,13 @@
 
 import type { UriComponents } from "vs/base/common/uri.js";
 
-import { URI as VscodeUri } from "../../Type/ExtHostTypes.js";
+import { URI as VSCodeUri } from "../../Type/ExtHostTypes.js";
 
 /**
  * Converts a `vscode.Uri` object into a plain JSON object for IPC.
  * This uses the canonical `.toJSON()` method.
  */
-export const fromApi = (uri: VscodeUri): UriComponents => {
+export const fromAPI = (uri: VSCodeUri): UriComponents => {
 	return uri.toJSON();
 };
 
@@ -19,6 +19,6 @@ export const fromApi = (uri: VscodeUri): UriComponents => {
  * Revives a URI DTO back into a `vscode.Uri` class instance.
  * This uses the canonical `Uri.revive()` static method.
  */
-export const toApi = (dto: UriComponents): VscodeUri => {
-	return VscodeUri.revive(dto);
+export const toAPI = (dto: UriComponents): VSCodeUri => {
+	return VSCodeUri.revive(dto);
 };

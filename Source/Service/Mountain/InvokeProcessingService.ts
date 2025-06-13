@@ -6,7 +6,7 @@
 import { Effect } from "effect";
 
 import { ProcessingServiceError } from "../../Command/ProcessUserData/Error.js"; // Re-using the error type
-import { IpcProvider } from "../Ipc.js";
+import { IPCProvider } from "../IPC.js";
 
 /**
  * The expected structure of the successful result from the processing service.
@@ -21,7 +21,7 @@ interface ProcessingResult {
  * the main IPC channel.
  *
  * This function abstracts the underlying RPC call, making it a reusable business
- * action. It depends on the `IpcProvider` service to handle the communication.
+ * action. It depends on the `IPCProvider` service to handle the communication.
  *
  * @param TextContent - The text content to be sent for processing.
  * @returns An `Effect` that resolves with the `ProcessingResult` from the backend,
@@ -31,10 +31,10 @@ export const InvokeProcessingService = (
 	TextContent: string,
 ): Effect.Effect<ProcessingResult, ProcessingServiceError> =>
 	Effect.gen(function* (_) {
-		const Ipc = yield* _(IpcProvider.Tag);
+		const IPC = yield* _(IPCProvider.Tag);
 
 		const Result = yield* _(
-			Ipc.SendRequest<ProcessingResult, Error>(
+			IPC.SendRequest<ProcessingResult, Error>(
 				"$processText", // The conventional RPC method name
 				{ Content: TextContent },
 			),

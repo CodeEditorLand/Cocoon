@@ -15,8 +15,8 @@ import type {
 
 import * as TypeConverter from "../../TypeConverter.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { Commands } from "../Command.js";
-import { IpcProvider } from "../Ipc.js";
+import { Command } from "../Command.js";
+import { IPCProvider } from "../IPC.js";
 
 let HandleCounter = 0;
 
@@ -40,8 +40,8 @@ export class TreeViewImpl<T> implements TreeView<T> {
 	constructor(
 		private readonly ViewId: string,
 		private readonly DataProvider: TreeDataProvider<T>,
-		private readonly Ipc: IpcProvider.Interface,
-		private readonly CommandConverter: any, // Placeholder for CommandsConverter
+		private readonly IPC: IPCProvider.Interface,
+		private readonly CommandConverter: any, // Placeholder for CommandConverter
 		private readonly Extension: IExtensionDescription,
 	) {
 		if (this.DataProvider.onDidChangeTreeData) {
@@ -55,7 +55,7 @@ export class TreeViewImpl<T> implements TreeView<T> {
 			"200 millis",
 		);
 		Stream.runForEach(DebouncedRefresh, (elements) =>
-			this.Ipc.SendNotification(`$refreshTreeView`, [
+			this.IPC.SendNotification(`$refreshTreeView`, [
 				this.ViewId,
 				this.getHandlesToRefresh(elements),
 			]),
@@ -87,7 +87,7 @@ export class TreeViewImpl<T> implements TreeView<T> {
 				const handle = this.getHandleForElement(element);
 				this.NodeCache.set(element, treeItem);
 				this.HandleCache.set(handle, element);
-				return TypeConverter.TreeView.Item.fromApi(
+				return TypeConverter.TreeView.Item.fromAPI(
 					this.Extension,
 					treeItem,
 					handle,
@@ -108,7 +108,7 @@ export class TreeViewImpl<T> implements TreeView<T> {
 	// Public API Methods
 	reveal = (element: T, options?: any) =>
 		Effect.runPromise(
-			this.Ipc.SendNotification("$revealTreeViewItem", [
+			this.IPC.SendNotification("$revealTreeViewItem", [
 				this.ViewId,
 				this.getHandleForElement(element),
 				options,
