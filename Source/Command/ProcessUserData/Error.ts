@@ -8,7 +8,7 @@ import { Data } from "effect";
 export class ActiveEditorNotFoundError extends Data.TaggedError(
 	"ActiveEditorNotFoundError",
 )<{}> {
-	message = "No active text editor found. Please open a file to process.";
+	override message = "No active text editor found. Please open a file to process.";
 }
 
 export class ProcessingServiceError extends Data.TaggedError(
@@ -16,7 +16,7 @@ export class ProcessingServiceError extends Data.TaggedError(
 )<{
 	readonly cause: unknown;
 }> {
-	get message() {
+	override get message() {
 		const causeMessage =
 			this.cause instanceof Error
 				? this.cause.message
