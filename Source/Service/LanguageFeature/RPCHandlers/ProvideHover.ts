@@ -70,7 +70,7 @@ export function ProvideHover(
 			{} as any,
 			() => undefined,
 		);
-		return TypeConverter.Hover.fromAPI(result as Hover, commandConverter);
+		return TypeConverter.Hover.FromAPI(result as Hover, commandConverter);
 	}).pipe(
 		Effect.scoped, // Ensures the cancellation token's scope is properly handled
 		Effect.catchAll(() => Effect.succeed(undefined)), // Return undefined on any failure

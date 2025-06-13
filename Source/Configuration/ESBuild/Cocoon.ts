@@ -6,7 +6,7 @@
  * Export: Clean, On
  */
 
-import type { BuildOption } from "esbuild";
+import type { BuildOptions } from "esbuild";
 
 export const On =
 	process.env["NODE_ENV"] === "development" ||
@@ -66,6 +66,6 @@ export default {
 		},
 	],
 	outbase: "Source/Configuration",
-} satisfies BuildOption as BuildOption;
+} satisfies BuildOptions as BuildOptions;
 
 export const { sep, posix } = await import("node:path");

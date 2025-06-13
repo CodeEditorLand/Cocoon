@@ -47,7 +47,7 @@ export function RegisterProvider<T>(
 		);
 
 		const selectorDTO =
-			TypeConverter.Main.DocumentSelector.fromAPI(Selector);
+			TypeConverter.Main.DocumentSelector.FromAPI(Selector);
 
 		IPCService.SendNotification(`$register${ProviderType}Provider`, [
 			Handle,

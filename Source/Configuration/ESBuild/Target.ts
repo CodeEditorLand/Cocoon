@@ -33,7 +33,7 @@
 //
 //--------------------------------------------------------------------------------------------*/
 
-import type { BuildOption } from "esbuild";
+import type { BuildOptions } from "esbuild";
 
 // Import the global API function name constant from the compiled interceptor module.
 // This ensures the build configuration uses the exact same string that the interceptor expects.
@@ -56,7 +56,7 @@ export const On = (await import("./Cocoon.js")).On;
  * @param Current - The current BuildOption, potentially passed from a preceding build step or CLI.
  * @returns A Promise resolving to the configured BuildOption for esbuild.
  */
-export default async (Current: BuildOption): Promise<BuildOption> => {
+export default async (Current: BuildOptions): Promise<BuildOptions> => {
 	// Asynchronously import dependencies for the configuration logic.
 	const [deepmergeMod, cocoonMod, ulidMod, playformBuildEntryMod] =
 		await Promise.all([
@@ -76,12 +76,12 @@ export default async (Current: BuildOption): Promise<BuildOption> => {
 	const { deepmerge } = deepmergeMod;
 
 	// Base configuration
-	const CocoonDefaultConfig = cocoonMod.default as BuildOption;
+	const CocoonDefaultConfig = cocoonMod.default as BuildOptions;
 
 	const { ulid } = ulidMod;
 
 	const getEntryPoints = playformBuildEntryMod.default as (
-		current: BuildOption,
+		current: BuildOptions,
 
 		patterns: string[],
 
@@ -89,7 +89,7 @@ export default async (Current: BuildOption): Promise<BuildOption> => {
 	) => string[] | Record<string, string>;
 
 	// Merge the base configuration with specific overrides and additions.
-	return deepmerge<[BuildOption, BuildOption]>(CocoonDefaultConfig, {
+	return deepmerge<[BuildOptions, BuildOptions]>(CocoonDefaultConfig, {
 		// Specifies the output directory for compiled files.
 		outdir: "Target",
 

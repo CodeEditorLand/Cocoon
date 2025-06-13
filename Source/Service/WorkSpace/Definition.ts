@@ -149,7 +149,7 @@ export const Definition = Effect.gen(function* (_) {
 		getConfiguration: ConfigurationService.GetConfiguration,
 		applyEdit: (edit) =>
 			IPCService.SendRequest<boolean>("$applyWorkspaceEdit", [
-				TypeConverter.WorkSpaceEdit.fromAPI(edit),
+				TypeConverter.WorkSpaceEdit.FromAPI(edit),
 			]).pipe(Effect.runPromise),
 
 		// --- Delegated Properties & Events ---

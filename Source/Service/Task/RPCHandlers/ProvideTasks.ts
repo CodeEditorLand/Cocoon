@@ -48,7 +48,7 @@ export function ProvideTasks(
 		}
 
 		return Tasks.map((task) =>
-			TypeConverter.Task.fromAPI(task, Entry.extension),
+			TypeConverter.Task.FromAPI(task, Entry.extension),
 		);
 	}).pipe(
 		Effect.scoped, // Ensures cancellation token scope is handled
