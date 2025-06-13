@@ -22,12 +22,12 @@ import { TerminateOnParentExit } from "./TerminateOnParentExit.js";
 
 // --- Re-export individual patches for granular use or testing if needed ---
 export * from "./BlockNativesModule.js";
-export * as ProcessError from "./Error/mod.js";
+export * as ProcessError from "./Error.js";
 export * from "./HandleExceptions.js";
 export * from "./PatchProcessCrash.js";
 export * from "./PatchProcessExit.js";
 export * from "./PipeLogging.js";
-export * as ProcessPatch from "./ProcessPatch/mod.js";
+export * as ProcessPatch from "./ProcessPatch.js";
 export * from "./SetElectronRunAsNode.js";
 export * from "./SetStackTraceLimit.js";
 export * from "./SetupEnvironment.js";

@@ -7,7 +7,7 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveClient } from "../Client/mod.js";
+import { Live as LiveClient } from "../Client.js";
 import { Config } from "../Config.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";

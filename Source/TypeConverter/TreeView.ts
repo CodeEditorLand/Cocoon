@@ -9,7 +9,7 @@ import { ThemeIcon as VscodeThemeIcon } from "vs/platform/theme/common/theme.js"
 import type * as Vscode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Commands as CommandsConverter } from "./Command/mod.js";
+import { Commands as CommandsConverter } from "./Command.js";
 import {
 	MarkdownString as MarkdownStringConverter,
 	Uri as UriConverter,

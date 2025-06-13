@@ -7,7 +7,7 @@ import { Effect, Stream } from "effect";
 import type { Event, SecretStorage, SecretStorageChangeEvent } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import { LogProvider } from "../Log.js";
 import { EmptyKeyError, InvalidValueError } from "./Error.js";
 

@@ -14,7 +14,7 @@ import {
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
 
 import { InitDataService } from "./InitData.js";
-import { IpcProvider } from "./Ipc/mod.js";
+import { IpcProvider } from "./Ipc.js";
 import { LogProvider } from "./Log.js";
 
 // --- Service Definition ---

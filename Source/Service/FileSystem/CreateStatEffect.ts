@@ -6,8 +6,8 @@
 import { Effect } from "effect";
 import { FileType, type FileStat, type Uri } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
+import { IpcProvider } from "../Ipc.js";
 import { FileSystemError, MapToVscodeError } from "./Error.js";
 
 export const CreateStatEffect = (Uri: Uri) =>

@@ -5,12 +5,12 @@
 
 import { Effect, Ref } from "effect";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { ConfigurationProvider } from "../Configuration/mod.js";
-import { DocumentsProvider } from "../Document/mod.js";
-import { FileSystemProvider } from "../FileSystem/mod.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { ConfigurationProvider } from "../Configuration.js";
+import { DocumentsProvider } from "../Document.js";
+import { FileSystemProvider } from "../FileSystem.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 import { InternalWorkspace } from "./State.js";
 import { FindFilesEffect } from "./Support/FindFiles.js";

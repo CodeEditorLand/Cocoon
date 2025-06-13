@@ -5,9 +5,9 @@
 
 import { Effect, Ref } from "effect";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
-import { Commands } from "../Command/mod.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
+import { Commands } from "../Command.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 import { TreeViewImpl } from "./TreeViewImpl.js";
 

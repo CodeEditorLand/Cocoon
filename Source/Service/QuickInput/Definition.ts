@@ -14,7 +14,7 @@ import type {
 } from "vscode";
 
 import * as QuickInputConverter from "../../TypeConverter/QuickInput.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {

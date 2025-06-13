@@ -6,8 +6,8 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveCancellation } from "../../Cancellation/mod.js";
-import { Live as LiveProtocolAdapter } from "../ProtocolAdapter/mod.js";
+import { Live as LiveCancellation } from "../../Cancellation.js";
+import { Live as LiveProtocolAdapter } from "../ProtocolAdapter.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
 

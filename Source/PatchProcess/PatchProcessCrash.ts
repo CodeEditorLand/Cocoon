@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 
-import { ProcessPatch } from "./ProcessPatch/mod.js";
+import { ProcessPatch } from "./ProcessPatch.js";
 
 /**
  * An Effect that replaces the `process.crash()` function if it exists.

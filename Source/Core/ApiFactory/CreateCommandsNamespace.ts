@@ -8,7 +8,7 @@ import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as Vscode from "vscode";
 
-import type { Commands as CommandsService } from "../../Service/mod.js";
+import type { Commands as CommandsService } from "../../Service.js";
 
 /**
  * Creates the `vscode.commands` namespace object.

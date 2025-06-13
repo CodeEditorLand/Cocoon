@@ -12,7 +12,7 @@ import type {
 } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import type { Ipc } from "../Ipc/mod.js";
+import type { Ipc } from "../Ipc.js";
 import type { Log } from "../Log.js";
 
 enum MementoScope {

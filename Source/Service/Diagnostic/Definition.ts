@@ -7,7 +7,7 @@ import { Effect } from "effect";
 import type { Uri } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import { DiagnosticCollectionImpl } from "./DiagnosticCollectionImpl.js";
 import type { Interface } from "./Service.js";
 

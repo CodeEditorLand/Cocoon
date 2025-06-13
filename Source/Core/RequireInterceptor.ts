@@ -7,8 +7,8 @@
 import { Layer } from "effect";
 
 import { Live as LiveLog } from "../../Service/Log.js";
-import { Live as LiveApiFactory } from "../ApiFactory/mod.js";
-import { Live as LiveExtensionPaths } from "../ExtensionPath/mod.js";
+import { Live as LiveApiFactory } from "../ApiFactory.js";
+import { Live as LiveExtensionPaths } from "../ExtensionPath.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
 

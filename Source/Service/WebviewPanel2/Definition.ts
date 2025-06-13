@@ -7,8 +7,8 @@ import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { ViewColumn, WebviewOptions, WebviewPanelOptions } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 import { WebviewPanelImpl } from "./WebviewPanelImpl.js";
 

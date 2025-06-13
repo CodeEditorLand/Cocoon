@@ -7,8 +7,8 @@ import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Disposable, type DocumentSelector } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
-import type { Ipc } from "../Ipc/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
+import type { Ipc } from "../Ipc.js";
 
 let HandleCounter = 0;
 

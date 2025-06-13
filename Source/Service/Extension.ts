@@ -6,7 +6,7 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveExtensionHost } from "../../Core/ExtensionHost/mod.js";
+import { Live as LiveExtensionHost } from "../../Core/ExtensionHost.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
 

@@ -10,7 +10,7 @@
  */
 
 export * as CodeAction from "./CodeAction.js";
-export * as Commands from "./Commands/mod.js";
+export * as Commands from "./Commands.js";
 export * as Completion from "./Completion.js";
 export * as Diagnostic from "./Diagnostic.js";
 export * as Dialog from "./Dialog.js";
@@ -21,7 +21,7 @@ export * as QuickInput from "./QuickInput.js";
 export * as StatusBar from "./StatusBar.js";
 export * as Task from "./Task.js";
 export * as TreeView from "./TreeView.js";
-export * as Webview from "./Webview/mod.js";
+export * as Webview from "./Webview.js";
 export * as WorkspaceEdit from "./WorkspaceEdit.js";
 
 // Re-exporting specific converters from Main for convenience

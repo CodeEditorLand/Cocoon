@@ -6,7 +6,7 @@
 import { Effect } from "effect";
 import type { Uri } from "vscode";
 
-import { FileSystem } from "../../FileSystem/mod.js";
+import { FileSystem } from "../../FileSystem.js";
 import { Log } from "../../Log.js";
 
 /**

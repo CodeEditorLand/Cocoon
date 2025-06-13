@@ -8,11 +8,11 @@ import { Schemas } from "vs/base/common/network.js";
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 import { UIKind, type Uri } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { ClipboardProvider } from "../Clipboard/mod.js";
+import { ClipboardProvider } from "../Clipboard.js";
 import { InitDataService } from "../InitData.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {

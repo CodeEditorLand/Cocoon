@@ -5,7 +5,7 @@
 
 import { Effect, Ref } from "effect";
 
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import { RegisterProvider } from "./RegisterProvider.js";
 import { ProvideHover } from "./RpcHandlers/ProvideHover.js";
 import type { Interface } from "./Service.js";

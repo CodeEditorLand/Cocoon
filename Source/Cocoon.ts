@@ -13,13 +13,13 @@
 import * as Path from "path";
 import { Barrier, Context, Effect, Layer, Scope } from "effect";
 
+import { CoreServicesLayer } from "./Core.js";
 import { ExtensionHost } from "./Core/ExtensionHost.js";
-import { CoreServicesLayer } from "./Core/mod.js";
 import { RequireInterceptor } from "./Core/RequireInterceptor.js";
-import { RunProcessPatches } from "./PatchProcess/mod.js";
+import { RunProcessPatches } from "./PatchProcess.js";
+import { AllServicesLayer } from "./Service.js";
 import { InitDataLayer } from "./Service/InitData.js";
-import { IpcProvider, Live as LiveIpc } from "./Service/Ipc/mod.js";
-import { AllServicesLayer } from "./Service/mod.js";
+import { IpcProvider, Live as LiveIpc } from "./Service/Ipc.js";
 import type { IExtensionHostInitData } from "./Type/vscode-proposed.js";
 
 // --- Pre-initialization Steps ---

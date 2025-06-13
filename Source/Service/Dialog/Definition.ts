@@ -8,7 +8,7 @@ import { isCancellationError } from "vs/base/common/errors.js";
 import type { CancellationToken } from "vscode";
 
 import * as DialogConverter from "../../TypeConverter/Dialog.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 import type { OpenDialogOptions, SaveDialogOptions } from "./Type.js";
 

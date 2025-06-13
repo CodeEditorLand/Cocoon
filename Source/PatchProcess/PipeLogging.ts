@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 
-import { IpcProvider } from "../Service/Ipc/mod.js";
+import { IpcProvider } from "../Service/Ipc.js";
 
 /**
  * A robust JSON stringifier that handles circular references and special types

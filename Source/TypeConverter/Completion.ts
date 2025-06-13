@@ -10,7 +10,7 @@ import * as ExtHostProtocol from "vs/workbench/api/common/extHost.protocol.js";
 import type * as Vscode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Commands as CommandsConverter } from "./Command/mod.js";
+import { Commands as CommandsConverter } from "./Command.js";
 import {
 	MarkdownString as MarkdownStringConverter,
 	Range as RangeConverter,

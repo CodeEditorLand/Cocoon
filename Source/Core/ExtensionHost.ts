@@ -6,12 +6,12 @@
 
 import { Layer } from "effect";
 
-import { InitDataService } from "../../Service/InitData.js";
-import { Live as LiveIpc } from "../../Service/Ipc/mod.js";
-import { Live as LiveLog } from "../../Service/Log.js";
-import { Live as LiveApiFactory } from "../ApiFactory/mod.js";
-import { Definition } from "./Definition.js";
-import { Tag } from "./Service.js";
+import { InitDataService } from "../Service/InitData.js";
+import { Live as LiveIpc } from "../Service/Ipc.js";
+import { Live as LiveLog } from "../Service/Log.js";
+import { Live as LiveApiFactory } from "./ApiFactory.js";
+import { Definition } from "./ExtensionHost/Definition.js";
+import { Tag } from "./ExtensionHost/Service.js";
 
 /**
  * The live implementation layer for the ExtensionHost service.

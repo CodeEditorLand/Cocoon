@@ -11,7 +11,7 @@ import { Emitter } from "vs/base/common/event.js";
 
 import { Tag as ClientTag } from "../Client/Service.js";
 import { IpcError } from "../Error.js";
-import { RpcDataPayload } from "../Generated/mod.js";
+import { RpcDataPayload } from "../Generated.js";
 import type { Interface } from "./Service.js";
 
 /**

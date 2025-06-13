@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 
-import { ProcessPatchError } from "./Error/mod.js";
+import { ProcessPatchError } from "./Error.js";
 
 /**
  * An Effect that sets the `VSCODE_CWD` environment variable if it is not already set.

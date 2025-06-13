@@ -16,8 +16,8 @@ import {
 	GenericRequest,
 	GenericResponse,
 	RpcDataPayload,
-} from "../Generated/mod.js";
-import { DecodeValue, EncodeValue } from "../ProtoConverter/mod.js";
+} from "../Generated.js";
+import { DecodeValue, EncodeValue } from "../ProtoConverter.js";
 
 /**
  * Builds the object containing all the RPC method handlers. These handlers

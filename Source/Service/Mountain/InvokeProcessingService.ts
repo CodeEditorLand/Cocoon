@@ -6,7 +6,7 @@
 import { Effect } from "effect";
 
 import { ProcessingServiceError } from "../../Command/ProcessUserData/Error.js"; // Re-using the error type
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 
 /**
  * The expected structure of the successful result from the processing service.

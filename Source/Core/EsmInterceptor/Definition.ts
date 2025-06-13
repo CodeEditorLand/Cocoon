@@ -8,7 +8,7 @@ import * as Module from "node:module";
 import { MessageChannel, type MessagePort } from "node:worker_threads";
 import { BidirectionalMap, Effect, pipe, Ref, Scope } from "effect";
 
-import { Tag as ApiFactoryTag } from "../ApiFactory/mod.js";
+import { Tag as ApiFactoryTag } from "../ApiFactory.js";
 import { LOADER_HOOK_SCRIPT_FILENAME } from "./Constants.js";
 import { HandleResolveRequest } from "./HandleResolveRequest.js";
 import { LoadHookScript } from "./LoadHookScript.js";

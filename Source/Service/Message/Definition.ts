@@ -6,7 +6,7 @@
 import { Effect } from "effect";
 import type { MessageItem, MessageOptions } from "vscode";
 
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 import { ParseArgument } from "./Support/ParseArgument.js";
 import type { ExtensionSource } from "./Type.js";

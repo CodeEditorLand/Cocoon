@@ -12,8 +12,8 @@ import type {
 	Uri,
 } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
-import type { Ipc } from "../Ipc/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
+import type { Ipc } from "../Ipc.js";
 
 export class DiagnosticCollectionImpl implements DiagnosticCollection {
 	private _isDisposed = false;

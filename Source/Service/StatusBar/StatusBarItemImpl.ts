@@ -14,8 +14,8 @@ import type {
 	StatusBarItem,
 } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
-import type { Ipc } from "../Ipc/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
+import type { Ipc } from "../Ipc.js";
 
 export class StatusBarItemImpl implements StatusBarItem {
 	private _isDisposed = false;

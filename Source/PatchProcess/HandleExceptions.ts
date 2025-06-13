@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 
-import { IpcProvider } from "../Service/Ipc/mod.js";
+import { IpcProvider } from "../Service/Ipc.js";
 
 /**
  * An Effect that, when executed, attaches listeners to the Node.js `process`

@@ -6,10 +6,10 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveConfiguration } from "../Configuration/mod.js";
-import { Live as LiveDocuments } from "../Documents/mod.js";
-import { Live as LiveFileSystem } from "../FileSystem/mod.js";
-import { Live as LiveIpc } from "../Ipc/mod.js";
+import { Live as LiveConfiguration } from "../Configuration.js";
+import { Live as LiveDocuments } from "../Documents.js";
+import { Live as LiveFileSystem } from "../FileSystem.js";
+import { Live as LiveIpc } from "../Ipc.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
 

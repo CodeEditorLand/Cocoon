@@ -6,8 +6,8 @@
 
 import { Effect } from "effect";
 
-import { ExitPreventedError } from "./Error/mod.js";
-import { ProcessPatch } from "./ProcessPatch/mod.js";
+import { ExitPreventedError } from "./Error.js";
+import { ProcessPatch } from "./ProcessPatch.js";
 
 /**
  * An Effect that replaces the global `process.exit` function with a controlled version.

@@ -7,7 +7,7 @@ import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Disposable, StatusBarAlignment } from "vscode";
 
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 import { StatusBarItemImpl } from "./StatusBarItemImpl.js";
 

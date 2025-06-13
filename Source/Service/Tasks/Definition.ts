@@ -6,9 +6,9 @@
 import { Effect, Ref, Stream } from "effect";
 import { Disposable } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import { ProvideTasks } from "./RpcHandlers/ProvideTasks.js";
 import type { Interface } from "./Service.js";
 

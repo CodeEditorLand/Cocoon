@@ -6,7 +6,7 @@
 import { Effect, Ref } from "effect";
 import { Disposable } from "vscode";
 
-import type { Ipc } from "../Ipc/mod.js";
+import type { Ipc } from "../Ipc.js";
 
 let HandleCounter = 0;
 

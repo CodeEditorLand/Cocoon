@@ -6,8 +6,8 @@
 import { Effect, Hub, Ref, Stream } from "effect";
 import type { TextDocument, Uri } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 import type { DocumentEvent } from "./Type.js";
 

@@ -6,9 +6,9 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveClipboard } from "../Clipboard/mod.js";
+import { Live as LiveClipboard } from "../Clipboard.js";
 import { InitDataService } from "../InitData.js";
-import { Live as LiveIpc } from "../Ipc/mod.js";
+import { Live as LiveIpc } from "../Ipc.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
 

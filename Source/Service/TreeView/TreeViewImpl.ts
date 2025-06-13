@@ -13,10 +13,10 @@ import type {
 	TreeViewVisibilityChangeEvent,
 } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { Commands } from "../Command/mod.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { Commands } from "../Command.js";
+import { IpcProvider } from "../Ipc.js";
 
 let HandleCounter = 0;
 

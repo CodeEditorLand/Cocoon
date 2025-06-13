@@ -9,9 +9,9 @@ import { Effect, Stream } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/mod.js";
+import * as TypeConverter from "../../TypeConverter.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import type { Ipc } from "../Ipc/mod.js";
+import type { Ipc } from "../Ipc.js";
 
 export class WebviewImpl implements Webview {
 	// --- Private State ---

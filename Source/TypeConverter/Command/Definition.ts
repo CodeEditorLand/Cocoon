@@ -7,7 +7,7 @@ import type { IDisposable } from "vs/base/common/lifecycle.js";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type * as Vscode from "vscode";
 
-import { Commands as CommandsService } from "../../Service/Command/mod.js";
+import { Commands as CommandsService } from "../../Service/Command.js";
 import type { Interface } from "./Service.js";
 import type { ApiCommand } from "./Type.js";
 

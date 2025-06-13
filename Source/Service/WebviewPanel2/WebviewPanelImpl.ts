@@ -16,8 +16,8 @@ import type {
 } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import type { Ipc } from "../Ipc/mod.js";
-import { WebviewImpl } from "../Webview/WebviewImpl.js";
+import type { Ipc } from "../Ipc.js";
+import { WebviewImpl } from "../Webview2/WebviewImpl.js";
 
 export class WebviewPanelImpl implements WebviewPanel {
 	private _isDisposed = false;

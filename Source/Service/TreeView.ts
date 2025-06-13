@@ -6,8 +6,8 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveCommands } from "../Commands/mod.js";
-import { Live as LiveIpc } from "../Ipc/mod.js";
+import { Live as LiveCommands } from "../Commands.js";
+import { Live as LiveIpc } from "../Ipc.js";
 import { Definition } from "./Definition.js";
 import { Tag } from "./Service.js";
 

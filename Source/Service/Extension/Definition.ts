@@ -6,7 +6,7 @@
 import { Effect, Stream } from "effect";
 import type { Extension } from "vscode";
 
-import { ExtensionHost } from "../../Core/ExtensionHost/mod.js";
+import { ExtensionHost } from "../../Core/ExtensionHost.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
 import { CreateApiObject } from "./CreateApiObject.js";
 import type { Interface } from "./Service.js";

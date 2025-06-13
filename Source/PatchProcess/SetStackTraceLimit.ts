@@ -5,7 +5,7 @@
 
 import { Effect } from "effect";
 
-import { ProcessPatchError } from "./Error/mod.js";
+import { ProcessPatchError } from "./Error.js";
 
 /**
  * An Effect that increases `Error.stackTraceLimit` to 100.

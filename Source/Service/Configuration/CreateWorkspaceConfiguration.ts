@@ -8,7 +8,7 @@ import { Effect } from "effect";
 import { deepClone } from "vs/base/common/objects.js";
 import type { ConfigurationTarget } from "vscode";
 
-import type { Ipc } from "../Ipc/mod.js";
+import type { Ipc } from "../Ipc.js";
 import type { Log } from "../Log.js";
 import type { WorkspaceConfiguration } from "./Type.js";
 

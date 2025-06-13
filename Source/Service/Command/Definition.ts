@@ -7,7 +7,7 @@ import { Effect, Ref } from "effect";
 import { Disposable } from "vscode";
 
 import { CommandsConverter } from "../../TypeConverter/Command.js"; // Assume this exists
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import { TelemetryProvider } from "../Telemetry.js";
 import type { Interface } from "./Service.js";
 import type { CommandHandler, CommandHandlerEntry } from "./Type.js";

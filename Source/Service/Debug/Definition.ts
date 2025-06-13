@@ -10,7 +10,7 @@ import type {
 } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import { RegisterProviderEffect } from "./RegisterProvider.js";
 import type { Interface } from "./Service.js";
 

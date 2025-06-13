@@ -5,7 +5,7 @@
 
 import { Effect } from "effect";
 
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import { LogProvider } from "../Log.js";
 import { SecretStorageImpl } from "./SecretStorageImpl.js";
 import type { Interface } from "./Service.js";

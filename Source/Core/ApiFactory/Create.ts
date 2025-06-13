@@ -7,7 +7,7 @@
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as Vscode from "vscode";
 
-import type * as Service from "../../Service/mod.js";
+import type * as Service from "../../Service.js";
 import * as ExtHostType from "../../Type/ExtHostTypes.js";
 import { AsExtensionEvent } from "./AsExtensionEvent.js";
 import { CreateCommandsNamespace } from "./CreateCommandsNamespace.js";

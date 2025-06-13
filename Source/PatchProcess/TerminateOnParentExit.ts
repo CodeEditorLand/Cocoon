@@ -6,7 +6,7 @@
 
 import { Effect, Schedule } from "effect";
 
-import { ProcessPatchError } from "./Error/mod.js";
+import { ProcessPatchError } from "./Error.js";
 
 /**
  * An Effect that, when forked as a daemon, periodically checks for the existence

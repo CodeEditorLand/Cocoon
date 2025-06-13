@@ -7,7 +7,7 @@ import { Effect, Ref } from "effect";
 import type { WindowState } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 
 export const Definition = Effect.gen(function* (_) {

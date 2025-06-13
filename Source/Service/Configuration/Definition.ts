@@ -7,7 +7,7 @@ import { Effect, Ref } from "effect";
 import type { ConfigurationChangeEvent } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import { LogProvider } from "../Log.js";
 import { CreateWorkspaceConfiguration } from "./CreateWorkspaceConfiguration.js";
 import type { Interface } from "./Service.js";

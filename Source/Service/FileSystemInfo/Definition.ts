@@ -10,7 +10,7 @@ import type { UriComponents } from "vs/base/common/uri.js";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import { LogProvider } from "../Log.js";
 import type { Interface } from "./Service.js";
 

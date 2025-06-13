@@ -10,7 +10,7 @@ import { Uri } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
 import { InitDataService } from "../InitData.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import type { Interface } from "./Service.js";
 import { FetchBundleEffect } from "./Support/FetchBundle.js";
 

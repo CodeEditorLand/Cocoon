@@ -7,12 +7,12 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveClient } from "./Client/mod.js";
+import { Live as LiveClient } from "./Client.js";
 import { ConfigTag, type Config } from "./Config.js";
 import { Definition } from "./Definition.js";
-import { Live as LiveDispatcher } from "./Dispatcher/mod.js";
-import { Live as LiveProtocolAdapter } from "./ProtocolAdapter/mod.js";
-import { Live as LiveServer } from "./Server/mod.js";
+import { Live as LiveDispatcher } from "./Dispatcher.js";
+import { Live as LiveProtocolAdapter } from "./ProtocolAdapter.js";
+import { Live as LiveServer } from "./Server.js";
 import { Tag } from "./Service.js";
 
 export { Tag, type Interface } from "./Service.js";

@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 
-import { ProcessPatchError } from "./Error/mod.js";
+import { ProcessPatchError } from "./Error.js";
 
 /**
  * An Effect that sets the `ELECTRON_RUN_AS_NODE` environment variable to '1'.

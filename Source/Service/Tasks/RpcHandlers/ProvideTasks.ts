@@ -6,7 +6,7 @@
 import { Effect } from "effect";
 import type { TaskProvider } from "vscode";
 
-import * as TypeConverter from "../../../TypeConverter/mod.js";
+import * as TypeConverter from "../../../TypeConverter.js";
 
 /**
  * An Effect that handles the `$provideTasks` RPC call from Mountain.

@@ -7,7 +7,7 @@
 import { Layer } from "effect";
 
 import type { Config } from "../Config.js";
-import { Live as LiveDispatcher } from "../Dispatcher/mod.js";
+import { Live as LiveDispatcher } from "../Dispatcher.js";
 import type { GrpcConnectionError } from "../Error.js";
 import { Acquire } from "./Acquire.js";
 import { Tag, type Service } from "./Service.js";

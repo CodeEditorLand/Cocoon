@@ -4,9 +4,9 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveApiDeprecation } from "./ApiDeprecation/mod.js";
-import { Live as LiveAuthentication } from "./Authentication/mod.js";
-import { Live as LiveCancellation } from "./Cancellation/mod.js";
+import { Live as LiveApiDeprecation } from "./ApiDeprecation.js";
+import { Live as LiveAuthentication } from "./Authentication.js";
+import { Live as LiveCancellation } from "./Cancellation.js";
 
 /**
  * @module Service
@@ -17,37 +17,37 @@ import { Live as LiveCancellation } from "./Cancellation/mod.js";
 
 // --- Re-exporting the full public API (Tag, Interface, Live Layer) for each service ---
 
-export * as ApiDeprecation from "./ApiDeprecation/mod.js";
-export * as Authentication from "./Authentication/mod.js";
-export * as Cancellation from "./Cancellation/mod.js";
-export * as Clipboard from "./Clipboard/mod.js";
-export * as Commands from "./Commands/mod.js";
-export * as Configuration from "./Configuration/mod.js";
-export * as CustomEditor from "./CustomEditor/mod.js";
-export * as Debug from "./Debug/mod.js";
-export * as Diagnostics from "./Diagnostics/mod.js";
-export * as Dialog from "./Dialog/mod.js";
-export * as Documents from "./Documents/mod.js";
-export * as Env from "./Env/mod.js";
-export * as Extension from "./Extension/mod.js";
-export * as FileSystem from "./FileSystem/mod.js";
-export * as FileSystemInfo from "./FileSystemInfo/mod.js";
-export * as Ipc from "./Ipc/mod.js";
-export * as LanguageFeatures from "./LanguageFeatures/mod.js";
-export * as Localization from "./Localization/mod.js";
+export * as ApiDeprecation from "./ApiDeprecation.js";
+export * as Authentication from "./Authentication.js";
+export * as Cancellation from "./Cancellation.js";
+export * as Clipboard from "./Clipboard.js";
+export * as Commands from "./Commands.js";
+export * as Configuration from "./Configuration.js";
+export * as CustomEditor from "./CustomEditor.js";
+export * as Debug from "./Debug.js";
+export * as Diagnostics from "./Diagnostics.js";
+export * as Dialog from "./Dialog.js";
+export * as Documents from "./Documents.js";
+export * as Env from "./Env.js";
+export * as Extension from "./Extension.js";
+export * as FileSystem from "./FileSystem.js";
+export * as FileSystemInfo from "./FileSystemInfo.js";
+export * as Ipc from "./Ipc.js";
+export * as LanguageFeatures from "./LanguageFeatures.js";
+export * as Localization from "./Localization.js";
 export * as Log from "./Log.js"; // Simple log service
-export * as Message from "./Message/mod.js";
+export * as Message from "./Message.js";
 export * as ProposedApi from "./ProposedApi.js";
-export * as QuickInput from "./QuickInput/mod.js";
-export * as SecretStorage from "./SecretStorage/mod.js";
-export * as StatusBar from "./StatusBar/mod.js";
-export * as Storage from "./Storage/mod.js";
-export * as Tasks from "./Tasks/mod.js";
+export * as QuickInput from "./QuickInput.js";
+export * as SecretStorage from "./SecretStorage.js";
+export * as StatusBar from "./StatusBar.js";
+export * as Storage from "./Storage.js";
+export * as Tasks from "./Tasks.js";
 export * as Telemetry from "./Telemetry.js";
-export * as TreeView from "./TreeView/mod.js";
-export * as Webview from "./Webview/mod.js";
-export * as WebviewPanel from "./WebviewPanel/mod.js";
-export * as Window from "./Window/mod.js";
+export * as TreeView from "./TreeView.js";
+export * as Webview from "./Webview.js";
+export * as WebviewPanel from "./WebviewPanel.js";
+export * as Window from "./Window.js";
 export * as Vscode from "vscode";
 
 // ... import all other Live layers ...

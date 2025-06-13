@@ -8,7 +8,7 @@ import type { IExtensionDescription } from "vs/platform/extensions/common/extens
 import { ActivationKind } from "vs/workbench/api/common/extHostExtensionActivator.js";
 import { ExtensionKind, Uri, type Extension } from "vscode";
 
-import type { ExtensionHost } from "../../Core/ExtensionHost/mod.js";
+import type { ExtensionHost } from "../../Core/ExtensionHost.js";
 
 /**
  * Creates the public `vscode.Extension` API object from an internal `IExtensionDescription`.

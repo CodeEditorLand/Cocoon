@@ -7,7 +7,7 @@
 
 import { Effect, Ref } from "effect";
 
-import { GenericNotification, GenericRequest } from "../Generated/mod.js";
+import { GenericNotification, GenericRequest } from "../Generated.js";
 import {
 	Tag as ClientTag,
 	type Service as ClientService,
@@ -21,7 +21,7 @@ import {
 	Tag as AdapterTag,
 	type Interface as AdapterInterface,
 } from "./ProtocolAdapter/Service.js";
-import { DecodeValue, EncodeValue } from "./ProtoConverter/mod.js";
+import { DecodeValue, EncodeValue } from "./ProtoConverter.js";
 import type { Interface } from "./Service.js";
 
 /**

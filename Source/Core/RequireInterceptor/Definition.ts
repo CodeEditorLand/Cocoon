@@ -8,12 +8,12 @@ import { Effect } from "effect";
 import { URI } from "vs/base/common/uri.js";
 
 import { Tag as LogTag } from "../../Service/Log.js";
-import { Tag as ApiFactoryTag } from "../ApiFactory/mod.js";
-import { Tag as ExtensionPathsTag } from "../ExtensionPath/mod.js";
+import { Tag as ApiFactoryTag } from "../ApiFactory.js";
+import { Tag as ExtensionPathsTag } from "../ExtensionPath.js";
 import {
 	VscodeNodeModuleFactory,
 	type INodeModuleFactory,
-} from "./Factory/mod.js";
+} from "./Factory.js";
 import { type Interface } from "./Service.js";
 
 /**

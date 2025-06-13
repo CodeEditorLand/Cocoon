@@ -14,7 +14,7 @@ import { GetActiveTextEditor } from "../../Service/Window/GetActiveTextEditor.js
 import {
 	ShowErrorMessage,
 	ShowInformationMessage,
-} from "../../Service/Window/mod.js";
+} from "../../Service/Window.js";
 import { ActiveEditorNotFoundError, ProcessingServiceError } from "./Error.js";
 import { GetDocumentText } from "./GetDocumentText.js";
 

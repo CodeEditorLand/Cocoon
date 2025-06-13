@@ -8,8 +8,8 @@ import { nullExtensionDescription } from "vs/platform/extensions/common/extensio
 import type * as Vscode from "vscode";
 
 import type { Log } from "../../../Service/Log.js";
-import type { ApiFactory } from "../../ApiFactory/mod.js";
-import type { ExtensionPaths } from "../../ExtensionPath/mod.js";
+import type { ApiFactory } from "../../ApiFactory.js";
+import type { ExtensionPaths } from "../../ExtensionPath.js";
 import type { INodeModuleFactory } from "./Interface.js";
 
 /**

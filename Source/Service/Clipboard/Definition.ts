@@ -6,7 +6,7 @@
 import { Effect } from "effect";
 import type { Clipboard } from "vscode";
 
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 
 /**
  * An Effect that builds the live implementation of the Clipboard service.

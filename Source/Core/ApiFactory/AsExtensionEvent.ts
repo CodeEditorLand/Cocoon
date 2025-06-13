@@ -6,7 +6,7 @@
 
 import type * as Vscode from "vscode";
 
-import type { Log } from "../../Service/mod.js";
+import type { Log } from "../../Service.js";
 
 /**
  * Creates a safe `vscode.Event` by wrapping an existing event emitter.

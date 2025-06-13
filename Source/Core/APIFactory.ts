@@ -8,7 +8,7 @@ import { Context, Effect, Layer } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as Vscode from "vscode";
 
-import * as Service from "../../Service/mod.js";
+import * as Service from "../../Service.js";
 import { CreateApiFactory } from "./CreateApiFactory.js";
 
 /**

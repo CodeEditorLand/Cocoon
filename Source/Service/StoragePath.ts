@@ -6,7 +6,7 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveFileSystem } from "../FileSystem/mod.js";
+import { Live as LiveFileSystem } from "../FileSystem.js";
 import { InitDataService } from "../InitData.js";
 import { Live as LiveLog } from "../Log.js";
 import { Definition } from "./Definition.js";

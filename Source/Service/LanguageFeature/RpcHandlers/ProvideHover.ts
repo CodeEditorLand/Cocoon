@@ -6,7 +6,7 @@
 import { Effect } from "effect";
 import type { Hover, HoverProvider } from "vscode";
 
-import * as TypeConverter from "../../../TypeConverter/mod.js";
+import * as TypeConverter from "../../../TypeConverter.js";
 import { Tag as CancellationTokenTag } from "../../Cancellation/Service.js";
 import { Tag as DocumentsTag } from "../../Document/Service.js";
 

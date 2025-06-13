@@ -8,7 +8,7 @@ import type { IDisposable } from "vs/base/common/lifecycle.js";
 import type { AuthenticationProvider, AuthenticationSession } from "vscode";
 
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IpcProvider } from "../Ipc/mod.js";
+import { IpcProvider } from "../Ipc.js";
 import { LogProvider } from "../Log.js";
 import { AuthenticationProviderExistsError } from "./Error.js";
 import type { Interface } from "./Service.js";

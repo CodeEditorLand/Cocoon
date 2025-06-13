@@ -5,7 +5,7 @@
 
 import { Effect } from "effect";
 
-import { FileSystemInfoProvider } from "../FileSystemInfo/mod.js";
+import { FileSystemInfoProvider } from "../FileSystemInfo.js";
 import { CreateStatEffect } from "./CreateStatEffect.js";
 import type { Interface } from "./Service.js";
 
