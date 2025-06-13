@@ -9,7 +9,7 @@ import type * as Vscode from "vscode";
 
 import type { Log } from "../../../Service/Log.js";
 import type { ApiFactory } from "../../ApiFactory/mod.js";
-import type { ExtensionPaths } from "../../ExtensionPaths/mod.js";
+import type { ExtensionPaths } from "../../ExtensionPath/mod.js";
 import type { INodeModuleFactory } from "./Interface.js";
 
 /**

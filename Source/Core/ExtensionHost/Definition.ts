@@ -9,7 +9,7 @@ import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/c
 import { InitDataService } from "../../Service/InitData.js";
 import { IpcProvider } from "../../Service/Ipc.js";
 import { LogProvider } from "../../Service/Log.js";
-import { ApiFactoryProvider } from "../ApiFactory.js";
+import { ApiFactoryProvider } from "../APIFactory.js";
 import { type Interface } from "./Service.js";
 import type { ActivatedExtension } from "./State.js";
 

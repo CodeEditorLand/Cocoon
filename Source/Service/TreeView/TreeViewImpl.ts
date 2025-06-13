@@ -15,7 +15,7 @@ import type {
 
 import * as TypeConverter from "../../TypeConverter/mod.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { Commands } from "../Commands/mod.js";
+import { Commands } from "../Command/mod.js";
 import { IpcProvider } from "../Ipc/mod.js";
 
 let HandleCounter = 0;

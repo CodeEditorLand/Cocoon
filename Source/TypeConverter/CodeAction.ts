@@ -11,7 +11,7 @@ import * as ExtHostProtocol from "vs/workbench/api/common/extHost.protocol.js";
 import type * as Vscode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import { Commands as CommandsConverter } from "./Commands.js";
+import { Commands as CommandsConverter } from "./Command.js";
 import { Diagnostic as DiagnosticConverter } from "./Diagnostic.js";
 import {
 	WorkspaceEdit as WorkspaceEditConverter,

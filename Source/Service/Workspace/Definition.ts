@@ -8,7 +8,7 @@ import { Effect, Ref } from "effect";
 import * as TypeConverter from "../../TypeConverter/mod.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
 import { ConfigurationProvider } from "../Configuration/mod.js";
-import { DocumentsProvider } from "../Documents/mod.js";
+import { DocumentsProvider } from "../Document/mod.js";
 import { FileSystemProvider } from "../FileSystem/mod.js";
 import { IpcProvider } from "../Ipc/mod.js";
 import type { Interface } from "./Service.js";

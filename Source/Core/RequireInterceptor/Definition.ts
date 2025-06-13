@@ -9,7 +9,7 @@ import { URI } from "vs/base/common/uri.js";
 
 import { Tag as LogTag } from "../../Service/Log.js";
 import { Tag as ApiFactoryTag } from "../ApiFactory/mod.js";
-import { Tag as ExtensionPathsTag } from "../ExtensionPaths/mod.js";
+import { Tag as ExtensionPathsTag } from "../ExtensionPath/mod.js";
 import {
 	VscodeNodeModuleFactory,
 	type INodeModuleFactory,
