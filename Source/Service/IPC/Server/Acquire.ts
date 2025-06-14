@@ -13,7 +13,7 @@ import {
 } from "@grpc/proto-loader";
 import { Effect } from "effect";
 
-import { Configuration as ConfigurationService } from "../Configuration.js";
+import { Configuration } from "../Configuration.js";
 import { Dispatcher } from "../Dispatcher.js";
 import { gRPCConnectionError } from "../Error.js";
 import { CreateServiceImplementation } from "./CreateServiceImplementation.js";
@@ -78,7 +78,7 @@ function StartServer(
 
 export const Acquire = Effect.acquireRelease(
 	Effect.gen(function* () {
-		const Config = yield* ConfigurationService.Tag;
+		const Config = yield* Configuration.Tag;
 		const DispatcherService = yield* Dispatcher.Tag;
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 

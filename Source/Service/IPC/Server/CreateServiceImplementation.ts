@@ -6,9 +6,9 @@
 
 import * as gRPC from "@grpc/grpc-js";
 import type { UntypedServiceImplementation } from "@grpc/grpc-js";
-import { Effect } from "effect";
+import { Context, Effect } from "effect";
 
-import type { Dispatcher } from "../Dispatcher/Service.js";
+import { Dispatcher } from "../Dispatcher.js";
 import {
 	Empty,
 	GenericResponse,
@@ -20,7 +20,7 @@ import {
 import { DecodeValue, EncodeValue } from "../ProtoConverter.js";
 
 export function CreateServiceImplementation(
-	DispatcherService: Dispatcher.Interface,
+	DispatcherService: Context.Tag.Service<Dispatcher.Interface>,
 ): UntypedServiceImplementation {
 	return {
 		/**

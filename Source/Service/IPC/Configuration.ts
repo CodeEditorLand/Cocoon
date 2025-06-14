@@ -25,4 +25,4 @@ export interface Configuration {
 /**
  * The `Context.Tag` for the IPC configuration.
  */
-export const Tag = Context.Tag<Configuration>("IPC/Configuration");
+export const Tag = Context.Tag("IPC/Configuration")<Configuration>;

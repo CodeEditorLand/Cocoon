@@ -6,16 +6,21 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveCancellation } from "../Cancellation.js";
+import { Cancellation } from "../../Cancellation.js";
 import { Definition } from "./Dispatcher/Definition.js";
-import { Tag } from "./Dispatcher/Service.js";
-import { Live as LiveProtocolAdapter } from "./ProtocolAdapter.js";
+import { Dispatcher as DispatcherTag } from "./Dispatcher/Service.js";
+import { ProtocolAdapter } from "./ProtocolAdapter.js";
 
-/**
- * The live implementation Layer for the Dispatcher service.
- * It depends on the ProtocolAdapter (for the underlying transport) and the
- * Cancellation service (for handling cancellation signals).
- */
-export const Live = Layer.effect(Tag, Definition).pipe(
-	Layer.provide(Layer.merge(LiveProtocolAdapter, LiveCancellation)),
-);
+export namespace Dispatcher {
+	export const Tag = DispatcherTag;
+	export type Interface = DispatcherTag;
+
+	/**
+	 * The live implementation Layer for the Dispatcher service.
+	 * It depends on the ProtocolAdapter (for the underlying transport) and the
+	 * Cancellation service (for handling cancellation signals).
+	 */
+	export const Live = Layer.effect(Tag, Definition).pipe(
+		Layer.provide(Layer.merge(ProtocolAdapter.Live, Cancellation.Live)),
+	);
+}
