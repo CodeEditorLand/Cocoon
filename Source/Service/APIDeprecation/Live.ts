@@ -1,4 +1,3 @@
-
 /**
  * @module Live (APIDeprecation)
  * @description The live implementation `Layer` for the APIDeprecation service.
