@@ -45,7 +45,7 @@ interface ServiceCollection {
 	StatusBar: StatusBarService;
 }
 
-export default function (Services: ServiceCollection) {
+const CreateAPIFactory = (Services: ServiceCollection) => {
 	return {
 		CreateAPI: (Extension: IExtensionDescription): typeof VSCode => {
 			const {
@@ -128,4 +128,6 @@ export default function (Services: ServiceCollection) {
 			return Object.freeze(API) as typeof VSCode;
 		},
 	};
-}
+};
+
+export default CreateAPIFactory;
