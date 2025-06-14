@@ -14,28 +14,23 @@ import type { Interface } from "./Service.js";
 
 let OwnerCounter = 0;
 
-export const Definition = Effect.gen(function* (_) {
-	const IPCService = yield* _(IPC.Tag);
+export const Definition = Effect.gen(function* () {
+	const IPCService = yield* IPC.Tag;
 	const OnDidChangeDiagnosticsEvent = CreateEventStream<readonly Uri[]>();
 
-	// Register the RPC handler for when Mountain pushes diagnostic changes.
-	// This is for extensions that want to *read* diagnostics from other sources.
+	// Register the RPC handler for when Mountain pushes a diagnostic changes.
 	IPCService.RegisterInvokeHandler(
 		"$acceptMarkerData",
 		([uriComponentsArray]) => {
 			const revivedUris = uriComponentsArray.map((dto: any) =>
-				TypeConverter.URIConverter.ToAPI(dto),
+				TypeConverter.URIConverter.toAPI(dto),
 			);
-			return OnDidChangeDiagnosticsEvent.Fire(revivedUris).pipe(
-				Effect.runPromise,
-			);
+			return OnDidChangeDiagnosticsEvent.Fire(revivedUris);
 		},
 	);
 
 	const ServiceImplementation: Interface = {
-		onDidChangeDiagnostics: OnDidChangeDiagnosticsEvent.Stream.pipe(
-			Stream.toEvent,
-		),
+		onDidChangeDiagnostics: OnDidChangeDiagnosticsEvent.event,
 
 		CreateDiagnosticCollection: (Name?: string) => {
 			const Owner = `cocoon-diag-${OwnerCounter++}-${Name ?? "anon"}`;

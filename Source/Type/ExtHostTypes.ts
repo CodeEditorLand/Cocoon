@@ -6,16 +6,22 @@
  */
 
 import { CancellationTokenSource as VscCancellationTokenSource } from "vs/base/common/cancellation.js";
+import { CancellationError as VscCancellationError } from "vs/base/common/errors.js";
 import * as Emitter from "vs/base/common/event.js";
 import * as Lifecycle from "vs/base/common/lifecycle.js";
 import { URI as VscURI } from "vs/base/common/uri.js";
+import type {
+	Uri,
+	MarkdownString as VSCodeMarkdownString,
+	ThemeColor as VSCodeThemeColor,
+	Range as VSCodeRange,
+	Position as VSCodePosition,
+} from "vscode";
 
 // --- Foundational Re-exports ---
-// It is critical to re-export these from the source to maintain a single
-// class definition throughout the application runtime.
 export const Disposable = Lifecycle.Disposable;
 export const CancellationTokenSource = VscCancellationTokenSource;
-export const CancellationError = Emitter.CancellationError;
+export const CancellationError = VscCancellationError;
 export const EventEmitter = Emitter.Emitter;
 export const URI = VscURI;
 
@@ -159,7 +165,7 @@ export class Range {
 		return new Range(start ?? this.start, end ?? this.end);
 	}
 
-	toJSON(): any {
+	override toJSON(): any {
 		return [this.start, this.end];
 	}
 }
@@ -178,7 +184,7 @@ export class Selection extends Range {
 		return this.active.isBefore(this.anchor);
 	}
 
-	toJSON(): any {
+	override toJSON(): any {
 		return {
 			start: this.start,
 			end: this.end,
@@ -190,7 +196,7 @@ export class Selection extends Range {
 
 export class Location {
 	constructor(
-		public uri: URI,
+		public uri: Uri,
 		public range: Range | Position,
 	) {}
 
@@ -207,7 +213,7 @@ export class Diagnostic {
 	message: string;
 	severity: DiagnosticSeverity;
 	source?: string;
-	code?: string | number | { value: string | number; target: URI };
+	code?: string | number | { value: string | number; target: Uri };
 	relatedInformation?: any[];
 	tags?: any[];
 	constructor(
@@ -231,7 +237,7 @@ export class Diagnostic {
 
 export class TreeItem {
 	label?: string | any;
-	resourceURI?: URI;
+	resourceURI?: Uri;
 	collapsibleState?: TreeItemCollapsibleState;
 	constructor(
 		labelOrUri: string | any,
@@ -246,9 +252,12 @@ export class TreeItem {
 	}
 }
 
-export class MarkdownString {
+export class MarkdownString implements VSCodeMarkdownString {
 	value: string;
-	isTrusted: boolean;
+	isTrusted?: boolean;
+	supportThemeIcons?: boolean;
+	supportHtml?: boolean;
+	baseUri?: Uri;
 	constructor(value: string = "", isTrusted: boolean = false) {
 		this.value = value;
 		this.isTrusted = isTrusted;
@@ -272,7 +281,7 @@ export class MarkdownString {
 	}
 }
 
-export class ThemeColor {
+export class ThemeColor implements VSCodeThemeColor {
 	constructor(public id: string) {}
 }
 

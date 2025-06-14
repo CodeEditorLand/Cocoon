@@ -10,7 +10,13 @@ import {
 	ExtensionIdentifier,
 	type IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
-import type { ExtensionActivationReason } from "vs/workbench/api/common/extHostExtensionActivator.js";
+
+// Placeholder type for VS Code's internal ExtensionActivationReason
+export interface ExtensionActivationReason {
+	readonly startup: boolean;
+	readonly extensionId: ExtensionIdentifier;
+	readonly activationEvent: string;
+}
 
 export interface Interface {
 	/**

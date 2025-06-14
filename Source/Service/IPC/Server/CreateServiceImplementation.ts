@@ -19,18 +19,6 @@ import {
 } from "../Generated.js";
 import { DecodeValue, EncodeValue } from "../ProtoConverter.js";
 
-/**
- * Builds the object containing all the RPC method handlers. These handlers
- * are the entry point for all calls coming *from* `Mountain` *to* `Cocoon`.
- *
- * Each handler decodes the incoming gRPC message, dispatches the request to the
- * appropriate service via the `Dispatcher`, encodes the result, and sends it
- * back to `Mountain`.
- *
- * @param DispatcherService The dispatcher service responsible for routing
- * incoming requests to the correct `Effect` handlers.
- * @returns The gRPC service implementation object.
- */
 export function CreateServiceImplementation(
 	DispatcherService: Dispatcher.Interface,
 ): UntypedServiceImplementation {
@@ -45,17 +33,15 @@ export function CreateServiceImplementation(
 			const Request = call.request;
 			const RequestID = Request.getRequestid();
 
-			const ProcessEffect = Effect.gen(function* (_) {
-				const DecodedParameter = yield* _(
-					DecodeValue(Request.getParams()),
+			const ProcessEffect = Effect.gen(function* () {
+				const DecodedParameter = yield* DecodeValue(
+					Request.getParams(),
 				);
-				const Result = yield* _(
-					DispatcherService.DispatchRequest(
-						Request.getMethod(),
-						DecodedParameter,
-					),
+				const Result = yield* DispatcherService.DispatchRequest(
+					Request.getMethod(),
+					DecodedParameter,
 				);
-				const EncodedResult = yield* _(EncodeValue(Result));
+				const EncodedResult = yield* EncodeValue(Result);
 
 				const Response = new GenericResponse();
 				Response.setRequestid(RequestID);
@@ -63,22 +49,22 @@ export function CreateServiceImplementation(
 				return Response;
 			});
 
-			Effect.runCallback(ProcessEffect, {
-				onSuccess: (Response) => callback(null, Response),
-				onFailure: (cause) => {
-					// TODO: Serialize the failure cause into a meaningful gRPC error.
+			Effect.runPromiseExit(ProcessEffect).then((exit) => {
+				if (exit._tag === "Success") {
+					callback(null, exit.value);
+				} else {
 					const RPCError: gRPC.ServiceError = {
 						code: gRPC.status.INTERNAL,
 						details:
-							cause._tag === "Fail"
-								? String(cause.error)
+							exit.cause._tag === "Fail"
+								? String(exit.cause.error)
 								: "Unknown Effect Failure",
 						metadata: new gRPC.Metadata(),
 						name: "EffectFailure",
 						message: "Effect failed to complete in gRPC handler.",
 					};
 					callback(RPCError, null);
-				},
+				}
 			});
 		},
 
@@ -100,8 +86,8 @@ export function CreateServiceImplementation(
 				),
 			);
 
-			Effect.runFork(ProcessEffect); // Run in background
-			callback(null, new Empty()); // Acknowledge immediately
+			Effect.runFork(ProcessEffect);
+			callback(null, new Empty());
 		},
 
 		/**
