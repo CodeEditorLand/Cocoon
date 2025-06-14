@@ -31,7 +31,6 @@ export function CreateWindowNamespace(
 	WorkSpaceService: Service.WorkSpace.Interface,
 	StatusBarService: Service.StatusBar.Interface,
 	WebViewPanelService: Service.WebViewPanel.Interface,
-	CustomEditorService: Service.CustomEditor.Interface,
 	TreeViewService: Service.TreeView.Interface,
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,

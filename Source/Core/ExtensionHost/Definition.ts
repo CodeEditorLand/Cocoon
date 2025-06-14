@@ -15,7 +15,6 @@ import {
 	ActivationKind,
 	type ExtensionActivationReason,
 } from "../../Type/ExtHostTypes.js";
-// Assuming local type definition
 import { APIFactory } from "../APIFactory.js";
 import type { Interface } from "./Service.js";
 import type { ActivatedExtension } from "./State.js";
@@ -188,9 +187,9 @@ export const Definition = Effect.gen(function* () {
 	const ActivateById = (
 		ID: import("vs/platform/extensions/common/extensions").ExtensionIdentifier,
 		Reason: ExtensionActivationReason,
-	) =>
+	): Effect.Effect<void, Error> =>
 		Effect.gen(function* () {
-			if (yield* IsActivated(ID)) return;
+			if (IsActivated(ID)) return;
 			const Description = yield* GetExtensionDescription(ID);
 			if (!Description) {
 				yield* LogService.Warn(
@@ -206,8 +205,8 @@ export const Definition = Effect.gen(function* () {
 			}
 			yield* DoActivateExtension(Description, Reason);
 		}).pipe(
-			Effect.catchAll((error) =>
-				LogService.Error("Activation failed", error),
+			Effect.mapError((e) =>
+				e instanceof Error ? e : new Error(String(e)),
 			),
 		);
 

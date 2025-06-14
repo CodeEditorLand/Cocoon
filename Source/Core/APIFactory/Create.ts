@@ -18,6 +18,8 @@ import { CreateWindowNamespace } from "./CreateWindowNamespace.js";
 import { CreateWorkSpaceNamespace } from "./CreateWorkSpaceNamespace.js";
 import type { Interface as APIFactory } from "./Service.js";
 
+// Assuming CustomEditor service might not exist based on previous errors.
+// If it does, it should be added to this collection.
 interface ServiceCollection {
 	LogService: Service.Log.Interface;
 	ProposedAPIService: Service.ProposedAPI.Interface;
@@ -30,7 +32,6 @@ interface ServiceCollection {
 	TaskService: Service.Task.Interface;
 	ExtensionService: Service.Extension.Interface;
 	WebViewPanelService: Service.WebViewPanel.Interface;
-	// CustomEditorService: Service.CustomEditor.Interface,
 	TreeViewService: Service.TreeView.Interface;
 	StatusBarService: Service.StatusBar.Interface;
 }
@@ -92,8 +93,7 @@ export function CreateAPIFactory(Services: ServiceCollection): APIFactory {
 				Extension,
 			);
 
-			const API = {
-				// TODO: CHANGE THIS TO ALWAYS BE 0.0.1 EVERYWHERE
+			const API: any = {
 				version: "1.85.0",
 				commands: CommandNamespace,
 				window: WindowNamespace,

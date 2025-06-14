@@ -92,7 +92,6 @@ export class Position {
 			this.character + (characterDelta ?? 0),
 		);
 	}
-
 	with(line?: number, character?: number): Position {
 		return new Position(line ?? this.line, character ?? this.character);
 	}
@@ -165,7 +164,7 @@ export class Range {
 		return new Range(start ?? this.start, end ?? this.end);
 	}
 
-	override toJSON(): any {
+	toJSON(): any {
 		return [this.start, this.end];
 	}
 }
@@ -268,11 +267,20 @@ export class MarkdownString implements VSCodeMarkdownString {
 		return this;
 	}
 
-	appendCodeblock(language: string, value: string): MarkdownString {
+	appendCodeblock(value: string, language: string = ""): MarkdownString {
 		this.value += `\n\`\`\`${language}\n${value}\n\`\`\`\n`;
 		return this;
 	}
 
+	appendMarkdown(value: string): MarkdownString {
+		this.value += value;
+		return this;
+	}
+
+	appendText(value: string): MarkdownString {
+		this.value += value;
+		return this;
+	}
 	toJSON(): any {
 		return {
 			value: this.value,
@@ -355,4 +363,18 @@ export enum ProgressLocation {
 export enum QuickPickItemKind {
 	Separator = -1,
 	Default = 0,
+}
+
+// Add placeholder for ActivationKind
+export enum ActivationKind {
+	API = 1,
+	Workspace = 2,
+	Startup = 3,
+}
+
+// Placeholder for ExtensionActivationReason
+export interface ExtensionActivationReason {
+	readonly startup: boolean;
+	readonly extensionId: any; // Using `any` to avoid circular dependencies
+	readonly activationEvent: string;
 }

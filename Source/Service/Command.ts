@@ -7,18 +7,17 @@
 import { Layer } from "effect";
 
 import { Definition } from "./Command/Definition.js";
-import { Tag } from "./Command/Service.js";
+import { Tag, type Interface } from "./Command/Service.js";
+import type { CommandHandler, CommandHandlerEntry } from "./Command/Type.js";
 import { Live as LiveIPC, type Configuration } from "./IPC.js";
 import { Live as LiveTelemetry } from "./Telemetry.js";
 import { Live as LiveWorkSpace } from "./WorkSpace.js";
 
-export { Tag, type Interface } from "./Command/Service.js";
-export type { CommandHandler, CommandHandlerEntry } from "./Command/Type.js";
+export { Tag, type Interface, type CommandHandler, type CommandHandlerEntry };
 
 /**
  * The live implementation Layer for the Command service.
  * It depends on the IPC, Telemetry, and WorkSpace services.
- * This is a factory that takes IPC configuration.
  * @param Config The IPC configuration.
  */
 export const Live = (Config: Configuration) =>
