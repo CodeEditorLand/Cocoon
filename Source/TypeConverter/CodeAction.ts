@@ -6,7 +6,6 @@
 
 import { DisposableStore } from "vs/base/common/lifecycle.js";
 import * as Languages from "vs/editor/common/languages.js";
-import type * as ExtHostProtocol from "vs/workbench/api/common/extHost.protocol.js";
 import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
@@ -17,7 +16,22 @@ import {
 	type IVersionInformationProvider,
 } from "./WorkSpaceEdit.js";
 
-// --- Namespace for CodeActionKind ---
+// Placeholders
+interface ExtHostCodeActionContext {
+	diagnostics: any[];
+	only?: string;
+	trigger?: Languages.CodeActionTriggerType;
+}
+interface ICodeActionDto {
+	title: string;
+	kind?: string;
+	isPreferred?: boolean;
+	disabled?: string;
+	command?: any;
+	diagnostics?: any[];
+	edit?: any;
+}
+
 export namespace CodeActionKind {
 	export function ToAPI(kind: string): VSCode.CodeActionKind {
 		return new ExtHostTypes.CodeActionKind(kind);
@@ -27,7 +41,6 @@ export namespace CodeActionKind {
 	}
 }
 
-// --- Namespace for CodeActionTriggerKind ---
 export namespace CodeActionTriggerKind {
 	export function ToAPI(
 		trigger: Languages.CodeActionTriggerType,
@@ -38,10 +51,9 @@ export namespace CodeActionTriggerKind {
 	}
 }
 
-// --- Namespace for CodeActionContext ---
 export namespace CodeActionContext {
 	export function ToAPI(
-		DTO: ExtHostProtocol.ExtHostCodeActionContext,
+		DTO: ExtHostCodeActionContext,
 	): VSCode.CodeActionContext {
 		return {
 			diagnostics: DTO.diagnostics.map((diag) =>
@@ -55,14 +67,13 @@ export namespace CodeActionContext {
 	}
 }
 
-// --- Namespace for CodeAction ---
 export namespace CodeAction {
 	export function FromAPI(
 		Action: VSCode.CodeAction,
 		CommandsConverter: CommandConverter.Interface,
 		Disposables: DisposableStore,
 		VersionProvider?: IVersionInformationProvider,
-	): ExtHostProtocol.ICodeActionDto {
+	): ICodeActionDto {
 		return {
 			title: Action.title,
 			kind: Action.kind ? CodeActionKind.FromAPI(Action.kind) : undefined,
@@ -75,13 +86,13 @@ export namespace CodeAction {
 				? DiagnosticConverter.FromAPIArray(Action.diagnostics)
 				: undefined,
 			edit: Action.edit
-				? WorkSpaceEditConverter.FromAPI(Action.edit, VersionProvider)
+				? WorkSpaceEditConverter.fromAPI(Action.edit, VersionProvider)
 				: undefined,
 		};
 	}
 
 	export function ToAPI(
-		DTO: ExtHostProtocol.ICodeActionDto,
+		DTO: ICodeActionDto,
 		CommandsConverter: CommandConverter.Interface,
 	): VSCode.CodeAction {
 		const action = new ExtHostTypes.CodeAction(
@@ -95,7 +106,7 @@ export namespace CodeAction {
 			DiagnosticConverter.ToAPI(d),
 		);
 		action.edit = DTO.edit
-			? WorkSpaceEditConverter.ToAPI(DTO.edit)
+			? WorkSpaceEditConverter.toAPI(DTO.edit)
 			: undefined;
 		action.isPreferred = DTO.isPreferred;
 		if (DTO.disabled) {

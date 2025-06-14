@@ -7,9 +7,9 @@
 import { Context, Effect, Layer } from "effect";
 import type { SerializedError } from "vs/base/common/errors.js";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
-import {
+import type {
+	ITelemetryInfo,
 	TelemetryLevel,
-	type ITelemetryInfo,
 } from "vs/platform/telemetry/common/telemetry.js";
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
 
@@ -17,17 +17,21 @@ import { InitData } from "./InitData.js";
 import { IPC } from "./IPC.js";
 import { Log } from "./Log.js";
 
-// --- Service Definition ---
+// Placeholders for internal types
+const TelemetryLevel = {
+	NONE: 0,
+	OFF: 0, // Assuming OFF is an alias for NONE
+	ERROR: 1,
+	USAGE: 2,
+};
 
 export type Interface = IExtHostTelemetry;
 export const Tag = Context.Tag<Interface>("Service/Telemetry");
 
-// --- Live Implementation ---
-
-const Definition = Effect.gen(function* (_) {
-	const InitDataService = yield* _(InitData.Tag);
-	const IPCService = yield* _(IPC.Tag);
-	const LogService = yield* _(Log.Tag);
+const Definition = Effect.gen(function* () {
+	const InitDataService = yield* InitData.Tag;
+	const IPCService = yield* IPC.Tag;
+	const LogService = yield* Log.Tag;
 
 	const TelemetryLevelValue =
 		InitDataService.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
@@ -53,14 +57,15 @@ const Definition = Effect.gen(function* (_) {
 		LogService.Debug(`Telemetry event: '${EventName}'`, Data).pipe(
 			Effect.flatMap(() =>
 				Effect.when(
-					IPCService.SendNotification("$publicLog", [
-						EventName,
-						Data,
-					]),
+					() =>
+						IPCService.SendNotification("$publicLog", [
+							EventName,
+							Data,
+						]),
 					() => ShouldSendEvent("usage"),
 				),
 			),
-			Effect.catchAll(() => Effect.unit), // Telemetry should never crash the host
+			Effect.catchAll(() => Effect.void),
 		);
 
 	const LogExtensionError = (
@@ -82,38 +87,30 @@ const Definition = Effect.gen(function* (_) {
 		).pipe(
 			Effect.flatMap(() =>
 				Effect.when(
-					IPCService.SendNotification("$onExtensionError", [
-						Extension.value,
-						SerializableError,
-					]),
+					() =>
+						IPCService.SendNotification("$onExtensionError", [
+							Extension.value,
+							SerializableError,
+						]),
 					() => ShouldSendEvent("error"),
 				),
 			),
-			Effect.catchAll(() => Effect.unit),
+			Effect.catchAll(() => Effect.void),
 		);
 	};
 
 	const ServiceImplementation: Interface = {
 		_serviceBrand: undefined,
-
 		getTelemetryInfo: () => Promise.resolve(InitDataService.telemetryInfo),
-
-		setEnabled: () => {
-			// No-op: Telemetry enablement is controlled by the host (Mountain).
-		},
-
+		setEnabled: () => {},
 		publicLog: (eventName, data) => {
 			Effect.runFork(LogPublicEvent(eventName, data));
 		},
-
 		publicLog2: (eventName, data) => {
 			Effect.runFork(LogPublicEvent(eventName, data as any));
 		},
-
 		onExtensionError: (extension, error) => {
 			Effect.runFork(LogExtensionError(extension, error));
-			// Always return false to indicate that the error was not "handled"
-			// by telemetry and should continue to be processed by other handlers.
 			return false;
 		},
 	};
@@ -121,7 +118,7 @@ const Definition = Effect.gen(function* (_) {
 	return ServiceImplementation;
 });
 
-export const Live = Layer.effect(Tag, Definition).pipe(
-	Layer.provide(Layer.merge(IPC.Live, Log.Live)),
-	// InitData service must be provided by the top-level ApplicationLayer
-);
+export const Live = (Config: IPC.Configuration) =>
+	Layer.effect(Tag, Definition).pipe(
+		Layer.provide(Layer.merge(IPC.Live(Config), Log.Live)),
+	);
