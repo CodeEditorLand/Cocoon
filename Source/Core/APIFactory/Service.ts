@@ -10,23 +10,18 @@ import type { IExtensionDescription } from "vs/platform/extensions/common/extens
 import type * as VSCode from "vscode";
 
 /**
- * The service interface for the `APIFactory`.
- */
-export interface Interface {
-	/**
-	 * Creates a new, sandboxed `vscode` API object for a specific extension.
-	 * This object is a frozen, high-fidelity replica of the `vscode` module.
-	 *
-	 * @param Extension The full description of the extension requesting the API.
-	 * @returns A frozen `vscode` API object tailored for the extension.
-	 */
-	readonly CreateAPI: (Extension: IExtensionDescription) => typeof VSCode;
-}
-
-/**
  * The `Context.Tag` for the `APIFactory` service.
  */
 export class APIFactory extends Context.Tag("Core/APIFactory")<
 	APIFactory,
-	Interface
+	{
+		/**
+		 * Creates a new, sandboxed `vscode` API object for a specific extension.
+		 * This object is a frozen, high-fidelity replica of the `vscode` module.
+		 *
+		 * @param Extension The full description of the extension requesting the API.
+		 * @returns A frozen `vscode` API object tailored for the extension.
+		 */
+		readonly CreateAPI: (Extension: IExtensionDescription) => typeof VSCode;
+	}
 >() {}
