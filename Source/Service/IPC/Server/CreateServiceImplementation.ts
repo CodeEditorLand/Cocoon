@@ -76,16 +76,16 @@ export function CreateServiceImplementation(
 			callback: gRPC.sendUnaryData<Empty>,
 		) => {
 			const Notification = call.request;
-
-			const ProcessEffect = DecodeValue(Notification.getParams()).pipe(
+			const ProcessEffect = DecodeValue(
+				(Notification as any).getParams(),
+			).pipe(
 				Effect.flatMap((DecodedParameter) =>
 					DispatcherService.DispatchNotification(
-						Notification.getMethod(),
+						(Notification as any).getMethod(),
 						DecodedParameter,
 					),
 				),
 			);
-
 			Effect.runFork(ProcessEffect);
 			callback(null, new Empty());
 		},

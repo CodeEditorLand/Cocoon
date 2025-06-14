@@ -14,7 +14,7 @@ import {
 import { Effect } from "effect";
 
 import { Configuration as ConfigurationService } from "../Configuration.js";
-import { Dispatcher } from "../Dispatcher/Service.js";
+import { Dispatcher } from "../Dispatcher.js";
 import { gRPCConnectionError } from "../Error.js";
 import { CreateServiceImplementation } from "./CreateServiceImplementation.js";
 import { Release } from "./Release.js";

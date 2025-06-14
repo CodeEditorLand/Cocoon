@@ -34,74 +34,74 @@ export interface IVersionInformationProvider {
 }
 
 export namespace WorkSpaceEdit {
-	export function fromAPI(
+	export function FromAPI(
 		Edit: VSCode.WorkspaceEdit,
 		VersionProvider?: IVersionInformationProvider,
 	): IWorkspaceEdit {
-		const result: IWorkspaceEdit = { edits: [] };
+		const Result: IWorkspaceEdit = { edits: [] };
 
-		for (const [uri, edits] of Edit.entries()) {
-			if (edits[0] instanceof ExtHostTypes.TextEdit) {
-				const resource = URIConverter.fromAPI(uri);
-				const versionId = VersionProvider?.GetTextDocumentVersion(uri);
-				for (const edit of edits as VSCode.TextEdit[]) {
-					result.edits.push({
-						resource,
-						textEdit: TextEditConverter.fromAPI(edit),
-						versionId,
+		for (const [URI, URIEditArray] of Edit.entries()) {
+			if (URIEditArray[0] instanceof ExtHostTypes.TextEdit) {
+				const Resource = URIConverter.FromAPI(URI);
+				const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
+				for (const SingleEdit of URIEditArray as VSCode.TextEdit[]) {
+					Result.edits.push({
+						resource: Resource,
+						textEdit: TextEditConverter.FromAPI(SingleEdit),
+						versionId: VersionId,
 					} as IWorkspaceTextEdit);
 				}
 			} else {
-				for (const edit of edits as any[]) {
-					result.edits.push({
-						oldResource: edit.oldUri
-							? URIConverter.fromAPI(edit.oldUri)
+				for (const FileEdit of URIEditArray as any[]) {
+					Result.edits.push({
+						oldResource: FileEdit.oldUri
+							? URIConverter.FromAPI(FileEdit.oldUri)
 							: undefined,
-						newResource: edit.newUri
-							? URIConverter.fromAPI(edit.newUri)
+						newResource: FileEdit.newUri
+							? URIConverter.FromAPI(FileEdit.newUri)
 							: undefined,
-						options: edit.options,
-						metadata: edit.metadata,
+						options: FileEdit.options,
+						metadata: FileEdit.metadata,
 					} as IWorkspaceFileEdit);
 				}
 			}
 		}
-		return result;
+		return Result;
 	}
 
 	export function ToAPI(DTO: IWorkspaceEdit): VSCode.WorkspaceEdit {
-		const result = new ExtHostTypes.WorkspaceEdit();
-		for (const edit of DTO.edits) {
-			if ("textEdit" in edit) {
-				const workspaceTextEdit = edit as IWorkspaceTextEdit;
-				const uri = URIConverter.ToAPI(
-					workspaceTextEdit.resource as any,
+		const Result = new ExtHostTypes.WorkspaceEdit();
+		for (const Edit of DTO.edits) {
+			if ("textEdit" in Edit) {
+				const WorkspaceTextEdit = Edit as IWorkspaceTextEdit;
+				const URI = URIConverter.ToAPI(
+					WorkspaceTextEdit.resource as any,
 				);
-				const textEdits = [
-					TextEditConverter.ToAPI(workspaceTextEdit.textEdit as any),
+				const TextEditArray = [
+					TextEditConverter.ToAPI(WorkspaceTextEdit.textEdit as any),
 				];
-				result.set(uri, textEdits);
+				Result.set(URI, TextEditArray);
 			} else {
-				const fileEdit = edit as IWorkspaceFileEdit;
-				if (fileEdit.oldResource && fileEdit.newResource) {
-					result.renameFile(
-						URIConverter.ToAPI(fileEdit.oldResource as any),
-						URIConverter.ToAPI(fileEdit.newResource as any),
-						fileEdit.options,
+				const FileEdit = Edit as IWorkspaceFileEdit;
+				if (FileEdit.oldResource && FileEdit.newResource) {
+					Result.renameFile(
+						URIConverter.ToAPI(FileEdit.oldResource as any),
+						URIConverter.ToAPI(FileEdit.newResource as any),
+						FileEdit.options,
 					);
-				} else if (fileEdit.newResource) {
-					result.createFile(
-						URIConverter.ToAPI(fileEdit.newResource as any),
-						fileEdit.options,
+				} else if (FileEdit.newResource) {
+					Result.createFile(
+						URIConverter.ToAPI(FileEdit.newResource as any),
+						FileEdit.options,
 					);
-				} else if (fileEdit.oldResource) {
-					result.deleteFile(
-						URIConverter.ToAPI(fileEdit.oldResource as any),
-						fileEdit.options,
+				} else if (FileEdit.oldResource) {
+					Result.deleteFile(
+						URIConverter.ToAPI(FileEdit.oldResource as any),
+						FileEdit.options,
 					);
 				}
 			}
 		}
-		return result;
+		return Result;
 	}
 }

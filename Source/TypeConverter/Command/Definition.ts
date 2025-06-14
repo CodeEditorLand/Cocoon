@@ -33,20 +33,20 @@ export class Definition implements Interface {
 		);
 	}
 
-	private ExecuteDelegatedCommand(ID: string, ...Arguments: any[]): any {
-		const command = this.DelegatedCommands.get(ID);
-		if (!command) {
+	private ExecuteDelegatedCommand(ID: string, ...ArgumentArray: any[]): any {
+		const Command = this.DelegatedCommands.get(ID);
+		if (!Command) {
 			throw new Error(`Unknown delegated command: ${ID}`);
 		}
 		return this.CommandService.ExecuteCommand(
-			command.command,
-			...(command.arguments ?? []),
+			Command.command,
+			...(Command.arguments ?? []),
 		);
 	}
 
 	public ToInternal(
 		Command: VSCode.Command,
-		Disposables: IDisposable[],
+		DisposableArray: IDisposable[],
 	): ICommand {
 		if (!Command) {
 			return undefined as any;
@@ -54,24 +54,24 @@ export class Definition implements Interface {
 
 		const APICommand = this.LookupAPICommand(Command.command);
 		if (APICommand) {
-			const ConvertedArguments =
-				Command.arguments?.map((argument, i) =>
-					APICommand.Arguments[i].Convert(argument),
+			const ConvertedArgumentArray =
+				Command.arguments?.map((Argument, i) =>
+					APICommand.Arguments[i].Convert(Argument),
 				) ?? [];
 			return {
 				id: APICommand.InternalID,
 				title: APICommand.ID,
-				arguments: ConvertedArguments,
+				arguments: ConvertedArgumentArray,
 			};
 		}
 
 		if (
 			Array.isArray(Command.arguments) &&
-			Command.arguments.some((argument) => typeof argument === "function")
+			Command.arguments.some((Argument) => typeof Argument === "function")
 		) {
 			const ID = generateUuid();
 			this.DelegatedCommands.set(ID, Command);
-			Disposables.push({
+			DisposableArray.push({
 				dispose: () => this.DelegatedCommands.delete(ID),
 			});
 			return {

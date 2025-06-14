@@ -7,7 +7,7 @@
 import { Layer } from "effect";
 
 import type { Configuration } from "./Configuration.js";
-import { Dispatcher } from "./Dispatcher/Service.js";
+import { Live as LiveDispatcher } from "./Dispatcher.js";
 import type { gRPCConnectionError } from "./Error.js";
 import { Acquire } from "./Server/Acquire.js";
 import { Tag, type Interface as ServerService } from "./Server/Service.js";
@@ -19,4 +19,4 @@ export const Live: Layer.Layer<
 	ServerService,
 	gRPCConnectionError,
 	Configuration | Dispatcher.Interface
-> = Layer.scoped(Tag, Acquire).pipe(Layer.provide(Dispatcher));
+> = Layer.scoped(Tag, Acquire).pipe(Layer.provide(LiveDispatcher));

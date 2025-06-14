@@ -16,12 +16,11 @@ import { Effect } from "effect";
 
 import { Configuration as ConfigurationService } from "../Configuration.js";
 import { gRPCConnectionError } from "../Error.js";
-import { Release } from "./Release.js";
 import type { Interface as ClientService } from "./Service.js";
+import { Release } from "./Release.js";
 
 /**
  * An `Effect` that loads the gRPC `.proto` file definition from disk.
- * @param ProtoPath The absolute path to the `vine.proto` file.
  */
 function LoadProtoDefinition(
 	ProtoPath: string,
@@ -44,8 +43,6 @@ function LoadProtoDefinition(
 /**
  * An `Effect` that creates an insecure gRPC client instance from a loaded
  * package definition.
- * @param PackageDefinition The loaded gRPC package definition.
- * @param ServerAddress The address of the `Mountain` gRPC server.
  */
 function CreateClientInstance(
 	PackageDefinition: GrpcObject,
@@ -72,9 +69,7 @@ function CreateClientInstance(
 }
 
 /**
- * An `Effect` that waits for the gRPC client to establish a ready connection
- * with the server, with a 10-second timeout.
- * @param Client The gRPC client instance.
+ * An `Effect` that waits for the gRPC client to establish a ready connection.
  */
 function WaitForClientReady(
 	Client: ClientService,
