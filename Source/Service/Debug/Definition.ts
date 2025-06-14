@@ -20,16 +20,13 @@ import type {
 	WorkspaceFolder,
 } from "./Type.js";
 
-export const Definition = Effect.gen(function* (_) {
-	const IPCService = yield* _(IPC.Tag);
+export const Definition = Effect.gen(function* () {
+	const IPCService = yield* IPC.Tag;
 
-	// --- State and Event Emitters ---
-	const ActiveSession = yield* _(
-		Ref.make<DebugSession | undefined>(undefined),
-	);
-	const ConfigProviders = yield* _(Ref.make(new Map<number, any>()));
-	const DescriptorFactories = yield* _(Ref.make(new Map<number, any>()));
-	const TrackerFactories = yield* _(Ref.make(new Map<number, any>()));
+	const ActiveSession = yield* Ref.make<DebugSession | undefined>(undefined);
+	const ConfigProviders = yield* Ref.make(new Map<number, any>());
+	const DescriptorFactories = yield* Ref.make(new Map<number, any>());
+	const TrackerFactories = yield* Ref.make(new Map<number, any>());
 
 	const OnDidChangeActiveDebugSessionEvent = CreateEventStream<any>();
 	const OnDidStartDebugSessionEvent = CreateEventStream<any>();
@@ -37,64 +34,48 @@ export const Definition = Effect.gen(function* (_) {
 	const OnDidTerminateDebugSessionEvent = CreateEventStream<any>();
 	const OnDidChangeBreakpointsEvent = CreateEventStream<any>();
 
-	// --- RPC Handlers (for calls FROM Mountain) ---
-	// These handlers call the provider methods registered by extensions.
 	IPCService.RegisterInvokeHandler(
 		"$provideDebugConfigurations",
 		([handle, folderDTO, token]) =>
-			Effect.gen(function* (_) {
+			Effect.gen(function* () {
 				// ... logic to find provider by handle, call it, and return DTOs ...
-			}).pipe(Effect.runPromise),
+			}),
 	);
 
 	IPCService.RegisterInvokeHandler(
 		"$resolveDebugConfiguration",
 		([handle, folderDTO, configDTO, token]) =>
-			Effect.gen(function* (_) {
+			Effect.gen(function* () {
 				// ... logic to find provider, call it, and return DTO ...
-			}).pipe(Effect.runPromise),
+			}),
 	);
 
 	IPCService.RegisterInvokeHandler(
 		"$createDebugAdapterDescriptor",
 		([handle, sessionDTO, executableDTO]) =>
-			Effect.gen(function* (_) {
+			Effect.gen(function* () {
 				// ... logic to find factory, call it, and return DTO ...
-			}).pipe(Effect.runPromise),
+			}),
 	);
 
-	// ... other RPC handlers for adapter factories, trackers, and session events ...
-
 	const ServiceImplementation: Interface = {
-		// Events
-		onDidChangeActiveDebugSession:
-			OnDidChangeActiveDebugSessionEvent.Stream.pipe(Stream.toEvent),
-		onDidStartDebugSession: OnDidStartDebugSessionEvent.Stream.pipe(
-			Stream.toEvent,
-		),
+		onDidChangeActiveDebugSession: OnDidChangeActiveDebugSessionEvent.event,
+		onDidStartDebugSession: OnDidStartDebugSessionEvent.event,
 		onDidReceiveDebugSessionCustomEvent:
-			OnDidReceiveDebugSessionCustomEvent.Stream.pipe(Stream.toEvent),
-		onDidTerminateDebugSession: OnDidTerminateDebugSessionEvent.Stream.pipe(
-			Stream.toEvent,
-		),
-		onDidChangeBreakpoints: OnDidChangeBreakpointsEvent.Stream.pipe(
-			Stream.toEvent,
-		),
+			OnDidReceiveDebugSessionCustomEvent.event,
+		onDidTerminateDebugSession: OnDidTerminateDebugSessionEvent.event,
+		onDidChangeBreakpoints: OnDidChangeBreakpointsEvent.event,
 
-		// Properties
 		get activeDebugSession() {
-			return Ref.get(ActiveSession).pipe(Effect.runSync);
+			return Effect.runSync(Ref.get(ActiveSession));
 		},
 		get activeDebugConsole() {
-			// This would be managed by state from Mountain
 			throw new Error("activeDebugConsole not implemented.");
 		},
 		get breakpoints() {
-			// This would be managed by state from Mountain
 			return [];
 		},
 
-		// Methods
 		RegisterDebugConfigurationProvider: (Type, Provider, Extension) =>
 			RegisterProvider(
 				ConfigProviders,
@@ -122,10 +103,10 @@ export const Definition = Effect.gen(function* (_) {
 		StartDebugging: (Folder, Configuration, Options) =>
 			IPCService.SendRequest<boolean>("$startDebugging", [
 				Folder
-					? TypeConverter.URIConverter.FromAPI(Folder.uri)
+					? TypeConverter.URIConverter.fromAPI(Folder.uri)
 					: undefined,
-				Configuration, // Needs DTO conversion
-				Options, // Needs DTO conversion
+				Configuration,
+				Options,
 			]).pipe(Effect.map((result) => !!result)),
 
 		StopDebugging: (Session) =>

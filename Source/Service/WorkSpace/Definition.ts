@@ -3,12 +3,11 @@
  * @description The live implementation of the WorkSpace service.
  */
 
-import { Effect, Ref, Stream } from "effect";
+import { Effect, Ref } from "effect";
 import { Emitter } from "vs/base/common/event.js";
-import type { TextEditor, Uri, WorkspaceFolder } from "vscode";
+import type { TextEditor, Uri } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
 import { Configuration } from "../Configuration/Service.js";
 import { Document } from "../Document/Service.js";
 import { FileSystem } from "../FileSystem/Service.js";
@@ -18,22 +17,22 @@ import { InternalWorkSpace } from "./State.js";
 import { FindFiles as FindFilesEffect } from "./Support/FindFiles.js";
 import { OpenTextDocument as OpenTextDocumentEffect } from "./Support/OpenTextDocument.js";
 
-export const Definition = Effect.gen(function* (_) {
-	const IPCService = yield* _(IPC.Tag);
-	const DocumentService = yield* _(Document.Tag);
-	const FsService = yield* _(FileSystem.Tag);
-	const ConfigurationService = yield* _(Configuration.Tag);
+export const Definition = Effect.gen(function* () {
+	const IPCService = yield* IPC.Tag;
+	const DocumentService = yield* Document.Tag;
+	const FsService = yield* FileSystem.Tag;
+	const ConfigurationService = yield* Configuration.Tag;
 
-	const InternalWorkSpaceRef = yield* _(
-		Ref.make<InternalWorkSpace | undefined>(undefined),
+	const InternalWorkSpaceRef = yield* Ref.make<InternalWorkSpace | undefined>(
+		undefined,
 	);
 	const OnDidChangeFoldersEvent = new Emitter<any>();
 
-	const TextEditorsMap = yield* _(Ref.make(new Map<string, TextEditor>()));
-	const ActiveTextEditorRef = yield* _(
-		Ref.make<TextEditor | undefined>(undefined),
+	const TextEditorsMap = yield* Ref.make(new Map<string, TextEditor>());
+	const ActiveTextEditorRef = yield* Ref.make<TextEditor | undefined>(
+		undefined,
 	);
-	const VisibleTextEditorsRef = yield* _(Ref.make<readonly TextEditor[]>([]));
+	const VisibleTextEditorsRef = yield* Ref.make<readonly TextEditor[]>([]);
 
 	const onDidChangeActiveTextEditorEmitter = new Emitter<
 		TextEditor | undefined
@@ -42,10 +41,9 @@ export const Definition = Effect.gen(function* (_) {
 		readonly TextEditor[]
 	>();
 
-	// --- RPC Handler ---
 	IPCService.RegisterInvokeHandler("$acceptWorkspaceData", ([data]) =>
-		Effect.gen(function* (_) {
-			const OldWorkSpace = yield* _(Ref.get(InternalWorkSpaceRef));
+		Effect.gen(function* () {
+			const OldWorkSpace = yield* Ref.get(InternalWorkSpaceRef);
 			const NewWorkSpace = new InternalWorkSpace(
 				data.id,
 				data.name,
@@ -53,10 +51,10 @@ export const Definition = Effect.gen(function* (_) {
 					TypeConverter.Main.WorkspaceFolder.fromDTO(f),
 				),
 				data.configuration
-					? TypeConverter.URIConverter.ToAPI(data.configuration)
+					? TypeConverter.URIConverter.toAPI(data.configuration)
 					: undefined,
 			);
-			yield* _(Ref.set(InternalWorkSpaceRef, NewWorkSpace));
+			yield* Ref.set(InternalWorkSpaceRef, NewWorkSpace);
 
 			const oldFolders = OldWorkSpace?.Folders ?? [];
 			const newFolders = NewWorkSpace.Folders;
@@ -77,16 +75,14 @@ export const Definition = Effect.gen(function* (_) {
 			if (added.length > 0 || removed.length > 0) {
 				OnDidChangeFoldersEvent.fire({ added, removed });
 			}
-		}).pipe(Effect.runPromise),
+		}),
 	);
 
-	// Handler for active/visible editor changes
 	IPCService.RegisterInvokeHandler(
 		"$acceptEditorState",
 		([activeEditorId, visibleEditorIds]) =>
-			Effect.gen(function* (_) {
-				// This is a simplified logic. A real impl would create/update TextEditor objects.
-				const editors = yield* _(Ref.get(TextEditorsMap));
+			Effect.gen(function* () {
+				const editors = yield* Ref.get(TextEditorsMap);
 				const newActive = activeEditorId
 					? editors.get(activeEditorId)
 					: undefined;
@@ -94,83 +90,86 @@ export const Definition = Effect.gen(function* (_) {
 					.map((id: string) => editors.get(id))
 					.filter(Boolean);
 
-				yield* _(Ref.set(ActiveTextEditorRef, newActive));
-				yield* _(
-					Ref.set(VisibleTextEditorsRef, newVisible as TextEditor[]),
+				yield* Ref.set(ActiveTextEditorRef, newActive);
+				yield* Ref.set(
+					VisibleTextEditorsRef,
+					newVisible as TextEditor[],
 				);
 
 				onDidChangeActiveTextEditorEmitter.fire(newActive);
 				onDidChangeVisibleTextEditorsEmitter.fire(
 					newVisible as TextEditor[],
 				);
-			}).pipe(Effect.runPromise),
+			}),
 	);
 
 	const ServiceImplementation: Interface = {
-		// --- Properties ---
 		get name() {
-			return Ref.get(InternalWorkSpaceRef).pipe(
-				Effect.map((ws) => ws?.Name),
-				Effect.runSync,
+			return Effect.runSync(
+				Ref.get(InternalWorkSpaceRef).pipe(
+					Effect.map((ws) => ws?.Name),
+				),
 			);
 		},
 		get workspaceFile() {
-			return Ref.get(InternalWorkSpaceRef).pipe(
-				Effect.map((ws) => ws?.Configuration),
-				Effect.runSync,
+			return Effect.runSync(
+				Ref.get(InternalWorkSpaceRef).pipe(
+					Effect.map((ws) => ws?.Configuration),
+				),
 			);
 		},
 		get workspaceFolders() {
-			return Ref.get(InternalWorkSpaceRef).pipe(
-				Effect.map((ws) => ws?.Folders),
-				Effect.runSync,
+			return Effect.runSync(
+				Ref.get(InternalWorkSpaceRef).pipe(
+					Effect.map((ws) => ws?.Folders),
+				),
 			);
 		},
 		get isTrusted() {
 			return true;
-		}, // This would come from InitData
-
-		// --- Events ---
+		},
 		onDidChangeWorkspaceFolders: OnDidChangeFoldersEvent.event,
-
-		// --- Methods ---
 		getWorkspaceFolder: (uri: Uri) => {
 			const folders =
-				Ref.get(InternalWorkSpaceRef).pipe(
-					Effect.map((ws) => ws?.Folders),
-					Effect.runSync,
+				Effect.runSync(
+					Ref.get(InternalWorkSpaceRef).pipe(
+						Effect.map((ws) => ws?.Folders),
+					),
 				) ?? [];
 			return folders.find((f) => uri.fsPath.startsWith(f.uri.fsPath));
 		},
 		findFiles: (include, exclude, max, token) =>
-			FindFilesEffect(IPCService, include, exclude, max, token),
+			FindFilesEffect(IPCService, include, exclude, max, token).pipe(
+				Effect.mapError((e) => new Error(String(e))),
+			),
 		openTextDocument: (options) =>
-			OpenTextDocumentEffect(IPCService, DocumentService, options),
+			OpenTextDocumentEffect(IPCService, DocumentService, options).pipe(
+				Effect.mapError((e) => new Error(String(e))),
+			),
 		getConfiguration: ConfigurationService.GetConfiguration,
 		applyEdit: (edit) =>
-			IPCService.SendRequest<boolean>("$applyWorkspaceEdit", [
-				TypeConverter.WorkSpaceEdit.FromAPI(edit),
-			]).pipe(Effect.runPromise),
-
-		// --- Delegated Properties & Events ---
+			Effect.runPromise(
+				IPCService.SendRequest<boolean>("$applyWorkspaceEdit", [
+					TypeConverter.WorkSpaceEdit.fromAPI(edit),
+				]),
+			),
 		fs: FsService,
 		textDocuments: DocumentService.TextDocuments,
 		onDidOpenTextDocument: DocumentService.onDidOpenTextDocument,
 		onDidCloseTextDocument: DocumentService.onDidCloseTextDocument,
 		onDidChangeTextDocument: DocumentService.onDidChangeTextDocument,
 		get activeTextEditor() {
-			return Ref.get(ActiveTextEditorRef).pipe(Effect.runSync);
+			return Effect.runSync(Ref.get(ActiveTextEditorRef));
 		},
 		get visibleTextEditors() {
-			return Ref.get(VisibleTextEditorsRef).pipe(Effect.runSync);
+			return Effect.runSync(Ref.get(VisibleTextEditorsRef));
 		},
 		onDidChangeActiveTextEditor: onDidChangeActiveTextEditorEmitter.event,
 		onDidChangeVisibleTextEditors:
 			onDidChangeVisibleTextEditorsEmitter.event,
 		findTextEditorById: (id: string) =>
-			Ref.get(TextEditorsMap).pipe(
-				Effect.map((m) => m.get(id)),
-				Effect.runSync,
+			Effect.runSync(
+				Ref.get(TextEditorsMap).pipe(Effect.map((m) => m.get(id))),
 			),
 	};
 
