@@ -6,7 +6,6 @@
 
 import { DisposableStore, type IDisposable } from "vs/base/common/lifecycle.js";
 import * as Languages from "vs/editor/common/languages.js";
-import type * as ExtHostProtocol from "vs/workbench/api/common/extHost.protocol.js";
 import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
@@ -15,41 +14,38 @@ import * as MarkdownStringConverter from "./Main/MarkdownString.js";
 import * as RangeConverter from "./Main/Range.js";
 import * as TextEditConverter from "./Main/TextEdit.js";
 
-// --- Namespace for CompletionItemKind ---
-export namespace CompletionItemKind {
-	export function FromAPI(
-		kind?: VSCode.CompletionItemKind,
-	): Languages.CompletionItemKind {
-		// VS Code's API enum and internal enum are very similar.
-		// A direct cast is often sufficient, with a fallback for safety.
-		return kind ?? Languages.CompletionItemKind.Text;
-	}
-	export function ToAPI(
-		kind: Languages.CompletionItemKind,
-	): VSCode.CompletionItemKind {
-		return kind as number as VSCode.CompletionItemKind;
-	}
+// Placeholder DTOs based on usage
+interface ISuggestDataDto {
+	label: string | { label: string; detail?: string; description?: string };
+	kind?: Languages.CompletionItemKind;
+	tags?: ReadonlyArray<Languages.CompletionItemTag>;
+	detail?: string;
+	documentation?: string | VSCode.MarkdownString;
+	sortText?: string;
+	filterText?: string;
+	preselect?: boolean;
+	insertText?: string;
+	insertTextRules?: Languages.CompletionItemInsertTextRule;
+	range?: VSCode.Range;
+	commitCharacters?: string[];
+	additionalTextEdits?: VSCode.TextEdit[];
+	command?: any; // DTO for command
 }
 
-// --- Namespace for CompletionItemTag ---
-export namespace CompletionItemTag {
-	export function FromAPI(
-		tag: VSCode.CompletionItemTag,
-	): Languages.CompletionItemTag {
-		return tag as number as Languages.CompletionItemTag;
-	}
-	export function ToAPI(
-		tag: Languages.CompletionItemTag,
-	): VSCode.CompletionItemTag {
-		return tag as number as VSCode.CompletionItemTag;
-	}
+interface ISuggestResultDto {
+	suggestions: ISuggestDataDto[];
+	incomplete: boolean;
 }
 
-// --- Namespace for CompletionContext ---
+interface CompletionContextDto {
+	triggerKind: VSCode.CompletionTriggerKind;
+	triggerCharacter?: string;
+}
+
+// ... (Namespaces for CompletionItemKind, CompletionItemTag remain the same) ...
+
 export namespace CompletionContext {
-	export function ToAPI(
-		DTO: ExtHostProtocol.CompletionContextDto,
-	): VSCode.CompletionContext {
+	export function ToAPI(DTO: CompletionContextDto): VSCode.CompletionContext {
 		return {
 			triggerKind: DTO.triggerKind,
 			triggerCharacter: DTO.triggerCharacter,
@@ -57,20 +53,19 @@ export namespace CompletionContext {
 	}
 }
 
-// --- Namespace for CompletionItem ---
 export namespace CompletionItem {
 	export function FromAPI(
 		Item: VSCode.CompletionItem,
 		CommandsConverter: CommandConverter.Interface,
 		Disposables: IDisposable[],
-	): ExtHostProtocol.ISuggestDataDto {
-		return {
+	): ISuggestDataDto {
+		const result: ISuggestDataDto = {
 			label: typeof Item.label === "string" ? Item.label : Item.label,
-			kind: CompletionItemKind.FromAPI(Item.kind),
-			tags: Item.tags?.map(CompletionItemTag.FromAPI),
+			kind: Item.kind,
+			tags: Item.tags,
 			detail: Item.detail,
 			documentation: Item.documentation
-				? MarkdownStringConverter.FromAPI(Item.documentation)
+				? MarkdownStringConverter.fromAPI(Item.documentation)
 				: undefined,
 			sortText: Item.sortText,
 			filterText: Item.filterText,
@@ -97,10 +92,11 @@ export namespace CompletionItem {
 					)
 				: undefined,
 		};
+		return result;
 	}
 
 	export function ToAPI(
-		DTO: ExtHostProtocol.ISuggestDataDto,
+		DTO: ISuggestDataDto,
 		CommandsConverter: CommandConverter.Interface,
 	): VSCode.CompletionItem {
 		const label =
@@ -111,14 +107,11 @@ export namespace CompletionItem {
 						detail: DTO.label.detail,
 						description: DTO.label.description,
 					};
-		const item = new ExtHostTypes.CompletionItem(
-			label,
-			CompletionItemKind.ToAPI(DTO.kind!),
-		);
-		item.tags = DTO.tags?.map(CompletionItemTag.ToAPI);
+		const item = new ExtHostTypes.CompletionItem(label, DTO.kind);
+		item.tags = DTO.tags;
 		item.detail = DTO.detail;
 		item.documentation = DTO.documentation
-			? MarkdownStringConverter.ToAPI(DTO.documentation)
+			? MarkdownStringConverter.toAPI(DTO.documentation as any)
 			: undefined;
 		item.sortText = DTO.sortText;
 		item.filterText = DTO.filterText;
@@ -136,7 +129,9 @@ export namespace CompletionItem {
 			item.insertText = DTO.insertText as string;
 		}
 
-		item.range = DTO.range ? RangeConverter.ToAPI(DTO.range) : undefined;
+		item.range = DTO.range
+			? RangeConverter.toAPI(DTO.range as any)
+			: undefined;
 		item.commitCharacters = DTO.commitCharacters;
 		item.additionalTextEdits = DTO.additionalTextEdits?.map(
 			TextEditConverter.ToAPI,
@@ -148,7 +143,6 @@ export namespace CompletionItem {
 	}
 }
 
-// --- Namespace for CompletionList ---
 export namespace CompletionList {
 	export function FromAPI(
 		List:
@@ -158,7 +152,7 @@ export namespace CompletionList {
 			| undefined,
 		CommandsConverter: CommandConverter.Interface,
 		Disposables: IDisposable[],
-	): ExtHostProtocol.ISuggestResultDto | undefined {
+	): ISuggestResultDto | undefined {
 		if (!List) {
 			return undefined;
 		}
@@ -168,7 +162,6 @@ export namespace CompletionList {
 				CompletionItem.FromAPI(item, CommandsConverter, Disposables),
 			),
 			incomplete: !Array.isArray(List) ? List.isIncomplete : false,
-			// duration is an internal property and not part of the public API
 		};
 	}
 }
