@@ -7,7 +7,6 @@
 
 import { Layer } from "effect";
 
-import { InitData } from "../Service/InitData.js";
 import { IPC } from "../Service/IPC.js";
 import { Log } from "../Service/Log.js";
 import { APIFactory } from "./APIFactory.js";
@@ -24,9 +23,6 @@ export const Live = Layer.effect(Tag, Definition).pipe(
 			APIFactory.Live,
 			Log.Live,
 			IPC.Live,
-			// The InitData layer is special and will be provided at the top-level
-			// when the application starts, so we don't provide a concrete Live
-			// implementation for it here. It's an external dependency.
 		),
 	),
 );
