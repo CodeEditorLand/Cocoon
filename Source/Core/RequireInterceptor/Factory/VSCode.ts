@@ -5,13 +5,30 @@
  */
 
 import type { URI } from "vs/base/common/uri.js";
-import { nullExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import {
+	ExtensionIdentifier,
+	type IExtensionDescription,
+} from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
 import type { Log } from "../../../Service/Log.js";
 import type { APIFactory } from "../../APIFactory.js";
 import type { ExtensionPath } from "../../ExtensionPath.js";
 import type { Interface as INodeModuleFactory } from "./Interface.js";
+
+// A fallback extension description for unidentified callers.
+const nullExtensionDescription: IExtensionDescription = {
+	identifier: new ExtensionIdentifier("nullExtension"),
+	isBuiltin: false,
+	isUserBuiltin: false,
+	isUnderDevelopment: false,
+	extensionLocation: { scheme: "file", path: "/__null" } as any,
+	name: "null",
+	publisher: "null",
+	version: "0.0.0",
+	engines: { vscode: "*" },
+	targetPlatform: "undefined",
+};
 
 /**
  * A factory that creates a sandboxed `vscode` API object for each extension.
@@ -29,7 +46,9 @@ export class VSCodeNodeModuleFactory implements INodeModuleFactory {
 	) {}
 
 	public Load(_Request: string, ParentURI: URI): any {
-		const Extension = this.ExtensionPathService.FindSubstr(ParentURI);
+		const Extension = this.ExtensionPathService.FindSubstr(
+			ParentURI as any,
+		);
 
 		if (Extension) {
 			const extensionId = Extension.identifier.value;
@@ -45,8 +64,6 @@ export class VSCodeNodeModuleFactory implements INodeModuleFactory {
 			return APIImplementation;
 		}
 
-		// Fallback for unidentified callers (e.g., code running from a bare script, or tests).
-		// This provides a default, non-functional API object to prevent crashes.
 		this.LogService.Warn(
 			`Could not identify extension for 'vscode' require call from ${ParentURI.fsPath}. Providing a default API object.`,
 		);

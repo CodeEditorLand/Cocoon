@@ -77,7 +77,7 @@ export async function resolve(
 			const TimeoutID = setTimeout(() => {
 				PendingPromises.delete(RequestID);
 				reject(
-					new Error(
+					new globalThis.Error(
 						`Timeout resolving module import: "${Specifier}"`,
 					),
 				);
@@ -96,19 +96,16 @@ export async function resolve(
 		});
 
 		const DynamicModuleURL = await ResolutionPromise;
-		// `shortCircuit: true` tells Node.js to use our returned URL and stop its own resolution process.
 		return { url: DynamicModuleURL, shortCircuit: true, format: "module" };
 	} catch (error) {
 		console.error(
 			`[Cocoon ESM Loader Hook] Error resolving "${Specifier}": ${(error as Error).message}`,
 		);
-		// Ensure cleanup even on error
 		const promiseCallbacks = PendingPromises.get(RequestID);
 		if (promiseCallbacks) {
 			clearTimeout(promiseCallbacks.TimeoutID);
 			PendingPromises.delete(RequestID);
 		}
-		// Fallback to default resolution on failure.
 		return NextResolve(Specifier, Context);
 	}
 }
@@ -120,24 +117,25 @@ function HandleResponseMessage(Response: {
 	url?: string;
 	error?: { message: string };
 }) {
-	const { id: ID, url: URL, error: Error } = Response;
+	const { id: ID, url: URL, error: ErrorResponse } = Response;
 	const PromiseCallbacks = PendingPromises.get(ID);
 	if (!PromiseCallbacks) return;
 
 	clearTimeout(PromiseCallbacks.TimeoutID);
 	PendingPromises.delete(ID);
 
-	if (Error) {
+	if (ErrorResponse) {
 		PromiseCallbacks.Reject(
-			new Error(
-				Error.message || "Unknown resolution error from main thread",
+			new globalThis.Error(
+				ErrorResponse.message ||
+					"Unknown resolution error from main thread",
 			),
 		);
 	} else if (typeof URL === "string") {
 		PromiseCallbacks.Resolve(URL);
 	} else {
 		PromiseCallbacks.Reject(
-			new Error(
+			new globalThis.Error(
 				"Invalid response from main thread: missing 'url' or 'error' field.",
 			),
 		);
@@ -152,7 +150,7 @@ function HandlePortClose() {
 	PendingPromises.forEach((Callbacks, ID) => {
 		clearTimeout(Callbacks.TimeoutID);
 		Callbacks.Reject(
-			new Error(
+			new globalThis.Error(
 				`Communication channel closed while request ID ${ID} was pending.`,
 			),
 		);
