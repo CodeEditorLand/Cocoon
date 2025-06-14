@@ -20,57 +20,47 @@ import { Log } from "../Log.js";
 import type { Interface } from "./Service.js";
 import { WebViewPanelImplementation } from "./WebViewPanelImplementation.js";
 
-export const Definition = Effect.gen(function* (_) {
-	const IPCService = yield* _(IPC.Tag);
-	const LogService = yield* _(Log.Tag);
-	const ActivePanels = yield* _(
-		Ref.make(new Map<string, WebViewPanelImplementation>()),
+export const Definition = Effect.gen(function* () {
+	const IPCService = yield* IPC.Tag;
+	const ActivePanels = yield* Ref.make(
+		new Map<string, WebViewPanelImplementation>(),
 	);
 
-	// --- RPC Handlers for events FROM Mountain ---
-	IPCService.RegisterInvokeHandler("$onDidDisposeWebview", ([handle]) => {
-		const panel = Ref.get(ActivePanels).pipe(
-			Effect.map((m) => m.get(handle)),
-			Effect.runSync,
-		);
-		if (panel) {
-			panel.dispose();
-		}
-		return Promise.resolve(undefined);
-	});
+	IPCService.RegisterInvokeHandler("$onDidDisposeWebview", ([handle]) =>
+		Effect.gen(function* () {
+			const panel = (yield* Ref.get(ActivePanels)).get(handle);
+			if (panel) {
+				panel.dispose();
+			}
+		}),
+	);
+
 	IPCService.RegisterInvokeHandler(
 		"$onDidReceiveMessage",
-		([handle, message]) => {
-			const panel = Ref.get(ActivePanels).pipe(
-				Effect.map((m) => m.get(handle)),
-				Effect.runSync,
-			);
-			if (panel) {
-				(panel.webview as any).fireDidReceiveMessage(message);
-			}
-			return Promise.resolve(undefined);
-		},
+		([handle, message]) =>
+			Effect.gen(function* () {
+				const panel = (yield* Ref.get(ActivePanels)).get(handle);
+				if (panel) {
+					(panel.webview as any).fireDidReceiveMessage(message);
+				}
+			}),
 	);
+
 	IPCService.RegisterInvokeHandler(
 		"$onDidChangeWebviewPanelViewState",
-		([handle, newState]) => {
-			const panel = Ref.get(ActivePanels).pipe(
-				Effect.map((m) => m.get(handle)),
-				Effect.runSync,
-			);
-			if (panel) {
-				panel._updateViewState(newState);
-			}
-			return Promise.resolve(undefined);
-		},
+		([handle, newState]) =>
+			Effect.gen(function* () {
+				const panel = (yield* Ref.get(ActivePanels)).get(handle);
+				if (panel) {
+					panel._updateViewState(newState);
+				}
+			}),
 	);
+
 	IPCService.RegisterInvokeHandler(
 		"$deserializeWebviewPanel",
-		([handle, viewType, title, state, options, contentOptions]) => {
-			// This requires looking up the correct serializer and calling it.
-			// This is a complex flow that is stubbed for now.
-			return Promise.resolve(undefined);
-		},
+		([handle, viewType, title, state, options, contentOptions]) =>
+			Effect.succeed(undefined), // Stubbed
 	);
 
 	const ServiceImplementation: Interface = {
@@ -81,7 +71,7 @@ export const Definition = Effect.gen(function* (_) {
 			ShowOptions,
 			Options: WebviewPanelOptions & WebviewOptions = {},
 		) =>
-			Effect.gen(function* (_) {
+			Effect.gen(function* () {
 				const handle = generateUuid();
 				const ViewColumnValue =
 					typeof ShowOptions === "object"
@@ -105,22 +95,22 @@ export const Definition = Effect.gen(function* (_) {
 						Options,
 					);
 
-				yield* _(
-					IPCService.SendRequest<string>("$createWebviewPanel", [
-						handle,
-						ViewType,
-						Title,
-						ShowOptionsDTO,
-						PanelOptionsDTO,
-						ContentOptionsDTO,
-					]),
-				);
+				yield* IPCService.SendRequest<string>("$createWebviewPanel", [
+					handle,
+					ViewType,
+					Title,
+					ShowOptionsDTO,
+					PanelOptionsDTO,
+					ContentOptionsDTO,
+				]);
 
 				const onDispose = () => {
-					Ref.update(
-						ActivePanels,
-						(map) => (map.delete(handle), map),
-					).pipe(Effect.runSync);
+					Effect.runFork(
+						Ref.update(
+							ActivePanels,
+							(map) => (map.delete(handle), map),
+						),
+					);
 				};
 
 				const Panel = new WebViewPanelImplementation(
@@ -133,10 +123,9 @@ export const Definition = Effect.gen(function* (_) {
 					Options,
 					ViewColumnValue,
 				);
-				yield* _(
-					Ref.update(ActivePanels, (map) => map.set(handle, Panel)),
+				yield* Ref.update(ActivePanels, (map) =>
+					map.set(handle, Panel),
 				);
-
 				return Panel;
 			}),
 
@@ -144,11 +133,8 @@ export const Definition = Effect.gen(function* (_) {
 			Effect.sync(() => {
 				IPCService.SendNotification("$registerWebviewPanelSerializer", [
 					ViewType,
-					{
-						// options for the serializer
-					},
+					{},
 				]);
-				// The actual registration would be stored and used by the $deserializeWebviewPanel handler
 				return new Disposable(() => {
 					IPCService.SendNotification(
 						"$unregisterWebviewPanelSerializer",
