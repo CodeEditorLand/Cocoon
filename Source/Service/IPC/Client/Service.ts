@@ -11,16 +11,12 @@ import { Context } from "effect";
 import type { MountainService } from "../Generated.js";
 
 /**
- * The service interface for the raw, generated gRPC client.
- *
- * Higher-level IPC services will use this client to make calls to `Mountain`.
- */
-export type Interface = MountainService;
-
-/**
  * The `Context.Tag` for the gRPC client service.
  *
  * This tag is used by other services to declare their dependency on the raw
  * gRPC client.
  */
-export const Tag = Context.Tag<Interface>("IPC/Client");
+export class Client extends Context.Tag("IPC/Client")<
+	Client,
+	MountainService
+>() {}

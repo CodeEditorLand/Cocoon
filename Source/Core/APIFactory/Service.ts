@@ -26,4 +26,7 @@ export interface Interface {
 /**
  * The `Context.Tag` for the `APIFactory` service.
  */
-export const Tag = Context.Tag<Interface>("Core/APIFactory");
+export class APIFactory extends Context.Tag("Core/APIFactory")<
+	APIFactory,
+	Interface
+>() {}

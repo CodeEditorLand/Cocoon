@@ -8,15 +8,20 @@
 import { Layer } from "effect";
 
 import { Acquire } from "./Client/Acquire.js";
-import { Tag, type Interface as ClientService } from "./Client/Service.js";
-import type { Configuration } from "./Configuration.js";
+import { Client as ClientTag } from "./Client/Service.js";
+import { Configuration } from "./Configuration.js";
 import type { gRPCConnectionError } from "./Error.js";
 
-/**
- * The live implementation `Layer` for the gRPC Client service.
- */
-export const Live: Layer.Layer<
-	ClientService,
-	gRPCConnectionError,
-	Configuration
-> = Layer.scoped(Tag, Acquire);
+export namespace Client {
+	export const Tag = ClientTag;
+	export type Interface = ClientTag;
+
+	/**
+	 * The live implementation `Layer` for the gRPC Client service.
+	 */
+	export const Live: Layer.Layer<
+		Interface,
+		gRPCConnectionError,
+		Configuration
+	> = Layer.scoped(Tag, Acquire);
+}

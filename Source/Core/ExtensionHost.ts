@@ -18,11 +18,5 @@ import { Tag } from "./ExtensionHost/Service.js";
  * It depends on the APIFactory, logging, IPC, and initialization data services.
  */
 export const Live = Layer.effect(Tag, Definition).pipe(
-	Layer.provide(
-		Layer.mergeAll(
-			APIFactory.Live,
-			Log.Live,
-			IPC.Live,
-		),
-	),
+	Layer.provide(Layer.mergeAll(APIFactory.Live, Log.Live, IPC.Live)),
 );

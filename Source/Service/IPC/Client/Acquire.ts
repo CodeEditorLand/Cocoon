@@ -16,8 +16,8 @@ import { Effect } from "effect";
 
 import { Configuration as ConfigurationService } from "../Configuration.js";
 import { gRPCConnectionError } from "../Error.js";
-import type { Interface as ClientService } from "./Service.js";
 import { Release } from "./Release.js";
+import type { Interface as ClientService } from "./Service.js";
 
 /**
  * An `Effect` that loads the gRPC `.proto` file definition from disk.

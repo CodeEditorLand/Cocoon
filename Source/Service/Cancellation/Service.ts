@@ -4,40 +4,37 @@
  * This service manages cancellation tokens for long-running RPC operations.
  */
 
-import { Context, type Effect } from "effect";
+import { Context, Scope, type Effect } from "effect";
 
 import type { InvalidTokenIDError } from "./Error.js";
 import type { TokenAndScope } from "./Type.js";
 
-/**
- * The service interface for the cancellation token provider.
- */
-export interface Interface {
-	/**
-	 * Acquires a CancellationToken for a given operation ID.
-	 * This returns a scoped Effect. When the scope is closed, the token
-	 * source is automatically disposed and cleaned up.
-	 * @param TokenID The numeric ID for the operation.
-	 * @returns A scoped `Effect` that resolves to a `TokenAndScope` object.
-	 */
-	readonly ObtainToken: (
-		TokenID: number,
-	) => Effect.Effect<TokenAndScope, InvalidTokenIDError, Effect.Scope>;
+export class Cancellation extends Context.Tag(
+	"Service/CancellationTokenProvider",
+)<
+	Cancellation,
+	{
+		/**
+		 * Acquires a CancellationToken for a given operation ID.
+		 * This returns a scoped Effect. When the scope is closed, the token
+		 * source is automatically disposed and cleaned up.
+		 * @param TokenID The numeric ID for the operation.
+		 * @returns A scoped `Effect` that resolves to a `TokenAndScope` object.
+		 */
+		readonly ObtainToken: (
+			TokenID: number,
+		) => Effect.Effect<TokenAndScope, InvalidTokenIDError, Scope.Scope>;
 
-	/**
-	 * Signals cancellation for a specific token ID.
-	 * @param TokenID The numeric ID of the operation to cancel.
-	 */
-	readonly CancelToken: (TokenID: number) => Effect.Effect<void, never>;
+		/**
+		 * Signals cancellation for a specific token ID.
+		 * @param TokenID The numeric ID of the operation to cancel.
+		 */
+		readonly CancelToken: (TokenID: number) => Effect.Effect<void, never>;
 
-	/**
-	 * Disposes of all currently managed cancellation token sources.
-	 * This is typically called during shutdown.
-	 */
-	readonly DisposeAll: () => Effect.Effect<void, never>;
-}
-
-/**
- * The Context.Tag for the CancellationTokenProvider service.
- */
-export const Tag = Context.Tag<Interface>("Service/CancellationTokenProvider");
+		/**
+		 * Disposes of all currently managed cancellation token sources.
+		 * This is typically called during shutdown.
+		 */
+		readonly DisposeAll: () => Effect.Effect<void, never>;
+	}
+>() {}

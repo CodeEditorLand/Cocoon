@@ -15,6 +15,7 @@ import { Server as ServerTag } from "./Server/Service.js";
 export namespace Server {
 	export const Tag = ServerTag;
 	export type Interface = ServerTag;
+
 	/**
 	 * The live implementation `Layer` for the gRPC Server service.
 	 *
@@ -25,7 +26,7 @@ export namespace Server {
 	 */
 	export const Live: Layer.Layer<
 		Interface,
-		gRPCConnectionError,
+		gRPCConnectionError | Error,
 		Configuration
 	> = Layer.scoped(Tag, Acquire).pipe(Layer.provide(Dispatcher.Live));
 }

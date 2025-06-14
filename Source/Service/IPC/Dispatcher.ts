@@ -6,7 +6,7 @@
 
 import { Layer } from "effect";
 
-import { Cancellation } from "../../Cancellation.js";
+import { Cancellation } from "../Cancellation.js";
 import { Definition } from "./Dispatcher/Definition.js";
 import { Dispatcher as DispatcherTag } from "./Dispatcher/Service.js";
 import { ProtocolAdapter } from "./ProtocolAdapter.js";
