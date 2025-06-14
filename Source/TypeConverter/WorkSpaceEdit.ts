@@ -28,13 +28,17 @@ export namespace WorkSpaceEdit {
 
 		for (const [uri, edits] of Edit.entries()) {
 			if (edits[0] instanceof ExtHostTypes.TextEdit) {
-				result.edits.push({
-					resource: URIConverter.fromAPI(uri),
-					textEdits: (edits as VSCode.TextEdit[]).map(
-						TextEditConverter.FromAPI,
-					),
-					versionId: VersionProvider?.GetTextDocumentVersion(uri),
-				} as IWorkspaceTextEdit);
+				// This is a list of text edits for a single file.
+				// The internal DTO structure is an array of IWorkspaceTextEdit.
+				const resource = URIConverter.fromAPI(uri);
+				const versionId = VersionProvider?.GetTextDocumentVersion(uri);
+				for (const edit of edits as VSCode.TextEdit[]) {
+					result.edits.push({
+						resource,
+						textEdit: TextEditConverter.FromAPI(edit),
+						versionId,
+					} as IWorkspaceTextEdit);
+				}
 			} else {
 				for (const edit of edits as any[]) {
 					result.edits.push({

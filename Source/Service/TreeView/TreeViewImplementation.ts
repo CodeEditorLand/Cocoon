@@ -23,30 +23,28 @@ import type { Command as CommandService } from "../Command.js";
 import type { IPC } from "../IPC.js";
 
 export class TreeViewImplementation<T> implements TreeView<T> {
-	// A map from the extension's data element to its handle.
 	private readonly elementToHandleMap = new Map<T, string>();
-	private readonly handleToElementMap = new Map<string, T>();
+	public readonly handleToElementMap = new Map<string, T>();
 
-	// --- Public Event Emitters ---
 	private readonly onDidExpandElementEmitter =
 		CreateEventStream<TreeViewExpansionEvent<T>>();
 	readonly onDidExpandElement: Event<TreeViewExpansionEvent<T>> =
-		this.onDidExpandElementEmitter.Stream.pipe(Stream.toEvent);
+		this.onDidExpandElementEmitter.event;
 
 	private readonly onDidCollapseElementEmitter =
 		CreateEventStream<TreeViewExpansionEvent<T>>();
 	readonly onDidCollapseElement: Event<TreeViewExpansionEvent<T>> =
-		this.onDidCollapseElementEmitter.Stream.pipe(Stream.toEvent);
+		this.onDidCollapseElementEmitter.event;
 
 	private readonly onDidChangeSelectionEmitter =
 		CreateEventStream<TreeViewSelectionChangeEvent<T>>();
 	readonly onDidChangeSelection: Event<TreeViewSelectionChangeEvent<T>> =
-		this.onDidChangeSelectionEmitter.Stream.pipe(Stream.toEvent);
+		this.onDidChangeSelectionEmitter.event;
 
 	private readonly onDidChangeVisibilityEmitter =
 		CreateEventStream<TreeViewVisibilityChangeEvent>();
 	readonly onDidChangeVisibility: Event<TreeViewVisibilityChangeEvent> =
-		this.onDidChangeVisibilityEmitter.Stream.pipe(Stream.toEvent);
+		this.onDidChangeVisibilityEmitter.event;
 
 	constructor(
 		private readonly viewID: string,
@@ -66,7 +64,7 @@ export class TreeViewImplementation<T> implements TreeView<T> {
 		}
 	}
 
-	public getChildrenEffect(element?: T) {
+	public getChildrenEffect(element?: T): Effect.Effect<any[]> {
 		return Effect.tryPromise(() =>
 			this.dataProvider.getChildren(element),
 		).pipe(
@@ -92,11 +90,11 @@ export class TreeViewImplementation<T> implements TreeView<T> {
 					this.commandService,
 					() => undefined,
 				);
-				return TypeConverter.TreeView.Item.FromAPI(
+				return TypeConverter.TreeView.Item.fromAPI(
 					this.extension,
 					treeItem,
 					handle,
-					undefined, // Parent handle is managed by the host
+					undefined,
 					commandConverter,
 				);
 			}),
@@ -117,7 +115,7 @@ export class TreeViewImplementation<T> implements TreeView<T> {
 		elements: T | T[] | undefined | null,
 	): (string | null)[] | undefined {
 		if (elements === null || elements === undefined) {
-			return undefined; // Full refresh
+			return undefined;
 		}
 		if (Array.isArray(elements)) {
 			return elements.map((e) => this.elementToHandleMap.get(e) || null);
@@ -125,7 +123,6 @@ export class TreeViewImplementation<T> implements TreeView<T> {
 		return [this.elementToHandleMap.get(elements) || null];
 	}
 
-	// --- Public API Methods ---
 	reveal(
 		element: T,
 		options?: {
@@ -144,7 +141,6 @@ export class TreeViewImplementation<T> implements TreeView<T> {
 	}
 
 	dispose() {
-		// Clean up emitters and maps
 		this.onDidExpandElementEmitter.Shutdown();
 		this.onDidCollapseElementEmitter.Shutdown();
 		this.onDidChangeSelectionEmitter.Shutdown();
@@ -153,7 +149,6 @@ export class TreeViewImplementation<T> implements TreeView<T> {
 		this.handleToElementMap.clear();
 	}
 
-	// --- Stubs for writable properties ---
 	selection: readonly T[] = [];
 	visible: boolean = true;
 	message?: string;

@@ -5,21 +5,21 @@
  * documents in the extension host.
  */
 
-import { Context, Effect, Event } from "effect";
-import type { TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
+import { Context, Effect } from "effect";
+import type { Event, TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
 
 export interface Interface {
 	/** A read-only array of all text documents known to this extension host. */
 	readonly TextDocuments: readonly TextDocument[];
 
 	/** An event that is emitted when a text document is opened. */
-	readonly onDidOpenTextDocument: Event.Event<TextDocument>;
+	readonly onDidOpenTextDocument: Event<TextDocument>;
 	/** An event that is emitted when a text document is closed. */
-	readonly onDidCloseTextDocument: Event.Event<TextDocument>;
+	readonly onDidCloseTextDocument: Event<TextDocument>;
 	/** An event that is emitted when a text document is changed. */
-	readonly onDidChangeTextDocument: Event.Event<TextDocumentChangeEvent>;
+	readonly onDidChangeTextDocument: Event<TextDocumentChangeEvent>;
 	/** An event that is emitted when a text document is saved. */
-	readonly onDidSaveTextDocument: Event.Event<TextDocument>;
+	readonly onDidSaveTextDocument: Event<TextDocument>;
 
 	/**
 	 * Retrieves a text document for a given URI.

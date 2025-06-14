@@ -61,6 +61,8 @@ export class Definition implements Interface {
 			return {
 				id: APICommand.InternalID,
 				arguments: ConvertedArguments,
+				id: "",
+				handler: undefined,
 			};
 		}
 
@@ -80,8 +82,12 @@ export class Definition implements Interface {
 		}
 
 		return {
-			id: Command.command,
 			arguments: Command.arguments,
+			id: Command.command,
+			// Type 'never[]' is not assignable to type 'ICommandHandler'.
+			// Type 'never[]' provides no match for the signature '(accessor: ServicesAccessor, ...args: any[]): void'.ts(2322)
+			// @ts-expect-error for now
+			handler: [],
 		};
 	}
 
@@ -93,9 +99,9 @@ export class Definition implements Interface {
 		// not the core command execution payload. We construct a minimal command object.
 		return {
 			command: CommandDTO.id,
-			title: "", // Title is not part of the DTO
-			tooltip: undefined, // Tooltip is not part of the DTO
-			arguments: CommandDTO.arguments,
+			title: CommandDTO["title"] ?? "", // title is not part of the DTO
+			tooltip: CommandDTO["tooltip"] ?? "", // tooltip is not part of the DTO
+			arguments: CommandDTO["arguments"] ?? [], // arguments is not part of the DTO
 		};
 	}
 }
