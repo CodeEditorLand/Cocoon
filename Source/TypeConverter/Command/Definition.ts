@@ -49,7 +49,7 @@ export class Definition implements Interface {
 		Disposables: IDisposable[],
 	): ICommand {
 		if (!Command) {
-			return undefined as any; // To satisfy ICommand which might not be nullable
+			return undefined as any;
 		}
 
 		const APICommand = this.LookupAPICommand(Command.command);
@@ -60,9 +60,8 @@ export class Definition implements Interface {
 				) ?? [];
 			return {
 				id: APICommand.InternalID,
+				title: APICommand.ID,
 				arguments: ConvertedArguments,
-				id: "",
-				handler: undefined,
 			};
 		}
 
@@ -77,17 +76,15 @@ export class Definition implements Interface {
 			});
 			return {
 				id: this.DelegatingCommandID,
+				title: Command.title,
 				arguments: [ID],
 			};
 		}
 
 		return {
-			arguments: Command.arguments,
 			id: Command.command,
-			// Type 'never[]' is not assignable to type 'ICommandHandler'.
-			// Type 'never[]' provides no match for the signature '(accessor: ServicesAccessor, ...args: any[]): void'.ts(2322)
-			// @ts-expect-error for now
-			handler: [],
+			title: Command.title,
+			arguments: Command.arguments,
 		};
 	}
 
@@ -95,13 +92,11 @@ export class Definition implements Interface {
 		if (!CommandDTO) {
 			return undefined;
 		}
-		// The DTO only has `id` and `arguments`. Title/tooltip are part of the UI representation,
-		// not the core command execution payload. We construct a minimal command object.
 		return {
 			command: CommandDTO.id,
-			title: CommandDTO["title"] ?? "", // title is not part of the DTO
-			tooltip: CommandDTO["tooltip"] ?? "", // tooltip is not part of the DTO
-			arguments: CommandDTO["arguments"] ?? [], // arguments is not part of the DTO
+			title: CommandDTO.title ?? "",
+			tooltip: (CommandDTO as any).tooltip ?? "",
+			arguments: CommandDTO.arguments ?? [],
 		};
 	}
 }

@@ -12,11 +12,7 @@ import { IPC } from "../IPC.js";
 import { Telemetry } from "../Telemetry.js";
 import { WorkSpace } from "../WorkSpace.js";
 import type { Interface } from "./Service.js";
-import type {
-	CommandHandler,
-	CommandHandlerEntry,
-	TextEditorCommandHandler,
-} from "./Type.js";
+import type { CommandHandler, CommandHandlerEntry } from "./Type.js";
 
 export const Definition = Effect.gen(function* (_) {
 	const IPCService = yield* _(IPC.Tag);
@@ -25,8 +21,6 @@ export const Definition = Effect.gen(function* (_) {
 	const CommandRegistry = yield* _(
 		Ref.make(new Map<string, CommandHandlerEntry>()),
 	);
-	// In a real app, the command converter would be a separate service.
-	// For simplicity, we create it here.
 	const CommandConverter = new TypeConverter.Command.Definition(
 		{} as any,
 		() => undefined,
@@ -41,7 +35,6 @@ export const Definition = Effect.gen(function* (_) {
 			const Entry = Registry.get(ID);
 
 			if (Entry) {
-				// Execute the command locally if it's registered in this host.
 				const { Handler, ThisArgument, Extension } = Entry;
 				return yield* _(
 					Effect.tryPromise({
@@ -52,16 +45,18 @@ export const Definition = Effect.gen(function* (_) {
 						catch: (e) =>
 							new Error(`Command '${ID}' execution failed: ${e}`),
 					}),
-					Effect.tapError((e) =>
-						TelemetryService.onExtensionError(
-							Extension!.identifier,
-							e,
+					Effect.catchAll((e) =>
+						Effect.flatMap(
+							TelemetryService.onExtensionError(
+								Extension!.identifier,
+								e,
+							),
+							() => Effect.fail(e),
 						),
 					),
 				);
 			}
 
-			// If not found locally, proxy the command execution to the Mountain host.
 			const MarshalledArguments = Arguments.map((arg) =>
 				CommandConverter.ToInternal(arg, []),
 			);
@@ -84,7 +79,7 @@ export const Definition = Effect.gen(function* (_) {
 		const Entry: CommandHandlerEntry = {
 			Handler,
 			ThisArgument,
-			Extension: Extension!, // Assume it's always provided internally
+			Extension: Extension!,
 			IsTextEditorCommand,
 		};
 		const registerEffect = Ref.update(CommandRegistry, (map) =>
@@ -125,9 +120,6 @@ export const Definition = Effect.gen(function* (_) {
 					);
 					return;
 				}
-				// The text editor command API provides an edit builder.
-				// This needs a more complex implementation involving the document service.
-				// For now, we pass a placeholder.
 				return editor.edit((editBuilder) => {
 					Handler(editor, editBuilder, ...args);
 				});
@@ -160,7 +152,6 @@ export const Definition = Effect.gen(function* (_) {
 			),
 	};
 
-	// Self-assign the command converter now that the service is defined
 	(CommandConverter as any).CommandService = ServiceImplementation;
 
 	return ServiceImplementation;
