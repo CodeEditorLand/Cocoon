@@ -1,5 +1,5 @@
 /**
- * @module Vscode (RequireInterceptor/Factory)
+ * @module VSCode (RequireInterceptor/Factory)
  * @description The factory responsible for creating the sandboxed `vscode` API
  * module when an extension calls `require('vscode')`.
  */
@@ -18,7 +18,7 @@ import type { Interface as INodeModuleFactory } from "./Interface.js";
  * It ensures that each extension receives an API instance tailored to its
  * own identity and permissions.
  */
-export class VscodeNodeModuleFactory implements INodeModuleFactory {
+export class VSCodeNodeModuleFactory implements INodeModuleFactory {
 	public readonly NodeModuleName = "vscode";
 	private readonly APIImplementationCache = new Map<string, typeof VSCode>();
 

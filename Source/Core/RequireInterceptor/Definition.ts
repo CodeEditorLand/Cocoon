@@ -11,7 +11,7 @@ import { URI } from "vs/base/common/uri.js";
 import { Log } from "../../Service/Log.js";
 import { APIFactory } from "../APIFactory.js";
 import { ExtensionPath } from "../ExtensionPath.js";
-import { VscodeNodeModuleFactory, type INodeModuleFactory } from "./Factory.js";
+import { VSCodeNodeModuleFactory, type INodeModuleFactory } from "./Factory.js";
 import type { Interface } from "./Service.js";
 
 /**
@@ -25,7 +25,7 @@ export const Definition = Effect.gen(function* (_) {
 	const Factories = new Map<string, INodeModuleFactory>();
 	Factories.set(
 		"vscode",
-		new VscodeNodeModuleFactory(
+		new VSCodeNodeModuleFactory(
 			APIFactoryService,
 			ExtensionPathService,
 			LogService,
