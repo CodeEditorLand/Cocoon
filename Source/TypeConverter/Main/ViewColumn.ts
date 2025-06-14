@@ -3,13 +3,12 @@
  * @description Converts the `vscode.ViewColumn` enum to its internal DTO representation.
  */
 
-import {
-	ActiveEditorGroup,
-	EditorGroup,
-	SIDE_GROUP,
-} from "vs/workbench/services/editor/common/editorService.js";
-
 import { ViewColumn as VscViewColumn } from "../../Type/ExtHostTypes.js";
+
+// Placeholders for internal VS Code constants
+const ActiveEditorGroup = -1;
+const SIDE_GROUP = -2;
+type EditorGroup = number;
 
 /**
  * Converts a `vscode.ViewColumn` enum value into its internal numeric representation

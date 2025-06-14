@@ -13,7 +13,10 @@ import {
 	ShowErrorMessage,
 	ShowInformationMessage,
 } from "../../Service/Window.js";
-import { ActiveEditorNotFoundError } from "./ProcessUserData/Error.js";
+import {
+	ActiveEditorNotFoundError,
+	ProcessingServiceError,
+} from "./ProcessUserData/Error.js";
 import { GetActiveTextEditor } from "./ProcessUserData/GetActiveTextEditor.js";
 import { GetDocumentText } from "./ProcessUserData/GetDocumentText.js";
 import { InvokeProcessingService } from "./ProcessUserData/InvokeProcessingService.js";
@@ -24,23 +27,20 @@ import { InvokeProcessingService } from "./ProcessUserData/InvokeProcessingServi
  * handling.
  */
 export const ProcessUserData = pipe(
-	Effect.gen(function* (_) {
+	Effect.gen(function* () {
 		// Safely get the active editor, which may not exist.
-		const MaybeEditor = yield* _(GetActiveTextEditor);
+		const MaybeEditor = yield* GetActiveTextEditor;
 
 		// Convert the Option into an Effect that fails with our specific error if empty.
-		const Editor = yield* _(
-			MaybeEditor,
+		const Editor = yield* MaybeEditor.pipe(
 			Effect.mapError(() => new ActiveEditorNotFoundError()),
 		);
 
 		// If the above succeeds, the workflow proceeds.
-		const TextContent = yield* _(GetDocumentText(Editor.document));
-		const ProcessingResult = yield* _(InvokeProcessingService(TextContent));
-		yield* _(
-			ShowInformationMessage(
-				`Processing complete: ${ProcessingResult.ID}`,
-			),
+		const TextContent = yield* GetDocumentText(Editor.document);
+		const ProcessingResult = yield* InvokeProcessingService(TextContent);
+		yield* ShowInformationMessage(
+			`Processing complete: ${ProcessingResult.ID}`,
 		);
 	}),
 	// Declaratively handle all known, tagged failure cases for this workflow.

@@ -14,7 +14,11 @@ import { Window } from "../../Service/Window.js";
  * @returns An `Effect` that resolves to an `Option<vscode.TextEditor>`, which
  * will be `None` if no editor is active, and `Some` otherwise.
  */
-export const GetActiveTextEditor = Effect.gen(function* (_) {
-	const WindowService = yield* _(Window.Tag);
+export const GetActiveTextEditor: Effect.Effect<
+	Option.Option<vscode.TextEditor>,
+	never,
+	Window.Interface
+> = Effect.gen(function* () {
+	const WindowService = yield* Window.Tag;
 	return Option.fromNullable(WindowService.activeTextEditor);
 });
