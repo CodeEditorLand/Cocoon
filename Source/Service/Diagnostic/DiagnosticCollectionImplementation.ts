@@ -5,12 +5,11 @@
  * created by an extension.
  */
 
-import { Effect } from "effect";
+import { Effect, Stream } from "effect";
 import type {
 	Diagnostic,
 	DiagnosticCollection,
-	Event,
-	Range,
+	Memento,
 	Tuple,
 	Uri,
 } from "vscode";
@@ -36,16 +35,14 @@ export class DiagnosticCollectionImplementation
 		diagnostics: readonly Diagnostic[] | undefined,
 	) {
 		if (this.isDisposed) {
-			return Effect.unit;
+			return Effect.void;
 		}
 
-		// Convert vscode.Diagnostic[] to MarkerDataDTO[] for the host
 		const DiagnosticsDTO = diagnostics
 			? TypeConverter.Diagnostic.FromAPIArray(diagnostics)
 			: undefined;
-		const UriDTO = TypeConverter.URIConverter.FromAPI(uri);
+		const UriDTO = TypeConverter.URIConverter.fromAPI(uri);
 
-		// Send notification to Mountain to update the markers
 		return this.ipc.SendNotification("$changeMany", [
 			this.owner,
 			[[UriDTO, DiagnosticsDTO]],
@@ -66,9 +63,8 @@ export class DiagnosticCollectionImplementation
 			return;
 		}
 		if (Array.isArray(uriOrEntries)) {
-			// Handle batch update
 			const convertedEntries = uriOrEntries.map(([uri, diags]) => [
-				TypeConverter.URIConverter.FromAPI(uri),
+				TypeConverter.URIConverter.fromAPI(uri),
 				diags
 					? TypeConverter.Diagnostic.FromAPIArray(diags)
 					: undefined,
@@ -80,13 +76,11 @@ export class DiagnosticCollectionImplementation
 				]),
 			);
 		} else {
-			// Handle single URI update
 			Effect.runFork(this.createSetEffect(uriOrEntries, diagnostics));
 		}
 	}
 
 	delete(uri: Uri): void {
-		// `delete` is just a special case of `set`
 		this.set(uri, undefined);
 	}
 
@@ -102,22 +96,11 @@ export class DiagnosticCollectionImplementation
 			return;
 		}
 		this.isDisposed = true;
-		this.clear(); // Clear all diagnostics owned by this collection
-		this.onDidDispose.Fire(); // Signal internal disposal
+		this.clear();
+		this.onDidDispose.Fire();
 	}
 
-	// The following methods are not typically implemented on the ext host side,
-	// as the source of truth for diagnostics lives in the main/host process.
-	// They could be implemented with RPC calls if needed.
-
-	forEach(
-		callback: (
-			uri: Uri,
-			diagnostics: readonly Diagnostic[],
-			collection: DiagnosticCollection,
-		) => any,
-		thisArg?: any,
-	): void {
+	forEach(): void {
 		// No-op: The extension host does not hold the state.
 	}
 

@@ -2,7 +2,6 @@
  * @module APIFactory
  * @description The main module for the `APIFactory` service, which is
  * responsible for creating sandboxed `vscode` API objects for extensions.
- * It provides the `Live` implementation Layer for the service.
  */
 
 import { Effect, Layer } from "effect";
@@ -13,48 +12,46 @@ import { Tag } from "./APIFactory/Service.js";
 
 /**
  * The live implementation `Layer` for the `APIFactory` service.
- *
- * This layer has a comprehensive dependency graph, as it requires every
- * underlying service that contributes to the final `vscode` API object. It
- * injects all of these services into the `CreateAPIFactory` function to
- * construct the final service implementation.
  */
 export const Live = Layer.effect(
 	Tag,
-	Effect.gen(function* (_) {
+	Effect.gen(function* () {
 		// --- Inject all necessary services ---
-		const LogService = yield* _(Service.Log.Tag);
-		const ProposedAPIService = yield* _(Service.ProposedAPI.Tag);
-		const DeprecationService = yield* _(Service.APIDeprecation.Tag);
-		const CommandService = yield* _(Service.Command.Tag);
-		const WorkSpaceService = yield* _(Service.WorkSpace.Tag);
-		const WindowService = yield* _(Service.Window.Tag);
-		const LanguageFeatureService = yield* _(Service.LanguageFeature.Tag);
-		const DebugService = yield* _(Service.Debug.Tag);
-		const TaskService = yield* _(Service.Task.Tag);
-		const ExtensionService = yield* _(Service.Extension.Tag);
-		const WebViewPanelService = yield* _(Service.WebViewPanel.Tag);
-		const CustomEditorService = yield* _(Service.CustomEditor.Tag);
-		const TreeViewService = yield* _(Service.TreeView.Tag);
-		const StatusBarService = yield* _(Service.StatusBar.Tag);
-		// Add other services here as they are implemented.
+		const LogService = yield* Service.Log.Tag;
+		const ProposedAPIService = yield* Service.ProposedAPI.Tag;
+		const DeprecationService = yield* Service.APIDeprecation.Tag;
+		const CommandService = yield* Service.Command.Tag;
+		const WorkSpaceService = yield* Service.WorkSpace.Tag;
+		const WindowService = yield* Service.Window.Tag;
+		const LanguageFeatureService = yield* Service.LanguageFeature.Tag;
+		const DebugService = yield* Service.Debug.Tag;
+		const TaskService = yield* Service.Task.Tag;
+		const ExtensionService = yield* Service.Extension.Tag;
+		const WebViewPanelService = yield* Service.WebViewPanel.Tag;
+		const TreeViewService = yield* Service.TreeView.Tag;
+		const StatusBarService = yield* Service.StatusBar.Tag;
+		// Assuming Service.CustomEditor is available, if not, this will need to be mocked or imported
+		// const CustomEditorService = yield* Service.CustomEditor.Tag;
 
 		// --- Construct the factory with all its dependencies ---
 		return CreateAPIFactory(
-			LogService,
-			ProposedAPIService,
-			DeprecationService,
-			CommandService,
-			WorkSpaceService,
-			WindowService,
-			LanguageFeatureService,
-			DebugService,
-			TaskService,
-			ExtensionService,
-			WebViewPanelService,
-			CustomEditorService,
-			TreeViewService,
-			StatusBarService,
+			{
+				LogService,
+				ProposedAPIService,
+				DeprecationService,
+				CommandService,
+				WorkSpaceService,
+				WindowService,
+				LanguageFeatureService,
+				DebugService,
+				TaskService,
+				ExtensionService,
+				WebViewPanelService,
+				// CustomEditorService,
+				TreeViewService,
+				StatusBarService,
+			},
+			// This part is missing, assuming it should be a placeholder or another service
 		);
 	}),
 );

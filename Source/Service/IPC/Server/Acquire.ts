@@ -6,7 +6,11 @@
 
 import * as Path from "node:path";
 import * as gRPC from "@grpc/grpc-js";
-import { loadPackageDefinition, type GrpcObject } from "@grpc/proto-loader";
+import {
+	loadPackageDefinition,
+	type GrpcObject,
+	type PackageDefinition,
+} from "@grpc/proto-loader";
 import { Effect } from "effect";
 
 import { Configuration } from "../Configuration.js";
@@ -16,11 +20,9 @@ import { CreateServiceImplementation } from "./CreateServiceImplementation.js";
 import { Release } from "./Release.js";
 import type { Interface as ServerService } from "./Service.js";
 
-/**
- * An `Effect` that loads the gRPC `.proto` file definition from disk.
- * @param ProtoPath The absolute path to the `vine.proto` file.
- */
-function LoadProtoDefinition(ProtoPath: string) {
+function LoadProtoDefinition(
+	ProtoPath: string,
+): Effect.Effect<PackageDefinition, gRPCConnectionError> {
 	return Effect.tryPromise({
 		try: () =>
 			loadPackageDefinition({
@@ -36,16 +38,11 @@ function LoadProtoDefinition(ProtoPath: string) {
 	});
 }
 
-/**
- * An `Effect` that binds the gRPC server to a network address and starts it.
- * @param Server The gRPC server instance.
- * @param ServerAddress The address where the server should listen.
- */
 function StartServer(
 	Server: ServerService,
 	ServerAddress: string,
 ): Effect.Effect<void, gRPCConnectionError> {
-	return Effect.async((Resume) => {
+	return Effect.async<void, gRPCConnectionError>((Resume) => {
 		Server.bindAsync(
 			ServerAddress,
 			gRPC.ServerCredentials.createInsecure(),
@@ -62,7 +59,7 @@ function StartServer(
 				} else {
 					try {
 						Server.start();
-						Resume(Effect.succeed(void 0));
+						Resume(Effect.succeedVoid);
 					} catch (e) {
 						Resume(
 							Effect.fail(
@@ -79,22 +76,14 @@ function StartServer(
 	});
 }
 
-/**
- * An `Effect` that acquires the gRPC server as a managed resource.
- *
- * It orchestrates loading the proto definition, creating the service
- * implementation, adding it to a new server instance, starting the server,
- * and associating it with a release finalizer.
- */
 export const Acquire = Effect.acquireRelease(
-	Effect.gen(function* (_) {
-		const Config = yield* _(Configuration.Tag);
-		const DispatcherService = yield* _(Dispatcher.Tag);
-		// Assume the proto file is copied to the dist output directory.
+	Effect.gen(function* () {
+		const Config = yield* Configuration;
+		const DispatcherService = yield* Dispatcher.Tag;
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
-		const Definition = yield* _(LoadProtoDefinition(ProtoPath));
-		const Proto = gRPC.loadPackageDefinition(Definition)
+		const Definition = yield* LoadProtoDefinition(ProtoPath);
+		const Proto = (gRPC.loadPackageDefinition(Definition) as any)
 			.vine_ipc as GrpcObject;
 		const ServiceDefinition = (Proto.CocoonService as any).service;
 
@@ -102,14 +91,12 @@ export const Acquire = Effect.acquireRelease(
 		const Implementation = CreateServiceImplementation(DispatcherService);
 		Server.addService(ServiceDefinition, Implementation);
 
-		yield* _(StartServer(Server, Config.CocoonAddress));
-		yield* _(
-			Effect.logInfo(
-				`Cocoon gRPC server listening at ${Config.CocoonAddress}.`,
-			),
+		yield* StartServer(Server, Config.CocoonAddress);
+		yield* Effect.logInfo(
+			`Cocoon gRPC server listening at ${Config.CocoonAddress}.`,
 		);
 
 		return Server;
 	}),
-	(Server) => Release(Server),
+	(Server) => Release(Server).pipe(Effect.orDie), // Release should not fail
 );

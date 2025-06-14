@@ -11,7 +11,6 @@ import type * as Service from "../../Service.js";
 import * as ExtHostType from "../../Type/ExtHostTypes.js";
 import { AsExtensionEvent } from "./AsExtensionEvent.js";
 import { CreateCommandNamespace } from "./CreateCommandNamespace.js";
-// Synthesizing missing imports based on dependencies
 import { CreateDebugNamespace } from "./CreateDebugNamespace.js";
 import { CreateLanguagesNamespace } from "./CreateLanguagesNamespace.js";
 import { CreateTasksNamespace } from "./CreateTasksNamespace.js";
@@ -19,53 +18,45 @@ import { CreateWindowNamespace } from "./CreateWindowNamespace.js";
 import { CreateWorkSpaceNamespace } from "./CreateWorkSpaceNamespace.js";
 import type { Interface as APIFactory } from "./Service.js";
 
-/**
- * Creates an `APIFactory` instance.
- *
- * This function uses a dependency injection pattern, taking all necessary
- * extension host services as arguments. It returns a factory object with a
-- * `Create` method, which is then used to construct the specific `vscode` API
-+ * `CreateAPI` method, which is then used to construct the specific `vscode` API
- * object for each individual extension.
- *
- * @param LogService The service for logging messages.
- * @param DeprecationService The service for handling API deprecations.
- * @param CommandService The service for command registration and execution.
- * @param WorkSpaceService The service for workspace-related information and events.
- * @param WindowService The service for window-related UI and events.
- * @param LanguageFeatureService The service for registering language providers.
- * @param DebugService The service for debugging features.
- * @param TaskService The service for task management.
- * @param StatusBarService The service for managing status bar items.
- * @param WebViewPanelService The service for creating and managing webview panels.
- * @param CustomEditorService The service for registering custom editors.
- * @param TreeViewService The service for creating and managing tree views.
- * @returns An `APIFactory` object capable of creating `vscode` API instances.
- */
-export function CreateAPIFactory(
-	LogService: Service.Log.Interface,
-	ProposedAPIService: Service.ProposedAPI.Interface,
-	DeprecationService: Service.APIDeprecation.Interface,
-	CommandService: Service.Command.Interface,
-	WorkSpaceService: Service.WorkSpace.Interface,
-	WindowService: Service.Window.Interface,
-	LanguageFeatureService: Service.LanguageFeature.Interface,
-	DebugService: Service.Debug.Interface,
-	TaskService: Service.Task.Interface,
-	ExtensionService: Service.Extension.Interface,
-	WebViewPanelService: Service.WebViewPanel.Interface,
-	CustomEditorService: Service.CustomEditor.Interface,
-	TreeViewService: Service.TreeView.Interface,
-	StatusBarService: Service.StatusBar.Interface,
-): APIFactory {
+interface ServiceCollection {
+	LogService: Service.Log.Interface;
+	ProposedAPIService: Service.ProposedAPI.Interface;
+	DeprecationService: Service.APIDeprecation.Interface;
+	CommandService: Service.Command.Interface;
+	WorkSpaceService: Service.WorkSpace.Interface;
+	WindowService: Service.Window.Interface;
+	LanguageFeatureService: Service.LanguageFeature.Interface;
+	DebugService: Service.Debug.Interface;
+	TaskService: Service.Task.Interface;
+	ExtensionService: Service.Extension.Interface;
+	WebViewPanelService: Service.WebViewPanel.Interface;
+	// CustomEditorService: Service.CustomEditor.Interface,
+	TreeViewService: Service.TreeView.Interface;
+	StatusBarService: Service.StatusBar.Interface;
+}
+
+export function CreateAPIFactory(Services: ServiceCollection): APIFactory {
 	return {
-		/**
-		 * Creates a new, sandboxed `vscode` API object for a specific extension.
-		 * @param Extension The full description of the extension.
-		 * @returns A frozen `vscode` API object.
-		 */
 		CreateAPI: (Extension: IExtensionDescription): typeof VSCode => {
-			// --- Create Namespaces ---
+			const {
+				LogService,
+				DeprecationService,
+				CommandService,
+				WorkSpaceService,
+				WindowService,
+				LanguageFeatureService,
+				DebugService,
+				TaskService,
+				ExtensionService,
+				WebViewPanelService,
+				TreeViewService,
+				StatusBarService,
+				ProposedAPIService,
+			} = Services;
+
+			const AsEvent = <T>(event: VSCode.Event<T>) =>
+				AsExtensionEvent(Extension.identifier, LogService, event);
+
 			const CommandNamespace = CreateCommandNamespace(
 				CommandService,
 				Extension,
@@ -73,6 +64,7 @@ export function CreateAPIFactory(
 			const WorkSpaceNamespace = CreateWorkSpaceNamespace(
 				WorkSpaceService,
 				DeprecationService,
+				AsEvent,
 				Extension,
 			);
 			const WindowNamespace = CreateWindowNamespace(
@@ -80,10 +72,9 @@ export function CreateAPIFactory(
 				WorkSpaceService,
 				StatusBarService,
 				WebViewPanelService,
-				CustomEditorService,
+				// CustomEditorService,
 				TreeViewService,
-				(Event) =>
-					AsExtensionEvent(Extension.identifier, LogService, Event),
+				AsEvent,
 				Extension,
 			);
 			const LanguagesNamespace = CreateLanguagesNamespace(
@@ -92,13 +83,17 @@ export function CreateAPIFactory(
 			);
 			const DebugNamespace = CreateDebugNamespace(
 				DebugService,
+				AsEvent,
 				Extension,
 			);
-			const TasksNamespace = CreateTasksNamespace(TaskService, Extension);
+			const TasksNamespace = CreateTasksNamespace(
+				TaskService,
+				AsEvent,
+				Extension,
+			);
 
-			// --- Assemble Final API Object ---
 			const API = {
-				// This version should come from a centralized product service.
+				// TODO: CHANGE THIS TO ALWAYS BE 0.0.1 EVERYWHERE
 				version: "1.85.0",
 				commands: CommandNamespace,
 				window: WindowNamespace,
@@ -106,14 +101,10 @@ export function CreateAPIFactory(
 				languages: LanguagesNamespace,
 				debug: DebugNamespace,
 				tasks: TasksNamespace,
-				// Other namespaces would be added here.
-				extensions: ExtensionService, // The extensions API is often top-level
-
-				// --- Static Types and Enums from VS Code ---
+				extensions: ExtensionService,
 				...ExtHostType,
 			};
 
-			// --- Propose API features if enabled for this extension ---
 			if (
 				ProposedAPIService.IsEnabled(
 					Extension.identifier,
@@ -123,7 +114,6 @@ export function CreateAPIFactory(
 				// Object.assign(API, { someProposedApi: ... });
 			}
 
-			// --- Freeze API to prevent runtime modification by extensions ---
 			for (const key in API) {
 				if (Object.prototype.hasOwnProperty.call(API, key)) {
 					const prop = (API as any)[key];
