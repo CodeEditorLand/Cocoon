@@ -14,9 +14,8 @@ import {
 } from "@grpc/proto-loader";
 import { Effect } from "effect";
 
-import { Configuration } from "../Configuration.js";
+import { Configuration as ConfigurationService } from "../Configuration.js";
 import { gRPCConnectionError } from "../Error.js";
-import { MountainServiceClient } from "../Generated.js";
 import { Release } from "./Release.js";
 import type { Interface as ClientService } from "./Service.js";
 
@@ -92,7 +91,7 @@ function WaitForClientReady(
 					),
 				);
 			} else {
-				Resume(Effect.succeedVoid);
+				Resume(Effect.void);
 			}
 		});
 	});
@@ -100,14 +99,10 @@ function WaitForClientReady(
 
 /**
  * An `Effect` that acquires the gRPC client as a managed resource.
- *
- * It orchestrates loading the proto definition, creating the client instance,
- * waiting for it to be ready, and associating it with a release finalizer to
- * ensure the client is properly closed on shutdown.
  */
 export const Acquire = Effect.acquireRelease(
 	Effect.gen(function* () {
-		const Config = yield* Configuration;
+		const Config = yield* ConfigurationService.Tag;
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
 		const Definition = yield* LoadProtoDefinition(ProtoPath);

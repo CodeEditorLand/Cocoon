@@ -15,10 +15,9 @@ import {
 	type Configuration as IPCConfiguration,
 } from "./IPC.js";
 import { Definition } from "./WorkSpace/Definition.js";
-import { Tag } from "./WorkSpace/Service.js";
+import { Tag, type Interface } from "./WorkSpace/Service.js";
 
-export { Tag, type Interface } from "./WorkSpace/Service.js";
-export type { WorkspaceFolder };
+export { Tag, type Interface, type WorkspaceFolder };
 
 /**
  * The live implementation Layer for the WorkSpace service.

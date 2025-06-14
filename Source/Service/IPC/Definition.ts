@@ -10,7 +10,11 @@ import { Effect, Ref } from "effect";
 import { Client } from "./Client/Service.js";
 import { Dispatcher } from "./Dispatcher/Service.js";
 import { IPCError, ProtoSerializationError } from "./Error.js";
-import { GenericNotification, GenericRequest } from "./Generated.js";
+import {
+	GenericNotification,
+	GenericRequest,
+	GenericResponse,
+} from "./Generated.js";
 import { ProtocolAdapter } from "./ProtocolAdapter/Service.js";
 import { DecodeValue, EncodeValue } from "./ProtoConverter.js";
 import type { Interface } from "./Service.js";
@@ -41,14 +45,14 @@ export const Definition = Effect.gen(function* () {
 			RequestMessage.setMethod(Method);
 			RequestMessage.setParams(EncodedParameter);
 
-			const ResponseMessage = yield* Effect.tryPromise({
+			const ResponseMessage = (yield* Effect.tryPromise({
 				try: () => ClientService.processCocoonRequest(RequestMessage),
 				catch: (cause) =>
 					new IPCError({
 						cause,
 						context: `gRPC request '${Method}' failed.`,
 					}),
-			});
+			})) as GenericResponse;
 
 			const DecodedResult = yield* DecodeValue(
 				ResponseMessage.getResult(),
@@ -86,7 +90,18 @@ export const Definition = Effect.gen(function* () {
 						context: `gRPC notification '${Method}' failed.`,
 					}),
 			});
-		}).pipe(Effect.asVoid);
+		}).pipe(
+			Effect.mapError((error) => {
+				if (error instanceof ProtoSerializationError) {
+					return new IPCError({
+						cause: error,
+						context: "Proto serialization/deserialization failed",
+					});
+				}
+				return error;
+			}),
+			Effect.asVoid,
+		);
 
 	const ServiceImplementation: Interface = {
 		SendRequest,
