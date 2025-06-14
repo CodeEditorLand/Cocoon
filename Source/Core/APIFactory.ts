@@ -16,42 +16,22 @@ import { Tag } from "./APIFactory/Service.js";
 export const Live = Layer.effect(
 	Tag,
 	Effect.gen(function* () {
-		// --- Inject all necessary services ---
-		const LogService = yield* Service.Log.Tag;
-		const ProposedAPIService = yield* Service.ProposedAPI.Tag;
-		const DeprecationService = yield* Service.APIDeprecation.Tag;
-		const CommandService = yield* Service.Command.Tag;
-		const WorkSpaceService = yield* Service.WorkSpace.Tag;
-		const WindowService = yield* Service.Window.Tag;
-		const LanguageFeatureService = yield* Service.LanguageFeature.Tag;
-		const DebugService = yield* Service.Debug.Tag;
-		const TaskService = yield* Service.Task.Tag;
-		const ExtensionService = yield* Service.Extension.Tag;
-		const WebViewPanelService = yield* Service.WebViewPanel.Tag;
-		const TreeViewService = yield* Service.TreeView.Tag;
-		const StatusBarService = yield* Service.StatusBar.Tag;
-		// Assuming Service.CustomEditor is available, if not, this will need to be mocked or imported
-		// const CustomEditorService = yield* Service.CustomEditor.Tag;
-
-		// --- Construct the factory with all its dependencies ---
-		return CreateAPIFactory(
-			{
-				LogService,
-				ProposedAPIService,
-				DeprecationService,
-				CommandService,
-				WorkSpaceService,
-				WindowService,
-				LanguageFeatureService,
-				DebugService,
-				TaskService,
-				ExtensionService,
-				WebViewPanelService,
-				// CustomEditorService,
-				TreeViewService,
-				StatusBarService,
-			},
-			// This part is missing, assuming it should be a placeholder or another service
-		);
+		const services = {
+			LogService: yield* Service.Log.Tag,
+			ProposedAPIService: yield* Service.ProposedAPI.Tag,
+			DeprecationService: yield* Service.APIDeprecation.Tag,
+			CommandService: yield* Service.Command.Tag,
+			WorkSpaceService: yield* Service.WorkSpace.Tag,
+			WindowService: yield* Service.Window.Tag,
+			LanguageFeatureService: yield* Service.LanguageFeature.Tag,
+			DebugService: yield* Service.Debug.Tag,
+			TaskService: yield* Service.Task.Tag,
+			ExtensionService: yield* Service.Extension.Tag,
+			WebViewPanelService: yield* Service.WebViewPanel.Tag,
+			TreeViewService: yield* Service.TreeView.Tag,
+			StatusBarService: yield* Service.StatusBar.Tag,
+			// CustomEditorService remains commented as its existence is uncertain
+		};
+		return CreateAPIFactory(services as any);
 	}),
 );

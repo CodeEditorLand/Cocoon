@@ -1,18 +1,11 @@
 /**
  * @module Cocoon
  * @description The main entry point for the Cocoon Node.js extension host.
- *
- * This file orchestrates the entire application lifecycle:
- * 1. Sets up the Node.js environment by patching module paths.
- * 2. Defines the main application workflow as a declarative `Effect`.
- * 3. Composes all service layers (`Core`, `IPC`, `Service`) into a single application layer.
- * 4. Executes the main Effect, which includes performing a handshake with Mountain,
- *    initializing all services with data from the host, and activating extensions.
  */
 
 import * as Path from "path";
 import { NodeRuntime } from "@effect/platform-node";
-import { Deferred, Effect, Layer, Scope } from "effect";
+import { Deferred, Effect, Layer } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 import { CoreServiceLayer } from "./Core.js";
@@ -47,7 +40,7 @@ const FullApplicationInitialization = Effect.gen(function* () {
 			startup: true,
 			activationEvent: "*",
 		} as any,
-	); // Cast as `any` to satisfy placeholder type
+	);
 
 	yield* Effect.logInfo("Startup extensions activated.");
 });
@@ -70,7 +63,10 @@ const Main = Effect.gen(function* () {
 					"Received 'initExtensionHost' data from Mountain.",
 				);
 
-				const ApplicationLayer = AllServiceLayer.pipe(
+				// Compose the final application layer, providing the received init data.
+				const ApplicationLayer = AllServiceLayer(
+					ApplicationConfiguration,
+				).pipe(
 					Layer.provide(CoreServiceLayer),
 					Layer.provide(InitDataLayer(initializationData)),
 				);
@@ -105,15 +101,15 @@ const ApplicationConfiguration: IPCConfiguration = {
 	CocoonAddress: process.env["COCOON_ADDR"] || "localhost:50052",
 };
 
-const CocoonBaseLayer = IPC.Live(ApplicationConfiguration);
-
-const MainLayer = Layer.succeed(
-	IPC.ConfigurationTag,
-	ApplicationConfiguration,
-).pipe(Layer.provide(CocoonBaseLayer));
+// This layer contains all services needed before the handshake.
+// After the handshake, a more complete layer including InitData is created.
+const PreInitLayer = Layer.mergeAll(
+	CoreServiceLayer,
+	IPC.Live(ApplicationConfiguration),
+);
 
 // --- Run the Application ---
 
-const RunnableApplication = Main.pipe(Effect.provide(MainLayer));
+const RunnableApplication = Main.pipe(Effect.provide(PreInitLayer));
 
 NodeRuntime.runMain(RunnableApplication);

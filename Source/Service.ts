@@ -5,11 +5,8 @@
  * and provides a single, composed `AllServiceLayer` for convenience.
  */
 
-// --- Re-export for type convenience in other modules ---
-
-// --- Composed Layer ---
 import { Layer } from "effect";
-import * as vscode from "vscode";
+import type * as vscode from "vscode";
 
 import { Live as LiveAPIDeprecation } from "./Service/APIDeprecation.js";
 import { Live as LiveAuthentication } from "./Service/Authentication.js";
@@ -25,7 +22,10 @@ import { Live as LiveEnvironment } from "./Service/Environment.js";
 import { Live as LiveExtension } from "./Service/Extension.js";
 import { Live as LiveFileSystem } from "./Service/FileSystem.js";
 import { Live as LiveFileSystemInformation } from "./Service/FileSystemInformation.js";
-import { Live as LiveIPC } from "./Service/IPC.js";
+import {
+	Live as LiveIPC,
+	type Configuration as IPCConfiguration,
+} from "./Service/IPC.js";
 import { Live as LiveLanguageFeature } from "./Service/LanguageFeature.js";
 import { Live as LiveLocalization } from "./Service/Localization.js";
 import { Live as LiveLog } from "./Service/Log.js";
@@ -46,7 +46,6 @@ import { Live as LiveWorkSpace } from "./Service/WorkSpace.js";
 export { vscode };
 
 // --- Re-exporting the full public API (Tag, Interface, Live Layer) for each service ---
-
 export * as APIDeprecation from "./Service/APIDeprecation.js";
 export * as Authentication from "./Service/Authentication.js";
 export * as Cancellation from "./Service/Cancellation.js";
@@ -80,40 +79,40 @@ export * as Window from "./Service/Window.js";
 export * as WorkSpace from "./Service/WorkSpace.js";
 
 /**
- * A single, composed layer that provides all services.
- * Note: This is a simplified composition. The final `ApplicationLayer` in `Cocoon.ts`
- * is responsible for providing the necessary configuration to layers like `IPC`.
+ * A factory function that creates a single, composed layer that provides all services.
+ * @param Config The IPC configuration required by many services.
  */
-export const AllServiceLayer = Layer.mergeAll(
-	LiveAPIDeprecation,
-	LiveAuthentication,
-	LiveCancellation,
-	LiveClipboard,
-	LiveCommand,
-	LiveConfiguration,
-	LiveDebug,
-	LiveDiagnostic,
-	LiveDialog,
-	LiveDocument,
-	LiveEnvironment,
-	LiveExtension,
-	LiveFileSystem,
-	LiveFileSystemInformation,
-	LiveIPC,
-	LiveLanguageFeature,
-	LiveLocalization,
-	LiveLog,
-	LiveMessage,
-	LiveProposedAPI,
-	LiveQuickInput,
-	LiveSecretStorage,
-	LiveStatusBar,
-	LiveStorage,
-	LiveStoragePath,
-	LiveTask,
-	LiveTelemetry,
-	LiveTreeView,
-	LiveWebViewPanel,
-	LiveWindow,
-	LiveWorkSpace,
-);
+export const AllServiceLayer = (Config: IPCConfiguration) =>
+	Layer.mergeAll(
+		LiveAPIDeprecation,
+		LiveAuthentication(Config),
+		LiveCancellation,
+		LiveClipboard(Config),
+		LiveCommand(Config),
+		LiveConfiguration(Config),
+		LiveDebug(Config),
+		LiveDiagnostic(Config),
+		LiveDialog(Config),
+		LiveDocument(Config),
+		LiveEnvironment,
+		LiveExtension,
+		LiveFileSystem(Config),
+		LiveFileSystemInformation(Config),
+		LiveIPC(Config),
+		LiveLanguageFeature(Config),
+		LiveLocalization(Config),
+		LiveLog,
+		LiveMessage(Config),
+		LiveProposedAPI,
+		LiveQuickInput(Config),
+		LiveSecretStorage(Config),
+		LiveStatusBar(Config),
+		LiveStorage(Config),
+		LiveStoragePath,
+		LiveTask(Config),
+		LiveTelemetry(Config),
+		LiveTreeView(Config),
+		LiveWebViewPanel(Config),
+		LiveWindow(Config),
+		LiveWorkSpace(Config),
+	);
