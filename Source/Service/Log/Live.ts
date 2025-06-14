@@ -1,4 +1,3 @@
-
 /**
  * @module Live (Log)
  * @description The live implementation `Layer` for the Log service.
