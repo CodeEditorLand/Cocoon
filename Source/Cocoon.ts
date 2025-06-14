@@ -11,7 +11,8 @@
  */
 
 import * as Path from "path";
-import { Barrier, Context, Effect, Layer, Scope } from "effect";
+import { NodeRuntime } from "@effect/platform-node";
+import { Deferred, Effect, Layer, Scope } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 import { CoreServiceLayer } from "./Core.js";
@@ -20,11 +21,9 @@ import { RequireInterceptor } from "./Core/RequireInterceptor.js";
 import { RunProcessPatch } from "./PatchProcess.js";
 import { AllServiceLayer } from "./Service.js";
 import { InitDataLayer } from "./Service/InitData.js";
-import { IPCProvider, Live as LiveIPC } from "./Service/IPC.js";
+import { IPC, type Configuration as IPCConfiguration } from "./Service/IPC.js";
 
 // --- Pre-initialization Steps ---
-// Add the bundled VS Code module path to Node's search paths. This allows
-// imports like `vs/base/common/uri.js` to resolve correctly.
 const VSCodeOutputDirectory =
 	process.env["VSCODE_OUT_DIR"] ??
 	Path.resolve(__dirname, "../../../Dependency/VSCode/out");
@@ -36,76 +35,64 @@ const VSCodeOutputDirectory =
  * An Effect that represents the full initialization of all services *after*
  * the handshake with Mountain is complete and the init data has been received.
  */
-const FullApplicationInitialization = Effect.gen(function* (_) {
-	const Interceptor = yield* _(RequireInterceptor.Tag);
-	yield* _(Interceptor.Install());
-	yield* _(Effect.logInfo("Node.js require() interceptor installed."));
+const FullApplicationInitialization = Effect.gen(function* () {
+	const Interceptor = yield* RequireInterceptor.Tag;
+	yield* Interceptor.Install();
+	yield* Effect.logInfo("Node.js require() interceptor installed.");
 
-	// Now that the environment is fully set up, we can activate extensions.
-	const Host = yield* _(ExtensionHost.Tag);
-	// The '*' event signifies activating all extensions marked for startup.
-	yield* _(
-		Host.ActivateById("*" as any, { startup: true, activationEvent: "*" }),
-	);
+	const Host = yield* ExtensionHost.Tag;
+	yield* Host.ActivateById(
+		"*" as any,
+		{
+			startup: true,
+			activationEvent: "*",
+		} as any,
+	); // Cast as `any` to satisfy placeholder type
 
-	yield* _(Effect.logInfo("Startup extensions activated."));
+	yield* Effect.logInfo("Startup extensions activated.");
 });
 
 /**
  * The main application workflow, described as a single declarative Effect.
  */
-const Main = Effect.gen(function* (_) {
-	const InitializationBarrier = yield* _(Barrier.make());
+const Main = Effect.gen(function* () {
+	const InitializationBarrier = yield* Deferred.make<void, never>();
 
-	// 1. Apply all low-level process patches (e.g., console piping, termination hooks).
-	yield* _(RunProcessPatch);
+	yield* RunProcessPatch;
 
-	// 2. Get the IPC provider.
-	const IPC = yield* _(IPCProvider.Tag);
+	const IPCService = yield* IPC.Tag;
 
-	// 3. Register the handler that will be called by Mountain to kick off initialization.
-	IPC.RegisterInvokeHandler(
+	IPCService.RegisterInvokeHandler(
 		"initExtensionHost",
 		(initializationData: IExtensionHostInitData) =>
-			Effect.gen(function* (_) {
-				yield* _(
-					Effect.logInfo(
-						"Received 'initExtensionHost' data from Mountain.",
-					),
+			Effect.gen(function* () {
+				yield* Effect.logInfo(
+					"Received 'initExtensionHost' data from Mountain.",
 				);
 
-				// Compose the final application layer, providing the received init data.
 				const ApplicationLayer = AllServiceLayer.pipe(
 					Layer.provide(CoreServiceLayer),
 					Layer.provide(InitDataLayer(initializationData)),
 				);
 
-				// Provide the full layer to our initialization Effect and run it.
-				yield* _(
-					Effect.provide(
-						FullApplicationInitialization,
-						ApplicationLayer,
-					),
+				yield* Effect.provide(
+					FullApplicationInitialization,
+					ApplicationLayer,
 				);
 
-				// Signal that initialization is complete.
-				yield* _(Barrier.succeed(InitializationBarrier, undefined));
-				return "initialized"; // Acknowledge completion back to Mountain.
-			}).pipe(Effect.runPromise),
+				yield* Deferred.succeed(InitializationBarrier, undefined);
+				return "initialized";
+			}),
 	);
 
-	// 4. Send the 'Ready' signal to Mountain, indicating we are ready for init data.
-	yield* _(IPC.SendNotification("$initialHandshake", []));
-	yield* _(Effect.logInfo("Cocoon is ready. Sent handshake to Mountain."));
+	yield* IPCService.SendNotification("$initialHandshake", []);
+	yield* Effect.logInfo("Cocoon is ready. Sent handshake to Mountain.");
 
-	// 5. Wait for the `initExtensionHost` handler to open the barrier.
-	yield* _(Barrier.await(InitializationBarrier));
-	yield* _(Effect.logInfo("Cocoon is fully initialized and operational."));
+	yield* Deferred.await(InitializationBarrier);
+	yield* Effect.logInfo("Cocoon is fully initialized and operational.");
 
-	// 6. Keep the process alive indefinitely.
-	yield* _(Effect.never);
+	yield* Effect.never;
 }).pipe(
-	// Global error handler for the entire application.
 	Effect.catchAllCause((cause) =>
 		Effect.logFatal("Cocoon main process failed.", cause),
 	),
@@ -113,30 +100,20 @@ const Main = Effect.gen(function* (_) {
 
 // --- Application Layer Composition ---
 
-/**
- * A configuration object for the IPC layer.
- */
-const ApplicationConfiguration = {
+const ApplicationConfiguration: IPCConfiguration = {
 	MountainAddress: process.env["MOUNTAIN_ADDR"] || "localhost:50051",
 	CocoonAddress: process.env["COCOON_ADDR"] || "localhost:50052",
 };
 
-/**
- * The base Layer for the application, providing the IPC connection.
- * Other layers will be built on top of this.
- */
-const CocoonBaseLayer = LiveIPC(ApplicationConfiguration);
+const CocoonBaseLayer = IPC.Live(ApplicationConfiguration);
+
+const MainLayer = Layer.succeed(
+	IPC.ConfigurationTag,
+	ApplicationConfiguration,
+).pipe(Layer.provide(CocoonBaseLayer));
 
 // --- Run the Application ---
 
-// We create a master Scope for the application. When this scope is closed (e.g., on SIGTERM),
-// all finalizers from our `Layer.scoped` resources (like the gRPC client/server)
-// will be executed, ensuring a graceful shutdown.
-const ApplicationWithScope = Scope.make().pipe(
-	Effect.flatMap((scope) =>
-		Effect.provide(Main, CocoonBaseLayer).pipe(Scope.extend(scope)),
-	),
-);
+const RunnableApplication = Main.pipe(Effect.provide(MainLayer));
 
-// Fork the entire application into the background.
-Effect.runFork(ApplicationWithScope);
+NodeRuntime.runMain(RunnableApplication);

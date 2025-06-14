@@ -31,6 +31,8 @@
 		"provenance": true
 	},
 	"dependencies": {
+		"@effect/platform": "0.84.11",
+		"@effect/platform-node": "0.85.16",
 		"@types/node": "24.0.1"
 	}
 }
