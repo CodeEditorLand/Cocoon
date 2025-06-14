@@ -120,7 +120,7 @@ function HandleResolveRequest({
 		}
 
 		const apiCache = yield* Ref.get(VSCodeAPICache);
-		let apiKeyOpt = apiCache.get(extension as any); // This is not quite right, need to get API obj first
+		const apiKeyOpt = apiCache.get(extension as any); // This is not quite right, need to get API obj first
 		let apiObject: object;
 		let apiKey: string;
 

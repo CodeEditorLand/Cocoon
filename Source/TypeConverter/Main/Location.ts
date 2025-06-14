@@ -6,7 +6,7 @@
 import type { UriComponents } from "vs/base/common/uri.js";
 import type { IRange } from "vs/editor/common/core/range.js";
 
-import { Location, Range } from "../../Type/ExtHostTypes.js";
+import { Location, type Range } from "../../Type/ExtHostTypes.js";
 import * as RangeConverter from "./Range.js";
 import * as URIConverter from "./URI.js";
 
@@ -21,9 +21,9 @@ interface ILocationDTO {
  * @param LocationInstance The `vscode.Location` instance to convert.
  * @returns The `ILocationDTO` DTO.
  */
-export function fromAPI(LocationInstance: Location): ILocationDTO {
+export function FromAPI(LocationInstance: Location): ILocationDTO {
 	return {
-		uri: URIConverter.fromAPI(LocationInstance.uri),
+		uri: URIConverter.FromAPI(LocationInstance.uri),
 		range: RangeConverter.FromAPI(LocationInstance.range as Range),
 	};
 }
@@ -33,9 +33,9 @@ export function fromAPI(LocationInstance: Location): ILocationDTO {
  * @param LocationDTO The `ILocationDTO` DTO to revive.
  * @returns A new `vscode.Location` instance.
  */
-export function toAPI(LocationDTO: ILocationDTO): Location {
+export function ToAPI(LocationDTO: ILocationDTO): Location {
 	return new Location(
-		URIConverter.toAPI(LocationDTO.uri),
-		RangeConverter.toAPI(LocationDTO.range),
+		URIConverter.ToAPI(LocationDTO.uri),
+		RangeConverter.ToAPI(LocationDTO.range),
 	);
 }

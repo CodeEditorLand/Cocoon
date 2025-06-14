@@ -41,7 +41,7 @@ export class DiagnosticCollectionImplementation
 		const DiagnosticsDTO = diagnostics
 			? TypeConverter.Diagnostic.FromAPIArray(diagnostics)
 			: undefined;
-		const UriDTO = TypeConverter.URIConverter.fromAPI(uri);
+		const UriDTO = TypeConverter.URIConverter.FromAPI(uri);
 
 		return this.ipc.SendNotification("$changeMany", [
 			this.owner,
@@ -64,7 +64,7 @@ export class DiagnosticCollectionImplementation
 		}
 		if (Array.isArray(uriOrEntries)) {
 			const convertedEntries = uriOrEntries.map(([uri, diags]) => [
-				TypeConverter.URIConverter.fromAPI(uri),
+				TypeConverter.URIConverter.FromAPI(uri),
 				diags
 					? TypeConverter.Diagnostic.FromAPIArray(diags)
 					: undefined,

@@ -8,7 +8,8 @@ import { Data } from "effect";
 export class ActiveEditorNotFoundError extends Data.TaggedError(
 	"ActiveEditorNotFoundError",
 )<{}> {
-	override message = "No active text editor found. Please open a file to process.";
+	override message =
+		"No active text editor found. Please open a file to process.";
 }
 
 export class ProcessingServiceError extends Data.TaggedError(

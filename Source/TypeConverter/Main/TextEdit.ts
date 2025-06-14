@@ -44,7 +44,7 @@ export function FromAPI(TextEditInstance: VscTextEdit): ITextEdit {
 export function ToAPI(TextEditDTO: ITextEdit): VscTextEdit {
 	let range: Range;
 	if (TextEditDTO.range) {
-		range = RangeConverter.toAPI(TextEditDTO.range);
+		range = RangeConverter.ToAPI(TextEditDTO.range);
 	} else {
 		range = new Range(new Position(0, 0), new Position(0, 0));
 	}

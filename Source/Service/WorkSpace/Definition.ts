@@ -51,7 +51,7 @@ export const Definition = Effect.gen(function* () {
 					TypeConverter.Main.WorkspaceFolder.fromDTO(f),
 				),
 				data.configuration
-					? TypeConverter.URIConverter.toAPI(data.configuration)
+					? TypeConverter.URIConverter.ToAPI(data.configuration)
 					: undefined,
 			);
 			yield* Ref.set(InternalWorkSpaceRef, NewWorkSpace);
@@ -150,7 +150,7 @@ export const Definition = Effect.gen(function* () {
 		applyEdit: (edit) =>
 			Effect.runPromise(
 				IPCService.SendRequest<boolean>("$applyWorkspaceEdit", [
-					TypeConverter.WorkSpaceEdit.fromAPI(edit),
+					TypeConverter.WorkSpaceEdit.FromAPI(edit),
 				]),
 			),
 		fs: FsService,

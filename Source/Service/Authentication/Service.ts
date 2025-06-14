@@ -3,7 +3,7 @@
  * @description Defines the interface and Context.Tag for the Authentication service.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
 import type { AuthenticationGetSessionOptions } from "vs/workbench/api/common/extHost.protocol.js";
 import type {

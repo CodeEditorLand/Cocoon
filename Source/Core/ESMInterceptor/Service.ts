@@ -5,7 +5,7 @@
  * intercepts `import 'vscode'` statements.
  */
 
-import { Context, Effect, Scope } from "effect";
+import { Context, type Effect, type Scope } from "effect";
 
 /**
  * The service interface for the ESM interceptor.

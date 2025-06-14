@@ -5,7 +5,7 @@
  * which will eventually route to the main `Effect` logger.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 
 export interface Interface {
 	readonly Trace: (

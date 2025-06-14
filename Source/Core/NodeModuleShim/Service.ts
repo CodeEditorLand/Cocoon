@@ -5,7 +5,7 @@
  * modules, blocking some and providing safe shims for others.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type { Uri } from "vscode";
 
 import type { ModuleBlockedError, ModuleNotShimmedError } from "./Error.js";

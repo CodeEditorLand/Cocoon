@@ -10,12 +10,12 @@ import { Effect } from "effect";
 
 import type { Dispatcher } from "../Dispatcher/Service.js";
 import {
-	CancelOperationRequest,
 	Empty,
-	GenericNotification,
-	GenericRequest,
 	GenericResponse,
-	RPCDataPayload,
+	type CancelOperationRequest,
+	type GenericNotification,
+	type GenericRequest,
+	type RPCDataPayload,
 } from "../Generated.js";
 import { DecodeValue, EncodeValue } from "../ProtoConverter.js";
 

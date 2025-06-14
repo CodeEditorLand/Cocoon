@@ -23,7 +23,7 @@ export const Definition = Effect.gen(function* () {
 		"$acceptMarkerData",
 		([uriComponentsArray]) => {
 			const revivedUris = uriComponentsArray.map((dto: any) =>
-				TypeConverter.URIConverter.toAPI(dto),
+				TypeConverter.URIConverter.ToAPI(dto),
 			);
 			return OnDidChangeDiagnosticsEvent.Fire(revivedUris);
 		},

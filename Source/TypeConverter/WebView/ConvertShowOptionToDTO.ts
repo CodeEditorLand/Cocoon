@@ -30,7 +30,7 @@ export function ConvertShowOptionToDTO(
 	PreserveFocus: boolean,
 ): { viewColumn?: number; preserveFocus: boolean } & IEditorOptions {
 	return {
-		viewColumn: ViewColumnConverter.fromAPI(ViewColumn),
+		viewColumn: ViewColumnConverter.FromAPI(ViewColumn),
 		preserveFocus: PreserveFocus,
 	};
 }

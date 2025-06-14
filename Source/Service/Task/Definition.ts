@@ -68,16 +68,16 @@ export const Definition = Effect.gen(function* () {
 		FetchTasks: (Filter) =>
 			IPCService.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
 				Effect.map((dtos) =>
-					dtos.map((dto) => TypeConverter.Task.toAPI(dto)),
+					dtos.map((dto) => TypeConverter.Task.ToAPI(dto)),
 				),
 			),
 
 		ExecuteTask: (TaskToExecute, Extension) =>
 			IPCService.SendRequest<any>("$executeTask", [
-				TypeConverter.Task.fromAPI(TaskToExecute, Extension),
+				TypeConverter.Task.FromAPI(TaskToExecute, Extension),
 			]).pipe(
 				Effect.map((dto) =>
-					TypeConverter.Task.Execution.toAPI(dto, TaskToExecute),
+					TypeConverter.Task.Execution.ToAPI(dto, TaskToExecute),
 				),
 			),
 	};

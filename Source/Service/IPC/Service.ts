@@ -4,7 +4,7 @@
  * Inter-Process Communication (IPC) between `Cocoon` and `Mountain`.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
 import type { IDisposable } from "vscode";
 

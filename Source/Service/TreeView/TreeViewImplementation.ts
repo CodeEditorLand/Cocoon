@@ -90,7 +90,7 @@ export class TreeViewImplementation<T> implements TreeView<T> {
 					this.commandService,
 					() => undefined,
 				);
-				return TypeConverter.TreeView.Item.fromAPI(
+				return TypeConverter.TreeView.Item.FromAPI(
 					this.extension,
 					treeItem,
 					handle,
@@ -150,7 +150,7 @@ export class TreeViewImplementation<T> implements TreeView<T> {
 	}
 
 	selection: readonly T[] = [];
-	visible: boolean = true;
+	visible = true;
 	message?: string;
 	title?: string;
 	description?: string;

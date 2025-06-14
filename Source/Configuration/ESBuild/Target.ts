@@ -108,7 +108,7 @@ export default async (Current: BuildOptions): Promise<BuildOptions> => {
 			// Replaces `ESBUILD_REPLACED_GLOBAL_API_FUNCTION_NAME` in template files
 			// with the actual string value of the global function name.
 			// `JSON.stringify` ensures it's inserted as a valid string literal.
-			"ESBUILD_REPLACED_GLOBAL_API_FUNCTION_NAME": JSON.stringify(
+			ESBUILD_REPLACED_GLOBAL_API_FUNCTION_NAME: JSON.stringify(
 				// COCOON_ESM_INTERCEPTOR_GLOBAL_API_FN_NAME,
 				`_COCOON_RESOLVE_ESM_VSCODE_API`,
 			),

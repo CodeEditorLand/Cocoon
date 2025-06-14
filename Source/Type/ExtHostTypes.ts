@@ -13,9 +13,9 @@ import { URI as VscURI } from "vs/base/common/uri.js";
 import type {
 	Uri,
 	MarkdownString as VSCodeMarkdownString,
-	ThemeColor as VSCodeThemeColor,
-	Range as VSCodeRange,
 	Position as VSCodePosition,
+	Range as VSCodeRange,
+	ThemeColor as VSCodeThemeColor,
 } from "vscode";
 
 // --- Foundational Re-exports ---
@@ -258,7 +258,7 @@ export class MarkdownString implements VSCodeMarkdownString {
 	supportThemeIcons?: boolean;
 	supportHtml?: boolean;
 	baseUri?: Uri;
-	constructor(value: string = "", isTrusted: boolean = false) {
+	constructor(value = "", isTrusted = false) {
 		this.value = value;
 		this.isTrusted = isTrusted;
 	}

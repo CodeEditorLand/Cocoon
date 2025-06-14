@@ -4,12 +4,12 @@
  * handling the transformation between `vscode` API types and their DTOs for IPC.
  */
 
-import { DisposableStore, type IDisposable } from "vs/base/common/lifecycle.js";
+import type { DisposableStore, IDisposable } from "vs/base/common/lifecycle.js";
 import * as Languages from "vs/editor/common/languages.js";
 import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import * as CommandConverter from "./Command.js";
+import type * as CommandConverter from "./Command.js";
 import * as MarkdownStringConverter from "./Main/MarkdownString.js";
 import * as RangeConverter from "./Main/Range.js";
 import * as TextEditConverter from "./Main/TextEdit.js";
@@ -65,7 +65,7 @@ export namespace CompletionItem {
 			tags: Item.tags,
 			detail: Item.detail,
 			documentation: Item.documentation
-				? MarkdownStringConverter.fromAPI(Item.documentation)
+				? MarkdownStringConverter.FromAPI(Item.documentation)
 				: undefined,
 			sortText: Item.sortText,
 			filterText: Item.filterText,
@@ -111,7 +111,7 @@ export namespace CompletionItem {
 		item.tags = DTO.tags;
 		item.detail = DTO.detail;
 		item.documentation = DTO.documentation
-			? MarkdownStringConverter.toAPI(DTO.documentation as any)
+			? MarkdownStringConverter.ToAPI(DTO.documentation as any)
 			: undefined;
 		item.sortText = DTO.sortText;
 		item.filterText = DTO.filterText;
@@ -130,7 +130,7 @@ export namespace CompletionItem {
 		}
 
 		item.range = DTO.range
-			? RangeConverter.toAPI(DTO.range as any)
+			? RangeConverter.ToAPI(DTO.range as any)
 			: undefined;
 		item.commitCharacters = DTO.commitCharacters;
 		item.additionalTextEdits = DTO.additionalTextEdits?.map(

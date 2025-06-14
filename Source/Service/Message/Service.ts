@@ -4,7 +4,7 @@
  * This service proxies requests to show notifications to the Mountain host.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type { MessageItem, MessageOptions } from "vscode";
 
 export interface Interface {

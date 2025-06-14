@@ -4,7 +4,7 @@
  * This service manages access to all workspace and user settings.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type {
 	ConfigurationChangeEvent,
 	ConfigurationScope,

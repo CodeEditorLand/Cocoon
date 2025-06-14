@@ -56,6 +56,6 @@ export interface MountainService {
 }
 
 // This is a placeholder constructor
-export const MountainServiceClient = function () {} as any as {
+export const MountainServiceClient = (() => {}) as any as {
 	new (address: string, creds: any): MountainService;
 };

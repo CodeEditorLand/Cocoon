@@ -4,7 +4,7 @@
  * which provides `vscode.window` dialog functions like `showOpenDialog`.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type { CancellationToken, Uri } from "vscode";
 
 import type { DialogError } from "./Error.js";

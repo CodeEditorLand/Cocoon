@@ -6,9 +6,9 @@
 
 import { path } from "vs/base/common/path.js";
 import { URI } from "vs/base/common/uri.js";
-import {
+import type {
 	ExtensionIdentifier,
-	type IExtensionDescription,
+	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
 
 interface ExtensionPathEntry {

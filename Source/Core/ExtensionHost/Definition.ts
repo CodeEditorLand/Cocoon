@@ -6,15 +6,16 @@
 
 import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ExtensionDescriptionRegistry } from "vs/workbenchservices/extensions/common/extensionDescriptionRegistry.js";
+import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 
 import { InitData } from "../../Service/InitData.js";
 import { IPC } from "../../Service/IPC.js";
 import { Log } from "../../Service/Log.js";
 import {
 	ActivationKind,
-	ExtensionActivationReason,
-} from "../../Type/ExtHostTypes.js"; // Assuming local type definition
+	type ExtensionActivationReason,
+} from "../../Type/ExtHostTypes.js";
+// Assuming local type definition
 import { APIFactory } from "../APIFactory.js";
 import type { Interface } from "./Service.js";
 import type { ActivatedExtension } from "./State.js";

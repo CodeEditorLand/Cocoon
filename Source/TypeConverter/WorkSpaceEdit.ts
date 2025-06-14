@@ -30,7 +30,7 @@ export namespace WorkSpaceEdit {
 			if (edits[0] instanceof ExtHostTypes.TextEdit) {
 				// This is a list of text edits for a single file.
 				// The internal DTO structure is an array of IWorkspaceTextEdit.
-				const resource = URIConverter.fromAPI(uri);
+				const resource = URIConverter.FromAPI(uri);
 				const versionId = VersionProvider?.GetTextDocumentVersion(uri);
 				for (const edit of edits as VSCode.TextEdit[]) {
 					result.edits.push({
@@ -43,10 +43,10 @@ export namespace WorkSpaceEdit {
 				for (const edit of edits as any[]) {
 					result.edits.push({
 						oldResource: edit.oldUri
-							? URIConverter.fromAPI(edit.oldUri)
+							? URIConverter.FromAPI(edit.oldUri)
 							: undefined,
 						newResource: edit.newUri
-							? URIConverter.fromAPI(edit.newUri)
+							? URIConverter.FromAPI(edit.newUri)
 							: undefined,
 						options: edit.options,
 						metadata: edit.metadata,
@@ -61,25 +61,25 @@ export namespace WorkSpaceEdit {
 		const result = new ExtHostTypes.WorkSpaceEdit();
 		for (const edit of DTO.edits) {
 			if ("textEdits" in edit) {
-				const uri = URIConverter.toAPI(edit.resource);
+				const uri = URIConverter.ToAPI(edit.resource);
 				const textEdits = edit.textEdits.map(TextEditConverter.ToAPI);
 				result.set(uri, textEdits);
 			} else {
 				const fileEdit = edit as IWorkspaceFileEdit;
 				if (fileEdit.oldResource && fileEdit.newResource) {
 					result.renameFile(
-						URIConverter.toAPI(fileEdit.oldResource),
-						URIConverter.toAPI(fileEdit.newResource),
+						URIConverter.ToAPI(fileEdit.oldResource),
+						URIConverter.ToAPI(fileEdit.newResource),
 						fileEdit.options,
 					);
 				} else if (fileEdit.newResource) {
 					result.createFile(
-						URIConverter.toAPI(fileEdit.newResource),
+						URIConverter.ToAPI(fileEdit.newResource),
 						fileEdit.options,
 					);
 				} else if (fileEdit.oldResource) {
 					result.deleteFile(
-						URIConverter.toAPI(fileEdit.oldResource),
+						URIConverter.ToAPI(fileEdit.oldResource),
 						fileEdit.options,
 					);
 				}

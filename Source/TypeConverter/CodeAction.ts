@@ -4,12 +4,12 @@
  * translating between the rich API objects and their serializable DTOs for IPC.
  */
 
-import { DisposableStore } from "vs/base/common/lifecycle.js";
+import type { DisposableStore } from "vs/base/common/lifecycle.js";
 import * as Languages from "vs/editor/common/languages.js";
 import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import * as CommandConverter from "./Command.js";
+import type * as CommandConverter from "./Command.js";
 import * as DiagnosticConverter from "./Diagnostic.js";
 import {
 	WorkSpaceEdit as WorkSpaceEditConverter,
@@ -86,7 +86,7 @@ export namespace CodeAction {
 				? DiagnosticConverter.FromAPIArray(Action.diagnostics)
 				: undefined,
 			edit: Action.edit
-				? WorkSpaceEditConverter.fromAPI(Action.edit, VersionProvider)
+				? WorkSpaceEditConverter.FromAPI(Action.edit, VersionProvider)
 				: undefined,
 		};
 	}
@@ -106,7 +106,7 @@ export namespace CodeAction {
 			DiagnosticConverter.ToAPI(d),
 		);
 		action.edit = DTO.edit
-			? WorkSpaceEditConverter.toAPI(DTO.edit)
+			? WorkSpaceEditConverter.ToAPI(DTO.edit)
 			: undefined;
 		action.isPreferred = DTO.isPreferred;
 		if (DTO.disabled) {

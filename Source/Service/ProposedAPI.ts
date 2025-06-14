@@ -5,9 +5,9 @@
  */
 
 import { Context, Effect, HashMap, Layer } from "effect";
-import {
+import type {
 	ExtensionIdentifier,
-	type IEnabledApiProposals,
+	IEnabledApiProposals,
 } from "vs/platform/extensions/common/extensions.js";
 
 import { InitData } from "./InitData.js";

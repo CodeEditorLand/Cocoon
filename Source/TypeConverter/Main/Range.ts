@@ -13,7 +13,7 @@ import { Position, Range } from "../../Type/ExtHostTypes.js";
  * @param RangeInstance The `vscode.Range` instance to convert.
  * @returns The `IRange` DTO.
  */
-export function fromAPI(RangeInstance: Range): IRange {
+export function FromAPI(RangeInstance: Range): IRange {
 	return {
 		startLineNumber: RangeInstance.start.line + 1,
 		startColumn: RangeInstance.start.character + 1,
@@ -27,7 +27,7 @@ export function fromAPI(RangeInstance: Range): IRange {
  * @param RangeDTO The `IRange` DTO to revive.
  * @returns A new `vscode.Range` instance.
  */
-export function toAPI(RangeDTO: IRange): Range {
+export function ToAPI(RangeDTO: IRange): Range {
 	return new Range(
 		new Position(RangeDTO.startLineNumber - 1, RangeDTO.startColumn - 1),
 		new Position(RangeDTO.endLineNumber - 1, RangeDTO.endColumn - 1),

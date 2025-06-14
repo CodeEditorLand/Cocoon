@@ -4,7 +4,7 @@
  * This service implements the `vscode.window.createStatusBarItem` API.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { Disposable, StatusBarAlignment, StatusBarItem } from "vscode";
 

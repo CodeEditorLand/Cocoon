@@ -5,9 +5,9 @@
  * the Cocoon (Node.js) extension host environment.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ExtensionHostKind } from "vs/workbench/services/extensions/common/extensionHostKind.js";
+import type { ExtensionHostKind } from "vs/workbench/services/extensions/common/extensionHostKind.js";
 
 /**
  * The service interface for picking an extension host kind.

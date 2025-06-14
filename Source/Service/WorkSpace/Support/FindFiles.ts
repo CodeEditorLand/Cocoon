@@ -8,7 +8,7 @@ import type { CancellationToken, GlobPattern, Uri } from "vscode";
 
 import * as TypeConverter from "../../../TypeConverter.js";
 import { Cancellation } from "../../Cancellation/Service.js";
-import { IPC } from "../../IPC.js";
+import type { IPC } from "../../IPC.js";
 
 export function FindFiles(
 	IPCService: IPC.Interface,

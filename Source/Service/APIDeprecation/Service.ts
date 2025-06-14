@@ -5,7 +5,7 @@
  * deprecated APIs by extensions.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
 
 /**

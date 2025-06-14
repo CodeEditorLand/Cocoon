@@ -5,7 +5,7 @@
  * sub-services like dialogs, messages, and quick input.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type {
 	Event,
 	TextDocumentShowOptions,

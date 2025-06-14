@@ -5,10 +5,10 @@
  * extensions: loading, activating, and deactivating them.
  */
 
-import { Context, Effect } from "effect";
-import {
+import { Context, type Effect } from "effect";
+import type {
 	ExtensionIdentifier,
-	type IExtensionDescription,
+	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
 
 // Placeholder type for VS Code's internal ExtensionActivationReason

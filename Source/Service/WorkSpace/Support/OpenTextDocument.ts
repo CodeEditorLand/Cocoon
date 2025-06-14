@@ -21,7 +21,7 @@ export function OpenTextDocument(
 			if (existing) {
 				return existing;
 			}
-			const uriDTO = TypeConverter.URIConverter.fromAPI(options);
+			const uriDTO = TypeConverter.URIConverter.FromAPI(options);
 			yield* IPCService.SendNotification("$openTextDocument", [uriDTO]);
 			// A real implementation would need to wait for the document to be created.
 			return yield* Effect.fail(
@@ -32,7 +32,7 @@ export function OpenTextDocument(
 				"$openTextDocument",
 				[options],
 			);
-			const uri = TypeConverter.URIConverter.toAPI(resultDTO.uri);
+			const uri = TypeConverter.URIConverter.ToAPI(resultDTO.uri);
 			const doc = yield* DocumentService.GetDocument(uri);
 			if (!doc) {
 				return yield* Effect.fail(

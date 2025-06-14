@@ -65,7 +65,7 @@ export const Definition = Effect.gen(function* () {
 					);
 				}
 
-				const OptionDTO = TypeConverter.TreeView.Option.fromAPI(Option);
+				const OptionDTO = TypeConverter.TreeView.Option.FromAPI(Option);
 				yield* IPCService.SendNotification(
 					"$registerTreeDataProvider",
 					[ViewID, OptionDTO],

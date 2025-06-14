@@ -103,7 +103,7 @@ export const Definition = Effect.gen(function* () {
 		StartDebugging: (Folder, Configuration, Options) =>
 			IPCService.SendRequest<boolean>("$startDebugging", [
 				Folder
-					? TypeConverter.URIConverter.fromAPI(Folder.uri)
+					? TypeConverter.URIConverter.FromAPI(Folder.uri)
 					: undefined,
 				Configuration,
 				Options,

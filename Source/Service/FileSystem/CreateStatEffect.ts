@@ -4,7 +4,7 @@
  */
 
 import { Effect } from "effect";
-import { FileType, type FileStat, type Uri } from "vscode";
+import type { FileStat, FileType, Uri } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
 import { IPC } from "../IPC.js";

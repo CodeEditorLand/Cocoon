@@ -3,7 +3,7 @@
  * @description Defines the interface and Context.Tag for the FileSystemInformation service.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type { IExtUri } from "vs/base/common/resources.js";
 import type {
 	Event,

@@ -4,7 +4,7 @@
  * This is a simplified version of `vscode.workspace` for internal composition.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type {
 	CancellationToken,
 	Event,

@@ -5,7 +5,7 @@
  * APIs to extensions.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 
 /**
  * The service interface for the `require` interceptor.

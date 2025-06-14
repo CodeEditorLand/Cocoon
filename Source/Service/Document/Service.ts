@@ -5,7 +5,7 @@
  * documents in the extension host.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type { Event, TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
 
 export interface Interface {

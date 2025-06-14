@@ -13,7 +13,7 @@ import * as MarkdownStringConverter from "./Main/MarkdownString.js";
 import * as URIConverter from "./Main/URI.js";
 
 export namespace Option {
-	export function fromAPI(Option: VSCode.TreeViewOptions<any>): any {
+	export function FromAPI(Option: VSCode.TreeViewOptions<any>): any {
 		return {
 			showCollapseAll: !!Option.showCollapseAll,
 			canSelectMany: !!Option.canSelectMany,
@@ -24,7 +24,7 @@ export namespace Option {
 }
 
 export namespace Item {
-	export function fromAPI(
+	export function FromAPI(
 		Extension: IExtensionDescription,
 		Item: VSCode.TreeItem,
 		Handle: string,
@@ -63,13 +63,13 @@ export namespace Item {
 			id: id,
 			description: description,
 			resourceUri: resourceURI
-				? URIConverter.fromAPI(resourceURI)
+				? URIConverter.FromAPI(resourceURI)
 				: undefined,
 			tooltip:
 				typeof tooltip === "string"
 					? tooltip
 					: tooltip
-						? MarkdownStringConverter.fromAPI(tooltip)
+						? MarkdownStringConverter.FromAPI(tooltip)
 						: undefined,
 			command: command
 				? CommandConverter.ToInternal(command, [])
@@ -81,22 +81,22 @@ export namespace Item {
 			icon: icon
 				? "light" in icon && "dark" in icon
 					? {
-							light: URIConverter.fromAPI(icon.light),
-							dark: URIConverter.fromAPI(icon.dark),
+							light: URIConverter.FromAPI(icon.light),
+							dark: URIConverter.FromAPI(icon.dark),
 						}
-					: URIConverter.fromAPI(icon)
+					: URIConverter.FromAPI(icon)
 				: undefined,
 			accessibilityInformation: accessibilityInformation,
 		};
 	}
 
-	export function toAPI(DTO: any): VSCode.TreeItem {
+	export function ToAPI(DTO: any): VSCode.TreeItem {
 		const label = DTO.label.label;
 		const item = new ExtHostTypes.TreeItem(label, DTO.collapsibleState);
 		item.id = DTO.id;
 		item.description = DTO.description;
 		item.resourceURI = DTO.resourceUri
-			? URIConverter.toAPI(DTO.resourceUri)
+			? URIConverter.ToAPI(DTO.resourceUri)
 			: undefined;
 		return item;
 	}

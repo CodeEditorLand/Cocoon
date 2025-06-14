@@ -4,7 +4,7 @@
  * This service manages cancellation tokens for long-running RPC operations.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 
 import type { InvalidTokenIDError } from "./Error.js";
 import type { TokenAndScope } from "./Type.js";

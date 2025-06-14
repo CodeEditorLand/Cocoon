@@ -10,7 +10,7 @@ import { Layer } from "effect";
 import { Definition } from "./Cancellation/Definition.js";
 import { Tag } from "./Cancellation/Service.js";
 
-export { type InvalidTokenIDError } from "./Cancellation/Error.js";
+export type { InvalidTokenIDError } from "./Cancellation/Error.js";
 export { Tag, type Interface } from "./Cancellation/Service.js";
 export type { TokenAndScope } from "./Cancellation/Type.js";
 

@@ -4,7 +4,7 @@
  * This service implements the `vscode.window.showQuickPick` and `showInputBox` APIs.
  */
 
-import { Context, Effect } from "effect";
+import { Context, type Effect } from "effect";
 import type {
 	CancellationToken,
 	InputBox,
