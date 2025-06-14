@@ -11,7 +11,7 @@ class ModulePatchError extends Error {
 	readonly _tag = "ModulePatchError";
 	constructor(
 		readonly context: string,
-		readonly cause?: unknown,
+		override readonly cause?: unknown,
 	) {
 		super(`Failed to patch Node.js module loader: ${context}`);
 	}

@@ -14,7 +14,7 @@ export class AuthenticationProviderExistsError extends Data.TaggedError(
 )<{
 	readonly ProviderID: string;
 }> {
-	get message() {
+	override get message() {
 		return `Authentication provider with ID '${this.ProviderID}' is already registered.`;
 	}
 }

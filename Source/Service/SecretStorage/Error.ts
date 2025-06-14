@@ -9,7 +9,7 @@ import { Data } from "effect";
  * An error indicating that an empty string was provided as a key, which is invalid.
  */
 export class EmptyKeyError extends Data.TaggedError("EmptyKeyError")<{}> {
-	get message() {
+	override get message() {
 		return "Secret key cannot be empty.";
 	}
 }
@@ -21,7 +21,7 @@ export class EmptyKeyError extends Data.TaggedError("EmptyKeyError")<{}> {
 export class InvalidValueError extends Data.TaggedError(
 	"InvalidValueError",
 )<{}> {
-	get message() {
+	override get message() {
 		return "Secret value must be a string.";
 	}
 }

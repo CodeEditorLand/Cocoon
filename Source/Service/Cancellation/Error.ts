@@ -14,7 +14,7 @@ export class InvalidTokenIDError extends Data.TaggedError(
 )<{
 	readonly TokenID: number;
 }> {
-	get message() {
+	override get message() {
 		return `Invalid TokenID ('${this.TokenID}') provided. Must be a positive number.`;
 	}
 }

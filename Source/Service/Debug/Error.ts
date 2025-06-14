@@ -15,7 +15,7 @@ export class DebugProviderRegistrationError extends Data.TaggedError(
 	readonly DebugType: string;
 	readonly cause?: unknown;
 }> {
-	get message() {
+	override get message() {
 		return `Failed to register debug provider for type '${this.DebugType}'.`;
 	}
 }
@@ -28,7 +28,7 @@ export class StartDebuggingError extends Data.TaggedError(
 )<{
 	readonly cause: unknown;
 }> {
-	get message() {
+	override get message() {
 		return `Failed to start debugging session.`;
 	}
 }

@@ -12,7 +12,7 @@ import { Data } from "effect";
 export class ModuleBlockedError extends Data.TaggedError("ModuleBlockedError")<{
 	readonly ModuleName: string;
 }> {
-	get message() {
+	override get message() {
 		return `[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`;
 	}
 }
@@ -26,7 +26,7 @@ export class ModuleNotShimmedError extends Data.TaggedError(
 )<{
 	readonly ModuleName: string;
 }> {
-	get message() {
+	override get message() {
 		return `Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`;
 	}
 }

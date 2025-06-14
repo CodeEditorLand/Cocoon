@@ -15,7 +15,7 @@ export class ConfigurationUpdateError extends Data.TaggedError(
 	readonly key: string;
 	readonly cause: unknown;
 }> {
-	get message() {
+	override get message() {
 		return `Failed to update configuration for key '${this.key}'.`;
 	}
 }
