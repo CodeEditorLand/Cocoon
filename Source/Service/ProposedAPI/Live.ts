@@ -1,0 +1,16 @@
+/**
+ * @module Live (ProposedAPI)
+ * @description The live implementation Layer for the ProposedAPI service.
+ */
+
+import { Layer } from "effect";
+
+import LogLive from "../Log/Live.js";
+import Definition from "./Definition.js";
+import Service from "./Service.js";
+
+/**
+ * The live implementation Layer for the ProposedAPI service.
+ * It depends on the Log and InitData services.
+ */
+export default Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));

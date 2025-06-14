@@ -1,0 +1,42 @@
+/**
+ * @module Type (Command/TypeConverter)
+ * @description Defines types for describing command signatures, enabling
+ * validation and conversion of arguments and results for built-in API commands.
+ */
+
+/**
+ * Represents and validates a single argument for a built-in API command.
+ */
+export class APICommandArgument<V, D> {
+	constructor(
+		public readonly Name: string,
+		public readonly Description: string,
+		public readonly Validate: (v: V) => boolean,
+		public readonly Convert: (v: V) => D,
+	) {}
+}
+
+/**
+ * Represents and converts the result of a built-in API command.
+ */
+export class APICommandResult<V, R> {
+	constructor(
+		public readonly Name: string,
+		public readonly Convert: (v: V) => R,
+	) {}
+}
+
+/**
+ * A descriptor for a built-in API command, detailing its signature.
+ * This allows for automated marshalling and unmarshalling of command
+ * arguments and results when communicating with the host.
+ */
+export class APICommand {
+	constructor(
+		public readonly ID: string,
+		public readonly InternalID: string,
+		public readonly Description: string,
+		public readonly Arguments: APICommandArgument<any, any>[],
+		public readonly Result: APICommandResult<any, any>,
+	) {}
+}
