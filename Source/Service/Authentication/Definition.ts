@@ -3,7 +3,7 @@
  * @description The live implementation of the Authentication service.
  */
 
-import { Effect, Ref, Stream } from "effect";
+import { Effect, Ref } from "effect";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
 import type { AuthenticationProvider } from "vscode";
 
