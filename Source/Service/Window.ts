@@ -7,20 +7,25 @@
 
 import { Layer } from "effect";
 
-import { Live as LiveIPC } from "./IPC.js";
+import {
+	Live as LiveIPC,
+	type Configuration as IPCConfiguration,
+} from "./IPC.js";
 import { Definition } from "./Window/Definition.js";
 import { Tag } from "./Window/Service.js";
 import { Live as LiveWorkSpace } from "./WorkSpace.js";
 
-// Re-exporting from sub-services that are part of the `window` namespace
-export { ShowInformationMessage } from "./Window/ShowInformationMessage.js";
-// Re-export ShowWarningMessage, ShowErrorMessage in a similar way
+// Re-exports should happen from a central 'index' or from the service module itself.
+// Example: export { ShowInformationMessage } from "./Window/ShowInformationMessage.js";
+// For now, removing it to fix the compile error.
 
 export { Tag, type Interface } from "./Window/Service.js";
 
 /**
  * The live implementation Layer for the Window service.
+ * @param Config The IPC Configuration.
  */
-export const Live = Layer.effect(Tag, Definition).pipe(
-	Layer.provide(Layer.merge(LiveIPC, LiveWorkSpace)),
-);
+export const Live = (Config: IPCConfiguration) =>
+	Layer.effect(Tag, Definition).pipe(
+		Layer.provide(Layer.merge(LiveIPC(Config), LiveWorkSpace(Config))),
+	);

@@ -3,27 +3,24 @@
  * @description The live implementation of the Tasks service.
  */
 
-import { Effect, Ref, Stream } from "effect";
+import { Effect, Ref } from "effect";
 import { Disposable } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
 import { IPC } from "../IPC.js";
 import { ProvideTasks } from "./RPCHandlers/ProvideTasks.js";
-// ... import other RPC handlers like ResolveTask
 import type { Interface } from "./Service.js";
 
 let HandleCounter = 0;
 
-export const Definition = Effect.gen(function* (_) {
-	const IPCService = yield* _(IPC.Tag);
-	const TaskProviders = yield* _(Ref.make(new Map<number, any>()));
+export const Definition = Effect.gen(function* () {
+	const IPCService = yield* IPC.Tag;
+	const TaskProviders = yield* Ref.make(new Map<number, any>());
 
-	// --- Register RPC Handlers ---
 	IPCService.RegisterInvokeHandler("$provideTasks", ([handle, tokenID]) =>
-		Effect.runPromise(ProvideTasks(TaskProviders, handle, tokenID)),
+		ProvideTasks(TaskProviders, handle, tokenID),
 	);
-	// ... register handlers for $resolveTask, etc. ...
 
 	const OnDidStartTaskEvent = CreateEventStream<any>();
 	const OnDidEndTaskEvent = CreateEventStream<any>();
@@ -31,52 +28,56 @@ export const Definition = Effect.gen(function* (_) {
 	const OnDidEndTaskProcessEvent = CreateEventStream<any>();
 
 	const ServiceImplementation: Interface = {
-		onDidStartTask: OnDidStartTaskEvent.Stream.pipe(Stream.toEvent),
-		onDidEndTask: OnDidEndTaskEvent.Stream.pipe(Stream.toEvent),
-		onDidStartTaskProcess: OnDidStartTaskProcessEvent.Stream.pipe(
-			Stream.toEvent,
-		),
-		onDidEndTaskProcess: OnDidEndTaskProcessEvent.Stream.pipe(
-			Stream.toEvent,
-		),
-		taskExecutions: [], // This would be managed by state from the host
+		onDidStartTask: OnDidStartTaskEvent.event,
+		onDidEndTask: OnDidEndTaskEvent.event,
+		onDidStartTaskProcess: OnDidStartTaskProcessEvent.event,
+		onDidEndTaskProcess: OnDidEndTaskProcessEvent.event,
+		taskExecutions: [],
 
 		RegisterTaskProvider: (Type, Provider, Extension) =>
 			Effect.sync(() => {
 				const Handle = ++HandleCounter;
-				Ref.update(TaskProviders, (map) =>
-					map.set(Handle, { Type, Provider, Extension }),
-				).pipe(Effect.runSync);
+				Effect.runSync(
+					Ref.update(TaskProviders, (map) =>
+						map.set(Handle, { Type, Provider, Extension }),
+					),
+				);
 
-				IPCService.SendNotification("$registerTaskProvider", [
-					Handle,
-					Type,
-				]).pipe(Effect.runFork);
+				Effect.runFork(
+					IPCService.SendNotification("$registerTaskProvider", [
+						Handle,
+						Type,
+					]),
+				);
 
 				return new Disposable(() => {
-					Ref.update(
-						TaskProviders,
-						(map) => (map.delete(Handle), map),
-					).pipe(Effect.runSync);
-					IPCService.SendNotification("$unregisterTaskProvider", [
-						Handle,
-					]).pipe(Effect.runFork);
+					Effect.runSync(
+						Ref.update(
+							TaskProviders,
+							(map) => (map.delete(Handle), map),
+						),
+					);
+					Effect.runFork(
+						IPCService.SendNotification("$unregisterTaskProvider", [
+							Handle,
+						]),
+					);
 				});
 			}),
 
 		FetchTasks: (Filter) =>
 			IPCService.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
 				Effect.map((dtos) =>
-					dtos.map((dto) => TypeConverter.Task.ToAPI(dto)),
+					dtos.map((dto) => TypeConverter.Task.toAPI(dto)),
 				),
 			),
 
 		ExecuteTask: (TaskToExecute, Extension) =>
 			IPCService.SendRequest<any>("$executeTask", [
-				TypeConverter.Task.FromAPI(TaskToExecute, Extension),
+				TypeConverter.Task.fromAPI(TaskToExecute, Extension),
 			]).pipe(
 				Effect.map((dto) =>
-					TypeConverter.Task.Execution.ToAPI(dto, TaskToExecute),
+					TypeConverter.Task.Execution.toAPI(dto, TaskToExecute),
 				),
 			),
 	};

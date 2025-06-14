@@ -4,10 +4,17 @@
  * serializable DTO.
  */
 
-import type { IEditorOptions } from "vs/platform/editor/common/editor.js";
 import type * as VSCode from "vscode";
 
 import * as ViewColumnConverter from "../Main/ViewColumn.js";
+
+// Placeholder for internal VS Code DTO
+interface IEditorOptions {
+	preserveFocus?: boolean;
+	selection?: any; // Should be IRange
+	pinned?: boolean;
+	sticky?: boolean;
+}
 
 /**
  * Converts the user-provided `showOption` for a webview panel into a
@@ -19,11 +26,11 @@ import * as ViewColumnConverter from "../Main/ViewColumn.js";
  * @returns A serializable DTO representing the showing behavior.
  */
 export function ConvertShowOptionToDTO(
-	ViewColumn: VSCode.ViewColumn,
+	ViewColumn: VSCode.ViewColumn | undefined,
 	PreserveFocus: boolean,
 ): { viewColumn?: number; preserveFocus: boolean } & IEditorOptions {
 	return {
-		viewColumn: ViewColumnConverter.FromAPI(ViewColumn),
+		viewColumn: ViewColumnConverter.fromAPI(ViewColumn),
 		preserveFocus: PreserveFocus,
 	};
 }

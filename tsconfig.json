@@ -40,5 +40,14 @@
 
 	"extends": "@playform/build/tsconfig",
 
-	"include": ["Source", "@types/node"]
+	"include": [
+		"Source",
+		"@types/node",
+
+		"../../Dependency/Microsoft/Dependency/Editor/src/*.ts",
+		"../../Dependency/Microsoft/Dependency/Editor/src/typings",
+		"../../Dependency/Microsoft/Dependency/Editor/src/vs/**/*.ts",
+		"../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.proposed.*.d.ts",
+		"../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.d.ts"
+	]
 }

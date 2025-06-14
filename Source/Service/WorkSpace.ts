@@ -5,28 +5,33 @@
  */
 
 import { Layer } from "effect";
+import type { WorkspaceFolder } from "vscode";
 
 import { Live as LiveConfiguration } from "./Configuration.js";
 import { Live as LiveDocument } from "./Document.js";
 import { Live as LiveFileSystem } from "./FileSystem.js";
-import { Live as LiveIPC } from "./IPC.js";
+import {
+	Live as LiveIPC,
+	type Configuration as IPCConfiguration,
+} from "./IPC.js";
 import { Definition } from "./WorkSpace/Definition.js";
 import { Tag } from "./WorkSpace/Service.js";
 
 export { Tag, type Interface } from "./WorkSpace/Service.js";
-export type { WorkspaceFolder } from "vscode";
+export type { WorkspaceFolder };
 
 /**
  * The live implementation Layer for the WorkSpace service.
- * It depends on the IPC, Document, FileSystem, and Configuration services.
+ * @param Config The IPC Configuration.
  */
-export const Live = Layer.effect(Tag, Definition).pipe(
-	Layer.provide(
-		Layer.mergeAll(
-			LiveIPC,
-			LiveDocument,
-			LiveFileSystem,
-			LiveConfiguration,
+export const Live = (Config: IPCConfiguration) =>
+	Layer.effect(Tag, Definition).pipe(
+		Layer.provide(
+			Layer.mergeAll(
+				LiveIPC(Config),
+				LiveDocument(Config),
+				LiveFileSystem(Config),
+				LiveConfiguration(Config),
+			),
 		),
-	),
-);
+	);

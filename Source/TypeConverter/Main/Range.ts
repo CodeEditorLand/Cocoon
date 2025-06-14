@@ -3,10 +3,9 @@
  * @description Converts between `vscode.Range` and its DTO representation.
  */
 
-import { Range as VscRange, type IRange } from "vs/editor/common/core/range.js";
+import type { IRange } from "vs/editor/common/core/range.js";
 
 import { Position, Range } from "../../Type/ExtHostTypes.js";
-import * as PositionConverter from "./Position.js";
 
 /**
  * Converts a `vscode.Range` object into a plain DTO by delegating to the
@@ -14,7 +13,7 @@ import * as PositionConverter from "./Position.js";
  * @param RangeInstance The `vscode.Range` instance to convert.
  * @returns The `IRange` DTO.
  */
-export function FromAPI(RangeInstance: Range): IRange {
+export function fromAPI(RangeInstance: Range): IRange {
 	return {
 		startLineNumber: RangeInstance.start.line + 1,
 		startColumn: RangeInstance.start.character + 1,
@@ -28,7 +27,7 @@ export function FromAPI(RangeInstance: Range): IRange {
  * @param RangeDTO The `IRange` DTO to revive.
  * @returns A new `vscode.Range` instance.
  */
-export function ToAPI(RangeDTO: IRange): Range {
+export function toAPI(RangeDTO: IRange): Range {
 	return new Range(
 		new Position(RangeDTO.startLineNumber - 1, RangeDTO.startColumn - 1),
 		new Position(RangeDTO.endLineNumber - 1, RangeDTO.endColumn - 1),
