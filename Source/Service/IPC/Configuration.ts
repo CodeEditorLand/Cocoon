@@ -7,22 +7,20 @@
 import { Context } from "effect";
 
 /**
- * The configuration required for the IPC service.
- */
-export interface Configuration {
-	/**
-	 * The network address of the `Mountain` gRPC server.
-	 * @example "localhost:50051"
-	 */
-	readonly MountainAddress: string;
-	/**
-	 * The network address where the `Cocoon` gRPC server should listen.
-	 * @example "localhost:50052"
-	 */
-	readonly CocoonAddress: string;
-}
-
-/**
  * The `Context.Tag` for the IPC configuration.
  */
-export const Tag = Context.Tag("IPC/Configuration")<Configuration>;
+export class Configuration extends Context.Tag("IPC/Configuration")<
+	Configuration,
+	{
+		/**
+		 * The network address of the `Mountain` gRPC server.
+		 * @example "localhost:50051"
+		 */
+		readonly MountainAddress: string;
+		/**
+		 * The network address where the `Cocoon` gRPC server should listen.
+		 * @example "localhost:50052"
+		 */
+		readonly CocoonAddress: string;
+	}
+>() {}
