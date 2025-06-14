@@ -15,7 +15,12 @@ export default class extends Data.TaggedError(
 	readonly DebugType: string;
 	readonly cause?: unknown;
 }> {
-	override get message() {
-		return `Failed to register debug provider for type '${this.DebugType}'.`;
+	constructor(Properties: {
+		readonly DebugType: string;
+		readonly cause?: unknown;
+	}) {
+		super(Properties);
+		this.message = `Failed to register debug provider for type '${this.DebugType}'.`;
 	}
+	public override readonly message: string;
 }

@@ -10,29 +10,29 @@ import { Schemas } from "vs/base/common/network.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/WebView.js";
+import { WebView as TypeConverter } from "../../TypeConverter.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type IPCService from "../IPC/Service.js";
 
 export default class implements Webview {
 	// --- Private State ---
-	private _isDisposed = false;
+	private IsDisposed = false;
 	private _html = "";
 	private _options: WebviewOptions;
 
 	// --- Event Emitters ---
-	private readonly onDidReceiveMessageEmitter = CreateEventStream<any>();
+	private readonly OnDidReceiveMessageEmitter = CreateEventStream<any>();
 	public readonly onDidReceiveMessage: Event<any>;
 
 	constructor(
-		public readonly handle: string, // A unique ID for this webview instance
-		private readonly ipc: IPCService,
-		private readonly extension: IExtensionDescription,
-		initialOptions: WebviewOptions,
+		public readonly Handle: string, // A unique ID for this webview instance
+		private readonly IPC: IPCService,
+		private readonly Extension: IExtensionDescription,
+		InitialOptions: WebviewOptions,
 	) {
-		this._options = initialOptions;
+		this._options = InitialOptions;
 		this.onDidReceiveMessage = Stream.toEvent(
-			this.onDidReceiveMessageEmitter.Stream,
+			this.OnDidReceiveMessageEmitter.Stream,
 		);
 	}
 
@@ -42,37 +42,37 @@ export default class implements Webview {
 		return this._html;
 	}
 
-	public set html(value: string) {
-		if (this._isDisposed || this._html === value) {
+	public set html(Value: string) {
+		if (this.IsDisposed || this._html === Value) {
 			return;
 		}
-		this._html = value;
+		this._html = Value;
 		// Send a fire-and-forget notification to the host to update the UI.
-		const updateEffect = this.ipc.SendNotification("$setWebviewHtml", [
-			this.handle,
-			value,
+		const UpdateEffect = this.IPC.SendNotification("$setWebviewHtml", [
+			this.Handle,
+			Value,
 		]);
-		Effect.runFork(updateEffect);
+		Effect.runFork(UpdateEffect);
 	}
 
 	public get options(): WebviewOptions {
 		return this._options;
 	}
 
-	public set options(newOptions: WebviewOptions) {
-		if (this._isDisposed) {
+	public set options(NewOptions: WebviewOptions) {
+		if (this.IsDisposed) {
 			return;
 		}
-		this._options = newOptions;
+		this._options = NewOptions;
 		const OptionsDTO = TypeConverter.ConvertContentOptionToDTO(
-			this.extension,
-			newOptions,
+			this.Extension,
+			NewOptions,
 		);
-		const updateEffect = this.ipc.SendNotification("$setWebviewOptions", [
-			this.handle,
+		const UpdateEffect = this.IPC.SendNotification("$setWebviewOptions", [
+			this.Handle,
 			OptionsDTO,
 		]);
-		Effect.runFork(updateEffect);
+		Effect.runFork(UpdateEffect);
 	}
 
 	public get cspSource(): string {
@@ -82,26 +82,22 @@ export default class implements Webview {
 
 	// --- Public API Methods ---
 
-	public postMessage(message: any): Promise<boolean> {
-		if (this._isDisposed) {
+	public postMessage(Message: any): Promise<boolean> {
+		if (this.IsDisposed) {
 			return Promise.resolve(false);
 		}
-		const postEffect = this.ipc
-			.SendRequest<boolean>("$postMessageToWebview", [
-				this.handle,
-				message,
-			])
-			.pipe(
-				Effect.catchAll(() => Effect.succeed(false)), // Return false on any failure
-			);
-		return Effect.runPromise(postEffect);
+		const PostEffect = this.IPC.SendRequest<boolean>(
+			"$postMessageToWebview",
+			[this.Handle, Message],
+		).pipe(Effect.catchAll(() => Effect.succeed(false))); // Return false on any failure
+		return Effect.runPromise(PostEffect);
 	}
 
-	public asWebviewUri(localResource: Uri): Uri {
-		const authority = this.extension.identifier.value.toLowerCase();
-		return localResource.with({
+	public asWebviewUri(LocalResource: Uri): Uri {
+		const Authority = this.Extension.identifier.value.toLowerCase();
+		return LocalResource.with({
 			scheme: Schemas.vscodeWebviewResource,
-			authority: authority,
+			authority: Authority,
 		});
 	}
 
@@ -111,9 +107,9 @@ export default class implements Webview {
 	 * Called by the WebViewPanel service when a message is received from the host
 	 * for this specific webview instance.
 	 */
-	public fireDidReceiveMessage(message: any): void {
-		if (!this._isDisposed) {
-			this.onDidReceiveMessageEmitter.Fire(message);
+	public fireDidReceiveMessage(Message: any): void {
+		if (!this.IsDisposed) {
+			this.OnDidReceiveMessageEmitter.Fire(Message);
 		}
 	}
 
@@ -121,9 +117,9 @@ export default class implements Webview {
 	 * Marks this webview as disposed and cleans up its resources.
 	 */
 	public dispose(): void {
-		if (!this._isDisposed) {
-			this._isDisposed = true;
-			this.onDidReceiveMessageEmitter.Shutdown();
+		if (!this.IsDisposed) {
+			this.IsDisposed = true;
+			this.OnDidReceiveMessageEmitter.Shutdown();
 		}
 	}
 }

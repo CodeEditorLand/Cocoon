@@ -13,7 +13,9 @@ import { Data } from "effect";
 export default class extends Data.TaggedError("ModuleNotShimmedError")<{
 	readonly ModuleName: string;
 }> {
-	override get message() {
-		return `Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`;
+	constructor(Properties: { readonly ModuleName: string }) {
+		super(Properties);
+		this.message = `Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`;
 	}
+	public override readonly message: string;
 }

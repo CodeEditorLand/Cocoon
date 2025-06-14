@@ -39,7 +39,7 @@ export default class {
 		}
 		return this.CommandService.ExecuteCommand(
 			Command.command,
-			...(Command.arguments ?? []),
+			...[...(Command.arguments ?? []), ...ArgumentArray],
 		);
 	}
 
@@ -61,7 +61,7 @@ export default class {
 				id: APICommand.InternalID,
 				title: APICommand.ID,
 				arguments: ConvertedArgumentArray,
-			} as ICommand;
+			} as unknown as ICommand;
 		}
 
 		if (
@@ -76,15 +76,15 @@ export default class {
 			return {
 				id: this.DelegatingCommandID,
 				title: Command.title,
-				arguments: [ID],
-			} as ICommand;
+				arguments: [ID, ...(Command.arguments ?? [])],
+			} as unknown as ICommand;
 		}
 
 		return {
 			id: Command.command,
 			title: Command.title,
 			arguments: Command.arguments,
-		} as ICommand;
+		} as unknown as ICommand;
 	}
 
 	public FromInternal(CommandDTO: ICommand): VSCode.Command | undefined {
@@ -93,9 +93,9 @@ export default class {
 		}
 		return {
 			command: CommandDTO.id,
-			title: CommandDTO.title ?? "",
+			title: (CommandDTO as any).title ?? "",
 			tooltip: (CommandDTO as any).tooltip ?? "",
-			arguments: CommandDTO.arguments ?? [],
+			arguments: (CommandDTO as any).arguments ?? [],
 		};
 	}
 }

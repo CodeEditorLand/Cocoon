@@ -5,20 +5,19 @@
  * dependencies for client communication and request dispatching.
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Effect, Ref } from "effect";
 
 import ClientService from "./Client/Service.js";
 import DispatcherService from "./Dispatcher/Service.js";
-import IPCError from "./Error/IPCError.js";
-import {
-	GenericNotification,
-	GenericRequest,
-	GenericResponse,
-} from "./Generated.js";
+import { IPCError } from "./Error.js";
+import Generated from "./Generated.js";
 import ProtocolAdapterService from "./ProtocolAdapter/Service.js";
-import DecodeValue from "./ProtoConverter/DecodeValue.js";
-import EncodeValue from "./ProtoConverter/EncodeValue.js";
-import ProtoSerializationError from "./ProtoConverter/Error/ProtoSerializationError.js";
+import {
+	DecodeValue,
+	EncodeValue,
+	ProtoSerializationError,
+} from "./ProtoConverter.js";
+import type Service from "./Service.js";
 
 /**
  * An `Effect` that builds the live implementation of the `IPC.Service`.
@@ -31,7 +30,7 @@ export default Effect.gen(function* () {
 
 	const SendRequest = <Res = unknown>(
 		Method: string,
-		Parameters: unknown,
+		Parameters: readonly unknown[],
 		_TimeoutMilliseconds?: number,
 	): Effect.Effect<Res, IPCError> =>
 		Effect.gen(function* () {
@@ -41,69 +40,69 @@ export default Effect.gen(function* () {
 			);
 			const EncodedParameter = yield* EncodeValue(Parameters);
 
-			const RequestMessage = new GenericRequest();
+			const RequestMessage = new Generated.GenericRequest();
 			RequestMessage.setRequestid(RequestID);
 			RequestMessage.setMethod(Method);
-			RequestMessage.setParams(EncodedParameter);
+			RequestMessage.setParams(EncodedParameter as any);
 
 			const ResponseMessage = (yield* Effect.tryPromise({
 				try: () => Client.processCocoonRequest(RequestMessage),
-				catch: (cause) =>
+				catch: (Cause) =>
 					new IPCError({
-						cause,
+						cause: Cause,
 						context: `gRPC request '${Method}' failed.`,
 					}),
-			})) as GenericResponse;
+			})) as typeof Generated.GenericResponse.prototype;
 
 			const DecodedResult = yield* DecodeValue(
 				ResponseMessage.getResult(),
 			);
 			return DecodedResult as Res;
 		}).pipe(
-			Effect.mapError((error) => {
-				if (error instanceof ProtoSerializationError) {
+			Effect.mapError((Error) => {
+				if (Error instanceof ProtoSerializationError) {
 					return new IPCError({
-						cause: error,
+						cause: Error,
 						context: "Proto serialization/deserialization failed",
 					});
 				}
-				return error;
+				return Error;
 			}),
 		);
 
 	const SendNotification = (
 		Method: string,
-		Parameters: unknown,
+		Parameters: readonly unknown[],
 	): Effect.Effect<void, IPCError> =>
 		Effect.gen(function* () {
 			const EncodedParameter = yield* EncodeValue(Parameters);
 
-			const NotificationMessage = new GenericNotification();
+			const NotificationMessage = new Generated.GenericNotification();
 			NotificationMessage.setMethod(Method);
-			NotificationMessage.setParams(EncodedParameter);
+			NotificationMessage.setParams(EncodedParameter as any);
 
 			yield* Effect.tryPromise({
 				try: () => Client.sendCocoonNotification(NotificationMessage),
-				catch: (cause) =>
+				catch: (Cause) =>
 					new IPCError({
-						cause,
+						cause: Cause,
 						context: `gRPC notification '${Method}' failed.`,
 					}),
 			});
 		}).pipe(
-			Effect.mapError((error) => {
-				if (error instanceof ProtoSerializationError) {
+			Effect.mapError((Error) => {
+				if (Error instanceof ProtoSerializationError) {
 					return new IPCError({
-						cause: error,
+						cause: Error,
 						context: "Proto serialization/deserialization failed",
 					});
 				}
-				return error;
+				return Error;
 			}),
 			Effect.asVoid,
 		);
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const IPCImplementation: Service = {
 		SendRequest,
 		SendNotification,
 		SendCancel: Dispatcher.CancelOperation,
@@ -111,5 +110,5 @@ export default Effect.gen(function* () {
 		RegisterInvokeHandler: Dispatcher.RegisterInvokeHandler,
 	};
 
-	return ServiceImplementation;
+	return IPCImplementation;
 });

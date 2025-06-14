@@ -21,37 +21,44 @@ import LogService from "../../Log/Service.js";
  * @param ScopeName A friendly name for the directory's purpose (e.g.,
  *   "Global Storage"), used for logging.
  */
-export default function (DirectoryURI: Uri | undefined, ScopeName: string) {
+const EnsureDirectory = (DirectoryURI: Uri | undefined, ScopeName: string) => {
 	return Effect.if(DirectoryURI, {
 		onTrue: (URI) =>
-			Effect.gen(function* (_) {
-				const Fs = yield* _(FileSystemService);
+			Effect.gen(function* () {
+				const Fs = yield* FileSystemService;
 				// The `createDirectory` method on the vscode.fs API is already idempotent.
-				yield* _(
-					Effect.tryPromise(() => Fs.createDirectory(URI)),
+				yield* Effect.tryPromise(() => Fs.createDirectory(URI)).pipe(
 					Effect.catchAll((Error) =>
-						Effect.flatMap(LogService, (Log) =>
-							Log.Error(
-								`Failed to ensure ${ScopeName} storage directory exists at ${URI.toString()}`,
-								Error,
+						LogService.pipe(
+							Effect.flatMap((Log) =>
+								Log.Error(
+									`Failed to ensure ${ScopeName} storage directory exists at ${URI.toString()}`,
+									Error,
+								),
 							),
 						),
 					),
 				);
 			}).pipe(
 				Effect.tap(() =>
-					Effect.flatMap(LogService, (Log) =>
-						Log.Trace(
-							`${ScopeName} storage directory ensured at: ${URI.fsPath}`,
+					LogService.pipe(
+						Effect.flatMap((Log) =>
+							Log.Trace(
+								`${ScopeName} storage directory ensured at: ${URI.fsPath}`,
+							),
 						),
 					),
 				),
 			),
 		onFalse: () =>
-			Effect.flatMap(LogService, (Log) =>
-				Log.Trace(
-					`${ScopeName} storage URI is not defined; skipping creation.`,
+			LogService.pipe(
+				Effect.flatMap((Log) =>
+					Log.Trace(
+						`${ScopeName} storage URI is not defined; skipping creation.`,
+					),
 				),
 			),
 	});
-}
+};
+
+export default EnsureDirectory;

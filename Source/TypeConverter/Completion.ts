@@ -4,15 +4,17 @@
  * handling the transformation between `vscode` API types and their DTOs for IPC.
  */
 
-import type { DisposableStore, IDisposable } from "vs/base/common/lifecycle.js";
+import type { IDisposable } from "vs/base/common/lifecycle.js";
 import * as Languages from "vs/editor/common/languages.js";
 import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
 import type CommandConverterDefinition from "./Command/Definition.js";
-import * as MarkdownStringConverter from "./Main/MarkdownString.js";
-import * as RangeConverter from "./Main/Range.js";
-import * as TextEditConverter from "./Main/TextEdit.js";
+import {
+	MarkdownString as MarkdownStringConverter,
+	Range as RangeConverter,
+	TextEdit as TextEditConverter,
+} from "./Main.js";
 
 // Placeholder DTOs based on usage
 interface ISuggestDataDto {
@@ -24,7 +26,7 @@ interface ISuggestDataDto {
 	sortText?: string;
 	filterText?: string;
 	preselect?: boolean;
-	insertText?: string | ExtHostTypes.SnippetString;
+	insertText?: string | VSCode.SnippetString;
 	insertTextRules?: Languages.CompletionItemInsertTextRule;
 	range?:
 		| VSCode.Range
@@ -48,7 +50,7 @@ interface CompletionContextDto {
 }
 
 const CompletionContext = {
-	ToAPI(DTO: CompletionContextDto): VSCode.CompletionContext {
+	ToAPI: (DTO: CompletionContextDto): VSCode.CompletionContext => {
 		return {
 			triggerKind: DTO.triggerKind,
 			triggerCharacter: DTO.triggerCharacter,
@@ -57,49 +59,59 @@ const CompletionContext = {
 };
 
 const CompletionItem = {
-	FromAPI(
+	FromAPI: (
 		Item: VSCode.CompletionItem,
 		CommandsConverter: CommandConverterDefinition,
 		Disposables: IDisposable[],
-	): ISuggestDataDto {
-		const result: ISuggestDataDto = {
+	): ISuggestDataDto => {
+		return {
 			label: typeof Item.label === "string" ? Item.label : Item.label,
-			kind: Item.kind,
-			tags: Item.tags,
+			kind: Item.kind as Languages.CompletionItemKind,
+			tags: Item.tags as Languages.CompletionItemTag[],
 			detail: Item.detail,
 			documentation: Item.documentation
-				? MarkdownStringConverter.FromAPI(Item.documentation)
+				? MarkdownStringConverter.FromAPI(
+						Item.documentation as VSCode.MarkdownString,
+					)
 				: undefined,
 			sortText: Item.sortText,
 			filterText: Item.filterText,
 			preselect: Item.preselect,
-			insertText: Item.insertText,
+			insertText:
+				Item.insertText instanceof ExtHostTypes.SnippetString
+					? (Item.insertText as any)
+					: Item.insertText,
 			insertTextRules:
 				Item.insertText instanceof ExtHostTypes.SnippetString
 					? Languages.CompletionItemInsertTextRule.InsertAsSnippet
 					: 0,
-			range: Item.range
-				? RangeConverter.FromAPI(Item.range as VSCode.Range)
-				: undefined,
-			commitCharacters: Item.commitCharacters,
+			range:
+				Item.range instanceof ExtHostTypes.Range
+					? RangeConverter.FromAPI(Item.range as VSCode.Range)
+					: Item.range
+						? {
+								insert: RangeConverter.FromAPI(
+									Item.range.insert,
+								),
+								replace: RangeConverter.FromAPI(
+									Item.range.replace,
+								),
+							}
+						: undefined,
 			additionalTextEdits: Item.additionalTextEdits?.map(
 				TextEditConverter.FromAPI,
 			),
 			command: Item.command
-				? CommandsConverter.ToInternal(
-						Item.command,
-						Disposables as DisposableStore,
-					)
+				? CommandsConverter.ToInternal(Item.command, Disposables)
 				: undefined,
 		};
-		return result;
 	},
 
-	ToAPI(
+	ToAPI: (
 		DTO: ISuggestDataDto,
 		CommandsConverter: CommandConverterDefinition,
-	): VSCode.CompletionItem {
-		const label =
+	): VSCode.CompletionItem => {
+		const Label =
 			typeof DTO.label === "string"
 				? DTO.label
 				: {
@@ -107,35 +119,41 @@ const CompletionItem = {
 						detail: DTO.label.detail,
 						description: DTO.label.description,
 					};
-		const item = new ExtHostTypes.CompletionItem(
-			label,
+		const Item = new ExtHostTypes.CompletionItem(
+			Label,
 			DTO.kind as VSCode.CompletionItemKind,
 		);
-		item.tags = DTO.tags as VSCode.CompletionItemTag[];
-		item.detail = DTO.detail;
-		item.documentation = DTO.documentation
-			? MarkdownStringConverter.ToAPI(DTO.documentation as any)
+		Item.tags = DTO.tags as VSCode.CompletionItemTag[];
+		Item.detail = DTO.detail;
+		Item.documentation =
+			typeof DTO.documentation === "string"
+				? DTO.documentation
+				: MarkdownStringConverter.ToAPI(DTO.documentation as any);
+		Item.sortText = DTO.sortText;
+		Item.filterText = DTO.filterText;
+		Item.preselect = DTO.preselect;
+		Item.insertText = DTO.insertText;
+		Item.range = DTO.range
+			? "insert" in DTO.range
+				? {
+						insert: RangeConverter.ToAPI(DTO.range.insert as any),
+						replace: RangeConverter.ToAPI(DTO.range.replace as any),
+					}
+				: RangeConverter.ToAPI(DTO.range as any)
 			: undefined;
-		item.sortText = DTO.sortText;
-		item.filterText = DTO.filterText;
-		item.preselect = DTO.preselect;
-		item.insertText = DTO.insertText;
-		item.range = DTO.range
-			? RangeConverter.ToAPI(DTO.range as any)
-			: undefined;
-		item.commitCharacters = DTO.commitCharacters;
-		item.additionalTextEdits = DTO.additionalTextEdits?.map(
+		Item.commitCharacters = DTO.commitCharacters;
+		Item.additionalTextEdits = DTO.additionalTextEdits?.map(
 			TextEditConverter.ToAPI,
 		);
-		item.command = DTO.command
+		Item.command = DTO.command
 			? CommandsConverter.FromInternal(DTO.command)
 			: undefined;
-		return item;
+		return Item;
 	},
 };
 
 const CompletionList = {
-	FromAPI(
+	FromAPI: (
 		List:
 			| VSCode.CompletionList
 			| readonly VSCode.CompletionItem[]
@@ -143,16 +161,16 @@ const CompletionList = {
 			| undefined,
 		CommandsConverter: CommandConverterDefinition,
 		Disposables: IDisposable[],
-	): ISuggestResultDto | undefined {
+	): ISuggestResultDto | undefined => {
 		if (!List) {
 			return undefined;
 		}
-		const items = Array.isArray(List) ? List : List.items;
+		const Items = Array.isArray(List) ? List : List.items;
 		return {
-			suggestions: items.map((item) =>
-				CompletionItem.FromAPI(item, CommandsConverter, Disposables),
+			suggestions: Items.map((Item) =>
+				CompletionItem.FromAPI(Item, CommandsConverter, Disposables),
 			),
-			incomplete: !Array.isArray(List) ? List.isIncomplete : false,
+			incomplete: "isIncomplete" in List ? !!List.isIncomplete : false,
 		};
 	},
 };

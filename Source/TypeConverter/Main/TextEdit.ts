@@ -4,16 +4,17 @@
  */
 
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
+import type { TextEdit as VscTextEdit } from "vscode";
 
-import { TextEdit as VscTextEdit } from "../../Type/ExtHostTypes.js";
-import * as RangeConverter from "./Range.js";
+import { TextEdit } from "../../Type/ExtHostTypes.js";
+import RangeConverter from "./Range.js";
 
 /**
  * Converts a `vscode.TextEdit` object into a plain DTO for IPC.
  * @param TextEditInstance The `vscode.TextEdit` instance to convert.
  * @returns The `IIdentifiedSingleEditOperation` DTO.
  */
-export const FromAPI = (
+const FromAPI = (
 	TextEditInstance: VscTextEdit,
 ): IIdentifiedSingleEditOperation => ({
 	text: TextEditInstance.newText,
@@ -26,15 +27,10 @@ export const FromAPI = (
  * @param TextEditDTO The `IIdentifiedSingleEditOperation` DTO to revive.
  * @returns A new `vscode.TextEdit` instance.
  */
-export const ToAPI = (
-	TextEditDTO: IIdentifiedSingleEditOperation,
-): VscTextEdit =>
-	new VscTextEdit(
+const ToAPI = (TextEditDTO: IIdentifiedSingleEditOperation): VscTextEdit =>
+	new TextEdit(
 		RangeConverter.ToAPI(TextEditDTO.range),
 		TextEditDTO.text ?? "",
 	);
 
-export default {
-	FromAPI,
-	ToAPI,
-};
+export default { FromAPI, ToAPI };

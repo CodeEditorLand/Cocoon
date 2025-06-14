@@ -6,9 +6,9 @@
 
 import { Context, type Effect } from "effect";
 import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
-import type { IDisposable } from "vscode";
+import type { Disposable } from "vscode";
 
-import type IPCError from "./Error/IPCError.js";
+import type { IPCError } from "./Error.js";
 
 /**
  * The `Context.Tag` for the `IPC.Service`.
@@ -21,13 +21,13 @@ export default class extends Context.Tag("Service/IPC")<
 		 * resolve with the response or fail with an `IPCError`.
 		 *
 		 * @param Method The RPC method name to invoke on `Mountain`.
-		 * @param Parameter The parameters for the RPC method.
+		 * @param Parameters The parameters for the RPC method.
 		 * @param TimeoutMilliseconds Optional timeout for the request.
 		 * @returns An `Effect` that resolves with the response from `Mountain`.
 		 */
 		readonly SendRequest: <Res = unknown>(
 			Method: string,
-			Parameter: unknown,
+			Parameters: readonly unknown[],
 			TimeoutMilliseconds?: number,
 		) => Effect.Effect<Res, IPCError>;
 
@@ -35,12 +35,12 @@ export default class extends Context.Tag("Service/IPC")<
 		 * Sends a fire-and-forget notification to the `Mountain` host.
 		 *
 		 * @param Method The RPC notification method name.
-		 * @param Parameter The parameters for the notification.
+		 * @param Parameters The parameters for the notification.
 		 * @returns An `Effect` that completes when the notification has been sent.
 		 */
 		readonly SendNotification: (
 			Method: string,
-			Parameter: unknown,
+			Parameters: readonly unknown[],
 		) => Effect.Effect<void, IPCError>;
 
 		/**
@@ -64,6 +64,6 @@ export default class extends Context.Tag("Service/IPC")<
 		readonly RegisterInvokeHandler: (
 			Channel: string,
 			Handler: (...Arguments: any[]) => Promise<any>,
-		) => IDisposable;
+		) => Disposable;
 	}
 >() {}

@@ -26,7 +26,7 @@ export default class implements Memento {
 	private readonly OnDidChangeEvent = CreateEventStream<MementoChangeEvent>();
 	public readonly onDidChange: Event<MementoChangeEvent>;
 	private readonly Scope: MementoScope;
-	private readonly _value: Ref.Ref<object | undefined>;
+	private readonly ValueRef: Ref.Ref<object | undefined>;
 
 	constructor(
 		private readonly ExtensionID: string,
@@ -37,47 +37,47 @@ export default class implements Memento {
 	) {
 		this.Scope = IsGlobal ? MementoScope.GLOBAL : MementoScope.WORKSPACE;
 		this.onDidChange = Stream.toEvent(this.OnDidChangeEvent.Stream);
-		this._value = Ref.unsafeMake(InitialValue);
+		this.ValueRef = Ref.unsafeMake(InitialValue);
 	}
 
-	get<T>(key: string): T | undefined;
-	get<T>(key: string, defaultValue: T): T;
-	get<T>(key: string, defaultValue?: T): T | undefined {
-		const state = Ref.get(this._value).pipe(Effect.runSync);
-		let value = (state as any)?.[key];
-		if (typeof value === "undefined") {
-			value = defaultValue;
+	get<T>(Key: string): T | undefined;
+	get<T>(Key: string, DefaultValue: T): T;
+	get<T>(Key: string, DefaultValue?: T): T | undefined {
+		const State = Effect.runSync(Ref.get(this.ValueRef));
+		let Value = (State as any)?.[Key];
+		if (typeof Value === "undefined") {
+			Value = DefaultValue;
 		}
-		return value;
+		return Value;
 	}
 
-	update(key: string, value: any): Promise<void> {
-		const updateEffect = this.IPC.SendNotification("$setValue", [
+	update(Key: string, Value: any): Promise<void> {
+		const UpdateEffect = this.IPC.SendNotification("$setValue", [
 			this.Scope,
-			key,
-			value,
+			Key,
+			Value,
 		]).pipe(
 			Effect.tap(() =>
-				Ref.update(this._value, (current) => ({
-					...current,
-					[key]: value,
+				Ref.update(this.ValueRef, (Current) => ({
+					...Current,
+					[Key]: Value,
 				})),
 			),
-			Effect.tap(() => this.OnDidChangeEvent.Fire({ keys: [key] })),
-			Effect.catchAll((err) =>
+			Effect.tap(() => this.OnDidChangeEvent.Fire({ keys: [Key] })),
+			Effect.catchAll((Error) =>
 				this.Log.Error(
-					`Memento.update('${key}') failed for ext '${this.ExtensionID}'.`,
-					err,
+					`Memento.update('${Key}') failed for ext '${this.ExtensionID}'.`,
+					Error,
 				),
 			),
 			Effect.asVoid,
 		);
-		return Effect.runPromise(updateEffect);
+		return Effect.runPromise(UpdateEffect);
 	}
 
-	keys(options?: MementoKeysOptions): readonly string[] {
-		const state = Ref.get(this._value).pipe(Effect.runSync);
-		return Object.keys(state || {});
+	keys(_Options?: MementoKeysOptions): readonly string[] {
+		const State = Effect.runSync(Ref.get(this.ValueRef));
+		return Object.keys(State || {});
 	}
 
 	get whenReady(): Promise<void> {
@@ -88,14 +88,14 @@ export default class implements Memento {
 	/**
 	 * Internal method to accept state updates from the host.
 	 */
-	public acceptValue(value: object | undefined) {
-		const oldValue = Ref.get(this._value).pipe(Effect.runSync);
-		Ref.set(this._value, value).pipe(Effect.runSync);
+	public acceptValue(Value: object | undefined) {
+		const OldValue = Effect.runSync(Ref.get(this.ValueRef));
+		Effect.runSync(Ref.set(this.ValueRef, Value));
 
-		const oldKeys = Object.keys(oldValue || {});
-		const newKeys = Object.keys(value || {});
-		const changedKeys = new Set([...oldKeys, ...newKeys]);
+		const OldKeys = Object.keys(OldValue || {});
+		const NewKeys = Object.keys(Value || {});
+		const ChangedKeys = new Set([...OldKeys, ...NewKeys]);
 
-		this.OnDidChangeEvent.Fire({ keys: Array.from(changedKeys) });
+		this.OnDidChangeEvent.Fire({ keys: Array.from(ChangedKeys) });
 	}
 }

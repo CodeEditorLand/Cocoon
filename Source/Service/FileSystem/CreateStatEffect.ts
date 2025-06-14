@@ -3,20 +3,20 @@
  * @description Creates an Effect for the `fs.stat` operation.
  */
 
-import { Context, Effect } from "effect";
-import { type FileStat, type Uri } from "vscode";
+import { Effect } from "effect";
+import type { FileStat, Uri } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/Main.js";
+import { URI as URIConverter } from "../../TypeConverter/Main.js";
 import IPCService from "../IPC/Service.js";
-import { FileSystemError, MapToVSCodeError } from "./Error/FileSystemError.js";
+import { FileSystemError, MapToVSCodeError } from "./Error.js";
 
-export default function (
+const CreateStatEffect = (
 	URI: Uri,
-): Effect.Effect<FileStat, Error, typeof IPCService> {
-	return Effect.gen(function* (_) {
-		const IPC = yield* _(IPCService);
-		const UriDTO = TypeConverter.URI.FromAPI(URI);
-		const RawStat = yield* _(IPC.SendRequest<any>("$stat", [UriDTO]));
+): Effect.Effect<FileStat, Error, IPCService> => {
+	return Effect.gen(function* () {
+		const IPC = yield* IPCService;
+		const UriDTO = URIConverter.FromAPI(URI);
+		const RawStat = yield* IPC.SendRequest<any>("$stat", [UriDTO]);
 		return {
 			type: RawStat.type,
 			ctime: RawStat.ctime,
@@ -26,11 +26,17 @@ export default function (
 		} as FileStat;
 	}).pipe(
 		Effect.mapError(
-			(cause) =>
-				new FileSystemError({ cause, operation: "Stat", uri: URI }),
+			(Cause) =>
+				new FileSystemError({
+					cause: Cause,
+					operation: "Stat",
+					uri: URI,
+				}),
 		),
-		Effect.catchTag("FileSystemError", (e) =>
-			Effect.fail(MapToVSCodeError(e)),
+		Effect.catchTag("FileSystemError", (Error) =>
+			Effect.fail(MapToVSCodeError(Error)),
 		),
 	);
-}
+};
+
+export default CreateStatEffect;

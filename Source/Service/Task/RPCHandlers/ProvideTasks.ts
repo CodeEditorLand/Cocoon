@@ -6,7 +6,7 @@
 import { Effect, Ref } from "effect";
 import type { Task, TaskProvider } from "vscode";
 
-import * as TypeConverter from "../../../TypeConverter/Task.js";
+import { Task as TaskConverter } from "../../../TypeConverter.js";
 import CancellationService from "../../Cancellation/Service.js";
 
 /**
@@ -16,18 +16,16 @@ import CancellationService from "../../Cancellation/Service.js";
  * @param TokenID The ID of the cancellation token.
  * @returns An `Effect` that resolves to an array of Task DTOs.
  */
-export default function (
+const ProvideTasks = (
 	Registry: Ref.Ref<Map<number, any>>,
 	Handle: number,
 	TokenID: number,
-) {
-	return Effect.gen(function* (_) {
-		const Entry = (yield* _(Registry)).get(Handle);
+) => {
+	return Effect.gen(function* () {
+		const Entry = (yield* Registry).get(Handle);
 		if (!Entry) {
-			return yield* _(
-				Effect.fail(
-					new Error(`Task provider with handle ${Handle} not found.`),
-				),
+			return yield* Effect.fail(
+				new Error(`Task provider with handle ${Handle} not found.`),
 			);
 		}
 
@@ -36,25 +34,25 @@ export default function (
 			return [];
 		}
 
-		const Cancellation = yield* _(CancellationService);
-		const { Token } = yield* _(Cancellation.ObtainToken(TokenID));
+		const Cancellation = yield* CancellationService;
+		const { Token } = yield* Cancellation.ObtainToken(TokenID);
 
-		const Tasks = yield* _(
-			Effect.tryPromise({
-				try: () => Provider.provideTasks!(Token),
-				catch: (e) => e as Error,
-			}),
-		);
+		const Tasks = yield* Effect.tryPromise({
+			try: () => Provider.provideTasks!(Token),
+			catch: (CaughtError) => CaughtError as Error,
+		});
 
 		if (!Tasks) {
 			return [];
 		}
 
-		return Tasks.map((task) =>
-			TypeConverter.FromAPI(task, Entry.extension),
+		return Tasks.map((Task) =>
+			TaskConverter.FromAPI(Task, Entry.extension),
 		);
 	}).pipe(
 		Effect.scoped, // Ensures cancellation token scope is handled
 		Effect.catchAll(() => Effect.succeed([])), // On error, return an empty array
 	);
-}
+};
+
+export default ProvideTasks;

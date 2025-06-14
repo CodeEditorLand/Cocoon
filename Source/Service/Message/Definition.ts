@@ -3,22 +3,23 @@
  * @description The live implementation of the Message service.
  */
 
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import type { MessageItem, MessageOptions } from "vscode";
 
 import IPCService from "../IPC/Service.js";
+import type Service from "./Service.js";
 import ParseArgument from "./Support/ParseArgument.js";
 import type ExtensionSource from "./Type.js";
 
-function ShowMessageEffect(
+const ShowMessageEffect = (
 	IPC: IPCService,
 	Severity: "Info" | "Warning" | "Error",
 	Message: string,
 	Option: MessageOptions,
 	Items: (string | MessageItem)[],
 	Source: ExtensionSource | undefined,
-) {
-	return Effect.gen(function* (_) {
+) => {
+	return Effect.gen(function* () {
 		const ItemsForIPC = Items.map((item, index) => ({
 			title: typeof item === "string" ? item : item.title,
 			isCloseAffordance:
@@ -32,18 +33,19 @@ function ShowMessageEffect(
 			options: { modal: Option.modal, detail: Option.detail },
 			items: ItemsForIPC,
 			source: Source
-				? { identifier: Source.id, name: Source.displayName }
+				? {
+						identifier:
+							typeof Source.id === "string"
+								? Source.id
+								: Source.id.value,
+						name: Source.displayName,
+					}
 				: undefined,
 		};
 
-		const ResultHandle = yield* _(
-			IPC.SendRequest<number | undefined>("$showMessage", [
-				Severity,
-				Message,
-				DTO.options,
-				DTO.items,
-				DTO.source,
-			]),
+		const ResultHandle = yield* IPC.SendRequest<number | undefined>(
+			"$showMessage",
+			[Severity, Message, DTO.options, DTO.items, DTO.source],
 		);
 
 		if (ResultHandle === undefined || ResultHandle === null) {
@@ -54,23 +56,44 @@ function ShowMessageEffect(
 		}
 		return undefined;
 	});
-}
+};
 
-export default Effect.gen(function* (_) {
-	const IPC = yield* _(IPCService);
+export default Effect.gen(function* () {
+	const IPC = yield* IPCService;
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const ServiceImplementation: Service = {
 		ShowInformationMessage: (message, ...args) => {
 			const { Option, Items, Source } = ParseArgument(args);
-			return ShowMessageEffect("Info", message, Option, Items, Source);
+			return ShowMessageEffect(
+				IPC,
+				"Info",
+				message,
+				Option,
+				Items,
+				Source,
+			);
 		},
 		ShowWarningMessage: (message, ...args) => {
 			const { Option, Items, Source } = ParseArgument(args);
-			return ShowMessageEffect("Warning", message, Option, Items, Source);
+			return ShowMessageEffect(
+				IPC,
+				"Warning",
+				message,
+				Option,
+				Items,
+				Source,
+			);
 		},
 		ShowErrorMessage: (message, ...args) => {
 			const { Option, Items, Source } = ParseArgument(args);
-			return ShowMessageEffect("Error", message, Option, Items, Source);
+			return ShowMessageEffect(
+				IPC,
+				"Error",
+				message,
+				Option,
+				Items,
+				Source,
+			);
 		},
 	};
 

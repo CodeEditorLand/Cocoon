@@ -20,8 +20,8 @@ import ProcessPatchService from "./ProcessPatch/Service.js";
  * It depends on the `ProcessPatch` service to safely access the original
  * native `crash` function.
  */
-export default Effect.gen(function* (_) {
-	const ProcessPatch = yield* _(ProcessPatchService);
+const PatchProcessCrash = Effect.gen(function* () {
+	const ProcessPatch = yield* ProcessPatchService;
 
 	if (ProcessPatch.NativeCrash) {
 		// Overwrite the global `process.crash` method.
@@ -36,17 +36,19 @@ export default Effect.gen(function* (_) {
 			Effect.runSync(
 				Effect.logWarning(
 					`A call to 'process.crash()' was intercepted and PREVENTED by host policy.`,
-					`Call stack for prevented crash:\n${PreventionStack ?? "(Stack trace unavailable)"}`,
+					`Call stack for prevented crash:\n${
+						PreventionStack ?? "(Stack trace unavailable)"
+					}`,
 				),
 			);
 		};
 
-		yield* _(Effect.logTrace("Successfully patched 'process.crash'."));
+		yield* Effect.logTrace("Successfully patched 'process.crash'.");
 	} else {
-		yield* _(
-			Effect.logTrace(
-				"'process.crash()' not found in this environment, skipping patch.",
-			),
+		yield* Effect.logTrace(
+			"'process.crash()' not found in this environment, skipping patch.",
 		);
 	}
 });
+
+export default PatchProcessCrash;

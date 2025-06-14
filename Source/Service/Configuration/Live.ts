@@ -5,7 +5,8 @@
 
 import { Layer } from "effect";
 
-import IPCLive from "../IPC/Live.js";
+import { Live as IPCLive } from "../IPC.js";
+import type IPCConfiguration from "../IPC/Configuration.js";
 import LogLive from "../Log/Live.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
@@ -14,6 +15,9 @@ import Service from "./Service.js";
  * The live implementation Layer for the Configuration service.
  * It depends on the IPC and Log services.
  */
-export default Layer.effect(Service, Definition).pipe(
-	Layer.provide(Layer.merge(IPCLive, LogLive)),
-);
+const Live = (Config: IPCConfiguration) =>
+	Layer.effect(Service, Definition).pipe(
+		Layer.provide(Layer.merge(IPCLive(Config), LogLive)),
+	);
+
+export default Live;

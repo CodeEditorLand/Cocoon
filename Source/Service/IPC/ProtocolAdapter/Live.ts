@@ -7,7 +7,7 @@
 
 import { Layer } from "effect";
 
-import ClientLive from "../Client/Live.js";
+import { Live as ClientLive } from "../Client.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
@@ -15,8 +15,8 @@ import Service from "./Service.js";
  * The live implementation `Layer` for the `ProtocolAdapter` service.
  *
  * This layer builds the adapter by composing its `Definition` with the
- * `LiveClient` layer it depends on for the underlying gRPC transport.
+ * `ClientLive` layer it depends on for the underlying gRPC transport.
  */
-export default Layer.effect(Service, Definition).pipe(
-	Layer.provide(ClientLive),
-);
+const Live = Layer.effect(Service, Definition).pipe(Layer.provide(ClientLive));
+
+export default Live;

@@ -4,25 +4,29 @@
  */
 
 import * as Path from "node:path";
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Uri } from "vscode";
 
 import InitDataService from "../InitData/Service.js";
 import LogService from "../Log/Service.js";
+import type Service from "./Service.js";
 import EnsureDirectory from "./Support/EnsureDirectory.js";
 
-export default Effect.gen(function* (_) {
-	const InitData = yield* _(InitDataService);
-	const Log = yield* _(LogService);
+/**
+ * An Effect that builds the live implementation of the StoragePath service.
+ */
+export default Effect.gen(function* () {
+	const InitData = yield* InitDataService;
+	const Log = yield* LogService;
 
 	const GlobalStorageURI = InitData.environment.globalStorageHome as any;
 	const WorkSpaceStorageURI = InitData.environment
 		.workspaceStorageHome as any;
 
 	// Ensure the base directories exist on startup.
-	yield* _(EnsureDirectory(GlobalStorageURI, "Global"));
-	yield* _(EnsureDirectory(WorkSpaceStorageURI, "WorkSpace"));
+	yield* EnsureDirectory(GlobalStorageURI, "Global");
+	yield* EnsureDirectory(WorkSpaceStorageURI, "WorkSpace");
 
 	const GetPathForExtension = (
 		BaseURI: Uri | undefined,
@@ -38,13 +42,13 @@ export default Effect.gen(function* (_) {
 		return Uri.joinPath(BaseURI, ExtensionSubdirectory);
 	};
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const StoragePathImplementation: Service = {
 		GetWorkSpaceStorageURI: (Extension) =>
 			GetPathForExtension(WorkSpaceStorageURI, Extension),
 
 		GetGlobalStorageURI: (Extension) => {
-			const uri = GetPathForExtension(GlobalStorageURI, Extension);
-			if (!uri) {
+			const URI = GetPathForExtension(GlobalStorageURI, Extension);
+			if (!URI) {
 				// This is a critical failure. Fallback to a local path to prevent crashes.
 				const EmergencyPath = Path.join(
 					process.cwd(),
@@ -58,9 +62,9 @@ export default Effect.gen(function* (_) {
 				);
 				return Uri.file(EmergencyPath);
 			}
-			return uri;
+			return URI;
 		},
 	};
 
-	return ServiceImplementation;
+	return StoragePathImplementation;
 });

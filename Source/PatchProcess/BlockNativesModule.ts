@@ -1,5 +1,3 @@
-
-
 /**
  * @module BlockNativesModule (PatchProcess)
  * @description An Effect that patches Node.js's internal module loader to
@@ -11,19 +9,16 @@ import { Data, Effect } from "effect";
 
 class ModulePatchError extends Data.TaggedError("ModulePatchError")<{
 	readonly context: string;
-	override readonly cause?: unknown;
+	readonly cause?: unknown;
 }> {
-	constructor(
-		properties: {
-			readonly context: string;
-			readonly cause?: unknown;
-		},
-		...rest: any[]
-	) {
-		super(properties, ...rest);
+	constructor(Properties: {
+		readonly context: string;
+		readonly cause?: unknown;
+	}) {
+		super(Properties);
 		this.message = `Failed to patch Node.js module loader: ${this.context}`;
 	}
-	override message: string;
+	public override readonly message: string;
 }
 
 /**
@@ -38,7 +33,7 @@ class ModulePatchError extends Data.TaggedError("ModulePatchError")<{
  * @returns An `Effect` that resolves when the patch is applied, or fails with a
  *   `ModulePatchError`.
  */
-export default Effect.try({
+const BlockNativesModule = Effect.try({
 	try: () => {
 		// The `_load` function is an internal, undocumented part of Node's CJS loader.
 		// We must check for its existence before attempting to patch it.
@@ -68,10 +63,15 @@ export default Effect.try({
 			);
 		}
 	},
-	catch: (cause) =>
-		new ModulePatchError({ context: "Failed during 'natives' block setup.", cause }),
+	catch: (Cause) =>
+		new ModulePatchError({
+			context: "Failed during 'natives' block setup.",
+			Cause,
+		}),
 }).pipe(
 	Effect.tap(() =>
 		Effect.logTrace("Module._load patched to block 'natives' module."),
 	),
 );
+
+export default BlockNativesModule;

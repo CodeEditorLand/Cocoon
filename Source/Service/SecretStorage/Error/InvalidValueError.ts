@@ -10,7 +10,9 @@ import { Data } from "effect";
  * which is not allowed by the API.
  */
 export default class extends Data.TaggedError("InvalidValueError")<{}> {
-	override get message() {
-		return "Secret value must be a string.";
+	constructor(Properties?: {}) {
+		super(Properties ?? {});
+		this.message = "Secret value must be a string.";
 	}
+	public override readonly message: string;
 }

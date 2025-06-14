@@ -3,31 +3,40 @@
  * @description The live implementation of the StatusBar service.
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Disposable, StatusBarAlignment } from "vscode";
 
+import { StatusBar as StatusBarConverter } from "../../TypeConverter.js";
+import {
+	APICommand as CommandConverter,
+	Definition as CommandConverterDefinition,
+} from "../../TypeConverter/Command.js";
 import IPCService from "../IPC/Service.js";
+import type Service from "./Service.js";
 import StatusBarItemImplementation from "./StatusBarItemImplementation.js";
 
 let EntryIDCounter = 0;
 
-export default Effect.gen(function* (_) {
-	const IPC = yield* _(IPCService);
-	const ActiveEntries = yield* _(
-		Ref.make(new Map<string, StatusBarItemImplementation>()),
+/**
+ * An Effect that builds the live implementation of the StatusBar service.
+ */
+export default Effect.gen(function* () {
+	const IPC = yield* IPCService;
+	const ActiveEntries = yield* Ref.make(
+		new Map<string, StatusBarItemImplementation>(),
 	);
 
 	// Register RPC handler for when Mountain needs a tooltip.
 	// This would be used if the tooltip were a complex object needing resolution.
-	IPC.RegisterInvokeHandler("$provideStatusbarTooltip", ([entryID]) =>
-		Effect.gen(function* (_) {
+	IPC.RegisterInvokeHandler("$provideStatusbarTooltip", ([_EntryID]) =>
+		Effect.gen(function* () {
 			// Logic to find the entry in ActiveEntries and call a potential tooltip provider function.
 			return null;
 		}).pipe(Effect.runPromise),
 	);
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const StatusBarImplementation: Service = {
 		CreateStatusBarItem: (Extension, ID, Alignment, Priority) =>
 			Effect.sync(() => {
 				const EntryID = `ext-statusbar-${EntryIDCounter++}`;
@@ -35,10 +44,12 @@ export default Effect.gen(function* (_) {
 				const FinalAlignment = Alignment ?? StatusBarAlignment.Left;
 
 				const OnDispose = () => {
-					Ref.update(
-						ActiveEntries,
-						(map) => (map.delete(EntryID), map),
-					).pipe(Effect.runSync);
+					Effect.runSync(
+						Ref.update(
+							ActiveEntries,
+							(Map) => (Map.delete(EntryID), Map),
+						),
+					);
 				};
 
 				const Entry = new StatusBarItemImplementation(
@@ -49,18 +60,18 @@ export default Effect.gen(function* (_) {
 					FinalAlignment,
 					Priority,
 				);
-				Ref.update(ActiveEntries, (map) =>
-					map.set(EntryID, Entry),
-				).pipe(Effect.runSync);
+				Effect.runSync(
+					Ref.update(ActiveEntries, (Map) => Map.set(EntryID, Entry)),
+				);
 
 				return Entry;
 			}),
 
-		SetStatusBarMessage: (text, hideOrPromise) => {
+		SetStatusBarMessage: (Text, HideOrPromise) => {
 			const HideId = `status.message.${EntryIDCounter++}`;
 			const ShowEffect = IPC.SendNotification("$setStatusBarMessage", [
 				HideId,
-				text,
+				Text,
 			]);
 			const HideEffect = IPC.SendNotification(
 				"$disposeStatusBarMessage",
@@ -69,15 +80,15 @@ export default Effect.gen(function* (_) {
 
 			Effect.runFork(ShowEffect);
 
-			if (typeof hideOrPromise === "number") {
-				setTimeout(() => Effect.runFork(HideEffect), hideOrPromise);
-			} else if (hideOrPromise) {
-				hideOrPromise.then(() => Effect.runFork(HideEffect));
+			if (typeof HideOrPromise === "number") {
+				setTimeout(() => Effect.runFork(HideEffect), HideOrPromise);
+			} else if (HideOrPromise) {
+				HideOrPromise.then(() => Effect.runFork(HideEffect));
 			}
 
 			return new Disposable(() => Effect.runFork(HideEffect));
 		},
 	};
 
-	return ServiceImplementation;
+	return StatusBarImplementation;
 });

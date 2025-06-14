@@ -5,7 +5,7 @@
 
 import { Layer } from "effect";
 
-import CancellationLive from "../../Cancellation/Live.js";
+import { CancellationLive } from "../../Cancellation.js";
 import ProtocolAdapterLive from "../ProtocolAdapter/Live.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
@@ -15,6 +15,8 @@ import Service from "./Service.js";
  * It depends on the ProtocolAdapter (for the underlying transport) and the
  * Cancellation service (for handling cancellation signals).
  */
-export default Layer.effect(Service, Definition).pipe(
+const Live = Layer.effect(Service, Definition).pipe(
 	Layer.provide(Layer.merge(ProtocolAdapterLive, CancellationLive)),
 );
+
+export default Live;

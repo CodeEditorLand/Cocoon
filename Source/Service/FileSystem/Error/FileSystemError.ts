@@ -19,29 +19,32 @@ export class FileSystemError extends Data.TaggedError("FileSystemError")<{
 /**
  * Maps a generic error from an RPC call into a specific `vscode.FileSystemError`.
  * This provides extensions with the familiar, expected error types.
- * @param error The `FileSystemError` containing the original cause.
+ * @param Error The `FileSystemError` containing the original cause.
  * @returns A new `vscode.FileSystemError` instance.
  */
-export function MapToVSCodeError(error: FileSystemError): VscFileSystemError {
-	const cause = error.cause as any;
-	const uri = error.uri;
+export const MapToVSCodeError = (
+	Error: FileSystemError,
+): VscFileSystemError => {
+	const Cause = Error.cause as any;
+	const URI = Error.uri;
 
 	if (
-		cause?.code === "EntryNotFound" ||
-		cause?.message?.includes("not found")
+		Cause?.code === "EntryNotFound" ||
+		Cause?.message?.includes("not found")
 	) {
-		return VscFileSystemError.FileNotFound(uri);
+		return VscFileSystemError.FileNotFound(URI);
 	}
-	if (cause?.code === "EntryExists" || cause?.message?.includes("exists")) {
-		return VscFileSystemError.FileExists(uri);
+	if (Cause?.code === "EntryExists" || Cause?.message?.includes("exists")) {
+		return VscFileSystemError.FileExists(URI);
 	}
-	if (cause?.code === "NoPermissions") {
-		return VscFileSystemError.NoPermissions(uri);
+	if (Cause?.code === "NoPermissions") {
+		return VscFileSystemError.NoPermissions(URI);
 	}
 	// Add other mappings for codes like 'FileIsADirectory', 'FileNotADirectory', etc.
 
-	const message = cause instanceof Error ? cause.message : String(cause);
+	const Message =
+		Cause instanceof globalThis.Error ? Cause.message : String(Cause);
 	return new VscFileSystemError(
-		`${error.operation} failed for ${uri?.toString() ?? "unknown resource"}: ${message}`,
+		`${Error.operation} failed for ${URI?.toString() ?? "unknown resource"}: ${Message}`,
 	);
-}
+};

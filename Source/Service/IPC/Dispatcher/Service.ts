@@ -13,11 +13,11 @@ export default class extends Context.Tag("IPC/Dispatcher")<
 	{
 		readonly DispatchRequest: (
 			Method: string,
-			ParameterArray: any[],
+			ParameterArray: readonly any[],
 		) => Effect.Effect<any, Error>;
 		readonly DispatchNotification: (
 			Method: string,
-			ParameterArray: any[],
+			ParameterArray: readonly any[],
 		) => Effect.Effect<void, never>;
 		readonly CancelOperation: (
 			RequestID: number,

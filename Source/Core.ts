@@ -7,13 +7,13 @@
 
 import { Layer } from "effect";
 
-import APIFactoryLive from "./Core/APIFactory/Live.js";
-import ESMInterceptorLive from "./Core/ESMInterceptor/Live.js";
-import ExtensionHostLive from "./Core/ExtensionHost/Live.js";
-import ExtensionPathLive from "./Core/ExtensionPath/Live.js";
-import HostKindPickerLive from "./Core/HostKindPicker/Live.js";
-import NodeModuleShimLive from "./Core/NodeModuleShim/Live.js";
-import RequireInterceptorLive from "./Core/RequireInterceptor/Live.js";
+import { Live as APIFactoryLive } from "./Core/APIFactory.js";
+import { Live as ESMInterceptorLive } from "./Core/ESMInterceptor.js";
+import { Live as ExtensionHostLive } from "./Core/ExtensionHost.js";
+import { Live as ExtensionPathLive } from "./Core/ExtensionPath.js";
+import { Live as HostKindPickerLive } from "./Core/HostKindPicker.js";
+import { Live as NodeModuleShimLive } from "./Core/NodeModuleShim.js";
+import { Live as RequireInterceptorLive } from "./Core/RequireInterceptor.js";
 
 /**
  * A single, composed layer that provides all core services of the extension host.

@@ -6,13 +6,7 @@
  */
 
 import Definition from "./Command/Definition.js";
-import Service from "./Command/Service.js";
+import type Service from "./Command/Service.js";
 import * as Type from "./Command/Type.js";
 
-export default {
-	Definition,
-	Service,
-	APICommand: Type.APICommand,
-	APICommandArgument: Type.APICommandArgument,
-	APICommandResult: Type.APICommandResult,
-};
+export { Definition, type Service, Type };

@@ -5,23 +5,20 @@
 
 import { Layer } from "effect";
 
-import CommandLive from "../Command/Live.js";
+import { Live as CommandLive } from "../Command.js";
+import { Live as IPCLive } from "../IPC.js";
 import type IPCConfiguration from "../IPC/Configuration.js";
-import IPCLive from "../IPC/Live.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
 /**
  * The live implementation Layer for the TreeView service.
  * It depends on the IPC and Command services.
- * This is a factory that takes IPC configuration.
  * @param Config The IPC configuration.
  */
-export default function (Config: {
-	MountainAddress: string;
-	CocoonAddress: string;
-}) {
-	return Layer.effect(Service, Definition).pipe(
+const Live = (Config: IPCConfiguration) =>
+	Layer.effect(Service, Definition).pipe(
 		Layer.provide(Layer.merge(IPCLive(Config), CommandLive(Config))),
 	);
-}
+
+export default Live;

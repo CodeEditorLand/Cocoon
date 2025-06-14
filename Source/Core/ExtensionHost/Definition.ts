@@ -4,22 +4,26 @@
  * the lifecycle of all extensions.
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 
 import InitDataService from "../../Service/InitData/Service.js";
 import IPCService from "../../Service/IPC/Service.js";
 import LogService from "../../Service/Log/Service.js";
-import { type ExtensionActivationReason } from "../../Type/ExtHostTypes.js";
 import APIFactoryService from "../APIFactory/Service.js";
+import type Service from "./Service.js";
+import type { ExtensionActivationReason } from "./Service.js";
 import type { ActivatedExtension } from "./State.js";
 
+/**
+ * An Effect that builds the live implementation of the ExtensionHost service.
+ */
 export default Effect.gen(function* () {
-	const Log = yield* _(LogService);
-	const IPC = yield* _(IPCService);
-	const APIFactory = yield* _(APIFactoryService);
-	const InitData = yield* _(InitDataService);
+	const Log = yield* LogService;
+	const IPC = yield* IPCService;
+	const APIFactory = yield* APIFactoryService;
+	const InitData = yield* InitDataService;
 
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		InitData.extensions,
@@ -28,56 +32,34 @@ export default Effect.gen(function* () {
 		new Map<string, ActivatedExtension>(),
 	);
 
-	const IsActivated = (
-		ID: import("vs/platform/extensions/common/extensions").ExtensionIdentifier,
-	) =>
-		Effect.runSync(
-			Ref.get(ActivatedExtensions).pipe(
-				Effect.map((map) => map.has(ID.value)),
-			),
-		);
-
-	const GetExtensionExports = (
-		ID: import("vs/platform/extensions/common/extensions").ExtensionIdentifier,
-	) =>
-		Effect.runSync(
-			Ref.get(ActivatedExtensions).pipe(
-				Effect.map((map) => map.get(ID.value)?.Exports),
-			),
-		);
-
-	const GetExtensionDescription = (
-		ID:
-			| string
-			| import("vs/platform/extensions/common/extensions").ExtensionIdentifier,
-	) => Effect.succeed(ExtensionRegistry.getExtensionDescription(ID));
-
 	const Deactivate = (Extension: ActivatedExtension) =>
 		Effect.gen(function* () {
 			yield* Log.Info(
 				`Deactivating extension '${Extension.ID.value}'...`,
 			);
 
+			// Deactivate subscriptions
 			for (const Subscription of Extension.Subscriptions) {
 				yield* Effect.try({
 					try: () => Subscription.dispose(),
-					catch: (e) =>
+					catch: (CaughtError) =>
 						Log.Warn(
 							`Error during subscription disposal for ${Extension.ID.value}`,
-							e,
+							CaughtError,
 						),
 				});
 			}
 
+			// Call the extension's deactivate function if it exists
 			const DeactivateFunction = Extension.Module.deactivate;
 			if (typeof DeactivateFunction === "function") {
 				yield* Effect.tryPromise({
 					try: () => DeactivateFunction(),
-					catch: (e) =>
+					catch: (CaughtError) =>
 						new Error(
-							`Deactivation function for '${Extension.ID.value}' failed: ${e}`,
+							`Deactivation function for '${Extension.ID.value}' failed: ${CaughtError}`,
 						),
-				}).pipe(Effect.catchAll((e) => Log.Error(e.message)));
+				}).pipe(Effect.catchAll((Error) => Log.Error(Error.message)));
 			}
 		});
 
@@ -92,12 +74,13 @@ export default Effect.gen(function* () {
 
 			const Module = yield* Effect.tryPromise({
 				try: () => import(Description.main!),
-				catch: (e) =>
+				catch: (CaughtError) =>
 					new Error(
-						`Failed to load module for '${Description.identifier.value}': ${e}`,
+						`Failed to load module for '${Description.identifier.value}': ${CaughtError}`,
 					),
 			});
 
+			// Create the extension context object that is passed to activate()
 			const Context: import("vscode").ExtensionContext = {
 				subscriptions: [],
 				extensionPath: Description.extensionLocation.fsPath,
@@ -120,9 +103,9 @@ export default Effect.gen(function* () {
 				? yield* Effect.tryPromise({
 						try: () =>
 							ActivationFunction.apply(globalThis, [Context]),
-						catch: (e) =>
+						catch: (CaughtError) =>
 							new Error(
-								`Activation function for '${Description.identifier.value}' failed: ${e}`,
+								`Activation function for '${Description.identifier.value}' failed: ${CaughtError}`,
 							),
 					})
 				: Module;
@@ -136,17 +119,20 @@ export default Effect.gen(function* () {
 				ActivationError: null,
 			};
 
-			yield* Ref.update(ActivatedExtensions, (map) =>
-				map.set(Description.identifier.value, Activated),
+			yield* Ref.update(ActivatedExtensions, (Map) =>
+				Map.set(Description.identifier.value, Activated),
 			);
+
 			yield* Log.Info(
 				`Successfully activated extension '${Description.identifier.value}'.`,
 			);
+
 			yield* IPC.SendNotification("$onDidActivateExtension", [
 				Description.identifier,
 			]);
 		}).pipe(
-			Effect.catchAll((error) =>
+			// This catch block handles failures during the activation process
+			Effect.catchAll((Error) =>
 				Effect.gen(function* () {
 					const Activated: ActivatedExtension = {
 						ID: Description.identifier,
@@ -155,27 +141,29 @@ export default Effect.gen(function* () {
 						Subscriptions: [],
 						ActivationFailed: true,
 						ActivationError:
-							error instanceof Error
-								? error
-								: new Error(String(error)),
+							Error instanceof globalThis.Error
+								? Error
+								: new Error(String(Error)),
 					};
-					yield* Ref.update(ActivatedExtensions, (map) =>
-						map.set(Description.identifier.value, Activated),
+
+					yield* Ref.update(ActivatedExtensions, (Map) =>
+						Map.set(Description.identifier.value, Activated),
 					);
+
 					yield* IPC.SendNotification("$onExtensionActivationError", [
 						Description.identifier,
 						{
 							name:
-								error instanceof Error
-									? error.name
+								Error instanceof globalThis.Error
+									? Error.name
 									: "UnknownError",
 							message:
-								error instanceof Error
-									? error.message
-									: String(error),
+								Error instanceof globalThis.Error
+									? Error.message
+									: String(Error),
 							stack:
-								error instanceof Error
-									? error.stack
+								Error instanceof globalThis.Error
+									? Error.stack
 									: undefined,
 						},
 					]);
@@ -184,49 +172,60 @@ export default Effect.gen(function* () {
 		);
 
 	const ActivateById = (
-		ID: import("vs/platform/extensions/common/extensions").ExtensionIdentifier,
+		ID: import("vs/platform/extensions/common/extensions.js").ExtensionIdentifier,
 		Reason: ExtensionActivationReason,
 	): Effect.Effect<void, Error> =>
 		Effect.gen(function* () {
-			if (IsActivated(ID)) return;
-			const Description = yield* GetExtensionDescription(ID);
-			if (!Description) {
-				yield* Log.Warn(
+			const IsAlreadyActivated = yield* Ref.get(ActivatedExtensions).pipe(
+				Effect.map((Map) => Map.has(ID.value)),
+			);
+			if (IsAlreadyActivated) return;
+
+			const MaybeDescription =
+				ExtensionRegistry.getExtensionDescription(ID);
+			if (!MaybeDescription) {
+				return yield* Log.Warn(
 					`Cannot activate unknown extension '${ID.value}'.`,
 				);
-				return;
 			}
-			if (!Description.main) {
-				yield* Log.Warn(
+
+			if (!MaybeDescription.main) {
+				return yield* Log.Warn(
 					`Cannot activate extension '${ID.value}' because it has no 'main' entry point.`,
 				);
-				return;
 			}
-			yield* DoActivateExtension(Description, Reason);
+			yield* DoActivateExtension(MaybeDescription, Reason);
 		}).pipe(
-			Effect.mapError((e) =>
-				e instanceof Error ? e : new Error(String(e)),
+			Effect.mapError((Error) =>
+				Error instanceof globalThis.Error
+					? Error
+					: new Error(String(Error)),
 			),
 		);
 
-	const DeactivateAll = () =>
-		Ref.get(ActivatedExtensions).pipe(
-			Effect.flatMap((map) =>
-				Effect.forEach([...map.values()], Deactivate, {
-					concurrency: "unbounded",
-					discard: true,
-				}),
-			),
-			Effect.flatMap(() => Ref.set(ActivatedExtensions, new Map())),
-			Effect.asVoid,
-		);
-
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const ServiceImplementation: Service = {
 		ActivateById,
-		GetExtensionDescription,
-		GetExtensionExports,
-		IsActivated,
-		DeactivateAll,
+		GetExtensionDescription: (ID) =>
+			Effect.succeed(ExtensionRegistry.getExtensionDescription(ID)),
+		GetExtensionExports: (ID) =>
+			Ref.get(ActivatedExtensions).pipe(
+				Effect.map((Map) => Map.get(ID.value)?.Exports),
+			),
+		IsActivated: (ID) =>
+			Ref.get(ActivatedExtensions).pipe(
+				Effect.map((Map) => Map.has(ID.value)),
+			),
+		DeactivateAll: () =>
+			Ref.get(ActivatedExtensions).pipe(
+				Effect.flatMap((Map) =>
+					Effect.forEach([...Map.values()], Deactivate, {
+						concurrency: "unbounded",
+						discard: true,
+					}),
+				),
+				Effect.flatMap(() => Ref.set(ActivatedExtensions, new Map())),
+				Effect.asVoid,
+			),
 	};
 
 	return ServiceImplementation;

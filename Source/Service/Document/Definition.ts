@@ -3,33 +3,34 @@
  * @description The live implementation of the Document service.
  */
 
-import { Context, Effect, Hub, Ref } from "effect";
-import { Emitter } from "vs/base/common/event.js";
+import { Effect, Ref } from "effect";
 import { TextDocument as VscTextDocument } from "vs/workbench/api/common/extHostDocuments.js";
 import type { TextDocument, Uri } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
-import type DocumentEvent from "./Type.js";
+import type Service from "./Service.js";
 
-export default Effect.gen(function* (_) {
-	const IPC = yield* _(IPCService);
-	const DocumentMap = yield* _(Ref.make(new Map<string, VscTextDocument>()));
-	const EventHub = yield* _(Hub.unbounded<DocumentEvent>());
+/**
+ * An Effect that builds the live implementation of the Document service.
+ */
+export default Effect.gen(function* () {
+	const IPC = yield* IPCService;
+	const DocumentMap = yield* Ref.make(new Map<string, VscTextDocument>());
 
 	// --- Event Emitters for the Public API ---
-	const onDidOpenTextDocument = new Emitter<TextDocument>();
-	const onDidCloseTextDocument = new Emitter<TextDocument>();
-	const onDidChangeTextDocument = new Emitter<any>(); // TextDocumentChangeEvent
-	const onDidSaveTextDocument = new Emitter<TextDocument>();
+	const OnDidOpenTextDocument = CreateEventStream<TextDocument>();
+	const OnDidCloseTextDocument = CreateEventStream<TextDocument>();
+	const OnDidChangeTextDocument = CreateEventStream<any>(); // TextDocumentChangeEvent
+	const OnDidSaveTextDocument = CreateEventStream<TextDocument>();
 
 	// --- RPC Handlers (for updates FROM Mountain) ---
 
 	const AcceptModelAdded = (Data: any) =>
-		Effect.gen(function* (_) {
+		Effect.gen(function* () {
 			const RevivedURI = TypeConverter.URI.ToAPI(Data.uri);
-			const document = new VscTextDocument(
+			const Document = new VscTextDocument(
 				IPC.CreateProtocolAdapter(),
 				RevivedURI,
 				Data.lines,
@@ -38,44 +39,40 @@ export default Effect.gen(function* (_) {
 				Data.languageId,
 				Data.isDirty,
 			);
-			yield* _(
-				Ref.update(DocumentMap, (map) =>
-					map.set(document.uri.toString(), document),
-				),
+			yield* Ref.update(DocumentMap, (Map) =>
+				Map.set(Document.uri.toString(), Document),
 			);
-			onDidOpenTextDocument.fire(document);
+			yield* OnDidOpenTextDocument.Fire(Document);
 		});
 
 	const AcceptModelRemoved = (UriDTO: any) =>
-		Effect.gen(function* (_) {
+		Effect.gen(function* () {
 			const URIString = TypeConverter.URI.ToAPI(UriDTO).toString();
-			const Document = (yield* _(Ref.get(DocumentMap))).get(URIString);
+			const Document = (yield* Ref.get(DocumentMap)).get(URIString);
 			if (Document) {
-				yield* _(
-					Ref.update(
-						DocumentMap,
-						(map) => (map.delete(URIString), map),
-					),
+				yield* Ref.update(
+					DocumentMap,
+					(Map) => (Map.delete(URIString), Map),
 				);
-				onDidCloseTextDocument.fire(Document);
+				yield* OnDidCloseTextDocument.Fire(Document);
 			}
 		});
 
 	const AcceptModelChanged = (UriDTO: any, ChangeEventDTO: any) =>
-		Effect.gen(function* (_) {
+		Effect.gen(function* () {
 			const URIString = TypeConverter.URI.ToAPI(UriDTO).toString();
-			const Document = (yield* _(Ref.get(DocumentMap))).get(URIString);
+			const Document = (yield* Ref.get(DocumentMap)).get(URIString);
 			if (Document) {
 				// The VscTextDocument class has a method to apply changes.
 				Document.$acceptEvents(ChangeEventDTO);
-				onDidChangeTextDocument.fire({
+				yield* OnDidChangeTextDocument.Fire({
 					document: Document,
 					contentChanges: ChangeEventDTO.changes.map(
-						(change: any) => ({
-							range: TypeConverter.Range.ToAPI(change.range),
-							rangeOffset: change.rangeOffset,
-							rangeLength: change.rangeLength,
-							text: change.text,
+						(Change: any) => ({
+							range: TypeConverter.Range.ToAPI(Change.range),
+							rangeOffset: Change.rangeOffset,
+							rangeLength: Change.rangeLength,
+							text: Change.text,
 						}),
 					),
 					reason: ChangeEventDTO.reason,
@@ -84,34 +81,32 @@ export default Effect.gen(function* (_) {
 		});
 
 	// Register these handlers with the dispatcher
-	IPC.RegisterInvokeHandler("$acceptModelAdded", ([data]) =>
-		Effect.runPromise(AcceptModelAdded(data)),
+	IPC.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
+		Effect.runPromise(AcceptModelAdded(Data)),
 	);
-	IPC.RegisterInvokeHandler("$acceptModelRemoved", ([uri]) =>
-		Effect.runPromise(AcceptModelRemoved(uri)),
+	IPC.RegisterInvokeHandler("$acceptModelRemoved", ([Uri]) =>
+		Effect.runPromise(AcceptModelRemoved(Uri)),
 	);
-	IPC.RegisterInvokeHandler("$acceptModelChanged", ([uri, changes]) =>
-		Effect.runPromise(AcceptModelChanged(uri, changes)),
+	IPC.RegisterInvokeHandler("$acceptModelChanged", ([Uri, Changes]) =>
+		Effect.runPromise(AcceptModelChanged(Uri, Changes)),
 	);
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const DocumentImplementation: Service = {
 		get TextDocuments() {
 			// This is a synchronous getter for API compatibility. It's safe for Ref.
-			return Array.from(
-				Ref.get(DocumentMap).pipe(Effect.runSync).values(),
-			);
+			return Array.from(Effect.runSync(Ref.get(DocumentMap)).values());
 		},
 
-		onDidOpenTextDocument: onDidOpenTextDocument.event,
-		onDidCloseTextDocument: onDidCloseTextDocument.event,
-		onDidChangeTextDocument: onDidChangeTextDocument.event,
-		onDidSaveTextDocument: onDidSaveTextDocument.event,
+		onDidOpenTextDocument: OnDidOpenTextDocument.event,
+		onDidCloseTextDocument: OnDidCloseTextDocument.event,
+		onDidChangeTextDocument: OnDidChangeTextDocument.event,
+		onDidSaveTextDocument: OnDidSaveTextDocument.event,
 
 		GetDocument: (URI: Uri) =>
 			Ref.get(DocumentMap).pipe(
-				Effect.map((map) => map.get(URI.toString())),
+				Effect.map((Map) => Map.get(URI.toString())),
 			),
 	};
 
-	return ServiceImplementation;
+	return DocumentImplementation;
 });

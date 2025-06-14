@@ -10,7 +10,7 @@ import {
 	Value as ProtoValue,
 } from "google-protobuf/google/protobuf/struct_pb.js";
 
-import ProtoSerializationError from "./Error/ProtoSerializationError.js";
+import { ProtoSerializationError } from "./Error.js";
 
 /**
  * An Effect that converts a JavaScript value into a `google.protobuf.Value`.
@@ -20,9 +20,9 @@ import ProtoSerializationError from "./Error/ProtoSerializationError.js";
  * @param JsValue The JavaScript value to encode.
  * @returns An `Effect` that resolves to a `ProtoValue` or fails with a `ProtoSerializationError`.
  */
-export default function (
+const EncodeValue = (
 	JsValue: any,
-): Effect.Effect<ProtoValue, ProtoSerializationError> {
+): Effect.Effect<ProtoValue, ProtoSerializationError> => {
 	return Effect.try({
 		try: () => {
 			if (JsValue === undefined) {
@@ -33,7 +33,9 @@ export default function (
 			}
 			return ProtoValue.fromJavaScript(JsValue);
 		},
-		catch: (cause) =>
-			new ProtoSerializationError({ cause, direction: "Encoding" }),
+		catch: (Cause) =>
+			new ProtoSerializationError({ Cause, Direction: "Encoding" }),
 	});
-}
+};
+
+export default EncodeValue;

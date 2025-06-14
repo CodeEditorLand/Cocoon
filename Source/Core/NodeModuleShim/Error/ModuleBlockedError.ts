@@ -13,16 +13,9 @@ import { Data } from "effect";
 export default class extends Data.TaggedError("ModuleBlockedError")<{
 	readonly ModuleName: string;
 }> {
-	constructor(Property: { readonly ModuleName: string }) {
-		// The super call is the only thing needed in the constructor
-		// if we use a getter for the message.
-		super(Property);
+	constructor(Properties: { readonly ModuleName: string }) {
+		super(Properties);
+		this.message = `[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`;
 	}
-
-	/**
-	 * A custom message for this error.
-	 */
-	override get message(): string {
-		return `[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`;
-	}
+	public override readonly message: string;
 }

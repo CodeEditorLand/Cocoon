@@ -12,27 +12,27 @@ export default class extends Context.Tag("Service/Log")<
 	{
 		readonly Trace: (
 			Message: string,
-			...Data: any[]
+			...Data: readonly any[]
 		) => Effect.Effect<void, never>;
 		readonly Debug: (
 			Message: string,
-			...Data: any[]
+			...Data: readonly any[]
 		) => Effect.Effect<void, never>;
 		readonly Info: (
 			Message: string,
-			...Data: any[]
+			...Data: readonly any[]
 		) => Effect.Effect<void, never>;
 		readonly Warn: (
 			Message: string,
-			...Data: any[]
+			...Data: readonly any[]
 		) => Effect.Effect<void, never>;
 		readonly Error: (
 			Message: string,
-			...Data: any[]
+			...Data: readonly any[]
 		) => Effect.Effect<void, never>;
 		readonly Fatal: (
 			Message: string,
-			...Data: any[]
+			...Data: readonly any[]
 		) => Effect.Effect<void, never>;
 	}
 >() {}

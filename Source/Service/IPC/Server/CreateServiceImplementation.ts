@@ -4,34 +4,32 @@
  * This object contains the handlers for all RPC methods callable by `Mountain`.
  */
 
-import * as gRPC from "@grpc/grpc-js";
+import * as GRPC from "@grpc/grpc-js";
 import type { UntypedServiceImplementation } from "@grpc/grpc-js";
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 
 import DispatcherService from "../Dispatcher/Service.js";
-import {
-	Empty,
-	GenericResponse,
-	type CancelOperationRequest,
-	type GenericNotification,
-	type GenericRequest,
-	type RPCDataPayload,
-} from "../Generated.js";
+import Generated from "../Generated.js";
 import DecodeValue from "../ProtoConverter/DecodeValue.js";
 import EncodeValue from "../ProtoConverter/EncodeValue.js";
 
-export default function (
-	Dispatcher: Context.Tag.Service<typeof DispatcherService>,
-): UntypedServiceImplementation {
+const CreateServiceImplementation = (
+	Dispatcher: DispatcherService,
+): UntypedServiceImplementation => {
 	return {
 		/**
 		 * Handles generic request/response calls from `Mountain`.
 		 */
 		processMountainRequest: (
-			call: gRPC.ServerUnaryCall<GenericRequest, GenericResponse>,
-			callback: gRPC.sendUnaryData<GenericResponse>,
+			Call: GRPC.ServerUnaryCall<
+				typeof Generated.GenericRequest.prototype,
+				typeof Generated.GenericResponse.prototype
+			>,
+			Callback: GRPC.sendUnaryData<
+				typeof Generated.GenericResponse.prototype
+			>,
 		) => {
-			const Request = call.request;
+			const Request = Call.request;
 			const RequestID = Request.getRequestid();
 
 			const ProcessEffect = Effect.gen(function* () {
@@ -44,27 +42,27 @@ export default function (
 				);
 				const EncodedResult = yield* EncodeValue(Result);
 
-				const Response = new GenericResponse();
+				const Response = new Generated.GenericResponse();
 				Response.setRequestid(RequestID);
 				Response.setResult(EncodedResult);
 				return Response;
 			});
 
-			Effect.runPromiseExit(ProcessEffect).then((exit) => {
-				if (exit._tag === "Success") {
-					callback(null, exit.value);
+			Effect.runPromiseExit(ProcessEffect).then((Exit) => {
+				if (Exit._tag === "Success") {
+					Callback(null, Exit.value);
 				} else {
-					const RPCError: gRPC.ServiceError = {
-						code: gRPC.status.INTERNAL,
+					const RPCError: GRPC.ServiceError = {
+						code: GRPC.status.INTERNAL,
 						details:
-							exit.cause._tag === "Fail"
-								? String(exit.cause.error)
+							Exit.cause._tag === "Fail"
+								? String(Exit.cause.error)
 								: "Unknown Effect Failure",
-						metadata: new gRPC.Metadata(),
+						metadata: new GRPC.Metadata(),
 						name: "EffectFailure",
 						message: "Effect failed to complete in gRPC handler.",
 					};
-					callback(RPCError, null);
+					Callback(RPCError, null);
 				}
 			});
 		},
@@ -73,10 +71,13 @@ export default function (
 		 * Handles fire-and-forget notifications from `Mountain`.
 		 */
 		sendMountainNotification: (
-			call: gRPC.ServerUnaryCall<GenericNotification, Empty>,
-			callback: gRPC.sendUnaryData<Empty>,
+			Call: GRPC.ServerUnaryCall<
+				typeof Generated.GenericNotification.prototype,
+				typeof Generated.Empty.prototype
+			>,
+			Callback: GRPC.sendUnaryData<typeof Generated.Empty.prototype>,
 		) => {
-			const Notification = call.request;
+			const Notification = Call.request;
 			const ProcessEffect = DecodeValue(
 				(Notification as any).getParams(),
 			).pipe(
@@ -88,37 +89,45 @@ export default function (
 				),
 			);
 			Effect.runFork(ProcessEffect);
-			callback(null, new Empty());
+			Callback(null, new Generated.Empty());
 		},
 
 		/**
 		 * Handles incoming raw binary data for the `RPCProtocol` adapter.
 		 */
 		sendRPCDataToCocoon: (
-			call: gRPC.ServerUnaryCall<RPCDataPayload, Empty>,
-			callback: gRPC.sendUnaryData<Empty>,
+			Call: GRPC.ServerUnaryCall<
+				typeof Generated.RPCDataPayload.prototype,
+				typeof Generated.Empty.prototype
+			>,
+			Callback: GRPC.sendUnaryData<typeof Generated.Empty.prototype>,
 		) => {
-			const Payload = call.request;
+			const Payload = Call.request;
 			const ProcessEffect = Dispatcher.ProcessIncomingData(
 				Payload.getBuffer_asU8(),
 			);
 			Effect.runFork(ProcessEffect);
-			callback(null, new Empty());
+			Callback(null, new Generated.Empty());
 		},
 
 		/**
 		 * Handles cancellation requests from `Mountain`.
 		 */
 		cancelCocoonOperation: (
-			call: gRPC.ServerUnaryCall<CancelOperationRequest, Empty>,
-			callback: gRPC.sendUnaryData<Empty>,
+			Call: GRPC.ServerUnaryCall<
+				typeof Generated.CancelOperationRequest.prototype,
+				typeof Generated.Empty.prototype
+			>,
+			Callback: GRPC.sendUnaryData<typeof Generated.Empty.prototype>,
 		) => {
-			const Request = call.request;
+			const Request = Call.request;
 			const ProcessEffect = Dispatcher.CancelOperation(
-				Request.getRequestiDTOcancel(),
+				Request.getRequestid(),
 			);
 			Effect.runFork(ProcessEffect);
-			callback(null, new Empty());
+			Callback(null, new Generated.Empty());
 		},
 	};
-}
+};
+
+export default CreateServiceImplementation;

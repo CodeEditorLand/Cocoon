@@ -6,7 +6,7 @@
 
 import { Context, Scope, type Effect } from "effect";
 
-import type InvalidTokenIDError from "./Error/InvalidTokenIDError.js";
+import type { InvalidTokenIDError } from "./Error.js";
 import type TokenAndScope from "./Type/TokenAndScope.js";
 
 export default class extends Context.Tag("Service/CancellationTokenProvider")<

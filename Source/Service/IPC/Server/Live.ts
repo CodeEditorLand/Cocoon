@@ -17,13 +17,13 @@ import Service from "./Service.js";
  *
  * This scoped layer creates and manages the lifecycle of the gRPC server instance,
  * ensuring it starts with the application and is shut down gracefully. It
- * composes the `Acquire` effect with the `LiveDispatcher` layer, which is a
+ * composes the `Acquire` effect with the `DispatcherLive` layer, which is a
  * dependency for creating the server's request handlers.
  */
-export default Layer.scoped(Service, Acquire).pipe(
-	Layer.provide(DispatcherLive),
-) satisfies Layer.Layer<
-	any,
+const Live: Layer.Layer<
+	Service,
 	gRPCConnectionError | Error,
-	typeof ConfigurationService
->;
+	ConfigurationService
+> = Layer.scoped(Service, Acquire).pipe(Layer.provide(DispatcherLive));
+
+export default Live;

@@ -17,14 +17,14 @@ import {
 	Location,
 	Range,
 } from "../Type/ExtHostTypes.js";
-import * as URIConverter from "./Main/URI.js";
+import URIConverter from "./Main/URI.js";
 
 /**
  * Converts a `vscode.DiagnosticRelatedInformation` object into its DTO representation.
  * @param RelatedInformation The `vscode.DiagnosticRelatedInformation` instance.
  * @returns The `IRelatedInformation` DTO.
  */
-export const RelatedInformationFromAPI = (
+const RelatedInformationFromAPI = (
 	RelatedInformation: VSCode.DiagnosticRelatedInformation,
 ): IRelatedInformation => ({
 	resource: URIConverter.FromAPI(RelatedInformation.location.uri),
@@ -40,7 +40,7 @@ export const RelatedInformationFromAPI = (
  * @param RelatedInformationDTO The `IRelatedInformation` DTO.
  * @returns A new `vscode.DiagnosticRelatedInformation` instance.
  */
-export const RelatedInformationToAPI = (
+const RelatedInformationToAPI = (
 	RelatedInformationDTO: IRelatedInformation,
 ): VSCode.DiagnosticRelatedInformation =>
 	new DiagnosticRelatedInformation(
@@ -61,7 +61,7 @@ export const RelatedInformationToAPI = (
  * @param Diagnostic The `vscode.Diagnostic` instance.
  * @returns The `IMarkerData` DTO.
  */
-export const FromAPI = (Diagnostic: VSCode.Diagnostic): IMarkerData => ({
+const FromAPI = (Diagnostic: VSCode.Diagnostic): IMarkerData => ({
 	code:
 		typeof Diagnostic.code === "object"
 			? {
@@ -69,7 +69,7 @@ export const FromAPI = (Diagnostic: VSCode.Diagnostic): IMarkerData => ({
 					target: URIConverter.FromAPI(Diagnostic.code.target),
 				}
 			: String(Diagnostic.code),
-	severity: MarkerSeverity.fromValue(Diagnostic.severity),
+	severity: Diagnostic.severity,
 	message: Diagnostic.message,
 	source: Diagnostic.source,
 	startLineNumber: Diagnostic.range.start.line + 1,
@@ -79,7 +79,7 @@ export const FromAPI = (Diagnostic: VSCode.Diagnostic): IMarkerData => ({
 	relatedInformation: Diagnostic.relatedInformation?.map(
 		RelatedInformationFromAPI,
 	),
-	tags: Diagnostic.tags,
+	tags: Diagnostic.tags as MarkerSeverity[],
 });
 
 /**
@@ -87,7 +87,7 @@ export const FromAPI = (Diagnostic: VSCode.Diagnostic): IMarkerData => ({
  * @param MarkerDataDTO The `IMarkerData` DTO.
  * @returns A new `vscode.Diagnostic` instance.
  */
-function ToAPI(MarkerDataDTO: IMarkerData): VSCode.Diagnostic {
+const ToAPI = (MarkerDataDTO: IMarkerData): VSCode.Diagnostic => {
 	const range = new Range(
 		MarkerDataDTO.startLineNumber - 1,
 		MarkerDataDTO.startColumn - 1,
@@ -110,21 +110,17 @@ function ToAPI(MarkerDataDTO: IMarkerData): VSCode.Diagnostic {
 	diagnostic.relatedInformation = MarkerDataDTO.relatedInformation?.map(
 		RelatedInformationToAPI,
 	);
-	diagnostic.tags = MarkerDataDTO.tags;
+	diagnostic.tags = MarkerDataDTO.tags as VSCode.DiagnosticTag[];
 	return diagnostic;
-}
+};
 
 /**
  * Converts an array of `vscode.Diagnostic` objects into an array of marker data DTOs.
  * @param Diagnostics The array of `vscode.Diagnostic` instances.
  * @returns An array of `IMarkerData` DTOs.
  */
-export const FromAPIArray = (
+const FromAPIArray = (
 	Diagnostics: readonly VSCode.Diagnostic[],
 ): IMarkerData[] => Diagnostics.map(FromAPI);
 
-export default {
-	FromAPI,
-	ToAPI,
-	FromAPIArray,
-};
+export default { FromAPI, ToAPI, FromAPIArray };

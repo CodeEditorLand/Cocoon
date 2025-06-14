@@ -13,21 +13,23 @@ import type * as VSCode from "vscode";
  * It includes security-relevant options and defines the root paths for local
  * resources, defaulting to the extension's location if not otherwise specified.
  *
- * @param Extension The description of the extension that owns the webview.
- * @param Option The `vscode.WebviewOptions` provided by the extension.
+ * @param ExtensionDescription The description of the extension that owns the webview.
+ * @param Options The `vscode.WebviewOptions` provided by the extension.
  * @returns A serializable DTO representing the webview's content options.
  */
-export default function (
-	Extension: IExtensionDescription,
-	Option: VSCode.WebviewOptions,
-) {
+const ConvertContentOptionToDTO = (
+	ExtensionDescription: IExtensionDescription,
+	Options: VSCode.WebviewOptions,
+) => {
 	return {
-		enableCommandUris: Option.enableCommandUris,
-		enableScripts: Option.enableScripts,
-		enableForms: Option.enableForms,
-		localResourceRoots: Option.localResourceRoots ?? [
-			Extension.extensionLocation,
+		enableCommandUris: Options.enableCommandUris,
+		enableScripts: Options.enableScripts,
+		enableForms: Options.enableForms,
+		localResourceRoots: Options.localResourceRoots ?? [
+			ExtensionDescription.extensionLocation,
 		],
-		portMappings: Option.portMapping,
+		portMappings: Options.portMapping,
 	};
-}
+};
+
+export default ConvertContentOptionToDTO;

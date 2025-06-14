@@ -11,7 +11,9 @@ import { Data } from "effect";
 export default class extends Data.TaggedError("StartDebuggingError")<{
 	readonly cause: unknown;
 }> {
-	override get message() {
-		return `Failed to start debugging session.`;
+	constructor(Properties: { readonly cause: unknown }) {
+		super(Properties);
+		this.message = `Failed to start debugging session.`;
 	}
+	public override readonly message: string;
 }

@@ -15,8 +15,7 @@ import Service from "./Service.js";
 /**
  * The live implementation `Layer` for the gRPC Client service.
  */
-export default Layer.scoped(Service, Acquire) satisfies Layer.Layer<
-	any,
-	gRPCConnectionError,
-	typeof ConfigurationService
->;
+const Live: Layer.Layer<Service, gRPCConnectionError, ConfigurationService> =
+	Layer.scoped(Service, Acquire);
+
+export default Live;

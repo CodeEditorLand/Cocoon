@@ -21,7 +21,7 @@ import type InitDataService from "../../../Service/InitData/Service.js";
  * @param InitData The initial data payload from the `Mountain` host.
  * @returns A shim object that implements a safe subset of the `os` module's API.
  */
-export default function (InitData: InitDataService) {
+const CreateOsShim = (InitData: InitDataService) => {
 	const IsWindows = InitData.environment.isWindows;
 	const UserHome = InitData.environment.userHome as any; // Cast from internal URI type
 
@@ -60,4 +60,6 @@ export default function (InitData: InitDataService) {
 	};
 
 	return Object.freeze(OsShim);
-}
+};
+
+export default CreateOsShim;

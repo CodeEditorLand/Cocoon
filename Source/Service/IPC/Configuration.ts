@@ -6,9 +6,6 @@
 
 import { Context } from "effect";
 
-/**
- * The `Context.Tag` for the IPC configuration.
- */
 export default class extends Context.Tag("IPC/Configuration")<
 	any,
 	{

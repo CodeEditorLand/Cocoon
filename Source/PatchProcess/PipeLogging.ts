@@ -14,7 +14,7 @@ import IPCService from "../Service/IPC/Service.js";
  * Based on the implementation in VS Code's `bootstrap-fork.ts`.
  * @param Arguments The array of arguments passed to a console method.
  */
-function SafeToString(Arguments: ArrayLike<unknown>): string {
+const SafeToString = (Arguments: ArrayLike<unknown>): string => {
 	const Slices: string[] = [];
 	for (let i = 0; i < Arguments.length; i++) {
 		const Argument = Arguments[i];
@@ -29,7 +29,7 @@ function SafeToString(Arguments: ArrayLike<unknown>): string {
 		}
 	}
 	return Slices.join(" ");
-}
+};
 
 /**
  * An Effect that, when executed, monkey-patches the global `console` object.
@@ -42,17 +42,14 @@ function SafeToString(Arguments: ArrayLike<unknown>): string {
  * This patch is conditionally applied based on the `VSCODE_PIPE_LOGGING`
  * environment variable.
  */
-export default Effect.gen(function* (_) {
+const PipeLogging = Effect.gen(function* () {
 	if (process.env["VSCODE_PIPE_LOGGING"] !== "true") {
-		yield* _(
-			Effect.logTrace(
-				"Console log piping is disabled by environment variable.",
-			),
+		return yield* Effect.logTrace(
+			"Console log piping is disabled by environment variable.",
 		);
-		return;
 	}
 
-	const IPC = yield* _(IPCService);
+	const IPC = yield* IPCService;
 
 	/**
 	 * Creates an Effect that sends a formatted log message to the host.
@@ -92,7 +89,9 @@ export default Effect.gen(function* (_) {
 		Effect.runFork(ForwardConsoleCall("error", args));
 	};
 
-	yield* _(
-		Effect.logTrace("Global console object patched to pipe logs to host."),
+	yield* Effect.logTrace(
+		"Global console object patched to pipe logs to host.",
 	);
 });
+
+export default PipeLogging;

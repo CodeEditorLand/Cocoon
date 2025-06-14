@@ -11,8 +11,10 @@ import type { TextDocument, TextDocumentChangeEvent } from "vscode";
  * published to the internal event hub. This allows services to react to
  * specific document state changes.
  */
-export type Interface =
+type DocumentEvent =
 	| { readonly _tag: "Open"; readonly Document: TextDocument }
 	| { readonly _tag: "Close"; readonly Document: TextDocument }
 	| { readonly _tag: "Change"; readonly Event: TextDocumentChangeEvent }
 	| { readonly _tag: "Save"; readonly Document: TextDocument };
+
+export default DocumentEvent;

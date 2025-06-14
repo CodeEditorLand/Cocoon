@@ -7,47 +7,44 @@
 
 import { Layer } from "effect";
 
-import APIDeprecationLive from "./Service/APIDeprecation/Live.js";
-import AuthenticationLive from "./Service/Authentication/Live.js";
-import CancellationLive from "./Service/Cancellation/Live.js";
-import ClipboardLive from "./Service/Clipboard/Live.js";
-import CommandLive from "./Service/Command/Live.js";
-import ConfigurationLive from "./Service/Configuration/Live.js";
-import DebugLive from "./Service/Debug/Live.js";
-import DiagnosticLive from "./Service/Diagnostic/Live.js";
-import DialogLive from "./Service/Dialog/Live.js";
-import DocumentLive from "./Service/Document/Live.js";
-import EnvironmentLive from "./Service/Environment/Live.js";
-import ExtensionLive from "./Service/Extension/Live.js";
-import FileSystemLive from "./Service/FileSystem/Live.js";
-import FileSystemInformationLive from "./Service/FileSystemInformation/Live.js";
+import { Live as APIDeprecationLive } from "./Service/APIDeprecation.js";
+import { Live as AuthenticationLive } from "./Service/Authentication.js";
+import { Live as CancellationLive } from "./Service/Cancellation.js";
+import { Live as ClipboardLive } from "./Service/Clipboard.js";
+import { Live as CommandLive } from "./Service/Command.js";
+import { Live as ConfigurationLive } from "./Service/Configuration.js";
+import { Live as DebugLive } from "./Service/Debug.js";
+import { Live as DiagnosticLive } from "./Service/Diagnostic.js";
+import { Live as DialogLive } from "./Service/Dialog.js";
+import { Live as DocumentLive } from "./Service/Document.js";
+import { Live as EnvironmentLive } from "./Service/Environment.js";
+import { Live as ExtensionLive } from "./Service/Extension.js";
+import { Live as FileSystemLive } from "./Service/FileSystem.js";
+import { Live as FileSystemInformationLive } from "./Service/FileSystemInformation.js";
+import { Live as IPCLive } from "./Service/IPC.js";
 import type IPCConfiguration from "./Service/IPC/Configuration.js";
-import IPCLive from "./Service/IPC/Live.js";
-import LanguageFeatureLive from "./Service/LanguageFeature/Live.js";
-import LocalizationLive from "./Service/Localization/Live.js";
-import LogLive from "./Service/Log/Live.js";
-import MessageLive from "./Service/Message/Live.js";
-import ProposedAPILive from "./Service/ProposedAPI/Live.js";
-import QuickInputLive from "./Service/QuickInput/Live.js";
-import SecretStorageLive from "./Service/SecretStorage/Live.js";
-import StatusBarLive from "./Service/StatusBar/Live.js";
-import StorageLive from "./Service/Storage/Live.js";
-import StoragePathLive from "./Service/StoragePath/Live.js";
-import TaskLive from "./Service/Task/Live.js";
-import TelemetryLive from "./Service/Telemetry/Live.js";
-import TreeViewLive from "./Service/TreeView/Live.js";
-import WebViewPanelLive from "./Service/WebViewPanel/Live.js";
-import WindowLive from "./Service/Window/Live.js";
-import WorkSpaceLive from "./Service/WorkSpace/Live.js";
+import { Live as LanguageFeatureLive } from "./Service/LanguageFeature.js";
+import { Live as LocalizationLive } from "./Service/Localization.js";
+import { Live as LogLive } from "./Service/Log.js";
+import { Live as MessageLive } from "./Service/Message.js";
+import { Live as ProposedAPILive } from "./Service/ProposedAPI.js";
+import { Live as QuickInputLive } from "./Service/QuickInput.js";
+import { Live as SecretStorageLive } from "./Service/SecretStorage.js";
+import { Live as StatusBarLive } from "./Service/StatusBar.js";
+import { Live as StorageLive } from "./Service/Storage.js";
+import { Live as StoragePathLive } from "./Service/StoragePath.js";
+import { Live as TaskLive } from "./Service/Task.js";
+import { Live as TelemetryLive } from "./Service/Telemetry.js";
+import { Live as TreeViewLive } from "./Service/TreeView.js";
+import { Live as WebViewPanelLive } from "./Service/WebViewPanel.js";
+import { Live as WindowLive } from "./Service/Window.js";
+import { Live as WorkSpaceLive } from "./Service/WorkSpace.js";
 
 /**
  * A factory function that creates a single, composed layer that provides all services.
  * @param Config The IPC configuration required by many services.
  */
-export default function (Config: {
-	MountainAddress: string;
-	CocoonAddress: string;
-}) {
+const AllServiceLayer = (Config: IPCConfiguration) => {
 	return Layer.mergeAll(
 		APIDeprecationLive,
 		AuthenticationLive(Config),
@@ -81,4 +78,5 @@ export default function (Config: {
 		WindowLive(Config),
 		WorkSpaceLive(Config),
 	);
-}
+};
+export default AllServiceLayer;

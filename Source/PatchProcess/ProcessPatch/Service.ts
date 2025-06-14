@@ -14,7 +14,7 @@ export default class extends Context.Tag("PatchProcess/ProcessPatch")<
 	any,
 	{
 		/** The original, native `process.exit` function. */
-		readonly NativeExit: (code?: number) => never;
+		readonly NativeExit: (Code?: number) => never;
 		/** The original, native `process.crash` function, if it exists. */
 		readonly NativeCrash?: () => void;
 		/** A predicate function that returns `true` if the process is allowed to exit. */

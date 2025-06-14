@@ -13,14 +13,16 @@ import type * as VSCode from "vscode";
  * This includes options that control the behavior of the panel itself, such as
  * its persistence and UI features.
  *
- * @param Option The `vscode.WebviewPanelOptions` provided by the extension.
+ * @param Options The `vscode.WebviewPanelOptions` provided by the extension.
  * @returns A serializable `IWebviewPanelOptions` DTO representing the webview panel's options.
  */
-export default function (
-	Option: VSCode.WebviewPanelOptions,
-): IWebviewPanelOptions {
+const ConvertPanelOptionToDTO = (
+	Options: VSCode.WebviewPanelOptions,
+): IWebviewPanelOptions => {
 	return {
-		enableFindWidget: Option.enableFindWidget,
-		retainContextWhenHidden: Option.retainContextWhenHidden,
+		enableFindWidget: Options.enableFindWidget,
+		retainContextWhenHidden: Options.retainContextWhenHidden,
 	};
-}
+};
+
+export default ConvertPanelOptionToDTO;

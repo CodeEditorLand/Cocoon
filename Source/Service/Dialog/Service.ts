@@ -7,7 +7,7 @@
 import { Context, type Effect } from "effect";
 import type { CancellationToken, Uri } from "vscode";
 
-import type DialogError from "./Error/DialogError.js";
+import type { DialogError } from "./Error.js";
 import type { OpenDialogOptions, SaveDialogOptions } from "./Type.js";
 
 export default class extends Context.Tag("Service/Dialog")<
@@ -15,23 +15,23 @@ export default class extends Context.Tag("Service/Dialog")<
 	{
 		/**
 		 * Shows an open file dialog to the user.
-		 * @param Option Options for the open dialog.
+		 * @param Options Options for the open dialog.
 		 * @param Token An optional cancellation token.
 		 * @returns An `Effect` that resolves with an array of selected URIs, or `undefined` if cancelled.
 		 */
 		readonly ShowOpenDialog: (
-			Option?: OpenDialogOptions,
+			Options?: OpenDialogOptions,
 			Token?: CancellationToken,
 		) => Effect.Effect<Uri[] | undefined, DialogError>;
 
 		/**
 		 * Shows a save file dialog to the user.
-		 * @param Option Options for the save dialog.
+		 * @param Options Options for the save dialog.
 		 * @param Token An optional cancellation token.
 		 * @returns An `Effect` that resolves with the selected URI, or `undefined` if cancelled.
 		 */
 		readonly ShowSaveDialog: (
-			Option?: SaveDialogOptions,
+			Options?: SaveDialogOptions,
 			Token?: CancellationToken,
 		) => Effect.Effect<Uri | undefined, DialogError>;
 	}

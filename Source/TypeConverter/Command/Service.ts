@@ -20,12 +20,15 @@ export default interface Interface {
 	 * @param Disposables A list to which any necessary disposables can be added.
 	 * @returns The internal `ICommand` DTO.
 	 */
-	ToInternal(Command: VSCode.Command, Disposables: IDisposable[]): ICommand;
+	readonly ToInternal: (
+		Command: VSCode.Command,
+		Disposables: IDisposable[],
+	) => ICommand;
 
 	/**
 	 * Converts an internal `ICommand` DTO back into a `vscode.Command`.
 	 * @param CommandDTO The internal `ICommand` DTO.
 	 * @returns The revived `vscode.Command` or `undefined`.
 	 */
-	FromInternal(CommandDTO: ICommand): VSCode.Command | undefined;
+	readonly FromInternal: (CommandDTO: ICommand) => VSCode.Command | undefined;
 }

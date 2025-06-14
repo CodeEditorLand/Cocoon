@@ -9,9 +9,6 @@ import { Context, type Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { ExtensionHostKind } from "vs/workbench/services/extensions/common/extensionHostKind.js";
 
-/**
- * The Context.Tag for the HostKindPicker service.
- */
 export default class extends Context.Tag("Core/HostKindPicker")<
 	any,
 	{
@@ -19,12 +16,12 @@ export default class extends Context.Tag("Core/HostKindPicker")<
 		 * Determines the appropriate extension host kind for a given extension based
 		 * on its manifest properties (`extensionKind`).
 		 *
-		 * @param Extension The description of the extension to analyze.
+		 * @param ExtensionDescription The description of the extension to analyze.
 		 * @returns An `Effect` that resolves to an `ExtensionHostKind` or `null` if no
 		 *   suitable host is found for the Cocoon environment.
 		 */
 		readonly PickHostKind: (
-			Extension: IExtensionDescription,
+			ExtensionDescription: IExtensionDescription,
 		) => Effect.Effect<ExtensionHostKind | null, never>;
 	}
 >() {}

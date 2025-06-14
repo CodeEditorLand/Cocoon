@@ -8,19 +8,23 @@ import type { IExtensionDescription } from "vs/platform/extensions/common/extens
 import { ExtensionHostKind } from "vs/workbench/services/extensions/common/extensionHostKind.js";
 
 import LogService from "../../Service/Log/Service.js";
+import type Service from "./Service.js";
 
-export default Effect.gen(function* (_) {
-	const Log = yield* _(LogService);
+/**
+ * An Effect that builds the live implementation of the HostKindPicker service.
+ */
+export default Effect.gen(function* () {
+	const Log = yield* LogService;
 
-	const PickHostKind = (Extension: IExtensionDescription) =>
-		Effect.gen(function* (_) {
+	const PickHostKind = (ExtensionDescription: IExtensionDescription) =>
+		Effect.gen(function* () {
 			// The `extensionKind` property in package.json can be an array or a single string.
 			// Default to ['workspace'] if it's not present, as this is the traditional Node.js host.
 			const DeclaredKinds = new Set(
-				Array.isArray(Extension.extensionKind)
-					? Extension.extensionKind
-					: Extension.extensionKind
-						? [Extension.extensionKind]
+				Array.isArray(ExtensionDescription.extensionKind)
+					? ExtensionDescription.extensionKind
+					: ExtensionDescription.extensionKind
+						? [ExtensionDescription.extensionKind]
 						: ["workspace"],
 			);
 
@@ -29,13 +33,11 @@ export default Effect.gen(function* (_) {
 			// browser-specific entry point, implying it needs Node.js APIs.
 			const HasNodeRequirement =
 				DeclaredKinds.has("workspace") ||
-				(DeclaredKinds.has("ui") && !Extension.browser);
+				(DeclaredKinds.has("ui") && !ExtensionDescription.browser);
 
 			if (HasNodeRequirement) {
-				yield* _(
-					Log.Trace(
-						`HostKindPicker: Selecting LocalProcess for extension '${Extension.identifier.value}'.`,
-					),
+				yield* Log.Trace(
+					`HostKindPicker: Selecting LocalProcess for extension '${ExtensionDescription.identifier.value}'.`,
 				);
 				return ExtensionHostKind.LocalProcess;
 			}
@@ -43,24 +45,22 @@ export default Effect.gen(function* (_) {
 			// If it's explicitly a 'web' extension and has no Node.js requirement,
 			// it cannot run in our Node.js-based Cocoon host.
 			if (DeclaredKinds.has("web") && !HasNodeRequirement) {
-				yield* _(
-					Log.Trace(
-						`HostKindPicker: Extension '${Extension.identifier.value}' is Web-only and not suitable for Cocoon.`,
-					),
+				yield* Log.Trace(
+					`HostKindPicker: Extension '${ExtensionDescription.identifier.value}' is Web-only and not suitable for Cocoon.`,
 				);
 				return null;
 			}
 
 			// Fallback for any other unusual configuration.
-			yield* _(
-				Log.Warn(
-					`HostKindPicker: No suitable host kind found for extension '${Extension.identifier.value}'. Defaulting to 'null'.`,
-				),
+			yield* Log.Warn(
+				`HostKindPicker: No suitable host kind found for extension '${ExtensionDescription.identifier.value}'. Defaulting to 'null'.`,
 			);
 			return null;
 		});
 
-	return {
+	const HostKindPickerImplementation: Service = {
 		PickHostKind,
 	};
+
+	return HostKindPickerImplementation;
 });

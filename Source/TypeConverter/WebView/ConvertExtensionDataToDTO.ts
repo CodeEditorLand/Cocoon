@@ -12,14 +12,16 @@ import type { IWebviewExtensionDescription } from "vs/workbench/contrib/webview/
  * `IExtensionDescription` object for passing to the `Mountain` host process.
  * This is specifically for identifying the extension that owns a webview.
  *
- * @param Extension The full description of the extension.
+ * @param ExtensionDescription The full description of the extension.
  * @returns A `IWebviewExtensionDescription` DTO containing the extension's ID and location URI.
  */
-export default function (
-	Extension: IExtensionDescription,
-): IWebviewExtensionDescription {
+const ConvertExtensionDataToDTO = (
+	ExtensionDescription: IExtensionDescription,
+): IWebviewExtensionDescription => {
 	return {
-		id: Extension.identifier,
-		location: Extension.extensionLocation,
+		id: ExtensionDescription.identifier,
+		location: ExtensionDescription.extensionLocation,
 	};
-}
+};
+
+export default ConvertExtensionDataToDTO;

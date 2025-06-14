@@ -4,6 +4,7 @@
  * to provide safe error handling for extension listeners.
  */
 
+import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
 import type LogService from "../../Service/Log/Service.js";
@@ -22,11 +23,11 @@ import type LogService from "../../Service/Log/Service.js";
  * @param ActualEvent The original `vscode.Event<T>` to wrap.
  * @returns A new, safe `vscode.Event<T>` that can be exposed to extensions.
  */
-export default function <T>(
-	ExtensionID: VSCode.ExtensionIdentifier,
+const AsExtensionEvent = <T>(
+	ExtensionID: ExtensionIdentifier,
 	Log: LogService,
 	ActualEvent: VSCode.Event<T>,
-): VSCode.Event<T> {
+): VSCode.Event<T> => {
 	// Return a new event subscription function.
 	return (Listener, ThisArgument, Disposables) => {
 		// Create a "safe" listener that wraps the original extension-provided listener.
@@ -47,4 +48,6 @@ export default function <T>(
 		Disposables?.push(Handle);
 		return Handle;
 	};
-}
+};
+
+export default AsExtensionEvent;

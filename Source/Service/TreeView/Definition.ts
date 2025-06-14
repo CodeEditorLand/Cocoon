@@ -3,14 +3,20 @@
  * @description The live implementation of the TreeView service factory.
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Effect, Ref } from "effect";
 import type { IExtensionDescription, TreeViewOptions } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/TreeView.js";
+import * as TypeConverter from "../../TypeConverter.js";
 import CommandService from "../Command/Service.js";
 import IPCService from "../IPC/Service.js";
+import type Service from "./Service.js";
 import TreeViewImplementation from "./TreeViewImplementation.js";
 
+let HandleCounter = 0;
+
+/**
+ * An Effect that builds the live implementation of the TreeView service factory.
+ */
 export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
 	const Command = yield* CommandService;
@@ -18,36 +24,37 @@ export default Effect.gen(function* () {
 		new Map<string, TreeViewImplementation<any>>(),
 	);
 
+	// --- RPC Handlers ---
 	IPC.RegisterInvokeHandler("$getChildren", ([ViewID, ParentHandle]) =>
 		Effect.gen(function* () {
-			const view = (yield* Ref.get(ActiveViews)).get(ViewID);
-			if (!view) {
+			const View = (yield* Ref.get(ActiveViews)).get(ViewID);
+			if (!View) {
 				return [];
 			}
-			const parentElement = ParentHandle
-				? view.handleToElementMap.get(ParentHandle)
+			const ParentElement = ParentHandle
+				? View.handleToElementMap.get(ParentHandle)
 				: undefined;
-			return yield* view.getChildrenEffect(parentElement);
-		}),
+			return yield* View.GetChildrenEffect(ParentElement);
+		}).pipe(Effect.runPromise),
 	);
 
 	IPC.RegisterInvokeHandler("$disposeTreeView", ([ViewID]) =>
 		Effect.gen(function* () {
-			const view = (yield* Ref.get(ActiveViews)).get(ViewID);
-			if (view) {
-				view.dispose();
+			const View = (yield* Ref.get(ActiveViews)).get(ViewID);
+			if (View) {
+				View.dispose();
 				yield* Ref.update(
 					ActiveViews,
-					(map) => (map.delete(ViewID), map),
+					(Map) => (Map.delete(ViewID), Map),
 				);
 			}
-		}),
+		}).pipe(Effect.runPromise),
 	);
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const TreeViewImplementationFactory: Service = {
 		CreateTreeView: <T>(
 			ViewID: string,
-			Option: TreeViewOptions<T>,
+			Options: TreeViewOptions<T>,
 			Extension: IExtensionDescription,
 		) =>
 			Effect.gen(function* () {
@@ -56,7 +63,7 @@ export default Effect.gen(function* () {
 						new Error(`Tree view '${ViewID}' already registered.`),
 					);
 				}
-				if (!Option.treeDataProvider) {
+				if (!Options.treeDataProvider) {
 					return yield* Effect.fail(
 						new Error(
 							"TreeViewOptions must include a TreeDataProvider.",
@@ -64,7 +71,8 @@ export default Effect.gen(function* () {
 					);
 				}
 
-				const OptionDTO = TypeConverter.Option.FromAPI(Option);
+				const OptionDTO =
+					TypeConverter.TreeView.Option.FromAPI(Options);
 				yield* IPC.SendNotification("$registerTreeDataProvider", [
 					ViewID,
 					OptionDTO,
@@ -72,18 +80,18 @@ export default Effect.gen(function* () {
 
 				const ExtHostView = new TreeViewImplementation<T>(
 					ViewID,
-					Option.treeDataProvider,
+					Options.treeDataProvider,
 					IPC,
 					Command,
 					Extension,
 				);
-				yield* Ref.update(ActiveViews, (map) =>
-					map.set(ViewID, ExtHostView),
+				yield* Ref.update(ActiveViews, (Map) =>
+					Map.set(ViewID, ExtHostView),
 				);
 
 				return ExtHostView;
 			}),
 	};
 
-	return ServiceImplementation;
+	return TreeViewImplementationFactory;
 });

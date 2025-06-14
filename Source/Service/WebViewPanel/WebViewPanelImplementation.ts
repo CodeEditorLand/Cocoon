@@ -16,24 +16,27 @@ import type {
 	WebviewPanelOptions,
 } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/WebView.js";
+import { WebView as TypeConverter } from "../../TypeConverter.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type IPCService from "../IPC/Service.js";
 import WebViewImplementation from "../WebView/WebViewImplementation.js";
 
 export default class implements WebviewPanel {
-	private _isDisposed = false;
+	private IsDisposed = false;
 	private _title: string;
-	private _iconPath: Uri | { light: Uri; dark: Uri } | undefined;
+	private _iconPath:
+		| Uri
+		| { readonly light: Uri; readonly dark: Uri }
+		| undefined;
 	private _active: boolean;
 	private _visible: boolean;
 	private _viewColumn: ViewColumn;
 
 	// --- Events ---
-	private readonly onDidDisposeEmitter = CreateEventStream<void>();
+	private readonly OnDidDisposeEmitter = CreateEventStream<void>();
 	public readonly onDidDispose: Event<void>;
 
-	private readonly onDidChangeViewStateEmitter =
+	private readonly OnDidChangeViewStateEmitter =
 		CreateEventStream<WebviewPanelOnDidChangeViewStateEvent>();
 	public readonly onDidChangeViewState: Event<WebviewPanelOnDidChangeViewStateEvent>;
 
@@ -42,30 +45,30 @@ export default class implements WebviewPanel {
 	public readonly options: WebviewPanelOptions;
 
 	constructor(
-		private readonly handle: string,
-		private readonly ipcService: IPCService,
-		private readonly extension: IExtensionDescription,
-		private readonly onDidDisposeCallback: () => void,
-		initialViewType: string,
-		initialTitle: string,
-		initialOptions: WebviewPanelOptions & WebviewOptions,
-		initialViewColumn: ViewColumn,
+		private readonly Handle: string,
+		private readonly IPCService: IPCService,
+		private readonly Extension: IExtensionDescription,
+		private readonly OnDidDisposeCallback: () => void,
+		InitialViewType: string,
+		InitialTitle: string,
+		InitialOptions: WebviewPanelOptions & WebviewOptions,
+		InitialViewColumn: ViewColumn,
 	) {
-		this.viewType = initialViewType;
-		this.options = initialOptions;
+		this.viewType = InitialViewType;
+		this.options = InitialOptions;
 		this.webview = new WebViewImplementation(
-			handle,
-			ipcService,
-			extension,
-			initialOptions,
+			Handle,
+			IPCService,
+			Extension,
+			InitialOptions,
 		);
-		this._title = initialTitle;
-		this._viewColumn = initialViewColumn;
+		this._title = InitialTitle;
+		this._viewColumn = InitialViewColumn;
 		this._active = true; // Assume active on creation
 		this._visible = true; // Assume visible on creation
-		this.onDidDispose = Stream.toEvent(this.onDidDisposeEmitter.Stream);
+		this.onDidDispose = Stream.toEvent(this.OnDidDisposeEmitter.Stream);
 		this.onDidChangeViewState = Stream.toEvent(
-			this.onDidChangeViewStateEmitter.Stream,
+			this.OnDidChangeViewStateEmitter.Stream,
 		);
 	}
 
@@ -83,94 +86,99 @@ export default class implements WebviewPanel {
 	get title(): string {
 		return this._title;
 	}
-	set title(value: string) {
-		if (this._isDisposed || this._title === value) {
+	set title(Value: string) {
+		if (this.IsDisposed || this._title === Value) {
 			return;
 		}
-		this._title = value;
+		this._title = Value;
 		Effect.runFork(
-			this.ipcService.SendNotification("$setWebviewTitle", [
-				this.handle,
-				value,
+			this.IPCService.SendNotification("$setWebviewTitle", [
+				this.Handle,
+				Value,
 			]),
 		);
 	}
 
-	get iconPath(): Uri | { light: Uri; dark: Uri } | undefined {
+	get iconPath():
+		| Uri
+		| { readonly light: Uri; readonly dark: Uri }
+		| undefined {
 		return this._iconPath;
 	}
-	set iconPath(value: Uri | { light: Uri; dark: Uri } | undefined) {
-		if (this._isDisposed || this._iconPath === value) {
+	set iconPath(
+		Value: Uri | { readonly light: Uri; readonly dark: Uri } | undefined,
+	) {
+		if (this.IsDisposed || this._iconPath === Value) {
 			return;
 		}
-		this._iconPath = value;
-		const iconPathDTO = value
+		this._iconPath = Value;
+		const IconPathDTO = Value
 			? {
-					light: (value as any).light
+					light: (Value as any).light
 						? TypeConverter.ConvertExtensionDataToDTO(
-								(value as any).light,
+								(Value as any).light,
 							)
 						: undefined,
-					dark: (value as any).dark
+					dark: (Value as any).dark
 						? TypeConverter.ConvertExtensionDataToDTO(
-								(value as any).dark,
+								(Value as any).dark,
 							)
-						: TypeConverter.ConvertExtensionDataToDTO(value as Uri),
+						: TypeConverter.ConvertExtensionDataToDTO(Value as Uri),
 				}
 			: undefined;
 		Effect.runFork(
-			this.ipcService.SendNotification("$setWebviewIconPath", [
-				this.handle,
-				iconPathDTO,
+			this.IPCService.SendNotification("$setWebviewIconPath", [
+				this.Handle,
+				IconPathDTO,
 			]),
 		);
 	}
 
 	// --- Public Methods ---
-	public reveal(viewColumn?: ViewColumn, preserveFocus?: boolean): void {
-		if (this._isDisposed) return;
-		const viewColumnDTO = viewColumn
+	public reveal(ViewColumn?: ViewColumn, PreserveFocus?: boolean): void {
+		if (this.IsDisposed) return;
+		const ViewColumnDTO = ViewColumn
 			? TypeConverter.ConvertShowOptionToDTO(
-					viewColumn,
-					preserveFocus ?? false,
+					ViewColumn,
+					PreserveFocus ?? false,
 				)
 			: undefined;
-		this.ipcService.SendNotification("$revealWebviewPanel", [
-			this.handle,
-			viewColumnDTO,
-			preserveFocus,
+		this.IPCService.SendNotification("$revealWebviewPanel", [
+			this.Handle,
+			ViewColumnDTO,
+			PreserveFocus,
 		]);
 	}
 
 	public dispose(): void {
-		if (this._isDisposed) {
+		if (this.IsDisposed) {
 			return;
 		}
-		this._isDisposed = true;
-		this.onDidDisposeEmitter.Fire();
-		this.onDidDisposeCallback();
+		this.IsDisposed = true;
+		this.OnDidDisposeEmitter.Fire();
+		this.OnDidDisposeCallback();
 		(this.webview as WebViewImplementation).dispose();
 		Effect.runFork(
-			this.ipcService.SendNotification("$disposeWebview", [this.handle]),
+			this.IPCService.SendNotification("$disposeWebview", [this.Handle]),
 		);
 	}
 
 	// --- Internal Methods ---
-	public _updateViewState(newState: {
-		active: boolean;
-		visible: boolean;
-		viewColumn: ViewColumn;
+	public _updateViewState(NewState: {
+		readonly active: boolean;
+		readonly visible: boolean;
+		readonly viewColumn: ViewColumn;
 	}) {
-		if (this._isDisposed) return;
-		const changed =
-			this._active !== newState.active ||
-			this._visible !== newState.visible ||
-			this._viewColumn !== newState.viewColumn;
-		this._active = newState.active;
-		this._visible = newState.visible;
-		this._viewColumn = newState.viewColumn;
-		if (changed) {
-			this.onDidChangeViewStateEmitter.Fire({ webviewPanel: this });
+		if (this.IsDisposed) return;
+		const Changed =
+			this._active !== NewState.active ||
+			this._visible !== NewState.visible ||
+			this._viewColumn !== NewState.viewColumn;
+		this._active = NewState.active;
+		this._visible = NewState.visible;
+		this._viewColumn = NewState.viewColumn;
+		if (Changed) {
+			this.OnDidChangeViewStateEmitter.Fire({ webviewPanel: this });
 		}
 	}
 }

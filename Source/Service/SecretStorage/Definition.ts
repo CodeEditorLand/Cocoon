@@ -3,22 +3,26 @@
  * @description The live implementation of the SecretStorage service factory.
  */
 
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
 import SecretStorageImplementation from "./SecretStorageImplementation.js";
+import type Service from "./Service.js";
 
-export default Effect.gen(function* (_) {
-	const IPC = yield* _(IPCService);
-	const Log = yield* _(LogService);
+/**
+ * An Effect that builds the live implementation of the SecretStorage service factory.
+ */
+export default Effect.gen(function* () {
+	const IPC = yield* IPCService;
+	const Log = yield* LogService;
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const SecretStorageFactoryImplementation: Service = {
 		CreateStorage: (ExtensionID: string) => {
 			Log.Debug(`Created SecretStorage for extension: '${ExtensionID}'`);
 			return new SecretStorageImplementation(ExtensionID, IPC, Log);
 		},
 	};
 
-	return ServiceImplementation;
+	return SecretStorageFactoryImplementation;
 });

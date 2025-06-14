@@ -5,13 +5,14 @@
  * synthesized from VS Code's `bootstrap-node.ts` and `bootstrap-fork.ts`.
  */
 
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
 
 import BlockNativesModule from "./PatchProcess/BlockNativesModule.js";
 import HandleException from "./PatchProcess/HandleException.js";
 import PatchProcessCrash from "./PatchProcess/PatchProcessCrash.js";
 import PatchProcessExit from "./PatchProcess/PatchProcessExit.js";
 import PipeLogging from "./PatchProcess/PipeLogging.js";
+import { Live as ProcessPatchLive } from "./PatchProcess/ProcessPatch.js";
 import SetElectronRunAsNode from "./PatchProcess/SetElectronRunAsNode.js";
 import SetStackTraceLimit from "./PatchProcess/SetStackTraceLimit.js";
 import SetupEnvironment from "./PatchProcess/SetupEnvironment.js";
@@ -26,27 +27,35 @@ import TerminateOnParentExit from "./PatchProcess/TerminateOnParentExit.js";
  * environment is stable, secure, and properly configured before any extension
  * code is loaded.
  */
-export default Effect.all(
-	[
-		// These patches have no dependencies and can run immediately.
-		SetStackTraceLimit,
-		SetupEnvironment,
-		SetElectronRunAsNode,
-		BlockNativesModule,
+export default Effect.gen(function* () {
+	// Effects that require the ProcessPatch service must be provided with its layer.
+	const PatchesWithDeps = Effect.all([PatchProcessCrash, PatchProcessExit], {
+		discard: true,
+		concurrency: "unbounded",
+	}).pipe(
+		// The policy here prevents extensions from exiting the host process.
+		Effect.provide(ProcessPatchLive(() => false)),
+	);
 
-		// These patches may depend on services like IPC.
-		PipeLogging,
-		HandleException,
+	// Effects without special dependencies can be run directly.
+	const PatchesWithoutDeps = Effect.all(
+		[
+			SetStackTraceLimit,
+			SetupEnvironment,
+			SetElectronRunAsNode,
+			BlockNativesModule,
+			PipeLogging,
+			HandleException,
+			TerminateOnParentExit,
+		],
+		{ discard: true, concurrency: "unbounded" },
+	);
 
-		// These patches depend on the ProcessPatch service.
-		PatchProcessCrash,
-		PatchProcessExit,
-
-		// This should run last as it starts a background monitoring loop.
-		TerminateOnParentExit,
-	],
-	{ discard: true, concurrency: "unbounded" }, // Run independent patches in parallel.
-).pipe(
+	yield* Effect.all([PatchesWithoutDeps, PatchesWithDeps], {
+		discard: true,
+		concurrency: "unbounded",
+	});
+}).pipe(
 	Effect.tap(() =>
 		Effect.logDebug("All core process patches have been applied."),
 	),

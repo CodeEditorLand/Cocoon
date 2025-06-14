@@ -12,9 +12,9 @@
 
 class Empty {}
 class GenericRequest {
-	setRequestid(_id: number) {}
-	setMethod(_method: string) {}
-	setParams(_params: any) {}
+	setRequestid(_ID: number) {}
+	setMethod(_Method: string) {}
+	setParams(_Parameters: any) {}
 	getRequestid(): number {
 		return 0;
 	}
@@ -26,38 +26,37 @@ class GenericRequest {
 	}
 }
 class GenericResponse {
-	setRequestid(_id: number) {}
-	setResult(_result: any) {}
+	setRequestid(_ID: number) {}
+	setResult(_Result: any) {}
 	getResult(): any {
 		return undefined;
 	}
 }
 class GenericNotification {
-	setMethod(_method: string) {}
-	setParams(_params: any) {}
+	setMethod(_Method: string) {}
+	setParams(_Parameters: any) {}
 }
 class CancelOperationRequest {
-	getRequestiDTOcancel(): number {
+	getRequestid(): number {
 		return 0;
 	}
 }
 class RPCDataPayload {
-	setBuffer(_buffer: Uint8Array) {}
+	setBuffer(_Buffer: Uint8Array) {}
 	getBuffer_asU8(): Uint8Array {
 		return new Uint8Array();
 	}
 }
 
 export interface MountainService {
-	// Define method signatures based on the proto file
-	processCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
-	sendCocoonNotification(notification: GenericNotification): Promise<Empty>;
-	sendRPCDataToMountain(payload: RPCDataPayload): Promise<Empty>;
+	processCocoonRequest(Request: GenericRequest): Promise<GenericResponse>;
+	sendCocoonNotification(Notification: GenericNotification): Promise<Empty>;
+	sendRPCDataToMountain(Payload: RPCDataPayload): Promise<Empty>;
 }
 
 // This is a placeholder constructor
 const MountainServiceClient = (() => {}) as any as {
-	new (address: string, creds: any): MountainService;
+	new (Address: string, Credentials: any): MountainService;
 };
 
 export default {

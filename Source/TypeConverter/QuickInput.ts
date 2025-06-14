@@ -3,9 +3,7 @@
  * @description Type converters for the QuickInput APIs (`showQuickPick`, `showInputBox`).
  */
 
-import type { QuickInputButton, QuickPickItem } from "vscode";
-
-import { URI } from "../Type/ExtHostTypes.js";
+import { URI, type QuickInputButton, type QuickPickItem } from "vscode";
 
 const QuickPick = {
 	/**
@@ -14,7 +12,7 @@ const QuickPick = {
 	 * @param Items The array of items to serialize.
 	 * @returns A serializable representation of the items.
 	 */
-	SerializeItems<T extends QuickPickItem | string>(Items: readonly T[]) {
+	SerializeItems: <T extends QuickPickItem | string>(Items: readonly T[]) => {
 		return Items.map((Item, Index) => {
 			const Base =
 				typeof Item === "string"
@@ -30,7 +28,7 @@ const QuickPick = {
 	 * @param Buttons The array of buttons to serialize.
 	 * @returns A serializable representation of the buttons.
 	 */
-	SerializeButtons(Buttons?: readonly QuickInputButton[]) {
+	SerializeButtons: (Buttons?: readonly QuickInputButton[]) => {
 		return Buttons?.map((Button, Index) => ({
 			iconPath: (Button as any).iconPath
 				? {
@@ -48,6 +46,4 @@ const QuickPick = {
 	},
 };
 
-export default {
-	QuickPick,
-};
+export default { QuickPick };

@@ -22,24 +22,24 @@ let HandleCounter = 0;
  * @param Data The provider data to register.
  * @returns An `Effect` that resolves to a `Disposable`.
  */
-export default function <T>(
+const RegisterProvider = <T>(
 	Registry: Ref.Ref<Map<number, T>>,
 	IPC: IPCService,
 	RPCRegisterMethod: string,
 	Data: T,
-): Effect.Effect<Disposable> {
+): Effect.Effect<Disposable> => {
 	return Effect.sync(() => {
 		const Handle = ++HandleCounter;
-		Ref.update(Registry, (map) => map.set(Handle, Data)).pipe(
+		Ref.update(Registry, (Map) => Map.set(Handle, Data)).pipe(
 			Effect.runSync,
 		);
 		IPC.SendNotification(RPCRegisterMethod, [
 			Handle,
-			(Data as any).type, // Assumes the data object has a 'type' property (e.g., debug type)
+			(Data as any).Type, // Assumes the data object has a 'type' property (e.g., debug type)
 		]).pipe(Effect.runFork);
 
 		return new Disposable(() => {
-			Ref.update(Registry, (map) => (map.delete(Handle), map)).pipe(
+			Ref.update(Registry, (Map) => (Map.delete(Handle), Map)).pipe(
 				Effect.runSync,
 			);
 			const RPCUnregisterMethod = `$unregister${RPCRegisterMethod.slice(1)}`; // e.g., $register... -> $unregister...
@@ -48,4 +48,6 @@ export default function <T>(
 			);
 		});
 	});
-}
+};
+
+export default RegisterProvider;

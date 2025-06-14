@@ -3,58 +3,60 @@
  * @description Type converters for the Dialog APIs (`showOpenDialog`, `showSaveDialog`).
  */
 
-import type { OpenDialogOptions, SaveDialogOptions } from "vscode";
+import type { OpenDialogOptions, SaveDialogOptions, Uri } from "vscode";
 
-import { URI } from "../Type/ExtHostTypes.js";
+import { URI as VscURI } from "../Type/ExtHostTypes.js";
 
-function SerializeFilters(filters?: { [name: string]: readonly string[] }) {
-	if (!filters) {
+const SerializeFilters = (Filters?: {
+	readonly [Name: string]: readonly string[];
+}) => {
+	if (!Filters) {
 		return undefined;
 	}
-	return Object.entries(filters).map(([Name, Extensions]) => ({
+	return Object.entries(Filters).map(([Name, Extensions]) => ({
 		name: Name,
 		extensions: Extensions,
 	}));
-}
+};
 
 const OpenDialogOption = {
-	ToDTO(Option?: OpenDialogOptions) {
-		if (!Option) {
+	ToDTO: (Options?: OpenDialogOptions) => {
+		if (!Options) {
 			return undefined;
 		}
 		return {
-			...Option,
-			defaultUri: Option.defaultUri?.toJSON(),
-			filters: SerializeFilters(Option.filters),
+			...Options,
+			defaultUri: Options.defaultUri?.toJSON(),
+			filters: SerializeFilters(Options.filters),
 		};
 	},
 };
 
 const SaveDialogOption = {
-	ToDTO(Option?: SaveDialogOptions) {
-		if (!Option) {
+	ToDTO: (Options?: SaveDialogOptions) => {
+		if (!Options) {
 			return undefined;
 		}
 		return {
-			...Option,
-			defaultUri: Option.defaultUri?.toJSON(),
-			filters: SerializeFilters(Option.filters),
+			...Options,
+			defaultUri: Options.defaultUri?.toJSON(),
+			filters: SerializeFilters(Options.filters),
 		};
 	},
 };
 
 const DialogResult = {
-	ToURI(DTO: any): URI | undefined {
+	ToURI: (DTO: any): Uri | undefined => {
 		if (!DTO) {
 			return undefined;
 		}
-		return URI.revive(DTO);
+		return VscURI.revive(DTO);
 	},
-	ToURIArray(DTOs: any[] | undefined): URI[] | undefined {
+	ToURIArray: (DTOs: any[] | undefined): Uri[] | undefined => {
 		if (!DTOs || !Array.isArray(DTOs)) {
 			return undefined;
 		}
-		return DTOs.map(DialogResult.ToURI).filter((u): u is URI => !!u);
+		return DTOs.map(DialogResult.ToURI).filter((URI): URI is Uri => !!URI);
 	},
 };
 

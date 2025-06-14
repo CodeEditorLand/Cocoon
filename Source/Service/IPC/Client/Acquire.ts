@@ -14,17 +14,18 @@ import {
 } from "@grpc/proto-loader";
 import { Effect } from "effect";
 
-import ConfigurationServiceTag from "../Configuration/Service.js";
-import { GRPCConnectionError } from "../Error/GRPCConnectionError.js";
+import ConfigurationService from "../Configuration.js";
+import { gRPCConnectionError } from "../Error.js";
+import Generated from "../Generated.js";
 import Release from "./Release.js";
 import type ClientService from "./Service.js";
 
 /**
  * An `Effect` that loads the gRPC `.proto` file definition from disk.
  */
-function LoadProtoDefinition(
+const LoadProtoDefinition = (
 	ProtoPath: string,
-): Effect.Effect<PackageDefinition, GRPCConnectionError> {
+): Effect.Effect<PackageDefinition, gRPCConnectionError> => {
 	return Effect.tryPromise({
 		try: () =>
 			loadPackageDefinition({
@@ -36,18 +37,18 @@ function LoadProtoDefinition(
 				oneofs: true,
 			} as any),
 		catch: (Cause) =>
-			new GRPCConnectionError({ Cause, Context: "ProtoLoadFailed" }),
+			new gRPCConnectionError({ Cause, Context: "ProtoLoadFailed" }),
 	});
-}
+};
 
 /**
  * An `Effect` that creates an insecure gRPC client instance from a loaded
  * package definition.
  */
-function CreateClientInstance(
+const CreateClientInstance = (
 	PackageDefinition: GrpcObject,
 	ServerAddress: string,
-): Effect.Effect<ClientService, GRPCConnectionError> {
+): Effect.Effect<ClientService, gRPCConnectionError> => {
 	return Effect.try({
 		try: () => {
 			const Proto = (
@@ -61,25 +62,25 @@ function CreateClientInstance(
 			) as ClientService;
 		},
 		catch: (Cause) =>
-			new GRPCConnectionError({
+			new gRPCConnectionError({
 				Cause,
 				Context: "ClientInstantiationFailed",
 			}),
 	});
-}
+};
 
 /**
  * An `Effect` that waits for the gRPC client to establish a ready connection.
  */
-function WaitForClientReady(
+const WaitForClientReady = (
 	Client: ClientService,
-): Effect.Effect<void, GRPCConnectionError> {
-	return Effect.async<void, GRPCConnectionError>((Resume) => {
+): Effect.Effect<void, gRPCConnectionError> => {
+	return Effect.async<void, gRPCConnectionError>((Resume) => {
 		(Client as any).waitForReady(Date.now() + 10000, (Error?: Error) => {
 			if (Error) {
 				Resume(
 					Effect.fail(
-						new GRPCConnectionError({
+						new gRPCConnectionError({
 							Cause: Error,
 							Context: "ClientNotReady",
 						}),
@@ -90,14 +91,14 @@ function WaitForClientReady(
 			}
 		});
 	});
-}
+};
 
 /**
  * An `Effect` that acquires the gRPC client as a managed resource.
  */
 export default Effect.acquireRelease(
-	Effect.gen(function* (Yield) {
-		const Config = yield* Yield(ConfigurationServiceTag);
+	Effect.gen(function* () {
+		const Config = yield* ConfigurationService;
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
 		const Definition = yield* LoadProtoDefinition(ProtoPath);

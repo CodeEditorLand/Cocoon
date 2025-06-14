@@ -5,29 +5,30 @@
  */
 
 import * as Module from "node:module";
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import { URI } from "vs/base/common/uri.js";
 
-import LogServiceTag from "../../Service/Log/Service.js";
-import APIFactoryServiceTag from "../APIFactory/Service.js";
-import ExtensionPathServiceTag from "../ExtensionPath/Service.js";
+import LogService from "../../Service/Log/Service.js";
+import APIFactoryService from "../APIFactory/Service.js";
+import ExtensionPathService from "../ExtensionPath/Service.js";
+import NodeModuleShimService from "../NodeModuleShim/Service.js";
 import type INodeModuleFactory from "./Factory/Interface.js";
 import VSCodeNodeModuleFactory from "./Factory/VSCode.js";
+import type Service from "./Service.js";
 
 /**
  * An Effect that builds the live implementation of the RequireInterceptor service.
  */
-export default Effect.gen(function* (_) {
-	const APIFactory = yield* _(APIFactoryServiceTag);
-	const ExtensionPath = yield* _(ExtensionPathServiceTag);
-	const Log = yield* _(LogServiceTag);
+export default Effect.gen(function* () {
+	const APIFactory = yield* APIFactoryService;
+	const ExtensionPath = yield* ExtensionPathService;
+	const Log = yield* LogService;
+	const NodeModuleShim = yield* NodeModuleShimService;
 
-	const Factories = new Map<string, INodeModuleFactory>();
-	Factories.set(
-		"vscode",
-		new VSCodeNodeModuleFactory(APIFactory, ExtensionPath, Log),
-	);
-	// Other factories, e.g., for 'open', 'electron', would be registered here.
+	const Factories = new Map<string, INodeModuleFactory>([
+		["vscode", new VSCodeNodeModuleFactory(APIFactory, ExtensionPath, Log)],
+		// Other factories for modules like 'open' or 'electron' would be added here.
+	]);
 
 	// Store the original require function before we patch it.
 	const OriginalRequire = Module.prototype.require;
@@ -41,23 +42,42 @@ export default Effect.gen(function* (_) {
 
 			yield* Effect.sync(() => {
 				(Module.prototype as any).require = function (
-					This: NodeModule,
+					this: NodeModule,
 					Request: string,
 				): any {
+					// If a factory exists for the requested module, use it.
 					const Factory = Factories.get(Request);
 					if (Factory) {
-						// If a filename is not available, we can't identify the extension.
-						// We'll create a dummy URI, and the factory will handle the fallback.
-						const ParentURI = This.filename
-							? URI.file(This.filename)
+						const ParentURI = this.filename
+							? URI.file(this.filename)
 							: URI.parse("unknown:/unknown");
 
 						return Factory.Load(Request, ParentURI, (Req) =>
-							OriginalRequire.call(This, Req),
+							OriginalRequire.call(this, Req),
 						);
 					}
+
+					// If it's a built-in Node module, attempt to load a shim.
+					if (Module.builtinModules.includes(Request)) {
+						const ParentURI = this.filename
+							? URI.file(this.filename)
+							: URI.parse("unknown:/unknown");
+
+						// The shim loader is effectful, but `require` is sync. We must run it synchronously.
+						const ShimResult = Effect.runSyncExit(
+							NodeModuleShim.Load(Request, ParentURI),
+						);
+
+						if (ShimResult._tag === "Success") {
+							return ShimResult.value;
+						} else {
+							// If shimming fails (e.g., module is blocked), throw the error to the extension.
+							throw ShimResult.cause;
+						}
+					}
+
 					// For any other module, delegate to the original `require`.
-					return OriginalRequire.call(This, Request);
+					return OriginalRequire.call(this, Request);
 				};
 
 				IsInstalled = true;
@@ -68,9 +88,9 @@ export default Effect.gen(function* (_) {
 			);
 		});
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const RequireInterceptorImplementation: Service = {
 		Install,
 	};
 
-	return ServiceImplementation;
+	return RequireInterceptorImplementation;
 });

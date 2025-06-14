@@ -3,11 +3,11 @@
  * @description Constructs the `vscode.tasks` namespace for the API object.
  */
 
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
-import TaskServiceTag from "../../Service/Task/Service.js";
+import type TaskService from "../../Service/Task/Service.js";
 
 /**
  * Creates the `vscode.tasks` namespace object.
@@ -21,11 +21,11 @@ import TaskServiceTag from "../../Service/Task/Service.js";
  * @param Extension The description of the extension for which this API is being created.
  * @returns An object that implements the `vscode.tasks` API.
  */
-export default function (
-	Task: Context.Tag.Service<typeof TaskServiceTag>,
+const CreateTasksNamespace = (
+	Task: TaskService,
 	AsEvent: <T>(Event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
-): typeof VSCode.tasks {
+): typeof VSCode.tasks => {
 	return {
 		// --- Properties ---
 		get taskExecutions() {
@@ -52,5 +52,7 @@ export default function (
 				Task.ExecuteTask(TaskParameter, Extension),
 			);
 		},
-	};
-}
+	} as typeof VSCode.tasks;
+};
+
+export default CreateTasksNamespace;

@@ -8,9 +8,6 @@
 import { Context, type Effect } from "effect";
 import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
 
-/**
- * The `Context.Tag` for the `ProtocolAdapter` service.
- */
 export default class extends Context.Tag("IPC/ProtocolAdapter")<
 	any,
 	IMessagePassingProtocol & {

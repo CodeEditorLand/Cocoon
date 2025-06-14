@@ -5,25 +5,22 @@
 
 import { Layer } from "effect";
 
-import FileSystemInformationLive from "../FileSystemInformation/Live.js";
+import { Live as FileSystemInformationLive } from "../FileSystemInformation.js";
+import { Live as IPCLive } from "../IPC.js";
 import type IPCConfiguration from "../IPC/Configuration.js";
-import IPCLive from "../IPC/Live.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
 /**
  * The live implementation Layer for the FileSystem service.
  * It depends on the IPC and FileSystemInformation services.
- * This is a factory that takes IPC configuration.
  * @param Config The IPC configuration.
  */
-export default function (Config: {
-	MountainAddress: string;
-	CocoonAddress: string;
-}) {
-	return Layer.effect(Service, Definition).pipe(
+const Live = (Config: IPCConfiguration) =>
+	Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.merge(IPCLive(Config), FileSystemInformationLive(Config)),
 		),
 	);
-}
+
+export default Live;

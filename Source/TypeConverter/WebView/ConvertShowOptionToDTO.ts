@@ -25,12 +25,14 @@ interface IEditorOptions {
  *   focus when shown.
  * @returns A serializable DTO representing the showing behavior.
  */
-export default function (
+const ConvertShowOptionToDTO = (
 	ViewColumn: VSCode.ViewColumn | undefined,
 	PreserveFocus: boolean,
-): { viewColumn?: number; preserveFocus: boolean } & IEditorOptions {
+): { viewColumn?: number; preserveFocus: boolean } & IEditorOptions => {
 	return {
 		viewColumn: ViewColumnConverter.FromAPI(ViewColumn),
 		preserveFocus: PreserveFocus,
 	};
-}
+};
+
+export default ConvertShowOptionToDTO;

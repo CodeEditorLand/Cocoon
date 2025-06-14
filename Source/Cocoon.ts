@@ -3,7 +3,7 @@
  * @description The main entry point for the Cocoon Node.js extension host.
  */
 
-import * as Path from "path";
+import * as Path from "node:path";
 import { NodeRuntime } from "@effect/platform-node";
 import { Deferred, Effect, Layer } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
@@ -58,7 +58,7 @@ const Main = Effect.gen(function* () {
 
 	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
-		(initializationData: IExtensionHostInitData) =>
+		(InitializationData: IExtensionHostInitData) =>
 			Effect.gen(function* () {
 				yield* Effect.logInfo(
 					"Received 'initExtensionHost' data from Mountain.",
@@ -69,7 +69,7 @@ const Main = Effect.gen(function* () {
 					ApplicationConfiguration,
 				).pipe(
 					Layer.provide(CoreServiceLayer),
-					Layer.provide(InitDataLayer(initializationData)),
+					Layer.provide(InitDataLayer(InitializationData)),
 				);
 
 				yield* Effect.provide(
@@ -79,7 +79,7 @@ const Main = Effect.gen(function* () {
 
 				yield* Deferred.succeed(InitializationBarrier, undefined);
 				return "initialized";
-			}),
+			}).pipe(Effect.runPromise),
 	);
 
 	yield* IPC.SendNotification("$initialHandshake", []);
@@ -90,8 +90,8 @@ const Main = Effect.gen(function* () {
 
 	yield* Effect.never;
 }).pipe(
-	Effect.catchAllCause((cause) =>
-		Effect.logFatal("Cocoon main process failed.", cause),
+	Effect.catchAllCause((Cause) =>
+		Effect.logFatal("Cocoon main process failed.", Cause),
 	),
 );
 
@@ -111,6 +111,6 @@ const PreInitLayer = Layer.mergeAll(
 
 // --- Run the Application ---
 
-const RunnableApplication = Main.pipe(Effect.provide(PreInitLayer));
+const RunnableApplication = Effect.provide(Main, PreInitLayer);
 
 NodeRuntime.runMain(RunnableApplication);

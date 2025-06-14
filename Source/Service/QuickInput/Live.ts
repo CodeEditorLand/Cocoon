@@ -16,11 +16,9 @@ import Service from "./Service.js";
  * This is a factory that takes IPC configuration.
  * @param Config The IPC configuration.
  */
-export default function (Config: {
-	MountainAddress: string;
-	CocoonAddress: string;
-}) {
+const Live = (Config: IPCConfiguration) => {
 	return Layer.effect(Service, Definition).pipe(
 		Layer.provide(IPCLive(Config)),
 	);
-}
+};
+export default Live;

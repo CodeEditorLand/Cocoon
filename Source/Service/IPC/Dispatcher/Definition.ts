@@ -3,12 +3,13 @@
  * @description The live implementation of the Dispatcher service.
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Effect, Ref } from "effect";
 import { RPCProtocol } from "vs/workbench/services/extensions/common/rpcProtocol.js";
-import type { IDisposable } from "vscode";
+import type { Disposable } from "vscode";
 
 import CancellationService from "../../Cancellation/Service.js";
 import ProtocolAdapterService from "../ProtocolAdapter/Service.js";
+import type Service from "./Service.js";
 
 type InvokeHandler = (...Arguments: any[]) => Promise<any>;
 
@@ -20,21 +21,21 @@ export default Effect.gen(function* () {
 
 	const DispatchRequest = (Method: string, Parameters: any[]) =>
 		Effect.gen(function* () {
-			const handlers = yield* Ref.get(InvokeHandlers);
-			const customHandler = handlers.get(Method);
+			const Handlers = yield* Ref.get(InvokeHandlers);
+			const CustomHandler = Handlers.get(Method);
 
-			if (customHandler) {
+			if (CustomHandler) {
 				return yield* Effect.tryPromise(() =>
-					customHandler(...Parameters),
+					CustomHandler(...Parameters),
 				);
 			} else {
 				if ((RPCProtocolInstance as any)._getHandler) {
-					const handler = (RPCProtocolInstance as any)._getHandler(
+					const Handler = (RPCProtocolInstance as any)._getHandler(
 						Method,
 					);
-					if (handler) {
+					if (Handler) {
 						return yield* Effect.tryPromise(() =>
-							handler(...Parameters),
+							Handler(...Parameters),
 						);
 					}
 				}
@@ -54,27 +55,27 @@ export default Effect.gen(function* () {
 			}
 		});
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const DispatcherImplementation: Service = {
 		DispatchRequest,
 		DispatchNotification,
 		CancelOperation: Cancellation.CancelToken,
 		ProcessIncomingData: ProtocolAdapter.ProcessIncomingData,
 		RegisterInvokeHandler: (Channel, Handler) => {
-			const registerEffect = Ref.update(InvokeHandlers, (map) =>
-				map.set(Channel, Handler),
+			const RegisterEffect = Ref.update(InvokeHandlers, (Map) =>
+				Map.set(Channel, Handler),
 			);
-			Effect.runSync(registerEffect);
+			Effect.runSync(RegisterEffect);
 			return {
 				dispose: () => {
-					const unregisterEffect = Ref.update(
+					const UnregisterEffect = Ref.update(
 						InvokeHandlers,
-						(map) => (map.delete(Channel), map),
+						(Map) => (Map.delete(Channel), Map),
 					);
-					Effect.runFork(unregisterEffect);
+					Effect.runFork(UnregisterEffect);
 				},
 			};
 		},
 	};
 
-	return ServiceImplementation;
+	return DispatcherImplementation;
 });

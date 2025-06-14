@@ -8,9 +8,6 @@
 import { Context, type Effect } from "effect";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
 
-/**
- * The Context.Tag for the APIDeprecation service.
- */
 export default class extends Context.Tag("Service/APIDeprecation")<
 	any,
 	{

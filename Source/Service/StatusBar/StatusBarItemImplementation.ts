@@ -16,14 +16,16 @@ import type {
 } from "vscode";
 
 import { ThemeColor } from "../../Type/ExtHostTypes.js";
-import * as TypeConverter from "../../TypeConverter/Command.js";
-import * as StatusBarConverter from "../../TypeConverter/StatusBar.js";
-import type CommandService from "../Command/Service.js";
+import { StatusBar as StatusBarConverter } from "../../TypeConverter.js";
+import {
+	APICommand,
+	Definition as CommandConverterDefinition,
+} from "../../TypeConverter/Command.js";
 import type IPCService from "../IPC/Service.js";
 
 export default class implements StatusBarItem {
-	private _isDisposed = false;
-	private _visible = false;
+	private IsDisposed = false;
+	private IsVisible = false;
 
 	// --- Backing fields for properties ---
 	private _id: string;
@@ -38,16 +40,16 @@ export default class implements StatusBarItem {
 	private _accessibilityInformation: AccessibilityInformation | undefined;
 
 	constructor(
-		private readonly entryID: string, // Internal unique ID for IPC
+		private readonly EntryID: string, // Internal unique ID for IPC
 		private readonly IPC: IPCService,
 		private readonly OnDidDispose: () => void,
-		initialID: string,
-		initialAlignment: StatusBarAlignment,
-		initialPriority?: number,
+		InitialID: string,
+		InitialAlignment: StatusBarAlignment,
+		InitialPriority?: number,
 	) {
-		this._id = initialID;
-		this._alignment = initialAlignment;
-		this._priority = initialPriority;
+		this._id = InitialID;
+		this._alignment = InitialAlignment;
+		this._priority = InitialPriority;
 	}
 
 	// --- Getters and Setters that trigger IPC updates ---
@@ -64,121 +66,121 @@ export default class implements StatusBarItem {
 	get name(): string | undefined {
 		return this._name;
 	}
-	set name(value: string | undefined) {
-		if (this._name !== value) {
-			this._name = value;
-			this.update();
+	set name(Value: string | undefined) {
+		if (this._name !== Value) {
+			this._name = Value;
+			this.Update();
 		}
 	}
 
 	get text(): string {
 		return this._text;
 	}
-	set text(value: string) {
-		if (this._text !== value) {
-			this._text = value;
-			this.update();
+	set text(Value: string) {
+		if (this._text !== Value) {
+			this._text = Value;
+			this.Update();
 		}
 	}
 
 	get tooltip(): string | MarkdownString | undefined {
 		return this._tooltip;
 	}
-	set tooltip(value: string | MarkdownString | undefined) {
-		if (this._tooltip !== value) {
-			this._tooltip = value;
-			this.update();
+	set tooltip(Value: string | MarkdownString | undefined) {
+		if (this._tooltip !== Value) {
+			this._tooltip = Value;
+			this.Update();
 		}
 	}
 
 	get color(): string | VSCodeThemeColor | undefined {
 		return this._color;
 	}
-	set color(value: string | VSCodeThemeColor | undefined) {
-		if (this._color !== value) {
-			this._color = value;
+	set color(Value: string | VSCodeThemeColor | undefined) {
+		if (this._color !== Value) {
+			this._color = Value;
 			if (
-				value instanceof ThemeColor &&
-				value.id === "statusBarItem.errorForeground"
+				Value instanceof ThemeColor &&
+				Value.id === "statusBarItem.errorForeground"
 			) {
 				this.backgroundColor = new ThemeColor(
 					"statusBarItem.errorBackground",
 				);
 			}
-			this.update();
+			this.Update();
 		}
 	}
 
 	get backgroundColor(): VSCodeThemeColor | undefined {
 		return this._backgroundColor;
 	}
-	set backgroundColor(value: VSCodeThemeColor | undefined) {
-		if (this._backgroundColor !== value) {
-			this._backgroundColor = value;
-			this.update();
+	set backgroundColor(Value: VSCodeThemeColor | undefined) {
+		if (this._backgroundColor !== Value) {
+			this._backgroundColor = Value;
+			this.Update();
 		}
 	}
 
 	get command(): string | Command | undefined {
 		return this._command;
 	}
-	set command(value: string | Command | undefined) {
-		if (this._command !== value) {
-			this._command = value;
-			this.update();
+	set command(Value: string | Command | undefined) {
+		if (this._command !== Value) {
+			this._command = Value;
+			this.Update();
 		}
 	}
 
 	get accessibilityInformation(): AccessibilityInformation | undefined {
 		return this._accessibilityInformation;
 	}
-	set accessibilityInformation(value: AccessibilityInformation | undefined) {
-		if (this._accessibilityInformation !== value) {
-			this._accessibilityInformation = value;
-			this.update();
+	set accessibilityInformation(Value: AccessibilityInformation | undefined) {
+		if (this._accessibilityInformation !== Value) {
+			this._accessibilityInformation = Value;
+			this.Update();
 		}
 	}
 
 	// --- Public Methods ---
 	show(): void {
-		if (!this._visible) {
-			this._visible = true;
-			this.update();
+		if (!this.IsVisible) {
+			this.IsVisible = true;
+			this.Update();
 		}
 	}
 
 	hide(): void {
-		if (this._visible) {
-			this._visible = false;
+		if (this.IsVisible) {
+			this.IsVisible = false;
 			// Send a dispose notification to the host to remove the UI item.
 			Effect.runFork(
-				this.IPC.SendNotification("$disposeEntry", [this.entryID]),
+				this.IPC.SendNotification("$disposeEntry", [this.EntryID]),
 			);
 		}
 	}
 
 	dispose(): void {
-		if (!this._isDisposed) {
-			this._isDisposed = true;
+		if (!this.IsDisposed) {
+			this.IsDisposed = true;
 			this.hide();
 			this.OnDidDispose();
 		}
 	}
 
 	// --- Private Methods ---
-	private update(): void {
-		if (this._isDisposed || !this._visible) {
+	private Update(): void {
+		if (this.IsDisposed || !this.IsVisible) {
 			return;
 		}
 		// The update is a fire-and-forget notification to the host.
 		// A real CommandConverter would be injected.
-		const CommandConverterInstance = new TypeConverter.Definition(
+		const CommandConverterInstance = new CommandConverterDefinition(
 			{} as any,
 			() => undefined,
 		);
 		const DTO = StatusBarConverter.FromAPI(
 			this,
-			this.entryID,
+			this.EntryID,
 			CommandConverterInstance,
 		);
 		Effect.runFork(this.IPC.SendNotification("$setEntry", [DTO]));

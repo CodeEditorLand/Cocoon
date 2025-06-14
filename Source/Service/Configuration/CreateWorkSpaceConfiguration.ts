@@ -13,12 +13,12 @@ import type IPCService from "../IPC/Service.js";
 import type LogService from "../Log/Service.js";
 import type WorkSpaceConfiguration from "./Type/WorkSpaceConfiguration.js";
 
-export default function (
+const CreateWorkSpaceConfiguration = (
 	Snapshot: any,
 	SectionPrefix: string,
 	IPC: IPCService,
 	Log: LogService,
-): WorkSpaceConfiguration {
+): WorkSpaceConfiguration => {
 	const Get = <T>(Key: string, DefaultValue?: T): T | undefined => {
 		// Traverse the object path to get the value.
 		const Value = Key.split(".").reduce(
@@ -38,8 +38,11 @@ export default function (
 			"$updateConfigurationOption",
 			[Target, `${SectionPrefix}.${Key}`, Value, OverrideInLanguage],
 		).pipe(
-			Effect.tapError((err) =>
-				Log.Error(`Configuration update for key '${Key}' failed.`, err),
+			Effect.tapError((Error) =>
+				Log.Error(
+					`Configuration update for key '${Key}' failed.`,
+					Error,
+				),
 			),
 		);
 		// The vscode API for update is fire-and-forget, so we fork the effect.
@@ -63,4 +66,6 @@ export default function (
 		},
 		update: Update,
 	};
-}
+};
+
+export default CreateWorkSpaceConfiguration;

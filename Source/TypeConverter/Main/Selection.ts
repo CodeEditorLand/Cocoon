@@ -4,6 +4,7 @@
  */
 
 import type { ISelection } from "vs/editor/common/core/selection.js";
+import type { Selection as VscSelection } from "vscode";
 
 import { Position, Selection } from "../../Type/ExtHostTypes.js";
 
@@ -12,7 +13,7 @@ import { Position, Selection } from "../../Type/ExtHostTypes.js";
  * @param SelectionInstance The `vscode.Selection` instance to convert.
  * @returns The `ISelection` DTO.
  */
-export const FromAPI = (SelectionInstance: Selection): ISelection => {
+const FromAPI = (SelectionInstance: VscSelection): ISelection => {
 	return {
 		selectionStartLineNumber: SelectionInstance.start.line + 1,
 		selectionStartColumn: SelectionInstance.start.character + 1,
@@ -26,7 +27,7 @@ export const FromAPI = (SelectionInstance: Selection): ISelection => {
  * @param SelectionDTO The `ISelection` DTO to revive.
  * @returns A new `vscode.Selection` instance.
  */
-export const ToAPI = (SelectionDTO: ISelection): Selection => {
+const ToAPI = (SelectionDTO: ISelection): VscSelection => {
 	const Anchor = new Position(
 		SelectionDTO.selectionStartLineNumber - 1,
 		SelectionDTO.selectionStartColumn - 1,
@@ -38,7 +39,4 @@ export const ToAPI = (SelectionDTO: ISelection): Selection => {
 	return new Selection(Anchor, Active);
 };
 
-export default {
-	FromAPI,
-	ToAPI,
-};
+export default { FromAPI, ToAPI };

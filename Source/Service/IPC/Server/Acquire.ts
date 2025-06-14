@@ -5,7 +5,7 @@
  */
 
 import * as Path from "node:path";
-import * as gRPC from "@grpc/grpc-js";
+import * as GRPC from "@grpc/grpc-js";
 import {
 	loadPackageDefinition,
 	type GrpcObject,
@@ -20,9 +20,9 @@ import CreateServiceImplementation from "./CreateServiceImplementation.js";
 import Release from "./Release.js";
 import type ServerService from "./Service.js";
 
-function LoadProtoDefinition(
+const LoadProtoDefinition = (
 	ProtoPath: string,
-): Effect.Effect<PackageDefinition, gRPCConnectionError> {
+): Effect.Effect<PackageDefinition, gRPCConnectionError> => {
 	return Effect.tryPromise({
 		try: () =>
 			loadPackageDefinition({
@@ -36,17 +36,17 @@ function LoadProtoDefinition(
 		catch: (Cause) =>
 			new gRPCConnectionError({ Cause, Context: "ProtoLoadFailed" }),
 	});
-}
+};
 
-function StartServer(
+const StartServer = (
 	Server: ServerService,
 	ServerAddress: string,
-): Effect.Effect<void, gRPCConnectionError> {
+): Effect.Effect<void, gRPCConnectionError> => {
 	return Effect.async<void, gRPCConnectionError>((Resume) => {
 		Server.bindAsync(
 			ServerAddress,
-			gRPC.ServerCredentials.createInsecure(),
-			(Error, _port) => {
+			GRPC.ServerCredentials.createInsecure(),
+			(Error, _Port) => {
 				if (Error) {
 					Resume(
 						Effect.fail(
@@ -60,11 +60,11 @@ function StartServer(
 					try {
 						Server.start();
 						Resume(Effect.void);
-					} catch (e) {
+					} catch (CaughtError) {
 						Resume(
 							Effect.fail(
 								new gRPCConnectionError({
-									Cause: e,
+									Cause: CaughtError,
 									Context: "ServerStartFailed",
 								}),
 							),
@@ -74,7 +74,7 @@ function StartServer(
 			},
 		);
 	});
-}
+};
 
 export default Effect.acquireRelease(
 	Effect.gen(function* () {
@@ -87,16 +87,16 @@ export default Effect.acquireRelease(
 			.vine_ipc as GrpcObject;
 		const ServiceDefinition = (Proto.CocoonService as any).service;
 
-		const Server = new gRPC.Server();
+		const Server = new GRPC.Server();
 		const Implementation = CreateServiceImplementation(Dispatcher);
 		Server.addService(ServiceDefinition, Implementation);
 
-		yield* StartServer(Server, Config.CocoonAddress);
+		yield* StartServer(Server as any, Config.CocoonAddress);
 		yield* Effect.logInfo(
 			`Cocoon gRPC server listening at ${Config.CocoonAddress}.`,
 		);
 
-		return Server;
+		return Server as ServerService;
 	}),
 	(Server) => Release(Server).pipe(Effect.orDie),
 );

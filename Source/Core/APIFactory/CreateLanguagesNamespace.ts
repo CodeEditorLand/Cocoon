@@ -20,10 +20,10 @@ import type LanguageFeatureService from "../../Service/LanguageFeature/Service.j
  * @param Extension The description of the extension for which this API is being created.
  * @returns An object that implements the `vscode.languages` API.
  */
-export default function (
+const CreateLanguagesNamespace = (
 	LanguageFeature: LanguageFeatureService,
 	Extension: IExtensionDescription,
-): typeof VSCode.languages {
+): typeof VSCode.languages => {
 	return {
 		// --- Provider Registration Methods ---
 		registerHoverProvider: (selector, provider) => {
@@ -75,15 +75,17 @@ export default function (
 			// This would be delegated to the LanguageFeatureService
 			return Promise.resolve([]);
 		},
-		setTextDocumentLanguage: (document, languageId) => {
+		setTextDocumentLanguage: (document, _languageId) => {
 			// This would be delegated to the LanguageFeatureService
 			return Promise.resolve(document);
 		},
-		createDiagnosticCollection: (name?: string) => {
+		createDiagnosticCollection: (_name?: string) => {
 			// This would be delegated to the DiagnosticService
 			throw new Error(
 				"createDiagnosticCollection not implemented in this mock.",
 			);
 		},
 	} as any;
-}
+};
+
+export default CreateLanguagesNamespace;

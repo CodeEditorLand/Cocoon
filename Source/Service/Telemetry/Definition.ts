@@ -4,13 +4,14 @@
  * to the Mountain host process based on user privacy settings.
  */
 
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import type { SerializedError } from "vs/base/common/errors.js";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
 
 import InitDataService from "../InitData/Service.js";
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
+import type Service from "./Service.js";
 
 // Placeholders for internal types
 const TelemetryLevel = {
@@ -20,6 +21,9 @@ const TelemetryLevel = {
 	USAGE: 2,
 };
 
+/**
+ * An Effect that builds the live implementation of the Telemetry service.
+ */
 export default Effect.gen(function* () {
 	const InitData = yield* InitDataService;
 	const IPC = yield* IPCService;
@@ -29,14 +33,14 @@ export default Effect.gen(function* () {
 		InitData.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
 	const ProductConfig = (InitData.product as any)?.telemetryOptOut;
 
-	const ShouldSendEvent = (type: "usage" | "error"): boolean => {
+	const ShouldSendEvent = (Type: "usage" | "error"): boolean => {
 		if (TelemetryLevelValue === TelemetryLevel.NONE) {
 			return false;
 		}
-		if (type === "error" && ProductConfig?.error === true) {
+		if (Type === "error" && ProductConfig?.error === true) {
 			return false;
 		}
-		if (type === "usage" && ProductConfig?.usage === true) {
+		if (Type === "usage" && ProductConfig?.usage === true) {
 			return false;
 		}
 		return true;
@@ -84,21 +88,21 @@ export default Effect.gen(function* () {
 		);
 	};
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const TelemetryImplementation: Service = {
 		_serviceBrand: undefined,
 		getTelemetryInfo: () => Promise.resolve(InitData.telemetryInfo),
 		setEnabled: () => {},
-		publicLog: (eventName, data) => {
-			Effect.runFork(LogPublicEvent(eventName, data));
+		publicLog: (EventName, Data) => {
+			Effect.runFork(LogPublicEvent(EventName, Data));
 		},
-		publicLog2: (eventName, data) => {
-			Effect.runFork(LogPublicEvent(eventName, data as any));
+		publicLog2: (EventName, Data) => {
+			Effect.runFork(LogPublicEvent(EventName, Data as any));
 		},
-		onExtensionError: (extension, error) => {
-			Effect.runFork(LogExtensionError(extension, error));
+		onExtensionError: (Extension, Error) => {
+			Effect.runFork(LogExtensionError(Extension, Error));
 			return false;
 		},
 	};
 
-	return ServiceImplementation;
+	return TelemetryImplementation;
 });

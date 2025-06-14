@@ -29,7 +29,7 @@ import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
  * @param Extension The description of the extension for which this API is being created.
  * @returns An object that implements the `vscode.window` API.
  */
-export default function (
+const CreateWindowNamespace = (
 	Window: WindowService,
 	WorkSpace: WorkSpaceService,
 	StatusBar: StatusBarService,
@@ -37,7 +37,7 @@ export default function (
 	TreeView: TreeViewService,
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
-): typeof VSCode.window {
+): typeof VSCode.window => {
 	return {
 		// --- Properties ---
 		get state() {
@@ -115,4 +115,5 @@ export default function (
 		// These are typically added to the final object in the APIFactory itself
 		// or accessed via the corresponding service.
 	} as any;
-}
+};
+export default CreateWindowNamespace;

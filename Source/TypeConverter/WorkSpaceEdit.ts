@@ -7,8 +7,7 @@
 import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
-import * as TextEditConverter from "./Main/TextEdit.js";
-import * as URIConverter from "./Main/URI.js";
+import { TextEdit as TextEditConverter, URI as URIConverter } from "./Main.js";
 
 // Placeholders for internal VS Code DTOs
 interface IWorkspaceTextEdit {
@@ -29,23 +28,26 @@ type IWorkspaceEdit = {
 };
 
 export interface IVersionInformationProvider {
-	GetTextDocumentVersion(uri: VSCode.Uri): number | undefined;
+	GetTextDocumentVersion(Uri: VSCode.Uri): number | undefined;
 }
 
-export const FromAPI = (
+const FromAPI = (
 	Edit: VSCode.WorkspaceEdit,
 	VersionProvider?: IVersionInformationProvider,
 ): IWorkspaceEdit => {
 	const Result: IWorkspaceEdit = { edits: [] };
 
 	for (const [URI, URIEditArray] of Edit.entries()) {
-		if (URIEditArray[0] instanceof ExtHostTypes.TextEdit) {
+		if (
+			URIEditArray.length > 0 &&
+			URIEditArray[0] instanceof ExtHostTypes.TextEdit
+		) {
 			const Resource = URIConverter.FromAPI(URI);
 			const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
 			for (const SingleEdit of URIEditArray as VSCode.TextEdit[]) {
 				Result.edits.push({
-					resource: Resource,
-					textEdit: TextEditConverter.FromAPI(SingleEdit),
+					resource: Resource as any,
+					textEdit: TextEditConverter.FromAPI(SingleEdit as any),
 					versionId: VersionId,
 				} as any);
 			}
@@ -67,7 +69,7 @@ export const FromAPI = (
 	return Result;
 };
 
-export const ToAPI = (DTO: IWorkspaceEdit): VSCode.WorkspaceEdit => {
+const ToAPI = (DTO: IWorkspaceEdit): VSCode.WorkspaceEdit => {
 	const Result = new ExtHostTypes.WorkspaceEdit();
 	for (const Edit of DTO.edits) {
 		if ("textEdit" in Edit) {
@@ -101,7 +103,4 @@ export const ToAPI = (DTO: IWorkspaceEdit): VSCode.WorkspaceEdit => {
 	return Result;
 };
 
-export default {
-	FromAPI,
-	ToAPI,
-};
+export default { FromAPI, ToAPI };

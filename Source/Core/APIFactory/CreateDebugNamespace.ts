@@ -21,11 +21,11 @@ import type DebugService from "../../Service/Debug/Service.js";
  * @param Extension The description of the extension for which this API is being created.
  * @returns An object that implements the `vscode.debug` API.
  */
-export default function (
+const CreateDebugNamespace = (
 	Debug: DebugService,
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
-): typeof VSCode.debug {
+): typeof VSCode.debug => {
 	return {
 		// --- Properties ---
 		get activeDebugSession() {
@@ -92,4 +92,6 @@ export default function (
 			return Effect.runPromise(Debug.RemoveBreakpoints(breakpoints));
 		},
 	} as any;
-}
+};
+
+export default CreateDebugNamespace;

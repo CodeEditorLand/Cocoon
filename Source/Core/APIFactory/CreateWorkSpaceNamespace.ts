@@ -3,13 +3,13 @@
  * @description Constructs the `vscode.workspace` namespace for the API object.
  */
 
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 import { Disposable } from "vscode";
 
-import APIDeprecationServiceTag from "../../Service/APIDeprecation/Service.js";
-import WorkSpaceServiceTag from "../../Service/WorkSpace/Service.js";
+import type APIDeprecationService from "../../Service/APIDeprecation/Service.js";
+import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
 
 /**
  * Creates the `vscode.workspace` namespace object.
@@ -24,12 +24,12 @@ import WorkSpaceServiceTag from "../../Service/WorkSpace/Service.js";
  * @param Extension The description of the extension for which this API is being created.
  * @returns An object that implements the `vscode.workspace` API.
  */
-export default function (
-	WorkSpace: Context.Tag.Service<typeof WorkSpaceServiceTag>,
-	Deprecation: Context.Tag.Service<typeof APIDeprecationServiceTag>,
+const CreateWorkSpaceNamespace = (
+	WorkSpace: WorkSpaceService,
+	Deprecation: APIDeprecationService,
 	AsEvent: <T>(Event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
-): typeof VSCode.workspace {
+): typeof VSCode.workspace => {
 	const Workspace: typeof VSCode.workspace = {
 		// --- Properties ---
 		get workspaceFolders() {
@@ -91,14 +91,15 @@ export default function (
 			return WorkSpace.getConfiguration(Section, Scope);
 		},
 		applyEdit: (Edit: VSCode.WorkspaceEdit) => {
-			// This would be delegated to a workspace edit service
-			return Promise.resolve(false);
+			return WorkSpace.applyEdit(Edit);
 		},
-		registerTextDocumentContentProvider: (Scheme, Provider) => {
+		registerTextDocumentContentProvider: (_Scheme, _Provider) => {
 			// This would be delegated to the document content provider service
 			return new Disposable(() => {});
 		},
-	};
+	} as unknown as typeof VSCode.workspace;
 
 	return Workspace;
-}
+};
+
+export default CreateWorkSpaceNamespace;

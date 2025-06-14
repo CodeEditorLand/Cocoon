@@ -7,12 +7,12 @@
 
 import { Layer } from "effect";
 
-import ClientLive from "./Client/Live.js";
+import { Live as ClientLive } from "./Client.js";
 import ConfigurationService from "./Configuration.js";
 import Definition from "./Definition.js";
-import DispatcherLive from "./Dispatcher/Live.js";
-import ProtocolAdapterLive from "./ProtocolAdapter/Live.js";
-import ServerLive from "./Server/Live.js";
+import { Live as DispatcherLive } from "./Dispatcher.js";
+import { Live as ProtocolAdapterLive } from "./ProtocolAdapter.js";
+import { Live as ServerLive } from "./Server.js";
 import Service from "./Service.js";
 
 /**
@@ -20,10 +20,10 @@ import Service from "./Service.js";
  * @param Config An object containing the `MountainAddress` and `CocoonAddress`.
  * @returns A self-contained `Layer` that provides the `IPC.Service`.
  */
-export default function (Config: {
-	MountainAddress: string;
-	CocoonAddress: string;
-}) {
+const Live = (Config: {
+	readonly MountainAddress: string;
+	readonly CocoonAddress: string;
+}) => {
 	const ConfigLayer = Layer.succeed(ConfigurationService, Config);
 
 	const DependenciesLayer = Layer.mergeAll(
@@ -36,4 +36,6 @@ export default function (Config: {
 	return Layer.effect(Service, Definition).pipe(
 		Layer.provide(DependenciesLayer),
 	);
-}
+};
+
+export default Live;

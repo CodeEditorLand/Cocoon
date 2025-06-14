@@ -4,6 +4,7 @@
  */
 
 import type { IPosition } from "vs/editor/common/core/position.js";
+import type { Position as VscPosition } from "vscode";
 
 import { Position } from "../../Type/ExtHostTypes.js";
 
@@ -13,8 +14,7 @@ import { Position } from "../../Type/ExtHostTypes.js";
  * @param PositionInstance The `vscode.Position` instance to convert.
  * @returns The `IPosition` DTO.
  */
-
-export const FromAPI = (PositionInstance: Position): IPosition => ({
+const FromAPI = (PositionInstance: VscPosition): IPosition => ({
 	lineNumber: PositionInstance.line + 1,
 	column: PositionInstance.character + 1,
 });
@@ -25,10 +25,7 @@ export const FromAPI = (PositionInstance: Position): IPosition => ({
  * @param PositionDTO The `IPosition` DTO to revive.
  * @returns A new `vscode.Position` instance.
  */
-export const ToAPI = (PositionDTO: IPosition): Position =>
+const ToAPI = (PositionDTO: IPosition): VscPosition =>
 	new Position(PositionDTO.lineNumber - 1, PositionDTO.column - 1);
 
-export default {
-	FromAPI,
-	ToAPI,
-};
+export default { FromAPI, ToAPI };

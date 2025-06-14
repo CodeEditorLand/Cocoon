@@ -13,7 +13,12 @@ export default class extends Data.TaggedError("DialogError")<{
 	readonly cause: unknown;
 	readonly context: string;
 }> {
-	override get message() {
-		return `Dialog operation failed: ${this.context}`;
+	constructor(Properties: {
+		readonly cause: unknown;
+		readonly context: string;
+	}) {
+		super(Properties);
+		this.message = `Dialog operation failed: ${this.context}`;
 	}
+	public override readonly message: string;
 }

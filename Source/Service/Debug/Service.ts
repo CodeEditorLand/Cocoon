@@ -5,7 +5,6 @@
 
 import { Context, type Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-
 import type {
 	Breakpoint,
 	DebugAdapterDescriptorFactory,
@@ -19,7 +18,12 @@ import type {
 	Disposable,
 	Event,
 	WorkspaceFolder,
-} from "./Type.js";
+} from "vscode";
+
+import type {
+	DebugProviderRegistrationError,
+	StartDebuggingError,
+} from "./Error.js";
 
 export default class extends Context.Tag("Service/Debug")<
 	any,
@@ -41,25 +45,25 @@ export default class extends Context.Tag("Service/Debug")<
 			DebugType: string,
 			Provider: DebugConfigurationProvider,
 			Extension: IExtensionDescription,
-		) => Effect.Effect<Disposable, Error>;
+		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
 
 		readonly RegisterDebugAdapterDescriptorFactory: (
 			DebugType: string,
 			Factory: DebugAdapterDescriptorFactory,
 			Extension: IExtensionDescription,
-		) => Effect.Effect<Disposable, Error>;
+		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
 
 		readonly RegisterDebugAdapterTrackerFactory: (
 			DebugType: string,
 			Factory: DebugAdapterTrackerFactory,
 			Extension: IExtensionDescription,
-		) => Effect.Effect<Disposable, Error>;
+		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
 
 		readonly StartDebugging: (
 			Folder: WorkspaceFolder | undefined,
 			Configuration: string | DebugConfiguration,
 			Options?: DebugSessionOptions,
-		) => Effect.Effect<boolean, Error>;
+		) => Effect.Effect<boolean, StartDebuggingError>;
 
 		readonly StopDebugging: (
 			Session?: DebugSession,

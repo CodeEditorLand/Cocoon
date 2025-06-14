@@ -8,8 +8,7 @@
 import { Context, type Effect } from "effect";
 import type { Uri } from "vscode";
 
-import type ModuleBlockedError from "./Error/ModuleBlockedError.js";
-import type ModuleNotShimmedError from "./Error/ModuleNotShimmedError.js";
+import type { ModuleBlockedError, ModuleNotShimmedError } from "./Error.js";
 
 export default class extends Context.Tag("Core/NodeModuleShim")<
 	any,

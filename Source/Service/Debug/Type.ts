@@ -4,4 +4,17 @@
  * namespace that are used by the Debug service.
  */
 
-export type * from "vscode";
+export type {
+	Breakpoint,
+	DebugAdapterDescriptorFactory,
+	DebugAdapterTrackerFactory,
+	DebugConfiguration,
+	DebugConfigurationProvider,
+	DebugConsole,
+	DebugSession,
+	DebugSessionCustomEvent,
+	DebugSessionOptions,
+	Disposable,
+	Event,
+	WorkspaceFolder,
+} from "vscode";

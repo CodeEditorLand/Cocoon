@@ -17,8 +17,10 @@ import type ClientService from "./Service.js";
  *
  * @param Client The gRPC client instance to close.
  */
-export default function (Client: ClientService) {
+const Release = (Client: ClientService) => {
 	return Effect.sync(() => {
 		(Client as any).close(); // The generated client has a close() method
 	}).pipe(Effect.tap(() => Effect.logInfo("gRPC client connection closed.")));
-}
+};
+
+export default Release;

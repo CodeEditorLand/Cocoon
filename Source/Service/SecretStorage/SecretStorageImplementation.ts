@@ -11,8 +11,7 @@ import type { Event, SecretStorage, SecretStorageChangeEvent } from "vscode";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type IPCService from "../IPC/Service.js";
 import type LogService from "../Log/Service.js";
-import EmptyKeyError from "./Error/EmptyKeyError.js";
-import InvalidValueError from "./Error/InvalidValueError.js";
+import { EmptyKeyError, InvalidValueError } from "./Error.js";
 
 export default class implements SecretStorage {
 	private readonly OnDidChangeEvent =
@@ -29,85 +28,78 @@ export default class implements SecretStorage {
 		// to fire this OnDidChangeEvent when secrets change in other windows.
 	}
 
-	private createGetEffect(Key: string) {
-		return Effect.gen(this, function* (_) {
+	private CreateGetEffect(Key: string) {
+		return Effect.gen(this, function* () {
 			if (!Key) {
-				return yield* _(Effect.fail(new EmptyKeyError()));
+				return yield* new EmptyKeyError();
 			}
-			const result = yield* _(
-				this.IPC.SendRequest<string | undefined>("$getPassword", [
-					this.ExtensionID,
-					Key,
-				]),
+			return yield* this.IPC.SendRequest<string | undefined>(
+				"$getPassword",
+				[this.ExtensionID, Key],
 			);
-			return result;
 		}).pipe(
-			Effect.catchTag("EmptyKeyError", (e) => Effect.fail(e)),
-			Effect.catchAll((err) =>
+			Effect.catchTag("EmptyKeyError", (Error) => Effect.fail(Error)),
+			Effect.catchAll((Error) =>
 				this.Log.Error(
 					`SecretStorage.get failed for key '${Key}' in ext '${this.ExtensionID}'.`,
-					err,
-				).pipe(Effect.flatMap(() => Effect.fail(err))),
+					Error,
+				).pipe(Effect.flatMap(() => Effect.fail(Error))),
 			),
 		);
 	}
 
-	private createStoreEffect(Key: string, Value: string) {
-		return Effect.gen(this, function* (_) {
+	private CreateStoreEffect(Key: string, Value: string) {
+		return Effect.gen(this, function* () {
 			if (!Key) {
-				return yield* _(Effect.fail(new EmptyKeyError()));
+				return yield* new EmptyKeyError();
 			}
 			if (typeof Value !== "string") {
-				return yield* _(Effect.fail(new InvalidValueError()));
+				return yield* new InvalidValueError();
 			}
-			yield* _(
-				this.IPC.SendNotification("$setPassword", [
-					this.ExtensionID,
-					Key,
-					Value,
-				]),
-			);
+			yield* this.IPC.SendNotification("$setPassword", [
+				this.ExtensionID,
+				Key,
+				Value,
+			]);
 			// Manually fire the event for local changes.
-			yield* _(this.OnDidChangeEvent.Fire({ key: Key }));
+			yield* this.OnDidChangeEvent.Fire({ key: Key });
 		}).pipe(
-			Effect.catchAll((err) =>
+			Effect.catchAll((Error) =>
 				this.Log.Error(
 					`SecretStorage.store failed for key '${Key}' in ext '${this.ExtensionID}'.`,
-					err,
-				).pipe(Effect.flatMap(() => Effect.fail(err))),
+					Error,
+				).pipe(Effect.flatMap(() => Effect.fail(Error))),
 			),
 		);
 	}
 
-	private createDeleteEffect(Key: string) {
-		return Effect.gen(this, function* (_) {
+	private CreateDeleteEffect(Key: string) {
+		return Effect.gen(this, function* () {
 			if (!Key) {
-				return yield* _(Effect.fail(new EmptyKeyError()));
+				return yield* new EmptyKeyError();
 			}
-			yield* _(
-				this.IPC.SendNotification("$deletePassword", [
-					this.ExtensionID,
-					Key,
-				]),
-			);
+			yield* this.IPC.SendNotification("$deletePassword", [
+				this.ExtensionID,
+				Key,
+			]);
 			// Manually fire the event for local changes.
-			yield* _(this.OnDidChangeEvent.Fire({ key: Key }));
+			yield* this.OnDidChangeEvent.Fire({ key: Key });
 		}).pipe(
-			Effect.catchAll((err) =>
+			Effect.catchAll((Error) =>
 				this.Log.Error(
 					`SecretStorage.delete failed for key '${Key}' in ext '${this.ExtensionID}'.`,
-					err,
-				).pipe(Effect.flatMap(() => Effect.fail(err))),
+					Error,
+				).pipe(Effect.flatMap(() => Effect.fail(Error))),
 			),
 		);
 	}
 
-	get = (key: string): Promise<string | undefined> =>
-		Effect.runPromise(this.createGetEffect(key));
+	get = (Key: string): Promise<string | undefined> =>
+		Effect.runPromise(this.CreateGetEffect(Key));
 
-	store = (key: string, value: string): Promise<void> =>
-		Effect.runPromise(this.createStoreEffect(key, value));
+	store = (Key: string, Value: string): Promise<void> =>
+		Effect.runPromise(this.CreateStoreEffect(Key, Value));
 
-	delete = (key: string): Promise<void> =>
-		Effect.runPromise(this.createDeleteEffect(key));
+	delete = (Key: string): Promise<void> =>
+		Effect.runPromise(this.CreateDeleteEffect(Key));
 }

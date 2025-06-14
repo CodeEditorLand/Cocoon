@@ -3,7 +3,7 @@
  * @description Converts the `vscode.ViewColumn` enum to its internal DTO representation.
  */
 
-import { ViewColumn as VscViewColumn } from "../../Type/ExtHostTypes.js";
+import { ViewColumn as VscViewColumn } from "vscode";
 
 // Placeholders for internal VS Code constants
 const ActiveEditorGroup = -1;
@@ -16,9 +16,7 @@ type EditorGroup = number;
  * @param ViewColumn The `vscode.ViewColumn` enum value.
  * @returns The corresponding internal `EditorGroup` number.
  */
-export const FromAPI = (
-	ViewColumn?: VscViewColumn,
-): EditorGroup | undefined => {
+const FromAPI = (ViewColumn?: VscViewColumn): EditorGroup | undefined => {
 	if (typeof ViewColumn !== "number") {
 		return undefined;
 	}
@@ -37,6 +35,4 @@ export const FromAPI = (
 	return undefined;
 };
 
-export default {
-	FromAPI,
-};
+export default { FromAPI };

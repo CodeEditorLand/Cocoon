@@ -19,15 +19,17 @@ import ConfigurationService from "./Service.js";
  *   the configuration.
  * @returns An `Effect` that resolves to the `vscode.WorkSpaceConfiguration`.
  */
-export default function (
+const GetConfiguration = (
 	Section?: string,
 	Scope?: VSCode.ConfigurationScope | null,
 ): Effect.Effect<
 	VSCode.WorkspaceConfiguration,
 	Error,
-	typeof ConfigurationService
-> {
+	ConfigurationService
+> => {
 	return Effect.flatMap(ConfigurationService, (Service) =>
 		Service.GetConfiguration(Section, Scope ?? undefined),
 	);
-}
+};
+
+export default GetConfiguration;

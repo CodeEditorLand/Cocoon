@@ -3,7 +3,7 @@
  * @description The live implementation of the Debug service.
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Effect, Ref } from "effect";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
@@ -12,6 +12,9 @@ import RegisterProvider from "./RegisterProvider.js";
 import type Service from "./Service.js";
 import type { DebugSession } from "./Type.js";
 
+/**
+ * An Effect that builds the live implementation of the Debug service.
+ */
 export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
 
@@ -26,31 +29,33 @@ export default Effect.gen(function* () {
 	const OnDidTerminateDebugSessionEvent = CreateEventStream<any>();
 	const OnDidChangeBreakpointsEvent = CreateEventStream<any>();
 
+	// --- RPC Handlers ---
 	IPC.RegisterInvokeHandler(
 		"$provideDebugConfigurations",
-		([handle, folderDTO, token]) =>
+		([_Handle, _FolderDTO, _Token]) =>
 			Effect.gen(function* () {
 				// ... logic to find provider by handle, call it, and return DTOs ...
-			}),
+			}).pipe(Effect.runPromise),
 	);
 
 	IPC.RegisterInvokeHandler(
 		"$resolveDebugConfiguration",
-		([handle, folderDTO, configDTO, token]) =>
+		([_Handle, _FolderDTO, _ConfigDTO, _Token]) =>
 			Effect.gen(function* () {
 				// ... logic to find provider, call it, and return DTO ...
-			}),
+			}).pipe(Effect.runPromise),
 	);
 
 	IPC.RegisterInvokeHandler(
 		"$createDebugAdapterDescriptor",
-		([handle, sessionDTO, executableDTO]) =>
+		([_Handle, _SessionDTO, _ExecutableDTO]) =>
 			Effect.gen(function* () {
 				// ... logic to find factory, call it, and return DTO ...
-			}),
+			}).pipe(Effect.runPromise),
 	);
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	// --- Service Implementation ---
+	const DebugImplementation: Service = {
 		onDidChangeActiveDebugSession: OnDidChangeActiveDebugSessionEvent.event,
 		onDidStartDebugSession: OnDidStartDebugSessionEvent.event,
 		onDidReceiveDebugSessionCustomEvent:
@@ -73,11 +78,7 @@ export default Effect.gen(function* () {
 				ConfigProviders,
 				IPC,
 				"$registerDebugConfigurationProvider",
-				{
-					Type,
-					Provider,
-					Extension,
-				},
+				{ Type, Provider, Extension },
 			),
 
 		RegisterDebugAdapterDescriptorFactory: (Type, Factory, Extension) =>
@@ -101,21 +102,21 @@ export default Effect.gen(function* () {
 				Folder ? TypeConverter.URI.FromAPI(Folder.uri) : undefined,
 				Configuration,
 				Options,
-			]).pipe(Effect.map((result) => !!result)),
+			]).pipe(Effect.map((Result) => !!Result)),
 
 		StopDebugging: (Session) =>
 			IPC.SendNotification("$stopDebugging", [Session?.id]),
 
-		AddBreakpoints: (Breakpoints) =>
+		AddBreakpoints: (_Breakpoints) =>
 			IPC.SendNotification("$addBreakpoints", [
 				// Convert breakpoints to DTOs
 			]),
 
-		RemoveBreakpoints: (Breakpoints) =>
+		RemoveBreakpoints: (_Breakpoints) =>
 			IPC.SendNotification("$removeBreakpoints", [
 				// Convert breakpoints to DTOs
 			]),
 	};
 
-	return ServiceImplementation;
+	return DebugImplementation;
 });

@@ -21,19 +21,16 @@ import IPCService from "../Service/IPC/Service.js";
  * allows for disabling this behavior if a more advanced RPC-based error
  * handling mechanism is active.
  */
-export default Effect.gen(function* (_) {
+const HandleException = Effect.gen(function* () {
 	// VS Code's RPCProtocol can have its own comprehensive error handling.
 	// If this flag is set, we defer to that system.
 	if (process.env["VSCODE_HANDLES_UNCAUGHT_ERRORS"] === "true") {
-		yield* _(
-			Effect.logTrace(
-				"Skipping global exception handler setup; will be handled by RPC protocol.",
-			),
+		return yield* Effect.logTrace(
+			"Skipping global exception handler setup; will be handled by RPC protocol.",
 		);
-		return;
 	}
 
-	const IPC = yield* _(IPCService);
+	const IPC = yield* IPCService;
 
 	/**
 	 * Creates an Effect to log an error to the parent (Mountain) process.
@@ -53,11 +50,11 @@ export default Effect.gen(function* (_) {
 		};
 
 		return IPC.SendNotification("$log", [Payload]).pipe(
-			Effect.catchAll((error) =>
+			Effect.catchAll((Error) =>
 				// Fallback to console if IPC fails
 				Effect.sync(() =>
 					console.error(
-						`[HandleException] Failed to send error to host: ${error}`,
+						`[HandleException] Failed to send error to host: ${Error}`,
 						Payload,
 					),
 				),
@@ -66,13 +63,15 @@ export default Effect.gen(function* (_) {
 	};
 
 	// Attach the listeners to the global process object.
-	process.on("uncaughtException", (error) => {
-		Effect.runFork(LogError("uncaughtException", error));
+	process.on("uncaughtException", (Error) => {
+		Effect.runFork(LogError("uncaughtException", Error));
 	});
 
-	process.on("unhandledRejection", (reason) => {
-		Effect.runFork(LogError("unhandledRejection", reason));
+	process.on("unhandledRejection", (Reason) => {
+		Effect.runFork(LogError("unhandledRejection", Reason));
 	});
 
-	yield* _(Effect.logTrace("Global exception handlers installed."));
+	yield* Effect.logTrace("Global exception handlers installed.");
 });
+
+export default HandleException;

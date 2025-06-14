@@ -3,73 +3,84 @@
  * @description The live implementation of the Dialog service.
  */
 
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import { isCancellationError } from "vs/base/common/errors.js";
-import type { CancellationToken } from "vscode";
+import type {
+	CancellationToken,
+	OpenDialogOptions,
+	SaveDialogOptions,
+	Uri,
+} from "vscode";
 
-import * as DialogConverter from "../../TypeConverter/Dialog.js";
+import { Dialog as DialogConverter } from "../../TypeConverter.js";
 import IPCService from "../IPC/Service.js";
-import DialogError from "./Error/DialogError.js";
+import { DialogError } from "./Error.js";
+import type Service from "./Service.js";
 
-function CreateDialogEffect<Option, DTO, Result>(
+const CreateDialogEffect = <Option, DTO, Result>(
 	IPC: IPCService,
-	ipcMethod: string,
-	options: Option | undefined,
-	token: CancellationToken | undefined,
-	optionsToDTO: (opts: Option | undefined) => DTO,
-	resultFromDTO: (res: any) => Result,
-) {
-	return Effect.gen(function* (_) {
-		if (token?.isCancellationRequested) {
-			return yield* _(Effect.interrupt);
+	IPCMethod: string,
+	Options: Option | undefined,
+	Token: CancellationToken | undefined,
+	OptionsToDTO: (Options: Option | undefined) => DTO,
+	ResultFromDTO: (Result: any) => Result,
+) => {
+	return Effect.gen(function* () {
+		if (Token?.isCancellationRequested) {
+			return yield* Effect.interrupt;
 		}
 
-		const DTO = optionsToDTO(options);
+		const DTO = OptionsToDTO(Options);
 
-		const RPCResult = yield* _(
-			IPC.SendRequest<any>(ipcMethod, [DTO]),
+		const RPCResult = yield* IPC.SendRequest<any>(IPCMethod, [DTO]).pipe(
 			// User cancellation is not an error; it resolves to an empty value.
 			Effect.catchIf(isCancellationError, () =>
 				Effect.succeed(undefined),
 			),
 			// Any other error is mapped to our specific DialogError.
 			Effect.mapError(
-				(cause) =>
+				(Cause) =>
 					new DialogError({
-						cause,
-						context: `IPC call to ${ipcMethod} failed`,
+						cause: Cause,
+						context: `IPC call to ${IPCMethod} failed`,
 					}),
 			),
 		);
 
-		return resultFromDTO(RPCResult);
+		return ResultFromDTO(RPCResult);
 	});
-}
+};
 
-export default Effect.gen(function* (_) {
-	const IPC = yield* _(IPCService);
+/**
+ * An Effect that builds the live implementation of the Dialog service.
+ */
+export default Effect.gen(function* () {
+	const IPC = yield* IPCService;
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
-		ShowOpenDialog: (Option, Token) =>
+	const DialogImplementation: Service = {
+		ShowOpenDialog: (Options, Token) =>
 			CreateDialogEffect(
 				IPC,
 				"$showOpenDialog",
-				Option,
+				Options,
 				Token,
-				DialogConverter.OpenDialogOption.ToDTO,
-				DialogConverter.DialogResult.ToURIArray,
+				(Options?: OpenDialogOptions) =>
+					DialogConverter.OpenDialogOption.ToDTO(Options),
+				(Result: any): Uri[] | undefined =>
+					DialogConverter.DialogResult.ToURIArray(Result),
 			),
 
-		ShowSaveDialog: (Option, Token) =>
+		ShowSaveDialog: (Options, Token) =>
 			CreateDialogEffect(
 				IPC,
 				"$showSaveDialog",
-				Option,
+				Options,
 				Token,
 				DialogConverter.SaveDialogOption.ToDTO,
-				DialogConverter.DialogResult.ToURI,
+				(Result: any): Uri | undefined =>
+					DialogConverter.DialogResult.ToURI(Result),
 			),
 	};
 
-	return ServiceImplementation;
+	return DialogImplementation;
 });

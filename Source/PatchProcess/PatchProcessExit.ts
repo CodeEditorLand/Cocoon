@@ -20,9 +20,9 @@ import ProcessPatchService from "./ProcessPatch/Service.js";
  * - If exiting is disallowed, a detailed warning is logged and a synchronous
  *   `ExitPreventedError` is thrown to halt the caller's execution path.
  */
-export default Effect.gen(function* (_) {
+const PatchProcessExit = Effect.gen(function* () {
 	// Depend on the ProcessPatch service to get the native function and the policy.
-	const ProcessPatch = yield* _(ProcessPatchService);
+	const ProcessPatch = yield* ProcessPatchService;
 
 	// Overwrite the global `process.exit` method.
 	process.exit = (Code?: number): never => {
@@ -31,14 +31,18 @@ export default Effect.gen(function* (_) {
 			// The host has permitted the exit. Log it and terminate.
 			Effect.runSync(
 				Effect.logInfo(
-					`'process.exit(${Code ?? ""})' was called and ALLOWED by host policy. Terminating.`,
+					`'process.exit(${
+						Code ?? ""
+					})' was called and ALLOWED by host policy. Terminating.`,
 				),
 			);
 			return ProcessPatch.NativeExit(Code);
 		}
 
 		// The host has blocked the exit.
-		const ErrorMessage = `'process.exit(${Code ?? ""})' was called but PREVENTED by host policy.`;
+		const ErrorMessage = `'process.exit(${
+			Code ?? ""
+		})' was called but PREVENTED by host policy.`;
 		const PreventionError = new ExitPreventedError({
 			message: ErrorMessage,
 			AttemptedCode: Code,
@@ -56,5 +60,7 @@ export default Effect.gen(function* (_) {
 		throw PreventionError;
 	};
 
-	yield* _(Effect.logTrace("Successfully patched 'process.exit'."));
+	yield* Effect.logTrace("Successfully patched 'process.exit'.");
 });
+
+export default PatchProcessExit;

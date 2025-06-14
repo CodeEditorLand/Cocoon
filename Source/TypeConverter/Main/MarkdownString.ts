@@ -4,6 +4,7 @@
  */
 
 import type { IMarkdownString } from "vs/base/common/htmlContent.js";
+import type { MarkdownString as VscMarkdownString } from "vscode";
 
 import { MarkdownString } from "../../Type/ExtHostTypes.js";
 
@@ -12,8 +13,8 @@ import { MarkdownString } from "../../Type/ExtHostTypes.js";
  * @param MarkdownStringInstance The `vscode.MarkdownString` instance to convert.
  * @returns The `IMarkdownString` DTO.
  */
-export const FromAPI = (
-	MarkdownStringInstance: MarkdownString,
+const FromAPI = (
+	MarkdownStringInstance: VscMarkdownString,
 ): IMarkdownString => ({
 	value: MarkdownStringInstance.value,
 	isTrusted: MarkdownStringInstance.isTrusted,
@@ -26,10 +27,7 @@ export const FromAPI = (
  * @param MarkdownStringDTO The `IMarkdownString` DTO to revive.
  * @returns A new `vscode.MarkdownString` instance.
  */
-export const ToAPI = (MarkdownStringDTO: IMarkdownString): MarkdownString =>
+const ToAPI = (MarkdownStringDTO: IMarkdownString): VscMarkdownString =>
 	new MarkdownString(MarkdownStringDTO.value, MarkdownStringDTO.isTrusted);
 
-export default {
-	FromAPI,
-	ToAPI,
-};
+export default { FromAPI, ToAPI };

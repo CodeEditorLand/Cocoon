@@ -26,7 +26,10 @@ export default class extends Context.Tag("Service/WebViewPanel")<
 			Title: string,
 			ShowOptions:
 				| ViewColumn
-				| { viewColumn: ViewColumn; preserveFocus?: boolean },
+				| {
+						readonly viewColumn: ViewColumn;
+						readonly preserveFocus?: boolean;
+				  },
 			Options?: WebviewPanelOptions & WebviewOptions,
 		) => Effect.Effect<WebviewPanel, Error>;
 

@@ -13,22 +13,13 @@ import MessageService from "../Message/Service.js";
  * An Effect that displays an informational message to the user.
  * It delegates to the central `Message.Service`.
  */
-function ShowInformationMessage<T extends VSCode.MessageItem>(
-	message: string,
-	...items: T[]
-): Effect.Effect<T | undefined, Error, typeof MessageService>;
-function ShowInformationMessage(
-	message: string,
-	options: VSCode.MessageOptions,
-	...items: VSCode.MessageItem[]
-): Effect.Effect<VSCode.MessageItem | undefined, Error, typeof MessageService>;
-function ShowInformationMessage(
-	message: string,
-	...itemsOrOptions: any[]
-): Effect.Effect<VSCode.MessageItem | undefined, Error, typeof MessageService> {
-	return Effect.flatMap(MessageService, (service) =>
-		service.ShowInformationMessage(message, ...itemsOrOptions),
+const ShowInformationMessage = <T extends VSCode.MessageItem>(
+	Message: string,
+	...ItemsOrOptions: Array<T | VSCode.MessageOptions>
+): Effect.Effect<T | undefined, Error, MessageService> => {
+	return Effect.flatMap(MessageService, (Service) =>
+		Service.ShowInformationMessage(Message, ...ItemsOrOptions),
 	);
-}
+};
 
 export default ShowInformationMessage;

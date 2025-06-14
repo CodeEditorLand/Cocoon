@@ -3,7 +3,7 @@
  * @description The live implementation of the Extension service.
  */
 
-import { Context, Effect, Ref, Stream } from "effect";
+import { Effect, Ref } from "effect";
 import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { Extension } from "vscode";
 
@@ -11,15 +11,16 @@ import ExtensionHostService from "../../Core/ExtensionHost/Service.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import InitDataService from "../InitData/Service.js";
 import CreateAPIObject from "./CreateAPIObject.js";
+import type Service from "./Service.js";
 
-export default Effect.gen(function* (_) {
-	const ExtensionHost = yield* _(ExtensionHostService);
-	const InitData = yield* _(InitDataService);
+export default Effect.gen(function* () {
+	const ExtensionHost = yield* ExtensionHostService;
+	const InitData = yield* InitDataService;
 
 	const OnDidChangeEvent = CreateEventStream<void>();
-	const AllExtensionsCache = yield* _(
-		Ref.make<readonly Extension<any>[] | undefined>(undefined),
-	);
+	const AllExtensionsCache = yield* Ref.make<
+		readonly Extension<any>[] | undefined
+	>(undefined);
 
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		InitData.extensions,
@@ -33,8 +34,8 @@ export default Effect.gen(function* (_) {
 	//   )
 	// }));
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
-		onDidChange: Stream.toEvent(OnDidChangeEvent.Stream),
+	const ServiceImplementation: Service = {
+		onDidChange: OnDidChangeEvent.event,
 
 		getExtension: <T>(extensionId: string) => {
 			const description = Effect.runSync(

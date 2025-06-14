@@ -14,13 +14,13 @@ export default class extends Context.Tag("Service/TreeView")<
 		/**
 		 * Creates a new tree view.
 		 * @param ViewID The ID of the view, which must match a view contribution in `package.json`.
-		 * @param Option Options for the tree view, including the data provider.
+		 * @param Options Options for the tree view, including the data provider.
 		 * @param Extension The extension creating the view.
 		 * @returns An `Effect` that resolves to the created `TreeView` instance.
 		 */
 		readonly CreateTreeView: <T>(
 			ViewID: string,
-			Option: TreeViewOptions<T>,
+			Options: TreeViewOptions<T>,
 			Extension: IExtensionDescription,
 		) => Effect.Effect<TreeView<T>, Error>;
 	}

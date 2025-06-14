@@ -12,42 +12,49 @@ import type CommandService from "../../Service/Command/Service.js";
 
 /**
  * Creates the `vscode.commands` namespace object.
+ * @param CommandService The central service for command management.
+ * @param ExtensionDescription The description of the extension for which this API is being created.
+ * @returns An object that implements the `vscode.commands` API.
  */
-export default function (
-	Command: CommandService,
-	Extension: IExtensionDescription,
-): typeof VSCode.commands {
+const CreateCommandNamespace = (
+	CommandService: CommandService,
+	ExtensionDescription: IExtensionDescription,
+): typeof VSCode.commands => {
 	return {
 		registerCommand: (ID, Handler, ThisArgument) =>
-			Command.RegisterCommand(ID, Handler, ThisArgument, Extension),
-
-		registerTextEditorCommand: (ID, Handler, ThisArgument) =>
-			Command.RegisterTextEditorCommand(
+			CommandService.RegisterCommand(
 				ID,
 				Handler,
 				ThisArgument,
-				Extension,
+				ExtensionDescription,
+			),
+
+		registerTextEditorCommand: (ID, Handler, ThisArgument) =>
+			CommandService.RegisterTextEditorCommand(
+				ID,
+				Handler,
+				ThisArgument,
+				ExtensionDescription,
 			),
 
 		registerDiffInformationCommand: (ID, Handler, ThisArgument) => {
 			// Stub: Delegate to the generic command registration
-			return Command.RegisterCommand(
+			return CommandService.RegisterCommand(
 				ID,
 				Handler,
 				ThisArgument,
-				Extension,
+				ExtensionDescription,
 			);
 		},
 
-		// registerUIEditorContentCommand: (ID, Handler) => {
-		// 	// Stub: Delegate to the generic command registration
-		// 	return Command.RegisterCommand(ID, Handler);
-		// },
-
 		executeCommand: <T>(ID: string, ...Argument: any[]) =>
-			Effect.runPromise(Command.ExecuteCommand<T>(ID, ...Argument)),
+			Effect.runPromise(
+				CommandService.ExecuteCommand<T>(ID, ...Argument),
+			),
 
 		getCommands: (FilterInternal?: boolean) =>
-			Effect.runPromise(Command.GetCommands(FilterInternal)),
+			Effect.runPromise(CommandService.GetCommands(FilterInternal)),
 	};
-}
+};
+
+export default CreateCommandNamespace;

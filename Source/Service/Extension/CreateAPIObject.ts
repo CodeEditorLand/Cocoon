@@ -6,8 +6,7 @@
 
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ActivationKind } from "vs/workbench/api/common/extHostExtensionActivator.js";
-import { ExtensionKind, Uri, type Extension } from "vscode";
+import { ActivationKind, ExtensionKind, Uri, type Extension } from "vscode";
 
 import type ExtensionHostService from "../../Core/ExtensionHost/Service.js";
 
@@ -18,10 +17,10 @@ import type ExtensionHostService from "../../Core/ExtensionHost/Service.js";
  * @param ExtensionHost The core service that manages extension state and activation.
  * @returns A frozen `vscode.Extension<T>` object.
  */
-export default function <T>(
+const CreateAPIObject = <T>(
 	Description: IExtensionDescription,
 	ExtensionHost: ExtensionHostService,
-): Extension<T> {
+): Extension<T> => {
 	const Activate = ExtensionHost.ActivateById(Description.identifier, {
 		startup: false,
 		extensionId: Description.identifier,
@@ -59,7 +58,9 @@ export default function <T>(
 			return ExtensionHost.GetExtensionExports(Description.identifier);
 		},
 		activate: () => Effect.runPromise(Activate),
+		isFromDifferentExtensionHost: false, // Assuming it's always local
 	};
 
 	return Object.freeze(ExtensionAPIObject);
-}
+};
+export default CreateAPIObject;

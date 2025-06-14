@@ -3,52 +3,56 @@
  * @description The live implementation of the FileSystem service.
  */
 
-import { Context, Effect } from "effect";
-import { FileSystemError as VscFileSystemError } from "vscode";
+import { Effect } from "effect";
+import { FileSystemError as VscFileSystemError, type FileSystem } from "vscode";
 
 import FileSystemInformationService from "../FileSystemInformation/Service.js";
 import CreateStatEffect from "./CreateStatEffect.js";
+import type Service from "./Service.js";
 
-export default Effect.gen(function* (_) {
-	const FsInfo = yield* _(FileSystemInformationService);
+/**
+ * An Effect that builds the live implementation of the FileSystem service.
+ */
+export default Effect.gen(function* () {
+	const FsInfo = yield* FileSystemInformationService;
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
-		stat: (uri) => CreateStatEffect(uri),
-		readDirectory: (uri) =>
-			Effect.fail(
+	const FileSystemImplementation: FileSystem = {
+		stat: (Uri) => Effect.runPromise(CreateStatEffect(Uri)),
+		readDirectory: (Uri) =>
+			Promise.reject(
 				new VscFileSystemError(
-					`readDirectory not implemented for ${uri}`,
+					`readDirectory not implemented for ${Uri}`,
 				),
 			),
-		createDirectory: (uri) =>
-			Effect.fail(
+		createDirectory: (Uri) =>
+			Promise.reject(
 				new VscFileSystemError(
-					`createDirectory not implemented for ${uri}`,
+					`createDirectory not implemented for ${Uri}`,
 				),
 			),
-		readFile: (uri) =>
-			Effect.fail(
-				new VscFileSystemError(`readFile not implemented for ${uri}`),
+		readFile: (Uri) =>
+			Promise.reject(
+				new VscFileSystemError(`readFile not implemented for ${Uri}`),
 			),
-		writeFile: (uri, content) =>
-			Effect.fail(
-				new VscFileSystemError(`writeFile not implemented for ${uri}`),
+		writeFile: (_Uri, _Content, _Options) =>
+			Promise.reject(
+				new VscFileSystemError(`writeFile not implemented for ${_Uri}`),
 			),
-		delete: (uri, options) =>
-			Effect.fail(
-				new VscFileSystemError(`delete not implemented for ${uri}`),
+		delete: (Uri, _Options) =>
+			Promise.reject(
+				new VscFileSystemError(`delete not implemented for ${Uri}`),
 			),
-		rename: (source, target, options) =>
-			Effect.fail(
-				new VscFileSystemError(`rename not implemented for ${source}`),
+		rename: (Source, _Target, _Options) =>
+			Promise.reject(
+				new VscFileSystemError(`rename not implemented for ${Source}`),
 			),
-		copy: (source, target, options) =>
-			Effect.fail(
-				new VscFileSystemError(`copy not implemented for ${source}`),
+		copy: (Source, _Target, _Options) =>
+			Promise.reject(
+				new VscFileSystemError(`copy not implemented for ${Source}`),
 			),
 		isWritableFileSystem: FsInfo.isWritableFileSystem,
 		onDidChangeFile: FsInfo.onDidChangeFile,
 	};
 
-	return ServiceImplementation;
+	return FileSystemImplementation as Service;
 });

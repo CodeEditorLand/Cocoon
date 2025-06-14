@@ -18,12 +18,12 @@ import type ServerService from "./Service.js";
  *
  * @param Server The gRPC server instance to shut down.
  */
-export default function (Server: ServerService) {
+const Release = (Server: ServerService) => {
 	return Effect.tryPromise({
 		try: () =>
-			new Promise<void>((resolve, reject) =>
-				Server.tryShutdown((error) =>
-					error ? reject(error) : resolve(),
+			new Promise<void>((Resolve, Reject) =>
+				Server.tryShutdown((Error) =>
+					Error ? Reject(Error) : Resolve(),
 				),
 			),
 		catch: (Cause) =>
@@ -32,4 +32,6 @@ export default function (Server: ServerService) {
 				context: "gRPC server shutdown failed",
 			}),
 	}).pipe(Effect.tap(() => Effect.logInfo("Cocoon gRPC server shut down.")));
-}
+};
+
+export default Release;

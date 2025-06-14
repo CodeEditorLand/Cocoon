@@ -4,7 +4,7 @@
  * all clipboard operations to the Mountain host via IPC.
  */
 
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import type { Clipboard } from "vscode";
 
 import IPCService from "../IPC/Service.js";
@@ -12,14 +12,14 @@ import IPCService from "../IPC/Service.js";
 /**
  * An Effect that builds the live implementation of the Clipboard service.
  */
-export default Effect.gen(function* (_) {
-	const IPC = yield* _(IPCService);
+export default Effect.gen(function* () {
+	const IPC = yield* IPCService;
 
 	/**
 	 * An Effect that reads text from the host's clipboard.
 	 */
 	const ReadText = IPC.SendRequest<string>("$clipboardReadText", []).pipe(
-		Effect.map((result) => result ?? ""), // Ensure we always return a string
+		Effect.map((Result) => Result ?? ""), // Ensure we always return a string
 		Effect.catchAll(() => Effect.succeed("")), // On failure, return an empty string
 	);
 
@@ -32,7 +32,7 @@ export default Effect.gen(function* (_) {
 			Effect.catchAll(() => Effect.void), // Ignore errors for fire-and-forget
 		);
 
-	const ServiceImplementation: Clipboard = {
+	const ClipboardImplementation: Clipboard = {
 		/**
 		 * Reads text from the clipboard. This builds and runs the ReadText Effect,
 		 * returning a Promise to conform to the vscode API.
@@ -46,5 +46,5 @@ export default Effect.gen(function* (_) {
 		writeText: (Text: string) => Effect.runPromise(WriteText(Text)),
 	};
 
-	return ServiceImplementation;
+	return ClipboardImplementation;
 });

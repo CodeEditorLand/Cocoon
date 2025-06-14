@@ -17,139 +17,142 @@ import type {
 	TreeViewVisibilityChangeEvent,
 } from "vscode";
 
-import * as CommandConverter from "../../TypeConverter/Command/Definition.js";
-import * as TreeViewConverter from "../../TypeConverter/TreeView.js";
+import { TreeView as TreeViewConverter } from "../../TypeConverter.js";
+import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type CommandService from "../Command/Service.js";
 import type IPCService from "../IPC/Service.js";
 
 export default class<T> implements TreeView<T> {
-	private readonly elementToHandleMap = new Map<T, string>();
+	private readonly ElementToHandleMap = new Map<T, string>();
 	public readonly handleToElementMap = new Map<string, T>();
 
-	private readonly onDidExpandElementEmitter =
+	private readonly OnDidExpandElementEmitter =
 		CreateEventStream<TreeViewExpansionEvent<T>>();
 	readonly onDidExpandElement: Event<TreeViewExpansionEvent<T>>;
 
-	private readonly onDidCollapseElementEmitter =
+	private readonly OnDidCollapseElementEmitter =
 		CreateEventStream<TreeViewExpansionEvent<T>>();
 	readonly onDidCollapseElement: Event<TreeViewExpansionEvent<T>>;
 
-	private readonly onDidChangeSelectionEmitter =
+	private readonly OnDidChangeSelectionEmitter =
 		CreateEventStream<TreeViewSelectionChangeEvent<T>>();
 	readonly onDidChangeSelection: Event<TreeViewSelectionChangeEvent<T>>;
 
-	private readonly onDidChangeVisibilityEmitter =
+	private readonly OnDidChangeVisibilityEmitter =
 		CreateEventStream<TreeViewVisibilityChangeEvent>();
 	readonly onDidChangeVisibility: Event<TreeViewVisibilityChangeEvent>;
 
 	constructor(
-		private readonly viewID: string,
-		private readonly dataProvider: TreeDataProvider<T>,
-		private readonly ipc: IPCService,
-		private readonly commandService: CommandService,
-		private readonly extension: IExtensionDescription,
+		private readonly ViewID: string,
+		private readonly DataProvider: TreeDataProvider<T>,
+		private readonly IPC: IPCService,
+		private readonly CommandService: CommandService,
+		private readonly Extension: IExtensionDescription,
 	) {
-		this.onDidExpandElement = this.onDidExpandElementEmitter.event;
-		this.onDidCollapseElement = this.onDidCollapseElementEmitter.event;
-		this.onDidChangeSelection = this.onDidChangeSelectionEmitter.event;
-		this.onDidChangeVisibility = this.onDidChangeVisibilityEmitter.event;
+		this.onDidExpandElement = this.OnDidExpandElementEmitter.event;
+		this.onDidCollapseElement = this.OnDidCollapseElementEmitter.event;
+		this.onDidChangeSelection = this.OnDidChangeSelectionEmitter.event;
+		this.onDidChangeVisibility = this.OnDidChangeVisibilityEmitter.event;
 
-		if (this.dataProvider.onDidChangeTreeData) {
-			this.dataProvider.onDidChangeTreeData((elements) => {
-				const handlesToRefresh = this.getHandlesToRefresh(elements);
-				this.ipc.SendNotification(`$refreshTreeView`, [
-					this.viewID,
-					handlesToRefresh,
+		if (this.DataProvider.onDidChangeTreeData) {
+			this.DataProvider.onDidChangeTreeData((Elements) => {
+				const HandlesToRefresh = this.GetHandlesToRefresh(Elements);
+				this.IPC.SendNotification(`$refreshTreeView`, [
+					this.ViewID,
+					HandlesToRefresh,
 				]);
 			});
 		}
 	}
 
-	public getChildrenEffect(element?: T): Effect.Effect<any[]> {
+	public GetChildrenEffect(Element?: T): Effect.Effect<any[]> {
 		return Effect.tryPromise({
-			try: () => this.dataProvider.getChildren(element),
-			catch: (e) => e as Error,
+			try: () => this.DataProvider.getChildren(Element),
+			catch: (CaughtError) => CaughtError as Error,
 		}).pipe(
-			Effect.flatMap((children) => {
-				if (!children) {
+			Effect.flatMap((Children) => {
+				if (!Children) {
 					return Effect.succeed([]);
 				}
-				const itemEffects = children.map((child) =>
-					this.resolveAndCacheItem(child),
+				const ItemEffects = Children.map((Child) =>
+					this.ResolveAndCacheItem(Child),
 				);
-				return Effect.all(itemEffects);
+				return Effect.all(ItemEffects);
 			}),
 		);
 	}
 
-	private resolveAndCacheItem(element: T) {
+	private ResolveAndCacheItem(Element: T) {
 		return Effect.tryPromise({
-			try: () => this.dataProvider.getTreeItem(element),
-			catch: (e) => e as Error,
+			try: () => this.DataProvider.getTreeItem(Element),
+			catch: (CaughtError) => CaughtError as Error,
 		}).pipe(
-			Effect.map((treeItem) => {
-				const handle = this.getHandleForElement(element);
-				const commandConverter = new CommandConverter(
-					this.commandService,
+			Effect.map((TreeItem) => {
+				const Handle = this.GetHandleForElement(Element);
+				// This is a temporary fix. A real implementation should inject the converter.
+				const CommandConverter = new CommandConverterDefinition(
+					this.CommandService,
 					() => undefined,
 				);
 				return TreeViewConverter.Item.FromAPI(
-					this.extension,
-					treeItem,
-					handle,
+					this.Extension,
+					TreeItem,
+					Handle,
 					undefined,
-					commandConverter,
+					CommandConverter,
 				);
 			}),
 		);
 	}
 
-	private getHandleForElement(element: T): string {
-		if (this.elementToHandleMap.has(element)) {
-			return this.elementToHandleMap.get(element)!;
+	private GetHandleForElement(Element: T): string {
+		if (this.ElementToHandleMap.has(Element)) {
+			return this.ElementToHandleMap.get(Element)!;
 		}
-		const handle = generateUuid();
-		this.elementToHandleMap.set(element, handle);
-		this.handleToElementMap.set(handle, element);
-		return handle;
+		const Handle = generateUuid();
+		this.ElementToHandleMap.set(Element, Handle);
+		this.handleToElementMap.set(Handle, Element);
+		return Handle;
 	}
 
-	private getHandlesToRefresh(
-		elements: T | T[] | undefined | null,
+	private GetHandlesToRefresh(
+		Elements: T | readonly T[] | undefined | null,
 	): (string | null)[] | undefined {
-		if (elements === null || elements === undefined) {
+		if (Elements === null || Elements === undefined) {
 			return undefined;
 		}
-		if (Array.isArray(elements)) {
-			return elements.map((e) => this.elementToHandleMap.get(e) || null);
+		if (Array.isArray(Elements)) {
+			return Elements.map(
+				(Element) => this.ElementToHandleMap.get(Element) || null,
+			);
 		}
-		return [this.elementToHandleMap.get(elements) || null];
+		return [this.ElementToHandleMap.get(Elements) || null];
 	}
 
 	reveal(
-		element: T,
-		options?: {
+		Element: T,
+		Options?: {
 			select?: boolean;
 			focus?: boolean;
 			expand?: boolean | number;
 		},
 	): Promise<void> {
 		return Effect.runPromise(
-			this.ipc.SendNotification("$revealTreeViewItem", [
-				this.viewID,
-				this.getHandleForElement(element),
-				options,
+			this.IPC.SendNotification("$revealTreeViewItem", [
+				this.ViewID,
+				this.GetHandleForElement(Element),
+				Options,
 			]),
 		);
 	}
 
 	dispose() {
-		this.onDidExpandElementEmitter.Shutdown();
-		this.onDidCollapseElementEmitter.Shutdown();
-		this.onDidChangeSelectionEmitter.Shutdown();
-		this.onDidChangeVisibilityEmitter.Shutdown();
-		this.elementToHandleMap.clear();
+		this.OnDidExpandElementEmitter.Shutdown();
+		this.OnDidCollapseElementEmitter.Shutdown();
+		this.OnDidChangeSelectionEmitter.Shutdown();
+		this.OnDidChangeVisibilityEmitter.Shutdown();
+		this.ElementToHandleMap.clear();
 		this.handleToElementMap.clear();
 	}
 

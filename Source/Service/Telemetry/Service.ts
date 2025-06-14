@@ -4,8 +4,6 @@
  */
 
 import { Context } from "effect";
-import type { SerializedError } from "vs/base/common/errors.js";
-import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
 
 /**

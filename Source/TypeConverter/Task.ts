@@ -6,75 +6,74 @@
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
-import { Task, TaskExecution } from "../Type/ExtHostTypes.js";
+import { ProcessExecution, Task } from "../Type/ExtHostTypes.js";
 
-export const FromAPI = (
-	task: VSCode.Task,
-	extension: IExtensionDescription,
+const FromAPI = (
+	TaskToConvert: VSCode.Task,
+	Extension: IExtensionDescription,
 ): any /* ITaskDTO */ => {
-	const definition: VSCode.TaskDefinition = task.definition;
-	const execution =
-		task.execution && "value" in task.execution
-			? task.execution.value
-			: task.execution;
+	const Definition: VSCode.TaskDefinition = TaskToConvert.definition;
+	const Execution = TaskToConvert.execution;
 
-	const result: any = {
-		_id: task._id,
+	const Result: any = {
+		_id: (TaskToConvert as any)._id,
 		definition: {
-			type: definition.type,
-			...definition,
+			type: Definition.type,
+			...Definition,
 		},
-		name: task.name,
+		name: TaskToConvert.name,
 		source: {
-			id: extension.identifier.value,
-			label: task.source,
-			scope: task.scope,
+			id: Extension.identifier.value,
+			label: TaskToConvert.source,
+			scope: TaskToConvert.scope,
 		},
 		execution: undefined,
-		isBackground: task.isBackground,
-		group: task.group?.id,
-		presentationOptions: task.presentationOptions,
-		problemMatchers: task.problemMatchers,
-		hasDefinedMatchers: task.hasDefinedMatchers,
+		isBackground: TaskToConvert.isBackground,
+		group: TaskToConvert.group?.id,
+		presentationOptions: TaskToConvert.presentationOptions,
+		problemMatchers: TaskToConvert.problemMatchers,
+		hasDefinedMatchers: (TaskToConvert as any).hasDefinedMatchers,
 	};
 
-	if (execution) {
+	if (Execution) {
 		// This part would need to convert ProcessExecution, ShellExecution, etc.
 		// For now, it's a simplified placeholder.
-		result.execution = {
-			...execution,
+		Result.execution = {
+			...Execution,
 		};
 	}
-	return result;
+	return Result;
 };
 
-export const ToAPI = (DTO: any /* ITaskDTO */): VSCode.Task => {
+const ToAPI = (DTO: any /* ITaskDTO */): VSCode.Task => {
 	// A real implementation would need to revive the execution object properly.
-	const execution = DTO.execution
-		? new (ExtHostTypes as any).ProcessExecution(
+	const Execution = DTO.execution
+		? new ProcessExecution(
 				DTO.execution.process,
 				DTO.execution.args,
 				DTO.execution.options,
 			)
 		: undefined;
 
-	return new Task(
+	const ConvertedTask = new Task(
 		DTO.definition,
 		DTO.source.scope,
 		DTO.source.label,
 		DTO.source.id,
-		execution,
+		Execution,
 		DTO.problemMatchers,
 	);
+	(ConvertedTask as any)._id = DTO._id;
+	return ConvertedTask;
 };
 
 const Execution = {
-	ToAPI(
-		DTO: any, // ITaskExecutionDTO
-		task: VSCode.Task,
-	): VSCode.TaskExecution {
+	ToAPI: (
+		_DTO: any, // ITaskExecutionDTO
+		TaskToExecute: VSCode.Task,
+	): VSCode.TaskExecution => {
 		return {
-			task,
+			task: TaskToExecute,
 			terminate: () => {
 				/* send ipc to terminate */
 			},
@@ -82,8 +81,4 @@ const Execution = {
 	},
 };
 
-export default {
-	FromAPI,
-	ToAPI,
-	Execution,
-};
+export default { FromAPI, ToAPI, Execution };

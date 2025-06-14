@@ -5,13 +5,14 @@
  * VS Code's core RPC mechanism.
  */
 
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import { VSBuffer } from "vs/base/common/buffer.js";
 import { Emitter } from "vs/base/common/event.js";
 
 import ClientService from "../Client/Service.js";
 import { IPCError } from "../Error.js";
-import { RPCDataPayload } from "../Generated.js";
+import Generated from "../Generated.js";
+import type Service from "./Service.js";
 
 /**
  * An `Effect` that builds the live implementation of the `ProtocolAdapter`
@@ -21,8 +22,8 @@ import { RPCDataPayload } from "../Generated.js";
  * logic for outgoing messages, delegating the actual transport to the low-level
  * gRPC client.
  */
-export default Effect.gen(function* (_) {
-	const Client = yield* _(ClientService);
+export default Effect.gen(function* () {
+	const Client = yield* ClientService;
 
 	// Emitters are created within the service's scope.
 	const OnMessageEmitter = new Emitter<VSBuffer>();
@@ -34,7 +35,7 @@ export default Effect.gen(function* (_) {
 	const Send = (Buffer: VSBuffer) =>
 		Effect.tryPromise({
 			try: () => {
-				const Payload = new RPCDataPayload();
+				const Payload = new Generated.RPCDataPayload();
 				Payload.setBuffer(Buffer.buffer);
 				// The gRPC method is assumed to be available on the client service.
 				return Client.sendRPCDataToMountain(Payload);
@@ -51,7 +52,7 @@ export default Effect.gen(function* (_) {
 			Effect.asVoid,
 		);
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const ProtocolAdapterImplementation: Service = {
 		/**
 		 * The `send` method must be synchronous according to the VS Code API.
 		 * Therefore, we fork the `Send` Effect to run in the background without
@@ -74,5 +75,5 @@ export default Effect.gen(function* (_) {
 			}),
 	};
 
-	return ServiceImplementation;
+	return ProtocolAdapterImplementation;
 });

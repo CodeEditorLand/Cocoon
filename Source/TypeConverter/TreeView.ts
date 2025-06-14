@@ -9,11 +9,13 @@ import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
 import type CommandConverterDefinition from "./Command/Definition.js";
-import * as MarkdownStringConverter from "./Main/MarkdownString.js";
-import * as URIConverter from "./Main/URI.js";
+import {
+	MarkdownString as MarkdownStringConverter,
+	URI as URIConverter,
+} from "./Main.js";
 
 const Option = {
-	FromAPI(Option: VSCode.TreeViewOptions<any>): any {
+	FromAPI: (Option: VSCode.TreeViewOptions<any>): any => {
 		return {
 			showCollapseAll: !!Option.showCollapseAll,
 			canSelectMany: !!Option.canSelectMany,
@@ -24,85 +26,88 @@ const Option = {
 };
 
 const Item = {
-	FromAPI(
-		Extension: IExtensionDescription,
+	FromAPI: (
+		_Extension: IExtensionDescription,
 		Item: VSCode.TreeItem,
 		Handle: string,
 		ParentHandle: string | undefined,
 		CommandConverter: CommandConverterDefinition,
-	): any {
+	): any => {
 		const {
-			label,
-			id,
-			iconPath,
-			resourceUri,
-			tooltip,
-			collapsibleState,
-			contextValue,
-			description,
-			command,
-			accessibilityInformation,
+			label: Label,
+			id: ID,
+			iconPath: IconPath,
+			resourceUri: ResourceURI,
+			tooltip: Tooltip,
+			collapsibleState: CollapsibleState,
+			contextValue: ContextValue,
+			description: Description,
+			command: Command,
+			accessibilityInformation: AccessibilityInformation,
 		} = Item;
 
-		let themeIcon: { id: string; color?: string } | undefined;
-		let icon:
+		let ThemeIcon: { id: string; color?: string } | undefined;
+		let Icon:
 			| { light: VSCode.Uri; dark: VSCode.Uri }
 			| VSCode.Uri
 			| undefined;
 
-		if (iconPath instanceof ExtHostTypes.ThemeIcon) {
-			themeIcon = { id: iconPath.id, color: iconPath.color?.id };
+		if (IconPath instanceof ExtHostTypes.ThemeIcon) {
+			ThemeIcon = {
+				id: IconPath.id,
+				color: (IconPath.color as any)?.id,
+			};
 		} else {
-			icon = iconPath;
+			Icon = IconPath as
+				| VSCode.Uri
+				| { light: VSCode.Uri; dark: VSCode.Uri }
+				| undefined;
 		}
 
 		return {
 			handle: Handle,
 			parentHandle: ParentHandle,
-			label: typeof label === "string" ? { label } : label,
-			id: id,
-			description: description,
-			resourceUri: resourceUri
-				? URIConverter.FromAPI(resourceUri)
+			label: typeof Label === "string" ? { label: Label } : Label,
+			id: ID,
+			description: Description,
+			resourceUri: ResourceURI
+				? URIConverter.FromAPI(ResourceURI)
 				: undefined,
 			tooltip:
-				typeof tooltip === "string"
-					? tooltip
-					: tooltip
-						? MarkdownStringConverter.FromAPI(tooltip)
+				typeof Tooltip === "string"
+					? Tooltip
+					: Tooltip
+						? MarkdownStringConverter.FromAPI(Tooltip)
 						: undefined,
-			command: command
-				? CommandConverter.ToInternal(command, [])
+			command: Command
+				? CommandConverter.ToInternal(Command, [])
 				: undefined,
 			collapsibleState:
-				collapsibleState ?? ExtHostTypes.TreeItemCollapsibleState.None,
-			contextValue: contextValue,
-			themeIcon: themeIcon,
-			icon: icon
-				? "light" in icon && "dark" in icon
+				CollapsibleState ?? ExtHostTypes.TreeItemCollapsibleState.None,
+			contextValue: ContextValue,
+			themeIcon: ThemeIcon,
+			icon: Icon
+				? "light" in Icon && "dark" in Icon
 					? {
-							light: URIConverter.FromAPI(icon.light),
-							dark: URIConverter.FromAPI(icon.dark),
+							light: URIConverter.FromAPI(Icon.light),
+							dark: URIConverter.FromAPI(Icon.dark),
 						}
-					: URIConverter.FromAPI(icon as VSCode.Uri)
+					: URIConverter.FromAPI(Icon as VSCode.Uri)
 				: undefined,
-			accessibilityInformation: accessibilityInformation,
+			accessibilityInformation: AccessibilityInformation,
 		};
 	},
 
-	ToAPI(DTO: any): VSCode.TreeItem {
-		const label = DTO.label.label;
-		const item = new ExtHostTypes.TreeItem(label, DTO.collapsibleState);
-		item.id = DTO.id;
-		item.description = DTO.description;
-		item.resourceURI = DTO.resourceUri
+	ToAPI: (DTO: any): VSCode.TreeItem => {
+		const Label = DTO.label.label;
+		const Item = new ExtHostTypes.TreeItem(Label, DTO.collapsibleState);
+		Item.id = DTO.id;
+		Item.description = DTO.description;
+		Item.resourceURI = DTO.resourceUri
 			? URIConverter.ToAPI(DTO.resourceUri)
 			: undefined;
-		return item;
+		return Item;
 	},
 };
 
-export default {
-	Option,
-	Item,
-};
+export default { Option, Item };
