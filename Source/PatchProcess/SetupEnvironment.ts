@@ -10,7 +10,7 @@ class ProcessPatchError extends Error {
 	readonly _tag = "ProcessPatchError";
 	constructor(
 		readonly context: string,
-		readonly cause?: unknown,
+		override readonly cause?: unknown,
 	) {
 		super(`Failed to patch Node.js process: ${context}`);
 	}
@@ -23,18 +23,20 @@ class ProcessPatchError extends Error {
 const SetVSCodeCWD = Effect.if(
 	Effect.sync(() => typeof process.env["VSCODE_CWD"] !== "string"),
 	{
-		onTrue: Effect.sync(() => {
-			process.env["VSCODE_CWD"] = process.cwd();
-		}).pipe(
-			Effect.tap(() =>
-				Effect.logTrace(
-					"VSCODE_CWD environment variable set to current process cwd.",
+		onTrue: () =>
+			Effect.sync(() => {
+				process.env["VSCODE_CWD"] = process.cwd();
+			}).pipe(
+				Effect.tap(() =>
+					Effect.logTrace(
+						"VSCODE_CWD environment variable set to current process cwd.",
+					),
 				),
 			),
-		),
-		onFalse: Effect.logTrace(
-			"VSCODE_CWD environment variable already set, skipping.",
-		),
+		onFalse: () =>
+			Effect.logTrace(
+				"VSCODE_CWD environment variable already set, skipping.",
+			),
 	},
 );
 
@@ -46,24 +48,25 @@ const SetVSCodeCWD = Effect.if(
 const ChangeWorkingDirectoryOnWindows = Effect.if(
 	process.platform === "win32" && !!process.env["MOUNTAIN_APP_ROOT"],
 	{
-		onTrue: Effect.try({
-			try: () => {
-				const AppRoot = process.env["MOUNTAIN_APP_ROOT"]!;
-				process.chdir(AppRoot);
-				return AppRoot; // Return the path on success for logging
-			},
-			catch: (cause) =>
-				new ProcessPatchError("ChangeWorkingDirectory", {
-					cause,
-				}),
-		}).pipe(
-			Effect.flatMap((AppRoot) =>
-				Effect.logDebug(
-					`Changed current working directory to '${AppRoot}' on Windows.`,
+		onTrue: () =>
+			Effect.try({
+				try: () => {
+					const AppRoot = process.env["MOUNTAIN_APP_ROOT"]!;
+					process.chdir(AppRoot);
+					return AppRoot; // Return the path on success for logging
+				},
+				catch: (cause) =>
+					new ProcessPatchError("ChangeWorkingDirectory", {
+						cause,
+					}),
+			}).pipe(
+				Effect.flatMap((AppRoot) =>
+					Effect.logDebug(
+						`Changed current working directory to '${AppRoot}' on Windows.`,
+					),
 				),
 			),
-		),
-		onFalse: Effect.unit,
+		onFalse: () => Effect.void,
 	},
 );
 

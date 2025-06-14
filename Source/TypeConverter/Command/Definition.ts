@@ -26,7 +26,6 @@ export class Definition implements Interface {
 	) {
 		this.DelegatingCommandID = `_cocoon.delegate.${generateUuid()}`;
 
-		// Register the central command that handles the execution of all delegated commands.
 		this.CommandService.RegisterCommand(
 			this.DelegatingCommandID,
 			this.ExecuteDelegatedCommand,
@@ -50,10 +49,9 @@ export class Definition implements Interface {
 		Disposables: IDisposable[],
 	): ICommand {
 		if (!Command) {
-			return undefined;
+			return undefined as any; // To satisfy ICommand which might not be nullable
 		}
 
-		// If the command is a built-in API command, we validate and convert its arguments.
 		const APICommand = this.LookupAPICommand(Command.command);
 		if (APICommand) {
 			const ConvertedArguments =
@@ -62,14 +60,10 @@ export class Definition implements Interface {
 				) ?? [];
 			return {
 				id: APICommand.InternalID,
-				title: Command.title,
-				tooltip: Command.tooltip,
 				arguments: ConvertedArguments,
 			};
 		}
 
-		// For other commands, we check if any argument is complex (e.g., a function).
-		// If so, we use the delegation pattern to proxy its execution back to this host.
 		if (
 			Array.isArray(Command.arguments) &&
 			Command.arguments.some((argument) => typeof argument === "function")
@@ -81,17 +75,12 @@ export class Definition implements Interface {
 			});
 			return {
 				id: this.DelegatingCommandID,
-				title: Command.title,
-				tooltip: Command.tooltip,
 				arguments: [ID],
 			};
 		}
 
-		// Otherwise, if arguments are simple, we serialize it directly.
 		return {
 			id: Command.command,
-			title: Command.title,
-			tooltip: Command.tooltip,
 			arguments: Command.arguments,
 		};
 	}
@@ -100,13 +89,12 @@ export class Definition implements Interface {
 		if (!CommandDTO) {
 			return undefined;
 		}
+		// The DTO only has `id` and `arguments`. Title/tooltip are part of the UI representation,
+		// not the core command execution payload. We construct a minimal command object.
 		return {
 			command: CommandDTO.id,
-			title:
-				typeof CommandDTO.title === "string"
-					? CommandDTO.title
-					: CommandDTO.title.value,
-			tooltip: CommandDTO.tooltip,
+			title: "", // Title is not part of the DTO
+			tooltip: undefined, // Tooltip is not part of the DTO
 			arguments: CommandDTO.arguments,
 		};
 	}

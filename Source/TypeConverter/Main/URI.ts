@@ -4,6 +4,7 @@
  */
 
 import type { UriComponents } from "vs/base/common/uri.js";
+import type { Uri as VSCodeURIType } from "vscode";
 
 import { URI as VSCodeURI } from "../../Type/ExtHostTypes.js";
 
@@ -13,7 +14,7 @@ import { URI as VSCodeURI } from "../../Type/ExtHostTypes.js";
  * @param uri The `vscode.URI` instance to convert.
  * @returns The `UriComponents` DTO.
  */
-export function FromAPI(uri: VSCodeURI): UriComponents {
+export function fromAPI(uri: VSCodeURIType): UriComponents {
 	return uri.toJSON();
 }
 
@@ -23,6 +24,6 @@ export function FromAPI(uri: VSCodeURI): UriComponents {
  * @param dto The `UriComponents` DTO to revive.
  * @returns A new `vscode.URI` instance.
  */
-export function ToAPI(dto: UriComponents): VSCodeURI {
+export function toAPI(dto: UriComponents): VSCodeURIType {
 	return VSCodeURI.revive(dto);
 }
