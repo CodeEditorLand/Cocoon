@@ -7,7 +7,7 @@
 import { Effect } from "effect";
 import { URI as VscURI } from "vs/base/common/uri.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ExtensionKind, type Extension, type Uri } from "vscode";
+import { ExtensionKind, type Extension } from "vscode";
 
 import type ExtensionHostService from "../../Core/ExtensionHost/Service.js";
 
@@ -35,13 +35,13 @@ const CreateAPIObject = <T>(
 	});
 
 	const GetExtensionKind = () => {
-		if (Description.extensionKind?.includes("web")) {
-			return ExtensionKind.Web;
-		}
 		if (Description.extensionKind?.includes("workspace")) {
 			return ExtensionKind.Workspace;
 		}
-		return ExtensionKind.UI;
+		if (Description.extensionKind?.includes("ui")) {
+			return ExtensionKind.UI;
+		}
+		return ExtensionKind.Workspace; // Default for Node-based host
 	};
 
 	const ExtensionAPIObject: Extension<T> = {
@@ -58,10 +58,9 @@ const CreateAPIObject = <T>(
 		},
 		extensionKind: GetExtensionKind(),
 		get exports() {
-			const exportsEffect = ExtensionHost.GetExtensionExports(
-				Description.identifier,
-			);
-			return Effect.runSync(exportsEffect) as T;
+			return Effect.runSync(
+				ExtensionHost.GetExtensionExports(Description.identifier),
+			) as T;
 		},
 		activate: () => Effect.runPromise(Activate),
 		isFromDifferentExtensionHost: false, // Assuming same host

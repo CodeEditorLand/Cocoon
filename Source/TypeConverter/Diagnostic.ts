@@ -16,7 +16,6 @@ import type * as VSCode from "vscode";
 import {
 	Diagnostic,
 	DiagnosticRelatedInformation,
-	DiagnosticSeverity,
 	DiagnosticTag,
 	Location,
 	Position,
@@ -100,7 +99,7 @@ const FromAPI = (diagnostic: VSCode.Diagnostic): IMarkerData => ({
 	relatedInformation: diagnostic.relatedInformation?.map(
 		RelatedInformationFromAPI,
 	),
-	tags: diagnostic.tags as MarkerTag[],
+	tags: diagnostic.tags as unknown as MarkerTag[],
 });
 
 /**
@@ -125,13 +124,14 @@ const ToAPI = (MarkerDataDTO: IMarkerData): VSCode.Diagnostic => {
 		fromMarkerSeverity(MarkerDataDTO.severity as MarkerSeverity),
 	);
 	diagnostic.source = MarkerDataDTO.source;
-	diagnostic.code =
-		typeof MarkerDataDTO.code === "object" && MarkerDataDTO.code
-			? {
-					value: MarkerDataDTO.code.value,
-					target: URIConverter.ToAPI(MarkerDataDTO.code.target),
-				}
-			: MarkerDataDTO.code;
+	if (typeof MarkerDataDTO.code === "object" && MarkerDataDTO.code) {
+		diagnostic.code = {
+			value: MarkerDataDTO.code.value,
+			target: URIConverter.ToAPI(MarkerDataDTO.code.target),
+		};
+	} else {
+		diagnostic.code = MarkerDataDTO.code;
+	}
 	diagnostic.relatedInformation = MarkerDataDTO.relatedInformation?.map(
 		RelatedInformationToAPI,
 	);

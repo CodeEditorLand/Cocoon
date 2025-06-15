@@ -58,11 +58,10 @@ const Main = Effect.gen(function* () {
 		"initExtensionHost",
 		(InitializationData: IExtensionHostInitData) => {
 			// Compose the final application layer, providing the received init data.
-			const ApplicationLayer = AllServiceLayer(
-				ApplicationConfiguration,
-			).pipe(
-				Layer.provide(CoreServiceLayer),
-				Layer.provide(InitDataLayer(InitializationData)),
+			const ApplicationLayer = Layer.mergeAll(
+				CoreServiceLayer,
+				AllServiceLayer(ApplicationConfiguration),
+				InitDataLayer(InitializationData),
 			);
 
 			const handlerEffect = Effect.gen(function* () {
@@ -70,19 +69,25 @@ const Main = Effect.gen(function* () {
 					"Received 'initExtensionHost' data from Mountain.",
 				);
 
-				yield* Effect.provide(RunProcessPatch, ApplicationLayer);
-				yield* Effect.provide(
-					FullApplicationInitialization,
-					ApplicationLayer,
+				yield* RunProcessPatch;
+				yield* FullApplicationInitialization;
+
+				return yield* Deferred.succeed(
+					InitializationBarrier,
+					undefined,
 				);
+			}).pipe(Effect.map(() => "initialized"));
 
-				yield* Deferred.succeed(InitializationBarrier, undefined);
-				return "initialized";
-			});
-
-			return Effect.runPromise(
-				Effect.provide(handlerEffect, ApplicationLayer),
+			// Build the layer to get the context, then provide it to the handler effect.
+			// This ensures all dependencies are resolved before running the effect.
+			const runnable = Layer.build(ApplicationLayer).pipe(
+				Effect.flatMap((context) =>
+					Effect.provide(handlerEffect, context),
+				),
+				Effect.scoped,
 			);
+
+			return Effect.runPromise(runnable);
 		},
 	);
 

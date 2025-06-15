@@ -119,9 +119,11 @@ export default Effect.gen(function* () {
 			Effect.gen(function* () {
 				const Providers = yield* Ref.get(LocalProviders);
 				if (Providers.has(ID)) {
-					return yield* new AuthenticationProviderExistsError({
-						ProviderID: ID,
-					});
+					return yield* Effect.fail(
+						new AuthenticationProviderExistsError({
+							ProviderID: ID,
+						}),
+					);
 				}
 
 				yield* Ref.update(LocalProviders, (Map) =>

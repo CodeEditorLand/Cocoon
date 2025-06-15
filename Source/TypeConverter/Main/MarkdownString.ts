@@ -36,8 +36,7 @@ const ToAPI = (MarkdownStringDTO: IMarkdownString): VscMarkdownString => {
 		MarkdownStringDTO.value,
 		typeof MarkdownStringDTO.isTrusted === "boolean"
 			? MarkdownStringDTO.isTrusted
-			: (MarkdownStringDTO.isTrusted as MarkdownStringTrustedOptions)
-					?.enabled,
+			: !!(MarkdownStringDTO.isTrusted as MarkdownStringTrustedOptions),
 	);
 	result.baseUri =
 		MarkdownStringDTO.baseUri as unknown as VscMarkdownString["baseUri"];

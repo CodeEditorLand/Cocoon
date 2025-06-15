@@ -10,7 +10,6 @@ import { CancellationError as VscCancellationError } from "vs/base/common/errors
 import { Emitter } from "vs/base/common/event.js";
 import * as Lifecycle from "vs/base/common/lifecycle.js";
 import { URI as VscURI } from "vs/base/common/uri.js";
-import * as VscLanguages from "vs/editor/common/languages.js";
 import { FileType as VscFileType } from "vs/platform/files/common/files.js";
 import type * as VSCode from "vscode";
 import {
@@ -26,6 +25,7 @@ import {
 	TextEditorCursorStyle,
 	TreeItemCollapsibleState,
 	ViewColumn,
+	ShellExecution,
 } from "vscode";
 
 // --- Foundational Re-exports ---
@@ -463,11 +463,117 @@ export class CompletionItem implements VSCode.CompletionItem {
 	}
 }
 
+export class Task implements VSCode.Task {
+	public definition: VSCode.TaskDefinition;
+	public scope: VSCode.TaskScope.Global | VSCode.TaskScope.Workspace;
+	public name: string;
+	public source: string;
+	public execution?:
+		| VSCode.ProcessExecution
+		| VSCode.ShellExecution
+		| VSCode.CustomExecution;
+	public problemMatchers: string[];
+
+	constructor(
+		definition: VSCode.TaskDefinition,
+		scope: VSCode.TaskScope.Global | VSCode.TaskScope.Workspace,
+		name: string,
+		source: string,
+		execution?:
+			| VSCode.ProcessExecution
+			| VSCode.ShellExecution
+			| VSCode.CustomExecution,
+		problemMatchers?: string[],
+	) {
+		this.definition = definition;
+		this.scope = scope;
+		this.name = name;
+		this.source = source;
+		this.execution = execution;
+		this.problemMatchers = problemMatchers ?? [];
+	}
+}
+
+export class ProcessExecution implements VSCode.ProcessExecution {
+	public process: string;
+	public args: string[];
+	public options?: VSCode.ProcessExecutionOptions;
+
+	constructor(
+		process: string,
+		args: string[],
+		options?: VSCode.ProcessExecutionOptions,
+	) {
+		this.process = process;
+		this.args = args;
+		this.options = options;
+	}
+}
+
+export class WorkspaceEdit implements VSCode.WorkspaceEdit {
+	private readonly _edits = new Map<string, VSCode.TextEdit[]>();
+
+	public set(uri: VSCode.Uri, edits: readonly VSCode.TextEdit[]): void {
+		this._edits.set(uri.toString(), [...edits]);
+	}
+
+	public entries(): [VSCode.Uri, readonly VSCode.TextEdit[]][] {
+		return Array.from(this._edits.entries()).map(([uri, edits]) => [
+			URI.parse(uri),
+			edits,
+		]);
+	}
+
+	public get(uri: VSCode.Uri): VSCode.TextEdit[] {
+		return this._edits.get(uri.toString()) ?? [];
+	}
+
+	public has(uri: VSCode.Uri): boolean {
+		return this._edits.has(uri.toString());
+	}
+
+	public get size(): number {
+		return this._edits.size;
+	}
+
+	public renameFile(
+		_oldUri: VSCode.Uri,
+		_newUri: VSCode.Uri,
+		_options?: {
+			readonly overwrite?: boolean;
+			readonly ignoreIfExists?: boolean;
+		},
+	): void {
+		// Not implemented in shim
+	}
+
+	public createFile(
+		_uri: VSCode.Uri,
+		_options?: {
+			readonly overwrite?: boolean;
+			readonly ignoreIfExists?: boolean;
+		},
+	): void {
+		// Not implemented in shim
+	}
+
+	public deleteFile(
+		_uri: VSCode.Uri,
+		_options?: {
+			readonly recursive?: boolean;
+			readonly ignoreIfNotExists?: boolean;
+		},
+	): void {
+		// Not implemented in shim
+	}
+}
+
 export {
 	ViewColumn,
 	StatusBarAlignment,
 	TextEditorCursorStyle,
 	DiagnosticSeverity,
+	DiagnosticTag,
 	TreeItemCollapsibleState,
 	ConfigurationTarget,
 	EndOfLine,
@@ -476,6 +582,7 @@ export {
 	CompletionItemKind,
 	SnippetString,
 	CompletionItemTag,
+	ShellExecution,
 };
 
 export const FileType = VscFileType;

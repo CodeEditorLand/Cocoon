@@ -47,21 +47,19 @@ export default Effect.gen(function* () {
 			for (const Subscription of Extension.Subscriptions) {
 				yield* Effect.try({
 					try: () => Subscription.dispose(),
-				}).pipe(
-					Effect.catchAll((CaughtError) =>
+					catch: (CaughtError) =>
 						Log.Warn(
 							`Error during subscription disposal for ${Extension.ID.value}`,
 							CaughtError,
 						),
-					),
-				);
+				});
 			}
 
 			// Call the extension's deactivate function if it exists
 			const DeactivateFunction = Extension.Module.deactivate;
 			if (typeof DeactivateFunction === "function") {
 				yield* Effect.tryPromise({
-					try: () => DeactivateFunction(),
+					try: () => Promise.resolve(DeactivateFunction()),
 					catch: (CaughtError) =>
 						new Error(
 							`Deactivation function for '${Extension.ID.value}' failed: ${CaughtError}`,
@@ -80,7 +78,8 @@ export default Effect.gen(function* () {
 			);
 
 			const Module = yield* Effect.tryPromise({
-				try: () => import(Description.main!),
+				try: () =>
+					import(URI.revive(Description.extensionLocation).fsPath),
 				catch: (CaughtError) =>
 					new Error(
 						`Failed to load module for '${Description.identifier.value}': ${CaughtError}`,
@@ -91,7 +90,7 @@ export default Effect.gen(function* () {
 			const Context: ExtensionContext = {
 				subscriptions: [],
 				extensionPath: Description.extensionLocation.fsPath,
-				extensionUri: Description.extensionLocation,
+				extensionUri: URI.revive(Description.extensionLocation),
 				storageUri: URI.parse("invalid:/storage"),
 				globalStorageUri: URI.parse("invalid:/globalstorage"),
 				logUri: URI.parse("invalid:/log"),
@@ -114,7 +113,9 @@ export default Effect.gen(function* () {
 			const Exports = ActivationFunction
 				? yield* Effect.tryPromise({
 						try: () =>
-							ActivationFunction.apply(globalThis, [Context]),
+							Promise.resolve(
+								ActivationFunction.apply(globalThis, [Context]),
+							),
 						catch: (CaughtError) =>
 							new Error(
 								`Activation function for '${Description.identifier.value}' failed: ${CaughtError}`,
@@ -180,7 +181,7 @@ export default Effect.gen(function* () {
 						},
 					]);
 
-					Telemetry.onExtensionError(
+					yield* Telemetry.onExtensionError(
 						Description.identifier,
 						ErrorValue,
 					);
@@ -196,7 +197,9 @@ export default Effect.gen(function* () {
 			const IsAlreadyActivated = yield* Ref.get(ActivatedExtensions).pipe(
 				Effect.map((Map) => Map.has(ID.value)),
 			);
-			if (IsAlreadyActivated) return;
+			if (IsAlreadyActivated) {
+				return;
+			}
 
 			const MaybeDescription =
 				ExtensionRegistry.getExtensionDescription(ID);

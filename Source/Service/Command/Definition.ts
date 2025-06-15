@@ -24,6 +24,7 @@ export default Effect.gen(function* () {
 
 	const CommandConverter = new CommandConverterDefinition(
 		() => undefined, // LookupAPICommand placeholder
+		() => Promise.resolve(undefined), // ExecuteCommand placeholder
 	);
 
 	const ExecuteCommand = <T>(
@@ -44,12 +45,7 @@ export default Effect.gen(function* () {
 				}).pipe(
 					Effect.catchAll((e) =>
 						Effect.flatMap(
-							Effect.sync(() =>
-								Telemetry.onExtensionError(
-									Extension.identifier,
-									e,
-								),
-							),
+							Telemetry.onExtensionError(Extension.identifier, e),
 							() => Effect.fail(e),
 						),
 					),
@@ -117,8 +113,8 @@ export default Effect.gen(function* () {
 					);
 					return;
 				}
-				return (editor as TextEditor).edit((editBuilder) => {
-					Handler(editor as TextEditor, editBuilder, ...args);
+				return editor.edit((editBuilder) => {
+					Handler(editor, editBuilder, ...args);
 				});
 			};
 			return Register(ID, WrappedHandler, true, ThisArgument, Extension);

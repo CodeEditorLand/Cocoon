@@ -3,7 +3,7 @@
  * @description Type converters for the QuickInput APIs (`showQuickPick`, `showInputBox`).
  */
 
-import { URI, type QuickInputButton, type QuickPickItem } from "vscode";
+import { Uri, type QuickInputButton, type QuickPickItem } from "vscode";
 
 const QuickPick = {
 	/**
@@ -34,10 +34,10 @@ const QuickPick = {
 				? "dark" in (Button as any).iconPath &&
 					"light" in (Button as any).iconPath
 					? {
-							dark: URI.revive(
+							dark: Uri.revive(
 								(Button as any).iconPath.dark,
 							).toJSON(),
-							light: URI.revive(
+							light: Uri.revive(
 								(Button as any).iconPath.light,
 							).toJSON(),
 						}
@@ -49,4 +49,4 @@ const QuickPick = {
 	},
 };
 
-export default { QuickPick };
+export const QuickInput = QuickPick;

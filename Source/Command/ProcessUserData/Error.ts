@@ -11,13 +11,13 @@ import { Data } from "effect";
  */
 export class ActiveEditorNotFoundError extends Data.TaggedError(
 	"ActiveEditorNotFoundError",
-)<void> {
+)<{}> {
+	public override readonly message: string;
 	constructor() {
 		super();
 		this.message =
 			"No active text editor found. Please open a file to process.";
 	}
-	public override readonly message: string;
 }
 
 /**
@@ -29,6 +29,7 @@ export class ProcessingServiceError extends Data.TaggedError(
 )<{
 	readonly cause: unknown;
 }> {
+	public override readonly message: string;
 	constructor(Properties: { readonly cause: unknown }) {
 		super(Properties);
 		const CauseMessage =
@@ -37,5 +38,4 @@ export class ProcessingServiceError extends Data.TaggedError(
 				: String(this.cause);
 		this.message = `Failed to connect to the processing service: ${CauseMessage}`;
 	}
-	public override readonly message: string;
 }

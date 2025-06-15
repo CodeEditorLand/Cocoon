@@ -20,6 +20,7 @@ import type {
 	WorkspaceFolder,
 } from "vscode";
 
+import type IPCService from "../IPC/Service.js";
 import type {
 	DebugProviderRegistrationError,
 	StartDebuggingError,
@@ -45,19 +46,31 @@ export default class DebugService extends Context.Tag("Service/Debug")<
 			DebugType: string,
 			Provider: DebugConfigurationProvider,
 			Extension: IExtensionDescription,
-		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
+		) => Effect.Effect<
+			Disposable,
+			DebugProviderRegistrationError,
+			IPCService
+		>;
 
 		readonly RegisterDebugAdapterDescriptorFactory: (
 			DebugType: string,
 			Factory: DebugAdapterDescriptorFactory,
 			Extension: IExtensionDescription,
-		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
+		) => Effect.Effect<
+			Disposable,
+			DebugProviderRegistrationError,
+			IPCService
+		>;
 
 		readonly RegisterDebugAdapterTrackerFactory: (
 			DebugType: string,
 			Factory: DebugAdapterTrackerFactory,
 			Extension: IExtensionDescription,
-		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
+		) => Effect.Effect<
+			Disposable,
+			DebugProviderRegistrationError,
+			IPCService
+		>;
 
 		readonly StartDebugging: (
 			Folder: WorkspaceFolder | undefined,

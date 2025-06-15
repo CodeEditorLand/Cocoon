@@ -35,7 +35,7 @@ const PendingPromises = new Map<
 	{
 		Resolve: (URL: string) => void;
 		Reject: (Reason?: any) => void;
-		TimeoutID?: NodeJS.Timeout;
+		TimeoutID?: any;
 	}
 >();
 
@@ -74,7 +74,7 @@ export async function resolve(
 	const RequestID = NextRequestID++;
 	try {
 		const ResolutionPromise = new Promise<string>((Resolve, Reject) => {
-			const TimeoutID: NodeJS.Timeout = setTimeout(() => {
+			const TimeoutID = setTimeout(() => {
 				PendingPromises.delete(RequestID);
 				Reject(
 					new globalThis.Error(

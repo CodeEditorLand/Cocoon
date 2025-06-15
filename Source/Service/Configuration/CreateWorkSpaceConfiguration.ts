@@ -7,18 +7,18 @@
 
 import { Effect } from "effect";
 import { deepClone } from "vs/base/common/objects.js";
-import type { ConfigurationInspect, ConfigurationTarget } from "vscode";
+import type { ConfigurationInspect } from "vs/workbench/api/common/extHostConfiguration.js";
+import type { ConfigurationTarget, WorkspaceConfiguration } from "vscode";
 
 import type IPCService from "../IPC/Service.js";
 import type LogService from "../Log/Service.js";
-import type WorkSpaceConfiguration from "./Type/WorkSpaceConfiguration.js";
 
 const CreateWorkSpaceConfiguration = (
 	Snapshot: any,
 	SectionPrefix: string,
 	IPC: IPCService["Type"],
 	Log: LogService["Type"],
-): WorkSpaceConfiguration => {
+): WorkspaceConfiguration => {
 	const Get = <T>(Key: string, DefaultValue?: T): T | undefined => {
 		// Traverse the object path to get the value.
 		const Value = Key.split(".").reduce(
@@ -53,19 +53,17 @@ const CreateWorkSpaceConfiguration = (
 	return {
 		get: Get,
 		has: (Key: string) => Get(Key) !== undefined,
-		inspect: <T>(
-			Key: string,
-		): Promise<ConfigurationInspect<T> | undefined> => {
+		inspect: <T>(Key: string): ConfigurationInspect<T> | undefined => {
 			// A real implementation would make an RPC call to Mountain to get the full
 			// configuration details (globalValue, workspaceValue, etc.).
 			const Value = Get<T>(Key);
-			return Promise.resolve({
+			return {
 				key: Key,
 				defaultValue: Value,
 				globalValue: Value,
 				workspaceValue: Value,
 				workspaceFolderValue: Value,
-			} as ConfigurationInspect<T>);
+			};
 		},
 		update: Update,
 	};
