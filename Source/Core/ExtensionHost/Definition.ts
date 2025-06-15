@@ -103,6 +103,11 @@ export default Effect.gen(function* () {
 				extension: undefined as any, // This will be set later
 				environmentVariableCollection: undefined as any,
 				asAbsolutePath: (path) => path,
+				extensionRuntime: 2, // NodeJS
+				messagePassingProtocol: undefined as any,
+				workspaceState: undefined as any,
+				globalState: undefined as any,
+				languageModelAccessInformation: undefined as any,
 			};
 
 			const ActivationFunction = Module.activate as Function | undefined;

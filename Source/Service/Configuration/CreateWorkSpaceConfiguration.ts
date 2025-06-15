@@ -53,7 +53,9 @@ const CreateWorkSpaceConfiguration = (
 	return {
 		get: Get,
 		has: (Key: string) => Get(Key) !== undefined,
-		inspect: <T>(Key: string) => {
+		inspect: <T>(
+			Key: string,
+		): Promise<ConfigurationInspect<T> | undefined> => {
 			// A real implementation would make an RPC call to Mountain to get the full
 			// configuration details (globalValue, workspaceValue, etc.).
 			const Value = Get<T>(Key);

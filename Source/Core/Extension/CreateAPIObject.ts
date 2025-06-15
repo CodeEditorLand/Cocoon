@@ -7,7 +7,7 @@
 import { Effect } from "effect";
 import { URI as VscURI } from "vs/base/common/uri.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ExtensionKind, type Extension } from "vscode";
+import { ExtensionKind, type Extension, type Uri } from "vscode";
 
 import type ExtensionHostService from "../../Core/ExtensionHost/Service.js";
 
@@ -36,7 +36,7 @@ const CreateAPIObject = <T>(
 
 	const GetExtensionKind = () => {
 		if (Description.extensionKind?.includes("web")) {
-			return ExtensionKind.UI;
+			return ExtensionKind.Web;
 		}
 		if (Description.extensionKind?.includes("workspace")) {
 			return ExtensionKind.Workspace;
@@ -64,7 +64,7 @@ const CreateAPIObject = <T>(
 			return Effect.runSync(exportsEffect) as T;
 		},
 		activate: () => Effect.runPromise(Activate),
-		isFromDifferentExtensionHost: false,
+		isFromDifferentExtensionHost: false, // Assuming same host
 	};
 
 	return Object.freeze(ExtensionAPIObject);

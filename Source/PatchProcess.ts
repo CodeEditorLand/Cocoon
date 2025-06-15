@@ -9,7 +9,7 @@ import { Effect } from "effect";
 
 import BlockNativesModule from "./PatchProcess/BlockNativesModule.js";
 import HandleException from "./PatchProcess/HandleException.js";
-import { Live as ProcessPatchLive } from "./PatchProcess/Live.js";
+import ProcessPatchLive from "./PatchProcess/Live.js";
 import PatchProcessCrash from "./PatchProcess/PatchProcessCrash.js";
 import PatchProcessExit from "./PatchProcess/PatchProcessExit.js";
 import PipeLogging from "./PatchProcess/PipeLogging.js";

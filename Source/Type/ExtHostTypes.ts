@@ -10,6 +10,7 @@ import { CancellationError as VscCancellationError } from "vs/base/common/errors
 import { Emitter } from "vs/base/common/event.js";
 import * as Lifecycle from "vs/base/common/lifecycle.js";
 import { URI as VscURI } from "vs/base/common/uri.js";
+import * as VscLanguages from "vs/editor/common/languages.js";
 import { FileType as VscFileType } from "vs/platform/files/common/files.js";
 import type * as VSCode from "vscode";
 import {
