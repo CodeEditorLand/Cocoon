@@ -50,11 +50,11 @@ const HandleException = Effect.gen(function* () {
 		};
 
 		return IPC.SendNotification("$log", [Payload]).pipe(
-			Effect.catchAll((Error) =>
+			Effect.catchAll((ErrorValue) =>
 				// Fallback to console if IPC fails
 				Effect.sync(() =>
 					console.error(
-						`[HandleException] Failed to send error to host: ${Error}`,
+						`[HandleException] Failed to send error to host: ${ErrorValue}`,
 						Payload,
 					),
 				),

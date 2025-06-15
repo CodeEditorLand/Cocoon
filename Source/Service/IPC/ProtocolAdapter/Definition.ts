@@ -40,14 +40,14 @@ export default Effect.gen(function* () {
 				// The gRPC method is assumed to be available on the client service.
 				return Client.sendRPCDataToMountain(Payload);
 			},
-			catch: (Cause) =>
+			catch: (cause) =>
 				new IPCError({
-					cause: Cause,
+					cause,
 					context: "sendRPCDataToMountain failed",
 				}),
 		}).pipe(
-			Effect.catchAll((Error) =>
-				Effect.logError("Failed to send RPC data via gRPC", Error),
+			Effect.catchAll((error) =>
+				Effect.logError("Failed to send RPC data via gRPC", error),
 			),
 			Effect.asVoid,
 		);

@@ -13,7 +13,7 @@ import ConvertExtensionDataToDTO from "./WebView/ConvertExtensionDataToDTO.js";
 import ConvertPanelOptionToDTO from "./WebView/ConvertPanelOptionToDTO.js";
 import ConvertShowOptionToDTO from "./WebView/ConvertShowOptionToDTO.js";
 
-export {
+export const WebView = {
 	ConvertContentOptionToDTO,
 	ConvertExtensionDataToDTO,
 	ConvertPanelOptionToDTO,

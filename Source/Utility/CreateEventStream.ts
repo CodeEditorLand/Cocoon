@@ -1,11 +1,10 @@
 /**
  * @module CreateEventStream
- * @description A utility to create a VS Code-compatible event emitter from an Effect Hub.
+ * @description A utility to create a VS Code-compatible event emitter.
  */
 
-import { Effect, Hub, Stream } from "effect";
-import { Emitter } from "vs/base/common/event.js";
-import type { Event } from "vscode";
+import { Effect, Hub } from "effect";
+import { Emitter, type Event } from "vs/base/common/event.js";
 
 export interface EventStream<T> {
 	/**
@@ -15,9 +14,9 @@ export interface EventStream<T> {
 	 */
 	readonly Fire: (Data: T) => Effect.Effect<void, never>;
 	/**
-	 * The underlying Effect Stream.
+	 * The underlying Effect Hub for stream processing.
 	 */
-	readonly Stream: Stream.Stream<T, never>;
+	readonly Hub: Hub.Hub<T>;
 	/**
 	 * The VS Code-compatible `Event` interface.
 	 */
@@ -33,26 +32,21 @@ export interface EventStream<T> {
  * @returns An `EventStream` object.
  */
 const CreateEventStream = <T>(): EventStream<T> => {
-	// VS Code's Emitter is a reliable and simple way to implement the Event interface.
 	const VscodeEmitter = new Emitter<T>();
 	const HubInstance = Effect.runSync(Hub.unbounded<T>());
 
 	const Fire = (Data: T): Effect.Effect<void, never> =>
-		Hub.publish(HubInstance, Data).pipe(Effect.asVoid);
-
-	// We also fire the vscode emitter to ensure the `.event` property works correctly.
-	const FireWithVscode = (Data: T) =>
-		Effect.sync(() => VscodeEmitter.fire(Data)).pipe(
-			Effect.andThen(() => Fire(Data)),
+		Hub.publish(HubInstance, Data).pipe(
+			Effect.andThen(Effect.sync(() => VscodeEmitter.fire(Data))),
+			Effect.asVoid,
 		);
 
 	const event: Event<T> = VscodeEmitter.event;
-	const StreamFromHub = Stream.fromHub(HubInstance);
 	const Shutdown = () => Hub.shutdown(HubInstance);
 
 	return {
-		Fire: FireWithVscode,
-		Stream: StreamFromHub,
+		Fire,
+		Hub: HubInstance,
 		event,
 		Shutdown,
 	};

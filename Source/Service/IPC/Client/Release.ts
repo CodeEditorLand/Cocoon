@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 
-import type ClientService from "./Service.js";
+import type Service from "./Service.js";
 
 /**
  * An `Effect` that closes the gRPC client connection.
@@ -17,7 +17,7 @@ import type ClientService from "./Service.js";
  *
  * @param Client The gRPC client instance to close.
  */
-const Release = (Client: ClientService) => {
+const Release = (Client: Service) => {
 	return Effect.sync(() => {
 		(Client as any).close(); // The generated client has a close() method
 	}).pipe(Effect.tap(() => Effect.logInfo("gRPC client connection closed.")));

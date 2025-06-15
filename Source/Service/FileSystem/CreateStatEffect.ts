@@ -8,7 +8,7 @@ import type { FileStat, Uri } from "vscode";
 
 import { URI as URIConverter } from "../../TypeConverter/Main.js";
 import IPCService from "../IPC/Service.js";
-import { FileSystemError, MapToVSCodeError } from "./Error.js";
+import { FileSystemError, MapToVSCodeError } from "./Error/FileSystemError.js";
 
 const CreateStatEffect = (
 	URI: Uri,
@@ -26,15 +26,15 @@ const CreateStatEffect = (
 		} as FileStat;
 	}).pipe(
 		Effect.mapError(
-			(Cause) =>
+			(cause) =>
 				new FileSystemError({
-					cause: Cause,
+					cause,
 					operation: "Stat",
 					uri: URI,
 				}),
 		),
-		Effect.catchTag("FileSystemError", (Error) =>
-			Effect.fail(MapToVSCodeError(Error)),
+		Effect.catchTag("FileSystemError", (error) =>
+			Effect.fail(MapToVSCodeError(error)),
 		),
 	);
 };

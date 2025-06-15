@@ -27,25 +27,28 @@ const RegisterProvider = <T>(
 	IPC: IPCService,
 	RPCRegisterMethod: string,
 	Data: T,
-): Effect.Effect<Disposable> => {
+): Effect.Effect<Disposable, never> => {
 	return Effect.sync(() => {
 		const Handle = ++HandleCounter;
-		Ref.update(Registry, (Map) => Map.set(Handle, Data)).pipe(
-			Effect.runSync,
+		Effect.runSync(Ref.update(Registry, (Map) => Map.set(Handle, Data)));
+		Effect.runFork(
+			IPC.SendNotification(RPCRegisterMethod, [
+				Handle,
+				(Data as any).Type, // Assumes the data object has a 'type' property (e.g., debug type)
+			]),
 		);
-		IPC.SendNotification(RPCRegisterMethod, [
-			Handle,
-			(Data as any).Type, // Assumes the data object has a 'type' property (e.g., debug type)
-		]).pipe(Effect.runFork);
 
 		return new Disposable(() => {
-			Ref.update(Registry, (Map) => (Map.delete(Handle), Map)).pipe(
-				Effect.runSync,
+			const CleanupEffect = Ref.update(
+				Registry,
+				(Map) => (Map.delete(Handle), Map),
+			).pipe(
+				Effect.flatMap(() => {
+					const RPCUnregisterMethod = `$unregister${RPCRegisterMethod.slice(1)}`; // e.g., $register... -> $unregister...
+					return IPC.SendNotification(RPCUnregisterMethod, [Handle]);
+				}),
 			);
-			const RPCUnregisterMethod = `$unregister${RPCRegisterMethod.slice(1)}`; // e.g., $register... -> $unregister...
-			IPC.SendNotification(RPCUnregisterMethod, [Handle]).pipe(
-				Effect.runFork,
-			);
+			Effect.runFork(CleanupEffect);
 		});
 	});
 };

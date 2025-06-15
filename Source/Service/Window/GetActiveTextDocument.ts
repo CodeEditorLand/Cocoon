@@ -20,7 +20,11 @@ import WindowService from "./Service.js";
  *   - `Some<TextDocument>` if an editor is active.
  *   - `None` if no editor is active.
  */
-const GetActiveTextDocument = Effect.gen(function* () {
+const GetActiveTextDocument: Effect.Effect<
+	Option.Option<TextDocument>,
+	never,
+	WindowService
+> = Effect.gen(function* () {
 	const Window = yield* WindowService;
 	return Option.fromNullable(Window.activeTextEditor?.document);
 });

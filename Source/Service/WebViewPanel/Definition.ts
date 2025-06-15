@@ -14,7 +14,7 @@ import {
 	type WebviewPanelSerializer,
 } from "vscode";
 
-import { WebView as TypeConverter } from "../../TypeConverter.js";
+import { WebView as TypeConverter } from "../../TypeConverter/WebView.js";
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
 import WebViewPanelImplementation from "./WebViewPanelImplementation.js";

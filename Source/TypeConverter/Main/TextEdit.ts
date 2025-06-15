@@ -6,7 +6,7 @@
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type { TextEdit as VscTextEdit } from "vscode";
 
-import { TextEdit } from "../../Type/ExtHostTypes.js";
+import { Range, TextEdit } from "../../Type/ExtHostTypes.js";
 import RangeConverter from "./Range.js";
 
 /**

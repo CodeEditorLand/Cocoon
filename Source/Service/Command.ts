@@ -9,10 +9,10 @@ import { Layer } from "effect";
 import Definition from "./Command/Definition.js";
 import Service from "./Command/Service.js";
 import type { CommandHandler, CommandHandlerEntry } from "./Command/Type.js";
-import type IPCConfiguration from "./IPC/Configuration.js";
-import IPCLive from "./IPC/Live.js";
-import TelemetryLive from "./Telemetry/Live.js";
-import WorkSpaceLive from "./WorkSpace/Live.js";
+import { Live as IPCLive } from "./IPC.js";
+import type IPCConfigurationService from "./IPC/Configuration.js";
+import { Live as TelemetryLive } from "./Telemetry.js";
+import { Live as WorkSpaceLive } from "./WorkSpace.js";
 
 export { type CommandHandler, type CommandHandlerEntry };
 export { default as Service } from "./Command/Service.js";
@@ -22,7 +22,7 @@ export { default as Service } from "./Command/Service.js";
  * It depends on the IPC, Telemetry, and WorkSpace services.
  * @param Config The IPC configuration.
  */
-export const Live = (Config: IPCConfiguration) =>
+export const Live = (Config: IPCConfigurationService) =>
 	Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.mergeAll(

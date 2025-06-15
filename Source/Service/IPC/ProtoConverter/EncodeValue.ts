@@ -33,8 +33,11 @@ const EncodeValue = (
 			}
 			return ProtoValue.fromJavaScript(JsValue);
 		},
-		catch: (Cause) =>
-			new ProtoSerializationError({ Cause, Direction: "Encoding" }),
+		catch: (cause) =>
+			new ProtoSerializationError({
+				Cause: cause,
+				Direction: "Encoding",
+			}),
 	});
 };
 

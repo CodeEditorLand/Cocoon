@@ -4,13 +4,21 @@
  */
 
 import { Effect, Ref } from "effect";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import type {
+	Breakpoint,
+	DebugConfiguration,
+	DebugConsole,
+	DebugSession,
+	DebugSessionOptions,
+	WorkspaceFolder,
+} from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
 import RegisterProvider from "./RegisterProvider.js";
 import type Service from "./Service.js";
-import type { DebugSession } from "./Type.js";
 
 /**
  * An Effect that builds the live implementation of the Debug service.
@@ -35,6 +43,7 @@ export default Effect.gen(function* () {
 		([_Handle, _FolderDTO, _Token]) =>
 			Effect.gen(function* () {
 				// ... logic to find provider by handle, call it, and return DTOs ...
+				return [];
 			}).pipe(Effect.runPromise),
 	);
 
@@ -66,7 +75,7 @@ export default Effect.gen(function* () {
 		get activeDebugSession() {
 			return Effect.runSync(Ref.get(ActiveSession));
 		},
-		get activeDebugConsole() {
+		get activeDebugConsole(): DebugConsole {
 			throw new Error("activeDebugConsole not implemented.");
 		},
 		get breakpoints() {
@@ -97,22 +106,26 @@ export default Effect.gen(function* () {
 				{ Type, Factory, Extension },
 			),
 
-		StartDebugging: (Folder, Configuration, Options) =>
+		StartDebugging: (
+			Folder: WorkspaceFolder | undefined,
+			Configuration: string | DebugConfiguration,
+			Options?: DebugSessionOptions,
+		) =>
 			IPC.SendRequest<boolean>("$startDebugging", [
 				Folder ? TypeConverter.URI.FromAPI(Folder.uri) : undefined,
 				Configuration,
 				Options,
 			]).pipe(Effect.map((Result) => !!Result)),
 
-		StopDebugging: (Session) =>
+		StopDebugging: (Session?: DebugSession) =>
 			IPC.SendNotification("$stopDebugging", [Session?.id]),
 
-		AddBreakpoints: (_Breakpoints) =>
+		AddBreakpoints: (_Breakpoints: readonly Breakpoint[]) =>
 			IPC.SendNotification("$addBreakpoints", [
 				// Convert breakpoints to DTOs
 			]),
 
-		RemoveBreakpoints: (_Breakpoints) =>
+		RemoveBreakpoints: (_Breakpoints: readonly Breakpoint[]) =>
 			IPC.SendNotification("$removeBreakpoints", [
 				// Convert breakpoints to DTOs
 			]),

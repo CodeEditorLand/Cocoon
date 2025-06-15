@@ -12,7 +12,7 @@ import type { IExtensionHostInitData } from "vs/workbench/services/extensions/co
  * The Context.Tag for the InitData service. Other services will use this Tag
  * to declare their dependency on the initial host configuration data.
  */
-export default class extends Context.Tag("Service/InitData")<
-	any,
+export default class InitDataService extends Context.Tag("Service/InitData")<
+	InitDataService,
 	IExtensionHostInitData
 >() {}

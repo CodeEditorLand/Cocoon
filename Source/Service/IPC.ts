@@ -5,9 +5,9 @@
  * Mountain host, exposing high-level effects for communication.
  */
 
-import type IPCConfiguration from "./IPC/Configuration.js";
+import type IPCConfigurationService from "./IPC/Configuration.js";
 import * as Error from "./IPC/Error.js";
 import Live from "./IPC/Live.js";
 import Service from "./IPC/Service.js";
 
-export { Service, Live, type IPCConfiguration, Error };
+export { Service, Live, type IPCConfigurationService, Error };

@@ -9,7 +9,7 @@ import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry
 /**
  * The `Context.Tag` for the `vscode.env.telemetry` API service.
  */
-export default class extends Context.Tag("Service/Telemetry")<
-	any,
+export default class TelemetryService extends Context.Tag("Service/Telemetry")<
+	TelemetryService,
 	IExtHostTelemetry
 >() {}

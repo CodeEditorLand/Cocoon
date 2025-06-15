@@ -3,7 +3,7 @@
  * @description The live implementation of the ProposedAPI service.
  */
 
-import { Context, Effect, HashMap } from "effect";
+import { Effect, HashMap } from "effect";
 import type { IEnabledApiProposals } from "vs/platform/extensions/common/extensions.js";
 
 import InitDataService from "../InitData/Service.js";
@@ -48,10 +48,10 @@ export default Effect.gen(function* () {
 	const Log = yield* LogService;
 
 	const ProductConfiguration = ParseConfiguration(
-		InitData.product?.extensionEnabledApiProposals,
+		(InitData.product as any)?.extensionEnabledApiProposals,
 	);
 	const EnvironmentConfiguration = ParseConfiguration(
-		InitData.environment.extensionEnabledProposedApi,
+		(InitData.environment as any).extensionEnabledProposedApi,
 	);
 
 	const AllGlobalAPIs = new Set([
@@ -74,7 +74,7 @@ export default Effect.gen(function* () {
 		`Proposed API provider initialized. Globally enabled: ${AllGlobalAPIs.size}. Per-extension configs: ${HashMap.size(ReadonlyExtensionAPIs)}.`,
 	);
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const ServiceImplementation: Service = {
 		IsEnabled: (ExtensionID, ProposalName) => {
 			if (AllGlobalAPIs.has(ProposalName)) {
 				return true;

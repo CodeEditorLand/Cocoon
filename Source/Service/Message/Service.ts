@@ -7,8 +7,8 @@
 import { Context, type Effect } from "effect";
 import type { MessageItem, MessageOptions } from "vscode";
 
-export default class extends Context.Tag("Service/Message")<
-	any,
+export default class MessageService extends Context.Tag("Service/Message")<
+	MessageService,
 	{
 		/**
 		 * Shows an information message to the user.
@@ -16,10 +16,10 @@ export default class extends Context.Tag("Service/Message")<
 		 * @param args A set of items or options for the message.
 		 * @returns An `Effect` that resolves with the selected item or `undefined`.
 		 */
-		readonly ShowInformationMessage: (
+		readonly ShowInformationMessage: <T extends MessageItem>(
 			message: string,
-			...args: any[]
-		) => Effect.Effect<MessageItem | string | undefined, Error>;
+			...args: (T | MessageOptions)[]
+		) => Effect.Effect<T | undefined, Error>;
 
 		/**
 		 * Shows a warning message to the user.
@@ -27,10 +27,10 @@ export default class extends Context.Tag("Service/Message")<
 		 * @param args A set of items or options for the message.
 		 * @returns An `Effect` that resolves with the selected item or `undefined`.
 		 */
-		readonly ShowWarningMessage: (
+		readonly ShowWarningMessage: <T extends MessageItem>(
 			message: string,
-			...args: any[]
-		) => Effect.Effect<MessageItem | string | undefined, Error>;
+			...args: (T | MessageOptions)[]
+		) => Effect.Effect<T | undefined, Error>;
 
 		/**
 		 * Shows an error message to the user.
@@ -38,9 +38,9 @@ export default class extends Context.Tag("Service/Message")<
 		 * @param args A set of items or options for the message.
 		 * @returns An `Effect` that resolves with the selected item or `undefined`.
 		 */
-		readonly ShowErrorMessage: (
+		readonly ShowErrorMessage: <T extends MessageItem>(
 			message: string,
-			...args: any[]
-		) => Effect.Effect<MessageItem | string | undefined, Error>;
+			...args: (T | MessageOptions)[]
+		) => Effect.Effect<T | undefined, Error>;
 	}
 >() {}

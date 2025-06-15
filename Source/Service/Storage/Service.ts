@@ -11,8 +11,8 @@ import type { Memento } from "vscode";
 /**
  * The `Context.Tag` for the Storage service factory.
  */
-export default class extends Context.Tag("Service/Storage")<
-	any,
+export default class StorageService extends Context.Tag("Service/Storage")<
+	StorageService,
 	{
 		/**
 		 * Creates a Memento instance.

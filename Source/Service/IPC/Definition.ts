@@ -43,13 +43,13 @@ export default Effect.gen(function* () {
 			const RequestMessage = new Generated.GenericRequest();
 			RequestMessage.setRequestid(RequestID);
 			RequestMessage.setMethod(Method);
-			RequestMessage.setParams(EncodedParameter as any);
+			RequestMessage.setParams(EncodedParameter);
 
 			const ResponseMessage = (yield* Effect.tryPromise({
 				try: () => Client.processCocoonRequest(RequestMessage),
-				catch: (Cause) =>
+				catch: (cause) =>
 					new IPCError({
-						cause: Cause,
+						cause,
 						context: `gRPC request '${Method}' failed.`,
 					}),
 			})) as typeof Generated.GenericResponse.prototype;
@@ -59,14 +59,14 @@ export default Effect.gen(function* () {
 			);
 			return DecodedResult as Res;
 		}).pipe(
-			Effect.mapError((Error) => {
-				if (Error instanceof ProtoSerializationError) {
+			Effect.mapError((error) => {
+				if (error instanceof ProtoSerializationError) {
 					return new IPCError({
-						cause: Error,
+						cause: error,
 						context: "Proto serialization/deserialization failed",
 					});
 				}
-				return Error;
+				return error as IPCError;
 			}),
 		);
 
@@ -79,25 +79,25 @@ export default Effect.gen(function* () {
 
 			const NotificationMessage = new Generated.GenericNotification();
 			NotificationMessage.setMethod(Method);
-			NotificationMessage.setParams(EncodedParameter as any);
+			NotificationMessage.setParams(EncodedParameter);
 
 			yield* Effect.tryPromise({
 				try: () => Client.sendCocoonNotification(NotificationMessage),
-				catch: (Cause) =>
+				catch: (cause) =>
 					new IPCError({
-						cause: Cause,
+						cause,
 						context: `gRPC notification '${Method}' failed.`,
 					}),
 			});
 		}).pipe(
-			Effect.mapError((Error) => {
-				if (Error instanceof ProtoSerializationError) {
+			Effect.mapError((error) => {
+				if (error instanceof ProtoSerializationError) {
 					return new IPCError({
-						cause: Error,
+						cause: error,
 						context: "Proto serialization/deserialization failed",
 					});
 				}
-				return Error;
+				return error as IPCError;
 			}),
 			Effect.asVoid,
 		);

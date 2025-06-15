@@ -18,7 +18,7 @@ import ConfigurationService from "../Configuration.js";
 import { gRPCConnectionError } from "../Error.js";
 import Generated from "../Generated.js";
 import Release from "./Release.js";
-import type ClientService from "./Service.js";
+import type Service from "./Service.js";
 
 /**
  * An `Effect` that loads the gRPC `.proto` file definition from disk.
@@ -35,9 +35,12 @@ const LoadProtoDefinition = (
 				enums: String,
 				defaults: true,
 				oneofs: true,
-			} as any),
-		catch: (Cause) =>
-			new gRPCConnectionError({ Cause, Context: "ProtoLoadFailed" }),
+			}),
+		catch: (cause) =>
+			new gRPCConnectionError({
+				Cause: cause,
+				Context: "ProtoLoadFailed",
+			}),
 	});
 };
 
@@ -48,7 +51,7 @@ const LoadProtoDefinition = (
 const CreateClientInstance = (
 	PackageDefinition: GrpcObject,
 	ServerAddress: string,
-): Effect.Effect<ClientService, gRPCConnectionError> => {
+): Effect.Effect<Service, gRPCConnectionError> => {
 	return Effect.try({
 		try: () => {
 			const Proto = (
@@ -59,11 +62,11 @@ const CreateClientInstance = (
 			return new ClientConstructor(
 				ServerAddress,
 				GRPC.credentials.createInsecure(),
-			) as ClientService;
+			) as Service;
 		},
-		catch: (Cause) =>
+		catch: (cause) =>
 			new gRPCConnectionError({
-				Cause,
+				Cause: cause,
 				Context: "ClientInstantiationFailed",
 			}),
 	});
@@ -73,7 +76,7 @@ const CreateClientInstance = (
  * An `Effect` that waits for the gRPC client to establish a ready connection.
  */
 const WaitForClientReady = (
-	Client: ClientService,
+	Client: Service,
 ): Effect.Effect<void, gRPCConnectionError> => {
 	return Effect.async<void, gRPCConnectionError>((Resume) => {
 		(Client as any).waitForReady(Date.now() + 10000, (Error?: Error) => {

@@ -13,8 +13,8 @@ import type { IPCError } from "./Error.js";
 /**
  * The `Context.Tag` for the `IPC.Service`.
  */
-export default class extends Context.Tag("Service/IPC")<
-	any,
+export default class IPCService extends Context.Tag("Service/IPC")<
+	IPCService,
 	{
 		/**
 		 * Sends a request to the `Mountain` host and returns an `Effect` that will

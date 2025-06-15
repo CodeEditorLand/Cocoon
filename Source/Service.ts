@@ -7,9 +7,9 @@
 
 import { Layer } from "effect";
 
-import { Live as APIDeprecationLive } from "./Service/APIDeprecation.js";
+import { APIDeprecationLive } from "./Service/APIDeprecation.js";
 import { Live as AuthenticationLive } from "./Service/Authentication.js";
-import { Live as CancellationLive } from "./Service/Cancellation.js";
+import { CancellationLive } from "./Service/Cancellation.js";
 import { Live as ClipboardLive } from "./Service/Clipboard.js";
 import { Live as CommandLive } from "./Service/Command.js";
 import { Live as ConfigurationLive } from "./Service/Configuration.js";
@@ -22,7 +22,7 @@ import { Live as ExtensionLive } from "./Service/Extension.js";
 import { Live as FileSystemLive } from "./Service/FileSystem.js";
 import { Live as FileSystemInformationLive } from "./Service/FileSystemInformation.js";
 import { Live as IPCLive } from "./Service/IPC.js";
-import type IPCConfiguration from "./Service/IPC/Configuration.js";
+import type IPCConfigurationService from "./Service/IPC/Configuration.js";
 import { Live as LanguageFeatureLive } from "./Service/LanguageFeature.js";
 import { Live as LocalizationLive } from "./Service/Localization.js";
 import { Live as LogLive } from "./Service/Log.js";
@@ -44,7 +44,7 @@ import { Live as WorkSpaceLive } from "./Service/WorkSpace.js";
  * A factory function that creates a single, composed layer that provides all services.
  * @param Config The IPC configuration required by many services.
  */
-const AllServiceLayer = (Config: IPCConfiguration) => {
+const AllServiceLayer = (Config: IPCConfigurationService) => {
 	return Layer.mergeAll(
 		APIDeprecationLive,
 		AuthenticationLive(Config),

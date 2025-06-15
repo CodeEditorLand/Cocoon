@@ -8,8 +8,8 @@
 import { Context, type Effect } from "effect";
 import type { Disposable } from "vscode";
 
-export default class extends Context.Tag("IPC/Dispatcher")<
-	any,
+export default class DispatcherService extends Context.Tag("IPC/Dispatcher")<
+	DispatcherService,
 	{
 		readonly DispatchRequest: (
 			Method: string,

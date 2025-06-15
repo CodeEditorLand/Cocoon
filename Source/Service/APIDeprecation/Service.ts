@@ -8,8 +8,10 @@
 import { Context, type Effect } from "effect";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
 
-export default class extends Context.Tag("Service/APIDeprecation")<
-	any,
+export default class APIDeprecationService extends Context.Tag(
+	"Service/APIDeprecation",
+)<
+	APIDeprecationService,
 	{
 		/**
 		 * Creates an Effect that, when run, logs a warning that a deprecated API was used.

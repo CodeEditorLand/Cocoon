@@ -4,21 +4,25 @@
  * handling complex transformations involving text edits, file operations, and versions.
  */
 
+import type { Uri as VscUri } from "vs/base/common/uri.js";
 import type * as VSCode from "vscode";
 
-import * as ExtHostTypes from "../Type/ExtHostTypes.js";
+import {
+	TextEdit,
+	WorkspaceEdit as VscWorkspaceEdit,
+} from "../Type/ExtHostTypes.js";
 import { TextEdit as TextEditConverter, URI as URIConverter } from "./Main.js";
 
 // Placeholders for internal VS Code DTOs
 interface IWorkspaceTextEdit {
-	resource: VSCode.Uri;
+	resource: VscUri;
 	textEdit: VSCode.TextEdit;
 	versionId?: number;
 	metadata?: any;
 }
 interface IWorkspaceFileEdit {
-	oldResource?: VSCode.Uri;
-	newResource?: VSCode.Uri;
+	oldResource?: VscUri;
+	newResource?: VscUri;
 	options?: any;
 	metadata?: any;
 }
@@ -38,16 +42,13 @@ const FromAPI = (
 	const Result: IWorkspaceEdit = { edits: [] };
 
 	for (const [URI, URIEditArray] of Edit.entries()) {
-		if (
-			URIEditArray.length > 0 &&
-			URIEditArray[0] instanceof ExtHostTypes.TextEdit
-		) {
+		if (URIEditArray.length > 0 && URIEditArray[0] instanceof TextEdit) {
 			const Resource = URIConverter.FromAPI(URI);
 			const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
 			for (const SingleEdit of URIEditArray as VSCode.TextEdit[]) {
 				Result.edits.push({
-					resource: Resource as any,
-					textEdit: TextEditConverter.FromAPI(SingleEdit as any),
+					resource: Resource,
+					textEdit: TextEditConverter.FromAPI(SingleEdit),
 					versionId: VersionId,
 				} as any);
 			}
@@ -70,11 +71,11 @@ const FromAPI = (
 };
 
 const ToAPI = (DTO: IWorkspaceEdit): VSCode.WorkspaceEdit => {
-	const Result = new ExtHostTypes.WorkspaceEdit();
+	const Result = new VscWorkspaceEdit();
 	for (const Edit of DTO.edits) {
 		if ("textEdit" in Edit) {
 			const WorkspaceTextEdit = Edit as IWorkspaceTextEdit;
-			const URI = URIConverter.ToAPI(WorkspaceTextEdit.resource as any);
+			const URI = URIConverter.ToAPI(WorkspaceTextEdit.resource);
 			const TextEditArray = [
 				TextEditConverter.ToAPI(WorkspaceTextEdit.textEdit as any),
 			];
@@ -83,18 +84,18 @@ const ToAPI = (DTO: IWorkspaceEdit): VSCode.WorkspaceEdit => {
 			const FileEdit = Edit as IWorkspaceFileEdit;
 			if (FileEdit.oldResource && FileEdit.newResource) {
 				Result.renameFile(
-					URIConverter.ToAPI(FileEdit.oldResource as any),
-					URIConverter.ToAPI(FileEdit.newResource as any),
+					URIConverter.ToAPI(FileEdit.oldResource),
+					URIConverter.ToAPI(FileEdit.newResource),
 					FileEdit.options,
 				);
 			} else if (FileEdit.newResource) {
 				Result.createFile(
-					URIConverter.ToAPI(FileEdit.newResource as any),
+					URIConverter.ToAPI(FileEdit.newResource),
 					FileEdit.options,
 				);
 			} else if (FileEdit.oldResource) {
 				Result.deleteFile(
-					URIConverter.ToAPI(FileEdit.oldResource as any),
+					URIConverter.ToAPI(FileEdit.oldResource),
 					FileEdit.options,
 				);
 			}

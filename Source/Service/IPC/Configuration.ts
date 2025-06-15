@@ -6,8 +6,10 @@
 
 import { Context } from "effect";
 
-export default class extends Context.Tag("IPC/Configuration")<
-	any,
+export default class IPCConfigurationService extends Context.Tag(
+	"IPC/Configuration",
+)<
+	IPCConfigurationService,
 	{
 		/**
 		 * The network address of the `Mountain` gRPC server.

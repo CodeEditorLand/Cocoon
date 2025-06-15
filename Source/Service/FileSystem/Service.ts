@@ -10,7 +10,6 @@ import type { FileSystem } from "vscode";
 /**
  * The `Context.Tag` for the `vscode.workspace.fs` API service.
  */
-export default class extends Context.Tag("Service/FileSystem")<
-	any,
-	FileSystem
->() {}
+export default class FileSystemService extends Context.Tag(
+	"Service/FileSystem",
+)<FileSystemService, FileSystem>() {}

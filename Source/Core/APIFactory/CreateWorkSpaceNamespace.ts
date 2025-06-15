@@ -88,7 +88,7 @@ const CreateWorkSpaceNamespace = (
 			);
 		},
 		getConfiguration: (Section, Scope) => {
-			return WorkSpace.getConfiguration(Section, Scope);
+			return Effect.runSync(WorkSpace.getConfiguration(Section, Scope));
 		},
 		applyEdit: (Edit: VSCode.WorkspaceEdit) => {
 			return WorkSpace.applyEdit(Edit);

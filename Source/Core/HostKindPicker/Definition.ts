@@ -16,7 +16,9 @@ import type Service from "./Service.js";
 export default Effect.gen(function* () {
 	const Log = yield* LogService;
 
-	const PickHostKind = (ExtensionDescription: IExtensionDescription) =>
+	const PickHostKind = (
+		ExtensionDescription: IExtensionDescription,
+	): Effect.Effect<ExtensionHostKind | null, never> =>
 		Effect.gen(function* () {
 			// The `extensionKind` property in package.json can be an array or a single string.
 			// Default to ['workspace'] if it's not present, as this is the traditional Node.js host.

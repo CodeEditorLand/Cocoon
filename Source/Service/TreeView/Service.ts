@@ -8,8 +8,8 @@ import { Context, type Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { TreeView, TreeViewOptions } from "vscode";
 
-export default class extends Context.Tag("Service/TreeView")<
-	any,
+export default class TreeViewService extends Context.Tag("Service/TreeView")<
+	TreeViewService,
 	{
 		/**
 		 * Creates a new tree view.

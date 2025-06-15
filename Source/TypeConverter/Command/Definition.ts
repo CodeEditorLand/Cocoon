@@ -10,7 +10,6 @@ import { generateUuid } from "vs/base/common/uuid.js";
 import type { ICommand } from "vs/platform/commands/common/commands.js";
 import type * as VSCode from "vscode";
 
-import type CommandService from "../../Service/Command/Service.js";
 import type { APICommand } from "./Type.js";
 
 export default class {
@@ -18,14 +17,22 @@ export default class {
 	private readonly DelegatedCommands = new Map<string, VSCode.Command>();
 
 	constructor(
-		private readonly CommandService: CommandService,
+		private readonly RegisterCommand: (
+			ID: string,
+			Handler: (...args: any[]) => any,
+			ThisArgument: any,
+		) => IDisposable,
+		private readonly ExecuteCommand: <T>(
+			command: string,
+			...rest: any[]
+		) => Promise<T | undefined>,
 		private readonly LookupAPICommand: (
 			ID: string,
 		) => APICommand | undefined,
 	) {
 		this.DelegatingCommandID = `_cocoon.delegate.${generateUuid()}`;
 
-		this.CommandService.RegisterCommand(
+		this.RegisterCommand(
 			this.DelegatingCommandID,
 			this.ExecuteDelegatedCommand,
 			this,
@@ -37,7 +44,7 @@ export default class {
 		if (!Command) {
 			throw new Error(`Unknown delegated command: ${ID}`);
 		}
-		return this.CommandService.ExecuteCommand(
+		return this.ExecuteCommand(
 			Command.command,
 			...[...(Command.arguments ?? []), ...ArgumentArray],
 		);
@@ -46,9 +53,9 @@ export default class {
 	public ToInternal(
 		Command: VSCode.Command,
 		DisposableArray: IDisposable[],
-	): ICommand {
+	): ICommand | undefined {
 		if (!Command) {
-			return undefined as any;
+			return undefined;
 		}
 
 		const APICommand = this.LookupAPICommand(Command.command);

@@ -10,6 +10,7 @@ import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
+import type * as VSCode from "vscode";
 
 interface ExtensionPathEntry {
 	readonly Path: string;
@@ -50,7 +51,7 @@ export default class {
 	 * @returns The `IExtensionDescription` containing the identifier if a
 	 *   match is found, otherwise `undefined`.
 	 */
-	public FindSubstr(PathURI: URI): IExtensionDescription | undefined {
+	public FindSubstr(PathURI: VSCode.Uri): IExtensionDescription | undefined {
 		const FilePath = PathURI.fsPath;
 		for (const Entry of this.Paths) {
 			// Use a path-aware comparison to ensure we are not just matching a prefix.

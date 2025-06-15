@@ -7,8 +7,8 @@
 
 import { Context, type Effect } from "effect";
 
-export default class extends Context.Tag("Service/Log")<
-	any,
+export default class LogService extends Context.Tag("Service/Log")<
+	LogService,
 	{
 		readonly Trace: (
 			Message: string,

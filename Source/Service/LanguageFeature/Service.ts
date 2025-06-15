@@ -17,8 +17,10 @@ import type {
 	HoverProvider,
 } from "vscode";
 
-export default class extends Context.Tag("Service/LanguageFeature")<
-	any,
+export default class LanguageFeatureService extends Context.Tag(
+	"Service/LanguageFeature",
+)<
+	LanguageFeatureService,
 	{
 		readonly RegisterHoverProvider: (
 			Selector: DocumentSelector,

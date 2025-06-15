@@ -7,11 +7,6 @@ import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Disposable, StatusBarAlignment } from "vscode";
 
-import { StatusBar as StatusBarConverter } from "../../TypeConverter.js";
-import {
-	APICommand as CommandConverter,
-	Definition as CommandConverterDefinition,
-} from "../../TypeConverter/Command.js";
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
 import StatusBarItemImplementation from "./StatusBarItemImplementation.js";

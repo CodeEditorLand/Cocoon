@@ -6,8 +6,8 @@
 
 import { Layer } from "effect";
 
-import type IPCConfiguration from "./IPC/Configuration.js";
-import IPCLive from "./IPC/Live.js";
+import { Live as IPCLive } from "./IPC.js";
+import type IPCConfigurationService from "./IPC/Configuration.js";
 import Definition from "./Message/Definition.js";
 import Service from "./Message/Service.js";
 
@@ -18,5 +18,5 @@ export type { default as ExtensionSource } from "./Message/Type.js";
  * The live implementation Layer for the Message service.
  * It depends on the IPC service for communication.
  */
-export const Live = (Config: IPCConfiguration) =>
+export const Live = (Config: IPCConfigurationService) =>
 	Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config)));

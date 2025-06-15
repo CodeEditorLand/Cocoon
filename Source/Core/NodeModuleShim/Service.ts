@@ -10,8 +10,10 @@ import type { Uri } from "vscode";
 
 import type { ModuleBlockedError, ModuleNotShimmedError } from "./Error.js";
 
-export default class extends Context.Tag("Core/NodeModuleShim")<
-	any,
+export default class NodeModuleShimService extends Context.Tag(
+	"Core/NodeModuleShim",
+)<
+	NodeModuleShimService,
 	{
 		/**
 		 * Loads a shim for a requested built-in Node.js module.

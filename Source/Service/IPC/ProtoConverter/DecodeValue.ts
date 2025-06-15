@@ -34,8 +34,11 @@ const DecodeValue = (
 			}
 			return ProtoValueInstance.toJavaScript();
 		},
-		catch: (Cause) =>
-			new ProtoSerializationError({ Cause, Direction: "Decoding" }),
+		catch: (cause) =>
+			new ProtoSerializationError({
+				Cause: cause,
+				Direction: "Decoding",
+			}),
 	});
 };
 

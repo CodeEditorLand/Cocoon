@@ -5,11 +5,11 @@
 
 import { Layer } from "effect";
 
-import ConfigurationLive from "../Configuration/Live.js";
-import DocumentLive from "../Document/Live.js";
-import FileSystemLive from "../FileSystem/Live.js";
-import type IPCConfiguration from "../IPC/Configuration.js";
-import IPCLive from "../IPC/Live.js";
+import { Live as ConfigurationLive } from "../Configuration.js";
+import { Live as DocumentLive } from "../Document.js";
+import { Live as FileSystemLive } from "../FileSystem.js";
+import { Live as IPCLive } from "../IPC.js";
+import type IPCConfigurationService from "../IPC/Configuration.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
@@ -17,10 +17,7 @@ import Service from "./Service.js";
  * The live implementation Layer for the WorkSpace service.
  * @param Config The IPC Configuration.
  */
-export default function (Config: {
-	MountainAddress: string;
-	CocoonAddress: string;
-}) {
+export default function (Config: IPCConfigurationService) {
 	return Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.mergeAll(

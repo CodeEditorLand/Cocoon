@@ -7,8 +7,10 @@
 
 import { Context, type Effect } from "effect";
 
-export default class extends Context.Tag("Core/RequireInterceptor")<
-	any,
+export default class RequireInterceptorService extends Context.Tag(
+	"Core/RequireInterceptor",
+)<
+	RequireInterceptorService,
 	{
 		/**
 		 * An Effect that, when executed, patches the global `Module.prototype.require`

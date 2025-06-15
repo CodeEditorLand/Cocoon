@@ -9,8 +9,8 @@ import type { DiagnosticCollection } from "vscode";
 
 import Definition from "./Diagnostic/Definition.js";
 import Service from "./Diagnostic/Service.js";
+import { Live as IPCLive } from "./IPC.js";
 import type IPCConfiguration from "./IPC/Configuration.js";
-import IPCLive from "./IPC/Live.js";
 
 export { default as Service } from "./Diagnostic/Service.js";
 export type { DiagnosticCollection };

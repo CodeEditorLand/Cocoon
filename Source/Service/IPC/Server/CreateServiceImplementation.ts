@@ -10,8 +10,7 @@ import { Effect } from "effect";
 
 import DispatcherService from "../Dispatcher/Service.js";
 import Generated from "../Generated.js";
-import DecodeValue from "../ProtoConverter/DecodeValue.js";
-import EncodeValue from "../ProtoConverter/EncodeValue.js";
+import { DecodeValue, EncodeValue } from "../ProtoConverter.js";
 
 const CreateServiceImplementation = (
 	Dispatcher: DispatcherService,
@@ -38,7 +37,7 @@ const CreateServiceImplementation = (
 				);
 				const Result = yield* Dispatcher.DispatchRequest(
 					Request.getMethod(),
-					DecodedParameter,
+					Array.isArray(DecodedParameter) ? DecodedParameter : [],
 				);
 				const EncodedResult = yield* EncodeValue(Result);
 
@@ -84,7 +83,7 @@ const CreateServiceImplementation = (
 				Effect.flatMap((DecodedParameter) =>
 					Dispatcher.DispatchNotification(
 						(Notification as any).getMethod(),
-						DecodedParameter,
+						Array.isArray(DecodedParameter) ? DecodedParameter : [],
 					),
 				),
 			);

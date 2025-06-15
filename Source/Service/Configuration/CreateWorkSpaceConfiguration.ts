@@ -7,7 +7,7 @@
 
 import { Effect } from "effect";
 import { deepClone } from "vs/base/common/objects.js";
-import type { ConfigurationTarget } from "vscode";
+import type { ConfigurationInspect, ConfigurationTarget } from "vscode";
 
 import type IPCService from "../IPC/Service.js";
 import type LogService from "../Log/Service.js";
@@ -33,19 +33,20 @@ const CreateWorkSpaceConfiguration = (
 		Value: any,
 		Target?: ConfigurationTarget | boolean,
 		OverrideInLanguage?: boolean,
-	) => {
+	): Promise<void> => {
 		const UpdateEffect = IPC.SendNotification(
 			"$updateConfigurationOption",
 			[Target, `${SectionPrefix}.${Key}`, Value, OverrideInLanguage],
 		).pipe(
-			Effect.tapError((Error) =>
+			Effect.tapError((ErrorValue) =>
 				Log.Error(
 					`Configuration update for key '${Key}' failed.`,
-					Error,
+					ErrorValue,
 				),
 			),
+			Effect.asVoid,
 		);
-		// The vscode API for update is fire-and-forget, so we fork the effect.
+		// The vscode API for update is fire-and-forget, so we run and return a promise.
 		return Effect.runPromise(UpdateEffect);
 	};
 
@@ -62,7 +63,7 @@ const CreateWorkSpaceConfiguration = (
 				globalValue: Value,
 				workspaceValue: Value,
 				workspaceFolderValue: Value,
-			} as any);
+			} as ConfigurationInspect<T>);
 		},
 		update: Update,
 	};

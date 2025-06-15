@@ -8,19 +8,19 @@
 import { Effect } from "effect";
 import type {
 	AccessibilityInformation,
-	Color,
 	Command,
 	MarkdownString,
 	StatusBarAlignment,
 	StatusBarItem,
+	ThemeColor,
 } from "vscode";
 
-import { ThemeColor } from "../../Type/ExtHostTypes.js";
-import { StatusBar as StatusBarConverter } from "../../TypeConverter.js";
+import * as ExtHostTypes from "../../Type/ExtHostTypes.js";
 import {
-	APICommand,
 	Definition as CommandConverterDefinition,
+	Type as CommandConverterType,
 } from "../../TypeConverter/Command.js";
+import * as TypeConverter from "../../TypeConverter/Main.js";
 import type IPCService from "../IPC/Service.js";
 
 export default class implements StatusBarItem {
@@ -34,8 +34,8 @@ export default class implements StatusBarItem {
 	private _priority: number | undefined;
 	private _text = "";
 	private _tooltip: string | MarkdownString | undefined;
-	private _color: string | VSCodeThemeColor | undefined;
-	private _backgroundColor: VSCodeThemeColor | undefined;
+	private _color: string | ThemeColor | undefined;
+	private _backgroundColor: ThemeColor | undefined;
 	private _command: string | Command | undefined;
 	private _accessibilityInformation: AccessibilityInformation | undefined;
 
@@ -93,17 +93,17 @@ export default class implements StatusBarItem {
 		}
 	}
 
-	get color(): string | VSCodeThemeColor | undefined {
+	get color(): string | ThemeColor | undefined {
 		return this._color;
 	}
-	set color(Value: string | VSCodeThemeColor | undefined) {
+	set color(Value: string | ThemeColor | undefined) {
 		if (this._color !== Value) {
 			this._color = Value;
 			if (
-				Value instanceof ThemeColor &&
+				Value instanceof ExtHostTypes.ThemeColor &&
 				Value.id === "statusBarItem.errorForeground"
 			) {
-				this.backgroundColor = new ThemeColor(
+				this.backgroundColor = new ExtHostTypes.ThemeColor(
 					"statusBarItem.errorBackground",
 				);
 			}
@@ -111,10 +111,10 @@ export default class implements StatusBarItem {
 		}
 	}
 
-	get backgroundColor(): VSCodeThemeColor | undefined {
+	get backgroundColor(): ThemeColor | undefined {
 		return this._backgroundColor;
 	}
-	set backgroundColor(Value: VSCodeThemeColor | undefined) {
+	set backgroundColor(Value: ThemeColor | undefined) {
 		if (this._backgroundColor !== Value) {
 			this._backgroundColor = Value;
 			this.Update();
@@ -175,10 +175,11 @@ export default class implements StatusBarItem {
 		// The update is a fire-and-forget notification to the host.
 		// A real CommandConverter would be injected.
 		const CommandConverterInstance = new CommandConverterDefinition(
-			{} as any,
+			() => undefined,
+			() => Promise.resolve(undefined),
 			() => undefined,
 		);
-		const DTO = StatusBarConverter.FromAPI(
+		const DTO = TypeConverter.StatusBar.FromAPI(
 			this,
 			this.EntryID,
 			CommandConverterInstance,

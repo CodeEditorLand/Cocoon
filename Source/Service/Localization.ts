@@ -6,8 +6,8 @@
 
 import { Layer } from "effect";
 
-import type IPCConfiguration from "./IPC/Configuration.js";
-import IPCLive from "./IPC/Live.js";
+import { Live as IPCLive } from "./IPC.js";
+import type IPCConfigurationService from "./IPC/Configuration.js";
 import Definition from "./Localization/Definition.js";
 import Service from "./Localization/Service.js";
 
@@ -17,5 +17,5 @@ export { default as Service } from "./Localization/Service.js";
  * The live implementation Layer for the Localization service.
  * It depends on the IPC and InitData services.
  */
-export const Live = (Config: IPCConfiguration) =>
+export const Live = (Config: IPCConfigurationService) =>
 	Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config)));

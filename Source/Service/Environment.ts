@@ -6,11 +6,11 @@
 
 import { Layer } from "effect";
 
-import ClipboardLive from "./Clipboard/Live.js";
+import { Live as ClipboardLive } from "./Clipboard.js";
 import Definition from "./Environment/Definition.js";
 import Service from "./Environment/Service.js";
+import { Live as IPCLive } from "./IPC.js";
 import type IPCConfiguration from "./IPC/Configuration.js";
-import IPCLive from "./IPC/Live.js";
 
 export { default as Service } from "./Environment/Service.js";
 

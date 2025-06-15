@@ -4,30 +4,27 @@
  */
 
 import * as Path from "node:path";
-import { Barrier, Context, Effect, Ref, Stream } from "effect";
+import { Barrier, Effect, Option, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Uri } from "vscode";
 
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import InitDataService from "../InitData/Service.js";
 import IPCService from "../IPC/Service.js";
+import type Service from "./Service.js";
 import FetchBundle from "./Support/FetchBundle.js";
 
-export default Effect.gen(function* (_) {
-	const IPC = yield* _(IPCService);
-	const InitData = yield* _(InitDataService);
-	const NlsCache = yield* _(
-		Ref.make(new Map<string, Record<string, string>>()),
-	);
-	const InitBarrier = yield* _(Barrier.make());
-	const OnDidInitializeEvent = CreateEventStream<void>();
+export default Effect.gen(function* () {
+	const IPC = yield* IPCService;
+	const InitData = yield* InitDataService;
+	const NlsCache = yield* Ref.make(new Map<string, Record<string, string>>());
+	const InitBarrier = yield* Barrier.make();
+	const { event, Fire, Shutdown } = CreateEventStream<void>();
 
 	// Fork a background fiber that fires the event once the barrier is opened.
-	yield* _(
-		Barrier.await(InitBarrier).pipe(
-			Effect.flatMap(() => OnDidInitializeEvent.Fire()),
-			Effect.forkDaemon,
-		),
+	yield* Barrier.await(InitBarrier).pipe(
+		Effect.flatMap(() => Fire()),
+		Effect.forkDaemon,
 	);
 
 	const GetPotentialBundleURIs = (Extension: IExtensionDescription) => {
@@ -48,44 +45,40 @@ export default Effect.gen(function* (_) {
 		return { DefaultBundleURI, LanguageBundleURI };
 	};
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const ServiceImplementation: Service = {
 		GetBundle: (ExtensionID) =>
 			Ref.get(NlsCache).pipe(
-				Effect.map((cache) => cache.get(ExtensionID)),
+				Effect.map((cache) =>
+					Option.fromNullable(cache.get(ExtensionID)),
+				),
 			),
-		GetBundleURI: (ExtensionID) => Effect.succeed(undefined), // This could be implemented to return one of the potential URIs.
+		GetBundleURI: (_ExtensionID) => Effect.succeed(undefined), // This could be implemented to return one of the potential URIs.
 
 		InitializeLocalizedMessages: (Extension) =>
-			Effect.gen(function* (_) {
-				yield* _(Barrier.await(InitBarrier)); // Wait until host is ready.
+			Effect.gen(function* () {
+				yield* Barrier.await(InitBarrier); // Wait until host is ready.
 				const { DefaultBundleURI, LanguageBundleURI } =
 					GetPotentialBundleURIs(Extension);
 
-				const [DefaultContent, LanguageContent] = yield* _(
-					Effect.all(
-						[
-							FetchBundle(IPC, DefaultBundleURI),
-							LanguageBundleURI
-								? FetchBundle(IPC, LanguageBundleURI)
-								: Effect.succeed({}),
-						],
-						{ concurrency: "unbounded" },
-					),
+				const [DefaultContent, LanguageContent] = yield* Effect.all(
+					[
+						FetchBundle(IPC, DefaultBundleURI),
+						LanguageBundleURI
+							? FetchBundle(IPC, LanguageBundleURI)
+							: Effect.succeed({}),
+					],
+					{ concurrency: "unbounded" },
 				);
 
 				const FinalBundle = { ...DefaultContent, ...LanguageContent };
 				if (Object.keys(FinalBundle).length > 0) {
-					yield* _(
-						Ref.update(NlsCache, (cache) =>
-							cache.set(Extension.identifier.value, FinalBundle),
-						),
+					yield* Ref.update(NlsCache, (cache) =>
+						cache.set(Extension.identifier.value, FinalBundle),
 					);
 				}
 			}),
 
-		onDidInitializeLocalization: Stream.toEvent(
-			OnDidInitializeEvent.Stream,
-		),
+		onDidInitializeLocalization: event,
 		SignalLocalizationInitialized: () =>
 			Barrier.succeed(InitBarrier, undefined).pipe(Effect.asVoid),
 	};

@@ -84,7 +84,7 @@ export default Effect.gen(function* () {
 			const Context: import("vscode").ExtensionContext = {
 				subscriptions: [],
 				extensionPath: Description.extensionLocation.fsPath,
-				extensionUri: Description.extensionLocation as any,
+				extensionUri: Description.extensionLocation,
 				storageUri: undefined,
 				globalStorageUri: undefined,
 				logUri: undefined,
@@ -132,7 +132,7 @@ export default Effect.gen(function* () {
 			]);
 		}).pipe(
 			// This catch block handles failures during the activation process
-			Effect.catchAll((Error) =>
+			Effect.catchAll((ErrorValue) =>
 				Effect.gen(function* () {
 					const Activated: ActivatedExtension = {
 						ID: Description.identifier,
@@ -141,9 +141,9 @@ export default Effect.gen(function* () {
 						Subscriptions: [],
 						ActivationFailed: true,
 						ActivationError:
-							Error instanceof globalThis.Error
-								? Error
-								: new Error(String(Error)),
+							ErrorValue instanceof globalThis.Error
+								? ErrorValue
+								: new Error(String(ErrorValue)),
 					};
 
 					yield* Ref.update(ActivatedExtensions, (Map) =>
@@ -154,16 +154,16 @@ export default Effect.gen(function* () {
 						Description.identifier,
 						{
 							name:
-								Error instanceof globalThis.Error
-									? Error.name
+								ErrorValue instanceof globalThis.Error
+									? ErrorValue.name
 									: "UnknownError",
 							message:
-								Error instanceof globalThis.Error
-									? Error.message
-									: String(Error),
+								ErrorValue instanceof globalThis.Error
+									? ErrorValue.message
+									: String(ErrorValue),
 							stack:
-								Error instanceof globalThis.Error
-									? Error.stack
+								ErrorValue instanceof globalThis.Error
+									? ErrorValue.stack
 									: undefined,
 						},
 					]);
@@ -196,10 +196,10 @@ export default Effect.gen(function* () {
 			}
 			yield* DoActivateExtension(MaybeDescription, Reason);
 		}).pipe(
-			Effect.mapError((Error) =>
-				Error instanceof globalThis.Error
-					? Error
-					: new Error(String(Error)),
+			Effect.mapError((ErrorValue) =>
+				ErrorValue instanceof globalThis.Error
+					? ErrorValue
+					: new Error(String(ErrorValue)),
 			),
 		);
 

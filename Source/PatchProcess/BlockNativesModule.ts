@@ -63,10 +63,10 @@ const BlockNativesModule = Effect.try({
 			);
 		}
 	},
-	catch: (Cause) =>
+	catch: (cause) =>
 		new ModulePatchError({
 			context: "Failed during 'natives' block setup.",
-			Cause,
+			cause,
 		}),
 }).pipe(
 	Effect.tap(() =>

@@ -7,6 +7,7 @@ import { Effect, HashMap, Ref } from "effect";
 import { isWindows } from "vs/base/common/platform.js";
 import { ExtUri, type IExtUri } from "vs/base/common/resources.js";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
+import type { FileChangeEvent } from "vscode";
 
 import { URI as URIConverter } from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
@@ -23,7 +24,7 @@ export default Effect.gen(function* () {
 	const CapabilitiesMap = yield* Ref.make(
 		HashMap.empty<string, FileSystemProviderCapabilities>(),
 	);
-	const OnDidChangeFileEvent = CreateEventStream<any[]>();
+	const { event, Fire } = CreateEventStream<readonly FileChangeEvent[]>();
 
 	const GetCapabilities = (Scheme: string) =>
 		Ref.get(CapabilitiesMap).pipe(
@@ -48,8 +49,10 @@ export default Effect.gen(function* () {
 		const IgnoreCase = Capabilities
 			? !(Capabilities & FileSystemProviderCapabilities.PathCaseSensitive)
 			: isWindows; // Default to OS case-sensitivity
-		Log.Trace(
-			`ExtURI check for scheme '${Uri.scheme}', ignoring case: ${IgnoreCase}`,
+		Effect.runFork(
+			Log.Trace(
+				`ExtURI check for scheme '${Uri.scheme}', ignoring case: ${IgnoreCase}`,
+			),
 		);
 		return IgnoreCase;
 	});
@@ -82,7 +85,7 @@ export default Effect.gen(function* () {
 			Effect.runPromise(AcceptProviderCapabilities(Scheme, Capabilities)),
 	);
 	IPC.RegisterInvokeHandler("$onFileEvent", ([Events]) =>
-		OnDidChangeFileEvent.Fire(
+		Fire(
 			Events.map((Event: any) => ({
 				type: Event.type,
 				uri: URIConverter.ToAPI(Event.uri),
@@ -93,7 +96,7 @@ export default Effect.gen(function* () {
 	const FileSystemInformationImplementation: Service = {
 		ExtURI: ExtURIInstance,
 		GetCapabilities,
-		onDidChangeFile: OnDidChangeFileEvent.event,
+		onDidChangeFile: event,
 		isWritableFileSystem: (Scheme) => {
 			const Capabilities = Effect.runSync(GetCapabilities(Scheme));
 			return Capabilities

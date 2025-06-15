@@ -3,7 +3,10 @@
  * @description Converts between `vscode.MarkdownString` and its DTO representation.
  */
 
-import type { IMarkdownString } from "vs/base/common/htmlContent.js";
+import type {
+	IMarkdownString,
+	MarkdownStringTrustedOptions,
+} from "vs/base/common/htmlContent.js";
 import type { MarkdownString as VscMarkdownString } from "vscode";
 
 import { MarkdownString } from "../../Type/ExtHostTypes.js";
@@ -18,8 +21,6 @@ const FromAPI = (
 ): IMarkdownString => ({
 	value: MarkdownStringInstance.value,
 	isTrusted: MarkdownStringInstance.isTrusted,
-	// Note: The `uris` property, used for managing related resources,
-	// would need to be serialized here if supported.
 });
 
 /**
@@ -27,7 +28,17 @@ const FromAPI = (
  * @param MarkdownStringDTO The `IMarkdownString` DTO to revive.
  * @returns A new `vscode.MarkdownString` instance.
  */
-const ToAPI = (MarkdownStringDTO: IMarkdownString): VscMarkdownString =>
-	new MarkdownString(MarkdownStringDTO.value, MarkdownStringDTO.isTrusted);
+const ToAPI = (MarkdownStringDTO: IMarkdownString): VscMarkdownString => {
+	const result = new MarkdownString(
+		MarkdownStringDTO.value,
+		typeof MarkdownStringDTO.isTrusted === "boolean"
+			? MarkdownStringDTO.isTrusted
+			: (MarkdownStringDTO.isTrusted as MarkdownStringTrustedOptions)
+					?.enabled,
+	);
+	result.baseUri = MarkdownStringDTO.baseUri;
+	result.supportHtml = MarkdownStringDTO.supportHtml;
+	return result;
+};
 
 export default { FromAPI, ToAPI };

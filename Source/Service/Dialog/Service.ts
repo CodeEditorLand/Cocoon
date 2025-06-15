@@ -10,8 +10,8 @@ import type { CancellationToken, Uri } from "vscode";
 import type { DialogError } from "./Error.js";
 import type { OpenDialogOptions, SaveDialogOptions } from "./Type.js";
 
-export default class extends Context.Tag("Service/Dialog")<
-	any,
+export default class DialogService extends Context.Tag("Service/Dialog")<
+	DialogService,
 	{
 		/**
 		 * Shows an open file dialog to the user.

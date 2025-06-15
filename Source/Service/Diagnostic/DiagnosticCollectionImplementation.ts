@@ -6,19 +6,19 @@
  */
 
 import { Effect } from "effect";
-import type { Diagnostic, DiagnosticCollection, Tuple, Uri } from "vscode";
+import type { Diagnostic, DiagnosticCollection, Uri } from "vscode";
 
-import * as DiagnosticConverter from "../../TypeConverter/Diagnostic.js";
+import { default as DiagnosticConverter } from "../../TypeConverter/Diagnostic.js";
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type IPCService from "../IPC/Service.js";
 
 export default class implements DiagnosticCollection {
 	private IsDisposed = false;
-	private readonly OnDidDispose = CreateEventStream<void>(); // For internal use
+	private readonly OnDidDispose = CreateEventStream<void>();
 
 	constructor(
-		public readonly name: string | undefined,
+		public readonly name: string,
 		private readonly Owner: string, // An internal ID for this collection
 		private readonly IPC: IPCService,
 	) {}
@@ -43,13 +43,11 @@ export default class implements DiagnosticCollection {
 	}
 
 	set(uri: Uri, diagnostics: readonly Diagnostic[] | undefined): void;
-	set(
-		entries: ReadonlyArray<Tuple<Uri, readonly Diagnostic[] | undefined>>,
-	): void;
+	set(entries: ReadonlyArray<[Uri, readonly Diagnostic[] | undefined]>): void;
 	set(
 		uriOrEntries:
 			| Uri
-			| ReadonlyArray<Tuple<Uri, readonly Diagnostic[] | undefined>>,
+			| ReadonlyArray<[Uri, readonly Diagnostic[] | undefined]>,
 		diagnostics?: readonly Diagnostic[],
 	): void {
 		if (this.IsDisposed) {
@@ -95,12 +93,12 @@ export default class implements DiagnosticCollection {
 		// No-op: The extension host does not hold the state.
 	}
 
-	get(uri: Uri): readonly Diagnostic[] | undefined {
+	get(_uri: Uri): readonly Diagnostic[] | undefined {
 		// No-op: The extension host does not hold the state.
 		return undefined;
 	}
 
-	has(uri: Uri): boolean {
+	has(_uri: Uri): boolean {
 		// No-op: The extension host does not hold the state.
 		return false;
 	}

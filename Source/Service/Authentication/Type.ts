@@ -24,8 +24,6 @@ export const ConvertSessionToVSCode = (
 			id: Session.account.id,
 		},
 		scopes: Session.scopes,
-		tenantId: "", // Placeholder, adjust if needed
-		idToken: undefined, // Placeholder, adjust if needed
 	};
 };
 
@@ -45,7 +43,5 @@ export const ConvertSessionToInternal = (
 			id: Session.account.id,
 		},
 		scopes: Session.scopes,
-		tenantId: "", // Placeholder, adjust if needed
-		idToken: undefined, // Placeholder, adjust if needed
 	};
 };

@@ -76,7 +76,7 @@ const Item = {
 			tooltip:
 				typeof Tooltip === "string"
 					? Tooltip
-					: Tooltip
+					: Tooltip instanceof ExtHostTypes.MarkdownString
 						? MarkdownStringConverter.FromAPI(Tooltip)
 						: undefined,
 			command: Command
@@ -102,7 +102,7 @@ const Item = {
 		const Label = DTO.label.label;
 		const Item = new ExtHostTypes.TreeItem(Label, DTO.collapsibleState);
 		Item.id = DTO.id;
-		Item.description = DTO.description;
+		(Item as any).description = DTO.description;
 		Item.resourceURI = DTO.resourceUri
 			? URIConverter.ToAPI(DTO.resourceUri)
 			: undefined;
@@ -110,4 +110,4 @@ const Item = {
 	},
 };
 
-export default { Option, Item };
+export const TreeView = { Option, Item };

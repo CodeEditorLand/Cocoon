@@ -5,7 +5,7 @@
 
 import { Effect, Ref } from "effect";
 import { TextDocument as VscTextDocument } from "vs/workbench/api/common/extHostDocuments.js";
-import type { TextDocument, Uri } from "vscode";
+import type { TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
@@ -22,7 +22,8 @@ export default Effect.gen(function* () {
 	// --- Event Emitters for the Public API ---
 	const OnDidOpenTextDocument = CreateEventStream<TextDocument>();
 	const OnDidCloseTextDocument = CreateEventStream<TextDocument>();
-	const OnDidChangeTextDocument = CreateEventStream<any>(); // TextDocumentChangeEvent
+	const OnDidChangeTextDocument =
+		CreateEventStream<TextDocumentChangeEvent>();
 	const OnDidSaveTextDocument = CreateEventStream<TextDocument>();
 
 	// --- RPC Handlers (for updates FROM Mountain) ---

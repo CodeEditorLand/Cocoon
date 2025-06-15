@@ -28,7 +28,7 @@ const InvokeProcessingService = (
 		return yield* IPC.SendRequest<ProcessingResult>("$processText", [
 			TextContent,
 		]).pipe(
-			Effect.mapError((Cause) => new ProcessingServiceError({ Cause })),
+			Effect.mapError((cause) => new ProcessingServiceError({ cause })),
 		);
 	});
 };

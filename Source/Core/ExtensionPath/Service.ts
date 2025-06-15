@@ -8,8 +8,10 @@ import { Context } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { Uri } from "vscode";
 
-export default class extends Context.Tag("Core/ExtensionPath")<
-	any,
+export default class ExtensionPathService extends Context.Tag(
+	"Core/ExtensionPath",
+)<
+	ExtensionPathService,
 	{
 		/**
 		 * Synchronously finds the extension that a given file URI belongs to.

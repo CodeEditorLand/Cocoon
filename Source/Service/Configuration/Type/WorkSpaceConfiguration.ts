@@ -10,4 +10,5 @@ import type { WorkspaceConfiguration } from "vscode";
  * An alias for the `vscode.WorkspaceConfiguration` interface. This represents
  * a snapshot of configuration values for a specific section.
  */
-export default interface Interface extends WorkspaceConfiguration {}
+type WorkSpaceConfiguration = WorkspaceConfiguration;
+export default WorkSpaceConfiguration;

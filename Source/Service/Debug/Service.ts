@@ -25,8 +25,8 @@ import type {
 	StartDebuggingError,
 } from "./Error.js";
 
-export default class extends Context.Tag("Service/Debug")<
-	any,
+export default class DebugService extends Context.Tag("Service/Debug")<
+	DebugService,
 	{
 		// --- Events ---
 		readonly onDidChangeActiveDebugSession: Event<DebugSession | undefined>;

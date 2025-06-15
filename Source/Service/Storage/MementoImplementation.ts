@@ -5,7 +5,7 @@
  * persisted on disk.
  */
 
-import { Effect, Ref, Stream } from "effect";
+import { Effect, Ref } from "effect";
 import type {
 	Event,
 	Memento,
@@ -36,7 +36,7 @@ export default class implements Memento {
 		InitialValue: object | undefined,
 	) {
 		this.Scope = IsGlobal ? MementoScope.GLOBAL : MementoScope.WORKSPACE;
-		this.onDidChange = Stream.toEvent(this.OnDidChangeEvent.Stream);
+		this.onDidChange = this.OnDidChangeEvent.event;
 		this.ValueRef = Ref.unsafeMake(InitialValue);
 	}
 

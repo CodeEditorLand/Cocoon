@@ -12,8 +12,8 @@ import { Data } from "effect";
 export class ActiveEditorNotFoundError extends Data.TaggedError(
 	"ActiveEditorNotFoundError",
 )<{}> {
-	constructor(Properties?: {}) {
-		super(Properties ?? {});
+	constructor() {
+		super({});
 		this.message =
 			"No active text editor found. Please open a file to process.";
 	}

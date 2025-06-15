@@ -12,7 +12,7 @@ import type {
 	Uri,
 } from "vscode";
 
-import { Dialog as DialogConverter } from "../../TypeConverter.js";
+import { Dialog as DialogConverter } from "../../TypeConverter/Dialog.js";
 import IPCService from "../IPC/Service.js";
 import { DialogError } from "./Error.js";
 import type Service from "./Service.js";
@@ -39,9 +39,9 @@ const CreateDialogEffect = <Option, DTO, Result>(
 			),
 			// Any other error is mapped to our specific DialogError.
 			Effect.mapError(
-				(Cause) =>
+				(cause) =>
 					new DialogError({
-						cause: Cause,
+						cause: cause,
 						context: `IPC call to ${IPCMethod} failed`,
 					}),
 			),
@@ -58,8 +58,11 @@ export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
 
 	const DialogImplementation: Service = {
-		ShowOpenDialog: (Options, Token) =>
-			CreateDialogEffect(
+		ShowOpenDialog: (
+			Options?: OpenDialogOptions,
+			Token?: CancellationToken,
+		) =>
+			CreateDialogEffect<OpenDialogOptions, any, Uri[] | undefined>(
 				IPC,
 				"$showOpenDialog",
 				Options,
@@ -70,8 +73,11 @@ export default Effect.gen(function* () {
 					DialogConverter.DialogResult.ToURIArray(Result),
 			),
 
-		ShowSaveDialog: (Options, Token) =>
-			CreateDialogEffect(
+		ShowSaveDialog: (
+			Options?: SaveDialogOptions,
+			Token?: CancellationToken,
+		) =>
+			CreateDialogEffect<SaveDialogOptions, any, Uri | undefined>(
 				IPC,
 				"$showSaveDialog",
 				Options,

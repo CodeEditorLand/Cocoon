@@ -5,12 +5,12 @@
  * perspective, proxying state changes to the Mountain host.
  */
 
-import { Effect, Stream } from "effect";
+import { Effect } from "effect";
 import { Schemas } from "vs/base/common/network.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
 
-import { WebView as TypeConverter } from "../../TypeConverter.js";
+import { WebView as WebViewConverter } from "../../TypeConverter/WebView.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type IPCService from "../IPC/Service.js";
 
@@ -31,9 +31,7 @@ export default class implements Webview {
 		InitialOptions: WebviewOptions,
 	) {
 		this._options = InitialOptions;
-		this.onDidReceiveMessage = Stream.toEvent(
-			this.OnDidReceiveMessageEmitter.Stream,
-		);
+		this.onDidReceiveMessage = this.OnDidReceiveMessageEmitter.event;
 	}
 
 	// --- Public API Properties ---
@@ -64,7 +62,7 @@ export default class implements Webview {
 			return;
 		}
 		this._options = NewOptions;
-		const OptionsDTO = TypeConverter.ConvertContentOptionToDTO(
+		const OptionsDTO = WebViewConverter.ConvertContentOptionToDTO(
 			this.Extension,
 			NewOptions,
 		);
@@ -96,7 +94,7 @@ export default class implements Webview {
 	public asWebviewUri(LocalResource: Uri): Uri {
 		const Authority = this.Extension.identifier.value.toLowerCase();
 		return LocalResource.with({
-			scheme: Schemas.vscodeWebviewResource,
+			scheme: Schemas["vscode-webview-resource"],
 			authority: Authority,
 		});
 	}
@@ -109,7 +107,7 @@ export default class implements Webview {
 	 */
 	public fireDidReceiveMessage(Message: any): void {
 		if (!this.IsDisposed) {
-			this.OnDidReceiveMessageEmitter.Fire(Message);
+			Effect.runFork(this.OnDidReceiveMessageEmitter.Fire(Message));
 		}
 	}
 

@@ -5,11 +5,11 @@
  * documents in the extension host.
  */
 
-import { Context, type Effect } from "effect";
+import { Context, Option, type Effect } from "effect";
 import type { Event, TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
 
-export default class extends Context.Tag("Service/Document")<
-	any,
+export default class DocumentService extends Context.Tag("Service/Document")<
+	DocumentService,
 	{
 		/** A read-only array of all text documents known to this extension host. */
 		readonly TextDocuments: readonly TextDocument[];
@@ -30,6 +30,6 @@ export default class extends Context.Tag("Service/Document")<
 		 */
 		readonly GetDocument: (
 			URI: Uri,
-		) => Effect.Effect<TextDocument | undefined, never>;
+		) => Effect.Effect<Option.Option<TextDocument>, never>;
 	}
 >() {}

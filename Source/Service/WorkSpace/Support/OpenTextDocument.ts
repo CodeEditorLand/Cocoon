@@ -4,7 +4,7 @@
  */
 
 import { Effect } from "effect";
-import { Uri } from "vscode";
+import { Uri, type TextDocument } from "vscode";
 
 import * as TypeConverter from "../../../TypeConverter/Main.js";
 import type DocumentService from "../../Document/Service.js";
@@ -14,7 +14,7 @@ export default function (
 	IPC: IPCService,
 	Document: DocumentService,
 	options?: { language?: string; content?: string } | Uri,
-) {
+): Effect.Effect<TextDocument, Error> {
 	return Effect.gen(function* () {
 		if (options instanceof Uri) {
 			const existing = yield* Document.GetDocument(options);

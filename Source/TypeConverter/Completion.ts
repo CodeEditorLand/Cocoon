@@ -65,21 +65,25 @@ const CompletionItem = {
 		Disposables: IDisposable[],
 	): ISuggestDataDto => {
 		return {
-			label: typeof Item.label === "string" ? Item.label : Item.label,
-			kind: Item.kind as Languages.CompletionItemKind,
-			tags: Item.tags as Languages.CompletionItemTag[],
+			label:
+				typeof Item.label === "string"
+					? Item.label
+					: (Item.label as VSCode.CompletionItemLabel),
+			kind: Item.kind,
+			tags: Item.tags,
 			detail: Item.detail,
-			documentation: Item.documentation
-				? MarkdownStringConverter.FromAPI(
-						Item.documentation as VSCode.MarkdownString,
-					)
-				: undefined,
+			documentation:
+				typeof Item.documentation === "string"
+					? Item.documentation
+					: Item.documentation instanceof ExtHostTypes.MarkdownString
+						? MarkdownStringConverter.FromAPI(Item.documentation)
+						: undefined,
 			sortText: Item.sortText,
 			filterText: Item.filterText,
 			preselect: Item.preselect,
 			insertText:
 				Item.insertText instanceof ExtHostTypes.SnippetString
-					? (Item.insertText as any)
+					? Item.insertText.value
 					: Item.insertText,
 			insertTextRules:
 				Item.insertText instanceof ExtHostTypes.SnippetString
@@ -87,7 +91,7 @@ const CompletionItem = {
 					: 0,
 			range:
 				Item.range instanceof ExtHostTypes.Range
-					? RangeConverter.FromAPI(Item.range as VSCode.Range)
+					? RangeConverter.FromAPI(Item.range)
 					: Item.range
 						? {
 								insert: RangeConverter.FromAPI(
@@ -98,6 +102,7 @@ const CompletionItem = {
 								),
 							}
 						: undefined,
+			commitCharacters: Item.commitCharacters,
 			additionalTextEdits: Item.additionalTextEdits?.map(
 				TextEditConverter.FromAPI,
 			),
@@ -119,16 +124,15 @@ const CompletionItem = {
 						detail: DTO.label.detail,
 						description: DTO.label.description,
 					};
-		const Item = new ExtHostTypes.CompletionItem(
-			Label,
-			DTO.kind as VSCode.CompletionItemKind,
-		);
-		Item.tags = DTO.tags as VSCode.CompletionItemTag[];
+		const Item = new ExtHostTypes.CompletionItem(Label, DTO.kind);
+		Item.tags = DTO.tags;
 		Item.detail = DTO.detail;
 		Item.documentation =
 			typeof DTO.documentation === "string"
 				? DTO.documentation
-				: MarkdownStringConverter.ToAPI(DTO.documentation as any);
+				: DTO.documentation
+					? MarkdownStringConverter.ToAPI(DTO.documentation as any)
+					: undefined;
 		Item.sortText = DTO.sortText;
 		Item.filterText = DTO.filterText;
 		Item.preselect = DTO.preselect;
@@ -142,8 +146,8 @@ const CompletionItem = {
 				: RangeConverter.ToAPI(DTO.range as any)
 			: undefined;
 		Item.commitCharacters = DTO.commitCharacters;
-		Item.additionalTextEdits = DTO.additionalTextEdits?.map(
-			TextEditConverter.ToAPI,
+		Item.additionalTextEdits = DTO.additionalTextEdits?.map((dto) =>
+			TextEditConverter.ToAPI(dto as any),
 		);
 		Item.command = DTO.command
 			? CommandsConverter.FromInternal(DTO.command)

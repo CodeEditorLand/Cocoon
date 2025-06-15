@@ -12,8 +12,8 @@ import type * as VSCode from "vscode";
 /**
  * The `Context.Tag` for the `APIFactory` service.
  */
-export default class extends Context.Tag("Core/APIFactory")<
-	any,
+export default class APIFactoryService extends Context.Tag("Core/APIFactory")<
+	APIFactoryService,
 	{
 		/**
 		 * Creates a new, sandboxed `vscode` API object for a specific extension.

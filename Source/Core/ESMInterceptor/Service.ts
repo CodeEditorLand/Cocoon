@@ -10,8 +10,10 @@ import { Context, type Effect, type Scope } from "effect";
 /**
  * The Context.Tag for the ESMInterceptor service.
  */
-export default class extends Context.Tag("Core/ESMInterceptor")<
-	any,
+export default class ESMInterceptorService extends Context.Tag(
+	"Core/ESMInterceptor",
+)<
+	ESMInterceptorService,
 	{
 		/**
 		 * An Effect that, when executed within a Scope, installs the ESM loader hook

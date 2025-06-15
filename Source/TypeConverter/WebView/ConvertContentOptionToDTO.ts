@@ -28,7 +28,7 @@ const ConvertContentOptionToDTO = (
 		localResourceRoots: Options.localResourceRoots ?? [
 			ExtensionDescription.extensionLocation,
 		],
-		portMappings: Options.portMapping,
+		portMapping: Options.portMapping,
 	};
 };
 

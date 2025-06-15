@@ -5,13 +5,16 @@
 
 import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable } from "vscode";
+import { Disposable, type TextEditor, type TextEditorEdit } from "vscode";
 
-import TypeConverter from "../../TypeConverter/Command.js";
+import {
+	Definition as CommandConverterDefinition,
+	Type as CommandConverterType,
+} from "../../TypeConverter/Command.js";
 import IPCService from "../IPC/Service.js";
 import TelemetryService from "../Telemetry/Service.js";
 import WorkSpaceService from "../WorkSpace/Service.js";
-import type { Interface } from "./Service.js";
+import type Service from "./Service.js";
 import type { CommandHandler, CommandHandlerEntry } from "./Type.js";
 
 export default Effect.gen(function* () {
@@ -21,9 +24,9 @@ export default Effect.gen(function* () {
 	const CommandRegistry = yield* Ref.make(
 		new Map<string, CommandHandlerEntry>(),
 	);
-	const CommandConverter = new TypeConverter.Definition(
-		{} as any,
-		() => undefined,
+
+	const CommandConverter = new CommandConverterDefinition(
+		() => undefined, // LookupAPICommand placeholder
 	);
 
 	const ExecuteCommand = <T>(
@@ -44,10 +47,7 @@ export default Effect.gen(function* () {
 				}).pipe(
 					Effect.catchAll((e) =>
 						Effect.flatMap(
-							Telemetry.onExtensionError(
-								Extension!.identifier,
-								e,
-							),
+							Telemetry.onExtensionError(Extension.identifier, e),
 							() => Effect.fail(e),
 						),
 					),
@@ -99,7 +99,7 @@ export default Effect.gen(function* () {
 		});
 	};
 
-	const ServiceImplementation: Interface = {
+	const ServiceImplementation: Service = {
 		ExecuteCommand,
 
 		RegisterCommand: (ID, Handler, ThisArgument, Extension) => {
@@ -115,8 +115,8 @@ export default Effect.gen(function* () {
 					);
 					return;
 				}
-				return editor.edit((editBuilder) => {
-					Handler(editor, editBuilder, ...args);
+				return (editor as TextEditor).edit((editBuilder) => {
+					Handler(editor as TextEditor, editBuilder, ...args);
 				});
 			};
 			return Register(ID, WrappedHandler, true, ThisArgument, Extension);

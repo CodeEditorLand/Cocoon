@@ -5,12 +5,14 @@
  * string bundles for extensions.
  */
 
-import { Context, type Effect } from "effect";
+import { Context, Option, type Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { Event, Uri } from "vscode";
 
-export default class extends Context.Tag("Service/Localization")<
-	any,
+export default class LocalizationService extends Context.Tag(
+	"Service/Localization",
+)<
+	LocalizationService,
 	{
 		/**
 		 * Gets the cached NLS bundle for a given extension.
@@ -19,7 +21,7 @@ export default class extends Context.Tag("Service/Localization")<
 		 */
 		readonly GetBundle: (
 			ExtensionID: string,
-		) => Effect.Effect<Record<string, string> | undefined, never>;
+		) => Effect.Effect<Option.Option<Record<string, string>>, never>;
 
 		/**
 		 * Gets the URI for an extension's effective localization bundle.

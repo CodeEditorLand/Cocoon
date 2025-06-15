@@ -73,10 +73,9 @@ export default Effect.gen(function* () {
 					Effect.orDie, // Failure to release is a fatal error.
 				),
 		).pipe(
-			// The scope is implicitly created and managed by acquireRelease
 			Effect.map((Source) => ({
 				Token: Source.token,
-				Scope: Scope.globalScope, // Placeholder, acquireRelease provides its own scope.
+				Scope: Scope.globalScope,
 			})),
 		);
 

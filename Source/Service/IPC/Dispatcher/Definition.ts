@@ -16,7 +16,7 @@ type InvokeHandler = (...Arguments: any[]) => Promise<any>;
 export default Effect.gen(function* () {
 	const ProtocolAdapter = yield* ProtocolAdapterService;
 	const Cancellation = yield* CancellationService;
-	const RPCProtocolInstance = new RPCProtocol(ProtocolAdapter as any);
+	const RPCProtocolInstance = new RPCProtocol(ProtocolAdapter);
 	const InvokeHandlers = yield* Ref.make(new Map<string, InvokeHandler>());
 
 	const DispatchRequest = (Method: string, Parameters: any[]) =>
@@ -25,18 +25,20 @@ export default Effect.gen(function* () {
 			const CustomHandler = Handlers.get(Method);
 
 			if (CustomHandler) {
-				return yield* Effect.tryPromise(() =>
-					CustomHandler(...Parameters),
-				);
+				return yield* Effect.tryPromise({
+					try: () => CustomHandler(...Parameters),
+					catch: (e) => e as Error,
+				});
 			} else {
 				if ((RPCProtocolInstance as any)._getHandler) {
 					const Handler = (RPCProtocolInstance as any)._getHandler(
 						Method,
 					);
 					if (Handler) {
-						return yield* Effect.tryPromise(() =>
-							Handler(...Parameters),
-						);
+						return yield* Effect.tryPromise({
+							try: () => Handler(...Parameters),
+							catch: (e) => e as Error,
+						});
 					}
 				}
 				return yield* Effect.fail(

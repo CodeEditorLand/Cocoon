@@ -5,7 +5,12 @@
 
 import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable } from "vscode";
+import {
+	Disposable,
+	type Task,
+	type TaskFilter,
+	type TaskProvider,
+} from "vscode";
 
 import { Task as TaskConverter } from "../../TypeConverter/Task.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
@@ -23,7 +28,7 @@ export default Effect.gen(function* () {
 	const TaskProviders = yield* Ref.make(new Map<number, any>());
 
 	// --- RPC Handlers ---
-	yield* IPC.RegisterInvokeHandler("$provideTasks", ([Handle, TokenID]) =>
+	IPC.RegisterInvokeHandler("$provideTasks", ([Handle, TokenID]) =>
 		Effect.runPromise(ProvideTasks(TaskProviders, Handle, TokenID)),
 	);
 
@@ -41,8 +46,8 @@ export default Effect.gen(function* () {
 		taskExecutions: [],
 
 		RegisterTaskProvider: (
-			Type,
-			Provider,
+			Type: string,
+			Provider: TaskProvider,
 			Extension: IExtensionDescription,
 		) =>
 			Effect.sync(() => {
@@ -75,7 +80,7 @@ export default Effect.gen(function* () {
 				});
 			}),
 
-		FetchTasks: (Filter) =>
+		FetchTasks: (Filter?: TaskFilter) =>
 			IPC.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
 				Effect.map((DTOs) =>
 					DTOs.map((DTO) => TaskConverter.ToAPI(DTO)),

@@ -5,7 +5,7 @@
  * synthesized from VS Code's `bootstrap-node.ts` and `bootstrap-fork.ts`.
  */
 
-import { Effect, Layer } from "effect";
+import { Effect } from "effect";
 
 import BlockNativesModule from "./PatchProcess/BlockNativesModule.js";
 import HandleException from "./PatchProcess/HandleException.js";

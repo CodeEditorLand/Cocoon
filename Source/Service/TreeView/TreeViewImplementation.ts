@@ -4,11 +4,12 @@
  * This class acts as the extension host's proxy for a tree view in the main UI.
  */
 
-import { Effect, Stream } from "effect";
+import { Effect } from "effect";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type {
 	Event,
+	ProviderResult,
 	TreeDataProvider,
 	TreeItem,
 	TreeView,
@@ -17,8 +18,8 @@ import type {
 	TreeViewVisibilityChangeEvent,
 } from "vscode";
 
-import { TreeView as TreeViewConverter } from "../../TypeConverter.js";
 import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
+import { TreeView as TreeViewConverter } from "../../TypeConverter/TreeView.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type CommandService from "../Command/Service.js";
 import type IPCService from "../IPC/Service.js";
@@ -58,17 +59,19 @@ export default class<T> implements TreeView<T> {
 		if (this.DataProvider.onDidChangeTreeData) {
 			this.DataProvider.onDidChangeTreeData((Elements) => {
 				const HandlesToRefresh = this.GetHandlesToRefresh(Elements);
-				this.IPC.SendNotification(`$refreshTreeView`, [
-					this.ViewID,
-					HandlesToRefresh,
-				]);
+				Effect.runFork(
+					this.IPC.SendNotification(`$refreshTreeView`, [
+						this.ViewID,
+						HandlesToRefresh,
+					]),
+				);
 			});
 		}
 	}
 
-	public GetChildrenEffect(Element?: T): Effect.Effect<any[]> {
+	public GetChildrenEffect(Element?: T): Effect.Effect<any[], Error> {
 		return Effect.tryPromise({
-			try: () => this.DataProvider.getChildren(Element),
+			try: () => this.DataProvider.getChildren(Element) as Promise<T[]>,
 			catch: (CaughtError) => CaughtError as Error,
 		}).pipe(
 			Effect.flatMap((Children) => {
@@ -83,16 +86,18 @@ export default class<T> implements TreeView<T> {
 		);
 	}
 
-	private ResolveAndCacheItem(Element: T) {
+	private ResolveAndCacheItem(Element: T): Effect.Effect<any, Error> {
 		return Effect.tryPromise({
-			try: () => this.DataProvider.getTreeItem(Element),
+			try: () =>
+				this.DataProvider.getTreeItem(Element) as Promise<TreeItem>,
 			catch: (CaughtError) => CaughtError as Error,
 		}).pipe(
 			Effect.map((TreeItem) => {
 				const Handle = this.GetHandleForElement(Element);
-				// This is a temporary fix. A real implementation should inject the converter.
+				// A real CommandConverter would be injected.
 				const CommandConverter = new CommandConverterDefinition(
-					this.CommandService,
+					() => undefined,
+					() => Promise.resolve(undefined),
 					() => undefined,
 				);
 				return TreeViewConverter.Item.FromAPI(
@@ -127,7 +132,7 @@ export default class<T> implements TreeView<T> {
 				(Element) => this.ElementToHandleMap.get(Element) || null,
 			);
 		}
-		return [this.ElementToHandleMap.get(Elements) || null];
+		return [this.ElementToHandleMap.get(Elements as T) || null];
 	}
 
 	reveal(
@@ -162,4 +167,8 @@ export default class<T> implements TreeView<T> {
 	title?: string;
 	description?: string;
 	badge?: { value: number; tooltip: string };
+	activeItem: T | undefined;
+	onDidChangeActiveItem: Event<T | undefined> = new Emitter<T | undefined>()
+		.event;
+	onDidChangeCheckboxState: Event<any> = new Emitter<any>().event;
 }

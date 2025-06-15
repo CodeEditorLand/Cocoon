@@ -5,7 +5,11 @@
 
 import { Effect, Ref } from "effect";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
-import type { AuthenticationProvider } from "vscode";
+import type {
+	AuthenticationProvider,
+	AuthenticationSession,
+	Extension,
+} from "vscode";
 
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
@@ -68,13 +72,15 @@ export default Effect.gen(function* () {
 	const AuthenticationImplementation: Service = {
 		GetSession: (RequestingExtension, ProviderID, Scopes, Options) =>
 			IPC.SendRequest<any | undefined>("$getSession", [
-				RequestingExtension.id,
+				(RequestingExtension as Extension<any>).id,
 				ProviderID,
 				Scopes,
 				Options,
 			]).pipe(
 				Effect.map((Info) =>
-					Info ? ConvertSessionToVSCode(Info) : undefined,
+					Info
+						? ConvertSessionToVSCode(Info)
+						: (undefined as AuthenticationSession | undefined),
 				),
 				Effect.tapError((Error) =>
 					Log.Error(
@@ -86,7 +92,7 @@ export default Effect.gen(function* () {
 
 		ListSessions: (RequestingExtension, ProviderID, Scopes) =>
 			IPC.SendRequest<any[]>("$getSessions", [
-				RequestingExtension.id,
+				(RequestingExtension as Extension<any>).id,
 				ProviderID,
 				Scopes,
 			]).pipe(

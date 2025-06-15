@@ -3,7 +3,7 @@
  * @description The live implementation of the QuickInput service.
  */
 
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import { isCancellationError } from "vs/base/common/errors.js";
 import type {
 	CancellationToken,
@@ -14,26 +14,25 @@ import type {
 
 import * as QuickInputConverter from "../../TypeConverter/QuickInput.js";
 import IPCService from "../IPC/Service.js";
+import type Service from "./Service.js";
 
-export default Effect.gen(function* (_) {
-	const IPC = yield* _(IPCService);
+export default Effect.gen(function* () {
+	const IPC = yield* IPCService;
 
 	const ShowQuickPick = <T extends QuickPickItem>(
 		Items: readonly T[] | Promise<readonly T[]>,
 		Option: QuickPickOptions = {},
 		Token?: CancellationToken,
 	) =>
-		Effect.gen(function* (_) {
+		Effect.gen(function* () {
 			if (Token?.isCancellationRequested) {
-				return yield* _(Effect.interrupt);
+				return yield* Effect.interrupt;
 			}
 
-			const ResolvedItems = yield* _(
-				Effect.tryPromise({
-					try: () => Promise.resolve(Items),
-					catch: (e) => e as Error,
-				}),
-			);
+			const ResolvedItems = yield* Effect.tryPromise({
+				try: () => Promise.resolve(Items),
+				catch: (e) => e as Error,
+			});
 
 			const IPCOptions = {
 				...Option,
@@ -45,11 +44,9 @@ export default Effect.gen(function* (_) {
 				),
 			};
 
-			const ResultHandles = yield* _(
-				IPC.SendRequest<number[] | number | undefined>(
-					"$showQuickPick",
-					[IPCOptions],
-				),
+			const ResultHandles = yield* IPC.SendRequest<
+				number[] | number | undefined
+			>("$showQuickPick", [IPCOptions]).pipe(
 				Effect.catchIf(isCancellationError, () =>
 					Effect.succeed(undefined),
 				),
@@ -75,9 +72,9 @@ export default Effect.gen(function* (_) {
 		Option?: InputBoxOptions,
 		Token?: CancellationToken,
 	) =>
-		Effect.gen(function* (_) {
+		Effect.gen(function* () {
 			if (Token?.isCancellationRequested) {
-				return yield* _(Effect.interrupt);
+				return yield* Effect.interrupt;
 			}
 
 			const IPCOptions = {
@@ -87,17 +84,16 @@ export default Effect.gen(function* (_) {
 				),
 			};
 
-			return yield* _(
-				IPC.SendRequest<string | undefined>("$showInputBox", [
-					IPCOptions,
-				]),
+			return yield* IPC.SendRequest<string | undefined>("$showInputBox", [
+				IPCOptions,
+			]).pipe(
 				Effect.catchIf(isCancellationError, () =>
 					Effect.succeed(undefined),
 				),
 			);
 		});
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const ServiceImplementation: Service = {
 		ShowQuickPick,
 		ShowInputBox,
 		CreateQuickPick: () => {

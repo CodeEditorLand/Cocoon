@@ -8,6 +8,7 @@
 import { Context, type Effect } from "effect";
 import type {
 	Event,
+	TextDocument,
 	TextDocumentShowOptions,
 	TextEditor,
 	Uri,
@@ -20,8 +21,8 @@ import type {
  * Note: Does NOT include methods handled by other services (e.g., `showQuickPick`).
  * The final `vscode.window` object is assembled in the APIFactory.
  */
-export default class extends Context.Tag("Service/Window")<
-	any,
+export default class WindowService extends Context.Tag("Service/Window")<
+	WindowService,
 	{
 		readonly state: WindowState;
 		readonly onDidChangeWindowState: Event<WindowState>;
@@ -39,7 +40,7 @@ export default class extends Context.Tag("Service/Window")<
 		 * @returns An `Effect` that resolves with the opened `TextEditor`.
 		 */
 		readonly ShowTextDocument: (
-			documentOrURI: Uri | any, // any is for TextDocument
+			documentOrURI: Uri | TextDocument,
 			columnOrOptions?: ViewColumn | TextDocumentShowOptions,
 			preserveFocus?: boolean,
 		) => Effect.Effect<TextEditor, Error>;

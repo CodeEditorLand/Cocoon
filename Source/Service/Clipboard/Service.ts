@@ -10,7 +10,7 @@ import type { Clipboard } from "vscode";
 /**
  * The Context.Tag for the Clipboard service.
  */
-export default class extends Context.Tag("Service/Clipboard")<
-	any,
+export default class ClipboardService extends Context.Tag("Service/Clipboard")<
+	ClipboardService,
 	Clipboard
 >() {}

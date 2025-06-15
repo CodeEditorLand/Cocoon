@@ -66,8 +66,10 @@ export default Effect.gen(function* () {
 				? (Global as any)[ExtensionID]
 				: (WorkSpace as any)[ExtensionID];
 
-			Log.Debug(
-				`Created Memento for ExtID='${ExtensionID}', Scope='${ScopeName}'`,
+			Effect.runSync(
+				Log.Debug(
+					`Created Memento for ExtID='${ExtensionID}', Scope='${ScopeName}'`,
+				),
 			);
 
 			const Memento = new MementoImplementation(

@@ -20,9 +20,9 @@ export default Effect.gen(function* () {
 	const InitData = yield* InitDataService;
 	const Log = yield* LogService;
 
-	const GlobalStorageURI = InitData.environment.globalStorageHome as any;
+	const GlobalStorageURI = InitData.environment.globalStorageHome as Uri;
 	const WorkSpaceStorageURI = InitData.environment
-		.workspaceStorageHome as any;
+		.workspaceStorageHome as Uri;
 
 	// Ensure the base directories exist on startup.
 	yield* EnsureDirectory(GlobalStorageURI, "Global");

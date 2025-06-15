@@ -11,8 +11,10 @@ import type { SecretStorage } from "vscode";
 /**
  * The `Context.Tag` for the SecretStorage service factory.
  */
-export default class extends Context.Tag("Service/SecretStorage")<
-	any,
+export default class SecretStorageService extends Context.Tag(
+	"Service/SecretStorage",
+)<
+	SecretStorageService,
 	{
 		/**
 		 * Creates a `SecretStorage` instance for a given extension.

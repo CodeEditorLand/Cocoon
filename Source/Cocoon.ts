@@ -14,7 +14,7 @@ import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
 import RunProcessPatch from "./PatchProcess.js";
 import AllServiceLayer from "./Service.js";
 import InitDataLayer from "./Service/InitData/Live.js";
-import type IPCConfiguration from "./Service/IPC/Configuration.js";
+import type IPCConfigurationService from "./Service/IPC/Configuration.js";
 import IPCService from "./Service/IPC/Service.js";
 
 // --- Pre-initialization Steps ---
@@ -36,7 +36,7 @@ const FullApplicationInitialization = Effect.gen(function* () {
 
 	const Host = yield* ExtensionHostService;
 	yield* Host.ActivateById(
-		"*" as any,
+		"*" as any, // This is a placeholder for VS Code's "star activation"
 		{
 			startup: true,
 			activationEvent: "*",
@@ -97,7 +97,7 @@ const Main = Effect.gen(function* () {
 
 // --- Application Layer Composition ---
 
-const ApplicationConfiguration: IPCConfiguration = {
+const ApplicationConfiguration: IPCConfigurationService = {
 	MountainAddress: process.env["MOUNTAIN_ADDR"] || "localhost:50051",
 	CocoonAddress: process.env["COCOON_ADDR"] || "localhost:50052",
 };

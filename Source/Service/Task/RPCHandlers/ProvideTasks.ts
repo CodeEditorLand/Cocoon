@@ -6,7 +6,7 @@
 import { Effect, Ref } from "effect";
 import type { Task, TaskProvider } from "vscode";
 
-import { Task as TaskConverter } from "../../../TypeConverter.js";
+import { Task as TaskConverter } from "../../../TypeConverter/Task.js";
 import CancellationService from "../../Cancellation/Service.js";
 
 /**
@@ -22,14 +22,14 @@ const ProvideTasks = (
 	TokenID: number,
 ) => {
 	return Effect.gen(function* () {
-		const Entry = (yield* Registry).get(Handle);
+		const Entry = (yield* Ref.get(Registry)).get(Handle);
 		if (!Entry) {
 			return yield* Effect.fail(
 				new Error(`Task provider with handle ${Handle} not found.`),
 			);
 		}
 
-		const Provider = Entry.provider as TaskProvider;
+		const Provider = Entry.Provider as TaskProvider;
 		if (!Provider.provideTasks) {
 			return [];
 		}
@@ -46,8 +46,8 @@ const ProvideTasks = (
 			return [];
 		}
 
-		return Tasks.map((Task) =>
-			TaskConverter.FromAPI(Task, Entry.extension),
+		return Tasks.map((Task: Task) =>
+			TaskConverter.FromAPI(Task, Entry.Extension),
 		);
 	}).pipe(
 		Effect.scoped, // Ensures cancellation token scope is handled

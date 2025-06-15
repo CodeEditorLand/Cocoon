@@ -13,4 +13,7 @@ import { Context } from "effect";
  * This tag provides access to the raw server object if needed, for example,
  * by the `acquireRelease` logic that manages its lifecycle.
  */
-export default class extends Context.Tag("IPC/Server")<any, gRPC.Server>() {}
+export default class ServerService extends Context.Tag("IPC/Server")<
+	ServerService,
+	gRPC.Server
+>() {}

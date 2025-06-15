@@ -19,7 +19,11 @@ export default Effect.gen(function* () {
 
 	const SecretStorageFactoryImplementation: Service = {
 		CreateStorage: (ExtensionID: string) => {
-			Log.Debug(`Created SecretStorage for extension: '${ExtensionID}'`);
+			Effect.runSync(
+				Log.Debug(
+					`Created SecretStorage for extension: '${ExtensionID}'`,
+				),
+			);
 			return new SecretStorageImplementation(ExtensionID, IPC, Log);
 		},
 	};

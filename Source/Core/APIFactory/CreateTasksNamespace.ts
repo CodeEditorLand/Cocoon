@@ -52,7 +52,7 @@ const CreateTasksNamespace = (
 				Task.ExecuteTask(TaskParameter, Extension),
 			);
 		},
-	} as typeof VSCode.tasks;
+	} as unknown as typeof VSCode.tasks; // Cast to bypass missing properties if any
 };
 
 export default CreateTasksNamespace;

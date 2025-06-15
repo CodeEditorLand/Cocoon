@@ -18,7 +18,7 @@ import DispatcherService from "../Dispatcher/Service.js";
 import { gRPCConnectionError } from "../Error.js";
 import CreateServiceImplementation from "./CreateServiceImplementation.js";
 import Release from "./Release.js";
-import type ServerService from "./Service.js";
+import type Service from "./Service.js";
 
 const LoadProtoDefinition = (
 	ProtoPath: string,
@@ -33,13 +33,16 @@ const LoadProtoDefinition = (
 				defaults: true,
 				oneofs: true,
 			}),
-		catch: (Cause) =>
-			new gRPCConnectionError({ Cause, Context: "ProtoLoadFailed" }),
+		catch: (cause) =>
+			new gRPCConnectionError({
+				Cause: cause,
+				Context: "ProtoLoadFailed",
+			}),
 	});
 };
 
 const StartServer = (
-	Server: ServerService,
+	Server: Service,
 	ServerAddress: string,
 ): Effect.Effect<void, gRPCConnectionError> => {
 	return Effect.async<void, gRPCConnectionError>((Resume) => {
@@ -83,7 +86,7 @@ export default Effect.acquireRelease(
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
 		const Definition = yield* LoadProtoDefinition(ProtoPath);
-		const Proto = (gRPC.loadPackageDefinition(Definition) as any)
+		const Proto = (GRPC.loadPackageDefinition(Definition) as any)
 			.vine_ipc as GrpcObject;
 		const ServiceDefinition = (Proto.CocoonService as any).service;
 
@@ -91,12 +94,12 @@ export default Effect.acquireRelease(
 		const Implementation = CreateServiceImplementation(Dispatcher);
 		Server.addService(ServiceDefinition, Implementation);
 
-		yield* StartServer(Server as any, Config.CocoonAddress);
+		yield* StartServer(Server, Config.CocoonAddress);
 		yield* Effect.logInfo(
 			`Cocoon gRPC server listening at ${Config.CocoonAddress}.`,
 		);
 
-		return Server as ServerService;
+		return Server as Service;
 	}),
 	(Server) => Release(Server).pipe(Effect.orDie),
 );

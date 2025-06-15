@@ -7,11 +7,11 @@
 import { Effect } from "effect";
 import type { SerializedError } from "vs/base/common/errors.js";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
+import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
 
 import InitDataService from "../InitData/Service.js";
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
-import type Service from "./Service.js";
 
 // Placeholders for internal types
 const TelemetryLevel = {
@@ -61,7 +61,7 @@ export default Effect.gen(function* () {
 		Extension: ExtensionIdentifier,
 		CaughtError: Error | SerializedError,
 	) => {
-		const SerializableError =
+		const SerializableError: SerializedError =
 			CaughtError instanceof Error
 				? {
 						name: CaughtError.name,
@@ -78,7 +78,7 @@ export default Effect.gen(function* () {
 				Effect.when(
 					() =>
 						IPC.SendNotification("$onExtensionError", [
-							Extension.value,
+							Extension,
 							SerializableError,
 						]),
 					() => ShouldSendEvent("error"),
@@ -88,7 +88,7 @@ export default Effect.gen(function* () {
 		);
 	};
 
-	const TelemetryImplementation: Service = {
+	const TelemetryImplementation: IExtHostTelemetry = {
 		_serviceBrand: undefined,
 		getTelemetryInfo: () => Promise.resolve(InitData.telemetryInfo),
 		setEnabled: () => {},

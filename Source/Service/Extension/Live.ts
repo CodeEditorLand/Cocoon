@@ -5,7 +5,7 @@
 
 import { Layer } from "effect";
 
-import ExtensionHostLive from "../../Core/ExtensionHost/Live.js";
+import { Live as ExtensionHostLive } from "../../Core/ExtensionHost.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 

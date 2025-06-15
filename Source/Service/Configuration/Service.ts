@@ -13,8 +13,10 @@ import type {
 
 import type WorkSpaceConfiguration from "./Type/WorkSpaceConfiguration.js";
 
-export default class extends Context.Tag("Service/Configuration")<
-	any,
+export default class ConfigurationService extends Context.Tag(
+	"Service/Configuration",
+)<
+	ConfigurationService,
 	{
 		/**
 		 * Retrieves a `WorkSpaceConfiguration` object for a given section and scope.

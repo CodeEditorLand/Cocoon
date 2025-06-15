@@ -6,7 +6,7 @@
 import { Layer } from "effect";
 
 import { CancellationLive } from "../../Cancellation.js";
-import ProtocolAdapterLive from "../ProtocolAdapter/Live.js";
+import { Live as ProtocolAdapterLive } from "../ProtocolAdapter.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 

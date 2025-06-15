@@ -9,18 +9,22 @@ import type {
 	Disposable,
 	Event,
 	Task,
+	TaskEndEvent,
 	TaskExecution,
 	TaskFilter,
+	TaskProcessEndEvent,
+	TaskProcessStartEvent,
 	TaskProvider,
+	TaskStartEvent,
 } from "vscode";
 
-export default class extends Context.Tag("Service/Task")<
-	any,
+export default class TaskService extends Context.Tag("Service/Task")<
+	TaskService,
 	{
-		readonly onDidStartTask: Event<any>; // TaskStartEvent
-		readonly onDidEndTask: Event<any>; // TaskEndEvent
-		readonly onDidStartTaskProcess: Event<any>; // TaskProcessStartEvent
-		readonly onDidEndTaskProcess: Event<any>; // TaskProcessEndEvent
+		readonly onDidStartTask: Event<TaskStartEvent>;
+		readonly onDidEndTask: Event<TaskEndEvent>;
+		readonly onDidStartTaskProcess: Event<TaskProcessStartEvent>;
+		readonly onDidEndTaskProcess: Event<TaskProcessEndEvent>;
 
 		readonly taskExecutions: readonly TaskExecution[];
 
@@ -31,9 +35,9 @@ export default class extends Context.Tag("Service/Task")<
 		 * @param Extension The extension registering the provider.
 		 * @returns An `Effect` resolving to a `Disposable`.
 		 */
-		readonly RegisterTaskProvider: (
+		readonly RegisterTaskProvider: <T extends Task>(
 			Type: string,
-			Provider: TaskProvider,
+			Provider: TaskProvider<T>,
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, Error>;
 

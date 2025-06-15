@@ -7,6 +7,7 @@
  */
 
 import * as NodeOs from "node:os";
+import type { Uri } from "vscode";
 
 import type InitDataService from "../../../Service/InitData/Service.js";
 
@@ -23,7 +24,7 @@ import type InitDataService from "../../../Service/InitData/Service.js";
  */
 const CreateOsShim = (InitData: InitDataService) => {
 	const IsWindows = InitData.environment.isWindows;
-	const UserHome = InitData.environment.userHome as any; // Cast from internal URI type
+	const UserHome = InitData.environment.userHome as Uri;
 
 	const OsShim = {
 		EOL: IsWindows ? "\r\n" : "\n",

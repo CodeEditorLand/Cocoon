@@ -11,8 +11,10 @@ import type { Uri } from "vscode";
 /**
  * The `Context.Tag` for the StoragePath service.
  */
-export default class extends Context.Tag("Service/StoragePath")<
-	any,
+export default class StoragePathService extends Context.Tag(
+	"Service/StoragePath",
+)<
+	StoragePathService,
 	{
 		/**
 		 * Returns the URI for an extension's workspace-specific storage.

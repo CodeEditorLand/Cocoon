@@ -1,12 +1,13 @@
 /**
  * @module WebViewPanelImplementation
- * @description The concrete implementation of the `vscode.WebViewPanel` interface.
+ * @description The concrete implementation of the `vscode.WebviewPanel` interface.
  */
 
-import { Effect, Stream } from "effect";
+import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type {
 	Event,
+	ThemeColor,
 	Uri,
 	ViewColumn,
 	Webview,
@@ -16,7 +17,7 @@ import type {
 	WebviewPanelOptions,
 } from "vscode";
 
-import { WebView as TypeConverter } from "../../TypeConverter.js";
+import { WebView as WebViewConverter } from "../../TypeConverter/WebView.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type IPCService from "../IPC/Service.js";
 import WebViewImplementation from "../WebView/WebViewImplementation.js";
@@ -66,10 +67,8 @@ export default class implements WebviewPanel {
 		this._viewColumn = InitialViewColumn;
 		this._active = true; // Assume active on creation
 		this._visible = true; // Assume visible on creation
-		this.onDidDispose = Stream.toEvent(this.OnDidDisposeEmitter.Stream);
-		this.onDidChangeViewState = Stream.toEvent(
-			this.OnDidChangeViewStateEmitter.Stream,
-		);
+		this.onDidDispose = this.OnDidDisposeEmitter.event;
+		this.onDidChangeViewState = this.OnDidChangeViewStateEmitter.event;
 	}
 
 	// --- Properties with RPC side-effects ---
@@ -115,15 +114,20 @@ export default class implements WebviewPanel {
 		const IconPathDTO = Value
 			? {
 					light: (Value as any).light
-						? TypeConverter.ConvertExtensionDataToDTO(
+						? WebViewConverter.ConvertExtensionDataToDTO(
+								this.Extension,
 								(Value as any).light,
 							)
 						: undefined,
 					dark: (Value as any).dark
-						? TypeConverter.ConvertExtensionDataToDTO(
+						? WebViewConverter.ConvertExtensionDataToDTO(
+								this.Extension,
 								(Value as any).dark,
 							)
-						: TypeConverter.ConvertExtensionDataToDTO(Value as Uri),
+						: WebViewConverter.ConvertExtensionDataToDTO(
+								this.Extension,
+								Value as Uri,
+							),
 				}
 			: undefined;
 		Effect.runFork(
@@ -138,7 +142,7 @@ export default class implements WebviewPanel {
 	public reveal(ViewColumn?: ViewColumn, PreserveFocus?: boolean): void {
 		if (this.IsDisposed) return;
 		const ViewColumnDTO = ViewColumn
-			? TypeConverter.ConvertShowOptionToDTO(
+			? WebViewConverter.ConvertShowOptionToDTO(
 					ViewColumn,
 					PreserveFocus ?? false,
 				)

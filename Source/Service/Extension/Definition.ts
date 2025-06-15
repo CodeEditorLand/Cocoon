@@ -17,7 +17,8 @@ export default Effect.gen(function* () {
 	const ExtensionHost = yield* ExtensionHostService;
 	const InitData = yield* InitDataService;
 
-	const OnDidChangeEvent = CreateEventStream<void>();
+	const { event: OnDidChangeEvent, Fire: FireOnDidChange } =
+		CreateEventStream<void>();
 	const AllExtensionsCache = yield* Ref.make<
 		readonly Extension<any>[] | undefined
 	>(undefined);
@@ -27,15 +28,15 @@ export default Effect.gen(function* () {
 	);
 
 	// In a real implementation, this would be driven by an event from the ExtensionHost
-	// when the registry changes. For now, we build the cache on first access.
-	// Effect.runFork(Stream.runForEach(ExtensionHostService.OnDidRegisterExtensions, () => {
-	//   Ref.set(allExtensionsCache, undefined).pipe(
-	//      Effect.flatMap(() => OnDidChangeEvent.Fire())
+	// when the registry changes.
+	// Effect.runFork(Stream.runForEach(ExtensionHost.OnDidRegisterExtensions, () =>
+	//   Ref.set(AllExtensionsCache, undefined).pipe(
+	//      Effect.flatMap(() => FireOnDidChange())
 	//   )
-	// }));
+	// ));
 
 	const ServiceImplementation: Service = {
-		onDidChange: OnDidChangeEvent.event,
+		onDidChange: OnDidChangeEvent,
 
 		getExtension: <T>(extensionId: string) => {
 			const description = Effect.runSync(
@@ -47,22 +48,34 @@ export default Effect.gen(function* () {
 		},
 
 		get all() {
-			return Ref.get(AllExtensionsCache).pipe(
-				Effect.flatMap((maybeCache) => {
-					if (maybeCache) {
-						return Effect.succeed(maybeCache);
-					}
-					const descriptions =
-						ExtensionRegistry.getAllExtensionDescriptions();
-					const newCache = descriptions.map((desc) =>
-						CreateAPIObject<any>(desc, ExtensionHost),
-					);
-					return Ref.set(AllExtensionsCache, newCache).pipe(
-						Effect.as(newCache),
-					);
-				}),
-				Effect.runSync,
+			return Effect.runSync(
+				Ref.get(AllExtensionsCache).pipe(
+					Effect.flatMap((maybeCache) => {
+						if (maybeCache) {
+							return Effect.succeed(maybeCache);
+						}
+						const descriptions =
+							ExtensionRegistry.getAllExtensionDescriptions();
+						const newCache = descriptions.map((desc) =>
+							CreateAPIObject<any>(desc, ExtensionHost),
+						);
+						return Ref.set(AllExtensionsCache, newCache).pipe(
+							Effect.as(newCache),
+						);
+					}),
+				),
 			);
+		},
+
+		activate: <T>(extensionId: string): Promise<Extension<T>> => {
+			const extension =
+				ServiceImplementation.getExtension<T>(extensionId);
+			if (!extension) {
+				return Promise.reject(
+					new Error(`Extension '${extensionId}' not found.`),
+				);
+			}
+			return extension.activate().then(() => extension);
 		},
 	};
 

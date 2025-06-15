@@ -18,12 +18,12 @@ export default interface Interface {
 	 * This handles argument marshalling and the delegation of complex commands.
 	 * @param Command The `vscode.Command` to convert.
 	 * @param Disposables A list to which any necessary disposables can be added.
-	 * @returns The internal `ICommand` DTO.
+	 * @returns The internal `ICommand` DTO, or undefined if the input is undefined.
 	 */
 	readonly ToInternal: (
 		Command: VSCode.Command,
 		Disposables: IDisposable[],
-	) => ICommand;
+	) => ICommand | undefined;
 
 	/**
 	 * Converts an internal `ICommand` DTO back into a `vscode.Command`.

@@ -5,7 +5,7 @@
 
 import type { OpenDialogOptions, SaveDialogOptions, Uri } from "vscode";
 
-import { URI as VscURI } from "../Type/ExtHostTypes.js";
+import * as ExtHostTypes from "../Type/ExtHostTypes.js";
 
 const SerializeFilters = (Filters?: {
 	readonly [Name: string]: readonly string[];
@@ -50,7 +50,7 @@ const DialogResult = {
 		if (!DTO) {
 			return undefined;
 		}
-		return VscURI.revive(DTO);
+		return ExtHostTypes.URI.revive(DTO);
 	},
 	ToURIArray: (DTOs: any[] | undefined): Uri[] | undefined => {
 		if (!DTOs || !Array.isArray(DTOs)) {

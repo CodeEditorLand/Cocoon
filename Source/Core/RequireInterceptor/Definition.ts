@@ -7,6 +7,7 @@
 import * as Module from "node:module";
 import { Effect } from "effect";
 import { URI } from "vs/base/common/uri.js";
+import type { Uri } from "vscode";
 
 import LogService from "../../Service/Log/Service.js";
 import APIFactoryService from "../APIFactory/Service.js";
@@ -52,7 +53,7 @@ export default Effect.gen(function* () {
 							? URI.file(this.filename)
 							: URI.parse("unknown:/unknown");
 
-						return Factory.Load(Request, ParentURI, (Req) =>
+						return Factory.Load(Request, ParentURI as Uri, (Req) =>
 							OriginalRequire.call(this, Req),
 						);
 					}
@@ -65,7 +66,7 @@ export default Effect.gen(function* () {
 
 						// The shim loader is effectful, but `require` is sync. We must run it synchronously.
 						const ShimResult = Effect.runSyncExit(
-							NodeModuleShim.Load(Request, ParentURI),
+							NodeModuleShim.Load(Request, ParentURI as Uri),
 						);
 
 						if (ShimResult._tag === "Success") {

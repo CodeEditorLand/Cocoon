@@ -7,10 +7,12 @@
 
 import { Context, type Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type { ExtensionHostKind } from "vs/workbench/services/extensions/common/extensionHostKind.js";
+import { ExtensionHostKind } from "vs/workbench/services/extensions/common/extensionHostKind.js";
 
-export default class extends Context.Tag("Core/HostKindPicker")<
-	any,
+export default class HostKindPickerService extends Context.Tag(
+	"Core/HostKindPicker",
+)<
+	HostKindPickerService,
 	{
 		/**
 		 * Determines the appropriate extension host kind for a given extension based

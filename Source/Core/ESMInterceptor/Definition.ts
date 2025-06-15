@@ -90,16 +90,16 @@ const HandleResolveRequest = (
 		const MaybeExtension = ExtensionPath.FindSubstr(ParentURI as any);
 
 		if (!MaybeExtension) {
-			const Error = new Error(
+			const ErrorValue = new Error(
 				`Could not find extension for module: ${ImportingModuleURL}`,
 			);
 			yield* Log.Error(
 				"ESM Interceptor failed to identify extension.",
-				Error,
+				ErrorValue,
 			);
 			MainThreadPort.postMessage({
 				id: ID,
-				error: { message: Error.message },
+				error: { message: ErrorValue.message },
 			});
 			return;
 		}
@@ -140,7 +140,7 @@ export default Effect.gen(function* () {
 	const ExtensionPath = yield* ExtensionPathService;
 	const Log = yield* LogService;
 
-	const Install = () =>
+	const Install = (): Effect.Effect<void, Error, Scope.Scope> =>
 		Effect.gen(function* () {
 			if (typeof (Module as any).register !== "function") {
 				return yield* Effect.fail(

@@ -10,7 +10,7 @@ import { Data } from "effect";
  * server setup.
  *
  * This error is tagged with "gRPCConnectionError" for precise handling with
- * `Effect.catchTag`. It captures the underlying `Cause` and provides a `Context`
+ * `Effect.catchTag`. It captures the underlying `cause` and provides a `Context`
  * string to indicate which part of the connection process failed.
  */
 export default class extends Data.TaggedError("gRPCConnectionError")<{

@@ -34,10 +34,10 @@ const AsExtensionEvent = <T>(
 		const SafeListener = (Event: T) => {
 			try {
 				Listener.call(ThisArgument, Event);
-			} catch (Error) {
+			} catch (error) {
 				Log.Error(
 					`[${ExtensionID.value}] FAILED to handle event:`,
-					Error,
+					error,
 				);
 				// This is also where telemetry reporting for extension errors would be triggered.
 			}

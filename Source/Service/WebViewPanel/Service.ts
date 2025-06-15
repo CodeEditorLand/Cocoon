@@ -14,8 +14,10 @@ import type {
 	WebviewPanelSerializer,
 } from "vscode";
 
-export default class extends Context.Tag("Service/WebViewPanel")<
-	any,
+export default class WebViewPanelService extends Context.Tag(
+	"Service/WebViewPanel",
+)<
+	WebViewPanelService,
 	{
 		/**
 		 * Creates a new webview panel.

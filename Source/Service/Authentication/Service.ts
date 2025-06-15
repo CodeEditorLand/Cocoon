@@ -17,14 +17,16 @@ import type {
 
 import type { AuthenticationProviderRegistrationError } from "./Error.js";
 
-export default class extends Context.Tag("Service/Authentication")<
-	any,
+export default class AuthenticationService extends Context.Tag(
+	"Service/Authentication",
+)<
+	AuthenticationService,
 	{
 		/**
 		 * Requests an authentication session from a provider managed by the host.
 		 */
 		readonly GetSession: (
-			RequestingExtension: Extension,
+			RequestingExtension: Extension<any>,
 			ProviderID: string,
 			Scopes: readonly string[],
 			Options: AuthenticationGetSessionOptions,
@@ -34,7 +36,7 @@ export default class extends Context.Tag("Service/Authentication")<
 		 * Lists all available sessions for a given provider.
 		 */
 		readonly ListSessions: (
-			RequestingExtension: Extension,
+			RequestingExtension: Extension<any>,
 			ProviderID: string,
 			Scopes?: readonly string[],
 		) => Effect.Effect<readonly AuthenticationSession[], Error>;

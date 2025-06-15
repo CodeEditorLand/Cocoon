@@ -11,8 +11,10 @@ import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensio
 /**
  * The Context.Tag for the ProposedAPI service.
  */
-export default class extends Context.Tag("Service/ProposedAPI")<
-	any,
+export default class ProposedAPIService extends Context.Tag(
+	"Service/ProposedAPI",
+)<
+	ProposedAPIService,
 	{
 		/**
 		 * Checks if a specific proposed API is enabled for a given extension.

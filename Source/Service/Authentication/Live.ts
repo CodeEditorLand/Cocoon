@@ -7,6 +7,7 @@ import { Layer } from "effect";
 
 import { Live as IPCLive } from "../IPC.js";
 import type IPCConfiguration from "../IPC/Configuration.js";
+import LogLive from "../Log/Live.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
@@ -17,6 +18,8 @@ import Service from "./Service.js";
  * @param Config The IPC configuration.
  */
 const Live = (Config: IPCConfiguration) =>
-	Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config)));
+	Layer.effect(Service, Definition).pipe(
+		Layer.provide(Layer.merge(IPCLive(Config), LogLive)),
+	);
 
 export default Live;

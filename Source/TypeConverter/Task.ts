@@ -39,7 +39,7 @@ const FromAPI = (
 		// This part would need to convert ProcessExecution, ShellExecution, etc.
 		// For now, it's a simplified placeholder.
 		Result.execution = {
-			...Execution,
+			...(Execution as any),
 		};
 	}
 	return Result;

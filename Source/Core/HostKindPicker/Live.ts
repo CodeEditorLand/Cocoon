@@ -5,7 +5,7 @@
 
 import { Layer } from "effect";
 
-import LogLive from "../../Service/Log/Live.js";
+import { Live as LogLive } from "../../Service/Log.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 

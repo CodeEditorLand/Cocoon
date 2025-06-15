@@ -16,7 +16,7 @@ import type { MountainService } from "../Generated.js";
  * This tag is used by other services to declare their dependency on the raw
  * gRPC client.
  */
-export default class extends Context.Tag("IPC/Client")<
-	any,
+export default class ClientService extends Context.Tag("IPC/Client")<
+	ClientService,
 	MountainService
 >() {}

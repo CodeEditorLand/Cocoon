@@ -7,8 +7,10 @@
 import { Context } from "effect";
 import type { DiagnosticCollection, Event, Uri } from "vscode";
 
-export default class extends Context.Tag("Service/Diagnostic")<
-	any,
+export default class DiagnosticService extends Context.Tag(
+	"Service/Diagnostic",
+)<
+	DiagnosticService,
 	{
 		/**
 		 * An event that fires when the diagnostics for a resource have changed.

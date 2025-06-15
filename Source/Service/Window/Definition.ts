@@ -3,22 +3,24 @@
  * @description The live implementation of the core Window service.
  */
 
-import { Context, Effect, Ref, Stream } from "effect";
+import { Effect, Ref } from "effect";
 import type { TextEditor, Uri, WindowState } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
 import WorkSpaceService from "../WorkSpace/Service.js";
+import type Service from "./Service.js";
 
-export default Effect.gen(function* (_) {
-	const IPC = yield* _(IPCService);
-	const WorkSpace = yield* _(WorkSpaceService);
+export default Effect.gen(function* () {
+	const IPC = yield* IPCService;
+	const WorkSpace = yield* WorkSpaceService;
 
 	// State and events are managed by Refs and Hubs, updated by host messages.
-	const WindowStateRef = yield* _(
-		Ref.make<WindowState>({ focused: true, active: true }),
-	);
+	const WindowStateRef = yield* Ref.make<WindowState>({
+		focused: true,
+		active: true,
+	});
 	const OnDidChangeWindowState = CreateEventStream<WindowState>();
 
 	// Register RPC handlers from Mountain
@@ -30,11 +32,11 @@ export default Effect.gen(function* (_) {
 		);
 	});
 
-	const ServiceImplementation: Context.Tag.Service<any> = {
+	const ServiceImplementation: Service = {
 		get state() {
-			return Ref.get(WindowStateRef).pipe(Effect.runSync);
+			return Effect.runSync(Ref.get(WindowStateRef));
 		},
-		onDidChangeWindowState: Stream.toEvent(OnDidChangeWindowState.Stream),
+		onDidChangeWindowState: OnDidChangeWindowState.event,
 
 		// These properties are delegated from the WorkSpace service, which is the
 		// source of truth for editor states.
@@ -48,7 +50,7 @@ export default Effect.gen(function* (_) {
 		onDidChangeVisibleTextEditors: WorkSpace.onDidChangeVisibleTextEditors,
 
 		ShowTextDocument: (documentOrURI, columnOrOptions, preserveFocus) =>
-			Effect.gen(function* (_) {
+			Effect.gen(function* () {
 				let uri: Uri;
 				if ("uri" in documentOrURI) {
 					// It's a TextDocument
@@ -78,22 +80,17 @@ export default Effect.gen(function* (_) {
 						: undefined;
 
 				// The RPC call returns an editor ID, which we would use to find the TextEditor object
-				const editorId = yield* _(
-					IPC.SendRequest<string>("$showTextDocument", [
-						TypeConverter.URI.FromAPI(uri),
-						viewColumnDTO,
-						optionsDTO,
-					]),
+				const editorId = yield* IPC.SendRequest<string>(
+					"$showTextDocument",
+					[TypeConverter.URI.FromAPI(uri), viewColumnDTO, optionsDTO],
 				);
 
 				// The WorkSpaceService would have a map of editor IDs to TextEditor objects
 				const editor = WorkSpace.findTextEditorById(editorId);
 				if (!editor) {
-					return yield* _(
-						Effect.fail(
-							new Error(
-								`Could not find text editor with ID ${editorId}`,
-							),
+					return yield* Effect.fail(
+						new Error(
+							`Could not find text editor with ID ${editorId}`,
 						),
 					);
 				}

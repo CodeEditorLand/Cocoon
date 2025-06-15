@@ -14,8 +14,7 @@ import type TokenAndScope from "./Cancellation/Type/TokenAndScope.js";
 
 export { InvalidTokenIDError, type TokenAndScope };
 
-export const CancellationService = Service;
-export type CancellationService = Service;
+export { default as Service } from "./Cancellation/Service.js";
 
 /**
  * The live implementation Layer for the CancellationTokenProvider service.

@@ -8,8 +8,8 @@ import { Context, type Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { Disposable, StatusBarAlignment, StatusBarItem } from "vscode";
 
-export default class extends Context.Tag("Service/StatusBar")<
-	any,
+export default class StatusBarService extends Context.Tag("Service/StatusBar")<
+	StatusBarService,
 	{
 		/**
 		 * Creates a new status bar item.

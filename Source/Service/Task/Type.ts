@@ -4,4 +4,13 @@
  * namespace that are used by the Task service.
  */
 
-export type * from "vscode";
+export type {
+	Task,
+	TaskExecution,
+	TaskFilter,
+	TaskProvider,
+	TaskStartEvent,
+	TaskEndEvent,
+	TaskProcessStartEvent,
+	TaskProcessEndEvent,
+} from "vscode";

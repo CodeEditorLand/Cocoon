@@ -10,8 +10,10 @@ import type { Clipboard, Event, LogLevel, UIKind, Uri } from "vscode";
 /**
  * The `Context.Tag` for the `vscode.env` API service.
  */
-export default class extends Context.Tag("Service/Environment")<
-	any,
+export default class EnvironmentService extends Context.Tag(
+	"Service/Environment",
+)<
+	EnvironmentService,
 	{
 		readonly appName: string;
 		readonly appRoot?: string;

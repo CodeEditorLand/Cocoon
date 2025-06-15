@@ -5,9 +5,9 @@
 
 import { Layer } from "effect";
 
-import ClipboardLive from "../Clipboard/Live.js";
-import type IPCConfiguration from "../IPC/Configuration.js";
-import IPCLive from "../IPC/Live.js";
+import { Live as ClipboardLive } from "../Clipboard.js";
+import { Live as IPCLive } from "../IPC.js";
+import type IPCConfigurationService from "../IPC/Configuration.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
@@ -17,10 +17,9 @@ import Service from "./Service.js";
  * This is a factory that takes IPC configuration.
  * @param Config The IPC configuration.
  */
-const Live = (Config: IPCConfiguration) => {
-	return Layer.effect(Service, Definition).pipe(
+const Live = (Config: IPCConfigurationService) =>
+	Layer.effect(Service, Definition).pipe(
 		Layer.provide(Layer.merge(IPCLive(Config), ClipboardLive(Config))),
 	);
-};
 
 export default Live;

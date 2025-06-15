@@ -14,8 +14,10 @@ import type {
 	QuickPickOptions,
 } from "vscode";
 
-export default class extends Context.Tag("Service/QuickInput")<
-	any,
+export default class QuickInputService extends Context.Tag(
+	"Service/QuickInput",
+)<
+	QuickInputService,
 	{
 		/**
 		 * Shows a selection list.

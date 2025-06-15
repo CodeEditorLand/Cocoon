@@ -15,10 +15,10 @@ import MessageService from "../Message/Service.js";
  */
 const ShowInformationMessage = <T extends VSCode.MessageItem>(
 	Message: string,
-	...ItemsOrOptions: Array<T | VSCode.MessageOptions>
+	...ItemsOrOptions: (T | VSCode.MessageOptions)[]
 ): Effect.Effect<T | undefined, Error, MessageService> =>
 	Effect.flatMap(MessageService, (Service) =>
-		Service.ShowInformationMessage(Message, ...ItemsOrOptions),
+		Service.ShowInformationMessage<T>(Message, ...ItemsOrOptions),
 	);
 
 export default ShowInformationMessage;

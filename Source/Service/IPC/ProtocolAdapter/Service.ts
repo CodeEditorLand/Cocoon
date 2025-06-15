@@ -8,8 +8,10 @@
 import { Context, type Effect } from "effect";
 import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
 
-export default class extends Context.Tag("IPC/ProtocolAdapter")<
-	any,
+export default class ProtocolAdapterService extends Context.Tag(
+	"IPC/ProtocolAdapter",
+)<
+	ProtocolAdapterService,
 	IMessagePassingProtocol & {
 		/**
 		 * An `Effect` that processes a raw binary buffer received from the host and

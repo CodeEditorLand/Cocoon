@@ -7,7 +7,7 @@
 import { Layer } from "effect";
 import type { Extension } from "vscode";
 
-import ExtensionHostLive from "../Core/ExtensionHost/Live.js";
+import { Live as ExtensionHostLive } from "../Core/ExtensionHost.js";
 import Definition from "./Extension/Definition.js";
 import Service from "./Extension/Service.js";
 

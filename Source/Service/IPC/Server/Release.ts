@@ -7,7 +7,7 @@
 import { Effect } from "effect";
 
 import { IPCError } from "../Error.js";
-import type ServerService from "./Service.js";
+import type Service from "./Service.js";
 
 /**
  * An `Effect` that gracefully shuts down the gRPC server.
@@ -18,7 +18,7 @@ import type ServerService from "./Service.js";
  *
  * @param Server The gRPC server instance to shut down.
  */
-const Release = (Server: ServerService) => {
+const Release = (Server: Service) => {
 	return Effect.tryPromise({
 		try: () =>
 			new Promise<void>((Resolve, Reject) =>
@@ -26,9 +26,9 @@ const Release = (Server: ServerService) => {
 					Error ? Reject(Error) : Resolve(),
 				),
 			),
-		catch: (Cause) =>
+		catch: (cause) =>
 			new IPCError({
-				cause: Cause,
+				cause,
 				context: "gRPC server shutdown failed",
 			}),
 	}).pipe(Effect.tap(() => Effect.logInfo("Cocoon gRPC server shut down.")));

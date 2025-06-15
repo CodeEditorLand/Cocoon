@@ -3,9 +3,9 @@
  * @description Type converters for the `vscode.StatusBarItem` API.
  */
 
-import { ThemeColor, type Command } from "vscode";
+import type { Command, StatusBarItem as VscStatusBarItem } from "vscode";
 
-import type * as ExtHostTypes from "../Type/ExtHostTypes.js";
+import * as ExtHostTypes from "../Type/ExtHostTypes.js";
 import type CommandConverterDefinition from "./Command/Definition.js";
 import MarkdownStringConverter from "./Main/MarkdownString.js";
 
@@ -24,7 +24,7 @@ interface IStatusbarEntry {
 }
 
 const FromAPI = (
-	From: ExtHostTypes.StatusBarItem,
+	From: VscStatusBarItem,
 	EntryID: string,
 	CommandConverter: CommandConverterDefinition,
 ): IStatusbarEntry => {
@@ -45,13 +45,13 @@ const FromAPI = (
 		alignment:
 			From.alignment === ExtHostTypes.StatusBarAlignment.Left ? 0 : 1,
 		backgroundColor:
-			From.backgroundColor instanceof ThemeColor
+			From.backgroundColor instanceof ExtHostTypes.ThemeColor
 				? From.backgroundColor.id
 				: undefined,
 		color:
 			typeof From.color === "string"
 				? From.color
-				: From.color instanceof ThemeColor
+				: From.color instanceof ExtHostTypes.ThemeColor
 					? From.color.id
 					: undefined,
 		accessibilityInformation: From.accessibilityInformation,

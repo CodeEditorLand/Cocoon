@@ -6,6 +6,7 @@
 
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { IWebviewExtensionDescription } from "vs/workbench/contrib/webview/common/webview.js";
+import type * as VSCode from "vscode";
 
 /**
  * Extracts the necessary identification and location information from an
@@ -17,10 +18,11 @@ import type { IWebviewExtensionDescription } from "vs/workbench/contrib/webview/
  */
 const ConvertExtensionDataToDTO = (
 	ExtensionDescription: IExtensionDescription,
+	resource?: VSCode.Uri,
 ): IWebviewExtensionDescription => {
 	return {
 		id: ExtensionDescription.identifier,
-		location: ExtensionDescription.extensionLocation,
+		location: resource ?? ExtensionDescription.extensionLocation,
 	};
 };
 

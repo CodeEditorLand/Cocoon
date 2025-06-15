@@ -22,7 +22,7 @@ import LogService from "../../Log/Service.js";
  *   "Global Storage"), used for logging.
  */
 const EnsureDirectory = (DirectoryURI: Uri | undefined, ScopeName: string) => {
-	return Effect.if(DirectoryURI, {
+	return Effect.if(Effect.succeed(DirectoryURI), {
 		onTrue: (URI) =>
 			Effect.gen(function* () {
 				const Fs = yield* FileSystemService;

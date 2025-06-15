@@ -5,7 +5,7 @@
  * in the OS keychain.
  */
 
-import { Effect, Stream } from "effect";
+import { Effect } from "effect";
 import type { Event, SecretStorage, SecretStorageChangeEvent } from "vscode";
 
 import CreateEventStream from "../../Utility/CreateEventStream.js";
@@ -23,12 +23,14 @@ export default class implements SecretStorage {
 		private readonly IPC: IPCService,
 		private readonly Log: LogService,
 	) {
-		this.onDidChange = Stream.toEvent(this.OnDidChangeEvent.Stream);
+		this.onDidChange = this.OnDidChangeEvent.event;
 		// A real implementation would need to listen to an IPC event from the host
 		// to fire this OnDidChangeEvent when secrets change in other windows.
 	}
 
-	private CreateGetEffect(Key: string) {
+	private CreateGetEffect(
+		Key: string,
+	): Effect.Effect<string | undefined, EmptyKeyError, IPCService> {
 		return Effect.gen(this, function* () {
 			if (!Key) {
 				return yield* new EmptyKeyError();
@@ -43,12 +45,15 @@ export default class implements SecretStorage {
 				this.Log.Error(
 					`SecretStorage.get failed for key '${Key}' in ext '${this.ExtensionID}'.`,
 					Error,
-				).pipe(Effect.flatMap(() => Effect.fail(Error))),
+				).pipe(Effect.flatMap(() => Effect.fail(Error as any))),
 			),
 		);
 	}
 
-	private CreateStoreEffect(Key: string, Value: string) {
+	private CreateStoreEffect(
+		Key: string,
+		Value: string,
+	): Effect.Effect<void, EmptyKeyError | InvalidValueError, IPCService> {
 		return Effect.gen(this, function* () {
 			if (!Key) {
 				return yield* new EmptyKeyError();
@@ -68,12 +73,14 @@ export default class implements SecretStorage {
 				this.Log.Error(
 					`SecretStorage.store failed for key '${Key}' in ext '${this.ExtensionID}'.`,
 					Error,
-				).pipe(Effect.flatMap(() => Effect.fail(Error))),
+				).pipe(Effect.flatMap(() => Effect.fail(Error as any))),
 			),
 		);
 	}
 
-	private CreateDeleteEffect(Key: string) {
+	private CreateDeleteEffect(
+		Key: string,
+	): Effect.Effect<void, EmptyKeyError, IPCService> {
 		return Effect.gen(this, function* () {
 			if (!Key) {
 				return yield* new EmptyKeyError();
@@ -89,7 +96,7 @@ export default class implements SecretStorage {
 				this.Log.Error(
 					`SecretStorage.delete failed for key '${Key}' in ext '${this.ExtensionID}'.`,
 					Error,
-				).pipe(Effect.flatMap(() => Effect.fail(Error))),
+				).pipe(Effect.flatMap(() => Effect.fail(Error as any))),
 			),
 		);
 	}

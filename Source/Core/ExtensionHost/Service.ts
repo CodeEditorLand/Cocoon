@@ -20,8 +20,10 @@ export interface ExtensionActivationReason {
 	readonly activationEvent: string;
 }
 
-export default class extends Context.Tag("Core/ExtensionHost")<
-	any,
+export default class ExtensionHostService extends Context.Tag(
+	"Core/ExtensionHost",
+)<
+	ExtensionHostService,
 	{
 		/**
 		 * Activates an extension by its identifier.

@@ -9,7 +9,7 @@ import { CancellationLive } from "../Cancellation.js";
 import { Live as CommandLive } from "../Command.js";
 import { Live as DocumentLive } from "../Document.js";
 import { Live as IPCLive } from "../IPC.js";
-import type IPCConfiguration from "../IPC/Configuration.js";
+import type IPCConfigurationService from "../IPC/Configuration.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
@@ -20,7 +20,7 @@ import Service from "./Service.js";
  * cancellation signals, and Command for converting command objects.
  * @param Config The IPC Configuration.
  */
-const Live = (Config: IPCConfiguration) =>
+const Live = (Config: IPCConfigurationService) =>
 	Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.mergeAll(

@@ -11,69 +11,62 @@
 
 import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable } from "vscode";
+import {
+	Disposable,
+	type CodeActionProvider,
+	type CodeActionProviderMetadata,
+	type CompletionItemProvider,
+	type DefinitionProvider,
+	type DocumentSelector,
+	type HoverProvider,
+} from "vscode";
 
 import type Service from "./Service.js";
 
 export default Effect.gen(function* () {
 	// Each provider type would have its own Ref holding a Map of registrations.
 	const HoverProviderRegistry = yield* Ref.make(new Map());
-
-	// ... and so on for CompletionItemProvider, DefinitionProvider, etc.
+	const CompletionProviderRegistry = yield* Ref.make(new Map());
+	const DefinitionProviderRegistry = yield* Ref.make(new Map());
+	const CodeActionProviderRegistry = yield* Ref.make(new Map());
 
 	const LanguageFeatureImplementation: Service = {
 		// Each register method would add the provider to the appropriate map and
 		// return a disposable to remove it.
-		RegisterHoverProvider: (Selector, Provider, Extension) =>
+		RegisterHoverProvider: (
+			_Selector: DocumentSelector,
+			_Provider: HoverProvider,
+			_Extension: IExtensionDescription,
+		) =>
 			Effect.sync(() => {
-				console.log(
-					"Registering Hover Provider for",
-					Extension.identifier.value,
-					Selector,
-					Provider,
-				);
+				// In a real implementation, we'd add to the HoverProviderRegistry
+				// and notify the host.
 				return new Disposable(() => {});
 			}),
 		RegisterCompletionItemProvider: (
-			Selector,
-			Provider,
-			TriggerCharacters,
-			Extension,
+			_Selector: DocumentSelector,
+			_Provider: CompletionItemProvider,
+			_TriggerCharacters: string[],
+			_Extension: IExtensionDescription,
 		) =>
 			Effect.sync(() => {
-				console.log(
-					"Registering Completion Provider for",
-					Extension.identifier.value,
-					Selector,
-					Provider,
-					TriggerCharacters,
-				);
 				return new Disposable(() => {});
 			}),
-		RegisterDefinitionProvider: (Selector, Provider, Extension) =>
+		RegisterDefinitionProvider: (
+			_Selector: DocumentSelector,
+			_Provider: DefinitionProvider,
+			_Extension: IExtensionDescription,
+		) =>
 			Effect.sync(() => {
-				console.log(
-					"Registering Definition Provider for",
-					Extension.identifier.value,
-					Selector,
-					Provider,
-				);
 				return new Disposable(() => {});
 			}),
 		RegisterCodeActionsProvider: (
-			Selector,
-			Provider,
-			Metadata,
-			Extension,
+			_Selector: DocumentSelector,
+			_Provider: CodeActionProvider,
+			_Metadata: CodeActionProviderMetadata | undefined,
+			_Extension: IExtensionDescription,
 		) =>
 			Effect.sync(() => {
-				console.log(
-					"Registering Code Actions Provider for",
-					Extension.identifier.value,
-					Selector,
-					Provider,
-					Metadata,
-				);
 				return new Disposable(() => {});
 			}),
 		// ... implementations for all other provider registration methods.

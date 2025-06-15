@@ -4,9 +4,10 @@
  */
 
 import { Effect, Ref } from "effect";
-import type { IExtensionDescription, TreeViewOptions } from "vscode";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import { Disposable, type TreeViewOptions } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter.js";
+import * as TypeConverter from "../../TypeConverter/TreeView.js";
 import CommandService from "../Command/Service.js";
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
@@ -71,8 +72,7 @@ export default Effect.gen(function* () {
 					);
 				}
 
-				const OptionDTO =
-					TypeConverter.TreeView.Option.FromAPI(Options);
+				const OptionDTO = TypeConverter.Option.FromAPI(Options);
 				yield* IPC.SendNotification("$registerTreeDataProvider", [
 					ViewID,
 					OptionDTO,

@@ -5,17 +5,16 @@
 
 import { Context, type Effect } from "effect";
 import type { IExtUri } from "vs/base/common/resources.js";
-import type {
-	Event,
-	FileChangeEvent,
-	FileSystemProviderCapabilities,
-} from "vscode";
+import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
+import type { Event, FileChangeEvent } from "vscode";
 
 /**
  * The `Context.Tag` for the FileSystemInformation service.
  */
-export default class extends Context.Tag("Service/FileSystemInformation")<
-	any,
+export default class FileSystemInformationService extends Context.Tag(
+	"Service/FileSystemInformation",
+)<
+	FileSystemInformationService,
 	{
 		/**
 		 * An instance of `ExtUri` configured with the correct case-sensitivity

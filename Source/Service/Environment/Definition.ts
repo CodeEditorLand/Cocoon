@@ -5,9 +5,9 @@
 
 import { Effect, Ref } from "effect";
 import { Schemas } from "vs/base/common/network.js";
-import type { LogLevel, UIKind, Uri } from "vscode";
+import { UIKind, type LogLevel, type Uri } from "vscode";
 
-import TypeConverter from "../../TypeConverter/Main.js";
+import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import ClipboardService from "../Clipboard/Service.js";
 import InitDataService from "../InitData/Service.js";
@@ -31,16 +31,18 @@ export default Effect.gen(function* () {
 	const LogLevelRef = yield* Ref.make(
 		InitData.logLevel as number as LogLevel,
 	);
-	const OnDidChangeLogLevelEvent = CreateEventStream<LogLevel>();
-	const OnDidChangeShellEvent = CreateEventStream<string>();
-	const OnDidChangeTelemetryEvent = CreateEventStream<boolean>();
+	const { event: onDidChangeLogLevel, Fire: fireLogLevel } =
+		CreateEventStream<LogLevel>();
+	const { event: onDidChangeShell } = CreateEventStream<string>();
+	const { event: onDidChangeTelemetryEnabled } = CreateEventStream<boolean>();
 
 	// --- RPC Handlers ---
 	// The IPC service should have a way to listen to incoming messages.
 	// We register a handler that fires the log level change event.
 	yield* Effect.sync(() =>
-		IPC.RegisterInvokeHandler("$onDidChangeLogLevel", ([Level]) =>
-			Effect.runPromise(OnDidChangeLogLevelEvent.Fire(Level)),
+		IPC.RegisterInvokeHandler(
+			"$onDidChangeLogLevel",
+			([Level]): Promise<void> => Effect.runPromise(fireLogLevel(Level)),
 		),
 	);
 
@@ -57,14 +59,14 @@ export default Effect.gen(function* () {
 		]).pipe(Effect.map((Dto) => TypeConverter.URI.ToAPI(Dto)));
 
 	const GetAppRoot = () => {
-		const AppRootUri = InitData.environment.appRoot as any; // Cast from internal type
+		const AppRootUri = InitData.environment.appRoot as Uri;
 		return AppRootUri?.scheme === Schemas.file
 			? AppRootUri.fsPath
 			: undefined;
 	};
 
 	const TelemetryLevelValue =
-		InitData.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
+		(InitData.telemetryInfo as any).telemetryLevel ?? TelemetryLevel.NONE;
 
 	const ServiceImplementation: Service = {
 		appName: InitData.environment.appName || "Cocoon Editor",
@@ -81,10 +83,7 @@ export default Effect.gen(function* () {
 			process.platform === "win32"
 				? process.env["ComSpec"] || "pwsh.exe"
 				: process.env["SHELL"] || "/bin/sh",
-		uiKind:
-			InitData.uiKind === 2
-				? (UIKind.Web as any)
-				: (UIKind.Desktop as any),
+		uiKind: (InitData.uiKind as any) === 2 ? UIKind.Web : UIKind.Desktop,
 		isNewAppInstall: (InitData as any).isNewAppInstall === true,
 		isBuilt: InitData.quality !== "development",
 		get logLevel() {
@@ -95,9 +94,9 @@ export default Effect.gen(function* () {
 		},
 
 		// Events
-		onDidChangeLogLevel: OnDidChangeLogLevelEvent.event,
-		onDidChangeShell: OnDidChangeShellEvent.event,
-		onDidChangeTelemetryEnabled: OnDidChangeTelemetryEvent.event,
+		onDidChangeLogLevel: onDidChangeLogLevel,
+		onDidChangeShell: onDidChangeShell,
+		onDidChangeTelemetryEnabled: onDidChangeTelemetryEnabled,
 
 		// Injected Services/Objects
 		clipboard: Clipboard,

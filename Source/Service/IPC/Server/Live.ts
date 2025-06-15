@@ -7,7 +7,7 @@
 import { Layer } from "effect";
 
 import type ConfigurationService from "../Configuration.js";
-import DispatcherLive from "../Dispatcher/Live.js";
+import { Live as DispatcherLive } from "../Dispatcher.js";
 import type { gRPCConnectionError } from "../Error.js";
 import Acquire from "./Acquire.js";
 import Service from "./Service.js";

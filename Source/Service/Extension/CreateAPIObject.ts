@@ -21,17 +21,17 @@ const CreateAPIObject = <T>(
 	Description: IExtensionDescription,
 	ExtensionHost: ExtensionHostService,
 ): Extension<T> => {
-	const Activate = ExtensionHost.ActivateById(Description.identifier, {
-		startup: false,
-		extensionId: Description.identifier,
-		activationEvent: "api",
-		activationKind: ActivationKind.API,
-	}).pipe(
-		Effect.map(
-			() =>
-				ExtensionHost.GetExtensionExports(Description.identifier) as T,
-		),
-	);
+	const Activate = Effect.gen(function* () {
+		yield* ExtensionHost.ActivateById(Description.identifier, {
+			startup: false,
+			extensionId: Description.identifier,
+			activationEvent: "api",
+		} as any);
+		const exports = yield* ExtensionHost.GetExtensionExports(
+			Description.identifier,
+		);
+		return exports as T;
+	});
 
 	const GetExtensionKind = () => {
 		if (Description.extensionKind?.includes("web")) {
@@ -48,17 +48,20 @@ const CreateAPIObject = <T>(
 		extensionUri: Uri.revive(Description.extensionLocation),
 		extensionPath: Description.extensionLocation.fsPath,
 		get isActive() {
-			return ExtensionHost.IsActivated(Description.identifier);
+			return Effect.runSync(
+				ExtensionHost.IsActivated(Description.identifier),
+			);
 		},
 		get packageJSON() {
 			return Description;
 		},
 		extensionKind: GetExtensionKind(),
 		get exports() {
-			return ExtensionHost.GetExtensionExports(Description.identifier);
+			return Effect.runSync(
+				ExtensionHost.GetExtensionExports(Description.identifier),
+			);
 		},
 		activate: () => Effect.runPromise(Activate),
-		isFromDifferentExtensionHost: false, // Assuming it's always local
 	};
 
 	return Object.freeze(ExtensionAPIObject);

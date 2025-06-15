@@ -6,12 +6,12 @@
 
 import { Context, type Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type { IDisposable } from "vscode";
+import type { Disposable } from "vscode";
 
 import type { CommandHandler, TextEditorCommandHandler } from "./Type.js";
 
-export default class extends Context.Tag("Service/Command")<
-	any,
+export default class CommandService extends Context.Tag("Service/Command")<
+	CommandService,
 	{
 		/**
 		 * Registers a command that can be invoked via a command ID.
@@ -26,7 +26,7 @@ export default class extends Context.Tag("Service/Command")<
 			Handler: CommandHandler,
 			ThisArgument?: any,
 			ExtensionDescription?: IExtensionDescription,
-		) => IDisposable;
+		) => Disposable;
 
 		/**
 		 * Registers a command that is only active when a text editor has focus.
@@ -36,7 +36,7 @@ export default class extends Context.Tag("Service/Command")<
 			Handler: TextEditorCommandHandler,
 			ThisArgument?: any,
 			ExtensionDescription?: IExtensionDescription,
-		) => IDisposable;
+		) => Disposable;
 
 		/**
 		 * Executes the command denoted by the given command identifier.

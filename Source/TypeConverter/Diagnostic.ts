@@ -8,6 +8,7 @@ import {
 	MarkerSeverity,
 	type IMarkerData,
 	type IRelatedInformation,
+	type MarkerTag,
 } from "vs/platform/markers/common/markers.js";
 import type * as VSCode from "vscode";
 
@@ -16,6 +17,7 @@ import {
 	DiagnosticRelatedInformation,
 	Location,
 	Range,
+	VscDiagnosticSeverity,
 } from "../Type/ExtHostTypes.js";
 import URIConverter from "./Main/URI.js";
 
@@ -47,10 +49,14 @@ const RelatedInformationToAPI = (
 		new Location(
 			URIConverter.ToAPI(RelatedInformationDTO.resource),
 			new Range(
-				RelatedInformationDTO.startLineNumber - 1,
-				RelatedInformationDTO.startColumn - 1,
-				RelatedInformationDTO.endLineNumber - 1,
-				RelatedInformationDTO.endColumn - 1,
+				new Position(
+					RelatedInformationDTO.startLineNumber - 1,
+					RelatedInformationDTO.startColumn - 1,
+				),
+				new Position(
+					RelatedInformationDTO.endLineNumber - 1,
+					RelatedInformationDTO.endColumn - 1,
+				),
 			),
 		),
 		RelatedInformationDTO.message,
@@ -58,28 +64,28 @@ const RelatedInformationToAPI = (
 
 /**
  * Converts a `vscode.Diagnostic` object into a marker data DTO for IPC.
- * @param Diagnostic The `vscode.Diagnostic` instance.
+ * @param diagnostic The `vscode.Diagnostic` instance.
  * @returns The `IMarkerData` DTO.
  */
-const FromAPI = (Diagnostic: VSCode.Diagnostic): IMarkerData => ({
+const FromAPI = (diagnostic: VSCode.Diagnostic): IMarkerData => ({
 	code:
-		typeof Diagnostic.code === "object"
+		typeof diagnostic.code === "object"
 			? {
-					value: String(Diagnostic.code.value),
-					target: URIConverter.FromAPI(Diagnostic.code.target),
+					value: String(diagnostic.code.value),
+					target: URIConverter.FromAPI(diagnostic.code.target),
 				}
-			: String(Diagnostic.code),
-	severity: Diagnostic.severity,
-	message: Diagnostic.message,
-	source: Diagnostic.source,
-	startLineNumber: Diagnostic.range.start.line + 1,
-	startColumn: Diagnostic.range.start.character + 1,
-	endLineNumber: Diagnostic.range.end.line + 1,
-	endColumn: Diagnostic.range.end.character + 1,
-	relatedInformation: Diagnostic.relatedInformation?.map(
+			: String(diagnostic.code),
+	severity: VscDiagnosticSeverity.toMarkerSeverity(diagnostic.severity),
+	message: diagnostic.message,
+	source: diagnostic.source,
+	startLineNumber: diagnostic.range.start.line + 1,
+	startColumn: diagnostic.range.start.character + 1,
+	endLineNumber: diagnostic.range.end.line + 1,
+	endColumn: diagnostic.range.end.character + 1,
+	relatedInformation: diagnostic.relatedInformation?.map(
 		RelatedInformationFromAPI,
 	),
-	tags: Diagnostic.tags as MarkerSeverity[],
+	tags: diagnostic.tags as MarkerTag[],
 });
 
 /**
@@ -89,19 +95,23 @@ const FromAPI = (Diagnostic: VSCode.Diagnostic): IMarkerData => ({
  */
 const ToAPI = (MarkerDataDTO: IMarkerData): VSCode.Diagnostic => {
 	const range = new Range(
-		MarkerDataDTO.startLineNumber - 1,
-		MarkerDataDTO.startColumn - 1,
-		MarkerDataDTO.endLineNumber - 1,
-		MarkerDataDTO.endColumn - 1,
+		new Position(
+			MarkerDataDTO.startLineNumber - 1,
+			MarkerDataDTO.startColumn - 1,
+		),
+		new Position(
+			MarkerDataDTO.endLineNumber - 1,
+			MarkerDataDTO.endColumn - 1,
+		),
 	);
 	const diagnostic = new Diagnostic(
 		range,
 		MarkerDataDTO.message,
-		MarkerDataDTO.severity,
+		VscDiagnosticSeverity.fromMarkerSeverity(MarkerDataDTO.severity),
 	);
 	diagnostic.source = MarkerDataDTO.source;
 	diagnostic.code =
-		typeof MarkerDataDTO.code === "object"
+		typeof MarkerDataDTO.code === "object" && MarkerDataDTO.code
 			? {
 					value: MarkerDataDTO.code.value,
 					target: URIConverter.ToAPI(MarkerDataDTO.code.target),

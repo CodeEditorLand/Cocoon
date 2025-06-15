@@ -8,7 +8,7 @@ import { Layer } from "effect";
 
 import Definition from "./APIDeprecation/Definition.js";
 import Service from "./APIDeprecation/Service.js";
-import LogLive from "./Log/Live.js";
+import { Live as LogLive } from "./Log.js";
 
 export { default as Service } from "./APIDeprecation/Service.js";
 
