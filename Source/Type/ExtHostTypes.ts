@@ -20,12 +20,12 @@ import {
 	EndOfLine,
 	ProgressLocation,
 	QuickPickItemKind,
+	ShellExecution,
 	SnippetString,
 	StatusBarAlignment,
 	TextEditorCursorStyle,
 	TreeItemCollapsibleState,
 	ViewColumn,
-	ShellExecution,
 } from "vscode";
 
 // --- Foundational Re-exports ---
@@ -442,14 +442,14 @@ export class TextEdit implements VSCode.TextEdit {
 export class CompletionItem implements VSCode.CompletionItem {
 	label: string | VSCode.CompletionItemLabel;
 	kind?: VSCode.CompletionItemKind;
-	tags?: VSCode.CompletionItemTag[];
+	tags?: readonly VSCode.CompletionItemTag[];
 	detail?: string;
 	documentation?: string | VSCode.MarkdownString;
 	sortText?: string;
 	filterText?: string;
 	preselect?: boolean;
 	insertText?: string | VSCode.SnippetString;
-	range?: VSCode.Range | { insert: VSCode.Range; replace: VSCode.Range };
+	range?: VSCode.Range | { inserting: VSCode.Range; replacing: VSCode.Range };
 	commitCharacters?: string[];
 	additionalTextEdits?: VSCode.TextEdit[];
 	command?: VSCode.Command;
@@ -465,7 +465,10 @@ export class CompletionItem implements VSCode.CompletionItem {
 
 export class Task implements VSCode.Task {
 	public definition: VSCode.TaskDefinition;
-	public scope: VSCode.TaskScope.Global | VSCode.TaskScope.Workspace;
+	public scope:
+		| VSCode.TaskScope.Global
+		| VSCode.TaskScope.Workspace
+		| VSCode.WorkspaceFolder;
 	public name: string;
 	public source: string;
 	public execution?:
@@ -473,10 +476,17 @@ export class Task implements VSCode.Task {
 		| VSCode.ShellExecution
 		| VSCode.CustomExecution;
 	public problemMatchers: string[];
+	public isBackground: boolean;
+	public presentationOptions: VSCode.TaskPresentationOptions;
+	public group?: VSCode.TaskGroup;
+	public runOptions: VSCode.RunOptions;
 
 	constructor(
 		definition: VSCode.TaskDefinition,
-		scope: VSCode.TaskScope.Global | VSCode.TaskScope.Workspace,
+		scope:
+			| VSCode.TaskScope.Global
+			| VSCode.TaskScope.Workspace
+			| VSCode.WorkspaceFolder,
 		name: string,
 		source: string,
 		execution?:
@@ -491,6 +501,9 @@ export class Task implements VSCode.Task {
 		this.source = source;
 		this.execution = execution;
 		this.problemMatchers = problemMatchers ?? [];
+		this.isBackground = false;
+		this.presentationOptions = {};
+		this.runOptions = {};
 	}
 }
 
@@ -513,11 +526,14 @@ export class ProcessExecution implements VSCode.ProcessExecution {
 export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 	private readonly _edits = new Map<string, VSCode.TextEdit[]>();
 
-	public set(uri: VSCode.Uri, edits: readonly VSCode.TextEdit[]): void {
-		this._edits.set(uri.toString(), [...edits]);
+	public set(
+		uri: VSCode.Uri,
+		edits: readonly (VSCode.TextEdit | any)[] | undefined,
+	): void {
+		this._edits.set(uri.toString(), edits ? [...edits] : []);
 	}
 
-	public entries(): [VSCode.Uri, readonly VSCode.TextEdit[]][] {
+	public entries(): [VSCode.Uri, VSCode.TextEdit[]][] {
 		return Array.from(this._edits.entries()).map(([uri, edits]) => [
 			URI.parse(uri),
 			edits,
@@ -566,6 +582,26 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 	): void {
 		// Not implemented in shim
 	}
+
+	public replace(
+		_uri: VSCode.Uri,
+		_range: VSCode.Range,
+		_newText: string,
+	): void {
+		// Not implemented in shim
+	}
+
+	public insert(
+		_uri: VSCode.Uri,
+		_position: VSCode.Position,
+		_newText: string,
+	): void {
+		// Not implemented in shim
+	}
+
+	public delete(_uri: VSCode.Uri, _range: VSCode.Range): void {
+		// Not implemented in shim
+	}
 }
 
 export {
@@ -573,7 +609,6 @@ export {
 	StatusBarAlignment,
 	TextEditorCursorStyle,
 	DiagnosticSeverity,
-	DiagnosticTag,
 	TreeItemCollapsibleState,
 	ConfigurationTarget,
 	EndOfLine,

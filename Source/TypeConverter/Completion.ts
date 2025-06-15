@@ -10,7 +10,6 @@ import type { IRange } from "vs/editor/common/core/range.js";
 import * as Languages from "vs/editor/common/languages.js";
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type * as VSCode from "vscode";
-import { CompletionItemTag } from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
 import type CommandConverterDefinition from "./Command/Definition.js";
@@ -23,8 +22,8 @@ import {
 // Placeholder DTOs based on usage
 interface ISuggestDataDto {
 	label: string | VSCode.CompletionItemLabel;
-	kind?: Languages.CompletionItemKind;
-	tags?: ReadonlyArray<Languages.CompletionItemTag>;
+	kind?: VSCode.CompletionItemKind;
+	tags?: ReadonlyArray<VSCode.CompletionItemTag>;
 	detail?: string;
 	documentation?: string | IMarkdownString;
 	sortText?: string;
@@ -70,8 +69,8 @@ const CompletionItem = {
 	): ISuggestDataDto => {
 		return {
 			label: Item.label,
-			kind: Item.kind as number as Languages.CompletionItemKind,
-			tags: Item.tags as any as Languages.CompletionItemTag[],
+			kind: Item.kind,
+			tags: Item.tags,
 			detail: Item.detail,
 			documentation:
 				typeof Item.documentation === "string"
@@ -98,24 +97,24 @@ const CompletionItem = {
 								insert: RangeConverter.FromAPI(
 									(
 										Item.range as {
-											insert: VSCode.Range;
-											replace: VSCode.Range;
+											inserting: VSCode.Range;
+											replacing: VSCode.Range;
 										}
-									).insert,
+									).inserting,
 								),
 								replace: RangeConverter.FromAPI(
 									(
 										Item.range as {
-											insert: VSCode.Range;
-											replace: VSCode.Range;
+											inserting: VSCode.Range;
+											replacing: VSCode.Range;
 										}
-									).replace,
+									).replacing,
 								),
 							}
 						: undefined,
 			commitCharacters: Item.commitCharacters,
 			additionalTextEdits: Item.additionalTextEdits?.map((edit) =>
-				TextEditConverter.FromAPI(edit as any),
+				TextEditConverter.FromAPI(edit),
 			),
 			command: Item.command
 				? CommandsConverter.ToInternal(Item.command, Disposables)
@@ -132,31 +131,31 @@ const CompletionItem = {
 			Label,
 			DTO.kind as unknown as VSCode.CompletionItemKind,
 		);
-		(Item as any).tags = DTO.tags as CompletionItemTag[];
-		(Item as any).detail = DTO.detail;
-		(Item as any).documentation =
+		Item.tags = DTO.tags;
+		Item.detail = DTO.detail;
+		Item.documentation =
 			typeof DTO.documentation === "string"
 				? DTO.documentation
 				: DTO.documentation
-					? MarkdownStringConverter.ToAPI(DTO.documentation as any)
+					? MarkdownStringConverter.ToAPI(DTO.documentation)
 					: undefined;
-		(Item as any).sortText = DTO.sortText;
-		(Item as any).filterText = DTO.filterText;
-		(Item as any).preselect = DTO.preselect;
-		(Item as any).insertText = DTO.insertText;
-		(Item as any).range = DTO.range
+		Item.sortText = DTO.sortText;
+		Item.filterText = DTO.filterText;
+		Item.preselect = DTO.preselect;
+		Item.insertText = DTO.insertText;
+		Item.range = DTO.range
 			? "insert" in DTO.range
 				? {
-						insert: RangeConverter.ToAPI(DTO.range.insert as any),
-						replace: RangeConverter.ToAPI(DTO.range.replace as any),
+						inserting: RangeConverter.ToAPI(DTO.range.insert),
+						replacing: RangeConverter.ToAPI(DTO.range.replace),
 					}
-				: RangeConverter.ToAPI(DTO.range as any)
+				: RangeConverter.ToAPI(DTO.range)
 			: undefined;
-		(Item as any).commitCharacters = DTO.commitCharacters;
-		(Item as any).additionalTextEdits = DTO.additionalTextEdits?.map(
-			(dto) => TextEditConverter.ToAPI(dto as any),
+		Item.commitCharacters = DTO.commitCharacters;
+		Item.additionalTextEdits = DTO.additionalTextEdits?.map((dto) =>
+			TextEditConverter.ToAPI(dto),
 		);
-		(Item as any).command = DTO.command
+		Item.command = DTO.command
 			? CommandsConverter.FromInternal(DTO.command)
 			: undefined;
 		return Item;
