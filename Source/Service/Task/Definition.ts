@@ -9,6 +9,7 @@ import { Disposable, type TaskFilter, type TaskProvider } from "vscode";
 
 import { Task as TaskConverter } from "../../TypeConverter/Task.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
+import { CancellationLive } from "../Cancellation.js";
 import IPCService from "../IPC/Service.js";
 import ProvideTasks from "./RPCHandlers/ProvideTasks.js";
 import type Service from "./Service.js";
@@ -24,7 +25,11 @@ export default Effect.gen(function* () {
 
 	// --- RPC Handlers ---
 	IPC.RegisterInvokeHandler("$provideTasks", ([Handle, TokenID]) =>
-		Effect.runPromise(ProvideTasks(TaskProviders, Handle, TokenID)),
+		Effect.runPromise(
+			ProvideTasks(TaskProviders, Handle, TokenID).pipe(
+				Effect.provide(CancellationLive),
+			),
+		),
 	);
 
 	// --- Event Emitters ---
@@ -80,6 +85,7 @@ export default Effect.gen(function* () {
 				Effect.map((DTOs) =>
 					DTOs.map((DTO) => TaskConverter.ToAPI(DTO)),
 				),
+				Effect.mapError((cause) => new Error(String(cause))),
 			),
 
 		ExecuteTask: (TaskToExecute, Extension) =>
@@ -89,6 +95,7 @@ export default Effect.gen(function* () {
 				Effect.map((DTO) =>
 					TaskConverter.Execution.ToAPI(DTO, TaskToExecute),
 				),
+				Effect.mapError((cause) => new Error(String(cause))),
 			),
 	};
 

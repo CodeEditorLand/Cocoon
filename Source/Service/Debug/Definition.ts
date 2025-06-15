@@ -16,6 +16,7 @@ import type {
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
+import { StartDebuggingError } from "./Error.js";
 import RegisterProvider from "./RegisterProvider.js";
 import type Service from "./Service.js";
 
@@ -82,28 +83,13 @@ export default Effect.gen(function* () {
 		},
 
 		RegisterDebugConfigurationProvider: (Type, Provider, Extension) =>
-			RegisterProvider(
-				ConfigProviders,
-				IPC,
-				"$registerDebugConfigurationProvider",
-				{ Type, Provider, Extension },
-			),
+			RegisterProvider(ConfigProviders, { Type, Provider, Extension }),
 
 		RegisterDebugAdapterDescriptorFactory: (Type, Factory, Extension) =>
-			RegisterProvider(
-				DescriptorFactories,
-				IPC,
-				"$registerDebugAdapterDescriptorFactory",
-				{ Type, Factory, Extension },
-			),
+			RegisterProvider(DescriptorFactories, { Type, Factory, Extension }),
 
 		RegisterDebugAdapterTrackerFactory: (Type, Factory, Extension) =>
-			RegisterProvider(
-				TrackerFactories,
-				IPC,
-				"$registerDebugAdapterTrackerFactory",
-				{ Type, Factory, Extension },
-			),
+			RegisterProvider(TrackerFactories, { Type, Factory, Extension }),
 
 		StartDebugging: (
 			Folder: WorkspaceFolder | undefined,
@@ -114,20 +100,25 @@ export default Effect.gen(function* () {
 				Folder ? TypeConverter.URI.FromAPI(Folder.uri) : undefined,
 				Configuration,
 				Options,
-			]).pipe(Effect.map((Result) => !!Result)),
+			]).pipe(
+				Effect.mapError((cause) => new StartDebuggingError({ cause })),
+				Effect.map((Result) => !!Result),
+			),
 
 		StopDebugging: (Session?: DebugSession) =>
-			IPC.SendNotification("$stopDebugging", [Session?.id]),
+			IPC.SendNotification("$stopDebugging", [Session?.id]).pipe(
+				Effect.mapError((cause) => new Error(String(cause))),
+			),
 
 		AddBreakpoints: (_Breakpoints: readonly Breakpoint[]) =>
 			IPC.SendNotification("$addBreakpoints", [
 				// Convert breakpoints to DTOs
-			]),
+			]).pipe(Effect.mapError((cause) => new Error(String(cause)))),
 
 		RemoveBreakpoints: (_Breakpoints: readonly Breakpoint[]) =>
 			IPC.SendNotification("$removeBreakpoints", [
 				// Convert breakpoints to DTOs
-			]),
+			]).pipe(Effect.mapError((cause) => new Error(String(cause)))),
 	};
 
 	return DebugImplementation;

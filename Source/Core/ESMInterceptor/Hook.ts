@@ -74,7 +74,7 @@ export async function resolve(
 	const RequestID = NextRequestID++;
 	try {
 		const ResolutionPromise = new Promise<string>((Resolve, Reject) => {
-			const TimeoutID = setTimeout(() => {
+			const TimeoutID: NodeJS.Timeout = setTimeout(() => {
 				PendingPromises.delete(RequestID);
 				Reject(
 					new globalThis.Error(

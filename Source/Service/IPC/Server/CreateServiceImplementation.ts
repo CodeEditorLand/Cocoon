@@ -8,12 +8,12 @@ import * as GRPC from "@grpc/grpc-js";
 import type { UntypedServiceImplementation } from "@grpc/grpc-js";
 import { Effect } from "effect";
 
-import DispatcherService from "../Dispatcher/Service.js";
+import type DispatcherService from "../Dispatcher/Service.js";
 import Generated from "../Generated.js";
 import { DecodeValue, EncodeValue } from "../ProtoConverter.js";
 
 const CreateServiceImplementation = (
-	Dispatcher: DispatcherService,
+	Dispatcher: DispatcherService["Type"],
 ): UntypedServiceImplementation => {
 	return {
 		/**
@@ -45,7 +45,13 @@ const CreateServiceImplementation = (
 				Response.setRequestid(RequestID);
 				Response.setResult(EncodedResult);
 				return Response;
-			});
+			}).pipe(
+				Effect.catchAll((err) =>
+					Effect.fail(
+						new Error("gRPC handler effect failed", { cause: err }),
+					),
+				),
+			);
 
 			Effect.runPromiseExit(ProcessEffect).then((Exit) => {
 				if (Exit._tag === "Success") {

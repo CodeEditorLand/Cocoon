@@ -6,8 +6,7 @@
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type { TextEdit as VscTextEdit } from "vscode";
 
-import { TextEdit } from "../../Type/ExtHostTypes.js";
-import RangeConverter from "./Range.js";
+import { Range, TextEdit } from "../../Type/ExtHostTypes.js";
 
 /**
  * Converts a `vscode.TextEdit` object into a plain DTO for IPC.
@@ -18,7 +17,7 @@ const FromAPI = (
 	TextEditInstance: VscTextEdit,
 ): IIdentifiedSingleEditOperation => ({
 	text: TextEditInstance.newText,
-	range: RangeConverter.FromAPI(TextEditInstance.range),
+	range: TextEditInstance.range as Range,
 	forceMoveMarkers: false,
 });
 
@@ -28,9 +27,6 @@ const FromAPI = (
  * @returns A new `vscode.TextEdit` instance.
  */
 const ToAPI = (TextEditDTO: IIdentifiedSingleEditOperation): VscTextEdit =>
-	new TextEdit(
-		RangeConverter.ToAPI(TextEditDTO.range),
-		TextEditDTO.text ?? "",
-	);
+	new TextEdit(TextEditDTO.range as Range, TextEditDTO.text ?? "");
 
 export default { FromAPI, ToAPI };

@@ -21,14 +21,7 @@ import TreeViewService from "../../Service/TreeView/Service.js";
 import WebViewPanelService from "../../Service/WebViewPanel/Service.js";
 import WindowService from "../../Service/Window/Service.js";
 import WorkSpaceService from "../../Service/WorkSpace/Service.js";
-import * as ExtHostTypes from "../../Type/ExtHostTypes.js";
-import AsExtensionEvent from "./AsExtensionEvent.js";
-import CreateCommandNamespace from "./CreateCommandNamespace.js";
-import CreateDebugNamespace from "./CreateDebugNamespace.js";
-import CreateLanguagesNamespace from "./CreateLanguagesNamespace.js";
-import CreateTasksNamespace from "./CreateTasksNamespace.js";
-import CreateWindowNamespace from "./CreateWindowNamespace.js";
-import CreateWorkSpaceNamespace from "./CreateWorkSpaceNamespace.js";
+import CreateAPIFactory from "./Create.js";
 import type Service from "./Service.js";
 
 /**
@@ -51,81 +44,25 @@ export default Effect.gen(function* () {
 	const TreeView = yield* TreeViewService;
 	const StatusBar = yield* StatusBarService;
 
-	const CreateAPI = (
-		ExtensionDescription: IExtensionDescription,
-	): typeof VSCode => {
-		const AsEvent = <T>(Event: VSCode.Event<T>) =>
-			AsExtensionEvent(ExtensionDescription.identifier, Log, Event);
-
-		const CommandNamespace = CreateCommandNamespace(
-			Command,
-			ExtensionDescription,
-		);
-		const WorkSpaceNamespace = CreateWorkSpaceNamespace(
-			WorkSpace,
-			APIDeprecation,
-			AsEvent,
-			ExtensionDescription,
-		);
-		const WindowNamespace = CreateWindowNamespace(
-			Window,
-			WorkSpace,
-			StatusBar,
-			WebViewPanel,
-			TreeView,
-			AsEvent,
-			ExtensionDescription,
-		);
-		const LanguagesNamespace = CreateLanguagesNamespace(
-			LanguageFeature,
-			ExtensionDescription,
-		);
-		const DebugNamespace = CreateDebugNamespace(
-			Debug,
-			AsEvent,
-			ExtensionDescription,
-		);
-		const TasksNamespace = CreateTasksNamespace(
-			Task,
-			AsEvent,
-			ExtensionDescription,
-		);
-
-		const API: any = {
-			version: "1.85.0",
-			commands: CommandNamespace,
-			window: WindowNamespace,
-			workspace: WorkSpaceNamespace,
-			languages: LanguagesNamespace,
-			debug: DebugNamespace,
-			tasks: TasksNamespace,
-			extensions: Extension,
-			...ExtHostTypes,
-		};
-
-		if (
-			ProposedAPI.IsEnabled(
-				ExtensionDescription.identifier,
-				"someProposedApi",
-			)
-		) {
-			// Object.assign(API, { someProposedApi: ... });
-		}
-
-		for (const Key in API) {
-			if (Object.prototype.hasOwnProperty.call(API, Key)) {
-				const Property = (API as any)[Key];
-				if (typeof Property === "object" && Property !== null) {
-					Object.freeze(Property);
-				}
-			}
-		}
-
-		return Object.freeze(API) as typeof VSCode;
-	};
+	const Factory = CreateAPIFactory({
+		Log,
+		ProposedAPI,
+		APIDeprecation,
+		Command,
+		WorkSpace,
+		Window,
+		LanguageFeature,
+		Debug,
+		Task,
+		Extension,
+		WebViewPanel,
+		TreeView,
+		StatusBar,
+	});
 
 	const APIFactoryImplementation: Service["Type"] = {
-		CreateAPI,
+		CreateAPI: (ExtensionDescription: IExtensionDescription) =>
+			Factory.CreateAPI(ExtensionDescription),
 	};
 
 	return APIFactoryImplementation;

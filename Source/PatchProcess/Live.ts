@@ -15,7 +15,7 @@ import Service from "./Service.js";
  *   environment should permit the process to be terminated by an extension.
  * @returns A `Layer` that provides the `ProcessPatch.Service`.
  */
-const Live = (AllowExit: () => boolean) => {
+export const Live = (AllowExit: () => boolean) => {
 	return Layer.succeed(Service, {
 		NativeExit: process.exit.bind(process),
 		NativeCrash:
@@ -25,5 +25,3 @@ const Live = (AllowExit: () => boolean) => {
 		AllowExit,
 	});
 };
-
-export default Live;

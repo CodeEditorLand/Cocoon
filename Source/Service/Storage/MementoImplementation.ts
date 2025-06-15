@@ -15,7 +15,7 @@ import type {
 
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
-import type LogService from "../Log/Service.js";
+import LogService from "../Log/Service.js";
 
 enum MementoScope {
 	GLOBAL = 0,
@@ -31,8 +31,6 @@ export default class implements Memento {
 	constructor(
 		private readonly ExtensionID: string,
 		IsGlobal: boolean,
-		private readonly IPC: IPCService["Type"],
-		private readonly Log: LogService["Type"],
 		InitialValue: object | undefined,
 	) {
 		this.Scope = IsGlobal ? MementoScope.GLOBAL : MementoScope.WORKSPACE;
@@ -52,26 +50,31 @@ export default class implements Memento {
 	}
 
 	update(Key: string, Value: any): Promise<void> {
-		const UpdateEffect = this.IPC.SendNotification("$setValue", [
-			this.Scope,
-			Key,
-			Value,
-		]).pipe(
-			Effect.tap(() =>
-				Ref.update(this.ValueRef, (Current) => ({
-					...Current,
-					[Key]: Value,
-				})),
-			),
-			Effect.tap(() => this.OnDidChangeEvent.Fire({ keys: [Key] })),
-			Effect.catchAll((Error) =>
-				this.Log.Error(
-					`Memento.update('${Key}') failed for ext '${this.ExtensionID}'.`,
-					Error,
+		const UpdateEffect = Effect.gen(this, function* () {
+			const IPC = yield* IPCService;
+			const Log = yield* LogService;
+
+			yield* IPC.SendNotification("$setValue", [
+				this.Scope,
+				Key,
+				Value,
+			]).pipe(
+				Effect.tap(() =>
+					Ref.update(this.ValueRef, (Current) => ({
+						...Current,
+						[Key]: Value,
+					})),
 				),
-			),
-			Effect.asVoid,
-		);
+				Effect.tap(() => this.OnDidChangeEvent.Fire({ keys: [Key] })),
+				Effect.catchAll((Error) =>
+					Log.Error(
+						`Memento.update('${Key}') failed for ext '${this.ExtensionID}'.`,
+						Error,
+					),
+				),
+				Effect.asVoid,
+			);
+		});
 		return Effect.runPromise(UpdateEffect);
 	}
 

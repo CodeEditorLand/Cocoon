@@ -3,7 +3,7 @@
  * @description Converts `vscode.WebviewPanelOptions` into a serializable DTO.
  */
 
-import type { IWebviewPanelOptions } from "vs/workbench/contrib/webview/common/webview.js";
+import type { WebviewPanelOptions as IWebviewPanelOptions } from "vscode";
 import type * as VSCode from "vscode";
 
 /**

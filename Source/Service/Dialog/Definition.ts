@@ -12,13 +12,13 @@ import type {
 	Uri,
 } from "vscode";
 
-import { Dialog as DialogConverter } from "../../TypeConverter/Dialog.js";
+import DialogConverter from "../../TypeConverter/Dialog.js";
 import IPCService from "../IPC/Service.js";
 import { DialogError } from "./Error.js";
 import type Service from "./Service.js";
 
 const CreateDialogEffect = <Option, DTO, Result>(
-	IPC: IPCService,
+	IPC: IPCService["Type"],
 	IPCMethod: string,
 	Options: Option | undefined,
 	Token: CancellationToken | undefined,

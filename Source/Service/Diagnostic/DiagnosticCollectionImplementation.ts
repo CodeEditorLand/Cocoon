@@ -20,10 +20,11 @@ export default class implements DiagnosticCollection {
 	constructor(
 		public readonly name: string,
 		private readonly Owner: string, // An internal ID for this collection
-		private readonly IPC: IPCService,
+		private readonly IPC: IPCService["Type"],
 	) {}
 
 	private CreateSetEffect(
+		this: this,
 		uri: Uri,
 		diagnostics: readonly Diagnostic[] | undefined,
 	) {
@@ -45,6 +46,7 @@ export default class implements DiagnosticCollection {
 	set(uri: Uri, diagnostics: readonly Diagnostic[] | undefined): void;
 	set(entries: ReadonlyArray<[Uri, readonly Diagnostic[] | undefined]>): void;
 	set(
+		this: this,
 		uriOrEntries:
 			| Uri
 			| ReadonlyArray<[Uri, readonly Diagnostic[] | undefined]>,
@@ -73,20 +75,20 @@ export default class implements DiagnosticCollection {
 		this.set(uri, undefined);
 	}
 
-	clear(): void {
+	clear(this: this): void {
 		if (this.IsDisposed) {
 			return;
 		}
 		Effect.runFork(this.IPC.SendNotification("$clear", [this.Owner]));
 	}
 
-	dispose(): void {
+	dispose(this: this): void {
 		if (this.IsDisposed) {
 			return;
 		}
 		this.IsDisposed = true;
 		this.clear();
-		this.OnDidDispose.Fire();
+		Effect.runFork(this.OnDidDispose.Fire());
 	}
 
 	forEach(): void {

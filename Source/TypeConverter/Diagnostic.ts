@@ -4,6 +4,7 @@
  * translating between the rich API objects and their serializable DTOs for IPC.
  */
 
+import { URI as VscURI } from "vs/base/common/uri.js";
 import type {
 	IMarkerData,
 	IRelatedInformation,
@@ -15,12 +16,25 @@ import type * as VSCode from "vscode";
 import {
 	Diagnostic,
 	DiagnosticRelatedInformation,
+	DiagnosticSeverity,
+	DiagnosticTag,
 	Location,
 	Position,
 	Range,
-	DiagnosticSeverity as VscDiagnosticSeverity,
 } from "../Type/ExtHostTypes.js";
 import URIConverter from "./Main/URI.js";
+
+const toMarkerSeverity = (
+	severity: VSCode.DiagnosticSeverity,
+): MarkerSeverity => {
+	return severity as unknown as MarkerSeverity;
+};
+
+const fromMarkerSeverity = (
+	severity: MarkerSeverity,
+): VSCode.DiagnosticSeverity => {
+	return severity as unknown as VSCode.DiagnosticSeverity;
+};
 
 /**
  * Converts a `vscode.DiagnosticRelatedInformation` object into its DTO representation.
@@ -30,7 +44,7 @@ import URIConverter from "./Main/URI.js";
 const RelatedInformationFromAPI = (
 	RelatedInformation: VSCode.DiagnosticRelatedInformation,
 ): IRelatedInformation => ({
-	resource: URIConverter.FromAPI(RelatedInformation.location.uri),
+	resource: URIConverter.FromAPI(RelatedInformation.location.uri) as VscURI,
 	message: RelatedInformation.message,
 	startLineNumber: RelatedInformation.location.range.start.line + 1,
 	startColumn: RelatedInformation.location.range.start.character + 1,
@@ -76,7 +90,7 @@ const FromAPI = (diagnostic: VSCode.Diagnostic): IMarkerData => ({
 					target: URIConverter.FromAPI(diagnostic.code.target),
 				}
 			: String(diagnostic.code),
-	severity: VscDiagnosticSeverity.toMarkerSeverity(diagnostic.severity),
+	severity: toMarkerSeverity(diagnostic.severity),
 	message: diagnostic.message,
 	source: diagnostic.source,
 	startLineNumber: diagnostic.range.start.line + 1,
@@ -108,9 +122,7 @@ const ToAPI = (MarkerDataDTO: IMarkerData): VSCode.Diagnostic => {
 	const diagnostic = new Diagnostic(
 		range,
 		MarkerDataDTO.message,
-		VscDiagnosticSeverity.fromMarkerSeverity(
-			MarkerDataDTO.severity as MarkerSeverity,
-		),
+		fromMarkerSeverity(MarkerDataDTO.severity as MarkerSeverity),
 	);
 	diagnostic.source = MarkerDataDTO.source;
 	diagnostic.code =
@@ -123,7 +135,7 @@ const ToAPI = (MarkerDataDTO: IMarkerData): VSCode.Diagnostic => {
 	diagnostic.relatedInformation = MarkerDataDTO.relatedInformation?.map(
 		RelatedInformationToAPI,
 	);
-	diagnostic.tags = MarkerDataDTO.tags as VSCode.DiagnosticTag[];
+	diagnostic.tags = MarkerDataDTO.tags as unknown as DiagnosticTag[];
 	return diagnostic;
 };
 

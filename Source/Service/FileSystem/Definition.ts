@@ -54,5 +54,5 @@ export default Effect.gen(function* () {
 		onDidChangeFile: FsInfo.onDidChangeFile,
 	};
 
-	return FileSystemImplementation as Service;
+	return FileSystemImplementation as Service["Type"];
 });

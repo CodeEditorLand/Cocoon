@@ -23,7 +23,7 @@ import type { Uri } from "vscode";
  */
 const CreateOsShim = (InitData: IExtensionHostInitData) => {
 	const IsWindows = InitData.environment.isExtensionDevelopmentDebug;
-	const UserHome = InitData.environment.userHome as Uri;
+	const UserHome = (InitData.environment as any).userHome as Uri;
 
 	const OsShim = {
 		EOL: IsWindows ? "\r\n" : "\n",

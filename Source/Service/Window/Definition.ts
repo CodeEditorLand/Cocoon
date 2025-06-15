@@ -4,7 +4,7 @@
  */
 
 import { Effect, Ref } from "effect";
-import type { TextEditor, Uri, WindowState } from "vscode";
+import type { Uri, WindowState } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
@@ -24,13 +24,18 @@ export default Effect.gen(function* () {
 	const OnDidChangeWindowState = CreateEventStream<WindowState>();
 
 	// Register RPC handlers from Mountain
-	IPC.RegisterInvokeHandler("$acceptWindowStateChanged", ([isFocused]) => {
-		const newState = { focused: isFocused, active: isFocused };
-		return Ref.set(WindowStateRef, newState).pipe(
-			Effect.flatMap(() => OnDidChangeWindowState.Fire(newState)),
-			Effect.runPromise,
-		);
-	});
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler(
+			"$acceptWindowStateChanged",
+			([isFocused]) => {
+				const newState = { focused: isFocused, active: isFocused };
+				return Ref.set(WindowStateRef, newState).pipe(
+					Effect.flatMap(() => OnDidChangeWindowState.Fire(newState)),
+					Effect.runPromise,
+				);
+			},
+		),
+	);
 
 	const ServiceImplementation: Service["Type"] = {
 		get state() {

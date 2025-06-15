@@ -30,19 +30,19 @@ import CreateWindowNamespace from "./CreateWindowNamespace.js";
 import CreateWorkSpaceNamespace from "./CreateWorkSpaceNamespace.js";
 
 interface ServiceCollection {
-	Log: LogService;
-	ProposedAPI: ProposedAPIService;
-	APIDeprecation: APIDeprecationService;
-	Command: CommandService;
-	WorkSpace: WorkSpaceService;
-	Window: WindowService;
-	LanguageFeature: LanguageFeatureService;
-	Debug: DebugService;
-	Task: TaskService;
-	Extension: ExtensionService;
-	WebViewPanel: WebViewPanelService;
-	TreeView: TreeViewService;
-	StatusBar: StatusBarService;
+	Log: LogService["Type"];
+	ProposedAPI: ProposedAPIService["Type"];
+	APIDeprecation: APIDeprecationService["Type"];
+	Command: CommandService["Type"];
+	WorkSpace: WorkSpaceService["Type"];
+	Window: WindowService["Type"];
+	LanguageFeature: LanguageFeatureService["Type"];
+	Debug: DebugService["Type"];
+	Task: TaskService["Type"];
+	Extension: ExtensionService["Type"];
+	WebViewPanel: WebViewPanelService["Type"];
+	TreeView: TreeViewService["Type"];
+	StatusBar: StatusBarService["Type"];
 }
 
 const CreateAPIFactory = (Services: ServiceCollection) => {

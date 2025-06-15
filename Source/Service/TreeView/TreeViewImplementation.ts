@@ -22,7 +22,8 @@ import type {
 import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
 import { TreeView as TreeViewConverter } from "../../TypeConverter/TreeView.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
-import IPCService from "../IPC/Service.js";
+import type CommandService from "../Command/Service.js";
+import type IPCService from "../IPC/Service.js";
 
 export default class<T> implements TreeView<T> {
 	private readonly ElementToHandleMap = new Map<T, string>();
@@ -48,6 +49,7 @@ export default class<T> implements TreeView<T> {
 		private readonly ViewID: string,
 		private readonly DataProvider: TreeDataProvider<T>,
 		private readonly IPC: IPCService["Type"],
+		private readonly Command: CommandService["Type"],
 		private readonly Extension: IExtensionDescription,
 	) {
 		this.onDidExpandElement = this.OnDidExpandElementEmitter.event;
@@ -95,9 +97,7 @@ export default class<T> implements TreeView<T> {
 				const Handle = this.GetHandleForElement(Element);
 				// A real CommandConverter would be injected.
 				const CommandConverter = new CommandConverterDefinition(
-					() => undefined as any, // RegisterCommand placeholder
-					() => Promise.resolve(undefined),
-					() => undefined,
+					() => undefined, // LookupAPICommand placeholder
 				);
 				return TreeViewConverter.Item.FromAPI(
 					this.Extension,
@@ -121,9 +121,13 @@ export default class<T> implements TreeView<T> {
 	}
 
 	private GetHandlesToRefresh(
-		Elements: T | readonly T[] | undefined | null,
+		Elements: void | T | readonly T[] | null | undefined,
 	): (string | null)[] | undefined {
-		if (Elements === null || Elements === undefined) {
+		if (
+			Elements === null ||
+			Elements === undefined ||
+			Elements === void 0
+		) {
 			return undefined;
 		}
 		if (Array.isArray(Elements)) {

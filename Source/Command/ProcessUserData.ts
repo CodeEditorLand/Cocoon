@@ -9,8 +9,11 @@
 
 import { Effect } from "effect";
 
-import ShowInformationMessage from "../Service/Window/ShowInformationMessage.js";
-import { ActiveEditorNotFoundError } from "./ProcessUserData/Error.js";
+import ShowInformationMessage from "../../Service/Window/ShowInformationMessage.js";
+import {
+	ActiveEditorNotFoundError,
+	ProcessingServiceError,
+} from "./ProcessUserData/Error.js";
 import GetActiveTextEditor from "./ProcessUserData/GetActiveTextEditor.js";
 import GetDocumentText from "./ProcessUserData/GetDocumentText.js";
 import InvokeProcessingService from "./ProcessUserData/InvokeProcessingService.js";

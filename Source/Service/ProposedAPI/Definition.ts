@@ -4,11 +4,13 @@
  */
 
 import { Effect, HashMap } from "effect";
-import type { IEnabledApiProposals } from "vs/platform/extensions/common/extensions.js";
+import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
 
 import InitDataService from "../InitData/Service.js";
 import LogService from "../Log/Service.js";
 import type Service from "./Service.js";
+
+type IEnabledApiProposals = Record<string, string[]>;
 
 function ParseConfiguration(
 	Configuration: string[] | IEnabledApiProposals | undefined,
@@ -48,7 +50,7 @@ export default Effect.gen(function* () {
 	const Log = yield* LogService;
 
 	const ProductConfiguration = ParseConfiguration(
-		(InitData.product as any)?.extensionEnabledApiProposals,
+		(InitData as any).product?.extensionEnabledApiProposals,
 	);
 	const EnvironmentConfiguration = ParseConfiguration(
 		(InitData.environment as any).extensionEnabledProposedApi,

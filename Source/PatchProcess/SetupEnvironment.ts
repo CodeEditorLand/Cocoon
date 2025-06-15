@@ -20,9 +20,9 @@ const SetupEnvironment = Effect.gen(function* () {
 	const InitData = yield* InitDataService;
 
 	// If a proxy is configured on the host, propagate it to this process's environment.
-	if (InitData.environment.proxy) {
-		process.env["http_proxy"] = InitData.environment.proxy;
-		process.env["https_proxy"] = InitData.environment.proxy;
+	if ((InitData.environment as any).proxy) {
+		process.env["http_proxy"] = (InitData.environment as any).proxy;
+		process.env["https_proxy"] = (InitData.environment as any).proxy;
 	}
 }).pipe(
 	Effect.tap(() =>

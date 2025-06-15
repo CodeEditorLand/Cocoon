@@ -49,6 +49,7 @@ const EnsureDirectory = (DirectoryURI: Uri | undefined, ScopeName: string) => {
 						),
 					),
 				),
+				Effect.as(true),
 			),
 		onFalse: () =>
 			LogService.pipe(
@@ -57,6 +58,7 @@ const EnsureDirectory = (DirectoryURI: Uri | undefined, ScopeName: string) => {
 						`${ScopeName} storage URI is not defined; skipping creation.`,
 					),
 				),
+				Effect.as(false),
 			),
 	});
 };

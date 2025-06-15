@@ -4,7 +4,7 @@
  */
 
 import { Effect, Ref } from "effect";
-import { TextDocument as VscTextDocument } from "vs/workbench/api/common/extHostDocuments.js";
+import { ExtHostDocument as VscTextDocument } from "vs/workbench/api/common/extHostDocuments.js";
 import type { TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
@@ -82,14 +82,20 @@ export default Effect.gen(function* () {
 		});
 
 	// Register these handlers with the dispatcher
-	IPC.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
-		Effect.runPromise(AcceptModelAdded(Data)),
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
+			Effect.runPromise(AcceptModelAdded(Data)),
+		),
 	);
-	IPC.RegisterInvokeHandler("$acceptModelRemoved", ([Uri]) =>
-		Effect.runPromise(AcceptModelRemoved(Uri)),
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler("$acceptModelRemoved", ([Uri]) =>
+			Effect.runPromise(AcceptModelRemoved(Uri)),
+		),
 	);
-	IPC.RegisterInvokeHandler("$acceptModelChanged", ([Uri, Changes]) =>
-		Effect.runPromise(AcceptModelChanged(Uri, Changes)),
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler("$acceptModelChanged", ([Uri, Changes]) =>
+			Effect.runPromise(AcceptModelChanged(Uri, Changes)),
+		),
 	);
 
 	const DocumentImplementation: Service["Type"] = {

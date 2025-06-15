@@ -27,7 +27,6 @@ export default Effect.gen(function* () {
 
 	// Emitters are created within the service's scope.
 	const OnMessageEmitter = new Emitter<VSBuffer>();
-	const OnDidDisposeEmitter = new Emitter<void>();
 
 	/**
 	 * An `Effect` that sends a raw buffer to `Mountain` via gRPC.
@@ -63,7 +62,6 @@ export default Effect.gen(function* () {
 		},
 
 		onMessage: OnMessageEmitter.event,
-		onDidDispose: OnDidDisposeEmitter.event,
 
 		/**
 		 * An `Effect` that processes incoming raw data from `Mountain` by

@@ -45,9 +45,10 @@ const CreateCryptoShim = () => {
 		constants: NodeCrypto.constants,
 
 		// --- Blocked / Stubbed Functions (Sensitive or Complex) ---
-		generatePrime: NodeCrypto.generatePrime
-			? CreateStub("generatePrime")
-			: undefined,
+		generatePrime:
+			typeof NodeCrypto.generatePrime === "function"
+				? CreateStub("generatePrime")
+				: undefined,
 		generateKeyPair: CreateStub("generateKeyPair"),
 		generateKeyPairSync: CreateStub("generateKeyPairSync"),
 		createCipheriv: CreateStub("createCipheriv"),

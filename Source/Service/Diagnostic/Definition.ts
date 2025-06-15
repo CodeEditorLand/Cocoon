@@ -19,14 +19,16 @@ export default Effect.gen(function* () {
 	const { event, Fire } = CreateEventStream<readonly Uri[]>();
 
 	// Register the RPC handler for when Mountain pushes a diagnostic changes.
-	IPC.RegisterInvokeHandler(
-		"$acceptMarkerData",
-		([uriComponentsArray]): Promise<void> => {
-			const RevivedUris = uriComponentsArray.map((DTO: any) =>
-				TypeConverter.URI.ToAPI(DTO),
-			);
-			return Effect.runPromise(Fire(RevivedUris));
-		},
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler(
+			"$acceptMarkerData",
+			([uriComponentsArray]): Promise<void> => {
+				const RevivedUris = uriComponentsArray.map((DTO: any) =>
+					TypeConverter.URI.ToAPI(DTO),
+				);
+				return Effect.runPromise(Fire(RevivedUris));
+			},
+		),
 	);
 
 	const ServiceImplementation: Service["Type"] = {
@@ -34,7 +36,11 @@ export default Effect.gen(function* () {
 
 		CreateDiagnosticCollection: (Name?: string) => {
 			const Owner = `cocoon-diag-${OwnerCounter++}-${Name ?? "anon"}`;
-			return new DiagnosticCollectionImplementation(Name, Owner, IPC);
+			return new DiagnosticCollectionImplementation(
+				Name ?? "",
+				Owner,
+				IPC,
+			);
 		},
 	};
 

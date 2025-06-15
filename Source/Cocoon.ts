@@ -52,34 +52,38 @@ const FullApplicationInitialization = Effect.gen(function* () {
 const Main = Effect.gen(function* () {
 	const InitializationBarrier = yield* Deferred.make<void>();
 
-	yield* RunProcessPatch;
-
 	const IPC = yield* IPCService;
 
 	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
-		(InitializationData: IExtensionHostInitData) =>
-			Effect.gen(function* () {
+		(InitializationData: IExtensionHostInitData) => {
+			// Compose the final application layer, providing the received init data.
+			const ApplicationLayer = AllServiceLayer(
+				ApplicationConfiguration,
+			).pipe(
+				Layer.provide(CoreServiceLayer),
+				Layer.provide(InitDataLayer(InitializationData)),
+			);
+
+			const handlerEffect = Effect.gen(function* () {
 				yield* Effect.logInfo(
 					"Received 'initExtensionHost' data from Mountain.",
 				);
 
-				// Compose the final application layer, providing the received init data.
-				const ApplicationLayer = AllServiceLayer(
-					ApplicationConfiguration,
-				).pipe(
-					Layer.provide(CoreServiceLayer),
-					Layer.provide(InitDataLayer(InitializationData)),
-				);
-
+				yield* Effect.provide(RunProcessPatch, ApplicationLayer);
 				yield* Effect.provide(
 					FullApplicationInitialization,
 					ApplicationLayer,
 				);
 
-				yield* Deferred.succeed(InitializationBarrier);
+				yield* Deferred.succeed(InitializationBarrier, undefined);
 				return "initialized";
-			}).pipe(Effect.runPromise),
+			});
+
+			return Effect.runPromise(
+				Effect.provide(handlerEffect, ApplicationLayer),
+			);
+		},
 	);
 
 	yield* IPC.SendNotification("$initialHandshake", []);

@@ -4,7 +4,7 @@
  */
 
 import { Effect } from "effect";
-import type { TextDocument } from "vs/workbench/api/common/extHostTypes.js";
+import type { TextDocument } from "vscode";
 
 /**
  * An Effect that gets the full text content of a given document.

@@ -3,7 +3,7 @@
  * @description This module provides the `Live` implementation Layer for the FileSystem service.
  */
 
-import { Layer } from "effect";
+import { Effect, Layer } from "effect";
 
 import { Live as FileSystemInformationLive } from "../FileSystemInformation.js";
 import { Live as IPCLive } from "../IPC.js";

@@ -5,6 +5,7 @@
  */
 
 import { Effect, Ref } from "effect";
+import { URI } from "vs/base/common/uri.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
@@ -15,7 +16,7 @@ import type { ExtensionContext } from "vscode";
 import InitDataService from "../../Service/InitData/Service.js";
 import IPCService from "../../Service/IPC/Service.js";
 import LogService from "../../Service/Log/Service.js";
-import APIFactoryService from "../APIFactory/Service.js";
+import TelemetryService from "../../Service/Telemetry/Service.js";
 import type Service from "./Service.js";
 import type { ExtensionActivationReason } from "./Service.js";
 import type { ActivatedExtension } from "./State.js";
@@ -27,6 +28,7 @@ export default Effect.gen(function* () {
 	const Log = yield* LogService;
 	const IPC = yield* IPCService;
 	const InitData = yield* InitDataService;
+	const Telemetry = yield* TelemetryService;
 
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		InitData.extensions,
@@ -45,12 +47,14 @@ export default Effect.gen(function* () {
 			for (const Subscription of Extension.Subscriptions) {
 				yield* Effect.try({
 					try: () => Subscription.dispose(),
-					catch: (CaughtError) =>
+				}).pipe(
+					Effect.catchAll((CaughtError) =>
 						Log.Warn(
 							`Error during subscription disposal for ${Extension.ID.value}`,
 							CaughtError,
 						),
-				});
+					),
+				);
 			}
 
 			// Call the extension's deactivate function if it exists
@@ -88,14 +92,14 @@ export default Effect.gen(function* () {
 				subscriptions: [],
 				extensionPath: Description.extensionLocation.fsPath,
 				extensionUri: Description.extensionLocation,
-				storageUri: undefined,
-				globalStorageUri: undefined,
-				logUri: undefined,
+				storageUri: URI.parse("invalid:/storage"),
+				globalStorageUri: URI.parse("invalid:/globalstorage"),
+				logUri: URI.parse("invalid:/log"),
 				extensionMode: 1, // Production
 				secrets: undefined as any,
-				storagePath: undefined,
-				globalStoragePath: undefined,
-				logPath: undefined,
+				storagePath: "",
+				globalStoragePath: "",
+				logPath: "",
 				extension: undefined as any, // This will be set later
 				environmentVariableCollection: undefined as any,
 				asAbsolutePath: (path) => path,
@@ -170,6 +174,11 @@ export default Effect.gen(function* () {
 									: undefined,
 						},
 					]);
+
+					Telemetry.onExtensionError(
+						Description.identifier,
+						ErrorValue,
+					);
 				}),
 			),
 		);

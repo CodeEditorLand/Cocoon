@@ -30,8 +30,8 @@ export default Effect.gen(function* () {
 	const Log = yield* LogService;
 
 	const TelemetryLevelValue =
-		InitData.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
-	const ProductConfig = (InitData.product as any)?.telemetryOptOut;
+		(InitData.telemetryInfo as any).telemetryLevel ?? TelemetryLevel.NONE;
+	const ProductConfig = (InitData as any).product?.telemetryOptOut;
 
 	const ShouldSendEvent = (Type: "usage" | "error"): boolean => {
 		if (TelemetryLevelValue === TelemetryLevel.NONE) {
@@ -67,6 +67,8 @@ export default Effect.gen(function* () {
 						name: CaughtError.name,
 						message: CaughtError.message,
 						stack: CaughtError.stack,
+						$isError: true,
+						noTelemetry: false,
 					}
 				: CaughtError;
 

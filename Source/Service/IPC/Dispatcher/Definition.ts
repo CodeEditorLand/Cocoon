@@ -18,7 +18,7 @@ export default Effect.gen(function* () {
 	const RPCProtocolInstance = new RPCProtocol(ProtocolAdapter);
 	const InvokeHandlers = yield* Ref.make(new Map<string, InvokeHandler>());
 
-	const DispatchRequest = (Method: string, Parameters: any[]) =>
+	const DispatchRequest = (Method: string, Parameters: readonly any[]) =>
 		Effect.gen(function* () {
 			const Handlers = yield* Ref.get(InvokeHandlers);
 			const CustomHandler = Handlers.get(Method);
@@ -46,7 +46,7 @@ export default Effect.gen(function* () {
 			}
 		});
 
-	const DispatchNotification = (Method: string, Parameters: any[]) =>
+	const DispatchNotification = (Method: string, Parameters: readonly any[]) =>
 		Effect.sync(() => {
 			if ((RPCProtocolInstance as any)._receiveNotification) {
 				(RPCProtocolInstance as any)._receiveNotification(

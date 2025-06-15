@@ -11,14 +11,14 @@ import type Service from "./Service.js";
 import ParseArgument from "./Support/ParseArgument.js";
 import type ExtensionSource from "./Type.js";
 
-const ShowMessageEffect = (
-	IPC: IPCService,
+const ShowMessageEffect = <T extends MessageItem>(
+	IPC: IPCService["Type"],
 	Severity: "Info" | "Warning" | "Error",
 	Message: string,
 	Option: MessageOptions,
-	Items: (string | MessageItem)[],
+	Items: (string | T)[],
 	Source: ExtensionSource | undefined,
-) => {
+): Effect.Effect<T | undefined, Error> => {
 	return Effect.gen(function* () {
 		const ItemsForIPC = Items.map((item, index) => ({
 			title: typeof item === "string" ? item : item.title,
@@ -46,13 +46,13 @@ const ShowMessageEffect = (
 		const ResultHandle = yield* IPC.SendRequest<number | undefined>(
 			"$showMessage",
 			[Severity, Message, DTO.options, DTO.items, DTO.source],
-		);
+		).pipe(Effect.mapError((cause) => new Error(String(cause))));
 
 		if (ResultHandle === undefined || ResultHandle === null) {
 			return undefined;
 		}
 		if (ResultHandle >= 0 && ResultHandle < Items.length) {
-			return Items[ResultHandle];
+			return Items[ResultHandle] as T | undefined;
 		}
 		return undefined;
 	});

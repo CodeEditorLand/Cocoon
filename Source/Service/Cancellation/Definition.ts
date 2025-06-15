@@ -73,10 +73,12 @@ export default Effect.gen(function* () {
 					Effect.orDie, // Failure to release is a fatal error.
 				),
 		).pipe(
-			Effect.map((Source) => ({
-				Token: Source.token,
-				Scope: Scope.globalScope,
-			})),
+			Effect.flatMap((Source) =>
+				Effect.map(Effect.scope, (scope) => ({
+					Token: Source.token,
+					Scope: scope,
+				})),
+			),
 		);
 
 	const CancelToken = (TokenID: number) =>

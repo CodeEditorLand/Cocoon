@@ -16,8 +16,8 @@ import type WorkSpaceConfiguration from "./Type/WorkSpaceConfiguration.js";
 const CreateWorkSpaceConfiguration = (
 	Snapshot: any,
 	SectionPrefix: string,
-	IPC: IPCService,
-	Log: LogService,
+	IPC: IPCService["Type"],
+	Log: LogService["Type"],
 ): WorkSpaceConfiguration => {
 	const Get = <T>(Key: string, DefaultValue?: T): T | undefined => {
 		// Traverse the object path to get the value.

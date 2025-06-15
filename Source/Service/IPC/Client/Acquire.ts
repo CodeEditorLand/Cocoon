@@ -9,6 +9,7 @@ import * as GRPC from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect } from "effect";
 
+import IPCConfigurationService from "../Configuration.js";
 import { gRPCConnectionError } from "../Error.js";
 import Release from "./Release.js";
 import type Service from "./Service.js";
@@ -93,7 +94,7 @@ const WaitForClientReady = (
  */
 export default Effect.acquireRelease(
 	Effect.gen(function* () {
-		const Config = yield* ConfigurationService;
+		const Config = yield* IPCConfigurationService;
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
 		const Definition = yield* LoadProtoDefinition(ProtoPath);

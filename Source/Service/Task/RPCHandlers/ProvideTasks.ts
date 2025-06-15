@@ -4,7 +4,7 @@
  */
 
 import { Effect, Ref } from "effect";
-import type { Task, TaskProvider } from "vscode";
+import type { ProviderResult, Task, TaskProvider } from "vscode";
 
 import { Task as TaskConverter } from "../../../TypeConverter/Task.js";
 import CancellationService from "../../Cancellation/Service.js";
@@ -38,7 +38,10 @@ const ProvideTasks = (
 		const { Token } = yield* Cancellation.ObtainToken(TokenID);
 
 		const Tasks = yield* Effect.tryPromise({
-			try: () => Provider.provideTasks!(Token),
+			try: (signal) =>
+				Provider.provideTasks!(Token) as Promise<
+					Task[] | null | undefined
+				>,
 			catch: (CaughtError) => CaughtError as Error,
 		});
 

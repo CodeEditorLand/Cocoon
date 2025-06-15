@@ -7,7 +7,10 @@ import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Disposable, type TextEditor } from "vscode";
 
-import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
+import {
+	Definition as CommandConverterDefinition,
+	Type as CommandConverterTypes,
+} from "../../TypeConverter/Command.js";
 import IPCService from "../IPC/Service.js";
 import TelemetryService from "../Telemetry/Service.js";
 import WorkSpaceService from "../WorkSpace/Service.js";
@@ -44,7 +47,12 @@ export default Effect.gen(function* () {
 				}).pipe(
 					Effect.catchAll((e) =>
 						Effect.flatMap(
-							Telemetry.onExtensionError(Extension.identifier, e),
+							Effect.sync(() =>
+								Telemetry.onExtensionError(
+									Extension.identifier,
+									e,
+								),
+							),
 							() => Effect.fail(e),
 						),
 					),
@@ -57,7 +65,7 @@ export default Effect.gen(function* () {
 			const Result = yield* IPC.SendRequest("$executeCommand", [
 				ID,
 				...MarshalledArguments,
-			]);
+			]).pipe(Effect.mapError((cause) => new Error(String(cause))));
 			return CommandConverter.FromInternal(Result as any) as T;
 		});
 
@@ -121,6 +129,7 @@ export default Effect.gen(function* () {
 
 		GetCommands: (FilterInternal = false) =>
 			IPC.SendRequest<string[]>("$getCommands", []).pipe(
+				Effect.mapError((cause) => new Error(String(cause))),
 				Effect.flatMap((RemoteCommands) =>
 					Ref.get(CommandRegistry).pipe(
 						Effect.map((LocalRegistry) => {

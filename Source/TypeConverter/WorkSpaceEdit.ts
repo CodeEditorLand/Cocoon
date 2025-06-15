@@ -4,12 +4,13 @@
  * handling complex transformations involving text edits, file operations, and versions.
  */
 
-import type { Uri as VscUri } from "vs/base/common/uri.js";
+import type { URI as VscUri } from "vs/base/common/uri.js";
 import type * as VSCode from "vscode";
 
 import {
 	TextEdit,
 	WorkspaceEdit as VscWorkspaceEdit,
+	type WorkspaceEdit,
 } from "../Type/ExtHostTypes.js";
 import { TextEdit as TextEditConverter, URI as URIConverter } from "./Main.js";
 

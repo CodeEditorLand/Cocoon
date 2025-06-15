@@ -24,7 +24,6 @@ export default Effect.gen(function* () {
 
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		InitData.extensions,
-		InitData.extensions.allExtensions,
 	);
 
 	// In a real implementation, this would be driven by an event from the ExtensionHost

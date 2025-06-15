@@ -10,20 +10,22 @@ import { CancellationError as VscCancellationError } from "vs/base/common/errors
 import { Emitter } from "vs/base/common/event.js";
 import * as Lifecycle from "vs/base/common/lifecycle.js";
 import { URI as VscURI } from "vs/base/common/uri.js";
-import * as VscLanguages from "vs/editor/common/languages.js";
+import { FileType as VscFileType } from "vs/platform/files/common/files.js";
+import type * as VSCode from "vscode";
 import {
+	CompletionItemKind,
+	CompletionItemTag,
 	ConfigurationTarget,
+	DiagnosticSeverity,
 	EndOfLine,
 	ProgressLocation,
-	TextEditorCursorStyle,
-	ViewColumn,
-	SnippetString,
-	TreeItemCollapsibleState,
-	DiagnosticSeverity,
-	CompletionItemKind,
 	QuickPickItemKind,
-} from "vs/workbench/api/common/extHostTypes.js";
-import type * as VSCode from "vscode";
+	SnippetString,
+	StatusBarAlignment,
+	TextEditorCursorStyle,
+	TreeItemCollapsibleState,
+	ViewColumn,
+} from "vscode";
 
 // --- Foundational Re-exports ---
 export const Disposable = Lifecycle.Disposable;
@@ -439,6 +441,18 @@ export class TextEdit implements VSCode.TextEdit {
 export class CompletionItem implements VSCode.CompletionItem {
 	label: string | VSCode.CompletionItemLabel;
 	kind?: VSCode.CompletionItemKind;
+	tags?: VSCode.CompletionItemTag[];
+	detail?: string;
+	documentation?: string | VSCode.MarkdownString;
+	sortText?: string;
+	filterText?: string;
+	preselect?: boolean;
+	insertText?: string | VSCode.SnippetString;
+	range?: VSCode.Range | { insert: VSCode.Range; replace: VSCode.Range };
+	commitCharacters?: string[];
+	additionalTextEdits?: VSCode.TextEdit[];
+	command?: VSCode.Command;
+
 	constructor(
 		label: string | VSCode.CompletionItemLabel,
 		kind?: VSCode.CompletionItemKind,
@@ -460,6 +474,7 @@ export {
 	QuickPickItemKind,
 	CompletionItemKind,
 	SnippetString,
+	CompletionItemTag,
 };
 
-export const FileType = VscLanguages.FileType;
+export const FileType = VscFileType;

@@ -5,7 +5,7 @@
  * as the public entry point for the ProcessPatch service.
  */
 
-import Live from "./Live.js";
+import { Live } from "./Live.js";
 import Service from "./Service.js";
 
 export { Service, Live };

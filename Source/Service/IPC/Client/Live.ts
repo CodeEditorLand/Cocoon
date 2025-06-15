@@ -7,7 +7,7 @@
 
 import { Layer } from "effect";
 
-import type ConfigurationService from "../Configuration.js";
+import type IPCConfigurationService from "../Configuration.js";
 import type { gRPCConnectionError } from "../Error.js";
 import Acquire from "./Acquire.js";
 import Service from "./Service.js";
@@ -15,7 +15,7 @@ import Service from "./Service.js";
 /**
  * The live implementation `Layer` for the gRPC Client service.
  */
-const Live: Layer.Layer<Service, gRPCConnectionError, ConfigurationService> =
+const Live: Layer.Layer<Service, gRPCConnectionError, IPCConfigurationService> =
 	Layer.scoped(Service, Acquire);
 
 export default Live;

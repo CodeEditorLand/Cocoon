@@ -5,7 +5,7 @@
  * internal `IAuthenticationSession` DTO.
  */
 
-import type { IAuthenticationSession } from "vs/platform/credentials/common/credentials.js";
+import type { AuthenticationSession as IAuthenticationSession } from "vscode";
 import type * as VSCode from "vscode";
 
 /**

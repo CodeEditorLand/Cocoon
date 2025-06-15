@@ -5,7 +5,7 @@
  */
 
 import { Effect, Option } from "effect";
-import type { TextEditor } from "vs/workbench/api/common/extHostTypes.js";
+import type { TextEditor } from "vscode";
 
 import WindowService from "../../Service/Window/Service.js";
 

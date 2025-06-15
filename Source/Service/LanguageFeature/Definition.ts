@@ -9,7 +9,7 @@
 // complex, involving managing provider registries for each feature type and
 // handling RPC calls from the host to invoke those providers.
 
-import { Effect, Ref } from "effect";
+import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import {
 	Disposable,

@@ -73,7 +73,9 @@ export default Effect.gen(function* () {
 							return ShimResult.value;
 						} else {
 							// If shimming fails (e.g., module is blocked), throw the error to the extension.
-							throw ShimResult.cause;
+							throw Effect.runSync(
+								Effect.failCause(ShimResult.cause),
+							);
 						}
 					}
 

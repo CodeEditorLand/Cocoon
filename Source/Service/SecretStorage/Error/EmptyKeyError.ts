@@ -8,9 +8,9 @@ import { Data } from "effect";
 /**
  * An error indicating that an empty string was provided as a key, which is invalid.
  */
-export default class extends Data.TaggedError("EmptyKeyError")<{}> {
+export default class extends Data.TaggedError("EmptyKeyError")<void> {
 	constructor() {
-		super({});
+		super();
 		this.message = "Secret key cannot be empty.";
 	}
 	public override readonly message: string;

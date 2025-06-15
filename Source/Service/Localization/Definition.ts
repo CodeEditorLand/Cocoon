@@ -4,9 +4,9 @@
  */
 
 import * as Path from "node:path";
-import { Barrier, Effect, Option, Ref } from "effect";
+import { Deferred, Effect, Option, Ref } from "effect";
+import { URI } from "vs/base/common/uri.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Uri } from "vscode";
 
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import InitDataService from "../InitData/Service.js";
@@ -18,28 +18,28 @@ export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
 	const InitData = yield* InitDataService;
 	const NlsCache = yield* Ref.make(new Map<string, Record<string, string>>());
-	const InitBarrier = yield* Barrier.make();
+	const InitBarrier = yield* Deferred.make<void, never>();
 	const { event, Fire } = CreateEventStream<void>();
 
 	// Fork a background fiber that fires the event once the barrier is opened.
-	yield* Barrier.await(InitBarrier).pipe(
+	yield* Deferred.await(InitBarrier).pipe(
 		Effect.flatMap(() => Fire()),
 		Effect.forkDaemon,
 	);
 
 	const GetPotentialBundleURIs = (Extension: IExtensionDescription) => {
 		const Language = InitData.environment.appLanguage || "en";
-		const BaseURI = Uri.revive(Extension.extensionLocation);
+		const BaseURI = URI.revive(Extension.extensionLocation);
 		const BasePath = Extension.l10n
 			? Path.join(BaseURI.fsPath, Extension.l10n)
 			: BaseURI.fsPath;
 
-		const DefaultBundleURI = Uri.file(
+		const DefaultBundleURI = URI.file(
 			Path.join(BasePath, "package.nls.json"),
 		);
 		const LanguageBundleURI =
 			Language !== "en"
-				? Uri.file(Path.join(BasePath, `package.nls.${Language}.json`))
+				? URI.file(Path.join(BasePath, `package.nls.${Language}.json`))
 				: undefined;
 
 		return { DefaultBundleURI, LanguageBundleURI };
@@ -56,7 +56,7 @@ export default Effect.gen(function* () {
 
 		InitializeLocalizedMessages: (Extension) =>
 			Effect.gen(function* () {
-				yield* Barrier.await(InitBarrier); // Wait until host is ready.
+				yield* Deferred.await(InitBarrier); // Wait until host is ready.
 				const { DefaultBundleURI, LanguageBundleURI } =
 					GetPotentialBundleURIs(Extension);
 
@@ -76,11 +76,11 @@ export default Effect.gen(function* () {
 						cache.set(Extension.identifier.value, FinalBundle),
 					);
 				}
-			}),
+			}).pipe(Effect.mapError((e) => e as Error)),
 
 		onDidInitializeLocalization: event,
 		SignalLocalizationInitialized: () =>
-			Barrier.succeed(InitBarrier, undefined).pipe(Effect.asVoid),
+			Deferred.succeed(InitBarrier, undefined).pipe(Effect.asVoid),
 	};
 
 	return ServiceImplementation;

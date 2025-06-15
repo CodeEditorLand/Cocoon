@@ -4,9 +4,13 @@
  * handling the transformation between `vscode` API types and their DTOs for IPC.
  */
 
+import type { IMarkdownString } from "vs/base/common/htmlContent.js";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
+import type { IRange } from "vs/editor/common/core/range.js";
 import * as Languages from "vs/editor/common/languages.js";
+import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type * as VSCode from "vscode";
+import { CompletionItemTag } from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
 import type CommandConverterDefinition from "./Command/Definition.js";
@@ -22,20 +26,20 @@ interface ISuggestDataDto {
 	kind?: Languages.CompletionItemKind;
 	tags?: ReadonlyArray<Languages.CompletionItemTag>;
 	detail?: string;
-	documentation?: string | VSCode.MarkdownString;
+	documentation?: string | IMarkdownString;
 	sortText?: string;
 	filterText?: string;
 	preselect?: boolean;
 	insertText?: string | VSCode.SnippetString;
 	insertTextRules?: Languages.CompletionItemInsertTextRule;
 	range?:
-		| VSCode.Range
+		| IRange
 		| {
-				insert: VSCode.Range;
-				replace: VSCode.Range;
+				insert: IRange;
+				replace: IRange;
 		  };
 	commitCharacters?: string[];
-	additionalTextEdits?: VSCode.TextEdit[];
+	additionalTextEdits?: IIdentifiedSingleEditOperation[];
 	command?: any; // DTO for command
 }
 
@@ -67,7 +71,7 @@ const CompletionItem = {
 		return {
 			label: Item.label,
 			kind: Item.kind as number as Languages.CompletionItemKind,
-			tags: Item.tags as unknown as Languages.CompletionItemTag[],
+			tags: Item.tags as any as Languages.CompletionItemTag[],
 			detail: Item.detail,
 			documentation:
 				typeof Item.documentation === "string"
@@ -128,19 +132,19 @@ const CompletionItem = {
 			Label,
 			DTO.kind as unknown as VSCode.CompletionItemKind,
 		);
-		Item.tags = DTO.tags as VSCode.CompletionItemTag[];
-		Item.detail = DTO.detail;
-		Item.documentation =
+		(Item as any).tags = DTO.tags as CompletionItemTag[];
+		(Item as any).detail = DTO.detail;
+		(Item as any).documentation =
 			typeof DTO.documentation === "string"
 				? DTO.documentation
 				: DTO.documentation
 					? MarkdownStringConverter.ToAPI(DTO.documentation as any)
 					: undefined;
-		Item.sortText = DTO.sortText;
-		Item.filterText = DTO.filterText;
-		Item.preselect = DTO.preselect;
-		Item.insertText = DTO.insertText;
-		Item.range = DTO.range
+		(Item as any).sortText = DTO.sortText;
+		(Item as any).filterText = DTO.filterText;
+		(Item as any).preselect = DTO.preselect;
+		(Item as any).insertText = DTO.insertText;
+		(Item as any).range = DTO.range
 			? "insert" in DTO.range
 				? {
 						insert: RangeConverter.ToAPI(DTO.range.insert as any),
@@ -148,11 +152,11 @@ const CompletionItem = {
 					}
 				: RangeConverter.ToAPI(DTO.range as any)
 			: undefined;
-		Item.commitCharacters = DTO.commitCharacters;
-		Item.additionalTextEdits = DTO.additionalTextEdits?.map((dto) =>
-			TextEditConverter.ToAPI(dto as any),
+		(Item as any).commitCharacters = DTO.commitCharacters;
+		(Item as any).additionalTextEdits = DTO.additionalTextEdits?.map(
+			(dto) => TextEditConverter.ToAPI(dto as any),
 		);
-		Item.command = DTO.command
+		(Item as any).command = DTO.command
 			? CommandsConverter.FromInternal(DTO.command)
 			: undefined;
 		return Item;
@@ -172,7 +176,7 @@ const CompletionList = {
 		if (!List) {
 			return undefined;
 		}
-		const Items = Array.isArray(List) ? List : List.items;
+		const Items = "items" in List ? List.items : List;
 		return {
 			suggestions: Items.map((Item) =>
 				CompletionItem.FromAPI(Item, CommandsConverter, Disposables),

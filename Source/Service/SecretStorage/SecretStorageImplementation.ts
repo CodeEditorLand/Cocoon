@@ -5,11 +5,11 @@
  * in the OS keychain.
  */
 
-import { Context, Effect } from "effect";
+import { Effect } from "effect";
 import type { Event, SecretStorage, SecretStorageChangeEvent } from "vscode";
 
 import CreateEventStream from "../../Utility/CreateEventStream.js";
-import IPCService from "../IPC/Service.js";
+import type IPCService from "../IPC/Service.js";
 import type LogService from "../Log/Service.js";
 import { EmptyKeyError, InvalidValueError } from "./Error.js";
 
@@ -101,26 +101,11 @@ export default class implements SecretStorage {
 	}
 
 	get = (Key: string): Promise<string | undefined> =>
-		Effect.runPromise(
-			Effect.provide(
-				this.CreateGetEffect(Key),
-				Context.make(IPCService, this.IPC),
-			),
-		);
+		Effect.runPromise(this.CreateGetEffect(Key));
 
 	store = (Key: string, Value: string): Promise<void> =>
-		Effect.runPromise(
-			Effect.provide(
-				this.CreateStoreEffect(Key, Value),
-				Context.make(IPCService, this.IPC),
-			),
-		);
+		Effect.runPromise(this.CreateStoreEffect(Key, Value));
 
 	delete = (Key: string): Promise<void> =>
-		Effect.runPromise(
-			Effect.provide(
-				this.CreateDeleteEffect(Key),
-				Context.make(IPCService, this.IPC),
-			),
-		);
+		Effect.runPromise(this.CreateDeleteEffect(Key));
 }

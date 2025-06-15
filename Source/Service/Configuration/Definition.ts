@@ -22,17 +22,19 @@ export default Effect.gen(function* () {
 	const OnDidChangeEvent = CreateEventStream<ConfigurationChangeEvent>();
 
 	// Register the handler for when Mountain pushes a configuration update.
-	IPC.RegisterInvokeHandler(
-		"$acceptConfigurationChanged",
-		([NewConfig, Change]) =>
-			Effect.gen(function* () {
-				yield* Ref.set(ConfigCache, NewConfig);
-				yield* OnDidChangeEvent.Fire({
-					affectsConfiguration: (Section: string, _Scope?: any) =>
-						// A real implementation would need to check the scope properly.
-						Change.keys.includes(Section),
-				});
-			}).pipe(Effect.runPromise),
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler(
+			"$acceptConfigurationChanged",
+			([NewConfig, Change]) =>
+				Effect.gen(function* () {
+					yield* Ref.set(ConfigCache, NewConfig);
+					yield* OnDidChangeEvent.Fire({
+						affectsConfiguration: (Section: string, _Scope?: any) =>
+							// A real implementation would need to check the scope properly.
+							Change.keys.includes(Section),
+					});
+				}).pipe(Effect.runPromise),
+		),
 	);
 
 	const ConfigurationImplementation: Service["Type"] = {

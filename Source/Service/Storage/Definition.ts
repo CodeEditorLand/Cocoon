@@ -4,6 +4,7 @@
  */
 
 import { Effect, Ref } from "effect";
+import type { Memento } from "vscode";
 
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
@@ -32,25 +33,27 @@ export default Effect.gen(function* () {
 	);
 
 	// Handler for when storage changes on the host side
-	IPC.RegisterInvokeHandler(
-		"$acceptStorageAndMementoData",
-		([GlobalData, WorkSpaceData]) => {
-			const UpdateEffect = Effect.gen(function* () {
-				const GlobalCache = yield* Ref.get(MementoCache);
-				for (const [Key, Memento] of GlobalCache) {
-					if ((Memento as any)["Scope"] === MementoScope.GLOBAL) {
-						Memento.acceptValue((GlobalData as any)[Key]);
-					} else {
-						Memento.acceptValue((WorkSpaceData as any)[Key]);
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler(
+			"$acceptStorageAndMementoData",
+			([GlobalData, WorkSpaceData]) => {
+				const UpdateEffect = Effect.gen(function* () {
+					const GlobalCache = yield* Ref.get(MementoCache);
+					for (const [Key, Memento] of GlobalCache) {
+						if ((Memento as any)["Scope"] === MementoScope.GLOBAL) {
+							Memento.acceptValue((GlobalData as any)[Key]);
+						} else {
+							Memento.acceptValue((WorkSpaceData as any)[Key]);
+						}
 					}
-				}
-			});
-			return Effect.runPromise(UpdateEffect);
-		},
+				});
+				return Effect.runPromise(UpdateEffect);
+			},
+		),
 	);
 
 	const StorageImplementation: Service["Type"] = {
-		CreateMemento: (ExtensionID: string, IsGlobal: boolean) => {
+		CreateMemento: (ExtensionID: string, IsGlobal: boolean): Memento => {
 			const CacheKey = `${IsGlobal ? "global" : "workspace"}:${ExtensionID}`;
 			const Cached = Effect.runSync(
 				Ref.get(MementoCache).pipe(
@@ -75,8 +78,6 @@ export default Effect.gen(function* () {
 			const Memento = new MementoImplementation(
 				ExtensionID,
 				IsGlobal,
-				IPC,
-				Log,
 				InitialValue,
 			);
 			Effect.runSync(

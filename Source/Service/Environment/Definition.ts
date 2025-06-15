@@ -71,19 +71,19 @@ export default Effect.gen(function* () {
 	const ServiceImplementation: Service["Type"] = {
 		appName: InitData.environment.appName || "Cocoon Editor",
 		appRoot: GetAppRoot(),
-		appHost: InitData.environment.appHost || "desktop",
-		uriScheme: InitData.environment.appUriScheme || "cocoon-code",
+		appHost: (InitData.environment as any).appHost || "desktop",
+		uriScheme: (InitData.environment as any).appUriScheme || "cocoon-code",
 		language: InitData.environment.appLanguage || "en",
 		machineId: InitData.telemetryInfo.machineId,
 		sessionId: InitData.telemetryInfo.sessionId,
 		isTrusted: (InitData.workspace as any)?.isTrusted ?? true,
-		isRemote: !!InitData.remote?.isRemote,
-		remoteName: InitData.remote?.authority?.split("+")[0],
+		isRemote: !!(InitData.remote as any)?.isRemote,
+		remoteName: (InitData.remote as any)?.authority?.split("+")[0],
 		shell:
 			process.platform === "win32"
 				? process.env["ComSpec"] || "pwsh.exe"
 				: process.env["SHELL"] || "/bin/sh",
-		uiKind: (InitData.uiKind as any) === 2 ? UIKind.Web : UIKind.Desktop,
+		uiKind: (InitData as any).uiKind === 2 ? UIKind.Web : UIKind.Desktop,
 		isNewAppInstall: (InitData as any).isNewAppInstall === true,
 		isBuilt: InitData.quality !== "development",
 		get logLevel() {

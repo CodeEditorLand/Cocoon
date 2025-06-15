@@ -14,7 +14,10 @@ import type {
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
-import { AuthenticationProviderExistsError } from "./Error.js";
+import {
+	AuthenticationProviderExistsError,
+	AuthenticationProviderRegistrationError,
+} from "./Error.js";
 import type Service from "./Service.js";
 import { ConvertSessionToInternal, ConvertSessionToVSCode } from "./Type.js";
 
@@ -61,11 +64,15 @@ export default Effect.gen(function* () {
 			});
 		});
 
-	IPC.RegisterInvokeHandler("$createSession", ([ID, Scopes]) =>
-		Effect.runPromise(CreateSession(ID, Scopes)),
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler("$createSession", ([ID, Scopes]) =>
+			Effect.runPromise(CreateSession(ID, Scopes)),
+		),
 	);
-	IPC.RegisterInvokeHandler("$removeSession", ([ID, SessionID]) =>
-		Effect.runPromise(RemoveSession(ID, SessionID)),
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler("$removeSession", ([ID, SessionID]) =>
+			Effect.runPromise(RemoveSession(ID, SessionID)),
+		),
 	);
 
 	// --- Service Implementation ---
@@ -88,6 +95,7 @@ export default Effect.gen(function* () {
 						Error,
 					),
 				),
+				Effect.mapError((e) => new Error(String(e))),
 			),
 
 		ListSessions: (RequestingExtension, ProviderID, Scopes) =>
@@ -103,6 +111,7 @@ export default Effect.gen(function* () {
 						Error,
 					),
 				),
+				Effect.mapError((e) => new Error(String(e))),
 				Effect.catchAll(() => Effect.succeed([])),
 			),
 
@@ -122,7 +131,14 @@ export default Effect.gen(function* () {
 					ID,
 					Label,
 					!!Options?.supportsMultipleAccounts,
-				]);
+				]).pipe(
+					Effect.mapError(
+						(cause) =>
+							new AuthenticationProviderRegistrationError({
+								cause,
+							}),
+					),
+				);
 
 				const Disposable: IDisposable = {
 					dispose: () => {

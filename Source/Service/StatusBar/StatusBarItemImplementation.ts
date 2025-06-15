@@ -10,6 +10,7 @@ import type {
 	AccessibilityInformation,
 	CancellationToken,
 	Command,
+	IDisposable,
 	MarkdownString,
 	ProviderResult,
 	StatusBarAlignment,
@@ -19,7 +20,7 @@ import type {
 
 import * as ExtHostTypes from "../../Type/ExtHostTypes.js";
 import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
-import * as TypeConverter from "../../TypeConverter/Main.js";
+import { StatusBar as StatusBarConverter } from "../../TypeConverter/StatusBar.js";
 import type IPCService from "../IPC/Service.js";
 
 export default class implements StatusBarItem {
@@ -181,11 +182,9 @@ export default class implements StatusBarItem {
 		// The update is a fire-and-forget notification to the host.
 		// A real CommandConverter would be injected.
 		const CommandConverterInstance = new CommandConverterDefinition(
-			() => undefined,
-			() => Promise.resolve(undefined),
-			() => undefined,
+			() => undefined, // LookupAPICommand placeholder
 		);
-		const DTO = TypeConverter.StatusBar.FromAPI(
+		const DTO = StatusBarConverter.FromAPI(
 			this,
 			this.EntryID,
 			CommandConverterInstance,

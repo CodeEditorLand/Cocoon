@@ -32,4 +32,4 @@ export default Effect.succeed({
 		Effect.logFatal(Message).pipe(
 			Effect.annotateLogs({ data: Data.length === 1 ? Data[0] : Data }),
 		),
-} satisfies Service);
+} satisfies Service["Type"]);

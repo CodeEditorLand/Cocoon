@@ -3,12 +3,12 @@
  * @description The live implementation of the WorkSpace service.
  */
 
-import { Context, Effect, Ref } from "effect";
+import { Effect, Ref } from "effect";
 import { Emitter } from "vs/base/common/event.js";
 import type { TextEditor, Uri, WorkspaceEdit, WorkspaceFolder } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
-import * as WorkSpaceEditConverter from "../../TypeConverter/WorkSpaceEdit.js";
+import { default as WorkSpaceEditConverter } from "../../TypeConverter/WorkSpaceEdit.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import ConfigurationService from "../Configuration/Service.js";
 import DocumentService from "../Document/Service.js";
@@ -41,67 +41,71 @@ export default Effect.gen(function* () {
 	const { event: onDidChangeVisibleTextEditors, Fire: fireVisible } =
 		CreateEventStream<readonly TextEditor[]>();
 
-	IPC.RegisterInvokeHandler(
-		"$acceptWorkspaceData",
-		([data]): Promise<void> =>
-			Effect.gen(function* () {
-				const OldWorkSpace = yield* Ref.get(InternalWorkSpaceRef);
-				const NewWorkSpace = new InternalWorkSpace(
-					data.id,
-					data.name,
-					data.folders.map((f: any) =>
-						TypeConverter.WorkspaceFolder.fromDTO(f),
-					),
-					data.configuration
-						? TypeConverter.URI.ToAPI(data.configuration)
-						: undefined,
-				);
-				yield* Ref.set(InternalWorkSpaceRef, NewWorkSpace);
-
-				const oldFolders: readonly WorkspaceFolder[] =
-					OldWorkSpace?.Folders ?? [];
-				const newFolders = NewWorkSpace.Folders;
-
-				const added = newFolders.filter(
-					(f) =>
-						!oldFolders.some(
-							(of) => of.uri.toString() === f.uri.toString(),
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler(
+			"$acceptWorkspaceData",
+			([data]): Promise<void> =>
+				Effect.gen(function* () {
+					const OldWorkSpace = yield* Ref.get(InternalWorkSpaceRef);
+					const NewWorkSpace = new InternalWorkSpace(
+						data.id,
+						data.name,
+						data.folders.map((f: any) =>
+							TypeConverter.WorkspaceFolder.fromDTO(f),
 						),
-				);
-				const removed = oldFolders.filter(
-					(f) =>
-						!newFolders.some(
-							(nf) => nf.uri.toString() === f.uri.toString(),
-						),
-				);
+						data.configuration
+							? TypeConverter.URI.ToAPI(data.configuration)
+							: undefined,
+					);
+					yield* Ref.set(InternalWorkSpaceRef, NewWorkSpace);
 
-				if (added.length > 0 || removed.length > 0) {
-					OnDidChangeFoldersEvent.fire({ added, removed });
-				}
-			}).pipe(Effect.runPromise),
+					const oldFolders: readonly WorkspaceFolder[] =
+						OldWorkSpace?.Folders ?? [];
+					const newFolders = NewWorkSpace.Folders;
+
+					const added = newFolders.filter(
+						(f) =>
+							!oldFolders.some(
+								(of) => of.uri.toString() === f.uri.toString(),
+							),
+					);
+					const removed = oldFolders.filter(
+						(f) =>
+							!newFolders.some(
+								(nf) => nf.uri.toString() === f.uri.toString(),
+							),
+					);
+
+					if (added.length > 0 || removed.length > 0) {
+						OnDidChangeFoldersEvent.fire({ added, removed });
+					}
+				}).pipe(Effect.runPromise),
+		),
 	);
 
-	IPC.RegisterInvokeHandler(
-		"$acceptEditorState",
-		([activeEditorId, visibleEditorIds]): Promise<void> =>
-			Effect.gen(function* () {
-				const editors = yield* Ref.get(TextEditorsMap);
-				const newActive = activeEditorId
-					? editors.get(activeEditorId)
-					: undefined;
-				const newVisible = visibleEditorIds
-					.map((id: string) => editors.get(id))
-					.filter(Boolean);
+	yield* Effect.sync(() =>
+		IPC.RegisterInvokeHandler(
+			"$acceptEditorState",
+			([activeEditorId, visibleEditorIds]): Promise<void> =>
+				Effect.gen(function* () {
+					const editors = yield* Ref.get(TextEditorsMap);
+					const newActive = activeEditorId
+						? editors.get(activeEditorId)
+						: undefined;
+					const newVisible = visibleEditorIds
+						.map((id: string) => editors.get(id))
+						.filter(Boolean);
 
-				yield* Ref.set(ActiveTextEditorRef, newActive);
-				yield* Ref.set(
-					VisibleTextEditorsRef,
-					newVisible as TextEditor[],
-				);
+					yield* Ref.set(ActiveTextEditorRef, newActive);
+					yield* Ref.set(
+						VisibleTextEditorsRef,
+						newVisible as TextEditor[],
+					);
 
-				yield* fireActive(newActive);
-				yield* fireVisible(newVisible as TextEditor[]);
-			}).pipe(Effect.runPromise),
+					yield* fireActive(newActive);
+					yield* fireVisible(newVisible as TextEditor[]);
+				}).pipe(Effect.runPromise),
+		),
 	);
 
 	const ServiceImplementation: Service["Type"] = {

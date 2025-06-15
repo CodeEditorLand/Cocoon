@@ -20,8 +20,6 @@ import type {
 	WorkspaceFoldersChangeEvent,
 } from "vscode";
 
-import type ConfigurationService from "../Configuration/Service.js";
-
 export default class WorkSpaceService extends Context.Tag("Service/WorkSpace")<
 	WorkSpaceService,
 	{
@@ -47,7 +45,7 @@ export default class WorkSpaceService extends Context.Tag("Service/WorkSpace")<
 		readonly getConfiguration: (
 			section?: string,
 			scope?: any,
-		) => Effect.Effect<WorkspaceConfiguration, Error, ConfigurationService>;
+		) => Effect.Effect<WorkspaceConfiguration, Error>;
 
 		readonly applyEdit: (edit: WorkspaceEdit) => Promise<boolean>;
 

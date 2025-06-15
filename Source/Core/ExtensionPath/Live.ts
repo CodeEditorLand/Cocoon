@@ -17,7 +17,7 @@ const Live = Layer.effect(
 	Service,
 	Effect.map(
 		InitDataService,
-		(InitData) => new Definition(InitData.extensions),
+		(InitData) => new Definition(InitData.extensions.allExtensions),
 	),
 );
 

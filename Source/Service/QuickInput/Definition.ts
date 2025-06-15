@@ -12,7 +12,7 @@ import type {
 	QuickPickOptions,
 } from "vscode";
 
-import * as QuickInputConverter from "../../TypeConverter/QuickInput.js";
+import { QuickInput as QuickInputConverter } from "../../TypeConverter/QuickInput.js";
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
 
@@ -36,11 +36,9 @@ export default Effect.gen(function* () {
 
 			const IPCOptions = {
 				...Option,
-				items: QuickInputConverter.QuickPick.SerializeItems(
-					ResolvedItems,
-				),
-				buttons: QuickInputConverter.QuickPick.SerializeButtons(
-					Option.buttons,
+				items: QuickInputConverter.SerializeItems(ResolvedItems),
+				buttons: QuickInputConverter.SerializeButtons(
+					(Option as any).buttons,
 				),
 			};
 
@@ -50,6 +48,7 @@ export default Effect.gen(function* () {
 				Effect.catchIf(isCancellationError, () =>
 					Effect.succeed(undefined),
 				),
+				Effect.mapError((cause) => new Error(String(cause))),
 			);
 
 			if (Option?.canPickMany) {
@@ -79,8 +78,8 @@ export default Effect.gen(function* () {
 
 			const IPCOptions = {
 				...Option,
-				buttons: QuickInputConverter.QuickPick.SerializeButtons(
-					Option?.buttons,
+				buttons: QuickInputConverter.SerializeButtons(
+					(Option as any)?.buttons,
 				),
 			};
 
@@ -90,18 +89,19 @@ export default Effect.gen(function* () {
 				Effect.catchIf(isCancellationError, () =>
 					Effect.succeed(undefined),
 				),
+				Effect.mapError((cause) => new Error(String(cause))),
 			);
 		});
 
 	const ServiceImplementation: Service["Type"] = {
-		ShowQuickPick,
-		ShowInputBox,
-		CreateQuickPick: () => {
+		showQuickPick: ShowQuickPick,
+		showInputBox: ShowInputBox,
+		createQuickPick: () => {
 			throw new Error(
 				"Controller-based QuickPick is not implemented in Cocoon.",
 			);
 		},
-		CreateInputBox: () => {
+		createInputBox: () => {
 			throw new Error(
 				"Controller-based InputBox is not implemented in Cocoon.",
 			);

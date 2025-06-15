@@ -6,7 +6,11 @@
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
-import { Task as ExtHostTask, ProcessExecution } from "../Type/ExtHostTypes.js";
+import {
+	Task as ExtHostTask,
+	ProcessExecution,
+	type Task,
+} from "../Type/ExtHostTypes.js";
 
 const FromAPI = (
 	TaskToConvert: VSCode.Task,
@@ -18,8 +22,8 @@ const FromAPI = (
 	const Result: any = {
 		_id: (TaskToConvert as any)._id,
 		definition: {
-			type: Definition.type,
 			...Definition,
+			type: Definition.type,
 		},
 		name: TaskToConvert.name,
 		source: {

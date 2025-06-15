@@ -7,7 +7,9 @@
 import { Effect, Ref } from "effect";
 import { Disposable } from "vscode";
 
-import type IPCService from "../IPC/Service.js";
+import { Live as IPCLive } from "../IPC.js";
+import type IPCConfigurationService from "../IPC/Configuration.js";
+import IPCService from "../IPC/Service.js";
 
 let HandleCounter = 0;
 
@@ -24,31 +26,32 @@ let HandleCounter = 0;
  */
 const RegisterProvider = <T>(
 	Registry: Ref.Ref<Map<number, T>>,
-	IPC: IPCService,
-	RPCRegisterMethod: string,
 	Data: T,
-): Effect.Effect<Disposable, never> => {
-	return Effect.sync(() => {
+): Effect.Effect<Disposable, never, IPCService> => {
+	return Effect.gen(function* () {
+		const IPC = yield* IPCService;
 		const Handle = ++HandleCounter;
-		Effect.runSync(Ref.update(Registry, (Map) => Map.set(Handle, Data)));
-		Effect.runFork(
-			IPC.SendNotification(RPCRegisterMethod, [
-				Handle,
-				(Data as any).Type, // Assumes the data object has a 'type' property (e.g., debug type)
-			]),
-		);
+		yield* Ref.update(Registry, (Map) => Map.set(Handle, Data));
+		yield* IPC.SendNotification("$registerDebugConfigurationProvider", [
+			Handle,
+			(Data as any).Type, // Assumes the data object has a 'type' property (e.g., debug type)
+		]);
 
 		return new Disposable(() => {
-			const CleanupEffect = Ref.update(
-				Registry,
-				(Map) => (Map.delete(Handle), Map),
-			).pipe(
-				Effect.flatMap(() => {
-					const RPCUnregisterMethod = `$unregister${RPCRegisterMethod.slice(1)}`; // e.g., $register... -> $unregister...
-					return IPC.SendNotification(RPCUnregisterMethod, [Handle]);
-				}),
-			);
-			Effect.runFork(CleanupEffect);
+			const CleanupEffect = Effect.gen(function* () {
+				const IPC = yield* IPCService;
+				yield* Ref.update(Registry, (Map) => (Map.delete(Handle), Map));
+				const RPCUnregisterMethod =
+					"$unregisterDebugConfigurationProvider";
+				yield* IPC.SendNotification(RPCUnregisterMethod, [Handle]);
+			});
+
+			Effect.runFork(
+				Effect.provide(
+					CleanupEffect,
+					IPCLive({} as IPCConfigurationService),
+				),
+			); // Provide necessary services if needed.
 		});
 	});
 };
