@@ -60,7 +60,7 @@ export default Effect.gen(function* () {
 			return null;
 		});
 
-	const HostKindPickerImplementation: Service = {
+	const HostKindPickerImplementation: Service["Type"] = {
 		PickHostKind,
 	};
 

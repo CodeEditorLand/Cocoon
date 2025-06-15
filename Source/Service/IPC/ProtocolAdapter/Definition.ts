@@ -52,7 +52,7 @@ export default Effect.gen(function* () {
 			Effect.asVoid,
 		);
 
-	const ProtocolAdapterImplementation: Service = {
+	const ProtocolAdapterImplementation: Service["Type"] = {
 		/**
 		 * The `send` method must be synchronous according to the VS Code API.
 		 * Therefore, we fork the `Send` Effect to run in the background without

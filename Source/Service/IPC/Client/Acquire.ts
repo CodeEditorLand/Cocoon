@@ -6,17 +6,10 @@
 
 import * as Path from "node:path";
 import * as GRPC from "@grpc/grpc-js";
-import {
-	loadPackageDefinition,
-	type GrpcObject,
-	type PackageDefinition,
-	type ServiceClientConstructor,
-} from "@grpc/proto-loader";
+import * as protoLoader from "@grpc/proto-loader";
 import { Effect } from "effect";
 
-import ConfigurationService from "../Configuration.js";
 import { gRPCConnectionError } from "../Error.js";
-import Generated from "../Generated.js";
 import Release from "./Release.js";
 import type Service from "./Service.js";
 
@@ -25,20 +18,19 @@ import type Service from "./Service.js";
  */
 const LoadProtoDefinition = (
 	ProtoPath: string,
-): Effect.Effect<PackageDefinition, gRPCConnectionError> => {
+): Effect.Effect<protoLoader.PackageDefinition, gRPCConnectionError> => {
 	return Effect.tryPromise({
 		try: () =>
-			loadPackageDefinition({
-				path: ProtoPath,
+			protoLoader.load(ProtoPath, {
 				keepCase: true,
 				longs: String,
 				enums: String,
 				defaults: true,
 				oneofs: true,
 			}),
-		catch: (cause) =>
+		catch: (Cause) =>
 			new gRPCConnectionError({
-				Cause: cause,
+				Cause,
 				Context: "ProtoLoadFailed",
 			}),
 	});
@@ -49,24 +41,24 @@ const LoadProtoDefinition = (
  * package definition.
  */
 const CreateClientInstance = (
-	PackageDefinition: GrpcObject,
+	PackageDefinition: GRPC.GrpcObject,
 	ServerAddress: string,
 ): Effect.Effect<Service, gRPCConnectionError> => {
 	return Effect.try({
 		try: () => {
-			const Proto = (
-				GRPC.loadPackageDefinition(PackageDefinition as any) as any
-			).vine_ipc as GrpcObject;
-			const ClientConstructor =
-				Proto.MountainService as ServiceClientConstructor;
+			const Proto = (PackageDefinition as any)
+				.vine_ipc as GRPC.GrpcObject;
+			const ClientConstructor = Proto[
+				"MountainService"
+			] as GRPC.ServiceClientConstructor;
 			return new ClientConstructor(
 				ServerAddress,
 				GRPC.credentials.createInsecure(),
-			) as Service;
+			) as unknown as Service;
 		},
-		catch: (cause) =>
+		catch: (Cause) =>
 			new gRPCConnectionError({
-				Cause: cause,
+				Cause,
 				Context: "ClientInstantiationFailed",
 			}),
 	});
@@ -105,8 +97,9 @@ export default Effect.acquireRelease(
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
 		const Definition = yield* LoadProtoDefinition(ProtoPath);
+		const GrpcObject = GRPC.loadPackageDefinition(Definition);
 		const Client = yield* CreateClientInstance(
-			Definition as GrpcObject,
+			GrpcObject,
 			Config.MountainAddress,
 		);
 

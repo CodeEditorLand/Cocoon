@@ -26,7 +26,7 @@ export default class implements Webview {
 
 	constructor(
 		public readonly Handle: string, // A unique ID for this webview instance
-		private readonly IPC: IPCService,
+		private readonly IPC: IPCService["Type"],
 		private readonly Extension: IExtensionDescription,
 		InitialOptions: WebviewOptions,
 	) {

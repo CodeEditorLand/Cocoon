@@ -4,7 +4,6 @@
  */
 
 import { Effect, Ref } from "effect";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type {
 	Breakpoint,
 	DebugConfiguration,
@@ -64,7 +63,7 @@ export default Effect.gen(function* () {
 	);
 
 	// --- Service Implementation ---
-	const DebugImplementation: Service = {
+	const DebugImplementation: Service["Type"] = {
 		onDidChangeActiveDebugSession: OnDidChangeActiveDebugSessionEvent.event,
 		onDidStartDebugSession: OnDidStartDebugSessionEvent.event,
 		onDidReceiveDebugSessionCustomEvent:

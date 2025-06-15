@@ -73,6 +73,6 @@ export default Effect.gen(function* () {
 			return yield* new ModuleNotShimmedError({ ModuleName: Request });
 		});
 
-	const NodeModuleShimImplementation: Service = { Load };
+	const NodeModuleShimImplementation: Service["Type"] = { Load };
 	return NodeModuleShimImplementation;
 });

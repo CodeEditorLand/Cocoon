@@ -49,7 +49,7 @@ export default Effect.gen(function* () {
 		},
 	);
 
-	const StorageImplementation: Service = {
+	const StorageImplementation: Service["Type"] = {
 		CreateMemento: (ExtensionID: string, IsGlobal: boolean) => {
 			const CacheKey = `${IsGlobal ? "global" : "workspace"}:${ExtensionID}`;
 			const Cached = Effect.runSync(

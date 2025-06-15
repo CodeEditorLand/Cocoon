@@ -1,11 +1,3 @@
-/*
- * File: Cocoon/Source/Configuration/ESBuild/Cocoon.ts
- * Responsibility: Configures the JavaScript bundling process for the VS Code platform code using ESBuild, ensuring proper output for the Cocoon sidecar to execute extensions in the Node.js extension host environment.
- * Modified: 2025-06-07 05:37:45 UTC
- * Dependency: esbuild
- * Export: Clean, On
- */
-
 import type { BuildOptions } from "esbuild";
 
 export const On =

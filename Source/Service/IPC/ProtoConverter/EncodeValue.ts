@@ -35,7 +35,7 @@ const EncodeValue = (
 		},
 		catch: (cause) =>
 			new ProtoSerializationError({
-				Cause: cause,
+				cause,
 				Direction: "Encoding",
 			}),
 	});

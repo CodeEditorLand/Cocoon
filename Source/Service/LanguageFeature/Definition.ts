@@ -24,13 +24,7 @@ import {
 import type Service from "./Service.js";
 
 export default Effect.gen(function* () {
-	// Each provider type would have its own Ref holding a Map of registrations.
-	const HoverProviderRegistry = yield* Ref.make(new Map());
-	const CompletionProviderRegistry = yield* Ref.make(new Map());
-	const DefinitionProviderRegistry = yield* Ref.make(new Map());
-	const CodeActionProviderRegistry = yield* Ref.make(new Map());
-
-	const LanguageFeatureImplementation: Service = {
+	const LanguageFeatureImplementation: Service["Type"] = {
 		// Each register method would add the provider to the appropriate map and
 		// return a disposable to remove it.
 		RegisterHoverProvider: (

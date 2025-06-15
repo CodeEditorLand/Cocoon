@@ -89,7 +89,7 @@ export default Effect.gen(function* () {
 			);
 		});
 
-	const RequireInterceptorImplementation: Service = {
+	const RequireInterceptorImplementation: Service["Type"] = {
 		Install,
 	};
 

@@ -7,7 +7,7 @@
 import { Effect } from "effect";
 
 import ExitPreventedError from "./Error/ExitPreventedError.js";
-import ProcessPatchService from "./ProcessPatch/Service.js";
+import ProcessPatchService from "./Service.js";
 
 /**
  * An Effect that replaces the global `process.exit` function with a controlled version.

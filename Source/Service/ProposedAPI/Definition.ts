@@ -74,7 +74,7 @@ export default Effect.gen(function* () {
 		`Proposed API provider initialized. Globally enabled: ${AllGlobalAPIs.size}. Per-extension configs: ${HashMap.size(ReadonlyExtensionAPIs)}.`,
 	);
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		IsEnabled: (ExtensionID, ProposalName) => {
 			if (AllGlobalAPIs.has(ProposalName)) {
 				return true;

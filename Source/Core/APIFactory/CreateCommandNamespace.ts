@@ -17,7 +17,7 @@ import type CommandService from "../../Service/Command/Service.js";
  * @returns An object that implements the `vscode.commands` API.
  */
 const CreateCommandNamespace = (
-	CommandService: CommandService,
+	CommandService: CommandService["Type"],
 	ExtensionDescription: IExtensionDescription,
 ): typeof VSCode.commands => {
 	return {

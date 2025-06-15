@@ -8,18 +8,17 @@
 import { Effect } from "effect";
 import type {
 	AccessibilityInformation,
+	CancellationToken,
 	Command,
 	MarkdownString,
+	ProviderResult,
 	StatusBarAlignment,
 	StatusBarItem,
 	ThemeColor,
 } from "vscode";
 
 import * as ExtHostTypes from "../../Type/ExtHostTypes.js";
-import {
-	Definition as CommandConverterDefinition,
-	Type as CommandConverterType,
-} from "../../TypeConverter/Command.js";
+import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import type IPCService from "../IPC/Service.js";
 
@@ -41,7 +40,7 @@ export default class implements StatusBarItem {
 
 	constructor(
 		private readonly EntryID: string, // Internal unique ID for IPC
-		private readonly IPC: IPCService,
+		private readonly IPC: IPCService["Type"],
 		private readonly OnDidDispose: () => void,
 		InitialID: string,
 		InitialAlignment: StatusBarAlignment,
@@ -51,6 +50,13 @@ export default class implements StatusBarItem {
 		this._alignment = InitialAlignment;
 		this._priority = InitialPriority;
 	}
+	tooltip2:
+		| string
+		| MarkdownString
+		| ((
+				token: CancellationToken,
+		  ) => ProviderResult<string | MarkdownString | undefined>)
+		| undefined;
 
 	// --- Getters and Setters that trigger IPC updates ---
 	get id(): string {

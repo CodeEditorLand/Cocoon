@@ -102,7 +102,7 @@ export default Effect.gen(function* () {
 			Effect.asVoid,
 		);
 
-	const IPCImplementation: Service = {
+	const IPCImplementation: Service["Type"] = {
 		SendRequest,
 		SendNotification,
 		SendCancel: Dispatcher.CancelOperation,

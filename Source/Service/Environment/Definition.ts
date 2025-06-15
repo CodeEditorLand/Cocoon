@@ -68,7 +68,7 @@ export default Effect.gen(function* () {
 	const TelemetryLevelValue =
 		(InitData.telemetryInfo as any).telemetryLevel ?? TelemetryLevel.NONE;
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		appName: InitData.environment.appName || "Cocoon Editor",
 		appRoot: GetAppRoot(),
 		appHost: InitData.environment.appHost || "desktop",

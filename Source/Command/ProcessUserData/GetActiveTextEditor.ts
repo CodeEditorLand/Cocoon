@@ -5,7 +5,7 @@
  */
 
 import { Effect, Option } from "effect";
-import type * as VSCode from "vscode";
+import type { TextEditor } from "vs/workbench/api/common/extHostTypes.js";
 
 import WindowService from "../../Service/Window/Service.js";
 
@@ -15,7 +15,7 @@ import WindowService from "../../Service/Window/Service.js";
  * will be `None` if no editor is active, and `Some` otherwise.
  */
 const GetActiveTextEditor: Effect.Effect<
-	Option.Option<VSCode.TextEditor>,
+	Option.Option<TextEditor>,
 	never,
 	WindowService
 > = Effect.gen(function* () {

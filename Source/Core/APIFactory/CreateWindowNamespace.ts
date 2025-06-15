@@ -30,11 +30,11 @@ import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
  * @returns An object that implements the `vscode.window` API.
  */
 const CreateWindowNamespace = (
-	Window: WindowService,
-	WorkSpace: WorkSpaceService,
-	StatusBar: StatusBarService,
-	WebViewPanel: WebViewPanelService,
-	TreeView: TreeViewService,
+	Window: WindowService["Type"],
+	WorkSpace: WorkSpaceService["Type"],
+	StatusBar: StatusBarService["Type"],
+	WebViewPanel: WebViewPanelService["Type"],
+	TreeView: TreeViewService["Type"],
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
 ): typeof VSCode.window => {
@@ -59,7 +59,7 @@ const CreateWindowNamespace = (
 		},
 		get activeColorTheme() {
 			// Stub: Would be provided by a ThemeService
-			return { kind: 1 }; // Light
+			return { kind: 1 as VSCode.ColorThemeKind.Light };
 		},
 
 		// --- Events ---

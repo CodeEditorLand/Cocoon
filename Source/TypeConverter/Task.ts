@@ -6,7 +6,7 @@
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
-import { ProcessExecution, Task } from "../Type/ExtHostTypes.js";
+import { Task as ExtHostTask, ProcessExecution } from "../Type/ExtHostTypes.js";
 
 const FromAPI = (
 	TaskToConvert: VSCode.Task,
@@ -55,7 +55,7 @@ const ToAPI = (DTO: any /* ITaskDTO */): VSCode.Task => {
 			)
 		: undefined;
 
-	const ConvertedTask = new Task(
+	const ConvertedTask = new ExtHostTask(
 		DTO.definition,
 		DTO.source.scope,
 		DTO.source.label,
@@ -81,4 +81,4 @@ const Execution = {
 	},
 };
 
-export default { FromAPI, ToAPI, Execution };
+export const Task = { FromAPI, ToAPI, Execution };

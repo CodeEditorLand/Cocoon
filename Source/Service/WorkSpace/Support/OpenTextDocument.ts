@@ -11,8 +11,8 @@ import type DocumentService from "../../Document/Service.js";
 import type IPCService from "../../IPC/Service.js";
 
 export default function (
-	IPC: IPCService,
-	Document: DocumentService,
+	IPC: IPCService["Type"],
+	Document: DocumentService["Type"],
 	options?: { language?: string; content?: string } | Uri,
 ): Effect.Effect<TextDocument, Error> {
 	return Effect.gen(function* () {

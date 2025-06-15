@@ -22,7 +22,7 @@ import type DebugService from "../../Service/Debug/Service.js";
  * @returns An object that implements the `vscode.debug` API.
  */
 const CreateDebugNamespace = (
-	Debug: DebugService,
+	Debug: DebugService["Type"],
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
 ): typeof VSCode.debug => {

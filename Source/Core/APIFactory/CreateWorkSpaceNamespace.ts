@@ -25,8 +25,8 @@ import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
  * @returns An object that implements the `vscode.workspace` API.
  */
 const CreateWorkSpaceNamespace = (
-	WorkSpace: WorkSpaceService,
-	Deprecation: APIDeprecationService,
+	WorkSpace: WorkSpaceService["Type"],
+	Deprecation: APIDeprecationService["Type"],
 	AsEvent: <T>(Event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
 ): typeof VSCode.workspace => {

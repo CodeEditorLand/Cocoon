@@ -4,11 +4,11 @@
  * translating between the rich API objects and their serializable DTOs for IPC.
  */
 
-import {
+import type {
+	IMarkerData,
+	IRelatedInformation,
 	MarkerSeverity,
-	type IMarkerData,
-	type IRelatedInformation,
-	type MarkerTag,
+	MarkerTag,
 } from "vs/platform/markers/common/markers.js";
 import type * as VSCode from "vscode";
 
@@ -16,8 +16,9 @@ import {
 	Diagnostic,
 	DiagnosticRelatedInformation,
 	Location,
+	Position,
 	Range,
-	VscDiagnosticSeverity,
+	DiagnosticSeverity as VscDiagnosticSeverity,
 } from "../Type/ExtHostTypes.js";
 import URIConverter from "./Main/URI.js";
 
@@ -107,7 +108,9 @@ const ToAPI = (MarkerDataDTO: IMarkerData): VSCode.Diagnostic => {
 	const diagnostic = new Diagnostic(
 		range,
 		MarkerDataDTO.message,
-		VscDiagnosticSeverity.fromMarkerSeverity(MarkerDataDTO.severity),
+		VscDiagnosticSeverity.fromMarkerSeverity(
+			MarkerDataDTO.severity as MarkerSeverity,
+		),
 	);
 	diagnostic.source = MarkerDataDTO.source;
 	diagnostic.code =

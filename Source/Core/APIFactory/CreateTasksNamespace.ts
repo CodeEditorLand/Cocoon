@@ -22,7 +22,7 @@ import type TaskService from "../../Service/Task/Service.js";
  * @returns An object that implements the `vscode.tasks` API.
  */
 const CreateTasksNamespace = (
-	Task: TaskService,
+	Task: TaskService["Type"],
 	AsEvent: <T>(Event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
 ): typeof VSCode.tasks => {

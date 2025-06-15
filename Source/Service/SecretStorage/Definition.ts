@@ -17,7 +17,7 @@ export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
 	const Log = yield* LogService;
 
-	const SecretStorageFactoryImplementation: Service = {
+	const SecretStorageFactoryImplementation: Service["Type"] = {
 		CreateStorage: (ExtensionID: string) => {
 			Effect.runSync(
 				Log.Debug(

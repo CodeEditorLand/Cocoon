@@ -7,9 +7,8 @@
  */
 
 import * as NodeOs from "node:os";
+import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import type { Uri } from "vscode";
-
-import type InitDataService from "../../../Service/InitData/Service.js";
 
 /**
  * Creates the shim object for the `os` module.
@@ -22,8 +21,8 @@ import type InitDataService from "../../../Service/InitData/Service.js";
  * @param InitData The initial data payload from the `Mountain` host.
  * @returns A shim object that implements a safe subset of the `os` module's API.
  */
-const CreateOsShim = (InitData: InitDataService) => {
-	const IsWindows = InitData.environment.isWindows;
+const CreateOsShim = (InitData: IExtensionHostInitData) => {
+	const IsWindows = InitData.environment.isExtensionDevelopmentDebug;
 	const UserHome = InitData.environment.userHome as Uri;
 
 	const OsShim = {
@@ -38,7 +37,7 @@ const CreateOsShim = (InitData: InitDataService) => {
 			process.env["HOME"] ||
 			process.env["USERPROFILE"] ||
 			"",
-		hostname: () => InitData.environment.hostname || "localhost",
+		hostname: () => InitData.environment.appName || "localhost",
 		loadavg: () => NodeOs.loadavg(),
 		networkInterfaces: () => NodeOs.networkInterfaces(),
 		release: () => NodeOs.release(),

@@ -5,8 +5,13 @@
  */
 
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type { IWebviewExtensionDescription } from "vs/workbench/contrib/webview/common/webview.js";
 import type * as VSCode from "vscode";
+
+// This type is not directly available, so we define a compatible shape.
+interface IWebviewExtensionDescription {
+	readonly id: IExtensionDescription["identifier"];
+	readonly location: IExtensionDescription["extensionLocation"];
+}
 
 /**
  * Extracts the necessary identification and location information from an

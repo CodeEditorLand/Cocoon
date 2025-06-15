@@ -25,7 +25,7 @@ import type LogService from "../../Service/Log/Service.js";
  */
 const AsExtensionEvent = <T>(
 	ExtensionID: ExtensionIdentifier,
-	Log: LogService,
+	Log: LogService["Type"],
 	ActualEvent: VSCode.Event<T>,
 ): VSCode.Event<T> => {
 	// Return a new event subscription function.

@@ -21,7 +21,7 @@ import type LanguageFeatureService from "../../Service/LanguageFeature/Service.j
  * @returns An object that implements the `vscode.languages` API.
  */
 const CreateLanguagesNamespace = (
-	LanguageFeature: LanguageFeatureService,
+	LanguageFeature: LanguageFeatureService["Type"],
 	Extension: IExtensionDescription,
 ): typeof VSCode.languages => {
 	return {

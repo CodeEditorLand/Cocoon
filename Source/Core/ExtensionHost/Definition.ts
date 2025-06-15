@@ -5,8 +5,12 @@
  */
 
 import { Effect, Ref } from "effect";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import type {
+	ExtensionIdentifier,
+	IExtensionDescription,
+} from "vs/platform/extensions/common/extensions.js";
 import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+import type { ExtensionContext } from "vscode";
 
 import InitDataService from "../../Service/InitData/Service.js";
 import IPCService from "../../Service/IPC/Service.js";
@@ -22,7 +26,6 @@ import type { ActivatedExtension } from "./State.js";
 export default Effect.gen(function* () {
 	const Log = yield* LogService;
 	const IPC = yield* IPCService;
-	const APIFactory = yield* APIFactoryService;
 	const InitData = yield* InitDataService;
 
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
@@ -81,7 +84,7 @@ export default Effect.gen(function* () {
 			});
 
 			// Create the extension context object that is passed to activate()
-			const Context: import("vscode").ExtensionContext = {
+			const Context: ExtensionContext = {
 				subscriptions: [],
 				extensionPath: Description.extensionLocation.fsPath,
 				extensionUri: Description.extensionLocation,
@@ -93,7 +96,7 @@ export default Effect.gen(function* () {
 				storagePath: undefined,
 				globalStoragePath: undefined,
 				logPath: undefined,
-				extension: undefined as any,
+				extension: undefined as any, // This will be set later
 				environmentVariableCollection: undefined as any,
 				asAbsolutePath: (path) => path,
 			};
@@ -172,7 +175,7 @@ export default Effect.gen(function* () {
 		);
 
 	const ActivateById = (
-		ID: import("vs/platform/extensions/common/extensions.js").ExtensionIdentifier,
+		ID: ExtensionIdentifier,
 		Reason: ExtensionActivationReason,
 	): Effect.Effect<void, Error> =>
 		Effect.gen(function* () {
@@ -203,7 +206,7 @@ export default Effect.gen(function* () {
 			),
 		);
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		ActivateById,
 		GetExtensionDescription: (ID) =>
 			Effect.succeed(ExtensionRegistry.getExtensionDescription(ID)),

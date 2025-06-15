@@ -124,7 +124,7 @@ export default Effect.gen(function* () {
 		return Object.freeze(API) as typeof VSCode;
 	};
 
-	const APIFactoryImplementation: Service = {
+	const APIFactoryImplementation: Service["Type"] = {
 		CreateAPI,
 	};
 

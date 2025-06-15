@@ -5,14 +5,15 @@
  */
 
 import { Effect } from "effect";
+import { Emitter } from "vs/base/common/event.js";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type {
 	Event,
-	ProviderResult,
 	TreeDataProvider,
 	TreeItem,
 	TreeView,
+	TreeViewActiveItemChangeEvent,
 	TreeViewExpansionEvent,
 	TreeViewSelectionChangeEvent,
 	TreeViewVisibilityChangeEvent,
@@ -21,8 +22,7 @@ import type {
 import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
 import { TreeView as TreeViewConverter } from "../../TypeConverter/TreeView.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
-import type CommandService from "../Command/Service.js";
-import type IPCService from "../IPC/Service.js";
+import IPCService from "../IPC/Service.js";
 
 export default class<T> implements TreeView<T> {
 	private readonly ElementToHandleMap = new Map<T, string>();
@@ -47,8 +47,7 @@ export default class<T> implements TreeView<T> {
 	constructor(
 		private readonly ViewID: string,
 		private readonly DataProvider: TreeDataProvider<T>,
-		private readonly IPC: IPCService,
-		private readonly CommandService: CommandService,
+		private readonly IPC: IPCService["Type"],
 		private readonly Extension: IExtensionDescription,
 	) {
 		this.onDidExpandElement = this.OnDidExpandElementEmitter.event;
@@ -96,7 +95,7 @@ export default class<T> implements TreeView<T> {
 				const Handle = this.GetHandleForElement(Element);
 				// A real CommandConverter would be injected.
 				const CommandConverter = new CommandConverterDefinition(
-					() => undefined,
+					() => undefined as any, // RegisterCommand placeholder
 					() => Promise.resolve(undefined),
 					() => undefined,
 				);
@@ -168,7 +167,7 @@ export default class<T> implements TreeView<T> {
 	description?: string;
 	badge?: { value: number; tooltip: string };
 	activeItem: T | undefined;
-	onDidChangeActiveItem: Event<T | undefined> = new Emitter<T | undefined>()
-		.event;
+	onDidChangeActiveItem: Event<TreeViewActiveItemChangeEvent<T>> =
+		new Emitter<TreeViewActiveItemChangeEvent<T>>().event;
 	onDidChangeCheckboxState: Event<any> = new Emitter<any>().event;
 }

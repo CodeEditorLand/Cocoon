@@ -5,7 +5,6 @@
 
 import { Effect, Ref } from "effect";
 import { RPCProtocol } from "vs/workbench/services/extensions/common/rpcProtocol.js";
-import type { Disposable } from "vscode";
 
 import CancellationService from "../../Cancellation/Service.js";
 import ProtocolAdapterService from "../ProtocolAdapter/Service.js";
@@ -57,7 +56,7 @@ export default Effect.gen(function* () {
 			}
 		});
 
-	const DispatcherImplementation: Service = {
+	const DispatcherImplementation: Service["Type"] = {
 		DispatchRequest,
 		DispatchNotification,
 		CancelOperation: Cancellation.CancelToken,

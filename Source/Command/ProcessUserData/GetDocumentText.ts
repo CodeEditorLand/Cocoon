@@ -4,7 +4,7 @@
  */
 
 import { Effect } from "effect";
-import type * as VSCode from "vscode";
+import type { TextDocument } from "vs/workbench/api/common/extHostTypes.js";
 
 /**
  * An Effect that gets the full text content of a given document.
@@ -12,7 +12,7 @@ import type * as VSCode from "vscode";
  * @returns An `Effect` that synchronously resolves to the document's text content.
  */
 const GetDocumentText = (
-	Document: VSCode.TextDocument,
+	Document: TextDocument,
 ): Effect.Effect<string, never, never> => {
 	return Effect.sync(() => Document.getText());
 };

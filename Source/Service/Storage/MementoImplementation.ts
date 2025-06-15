@@ -14,7 +14,7 @@ import type {
 } from "vscode";
 
 import CreateEventStream from "../../Utility/CreateEventStream.js";
-import type IPCService from "../IPC/Service.js";
+import IPCService from "../IPC/Service.js";
 import type LogService from "../Log/Service.js";
 
 enum MementoScope {
@@ -31,8 +31,8 @@ export default class implements Memento {
 	constructor(
 		private readonly ExtensionID: string,
 		IsGlobal: boolean,
-		private readonly IPC: IPCService,
-		private readonly Log: LogService,
+		private readonly IPC: IPCService["Type"],
+		private readonly Log: LogService["Type"],
 		InitialValue: object | undefined,
 	) {
 		this.Scope = IsGlobal ? MementoScope.GLOBAL : MementoScope.WORKSPACE;

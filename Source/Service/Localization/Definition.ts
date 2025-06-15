@@ -19,7 +19,7 @@ export default Effect.gen(function* () {
 	const InitData = yield* InitDataService;
 	const NlsCache = yield* Ref.make(new Map<string, Record<string, string>>());
 	const InitBarrier = yield* Barrier.make();
-	const { event, Fire, Shutdown } = CreateEventStream<void>();
+	const { event, Fire } = CreateEventStream<void>();
 
 	// Fork a background fiber that fires the event once the barrier is opened.
 	yield* Barrier.await(InitBarrier).pipe(
@@ -45,7 +45,7 @@ export default Effect.gen(function* () {
 		return { DefaultBundleURI, LanguageBundleURI };
 	};
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		GetBundle: (ExtensionID) =>
 			Ref.get(NlsCache).pipe(
 				Effect.map((cache) =>

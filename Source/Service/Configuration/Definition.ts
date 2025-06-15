@@ -35,7 +35,7 @@ export default Effect.gen(function* () {
 			}).pipe(Effect.runPromise),
 	);
 
-	const ConfigurationImplementation: Service = {
+	const ConfigurationImplementation: Service["Type"] = {
 		GetConfiguration: (Section, Scope) =>
 			IPC.SendRequest<object>("$getConfiguration", [Section, Scope]).pipe(
 				Effect.tap((NewConfig) => Ref.set(ConfigCache, NewConfig)),

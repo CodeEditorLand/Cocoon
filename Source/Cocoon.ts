@@ -50,7 +50,7 @@ const FullApplicationInitialization = Effect.gen(function* () {
  * The main application workflow, described as a single declarative Effect.
  */
 const Main = Effect.gen(function* () {
-	const InitializationBarrier = yield* Deferred.make<void, never>();
+	const InitializationBarrier = yield* Deferred.make<void>();
 
 	yield* RunProcessPatch;
 
@@ -77,7 +77,7 @@ const Main = Effect.gen(function* () {
 					ApplicationLayer,
 				);
 
-				yield* Deferred.succeed(InitializationBarrier, undefined);
+				yield* Deferred.succeed(InitializationBarrier);
 				return "initialized";
 			}).pipe(Effect.runPromise),
 	);
@@ -98,8 +98,8 @@ const Main = Effect.gen(function* () {
 // --- Application Layer Composition ---
 
 const ApplicationConfiguration: IPCConfigurationService = {
-	MountainAddress: process.env["MOUNTAIN_ADDR"] || "localhost:50051",
-	CocoonAddress: process.env["COCOON_ADDR"] || "localhost:50052",
+	MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
+	CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
 };
 
 // This layer contains all services needed before the handshake.

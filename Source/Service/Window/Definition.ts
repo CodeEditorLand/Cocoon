@@ -32,7 +32,7 @@ export default Effect.gen(function* () {
 		);
 	});
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		get state() {
 			return Effect.runSync(Ref.get(WindowStateRef));
 		},

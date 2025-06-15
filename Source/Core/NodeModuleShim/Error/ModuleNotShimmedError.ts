@@ -10,7 +10,9 @@ import { Data } from "effect";
  * An error indicating that an extension attempted to require a built-in Node.js
  * module for which no safe, sandboxed shim has been implemented.
  */
-export default class extends Data.TaggedError("ModuleNotShimmedError")<{
+export default class ModuleNotShimmedError extends Data.TaggedError(
+	"ModuleNotShimmedError",
+)<{
 	readonly ModuleName: string;
 }> {
 	constructor(Properties: { readonly ModuleName: string }) {

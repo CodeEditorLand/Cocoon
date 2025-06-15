@@ -74,9 +74,9 @@ const SetupGlobalAPIRetriever = (
 // An Effect that handles a single resolution request from the loader thread.
 const HandleResolveRequest = (
 	Message: { readonly ID: number; readonly ImportingModuleURL: string },
-	APIFactory: APIFactoryService,
-	ExtensionPath: ExtensionPathService,
-	Log: LogService,
+	APIFactory: APIFactoryService["Type"],
+	ExtensionPath: ExtensionPathService["Type"],
+	Log: LogService["Type"],
 	VSCodeAPICache: Ref.Ref<BidirectionalMap<object, string>>,
 	DataURICache: Ref.Ref<Map<string, string>>,
 	MainThreadPort: MessagePort,
@@ -209,6 +209,6 @@ export default Effect.gen(function* () {
 			Effect.scoped, // Ensures the finalizer is attached to a scope
 		);
 
-	const ESMInterceptorImplementation: Service = { Install };
+	const ESMInterceptorImplementation: Service["Type"] = { Install };
 	return ESMInterceptorImplementation;
 });

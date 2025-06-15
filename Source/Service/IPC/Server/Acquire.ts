@@ -6,27 +6,20 @@
 
 import * as Path from "node:path";
 import * as GRPC from "@grpc/grpc-js";
-import {
-	loadPackageDefinition,
-	type GrpcObject,
-	type PackageDefinition,
-} from "@grpc/proto-loader";
+import * as protoLoader from "@grpc/proto-loader";
 import { Effect } from "effect";
 
-import ConfigurationService from "../Configuration.js";
 import DispatcherService from "../Dispatcher/Service.js";
 import { gRPCConnectionError } from "../Error.js";
 import CreateServiceImplementation from "./CreateServiceImplementation.js";
 import Release from "./Release.js";
-import type Service from "./Service.js";
 
 const LoadProtoDefinition = (
 	ProtoPath: string,
-): Effect.Effect<PackageDefinition, gRPCConnectionError> => {
+): Effect.Effect<protoLoader.PackageDefinition, gRPCConnectionError> => {
 	return Effect.tryPromise({
 		try: () =>
-			loadPackageDefinition({
-				path: ProtoPath,
+			protoLoader.load(ProtoPath, {
 				keepCase: true,
 				longs: String,
 				enums: String,
@@ -35,14 +28,14 @@ const LoadProtoDefinition = (
 			}),
 		catch: (cause) =>
 			new gRPCConnectionError({
-				Cause: cause,
-				Context: "ProtoLoadFailed",
+				cause,
+				context: "ProtoLoadFailed",
 			}),
 	});
 };
 
 const StartServer = (
-	Server: Service,
+	Server: GRPC.Server,
 	ServerAddress: string,
 ): Effect.Effect<void, gRPCConnectionError> => {
 	return Effect.async<void, gRPCConnectionError>((Resume) => {
@@ -54,8 +47,8 @@ const StartServer = (
 					Resume(
 						Effect.fail(
 							new gRPCConnectionError({
-								Cause: Error,
-								Context: "ServerBindFailed",
+								cause: Error,
+								context: "ServerBindFailed",
 							}),
 						),
 					);
@@ -67,8 +60,8 @@ const StartServer = (
 						Resume(
 							Effect.fail(
 								new gRPCConnectionError({
-									Cause: CaughtError,
-									Context: "ServerStartFailed",
+									cause: CaughtError,
+									context: "ServerStartFailed",
 								}),
 							),
 						);
@@ -87,7 +80,7 @@ export default Effect.acquireRelease(
 
 		const Definition = yield* LoadProtoDefinition(ProtoPath);
 		const Proto = (GRPC.loadPackageDefinition(Definition) as any)
-			.vine_ipc as GrpcObject;
+			.vine_ipc as GRPC.GrpcObject;
 		const ServiceDefinition = (Proto.CocoonService as any).service;
 
 		const Server = new GRPC.Server();
@@ -99,7 +92,7 @@ export default Effect.acquireRelease(
 			`Cocoon gRPC server listening at ${Config.CocoonAddress}.`,
 		);
 
-		return Server as Service;
+		return Server;
 	}),
 	(Server) => Release(Server).pipe(Effect.orDie),
 );

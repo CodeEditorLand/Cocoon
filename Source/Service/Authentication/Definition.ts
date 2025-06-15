@@ -69,7 +69,7 @@ export default Effect.gen(function* () {
 	);
 
 	// --- Service Implementation ---
-	const AuthenticationImplementation: Service = {
+	const AuthenticationImplementation: Service["Type"] = {
 		GetSession: (RequestingExtension, ProviderID, Scopes, Options) =>
 			IPC.SendRequest<any | undefined>("$getSession", [
 				(RequestingExtension as Extension<any>).id,

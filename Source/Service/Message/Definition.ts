@@ -61,7 +61,7 @@ const ShowMessageEffect = (
 export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		ShowInformationMessage: (message, ...args) => {
 			const { Option, Items, Source } = ParseArgument(args);
 			return ShowMessageEffect(

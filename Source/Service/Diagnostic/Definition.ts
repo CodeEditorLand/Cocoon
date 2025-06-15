@@ -29,7 +29,7 @@ export default Effect.gen(function* () {
 		},
 	);
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		onDidChangeDiagnostics: event,
 
 		CreateDiagnosticCollection: (Name?: string) => {

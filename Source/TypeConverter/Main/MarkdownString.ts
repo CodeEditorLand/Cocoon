@@ -7,6 +7,7 @@ import type {
 	IMarkdownString,
 	MarkdownStringTrustedOptions,
 } from "vs/base/common/htmlContent.js";
+import type { URI } from "vs/base/common/uri.js";
 import type { MarkdownString as VscMarkdownString } from "vscode";
 
 import { MarkdownString } from "../../Type/ExtHostTypes.js";
@@ -21,6 +22,8 @@ const FromAPI = (
 ): IMarkdownString => ({
 	value: MarkdownStringInstance.value,
 	isTrusted: MarkdownStringInstance.isTrusted,
+	baseUri: MarkdownStringInstance.baseUri as unknown as URI,
+	supportHtml: MarkdownStringInstance.supportHtml,
 });
 
 /**
@@ -36,7 +39,8 @@ const ToAPI = (MarkdownStringDTO: IMarkdownString): VscMarkdownString => {
 			: (MarkdownStringDTO.isTrusted as MarkdownStringTrustedOptions)
 					?.enabled,
 	);
-	result.baseUri = MarkdownStringDTO.baseUri;
+	result.baseUri =
+		MarkdownStringDTO.baseUri as unknown as VscMarkdownString["baseUri"];
 	result.supportHtml = MarkdownStringDTO.supportHtml;
 	return result;
 };

@@ -17,14 +17,14 @@ export default Effect.gen(function* () {
 	const ExtensionHost = yield* ExtensionHostService;
 	const InitData = yield* InitDataService;
 
-	const { event: OnDidChangeEvent, Fire: FireOnDidChange } =
-		CreateEventStream<void>();
+	const { event: OnDidChangeEvent } = CreateEventStream<void>();
 	const AllExtensionsCache = yield* Ref.make<
 		readonly Extension<any>[] | undefined
 	>(undefined);
 
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		InitData.extensions,
+		InitData.extensions.allExtensions,
 	);
 
 	// In a real implementation, this would be driven by an event from the ExtensionHost
@@ -35,7 +35,7 @@ export default Effect.gen(function* () {
 	//   )
 	// ));
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		onDidChange: OnDidChangeEvent,
 
 		getExtension: <T>(extensionId: string) => {

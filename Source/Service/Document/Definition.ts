@@ -92,7 +92,7 @@ export default Effect.gen(function* () {
 		Effect.runPromise(AcceptModelChanged(Uri, Changes)),
 	);
 
-	const DocumentImplementation: Service = {
+	const DocumentImplementation: Service["Type"] = {
 		get TextDocuments() {
 			// This is a synchronous getter for API compatibility. It's safe for Ref.
 			return Array.from(Effect.runSync(Ref.get(DocumentMap)).values());

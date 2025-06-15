@@ -57,7 +57,7 @@ const CreateDialogEffect = <Option, DTO, Result>(
 export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
 
-	const DialogImplementation: Service = {
+	const DialogImplementation: Service["Type"] = {
 		ShowOpenDialog: (
 			Options?: OpenDialogOptions,
 			Token?: CancellationToken,

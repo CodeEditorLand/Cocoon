@@ -4,10 +4,10 @@
  * gRPC server.
  */
 
+import type * as GRPC from "@grpc/grpc-js";
 import { Effect } from "effect";
 
 import { IPCError } from "../Error.js";
-import type Service from "./Service.js";
 
 /**
  * An `Effect` that gracefully shuts down the gRPC server.
@@ -18,7 +18,7 @@ import type Service from "./Service.js";
  *
  * @param Server The gRPC server instance to shut down.
  */
-const Release = (Server: Service) => {
+const Release = (Server: GRPC.Server) => {
 	return Effect.tryPromise({
 		try: () =>
 			new Promise<void>((Resolve, Reject) =>

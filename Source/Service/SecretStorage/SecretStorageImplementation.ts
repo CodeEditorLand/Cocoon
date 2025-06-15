@@ -5,11 +5,11 @@
  * in the OS keychain.
  */
 
-import { Effect } from "effect";
+import { Context, Effect } from "effect";
 import type { Event, SecretStorage, SecretStorageChangeEvent } from "vscode";
 
 import CreateEventStream from "../../Utility/CreateEventStream.js";
-import type IPCService from "../IPC/Service.js";
+import IPCService from "../IPC/Service.js";
 import type LogService from "../Log/Service.js";
 import { EmptyKeyError, InvalidValueError } from "./Error.js";
 
@@ -20,8 +20,8 @@ export default class implements SecretStorage {
 
 	constructor(
 		private readonly ExtensionID: string,
-		private readonly IPC: IPCService,
-		private readonly Log: LogService,
+		private readonly IPC: IPCService["Type"],
+		private readonly Log: LogService["Type"],
 	) {
 		this.onDidChange = this.OnDidChangeEvent.event;
 		// A real implementation would need to listen to an IPC event from the host
@@ -30,7 +30,7 @@ export default class implements SecretStorage {
 
 	private CreateGetEffect(
 		Key: string,
-	): Effect.Effect<string | undefined, EmptyKeyError, IPCService> {
+	): Effect.Effect<string | undefined, EmptyKeyError> {
 		return Effect.gen(this, function* () {
 			if (!Key) {
 				return yield* new EmptyKeyError();
@@ -40,12 +40,11 @@ export default class implements SecretStorage {
 				[this.ExtensionID, Key],
 			);
 		}).pipe(
-			Effect.catchTag("EmptyKeyError", (Error) => Effect.fail(Error)),
-			Effect.catchAll((Error) =>
+			Effect.catchTag("IPCError", (Error) =>
 				this.Log.Error(
 					`SecretStorage.get failed for key '${Key}' in ext '${this.ExtensionID}'.`,
 					Error,
-				).pipe(Effect.flatMap(() => Effect.fail(Error as any))),
+				).pipe(Effect.flatMap(() => Effect.succeed(undefined))),
 			),
 		);
 	}
@@ -53,7 +52,7 @@ export default class implements SecretStorage {
 	private CreateStoreEffect(
 		Key: string,
 		Value: string,
-	): Effect.Effect<void, EmptyKeyError | InvalidValueError, IPCService> {
+	): Effect.Effect<void, EmptyKeyError | InvalidValueError> {
 		return Effect.gen(this, function* () {
 			if (!Key) {
 				return yield* new EmptyKeyError();
@@ -73,14 +72,14 @@ export default class implements SecretStorage {
 				this.Log.Error(
 					`SecretStorage.store failed for key '${Key}' in ext '${this.ExtensionID}'.`,
 					Error,
-				).pipe(Effect.flatMap(() => Effect.fail(Error as any))),
+				).pipe(Effect.flatMap(() => Effect.void)),
 			),
 		);
 	}
 
 	private CreateDeleteEffect(
 		Key: string,
-	): Effect.Effect<void, EmptyKeyError, IPCService> {
+	): Effect.Effect<void, EmptyKeyError> {
 		return Effect.gen(this, function* () {
 			if (!Key) {
 				return yield* new EmptyKeyError();
@@ -96,17 +95,32 @@ export default class implements SecretStorage {
 				this.Log.Error(
 					`SecretStorage.delete failed for key '${Key}' in ext '${this.ExtensionID}'.`,
 					Error,
-				).pipe(Effect.flatMap(() => Effect.fail(Error as any))),
+				).pipe(Effect.flatMap(() => Effect.void)),
 			),
 		);
 	}
 
 	get = (Key: string): Promise<string | undefined> =>
-		Effect.runPromise(this.CreateGetEffect(Key));
+		Effect.runPromise(
+			Effect.provide(
+				this.CreateGetEffect(Key),
+				Context.make(IPCService, this.IPC),
+			),
+		);
 
 	store = (Key: string, Value: string): Promise<void> =>
-		Effect.runPromise(this.CreateStoreEffect(Key, Value));
+		Effect.runPromise(
+			Effect.provide(
+				this.CreateStoreEffect(Key, Value),
+				Context.make(IPCService, this.IPC),
+			),
+		);
 
 	delete = (Key: string): Promise<void> =>
-		Effect.runPromise(this.CreateDeleteEffect(Key));
+		Effect.runPromise(
+			Effect.provide(
+				this.CreateDeleteEffect(Key),
+				Context.make(IPCService, this.IPC),
+			),
+		);
 }

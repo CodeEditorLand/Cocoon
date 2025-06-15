@@ -64,7 +64,7 @@ export default Effect.gen(function* () {
 			Effect.succeed(undefined).pipe(Effect.runPromise), // Stubbed
 	);
 
-	const WebViewPanelImplementationFactory: Service = {
+	const WebViewPanelImplementationFactory: Service["Type"] = {
 		CreateWebviewPanel: (
 			Extension: IExtensionDescription,
 			ViewType: string,

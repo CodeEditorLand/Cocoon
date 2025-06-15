@@ -36,7 +36,7 @@ const DecodeValue = (
 		},
 		catch: (cause) =>
 			new ProtoSerializationError({
-				Cause: cause,
+				cause: cause,
 				Direction: "Decoding",
 			}),
 	});

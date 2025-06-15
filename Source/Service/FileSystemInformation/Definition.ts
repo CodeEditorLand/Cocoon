@@ -93,7 +93,7 @@ export default Effect.gen(function* () {
 		).pipe(Effect.runPromise),
 	);
 
-	const FileSystemInformationImplementation: Service = {
+	const FileSystemInformationImplementation: Service["Type"] = {
 		ExtURI: ExtURIInstance,
 		GetCapabilities,
 		onDidChangeFile: event,

@@ -30,5 +30,12 @@ export default class ExtensionService extends Context.Tag("Service/Extension")<
 		 * All extensions are listed in this array.
 		 */
 		readonly all: readonly Extension<any>[];
+
+		/**
+		 * Activate an extension.
+		 * @param extensionId The extension identifier.
+		 * @returns A promise that resolves to the extension's exports.
+		 */
+		readonly activate: <T>(extensionId: string) => Promise<Extension<T>>;
 	}
 >() {}

@@ -10,7 +10,9 @@ import { Data } from "effect";
  * An error indicating that an extension attempted to require a built-in Node.js
  * module that is explicitly blocked by the host for security or stability reasons.
  */
-export default class extends Data.TaggedError("ModuleBlockedError")<{
+export default class ModuleBlockedError extends Data.TaggedError(
+	"ModuleBlockedError",
+)<{
 	readonly ModuleName: string;
 }> {
 	constructor(Properties: { readonly ModuleName: string }) {

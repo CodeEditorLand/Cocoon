@@ -4,7 +4,6 @@
  */
 
 import { Effect, Ref } from "effect";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Disposable, StatusBarAlignment } from "vscode";
 
 import IPCService from "../IPC/Service.js";
@@ -31,7 +30,7 @@ export default Effect.gen(function* () {
 		}).pipe(Effect.runPromise),
 	);
 
-	const StatusBarImplementation: Service = {
+	const StatusBarImplementation: Service["Type"] = {
 		CreateStatusBarItem: (Extension, ID, Alignment, Priority) =>
 			Effect.sync(() => {
 				const EntryID = `ext-statusbar-${EntryIDCounter++}`;

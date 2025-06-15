@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ActivationKind, ExtensionKind, Uri, type Extension } from "vscode";
+import { ExtensionKind, Uri, type Extension } from "vscode";
 
 import type ExtensionHostService from "../../Core/ExtensionHost/Service.js";
 

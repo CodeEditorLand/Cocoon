@@ -93,7 +93,7 @@ export default Effect.gen(function* () {
 			);
 		});
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		ShowQuickPick,
 		ShowInputBox,
 		CreateQuickPick: () => {

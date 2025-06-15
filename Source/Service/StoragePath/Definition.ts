@@ -42,7 +42,7 @@ export default Effect.gen(function* () {
 		return Uri.joinPath(BaseURI, ExtensionSubdirectory);
 	};
 
-	const StoragePathImplementation: Service = {
+	const StoragePathImplementation: Service["Type"] = {
 		GetWorkSpaceStorageURI: (Extension) =>
 			GetPathForExtension(WorkSpaceStorageURI, Extension),
 

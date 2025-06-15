@@ -17,7 +17,7 @@ import type IPCService from "../../IPC/Service.js";
  * @returns An `Effect` that resolves to the parsed JSON object, or an empty
  *   object if the file doesn't exist, is empty, or fails to parse.
  */
-export default function (IPC: IPCService, BundleURI: Uri) {
+export default function (IPC: IPCService["Type"], BundleURI: Uri) {
 	return IPC.SendRequest<string | null>("$fetchBundleContents", [
 		TypeConverter.URI.FromAPI(BundleURI),
 	]).pipe(

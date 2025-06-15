@@ -5,12 +5,9 @@
 
 import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable, type TextEditor, type TextEditorEdit } from "vscode";
+import { Disposable, type TextEditor } from "vscode";
 
-import {
-	Definition as CommandConverterDefinition,
-	Type as CommandConverterType,
-} from "../../TypeConverter/Command.js";
+import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
 import IPCService from "../IPC/Service.js";
 import TelemetryService from "../Telemetry/Service.js";
 import WorkSpaceService from "../WorkSpace/Service.js";
@@ -99,7 +96,7 @@ export default Effect.gen(function* () {
 		});
 	};
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		ExecuteCommand,
 
 		RegisterCommand: (ID, Handler, ThisArgument, Extension) => {

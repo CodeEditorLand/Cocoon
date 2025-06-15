@@ -104,7 +104,7 @@ export default Effect.gen(function* () {
 			}).pipe(Effect.runPromise),
 	);
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		get name() {
 			return Effect.runSync(
 				Ref.get(InternalWorkSpaceRef).pipe(

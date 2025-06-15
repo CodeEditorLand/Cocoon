@@ -7,16 +7,29 @@
 
 import { CancellationTokenSource as VscCancellationTokenSource } from "vs/base/common/cancellation.js";
 import { CancellationError as VscCancellationError } from "vs/base/common/errors.js";
-import * as Emitter from "vs/base/common/event.js";
+import { Emitter } from "vs/base/common/event.js";
 import * as Lifecycle from "vs/base/common/lifecycle.js";
 import { URI as VscURI } from "vs/base/common/uri.js";
-import * as VSCode from "vscode";
+import * as VscLanguages from "vs/editor/common/languages.js";
+import {
+	ConfigurationTarget,
+	EndOfLine,
+	ProgressLocation,
+	TextEditorCursorStyle,
+	ViewColumn,
+	SnippetString,
+	TreeItemCollapsibleState,
+	DiagnosticSeverity,
+	CompletionItemKind,
+	QuickPickItemKind,
+} from "vs/workbench/api/common/extHostTypes.js";
+import type * as VSCode from "vscode";
 
 // --- Foundational Re-exports ---
 export const Disposable = Lifecycle.Disposable;
 export const CancellationTokenSource = VscCancellationTokenSource;
 export const CancellationError = VscCancellationError;
-export const EventEmitter = Emitter.Emitter;
+export const EventEmitter = Emitter;
 export const URI = VscURI;
 
 // --- Core Classes ---
@@ -137,7 +150,40 @@ export class Range implements VSCode.Range {
 	readonly start: Position;
 	readonly end: Position;
 
-	constructor(start: Position, end: Position) {
+	constructor(start: Position, end: Position);
+	constructor(
+		startLine: number,
+		startCharacter: number,
+		endLine: number,
+		endCharacter: number,
+	);
+	constructor(
+		startLineOrPosition: number | Position,
+		startCharacterOrPosition: number | Position,
+		endLine?: number,
+		endCharacter?: number,
+	) {
+		let start: Position;
+		let end: Position;
+
+		if (
+			typeof startLineOrPosition === "number" &&
+			typeof startCharacterOrPosition === "number" &&
+			typeof endLine === "number" &&
+			typeof endCharacter === "number"
+		) {
+			start = new Position(startLineOrPosition, startCharacterOrPosition);
+			end = new Position(endLine, endCharacter);
+		} else if (
+			startLineOrPosition instanceof Position &&
+			startCharacterOrPosition instanceof Position
+		) {
+			start = startLineOrPosition;
+			end = startCharacterOrPosition;
+		} else {
+			throw new Error("Invalid arguments");
+		}
+
 		if (start.isAfter(end)) {
 			this.start = end;
 			this.end = start;
@@ -278,7 +324,7 @@ export class Diagnostic implements VSCode.Diagnostic {
 	toJSON(): any {
 		return {
 			message: this.message,
-			severity: VscDiagnosticSeverity[this.severity],
+			severity: DiagnosticSeverity[this.severity],
 			range: this.range.toJSON(),
 		};
 	}
@@ -291,6 +337,14 @@ export class DiagnosticRelatedInformation
 		public location: Location,
 		public message: string,
 	) {}
+}
+
+function isTreeItemLabel(thing: any): thing is VSCode.TreeItemLabel {
+	return (
+		thing &&
+		typeof thing === "object" &&
+		typeof (thing as VSCode.TreeItemLabel).label === "string"
+	);
 }
 
 export class TreeItem implements VSCode.TreeItem {
@@ -308,14 +362,6 @@ export class TreeItem implements VSCode.TreeItem {
 		}
 		this.collapsibleState = collapsibleState;
 	}
-}
-
-function isTreeItemLabel(thing: any): thing is VSCode.TreeItemLabel {
-	return (
-		thing &&
-		typeof thing === "object" &&
-		typeof (thing as VSCode.TreeItemLabel).label === "string"
-	);
 }
 
 export class MarkdownString implements VSCode.MarkdownString {
@@ -390,7 +436,7 @@ export class TextEdit implements VSCode.TextEdit {
 	newEol: VSCode.EndOfLine | undefined;
 }
 
-export class CompletionItem extends class implements VSCode.CompletionItem {
+export class CompletionItem implements VSCode.CompletionItem {
 	label: string | VSCode.CompletionItemLabel;
 	kind?: VSCode.CompletionItemKind;
 	constructor(
@@ -400,24 +446,20 @@ export class CompletionItem extends class implements VSCode.CompletionItem {
 		this.label = label;
 		this.kind = kind;
 	}
-} {}
-export class SnippetString extends class implements VSCode.SnippetString {
-	value: string;
-	constructor(value: string) {
-		this.value = value;
-	}
-} {}
+}
 
-// --- Enums ---
-export import ViewColumn = VSCode.ViewColumn;
-export import StatusBarAlignment = VSCode.StatusBarAlignment;
-export import FileType = VSCode.FileType;
-export import TextEditorCursorStyle = VSCode.TextEditorCursorStyle;
-export import DiagnosticSeverity = VSCode.DiagnosticSeverity;
-export const VscDiagnosticSeverity = VSCode.DiagnosticSeverity;
-export import TreeItemCollapsibleState = VSCode.TreeItemCollapsibleState;
-export import ConfigurationTarget = VSCode.ConfigurationTarget;
-export import EndOfLine = VSCode.EndOfLine;
-export import ProgressLocation = VSCode.ProgressLocation;
-export import QuickPickItemKind = VSCode.QuickPickItemKind;
-export import CompletionItemKind = VSCode.CompletionItemKind;
+export {
+	ViewColumn,
+	StatusBarAlignment,
+	TextEditorCursorStyle,
+	DiagnosticSeverity,
+	TreeItemCollapsibleState,
+	ConfigurationTarget,
+	EndOfLine,
+	ProgressLocation,
+	QuickPickItemKind,
+	CompletionItemKind,
+	SnippetString,
+};
+
+export const FileType = VscLanguages.FileType;

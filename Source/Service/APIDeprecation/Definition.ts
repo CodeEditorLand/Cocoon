@@ -64,7 +64,7 @@ export default Effect.gen(function* () {
 		};
 	};
 
-	const ServiceImplementation: Service = {
+	const ServiceImplementation: Service["Type"] = {
 		Report,
 		Deprecated,
 	};

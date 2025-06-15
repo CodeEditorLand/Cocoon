@@ -13,9 +13,9 @@ import type INodeModuleFactory from "./Interface.js";
 
 export default class implements INodeModuleFactory {
 	constructor(
-		private readonly APIFactory: APIFactoryService,
-		private readonly ExtensionPath: ExtensionPathService,
-		private readonly Log: LogService,
+		private readonly APIFactory: APIFactoryService["Type"],
+		private readonly ExtensionPath: ExtensionPathService["Type"],
+		private readonly Log: LogService["Type"],
 	) {}
 
 	public Load(

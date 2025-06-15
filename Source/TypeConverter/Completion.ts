@@ -18,7 +18,7 @@ import {
 
 // Placeholder DTOs based on usage
 interface ISuggestDataDto {
-	label: string | { label: string; detail?: string; description?: string };
+	label: string | VSCode.CompletionItemLabel;
 	kind?: Languages.CompletionItemKind;
 	tags?: ReadonlyArray<Languages.CompletionItemTag>;
 	detail?: string;
@@ -65,12 +65,9 @@ const CompletionItem = {
 		Disposables: IDisposable[],
 	): ISuggestDataDto => {
 		return {
-			label:
-				typeof Item.label === "string"
-					? Item.label
-					: (Item.label as VSCode.CompletionItemLabel),
-			kind: Item.kind,
-			tags: Item.tags,
+			label: Item.label,
+			kind: Item.kind as number as Languages.CompletionItemKind,
+			tags: Item.tags as unknown as Languages.CompletionItemTag[],
 			detail: Item.detail,
 			documentation:
 				typeof Item.documentation === "string"
@@ -95,16 +92,26 @@ const CompletionItem = {
 					: Item.range
 						? {
 								insert: RangeConverter.FromAPI(
-									Item.range.insert,
+									(
+										Item.range as {
+											insert: VSCode.Range;
+											replace: VSCode.Range;
+										}
+									).insert,
 								),
 								replace: RangeConverter.FromAPI(
-									Item.range.replace,
+									(
+										Item.range as {
+											insert: VSCode.Range;
+											replace: VSCode.Range;
+										}
+									).replace,
 								),
 							}
 						: undefined,
 			commitCharacters: Item.commitCharacters,
-			additionalTextEdits: Item.additionalTextEdits?.map(
-				TextEditConverter.FromAPI,
+			additionalTextEdits: Item.additionalTextEdits?.map((edit) =>
+				TextEditConverter.FromAPI(edit as any),
 			),
 			command: Item.command
 				? CommandsConverter.ToInternal(Item.command, Disposables)
@@ -116,16 +123,12 @@ const CompletionItem = {
 		DTO: ISuggestDataDto,
 		CommandsConverter: CommandConverterDefinition,
 	): VSCode.CompletionItem => {
-		const Label =
-			typeof DTO.label === "string"
-				? DTO.label
-				: {
-						label: DTO.label.label,
-						detail: DTO.label.detail,
-						description: DTO.label.description,
-					};
-		const Item = new ExtHostTypes.CompletionItem(Label, DTO.kind);
-		Item.tags = DTO.tags;
+		const Label = DTO.label;
+		const Item = new ExtHostTypes.CompletionItem(
+			Label,
+			DTO.kind as unknown as VSCode.CompletionItemKind,
+		);
+		Item.tags = DTO.tags as VSCode.CompletionItemTag[];
 		Item.detail = DTO.detail;
 		Item.documentation =
 			typeof DTO.documentation === "string"
