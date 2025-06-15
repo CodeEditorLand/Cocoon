@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/FileSystem/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (FileSystem)\n * @description This module provides the `Live` implementation Layer for the FileSystem service.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as FileSystemInformationLive } from \"../FileSystemInformation.js\";\nimport { Live as IPCLive } from \"../IPC.js\";\nimport type IPCConfiguration from \"../IPC/Configuration.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the FileSystem service.\n * It depends on the IPC and FileSystemInformation services.\n * @param Config The IPC configuration.\n */\nconst Live = (Config: IPCConfiguration) =>\n\tLayer.effect(Service, Definition).pipe(\n\t\tLayer.provide(\n\t\t\tLayer.merge(IPCLive(Config), FileSystemInformationLive(Config)),\n\t\t),\n\t);\n\nexport default Live;\n"],
+  "mappings": ";;AAKA,SAAS,aAAa;AAEtB,SAAS,QAAQ,iCAAiC;AAClD,SAAS,QAAQ,eAAe;AAEhC,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAOpB,MAAM,OAAO,wBAAC,WACb,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,EACjC,MAAM;AAAA,IACL,MAAM,MAAM,QAAQ,MAAM,GAAG,0BAA0B,MAAM,CAAC;AAAA,EAC/D;AACD,GALY;AAOb,IAAO,eAAQ;",
+  "names": []
+}

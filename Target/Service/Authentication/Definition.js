@@ -1,135 +1,123 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Ref, Stream } from "effect";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IPC } from "../IPC.js";
-import { Log } from "../Log.js";
+import { Effect, Ref } from "effect";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import IPCService from "../IPC/Service.js";
+import LogService from "../Log/Service.js";
 import { AuthenticationProviderExistsError } from "./Error.js";
 import { ConvertSessionToInternal, ConvertSessionToVSCode } from "./Type.js";
-const Definition = Effect.gen(function* (_) {
-  const IPCService = yield* _(IPC.Tag);
-  const LogService = yield* _(Log.Tag);
-  const LocalProviders = yield* _(
-    Ref.make(/* @__PURE__ */ new Map())
+var Definition_default = Effect.gen(function* () {
+  const IPC = yield* IPCService;
+  const Log = yield* LogService;
+  const LocalProviders = yield* Ref.make(
+    /* @__PURE__ */ new Map()
   );
   const OnDidChangeProvidersEvent = CreateEventStream();
   const OnDidChangeSessionsEvent = CreateEventStream();
-  const CreateSession = /* @__PURE__ */ __name((ProviderID, Scopes) => Effect.gen(function* (_2) {
-    const provider = (yield* _2(Ref.get(LocalProviders))).get(
-      ProviderID
-    );
-    if (!provider) {
-      return yield* _2(
-        Effect.fail(
-          new Error(
-            `No auth provider with id '${ProviderID}' is registered.`
-          )
+  const CreateSession = /* @__PURE__ */ __name((ProviderID, Scopes) => Effect.gen(function* () {
+    const Provider = (yield* Ref.get(LocalProviders)).get(ProviderID);
+    if (!Provider) {
+      return yield* Effect.fail(
+        new Error(
+          `No auth provider with id '${ProviderID}' is registered.`
         )
       );
     }
-    const session = yield* _2(
-      Effect.tryPromise(() => provider.createSession(Scopes))
-    );
-    return ConvertSessionToInternal(session);
+    const Session = yield* Effect.tryPromise({
+      try: /* @__PURE__ */ __name(() => Provider.createSession(Scopes), "try"),
+      catch: /* @__PURE__ */ __name((CaughtError) => CaughtError, "catch")
+    });
+    return ConvertSessionToInternal(Session);
   }), "CreateSession");
-  const RemoveSession = /* @__PURE__ */ __name((ProviderID, SessionID) => Effect.gen(function* (_2) {
-    const provider = (yield* _2(Ref.get(LocalProviders))).get(
-      ProviderID
-    );
-    if (!provider?.removeSession) {
+  const RemoveSession = /* @__PURE__ */ __name((ProviderID, SessionID) => Effect.gen(function* () {
+    const Provider = (yield* Ref.get(LocalProviders)).get(ProviderID);
+    if (!Provider?.removeSession) {
       return;
     }
-    yield* _2(
-      Effect.tryPromise(() => provider.removeSession(SessionID))
-    );
+    yield* Effect.tryPromise({
+      try: /* @__PURE__ */ __name(() => Provider.removeSession(SessionID), "try"),
+      catch: /* @__PURE__ */ __name((CaughtError) => CaughtError, "catch")
+    });
   }), "RemoveSession");
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$createSession",
-    ([id, scopes]) => Effect.runPromise(CreateSession(id, scopes))
+    ([ID, Scopes]) => Effect.runPromise(CreateSession(ID, Scopes))
   );
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$removeSession",
-    ([id, sid]) => Effect.runPromise(RemoveSession(id, sid))
+    ([ID, SessionID]) => Effect.runPromise(RemoveSession(ID, SessionID))
   );
-  const ServiceImplementation = {
-    GetSession: /* @__PURE__ */ __name((extension, providerId, scopes, options) => IPCService.SendRequest("$getSession", [
-      extension.id,
-      providerId,
-      scopes,
-      options
+  const AuthenticationImplementation = {
+    GetSession: /* @__PURE__ */ __name((RequestingExtension, ProviderID, Scopes, Options) => IPC.SendRequest("$getSession", [
+      RequestingExtension.id,
+      ProviderID,
+      Scopes,
+      Options
     ]).pipe(
       Effect.map(
-        (info) => info ? ConvertSessionToVSCode(info) : void 0
+        (Info) => Info ? ConvertSessionToVSCode(Info) : void 0
       ),
       Effect.tapError(
-        (err) => LogService.Error(
-          `GetSession for provider '${providerId}' failed.`,
-          err
+        (Error2) => Log.Error(
+          `GetSession for provider '${ProviderID}' failed.`,
+          Error2
         )
       )
     ), "GetSession"),
-    ListSessions: /* @__PURE__ */ __name((extension, providerId, scopes) => IPCService.SendRequest("$getSessions", [
-      extension.id,
-      providerId,
-      scopes
+    ListSessions: /* @__PURE__ */ __name((RequestingExtension, ProviderID, Scopes) => IPC.SendRequest("$getSessions", [
+      RequestingExtension.id,
+      ProviderID,
+      Scopes
     ]).pipe(
-      Effect.map((infos) => infos.map(ConvertSessionToVSCode)),
+      Effect.map((Infos) => Infos.map(ConvertSessionToVSCode)),
       Effect.tapError(
-        (err) => LogService.Error(
-          `ListSessions for provider '${providerId}' failed.`,
-          err
+        (Error2) => Log.Error(
+          `ListSessions for provider '${ProviderID}' failed.`,
+          Error2
         )
       ),
       Effect.catchAll(() => Effect.succeed([]))
-      // Return empty array on failure
     ), "ListSessions"),
-    RegisterAuthenticationProvider: /* @__PURE__ */ __name((ID, Label, Provider, Option) => Effect.gen(function* (_2) {
-      const providers = yield* _2(Ref.get(LocalProviders));
-      if (providers.has(ID)) {
-        return yield* _2(
-          Effect.fail(
-            new AuthenticationProviderExistsError({
-              ProviderID: ID
-            })
-          )
-        );
+    RegisterAuthenticationProvider: /* @__PURE__ */ __name((ID, Label, Provider, Options) => Effect.gen(function* () {
+      const Providers = yield* Ref.get(LocalProviders);
+      if (Providers.has(ID)) {
+        return yield* new AuthenticationProviderExistsError({
+          ProviderID: ID
+        });
       }
-      yield* _2(
-        Ref.update(LocalProviders, (map) => map.set(ID, Provider))
+      yield* Ref.update(
+        LocalProviders,
+        (Map2) => Map2.set(ID, Provider)
       );
-      yield* _2(
-        IPCService.SendNotification(
-          "$registerAuthenticationProvider",
-          [ID, Label, !!Option?.supportsMultipleAccounts]
-        )
-      );
-      const disposable = {
+      yield* IPC.SendNotification("$registerAuthenticationProvider", [
+        ID,
+        Label,
+        !!Options?.supportsMultipleAccounts
+      ]);
+      const Disposable = {
         dispose: /* @__PURE__ */ __name(() => {
-          Effect.runFork(
-            Ref.update(
-              LocalProviders,
-              (map) => (map.delete(ID), map)
-            ).pipe(
-              Effect.flatMap(
-                () => IPCService.SendNotification(
-                  "$unregisterAuthenticationProvider",
-                  [ID]
-                )
+          const CleanupEffect = Ref.update(
+            LocalProviders,
+            (Map2) => (Map2.delete(ID), Map2)
+          ).pipe(
+            Effect.flatMap(
+              () => IPC.SendNotification(
+                "$unregisterAuthenticationProvider",
+                [ID]
               )
             )
           );
+          Effect.runFork(CleanupEffect);
         }, "dispose")
       };
-      return disposable;
+      return Disposable;
     }), "RegisterAuthenticationProvider"),
-    onDidChangeAuthenticationProviders: OnDidChangeProvidersEvent.Stream.pipe(Stream.toEvent),
-    onDidChangeSessions: OnDidChangeSessionsEvent.Stream.pipe(
-      Stream.toEvent
-    )
+    onDidChangeAuthenticationProviders: OnDidChangeProvidersEvent.event,
+    onDidChangeSessions: OnDidChangeSessionsEvent.event
   };
-  return ServiceImplementation;
+  return AuthenticationImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

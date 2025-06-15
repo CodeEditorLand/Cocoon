@@ -1,10 +1,12 @@
 import { Layer } from "effect";
-import { Definition } from "./Cancellation/Definition.js";
-import { Tag } from "./Cancellation/Service.js";
-import { Tag as Tag2 } from "./Cancellation/Service.js";
-const Live = Layer.effect(Tag, Definition);
+import Definition from "./Cancellation/Definition.js";
+import InvalidTokenIDError from "./Cancellation/Error/InvalidTokenIDError.js";
+import Service from "./Cancellation/Service.js";
+const CancellationService = Service;
+const CancellationLive = Layer.effect(Service, Definition);
 export {
-  Live,
-  Tag2 as Tag
+  CancellationLive,
+  CancellationService,
+  InvalidTokenIDError
 };
 //# sourceMappingURL=Cancellation.js.map

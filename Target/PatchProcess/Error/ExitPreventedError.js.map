@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../../Source/PatchProcess/Error/ExitPreventedError.ts"],
-  "sourcesContent": ["/**\n * @module ExitPreventedError (PatchProcess/Error)\n * @description Defines a custom, structured error that is thrown when an extension's\n * attempt to call `process.exit` is intercepted and blocked by the host's policy.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A structured, tagged error representing a blocked process termination attempt.\n *\n * This error is thrown synchronously by the patched `process.exit` function\n * to halt the execution of the misbehaving extension code.\n */\nexport class ExitPreventedError extends Data.TaggedError(\"ExitPreventedError\")<{\n\t/** A descriptive message explaining that the exit was blocked. */\n\treadonly message: string;\n\t/** The exit code that the extension attempted to use. */\n\treadonly AttemptedCode?: number;\n}> {}\n"],
-  "mappings": ";;AAMA,SAAS,YAAY;AAQd,MAAM,2BAA2B,KAAK,YAAY,oBAAoB,EAK1E;AAAA,EAnBH,OAmBG;AAAA;AAAA;AAAC;",
+  "sourcesContent": ["/**\n * @module ExitPreventedError (PatchProcess/Error)\n * @description Defines a custom, structured error that is thrown when an extension's\n * attempt to call `process.exit` is intercepted and blocked by the host's policy.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A structured, tagged error representing a blocked process termination attempt.\n *\n * This error is thrown synchronously by the patched `process.exit` function\n * to halt the execution of the misbehaving extension code.\n */\nexport default class extends Data.TaggedError(\"ExitPreventedError\")<{\n\t/** A descriptive message explaining that the exit was blocked. */\n\treadonly message: string;\n\t/** The exit code that the extension attempted to use. */\n\treadonly AttemptedCode?: number;\n}> {}\n"],
+  "mappings": ";;AAMA,SAAS,YAAY;AAQrB,MAAO,mCAAsB,KAAK,YAAY,oBAAoB,EAK/D;AAAA,EAnBH,OAmBG;AAAA;AAAA;AAAC;",
   "names": []
 }

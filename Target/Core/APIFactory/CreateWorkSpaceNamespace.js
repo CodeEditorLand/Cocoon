@@ -1,80 +1,75 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-function CreateWorkSpaceNamespace(WorkSpaceService, DeprecationService, AsEvent, Extension) {
-  const workspace = {
+import { Disposable } from "vscode";
+const CreateWorkSpaceNamespace = /* @__PURE__ */ __name((WorkSpace, Deprecation, AsEvent, Extension) => {
+  const Workspace = {
     // --- Properties ---
     get workspaceFolders() {
-      return WorkSpaceService.workspaceFolders;
+      return WorkSpace.workspaceFolders;
     },
     get name() {
-      return WorkSpaceService.name;
+      return WorkSpace.name;
     },
     get workspaceFile() {
-      return WorkSpaceService.workspaceFile;
+      return WorkSpace.workspaceFile;
     },
     get isTrusted() {
-      return WorkSpaceService.isTrusted;
+      return WorkSpace.isTrusted;
     },
     get fs() {
-      return WorkSpaceService.fs;
+      return WorkSpace.fs;
     },
     get textDocuments() {
-      return WorkSpaceService.textDocuments;
+      return WorkSpace.textDocuments;
     },
     // --- Deprecated rootPath ---
     get rootPath() {
       Effect.runFork(
-        DeprecationService.Report(
+        Deprecation.Report(
           Extension.identifier,
           "workspace.rootPath",
           "Use `workspace.workspaceFolders` instead."
         )
       );
-      const folders = WorkSpaceService.workspaceFolders;
-      return folders && folders.length > 0 ? folders[0].uri.fsPath : void 0;
+      const Folders = WorkSpace.workspaceFolders;
+      return Folders && Folders.length > 0 ? Folders[0].uri.fsPath : void 0;
     },
     // --- Events ---
     onDidChangeWorkspaceFolders: AsEvent(
-      WorkSpaceService.onDidChangeWorkspaceFolders
+      WorkSpace.onDidChangeWorkspaceFolders
     ),
-    onDidOpenTextDocument: AsEvent(WorkSpaceService.onDidOpenTextDocument),
-    onDidCloseTextDocument: AsEvent(
-      WorkSpaceService.onDidCloseTextDocument
-    ),
-    onDidChangeTextDocument: AsEvent(
-      WorkSpaceService.onDidChangeTextDocument
-    ),
+    onDidOpenTextDocument: AsEvent(WorkSpace.onDidOpenTextDocument),
+    onDidCloseTextDocument: AsEvent(WorkSpace.onDidCloseTextDocument),
+    onDidChangeTextDocument: AsEvent(WorkSpace.onDidChangeTextDocument),
     // onDidSaveTextDocument, onWillSaveTextDocument, etc. would follow the same pattern
     // --- Methods ---
-    getWorkspaceFolder: /* @__PURE__ */ __name((uri) => {
-      return WorkSpaceService.getWorkspaceFolder(uri);
+    getWorkspaceFolder: /* @__PURE__ */ __name((Uri) => {
+      return WorkSpace.getWorkspaceFolder(Uri);
     }, "getWorkspaceFolder"),
-    openTextDocument: /* @__PURE__ */ __name((uriOrOptions) => {
-      return Effect.runPromise(
-        WorkSpaceService.openTextDocument(uriOrOptions)
-      );
+    openTextDocument: /* @__PURE__ */ __name((UriOrOptions) => {
+      return Effect.runPromise(WorkSpace.openTextDocument(UriOrOptions));
     }, "openTextDocument"),
-    findFiles: /* @__PURE__ */ __name((include, exclude, maxResults, token) => {
+    findFiles: /* @__PURE__ */ __name((Include, Exclude, MaxResults, Token) => {
       return Effect.runPromise(
-        WorkSpaceService.findFiles(include, exclude, maxResults, token)
+        WorkSpace.findFiles(Include, Exclude, MaxResults, Token)
       );
     }, "findFiles"),
-    getConfiguration: /* @__PURE__ */ __name((section, scope) => {
-      return WorkSpaceService.getConfiguration(section, scope);
+    getConfiguration: /* @__PURE__ */ __name((Section, Scope) => {
+      return WorkSpace.getConfiguration(Section, Scope);
     }, "getConfiguration"),
-    applyEdit: /* @__PURE__ */ __name((edit) => {
-      return Promise.resolve(false);
+    applyEdit: /* @__PURE__ */ __name((Edit) => {
+      return WorkSpace.applyEdit(Edit);
     }, "applyEdit"),
-    registerTextDocumentContentProvider: /* @__PURE__ */ __name((scheme, provider) => {
-      return new ExtHostTypes.Disposable(() => {
+    registerTextDocumentContentProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => {
+      return new Disposable(() => {
       });
     }, "registerTextDocumentContentProvider")
   };
-  return workspace;
-}
-__name(CreateWorkSpaceNamespace, "CreateWorkSpaceNamespace");
+  return Workspace;
+}, "CreateWorkSpaceNamespace");
+var CreateWorkSpaceNamespace_default = CreateWorkSpaceNamespace;
 export {
-  CreateWorkSpaceNamespace
+  CreateWorkSpaceNamespace_default as default
 };
 //# sourceMappingURL=CreateWorkSpaceNamespace.js.map

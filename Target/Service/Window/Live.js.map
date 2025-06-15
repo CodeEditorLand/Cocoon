@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Window/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (Window)\n * @description The live implementation Layer for the Window service.\n */\n\nimport { Layer } from \"effect\";\n\nimport type IPCConfiguration from \"../IPC/Configuration.js\";\nimport IPCLive from \"../IPC/Live.js\";\nimport WorkSpaceLive from \"../WorkSpace/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the Window service.\n * @param Config The IPC Configuration.\n */\nexport default function (Config: {\n\tMountainAddress: string;\n\tCocoonAddress: string;\n}) {\n\treturn Layer.effect(Service, Definition).pipe(\n\t\tLayer.provide(Layer.merge(IPCLive(Config), WorkSpaceLive(Config))),\n\t);\n}\n"],
+  "mappings": ";;AAKA,SAAS,aAAa;AAGtB,OAAO,aAAa;AACpB,OAAO,mBAAmB;AAC1B,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAML,SAAR,aAAkB,QAGtB;AACF,SAAO,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,IACxC,MAAM,QAAQ,MAAM,MAAM,QAAQ,MAAM,GAAG,cAAc,MAAM,CAAC,CAAC;AAAA,EAClE;AACD;AAPO;",
+  "names": []
+}

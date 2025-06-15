@@ -1,9 +1,9 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as NodeOs from "node:os";
-function CreateOsShim(InitDataService) {
-  const IsWindows = InitDataService.environment.isWindows;
-  const UserHome = InitDataService.environment.userHome;
+const CreateOsShim = /* @__PURE__ */ __name((InitData) => {
+  const IsWindows = InitData.environment.isWindows;
+  const UserHome = InitData.environment.userHome;
   const OsShim = {
     EOL: IsWindows ? "\r\n" : "\n",
     arch: /* @__PURE__ */ __name(() => process.arch, "arch"),
@@ -12,7 +12,7 @@ function CreateOsShim(InitDataService) {
     cpus: /* @__PURE__ */ __name(() => NodeOs.cpus(), "cpus"),
     freemem: /* @__PURE__ */ __name(() => NodeOs.freemem(), "freemem"),
     homedir: /* @__PURE__ */ __name(() => UserHome.fsPath || process.env["HOME"] || process.env["USERPROFILE"] || "", "homedir"),
-    hostname: /* @__PURE__ */ __name(() => InitDataService.environment.hostname || "localhost", "hostname"),
+    hostname: /* @__PURE__ */ __name(() => InitData.environment.hostname || "localhost", "hostname"),
     loadavg: /* @__PURE__ */ __name(() => NodeOs.loadavg(), "loadavg"),
     networkInterfaces: /* @__PURE__ */ __name(() => NodeOs.networkInterfaces(), "networkInterfaces"),
     release: /* @__PURE__ */ __name(() => NodeOs.release(), "release"),
@@ -33,9 +33,9 @@ function CreateOsShim(InitDataService) {
     uptime: /* @__PURE__ */ __name(() => NodeOs.uptime(), "uptime")
   };
   return Object.freeze(OsShim);
-}
-__name(CreateOsShim, "CreateOsShim");
+}, "CreateOsShim");
+var Os_default = CreateOsShim;
 export {
-  CreateOsShim
+  Os_default as default
 };
 //# sourceMappingURL=Os.js.map

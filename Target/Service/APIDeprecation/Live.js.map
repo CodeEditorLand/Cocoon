@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/APIDeprecation/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (APIDeprecation)\n * @description The live implementation `Layer` for the APIDeprecation service.\n */\n\nimport { Layer } from \"effect\";\n\nimport LogLive from \"../Log/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the APIDeprecation service.\n * It depends on the Log service to output warnings.\n */\nconst Live = Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));\n\nexport default Live;\n"],
+  "mappings": "AAKA,SAAS,aAAa;AAEtB,OAAO,aAAa;AACpB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAAO,MAAM,OAAO,SAAS,UAAU,EAAE,KAAK,MAAM,QAAQ,OAAO,CAAC;AAE1E,IAAO,eAAQ;",
+  "names": []
+}

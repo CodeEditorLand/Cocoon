@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/RequireInterceptor/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (RequireInterceptor)\n * @description The live implementation layer for the RequireInterceptor service.\n */\n\nimport { Layer } from \"effect\";\n\nimport LogLive from \"../../Service/Log/Live.js\";\nimport APIFactoryLive from \"../APIFactory/Live.js\";\nimport ExtensionPathLive from \"../ExtensionPath/Live.js\";\nimport NodeModuleShimLive from \"../NodeModuleShim/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation layer for the RequireInterceptor service.\n * It has dependencies on the APIFactory, ExtensionPath, NodeModuleShim, and Log services,\n * which are provided to it here.\n */\nconst Live = Layer.effect(Service, Definition).pipe(\n\tLayer.provide(\n\t\tLayer.mergeAll(\n\t\t\tAPIFactoryLive,\n\t\t\tExtensionPathLive,\n\t\t\tNodeModuleShimLive,\n\t\t\tLogLive,\n\t\t),\n\t),\n);\n\nexport default Live;\n"],
+  "mappings": "AAKA,SAAS,aAAa;AAEtB,OAAO,aAAa;AACpB,OAAO,oBAAoB;AAC3B,OAAO,uBAAuB;AAC9B,OAAO,wBAAwB;AAC/B,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAOpB,MAAM,OAAO,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,EAC9C,MAAM;AAAA,IACL,MAAM;AAAA,MACL;AAAA,MACA;AAAA,MACA;AAAA,MACA;AAAA,IACD;AAAA,EACD;AACD;AAEA,IAAO,eAAQ;",
+  "names": []
+}

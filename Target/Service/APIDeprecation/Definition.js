@@ -1,10 +1,10 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-import { Log } from "../Log.js";
-const Definition = Effect.gen(function* (_) {
-  const LogService = yield* _(Log.Tag);
-  const Report = /* @__PURE__ */ __name((ExtensionID, Usage, Message) => LogService.Warn(
+import LogService from "../Log/Service.js";
+var Definition_default = Effect.gen(function* () {
+  const Log = yield* LogService;
+  const Report = /* @__PURE__ */ __name((ExtensionID, Usage, Message) => Log.Warn(
     `Extension '${ExtensionID.value}' used deprecated API: '${Usage}'. Message: ${Message}`
   ), "Report");
   const Deprecated = /* @__PURE__ */ __name((ExtensionID, Feature, Message) => {
@@ -15,22 +15,22 @@ const Definition = Effect.gen(function* (_) {
     ), "ReportEffect");
     return (Target, PropertyKey) => {
       let BackingField = Target[PropertyKey];
-      let hasReported = false;
-      const reportOnce = /* @__PURE__ */ __name((key) => {
-        if (!hasReported) {
-          Effect.runFork(ReportEffect(key));
-          hasReported = true;
+      let HasReported = false;
+      const ReportOnce = /* @__PURE__ */ __name((Key) => {
+        if (!HasReported) {
+          Effect.runFork(ReportEffect(Key));
+          HasReported = true;
         }
-      }, "reportOnce");
+      }, "ReportOnce");
       Object.defineProperty(Target, PropertyKey, {
         configurable: true,
         enumerable: true,
         get() {
-          reportOnce(PropertyKey);
+          ReportOnce(PropertyKey);
           return BackingField;
         },
         set(NewValue) {
-          reportOnce(PropertyKey);
+          ReportOnce(PropertyKey);
           BackingField = NewValue;
         }
       });
@@ -43,6 +43,6 @@ const Definition = Effect.gen(function* (_) {
   return ServiceImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

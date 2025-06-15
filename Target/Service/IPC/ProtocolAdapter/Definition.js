@@ -3,18 +3,18 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Effect } from "effect";
 import { VSBuffer } from "vs/base/common/buffer.js";
 import { Emitter } from "vs/base/common/event.js";
-import { Client } from "../Client.js";
+import ClientService from "../Client/Service.js";
 import { IPCError } from "../Error.js";
-import { RPCDataPayload } from "../Generated.js";
-const Definition = Effect.gen(function* (_) {
-  const ClientService = yield* _(Client.Tag);
+import Generated from "../Generated.js";
+var Definition_default = Effect.gen(function* () {
+  const Client = yield* ClientService;
   const OnMessageEmitter = new Emitter();
   const OnDidDisposeEmitter = new Emitter();
   const Send = /* @__PURE__ */ __name((Buffer2) => Effect.tryPromise({
     try: /* @__PURE__ */ __name(() => {
-      const Payload = new RPCDataPayload();
+      const Payload = new Generated.RPCDataPayload();
       Payload.setBuffer(Buffer2.buffer);
-      return ClientService.sendRPCDataToMountain(Payload);
+      return Client.sendRPCDataToMountain(Payload);
     }, "try"),
     catch: /* @__PURE__ */ __name((Cause) => new IPCError({
       cause: Cause,
@@ -24,9 +24,9 @@ const Definition = Effect.gen(function* (_) {
     Effect.catchAll(
       (Error2) => Effect.logError("Failed to send RPC data via gRPC", Error2)
     ),
-    Effect.asUnit
+    Effect.asVoid
   ), "Send");
-  const ServiceImplementation = {
+  const ProtocolAdapterImplementation = {
     /**
      * The `send` method must be synchronous according to the VS Code API.
      * Therefore, we fork the `Send` Effect to run in the background without
@@ -45,9 +45,9 @@ const Definition = Effect.gen(function* (_) {
       OnMessageEmitter.fire(VSBuffer.wrap(Data));
     }), "ProcessIncomingData")
   };
-  return ServiceImplementation;
+  return ProtocolAdapterImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

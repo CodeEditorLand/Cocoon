@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../../Source/Service/IPC/ProtoConverter.ts"],
-  "sourcesContent": ["/**\n * @module ProtoConverter (IPC)\n * @description Provides Effect-based utilities for converting between JavaScript\n * values and Google Protobuf `Value` structures for gRPC communication. This\n * module aggregates and exports the individual converter functions.\n */\n\nexport { DecodeValue } from \"./ProtoConverter/DecodeValue.js\";\nexport { EncodeValue } from \"./ProtoConverter/EncodeValue.js\";\nexport * from \"./ProtoConverter/Error.js\";\n"],
-  "mappings": "AAOA,SAAS,mBAAmB;AAC5B,SAAS,mBAAmB;AAC5B,cAAc;",
+  "sourcesContent": ["/**\n * @module ProtoConverter (IPC)\n * @description Provides Effect-based utilities for converting between JavaScript\n * values and Google Protobuf `Value` structures for gRPC communication. This\n * module aggregates and exports the individual converter functions.\n */\n\nimport DecodeValue from \"./ProtoConverter/DecodeValue.js\";\nimport EncodeValue from \"./ProtoConverter/EncodeValue.js\";\nimport { ProtoSerializationError } from \"./ProtoConverter/Error.js\";\n\nexport { DecodeValue, EncodeValue, ProtoSerializationError };\n"],
+  "mappings": "AAOA,OAAO,iBAAiB;AACxB,OAAO,iBAAiB;AACxB,SAAS,+BAA+B;",
   "names": []
 }

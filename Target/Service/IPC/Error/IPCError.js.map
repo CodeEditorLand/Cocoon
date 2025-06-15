@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/IPC/Error/IPCError.ts"],
+  "sourcesContent": ["/**\n * @module IPCError (IPC/Error)\n * @description Defines a generic, tagged error for IPC-related failures.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A generic error for failures that occur during an IPC request or notification,\n * such as a network error or a failure to serialize/deserialize a message.\n */\nexport default class extends Data.TaggedError(\"IPCError\")<{\n\treadonly cause: unknown;\n\treadonly context: string;\n}> {}\n"],
+  "mappings": ";;AAKA,SAAS,YAAY;AAMrB,MAAO,yBAAsB,KAAK,YAAY,UAAU,EAGrD;AAAA,EAdH,OAcG;AAAA;AAAA;AAAC;",
+  "names": []
+}

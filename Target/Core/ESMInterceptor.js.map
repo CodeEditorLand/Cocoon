@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../Source/Core/ESMInterceptor.ts"],
-  "sourcesContent": ["/**\n * @module ESMInterceptor (Core)\n * @description The main module for the ESMInterceptor service, which installs a\n * Node.js loader hook to intercept `import 'vscode'` statements.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveLog } from \"../../Service/Log.js\";\nimport { Live as LiveAPIFactory } from \"../APIFactory.js\";\nimport { Live as LiveExtensionPath } from \"../ExtensionPath.js\";\nimport { Definition } from \"./ESMInterceptor/Definition.js\";\nimport { Tag } from \"./ESMInterceptor/Service.js\";\n\n/**\n * The live implementation layer for the ESMInterceptor service.\n * It depends on the APIFactory, ExtensionPath, and logging services.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(\n\tLayer.provide(Layer.mergeAll(LiveAPIFactory, LiveExtensionPath, LiveLog)),\n);\n"],
-  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,eAAe;AAChC,SAAS,QAAQ,sBAAsB;AACvC,SAAS,QAAQ,yBAAyB;AAC1C,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAMb,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE;AAAA,EACjD,MAAM,QAAQ,MAAM,SAAS,gBAAgB,mBAAmB,OAAO,CAAC;AACzE;",
+  "sourcesContent": ["/**\n * @module ESMInterceptor (Core)\n * @description The main module for the ESMInterceptor service, which installs a\n * Node.js loader hook to intercept `import 'vscode'` statements.\n */\n\nimport Live from \"./ESMInterceptor/Live.js\";\nimport Service from \"./ESMInterceptor/Service.js\";\n\nexport { Service, Live };\n"],
+  "mappings": "AAMA,OAAO,UAAU;AACjB,OAAO,aAAa;",
   "names": []
 }

@@ -6,7 +6,7 @@ import {
   Value as ProtoValue
 } from "google-protobuf/google/protobuf/struct_pb.js";
 import { ProtoSerializationError } from "./Error.js";
-function EncodeValue(JsValue) {
+const EncodeValue = /* @__PURE__ */ __name((JsValue) => {
   return Effect.try({
     try: /* @__PURE__ */ __name(() => {
       if (JsValue === void 0) {
@@ -16,11 +16,11 @@ function EncodeValue(JsValue) {
       }
       return ProtoValue.fromJavaScript(JsValue);
     }, "try"),
-    catch: /* @__PURE__ */ __name((cause) => new ProtoSerializationError({ cause, direction: "Encoding" }), "catch")
+    catch: /* @__PURE__ */ __name((Cause) => new ProtoSerializationError({ Cause, Direction: "Encoding" }), "catch")
   });
-}
-__name(EncodeValue, "EncodeValue");
+}, "EncodeValue");
+var EncodeValue_default = EncodeValue;
 export {
-  EncodeValue
+  EncodeValue_default as default
 };
 //# sourceMappingURL=EncodeValue.js.map

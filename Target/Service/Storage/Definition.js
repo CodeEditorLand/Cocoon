@@ -1,63 +1,67 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Ref } from "effect";
-import { IPC } from "../IPC.js";
-import { Log } from "../Log.js";
-import { MementoImplementation } from "./MementoImplementation.js";
-const Definition = Effect.gen(function* (_) {
-  const IPCService = yield* _(IPC.Tag);
-  const LogService = yield* _(Log.Tag);
-  const MementoCache = yield* _(
-    Ref.make(/* @__PURE__ */ new Map())
+import IPCService from "../IPC/Service.js";
+import LogService from "../Log/Service.js";
+import MementoImplementation from "./MementoImplementation.js";
+var Definition_default = Effect.gen(function* () {
+  const IPC = yield* IPCService;
+  const Log = yield* LogService;
+  const MementoCache = yield* Ref.make(
+    /* @__PURE__ */ new Map()
   );
-  const [global, workspace] = yield* _(
-    IPCService.SendRequest("$initializeStorage", [])
+  const [Global, WorkSpace] = yield* IPC.SendRequest(
+    "$initializeStorage",
+    []
   );
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$acceptStorageAndMementoData",
-    ([global2, workspace2]) => {
-      const globalCache = Ref.get(MementoCache).pipe(Effect.runSync);
-      for (const [key, memento] of globalCache) {
-        if (memento["Scope"] === 0 /* GLOBAL */) {
-          memento.acceptValue(global2[key]);
-        } else {
-          memento.acceptValue(workspace2[key]);
+    ([GlobalData, WorkSpaceData]) => {
+      const UpdateEffect = Effect.gen(function* () {
+        const GlobalCache = yield* Ref.get(MementoCache);
+        for (const [Key, Memento] of GlobalCache) {
+          if (Memento["Scope"] === 0 /* GLOBAL */) {
+            Memento.acceptValue(GlobalData[Key]);
+          } else {
+            Memento.acceptValue(WorkSpaceData[Key]);
+          }
         }
-      }
-      return Promise.resolve();
+      });
+      return Effect.runPromise(UpdateEffect);
     }
   );
-  const ServiceImplementation = {
+  const StorageImplementation = {
     CreateMemento: /* @__PURE__ */ __name((ExtensionID, IsGlobal) => {
-      const cacheKey = `${IsGlobal ? "global" : "workspace"}:${ExtensionID}`;
-      const cached = Ref.get(MementoCache).pipe(
-        Effect.map((c) => c.get(cacheKey)),
-        Effect.runSync
+      const CacheKey = `${IsGlobal ? "global" : "workspace"}:${ExtensionID}`;
+      const Cached = Effect.runSync(
+        Ref.get(MementoCache).pipe(
+          Effect.map((Cache) => Cache.get(CacheKey))
+        )
       );
-      if (cached) {
-        return cached;
+      if (Cached) {
+        return Cached;
       }
       const ScopeName = IsGlobal ? "Global" : "WorkSpace";
-      const initialValue = IsGlobal ? global[ExtensionID] : workspace[ExtensionID];
-      LogService.Debug(
+      const InitialValue = IsGlobal ? Global[ExtensionID] : WorkSpace[ExtensionID];
+      Log.Debug(
         `Created Memento for ExtID='${ExtensionID}', Scope='${ScopeName}'`
       );
-      const memento = new MementoImplementation(
+      const Memento = new MementoImplementation(
         ExtensionID,
         IsGlobal,
-        IPCService,
-        LogService,
-        initialValue
+        IPC,
+        Log,
+        InitialValue
       );
-      Ref.update(MementoCache, (map) => map.set(cacheKey, memento)).pipe(
-        Effect.runSync
+      Effect.runSync(
+        Ref.update(MementoCache, (Map2) => Map2.set(CacheKey, Memento))
       );
-      return memento;
+      return Memento;
     }, "CreateMemento")
   };
-  return ServiceImplementation;
+  return StorageImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

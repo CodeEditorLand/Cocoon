@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../Source/TypeConverter/WebView.ts"],
-  "sourcesContent": ["/**\n * @module WebView (TypeConverter)\n * @description Aggregates and exports type converter functions for the\n * `WebView` and `WebViewPanel` APIs.\n *\n * These functions are responsible for translating rich `vscode` API objects\n * into plain, serializable Data Transfer Objects (DTOs) suitable for\n\n * Inter-Process Communication (IPC) with the `Mountain` backend.\n */\n\nexport { ConvertContentOptionToDTO } from \"./WebView/ConvertContentOptionToDTO.js\";\nexport { ConvertExtensionDataToDTO } from \"./WebView/ConvertExtensionDataToDTO.js\";\nexport { ConvertPanelOptionToDTO } from \"./WebView/ConvertPanelOptionToDTO.js\";\nexport { ConvertShowOptionToDTO } from \"./WebView/ConvertShowOptionToDTO.js\";\n"],
-  "mappings": "AAWA,SAAS,iCAAiC;AAC1C,SAAS,iCAAiC;AAC1C,SAAS,+BAA+B;AACxC,SAAS,8BAA8B;",
+  "sourcesContent": ["/**\n * @module WebView (TypeConverter)\n * @description Aggregates and exports type converter functions for the\n * `WebView` and `WebViewPanel` APIs.\n *\n * These functions are responsible for translating rich `vscode` API objects\n * into plain, serializable Data Transfer Objects (DTOs) suitable for\n * Inter-Process Communication (IPC) with the `Mountain` backend.\n */\n\nimport ConvertContentOptionToDTO from \"./WebView/ConvertContentOptionToDTO.js\";\nimport ConvertExtensionDataToDTO from \"./WebView/ConvertExtensionDataToDTO.js\";\nimport ConvertPanelOptionToDTO from \"./WebView/ConvertPanelOptionToDTO.js\";\nimport ConvertShowOptionToDTO from \"./WebView/ConvertShowOptionToDTO.js\";\n\nexport {\n\tConvertContentOptionToDTO,\n\tConvertExtensionDataToDTO,\n\tConvertPanelOptionToDTO,\n\tConvertShowOptionToDTO,\n};\n"],
+  "mappings": "AAUA,OAAO,+BAA+B;AACtC,OAAO,+BAA+B;AACtC,OAAO,6BAA6B;AACpC,OAAO,4BAA4B;",
   "names": []
 }

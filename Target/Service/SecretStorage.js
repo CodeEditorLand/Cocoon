@@ -1,14 +1,9 @@
-import { Layer } from "effect";
-import { Live as LiveIPC } from "./IPC.js";
-import { Live as LiveLog } from "./Log.js";
-import { Definition } from "./SecretStorage/Definition.js";
-import { Tag } from "./SecretStorage/Service.js";
-import { Tag as Tag2 } from "./SecretStorage/Service.js";
-const Live = Layer.effect(Tag, Definition).pipe(
-  Layer.provide(Layer.merge(LiveIPC, LiveLog))
-);
+import * as Error from "./SecretStorage/Error.js";
+import Live from "./SecretStorage/Live.js";
+import Service from "./SecretStorage/Service.js";
 export {
+  Error,
   Live,
-  Tag2 as Tag
+  Service
 };
 //# sourceMappingURL=SecretStorage.js.map

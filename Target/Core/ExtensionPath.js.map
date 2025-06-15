@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../Source/Core/ExtensionPath.ts"],
-  "sourcesContent": ["/**\n * @module ExtensionPath (Core)\n * @description The main module for the ExtensionPath service, which maps file URIs\n * to their owner extension.\n */\n\nimport { Context, Effect, Layer } from \"effect\";\n\nimport { InitData } from \"../../Service/InitData.js\";\nimport { Definition } from \"./ExtensionPath/Definition.js\";\n\n/**\n * The interface for the ExtensionPath service is the class definition itself.\n */\nexport type Interface = Definition;\n\n/**\n * The Context.Tag for the ExtensionPath service.\n */\nexport const Tag = Context.Tag<Interface>(\"Core/ExtensionPath\");\n\n/**\n * The live implementation layer for the ExtensionPath service.\n * It depends on the InitData service to get the list of all installed extensions.\n */\nexport const Live = Layer.effect(\n\tTag,\n\tEffect.map(InitData.Tag, (InitData) => new Definition(InitData.extensions)),\n);\n"],
-  "mappings": "AAMA,SAAS,SAAS,QAAQ,aAAa;AAEvC,SAAS,gBAAgB;AACzB,SAAS,kBAAkB;AAUpB,MAAM,MAAM,QAAQ,IAAe,oBAAoB;AAMvD,MAAM,OAAO,MAAM;AAAA,EACzB;AAAA,EACA,OAAO,IAAI,SAAS,KAAK,CAACA,cAAa,IAAI,WAAWA,UAAS,UAAU,CAAC;AAC3E;",
-  "names": ["InitData"]
+  "sourcesContent": ["/**\n * @module ExtensionPath (Core)\n * @description The main module for the ExtensionPath service, which maps file URIs\n * to their owner extension.\n */\n\nimport Live from \"./ExtensionPath/Live.js\";\nimport Service from \"./ExtensionPath/Service.js\";\n\nexport { Service, Live };\n"],
+  "mappings": "AAMA,OAAO,UAAU;AACjB,OAAO,aAAa;",
+  "names": []
 }

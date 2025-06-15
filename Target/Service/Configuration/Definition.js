@@ -1,49 +1,44 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Ref, Stream } from "effect";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IPC } from "../IPC.js";
-import { Log } from "../Log.js";
-import { CreateWorkSpaceConfiguration } from "./CreateWorkSpaceConfiguration.js";
-const Definition = Effect.gen(function* (_) {
-  const IPCService = yield* _(IPC.Tag);
-  const LogService = yield* _(Log.Tag);
-  const ConfigCache = yield* _(Ref.make({}));
+import { Effect, Ref } from "effect";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import IPCService from "../IPC/Service.js";
+import LogService from "../Log/Service.js";
+import CreateWorkSpaceConfiguration from "./CreateWorkSpaceConfiguration.js";
+var Definition_default = Effect.gen(function* () {
+  const IPC = yield* IPCService;
+  const Log = yield* LogService;
+  const ConfigCache = yield* Ref.make({});
   const OnDidChangeEvent = CreateEventStream();
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$acceptConfigurationChanged",
-    ([newConfig, change]) => Effect.gen(function* (_2) {
-      yield* _2(Ref.set(ConfigCache, newConfig));
-      yield* _2(
-        OnDidChangeEvent.Fire({
-          affectsConfiguration: /* @__PURE__ */ __name((section, scope) => (
-            // A real implementation would need to check the scope properly.
-            change.keys.includes(section)
-          ), "affectsConfiguration")
-        })
-      );
+    ([NewConfig, Change]) => Effect.gen(function* () {
+      yield* Ref.set(ConfigCache, NewConfig);
+      yield* OnDidChangeEvent.Fire({
+        affectsConfiguration: /* @__PURE__ */ __name((Section, _Scope) => (
+          // A real implementation would need to check the scope properly.
+          Change.keys.includes(Section)
+        ), "affectsConfiguration")
+      });
     }).pipe(Effect.runPromise)
   );
-  const ServiceImplementation = {
-    GetConfiguration: /* @__PURE__ */ __name((Section, Scope) => IPCService.SendRequest("$getConfiguration", [
-      Section,
-      Scope
-    ]).pipe(
-      Effect.tap((newConfig) => Ref.set(ConfigCache, newConfig)),
+  const ConfigurationImplementation = {
+    GetConfiguration: /* @__PURE__ */ __name((Section, Scope) => IPC.SendRequest("$getConfiguration", [Section, Scope]).pipe(
+      Effect.tap((NewConfig) => Ref.set(ConfigCache, NewConfig)),
       Effect.map(
-        (newConfig) => CreateWorkSpaceConfiguration(
-          newConfig,
+        (NewConfig) => CreateWorkSpaceConfiguration(
+          NewConfig,
           Section ?? "",
-          IPCService,
-          LogService
+          IPC,
+          Log
         )
       )
     ), "GetConfiguration"),
-    onDidChangeConfiguration: OnDidChangeEvent.Stream.pipe(Stream.toEvent)
+    onDidChangeConfiguration: OnDidChangeEvent.event
   };
-  return ServiceImplementation;
+  return ConfigurationImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

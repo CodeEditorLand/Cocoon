@@ -1,16 +1,14 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-import * as TypeConverter from "../../TypeConverter.js";
-import { IPC } from "../IPC.js";
+import { URI as URIConverter } from "../../TypeConverter/Main.js";
+import IPCService from "../IPC/Service.js";
 import { FileSystemError, MapToVSCodeError } from "./Error.js";
-function CreateStatEffect(URI) {
-  return Effect.gen(function* (_) {
-    const IPCService = yield* _(IPC.Tag);
-    const UriDTO = TypeConverter.URIConverter.FromAPI(URI);
-    const RawStat = yield* _(
-      IPCService.SendRequest("$stat", [UriDTO])
-    );
+const CreateStatEffect = /* @__PURE__ */ __name((URI) => {
+  return Effect.gen(function* () {
+    const IPC = yield* IPCService;
+    const UriDTO = URIConverter.FromAPI(URI);
+    const RawStat = yield* IPC.SendRequest("$stat", [UriDTO]);
     return {
       type: RawStat.type,
       ctime: RawStat.ctime,
@@ -20,16 +18,20 @@ function CreateStatEffect(URI) {
     };
   }).pipe(
     Effect.mapError(
-      (cause) => new FileSystemError({ cause, operation: "Stat", uri: URI })
+      (Cause) => new FileSystemError({
+        cause: Cause,
+        operation: "Stat",
+        uri: URI
+      })
     ),
     Effect.catchTag(
       "FileSystemError",
-      (e) => Effect.fail(MapToVSCodeError(e))
+      (Error2) => Effect.fail(MapToVSCodeError(Error2))
     )
   );
-}
-__name(CreateStatEffect, "CreateStatEffect");
+}, "CreateStatEffect");
+var CreateStatEffect_default = CreateStatEffect;
 export {
-  CreateStatEffect
+  CreateStatEffect_default as default
 };
 //# sourceMappingURL=CreateStatEffect.js.map

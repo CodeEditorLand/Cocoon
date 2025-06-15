@@ -2,38 +2,32 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, HashMap, Ref, Scope } from "effect";
 import { CancellationTokenSource } from "vs/base/common/cancellation.js";
-import { InvalidTokenIDError } from "./Error.js";
-const Definition = Effect.gen(function* (_) {
-  const SourceMap = yield* _(
-    Ref.make(HashMap.empty())
+import InvalidTokenIDError from "./Error/InvalidTokenIDError.js";
+var Definition_default = Effect.gen(function* () {
+  const SourceMap = yield* Ref.make(
+    HashMap.empty()
   );
   const ObtainToken = /* @__PURE__ */ __name((TokenID) => Effect.acquireRelease(
-    Effect.gen(function* (_2) {
+    Effect.gen(function* () {
       if (TokenID <= 0) {
-        return yield* _2(
-          Effect.fail(new InvalidTokenIDError({ TokenID }))
+        return yield* Effect.fail(
+          new InvalidTokenIDError({ TokenID })
         );
       }
-      const ExistingSource = yield* _2(
+      const ExistingSource = yield* Effect.map(
         Ref.get(SourceMap),
-        Effect.map(HashMap.get(TokenID))
+        HashMap.get(TokenID)
       );
       if (ExistingSource._tag === "Some") {
-        yield* _2(
-          Effect.logTrace(
-            `Reusing CancellationTokenSource for TokenID: ${TokenID}.`
-          )
+        yield* Effect.logTrace(
+          `Reusing CancellationTokenSource for TokenID: ${TokenID}.`
         );
         return ExistingSource.value;
       }
       const NewSource = new CancellationTokenSource();
-      yield* _2(
-        Ref.update(SourceMap, HashMap.set(TokenID, NewSource))
-      );
-      yield* _2(
-        Effect.logTrace(
-          `Created new CancellationTokenSource for TokenID: ${TokenID}.`
-        )
+      yield* Ref.update(SourceMap, HashMap.set(TokenID, NewSource));
+      yield* Effect.logTrace(
+        `Created new CancellationTokenSource for TokenID: ${TokenID}.`
       );
       return NewSource;
     }),
@@ -53,7 +47,7 @@ const Definition = Effect.gen(function* (_) {
             })
           );
         }
-        return Effect.unit;
+        return Effect.void;
       }),
       Effect.orDie
       // Failure to release is a fatal error.
@@ -62,41 +56,37 @@ const Definition = Effect.gen(function* (_) {
     // The scope is implicitly created and managed by acquireRelease
     Effect.map((Source) => ({
       Token: Source.token,
-      Scope: Scope.global
+      Scope: Scope.globalScope
       // Placeholder, acquireRelease provides its own scope.
     }))
   ), "ObtainToken");
-  const CancelToken = /* @__PURE__ */ __name((TokenID) => Effect.gen(function* (_2) {
+  const CancelToken = /* @__PURE__ */ __name((TokenID) => Effect.gen(function* () {
     if (TokenID <= 0) {
-      return yield* _2(
-        Effect.logWarning(
-          `Attempted to cancel with an invalid TokenID: '${TokenID}'.`
-        )
+      return yield* Effect.logWarning(
+        `Attempted to cancel with an invalid TokenID: '${TokenID}'.`
       );
     }
-    const MaybeSource = yield* _2(
+    const MaybeSource = yield* Effect.map(
       Ref.get(SourceMap),
-      Effect.map(HashMap.get(TokenID))
+      HashMap.get(TokenID)
     );
     if (MaybeSource._tag === "Some") {
-      yield* _2(
-        Effect.logDebug(
-          `Received cancellation signal. Cancelling operation for TokenID: ${TokenID}.`
-        )
+      yield* Effect.logDebug(
+        `Received cancellation signal. Cancelling operation for TokenID: ${TokenID}.`
       );
       MaybeSource.value.cancel();
     } else {
-      yield* _2(
-        Effect.logWarning(
-          `Cancellation signal for TokenID: ${TokenID}, but no active source was found.`
-        )
+      yield* Effect.logWarning(
+        `Cancellation signal for TokenID: ${TokenID}, but no active source was found.`
       );
     }
   }), "CancelToken");
-  const DisposeAll = Ref.get(SourceMap).pipe(
+  const DisposeAll = /* @__PURE__ */ __name(() => Ref.get(SourceMap).pipe(
     Effect.tap(
       (map) => Effect.logDebug(
-        `Disposing all (${HashMap.size(map)}) managed CancellationTokenSources.`
+        `Disposing all (${HashMap.size(
+          map
+        )}) managed CancellationTokenSources.`
       )
     ),
     Effect.flatMap(
@@ -115,15 +105,15 @@ const Definition = Effect.gen(function* (_) {
         "All CancellationTokenSources disposed and map cleared."
       )
     )
-  );
+  ), "DisposeAll");
   const ServiceImplementation = {
     ObtainToken,
     CancelToken,
-    DisposeAll: /* @__PURE__ */ __name(() => DisposeAll, "DisposeAll")
+    DisposeAll
   };
   return ServiceImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

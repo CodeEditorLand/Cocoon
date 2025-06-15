@@ -1,12 +1,12 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-function CreateLanguagesNamespace(LanguageFeatureService, Extension) {
+const CreateLanguagesNamespace = /* @__PURE__ */ __name((LanguageFeature, Extension) => {
   return {
     // --- Provider Registration Methods ---
     registerHoverProvider: /* @__PURE__ */ __name((selector, provider) => {
       return Effect.runSync(
-        LanguageFeatureService.RegisterHoverProvider(
+        LanguageFeature.RegisterHoverProvider(
           selector,
           provider,
           Extension
@@ -15,7 +15,7 @@ function CreateLanguagesNamespace(LanguageFeatureService, Extension) {
     }, "registerHoverProvider"),
     registerCompletionItemProvider: /* @__PURE__ */ __name((selector, provider, ...triggerCharacters) => {
       return Effect.runSync(
-        LanguageFeatureService.RegisterCompletionItemProvider(
+        LanguageFeature.RegisterCompletionItemProvider(
           selector,
           provider,
           triggerCharacters,
@@ -25,7 +25,7 @@ function CreateLanguagesNamespace(LanguageFeatureService, Extension) {
     }, "registerCompletionItemProvider"),
     registerDefinitionProvider: /* @__PURE__ */ __name((selector, provider) => {
       return Effect.runSync(
-        LanguageFeatureService.RegisterDefinitionProvider(
+        LanguageFeature.RegisterDefinitionProvider(
           selector,
           provider,
           Extension
@@ -34,7 +34,7 @@ function CreateLanguagesNamespace(LanguageFeatureService, Extension) {
     }, "registerDefinitionProvider"),
     registerCodeActionsProvider: /* @__PURE__ */ __name((selector, provider, metadata) => {
       return Effect.runSync(
-        LanguageFeatureService.RegisterCodeActionsProvider(
+        LanguageFeature.RegisterCodeActionsProvider(
           selector,
           provider,
           metadata,
@@ -47,18 +47,18 @@ function CreateLanguagesNamespace(LanguageFeatureService, Extension) {
     getLanguages: /* @__PURE__ */ __name(() => {
       return Promise.resolve([]);
     }, "getLanguages"),
-    setTextDocumentLanguage: /* @__PURE__ */ __name((document, languageId) => {
+    setTextDocumentLanguage: /* @__PURE__ */ __name((document, _languageId) => {
       return Promise.resolve(document);
     }, "setTextDocumentLanguage"),
-    createDiagnosticCollection: /* @__PURE__ */ __name((name) => {
+    createDiagnosticCollection: /* @__PURE__ */ __name((_name) => {
       throw new Error(
         "createDiagnosticCollection not implemented in this mock."
       );
     }, "createDiagnosticCollection")
   };
-}
-__name(CreateLanguagesNamespace, "CreateLanguagesNamespace");
+}, "CreateLanguagesNamespace");
+var CreateLanguagesNamespace_default = CreateLanguagesNamespace;
 export {
-  CreateLanguagesNamespace
+  CreateLanguagesNamespace_default as default
 };
 //# sourceMappingURL=CreateLanguagesNamespace.js.map

@@ -1,48 +1,42 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Ref, Stream } from "effect";
-import * as TypeConverter from "../../TypeConverter.js";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IPC } from "../IPC.js";
-import { WorkSpace } from "../WorkSpace.js";
-const Definition = Effect.gen(function* (_) {
-  const IPCService = yield* _(IPC.Tag);
-  const WorkSpaceService = yield* _(WorkSpace.Tag);
+import * as TypeConverter from "../../TypeConverter/Main.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import IPCService from "../IPC/Service.js";
+import WorkSpaceService from "../WorkSpace/Service.js";
+var Definition_default = Effect.gen(function* (_) {
+  const IPC = yield* _(IPCService);
+  const WorkSpace = yield* _(WorkSpaceService);
   const WindowStateRef = yield* _(
-    Ref.make({ focused: true })
-    // Initial optimistic state
+    Ref.make({ focused: true, active: true })
   );
   const OnDidChangeWindowState = CreateEventStream();
-  IPCService.RegisterInvokeHandler(
-    "$acceptWindowStateChanged",
-    ([isFocused]) => {
-      const newState = { focused: isFocused };
-      return Ref.set(WindowStateRef, newState).pipe(
-        Effect.flatMap(() => OnDidChangeWindowState.Fire(newState)),
-        Effect.runPromise
-      );
-    }
-  );
+  IPC.RegisterInvokeHandler("$acceptWindowStateChanged", ([isFocused]) => {
+    const newState = { focused: isFocused, active: isFocused };
+    return Ref.set(WindowStateRef, newState).pipe(
+      Effect.flatMap(() => OnDidChangeWindowState.Fire(newState)),
+      Effect.runPromise
+    );
+  });
   const ServiceImplementation = {
     get state() {
       return Ref.get(WindowStateRef).pipe(Effect.runSync);
     },
-    onDidChangeWindowState: OnDidChangeWindowState.Stream.pipe(
-      Stream.toEvent
-    ),
+    onDidChangeWindowState: Stream.toEvent(OnDidChangeWindowState.Stream),
     // These properties are delegated from the WorkSpace service, which is the
     // source of truth for editor states.
     get activeTextEditor() {
-      return WorkSpaceService.activeTextEditor;
+      return WorkSpace.activeTextEditor;
     },
     get visibleTextEditors() {
-      return WorkSpaceService.visibleTextEditors;
+      return WorkSpace.visibleTextEditors;
     },
-    onDidChangeActiveTextEditor: WorkSpaceService.onDidChangeActiveTextEditor,
-    onDidChangeVisibleTextEditors: WorkSpaceService.onDidChangeVisibleTextEditors,
+    onDidChangeActiveTextEditor: WorkSpace.onDidChangeActiveTextEditor,
+    onDidChangeVisibleTextEditors: WorkSpace.onDidChangeVisibleTextEditors,
     ShowTextDocument: /* @__PURE__ */ __name((documentOrURI, columnOrOptions, preserveFocus) => Effect.gen(function* (_2) {
       let uri;
-      if (documentOrURI.uri) {
+      if ("uri" in documentOrURI) {
         uri = documentOrURI.uri;
       } else {
         uri = documentOrURI;
@@ -50,21 +44,19 @@ const Definition = Effect.gen(function* (_) {
       const optionsDTO = columnOrOptions ? {
         // Convert TextDocumentShowOptions to DTO
         preserveFocus: preserveFocus ?? columnOrOptions.preserveFocus,
-        selection: columnOrOptions.selection ? TypeConverter.RangeConverter.FromAPI(
+        selection: columnOrOptions.selection ? TypeConverter.Range.FromAPI(
           columnOrOptions.selection
         ) : void 0
       } : void 0;
-      const viewColumnDTO = typeof columnOrOptions === "number" ? TypeConverter.ViewColumnConverter.FromAPI(
-        columnOrOptions
-      ) : void 0;
+      const viewColumnDTO = typeof columnOrOptions === "number" ? TypeConverter.ViewColumn.FromAPI(columnOrOptions) : void 0;
       const editorId = yield* _2(
-        IPCService.SendRequest("$showTextDocument", [
-          TypeConverter.URIConverter.FromAPI(uri),
+        IPC.SendRequest("$showTextDocument", [
+          TypeConverter.URI.FromAPI(uri),
           viewColumnDTO,
           optionsDTO
         ])
       );
-      const editor = WorkSpaceService.findTextEditorById(editorId);
+      const editor = WorkSpace.findTextEditorById(editorId);
       if (!editor) {
         return yield* _2(
           Effect.fail(
@@ -80,6 +72,6 @@ const Definition = Effect.gen(function* (_) {
   return ServiceImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

@@ -1,114 +1,118 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Stream } from "effect";
+import { Effect } from "effect";
 import { generateUuid } from "vs/base/common/uuid.js";
-import * as TypeConverter from "../../TypeConverter.js";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-class TreeViewImplementation {
-  constructor(viewID, dataProvider, ipc, commandService, extension) {
-    this.viewID = viewID;
-    this.dataProvider = dataProvider;
-    this.ipc = ipc;
-    this.commandService = commandService;
-    this.extension = extension;
-    if (this.dataProvider.onDidChangeTreeData) {
-      this.dataProvider.onDidChangeTreeData((elements) => {
-        const handlesToRefresh = this.getHandlesToRefresh(elements);
-        this.ipc.SendNotification(`$refreshTreeView`, [
-          this.viewID,
-          handlesToRefresh
+import { TreeView as TreeViewConverter } from "../../TypeConverter.js";
+import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+class TreeViewImplementation_default {
+  constructor(ViewID, DataProvider, IPC, CommandService, Extension) {
+    this.ViewID = ViewID;
+    this.DataProvider = DataProvider;
+    this.IPC = IPC;
+    this.CommandService = CommandService;
+    this.Extension = Extension;
+    this.onDidExpandElement = this.OnDidExpandElementEmitter.event;
+    this.onDidCollapseElement = this.OnDidCollapseElementEmitter.event;
+    this.onDidChangeSelection = this.OnDidChangeSelectionEmitter.event;
+    this.onDidChangeVisibility = this.OnDidChangeVisibilityEmitter.event;
+    if (this.DataProvider.onDidChangeTreeData) {
+      this.DataProvider.onDidChangeTreeData((Elements) => {
+        const HandlesToRefresh = this.GetHandlesToRefresh(Elements);
+        this.IPC.SendNotification(`$refreshTreeView`, [
+          this.ViewID,
+          HandlesToRefresh
         ]);
       });
     }
   }
   static {
-    __name(this, "TreeViewImplementation");
+    __name(this, "default");
   }
-  // A map from the extension's data element to its handle.
-  elementToHandleMap = /* @__PURE__ */ new Map();
+  ElementToHandleMap = /* @__PURE__ */ new Map();
   handleToElementMap = /* @__PURE__ */ new Map();
-  // --- Public Event Emitters ---
-  onDidExpandElementEmitter = CreateEventStream();
-  onDidExpandElement = this.onDidExpandElementEmitter.Stream.pipe(Stream.toEvent);
-  onDidCollapseElementEmitter = CreateEventStream();
-  onDidCollapseElement = this.onDidCollapseElementEmitter.Stream.pipe(Stream.toEvent);
-  onDidChangeSelectionEmitter = CreateEventStream();
-  onDidChangeSelection = this.onDidChangeSelectionEmitter.Stream.pipe(Stream.toEvent);
-  onDidChangeVisibilityEmitter = CreateEventStream();
-  onDidChangeVisibility = this.onDidChangeVisibilityEmitter.Stream.pipe(Stream.toEvent);
-  getChildrenEffect(element) {
-    return Effect.tryPromise(
-      () => this.dataProvider.getChildren(element)
-    ).pipe(
-      Effect.flatMap((children) => {
-        if (!children) {
+  OnDidExpandElementEmitter = CreateEventStream();
+  onDidExpandElement;
+  OnDidCollapseElementEmitter = CreateEventStream();
+  onDidCollapseElement;
+  OnDidChangeSelectionEmitter = CreateEventStream();
+  onDidChangeSelection;
+  OnDidChangeVisibilityEmitter = CreateEventStream();
+  onDidChangeVisibility;
+  GetChildrenEffect(Element) {
+    return Effect.tryPromise({
+      try: /* @__PURE__ */ __name(() => this.DataProvider.getChildren(Element), "try"),
+      catch: /* @__PURE__ */ __name((CaughtError) => CaughtError, "catch")
+    }).pipe(
+      Effect.flatMap((Children) => {
+        if (!Children) {
           return Effect.succeed([]);
         }
-        const itemEffects = children.map(
-          (child) => this.resolveAndCacheItem(child)
+        const ItemEffects = Children.map(
+          (Child) => this.ResolveAndCacheItem(Child)
         );
-        return Effect.all(itemEffects);
+        return Effect.all(ItemEffects);
       })
     );
   }
-  resolveAndCacheItem(element) {
-    return Effect.tryPromise(
-      () => this.dataProvider.getTreeItem(element)
-    ).pipe(
-      Effect.map((treeItem) => {
-        const handle = this.getHandleForElement(element);
-        const commandConverter = new TypeConverter.Command.Definition(
-          this.commandService,
+  ResolveAndCacheItem(Element) {
+    return Effect.tryPromise({
+      try: /* @__PURE__ */ __name(() => this.DataProvider.getTreeItem(Element), "try"),
+      catch: /* @__PURE__ */ __name((CaughtError) => CaughtError, "catch")
+    }).pipe(
+      Effect.map((TreeItem) => {
+        const Handle = this.GetHandleForElement(Element);
+        const CommandConverter = new CommandConverterDefinition(
+          this.CommandService,
           () => void 0
         );
-        return TypeConverter.TreeView.Item.FromAPI(
-          this.extension,
-          treeItem,
-          handle,
+        return TreeViewConverter.Item.FromAPI(
+          this.Extension,
+          TreeItem,
+          Handle,
           void 0,
-          // Parent handle is managed by the host
-          commandConverter
+          CommandConverter
         );
       })
     );
   }
-  getHandleForElement(element) {
-    if (this.elementToHandleMap.has(element)) {
-      return this.elementToHandleMap.get(element);
+  GetHandleForElement(Element) {
+    if (this.ElementToHandleMap.has(Element)) {
+      return this.ElementToHandleMap.get(Element);
     }
-    const handle = generateUuid();
-    this.elementToHandleMap.set(element, handle);
-    this.handleToElementMap.set(handle, element);
-    return handle;
+    const Handle = generateUuid();
+    this.ElementToHandleMap.set(Element, Handle);
+    this.handleToElementMap.set(Handle, Element);
+    return Handle;
   }
-  getHandlesToRefresh(elements) {
-    if (elements === null || elements === void 0) {
+  GetHandlesToRefresh(Elements) {
+    if (Elements === null || Elements === void 0) {
       return void 0;
     }
-    if (Array.isArray(elements)) {
-      return elements.map((e) => this.elementToHandleMap.get(e) || null);
+    if (Array.isArray(Elements)) {
+      return Elements.map(
+        (Element) => this.ElementToHandleMap.get(Element) || null
+      );
     }
-    return [this.elementToHandleMap.get(elements) || null];
+    return [this.ElementToHandleMap.get(Elements) || null];
   }
-  // --- Public API Methods ---
-  reveal(element, options) {
+  reveal(Element, Options) {
     return Effect.runPromise(
-      this.ipc.SendNotification("$revealTreeViewItem", [
-        this.viewID,
-        this.getHandleForElement(element),
-        options
+      this.IPC.SendNotification("$revealTreeViewItem", [
+        this.ViewID,
+        this.GetHandleForElement(Element),
+        Options
       ])
     );
   }
   dispose() {
-    this.onDidExpandElementEmitter.Shutdown();
-    this.onDidCollapseElementEmitter.Shutdown();
-    this.onDidChangeSelectionEmitter.Shutdown();
-    this.onDidChangeVisibilityEmitter.Shutdown();
-    this.elementToHandleMap.clear();
+    this.OnDidExpandElementEmitter.Shutdown();
+    this.OnDidCollapseElementEmitter.Shutdown();
+    this.OnDidChangeSelectionEmitter.Shutdown();
+    this.OnDidChangeVisibilityEmitter.Shutdown();
+    this.ElementToHandleMap.clear();
     this.handleToElementMap.clear();
   }
-  // --- Stubs for writable properties ---
   selection = [];
   visible = true;
   message;
@@ -117,6 +121,6 @@ class TreeViewImplementation {
   badge;
 }
 export {
-  TreeViewImplementation
+  TreeViewImplementation_default as default
 };
 //# sourceMappingURL=TreeViewImplementation.js.map

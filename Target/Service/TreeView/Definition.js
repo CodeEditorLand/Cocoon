@@ -2,84 +2,75 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Ref } from "effect";
 import * as TypeConverter from "../../TypeConverter.js";
-import { Command } from "../Command.js";
-import { IPC } from "../IPC.js";
-import { TreeViewImplementation } from "./TreeViewImplementation.js";
-const Definition = Effect.gen(function* (_) {
-  const IPCService = yield* _(IPC.Tag);
-  const CommandService = yield* _(Command.Tag);
-  const ActiveViews = yield* _(
-    Ref.make(/* @__PURE__ */ new Map())
+import CommandService from "../Command/Service.js";
+import IPCService from "../IPC/Service.js";
+import TreeViewImplementation from "./TreeViewImplementation.js";
+var Definition_default = Effect.gen(function* () {
+  const IPC = yield* IPCService;
+  const Command = yield* CommandService;
+  const ActiveViews = yield* Ref.make(
+    /* @__PURE__ */ new Map()
   );
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$getChildren",
-    ([ViewID, ParentHandle]) => Effect.gen(function* (_2) {
-      const view = (yield* _2(Ref.get(ActiveViews))).get(ViewID);
-      if (!view) {
+    ([ViewID, ParentHandle]) => Effect.gen(function* () {
+      const View = (yield* Ref.get(ActiveViews)).get(ViewID);
+      if (!View) {
         return [];
       }
-      const parentElement = ParentHandle ? view["handleToElementMap"].get(ParentHandle) : void 0;
-      return yield* _2(view.getChildrenEffect(parentElement));
+      const ParentElement = ParentHandle ? View.handleToElementMap.get(ParentHandle) : void 0;
+      return yield* View.GetChildrenEffect(ParentElement);
     }).pipe(Effect.runPromise)
   );
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$disposeTreeView",
-    ([ViewID]) => Effect.gen(function* (_2) {
-      const view = (yield* _2(Ref.get(ActiveViews))).get(ViewID);
-      if (view) {
-        view.dispose();
-        yield* _2(
-          Ref.update(ActiveViews, (map) => (map.delete(ViewID), map))
+    ([ViewID]) => Effect.gen(function* () {
+      const View = (yield* Ref.get(ActiveViews)).get(ViewID);
+      if (View) {
+        View.dispose();
+        yield* Ref.update(
+          ActiveViews,
+          (Map2) => (Map2.delete(ViewID), Map2)
         );
       }
     }).pipe(Effect.runPromise)
   );
-  const ServiceImplementation = {
-    CreateTreeView: /* @__PURE__ */ __name((ViewID, Option, Extension) => Effect.gen(function* (_2) {
-      if ((yield* _2(Ref.get(ActiveViews))).has(ViewID)) {
-        return yield* _2(
-          Effect.fail(
-            new Error(
-              `Tree view '${ViewID}' already registered.`
-            )
+  const TreeViewImplementationFactory = {
+    CreateTreeView: /* @__PURE__ */ __name((ViewID, Options, Extension) => Effect.gen(function* () {
+      if ((yield* Ref.get(ActiveViews)).has(ViewID)) {
+        return yield* Effect.fail(
+          new Error(`Tree view '${ViewID}' already registered.`)
+        );
+      }
+      if (!Options.treeDataProvider) {
+        return yield* Effect.fail(
+          new Error(
+            "TreeViewOptions must include a TreeDataProvider."
           )
         );
       }
-      if (!Option.treeDataProvider) {
-        return yield* _2(
-          Effect.fail(
-            new Error(
-              "TreeViewOptions must include a TreeDataProvider."
-            )
-          )
-        );
-      }
-      const OptionDTO = TypeConverter.TreeView.Option.FromAPI(Option);
-      yield* _2(
-        IPCService.SendNotification("$registerTreeDataProvider", [
-          ViewID,
-          OptionDTO
-        ])
-      );
+      const OptionDTO = TypeConverter.TreeView.Option.FromAPI(Options);
+      yield* IPC.SendNotification("$registerTreeDataProvider", [
+        ViewID,
+        OptionDTO
+      ]);
       const ExtHostView = new TreeViewImplementation(
         ViewID,
-        Option.treeDataProvider,
-        IPCService,
-        CommandService,
+        Options.treeDataProvider,
+        IPC,
+        Command,
         Extension
       );
-      yield* _2(
-        Ref.update(
-          ActiveViews,
-          (map) => map.set(ViewID, ExtHostView)
-        )
+      yield* Ref.update(
+        ActiveViews,
+        (Map2) => Map2.set(ViewID, ExtHostView)
       );
       return ExtHostView;
     }), "CreateTreeView")
   };
-  return ServiceImplementation;
+  return TreeViewImplementationFactory;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

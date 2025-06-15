@@ -1,8 +1,8 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-import { IPC } from "../Service/IPC.js";
-function SafeToString(Arguments) {
+import IPCService from "../Service/IPC/Service.js";
+const SafeToString = /* @__PURE__ */ __name((Arguments) => {
   const Slices = [];
   for (let i = 0; i < Arguments.length; i++) {
     const Argument = Arguments[i];
@@ -17,25 +17,21 @@ function SafeToString(Arguments) {
     }
   }
   return Slices.join(" ");
-}
-__name(SafeToString, "SafeToString");
-const PipeLogging = Effect.gen(function* (_) {
+}, "SafeToString");
+const PipeLogging = Effect.gen(function* () {
   if (process.env["VSCODE_PIPE_LOGGING"] !== "true") {
-    yield* _(
-      Effect.logTrace(
-        "Console log piping is disabled by environment variable."
-      )
+    return yield* Effect.logTrace(
+      "Console log piping is disabled by environment variable."
     );
-    return;
   }
-  const IPCService = yield* _(IPC.Tag);
+  const IPC = yield* IPCService;
   const ForwardConsoleCall = /* @__PURE__ */ __name((Severity, Arguments) => {
     const Payload = {
       type: "__$console",
       severity: Severity,
       arguments: SafeToString(Arguments)
     };
-    return IPCService.SendNotification("$log", [Payload]);
+    return IPC.SendNotification("$log", [Payload]);
   }, "ForwardConsoleCall");
   const OriginalConsole = {
     log: console.log,
@@ -54,11 +50,12 @@ const PipeLogging = Effect.gen(function* (_) {
     OriginalConsole.error.apply(console, args);
     Effect.runFork(ForwardConsoleCall("error", args));
   };
-  yield* _(
-    Effect.logTrace("Global console object patched to pipe logs to host.")
+  yield* Effect.logTrace(
+    "Global console object patched to pipe logs to host."
   );
 });
+var PipeLogging_default = PipeLogging;
 export {
-  PipeLogging
+  PipeLogging_default as default
 };
 //# sourceMappingURL=PipeLogging.js.map

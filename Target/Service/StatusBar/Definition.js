@@ -2,67 +2,68 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Ref } from "effect";
 import { Disposable, StatusBarAlignment } from "vscode";
-import { IPC } from "../IPC.js";
-import { StatusBarItemImplementation } from "./StatusBarItemImplementation.js";
+import IPCService from "../IPC/Service.js";
+import StatusBarItemImplementation from "./StatusBarItemImplementation.js";
 let EntryIDCounter = 0;
-const Definition = Effect.gen(function* (_) {
-  const IPCService = yield* _(IPC.Tag);
-  const ActiveEntries = yield* _(
-    Ref.make(/* @__PURE__ */ new Map())
+var Definition_default = Effect.gen(function* () {
+  const IPC = yield* IPCService;
+  const ActiveEntries = yield* Ref.make(
+    /* @__PURE__ */ new Map()
   );
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$provideStatusbarTooltip",
-    ([entryID]) => Effect.gen(function* (_2) {
+    ([_EntryID]) => Effect.gen(function* () {
       return null;
     }).pipe(Effect.runPromise)
   );
-  const ServiceImplementation = {
+  const StatusBarImplementation = {
     CreateStatusBarItem: /* @__PURE__ */ __name((Extension, ID, Alignment, Priority) => Effect.sync(() => {
       const EntryID = `ext-statusbar-${EntryIDCounter++}`;
       const ItemID = ID ?? `${Extension.identifier.value}.${EntryID}`;
       const FinalAlignment = Alignment ?? StatusBarAlignment.Left;
       const OnDispose = /* @__PURE__ */ __name(() => {
-        Ref.update(
-          ActiveEntries,
-          (map) => (map.delete(EntryID), map)
-        ).pipe(Effect.runSync);
+        Effect.runSync(
+          Ref.update(
+            ActiveEntries,
+            (Map2) => (Map2.delete(EntryID), Map2)
+          )
+        );
       }, "OnDispose");
       const Entry = new StatusBarItemImplementation(
         EntryID,
-        IPCService,
+        IPC,
         OnDispose,
         ItemID,
         FinalAlignment,
         Priority
       );
-      Ref.update(
-        ActiveEntries,
-        (map) => map.set(EntryID, Entry)
-      ).pipe(Effect.runSync);
+      Effect.runSync(
+        Ref.update(ActiveEntries, (Map2) => Map2.set(EntryID, Entry))
+      );
       return Entry;
     }), "CreateStatusBarItem"),
-    SetStatusBarMessage: /* @__PURE__ */ __name((text, hideOrPromise) => {
-      const hideId = `status.message.${EntryIDCounter++}`;
-      const ShowEffect = IPCService.SendNotification(
-        "$setStatusBarMessage",
-        [hideId, text]
-      );
-      const HideEffect = IPCService.SendNotification(
+    SetStatusBarMessage: /* @__PURE__ */ __name((Text, HideOrPromise) => {
+      const HideId = `status.message.${EntryIDCounter++}`;
+      const ShowEffect = IPC.SendNotification("$setStatusBarMessage", [
+        HideId,
+        Text
+      ]);
+      const HideEffect = IPC.SendNotification(
         "$disposeStatusBarMessage",
-        [hideId]
+        [HideId]
       );
       Effect.runFork(ShowEffect);
-      if (typeof hideOrPromise === "number") {
-        setTimeout(() => Effect.runFork(HideEffect), hideOrPromise);
-      } else if (hideOrPromise) {
-        hideOrPromise.then(() => Effect.runFork(HideEffect));
+      if (typeof HideOrPromise === "number") {
+        setTimeout(() => Effect.runFork(HideEffect), HideOrPromise);
+      } else if (HideOrPromise) {
+        HideOrPromise.then(() => Effect.runFork(HideEffect));
       }
       return new Disposable(() => Effect.runFork(HideEffect));
     }, "SetStatusBarMessage")
   };
-  return ServiceImplementation;
+  return StatusBarImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

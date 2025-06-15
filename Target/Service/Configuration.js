@@ -1,16 +1,11 @@
-import { Layer } from "effect";
-import { Definition } from "./Configuration/Definition.js";
-import { Tag } from "./Configuration/Service.js";
-import { Live as LiveIPC } from "./IPC.js";
-import { Live as LiveLog } from "./Log.js";
-import { Tag as Tag2 } from "./Configuration/Service.js";
-export * from "./Configuration/Type.js";
-export * from "./Configuration/Error.js";
-const Live = Layer.effect(Tag, Definition).pipe(
-  Layer.provide(Layer.merge(LiveIPC, LiveLog))
-);
+import { ConfigurationUpdateError } from "./Configuration/Error.js";
+import GetConfiguration from "./Configuration/GetConfiguration.js";
+import Live from "./Configuration/Live.js";
+import Service from "./Configuration/Service.js";
 export {
+  ConfigurationUpdateError,
+  GetConfiguration,
   Live,
-  Tag2 as Tag
+  Service
 };
 //# sourceMappingURL=Configuration.js.map

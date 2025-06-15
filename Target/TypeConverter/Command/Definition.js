@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { generateUuid } from "vs/base/common/uuid.js";
-class Definition {
+class Definition_default {
   constructor(CommandService, LookupAPICommand) {
     this.CommandService = CommandService;
     this.LookupAPICommand = LookupAPICommand;
@@ -13,53 +13,50 @@ class Definition {
     );
   }
   static {
-    __name(this, "Definition");
+    __name(this, "default");
   }
   DelegatingCommandID;
   DelegatedCommands = /* @__PURE__ */ new Map();
-  ExecuteDelegatedCommand(ID, ...Arguments) {
-    const command = this.DelegatedCommands.get(ID);
-    if (!command) {
+  ExecuteDelegatedCommand(ID, ...ArgumentArray) {
+    const Command = this.DelegatedCommands.get(ID);
+    if (!Command) {
       throw new Error(`Unknown delegated command: ${ID}`);
     }
     return this.CommandService.ExecuteCommand(
-      command.command,
-      ...command.arguments ?? []
+      Command.command,
+      ...[...Command.arguments ?? [], ...ArgumentArray]
     );
   }
-  ToInternal(Command, Disposables) {
+  ToInternal(Command, DisposableArray) {
     if (!Command) {
       return void 0;
     }
     const APICommand = this.LookupAPICommand(Command.command);
     if (APICommand) {
-      const ConvertedArguments = Command.arguments?.map(
-        (argument, i) => APICommand.Arguments[i].Convert(argument)
+      const ConvertedArgumentArray = Command.arguments?.map(
+        (Argument, i) => APICommand.Arguments[i].Convert(Argument)
       ) ?? [];
       return {
         id: APICommand.InternalID,
-        title: Command.title,
-        tooltip: Command.tooltip,
-        arguments: ConvertedArguments
+        title: APICommand.ID,
+        arguments: ConvertedArgumentArray
       };
     }
-    if (Array.isArray(Command.arguments) && Command.arguments.some((argument) => typeof argument === "function")) {
+    if (Array.isArray(Command.arguments) && Command.arguments.some((Argument) => typeof Argument === "function")) {
       const ID = generateUuid();
       this.DelegatedCommands.set(ID, Command);
-      Disposables.push({
+      DisposableArray.push({
         dispose: /* @__PURE__ */ __name(() => this.DelegatedCommands.delete(ID), "dispose")
       });
       return {
         id: this.DelegatingCommandID,
         title: Command.title,
-        tooltip: Command.tooltip,
-        arguments: [ID]
+        arguments: [ID, ...Command.arguments ?? []]
       };
     }
     return {
       id: Command.command,
       title: Command.title,
-      tooltip: Command.tooltip,
       arguments: Command.arguments
     };
   }
@@ -69,13 +66,13 @@ class Definition {
     }
     return {
       command: CommandDTO.id,
-      title: typeof CommandDTO.title === "string" ? CommandDTO.title : CommandDTO.title.value,
-      tooltip: CommandDTO.tooltip,
-      arguments: CommandDTO.arguments
+      title: CommandDTO.title ?? "",
+      tooltip: CommandDTO.tooltip ?? "",
+      arguments: CommandDTO.arguments ?? []
     };
   }
 }
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

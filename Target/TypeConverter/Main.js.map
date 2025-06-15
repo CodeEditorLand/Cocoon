@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../Source/TypeConverter/Main.ts"],
-  "sourcesContent": ["/**\n * @module Main (TypeConverter)\n * @description Aggregates and exports all foundational type converters for the\n * most common, basic data types used throughout the vscode API.\n */\n\nexport * as Location from \"./Main/Location.js\";\nexport * as MarkdownString from \"./Main/MarkdownString.js\";\nexport * as Position from \"./Main/Position.js\";\nexport * as Range from \"./Main/Range.js\";\nexport * as Selection from \"./Main/Selection.js\";\nexport * as TextEdit from \"./Main/TextEdit.js\";\nexport * as URI from \"./Main/URI.js\";\nexport * as ViewColumn from \"./Main/ViewColumn.js\";\n"],
-  "mappings": "AAMA,YAAY,cAAc;AAC1B,YAAY,oBAAoB;AAChC,YAAY,cAAc;AAC1B,YAAY,WAAW;AACvB,YAAY,eAAe;AAC3B,YAAY,cAAc;AAC1B,YAAY,SAAS;AACrB,YAAY,gBAAgB;",
+  "sourcesContent": ["/**\n * @module Main (TypeConverter)\n * @description Aggregates and exports all foundational type converters for the\n * most common, basic data types used throughout the vscode API.\n */\n\nimport Location from \"./Main/Location.js\";\nimport MarkdownString from \"./Main/MarkdownString.js\";\nimport Position from \"./Main/Position.js\";\nimport Range from \"./Main/Range.js\";\nimport Selection from \"./Main/Selection.js\";\nimport TextEdit from \"./Main/TextEdit.js\";\nimport URI from \"./Main/URI.js\";\nimport ViewColumn from \"./Main/ViewColumn.js\";\nimport WorkspaceFolder from \"./Main/WorkspaceFolder.js\";\n\nexport {\n\tLocation,\n\tMarkdownString,\n\tPosition,\n\tRange,\n\tSelection,\n\tTextEdit,\n\tURI,\n\tViewColumn,\n\tWorkspaceFolder,\n};\n"],
+  "mappings": "AAMA,OAAO,cAAc;AACrB,OAAO,oBAAoB;AAC3B,OAAO,cAAc;AACrB,OAAO,WAAW;AAClB,OAAO,eAAe;AACtB,OAAO,cAAc;AACrB,OAAO,SAAS;AAChB,OAAO,gBAAgB;AACvB,OAAO,qBAAqB;",
   "names": []
 }

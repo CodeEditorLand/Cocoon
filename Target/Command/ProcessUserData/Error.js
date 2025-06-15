@@ -7,7 +7,11 @@ class ActiveEditorNotFoundError extends Data.TaggedError(
   static {
     __name(this, "ActiveEditorNotFoundError");
   }
-  message = "No active text editor found. Please open a file to process.";
+  constructor(Properties) {
+    super(Properties ?? {});
+    this.message = "No active text editor found. Please open a file to process.";
+  }
+  message;
 }
 class ProcessingServiceError extends Data.TaggedError(
   "ProcessingServiceError"
@@ -15,10 +19,12 @@ class ProcessingServiceError extends Data.TaggedError(
   static {
     __name(this, "ProcessingServiceError");
   }
-  get message() {
-    const causeMessage = this.cause instanceof Error ? this.cause.message : String(this.cause);
-    return `Failed to connect to the processing service: ${causeMessage}`;
+  constructor(Properties) {
+    super(Properties);
+    const CauseMessage = this.cause instanceof Error ? this.cause.message : String(this.cause);
+    this.message = `Failed to connect to the processing service: ${CauseMessage}`;
   }
+  message;
 }
 export {
   ActiveEditorNotFoundError,

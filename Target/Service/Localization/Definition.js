@@ -3,13 +3,13 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import * as Path from "node:path";
 import { Barrier, Effect, Ref, Stream } from "effect";
 import { Uri } from "vscode";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { InitData } from "../InitData.js";
-import { IPC } from "../IPC.js";
-import { FetchBundle } from "./Support/FetchBundle.js";
-const Definition = Effect.gen(function* (_) {
-  const IPCService = yield* _(IPC.Tag);
-  const InitDataService = yield* _(InitData.Tag);
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import InitDataService from "../InitData/Service.js";
+import IPCService from "../IPC/Service.js";
+import FetchBundle from "./Support/FetchBundle.js";
+var Definition_default = Effect.gen(function* (_) {
+  const IPC = yield* _(IPCService);
+  const InitData = yield* _(InitDataService);
   const NlsCache = yield* _(
     Ref.make(/* @__PURE__ */ new Map())
   );
@@ -22,7 +22,7 @@ const Definition = Effect.gen(function* (_) {
     )
   );
   const GetPotentialBundleURIs = /* @__PURE__ */ __name((Extension) => {
-    const Language = InitDataService.environment.appLanguage || "en";
+    const Language = InitData.environment.appLanguage || "en";
     const BaseURI = Uri.revive(Extension.extensionLocation);
     const BasePath = Extension.l10n ? Path.join(BaseURI.fsPath, Extension.l10n) : BaseURI.fsPath;
     const DefaultBundleURI = Uri.file(
@@ -43,8 +43,8 @@ const Definition = Effect.gen(function* (_) {
       const [DefaultContent, LanguageContent] = yield* _2(
         Effect.all(
           [
-            FetchBundle(IPCService, DefaultBundleURI),
-            LanguageBundleURI ? FetchBundle(IPCService, LanguageBundleURI) : Effect.succeed({})
+            FetchBundle(IPC, DefaultBundleURI),
+            LanguageBundleURI ? FetchBundle(IPC, LanguageBundleURI) : Effect.succeed({})
           ],
           { concurrency: "unbounded" }
         )
@@ -59,14 +59,14 @@ const Definition = Effect.gen(function* (_) {
         );
       }
     }), "InitializeLocalizedMessages"),
-    onDidInitializeLocalization: OnDidInitializeEvent.Stream.pipe(
-      Stream.toEvent
+    onDidInitializeLocalization: Stream.toEvent(
+      OnDidInitializeEvent.Stream
     ),
-    SignalLocalizationInitialized: /* @__PURE__ */ __name(() => Barrier.succeed(InitBarrier, void 0).pipe(Effect.asUnit), "SignalLocalizationInitialized")
+    SignalLocalizationInitialized: /* @__PURE__ */ __name(() => Barrier.succeed(InitBarrier, void 0).pipe(Effect.asVoid), "SignalLocalizationInitialized")
   };
   return ServiceImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

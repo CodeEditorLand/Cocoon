@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/ESMInterceptor/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (ESMInterceptor)\n * @description The live implementation layer for the ESMInterceptor service.\n */\n\nimport { Layer } from \"effect\";\n\nimport LogLive from \"../../Service/Log/Live.js\";\nimport APIFactoryLive from \"../APIFactory/Live.js\";\nimport ExtensionPathLive from \"../ExtensionPath/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation layer for the ESMInterceptor service.\n * It depends on the APIFactory, ExtensionPath, and logging services.\n */\nconst Live = Layer.effect(Service, Definition).pipe(\n\tLayer.provide(Layer.mergeAll(APIFactoryLive, ExtensionPathLive, LogLive)),\n);\n\nexport default Live;\n"],
+  "mappings": "AAKA,SAAS,aAAa;AAEtB,OAAO,aAAa;AACpB,OAAO,oBAAoB;AAC3B,OAAO,uBAAuB;AAC9B,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAAO,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,EAC9C,MAAM,QAAQ,MAAM,SAAS,gBAAgB,mBAAmB,OAAO,CAAC;AACzE;AAEA,IAAO,eAAQ;",
+  "names": []
+}

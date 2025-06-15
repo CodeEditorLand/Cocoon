@@ -1,19 +1,16 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-import { ActivationKind } from "vs/workbench/api/common/extHostExtensionActivator.js";
-import { ExtensionKind, Uri } from "vscode";
-function CreateAPIObject(Description, ExtensionHostService) {
-  const Activate = ExtensionHostService.ActivateById(Description.identifier, {
+import { ActivationKind, ExtensionKind, Uri } from "vscode";
+const CreateAPIObject = /* @__PURE__ */ __name((Description, ExtensionHost) => {
+  const Activate = ExtensionHost.ActivateById(Description.identifier, {
     startup: false,
     extensionId: Description.identifier,
     activationEvent: "api",
     activationKind: ActivationKind.API
   }).pipe(
     Effect.map(
-      () => ExtensionHostService.GetExtensionExports(
-        Description.identifier
-      )
+      () => ExtensionHost.GetExtensionExports(Description.identifier)
     )
   );
   const GetExtensionKind = /* @__PURE__ */ __name(() => {
@@ -30,23 +27,23 @@ function CreateAPIObject(Description, ExtensionHostService) {
     extensionUri: Uri.revive(Description.extensionLocation),
     extensionPath: Description.extensionLocation.fsPath,
     get isActive() {
-      return ExtensionHostService.IsActivated(Description.identifier);
+      return ExtensionHost.IsActivated(Description.identifier);
     },
     get packageJSON() {
       return Description;
     },
     extensionKind: GetExtensionKind(),
     get exports() {
-      return ExtensionHostService.GetExtensionExports(
-        Description.identifier
-      );
+      return ExtensionHost.GetExtensionExports(Description.identifier);
     },
-    activate: /* @__PURE__ */ __name(() => Effect.runPromise(Activate), "activate")
+    activate: /* @__PURE__ */ __name(() => Effect.runPromise(Activate), "activate"),
+    isFromDifferentExtensionHost: false
+    // Assuming it's always local
   };
   return Object.freeze(ExtensionAPIObject);
-}
-__name(CreateAPIObject, "CreateAPIObject");
+}, "CreateAPIObject");
+var CreateAPIObject_default = CreateAPIObject;
 export {
-  CreateAPIObject
+  CreateAPIObject_default as default
 };
 //# sourceMappingURL=CreateAPIObject.js.map

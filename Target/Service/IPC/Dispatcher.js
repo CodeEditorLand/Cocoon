@@ -1,12 +1,7 @@
-import { Layer } from "effect";
-import { Live as LiveCancellation } from "../Cancellation.js";
-import { Definition } from "./Dispatcher/Definition.js";
-import { Tag } from "./Dispatcher/Service.js";
-import { Live as LiveProtocolAdapter } from "./ProtocolAdapter.js";
-const Live = Layer.effect(Tag, Definition).pipe(
-  Layer.provide(Layer.merge(LiveProtocolAdapter, LiveCancellation))
-);
+import Live from "./Dispatcher/Live.js";
+import Service from "./Dispatcher/Service.js";
 export {
-  Live
+  Live,
+  Service
 };
 //# sourceMappingURL=Dispatcher.js.map

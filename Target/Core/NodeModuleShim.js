@@ -1,12 +1,9 @@
-import { Layer } from "effect";
-import { Live as LiveLog } from "../../Service/Log.js";
-import { Definition } from "./NodeModuleShim/Definition.js";
-import { Tag } from "./NodeModuleShim/Service.js";
-import { Tag as Tag2 } from "./NodeModuleShim/Service.js";
-export * from "./NodeModuleShim/Error.js";
-const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveLog));
+import * as Error from "./NodeModuleShim/Error.js";
+import Live from "./NodeModuleShim/Live.js";
+import Service from "./NodeModuleShim/Service.js";
 export {
+  Error,
   Live,
-  Tag2 as Tag
+  Service
 };
 //# sourceMappingURL=NodeModuleShim.js.map

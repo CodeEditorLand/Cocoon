@@ -1,7 +1,7 @@
-import { Live } from "./ProcessPatch/Live.js";
-import { Tag } from "./ProcessPatch/Service.js";
+import Live from "./ProcessPatch/Live.js";
+import Service from "./ProcessPatch/Service.js";
 export {
   Live,
-  Tag
+  Service
 };
 //# sourceMappingURL=ProcessPatch.js.map

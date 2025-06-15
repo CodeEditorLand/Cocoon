@@ -1,133 +1,74 @@
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Layer } from "effect";
-import * as vscode from "vscode";
-import { Live as LiveAPIDeprecation } from "./Service/APIDeprecation.js";
-import { Live as LiveAuthentication } from "./Service/Authentication.js";
-import { Live as LiveCancellation } from "./Service/Cancellation.js";
-import { Live as LiveClipboard } from "./Service/Clipboard.js";
-import { Live as LiveCommand } from "./Service/Command.js";
-import { Live as LiveConfiguration } from "./Service/Configuration.js";
-import { Live as LiveDebug } from "./Service/Debug.js";
-import { Live as LiveDiagnostic } from "./Service/Diagnostic.js";
-import { Live as LiveDialog } from "./Service/Dialog.js";
-import { Live as LiveDocument } from "./Service/Document.js";
-import { Live as LiveEnvironment } from "./Service/Environment.js";
-import { Live as LiveExtension } from "./Service/Extension.js";
-import { Live as LiveFileSystem } from "./Service/FileSystem.js";
-import { Live as LiveFileSystemInformation } from "./Service/FileSystemInformation.js";
-import { Live as LiveIPC } from "./Service/IPC.js";
-import { Live as LiveLanguageFeature } from "./Service/LanguageFeature.js";
-import { Live as LiveLocalization } from "./Service/Localization.js";
-import { Live as LiveLog } from "./Service/Log.js";
-import { Live as LiveMessage } from "./Service/Message.js";
-import { Live as LiveProposedAPI } from "./Service/ProposedAPI.js";
-import { Live as LiveQuickInput } from "./Service/QuickInput.js";
-import { Live as LiveSecretStorage } from "./Service/SecretStorage.js";
-import { Live as LiveStatusBar } from "./Service/StatusBar.js";
-import { Live as LiveStorage } from "./Service/Storage.js";
-import { Live as LiveStoragePath } from "./Service/StoragePath.js";
-import { Live as LiveTask } from "./Service/Task.js";
-import { Live as LiveTelemetry } from "./Service/Telemetry.js";
-import { Live as LiveTreeView } from "./Service/TreeView.js";
-import { Live as LiveWebViewPanel } from "./Service/WebViewPanel.js";
-import { Live as LiveWindow } from "./Service/Window.js";
-import { Live as LiveWorkSpace } from "./Service/WorkSpace.js";
-import * as APIDeprecation from "./Service/APIDeprecation.js";
-import * as Authentication from "./Service/Authentication.js";
-import * as Cancellation from "./Service/Cancellation.js";
-import * as Clipboard from "./Service/Clipboard.js";
-import * as Command from "./Service/Command.js";
-import * as Configuration from "./Service/Configuration.js";
-import * as Debug from "./Service/Debug.js";
-import * as Diagnostic from "./Service/Diagnostic.js";
-import * as Dialog from "./Service/Dialog.js";
-import * as Document from "./Service/Document.js";
-import * as Environment from "./Service/Environment.js";
-import * as Extension from "./Service/Extension.js";
-import * as FileSystem from "./Service/FileSystem.js";
-import * as FileSystemInformation from "./Service/FileSystemInformation.js";
-import * as IPC from "./Service/IPC.js";
-import * as LanguageFeature from "./Service/LanguageFeature.js";
-import * as Localization from "./Service/Localization.js";
-import * as Log from "./Service/Log.js";
-import * as Message from "./Service/Message.js";
-import * as ProposedAPI from "./Service/ProposedAPI.js";
-import * as QuickInput from "./Service/QuickInput.js";
-import * as SecretStorage from "./Service/SecretStorage.js";
-import * as StatusBar from "./Service/StatusBar.js";
-import * as Storage from "./Service/Storage.js";
-import * as StoragePath from "./Service/StoragePath.js";
-import * as Task from "./Service/Task.js";
-import * as Telemetry from "./Service/Telemetry.js";
-import * as TreeView from "./Service/TreeView.js";
-import * as WebViewPanel from "./Service/WebViewPanel.js";
-import * as Window from "./Service/Window.js";
-import * as WorkSpace from "./Service/WorkSpace.js";
-const AllServiceLayer = Layer.mergeAll(
-  LiveAPIDeprecation,
-  LiveAuthentication,
-  LiveCancellation,
-  LiveClipboard,
-  LiveCommand,
-  LiveConfiguration,
-  LiveDebug,
-  LiveDiagnostic,
-  LiveDialog,
-  LiveDocument,
-  LiveEnvironment,
-  LiveExtension,
-  LiveFileSystem,
-  LiveFileSystemInformation,
-  LiveIPC,
-  LiveLanguageFeature,
-  LiveLocalization,
-  LiveLog,
-  LiveMessage,
-  LiveProposedAPI,
-  LiveQuickInput,
-  LiveSecretStorage,
-  LiveStatusBar,
-  LiveStorage,
-  LiveStoragePath,
-  LiveTask,
-  LiveTelemetry,
-  LiveTreeView,
-  LiveWebViewPanel,
-  LiveWindow,
-  LiveWorkSpace
-);
+import { Live as APIDeprecationLive } from "./Service/APIDeprecation.js";
+import { Live as AuthenticationLive } from "./Service/Authentication.js";
+import { Live as CancellationLive } from "./Service/Cancellation.js";
+import { Live as ClipboardLive } from "./Service/Clipboard.js";
+import { Live as CommandLive } from "./Service/Command.js";
+import { Live as ConfigurationLive } from "./Service/Configuration.js";
+import { Live as DebugLive } from "./Service/Debug.js";
+import { Live as DiagnosticLive } from "./Service/Diagnostic.js";
+import { Live as DialogLive } from "./Service/Dialog.js";
+import { Live as DocumentLive } from "./Service/Document.js";
+import { Live as EnvironmentLive } from "./Service/Environment.js";
+import { Live as ExtensionLive } from "./Service/Extension.js";
+import { Live as FileSystemLive } from "./Service/FileSystem.js";
+import { Live as FileSystemInformationLive } from "./Service/FileSystemInformation.js";
+import { Live as IPCLive } from "./Service/IPC.js";
+import { Live as LanguageFeatureLive } from "./Service/LanguageFeature.js";
+import { Live as LocalizationLive } from "./Service/Localization.js";
+import { Live as LogLive } from "./Service/Log.js";
+import { Live as MessageLive } from "./Service/Message.js";
+import { Live as ProposedAPILive } from "./Service/ProposedAPI.js";
+import { Live as QuickInputLive } from "./Service/QuickInput.js";
+import { Live as SecretStorageLive } from "./Service/SecretStorage.js";
+import { Live as StatusBarLive } from "./Service/StatusBar.js";
+import { Live as StorageLive } from "./Service/Storage.js";
+import { Live as StoragePathLive } from "./Service/StoragePath.js";
+import { Live as TaskLive } from "./Service/Task.js";
+import { Live as TelemetryLive } from "./Service/Telemetry.js";
+import { Live as TreeViewLive } from "./Service/TreeView.js";
+import { Live as WebViewPanelLive } from "./Service/WebViewPanel.js";
+import { Live as WindowLive } from "./Service/Window.js";
+import { Live as WorkSpaceLive } from "./Service/WorkSpace.js";
+const AllServiceLayer = /* @__PURE__ */ __name((Config) => {
+  return Layer.mergeAll(
+    APIDeprecationLive,
+    AuthenticationLive(Config),
+    CancellationLive,
+    ClipboardLive(Config),
+    CommandLive(Config),
+    ConfigurationLive(Config),
+    DebugLive(Config),
+    DiagnosticLive(Config),
+    DialogLive(Config),
+    DocumentLive(Config),
+    EnvironmentLive(Config),
+    ExtensionLive,
+    FileSystemLive(Config),
+    FileSystemInformationLive(Config),
+    IPCLive(Config),
+    LanguageFeatureLive(Config),
+    LocalizationLive(Config),
+    LogLive,
+    MessageLive(Config),
+    ProposedAPILive,
+    QuickInputLive(Config),
+    SecretStorageLive(Config),
+    StatusBarLive(Config),
+    StorageLive(Config),
+    StoragePathLive(Config),
+    TaskLive(Config),
+    TelemetryLive(Config),
+    TreeViewLive(Config),
+    WebViewPanelLive(Config),
+    WindowLive(Config),
+    WorkSpaceLive(Config)
+  );
+}, "AllServiceLayer");
+var Service_default = AllServiceLayer;
 export {
-  APIDeprecation,
-  AllServiceLayer,
-  Authentication,
-  Cancellation,
-  Clipboard,
-  Command,
-  Configuration,
-  Debug,
-  Diagnostic,
-  Dialog,
-  Document,
-  Environment,
-  Extension,
-  FileSystem,
-  FileSystemInformation,
-  IPC,
-  LanguageFeature,
-  Localization,
-  Log,
-  Message,
-  ProposedAPI,
-  QuickInput,
-  SecretStorage,
-  StatusBar,
-  Storage,
-  StoragePath,
-  Task,
-  Telemetry,
-  TreeView,
-  WebViewPanel,
-  Window,
-  WorkSpace,
-  vscode
+  Service_default as default
 };
 //# sourceMappingURL=Service.js.map

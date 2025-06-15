@@ -1,93 +1,86 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Stream } from "effect";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
 import { EmptyKeyError, InvalidValueError } from "./Error.js";
-class SecretStorageImplementation {
-  constructor(ExtensionID, IPCService, LogService) {
+class SecretStorageImplementation_default {
+  constructor(ExtensionID, IPC, Log) {
     this.ExtensionID = ExtensionID;
-    this.IPCService = IPCService;
-    this.LogService = LogService;
-    this.onDidChange = this.OnDidChangeEvent.Stream.pipe(Stream.toEvent);
+    this.IPC = IPC;
+    this.Log = Log;
+    this.onDidChange = Stream.toEvent(this.OnDidChangeEvent.Stream);
   }
   static {
-    __name(this, "SecretStorageImplementation");
+    __name(this, "default");
   }
   OnDidChangeEvent = CreateEventStream();
   onDidChange;
-  createGetEffect(Key) {
-    return Effect.gen(this, function* (_) {
+  CreateGetEffect(Key) {
+    return Effect.gen(this, function* () {
       if (!Key) {
-        return yield* _(Effect.fail(new EmptyKeyError()));
+        return yield* new EmptyKeyError();
       }
-      const result = yield* _(
-        this.IPCService.SendRequest(
-          "$getPassword",
-          [this.ExtensionID, Key]
-        )
+      return yield* this.IPC.SendRequest(
+        "$getPassword",
+        [this.ExtensionID, Key]
       );
-      return result;
     }).pipe(
-      Effect.catchTag("EmptyKeyError", (e) => Effect.fail(e)),
+      Effect.catchTag("EmptyKeyError", (Error2) => Effect.fail(Error2)),
       Effect.catchAll(
-        (err) => this.LogService.Error(
+        (Error2) => this.Log.Error(
           `SecretStorage.get failed for key '${Key}' in ext '${this.ExtensionID}'.`,
-          err
-        ).pipe(Effect.flatMap(() => Effect.fail(err)))
+          Error2
+        ).pipe(Effect.flatMap(() => Effect.fail(Error2)))
       )
     );
   }
-  createStoreEffect(Key, Value) {
-    return Effect.gen(this, function* (_) {
+  CreateStoreEffect(Key, Value) {
+    return Effect.gen(this, function* () {
       if (!Key) {
-        return yield* _(Effect.fail(new EmptyKeyError()));
+        return yield* new EmptyKeyError();
       }
       if (typeof Value !== "string") {
-        return yield* _(Effect.fail(new InvalidValueError()));
+        return yield* new InvalidValueError();
       }
-      yield* _(
-        this.IPCService.SendNotification("$setPassword", [
-          this.ExtensionID,
-          Key,
-          Value
-        ])
-      );
-      yield* _(this.OnDidChangeEvent.Fire({ key: Key }));
+      yield* this.IPC.SendNotification("$setPassword", [
+        this.ExtensionID,
+        Key,
+        Value
+      ]);
+      yield* this.OnDidChangeEvent.Fire({ key: Key });
     }).pipe(
       Effect.catchAll(
-        (err) => this.LogService.Error(
+        (Error2) => this.Log.Error(
           `SecretStorage.store failed for key '${Key}' in ext '${this.ExtensionID}'.`,
-          err
-        ).pipe(Effect.flatMap(() => Effect.fail(err)))
+          Error2
+        ).pipe(Effect.flatMap(() => Effect.fail(Error2)))
       )
     );
   }
-  createDeleteEffect(Key) {
-    return Effect.gen(this, function* (_) {
+  CreateDeleteEffect(Key) {
+    return Effect.gen(this, function* () {
       if (!Key) {
-        return yield* _(Effect.fail(new EmptyKeyError()));
+        return yield* new EmptyKeyError();
       }
-      yield* _(
-        this.IPCService.SendNotification("$deletePassword", [
-          this.ExtensionID,
-          Key
-        ])
-      );
-      yield* _(this.OnDidChangeEvent.Fire({ key: Key }));
+      yield* this.IPC.SendNotification("$deletePassword", [
+        this.ExtensionID,
+        Key
+      ]);
+      yield* this.OnDidChangeEvent.Fire({ key: Key });
     }).pipe(
       Effect.catchAll(
-        (err) => this.LogService.Error(
+        (Error2) => this.Log.Error(
           `SecretStorage.delete failed for key '${Key}' in ext '${this.ExtensionID}'.`,
-          err
-        ).pipe(Effect.flatMap(() => Effect.fail(err)))
+          Error2
+        ).pipe(Effect.flatMap(() => Effect.fail(Error2)))
       )
     );
   }
-  get = /* @__PURE__ */ __name((key) => Effect.runPromise(this.createGetEffect(key)), "get");
-  store = /* @__PURE__ */ __name((key, value) => Effect.runPromise(this.createStoreEffect(key, value)), "store");
-  delete = /* @__PURE__ */ __name((key) => Effect.runPromise(this.createDeleteEffect(key)), "delete");
+  get = /* @__PURE__ */ __name((Key) => Effect.runPromise(this.CreateGetEffect(Key)), "get");
+  store = /* @__PURE__ */ __name((Key, Value) => Effect.runPromise(this.CreateStoreEffect(Key, Value)), "store");
+  delete = /* @__PURE__ */ __name((Key) => Effect.runPromise(this.CreateDeleteEffect(Key)), "delete");
 }
 export {
-  SecretStorageImplementation
+  SecretStorageImplementation_default as default
 };
 //# sourceMappingURL=SecretStorageImplementation.js.map

@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../../Source/Service/Debug/Error.ts"],
-  "sourcesContent": ["/**\n * @module Error (Debug)\n * @description Defines custom, tagged errors for the Debug service.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that a debug provider (e.g., configuration provider or\n * adapter factory) failed to register.\n */\nexport class DebugProviderRegistrationError extends Data.TaggedError(\n\t\"DebugProviderRegistrationError\",\n)<{\n\treadonly DebugType: string;\n\treadonly cause?: unknown;\n}> {\n\tget message() {\n\t\treturn `Failed to register debug provider for type '${this.DebugType}'.`;\n\t}\n}\n\n/**\n * An error indicating that a `startDebugging` call failed.\n */\nexport class StartDebuggingError extends Data.TaggedError(\n\t\"StartDebuggingError\",\n)<{\n\treadonly cause: unknown;\n}> {\n\tget message() {\n\t\treturn `Failed to start debugging session.`;\n\t}\n}\n"],
-  "mappings": ";;AAKA,SAAS,YAAY;AAMd,MAAM,uCAAuC,KAAK;AAAA,EACxD;AACD,EAGG;AAAA,EAhBH,OAgBG;AAAA;AAAA;AAAA,EACF,IAAI,UAAU;AACb,WAAO,+CAA+C,KAAK,SAAS;AAAA,EACrE;AACD;AAKO,MAAM,4BAA4B,KAAK;AAAA,EAC7C;AACD,EAEG;AAAA,EA7BH,OA6BG;AAAA;AAAA;AAAA,EACF,IAAI,UAAU;AACb,WAAO;AAAA,EACR;AACD;",
-  "names": []
+  "sourcesContent": ["/**\n * @module Error (Debug)\n * @description Exports custom, tagged errors for the Debug service.\n */\n\nexport { default as DebugProviderRegistrationError } from \"./Error/DebugProviderRegistrationError.js\";\nexport { default as StartDebuggingError } from \"./Error/StartDebuggingError.js\";\n"],
+  "mappings": "AAKA,SAAoB,WAAXA,gBAAiD;AAC1D,SAAoB,WAAXA,gBAAsC;",
+  "names": ["default"]
 }

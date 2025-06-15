@@ -9,11 +9,11 @@ class GenericRequest {
   static {
     __name(this, "GenericRequest");
   }
-  setRequestid(_id) {
+  setRequestid(_ID) {
   }
-  setMethod(_method) {
+  setMethod(_Method) {
   }
-  setParams(_params) {
+  setParams(_Parameters) {
   }
   getRequestid() {
     return 0;
@@ -29,9 +29,9 @@ class GenericResponse {
   static {
     __name(this, "GenericResponse");
   }
-  setRequestid(_id) {
+  setRequestid(_ID) {
   }
-  setResult(_result) {
+  setResult(_Result) {
   }
   getResult() {
     return void 0;
@@ -41,16 +41,16 @@ class GenericNotification {
   static {
     __name(this, "GenericNotification");
   }
-  setMethod(_method) {
+  setMethod(_Method) {
   }
-  setParams(_params) {
+  setParams(_Parameters) {
   }
 }
 class CancelOperationRequest {
   static {
     __name(this, "CancelOperationRequest");
   }
-  getRequestidtocancel() {
+  getRequestid() {
     return 0;
   }
 }
@@ -58,21 +58,24 @@ class RPCDataPayload {
   static {
     __name(this, "RPCDataPayload");
   }
-  setBuffer(_buffer) {
+  setBuffer(_Buffer) {
   }
   getBuffer_asU8() {
     return new Uint8Array();
   }
 }
-const MountainServiceClient = /* @__PURE__ */ __name(function() {
+const MountainServiceClient = /* @__PURE__ */ __name(() => {
 }, "MountainServiceClient");
-export {
-  CancelOperationRequest,
+var Generated_default = {
   Empty,
-  GenericNotification,
   GenericRequest,
   GenericResponse,
-  MountainServiceClient,
-  RPCDataPayload
+  GenericNotification,
+  CancelOperationRequest,
+  RPCDataPayload,
+  MountainServiceClient
+};
+export {
+  Generated_default as default
 };
 //# sourceMappingURL=Generated.js.map

@@ -1,9 +1,7 @@
-import { Layer } from "effect";
-import { Live as LiveDispatcher } from "./Dispatcher.js";
-import { Acquire } from "./Server/Acquire.js";
-import { Tag } from "./Server/Service.js";
-const Live = Layer.scoped(Tag, Acquire).pipe(Layer.provide(LiveDispatcher));
+import Live from "./Server/Live.js";
+import Service from "./Server/Service.js";
 export {
-  Live
+  Live,
+  Service
 };
 //# sourceMappingURL=Server.js.map

@@ -2,35 +2,33 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Ref } from "effect";
 import { RPCProtocol } from "vs/workbench/services/extensions/common/rpcProtocol.js";
-import { Cancellation } from "../../Cancellation.js";
-import { ProtocolAdapter } from "../ProtocolAdapter.js";
-const Definition = Effect.gen(function* (_) {
-  const ProtocolAdapterService = yield* _(ProtocolAdapter.Tag);
-  const CancellationService = yield* _(Cancellation.Tag);
-  const RPCProtocolInstance = new RPCProtocol(ProtocolAdapterService);
-  const InvokeHandlers = yield* _(Ref.make(/* @__PURE__ */ new Map()));
-  const DispatchRequest = /* @__PURE__ */ __name((Method, Parameters) => Effect.gen(function* (_2) {
-    const handlers = yield* _2(Ref.get(InvokeHandlers));
-    const customHandler = handlers.get(Method);
-    if (customHandler) {
-      return yield* _2(
-        Effect.tryPromise(() => customHandler(...Parameters))
+import CancellationService from "../../Cancellation/Service.js";
+import ProtocolAdapterService from "../ProtocolAdapter/Service.js";
+var Definition_default = Effect.gen(function* () {
+  const ProtocolAdapter = yield* ProtocolAdapterService;
+  const Cancellation = yield* CancellationService;
+  const RPCProtocolInstance = new RPCProtocol(ProtocolAdapter);
+  const InvokeHandlers = yield* Ref.make(/* @__PURE__ */ new Map());
+  const DispatchRequest = /* @__PURE__ */ __name((Method, Parameters) => Effect.gen(function* () {
+    const Handlers = yield* Ref.get(InvokeHandlers);
+    const CustomHandler = Handlers.get(Method);
+    if (CustomHandler) {
+      return yield* Effect.tryPromise(
+        () => CustomHandler(...Parameters)
       );
     } else {
       if (RPCProtocolInstance._getHandler) {
-        const handler = RPCProtocolInstance._getHandler(
+        const Handler = RPCProtocolInstance._getHandler(
           Method
         );
-        if (handler) {
-          return yield* _2(
-            Effect.tryPromise(() => handler(...Parameters))
+        if (Handler) {
+          return yield* Effect.tryPromise(
+            () => Handler(...Parameters)
           );
         }
       }
-      return yield* _2(
-        Effect.fail(
-          new Error(`No handler found for RPC method: ${Method}`)
-        )
+      return yield* Effect.fail(
+        new Error(`No handler found for RPC method: ${Method}`)
       );
     }
   }), "DispatchRequest");
@@ -42,31 +40,31 @@ const Definition = Effect.gen(function* (_) {
       );
     }
   }), "DispatchNotification");
-  const ServiceImplementation = {
+  const DispatcherImplementation = {
     DispatchRequest,
     DispatchNotification,
-    CancelOperation: CancellationService.CancelToken,
-    ProcessIncomingData: ProtocolAdapterService.ProcessIncomingData,
+    CancelOperation: Cancellation.CancelToken,
+    ProcessIncomingData: ProtocolAdapter.ProcessIncomingData,
     RegisterInvokeHandler: /* @__PURE__ */ __name((Channel, Handler) => {
-      const registerEffect = Ref.update(
+      const RegisterEffect = Ref.update(
         InvokeHandlers,
-        (map) => map.set(Channel, Handler)
+        (Map2) => Map2.set(Channel, Handler)
       );
-      Effect.runSync(registerEffect);
+      Effect.runSync(RegisterEffect);
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          const unregisterEffect = Ref.update(
+          const UnregisterEffect = Ref.update(
             InvokeHandlers,
-            (map) => (map.delete(Channel), map)
+            (Map2) => (Map2.delete(Channel), Map2)
           );
-          Effect.runFork(unregisterEffect);
+          Effect.runFork(UnregisterEffect);
         }, "dispose")
       };
     }, "RegisterInvokeHandler")
   };
-  return ServiceImplementation;
+  return DispatcherImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/ExtensionPath/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (ExtensionPath)\n * @description Provides the live implementation layer for the ExtensionPath service.\n */\n\nimport { Effect, Layer } from \"effect\";\n\nimport InitDataService from \"../../Service/InitData/Service.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation layer for the ExtensionPath service.\n * It depends on the InitData service to get the list of all installed extensions.\n */\nconst Live = Layer.effect(\n\tService,\n\tEffect.map(\n\t\tInitDataService,\n\t\t(InitData) => new Definition(InitData.extensions),\n\t),\n);\n\nexport default Live;\n"],
+  "mappings": "AAKA,SAAS,QAAQ,aAAa;AAE9B,OAAO,qBAAqB;AAC5B,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAAO,MAAM;AAAA,EAClB;AAAA,EACA,OAAO;AAAA,IACN;AAAA,IACA,CAAC,aAAa,IAAI,WAAW,SAAS,UAAU;AAAA,EACjD;AACD;AAEA,IAAO,eAAQ;",
+  "names": []
+}

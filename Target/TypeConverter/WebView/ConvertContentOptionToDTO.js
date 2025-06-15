@@ -1,19 +1,18 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-function ConvertContentOptionToDTO(Extension, Option) {
+const ConvertContentOptionToDTO = /* @__PURE__ */ __name((ExtensionDescription, Options) => {
   return {
-    enableCommandUris: Option.enableCommandUris,
-    enableScripts: Option.enableScripts,
-    enableForms: Option.enableForms,
-    localResourceRoots: Option.localResourceRoots ?? [
-      Extension.extensionLocation
+    enableCommandUris: Options.enableCommandUris,
+    enableScripts: Options.enableScripts,
+    enableForms: Options.enableForms,
+    localResourceRoots: Options.localResourceRoots ?? [
+      ExtensionDescription.extensionLocation
     ],
-    // Note: Port mappings would be handled here if implemented.
-    portMappings: Option.portMapping
+    portMappings: Options.portMapping
   };
-}
-__name(ConvertContentOptionToDTO, "ConvertContentOptionToDTO");
+}, "ConvertContentOptionToDTO");
+var ConvertContentOptionToDTO_default = ConvertContentOptionToDTO;
 export {
-  ConvertContentOptionToDTO
+  ConvertContentOptionToDTO_default as default
 };
 //# sourceMappingURL=ConvertContentOptionToDTO.js.map

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/SecretStorage/Error/EmptyKeyError.ts"],
+  "sourcesContent": ["/**\n * @module EmptyKeyError (SecretStorage/Error)\n * @description Defines a custom error for when an empty key is used with secret storage.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that an empty string was provided as a key, which is invalid.\n */\nexport default class extends Data.TaggedError(\"EmptyKeyError\")<{}> {\n\tconstructor(Properties?: {}) {\n\t\tsuper(Properties ?? {});\n\t\tthis.message = \"Secret key cannot be empty.\";\n\t}\n\tpublic override readonly message: string;\n}\n"],
+  "mappings": ";;AAKA,SAAS,YAAY;AAKrB,MAAO,8BAAsB,KAAK,YAAY,eAAe,EAAM;AAAA,EAVnE,OAUmE;AAAA;AAAA;AAAA,EAClE,YAAY,YAAiB;AAC5B,UAAM,cAAc,CAAC,CAAC;AACtB,SAAK,UAAU;AAAA,EAChB;AAAA,EACyB;AAC1B;",
+  "names": []
+}

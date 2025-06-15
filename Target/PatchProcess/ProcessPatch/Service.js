@@ -1,6 +1,12 @@
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Context } from "effect";
-const Tag = Context.Tag("PatchProcess/ProcessPatch");
+class Service_default extends Context.Tag("PatchProcess/ProcessPatch")() {
+  static {
+    __name(this, "default");
+  }
+}
 export {
-  Tag
+  Service_default as default
 };
 //# sourceMappingURL=Service.js.map

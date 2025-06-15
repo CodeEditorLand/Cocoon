@@ -1,8 +1,7 @@
-import { Layer } from "effect";
-import { Acquire } from "./Client/Acquire.js";
-import { Tag } from "./Client/Service.js";
-const Live = Layer.scoped(Tag, Acquire);
+import Live from "./Client/Live.js";
+import Service from "./Client/Service.js";
 export {
-  Live
+  Live,
+  Service
 };
 //# sourceMappingURL=Client.js.map

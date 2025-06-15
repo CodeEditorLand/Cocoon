@@ -33,7 +33,8 @@ const CryptoShim = {
   createVerify: CreateStub("createVerify")
   // Add other sensitive functions to the blocklist as needed.
 };
+var Crypto_default = CryptoShim;
 export {
-  CryptoShim
+  Crypto_default as default
 };
 //# sourceMappingURL=Crypto.js.map

@@ -1,8 +1,9 @@
-import { DecodeValue } from "./ProtoConverter/DecodeValue.js";
-import { EncodeValue } from "./ProtoConverter/EncodeValue.js";
-export * from "./ProtoConverter/Error.js";
+import DecodeValue from "./ProtoConverter/DecodeValue.js";
+import EncodeValue from "./ProtoConverter/EncodeValue.js";
+import { ProtoSerializationError } from "./ProtoConverter/Error.js";
 export {
   DecodeValue,
-  EncodeValue
+  EncodeValue,
+  ProtoSerializationError
 };
 //# sourceMappingURL=ProtoConverter.js.map

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/IPC/Server/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (IPC/Server)\n * @description Provides a `Layer` for the managed gRPC server, which listens\n * for incoming requests from the `Mountain` backend.\n */\n\nimport { Layer } from \"effect\";\n\nimport type ConfigurationService from \"../Configuration.js\";\nimport DispatcherLive from \"../Dispatcher/Live.js\";\nimport type { gRPCConnectionError } from \"../Error.js\";\nimport Acquire from \"./Acquire.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation `Layer` for the gRPC Server service.\n *\n * This scoped layer creates and manages the lifecycle of the gRPC server instance,\n * ensuring it starts with the application and is shut down gracefully. It\n * composes the `Acquire` effect with the `DispatcherLive` layer, which is a\n * dependency for creating the server's request handlers.\n */\nconst Live: Layer.Layer<\n\tService,\n\tgRPCConnectionError | Error,\n\tConfigurationService\n> = Layer.scoped(Service, Acquire).pipe(Layer.provide(DispatcherLive));\n\nexport default Live;\n"],
+  "mappings": "AAMA,SAAS,aAAa;AAGtB,OAAO,oBAAoB;AAE3B,OAAO,aAAa;AACpB,OAAO,aAAa;AAUpB,MAAM,OAIF,MAAM,OAAO,SAAS,OAAO,EAAE,KAAK,MAAM,QAAQ,cAAc,CAAC;AAErE,IAAO,eAAQ;",
+  "names": []
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Telemetry/Service.ts"],
+  "sourcesContent": ["/**\n * @module Service (Telemetry)\n * @description Defines the interface and Context.Tag for the Telemetry service.\n */\n\nimport { Context } from \"effect\";\nimport type { IExtHostTelemetry } from \"vs/workbench/api/common/extHostTelemetry.js\";\n\n/**\n * The `Context.Tag` for the `vscode.env.telemetry` API service.\n */\nexport default class extends Context.Tag(\"Service/Telemetry\")<\n\tany,\n\tIExtHostTelemetry\n>() {}\n"],
+  "mappings": ";;AAKA,SAAS,eAAe;AAMxB,MAAO,wBAAsB,QAAQ,IAAI,mBAAmB,EAG1D,EAAE;AAAA,EAdJ,OAcI;AAAA;AAAA;AAAC;",
+  "names": []
+}

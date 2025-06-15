@@ -1,20 +1,8 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Data } from "effect";
-class gRPCConnectionError extends Data.TaggedError(
-  "gRPCConnectionError"
-) {
-  static {
-    __name(this, "gRPCConnectionError");
-  }
-}
-class IPCError extends Data.TaggedError("IPCError") {
-  static {
-    __name(this, "IPCError");
-  }
-}
+import { default as default2 } from "./Error/gRPCConnectionError.js";
+import { default as default3 } from "./Error/IPCError.js";
+export * from "./ProtoConverter/Error.js";
 export {
-  IPCError,
-  gRPCConnectionError
+  default3 as IPCError,
+  default2 as gRPCConnectionError
 };
 //# sourceMappingURL=Error.js.map

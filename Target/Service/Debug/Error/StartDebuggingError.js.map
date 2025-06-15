@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/Debug/Error/StartDebuggingError.ts"],
+  "sourcesContent": ["/**\n * @module StartDebuggingError (Debug/Error)\n * @description Defines a custom error for failures when starting a debug session.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that a `startDebugging` call failed.\n */\nexport default class extends Data.TaggedError(\"StartDebuggingError\")<{\n\treadonly cause: unknown;\n}> {\n\tconstructor(Properties: { readonly cause: unknown }) {\n\t\tsuper(Properties);\n\t\tthis.message = `Failed to start debugging session.`;\n\t}\n\tpublic override readonly message: string;\n}\n"],
+  "mappings": ";;AAKA,SAAS,YAAY;AAKrB,MAAO,oCAAsB,KAAK,YAAY,qBAAqB,EAEhE;AAAA,EAZH,OAYG;AAAA;AAAA;AAAA,EACF,YAAY,YAAyC;AACpD,UAAM,UAAU;AAChB,SAAK,UAAU;AAAA,EAChB;AAAA,EACyB;AAC1B;",
+  "names": []
+}

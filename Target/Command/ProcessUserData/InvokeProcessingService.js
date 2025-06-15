@@ -1,21 +1,20 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-import { IPC } from "../../Service/IPC.js";
+import IPCService from "../../Service/IPC/Service.js";
 import { ProcessingServiceError } from "./Error.js";
-function InvokeProcessingService(TextContent) {
-  return Effect.gen(function* (_) {
-    const IPCService = yield* _(IPC.Tag);
-    return yield* _(
-      IPCService.SendRequest("$processText", [
-        TextContent
-      ]),
-      Effect.mapError((cause) => new ProcessingServiceError({ cause }))
+const InvokeProcessingService = /* @__PURE__ */ __name((TextContent) => {
+  return Effect.gen(function* () {
+    const IPC = yield* IPCService;
+    return yield* IPC.SendRequest("$processText", [
+      TextContent
+    ]).pipe(
+      Effect.mapError((Cause) => new ProcessingServiceError({ Cause }))
     );
   });
-}
-__name(InvokeProcessingService, "InvokeProcessingService");
+}, "InvokeProcessingService");
+var InvokeProcessingService_default = InvokeProcessingService;
 export {
-  InvokeProcessingService
+  InvokeProcessingService_default as default
 };
 //# sourceMappingURL=InvokeProcessingService.js.map

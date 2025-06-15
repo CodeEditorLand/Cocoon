@@ -1,68 +1,59 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { URI } from "../Type/ExtHostTypes.js";
-function SerializeFilters(filters) {
-  if (!filters) {
+import { URI as VscURI } from "../Type/ExtHostTypes.js";
+const SerializeFilters = /* @__PURE__ */ __name((Filters) => {
+  if (!Filters) {
     return void 0;
   }
-  return Object.entries(filters).map(([Name, Extensions]) => ({
-    Name,
-    Extensions
+  return Object.entries(Filters).map(([Name, Extensions]) => ({
+    name: Name,
+    extensions: Extensions
   }));
-}
-__name(SerializeFilters, "SerializeFilters");
-var OpenDialogOption;
-((OpenDialogOption2) => {
-  function ToDTO(Option) {
-    if (!Option) {
+}, "SerializeFilters");
+const OpenDialogOption = {
+  ToDTO: /* @__PURE__ */ __name((Options) => {
+    if (!Options) {
       return void 0;
     }
     return {
-      ...Option,
-      defaultUri: Option.defaultUri?.toJSON(),
-      filters: SerializeFilters(Option.filters)
+      ...Options,
+      defaultUri: Options.defaultUri?.toJSON(),
+      filters: SerializeFilters(Options.filters)
     };
-  }
-  OpenDialogOption2.ToDTO = ToDTO;
-  __name(ToDTO, "ToDTO");
-})(OpenDialogOption || (OpenDialogOption = {}));
-var SaveDialogOption;
-((SaveDialogOption2) => {
-  function ToDTO(Option) {
-    if (!Option) {
+  }, "ToDTO")
+};
+const SaveDialogOption = {
+  ToDTO: /* @__PURE__ */ __name((Options) => {
+    if (!Options) {
       return void 0;
     }
     return {
-      ...Option,
-      defaultUri: Option.defaultUri?.toJSON(),
-      filters: SerializeFilters(Option.filters)
+      ...Options,
+      defaultUri: Options.defaultUri?.toJSON(),
+      filters: SerializeFilters(Options.filters)
     };
-  }
-  SaveDialogOption2.ToDTO = ToDTO;
-  __name(ToDTO, "ToDTO");
-})(SaveDialogOption || (SaveDialogOption = {}));
-var DialogResult;
-((DialogResult2) => {
-  function ToURI(DTO) {
+  }, "ToDTO")
+};
+const DialogResult = {
+  ToURI: /* @__PURE__ */ __name((DTO) => {
     if (!DTO) {
       return void 0;
     }
-    return URI.revive(DTO);
-  }
-  DialogResult2.ToURI = ToURI;
-  __name(ToURI, "ToURI");
-  function ToURIArray(DTOs) {
+    return VscURI.revive(DTO);
+  }, "ToURI"),
+  ToURIArray: /* @__PURE__ */ __name((DTOs) => {
     if (!DTOs || !Array.isArray(DTOs)) {
       return void 0;
     }
-    return DTOs.map(ToURI).filter((u) => !!u);
-  }
-  DialogResult2.ToURIArray = ToURIArray;
-  __name(ToURIArray, "ToURIArray");
-})(DialogResult || (DialogResult = {}));
-export {
-  DialogResult,
+    return DTOs.map(DialogResult.ToURI).filter((URI) => !!URI);
+  }, "ToURIArray")
+};
+var Dialog_default = {
   OpenDialogOption,
-  SaveDialogOption
+  SaveDialogOption,
+  DialogResult
+};
+export {
+  Dialog_default as default
 };
 //# sourceMappingURL=Dialog.js.map

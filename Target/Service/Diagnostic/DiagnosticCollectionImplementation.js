@@ -1,71 +1,69 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-import * as TypeConverter from "../../TypeConverter.js";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-class DiagnosticCollectionImplementation {
+import * as DiagnosticConverter from "../../TypeConverter/Diagnostic.js";
+import * as TypeConverter from "../../TypeConverter/Main.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+class DiagnosticCollectionImplementation_default {
   // For internal use
-  constructor(name, owner, ipc) {
+  constructor(name, Owner, IPC) {
     this.name = name;
-    this.owner = owner;
-    this.ipc = ipc;
+    this.Owner = Owner;
+    this.IPC = IPC;
   }
   static {
-    __name(this, "DiagnosticCollectionImplementation");
+    __name(this, "default");
   }
-  isDisposed = false;
-  onDidDispose = CreateEventStream();
-  createSetEffect(uri, diagnostics) {
-    if (this.isDisposed) {
-      return Effect.unit;
+  IsDisposed = false;
+  OnDidDispose = CreateEventStream();
+  CreateSetEffect(uri, diagnostics) {
+    if (this.IsDisposed) {
+      return Effect.void;
     }
-    const DiagnosticsDTO = diagnostics ? TypeConverter.Diagnostic.FromAPIArray(diagnostics) : void 0;
-    const UriDTO = TypeConverter.URIConverter.FromAPI(uri);
-    return this.ipc.SendNotification("$changeMany", [
-      this.owner,
+    const DiagnosticsDTO = diagnostics ? DiagnosticConverter.FromAPIArray(diagnostics) : void 0;
+    const UriDTO = TypeConverter.URI.FromAPI(uri);
+    return this.IPC.SendNotification("$changeMany", [
+      this.Owner,
       [[UriDTO, DiagnosticsDTO]]
     ]);
   }
   set(uriOrEntries, diagnostics) {
-    if (this.isDisposed) {
+    if (this.IsDisposed) {
       return;
     }
     if (Array.isArray(uriOrEntries)) {
-      const convertedEntries = uriOrEntries.map(([uri, diags]) => [
-        TypeConverter.URIConverter.FromAPI(uri),
-        diags ? TypeConverter.Diagnostic.FromAPIArray(diags) : void 0
+      const ConvertedEntries = uriOrEntries.map(([uri, diags]) => [
+        TypeConverter.URI.FromAPI(uri),
+        diags ? DiagnosticConverter.FromAPIArray(diags) : void 0
       ]);
       Effect.runFork(
-        this.ipc.SendNotification("$changeMany", [
-          this.owner,
-          convertedEntries
+        this.IPC.SendNotification("$changeMany", [
+          this.Owner,
+          ConvertedEntries
         ])
       );
     } else {
-      Effect.runFork(this.createSetEffect(uriOrEntries, diagnostics));
+      Effect.runFork(this.CreateSetEffect(uriOrEntries, diagnostics));
     }
   }
   delete(uri) {
     this.set(uri, void 0);
   }
   clear() {
-    if (this.isDisposed) {
+    if (this.IsDisposed) {
       return;
     }
-    Effect.runFork(this.ipc.SendNotification("$clear", [this.owner]));
+    Effect.runFork(this.IPC.SendNotification("$clear", [this.Owner]));
   }
   dispose() {
-    if (this.isDisposed) {
+    if (this.IsDisposed) {
       return;
     }
-    this.isDisposed = true;
+    this.IsDisposed = true;
     this.clear();
-    this.onDidDispose.Fire();
+    this.OnDidDispose.Fire();
   }
-  // The following methods are not typically implemented on the ext host side,
-  // as the source of truth for diagnostics lives in the main/host process.
-  // They could be implemented with RPC calls if needed.
-  forEach(callback, thisArg) {
+  forEach() {
   }
   get(uri) {
     return void 0;
@@ -73,8 +71,11 @@ class DiagnosticCollectionImplementation {
   has(uri) {
     return false;
   }
+  [Symbol.iterator]() {
+    return [][Symbol.iterator]();
+  }
 }
 export {
-  DiagnosticCollectionImplementation
+  DiagnosticCollectionImplementation_default as default
 };
 //# sourceMappingURL=DiagnosticCollectionImplementation.js.map

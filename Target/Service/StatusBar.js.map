@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../Source/Service/StatusBar.ts"],
-  "sourcesContent": ["/**\n * @module StatusBar\n * @description This module provides the `vscode.window.createStatusBarItem` API\n * implementation, allowing extensions to add items to the status bar.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as LiveIPC } from \"./IPC.js\";\nimport { Definition } from \"./StatusBar/Definition.js\";\nimport { Tag } from \"./StatusBar/Service.js\";\n\nexport { Tag, type Interface } from \"./StatusBar/Service.js\";\nexport type { StatusBarItem } from \"vscode\";\n\n/**\n * The live implementation Layer for the StatusBar service.\n * It depends on the IPC service for communication.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIPC));\n"],
-  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,QAAQ,eAAe;AAChC,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AAEpB,SAAS,OAAAA,YAA2B;AAO7B,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE,KAAK,MAAM,QAAQ,OAAO,CAAC;",
-  "names": ["Tag"]
+  "sourcesContent": ["/**\n * @module StatusBar\n * @description This module provides the `vscode.window.createStatusBarItem` API\n * implementation, allowing extensions to add items to the status bar.\n */\n\nimport Live from \"./StatusBar/Live.js\";\nimport Service from \"./StatusBar/Service.js\";\n\nexport { Service, Live };\n"],
+  "mappings": "AAMA,OAAO,UAAU;AACjB,OAAO,aAAa;",
+  "names": []
 }

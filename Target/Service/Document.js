@@ -1,12 +1,7 @@
-import { Layer } from "effect";
-import { Definition } from "./Document/Definition.js";
-import { Tag } from "./Document/Service.js";
-import { Live as LiveIPC } from "./IPC.js";
-import { Tag as Tag2 } from "./Document/Service.js";
-export * from "./Document/Type.js";
-const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIPC));
+import Live from "./Document/Live.js";
+import Service from "./Document/Service.js";
 export {
   Live,
-  Tag2 as Tag
+  Service
 };
 //# sourceMappingURL=Document.js.map

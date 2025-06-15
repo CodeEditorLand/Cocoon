@@ -1,10 +1,13 @@
 import { Layer } from "effect";
-import { Definition } from "./APIDeprecation/Definition.js";
-import { Tag } from "./APIDeprecation/Service.js";
-import { Live as LiveLog } from "./Log.js";
-const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveLog));
+import Definition from "./APIDeprecation/Definition.js";
+import Service from "./APIDeprecation/Service.js";
+import LogLive from "./Log/Live.js";
+import { default as default2 } from "./APIDeprecation/Service.js";
+const APIDeprecationLive = Layer.effect(Service, Definition).pipe(
+  Layer.provide(LogLive)
+);
 export {
-  Live,
-  Tag
+  APIDeprecationLive,
+  default2 as Service
 };
 //# sourceMappingURL=APIDeprecation.js.map

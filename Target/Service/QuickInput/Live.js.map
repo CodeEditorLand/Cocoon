@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/QuickInput/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (QuickInput)\n * @description The live implementation Layer for the QuickInput service.\n */\n\nimport { Layer } from \"effect\";\n\nimport type IPCConfiguration from \"../IPC/Configuration.js\";\nimport IPCLive from \"../IPC/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the QuickInput service.\n * It depends on the IPC service for communication.\n * This is a factory that takes IPC configuration.\n * @param Config The IPC configuration.\n */\nconst Live = (Config: IPCConfiguration) => {\n\treturn Layer.effect(Service, Definition).pipe(\n\t\tLayer.provide(IPCLive(Config)),\n\t);\n};\nexport default Live;\n"],
+  "mappings": ";;AAKA,SAAS,aAAa;AAGtB,OAAO,aAAa;AACpB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAQpB,MAAM,OAAO,wBAAC,WAA6B;AAC1C,SAAO,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,IACxC,MAAM,QAAQ,QAAQ,MAAM,CAAC;AAAA,EAC9B;AACD,GAJa;AAKb,IAAO,eAAQ;",
+  "names": []
+}

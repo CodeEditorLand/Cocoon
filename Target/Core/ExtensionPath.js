@@ -1,13 +1,7 @@
-import { Context, Effect, Layer } from "effect";
-import { InitData } from "../../Service/InitData.js";
-import { Definition } from "./ExtensionPath/Definition.js";
-const Tag = Context.Tag("Core/ExtensionPath");
-const Live = Layer.effect(
-  Tag,
-  Effect.map(InitData.Tag, (InitData2) => new Definition(InitData2.extensions))
-);
+import Live from "./ExtensionPath/Live.js";
+import Service from "./ExtensionPath/Service.js";
 export {
   Live,
-  Tag
+  Service
 };
 //# sourceMappingURL=ExtensionPath.js.map

@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../Source/Service/Diagnostic.ts"],
-  "sourcesContent": ["/**\n * @module Diagnostic\n * @description This module provides the `vscode.languages.createDiagnosticCollection`\n * API, allowing extensions to report problems in the workspace.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Definition } from \"./Diagnostic/Definition.js\";\nimport { Tag } from \"./Diagnostic/Service.js\";\nimport { Live as LiveIPC } from \"./IPC.js\";\n\nexport { Tag, type Interface } from \"./Diagnostic/Service.js\";\nexport type { DiagnosticCollection } from \"vscode\";\n\n/**\n * The live implementation Layer for the Diagnostics service.\n * It depends on the IPC service for communication.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIPC));\n"],
-  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AACpB,SAAS,QAAQ,eAAe;AAEhC,SAAS,OAAAA,YAA2B;AAO7B,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE,KAAK,MAAM,QAAQ,OAAO,CAAC;",
-  "names": ["Tag"]
+  "sourcesContent": ["/**\n * @module Diagnostic\n * @description This module provides the `vscode.languages.createDiagnosticCollection`\n * API, allowing extensions to report problems in the workspace.\n */\n\nimport { Layer } from \"effect\";\nimport type { DiagnosticCollection } from \"vscode\";\n\nimport Definition from \"./Diagnostic/Definition.js\";\nimport Service from \"./Diagnostic/Service.js\";\nimport type IPCConfiguration from \"./IPC/Configuration.js\";\nimport IPCLive from \"./IPC/Live.js\";\n\nexport { default as Service } from \"./Diagnostic/Service.js\";\nexport type { DiagnosticCollection };\n\n/**\n * The live implementation Layer for the Diagnostics service.\n * It depends on the IPC service for communication.\n */\nexport const Live = (Config: IPCConfiguration) =>\n\tLayer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config)));\n"],
+  "mappings": ";;AAMA,SAAS,aAAa;AAGtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAEpB,OAAO,aAAa;AAEpB,SAAoB,WAAXA,gBAA0B;AAO5B,MAAM,OAAO,wBAAC,WACpB,MAAM,OAAO,SAAS,UAAU,EAAE,KAAK,MAAM,QAAQ,QAAQ,MAAM,CAAC,CAAC,GADlD;",
+  "names": ["default"]
 }

@@ -1,11 +1,9 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import {
-  ActiveEditorGroup,
-  SIDE_GROUP
-} from "vs/workbench/services/editor/common/editorService.js";
-import { ViewColumn as VscViewColumn } from "../../Type/ExtHostTypes.js";
-function FromAPI(ViewColumn) {
+import { ViewColumn as VscViewColumn } from "vscode";
+const ActiveEditorGroup = -1;
+const SIDE_GROUP = -2;
+const FromAPI = /* @__PURE__ */ __name((ViewColumn) => {
   if (typeof ViewColumn !== "number") {
     return void 0;
   }
@@ -20,9 +18,9 @@ function FromAPI(ViewColumn) {
       }
   }
   return void 0;
-}
-__name(FromAPI, "FromAPI");
+}, "FromAPI");
+var ViewColumn_default = { FromAPI };
 export {
-  FromAPI
+  ViewColumn_default as default
 };
 //# sourceMappingURL=ViewColumn.js.map

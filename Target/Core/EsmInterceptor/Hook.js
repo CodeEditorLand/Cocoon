@@ -16,26 +16,22 @@ function initialize(Data) {
 }
 __name(initialize, "initialize");
 async function resolve(Specifier, Context, NextResolve) {
-  const shouldIntercept = Specifier === "vscode" || Specifier === "land";
-  if (!shouldIntercept || !Context.parentURL || !MainThreadPort) {
+  const ShouldIntercept = Specifier === "vscode";
+  if (!ShouldIntercept || !Context.parentURL || !MainThreadPort) {
     return NextResolve(Specifier, Context);
   }
   const RequestID = NextRequestID++;
   try {
-    const ResolutionPromise = new Promise((resolve2, reject) => {
+    const ResolutionPromise = new Promise((Resolve, Reject) => {
       const TimeoutID = setTimeout(() => {
         PendingPromises.delete(RequestID);
-        reject(
-          new Error(
+        Reject(
+          new globalThis.Error(
             `Timeout resolving module import: "${Specifier}"`
           )
         );
       }, 5e3);
-      PendingPromises.set(RequestID, {
-        Resolve: resolve2,
-        Reject: reject,
-        TimeoutID
-      });
+      PendingPromises.set(RequestID, { Resolve, Reject, TimeoutID });
     });
     MainThreadPort.postMessage({
       ID: RequestID,
@@ -44,13 +40,13 @@ async function resolve(Specifier, Context, NextResolve) {
     });
     const DynamicModuleURL = await ResolutionPromise;
     return { url: DynamicModuleURL, shortCircuit: true, format: "module" };
-  } catch (error) {
+  } catch (Error2) {
     console.error(
-      `[Cocoon ESM Loader Hook] Error resolving "${Specifier}": ${error.message}`
+      `[Cocoon ESM Loader Hook] Error resolving "${Specifier}": ${Error2.message}`
     );
-    const promiseCallbacks = PendingPromises.get(RequestID);
-    if (promiseCallbacks) {
-      clearTimeout(promiseCallbacks.TimeoutID);
+    const PromiseCallbacks = PendingPromises.get(RequestID);
+    if (PromiseCallbacks) {
+      clearTimeout(PromiseCallbacks.TimeoutID);
       PendingPromises.delete(RequestID);
     }
     return NextResolve(Specifier, Context);
@@ -58,22 +54,22 @@ async function resolve(Specifier, Context, NextResolve) {
 }
 __name(resolve, "resolve");
 function HandleResponseMessage(Response) {
-  const { id: ID, url: URL, error: Error2 } = Response;
+  const { id: ID, url: URL, error: ErrorResponse } = Response;
   const PromiseCallbacks = PendingPromises.get(ID);
   if (!PromiseCallbacks) return;
   clearTimeout(PromiseCallbacks.TimeoutID);
   PendingPromises.delete(ID);
-  if (Error2) {
+  if (ErrorResponse) {
     PromiseCallbacks.Reject(
-      new Error2(
-        Error2.message || "Unknown resolution error from main thread"
+      new globalThis.Error(
+        ErrorResponse.message || "Unknown resolution error from main thread"
       )
     );
   } else if (typeof URL === "string") {
     PromiseCallbacks.Resolve(URL);
   } else {
     PromiseCallbacks.Reject(
-      new Error2(
+      new globalThis.Error(
         "Invalid response from main thread: missing 'url' or 'error' field."
       )
     );
@@ -88,7 +84,7 @@ function HandlePortClose() {
   PendingPromises.forEach((Callbacks, ID) => {
     clearTimeout(Callbacks.TimeoutID);
     Callbacks.Reject(
-      new Error(
+      new globalThis.Error(
         `Communication channel closed while request ID ${ID} was pending.`
       )
     );

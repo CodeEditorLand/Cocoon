@@ -1,14 +1,7 @@
-import { Layer } from "effect";
-import { Definition } from "./FileSystemInformation/Definition.js";
-import { Tag } from "./FileSystemInformation/Service.js";
-import { Live as LiveIPC } from "./IPC.js";
-import { Live as LiveLog } from "./Log.js";
-import { Tag as Tag2 } from "./FileSystemInformation/Service.js";
-const Live = Layer.effect(Tag, Definition).pipe(
-  Layer.provide(Layer.merge(LiveIPC, LiveLog))
-);
+import Live from "./FileSystemInformation/Live.js";
+import Service from "./FileSystemInformation/Service.js";
 export {
   Live,
-  Tag2 as Tag
+  Service
 };
 //# sourceMappingURL=FileSystemInformation.js.map

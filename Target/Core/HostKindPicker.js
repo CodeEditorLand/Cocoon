@@ -1,11 +1,7 @@
-import { Layer } from "effect";
-import { Live as LiveLog } from "../../Service/Log.js";
-import { Definition } from "./HostKindPicker/Definition.js";
-import { Tag } from "./HostKindPicker/Service.js";
-import { Tag as Tag2 } from "./HostKindPicker/Service.js";
-const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveLog));
+import Live from "./HostKindPicker/Live.js";
+import Service from "./HostKindPicker/Service.js";
 export {
   Live,
-  Tag2 as Tag
+  Service
 };
 //# sourceMappingURL=HostKindPicker.js.map

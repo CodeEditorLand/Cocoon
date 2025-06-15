@@ -7,7 +7,7 @@ class ProcessShimBase extends EventEmitter {
   }
 }
 const ActualNodeProcess = process;
-function CreateSanitizedEnvironment() {
+const CreateSanitizedEnvironment = /* @__PURE__ */ __name(() => {
   const SanitizedEnvironment = {};
   for (const key in ActualNodeProcess.env) {
     if (Object.prototype.hasOwnProperty.call(ActualNodeProcess.env, key)) {
@@ -17,8 +17,7 @@ function CreateSanitizedEnvironment() {
     }
   }
   return Object.freeze(SanitizedEnvironment);
-}
-__name(CreateSanitizedEnvironment, "CreateSanitizedEnvironment");
+}, "CreateSanitizedEnvironment");
 const ProcessShim = {
   ...new ProcessShimBase(),
   // --- Read-only Properties (safe to expose directly) ---
@@ -65,17 +64,18 @@ const ProcessShim = {
   exit: /* @__PURE__ */ __name((code) => ActualNodeProcess.exit(code), "exit"),
   kill: /* @__PURE__ */ __name((pid, signal) => ActualNodeProcess.kill(pid, signal), "kill"),
   // --- Unsafe Methods (stubbed to prevent usage) ---
-  chdir: /* @__PURE__ */ __name((directory) => {
+  chdir: /* @__PURE__ */ __name((_directory) => {
     throw new Error("`process.chdir()` is not allowed in extensions.");
   }, "chdir"),
-  setuid: /* @__PURE__ */ __name((id) => {
+  setuid: /* @__PURE__ */ __name((_id) => {
     throw new Error("`process.setuid()` is not allowed in extensions.");
   }, "setuid"),
-  setgid: /* @__PURE__ */ __name((id) => {
+  setgid: /* @__PURE__ */ __name((_id) => {
     throw new Error("`process.setgid()` is not allowed in extensions.");
   }, "setgid")
 };
+var Process_default = ProcessShim;
 export {
-  ProcessShim
+  Process_default as default
 };
 //# sourceMappingURL=Process.js.map

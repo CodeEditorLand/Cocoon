@@ -1,11 +1,7 @@
-import { Layer } from "effect";
-import { Live as LiveClient } from "./Client.js";
-import { Definition } from "./ProtocolAdapter/Definition.js";
-import { Tag } from "./ProtocolAdapter/Service.js";
-const Live = Layer.effect(Tag, Definition).pipe(
-  Layer.provide(LiveClient)
-);
+import Live from "./ProtocolAdapter/Live.js";
+import Service from "./ProtocolAdapter/Service.js";
 export {
-  Live
+  Live,
+  Service
 };
 //# sourceMappingURL=ProtocolAdapter.js.map

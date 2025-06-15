@@ -1,13 +1,11 @@
-import { Layer } from "effect";
-import { Definition } from "./Dialog/Definition.js";
-import { Tag } from "./Dialog/Service.js";
-import { Live as LiveIPC } from "./IPC.js";
-import { Tag as Tag2 } from "./Dialog/Service.js";
-export * from "./Dialog/Type.js";
-export * from "./Dialog/Error.js";
-const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIPC));
+import { DialogError } from "./Dialog/Error.js";
+import Live from "./Dialog/Live.js";
+import Service from "./Dialog/Service.js";
+import * as Type from "./Dialog/Type.js";
 export {
+  DialogError,
   Live,
-  Tag2 as Tag
+  Service,
+  Type
 };
 //# sourceMappingURL=Dialog.js.map

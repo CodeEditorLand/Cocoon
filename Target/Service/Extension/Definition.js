@@ -1,40 +1,38 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Ref, Stream } from "effect";
+import { Effect, Ref } from "effect";
 import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
-import { ExtensionHost } from "../../Core/ExtensionHost.js";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { InitData } from "../InitData.js";
-import { CreateAPIObject } from "./CreateAPIObject.js";
-const Definition = Effect.gen(function* (_) {
-  const ExtensionHostService = yield* _(ExtensionHost.Tag);
-  const InitDataService = yield* _(InitData.Tag);
+import ExtensionHostService from "../../Core/ExtensionHost/Service.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import InitDataService from "../InitData/Service.js";
+import CreateAPIObject from "./CreateAPIObject.js";
+var Definition_default = Effect.gen(function* () {
+  const ExtensionHost = yield* ExtensionHostService;
+  const InitData = yield* InitDataService;
   const OnDidChangeEvent = CreateEventStream();
-  const allExtensionsCache = yield* _(
-    Ref.make(void 0)
-  );
+  const AllExtensionsCache = yield* Ref.make(void 0);
   const ExtensionRegistry = new ExtensionDescriptionRegistry(
-    InitDataService.extensions
+    InitData.extensions
   );
   const ServiceImplementation = {
-    onDidChange: OnDidChangeEvent.Stream.pipe(Stream.toEvent),
+    onDidChange: OnDidChangeEvent.event,
     getExtension: /* @__PURE__ */ __name((extensionId) => {
       const description = Effect.runSync(
-        ExtensionHostService.GetExtensionDescription(extensionId)
+        ExtensionHost.GetExtensionDescription(extensionId)
       );
-      return description ? CreateAPIObject(description, ExtensionHostService) : void 0;
+      return description ? CreateAPIObject(description, ExtensionHost) : void 0;
     }, "getExtension"),
     get all() {
-      return Ref.get(allExtensionsCache).pipe(
+      return Ref.get(AllExtensionsCache).pipe(
         Effect.flatMap((maybeCache) => {
           if (maybeCache) {
             return Effect.succeed(maybeCache);
           }
           const descriptions = ExtensionRegistry.getAllExtensionDescriptions();
           const newCache = descriptions.map(
-            (desc) => CreateAPIObject(desc, ExtensionHostService)
+            (desc) => CreateAPIObject(desc, ExtensionHost)
           );
-          return Ref.set(allExtensionsCache, newCache).pipe(
+          return Ref.set(AllExtensionsCache, newCache).pipe(
             Effect.as(newCache)
           );
         }),
@@ -45,6 +43,6 @@ const Definition = Effect.gen(function* (_) {
   return ServiceImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

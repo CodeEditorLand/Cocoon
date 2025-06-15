@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../Source/Service/Authentication.ts"],
-  "sourcesContent": ["/**\n * @module Authentication\n * @description This module provides the `vscode.authentication` API, allowing extensions\n * to request authentication sessions and for Cocoon to register its own auth providers.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Definition } from \"./Authentication/Definition.js\";\nimport { Tag } from \"./Authentication/Service.js\";\nimport { Live as LiveIPC } from \"./IPC.js\";\n\nexport { Tag, type Interface } from \"./Authentication/Service.js\";\nexport * from \"./Authentication/Type.js\";\nexport * from \"./Authentication/Error.js\";\n\n/**\n * The live implementation Layer for the Authentication service.\n * It depends on the IPC service for all communication.\n */\nexport const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIPC));\n"],
-  "mappings": "AAMA,SAAS,aAAa;AAEtB,SAAS,kBAAkB;AAC3B,SAAS,WAAW;AACpB,SAAS,QAAQ,eAAe;AAEhC,SAAS,OAAAA,YAA2B;AACpC,cAAc;AACd,cAAc;AAMP,MAAM,OAAO,MAAM,OAAO,KAAK,UAAU,EAAE,KAAK,MAAM,QAAQ,OAAO,CAAC;",
-  "names": ["Tag"]
+  "sourcesContent": ["/**\n * @module Authentication\n * @description This module provides the `vscode.authentication` API, allowing extensions\n * to request authentication sessions and for Cocoon to register its own auth providers.\n */\n\nimport * as Error from \"./Authentication/Error.js\";\nimport Live from \"./Authentication/Live.js\";\nimport Service from \"./Authentication/Service.js\";\nimport * as Type from \"./Authentication/Type.js\";\n\nexport { Service, Live, Error, Type };\n"],
+  "mappings": "AAMA,YAAY,WAAW;AACvB,OAAO,UAAU;AACjB,OAAO,aAAa;AACpB,YAAY,UAAU;",
+  "names": []
 }

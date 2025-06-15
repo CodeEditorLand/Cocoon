@@ -1,5 +1,5 @@
-import { VscodeNodeModuleFactory } from "./Factory/Vscode.js";
+import { default as default2 } from "./Factory/VSCode.js";
 export {
-  VscodeNodeModuleFactory
+  default2 as VSCodeNodeModuleFactory
 };
 //# sourceMappingURL=Factory.js.map

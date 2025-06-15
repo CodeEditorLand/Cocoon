@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": ["../../Source/Service/InitData.ts"],
-  "sourcesContent": ["/**\n * @module InitData\n * @description This module provides the InitData service, a value service that\n * holds the initial data sent from the Mountain host process. This data is\n * essential for bootstrapping many other services.\n */\n\nexport { Live as InitDataLayer } from \"./InitData/Live.js\";\nexport { Tag, type Interface } from \"./InitData/Service.js\";\n"],
-  "mappings": "AAOA,SAAiB,YAAqB;AACtC,SAAS,WAA2B;",
-  "names": []
+  "sourcesContent": ["/**\n * @module InitData\n * @description This module provides the InitData service, a value service that\n * holds the initial data sent from the Mountain host process. This data is\n * essential for bootstrapping many other services.\n */\n\nexport { default as InitDataLayer } from \"./InitData/Live.js\";\nexport { default as Service } from \"./InitData/Service.js\";\n"],
+  "mappings": "AAOA,SAAoB,WAAXA,gBAAgC;AACzC,SAAoB,WAAXA,gBAA0B;",
+  "names": ["default"]
 }

@@ -2,43 +2,46 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
 import { deepClone } from "vs/base/common/objects.js";
-function CreateWorkSpaceConfiguration(Snapshot, SectionPrefix, IPCService, LogService) {
-  const get = /* @__PURE__ */ __name((key, defaultValue) => {
-    const value = key.split(".").reduce((acc, part) => acc?.[part], Snapshot);
-    return value !== void 0 ? deepClone(value) : defaultValue;
-  }, "get");
-  const update = /* @__PURE__ */ __name((key, value, target, overrideInLanguage) => {
-    const updateEffect = IPCService.SendNotification(
+const CreateWorkSpaceConfiguration = /* @__PURE__ */ __name((Snapshot, SectionPrefix, IPC, Log) => {
+  const Get = /* @__PURE__ */ __name((Key, DefaultValue) => {
+    const Value = Key.split(".").reduce(
+      (Accumulator, Part) => Accumulator?.[Part],
+      Snapshot
+    );
+    return Value !== void 0 ? deepClone(Value) : DefaultValue;
+  }, "Get");
+  const Update = /* @__PURE__ */ __name((Key, Value, Target, OverrideInLanguage) => {
+    const UpdateEffect = IPC.SendNotification(
       "$updateConfigurationOption",
-      [target, `${SectionPrefix}.${key}`, value, overrideInLanguage]
+      [Target, `${SectionPrefix}.${Key}`, Value, OverrideInLanguage]
     ).pipe(
       Effect.tapError(
-        (err) => LogService.Error(
-          `Configuration update for key '${key}' failed.`,
-          err
+        (Error2) => Log.Error(
+          `Configuration update for key '${Key}' failed.`,
+          Error2
         )
       )
     );
-    return Effect.runPromise(updateEffect);
-  }, "update");
+    return Effect.runPromise(UpdateEffect);
+  }, "Update");
   return {
-    get,
-    has: /* @__PURE__ */ __name((key) => get(key) !== void 0, "has"),
-    inspect: /* @__PURE__ */ __name((key) => {
-      const value = get(key);
+    get: Get,
+    has: /* @__PURE__ */ __name((Key) => Get(Key) !== void 0, "has"),
+    inspect: /* @__PURE__ */ __name((Key) => {
+      const Value = Get(Key);
       return Promise.resolve({
-        key,
-        defaultValue: value,
-        globalValue: value,
-        workspaceValue: value,
-        workspaceFolderValue: value
+        key: Key,
+        defaultValue: Value,
+        globalValue: Value,
+        workspaceValue: Value,
+        workspaceFolderValue: Value
       });
     }, "inspect"),
-    update
+    update: Update
   };
-}
-__name(CreateWorkSpaceConfiguration, "CreateWorkSpaceConfiguration");
+}, "CreateWorkSpaceConfiguration");
+var CreateWorkSpaceConfiguration_default = CreateWorkSpaceConfiguration;
 export {
-  CreateWorkSpaceConfiguration
+  CreateWorkSpaceConfiguration_default as default
 };
 //# sourceMappingURL=CreateWorkSpaceConfiguration.js.map

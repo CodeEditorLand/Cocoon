@@ -3,16 +3,16 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import * as Path from "node:path";
 import { Effect } from "effect";
 import { Uri } from "vscode";
-import { InitData } from "../InitData.js";
-import { Log } from "../Log.js";
-import { EnsureDirectory } from "./Support/EnsureDirectory.js";
-const Definition = Effect.gen(function* (_) {
-  const InitDataService = yield* _(InitData.Tag);
-  const LogService = yield* _(Log.Tag);
-  const GlobalStorageURI = InitDataService.environment.globalStorageHome;
-  const WorkSpaceStorageURI = InitDataService.environment.workspaceStorageHome;
-  yield* _(EnsureDirectory(GlobalStorageURI, "Global"));
-  yield* _(EnsureDirectory(WorkSpaceStorageURI, "WorkSpace"));
+import InitDataService from "../InitData/Service.js";
+import LogService from "../Log/Service.js";
+import EnsureDirectory from "./Support/EnsureDirectory.js";
+var Definition_default = Effect.gen(function* () {
+  const InitData = yield* InitDataService;
+  const Log = yield* LogService;
+  const GlobalStorageURI = InitData.environment.globalStorageHome;
+  const WorkSpaceStorageURI = InitData.environment.workspaceStorageHome;
+  yield* EnsureDirectory(GlobalStorageURI, "Global");
+  yield* EnsureDirectory(WorkSpaceStorageURI, "WorkSpace");
   const GetPathForExtension = /* @__PURE__ */ __name((BaseURI, Extension) => {
     if (!BaseURI || !Extension?.identifier?.value) {
       return void 0;
@@ -20,29 +20,29 @@ const Definition = Effect.gen(function* (_) {
     const ExtensionSubdirectory = Extension.identifier.value.replace(/[^a-z0-9-]/gi, "_").toLowerCase();
     return Uri.joinPath(BaseURI, ExtensionSubdirectory);
   }, "GetPathForExtension");
-  const ServiceImplementation = {
+  const StoragePathImplementation = {
     GetWorkSpaceStorageURI: /* @__PURE__ */ __name((Extension) => GetPathForExtension(WorkSpaceStorageURI, Extension), "GetWorkSpaceStorageURI"),
     GetGlobalStorageURI: /* @__PURE__ */ __name((Extension) => {
-      const uri = GetPathForExtension(GlobalStorageURI, Extension);
-      if (!uri) {
+      const URI = GetPathForExtension(GlobalStorageURI, Extension);
+      if (!URI) {
         const EmergencyPath = Path.join(
           process.cwd(),
           ".cocoon-data/global",
           Extension.identifier.value.toLowerCase()
         );
         Effect.runSync(
-          LogService.Error(
+          Log.Error(
             `FATAL: Could not resolve global storage path for ${Extension.identifier.value}. Falling back to ${EmergencyPath}`
           )
         );
         return Uri.file(EmergencyPath);
       }
-      return uri;
+      return URI;
     }, "GetGlobalStorageURI")
   };
-  return ServiceImplementation;
+  return StoragePathImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

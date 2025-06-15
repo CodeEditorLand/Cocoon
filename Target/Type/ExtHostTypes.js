@@ -1,12 +1,13 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { CancellationTokenSource as VscCancellationTokenSource } from "vs/base/common/cancellation.js";
+import { CancellationError as VscCancellationError } from "vs/base/common/errors.js";
 import * as Emitter from "vs/base/common/event.js";
 import * as Lifecycle from "vs/base/common/lifecycle.js";
 import { URI as VscURI } from "vs/base/common/uri.js";
 const Disposable = Lifecycle.Disposable;
 const CancellationTokenSource = VscCancellationTokenSource;
-const CancellationError = Emitter.CancellationError;
+const CancellationError = VscCancellationError;
 const EventEmitter = Emitter.Emitter;
 const URI = VscURI;
 class Position {
@@ -15,54 +16,54 @@ class Position {
   }
   line;
   character;
-  constructor(line, character) {
-    if (line < 0) {
+  constructor(Line, Character) {
+    if (Line < 0) {
       throw new Error("Illegal argument: line must be non-negative");
     }
-    if (character < 0) {
+    if (Character < 0) {
       throw new Error("Illegal argument: character must be non-negative");
     }
-    this.line = line;
-    this.character = character;
+    this.line = Line;
+    this.character = Character;
   }
-  isBefore(other) {
-    return this.line < other.line || this.line === other.line && this.character < other.character;
+  isBefore(Other) {
+    return this.line < Other.line || this.line === Other.line && this.character < Other.character;
   }
-  isBeforeOrEqual(other) {
-    return this.line < other.line || this.line === other.line && this.character <= other.character;
+  isBeforeOrEqual(Other) {
+    return this.line < Other.line || this.line === Other.line && this.character <= Other.character;
   }
-  isAfter(other) {
-    return !this.isBeforeOrEqual(other);
+  isAfter(Other) {
+    return !this.isBeforeOrEqual(Other);
   }
-  isAfterOrEqual(other) {
-    return !this.isBefore(other);
+  isAfterOrEqual(Other) {
+    return !this.isBefore(Other);
   }
-  isEqual(other) {
-    return this.line === other.line && this.character === other.character;
+  isEqual(Other) {
+    return this.line === Other.line && this.character === Other.character;
   }
-  compareTo(other) {
-    if (this.line < other.line) {
+  compareTo(Other) {
+    if (this.line < Other.line) {
       return -1;
     }
-    if (this.line > other.line) {
+    if (this.line > Other.line) {
       return 1;
     }
-    if (this.character < other.character) {
+    if (this.character < Other.character) {
       return -1;
     }
-    if (this.character > other.character) {
+    if (this.character > Other.character) {
       return 1;
     }
     return 0;
   }
-  translate(lineDelta, characterDelta) {
+  translate(LineDelta, CharacterDelta) {
     return new Position(
-      this.line + (lineDelta ?? 0),
-      this.character + (characterDelta ?? 0)
+      this.line + (LineDelta ?? 0),
+      this.character + (CharacterDelta ?? 0)
     );
   }
-  with(line, character) {
-    return new Position(line ?? this.line, character ?? this.character);
+  with(Line, Character) {
+    return new Position(Line ?? this.line, Character ?? this.character);
   }
   toJSON() {
     return { line: this.line, character: this.character };
@@ -74,13 +75,13 @@ class Range {
   }
   start;
   end;
-  constructor(start, end) {
-    if (start.isAfter(end)) {
-      this.start = end;
-      this.end = start;
+  constructor(Start, End) {
+    if (Start.isAfter(End)) {
+      this.start = End;
+      this.end = Start;
     } else {
-      this.start = start;
-      this.end = end;
+      this.start = Start;
+      this.end = End;
     }
   }
   get isEmpty() {
@@ -89,30 +90,30 @@ class Range {
   get isSingleLine() {
     return this.start.line === this.end.line;
   }
-  contains(positionOrRange) {
-    if (positionOrRange instanceof Range) {
-      return this.contains(positionOrRange.start) && this.contains(positionOrRange.end);
+  contains(PositionOrRange) {
+    if (PositionOrRange instanceof Range) {
+      return this.contains(PositionOrRange.start) && this.contains(PositionOrRange.end);
     }
-    return positionOrRange.isAfterOrEqual(this.start) && positionOrRange.isBeforeOrEqual(this.end);
+    return PositionOrRange.isAfterOrEqual(this.start) && PositionOrRange.isBeforeOrEqual(this.end);
   }
-  isEqual(other) {
-    return this.start.isEqual(other.start) && this.end.isEqual(other.end);
+  isEqual(Other) {
+    return this.start.isEqual(Other.start) && this.end.isEqual(Other.end);
   }
-  intersection(other) {
-    const start = this.start.isAfter(other.start) ? this.start : other.start;
-    const end = this.end.isBefore(other.end) ? this.end : other.end;
-    if (start.isAfter(end)) {
+  intersection(Other) {
+    const Start = this.start.isAfter(Other.start) ? this.start : Other.start;
+    const End = this.end.isBefore(Other.end) ? this.end : Other.end;
+    if (Start.isAfter(End)) {
       return void 0;
     }
-    return new Range(start, end);
+    return new Range(Start, End);
   }
-  union(other) {
-    const start = this.start.isBefore(other.start) ? this.start : other.start;
-    const end = this.end.isAfter(other.end) ? this.end : other.end;
-    return new Range(start, end);
+  union(Other) {
+    const Start = this.start.isBefore(Other.start) ? this.start : Other.start;
+    const End = this.end.isAfter(Other.end) ? this.end : Other.end;
+    return new Range(Start, End);
   }
-  with(start, end) {
-    return new Range(start ?? this.start, end ?? this.end);
+  with(Start, End) {
+    return new Range(Start ?? this.start, End ?? this.end);
   }
   toJSON() {
     return [this.start, this.end];
@@ -124,10 +125,10 @@ class Selection extends Range {
   }
   anchor;
   active;
-  constructor(anchor, active) {
-    super(anchor, active);
-    this.anchor = anchor;
-    this.active = active;
+  constructor(Anchor, Active) {
+    super(Anchor, Active);
+    this.anchor = Anchor;
+    this.active = Active;
   }
   get isReversed() {
     return this.active.isBefore(this.anchor);
@@ -167,17 +168,26 @@ class Diagnostic {
   code;
   relatedInformation;
   tags;
-  constructor(range, message, severity = 0 /* Error */) {
-    this.range = range;
-    this.message = message;
-    this.severity = severity;
+  constructor(Range2, Message, Severity = VscDiagnosticSeverity.Error) {
+    this.range = Range2;
+    this.message = Message;
+    this.severity = Severity;
   }
   toJSON() {
     return {
       message: this.message,
-      severity: DiagnosticSeverity[this.severity],
+      severity: VscDiagnosticSeverity[this.severity],
       range: this.range
     };
+  }
+}
+class DiagnosticRelatedInformation {
+  constructor(location, message) {
+    this.location = location;
+    this.message = message;
+  }
+  static {
+    __name(this, "DiagnosticRelatedInformation");
   }
 }
 class TreeItem {
@@ -187,13 +197,13 @@ class TreeItem {
   label;
   resourceURI;
   collapsibleState;
-  constructor(labelOrUri, collapsibleState) {
-    if (typeof labelOrUri === "string") {
-      this.label = labelOrUri;
+  constructor(LabelOrUri, CollapsibleState) {
+    if (typeof LabelOrUri === "string") {
+      this.label = LabelOrUri;
     } else {
-      this.resourceURI = labelOrUri;
+      this.resourceURI = LabelOrUri;
     }
-    this.collapsibleState = collapsibleState;
+    this.collapsibleState = CollapsibleState;
   }
 }
 class MarkdownString {
@@ -202,18 +212,25 @@ class MarkdownString {
   }
   value;
   isTrusted;
-  constructor(value = "", isTrusted = false) {
-    this.value = value;
-    this.isTrusted = isTrusted;
+  supportThemeIcons;
+  supportHtml;
+  baseUri;
+  constructor(Value = "", IsTrusted = false) {
+    this.value = Value;
+    this.isTrusted = IsTrusted;
   }
-  append(value) {
-    this.value += value;
+  appendText(Value) {
+    this.value += Value;
     return this;
   }
-  appendCodeblock(language, value) {
+  appendMarkdown(Value) {
+    this.value += Value;
+    return this;
+  }
+  appendCodeblock(Value, Language = "") {
     this.value += `
-\`\`\`${language}
-${value}
+\`\`\`${Language}
+${Value}
 \`\`\`
 `;
     return this;
@@ -243,6 +260,25 @@ class ThemeIcon {
   }
   static File = new ThemeIcon("file");
   static Folder = new ThemeIcon("folder");
+}
+class TextEdit {
+  constructor(range, newText) {
+    this.range = range;
+    this.newText = newText;
+  }
+  static {
+    __name(this, "TextEdit");
+  }
+}
+class CompletionItem extends VscCompletionItem {
+  static {
+    __name(this, "CompletionItem");
+  }
+}
+class SnippetString extends VscSnippetString {
+  static {
+    __name(this, "SnippetString");
+  }
 }
 var ViewColumn = /* @__PURE__ */ ((ViewColumn2) => {
   ViewColumn2[ViewColumn2["Active"] = -1] = "Active";
@@ -314,11 +350,15 @@ var QuickPickItemKind = /* @__PURE__ */ ((QuickPickItemKind2) => {
   QuickPickItemKind2[QuickPickItemKind2["Default"] = 0] = "Default";
   return QuickPickItemKind2;
 })(QuickPickItemKind || {});
+const CompletionItemKind = VscCompletionItemKind;
 export {
   CancellationError,
   CancellationTokenSource,
+  CompletionItem,
+  CompletionItemKind,
   ConfigurationTarget,
   Diagnostic,
+  DiagnosticRelatedInformation,
   DiagnosticSeverity,
   Disposable,
   EndOfLine,
@@ -331,7 +371,9 @@ export {
   QuickPickItemKind,
   Range,
   Selection,
+  SnippetString,
   StatusBarAlignment,
+  TextEdit,
   TextEditorCursorStyle,
   ThemeColor,
   ThemeIcon,

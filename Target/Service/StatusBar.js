@@ -1,11 +1,7 @@
-import { Layer } from "effect";
-import { Live as LiveIPC } from "./IPC.js";
-import { Definition } from "./StatusBar/Definition.js";
-import { Tag } from "./StatusBar/Service.js";
-import { Tag as Tag2 } from "./StatusBar/Service.js";
-const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIPC));
+import Live from "./StatusBar/Live.js";
+import Service from "./StatusBar/Service.js";
 export {
   Live,
-  Tag2 as Tag
+  Service
 };
 //# sourceMappingURL=StatusBar.js.map

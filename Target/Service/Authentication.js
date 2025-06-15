@@ -1,13 +1,11 @@
-import { Layer } from "effect";
-import { Definition } from "./Authentication/Definition.js";
-import { Tag } from "./Authentication/Service.js";
-import { Live as LiveIPC } from "./IPC.js";
-import { Tag as Tag2 } from "./Authentication/Service.js";
-export * from "./Authentication/Type.js";
-export * from "./Authentication/Error.js";
-const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIPC));
+import * as Error from "./Authentication/Error.js";
+import Live from "./Authentication/Live.js";
+import Service from "./Authentication/Service.js";
+import * as Type from "./Authentication/Type.js";
 export {
+  Error,
   Live,
-  Tag2 as Tag
+  Service,
+  Type
 };
 //# sourceMappingURL=Authentication.js.map

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Telemetry/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (Telemetry)\n * @description The live implementation Layer for the Telemetry service.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as IPCLive } from \"../IPC.js\";\nimport type IPCConfiguration from \"../IPC/Configuration.js\";\nimport LogLive from \"../Log/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the Telemetry service.\n * @param Config The IPC configuration.\n */\nconst Live = (Config: IPCConfiguration) => {\n\treturn Layer.effect(Service, Definition).pipe(\n\t\tLayer.provide(Layer.merge(IPCLive(Config), LogLive)),\n\t);\n};\n\nexport default Live;\n"],
+  "mappings": ";;AAKA,SAAS,aAAa;AAEtB,SAAS,QAAQ,eAAe;AAEhC,OAAO,aAAa;AACpB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAAO,wBAAC,WAA6B;AAC1C,SAAO,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,IACxC,MAAM,QAAQ,MAAM,MAAM,QAAQ,MAAM,GAAG,OAAO,CAAC;AAAA,EACpD;AACD,GAJa;AAMb,IAAO,eAAQ;",
+  "names": []
+}

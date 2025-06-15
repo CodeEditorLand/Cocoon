@@ -3,7 +3,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Effect } from "effect";
 import { Value as ProtoValue } from "google-protobuf/google/protobuf/struct_pb.js";
 import { ProtoSerializationError } from "./Error.js";
-function DecodeValue(ProtoValueInstance) {
+const DecodeValue = /* @__PURE__ */ __name((ProtoValueInstance) => {
   return Effect.try({
     try: /* @__PURE__ */ __name(() => {
       if (ProtoValueInstance === void 0) {
@@ -14,11 +14,11 @@ function DecodeValue(ProtoValueInstance) {
       }
       return ProtoValueInstance.toJavaScript();
     }, "try"),
-    catch: /* @__PURE__ */ __name((cause) => new ProtoSerializationError({ cause, direction: "Decoding" }), "catch")
+    catch: /* @__PURE__ */ __name((Cause) => new ProtoSerializationError({ Cause, Direction: "Decoding" }), "catch")
   });
-}
-__name(DecodeValue, "DecodeValue");
+}, "DecodeValue");
+var DecodeValue_default = DecodeValue;
 export {
-  DecodeValue
+  DecodeValue_default as default
 };
 //# sourceMappingURL=DecodeValue.js.map

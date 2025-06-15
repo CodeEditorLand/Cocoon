@@ -1,26 +1,7 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Data } from "effect";
-class ModuleBlockedError extends Data.TaggedError("ModuleBlockedError") {
-  static {
-    __name(this, "ModuleBlockedError");
-  }
-  get message() {
-    return `[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`;
-  }
-}
-class ModuleNotShimmedError extends Data.TaggedError(
-  "ModuleNotShimmedError"
-) {
-  static {
-    __name(this, "ModuleNotShimmedError");
-  }
-  get message() {
-    return `Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`;
-  }
-}
+import { default as default2 } from "./Error/ModuleBlockedError.js";
+import { default as default3 } from "./Error/ModuleNotShimmedError.js";
 export {
-  ModuleBlockedError,
-  ModuleNotShimmedError
+  default2 as ModuleBlockedError,
+  default3 as ModuleNotShimmedError
 };
 //# sourceMappingURL=Error.js.map

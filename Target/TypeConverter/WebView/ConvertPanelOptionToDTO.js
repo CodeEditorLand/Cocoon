@@ -1,13 +1,13 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-function ConvertPanelOptionToDTO(Option) {
+const ConvertPanelOptionToDTO = /* @__PURE__ */ __name((Options) => {
   return {
-    enableFindWidget: Option.enableFindWidget,
-    retainContextWhenHidden: Option.retainContextWhenHidden
+    enableFindWidget: Options.enableFindWidget,
+    retainContextWhenHidden: Options.retainContextWhenHidden
   };
-}
-__name(ConvertPanelOptionToDTO, "ConvertPanelOptionToDTO");
+}, "ConvertPanelOptionToDTO");
+var ConvertPanelOptionToDTO_default = ConvertPanelOptionToDTO;
 export {
-  ConvertPanelOptionToDTO
+  ConvertPanelOptionToDTO_default as default
 };
 //# sourceMappingURL=ConvertPanelOptionToDTO.js.map

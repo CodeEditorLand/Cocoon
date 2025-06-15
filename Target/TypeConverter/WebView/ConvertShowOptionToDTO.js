@@ -1,14 +1,14 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import * as ViewColumnConverter from "../Main/ViewColumn.js";
-function ConvertShowOptionToDTO(ViewColumn, PreserveFocus) {
+import ViewColumnConverter from "../Main/ViewColumn.js";
+const ConvertShowOptionToDTO = /* @__PURE__ */ __name((ViewColumn, PreserveFocus) => {
   return {
     viewColumn: ViewColumnConverter.FromAPI(ViewColumn),
     preserveFocus: PreserveFocus
   };
-}
-__name(ConvertShowOptionToDTO, "ConvertShowOptionToDTO");
+}, "ConvertShowOptionToDTO");
+var ConvertShowOptionToDTO_default = ConvertShowOptionToDTO;
 export {
-  ConvertShowOptionToDTO
+  ConvertShowOptionToDTO_default as default
 };
 //# sourceMappingURL=ConvertShowOptionToDTO.js.map

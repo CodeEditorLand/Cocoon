@@ -1,14 +1,14 @@
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Live as CommandLive } from "./Command.js";
+import { Live as IPCLive } from "./IPC.js";
+import Service from "./TreeView/Service.js";
 import { Layer } from "effect";
-import { Live as LiveCommand } from "./Command.js";
-import { Live as LiveIPC } from "./IPC.js";
-import { Definition } from "./TreeView/Definition.js";
-import { Tag } from "./TreeView/Service.js";
-import { Tag as Tag2 } from "./TreeView/Service.js";
-const Live = Layer.effect(Tag, Definition).pipe(
-  Layer.provide(Layer.merge(LiveIPC, LiveCommand))
-);
+const Live = /* @__PURE__ */ __name((Config) => Layer.effect(Service, Live).pipe(
+  Layer.provide(Layer.merge(IPCLive(Config), CommandLive(Config)))
+), "Live");
 export {
   Live,
-  Tag2 as Tag
+  Service
 };
 //# sourceMappingURL=TreeView.js.map

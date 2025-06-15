@@ -1,6 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-function ParseArgument(Arguments) {
+function ParseArgument_default(Arguments) {
   let Option = {};
   let Items = [];
   let Source = void 0;
@@ -16,8 +16,8 @@ function ParseArgument(Arguments) {
   );
   return { Option, Items, Source };
 }
-__name(ParseArgument, "ParseArgument");
+__name(ParseArgument_default, "default");
 export {
-  ParseArgument
+  ParseArgument_default as default
 };
 //# sourceMappingURL=ParseArgument.js.map

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/TreeView/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (TreeView)\n * @description This module provides the `Live` implementation Layer for the TreeView service.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as CommandLive } from \"../Command.js\";\nimport { Live as IPCLive } from \"../IPC.js\";\nimport type IPCConfiguration from \"../IPC/Configuration.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the TreeView service.\n * It depends on the IPC and Command services.\n * @param Config The IPC configuration.\n */\nconst Live = (Config: IPCConfiguration) =>\n\tLayer.effect(Service, Definition).pipe(\n\t\tLayer.provide(Layer.merge(IPCLive(Config), CommandLive(Config))),\n\t);\n\nexport default Live;\n"],
+  "mappings": ";;AAKA,SAAS,aAAa;AAEtB,SAAS,QAAQ,mBAAmB;AACpC,SAAS,QAAQ,eAAe;AAEhC,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAOpB,MAAM,OAAO,wBAAC,WACb,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,EACjC,MAAM,QAAQ,MAAM,MAAM,QAAQ,MAAM,GAAG,YAAY,MAAM,CAAC,CAAC;AAChE,GAHY;AAKb,IAAO,eAAQ;",
+  "names": []
+}

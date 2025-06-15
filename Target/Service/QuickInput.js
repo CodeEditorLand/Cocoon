@@ -1,11 +1,13 @@
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Layer } from "effect";
-import { Live as LiveIPC } from "./IPC.js";
-import { Definition } from "./QuickInput/Definition.js";
-import { Tag } from "./QuickInput/Service.js";
-import { Tag as Tag2 } from "./QuickInput/Service.js";
-const Live = Layer.effect(Tag, Definition).pipe(Layer.provide(LiveIPC));
+import IPCLive from "./IPC/Live.js";
+import Definition from "./QuickInput/Definition.js";
+import Service from "./QuickInput/Service.js";
+import { default as default2 } from "./QuickInput/Service.js";
+const Live = /* @__PURE__ */ __name((Config) => Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config))), "Live");
 export {
   Live,
-  Tag2 as Tag
+  default2 as Service
 };
 //# sourceMappingURL=QuickInput.js.map

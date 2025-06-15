@@ -1,13 +1,13 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-function ConvertExtensionDataToDTO(Extension) {
+const ConvertExtensionDataToDTO = /* @__PURE__ */ __name((ExtensionDescription) => {
   return {
-    id: Extension.identifier,
-    location: Extension.extensionLocation
+    id: ExtensionDescription.identifier,
+    location: ExtensionDescription.extensionLocation
   };
-}
-__name(ConvertExtensionDataToDTO, "ConvertExtensionDataToDTO");
+}, "ConvertExtensionDataToDTO");
+var ConvertExtensionDataToDTO_default = ConvertExtensionDataToDTO;
 export {
-  ConvertExtensionDataToDTO
+  ConvertExtensionDataToDTO_default as default
 };
 //# sourceMappingURL=ConvertExtensionDataToDTO.js.map

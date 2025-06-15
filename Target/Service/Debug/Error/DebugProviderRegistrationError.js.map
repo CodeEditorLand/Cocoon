@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/Debug/Error/DebugProviderRegistrationError.ts"],
+  "sourcesContent": ["/**\n * @module DebugProviderRegistrationError (Debug/Error)\n * @description Defines a custom error for debug provider registration failures.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that a debug provider (e.g., configuration provider or\n * adapter factory) failed to register.\n */\nexport default class extends Data.TaggedError(\n\t\"DebugProviderRegistrationError\",\n)<{\n\treadonly DebugType: string;\n\treadonly cause?: unknown;\n}> {\n\tconstructor(Properties: {\n\t\treadonly DebugType: string;\n\t\treadonly cause?: unknown;\n\t}) {\n\t\tsuper(Properties);\n\t\tthis.message = `Failed to register debug provider for type '${this.DebugType}'.`;\n\t}\n\tpublic override readonly message: string;\n}\n"],
+  "mappings": ";;AAKA,SAAS,YAAY;AAMrB,MAAO,+CAAsB,KAAK;AAAA,EACjC;AACD,EAGG;AAAA,EAhBH,OAgBG;AAAA;AAAA;AAAA,EACF,YAAY,YAGT;AACF,UAAM,UAAU;AAChB,SAAK,UAAU,+CAA+C,KAAK,SAAS;AAAA,EAC7E;AAAA,EACyB;AAC1B;",
+  "names": []
+}

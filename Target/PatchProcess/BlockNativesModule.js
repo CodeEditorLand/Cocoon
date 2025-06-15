@@ -1,17 +1,16 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as Module from "node:module";
-import { Effect } from "effect";
-class ModulePatchError extends Error {
-  constructor(context, cause) {
-    super(`Failed to patch Node.js module loader: ${context}`);
-    this.context = context;
-    this.cause = cause;
-  }
+import { Data, Effect } from "effect";
+class ModulePatchError extends Data.TaggedError("ModulePatchError") {
   static {
     __name(this, "ModulePatchError");
   }
-  _tag = "ModulePatchError";
+  constructor(Properties) {
+    super(Properties);
+    this.message = `Failed to patch Node.js module loader: ${this.context}`;
+  }
+  message;
 }
 const BlockNativesModule = Effect.try({
   try: /* @__PURE__ */ __name(() => {
@@ -31,13 +30,17 @@ const BlockNativesModule = Effect.try({
       );
     }
   }, "try"),
-  catch: /* @__PURE__ */ __name((cause) => new ModulePatchError("Failed during 'natives' block setup.", { cause }), "catch")
+  catch: /* @__PURE__ */ __name((Cause) => new ModulePatchError({
+    context: "Failed during 'natives' block setup.",
+    Cause
+  }), "catch")
 }).pipe(
   Effect.tap(
     () => Effect.logTrace("Module._load patched to block 'natives' module.")
   )
 );
+var BlockNativesModule_default = BlockNativesModule;
 export {
-  BlockNativesModule
+  BlockNativesModule_default as default
 };
 //# sourceMappingURL=BlockNativesModule.js.map

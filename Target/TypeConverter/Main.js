@@ -1,11 +1,12 @@
-import * as Location from "./Main/Location.js";
-import * as MarkdownString from "./Main/MarkdownString.js";
-import * as Position from "./Main/Position.js";
-import * as Range from "./Main/Range.js";
-import * as Selection from "./Main/Selection.js";
-import * as TextEdit from "./Main/TextEdit.js";
-import * as URI from "./Main/URI.js";
-import * as ViewColumn from "./Main/ViewColumn.js";
+import Location from "./Main/Location.js";
+import MarkdownString from "./Main/MarkdownString.js";
+import Position from "./Main/Position.js";
+import Range from "./Main/Range.js";
+import Selection from "./Main/Selection.js";
+import TextEdit from "./Main/TextEdit.js";
+import URI from "./Main/URI.js";
+import ViewColumn from "./Main/ViewColumn.js";
+import WorkspaceFolder from "./Main/WorkspaceFolder.js";
 export {
   Location,
   MarkdownString,
@@ -14,6 +15,7 @@ export {
   Selection,
   TextEdit,
   URI,
-  ViewColumn
+  ViewColumn,
+  WorkspaceFolder
 };
 //# sourceMappingURL=Main.js.map

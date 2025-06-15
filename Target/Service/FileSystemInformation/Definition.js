@@ -1,25 +1,25 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, HashMap, Ref, Stream } from "effect";
+import { Effect, HashMap, Ref } from "effect";
 import { isWindows } from "vs/base/common/platform.js";
 import { ExtUri } from "vs/base/common/resources.js";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
-import * as TypeConverter from "../../TypeConverter.js";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IPC } from "../IPC.js";
-import { Log } from "../Log.js";
-const Definition = Effect.gen(function* (_) {
-  const IPCService = yield* _(IPC.Tag);
-  const LogService = yield* _(Log.Tag);
-  const CapabilitiesMap = yield* _(
-    Ref.make(HashMap.empty())
+import { URI as URIConverter } from "../../TypeConverter/Main.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import IPCService from "../IPC/Service.js";
+import LogService from "../Log/Service.js";
+var Definition_default = Effect.gen(function* () {
+  const IPC = yield* IPCService;
+  const Log = yield* LogService;
+  const CapabilitiesMap = yield* Ref.make(
+    HashMap.empty()
   );
   const OnDidChangeFileEvent = CreateEventStream();
   const GetCapabilities = /* @__PURE__ */ __name((Scheme) => Ref.get(CapabilitiesMap).pipe(
     Effect.map(HashMap.get(Scheme)),
-    Effect.map((maybeCaps) => {
-      if (maybeCaps._tag === "Some") {
-        return maybeCaps.value;
+    Effect.map((MaybeCapabilities) => {
+      if (MaybeCapabilities._tag === "Some") {
+        return MaybeCapabilities.value;
       }
       if (Scheme === "file") {
         return isWindows ? FileSystemProviderCapabilities.FileReadWrite : FileSystemProviderCapabilities.FileReadWrite | FileSystemProviderCapabilities.PathCaseSensitive;
@@ -27,61 +27,55 @@ const Definition = Effect.gen(function* (_) {
       return void 0;
     })
   ), "GetCapabilities");
-  const ExtURIInstance = new ExtUri((uri) => {
-    const caps = Effect.runSync(GetCapabilities(uri.scheme));
-    const ignoreCase = caps ? !(caps & FileSystemProviderCapabilities.PathCaseSensitive) : isWindows;
-    LogService.Trace(
-      `ExtURI check for scheme '${uri.scheme}', ignoring case: ${ignoreCase}`
+  const ExtURIInstance = new ExtUri((Uri) => {
+    const Capabilities = Effect.runSync(GetCapabilities(Uri.scheme));
+    const IgnoreCase = Capabilities ? !(Capabilities & FileSystemProviderCapabilities.PathCaseSensitive) : isWindows;
+    Log.Trace(
+      `ExtURI check for scheme '${Uri.scheme}', ignoring case: ${IgnoreCase}`
     );
-    return ignoreCase;
+    return IgnoreCase;
   });
-  const AcceptProviderCapabilities = /* @__PURE__ */ __name((Scheme, Capabilities) => Effect.gen(function* (_2) {
+  const AcceptProviderCapabilities = /* @__PURE__ */ __name((Scheme, Capabilities) => Effect.gen(function* () {
     if (Capabilities === null) {
-      yield* _2(Ref.update(CapabilitiesMap, HashMap.remove(Scheme)));
-      yield* _2(
-        LogService.Trace(
-          `Cleared capabilities for scheme '${Scheme}'.`
-        )
+      yield* Ref.update(CapabilitiesMap, HashMap.remove(Scheme));
+      yield* Log.Trace(
+        `Cleared capabilities for scheme '${Scheme}'.`
       );
     } else {
-      yield* _2(
-        Ref.update(
-          CapabilitiesMap,
-          HashMap.set(Scheme, Capabilities)
-        )
+      yield* Ref.update(
+        CapabilitiesMap,
+        HashMap.set(Scheme, Capabilities)
       );
-      yield* _2(
-        LogService.Trace(
-          `Updated capabilities for scheme '${Scheme}' to: ${Capabilities}`
-        )
+      yield* Log.Trace(
+        `Updated capabilities for scheme '${Scheme}' to: ${Capabilities}`
       );
     }
   }), "AcceptProviderCapabilities");
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$acceptProviderInfos",
-    ([scheme, caps]) => Effect.runPromise(AcceptProviderCapabilities(scheme, caps))
+    ([Scheme, Capabilities]) => Effect.runPromise(AcceptProviderCapabilities(Scheme, Capabilities))
   );
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$onFileEvent",
-    ([events]) => OnDidChangeFileEvent.Fire(
-      events.map((e) => ({
-        type: e.type,
-        uri: TypeConverter.URIConverter.ToAPI(e.uri)
+    ([Events]) => OnDidChangeFileEvent.Fire(
+      Events.map((Event) => ({
+        type: Event.type,
+        uri: URIConverter.ToAPI(Event.uri)
       }))
     ).pipe(Effect.runPromise)
   );
-  const ServiceImplementation = {
+  const FileSystemInformationImplementation = {
     ExtURI: ExtURIInstance,
     GetCapabilities,
-    onDidChangeFile: OnDidChangeFileEvent.Stream.pipe(Stream.toEvent),
-    isWritableFileSystem: /* @__PURE__ */ __name((scheme) => {
-      const caps = Effect.runSync(GetCapabilities(scheme));
-      return caps ? !(caps & FileSystemProviderCapabilities.Readonly) : true;
+    onDidChangeFile: OnDidChangeFileEvent.event,
+    isWritableFileSystem: /* @__PURE__ */ __name((Scheme) => {
+      const Capabilities = Effect.runSync(GetCapabilities(Scheme));
+      return Capabilities ? !(Capabilities & FileSystemProviderCapabilities.Readonly) : true;
     }, "isWritableFileSystem")
   };
-  return ServiceImplementation;
+  return FileSystemInformationImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

@@ -1,18 +1,7 @@
-import { Layer } from "effect";
-import { Live as LiveCancellation } from "./Cancellation.js";
-import { Live as LiveCommand } from "./Command.js";
-import { Live as LiveDocument } from "./Document.js";
-import { Live as LiveIPC } from "./IPC.js";
-import { Definition } from "./LanguageFeature/Definition.js";
-import { Tag } from "./LanguageFeature/Service.js";
-import { Tag as Tag2 } from "./LanguageFeature/Service.js";
-const Live = Layer.effect(Tag, Definition).pipe(
-  Layer.provide(
-    Layer.mergeAll(LiveIPC, LiveDocument, LiveCancellation, LiveCommand)
-  )
-);
+import Live from "./LanguageFeature/Live.js";
+import Service from "./LanguageFeature/Service.js";
 export {
   Live,
-  Tag2 as Tag
+  Service
 };
 //# sourceMappingURL=LanguageFeature.js.map

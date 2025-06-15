@@ -1,16 +1,16 @@
 import { Effect } from "effect";
-import { ExitPreventedError } from "./Error/ExitPreventedError.js";
-import { ProcessPatch } from "./ProcessPatch.js";
-const PatchProcessExit = Effect.gen(function* (_) {
-  const { NativeExit, AllowExit } = yield* _(ProcessPatch.Tag);
+import ExitPreventedError from "./Error/ExitPreventedError.js";
+import ProcessPatchService from "./ProcessPatch/Service.js";
+const PatchProcessExit = Effect.gen(function* () {
+  const ProcessPatch = yield* ProcessPatchService;
   process.exit = (Code) => {
-    if (AllowExit()) {
+    if (ProcessPatch.AllowExit()) {
       Effect.runSync(
         Effect.logInfo(
           `'process.exit(${Code ?? ""})' was called and ALLOWED by host policy. Terminating.`
         )
       );
-      return NativeExit(Code);
+      return ProcessPatch.NativeExit(Code);
     }
     const ErrorMessage = `'process.exit(${Code ?? ""})' was called but PREVENTED by host policy.`;
     const PreventionError = new ExitPreventedError({
@@ -25,9 +25,10 @@ const PatchProcessExit = Effect.gen(function* (_) {
     );
     throw PreventionError;
   };
-  yield* _(Effect.logTrace("Successfully patched 'process.exit'."));
+  yield* Effect.logTrace("Successfully patched 'process.exit'.");
 });
+var PatchProcessExit_default = PatchProcessExit;
 export {
-  PatchProcessExit
+  PatchProcessExit_default as default
 };
 //# sourceMappingURL=PatchProcessExit.js.map

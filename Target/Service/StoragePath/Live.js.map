@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/StoragePath/Live.ts"],
+  "sourcesContent": ["/**\n * @module Live (StoragePath)\n * @description The live implementation Layer for the StoragePath service.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as FileSystemLive } from \"../FileSystem.js\";\nimport type IPCConfiguration from \"../IPC/Configuration.js\";\nimport LogLive from \"../Log/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the StoragePath service.\n * It depends on the FileSystem, Log, and InitData services.\n * @param Config The IPC configuration.\n */\nconst Live = (Config: IPCConfiguration) =>\n\tLayer.effect(Service, Definition).pipe(\n\t\t// The FileSystem dependency is for the EnsureDirectory helper.\n\t\tLayer.provide(Layer.merge(FileSystemLive(Config), LogLive)),\n\t);\n\nexport default Live;\n"],
+  "mappings": ";;AAKA,SAAS,aAAa;AAEtB,SAAS,QAAQ,sBAAsB;AAEvC,OAAO,aAAa;AACpB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAOpB,MAAM,OAAO,wBAAC,WACb,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA;AAAA,EAEjC,MAAM,QAAQ,MAAM,MAAM,eAAe,MAAM,GAAG,OAAO,CAAC;AAC3D,GAJY;AAMb,IAAO,eAAQ;",
+  "names": []
+}

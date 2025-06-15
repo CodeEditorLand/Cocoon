@@ -1,27 +1,18 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Range, TextEdit as VscTextEdit } from "../../Type/ExtHostTypes.js";
-import * as RangeConverter from "./Range.js";
-function FromAPI(TextEditInstance) {
-  return {
-    text: TextEditInstance.newText,
-    range: RangeConverter.FromAPI(TextEditInstance.range),
-    eol: TextEditInstance.newEol
-  };
-}
-__name(FromAPI, "FromAPI");
-function ToAPI(TextEditDTO) {
-  let range;
-  if (TextEditDTO.range) {
-    range = RangeConverter.ToAPI(TextEditDTO.range);
-  } else {
-    range = new Range(0, 0, 0, 0);
-  }
-  return new VscTextEdit(range, TextEditDTO.text, TextEditDTO.eol);
-}
-__name(ToAPI, "ToAPI");
+import { TextEdit } from "../../Type/ExtHostTypes.js";
+import RangeConverter from "./Range.js";
+const FromAPI = /* @__PURE__ */ __name((TextEditInstance) => ({
+  text: TextEditInstance.newText,
+  range: RangeConverter.FromAPI(TextEditInstance.range),
+  forceMoveMarkers: false
+}), "FromAPI");
+const ToAPI = /* @__PURE__ */ __name((TextEditDTO) => new TextEdit(
+  RangeConverter.ToAPI(TextEditDTO.range),
+  TextEditDTO.text ?? ""
+), "ToAPI");
+var TextEdit_default = { FromAPI, ToAPI };
 export {
-  FromAPI,
-  ToAPI
+  TextEdit_default as default
 };
 //# sourceMappingURL=TextEdit.js.map

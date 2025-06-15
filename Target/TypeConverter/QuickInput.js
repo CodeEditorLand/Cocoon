@@ -1,17 +1,25 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { URI } from "../Type/ExtHostTypes.js";
-var QuickPick;
-((QuickPick2) => {
-  function SerializeItems(Items) {
+import { URI } from "vscode";
+const QuickPick = {
+  /**
+   * Serializes `QuickPickItem` or string arrays for IPC transport.
+   * It attaches a temporary index to map results back to the original objects.
+   * @param Items The array of items to serialize.
+   * @returns A serializable representation of the items.
+   */
+  SerializeItems: /* @__PURE__ */ __name((Items) => {
     return Items.map((Item, Index) => {
       const Base = typeof Item === "string" ? { label: Item } : Item;
       return { ...Base, handle: Index };
     });
-  }
-  QuickPick2.SerializeItems = SerializeItems;
-  __name(SerializeItems, "SerializeItems");
-  function SerializeButtons(Buttons) {
+  }, "SerializeItems"),
+  /**
+   * Serializes `QuickInputButton` arrays for IPC transport.
+   * @param Buttons The array of buttons to serialize.
+   * @returns A serializable representation of the buttons.
+   */
+  SerializeButtons: /* @__PURE__ */ __name((Buttons) => {
     return Buttons?.map((Button, Index) => ({
       iconPath: Button.iconPath ? {
         dark: URI.revive(
@@ -24,11 +32,10 @@ var QuickPick;
       tooltip: Button.tooltip,
       handle: Index
     }));
-  }
-  QuickPick2.SerializeButtons = SerializeButtons;
-  __name(SerializeButtons, "SerializeButtons");
-})(QuickPick || (QuickPick = {}));
+  }, "SerializeButtons")
+};
+var QuickInput_default = { QuickPick };
 export {
-  QuickPick
+  QuickInput_default as default
 };
 //# sourceMappingURL=QuickInput.js.map

@@ -2,21 +2,24 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
 import { ThemeColor } from "../../Type/ExtHostTypes.js";
-import * as TypeConverter from "../../TypeConverter.js";
-class StatusBarItemImplementation {
-  constructor(entryID, IPCService, onDidDispose, initialID, initialAlignment, initialPriority) {
-    this.entryID = entryID;
-    this.IPCService = IPCService;
-    this.onDidDispose = onDidDispose;
-    this._id = initialID;
-    this._alignment = initialAlignment;
-    this._priority = initialPriority;
+import { StatusBar as StatusBarConverter } from "../../TypeConverter.js";
+import {
+  Definition as CommandConverterDefinition
+} from "../../TypeConverter/Command.js";
+class StatusBarItemImplementation_default {
+  constructor(EntryID, IPC, OnDidDispose, InitialID, InitialAlignment, InitialPriority) {
+    this.EntryID = EntryID;
+    this.IPC = IPC;
+    this.OnDidDispose = OnDidDispose;
+    this._id = InitialID;
+    this._alignment = InitialAlignment;
+    this._priority = InitialPriority;
   }
   static {
-    __name(this, "StatusBarItemImplementation");
+    __name(this, "default");
   }
-  _isDisposed = false;
-  _visible = false;
+  IsDisposed = false;
+  IsVisible = false;
   // --- Backing fields for properties ---
   _id;
   _name;
@@ -41,113 +44,111 @@ class StatusBarItemImplementation {
   get name() {
     return this._name;
   }
-  set name(value) {
-    if (this._name !== value) {
-      this._name = value;
-      this.update();
+  set name(Value) {
+    if (this._name !== Value) {
+      this._name = Value;
+      this.Update();
     }
   }
   get text() {
     return this._text;
   }
-  set text(value) {
-    if (this._text !== value) {
-      this._text = value;
-      this.update();
+  set text(Value) {
+    if (this._text !== Value) {
+      this._text = Value;
+      this.Update();
     }
   }
   get tooltip() {
     return this._tooltip;
   }
-  set tooltip(value) {
-    if (this._tooltip !== value) {
-      this._tooltip = value;
-      this.update();
+  set tooltip(Value) {
+    if (this._tooltip !== Value) {
+      this._tooltip = Value;
+      this.Update();
     }
   }
   get color() {
     return this._color;
   }
-  set color(value) {
-    if (this._color !== value) {
-      this._color = value;
-      if (value instanceof ThemeColor && value.id === "statusBarItem.errorForeground") {
+  set color(Value) {
+    if (this._color !== Value) {
+      this._color = Value;
+      if (Value instanceof ThemeColor && Value.id === "statusBarItem.errorForeground") {
         this.backgroundColor = new ThemeColor(
           "statusBarItem.errorBackground"
         );
       }
-      this.update();
+      this.Update();
     }
   }
   get backgroundColor() {
     return this._backgroundColor;
   }
-  set backgroundColor(value) {
-    if (this._backgroundColor !== value) {
-      this._backgroundColor = value;
-      this.update();
+  set backgroundColor(Value) {
+    if (this._backgroundColor !== Value) {
+      this._backgroundColor = Value;
+      this.Update();
     }
   }
   get command() {
     return this._command;
   }
-  set command(value) {
-    if (this._command !== value) {
-      this._command = value;
-      this.update();
+  set command(Value) {
+    if (this._command !== Value) {
+      this._command = Value;
+      this.Update();
     }
   }
   get accessibilityInformation() {
     return this._accessibilityInformation;
   }
-  set accessibilityInformation(value) {
-    if (this._accessibilityInformation !== value) {
-      this._accessibilityInformation = value;
-      this.update();
+  set accessibilityInformation(Value) {
+    if (this._accessibilityInformation !== Value) {
+      this._accessibilityInformation = Value;
+      this.Update();
     }
   }
   // --- Public Methods ---
   show() {
-    if (!this._visible) {
-      this._visible = true;
-      this.update();
+    if (!this.IsVisible) {
+      this.IsVisible = true;
+      this.Update();
     }
   }
   hide() {
-    if (this._visible) {
-      this._visible = false;
+    if (this.IsVisible) {
+      this.IsVisible = false;
       Effect.runFork(
-        this.IPCService.SendNotification("$disposeEntry", [
-          this.entryID
-        ])
+        this.IPC.SendNotification("$disposeEntry", [this.EntryID])
       );
     }
   }
   dispose() {
-    if (!this._isDisposed) {
-      this._isDisposed = true;
+    if (!this.IsDisposed) {
+      this.IsDisposed = true;
       this.hide();
-      this.onDidDispose();
+      this.OnDidDispose();
     }
   }
   // --- Private Methods ---
-  update() {
-    if (this._isDisposed || !this._visible) {
+  Update() {
+    if (this.IsDisposed || !this.IsVisible) {
       return;
     }
-    const commandConverter = new TypeConverter.Command.Definition(
+    const CommandConverterInstance = new CommandConverterDefinition(
       {},
       () => void 0
     );
-    const DTO = TypeConverter.StatusBar.FromAPI(
+    const DTO = StatusBarConverter.FromAPI(
       this,
-      this.entryID,
-      commandConverter
+      this.EntryID,
+      CommandConverterInstance
     );
-    Effect.runFork(this.IPCService.SendNotification("$setEntry", [DTO]));
+    Effect.runFork(this.IPC.SendNotification("$setEntry", [DTO]));
   }
 }
 export {
-  StatusBarItemImplementation
+  StatusBarItemImplementation_default as default
 };
 //# sourceMappingURL=StatusBarItemImplementation.js.map

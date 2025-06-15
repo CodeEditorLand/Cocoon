@@ -3,15 +3,18 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Effect } from "effect";
 import { isCancellationError } from "vs/base/common/errors.js";
 import * as QuickInputConverter from "../../TypeConverter/QuickInput.js";
-import { IPC } from "../IPC.js";
-const Definition = Effect.gen(function* (_) {
-  const IPCService = yield* _(IPC.Tag);
+import IPCService from "../IPC/Service.js";
+var Definition_default = Effect.gen(function* (_) {
+  const IPC = yield* _(IPCService);
   const ShowQuickPick = /* @__PURE__ */ __name((Items, Option = {}, Token) => Effect.gen(function* (_2) {
     if (Token?.isCancellationRequested) {
       return yield* _2(Effect.interrupt);
     }
     const ResolvedItems = yield* _2(
-      Effect.tryPromise(() => Promise.resolve(Items))
+      Effect.tryPromise({
+        try: /* @__PURE__ */ __name(() => Promise.resolve(Items), "try"),
+        catch: /* @__PURE__ */ __name((e) => e, "catch")
+      })
     );
     const IPCOptions = {
       ...Option,
@@ -23,7 +26,7 @@ const Definition = Effect.gen(function* (_) {
       )
     };
     const ResultHandles = yield* _2(
-      IPCService.SendRequest(
+      IPC.SendRequest(
         "$showQuickPick",
         [IPCOptions]
       ),
@@ -57,7 +60,7 @@ const Definition = Effect.gen(function* (_) {
       )
     };
     return yield* _2(
-      IPCService.SendRequest("$showInputBox", [
+      IPC.SendRequest("$showInputBox", [
         IPCOptions
       ]),
       Effect.catchIf(
@@ -83,6 +86,6 @@ const Definition = Effect.gen(function* (_) {
   return ServiceImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map

@@ -1,24 +1,22 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Location } from "../../Type/ExtHostTypes.js";
-import * as RangeConverter from "./Range.js";
-import * as URIConverter from "./URI.js";
-function FromAPI(LocationInstance) {
+import { Location as VscLocation } from "../../Type/ExtHostTypes.js";
+import RangeConverter from "./Range.js";
+import URIConverter from "./URI.js";
+const FromAPI = /* @__PURE__ */ __name((LocationInstance) => {
   return {
     uri: URIConverter.FromAPI(LocationInstance.uri),
     range: RangeConverter.FromAPI(LocationInstance.range)
   };
-}
-__name(FromAPI, "FromAPI");
-function ToAPI(LocationDTO) {
-  return new Location(
+}, "FromAPI");
+const ToAPI = /* @__PURE__ */ __name((LocationDTO) => {
+  return new VscLocation(
     URIConverter.ToAPI(LocationDTO.uri),
     RangeConverter.ToAPI(LocationDTO.range)
   );
-}
-__name(ToAPI, "ToAPI");
+}, "ToAPI");
+var Location_default = { FromAPI, ToAPI };
 export {
-  FromAPI,
-  ToAPI
+  Location_default as default
 };
 //# sourceMappingURL=Location.js.map

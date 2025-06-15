@@ -41,10 +41,10 @@ class BidirectionalMap<K, V> {
 
 // Effect-fully loads the loader hook script from disk.
 const LoadHookScript = (FileName: string): Effect.Effect<string, Error> => {
-	return Effect.try({
-		try: () => {
-			const { readFileSync } = require("node:fs");
-			const { join } = require("node:path");
+	return Effect.tryPromise({
+		try: async () => {
+			const { readFileSync } = await import("node:fs");
+			const { join } = await import("node:path");
 			const ScriptPath = join(__dirname, FileName);
 			return readFileSync(ScriptPath, "utf-8");
 		},

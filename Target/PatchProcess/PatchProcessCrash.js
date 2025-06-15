@@ -1,8 +1,8 @@
 import { Effect } from "effect";
-import { ProcessPatch } from "./ProcessPatch.js";
-const PatchProcessCrash = Effect.gen(function* (_) {
-  const { NativeCrash } = yield* _(ProcessPatch.Tag);
-  if (NativeCrash) {
+import ProcessPatchService from "./ProcessPatch/Service.js";
+const PatchProcessCrash = Effect.gen(function* () {
+  const ProcessPatch = yield* ProcessPatchService;
+  if (ProcessPatch.NativeCrash) {
     process.crash = () => {
       const PreventionStack = new Error(
         "Stack trace for prevented process.crash()"
@@ -15,16 +15,15 @@ ${PreventionStack ?? "(Stack trace unavailable)"}`
         )
       );
     };
-    yield* _(Effect.logTrace("Successfully patched 'process.crash'."));
+    yield* Effect.logTrace("Successfully patched 'process.crash'.");
   } else {
-    yield* _(
-      Effect.logTrace(
-        "'process.crash()' not found in this environment, skipping patch."
-      )
+    yield* Effect.logTrace(
+      "'process.crash()' not found in this environment, skipping patch."
     );
   }
 });
+var PatchProcessCrash_default = PatchProcessCrash;
 export {
-  PatchProcessCrash
+  PatchProcessCrash_default as default
 };
 //# sourceMappingURL=PatchProcessCrash.js.map

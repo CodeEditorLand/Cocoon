@@ -1,17 +1,17 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-function CreateWindowNamespace(WindowService, WorkSpaceService, StatusBarService, WebViewPanelService, CustomEditorService, TreeViewService, AsEvent, Extension) {
+const CreateWindowNamespace = /* @__PURE__ */ __name((Window, WorkSpace, StatusBar, WebViewPanel, TreeView, AsEvent, Extension) => {
   return {
     // --- Properties ---
     get state() {
-      return WindowService.state;
+      return Window.state;
     },
     get activeTextEditor() {
-      return WorkSpaceService.activeTextEditor;
+      return WorkSpace.activeTextEditor;
     },
     get visibleTextEditors() {
-      return WorkSpaceService.visibleTextEditors;
+      return WorkSpace.visibleTextEditors;
     },
     get activeTerminal() {
       return void 0;
@@ -23,12 +23,12 @@ function CreateWindowNamespace(WindowService, WorkSpaceService, StatusBarService
       return { kind: 1 };
     },
     // --- Events ---
-    onDidChangeWindowState: AsEvent(WindowService.onDidChangeWindowState),
+    onDidChangeWindowState: AsEvent(Window.onDidChangeWindowState),
     onDidChangeActiveTextEditor: AsEvent(
-      WorkSpaceService.onDidChangeActiveTextEditor
+      WorkSpace.onDidChangeActiveTextEditor
     ),
     onDidChangeVisibleTextEditors: AsEvent(
-      WorkSpaceService.onDidChangeVisibleTextEditors
+      WorkSpace.onDidChangeVisibleTextEditors
     ),
     // ... other events would be wrapped here ...
     // --- Methods from other services ---
@@ -45,19 +45,12 @@ function CreateWindowNamespace(WindowService, WorkSpaceService, StatusBarService
         prio = priorityOrAlignment;
       }
       return Effect.runSync(
-        StatusBarService.CreateStatusBarItem(
-          Extension,
-          id,
-          alignment,
-          prio
-        )
+        StatusBar.CreateStatusBarItem(Extension, id, alignment, prio)
       );
     }, "createStatusBarItem"),
-    createTreeView: /* @__PURE__ */ __name((viewId, options) => Effect.runSync(
-      TreeViewService.CreateTreeView(viewId, options, Extension)
-    ), "createTreeView"),
+    createTreeView: /* @__PURE__ */ __name((viewId, options) => Effect.runSync(TreeView.CreateTreeView(viewId, options, Extension)), "createTreeView"),
     createWebviewPanel: /* @__PURE__ */ __name((viewType, title, showOptions, options) => Effect.runSync(
-      WebViewPanelService.CreateWebViewPanel(
+      WebViewPanel.CreateWebviewPanel(
         Extension,
         viewType,
         title,
@@ -66,7 +59,7 @@ function CreateWindowNamespace(WindowService, WorkSpaceService, StatusBarService
       )
     ), "createWebviewPanel"),
     registerWebviewPanelSerializer: /* @__PURE__ */ __name((viewType, serializer) => Effect.runSync(
-      WebViewPanelService.RegisterWebviewPanelSerializer(
+      WebViewPanel.RegisterWebviewPanelSerializer(
         Extension,
         viewType,
         serializer
@@ -76,9 +69,9 @@ function CreateWindowNamespace(WindowService, WorkSpaceService, StatusBarService
     // These are typically added to the final object in the APIFactory itself
     // or accessed via the corresponding service.
   };
-}
-__name(CreateWindowNamespace, "CreateWindowNamespace");
+}, "CreateWindowNamespace");
+var CreateWindowNamespace_default = CreateWindowNamespace;
 export {
-  CreateWindowNamespace
+  CreateWindowNamespace_default as default
 };
 //# sourceMappingURL=CreateWindowNamespace.js.map

@@ -1,92 +1,91 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import * as gRPC from "@grpc/grpc-js";
+import * as GRPC from "@grpc/grpc-js";
 import { Effect } from "effect";
-import {
-  Empty,
-  GenericResponse
-} from "../Generated.js";
-import { DecodeValue, EncodeValue } from "../ProtoConverter.js";
-function CreateServiceImplementation(DispatcherService) {
+import Generated from "../Generated.js";
+import DecodeValue from "../ProtoConverter/DecodeValue.js";
+import EncodeValue from "../ProtoConverter/EncodeValue.js";
+const CreateServiceImplementation = /* @__PURE__ */ __name((Dispatcher) => {
   return {
     /**
      * Handles generic request/response calls from `Mountain`.
      */
-    processMountainRequest: /* @__PURE__ */ __name((call, callback) => {
-      const Request = call.request;
+    processMountainRequest: /* @__PURE__ */ __name((Call, Callback) => {
+      const Request = Call.request;
       const RequestID = Request.getRequestid();
-      const ProcessEffect = Effect.gen(function* (_) {
-        const DecodedParameter = yield* _(
-          DecodeValue(Request.getParams())
+      const ProcessEffect = Effect.gen(function* () {
+        const DecodedParameter = yield* DecodeValue(
+          Request.getParams()
         );
-        const Result = yield* _(
-          DispatcherService.DispatchRequest(
-            Request.getMethod(),
-            DecodedParameter
-          )
+        const Result = yield* Dispatcher.DispatchRequest(
+          Request.getMethod(),
+          DecodedParameter
         );
-        const EncodedResult = yield* _(EncodeValue(Result));
-        const Response = new GenericResponse();
+        const EncodedResult = yield* EncodeValue(Result);
+        const Response = new Generated.GenericResponse();
         Response.setRequestid(RequestID);
         Response.setResult(EncodedResult);
         return Response;
       });
-      Effect.runCallback(ProcessEffect, {
-        onSuccess: /* @__PURE__ */ __name((Response) => callback(null, Response), "onSuccess"),
-        onFailure: /* @__PURE__ */ __name((cause) => {
+      Effect.runPromiseExit(ProcessEffect).then((Exit) => {
+        if (Exit._tag === "Success") {
+          Callback(null, Exit.value);
+        } else {
           const RPCError = {
-            code: gRPC.status.INTERNAL,
-            details: cause._tag === "Fail" ? String(cause.error) : "Unknown Effect Failure",
-            metadata: new gRPC.Metadata(),
+            code: GRPC.status.INTERNAL,
+            details: Exit.cause._tag === "Fail" ? String(Exit.cause.error) : "Unknown Effect Failure",
+            metadata: new GRPC.Metadata(),
             name: "EffectFailure",
             message: "Effect failed to complete in gRPC handler."
           };
-          callback(RPCError, null);
-        }, "onFailure")
+          Callback(RPCError, null);
+        }
       });
     }, "processMountainRequest"),
     /**
      * Handles fire-and-forget notifications from `Mountain`.
      */
-    sendMountainNotification: /* @__PURE__ */ __name((call, callback) => {
-      const Notification = call.request;
-      const ProcessEffect = DecodeValue(Notification.getParams()).pipe(
+    sendMountainNotification: /* @__PURE__ */ __name((Call, Callback) => {
+      const Notification = Call.request;
+      const ProcessEffect = DecodeValue(
+        Notification.getParams()
+      ).pipe(
         Effect.flatMap(
-          (DecodedParameter) => DispatcherService.DispatchNotification(
+          (DecodedParameter) => Dispatcher.DispatchNotification(
             Notification.getMethod(),
             DecodedParameter
           )
         )
       );
       Effect.runFork(ProcessEffect);
-      callback(null, new Empty());
+      Callback(null, new Generated.Empty());
     }, "sendMountainNotification"),
     /**
      * Handles incoming raw binary data for the `RPCProtocol` adapter.
      */
-    sendRPCDataToCocoon: /* @__PURE__ */ __name((call, callback) => {
-      const Payload = call.request;
-      const ProcessEffect = DispatcherService.ProcessIncomingData(
+    sendRPCDataToCocoon: /* @__PURE__ */ __name((Call, Callback) => {
+      const Payload = Call.request;
+      const ProcessEffect = Dispatcher.ProcessIncomingData(
         Payload.getBuffer_asU8()
       );
       Effect.runFork(ProcessEffect);
-      callback(null, new Empty());
+      Callback(null, new Generated.Empty());
     }, "sendRPCDataToCocoon"),
     /**
      * Handles cancellation requests from `Mountain`.
      */
-    cancelCocoonOperation: /* @__PURE__ */ __name((call, callback) => {
-      const Request = call.request;
-      const ProcessEffect = DispatcherService.CancelOperation(
-        Request.getRequestidtocancel()
+    cancelCocoonOperation: /* @__PURE__ */ __name((Call, Callback) => {
+      const Request = Call.request;
+      const ProcessEffect = Dispatcher.CancelOperation(
+        Request.getRequestid()
       );
       Effect.runFork(ProcessEffect);
-      callback(null, new Empty());
+      Callback(null, new Generated.Empty());
     }, "cancelCocoonOperation")
   };
-}
-__name(CreateServiceImplementation, "CreateServiceImplementation");
+}, "CreateServiceImplementation");
+var CreateServiceImplementation_default = CreateServiceImplementation;
 export {
-  CreateServiceImplementation
+  CreateServiceImplementation_default as default
 };
 //# sourceMappingURL=CreateServiceImplementation.js.map

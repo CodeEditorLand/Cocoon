@@ -1,54 +1,44 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Ref, Stream } from "effect";
-import * as TypeConverter from "../../TypeConverter.js";
-import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { IPC } from "../IPC.js";
-import { RegisterProvider } from "./RegisterProvider.js";
-const Definition = Effect.gen(function* (_) {
-  const IPCService = yield* _(IPC.Tag);
-  const ActiveSession = yield* _(
-    Ref.make(void 0)
-  );
-  const ConfigProviders = yield* _(Ref.make(/* @__PURE__ */ new Map()));
-  const DescriptorFactories = yield* _(Ref.make(/* @__PURE__ */ new Map()));
-  const TrackerFactories = yield* _(Ref.make(/* @__PURE__ */ new Map()));
+import { Effect, Ref } from "effect";
+import * as TypeConverter from "../../TypeConverter/Main.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import IPCService from "../IPC/Service.js";
+import RegisterProvider from "./RegisterProvider.js";
+var Definition_default = Effect.gen(function* () {
+  const IPC = yield* IPCService;
+  const ActiveSession = yield* Ref.make(void 0);
+  const ConfigProviders = yield* Ref.make(/* @__PURE__ */ new Map());
+  const DescriptorFactories = yield* Ref.make(/* @__PURE__ */ new Map());
+  const TrackerFactories = yield* Ref.make(/* @__PURE__ */ new Map());
   const OnDidChangeActiveDebugSessionEvent = CreateEventStream();
   const OnDidStartDebugSessionEvent = CreateEventStream();
   const OnDidReceiveDebugSessionCustomEvent = CreateEventStream();
   const OnDidTerminateDebugSessionEvent = CreateEventStream();
   const OnDidChangeBreakpointsEvent = CreateEventStream();
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$provideDebugConfigurations",
-    ([handle, folderDTO, token]) => Effect.gen(function* (_2) {
+    ([_Handle, _FolderDTO, _Token]) => Effect.gen(function* () {
     }).pipe(Effect.runPromise)
   );
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$resolveDebugConfiguration",
-    ([handle, folderDTO, configDTO, token]) => Effect.gen(function* (_2) {
+    ([_Handle, _FolderDTO, _ConfigDTO, _Token]) => Effect.gen(function* () {
     }).pipe(Effect.runPromise)
   );
-  IPCService.RegisterInvokeHandler(
+  IPC.RegisterInvokeHandler(
     "$createDebugAdapterDescriptor",
-    ([handle, sessionDTO, executableDTO]) => Effect.gen(function* (_2) {
+    ([_Handle, _SessionDTO, _ExecutableDTO]) => Effect.gen(function* () {
     }).pipe(Effect.runPromise)
   );
-  const ServiceImplementation = {
-    // Events
-    onDidChangeActiveDebugSession: OnDidChangeActiveDebugSessionEvent.Stream.pipe(Stream.toEvent),
-    onDidStartDebugSession: OnDidStartDebugSessionEvent.Stream.pipe(
-      Stream.toEvent
-    ),
-    onDidReceiveDebugSessionCustomEvent: OnDidReceiveDebugSessionCustomEvent.Stream.pipe(Stream.toEvent),
-    onDidTerminateDebugSession: OnDidTerminateDebugSessionEvent.Stream.pipe(
-      Stream.toEvent
-    ),
-    onDidChangeBreakpoints: OnDidChangeBreakpointsEvent.Stream.pipe(
-      Stream.toEvent
-    ),
-    // Properties
+  const DebugImplementation = {
+    onDidChangeActiveDebugSession: OnDidChangeActiveDebugSessionEvent.event,
+    onDidStartDebugSession: OnDidStartDebugSessionEvent.event,
+    onDidReceiveDebugSessionCustomEvent: OnDidReceiveDebugSessionCustomEvent.event,
+    onDidTerminateDebugSession: OnDidTerminateDebugSessionEvent.event,
+    onDidChangeBreakpoints: OnDidChangeBreakpointsEvent.event,
     get activeDebugSession() {
-      return Ref.get(ActiveSession).pipe(Effect.runSync);
+      return Effect.runSync(Ref.get(ActiveSession));
     },
     get activeDebugConsole() {
       throw new Error("activeDebugConsole not implemented.");
@@ -56,43 +46,40 @@ const Definition = Effect.gen(function* (_) {
     get breakpoints() {
       return [];
     },
-    // Methods
     RegisterDebugConfigurationProvider: /* @__PURE__ */ __name((Type, Provider, Extension) => RegisterProvider(
       ConfigProviders,
-      IPCService,
+      IPC,
       "$registerDebugConfigurationProvider",
       { Type, Provider, Extension }
     ), "RegisterDebugConfigurationProvider"),
     RegisterDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((Type, Factory, Extension) => RegisterProvider(
       DescriptorFactories,
-      IPCService,
+      IPC,
       "$registerDebugAdapterDescriptorFactory",
       { Type, Factory, Extension }
     ), "RegisterDebugAdapterDescriptorFactory"),
     RegisterDebugAdapterTrackerFactory: /* @__PURE__ */ __name((Type, Factory, Extension) => RegisterProvider(
       TrackerFactories,
-      IPCService,
+      IPC,
       "$registerDebugAdapterTrackerFactory",
       { Type, Factory, Extension }
     ), "RegisterDebugAdapterTrackerFactory"),
-    StartDebugging: /* @__PURE__ */ __name((Folder, Configuration, Options) => IPCService.SendRequest("$startDebugging", [
-      Folder ? TypeConverter.URIConverter.FromAPI(Folder.uri) : void 0,
+    StartDebugging: /* @__PURE__ */ __name((Folder, Configuration, Options) => IPC.SendRequest("$startDebugging", [
+      Folder ? TypeConverter.URI.FromAPI(Folder.uri) : void 0,
       Configuration,
-      // Needs DTO conversion
       Options
-      // Needs DTO conversion
-    ]).pipe(Effect.map((result) => !!result)), "StartDebugging"),
-    StopDebugging: /* @__PURE__ */ __name((Session) => IPCService.SendNotification("$stopDebugging", [Session?.id]), "StopDebugging"),
-    AddBreakpoints: /* @__PURE__ */ __name((Breakpoints) => IPCService.SendNotification("$addBreakpoints", [
+    ]).pipe(Effect.map((Result) => !!Result)), "StartDebugging"),
+    StopDebugging: /* @__PURE__ */ __name((Session) => IPC.SendNotification("$stopDebugging", [Session?.id]), "StopDebugging"),
+    AddBreakpoints: /* @__PURE__ */ __name((_Breakpoints) => IPC.SendNotification("$addBreakpoints", [
       // Convert breakpoints to DTOs
     ]), "AddBreakpoints"),
-    RemoveBreakpoints: /* @__PURE__ */ __name((Breakpoints) => IPCService.SendNotification("$removeBreakpoints", [
+    RemoveBreakpoints: /* @__PURE__ */ __name((_Breakpoints) => IPC.SendNotification("$removeBreakpoints", [
       // Convert breakpoints to DTOs
     ]), "RemoveBreakpoints")
   };
-  return ServiceImplementation;
+  return DebugImplementation;
 });
 export {
-  Definition
+  Definition_default as default
 };
 //# sourceMappingURL=Definition.js.map
