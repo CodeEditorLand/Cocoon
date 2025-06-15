@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Core/APIFactory.ts"],
-  "sourcesContent": ["/**\n * @module APIFactory (Core)\n * @description The main module for the `APIFactory` service, which is\n * responsible for creating sandboxed `vscode` API objects for extensions.\n */\n\nimport Live from \"./APIFactory/Live.js\";\nimport Service from \"./APIFactory/Service.js\";\n\nexport { Service, Live };\n"],
-  "mappings": "AAMA,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

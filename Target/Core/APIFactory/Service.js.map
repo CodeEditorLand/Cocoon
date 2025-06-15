@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Core/APIFactory/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (APIFactory)\n * @description Defines the interface and Context.Tag for the APIFactory service.\n * This service is responsible for creating sandboxed `vscode` API objects for\n * each individual extension.\n */\n\nimport { Context } from \"effect\";\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\nimport type * as VSCode from \"vscode\";\n\n/**\n * The `Context.Tag` for the `APIFactory` service.\n */\nexport default class extends Context.Tag(\"Core/APIFactory\")<\n\tany,\n\t{\n\t\t/**\n\t\t * Creates a new, sandboxed `vscode` API object for a specific extension.\n\t\t * This object is a frozen, high-fidelity replica of the `vscode` module.\n\t\t *\n\t\t * @param ExtensionDescription The full description of the extension requesting the API.\n\t\t * @returns A frozen `vscode` API object tailored for the extension.\n\t\t */\n\t\treadonly CreateAPI: (\n\t\t\tExtensionDescription: IExtensionDescription,\n\t\t) => typeof VSCode;\n\t}\n>() {}\n"],
-  "mappings": ";;AAOA,SAAS,eAAe;AAOxB,MAAO,wBAAsB,QAAQ,IAAI,iBAAiB,EAcxD,EAAE;AAAA,EA5BJ,OA4BI;AAAA;AAAA;AAAC;",
-  "names": []
-}

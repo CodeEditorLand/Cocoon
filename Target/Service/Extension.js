@@ -1,13 +1,1 @@
-import { Layer } from "effect";
-import ExtensionHostLive from "../Core/ExtensionHost/Live.js";
-import Definition from "./Extension/Definition.js";
-import Service from "./Extension/Service.js";
-import { default as default2 } from "./Extension/Service.js";
-const Live = Layer.effect(Service, Definition).pipe(
-  Layer.provide(ExtensionHostLive)
-);
-export {
-  Live,
-  default2 as Service
-};
-//# sourceMappingURL=Extension.js.map
+import{Layer as e}from"effect";import o from"../Core/ExtensionHost/Live.js";import r from"./Extension/Definition.js";import t from"./Extension/Service.js";import{default as x}from"./Extension/Service.js";const n=e.effect(t,r).pipe(e.provide(o));export{n as Live,x as Service};

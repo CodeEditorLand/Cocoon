@@ -1,7 +1,1 @@
-import Definition from "./Command/Definition.js";
-import * as Type from "./Command/Type.js";
-export {
-  Definition,
-  Type
-};
-//# sourceMappingURL=Command.js.map
+import r from"./Command/Definition.js";import*as i from"./Command/Type.js";export{r as Definition,i as Type};

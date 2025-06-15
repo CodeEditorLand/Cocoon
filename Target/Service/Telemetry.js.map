@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/Telemetry.ts"],
-  "sourcesContent": ["/**\n * @module Telemetry\n * @description This module provides the `vscode.env.telemetry` API implementation,\n * handling event collection and forwarding to the host.\n */\n\nimport Live from \"./Telemetry/Live.js\";\nimport Service from \"./Telemetry/Service.js\";\n\nexport { Service, Live };\n"],
-  "mappings": "AAMA,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

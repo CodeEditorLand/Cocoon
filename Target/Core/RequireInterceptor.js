@@ -1,7 +1,1 @@
-import Live from "./RequireInterceptor/Live.js";
-import Service from "./RequireInterceptor/Service.js";
-export {
-  Live,
-  Service
-};
-//# sourceMappingURL=RequireInterceptor.js.map
+import o from"./RequireInterceptor/Live.js";import i from"./RequireInterceptor/Service.js";export{o as Live,i as Service};

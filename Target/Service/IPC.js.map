@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/IPC.ts"],
-  "sourcesContent": ["/**\n * @module IPC\n * @description This module provides the primary Inter-Process Communication (IPC)\n * service for Cocoon. It provides a managed gRPC connection to and from the\n * Mountain host, exposing high-level effects for communication.\n */\n\nimport type IPCConfiguration from \"./IPC/Configuration.js\";\nimport * as Error from \"./IPC/Error.js\";\nimport Live from \"./IPC/Live.js\";\nimport Service from \"./IPC/Service.js\";\n\nexport { Service, Live, type IPCConfiguration, Error };\n"],
-  "mappings": "AAQA,YAAY,WAAW;AACvB,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

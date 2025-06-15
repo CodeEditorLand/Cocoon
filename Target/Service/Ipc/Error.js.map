@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/IPC/Error.ts"],
-  "sourcesContent": ["/**\n * @module Error (IPC)\n * @description Re-exports all custom error types for the IPC module.\n */\n\nexport { default as gRPCConnectionError } from \"./Error/gRPCConnectionError.js\";\nexport { default as IPCError } from \"./Error/IPCError.js\";\nexport * from \"./ProtoConverter/Error.js\";\n"],
-  "mappings": "AAKA,SAAoB,WAAXA,gBAAsC;AAC/C,SAAoB,WAAXA,gBAA2B;AACpC,cAAc;",
-  "names": ["default"]
-}

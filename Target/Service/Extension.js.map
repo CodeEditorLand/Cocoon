@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/Extension.ts"],
-  "sourcesContent": ["/**\n * @module Extension\n * @description This module provides the `vscode.extensions` API implementation,\n * allowing extensions to introspect and activate other extensions.\n */\n\nimport { Layer } from \"effect\";\nimport type { Extension } from \"vscode\";\n\nimport ExtensionHostLive from \"../Core/ExtensionHost/Live.js\";\nimport Definition from \"./Extension/Definition.js\";\nimport Service from \"./Extension/Service.js\";\n\nexport { default as Service } from \"./Extension/Service.js\";\nexport type { Extension };\n\n/**\n * The live implementation Layer for the Extension service.\n * It depends on the core ExtensionHost service to get information about\n * and activate other extensions.\n */\nexport const Live = Layer.effect(Service, Definition).pipe(\n\tLayer.provide(ExtensionHostLive),\n);\n"],
-  "mappings": "AAMA,SAAS,aAAa;AAGtB,OAAO,uBAAuB;AAC9B,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAEpB,SAAoB,WAAXA,gBAA0B;AAQ5B,MAAM,OAAO,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,EACrD,MAAM,QAAQ,iBAAiB;AAChC;",
-  "names": ["default"]
-}

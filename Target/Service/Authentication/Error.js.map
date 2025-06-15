@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Authentication/Error.ts"],
-  "sourcesContent": ["/**\n * @module Error (Authentication)\n * @description Exports all custom, tagged errors for the Authentication service.\n */\n\nimport { Data } from \"effect\";\n\nimport AuthenticationProviderExistsError from \"./Error/AuthenticationProviderExistsError.js\";\n\n/**\n * An error indicating a failure during the registration of an authentication provider.\n * This is a more generic error type.\n */\nexport class AuthenticationProviderRegistrationError extends Data.TaggedError(\n\t\"AuthenticationProviderRegistrationError\",\n)<{\n\treadonly cause: unknown;\n}> {}\n\nexport { AuthenticationProviderExistsError };\n"],
-  "mappings": ";;AAKA,SAAS,YAAY;AAErB,OAAO,uCAAuC;AAMvC,MAAM,gDAAgD,KAAK;AAAA,EACjE;AACD,EAEG;AAAA,EAjBH,OAiBG;AAAA;AAAA;AAAC;",
-  "names": []
-}

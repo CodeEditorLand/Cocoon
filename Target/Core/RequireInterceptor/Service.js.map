@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Core/RequireInterceptor/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (RequireInterceptor)\n * @description Defines the interface and Context.Tag for the RequireInterceptor service.\n * This service is responsible for patching Node.js's `require` to provide sandboxed\n * APIs to extensions.\n */\n\nimport { Context, type Effect } from \"effect\";\n\nexport default class extends Context.Tag(\"Core/RequireInterceptor\")<\n\tany,\n\t{\n\t\t/**\n\t\t * An Effect that, when executed, patches the global `Module.prototype.require`\n\t\t * function to enable interception. This should be run once at startup and is\n\t\t * idempotent.\n\t\t */\n\t\treadonly Install: () => Effect.Effect<void, never>;\n\t}\n>() {}\n"],
-  "mappings": ";;AAOA,SAAS,eAA4B;AAErC,MAAO,wBAAsB,QAAQ,IAAI,yBAAyB,EAUhE,EAAE;AAAA,EAnBJ,OAmBI;AAAA;AAAA;AAAC;",
-  "names": []
-}

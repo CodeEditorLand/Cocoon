@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Core/ExtensionPath.ts"],
-  "sourcesContent": ["/**\n * @module ExtensionPath (Core)\n * @description The main module for the ExtensionPath service, which maps file URIs\n * to their owner extension.\n */\n\nimport Live from \"./ExtensionPath/Live.js\";\nimport Service from \"./ExtensionPath/Service.js\";\n\nexport { Service, Live };\n"],
-  "mappings": "AAMA,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

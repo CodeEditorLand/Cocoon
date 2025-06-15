@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Core/RequireInterceptor/Factory.ts"],
-  "sourcesContent": ["/**\n * @module Factory (RequireInterceptor)\n * @description Aggregates and exports all module factories used by the\n * `RequireInterceptor` service. This serves as a single point of import\n * for the different factory implementations.\n */\n\nexport type { default as INodeModuleFactory } from \"./Factory/Interface.js\";\nexport { default as VSCodeNodeModuleFactory } from \"./Factory/VSCode.js\";\n"],
-  "mappings": "AAQA,SAAoB,WAAXA,gBAA0C;",
-  "names": ["default"]
-}

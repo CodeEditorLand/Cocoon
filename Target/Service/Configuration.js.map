@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/Configuration.ts"],
-  "sourcesContent": ["/**\n * @module Configuration\n * @description This module provides the `vscode.workspace.getConfiguration` API\n * implementation, managing access to configuration settings.\n */\n\nimport { ConfigurationUpdateError } from \"./Configuration/Error.js\";\nimport GetConfiguration from \"./Configuration/GetConfiguration.js\";\nimport Live from \"./Configuration/Live.js\";\nimport Service from \"./Configuration/Service.js\";\nimport type WorkSpaceConfiguration from \"./Configuration/Type/WorkSpaceConfiguration.js\";\n\nexport {\n\tService,\n\tLive,\n\tGetConfiguration,\n\ttype WorkSpaceConfiguration,\n\tConfigurationUpdateError,\n};\n"],
-  "mappings": "AAMA,SAAS,gCAAgC;AACzC,OAAO,sBAAsB;AAC7B,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

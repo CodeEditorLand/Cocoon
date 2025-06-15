@@ -1,7 +1,1 @@
-import Live from "./WebViewPanel/Live.js";
-import Service from "./WebViewPanel/Service.js";
-export {
-  Live,
-  Service
-};
-//# sourceMappingURL=WebViewPanel.js.map
+import o from"./WebViewPanel/Live.js";import i from"./WebViewPanel/Service.js";export{o as Live,i as Service};

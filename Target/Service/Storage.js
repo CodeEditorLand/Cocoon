@@ -1,7 +1,1 @@
-import Live from "./Storage/Live.js";
-import Service from "./Storage/Service.js";
-export {
-  Live,
-  Service
-};
-//# sourceMappingURL=Storage.js.map
+import o from"./Storage/Live.js";import i from"./Storage/Service.js";export{o as Live,i as Service};

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Configuration/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (Configuration)\n * @description Defines the interface and Context.Tag for the Configuration service.\n * This service manages access to all workspace and user settings.\n */\n\nimport { Context, type Effect } from \"effect\";\nimport type {\n\tConfigurationChangeEvent,\n\tConfigurationScope,\n\tEvent,\n} from \"vscode\";\n\nimport type WorkSpaceConfiguration from \"./Type/WorkSpaceConfiguration.js\";\n\nexport default class extends Context.Tag(\"Service/Configuration\")<\n\tany,\n\t{\n\t\t/**\n\t\t * Retrieves a `WorkSpaceConfiguration` object for a given section and scope.\n\t\t * @param Section The configuration section to retrieve (e.g., 'files.autoSave').\n\t\t * @param Scope A resource URI or other scope for which to get the configuration.\n\t\t * @returns An `Effect` that resolves with the configuration object.\n\t\t */\n\t\treadonly GetConfiguration: (\n\t\t\tSection?: string,\n\t\t\tScope?: ConfigurationScope,\n\t\t) => Effect.Effect<WorkSpaceConfiguration, Error>;\n\n\t\t/**\n\t\t * An event that is fired when the configuration has changed.\n\t\t */\n\t\treadonly onDidChangeConfiguration: Event<ConfigurationChangeEvent>;\n\t}\n>() {}\n"],
-  "mappings": ";;AAMA,SAAS,eAA4B;AASrC,MAAO,wBAAsB,QAAQ,IAAI,uBAAuB,EAmB9D,EAAE;AAAA,EAlCJ,OAkCI;AAAA;AAAA;AAAC;",
-  "names": []
-}

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/LanguageFeature.ts"],
-  "sourcesContent": ["/**\n * @module LanguageFeature\n * @description This module provides the `vscode.languages` API implementation,\n * managing the registration and invocation of all language feature providers.\n */\n\nimport Live from \"./LanguageFeature/Live.js\";\nimport Service from \"./LanguageFeature/Service.js\";\n\nexport { Service, Live };\n"],
-  "mappings": "AAMA,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

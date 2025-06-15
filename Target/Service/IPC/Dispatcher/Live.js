@@ -1,13 +1,1 @@
-import { Layer } from "effect";
-import { CancellationLive } from "../../Cancellation.js";
-import ProtocolAdapterLive from "../ProtocolAdapter/Live.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
-const Live = Layer.effect(Service, Definition).pipe(
-  Layer.provide(Layer.merge(ProtocolAdapterLive, CancellationLive))
-);
-var Live_default = Live;
-export {
-  Live_default as default
-};
-//# sourceMappingURL=Live.js.map
+import{Layer as o}from"effect";import{CancellationLive as e}from"../../Cancellation.js";import r from"../ProtocolAdapter/Live.js";import i from"./Definition.js";import t from"./Service.js";const m=o.effect(t,i).pipe(o.provide(o.merge(r,e)));var v=m;export{v as default};

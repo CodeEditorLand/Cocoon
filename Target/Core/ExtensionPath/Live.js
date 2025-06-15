@@ -1,16 +1,1 @@
-import { Effect, Layer } from "effect";
-import InitDataService from "../../Service/InitData/Service.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
-const Live = Layer.effect(
-  Service,
-  Effect.map(
-    InitDataService,
-    (InitData) => new Definition(InitData.extensions)
-  )
-);
-var Live_default = Live;
-export {
-  Live_default as default
-};
-//# sourceMappingURL=Live.js.map
+import{Effect as t,Layer as i}from"effect";import o from"../../Service/InitData/Service.js";import r from"./Definition.js";import f from"./Service.js";const m=i.effect(f,t.map(o,e=>new r(e.extensions)));var s=m;export{s as default};

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Core/NodeModuleShim/Error/ModuleBlockedError.ts"],
-  "sourcesContent": ["/**\n * @module ModuleBlockedError (NodeModuleShim/Error)\n * @description Defines a custom, tagged error for when an extension attempts\n * to require a blocked Node.js module.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that an extension attempted to require a built-in Node.js\n * module that is explicitly blocked by the host for security or stability reasons.\n */\nexport default class extends Data.TaggedError(\"ModuleBlockedError\")<{\n\treadonly ModuleName: string;\n}> {\n\tconstructor(Properties: { readonly ModuleName: string }) {\n\t\tsuper(Properties);\n\t\tthis.message = `[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`;\n\t}\n\tpublic override readonly message: string;\n}\n"],
-  "mappings": ";;AAMA,SAAS,YAAY;AAMrB,MAAO,mCAAsB,KAAK,YAAY,oBAAoB,EAE/D;AAAA,EAdH,OAcG;AAAA;AAAA;AAAA,EACF,YAAY,YAA6C;AACxD,UAAM,UAAU;AAChB,SAAK,UAAU,qBAAqB,KAAK,UAAU;AAAA,EACpD;AAAA,EACyB;AAC1B;",
-  "names": []
-}

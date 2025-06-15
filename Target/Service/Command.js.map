@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/Command.ts"],
-  "sourcesContent": ["/**\n * @module Command\n * @description This module provides the `vscode.commands` API implementation,\n * managing command registration and execution.\n */\n\nimport { Layer } from \"effect\";\n\nimport Definition from \"./Command/Definition.js\";\nimport Service from \"./Command/Service.js\";\nimport type { CommandHandler, CommandHandlerEntry } from \"./Command/Type.js\";\nimport type IPCConfiguration from \"./IPC/Configuration.js\";\nimport IPCLive from \"./IPC/Live.js\";\nimport TelemetryLive from \"./Telemetry/Live.js\";\nimport WorkSpaceLive from \"./WorkSpace/Live.js\";\n\nexport { type CommandHandler, type CommandHandlerEntry };\nexport { default as Service } from \"./Command/Service.js\";\n\n/**\n * The live implementation Layer for the Command service.\n * It depends on the IPC, Telemetry, and WorkSpace services.\n * @param Config The IPC configuration.\n */\nexport const Live = (Config: IPCConfiguration) =>\n\tLayer.effect(Service, Definition).pipe(\n\t\tLayer.provide(\n\t\t\tLayer.mergeAll(\n\t\t\t\tIPCLive(Config),\n\t\t\t\tTelemetryLive(Config),\n\t\t\t\tWorkSpaceLive(Config),\n\t\t\t),\n\t\t),\n\t);\n"],
-  "mappings": ";;AAMA,SAAS,aAAa;AAEtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAGpB,OAAO,aAAa;AACpB,OAAO,mBAAmB;AAC1B,OAAO,mBAAmB;AAG1B,SAAoB,WAAXA,gBAA0B;AAO5B,MAAM,OAAO,wBAAC,WACpB,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,EACjC,MAAM;AAAA,IACL,MAAM;AAAA,MACL,QAAQ,MAAM;AAAA,MACd,cAAc,MAAM;AAAA,MACpB,cAAc,MAAM;AAAA,IACrB;AAAA,EACD;AACD,GATmB;",
-  "names": ["default"]
-}

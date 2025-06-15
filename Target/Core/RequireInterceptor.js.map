@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Core/RequireInterceptor.ts"],
-  "sourcesContent": ["/**\n * @module RequireInterceptor (Core)\n * @description The main module for the RequireInterceptor service, which patches\n * Node.js's `require` to provide sandboxed APIs to extensions.\n */\n\nimport Live from \"./RequireInterceptor/Live.js\";\nimport Service from \"./RequireInterceptor/Service.js\";\n\nexport { Service, Live };\n"],
-  "mappings": "AAMA,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

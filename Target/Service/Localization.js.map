@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/Localization.ts"],
-  "sourcesContent": ["/**\n * @module Localization\n * @description This module provides the Localization service, which manages the\n * loading and caching of localized string bundles (NLS) for extensions.\n */\n\nimport { Layer } from \"effect\";\n\nimport type IPCConfiguration from \"./IPC/Configuration.js\";\nimport IPCLive from \"./IPC/Live.js\";\nimport Definition from \"./Localization/Definition.js\";\nimport Service from \"./Localization/Service.js\";\n\nexport { default as Service } from \"./Localization/Service.js\";\n\n/**\n * The live implementation Layer for the Localization service.\n * It depends on the IPC and InitData services.\n */\nexport const Live = (Config: IPCConfiguration) =>\n\tLayer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config)));\n"],
-  "mappings": ";;AAMA,SAAS,aAAa;AAGtB,OAAO,aAAa;AACpB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAEpB,SAAoB,WAAXA,gBAA0B;AAM5B,MAAM,OAAO,wBAAC,WACpB,MAAM,OAAO,SAAS,UAAU,EAAE,KAAK,MAAM,QAAQ,QAAQ,MAAM,CAAC,CAAC,GADlD;",
-  "names": ["default"]
-}

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/SecretStorage/Error.ts"],
-  "sourcesContent": ["/**\n * @module Error (SecretStorage)\n * @description Exports all custom, tagged errors for the SecretStorage service.\n */\n\nexport { default as EmptyKeyError } from \"./Error/EmptyKeyError.js\";\nexport { default as InvalidValueError } from \"./Error/InvalidValueError.js\";\n"],
-  "mappings": "AAKA,SAAoB,WAAXA,gBAAgC;AACzC,SAAoB,WAAXA,gBAAoC;",
-  "names": ["default"]
-}

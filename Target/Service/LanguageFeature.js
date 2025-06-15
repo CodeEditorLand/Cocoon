@@ -1,7 +1,1 @@
-import Live from "./LanguageFeature/Live.js";
-import Service from "./LanguageFeature/Service.js";
-export {
-  Live,
-  Service
-};
-//# sourceMappingURL=LanguageFeature.js.map
+import o from"./LanguageFeature/Live.js";import i from"./LanguageFeature/Service.js";export{o as Live,i as Service};

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Debug/Error.ts"],
-  "sourcesContent": ["/**\n * @module Error (Debug)\n * @description Exports custom, tagged errors for the Debug service.\n */\n\nexport { default as DebugProviderRegistrationError } from \"./Error/DebugProviderRegistrationError.js\";\nexport { default as StartDebuggingError } from \"./Error/StartDebuggingError.js\";\n"],
-  "mappings": "AAKA,SAAoB,WAAXA,gBAAiD;AAC1D,SAAoB,WAAXA,gBAAsC;",
-  "names": ["default"]
-}

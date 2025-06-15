@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/ProposedAPI/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (ProposedAPI)\n * @description Defines the interface and Context.Tag for the ProposedAPI service.\n * This service manages and checks the enablement status of proposed\n * (experimental) VS Code APIs for extensions.\n */\n\nimport { Context } from \"effect\";\nimport type { ExtensionIdentifier } from \"vs/platform/extensions/common/extensions.js\";\n\n/**\n * The Context.Tag for the ProposedAPI service.\n */\nexport default class extends Context.Tag(\"Service/ProposedAPI\")<\n\tany,\n\t{\n\t\t/**\n\t\t * Checks if a specific proposed API is enabled for a given extension.\n\t\t * @param ExtensionID The identifier of the extension making the request.\n\t\t * @param ProposalName The name of the proposed API feature (e.g., 'languageModels').\n\t\t * @returns `true` if the API is enabled, `false` otherwise.\n\t\t */\n\t\treadonly IsEnabled: (\n\t\t\tExtensionID: ExtensionIdentifier,\n\t\t\tProposalName: string,\n\t\t) => boolean;\n\t}\n>() {}\n"],
-  "mappings": ";;AAOA,SAAS,eAAe;AAMxB,MAAO,wBAAsB,QAAQ,IAAI,qBAAqB,EAc5D,EAAE;AAAA,EA3BJ,OA2BI;AAAA;AAAA;AAAC;",
-  "names": []
-}

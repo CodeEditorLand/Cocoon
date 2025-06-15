@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Authentication/Error/AuthenticationProviderExistsError.ts"],
-  "sourcesContent": ["/**\n * @module AuthenticationProviderExistsError (Authentication/Error)\n * @description Defines custom, tagged errors for the Authentication service.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that an extension attempted to register an authentication\n * provider with an ID that is already in use.\n */\nexport default class extends Data.TaggedError(\n\t\"AuthenticationProviderExistsError\",\n)<{\n\treadonly ProviderID: string;\n}> {\n\tconstructor(Properties: { readonly ProviderID: string }) {\n\t\tsuper(Properties);\n\t\tthis.message = `Authentication provider with ID '${this.ProviderID}' is already registered.`;\n\t}\n\tpublic override readonly message: string;\n}\n"],
-  "mappings": ";;AAKA,SAAS,YAAY;AAMrB,MAAO,kDAAsB,KAAK;AAAA,EACjC;AACD,EAEG;AAAA,EAfH,OAeG;AAAA;AAAA;AAAA,EACF,YAAY,YAA6C;AACxD,UAAM,UAAU;AAChB,SAAK,UAAU,oCAAoC,KAAK,UAAU;AAAA,EACnE;AAAA,EACyB;AAC1B;",
-  "names": []
-}

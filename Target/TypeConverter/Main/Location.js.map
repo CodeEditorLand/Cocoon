@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/TypeConverter/Main/Location.ts"],
-  "sourcesContent": ["/**\n * @module Location (Main/TypeConverter)\n * @description Converts between `vscode.Location` and its DTO representation.\n */\n\nimport type { UriComponents } from \"vs/base/common/uri.js\";\nimport type { IRange } from \"vs/editor/common/core/range.js\";\nimport type { Location } from \"vscode\";\n\nimport { Range, Location as VscLocation } from \"../../Type/ExtHostTypes.js\";\nimport RangeConverter from \"./Range.js\";\nimport URIConverter from \"./URI.js\";\n\ninterface ILocationDTO {\n\turi: UriComponents;\n\trange: IRange;\n}\n\nconst FromAPI = (LocationInstance: Location): ILocationDTO => {\n\treturn {\n\t\turi: URIConverter.FromAPI(LocationInstance.uri),\n\t\trange: RangeConverter.FromAPI(LocationInstance.range as Range),\n\t};\n};\n\nconst ToAPI = (LocationDTO: ILocationDTO): Location => {\n\treturn new VscLocation(\n\t\tURIConverter.ToAPI(LocationDTO.uri),\n\t\tRangeConverter.ToAPI(LocationDTO.range),\n\t);\n};\n\nexport default { FromAPI, ToAPI };\n"],
-  "mappings": ";;AASA,SAAgB,YAAY,mBAAmB;AAC/C,OAAO,oBAAoB;AAC3B,OAAO,kBAAkB;AAOzB,MAAM,UAAU,wBAAC,qBAA6C;AAC7D,SAAO;AAAA,IACN,KAAK,aAAa,QAAQ,iBAAiB,GAAG;AAAA,IAC9C,OAAO,eAAe,QAAQ,iBAAiB,KAAc;AAAA,EAC9D;AACD,GALgB;AAOhB,MAAM,QAAQ,wBAAC,gBAAwC;AACtD,SAAO,IAAI;AAAA,IACV,aAAa,MAAM,YAAY,GAAG;AAAA,IAClC,eAAe,MAAM,YAAY,KAAK;AAAA,EACvC;AACD,GALc;AAOd,IAAO,mBAAQ,EAAE,SAAS,MAAM;",
-  "names": []
-}

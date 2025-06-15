@@ -1,4 +1,4 @@
-const DynamicModuleTemplate = `
+const e=`
   // This global function is defined in the main Cocoon process. The ESM loader
   // hook tells this dynamic module which key to use to retrieve its sandboxed API.
   const VSCodeAPI = globalThis[__BUILD_TIME_GLOBAL_API_FUNCTION_NAME__]('__RUNTIME_API_KEY__');
@@ -18,8 +18,4 @@ const DynamicModuleTemplate = `
 
   // The default export allows for \`import vscode from 'vscode'\`.
   export default VSCodeAPI;
-`;
-export {
-  DynamicModuleTemplate
-};
-//# sourceMappingURL=DynamicModuleTemplate.js.map
+`;export{e as DynamicModuleTemplate};

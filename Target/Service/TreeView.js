@@ -1,14 +1,1 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Live as CommandLive } from "./Command.js";
-import { Live as IPCLive } from "./IPC.js";
-import Service from "./TreeView/Service.js";
-import { Layer } from "effect";
-const Live = /* @__PURE__ */ __name((Config) => Layer.effect(Service, Live).pipe(
-  Layer.provide(Layer.merge(IPCLive(Config), CommandLive(Config)))
-), "Live");
-export {
-  Live,
-  Service
-};
-//# sourceMappingURL=TreeView.js.map
+import{Live as i}from"./Command.js";import{Live as e}from"./IPC.js";import m from"./TreeView/Service.js";import{Layer as o}from"effect";const t=r=>o.effect(m,t).pipe(o.provide(o.merge(e(r),i(r))));export{t as Live,m as Service};

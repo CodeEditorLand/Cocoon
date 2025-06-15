@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/Environment.ts"],
-  "sourcesContent": ["/**\n * @module Environment\n * @description This module provides the `vscode.env` API implementation,\n * exposing information about the application and host environment.\n */\n\nimport { Layer } from \"effect\";\n\nimport ClipboardLive from \"./Clipboard/Live.js\";\nimport Definition from \"./Environment/Definition.js\";\nimport Service from \"./Environment/Service.js\";\nimport type IPCConfiguration from \"./IPC/Configuration.js\";\nimport IPCLive from \"./IPC/Live.js\";\n\nexport { default as Service } from \"./Environment/Service.js\";\n\n/**\n * The live implementation Layer for the Environment service.\n * It depends on IPC and Clipboard services.\n * This is a factory that takes IPC configuration.\n * @param Config The IPC configuration.\n */\nexport const Live = (Config: IPCConfiguration) =>\n\tLayer.effect(Service, Definition).pipe(\n\t\tLayer.provide(Layer.merge(IPCLive(Config), ClipboardLive(Config))),\n\t);\n"],
-  "mappings": ";;AAMA,SAAS,aAAa;AAEtB,OAAO,mBAAmB;AAC1B,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAEpB,OAAO,aAAa;AAEpB,SAAoB,WAAXA,gBAA0B;AAQ5B,MAAM,OAAO,wBAAC,WACpB,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,EACjC,MAAM,QAAQ,MAAM,MAAM,QAAQ,MAAM,GAAG,cAAc,MAAM,CAAC,CAAC;AAClE,GAHmB;",
-  "names": ["default"]
-}

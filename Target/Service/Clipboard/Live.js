@@ -1,12 +1,1 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Layer } from "effect";
-import { Live as IPCLive } from "../IPC.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
-const Live = /* @__PURE__ */ __name((Config) => Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config))), "Live");
-var Live_default = Live;
-export {
-  Live_default as default
-};
-//# sourceMappingURL=Live.js.map
+import{Layer as i}from"effect";import{Live as r}from"../IPC.js";import e from"./Definition.js";import t from"./Service.js";const f=o=>i.effect(t,e).pipe(i.provide(r(o)));var a=f;export{a as default};

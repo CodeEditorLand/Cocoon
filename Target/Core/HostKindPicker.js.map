@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Core/HostKindPicker.ts"],
-  "sourcesContent": ["/**\n * @module HostKindPicker (Core)\n * @description This module provides the HostKindPicker service, which determines if\n * an extension is compatible with the Cocoon (Node.js) extension host. It provides\n * the `Live` implementation Layer for the service.\n */\n\nimport Live from \"./HostKindPicker/Live.js\";\nimport Service from \"./HostKindPicker/Service.js\";\n\nexport { Service, Live };\n"],
-  "mappings": "AAOA,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

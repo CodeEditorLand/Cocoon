@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Core/ExtensionHost.ts"],
-  "sourcesContent": ["/**\n * @module ExtensionHost (Core)\n * @description The main module for the Extension Host service, which manages the\n * entire lifecycle of extensions. It provides the `Live` implementation Layer\n * for the service.\n */\n\nimport Live from \"./ExtensionHost/Live.js\";\nimport Service from \"./ExtensionHost/Service.js\";\n\nexport { Service, Live };\n"],
-  "mappings": "AAOA,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

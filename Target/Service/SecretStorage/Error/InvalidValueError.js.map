@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/SecretStorage/Error/InvalidValueError.ts"],
-  "sourcesContent": ["/**\n * @module InvalidValueError (SecretStorage/Error)\n * @description Defines a custom error for when a non-string value is provided to secret storage.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that a value other than a string was provided to be stored,\n * which is not allowed by the API.\n */\nexport default class extends Data.TaggedError(\"InvalidValueError\")<{}> {\n\tconstructor(Properties?: {}) {\n\t\tsuper(Properties ?? {});\n\t\tthis.message = \"Secret value must be a string.\";\n\t}\n\tpublic override readonly message: string;\n}\n"],
-  "mappings": ";;AAKA,SAAS,YAAY;AAMrB,MAAO,kCAAsB,KAAK,YAAY,mBAAmB,EAAM;AAAA,EAXvE,OAWuE;AAAA;AAAA;AAAA,EACtE,YAAY,YAAiB;AAC5B,UAAM,cAAc,CAAC,CAAC;AACtB,SAAK,UAAU;AAAA,EAChB;AAAA,EACyB;AAC1B;",
-  "names": []
-}

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Environment/Live.ts"],
-  "sourcesContent": ["/**\n * @module Live (Environment)\n * @description The live implementation Layer for the Environment service.\n */\n\nimport { Layer } from \"effect\";\n\nimport ClipboardLive from \"../Clipboard/Live.js\";\nimport type IPCConfiguration from \"../IPC/Configuration.js\";\nimport IPCLive from \"../IPC/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the Environment service.\n * It depends on IPC and Clipboard services.\n * This is a factory that takes IPC configuration.\n * @param Config The IPC configuration.\n */\nconst Live = (Config: IPCConfiguration) => {\n\treturn Layer.effect(Service, Definition).pipe(\n\t\tLayer.provide(Layer.merge(IPCLive(Config), ClipboardLive(Config))),\n\t);\n};\n\nexport default Live;\n"],
-  "mappings": ";;AAKA,SAAS,aAAa;AAEtB,OAAO,mBAAmB;AAE1B,OAAO,aAAa;AACpB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAQpB,MAAM,OAAO,wBAAC,WAA6B;AAC1C,SAAO,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,IACxC,MAAM,QAAQ,MAAM,MAAM,QAAQ,MAAM,GAAG,cAAc,MAAM,CAAC,CAAC;AAAA,EAClE;AACD,GAJa;AAMb,IAAO,eAAQ;",
-  "names": []
-}

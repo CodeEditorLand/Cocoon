@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Clipboard/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (Clipboard)\n * @description Defines the interface and Context.Tag for the Clipboard service.\n * This service implements the `vscode.env.clipboard` API.\n */\n\nimport { Context } from \"effect\";\nimport type { Clipboard } from \"vscode\";\n\n/**\n * The Context.Tag for the Clipboard service.\n */\nexport default class extends Context.Tag(\"Service/Clipboard\")<\n\tany,\n\tClipboard\n>() {}\n"],
-  "mappings": ";;AAMA,SAAS,eAAe;AAMxB,MAAO,wBAAsB,QAAQ,IAAI,mBAAmB,EAG1D,EAAE;AAAA,EAfJ,OAeI;AAAA;AAAA;AAAC;",
-  "names": []
-}

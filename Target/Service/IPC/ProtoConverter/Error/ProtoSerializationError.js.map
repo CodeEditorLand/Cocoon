@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../../Source/Service/IPC/ProtoConverter/Error/ProtoSerializationError.ts"],
-  "sourcesContent": ["/**\n * @module ProtoSerializationError (ProtoConverter/Error)\n * @description Defines custom errors for Protobuf serialization/deserialization.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A tagged error representing a failure during the conversion between a\n * JavaScript value and a Google Protobuf `Value` type.\n */\nexport default class extends Data.TaggedError(\"ProtoSerializationError\")<{\n\treadonly cause: unknown;\n\treadonly Direction: \"Encoding\" | \"Decoding\";\n}> {\n\tconstructor(Properties: {\n\t\treadonly cause: unknown;\n\t\treadonly Direction: \"Encoding\" | \"Decoding\";\n\t}) {\n\t\tsuper(Properties);\n\t\tthis.message = `Protobuf ${this.Direction} failed: ${this.cause}`;\n\t}\n\tpublic override readonly message: string;\n}\n"],
-  "mappings": ";;AAKA,SAAS,YAAY;AAMrB,MAAO,wCAAsB,KAAK,YAAY,yBAAyB,EAGpE;AAAA,EAdH,OAcG;AAAA;AAAA;AAAA,EACF,YAAY,YAGT;AACF,UAAM,UAAU;AAChB,SAAK,UAAU,YAAY,KAAK,SAAS,YAAY,KAAK,KAAK;AAAA,EAChE;AAAA,EACyB;AAC1B;",
-  "names": []
-}

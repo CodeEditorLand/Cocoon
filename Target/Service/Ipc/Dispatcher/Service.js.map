@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/IPC/Dispatcher/Service.ts"],
-  "sourcesContent": ["/**\n * @module Service (IPC/Dispatcher)\n * @description Defines the interface and Context.Tag for the Dispatcher service.\n * This service is the central router for all incoming RPC messages from the\n * Mountain host.\n */\n\nimport { Context, type Effect } from \"effect\";\nimport type { Disposable } from \"vscode\";\n\nexport default class extends Context.Tag(\"IPC/Dispatcher\")<\n\tany,\n\t{\n\t\treadonly DispatchRequest: (\n\t\t\tMethod: string,\n\t\t\tParameterArray: readonly any[],\n\t\t) => Effect.Effect<any, Error>;\n\t\treadonly DispatchNotification: (\n\t\t\tMethod: string,\n\t\t\tParameterArray: readonly any[],\n\t\t) => Effect.Effect<void, never>;\n\t\treadonly CancelOperation: (\n\t\t\tRequestID: number,\n\t\t) => Effect.Effect<void, never>;\n\t\treadonly ProcessIncomingData: (\n\t\t\tData: Uint8Array,\n\t\t) => Effect.Effect<void, never>;\n\t\treadonly RegisterInvokeHandler: (\n\t\t\tChannel: string,\n\t\t\tHandler: (...ArgumentArray: any[]) => Promise<any>,\n\t\t) => Disposable;\n\t}\n>() {}\n"],
-  "mappings": ";;AAOA,SAAS,eAA4B;AAGrC,MAAO,wBAAsB,QAAQ,IAAI,gBAAgB,EAsBvD,EAAE;AAAA,EAhCJ,OAgCI;AAAA;AAAA;AAAC;",
-  "names": []
-}

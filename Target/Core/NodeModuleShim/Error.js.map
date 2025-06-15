@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Core/NodeModuleShim/Error.ts"],
-  "sourcesContent": ["/**\n * @module Error (NodeModuleShim)\n * @description Exports all custom, tagged errors for the Node.js module shimming service.\n */\n\nexport { default as ModuleBlockedError } from \"./Error/ModuleBlockedError.js\";\nexport { default as ModuleNotShimmedError } from \"./Error/ModuleNotShimmedError.js\";\n"],
-  "mappings": "AAKA,SAAoB,WAAXA,gBAAqC;AAC9C,SAAoB,WAAXA,gBAAwC;",
-  "names": ["default"]
-}

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Core/NodeModuleShim.ts"],
-  "sourcesContent": ["/**\n * @module NodeModuleShim (Core)\n * @description Provides the NodeModuleShim service, which intercepts requests for\n * built-in Node.js modules, blocking some and providing safe shims for others.\n */\n\nimport * as Error from \"./NodeModuleShim/Error.js\";\nimport Live from \"./NodeModuleShim/Live.js\";\nimport Service from \"./NodeModuleShim/Service.js\";\n\nexport { Service, Live, Error };\n"],
-  "mappings": "AAMA,YAAY,WAAW;AACvB,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

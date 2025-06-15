@@ -1,14 +1,1 @@
-import { Layer } from "effect";
-import LogLive from "../../Service/Log/Live.js";
-import APIFactoryLive from "../APIFactory/Live.js";
-import ExtensionPathLive from "../ExtensionPath/Live.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
-const Live = Layer.effect(Service, Definition).pipe(
-  Layer.provide(Layer.mergeAll(APIFactoryLive, ExtensionPathLive, LogLive))
-);
-var Live_default = Live;
-export {
-  Live_default as default
-};
-//# sourceMappingURL=Live.js.map
+import{Layer as o}from"effect";import r from"../../Service/Log/Live.js";import e from"../APIFactory/Live.js";import i from"../ExtensionPath/Live.js";import t from"./Definition.js";import m from"./Service.js";const f=o.effect(m,t).pipe(o.provide(o.mergeAll(e,i,r)));var l=f;export{l as default};

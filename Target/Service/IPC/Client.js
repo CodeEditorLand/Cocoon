@@ -1,7 +1,1 @@
-import Live from "./Client/Live.js";
-import Service from "./Client/Service.js";
-export {
-  Live,
-  Service
-};
-//# sourceMappingURL=Client.js.map
+import o from"./Client/Live.js";import i from"./Client/Service.js";export{o as Live,i as Service};

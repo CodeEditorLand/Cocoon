@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/StatusBar/Live.ts"],
-  "sourcesContent": ["/**\n * @module Live (StatusBar)\n * @description The live implementation Layer for the StatusBar service.\n */\n\nimport { Layer } from \"effect\";\n\nimport { Live as IPCLive } from \"../IPC.js\";\nimport type IPCConfiguration from \"../IPC/Configuration.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the StatusBar service.\n * It depends on the IPC service for communication.\n * @param Config The IPC configuration.\n */\nconst Live = (Config: IPCConfiguration) =>\n\tLayer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config)));\n\nexport default Live;\n"],
-  "mappings": ";;AAKA,SAAS,aAAa;AAEtB,SAAS,QAAQ,eAAe;AAEhC,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAOpB,MAAM,OAAO,wBAAC,WACb,MAAM,OAAO,SAAS,UAAU,EAAE,KAAK,MAAM,QAAQ,QAAQ,MAAM,CAAC,CAAC,GADzD;AAGb,IAAO,eAAQ;",
-  "names": []
-}

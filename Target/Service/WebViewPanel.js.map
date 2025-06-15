@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/WebViewPanel.ts"],
-  "sourcesContent": ["/**\n * @module WebViewPanel\n * @description This module provides the `vscode.window.createWebViewPanel` API,\n * allowing extensions to create and manage webview-based UI panels.\n */\n\nimport Live from \"./WebViewPanel/Live.js\";\nimport Service from \"./WebViewPanel/Service.js\";\n\nexport { Service, Live };\n"],
-  "mappings": "AAMA,OAAO,UAAU;AACjB,OAAO,aAAa;",
-  "names": []
-}

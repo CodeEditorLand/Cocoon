@@ -1,7 +1,1 @@
-import Live from "./Clipboard/Live.js";
-import Service from "./Clipboard/Service.js";
-export {
-  Live,
-  Service
-};
-//# sourceMappingURL=Clipboard.js.map
+import o from"./Clipboard/Live.js";import i from"./Clipboard/Service.js";export{o as Live,i as Service};

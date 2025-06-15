@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Log/Live.ts"],
-  "sourcesContent": ["/**\n * @module Live (Log)\n * @description The live implementation `Layer` for the Log service.\n */\n\nimport { Layer } from \"effect\";\n\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the Log service.\n * It has no external dependencies.\n */\nconst Live = Layer.effect(Service, Definition);\n\nexport default Live;\n"],
-  "mappings": "AAKA,SAAS,aAAa;AAEtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAAO,MAAM,OAAO,SAAS,UAAU;AAE7C,IAAO,eAAQ;",
-  "names": []
-}

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/Window.ts"],
-  "sourcesContent": ["/**\n * @module Window\n * @description This module provides the core `vscode.window` API implementation,\n * managing properties like window state and orchestrating calls to sub-services\n * like dialogs, messages, and quick input.\n */\n\nimport { Layer } from \"effect\";\n\nimport type IPCConfiguration from \"./IPC/Configuration.js\";\nimport IPCLive from \"./IPC/Live.js\";\nimport Definition from \"./Window/Definition.js\";\nimport Service from \"./Window/Service.js\";\nimport WorkSpaceLive from \"./WorkSpace/Live.js\";\n\nexport { default as Service } from \"./Window/Service.js\";\n\n/**\n * The live implementation Layer for the Window service.\n * @param Config The IPC Configuration.\n */\nexport const Live = (Config: IPCConfiguration) =>\n\tLayer.effect(Service, Definition).pipe(\n\t\tLayer.provide(Layer.merge(IPCLive(Config), WorkSpaceLive(Config))),\n\t);\n"],
-  "mappings": ";;AAOA,SAAS,aAAa;AAGtB,OAAO,aAAa;AACpB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AACpB,OAAO,mBAAmB;AAE1B,SAAoB,WAAXA,gBAA0B;AAM5B,MAAM,OAAO,wBAAC,WACpB,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,EACjC,MAAM,QAAQ,MAAM,MAAM,QAAQ,MAAM,GAAG,cAAc,MAAM,CAAC,CAAC;AAClE,GAHmB;",
-  "names": ["default"]
-}

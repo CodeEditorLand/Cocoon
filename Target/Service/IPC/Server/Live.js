@@ -1,10 +1,1 @@
-import { Layer } from "effect";
-import DispatcherLive from "../Dispatcher/Live.js";
-import Acquire from "./Acquire.js";
-import Service from "./Service.js";
-const Live = Layer.scoped(Service, Acquire).pipe(Layer.provide(DispatcherLive));
-var Live_default = Live;
-export {
-  Live_default as default
-};
-//# sourceMappingURL=Live.js.map
+import{Layer as r}from"effect";import o from"../Dispatcher/Live.js";import e from"./Acquire.js";import i from"./Service.js";const t=r.scoped(i,e).pipe(r.provide(o));var f=t;export{f as default};

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/IPC/Error/gRPCConnectionError.ts"],
-  "sourcesContent": ["/**\n * @module gRPCConnectionError (IPC/Error)\n * @description Defines a custom, structured error for gRPC connection failures.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A structured error indicating a failure during a gRPC connection attempt or\n * server setup.\n *\n * This error is tagged with \"gRPCConnectionError\" for precise handling with\n * `Effect.catchTag`. It captures the underlying `Cause` and provides a `Context`\n * string to indicate which part of the connection process failed.\n */\nexport default class extends Data.TaggedError(\"gRPCConnectionError\")<{\n\treadonly Cause: unknown;\n\treadonly Context:\n\t\t| \"ProtoLoadFailed\"\n\t\t| \"ClientInstantiationFailed\"\n\t\t| \"ClientNotReady\"\n\t\t| \"ServerBindFailed\"\n\t\t| \"ServerStartFailed\";\n}> {}\n"],
-  "mappings": ";;AAKA,SAAS,YAAY;AAUrB,MAAO,oCAAsB,KAAK,YAAY,qBAAqB,EAQhE;AAAA,EAvBH,OAuBG;AAAA;AAAA;AAAC;",
-  "names": []
-}

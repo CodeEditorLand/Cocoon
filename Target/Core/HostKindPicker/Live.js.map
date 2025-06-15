@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Core/HostKindPicker/Live.ts"],
-  "sourcesContent": ["/**\n * @module Live (HostKindPicker)\n * @description This module provides the `Live` implementation Layer for the HostKindPicker service.\n */\n\nimport { Layer } from \"effect\";\n\nimport LogLive from \"../../Service/Log/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the HostKindPicker service.\n * It depends on the Log service for reporting its decisions.\n */\nconst Live = Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));\n\nexport default Live;\n"],
-  "mappings": "AAKA,SAAS,aAAa;AAEtB,OAAO,aAAa;AACpB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAAO,MAAM,OAAO,SAAS,UAAU,EAAE,KAAK,MAAM,QAAQ,OAAO,CAAC;AAE1E,IAAO,eAAQ;",
-  "names": []
-}

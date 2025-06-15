@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Localization/Live.ts"],
-  "sourcesContent": ["/**\n * @module Live (Localization)\n * @description The live implementation Layer for the Localization service.\n */\n\nimport { Layer } from \"effect\";\n\nimport type IPCConfiguration from \"../IPC/Configuration.js\";\nimport IPCLive from \"../IPC/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the Localization service.\n * It depends on the IPC and InitData services.\n * This is a factory that takes IPC configuration.\n * @param Config The IPC configuration.\n */\nexport default function (Config: {\n\tMountainAddress: string;\n\tCocoonAddress: string;\n}) {\n\treturn Layer.effect(Service, Definition).pipe(\n\t\tLayer.provide(IPCLive(Config)),\n\t);\n}\n"],
-  "mappings": ";;AAKA,SAAS,aAAa;AAGtB,OAAO,aAAa;AACpB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAQL,SAAR,aAAkB,QAGtB;AACF,SAAO,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,IACxC,MAAM,QAAQ,QAAQ,MAAM,CAAC;AAAA,EAC9B;AACD;AAPO;",
-  "names": []
-}

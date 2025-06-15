@@ -1,9 +1,1 @@
-import * as Error from "./IPC/Error.js";
-import Live from "./IPC/Live.js";
-import Service from "./IPC/Service.js";
-export {
-  Error,
-  Live,
-  Service
-};
-//# sourceMappingURL=IPC.js.map
+import*as o from"./IPC/Error.js";import i from"./IPC/Live.js";import m from"./IPC/Service.js";export{o as Error,i as Live,m as Service};

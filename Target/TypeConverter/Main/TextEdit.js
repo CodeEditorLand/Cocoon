@@ -1,18 +1,1 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { TextEdit } from "../../Type/ExtHostTypes.js";
-import RangeConverter from "./Range.js";
-const FromAPI = /* @__PURE__ */ __name((TextEditInstance) => ({
-  text: TextEditInstance.newText,
-  range: RangeConverter.FromAPI(TextEditInstance.range),
-  forceMoveMarkers: false
-}), "FromAPI");
-const ToAPI = /* @__PURE__ */ __name((TextEditDTO) => new TextEdit(
-  RangeConverter.ToAPI(TextEditDTO.range),
-  TextEditDTO.text ?? ""
-), "ToAPI");
-var TextEdit_default = { FromAPI, ToAPI };
-export {
-  TextEdit_default as default
-};
-//# sourceMappingURL=TextEdit.js.map
+import{TextEdit as o}from"../../Type/ExtHostTypes.js";import t from"./Range.js";const i=e=>({text:e.newText,range:t.FromAPI(e.range),forceMoveMarkers:!1}),r=e=>new o(t.ToAPI(e.range),e.text??"");var m={FromAPI:i,ToAPI:r};export{m as default};

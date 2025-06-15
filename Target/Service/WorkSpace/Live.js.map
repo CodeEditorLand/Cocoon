@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/WorkSpace/Live.ts"],
-  "sourcesContent": ["/**\n * @module Live (WorkSpace)\n * @description The live implementation Layer for the WorkSpace service.\n */\n\nimport { Layer } from \"effect\";\n\nimport ConfigurationLive from \"../Configuration/Live.js\";\nimport DocumentLive from \"../Document/Live.js\";\nimport FileSystemLive from \"../FileSystem/Live.js\";\nimport type IPCConfiguration from \"../IPC/Configuration.js\";\nimport IPCLive from \"../IPC/Live.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the WorkSpace service.\n * @param Config The IPC Configuration.\n */\nexport default function (Config: {\n\tMountainAddress: string;\n\tCocoonAddress: string;\n}) {\n\treturn Layer.effect(Service, Definition).pipe(\n\t\tLayer.provide(\n\t\t\tLayer.mergeAll(\n\t\t\t\tIPCLive(Config),\n\t\t\t\tDocumentLive(Config),\n\t\t\t\tFileSystemLive(Config),\n\t\t\t\tConfigurationLive(Config),\n\t\t\t),\n\t\t),\n\t);\n}\n"],
-  "mappings": ";;AAKA,SAAS,aAAa;AAEtB,OAAO,uBAAuB;AAC9B,OAAO,kBAAkB;AACzB,OAAO,oBAAoB;AAE3B,OAAO,aAAa;AACpB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAML,SAAR,aAAkB,QAGtB;AACF,SAAO,MAAM,OAAO,SAAS,UAAU,EAAE;AAAA,IACxC,MAAM;AAAA,MACL,MAAM;AAAA,QACL,QAAQ,MAAM;AAAA,QACd,aAAa,MAAM;AAAA,QACnB,eAAe,MAAM;AAAA,QACrB,kBAAkB,MAAM;AAAA,MACzB;AAAA,IACD;AAAA,EACD;AACD;AAdO;",
-  "names": []
-}

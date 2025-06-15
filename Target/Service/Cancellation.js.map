@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/Cancellation.ts"],
-  "sourcesContent": ["/**\n * @module Cancellation\n * @description This module provides the CancellationTokenProvider service, which is\n * responsible for creating and managing cancellation tokens for long-running\n * RPC operations that can be cancelled by the Mountain host.\n */\n\nimport { Layer } from \"effect\";\n\nimport Definition from \"./Cancellation/Definition.js\";\nimport InvalidTokenIDError from \"./Cancellation/Error/InvalidTokenIDError.js\";\nimport Service from \"./Cancellation/Service.js\";\nimport type TokenAndScope from \"./Cancellation/Type/TokenAndScope.js\";\n\nexport { InvalidTokenIDError, type TokenAndScope };\n\nexport const CancellationService = Service;\nexport type CancellationService = Service;\n\n/**\n * The live implementation Layer for the CancellationTokenProvider service.\n * This is a self-contained layer with no external dependencies.\n */\nexport const CancellationLive = Layer.effect(Service, Definition);\n"],
-  "mappings": "AAOA,SAAS,aAAa;AAEtB,OAAO,gBAAgB;AACvB,OAAO,yBAAyB;AAChC,OAAO,aAAa;AAKb,MAAM,sBAAsB;AAO5B,MAAM,mBAAmB,MAAM,OAAO,SAAS,UAAU;",
-  "names": []
-}

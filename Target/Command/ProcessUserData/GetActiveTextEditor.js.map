@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Command/ProcessUserData/GetActiveTextEditor.ts"],
-  "sourcesContent": ["/**\n * @module GetActiveTextEditor\n * @description An Effect that retrieves the active VS Code text editor by\n * delegating to the Window service.\n */\n\nimport { Effect, Option } from \"effect\";\nimport type * as VSCode from \"vscode\";\n\nimport WindowService from \"../../Service/Window/Service.js\";\n\n/**\n * An Effect that safely retrieves the active text editor.\n * @returns An `Effect` that resolves to an `Option<vscode.TextEditor>`, which\n * will be `None` if no editor is active, and `Some` otherwise.\n */\nconst GetActiveTextEditor: Effect.Effect<\n\tOption.Option<VSCode.TextEditor>,\n\tnever,\n\tWindowService\n> = Effect.gen(function* () {\n\tconst Window = yield* WindowService;\n\treturn Option.fromNullable(Window.activeTextEditor);\n});\n\nexport default GetActiveTextEditor;\n"],
-  "mappings": "AAMA,SAAS,QAAQ,cAAc;AAG/B,OAAO,mBAAmB;AAO1B,MAAM,sBAIF,OAAO,IAAI,aAAa;AAC3B,QAAM,SAAS,OAAO;AACtB,SAAO,OAAO,aAAa,OAAO,gBAAgB;AACnD,CAAC;AAED,IAAO,8BAAQ;",
-  "names": []
-}

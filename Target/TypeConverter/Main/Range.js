@@ -1,18 +1,1 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Position, Range } from "../../Type/ExtHostTypes.js";
-const FromAPI = /* @__PURE__ */ __name((RangeInstance) => ({
-  startLineNumber: RangeInstance.start.line + 1,
-  startColumn: RangeInstance.start.character + 1,
-  endLineNumber: RangeInstance.end.line + 1,
-  endColumn: RangeInstance.end.character + 1
-}), "FromAPI");
-const ToAPI = /* @__PURE__ */ __name((RangeDTO) => new Range(
-  new Position(RangeDTO.startLineNumber - 1, RangeDTO.startColumn - 1),
-  new Position(RangeDTO.endLineNumber - 1, RangeDTO.endColumn - 1)
-), "ToAPI");
-var Range_default = { FromAPI, ToAPI };
-export {
-  Range_default as default
-};
-//# sourceMappingURL=Range.js.map
+import{Position as r,Range as o}from"../../Type/ExtHostTypes.js";const t=e=>({startLineNumber:e.start.line+1,startColumn:e.start.character+1,endLineNumber:e.end.line+1,endColumn:e.end.character+1}),n=e=>new o(new r(e.startLineNumber-1,e.startColumn-1),new r(e.endLineNumber-1,e.endColumn-1));var s={FromAPI:t,ToAPI:n};export{s as default};

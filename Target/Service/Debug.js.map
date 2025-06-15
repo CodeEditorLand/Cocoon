@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Service/Debug.ts"],
-  "sourcesContent": ["/**\n * @module Debug\n * @description This module provides the `vscode.debug` API implementation, managing\n * debug configurations, adapter factories, and debugging sessions.\n */\n\nimport * as Error from \"./Debug/Error.js\";\nimport Live from \"./Debug/Live.js\";\nimport Service from \"./Debug/Service.js\";\nimport * as Type from \"./Debug/Type.js\";\n\nexport { Service, Live, Type, Error };\n"],
-  "mappings": "AAMA,YAAY,WAAW;AACvB,OAAO,UAAU;AACjB,OAAO,aAAa;AACpB,YAAY,UAAU;",
-  "names": []
-}

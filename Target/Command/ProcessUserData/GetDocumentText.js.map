@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Command/ProcessUserData/GetDocumentText.ts"],
-  "sourcesContent": ["/**\n * @module GetDocumentText\n * @description An Effect that retrieves the full text content of a document.\n */\n\nimport { Effect } from \"effect\";\nimport type * as VSCode from \"vscode\";\n\n/**\n * An Effect that gets the full text content of a given document.\n * @param Document The `vscode.TextDocument` to read from.\n * @returns An `Effect` that synchronously resolves to the document's text content.\n */\nconst GetDocumentText = (\n\tDocument: VSCode.TextDocument,\n): Effect.Effect<string, never, never> => {\n\treturn Effect.sync(() => Document.getText());\n};\n\nexport default GetDocumentText;\n"],
-  "mappings": ";;AAKA,SAAS,cAAc;AAQvB,MAAM,kBAAkB,wBACvB,aACyC;AACzC,SAAO,OAAO,KAAK,MAAM,SAAS,QAAQ,CAAC;AAC5C,GAJwB;AAMxB,IAAO,0BAAQ;",
-  "names": []
-}
