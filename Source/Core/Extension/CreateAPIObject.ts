@@ -1,4 +1,3 @@
-// Cocoon/Source/Core/Extension/CreateAPIObject.ts
 
 /**
  * @module CreateAPIObject (Extension)

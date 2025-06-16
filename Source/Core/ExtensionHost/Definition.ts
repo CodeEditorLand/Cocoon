@@ -1,4 +1,3 @@
-// Cocoon/Source/Core/ExtensionHost/Definition.ts
 
 /**
  * @module Definition (ExtensionHost)

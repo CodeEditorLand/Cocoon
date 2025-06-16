@@ -1,5 +1,3 @@
-// Cocoon/Source/Cocoon.ts
-
 /**
  * @module Cocoon
  * @description The main entry point for the Cocoon Node.js extension host.
@@ -17,9 +15,8 @@ import RunProcessPatch from "./PatchProcess.js";
 import AllServiceLayer from "./Service.js";
 import { default as InitDataLayer } from "./Service/InitData/Live.js";
 import { Live as IPCLive } from "./Service/IPC.js";
+import type { IPCConfiguration } from "./Service/IPC/Configuration.js";
 import IPCService from "./Service/IPC/Service.js";
-// FIX: Corrected import to use named import for the data interface.
-import type IPCConfiguration from "./Service/IPCConfiguration/Definition.js";
 
 // --- Pre-initialization Steps ---
 const VSCodeOutputDirectory =

@@ -1,4 +1,3 @@
-// Cocoon/Source/Service/Storage/MementoImplementation.ts
 
 /**
  * @module MementoImplementation

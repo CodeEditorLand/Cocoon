@@ -1,5 +1,3 @@
-// Cocoon/Source/Utility/CreateEventStream.ts
-
 /**
  * @module CreateEventStream
  * @description A utility to create a VS Code-compatible event emitter that is also an Effect PubSub.

@@ -29,23 +29,26 @@ const QuickPick = {
 	 * @returns A serializable representation of the buttons.
 	 */
 	SerializeButtons: (Buttons?: readonly QuickInputButton[]) => {
-		return Buttons?.map((Button, Index) => ({
-			iconPath: (Button ).iconPath
-				? "dark" in (Button ).iconPath &&
-					"light" in (Button ).iconPath
-					? {
-							dark: Uri.revive(
-								(Button ).iconPath.dark,
-							).toJSON(),
-							light: Uri.revive(
-								(Button ).iconPath.light,
-							).toJSON(),
-						}
-					: undefined
-				: undefined,
-			tooltip: Button.tooltip,
-			handle: Index,
-		}));
+		return Buttons?.map((Button, Index) => {
+			// VS Code's internal quick input buttons have an iconPath property
+			// which can be a dark/light theme URI object. We need to handle this.
+			const iconPath = (Button as any).iconPath;
+			return {
+				// FIX: `Uri.revive` does not exist on the public API.
+				// The DTO should be built from the raw URI data.
+				// Assuming the `iconPath` in the DTO is a string or has `dark`/`light` string properties.
+				iconPath: iconPath
+					? "dark" in iconPath && "light" in iconPath
+						? {
+								dark: Uri.parse(iconPath.dark).toJSON(),
+								light: Uri.parse(iconPath.light).toJSON(),
+							}
+						: Uri.parse(iconPath.toString()).toJSON()
+					: undefined,
+				tooltip: Button.tooltip,
+				handle: Index,
+			};
+		});
 	},
 };
 

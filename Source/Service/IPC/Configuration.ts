@@ -1,5 +1,3 @@
-// Cocoon/Source/Service/IPC/Configuration.ts
-
 /**
  * @module Configuration (IPC)
  * @description Defines the configuration interface and service Tag for the
@@ -23,6 +21,7 @@ export interface IPCConfiguration {
 }
 
 // FIX: Define and export the Context.Tag that other services can depend on.
-export const IPCConfigurationService = Context.Tag(
-	"IPCConfiguration",
-)<IPCConfiguration>;
+// The class-based syntax is the modern and correct way to define a Tag.
+export class IPCConfigurationService extends Context.Tag(
+	"Service/IPCConfiguration",
+)<IPCConfigurationService, IPCConfiguration>() {}

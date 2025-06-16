@@ -1,4 +1,3 @@
-// Cocoon/Source/Service/Message/Definition.ts
 
 /**
  * @module Definition (Message)

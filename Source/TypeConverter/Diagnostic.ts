@@ -1,5 +1,3 @@
-// Cocoon/Source/TypeConverter/Diagnostic.ts
-
 /**
  * @module Diagnostic (TypeConverter)
  * @description Implements type converters for `vscode.Diagnostic` and related types,

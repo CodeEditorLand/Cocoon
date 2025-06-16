@@ -1,4 +1,3 @@
-// Cocoon/Source/Core/ExtensionHost/Service.ts
 
 /**
  * @module Service (ExtensionHost)

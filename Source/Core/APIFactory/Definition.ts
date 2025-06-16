@@ -1,4 +1,3 @@
-// Cocoon/Source/Core/APIFactory/Definition.ts
 
 /**
  * @module Definition (APIFactory)

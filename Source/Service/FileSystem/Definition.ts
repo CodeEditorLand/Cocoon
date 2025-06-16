@@ -1,4 +1,3 @@
-// Cocoon/Source/Service/FileSystem/Definition.ts
 
 /**
  * @module Definition (FileSystem)

@@ -19,7 +19,7 @@ import type Service from "./Service.js";
  */
 const Release = (Client: Service) => {
 	return Effect.sync(() => {
-		(Client ).close(); // The generated client has a close() method
+		Client.close(); // The generated client has a close() method
 	}).pipe(Effect.tap(() => Effect.logInfo("gRPC client connection closed.")));
 };
 

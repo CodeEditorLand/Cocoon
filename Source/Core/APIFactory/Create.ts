@@ -1,5 +1,3 @@
-// Cocoon/Source/Core/APIFactory/Create.ts
-
 /**
  * @module Create (APIFactory)
  * @description The primary factory function that constructs the `vscode` API
@@ -126,7 +124,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 
 			for (const key in API) {
 				if (Object.prototype.hasOwnProperty.call(API, key)) {
-					const prop = (API )[key];
+					const prop = API[key];
 					if (typeof prop === "object" && prop !== null) {
 						Object.freeze(prop);
 					}

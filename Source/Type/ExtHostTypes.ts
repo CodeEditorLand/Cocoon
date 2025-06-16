@@ -17,14 +17,13 @@ import {
 	CompletionItemTag,
 	ConfigurationTarget,
 	DiagnosticSeverity,
+	DiagnosticTag,
 	EndOfLine,
 	ProgressLocation,
 	QuickPickItemKind,
-	ShellExecution,
 	SnippetString,
 	StatusBarAlignment,
 	TextEditorCursorStyle,
-	TreeItemCollapsibleState,
 	ViewColumn,
 } from "vscode";
 
@@ -85,14 +84,12 @@ export class Position implements VSCode.Position {
 		if (this.line > other.line) {
 			return 1;
 		}
-		// lines are equal
 		if (this.character < other.character) {
 			return -1;
 		}
 		if (this.character > other.character) {
 			return 1;
 		}
-		// characters are equal
 		return 0;
 	}
 
@@ -228,7 +225,7 @@ export class Range implements VSCode.Range {
 		const end = this.end.isBefore(other.end) ? this.end : other.end;
 
 		if (start.isAfter(end)) {
-			return undefined; // No overlap
+			return undefined;
 		}
 		return new Range(start, end);
 	}
@@ -354,6 +351,10 @@ export class TreeItem implements VSCode.TreeItem {
 	label?: string | VSCode.TreeItemLabel;
 	resourceURI?: VSCode.Uri;
 	collapsibleState?: VSCode.TreeItemCollapsibleState;
+	id?: string;
+	description?: string;
+	command?: VSCode.Command;
+
 	constructor(
 		labelOrUri: string | VSCode.Uri | VSCode.TreeItemLabel,
 		collapsibleState?: VSCode.TreeItemCollapsibleState,
@@ -433,7 +434,7 @@ export class TextEdit implements VSCode.TextEdit {
 			new Range(new Position(0, 0), new Position(0, 0)),
 			"",
 		);
-		(r ).newEol = eol;
+		r.newEol = eol;
 		return r;
 	}
 	newEol: VSCode.EndOfLine | undefined;
@@ -461,6 +462,33 @@ export class CompletionItem implements VSCode.CompletionItem {
 		this.label = label;
 		this.kind = kind;
 	}
+}
+
+export class ProcessExecution implements VSCode.ProcessExecution {
+	public process: string;
+	public args: string[];
+	public options?: VSCode.ProcessExecutionOptions;
+
+	constructor(
+		process: string,
+		args: string[],
+		options?: VSCode.ProcessExecutionOptions,
+	) {
+		this.process = process;
+		this.args = args;
+		this.options = options;
+	}
+}
+
+export class ShellExecution implements VSCode.ShellExecution {
+	public commandLine: string;
+	public options?: VSCode.ShellExecutionOptions;
+	constructor(commandLine: string, options?: VSCode.ShellExecutionOptions) {
+		this.commandLine = commandLine;
+		this.options = options;
+	}
+	command: string | VSCode.ShellQuotedString | undefined;
+	args: (string | VSCode.ShellQuotedString)[] | undefined;
 }
 
 export class Task implements VSCode.Task {
@@ -504,22 +532,6 @@ export class Task implements VSCode.Task {
 		this.isBackground = false;
 		this.presentationOptions = {};
 		this.runOptions = {};
-	}
-}
-
-export class ProcessExecution implements VSCode.ProcessExecution {
-	public process: string;
-	public args: string[];
-	public options?: VSCode.ProcessExecutionOptions;
-
-	constructor(
-		process: string,
-		args: string[],
-		options?: VSCode.ProcessExecutionOptions,
-	) {
-		this.process = process;
-		this.args = args;
-		this.options = options;
 	}
 }
 
@@ -608,8 +620,7 @@ export {
 	ViewColumn,
 	StatusBarAlignment,
 	TextEditorCursorStyle,
-	DiagnosticSeverity,
-	TreeItemCollapsibleState,
+	DiagnosticTag,
 	ConfigurationTarget,
 	EndOfLine,
 	ProgressLocation,
@@ -617,7 +628,7 @@ export {
 	CompletionItemKind,
 	SnippetString,
 	CompletionItemTag,
-	ShellExecution,
+	DiagnosticSeverity,
 };
 
 export const FileType = VscFileType;
