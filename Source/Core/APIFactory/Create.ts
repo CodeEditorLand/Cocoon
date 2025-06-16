@@ -4,7 +4,7 @@
  * object for a given extension. This serves as the `Definition` for the service.
  */
 
-import { Effect, Layer } from "effect";
+import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
@@ -57,7 +57,6 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				WorkSpace,
 				Window,
 				LanguageFeature,
-				Debug,
 				Task,
 				Extension: ExtensionService,
 				WebViewPanel,

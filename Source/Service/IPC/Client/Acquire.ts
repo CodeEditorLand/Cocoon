@@ -9,7 +9,7 @@ import * as GRPC from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect } from "effect";
 
-import IPCConfigurationService from "../Configuration.js";
+import { IPCConfigurationService } from "../Configuration.js";
 import { gRPCConnectionError } from "../Error.js";
 import Release from "./Release.js";
 import type Service from "./Service.js";
@@ -72,7 +72,8 @@ const WaitForClientReady = (
 	Client: Service,
 ): Effect.Effect<void, gRPCConnectionError> => {
 	return Effect.async<void, gRPCConnectionError>((Resume) => {
-		(Client as any).waitForReady(Date.now() + 10000, (Error?: Error) => {
+		// Set a 10-second timeout for the client to become ready.
+		(Client as any).waitForReady(Date.now() + 10_000, (Error?: Error) => {
 			if (Error) {
 				Resume(
 					Effect.fail(
@@ -90,13 +91,19 @@ const WaitForClientReady = (
 };
 
 /**
- * An `Effect` that acquires the gRPC client as a managed resource.
+ * An `Effect` that acquires the gRPC client as a managed resource. This effect
+ * handles loading the protocol definition, creating the client, waiting for a
+ * connection, and registering a release action.
+ * @export
+ * @default
  */
 export default Effect.acquireRelease(
 	Effect.gen(function* () {
+		// Step 1: Get the IPC configuration from the context.
 		const Config = yield* IPCConfigurationService;
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
+		// Step 2: Load the .proto definition and create the gRPC client.
 		const Definition = yield* LoadProtoDefinition(ProtoPath);
 		const GrpcObject = GRPC.loadPackageDefinition(Definition);
 		const Client = yield* CreateClientInstance(
@@ -104,11 +111,13 @@ export default Effect.acquireRelease(
 			Config.MountainAddress,
 		);
 
+		// Step 3: Wait for the client to connect to the server.
 		yield* WaitForClientReady(Client);
 		yield* Effect.logInfo(
 			`gRPC client connected to Mountain at ${Config.MountainAddress}.`,
 		);
 
+		// Step 4: Return the ready client.
 		return Client;
 	}),
 	(Client) => Release(Client),

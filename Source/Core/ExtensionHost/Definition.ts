@@ -6,6 +6,7 @@
 
 import { Effect, Ref } from "effect";
 import { URI } from "vs/base/common/uri.js";
+import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
@@ -23,27 +24,36 @@ import type { ActivatedExtension } from "./State.js";
 
 /**
  * An Effect that builds the live implementation of the ExtensionHost service.
+ * @export
+ * @default
  */
 export default Effect.gen(function* () {
+	// --- Service Dependencies ---
 	const Log = yield* LogService;
 	const IPC = yield* IPCService;
 	const InitData = yield* InitDataService;
 	const Telemetry = yield* TelemetryService;
 
+	// --- State Management ---
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
+		ImplicitActivationEvents,
 		InitData.extensions,
 	);
 	const ActivatedExtensions = yield* Ref.make(
 		new Map<string, ActivatedExtension>(),
 	);
 
+	/**
+	 * Deactivates a single extension, running its cleanup logic.
+	 */
 	const Deactivate = (Extension: ActivatedExtension) =>
 		Effect.gen(function* () {
+			// Step 1: Log the deactivation event.
 			yield* Log.Info(
 				`Deactivating extension '${Extension.ID.value}'...`,
 			);
 
-			// Deactivate subscriptions
+			// Step 2: Dispose of all subscriptions associated with the extension.
 			for (const Subscription of Extension.Subscriptions) {
 				yield* Effect.try({
 					try: () => Subscription.dispose(),
@@ -55,7 +65,7 @@ export default Effect.gen(function* () {
 				});
 			}
 
-			// Call the extension's deactivate function if it exists
+			// Step 3: Call the extension's `deactivate` function, if it exists.
 			const DeactivateFunction = Extension.Module.deactivate;
 			if (typeof DeactivateFunction === "function") {
 				yield* Effect.tryPromise({
@@ -68,15 +78,20 @@ export default Effect.gen(function* () {
 			}
 		});
 
+	/**
+	 * Activates a single extension, loading its module and running its `activate` function.
+	 */
 	const DoActivateExtension = (
 		Description: IExtensionDescription,
 		Reason: ExtensionActivationReason,
 	) =>
 		Effect.gen(function* () {
+			// Step 1: Log the activation attempt.
 			yield* Log.Info(
 				`Activating extension '${Description.identifier.value}' (Reason: ${Reason.activationEvent}).`,
 			);
 
+			// Step 2: Dynamically import the extension module.
 			const Module = yield* Effect.tryPromise({
 				try: () =>
 					import(URI.revive(Description.extensionLocation).fsPath),
@@ -86,7 +101,7 @@ export default Effect.gen(function* () {
 					),
 			});
 
-			// Create the extension context object that is passed to activate()
+			// Step 3: Create the extension context object passed to the activate function.
 			const Context: ExtensionContext = {
 				subscriptions: [],
 				extensionPath: Description.extensionLocation.fsPath,
@@ -99,7 +114,7 @@ export default Effect.gen(function* () {
 				storagePath: "",
 				globalStoragePath: "",
 				logPath: "",
-				extension: undefined as any, // This will be set later
+				extension: undefined as any,
 				environmentVariableCollection: undefined as any,
 				asAbsolutePath: (path) => path,
 				extensionRuntime: 2, // NodeJS
@@ -109,6 +124,7 @@ export default Effect.gen(function* () {
 				languageModelAccessInformation: undefined as any,
 			};
 
+			// Step 4: Execute the extension's activate function if it exists.
 			const ActivationFunction = Module.activate as Function | undefined;
 			const Exports = ActivationFunction
 				? yield* Effect.tryPromise({
@@ -123,6 +139,7 @@ export default Effect.gen(function* () {
 					})
 				: Module;
 
+			// Step 5: Store the successfully activated extension's state.
 			const Activated: ActivatedExtension = {
 				ID: Description.identifier,
 				Module,
@@ -136,6 +153,7 @@ export default Effect.gen(function* () {
 				Map.set(Description.identifier.value, Activated),
 			);
 
+			// Step 6: Log and notify the host of successful activation.
 			yield* Log.Info(
 				`Successfully activated extension '${Description.identifier.value}'.`,
 			);
@@ -144,9 +162,10 @@ export default Effect.gen(function* () {
 				Description.identifier,
 			]);
 		}).pipe(
-			// This catch block handles failures during the activation process
+			// This catch block handles any failure during the activation process.
 			Effect.catchAll((ErrorValue) =>
 				Effect.gen(function* () {
+					// Step 1: Record the activation failure state.
 					const Activated: ActivatedExtension = {
 						ID: Description.identifier,
 						Module: {},
@@ -163,6 +182,7 @@ export default Effect.gen(function* () {
 						Map.set(Description.identifier.value, Activated),
 					);
 
+					// Step 2: Notify the host and telemetry services of the error.
 					yield* IPC.SendNotification("$onExtensionActivationError", [
 						Description.identifier,
 						{
@@ -189,11 +209,15 @@ export default Effect.gen(function* () {
 			),
 		);
 
+	/**
+	 * The public method to activate an extension by its identifier.
+	 */
 	const ActivateById = (
 		ID: ExtensionIdentifier,
 		Reason: ExtensionActivationReason,
 	): Effect.Effect<void, Error> =>
 		Effect.gen(function* () {
+			// Step 1: Check if the extension is already activated.
 			const IsAlreadyActivated = yield* Ref.get(ActivatedExtensions).pipe(
 				Effect.map((Map) => Map.has(ID.value)),
 			);
@@ -201,6 +225,7 @@ export default Effect.gen(function* () {
 				return;
 			}
 
+			// Step 2: Get the extension description from the registry.
 			const MaybeDescription =
 				ExtensionRegistry.getExtensionDescription(ID);
 			if (!MaybeDescription) {
@@ -209,11 +234,14 @@ export default Effect.gen(function* () {
 				);
 			}
 
+			// Step 3: Ensure the extension has a 'main' entry point.
 			if (!MaybeDescription.main) {
 				return yield* Log.Warn(
 					`Cannot activate extension '${ID.value}' because it has no 'main' entry point.`,
 				);
 			}
+
+			// Step 4: Proceed with the activation logic.
 			yield* DoActivateExtension(MaybeDescription, Reason);
 		}).pipe(
 			Effect.mapError((ErrorValue) =>
@@ -223,6 +251,9 @@ export default Effect.gen(function* () {
 			),
 		);
 
+	/**
+	 * The live implementation of the ExtensionHost service.
+	 */
 	const ServiceImplementation: Service["Type"] = {
 		ActivateById,
 		GetExtensionDescription: (ID) =>
@@ -243,8 +274,7 @@ export default Effect.gen(function* () {
 						discard: true,
 					}),
 				),
-				Effect.flatMap(() => Ref.set(ActivatedExtensions, new Map())),
-				Effect.asVoid,
+				Effect.andThen(Ref.set(ActivatedExtensions, new Map())),
 			),
 	};
 

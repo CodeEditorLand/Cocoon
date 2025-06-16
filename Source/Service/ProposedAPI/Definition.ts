@@ -4,7 +4,6 @@
  */
 
 import { Effect, HashMap } from "effect";
-import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
 
 import InitDataService from "../InitData/Service.js";
 import LogService from "../Log/Service.js";

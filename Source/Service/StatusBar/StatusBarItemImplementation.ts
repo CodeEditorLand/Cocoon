@@ -10,7 +10,6 @@ import type {
 	AccessibilityInformation,
 	CancellationToken,
 	Command,
-	IDisposable,
 	MarkdownString,
 	ProviderResult,
 	StatusBarAlignment,

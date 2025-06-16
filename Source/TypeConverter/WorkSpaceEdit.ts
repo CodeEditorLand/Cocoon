@@ -10,7 +10,6 @@ import type * as VSCode from "vscode";
 import {
 	TextEdit,
 	WorkspaceEdit as VscWorkspaceEdit,
-	type WorkspaceEdit,
 } from "../Type/ExtHostTypes.js";
 import { TextEdit as TextEditConverter, URI as URIConverter } from "./Main.js";
 

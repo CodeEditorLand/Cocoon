@@ -5,7 +5,7 @@
 
 import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable, type TextEditor } from "vscode";
+import { Disposable } from "vscode";
 
 import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
 import IPCService from "../IPC/Service.js";
