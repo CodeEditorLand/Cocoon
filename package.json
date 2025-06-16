@@ -24,6 +24,7 @@
 	},
 	"devDependencies": {
 		"@playform/build": "0.2.4",
+		"@types/google-protobuf": "3.15.12",
 		"ulid": "3.0.1"
 	},
 	"publishConfig": {
@@ -34,6 +35,7 @@
 		"@effect/platform": "0.84.11",
 		"@effect/platform-node": "0.85.16",
 		"@effect/stream": "0.37.1",
-		"@types/node": "24.0.1"
+		"@types/node": "24.0.1",
+		"google-protobuf": "3.21.4"
 	}
 }
