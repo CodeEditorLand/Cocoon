@@ -13,7 +13,7 @@ import ExtensionHostService from "./Core/ExtensionHost/Service.js";
 import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
 import RunProcessPatch from "./PatchProcess.js";
 import AllServiceLayer from "./Service.js";
-import { InitDataLayer } from "./Service/InitData/Live.js";
+import InitDataLayer from "./Service/InitData/Live.js";
 import type IPCConfigurationService from "./Service/IPC/Configuration.js";
 import IPCService from "./Service/IPC/Service.js";
 
@@ -38,7 +38,7 @@ const FullApplicationInitialization = Effect.gen(function* () {
 	// Step 2: Trigger the initial "star activation" of extensions.
 	const Host = yield* ExtensionHostService;
 	yield* Host.ActivateById(
-		"*" as any,
+		"*" as any, // This is a placeholder for VS Code's "star activation"
 		{
 			startup: true,
 			activationEvent: "*",
@@ -78,15 +78,23 @@ const Main = Effect.gen(function* () {
 				yield* FullApplicationInitialization;
 
 				// Step 3.2: Signal that initialization is complete.
-				yield* Deferred.succeed(InitializationBarrier, undefined);
-			}).pipe(
-				// This effect now has all its dependencies provided by the CompleteApplicationLayer.
-				Effect.provide(CompleteApplicationLayer),
-				Effect.scoped, // Ensure all scoped resources are properly managed.
+				return yield* Deferred.succeed(
+					InitializationBarrier,
+					undefined,
+				);
+			});
+
+			// Build the layer to get the context, then provide it to the handler effect.
+			// This ensures all dependencies are resolved before running the effect.
+			const Runnable = Layer.build(CompleteApplicationLayer).pipe(
+				Effect.flatMap((Context) =>
+					Effect.provide(HandlerEffect, Context),
+				),
+				Effect.scoped,
 			);
 
 			// Step 4: Fork the main application logic so it doesn't block the IPC handler.
-			return Effect.runPromise(Effect.fork(HandlerEffect));
+			return Effect.runPromise(Effect.fork(Runnable));
 		},
 	);
 
