@@ -109,11 +109,27 @@ export default Effect.gen(function* () {
 			Effect.asVoid,
 		);
 
+	const CreateProxy = <T extends object>(Channel: string): T => {
+		return new Proxy({} as T, {
+			get(_target, prop) {
+				if (typeof prop === "string" && prop.startsWith("$")) {
+					return (...args: any[]) => {
+						const method = `${Channel}/${prop}`;
+						// The proxy needs to return a Promise to match the VS Code API.
+						return Effect.runPromise(SendRequest(method, args));
+					};
+				}
+				return (_target as any)[prop];
+			},
+		});
+	};
+
 	const IPCImplementation: Service["Type"] = {
 		SendRequest,
 		SendNotification,
 		SendCancel: Dispatcher.CancelOperation,
 		CreateProtocolAdapter: () => ProtocolAdapter,
+		CreateProxy,
 		RegisterInvokeHandler: Dispatcher.RegisterInvokeHandler,
 	};
 

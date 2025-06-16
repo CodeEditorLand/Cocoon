@@ -11,7 +11,8 @@
  */
 
 import { Effect, Option, Ref } from "effect";
-import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
+import type { IModelChangedEvent } from "vs/editor/common/model/mirrorTextModel.js";
+import { MainThreadDocumentsShape } from "vs/workbench/api/common/extHost.protocol.js";
 import { ExtHostDocumentData } from "vs/workbench/api/common/extHostDocumentData.js";
 import type { TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
 
@@ -28,8 +29,11 @@ import type Service from "./Service.js";
 export default Effect.gen(function* () {
 	// --- Service Dependencies ---
 	const IPC = yield* IPCService;
-	// The map should store instances of ExtHostDocumentData.
 	const DocumentMap = yield* Ref.make(new Map<string, ExtHostDocumentData>());
+
+	const MainThreadDocumentsProxy = IPC.CreateProxy<MainThreadDocumentsShape>(
+		"$rpc:mainThreadDocuments",
+	);
 
 	// --- Event Emitters for the Public API ---
 	const OnDidOpenTextDocument = CreateEventStream<TextDocument>();
@@ -45,26 +49,22 @@ export default Effect.gen(function* () {
 	 */
 	const AcceptModelAdded = (Data: any) =>
 		Effect.gen(function* () {
-			// Step 1: Revive the DTOs into VS Code API objects.
 			const RevivedURI = TypeConverter.URI.ToAPI(Data.uri);
 
-			// Step 2: Instantiate the correct class, ExtHostDocumentData.
 			const DocumentData = new ExtHostDocumentData(
-				IPC.CreateProtocolAdapter() as IMessagePassingProtocol,
+				MainThreadDocumentsProxy,
 				RevivedURI,
 				Data.lines,
 				Data.eol,
 				Data.versionId,
 				Data.languageId,
 				Data.isDirty,
-				false, // isReadonly
+				Data.encoding,
 			);
 
-			// Step 3: Update the central document map.
 			yield* Ref.update(DocumentMap, (Map) =>
 				Map.set(DocumentData.document.uri.toString(), DocumentData),
 			);
-			// Step 4: Fire the public event with the public-facing `.document` property.
 			yield* OnDidOpenTextDocument.Fire(DocumentData.document);
 		});
 
@@ -92,8 +92,16 @@ export default Effect.gen(function* () {
 			const URIString = TypeConverter.URI.ToAPI(UriDTO).toString();
 			const DocumentData = (yield* Ref.get(DocumentMap)).get(URIString);
 			if (DocumentData) {
-				// The ExtHostDocumentData class has a method to apply changes from the host.
-				DocumentData.$acceptModelChanged(UriDTO, ChangeEventDTO);
+				// The `onEvents` method expects a single event object conforming to `IModelChangedEvent`.
+				const modelChangedEvent: IModelChangedEvent = {
+					changes: ChangeEventDTO.changes,
+					eol: ChangeEventDTO.eol,
+					versionId: ChangeEventDTO.versionId,
+					isUndoing: false, // Assume false if not provided
+					isRedoing: false, // Assume false if not provided
+				};
+				DocumentData.onEvents(modelChangedEvent);
+
 				yield* OnDidChangeTextDocument.Fire({
 					document: DocumentData.document,
 					contentChanges: ChangeEventDTO.changes.map(
@@ -110,7 +118,6 @@ export default Effect.gen(function* () {
 		});
 
 	// --- Register Handlers ---
-	// Register these handlers with the dispatcher for incoming messages from Mountain.
 	yield* Effect.sync(() =>
 		IPC.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
 			Effect.runPromise(AcceptModelAdded(Data)),
@@ -129,25 +136,19 @@ export default Effect.gen(function* () {
 
 	// --- Service Implementation ---
 	const DocumentImplementation: Service["Type"] = {
-		// `TextDocuments` must be a synchronous getter to match the vscode API.
 		get TextDocuments() {
 			const Map = Effect.runSync(Ref.get(DocumentMap));
-			// Return the public `.document` part.
 			return Array.from(Map.values()).map((data) => data.document);
 		},
-
 		onDidOpenTextDocument: OnDidOpenTextDocument.event,
 		onDidCloseTextDocument: OnDidCloseTextDocument.event,
 		onDidChangeTextDocument: OnDidChangeTextDocument.event,
 		onDidSaveTextDocument: OnDidSaveTextDocument.event,
-
 		GetDocument: (URI: Uri) =>
 			Ref.get(DocumentMap).pipe(
-				// Get the ExtHostDocumentData object...
 				Effect.map((Map) =>
 					Option.fromNullable(Map.get(URI.toString())),
 				),
-				// ...and extract its public `.document` property, wrapping in Option.
 				Effect.map(Option.map((data) => data.document)),
 			),
 	};

@@ -64,6 +64,12 @@ export default class IPCService extends Context.Tag("Service/IPC")<
 		readonly CreateProtocolAdapter: () => IMessagePassingProtocol;
 
 		/**
+		 * Creates a proxy object that can be used to invoke methods on the main thread.
+		 * @param Channel The RPC channel prefix for the proxy.
+		 */
+		readonly CreateProxy: <T extends object>(Channel: string) => T;
+
+		/**
 		 * Registers a handler for "invoke" calls coming *from* `Mountain`.
 		 * These are typically used for services `Cocoon` provides to `Mountain`.
 		 * @param Channel The channel/method name.
