@@ -28,7 +28,6 @@ import type {
 	WorkspaceFolder,
 } from "vscode";
 
-import type IPCService from "../IPC/Service.js";
 import type {
 	DebugProviderRegistrationError,
 	StartDebuggingError,
@@ -50,35 +49,25 @@ export default class DebugService extends Context.Tag("Service/Debug")<
 		readonly breakpoints: readonly Breakpoint[];
 
 		// --- Methods ---
+		// These methods should return an Effect that resolves to a Disposable.
+		// The IPCService dependency will be handled by the live implementation and should not be part of the service interface.
 		readonly RegisterDebugConfigurationProvider: (
 			DebugType: string,
 			Provider: DebugConfigurationProvider,
 			Extension: IExtensionDescription,
-		) => Effect.Effect<
-			Disposable,
-			DebugProviderRegistrationError,
-			IPCService
-		>;
+		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
 
 		readonly RegisterDebugAdapterDescriptorFactory: (
 			DebugType: string,
 			Factory: DebugAdapterDescriptorFactory,
 			Extension: IExtensionDescription,
-		) => Effect.Effect<
-			Disposable,
-			DebugProviderRegistrationError,
-			IPCService
-		>;
+		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
 
 		readonly RegisterDebugAdapterTrackerFactory: (
 			DebugType: string,
 			Factory: DebugAdapterTrackerFactory,
 			Extension: IExtensionDescription,
-		) => Effect.Effect<
-			Disposable,
-			DebugProviderRegistrationError,
-			IPCService
-		>;
+		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
 
 		readonly StartDebugging: (
 			Folder: WorkspaceFolder | undefined,

@@ -1,1 +1,1 @@
-import{Effect as e}from"effect";const c=o=>e.sync(()=>{o.close()}).pipe(e.tap(()=>e.logInfo("gRPC client connection closed.")));var r=c;export{r as default};
+import{Effect as e}from"effect";const n=t=>e.sync(()=>{t.close()}).pipe(e.tap(()=>e.logInfo("gRPC client connection closed.")));var c=n;export{c as default};

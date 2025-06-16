@@ -1,18 +1,1 @@
-import { Position as e, Selection as r } from "../../Type/ExtHostTypes.js";
-
-const i = (o) => ({
-		selectionStartLineNumber: o.start.line + 1,
-		selectionStartColumn: o.start.character + 1,
-		positionLineNumber: o.end.line + 1,
-		positionColumn: o.end.character + 1,
-	}),
-	c = (o) => {
-		const t = new e(
-				o.selectionStartLineNumber - 1,
-				o.selectionStartColumn - 1,
-			),
-			n = new e(o.positionLineNumber - 1, o.positionColumn - 1);
-		return new r(t, n);
-	};
-var m = { FromAPI: i, ToAPI: c };
-export { m as default };
+import{Position as e,Selection as r}from"../../Type/ExtHostTypes.js";const i=o=>({selectionStartLineNumber:o.start.line+1,selectionStartColumn:o.start.character+1,positionLineNumber:o.end.line+1,positionColumn:o.end.character+1}),c=o=>{const t=new e(o.selectionStartLineNumber-1,o.selectionStartColumn-1),n=new e(o.positionLineNumber-1,o.positionColumn-1);return new r(t,n)};var m={FromAPI:i,ToAPI:c};export{m as default};

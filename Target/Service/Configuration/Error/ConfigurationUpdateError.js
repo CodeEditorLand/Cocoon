@@ -1,1 +1,1 @@
-import{Data as r}from"effect";class n extends r.TaggedError("ConfigurationUpdateError"){constructor(e){super(e),this.message=`Failed to update configuration for key '${this.key}'.`}message}export{n as default};
+import{Data as e}from"effect";class o extends e.TaggedError("ConfigurationUpdateError"){constructor(r){super(r),this.message=`Failed to update configuration for key '${this.key}'.`}message}var t=o;export{o as ConfigurationUpdateError,t as default};

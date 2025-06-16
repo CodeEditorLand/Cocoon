@@ -1,1 +1,1 @@
-import{Effect as l}from"effect";import*as f from"../../../TypeConverter/Main.js";function a(n,t,r,o,e){return l.gen(function*(){const i=e?e._id??0:0;return(yield*n.SendRequest("$findFiles",[t,r,o,i])).map(f.URI.ToAPI)})}export{a as default};
+import{Effect as l}from"effect";import*as f from"../../../TypeConverter/Main.js";function c(e,n,t,o,r){return l.gen(function*(){const i=r?1:0;return(yield*e.SendRequest("$findFiles",[n,t,o,i])).map(f.URI.ToAPI)})}export{c as default};

@@ -1,6 +1,1 @@
-import { TextEdit as t } from "../../Type/ExtHostTypes.js";
-
-const i = (e) => ({ text: e.newText, range: e.range, forceMoveMarkers: !1 }),
-	o = (e) => new t(e.range, e.text ?? "");
-var d = { FromAPI: i, ToAPI: o };
-export { d as default };
+import{Range as o,TextEdit as n}from"../../Type/ExtHostTypes.js";import e from"./Range.js";function r(t){return new o(t.start.line,t.start.character,t.end.line,t.end.character)}const i=t=>({text:t.newText,range:e.FromAPI(t.range),forceMoveMarkers:!1}),a=t=>new n(r(e.ToAPI(t.range)),t.text??"");var c={FromAPI:i,ToAPI:a};export{c as default};

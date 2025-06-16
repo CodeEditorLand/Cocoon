@@ -15,6 +15,7 @@ import type { IExtensionDescription } from "vs/platform/extensions/common/extens
 import type * as VSCode from "vscode";
 
 import DebugService from "../../Service/Debug/Service.js";
+import IPCService from "../../Service/IPC/Service.js";
 
 /**
  * Creates an Effect that constructs the `vscode.debug` namespace object.
@@ -30,9 +31,10 @@ import DebugService from "../../Service/Debug/Service.js";
 const CreateDebugNamespace = (
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
-): Effect.Effect<typeof VSCode.debug, never, DebugService> => {
+): Effect.Effect<typeof VSCode.debug, never, DebugService | IPCService> => {
 	return Effect.gen(function* () {
 		const Debug = yield* DebugService;
+		// const IPC = yield* IPCService;
 
 		// The vscode.debug namespace is extensive. We implement the core parts
 		// and leave stubs for the less common ones for this example.
@@ -62,23 +64,32 @@ const CreateDebugNamespace = (
 			onDidChangeBreakpoints: AsEvent(Debug.onDidChangeBreakpoints),
 
 			// --- Methods ---
+			// The vscode API expects these methods to be synchronous and return a Disposable.
+			// The underlying service returns an Effect that resolves to a Disposable.
+			// We must run this effect synchronously at the boundary.
 			registerDebugConfigurationProvider: (debugType, provider) =>
-				Debug.RegisterDebugConfigurationProvider(
-					debugType,
-					provider,
-					Extension,
+				Effect.runSync(
+					Debug.RegisterDebugConfigurationProvider(
+						debugType,
+						provider,
+						Extension,
+					),
 				),
 			registerDebugAdapterDescriptorFactory: (debugType, factory) =>
-				Debug.RegisterDebugAdapterDescriptorFactory(
-					debugType,
-					factory,
-					Extension,
+				Effect.runSync(
+					Debug.RegisterDebugAdapterDescriptorFactory(
+						debugType,
+						factory,
+						Extension,
+					),
 				),
 			registerDebugAdapterTrackerFactory: (debugType, factory) =>
-				Debug.RegisterDebugAdapterTrackerFactory(
-					debugType,
-					factory,
-					Extension,
+				Effect.runSync(
+					Debug.RegisterDebugAdapterTrackerFactory(
+						debugType,
+						factory,
+						Extension,
+					),
 				),
 			startDebugging: (folder, nameOrConfig, options) =>
 				Effect.runPromise(

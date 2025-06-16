@@ -30,44 +30,56 @@ export default Effect.gen(function* () {
 	const FsInfo = yield* FileSystemInformationService;
 	const IPC = yield* IPCService;
 
+	// This implementation matches the `vscode.FileSystem` interface from `vscode.d.ts`
 	const FileSystemImplementation: FileSystem = {
-		stat: (Uri): Promise<FileStat> =>
-			Effect.runPromise(CreateStatEffect(Uri, IPC)),
-		readDirectory: (Uri) =>
+		stat: (uri: Uri): Promise<FileStat> =>
+			Effect.runPromise(CreateStatEffect(uri, IPC)),
+		readDirectory: (uri: Uri) =>
 			Promise.reject(
 				new VscFileSystemError(
-					`readDirectory not implemented for ${Uri}`,
+					`readDirectory not implemented for ${uri}`,
 				),
 			),
-		createDirectory: (Uri) =>
+		createDirectory: (uri: Uri) =>
 			Promise.reject(
 				new VscFileSystemError(
-					`createDirectory not implemented for ${Uri}`,
+					`createDirectory not implemented for ${uri}`,
 				),
 			),
-		readFile: (Uri) =>
+		readFile: (uri: Uri) =>
 			Promise.reject(
-				new VscFileSystemError(`readFile not implemented for ${Uri}`),
+				new VscFileSystemError(`readFile not implemented for ${uri}`),
 			),
-		writeFile: (Uri: Uri, _Content: Uint8Array) =>
+		writeFile: (uri: Uri, _Content: Uint8Array) =>
 			Promise.reject(
-				new VscFileSystemError(`writeFile not implemented for ${Uri}`),
+				new VscFileSystemError(`writeFile not implemented for ${uri}`),
 			),
-		delete: (Uri, _Options) =>
+		delete: (uri: Uri, _Options) =>
 			Promise.reject(
-				new VscFileSystemError(`delete not implemented for ${Uri}`),
+				new VscFileSystemError(`delete not implemented for ${uri}`),
 			),
-		rename: (Source, _Target, _Options) =>
+		rename: (source: Uri, _Target: Uri, _Options) =>
 			Promise.reject(
-				new VscFileSystemError(`rename not implemented for ${Source}`),
+				new VscFileSystemError(`rename not implemented for ${source}`),
 			),
-		copy: (Source, _Target, _Options) =>
+		copy: (source: Uri, _Target: Uri, _Options) =>
 			Promise.reject(
-				new VscFileSystemError(`copy not implemented for ${Source}`),
+				new VscFileSystemError(`copy not implemented for ${source}`),
 			),
-		isWritableFileSystem: FsInfo.isWritableFileSystem,
+		isWritableFileSystem: (scheme: string): boolean | undefined => {
+			// The API contract is synchronous boolean|undefined, not a Thenable.
+			// We must run the effect from the service synchronously.
+			const isWritableEffect = FsInfo.isWritableFileSystem(scheme);
+			return Effect.runSync(isWritableEffect);
+		},
+	};
+
+	// Your custom service type appears to be a superset of vscode.FileSystem,
+	// including the onDidChangeFile event.
+	const ServiceImplementation: Service["Type"] = {
+		...FileSystemImplementation,
 		onDidChangeFile: FsInfo.onDidChangeFile,
 	};
 
-	return FileSystemImplementation as Service["Type"];
+	return ServiceImplementation;
 });

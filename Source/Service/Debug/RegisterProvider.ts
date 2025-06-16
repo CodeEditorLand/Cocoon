@@ -11,10 +11,9 @@
  * (e.g., `DebugConfigurationProvider`, `DebugAdapterDescriptorFactory`).
  */
 
-import { Effect, Ref } from "effect";
+import { Effect, Layer, Ref } from "effect";
 import { Disposable } from "vscode";
 
-import { Live as IPCLive } from "../IPC.js";
 import IPCService from "../IPC/Service.js";
 import { DebugProviderRegistrationError } from "./Error.js";
 
@@ -60,13 +59,15 @@ const RegisterProvider = <T>(
 					Handle,
 				]);
 			});
-			// Provide a dummy IPC layer for the detached effect.
-			// This is a temporary solution for the detached Effect.
-			const TempIPCLayer = IPCLive({
-				MountainAddress: "",
-				CocoonAddress: "",
-			});
-			Effect.runFork(Effect.provide(CleanupEffect, TempIPCLayer));
+			// When a disposable is created, the effect inside it runs detached from the main scope.
+			// It needs its own runtime and layer. We can't get the IPCConfiguration here easily,
+			// so we fork the effect and ignore failures for this cleanup logic.
+			// A more robust solution might involve a dedicated "cleanup" service.
+			Effect.runFork(
+				CleanupEffect.pipe(
+					Effect.provide(Layer.succeed(IPCService, IPC)),
+				),
+			);
 		});
 	});
 };
