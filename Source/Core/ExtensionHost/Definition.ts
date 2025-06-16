@@ -11,7 +11,10 @@ import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
-import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+import {
+	ExtensionDescriptionRegistry,
+	type IActivationEventsReader,
+} from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { ExtensionContext } from "vscode";
 
 import InitDataService from "../../Service/InitData/Service.js";
@@ -28,32 +31,29 @@ import type { ActivatedExtension } from "./State.js";
  * @default
  */
 export default Effect.gen(function* () {
-	// --- Service Dependencies ---
 	const Log = yield* LogService;
 	const IPC = yield* IPCService;
 	const InitData = yield* InitDataService;
 	const Telemetry = yield* TelemetryService;
 
-	// --- State Management ---
+	const ActivationEventsReader: IActivationEventsReader = {
+		readActivationEvents: (desc) =>
+			ImplicitActivationEvents.readActivationEvents(desc),
+	};
+
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
-		ImplicitActivationEvents,
+		ActivationEventsReader,
 		InitData.extensions,
 	);
 	const ActivatedExtensions = yield* Ref.make(
 		new Map<string, ActivatedExtension>(),
 	);
 
-	/**
-	 * Deactivates a single extension, running its cleanup logic.
-	 */
 	const Deactivate = (Extension: ActivatedExtension) =>
 		Effect.gen(function* () {
-			// Step 1: Log the deactivation event.
 			yield* Log.Info(
 				`Deactivating extension '${Extension.ID.value}'...`,
 			);
-
-			// Step 2: Dispose of all subscriptions associated with the extension.
 			for (const Subscription of Extension.Subscriptions) {
 				yield* Effect.try({
 					try: () => Subscription.dispose(),
@@ -65,7 +65,6 @@ export default Effect.gen(function* () {
 				});
 			}
 
-			// Step 3: Call the extension's `deactivate` function, if it exists.
 			const DeactivateFunction = Extension.Module.deactivate;
 			if (typeof DeactivateFunction === "function") {
 				yield* Effect.tryPromise({
@@ -78,20 +77,15 @@ export default Effect.gen(function* () {
 			}
 		});
 
-	/**
-	 * Activates a single extension, loading its module and running its `activate` function.
-	 */
 	const DoActivateExtension = (
 		Description: IExtensionDescription,
 		Reason: ExtensionActivationReason,
 	) =>
 		Effect.gen(function* () {
-			// Step 1: Log the activation attempt.
 			yield* Log.Info(
 				`Activating extension '${Description.identifier.value}' (Reason: ${Reason.activationEvent}).`,
 			);
 
-			// Step 2: Dynamically import the extension module.
 			const Module = yield* Effect.tryPromise({
 				try: () =>
 					import(URI.revive(Description.extensionLocation).fsPath),
@@ -101,30 +95,28 @@ export default Effect.gen(function* () {
 					),
 			});
 
-			// Step 3: Create the extension context object passed to the activate function.
 			const Context: ExtensionContext = {
 				subscriptions: [],
 				extensionPath: Description.extensionLocation.fsPath,
 				extensionUri: URI.revive(Description.extensionLocation),
-				storageUri: URI.parse("invalid:/storage"),
-				globalStorageUri: URI.parse("invalid:/globalstorage"),
-				logUri: URI.parse("invalid:/log"),
+				storageUri: URI.parse("file:///extension-storage"), // Stub
+				globalStorageUri: URI.parse("file:///global-storage"), // Stub
+				logUri: URI.parse("file:///logs"), // Stub
 				extensionMode: 1, // Production
 				secrets: undefined as any,
-				storagePath: "",
-				globalStoragePath: "",
-				logPath: "",
-				extension: undefined as any,
-				environmentVariableCollection: undefined as any,
+				storagePath: "/extension-storage", // Stub
+				globalStoragePath: "/global-storage", // Stub
+				logPath: "/logs", // Stub
+				extension: undefined as any, // Will be filled later
+				environmentVariableCollection: undefined as any, // Stub
 				asAbsolutePath: (path) => path,
-				extensionRuntime: 2, // NodeJS
-				messagePassingProtocol: undefined as any,
-				workspaceState: undefined as any,
-				globalState: undefined as any,
-				languageModelAccessInformation: undefined as any,
+				languageModelAccessInformation: undefined as any, // Stub
+				workspaceState: undefined as any, // Stub Memento
+				globalState: undefined as any, // Stub Memento
+				extensionRuntime: 2, // NodeJS - from proposed API
+				messagePassingProtocol: undefined as any, // from proposed API
 			};
 
-			// Step 4: Execute the extension's activate function if it exists.
 			const ActivationFunction = Module.activate as Function | undefined;
 			const Exports = ActivationFunction
 				? yield* Effect.tryPromise({
@@ -139,7 +131,6 @@ export default Effect.gen(function* () {
 					})
 				: Module;
 
-			// Step 5: Store the successfully activated extension's state.
 			const Activated: ActivatedExtension = {
 				ID: Description.identifier,
 				Module,
@@ -152,80 +143,58 @@ export default Effect.gen(function* () {
 			yield* Ref.update(ActivatedExtensions, (Map) =>
 				Map.set(Description.identifier.value, Activated),
 			);
-
-			// Step 6: Log and notify the host of successful activation.
 			yield* Log.Info(
 				`Successfully activated extension '${Description.identifier.value}'.`,
 			);
-
 			yield* IPC.SendNotification("$onDidActivateExtension", [
 				Description.identifier,
 			]);
 		}).pipe(
-			// This catch block handles any failure during the activation process.
 			Effect.catchAll((ErrorValue) =>
 				Effect.gen(function* () {
-					// Step 1: Record the activation failure state.
+					const ErrorToReport =
+						ErrorValue instanceof globalThis.Error
+							? ErrorValue
+							: new Error(String(ErrorValue));
 					const Activated: ActivatedExtension = {
 						ID: Description.identifier,
 						Module: {},
 						Exports: undefined,
 						Subscriptions: [],
 						ActivationFailed: true,
-						ActivationError:
-							ErrorValue instanceof globalThis.Error
-								? ErrorValue
-								: new Error(String(ErrorValue)),
+						ActivationError: ErrorToReport,
 					};
-
 					yield* Ref.update(ActivatedExtensions, (Map) =>
 						Map.set(Description.identifier.value, Activated),
 					);
-
-					// Step 2: Notify the host and telemetry services of the error.
 					yield* IPC.SendNotification("$onExtensionActivationError", [
 						Description.identifier,
 						{
-							name:
-								ErrorValue instanceof globalThis.Error
-									? ErrorValue.name
-									: "UnknownError",
-							message:
-								ErrorValue instanceof globalThis.Error
-									? ErrorValue.message
-									: String(ErrorValue),
-							stack:
-								ErrorValue instanceof globalThis.Error
-									? ErrorValue.stack
-									: undefined,
+							name: ErrorToReport.name,
+							message: ErrorToReport.message,
+							stack: ErrorToReport.stack,
 						},
 					]);
-
 					yield* Telemetry.onExtensionError(
 						Description.identifier,
-						ErrorValue,
+						ErrorToReport,
 					);
 				}),
 			),
 		);
 
-	/**
-	 * The public method to activate an extension by its identifier.
-	 */
 	const ActivateById = (
 		ID: ExtensionIdentifier,
 		Reason: ExtensionActivationReason,
 	): Effect.Effect<void, Error> =>
 		Effect.gen(function* () {
-			// Step 1: Check if the extension is already activated.
-			const IsAlreadyActivated = yield* Ref.get(ActivatedExtensions).pipe(
-				Effect.map((Map) => Map.has(ID.value)),
-			);
+			// This can now be synchronous because Ref.get is synchronous.
+			const IsAlreadyActivated = Effect.runSync(
+				Ref.get(ActivatedExtensions),
+			).has(ID.value);
 			if (IsAlreadyActivated) {
 				return;
 			}
-
-			// Step 2: Get the extension description from the registry.
 			const MaybeDescription =
 				ExtensionRegistry.getExtensionDescription(ID);
 			if (!MaybeDescription) {
@@ -233,15 +202,11 @@ export default Effect.gen(function* () {
 					`Cannot activate unknown extension '${ID.value}'.`,
 				);
 			}
-
-			// Step 3: Ensure the extension has a 'main' entry point.
 			if (!MaybeDescription.main) {
 				return yield* Log.Warn(
 					`Cannot activate extension '${ID.value}' because it has no 'main' entry point.`,
 				);
 			}
-
-			// Step 4: Proceed with the activation logic.
 			yield* DoActivateExtension(MaybeDescription, Reason);
 		}).pipe(
 			Effect.mapError((ErrorValue) =>
@@ -251,21 +216,18 @@ export default Effect.gen(function* () {
 			),
 		);
 
-	/**
-	 * The live implementation of the ExtensionHost service.
-	 */
 	const ServiceImplementation: Service["Type"] = {
 		ActivateById,
 		GetExtensionDescription: (ID) =>
-			Effect.succeed(ExtensionRegistry.getExtensionDescription(ID)),
-		GetExtensionExports: (ID) =>
-			Ref.get(ActivatedExtensions).pipe(
-				Effect.map((Map) => Map.get(ID.value)?.Exports),
-			),
-		IsActivated: (ID) =>
-			Ref.get(ActivatedExtensions).pipe(
-				Effect.map((Map) => Map.has(ID.value)),
-			),
+			ExtensionRegistry.getExtensionDescription(ID),
+		GetExtensionExports: (ID) => {
+			const Map = Effect.runSync(Ref.get(ActivatedExtensions));
+			return Map.get(ID.value)?.Exports;
+		},
+		IsActivated: (ID) => {
+			const Map = Effect.runSync(Ref.get(ActivatedExtensions));
+			return Map.has(ID.value);
+		},
 		DeactivateAll: () =>
 			Ref.get(ActivatedExtensions).pipe(
 				Effect.flatMap((Map) =>

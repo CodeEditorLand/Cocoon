@@ -4,7 +4,11 @@
  */
 
 import { Effect, Ref } from "effect";
-import { ExtensionDescriptionRegistry } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
+import {
+	ExtensionDescriptionRegistry,
+	type IActivationEventsReader,
+} from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { Extension } from "vscode";
 
 import ExtensionHostService from "../../Core/ExtensionHost/Service.js";
@@ -13,34 +17,39 @@ import InitDataService from "../InitData/Service.js";
 import CreateAPIObject from "./CreateAPIObject.js";
 import type Service from "./Service.js";
 
+/**
+ * An Effect that builds the live implementation of the Extension service,
+ * which corresponds to the `vscode.extensions` API namespace.
+ */
 export default Effect.gen(function* () {
+	// --- Service Dependencies ---
 	const ExtensionHost = yield* ExtensionHostService;
 	const InitData = yield* InitDataService;
 
+	// --- State and Events ---
 	const { event: OnDidChangeEvent } = CreateEventStream<void>();
 	const AllExtensionsCache = yield* Ref.make<
 		readonly Extension<any>[] | undefined
 	>(undefined);
 
+	// Create a reader that adheres to the IActivationEventsReader interface.
+	const ActivationEventsReader: IActivationEventsReader = {
+		readActivationEvents: (description) =>
+			ImplicitActivationEvents.readActivationEvents(description),
+	};
+
+	// Create a registry of all known extension descriptions from the init data.
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
+		ActivationEventsReader,
 		InitData.extensions,
 	);
-
-	// In a real implementation, this would be driven by an event from the ExtensionHost
-	// when the registry changes.
-	// Effect.runFork(Stream.runForEach(ExtensionHost.OnDidRegisterExtensions, () =>
-	//   Ref.set(AllExtensionsCache, undefined).pipe(
-	//      Effect.flatMap(() => FireOnDidChange())
-	//   )
-	// ));
 
 	const ServiceImplementation: Service["Type"] = {
 		onDidChange: OnDidChangeEvent,
 
 		getExtension: <T>(extensionId: string) => {
-			const description = Effect.runSync(
-				ExtensionHost.GetExtensionDescription(extensionId),
-			);
+			const description =
+				ExtensionRegistry.getExtensionDescription(extensionId);
 			return description
 				? CreateAPIObject<T>(description, ExtensionHost)
 				: undefined;
@@ -74,7 +83,7 @@ export default Effect.gen(function* () {
 					new Error(`Extension '${extensionId}' not found.`),
 				);
 			}
-			return extension.activate().then(() => extension);
+			return Promise.resolve(extension.activate()).then(() => extension);
 		},
 	};
 

@@ -22,32 +22,27 @@ const CreateAPIObject = <T>(
 	ExtensionHost: ExtensionHostService["Type"],
 ): Extension<T> => {
 	const ActivateEffect = Effect.gen(function* () {
-		// Step 1: Call the activation method on the host service.
 		yield* ExtensionHost.ActivateById(Description.identifier, {
 			startup: false,
 			extensionId: Description.identifier,
 			activationEvent: "api",
 		} as any);
-
-		// Step 2: Retrieve the exports after activation.
-		const Exports = yield* ExtensionHost.GetExtensionExports(
+		const Exports = ExtensionHost.GetExtensionExports(
 			Description.identifier,
 		);
 		return Exports as T;
 	});
 
-	/**
-	 * Determines the vscode.ExtensionKind based on the manifest's `extensionKind` property.
-	 */
 	const GetExtensionKind = (): ExtensionKind => {
 		const Kinds = Array.isArray(Description.extensionKind)
 			? Description.extensionKind
-			: [Description.extensionKind];
+			: Description.extensionKind
+				? [Description.extensionKind]
+				: [];
 
 		if (Kinds.includes("workspace")) {
 			return ExtensionKind.Workspace;
 		}
-		// Default to UI kind if not 'workspace'. The 'web' kind is not applicable here.
 		return ExtensionKind.UI;
 	};
 
@@ -56,7 +51,6 @@ const CreateAPIObject = <T>(
 		extensionUri: Description.extensionLocation,
 		extensionPath: Description.extensionLocation.fsPath,
 		get isActive() {
-			// This now synchronously calls the corrected IsActivated method.
 			return ExtensionHost.IsActivated(Description.identifier);
 		},
 		get packageJSON() {
@@ -64,11 +58,11 @@ const CreateAPIObject = <T>(
 		},
 		extensionKind: GetExtensionKind(),
 		get exports() {
-			// This synchronously retrieves the cached exports.
 			return ExtensionHost.GetExtensionExports(Description.identifier);
 		},
-		// activate() is the only async method, returning a promise.
 		activate: () => Effect.runPromise(ActivateEffect),
+		// Added missing property required by the interface
+		isFromDifferentExtensionHost: false,
 	};
 
 	return Object.freeze(ExtensionAPIObject);

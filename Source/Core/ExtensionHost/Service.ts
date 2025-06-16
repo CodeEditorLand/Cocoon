@@ -25,48 +25,15 @@ export default class ExtensionHostService extends Context.Tag(
 )<
 	ExtensionHostService,
 	{
-		/**
-		 * Activates an extension by its identifier.
-		 * @param ID The identifier of the extension to activate.
-		 * @param Reason The reason for activation (e.g., startup, event).
-		 * @returns An `Effect` that completes when activation is attempted.
-		 */
 		readonly ActivateById: (
 			ID: ExtensionIdentifier,
 			Reason: ExtensionActivationReason,
 		) => Effect.Effect<void, Error>;
-
-		/**
-		 * Gets the full description for a loaded extension.
-		 * @param ID The identifier of the extension.
-		 * @returns An `Effect` that resolves with the description or `undefined`.
-		 */
 		readonly GetExtensionDescription: (
 			ID: string | ExtensionIdentifier,
-		) => Effect.Effect<IExtensionDescription | undefined, never>;
-
-		/**
-		 * Gets the exports of an activated extension.
-		 * @param ID The identifier of the extension.
-		 * @returns The `exports` object from the extension's module, or `undefined`.
-		 */
-		readonly GetExtensionExports: (
-			ID: ExtensionIdentifier,
-		) => Effect.Effect<any>;
-
-		/**
-		 * Checks if an extension is currently activated.
-		 * @param ID The identifier of the extension.
-		 * @returns `true` if the extension is active, `false` otherwise.
-		 */
-		readonly IsActivated: (
-			ID: ExtensionIdentifier,
-		) => Effect.Effect<boolean>;
-
-		/**
-		 * Deactivates all currently activated extensions.
-		 * @returns An `Effect` that completes when all deactivation logic has run.
-		 */
+		) => IExtensionDescription | undefined;
+		readonly GetExtensionExports: (ID: ExtensionIdentifier) => any;
+		readonly IsActivated: (ID: ExtensionIdentifier) => boolean;
 		readonly DeactivateAll: () => Effect.Effect<void, never>;
 	}
 >() {}
