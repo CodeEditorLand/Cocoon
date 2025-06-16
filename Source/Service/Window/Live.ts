@@ -20,10 +20,10 @@ import Service from "./Service.js";
 
 /**
  * The live implementation Layer for the Window service.
- * @param Config The IPC Configuration.
+ * @param Configuration The IPC Configuration.
  */
-export default function (Config: IPCConfiguration) {
+export default function (Configuration: IPCConfiguration) {
 	return Layer.effect(Service, Definition).pipe(
-		Layer.provide(Layer.merge(IPCLive(Config), WorkSpaceLive(Config))),
+		Layer.provide(Layer.merge(IPCLive(Configuration), WorkSpaceLive(Configuration))),
 	);
 }

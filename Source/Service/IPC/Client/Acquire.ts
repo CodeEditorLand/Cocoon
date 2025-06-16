@@ -108,7 +108,7 @@ const WaitForClientReady = (
 export default Effect.acquireRelease(
 	Effect.gen(function* () {
 		// Step 1: Get the IPC configuration from the context.
-		const Config = yield* IPCConfigurationService;
+		const Configuration = yield* IPCConfigurationService;
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
 		// Step 2: Load the .proto definition and create the gRPC client.
@@ -116,13 +116,13 @@ export default Effect.acquireRelease(
 		const GrpcObject = GRPC.loadPackageDefinition(Definition);
 		const Client = yield* CreateClientInstance(
 			GrpcObject,
-			Config.MountainAddress,
+			Configuration.MountainAddress,
 		);
 
 		// Step 3: Wait for the client to connect to the server.
 		yield* WaitForClientReady(Client);
 		yield* Effect.logInfo(
-			`gRPC client connected to Mountain at ${Config.MountainAddress}.`,
+			`gRPC client connected to Mountain at ${Configuration.MountainAddress}.`,
 		);
 
 		// Step 4: Return the ready client.

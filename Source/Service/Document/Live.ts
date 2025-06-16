@@ -21,11 +21,11 @@ import Service from "./Service.js";
  * The live implementation Layer for the Document service.
  * It depends on the IPC service to receive updates from the host.
  * This is a factory that takes IPC configuration.
- * @param Config The IPC configuration.
+ * @param Configuration The IPC configuration.
  */
-const Live = (Config: IPCConfiguration) => {
+const Live = (Configuration: IPCConfiguration) => {
 	return Layer.effect(Service, Definition).pipe(
-		Layer.provide(IPCLive(Config)),
+		Layer.provide(IPCLive(Configuration)),
 	);
 };
 

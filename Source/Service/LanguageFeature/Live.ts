@@ -25,16 +25,16 @@ import Service from "./Service.js";
  * It has many core dependencies for handling RPC calls, including IPC for
  * transport, Document for accessing document state, Cancellation for handling
  * cancellation signals, and Command for converting command objects.
- * @param Config The IPC Configuration.
+ * @param Configuration The IPC Configuration.
  */
-const Live = (Config: IPCConfiguration) =>
+const Live = (Configuration: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.mergeAll(
-				IPCLive(Config),
-				DocumentLive(Config),
+				IPCLive(Configuration),
+				DocumentLive(Configuration),
 				CancellationLive,
-				CommandLive(Config),
+				CommandLive(Configuration),
 			),
 		),
 	);

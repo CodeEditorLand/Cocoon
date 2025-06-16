@@ -28,15 +28,15 @@ export { default as Service } from "./Command/Service.js";
 /**
  * The live implementation Layer for the Command service.
  * It depends on the IPC, Telemetry, and WorkSpace services.
- * @param Config The IPC configuration.
+ * @param Configuration The IPC configuration.
  */
-export const Live = (Config: IPCConfiguration) =>
+export const Live = (Configuration: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.mergeAll(
-				IPCLive(Config),
-				TelemetryLive(Config),
-				WorkSpaceLive(Config),
+				IPCLive(Configuration),
+				TelemetryLive(Configuration),
+				WorkSpaceLive(Configuration),
 			),
 		),
 	);

@@ -58,26 +58,31 @@ const InitializeAfterHandshake = Effect.gen(function* (G) {
  */
 const Main = Effect.gen(function* (G) {
 	// A barrier to pause the main thread until the host sends init data.
-	// The error channel holds the entire Cause of failure for detailed reporting.
-	const InitializationBarrier = yield* G(
-		Deferred.make<void, Cause.Cause<any>>(),
-	);
+	// The error channel now holds a generic `Error` for simplicity.
+	const InitializationBarrier = yield* G(Deferred.make<void, Error>());
 	const IPC = yield* G(IPCService);
 
 	// Step 1: Register the handler that will be invoked by the host.
 	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
 		(InitializationData: IExtensionHostInitData) => {
-			// Step 2: Once init data is received, create the final application layer.
+			// Step 2: Create a layer for the application services, which depends on runtime config.
+			const servicesLayer = AllServiceLayer(ApplicationConfiguration);
+
+			// Step 3: Create a layer for the core services.
+			const coreLayer = CoreServiceLayer;
+
+			// Step 4: Create a layer from the dynamic init data.
+			const initDataLayer = InitDataLayer(InitializationData);
+
+			// Step 5: Compose all layers together.
+			// `initDataLayer` provides the `InitDataService` that the other layers require.
 			const CompleteApplicationLayer = Layer.provide(
-				Layer.mergeAll(
-					CoreServiceLayer,
-					AllServiceLayer(ApplicationConfiguration),
-				),
-				InitDataLayer(InitializationData),
+				Layer.merge(coreLayer, servicesLayer),
+				initDataLayer,
 			);
 
-			// Step 3: Define the effect that runs the rest of the application logic.
+			// Step 6: Define the effect that runs the rest of the application logic.
 			const HandlerEffect = Effect.gen(function* (G) {
 				yield* G(
 					Effect.logInfo(
@@ -89,16 +94,14 @@ const Main = Effect.gen(function* (G) {
 				yield* G(InitializeAfterHandshake);
 			});
 
-			// Step 4: Create the final runnable effect by providing all dependencies.
-			// This runnable will either complete successfully or fail with a Cause.
-			const Runnable = Effect.provide(
-				HandlerEffect,
-				CompleteApplicationLayer,
-			).pipe(Effect.scoped);
+			// Step 7: Create the final runnable by providing the complete layer.
+			// This results in an Effect with no requirements (R = never).
+			const Runnable = HandlerEffect.pipe(
+				Effect.provide(CompleteApplicationLayer),
+				Effect.scoped,
+			);
 
-			// Step 5: Execute the runnable.
-			// We use runPromiseExit to handle both success and failure cases explicitly.
-			// This avoids the complex type inference issues of catchAllCause within this context.
+			// Step 8: Execute the runnable. Since its requirements are satisfied, we can use the default runtime.
 			const PromiseResult = Effect.runPromiseExit(Runnable).then(
 				(exit) => {
 					if (Exit.isSuccess(exit)) {
@@ -110,11 +113,11 @@ const Main = Effect.gen(function* (G) {
 							),
 						);
 					} else {
-						// On failure, fail the deferred with the entire cause.
+						// On failure, fail the deferred with a user-friendly error message.
 						Effect.runFork(
-							Deferred.failCause(
+							Deferred.fail(
 								InitializationBarrier,
-								exit.cause,
+								new Error(Cause.pretty(exit.cause)),
 							),
 						);
 					}
@@ -125,18 +128,18 @@ const Main = Effect.gen(function* (G) {
 		},
 	);
 
-	// Step 6: Send the initial handshake and wait for init data.
+	// Step 9: Send the initial handshake and wait for init data.
 	yield* G(IPC.SendNotification("$initialHandshake", []));
 	yield* G(Effect.logInfo("Cocoon is ready. Sent handshake to Mountain."));
 
-	// Step 7: Wait here until the 'initExtensionHost' handler signals completion or failure.
+	// Step 10: Wait here until the 'initExtensionHost' handler signals completion or failure.
 	yield* G(Deferred.await(InitializationBarrier));
 	yield* G(Effect.logInfo("Cocoon is fully initialized and operational."));
 
-	// Step 8: Keep the process alive indefinitely.
+	// Step 11: Keep the process alive indefinitely.
 	yield* G(Effect.never);
 }).pipe(
-	// Step 9: Top-level error handler for any uncaught failures.
+	// Step 12: Top-level error handler for any uncaught failures.
 	Effect.catchAllCause((cause) =>
 		Effect.logFatal("Cocoon main process failed.", cause),
 	),

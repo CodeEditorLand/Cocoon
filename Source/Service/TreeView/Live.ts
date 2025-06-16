@@ -21,11 +21,11 @@ import Service from "./Service.js";
 /**
  * The live implementation Layer for the TreeView service.
  * It depends on the IPC and Command services.
- * @param Config The IPC configuration.
+ * @param Configuration The IPC configuration.
  */
-const Live = (Config: IPCConfiguration) =>
+const Live = (Configuration: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
-		Layer.provide(Layer.merge(IPCLive(Config), CommandLive(Config))),
+		Layer.provide(Layer.merge(IPCLive(Configuration), CommandLive(Configuration))),
 	);
 
 export default Live;

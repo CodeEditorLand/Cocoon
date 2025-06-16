@@ -22,9 +22,9 @@ import Service from "./Service.js";
  * The live implementation Layer for the Configuration service.
  * It depends on the IPC and Log services.
  */
-const Live = (Config: IPCConfiguration) =>
+const Live = (Configuration: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
-		Layer.provide(Layer.merge(IPCLive(Config), LogLive)),
+		Layer.provide(Layer.merge(IPCLive(Configuration), LogLive)),
 	);
 
 export default Live;

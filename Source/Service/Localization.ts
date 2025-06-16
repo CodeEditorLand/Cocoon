@@ -25,5 +25,5 @@ export { default as Service } from "./Localization/Service.js";
  * The live implementation Layer for the Localization service.
  * It depends on the IPC and InitData services.
  */
-export const Live = (Config: IPCConfiguration) =>
-	Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config)));
+export const Live = (Configuration: IPCConfiguration) =>
+	Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Configuration)));

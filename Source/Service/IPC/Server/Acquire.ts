@@ -96,7 +96,7 @@ const StartServer = (
 export default Effect.acquireRelease(
 	Effect.gen(function* () {
 		// Step 1: Get IPC configuration and dispatcher service from the context.
-		const Config = yield* IPCConfigurationService;
+		const Configuration = yield* IPCConfigurationService;
 		const Dispatcher = yield* DispatcherService;
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
@@ -113,9 +113,9 @@ export default Effect.acquireRelease(
 		Server.addService(ServiceDefinition, Implementation);
 
 		// Step 4: Start the server and log its status.
-		yield* StartServer(Server, Config.CocoonAddress);
+		yield* StartServer(Server, Configuration.CocoonAddress);
 		yield* Effect.logInfo(
-			`Cocoon gRPC server listening at ${Config.CocoonAddress}.`,
+			`Cocoon gRPC server listening at ${Configuration.CocoonAddress}.`,
 		);
 
 		// Step 5: Return the running server instance.

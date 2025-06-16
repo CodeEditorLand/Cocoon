@@ -20,9 +20,9 @@ import Service from "./Service.js";
 /**
  * The live implementation Layer for the Tasks service.
  * It depends on the IPC service for communication.
- * @param Config The IPC configuration.
+ * @param Configuration The IPC configuration.
  */
-const Live = (Config: IPCConfiguration) =>
-	Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config)));
+const Live = (Configuration: IPCConfiguration) =>
+	Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Configuration)));
 
 export default Live;

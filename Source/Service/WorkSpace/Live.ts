@@ -22,16 +22,16 @@ import Service from "./Service.js";
 
 /**
  * The live implementation Layer for the WorkSpace service.
- * @param Config The IPC Configuration.
+ * @param Configuration The IPC Configuration.
  */
-export default function (Config: IPCConfiguration) {
+export default function (Configuration: IPCConfiguration) {
 	return Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.mergeAll(
-				IPCLive(Config),
-				DocumentLive(Config),
-				FileSystemLive(Config),
-				ConfigurationLive(Config),
+				IPCLive(Configuration),
+				DocumentLive(Configuration),
+				FileSystemLive(Configuration),
+				ConfigurationLive(Configuration),
 			),
 		),
 	);

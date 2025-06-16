@@ -26,12 +26,12 @@ export { default as Service } from "./Environment/Service.js";
  * The live implementation Layer for the Environment service.
  * It depends on IPC and Clipboard services.
  * This is a factory that takes IPC configuration.
- * @param Config The IPC configuration.
+ * @param Configuration The IPC configuration.
  */
-export const Live = (Config: IPCConfiguration) => {
+export const Live = (Configuration: IPCConfiguration) => {
 	// Create instances of the dependency layers by calling their factory functions.
-	const IpcLayer = IPCLive(Config);
-	const ClipboardLayer = ClipboardLive(Config);
+	const IpcLayer = IPCLive(Configuration);
+	const ClipboardLayer = ClipboardLive(Configuration);
 
 	// The Definition for the Environment service requires IPC and Clipboard services.
 	// We provide them here.

@@ -5,8 +5,6 @@
  * Dependency: ./Service/APIDeprecation.js, ./Service/Authentication.js, ./Service/Cancellation.js, ./Service/Clipboard.js, ./Service/Command.js, ./Service/Configuration.js, ./Service/Debug.js, ./Service/Diagnostic.js, ./Service/Dialog.js, ./Service/Document.js, ./Service/Environment.js, ./Service/Extension.js, ./Service/FileSystem.js, ./Service/FileSystemInformation.js, ./Service/IPC.js, ./Service/IPC/Configuration.js, ./Service/LanguageFeature.js, ./Service/Localization.js, ./Service/Log.js, ./Service/Message.js, ./Service/ProposedAPI.js, ./Service/QuickInput.js, ./Service/SecretStorage.js, ./Service/StatusBar.js, ./Service/Storage.js, ./Service/StoragePath.js, ./Service/Task.js, ./Service/Telemetry.js, ./Service/TreeView.js, ./Service/WebViewPanel.js, ./Service/Window.js, ./Service/WorkSpace.js, effect
  */
 
-// Cocoon/Source/Service.ts
-
 /**
  * @module Service
  * @description This is the aggregator module for all services that implement the
@@ -51,43 +49,43 @@ import { Live as WorkSpaceLive } from "./Service/WorkSpace.js";
 
 /**
  * A factory function that creates a single, composed layer that provides all services.
- * @param Config The IPC configuration required by many services.
+ * @param Configuration The IPC configuration required by many services.
  * @returns A composed `Layer` containing all API services.
  */
-const AllServiceLayer = (Config: IPCConfiguration) => {
+const AllServiceLayer = (Configuration: IPCConfiguration) => {
 	// FIX: Use the data interface
 	return Layer.mergeAll(
 		APIDeprecationLive,
-		AuthenticationLive(Config),
+		AuthenticationLive(Configuration),
 		CancellationLive,
-		ClipboardLive(Config),
-		CommandLive(Config),
-		ConfigurationLive(Config),
-		DebugLive(Config),
-		DiagnosticLive(Config),
-		DialogLive(Config),
-		DocumentLive(Config),
-		EnvironmentLive(Config),
+		ClipboardLive(Configuration),
+		CommandLive(Configuration),
+		ConfigurationLive(Configuration),
+		DebugLive(Configuration),
+		DiagnosticLive(Configuration),
+		DialogLive(Configuration),
+		DocumentLive(Configuration),
+		EnvironmentLive(Configuration),
 		ExtensionLive,
-		FileSystemLive(Config),
-		FileSystemInformationLive(Config),
-		IPCLive(Config),
-		LanguageFeatureLive(Config),
-		LocalizationLive(Config),
+		FileSystemLive(Configuration),
+		FileSystemInformationLive(Configuration),
+		IPCLive(Configuration),
+		LanguageFeatureLive(Configuration),
+		LocalizationLive(Configuration),
 		LogLive,
-		MessageLive(Config),
+		MessageLive(Configuration),
 		ProposedAPILive,
-		QuickInputLive(Config),
-		SecretStorageLive(Config),
-		StatusBarLive(Config),
-		StorageLive(Config),
-		StoragePathLive(Config),
-		TaskLive(Config),
-		TelemetryLive(Config),
-		TreeViewLive(Config),
-		WebViewPanelLive(Config),
-		WindowLive(Config),
-		WorkSpaceLive(Config),
+		QuickInputLive(Configuration),
+		SecretStorageLive(Configuration),
+		StatusBarLive(Configuration),
+		StorageLive(Configuration),
+		StoragePathLive(Configuration),
+		TaskLive(Configuration),
+		TelemetryLive(Configuration),
+		TreeViewLive(Configuration),
+		WebViewPanelLive(Configuration),
+		WindowLive(Configuration),
+		WorkSpaceLive(Configuration),
 	);
 };
 export default AllServiceLayer;

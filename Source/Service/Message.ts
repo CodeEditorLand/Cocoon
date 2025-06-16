@@ -26,5 +26,5 @@ export type { default as ExtensionSource } from "./Message/Type.js";
  * The live implementation Layer for the Message service.
  * It depends on the IPC service for communication.
  */
-export const Live = (Config: IPCConfiguration) =>
-	Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Config)));
+export const Live = (Configuration: IPCConfiguration) =>
+	Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Configuration)));

@@ -21,10 +21,10 @@ import Service from "./Service.js";
  * The live implementation Layer for the Localization service.
  * It depends on the IPC and InitData services.
  * This is a factory that takes IPC configuration.
- * @param Config The IPC configuration.
+ * @param Configuration The IPC configuration.
  */
-export default function (Config: IPCConfiguration) {
+export default function (Configuration: IPCConfiguration) {
 	return Layer.effect(Service, Definition).pipe(
-		Layer.provide(IPCLive(Config)),
+		Layer.provide(IPCLive(Configuration)),
 	);
 }

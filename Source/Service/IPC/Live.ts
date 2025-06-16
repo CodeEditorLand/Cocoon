@@ -27,11 +27,11 @@ import Service from "./Service.js";
 
 /**
  * The composed "live" Layer for the IPC service.
- * @param Config An object containing the `MountainAddress` and `CocoonAddress`.
+ * @param Configuration An object containing the `MountainAddress` and `CocoonAddress`.
  * @returns A self-contained `Layer` that provides the `IPC.Service`.
  */
-const Live = (Config: IPCConfiguration) => {
-	const ConfigLayer = Layer.succeed(IPCConfigurationService, Config);
+const Live = (Configuration: IPCConfiguration) => {
+	const ConfigLayer = Layer.succeed(IPCConfigurationService, Configuration);
 
 	const DependenciesLayer = Layer.mergeAll(
 		ClientLive,

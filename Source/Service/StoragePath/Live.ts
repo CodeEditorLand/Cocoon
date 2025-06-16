@@ -1,14 +1,4 @@
-/*
- * File: Cocoon/Source/Service/StoragePath/Live.ts
- * Responsibility:
- * Modified: 2025-06-16 14:45:21 UTC
- * Dependency: ../FileSystem.js, ../IPC/Configuration.js, ../Log.js, ./Definition.js, ./Service.js, effect
- */
-
-/**
- * @module Live (StoragePath)
- * @description The live implementation Layer for the StoragePath service.
- */
+// File: Cocoon/Source/Service/StoragePath/Live.ts
 
 import { Layer } from "effect";
 
@@ -25,8 +15,14 @@ import Service from "./Service.js";
  */
 const Live = (Config: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
-		// The FileSystem dependency is for the EnsureDirectory helper.
-		Layer.provide(Layer.merge(FileSystemLive(Config), LogLive)),
+		// Provide its dependencies. It now also depends on InitDataService.
+		Layer.provide(
+			Layer.mergeAll(
+				FileSystemLive(Config),
+				LogLive,
+				// We don't provide InitDataLive here, we declare it as a requirement
+			),
+		),
 	);
 
 export default Live;

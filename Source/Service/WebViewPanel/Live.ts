@@ -21,11 +21,11 @@ import Service from "./Service.js";
 /**
  * The live implementation Layer for the WebViewPanel service.
  * It depends on the IPC service for communication and Log for diagnostics.
- * @param Config The IPC configuration.
+ * @param Configuration The IPC configuration.
  */
-const Live = (Config: IPCConfiguration) =>
+const Live = (Configuration: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
-		Layer.provide(Layer.merge(IPCLive(Config), LogLive)),
+		Layer.provide(Layer.merge(IPCLive(Configuration), LogLive)),
 	);
 
 export default Live;

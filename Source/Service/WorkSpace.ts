@@ -28,16 +28,16 @@ export type { WorkspaceFolder };
 
 /**
  * The live implementation Layer for the WorkSpace service.
- * @param Config The IPC Configuration.
+ * @param Configuration The IPC Configuration.
  */
-export const Live = (Config: IPCConfiguration) =>
+export const Live = (Configuration: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.mergeAll(
-				IPCLive(Config),
-				DocumentLive(Config),
-				FileSystemLive(Config),
-				ConfigurationLive(Config),
+				IPCLive(Configuration),
+				DocumentLive(Configuration),
+				FileSystemLive(Configuration),
+				ConfigurationLive(Configuration),
 			),
 		),
 	);

@@ -22,11 +22,11 @@ import Service from "./Service.js";
  * The live implementation Layer for the Environment service.
  * It depends on IPC and Clipboard services.
  * This is a factory that takes IPC configuration.
- * @param Config The IPC configuration.
+ * @param Configuration The IPC configuration.
  */
-const Live = (Config: IPCConfiguration) =>
+const Live = (Configuration: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
-		Layer.provide(Layer.merge(IPCLive(Config), ClipboardLive(Config))),
+		Layer.provide(Layer.merge(IPCLive(Configuration), ClipboardLive(Configuration))),
 	);
 
 export default Live;
