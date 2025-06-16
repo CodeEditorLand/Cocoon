@@ -1,14 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Cancellation/Error/InvalidTokenIDError.ts
- * Responsibility: 
- * Modified: 2025-06-15 19:17:15 UTC
- * Dependency: effect
- * Export: extends
- */
-
-/**
- * @module InvalidTokenIDError (Cancellation/Error)
- * @description Defines custom, tagged errors for the cancellation service.
+ * Responsibility: Defines a custom error for an invalid cancellation token ID.
+ *
+ * Last-Modified: 2025-06-18
  */
 
 import { Data } from "effect";
@@ -17,12 +11,16 @@ import { Data } from "effect";
  * A tagged error indicating that an invalid token ID was provided. Cancellation
  * tokens are identified by positive integers.
  */
-export default class extends Data.TaggedError("InvalidTokenIDError")<{
+export class InvalidTokenIDError extends Data.TaggedError(
+	"InvalidTokenIDError",
+)<{
 	readonly TokenID: number;
 }> {
 	constructor(properties: { readonly TokenID: number }) {
 		super(properties);
 		this.message = `Invalid TokenID ('${this.TokenID}') provided. Must be a positive number.`;
 	}
-	override message: string;
+	public override readonly message: string;
 }
+
+export default InvalidTokenIDError;

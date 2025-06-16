@@ -1,14 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Error/gRPCConnectionError.ts
- * Responsibility: 
- * Modified: 2025-06-15 19:17:03 UTC
- * Dependency: effect
- * Export: extends
- */
-
-/**
- * @module gRPCConnectionError (IPC/Error)
- * @description Defines a custom, structured error for gRPC connection failures.
+ * Responsibility: Defines a custom, structured error for gRPC connection failures.
+ *
+ * Last-Modified: 2025-06-18
  */
 
 import { Data } from "effect";
@@ -18,10 +12,12 @@ import { Data } from "effect";
  * server setup.
  *
  * This error is tagged with "gRPCConnectionError" for precise handling with
- * `Effect.catchTag`. It captures the underlying `cause` and provides a `Context`
+ * `Effect.catchTag`. It captures the underlying `Cause` and provides a `Context`
  * string to indicate which part of the connection process failed.
  */
-export default class extends Data.TaggedError("gRPCConnectionError")<{
+export class GPCConnectionError extends Data.TaggedError(
+	"gRPCConnectionError",
+)<{
 	readonly Cause: unknown;
 	readonly Context:
 		| "ProtoLoadFailed"
@@ -30,3 +26,5 @@ export default class extends Data.TaggedError("gRPCConnectionError")<{
 		| "ServerBindFailed"
 		| "ServerStartFailed";
 }> {}
+
+export default GPCConnectionError;

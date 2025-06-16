@@ -1,14 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Configuration/Error/ConfigurationUpdateError.ts
- * Responsibility: 
- * Modified: 2025-06-15 19:17:14 UTC
- * Dependency: effect
- * Export: extends
- */
-
-/**
- * @module ConfigurationUpdateError (Configuration/Error)
- * @description Defines custom, tagged errors for the Configuration service.
+ * Responsibility: Defines a custom error for configuration update failures.
+ *
+ * Last-Modified: 2025-06-18
  */
 
 import { Data } from "effect";
@@ -17,13 +11,17 @@ import { Data } from "effect";
  * An error indicating that an attempt to update a configuration value failed.
  * This could be due to permission issues, invalid values, or IPC failures.
  */
-export default class extends Data.TaggedError("ConfigurationUpdateError")<{
+export class ConfigurationUpdateError extends Data.TaggedError(
+	"ConfigurationUpdateError",
+)<{
 	readonly key: string;
 	readonly cause: unknown;
 }> {
-	constructor(Properties: { readonly key: string; readonly cause: unknown }) {
-		super(Properties);
+	constructor(properties: { readonly key: string; readonly cause: unknown }) {
+		super(properties);
 		this.message = `Failed to update configuration for key '${this.key}'.`;
 	}
 	public override readonly message: string;
 }
+
+export default ConfigurationUpdateError;

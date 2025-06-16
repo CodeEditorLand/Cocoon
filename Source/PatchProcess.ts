@@ -1,15 +1,11 @@
 /*
  * File: Cocoon/Source/PatchProcess.ts
- * Responsibility: 
- * Modified: 2025-06-15 19:20:53 UTC
- * Dependency: ./PatchProcess/BlockNativesModule.js, ./PatchProcess/HandleException.js, ./PatchProcess/Live.js, ./PatchProcess/PatchProcessCrash.js, ./PatchProcess/PatchProcessExit.js, ./PatchProcess/PipeLogging.js, ./PatchProcess/SetElectronRunAsNode.js, ./PatchProcess/SetStackTraceLimit.js, ./PatchProcess/SetupEnvironment.js, ./PatchProcess/TerminateOnParentExit.js, effect
- */
-
-/**
- * @module PatchProcess
- * @description Provides low-level patches and setup for the Node.js process,
- * ensuring it behaves correctly as an extension host. This logic is
- * synthesized from VS Code's `bootstrap-node.ts` and `bootstrap-fork.ts`.
+ * Responsibility: Provides low-level patches and setup for the Node.js process,
+ * ensuring it behaves correctly as an extension host.
+ *
+ * This logic is synthesized from VS Code's `bootstrap-node.ts` and `bootstrap-fork.ts`.
+ *
+ * Last-Modified: 2025-06-17
  */
 
 import { Effect } from "effect";
@@ -26,8 +22,7 @@ import SetupEnvironment from "./PatchProcess/SetupEnvironment.js";
 import TerminateOnParentExit from "./PatchProcess/TerminateOnParentExit.js";
 
 /**
- * The main orchestrator `Effect` that composes all individual process-level
- * patches.
+ * The main orchestrator `Effect` that composes all individual process-level patches.
  *
  * This should be one of the very first `Effect`s run at application startup. It
  * runs all patches concurrently where possible and ensures that the Node.js

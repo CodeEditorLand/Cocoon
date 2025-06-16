@@ -1,18 +1,13 @@
 /*
  * File: Cocoon/Source/Cocoon.ts
- * Responsibility: 
- * Modified: 2025-06-16 14:55:15 UTC
- * Dependency: ./Core.js, ./Core/ExtensionHost/Service.js, ./Core/RequireInterceptor/Service.js, ./PatchProcess.js, ./Service.js, ./Service/IPC.js, ./Service/IPC/Configuration.js, ./Service/IPC/Service.js, ./Service/InitData/Live.js, @effect/platform-node, effect, node:path, vs/workbench/services/extensions/common/extensionHostProtocol.js
- */
-
-/**
- * @module Cocoon
- * @description The main entry point for the Cocoon Node.js extension host.
+ * Responsibility: The main entry point for the Cocoon Node.js extension host.
+ *
+ * Last-Modified: 2025-06-18
  */
 
 import * as Path from "node:path";
 import { NodeRuntime } from "@effect/platform-node";
-import { Deferred, Effect, Layer } from "effect";
+import { Cause, Deferred, Effect, Exit, Layer } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 import CoreServiceLayer from "./Core.js";
@@ -37,40 +32,43 @@ const VSCodeOutputDirectory =
  * An Effect that represents the full initialization of all services *after*
  * the handshake with Mountain is complete and the init data has been received.
  */
-const InitializeAfterHandshake = Effect.gen(function* () {
+const InitializeAfterHandshake = Effect.gen(function* (G) {
 	// Step 1: Install the require() interceptor.
-	const Interceptor = yield* RequireInterceptorService;
-	yield* Interceptor.Install();
-	yield* Effect.logInfo("Node.js require() interceptor installed.");
+	const Interceptor = yield* G(RequireInterceptorService);
+	yield* G(Interceptor.Install());
+	yield* G(Effect.logInfo("Node.js require() interceptor installed."));
 
 	// Step 2: Trigger the initial "star activation" of extensions.
-	const Host = yield* ExtensionHostService;
-	yield* Host.ActivateById(
-		"*" as any, // This is a placeholder for VS Code's "star activation"
-		{
-			startup: true,
-			activationEvent: "*",
-		} as any,
+	const Host = yield* G(ExtensionHostService);
+	yield* G(
+		Host.ActivateById(
+			"*" as any, // This is a placeholder for VS Code's "star activation"
+			{
+				startup: true,
+				activationEvent: "*",
+			} as any,
+		),
 	);
 
-	yield* Effect.logInfo("Startup extensions activated.");
+	yield* G(Effect.logInfo("Startup extensions activated."));
 });
 
 /**
  * The main application workflow, described as a single declarative Effect.
  */
-const Main = Effect.gen(function* () {
+const Main = Effect.gen(function* (G) {
 	// A barrier to pause the main thread until the host sends init data.
-	// FIX: Make the error channel compatible with `undefined` for `succeed`.
-	const InitializationBarrier = yield* Deferred.make<Error, void>();
-	const IPC = yield* IPCService;
+	// The error channel holds the entire Cause of failure for detailed reporting.
+	const InitializationBarrier = yield* G(
+		Deferred.make<void, Cause.Cause<unknown>>(),
+	);
+	const IPC = yield* G(IPCService);
 
 	// Step 1: Register the handler that will be invoked by the host.
 	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
 		(InitializationData: IExtensionHostInitData) => {
 			// Step 2: Once init data is received, create the final application layer.
-			// This layer provides the missing InitData service to all other layers.
 			const CompleteApplicationLayer = Layer.provide(
 				Layer.mergeAll(
 					CoreServiceLayer,
@@ -80,56 +78,60 @@ const Main = Effect.gen(function* () {
 			);
 
 			// Step 3: Define the effect that runs the rest of the application logic.
-			const HandlerEffect = Effect.gen(function* () {
-				yield* Effect.logInfo(
-					"Received 'initExtensionHost' data from Mountain.",
+			const HandlerEffect = Effect.gen(function* (G) {
+				yield* G(
+					Effect.logInfo(
+						"Received 'initExtensionHost' data from Mountain.",
+					),
 				);
 
-				// Step 3.1: Apply process patches and run the main initialization.
-				yield* RunProcessPatch;
-				yield* InitializeAfterHandshake;
-
-				// Step 3.2: Signal that initialization is complete.
-				// FIX: Deferred.succeed now correctly matches the <void> success channel.
-				return yield* Deferred.succeed(
-					InitializationBarrier,
-					undefined,
-				);
+				yield* G(RunProcessPatch);
+				yield* G(InitializeAfterHandshake);
 			});
 
-			// FIX: The handler logic is now a self-contained, runnable effect.
-			// We provide its layer and then fork it into the background.
+			// Step 4: Create the final runnable effect by providing all dependencies.
+			// This runnable will either complete successfully or fail with a Cause.
 			const Runnable = Effect.provide(
 				HandlerEffect,
 				CompleteApplicationLayer,
-			).pipe(
-				Effect.catchAllCause((cause) =>
-					// FIX: `failCause` expects the cause, not the deferred.
-					Deferred.failCause(InitializationBarrier, cause),
-				),
-				Effect.scoped,
-			);
+			).pipe(Effect.scoped);
 
-			// Step 4: Fork the main application logic so it doesn't block the IPC handler.
-			// FIX: runPromise returns a promise, not a fiber. We don't need to await it here.
-			return Effect.runPromise(Runnable);
+			// Step 5: Execute the runnable.
+			// We use runPromiseExit to handle both success and failure cases explicitly.
+			// This avoids the complex type inference issues of catchAllCause within this context.
+			Effect.runPromiseExit(Runnable).then((exit) => {
+				if (Exit.isSuccess(exit)) {
+					// On success, succeed the deferred to unblock the main fiber.
+					Effect.runFork(
+						Deferred.succeed(
+							InitializationBarrier,
+							undefined as void,
+						),
+					);
+				} else {
+					// On failure, fail the deferred with the entire cause.
+					Effect.runFork(
+						Deferred.failCause(InitializationBarrier, exit.cause),
+					);
+				}
+			});
 		},
 	);
 
-	// Step 5: Send the initial handshake to the host and wait for the init data.
-	yield* IPC.SendNotification("$initialHandshake", []);
-	yield* Effect.logInfo("Cocoon is ready. Sent handshake to Mountain.");
+	// Step 6: Send the initial handshake and wait for init data.
+	yield* G(IPC.SendNotification("$initialHandshake", []));
+	yield* G(Effect.logInfo("Cocoon is ready. Sent handshake to Mountain."));
 
-	// Step 6: Wait here until the 'initExtensionHost' handler signals completion.
-	yield* Deferred.await(InitializationBarrier);
-	yield* Effect.logInfo("Cocoon is fully initialized and operational.");
+	// Step 7: Wait here until the 'initExtensionHost' handler signals completion or failure.
+	yield* G(Deferred.await(InitializationBarrier));
+	yield* G(Effect.logInfo("Cocoon is fully initialized and operational."));
 
-	// Step 7: Keep the process alive indefinitely to listen for more IPC events.
-	yield* Effect.never;
+	// Step 8: Keep the process alive indefinitely.
+	yield* G(Effect.never);
 }).pipe(
-	// Step 8: Define a top-level error handler for any uncaught failures.
-	Effect.catchAllCause((Cause) =>
-		Effect.logFatal("Cocoon main process failed.", Cause),
+	// Step 9: Top-level error handler for any uncaught failures.
+	Effect.catchAllCause((cause) =>
+		Effect.logFatal("Cocoon main process failed.", cause),
 	),
 );
 
@@ -140,11 +142,10 @@ const ApplicationConfiguration: IPCConfiguration = {
 	CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
 };
 
-// This layer ONLY provides the services needed to perform the initial handshake.
+// Layer needed to perform the initial handshake.
 const PreHandshakeLayer = IPCLive(ApplicationConfiguration);
 
 // --- Run the Application ---
-// FIX: The runnable effect now has its requirements provided, so its R channel is `never`.
 const RunnableApplication = Effect.provide(Main, PreHandshakeLayer);
 
 NodeRuntime.runMain(RunnableApplication);

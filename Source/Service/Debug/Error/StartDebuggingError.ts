@@ -1,14 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Debug/Error/StartDebuggingError.ts
- * Responsibility: 
- * Modified: 2025-06-15 19:17:12 UTC
- * Dependency: effect
- * Export: extends
- */
-
-/**
- * @module StartDebuggingError (Debug/Error)
- * @description Defines a custom error for failures when starting a debug session.
+ * Responsibility: Defines a custom error for failures when starting a debug session.
+ *
+ * Last-Modified: 2025-06-18
  */
 
 import { Data } from "effect";
@@ -16,12 +10,16 @@ import { Data } from "effect";
 /**
  * An error indicating that a `startDebugging` call failed.
  */
-export default class extends Data.TaggedError("StartDebuggingError")<{
+export class StartDebuggingError extends Data.TaggedError(
+	"StartDebuggingError",
+)<{
 	readonly cause: unknown;
 }> {
-	constructor(Properties: { readonly cause: unknown }) {
-		super(Properties);
+	constructor(properties: { readonly cause: unknown }) {
+		super(properties);
 		this.message = `Failed to start debugging session.`;
 	}
 	public override readonly message: string;
 }
+
+export default StartDebuggingError;

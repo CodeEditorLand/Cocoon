@@ -1,14 +1,8 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/Error/FileSystemError.ts
- * Responsibility: 
- * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: effect, vscode
- * Export: FileSystemError, MapToVSCodeError
- */
-
-/**
- * @module FileSystemError (FileSystem/Error)
- * @description Defines custom errors and error handling for the FileSystem service.
+ * Responsibility: Defines custom errors and error handling for the FileSystem service.
+ *
+ * Last-Modified: 2025-06-18
  */
 
 import { Data } from "effect";
@@ -33,26 +27,31 @@ export class FileSystemError extends Data.TaggedError("FileSystemError")<{
 export const MapToVSCodeError = (
 	Error: FileSystemError,
 ): VscFileSystemError => {
-	const Cause = Error.cause ;
+	const Cause: any = Error.cause;
 	const URI = Error.uri;
 
-	if (
-		Cause?.code === "EntryNotFound" ||
-		Cause?.message?.includes("not found")
-	) {
+	// Safely access properties on the `cause` object.
+	const CauseCode =
+		Cause && typeof Cause === "object" && "code" in Cause
+			? String(Cause.code)
+			: "";
+	const CauseMessage =
+		Cause && typeof Cause === "object" && "message" in Cause
+			? String(Cause.message)
+			: String(Cause);
+
+	if (CauseCode === "EntryNotFound" || CauseMessage.includes("not found")) {
 		return VscFileSystemError.FileNotFound(URI);
 	}
-	if (Cause?.code === "EntryExists" || Cause?.message?.includes("exists")) {
+	if (CauseCode === "EntryExists" || CauseMessage.includes("exists")) {
 		return VscFileSystemError.FileExists(URI);
 	}
-	if (Cause?.code === "NoPermissions") {
+	if (CauseCode === "NoPermissions") {
 		return VscFileSystemError.NoPermissions(URI);
 	}
 	// Add other mappings for codes like 'FileIsADirectory', 'FileNotADirectory', etc.
 
-	const Message =
-		Cause instanceof globalThis.Error ? Cause.message : String(Cause);
 	return new VscFileSystemError(
-		`${Error.operation} failed for ${URI?.toString() ?? "unknown resource"}: ${Message}`,
+		`${Error.operation} failed for ${URI?.toString() ?? "unknown resource"}: ${CauseMessage}`,
 	);
 };
