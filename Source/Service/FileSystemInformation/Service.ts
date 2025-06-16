@@ -35,7 +35,8 @@ export default class FileSystemInformationService extends Context.Tag(
 		readonly onDidChangeFile: Event<readonly FileChangeEvent[]>;
 
 		/** Checks if a filesystem for a given scheme is writable. */
-		readonly isWritableFileSystem: (Scheme: string) => boolean | undefined;
+		// This should be a method that returns boolean | undefined, not an Effect.
+		readonly isWritableFileSystem: (scheme: string) => boolean | undefined;
 
 		/**
 		 * Gets the capabilities of a filesystem provider for a given URI scheme.

@@ -1,75 +1,48 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/CreateStatEffect.ts
- * Responsibility:
- * Modified: 2025-06-16 00:18:14 UTC
- * Dependency: ../../PatchProcess/BlockNativesModule.js, ../../PatchProcess/HandleException.js, ../../PatchProcess/Live.js, ../../PatchProcess/PatchProcessCrash.js, ../../PatchProcess/PatchProcessExit.js, ../../PatchProcess/PipeLogging.js, ../../PatchProcess/SetElectronRunAsNode.js, ../../PatchProcess/SetStackTraceLimit.js, ../../PatchProcess/SetupEnvironment.js, ../../PatchProcess/TerminateOnParentExit.js, effect
+ * Responsibility: Creates an Effect to get file metadata via IPC.
+ * Modified: 2025-06-18
+ * Dependency: ../../TypeConverter/Main.js, ../IPC/Service.js, effect, vscode
  */
 
 /**
- * @module PatchProcess
- * @description Provides low-level patches and setup for the Node.js process,
- * ensuring it behaves correctly as an extension host. This logic is
- * synthesized from VS Code's `bootstrap-node.ts` and `bootstrap-fork.ts`.
+ * @module CreateStatEffect (FileSystem)
+ * @description A factory function for creating an Effect that performs a
+ * file `stat` operation via an IPC call to the main host.
  */
 
 import { Effect } from "effect";
+import type { FileStat, Uri } from "vscode";
 
-import BlockNativesModule from "../../PatchProcess/BlockNativesModule.js";
-import HandleException from "../../PatchProcess/HandleException.js";
-import { Live as ProcessPatchLive } from "../../PatchProcess/Live.js";
-import PatchProcessCrash from "../../PatchProcess/PatchProcessCrash.js";
-import PatchProcessExit from "../../PatchProcess/PatchProcessExit.js";
-import PipeLogging from "../../PatchProcess/PipeLogging.js";
-import SetElectronRunAsNode from "../../PatchProcess/SetElectronRunAsNode.js";
-import SetStackTraceLimit from "../../PatchProcess/SetStackTraceLimit.js";
-import SetupEnvironment from "../../PatchProcess/SetupEnvironment.js";
-import TerminateOnParentExit from "../../PatchProcess/TerminateOnParentExit.js";
+import * as TypeConverter from "../../TypeConverter/Main.js";
+import type IPCService from "../IPC/Service.js";
 
 /**
- * The main orchestrator `Effect` that composes all individual process-level
- * patches.
+ * Creates an Effect that, when run, will request file metadata from the host.
  *
- * This should be one of the very first `Effect`s run at application startup. It
- * runs all patches concurrently where possible and ensures that the Node.js
- * environment is stable, secure, and properly configured before any extension
- * code is loaded.
+ * @param uri The URI of the file to stat.
+ * @param IPC An instance of the IPCService to use for the request.
+ * @returns An `Effect` that resolves to a `FileStat` object or fails with an error.
  */
-export default Effect.gen(function* () {
-	// Effects that require the ProcessPatch service must be provided with its layer.
-	const PatchesWithDeps = Effect.all([PatchProcessCrash, PatchProcessExit], {
-		discard: true,
-		concurrency: "unbounded",
-	}).pipe(
-		// The policy here prevents extensions from exiting the host process.
-		Effect.provide(ProcessPatchLive(() => false)),
-	);
+const CreateStatEffect = (
+	uri: Uri,
+	IPC: IPCService["Type"],
+): Effect.Effect<FileStat, Error> => {
+	return Effect.gen(function* () {
+		const uriDTO = TypeConverter.URI.FromAPI(uri);
+		const statDTO = yield* IPC.SendRequest<any>("$stat", [uriDTO]);
 
-	// Effects without special dependencies can be run directly.
-	const PatchesWithoutDeps = Effect.all(
-		[
-			SetStackTraceLimit,
-			SetupEnvironment,
-			SetElectronRunAsNode,
-			BlockNativesModule,
-			PipeLogging,
-			HandleException,
-			TerminateOnParentExit,
-		],
-		{ discard: true, concurrency: "unbounded" },
-	);
+		// Assuming the DTO from the host matches the FileStat interface.
+		// A more robust implementation might do a full type conversion.
+		const fileStat: FileStat = {
+			type: statDTO.type,
+			ctime: statDTO.ctime,
+			mtime: statDTO.mtime,
+			size: statDTO.size,
+			permissions: statDTO.permissions,
+		};
+		return fileStat;
+	}).pipe(Effect.mapError((cause) => new Error(String(cause))));
+};
 
-	yield* Effect.all([PatchesWithoutDeps, PatchesWithDeps], {
-		discard: true,
-		concurrency: "unbounded",
-	});
-}).pipe(
-	Effect.tap(() =>
-		Effect.logDebug("All core process patches have been applied."),
-	),
-	Effect.catchAll((Error) =>
-		Effect.logFatal(
-			"A critical error occurred during the bootstrap process patching. The environment may be unstable.",
-			Error,
-		),
-	),
-);
+export default CreateStatEffect;

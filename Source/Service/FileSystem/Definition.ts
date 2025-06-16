@@ -14,7 +14,6 @@ import { Effect } from "effect";
 import {
 	FileSystemError as VscFileSystemError,
 	type FileStat,
-	type FileSystem,
 	type Uri,
 } from "vscode";
 
@@ -30,8 +29,8 @@ export default Effect.gen(function* () {
 	const FsInfo = yield* FileSystemInformationService;
 	const IPC = yield* IPCService;
 
-	// This implementation matches the `vscode.FileSystem` interface from `vscode.d.ts`
-	const FileSystemImplementation: FileSystem = {
+	// This implementation matches the `FileSystemServiceType` interface.
+	const ServiceImplementation: Service["Type"] = {
 		stat: (uri: Uri): Promise<FileStat> =>
 			Effect.runPromise(CreateStatEffect(uri, IPC)),
 		readDirectory: (uri: Uri) =>
@@ -66,18 +65,11 @@ export default Effect.gen(function* () {
 			Promise.reject(
 				new VscFileSystemError(`copy not implemented for ${source}`),
 			),
+		// isWritableFileSystem is now a direct method call, not an effect.
 		isWritableFileSystem: (scheme: string): boolean | undefined => {
-			// The API contract is synchronous boolean|undefined, not a Thenable.
-			// We must run the effect from the service synchronously.
-			const isWritableEffect = FsInfo.isWritableFileSystem(scheme);
-			return Effect.runSync(isWritableEffect);
+			return FsInfo.isWritableFileSystem(scheme);
 		},
-	};
-
-	// Your custom service type appears to be a superset of vscode.FileSystem,
-	// including the onDidChangeFile event.
-	const ServiceImplementation: Service["Type"] = {
-		...FileSystemImplementation,
+		// onDidChangeFile is part of our custom service type.
 		onDidChangeFile: FsInfo.onDidChangeFile,
 	};
 
