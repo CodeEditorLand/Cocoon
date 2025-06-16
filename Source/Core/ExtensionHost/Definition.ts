@@ -11,6 +11,7 @@ import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
+import { ExtensionRuntime } from "vs/workbench/api/common/extHostTypes.js";
 import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
@@ -36,6 +37,10 @@ export default Effect.gen(function* () {
 	const InitData = yield* InitDataService;
 	const Telemetry = yield* TelemetryService;
 
+	const ActivatedExtensions = yield* Ref.make(
+		new Map<string, ActivatedExtension>(),
+	);
+
 	const ActivationEventsReader: IActivationEventsReader = {
 		readActivationEvents: (desc) =>
 			ImplicitActivationEvents.readActivationEvents(desc),
@@ -44,9 +49,6 @@ export default Effect.gen(function* () {
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		ActivationEventsReader,
 		InitData.extensions,
-	);
-	const ActivatedExtensions = yield* Ref.make(
-		new Map<string, ActivatedExtension>(),
 	);
 
 	const Deactivate = (Extension: ActivatedExtension) =>
@@ -64,7 +66,6 @@ export default Effect.gen(function* () {
 						),
 				});
 			}
-
 			const DeactivateFunction = Extension.Module.deactivate;
 			if (typeof DeactivateFunction === "function") {
 				yield* Effect.tryPromise({
@@ -85,7 +86,6 @@ export default Effect.gen(function* () {
 			yield* Log.Info(
 				`Activating extension '${Description.identifier.value}' (Reason: ${Reason.activationEvent}).`,
 			);
-
 			const Module = yield* Effect.tryPromise({
 				try: () =>
 					import(URI.revive(Description.extensionLocation).fsPath),
@@ -99,22 +99,22 @@ export default Effect.gen(function* () {
 				subscriptions: [],
 				extensionPath: Description.extensionLocation.fsPath,
 				extensionUri: URI.revive(Description.extensionLocation),
-				storageUri: URI.parse("file:///extension-storage"), // Stub
-				globalStorageUri: URI.parse("file:///global-storage"), // Stub
-				logUri: URI.parse("file:///logs"), // Stub
+				storageUri: URI.parse("file:///extension-storage"),
+				globalStorageUri: URI.parse("file:///global-storage"),
+				logUri: URI.parse("file:///logs"),
 				extensionMode: 1, // Production
 				secrets: undefined as any,
-				storagePath: "/extension-storage", // Stub
-				globalStoragePath: "/global-storage", // Stub
-				logPath: "/logs", // Stub
-				extension: undefined as any, // Will be filled later
-				environmentVariableCollection: undefined as any, // Stub
+				storagePath: "/extension-storage",
+				globalStoragePath: "/global-storage",
+				logPath: "/logs",
+				extension: undefined as any,
+				environmentVariableCollection: undefined as any,
 				asAbsolutePath: (path) => path,
-				languageModelAccessInformation: undefined as any, // Stub
-				workspaceState: undefined as any, // Stub Memento
-				globalState: undefined as any, // Stub Memento
-				extensionRuntime: 2, // NodeJS - from proposed API
-				messagePassingProtocol: undefined as any, // from proposed API
+				languageModelAccessInformation: undefined as any,
+				workspaceState: undefined as any,
+				globalState: undefined as any,
+				extensionRuntime: ExtensionRuntime.Node,
+				messagePassingProtocol: undefined,
 			};
 
 			const ActivationFunction = Module.activate as Function | undefined;
@@ -186,13 +186,12 @@ export default Effect.gen(function* () {
 	const ActivateById = (
 		ID: ExtensionIdentifier,
 		Reason: ExtensionActivationReason,
-	): Effect.Effect<void, Error> =>
+	): Effect.Effect<void, Error, unknown> =>
 		Effect.gen(function* () {
-			// This can now be synchronous because Ref.get is synchronous.
-			const IsAlreadyActivated = Effect.runSync(
-				Ref.get(ActivatedExtensions),
-			).has(ID.value);
-			if (IsAlreadyActivated) {
+			const IsActivated = yield* Ref.get(ActivatedExtensions).pipe(
+				Effect.map((Map) => Map.has(ID.value)),
+			);
+			if (IsActivated) {
 				return;
 			}
 			const MaybeDescription =
@@ -219,15 +218,15 @@ export default Effect.gen(function* () {
 	const ServiceImplementation: Service["Type"] = {
 		ActivateById,
 		GetExtensionDescription: (ID) =>
-			ExtensionRegistry.getExtensionDescription(ID),
-		GetExtensionExports: (ID) => {
-			const Map = Effect.runSync(Ref.get(ActivatedExtensions));
-			return Map.get(ID.value)?.Exports;
-		},
-		IsActivated: (ID) => {
-			const Map = Effect.runSync(Ref.get(ActivatedExtensions));
-			return Map.has(ID.value);
-		},
+			Effect.succeed(ExtensionRegistry.getExtensionDescription(ID)),
+		GetExtensionExports: (ID) =>
+			Ref.get(ActivatedExtensions).pipe(
+				Effect.map((Map) => Map.get(ID.value)?.Exports),
+			),
+		IsActivated: (ID) =>
+			Ref.get(ActivatedExtensions).pipe(
+				Effect.map((Map) => Map.has(ID.value)),
+			),
 		DeactivateAll: () =>
 			Ref.get(ActivatedExtensions).pipe(
 				Effect.flatMap((Map) =>

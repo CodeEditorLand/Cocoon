@@ -5,7 +5,6 @@
  */
 
 import { Effect } from "effect";
-import { URI as VscURI } from "vs/base/common/uri.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { ExtensionKind, type Extension } from "vscode";
 
@@ -22,48 +21,47 @@ const CreateAPIObject = <T>(
 	Description: IExtensionDescription,
 	ExtensionHost: ExtensionHostService["Type"],
 ): Extension<T> => {
-	const Activate = Effect.gen(function* () {
+	const ActivateEffect = Effect.gen(function* () {
 		yield* ExtensionHost.ActivateById(Description.identifier, {
 			startup: false,
 			extensionId: Description.identifier,
 			activationEvent: "api",
 		} as any);
-		const exports = yield* ExtensionHost.GetExtensionExports(
+		const Exports = ExtensionHost.GetExtensionExports(
 			Description.identifier,
 		);
-		return exports as T;
+		return Exports as T;
 	});
 
-	const GetExtensionKind = () => {
-		if (Description.extensionKind?.includes("workspace")) {
+	const GetExtensionKind = (): ExtensionKind => {
+		const Kinds = Array.isArray(Description.extensionKind)
+			? Description.extensionKind
+			: Description.extensionKind
+				? [Description.extensionKind]
+				: [];
+
+		if (Kinds.includes("workspace")) {
 			return ExtensionKind.Workspace;
 		}
-		if (Description.extensionKind?.includes("ui")) {
-			return ExtensionKind.UI;
-		}
-		return ExtensionKind.Workspace; // Default for Node-based host
+		return ExtensionKind.UI;
 	};
 
 	const ExtensionAPIObject: Extension<T> = {
 		id: Description.identifier.value,
-		extensionUri: VscURI.revive(Description.extensionLocation),
+		extensionUri: Description.extensionLocation,
 		extensionPath: Description.extensionLocation.fsPath,
 		get isActive() {
-			return Effect.runSync(
-				ExtensionHost.IsActivated(Description.identifier),
-			);
+			return ExtensionHost.IsActivated(Description.identifier);
 		},
 		get packageJSON() {
 			return Description;
 		},
 		extensionKind: GetExtensionKind(),
 		get exports() {
-			return Effect.runSync(
-				ExtensionHost.GetExtensionExports(Description.identifier),
-			) as T;
+			return ExtensionHost.GetExtensionExports(Description.identifier);
 		},
-		activate: () => Effect.runPromise(Activate),
-		isFromDifferentExtensionHost: false, // Assuming same host
+		activate: () => Effect.runPromise(ActivateEffect),
+		isFromDifferentExtensionHost: false,
 	};
 
 	return Object.freeze(ExtensionAPIObject);

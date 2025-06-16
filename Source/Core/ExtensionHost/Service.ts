@@ -8,7 +8,7 @@
 import { Context, type Effect } from "effect";
 import type {
 	ExtensionIdentifier,
-	IExtensionDescription,
+	IRelaxedExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
 
 /**
@@ -25,15 +25,56 @@ export default class ExtensionHostService extends Context.Tag(
 )<
 	ExtensionHostService,
 	{
+		/**
+		 * Activates an extension by its identifier.
+		 * @param ID The identifier of the extension to activate.
+		 * @param Reason The reason for activation (e.g., startup, event).
+		 * @returns An `Effect` that completes when activation is attempted. It may fail with an Error.
+		 */
 		readonly ActivateById: (
 			ID: ExtensionIdentifier,
 			Reason: ExtensionActivationReason,
-		) => Effect.Effect<void, Error>;
+		) => Effect.Effect<void, Error, unknown>;
+
+		/**
+		 * Gets the full description for a loaded extension.
+		 * @param ID The identifier of the extension.
+		 * @returns An `Effect` that resolves with an `Option` of the description.
+		 */
 		readonly GetExtensionDescription: (
 			ID: string | ExtensionIdentifier,
-		) => IExtensionDescription | undefined;
-		readonly GetExtensionExports: (ID: ExtensionIdentifier) => any;
-		readonly IsActivated: (ID: ExtensionIdentifier) => boolean;
-		readonly DeactivateAll: () => Effect.Effect<void, never>;
+		) => Effect.Effect<
+			Readonly<IRelaxedExtensionDescription> | undefined,
+			never,
+			never
+		>;
+
+		/**
+		 * Gets the exports of an activated extension.
+		 * @param ID The identifier of the extension.
+		 * @returns An `Effect` that resolves to the `exports` object, or `undefined`.
+		 */
+		readonly GetExtensionExports: (
+			ID: ExtensionIdentifier,
+		) => Effect.Effect<any>;
+
+		/**
+		 * Checks if an extension is currently activated.
+		 * @param ID The identifier of the extension.
+		 * @returns An `Effect` that resolves to `true` if the extension is active, `false` otherwise.
+		 */
+		readonly IsActivated: (
+			ID: ExtensionIdentifier,
+		) => Effect.Effect<boolean>;
+
+		/**
+		 * Deactivates all currently activated extensions.
+		 * @returns An `Effect` that completes when all deactivation logic has run.
+		 */
+		readonly DeactivateAll: () => Effect.Effect<
+			void,
+			Effect.Effect<void, never, never>,
+			never
+		>;
 	}
 >() {}

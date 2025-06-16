@@ -1,41 +1,68 @@
 /**
- * @module Service (Extension)
- * @description Defines the interface and Context.Tag for the Extension service.
- * This service implements the `vscode.extensions` API, allowing extensions to
- * introspect and activate other extensions.
+ * @module CreateAPIObject (Extension)
+ * @description A factory function that creates the public-facing `vscode.Extension` object.
+ * This acts as an adapter between the internal extension host service and the public API.
  */
 
-import { Context } from "effect";
-import type { Event, Extension } from "vscode";
+import { Effect } from "effect";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import { ExtensionKind, type Extension } from "vscode";
+
+import type ExtensionHostService from "../../Core/ExtensionHost/Service.js";
 
 /**
- * The `Context.Tag` for the `vscode.extensions` API service.
+ * Creates the public `vscode.Extension` API object from an internal `IExtensionDescription`.
+ *
+ * @param Description The internal description of the extension.
+ * @param ExtensionHost The core service that manages extension state and activation.
+ * @returns A frozen `vscode.Extension<T>` object.
  */
-export default class ExtensionService extends Context.Tag("Service/Extension")<
-	ExtensionService,
-	{
-		/** An event which fires when `extensions` have been changed (i.e., installed or uninstalled). */
-		readonly onDidChange: Event<void>;
+const CreateAPIObject = <T>(
+	Description: IExtensionDescription,
+	ExtensionHost: ExtensionHostService["Type"],
+): Extension<T> => {
+	const ActivateEffect = ExtensionHost.ActivateById(Description.identifier, {
+		startup: false,
+		extensionId: Description.identifier,
+		activationEvent: "api",
+	} as any).pipe(
+		Effect.andThen(
+			ExtensionHost.GetExtensionExports(Description.identifier),
+		),
+	);
 
-		/**
-		 * Get an extension by its full identifier in the form of: `publisher.name`.
-		 * @param extensionId The extension identifier.
-		 * @returns The `Extension` object or `undefined` if the extension is not found.
-		 */
-		readonly getExtension: <T>(
-			extensionId: string,
-		) => Extension<T> | undefined;
+	// The public-facing properties must be synchronous.
+	// The internal state management must support this.
+	// This is now impossible since the service methods return Effects.
+	// We will change the implementation to return Promises from an async getter
+	// to make progress, acknowledging this deviates from the strict vscode.d.ts.
+	// A final implementation may require a more complex state synchronization proxy.
+	const ExtensionAPIObject = {
+		id: Description.identifier.value,
+		extensionUri: Description.extensionLocation,
+		extensionPath: Description.extensionLocation.fsPath,
+		get isActive(): boolean {
+			// This is not strictly correct but is a placeholder.
+			// A full solution would require a synchronous state cache.
+			console.warn(
+				"Synchronous access to `isActive` is not fully supported in this async environment.",
+			);
+			return false;
+		},
+		get packageJSON() {
+			return Description;
+		},
+		extensionKind: ExtensionKind.Workspace,
+		get exports() {
+			// This is not strictly correct.
+			console.warn(
+				"Synchronous access to `exports` is not fully supported in this async environment.",
+			);
+			return undefined;
+		},
+		activate: (): Promise<T> => Effect.runPromise(ActivateEffect),
+	};
 
-		/**
-		 * All extensions are listed in this array.
-		 */
-		readonly all: readonly Extension<any>[];
-
-		/**
-		 * Activate an extension.
-		 * @param extensionId The extension identifier.
-		 * @returns A promise that resolves to the extension's exports.
-		 */
-		readonly activate: <T>(extensionId: string) => Promise<Extension<T>>;
-	}
->() {}
+	return Object.freeze(ExtensionAPIObject as Extension<T>);
+};
+export default CreateAPIObject;

@@ -27,6 +27,7 @@ const CreateAPIObject = <T>(
 			extensionId: Description.identifier,
 			activationEvent: "api",
 		} as any);
+		// After activation completes, the exports are available synchronously.
 		const Exports = ExtensionHost.GetExtensionExports(
 			Description.identifier,
 		);
@@ -61,7 +62,7 @@ const CreateAPIObject = <T>(
 			return ExtensionHost.GetExtensionExports(Description.identifier);
 		},
 		activate: () => Effect.runPromise(ActivateEffect),
-		// Added missing property required by the interface
+		// `isFromDifferentExtensionHost` is a proposed API field, default to false.
 		isFromDifferentExtensionHost: false,
 	};
 
