@@ -11,7 +11,8 @@
  * the lifecycle of all extensions.
  */
 
-import { Effect, Layer, Ref } from "effect";
+import { Effect, Ref } from "effect";
+import { Emitter } from "vs/base/common/event.js";
 import { URI } from "vs/base/common/uri.js";
 import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
 import type {
@@ -58,6 +59,7 @@ export default Effect.gen(function* () {
 		InitData.extensions.allExtensions,
 	);
 
+	// This is an internal helper. It should handle its own errors and not let them leak.
 	const Deactivate = (Extension: ActivatedExtension) =>
 		Effect.gen(function* () {
 			yield* Log.Info(
@@ -81,9 +83,13 @@ export default Effect.gen(function* () {
 						new Error(
 							`Deactivation function for '${Extension.ID.value}' failed: ${CaughtError}`,
 						),
-				}).pipe(Effect.catchAll((Error) => Log.Error(Error.message)));
+				}).pipe(Effect.catchAll((error) => Log.Error(error.message)));
 			}
-		});
+		}).pipe(
+			Effect.catchAllCause((cause) =>
+				Log.Warn("Deactivation error occurred", cause),
+			),
+		);
 
 	const DoActivateExtension = (
 		Description: IExtensionDescription,
@@ -102,11 +108,9 @@ export default Effect.gen(function* () {
 					),
 			});
 
-			// `languageModelAccessInformation` requires a concrete implementation.
-			// We'll create a stub for now.
 			const languageModelAccessInformation: LanguageModelAccessInformation =
 				{
-					onDidChange: undefined as any, // This should be an Event<void>
+					onDidChange: new Emitter<void>().event,
 					canSendRequest: (_chat) => false,
 				};
 
@@ -166,49 +170,13 @@ export default Effect.gen(function* () {
 				[], // activationTimings
 				[], // TZe activation timing
 			]);
-		}).pipe(
-			Effect.catchAll((ErrorValue) =>
-				Effect.gen(function* () {
-					const ErrorToReport =
-						ErrorValue instanceof globalThis.Error
-							? ErrorValue
-							: new Error(String(ErrorValue));
-					const Activated: ActivatedExtension = {
-						ID: Description.identifier,
-						Module: {},
-						Exports: undefined,
-						Subscriptions: [],
-						ActivationFailed: true,
-						ActivationError: ErrorToReport,
-					};
-					yield* Ref.update(ActivatedExtensions, (Map) =>
-						Map.set(Description.identifier.value, Activated),
-					);
-					yield* IPC.SendNotification("$onExtensionActivationError", [
-						Description.identifier,
-						{
-							name: ErrorToReport.name,
-							message: ErrorToReport.message,
-							stack: ErrorToReport.stack,
-						},
-					]);
-					// `Telemetry.onExtensionError` returns a boolean, but we are in an effect context.
-					// We need to wrap this side-effectful call in `Effect.sync`.
-					yield* Effect.sync(() =>
-						Telemetry.onExtensionError(
-							Description.identifier,
-							ErrorToReport,
-						),
-					);
-				}),
-			),
-		);
+		});
 
 	const ActivateById = (
 		ID: ExtensionIdentifier,
 		Reason: ExtensionActivationReason,
-	): Effect.Effect<void, Error> =>
-		Effect.gen(function* () {
+	): Effect.Effect<void, never, never> => {
+		const activationLogic = Effect.gen(function* () {
 			const IsActivated = yield* Ref.get(ActivatedExtensions).pipe(
 				Effect.map((Map) => Map.has(ID.value)),
 			);
@@ -227,18 +195,57 @@ export default Effect.gen(function* () {
 					`Cannot activate extension '${ID.value}' because it has no 'main' entry point.`,
 				);
 			}
+			// DoActivateExtension can fail, so we must yield it within this block
+			// to allow the outer catchAll to handle its errors.
 			yield* DoActivateExtension(MaybeDescription, Reason);
-		}).pipe(
-			Effect.mapError((ErrorValue) =>
-				ErrorValue instanceof globalThis.Error
-					? ErrorValue
-					: new Error(String(ErrorValue)),
-			),
+		});
+
+		return activationLogic.pipe(
+			Effect.catchAll((error) => {
+				const errorHandlingEffect = Effect.gen(function* () {
+					const ErrorToReport =
+						error instanceof globalThis.Error
+							? error
+							: new Error(String(error));
+					const Activated: ActivatedExtension = {
+						ID: ID,
+						Module: {},
+						Exports: undefined,
+						Subscriptions: [],
+						ActivationFailed: true,
+						ActivationError: ErrorToReport,
+					};
+					yield* Ref.update(ActivatedExtensions, (Map) =>
+						Map.set(ID.value, Activated),
+					);
+					yield* IPC.SendNotification("$onExtensionActivationError", [
+						ID,
+						{
+							name: ErrorToReport.name,
+							message: ErrorToReport.message,
+							stack: ErrorToReport.stack,
+						},
+					]).pipe(
+						Effect.catchAllCause((cause) =>
+							Log.Warn(
+								"Failed to send activation error notification",
+								cause,
+							),
+						),
+					);
+
+					yield* Effect.sync(() =>
+						Telemetry.onExtensionError(ID, ErrorToReport),
+					);
+				});
+
+				return errorHandlingEffect.pipe(Effect.asVoid);
+			}),
 		);
+	};
 
 	const ServiceImplementation: Service["Type"] = {
-		ActivateById: (id, reason) =>
-			ActivateById(id, reason).pipe(Effect.orDie),
+		ActivateById,
 		GetExtensionDescription: (ID) =>
 			Effect.succeed(ExtensionRegistry.getExtensionDescription(ID)),
 		GetExtensionExports: (ID) =>
@@ -252,6 +259,8 @@ export default Effect.gen(function* () {
 		DeactivateAll: () =>
 			Ref.get(ActivatedExtensions).pipe(
 				Effect.flatMap((Map) =>
+					// The `Deactivate` effect now handles its own errors internally,
+					// so `forEach` will not fail.
 					Effect.forEach([...Map.values()], Deactivate, {
 						concurrency: "unbounded",
 						discard: true,

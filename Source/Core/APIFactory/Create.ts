@@ -12,24 +12,27 @@
  */
 
 import { Effect, Layer } from "effect";
+import { Emitter } from "vs/base/common/event.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
+// Do not import everything from ExtHostTypes, as it clashes with the real vscode types.
+// Import only what is needed, or ensure perfect compatibility.
+import { Position, Range, Selection } from "vscode";
 
-import type APIDeprecationService from "../../Service/APIDeprecation/Service.js";
-import type CommandService from "../../Service/Command/Service.js";
-import type DebugService from "../../Service/Debug/Service.js";
-import type ExtensionService from "../../Service/Extension/Service.js";
+import APIDeprecationService from "../../Service/APIDeprecation/Service.js";
+import CommandService from "../../Service/Command/Service.js";
+import DebugService from "../../Service/Debug/Service.js";
+import ExtensionService from "../../Service/Extension/Service.js";
 import IPCService from "../../Service/IPC/Service.js";
-import type LanguageFeatureService from "../../Service/LanguageFeature/Service.js";
-import type LogService from "../../Service/Log/Service.js";
-import type ProposedAPIService from "../../Service/ProposedAPI/Service.js";
-import type StatusBarService from "../../Service/StatusBar/Service.js";
-import type TaskService from "../../Service/Task/Service.js";
-import type TreeViewService from "../../Service/TreeView/Service.js";
-import type WebViewPanelService from "../../Service/WebViewPanel/Service.js";
-import type WindowService from "../../Service/Window/Service.js";
-import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
-import * as ExtHostType from "../../Type/ExtHostTypes.js";
+import LanguageFeatureService from "../../Service/LanguageFeature/Service.js";
+import LogService from "../../Service/Log/Service.js";
+import ProposedAPIService from "../../Service/ProposedAPI/Service.js";
+import StatusBarService from "../../Service/StatusBar/Service.js";
+import TaskService from "../../Service/Task/Service.js";
+import TreeViewService from "../../Service/TreeView/Service.js";
+import WebViewPanelService from "../../Service/WebViewPanel/Service.js";
+import WindowService from "../../Service/Window/Service.js";
+import WorkSpaceService from "../../Service/WorkSpace/Service.js";
 import AsExtensionEvent from "./AsExtensionEvent.js";
 import CreateCommandNamespace from "./CreateCommandNamespace.js";
 import CreateDebugNamespace from "./CreateDebugNamespace.js";
@@ -54,6 +57,27 @@ interface ServiceCollection {
 	StatusBar: StatusBarService["Type"];
 	IPC: IPCService["Type"];
 }
+
+// A stub that conforms to `vscode.extensions`
+const createExtensionsApi = (
+	_extensionService: ExtensionService["Type"],
+): typeof VSCode.extensions => ({
+	getExtension: (_extensionId: string) => {
+		// This needs an implementation that can synchronously or asynchronously get an extension.
+		// For now, it returns undefined.
+		return undefined;
+	},
+	get all() {
+		// This needs to synchronously return extensions, which is tricky with an effect-based service.
+		// This likely requires caching the extension list.
+		return [];
+	},
+	get allAcrossExtensionHosts() {
+		// Similar to `all`, this requires a synchronous way to get extensions.
+		return [];
+	},
+	onDidChange: new Emitter<void>().event, // A simple event emitter stub
+});
 
 const CreateAPIFactory = (Services: ServiceCollection) => {
 	return {
@@ -99,8 +123,6 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				Extension,
 			);
 
-			// Create the Debug namespace by running its constructor Effect synchronously
-			// after providing its specific dependencies.
 			const DebugEffect = CreateDebugNamespace(AsEvent, Extension);
 			const DebugNamespace = Effect.runSync(
 				Effect.provide(
@@ -118,15 +140,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				Extension,
 			);
 
-			// Stub for the `vscode.extensions` namespace object
-			const extensionsNs: typeof VSCode.extensions = {
-				getExtension: (extensionId) => undefined, // Should be implemented by ExtensionService
-				all: [], // Should be implemented by ExtensionService
-				onDidChange: new (class {
-					event = () => ({ dispose: () => {} });
-				})().event,
-				allAcrossExtensionHosts: [],
-			};
+			const extensionsNs = createExtensionsApi(ExtensionService);
 
 			const API: Partial<typeof VSCode> = {
 				version: "1.85.0",
@@ -137,7 +151,10 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				debug: DebugNamespace,
 				tasks: TasksNamespace,
 				extensions: extensionsNs,
-				...ExtHostType,
+				// Do not spread ExtHostTypes here if they conflict with the official vscode types
+				Position,
+				Range,
+				Selection,
 			};
 
 			if (

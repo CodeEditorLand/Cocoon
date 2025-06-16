@@ -18,6 +18,7 @@ import APIDeprecationService from "../../Service/APIDeprecation/Service.js";
 import CommandService from "../../Service/Command/Service.js";
 import DebugService from "../../Service/Debug/Service.js";
 import ExtensionService from "../../Service/Extension/Service.js";
+import IPCService from "../../Service/IPC/Service.js"; // Import IPCService
 import LanguageFeatureService from "../../Service/LanguageFeature/Service.js";
 import LogService from "../../Service/Log/Service.js";
 import ProposedAPIService from "../../Service/ProposedAPI/Service.js";
@@ -49,6 +50,7 @@ export default Effect.gen(function* () {
 	const WebViewPanel = yield* WebViewPanelService;
 	const TreeView = yield* TreeViewService;
 	const StatusBar = yield* StatusBarService;
+	const IPC = yield* IPCService; // Yield the IPC service
 
 	const Factory = CreateAPIFactory({
 		Log,
@@ -64,6 +66,7 @@ export default Effect.gen(function* () {
 		WebViewPanel,
 		TreeView,
 		StatusBar,
+		IPC, // Pass the IPC service to the factory
 	});
 
 	const APIFactoryImplementation: Service["Type"] = {

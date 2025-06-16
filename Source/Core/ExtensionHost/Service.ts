@@ -34,15 +34,17 @@ export default class ExtensionHostService extends Context.Tag(
 	ExtensionHostService,
 	{
 		/**
-		 * Activates an extension by its identifier.
+		 * Activates an extension by its identifier. This is a fire-and-forget operation from the
+		 * caller's perspective. Any activation errors are handled internally (e.g., logged, sent to telemetry).
+		 * The returned Effect will not fail, but the underlying fiber may die on unrecoverable errors.
 		 * @param ID The identifier of the extension to activate.
 		 * @param Reason The reason for activation (e.g., startup, event).
-		 * @returns An `Effect` that completes when activation is attempted. It may fail with an Error.
+		 * @returns An `Effect` that completes when activation has been attempted.
 		 */
 		readonly ActivateById: (
 			ID: ExtensionIdentifier,
 			Reason: ExtensionActivationReason,
-		) => Effect.Effect<void, Error>; // FIX: R should be `never` in the public interface.
+		) => Effect.Effect<void, never, never>;
 
 		/**
 		 * Gets the full description for a loaded extension.
@@ -79,6 +81,6 @@ export default class ExtensionHostService extends Context.Tag(
 		 * Deactivates all currently activated extensions.
 		 * @returns An `Effect` that completes when all deactivation logic has run.
 		 */
-		readonly DeactivateAll: () => Effect.Effect<void, never, never>; // FIX: Corrected signature
+		readonly DeactivateAll: () => Effect.Effect<void, never, never>;
 	}
 >() {}
