@@ -114,6 +114,6 @@ const CreateWindowNamespace = (
 		// ... other methods like showQuickPick, showInformationMessage are delegated ...
 		// These are typically added to the final object in the APIFactory itself
 		// or accessed via the corresponding service.
-	} as any;
+	} ;
 };
 export default CreateWindowNamespace;

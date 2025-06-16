@@ -31,14 +31,14 @@ export default Effect.gen(function* () {
 
 			const ResolvedItems = yield* Effect.tryPromise({
 				try: () => Promise.resolve(Items),
-				catch: (e) => e as Error,
+				catch: (e) => e,
 			});
 
 			const IPCOptions = {
 				...Option,
 				items: QuickInputConverter.SerializeItems(ResolvedItems),
 				buttons: QuickInputConverter.SerializeButtons(
-					(Option as any).buttons,
+					(Option ).buttons,
 				),
 			};
 
@@ -79,7 +79,7 @@ export default Effect.gen(function* () {
 			const IPCOptions = {
 				...Option,
 				buttons: QuickInputConverter.SerializeButtons(
-					(Option as any)?.buttons,
+					(Option )?.buttons,
 				),
 			};
 

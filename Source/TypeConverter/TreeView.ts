@@ -55,7 +55,7 @@ const Item = {
 		if (IconPath instanceof ExtHostTypes.ThemeIcon) {
 			ThemeIcon = {
 				id: IconPath.id,
-				color: (IconPath.color as any)?.id,
+				color: (IconPath.color )?.id,
 			};
 		} else {
 			Icon = IconPath as
@@ -102,7 +102,7 @@ const Item = {
 		const Label = DTO.label.label;
 		const Item = new ExtHostTypes.TreeItem(Label, DTO.collapsibleState);
 		Item.id = DTO.id;
-		(Item as any).description = DTO.description;
+		(Item ).description = DTO.description;
 		Item.resourceURI = DTO.resourceUri
 			? URIConverter.ToAPI(DTO.resourceUri)
 			: undefined;

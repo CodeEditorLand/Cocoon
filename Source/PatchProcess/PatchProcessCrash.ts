@@ -25,7 +25,7 @@ const PatchProcessCrash = Effect.gen(function* () {
 
 	if (ProcessPatch.NativeCrash) {
 		// Overwrite the global `process.crash` method.
-		(process as any).crash = (): void => {
+		(process ).crash = (): void => {
 			// We create a new Error here just to capture the current stack trace.
 			// This helps identify which code path attempted to call `crash()`.
 			const PreventionStack = new Error(

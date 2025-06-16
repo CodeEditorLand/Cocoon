@@ -95,9 +95,9 @@ export default Effect.acquireRelease(
 
 		// Step 2: Load the .proto definition and get the service definition.
 		const Definition = yield* LoadProtoDefinition(ProtoPath);
-		const Proto = (GRPC.loadPackageDefinition(Definition) as any)
+		const Proto = (GRPC.loadPackageDefinition(Definition) )
 			.vine_ipc as GRPC.GrpcObject;
-		const ServiceDefinition = (Proto as any)["CocoonService"].service;
+		const ServiceDefinition = (Proto )["CocoonService"].service;
 
 		// Step 3: Create and configure the gRPC server instance.
 		const Server = new GRPC.Server();

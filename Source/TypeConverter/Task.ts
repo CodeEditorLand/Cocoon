@@ -14,7 +14,7 @@ const FromAPI = (
 	const Execution = TaskToConvert.execution;
 
 	const Result: any = {
-		_id: (TaskToConvert as any)._id,
+		_id: (TaskToConvert )._id,
 		definition: {
 			...Definition,
 			type: Definition.type,
@@ -30,14 +30,14 @@ const FromAPI = (
 		group: TaskToConvert.group?.id,
 		presentationOptions: TaskToConvert.presentationOptions,
 		problemMatchers: TaskToConvert.problemMatchers,
-		hasDefinedMatchers: (TaskToConvert as any).hasDefinedMatchers,
+		hasDefinedMatchers: (TaskToConvert ).hasDefinedMatchers,
 	};
 
 	if (Execution) {
 		// This part would need to convert ProcessExecution, ShellExecution, etc.
 		// For now, it's a simplified placeholder.
 		Result.execution = {
-			...(Execution as any),
+			...(Execution ),
 		};
 	}
 	return Result;
@@ -61,7 +61,7 @@ const ToAPI = (DTO: any /* ITaskDTO */): VSCode.Task => {
 		Execution,
 		DTO.problemMatchers,
 	);
-	(ConvertedTask as any)._id = DTO._id;
+	(ConvertedTask )._id = DTO._id;
 	return ConvertedTask;
 };
 

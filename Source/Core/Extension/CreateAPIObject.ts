@@ -28,7 +28,7 @@ const CreateAPIObject = <T>(
 			startup: false,
 			extensionId: Description.identifier,
 			activationEvent: "api",
-		} as any);
+		} );
 		// FIX: After activation, get the exports. This should be an effect itself.
 		const Exports = yield* ExtensionHost.GetExtensionExports(
 			Description.identifier,

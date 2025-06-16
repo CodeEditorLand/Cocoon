@@ -14,7 +14,7 @@ import type {
 	MarkerTag,
 } from "vs/platform/markers/common/markers.js";
 import type * as VSCode from "vscode";
-import type { DiagnosticTag } from "vscode"; // Correct import
+import type { DiagnosticTag } from "vscode";
 
 import {
 	Diagnostic,
@@ -22,9 +22,6 @@ import {
 	Location,
 	Position,
 	Range,
-	// FIX: The type is DiagnosticTag, not Diagnostic.
-
-	// It's also part of the vscode namespace, not our custom types.
 } from "../Type/ExtHostTypes.js";
 import URIConverter from "./Main/URI.js";
 
@@ -91,7 +88,6 @@ const FromAPI = (diagnostic: VSCode.Diagnostic): IMarkerData => ({
 		typeof diagnostic.code === "object"
 			? {
 					value: String(diagnostic.code.value),
-					// FIX: The DTO expects the raw URI components, not the class instance.
 					target: URIConverter.FromAPI(diagnostic.code.target),
 				}
 			: String(diagnostic.code),

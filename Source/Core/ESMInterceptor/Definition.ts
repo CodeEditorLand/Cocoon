@@ -58,7 +58,7 @@ const SetupGlobalAPIRetriever = (
 	APICache: Ref.Ref<BidirectionalMap<object, string>>,
 ): Effect.Effect<void> => {
 	return Effect.sync(() => {
-		(globalThis as any)[ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME] = (
+		(globalThis )[ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME] = (
 			APIKey: string,
 		) => {
 			const Cache = Effect.runSync(Ref.get(APICache));
@@ -87,7 +87,7 @@ const HandleResolveRequest = (
 			try: () => new URL(ImportingModuleURL),
 			catch: (CaughtError) => new Error(`Invalid URL: ${CaughtError}`),
 		});
-		const MaybeExtension = ExtensionPath.FindSubstr(ParentURI as any);
+		const MaybeExtension = ExtensionPath.FindSubstr(ParentURI );
 
 		if (!MaybeExtension) {
 			const ErrorValue = new Error(
@@ -142,7 +142,7 @@ export default Effect.gen(function* () {
 
 	const Install = (): Effect.Effect<void, Error, Scope.Scope> =>
 		Effect.gen(function* () {
-			if (typeof (Module as any).register !== "function") {
+			if (typeof (Module ).register !== "function") {
 				return yield* Effect.fail(
 					new Error(
 						"`node:module.register` is not available. ESM interception will fail.",
@@ -178,7 +178,7 @@ export default Effect.gen(function* () {
 			);
 			const HookDataURI = `data:text/javascript;base64,${Buffer.from(HookScriptContent).toString("base64")}`;
 
-			(Module as any).register(HookDataURI, {
+			(Module ).register(HookDataURI, {
 				parentURL: import.meta.url,
 				data: { port: LoaderHookPort },
 				transferList: [LoaderHookPort],
@@ -190,7 +190,7 @@ export default Effect.gen(function* () {
 				Effect.sync(() => {
 					MainThreadPort.close();
 					LoaderHookPort.close();
-					delete (globalThis as any)[
+					delete (globalThis )[
 						ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME
 					];
 				}).pipe(

@@ -16,11 +16,11 @@ export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
 	const WorkSpace = yield* WorkSpaceService;
 
-	// State and events are managed by Refs and Hubs, updated by host messages.
 	const WindowStateRef = yield* Ref.make<WindowState>({
 		focused: true,
 		active: true,
 	});
+
 	const OnDidChangeWindowState = CreateEventStream<WindowState>();
 
 	// Register RPC handlers from Mountain
@@ -69,11 +69,10 @@ export default Effect.gen(function* () {
 					? {
 							// Convert TextDocumentShowOptions to DTO
 							preserveFocus:
-								preserveFocus ??
-								(columnOrOptions as any).preserveFocus,
-							selection: (columnOrOptions as any).selection
+								preserveFocus ?? columnOrOptions.preserveFocus,
+							selection: columnOrOptions.selection
 								? TypeConverter.Range.FromAPI(
-										(columnOrOptions as any).selection,
+										columnOrOptions.selection,
 									)
 								: undefined,
 						}

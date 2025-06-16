@@ -73,7 +73,7 @@ export default class<T> implements TreeView<T> {
 	public GetChildrenEffect(Element?: T): Effect.Effect<any[], Error> {
 		return Effect.tryPromise({
 			try: () => this.DataProvider.getChildren(Element) as Promise<T[]>,
-			catch: (CaughtError) => CaughtError as Error,
+			catch: (CaughtError) => CaughtError,
 		}).pipe(
 			Effect.flatMap((Children) => {
 				if (!Children) {
@@ -91,7 +91,7 @@ export default class<T> implements TreeView<T> {
 		return Effect.tryPromise({
 			try: () =>
 				this.DataProvider.getTreeItem(Element) as Promise<TreeItem>,
-			catch: (CaughtError) => CaughtError as Error,
+			catch: (CaughtError) => CaughtError,
 		}).pipe(
 			Effect.map((TreeItem) => {
 				const Handle = this.GetHandleForElement(Element);

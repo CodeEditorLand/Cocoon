@@ -46,7 +46,7 @@ const ProvideTasks = (
 				Provider.provideTasks!(Token) as Promise<
 					Task[] | null | undefined
 				>,
-			catch: (CaughtError) => CaughtError as Error,
+			catch: (CaughtError) => CaughtError,
 		});
 
 		// If no tasks are returned, provide an empty array.

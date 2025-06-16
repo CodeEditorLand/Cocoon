@@ -30,15 +30,15 @@ const QuickPick = {
 	 */
 	SerializeButtons: (Buttons?: readonly QuickInputButton[]) => {
 		return Buttons?.map((Button, Index) => ({
-			iconPath: (Button as any).iconPath
-				? "dark" in (Button as any).iconPath &&
-					"light" in (Button as any).iconPath
+			iconPath: (Button ).iconPath
+				? "dark" in (Button ).iconPath &&
+					"light" in (Button ).iconPath
 					? {
 							dark: Uri.revive(
-								(Button as any).iconPath.dark,
+								(Button ).iconPath.dark,
 							).toJSON(),
 							light: Uri.revive(
-								(Button as any).iconPath.light,
+								(Button ).iconPath.light,
 							).toJSON(),
 						}
 					: undefined

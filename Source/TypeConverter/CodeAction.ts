@@ -33,7 +33,7 @@ interface ICodeActionDto {
 
 const CodeActionKind = {
 	ToAPI: (Kind: string): VSCode.CodeActionKind => {
-		return new (ExtHostTypes as any).CodeActionKind(Kind);
+		return new (ExtHostTypes ).CodeActionKind(Kind);
 	},
 	FromAPI: (Kind: VSCode.CodeActionKind): string => {
 		return Kind.value;
@@ -45,8 +45,8 @@ const CodeActionTriggerKind = {
 		Trigger: Languages.CodeActionTriggerType,
 	): VSCode.CodeActionTriggerKind => {
 		return Trigger === Languages.CodeActionTriggerType.Invoke
-			? (ExtHostTypes as any).CodeActionTriggerKind.Invoke
-			: (ExtHostTypes as any).CodeActionTriggerKind.Automatic;
+			? (ExtHostTypes ).CodeActionTriggerKind.Invoke
+			: (ExtHostTypes ).CodeActionTriggerKind.Automatic;
 	},
 };
 
@@ -58,7 +58,7 @@ const CodeActionContext = {
 		only: DTO.only ? CodeActionKind.ToAPI(DTO.only) : undefined,
 		triggerKind: DTO.trigger
 			? CodeActionTriggerKind.ToAPI(DTO.trigger)
-			: (ExtHostTypes as any).CodeActionTriggerKind.Invoke,
+			: (ExtHostTypes ).CodeActionTriggerKind.Invoke,
 	}),
 };
 
@@ -90,7 +90,7 @@ const CodeAction = {
 		DTO: ICodeActionDto,
 		CommandsConverter: CommandConverterDefinition,
 	): VSCode.CodeAction => {
-		const Action = new (ExtHostTypes as any).CodeAction(
+		const Action = new (ExtHostTypes ).CodeAction(
 			DTO.title,
 			DTO.kind ? CodeActionKind.ToAPI(DTO.kind) : undefined,
 		);

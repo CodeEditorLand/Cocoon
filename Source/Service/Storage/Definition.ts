@@ -40,10 +40,10 @@ export default Effect.gen(function* () {
 				const UpdateEffect = Effect.gen(function* () {
 					const GlobalCache = yield* Ref.get(MementoCache);
 					for (const [Key, Memento] of GlobalCache) {
-						if ((Memento as any)["Scope"] === MementoScope.GLOBAL) {
-							Memento.acceptValue((GlobalData as any)[Key]);
+						if ((Memento )["Scope"] === MementoScope.GLOBAL) {
+							Memento.acceptValue((GlobalData )[Key]);
 						} else {
-							Memento.acceptValue((WorkSpaceData as any)[Key]);
+							Memento.acceptValue((WorkSpaceData )[Key]);
 						}
 					}
 				});
@@ -66,8 +66,8 @@ export default Effect.gen(function* () {
 
 			const ScopeName = IsGlobal ? "Global" : "WorkSpace";
 			const InitialValue = IsGlobal
-				? (Global as any)[ExtensionID]
-				: (WorkSpace as any)[ExtensionID];
+				? (Global )[ExtensionID]
+				: (WorkSpace )[ExtensionID];
 
 			Effect.runSync(
 				Log.Debug(

@@ -53,7 +53,7 @@ export default class implements Memento {
 	get<T>(Key: string, DefaultValue: T): T;
 	get<T>(Key: string, DefaultValue?: T): T | undefined {
 		const State = Effect.runSync(Ref.get(this.ValueRef));
-		let Value = (State as any)?.[Key];
+		let Value = (State )?.[Key];
 		if (typeof Value === "undefined") {
 			Value = DefaultValue;
 		}

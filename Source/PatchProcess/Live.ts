@@ -19,8 +19,8 @@ export const Live = (AllowExit: () => boolean) => {
 	return Layer.succeed(Service, {
 		NativeExit: process.exit.bind(process),
 		NativeCrash:
-			typeof (process as any).crash === "function"
-				? (process as any).crash.bind(process)
+			typeof (process ).crash === "function"
+				? (process ).crash.bind(process)
 				: undefined,
 		AllowExit,
 	});

@@ -23,7 +23,7 @@ function ParseConfiguration(
 		}
 	} else if (typeof Configuration === "object" && Configuration !== null) {
 		for (const Key in Configuration) {
-			const Proposals = (Configuration as any)[Key];
+			const Proposals = (Configuration )[Key];
 			if (Array.isArray(Proposals)) {
 				if (Key === "*") {
 					for (const Proposal of Proposals) {
@@ -49,10 +49,10 @@ export default Effect.gen(function* () {
 	const Log = yield* LogService;
 
 	const ProductConfiguration = ParseConfiguration(
-		(InitData as any).product?.extensionEnabledApiProposals,
+		(InitData ).product?.extensionEnabledApiProposals,
 	);
 	const EnvironmentConfiguration = ParseConfiguration(
-		(InitData.environment as any).extensionEnabledProposedApi,
+		(InitData.environment ).extensionEnabledProposedApi,
 	);
 
 	const AllGlobalAPIs = new Set([

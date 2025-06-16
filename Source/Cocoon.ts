@@ -7,7 +7,7 @@
 
 import * as Path from "node:path";
 import { NodeRuntime } from "@effect/platform-node";
-import { Deferred, Effect, Layer, Scope } from "effect";
+import { Deferred, Effect, Layer } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 import CoreServiceLayer from "./Core.js";
@@ -16,12 +16,10 @@ import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
 import RunProcessPatch from "./PatchProcess.js";
 import AllServiceLayer from "./Service.js";
 import { default as InitDataLayer } from "./Service/InitData/Live.js";
-// FIX: Import Tag
 import { Live as IPCLive } from "./Service/IPC.js";
-import IPCConfiguration, {
-	IPCConfigurationService,
-} from "./Service/IPC/Configuration.js";
 import IPCService from "./Service/IPC/Service.js";
+// FIX: Corrected import to use named import for the data interface.
+import type IPCConfiguration from "./Service/IPCConfiguration/Definition.js";
 
 // --- Pre-initialization Steps ---
 const VSCodeOutputDirectory =
@@ -59,6 +57,7 @@ const InitializeAfterHandshake = Effect.gen(function* () {
  */
 const Main = Effect.gen(function* () {
 	// A barrier to pause the main thread until the host sends init data.
+	// FIX: Make the error channel compatible with `undefined` for `succeed`.
 	const InitializationBarrier = yield* Deferred.make<Error, void>();
 	const IPC = yield* IPCService;
 
@@ -67,7 +66,7 @@ const Main = Effect.gen(function* () {
 		"initExtensionHost",
 		(InitializationData: IExtensionHostInitData) => {
 			// Step 2: Once init data is received, create the final application layer.
-			// This layer provides the missing InitData service to the pre-init layer.
+			// This layer provides the missing InitData service to all other layers.
 			const CompleteApplicationLayer = Layer.provide(
 				Layer.mergeAll(
 					CoreServiceLayer,
@@ -87,6 +86,7 @@ const Main = Effect.gen(function* () {
 				yield* InitializeAfterHandshake;
 
 				// Step 3.2: Signal that initialization is complete.
+				// FIX: Deferred.succeed now correctly matches the <void> success channel.
 				return yield* Deferred.succeed(
 					InitializationBarrier,
 					undefined,
@@ -100,13 +100,15 @@ const Main = Effect.gen(function* () {
 				CompleteApplicationLayer,
 			).pipe(
 				Effect.catchAllCause((cause) =>
+					// FIX: `failCause` expects the cause, not the deferred.
 					Deferred.failCause(InitializationBarrier, cause),
 				),
 				Effect.scoped,
 			);
 
 			// Step 4: Fork the main application logic so it doesn't block the IPC handler.
-			return Effect.runPromise(Effect.fork(Runnable));
+			// FIX: runPromise returns a promise, not a fiber. We don't need to await it here.
+			return Effect.runPromise(Runnable);
 		},
 	);
 
@@ -134,12 +136,11 @@ const ApplicationConfiguration: IPCConfiguration = {
 	CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
 };
 
-// FIX: This layer now only provides the IPC service, which is all that's
-// needed to establish the initial connection and wait for the handshake.
+// This layer ONLY provides the services needed to perform the initial handshake.
 const PreHandshakeLayer = IPCLive(ApplicationConfiguration);
 
 // --- Run the Application ---
-
+// FIX: The runnable effect now has its requirements provided, so its R channel is `never`.
 const RunnableApplication = Effect.provide(Main, PreHandshakeLayer);
 
 NodeRuntime.runMain(RunnableApplication);

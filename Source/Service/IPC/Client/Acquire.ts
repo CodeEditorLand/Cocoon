@@ -46,7 +46,7 @@ const CreateClientInstance = (
 ): Effect.Effect<Service, gRPCConnectionError> => {
 	return Effect.try({
 		try: () => {
-			const Proto = (PackageDefinition as any)
+			const Proto = (PackageDefinition )
 				.vine_ipc as GRPC.GrpcObject;
 			const ClientConstructor = Proto[
 				"MountainService"
@@ -72,7 +72,7 @@ const WaitForClientReady = (
 ): Effect.Effect<void, gRPCConnectionError> => {
 	return Effect.async<void, gRPCConnectionError>((Resume) => {
 		// Set a 10-second timeout for the client to become ready.
-		(Client as any).waitForReady(Date.now() + 10_000, (Error?: Error) => {
+		(Client ).waitForReady(Date.now() + 10_000, (Error?: Error) => {
 			if (Error) {
 				Resume(
 					Effect.fail(

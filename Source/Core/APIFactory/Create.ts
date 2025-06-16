@@ -126,7 +126,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 
 			for (const key in API) {
 				if (Object.prototype.hasOwnProperty.call(API, key)) {
-					const prop = (API as any)[key];
+					const prop = (API )[key];
 					if (typeof prop === "object" && prop !== null) {
 						Object.freeze(prop);
 					}

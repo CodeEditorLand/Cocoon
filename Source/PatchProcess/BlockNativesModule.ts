@@ -37,10 +37,10 @@ const BlockNativesModule = Effect.try({
 	try: () => {
 		// The `_load` function is an internal, undocumented part of Node's CJS loader.
 		// We must check for its existence before attempting to patch it.
-		if (typeof (Module as any)._load === "function") {
-			const OriginalLoad = (Module as any)._load;
+		if (typeof (Module )._load === "function") {
+			const OriginalLoad = (Module )._load;
 
-			(Module as any)._load = function (
+			(Module )._load = function (
 				Request: string,
 				Parent: any,
 				IsMain: boolean,

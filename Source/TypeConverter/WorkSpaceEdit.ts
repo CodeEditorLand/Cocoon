@@ -40,20 +40,19 @@ const FromAPI = (
 	VersionProvider?: IVersionInformationProvider,
 ): IWorkspaceEdit => {
 	const Result: IWorkspaceEdit = { edits: [] };
-
 	for (const [URI, URIEditArray] of Edit.entries()) {
 		if (URIEditArray.length > 0 && URIEditArray[0] instanceof TextEdit) {
 			const Resource = URIConverter.FromAPI(URI);
 			const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
-			for (const SingleEdit of URIEditArray as VSCode.TextEdit[]) {
+			for (const SingleEdit of URIEditArray) {
 				Result.edits.push({
 					resource: Resource,
 					textEdit: TextEditConverter.FromAPI(SingleEdit),
 					versionId: VersionId,
-				} as any);
+				});
 			}
 		} else {
-			for (const FileEdit of URIEditArray as any[]) {
+			for (const FileEdit of URIEditArray) {
 				Result.edits.push({
 					oldResource: FileEdit.oldUri
 						? URIConverter.FromAPI(FileEdit.oldUri)
@@ -63,7 +62,7 @@ const FromAPI = (
 						: undefined,
 					options: FileEdit.options,
 					metadata: FileEdit.metadata,
-				} as any);
+				});
 			}
 		}
 	}
@@ -77,7 +76,7 @@ const ToAPI = (DTO: IWorkspaceEdit): VSCode.WorkspaceEdit => {
 			const WorkspaceTextEdit = Edit as IWorkspaceTextEdit;
 			const URI = URIConverter.ToAPI(WorkspaceTextEdit.resource);
 			const TextEditArray = [
-				TextEditConverter.ToAPI(WorkspaceTextEdit.textEdit as any),
+				TextEditConverter.ToAPI(WorkspaceTextEdit.textEdit),
 			];
 			Result.set(URI, TextEditArray);
 		} else {

@@ -100,9 +100,9 @@ export default class {
 		}
 		return {
 			command: CommandDTO.id,
-			title: (CommandDTO as any).title ?? "",
-			tooltip: (CommandDTO as any).tooltip ?? "",
-			arguments: (CommandDTO as any).arguments ?? [],
+			title: (CommandDTO ).title ?? "",
+			tooltip: (CommandDTO ).tooltip ?? "",
+			arguments: (CommandDTO ).arguments ?? [],
 		};
 	}
 }

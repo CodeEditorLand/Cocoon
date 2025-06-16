@@ -72,7 +72,8 @@ export default Effect.gen(function* () {
 						if (ShimResult._tag === "Success") {
 							return ShimResult.value;
 						} else {
-							// If shimming fails (e.g., module is blocked), throw the error to the extension.
+							// FIX: To properly re-throw with the original Cause, we must
+							// wrap the cause in `Effect.failCause` and then run that.
 							throw Effect.runSync(
 								Effect.failCause(ShimResult.cause),
 							);

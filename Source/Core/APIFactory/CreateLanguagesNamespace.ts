@@ -85,7 +85,7 @@ const CreateLanguagesNamespace = (
 				"createDiagnosticCollection not implemented in this mock.",
 			);
 		},
-	} as any;
+	} ;
 };
 
 export default CreateLanguagesNamespace;

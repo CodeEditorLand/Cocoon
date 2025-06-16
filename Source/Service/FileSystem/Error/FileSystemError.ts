@@ -25,7 +25,7 @@ export class FileSystemError extends Data.TaggedError("FileSystemError")<{
 export const MapToVSCodeError = (
 	Error: FileSystemError,
 ): VscFileSystemError => {
-	const Cause = Error.cause as any;
+	const Cause = Error.cause ;
 	const URI = Error.uri;
 
 	if (

@@ -1,9 +1,11 @@
+// Cocoon/Source/Utility/CreateEventStream.ts
+
 /**
  * @module CreateEventStream
- * @description A utility to create a VS Code-compatible event emitter.
+ * @description A utility to create a VS Code-compatible event emitter that is also an Effect PubSub.
  */
 
-import { Effect, Hub } from "effect";
+import { Effect, PubSub } from "effect";
 import { Emitter, type Event } from "vs/base/common/event.js";
 
 export interface EventStream<T> {
@@ -14,15 +16,15 @@ export interface EventStream<T> {
 	 */
 	readonly Fire: (Data: T) => Effect.Effect<void, never>;
 	/**
-	 * The underlying Effect Hub for stream processing.
+	 * The underlying Effect PubSub for stream processing.
 	 */
-	readonly Hub: Hub.Hub<T>;
+	readonly PubSub: PubSub.PubSub<T>;
 	/**
 	 * The VS Code-compatible `Event` interface.
 	 */
 	readonly event: Event<T>;
 	/**
-	 * Shuts down the underlying Hub, completing the stream.
+	 * Shuts down the underlying PubSub, completing the stream.
 	 */
 	readonly Shutdown: () => Effect.Effect<void, never>;
 }
@@ -33,20 +35,20 @@ export interface EventStream<T> {
  */
 const CreateEventStream = <T>(): EventStream<T> => {
 	const VscodeEmitter = new Emitter<T>();
-	const HubInstance = Effect.runSync(Hub.unbounded<T>());
+	const PubSubInstance = Effect.runSync(PubSub.unbounded<T>());
 
 	const Fire = (Data: T): Effect.Effect<void, never> =>
-		Hub.publish(HubInstance, Data).pipe(
+		PubSub.publish(PubSubInstance, Data).pipe(
 			Effect.andThen(Effect.sync(() => VscodeEmitter.fire(Data))),
 			Effect.asVoid,
 		);
 
 	const event: Event<T> = VscodeEmitter.event;
-	const Shutdown = () => Hub.shutdown(HubInstance);
+	const Shutdown = () => PubSub.shutdown(PubSubInstance);
 
 	return {
 		Fire,
-		Hub: HubInstance,
+		PubSub: PubSubInstance,
 		event,
 		Shutdown,
 	};

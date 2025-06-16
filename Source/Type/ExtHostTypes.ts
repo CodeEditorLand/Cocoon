@@ -433,7 +433,7 @@ export class TextEdit implements VSCode.TextEdit {
 			new Range(new Position(0, 0), new Position(0, 0)),
 			"",
 		);
-		(r as any).newEol = eol;
+		(r ).newEol = eol;
 		return r;
 	}
 	newEol: VSCode.EndOfLine | undefined;

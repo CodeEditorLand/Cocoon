@@ -1,3 +1,5 @@
+// Cocoon/Source/Core/APIFactory/Definition.ts
+
 /**
  * @module Definition (APIFactory)
  * @description The live implementation of the APIFactory service. This is
@@ -43,6 +45,7 @@ export default Effect.gen(function* () {
 	const TreeView = yield* TreeViewService;
 	const StatusBar = yield* StatusBarService;
 
+	// FIX: The CreateAPIFactory is a function that returns an object with a `CreateAPI` method.
 	const Factory = CreateAPIFactory({
 		Log,
 		ProposedAPI,

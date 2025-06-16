@@ -26,17 +26,15 @@ export default Effect.gen(function* () {
 			if (CustomHandler) {
 				return yield* Effect.tryPromise({
 					try: () => CustomHandler(...Parameters),
-					catch: (e) => e as Error,
+					catch: (e) => e,
 				});
 			} else {
-				if ((RPCProtocolInstance as any)._getHandler) {
-					const Handler = (RPCProtocolInstance as any)._getHandler(
-						Method,
-					);
+				if (RPCProtocolInstance._getHandler) {
+					const Handler = RPCProtocolInstance._getHandler(Method);
 					if (Handler) {
 						return yield* Effect.tryPromise({
 							try: () => Handler(...Parameters),
-							catch: (e) => e as Error,
+							catch: (e) => e,
 						});
 					}
 				}
@@ -48,11 +46,8 @@ export default Effect.gen(function* () {
 
 	const DispatchNotification = (Method: string, Parameters: readonly any[]) =>
 		Effect.sync(() => {
-			if ((RPCProtocolInstance as any)._receiveNotification) {
-				(RPCProtocolInstance as any)._receiveNotification(
-					Method,
-					Parameters,
-				);
+			if (RPCProtocolInstance._receiveNotification) {
+				RPCProtocolInstance._receiveNotification(Method, Parameters);
 			}
 		});
 

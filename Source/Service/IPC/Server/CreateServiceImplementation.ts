@@ -84,11 +84,11 @@ const CreateServiceImplementation = (
 		) => {
 			const Notification = Call.request;
 			const ProcessEffect = DecodeValue(
-				(Notification as any).getParams(),
+				(Notification ).getParams(),
 			).pipe(
 				Effect.flatMap((DecodedParameter) =>
 					Dispatcher.DispatchNotification(
-						(Notification as any).getMethod(),
+						(Notification ).getMethod(),
 						Array.isArray(DecodedParameter) ? DecodedParameter : [],
 					),
 				),

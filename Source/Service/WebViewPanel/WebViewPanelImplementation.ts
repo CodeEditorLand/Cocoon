@@ -112,16 +112,16 @@ export default class implements WebviewPanel {
 		this._iconPath = Value;
 		const IconPathDTO = Value
 			? {
-					light: (Value as any).light
+					light: (Value ).light
 						? WebViewConverter.ConvertExtensionDataToDTO(
 								this.Extension,
-								(Value as any).light,
+								(Value ).light,
 							)
 						: undefined,
-					dark: (Value as any).dark
+					dark: (Value ).dark
 						? WebViewConverter.ConvertExtensionDataToDTO(
 								this.Extension,
-								(Value as any).dark,
+								(Value ).dark,
 							)
 						: WebViewConverter.ConvertExtensionDataToDTO(
 								this.Extension,

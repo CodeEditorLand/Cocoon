@@ -54,7 +54,7 @@ export default Effect.gen(function* () {
 	// Based on VS Code's structure, this is likely on a property like `all`.
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		ActivationEventsReader,
-		(InitData.extensions as any).allExtensions,
+		(InitData.extensions ).allExtensions,
 	);
 
 	const Deactivate = (Extension: ActivatedExtension) =>
@@ -109,16 +109,16 @@ export default Effect.gen(function* () {
 				globalStorageUri: URI.parse("file:///global-storage"),
 				logUri: URI.parse("file:///logs"),
 				extensionMode: 1, // Production
-				secrets: undefined as any,
+				secrets: undefined ,
 				storagePath: "/extension-storage",
 				globalStoragePath: "/global-storage",
 				logPath: "/logs",
-				extension: undefined as any,
-				environmentVariableCollection: undefined as any,
+				extension: undefined ,
+				environmentVariableCollection: undefined ,
 				asAbsolutePath: (path) => path,
-				languageModelAccessInformation: undefined as any,
-				workspaceState: undefined as any,
-				globalState: undefined as any,
+				languageModelAccessInformation: undefined ,
+				workspaceState: undefined ,
+				globalState: undefined ,
 				extensionRuntime: ExtensionRuntime.Node,
 				messagePassingProtocol: undefined,
 			};

@@ -48,7 +48,7 @@ export default Effect.gen(function* () {
 			}
 			const Session = yield* Effect.tryPromise({
 				try: () => Provider.createSession(Scopes, {}),
-				catch: (CaughtError) => CaughtError as Error,
+				catch: (CaughtError) => CaughtError,
 			});
 			return ConvertSessionToInternal(Session);
 		});
@@ -61,7 +61,7 @@ export default Effect.gen(function* () {
 			}
 			yield* Effect.tryPromise({
 				try: () => Provider.removeSession!(SessionID),
-				catch: (CaughtError) => CaughtError as Error,
+				catch: (CaughtError) => CaughtError,
 			});
 		});
 
