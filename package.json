@@ -33,7 +33,7 @@
 	},
 	"dependencies": {
 		"@effect/platform": "0.84.11",
-		"@effect/platform-node": "0.85.16",
+		"@effect/platform-node": "0.86.0",
 		"@effect/stream": "0.37.1",
 		"@types/node": "24.0.1",
 		"google-protobuf": "3.21.4"
