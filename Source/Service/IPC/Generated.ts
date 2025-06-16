@@ -62,7 +62,7 @@ export interface MountainService {
 }
 
 // This is a placeholder constructor
-const MountainServiceClient = (() => {})  as {
+const MountainServiceClient = (() => {}) as {
 	new (Address: string, Credentials: any): MountainService;
 };
 

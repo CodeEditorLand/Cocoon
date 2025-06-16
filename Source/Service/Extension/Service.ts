@@ -32,7 +32,7 @@ const CreateAPIObject = <T>(
 		startup: false,
 		extensionId: Description.identifier,
 		activationEvent: "api",
-	} ).pipe(
+	}).pipe(
 		Effect.andThen(
 			ExtensionHost.GetExtensionExports(Description.identifier),
 		),

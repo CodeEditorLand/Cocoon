@@ -50,7 +50,7 @@ export default Effect.gen(function* () {
 			// Step 2: Instantiate the correct class, ExtHostDocumentData.
 			const DocumentData = new ExtHostDocumentData(
 				// The constructor from `extHostDocuments.ts` shows it needs the IPC protocol adapter.
-				(IPC )._protocol,
+				IPC._protocol,
 				RevivedURI,
 				Data.lines,
 				Data.eol,

@@ -5,7 +5,6 @@
  * Dependency: ../IPC/Service.js, ../InitData/Service.js, ../Log/Service.js, ./Service.js, effect, vs/base/common/errors.js, vs/platform/extensions/common/extensions.js, vscode
  */
 
-
 /**
  * @module Definition (Telemetry)
  * @description Implements the telemetry service, handling event collection and forwarding
@@ -39,8 +38,8 @@ export default Effect.gen(function* () {
 	const Log = yield* LogService;
 
 	const TelemetryLevelValue =
-		(InitData.telemetryInfo ).telemetryLevel ?? TelemetryLevel.NONE;
-	const ProductConfig = (InitData ).product?.telemetryOptOut;
+		InitData.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
+	const ProductConfig = InitData.product?.telemetryOptOut;
 
 	const ShouldSendEvent = (Type: "usage" | "error"): boolean => {
 		if (TelemetryLevelValue === TelemetryLevel.NONE) {
@@ -111,13 +110,13 @@ export default Effect.gen(function* () {
 			// This would typically involve an IPC call to the host.
 		},
 		publicLog: (EventName: string, Data?: object): void => {
-			Effect.runFork(LogPublicEvent(EventName, Data ));
+			Effect.runFork(LogPublicEvent(EventName, Data));
 		},
 		publicLog2: <T extends object = any>(
 			EventName: string,
 			Data?: T,
 		): void => {
-			Effect.runFork(LogPublicEvent(EventName, Data ));
+			Effect.runFork(LogPublicEvent(EventName, Data));
 		},
 		onExtensionError: (
 			Extension: ExtensionIdentifier,

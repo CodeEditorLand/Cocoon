@@ -5,7 +5,6 @@
  * Dependency: ../../Service/IPC/Service.js, ../../Service/InitData/Service.js, ../../Service/Log/Service.js, ../../Service/Telemetry/Service.js, ./Service.js, ./State.js, effect, vs/base/common/uri.js, vs/platform/extensionManagement/common/implicitActivationEvents.js, vs/workbench/api/common/extHostTypes.js, vscode
  */
 
-
 /**
  * @module Definition (ExtensionHost)
  * @description The live implementation of the ExtensionHost service, which manages
@@ -60,7 +59,7 @@ export default Effect.gen(function* () {
 	// Based on VS Code's structure, this is likely on a property like `all`.
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		ActivationEventsReader,
-		(InitData.extensions ).allExtensions,
+		InitData.extensions.allExtensions,
 	);
 
 	const Deactivate = (Extension: ActivatedExtension) =>
@@ -115,16 +114,16 @@ export default Effect.gen(function* () {
 				globalStorageUri: URI.parse("file:///global-storage"),
 				logUri: URI.parse("file:///logs"),
 				extensionMode: 1, // Production
-				secrets: undefined ,
+				secrets: undefined,
 				storagePath: "/extension-storage",
 				globalStoragePath: "/global-storage",
 				logPath: "/logs",
-				extension: undefined ,
-				environmentVariableCollection: undefined ,
+				extension: undefined,
+				environmentVariableCollection: undefined,
 				asAbsolutePath: (path) => path,
-				languageModelAccessInformation: undefined ,
-				workspaceState: undefined ,
-				globalState: undefined ,
+				languageModelAccessInformation: undefined,
+				workspaceState: undefined,
+				globalState: undefined,
 				extensionRuntime: ExtensionRuntime.Node,
 				messagePassingProtocol: undefined,
 			};

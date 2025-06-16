@@ -65,15 +65,15 @@ export default class {
 			return undefined;
 		}
 
-		const APICommand = this.LookupAPICommand(Command.command);
-		if (APICommand) {
+		const APICommandValue = this.LookupAPICommand(Command.command);
+		if (APICommandValue) {
 			const ConvertedArgumentArray =
 				Command.arguments?.map((Argument, i) =>
-					APICommand.Arguments[i].Convert(Argument),
+					APICommandValue.Arguments[i].Convert(Argument),
 				) ?? [];
 			return {
-				id: APICommand.InternalID,
-				title: APICommand.ID,
+				id: APICommandValue.InternalID,
+				title: APICommandValue.ID,
 				arguments: ConvertedArgumentArray,
 			} as unknown as ICommand;
 		}
@@ -107,9 +107,9 @@ export default class {
 		}
 		return {
 			command: CommandDTO.id,
-			title: (CommandDTO ).title ?? "",
-			tooltip: (CommandDTO ).tooltip ?? "",
-			arguments: (CommandDTO ).arguments ?? [],
+			title: (CommandDTO as any).title ?? "",
+			tooltip: (CommandDTO as any).tooltip ?? "",
+			arguments: (CommandDTO as any).arguments ?? [],
 		};
 	}
 }

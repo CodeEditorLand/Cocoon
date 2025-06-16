@@ -25,7 +25,7 @@ export default function (
 ) {
 	return Effect.gen(function* () {
 		// A real implementation would acquire a token ID from the cancellation service
-		const tokenID = token ? ((token )._id ?? 0) : 0;
+		const tokenID = token ? (token._id ?? 0) : 0;
 
 		const resultDTOs = yield* IPC.SendRequest<any[]>("$findFiles", [
 			include,

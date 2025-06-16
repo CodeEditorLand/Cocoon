@@ -5,7 +5,6 @@
  * Dependency: ../FileSystemInformation/Service.js, ../IPC/Service.js, ./CreateStatEffect.js, ./Service.js, effect
  */
 
-
 /**
  * @module Definition (FileSystem)
  * @description The live implementation of the FileSystem service.

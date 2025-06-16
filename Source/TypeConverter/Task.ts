@@ -2,7 +2,7 @@
  * File: Cocoon/Source/TypeConverter/Task.ts
  * Responsibility: 
  * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: vs/platform/extensions/common/extensions.js, vscode
+ * Dependency: ../Type/ExtHostTypes.js, vs/platform/extensions/common/extensions.js, vscode
  * Export: Task
  */
 
@@ -14,6 +14,8 @@
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
+import { Task as ExtHostTask, ProcessExecution } from "../Type/ExtHostTypes.js";
+
 const FromAPI = (
 	TaskToConvert: VSCode.Task,
 	Extension: IExtensionDescription,
@@ -22,7 +24,7 @@ const FromAPI = (
 	const Execution = TaskToConvert.execution;
 
 	const Result: any = {
-		_id: (TaskToConvert )._id,
+		_id: (TaskToConvert as any)._id,
 		definition: {
 			...Definition,
 			type: Definition.type,
@@ -38,14 +40,14 @@ const FromAPI = (
 		group: TaskToConvert.group?.id,
 		presentationOptions: TaskToConvert.presentationOptions,
 		problemMatchers: TaskToConvert.problemMatchers,
-		hasDefinedMatchers: (TaskToConvert ).hasDefinedMatchers,
+		hasDefinedMatchers: (TaskToConvert as any).hasDefinedMatchers,
 	};
 
 	if (Execution) {
 		// This part would need to convert ProcessExecution, ShellExecution, etc.
 		// For now, it's a simplified placeholder.
 		Result.execution = {
-			...(Execution ),
+			...(Execution as any),
 		};
 	}
 	return Result;
@@ -64,12 +66,12 @@ const ToAPI = (DTO: any /* ITaskDTO */): VSCode.Task => {
 	const ConvertedTask = new ExtHostTask(
 		DTO.definition,
 		DTO.source.scope,
+		DTO.name,
 		DTO.source.label,
-		DTO.source.id,
 		Execution,
 		DTO.problemMatchers,
 	);
-	(ConvertedTask )._id = DTO._id;
+	(ConvertedTask as any)._id = DTO._id;
 	return ConvertedTask;
 };
 

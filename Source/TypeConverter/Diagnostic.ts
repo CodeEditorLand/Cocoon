@@ -2,7 +2,7 @@
  * File: Cocoon/Source/TypeConverter/Diagnostic.ts
  * Responsibility: 
  * Modified: 2025-06-16 14:42:17 UTC
- * Dependency: ./Main/URI.js, vs/base/common/uri.js, vscode
+ * Dependency: ../Type/ExtHostTypes.js, ./Main/URI.js, vs/base/common/uri.js, vscode
  */
 
 /**
@@ -30,13 +30,13 @@ import {
 } from "../Type/ExtHostTypes.js";
 import URIConverter from "./Main/URI.js";
 
-const toMarkerSeverity = (
+const ToMarkerSeverity = (
 	severity: VSCode.DiagnosticSeverity,
 ): MarkerSeverity => {
 	return severity as unknown as MarkerSeverity;
 };
 
-const fromMarkerSeverity = (
+const FromMarkerSeverity = (
 	severity: MarkerSeverity,
 ): VSCode.DiagnosticSeverity => {
 	return severity as unknown as VSCode.DiagnosticSeverity;
@@ -44,43 +44,43 @@ const fromMarkerSeverity = (
 
 /**
  * Converts a `vscode.DiagnosticRelatedInformation` object into its DTO representation.
- * @param RelatedInformation The `vscode.DiagnosticRelatedInformation` instance.
+ * @param relatedInformation The `vscode.DiagnosticRelatedInformation` instance.
  * @returns The `IRelatedInformation` DTO.
  */
 const RelatedInformationFromAPI = (
-	RelatedInformation: VSCode.DiagnosticRelatedInformation,
+	relatedInformation: VSCode.DiagnosticRelatedInformation,
 ): IRelatedInformation => ({
-	resource: URIConverter.FromAPI(RelatedInformation.location.uri) as VscURI,
-	message: RelatedInformation.message,
-	startLineNumber: RelatedInformation.location.range.start.line + 1,
-	startColumn: RelatedInformation.location.range.start.character + 1,
-	endLineNumber: RelatedInformation.location.range.end.line + 1,
-	endColumn: RelatedInformation.location.range.end.character + 1,
+	resource: relatedInformation.location.uri as VscURI,
+	message: relatedInformation.message,
+	startLineNumber: relatedInformation.location.range.start.line + 1,
+	startColumn: relatedInformation.location.range.start.character + 1,
+	endLineNumber: relatedInformation.location.range.end.line + 1,
+	endColumn: relatedInformation.location.range.end.character + 1,
 });
 
 /**
  * Revives a related information DTO into a `vscode.DiagnosticRelatedInformation` instance.
- * @param RelatedInformationDTO The `IRelatedInformation` DTO.
+ * @param relatedInformationDTO The `IRelatedInformation` DTO.
  * @returns A new `vscode.DiagnosticRelatedInformation` instance.
  */
 const RelatedInformationToAPI = (
-	RelatedInformationDTO: IRelatedInformation,
+	relatedInformationDTO: IRelatedInformation,
 ): VSCode.DiagnosticRelatedInformation =>
 	new DiagnosticRelatedInformation(
 		new Location(
-			URIConverter.ToAPI(RelatedInformationDTO.resource),
+			URIConverter.ToAPI(relatedInformationDTO.resource),
 			new Range(
 				new Position(
-					RelatedInformationDTO.startLineNumber - 1,
-					RelatedInformationDTO.startColumn - 1,
+					relatedInformationDTO.startLineNumber - 1,
+					relatedInformationDTO.startColumn - 1,
 				),
 				new Position(
-					RelatedInformationDTO.endLineNumber - 1,
-					RelatedInformationDTO.endColumn - 1,
+					relatedInformationDTO.endLineNumber - 1,
+					relatedInformationDTO.endColumn - 1,
 				),
 			),
 		),
-		RelatedInformationDTO.message,
+		relatedInformationDTO.message,
 	);
 
 /**
@@ -93,10 +93,10 @@ const FromAPI = (diagnostic: VSCode.Diagnostic): IMarkerData => ({
 		typeof diagnostic.code === "object"
 			? {
 					value: String(diagnostic.code.value),
-					target: URIConverter.FromAPI(diagnostic.code.target),
+					target: diagnostic.code.target as VscURI,
 				}
 			: String(diagnostic.code),
-	severity: toMarkerSeverity(diagnostic.severity),
+	severity: ToMarkerSeverity(diagnostic.severity),
 	message: diagnostic.message,
 	source: diagnostic.source,
 	startLineNumber: diagnostic.range.start.line + 1,
@@ -111,48 +111,48 @@ const FromAPI = (diagnostic: VSCode.Diagnostic): IMarkerData => ({
 
 /**
  * Revives a marker data DTO into a `vscode.Diagnostic` instance.
- * @param MarkerDataDTO The `IMarkerData` DTO.
+ * @param markerDataDTO The `IMarkerData` DTO.
  * @returns A new `vscode.Diagnostic` instance.
  */
-const ToAPI = (MarkerDataDTO: IMarkerData): VSCode.Diagnostic => {
-	const range = new Range(
+const ToAPI = (markerDataDTO: IMarkerData): VSCode.Diagnostic => {
+	const RangeValue = new Range(
 		new Position(
-			MarkerDataDTO.startLineNumber - 1,
-			MarkerDataDTO.startColumn - 1,
+			markerDataDTO.startLineNumber - 1,
+			markerDataDTO.startColumn - 1,
 		),
 		new Position(
-			MarkerDataDTO.endLineNumber - 1,
-			MarkerDataDTO.endColumn - 1,
+			markerDataDTO.endLineNumber - 1,
+			markerDataDTO.endColumn - 1,
 		),
 	);
-	const diagnostic = new Diagnostic(
-		range,
-		MarkerDataDTO.message,
-		fromMarkerSeverity(MarkerDataDTO.severity as MarkerSeverity),
+	const DiagnosticValue = new Diagnostic(
+		RangeValue,
+		markerDataDTO.message,
+		FromMarkerSeverity(markerDataDTO.severity as MarkerSeverity),
 	);
-	diagnostic.source = MarkerDataDTO.source;
-	if (typeof MarkerDataDTO.code === "object" && MarkerDataDTO.code) {
-		diagnostic.code = {
-			value: MarkerDataDTO.code.value,
-			target: URIConverter.ToAPI(MarkerDataDTO.code.target),
+	DiagnosticValue.source = markerDataDTO.source;
+	if (typeof markerDataDTO.code === "object" && markerDataDTO.code) {
+		DiagnosticValue.code = {
+			value: markerDataDTO.code.value,
+			target: URIConverter.ToAPI(markerDataDTO.code.target),
 		};
 	} else {
-		diagnostic.code = MarkerDataDTO.code;
+		DiagnosticValue.code = markerDataDTO.code;
 	}
-	diagnostic.relatedInformation = MarkerDataDTO.relatedInformation?.map(
+	DiagnosticValue.relatedInformation = markerDataDTO.relatedInformation?.map(
 		RelatedInformationToAPI,
 	);
-	diagnostic.tags = MarkerDataDTO.tags as unknown as DiagnosticTag[];
-	return diagnostic;
+	DiagnosticValue.tags = markerDataDTO.tags as unknown as DiagnosticTag[];
+	return DiagnosticValue;
 };
 
 /**
  * Converts an array of `vscode.Diagnostic` objects into an array of marker data DTOs.
- * @param Diagnostics The array of `vscode.Diagnostic` instances.
+ * @param diagnostics The array of `vscode.Diagnostic` instances.
  * @returns An array of `IMarkerData` DTOs.
  */
 const FromAPIArray = (
-	Diagnostics: readonly VSCode.Diagnostic[],
-): IMarkerData[] => Diagnostics.map(FromAPI);
+	diagnostics: readonly VSCode.Diagnostic[],
+): IMarkerData[] => diagnostics.map(FromAPI);
 
 export default { FromAPI, ToAPI, FromAPIArray };

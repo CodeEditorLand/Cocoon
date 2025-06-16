@@ -2,7 +2,7 @@
  * File: Cocoon/Source/TypeConverter/TreeView.ts
  * Responsibility: 
  * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, vs/platform/extensions/common/extensions.js, vscode
+ * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Main.js, vs/platform/extensions/common/extensions.js, vscode
  * Export: TreeView
  */
 
@@ -13,7 +13,8 @@
  */
 
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type * as VSCode from "vscode";
+import * as VSCode from "vscode";
+import { TreeItemCollapsibleState } from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
 import type CommandConverterDefinition from "./Command/Definition.js";
@@ -23,23 +24,23 @@ import {
 } from "./Main.js";
 
 const Option = {
-	FromAPI: (Option: VSCode.TreeViewOptions<any>): any => {
+	FromAPI: (option: VSCode.TreeViewOptions<any>): any => {
 		return {
-			showCollapseAll: !!Option.showCollapseAll,
-			canSelectMany: !!Option.canSelectMany,
-			hasHandleDrag: !!Option.dragAndDropController?.handleDrag,
-			hasHandleDrop: !!Option.dragAndDropController?.handleDrop,
+			showCollapseAll: !!option.showCollapseAll,
+			canSelectMany: !!option.canSelectMany,
+			hasHandleDrag: !!option.dragAndDropController?.handleDrag,
+			hasHandleDrop: !!option.dragAndDropController?.handleDrop,
 		};
 	},
 };
 
 const Item = {
 	FromAPI: (
-		_Extension: IExtensionDescription,
-		Item: VSCode.TreeItem,
-		Handle: string,
-		ParentHandle: string | undefined,
-		CommandConverter: CommandConverterDefinition,
+		_extension: IExtensionDescription,
+		item: VSCode.TreeItem,
+		handle: string,
+		parentHandle: string | undefined,
+		commandConverter: CommandConverterDefinition,
 	): any => {
 		const {
 			label: Label,
@@ -47,12 +48,12 @@ const Item = {
 			iconPath: IconPath,
 			resourceUri: ResourceURI,
 			tooltip: Tooltip,
-			collapsibleState: CollapsibleState,
+			collapsibleState: CollapsibleStateValue,
 			contextValue: ContextValue,
 			description: Description,
 			command: Command,
 			accessibilityInformation: AccessibilityInformation,
-		} = Item;
+		} = item;
 
 		let ThemeIcon: { id: string; color?: string } | undefined;
 		let Icon:
@@ -63,7 +64,7 @@ const Item = {
 		if (IconPath instanceof ExtHostTypes.ThemeIcon) {
 			ThemeIcon = {
 				id: IconPath.id,
-				color: (IconPath.color )?.id,
+				color: (IconPath.color as any)?.id,
 			};
 		} else {
 			Icon = IconPath as
@@ -73,8 +74,8 @@ const Item = {
 		}
 
 		return {
-			handle: Handle,
-			parentHandle: ParentHandle,
+			handle: handle,
+			parentHandle: parentHandle,
 			label: typeof Label === "string" ? { label: Label } : Label,
 			id: ID,
 			description: Description,
@@ -88,10 +89,10 @@ const Item = {
 						? MarkdownStringConverter.FromAPI(Tooltip)
 						: undefined,
 			command: Command
-				? CommandConverter.ToInternal(Command, [])
+				? commandConverter.ToInternal(Command, [])
 				: undefined,
 			collapsibleState:
-				CollapsibleState ?? ExtHostTypes.TreeItemCollapsibleState.None,
+				CollapsibleStateValue ?? TreeItemCollapsibleState.None,
 			contextValue: ContextValue,
 			themeIcon: ThemeIcon,
 			icon: Icon
@@ -106,13 +107,13 @@ const Item = {
 		};
 	},
 
-	ToAPI: (DTO: any): VSCode.TreeItem => {
-		const Label = DTO.label.label;
-		const Item = new ExtHostTypes.TreeItem(Label, DTO.collapsibleState);
-		Item.id = DTO.id;
-		(Item ).description = DTO.description;
-		Item.resourceURI = DTO.resourceUri
-			? URIConverter.ToAPI(DTO.resourceUri)
+	ToAPI: (dto: any): VSCode.TreeItem => {
+		const Label = dto.label.label;
+		const Item = new ExtHostTypes.TreeItem(Label, dto.collapsibleState);
+		Item.id = dto.id;
+		(Item as any).description = dto.description;
+		Item.resourceURI = dto.resourceUri
+			? URIConverter.ToAPI(dto.resourceUri)
 			: undefined;
 		return Item;
 	},

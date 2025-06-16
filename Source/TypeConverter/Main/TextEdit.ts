@@ -2,7 +2,7 @@
  * File: Cocoon/Source/TypeConverter/Main/TextEdit.ts
  * Responsibility: 
  * Modified: 2025-06-15 19:16:41 UTC
- * Dependency: ../../Type/ExtHostTypes.js, vs/editor/common/model.js, vscode
+ * Dependency: ../../Type/ExtHostTypes.js, ./Range.js, vs/editor/common/model.js, vscode
  */
 
 /**
@@ -13,7 +13,8 @@
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type { TextEdit as VscTextEdit } from "vscode";
 
-import { Range, TextEdit } from "../../Type/ExtHostTypes.js";
+import { TextEdit } from "../../Type/ExtHostTypes.js";
+import RangeConverter from "./Range.js";
 
 /**
  * Converts a `vscode.TextEdit` object into a plain DTO for IPC.
@@ -24,7 +25,7 @@ const FromAPI = (
 	TextEditInstance: VscTextEdit,
 ): IIdentifiedSingleEditOperation => ({
 	text: TextEditInstance.newText,
-	range: TextEditInstance.range as Range,
+	range: RangeConverter.FromAPI(TextEditInstance.range),
 	forceMoveMarkers: false,
 });
 
@@ -34,6 +35,9 @@ const FromAPI = (
  * @returns A new `vscode.TextEdit` instance.
  */
 const ToAPI = (TextEditDTO: IIdentifiedSingleEditOperation): VscTextEdit =>
-	new TextEdit(TextEditDTO.range as Range, TextEditDTO.text ?? "");
+	new TextEdit(
+		RangeConverter.ToAPI(TextEditDTO.range),
+		TextEditDTO.text ?? "",
+	);
 
 export default { FromAPI, ToAPI };

@@ -66,7 +66,7 @@ export default Effect.gen(function* () {
 				ID,
 				...MarshalledArguments,
 			]).pipe(Effect.mapError((cause) => new Error(String(cause))));
-			return CommandConverter.FromInternal(Result ) as T;
+			return CommandConverter.FromInternal(Result) as T;
 		});
 
 	const Register = (
@@ -153,7 +153,7 @@ export default Effect.gen(function* () {
 			),
 	};
 
-	(CommandConverter ).CommandService = ServiceImplementation;
+	CommandConverter.CommandService = ServiceImplementation;
 
 	return ServiceImplementation;
 });

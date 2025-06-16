@@ -88,7 +88,7 @@ const CreateDebugNamespace = (
 				Effect.runPromise(Debug.AddBreakpoints(breakpoints)),
 			removeBreakpoints: (breakpoints) =>
 				Effect.runPromise(Debug.RemoveBreakpoints(breakpoints)),
-		} ;
+		};
 	});
 };
 

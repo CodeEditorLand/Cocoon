@@ -6,7 +6,6 @@
  * Export: ExtensionActivationReason, ExtensionHostService
  */
 
-
 /**
  * @module Service (ExtensionHost)
  * @description Defines the interface and Context.Tag for the ExtensionHost service.

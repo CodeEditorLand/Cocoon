@@ -44,9 +44,7 @@ export default Effect.gen(function* () {
 			const IPCOptions = {
 				...Option,
 				items: QuickInputConverter.SerializeItems(ResolvedItems),
-				buttons: QuickInputConverter.SerializeButtons(
-					(Option ).buttons,
-				),
+				buttons: QuickInputConverter.SerializeButtons(Option.buttons),
 			};
 
 			const ResultHandles = yield* IPC.SendRequest<
@@ -85,9 +83,7 @@ export default Effect.gen(function* () {
 
 			const IPCOptions = {
 				...Option,
-				buttons: QuickInputConverter.SerializeButtons(
-					(Option )?.buttons,
-				),
+				buttons: QuickInputConverter.SerializeButtons(Option?.buttons),
 			};
 
 			return yield* IPC.SendRequest<string | undefined>("$showInputBox", [

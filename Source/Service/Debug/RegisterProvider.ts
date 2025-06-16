@@ -39,12 +39,12 @@ const RegisterProvider = <T>(
 		yield* Ref.update(Registry, (Map) => Map.set(Handle, Data));
 		yield* IPC.SendNotification("$registerDebugConfigurationProvider", [
 			Handle,
-			(Data ).Type, // Assumes the data object has a 'type' property (e.g., debug type)
+			Data.Type, // Assumes the data object has a 'type' property (e.g., debug type)
 		]).pipe(
 			Effect.mapError(
 				(cause) =>
 					new DebugProviderRegistrationError({
-						DebugType: (Data ).Type,
+						DebugType: Data.Type,
 						cause,
 					}),
 			),

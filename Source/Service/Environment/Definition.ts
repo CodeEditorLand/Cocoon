@@ -73,25 +73,25 @@ export default Effect.gen(function* () {
 	};
 
 	const TelemetryLevelValue =
-		(InitData.telemetryInfo ).telemetryLevel ?? TelemetryLevel.NONE;
+		InitData.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
 
 	const ServiceImplementation: Service["Type"] = {
 		appName: InitData.environment.appName || "Cocoon Editor",
 		appRoot: GetAppRoot(),
-		appHost: (InitData.environment ).appHost || "desktop",
-		uriScheme: (InitData.environment ).appUriScheme || "cocoon-code",
+		appHost: InitData.environment.appHost || "desktop",
+		uriScheme: InitData.environment.appUriScheme || "cocoon-code",
 		language: InitData.environment.appLanguage || "en",
 		machineId: InitData.telemetryInfo.machineId,
 		sessionId: InitData.telemetryInfo.sessionId,
-		isTrusted: (InitData.workspace )?.isTrusted ?? true,
-		isRemote: !!(InitData.remote )?.isRemote,
-		remoteName: (InitData.remote )?.authority?.split("+")[0],
+		isTrusted: InitData.workspace?.isTrusted ?? true,
+		isRemote: !!InitData.remote?.isRemote,
+		remoteName: InitData.remote?.authority?.split("+")[0],
 		shell:
 			process.platform === "win32"
 				? process.env["ComSpec"] || "pwsh.exe"
 				: process.env["SHELL"] || "/bin/sh",
-		uiKind: (InitData ).uiKind === 2 ? UIKind.Web : UIKind.Desktop,
-		isNewAppInstall: (InitData ).isNewAppInstall === true,
+		uiKind: InitData.uiKind === 2 ? UIKind.Web : UIKind.Desktop,
+		isNewAppInstall: InitData.isNewAppInstall === true,
 		isBuilt: InitData.quality !== "development",
 		get logLevel() {
 			return Effect.runSync(Ref.get(LogLevelRef));

@@ -5,7 +5,6 @@
  * Dependency: ../../Core/ExtensionHost/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
-
 /**
  * @module CreateAPIObject (Extension)
  * @description A factory function that creates the public-facing `vscode.Extension` object.
@@ -34,7 +33,7 @@ const CreateAPIObject = <T>(
 			startup: false,
 			extensionId: Description.identifier,
 			activationEvent: "api",
-		} );
+		});
 		// FIX: After activation, get the exports. This should be an effect itself.
 		const Exports = yield* ExtensionHost.GetExtensionExports(
 			Description.identifier,

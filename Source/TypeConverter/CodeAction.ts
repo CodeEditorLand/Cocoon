@@ -2,7 +2,7 @@
  * File: Cocoon/Source/TypeConverter/CodeAction.ts
  * Responsibility: 
  * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Diagnostic.js, vs/base/common/lifecycle.js, vs/editor/common/languages.js, vscode
+ * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Diagnostic.js, ./WorkSpaceEdit.js, vs/base/common/lifecycle.js, vs/editor/common/languages.js, vscode
  */
 
 /**
@@ -14,8 +14,12 @@
 import type { IDisposable } from "vs/base/common/lifecycle.js";
 import * as Languages from "vs/editor/common/languages.js";
 import type * as VSCode from "vscode";
+import {
+	CodeAction as VscCodeAction,
+	CodeActionKind as VscCodeActionKind,
+	CodeActionTriggerKind as VscCodeActionTriggerKind,
+} from "vscode";
 
-import * as ExtHostTypes from "../Type/ExtHostTypes.js";
 import type CommandConverterDefinition from "./Command/Definition.js";
 import { default as DiagnosticConverter } from "./Diagnostic.js";
 import WorkSpaceEditConverter, {
@@ -39,80 +43,80 @@ interface ICodeActionDto {
 }
 
 const CodeActionKind = {
-	ToAPI: (Kind: string): VSCode.CodeActionKind => {
-		return new (ExtHostTypes ).CodeActionKind(Kind);
+	ToAPI: (kind: string): VSCode.CodeActionKind => {
+		return new VscCodeActionKind(kind);
 	},
-	FromAPI: (Kind: VSCode.CodeActionKind): string => {
-		return Kind.value;
+	FromAPI: (kind: VSCode.CodeActionKind): string => {
+		return kind.value;
 	},
 };
 
 const CodeActionTriggerKind = {
 	ToAPI: (
-		Trigger: Languages.CodeActionTriggerType,
+		trigger: Languages.CodeActionTriggerType,
 	): VSCode.CodeActionTriggerKind => {
-		return Trigger === Languages.CodeActionTriggerType.Invoke
-			? (ExtHostTypes ).CodeActionTriggerKind.Invoke
-			: (ExtHostTypes ).CodeActionTriggerKind.Automatic;
+		return trigger === Languages.CodeActionTriggerType.Invoke
+			? VscCodeActionTriggerKind.Invoke
+			: VscCodeActionTriggerKind.Automatic;
 	},
 };
 
 const CodeActionContext = {
-	ToAPI: (DTO: ExtHostCodeActionContext): VSCode.CodeActionContext => ({
-		diagnostics: DTO.diagnostics.map((Diagnostic) =>
-			DiagnosticConverter.ToAPI(Diagnostic),
+	ToAPI: (dto: ExtHostCodeActionContext): VSCode.CodeActionContext => ({
+		diagnostics: dto.diagnostics.map((diagnostic) =>
+			DiagnosticConverter.ToAPI(diagnostic),
 		),
-		only: DTO.only ? CodeActionKind.ToAPI(DTO.only) : undefined,
-		triggerKind: DTO.trigger
-			? CodeActionTriggerKind.ToAPI(DTO.trigger)
-			: (ExtHostTypes ).CodeActionTriggerKind.Invoke,
+		only: dto.only ? CodeActionKind.ToAPI(dto.only) : undefined,
+		triggerKind: dto.trigger
+			? CodeActionTriggerKind.ToAPI(dto.trigger)
+			: VscCodeActionTriggerKind.Invoke,
 	}),
 };
 
 const CodeAction = {
 	FromAPI: (
-		Action: VSCode.CodeAction,
-		CommandsConverter: CommandConverterDefinition,
-		Disposables: IDisposable[],
-		VersionProvider?: IVersionInformationProvider,
+		action: VSCode.CodeAction,
+		commandsConverter: CommandConverterDefinition,
+		disposables: IDisposable[],
+		versionProvider?: IVersionInformationProvider,
 	): ICodeActionDto => {
 		return {
-			title: Action.title,
-			kind: Action.kind ? CodeActionKind.FromAPI(Action.kind) : undefined,
-			isPreferred: Action.isPreferred,
-			disabled: Action.disabled?.reason,
-			command: Action.command
-				? CommandsConverter.ToInternal(Action.command, Disposables)
+			title: action.title,
+			kind: action.kind ? CodeActionKind.FromAPI(action.kind) : undefined,
+			isPreferred: action.isPreferred,
+			disabled: action.disabled?.reason,
+			command: action.command
+				? commandsConverter.ToInternal(action.command, disposables)
 				: undefined,
-			diagnostics: Action.diagnostics
-				? DiagnosticConverter.FromAPIArray(Action.diagnostics)
+			diagnostics: action.diagnostics
+				? DiagnosticConverter.FromAPIArray(action.diagnostics)
 				: undefined,
-			edit: Action.edit
-				? WorkSpaceEditConverter.FromAPI(Action.edit, VersionProvider)
+			edit: action.edit
+				? WorkSpaceEditConverter.FromAPI(action.edit, versionProvider)
 				: undefined,
 		};
 	},
 
 	ToAPI: (
-		DTO: ICodeActionDto,
-		CommandsConverter: CommandConverterDefinition,
+		dto: ICodeActionDto,
+		commandsConverter: CommandConverterDefinition,
 	): VSCode.CodeAction => {
-		const Action = new (ExtHostTypes ).CodeAction(
-			DTO.title,
-			DTO.kind ? CodeActionKind.ToAPI(DTO.kind) : undefined,
+		const Action = new VscCodeAction(
+			dto.title,
+			dto.kind ? CodeActionKind.ToAPI(dto.kind) : undefined,
 		);
-		Action.command = DTO.command
-			? CommandsConverter.FromInternal(DTO.command)
+		Action.command = dto.command
+			? commandsConverter.FromInternal(dto.command)
 			: undefined;
-		Action.diagnostics = DTO.diagnostics?.map((Diagnostic) =>
-			DiagnosticConverter.ToAPI(Diagnostic),
+		Action.diagnostics = dto.diagnostics?.map((diagnostic) =>
+			DiagnosticConverter.ToAPI(diagnostic),
 		);
-		Action.edit = DTO.edit
-			? WorkSpaceEditConverter.ToAPI(DTO.edit)
+		Action.edit = dto.edit
+			? WorkSpaceEditConverter.ToAPI(dto.edit)
 			: undefined;
-		Action.isPreferred = DTO.isPreferred;
-		if (DTO.disabled) {
-			Action.disabled = { reason: DTO.disabled };
+		Action.isPreferred = dto.isPreferred;
+		if (dto.disabled) {
+			Action.disabled = { reason: dto.disabled };
 		}
 		return Action;
 	},

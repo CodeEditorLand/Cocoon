@@ -90,12 +90,10 @@ const CreateServiceImplementation = (
 			Callback: GRPC.sendUnaryData<typeof Generated.Empty.prototype>,
 		) => {
 			const Notification = Call.request;
-			const ProcessEffect = DecodeValue(
-				(Notification ).getParams(),
-			).pipe(
+			const ProcessEffect = DecodeValue(Notification.getParams()).pipe(
 				Effect.flatMap((DecodedParameter) =>
 					Dispatcher.DispatchNotification(
-						(Notification ).getMethod(),
+						Notification.getMethod(),
 						Array.isArray(DecodedParameter) ? DecodedParameter : [],
 					),
 				),

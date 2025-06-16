@@ -5,7 +5,6 @@
  * Dependency: ../IPC/Service.js, ./Service.js, ./Support/ParseArgument.js, ./Type.js, effect, vscode
  */
 
-
 /**
  * @module Definition (Message)
  * @description The live implementation of the Message service.

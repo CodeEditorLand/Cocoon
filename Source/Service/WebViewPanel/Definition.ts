@@ -49,7 +49,7 @@ export default Effect.gen(function* () {
 		Effect.gen(function* () {
 			const Panel = (yield* Ref.get(ActivePanels)).get(Handle);
 			if (Panel) {
-				(Panel.webview ).fireDidReceiveMessage(Message);
+				Panel.webview.fireDidReceiveMessage(Message);
 			}
 		}).pipe(Effect.runPromise),
 	);

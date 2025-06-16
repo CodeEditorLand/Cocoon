@@ -2,7 +2,7 @@
  * File: Cocoon/Source/PatchProcess/BlockNativesModule.ts
  * Responsibility: 
  * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: effect, natives, node:module
+ * Dependency: effect, node:module
  */
 
 /**
@@ -43,11 +43,11 @@ class ModulePatchError extends Data.TaggedError("ModulePatchError")<{
 const BlockNativesModule = Effect.try({
 	try: () => {
 		// The `_load` function is an internal, undocumented part of Node's CJS loader.
-		// We must check for its existence before attempting to patch it.
-		if (typeof (Module )._load === "function") {
-			const OriginalLoad = (Module )._load;
+		// We must check for its existence before attempting to patch it and cast to `any`.
+		if (typeof (Module as any)._load === "function") {
+			const OriginalLoad = (Module as any)._load;
 
-			(Module )._load = function (
+			(Module as any)._load = function (
 				Request: string,
 				Parent: any,
 				IsMain: boolean,

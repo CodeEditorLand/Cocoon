@@ -2,7 +2,7 @@
  * File: Cocoon/Source/TypeConverter/WorkSpaceEdit.ts
  * Responsibility: 
  * Modified: 2025-06-16 14:04:01 UTC
- * Dependency: ./Main.js, vs/base/common/uri.js, vscode
+ * Dependency: ./Main.js, vs/base/common/uri.js, vs/editor/common/model.js, vscode
  * Export: IVersionInformationProvider
  */
 
@@ -12,25 +12,23 @@
  * handling complex transformations involving text edits, file operations, and versions.
  */
 
-import type { URI as VscUri } from "vs/base/common/uri.js";
+import type { UriComponents } from "vs/base/common/uri.js";
+import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type * as VSCode from "vscode";
 
-import {
-	TextEdit,
-	WorkspaceEdit as VscWorkspaceEdit,
-} from "../Type/ExtHostTypes.js";
+import { WorkspaceEdit as VscWorkspaceEdit } from "../Type/ExtHostTypes.js";
 import { TextEdit as TextEditConverter, URI as URIConverter } from "./Main.js";
 
 // Placeholders for internal VS Code DTOs
 interface IWorkspaceTextEdit {
-	resource: VscUri;
-	textEdit: VSCode.TextEdit;
+	resource: UriComponents;
+	textEdit: IIdentifiedSingleEditOperation;
 	versionId?: number;
 	metadata?: any;
 }
 interface IWorkspaceFileEdit {
-	oldResource?: VscUri;
-	newResource?: VscUri;
+	oldResource?: UriComponents;
+	newResource?: UriComponents;
 	options?: any;
 	metadata?: any;
 }
@@ -49,29 +47,17 @@ const FromAPI = (
 ): IWorkspaceEdit => {
 	const Result: IWorkspaceEdit = { edits: [] };
 	for (const [URI, URIEditArray] of Edit.entries()) {
-		if (URIEditArray.length > 0 && URIEditArray[0] instanceof TextEdit) {
-			const Resource = URIConverter.FromAPI(URI);
-			const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
-			for (const SingleEdit of URIEditArray) {
-				Result.edits.push({
-					resource: Resource,
-					textEdit: TextEditConverter.FromAPI(SingleEdit),
-					versionId: VersionId,
-				});
-			}
-		} else {
-			for (const FileEdit of URIEditArray) {
-				Result.edits.push({
-					oldResource: FileEdit.oldUri
-						? URIConverter.FromAPI(FileEdit.oldUri)
-						: undefined,
-					newResource: FileEdit.newUri
-						? URIConverter.FromAPI(FileEdit.newUri)
-						: undefined,
-					options: FileEdit.options,
-					metadata: FileEdit.metadata,
-				});
-			}
+		// The provided WorkspaceEdit shim only supports text edits.
+		// The logic for file operations is removed as it's based on an incorrect assumption
+		// about the shim's implementation of `entries()`.
+		const Resource = URIConverter.FromAPI(URI);
+		const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
+		for (const SingleEdit of URIEditArray) {
+			Result.edits.push({
+				resource: Resource,
+				textEdit: TextEditConverter.FromAPI(SingleEdit),
+				versionId: VersionId,
+			});
 		}
 	}
 	return Result;

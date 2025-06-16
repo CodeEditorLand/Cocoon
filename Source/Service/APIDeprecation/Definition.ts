@@ -46,7 +46,7 @@ export default Effect.gen(function* () {
 			);
 
 		return (Target: Object, PropertyKey: string | symbol): void => {
-			let BackingField: any = (Target )[PropertyKey];
+			let BackingField: any = Target[PropertyKey];
 			let HasReported = false;
 
 			const ReportOnce = (Key: string | symbol) => {
