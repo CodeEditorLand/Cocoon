@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Environment/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:08 UTC
+ * Dependency: effect, vscode
+ * Export: EnvironmentService
+ */
+
 /**
  * @module Service (Environment)
  * @description Defines the interface and Context.Tag for the Environment service,

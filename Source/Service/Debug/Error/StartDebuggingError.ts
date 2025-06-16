@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Debug/Error/StartDebuggingError.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:12 UTC
+ * Dependency: effect
+ * Export: extends
+ */
+
 /**
  * @module StartDebuggingError (Debug/Error)
  * @description Defines a custom error for failures when starting a debug session.

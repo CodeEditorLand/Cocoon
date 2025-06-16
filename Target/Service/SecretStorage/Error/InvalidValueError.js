@@ -1,1 +1,1 @@
-import{Data as r}from"effect";class a extends r.TaggedError("InvalidValueError"){constructor(e){super(e??{}),this.message="Secret value must be a string."}message}export{a as default};
+import{Data as e}from"effect";class s extends e.TaggedError("InvalidValueError"){message;constructor(){super(),this.message="Secret value must be a string."}}export{s as default};

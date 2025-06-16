@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/APIDeprecation/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:16 UTC
+ * Dependency: effect, vs/platform/extensions/common/extensions.js
+ * Export: APIDeprecationService
+ */
+
 /**
  * @module Service (APIDeprecation)
  * @description Defines the interface and Context.Tag for the APIDeprecation service.

@@ -1,3 +1,9 @@
+/*
+ * File: Cocoon/Source/Service/Task/Type.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:49 UTC
+ */
+
 /**
  * @module Type (Task)
  * @description Defines aliases for the complex types from the `vscode`

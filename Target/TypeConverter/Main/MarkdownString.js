@@ -1,1 +1,1 @@
-import{MarkdownString as o}from"../../Type/ExtHostTypes.js";const t=r=>({value:r.value,isTrusted:r.isTrusted}),n=r=>new o(r.value,r.isTrusted);var e={FromAPI:t,ToAPI:n};export{e as default};
+import{MarkdownString as t}from"../../Type/ExtHostTypes.js";const o=s=>({value:s.value,isTrusted:s.isTrusted,baseUri:s.baseUri,supportHtml:s.supportHtml}),e=s=>{const r=new t(s.value,typeof s.isTrusted=="boolean"?s.isTrusted:!!s.isTrusted);return r.baseUri=s.baseUri,r.supportHtml=s.supportHtml,r};var u={FromAPI:o,ToAPI:e};export{u as default};

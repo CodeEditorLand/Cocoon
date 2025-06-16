@@ -1,1 +1,1 @@
-import{Context as e}from"effect";class a extends e.Tag("IPC/Dispatcher")(){}export{a as default};
+import{Context as e}from"effect";class r extends e.Tag("IPC/Dispatcher")(){}export{r as default};

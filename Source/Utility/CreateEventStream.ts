@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Utility/CreateEventStream.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:42:21 UTC
+ * Dependency: effect, vs/base/common/event.js
+ * Export: EventStream
+ */
+
 /**
  * @module CreateEventStream
  * @description A utility to create a VS Code-compatible event emitter that is also an Effect PubSub.

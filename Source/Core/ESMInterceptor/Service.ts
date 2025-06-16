@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Core/ESMInterceptor/Service.ts
+ * Responsibility: Implements the ESMInterceptor service using Effect's Context API to install a Node.js loader hook that intercepts 'import vscode' statements in the Cocoon sidecar, enabling VS Code extension compatibility while ensuring proper resource cleanup via Scope management.
+ * Modified: 2025-06-15 19:17:27 UTC
+ * Dependency: effect
+ * Export: ESMInterceptorService
+ */
+
 /**
  * @module Service (ESMInterceptor)
  * @description Defines the interface and Context.Tag for the ESMInterceptor service.

@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Command/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../../TypeConverter/Command.js, ../IPC/Service.js, ../Telemetry/Service.js, ../WorkSpace/Service.js, ./Service.js, ./Type.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ */
+
 /**
  * @module Definition (Command)
  * @description The live implementation of the Command service.

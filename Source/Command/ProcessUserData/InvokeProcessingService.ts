@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Command/ProcessUserData/InvokeProcessingService.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:55:53 UTC
+ * Dependency: ../../Service/IPC/Service.js, ./Error.js, effect
+ */
+
 /**
  * @module InvokeProcessingService
  * @description An Effect that sends text to a backend service for processing.

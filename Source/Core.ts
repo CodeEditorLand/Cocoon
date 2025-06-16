@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:56:03 UTC
+ * Dependency: ./Core/APIFactory.js, ./Core/ESMInterceptor.js, ./Core/ExtensionHost.js, ./Core/ExtensionPath.js, ./Core/HostKindPicker.js, ./Core/NodeModuleShim.js, ./Core/RequireInterceptor.js, effect
+ */
+
 /**
  * @module Core
  * @description This is the aggregator module for all core services of the Cocoon

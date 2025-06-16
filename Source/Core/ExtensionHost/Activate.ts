@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/ExtensionHost/Activate.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:25 UTC
+ * Dependency: ../../Service/Configuration/GetConfiguration.js, ../../Service/Window/ShowInformationMessage.js, effect
+ */
+
 /**
  * @module Activate
  * @description Defines the primary `Effect` workflow for activating an

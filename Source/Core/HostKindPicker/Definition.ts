@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/HostKindPicker/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:21 UTC
+ * Dependency: ../../Service/Log/Service.js, ./Service.js, effect, vs/platform/extensions/common/extensions.js, vs/workbench/services/extensions/common/extensionHostKind.js
+ */
+
 /**
  * @module Definition (HostKindPicker)
  * @description The live implementation of the HostKindPicker service.

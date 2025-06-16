@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/PatchProcess/TerminateOnParentExit.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:19 UTC
+ * Dependency: effect
+ */
+
 /**
  * @module TerminateOnParentExit
  * @description An Effect that ensures the Cocoon process terminates gracefully

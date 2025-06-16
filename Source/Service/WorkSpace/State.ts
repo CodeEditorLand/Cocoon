@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/WorkSpace/State.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:45 UTC
+ * Dependency: vscode
+ */
+
 /**
  * @module State (WorkSpace)
  * @description Defines the internal state representation for the workspace.

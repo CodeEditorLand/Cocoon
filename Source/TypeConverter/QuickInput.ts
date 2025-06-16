@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/TypeConverter/QuickInput.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:42:19 UTC
+ * Dependency: vscode
+ * Export: QuickInput
+ */
+
 /**
  * @module QuickInput (TypeConverter)
  * @description Type converters for the QuickInput APIs (`showQuickPick`, `showInputBox`).

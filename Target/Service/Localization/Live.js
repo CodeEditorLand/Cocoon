@@ -1,1 +1,1 @@
-import{Layer as o}from"effect";import i from"../IPC/Live.js";import t from"./Definition.js";import e from"./Service.js";function s(r){return o.effect(e,t).pipe(o.provide(i(r)))}export{s as default};
+import{Layer as i}from"effect";import{Live as r}from"../IPC.js";import e from"./Definition.js";import t from"./Service.js";function a(o){return i.effect(t,e).pipe(i.provide(r(o)))}export{a as default};

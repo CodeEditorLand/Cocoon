@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/Main/URI.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:41 UTC
+ * Dependency: ../../Type/ExtHostTypes.js, vs/base/common/uri.js, vscode
+ */
+
 /**
  * @module URI (Main/TypeConverter)
  * @description Converts between `vscode.URI` and its DTO representation.

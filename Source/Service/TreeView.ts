@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/TreeView.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:46:10 UTC
+ * Dependency: ./Command.js, ./IPC.js, ./IPC/Configuration.js, ./TreeView/Definition.js, ./TreeView/Service.js, effect
+ * Export: Live, default
+ */
+
 /**
  * @module TreeView
  * @description This module provides the `vscode.window.createTreeView` API, allowing
@@ -8,7 +16,7 @@ import { Layer } from "effect";
 
 import { Live as CommandLive } from "./Command.js";
 import { Live as IPCLive } from "./IPC.js";
-import type IPCConfigurationService from "./IPC/Configuration.js";
+import { type IPCConfiguration } from "./IPC/Configuration.js";
 import Definition from "./TreeView/Definition.js";
 import Service from "./TreeView/Service.js";
 
@@ -19,7 +27,7 @@ export { default as Service } from "./TreeView/Service.js";
  * It depends on the IPC and Command services.
  * @param Config The IPC configuration.
  */
-export const Live = (Config: IPCConfigurationService) =>
+export const Live = (Config: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
 		Layer.provide(Layer.merge(IPCLive(Config), CommandLive(Config))),
 	);

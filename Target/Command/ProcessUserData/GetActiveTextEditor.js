@@ -1,1 +1,1 @@
-import{Effect as t,Option as o}from"effect";import i from"../../Service/Window/Service.js";const r=t.gen(function*(){const e=yield*i;return o.fromNullable(e.activeTextEditor)});var c=r;export{c as default};
+import{Effect as e,Option as o}from"effect";import i from"../../Service/Window/Service.js";const r=e.gen(function*(){const t=yield*i;return o.fromNullable(t.activeTextEditor)});var c=r;export{c as default};

@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:21 UTC
+ * Dependency: ${Request}, ../../Service/InitData/Service.js, ../../Service/Log/Service.js, ./Error.js, ./Service.js, ./Shim/Crypto.js, ./Shim/Os.js, ./Shim/Process.js, effect, vscode
+ */
+
 /**
  * @module Definition (NodeModuleShim)
  * @description The live implementation of the `NodeModuleShim` service, which

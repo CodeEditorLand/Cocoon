@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/LanguageFeature/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:58 UTC
+ * Dependency: ./Service.js, effect, vs/platform/extensions/common/extensions.js
+ */
+
 /**
  * @module Definition (LanguageFeature)
  * @description The live implementation of the LanguageFeature service. This is

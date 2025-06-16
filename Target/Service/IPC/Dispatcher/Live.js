@@ -1,1 +1,1 @@
-import{Layer as o}from"effect";import{CancellationLive as e}from"../../Cancellation.js";import r from"../ProtocolAdapter/Live.js";import i from"./Definition.js";import t from"./Service.js";const m=o.effect(t,i).pipe(o.provide(o.merge(r,e)));var v=m;export{v as default};
+import{Layer as e}from"effect";import{CancellationLive as o}from"../../Cancellation.js";import{Live as r}from"../ProtocolAdapter.js";import i from"./Definition.js";import t from"./Service.js";const m=e.effect(t,i).pipe(e.provide(e.merge(r,o)));var n=m;export{n as default};

@@ -1,1 +1,1 @@
-import{Effect as e}from"effect";import o from"../../Service/IPC/Service.js";import{ProcessingServiceError as t}from"./Error.js";const c=r=>e.gen(function*(){return yield*(yield*o).SendRequest("$processText",[r]).pipe(e.mapError(s=>new t({Cause:s})))});var P=c;export{P as default};
+import{Effect as e}from"effect";import o from"../../Service/IPC/Service.js";import{ProcessingServiceError as t}from"./Error.js";const c=r=>e.gen(function*(){return yield*(yield*o).SendRequest("$processText",[r]).pipe(e.mapError(s=>new t({cause:s})))});var P=c;export{P as default};

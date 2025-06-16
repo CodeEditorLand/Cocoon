@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/APIFactory/CreateWindowNamespace.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:56:06 UTC
+ * Dependency: ../../Service/StatusBar/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ */
+
 /**
  * @module CreateWindowNamespace
  * @description Constructs the `vscode.window` namespace for the API object.

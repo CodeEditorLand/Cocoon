@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Localization/Support/FetchBundle.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:58 UTC
+ * Dependency: ../../../TypeConverter/Main.js, ../../IPC/Service.js, effect, vscode
+ */
+
 /**
  * @module FetchBundle (Localization/Support)
  * @description An Effect for fetching an NLS (National Language Support)

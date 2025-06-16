@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/ESMInterceptor/Hook.ts
+ * Responsibility: Implements the Node.js ESM loader hooks to intercept 'vscode' module imports, delegating resolution to the main Mountain backend via the Vine IPC layer to enable VS Code extension compatibility in the Cocoon sidecar for MVP Path A.
+ * Modified: 2025-06-15 21:24:34 UTC
+ * Export: initialize
+ */
+
 /**
  * @module Hook (ESMInterceptor)
  * @description Implements the Node.js ESM loader hooks (`initialize` and `resolve`).

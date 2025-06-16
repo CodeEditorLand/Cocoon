@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/Main/Selection.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:42 UTC
+ * Dependency: ../../Type/ExtHostTypes.js, vs/editor/common/core/selection.js, vscode
+ */
+
 /**
  * @module Selection (Main/TypeConverter)
  * @description Converts between `vscode.Selection` and its DTO representation.

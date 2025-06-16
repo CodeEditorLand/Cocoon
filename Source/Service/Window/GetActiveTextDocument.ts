@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Window/GetActiveTextDocument.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:46 UTC
+ * Dependency: ./Service.js, effect, vscode
+ */
+
 /**
  * @module GetActiveTextDocument
  * @description An Effect-based utility for safely retrieving the active text document.

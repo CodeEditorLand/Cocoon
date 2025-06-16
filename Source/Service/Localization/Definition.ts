@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Localization/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:57 UTC
+ * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../InitData/Service.js, ./Service.js, ./Support/FetchBundle.js, effect, node:path, vs/base/common/uri.js, vs/platform/extensions/common/extensions.js
+ */
+
 /**
  * @module Definition (Localization)
  * @description The live implementation of the Localization service.

@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Clipboard/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:15 UTC
+ * Dependency: effect, vscode
+ * Export: ClipboardService
+ */
+
 /**
  * @module Service (Clipboard)
  * @description Defines the interface and Context.Tag for the Clipboard service.

@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:43:47 UTC
+ * Dependency: ./Service/APIDeprecation.js, ./Service/Authentication.js, ./Service/Cancellation.js, ./Service/Clipboard.js, ./Service/Command.js, ./Service/Configuration.js, ./Service/Debug.js, ./Service/Diagnostic.js, ./Service/Dialog.js, ./Service/Document.js, ./Service/Environment.js, ./Service/Extension.js, ./Service/FileSystem.js, ./Service/FileSystemInformation.js, ./Service/IPC.js, ./Service/IPC/Configuration.js, ./Service/LanguageFeature.js, ./Service/Localization.js, ./Service/Log.js, ./Service/Message.js, ./Service/ProposedAPI.js, ./Service/QuickInput.js, ./Service/SecretStorage.js, ./Service/StatusBar.js, ./Service/Storage.js, ./Service/StoragePath.js, ./Service/Task.js, ./Service/Telemetry.js, ./Service/TreeView.js, ./Service/WebViewPanel.js, ./Service/Window.js, ./Service/WorkSpace.js, effect
+ */
+
 // Cocoon/Source/Service.ts
 
 /**
@@ -24,7 +31,7 @@ import { Live as ExtensionLive } from "./Service/Extension.js";
 import { Live as FileSystemLive } from "./Service/FileSystem.js";
 import { Live as FileSystemInformationLive } from "./Service/FileSystemInformation.js";
 import { Live as IPCLive } from "./Service/IPC.js";
-import type IPCConfiguration from "./Service/IPC/Configuration.js"; // FIX: Import the interface, not the Tag
+import type { IPCConfiguration } from "./Service/IPC/Configuration.js"; // FIX: Import the interface, not the Tag
 import { Live as LanguageFeatureLive } from "./Service/LanguageFeature.js";
 import { Live as LocalizationLive } from "./Service/Localization.js";
 import { Live as LogLive } from "./Service/Log.js";

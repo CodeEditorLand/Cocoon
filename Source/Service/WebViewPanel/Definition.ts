@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/WebViewPanel/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../../TypeConverter/WebView.js, ../IPC/Service.js, ./Service.js, ./WebViewPanelImplementation.js, effect, vs/base/common/uuid.js, vs/platform/extensions/common/extensions.js
+ */
+
 /**
  * @module Definition (WebViewPanel)
  * @description The live implementation of the WebViewPanel service factory.

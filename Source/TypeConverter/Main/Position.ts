@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/Main/Position.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:42 UTC
+ * Dependency: ../../Type/ExtHostTypes.js, vs/editor/common/core/position.js, vscode
+ */
+
 /**
  * @module Position (Main/TypeConverter)
  * @description Converts between `vscode.Position` and its DTO representation.

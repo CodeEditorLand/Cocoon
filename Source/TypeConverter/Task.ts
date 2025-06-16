@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/TypeConverter/Task.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: vs/platform/extensions/common/extensions.js, vscode
+ * Export: Task
+ */
+
 /**
  * @module Task (TypeConverter)
  * @description Implements type converters for `vscode.Task` and related types.

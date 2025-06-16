@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/SecretStorage/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:53 UTC
+ * Dependency: effect, vscode
+ * Export: SecretStorageService
+ */
+
 /**
  * @module Service (SecretStorage)
  * @description Defines the interface and Context.Tag for the SecretStorage service factory.

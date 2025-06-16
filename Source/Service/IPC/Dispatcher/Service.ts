@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Dispatcher/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:03 UTC
+ * Dependency: effect, vscode
+ * Export: DispatcherService
+ */
+
 /**
  * @module Service (IPC/Dispatcher)
  * @description Defines the interface and Context.Tag for the Dispatcher service.

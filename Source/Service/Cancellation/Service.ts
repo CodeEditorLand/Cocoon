@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Cancellation/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:15 UTC
+ * Dependency: ./Error/InvalidTokenIDError.js, ./Type/TokenAndScope.js, effect
+ * Export: CancellationService
+ */
+
 /**
  * @module Service (Cancellation)
  * @description Defines the interface and Context.Tag for the CancellationTokenProvider service.

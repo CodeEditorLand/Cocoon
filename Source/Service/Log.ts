@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Log.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:55 UTC
+ * Dependency: ./Log/Definition.js, ./Log/Service.js, effect
+ * Export: Live, default
+ */
+
 /**
  * @module Log
  * @description This module provides a simple, internal logging service.

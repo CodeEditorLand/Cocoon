@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/QuickInput/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:54 UTC
+ * Dependency: effect
+ * Export: QuickInputService
+ */
+
 /**
  * @module Service (QuickInput)
  * @description Defines the interface and Context.Tag for the QuickInput service.

@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Window/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:14:05 UTC
+ * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../WorkSpace/Service.js, ./Service.js, effect, vscode
+ */
+
 /**
  * @module Definition (Window)
  * @description The live implementation of the core Window service.

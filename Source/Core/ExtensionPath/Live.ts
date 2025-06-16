@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/ExtensionPath/Live.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:24 UTC
+ * Dependency: ../../Service/InitData/Service.js, ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (ExtensionPath)
  * @description Provides the live implementation layer for the ExtensionPath service.

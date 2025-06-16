@@ -1,1 +1,1 @@
-import{Layer as o}from"effect";import r from"./Diagnostic/Definition.js";import t from"./Diagnostic/Service.js";import e from"./IPC/Live.js";import{default as s}from"./Diagnostic/Service.js";const c=i=>o.effect(t,r).pipe(o.provide(e(i)));export{c as Live,s as Service};
+import{Layer as o}from"effect";import e from"./Diagnostic/Definition.js";import r from"./Diagnostic/Service.js";import{Live as t}from"./IPC.js";import{default as s}from"./Diagnostic/Service.js";const a=i=>o.effect(r,e).pipe(o.provide(t(i)));export{a as Live,s as Service};

@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/ESMInterceptor/Constants.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:26 UTC
+ * Export: ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME, LOADER_HOOK_SCRIPT_FILENAME
+ */
+
 /**
  * @module Constants (ESMInterceptor)
  * @description Defines constants used by the ESM interception mechanism.

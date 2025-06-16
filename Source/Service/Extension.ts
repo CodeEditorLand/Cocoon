@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Extension.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:06 UTC
+ * Dependency: ../Core/ExtensionHost.js, ./Extension/Definition.js, ./Extension/Service.js, effect, vscode
+ * Export: Live, default
+ */
+
 /**
  * @module Extension
  * @description This module provides the `vscode.extensions` API implementation,

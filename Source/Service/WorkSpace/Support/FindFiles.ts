@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/WorkSpace/Support/FindFiles.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../../../TypeConverter/Main.js, ../../IPC/Service.js, effect, vscode
+ */
+
 /**
  * @module FindFiles (WorkSpace/Support)
  * @description An Effect for the `workspace.findFiles` API.

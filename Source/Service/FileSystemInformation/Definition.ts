@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/FileSystemInformation/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:06 UTC
+ * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Service.js, effect, vs/base/common/platform.js, vs/base/common/resources.js, vs/platform/files/common/files.js, vscode
+ */
+
 /**
  * @module Definition (FileSystemInformation)
  * @description The live implementation of the FileSystemInformation service.

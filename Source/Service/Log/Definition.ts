@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Log/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:56 UTC
+ * Dependency: ./Service.js, effect
+ */
+
 /**
  * @module Definition (Log)
  * @description The live implementation of the Log service.

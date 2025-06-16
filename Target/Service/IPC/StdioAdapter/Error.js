@@ -1,1 +1,1 @@
-import{Data as e}from"effect";class o extends e.TaggedError("StdioError"){}export{o as default};
+import{Data as e}from"effect";class r extends e.TaggedError("StdioError"){}export{r as default};

@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Log/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:56 UTC
+ * Dependency: effect
+ * Export: LogService
+ */
+
 /**
  * @module Service (Log)
  * @description Defines the interface and Context.Tag for the Log service.

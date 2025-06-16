@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/ExtensionPath/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:24 UTC
+ * Dependency: node:path, vs/base/common/uri.js, vscode
+ */
+
 /**
  * @module Definition (ExtensionPath)
  * @description The class implementation for the ExtensionPath service. This

@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Configuration.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:42:03 UTC
+ * Dependency: effect
+ * Export: IPCConfiguration, IPCConfigurationService
+ */
+
 /**
  * @module Configuration (IPC)
  * @description Defines the configuration interface and service Tag for the

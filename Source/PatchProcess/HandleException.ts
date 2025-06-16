@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/PatchProcess/HandleException.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:18 UTC
+ * Dependency: ../Service/IPC/Service.js, effect
+ */
+
 /**
  * @module HandleException (PatchProcess)
  * @description An Effect that sets up global handlers for uncaught exceptions and

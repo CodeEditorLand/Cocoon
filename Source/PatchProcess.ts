@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/PatchProcess.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:20:53 UTC
+ * Dependency: ./PatchProcess/BlockNativesModule.js, ./PatchProcess/HandleException.js, ./PatchProcess/Live.js, ./PatchProcess/PatchProcessCrash.js, ./PatchProcess/PatchProcessExit.js, ./PatchProcess/PipeLogging.js, ./PatchProcess/SetElectronRunAsNode.js, ./PatchProcess/SetStackTraceLimit.js, ./PatchProcess/SetupEnvironment.js, ./PatchProcess/TerminateOnParentExit.js, effect
+ */
+
 /**
  * @module PatchProcess
  * @description Provides low-level patches and setup for the Node.js process,

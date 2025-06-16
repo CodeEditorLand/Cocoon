@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Server/Release.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:01 UTC
+ * Dependency: ../Error.js, @grpc/grpc-js, effect
+ */
+
 /**
  * @module Release (IPC/Server)
  * @description Defines the `Effect` for gracefully shutting down the `Cocoon`

@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Storage/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../IPC/Service.js, ../Log/Service.js, ./MementoImplementation.js, ./Service.js, effect, vscode
+ */
+
 /**
  * @module Definition (Storage)
  * @description The live implementation of the Storage service factory.

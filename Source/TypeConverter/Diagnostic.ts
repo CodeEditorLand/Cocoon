@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/Diagnostic.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:42:17 UTC
+ * Dependency: ./Main/URI.js, vs/base/common/uri.js, vscode
+ */
+
 /**
  * @module Diagnostic (TypeConverter)
  * @description Implements type converters for `vscode.Diagnostic` and related types,

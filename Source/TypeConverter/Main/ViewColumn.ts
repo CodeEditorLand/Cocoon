@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/Main/ViewColumn.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:41 UTC
+ * Dependency: vs/workbench/api/common/extHostTypes.js
+ */
+
 /**
  * @module ViewColumn (Main/TypeConverter)
  * @description Converts the `vscode.ViewColumn` enum to its internal DTO representation.

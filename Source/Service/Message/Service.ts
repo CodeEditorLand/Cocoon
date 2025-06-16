@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Message/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:56 UTC
+ * Dependency: effect, vscode
+ * Export: MessageService
+ */
+
 /**
  * @module Service (Message)
  * @description Defines the interface and Context.Tag for the Message service.

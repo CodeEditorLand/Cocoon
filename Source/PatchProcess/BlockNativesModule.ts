@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/PatchProcess/BlockNativesModule.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: effect, natives, node:module
+ */
+
 /**
  * @module BlockNativesModule (PatchProcess)
  * @description An Effect that patches Node.js's internal module loader to

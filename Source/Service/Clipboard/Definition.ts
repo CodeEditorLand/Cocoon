@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Clipboard/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:16 UTC
+ * Dependency: ../IPC/Service.js, effect, vscode
+ */
+
 /**
  * @module Definition (Clipboard)
  * @description The live implementation of the Clipboard service. It proxies

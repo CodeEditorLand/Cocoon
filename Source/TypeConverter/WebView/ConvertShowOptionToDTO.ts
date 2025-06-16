@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/WebView/ConvertShowOptionToDTO.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:39 UTC
+ * Dependency: ../Main/ViewColumn.js, vscode
+ */
+
 /**
  * @module ConvertShowOptionToDTO
  * @description Converts `vscode.WebviewPanel` show options into a

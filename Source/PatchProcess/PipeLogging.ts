@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/PatchProcess/PipeLogging.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:20 UTC
+ * Dependency: ../Service/IPC/Service.js, effect
+ */
+
 /**
  * @module PipeLogging (PatchProcess)
  * @description An Effect that intercepts `console.*` calls and pipes them as

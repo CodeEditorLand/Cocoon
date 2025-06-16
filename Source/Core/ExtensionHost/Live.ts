@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/ExtensionHost/Live.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:25 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (ExtensionHost)
  * @description The live implementation Layer for the Extension Host service.

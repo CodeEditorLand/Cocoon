@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Error/ModuleNotShimmedError.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:22 UTC
+ * Dependency: effect
+ * Export: ModuleNotShimmedError
+ */
+
 /**
  * @module ModuleNotShimmedError (NodeModuleShim/Error)
  * @description Defines a custom, tagged error for when an extension attempts

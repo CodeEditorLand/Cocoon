@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Debug.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:11 UTC
+ * Dependency: ./Debug/Error.js, ./Debug/Live.js, ./Debug/Service.js, ./Debug/Type.js
+ * Export: Error, Live, Service, Type
+ */
+
 /**
  * @module Debug
  * @description This module provides the `vscode.debug` API implementation, managing

@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Command/ProcessUserData/Error.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:55:44 UTC
+ * Dependency: effect
+ * Export: ActiveEditorNotFoundError, ProcessingServiceError
+ */
+
 /**
  * @module Error (ProcessUserData)
  * @description Defines custom, tagged errors for the ProcessUserData command workflow.

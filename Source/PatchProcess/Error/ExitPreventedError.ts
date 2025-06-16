@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/PatchProcess/Error/ExitPreventedError.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:20 UTC
+ * Dependency: effect
+ * Export: extends
+ */
+
 /**
  * @module ExitPreventedError (PatchProcess/Error)
  * @description Defines a custom, structured error that is thrown when an extension's

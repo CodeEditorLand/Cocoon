@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Authentication/Error/AuthenticationProviderExistsError.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:20 UTC
+ * Dependency: effect
+ * Export: extends
+ */
+
 /**
  * @module AuthenticationProviderExistsError (Authentication/Error)
  * @description Defines custom, tagged errors for the Authentication service.

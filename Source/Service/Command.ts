@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Command.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:46:10 UTC
+ * Dependency: ./Command/Definition.js, ./Command/Service.js, ./Command/Type.js, ./IPC.js, ./IPC/Configuration.js, ./Telemetry.js, ./WorkSpace.js, effect
+ * Export: Live, default, type CommandHandler, type CommandHandlerEntry
+ */
+
 /**
  * @module Command
  * @description This module provides the `vscode.commands` API implementation,
@@ -10,7 +18,7 @@ import Definition from "./Command/Definition.js";
 import Service from "./Command/Service.js";
 import type { CommandHandler, CommandHandlerEntry } from "./Command/Type.js";
 import { Live as IPCLive } from "./IPC.js";
-import type IPCConfigurationService from "./IPC/Configuration.js";
+import { type IPCConfiguration } from "./IPC/Configuration.js";
 import { Live as TelemetryLive } from "./Telemetry.js";
 import { Live as WorkSpaceLive } from "./WorkSpace.js";
 
@@ -22,7 +30,7 @@ export { default as Service } from "./Command/Service.js";
  * It depends on the IPC, Telemetry, and WorkSpace services.
  * @param Config The IPC configuration.
  */
-export const Live = (Config: IPCConfigurationService) =>
+export const Live = (Config: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.mergeAll(

@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/WorkSpace.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:46:10 UTC
+ * Dependency: ./Configuration.js, ./Document.js, ./FileSystem.js, ./IPC.js, ./IPC/Configuration.js, ./WorkSpace/Definition.js, ./WorkSpace/Service.js, effect, vscode
+ * Export: Live, default
+ */
+
 /**
  * @module WorkSpace
  * @description This module provides the `vscode.workspace` API implementation,
@@ -11,7 +19,7 @@ import { Live as ConfigurationLive } from "./Configuration.js";
 import { Live as DocumentLive } from "./Document.js";
 import { Live as FileSystemLive } from "./FileSystem.js";
 import { Live as IPCLive } from "./IPC.js";
-import type IPCConfigurationService from "./IPC/Configuration.js";
+import { type IPCConfiguration } from "./IPC/Configuration.js";
 import Definition from "./WorkSpace/Definition.js";
 import Service from "./WorkSpace/Service.js";
 
@@ -22,7 +30,7 @@ export type { WorkspaceFolder };
  * The live implementation Layer for the WorkSpace service.
  * @param Config The IPC Configuration.
  */
-export const Live = (Config: IPCConfigurationService) =>
+export const Live = (Config: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.mergeAll(

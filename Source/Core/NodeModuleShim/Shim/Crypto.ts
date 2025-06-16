@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Shim/Crypto.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:22 UTC
+ * Dependency: node:crypto
+ */
+
 /**
  * @module Crypto (NodeModuleShim/Shim)
  * @description A controlled shim for the Node.js `crypto` module.

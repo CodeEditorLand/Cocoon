@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Core/RequireInterceptor.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:21 UTC
+ * Dependency: ./RequireInterceptor/Live.js, ./RequireInterceptor/Service.js
+ * Export: Live, Service
+ */
+
 /**
  * @module RequireInterceptor (Core)
  * @description The main module for the RequireInterceptor service, which patches

@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/PatchProcess/Service.ts
+ * Responsibility: Implements the ProcessPatch service using Effect's Context API to provide native process exit control and shutdown coordination for the Cocoon Node.js sidecar via the Vine IPC layer.
+ * Modified: 2025-06-15 19:17:19 UTC
+ * Dependency: effect
+ * Export: ProcessPatchService
+ */
+
 /**
  * @module Service (ProcessPatch)
  * @description Defines the interface and Context.Tag for the ProcessPatch service.

@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/ProposedAPI/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../InitData/Service.js, ../Log/Service.js, ./Service.js, effect
+ */
+
 /**
  * @module Definition (ProposedAPI)
  * @description The live implementation of the ProposedAPI service.

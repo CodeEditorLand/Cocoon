@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Document/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect, vs/workbench/api/common/extHostDocumentData.js, vscode
+ */
+
 /**
  * @module Definition (Document)
  * @description The live implementation of the Document service.

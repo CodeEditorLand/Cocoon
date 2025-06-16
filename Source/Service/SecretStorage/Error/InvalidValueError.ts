@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/SecretStorage/Error/InvalidValueError.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 22:49:05 UTC
+ * Dependency: effect
+ * Export: extends
+ */
+
 /**
  * @module InvalidValueError (SecretStorage/Error)
  * @description Defines a custom error for when a non-string value is provided to secret storage.

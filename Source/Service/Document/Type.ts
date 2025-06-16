@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Document/Type.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:08 UTC
+ * Dependency: vscode
+ */
+
 /**
  * @module Type (Document)
  * @description Defines internal types for the Document service, specifically

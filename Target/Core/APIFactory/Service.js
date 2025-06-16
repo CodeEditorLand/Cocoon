@@ -1,1 +1,1 @@
-import{Context as o}from"effect";class t extends o.Tag("Core/APIFactory")(){}export{t as default};
+import{Context as e}from"effect";class o extends e.Tag("Core/APIFactory")(){}export{o as default};

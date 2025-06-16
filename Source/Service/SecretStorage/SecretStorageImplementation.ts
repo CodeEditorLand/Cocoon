@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/SecretStorage/SecretStorageImplementation.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:53 UTC
+ * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Error.js, effect, vscode
+ * Export: implements
+ */
+
 /**
  * @module SecretStorageImplementation
  * @description The concrete implementation of the `vscode.SecretStorage` interface.

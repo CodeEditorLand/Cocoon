@@ -1,0 +1,1 @@
+import{Layer as r}from"effect";import o from"./Service.js";const i=e=>r.succeed(o,{NativeExit:process.exit.bind(process),NativeCrash:typeof process.crash=="function"?process.crash.bind(process):void 0,AllowExit:e});export{i as Live};

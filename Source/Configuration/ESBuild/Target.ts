@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Configuration/ESBuild/Target.ts
- * Responsibility: Configures the ESBuild bundler to transform VS Code's platform code for the Cocoon Node.js sidecar, implementing module resolution and global API replacements to enable VS Code extension compatibility in Land's MVP Path A architecture.
- * Modified: 2025-06-07 05:37:45 UTC
+ * Responsibility: 
+ * Modified: 2025-06-16 14:56:03 UTC
  * Dependency: ./../../cocoon-esm-interceptor.js, esbuild
  * Export: On
  */

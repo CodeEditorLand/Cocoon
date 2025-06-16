@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Server/Live.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:47:03 UTC
+ * Dependency: ../Configuration.js, ../Dispatcher.js, ../Error.js, ./Acquire.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (IPC/Server)
  * @description Provides a `Layer` for the managed gRPC server, which listens
@@ -6,7 +13,7 @@
 
 import { Layer } from "effect";
 
-import type IPCConfigurationService from "../Configuration.js";
+import { type IPCConfiguration } from "../Configuration.js";
 import { Live as DispatcherLive } from "../Dispatcher.js";
 import type { gRPCConnectionError } from "../Error.js";
 import Acquire from "./Acquire.js";
@@ -23,7 +30,7 @@ import Service from "./Service.js";
 const Live: Layer.Layer<
 	Service,
 	gRPCConnectionError | Error,
-	IPCConfigurationService
+	IPCConfiguration
 > = Layer.scoped(Service, Acquire).pipe(Layer.provide(DispatcherLive));
 
 export default Live;

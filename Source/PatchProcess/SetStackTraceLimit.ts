@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/PatchProcess/SetStackTraceLimit.ts
+ * Responsibility: Configures the Error.stackTraceLimit to 100 using Effect's synchronous side effect, enhancing debugging capabilities for complex asynchronous operations and Effect workflows in the Land ecosystem.
+ * Modified: 2025-06-15 19:17:19 UTC
+ * Dependency: effect
+ */
+
 /**
  * @module SetStackTraceLimit
  * @description An Effect that increases the stack trace limit for better

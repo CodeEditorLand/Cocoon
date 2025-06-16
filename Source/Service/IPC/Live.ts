@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Live.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:45:21 UTC
+ * Dependency: ./Client.js, ./Configuration.js, ./Definition.js, ./Dispatcher.js, ./ProtocolAdapter.js, ./Server.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (IPC)
  * @description This module provides the primary Inter-Process Communication (IPC)
@@ -20,7 +27,7 @@ import Service from "./Service.js";
  * @param Config An object containing the `MountainAddress` and `CocoonAddress`.
  * @returns A self-contained `Layer` that provides the `IPC.Service`.
  */
-const Live = (Config: IPCConfigurationService) => {
+const Live = (Config: IPCConfiguration) => {
 	const ConfigLayer = Layer.succeed(IPCConfigurationService, Config);
 
 	const DependenciesLayer = Layer.mergeAll(

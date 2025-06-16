@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Configuration/GetConfiguration.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:13 UTC
+ * Dependency: ./Service.js, effect, vscode
+ */
+
 /**
  * @module GetConfiguration
  * @description Defines an `Effect`-based wrapper for retrieving a VS Code

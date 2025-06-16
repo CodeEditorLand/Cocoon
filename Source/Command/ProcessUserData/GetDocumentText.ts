@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Command/ProcessUserData/GetDocumentText.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:55:53 UTC
+ * Dependency: effect, vscode
+ */
+
 /**
  * @module GetDocumentText
  * @description An Effect that retrieves the full text content of a document.

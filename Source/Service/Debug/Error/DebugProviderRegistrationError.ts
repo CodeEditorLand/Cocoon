@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Debug/Error/DebugProviderRegistrationError.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:12 UTC
+ * Dependency: effect
+ * Export: extends
+ */
+
 /**
  * @module DebugProviderRegistrationError (Debug/Error)
  * @description Defines a custom error for debug provider registration failures.

@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Environment/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../Clipboard/Service.js, ../IPC/Service.js, ../InitData/Service.js, ./Service.js, effect, vs/base/common/network.js, vscode
+ */
+
 /**
  * @module Definition (Environment)
  * @description The live implementation of the Environment service.

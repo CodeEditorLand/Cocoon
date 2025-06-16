@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/Extension/CreateAPIObject.ts
+ * Responsibility: Implements the factory function that creates the vscode.Extension API object for the Cocoon sidecar, adapting between the internal ExtensionHostService and the public extension API to enable VS Code extension compatibility in Land's Node.js environment.
+ * Modified: 2025-06-16 14:41:55 UTC
+ * Dependency: ../../Core/ExtensionHost/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ */
+
 
 /**
  * @module CreateAPIObject (Extension)

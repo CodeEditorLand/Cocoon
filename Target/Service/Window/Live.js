@@ -1,1 +1,1 @@
-import{Layer as r}from"effect";import i from"../IPC/Live.js";import e from"../WorkSpace/Live.js";import t from"./Definition.js";import m from"./Service.js";function d(o){return r.effect(m,t).pipe(r.provide(r.merge(i(o),e(o))))}export{d as default};
+import{Layer as r}from"effect";import{Live as o}from"../IPC.js";import{Live as e}from"../WorkSpace.js";import t from"./Definition.js";import m from"./Service.js";function u(i){return r.effect(m,t).pipe(r.provide(r.merge(o(i),e(i))))}export{u as default};

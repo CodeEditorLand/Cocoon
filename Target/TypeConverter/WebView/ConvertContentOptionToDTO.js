@@ -1,1 +1,1 @@
-const n=(o,e)=>({enableCommandUris:e.enableCommandUris,enableScripts:e.enableScripts,enableForms:e.enableForms,localResourceRoots:e.localResourceRoots??[o.extensionLocation],portMappings:e.portMapping});var t=n;export{t as default};
+const n=(o,e)=>({enableCommandUris:e.enableCommandUris,enableScripts:e.enableScripts,enableForms:e.enableForms,localResourceRoots:e.localResourceRoots??[o.extensionLocation],portMapping:e.portMapping});var t=n;export{t as default};

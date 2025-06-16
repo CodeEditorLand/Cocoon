@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/Command/Type.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:43 UTC
+ * Export: APICommand, APICommandArgument, APICommandResult
+ */
+
 /**
  * @module Type (Command/TypeConverter)
  * @description Defines types for describing command signatures, enabling

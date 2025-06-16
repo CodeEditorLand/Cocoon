@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/RequireInterceptor/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:07:06 UTC
+ * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ../NodeModuleShim/Service.js, ./Factory/Interface.js, ./Factory/VSCode.js, ./Service.js, effect, node:module, vs/base/common/uri.js, vscode
+ */
+
 /**
  * @module Definition (RequireInterceptor)
  * @description The live implementation of the RequireInterceptor service. It

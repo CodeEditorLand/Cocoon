@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/FileSystem/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:05 UTC
+ * Dependency: effect, vscode
+ * Export: FileSystemService
+ */
+
 /**
  * @module Service (FileSystem)
  * @description Defines the interface and Context.Tag for the FileSystem service,

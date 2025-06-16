@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Command/Type.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:13 UTC
+ * Dependency: vs/platform/extensions/common/extensions.js, vscode
+ * Export: CommandHandler, CommandHandlerEntry, TextEditorCommandHandler
+ */
+
 /**
  * @module Type (Command)
  * @description Defines types used by the Command service.

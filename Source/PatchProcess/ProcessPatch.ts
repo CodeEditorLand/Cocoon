@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/PatchProcess/ProcessPatch.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:19 UTC
+ * Dependency: ./Live.js, ./Service.js
+ * Export: Live, Service
+ */
+
 /**
  * @module ProcessPatch
  * @description This module defines the service that provides the necessary native

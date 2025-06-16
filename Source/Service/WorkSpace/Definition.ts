@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/WorkSpace/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:45 UTC
+ * Dependency: ../../TypeConverter/Main.js, ../../TypeConverter/WorkSpaceEdit.js, ../../Utility/CreateEventStream.js, ../Configuration/Service.js, ../Document/Service.js, ../FileSystem/Service.js, ../IPC/Service.js, ./Service.js, ./State.js, ./Support/FindFiles.js, ./Support/OpenTextDocument.js, effect, vs/base/common/event.js, vscode
+ */
+
 /**
  * @module Definition (WorkSpace)
  * @description The live implementation of the WorkSpace service.

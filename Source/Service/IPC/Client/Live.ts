@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Client/Live.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:41:22 UTC
+ * Dependency: ../Configuration.js, ../Error.js, ./Acquire.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (IPC/Client)
  * @description Provides a managed gRPC client connection from `Cocoon` to

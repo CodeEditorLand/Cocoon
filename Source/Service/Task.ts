@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Task.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:49 UTC
+ * Dependency: ./Task/Live.js, ./Task/Service.js, ./Task/Type.js
+ * Export: Live, Service, Type
+ */
+
 /**
  * @module Task
  * @description This module provides the `vscode.tasks` API implementation, allowing

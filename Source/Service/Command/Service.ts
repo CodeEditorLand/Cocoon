@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Command/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:13 UTC
+ * Dependency: ./Type.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ * Export: CommandService
+ */
+
 /**
  * @module Service (Command)
  * @description Defines the interface and Context.Tag for the Command service.

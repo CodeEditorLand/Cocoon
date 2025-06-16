@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Command/ProcessUserData.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:55:29 UTC
+ * Dependency: ../Service/Window/ShowInformationMessage.js, ./ProcessUserData/GetActiveTextEditor.js, ./ProcessUserData/GetDocumentText.js, ./ProcessUserData/InvokeProcessingService.js, effect
+ */
+
 /**
  * @module ProcessUserData (Command)
  * @description The main module for the 'ProcessUserData' command.

@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/Command/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ./Type.js, vs/base/common/lifecycle.js, vs/base/common/uuid.js, vs/platform/commands/common/commands.js, vscode
+ */
+
 /**
  * @module Definition (Command/TypeConverter)
  * @description The class implementation of the CommandConverter. It handles the

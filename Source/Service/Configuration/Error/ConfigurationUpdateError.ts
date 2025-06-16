@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Configuration/Error/ConfigurationUpdateError.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:14 UTC
+ * Dependency: effect
+ * Export: extends
+ */
+
 /**
  * @module ConfigurationUpdateError (Configuration/Error)
  * @description Defines custom, tagged errors for the Configuration service.

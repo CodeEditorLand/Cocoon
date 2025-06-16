@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/WorkSpace/Support/OpenTextDocument.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:44 UTC
+ * Dependency: ../../../TypeConverter/Main.js, ../../Document/Service.js, ../../IPC/Service.js, effect, vscode
+ */
+
 /**
  * @module OpenTextDocument (WorkSpace/Support)
  * @description An Effect for the `workspace.openTextDocument` API.

@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/CodeAction.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Diagnostic.js, vs/base/common/lifecycle.js, vs/editor/common/languages.js, vscode
+ */
+
 /**
  * @module CodeAction (TypeConverter)
  * @description Implements type converters for `vscode.CodeAction` and related types,

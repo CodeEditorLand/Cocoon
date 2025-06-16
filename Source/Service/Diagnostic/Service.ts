@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Diagnostic/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:09 UTC
+ * Dependency: effect, vscode
+ * Export: DiagnosticService
+ */
+
 /**
  * @module Service (Diagnostic)
  * @description Defines the interface and Context.Tag for the Diagnostic service.

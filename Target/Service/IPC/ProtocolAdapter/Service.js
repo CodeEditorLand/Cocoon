@@ -1,1 +1,1 @@
-import{Context as o}from"effect";class t extends o.Tag("IPC/ProtocolAdapter")(){}export{t as default};
+import{Context as o}from"effect";class e extends o.Tag("IPC/ProtocolAdapter")(){}export{e as default};

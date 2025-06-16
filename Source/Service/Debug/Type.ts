@@ -1,3 +1,9 @@
+/*
+ * File: Cocoon/Source/Service/Debug/Type.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:11 UTC
+ */
+
 /**
  * @module Type (Debug)
  * @description Defines aliases for the complex types from the `vscode`

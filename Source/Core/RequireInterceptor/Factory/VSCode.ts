@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Core/RequireInterceptor/Factory/VSCode.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:24 UTC
+ * Dependency: ../../../Core/APIFactory/Service.js, ../../../Core/ExtensionPath/Service.js, ../../../Service/Log/Service.js, ./Interface.js, vscode
+ * Export: implements
+ */
+
 /**
  * @module VSCodeNodeModuleFactory (RequireInterceptor/Factory)
  * @description A factory that creates the `vscode` API object when an extension

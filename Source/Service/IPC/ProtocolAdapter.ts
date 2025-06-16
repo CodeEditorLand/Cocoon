@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/IPC/ProtocolAdapter.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:01 UTC
+ * Dependency: ./ProtocolAdapter/Live.js, ./ProtocolAdapter/Service.js
+ * Export: Live, Service
+ */
+
 /**
  * @module ProtocolAdapter (IPC)
  * @description Provides a `Layer` for the `ProtocolAdapter` service. This

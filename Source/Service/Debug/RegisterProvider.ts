@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Debug/RegisterProvider.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../IPC.js, ../IPC/Service.js, ./Error.js, effect, vscode
+ */
+
 /**
  * @module RegisterProvider (Debug)
  * @description A generic helper Effect for registering debug-related providers

@@ -1,1 +1,1 @@
-import{Effect as e}from"effect";import*as i from"../../../TypeConverter/Main.js";function c(t,o){return t.SendRequest("$fetchBundleContents",[i.URI.FromAPI(o)]).pipe(e.map(r=>r?JSON.parse(r):{}),e.catchAll(()=>e.succeed({})))}export{c as default};
+import{Effect as e}from"effect";import*as p from"../../../TypeConverter/Main.js";function c(t,o){return t.SendRequest("$fetchBundleContents",[p.URI.FromAPI(o)]).pipe(e.map(r=>r?JSON.parse(r):{}),e.catchAll(()=>e.succeed({})))}export{c as default};

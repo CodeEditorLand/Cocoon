@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/APIFactory/CreateCommandNamespace.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:56:05 UTC
+ * Dependency: ../../Service/Command/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ */
+
 /**
  * @module CreateCommandNamespace
  * @description Constructs the `vscode.commands` namespace for the API object

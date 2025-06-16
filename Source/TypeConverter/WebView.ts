@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/TypeConverter/WebView.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:39 UTC
+ * Dependency: ./WebView/ConvertContentOptionToDTO.js, ./WebView/ConvertExtensionDataToDTO.js, ./WebView/ConvertPanelOptionToDTO.js, ./WebView/ConvertShowOptionToDTO.js
+ * Export: WebView
+ */
+
 /**
  * @module WebView (TypeConverter)
  * @description Aggregates and exports type converter functions for the

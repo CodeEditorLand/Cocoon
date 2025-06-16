@@ -1,1 +1,1 @@
-import{Layer as r}from"effect";import o from"./Acquire.js";import e from"./Service.js";const i=r.scoped(e,o);var c=i;export{c as default};
+import{Layer as r}from"effect";import o from"./Acquire.js";import i from"./Service.js";const e=r.scoped(i,o);var f=e;export{f as default};

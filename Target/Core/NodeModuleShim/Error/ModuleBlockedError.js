@@ -1,1 +1,1 @@
-import{Data as o}from"effect";class s extends o.TaggedError("ModuleBlockedError"){constructor(e){super(e),this.message=`[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`}message}export{s as default};
+import{Data as o}from"effect";class r extends o.TaggedError("ModuleBlockedError"){constructor(e){super(e),this.message=`[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`}message}export{r as default};

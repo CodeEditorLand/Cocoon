@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/FileSystemInformation/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:05 UTC
+ * Dependency: effect, vs/base/common/resources.js, vs/platform/files/common/files.js, vscode
+ * Export: FileSystemInformationService
+ */
+
 /**
  * @module Service (FileSystemInformation)
  * @description Defines the interface and Context.Tag for the FileSystemInformation service.

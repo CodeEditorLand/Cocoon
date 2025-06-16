@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/WorkSpace/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:45 UTC
+ * Dependency: effect
+ * Export: WorkSpaceService
+ */
+
 /**
  * @module Service (WorkSpace)
  * @description Defines the interface and Context.Tag for the WorkSpace service.

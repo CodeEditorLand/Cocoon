@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Configuration/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:13 UTC
+ * Dependency: ./Type/WorkSpaceConfiguration.js, effect
+ * Export: ConfigurationService
+ */
+
 /**
  * @module Service (Configuration)
  * @description Defines the interface and Context.Tag for the Configuration service.

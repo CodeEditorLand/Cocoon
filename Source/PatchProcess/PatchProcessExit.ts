@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/PatchProcess/PatchProcessExit.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:20 UTC
+ * Dependency: ./Error/ExitPreventedError.js, ./Service.js, effect
+ */
+
 /**
  * @module PatchProcessExit (PatchProcess)
  * @description An Effect that patches the global `process.exit` function, allowing

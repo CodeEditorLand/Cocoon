@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/APIFactory/CreateWorkSpaceNamespace.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:56:06 UTC
+ * Dependency: ../../Service/APIDeprecation/Service.js, ../../Service/WorkSpace/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ */
+
 /**
  * @module CreateWorkSpaceNamespace
  * @description Constructs the `vscode.workspace` namespace for the API object.

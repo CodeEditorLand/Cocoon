@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Window/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:46 UTC
+ * Dependency: effect
+ * Export: WindowService
+ */
+
 /**
  * @module Service (Window)
  * @description Defines the interface and Context.Tag for the core Window service.

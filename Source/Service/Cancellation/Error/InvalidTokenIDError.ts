@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Cancellation/Error/InvalidTokenIDError.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:15 UTC
+ * Dependency: effect
+ * Export: extends
+ */
+
 /**
  * @module InvalidTokenIDError (Cancellation/Error)
  * @description Defines custom, tagged errors for the cancellation service.

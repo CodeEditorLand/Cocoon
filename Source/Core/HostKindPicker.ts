@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Core/HostKindPicker.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:24 UTC
+ * Dependency: ./HostKindPicker/Live.js, ./HostKindPicker/Service.js
+ * Export: Live, Service
+ */
+
 /**
  * @module HostKindPicker (Core)
  * @description This module provides the HostKindPicker service, which determines if

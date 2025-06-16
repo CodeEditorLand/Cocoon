@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/ProposedAPI.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:54 UTC
+ * Dependency: ./Log.js, ./ProposedAPI/Definition.js, ./ProposedAPI/Service.js, effect
+ * Export: Live, default
+ */
+
 /**
  * @module ProposedAPI
  * @description This module provides the ProposedAPI service, which checks the

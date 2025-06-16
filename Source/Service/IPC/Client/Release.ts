@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Client/Release.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:40:52 UTC
+ * Dependency: ./Service.js, effect
+ */
+
 /**
  * @module Release (IPC/Client)
  * @description Defines the `Effect` for gracefully closing the gRPC client

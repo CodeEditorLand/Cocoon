@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Server/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:00 UTC
+ * Dependency: @grpc/grpc-js, effect
+ * Export: ServerService
+ */
+
 /**
  * @module Service (IPC/Server)
  * @description Defines the service type and `Context.Tag` for the `Cocoon` gRPC

@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Telemetry.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:48 UTC
+ * Dependency: ./Telemetry/Live.js, ./Telemetry/Service.js
+ * Export: Live, Service
+ */
+
 /**
  * @module Telemetry
  * @description This module provides the `vscode.env.telemetry` API implementation,

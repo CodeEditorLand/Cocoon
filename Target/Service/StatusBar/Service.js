@@ -1,1 +1,1 @@
-import{Context as t}from"effect";class s extends t.Tag("Service/StatusBar")(){}export{s as default};
+import{Context as t}from"effect";class e extends t.Tag("Service/StatusBar")(){}export{e as default};

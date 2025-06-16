@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Window/ShowInformationMessage.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:46 UTC
+ * Dependency: ../Message/Service.js, effect, vscode
+ */
+
 /**
  * @module ShowInformationMessage
  * @description An Effect-based wrapper for the `vscode.window.showInformationMessage` API.

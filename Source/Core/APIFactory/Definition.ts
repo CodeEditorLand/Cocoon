@@ -1,3 +1,9 @@
+/*
+ * File: Cocoon/Source/Core/APIFactory/Definition.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:57:20 UTC
+ * Dependency: ../../Service/APIDeprecation/Service.js, ../../Service/Command/Service.js, ../../Service/Debug/Service.js, ../../Service/Extension/Service.js, ../../Service/LanguageFeature/Service.js, ../../Service/Log/Service.js, ../../Service/ProposedAPI/Service.js, ../../Service/StatusBar/Service.js, ../../Service/Task/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, ./Create.js, ./Service.js, effect, vs/platform/extensions/common/extensions.js
+ */
 
 /**
  * @module Definition (APIFactory)

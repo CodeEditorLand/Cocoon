@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/WebView/ConvertPanelOptionToDTO.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:39 UTC
+ * Dependency: vscode
+ */
+
 /**
  * @module ConvertPanelOptionToDTO
  * @description Converts `vscode.WebviewPanelOptions` into a serializable DTO.

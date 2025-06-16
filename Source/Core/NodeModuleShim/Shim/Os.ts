@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Shim/Os.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: node:os, vs/workbench/services/extensions/common/extensionHostProtocol.js, vscode
+ */
+
 /**
  * @module Os (NodeModuleShim/Shim)
  * @description Creates a safe shim for the Node.js 'os' module. It provides

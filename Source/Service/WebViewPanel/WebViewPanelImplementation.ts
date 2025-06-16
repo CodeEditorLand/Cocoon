@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/WebViewPanel/WebViewPanelImplementation.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../../TypeConverter/WebView.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../WebView/WebViewImplementation.js, effect, vs/platform/extensions/common/extensions.js
+ * Export: implements
+ */
+
 /**
  * @module WebViewPanelImplementation
  * @description The concrete implementation of the `vscode.WebviewPanel` interface.

@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Core/ESMInterceptor/DynamicModuleTemplate.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:28 UTC
+ * Dependency: vscode
+ * Export: DynamicModuleTemplate, window
+ */
+
 /**
  * @module DynamicModuleTemplate (ESMInterceptor)
  * @description A raw text template for the dynamically generated 'vscode' module.

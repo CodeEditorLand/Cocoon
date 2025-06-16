@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Document/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:08 UTC
+ * Dependency: effect, vscode
+ * Export: DocumentService
+ */
+
 /**
  * @module Service (Document)
  * @description Defines the interface and Context.Tag for the Document service.

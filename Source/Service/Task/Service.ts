@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Task/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:49 UTC
+ * Dependency: effect, vs/platform/extensions/common/extensions.js
+ * Export: TaskService
+ */
+
 /**
  * @module Service (Task)
  * @description Defines the interface and Context.Tag for the Task service.

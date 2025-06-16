@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/PatchProcess/PatchProcessCrash.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ./Service.js, effect
+ */
+
 /**
  * @module PatchProcessCrash (PatchProcess)
  * @description An Effect that patches the Electron-specific `process.crash` function

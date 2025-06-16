@@ -1,0 +1,1 @@
+import{Effect as e}from"effect";const t=e.sync(()=>{process.env.ELECTRON_RUN_AS_NODE="1"}).pipe(e.tap(()=>e.logTrace("Set `ELECTRON_RUN_AS_NODE` environment variable.")));var n=t;export{n as default};

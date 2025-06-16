@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/PatchProcess/SetElectronRunAsNode.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:19 UTC
+ * Dependency: effect
+ */
+
 /**
  * @module SetElectronRunAsNode
  * @description An Effect that sets an environment variable to signal that

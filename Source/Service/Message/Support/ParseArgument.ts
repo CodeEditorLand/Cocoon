@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Message/Support/ParseArgument.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:57 UTC
+ * Dependency: ../Type.js, vscode
+ */
+
 /**
  * @module ParseArgument (Message/Support)
  * @description A helper function to parse the overloaded arguments of the

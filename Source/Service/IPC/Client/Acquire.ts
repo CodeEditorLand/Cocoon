@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Client/Acquire.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:40:29 UTC
+ * Dependency: ../Error.js, ./Release.js, ./Service.js, @grpc/grpc-js, @grpc/proto-loader, effect, node:path
+ */
+
 /**
  * @module Acquire (IPC/Client)
  * @description Defines the `Effect` for acquiring and preparing the gRPC client

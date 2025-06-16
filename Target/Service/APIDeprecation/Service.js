@@ -1,1 +1,1 @@
-import{Context as e}from"effect";class n extends e.Tag("Service/APIDeprecation")(){}export{n as default};
+import{Context as e}from"effect";class t extends e.Tag("Service/APIDeprecation")(){}export{t as default};

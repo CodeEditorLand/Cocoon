@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Diagnostic/DiagnosticCollectionImplementation.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 00:41:56 UTC
+ * Dependency: ../../TypeConverter/Diagnostic.js, ../../TypeConverter/Main.js, ../IPC/Service.js, effect, vscode
+ * Export: implements
+ */
+
 /**
  * @module DiagnosticCollectionImplementation (Service)
  * @description The concrete implementation of the `vscode.DiagnosticCollection` interface.

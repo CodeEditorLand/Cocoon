@@ -1,1 +1,1 @@
-import{Effect as t,Layer as i}from"effect";import o from"../../Service/InitData/Service.js";import r from"./Definition.js";import f from"./Service.js";const m=i.effect(f,t.map(o,e=>new r(e.extensions)));var s=m;export{s as default};
+import{Effect as t,Layer as i}from"effect";import o from"../../Service/InitData/Service.js";import r from"./Definition.js";import f from"./Service.js";const m=i.effect(f,t.map(o,e=>new r(e.extensions.allExtensions)));var s=m;export{s as default};

@@ -1,1 +1,1 @@
-import{Layer as o}from"effect";import r from"./IPC/Live.js";import i from"./Message/Definition.js";import t from"./Message/Service.js";import{default as u}from"./Message/Service.js";const a=e=>o.effect(t,i).pipe(o.provide(r(e)));export{a as Live,u as Service};
+import{Layer as e}from"effect";import{Live as r}from"./IPC.js";import i from"./Message/Definition.js";import t from"./Message/Service.js";import{default as c}from"./Message/Service.js";const n=o=>e.effect(t,i).pipe(e.provide(r(o)));export{n as Live,c as Service};

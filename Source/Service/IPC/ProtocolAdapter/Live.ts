@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Live.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:59 UTC
+ * Dependency: ../Client.js, ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (IPC/ProtocolAdapter)
  * @description Provides a `Layer` for the `ProtocolAdapter` service. This

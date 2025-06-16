@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Error/gRPCConnectionError.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:03 UTC
+ * Dependency: effect
+ * Export: extends
+ */
+
 /**
  * @module gRPCConnectionError (IPC/Error)
  * @description Defines a custom, structured error for gRPC connection failures.

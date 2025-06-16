@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/Dialog.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:42 UTC
+ * Dependency: ../Type/ExtHostTypes.js, vscode
+ */
+
 /**
  * @module Dialog (TypeConverter)
  * @description Type converters for the Dialog APIs (`showOpenDialog`, `showSaveDialog`).

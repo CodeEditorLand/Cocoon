@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/InitData.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:59 UTC
+ * Export: default
+ */
+
 /**
  * @module InitData
  * @description This module provides the InitData service, a value service that

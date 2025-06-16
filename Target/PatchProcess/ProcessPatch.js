@@ -1,1 +1,1 @@
-import o from"./ProcessPatch/Live.js";import i from"./ProcessPatch/Service.js";export{o as Live,i as Service};
+import{Live as o}from"./Live.js";import i from"./Service.js";export{o as Live,i as Service};

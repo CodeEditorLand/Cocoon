@@ -1,1 +1,1 @@
-import{Context as e}from"effect";class t extends e.Tag("Service/QuickInput")(){}export{t as default};
+import{Context as e}from"effect";class n extends e.Tag("Service/QuickInput")(){}export{n as default};

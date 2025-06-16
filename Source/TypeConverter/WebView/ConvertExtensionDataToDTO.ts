@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/TypeConverter/WebView/ConvertExtensionDataToDTO.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:40 UTC
+ * Dependency: vs/platform/extensions/common/extensions.js, vscode
+ */
+
 /**
  * @module ConvertExtensionDataToDTO
  * @description Converts an `IExtensionDescription` object into a simplified

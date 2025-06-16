@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/TypeConverter/Command/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:43 UTC
+ * Dependency: vs/base/common/lifecycle.js, vs/platform/commands/common/commands.js, vscode
+ * Export: Interface
+ */
+
 /**
  * @module Service (Command/TypeConverter)
  * @description Defines the interface for the CommandConverter. This service is

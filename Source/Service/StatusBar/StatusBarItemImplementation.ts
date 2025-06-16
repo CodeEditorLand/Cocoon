@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/StatusBar/StatusBarItemImplementation.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 01:08:56 UTC
+ * Dependency: ../../Type/ExtHostTypes.js, ../../TypeConverter/Command.js, ../../TypeConverter/StatusBar.js, ../IPC/Service.js, effect
+ * Export: implements
+ */
+
 /**
  * @module StatusBarItemImplementation
  * @description The concrete implementation of the `vscode.StatusBarItem` interface.

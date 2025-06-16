@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/RequireInterceptor/Live.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:23 UTC
+ * Dependency: ../../Service/Log/Live.js, ../APIFactory/Live.js, ../ExtensionPath/Live.js, ../NodeModuleShim/Live.js, ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (RequireInterceptor)
  * @description The live implementation layer for the RequireInterceptor service.

@@ -1,0 +1,1 @@
+import{Effect as n}from"effect";import o from"../Service/InitData/Service.js";const t=n.gen(function*(){const e=yield*o;e.environment.proxy&&(process.env.http_proxy=e.environment.proxy,process.env.https_proxy=e.environment.proxy)}).pipe(n.tap(()=>n.logTrace("Proxy environment variables configured.")));var p=t;export{p as default};

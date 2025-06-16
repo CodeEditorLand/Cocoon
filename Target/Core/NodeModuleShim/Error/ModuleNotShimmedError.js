@@ -1,1 +1,1 @@
-import{Data as r}from"effect";class s extends r.TaggedError("ModuleNotShimmedError"){constructor(e){super(e),this.message=`Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`}message}export{s as default};
+import{Data as r}from"effect";class o extends r.TaggedError("ModuleNotShimmedError"){constructor(e){super(e),this.message=`Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`}message}export{o as default};

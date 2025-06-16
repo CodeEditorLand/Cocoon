@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/APIFactory/Create.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:56:04 UTC
+ * Dependency: ../../Service/APIDeprecation/Service.js, ../../Service/Command/Service.js, ../../Service/Debug.js, ../../Service/Debug/Service.js, ../../Service/Extension/Service.js, ../../Service/LanguageFeature/Service.js, ../../Service/Log/Service.js, ../../Service/ProposedAPI/Service.js, ../../Service/StatusBar/Service.js, ../../Service/Task/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, ../../Type/ExtHostTypes.js, ./AsExtensionEvent.js, ./CreateCommandNamespace.js, ./CreateDebugNamespace.js, ./CreateLanguagesNamespace.js, ./CreateTasksNamespace.js, ./CreateWindowNamespace.js, ./CreateWorkSpaceNamespace.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ */
+
 /**
  * @module Create (APIFactory)
  * @description The primary factory function that constructs the `vscode` API

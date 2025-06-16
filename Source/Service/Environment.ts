@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Environment.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:07 UTC
+ * Dependency: ./Clipboard.js, ./Environment/Definition.js, ./Environment/Service.js, ./IPC.js, ./IPC/Configuration.js, effect
+ * Export: Live, default
+ */
+
 /**
  * @module Environment
  * @description This module provides the `vscode.env` API implementation,

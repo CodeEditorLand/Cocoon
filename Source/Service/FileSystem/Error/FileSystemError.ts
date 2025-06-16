@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/FileSystem/Error/FileSystemError.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: effect, vscode
+ * Export: FileSystemError, MapToVSCodeError
+ */
+
 /**
  * @module FileSystemError (FileSystem/Error)
  * @description Defines custom errors and error handling for the FileSystem service.

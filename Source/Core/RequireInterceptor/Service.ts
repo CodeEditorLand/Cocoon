@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Core/RequireInterceptor/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:23 UTC
+ * Dependency: effect
+ * Export: RequireInterceptorService
+ */
+
 /**
  * @module Service (RequireInterceptor)
  * @description Defines the interface and Context.Tag for the RequireInterceptor service.

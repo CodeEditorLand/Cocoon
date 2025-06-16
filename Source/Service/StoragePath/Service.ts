@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/StoragePath/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:50 UTC
+ * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode
+ * Export: StoragePathService
+ */
+
 /**
  * @module Service (StoragePath)
  * @description Defines the interface and Context.Tag for the StoragePath service.

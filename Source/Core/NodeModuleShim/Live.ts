@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Live.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:17:22 UTC
+ * Dependency: ../../Service/Log/Live.js, ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (NodeModuleShim)
  * @description Provides the live implementation Layer for the NodeModuleShim service.

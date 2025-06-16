@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Storage/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:52 UTC
+ * Dependency: effect, vscode
+ * Export: StorageService
+ */
+
 /**
  * @module Service (Storage)
  * @description Defines the interface and Context.Tag for the Storage service factory.

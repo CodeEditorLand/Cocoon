@@ -1,1 +1,1 @@
-import{Data as r}from"effect";class s extends r.TaggedError("EmptyKeyError"){constructor(e){super(e??{}),this.message="Secret key cannot be empty."}message}export{s as default};
+import{Data as e}from"effect";class t extends e.TaggedError("EmptyKeyError"){message;constructor(){super(),this.message="Secret key cannot be empty."}}export{t as default};

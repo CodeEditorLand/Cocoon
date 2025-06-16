@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Server/CreateServiceImplementation.ts
+ * Responsibility: 
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../Dispatcher/Service.js, ../Generated.js, ../ProtoConverter.js, @grpc/grpc-js, effect
+ */
+
 /**
  * @module CreateServiceImplementation (IPC/Server)
  * @description Creates the implementation object for the `Cocoon` gRPC service.

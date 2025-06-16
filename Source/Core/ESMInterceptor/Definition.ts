@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/ESMInterceptor/Definition.ts
+ * Responsibility: Implements the ESM interception mechanism for the Cocoon sidecar, dynamically generating vscode API modules as base64-encoded data URIs to enable VS Code extension compatibility while maintaining isolation between extensions.
+ * Modified: 2025-06-16 14:00:34 UTC
+ * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ./CreateDynamicModule.js, ./Service.js, effect, node:buffer, node:module, node:worker_threads, vs/base/common/uuid.js, vscode
+ */
+
 /**
  * @module Definition (ESMInterceptor)
  * @description The live implementation of the ESMInterceptor service. This module

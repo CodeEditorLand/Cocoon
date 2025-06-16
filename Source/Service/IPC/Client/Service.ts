@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Client/Service.ts
+ * Responsibility: Defines the service interface and Context.Tag for the low-level gRPC client that facilitates communication from the Cocoon Node.js sidecar to the Mountain backend via the Vine IPC layer.
+ * Modified: 2025-06-15 19:17:04 UTC
+ * Dependency: ../Generated.js, effect
+ * Export: ClientService
+ */
+
 /**
  * @module Service (IPC/Client)
  * @description Defines the service interface and `Context.Tag` for the low-level

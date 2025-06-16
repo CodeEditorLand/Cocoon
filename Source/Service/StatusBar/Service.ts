@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/StatusBar/Service.ts
+ * Responsibility: 
+ * Modified: 2025-06-15 19:16:51 UTC
+ * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode
+ * Export: StatusBarService
+ */
+
 /**
  * @module Service (StatusBar)
  * @description Defines the interface and Context.Tag for the StatusBar service.
