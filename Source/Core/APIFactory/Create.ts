@@ -11,7 +11,7 @@
  * object for a given extension. This serves as the `Definition` for the service.
  */
 
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
@@ -19,6 +19,7 @@ import type APIDeprecationService from "../../Service/APIDeprecation/Service.js"
 import type CommandService from "../../Service/Command/Service.js";
 import type DebugService from "../../Service/Debug/Service.js";
 import type ExtensionService from "../../Service/Extension/Service.js";
+import IPCService from "../../Service/IPC/Service.js";
 import type LanguageFeatureService from "../../Service/LanguageFeature/Service.js";
 import type LogService from "../../Service/Log/Service.js";
 import type ProposedAPIService from "../../Service/ProposedAPI/Service.js";
@@ -51,6 +52,7 @@ interface ServiceCollection {
 	WebViewPanel: WebViewPanelService["Type"];
 	TreeView: TreeViewService["Type"];
 	StatusBar: StatusBarService["Type"];
+	IPC: IPCService["Type"];
 }
 
 const CreateAPIFactory = (Services: ServiceCollection) => {
@@ -70,6 +72,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				TreeView,
 				StatusBar,
 				ProposedAPI,
+				IPC,
 			} = Services;
 
 			const AsEvent = <T>(event: VSCode.Event<T>) =>
@@ -98,10 +101,14 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 
 			// Create the Debug namespace by running its constructor Effect synchronously
 			// after providing its specific dependencies.
+			const DebugEffect = CreateDebugNamespace(AsEvent, Extension);
 			const DebugNamespace = Effect.runSync(
 				Effect.provide(
-					CreateDebugNamespace(AsEvent, Extension),
-					Debug as any,
+					DebugEffect,
+					Layer.mergeAll(
+						Layer.succeed(DebugService, Debug),
+						Layer.succeed(IPCService, IPC),
+					),
 				),
 			);
 
@@ -111,6 +118,16 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				Extension,
 			);
 
+			// Stub for the `vscode.extensions` namespace object
+			const extensionsNs: typeof VSCode.extensions = {
+				getExtension: (extensionId) => undefined, // Should be implemented by ExtensionService
+				all: [], // Should be implemented by ExtensionService
+				onDidChange: new (class {
+					event = () => ({ dispose: () => {} });
+				})().event,
+				allAcrossExtensionHosts: [],
+			};
+
 			const API: Partial<typeof VSCode> = {
 				version: "1.85.0",
 				commands: CommandNamespace,
@@ -119,7 +136,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				languages: LanguagesNamespace,
 				debug: DebugNamespace,
 				tasks: TasksNamespace,
-				extensions: ExtensionService,
+				extensions: extensionsNs,
 				...ExtHostType,
 			};
 

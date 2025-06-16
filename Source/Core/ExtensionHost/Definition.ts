@@ -11,7 +11,7 @@
  * the lifecycle of all extensions.
  */
 
-import { Effect, Ref } from "effect";
+import { Effect, Layer, Ref } from "effect";
 import { URI } from "vs/base/common/uri.js";
 import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
 import type {
@@ -23,7 +23,7 @@ import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
-import type { ExtensionContext } from "vscode";
+import type { ExtensionContext, LanguageModelAccessInformation } from "vscode";
 
 import InitDataService from "../../Service/InitData/Service.js";
 import IPCService from "../../Service/IPC/Service.js";
@@ -102,6 +102,14 @@ export default Effect.gen(function* () {
 					),
 			});
 
+			// `languageModelAccessInformation` requires a concrete implementation.
+			// We'll create a stub for now.
+			const languageModelAccessInformation: LanguageModelAccessInformation =
+				{
+					onDidChange: undefined as any, // This should be an Event<void>
+					canSendRequest: (_chat) => false,
+				};
+
 			const Context: ExtensionContext = {
 				subscriptions: [],
 				extensionPath: URI.revive(Description.extensionLocation).fsPath,
@@ -117,7 +125,7 @@ export default Effect.gen(function* () {
 				extension: undefined as any,
 				environmentVariableCollection: undefined as any,
 				asAbsolutePath: (path) => path,
-				languageModelAccessInformation: undefined,
+				languageModelAccessInformation: languageModelAccessInformation,
 				workspaceState: undefined as any,
 				globalState: undefined as any,
 				extensionRuntime: ExtensionRuntime.Node,
@@ -184,6 +192,8 @@ export default Effect.gen(function* () {
 							stack: ErrorToReport.stack,
 						},
 					]);
+					// `Telemetry.onExtensionError` returns a boolean, but we are in an effect context.
+					// We need to wrap this side-effectful call in `Effect.sync`.
 					yield* Effect.sync(() =>
 						Telemetry.onExtensionError(
 							Description.identifier,
