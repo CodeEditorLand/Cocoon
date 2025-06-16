@@ -13,7 +13,7 @@
 
 import { Layer } from "effect";
 
-import { type IPCConfiguration } from "../Configuration.js";
+import { IPCConfigurationService } from "../Configuration.js";
 import { Live as DispatcherLive } from "../Dispatcher.js";
 import type { gRPCConnectionError, IPCError } from "../Error.js";
 import Acquire from "./Acquire.js";
@@ -30,7 +30,7 @@ import Service from "./Service.js";
 const Live: Layer.Layer<
 	Service,
 	gRPCConnectionError | IPCError,
-	IPCConfiguration
+	IPCConfigurationService
 > = Layer.scoped(Service, Acquire).pipe(Layer.provide(DispatcherLive));
 
 export default Live;

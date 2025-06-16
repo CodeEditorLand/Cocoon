@@ -30,7 +30,9 @@ const ShowMessageEffect = <T extends MessageItem>(
 		const ItemsForIPC = Items.map((item, index) => ({
 			title: typeof item === "string" ? item : item.title,
 			isCloseAffordance:
-				typeof item === "object" ? !!item.isCloseAffordance : false,
+				typeof item === "object"
+					? !!(item as T).isCloseAffordance
+					: false,
 			handle: index, // The host uses this handle to report the chosen item
 		}));
 
@@ -66,12 +68,14 @@ const ShowMessageEffect = <T extends MessageItem>(
 			}
 		}
 		return undefined;
-	}) as Effect.Effect<T | undefined, Error>;
+	});
 };
 
 export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
 
+	// The `Service["Type"]` interface is generic, so we must implement it with a generic function.
+	// We cast the final implementation object to satisfy the compiler.
 	const ServiceImplementation: Service["Type"] = {
 		ShowInformationMessage: (message, ...args) => {
 			const { Option, Items, Source } = ParseArgument(args);
@@ -82,7 +86,7 @@ export default Effect.gen(function* () {
 				Option,
 				Items,
 				Source,
-			);
+			) as any;
 		},
 		ShowWarningMessage: (message, ...args) => {
 			const { Option, Items, Source } = ParseArgument(args);
@@ -93,7 +97,7 @@ export default Effect.gen(function* () {
 				Option,
 				Items,
 				Source,
-			);
+			) as any;
 		},
 		ShowErrorMessage: (message, ...args) => {
 			const { Option, Items, Source } = ParseArgument(args);
@@ -104,7 +108,7 @@ export default Effect.gen(function* () {
 				Option,
 				Items,
 				Source,
-			);
+			) as any;
 		},
 	};
 

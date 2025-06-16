@@ -26,7 +26,7 @@ import type {
 	TreeViewVisibilityChangeEvent,
 } from "vscode";
 
-import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
+import { default as CommandConverterDefinition } from "../../TypeConverter/Command/Definition.js";
 import { TreeView as TreeViewConverter } from "../../TypeConverter/TreeView.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type CommandService from "../Command/Service.js";
@@ -105,9 +105,16 @@ export default class<T> implements TreeView<T> {
 		}).pipe(
 			Effect.map((TreeItem) => {
 				const Handle = this.GetHandleForElement(Element);
+				// The CommandConverter constructor expects a function that returns a Promise, not an Effect.
+				// We wrap `this.Command.ExecuteCommand` to satisfy this signature.
+				const commandExecutor = <T>(command: string, ...rest: any[]) =>
+					Effect.runPromise(
+						this.Command.ExecuteCommand<T>(command, ...rest),
+					);
+
 				const CommandConverter = new CommandConverterDefinition(
 					this.Command.RegisterCommand,
-					this.Command.ExecuteCommand,
+					commandExecutor,
 					() => undefined,
 				);
 				return TreeViewConverter.Item.FromAPI(
@@ -127,7 +134,7 @@ export default class<T> implements TreeView<T> {
 		}
 		const Handle = generateUuid();
 		this.ElementToHandleMap.set(Element, Handle);
-		this.handleToElementMap.set(Handle, Handle as any as T); // This is a flaw in the logic, but fixes the type error for now
+		this.handleToElementMap.set(Handle, Element);
 		return Handle;
 	}
 
