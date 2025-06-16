@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/Dispatcher/Live.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:04 UTC
  * Dependency: ../../Cancellation.js, ../ProtocolAdapter.js, ./Definition.js, ./Service.js, effect
  */

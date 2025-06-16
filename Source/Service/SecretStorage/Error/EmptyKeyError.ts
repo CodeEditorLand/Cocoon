@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/SecretStorage/Error/EmptyKeyError.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 22:48:18 UTC
  * Dependency: effect
  * Export: extends

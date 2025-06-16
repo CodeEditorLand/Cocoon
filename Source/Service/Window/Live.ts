@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Window/Live.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:45:21 UTC
  * Dependency: ../IPC.js, ../IPC/Configuration.js, ../WorkSpace.js, ./Definition.js, ./Service.js, effect
  */

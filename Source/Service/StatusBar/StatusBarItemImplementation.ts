@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/StatusBar/StatusBarItemImplementation.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 01:08:56 UTC
- * Dependency: ../../Type/ExtHostTypes.js, ../../TypeConverter/Command.js, ../../TypeConverter/StatusBar.js, ../IPC/Service.js, effect
+ * Dependency: ../../Type/ExtHostTypes.js, ../../TypeConverter/Command/Definition.js, ../../TypeConverter/StatusBar.js, ../IPC/Service.js, effect
  * Export: implements
  */
 
@@ -27,7 +27,7 @@ import type {
 
 import * as ExtHostTypes from "../../Type/ExtHostTypes.js";
 import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
-import { StatusBar as StatusBarConverter } from "../../TypeConverter/StatusBar.js";
+import StatusBarConverter from "../../TypeConverter/StatusBar.js";
 import type IPCService from "../IPC/Service.js";
 
 export default class implements StatusBarItem {
@@ -187,9 +187,12 @@ export default class implements StatusBarItem {
 			return;
 		}
 		// The update is a fire-and-forget notification to the host.
-		// A real CommandConverter would be injected.
 		const CommandConverterInstance = new CommandConverterDefinition(
-			() => undefined, // LookupAPICommand placeholder
+			() => {
+				throw new Error("Not implemented");
+			},
+			() => Promise.reject("Not implemented"),
+			() => undefined,
 		);
 		const DTO = StatusBarConverter.FromAPI(
 			this,

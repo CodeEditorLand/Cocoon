@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/WorkSpace.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:46:10 UTC
  * Dependency: ./Configuration.js, ./Document.js, ./FileSystem.js, ./IPC.js, ./IPC/Configuration.js, ./WorkSpace/Definition.js, ./WorkSpace/Service.js, effect, vscode
  * Export: Live, default

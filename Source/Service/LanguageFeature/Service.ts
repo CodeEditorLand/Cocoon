@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/LanguageFeature/Service.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:58 UTC
  * Dependency: effect, vs/platform/extensions/common/extensions.js
  * Export: LanguageFeatureService

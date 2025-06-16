@@ -1,1 +1,12 @@
-import o from"./WebView/ConvertContentOptionToDTO.js";import t from"./WebView/ConvertExtensionDataToDTO.js";import n from"./WebView/ConvertPanelOptionToDTO.js";import r from"./WebView/ConvertShowOptionToDTO.js";const T={ConvertContentOptionToDTO:o,ConvertExtensionDataToDTO:t,ConvertPanelOptionToDTO:n,ConvertShowOptionToDTO:r};export{T as WebView};
+import o from "./WebView/ConvertContentOptionToDTO.js";
+import t from "./WebView/ConvertExtensionDataToDTO.js";
+import n from "./WebView/ConvertPanelOptionToDTO.js";
+import r from "./WebView/ConvertShowOptionToDTO.js";
+
+const T = {
+	ConvertContentOptionToDTO: o,
+	ConvertExtensionDataToDTO: t,
+	ConvertPanelOptionToDTO: n,
+	ConvertShowOptionToDTO: r,
+};
+export { T as WebView };

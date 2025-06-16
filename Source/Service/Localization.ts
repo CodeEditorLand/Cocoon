@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Localization.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:46:23 UTC
  * Dependency: ./IPC.js, ./IPC/Configuration.js, ./Localization/Definition.js, ./Localization/Service.js, effect
  * Export: Live, default

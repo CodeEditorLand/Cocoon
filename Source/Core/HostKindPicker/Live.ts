@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/HostKindPicker/Live.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:21 UTC
  * Dependency: ../../Service/Log.js, ./Definition.js, ./Service.js, effect
  */

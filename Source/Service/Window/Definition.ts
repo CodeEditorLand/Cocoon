@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Window/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:14:05 UTC
  * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../WorkSpace/Service.js, ./Service.js, effect, vscode
  */
@@ -11,7 +11,13 @@
  */
 
 import { Effect, Ref } from "effect";
-import type { Uri, WindowState } from "vscode";
+import type {
+	TextDocument,
+	TextDocumentShowOptions,
+	Uri,
+	ViewColumn,
+	WindowState,
+} from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
@@ -72,15 +78,17 @@ export default Effect.gen(function* () {
 					uri = documentOrURI;
 				}
 
-				const optionsDTO = columnOrOptions
+				const options =
+					typeof columnOrOptions === "object"
+						? (columnOrOptions as TextDocumentShowOptions)
+						: undefined;
+
+				const optionsDTO = options
 					? {
-							// Convert TextDocumentShowOptions to DTO
 							preserveFocus:
-								preserveFocus ?? columnOrOptions.preserveFocus,
-							selection: columnOrOptions.selection
-								? TypeConverter.Range.FromAPI(
-										columnOrOptions.selection,
-									)
+								preserveFocus ?? options.preserveFocus,
+							selection: options.selection
+								? TypeConverter.Range.FromAPI(options.selection)
 								: undefined,
 						}
 					: undefined;

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/Diagnostic.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:42:17 UTC
  * Dependency: ../Type/ExtHostTypes.js, ./Main/URI.js, vs/base/common/uri.js, vscode
  */

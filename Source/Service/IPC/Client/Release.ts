@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Client/Release.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:40:52 UTC
- * Dependency: ./Service.js, effect
+ * Dependency: ../Generated.js, @grpc/grpc-js, effect
  */
 
 /**
@@ -11,9 +11,12 @@
  * connection to the Mountain host.
  */
 
+import type * as GRPC from "@grpc/grpc-js";
 import { Effect } from "effect";
 
-import type Service from "./Service.js";
+import type { MountainService } from "../Generated.js";
+
+type ClientInstance = MountainService & GRPC.Client;
 
 /**
  * An `Effect` that closes the gRPC client connection.
@@ -24,7 +27,7 @@ import type Service from "./Service.js";
  *
  * @param Client The gRPC client instance to close.
  */
-const Release = (Client: Service) => {
+const Release = (Client: ClientInstance) => {
 	return Effect.sync(() => {
 		Client.close(); // The generated client has a close() method
 	}).pipe(Effect.tap(() => Effect.logInfo("gRPC client connection closed.")));

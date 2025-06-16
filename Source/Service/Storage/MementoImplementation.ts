@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Storage/MementoImplementation.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:42:05 UTC
- * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, effect
+ * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, effect, vscode
  * Export: implements
  */
 
@@ -13,9 +13,7 @@
  * persisted on disk.
  */
 
-import { Effect, Layer, Ref } from "effect";
-// FIX: These types are part of the `vscode` namespace directly, not module exports.
-// We define them here or ensure our types are compatible.
+import { Effect, Ref } from "effect";
 import type {
 	Event,
 	Memento,
@@ -37,12 +35,12 @@ enum MementoScope {
 }
 
 export default class implements Memento {
-	private readonly OnDidChangeEvent = CreateEventStream<MementoChangeEvent>();
+	private readonly OnDidChangeEventStream =
+		CreateEventStream<MementoChangeEvent>();
 	public readonly onDidChange: Event<MementoChangeEvent>;
-	private readonly Scope: MementoScope;
+	public readonly Scope: MementoScope;
 	private readonly ValueRef: Ref.Ref<object | undefined>;
 
-	// FIX: Inject dependencies into the constructor.
 	constructor(
 		private readonly ExtensionID: string,
 		IsGlobal: boolean,
@@ -51,7 +49,7 @@ export default class implements Memento {
 		private readonly Log: LogService["Type"],
 	) {
 		this.Scope = IsGlobal ? MementoScope.GLOBAL : MementoScope.WORKSPACE;
-		this.onDidChange = this.OnDidChangeEvent.event;
+		this.onDidChange = this.OnDidChangeEventStream.event;
 		this.ValueRef = Ref.unsafeMake(InitialValue);
 	}
 
@@ -59,7 +57,7 @@ export default class implements Memento {
 	get<T>(Key: string, DefaultValue: T): T;
 	get<T>(Key: string, DefaultValue?: T): T | undefined {
 		const State = Effect.runSync(Ref.get(this.ValueRef));
-		let Value = State?.[Key];
+		let Value = (State as any)?.[Key];
 		if (typeof Value === "undefined") {
 			Value = DefaultValue;
 		}
@@ -67,23 +65,25 @@ export default class implements Memento {
 	}
 
 	update(Key: string, Value: any): Promise<void> {
-		const UpdateEffect = Effect.gen(this, function* (that) {
-			// Now that IPC and Log are class properties, we can use them.
-			yield* that.IPC.SendNotification("$setValue", [
-				that.Scope,
+		const UpdateEffect = Effect.gen(this, function* () {
+			yield* this.IPC.SendNotification("$setValue", [
+				this.Scope,
+				this.ExtensionID, // The host needs to know which extension's storage to update.
 				Key,
 				Value,
 			]).pipe(
 				Effect.tap(() =>
-					Ref.update(that.ValueRef, (Current) => ({
-						...Current,
+					Ref.update(this.ValueRef, (Current) => ({
+						...(Current || {}),
 						[Key]: Value,
 					})),
 				),
-				Effect.tap(() => that.OnDidChangeEvent.Fire({ keys: [Key] })),
+				Effect.tap(() =>
+					this.OnDidChangeEventStream.Fire({ keys: [Key] }),
+				),
 				Effect.catchAll((Error) =>
-					that.Log.Error(
-						`Memento.update('${Key}') failed for ext '${that.ExtensionID}'.`,
+					this.Log.Error(
+						`Memento.update('${Key}') failed for ext '${this.ExtensionID}'.`,
 						Error,
 					),
 				),
@@ -91,9 +91,9 @@ export default class implements Memento {
 			);
 		});
 
-		// FIX: We no longer need to provide the services here because they are
-		// part of the class instance now. `this` handles it.
-		return Effect.runPromise(UpdateEffect.pipe(Effect.provide(this)));
+		return Effect.runPromise(
+			UpdateEffect.pipe(Effect.provide(UpdateEffect)),
+		);
 	}
 
 	keys(_Options?: MementoKeysOptions): readonly string[] {
@@ -117,6 +117,6 @@ export default class implements Memento {
 		const NewKeys = Object.keys(Value || {});
 		const ChangedKeys = new Set([...OldKeys, ...NewKeys]);
 
-		this.OnDidChangeEvent.Fire({ keys: Array.from(ChangedKeys) });
+		this.OnDidChangeEventStream.Fire({ keys: Array.from(ChangedKeys) });
 	}
 }

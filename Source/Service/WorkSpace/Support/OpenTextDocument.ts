@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/WorkSpace/Support/OpenTextDocument.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:44 UTC
  * Dependency: ../../../TypeConverter/Main.js, ../../Document/Service.js, ../../IPC/Service.js, effect, vscode
  */
@@ -10,7 +10,7 @@
  * @description An Effect for the `workspace.openTextDocument` API.
  */
 
-import { Effect } from "effect";
+import { Effect, Option } from "effect";
 import { Uri, type TextDocument } from "vscode";
 
 import * as TypeConverter from "../../../TypeConverter/Main.js";
@@ -24,30 +24,32 @@ export default function (
 ): Effect.Effect<TextDocument, Error> {
 	return Effect.gen(function* () {
 		if (options instanceof Uri) {
-			const existing = yield* Document.GetDocument(options);
-			if (existing) {
-				return existing;
+			const Existing = yield* Document.GetDocument(options);
+			if (Option.isSome(Existing)) {
+				return Existing.value;
 			}
-			const uriDTO = TypeConverter.URI.FromAPI(options);
-			yield* IPC.SendNotification("$openTextDocument", [uriDTO]);
+			const UriDTO = TypeConverter.URI.FromAPI(options);
+			yield* IPC.SendNotification("$openTextDocument", [UriDTO]);
 			// A real implementation would need to wait for the document to be created.
+			// This part of the logic needs a more robust way to await the '$acceptModelAdded' event.
 			return yield* Effect.fail(
 				new Error("Async document opening flow not fully implemented."),
 			);
 		} else {
-			const resultDTO = yield* IPC.SendRequest<any>("$openTextDocument", [
+			const ResultDTO = yield* IPC.SendRequest<any>("$openTextDocument", [
 				options,
 			]);
-			const uri = TypeConverter.URI.ToAPI(resultDTO.uri);
-			const doc = yield* Document.GetDocument(uri);
-			if (!doc) {
-				return yield* Effect.fail(
-					new Error(
-						"Failed to find newly created untitled document.",
+			const uri = TypeConverter.URI.ToAPI(ResultDTO.uri);
+			const Doc = yield* Document.GetDocument(uri);
+			return yield* Option.match(Doc, {
+				onSome: (doc) => Effect.succeed(doc),
+				onNone: () =>
+					Effect.fail(
+						new Error(
+							"Failed to find newly created untitled document.",
+						),
 					),
-				);
-			}
-			return doc;
+			});
 		}
 	});
 }

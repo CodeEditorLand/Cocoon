@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:42:01 UTC
- * Dependency: ../FileSystemInformation/Service.js, ../IPC/Service.js, ./CreateStatEffect.js, ./Service.js, effect
+ * Dependency: ../FileSystemInformation/Service.js, ../IPC/Service.js, ./CreateStatEffect.js, ./Service.js, effect, vscode
  */
 
 /**
@@ -10,7 +10,7 @@
  * @description The live implementation of the FileSystem service.
  */
 
-import { Effect, Layer } from "effect";
+import { Effect } from "effect";
 import {
 	FileSystemError as VscFileSystemError,
 	type FileStat,
@@ -28,10 +28,9 @@ import type Service from "./Service.js";
  */
 export default Effect.gen(function* () {
 	const FsInfo = yield* FileSystemInformationService;
-	const IPC = yield* IPCService; // Dependency for CreateStatEffect
+	const IPC = yield* IPCService;
 
 	const FileSystemImplementation: FileSystem = {
-		// FIX: CreateStatEffect now needs IPC. We provide it from this scope.
 		stat: (Uri): Promise<FileStat> =>
 			Effect.runPromise(CreateStatEffect(Uri, IPC)),
 		readDirectory: (Uri) =>
@@ -50,8 +49,7 @@ export default Effect.gen(function* () {
 			Promise.reject(
 				new VscFileSystemError(`readFile not implemented for ${Uri}`),
 			),
-		// FIX: The signature must match the `vscode.d.ts` interface.
-		writeFile: (Uri: Uri, _Content: Uint8Array, _Options: any) =>
+		writeFile: (Uri: Uri, _Content: Uint8Array) =>
 			Promise.reject(
 				new VscFileSystemError(`writeFile not implemented for ${Uri}`),
 			),
@@ -67,11 +65,9 @@ export default Effect.gen(function* () {
 			Promise.reject(
 				new VscFileSystemError(`copy not implemented for ${Source}`),
 			),
-		// FIX: isWritableFileSystem is a method that takes a scheme, not an effect.
 		isWritableFileSystem: FsInfo.isWritableFileSystem,
 		onDidChangeFile: FsInfo.onDidChangeFile,
 	};
 
-	// FIX: The service must be provided with its dependencies.
 	return FileSystemImplementation as Service["Type"];
-}).pipe(Effect.provide(Layer.succeed(IPCService, IPC)));
+});

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Document/Service.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:08 UTC
  * Dependency: effect, vscode
  * Export: DocumentService

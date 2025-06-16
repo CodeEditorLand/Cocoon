@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/WorkSpace/Support/FindFiles.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
  * Dependency: ../../../TypeConverter/Main.js, ../../IPC/Service.js, effect, vscode
  */
@@ -24,16 +24,18 @@ export default function (
 	token: CancellationToken | undefined,
 ) {
 	return Effect.gen(function* () {
-		// A real implementation would acquire a token ID from the cancellation service
-		const tokenID = token ? (token._id ?? 0) : 0;
+		// A real implementation would acquire a token ID from the cancellation service.
+		// For now, we pass a placeholder ID. The `_id` property is internal to VS Code's
+		// CancellationTokenSource and not on the public interface.
+		const TokenID = token ? 1 : 0; // Placeholder logic
 
-		const resultDTOs = yield* IPC.SendRequest<any[]>("$findFiles", [
+		const ResultDTOs = yield* IPC.SendRequest<any[]>("$findFiles", [
 			include,
 			exclude,
 			maxResults,
-			tokenID,
+			TokenID,
 		]);
 
-		return resultDTOs.map(TypeConverter.URI.ToAPI);
+		return ResultDTOs.map(TypeConverter.URI.ToAPI);
 	});
 }

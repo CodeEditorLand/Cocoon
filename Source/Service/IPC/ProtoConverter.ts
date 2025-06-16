@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtoConverter.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:00 UTC
  * Dependency: ./ProtoConverter/DecodeValue.js, ./ProtoConverter/EncodeValue.js, ./ProtoConverter/Error.js
  * Export: DecodeValue, EncodeValue, ProtoSerializationError

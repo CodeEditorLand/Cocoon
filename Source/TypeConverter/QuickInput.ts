@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/QuickInput.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:42:19 UTC
  * Dependency: vscode
  * Export: QuickInput

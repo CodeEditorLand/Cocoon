@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/FileSystemInformation.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:04 UTC
  * Dependency: ./FileSystemInformation/Live.js, ./FileSystemInformation/Service.js
  * Export: Live, Service

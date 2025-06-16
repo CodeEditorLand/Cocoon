@@ -1,75 +1,47 @@
 /*
  * File: Cocoon/Source/Service/Extension/Service.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: ../../Core/ExtensionHost/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ * Dependency: effect, vscode
  */
 
 /**
- * @module CreateAPIObject (Extension)
- * @description A factory function that creates the public-facing `vscode.Extension` object.
- * This acts as an adapter between the internal extension host service and the public API.
+ * @module Service (Extension)
+ * @description Defines the interface and Context.Tag for the Extension service.
+ * This service implements the `vscode.extensions` API.
  */
 
-import { Effect } from "effect";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ExtensionKind, type Extension } from "vscode";
+import { Context, Option, type Effect } from "effect";
+import type { Event, Extension } from "vscode";
 
-import type ExtensionHostService from "../../Core/ExtensionHost/Service.js";
+export default class ExtensionService extends Context.Tag("Service/Extension")<
+	ExtensionService,
+	{
+		/** An event which fires when `extensions.all` changes. */
+		readonly onDidChange: Event<void>;
 
-/**
- * Creates the public `vscode.Extension` API object from an internal `IExtensionDescription`.
- *
- * @param Description The internal description of the extension.
- * @param ExtensionHost The core service that manages extension state and activation.
- * @returns A frozen `vscode.Extension<T>` object.
- */
-const CreateAPIObject = <T>(
-	Description: IExtensionDescription,
-	ExtensionHost: ExtensionHostService["Type"],
-): Extension<T> => {
-	const ActivateEffect = ExtensionHost.ActivateById(Description.identifier, {
-		startup: false,
-		extensionId: Description.identifier,
-		activationEvent: "api",
-	}).pipe(
-		Effect.andThen(
-			ExtensionHost.GetExtensionExports(Description.identifier),
-		),
-	);
+		/**
+		 * Get an extension by its full identifier.
+		 * @param extensionId An extension identifier.
+		 * @returns An `Effect` that resolves to the extension `T` or `undefined`.
+		 */
+		readonly GetExtension: <T>(
+			extensionId: string,
+		) => Effect.Effect<Option.Option<Extension<T>>>;
 
-	// The public-facing properties must be synchronous.
-	// The internal state management must support this.
-	// This is now impossible since the service methods return Effects.
-	// We will change the implementation to return Promises from an async getter
-	// to make progress, acknowledging this deviates from the strict vscode.d.ts.
-	// A final implementation may require a more complex state synchronization proxy.
-	const ExtensionAPIObject = {
-		id: Description.identifier.value,
-		extensionUri: Description.extensionLocation,
-		extensionPath: Description.extensionLocation.fsPath,
-		get isActive(): boolean {
-			// This is not strictly correct but is a placeholder.
-			// A full solution would require a synchronous state cache.
-			console.warn(
-				"Synchronous access to `isActive` is not fully supported in this async environment.",
-			);
-			return false;
-		},
-		get packageJSON() {
-			return Description;
-		},
-		extensionKind: ExtensionKind.Workspace,
-		get exports() {
-			// This is not strictly correct.
-			console.warn(
-				"Synchronous access to `exports` is not fully supported in this async environment.",
-			);
-			return undefined;
-		},
-		activate: (): Promise<T> => Effect.runPromise(ActivateEffect),
-	};
+		/**
+		 * Get all known extensions.
+		 * @returns An `Effect` resolving to a readonly array of all extensions.
+		 */
+		readonly GetAll: () => Effect.Effect<readonly Extension<any>[]>;
 
-	return Object.freeze(ExtensionAPIObject as Extension<T>);
-};
-export default CreateAPIObject;
+		/**
+		 * Activate an extension.
+		 * @param extensionId The identifier of the extension to activate.
+		 * @returns An `Effect` that resolves with the activated extension's public API.
+		 */
+		readonly Activate: <T>(
+			extensionId: string,
+		) => Effect.Effect<Extension<T>, Error>;
+	}
+>() {}

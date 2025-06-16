@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/WorkSpace/State.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:45 UTC
  * Dependency: vscode
  */

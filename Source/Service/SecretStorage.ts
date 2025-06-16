@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/SecretStorage.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:52 UTC
  * Dependency: ./SecretStorage/Error.js, ./SecretStorage/Live.js, ./SecretStorage/Service.js
  * Export: Error, Live, Service

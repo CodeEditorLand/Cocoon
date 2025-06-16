@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/Main/TextEdit.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:41 UTC
  * Dependency: ../../Type/ExtHostTypes.js, ./Range.js, vs/editor/common/model.js, vscode
  */

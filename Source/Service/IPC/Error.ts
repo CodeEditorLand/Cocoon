@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/Error.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:02 UTC
  * Export: default
  */

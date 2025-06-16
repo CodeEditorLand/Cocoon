@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Extension/CreateAPIObject.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:41:59 UTC
  * Dependency: ../../Core/ExtensionHost/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */

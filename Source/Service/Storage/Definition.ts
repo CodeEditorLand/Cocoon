@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Storage/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
  * Dependency: ../IPC/Service.js, ../Log/Service.js, ./MementoImplementation.js, ./Service.js, effect, vscode
  */
@@ -47,10 +47,10 @@ export default Effect.gen(function* () {
 				const UpdateEffect = Effect.gen(function* () {
 					const GlobalCache = yield* Ref.get(MementoCache);
 					for (const [Key, Memento] of GlobalCache) {
-						if (Memento["Scope"] === MementoScope.GLOBAL) {
-							Memento.acceptValue(GlobalData[Key]);
+						if (Memento.Scope === MementoScope.GLOBAL) {
+							Memento.acceptValue((GlobalData as any)?.[Key]);
 						} else {
-							Memento.acceptValue(WorkSpaceData[Key]);
+							Memento.acceptValue((WorkSpaceData as any)?.[Key]);
 						}
 					}
 				});
@@ -73,8 +73,8 @@ export default Effect.gen(function* () {
 
 			const ScopeName = IsGlobal ? "Global" : "WorkSpace";
 			const InitialValue = IsGlobal
-				? Global[ExtensionID]
-				: WorkSpace[ExtensionID];
+				? (Global as any)?.[ExtensionID]
+				: (WorkSpace as any)?.[ExtensionID];
 
 			Effect.runSync(
 				Log.Debug(
@@ -86,6 +86,8 @@ export default Effect.gen(function* () {
 				ExtensionID,
 				IsGlobal,
 				InitialValue,
+				IPC,
+				Log,
 			);
 			Effect.runSync(
 				Ref.update(MementoCache, (Map) => Map.set(CacheKey, Memento)),

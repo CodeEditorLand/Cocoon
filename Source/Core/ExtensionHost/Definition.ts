@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/ExtensionHost/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:41:56 UTC
  * Dependency: ../../Service/IPC/Service.js, ../../Service/InitData/Service.js, ../../Service/Log/Service.js, ../../Service/Telemetry/Service.js, ./Service.js, ./State.js, effect, vs/base/common/uri.js, vs/platform/extensionManagement/common/implicitActivationEvents.js, vs/workbench/api/common/extHostTypes.js, vscode
  */
@@ -11,7 +11,7 @@
  * the lifecycle of all extensions.
  */
 
-import { Effect, Layer, Ref } from "effect"; // FIX: Import Layer
+import { Effect, Ref } from "effect";
 import { URI } from "vs/base/common/uri.js";
 import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
 import type {
@@ -22,8 +22,6 @@ import { ExtensionRuntime } from "vs/workbench/api/common/extHostTypes.js";
 import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
-	// FIX: This type is not exported, but we need the shape. Let's assume it's `all`
-	type IExtensionDescriptionSnapshot,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { ExtensionContext } from "vscode";
 
@@ -55,8 +53,6 @@ export default Effect.gen(function* () {
 			ImplicitActivationEvents.readActivationEvents(desc),
 	};
 
-	// FIX: The registry expects an array of descriptions, not the snapshot object.
-	// Based on VS Code's structure, this is likely on a property like `all`.
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		ActivationEventsReader,
 		InitData.extensions.allExtensions,
@@ -114,16 +110,16 @@ export default Effect.gen(function* () {
 				globalStorageUri: URI.parse("file:///global-storage"),
 				logUri: URI.parse("file:///logs"),
 				extensionMode: 1, // Production
-				secrets: undefined,
+				secrets: undefined as any,
 				storagePath: "/extension-storage",
 				globalStoragePath: "/global-storage",
 				logPath: "/logs",
-				extension: undefined,
-				environmentVariableCollection: undefined,
+				extension: undefined as any,
+				environmentVariableCollection: undefined as any,
 				asAbsolutePath: (path) => path,
 				languageModelAccessInformation: undefined,
-				workspaceState: undefined,
-				globalState: undefined,
+				workspaceState: undefined as any,
+				globalState: undefined as any,
 				extensionRuntime: ExtensionRuntime.Node,
 				messagePassingProtocol: undefined,
 			};
@@ -157,10 +153,10 @@ export default Effect.gen(function* () {
 			yield* Log.Info(
 				`Successfully activated extension '${Description.identifier.value}'.`,
 			);
-			// FIX: VS Code expects an array for activationTimings
 			yield* IPC.SendNotification("$onDidActivateExtension", [
 				Description.identifier,
-				[],
+				[], // activationTimings
+				[], // TZe activation timing
 			]);
 		}).pipe(
 			Effect.catchAll((ErrorValue) =>
@@ -188,9 +184,11 @@ export default Effect.gen(function* () {
 							stack: ErrorToReport.stack,
 						},
 					]);
-					yield* Telemetry.onExtensionError(
-						Description.identifier,
-						ErrorToReport,
+					yield* Effect.sync(() =>
+						Telemetry.onExtensionError(
+							Description.identifier,
+							ErrorToReport,
+						),
 					);
 				}),
 			),
@@ -199,7 +197,7 @@ export default Effect.gen(function* () {
 	const ActivateById = (
 		ID: ExtensionIdentifier,
 		Reason: ExtensionActivationReason,
-	): Effect.Effect<void, Error> => // FIX: Make signature clean
+	): Effect.Effect<void, Error> =>
 		Effect.gen(function* () {
 			const IsActivated = yield* Ref.get(ActivatedExtensions).pipe(
 				Effect.map((Map) => Map.has(ID.value)),
@@ -229,7 +227,8 @@ export default Effect.gen(function* () {
 		);
 
 	const ServiceImplementation: Service["Type"] = {
-		ActivateById,
+		ActivateById: (id, reason) =>
+			ActivateById(id, reason).pipe(Effect.orDie),
 		GetExtensionDescription: (ID) =>
 			Effect.succeed(ExtensionRegistry.getExtensionDescription(ID)),
 		GetExtensionExports: (ID) =>

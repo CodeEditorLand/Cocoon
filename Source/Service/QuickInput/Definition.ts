@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/QuickInput/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:01:41 UTC
- * Dependency: ../../TypeConverter/QuickInput.js, ../IPC/Service.js, ./Service.js, effect, vs/base/common/errors.js
+ * Dependency: ../../TypeConverter/QuickInput.js, ../IPC/Service.js, ./Service.js, effect, vs/base/common/errors.js, vscode
  */
 
 /**
@@ -38,13 +38,15 @@ export default Effect.gen(function* () {
 
 			const ResolvedItems = yield* Effect.tryPromise({
 				try: () => Promise.resolve(Items),
-				catch: (e) => e,
+				catch: (e) => e as Error,
 			});
 
 			const IPCOptions = {
 				...Option,
 				items: QuickInputConverter.SerializeItems(ResolvedItems),
-				buttons: QuickInputConverter.SerializeButtons(Option.buttons),
+				buttons: QuickInputConverter.SerializeButtons(
+					(Option as any).buttons,
+				),
 			};
 
 			const ResultHandles = yield* IPC.SendRequest<
@@ -83,7 +85,9 @@ export default Effect.gen(function* () {
 
 			const IPCOptions = {
 				...Option,
-				buttons: QuickInputConverter.SerializeButtons(Option?.buttons),
+				buttons: QuickInputConverter.SerializeButtons(
+					(Option as any)?.buttons,
+				),
 			};
 
 			return yield* IPC.SendRequest<string | undefined>("$showInputBox", [
@@ -97,14 +101,14 @@ export default Effect.gen(function* () {
 		});
 
 	const ServiceImplementation: Service["Type"] = {
-		showQuickPick: ShowQuickPick,
-		showInputBox: ShowInputBox,
-		createQuickPick: () => {
+		ShowQuickPick: ShowQuickPick,
+		ShowInputBox: ShowInputBox,
+		CreateQuickPick: () => {
 			throw new Error(
 				"Controller-based QuickPick is not implemented in Cocoon.",
 			);
 		},
-		createInputBox: () => {
+		CreateInputBox: () => {
 			throw new Error(
 				"Controller-based InputBox is not implemented in Cocoon.",
 			);

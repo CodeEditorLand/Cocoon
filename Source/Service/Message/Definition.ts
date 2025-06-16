@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Message/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:42:04 UTC
  * Dependency: ../IPC/Service.js, ./Service.js, ./Support/ParseArgument.js, ./Type.js, effect, vscode
  */
@@ -20,7 +20,7 @@ import type ExtensionSource from "./Type.js";
 
 const ShowMessageEffect = <T extends MessageItem>(
 	IPC: IPCService["Type"],
-	Severity: "Info" | "Warning" | "Error",
+	Severity: number, // Corresponds to vs/base/common/severity
 	Message: string,
 	Option: MessageOptions,
 	Items: (string | T)[],
@@ -52,9 +52,7 @@ const ShowMessageEffect = <T extends MessageItem>(
 
 		const ResultHandle = yield* IPC.SendRequest<number | undefined>(
 			"$showMessage",
-			// FIX: The IPC call signature in the original file was incorrect.
-			// This matches the DTO structure above.
-			[Severity, Message, DTO.options, DTO.items, DTO.source],
+			[DTO.severity, DTO.message, DTO.options, DTO.items, DTO.source],
 		).pipe(Effect.mapError((cause) => new Error(String(cause))));
 
 		if (ResultHandle === undefined || ResultHandle === null) {
@@ -62,14 +60,12 @@ const ShowMessageEffect = <T extends MessageItem>(
 		}
 		if (ResultHandle >= 0 && ResultHandle < Items.length) {
 			const resultItem = Items[ResultHandle];
-			// Ensure we don't return a plain string if T is a MessageItem
-			if (typeof resultItem === "string") {
-				return undefined;
+			// Only return if the result is not a plain string, matching the generic constraint
+			if (typeof resultItem !== "string") {
+				return resultItem as T;
 			}
-			return resultItem as T | undefined;
 		}
 		return undefined;
-		// FIX: Add the type assertion to satisfy the generic constraint.
 	}) as Effect.Effect<T | undefined, Error>;
 };
 
@@ -81,7 +77,7 @@ export default Effect.gen(function* () {
 			const { Option, Items, Source } = ParseArgument(args);
 			return ShowMessageEffect(
 				IPC,
-				"Info",
+				1, // Severity.Info
 				message,
 				Option,
 				Items,
@@ -92,7 +88,7 @@ export default Effect.gen(function* () {
 			const { Option, Items, Source } = ParseArgument(args);
 			return ShowMessageEffect(
 				IPC,
-				"Warning",
+				2, // Severity.Warning
 				message,
 				Option,
 				Items,
@@ -103,7 +99,7 @@ export default Effect.gen(function* () {
 			const { Option, Items, Source } = ParseArgument(args);
 			return ShowMessageEffect(
 				IPC,
-				"Error",
+				3, // Severity.Error
 				message,
 				Option,
 				Items,

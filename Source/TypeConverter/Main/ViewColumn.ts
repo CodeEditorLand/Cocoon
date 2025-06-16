@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/Main/ViewColumn.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:41 UTC
  * Dependency: vs/workbench/api/common/extHostTypes.js
  */

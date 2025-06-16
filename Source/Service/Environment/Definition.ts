@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Environment/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
  * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../Clipboard/Service.js, ../IPC/Service.js, ../InitData/Service.js, ./Service.js, effect, vs/base/common/network.js, vscode
  */
@@ -66,23 +66,25 @@ export default Effect.gen(function* () {
 		]).pipe(Effect.map((Dto) => TypeConverter.URI.ToAPI(Dto)));
 
 	const GetAppRoot = () => {
-		const AppRootUri = InitData.environment.appRoot as Uri;
+		const AppRootUri = TypeConverter.URI.ToAPI(
+			InitData.environment.appRoot,
+		);
 		return AppRootUri?.scheme === Schemas.file
 			? AppRootUri.fsPath
 			: undefined;
 	};
 
 	const TelemetryLevelValue =
-		InitData.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
+		InitData.telemetry.telemetryLevel ?? TelemetryLevel.NONE;
 
 	const ServiceImplementation: Service["Type"] = {
 		appName: InitData.environment.appName || "Cocoon Editor",
 		appRoot: GetAppRoot(),
 		appHost: InitData.environment.appHost || "desktop",
-		uriScheme: InitData.environment.appUriScheme || "cocoon-code",
+		uriScheme: InitData.environment.uriScheme || "cocoon-code",
 		language: InitData.environment.appLanguage || "en",
-		machineId: InitData.telemetryInfo.machineId,
-		sessionId: InitData.telemetryInfo.sessionId,
+		machineId: InitData.telemetry.machineId,
+		sessionId: InitData.telemetry.sessionId,
 		isTrusted: InitData.workspace?.isTrusted ?? true,
 		isRemote: !!InitData.remote?.isRemote,
 		remoteName: InitData.remote?.authority?.split("+")[0],

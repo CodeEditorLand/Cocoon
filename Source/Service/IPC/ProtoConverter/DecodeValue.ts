@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtoConverter/DecodeValue.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 00:50:06 UTC
  * Dependency: ./Error.js, effect, google-protobuf/google/protobuf/struct_pb.js
  */

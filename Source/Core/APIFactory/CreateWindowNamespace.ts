@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateWindowNamespace.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:56:06 UTC
  * Dependency: ../../Service/StatusBar/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
@@ -45,7 +45,7 @@ const CreateWindowNamespace = (
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
 ): typeof VSCode.window => {
-	return {
+	const PartialWindowNamespace: Partial<typeof VSCode.window> = {
 		// --- Properties ---
 		get state() {
 			return Window.state;
@@ -80,24 +80,24 @@ const CreateWindowNamespace = (
 		// ... other events would be wrapped here ...
 
 		// --- Methods from other services ---
-		createStatusBarItem: (alignmentOrId, priorityOrAlignment, priority) => {
+		createStatusBarItem: ((...args: any[]) => {
 			let id: string | undefined;
 			let alignment: VSCode.StatusBarAlignment | undefined;
 			let prio: number | undefined;
 
-			if (typeof alignmentOrId === "string") {
-				id = alignmentOrId;
-				alignment = priorityOrAlignment;
-				prio = priority;
+			if (typeof args[0] === "string") {
+				id = args[0];
+				alignment = args[1];
+				prio = args[2];
 			} else {
-				alignment = alignmentOrId;
-				prio = priorityOrAlignment;
+				alignment = args[0];
+				prio = args[1];
 			}
 
 			return Effect.runSync(
 				StatusBar.CreateStatusBarItem(Extension, id, alignment, prio),
 			);
-		},
+		}) as typeof VSCode.window.createStatusBarItem,
 		createTreeView: (viewId, options) =>
 			Effect.runSync(TreeView.CreateTreeView(viewId, options, Extension)),
 		createWebviewPanel: (viewType, title, showOptions, options) =>
@@ -122,5 +122,7 @@ const CreateWindowNamespace = (
 		// These are typically added to the final object in the APIFactory itself
 		// or accessed via the corresponding service.
 	};
+
+	return PartialWindowNamespace as typeof VSCode.window;
 };
 export default CreateWindowNamespace;

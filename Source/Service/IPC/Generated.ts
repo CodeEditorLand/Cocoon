@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/Generated.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
  * Export: MountainService
  */
@@ -40,8 +40,20 @@ class GenericResponse {
 	}
 }
 class GenericNotification {
-	setMethod(_Method: string) {}
-	setParams(_Parameters: any) {}
+	private method = "";
+	private params: any;
+	setMethod(Method: string) {
+		this.method = Method;
+	}
+	setParams(Parameters: any) {
+		this.params = Parameters;
+	}
+	getMethod(): string {
+		return this.method;
+	}
+	getParams(): any {
+		return this.params;
+	}
 }
 class CancelOperationRequest {
 	getRequestid(): number {
@@ -62,7 +74,7 @@ export interface MountainService {
 }
 
 // This is a placeholder constructor
-const MountainServiceClient = (() => {}) as {
+const MountainServiceClient = (() => {}) as unknown as {
 	new (Address: string, Credentials: any): MountainService;
 };
 

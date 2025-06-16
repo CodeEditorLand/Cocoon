@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/PatchProcess/PatchProcessCrash.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
  * Dependency: ./Service.js, effect
  */

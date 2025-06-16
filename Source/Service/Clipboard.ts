@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Clipboard.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:14 UTC
  * Dependency: ./Clipboard/Live.js, ./Clipboard/Service.js
  * Export: Live, Service

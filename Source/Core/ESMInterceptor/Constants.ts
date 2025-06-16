@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/Constants.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:26 UTC
  * Export: ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME, LOADER_HOOK_SCRIPT_FILENAME
  */

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/PatchProcess/ProcessPatch.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:19 UTC
  * Dependency: ./Live.js, ./Service.js
  * Export: Live, Service

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/ExtensionHost/Live.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:25 UTC
  * Dependency: ./Definition.js, ./Service.js, effect
  */

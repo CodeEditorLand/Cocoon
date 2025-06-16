@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/SecretStorage/Error/InvalidValueError.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 22:49:05 UTC
  * Dependency: effect
  * Export: extends

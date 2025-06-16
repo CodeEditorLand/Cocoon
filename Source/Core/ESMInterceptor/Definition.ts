@@ -2,7 +2,7 @@
  * File: Cocoon/Source/Core/ESMInterceptor/Definition.ts
  * Responsibility: Implements the ESM interception mechanism for the Cocoon sidecar, dynamically generating vscode API modules as base64-encoded data URIs to enable VS Code extension compatibility while maintaining isolation between extensions.
  * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ./CreateDynamicModule.js, ./Service.js, effect, node:buffer, node:module, node:worker_threads, vs/base/common/uuid.js, vscode
+ * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ./Constants.js, ./CreateDynamicModule.js, ./Service.js, effect, node:buffer, node:module, node:url, node:worker_threads, vs/base/common/uuid.js, vscode
  */
 
 /**
@@ -14,6 +14,7 @@
 
 import { Buffer } from "node:buffer";
 import * as Module from "node:module";
+import { URL } from "node:url";
 import { MessageChannel, type MessagePort } from "node:worker_threads";
 import { Effect, Option, Ref, Scope } from "effect";
 import { generateUuid } from "vs/base/common/uuid.js";
@@ -65,7 +66,7 @@ const SetupGlobalAPIRetriever = (
 	APICache: Ref.Ref<BidirectionalMap<object, string>>,
 ): Effect.Effect<void> => {
 	return Effect.sync(() => {
-		globalThis[ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME] = (
+		(globalThis as any)[ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME] = (
 			APIKey: string,
 		) => {
 			const Cache = Effect.runSync(Ref.get(APICache));
@@ -94,7 +95,27 @@ const HandleResolveRequest = (
 			try: () => new URL(ImportingModuleURL),
 			catch: (CaughtError) => new Error(`Invalid URL: ${CaughtError}`),
 		});
-		const MaybeExtension = ExtensionPath.FindSubstr(ParentURI);
+
+		// The ExtensionPath service expects a vscode.Uri, not a node:url.URL
+		const VscodeParentUri = {
+			scheme: ParentURI.protocol.slice(0, -1),
+			authority: ParentURI.host,
+			path: ParentURI.pathname,
+			query: ParentURI.search,
+			fragment: ParentURI.hash,
+			fsPath: ParentURI.pathname,
+			// Add dummy methods to satisfy the type
+			with: () => VscodeParentUri,
+			toJSON: () => ({
+				scheme: VscodeParentUri.scheme,
+				authority: VscodeParentUri.authority,
+				path: VscodeParentUri.path,
+				query: VscodeParentUri.query,
+				fragment: VscodeParentUri.fragment,
+			}),
+		} as VSCode.Uri;
+
+		const MaybeExtension = ExtensionPath.FindSubstr(VscodeParentUri);
 
 		if (!MaybeExtension) {
 			const ErrorValue = new Error(
@@ -149,7 +170,7 @@ export default Effect.gen(function* () {
 
 	const Install = (): Effect.Effect<void, Error, Scope.Scope> =>
 		Effect.gen(function* () {
-			if (typeof Module.register !== "function") {
+			if (typeof (Module as any).register !== "function") {
 				return yield* Effect.fail(
 					new Error(
 						"`node:module.register` is not available. ESM interception will fail.",
@@ -185,7 +206,7 @@ export default Effect.gen(function* () {
 			);
 			const HookDataURI = `data:text/javascript;base64,${Buffer.from(HookScriptContent).toString("base64")}`;
 
-			Module.register(HookDataURI, {
+			(Module as any).register(HookDataURI, {
 				parentURL: import.meta.url,
 				data: { port: LoaderHookPort },
 				transferList: [LoaderHookPort],
@@ -197,7 +218,9 @@ export default Effect.gen(function* () {
 				Effect.sync(() => {
 					MainThreadPort.close();
 					LoaderHookPort.close();
-					delete globalThis[ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME];
+					delete (globalThis as any)[
+						ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME
+					];
 				}).pipe(
 					Effect.tap(() =>
 						Effect.logInfo("ESM Interceptor resources released."),

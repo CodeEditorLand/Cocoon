@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Authentication/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:01:41 UTC
  * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Service.js, ./Type.js, effect, vs/base/common/lifecycle.js
  */

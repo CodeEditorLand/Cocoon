@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Client/Acquire.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:40:29 UTC
- * Dependency: ../Error.js, ./Release.js, ./Service.js, @grpc/grpc-js, @grpc/proto-loader, effect, node:path
+ * Dependency: ../Configuration.js, ../Error.js, ../Generated.js, ./Release.js, @grpc/grpc-js, @grpc/proto-loader, effect, node:path
  */
 
 /**
@@ -16,9 +16,12 @@ import * as GRPC from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect } from "effect";
 
+import { IPCConfigurationService } from "../Configuration.js";
 import { gRPCConnectionError } from "../Error.js";
+import type { MountainService } from "../Generated.js";
 import Release from "./Release.js";
-import type Service from "./Service.js";
+
+type ClientInstance = MountainService & GRPC.Client;
 
 /**
  * An `Effect` that loads the gRPC `.proto` file definition from disk.
@@ -50,7 +53,7 @@ const LoadProtoDefinition = (
 const CreateClientInstance = (
 	PackageDefinition: GRPC.GrpcObject,
 	ServerAddress: string,
-): Effect.Effect<Service, gRPCConnectionError> => {
+): Effect.Effect<ClientInstance, gRPCConnectionError> => {
 	return Effect.try({
 		try: () => {
 			const Proto = PackageDefinition["vine_ipc"] as GRPC.GrpcObject;
@@ -60,7 +63,7 @@ const CreateClientInstance = (
 			return new ClientConstructor(
 				ServerAddress,
 				GRPC.credentials.createInsecure(),
-			) as unknown as Service;
+			) as unknown as ClientInstance;
 		},
 		catch: (Cause) =>
 			new gRPCConnectionError({
@@ -74,7 +77,7 @@ const CreateClientInstance = (
  * An `Effect` that waits for the gRPC client to establish a ready connection.
  */
 const WaitForClientReady = (
-	Client: Service,
+	Client: ClientInstance,
 ): Effect.Effect<void, gRPCConnectionError> => {
 	return Effect.async<void, gRPCConnectionError>((Resume) => {
 		// Set a 10-second timeout for the client to become ready.

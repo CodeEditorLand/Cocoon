@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/Live.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:45:21 UTC
  * Dependency: ./Client.js, ./Configuration.js, ./Definition.js, ./Dispatcher.js, ./ProtocolAdapter.js, ./Server.js, ./Service.js, effect
  */
@@ -15,7 +15,10 @@
 import { Layer } from "effect";
 
 import { Live as ClientLive } from "./Client.js";
-import IPCConfigurationService from "./Configuration.js";
+import {
+	IPCConfigurationService,
+	type IPCConfiguration,
+} from "./Configuration.js";
 import Definition from "./Definition.js";
 import { Live as DispatcherLive } from "./Dispatcher.js";
 import { Live as ProtocolAdapterLive } from "./ProtocolAdapter.js";

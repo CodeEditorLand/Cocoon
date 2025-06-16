@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/Server/Acquire.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:40:20 UTC
  * Dependency: ../Configuration.js, ../Dispatcher/Service.js, ../Error.js, ./CreateServiceImplementation.js, ./Release.js, @grpc/grpc-js, @grpc/proto-loader, effect, node:path
  */

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/PatchProcess/BlockNativesModule.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
  * Dependency: effect, node:module
  */

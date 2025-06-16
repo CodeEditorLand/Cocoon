@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Window/GetActiveTextDocument.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:46 UTC
  * Dependency: ./Service.js, effect, vscode
  */

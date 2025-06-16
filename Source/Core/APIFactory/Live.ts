@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/Live.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:59:29 UTC
  * Dependency: ./Definition.js, ./Service.js, effect
  */

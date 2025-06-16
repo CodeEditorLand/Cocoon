@@ -15,7 +15,7 @@ import ExtensionHostService from "./Core/ExtensionHost/Service.js";
 import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
 import RunProcessPatch from "./PatchProcess.js";
 import AllServiceLayer from "./Service.js";
-import { default as InitDataLayer } from "./Service/InitData/Live.js";
+import InitDataLayer from "./Service/InitData/Live.js";
 import { Live as IPCLive } from "./Service/IPC.js";
 import type { IPCConfiguration } from "./Service/IPC/Configuration.js";
 import IPCService from "./Service/IPC/Service.js";
@@ -60,7 +60,7 @@ const Main = Effect.gen(function* (G) {
 	// A barrier to pause the main thread until the host sends init data.
 	// The error channel holds the entire Cause of failure for detailed reporting.
 	const InitializationBarrier = yield* G(
-		Deferred.make<void, Cause.Cause<unknown>>(),
+		Deferred.make<void, Cause.Cause<any>>(),
 	);
 	const IPC = yield* G(IPCService);
 
@@ -99,22 +99,29 @@ const Main = Effect.gen(function* (G) {
 			// Step 5: Execute the runnable.
 			// We use runPromiseExit to handle both success and failure cases explicitly.
 			// This avoids the complex type inference issues of catchAllCause within this context.
-			Effect.runPromiseExit(Runnable).then((exit) => {
-				if (Exit.isSuccess(exit)) {
-					// On success, succeed the deferred to unblock the main fiber.
-					Effect.runFork(
-						Deferred.succeed(
-							InitializationBarrier,
-							undefined as void,
-						),
-					);
-				} else {
-					// On failure, fail the deferred with the entire cause.
-					Effect.runFork(
-						Deferred.failCause(InitializationBarrier, exit.cause),
-					);
-				}
-			});
+			const PromiseResult = Effect.runPromiseExit(Runnable).then(
+				(exit) => {
+					if (Exit.isSuccess(exit)) {
+						// On success, succeed the deferred to unblock the main fiber.
+						Effect.runFork(
+							Deferred.succeed(
+								InitializationBarrier,
+								undefined as void,
+							),
+						);
+					} else {
+						// On failure, fail the deferred with the entire cause.
+						Effect.runFork(
+							Deferred.failCause(
+								InitializationBarrier,
+								exit.cause,
+							),
+						);
+					}
+				},
+			);
+
+			return PromiseResult;
 		},
 	);
 

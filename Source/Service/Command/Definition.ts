@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Command/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
  * Dependency: ../../TypeConverter/Command.js, ../IPC/Service.js, ../Telemetry/Service.js, ../WorkSpace/Service.js, ./Service.js, ./Type.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
@@ -29,10 +29,11 @@ export default Effect.gen(function* () {
 		new Map<string, CommandHandlerEntry>(),
 	);
 
-	const CommandConverter = new CommandConverterDefinition(
-		() => undefined, // LookupAPICommand placeholder
-		() => Promise.resolve(undefined), // ExecuteCommand placeholder
-	);
+	// const CommandConverter = new CommandConverterDefinition(
+	// 	() => new Disposable(() => {}),
+	// 	() => Promise.resolve(undefined),
+	// 	() => undefined,
+	// );
 
 	const ExecuteCommand = <T>(
 		ID: string,
@@ -52,21 +53,25 @@ export default Effect.gen(function* () {
 				}).pipe(
 					Effect.catchAll((e) =>
 						Effect.flatMap(
-							Telemetry.onExtensionError(Extension.identifier, e),
+							Effect.sync(() =>
+								Telemetry.onExtensionError(
+									Extension.identifier,
+									e,
+								),
+							),
 							() => Effect.fail(e),
 						),
 					),
 				);
 			}
 
-			const MarshalledArguments = Arguments.map((arg) =>
-				CommandConverter.ToInternal(arg, []),
-			);
+			// Arguments are not marshalled here because VS Code's RPCProtocol handles it.
+			// This simplifies our implementation significantly.
 			const Result = yield* IPC.SendRequest("$executeCommand", [
 				ID,
-				...MarshalledArguments,
+				...Arguments,
 			]).pipe(Effect.mapError((cause) => new Error(String(cause))));
-			return CommandConverter.FromInternal(Result) as T;
+			return Result as T;
 		});
 
 	const Register = (
@@ -152,8 +157,6 @@ export default Effect.gen(function* () {
 				),
 			),
 	};
-
-	CommandConverter.CommandService = ServiceImplementation;
 
 	return ServiceImplementation;
 });

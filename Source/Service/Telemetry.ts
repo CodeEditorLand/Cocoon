@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Telemetry.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:48 UTC
  * Dependency: ./Telemetry/Live.js, ./Telemetry/Service.js
  * Export: Live, Service

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Message.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:46:10 UTC
  * Dependency: ./IPC.js, ./IPC/Configuration.js, ./Message/Definition.js, ./Message/Service.js, effect
  * Export: Live, default

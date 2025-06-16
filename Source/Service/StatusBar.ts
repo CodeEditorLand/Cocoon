@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/StatusBar.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:51 UTC
  * Dependency: ./StatusBar/Live.js, ./StatusBar/Service.js
  * Export: Live, Service

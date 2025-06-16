@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Telemetry/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:42:08 UTC
- * Dependency: ../IPC/Service.js, ../InitData/Service.js, ../Log/Service.js, ./Service.js, effect, vs/base/common/errors.js, vs/platform/extensions/common/extensions.js, vscode
+ * Dependency: ../IPC/Service.js, ../InitData/Service.js, ../Log/Service.js, ./Service.js, effect, vs/base/common/errors.js, vs/platform/extensions/common/extensions.js, vs/workbench/api/common/extHostTelemetry.js
  */
 
 /**
@@ -11,15 +11,17 @@
  * to the Mountain host process based on user privacy settings.
  */
 
-import { Effect, Option } from "effect";
+import { Effect } from "effect";
 import type { SerializedError } from "vs/base/common/errors.js";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
-import type { TelemetryInfo } from "vscode";
+import type {
+	IExtHostTelemetry,
+	TelemetryInfo,
+} from "vs/workbench/api/common/extHostTelemetry.js";
 
 import InitDataService from "../InitData/Service.js";
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
-import type Service from "./Service.js";
 
 // Placeholders for internal types
 const TelemetryLevel = {
@@ -38,7 +40,7 @@ export default Effect.gen(function* () {
 	const Log = yield* LogService;
 
 	const TelemetryLevelValue =
-		InitData.telemetryInfo.telemetryLevel ?? TelemetryLevel.NONE;
+		InitData.telemetry.telemetryLevel ?? TelemetryLevel.NONE;
 	const ProductConfig = InitData.product?.telemetryOptOut;
 
 	const ShouldSendEvent = (Type: "usage" | "error"): boolean => {
@@ -69,15 +71,14 @@ export default Effect.gen(function* () {
 		Extension: ExtensionIdentifier,
 		CaughtError: Error | SerializedError,
 	): Effect.Effect<void, never> => {
-		// FIX: Make it an effect
-		// FIX: Correctly construct the error object to match SerializedError type.
 		const SerializableError: SerializedError =
 			CaughtError instanceof Error
 				? {
 						name: CaughtError.name,
 						message: CaughtError.message,
-						stack: CaughtError.stack ?? "", // stack must be a string
+						stack: CaughtError.stack ?? "",
 						$isError: true,
+						noTelemetry: false,
 					}
 				: CaughtError;
 
@@ -99,24 +100,25 @@ export default Effect.gen(function* () {
 		);
 	};
 
-	// FIX: The service implementation must match the interface.
-	const TelemetryImplementation: Service["Type"] = {
+	const TelemetryImplementation: IExtHostTelemetry = {
 		_serviceBrand: undefined,
-		// FIX: `getTelemetryInfo` should be a method returning a promise.
 		getTelemetryInfo: (): Promise<TelemetryInfo> =>
-			Promise.resolve(InitData.telemetryInfo),
-		// FIX: `setEnabled` is a method.
+			Promise.resolve(InitData.telemetry),
 		setEnabled: (_isEnabled: boolean): void => {
 			// This would typically involve an IPC call to the host.
 		},
 		publicLog: (EventName: string, Data?: object): void => {
-			Effect.runFork(LogPublicEvent(EventName, Data));
+			Effect.runFork(
+				LogPublicEvent(EventName, Data as Record<string, any>),
+			);
 		},
 		publicLog2: <T extends object = any>(
 			EventName: string,
 			Data?: T,
 		): void => {
-			Effect.runFork(LogPublicEvent(EventName, Data));
+			Effect.runFork(
+				LogPublicEvent(EventName, Data as Record<string, any>),
+			);
 		},
 		onExtensionError: (
 			Extension: ExtensionIdentifier,
@@ -125,15 +127,12 @@ export default Effect.gen(function* () {
 			Effect.runFork(LogExtensionError(Extension, Error));
 			return false; // Return value indicates if the error was "handled"
 		},
-		// FIX: These were missing from the implementation. They are part of IExtHostTelemetry.
-		// These methods in VS Code are used for more advanced, structured telemetry.
-		// Stubbing them out is acceptable for this context.
 		$publicLog: (eventName, data) =>
-			Effect.runPromise(Effect.succeed(Option.fromNullable(data))),
+			Effect.runPromise(LogPublicEvent(eventName, data)),
 		$publicLog2: (eventName, data) =>
-			Effect.runPromise(Effect.succeed(Option.fromNullable(data))),
+			Effect.runPromise(LogPublicEvent(eventName, data)),
 		$onExtensionError: (extensionId, error) =>
-			Effect.runPromise(Effect.succeed(Option.fromNullable(error))),
+			Effect.runPromise(LogExtensionError(extensionId, error)),
 	};
 
 	return TelemetryImplementation;

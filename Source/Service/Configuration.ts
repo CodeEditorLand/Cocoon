@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Configuration.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:12 UTC
  * Dependency: ./Configuration/Error.js, ./Configuration/GetConfiguration.js, ./Configuration/Live.js, ./Configuration/Service.js, ./Configuration/Type/WorkSpaceConfiguration.js
  * Export: Error, GetConfiguration, Live, Service, type WorkSpaceConfiguration

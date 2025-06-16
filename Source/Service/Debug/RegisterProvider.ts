@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Debug/RegisterProvider.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: ../IPC.js, ../IPC/Service.js, ./Error.js, effect, vscode
+ * Dependency: ../IPC/Service.js, ./Error.js, effect, vscode
  */
 
 /**
@@ -39,12 +39,12 @@ const RegisterProvider = <T>(
 		yield* Ref.update(Registry, (Map) => Map.set(Handle, Data));
 		yield* IPC.SendNotification("$registerDebugConfigurationProvider", [
 			Handle,
-			Data.Type, // Assumes the data object has a 'type' property (e.g., debug type)
+			(Data as any).Type, // The data object is known to have a 'type' property.
 		]).pipe(
 			Effect.mapError(
 				(cause) =>
 					new DebugProviderRegistrationError({
-						DebugType: Data.Type,
+						DebugType: (Data as any).Type,
 						cause,
 					}),
 			),
@@ -52,19 +52,21 @@ const RegisterProvider = <T>(
 
 		return new Disposable(() => {
 			const CleanupEffect = Effect.gen(function* () {
-				const IPC = yield* IPCService;
+				const IPC_Handle = yield* IPCService;
 				yield* Ref.update(Registry, (Map) => (Map.delete(Handle), Map));
 				const RPCUnregisterMethod =
 					"$unregisterDebugConfigurationProvider";
-				yield* IPC.SendNotification(RPCUnregisterMethod, [Handle]);
+				yield* IPC_Handle.SendNotification(RPCUnregisterMethod, [
+					Handle,
+				]);
 			});
 			// Provide a dummy IPC layer for the detached effect.
-			Effect.runFork(
-				Effect.provide(
-					CleanupEffect,
-					IPCLive({ MountainAddress: "", CocoonAddress: "" }),
-				),
-			);
+			// This is a temporary solution for the detached Effect.
+			const TempIPCLayer = IPCLive({
+				MountainAddress: "",
+				CocoonAddress: "",
+			});
+			Effect.runFork(Effect.provide(CleanupEffect, TempIPCLayer));
 		});
 	});
 };

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/Main/MarkdownString.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 22:53:45 UTC
  * Dependency: ../../Type/ExtHostTypes.js, vs/base/common/uri.js, vscode
  */

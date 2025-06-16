@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/Command/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
  * Dependency: ./Type.js, vs/base/common/lifecycle.js, vs/base/common/uuid.js, vs/platform/commands/common/commands.js, vscode
  */
@@ -75,7 +75,7 @@ export default class {
 				id: APICommandValue.InternalID,
 				title: APICommandValue.ID,
 				arguments: ConvertedArgumentArray,
-			} as unknown as ICommand;
+			};
 		}
 
 		if (
@@ -91,14 +91,14 @@ export default class {
 				id: this.DelegatingCommandID,
 				title: Command.title,
 				arguments: [ID, ...(Command.arguments ?? [])],
-			} as unknown as ICommand;
+			};
 		}
 
 		return {
 			id: Command.command,
 			title: Command.title,
 			arguments: Command.arguments,
-		} as unknown as ICommand;
+		};
 	}
 
 	public FromInternal(CommandDTO: ICommand): VSCode.Command | undefined {

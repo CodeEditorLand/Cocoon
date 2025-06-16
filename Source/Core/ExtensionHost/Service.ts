@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/ExtensionHost/Service.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:41:58 UTC
  * Dependency: effect
  * Export: ExtensionActivationReason, ExtensionHostService

@@ -31,7 +31,8 @@ const CreateLanguagesNamespace = (
 	LanguageFeature: LanguageFeatureService["Type"],
 	Extension: IExtensionDescription,
 ): typeof VSCode.languages => {
-	return {
+	// A full implementation would provide all methods. This is a partial stub.
+	const PartialLanguagesNamespace: Partial<typeof VSCode.languages> = {
 		// --- Provider Registration Methods ---
 		registerHoverProvider: (selector, provider) => {
 			return Effect.runSync(
@@ -93,6 +94,8 @@ const CreateLanguagesNamespace = (
 			);
 		},
 	};
+
+	return PartialLanguagesNamespace as typeof VSCode.languages;
 };
 
 export default CreateLanguagesNamespace;

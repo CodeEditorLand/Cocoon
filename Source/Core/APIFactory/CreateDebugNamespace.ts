@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateDebugNamespace.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:56:05 UTC
  * Dependency: ../../Service/Debug/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
@@ -34,7 +34,9 @@ const CreateDebugNamespace = (
 	return Effect.gen(function* () {
 		const Debug = yield* DebugService;
 
-		return {
+		// The vscode.debug namespace is extensive. We implement the core parts
+		// and leave stubs for the less common ones for this example.
+		const DebugNamespace: Partial<typeof VSCode.debug> = {
 			// --- Properties ---
 			get activeDebugSession() {
 				return Debug.activeDebugSession;
@@ -89,6 +91,8 @@ const CreateDebugNamespace = (
 			removeBreakpoints: (breakpoints) =>
 				Effect.runPromise(Debug.RemoveBreakpoints(breakpoints)),
 		};
+
+		return DebugNamespace as typeof VSCode.debug;
 	});
 };
 

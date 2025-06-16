@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/Dialog.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:42 UTC
  * Dependency: ../Type/ExtHostTypes.js, vscode
  */

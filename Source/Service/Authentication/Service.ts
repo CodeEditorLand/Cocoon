@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Authentication/Service.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 23:53:35 UTC
  * Dependency: effect, vs/base/common/lifecycle.js
  * Export: AuthenticationService

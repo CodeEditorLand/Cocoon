@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Live.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:22 UTC
  * Dependency: ../../Service/Log/Live.js, ./Definition.js, ./Service.js, effect
  */

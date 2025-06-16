@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/Dispatcher/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:01:41 UTC
  * Dependency: ../../Cancellation/Service.js, ../ProtocolAdapter/Service.js, ./Service.js, effect, vs/workbench/services/extensions/common/rpcProtocol.js
  */
@@ -33,15 +33,17 @@ export default Effect.gen(function* () {
 			if (CustomHandler) {
 				return yield* Effect.tryPromise({
 					try: () => CustomHandler(...Parameters),
-					catch: (e) => e,
+					catch: (e) => e as Error,
 				});
 			} else {
-				if (RPCProtocolInstance._getHandler) {
-					const Handler = RPCProtocolInstance._getHandler(Method);
+				if ((RPCProtocolInstance as any)._getHandler) {
+					const Handler = (RPCProtocolInstance as any)._getHandler(
+						Method,
+					);
 					if (Handler) {
 						return yield* Effect.tryPromise({
 							try: () => Handler(...Parameters),
-							catch: (e) => e,
+							catch: (e) => e as Error,
 						});
 					}
 				}
@@ -53,8 +55,11 @@ export default Effect.gen(function* () {
 
 	const DispatchNotification = (Method: string, Parameters: readonly any[]) =>
 		Effect.sync(() => {
-			if (RPCProtocolInstance._receiveNotification) {
-				RPCProtocolInstance._receiveNotification(Method, Parameters);
+			if ((RPCProtocolInstance as any)._receiveNotification) {
+				(RPCProtocolInstance as any)._receiveNotification(
+					Method,
+					Parameters,
+				);
 			}
 		});
 

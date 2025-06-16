@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Message/Service.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:56 UTC
  * Dependency: effect, vscode
  * Export: MessageService

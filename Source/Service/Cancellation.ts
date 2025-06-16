@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Cancellation.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:15 UTC
  * Dependency: ./Cancellation/Definition.js, ./Cancellation/Error/InvalidTokenIDError.js, ./Cancellation/Service.js, ./Cancellation/Type/TokenAndScope.js, effect
  * Export: CancellationLive, InvalidTokenIDError, default, type TokenAndScope

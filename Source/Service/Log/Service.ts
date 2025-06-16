@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Log/Service.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:56 UTC
  * Dependency: effect
  * Export: LogService

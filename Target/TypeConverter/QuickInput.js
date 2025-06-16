@@ -1,1 +1,27 @@
-import{Uri as r}from"vscode";const a={SerializeItems:n=>n.map((i,e)=>({...typeof i=="string"?{label:i}:i,handle:e})),SerializeButtons:n=>n?.map((i,e)=>{const t=i.iconPath;return{iconPath:t?"dark"in t&&"light"in t?{dark:r.parse(t.dark).toJSON(),light:r.parse(t.light).toJSON()}:r.parse(t.toString()).toJSON():void 0,tooltip:i.tooltip,handle:e}})},c=a;export{c as QuickInput};
+import { Uri as r } from "vscode";
+
+const a = {
+		SerializeItems: (n) =>
+			n.map((i, e) => ({
+				...(typeof i == "string" ? { label: i } : i),
+				handle: e,
+			})),
+		SerializeButtons: (n) =>
+			n?.map((i, e) => {
+				const t = i.iconPath;
+				return {
+					iconPath: t
+						? "dark" in t && "light" in t
+							? {
+									dark: r.parse(t.dark).toJSON(),
+									light: r.parse(t.light).toJSON(),
+								}
+							: r.parse(t.toString()).toJSON()
+						: void 0,
+					tooltip: i.tooltip,
+					handle: e,
+				};
+			}),
+	},
+	c = a;
+export { c as QuickInput };

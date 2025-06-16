@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Command/ProcessUserData/Error.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:55:44 UTC
  * Dependency: effect
  * Export: ActiveEditorNotFoundError, ProcessingServiceError

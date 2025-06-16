@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/Command/Service.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:43 UTC
  * Dependency: vs/base/common/lifecycle.js, vs/platform/commands/common/commands.js, vscode
  * Export: Interface

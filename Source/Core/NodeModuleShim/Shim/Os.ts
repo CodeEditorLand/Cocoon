@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Shim/Os.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: node:os, vs/workbench/services/extensions/common/extensionHostProtocol.js, vscode
+ * Dependency: ../../../Service/InitData/Service.js, node:os, vs/workbench/services/extensions/common/extensionHostProtocol.js, vscode
  */
 
 /**
@@ -15,7 +15,7 @@
 
 import * as NodeOs from "node:os";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
-import type { Uri } from "vscode";
+import { Uri } from "vscode";
 
 /**
  * Creates the shim object for the `os` module.
@@ -29,8 +29,8 @@ import type { Uri } from "vscode";
  * @returns A shim object that implements a safe subset of the `os` module's API.
  */
 const CreateOsShim = (InitData: IExtensionHostInitData) => {
-	const IsWindows = InitData.environment.isExtensionDevelopmentDebug;
-	const UserHome = InitData.environment.userHome as Uri;
+	const IsWindows = InitData.environment.isWindows;
+	const UserHome = Uri.revive(InitData.userHome);
 
 	const OsShim = {
 		EOL: IsWindows ? "\r\n" : "\n",
@@ -44,7 +44,7 @@ const CreateOsShim = (InitData: IExtensionHostInitData) => {
 			process.env["HOME"] ||
 			process.env["USERPROFILE"] ||
 			"",
-		hostname: () => InitData.environment.appName || "localhost",
+		hostname: () => InitData.environment.appHost || "localhost",
 		loadavg: () => NodeOs.loadavg(),
 		networkInterfaces: () => NodeOs.networkInterfaces(),
 		release: () => NodeOs.release(),

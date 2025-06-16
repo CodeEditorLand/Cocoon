@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/Client.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:03 UTC
  * Dependency: ./Client/Live.js, ./Client/Service.js
  * Export: Live, Service

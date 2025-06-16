@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Document/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect, vs/workbench/api/common/extHostDocumentData.js, vscode
+ * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect, vs/base/parts/ipc/common/ipc.js, vs/workbench/api/common/extHostDocumentData.js, vscode
  */
 
 /**
@@ -11,6 +11,7 @@
  */
 
 import { Effect, Option, Ref } from "effect";
+import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
 import { ExtHostDocumentData } from "vs/workbench/api/common/extHostDocumentData.js";
 import type { TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
 
@@ -49,15 +50,14 @@ export default Effect.gen(function* () {
 
 			// Step 2: Instantiate the correct class, ExtHostDocumentData.
 			const DocumentData = new ExtHostDocumentData(
-				// The constructor from `extHostDocuments.ts` shows it needs the IPC protocol adapter.
-				IPC._protocol,
+				IPC.CreateProtocolAdapter() as IMessagePassingProtocol,
 				RevivedURI,
 				Data.lines,
 				Data.eol,
 				Data.versionId,
 				Data.languageId,
 				Data.isDirty,
-				Data.encoding,
+				false, // isReadonly
 			);
 
 			// Step 3: Update the central document map.
@@ -93,7 +93,7 @@ export default Effect.gen(function* () {
 			const DocumentData = (yield* Ref.get(DocumentMap)).get(URIString);
 			if (DocumentData) {
 				// The ExtHostDocumentData class has a method to apply changes from the host.
-				DocumentData.onEvents(ChangeEventDTO);
+				DocumentData.$acceptModelChanged(UriDTO, ChangeEventDTO);
 				yield* OnDidChangeTextDocument.Fire({
 					document: DocumentData.document,
 					contentChanges: ChangeEventDTO.changes.map(
@@ -144,9 +144,11 @@ export default Effect.gen(function* () {
 		GetDocument: (URI: Uri) =>
 			Ref.get(DocumentMap).pipe(
 				// Get the ExtHostDocumentData object...
-				Effect.map((Map) => Map.get(URI.toString())),
+				Effect.map((Map) =>
+					Option.fromNullable(Map.get(URI.toString())),
+				),
 				// ...and extract its public `.document` property, wrapping in Option.
-				Effect.map((data) => Option.fromNullable(data?.document)),
+				Effect.map(Option.map((data) => data.document)),
 			),
 	};
 

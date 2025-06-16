@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/StoragePath/Live.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:45:21 UTC
  * Dependency: ../FileSystem.js, ../IPC/Configuration.js, ../Log.js, ./Definition.js, ./Service.js, effect
  */

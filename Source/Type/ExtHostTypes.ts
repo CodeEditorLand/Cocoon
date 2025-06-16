@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Type/ExtHostTypes.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:42:15 UTC
  * Dependency: vs/base/common/cancellation.js, vs/base/common/errors.js, vs/base/common/event.js, vs/base/common/lifecycle.js, vs/base/common/uri.js, vs/platform/files/common/files.js, vscode
  * Export: CancellationError, CancellationTokenSource, CompletionItem, CompletionItemKind, CompletionItemTag, ConfigurationTarget, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, DiagnosticTag, Disposable, EndOfLine, EventEmitter, FileType, Location, MarkdownString, Position, ProcessExecution, ProgressLocation, QuickPickItemKind, Range, Selection, ShellExecution, SnippetString, StatusBarAlignment, Task, TextEdit, TextEditorCursorStyle, ThemeColor, ThemeIcon, TreeItem, URI, ViewColumn, WorkspaceEdit

@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/Create.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:56:04 UTC
- * Dependency: ../../Service/APIDeprecation/Service.js, ../../Service/Command/Service.js, ../../Service/Debug.js, ../../Service/Debug/Service.js, ../../Service/Extension/Service.js, ../../Service/LanguageFeature/Service.js, ../../Service/Log/Service.js, ../../Service/ProposedAPI/Service.js, ../../Service/StatusBar/Service.js, ../../Service/Task/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, ../../Type/ExtHostTypes.js, ./AsExtensionEvent.js, ./CreateCommandNamespace.js, ./CreateDebugNamespace.js, ./CreateLanguagesNamespace.js, ./CreateTasksNamespace.js, ./CreateWindowNamespace.js, ./CreateWorkSpaceNamespace.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ * Dependency: ../../Service/APIDeprecation/Service.js, ../../Service/Command/Service.js, ../../Service/Debug/Service.js, ../../Service/Extension/Service.js, ../../Service/LanguageFeature/Service.js, ../../Service/Log/Service.js, ../../Service/ProposedAPI/Service.js, ../../Service/StatusBar/Service.js, ../../Service/Task/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, ../../Type/ExtHostTypes.js, ./AsExtensionEvent.js, ./CreateCommandNamespace.js, ./CreateDebugNamespace.js, ./CreateLanguagesNamespace.js, ./CreateTasksNamespace.js, ./CreateWindowNamespace.js, ./CreateWorkSpaceNamespace.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**
@@ -17,7 +17,6 @@ import type * as VSCode from "vscode";
 
 import type APIDeprecationService from "../../Service/APIDeprecation/Service.js";
 import type CommandService from "../../Service/Command/Service.js";
-import { Live as DebugLive } from "../../Service/Debug.js";
 import type DebugService from "../../Service/Debug/Service.js";
 import type ExtensionService from "../../Service/Extension/Service.js";
 import type LanguageFeatureService from "../../Service/LanguageFeature/Service.js";
@@ -48,7 +47,7 @@ interface ServiceCollection {
 	LanguageFeature: LanguageFeatureService["Type"];
 	Debug: DebugService["Type"];
 	Task: TaskService["Type"];
-	Extension: ExtensionService["Type"]; // FIX: Use the ["Type"] accessor to get the type from the Tag.
+	Extension: ExtensionService["Type"];
 	WebViewPanel: WebViewPanelService["Type"];
 	TreeView: TreeViewService["Type"];
 	StatusBar: StatusBarService["Type"];
@@ -64,8 +63,9 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				WorkSpace,
 				Window,
 				LanguageFeature,
+				Debug,
 				Task,
-				Extension: ExtensionServiceValue, // FIX: Rename the destructured variable to avoid shadowing the type.
+				Extension: ExtensionService,
 				WebViewPanel,
 				TreeView,
 				StatusBar,
@@ -101,7 +101,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 			const DebugNamespace = Effect.runSync(
 				Effect.provide(
 					CreateDebugNamespace(AsEvent, Extension),
-					DebugLive({ MountainAddress: "", CocoonAddress: "" }),
+					Debug as any,
 				),
 			);
 
@@ -111,7 +111,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				Extension,
 			);
 
-			const API: any = {
+			const API: Partial<typeof VSCode> = {
 				version: "1.85.0",
 				commands: CommandNamespace,
 				window: WindowNamespace,
@@ -119,7 +119,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				languages: LanguagesNamespace,
 				debug: DebugNamespace,
 				tasks: TasksNamespace,
-				extensions: ExtensionServiceValue, // FIX: Use the renamed variable here.
+				extensions: ExtensionService,
 				...ExtHostType,
 			};
 
@@ -131,7 +131,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 
 			for (const key in API) {
 				if (Object.prototype.hasOwnProperty.call(API, key)) {
-					const prop = API[key];
+					const prop = (API as any)[key];
 					if (typeof prop === "object" && prop !== null) {
 						Object.freeze(prop);
 					}

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Window.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:46:10 UTC
  * Dependency: ./IPC.js, ./IPC/Configuration.js, ./Window/Definition.js, ./Window/Service.js, ./WorkSpace.js, effect
  * Export: Live, default

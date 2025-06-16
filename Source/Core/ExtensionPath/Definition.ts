@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/ExtensionPath/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:24 UTC
  * Dependency: node:path, vs/base/common/uri.js, vscode
  */

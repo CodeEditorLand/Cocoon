@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtoConverter/Error.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:00 UTC
  * Export: default
  */

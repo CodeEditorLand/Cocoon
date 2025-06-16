@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/ExtensionPath.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:24 UTC
  * Dependency: ./ExtensionPath/Live.js, ./ExtensionPath/Service.js
  * Export: Live, Service

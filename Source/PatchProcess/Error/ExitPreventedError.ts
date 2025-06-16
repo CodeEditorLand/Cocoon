@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/PatchProcess/Error/ExitPreventedError.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:20 UTC
  * Dependency: effect
  * Export: extends

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/Service.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:28 UTC
  * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode
  * Export: APIFactoryService

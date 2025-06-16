@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/StatusBar/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:52 UTC
  * Dependency: ../IPC/Service.js, ./Service.js, ./StatusBarItemImplementation.js, effect, vscode
  */

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Command.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:46:10 UTC
  * Dependency: ./Command/Definition.js, ./Command/Service.js, ./Command/Type.js, ./IPC.js, ./IPC/Configuration.js, ./Telemetry.js, ./WorkSpace.js, effect
  * Export: Live, default, type CommandHandler, type CommandHandlerEntry

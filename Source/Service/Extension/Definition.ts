@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Extension/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 03:16:36 UTC
- * Dependency: ../../Core/ExtensionHost/Service.js, ../../Utility/CreateEventStream.js, ../InitData/Service.js, ./CreateAPIObject.js, ./Service.js, effect, vs/platform/extensionManagement/common/implicitActivationEvents.js, vscode
+ * Dependency: ../../Core/ExtensionHost/Service.js, ../../Utility/CreateEventStream.js, ../InitData/Service.js, ./CreateAPIObject.js, ./Service.js, effect, vs/platform/extensionManagement/common/implicitActivationEvents.js, vs/workbench/services/extensions/common/extensionDescriptionRegistry.js, vscode
  */
 
 /**
@@ -44,18 +44,21 @@ export default Effect.gen(function* () {
 
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		ActivationEventsReader,
-		InitData.extensions,
+		InitData.extensions.allExtensions,
 	);
 
 	const ServiceImplementation: Service["Type"] = {
 		onDidChange: OnDidChangeEvent,
 		GetExtension: <T>(extensionId: string) =>
-			Effect.map(
-				Effect.succeed(
-					ExtensionRegistry.getExtensionDescription(extensionId),
+			Effect.succeed(
+				ExtensionRegistry.getExtensionDescription(extensionId),
+			).pipe(
+				Effect.map(Option.fromNullable),
+				Effect.map(
+					Option.map((description) =>
+						CreateAPIObject<T>(description, ExtensionHost),
+					),
 				),
-				Option.fromNullable,
-				(description) => CreateAPIObject<T>(description, ExtensionHost),
 			),
 
 		GetAll: () =>

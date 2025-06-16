@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Log.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:55 UTC
  * Dependency: ./Log/Definition.js, ./Log/Service.js, effect
  * Export: Live, default

@@ -1,1 +1,13 @@
-import{Effect as e,PubSub as n}from"effect";import{Emitter as c}from"vs/base/common/event.js";const d=()=>{const o=new c,t=e.runSync(n.unbounded()),u=r=>n.publish(t,r).pipe(e.andThen(e.sync(()=>o.fire(r))),e.asVoid),f=o.event;return{Fire:u,PubSub:t,event:f,Shutdown:()=>n.shutdown(t)}};var i=d;export{i as default};
+import { Effect as e, PubSub as n } from "effect";
+import { Emitter as c } from "vs/base/common/event.js";
+
+const d = () => {
+	const o = new c(),
+		t = e.runSync(n.unbounded()),
+		u = (r) =>
+			n.publish(t, r).pipe(e.andThen(e.sync(() => o.fire(r))), e.asVoid),
+		f = o.event;
+	return { Fire: u, PubSub: t, event: f, Shutdown: () => n.shutdown(t) };
+};
+var i = d;
+export { i as default };

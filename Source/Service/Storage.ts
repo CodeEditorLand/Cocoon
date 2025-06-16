@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Storage.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:50 UTC
  * Dependency: ./Storage/Live.js, ./Storage/Service.js
  * Export: Live, Service

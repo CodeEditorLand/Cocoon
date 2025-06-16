@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/TreeView.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:46:10 UTC
  * Dependency: ./Command.js, ./IPC.js, ./IPC/Configuration.js, ./TreeView/Definition.js, ./TreeView/Service.js, effect
  * Export: Live, default

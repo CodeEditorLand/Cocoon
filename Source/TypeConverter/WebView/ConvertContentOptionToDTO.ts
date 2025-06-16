@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/WebView/ConvertContentOptionToDTO.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:40 UTC
  * Dependency: vs/platform/extensions/common/extensions.js, vscode
  */

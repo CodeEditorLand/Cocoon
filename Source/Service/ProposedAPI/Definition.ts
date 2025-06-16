@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/ProposedAPI/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
  * Dependency: ../InitData/Service.js, ../Log/Service.js, ./Service.js, effect
  */
@@ -30,7 +30,7 @@ function ParseConfiguration(
 		}
 	} else if (typeof Configuration === "object" && Configuration !== null) {
 		for (const Key in Configuration) {
-			const Proposals = Configuration[Key];
+			const Proposals = (Configuration as any)[Key];
 			if (Array.isArray(Proposals)) {
 				if (Key === "*") {
 					for (const Proposal of Proposals) {
@@ -59,7 +59,7 @@ export default Effect.gen(function* () {
 		InitData.product?.extensionEnabledApiProposals,
 	);
 	const EnvironmentConfiguration = ParseConfiguration(
-		InitData.environment.extensionEnabledProposedApi,
+		InitData.environment.extensionEnabledApiProposals,
 	);
 
 	const AllGlobalAPIs = new Set([

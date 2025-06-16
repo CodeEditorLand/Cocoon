@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/SecretStorage/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:54 UTC
  * Dependency: ../IPC/Service.js, ../Log/Service.js, ./SecretStorageImplementation.js, ./Service.js, effect
  */

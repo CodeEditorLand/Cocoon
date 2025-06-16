@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Extension.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:06 UTC
- * Dependency: ../Core/ExtensionHost.js, ./Extension/Definition.js, ./Extension/Service.js, effect, vscode
+ * Dependency: ../Core/ExtensionHost.js, ./Extension/Definition.js, ./Extension/Service.js, effect
  * Export: Live, default
  */
 
@@ -13,14 +13,12 @@
  */
 
 import { Layer } from "effect";
-import type { Extension } from "vscode";
 
 import { Live as ExtensionHostLive } from "../Core/ExtensionHost.js";
 import Definition from "./Extension/Definition.js";
 import Service from "./Extension/Service.js";
 
 export { default as Service } from "./Extension/Service.js";
-export type { Extension };
 
 /**
  * The live implementation Layer for the Extension service.

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Environment.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:07 UTC
  * Dependency: ./Clipboard.js, ./Environment/Definition.js, ./Environment/Service.js, ./IPC.js, ./IPC/Configuration.js, effect
  * Export: Live, default
@@ -18,7 +18,7 @@ import { Live as ClipboardLive } from "./Clipboard.js";
 import Definition from "./Environment/Definition.js";
 import Service from "./Environment/Service.js";
 import { Live as IPCLive } from "./IPC.js";
-import type IPCConfiguration from "./IPC/Configuration.js";
+import type { IPCConfiguration } from "./IPC/Configuration.js";
 
 export { default as Service } from "./Environment/Service.js";
 

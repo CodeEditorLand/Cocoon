@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Dialog/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:10 UTC
  * Dependency: ../../TypeConverter/Dialog.js, ../IPC/Service.js, ./Error.js, ./Service.js, effect, vs/base/common/errors.js
  */

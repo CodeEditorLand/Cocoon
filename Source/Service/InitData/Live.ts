@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/InitData/Live.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:03 UTC
  * Dependency: ./Service.js, effect, vs/workbench/services/extensions/common/extensionHostProtocol.js
  */

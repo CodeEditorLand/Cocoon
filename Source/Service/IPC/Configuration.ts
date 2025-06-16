@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/Configuration.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:42:03 UTC
  * Dependency: effect
  * Export: IPCConfiguration, IPCConfigurationService

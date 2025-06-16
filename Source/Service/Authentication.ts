@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Authentication.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:16 UTC
  * Dependency: ./Authentication/Error.js, ./Authentication/Live.js, ./Authentication/Service.js, ./Authentication/Type.js
  * Export: Error, Live, Service, Type

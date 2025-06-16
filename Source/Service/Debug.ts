@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Debug.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:11 UTC
  * Dependency: ./Debug/Error.js, ./Debug/Live.js, ./Debug/Service.js, ./Debug/Type.js
  * Export: Error, Live, Service, Type

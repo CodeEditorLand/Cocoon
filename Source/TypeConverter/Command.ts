@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/Command.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:43 UTC
  * Dependency: ./Command/Definition.js, ./Command/Service.js, ./Command/Type.js
  * Export: Definition, Type, type Service

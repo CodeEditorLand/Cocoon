@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Debug/Definition.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 21:13:29 UTC
  * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Error.js, ./RegisterProvider.js, ./Service.js, effect
  */

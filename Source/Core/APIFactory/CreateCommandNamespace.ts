@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateCommandNamespace.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:56:05 UTC
  * Dependency: ../../Service/Command/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */

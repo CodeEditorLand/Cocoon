@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Dialog/Error.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:10 UTC
  * Export: default
  */

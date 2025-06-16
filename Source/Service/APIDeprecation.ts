@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/APIDeprecation.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:16 UTC
  * Dependency: ./APIDeprecation/Definition.js, ./APIDeprecation/Service.js, ./Log.js, effect
  * Export: APIDeprecationLive, default

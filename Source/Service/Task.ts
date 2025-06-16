@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Task.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:49 UTC
  * Dependency: ./Task/Live.js, ./Task/Service.js, ./Task/Type.js
  * Export: Live, Service, Type

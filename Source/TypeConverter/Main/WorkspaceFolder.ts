@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/Main/WorkspaceFolder.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:16:41 UTC
  * Dependency: ./URI.js, vs/platform/workspace/common/workspace.js, vscode
  */

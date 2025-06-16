@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/PatchProcess/HandleException.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-15 19:17:18 UTC
  * Dependency: ../Service/IPC/Service.js, effect
  */

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Authentication/Live.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:45:33 UTC
  * Dependency: ../IPC.js, ../IPC/Configuration.js, ../Log/Live.js, ./Definition.js, ./Service.js, effect
  */

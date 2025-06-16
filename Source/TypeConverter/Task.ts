@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/TypeConverter/Task.ts
- * Responsibility: 
+ * Responsibility:
  * Modified: 2025-06-16 14:00:34 UTC
  * Dependency: ../Type/ExtHostTypes.js, vs/platform/extensions/common/extensions.js, vscode
  * Export: Task
