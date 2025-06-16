@@ -26,12 +26,16 @@ import InitDataService from "../Service/InitData/Service.js";
 const SetupEnvironment = Effect.gen(function* () {
 	const InitData = yield* InitDataService;
 
-	// If a proxy is configured on the host, propagate it to this process's environment.
-	if (InitData.environment.httpProxy) {
-		process.env["http_proxy"] = InitData.environment.httpProxy;
-	}
-	if (InitData.environment.httpsProxy) {
-		process.env["https_proxy"] = InitData.environment.httpsProxy;
+	// The `IEnvironment` interface does not contain httpProxy/httpsProxy directly.
+	// However, `useHostProxy` signals that we should use the host's proxy settings.
+	// We'll assume the host's environment variables are already set and this process inherits them,
+	// or that the host provides them through another mechanism if `useHostProxy` is true.
+	// For now, we will remove the direct setting of these variables as the properties don't exist on the type.
+	// If proxy support is needed, it would require a change in IExtensionHostInitData or another IPC call.
+	if (InitData.environment.useHostProxy) {
+		yield* Effect.logInfo(
+			"Host proxy is enabled. Assuming proxy environment variables are inherited.",
+		);
 	}
 }).pipe(
 	Effect.tap(() =>

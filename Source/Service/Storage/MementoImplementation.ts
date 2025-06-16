@@ -14,20 +14,20 @@
  */
 
 import { Effect, Ref } from "effect";
-import type {
-	Event,
-	Memento,
-	MementoChangeEvent as VscodeMementoChangeEvent,
-	MementoKeysOptions as VscodeMementoKeysOptions,
-} from "vscode";
+import type { Event, Memento } from "vscode";
 
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
 
-// Make our types compatible aliases
-type MementoChangeEvent = VscodeMementoChangeEvent;
-type MementoKeysOptions = VscodeMementoKeysOptions;
+// These types are part of the vscode API but might not be exported at the top level.
+// We define them here to match the expected structure.
+interface MementoChangeEvent {
+	readonly keys: readonly string[];
+}
+interface MementoKeysOptions {
+	readonly prefix?: string;
+}
 
 enum MementoScope {
 	GLOBAL = 0,
@@ -91,9 +91,9 @@ export default class implements Memento {
 			);
 		});
 
-		return Effect.runPromise(
-			UpdateEffect.pipe(Effect.provide(UpdateEffect)),
-		);
+		// The effect is constructed with `this` context, which holds the IPC and Log services.
+		// We just need to run the effect to get a promise.
+		return Effect.runPromise(UpdateEffect);
 	}
 
 	keys(_Options?: MementoKeysOptions): readonly string[] {

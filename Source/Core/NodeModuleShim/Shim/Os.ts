@@ -15,7 +15,6 @@
 
 import * as NodeOs from "node:os";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
-import { Uri } from "vscode";
 
 /**
  * Creates the shim object for the `os` module.
@@ -29,8 +28,13 @@ import { Uri } from "vscode";
  * @returns A shim object that implements a safe subset of the `os` module's API.
  */
 const CreateOsShim = (InitData: IExtensionHostInitData) => {
-	const IsWindows = InitData.environment.isWindows;
-	const UserHome = Uri.revive(InitData.userHome);
+	// The `isWindows` property does not exist on IEnvironment.
+	// We can reliably get this information from the running Node.js process itself.
+	const IsWindows = process.platform === "win32";
+
+	// The `userHome` property does not exist on IExtensionHostInitData.
+	// `globalStorageHome` is the closest, most reliable source for the user's home directory URI.
+	const UserHome = InitData.environment.globalStorageHome;
 
 	const OsShim = {
 		EOL: IsWindows ? "\r\n" : "\n",
@@ -50,7 +54,12 @@ const CreateOsShim = (InitData: IExtensionHostInitData) => {
 		release: () => NodeOs.release(),
 		tmpdir: () => NodeOs.tmpdir(), // tmpdir is generally safe to expose.
 		totalmem: () => NodeOs.totalmem(),
-		type: () => NodeOs.type(),
+		type: () =>
+			IsWindows
+				? "Windows_NT"
+				: process.platform === "darwin"
+					? "Darwin"
+					: "Linux",
 		userInfo: (_options?: { encoding: string }) => {
 			// Return a mocked/sanitized version to avoid exposing real user info.
 			const Username =

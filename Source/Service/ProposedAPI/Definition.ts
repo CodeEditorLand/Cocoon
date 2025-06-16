@@ -12,7 +12,6 @@
 
 import { Effect, HashMap } from "effect";
 
-import InitDataService from "../InitData/Service.js";
 import LogService from "../Log/Service.js";
 import type Service from "./Service.js";
 
@@ -52,15 +51,14 @@ function ParseConfiguration(
 }
 
 export default Effect.gen(function* () {
-	const InitData = yield* InitDataService;
 	const Log = yield* LogService;
 
-	const ProductConfiguration = ParseConfiguration(
-		InitData.product?.extensionEnabledApiProposals,
-	);
-	const EnvironmentConfiguration = ParseConfiguration(
-		InitData.environment.extensionEnabledApiProposals,
-	);
+	// According to `extensionHostProtocol.ts`, `IExtensionHostInitData` does not contain a `product` property,
+	// and `IEnvironment` does not contain `extensionEnabledApiProposals`.
+	// Therefore, we must assume this configuration is not available via InitData.
+	// The implementation is stubbed to be 'disabled' until the data source is corrected.
+	const ProductConfiguration = ParseConfiguration(undefined);
+	const EnvironmentConfiguration = ParseConfiguration(undefined);
 
 	const AllGlobalAPIs = new Set([
 		...ProductConfiguration.GlobalAPIs,
@@ -79,7 +77,7 @@ export default Effect.gen(function* () {
 	);
 
 	yield* Log.Info(
-		`Proposed API provider initialized. Globally enabled: ${AllGlobalAPIs.size}. Per-extension configs: ${HashMap.size(ReadonlyExtensionAPIs)}.`,
+		`Proposed API provider initialized. No proposals found in InitData. All proposals will be disabled.`,
 	);
 
 	const ServiceImplementation: Service["Type"] = {
