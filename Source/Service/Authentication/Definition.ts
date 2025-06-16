@@ -6,6 +6,7 @@
 import { Effect, Ref } from "effect";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
 import type {
+	AuthenticationGetSessionOptions,
 	AuthenticationProvider,
 	AuthenticationSession,
 	Extension,
@@ -46,7 +47,7 @@ export default Effect.gen(function* () {
 				);
 			}
 			const Session = yield* Effect.tryPromise({
-				try: () => Provider.createSession(Scopes),
+				try: () => Provider.createSession(Scopes, {}),
 				catch: (CaughtError) => CaughtError as Error,
 			});
 			return ConvertSessionToInternal(Session);
@@ -77,12 +78,17 @@ export default Effect.gen(function* () {
 
 	// --- Service Implementation ---
 	const AuthenticationImplementation: Service["Type"] = {
-		GetSession: (RequestingExtension, ProviderID, Scopes, Options) =>
+		GetSession: (
+			RequestingExtension: Extension<any>,
+			ProviderID: string,
+			Scopes: readonly string[],
+			Options: AuthenticationGetSessionOptions,
+		) =>
 			IPC.SendRequest<any | undefined>("$getSession", [
-				(RequestingExtension as Extension<any>).id,
+				RequestingExtension.id,
 				ProviderID,
 				Scopes,
-				Options,
+				Options, // This will require a new TypeConverter in a real implementation
 			]).pipe(
 				Effect.map((Info) =>
 					Info
@@ -98,9 +104,13 @@ export default Effect.gen(function* () {
 				Effect.mapError((e) => new Error(String(e))),
 			),
 
-		ListSessions: (RequestingExtension, ProviderID, Scopes) =>
+		ListSessions: (
+			RequestingExtension: Extension<any>,
+			ProviderID: string,
+			Scopes?: readonly string[],
+		) =>
 			IPC.SendRequest<any[]>("$getSessions", [
-				(RequestingExtension as Extension<any>).id,
+				RequestingExtension.id,
 				ProviderID,
 				Scopes,
 			]).pipe(

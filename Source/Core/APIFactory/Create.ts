@@ -4,11 +4,13 @@
  * object for a given extension. This serves as the `Definition` for the service.
  */
 
+import { Effect, Layer } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
 import type APIDeprecationService from "../../Service/APIDeprecation/Service.js";
 import type CommandService from "../../Service/Command/Service.js";
+import { Live as DebugLive } from "../../Service/Debug.js";
 import type DebugService from "../../Service/Debug/Service.js";
 import type ExtensionService from "../../Service/Extension/Service.js";
 import type LanguageFeatureService from "../../Service/LanguageFeature/Service.js";
@@ -55,7 +57,6 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				WorkSpace,
 				Window,
 				LanguageFeature,
-				Debug,
 				Task,
 				Extension: ExtensionService,
 				WebViewPanel,
@@ -87,11 +88,18 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				LanguageFeature,
 				Extension,
 			);
-			const DebugNamespace = CreateDebugNamespace(
-				Debug,
-				AsEvent,
-				Extension,
+
+			// Create the Debug namespace by running its constructor Effect synchronously
+			// after providing its specific dependencies.
+			const DebugNamespace = Effect.runSync(
+				Effect.provide(
+					CreateDebugNamespace(AsEvent, Extension),
+					// We need to provide the dependencies that the Debug service itself needs.
+					// This is a simplified layer for this specific purpose.
+					DebugLive({ MountainAddress: "", CocoonAddress: "" }),
+				),
 			);
+
 			const TasksNamespace = CreateTasksNamespace(
 				Task,
 				AsEvent,

@@ -5,8 +5,8 @@
 
 import { Context, type Effect } from "effect";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
-import type { AuthenticationGetSessionOptions } from "vs/workbench/api/common/extHost.protocol.js";
 import type {
+	AuthenticationGetSessionOptions,
 	AuthenticationProvider,
 	AuthenticationProviderInformation,
 	AuthenticationSession,
@@ -15,7 +15,10 @@ import type {
 	Extension,
 } from "vscode";
 
-import type { AuthenticationProviderRegistrationError } from "./Error.js";
+import type {
+	AuthenticationProviderExistsError,
+	AuthenticationProviderRegistrationError,
+} from "./Error.js";
 
 export default class AuthenticationService extends Context.Tag(
 	"Service/Authentication",
@@ -51,7 +54,8 @@ export default class AuthenticationService extends Context.Tag(
 			Options?: { readonly supportsMultipleAccounts?: boolean },
 		) => Effect.Effect<
 			IDisposable,
-			AuthenticationProviderRegistrationError
+			| AuthenticationProviderRegistrationError
+			| AuthenticationProviderExistsError
 		>;
 
 		/**
