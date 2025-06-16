@@ -9,7 +9,6 @@ import * as GRPC from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect } from "effect";
 
-import { IPCConfigurationService } from "../Configuration.js";
 import { gRPCConnectionError } from "../Error.js";
 import Release from "./Release.js";
 import type Service from "./Service.js";

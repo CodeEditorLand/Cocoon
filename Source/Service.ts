@@ -43,6 +43,7 @@ import { Live as WorkSpaceLive } from "./Service/WorkSpace.js";
 /**
  * A factory function that creates a single, composed layer that provides all services.
  * @param Config The IPC configuration required by many services.
+ * @returns A composed `Layer` containing all API services.
  */
 const AllServiceLayer = (Config: IPCConfigurationService) => {
 	return Layer.mergeAll(

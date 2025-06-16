@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ExtensionKind, Uri, type Extension } from "vscode";
+import { ExtensionKind, type Extension } from "vscode";
 
 import type ExtensionHostService from "../../Core/ExtensionHost/Service.js";
 
@@ -19,49 +19,56 @@ import type ExtensionHostService from "../../Core/ExtensionHost/Service.js";
  */
 const CreateAPIObject = <T>(
 	Description: IExtensionDescription,
-	ExtensionHost: ExtensionHostService,
+	ExtensionHost: ExtensionHostService["Type"],
 ): Extension<T> => {
-	const Activate = Effect.gen(function* () {
+	const ActivateEffect = Effect.gen(function* () {
+		// Step 1: Call the activation method on the host service.
 		yield* ExtensionHost.ActivateById(Description.identifier, {
 			startup: false,
 			extensionId: Description.identifier,
 			activationEvent: "api",
 		} as any);
-		const exports = yield* ExtensionHost.GetExtensionExports(
+
+		// Step 2: Retrieve the exports after activation.
+		const Exports = yield* ExtensionHost.GetExtensionExports(
 			Description.identifier,
 		);
-		return exports as T;
+		return Exports as T;
 	});
 
-	const GetExtensionKind = () => {
-		if (Description.extensionKind?.includes("web")) {
-			return ExtensionKind.Web;
-		}
-		if (Description.extensionKind?.includes("workspace")) {
+	/**
+	 * Determines the vscode.ExtensionKind based on the manifest's `extensionKind` property.
+	 */
+	const GetExtensionKind = (): ExtensionKind => {
+		const Kinds = Array.isArray(Description.extensionKind)
+			? Description.extensionKind
+			: [Description.extensionKind];
+
+		if (Kinds.includes("workspace")) {
 			return ExtensionKind.Workspace;
 		}
+		// Default to UI kind if not 'workspace'. The 'web' kind is not applicable here.
 		return ExtensionKind.UI;
 	};
 
 	const ExtensionAPIObject: Extension<T> = {
 		id: Description.identifier.value,
-		extensionUri: Uri.revive(Description.extensionLocation),
+		extensionUri: Description.extensionLocation,
 		extensionPath: Description.extensionLocation.fsPath,
 		get isActive() {
-			return Effect.runSync(
-				ExtensionHost.IsActivated(Description.identifier),
-			);
+			// This now synchronously calls the corrected IsActivated method.
+			return ExtensionHost.IsActivated(Description.identifier);
 		},
 		get packageJSON() {
 			return Description;
 		},
 		extensionKind: GetExtensionKind(),
 		get exports() {
-			return Effect.runSync(
-				ExtensionHost.GetExtensionExports(Description.identifier),
-			);
+			// This synchronously retrieves the cached exports.
+			return ExtensionHost.GetExtensionExports(Description.identifier);
 		},
-		activate: () => Effect.runPromise(Activate),
+		// activate() is the only async method, returning a promise.
+		activate: () => Effect.runPromise(ActivateEffect),
 	};
 
 	return Object.freeze(ExtensionAPIObject);

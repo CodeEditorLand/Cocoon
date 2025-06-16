@@ -3,8 +3,8 @@
  * @description The live implementation of the Document service.
  */
 
-import { Effect, Ref } from "effect";
-import { ExtHostDocument as VscTextDocument } from "vs/workbench/api/common/extHostDocuments.js";
+import { Effect, Option, Ref } from "effect";
+import { ExtHostDocumentData } from "vs/workbench/api/common/extHostDocumentData.js";
 import type { TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
@@ -14,10 +14,14 @@ import type Service from "./Service.js";
 
 /**
  * An Effect that builds the live implementation of the Document service.
+ * @export
+ * @default
  */
 export default Effect.gen(function* () {
+	// --- Service Dependencies ---
 	const IPC = yield* IPCService;
-	const DocumentMap = yield* Ref.make(new Map<string, VscTextDocument>());
+	// The map should store instances of ExtHostDocumentData.
+	const DocumentMap = yield* Ref.make(new Map<string, ExtHostDocumentData>());
 
 	// --- Event Emitters for the Public API ---
 	const OnDidOpenTextDocument = CreateEventStream<TextDocument>();
@@ -28,46 +32,63 @@ export default Effect.gen(function* () {
 
 	// --- RPC Handlers (for updates FROM Mountain) ---
 
+	/**
+	 * An Effect that handles the addition of a new model from the host.
+	 */
 	const AcceptModelAdded = (Data: any) =>
 		Effect.gen(function* () {
+			// Step 1: Revive the DTOs into VS Code API objects.
 			const RevivedURI = TypeConverter.URI.ToAPI(Data.uri);
-			const Document = new VscTextDocument(
-				IPC.CreateProtocolAdapter(),
+
+			// Step 2: Instantiate the correct class, ExtHostDocumentData.
+			const DocumentData = new ExtHostDocumentData(
+				// The constructor from `extHostDocuments.ts` shows it needs the IPC protocol adapter.
+				(IPC as any)._protocol,
 				RevivedURI,
 				Data.lines,
 				Data.eol,
 				Data.versionId,
 				Data.languageId,
 				Data.isDirty,
+				Data.encoding,
 			);
+
+			// Step 3: Update the central document map.
 			yield* Ref.update(DocumentMap, (Map) =>
-				Map.set(Document.uri.toString(), Document),
+				Map.set(DocumentData.document.uri.toString(), DocumentData),
 			);
-			yield* OnDidOpenTextDocument.Fire(Document);
+			// Step 4: Fire the public event with the public-facing `.document` property.
+			yield* OnDidOpenTextDocument.Fire(DocumentData.document);
 		});
 
+	/**
+	 * An Effect that handles the removal of a model from the host.
+	 */
 	const AcceptModelRemoved = (UriDTO: any) =>
 		Effect.gen(function* () {
 			const URIString = TypeConverter.URI.ToAPI(UriDTO).toString();
-			const Document = (yield* Ref.get(DocumentMap)).get(URIString);
-			if (Document) {
+			const DocumentData = (yield* Ref.get(DocumentMap)).get(URIString);
+			if (DocumentData) {
 				yield* Ref.update(
 					DocumentMap,
 					(Map) => (Map.delete(URIString), Map),
 				);
-				yield* OnDidCloseTextDocument.Fire(Document);
+				yield* OnDidCloseTextDocument.Fire(DocumentData.document);
 			}
 		});
 
+	/**
+	 * An Effect that handles content changes to an existing model.
+	 */
 	const AcceptModelChanged = (UriDTO: any, ChangeEventDTO: any) =>
 		Effect.gen(function* () {
 			const URIString = TypeConverter.URI.ToAPI(UriDTO).toString();
-			const Document = (yield* Ref.get(DocumentMap)).get(URIString);
-			if (Document) {
-				// The VscTextDocument class has a method to apply changes.
-				Document.$acceptEvents(ChangeEventDTO);
+			const DocumentData = (yield* Ref.get(DocumentMap)).get(URIString);
+			if (DocumentData) {
+				// The ExtHostDocumentData class has a method to apply changes from the host.
+				DocumentData.onEvents(ChangeEventDTO);
 				yield* OnDidChangeTextDocument.Fire({
-					document: Document,
+					document: DocumentData.document,
 					contentChanges: ChangeEventDTO.changes.map(
 						(Change: any) => ({
 							range: TypeConverter.Range.ToAPI(Change.range),
@@ -81,7 +102,8 @@ export default Effect.gen(function* () {
 			}
 		});
 
-	// Register these handlers with the dispatcher
+	// --- Register Handlers ---
+	// Register these handlers with the dispatcher for incoming messages from Mountain.
 	yield* Effect.sync(() =>
 		IPC.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
 			Effect.runPromise(AcceptModelAdded(Data)),
@@ -98,10 +120,13 @@ export default Effect.gen(function* () {
 		),
 	);
 
+	// --- Service Implementation ---
 	const DocumentImplementation: Service["Type"] = {
+		// `TextDocuments` must be a synchronous getter to match the vscode API.
 		get TextDocuments() {
-			// This is a synchronous getter for API compatibility. It's safe for Ref.
-			return Array.from(Effect.runSync(Ref.get(DocumentMap)).values());
+			const Map = Effect.runSync(Ref.get(DocumentMap));
+			// Return the public `.document` part.
+			return Array.from(Map.values()).map((data) => data.document);
 		},
 
 		onDidOpenTextDocument: OnDidOpenTextDocument.event,
@@ -111,7 +136,10 @@ export default Effect.gen(function* () {
 
 		GetDocument: (URI: Uri) =>
 			Ref.get(DocumentMap).pipe(
+				// Get the ExtHostDocumentData object...
 				Effect.map((Map) => Map.get(URI.toString())),
+				// ...and extract its public `.document` property, wrapping in Option.
+				Effect.map((data) => Option.fromNullable(data?.document)),
 			),
 	};
 
