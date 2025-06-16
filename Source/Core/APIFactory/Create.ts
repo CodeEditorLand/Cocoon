@@ -1,3 +1,5 @@
+// Cocoon/Source/Core/APIFactory/Create.ts
+
 /**
  * @module Create (APIFactory)
  * @description The primary factory function that constructs the `vscode` API
@@ -41,7 +43,7 @@ interface ServiceCollection {
 	LanguageFeature: LanguageFeatureService["Type"];
 	Debug: DebugService["Type"];
 	Task: TaskService["Type"];
-	Extension: ExtensionService["Type"];
+	Extension: ExtensionService["Type"]; // FIX: Use the ["Type"] accessor to get the type from the Tag.
 	WebViewPanel: WebViewPanelService["Type"];
 	TreeView: TreeViewService["Type"];
 	StatusBar: StatusBarService["Type"];
@@ -58,7 +60,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				Window,
 				LanguageFeature,
 				Task,
-				Extension: ExtensionService,
+				Extension: ExtensionServiceValue, // FIX: Rename the destructured variable to avoid shadowing the type.
 				WebViewPanel,
 				TreeView,
 				StatusBar,
@@ -112,7 +114,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				languages: LanguagesNamespace,
 				debug: DebugNamespace,
 				tasks: TasksNamespace,
-				extensions: ExtensionService,
+				extensions: ExtensionServiceValue, // FIX: Use the renamed variable here.
 				...ExtHostType,
 			};
 

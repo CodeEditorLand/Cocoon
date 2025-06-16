@@ -1,3 +1,5 @@
+// Cocoon/Source/Service.ts
+
 /**
  * @module Service
  * @description This is the aggregator module for all services that implement the
@@ -22,7 +24,7 @@ import { Live as ExtensionLive } from "./Service/Extension.js";
 import { Live as FileSystemLive } from "./Service/FileSystem.js";
 import { Live as FileSystemInformationLive } from "./Service/FileSystemInformation.js";
 import { Live as IPCLive } from "./Service/IPC.js";
-import type IPCConfigurationService from "./Service/IPC/Configuration.js";
+import type IPCConfiguration from "./Service/IPC/Configuration.js"; // FIX: Import the interface, not the Tag
 import { Live as LanguageFeatureLive } from "./Service/LanguageFeature.js";
 import { Live as LocalizationLive } from "./Service/Localization.js";
 import { Live as LogLive } from "./Service/Log.js";
@@ -45,7 +47,8 @@ import { Live as WorkSpaceLive } from "./Service/WorkSpace.js";
  * @param Config The IPC configuration required by many services.
  * @returns A composed `Layer` containing all API services.
  */
-const AllServiceLayer = (Config: IPCConfigurationService) => {
+const AllServiceLayer = (Config: IPCConfiguration) => {
+	// FIX: Use the data interface
 	return Layer.mergeAll(
 		APIDeprecationLive,
 		AuthenticationLive(Config),

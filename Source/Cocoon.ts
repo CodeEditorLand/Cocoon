@@ -1,3 +1,5 @@
+// Cocoon/Source/Cocoon.ts
+
 /**
  * @module Cocoon
  * @description The main entry point for the Cocoon Node.js extension host.
@@ -5,7 +7,7 @@
 
 import * as Path from "node:path";
 import { NodeRuntime } from "@effect/platform-node";
-import { Deferred, Effect, Layer } from "effect";
+import { Deferred, Effect, Layer, Scope } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 import CoreServiceLayer from "./Core.js";
@@ -13,8 +15,12 @@ import ExtensionHostService from "./Core/ExtensionHost/Service.js";
 import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
 import RunProcessPatch from "./PatchProcess.js";
 import AllServiceLayer from "./Service.js";
-import InitDataLayer from "./Service/InitData/Live.js";
-import type IPCConfigurationService from "./Service/IPC/Configuration.js";
+import { default as InitDataLayer } from "./Service/InitData/Live.js";
+// FIX: Import Tag
+import { Live as IPCLive } from "./Service/IPC.js";
+import IPCConfiguration, {
+	IPCConfigurationService,
+} from "./Service/IPC/Configuration.js";
 import IPCService from "./Service/IPC/Service.js";
 
 // --- Pre-initialization Steps ---
@@ -29,7 +35,7 @@ const VSCodeOutputDirectory =
  * An Effect that represents the full initialization of all services *after*
  * the handshake with Mountain is complete and the init data has been received.
  */
-const FullApplicationInitialization = Effect.gen(function* () {
+const InitializeAfterHandshake = Effect.gen(function* () {
 	// Step 1: Install the require() interceptor.
 	const Interceptor = yield* RequireInterceptorService;
 	yield* Interceptor.Install();
@@ -53,7 +59,7 @@ const FullApplicationInitialization = Effect.gen(function* () {
  */
 const Main = Effect.gen(function* () {
 	// A barrier to pause the main thread until the host sends init data.
-	const InitializationBarrier = yield* Deferred.make<void>();
+	const InitializationBarrier = yield* Deferred.make<Error, void>();
 	const IPC = yield* IPCService;
 
 	// Step 1: Register the handler that will be invoked by the host.
@@ -63,7 +69,10 @@ const Main = Effect.gen(function* () {
 			// Step 2: Once init data is received, create the final application layer.
 			// This layer provides the missing InitData service to the pre-init layer.
 			const CompleteApplicationLayer = Layer.provide(
-				PreInitLayer,
+				Layer.mergeAll(
+					CoreServiceLayer,
+					AllServiceLayer(ApplicationConfiguration),
+				),
 				InitDataLayer(InitializationData),
 			);
 
@@ -75,7 +84,7 @@ const Main = Effect.gen(function* () {
 
 				// Step 3.1: Apply process patches and run the main initialization.
 				yield* RunProcessPatch;
-				yield* FullApplicationInitialization;
+				yield* InitializeAfterHandshake;
 
 				// Step 3.2: Signal that initialization is complete.
 				return yield* Deferred.succeed(
@@ -84,11 +93,14 @@ const Main = Effect.gen(function* () {
 				);
 			});
 
-			// Build the layer to get the context, then provide it to the handler effect.
-			// This ensures all dependencies are resolved before running the effect.
-			const Runnable = Layer.build(CompleteApplicationLayer).pipe(
-				Effect.flatMap((Context) =>
-					Effect.provide(HandlerEffect, Context),
+			// FIX: The handler logic is now a self-contained, runnable effect.
+			// We provide its layer and then fork it into the background.
+			const Runnable = Effect.provide(
+				HandlerEffect,
+				CompleteApplicationLayer,
+			).pipe(
+				Effect.catchAllCause((cause) =>
+					Deferred.failCause(InitializationBarrier, cause),
 				),
 				Effect.scoped,
 			);
@@ -117,20 +129,17 @@ const Main = Effect.gen(function* () {
 
 // --- Application Layer Composition ---
 
-const ApplicationConfiguration: IPCConfigurationService = {
+const ApplicationConfiguration: IPCConfiguration = {
 	MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
 	CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
 };
 
-// This layer contains all services needed BEFORE the handshake.
-// It depends on `InitData`, which will be provided later.
-const PreInitLayer = Layer.mergeAll(
-	CoreServiceLayer,
-	AllServiceLayer(ApplicationConfiguration),
-);
+// FIX: This layer now only provides the IPC service, which is all that's
+// needed to establish the initial connection and wait for the handshake.
+const PreHandshakeLayer = IPCLive(ApplicationConfiguration);
 
 // --- Run the Application ---
 
-const RunnableApplication = Effect.provide(Main, PreInitLayer);
+const RunnableApplication = Effect.provide(Main, PreHandshakeLayer);
 
 NodeRuntime.runMain(RunnableApplication);

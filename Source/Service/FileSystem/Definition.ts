@@ -1,12 +1,20 @@
+// Cocoon/Source/Service/FileSystem/Definition.ts
+
 /**
  * @module Definition (FileSystem)
  * @description The live implementation of the FileSystem service.
  */
 
-import { Effect } from "effect";
-import { FileSystemError as VscFileSystemError, type FileSystem } from "vscode";
+import { Effect, Layer } from "effect";
+import {
+	FileSystemError as VscFileSystemError,
+	type FileStat,
+	type FileSystem,
+	type Uri,
+} from "vscode";
 
 import FileSystemInformationService from "../FileSystemInformation/Service.js";
+import IPCService from "../IPC/Service.js"; // Needed for CreateStatEffect
 import CreateStatEffect from "./CreateStatEffect.js";
 import type Service from "./Service.js";
 
@@ -15,9 +23,12 @@ import type Service from "./Service.js";
  */
 export default Effect.gen(function* () {
 	const FsInfo = yield* FileSystemInformationService;
+	const IPC = yield* IPCService; // Dependency for CreateStatEffect
 
 	const FileSystemImplementation: FileSystem = {
-		stat: (Uri) => Effect.runPromise(CreateStatEffect(Uri)),
+		// FIX: CreateStatEffect now needs IPC. We provide it from this scope.
+		stat: (Uri): Promise<FileStat> =>
+			Effect.runPromise(CreateStatEffect(Uri, IPC)),
 		readDirectory: (Uri) =>
 			Promise.reject(
 				new VscFileSystemError(
@@ -34,9 +45,10 @@ export default Effect.gen(function* () {
 			Promise.reject(
 				new VscFileSystemError(`readFile not implemented for ${Uri}`),
 			),
-		writeFile: (_Uri, _Content, _Options) =>
+		// FIX: The signature must match the `vscode.d.ts` interface.
+		writeFile: (Uri: Uri, _Content: Uint8Array, _Options: any) =>
 			Promise.reject(
-				new VscFileSystemError(`writeFile not implemented for ${_Uri}`),
+				new VscFileSystemError(`writeFile not implemented for ${Uri}`),
 			),
 		delete: (Uri, _Options) =>
 			Promise.reject(
@@ -50,9 +62,11 @@ export default Effect.gen(function* () {
 			Promise.reject(
 				new VscFileSystemError(`copy not implemented for ${Source}`),
 			),
+		// FIX: isWritableFileSystem is a method that takes a scheme, not an effect.
 		isWritableFileSystem: FsInfo.isWritableFileSystem,
 		onDidChangeFile: FsInfo.onDidChangeFile,
 	};
 
+	// FIX: The service must be provided with its dependencies.
 	return FileSystemImplementation as Service["Type"];
-});
+}).pipe(Effect.provide(Layer.succeed(IPCService, IPC)));

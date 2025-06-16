@@ -1,11 +1,15 @@
+// Cocoon/Source/Service/IPC/Configuration.ts
+
 /**
  * @module Configuration (IPC)
- * @description Defines the configuration interface for the
+ * @description Defines the configuration interface and service Tag for the
  * IPC service, specifying the network addresses for communication.
- * This is a plain type, not a service.
  */
 
-export default interface IPCConfigurationService {
+import { Context } from "effect";
+
+// This is the data structure for the configuration.
+export interface IPCConfiguration {
 	/**
 	 * The network address of the `Mountain` gRPC server.
 	 * @example "localhost:50051"
@@ -17,3 +21,8 @@ export default interface IPCConfigurationService {
 	 */
 	readonly CocoonAddress: string;
 }
+
+// FIX: Define and export the Context.Tag that other services can depend on.
+export const IPCConfigurationService = Context.Tag(
+	"IPCConfiguration",
+)<IPCConfiguration>;

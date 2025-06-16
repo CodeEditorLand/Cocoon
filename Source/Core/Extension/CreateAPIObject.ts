@@ -1,3 +1,5 @@
+// Cocoon/Source/Core/Extension/CreateAPIObject.ts
+
 /**
  * @module CreateAPIObject (Extension)
  * @description A factory function that creates the public-facing `vscode.Extension` object.
@@ -27,7 +29,8 @@ const CreateAPIObject = <T>(
 			extensionId: Description.identifier,
 			activationEvent: "api",
 		} as any);
-		const Exports = ExtensionHost.GetExtensionExports(
+		// FIX: After activation, get the exports. This should be an effect itself.
+		const Exports = yield* ExtensionHost.GetExtensionExports(
 			Description.identifier,
 		);
 		return Exports as T;
@@ -38,7 +41,7 @@ const CreateAPIObject = <T>(
 			? Description.extensionKind
 			: Description.extensionKind
 				? [Description.extensionKind]
-				: [];
+				: ["workspace"]; // Default to 'workspace'
 
 		if (Kinds.includes("workspace")) {
 			return ExtensionKind.Workspace;
@@ -50,17 +53,25 @@ const CreateAPIObject = <T>(
 		id: Description.identifier.value,
 		extensionUri: Description.extensionLocation,
 		extensionPath: Description.extensionLocation.fsPath,
-		get isActive() {
-			return ExtensionHost.IsActivated(Description.identifier);
+		get isActive(): boolean {
+			// FIX: `IsActivated` returns an Effect. Since it's a sync read from a Ref,
+			// we can use `runSync` to get the raw boolean value.
+			return Effect.runSync(
+				ExtensionHost.IsActivated(Description.identifier),
+			);
 		},
 		get packageJSON() {
 			return Description;
 		},
 		extensionKind: GetExtensionKind(),
-		get exports() {
-			return ExtensionHost.GetExtensionExports(Description.identifier);
+		get exports(): T {
+			// FIX: `GetExtensionExports` returns an Effect. Run it synchronously.
+			return Effect.runSync(
+				ExtensionHost.GetExtensionExports(Description.identifier),
+			);
 		},
 		activate: () => Effect.runPromise(ActivateEffect),
+		// FIX: Add the missing property required by the vscode.Extension<T> interface.
 		isFromDifferentExtensionHost: false,
 	};
 

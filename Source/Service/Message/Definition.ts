@@ -1,3 +1,5 @@
+// Cocoon/Source/Service/Message/Definition.ts
+
 /**
  * @module Definition (Message)
  * @description The live implementation of the Message service.
@@ -45,6 +47,8 @@ const ShowMessageEffect = <T extends MessageItem>(
 
 		const ResultHandle = yield* IPC.SendRequest<number | undefined>(
 			"$showMessage",
+			// FIX: The IPC call signature in the original file was incorrect.
+			// This matches the DTO structure above.
 			[Severity, Message, DTO.options, DTO.items, DTO.source],
 		).pipe(Effect.mapError((cause) => new Error(String(cause))));
 
@@ -52,10 +56,16 @@ const ShowMessageEffect = <T extends MessageItem>(
 			return undefined;
 		}
 		if (ResultHandle >= 0 && ResultHandle < Items.length) {
-			return Items[ResultHandle] as T | undefined;
+			const resultItem = Items[ResultHandle];
+			// Ensure we don't return a plain string if T is a MessageItem
+			if (typeof resultItem === "string") {
+				return undefined;
+			}
+			return resultItem as T | undefined;
 		}
 		return undefined;
-	});
+		// FIX: Add the type assertion to satisfy the generic constraint.
+	}) as Effect.Effect<T | undefined, Error>;
 };
 
 export default Effect.gen(function* () {

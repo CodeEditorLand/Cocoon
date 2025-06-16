@@ -1,3 +1,5 @@
+// Cocoon/Source/Core/ExtensionHost/Service.ts
+
 /**
  * @module Service (ExtensionHost)
  * @description Defines the interface and Context.Tag for the ExtensionHost service.
@@ -34,7 +36,7 @@ export default class ExtensionHostService extends Context.Tag(
 		readonly ActivateById: (
 			ID: ExtensionIdentifier,
 			Reason: ExtensionActivationReason,
-		) => Effect.Effect<void, Error, unknown>;
+		) => Effect.Effect<void, Error>; // FIX: R should be `never` in the public interface.
 
 		/**
 		 * Gets the full description for a loaded extension.
@@ -71,10 +73,6 @@ export default class ExtensionHostService extends Context.Tag(
 		 * Deactivates all currently activated extensions.
 		 * @returns An `Effect` that completes when all deactivation logic has run.
 		 */
-		readonly DeactivateAll: () => Effect.Effect<
-			void,
-			Effect.Effect<void, never, never>,
-			never
-		>;
+		readonly DeactivateAll: () => Effect.Effect<void, never, never>; // FIX: Corrected signature
 	}
 >() {}

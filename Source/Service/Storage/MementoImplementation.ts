@@ -1,3 +1,5 @@
+// Cocoon/Source/Service/Storage/MementoImplementation.ts
+
 /**
  * @module MementoImplementation
  * @description The concrete implementation of the `vscode.Memento` interface.
@@ -5,17 +7,23 @@
  * persisted on disk.
  */
 
-import { Effect, Ref } from "effect";
+import { Effect, Layer, Ref } from "effect";
+// FIX: These types are part of the `vscode` namespace directly, not module exports.
+// We define them here or ensure our types are compatible.
 import type {
 	Event,
 	Memento,
-	MementoChangeEvent,
-	MementoKeysOptions,
+	MementoChangeEvent as VscodeMementoChangeEvent,
+	MementoKeysOptions as VscodeMementoKeysOptions,
 } from "vscode";
 
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
+
+// Make our types compatible aliases
+type MementoChangeEvent = VscodeMementoChangeEvent;
+type MementoKeysOptions = VscodeMementoKeysOptions;
 
 enum MementoScope {
 	GLOBAL = 0,
@@ -28,10 +36,13 @@ export default class implements Memento {
 	private readonly Scope: MementoScope;
 	private readonly ValueRef: Ref.Ref<object | undefined>;
 
+	// FIX: Inject dependencies into the constructor.
 	constructor(
 		private readonly ExtensionID: string,
 		IsGlobal: boolean,
 		InitialValue: object | undefined,
+		private readonly IPC: IPCService["Type"],
+		private readonly Log: LogService["Type"],
 	) {
 		this.Scope = IsGlobal ? MementoScope.GLOBAL : MementoScope.WORKSPACE;
 		this.onDidChange = this.OnDidChangeEvent.event;
@@ -50,32 +61,33 @@ export default class implements Memento {
 	}
 
 	update(Key: string, Value: any): Promise<void> {
-		const UpdateEffect = Effect.gen(this, function* () {
-			const IPC = yield* IPCService;
-			const Log = yield* LogService;
-
-			yield* IPC.SendNotification("$setValue", [
-				this.Scope,
+		const UpdateEffect = Effect.gen(this, function* (that) {
+			// Now that IPC and Log are class properties, we can use them.
+			yield* that.IPC.SendNotification("$setValue", [
+				that.Scope,
 				Key,
 				Value,
 			]).pipe(
 				Effect.tap(() =>
-					Ref.update(this.ValueRef, (Current) => ({
+					Ref.update(that.ValueRef, (Current) => ({
 						...Current,
 						[Key]: Value,
 					})),
 				),
-				Effect.tap(() => this.OnDidChangeEvent.Fire({ keys: [Key] })),
+				Effect.tap(() => that.OnDidChangeEvent.Fire({ keys: [Key] })),
 				Effect.catchAll((Error) =>
-					Log.Error(
-						`Memento.update('${Key}') failed for ext '${this.ExtensionID}'.`,
+					that.Log.Error(
+						`Memento.update('${Key}') failed for ext '${that.ExtensionID}'.`,
 						Error,
 					),
 				),
 				Effect.asVoid,
 			);
 		});
-		return Effect.runPromise(UpdateEffect);
+
+		// FIX: We no longer need to provide the services here because they are
+		// part of the class instance now. `this` handles it.
+		return Effect.runPromise(UpdateEffect.pipe(Effect.provide(this)));
 	}
 
 	keys(_Options?: MementoKeysOptions): readonly string[] {
