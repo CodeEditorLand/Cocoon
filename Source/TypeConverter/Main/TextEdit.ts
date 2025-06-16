@@ -11,10 +11,22 @@
  */
 
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
-import type { TextEdit as VscTextEdit } from "vscode";
+import type { Range as VscRange, TextEdit as VscTextEdit } from "vscode";
 
-import { TextEdit } from "../../Type/ExtHostTypes.js";
+import {
+	Range as ExtHostRange,
+	TextEdit as ExtHostTextEdit,
+} from "../../Type/ExtHostTypes.js";
 import RangeConverter from "./Range.js";
+
+function toExtHostRange(range: VscRange): ExtHostRange {
+	return new ExtHostRange(
+		range.start.line,
+		range.start.character,
+		range.end.line,
+		range.end.character,
+	);
+}
 
 /**
  * Converts a `vscode.TextEdit` object into a plain DTO for IPC.
@@ -35,8 +47,8 @@ const FromAPI = (
  * @returns A new `vscode.TextEdit` instance.
  */
 const ToAPI = (TextEditDTO: IIdentifiedSingleEditOperation): VscTextEdit =>
-	new TextEdit(
-		RangeConverter.ToAPI(TextEditDTO.range),
+	new ExtHostTextEdit(
+		toExtHostRange(RangeConverter.ToAPI(TextEditDTO.range)),
 		TextEditDTO.text ?? "",
 	);
 

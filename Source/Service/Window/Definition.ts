@@ -11,13 +11,7 @@
  */
 
 import { Effect, Ref } from "effect";
-import type {
-	TextDocument,
-	TextDocumentShowOptions,
-	Uri,
-	ViewColumn,
-	WindowState,
-} from "vscode";
+import type { TextDocumentShowOptions, Uri, WindowState } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";

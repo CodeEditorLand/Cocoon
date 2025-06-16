@@ -14,10 +14,22 @@
 
 import type { IDisposable } from "vs/base/common/lifecycle.js";
 import { generateUuid } from "vs/base/common/uuid.js";
-import type { ICommand } from "vs/platform/commands/common/commands.js";
+// Do not import ICommand from platform, it is not the DTO.
+// import type { ICommand } from "vs/platform/commands/common/commands.js";
 import type * as VSCode from "vscode";
 
 import type { APICommand } from "./Type.js";
+
+/**
+ * Represents the serializable DTO for a command sent over IPC.
+ * This is distinct from the rich `ICommand` object from `vs/platform` which includes a handler function.
+ */
+interface InternalCommand {
+	id: string;
+	title: string;
+	tooltip?: string;
+	arguments?: any[];
+}
 
 export default class {
 	private readonly DelegatingCommandID: string;
@@ -60,7 +72,7 @@ export default class {
 	public ToInternal(
 		Command: VSCode.Command,
 		DisposableArray: IDisposable[],
-	): ICommand | undefined {
+	): InternalCommand | undefined {
 		if (!Command) {
 			return undefined;
 		}
@@ -73,7 +85,7 @@ export default class {
 				) ?? [];
 			return {
 				id: APICommandValue.InternalID,
-				title: APICommandValue.ID,
+				title: Command.title,
 				arguments: ConvertedArgumentArray,
 			};
 		}
@@ -101,15 +113,17 @@ export default class {
 		};
 	}
 
-	public FromInternal(CommandDTO: ICommand): VSCode.Command | undefined {
+	public FromInternal(
+		CommandDTO: InternalCommand,
+	): VSCode.Command | undefined {
 		if (!CommandDTO) {
 			return undefined;
 		}
 		return {
 			command: CommandDTO.id,
-			title: (CommandDTO as any).title ?? "",
-			tooltip: (CommandDTO as any).tooltip ?? "",
-			arguments: (CommandDTO as any).arguments ?? [],
+			title: CommandDTO.title,
+			tooltip: CommandDTO.tooltip,
+			arguments: CommandDTO.arguments,
 		};
 	}
 }

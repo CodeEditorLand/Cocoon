@@ -31,6 +31,9 @@ import type IPCService from "../IPC/Service.js";
 import WebViewImplementation from "../WebView/WebViewImplementation.js";
 
 export default class implements WebviewPanel {
+	fireDidReceiveMessage(_Message: any) {
+		throw new Error("Method not implemented.");
+	}
 	private IsDisposed = false;
 
 	private _title: string;
@@ -219,7 +222,7 @@ export default class implements WebviewPanel {
 	}
 
 	// --- Internal Methods ---
-	public _updateViewState(NewState: {
+	public updateViewState(NewState: {
 		readonly active: boolean;
 
 		readonly visible: boolean;

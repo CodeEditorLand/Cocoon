@@ -16,7 +16,6 @@ import * as Languages from "vs/editor/common/languages.js";
 import type * as VSCode from "vscode";
 import {
 	CodeAction as VscCodeAction,
-	CodeActionKind as VscCodeActionKind,
 	CodeActionTriggerKind as VscCodeActionTriggerKind,
 } from "vscode";
 
@@ -44,7 +43,10 @@ interface ICodeActionDto {
 
 const CodeActionKind = {
 	ToAPI: (kind: string): VSCode.CodeActionKind => {
-		return new VscCodeActionKind(kind);
+		// The constructor is reported as private, so we cannot use `new VscCodeActionKind(kind)`.
+		// We'll create a structurally-compatible object instead.
+		// This assumes the consumer only cares about the .value property.
+		return { value: kind } as VSCode.CodeActionKind;
 	},
 	FromAPI: (kind: VSCode.CodeActionKind): string => {
 		return kind.value;

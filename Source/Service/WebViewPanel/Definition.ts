@@ -49,7 +49,8 @@ export default Effect.gen(function* () {
 		Effect.gen(function* () {
 			const Panel = (yield* Ref.get(ActivePanels)).get(Handle);
 			if (Panel) {
-				Panel.webview.fireDidReceiveMessage(Message);
+				// The implementation panel, not the webview property, is responsible for firing events.
+				Panel.fireDidReceiveMessage(Message);
 			}
 		}).pipe(Effect.runPromise),
 	);
@@ -60,7 +61,8 @@ export default Effect.gen(function* () {
 			Effect.gen(function* () {
 				const Panel = (yield* Ref.get(ActivePanels)).get(Handle);
 				if (Panel) {
-					Panel._updateViewState(NewState);
+					// The method should be public to be called from here.
+					Panel.updateViewState(NewState);
 				}
 			}).pipe(Effect.runPromise),
 	);

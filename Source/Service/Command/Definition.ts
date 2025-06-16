@@ -14,7 +14,8 @@ import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Disposable } from "vscode";
 
-import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
+// This import is unused in the file's logic.
+// import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
 import IPCService from "../IPC/Service.js";
 import TelemetryService from "../Telemetry/Service.js";
 import WorkSpaceService from "../WorkSpace/Service.js";
@@ -28,12 +29,6 @@ export default Effect.gen(function* () {
 	const CommandRegistry = yield* Ref.make(
 		new Map<string, CommandHandlerEntry>(),
 	);
-
-	// const CommandConverter = new CommandConverterDefinition(
-	// 	() => new Disposable(() => {}),
-	// 	() => Promise.resolve(undefined),
-	// 	() => undefined,
-	// );
 
 	const ExecuteCommand = <T>(
 		ID: string,
