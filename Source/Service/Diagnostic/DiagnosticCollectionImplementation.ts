@@ -24,7 +24,6 @@ export default class implements DiagnosticCollection {
 	) {}
 
 	private CreateSetEffect(
-		this: this,
 		uri: Uri,
 		diagnostics: readonly Diagnostic[] | undefined,
 	) {
@@ -46,7 +45,6 @@ export default class implements DiagnosticCollection {
 	set(uri: Uri, diagnostics: readonly Diagnostic[] | undefined): void;
 	set(entries: ReadonlyArray<[Uri, readonly Diagnostic[] | undefined]>): void;
 	set(
-		this: this,
 		uriOrEntries:
 			| Uri
 			| ReadonlyArray<[Uri, readonly Diagnostic[] | undefined]>,
@@ -75,14 +73,14 @@ export default class implements DiagnosticCollection {
 		this.set(uri, undefined);
 	}
 
-	clear(this: this): void {
+	clear(): void {
 		if (this.IsDisposed) {
 			return;
 		}
 		Effect.runFork(this.IPC.SendNotification("$clear", [this.Owner]));
 	}
 
-	dispose(this: this): void {
+	dispose(): void {
 		if (this.IsDisposed) {
 			return;
 		}

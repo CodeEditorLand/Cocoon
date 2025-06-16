@@ -57,6 +57,7 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 				WorkSpace,
 				Window,
 				LanguageFeature,
+				Debug,
 				Task,
 				Extension: ExtensionService,
 				WebViewPanel,
@@ -94,8 +95,6 @@ const CreateAPIFactory = (Services: ServiceCollection) => {
 			const DebugNamespace = Effect.runSync(
 				Effect.provide(
 					CreateDebugNamespace(AsEvent, Extension),
-					// We need to provide the dependencies that the Debug service itself needs.
-					// This is a simplified layer for this specific purpose.
 					DebugLive({ MountainAddress: "", CocoonAddress: "" }),
 				),
 			);

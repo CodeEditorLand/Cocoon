@@ -7,16 +7,16 @@
 
 import { Effect } from "effect";
 
-import BlockNativesModule from "./PatchProcess/BlockNativesModule.js";
-import HandleException from "./PatchProcess/HandleException.js";
-import { Live as ProcessPatchLive } from "./PatchProcess/Live.js";
-import PatchProcessCrash from "./PatchProcess/PatchProcessCrash.js";
-import PatchProcessExit from "./PatchProcess/PatchProcessExit.js";
-import PipeLogging from "./PatchProcess/PipeLogging.js";
-import SetElectronRunAsNode from "./PatchProcess/SetElectronRunAsNode.js";
-import SetStackTraceLimit from "./PatchProcess/SetStackTraceLimit.js";
-import SetupEnvironment from "./PatchProcess/SetupEnvironment.js";
-import TerminateOnParentExit from "./PatchProcess/TerminateOnParentExit.js";
+import BlockNativesModule from "../../PatchProcess/BlockNativesModule.js";
+import HandleException from "../../PatchProcess/HandleException.js";
+import { Live as ProcessPatchLive } from "../../PatchProcess/Live.js";
+import PatchProcessCrash from "../../PatchProcess/PatchProcessCrash.js";
+import PatchProcessExit from "../../PatchProcess/PatchProcessExit.js";
+import PipeLogging from "../../PatchProcess/PipeLogging.js";
+import SetElectronRunAsNode from "../../PatchProcess/SetElectronRunAsNode.js";
+import SetStackTraceLimit from "../../PatchProcess/SetStackTraceLimit.js";
+import SetupEnvironment from "../../PatchProcess/SetupEnvironment.js";
+import TerminateOnParentExit from "../../PatchProcess/TerminateOnParentExit.js";
 
 /**
  * The main orchestrator `Effect` that composes all individual process-level
