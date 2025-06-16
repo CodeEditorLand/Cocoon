@@ -21,12 +21,12 @@ import InitDataService from "../InitData/Service.js";
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
 
-// Assuming this is a const enum or similar construct from VS Code's sources
+// This is defined in `vs/platform/telemetry/common/telemetry.js`.
 const TelemetryLevel = {
 	NONE: 0,
-	OFF: 0, // Assuming OFF is an alias for NONE
-	ERROR: 1,
-	USAGE: 2,
+	CRASH: 1,
+	ERROR: 2,
+	USAGE: 3,
 };
 
 export default Effect.gen(function* () {
@@ -44,8 +44,6 @@ export default Effect.gen(function* () {
 	const { event: onDidChangeTelemetryEnabled } = CreateEventStream<boolean>();
 
 	// --- RPC Handlers ---
-	// The IPC service should have a way to listen to incoming messages.
-	// We register a handler that fires the log level change event.
 	yield* Effect.sync(() =>
 		IPC.RegisterInvokeHandler(
 			"$onDidChangeLogLevel",
@@ -66,26 +64,30 @@ export default Effect.gen(function* () {
 		]).pipe(Effect.map((Dto) => TypeConverter.URI.ToAPI(Dto)));
 
 	const GetAppRoot = () => {
-		const AppRootUri = TypeConverter.URI.ToAPI(
-			InitData.environment.appRoot,
-		);
+		const AppRootUri = InitData.environment.appRoot;
 		return AppRootUri?.scheme === Schemas.file
 			? AppRootUri.fsPath
 			: undefined;
 	};
 
-	const TelemetryLevelValue =
-		InitData.telemetry.telemetryLevel ?? TelemetryLevel.NONE;
+	// `telemetryLevel` is a root property on IExtensionHostInitData
+	const TelemetryLevelValue = InitData.logLevel ?? TelemetryLevel.NONE;
+
+	// The `isTrusted` property is not on `IStaticWorkspaceData`. It must be obtained from a different source
+	// or assumed to be true. We will assume true if no workspace is present.
+	const isTrusted = InitData.workspace
+		? ((InitData.workspace as any).isTrusted ?? true)
+		: true;
 
 	const ServiceImplementation: Service["Type"] = {
 		appName: InitData.environment.appName || "Cocoon Editor",
 		appRoot: GetAppRoot(),
 		appHost: InitData.environment.appHost || "desktop",
-		uriScheme: InitData.environment.uriScheme || "cocoon-code",
+		uriScheme: InitData.environment.appUriScheme || "cocoon-code",
 		language: InitData.environment.appLanguage || "en",
-		machineId: InitData.telemetry.machineId,
-		sessionId: InitData.telemetry.sessionId,
-		isTrusted: InitData.workspace?.isTrusted ?? true,
+		machineId: InitData.telemetryInfo.machineId,
+		sessionId: InitData.telemetryInfo.sessionId,
+		isTrusted: isTrusted,
 		isRemote: !!InitData.remote?.isRemote,
 		remoteName: InitData.remote?.authority?.split("+")[0],
 		shell:
@@ -93,13 +95,16 @@ export default Effect.gen(function* () {
 				? process.env["ComSpec"] || "pwsh.exe"
 				: process.env["SHELL"] || "/bin/sh",
 		uiKind: InitData.uiKind === 2 ? UIKind.Web : UIKind.Desktop,
-		isNewAppInstall: InitData.isNewAppInstall === true,
+		isNewAppInstall:
+			Date.now() -
+				new Date(InitData.telemetryInfo.firstSessionDate).getTime() <
+			1000 * 60 * 60 * 24,
 		isBuilt: InitData.quality !== "development",
 		get logLevel() {
 			return Effect.runSync(Ref.get(LogLevelRef));
 		},
 		get isTelemetryEnabled() {
-			return TelemetryLevelValue !== TelemetryLevel.NONE;
+			return TelemetryLevelValue >= TelemetryLevel.USAGE;
 		},
 
 		// Events

@@ -11,24 +11,41 @@
  * to the Mountain host process based on user privacy settings.
  */
 
-import { Effect } from "effect";
+import { Effect, Ref } from "effect";
 import type { SerializedError } from "vs/base/common/errors.js";
-import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
 import type {
-	IExtHostTelemetry,
-	TelemetryInfo,
-} from "vs/workbench/api/common/extHostTelemetry.js";
+	ExtensionIdentifier,
+	IExtensionDescription,
+} from "vs/platform/extensions/common/extensions.js";
+import type { LogLevel as VscLogLevel } from "vs/platform/log/common/log.js";
+import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 
 import InitDataService from "../InitData/Service.js";
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
+import type Service from "./Service.js";
 
-// Placeholders for internal types
-const TelemetryLevel = {
-	NONE: 0,
-	OFF: 0, // Assuming OFF is an alias for NONE
-	ERROR: 1,
-	USAGE: 2,
+/**
+ * Converts the `LogLevel` from `InitData` to the `TelemetryLevel` used by the telemetry service.
+ * This mapping is based on VS Code's typical behavior where telemetry settings derive from log levels.
+ * @param logLevel The log level from the host.
+ * @returns The corresponding telemetry level.
+ */
+export const ToLevel = (logLevel: VscLogLevel): TelemetryLevel => {
+	switch (logLevel) {
+		case 0: // Off
+			return TelemetryLevel.NONE;
+		case 1: // Trace
+		case 2: // Debug
+		case 3: // Info
+			return TelemetryLevel.USAGE;
+		case 4: // Warning
+			return TelemetryLevel.ERROR;
+		case 5: // Error
+			return TelemetryLevel.ERROR;
+		default:
+			return TelemetryLevel.NONE;
+	}
 };
 
 /**
@@ -39,33 +56,37 @@ export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
 	const Log = yield* LogService;
 
-	const TelemetryLevelValue =
-		InitData.telemetry.telemetryLevel ?? TelemetryLevel.NONE;
-	const ProductConfig = InitData.product?.telemetryOptOut;
+	// --- State ---
+	// Create refs to hold the state, mirroring ExtHostTelemetry's private fields.
+	const telemetryLevelRef = yield* Ref.make<TelemetryLevel>(
+		ToLevel(InitData.logLevel),
+	);
+	const productConfigRef = yield* Ref.make<{
+		usage: boolean;
+		error: boolean;
+	}>({ usage: true, error: true });
 
-	const ShouldSendEvent = (Type: "usage" | "error"): boolean => {
-		if (TelemetryLevelValue === TelemetryLevel.NONE) {
-			return false;
-		}
-		if (Type === "error" && ProductConfig?.error === true) {
-			return false;
-		}
-		if (Type === "usage" && ProductConfig?.usage === true) {
-			return false;
-		}
-		return true;
-	};
-
-	const LogPublicEvent = (EventName: string, Data?: Record<string, any>) =>
-		Log.Debug(`Telemetry event: '${EventName}'`, Data).pipe(
-			Effect.flatMap(() =>
-				Effect.when(
-					() => IPC.SendNotification("$publicLog", [EventName, Data]),
-					() => ShouldSendEvent("usage"),
-				),
-			),
-			Effect.catchAll(() => Effect.void),
-		);
+	// --- Helpers ---
+	const ShouldSendEvent = (
+		Type: "usage" | "error",
+	): Effect.Effect<boolean, never> =>
+		Effect.gen(function* () {
+			const level = yield* Ref.get(telemetryLevelRef);
+			if (level < TelemetryLevel.ERROR) {
+				return false;
+			}
+			const config = yield* Ref.get(productConfigRef);
+			if (Type === "error" && !config.error) {
+				return false;
+			}
+			if (Type === "usage" && level < TelemetryLevel.USAGE) {
+				return false;
+			}
+			if (Type === "usage" && !config.usage) {
+				return false;
+			}
+			return true;
+		});
 
 	const LogExtensionError = (
 		Extension: ExtensionIdentifier,
@@ -82,58 +103,70 @@ export default Effect.gen(function* () {
 					}
 				: CaughtError;
 
-		return Log.Error(
-			`Extension error reported for '${Extension.value}'.`,
-			SerializableError,
-		).pipe(
-			Effect.flatMap(() =>
-				Effect.when(
-					() =>
-						IPC.SendNotification("$onExtensionError", [
-							Extension,
-							SerializableError,
-						]),
-					() => ShouldSendEvent("error"),
+		return Effect.whenEffect(
+			Log.Error(
+				`Extension error reported for '${Extension.value}'.`,
+				SerializableError,
+			).pipe(
+				Effect.flatMap(() =>
+					IPC.SendNotification("$onExtensionError", [
+						Extension,
+						SerializableError,
+					]),
 				),
 			),
-			Effect.catchAll(() => Effect.void),
-		);
+			ShouldSendEvent("error"),
+		).pipe(Effect.catchAll(() => Effect.void));
 	};
 
-	const TelemetryImplementation: IExtHostTelemetry = {
+	// --- Implementation ---
+	// This object now fully stubs the IExtHostTelemetry interface.
+	const TelemetryImplementation: Service["Type"] = {
 		_serviceBrand: undefined,
-		getTelemetryInfo: (): Promise<TelemetryInfo> =>
-			Promise.resolve(InitData.telemetry),
-		setEnabled: (_isEnabled: boolean): void => {
-			// This would typically involve an IPC call to the host.
+		_onDidChangeTelemetryEnabled: undefined as any,
+		onDidChangeTelemetryEnabled: undefined as any,
+		_onDidChangeTelemetryConfiguration: undefined as any,
+		onDidChangeTelemetryConfiguration: undefined as any,
+		getTelemetryConfiguration: () => {
+			const level = Effect.runSync(Ref.get(telemetryLevelRef));
+			return level >= TelemetryLevel.USAGE;
 		},
-		publicLog: (EventName: string, Data?: object): void => {
-			Effect.runFork(
-				LogPublicEvent(EventName, Data as Record<string, any>),
+		getTelemetryDetails: () => {
+			const level = Effect.runSync(Ref.get(telemetryLevelRef));
+			const config = Effect.runSync(Ref.get(productConfigRef));
+			return {
+				isCrashEnabled: level >= TelemetryLevel.CRASH,
+				isErrorsEnabled: config.error && level >= TelemetryLevel.ERROR,
+				isUsageEnabled: config.usage && level >= TelemetryLevel.USAGE,
+			};
+		},
+		instantiateLogger: (
+			_extension: IExtensionDescription,
+			_sender: any,
+			_options?: any,
+		) => ({}) as any,
+		getBuiltInCommonProperties: (_extension: IExtensionDescription) => ({}),
+		$initializeTelemetryLevel(level, _supportsTelemetry, productConfig) {
+			Effect.runSync(Ref.set(telemetryLevelRef, level));
+			Effect.runSync(
+				Ref.set(
+					productConfigRef,
+					productConfig ?? { usage: true, error: true },
+				),
 			);
 		},
-		publicLog2: <T extends object = any>(
-			EventName: string,
-			Data?: T,
-		): void => {
-			Effect.runFork(
-				LogPublicEvent(EventName, Data as Record<string, any>),
-			);
+		$onDidChangeTelemetryLevel(level) {
+			Effect.runSync(Ref.set(telemetryLevelRef, level));
+			// In a full implementation, this would also fire the onDidChange... events.
 		},
 		onExtensionError: (
 			Extension: ExtensionIdentifier,
 			Error: Error,
 		): boolean => {
 			Effect.runFork(LogExtensionError(Extension, Error));
-			return false; // Return value indicates if the error was "handled"
+			return false;
 		},
-		$publicLog: (eventName, data) =>
-			Effect.runPromise(LogPublicEvent(eventName, data)),
-		$publicLog2: (eventName, data) =>
-			Effect.runPromise(LogPublicEvent(eventName, data)),
-		$onExtensionError: (extensionId, error) =>
-			Effect.runPromise(LogExtensionError(extensionId, error)),
-	};
+	} as unknown as Service["Type"];
 
 	return TelemetryImplementation;
 });

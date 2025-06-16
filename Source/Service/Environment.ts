@@ -28,7 +28,14 @@ export { default as Service } from "./Environment/Service.js";
  * This is a factory that takes IPC configuration.
  * @param Config The IPC configuration.
  */
-export const Live = (Config: IPCConfiguration) =>
-	Layer.effect(Service, Definition).pipe(
-		Layer.provide(Layer.merge(IPCLive(Config), ClipboardLive(Config))),
+export const Live = (Config: IPCConfiguration) => {
+	// Create instances of the dependency layers by calling their factory functions.
+	const IpcLayer = IPCLive(Config);
+	const ClipboardLayer = ClipboardLive(Config);
+
+	// The Definition for the Environment service requires IPC and Clipboard services.
+	// We provide them here.
+	return Layer.effect(Service, Definition).pipe(
+		Layer.provide(Layer.merge(IpcLayer, ClipboardLayer)),
 	);
+};
