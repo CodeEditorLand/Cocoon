@@ -33,9 +33,12 @@ export default Effect.gen(function* (G) {
 		Ref.make(new Map<string, MementoImplementation>()),
 	);
 
-	// Initialize storage from the host
+	// Initialize storage from the host. This can fail, so we must handle the error.
 	const [GlobalStorage, WorkSpaceStorage] = yield* G(
-		IPC.SendRequest<[object, object]>("$initializeStorage", []),
+		IPC.SendRequest<[object, object]>("$initializeStorage", []).pipe(
+			// If this fails, it's a fatal error. The layer cannot be constructed.
+			Effect.orDie,
+		),
 	);
 
 	// Handler for when storage changes on the host side

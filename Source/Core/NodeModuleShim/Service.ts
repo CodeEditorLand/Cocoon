@@ -36,6 +36,9 @@ export interface NodeModuleShim {
 	) => Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError>;
 }
 
-export default class NodeModuleShimService extends Context.Tag(
-	"Core/NodeModuleShim",
-)<NodeModuleShimService, NodeModuleShim>() {}
+export class NodeModuleShimService extends Context.Tag("Core/NodeModuleShim")<
+	NodeModuleShimService,
+	NodeModuleShim
+>() {}
+
+export default NodeModuleShimService;

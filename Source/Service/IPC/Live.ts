@@ -15,6 +15,7 @@
 import { Layer } from "effect";
 
 import ClientLive from "./Client/Live.js";
+import Configuration from "./Configuration.js";
 import Definition from "./Definition.js";
 import DispatcherLive from "./Dispatcher/Live.js";
 import ProtocolAdapterLive from "./ProtocolAdapter/Live.js";
@@ -24,11 +25,15 @@ import Service from "./Service.js";
 /**
  * The composed "live" Layer for the IPC service.
  *
- * This layer composes the individual parts of the IPC system. The final layer
- * exposes the high-level IPC.Service and requires the dependencies of its
- * sub-layers (like IPCConfigurationService).
+ * This layer is constructed by taking the top-level IPC service definition and
+ * providing it with the live implementations of all its internal dependencies.
+ * This creates a single, self-contained layer that can be provided to other
+ * parts of the application.
  */
-const IPCLive = Layer.effect(Service, Definition).pipe(
+const IPCLive: Layer.Layer<Service, never, Configuration> = Layer.effect(
+	Service,
+	Definition,
+).pipe(
 	Layer.provide(
 		Layer.mergeAll(
 			ClientLive,
