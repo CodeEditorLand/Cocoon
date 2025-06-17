@@ -1,9 +1,7 @@
 /*
  * File: Cocoon/Source/Service/SecretStorage/SecretStorageImplementation.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The concrete implementation of the `vscode.SecretStorage` interface.
  * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Error.js, effect, vscode
- * Export: implements
  */
 
 /**
@@ -21,8 +19,8 @@ import type IPCService from "../IPC/Service.js";
 import type LogService from "../Log/Service.js";
 import { EmptyKeyError, InvalidValueError } from "./Error.js";
 
-export default class implements SecretStorage {
-	private readonly OnDidChangeEvent =
+export default class SecretStorageImplementation implements SecretStorage {
+	private readonly OnDidChangeEventStream =
 		CreateEventStream<SecretStorageChangeEvent>();
 	public readonly onDidChange: Event<SecretStorageChangeEvent>;
 
@@ -31,7 +29,7 @@ export default class implements SecretStorage {
 		private readonly IPC: IPCService["Type"],
 		private readonly Log: LogService["Type"],
 	) {
-		this.onDidChange = this.OnDidChangeEvent.event;
+		this.onDidChange = this.OnDidChangeEventStream.event;
 		// A real implementation would need to listen to an IPC event from the host
 		// to fire this OnDidChangeEvent when secrets change in other windows.
 	}
@@ -39,13 +37,15 @@ export default class implements SecretStorage {
 	private CreateGetEffect(
 		Key: string,
 	): Effect.Effect<string | undefined, EmptyKeyError> {
-		return Effect.gen(this, function* () {
+		return Effect.gen(this, function* (G) {
 			if (!Key) {
-				return yield* new EmptyKeyError();
+				return yield* G(new EmptyKeyError());
 			}
-			return yield* this.IPC.SendRequest<string | undefined>(
-				"$getPassword",
-				[this.ExtensionID, Key],
+			return yield* G(
+				this.IPC.SendRequest<string | undefined>("$getPassword", [
+					this.ExtensionID,
+					Key,
+				]),
 			);
 		}).pipe(
 			Effect.catchTag("IPCError", (Error) =>
@@ -61,20 +61,21 @@ export default class implements SecretStorage {
 		Key: string,
 		Value: string,
 	): Effect.Effect<void, EmptyKeyError | InvalidValueError> {
-		return Effect.gen(this, function* () {
+		return Effect.gen(this, function* (G) {
 			if (!Key) {
-				return yield* new EmptyKeyError();
+				return yield* G(new EmptyKeyError());
 			}
 			if (typeof Value !== "string") {
-				return yield* new InvalidValueError();
+				return yield* G(new InvalidValueError());
 			}
-			yield* this.IPC.SendNotification("$setPassword", [
-				this.ExtensionID,
-				Key,
-				Value,
-			]);
-			// Manually fire the event for local changes.
-			yield* this.OnDidChangeEvent.Fire({ key: Key });
+			yield* G(
+				this.IPC.SendNotification("$setPassword", [
+					this.ExtensionID,
+					Key,
+					Value,
+				]),
+			);
+			yield* G(this.OnDidChangeEventStream.Fire({ key: Key }));
 		}).pipe(
 			Effect.catchAll((Error) =>
 				this.Log.Error(
@@ -88,16 +89,17 @@ export default class implements SecretStorage {
 	private CreateDeleteEffect(
 		Key: string,
 	): Effect.Effect<void, EmptyKeyError> {
-		return Effect.gen(this, function* () {
+		return Effect.gen(this, function* (G) {
 			if (!Key) {
-				return yield* new EmptyKeyError();
+				return yield* G(new EmptyKeyError());
 			}
-			yield* this.IPC.SendNotification("$deletePassword", [
-				this.ExtensionID,
-				Key,
-			]);
-			// Manually fire the event for local changes.
-			yield* this.OnDidChangeEvent.Fire({ key: Key });
+			yield* G(
+				this.IPC.SendNotification("$deletePassword", [
+					this.ExtensionID,
+					Key,
+				]),
+			);
+			yield* G(this.OnDidChangeEventStream.Fire({ key: Key }));
 		}).pipe(
 			Effect.catchAll((Error) =>
 				this.Log.Error(

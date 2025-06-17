@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/SecretStorage/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the SecretStorage service factory.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../IPC/Service.js, ../Log/Service.js, ./SecretStorageImplementation.js, ./Service.js, effect
  */
 
 /**
@@ -20,9 +19,9 @@ import type Service from "./Service.js";
 /**
  * An Effect that builds the live implementation of the SecretStorage service factory.
  */
-export default Effect.gen(function* () {
-	const IPC = yield* IPCService;
-	const Log = yield* LogService;
+export default Effect.gen(function* (G) {
+	const IPC = yield* G(IPCService);
+	const Log = yield* G(LogService);
 
 	const SecretStorageFactoryImplementation: Service["Type"] = {
 		CreateStorage: (ExtensionID: string) => {

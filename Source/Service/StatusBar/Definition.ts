@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/StatusBar/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the StatusBar service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../IPC/Service.js, ./Service.js, ./StatusBarItemImplementation.js, effect, vscode
  */
 
 /**
@@ -13,6 +12,7 @@
 import { Effect, Ref } from "effect";
 import { Disposable, StatusBarAlignment } from "vscode";
 
+import CommandService from "../Command/Service.js";
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
 import StatusBarItemImplementation from "./StatusBarItemImplementation.js";
@@ -22,19 +22,11 @@ let EntryIDCounter = 0;
 /**
  * An Effect that builds the live implementation of the StatusBar service.
  */
-export default Effect.gen(function* () {
-	const IPC = yield* IPCService;
-	const ActiveEntries = yield* Ref.make(
-		new Map<string, StatusBarItemImplementation>(),
-	);
-
-	// Register RPC handler for when Mountain needs a tooltip.
-	// This would be used if the tooltip were a complex object needing resolution.
-	IPC.RegisterInvokeHandler("$provideStatusbarTooltip", ([_EntryID]) =>
-		Effect.gen(function* () {
-			// Logic to find the entry in ActiveEntries and call a potential tooltip provider function.
-			return null;
-		}).pipe(Effect.runPromise),
+export default Effect.gen(function* (G) {
+	const IPC = yield* G(IPCService);
+	const Command = yield* G(CommandService);
+	const ActiveEntriesRef = yield* G(
+		Ref.make(new Map<string, StatusBarItemImplementation>()),
 	);
 
 	const StatusBarImplementation: Service["Type"] = {
@@ -47,7 +39,7 @@ export default Effect.gen(function* () {
 				const OnDispose = () => {
 					Effect.runSync(
 						Ref.update(
-							ActiveEntries,
+							ActiveEntriesRef,
 							(Map) => (Map.delete(EntryID), Map),
 						),
 					);
@@ -56,13 +48,16 @@ export default Effect.gen(function* () {
 				const Entry = new StatusBarItemImplementation(
 					EntryID,
 					IPC,
+					Command, // Pass the CommandService instance
 					OnDispose,
 					ItemID,
 					FinalAlignment,
 					Priority,
 				);
 				Effect.runSync(
-					Ref.update(ActiveEntries, (Map) => Map.set(EntryID, Entry)),
+					Ref.update(ActiveEntriesRef, (Map) =>
+						Map.set(EntryID, Entry),
+					),
 				);
 
 				return Entry;

@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Message/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the Message service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../IPC/Service.js, ./Service.js, ./Support/ParseArgument.js, ./Type.js, effect, vscode
  */
 
 /**
@@ -26,14 +25,14 @@ const ShowMessageEffect = <T extends MessageItem>(
 	Items: (string | T)[],
 	Source: ExtensionSource | undefined,
 ): Effect.Effect<T | undefined, Error> => {
-	return Effect.gen(function* () {
+	return Effect.gen(function* (G) {
 		const ItemsForIPC = Items.map((item, index) => ({
 			title: typeof item === "string" ? item : item.title,
 			isCloseAffordance:
 				typeof item === "object"
 					? !!(item as T).isCloseAffordance
 					: false,
-			handle: index, // The host uses this handle to report the chosen item
+			handle: index,
 		}));
 
 		const DTO = {
@@ -52,17 +51,21 @@ const ShowMessageEffect = <T extends MessageItem>(
 				: undefined,
 		};
 
-		const ResultHandle = yield* IPC.SendRequest<number | undefined>(
-			"$showMessage",
-			[DTO.severity, DTO.message, DTO.options, DTO.items, DTO.source],
-		).pipe(Effect.mapError((cause) => new Error(String(cause))));
+		const ResultHandle = yield* G(
+			IPC.SendRequest<number | undefined>("$showMessage", [
+				DTO.severity,
+				DTO.message,
+				DTO.options,
+				DTO.items,
+				DTO.source,
+			]).pipe(Effect.mapError((cause) => new Error(String(cause)))),
+		);
 
 		if (ResultHandle === undefined || ResultHandle === null) {
 			return undefined;
 		}
 		if (ResultHandle >= 0 && ResultHandle < Items.length) {
 			const resultItem = Items[ResultHandle];
-			// Only return if the result is not a plain string, matching the generic constraint
 			if (typeof resultItem !== "string") {
 				return resultItem as T;
 			}
@@ -71,11 +74,12 @@ const ShowMessageEffect = <T extends MessageItem>(
 	});
 };
 
-export default Effect.gen(function* () {
-	const IPC = yield* IPCService;
+/**
+ * An Effect that builds the live implementation of the Message service.
+ */
+export default Effect.gen(function* (G) {
+	const IPC = yield* G(IPCService);
 
-	// The `Service["Type"]` interface is generic, so we must implement it with a generic function.
-	// We cast the final implementation object to satisfy the compiler.
 	const ServiceImplementation: Service["Type"] = {
 		ShowInformationMessage: (message, ...args) => {
 			const { Option, Items, Source } = ParseArgument(args);

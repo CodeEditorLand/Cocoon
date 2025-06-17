@@ -1,9 +1,7 @@
 /*
  * File: Cocoon/Source/Service/StatusBar/StatusBarItemImplementation.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The concrete implementation of the `vscode.StatusBarItem` interface.
  * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ../../Type/ExtHostTypes.js, ../../TypeConverter/Command.js, ../../TypeConverter/StatusBar.js, ../IPC/Service.js, effect
- * Export: implements
  */
 
 /**
@@ -16,10 +14,8 @@
 import { Effect } from "effect";
 import type {
 	AccessibilityInformation,
-	CancellationToken,
 	Command,
 	MarkdownString,
-	ProviderResult,
 	StatusBarAlignment,
 	StatusBarItem,
 	ThemeColor,
@@ -28,9 +24,10 @@ import type {
 import * as ExtHostTypes from "../../Type/ExtHostTypes.js";
 import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
 import StatusBarConverter from "../../TypeConverter/StatusBar.js";
+import type CommandService from "../Command/Service.js";
 import type IPCService from "../IPC/Service.js";
 
-export default class implements StatusBarItem {
+export default class StatusBarItemImplementation implements StatusBarItem {
 	private IsDisposed = false;
 	private IsVisible = false;
 
@@ -49,6 +46,7 @@ export default class implements StatusBarItem {
 	constructor(
 		private readonly EntryID: string, // Internal unique ID for IPC
 		private readonly IPC: IPCService["Type"],
+		private readonly CommandService: CommandService["Type"],
 		private readonly OnDidDispose: () => void,
 		InitialID: string,
 		InitialAlignment: StatusBarAlignment,
@@ -58,13 +56,6 @@ export default class implements StatusBarItem {
 		this._alignment = InitialAlignment;
 		this._priority = InitialPriority;
 	}
-	tooltip2:
-		| string
-		| MarkdownString
-		| ((
-				token: CancellationToken,
-		  ) => ProviderResult<string | MarkdownString | undefined>)
-		| undefined;
 
 	// --- Getters and Setters that trigger IPC updates ---
 	get id(): string {
@@ -166,7 +157,6 @@ export default class implements StatusBarItem {
 	hide(): void {
 		if (this.IsVisible) {
 			this.IsVisible = false;
-			// Send a dispose notification to the host to remove the UI item.
 			Effect.runFork(
 				this.IPC.SendNotification("$disposeEntry", [this.EntryID]),
 			);
@@ -186,19 +176,24 @@ export default class implements StatusBarItem {
 		if (this.IsDisposed || !this.IsVisible) {
 			return;
 		}
-		// The update is a fire-and-forget notification to the host.
-		const CommandConverterInstance = new CommandConverterDefinition(
-			() => {
-				throw new Error("Not implemented");
-			},
-			() => Promise.reject("Not implemented"),
-			() => undefined,
+
+		// The CommandConverter needs access to the live command service to run commands.
+		const CommandConverter = new CommandConverterDefinition(
+			this.CommandService.RegisterCommand,
+			(command, ...args) =>
+				Effect.runPromise(
+					this.CommandService.ExecuteCommand(command, ...args),
+				),
+			() => undefined, // lookupApiCommand is not needed for this conversion
 		);
+
 		const DTO = StatusBarConverter.FromAPI(
 			this,
 			this.EntryID,
-			CommandConverterInstance,
+			CommandConverter,
 		);
+
+		// Use runFork for a fire-and-forget UI update.
 		Effect.runFork(this.IPC.SendNotification("$setEntry", [DTO]));
 	}
 }

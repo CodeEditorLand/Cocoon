@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Storage/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the Storage service factory.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../IPC/Service.js, ../Log/Service.js, ./MementoImplementation.js, ./Service.js, effect, vscode
  */
 
 /**
@@ -26,36 +25,43 @@ enum MementoScope {
 /**
  * An Effect that builds the live implementation of the Storage service factory.
  */
-export default Effect.gen(function* () {
-	const IPC = yield* IPCService;
-	const Log = yield* LogService;
-	const MementoCache = yield* Ref.make(
-		new Map<string, MementoImplementation>(),
+export default Effect.gen(function* (G) {
+	const IPC = yield* G(IPCService);
+	const Log = yield* G(LogService);
+	const MementoCacheRef = yield* G(
+		Ref.make(new Map<string, MementoImplementation>()),
 	);
 
 	// Initialize storage from the host
-	const [Global, WorkSpace] = yield* IPC.SendRequest<[object, object]>(
-		"$initializeStorage",
-		[],
+	const [GlobalStorage, WorkSpaceStorage] = yield* G(
+		IPC.SendRequest<[object, object]>("$initializeStorage", []),
 	);
 
 	// Handler for when storage changes on the host side
-	yield* Effect.sync(() =>
-		IPC.RegisterInvokeHandler(
-			"$acceptStorageAndMementoData",
-			([GlobalData, WorkSpaceData]) => {
-				const UpdateEffect = Effect.gen(function* () {
-					const GlobalCache = yield* Ref.get(MementoCache);
-					for (const [Key, Memento] of GlobalCache) {
-						if (Memento.Scope === MementoScope.GLOBAL) {
-							Memento.acceptValue((GlobalData as any)?.[Key]);
-						} else {
-							Memento.acceptValue((WorkSpaceData as any)?.[Key]);
-						}
-					}
-				});
-				return Effect.runPromise(UpdateEffect);
-			},
+	yield* G(
+		Effect.sync(() =>
+			IPC.RegisterInvokeHandler(
+				"$acceptStorageAndMementoData",
+				([GlobalData, WorkSpaceData]) =>
+					Effect.runPromise(
+						Effect.gen(function* (G) {
+							const GlobalCache = yield* G(
+								Ref.get(MementoCacheRef),
+							);
+							for (const [Key, Memento] of GlobalCache) {
+								if (Memento.Scope === MementoScope.GLOBAL) {
+									Memento.acceptValue(
+										(GlobalData as any)?.[Key],
+									);
+								} else {
+									Memento.acceptValue(
+										(WorkSpaceData as any)?.[Key],
+									);
+								}
+							}
+						}),
+					),
+			),
 		),
 	);
 
@@ -63,7 +69,7 @@ export default Effect.gen(function* () {
 		CreateMemento: (ExtensionID: string, IsGlobal: boolean): Memento => {
 			const CacheKey = `${IsGlobal ? "global" : "workspace"}:${ExtensionID}`;
 			const Cached = Effect.runSync(
-				Ref.get(MementoCache).pipe(
+				Ref.get(MementoCacheRef).pipe(
 					Effect.map((Cache) => Cache.get(CacheKey)),
 				),
 			);
@@ -73,8 +79,8 @@ export default Effect.gen(function* () {
 
 			const ScopeName = IsGlobal ? "Global" : "WorkSpace";
 			const InitialValue = IsGlobal
-				? (Global as any)?.[ExtensionID]
-				: (WorkSpace as any)?.[ExtensionID];
+				? (GlobalStorage as any)?.[ExtensionID]
+				: (WorkSpaceStorage as any)?.[ExtensionID];
 
 			Effect.runSync(
 				Log.Debug(
@@ -90,7 +96,9 @@ export default Effect.gen(function* () {
 				Log,
 			);
 			Effect.runSync(
-				Ref.update(MementoCache, (Map) => Map.set(CacheKey, Memento)),
+				Ref.update(MementoCacheRef, (Map) =>
+					Map.set(CacheKey, Memento),
+				),
 			);
 			return Memento;
 		},

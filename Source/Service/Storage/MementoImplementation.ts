@@ -1,9 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Storage/MementoImplementation.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The concrete implementation of the `vscode.Memento` interface.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, effect, vscode
- * Export: implements
  */
 
 /**
@@ -21,7 +19,6 @@ import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
 
 // These types are part of the vscode API but might not be exported at the top level.
-// We define them here to match the expected structure.
 interface MementoChangeEvent {
 	readonly keys: readonly string[];
 }
@@ -34,7 +31,7 @@ enum MementoScope {
 	WORKSPACE = 1,
 }
 
-export default class implements Memento {
+export default class MementoImplementation implements Memento {
 	private readonly OnDidChangeEventStream =
 		CreateEventStream<MementoChangeEvent>();
 	public readonly onDidChange: Event<MementoChangeEvent>;
@@ -53,47 +50,47 @@ export default class implements Memento {
 		this.ValueRef = Ref.unsafeMake(InitialValue);
 	}
 
+	private CreateUpdateEffect(
+		Key: string,
+		Value: any,
+	): Effect.Effect<void, never> {
+		return Effect.gen(this, function* (G) {
+			yield* G(
+				this.IPC.SendNotification("$setValue", [
+					this.Scope,
+					this.ExtensionID,
+					Key,
+					Value,
+				]),
+			);
+			yield* G(
+				Ref.update(this.ValueRef, (Current) => ({
+					...(Current || {}),
+					[Key]: Value,
+				})),
+			);
+			yield* G(this.OnDidChangeEventStream.Fire({ keys: [Key] }));
+		}).pipe(
+			Effect.catchAll((Error) =>
+				this.Log.Error(
+					`Memento.update('${Key}') failed for ext '${this.ExtensionID}'.`,
+					Error,
+				),
+			),
+			Effect.asVoid,
+		);
+	}
+
 	get<T>(Key: string): T | undefined;
 	get<T>(Key: string, DefaultValue: T): T;
 	get<T>(Key: string, DefaultValue?: T): T | undefined {
 		const State = Effect.runSync(Ref.get(this.ValueRef));
-		let Value = (State as any)?.[Key];
-		if (typeof Value === "undefined") {
-			Value = DefaultValue;
-		}
-		return Value;
+		const Value = (State as any)?.[Key];
+		return Value !== undefined ? Value : DefaultValue;
 	}
 
 	update(Key: string, Value: any): Promise<void> {
-		const UpdateEffect = Effect.gen(this, function* () {
-			yield* this.IPC.SendNotification("$setValue", [
-				this.Scope,
-				this.ExtensionID, // The host needs to know which extension's storage to update.
-				Key,
-				Value,
-			]).pipe(
-				Effect.tap(() =>
-					Ref.update(this.ValueRef, (Current) => ({
-						...(Current || {}),
-						[Key]: Value,
-					})),
-				),
-				Effect.tap(() =>
-					this.OnDidChangeEventStream.Fire({ keys: [Key] }),
-				),
-				Effect.catchAll((Error) =>
-					this.Log.Error(
-						`Memento.update('${Key}') failed for ext '${this.ExtensionID}'.`,
-						Error,
-					),
-				),
-				Effect.asVoid,
-			);
-		});
-
-		// The effect is constructed with `this` context, which holds the IPC and Log services.
-		// We just need to run the effect to get a promise.
-		return Effect.runPromise(UpdateEffect);
+		return Effect.runPromise(this.CreateUpdateEffect(Key, Value));
 	}
 
 	keys(_Options?: MementoKeysOptions): readonly string[] {
@@ -102,21 +99,17 @@ export default class implements Memento {
 	}
 
 	get whenReady(): Promise<void> {
-		// The Memento is ready as soon as it's created in this implementation.
 		return Promise.resolve();
 	}
 
-	/**
-	 * Internal method to accept state updates from the host.
-	 */
 	public acceptValue(Value: object | undefined) {
 		const OldValue = Effect.runSync(Ref.get(this.ValueRef));
 		Effect.runSync(Ref.set(this.ValueRef, Value));
 
 		const OldKeys = Object.keys(OldValue || {});
 		const NewKeys = Object.keys(Value || {});
-		const ChangedKeys = new Set([...OldKeys, ...NewKeys]);
+		const ChangedKeys = [...new Set([...OldKeys, ...NewKeys])];
 
-		this.OnDidChangeEventStream.Fire({ keys: Array.from(ChangedKeys) });
+		this.OnDidChangeEventStream.Fire({ keys: ChangedKeys });
 	}
 }
