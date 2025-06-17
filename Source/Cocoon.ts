@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Cocoon.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:45 UTC
- * Dependency: ./Core/APIFactory/Live.js, ./Core/ESMInterceptor/Live.js, ./Core/ExtensionHost/Live.js, ./Core/ExtensionHost/Service.js, ./Core/ExtensionPath/Live.js, ./Core/HostKindPicker/Live.js, ./Core/NodeModuleShim/Live.js, ./Core/RequireInterceptor/Live.js, ./Core/RequireInterceptor/Service.js, ./PatchProcess.js, ./Service/APIDeprecation/Live.js, ./Service/Authentication/Live.js, ./Service/Cancellation/Live.js, ./Service/Clipboard/Live.js, ./Service/Command/Live.js, ./Service/Configuration/Live.js, ./Service/Debug/Live.js, ./Service/Diagnostic/Live.js, ./Service/Dialog/Live.js, ./Service/Document/Live.js, ./Service/Environment/Live.js, ./Service/Extension/Live.js, ./Service/FileSystem/Live.js, ./Service/FileSystemInformation/Live.js, ./Service/IPC/Live.js, ./Service/IPC/Service.js, ./Service/InitData/Live.js, ./Service/LanguageFeature/Live.js, ./Service/Localization/Live.js, ./Service/Log/Live.js, ./Service/Message/Live.js, ./Service/ProposedAPI/Live.js, ./Service/QuickInput/Live.js, ./Service/SecretStorage/Live.js, ./Service/StatusBar/Live.js, ./Service/Storage/Live.js, ./Service/StoragePath/Live.js, ./Service/Task/Live.js, ./Service/Telemetry/Live.js, ./Service/TreeView/Live.js, ./Service/WebViewPanel/Live.js, ./Service/Window/Live.js, ./Service/WorkSpace/Live.js, @effect/platform-node, effect, node:path, vs/workbench/services/extensions/common/extensionHostProtocol.js
+ * Responsibility: Orchestrates the entire application lifecycle using a hierarchical layering strategy.
+ * Modified: 2025-06-18 10:00:00 UTC
  */
 
 import * as Path from "node:path";
@@ -10,7 +9,8 @@ import { NodeRuntime } from "@effect/platform-node";
 import { Deferred, Effect, Layer, Logger } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
-// --- Direct Core Service Imports ---
+// --- Service Imports ---
+// This file now imports all the `Live` layers to compose them.
 import APIFactoryLive from "./Core/APIFactory/Live.js";
 import ESMInterceptorLive from "./Core/ESMInterceptor/Live.js";
 import ExtensionHostLive from "./Core/ExtensionHost/Live.js";
@@ -20,9 +20,7 @@ import HostKindPickerLive from "./Core/HostKindPicker/Live.js";
 import NodeModuleShimLive from "./Core/NodeModuleShim/Live.js";
 import RequireInterceptorLive from "./Core/RequireInterceptor/Live.js";
 import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
-// --- Consolidated Imports via Barrel Files ---
 import RunProcessPatch from "./PatchProcess.js";
-// --- Direct API Service Imports ---
 import APIDeprecationLive from "./Service/APIDeprecation/Live.js";
 import AuthenticationLive from "./Service/Authentication/Live.js";
 import CancellationLive from "./Service/Cancellation/Live.js";
@@ -66,28 +64,36 @@ const VSCodeOutputDirectory =
 	Path.resolve(__dirname, "../../../Dependency/VSCode/out");
 (module as any).paths.unshift(VSCodeOutputDirectory);
 
-// --- Static Layer Composition ---
+// --- Hierarchical Layer Composition ---
 
-// A layer for just the static IPC configuration.
-const ConfigurationLayer = Layer.succeed(IPCConfigurationService, {
-	MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
-	CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
-} satisfies IPCConfiguration);
-
-// The pre-handshake layer requires only a minimal set of services.
-const PreHandshakeLayer = IPCLive.pipe(
-	Layer.provide(
-		Layer.mergeAll(ConfigurationLayer, Logger.logFmt, CancellationLive),
-	),
-);
-
-// This is the main application layer, merging all individual service layers.
-// It will be provided to the post-handshake logic.
-const ApplicationLayer = Layer.mergeAll(
-	APIDeprecationLive,
-	APIFactoryLive,
-	AuthenticationLive,
+// STAGE 1: Core Infrastructure Layer
+// Provides foundational services with zero or minimal dependencies.
+const CoreInfraLayer = Layer.mergeAll(
+	Layer.succeed(IPCConfigurationService, {
+		MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
+		CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
+	} satisfies IPCConfiguration),
+	Logger.logFmt,
 	CancellationLive,
+).pipe(Layer.provide(IPCLive)); // IPCLive depends on the services above
+
+// STAGE 2: Core Services Layer
+// Provides essential host services that depend on the infrastructure.
+const CoreServicesLayer = Layer.mergeAll(
+	LogLive,
+	TelemetryLive,
+	NodeModuleShimLive,
+	RequireInterceptorLive,
+	ESMInterceptorLive,
+	ExtensionPathLive,
+	HostKindPickerLive,
+).pipe(Layer.provide(CoreInfraLayer)); // Depends on CoreInfraLayer
+
+// STAGE 3: Application Services Layer
+// Provides high-level services that mimic the vscode API.
+const AppServicesLayer = Layer.mergeAll(
+	APIDeprecationLive,
+	AuthenticationLive,
 	ClipboardLive,
 	CommandLive,
 	ConfigurationLive,
@@ -96,32 +102,29 @@ const ApplicationLayer = Layer.mergeAll(
 	DialogLive,
 	DocumentLive,
 	EnvironmentLive,
-	ESMInterceptorLive,
-	ExtensionHostLive,
 	ExtensionLive,
-	ExtensionPathLive,
-	FileSystemInformationLive,
 	FileSystemLive,
-	HostKindPickerLive,
-	IPCLive,
+	FileSystemInformationLive,
 	LanguageFeatureLive,
 	LocalizationLive,
-	LogLive,
 	MessageLive,
-	NodeModuleShimLive,
 	ProposedAPILive,
 	QuickInputLive,
-	RequireInterceptorLive,
 	SecretStorageLive,
 	StatusBarLive,
 	StorageLive,
 	StoragePathLive,
 	TaskLive,
-	TelemetryLive,
 	TreeViewLive,
 	WebViewPanelLive,
 	WindowLive,
 	WorkSpaceLive,
+).pipe(Layer.provide(CoreServicesLayer)); // Depends on CoreServicesLayer
+
+// STAGE 4: Top-Level Business Logic Layer
+// Provides the final, most complex services that orchestrate everything.
+const TopLevelLayer = Layer.mergeAll(APIFactoryLive, ExtensionHostLive).pipe(
+	Layer.provide(AppServicesLayer), // Depends on AppServicesLayer
 );
 
 // --- Effect Definitions ---
@@ -131,34 +134,25 @@ const PreHandshakeEffect = Effect.gen(function* (G) {
 		Deferred.make<IExtensionHostInitData, Error>(),
 	);
 	const IPC = yield* G(IPCService);
-
 	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
-		(InitializationData: IExtensionHostInitData): Promise<void> =>
+		(data: IExtensionHostInitData) =>
 			Effect.runPromise(
-				Deferred.succeed(
-					InitializationBarrier,
-					InitializationData,
-				).pipe(Effect.asVoid),
+				Deferred.succeed(InitializationBarrier, data).pipe(
+					Effect.asVoid,
+				),
 			),
 	);
-
-	yield* G(Effect.logInfo("Cocoon is ready. Sent handshake to Mountain."));
 	yield* G(IPC.SendNotification("$initialHandshake", []));
-	const InitializationData = yield* G(Deferred.await(InitializationBarrier));
-	yield* G(Effect.logInfo("Cocoon handshake complete."));
-
-	return InitializationData;
+	return yield* G(Deferred.await(InitializationBarrier));
 });
 
 const PostHandshakeEffect = Effect.gen(function* (G) {
 	yield* G(Effect.logInfo("Proceeding with full initialization..."));
 	yield* G(RunProcessPatch);
-
 	const Interceptor = yield* G(RequireInterceptorService);
 	yield* G(Interceptor.Install());
 	yield* G(Effect.logInfo("Node.js require() interceptor installed."));
-
 	const Host = yield* G(ExtensionHostService);
 	yield* G(
 		Host.ActivateById(
@@ -166,31 +160,28 @@ const PostHandshakeEffect = Effect.gen(function* (G) {
 			{ startup: true, activationEvent: "*" } as any,
 		),
 	);
-
 	yield* G(Effect.logInfo("Startup extensions activated."));
 	yield* G(Effect.logInfo("Cocoon is fully initialized and operational."));
-
 	yield* G(Effect.never);
 });
 
 // --- Main Application Logic ---
 
-// The main effect now clearly separates the pre- and post-handshake phases.
 const MainEffect = Effect.gen(function* (G) {
-	// 1. Run the pre-handshake with its minimal layer.
+	// 1. Run pre-handshake with its minimal layer to get the init data.
 	const InitializationData = yield* G(
-		PreHandshakeEffect.pipe(Effect.provide(PreHandshakeLayer)),
+		PreHandshakeEffect.pipe(Effect.provide(CoreInfraLayer)),
 	);
 
 	// 2. Create the runtime-dependent InitData layer.
 	const InitDataLayer = InitDataLive(InitializationData);
 
-	// 3. Compose the final layer by providing the InitData to the main application layer.
-	const FinalApplicationLayer = ApplicationLayer.pipe(
+	// 3. Compose the final, complete layer for the post-handshake logic.
+	const FinalApplicationLayer = TopLevelLayer.pipe(
 		Layer.provide(InitDataLayer),
 	);
 
-	// 4. Run the main post-handshake logic with all dependencies resolved.
+	// 4. Run the main post-handshake logic with all dependencies now resolved.
 	yield* G(PostHandshakeEffect.pipe(Effect.provide(FinalApplicationLayer)));
 }).pipe(
 	Effect.catchAllCause((Cause) =>
