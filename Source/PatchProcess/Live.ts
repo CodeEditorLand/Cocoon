@@ -11,39 +11,44 @@
  * overwritten by any other patches.
  */
 
-import { Config, Effect, Layer } from "effect";
+import { Config, Effect, Layer, LogLevel } from "effect";
 
 import Service from "./Service.js";
-
-// FIX: Reverted to a more compatible API shape for Config.
-const AllowExitConfig: Config.Config<boolean> = Config.boolean("AllowExit");
 
 /**
  * The live `Layer` for the `ProcessPatch.Service`.
  * It reads its configuration from the environment, with a default.
  */
+// FIX: The Layer's error type must be `never`. We handle any potential
+// `ConfigError` by using `Effect.catchAll` to provide a default service
+// implementation in case of failure.
 const Live: Layer.Layer<Service, never, never> = Layer.effect(
 	Service,
-	Effect.config(AllowExitConfig).pipe(
-		// FIX: First create the effect with Effect.config
-		Effect.map((allowExit) => ({
+	Effect.gen(function* (G) {
+		const allowExit = yield* G(Config.boolean("AllowExit"));
+		return {
 			NativeExit: process.exit.bind(process),
 			NativeCrash:
 				typeof process.crash === "function"
 					? process.crash.bind(process)
 					: undefined,
 			AllowExit: () => allowExit,
-		})),
-		// FIX: Then, handle the error case for the Effect.
-		Effect.catchTag("MissingData", () =>
-			Effect.succeed({
-				NativeExit: process.exit.bind(process),
-				NativeCrash:
-					typeof process.crash === "function"
-						? process.crash.bind(process)
-						: undefined,
-				AllowExit: () => false, // Default to not allowing exit.
-			}),
+		};
+	}).pipe(
+		Effect.catchAll((error) =>
+			Effect.log("Failed to load ProcessPatch config, using defaults.", {
+				error,
+				logLevel: LogLevel.Warning,
+			}).pipe(
+				Effect.as({
+					NativeExit: process.exit.bind(process),
+					NativeCrash:
+						typeof process.crash === "function"
+							? process.crash.bind(process)
+							: undefined,
+					AllowExit: () => false, // Default to not allowing exit on error.
+				}),
+			),
 		),
 	),
 );
