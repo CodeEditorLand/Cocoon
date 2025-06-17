@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Command/ProcessUserData/GetActiveTextEditor.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../Service/Window/Service.js, effect, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:46 UTC
+ * Dependency: ../../Service/Window/Service.js, effect
  */
 
 /**
@@ -12,7 +12,6 @@
  */
 
 import { Effect, Option } from "effect";
-import type { TextEditor } from "vscode";
 
 import WindowService from "../../Service/Window/Service.js";
 
@@ -21,13 +20,7 @@ import WindowService from "../../Service/Window/Service.js";
  * @returns An `Effect` that resolves to an `Option<vscode.TextEditor>`, which
  * will be `None` if no editor is active, and `Some` otherwise.
  */
-const GetActiveTextEditor: Effect.Effect<
-	Option.Option<TextEditor>,
-	never,
-	WindowService
-> = Effect.gen(function* () {
+export default Effect.gen(function* () {
 	const Window = yield* WindowService;
 	return Option.fromNullable(Window.activeTextEditor);
 });
-
-export default GetActiveTextEditor;

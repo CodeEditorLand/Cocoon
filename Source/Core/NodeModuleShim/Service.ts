@@ -1,7 +1,9 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Service.ts
- * Responsibility: Defines the interface for intercepting and shimming Node.js module requests.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:39 UTC
+ * Dependency: ./Error/ModuleBlockedError.js, ./Error/ModuleNotShimmedError.js, effect, vscode
+ * Export: NodeModuleShim, NodeModuleShimService
  */
 
 /**
@@ -14,10 +16,11 @@
 import { Context, Exit } from "effect";
 import type { Uri } from "vscode";
 
-import type { ModuleBlockedError, ModuleNotShimmedError } from "./Error.js";
+import type ModuleBlockedError from "./Error/ModuleBlockedError.js";
+import type ModuleNotShimmedError from "./Error/ModuleNotShimmedError.js";
 
 // FIX: Define the service interface separately so the class can implement it directly.
-export interface NodeModuleShimService {
+export interface NodeModuleShim {
 	/**
 	 * Synchronously loads a shim for a requested built-in Node.js module.
 	 * This method must be synchronous to be compatible with `require`.
@@ -33,7 +36,6 @@ export interface NodeModuleShimService {
 	) => Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError>;
 }
 
-export default class extends Context.Tag("Core/NodeModuleShim")<
-	NodeModuleShimService,
-	NodeModuleShimService
->() {}
+export default class NodeModuleShimService extends Context.Tag(
+	"Core/NodeModuleShim",
+)<NodeModuleShimService, NodeModuleShim>() {}

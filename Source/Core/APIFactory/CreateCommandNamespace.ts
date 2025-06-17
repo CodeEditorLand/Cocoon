@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateCommandNamespace.ts
- * Responsibility: Constructs the vscode.commands API namespace for an extension.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../Service/Command/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:45 UTC
+ * Dependency: ../../Service/Command/Service.js, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**

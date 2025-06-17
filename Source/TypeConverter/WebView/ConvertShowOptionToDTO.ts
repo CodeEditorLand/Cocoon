@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/WebView/ConvertShowOptionToDTO.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:03 UTC
  * Dependency: ../Main/ViewColumn.js, vscode
  */
 
@@ -32,7 +32,7 @@ interface IEditorOptions {
  *   focus when shown.
  * @returns A serializable DTO representing the showing behavior.
  */
-const ConvertShowOptionToDTO = (
+export default (
 	ViewColumn: VSCode.ViewColumn | undefined,
 	PreserveFocus: boolean,
 ): { viewColumn?: number; preserveFocus: boolean } & IEditorOptions => {
@@ -41,5 +41,3 @@ const ConvertShowOptionToDTO = (
 		preserveFocus: PreserveFocus,
 	};
 };
-
-export default ConvertShowOptionToDTO;

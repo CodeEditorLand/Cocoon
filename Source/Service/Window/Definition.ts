@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Window/Definition.ts
- * Responsibility: The live implementation of the core Window service.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:09 UTC
+ * Dependency: ../../TypeConverter/Main/Range.js, ../../TypeConverter/Main/URI.js, ../../TypeConverter/Main/ViewColumn.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect
  */
 
 /**
@@ -17,7 +18,9 @@ import type {
 	WindowState,
 } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/Main.js";
+import RangeConverter from "../../TypeConverter/Main/Range.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
+import ViewColumnConverter from "../../TypeConverter/Main/ViewColumn.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
@@ -124,18 +127,18 @@ export default Effect.gen(function* (G) {
 							preserveFocus:
 								preserveFocus ?? options.preserveFocus,
 							selection: options.selection
-								? TypeConverter.Range.FromAPI(options.selection)
+								? RangeConverter.FromAPI(options.selection)
 								: undefined,
 						}
 					: undefined;
 				const viewColumnDTO =
 					typeof columnOrOptions === "number"
-						? TypeConverter.ViewColumn.FromAPI(columnOrOptions)
+						? ViewColumnConverter.FromAPI(columnOrOptions)
 						: undefined;
 
 				const editorId = yield* G(
 					IPC.SendRequest<string>("$showTextDocument", [
-						TypeConverter.URI.FromAPI(uri),
+						URIConverter.FromAPI(uri),
 						viewColumnDTO,
 						optionsDTO,
 					]),

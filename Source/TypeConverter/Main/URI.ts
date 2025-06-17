@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/Main/URI.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:05 UTC
  * Dependency: ../../Type/ExtHostTypes.js, vs/base/common/uri.js, vscode
  */
 

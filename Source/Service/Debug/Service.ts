@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Debug/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: effect, vs/platform/extensions/common/extensions.js
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:30 UTC
+ * Dependency: ./Error/DebugProviderRegistrationError.js, ./Error/StartDebuggingError.js, effect, vs/platform/extensions/common/extensions.js
  * Export: DebugService
  */
 
@@ -28,10 +28,8 @@ import type {
 	WorkspaceFolder,
 } from "vscode";
 
-import type {
-	DebugProviderRegistrationError,
-	StartDebuggingError,
-} from "./Error.js";
+import type DebugProviderRegistrationError from "./Error/DebugProviderRegistrationError.js";
+import type StartDebuggingError from "./Error/StartDebuggingError.js";
 
 export default class DebugService extends Context.Tag("Service/Debug")<
 	DebugService,

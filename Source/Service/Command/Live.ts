@@ -1,9 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Command/Live.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ./Definition.js, ./Service.js, ./Type.js, effect
- * Export: type CommandHandler, type CommandHandlerEntry
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:31 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
  */
 
 /**
@@ -16,9 +15,6 @@ import { Layer } from "effect";
 
 import Definition from "./Definition.js";
 import Service from "./Service.js";
-import type { CommandHandler, CommandHandlerEntry } from "./Type.js";
-
-export { type CommandHandler, type CommandHandlerEntry };
 
 /**
  * The live implementation Layer for the Command service.

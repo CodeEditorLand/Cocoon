@@ -1,7 +1,9 @@
 /*
  * File: Cocoon/Source/TypeConverter/Command/Definition.ts
- * Responsibility: The class implementation of the CommandConverter.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:07 UTC
+ * Dependency: ./Type.js, effect, vs/base/common/lifecycle.js, vs/base/common/uuid.js, vscode
+ * Export: CommandConverterDefinition
  */
 
 /**

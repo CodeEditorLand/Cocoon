@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/WebView/ConvertContentOptionToDTO.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:04 UTC
  * Dependency: vs/platform/extensions/common/extensions.js, vscode
  */
 
@@ -24,7 +24,7 @@ import type * as VSCode from "vscode";
  * @param Options The `vscode.WebviewOptions` provided by the extension.
  * @returns A serializable DTO representing the webview's content options.
  */
-const ConvertContentOptionToDTO = (
+export default (
 	ExtensionDescription: IExtensionDescription,
 	Options: VSCode.WebviewOptions,
 ) => {
@@ -38,5 +38,3 @@ const ConvertContentOptionToDTO = (
 		portMapping: Options.portMapping,
 	};
 };
-
-export default ConvertContentOptionToDTO;

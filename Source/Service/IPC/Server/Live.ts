@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Server/Live.ts
- * Responsibility: Provides a managed gRPC server Layer for Cocoon, which listens for incoming requests from the Mountain backend.
- * Modified: 2025-06-17 11:19:34 UTC
- * Dependency: ../Configuration.js, ../Dispatcher/Service.js, ../Error.js, ./Acquire.js, ./Service.js, effect
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:20 UTC
+ * Dependency: ../Configuration.js, ../Dispatcher/Service.js, ../Error/gRPCConnectionError.js, ./Acquire.js, ./Service.js, effect
  */
 
 /**
@@ -13,9 +13,9 @@
 
 import { Layer } from "effect";
 
-import type { IPCConfigurationService } from "../Configuration.js";
+import type IPCConfigurationService from "../Configuration.js";
 import type DispatcherService from "../Dispatcher/Service.js";
-import type { gRPCConnectionError } from "../Error.js";
+import type gRPCConnectionError from "../Error/gRPCConnectionError.js";
 import Acquire from "./Acquire.js";
 import Service from "./Service.js";
 

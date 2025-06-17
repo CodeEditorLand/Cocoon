@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Live.ts
- * Responsibility: Provides the primary IPC service for the Cocoon sidecar, implementing gRPC communication with the Mountain backend to enable VS Code extension hosting and interaction.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ./Client.js, ./Definition.js, ./Dispatcher.js, ./ProtocolAdapter.js, ./Server.js, ./Service.js, effect
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:21 UTC
+ * Dependency: ./Client/Live.js, ./Definition.js, ./Dispatcher/Live.js, ./ProtocolAdapter/Live.js, ./Server/Live.js, ./Service.js, effect
  */
 
 /**
@@ -14,11 +14,11 @@
 
 import { Layer } from "effect";
 
-import { Live as ClientLive } from "./Client.js";
+import ClientLive from "./Client/Live.js";
 import Definition from "./Definition.js";
-import { Live as DispatcherLive } from "./Dispatcher.js";
-import { Live as ProtocolAdapterLive } from "./ProtocolAdapter.js";
-import { Live as ServerLive } from "./Server.js";
+import DispatcherLive from "./Dispatcher/Live.js";
+import ProtocolAdapterLive from "./ProtocolAdapter/Live.js";
+import ServerLive from "./Server/Live.js";
 import Service from "./Service.js";
 
 /**
@@ -27,12 +27,10 @@ import Service from "./Service.js";
  * This layer merges the individual parts of the IPC system. The final merged
  * layer will expose all dependencies, which must be provided at the composition root.
  */
-const IPCLive = Layer.mergeAll(
+export default Layer.mergeAll(
 	Layer.effect(Service, Definition),
 	ClientLive,
 	ServerLive,
 	DispatcherLive,
 	ProtocolAdapterLive,
 );
-
-export default IPCLive;

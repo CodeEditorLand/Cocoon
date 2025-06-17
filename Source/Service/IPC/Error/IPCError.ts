@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/IPC/Error/IPCError.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:53:05 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:22 UTC
  * Dependency: effect
- * Export: IPCError
+ * Export: extends
  */
 
 import { Data } from "effect";
@@ -12,9 +12,7 @@ import { Data } from "effect";
  * A generic error for failures that occur during an IPC request or notification,
  * such as a network error or a failure to serialize/deserialize a message.
  */
-export class IPCError extends Data.TaggedError("IPCError")<{
+export default class extends Data.TaggedError("IPCError")<{
 	readonly cause: unknown;
 	readonly context: string;
 }> {}
-
-export default IPCError;

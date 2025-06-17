@@ -1,7 +1,9 @@
 /*
  * File: Cocoon/Source/Service/StatusBar/StatusBarItemImplementation.ts
- * Responsibility: The concrete implementation of the `vscode.StatusBarItem` interface.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:13 UTC
+ * Dependency: ../../Type/ExtHostTypes.js, ../../TypeConverter/Command/Definition.js, ../../TypeConverter/StatusBar.js, ../Command/Service.js, ../IPC/Service.js, effect
+ * Export: StatusBarItemImplementation
  */
 
 /**
@@ -12,17 +14,17 @@
 import { Effect } from "effect";
 import type {
 	AccessibilityInformation,
-	CancellationToken, // Import CancellationToken
+	CancellationToken,
 	Command,
 	MarkdownString,
-	ProviderResult, // Import ProviderResult
+	ProviderResult,
 	StatusBarAlignment,
 	StatusBarItem,
 	ThemeColor,
 } from "vscode";
 
 import * as ExtHostTypes from "../../Type/ExtHostTypes.js";
-import { Definition as CommandConverterDefinition } from "../../TypeConverter/Command.js";
+import CommandConverterDefinition from "../../TypeConverter/Command/Definition.js";
 import StatusBarConverter from "../../TypeConverter/StatusBar.js";
 import type CommandService from "../Command/Service.js";
 import type IPCService from "../IPC/Service.js";
@@ -43,15 +45,6 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	private _command: string | Command | undefined;
 	private _accessibilityInformation: AccessibilityInformation | undefined;
 
-	// FIX: Add missing property to satisfy the interface.
-	public tooltip2:
-		| string
-		| MarkdownString
-		| ((
-				token: CancellationToken,
-		  ) => ProviderResult<string | MarkdownString | undefined>)
-		| undefined;
-
 	constructor(
 		private readonly EntryID: string,
 		private readonly IPC: IPCService["Type"],
@@ -65,9 +58,15 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 		this._alignment = InitialAlignment;
 		this._priority = InitialPriority;
 	}
+	tooltip2:
+		| string
+		| MarkdownString
+		| ((
+				token: CancellationToken,
+		  ) => ProviderResult<string | MarkdownString | undefined>)
+		| undefined;
 
-	// ... (rest of the getters and setters are correct) ...
-	// --- Getters and Setters that trigger IPC updates ---
+	// ... (getters and setters are correct) ...
 	get id(): string {
 		return this._id;
 	}
@@ -178,8 +177,9 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 		}
 		const CommandConverter = new CommandConverterDefinition(
 			this.CommandService.RegisterCommand,
+			// FIX: Wrap the promise-based execute in an Effect
 			(command, ...args) =>
-				Effect.runPromise(
+				Effect.tryPromise(() =>
 					this.CommandService.ExecuteCommand(command, ...args),
 				),
 			() => undefined,

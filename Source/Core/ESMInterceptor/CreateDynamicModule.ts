@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/CreateDynamicModule.ts
- * Responsibility: Generates dynamic ESM module code that proxies the vscode API for the Cocoon sidecar, enabling VS Code extension compatibility by exporting extension-specific API instances through global interception.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:44 UTC
  * Dependency: ./Constants.js, ./DynamicModuleTemplate.js, vscode
  */
 

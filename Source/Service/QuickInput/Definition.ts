@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/QuickInput/Definition.ts
- * Responsibility: The live implementation of the QuickInput service.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:16 UTC
+ * Dependency: ../../TypeConverter/QuickInput.js, ../IPC/Service.js, ./Service.js, effect, vs/base/common/errors.js
  */
 
 /**
@@ -18,7 +19,7 @@ import type {
 	QuickPickOptions,
 } from "vscode";
 
-import { QuickInput as QuickInputConverter } from "../../TypeConverter/QuickInput.js";
+import QuickInputConverter from "../../TypeConverter/QuickInput.js";
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
 

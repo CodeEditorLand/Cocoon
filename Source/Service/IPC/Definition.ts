@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Definition.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ./Client/Service.js, ./Dispatcher/Service.js, ./Error.js, ./Generated.js, ./ProtocolAdapter/Service.js, ./Service.js, effect
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:22 UTC
+ * Dependency: ./Client/Service.js, ./Dispatcher/Service.js, ./Error/IPCError.js, ./Generated.js, ./ProtoConverter/DecodeValue.js, ./ProtoConverter/EncodeValue.js, ./ProtoConverter/Error/ProtoSerializationError.js, ./ProtocolAdapter/Service.js, ./Service.js, effect
  */
 
 /**
@@ -16,14 +16,12 @@ import { Effect, Ref } from "effect";
 
 import ClientService from "./Client/Service.js";
 import DispatcherService from "./Dispatcher/Service.js";
-import { IPCError } from "./Error.js";
+import IPCError from "./Error/IPCError.js";
 import Generated from "./Generated.js";
 import ProtocolAdapterService from "./ProtocolAdapter/Service.js";
-import {
-	DecodeValue,
-	EncodeValue,
-	ProtoSerializationError,
-} from "./ProtoConverter.js";
+import DecodeValue from "./ProtoConverter/DecodeValue.js";
+import EncodeValue from "./ProtoConverter/EncodeValue.js";
+import ProtoSerializationError from "./ProtoConverter/Error/ProtoSerializationError.js";
 import type Service from "./Service.js";
 
 /**

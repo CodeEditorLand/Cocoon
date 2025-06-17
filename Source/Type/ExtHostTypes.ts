@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Type/ExtHostTypes.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:07 UTC
  * Dependency: vs/base/common/cancellation.js, vs/base/common/errors.js, vs/base/common/event.js, vs/base/common/lifecycle.js, vs/base/common/uri.js, vs/platform/files/common/files.js, vscode
  * Export: CancellationError, CancellationTokenSource, CompletionItem, CompletionItemKind, CompletionItemTag, ConfigurationTarget, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity, DiagnosticTag, Disposable, EndOfLine, EventEmitter, FileType, Location, MarkdownString, Position, ProcessExecution, ProgressLocation, QuickPickItemKind, Range, Selection, ShellExecution, SnippetString, StatusBarAlignment, Task, TextEdit, TextEditorCursorStyle, ThemeColor, ThemeIcon, TreeItem, URI, ViewColumn, WorkspaceEdit
  */
@@ -12,7 +12,6 @@
  * such as `URI`, `Range`, `Position`, `Disposable`, and all enums.
  * Synthesized from `vscode.d.ts` and VS Code's internal `extHostTypes.ts`.
  */
-
 import { CancellationTokenSource as VscCancellationTokenSource } from "vs/base/common/cancellation.js";
 import { CancellationError as VscCancellationError } from "vs/base/common/errors.js";
 import { Emitter } from "vs/base/common/event.js";
@@ -37,25 +36,33 @@ import {
 
 // --- Foundational Re-exports ---
 export const Disposable = Lifecycle.Disposable;
+
 export const CancellationTokenSource = VscCancellationTokenSource;
+
 export const CancellationError = VscCancellationError;
+
 export const EventEmitter = Emitter;
+
 export const URI = VscURI;
 
 // --- Core Classes ---
 
 export class Position implements VSCode.Position {
 	readonly line: number;
+
 	readonly character: number;
 
 	constructor(line: number, character: number) {
 		if (line < 0) {
 			throw new Error("Illegal argument: line must be non-negative");
 		}
+
 		if (character < 0) {
 			throw new Error("Illegal argument: character must be non-negative");
 		}
+
 		this.line = line;
+
 		this.character = character;
 	}
 
@@ -89,23 +96,30 @@ export class Position implements VSCode.Position {
 		if (this.line < other.line) {
 			return -1;
 		}
+
 		if (this.line > other.line) {
 			return 1;
 		}
+
 		if (this.character < other.character) {
 			return -1;
 		}
+
 		if (this.character > other.character) {
 			return 1;
 		}
+
 		return 0;
 	}
 
 	translate(lineDelta?: number, characterDelta?: number): VSCode.Position;
+
 	translate(change: {
 		lineDelta?: number;
+
 		characterDelta?: number;
 	}): VSCode.Position;
+
 	translate(
 		lineDeltaOrChange:
 			| number
@@ -116,12 +130,14 @@ export class Position implements VSCode.Position {
 		if (lineDeltaOrChange === null || lineDeltaOrChange === undefined) {
 			return this;
 		}
+
 		if (typeof lineDeltaOrChange === "number") {
 			return new Position(
 				this.line + lineDeltaOrChange,
 				this.character + characterDelta,
 			);
 		}
+
 		return new Position(
 			this.line + (lineDeltaOrChange.lineDelta ?? 0),
 			this.character + (lineDeltaOrChange.characterDelta ?? 0),
@@ -129,7 +145,9 @@ export class Position implements VSCode.Position {
 	}
 
 	with(line?: number, character?: number): VSCode.Position;
+
 	with(change: { line?: number; character?: number }): VSCode.Position;
+
 	with(
 		lineOrChange:
 			| number
@@ -140,9 +158,11 @@ export class Position implements VSCode.Position {
 		if (lineOrChange === null || lineOrChange === undefined) {
 			return this;
 		}
+
 		if (typeof lineOrChange === "number") {
 			return new Position(lineOrChange, character);
 		}
+
 		return new Position(
 			lineOrChange.line ?? this.line,
 			lineOrChange.character ?? this.character,
@@ -156,15 +176,18 @@ export class Position implements VSCode.Position {
 
 export class Range implements VSCode.Range {
 	readonly start: Position;
+
 	readonly end: Position;
 
 	constructor(start: Position, end: Position);
+
 	constructor(
 		startLine: number,
 		startCharacter: number,
 		endLine: number,
 		endCharacter: number,
 	);
+
 	constructor(
 		startLineOrPosition: number | Position,
 		startCharacterOrPosition: number | Position,
@@ -172,6 +195,7 @@ export class Range implements VSCode.Range {
 		endCharacter?: number,
 	) {
 		let start: Position;
+
 		let end: Position;
 
 		if (
@@ -181,12 +205,14 @@ export class Range implements VSCode.Range {
 			typeof endCharacter === "number"
 		) {
 			start = new Position(startLineOrPosition, startCharacterOrPosition);
+
 			end = new Position(endLine, endCharacter);
 		} else if (
 			startLineOrPosition instanceof Position &&
 			startCharacterOrPosition instanceof Position
 		) {
 			start = startLineOrPosition;
+
 			end = startCharacterOrPosition;
 		} else {
 			throw new Error("Invalid arguments");
@@ -194,9 +220,11 @@ export class Range implements VSCode.Range {
 
 		if (start.isAfter(end)) {
 			this.start = end;
+
 			this.end = start;
 		} else {
 			this.start = start;
+
 			this.end = end;
 		}
 	}
@@ -216,6 +244,7 @@ export class Range implements VSCode.Range {
 				this.contains(positionOrRange.end)
 			);
 		}
+
 		return (
 			positionOrRange.isAfterOrEqual(this.start) &&
 			positionOrRange.isBeforeOrEqual(this.end)
@@ -230,11 +259,13 @@ export class Range implements VSCode.Range {
 		const start = this.start.isAfter(other.start)
 			? this.start
 			: other.start;
+
 		const end = this.end.isBefore(other.end) ? this.end : other.end;
 
 		if (start.isAfter(end)) {
 			return undefined;
 		}
+
 		return new Range(start, end);
 	}
 
@@ -242,12 +273,16 @@ export class Range implements VSCode.Range {
 		const start = this.start.isBefore(other.start)
 			? this.start
 			: other.start;
+
 		const end = this.end.isAfter(other.end) ? this.end : other.end;
+
 		return new Range(start, end);
 	}
 
 	with(start?: Position, end?: Position): Range;
+
 	with(change: { start?: Position; end?: Position }): Range;
+
 	with(
 		startOrChange:
 			| Position
@@ -258,9 +293,11 @@ export class Range implements VSCode.Range {
 		if (startOrChange === null || startOrChange === undefined) {
 			return this;
 		}
+
 		if (startOrChange instanceof Position) {
 			return new Range(startOrChange, end);
 		}
+
 		return new Range(
 			startOrChange.start ?? this.start,
 			startOrChange.end ?? this.end,
@@ -274,11 +311,14 @@ export class Range implements VSCode.Range {
 
 export class Selection extends Range implements VSCode.Selection {
 	readonly anchor: Position;
+
 	readonly active: Position;
 
 	constructor(anchor: Position, active: Position) {
 		super(anchor, active);
+
 		this.anchor = anchor;
+
 		this.active = active;
 	}
 
@@ -312,11 +352,17 @@ export class Location implements VSCode.Location {
 
 export class Diagnostic implements VSCode.Diagnostic {
 	range: Range;
+
 	message: string;
+
 	severity: VSCode.DiagnosticSeverity;
+
 	source?: string;
+
 	code?: string | number | { value: string | number; target: VSCode.Uri };
+
 	relatedInformation?: VSCode.DiagnosticRelatedInformation[];
+
 	tags?: VSCode.DiagnosticTag[];
 
 	constructor(
@@ -325,7 +371,9 @@ export class Diagnostic implements VSCode.Diagnostic {
 		severity: VSCode.DiagnosticSeverity = DiagnosticSeverity.Error,
 	) {
 		this.range = range;
+
 		this.message = message;
+
 		this.severity = severity;
 	}
 
@@ -357,10 +405,15 @@ function isTreeItemLabel(thing: any): thing is VSCode.TreeItemLabel {
 
 export class TreeItem implements VSCode.TreeItem {
 	label?: string | VSCode.TreeItemLabel;
+
 	resourceURI?: VSCode.Uri;
+
 	collapsibleState?: VSCode.TreeItemCollapsibleState;
+
 	id?: string;
+
 	description?: string;
+
 	command?: VSCode.Command;
 
 	constructor(
@@ -372,32 +425,43 @@ export class TreeItem implements VSCode.TreeItem {
 		} else {
 			this.resourceURI = labelOrUri;
 		}
+
 		this.collapsibleState = collapsibleState;
 	}
 }
 
 export class MarkdownString implements VSCode.MarkdownString {
 	value: string;
+
 	isTrusted?: boolean;
+
 	supportThemeIcons?: boolean;
+
 	supportHtml?: boolean;
+
 	baseUri?: VSCode.Uri;
+
 	constructor(value = "", isTrusted = false) {
 		this.value = value;
+
 		this.isTrusted = isTrusted;
 	}
 
 	appendText(value: string): MarkdownString {
 		this.value += value;
+
 		return this;
 	}
+
 	appendMarkdown(value: string): MarkdownString {
 		this.value += value;
+
 		return this;
 	}
 
 	appendCodeblock(value: string, language = ""): MarkdownString {
 		this.value += `\n\`\`\`${language}\n${value}\n\`\`\`\n`;
+
 		return this;
 	}
 
@@ -415,7 +479,9 @@ export class ThemeColor implements VSCode.ThemeColor {
 
 export class ThemeIcon implements VSCode.ThemeIcon {
 	static readonly File = new ThemeIcon("file");
+
 	static readonly Folder = new ThemeIcon("folder");
+
 	constructor(
 		public id: string,
 		public color?: ThemeColor,
@@ -431,36 +497,54 @@ export class TextEdit implements VSCode.TextEdit {
 	static replace(range: Range, newText: string): TextEdit {
 		return new TextEdit(range, newText);
 	}
+
 	static insert(position: Position, newText: string): TextEdit {
 		return TextEdit.replace(new Range(position, position), newText);
 	}
+
 	static delete(range: Range): TextEdit {
 		return TextEdit.replace(range, "");
 	}
+
 	static setEndOfLine(eol: VSCode.EndOfLine): TextEdit {
 		const r = new TextEdit(
 			new Range(new Position(0, 0), new Position(0, 0)),
 			"",
 		);
+
 		r.newEol = eol;
+
 		return r;
 	}
+
 	newEol: VSCode.EndOfLine | undefined;
 }
 
 export class CompletionItem implements VSCode.CompletionItem {
 	label: string | VSCode.CompletionItemLabel;
+
 	kind?: VSCode.CompletionItemKind;
+
 	tags?: readonly VSCode.CompletionItemTag[];
+
 	detail?: string;
+
 	documentation?: string | VSCode.MarkdownString;
+
 	sortText?: string;
+
 	filterText?: string;
+
 	preselect?: boolean;
+
 	insertText?: string | VSCode.SnippetString;
+
 	range?: VSCode.Range | { inserting: VSCode.Range; replacing: VSCode.Range };
+
 	commitCharacters?: string[];
+
 	additionalTextEdits?: VSCode.TextEdit[];
+
 	command?: VSCode.Command;
 
 	constructor(
@@ -468,13 +552,16 @@ export class CompletionItem implements VSCode.CompletionItem {
 		kind?: VSCode.CompletionItemKind,
 	) {
 		this.label = label;
+
 		this.kind = kind;
 	}
 }
 
 export class ProcessExecution implements VSCode.ProcessExecution {
 	public process: string;
+
 	public args: string[];
+
 	public options?: VSCode.ProcessExecutionOptions;
 
 	constructor(
@@ -483,38 +570,54 @@ export class ProcessExecution implements VSCode.ProcessExecution {
 		options?: VSCode.ProcessExecutionOptions,
 	) {
 		this.process = process;
+
 		this.args = args;
+
 		this.options = options;
 	}
 }
 
 export class ShellExecution implements VSCode.ShellExecution {
 	public commandLine: string;
+
 	public options?: VSCode.ShellExecutionOptions;
+
 	constructor(commandLine: string, options?: VSCode.ShellExecutionOptions) {
 		this.commandLine = commandLine;
+
 		this.options = options;
 	}
+
 	command: string | VSCode.ShellQuotedString | undefined;
+
 	args: (string | VSCode.ShellQuotedString)[] | undefined;
 }
 
 export class Task implements VSCode.Task {
 	public definition: VSCode.TaskDefinition;
+
 	public scope:
 		| VSCode.TaskScope.Global
 		| VSCode.TaskScope.Workspace
 		| VSCode.WorkspaceFolder;
+
 	public name: string;
+
 	public source: string;
+
 	public execution?:
 		| VSCode.ProcessExecution
 		| VSCode.ShellExecution
 		| VSCode.CustomExecution;
+
 	public problemMatchers: string[];
+
 	public isBackground: boolean;
+
 	public presentationOptions: VSCode.TaskPresentationOptions;
+
 	public group?: VSCode.TaskGroup;
+
 	public runOptions: VSCode.RunOptions;
 
 	constructor(
@@ -532,13 +635,21 @@ export class Task implements VSCode.Task {
 		problemMatchers?: string[],
 	) {
 		this.definition = definition;
+
 		this.scope = scope;
+
 		this.name = name;
+
 		this.source = source;
+
 		this.execution = execution;
+
 		this.problemMatchers = problemMatchers ?? [];
+
 		this.isBackground = false;
+
 		this.presentationOptions = {};
+
 		this.runOptions = {};
 	}
 }
@@ -577,6 +688,7 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 		_newUri: VSCode.Uri,
 		_options?: {
 			readonly overwrite?: boolean;
+
 			readonly ignoreIfExists?: boolean;
 		},
 	): void {
@@ -587,6 +699,7 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 		_uri: VSCode.Uri,
 		_options?: {
 			readonly overwrite?: boolean;
+
 			readonly ignoreIfExists?: boolean;
 		},
 	): void {
@@ -597,6 +710,7 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 		_uri: VSCode.Uri,
 		_options?: {
 			readonly recursive?: boolean;
+
 			readonly ignoreIfNotExists?: boolean;
 		},
 	): void {

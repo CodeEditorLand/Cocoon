@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/LanguageFeature/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility:
  * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ./Service.js, effect, vs/platform/extensions/common/extensions.js
  */

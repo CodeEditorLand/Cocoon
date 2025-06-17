@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ./Error.js, effect, vs/base/parts/ipc/common/ipc.js, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:19 UTC
+ * Dependency: ./Error/IPCError.js, effect, vs/base/parts/ipc/common/ipc.js, vscode
  * Export: IPCService
  */
 
@@ -16,7 +16,7 @@ import { Context, type Effect } from "effect";
 import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
 import type { Disposable } from "vscode";
 
-import type { IPCError } from "./Error.js";
+import IPCError from "./Error/IPCError.js";
 
 /**
  * The `Context.Tag` for the `IPC.Service`.

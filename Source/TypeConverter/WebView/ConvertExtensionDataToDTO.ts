@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/WebView/ConvertExtensionDataToDTO.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:03 UTC
  * Dependency: vs/platform/extensions/common/extensions.js, vscode
  */
 
@@ -28,7 +28,7 @@ interface IWebviewExtensionDescription {
  * @param ExtensionDescription The full description of the extension.
  * @returns A `IWebviewExtensionDescription` DTO containing the extension's ID and location URI.
  */
-const ConvertExtensionDataToDTO = (
+export default (
 	ExtensionDescription: IExtensionDescription,
 	resource?: VSCode.Uri,
 ): IWebviewExtensionDescription => {
@@ -37,5 +37,3 @@ const ConvertExtensionDataToDTO = (
 		location: resource ?? ExtensionDescription.extensionLocation,
 	};
 };
-
-export default ConvertExtensionDataToDTO;

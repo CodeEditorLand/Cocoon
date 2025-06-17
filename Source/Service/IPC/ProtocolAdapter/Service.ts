@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:53:05 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:20 UTC
  * Dependency: effect, vs/base/parts/ipc/common/ipc.js
  * Export: ProtocolAdapterService
  */

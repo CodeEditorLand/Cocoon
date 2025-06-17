@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/Main/TextEdit.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:05 UTC
  * Dependency: ./Range.js, vs/editor/common/model.js, vscode
  */
 

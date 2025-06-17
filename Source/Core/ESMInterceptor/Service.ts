@@ -1,7 +1,9 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/Service.ts
- * Responsibility: Defines the Context.Tag and interface for the ESMInterceptor service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:42 UTC
+ * Dependency: effect
+ * Export: ESMInterceptorService
  */
 
 /**

@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/WebViewPanel/Definition.ts
- * Responsibility: The live implementation of the WebViewPanel service factory.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:10 UTC
+ * Dependency: ../../TypeConverter/WebView/ConvertContentOptionToDTO.js, ../../TypeConverter/WebView/ConvertPanelOptionToDTO.js, ../../TypeConverter/WebView/ConvertShowOptionToDTO.js, ../IPC/Service.js, ./Service.js, ./WebViewPanelImplementation.js, effect, vs/base/common/uuid.js, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**
@@ -14,7 +15,9 @@ import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Disposable, type WebviewPanelSerializer } from "vscode";
 
-import { WebView as TypeConverter } from "../../TypeConverter/WebView.js";
+import ConvertContentOptionToDTO from "../../TypeConverter/WebView/ConvertContentOptionToDTO.js";
+import ConvertPanelOptionToDTO from "../../TypeConverter/WebView/ConvertPanelOptionToDTO.js";
+import ConvertShowOptionToDTO from "../../TypeConverter/WebView/ConvertShowOptionToDTO.js";
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
 import WebViewPanelImplementation from "./WebViewPanelImplementation.js";
@@ -95,14 +98,15 @@ export default Effect.gen(function* (G) {
 						? !!ShowOptions.preserveFocus
 						: false;
 
-				const ShowOptionsDTO = TypeConverter.ConvertShowOptionToDTO(
+				const ShowOptionsDTO = ConvertShowOptionToDTO(
 					ViewColumnValue,
 					PreserveFocus,
 				);
-				const PanelOptionsDTO =
-					TypeConverter.ConvertPanelOptionToDTO(Options);
-				const ContentOptionsDTO =
-					TypeConverter.ConvertContentOptionToDTO(Extension, Options);
+				const PanelOptionsDTO = ConvertPanelOptionToDTO(Options);
+				const ContentOptionsDTO = ConvertContentOptionToDTO(
+					Extension,
+					Options,
+				);
 
 				yield* G(
 					IPC.SendRequest<string>("$createWebviewPanel", [

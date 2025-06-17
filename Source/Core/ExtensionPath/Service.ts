@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ExtensionPath/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:53:05 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:41 UTC
  * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode
  * Export: ExtensionPathService
  */

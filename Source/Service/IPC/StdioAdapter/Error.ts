@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/IPC/StdioAdapter/Error.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility: Defines custom tagged errors for the StdioAdapter IPC layer in the Cocoon sidecar, handling JSON parsing failures, timeouts, and write errors during communication with the Mountain backend via the Vine transport.
+ * Modified: 2025-06-17 21:19:19 UTC
  * Dependency: effect
- * Export: StdioError
+ * Export: extends
  */
 
 /**
@@ -14,7 +14,7 @@
 
 import { Data } from "effect";
 
-export default class StdioError extends Data.TaggedError("StdioError")<{
+export default class extends Data.TaggedError("StdioError")<{
 	readonly cause: unknown;
 	readonly context: "JsonParseFailed" | "RequestTimeout" | "WriteFailed";
 }> {}

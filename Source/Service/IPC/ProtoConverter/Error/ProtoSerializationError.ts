@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtoConverter/Error/ProtoSerializationError.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility:
  * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: effect
  * Export: ProtoSerializationError
@@ -12,9 +12,7 @@ import { Data } from "effect";
  * A tagged error representing a failure during the conversion between a
  * JavaScript value and a Google Protobuf `Value` type.
  */
-export class ProtoSerializationError extends Data.TaggedError(
-	"ProtoSerializationError",
-)<{
+export default class extends Data.TaggedError("ProtoSerializationError")<{
 	readonly cause: unknown;
 	readonly Direction: "Encoding" | "Decoding";
 }> {
@@ -27,5 +25,3 @@ export class ProtoSerializationError extends Data.TaggedError(
 	}
 	public override readonly message: string;
 }
-
-export default ProtoSerializationError;

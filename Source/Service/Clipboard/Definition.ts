@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Clipboard/Definition.ts
- * Responsibility: The live implementation of the Clipboard service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:32 UTC
+ * Dependency: ../IPC/Service.js, effect, vscode
  */
 
 /**

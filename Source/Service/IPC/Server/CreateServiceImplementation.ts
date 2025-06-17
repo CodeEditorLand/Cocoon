@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Server/CreateServiceImplementation.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../Dispatcher/Service.js, ../Generated.js, ../ProtoConverter.js, @grpc/grpc-js, effect
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:20 UTC
+ * Dependency: ../Dispatcher/Service.js, ../Generated.js, ../ProtoConverter/DecodeValue.js, ../ProtoConverter/EncodeValue.js, @grpc/grpc-js, effect
  */
 
 /**
@@ -17,7 +17,8 @@ import { Effect } from "effect";
 
 import type DispatcherService from "../Dispatcher/Service.js";
 import Generated from "../Generated.js";
-import { DecodeValue, EncodeValue } from "../ProtoConverter.js";
+import DecodeValue from "../ProtoConverter/DecodeValue.js";
+import EncodeValue from "../ProtoConverter/EncodeValue.js";
 
 const CreateServiceImplementation = (
 	Dispatcher: DispatcherService["Type"],

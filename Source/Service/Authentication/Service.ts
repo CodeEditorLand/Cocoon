@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Authentication/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: effect, vs/base/common/lifecycle.js
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:33 UTC
+ * Dependency: ./Error/AuthenticationProviderExistsError.js, ./Error/AuthenticationProviderRegistrationError.js, effect, vs/base/common/lifecycle.js
  * Export: AuthenticationService
  */
 
@@ -23,10 +23,8 @@ import type {
 	Extension,
 } from "vscode";
 
-import type {
-	AuthenticationProviderExistsError,
-	AuthenticationProviderRegistrationError,
-} from "./Error.js";
+import type AuthenticationProviderExistsError from "./Error/AuthenticationProviderExistsError.js";
+import type AuthenticationProviderRegistrationError from "./Error/AuthenticationProviderRegistrationError.js";
 
 export default class AuthenticationService extends Context.Tag(
 	"Service/Authentication",

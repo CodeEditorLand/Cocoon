@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Server/Acquire.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../Configuration.js, ../Dispatcher/Service.js, ../Error.js, ./CreateServiceImplementation.js, ./Release.js, @grpc/grpc-js, @grpc/proto-loader, effect, node:path
+ * Responsibility: Implements the gRPC server acquisition and startup logic for the Cocoon sidecar, loading protocol definitions and binding service implementations to enable IPC communication with the Mountain backend via the Vine layer.
+ * Modified: 2025-06-17 21:19:20 UTC
+ * Dependency: ../Configuration.js, ../Dispatcher/Service.js, ../Error/gRPCConnectionError.js, ./CreateServiceImplementation.js, ./Release.js, @grpc/grpc-js, @grpc/proto-loader, effect, node:path
  */
 
 /**
@@ -16,9 +16,9 @@ import * as GRPC from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect } from "effect";
 
-import { IPCConfigurationService } from "../Configuration.js";
+import IPCConfigurationService from "../Configuration.js";
 import DispatcherService from "../Dispatcher/Service.js";
-import { gRPCConnectionError } from "../Error.js";
+import gRPCConnectionError from "../Error/gRPCConnectionError.js";
 import CreateServiceImplementation from "./CreateServiceImplementation.js";
 import Release from "./Release.js";
 

@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/Environment/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility:
  * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../Clipboard/Service.js, ../IPC/Service.js, ../InitData/Service.js, ./Service.js, effect, vs/base/common/network.js, vscode
  */
@@ -14,7 +14,7 @@ import { Effect, Ref } from "effect";
 import { Schemas } from "vs/base/common/network.js";
 import { UIKind, type LogLevel, type Uri } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/Main.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import ClipboardService from "../Clipboard/Service.js";
 import InitDataService from "../InitData/Service.js";
@@ -54,14 +54,14 @@ export default Effect.gen(function* () {
 	// --- Effects for Methods ---
 	const CreateOpenExternalEffect = (Target: Uri) =>
 		IPC.SendRequest<boolean>("$openUri", [
-			TypeConverter.URI.FromAPI(Target),
+			URIConverter.FromAPI(Target),
 			{ allowExternalSchemes: true },
 		]).pipe(Effect.map((Result) => !!Result));
 
 	const CreateAsExternalURIEffect = (Target: Uri) =>
 		IPC.SendRequest<any>("$asExternalUri", [
-			TypeConverter.URI.FromAPI(Target),
-		]).pipe(Effect.map((Dto) => TypeConverter.URI.ToAPI(Dto)));
+			URIConverter.FromAPI(Target),
+		]).pipe(Effect.map((Dto) => URIConverter.ToAPI(Dto)));
 
 	const GetAppRoot = () => {
 		const AppRootUri = InitData.environment.appRoot;

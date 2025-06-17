@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/PatchProcess.ts
- * Responsibility: Orchestrates the application of all process-level patches.
- * Modified: 2025-06-17 11:22:56 UTC
+ * Responsibility: Orchestrates process-level patches for the Cocoon Node.js sidecar, applying security, stability, and environment configurations to ensure proper integration with the Mountain backend and Vine IPC layer.
+ * Modified: 2025-06-17 21:19:34 UTC
+ * Dependency: ./PatchProcess/BlockNativesModule.js, ./PatchProcess/HandleException.js, ./PatchProcess/PatchProcessCrash.js, ./PatchProcess/PatchProcessExit.js, ./PatchProcess/PipeLogging.js, ./PatchProcess/SetElectronRunAsNode.js, ./PatchProcess/SetStackTraceLimit.js, ./PatchProcess/SetupEnvironment.js, ./PatchProcess/TerminateOnParentExit.js, effect
  */
 
 import { Effect } from "effect";

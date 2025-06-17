@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Extension/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:25 UTC
  * Dependency: effect, vscode
  * Export: ExtensionService
  */

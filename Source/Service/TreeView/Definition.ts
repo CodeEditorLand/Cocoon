@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/TreeView/Definition.ts
- * Responsibility: The live implementation of the TreeView service factory.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:11 UTC
+ * Dependency: ../../TypeConverter/TreeView.js, ../Command/Service.js, ../IPC/Service.js, ./Service.js, ./TreeViewImplementation.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**

@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/WebViewPanel/WebViewPanelImplementation.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:53:25 UTC
- * Dependency: ../../TypeConverter/Main.js, ../../TypeConverter/WebView.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../WebView/WebViewImplementation.js, effect, vs/platform/extensions/common/extensions.js
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:09 UTC
+ * Dependency: ../../TypeConverter/Main/URI.js, ../../TypeConverter/WebView/ConvertShowOptionToDTO.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../WebView/WebViewImplementation.js, effect, vs/platform/extensions/common/extensions.js
  * Export: implements
  */
 
@@ -24,8 +24,8 @@ import type {
 	WebviewPanelOptions,
 } from "vscode";
 
-import { URI as URIConverter } from "../../TypeConverter/Main.js";
-import { WebView as WebViewConverter } from "../../TypeConverter/WebView.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
+import ConvertShowOptionToDTO from "../../TypeConverter/WebView/ConvertShowOptionToDTO.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type IPCService from "../IPC/Service.js";
 import WebViewImplementation from "../WebView/WebViewImplementation.js";
@@ -187,7 +187,7 @@ export default class implements WebviewPanel {
 		if (this.IsDisposed) return;
 
 		const ViewColumnDTO = ViewColumn
-			? WebViewConverter.ConvertShowOptionToDTO(
+			? ConvertShowOptionToDTO(
 					ViewColumn,
 
 					PreserveFocus ?? false,

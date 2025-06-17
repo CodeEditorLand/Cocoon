@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Server/Release.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../Error.js, @grpc/grpc-js, effect
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:19 UTC
+ * Dependency: ../Error/IPCError.js, @grpc/grpc-js, effect
  */
 
 /**
@@ -14,7 +14,7 @@
 import type * as GRPC from "@grpc/grpc-js";
 import { Effect } from "effect";
 
-import { IPCError } from "../Error.js";
+import IPCError from "../Error/IPCError.js";
 
 /**
  * An `Effect` that gracefully shuts down the gRPC server.

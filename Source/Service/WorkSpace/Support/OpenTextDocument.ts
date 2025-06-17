@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/WorkSpace/Support/OpenTextDocument.ts
- * Responsibility: An Effect for the `workspace.openTextDocument` API.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:07 UTC
+ * Dependency: ../../../TypeConverter/Main/URI.js, ../../Document/Service.js, ../../IPC/Service.js, effect, vscode
  */
 
 /**
@@ -12,7 +13,7 @@
 import { Effect, Option } from "effect";
 import { Uri, type TextDocument } from "vscode";
 
-import * as TypeConverter from "../../../TypeConverter/Main.js";
+import URIConverter from "../../../TypeConverter/Main/URI.js";
 import type DocumentService from "../../Document/Service.js";
 import type IPCService from "../../IPC/Service.js";
 
@@ -31,11 +32,15 @@ export default (
 	Effect.gen(function* (G) {
 		if (options instanceof Uri) {
 			const Existing = yield* G(Document.GetDocument(options));
+
 			if (Option.isSome(Existing)) {
 				return Existing.value;
 			}
-			const UriDTO = TypeConverter.URI.FromAPI(options);
+
+			const UriDTO = URIConverter.FromAPI(options);
+
 			yield* G(IPC.SendNotification("$openTextDocument", [UriDTO]));
+
 			// TODO: A robust implementation would need to wait for the '$acceptModelAdded'
 			// event for this specific URI before proceeding. This requires a more complex
 			// event-driven flow, potentially using a Deferred or PubSub.
@@ -50,8 +55,11 @@ export default (
 			const ResultDTO = yield* G(
 				IPC.SendRequest<any>("$openTextDocument", [options]),
 			);
-			const uri = TypeConverter.URI.ToAPI(ResultDTO.uri);
+
+			const uri = URIConverter.ToAPI(ResultDTO.uri);
+
 			const Doc = yield* G(Document.GetDocument(uri));
+
 			return yield* G(
 				Option.match(Doc, {
 					onSome: (doc) => Effect.succeed(doc),

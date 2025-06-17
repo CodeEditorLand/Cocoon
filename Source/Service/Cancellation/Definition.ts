@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Cancellation/Definition.ts
- * Responsibility: The live implementation of the CancellationTokenProvider service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:32 UTC
  * Dependency: ./Error/InvalidTokenIDError.js, ./Service.js, effect, vs/base/common/cancellation.js
  */
 

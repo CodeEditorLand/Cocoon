@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Dialog/Definition.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:53:06 UTC
- * Dependency: ../../TypeConverter/Dialog.js, ../IPC/Service.js, ./Error.js, ./Service.js, effect, vs/base/common/errors.js
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:26 UTC
+ * Dependency: ../../TypeConverter/Dialog.js, ../IPC/Service.js, ./Error/DialogError.js, ./Service.js, effect, vs/base/common/errors.js
  */
 
 /**
@@ -21,7 +21,7 @@ import type {
 
 import DialogConverter from "../../TypeConverter/Dialog.js";
 import IPCService from "../IPC/Service.js";
-import { DialogError } from "./Error.js";
+import DialogError from "./Error/DialogError.js";
 import type Service from "./Service.js";
 
 const CreateDialogEffect = <Option, DTO, Result>(

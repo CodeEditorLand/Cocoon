@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/Main/WorkspaceFolder.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:04 UTC
  * Dependency: ./URI.js, vs/platform/workspace/common/workspace.js, vscode
  */
 
@@ -15,7 +15,7 @@ import type { WorkspaceFolder } from "vscode";
 
 import URIConverter from "./URI.js";
 
-const fromDTO = (DTO: IWorkspaceFolderData): WorkspaceFolder => {
+const FromDTO = (DTO: IWorkspaceFolderData): WorkspaceFolder => {
 	return {
 		uri: URIConverter.ToAPI(DTO.uri),
 		name: DTO.name,
@@ -24,5 +24,5 @@ const fromDTO = (DTO: IWorkspaceFolderData): WorkspaceFolder => {
 };
 
 export default {
-	fromDTO,
+	FromDTO,
 };

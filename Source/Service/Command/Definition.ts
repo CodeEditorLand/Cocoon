@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Command/Definition.ts
- * Responsibility: The live implementation of the Command service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:31 UTC
+ * Dependency: ../IPC/Service.js, ../Telemetry/Service.js, ../Window/Service.js, ./Service.js, ./Type.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**

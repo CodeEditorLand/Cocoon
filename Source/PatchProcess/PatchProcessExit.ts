@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/PatchProcess/PatchProcessExit.ts
- * Responsibility: Patches the global `process.exit` function.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:36 UTC
+ * Dependency: ./Error/ExitPreventedError.js, ./Service.js, effect
  */
 
 /**

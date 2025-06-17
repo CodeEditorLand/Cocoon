@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Dialog/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ./Error.js, ./Type.js, effect, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:27 UTC
+ * Dependency: ./Error/DialogError.js, ./Type.js, effect, vscode
  * Export: DialogService
  */
 
@@ -15,7 +15,7 @@
 import { Context, type Effect } from "effect";
 import type { CancellationToken, Uri } from "vscode";
 
-import type { DialogError } from "./Error.js";
+import type DialogError from "./Error/DialogError.js";
 import type { OpenDialogOptions, SaveDialogOptions } from "./Type.js";
 
 export default class DialogService extends Context.Tag("Service/Dialog")<

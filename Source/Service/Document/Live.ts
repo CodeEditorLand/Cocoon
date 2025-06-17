@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Document/Live.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility: Implements the live Layer for the Document service in the Cocoon sidecar, providing real-time document management capabilities through IPC communication with the Mountain backend via the Vine transport layer.
+ * Modified: 2025-06-17 21:19:27 UTC
  * Dependency: ./Definition.js, ./Service.js, effect
  */
 

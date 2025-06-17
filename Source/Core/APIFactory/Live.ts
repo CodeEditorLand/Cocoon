@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/Live.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:53:13 UTC
+ * Responsibility: Implements the live Layer for the APIFactory service in the Cocoon sidecar, providing dependency injection for VS Code extension APIs using Effect's Layer to combine service definitions and implementations.
+ * Modified: 2025-06-17 21:19:42 UTC
  * Dependency: ./Definition.js, ./Service.js, effect
  */
 

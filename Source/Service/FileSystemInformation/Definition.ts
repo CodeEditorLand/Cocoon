@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/FileSystemInformation/Definition.ts
- * Responsibility: The live implementation of the FileSystemInformation service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:24 UTC
+ * Dependency: ../../TypeConverter/Main/URI.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Service.js, effect, vs/base/common/platform.js, vs/base/common/resources.js, vs/platform/files/common/files.js, vscode
  */
 
 /**
@@ -15,7 +16,7 @@ import { ExtUri, type IExtUri } from "vs/base/common/resources.js";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
 import type { FileChangeEvent } from "vscode";
 
-import { URI as URIConverter } from "../../TypeConverter/Main.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";

@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Log/Definition.ts
- * Responsibility: The live implementation of the Log service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:17 UTC
+ * Dependency: ./Service.js, effect
  */
 
 /**

@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/Definition.ts
- * Responsibility: The live implementation of the FileSystem service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:24 UTC
+ * Dependency: ../../TypeConverter/Main/URI.js, ../FileSystemInformation/Service.js, ../IPC/Service.js, ./Service.js, effect
  */
 
 /**
@@ -16,7 +17,7 @@ import {
 	type Uri,
 } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/Main.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
 import FileSystemInformationService from "../FileSystemInformation/Service.js";
 import IPCService from "../IPC/Service.js";
 import type { FileSystemServiceType } from "./Service.js";
@@ -31,7 +32,7 @@ export default Effect.gen(function* (G) {
 	// --- Internal Helper Effects ---
 	const StatEffect = (uri: Uri): Effect.Effect<FileStat, Error> =>
 		Effect.gen(function* (G) {
-			const UriDTO = TypeConverter.URI.FromAPI(uri);
+			const UriDTO = URIConverter.FromAPI(uri);
 			const StatDTO = yield* G(IPC.SendRequest<any>("$stat", [UriDTO]));
 			const FileStat: FileStat = {
 				type: StatDTO.type,

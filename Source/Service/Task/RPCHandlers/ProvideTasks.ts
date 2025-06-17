@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Task/RPCHandlers/ProvideTasks.ts
- * Responsibility: Implements the RPC handler for providing tasks from an extension's TaskProvider.
- * Modified: 2025-06-17 10:53:23 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:12 UTC
+ * Dependency: ../../../TypeConverter/Task.js, ../../Cancellation/Service.js, effect, vscode
  */
 
 /**
@@ -13,7 +14,7 @@ import { Effect, Ref } from "effect";
 import type { Task, TaskProvider } from "vscode";
 
 import { Task as TaskConverter } from "../../../TypeConverter/Task.js";
-import type CancellationService from "../../Cancellation/Service.js"; // Import the type
+import type CancellationService from "../../Cancellation/Service.js";
 
 /**
  * An Effect that handles the `$provideTasks` RPC call from Mountain.
@@ -27,7 +28,6 @@ const ProvideTasksEffect = (
 	Registry: Ref.Ref<Map<number, any>>,
 	Handle: number,
 	TokenID: number,
-	// FIX: Explicitly take the CancellationService as an argument.
 	Cancellation: CancellationService["Type"],
 ) => {
 	return Effect.gen(function* (G) {
@@ -53,7 +53,7 @@ const ProvideTasksEffect = (
 					Provider.provideTasks!(Token) as Promise<
 						Task[] | null | undefined
 					>,
-				catch: (CaughtError) => CaughtError,
+				catch: (CaughtError) => CaughtError as Error,
 			}),
 		);
 

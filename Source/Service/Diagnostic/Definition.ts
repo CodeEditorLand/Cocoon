@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Diagnostic/Definition.ts
- * Responsibility: Implements the Diagnostic service for the Cocoon sidecar, providing methods to create diagnostic collections and handle IPC communication with the Mountain backend to synchronize VS Code extension diagnostics.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./DiagnosticCollectionImplementation.js, ./Service.js, effect, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:28 UTC
+ * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./DiagnosticCollectionImplementation.js, ./Service.js, Source/TypeConverter/Main/URI.js, effect, vscode
  */
 
 /**
@@ -11,9 +11,9 @@
  */
 
 import { Effect } from "effect";
+import URIConverter from "Source/TypeConverter/Main/URI.js";
 import type { Uri } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/Main.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
 import DiagnosticCollectionImplementation from "./DiagnosticCollectionImplementation.js";
@@ -31,7 +31,7 @@ export default Effect.gen(function* () {
 			"$acceptMarkerData",
 			([uriComponentsArray]): Promise<void> => {
 				const RevivedUris = uriComponentsArray.map((DTO: any) =>
-					TypeConverter.URI.ToAPI(DTO),
+					URIConverter.ToAPI(DTO),
 				);
 				return Effect.runPromise(Fire(RevivedUris));
 			},

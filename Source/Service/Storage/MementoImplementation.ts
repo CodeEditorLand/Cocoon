@@ -1,7 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Storage/MementoImplementation.ts
- * Responsibility: The concrete implementation of the `vscode.Memento` interface.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:13 UTC
+ * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, effect, vscode
+ * Export: MementoImplementation
  */
 
 /**

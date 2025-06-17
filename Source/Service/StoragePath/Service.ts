@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/StoragePath/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:12 UTC
  * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode
  * Export: StoragePathService
  */

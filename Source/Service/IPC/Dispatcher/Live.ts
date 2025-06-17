@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/Dispatcher/Live.ts
- * Responsibility: Provides the live implementation Layer for the Dispatcher service, which routes all incoming RPC messages from the Mountain host to appropriate handlers within Cocoon.
- * Modified: 2025-06-17 11:20:29 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:21 UTC
  * Dependency: ../../Cancellation/Service.js, ../ProtocolAdapter/Service.js, ./Definition.js, ./Service.js, effect
  */
 

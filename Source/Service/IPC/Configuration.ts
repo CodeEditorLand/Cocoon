@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/Configuration.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility: Defines the network address configuration for IPC communication between the Cocoon sidecar and Mountain backend using gRPC, specifying the Mountain server location and Cocoon's listening endpoint.
+ * Modified: 2025-06-17 21:19:22 UTC
  * Dependency: effect
  * Export: IPCConfiguration, IPCConfigurationService
  */
@@ -32,6 +32,6 @@ export interface IPCConfiguration {
  * The `Context.Tag` for the `IPCConfiguration` service.
  * This allows the configuration to be provided and injected as a formal dependency.
  */
-export class IPCConfigurationService extends Context.Tag(
+export default class IPCConfigurationService extends Context.Tag(
 	"Service/IPCConfiguration",
 )<IPCConfigurationService, IPCConfiguration>() {}

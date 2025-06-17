@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Cancellation/Service.ts
- * Responsibility: Defines the contract for the CancellationTokenProvider service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:31 UTC
  * Dependency: ./Error/InvalidTokenIDError.js, effect, vscode
  * Export: CancellationService
  */

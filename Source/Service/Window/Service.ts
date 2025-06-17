@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Window/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:09 UTC
  * Dependency: effect
  * Export: WindowService
  */
@@ -32,13 +32,9 @@ import type {
 export default class WindowService extends Context.Tag("Service/Window")<
 	WindowService,
 	{
+		readonly activeTextEditor: any;
 		readonly state: WindowState;
 		readonly onDidChangeWindowState: Event<WindowState>;
-
-		readonly activeTextEditor: TextEditor | undefined;
-		readonly visibleTextEditors: readonly TextEditor[];
-		readonly onDidChangeActiveTextEditor: Event<TextEditor | undefined>;
-		readonly onDidChangeVisibleTextEditors: Event<readonly TextEditor[]>;
 
 		/**
 		 * Shows a text document in an editor.

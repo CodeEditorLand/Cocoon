@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Document/Type.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:27 UTC
  * Dependency: vscode
  */
 

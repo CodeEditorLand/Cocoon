@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/WorkSpace/Support/FindFiles.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../../TypeConverter/Main.js, ../../IPC/Service.js, effect, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:08 UTC
+ * Dependency: ../../../TypeConverter/Main/URI.js, ../../IPC/Service.js, effect, vscode
  */
 
 /**
@@ -13,7 +13,7 @@
 import { Effect } from "effect";
 import type { CancellationToken, GlobPattern } from "vscode";
 
-import * as TypeConverter from "../../../TypeConverter/Main.js";
+import URIConverter from "../../../TypeConverter/Main/URI.js";
 import type IPCService from "../../IPC/Service.js";
 
 export default (
@@ -36,5 +36,5 @@ export default (
 			TokenID,
 		]);
 
-		return ResultDTOs.map(TypeConverter.URI.ToAPI);
+		return ResultDTOs.map(URIConverter.ToAPI);
 	});

@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/WebView/WebViewImplementation.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../TypeConverter/WebView.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, effect, vs/base/common/network.js, vs/platform/extensions/common/extensions.js, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:10 UTC
+ * Dependency: ../../TypeConverter/WebView/ConvertContentOptionToDTO.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, effect, vs/base/common/network.js, vs/platform/extensions/common/extensions.js, vscode
  * Export: implements
  */
 
@@ -18,7 +18,7 @@ import { Schemas } from "vs/base/common/network.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
 
-import { WebView as WebViewConverter } from "../../TypeConverter/WebView.js";
+import ConvertContentOptionToDTO from "../../TypeConverter/WebView/ConvertContentOptionToDTO.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type IPCService from "../IPC/Service.js";
 
@@ -70,7 +70,7 @@ export default class implements Webview {
 			return;
 		}
 		this._options = NewOptions;
-		const OptionsDTO = WebViewConverter.ConvertContentOptionToDTO(
+		const OptionsDTO = ConvertContentOptionToDTO(
 			this.Extension,
 			NewOptions,
 		);

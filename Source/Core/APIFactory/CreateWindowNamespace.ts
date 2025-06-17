@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateWindowNamespace.ts
- * Responsibility: Constructs the vscode.window namespace for the API object.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:43 UTC
+ * Dependency: ../../Service/StatusBar/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**
@@ -16,30 +17,31 @@ import type StatusBarService from "../../Service/StatusBar/Service.js";
 import type TreeViewService from "../../Service/TreeView/Service.js";
 import type WebViewPanelService from "../../Service/WebViewPanel/Service.js";
 import type WindowService from "../../Service/Window/Service.js";
+import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
 
 /**
  * Creates the `vscode.window` namespace object.
  */
 const CreateWindowNamespace = (
 	Window: WindowService["Type"],
-	// FIX: Removed unused parameter `WorkSpace`
-	// WorkSpace: WorkSpaceService["Type"],
 	StatusBar: StatusBarService["Type"],
 	WebViewPanel: WebViewPanelService["Type"],
 	TreeView: TreeViewService["Type"],
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
+	WorkSpace: WorkSpaceService["Type"], // Pass WorkSpace for editor state
 ): typeof VSCode.window => {
 	const WindowNamespace: Partial<typeof VSCode.window> = {
 		// --- Properties ---
 		get state() {
 			return Window.state;
 		},
+		// Editor state is now managed by WorkSpaceService
 		get activeTextEditor() {
-			return Window.activeTextEditor;
+			return WorkSpace.activeTextEditor;
 		},
 		get visibleTextEditors() {
-			return Window.visibleTextEditors;
+			return WorkSpace.visibleTextEditors;
 		},
 		get activeTerminal() {
 			return undefined;
@@ -53,11 +55,12 @@ const CreateWindowNamespace = (
 
 		// --- Events ---
 		onDidChangeWindowState: AsEvent(Window.onDidChangeWindowState),
+		// Editor events are now on WorkSpaceService
 		onDidChangeActiveTextEditor: AsEvent(
-			Window.onDidChangeActiveTextEditor,
+			WorkSpace.onDidChangeActiveTextEditor,
 		),
 		onDidChangeVisibleTextEditors: AsEvent(
-			Window.onDidChangeVisibleTextEditors,
+			WorkSpace.onDidChangeVisibleTextEditors,
 		),
 
 		// --- Methods from other services (now return Effects) ---

@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Diagnostic/DiagnosticCollectionImplementation.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:53:21 UTC
- * Dependency: ../../TypeConverter/Diagnostic.js, ../../TypeConverter/Main.js, ../IPC/Service.js, effect, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:28 UTC
+ * Dependency: ../../TypeConverter/Diagnostic.js, ../../TypeConverter/Main/URI.js, ../IPC/Service.js, effect, vscode
  * Export: implements
  */
 
@@ -16,8 +16,8 @@
 import { Effect } from "effect";
 import type { Diagnostic, DiagnosticCollection, Uri } from "vscode";
 
-import { default as DiagnosticConverter } from "../../TypeConverter/Diagnostic.js";
-import * as TypeConverter from "../../TypeConverter/Main.js";
+import DiagnosticConverter from "../../TypeConverter/Diagnostic.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
 import CreateEventStream, {
 	type EventStream,
 } from "../../Utility/CreateEventStream.js";
@@ -51,7 +51,7 @@ export default class implements DiagnosticCollection {
 		const DiagnosticsDTO = Diagnostics
 			? DiagnosticConverter.FromAPIArray(Diagnostics)
 			: undefined;
-		const UriDTO = TypeConverter.URI.FromAPI(Uri);
+		const UriDTO = URIConverter.FromAPI(Uri);
 
 		// Send the notification to the host process to update the diagnostics.
 		return this.IPC.SendNotification("$changeMany", [
@@ -76,7 +76,7 @@ export default class implements DiagnosticCollection {
 		if (Array.isArray(uriOrEntries)) {
 			// Step 1: Convert all URI and Diagnostic objects to their DTOs.
 			const ConvertedEntries = uriOrEntries.map(([Uri, Diags]) => [
-				TypeConverter.URI.FromAPI(Uri),
+				URIConverter.FromAPI(Uri),
 				Diags ? DiagnosticConverter.FromAPIArray(Diags) : undefined,
 			]);
 			// Step 2: Send the batch update notification.

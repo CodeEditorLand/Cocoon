@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ExtensionPath/Definition.ts
- * Responsibility: Implements the ExtensionPath service in the Cocoon sidecar to map file URIs to their owning VS Code extensions, supporting module interception by maintaining a sorted index of extension paths for efficient lookup.
- * Modified: 2025-06-17 10:53:05 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:42 UTC
  * Dependency: node:path, vs/base/common/uri.js, vscode
  */
 

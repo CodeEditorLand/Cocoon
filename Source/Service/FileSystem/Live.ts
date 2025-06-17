@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/Live.ts
- * Responsibility: Implements the live FileSystem service layer for the Cocoon sidecar using Effect's Layer, enabling Node.js-based file system operations required for VS Code extension hosting in the Land editor's MVP Path A.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:24 UTC
  * Dependency: ./Definition.js, ./Service.js, effect
  */
 

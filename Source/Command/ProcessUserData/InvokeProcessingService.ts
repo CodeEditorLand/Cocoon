@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Command/ProcessUserData/InvokeProcessingService.ts
- * Responsibility: Invokes the text processing service via the Vine IPC layer from the Cocoon sidecar, routing requests through Mountain's Track dispatcher to enable VS Code extension functionality while maintaining process isolation.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:45 UTC
  * Dependency: ../../Service/IPC/Service.js, ./Error.js, effect
  */
 

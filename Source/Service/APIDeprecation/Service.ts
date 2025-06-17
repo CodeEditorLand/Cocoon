@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Service/APIDeprecation/Service.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility:
  * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: effect, vs/platform/extensions/common/extensions.js
  * Export: APIDeprecationService

@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Core/RequireInterceptor/Definition.ts
- * Responsibility: Implements the core logic for intercepting Node.js module loading.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:39 UTC
+ * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ../NodeModuleShim/Service.js, ./Factory/Interface.js, ./Factory/VSCode.js, ./Service.js, effect, node:module, vs/base/common/uri.js, vscode
  */
 
 /**
@@ -75,9 +76,6 @@ export default Effect.gen(function* (G) {
 							if (Exit.isSuccess(ShimResult)) {
 								return ShimResult.value;
 							} else {
-								// FIX: Use `Cause.squash` to extract the error. This will
-								// correctly throw the underlying error or a RuntimeException
-								// if the cause was a defect.
 								throw Cause.squash(ShimResult.cause);
 							}
 						}

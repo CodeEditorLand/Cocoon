@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/PatchProcess/PipeLogging.ts
- * Responsibility: Monkey-patches the global console object to forward logs via IPC.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:36 UTC
+ * Dependency: ../Service/IPC/Service.js, effect
  */
 
 /**

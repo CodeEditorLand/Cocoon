@@ -14,7 +14,7 @@ import { Effect, Ref } from "effect";
 import { Disposable } from "vscode";
 
 import IPCService from "../IPC/Service.js";
-import { DebugProviderRegistrationError } from "./Error.js";
+import DebugProviderRegistrationError from "./Error/DebugProviderRegistrationError.js";
 
 let HandleCounter = 0;
 

@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/SecretStorage/Definition.ts
- * Responsibility: The live implementation of the SecretStorage service factory.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:15 UTC
+ * Dependency: ../IPC/Service.js, ../Log/Service.js, ./SecretStorageImplementation.js, ./Service.js, effect
  */
 
 /**

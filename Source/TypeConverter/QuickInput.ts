@@ -1,9 +1,8 @@
 /*
  * File: Cocoon/Source/TypeConverter/QuickInput.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:04 UTC
  * Dependency: vscode
- * Export: QuickInput
  */
 
 /**
@@ -13,7 +12,7 @@
 
 import { Uri, type QuickInputButton, type QuickPickItem } from "vscode";
 
-const QuickPick = {
+export default {
 	/**
 	 * Serializes `QuickPickItem` or string arrays for IPC transport.
 	 * It attaches a temporary index to map results back to the original objects.
@@ -59,5 +58,3 @@ const QuickPick = {
 		});
 	},
 };
-
-export const QuickInput = QuickPick;

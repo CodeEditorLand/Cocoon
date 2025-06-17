@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/PatchProcess/Live.ts
- * Responsibility: Implements the live layer for the ProcessPatch service.
- * Modified: 2025-06-17 11:21:12 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:36 UTC
+ * Dependency: ./Service.js, effect
  */
 
 /**

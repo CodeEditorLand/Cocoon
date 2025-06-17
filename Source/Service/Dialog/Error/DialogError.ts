@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Dialog/Error/DialogError.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:53:21 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:27 UTC
  * Dependency: effect
  * Export: DialogError
  */

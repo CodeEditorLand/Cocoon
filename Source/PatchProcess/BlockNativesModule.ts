@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/PatchProcess/BlockNativesModule.ts
- * Responsibility: Patches Node.js's module loader to block the 'natives' module.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:35 UTC
+ * Dependency: effect, natives, node:module
  */
 
 /**

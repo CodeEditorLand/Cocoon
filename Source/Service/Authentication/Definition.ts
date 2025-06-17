@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Authentication/Definition.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Service.js, ./Type.js, effect, vs/base/common/lifecycle.js
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:33 UTC
+ * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Error/AuthenticationProviderExistsError.js, ./Error/AuthenticationProviderRegistrationError.js, ./Service.js, ./Type.js, effect, vs/base/common/lifecycle.js
  */
 
 /**
@@ -22,10 +22,8 @@ import type {
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
-import {
-	AuthenticationProviderExistsError,
-	AuthenticationProviderRegistrationError,
-} from "./Error.js";
+import AuthenticationProviderExistsError from "./Error/AuthenticationProviderExistsError.js";
+import AuthenticationProviderRegistrationError from "./Error/AuthenticationProviderRegistrationError.js";
 import type Service from "./Service.js";
 import { ConvertSessionToInternal, ConvertSessionToVSCode } from "./Type.js";
 

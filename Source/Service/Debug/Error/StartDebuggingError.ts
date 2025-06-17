@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Debug/Error/StartDebuggingError.ts
- * Responsibility: Defines a custom error type for failures when initiating debug sessions in the Cocoon Node.js sidecar, used to handle VS Code extension debugging in Land's MVP Path A implementation.
- * Modified: 2025-06-17 10:53:04 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:30 UTC
  * Dependency: effect
  * Export: StartDebuggingError
  */

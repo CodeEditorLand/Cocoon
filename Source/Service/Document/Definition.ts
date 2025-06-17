@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Document/Definition.ts
- * Responsibility: The live implementation of the Document service.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:27 UTC
+ * Dependency: ../../TypeConverter/Main/Range.js, ../../TypeConverter/Main/URI.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect, vs/editor/common/model/mirrorTextModel.js, vs/workbench/api/common/extHost.protocol.js, vs/workbench/api/common/extHostDocumentData.js, vscode
  */
 
 /**
@@ -15,7 +16,8 @@ import { MainThreadDocumentsShape } from "vs/workbench/api/common/extHost.protoc
 import { ExtHostDocumentData } from "vs/workbench/api/common/extHostDocumentData.js";
 import type { TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
 
-import * as TypeConverter from "../../TypeConverter/Main.js";
+import RangeConverter from "../../TypeConverter/Main/Range.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
@@ -45,7 +47,7 @@ export default Effect.gen(function* (G) {
 
 	const AcceptModelAddedEffect = (Data: any) =>
 		Effect.gen(function* (G) {
-			const RevivedURI = TypeConverter.URI.ToAPI(Data.uri);
+			const RevivedURI = URIConverter.ToAPI(Data.uri);
 			const DocumentData = new ExtHostDocumentData(
 				MainThreadDocumentsProxy,
 				RevivedURI,
@@ -66,7 +68,7 @@ export default Effect.gen(function* (G) {
 
 	const AcceptModelRemovedEffect = (UriDTO: any) =>
 		Effect.gen(function* (G) {
-			const URIString = TypeConverter.URI.ToAPI(UriDTO).toString();
+			const URIString = URIConverter.ToAPI(UriDTO).toString();
 			const DocumentData = (yield* G(Ref.get(DocumentMapRef))).get(
 				URIString,
 			);
@@ -85,7 +87,7 @@ export default Effect.gen(function* (G) {
 
 	const AcceptModelChangedEffect = (UriDTO: any, ChangeEventDTO: any) =>
 		Effect.gen(function* (G) {
-			const URIString = TypeConverter.URI.ToAPI(UriDTO).toString();
+			const URIString = URIConverter.ToAPI(UriDTO).toString();
 			const DocumentData = (yield* G(Ref.get(DocumentMapRef))).get(
 				URIString,
 			);
@@ -103,7 +105,7 @@ export default Effect.gen(function* (G) {
 						document: DocumentData.document,
 						contentChanges: ChangeEventDTO.changes.map(
 							(Change: any) => ({
-								range: TypeConverter.Range.ToAPI(Change.range),
+								range: RangeConverter.ToAPI(Change.range),
 								rangeOffset: Change.rangeOffset,
 								rangeLength: Change.rangeLength,
 								text: Change.text,

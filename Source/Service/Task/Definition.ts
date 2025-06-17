@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Task/Definition.ts
- * Responsibility: The live implementation of the Tasks service.
- * Modified: 2025-06-17 11:16:40 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:12 UTC
+ * Dependency: ../../TypeConverter/Task.js, ../../Utility/CreateEventStream.js, ../Cancellation/Service.js, ../IPC/Service.js, ./RPCHandlers/ProvideTasks.js, ./Service.js, effect, vscode
  */
 
 /**
@@ -14,7 +15,7 @@ import { Disposable, type TaskFilter } from "vscode";
 
 import { Task as TaskConverter } from "../../TypeConverter/Task.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
-import CancellationService from "../Cancellation/Service.js"; // Import the service tag
+import CancellationService from "../Cancellation/Service.js";
 import IPCService from "../IPC/Service.js";
 import ProvideTasksEffect from "./RPCHandlers/ProvideTasks.js";
 import type Service from "./Service.js";
@@ -26,13 +27,11 @@ let HandleCounter = 0;
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
-	// FIX: Yield the cancellation service here to pass it to the handler.
 	const Cancellation = yield* G(CancellationService);
 	const TaskProvidersRef = yield* G(Ref.make(new Map<number, any>()));
 
 	// --- RPC Handlers ---
 	IPC.RegisterInvokeHandler("$provideTasks", ([Handle, TokenID]) =>
-		// FIX: Pass the acquired Cancellation service to the handler effect.
 		Effect.runPromise(
 			ProvideTasksEffect(TaskProvidersRef, Handle, TokenID, Cancellation),
 		),

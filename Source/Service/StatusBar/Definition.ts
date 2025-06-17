@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/StatusBar/Definition.ts
- * Responsibility: The live implementation of the StatusBar service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:14 UTC
+ * Dependency: ../Command/Service.js, ../IPC/Service.js, ./Service.js, ./StatusBarItemImplementation.js, effect, vscode
  */
 
 /**
@@ -60,8 +61,7 @@ export default Effect.gen(function* (G) {
 					),
 				);
 
-				// FIX: The method should return a StatusBarItem, which the implementation class satisfies.
-				return Entry as StatusBarItem;
+				return Entry;
 			}),
 
 		SetStatusBarMessage: (Text, HideOrPromise) => {

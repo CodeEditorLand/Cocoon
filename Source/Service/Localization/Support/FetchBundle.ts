@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Localization/Support/FetchBundle.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:53:15 UTC
- * Dependency: ../../../TypeConverter/Main.js, ../../IPC/Service.js, effect, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:19 UTC
+ * Dependency: ../../../TypeConverter/Main/URI.js, ../../IPC/Service.js, effect, vscode
  */
 
 /**
@@ -14,7 +14,7 @@
 import { Effect } from "effect";
 import type { Uri } from "vscode";
 
-import * as TypeConverter from "../../../TypeConverter/Main.js";
+import URIConverter from "../../../TypeConverter/Main/URI.js";
 import type IPCService from "../../IPC/Service.js";
 
 /**
@@ -26,7 +26,7 @@ import type IPCService from "../../IPC/Service.js";
  */
 export default (IPC: IPCService["Type"], BundleURI: Uri) =>
 	IPC.SendRequest<string | null>("$fetchBundleContents", [
-		TypeConverter.URI.FromAPI(BundleURI),
+		URIConverter.FromAPI(BundleURI),
 	]).pipe(
 		Effect.map((content) => (content ? JSON.parse(content) : {})),
 		// If the bundle doesn't exist or fails to parse, we gracefully treat it as an empty object.

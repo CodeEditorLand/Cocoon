@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/PatchProcess/PatchProcessCrash.ts
- * Responsibility: Implements a security patch to override Electron's process.crash().
- * Modified: 2025-06-17 10:53:20 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:36 UTC
+ * Dependency: ./Service.js, effect
  */
 
 /**

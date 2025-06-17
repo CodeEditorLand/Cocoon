@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/StatusBar.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:04 UTC
  * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Main/MarkdownString.js, vscode
  */
 

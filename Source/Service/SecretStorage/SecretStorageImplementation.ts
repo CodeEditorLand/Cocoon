@@ -1,7 +1,9 @@
 /*
  * File: Cocoon/Source/Service/SecretStorage/SecretStorageImplementation.ts
- * Responsibility: The concrete implementation of the `vscode.SecretStorage` interface.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:14 UTC
+ * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Error/EmptyKeyError.js, ./Error/InvalidValueError.js, effect, vscode
+ * Export: SecretStorageImplementation
  */
 
 /**
@@ -17,7 +19,8 @@ import type { Event, SecretStorage, SecretStorageChangeEvent } from "vscode";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type IPCService from "../IPC/Service.js";
 import type LogService from "../Log/Service.js";
-import { EmptyKeyError, InvalidValueError } from "./Error.js";
+import EmptyKeyError from "./Error/EmptyKeyError.js";
+import InvalidValueError from "./Error/InvalidValueError.js";
 
 export default class SecretStorageImplementation implements SecretStorage {
 	private readonly OnDidChangeEventStream =

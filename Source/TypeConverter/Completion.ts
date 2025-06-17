@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/TypeConverter/Completion.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, vs/base/common/htmlContent.js, vs/base/common/lifecycle.js, vs/editor/common/core/range.js, vs/editor/common/languages.js, vs/editor/common/model.js, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:06 UTC
+ * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Main/MarkdownString.js, ./Main/Range.js, ./Main/TextEdit.js, vs/base/common/htmlContent.js, vs/base/common/lifecycle.js, vs/editor/common/core/range.js, vs/editor/common/languages.js, vs/editor/common/model.js, vscode
  */
 
 /**
@@ -20,11 +20,9 @@ import type * as VSCode from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
 import type CommandConverterDefinition from "./Command/Definition.js";
-import {
-	MarkdownString as MarkdownStringConverter,
-	Range as RangeConverter,
-	TextEdit as TextEditConverter,
-} from "./Main.js";
+import MarkdownStringConverter from "./Main/MarkdownString.js";
+import RangeConverter from "./Main/Range.js";
+import TextEditConverter from "./Main/TextEdit.js";
 
 // Placeholder DTOs based on usage
 interface ISuggestDataDto {

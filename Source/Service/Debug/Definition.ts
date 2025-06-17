@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Debug/Definition.ts
- * Responsibility: The live implementation of the Debug service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:30 UTC
+ * Dependency: ../IPC/Service.js, ./RegisterProvider.js, ./Service.js, ./Type.js, effect
  */
 
 /**

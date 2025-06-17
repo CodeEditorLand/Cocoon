@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Client/Acquire.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../Configuration.js, ../Error.js, ../Generated.js, ./Release.js, @grpc/grpc-js, @grpc/proto-loader, effect, node:path
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:23 UTC
+ * Dependency: ../Configuration.js, ../Error/gRPCConnectionError.js, ../Generated.js, ./Release.js, @grpc/grpc-js, @grpc/proto-loader, effect, node:path
  */
 
 /**
@@ -16,8 +16,8 @@ import * as GRPC from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect } from "effect";
 
-import { IPCConfigurationService } from "../Configuration.js";
-import { gRPCConnectionError } from "../Error.js";
+import IPCConfigurationService from "../Configuration.js";
+import gRPCConnectionError from "../Error/gRPCConnectionError.js";
 import type { MountainService } from "../Generated.js";
 import Release from "./Release.js";
 

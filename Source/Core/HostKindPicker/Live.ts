@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/HostKindPicker/Live.ts
- * Responsibility: This module provides the `Live` implementation Layer for the HostKindPicker service.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility: Implements the live layer for the HostKindPicker service using Effect's Layer, declaring its dependency on the Log service to facilitate environment-specific configuration within the Cocoon sidecar.
+ * Modified: 2025-06-17 21:19:40 UTC
  * Dependency: ../../Service/Log/Service.js, ./Definition.js, ./Service.js, effect
  */
 

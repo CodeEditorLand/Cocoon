@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtoConverter/DecodeValue.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:53:09 UTC
- * Dependency: ./Error.js, effect, google-protobuf/google/protobuf/struct_pb.js
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:20 UTC
+ * Dependency: ./Error/ProtoSerializationError.js, effect, google-protobuf/google/protobuf/struct_pb.js
  */
 
 /**
@@ -14,7 +14,7 @@
 import { Effect } from "effect";
 import { Value as ProtoValue } from "google-protobuf/google/protobuf/struct_pb.js";
 
-import { ProtoSerializationError } from "./Error.js";
+import ProtoSerializationError from "./Error/ProtoSerializationError.js";
 
 /**
  * An Effect that converts a `google.protobuf.Value` back into a JavaScript value.
@@ -25,7 +25,7 @@ import { ProtoSerializationError } from "./Error.js";
  * @returns An `Effect` that resolves to the corresponding JavaScript value,
  *   or fails with a `ProtoSerializationError`.
  */
-const DecodeValue = (
+export default (
 	ProtoValueInstance?: ProtoValue,
 ): Effect.Effect<any, ProtoSerializationError> => {
 	return Effect.try({
@@ -48,5 +48,3 @@ const DecodeValue = (
 			}),
 	});
 };
-
-export default DecodeValue;

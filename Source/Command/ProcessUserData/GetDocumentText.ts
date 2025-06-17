@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Command/ProcessUserData/GetDocumentText.ts
  * Responsibility: Provides a utility function for the Cocoon sidecar to synchronously retrieve the full text content of a VS Code TextDocument, enabling VS Code extension compatibility during MVP Path A development.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Modified: 2025-06-17 21:19:45 UTC
  * Dependency: effect, vscode
  */
 

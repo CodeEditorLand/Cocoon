@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/TypeConverter/WorkSpaceEdit.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../Type/ExtHostTypes.js, ./Main.js, vs/base/common/uri.js, vs/editor/common/model.js, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:03 UTC
+ * Dependency: ../Type/ExtHostTypes.js, ./Main/TextEdit.js, ./Main/URI.js, vs/base/common/uri.js, vs/editor/common/model.js, vscode
  * Export: IVersionInformationProvider
  */
 
@@ -17,7 +17,8 @@ import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type * as VSCode from "vscode";
 
 import { WorkspaceEdit as VscWorkspaceEdit } from "../Type/ExtHostTypes.js";
-import { TextEdit as TextEditConverter, URI as URIConverter } from "./Main.js";
+import TextEditConverter from "./Main/TextEdit.js";
+import URIConverter from "./Main/URI.js";
 
 // Placeholders for internal VS Code DTOs
 interface IWorkspaceTextEdit {

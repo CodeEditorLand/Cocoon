@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/HostKindPicker/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:40 UTC
  * Dependency: effect, vs/platform/extensions/common/extensions.js, vs/workbench/services/extensions/common/extensionHostKind.js
  * Export: HostKindPickerService
  */

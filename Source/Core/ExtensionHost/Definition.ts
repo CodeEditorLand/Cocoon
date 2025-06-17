@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Core/ExtensionHost/Definition.ts
- * Responsibility: The live implementation of the ExtensionHost service.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:41 UTC
+ * Dependency: ../../Service/IPC/Service.js, ../../Service/InitData/Service.js, ../../Service/Log/Service.js, ../../Service/Telemetry/Service.js, ./Service.js, ./State.js, effect, vs/base/common/event.js, vs/base/common/uri.js, vs/platform/extensionManagement/common/implicitActivationEvents.js, vs/workbench/api/common/extHostTypes.js, vscode
  */
 
 /**

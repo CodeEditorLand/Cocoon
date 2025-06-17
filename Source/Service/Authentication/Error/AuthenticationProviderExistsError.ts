@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Authentication/Error/AuthenticationProviderExistsError.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:35 UTC
  * Dependency: effect
- * Export: AuthenticationProviderExistsError
+ * Export: extends
  */
 
 import { Data } from "effect";
@@ -12,7 +12,7 @@ import { Data } from "effect";
  * An error indicating that an extension attempted to register an authentication
  * provider with an ID that is already in use.
  */
-export class AuthenticationProviderExistsError extends Data.TaggedError(
+export default class extends Data.TaggedError(
 	"AuthenticationProviderExistsError",
 )<{
 	readonly ProviderID: string;
@@ -23,5 +23,3 @@ export class AuthenticationProviderExistsError extends Data.TaggedError(
 	}
 	public override readonly message: string;
 }
-
-export default AuthenticationProviderExistsError;

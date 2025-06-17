@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/TypeConverter/TreeView.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, vs/platform/extensions/common/extensions.js, vscode
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:04 UTC
+ * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Main/MarkdownString.js, ./Main/URI.js, vs/platform/extensions/common/extensions.js, vscode
  * Export: TreeView
  */
 
@@ -18,10 +18,8 @@ import { TreeItemCollapsibleState } from "vscode";
 
 import * as ExtHostTypes from "../Type/ExtHostTypes.js";
 import type CommandConverterDefinition from "./Command/Definition.js";
-import {
-	MarkdownString as MarkdownStringConverter,
-	URI as URIConverter,
-} from "./Main.js";
+import MarkdownStringConverter from "./Main/MarkdownString.js";
+import URIConverter from "./Main/URI.js";
 
 const Option = {
 	FromAPI: (option: VSCode.TreeViewOptions<any>): any => {

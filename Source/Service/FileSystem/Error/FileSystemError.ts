@@ -1,23 +1,13 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/Error/FileSystemError.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:25 UTC
  * Dependency: effect, vscode
- * Export: FileSystemError, MapToVSCodeError
+ * Export: MapToVSCodeError, extends
  */
 
 import { Data } from "effect";
 import { FileSystemError as VscFileSystemError, type Uri } from "vscode";
-
-/**
- * A tagged error for filesystem operations that wraps the underlying cause,
- * typically an IPC or gRPC error.
- */
-export class FileSystemError extends Data.TaggedError("FileSystemError")<{
-	readonly cause: unknown;
-	readonly operation: string;
-	readonly uri?: Uri;
-}> {}
 
 /**
  * Maps a generic error from an RPC call into a specific `vscode.FileSystemError`.
@@ -26,7 +16,7 @@ export class FileSystemError extends Data.TaggedError("FileSystemError")<{
  * @returns A new `vscode.FileSystemError` instance.
  */
 export const MapToVSCodeError = (
-	Error: FileSystemError,
+	Error: VscFileSystemError,
 ): VscFileSystemError => {
 	const Cause: any = Error.cause;
 	const URI = Error.uri;
@@ -56,3 +46,13 @@ export const MapToVSCodeError = (
 		`${Error.operation} failed for ${URI?.toString() ?? "unknown resource"}: ${CauseMessage}`,
 	);
 };
+
+/**
+ * A tagged error for filesystem operations that wraps the underlying cause,
+ * typically an IPC or gRPC error.
+ */
+export default class extends Data.TaggedError("FileSystemError")<{
+	readonly cause: unknown;
+	readonly operation: string;
+	readonly uri?: Uri;
+}> {}

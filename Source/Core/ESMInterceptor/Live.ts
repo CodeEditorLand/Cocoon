@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/Live.ts
- * Responsibility: The live implementation layer for the ESMInterceptor service.
- * Modified: 2025-06-17 10:53:05 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:43 UTC
  * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ./Definition.js, ./Service.js, effect
  */
 

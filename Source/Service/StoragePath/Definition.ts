@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/StoragePath/Definition.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:52:55 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:13 UTC
  * Dependency: ../InitData/Service.js, ../Log/Service.js, ./Service.js, ./Support/EnsureDirectory.js, effect, node:path, vs/platform/extensions/common/extensions.js, vscode
  */
 

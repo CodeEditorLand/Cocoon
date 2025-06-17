@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateLanguagesNamespace.ts
- * Responsibility: Constructs the vscode.languages namespace for the API object.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../Service/LanguageFeature/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ * Responsibility: Implements the vscode.languages API facade for the Cocoon sidecar, delegating language feature registrations (hover, completions, definitions) to the core LanguageFeatureService while returning composable effects.
+ * Modified: 2025-06-17 21:19:44 UTC
+ * Dependency: ../../Service/LanguageFeature/Service.js, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**

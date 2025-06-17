@@ -1,7 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Message/Definition.ts
- * Responsibility: The live implementation of the Message service.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:17 UTC
+ * Dependency: ../IPC/Service.js, ./Service.js, ./Support/ParseArgument.js, ./Type.js, effect, vscode
  */
 
 /**

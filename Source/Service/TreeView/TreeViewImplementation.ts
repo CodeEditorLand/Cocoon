@@ -1,7 +1,9 @@
 /*
  * File: Cocoon/Source/Service/TreeView/TreeViewImplementation.ts
- * Responsibility: The controller class that manages a single tree view and its data provider.
- * Modified: 2025-06-17 10:52:54 UTC
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:10 UTC
+ * Dependency: ../../TypeConverter/Command/Definition.js, ../../TypeConverter/TreeView.js, ../../Utility/CreateEventStream.js, ../Command/Service.js, ../IPC/Service.js, effect, vs/base/common/event.js, vs/base/common/uuid.js, vs/platform/extensions/common/extensions.js
+ * Export: TreeViewImplementation
  */
 
 /**
@@ -10,14 +12,14 @@
  */
 
 import { Effect } from "effect";
-import { Emitter, type Event } from "vs/base/common/event.js";
+import { type Event } from "vs/base/common/event.js";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type {
 	TreeDataProvider,
 	TreeItem,
 	TreeView,
-	TreeViewActiveItemChangeEvent, // Import this type
+	TreeViewActiveItemChangeEvent,
 	TreeViewExpansionEvent,
 	TreeViewSelectionChangeEvent,
 	TreeViewVisibilityChangeEvent,
@@ -45,6 +47,9 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 	private readonly OnDidChangeVisibilityEmitter =
 		CreateEventStream<TreeViewVisibilityChangeEvent>();
 	readonly onDidChangeVisibility: Event<TreeViewVisibilityChangeEvent>;
+	private readonly OnDidChangeCheckboxStateEmitter =
+		CreateEventStream<TreeViewCheckboxChangeEvent<T>>();
+	readonly onDidChangeCheckboxState: Event<TreeViewCheckboxChangeEvent<T>>;
 
 	constructor(
 		private readonly ViewID: string,
@@ -57,6 +62,8 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 		this.onDidCollapseElement = this.OnDidCollapseElementEmitter.event;
 		this.onDidChangeSelection = this.OnDidChangeSelectionEmitter.event;
 		this.onDidChangeVisibility = this.OnDidChangeVisibilityEmitter.event;
+		this.onDidChangeCheckboxState =
+			this.OnDidChangeCheckboxStateEmitter.event;
 
 		if (this.DataProvider.onDidChangeTreeData) {
 			this.DataProvider.onDidChangeTreeData((Elements) => {
@@ -70,6 +77,8 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 			});
 		}
 	}
+	activeItem: T | undefined;
+	onDidChangeActiveItem: Event<TreeViewActiveItemChangeEvent<T>>;
 
 	public GetChildrenEffect(Element?: T): Effect.Effect<any[], Error> {
 		return Effect.tryPromise({
@@ -99,10 +108,13 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 		}).pipe(
 			Effect.map((TreeItem) => {
 				const Handle = this.GetHandleForElement(Element);
-				// FIX: The CommandConverter now expects an Effect-returning function.
 				const CommandConverter = new CommandConverterDefinition(
 					this.Command.RegisterCommand,
-					this.Command.ExecuteCommand,
+					// FIX: Wrap the promise-based execute in an Effect
+					(command, ...args) =>
+						Effect.tryPromise(() =>
+							this.Command.ExecuteCommand(command, ...args),
+						),
 					() => undefined,
 				);
 				return TreeViewConverter.Item.FromAPI(
@@ -166,6 +178,7 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 		this.OnDidCollapseElementEmitter.Shutdown();
 		this.OnDidChangeSelectionEmitter.Shutdown();
 		this.OnDidChangeVisibilityEmitter.Shutdown();
+		this.OnDidChangeCheckboxStateEmitter.Shutdown();
 		this.ElementToHandleMap.clear();
 		this.handleToElementMap.clear();
 	}
@@ -176,8 +189,4 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 	title?: string;
 	description?: string;
 	badge?: { value: number; tooltip: string };
-	activeItem: T | undefined;
-	onDidChangeActiveItem: Event<TreeViewActiveItemChangeEvent<T>> =
-		new Emitter<TreeViewActiveItemChangeEvent<T>>().event;
-	onDidChangeCheckboxState: Event<any> = new Emitter<any>().event;
 }

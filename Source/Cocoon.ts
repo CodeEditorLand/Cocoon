@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Cocoon.ts
- * Responsibility: The main entry point and composition root for the Cocoon application.
- * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ./Core/ExtensionHost/Service.js, ./Core/RequireInterceptor/Service.js, ./PatchProcess.js, ./Service/IPC.js, ./Service/IPC/Configuration.js, ./Service/IPC/Service.js, ./Service/InitData/Live.js, @effect/platform-node, effect, node:path, vs/workbench/services/extensions/common/extensionHostProtocol.js
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:45 UTC
+ * Dependency: ./Core/APIFactory/Live.js, ./Core/ESMInterceptor/Live.js, ./Core/ExtensionHost/Live.js, ./Core/ExtensionHost/Service.js, ./Core/ExtensionPath/Live.js, ./Core/HostKindPicker/Live.js, ./Core/NodeModuleShim/Live.js, ./Core/RequireInterceptor/Live.js, ./Core/RequireInterceptor/Service.js, ./PatchProcess.js, ./Service/APIDeprecation/Live.js, ./Service/Authentication/Live.js, ./Service/Cancellation/Live.js, ./Service/Clipboard/Live.js, ./Service/Command/Live.js, ./Service/Configuration/Live.js, ./Service/Debug/Live.js, ./Service/Diagnostic/Live.js, ./Service/Dialog/Live.js, ./Service/Document/Live.js, ./Service/Environment/Live.js, ./Service/Extension/Live.js, ./Service/FileSystem/Live.js, ./Service/FileSystemInformation/Live.js, ./Service/IPC/Live.js, ./Service/IPC/Service.js, ./Service/InitData/Live.js, ./Service/LanguageFeature/Live.js, ./Service/Localization/Live.js, ./Service/Log/Live.js, ./Service/Message/Live.js, ./Service/ProposedAPI/Live.js, ./Service/QuickInput/Live.js, ./Service/SecretStorage/Live.js, ./Service/StatusBar/Live.js, ./Service/Storage/Live.js, ./Service/StoragePath/Live.js, ./Service/Task/Live.js, ./Service/Telemetry/Live.js, ./Service/TreeView/Live.js, ./Service/WebViewPanel/Live.js, ./Service/Window/Live.js, ./Service/WorkSpace/Live.js, @effect/platform-node, effect, node:path, vs/workbench/services/extensions/common/extensionHostProtocol.js
  */
 
 import * as Path from "node:path";
@@ -10,14 +10,55 @@ import { NodeRuntime } from "@effect/platform-node";
 import { Deferred, Effect, Layer, Logger } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
+// --- Direct Core Service Imports ---
+import APIFactoryLive from "./Core/APIFactory/Live.js";
+import ESMInterceptorLive from "./Core/ESMInterceptor/Live.js";
+import ExtensionHostLive from "./Core/ExtensionHost/Live.js";
+import ExtensionHostService from "./Core/ExtensionHost/Service.js";
+import ExtensionPathLive from "./Core/ExtensionPath/Live.js";
+import HostKindPickerLive from "./Core/HostKindPicker/Live.js";
+import NodeModuleShimLive from "./Core/NodeModuleShim/Live.js";
+import RequireInterceptorLive from "./Core/RequireInterceptor/Live.js";
+import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
 // --- Consolidated Imports via Barrel Files ---
-import * as Core from "./Core.js";
 import RunProcessPatch from "./PatchProcess.js";
-import * as Services from "./Service.js";
-import {
-	IPCConfigurationService,
+// --- Direct API Service Imports ---
+import APIDeprecationLive from "./Service/APIDeprecation/Live.js";
+import AuthenticationLive from "./Service/Authentication/Live.js";
+import CancellationLive from "./Service/Cancellation/Live.js";
+import ClipboardLive from "./Service/Clipboard/Live.js";
+import CommandLive from "./Service/Command/Live.js";
+import ConfigurationLive from "./Service/Configuration/Live.js";
+import DebugLive from "./Service/Debug/Live.js";
+import DiagnosticLive from "./Service/Diagnostic/Live.js";
+import DialogLive from "./Service/Dialog/Live.js";
+import DocumentLive from "./Service/Document/Live.js";
+import EnvironmentLive from "./Service/Environment/Live.js";
+import ExtensionLive from "./Service/Extension/Live.js";
+import FileSystemLive from "./Service/FileSystem/Live.js";
+import FileSystemInformationLive from "./Service/FileSystemInformation/Live.js";
+import InitDataLive from "./Service/InitData/Live.js";
+import IPCConfigurationService, {
 	type IPCConfiguration,
 } from "./Service/IPC/Configuration.js";
+import IPCLive from "./Service/IPC/Live.js";
+import IPCService from "./Service/IPC/Service.js";
+import LanguageFeatureLive from "./Service/LanguageFeature/Live.js";
+import LocalizationLive from "./Service/Localization/Live.js";
+import LogLive from "./Service/Log/Live.js";
+import MessageLive from "./Service/Message/Live.js";
+import ProposedAPILive from "./Service/ProposedAPI/Live.js";
+import QuickInputLive from "./Service/QuickInput/Live.js";
+import SecretStorageLive from "./Service/SecretStorage/Live.js";
+import StatusBarLive from "./Service/StatusBar/Live.js";
+import StorageLive from "./Service/Storage/Live.js";
+import StoragePathLive from "./Service/StoragePath/Live.js";
+import TaskLive from "./Service/Task/Live.js";
+import TelemetryLive from "./Service/Telemetry/Live.js";
+import TreeViewLive from "./Service/TreeView/Live.js";
+import WebViewPanelLive from "./Service/WebViewPanel/Live.js";
+import WindowLive from "./Service/Window/Live.js";
+import WorkSpaceLive from "./Service/WorkSpace/Live.js";
 
 // --- Pre-initialization Steps ---
 const VSCodeOutputDirectory =
@@ -35,11 +76,11 @@ const PostHandshakeEffect = Effect.gen(function* (G) {
 
 	yield* G(RunProcessPatch);
 
-	const Interceptor = yield* G(Core.RequireInterceptorService);
+	const Interceptor = yield* G(RequireInterceptorService);
 	yield* G(Interceptor.Install());
 	yield* G(Effect.logInfo("Node.js require() interceptor installed."));
 
-	const Host = yield* G(Core.ExtensionHostService);
+	const Host = yield* G(ExtensionHostService);
 	yield* G(
 		Host.ActivateById(
 			"*" as any,
@@ -64,7 +105,7 @@ const PreHandshakeEffect = Effect.gen(function* (G) {
 	const InitializationBarrier = yield* G(
 		Deferred.make<IExtensionHostInitData, Error>(),
 	);
-	const IPC = yield* G(Services.IPCService);
+	const IPC = yield* G(IPCService);
 
 	// Register the handler that receives the initialization data.
 	// Upon receiving the data, it succeeds the Deferred, unblocking the main flow.
@@ -99,48 +140,48 @@ const MainEffect = Effect.gen(function* (G) {
 
 	// Step 2: Define the complete application layer by merging all service layers.
 	const ApplicationLayer = Layer.mergeAll(
-		Core.APIFactoryLive,
-		Core.ESMInterceptorLive,
-		Core.ExtensionHostLive,
-		Core.ExtensionPathLive,
-		Core.HostKindPickerLive,
-		Core.NodeModuleShimLive,
-		Core.RequireInterceptorLive,
-		Services.APIDeprecationLive,
-		Services.AuthenticationLive,
-		Services.CancellationLive,
-		Services.ClipboardLive,
-		Services.CommandLive,
-		Services.ConfigurationLive,
-		Services.DebugLive,
-		Services.DiagnosticLive,
-		Services.DialogLive,
-		Services.DocumentLive,
-		Services.EnvironmentLive,
-		Services.ExtensionLive,
-		Services.FileSystemLive,
-		Services.FileSystemInformationLive,
-		Services.IPCLive,
-		Services.LanguageFeatureLive,
-		Services.LocalizationLive,
-		Services.LogLive,
-		Services.MessageLive,
-		Services.ProposedAPILive,
-		Services.QuickInputLive,
-		Services.SecretStorageLive,
-		Services.StatusBarLive,
-		Services.StorageLive,
-		Services.StoragePathLive,
-		Services.TaskLive,
-		Services.TelemetryLive,
-		Services.TreeViewLive,
-		Services.WebViewPanelLive,
-		Services.WindowLive,
-		Services.WorkSpaceLive,
+		APIFactoryLive,
+		ESMInterceptorLive,
+		ExtensionHostLive,
+		ExtensionPathLive,
+		HostKindPickerLive,
+		NodeModuleShimLive,
+		RequireInterceptorLive,
+		APIDeprecationLive,
+		AuthenticationLive,
+		CancellationLive,
+		ClipboardLive,
+		CommandLive,
+		ConfigurationLive,
+		DebugLive,
+		DiagnosticLive,
+		DialogLive,
+		DocumentLive,
+		EnvironmentLive,
+		ExtensionLive,
+		FileSystemLive,
+		FileSystemInformationLive,
+		IPCLive,
+		LanguageFeatureLive,
+		LocalizationLive,
+		LogLive,
+		MessageLive,
+		ProposedAPILive,
+		QuickInputLive,
+		SecretStorageLive,
+		StatusBarLive,
+		StorageLive,
+		StoragePathLive,
+		TaskLive,
+		TelemetryLive,
+		TreeViewLive,
+		WebViewPanelLive,
+		WindowLive,
+		WorkSpaceLive,
 	);
 
 	// Step 3: Create the layer for the runtime-dependent InitData.
-	const InitDataLayer = Services.InitDataLive(InitializationData);
+	const InitDataLayer = InitDataLive(InitializationData);
 
 	// Step 4: Create the final, fully-resolved layer by providing the
 	// runtime data layer to the main application layer.
@@ -172,13 +213,12 @@ const ConfigurationLayer = Layer.succeed(
 );
 
 // The layer needed for the initial handshake only requires IPC and a logger.
-const PreHandshakeDependencies = Layer.merge(
+const PreHandshakeDependencies = Layer.mergeAll(
 	ConfigurationLayer,
 	Logger.logFmt, // Use a default formatted logger.
+	CancellationLive, // Cancellation needs to be available early for IPC
 );
-const PreHandshakeLayer = Services.IPCLive.pipe(
-	Layer.provide(PreHandshakeDependencies),
-);
+const PreHandshakeLayer = IPCLive.pipe(Layer.provide(PreHandshakeDependencies));
 
 // --- Run the Application ---
 

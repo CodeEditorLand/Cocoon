@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtoConverter/EncodeValue.ts
- * Responsibility: Implements protocol buffer value encoding for JavaScript values in the Cocoon sidecar's IPC layer, converting native types to google.protobuf.Value structures to enable type-safe communication with the Mountain backend via the Vine transport.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ./Error.js, effect
+ * Responsibility:
+ * Modified: 2025-06-17 21:19:19 UTC
+ * Dependency: ./Error/ProtoSerializationError.js, effect
  */
 
 /**
@@ -17,7 +17,7 @@ import {
 	Value as ProtoValue,
 } from "google-protobuf/google/protobuf/struct_pb.js";
 
-import { ProtoSerializationError } from "./Error.js";
+import ProtoSerializationError from "./Error/ProtoSerializationError.js";
 
 /**
  * An Effect that converts a JavaScript value into a `google.protobuf.Value`.
@@ -27,7 +27,7 @@ import { ProtoSerializationError } from "./Error.js";
  * @param JsValue The JavaScript value to encode.
  * @returns An `Effect` that resolves to a `ProtoValue` or fails with a `ProtoSerializationError`.
  */
-const EncodeValue = (
+export default (
 	JsValue: any,
 ): Effect.Effect<ProtoValue, ProtoSerializationError> => {
 	return Effect.try({
@@ -47,5 +47,3 @@ const EncodeValue = (
 			}),
 	});
 };
-
-export default EncodeValue;
