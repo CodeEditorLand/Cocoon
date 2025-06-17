@@ -22,17 +22,19 @@ const AllowExitConfig: Config.Config<boolean> = Config.boolean("AllowExit");
  * The live `Layer` for the `ProcessPatch.Service`.
  * It reads its configuration from the environment, with a default.
  */
-const Live = Layer.effect(
+const Live: Layer.Layer<Service, never, never> = Layer.effect(
 	Service,
-	Effect.map(AllowExitConfig, (allowExit) => ({
-		NativeExit: process.exit.bind(process),
-		NativeCrash:
-			typeof process.crash === "function"
-				? process.crash.bind(process)
-				: undefined,
-		AllowExit: () => allowExit,
-	})).pipe(
-		// FIX: Use catchTag to provide a default value if the config is missing.
+	Effect.config(AllowExitConfig).pipe(
+		// FIX: First create the effect with Effect.config
+		Effect.map((allowExit) => ({
+			NativeExit: process.exit.bind(process),
+			NativeCrash:
+				typeof process.crash === "function"
+					? process.crash.bind(process)
+					: undefined,
+			AllowExit: () => allowExit,
+		})),
+		// FIX: Then, handle the error case for the Effect.
 		Effect.catchTag("MissingData", () =>
 			Effect.succeed({
 				NativeExit: process.exit.bind(process),

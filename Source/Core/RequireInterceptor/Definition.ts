@@ -11,7 +11,7 @@
  */
 
 import * as Module from "node:module";
-import { Effect, Exit } from "effect"; // FIX: Changed from Result to Exit
+import { Cause, Effect, Exit } from "effect";
 import { URI } from "vs/base/common/uri.js";
 import type { Uri } from "vscode";
 
@@ -75,8 +75,10 @@ export default Effect.gen(function* (G) {
 							if (Exit.isSuccess(ShimResult)) {
 								return ShimResult.value;
 							} else {
-								// FIX: The `error` property is on the `Fail` case of the `Cause` within the `Exit.Failure`.
-								throw ShimResult.cause.error;
+								// FIX: Use `Cause.squash` to extract the error. This will
+								// correctly throw the underlying error or a RuntimeException
+								// if the cause was a defect.
+								throw Cause.squash(ShimResult.cause);
 							}
 						}
 						return OriginalRequire.call(this, Request);

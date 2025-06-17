@@ -12,13 +12,7 @@
 import { Effect, Ref } from "effect";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import {
-	Disposable,
-	type ViewColumn,
-	type WebviewOptions,
-	type WebviewPanelOptions,
-	type WebviewPanelSerializer,
-} from "vscode";
+import { Disposable, type WebviewPanelSerializer } from "vscode";
 
 import { WebView as TypeConverter } from "../../TypeConverter/WebView.js";
 import IPCService from "../IPC/Service.js";

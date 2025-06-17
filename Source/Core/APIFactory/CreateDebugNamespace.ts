@@ -36,7 +36,6 @@ const CreateDebugNamespaceEffect = (
 			get breakpoints() {
 				return Debug.breakpoints;
 			},
-			// FIX: Add missing property to satisfy the `vscode.debug` interface
 			get activeStackItem() {
 				return undefined;
 			},
@@ -53,8 +52,6 @@ const CreateDebugNamespaceEffect = (
 				Debug.onDidTerminateDebugSession,
 			),
 			onDidChangeBreakpoints: AsEvent(Debug.onDidChangeBreakpoints),
-			// FIX: Add missing event to satisfy the `vscode.debug` interface.
-			// Use a new EventEmitter from the `vscode` module itself.
 			onDidChangeActiveStackItem: AsEvent(
 				new VSCode.EventEmitter<any>().event,
 			),
@@ -85,25 +82,25 @@ const CreateDebugNamespaceEffect = (
 				Debug.AddBreakpoints(breakpoints) as any,
 			removeBreakpoints: (breakpoints) =>
 				Debug.RemoveBreakpoints(breakpoints) as any,
-
-			// FIX: Add missing methods to satisfy the `vscode.debug` interface
 			registerDebugVisualizationProvider: (_id, _provider) =>
 				new VSCode.Disposable(() => {}),
 			registerDebugVisualizationTreeProvider: (_id, _provider) =>
 				new VSCode.Disposable(() => {}),
 			asDebugSourceUri: (source, session) => {
 				// FIX: The `uri` property is not on the `DebugProtocolSource` type.
-				// This requires a more robust implementation that likely involves an IPC call
-				// or inspecting the source object's properties if available at runtime.
-				// For now, we return a placeholder to satisfy the type.
-				const sourceUri = (source as any).uri;
-				if (sourceUri) {
-					const uri = VSCode.Uri.revive(sourceUri);
+				// However, the object passed from the debug adapter will have a `path` property.
+				// `Uri.file` is the correct constructor for a file system path.
+				const sourcePath = (source as any).path;
+				if (typeof sourcePath === "string") {
+					const uri = VSCode.Uri.file(sourcePath);
 					if (session) {
 						return uri.with({ query: `session=${session.id}` });
 					}
 					return uri;
 				}
+				// The source can also have a `sourceReference` which is a number.
+				// This case would require a "debug:" scheme Uri, which is more complex.
+				// For now, we only handle the path case.
 				throw new Error(
 					"asDebugSourceUri: Not implemented for this source type.",
 				);

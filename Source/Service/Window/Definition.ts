@@ -11,7 +11,6 @@
 
 import { Effect, Ref } from "effect";
 import type {
-	TextDocument,
 	TextDocumentShowOptions,
 	TextEditor,
 	Uri,

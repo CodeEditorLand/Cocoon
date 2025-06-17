@@ -17,9 +17,6 @@ import type TreeViewService from "../../Service/TreeView/Service.js";
 import type WebViewPanelService from "../../Service/WebViewPanel/Service.js";
 import type WindowService from "../../Service/Window/Service.js";
 
-// FIX: Removed unused import `WorkSpaceService`
-// import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
-
 /**
  * Creates the `vscode.window` namespace object.
  */

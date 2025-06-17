@@ -11,28 +11,29 @@
  * modules, blocking some and providing safe shims for others.
  */
 
-import { Context, Exit } from "effect"; // FIX: Changed from Result to Exit
+import { Context, Exit } from "effect";
 import type { Uri } from "vscode";
 
 import type { ModuleBlockedError, ModuleNotShimmedError } from "./Error.js";
 
-export default class NodeModuleShimService extends Context.Tag(
-	"Core/NodeModuleShim",
-)<
+// FIX: Define the service interface separately so the class can implement it directly.
+export interface NodeModuleShimService {
+	/**
+	 * Synchronously loads a shim for a requested built-in Node.js module.
+	 * This method must be synchronous to be compatible with `require`.
+	 *
+	 * @param Request The name of the module being requested (e.g., 'fs', 'node:os').
+	 * @param ParentURI The URI of the file that made the `require` call.
+	 * @returns An `Exit` that contains the shimmed module on success, or a
+	 *   `ModuleBlockedError` or `ModuleNotShimmedError` on failure.
+	 */
+	readonly Load: (
+		Request: string,
+		ParentURI?: Uri,
+	) => Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError>;
+}
+
+export default class extends Context.Tag("Core/NodeModuleShim")<
 	NodeModuleShimService,
-	{
-		/**
-		 * Synchronously loads a shim for a requested built-in Node.js module.
-		 * This method must be synchronous to be compatible with `require`.
-		 *
-		 * @param Request The name of the module being requested (e.g., 'fs', 'node:os').
-		 * @param ParentURI The URI of the file that made the `require` call.
-		 * @returns An `Exit` that contains the shimmed module on success, or a
-		 *   `ModuleBlockedError` or `ModuleNotShimmedError` on failure.
-		 */
-		readonly Load: (
-			Request: string,
-			ParentURI?: Uri,
-		) => Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError>;
-	}
+	NodeModuleShimService
 >() {}
