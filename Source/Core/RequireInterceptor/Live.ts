@@ -15,7 +15,7 @@ import { Layer } from "effect";
 import type LogService from "../../Service/Log/Service.js";
 import type APIFactoryService from "../APIFactory/Service.js";
 import type ExtensionPathService from "../ExtensionPath/Service.js";
-import { NodeModuleShimService } from "../NodeModuleShim/Service.js";
+import NodeModuleShimService from "../NodeModuleShim/Service.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 

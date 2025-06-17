@@ -19,6 +19,10 @@ import type {
 	TextDocument,
 	TextDocumentShowOptions,
 	TextEditor,
+	TextEditorOptionsChangeEvent,
+	TextEditorSelectionChangeEvent,
+	TextEditorViewColumnChangeEvent,
+	TextEditorVisibleRangesChangeEvent,
 	Uri,
 	ViewColumn,
 	WindowState,
@@ -32,9 +36,16 @@ import type {
 export default class WindowService extends Context.Tag("Service/Window")<
 	WindowService,
 	{
-		readonly activeTextEditor: any;
+		readonly activeTextEditor: TextEditor | undefined;
+		readonly visibleTextEditors: readonly TextEditor[];
 		readonly state: WindowState;
 		readonly onDidChangeWindowState: Event<WindowState>;
+		readonly onDidChangeActiveTextEditor: Event<TextEditor | undefined>;
+		readonly onDidChangeVisibleTextEditors: Event<readonly TextEditor[]>;
+		readonly onDidChangeTextEditorSelection: Event<TextEditorSelectionChangeEvent>;
+		readonly onDidChangeTextEditorVisibleRanges: Event<TextEditorVisibleRangesChangeEvent>;
+		readonly onDidChangeTextEditorOptions: Event<TextEditorOptionsChangeEvent>;
+		readonly onDidChangeTextEditorViewColumn: Event<TextEditorViewColumnChangeEvent>;
 
 		/**
 		 * Shows a text document in an editor.

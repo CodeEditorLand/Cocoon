@@ -9,6 +9,8 @@
 import { Data } from "effect";
 import { FileSystemError as VscFileSystemError, type Uri } from "vscode";
 
+import type FileSystemError from "./FileSystemError.js";
+
 /**
  * Maps a generic error from an RPC call into a specific `vscode.FileSystemError`.
  * This provides extensions with the familiar, expected error types.
@@ -16,7 +18,7 @@ import { FileSystemError as VscFileSystemError, type Uri } from "vscode";
  * @returns A new `vscode.FileSystemError` instance.
  */
 export const MapToVSCodeError = (
-	Error: VscFileSystemError,
+	Error: FileSystemError,
 ): VscFileSystemError => {
 	const Cause: any = Error.cause;
 	const URI = Error.uri;

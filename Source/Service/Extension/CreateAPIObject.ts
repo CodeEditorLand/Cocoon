@@ -34,7 +34,7 @@ const CreateAPIObject = <T>(
 			extensionId: Description.identifier,
 			activationEvent: "api",
 		});
-		// FIX: Run the effect to get the exports value after activation.
+		// Run the effect to get the exports value after activation.
 		const Exports = yield* ExtensionHost.GetExtensionExports(
 			Description.identifier,
 		);
@@ -59,8 +59,8 @@ const CreateAPIObject = <T>(
 		extensionUri: Description.extensionLocation,
 		extensionPath: Description.extensionLocation.fsPath,
 		get isActive(): boolean {
-			// FIX: Run the effect synchronously to get the boolean value.
-			// This is safe as it's just reading from a Ref.
+			// This must be synchronous to match the VS Code API.
+			// It is safe because IsActivated reads from a Ref, which is a sync operation.
 			return Effect.runSync(
 				ExtensionHost.IsActivated(Description.identifier),
 			);
@@ -70,14 +70,18 @@ const CreateAPIObject = <T>(
 		},
 		extensionKind: GetExtensionKind(),
 		get exports() {
-			// FIX: Run the effect synchronously to get the exports value.
+			// This must be synchronous. It can fail if the extension activation failed.
+			// We squash the error into `undefined` to match the API behavior.
 			return Effect.runSync(
-				ExtensionHost.GetExtensionExports(Description.identifier),
+				Effect.catchAll(
+					ExtensionHost.GetExtensionExports(Description.identifier),
+					() => Effect.succeed(undefined),
+				),
 			);
 		},
 		activate: (): Promise<T> => Effect.runPromise(ActivateEffect),
 		// `isFromDifferentExtensionHost` is a proposed API field, default to false.
-		isFromDifferentExtensionHost: false, // FIX: Added this required property.
+		isFromDifferentExtensionHost: false,
 	};
 
 	return Object.freeze(ExtensionAPIObject);

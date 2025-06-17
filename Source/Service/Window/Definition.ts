@@ -11,11 +11,16 @@
  */
 
 import { Effect, Ref } from "effect";
-import type {
-	TextDocumentShowOptions,
-	TextEditor,
-	Uri,
-	WindowState,
+import {
+	EventEmitter,
+	type TextDocumentShowOptions,
+	type TextEditor,
+	type TextEditorOptionsChangeEvent,
+	type TextEditorSelectionChangeEvent,
+	type TextEditorViewColumnChangeEvent,
+	type TextEditorVisibleRangesChangeEvent,
+	type Uri,
+	type WindowState,
 } from "vscode";
 
 import RangeConverter from "../../TypeConverter/Main/Range.js";
@@ -109,6 +114,15 @@ export default Effect.gen(function* (G) {
 		},
 		onDidChangeActiveTextEditor: OnDidChangeActiveTextEditorEvent,
 		onDidChangeVisibleTextEditors: OnDidChangeVisibleTextEditorsEvent,
+		// Stubs for other events, a full implementation would use CreateEventStream
+		onDidChangeTextEditorSelection:
+			new EventEmitter<TextEditorSelectionChangeEvent>().event,
+		onDidChangeTextEditorVisibleRanges:
+			new EventEmitter<TextEditorVisibleRangesChangeEvent>().event,
+		onDidChangeTextEditorOptions:
+			new EventEmitter<TextEditorOptionsChangeEvent>().event,
+		onDidChangeTextEditorViewColumn:
+			new EventEmitter<TextEditorViewColumnChangeEvent>().event,
 		ShowTextDocument: (documentOrURI, columnOrOptions, preserveFocus) =>
 			Effect.gen(function* (G) {
 				let uri: Uri;
@@ -144,8 +158,6 @@ export default Effect.gen(function* (G) {
 					]),
 				);
 
-				// FIX: The findTextEditorById method must be part of the service type to be called here.
-				// For now, we will get it from the map directly.
 				const editor = (yield* G(Ref.get(TextEditorsMapRef))).get(
 					editorId,
 				);
@@ -160,14 +172,6 @@ export default Effect.gen(function* (G) {
 				}
 				return editor;
 			}),
-	};
-
-	// The error `findTextEditorById does not exist` is because it's not on the service interface.
-	// We'll add it to the interface and implementation.
-	(ServiceImplementation as any).findTextEditorById = (id: string) => {
-		return Effect.runSync(
-			Ref.get(TextEditorsMapRef).pipe(Effect.map((m) => m.get(id))),
-		);
 	};
 
 	return ServiceImplementation;
