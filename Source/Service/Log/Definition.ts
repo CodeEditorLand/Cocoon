@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Log/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the Log service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ./Service.js, effect
  */
 
 /**
@@ -14,11 +13,11 @@ import { Effect } from "effect";
 
 import type Service from "./Service.js";
 
+/**
+ * An Effect that builds the live implementation of the Log service.
+ */
 export default Effect.gen(function* () {
-	// This service currently has no dependencies, but is structured as a generator
-	// for consistency and future extensibility.
-
-	const implementation: Service["Type"] = {
+	const ServiceImplementation: Service["Type"] = {
 		Trace: (Message, ...Data) =>
 			Effect.logTrace(Message).pipe(
 				Effect.annotateLogs({
@@ -56,5 +55,5 @@ export default Effect.gen(function* () {
 				}),
 			),
 	};
-	return implementation;
+	return ServiceImplementation;
 });

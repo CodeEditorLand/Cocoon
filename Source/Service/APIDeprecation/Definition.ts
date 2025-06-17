@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/APIDeprecation/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the APIDeprecation service.
  * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ../Log/Service.js, ./Service.js, effect, vs/platform/extensions/common/extensions.js
  */
 
 /**
@@ -19,10 +18,10 @@ import type Service from "./Service.js";
 /**
  * An Effect that builds the live implementation of the APIDeprecation service.
  */
-export default Effect.gen(function* () {
-	const Log = yield* LogService;
+export default Effect.gen(function* (G) {
+	const Log = yield* G(LogService);
 
-	const Report = (
+	const ReportEffect = (
 		ExtensionID: ExtensionIdentifier,
 		Usage: string,
 		Message: string,
@@ -31,27 +30,27 @@ export default Effect.gen(function* () {
 			`Extension '${ExtensionID.value}' used deprecated API: '${Usage}'. Message: ${Message}`,
 		);
 
-	const Deprecated = (
+	const DeprecatedDecorator = (
 		ExtensionID: ExtensionIdentifier,
 		Feature: string,
 		Message: string,
 	): PropertyDecorator => {
-		// This inner function creates the logging Effect and forks it,
-		// because property accessors must be synchronous.
-		const ReportEffect = (PropertyName: string | symbol) =>
-			Report(
+		const CreateReportEffect = (PropertyName: string | symbol) =>
+			ReportEffect(
 				ExtensionID,
 				`${Feature} (property: ${String(PropertyName)})`,
 				Message,
 			);
 
 		return (Target: Object, PropertyKey: string | symbol): void => {
-			let BackingField: any = Target[PropertyKey];
+			let BackingField: any = (Target as any)[PropertyKey];
 			let HasReported = false;
 
 			const ReportOnce = (Key: string | symbol) => {
 				if (!HasReported) {
-					Effect.runFork(ReportEffect(Key));
+					// `runFork` is appropriate here because a property accessor must be
+					// synchronous, but logging is an asynchronous side effect.
+					Effect.runFork(CreateReportEffect(Key));
 					HasReported = true;
 				}
 			};
@@ -72,8 +71,8 @@ export default Effect.gen(function* () {
 	};
 
 	const ServiceImplementation: Service["Type"] = {
-		Report,
-		Deprecated,
+		Report: ReportEffect,
+		Deprecated: DeprecatedDecorator,
 	};
 
 	return ServiceImplementation;
