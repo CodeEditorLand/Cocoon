@@ -168,7 +168,7 @@ export default Effect.gen(function* () {
 	const ExtensionPath = yield* ExtensionPathService;
 	const Log = yield* LogService;
 
-	const Install = (): Effect.Effect<void, Error, Scope.Scope> =>
+	const Install = (): Effect.Effect<void, Error> =>
 		Effect.gen(function* () {
 			if (typeof (Module as any).register !== "function") {
 				return yield* Effect.fail(

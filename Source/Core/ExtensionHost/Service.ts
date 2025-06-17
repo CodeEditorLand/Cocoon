@@ -81,6 +81,6 @@ export default class ExtensionHostService extends Context.Tag(
 		 * Deactivates all currently activated extensions.
 		 * @returns An `Effect` that completes when all deactivation logic has run.
 		 */
-		readonly DeactivateAll: () => Effect.Effect<void, never, never>;
+		readonly DeactivateAll: () => Effect.Effect<void, never>;
 	}
 >() {}

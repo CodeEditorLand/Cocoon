@@ -13,7 +13,7 @@
  * intercepts `import 'vscode'` statements.
  */
 
-import { Context, type Effect, type Scope } from "effect";
+import { Context, type Effect } from "effect";
 
 /**
  * The Context.Tag for the ESMInterceptor service.
@@ -28,6 +28,6 @@ export default class ESMInterceptorService extends Context.Tag(
 		 * and registers finalizers to clean up all resources (MessagePorts, globals)
 		 * when the scope is closed. This action is idempotent.
 		 */
-		readonly Install: () => Effect.Effect<void, Error, Scope.Scope>;
+		readonly Install: () => Effect.Effect<void, Error>;
 	}
 >() {}
