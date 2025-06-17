@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/WorkSpace/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the WorkSpace service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../TypeConverter/Main.js, ../../TypeConverter/WorkSpaceEdit.js, ../../Utility/CreateEventStream.js, ../Configuration/Service.js, ../Document/Service.js, ../FileSystem/Service.js, ../IPC/Service.js, ./Service.js, ./State.js, ./Support/FindFiles.js, ./Support/OpenTextDocument.js, effect, vs/base/common/event.js, vscode
+ * Dependency: ../../TypeConverter/Main.js, ../../TypeConverter/WorkSpaceEdit.js, ../Configuration/Service.js, ../Document/Service.js, ../FileSystem/Service.js, ../IPC/Service.js, ./Service.js, ./State.js, ./Support/FindFiles.js, ./Support/OpenTextDocument.js, effect, vs/base/common/event.js, vscode
  */
 
 /**
@@ -12,16 +12,15 @@
 
 import { Effect, Ref } from "effect";
 import { Emitter } from "vs/base/common/event.js";
-import type { TextEditor, Uri, WorkspaceEdit, WorkspaceFolder } from "vscode";
+import type { Uri, WorkspaceEdit, WorkspaceFolder } from "vscode";
 
 import * as TypeConverter from "../../TypeConverter/Main.js";
 import { default as WorkSpaceEditConverter } from "../../TypeConverter/WorkSpaceEdit.js";
-import CreateEventStream from "../../Utility/CreateEventStream.js";
 import ConfigurationService from "../Configuration/Service.js";
 import DocumentService from "../Document/Service.js";
 import FileSystemService from "../FileSystem/Service.js";
 import IPCService from "../IPC/Service.js";
-import type Service from "./Service.js";
+import type WorkSpaceService from "./Service.js";
 import InternalWorkSpace from "./State.js";
 import FindFilesEffect from "./Support/FindFiles.js";
 import OpenTextDocumentEffect from "./Support/OpenTextDocument.js";
@@ -37,17 +36,7 @@ export default Effect.gen(function* () {
 	);
 	const OnDidChangeFoldersEvent = new Emitter<any>();
 
-	const TextEditorsMap = yield* Ref.make(new Map<string, TextEditor>());
-	const ActiveTextEditorRef = yield* Ref.make<TextEditor | undefined>(
-		undefined,
-	);
-	const VisibleTextEditorsRef = yield* Ref.make<readonly TextEditor[]>([]);
-
-	const { event: onDidChangeActiveTextEditor, Fire: fireActive } =
-		CreateEventStream<TextEditor | undefined>();
-	const { event: onDidChangeVisibleTextEditors, Fire: fireVisible } =
-		CreateEventStream<readonly TextEditor[]>();
-
+	// This IPC handler is correctly part of the WorkSpace service.
 	yield* Effect.sync(() =>
 		IPC.RegisterInvokeHandler(
 			"$acceptWorkspaceData",
@@ -90,32 +79,10 @@ export default Effect.gen(function* () {
 		),
 	);
 
-	yield* Effect.sync(() =>
-		IPC.RegisterInvokeHandler(
-			"$acceptEditorState",
-			([activeEditorId, visibleEditorIds]): Promise<void> =>
-				Effect.gen(function* () {
-					const editors = yield* Ref.get(TextEditorsMap);
-					const newActive = activeEditorId
-						? editors.get(activeEditorId)
-						: undefined;
-					const newVisible = visibleEditorIds
-						.map((id: string) => editors.get(id))
-						.filter(Boolean);
+	// REMOVED: The "$acceptEditorState" IPC handler and all related Refs
+	// and EventEmitters. They belong in a dedicated Editor service.
 
-					yield* Ref.set(ActiveTextEditorRef, newActive);
-					yield* Ref.set(
-						VisibleTextEditorsRef,
-						newVisible as TextEditor[],
-					);
-
-					yield* fireActive(newActive);
-					yield* fireVisible(newVisible as TextEditor[]);
-				}).pipe(Effect.runPromise),
-		),
-	);
-
-	const ServiceImplementation: Service["Type"] = {
+	const ServiceImplementation: WorkSpaceService["Type"] = {
 		get name() {
 			return Effect.runSync(
 				Ref.get(InternalWorkSpaceRef).pipe(
@@ -159,29 +126,14 @@ export default Effect.gen(function* () {
 				Effect.mapError((e) => new Error(String(e))),
 			),
 		getConfiguration: Configuration.GetConfiguration,
+		// FIXED: This now returns a composable Effect instead of executing a Promise.
 		applyEdit: (edit: WorkspaceEdit) =>
-			Effect.runPromise(
-				IPC.SendRequest<boolean>("$applyWorkspaceEdit", [
-					WorkSpaceEditConverter.FromAPI(edit),
-				]),
-			),
+			IPC.SendRequest<boolean>("$applyWorkspaceEdit", [
+				WorkSpaceEditConverter.FromAPI(edit),
+			]).pipe(Effect.mapError((e) => new Error(String(e)))),
 		fs: Fs,
-		textDocuments: Document.TextDocuments,
-		onDidOpenTextDocument: Document.onDidOpenTextDocument,
-		onDidCloseTextDocument: Document.onDidCloseTextDocument,
-		onDidChangeTextDocument: Document.onDidChangeTextDocument,
-		get activeTextEditor() {
-			return Effect.runSync(Ref.get(ActiveTextEditorRef));
-		},
-		get visibleTextEditors() {
-			return Effect.runSync(Ref.get(VisibleTextEditorsRef));
-		},
-		onDidChangeActiveTextEditor: onDidChangeActiveTextEditor,
-		onDidChangeVisibleTextEditors: onDidChangeVisibleTextEditors,
-		findTextEditorById: (id: string) =>
-			Effect.runSync(
-				Ref.get(TextEditorsMap).pipe(Effect.map((m) => m.get(id))),
-			),
+
+		// REMOVED: All properties related to textDocuments and textEditors.
 	};
 
 	return ServiceImplementation;

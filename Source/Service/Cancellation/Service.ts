@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Cancellation/Service.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Defines the contract for the CancellationTokenProvider service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ./Error/InvalidTokenIDError.js, ./Type/TokenAndScope.js, effect
+ * Dependency: ./Error/InvalidTokenIDError.js, effect, vscode
  * Export: CancellationService
  */
 
@@ -12,10 +12,10 @@
  * This service manages cancellation tokens for long-running RPC operations.
  */
 
-import { Context, Scope, type Effect } from "effect";
+import { Context, type Effect } from "effect";
+import type { CancellationToken } from "vscode";
 
 import type InvalidTokenIDError from "./Error/InvalidTokenIDError.js";
-import type TokenAndScope from "./Type/TokenAndScope.js";
 
 export default class CancellationService extends Context.Tag(
 	"Service/CancellationTokenProvider",
@@ -23,15 +23,15 @@ export default class CancellationService extends Context.Tag(
 	CancellationService,
 	{
 		/**
-		 * Acquires a CancellationToken for a given operation ID.
-		 * This returns a scoped Effect. When the scope is closed, the token
-		 * source is automatically disposed and cleaned up.
+		 * Creates and returns a CancellationToken for a given operation ID.
+		 * The token's lifecycle is managed internally; its source is automatically
+		 * disposed and cleaned up when the effect that uses it completes.
 		 * @param TokenID The numeric ID for the operation.
-		 * @returns A scoped `Effect` that resolves to a `TokenAndScope` object.
+		 * @returns An `Effect` that resolves to a `CancellationToken`.
 		 */
 		readonly ObtainToken: (
 			TokenID: number,
-		) => Effect.Effect<TokenAndScope, InvalidTokenIDError, Scope.Scope>;
+		) => Effect.Effect<CancellationToken, InvalidTokenIDError>; // FIXED: No more Scope requirement.
 
 		/**
 		 * Signals cancellation for a specific token ID.

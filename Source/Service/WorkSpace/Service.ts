@@ -1,15 +1,20 @@
 /*
  * File: Cocoon/Source/Service/WorkSpace/Service.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Defines the contract for the WorkSpace service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: effect
+ * Dependency: effect, vscode
  * Export: WorkSpaceService
  */
 
 /**
  * @module Service (WorkSpace)
- * @description Defines the interface and Context.Tag for the WorkSpace service.
- * This is a simplified version of `vscode.workspace` for internal composition.
+ * @description Defines the interface and `Context.Tag` for the WorkSpace service.
+ * This service provides an abstraction over `vscode.workspace` to be used
+ * within the application's dependency injection system. It focuses purely on
+ * workspace-related functionalities, ensuring a clean and decoupled architecture.
+ *
+ * Consumers that require access to text documents or editors should depend on
+ * the respective services for those concerns.
  */
 
 import { Context, type Effect } from "effect";
@@ -19,8 +24,6 @@ import type {
 	FileSystem,
 	GlobPattern,
 	TextDocument,
-	TextDocumentChangeEvent,
-	TextEditor,
 	Uri,
 	WorkspaceConfiguration,
 	WorkspaceEdit,
@@ -55,19 +58,10 @@ export default class WorkSpaceService extends Context.Tag("Service/WorkSpace")<
 			scope?: any,
 		) => Effect.Effect<WorkspaceConfiguration, Error>;
 
-		readonly applyEdit: (edit: WorkspaceEdit) => Promise<boolean>;
+		readonly applyEdit: (
+			edit: WorkspaceEdit,
+		) => Effect.Effect<boolean, Error>;
 
 		readonly fs: FileSystem;
-
-		// Delegated from Document & Window services for convenience
-		readonly textDocuments: readonly TextDocument[];
-		readonly onDidOpenTextDocument: Event<TextDocument>;
-		readonly onDidCloseTextDocument: Event<TextDocument>;
-		readonly onDidChangeTextDocument: Event<TextDocumentChangeEvent>;
-		readonly activeTextEditor: TextEditor | undefined;
-		readonly visibleTextEditors: readonly TextEditor[];
-		readonly onDidChangeActiveTextEditor: Event<TextEditor | undefined>;
-		readonly onDidChangeVisibleTextEditors: Event<readonly TextEditor[]>;
-		readonly findTextEditorById: (id: string) => TextEditor | undefined;
 	}
 >() {}
