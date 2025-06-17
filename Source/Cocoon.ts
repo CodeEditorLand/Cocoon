@@ -114,21 +114,24 @@ const PreHandshakeEffect = Effect.gen(function* (G) {
 
 // --- Layer Definitions ---
 
+// Layer for static, top-level configuration.
 const ApplicationConfiguration: IPCConfiguration = {
 	MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
 	CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
 };
-
 const StaticConfigLayer = Layer.succeed(
 	IPCConfigurationService,
 	ApplicationConfiguration,
 );
 
+// A self-contained layer for the pre-handshake phase.
 const PreHandshakeLayer = IPCLive.pipe(
 	Layer.provide(Layer.merge(StaticConfigLayer, CancellationLive)),
 	Layer.provide(Logger.logFmt),
 );
 
+// A single, comprehensive layer containing ALL application services.
+// This defines the entire dependency graph of the application.
 const LiveApplicationLayer = Layer.mergeAll(
 	APIFactoryLive,
 	ESMInterceptorLive,
@@ -168,34 +171,45 @@ const LiveApplicationLayer = Layer.mergeAll(
 	WorkSpaceLive,
 	IPCLive,
 	CancellationLive,
-	PatchProcessLive, // Add the layer for process patching config
+	PatchProcessLive,
 );
 
 // --- Application Entry Point ---
 
+// Stage 1: Run the pre-handshake effect to get the dynamic initialization data.
 const getInitializationData = PreHandshakeEffect.pipe(
 	Effect.provide(PreHandshakeLayer),
 );
 
+// Stage 2: Chain the main application logic using the dynamic data.
 const RunnableApplication = getInitializationData.pipe(
 	Effect.flatMap((initData) => {
+		// Create the layer for the dynamic runtime data.
 		const initDataLayer = InitDataLive(initData);
-		const externalDependenciesLayer = Layer.merge(
+
+		// Combine all *external* dependencies into a single provider layer.
+		const DependenciesProviderLayer = Layer.mergeAll(
+			initDataLayer,
 			StaticConfigLayer,
 			Logger.logFmt,
 		);
 
-		const finalLayer = LiveApplicationLayer.pipe(
-			Layer.provide(initDataLayer),
-			Layer.provide(externalDependenciesLayer),
+		// Create the final, fully-resolved application environment by providing
+		// the external dependencies to the main application layer.
+		const FinalLayer = Layer.provide(
+			LiveApplicationLayer,
+			DependenciesProviderLayer,
 		);
 
-		return PostHandshakeEffect.pipe(Effect.provide(finalLayer));
+		// Provide this complete, self-contained environment to the main logic.
+		return PostHandshakeEffect.pipe(Effect.provide(FinalLayer));
 	}),
+	// Add final error handling and ensure all scoped resources are released.
 	Effect.catchAllCause((Cause) =>
 		Effect.logFatal("Cocoon main process failed.", Cause),
 	),
 	Effect.scoped,
 );
 
+// --- Run the Application ---
 NodeRuntime.runMain(RunnableApplication);
