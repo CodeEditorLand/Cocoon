@@ -2,12 +2,12 @@
  * File: Cocoon/Source/Service/WorkSpace/Definition.ts
  * Responsibility: The live implementation of the WorkSpace service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../TypeConverter/Main.js, ../../TypeConverter/WorkSpaceEdit.js, ../Configuration/Service.js, ../Document/Service.js, ../FileSystem/Service.js, ../IPC/Service.js, ./Service.js, ./State.js, ./Support/FindFiles.js, ./Support/OpenTextDocument.js, effect, vs/base/common/event.js, vscode
  */
 
 /**
  * @module Definition (WorkSpace)
- * @description The live implementation of the WorkSpace service.
+ * @description The live implementation of the WorkSpace service. This service is now
+ * strictly focused on workspace-level concerns and no longer manages editor state.
  */
 
 import { Effect, Ref } from "effect";
@@ -25,62 +25,83 @@ import InternalWorkSpace from "./State.js";
 import FindFilesEffect from "./Support/FindFiles.js";
 import OpenTextDocumentEffect from "./Support/OpenTextDocument.js";
 
-export default Effect.gen(function* () {
-	const IPC = yield* IPCService;
-	const Document = yield* DocumentService;
-	const Fs = yield* FileSystemService;
-	const Configuration = yield* ConfigurationService;
+/**
+ * An Effect that builds the live implementation of the WorkSpace service.
+ */
+export default Effect.gen(function* (G) {
+	const IPC = yield* G(IPCService);
+	const Document = yield* G(DocumentService);
+	const Fs = yield* G(FileSystemService);
+	const Configuration = yield* G(ConfigurationService);
 
-	const InternalWorkSpaceRef = yield* Ref.make<InternalWorkSpace | undefined>(
-		undefined,
+	const InternalWorkSpaceRef = yield* G(
+		Ref.make<InternalWorkSpace | undefined>(undefined),
 	);
 	const OnDidChangeFoldersEvent = new Emitter<any>();
 
-	// This IPC handler is correctly part of the WorkSpace service.
-	yield* Effect.sync(() =>
-		IPC.RegisterInvokeHandler(
-			"$acceptWorkspaceData",
-			([data]): Promise<void> =>
-				Effect.gen(function* () {
-					const OldWorkSpace = yield* Ref.get(InternalWorkSpaceRef);
-					const NewWorkSpace = new InternalWorkSpace(
-						data.id,
-						data.name,
-						data.folders.map((f: any) =>
-							TypeConverter.WorkspaceFolder.fromDTO(f),
-						),
-						data.configuration
-							? TypeConverter.URI.ToAPI(data.configuration)
-							: undefined,
-					);
-					yield* Ref.set(InternalWorkSpaceRef, NewWorkSpace);
+	// This IPC handler correctly belongs to the WorkSpace service.
+	yield* G(
+		Effect.sync(() =>
+			IPC.RegisterInvokeHandler(
+				"$acceptWorkspaceData",
+				([data]): Promise<void> =>
+					Effect.runPromise(
+						Effect.gen(function* (G) {
+							const OldWorkSpace = yield* G(
+								Ref.get(InternalWorkSpaceRef),
+							);
+							const NewWorkSpace = new InternalWorkSpace(
+								data.id,
+								data.name,
+								data.folders.map((f: any) =>
+									TypeConverter.WorkspaceFolder.fromDTO(f),
+								),
+								data.configuration
+									? TypeConverter.URI.ToAPI(
+											data.configuration,
+										)
+									: undefined,
+							);
+							yield* G(
+								Ref.set(InternalWorkSpaceRef, NewWorkSpace),
+							);
 
-					const oldFolders: readonly WorkspaceFolder[] =
-						OldWorkSpace?.Folders ?? [];
-					const newFolders = NewWorkSpace.Folders;
+							const OldFolders: readonly WorkspaceFolder[] =
+								OldWorkSpace?.Folders ?? [];
+							const NewFolders = NewWorkSpace.Folders;
 
-					const added = newFolders.filter(
-						(f) =>
-							!oldFolders.some(
-								(of) => of.uri.toString() === f.uri.toString(),
-							),
-					);
-					const removed = oldFolders.filter(
-						(f) =>
-							!newFolders.some(
-								(nf) => nf.uri.toString() === f.uri.toString(),
-							),
-					);
+							const Added = NewFolders.filter(
+								(f) =>
+									!OldFolders.some(
+										(of) =>
+											of.uri.toString() ===
+											f.uri.toString(),
+									),
+							);
+							const Removed = OldFolders.filter(
+								(f) =>
+									!NewFolders.some(
+										(nf) =>
+											nf.uri.toString() ===
+											f.uri.toString(),
+									),
+							);
 
-					if (added.length > 0 || removed.length > 0) {
-						OnDidChangeFoldersEvent.fire({ added, removed });
-					}
-				}).pipe(Effect.runPromise),
+							if (Added.length > 0 || Removed.length > 0) {
+								OnDidChangeFoldersEvent.fire({
+									added: Added,
+									removed: Removed,
+								});
+							}
+						}),
+					),
+			),
 		),
 	);
 
-	// REMOVED: The "$acceptEditorState" IPC handler and all related Refs
-	// and EventEmitters. They belong in a dedicated Editor service.
+	// REMOVED: All state and IPC handlers related to TextEditor state
+	// (e.g., ActiveTextEditorRef, $acceptEditorState) have been moved
+	// to the WindowService definition where they correctly belong.
 
 	const ServiceImplementation: WorkSpaceService["Type"] = {
 		get name() {
@@ -105,7 +126,7 @@ export default Effect.gen(function* () {
 			);
 		},
 		get isTrusted() {
-			return true;
+			return true; // Stubbed value
 		},
 		onDidChangeWorkspaceFolders: OnDidChangeFoldersEvent.event,
 		getWorkspaceFolder: (uri: Uri) => {
@@ -126,14 +147,11 @@ export default Effect.gen(function* () {
 				Effect.mapError((e) => new Error(String(e))),
 			),
 		getConfiguration: Configuration.GetConfiguration,
-		// FIXED: This now returns a composable Effect instead of executing a Promise.
 		applyEdit: (edit: WorkspaceEdit) =>
 			IPC.SendRequest<boolean>("$applyWorkspaceEdit", [
 				WorkSpaceEditConverter.FromAPI(edit),
 			]).pipe(Effect.mapError((e) => new Error(String(e)))),
 		fs: Fs,
-
-		// REMOVED: All properties related to textDocuments and textEditors.
 	};
 
 	return ServiceImplementation;
