@@ -16,14 +16,14 @@ import type { CancellationToken, GlobPattern } from "vscode";
 import * as TypeConverter from "../../../TypeConverter/Main.js";
 import type IPCService from "../../IPC/Service.js";
 
-export default function (
+export default (
 	IPC: IPCService["Type"],
 	include: GlobPattern,
 	exclude: GlobPattern | null | undefined,
 	maxResults: number | undefined,
 	token: CancellationToken | undefined,
-) {
-	return Effect.gen(function* () {
+) =>
+	Effect.gen(function* () {
 		// A real implementation would acquire a token ID from the cancellation service.
 		// For now, we pass a placeholder ID. The `_id` property is internal to VS Code's
 		// CancellationTokenSource and not on the public interface.
@@ -38,4 +38,3 @@ export default function (
 
 		return ResultDTOs.map(TypeConverter.URI.ToAPI);
 	});
-}

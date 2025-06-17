@@ -27,7 +27,7 @@ interface ParsedArguments {
  * @param Arguments The array of arguments passed to the function.
  * @returns A `ParsedArguments` object.
  */
-export default function (Arguments: any[]): ParsedArguments {
+export default (Arguments: any[]): ParsedArguments => {
 	let Option: MessageOptions = {};
 	let Items: (string | MessageItem)[] = [];
 	let Source: ExtensionSource | undefined = undefined;
@@ -64,4 +64,4 @@ export default function (Arguments: any[]): ParsedArguments {
 	);
 
 	return { Option, Items, Source };
-}
+};

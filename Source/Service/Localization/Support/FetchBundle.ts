@@ -24,12 +24,11 @@ import type IPCService from "../../IPC/Service.js";
  * @returns An `Effect` that resolves to the parsed JSON object, or an empty
  *   object if the file doesn't exist, is empty, or fails to parse.
  */
-export default function (IPC: IPCService["Type"], BundleURI: Uri) {
-	return IPC.SendRequest<string | null>("$fetchBundleContents", [
+export default (IPC: IPCService["Type"], BundleURI: Uri) =>
+	IPC.SendRequest<string | null>("$fetchBundleContents", [
 		TypeConverter.URI.FromAPI(BundleURI),
 	]).pipe(
 		Effect.map((content) => (content ? JSON.parse(content) : {})),
 		// If the bundle doesn't exist or fails to parse, we gracefully treat it as an empty object.
 		Effect.catchAll(() => Effect.succeed({})),
 	);
-}

@@ -28,8 +28,10 @@ export interface IPCConfiguration {
 	readonly CocoonAddress: string;
 }
 
-// FIX: Define and export the Context.Tag that other services can depend on.
-// The class-based syntax is the modern and correct way to define a Tag.
+/**
+ * The `Context.Tag` for the `IPCConfiguration` service.
+ * This allows the configuration to be provided and injected as a formal dependency.
+ */
 export class IPCConfigurationService extends Context.Tag(
 	"Service/IPCConfiguration",
 )<IPCConfigurationService, IPCConfiguration>() {}

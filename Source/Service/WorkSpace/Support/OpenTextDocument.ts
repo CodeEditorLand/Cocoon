@@ -17,12 +17,12 @@ import * as TypeConverter from "../../../TypeConverter/Main.js";
 import type DocumentService from "../../Document/Service.js";
 import type IPCService from "../../IPC/Service.js";
 
-export default function (
+export default (
 	IPC: IPCService["Type"],
 	Document: DocumentService["Type"],
 	options?: { language?: string; content?: string } | Uri,
-): Effect.Effect<TextDocument, Error> {
-	return Effect.gen(function* () {
+): Effect.Effect<TextDocument, Error> =>
+	Effect.gen(function* () {
 		if (options instanceof Uri) {
 			const Existing = yield* Document.GetDocument(options);
 			if (Option.isSome(Existing)) {
@@ -52,4 +52,3 @@ export default function (
 			});
 		}
 	});
-}

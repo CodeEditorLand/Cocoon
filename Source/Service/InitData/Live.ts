@@ -26,6 +26,5 @@ import Service from "./Service.js";
  * @param InitDataObject The `IExtensionHostInitData` object received from the Mountain host.
  * @returns A `Layer` that provides the `InitData.Service`.
  */
-export default function (InitDataObject: IExtensionHostInitData) {
-	return Layer.succeed(Service, InitDataObject);
-}
+export default (InitDataObject: IExtensionHostInitData) =>
+	Layer.succeed(Service, InitDataObject);

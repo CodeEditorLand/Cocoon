@@ -15,9 +15,12 @@ import ExtensionHostService from "./Core/ExtensionHost/Service.js";
 import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
 import RunProcessPatch from "./PatchProcess.js";
 import AllServiceLayer from "./Service.js";
-import InitDataLayer from "./Service/InitData/Live.js";
-import { Live as IPCLive } from "./Service/IPC.js";
-import type { IPCConfiguration } from "./Service/IPC/Configuration.js";
+import InitDataLayerFactory from "./Service/InitData/Live.js";
+import IPCLive from "./Service/IPC/Live.js";
+import {
+	IPCConfigurationService,
+	type IPCConfiguration,
+} from "./Service/IPC/Configuration.js";
 import IPCService from "./Service/IPC/Service.js";
 
 // --- Pre-initialization Steps ---
@@ -58,7 +61,6 @@ const InitializeAfterHandshake = Effect.gen(function* (G) {
  */
 const Main = Effect.gen(function* (G) {
 	// A barrier to pause the main thread until the host sends init data.
-	// The error channel now holds a generic `Error` for simplicity.
 	const InitializationBarrier = yield* G(Deferred.make<void, Error>());
 	const IPC = yield* G(IPCService);
 
@@ -66,20 +68,27 @@ const Main = Effect.gen(function* (G) {
 	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
 		(InitializationData: IExtensionHostInitData) => {
-			// Step 2: Create a layer for the application services, which depends on runtime config.
-			const servicesLayer = AllServiceLayer(ApplicationConfiguration);
+			// Step 2: Create a layer from the dynamic init data.
+			const initDataLayer = InitDataLayerFactory(InitializationData);
 
-			// Step 3: Create a layer for the core services.
-			const coreLayer = CoreServiceLayer;
+			// Step 3: Define the application's dependencies.
+			// The IPC Layer provides the IPCService.
+			// The InitData Layer provides the InitDataService.
+			const dependenciesLayer = Layer.merge(IPCLive, initDataLayer);
 
-			// Step 4: Create a layer from the dynamic init data.
-			const initDataLayer = InitDataLayer(InitializationData);
+			// Step 4: Define the application services themselves.
+			// These layers depend on the services provided by the dependenciesLayer.
+			const applicationServicesLayer = Layer.merge(
+				CoreServiceLayer,
+				AllServiceLayer,
+			);
 
-			// Step 5: Compose all layers together.
-			// `initDataLayer` provides the `InitDataService` that the other layers require.
-			const CompleteApplicationLayer = Layer.provide(
-				Layer.merge(coreLayer, servicesLayer),
-				initDataLayer,
+			// Step 5: Construct the complete application by providing the dependencies
+			// to the services that need them. We also provide the configuration layer here,
+			// which is needed by the IPCLive layer within the dependenciesLayer.
+			const CompleteApplicationLayer = applicationServicesLayer.pipe(
+				Layer.provide(dependenciesLayer),
+				Layer.provide(ConfigurationLayer),
 			);
 
 			// Step 6: Define the effect that runs the rest of the application logic.
@@ -152,8 +161,15 @@ const ApplicationConfiguration: IPCConfiguration = {
 	CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
 };
 
-// Layer needed to perform the initial handshake.
-const PreHandshakeLayer = IPCLive(ApplicationConfiguration);
+// Create a layer that provides the IPCConfigurationService.
+const ConfigurationLayer = Layer.succeed(
+	IPCConfigurationService,
+	ApplicationConfiguration,
+);
+
+// The layer needed to perform the initial handshake.
+// We provide the configuration layer to the IPCLive layer to satisfy its dependency.
+const PreHandshakeLayer = IPCLive.pipe(Layer.provide(ConfigurationLayer));
 
 // --- Run the Application ---
 const RunnableApplication = Effect.provide(Main, PreHandshakeLayer);
