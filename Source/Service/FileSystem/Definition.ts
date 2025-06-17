@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the FileSystem service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../FileSystemInformation/Service.js, ../IPC/Service.js, ./CreateStatEffect.js, ./Service.js, effect
  */
 
 /**
@@ -17,22 +16,37 @@ import {
 	type Uri,
 } from "vscode";
 
+import * as TypeConverter from "../../TypeConverter/Main.js";
 import FileSystemInformationService from "../FileSystemInformation/Service.js";
-import IPCService from "../IPC/Service.js"; // Needed for CreateStatEffect
-import CreateStatEffect from "./CreateStatEffect.js";
-import type Service from "./Service.js";
+import IPCService from "../IPC/Service.js";
+import type { FileSystemServiceType } from "./Service.js";
 
 /**
  * An Effect that builds the live implementation of the FileSystem service.
  */
-export default Effect.gen(function* () {
-	const FsInfo = yield* FileSystemInformationService;
-	const IPC = yield* IPCService;
+export default Effect.gen(function* (G) {
+	const FsInfo = yield* G(FileSystemInformationService);
+	const IPC = yield* G(IPCService);
 
-	// This implementation matches the `FileSystemServiceType` interface.
-	const ServiceImplementation: Service["Type"] = {
+	// --- Internal Helper Effects ---
+	const StatEffect = (uri: Uri): Effect.Effect<FileStat, Error> =>
+		Effect.gen(function* (G) {
+			const UriDTO = TypeConverter.URI.FromAPI(uri);
+			const StatDTO = yield* G(IPC.SendRequest<any>("$stat", [UriDTO]));
+			const FileStat: FileStat = {
+				type: StatDTO.type,
+				ctime: StatDTO.ctime,
+				mtime: StatDTO.mtime,
+				size: StatDTO.size,
+				permissions: StatDTO.permissions,
+			};
+			return FileStat;
+		}).pipe(Effect.mapError((cause) => new Error(String(cause))));
+
+	// --- Service Implementation ---
+	const ServiceImplementation: FileSystemServiceType = {
 		stat: (uri: Uri): Promise<FileStat> =>
-			Effect.runPromise(CreateStatEffect(uri, IPC)),
+			Effect.runPromise(StatEffect(uri)),
 		readDirectory: (uri: Uri) =>
 			Promise.reject(
 				new VscFileSystemError(
@@ -65,11 +79,9 @@ export default Effect.gen(function* () {
 			Promise.reject(
 				new VscFileSystemError(`copy not implemented for ${source}`),
 			),
-		// isWritableFileSystem is now a direct method call, not an effect.
 		isWritableFileSystem: (scheme: string): boolean | undefined => {
 			return FsInfo.isWritableFileSystem(scheme);
 		},
-		// onDidChangeFile is part of our custom service type.
 		onDidChangeFile: FsInfo.onDidChangeFile,
 	};
 

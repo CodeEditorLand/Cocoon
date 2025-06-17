@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Document/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the Document service.
  * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect, vs/editor/common/model/mirrorTextModel.js, vs/workbench/api/common/extHost.protocol.js, vs/workbench/api/common/extHostDocumentData.js, vscode
  */
 
 /**
@@ -23,34 +22,30 @@ import type Service from "./Service.js";
 
 /**
  * An Effect that builds the live implementation of the Document service.
- * @export
- * @default
  */
-export default Effect.gen(function* () {
+export default Effect.gen(function* (G) {
 	// --- Service Dependencies ---
-	const IPC = yield* IPCService;
-	const DocumentMap = yield* Ref.make(new Map<string, ExtHostDocumentData>());
+	const IPC = yield* G(IPCService);
+	const DocumentMapRef = yield* G(
+		Ref.make(new Map<string, ExtHostDocumentData>()),
+	);
 
 	const MainThreadDocumentsProxy = IPC.CreateProxy<MainThreadDocumentsShape>(
 		"$rpc:mainThreadDocuments",
 	);
 
 	// --- Event Emitters for the Public API ---
-	const OnDidOpenTextDocument = CreateEventStream<TextDocument>();
-	const OnDidCloseTextDocument = CreateEventStream<TextDocument>();
-	const OnDidChangeTextDocument =
+	const OnDidOpenTextDocumentStream = CreateEventStream<TextDocument>();
+	const OnDidCloseTextDocumentStream = CreateEventStream<TextDocument>();
+	const OnDidChangeTextDocumentStream =
 		CreateEventStream<TextDocumentChangeEvent>();
-	const OnDidSaveTextDocument = CreateEventStream<TextDocument>();
+	const OnDidSaveTextDocumentStream = CreateEventStream<TextDocument>();
 
 	// --- RPC Handlers (for updates FROM Mountain) ---
 
-	/**
-	 * An Effect that handles the addition of a new model from the host.
-	 */
-	const AcceptModelAdded = (Data: any) =>
-		Effect.gen(function* () {
+	const AcceptModelAddedEffect = (Data: any) =>
+		Effect.gen(function* (G) {
 			const RevivedURI = TypeConverter.URI.ToAPI(Data.uri);
-
 			const DocumentData = new ExtHostDocumentData(
 				MainThreadDocumentsProxy,
 				RevivedURI,
@@ -61,91 +56,92 @@ export default Effect.gen(function* () {
 				Data.isDirty,
 				Data.encoding,
 			);
-
-			yield* Ref.update(DocumentMap, (Map) =>
-				Map.set(DocumentData.document.uri.toString(), DocumentData),
+			yield* G(
+				Ref.update(DocumentMapRef, (Map) =>
+					Map.set(DocumentData.document.uri.toString(), DocumentData),
+				),
 			);
-			yield* OnDidOpenTextDocument.Fire(DocumentData.document);
+			yield* G(OnDidOpenTextDocumentStream.Fire(DocumentData.document));
 		});
 
-	/**
-	 * An Effect that handles the removal of a model from the host.
-	 */
-	const AcceptModelRemoved = (UriDTO: any) =>
-		Effect.gen(function* () {
+	const AcceptModelRemovedEffect = (UriDTO: any) =>
+		Effect.gen(function* (G) {
 			const URIString = TypeConverter.URI.ToAPI(UriDTO).toString();
-			const DocumentData = (yield* Ref.get(DocumentMap)).get(URIString);
+			const DocumentData = (yield* G(Ref.get(DocumentMapRef))).get(
+				URIString,
+			);
 			if (DocumentData) {
-				yield* Ref.update(
-					DocumentMap,
-					(Map) => (Map.delete(URIString), Map),
+				yield* G(
+					Ref.update(
+						DocumentMapRef,
+						(Map) => (Map.delete(URIString), Map),
+					),
 				);
-				yield* OnDidCloseTextDocument.Fire(DocumentData.document);
+				yield* G(
+					OnDidCloseTextDocumentStream.Fire(DocumentData.document),
+				);
 			}
 		});
 
-	/**
-	 * An Effect that handles content changes to an existing model.
-	 */
-	const AcceptModelChanged = (UriDTO: any, ChangeEventDTO: any) =>
-		Effect.gen(function* () {
+	const AcceptModelChangedEffect = (UriDTO: any, ChangeEventDTO: any) =>
+		Effect.gen(function* (G) {
 			const URIString = TypeConverter.URI.ToAPI(UriDTO).toString();
-			const DocumentData = (yield* Ref.get(DocumentMap)).get(URIString);
+			const DocumentData = (yield* G(Ref.get(DocumentMapRef))).get(
+				URIString,
+			);
 			if (DocumentData) {
-				// The `onEvents` method expects a single event object conforming to `IModelChangedEvent`.
-				const modelChangedEvent: IModelChangedEvent = {
+				const ModelChangedEvent: IModelChangedEvent = {
 					changes: ChangeEventDTO.changes,
 					eol: ChangeEventDTO.eol,
 					versionId: ChangeEventDTO.versionId,
-					isUndoing: false, // Assume false if not provided
-					isRedoing: false, // Assume false if not provided
+					isUndoing: false,
+					isRedoing: false,
 				};
-				DocumentData.onEvents(modelChangedEvent);
-
-				yield* OnDidChangeTextDocument.Fire({
-					document: DocumentData.document,
-					contentChanges: ChangeEventDTO.changes.map(
-						(Change: any) => ({
-							range: TypeConverter.Range.ToAPI(Change.range),
-							rangeOffset: Change.rangeOffset,
-							rangeLength: Change.rangeLength,
-							text: Change.text,
-						}),
-					),
-					reason: ChangeEventDTO.reason,
-				});
+				DocumentData.onEvents(ModelChangedEvent);
+				yield* G(
+					OnDidChangeTextDocumentStream.Fire({
+						document: DocumentData.document,
+						contentChanges: ChangeEventDTO.changes.map(
+							(Change: any) => ({
+								range: TypeConverter.Range.ToAPI(Change.range),
+								rangeOffset: Change.rangeOffset,
+								rangeLength: Change.rangeLength,
+								text: Change.text,
+							}),
+						),
+						reason: ChangeEventDTO.reason,
+					}),
+				);
 			}
 		});
 
 	// --- Register Handlers ---
-	yield* Effect.sync(() =>
-		IPC.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
-			Effect.runPromise(AcceptModelAdded(Data)),
-		),
-	);
-	yield* Effect.sync(() =>
-		IPC.RegisterInvokeHandler("$acceptModelRemoved", ([Uri]) =>
-			Effect.runPromise(AcceptModelRemoved(Uri)),
-		),
-	);
-	yield* Effect.sync(() =>
-		IPC.RegisterInvokeHandler("$acceptModelChanged", ([Uri, Changes]) =>
-			Effect.runPromise(AcceptModelChanged(Uri, Changes)),
-		),
+	yield* G(
+		Effect.sync(() => {
+			IPC.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
+				Effect.runPromise(AcceptModelAddedEffect(Data)),
+			);
+			IPC.RegisterInvokeHandler("$acceptModelRemoved", ([Uri]) =>
+				Effect.runPromise(AcceptModelRemovedEffect(Uri)),
+			);
+			IPC.RegisterInvokeHandler("$acceptModelChanged", ([Uri, Changes]) =>
+				Effect.runPromise(AcceptModelChangedEffect(Uri, Changes)),
+			);
+		}),
 	);
 
 	// --- Service Implementation ---
 	const DocumentImplementation: Service["Type"] = {
 		get TextDocuments() {
-			const Map = Effect.runSync(Ref.get(DocumentMap));
+			const Map = Effect.runSync(Ref.get(DocumentMapRef));
 			return Array.from(Map.values()).map((data) => data.document);
 		},
-		onDidOpenTextDocument: OnDidOpenTextDocument.event,
-		onDidCloseTextDocument: OnDidCloseTextDocument.event,
-		onDidChangeTextDocument: OnDidChangeTextDocument.event,
-		onDidSaveTextDocument: OnDidSaveTextDocument.event,
+		onDidOpenTextDocument: OnDidOpenTextDocumentStream.event,
+		onDidCloseTextDocument: OnDidCloseTextDocumentStream.event,
+		onDidChangeTextDocument: OnDidChangeTextDocumentStream.event,
+		onDidSaveTextDocument: OnDidSaveTextDocumentStream.event,
 		GetDocument: (URI: Uri) =>
-			Ref.get(DocumentMap).pipe(
+			Ref.get(DocumentMapRef).pipe(
 				Effect.map((Map) =>
 					Option.fromNullable(Map.get(URI.toString())),
 				),
