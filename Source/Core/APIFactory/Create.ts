@@ -38,7 +38,6 @@ import CreateTasksNamespace from "./CreateTasksNamespace.js";
 import CreateWindowNamespace from "./CreateWindowNamespace.js";
 import CreateWorkSpaceNamespace from "./CreateWorkSpaceNamespace.js";
 
-// This is a minimal stub conforming to `vscode.extensions`. A full implementation is complex.
 const CreateExtensionsAPI = (
 	_extensionService: ExtensionService["Type"],
 ): typeof VSCode.extensions => ({
@@ -54,11 +53,8 @@ const CreateExtensionsAPI = (
 
 /**
  * An `Effect` that gathers all necessary services and constructs the factory object.
- * The factory itself has one method, `CreateAPI`, which synchronously returns the
- * sandboxed `vscode` API object.
  */
 const CreateAPIFactoryEffect = Effect.gen(function* (G) {
-	// Yield all services needed by the various namespace factories.
 	const Log = yield* G(LogService);
 	const ProposedAPI = yield* G(ProposedAPIService);
 	const APIDeprecation = yield* G(APIDeprecationService);
@@ -74,20 +70,16 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 	const TreeView = yield* G(TreeViewService);
 	const StatusBar = yield* G(StatusBarService);
 
-	// The `CreateAPI` function is the core of this factory. It's called for each extension.
 	const CreateAPI = (
 		ExtensionDescription: IExtensionDescription,
 	): typeof VSCode => {
-		// `AsEvent` is a higher-order function that wraps event listeners for safety.
 		const AsEvent = <T>(event: VSCode.Event<T>) =>
 			AsExtensionEvent(ExtensionDescription.identifier, Log, event);
 
-		// Create each namespace of the `vscode` API.
 		const CommandNamespace = CreateCommandNamespace(
 			Command,
 			ExtensionDescription,
 		);
-		// Note: The workspace namespace now also needs the Document service.
 		const WorkSpaceNamespace = CreateWorkSpaceNamespace(
 			WorkSpace,
 			Document,
@@ -95,9 +87,9 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 			AsEvent,
 			ExtensionDescription,
 		);
+		// FIX: Corrected the argument list to remove `WorkSpace`.
 		const WindowNamespace = CreateWindowNamespace(
 			Window,
-			WorkSpace, // Still needed for some properties until fully refactored
 			StatusBar,
 			WebViewPanel,
 			TreeView,
@@ -114,8 +106,6 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 			ExtensionDescription,
 		);
 
-		// The Debug namespace is created effectfully because it has its own dependencies.
-		// We provide its dependencies here and run it to get the final object.
 		const DebugNamespace = Effect.runSync(
 			CreateDebugNamespaceEffect(AsEvent, ExtensionDescription).pipe(
 				Effect.provideService(DebugService, Debug),
@@ -124,9 +114,8 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 
 		const ExtensionsNamespace = CreateExtensionsAPI(Extension);
 
-		// Assemble the final, partial `vscode` API object.
 		const API: Partial<typeof VSCode> = {
-			version: "1.85.0", // This should be dynamic
+			version: "1.85.0",
 			commands: CommandNamespace,
 			window: WindowNamespace,
 			workspace: WorkSpaceNamespace,
@@ -139,7 +128,6 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 			Selection,
 		};
 
-		// Logic for enabling proposed APIs for the extension.
 		if (
 			ProposedAPI.IsEnabled(
 				ExtensionDescription.identifier,
@@ -149,7 +137,6 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 			// Object.assign(API, { someProposedApi: ... });
 		}
 
-		// Deep-freeze the API object to prevent extensions from modifying it.
 		for (const key in API) {
 			if (Object.prototype.hasOwnProperty.call(API, key)) {
 				const prop = (API as any)[key];
@@ -162,10 +149,7 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 		return Object.freeze(API) as typeof VSCode;
 	};
 
-	// Return the factory object itself.
-	return {
-		CreateAPI: CreateAPI,
-	};
+	return { CreateAPI };
 });
 
 export default CreateAPIFactoryEffect;

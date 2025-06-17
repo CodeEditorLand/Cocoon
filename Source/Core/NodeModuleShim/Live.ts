@@ -14,13 +14,17 @@ import { Layer } from "effect";
 import type InitDataService from "../../Service/InitData/Service.js";
 import type LogService from "../../Service/Log/Service.js";
 import Definition from "./Definition.js";
-import Service from "./Service.js";
+// FIX: Import the named `NodeModuleShimService` instead of a default export.
+import NodeModuleShimService from "./Service.js";
 
 /**
  * The live implementation Layer for the NodeModuleShim service.
  * It correctly declares its dependencies on Log and InitData services.
  */
-const Live: Layer.Layer<Service, never, LogService | InitDataService> =
-	Layer.effect(Service, Definition);
+const Live: Layer.Layer<
+	NodeModuleShimService,
+	never,
+	LogService | InitDataService
+> = Layer.effect(NodeModuleShimService, Definition);
 
 export default Live;

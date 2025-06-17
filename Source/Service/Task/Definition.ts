@@ -10,11 +10,11 @@
  */
 
 import { Effect, Ref } from "effect";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable, type TaskFilter, type TaskProvider } from "vscode";
+import { Disposable, type TaskFilter } from "vscode";
 
 import { Task as TaskConverter } from "../../TypeConverter/Task.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
+import CancellationService from "../Cancellation/Service.js"; // Import the service tag
 import IPCService from "../IPC/Service.js";
 import ProvideTasksEffect from "./RPCHandlers/ProvideTasks.js";
 import type Service from "./Service.js";
@@ -26,14 +26,15 @@ let HandleCounter = 0;
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
+	// FIX: Yield the cancellation service here to pass it to the handler.
+	const Cancellation = yield* G(CancellationService);
 	const TaskProvidersRef = yield* G(Ref.make(new Map<number, any>()));
 
 	// --- RPC Handlers ---
 	IPC.RegisterInvokeHandler("$provideTasks", ([Handle, TokenID]) =>
-		// The ProvideTasksEffect now correctly declares its dependencies,
-		// and the runtime will provide them. We just need to run it.
+		// FIX: Pass the acquired Cancellation service to the handler effect.
 		Effect.runPromise(
-			ProvideTasksEffect(TaskProvidersRef, Handle, TokenID),
+			ProvideTasksEffect(TaskProvidersRef, Handle, TokenID, Cancellation),
 		),
 	);
 
@@ -50,11 +51,7 @@ export default Effect.gen(function* (G) {
 		onDidEndTaskProcess: OnDidEndTaskProcessEvent.event,
 		taskExecutions: [],
 
-		RegisterTaskProvider: (
-			Type: string,
-			Provider: TaskProvider,
-			Extension: IExtensionDescription,
-		) =>
+		RegisterTaskProvider: (Type, Provider, Extension) =>
 			Effect.sync(() => {
 				const Handle = ++HandleCounter;
 				Effect.runSync(
@@ -62,14 +59,12 @@ export default Effect.gen(function* (G) {
 						Map.set(Handle, { Type, Provider, Extension }),
 					),
 				);
-
 				Effect.runFork(
 					IPC.SendNotification("$registerTaskProvider", [
 						Handle,
 						Type,
 					]),
 				);
-
 				return new Disposable(() => {
 					const CleanupEffect = Ref.update(
 						TaskProvidersRef,

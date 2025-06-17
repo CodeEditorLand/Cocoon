@@ -1,26 +1,23 @@
 /*
  * File: Cocoon/Source/Service/TreeView/TreeViewImplementation.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The controller class that manages a single tree view and its data provider.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../TypeConverter/Command/Definition.js, ../../TypeConverter/TreeView.js, ../../Utility/CreateEventStream.js, ../Command/Service.js, ../IPC/Service.js, effect, vs/base/common/event.js, vs/base/common/uuid.js, vs/platform/extensions/common/extensions.js
  */
 
 /**
  * @module TreeViewImplementation
  * @description The controller class that manages a single tree view and its data provider.
- * This class acts as the extension host's proxy for a tree view in the main UI.
  */
 
 import { Effect } from "effect";
-import { Emitter } from "vs/base/common/event.js";
+import { Emitter, type Event } from "vs/base/common/event.js";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type {
-	Event,
 	TreeDataProvider,
 	TreeItem,
 	TreeView,
-	TreeViewActiveItemChangeEvent,
+	TreeViewActiveItemChangeEvent, // Import this type
 	TreeViewExpansionEvent,
 	TreeViewSelectionChangeEvent,
 	TreeViewVisibilityChangeEvent,
@@ -32,22 +29,19 @@ import CreateEventStream from "../../Utility/CreateEventStream.js";
 import type CommandService from "../Command/Service.js";
 import type IPCService from "../IPC/Service.js";
 
-export default class<T> implements TreeView<T> {
+export default class TreeViewImplementation<T> implements TreeView<T> {
 	private readonly ElementToHandleMap = new Map<T, string>();
 	public readonly handleToElementMap = new Map<string, T>();
 
 	private readonly OnDidExpandElementEmitter =
 		CreateEventStream<TreeViewExpansionEvent<T>>();
 	readonly onDidExpandElement: Event<TreeViewExpansionEvent<T>>;
-
 	private readonly OnDidCollapseElementEmitter =
 		CreateEventStream<TreeViewExpansionEvent<T>>();
 	readonly onDidCollapseElement: Event<TreeViewExpansionEvent<T>>;
-
 	private readonly OnDidChangeSelectionEmitter =
 		CreateEventStream<TreeViewSelectionChangeEvent<T>>();
 	readonly onDidChangeSelection: Event<TreeViewSelectionChangeEvent<T>>;
-
 	private readonly OnDidChangeVisibilityEmitter =
 		CreateEventStream<TreeViewVisibilityChangeEvent>();
 	readonly onDidChangeVisibility: Event<TreeViewVisibilityChangeEvent>;
@@ -105,16 +99,10 @@ export default class<T> implements TreeView<T> {
 		}).pipe(
 			Effect.map((TreeItem) => {
 				const Handle = this.GetHandleForElement(Element);
-				// The CommandConverter constructor expects a function that returns a Promise, not an Effect.
-				// We wrap `this.Command.ExecuteCommand` to satisfy this signature.
-				const commandExecutor = <T>(command: string, ...rest: any[]) =>
-					Effect.runPromise(
-						this.Command.ExecuteCommand<T>(command, ...rest),
-					);
-
+				// FIX: The CommandConverter now expects an Effect-returning function.
 				const CommandConverter = new CommandConverterDefinition(
 					this.Command.RegisterCommand,
-					commandExecutor,
+					this.Command.ExecuteCommand,
 					() => undefined,
 				);
 				return TreeViewConverter.Item.FromAPI(
