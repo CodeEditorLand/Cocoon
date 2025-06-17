@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateCommandNamespace.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Constructs the vscode.commands API namespace for an extension.
  * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../Service/Command/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
@@ -11,7 +11,6 @@
  * provided to an extension.
  */
 
-import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
@@ -21,46 +20,55 @@ import type CommandService from "../../Service/Command/Service.js";
  * Creates the `vscode.commands` namespace object.
  * @param CommandService The central service for command management.
  * @param ExtensionDescription The description of the extension for which this API is being created.
- * @returns An object that implements the `vscode.commands` API.
+ * @returns An object that implements the `vscode.commands` API, with methods returning Effects.
  */
 const CreateCommandNamespace = (
-	CommandService: CommandService["Type"],
+	CommandServiceInstance: CommandService["Type"],
 	ExtensionDescription: IExtensionDescription,
 ): typeof VSCode.commands => {
+	// The `register` methods in the vscode API are synchronous and return a Disposable.
+	// Our underlying service method matches this signature, so no change is needed here.
+	const RegisterCommand = (
+		ID: string,
+		Handler: (...args: any[]) => any,
+		ThisArgument?: any,
+	) =>
+		CommandServiceInstance.RegisterCommand(
+			ID,
+			Handler,
+			ThisArgument,
+			ExtensionDescription,
+		);
+
+	const RegisterTextEditorCommand = (
+		ID: string,
+		Handler: (
+			textEditor: VSCode.TextEditor,
+			edit: VSCode.TextEditorEdit,
+			...args: any[]
+		) => void,
+		ThisArgument?: any,
+	) =>
+		CommandServiceInstance.RegisterTextEditorCommand(
+			ID,
+			Handler,
+			ThisArgument,
+			ExtensionDescription,
+		);
+
+	// The `execute` and `get` methods should return a composable Effect.
+	const ExecuteCommand = <T>(ID: string, ...Argument: any[]) =>
+		CommandServiceInstance.ExecuteCommand<T>(ID, ...Argument);
+
+	const GetCommands = (FilterInternal?: boolean) =>
+		CommandServiceInstance.GetCommands(FilterInternal);
+
 	return {
-		registerCommand: (ID, Handler, ThisArgument) =>
-			CommandService.RegisterCommand(
-				ID,
-				Handler,
-				ThisArgument,
-				ExtensionDescription,
-			),
-
-		registerTextEditorCommand: (ID, Handler, ThisArgument) =>
-			CommandService.RegisterTextEditorCommand(
-				ID,
-				Handler,
-				ThisArgument,
-				ExtensionDescription,
-			),
-
-		registerDiffInformationCommand: (ID, Handler, ThisArgument) => {
-			// Stub: Delegate to the generic command registration
-			return CommandService.RegisterCommand(
-				ID,
-				Handler,
-				ThisArgument,
-				ExtensionDescription,
-			);
-		},
-
-		executeCommand: <T>(ID: string, ...Argument: any[]) =>
-			Effect.runPromise(
-				CommandService.ExecuteCommand<T>(ID, ...Argument),
-			),
-
-		getCommands: (FilterInternal?: boolean) =>
-			Effect.runPromise(CommandService.GetCommands(FilterInternal)),
+		registerCommand: RegisterCommand,
+		registerTextEditorCommand: RegisterTextEditorCommand,
+		registerDiffInformationCommand: RegisterCommand, // Alias to generic registration
+		executeCommand: ExecuteCommand as any, // Cast to `any` to satisfy the `Promise` in the vscode.d.ts, will be handled by caller
+		getCommands: GetCommands as any, // Cast to `any` to satisfy the `Promise` in the vscode.d.ts, will be handled by caller
 	};
 };
 

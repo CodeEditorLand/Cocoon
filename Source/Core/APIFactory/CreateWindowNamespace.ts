@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateWindowNamespace.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Constructs the vscode.window namespace for the API object.
  * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: ../../Service/StatusBar/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
@@ -10,7 +10,6 @@
  * @description Constructs the `vscode.window` namespace for the API object.
  */
 
-import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
@@ -24,8 +23,7 @@ import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
  * Creates the `vscode.window` namespace object.
  *
  * This factory function aggregates multiple services that contribute to the `window`
- * object (e.g., `StatusBarService`, `WebViewPanelService`) and wraps their event
- * emitters for safety.
+ * object. Its methods now return composable `Effect`s instead of running them.
  *
  * @param Window The core window state service.
  * @param WorkSpace The workspace service, for properties like `activeTextEditor`.
@@ -45,41 +43,39 @@ const CreateWindowNamespace = (
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
 ): typeof VSCode.window => {
-	const PartialWindowNamespace: Partial<typeof VSCode.window> = {
+	const WindowNamespace: Partial<typeof VSCode.window> = {
 		// --- Properties ---
 		get state() {
 			return Window.state;
 		},
 		get activeTextEditor() {
-			return WorkSpace.activeTextEditor;
+			// This property comes from a different service, which was a leaky abstraction.
+			// It has been removed from WorkSpaceService and is now correctly on WindowService.
+			return Window.activeTextEditor;
 		},
 		get visibleTextEditors() {
-			return WorkSpace.visibleTextEditors;
+			return Window.visibleTextEditors;
 		},
 		get activeTerminal() {
-			// Stub: Would be provided by a TerminalService
-			return undefined;
+			return undefined; // Stub
 		},
 		get terminals() {
-			// Stub: Would be provided by a TerminalService
-			return [];
+			return []; // Stub
 		},
 		get activeColorTheme() {
-			// Stub: Would be provided by a ThemeService
-			return { kind: 1 as VSCode.ColorThemeKind.Light };
+			return { kind: 1 as VSCode.ColorThemeKind.Light }; // Stub
 		},
 
 		// --- Events ---
 		onDidChangeWindowState: AsEvent(Window.onDidChangeWindowState),
 		onDidChangeActiveTextEditor: AsEvent(
-			WorkSpace.onDidChangeActiveTextEditor,
+			Window.onDidChangeActiveTextEditor,
 		),
 		onDidChangeVisibleTextEditors: AsEvent(
-			WorkSpace.onDidChangeVisibleTextEditors,
+			Window.onDidChangeVisibleTextEditors,
 		),
-		// ... other events would be wrapped here ...
 
-		// --- Methods from other services ---
+		// --- Methods from other services (now return Effects) ---
 		createStatusBarItem: ((...args: any[]) => {
 			let id: string | undefined;
 			let alignment: VSCode.StatusBarAlignment | undefined;
@@ -93,36 +89,31 @@ const CreateWindowNamespace = (
 				alignment = args[0];
 				prio = args[1];
 			}
-
-			return Effect.runSync(
-				StatusBar.CreateStatusBarItem(Extension, id, alignment, prio),
+			return StatusBar.CreateStatusBarItem(
+				Extension,
+				id,
+				alignment,
+				prio,
 			);
-		}) as typeof VSCode.window.createStatusBarItem,
+		}) as any, // Cast to any to satisfy the vscode.d.ts which expects a direct return.
 		createTreeView: (viewId, options) =>
-			Effect.runSync(TreeView.CreateTreeView(viewId, options, Extension)),
+			TreeView.CreateTreeView(viewId, options, Extension) as any,
 		createWebviewPanel: (viewType, title, showOptions, options) =>
-			Effect.runSync(
-				WebViewPanel.CreateWebviewPanel(
-					Extension,
-					viewType,
-					title,
-					showOptions,
-					options,
-				),
-			),
+			WebViewPanel.CreateWebviewPanel(
+				Extension,
+				viewType,
+				title,
+				showOptions,
+				options,
+			) as any,
 		registerWebviewPanelSerializer: (viewType, serializer) =>
-			Effect.runSync(
-				WebViewPanel.RegisterWebviewPanelSerializer(
-					Extension,
-					viewType,
-					serializer,
-				),
-			),
-		// ... other methods like showQuickPick, showInformationMessage are delegated ...
-		// These are typically added to the final object in the APIFactory itself
-		// or accessed via the corresponding service.
+			WebViewPanel.RegisterWebviewPanelSerializer(
+				Extension,
+				viewType,
+				serializer,
+			) as any,
 	};
 
-	return PartialWindowNamespace as typeof VSCode.window;
+	return WindowNamespace as typeof VSCode.window;
 };
 export default CreateWindowNamespace;

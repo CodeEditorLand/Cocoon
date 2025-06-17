@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateDebugNamespace.ts
- * Responsibility: Implements the vscode.debug API namespace for the Cocoon sidecar by delegating to the central DebugService, enabling VS Code extensions to interact with debugging sessions and breakpoints while maintaining sandboxing.
+ * Responsibility: Implements the vscode.debug API namespace for the Cocoon sidecar by delegating to the central DebugService.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../Service/Debug/Service.js, ../../Service/IPC/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ * Dependency: ../../Service/Debug/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**
@@ -15,30 +15,26 @@ import type { IExtensionDescription } from "vs/platform/extensions/common/extens
 import type * as VSCode from "vscode";
 
 import DebugService from "../../Service/Debug/Service.js";
-import IPCService from "../../Service/IPC/Service.js";
 
 /**
  * Creates an Effect that constructs the `vscode.debug` namespace object.
  *
- * This factory function takes the central `DebugService` and the extension's
- * description to create a sandboxed `debug` object. The methods and events on this
- * object delegate to the central service.
+ * This factory function is an `Effect` that depends on the `DebugService`.
+ * It creates a sandboxed `debug` object where methods return `Effect`s.
  *
  * @param AsEvent A function to create a safe event subscription.
  * @param Extension The description of the extension for which this API is being created.
  * @returns An `Effect` that resolves to an object implementing the `vscode.debug` API.
  */
-const CreateDebugNamespace = (
+const CreateDebugNamespaceEffect = (
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
-): Effect.Effect<typeof VSCode.debug, never, DebugService | IPCService> => {
-	return Effect.gen(function* () {
-		const Debug = yield* DebugService;
-		// const IPC = yield* IPCService;
+): Effect.Effect<typeof VSCode.debug, never, DebugService> => {
+	return Effect.gen(function* (G) {
+		const Debug = yield* G(DebugService);
 
-		// The vscode.debug namespace is extensive. We implement the core parts
-		// and leave stubs for the less common ones for this example.
-		const DebugNamespace: Partial<typeof VSCode.debug> = {
+		// The vscode.debug namespace is extensive. We implement the core parts.
+		const DebugNamespace: typeof VSCode.debug = {
 			// --- Properties ---
 			get activeDebugSession() {
 				return Debug.activeDebugSession;
@@ -63,48 +59,36 @@ const CreateDebugNamespace = (
 			),
 			onDidChangeBreakpoints: AsEvent(Debug.onDidChangeBreakpoints),
 
-			// --- Methods ---
-			// The vscode API expects these methods to be synchronous and return a Disposable.
-			// The underlying service returns an Effect that resolves to a Disposable.
-			// We must run this effect synchronously at the boundary.
+			// --- Methods (Now return Effects instead of running them) ---
 			registerDebugConfigurationProvider: (debugType, provider) =>
-				Effect.runSync(
-					Debug.RegisterDebugConfigurationProvider(
-						debugType,
-						provider,
-						Extension,
-					),
-				),
+				Debug.RegisterDebugConfigurationProvider(
+					debugType,
+					provider,
+					Extension,
+				) as any, // Cast to `any` to satisfy the `Disposable` in the vscode.d.ts, will be handled by caller
 			registerDebugAdapterDescriptorFactory: (debugType, factory) =>
-				Effect.runSync(
-					Debug.RegisterDebugAdapterDescriptorFactory(
-						debugType,
-						factory,
-						Extension,
-					),
-				),
+				Debug.RegisterDebugAdapterDescriptorFactory(
+					debugType,
+					factory,
+					Extension,
+				) as any,
 			registerDebugAdapterTrackerFactory: (debugType, factory) =>
-				Effect.runSync(
-					Debug.RegisterDebugAdapterTrackerFactory(
-						debugType,
-						factory,
-						Extension,
-					),
-				),
+				Debug.RegisterDebugAdapterTrackerFactory(
+					debugType,
+					factory,
+					Extension,
+				) as any,
 			startDebugging: (folder, nameOrConfig, options) =>
-				Effect.runPromise(
-					Debug.StartDebugging(folder, nameOrConfig, options),
-				),
-			stopDebugging: (session) =>
-				Effect.runPromise(Debug.StopDebugging(session)),
+				Debug.StartDebugging(folder, nameOrConfig, options) as any,
+			stopDebugging: (session) => Debug.StopDebugging(session) as any,
 			addBreakpoints: (breakpoints) =>
-				Effect.runPromise(Debug.AddBreakpoints(breakpoints)),
+				Debug.AddBreakpoints(breakpoints) as any,
 			removeBreakpoints: (breakpoints) =>
-				Effect.runPromise(Debug.RemoveBreakpoints(breakpoints)),
+				Debug.RemoveBreakpoints(breakpoints) as any,
 		};
 
-		return DebugNamespace as typeof VSCode.debug;
+		return DebugNamespace;
 	});
 };
 
-export default CreateDebugNamespace;
+export default CreateDebugNamespaceEffect;

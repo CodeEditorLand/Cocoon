@@ -150,7 +150,7 @@ const MainEffect = Effect.gen(function* (G) {
 
 	// Step 5: Run the main application logic, providing it with the complete layer.
 	// This resolves all of its dependencies.
-	yield* G(PostHandshakeEffect.pipe(Layer.provide(FinalApplicationLayer)));
+	yield* G(PostHandshakeEffect.pipe(Effect.provide(FinalApplicationLayer)));
 }).pipe(
 	Effect.catchAllCause((Cause) =>
 		Effect.logFatal("Cocoon main process failed.", Cause),
@@ -185,7 +185,7 @@ const PreHandshakeLayer = Services.IPCLive.pipe(
 // Provide the minimal pre-handshake layer to the main effect.
 // The main effect will then build and provide the rest of the layers internally.
 const RunnableApplication = MainEffect.pipe(
-	Layer.provide(PreHandshakeLayer),
+	Effect.provide(PreHandshakeLayer),
 	Effect.scoped, // Ensure all scoped services are properly finalized on exit.
 );
 

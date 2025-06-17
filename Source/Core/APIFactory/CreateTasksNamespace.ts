@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateTasksNamespace.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Constructs the vscode.tasks namespace for the API object.
  * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../Service/Task/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
@@ -10,7 +10,6 @@
  * @description Constructs the `vscode.tasks` namespace for the API object.
  */
 
-import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
@@ -19,9 +18,8 @@ import type TaskService from "../../Service/Task/Service.js";
 /**
  * Creates the `vscode.tasks` namespace object.
  *
- * This factory function takes the central `TaskService` and the extension's
- * description to create a sandboxed `tasks` object. The methods and events on this
- * object delegate to the central service.
+ * This factory function takes the central `TaskService` and creates a sandboxed
+ * `tasks` object whose methods now return `Effect`s.
  *
  * @param Task The central service for task management.
  * @param AsEvent A function to create a safe event subscription.
@@ -45,21 +43,13 @@ const CreateTasksNamespace = (
 		onDidStartTaskProcess: AsEvent(Task.onDidStartTaskProcess),
 		onDidEndTaskProcess: AsEvent(Task.onDidEndTaskProcess),
 
-		// --- Methods ---
-		registerTaskProvider: (Type, Provider) => {
-			return Effect.runSync(
-				Task.RegisterTaskProvider(Type, Provider, Extension),
-			);
-		},
-		fetchTasks: (Filter) => {
-			return Effect.runPromise(Task.FetchTasks(Filter));
-		},
-		executeTask: (TaskParameter) => {
-			return Effect.runPromise(
-				Task.ExecuteTask(TaskParameter, Extension),
-			);
-		},
-	} as unknown as typeof VSCode.tasks; // Cast to bypass missing properties if any
+		// --- Methods (now return Effects) ---
+		registerTaskProvider: (Type, Provider) =>
+			Task.RegisterTaskProvider(Type, Provider, Extension) as any,
+		fetchTasks: (Filter) => Task.FetchTasks(Filter) as any,
+		executeTask: (TaskParameter) =>
+			Task.ExecuteTask(TaskParameter, Extension) as any,
+	} as unknown as typeof VSCode.tasks;
 };
 
 export default CreateTasksNamespace;

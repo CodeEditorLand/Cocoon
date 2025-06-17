@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateWorkSpaceNamespace.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Constructs the vscode.workspace namespace for the API object.
  * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../Service/APIDeprecation/Service.js, ../../Service/WorkSpace/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
@@ -16,16 +16,17 @@ import type * as VSCode from "vscode";
 import { Disposable } from "vscode";
 
 import type APIDeprecationService from "../../Service/APIDeprecation/Service.js";
+import type DocumentService from "../../Service/Document/Service.js"; // Import DocumentService
 import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
 
 /**
  * Creates the `vscode.workspace` namespace object.
  *
- * This factory function takes the central `WorkSpaceService` and `APIDeprecationService`
- * to construct the object exposed to extensions. It handles delegation of properties,
- * methods, and events, including the special handling of deprecated properties like `rootPath`.
+ * This factory function takes the central `WorkSpaceService` and constructs
+ * the object exposed to extensions. Its methods now return `Effect`s.
  *
  * @param WorkSpace The central service for workspace management.
+ * @param Document The central service for document management.
  * @param Deprecation The service for reporting deprecated API usage.
  * @param AsEvent A function to create a safe event subscription.
  * @param Extension The description of the extension for which this API is being created.
@@ -33,11 +34,12 @@ import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
  */
 const CreateWorkSpaceNamespace = (
 	WorkSpace: WorkSpaceService["Type"],
+	Document: DocumentService["Type"],
 	Deprecation: APIDeprecationService["Type"],
 	AsEvent: <T>(Event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
 ): typeof VSCode.workspace => {
-	const Workspace: typeof VSCode.workspace = {
+	const WorkspaceNamespace: typeof VSCode.workspace = {
 		// --- Properties ---
 		get workspaceFolders() {
 			return WorkSpace.workspaceFolders;
@@ -54,12 +56,14 @@ const CreateWorkSpaceNamespace = (
 		get fs() {
 			return WorkSpace.fs;
 		},
+		// The `textDocuments` property correctly belongs to the Document service.
 		get textDocuments() {
-			return WorkSpace.textDocuments;
+			return Document.TextDocuments;
 		},
 
 		// --- Deprecated rootPath ---
 		get rootPath() {
+			// This side-effecting log is a necessary evil for a synchronous getter.
 			Effect.runFork(
 				Deprecation.Report(
 					Extension.identifier,
@@ -77,36 +81,29 @@ const CreateWorkSpaceNamespace = (
 		onDidChangeWorkspaceFolders: AsEvent(
 			WorkSpace.onDidChangeWorkspaceFolders,
 		),
-		onDidOpenTextDocument: AsEvent(WorkSpace.onDidOpenTextDocument),
-		onDidCloseTextDocument: AsEvent(WorkSpace.onDidCloseTextDocument),
-		onDidChangeTextDocument: AsEvent(WorkSpace.onDidChangeTextDocument),
-		// onDidSaveTextDocument, onWillSaveTextDocument, etc. would follow the same pattern
+		// Document events correctly come from the Document service.
+		onDidOpenTextDocument: AsEvent(Document.onDidOpenTextDocument),
+		onDidCloseTextDocument: AsEvent(Document.onDidCloseTextDocument),
+		onDidChangeTextDocument: AsEvent(Document.onDidChangeTextDocument),
 
-		// --- Methods ---
+		// --- Methods (now return Effects) ---
 		getWorkspaceFolder: (Uri: VSCode.Uri) => {
 			return WorkSpace.getWorkspaceFolder(Uri);
 		},
-		openTextDocument: (UriOrOptions: any) => {
-			return Effect.runPromise(WorkSpace.openTextDocument(UriOrOptions));
-		},
-		findFiles: (Include, Exclude, MaxResults, Token) => {
-			return Effect.runPromise(
-				WorkSpace.findFiles(Include, Exclude, MaxResults, Token),
-			);
-		},
-		getConfiguration: (Section, Scope) => {
-			return Effect.runSync(WorkSpace.getConfiguration(Section, Scope));
-		},
-		applyEdit: (Edit: VSCode.WorkspaceEdit) => {
-			return WorkSpace.applyEdit(Edit);
-		},
+		openTextDocument: (UriOrOptions: any) =>
+			WorkSpace.openTextDocument(UriOrOptions) as any,
+		findFiles: (Include, Exclude, MaxResults, Token) =>
+			WorkSpace.findFiles(Include, Exclude, MaxResults, Token) as any,
+		getConfiguration: (Section, Scope) =>
+			WorkSpace.getConfiguration(Section, Scope) as any,
+		applyEdit: (Edit: VSCode.WorkspaceEdit) =>
+			WorkSpace.applyEdit(Edit) as any,
 		registerTextDocumentContentProvider: (_Scheme, _Provider) => {
-			// This would be delegated to the document content provider service
-			return new Disposable(() => {});
+			return new Disposable(() => {}); // Stub
 		},
 	} as unknown as typeof VSCode.workspace;
 
-	return Workspace;
+	return WorkspaceNamespace;
 };
 
 export default CreateWorkSpaceNamespace;

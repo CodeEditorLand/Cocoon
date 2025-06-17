@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateLanguagesNamespace.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Constructs the vscode.languages namespace for the API object.
  * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../Service/LanguageFeature/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
@@ -10,7 +10,6 @@
  * @description Constructs the `vscode.languages` namespace for the API object.
  */
 
-import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 
@@ -20,8 +19,8 @@ import type LanguageFeatureService from "../../Service/LanguageFeature/Service.j
  * Creates the `vscode.languages` namespace object.
  *
  * This factory function takes the central `LanguageFeatureService` and creates
- * an object whose methods delegate to the service. This provides the `register...Provider`
- * functions that extensions use to contribute language features.
+ * an object whose methods delegate to the service. These methods now return
+ * composable `Effect`s.
  *
  * @param LanguageFeature The central service for language feature management.
  * @param Extension The description of the extension for which this API is being created.
@@ -31,71 +30,54 @@ const CreateLanguagesNamespace = (
 	LanguageFeature: LanguageFeatureService["Type"],
 	Extension: IExtensionDescription,
 ): typeof VSCode.languages => {
-	// A full implementation would provide all methods. This is a partial stub.
-	const PartialLanguagesNamespace: Partial<typeof VSCode.languages> = {
-		// --- Provider Registration Methods ---
-		registerHoverProvider: (selector, provider) => {
-			return Effect.runSync(
-				LanguageFeature.RegisterHoverProvider(
-					selector,
-					provider,
-					Extension,
-				),
-			);
-		},
+	const LanguagesNamespace: Partial<typeof VSCode.languages> = {
+		// --- Provider Registration Methods (now return Effects) ---
+		registerHoverProvider: (selector, provider) =>
+			LanguageFeature.RegisterHoverProvider(
+				selector,
+				provider,
+				Extension,
+			) as any,
 		registerCompletionItemProvider: (
 			selector,
 			provider,
 			...triggerCharacters
-		) => {
-			return Effect.runSync(
-				LanguageFeature.RegisterCompletionItemProvider(
-					selector,
-					provider,
-					triggerCharacters,
-					Extension,
-				),
-			);
-		},
-		registerDefinitionProvider: (selector, provider) => {
-			return Effect.runSync(
-				LanguageFeature.RegisterDefinitionProvider(
-					selector,
-					provider,
-					Extension,
-				),
-			);
-		},
-		registerCodeActionsProvider: (selector, provider, metadata) => {
-			return Effect.runSync(
-				LanguageFeature.RegisterCodeActionsProvider(
-					selector,
-					provider,
-					metadata,
-					Extension,
-				),
-			);
-		},
-		// ... and so on for all other provider types (references, implementation, etc.)
+		) =>
+			LanguageFeature.RegisterCompletionItemProvider(
+				selector,
+				provider,
+				triggerCharacters,
+				Extension,
+			) as any,
+		registerDefinitionProvider: (selector, provider) =>
+			LanguageFeature.RegisterDefinitionProvider(
+				selector,
+				provider,
+				Extension,
+			) as any,
+		registerCodeActionsProvider: (selector, provider, metadata) =>
+			LanguageFeature.RegisterCodeActionsProvider(
+				selector,
+				provider,
+				metadata,
+				Extension,
+			) as any,
 
-		// --- Other Methods ---
+		// --- Other Methods (stubbed for now) ---
 		getLanguages: () => {
-			// This would be delegated to the LanguageFeatureService
 			return Promise.resolve([]);
 		},
 		setTextDocumentLanguage: (document, _languageId) => {
-			// This would be delegated to the LanguageFeatureService
 			return Promise.resolve(document);
 		},
 		createDiagnosticCollection: (_name?: string) => {
-			// This would be delegated to the DiagnosticService
 			throw new Error(
-				"createDiagnosticCollection not implemented in this mock.",
+				"createDiagnosticCollection not implemented in this mock. It is provided by a separate DiagnosticService.",
 			);
 		},
 	};
 
-	return PartialLanguagesNamespace as typeof VSCode.languages;
+	return LanguagesNamespace as typeof VSCode.languages;
 };
 
 export default CreateLanguagesNamespace;
