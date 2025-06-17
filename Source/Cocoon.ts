@@ -66,14 +66,93 @@ const VSCodeOutputDirectory =
 	Path.resolve(__dirname, "../../../Dependency/VSCode/out");
 (module as any).paths.unshift(VSCodeOutputDirectory);
 
-/**
- * The main logic that runs *after* the initial handshake with the host is complete.
- * This effect declares dependencies on all services required for the application's
- * full functionality.
- */
+// --- Static Layer Composition ---
+
+// A layer for just the static IPC configuration.
+const ConfigurationLayer = Layer.succeed(IPCConfigurationService, {
+	MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
+	CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
+} satisfies IPCConfiguration);
+
+// The pre-handshake layer requires only a minimal set of services.
+const PreHandshakeLayer = IPCLive.pipe(
+	Layer.provide(
+		Layer.mergeAll(ConfigurationLayer, Logger.logFmt, CancellationLive),
+	),
+);
+
+// This is the main application layer, merging all individual service layers.
+// It will be provided to the post-handshake logic.
+const ApplicationLayer = Layer.mergeAll(
+	APIDeprecationLive,
+	APIFactoryLive,
+	AuthenticationLive,
+	CancellationLive,
+	ClipboardLive,
+	CommandLive,
+	ConfigurationLive,
+	DebugLive,
+	DiagnosticLive,
+	DialogLive,
+	DocumentLive,
+	EnvironmentLive,
+	ESMInterceptorLive,
+	ExtensionHostLive,
+	ExtensionLive,
+	ExtensionPathLive,
+	FileSystemInformationLive,
+	FileSystemLive,
+	HostKindPickerLive,
+	IPCLive,
+	LanguageFeatureLive,
+	LocalizationLive,
+	LogLive,
+	MessageLive,
+	NodeModuleShimLive,
+	ProposedAPILive,
+	QuickInputLive,
+	RequireInterceptorLive,
+	SecretStorageLive,
+	StatusBarLive,
+	StorageLive,
+	StoragePathLive,
+	TaskLive,
+	TelemetryLive,
+	TreeViewLive,
+	WebViewPanelLive,
+	WindowLive,
+	WorkSpaceLive,
+);
+
+// --- Effect Definitions ---
+
+const PreHandshakeEffect = Effect.gen(function* (G) {
+	const InitializationBarrier = yield* G(
+		Deferred.make<IExtensionHostInitData, Error>(),
+	);
+	const IPC = yield* G(IPCService);
+
+	IPC.RegisterInvokeHandler(
+		"initExtensionHost",
+		(InitializationData: IExtensionHostInitData): Promise<void> =>
+			Effect.runPromise(
+				Deferred.succeed(
+					InitializationBarrier,
+					InitializationData,
+				).pipe(Effect.asVoid),
+			),
+	);
+
+	yield* G(Effect.logInfo("Cocoon is ready. Sent handshake to Mountain."));
+	yield* G(IPC.SendNotification("$initialHandshake", []));
+	const InitializationData = yield* G(Deferred.await(InitializationBarrier));
+	yield* G(Effect.logInfo("Cocoon handshake complete."));
+
+	return InitializationData;
+});
+
 const PostHandshakeEffect = Effect.gen(function* (G) {
 	yield* G(Effect.logInfo("Proceeding with full initialization..."));
-
 	yield* G(RunProcessPatch);
 
 	const Interceptor = yield* G(RequireInterceptorService);
@@ -91,142 +170,34 @@ const PostHandshakeEffect = Effect.gen(function* (G) {
 	yield* G(Effect.logInfo("Startup extensions activated."));
 	yield* G(Effect.logInfo("Cocoon is fully initialized and operational."));
 
-	// Keep the program alive indefinitely.
 	yield* G(Effect.never);
 });
 
-/**
- * The logic that runs *before* the main application can be initialized.
- * It has minimal dependencies and is responsible for establishing communication
- * and receiving the initial data payload from the host.
- * @returns An `Effect` that resolves with the `IExtensionHostInitData`.
- */
-const PreHandshakeEffect = Effect.gen(function* (G) {
-	const InitializationBarrier = yield* G(
-		Deferred.make<IExtensionHostInitData, Error>(),
-	);
-	const IPC = yield* G(IPCService);
+// --- Main Application Logic ---
 
-	// Register the handler that receives the initialization data.
-	// Upon receiving the data, it succeeds the Deferred, unblocking the main flow.
-	IPC.RegisterInvokeHandler(
-		"initExtensionHost",
-		(InitializationData: IExtensionHostInitData): Promise<void> =>
-			Effect.runPromise(
-				Deferred.succeed(
-					InitializationBarrier,
-					InitializationData,
-				).pipe(Effect.asVoid),
-			),
-	);
-
-	// Send the handshake notification and then wait for the barrier.
-	yield* G(Effect.logInfo("Cocoon is ready. Sent handshake to Mountain."));
-	yield* G(IPC.SendNotification("$initialHandshake", []));
-	const InitializationData = yield* G(Deferred.await(InitializationBarrier));
-	yield* G(Effect.logInfo("Cocoon handshake complete."));
-
-	return InitializationData;
-});
-
-/**
- * The main entry point for the entire application.
- * It orchestrates the pre-handshake and post-handshake logic, composing all
- * layers correctly.
- */
+// The main effect now clearly separates the pre- and post-handshake phases.
 const MainEffect = Effect.gen(function* (G) {
-	// Step 1: Run the pre-handshake logic to get runtime initialization data.
-	const InitializationData = yield* G(PreHandshakeEffect);
-
-	// Step 2: Define the complete application layer by merging all service layers.
-	const ApplicationLayer = Layer.mergeAll(
-		APIDeprecationLive,
-		APIFactoryLive,
-		AuthenticationLive,
-		CancellationLive,
-		ClipboardLive,
-		CommandLive,
-		ConfigurationLive,
-		DebugLive,
-		DiagnosticLive,
-		DialogLive,
-		DocumentLive,
-		EnvironmentLive,
-		ESMInterceptorLive,
-		ExtensionHostLive,
-		ExtensionLive,
-		ExtensionPathLive,
-		FileSystemInformationLive,
-		FileSystemLive,
-		HostKindPickerLive,
-		IPCLive,
-		LanguageFeatureLive,
-		LocalizationLive,
-		LogLive,
-		MessageLive,
-		NodeModuleShimLive,
-		ProposedAPILive,
-		QuickInputLive,
-		RequireInterceptorLive,
-		SecretStorageLive,
-		StatusBarLive,
-		StorageLive,
-		StoragePathLive,
-		TaskLive,
-		TelemetryLive,
-		TreeViewLive,
-		WebViewPanelLive,
-		WindowLive,
-		WorkSpaceLive,
+	// 1. Run the pre-handshake with its minimal layer.
+	const InitializationData = yield* G(
+		PreHandshakeEffect.pipe(Effect.provide(PreHandshakeLayer)),
 	);
 
-	// Step 3: Create the layer for the runtime-dependent InitData.
+	// 2. Create the runtime-dependent InitData layer.
 	const InitDataLayer = InitDataLive(InitializationData);
 
-	// Step 4: Create the final, fully-resolved layer by providing the
-	// runtime data layer to the main application layer.
+	// 3. Compose the final layer by providing the InitData to the main application layer.
 	const FinalApplicationLayer = ApplicationLayer.pipe(
 		Layer.provide(InitDataLayer),
 	);
 
-	// Step 5: Run the main application logic, providing it with the complete layer.
-	// This resolves all of its dependencies.
+	// 4. Run the main post-handshake logic with all dependencies resolved.
 	yield* G(PostHandshakeEffect.pipe(Effect.provide(FinalApplicationLayer)));
 }).pipe(
 	Effect.catchAllCause((Cause) =>
 		Effect.logFatal("Cocoon main process failed.", Cause),
 	),
+	Effect.scoped,
 );
-
-// --- Application Layer Composition for Pre-Handshake ---
-
-// Define the static configuration needed before the handshake.
-const ApplicationConfiguration: IPCConfiguration = {
-	MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
-	CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
-};
-
-// Create a layer for the static IPC configuration.
-const ConfigurationLayer = Layer.succeed(
-	IPCConfigurationService,
-	ApplicationConfiguration,
-);
-
-// The layer needed for the initial handshake only requires IPC and a logger.
-const PreHandshakeDependencies = Layer.mergeAll(
-	ConfigurationLayer,
-	Logger.logFmt, // Use a default formatted logger.
-	CancellationLive, // Cancellation needs to be available early for IPC
-);
-const PreHandshakeLayer = IPCLive.pipe(Layer.provide(PreHandshakeDependencies));
 
 // --- Run the Application ---
-
-// Provide the minimal pre-handshake layer to the main effect.
-// The main effect will then build and provide the rest of the layers internally.
-const RunnableApplication = MainEffect.pipe(
-	Effect.provide(PreHandshakeLayer),
-	Effect.scoped, // Ensure all scoped services are properly finalized on exit.
-);
-
-NodeRuntime.runMain(RunnableApplication);
+NodeRuntime.runMain(MainEffect);

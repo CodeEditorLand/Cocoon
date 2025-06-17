@@ -10,7 +10,7 @@
  * @description The live implementation Layer for the Storage service.
  */
 
-import { Layer } from "effect";
+import { Effect, Layer } from "effect";
 
 import IPCService from "../IPC/Service.js";
 import LogService from "../Log/Service.js";
@@ -23,7 +23,10 @@ import Service from "./Service.js";
  */
 const Live: Layer.Layer<Service, never, IPCService | LogService> = Layer.effect(
 	Service,
-	Definition,
+	// The Definition effect uses IPC.SendRequest, which can fail.
+	// We treat this as a fatal error for layer construction using orDie.
+	// This ensures the Layer's error channel is `never`.
+	Definition.pipe(Effect.orDie),
 );
 
 export default Live;
