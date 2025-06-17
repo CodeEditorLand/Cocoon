@@ -10,7 +10,7 @@ import { NodeRuntime } from "@effect/platform-node";
 import { Deferred, Effect, Layer, Logger } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
-// --- Direct Core Service Imports ---
+// --- Core Service Imports ---
 import APIFactoryLive from "./Core/APIFactory/Live.js";
 import ESMInterceptorLive from "./Core/ESMInterceptor/Live.js";
 import ExtensionHostLive from "./Core/ExtensionHost/Live.js";
@@ -20,9 +20,8 @@ import HostKindPickerLive from "./Core/HostKindPicker/Live.js";
 import NodeModuleShimLive from "./Core/NodeModuleShim/Live.js";
 import RequireInterceptorLive from "./Core/RequireInterceptor/Live.js";
 import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
-// --- Consolidated Imports via Barrel Files ---
+// --- Other Imports ---
 import RunProcessPatch from "./PatchProcess.js";
-// --- Direct API Service Imports ---
 import APIDeprecationLive from "./Service/APIDeprecation/Live.js";
 import AuthenticationLive from "./Service/Authentication/Live.js";
 import CancellationLive from "./Service/Cancellation/Live.js";

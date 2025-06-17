@@ -43,23 +43,34 @@ export default Effect.gen(function* (G) {
 	const Fs = yield* G(FileSystemService);
 	const Configuration = yield* G(ConfigurationService);
 
+	// Workspace State
 	const InternalWorkSpaceRef = yield* G(
 		Ref.make<InternalWorkSpace | undefined>(undefined),
 	);
+
+	// Editor State
 	const TextEditorsMapRef = yield* G(Ref.make(new Map<string, TextEditor>()));
 	const ActiveTextEditorRef = yield* G(
 		Ref.make<TextEditor | undefined>(undefined),
 	);
 	const VisibleTextEditorsRef = yield* G(Ref.make<readonly TextEditor[]>([]));
 
+	// Workspace Events
 	const OnDidChangeFoldersEvent = new Emitter<any>();
+
+	// Editor Events
 	const { event: OnDidChangeActiveTextEditorEvent, Fire: FireActiveEditor } =
 		CreateEventStream<TextEditor | undefined>();
 	const {
 		event: OnDidChangeVisibleTextEditorsEvent,
 		Fire: FireVisibleEditors,
 	} = CreateEventStream<readonly TextEditor[]>();
+	const OnDidChangeTextEditorSelectionEvent = new Emitter<any>();
+	const OnDidChangeTextEditorVisibleRangesEvent = new Emitter<any>();
+	const OnDidChangeTextEditorOptionsEvent = new Emitter<any>();
+	const OnDidChangeTextEditorViewColumnEvent = new Emitter<any>();
 
+	// --- RPC Handlers ---
 	const AcceptWorkspaceDataEffect = (data: any) =>
 		Effect.gen(function* (G) {
 			const OldWorkSpace = yield* G(Ref.get(InternalWorkSpaceRef));
@@ -111,15 +122,13 @@ export default Effect.gen(function* (G) {
 				: undefined;
 			const NewVisible = visibleEditorIds
 				.map((id) => Editors.get(id))
-				.filter(Boolean);
+				.filter((e): e is TextEditor => !!e);
 
 			yield* G(Ref.set(ActiveTextEditorRef, NewActive));
-			yield* G(
-				Ref.set(VisibleTextEditorsRef, NewVisible as TextEditor[]),
-			);
+			yield* G(Ref.set(VisibleTextEditorsRef, NewVisible));
 
 			yield* G(FireActiveEditor(NewActive));
-			yield* G(FireVisibleEditors(NewVisible as TextEditor[]));
+			yield* G(FireVisibleEditors(NewVisible));
 		});
 
 	yield* G(
@@ -176,10 +185,13 @@ export default Effect.gen(function* (G) {
 		// Editor State Events
 		onDidChangeActiveTextEditor: OnDidChangeActiveTextEditorEvent,
 		onDidChangeVisibleTextEditors: OnDidChangeVisibleTextEditorsEvent,
-		onDidChangeTextEditorSelection: new Emitter<any>().event,
-		onDidChangeTextEditorVisibleRanges: new Emitter<any>().event,
-		onDidChangeTextEditorOptions: new Emitter<any>().event,
-		onDidChangeTextEditorViewColumn: new Emitter<any>().event,
+		onDidChangeTextEditorSelection:
+			OnDidChangeTextEditorSelectionEvent.event,
+		onDidChangeTextEditorVisibleRanges:
+			OnDidChangeTextEditorVisibleRangesEvent.event,
+		onDidChangeTextEditorOptions: OnDidChangeTextEditorOptionsEvent.event,
+		onDidChangeTextEditorViewColumn:
+			OnDidChangeTextEditorViewColumnEvent.event,
 
 		// Methods
 		getWorkspaceFolder: (uri: Uri) => {

@@ -24,7 +24,7 @@ export default Effect.gen(function* () {
 		HashMap.empty<number, CancellationTokenSource>(),
 	);
 
-	// FIXED: `ObtainToken` now encapsulates its scope management.
+	// `ObtainToken` now encapsulates its scope management.
 	const ObtainToken = (TokenID: number) => {
 		// Define the scoped effect that acquires and releases the token source.
 		const acquireAndReleaseToken = Effect.acquireRelease(
@@ -129,7 +129,7 @@ export default Effect.gen(function* () {
 			),
 		);
 
-	// BEST PRACTICE: Register DisposeAll as a finalizer for the service's own scope.
+	// Register DisposeAll as a finalizer for the service's own scope.
 	// This ensures cleanup happens automatically when the application shuts down.
 	yield* Effect.addFinalizer(() => DisposeAll());
 

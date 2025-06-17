@@ -111,6 +111,10 @@ export default Effect.acquireRelease(
 		const Configuration = yield* IPCConfigurationService;
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
+		yield* Effect.logTrace(
+			`Attempting to connect gRPC client to Mountain at ${Configuration.MountainAddress}.`,
+		);
+
 		// Step 2: Load the .proto definition and create the gRPC client.
 		const Definition = yield* LoadProtoDefinition(ProtoPath);
 		const GrpcObject = GRPC.loadPackageDefinition(Definition);

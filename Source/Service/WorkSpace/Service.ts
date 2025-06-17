@@ -42,7 +42,7 @@ export default class WorkSpaceService extends Context.Tag("Service/WorkSpace")<
 		readonly isTrusted: boolean;
 		readonly onDidChangeWorkspaceFolders: Event<WorkspaceFoldersChangeEvent>;
 
-		// --- Editor State Properties ---
+		// --- Editor State Properties (Moved here from WindowService) ---
 		readonly activeTextEditor: TextEditor | undefined;
 		readonly visibleTextEditors: readonly TextEditor[];
 		readonly onDidChangeActiveTextEditor: Event<TextEditor | undefined>;

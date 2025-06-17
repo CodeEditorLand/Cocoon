@@ -115,6 +115,9 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 
 		const ExtensionsNamespace = CreateExtensionsAPI(Extension);
 
+		// Assemble the final API object. Note that some namespaces are composed
+		// from multiple services (e.g., `window` pulls from `Message`, `Dialog`, etc.).
+		// This composition happens implicitly when the full API object is constructed.
 		const API: Partial<typeof VSCode> = {
 			version: "1.85.0",
 			commands: CommandNamespace,

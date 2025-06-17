@@ -2,7 +2,7 @@
  * File: Cocoon/Source/Service/Command/Definition.ts
  * Responsibility:
  * Modified: 2025-06-17 21:19:31 UTC
- * Dependency: ../IPC/Service.js, ../Telemetry/Service.js, ../Window/Service.js, ./Service.js, ./Type.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ * Dependency: ../IPC/Service.js, ../Telemetry/Service.js, ../WorkSpace/Service.js, ./Service.js, ./Type.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**
@@ -16,7 +16,7 @@ import { Disposable } from "vscode";
 
 import IPCService from "../IPC/Service.js";
 import TelemetryService from "../Telemetry/Service.js";
-import WindowService from "../Window/Service.js";
+import WorkSpaceService from "../WorkSpace/Service.js"; // Changed from WindowService
 import type Service from "./Service.js";
 import type { CommandHandler, CommandHandlerEntry } from "./Type.js";
 
@@ -26,7 +26,7 @@ import type { CommandHandler, CommandHandlerEntry } from "./Type.js";
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
 	const Telemetry = yield* G(TelemetryService);
-	const Window = yield* G(WindowService);
+	const WorkSpace = yield* G(WorkSpaceService); // Changed from Window
 	const CommandRegistryRef = yield* G(
 		Ref.make(new Map<string, CommandHandlerEntry>()),
 	);
@@ -114,7 +114,7 @@ export default Effect.gen(function* (G) {
 
 		RegisterTextEditorCommand: (ID, Handler, ThisArgument, Extension) => {
 			const WrappedHandler: CommandHandler = (...args: any[]) => {
-				const Editor = Window.activeTextEditor;
+				const Editor = WorkSpace.activeTextEditor; // Changed from Window.activeTextEditor
 				if (!Editor) {
 					console.warn(
 						`Cannot execute text editor command "${ID}" without an active text editor.`,

@@ -28,11 +28,12 @@ import type {
  * The `Context.Tag` for the core `vscode.window` properties and methods.
  * Note: Does NOT include methods handled by other services (e.g., `showQuickPick`).
  * The final `vscode.window` object is assembled in the APIFactory.
+ * Editor state properties (`activeTextEditor`, `visibleTextEditors`) have been moved
+ * to `WorkSpaceService` to break circular dependencies.
  */
 export default class WindowService extends Context.Tag("Service/Window")<
 	WindowService,
 	{
-		readonly activeTextEditor: any;
 		readonly state: WindowState;
 		readonly onDidChangeWindowState: Event<WindowState>;
 

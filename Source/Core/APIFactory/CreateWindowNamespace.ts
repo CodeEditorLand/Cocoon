@@ -101,6 +101,10 @@ const CreateWindowNamespace = (
 			) as any,
 	};
 
+	// Methods like showInformationMessage are not part of this core service,
+	// they are added by the APIFactory from the MessageService.
+	// This keeps the Window service itself clean.
+
 	return WindowNamespace as typeof VSCode.window;
 };
 
