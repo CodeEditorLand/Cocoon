@@ -1,9 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/Service.ts
- * Responsibility: Defines the Context.Tag and interface for the ESMInterceptor service in Cocoon, responsible for installing a Node.js loader hook to intercept 'vscode' imports and manage cleanup, enabling VS Code extension support in the sidecar process.
+ * Responsibility: Defines the Context.Tag and interface for the ESMInterceptor service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: effect
- * Export: ESMInterceptorService
  */
 
 /**
@@ -24,9 +22,9 @@ export default class ESMInterceptorService extends Context.Tag(
 	ESMInterceptorService,
 	{
 		/**
-		 * An Effect that, when executed within a Scope, installs the ESM loader hook
-		 * and registers finalizers to clean up all resources (MessagePorts, globals)
-		 * when the scope is closed. This action is idempotent.
+		 * An Effect that, when executed, installs the ESM loader hook
+		 * and handles cleanup of all resources (MessagePorts, globals).
+		 * The scope is managed internally and not leaked to the caller.
 		 */
 		readonly Install: () => Effect.Effect<void, Error>;
 	}

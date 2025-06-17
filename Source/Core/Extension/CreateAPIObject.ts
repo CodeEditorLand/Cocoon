@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Core/Extension/CreateAPIObject.ts
- * Responsibility: Implements the vscode.Extension API factory for Cocoon's extension host, adapting internal extension activation and state management from the ExtensionHostService to VS Code-compatible extension objects.
+ * Responsibility: Implements the vscode.Extension API factory for Cocoon's extension host.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../Core/ExtensionHost/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**
@@ -15,7 +14,7 @@ import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { ExtensionKind, type Extension } from "vscode";
 
-import type ExtensionHostService from "../../Core/ExtensionHost/Service.js";
+import type ExtensionHostService from "../ExtensionHost/Service.js";
 
 /**
  * Creates the public `vscode.Extension` API object from an internal `IExtensionDescription`.
@@ -28,15 +27,17 @@ const CreateAPIObject = <T>(
 	Description: IExtensionDescription,
 	ExtensionHost: ExtensionHostService["Type"],
 ): Extension<T> => {
-	const ActivateEffect = Effect.gen(function* () {
-		yield* ExtensionHost.ActivateById(Description.identifier, {
-			startup: false,
-			extensionId: Description.identifier,
-			activationEvent: "api",
-		});
-		// FIX: After activation, get the exports. This should be an effect itself.
-		const Exports = yield* ExtensionHost.GetExtensionExports(
-			Description.identifier,
+	const ActivateEffect = Effect.gen(function* (G) {
+		yield* G(
+			ExtensionHost.ActivateById(Description.identifier, {
+				startup: false,
+				extensionId: Description.identifier,
+				activationEvent: "api",
+			}),
+		);
+		// After activation, get the exports.
+		const Exports = yield* G(
+			ExtensionHost.GetExtensionExports(Description.identifier),
 		);
 		return Exports as T;
 	});
@@ -59,8 +60,10 @@ const CreateAPIObject = <T>(
 		extensionUri: Description.extensionLocation,
 		extensionPath: Description.extensionLocation.fsPath,
 		get isActive(): boolean {
-			// FIX: `IsActivated` returns an Effect. Since it's a sync read from a Ref,
-			// we can use `runSync` to get the raw boolean value.
+			// FIXME: This is an anti-pattern. The `vscode.Extension` interface forces a
+			// synchronous property, but our underlying service is effect-ful. `runSync`
+			// is used here as a pragmatic escape hatch. A better long-term solution
+			// would involve a reactive state management system.
 			return Effect.runSync(
 				ExtensionHost.IsActivated(Description.identifier),
 			);
@@ -70,16 +73,19 @@ const CreateAPIObject = <T>(
 		},
 		extensionKind: GetExtensionKind(),
 		get exports(): T {
-			// FIX: `GetExtensionExports` returns an Effect. Run it synchronously.
+			// FIXME: This is an anti-pattern for the same reason as `isActive`.
 			return Effect.runSync(
 				ExtensionHost.GetExtensionExports(Description.identifier),
 			);
 		},
-		activate: () => Effect.runPromise(ActivateEffect),
-		// FIX: Add the missing property required by the vscode.Extension<T> interface.
+		// The `activate` function now correctly returns an Effect. The caller
+		// (the extension host runtime) is responsible for running it and handling
+		// the `Thenable` contract of the `vscode` API.
+		activate: () => ActivateEffect as any,
 		isFromDifferentExtensionHost: false,
 	};
 
 	return Object.freeze(ExtensionAPIObject);
 };
+
 export default CreateAPIObject;

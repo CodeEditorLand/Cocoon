@@ -1,17 +1,17 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the `NodeModuleShim` service.
  * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ${Request}, ../../Service/InitData/Service.js, ../../Service/Log/Service.js, ./Error.js, ./Service.js, ./Shim/Crypto.js, ./Shim/Os.js, ./Shim/Process.js, effect, vscode
  */
 
 /**
  * @module Definition (NodeModuleShim)
  * @description The live implementation of the `NodeModuleShim` service, which
- * provides sandboxed shims for built-in Node.js modules.
+ * provides sandboxed shims for built-in Node.js modules. This implementation
+ * is a synchronous class to be compatible with Node's `require`.
  */
 
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import type { Uri } from "vscode";
 
 import InitDataService from "../../Service/InitData/Service.js";
@@ -23,63 +23,76 @@ import CreateOsShim from "./Shim/Os.js";
 import ProcessShim from "./Shim/Process.js";
 
 /**
- * An `Effect` that constructs the `NodeModuleShim` service implementation.
+ * A synchronous class implementation of the NodeModuleShimService.
  */
-export default Effect.gen(function* () {
-	const Log = yield* LogService;
-	const InitData = yield* InitDataService;
+class NodeModuleShimImpl implements Service["Type"] {
+	private readonly BlockedModules: Set<string>;
+	private readonly Shims: Map<string, any>;
 
-	const OsShim = CreateOsShim(InitData);
-	const CryptoShim = CreateCryptoShim();
+	constructor(
+		private readonly Log: LogService["Type"],
+		InitData: InitDataService["Type"],
+	) {
+		const OsShim = CreateOsShim(InitData);
+		const CryptoShim = CreateCryptoShim();
 
-	const BlockedModules = new Set([
-		"fs",
-		"node:fs",
-		"fs/promises",
-		"node:fs/promises",
-		"path",
-		"node:path",
-		"child_process",
-		"node:child_process",
-		"worker_threads",
-		"node:worker_threads",
-		"cluster",
-		"node:cluster",
-		"vm",
-		"node:vm",
-	]);
+		this.BlockedModules = new Set([
+			"fs",
+			"node:fs",
+			"fs/promises",
+			"node:fs/promises",
+			"path",
+			"node:path",
+			"child_process",
+			"node:child_process",
+			"worker_threads",
+			"node:worker_threads",
+			"cluster",
+			"node:cluster",
+			"vm",
+			"node:vm",
+		]);
 
-	const Shims = new Map<string, any>([
-		["os", OsShim],
-		["node:os", OsShim],
-		["crypto", CryptoShim],
-		["node:crypto", CryptoShim],
-		["process", ProcessShim],
-		["node:process", ProcessShim],
-	]);
+		this.Shims = new Map<string, any>([
+			["os", OsShim],
+			["node:os", OsShim],
+			["crypto", CryptoShim],
+			["node:crypto", CryptoShim],
+			["process", ProcessShim],
+			["node:process", ProcessShim],
+		]);
+	}
 
-	const Load = (
+	Load(
 		Request: string,
 		ParentURI?: Uri,
-	): Effect.Effect<any, ModuleBlockedError | ModuleNotShimmedError> =>
-		Effect.gen(function* () {
-			const RequesterPath = ParentURI?.fsPath || "unknown module";
-			yield* Log.Trace(
+	): Result.Result<any, ModuleBlockedError | ModuleNotShimmedError> {
+		const RequesterPath = ParentURI?.fsPath || "unknown module";
+		// Logging within a sync function must be forked.
+		Effect.runFork(
+			this.Log.Trace(
 				`Intercepted require('${Request}') from '${RequesterPath}'.`,
-			);
+			),
+		);
 
-			if (BlockedModules.has(Request)) {
-				return yield* new ModuleBlockedError({ ModuleName: Request });
-			}
+		if (this.BlockedModules.has(Request)) {
+			return Result.fail(new ModuleBlockedError({ ModuleName: Request }));
+		}
 
-			const Shim = Shims.get(Request);
-			if (Shim) {
-				return Shim;
-			}
+		const Shim = this.Shims.get(Request);
+		if (Shim) {
+			return Result.succeed(Shim);
+		}
 
-			return yield* new ModuleNotShimmedError({ ModuleName: Request });
-		});
+		return Result.fail(new ModuleNotShimmedError({ ModuleName: Request }));
+	}
+}
 
-	const NodeModuleShimImplementation: Service["Type"] = { Load };
-	return NodeModuleShimImplementation;
+/**
+ * An `Effect` that constructs the `NodeModuleShim` service implementation.
+ */
+export default Effect.gen(function* (G) {
+	const Log = yield* G(LogService);
+	const InitData = yield* G(InitDataService);
+	return new NodeModuleShimImpl(Log, InitData);
 });

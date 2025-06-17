@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the ESMInterceptor service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ./CreateDynamicModule.js, ./Service.js, effect, node:buffer, node:module, node:url, node:worker_threads, vs/base/common/uuid.js, vscode
  */
 
 /**
@@ -16,7 +15,7 @@ import { Buffer } from "node:buffer";
 import * as Module from "node:module";
 import { URL } from "node:url";
 import { MessageChannel, type MessagePort } from "node:worker_threads";
-import { Effect, Option, Ref, Scope } from "effect";
+import { Effect, Option, Ref } from "effect";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type * as VSCode from "vscode";
 
@@ -39,16 +38,15 @@ class BidirectionalMap<K, V> {
 		this.B.set(Value, Key);
 		return this;
 	}
-	get(Key: K): Option.Option<V> {
-		return Option.fromNullable(this.A.get(Key));
-	}
 	getKey(Value: V): Option.Option<K> {
 		return Option.fromNullable(this.B.get(Value));
 	}
 }
 
 // Effect-fully loads the loader hook script from disk.
-const LoadHookScript = (FileName: string): Effect.Effect<string, Error> => {
+const LoadHookScriptEffect = (
+	FileName: string,
+): Effect.Effect<string, Error> => {
 	return Effect.tryPromise({
 		try: async () => {
 			const { readFileSync } = await import("node:fs");
@@ -62,7 +60,7 @@ const LoadHookScript = (FileName: string): Effect.Effect<string, Error> => {
 };
 
 // Sets up the global function that the dynamic module will call to get its API instance.
-const SetupGlobalAPIRetriever = (
+const SetupGlobalAPIRetrieverEffect = (
 	APICache: Ref.Ref<BidirectionalMap<object, string>>,
 ): Effect.Effect<void> => {
 	return Effect.sync(() => {
@@ -80,7 +78,7 @@ const SetupGlobalAPIRetriever = (
 };
 
 // An Effect that handles a single resolution request from the loader thread.
-const HandleResolveRequest = (
+const HandleResolveRequestEffect = (
 	Message: { readonly ID: number; readonly ImportingModuleURL: string },
 	APIFactory: APIFactoryService["Type"],
 	ExtensionPath: ExtensionPathService["Type"],
@@ -89,14 +87,16 @@ const HandleResolveRequest = (
 	DataURICache: Ref.Ref<Map<string, string>>,
 	MainThreadPort: MessagePort,
 ) => {
-	return Effect.gen(function* () {
+	return Effect.gen(function* (G) {
 		const { ID, ImportingModuleURL } = Message;
-		const ParentURI = yield* Effect.try({
-			try: () => new URL(ImportingModuleURL),
-			catch: (CaughtError) => new Error(`Invalid URL: ${CaughtError}`),
-		});
+		const ParentURI = yield* G(
+			Effect.try({
+				try: () => new URL(ImportingModuleURL),
+				catch: (CaughtError) =>
+					new Error(`Invalid URL: ${CaughtError}`),
+			}),
+		);
 
-		// The ExtensionPath service expects a vscode.Uri, not a node:url.URL
 		const VscodeParentUri = {
 			scheme: ParentURI.protocol.slice(0, -1),
 			authority: ParentURI.host,
@@ -104,7 +104,6 @@ const HandleResolveRequest = (
 			query: ParentURI.search,
 			fragment: ParentURI.hash,
 			fsPath: ParentURI.pathname,
-			// Add dummy methods to satisfy the type
 			with: () => VscodeParentUri,
 			toJSON: () => ({
 				scheme: VscodeParentUri.scheme,
@@ -121,9 +120,11 @@ const HandleResolveRequest = (
 			const ErrorValue = new Error(
 				`Could not find extension for module: ${ImportingModuleURL}`,
 			);
-			yield* Log.Error(
-				"ESM Interceptor failed to identify extension.",
-				ErrorValue,
+			yield* G(
+				Log.Error(
+					"ESM Interceptor failed to identify extension.",
+					ErrorValue,
+				),
 			);
 			MainThreadPort.postMessage({
 				id: ID,
@@ -132,7 +133,7 @@ const HandleResolveRequest = (
 			return;
 		}
 
-		const DataURICacheValue = yield* Ref.get(DataURICache);
+		const DataURICacheValue = yield* G(Ref.get(DataURICache));
 		const CachedDataURI = DataURICacheValue.get(
 			MaybeExtension.identifier.value,
 		);
@@ -143,8 +144,8 @@ const HandleResolveRequest = (
 
 		const APIObject = APIFactory.CreateAPI(MaybeExtension);
 		const APIKey = generateUuid();
-		yield* Ref.update(VSCodeAPICache, (Cache) =>
-			Cache.set(APIObject, APIKey),
+		yield* G(
+			Ref.update(VSCodeAPICache, (Cache) => Cache.set(APIObject, APIKey)),
 		);
 
 		const ModuleScript = CreateDynamicModule(
@@ -153,8 +154,10 @@ const HandleResolveRequest = (
 		);
 		const DataURI = `data:text/javascript;base64,${Buffer.from(ModuleScript).toString("base64")}`;
 
-		yield* Ref.update(DataURICache, (Map) =>
-			Map.set(MaybeExtension.identifier.value, DataURI),
+		yield* G(
+			Ref.update(DataURICache, (Map) =>
+				Map.set(MaybeExtension.identifier.value, DataURI),
+			),
 		);
 		MainThreadPort.postMessage({ id: ID, url: DataURI });
 	});
@@ -163,33 +166,35 @@ const HandleResolveRequest = (
 /**
  * An Effect that builds the live implementation of the ESMInterceptor service.
  */
-export default Effect.gen(function* () {
-	const APIFactory = yield* APIFactoryService;
-	const ExtensionPath = yield* ExtensionPathService;
-	const Log = yield* LogService;
+export default Effect.gen(function* (G) {
+	const APIFactory = yield* G(APIFactoryService);
+	const ExtensionPath = yield* G(ExtensionPathService);
+	const Log = yield* G(LogService);
 
-	const Install = (): Effect.Effect<void, Error> =>
-		Effect.gen(function* () {
+	const InstallEffect = (): Effect.Effect<void, Error> =>
+		Effect.gen(function* (G) {
 			if (typeof (Module as any).register !== "function") {
-				return yield* Effect.fail(
-					new Error(
-						"`node:module.register` is not available. ESM interception will fail.",
+				return yield* G(
+					Effect.fail(
+						new Error(
+							"`node:module.register` is not available. ESM interception will fail.",
+						),
 					),
 				);
 			}
 
-			const VSCodeAPICache = yield* Ref.make(
-				new BidirectionalMap<object, string>(),
+			const VSCodeAPICache = yield* G(
+				Ref.make(new BidirectionalMap<object, string>()),
 			);
-			const DataURICache = yield* Ref.make(new Map<string, string>());
+			const DataURICache = yield* G(Ref.make(new Map<string, string>()));
 			const { port1: MainThreadPort, port2: LoaderHookPort } =
 				new MessageChannel();
 
-			yield* SetupGlobalAPIRetriever(VSCodeAPICache);
+			yield* G(SetupGlobalAPIRetrieverEffect(VSCodeAPICache));
 
 			MainThreadPort.on("message", (Message) =>
 				Effect.runFork(
-					HandleResolveRequest(
+					HandleResolveRequestEffect(
 						Message,
 						APIFactory,
 						ExtensionPath,
@@ -201,8 +206,8 @@ export default Effect.gen(function* () {
 				),
 			);
 
-			const HookScriptContent = yield* LoadHookScript(
-				LOADER_HOOK_SCRIPT_FILENAME,
+			const HookScriptContent = yield* G(
+				LoadHookScriptEffect(LOADER_HOOK_SCRIPT_FILENAME),
 			);
 			const HookDataURI = `data:text/javascript;base64,${Buffer.from(HookScriptContent).toString("base64")}`;
 
@@ -212,31 +217,37 @@ export default Effect.gen(function* () {
 				transferList: [LoaderHookPort],
 			});
 
-			yield* Log.Info("ESM loader hook successfully registered.");
+			yield* G(Log.Info("ESM loader hook successfully registered."));
 
-			yield* Effect.addFinalizer(() =>
-				Effect.sync(() => {
-					MainThreadPort.close();
-					LoaderHookPort.close();
-					delete (globalThis as any)[
-						ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME
-					];
-				}).pipe(
-					Effect.tap(() =>
-						Effect.logInfo("ESM Interceptor resources released."),
+			yield* G(
+				Effect.addFinalizer(() =>
+					Effect.sync(() => {
+						MainThreadPort.close();
+						LoaderHookPort.close();
+						delete (globalThis as any)[
+							ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME
+						];
+					}).pipe(
+						Effect.tap(() =>
+							Effect.logInfo(
+								"ESM Interceptor resources released.",
+							),
+						),
 					),
 				),
 			);
 		}).pipe(
 			Effect.catchAll((Error) =>
-				Effect.logFatal(
+				Log.Fatal(
 					"Critical failure during ESM Interceptor installation.",
 					Error,
 				),
 			),
-			Effect.scoped, // Ensures the finalizer is attached to a scope
+			Effect.scoped, // Use Effect.scoped to discharge the Scope requirement from addFinalizer
 		);
 
-	const ESMInterceptorImplementation: Service["Type"] = { Install };
+	const ESMInterceptorImplementation: Service["Type"] = {
+		Install: InstallEffect,
+	};
 	return ESMInterceptorImplementation;
 });

@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Core/RequireInterceptor/Definition.ts
- * Responsibility: Implements the core logic for intercepting Node.js module loading in the Cocoon sidecar, patching the require function to handle VS Code API shims and Node built-in modules, enabling VS Code extension compatibility within Land's architecture.
+ * Responsibility: Implements the core logic for intercepting Node.js module loading.
  * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ../NodeModuleShim/Service.js, ./Factory/Interface.js, ./Factory/VSCode.js, ./Service.js, effect, node:module, vs/base/common/uri.js, vscode
  */
 
 /**
@@ -12,7 +11,7 @@
  */
 
 import * as Module from "node:module";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import { URI } from "vs/base/common/uri.js";
 import type { Uri } from "vscode";
 
@@ -27,80 +26,82 @@ import type Service from "./Service.js";
 /**
  * An Effect that builds the live implementation of the RequireInterceptor service.
  */
-export default Effect.gen(function* () {
-	const APIFactory = yield* APIFactoryService;
-	const ExtensionPath = yield* ExtensionPathService;
-	const Log = yield* LogService;
-	const NodeModuleShim = yield* NodeModuleShimService;
+export default Effect.gen(function* (G) {
+	const APIFactory = yield* G(APIFactoryService);
+	const ExtensionPath = yield* G(ExtensionPathService);
+	const Log = yield* G(LogService);
+	const NodeModuleShim = yield* G(NodeModuleShimService);
 
 	const Factories = new Map<string, INodeModuleFactory>([
 		["vscode", new VSCodeNodeModuleFactory(APIFactory, ExtensionPath, Log)],
-		// Other factories for modules like 'open' or 'electron' would be added here.
 	]);
 
-	// Store the original require function before we patch it.
 	const OriginalRequire = Module.prototype.require;
 	let IsInstalled = false;
 
-	const Install = () =>
-		Effect.gen(function* () {
+	const InstallEffect = () =>
+		Effect.gen(function* (G) {
 			if (IsInstalled) {
 				return;
 			}
 
-			yield* Effect.sync(() => {
-				(Module.prototype as any).require = function (
-					this: NodeModule,
-					Request: string,
-				): any {
-					// If a factory exists for the requested module, use it.
-					const Factory = Factories.get(Request);
-					if (Factory) {
-						const ParentURI = this.filename
-							? URI.file(this.filename)
-							: URI.parse("unknown:/unknown");
+			yield* G(
+				Effect.sync(() => {
+					(Module.prototype as any).require = function (
+						this: NodeModule,
+						Request: string,
+					): any {
+						// If a factory exists for the requested module, use it.
+						const Factory = Factories.get(Request);
+						if (Factory) {
+							const ParentURI = this.filename
+								? URI.file(this.filename)
+								: URI.parse("unknown:/unknown");
 
-						return Factory.Load(Request, ParentURI as Uri, (Req) =>
-							OriginalRequire.call(this, Req),
-						);
-					}
-
-					// If it's a built-in Node module, attempt to load a shim.
-					if (Module.builtinModules.includes(Request)) {
-						const ParentURI = this.filename
-							? URI.file(this.filename)
-							: URI.parse("unknown:/unknown");
-
-						// The shim loader is effectful, but `require` is sync. We must run it synchronously.
-						const ShimResult = Effect.runSyncExit(
-							NodeModuleShim.Load(Request, ParentURI as Uri),
-						);
-
-						if (ShimResult._tag === "Success") {
-							return ShimResult.value;
-						} else {
-							// FIX: To properly re-throw with the original Cause, we must
-							// wrap the cause in `Effect.failCause` and then run that.
-							throw Effect.runSync(
-								Effect.failCause(ShimResult.cause),
+							return Factory.Load(
+								Request,
+								ParentURI as Uri,
+								(Req) => OriginalRequire.call(this, Req),
 							);
 						}
-					}
 
-					// For any other module, delegate to the original `require`.
-					return OriginalRequire.call(this, Request);
-				};
+						// If it's a built-in Node module, attempt to load a shim.
+						if (Module.builtinModules.includes(Request)) {
+							const ParentURI = this.filename
+								? URI.file(this.filename)
+								: URI.parse("unknown:/unknown");
 
-				IsInstalled = true;
-			});
+							// The shim loader is now a synchronous function.
+							const ShimResult = NodeModuleShim.Load(
+								Request,
+								ParentURI as Uri,
+							);
 
-			yield* Log.Info(
-				"Node.js require() interceptor has been successfully installed.",
+							if (Result.isSuccess(ShimResult)) {
+								return ShimResult.value;
+							} else {
+								// Re-throw the specific tagged error.
+								throw ShimResult.error;
+							}
+						}
+
+						// For any other module, delegate to the original `require`.
+						return OriginalRequire.call(this, Request);
+					};
+
+					IsInstalled = true;
+				}),
+			);
+
+			yield* G(
+				Log.Info(
+					"Node.js require() interceptor has been successfully installed.",
+				),
 			);
 		});
 
 	const RequireInterceptorImplementation: Service["Type"] = {
-		Install,
+		Install: InstallEffect,
 	};
 
 	return RequireInterceptorImplementation;

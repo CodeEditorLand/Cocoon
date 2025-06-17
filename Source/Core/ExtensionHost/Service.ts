@@ -1,9 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ExtensionHost/Service.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Defines the interface and Context.Tag for the ExtensionHost service.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: effect
- * Export: ExtensionActivationReason, ExtensionHostService
  */
 
 /**
@@ -35,27 +33,25 @@ export default class ExtensionHostService extends Context.Tag(
 	{
 		/**
 		 * Activates an extension by its identifier. This is a fire-and-forget operation from the
-		 * caller's perspective. Any activation errors are handled internally (e.g., logged, sent to telemetry).
-		 * The returned Effect will not fail, but the underlying fiber may die on unrecoverable errors.
+		 * caller's perspective. Any activation errors are handled internally.
 		 * @param ID The identifier of the extension to activate.
-		 * @param Reason The reason for activation (e.g., startup, event).
+		 * @param Reason The reason for activation.
 		 * @returns An `Effect` that completes when activation has been attempted.
 		 */
 		readonly ActivateById: (
 			ID: ExtensionIdentifier,
 			Reason: ExtensionActivationReason,
-		) => Effect.Effect<void, never, never>;
+		) => Effect.Effect<void, never>;
 
 		/**
 		 * Gets the full description for a loaded extension.
 		 * @param ID The identifier of the extension.
-		 * @returns An `Effect` that resolves with an `Option` of the description.
+		 * @returns An `Effect` that resolves with the description or `undefined`.
 		 */
 		readonly GetExtensionDescription: (
 			ID: string | ExtensionIdentifier,
 		) => Effect.Effect<
 			Readonly<IRelaxedExtensionDescription> | undefined,
-			never,
 			never
 		>;
 
@@ -66,12 +62,12 @@ export default class ExtensionHostService extends Context.Tag(
 		 */
 		readonly GetExtensionExports: (
 			ID: ExtensionIdentifier,
-		) => Effect.Effect<any>;
+		) => Effect.Effect<any, Error>; // The effect can fail if the extension failed to activate.
 
 		/**
 		 * Checks if an extension is currently activated.
 		 * @param ID The identifier of the extension.
-		 * @returns An `Effect` that resolves to `true` if the extension is active, `false` otherwise.
+		 * @returns An `Effect` that resolves to `true` if the extension is active.
 		 */
 		readonly IsActivated: (
 			ID: ExtensionIdentifier,
