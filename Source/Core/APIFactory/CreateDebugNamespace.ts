@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateDebugNamespace.ts
- * Responsibility: Implements the vscode.debug API namespace for the Cocoon sidecar by delegating to the central DebugService.
+ * Responsibility: Implements the vscode.debug API namespace for the Cocoon sidecar.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../Service/Debug/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**
@@ -18,13 +17,6 @@ import DebugService from "../../Service/Debug/Service.js";
 
 /**
  * Creates an Effect that constructs the `vscode.debug` namespace object.
- *
- * This factory function is an `Effect` that depends on the `DebugService`.
- * It creates a sandboxed `debug` object where methods return `Effect`s.
- *
- * @param AsEvent A function to create a safe event subscription.
- * @param Extension The description of the extension for which this API is being created.
- * @returns An `Effect` that resolves to an object implementing the `vscode.debug` API.
  */
 const CreateDebugNamespaceEffect = (
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
@@ -33,7 +25,6 @@ const CreateDebugNamespaceEffect = (
 	return Effect.gen(function* (G) {
 		const Debug = yield* G(DebugService);
 
-		// The vscode.debug namespace is extensive. We implement the core parts.
 		const DebugNamespace: typeof VSCode.debug = {
 			// --- Properties ---
 			get activeDebugSession() {
@@ -44,6 +35,10 @@ const CreateDebugNamespaceEffect = (
 			},
 			get breakpoints() {
 				return Debug.breakpoints;
+			},
+			// FIX: Add missing property
+			get activeStackItem() {
+				return undefined;
 			},
 
 			// --- Events ---
@@ -58,14 +53,18 @@ const CreateDebugNamespaceEffect = (
 				Debug.onDidTerminateDebugSession,
 			),
 			onDidChangeBreakpoints: AsEvent(Debug.onDidChangeBreakpoints),
+			// FIX: Add missing event
+			onDidChangeActiveStackItem: AsEvent(
+				new Effect.EventEmitter<any>().event,
+			),
 
-			// --- Methods (Now return Effects instead of running them) ---
+			// --- Methods ---
 			registerDebugConfigurationProvider: (debugType, provider) =>
 				Debug.RegisterDebugConfigurationProvider(
 					debugType,
 					provider,
 					Extension,
-				) as any, // Cast to `any` to satisfy the `Disposable` in the vscode.d.ts, will be handled by caller
+				) as any,
 			registerDebugAdapterDescriptorFactory: (debugType, factory) =>
 				Debug.RegisterDebugAdapterDescriptorFactory(
 					debugType,
@@ -85,6 +84,25 @@ const CreateDebugNamespaceEffect = (
 				Debug.AddBreakpoints(breakpoints) as any,
 			removeBreakpoints: (breakpoints) =>
 				Debug.RemoveBreakpoints(breakpoints) as any,
+
+			// FIX: Add missing methods
+			registerDebugVisualizationProvider: (_id, _provider) => ({
+				dispose: () => {},
+			}),
+			registerDebugVisualizationTreeProvider: (_id, _provider) => ({
+				dispose: () => {},
+			}),
+			asDebugSourceUri: (source, session) => {
+				// This requires a more complex implementation, stubbing for now.
+				const uri = source.uri;
+				if (!uri) {
+					throw new Error("NYI");
+				}
+				if (session) {
+					return uri.with({ query: `session=${session.id}` });
+				}
+				return uri;
+			},
 		};
 
 		return DebugNamespace;

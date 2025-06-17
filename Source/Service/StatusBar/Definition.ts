@@ -10,7 +10,7 @@
  */
 
 import { Effect, Ref } from "effect";
-import { Disposable, StatusBarAlignment } from "vscode";
+import { Disposable, StatusBarAlignment, type StatusBarItem } from "vscode"; // FIX: Import StatusBarItem
 
 import CommandService from "../Command/Service.js";
 import IPCService from "../IPC/Service.js";
@@ -48,7 +48,7 @@ export default Effect.gen(function* (G) {
 				const Entry = new StatusBarItemImplementation(
 					EntryID,
 					IPC,
-					Command, // Pass the CommandService instance
+					Command,
 					OnDispose,
 					ItemID,
 					FinalAlignment,
@@ -60,7 +60,8 @@ export default Effect.gen(function* (G) {
 					),
 				);
 
-				return Entry;
+				// FIX: The method should return a StatusBarItem, which the implementation class satisfies.
+				return Entry as StatusBarItem;
 			}),
 
 		SetStatusBarMessage: (Text, HideOrPromise) => {

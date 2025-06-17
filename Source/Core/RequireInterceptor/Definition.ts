@@ -11,7 +11,7 @@
  */
 
 import * as Module from "node:module";
-import { Effect, Result } from "effect";
+import { Effect, Exit } from "effect"; // FIX: Changed from Result to Exit
 import { URI } from "vs/base/common/uri.js";
 import type { Uri } from "vscode";
 
@@ -51,13 +51,11 @@ export default Effect.gen(function* (G) {
 						this: NodeModule,
 						Request: string,
 					): any {
-						// If a factory exists for the requested module, use it.
 						const Factory = Factories.get(Request);
 						if (Factory) {
 							const ParentURI = this.filename
 								? URI.file(this.filename)
 								: URI.parse("unknown:/unknown");
-
 							return Factory.Load(
 								Request,
 								ParentURI as Uri,
@@ -65,30 +63,25 @@ export default Effect.gen(function* (G) {
 							);
 						}
 
-						// If it's a built-in Node module, attempt to load a shim.
 						if (Module.builtinModules.includes(Request)) {
 							const ParentURI = this.filename
 								? URI.file(this.filename)
 								: URI.parse("unknown:/unknown");
-
-							// The shim loader is now a synchronous function.
 							const ShimResult = NodeModuleShim.Load(
 								Request,
 								ParentURI as Uri,
 							);
 
-							if (Result.isSuccess(ShimResult)) {
+							if (Exit.isSuccess(ShimResult)) {
+								// FIX: Use Exit.isSuccess
 								return ShimResult.value;
 							} else {
-								// Re-throw the specific tagged error.
-								throw ShimResult.error;
+								// Re-throw the specific tagged error from the failure cause.
+								throw ShimResult.cause.error;
 							}
 						}
-
-						// For any other module, delegate to the original `require`.
 						return OriginalRequire.call(this, Request);
 					};
-
 					IsInstalled = true;
 				}),
 			);

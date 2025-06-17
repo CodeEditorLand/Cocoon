@@ -11,13 +11,12 @@
  * is a synchronous class to be compatible with Node's `require`.
  */
 
-import { Effect, Result } from "effect";
+import { Effect, Exit } from "effect"; // FIX: Changed from Result to Exit
 import type { Uri } from "vscode";
 
 import InitDataService from "../../Service/InitData/Service.js";
 import LogService from "../../Service/Log/Service.js";
 import { ModuleBlockedError, ModuleNotShimmedError } from "./Error.js";
-import type Service from "./Service.js";
 import CreateCryptoShim from "./Shim/Crypto.js";
 import CreateOsShim from "./Shim/Os.js";
 import ProcessShim from "./Shim/Process.js";
@@ -25,7 +24,8 @@ import ProcessShim from "./Shim/Process.js";
 /**
  * A synchronous class implementation of the NodeModuleShimService.
  */
-class NodeModuleShimImpl implements Service["Type"] {
+class NodeModuleShimImpl implements NodeModuleShimService["Type"] {
+	// FIX: Changed Service to NodeModuleShimService
 	private readonly BlockedModules: Set<string>;
 	private readonly Shims: Map<string, any>;
 
@@ -66,25 +66,23 @@ class NodeModuleShimImpl implements Service["Type"] {
 	Load(
 		Request: string,
 		ParentURI?: Uri,
-	): Result.Result<any, ModuleBlockedError | ModuleNotShimmedError> {
-		const RequesterPath = ParentURI?.fsPath || "unknown module";
-		// Logging within a sync function must be forked.
+	): Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError> {
 		Effect.runFork(
 			this.Log.Trace(
-				`Intercepted require('${Request}') from '${RequesterPath}'.`,
+				`Intercepted require('${Request}') from '${ParentURI?.fsPath || "unknown module"}'.`,
 			),
 		);
 
 		if (this.BlockedModules.has(Request)) {
-			return Result.fail(new ModuleBlockedError({ ModuleName: Request }));
+			return Exit.fail(new ModuleBlockedError({ ModuleName: Request }));
 		}
 
 		const Shim = this.Shims.get(Request);
 		if (Shim) {
-			return Result.succeed(Shim);
+			return Exit.succeed(Shim);
 		}
 
-		return Result.fail(new ModuleNotShimmedError({ ModuleName: Request }));
+		return Exit.fail(new ModuleNotShimmedError({ ModuleName: Request }));
 	}
 }
 

@@ -11,7 +11,7 @@
  * modules, blocking some and providing safe shims for others.
  */
 
-import { Context, Result } from "effect";
+import { Context, Exit } from "effect"; // FIX: Changed from Result to Exit
 import type { Uri } from "vscode";
 
 import type { ModuleBlockedError, ModuleNotShimmedError } from "./Error.js";
@@ -27,12 +27,12 @@ export default class NodeModuleShimService extends Context.Tag(
 		 *
 		 * @param Request The name of the module being requested (e.g., 'fs', 'node:os').
 		 * @param ParentURI The URI of the file that made the `require` call.
-		 * @returns A `Result` that contains the shimmed module on success, or a
+		 * @returns An `Exit` that contains the shimmed module on success, or a
 		 *   `ModuleBlockedError` or `ModuleNotShimmedError` on failure.
 		 */
 		readonly Load: (
 			Request: string,
 			ParentURI?: Uri,
-		) => Result.Result<any, ModuleBlockedError | ModuleNotShimmedError>;
+		) => Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError>;
 	}
 >() {}

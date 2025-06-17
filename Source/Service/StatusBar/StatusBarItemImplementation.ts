@@ -7,15 +7,15 @@
 /**
  * @module StatusBarItemImplementation
  * @description The concrete implementation of the `vscode.StatusBarItem` interface.
- * An instance of this class proxies its state to a corresponding UI component
- * in the Mountain host via IPC.
  */
 
 import { Effect } from "effect";
 import type {
 	AccessibilityInformation,
+	CancellationToken, // Import CancellationToken
 	Command,
 	MarkdownString,
+	ProviderResult, // Import ProviderResult
 	StatusBarAlignment,
 	StatusBarItem,
 	ThemeColor,
@@ -31,7 +31,7 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	private IsDisposed = false;
 	private IsVisible = false;
 
-	// --- Backing fields for properties ---
+	// --- Backing fields ---
 	private _id: string;
 	private _name: string | undefined;
 	private _alignment: StatusBarAlignment;
@@ -43,8 +43,17 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	private _command: string | Command | undefined;
 	private _accessibilityInformation: AccessibilityInformation | undefined;
 
+	// FIX: Add missing property to satisfy the interface.
+	public tooltip2:
+		| string
+		| MarkdownString
+		| ((
+				token: CancellationToken,
+		  ) => ProviderResult<string | MarkdownString | undefined>)
+		| undefined;
+
 	constructor(
-		private readonly EntryID: string, // Internal unique ID for IPC
+		private readonly EntryID: string,
 		private readonly IPC: IPCService["Type"],
 		private readonly CommandService: CommandService["Type"],
 		private readonly OnDidDispose: () => void,
@@ -57,6 +66,7 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 		this._priority = InitialPriority;
 	}
 
+	// ... (rest of the getters and setters are correct) ...
 	// --- Getters and Setters that trigger IPC updates ---
 	get id(): string {
 		return this._id;
@@ -67,7 +77,6 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	get priority(): number | undefined {
 		return this._priority;
 	}
-
 	get name(): string | undefined {
 		return this._name;
 	}
@@ -77,7 +86,6 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
-
 	get text(): string {
 		return this._text;
 	}
@@ -87,7 +95,6 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
-
 	get tooltip(): string | MarkdownString | undefined {
 		return this._tooltip;
 	}
@@ -97,7 +104,6 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
-
 	get color(): string | ThemeColor | undefined {
 		return this._color;
 	}
@@ -115,7 +121,6 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
-
 	get backgroundColor(): ThemeColor | undefined {
 		return this._backgroundColor;
 	}
@@ -125,7 +130,6 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
-
 	get command(): string | Command | undefined {
 		return this._command;
 	}
@@ -135,7 +139,6 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
-
 	get accessibilityInformation(): AccessibilityInformation | undefined {
 		return this._accessibilityInformation;
 	}
@@ -153,7 +156,6 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
-
 	hide(): void {
 		if (this.IsVisible) {
 			this.IsVisible = false;
@@ -162,7 +164,6 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			);
 		}
 	}
-
 	dispose(): void {
 		if (!this.IsDisposed) {
 			this.IsDisposed = true;
@@ -171,29 +172,23 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 		}
 	}
 
-	// --- Private Methods ---
 	private Update(): void {
 		if (this.IsDisposed || !this.IsVisible) {
 			return;
 		}
-
-		// The CommandConverter needs access to the live command service to run commands.
 		const CommandConverter = new CommandConverterDefinition(
 			this.CommandService.RegisterCommand,
 			(command, ...args) =>
 				Effect.runPromise(
 					this.CommandService.ExecuteCommand(command, ...args),
 				),
-			() => undefined, // lookupApiCommand is not needed for this conversion
+			() => undefined,
 		);
-
 		const DTO = StatusBarConverter.FromAPI(
 			this,
 			this.EntryID,
 			CommandConverter,
 		);
-
-		// Use runFork for a fire-and-forget UI update.
 		Effect.runFork(this.IPC.SendNotification("$setEntry", [DTO]));
 	}
 }

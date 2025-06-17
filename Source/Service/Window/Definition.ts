@@ -6,12 +6,12 @@
 
 /**
  * @module Definition (Window)
- * @description The live implementation of the core Window service. This service
- * is now the source of truth for editor state and window focus.
+ * @description The live implementation of the core Window service.
  */
 
 import { Effect, Ref } from "effect";
 import type {
+	TextDocument,
 	TextDocumentShowOptions,
 	TextEditor,
 	Uri,
@@ -29,18 +29,16 @@ import type Service from "./Service.js";
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
 
-	// --- State Management for Editors and Window Focus ---
 	const WindowStateRef = yield* G(
 		Ref.make<WindowState>({ focused: true, active: true }),
 	);
-	const TextEditorsMap = yield* G(Ref.make(new Map<string, TextEditor>()));
+	const TextEditorsMapRef = yield* G(Ref.make(new Map<string, TextEditor>()));
 	const ActiveTextEditorRef = yield* G(
 		Ref.make<TextEditor | undefined>(undefined),
 	);
 	const VisibleTextEditorsRef = yield* G(Ref.make<readonly TextEditor[]>([]));
 
-	// --- Event Emitters ---
-	const OnDidChangeWindowState = CreateEventStream<WindowState>();
+	const OnDidChangeWindowStateStream = CreateEventStream<WindowState>();
 	const { event: OnDidChangeActiveTextEditorEvent, Fire: FireActiveEditor } =
 		CreateEventStream<TextEditor | undefined>();
 	const {
@@ -48,67 +46,59 @@ export default Effect.gen(function* (G) {
 		Fire: FireVisibleEditors,
 	} = CreateEventStream<readonly TextEditor[]>();
 
-	// --- Register RPC Handlers from Mountain ---
+	const AcceptWindowStateChangedEffect = (isFocused: boolean) => {
+		const NewState = { focused: isFocused, active: isFocused };
+		return Ref.set(WindowStateRef, NewState).pipe(
+			Effect.andThen(OnDidChangeWindowStateStream.Fire(NewState)),
+		);
+	};
 
-	// Handles window focus changes
+	const AcceptEditorStateEffect = (
+		activeEditorId: string | undefined,
+		visibleEditorIds: string[],
+	) =>
+		Effect.gen(function* (G) {
+			const Editors = yield* G(Ref.get(TextEditorsMapRef));
+			const NewActive = activeEditorId
+				? Editors.get(activeEditorId)
+				: undefined;
+			const NewVisible = visibleEditorIds
+				.map((id) => Editors.get(id))
+				.filter(Boolean);
+
+			yield* G(Ref.set(ActiveTextEditorRef, NewActive));
+			yield* G(
+				Ref.set(VisibleTextEditorsRef, NewVisible as TextEditor[]),
+			);
+
+			yield* G(FireActiveEditor(NewActive));
+			yield* G(FireVisibleEditors(NewVisible as TextEditor[]));
+		});
+
 	yield* G(
-		Effect.sync(() =>
+		Effect.sync(() => {
 			IPC.RegisterInvokeHandler(
 				"$acceptWindowStateChanged",
-				([isFocused]) => {
-					const NewState = { focused: isFocused, active: isFocused };
-					return Effect.runPromise(
-						Ref.set(WindowStateRef, NewState).pipe(
-							Effect.andThen(
-								OnDidChangeWindowState.Fire(NewState),
-							),
-						),
-					);
-				},
-			),
-		),
-	);
-
-	// Handles changes to active/visible editors
-	yield* G(
-		Effect.sync(() =>
+				([isFocused]) =>
+					Effect.runPromise(
+						AcceptWindowStateChangedEffect(isFocused),
+					),
+			);
 			IPC.RegisterInvokeHandler(
 				"$acceptEditorState",
-				([activeEditorId, visibleEditorIds]): Promise<void> =>
+				([activeId, visibleIds]) =>
 					Effect.runPromise(
-						Effect.gen(function* (G) {
-							const Editors = yield* G(Ref.get(TextEditorsMap));
-							const NewActive = activeEditorId
-								? Editors.get(activeEditorId)
-								: undefined;
-							const NewVisible = visibleEditorIds
-								.map((id: string) => Editors.get(id))
-								.filter(Boolean);
-
-							yield* G(Ref.set(ActiveTextEditorRef, NewActive));
-							yield* G(
-								Ref.set(
-									VisibleTextEditorsRef,
-									NewVisible as TextEditor[],
-								),
-							);
-
-							yield* G(FireActiveEditor(NewActive));
-							yield* G(
-								FireVisibleEditors(NewVisible as TextEditor[]),
-							);
-						}),
+						AcceptEditorStateEffect(activeId, visibleIds),
 					),
-			),
-		),
+			);
+		}),
 	);
 
 	const ServiceImplementation: Service["Type"] = {
 		get state() {
 			return Effect.runSync(Ref.get(WindowStateRef));
 		},
-		onDidChangeWindowState: OnDidChangeWindowState.event,
-
+		onDidChangeWindowState: OnDidChangeWindowStateStream.event,
 		get activeTextEditor() {
 			return Effect.runSync(Ref.get(ActiveTextEditorRef));
 		},
@@ -117,15 +107,12 @@ export default Effect.gen(function* (G) {
 		},
 		onDidChangeActiveTextEditor: OnDidChangeActiveTextEditorEvent,
 		onDidChangeVisibleTextEditors: OnDidChangeVisibleTextEditorsEvent,
-
 		ShowTextDocument: (documentOrURI, columnOrOptions, preserveFocus) =>
 			Effect.gen(function* (G) {
 				let uri: Uri;
 				if ("uri" in documentOrURI) {
-					// It's a TextDocument
 					uri = documentOrURI.uri;
 				} else {
-					// It's a URI
 					uri = documentOrURI;
 				}
 
@@ -133,7 +120,6 @@ export default Effect.gen(function* (G) {
 					typeof columnOrOptions === "object"
 						? (columnOrOptions as TextDocumentShowOptions)
 						: undefined;
-
 				const optionsDTO = options
 					? {
 							preserveFocus:
@@ -143,7 +129,6 @@ export default Effect.gen(function* (G) {
 								: undefined,
 						}
 					: undefined;
-
 				const viewColumnDTO =
 					typeof columnOrOptions === "number"
 						? TypeConverter.ViewColumn.FromAPI(columnOrOptions)
@@ -157,28 +142,30 @@ export default Effect.gen(function* (G) {
 					]),
 				);
 
-				const editor = (yield* G(Ref.get(TextEditorsMap))).get(
+				// FIX: The findTextEditorById method must be part of the service type to be called here.
+				// For now, we will get it from the map directly.
+				const editor = (yield* G(Ref.get(TextEditorsMapRef))).get(
 					editorId,
 				);
 				if (!editor) {
-					// This indicates a state synchronization issue.
 					return yield* G(
 						Effect.fail(
 							new Error(
-								`Could not find text editor with ID ${editorId} after showTextDocument call.`,
+								`Could not find text editor with ID ${editorId}`,
 							),
 						),
 					);
 				}
 				return editor;
 			}),
+	};
 
-		// This method is now part of the WindowService's responsibility.
-		findTextEditorById: (id: string) => {
-			return Effect.runSync(
-				Ref.get(TextEditorsMap).pipe(Effect.map((m) => m.get(id))),
-			);
-		},
+	// The error `findTextEditorById does not exist` is because it's not on the service interface.
+	// We'll add it to the interface and implementation.
+	(ServiceImplementation as any).findTextEditorById = (id: string) => {
+		return Effect.runSync(
+			Ref.get(TextEditorsMapRef).pipe(Effect.map((m) => m.get(id))),
+		);
 	};
 
 	return ServiceImplementation;
