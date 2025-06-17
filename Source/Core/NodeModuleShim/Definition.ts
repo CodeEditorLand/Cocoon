@@ -17,6 +17,7 @@ import type { Uri } from "vscode";
 import InitDataService from "../../Service/InitData/Service.js";
 import LogService from "../../Service/Log/Service.js";
 import { ModuleBlockedError, ModuleNotShimmedError } from "./Error.js";
+import type NodeModuleShimService from "./Service.js"; // FIX: Import the type correctly
 import CreateCryptoShim from "./Shim/Crypto.js";
 import CreateOsShim from "./Shim/Os.js";
 import ProcessShim from "./Shim/Process.js";
@@ -25,7 +26,7 @@ import ProcessShim from "./Shim/Process.js";
  * A synchronous class implementation of the NodeModuleShimService.
  */
 class NodeModuleShimImpl implements NodeModuleShimService["Type"] {
-	// FIX: Changed Service to NodeModuleShimService
+	// FIX: Correctly implement the service type
 	private readonly BlockedModules: Set<string>;
 	private readonly Shims: Map<string, any>;
 
@@ -67,9 +68,11 @@ class NodeModuleShimImpl implements NodeModuleShimService["Type"] {
 		Request: string,
 		ParentURI?: Uri,
 	): Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError> {
+		const RequesterPath = ParentURI?.fsPath || "unknown module";
+		// Logging within a sync function must be forked.
 		Effect.runFork(
 			this.Log.Trace(
-				`Intercepted require('${Request}') from '${ParentURI?.fsPath || "unknown module"}'.`,
+				`Intercepted require('${Request}') from '${RequesterPath}'.`,
 			),
 		);
 

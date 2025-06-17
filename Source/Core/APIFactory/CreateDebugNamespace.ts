@@ -11,7 +11,7 @@
 
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type * as VSCode from "vscode";
+import * as VSCode from "vscode";
 
 import DebugService from "../../Service/Debug/Service.js";
 
@@ -36,7 +36,7 @@ const CreateDebugNamespaceEffect = (
 			get breakpoints() {
 				return Debug.breakpoints;
 			},
-			// FIX: Add missing property
+			// FIX: Add missing property to satisfy the `vscode.debug` interface
 			get activeStackItem() {
 				return undefined;
 			},
@@ -53,9 +53,10 @@ const CreateDebugNamespaceEffect = (
 				Debug.onDidTerminateDebugSession,
 			),
 			onDidChangeBreakpoints: AsEvent(Debug.onDidChangeBreakpoints),
-			// FIX: Add missing event
+			// FIX: Add missing event to satisfy the `vscode.debug` interface.
+			// Use a new EventEmitter from the `vscode` module itself.
 			onDidChangeActiveStackItem: AsEvent(
-				new Effect.EventEmitter<any>().event,
+				new VSCode.EventEmitter<any>().event,
 			),
 
 			// --- Methods ---
@@ -85,23 +86,27 @@ const CreateDebugNamespaceEffect = (
 			removeBreakpoints: (breakpoints) =>
 				Debug.RemoveBreakpoints(breakpoints) as any,
 
-			// FIX: Add missing methods
-			registerDebugVisualizationProvider: (_id, _provider) => ({
-				dispose: () => {},
-			}),
-			registerDebugVisualizationTreeProvider: (_id, _provider) => ({
-				dispose: () => {},
-			}),
+			// FIX: Add missing methods to satisfy the `vscode.debug` interface
+			registerDebugVisualizationProvider: (_id, _provider) =>
+				new VSCode.Disposable(() => {}),
+			registerDebugVisualizationTreeProvider: (_id, _provider) =>
+				new VSCode.Disposable(() => {}),
 			asDebugSourceUri: (source, session) => {
-				// This requires a more complex implementation, stubbing for now.
-				const uri = source.uri;
-				if (!uri) {
-					throw new Error("NYI");
+				// FIX: The `uri` property is not on the `DebugProtocolSource` type.
+				// This requires a more robust implementation that likely involves an IPC call
+				// or inspecting the source object's properties if available at runtime.
+				// For now, we return a placeholder to satisfy the type.
+				const sourceUri = (source as any).uri;
+				if (sourceUri) {
+					const uri = VSCode.Uri.revive(sourceUri);
+					if (session) {
+						return uri.with({ query: `session=${session.id}` });
+					}
+					return uri;
 				}
-				if (session) {
-					return uri.with({ query: `session=${session.id}` });
-				}
-				return uri;
+				throw new Error(
+					"asDebugSourceUri: Not implemented for this source type.",
+				);
 			},
 		};
 

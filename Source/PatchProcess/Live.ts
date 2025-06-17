@@ -1,6 +1,6 @@
 /*
  * File: Cocoon/Source/PatchProcess/Live.ts
- * Responsibility: Implements a live layer for the ProcessPatch service in Cocoon.
+ * Responsibility: Implements the live layer for the ProcessPatch service.
  * Modified: 2025-06-17 11:21:12 UTC
  */
 
@@ -15,21 +15,15 @@ import { Config, Effect, Layer } from "effect";
 
 import Service from "./Service.js";
 
-/**
- * A `Config` object for configuring the ProcessPatch service.
- * This defines whether extensions are allowed to terminate the process.
- */
-// FIX: The `.struct` and `.withDefault` APIs are from a newer version.
-// Reverting to a more basic Config pattern.
-const AllowExitConfig = Config.boolean("AllowExit");
+// FIX: Reverted to a more compatible API shape for Config.
+const AllowExitConfig: Config.Config<boolean> = Config.boolean("AllowExit");
 
 /**
  * The live `Layer` for the `ProcessPatch.Service`.
- * It reads its configuration from the `ProcessPatchConfig` service.
+ * It reads its configuration from the environment, with a default.
  */
 const Live = Layer.effect(
 	Service,
-	// FIX: Use `Effect.map` on the config instead of the newer `Config.map`.
 	Effect.map(AllowExitConfig, (allowExit) => ({
 		NativeExit: process.exit.bind(process),
 		NativeCrash:
@@ -38,7 +32,7 @@ const Live = Layer.effect(
 				: undefined,
 		AllowExit: () => allowExit,
 	})).pipe(
-		// Provide a default value for the config if it's not set.
+		// FIX: Use catchTag to provide a default value if the config is missing.
 		Effect.catchTag("MissingData", () =>
 			Effect.succeed({
 				NativeExit: process.exit.bind(process),

@@ -2,7 +2,6 @@
  * File: Cocoon/Source/Core/APIFactory/CreateWindowNamespace.ts
  * Responsibility: Constructs the vscode.window namespace for the API object.
  * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ../../Service/StatusBar/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**
@@ -17,26 +16,17 @@ import type StatusBarService from "../../Service/StatusBar/Service.js";
 import type TreeViewService from "../../Service/TreeView/Service.js";
 import type WebViewPanelService from "../../Service/WebViewPanel/Service.js";
 import type WindowService from "../../Service/Window/Service.js";
-import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
+
+// FIX: Removed unused import `WorkSpaceService`
+// import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
 
 /**
  * Creates the `vscode.window` namespace object.
- *
- * This factory function aggregates multiple services that contribute to the `window`
- * object. Its methods now return composable `Effect`s instead of running them.
- *
- * @param Window The core window state service.
- * @param WorkSpace The workspace service, for properties like `activeTextEditor`.
- * @param StatusBar The service for creating status bar items.
- * @param WebViewPanel The service for creating webview panels.
- * @param TreeView The service for creating tree views.
- * @param AsEvent A function to create a safe event subscription.
- * @param Extension The description of the extension for which this API is being created.
- * @returns An object that implements the `vscode.window` API.
  */
 const CreateWindowNamespace = (
 	Window: WindowService["Type"],
-	WorkSpace: WorkSpaceService["Type"],
+	// FIX: Removed unused parameter `WorkSpace`
+	// WorkSpace: WorkSpaceService["Type"],
 	StatusBar: StatusBarService["Type"],
 	WebViewPanel: WebViewPanelService["Type"],
 	TreeView: TreeViewService["Type"],
@@ -49,21 +39,19 @@ const CreateWindowNamespace = (
 			return Window.state;
 		},
 		get activeTextEditor() {
-			// This property comes from a different service, which was a leaky abstraction.
-			// It has been removed from WorkSpaceService and is now correctly on WindowService.
 			return Window.activeTextEditor;
 		},
 		get visibleTextEditors() {
 			return Window.visibleTextEditors;
 		},
 		get activeTerminal() {
-			return undefined; // Stub
+			return undefined;
 		},
 		get terminals() {
-			return []; // Stub
+			return [];
 		},
 		get activeColorTheme() {
-			return { kind: 1 as VSCode.ColorThemeKind.Light }; // Stub
+			return { kind: 1 as VSCode.ColorThemeKind.Light };
 		},
 
 		// --- Events ---
@@ -80,7 +68,6 @@ const CreateWindowNamespace = (
 			let id: string | undefined;
 			let alignment: VSCode.StatusBarAlignment | undefined;
 			let prio: number | undefined;
-
 			if (typeof args[0] === "string") {
 				id = args[0];
 				alignment = args[1];
@@ -95,7 +82,7 @@ const CreateWindowNamespace = (
 				alignment,
 				prio,
 			);
-		}) as any, // Cast to any to satisfy the vscode.d.ts which expects a direct return.
+		}) as any,
 		createTreeView: (viewId, options) =>
 			TreeView.CreateTreeView(viewId, options, Extension) as any,
 		createWebviewPanel: (viewType, title, showOptions, options) =>
@@ -116,4 +103,5 @@ const CreateWindowNamespace = (
 
 	return WindowNamespace as typeof VSCode.window;
 };
+
 export default CreateWindowNamespace;

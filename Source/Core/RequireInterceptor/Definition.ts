@@ -73,10 +73,9 @@ export default Effect.gen(function* (G) {
 							);
 
 							if (Exit.isSuccess(ShimResult)) {
-								// FIX: Use Exit.isSuccess
 								return ShimResult.value;
 							} else {
-								// Re-throw the specific tagged error from the failure cause.
+								// FIX: The `error` property is on the `Fail` case of the `Cause` within the `Exit.Failure`.
 								throw ShimResult.cause.error;
 							}
 						}
