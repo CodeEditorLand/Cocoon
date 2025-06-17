@@ -1,22 +1,20 @@
 /*
  * File: Cocoon/Source/PatchProcess.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Orchestrates the application of all process-level patches.
  * Modified: 2025-06-17 11:22:56 UTC
- * Dependency: ./PatchProcess/BlockNativesModule.js, ./PatchProcess/HandleException.js, ./PatchProcess/Live.js, ./PatchProcess/PatchProcessCrash.js, ./PatchProcess/PatchProcessExit.js, ./PatchProcess/PipeLogging.js, ./PatchProcess/SetElectronRunAsNode.js, ./PatchProcess/SetStackTraceLimit.js, ./PatchProcess/SetupEnvironment.js, ./PatchProcess/TerminateOnParentExit.js, effect
  */
 
 import { Effect } from "effect";
 
-import BlockNativesModule from "./PatchProcess/BlockNativesModule.js";
-import HandleException from "./PatchProcess/HandleException.js";
-import ProcessPatchLive from "./PatchProcess/Live.js";
-import PatchProcessCrash from "./PatchProcess/PatchProcessCrash.js";
-import PatchProcessExit from "./PatchProcess/PatchProcessExit.js";
-import PipeLogging from "./PatchProcess/PipeLogging.js";
-import SetElectronRunAsNode from "./PatchProcess/SetElectronRunAsNode.js";
-import SetStackTraceLimit from "./PatchProcess/SetStackTraceLimit.js";
-import SetupEnvironment from "./PatchProcess/SetupEnvironment.js";
-import TerminateOnParentExit from "./PatchProcess/TerminateOnParentExit.js";
+import BlockNativesModuleEffect from "./PatchProcess/BlockNativesModule.js";
+import HandleExceptionEffect from "./PatchProcess/HandleException.js";
+import PatchProcessCrashEffect from "./PatchProcess/PatchProcessCrash.js";
+import PatchProcessExitEffect from "./PatchProcess/PatchProcessExit.js";
+import PipeLoggingEffect from "./PatchProcess/PipeLogging.js";
+import SetElectronRunAsNodeEffect from "./PatchProcess/SetElectronRunAsNode.js";
+import SetStackTraceLimitEffect from "./PatchProcess/SetStackTraceLimit.js";
+import SetupEnvironmentEffect from "./PatchProcess/SetupEnvironment.js";
+import TerminateOnParentExitEffect from "./PatchProcess/TerminateOnParentExit.js";
 
 /**
  * The main orchestrator `Effect` that composes all individual process-level patches.
@@ -26,34 +24,28 @@ import TerminateOnParentExit from "./PatchProcess/TerminateOnParentExit.js";
  * environment is stable, secure, and properly configured before any extension
  * code is loaded.
  */
-export default Effect.gen(function* () {
-	// Effects that require the ProcessPatch service must be provided with its layer.
-	const PatchesWithDeps = Effect.all([PatchProcessCrash, PatchProcessExit], {
-		discard: true,
-		concurrency: "unbounded",
-	}).pipe(
-		// The policy here prevents extensions from exiting the host process.
-		Effect.provide(ProcessPatchLive(() => false)),
-	);
+export default Effect.gen(function* (G) {
+	// All patches are now simple effects that declare their own dependencies.
+	// The runtime will provide the necessary services via layers.
+	const AllPatches = [
+		PatchProcessCrashEffect,
+		PatchProcessExitEffect,
+		SetStackTraceLimitEffect,
+		SetupEnvironmentEffect,
+		SetElectronRunAsNodeEffect,
+		BlockNativesModuleEffect,
+		PipeLoggingEffect,
+		HandleExceptionEffect,
+		TerminateOnParentExitEffect,
+	];
 
-	// Effects without special dependencies can be run directly.
-	const PatchesWithoutDeps = Effect.all(
-		[
-			SetStackTraceLimit,
-			SetupEnvironment,
-			SetElectronRunAsNode,
-			BlockNativesModule,
-			PipeLogging,
-			HandleException,
-			TerminateOnParentExit,
-		],
-		{ discard: true, concurrency: "unbounded" },
+	// Run all patches concurrently.
+	yield* G(
+		Effect.all(AllPatches, {
+			discard: true,
+			concurrency: "unbounded",
+		}),
 	);
-
-	yield* Effect.all([PatchesWithoutDeps, PatchesWithDeps], {
-		discard: true,
-		concurrency: "unbounded",
-	});
 }).pipe(
 	Effect.tap(() =>
 		Effect.logDebug("All core process patches have been applied."),

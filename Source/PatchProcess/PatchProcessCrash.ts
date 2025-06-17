@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/PatchProcessCrash.ts
- * Responsibility: Implements a critical security patch for the Cocoon Node.js sidecar, overriding Electron's process.crash() to prevent VS Code extensions from terminating the host process by intercepting and logging crash attempts instead.
+ * Responsibility: Implements a security patch to override Electron's process.crash().
  * Modified: 2025-06-17 10:53:20 UTC
- * Dependency: ./Service.js, effect
  */
 
 /**
@@ -17,29 +16,17 @@ import ProcessPatchService from "./Service.js";
 
 /**
  * An Effect that replaces the `process.crash()` function if it exists.
- *
- * This patch is a critical reliability measure. In an Electron environment,
- * extensions could potentially call `process.crash()` to terminate the host.
- * This patched function intercepts the call, logs a detailed warning with a
- * stack trace of the caller, and prevents the actual crash from occurring,
- * allowing the Cocoon process to remain stable.
- *
- * It depends on the `ProcessPatch` service to safely access the original
- * native `crash` function.
+ * It depends on the `ProcessPatch` service to safely access the original function.
  */
-const PatchProcessCrash = Effect.gen(function* () {
-	const ProcessPatch = yield* ProcessPatchService;
+const PatchProcessCrashEffect = Effect.gen(function* (G) {
+	const ProcessPatch = yield* G(ProcessPatchService);
 
 	if (ProcessPatch.NativeCrash) {
-		// Overwrite the global `process.crash` method.
 		process.crash = (): void => {
-			// We create a new Error here just to capture the current stack trace.
-			// This helps identify which code path attempted to call `crash()`.
 			const PreventionStack = new Error(
 				"Stack trace for prevented process.crash()",
 			).stack;
 
-			// The log must be run synchronously because `process.crash` is a sync function.
 			Effect.runSync(
 				Effect.logWarning(
 					`A call to 'process.crash()' was intercepted and PREVENTED by host policy.`,
@@ -50,12 +37,14 @@ const PatchProcessCrash = Effect.gen(function* () {
 			);
 		};
 
-		yield* Effect.logTrace("Successfully patched 'process.crash'.");
+		yield* G(Effect.logTrace("Successfully patched 'process.crash'."));
 	} else {
-		yield* Effect.logTrace(
-			"'process.crash()' not found in this environment, skipping patch.",
+		yield* G(
+			Effect.logTrace(
+				"'process.crash()' not found in this environment, skipping patch.",
+			),
 		);
 	}
 });
 
-export default PatchProcessCrash;
+export default PatchProcessCrashEffect;

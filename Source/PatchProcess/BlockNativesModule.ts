@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/BlockNativesModule.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Patches Node.js's module loader to block the 'natives' module.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: effect, natives, node:module
  */
 
 /**
@@ -30,20 +29,13 @@ class ModulePatchError extends Data.TaggedError("ModulePatchError")<{
 
 /**
  * An Effect that, when executed, monkey-patches `Module._load` to throw an
- * error if an extension attempts to `require('natives')`. This was a legacy
- * Node.js internal module that is no longer available and can cause issues
- * if extensions try to access it.
- *
- * This patch is crucial for maintaining a stable and predictable runtime
- * environment similar to VS Code's extension host.
+ * error if an extension attempts to `require('natives')`.
  *
  * @returns An `Effect` that resolves when the patch is applied, or fails with a
  *   `ModulePatchError`.
  */
-const BlockNativesModule = Effect.try({
+const BlockNativesModuleEffect = Effect.try({
 	try: () => {
-		// The `_load` function is an internal, undocumented part of Node's CJS loader.
-		// We must check for its existence before attempting to patch it and cast to `any`.
 		if (typeof (Module as any)._load === "function") {
 			const OriginalLoad = (Module as any)._load;
 
@@ -55,16 +47,12 @@ const BlockNativesModule = Effect.try({
 				if (Request === "natives") {
 					const ErrorMessage =
 						"Attempt to load deprecated 'natives' module blocked. This module is not available in the Cocoon runtime.";
-					// Use a direct console warning here as this patch runs very early,
-					// before the main logging service might be fully configured.
 					console.warn(`[Cocoon PatchProcess] ${ErrorMessage}`);
 					throw new Error(ErrorMessage);
 				}
-				// If the request is not for 'natives', delegate to the original loader.
 				return OriginalLoad.call(this, Request, Parent, IsMain);
 			};
 		} else {
-			// This environment (e.g., pure ESM) might not have _load. That's okay.
 			console.warn(
 				"[Cocoon PatchProcess] Module._load not found. Skipping 'natives' block patch.",
 			);
@@ -81,4 +69,4 @@ const BlockNativesModule = Effect.try({
 	),
 );
 
-export default BlockNativesModule;
+export default BlockNativesModuleEffect;

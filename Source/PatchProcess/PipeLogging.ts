@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/PipeLogging.ts
- * Responsibility: Monkey-patches the global console object in the Cocoon sidecar to forward log, warn, and error messages to the Mountain backend via the Vine IPC layer, enabling centralized logging for extension debugging.
+ * Responsibility: Monkey-patches the global console object to forward logs via IPC.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../Service/IPC/Service.js, effect
  */
 
 /**
@@ -15,12 +14,6 @@ import { Effect } from "effect";
 
 import IPCService from "../Service/IPC/Service.js";
 
-/**
- * A robust JSON stringifier that handles circular references and special types
- * to prevent crashes during logging.
- * Based on the implementation in VS Code's `bootstrap-fork.ts`.
- * @param Arguments The array of arguments passed to a console method.
- */
 const SafeToString = (Arguments: ArrayLike<unknown>): string => {
 	const Slices: string[] = [];
 	for (let i = 0; i < Arguments.length; i++) {
@@ -39,30 +32,19 @@ const SafeToString = (Arguments: ArrayLike<unknown>): string => {
 };
 
 /**
- * An Effect that, when executed, monkey-patches the global `console` object.
- *
- * Each call to `console.log`, `warn`, or `error` is intercepted, formatted into
- * a structured payload, and sent to the Mountain host via an IPC notification.
- * This allows the main application to display logs from the extension host, which
- * is essential for debugging both Cocoon itself and the extensions it runs.
- *
- * This patch is conditionally applied based on the `VSCODE_PIPE_LOGGING`
- * environment variable.
+ * An Effect that monkey-patches the global `console` object.
  */
-const PipeLogging = Effect.gen(function* () {
+const PipeLoggingEffect = Effect.gen(function* (G) {
 	if (process.env["VSCODE_PIPE_LOGGING"] !== "true") {
-		return yield* Effect.logTrace(
-			"Console log piping is disabled by environment variable.",
+		return yield* G(
+			Effect.logTrace(
+				"Console log piping is disabled by environment variable.",
+			),
 		);
 	}
 
-	const IPC = yield* IPCService;
+	const IPC = yield* G(IPCService);
 
-	/**
-	 * Creates an Effect that sends a formatted log message to the host.
-	 * @param Severity The severity level of the log message.
-	 * @param Arguments The arguments originally passed to the console function.
-	 */
 	const ForwardConsoleCall = (
 		Severity: "log" | "warn" | "error",
 		Arguments: ArrayLike<unknown>,
@@ -75,16 +57,14 @@ const PipeLogging = Effect.gen(function* () {
 		return IPC.SendNotification("$log", [Payload]);
 	};
 
-	// Keep a reference to the original functions.
 	const OriginalConsole = {
 		log: console.log,
 		warn: console.warn,
 		error: console.error,
 	};
 
-	// Overwrite the global console methods.
 	console.log = (...args: any[]) => {
-		OriginalConsole.log.apply(console, args); // Also log to the actual sidecar console.
+		OriginalConsole.log.apply(console, args);
 		Effect.runFork(ForwardConsoleCall("log", args));
 	};
 	console.warn = (...args: any[]) => {
@@ -96,9 +76,9 @@ const PipeLogging = Effect.gen(function* () {
 		Effect.runFork(ForwardConsoleCall("error", args));
 	};
 
-	yield* Effect.logTrace(
-		"Global console object patched to pipe logs to host.",
+	yield* G(
+		Effect.logTrace("Global console object patched to pipe logs to host."),
 	);
 });
 
-export default PipeLogging;
+export default PipeLoggingEffect;

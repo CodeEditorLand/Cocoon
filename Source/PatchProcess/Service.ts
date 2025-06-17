@@ -1,9 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/Service.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Defines the contract for the ProcessPatch service.
  * Modified: 2025-06-17 10:53:11 UTC
- * Dependency: effect
- * Export: ProcessPatchService
  */
 
 /**

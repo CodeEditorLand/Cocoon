@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/PatchProcessExit.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Patches the global `process.exit` function.
  * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ./Error/ExitPreventedError.js, ./Service.js, effect
  */
 
 /**
@@ -18,24 +17,12 @@ import ProcessPatchService from "./Service.js";
 
 /**
  * An Effect that replaces the global `process.exit` function with a controlled version.
- *
- * This is a critical security and reliability patch. The new function consults an
- * `AllowExit` predicate provided by the host environment via the `ProcessPatch`
- * service.
- *
- * - If exiting is allowed, the original native exit function is called.
- * - If exiting is disallowed, a detailed warning is logged and a synchronous
- *   `ExitPreventedError` is thrown to halt the caller's execution path.
  */
-const PatchProcessExit = Effect.gen(function* () {
-	// Depend on the ProcessPatch service to get the native function and the policy.
-	const ProcessPatch = yield* ProcessPatchService;
+const PatchProcessExitEffect = Effect.gen(function* (G) {
+	const ProcessPatch = yield* G(ProcessPatchService);
 
-	// Overwrite the global `process.exit` method.
 	process.exit = (Code?: number): never => {
-		// Consult the host's policy.
 		if (ProcessPatch.AllowExit()) {
-			// The host has permitted the exit. Log it and terminate.
 			Effect.runSync(
 				Effect.logInfo(
 					`'process.exit(${
@@ -46,7 +33,6 @@ const PatchProcessExit = Effect.gen(function* () {
 			return ProcessPatch.NativeExit(Code);
 		}
 
-		// The host has blocked the exit.
 		const ErrorMessage = `'process.exit(${
 			Code ?? ""
 		})' was called but PREVENTED by host policy.`;
@@ -55,8 +41,6 @@ const PatchProcessExit = Effect.gen(function* () {
 			AttemptedCode: Code,
 		});
 
-		// We must throw synchronously here to immediately halt the execution path
-		// of the code that called `process.exit`. Logging is secondary to this throw.
 		Effect.runSync(
 			Effect.logWarning(
 				"Blocked call to process.exit by host policy.",
@@ -67,7 +51,7 @@ const PatchProcessExit = Effect.gen(function* () {
 		throw PreventionError;
 	};
 
-	yield* Effect.logTrace("Successfully patched 'process.exit'.");
+	yield* G(Effect.logTrace("Successfully patched 'process.exit'."));
 });
 
-export default PatchProcessExit;
+export default PatchProcessExitEffect;
