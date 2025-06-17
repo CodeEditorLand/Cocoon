@@ -1,29 +1,28 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Live.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Provides a Layer for the ProtocolAdapter service. This adapter makes the gRPC communication channel compatible with VS Code's IMessagePassingProtocol, required by RPCProtocol.
  * Modified: 2025-06-17 10:53:13 UTC
- * Dependency: ../Client.js, ./Definition.js, ./Service.js, effect
+ * Dependency: ../Client/Service.js, ./Definition.js, ./Service.js, effect
  */
 
 /**
  * @module Live (IPC/ProtocolAdapter)
- * @description Provides a `Layer` for the `ProtocolAdapter` service. This
- * adapter makes the gRPC communication channel compatible with VS Code's
- * `IMessagePassingProtocol`, which is required by `RPCProtocol`.
+ * @description Provides a `Layer` for the `ProtocolAdapter` service.
  */
 
 import { Layer } from "effect";
 
-import { Live as ClientLive } from "../Client.js";
+import type ClientService from "../Client/Service.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
 /**
  * The live implementation `Layer` for the `ProtocolAdapter` service.
- *
- * This layer builds the adapter by composing its `Definition` with the
- * `ClientLive` layer it depends on for the underlying gRPC transport.
+ * It correctly declares its dependency on `ClientService`.
  */
-export default Layer.effect(Service, Definition).pipe(
-	Layer.provide(ClientLive),
+const Live: Layer.Layer<Service, never, ClientService> = Layer.effect(
+	Service,
+	Definition,
 );
+
+export default Live;

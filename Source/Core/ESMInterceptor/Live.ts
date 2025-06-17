@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/Live.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation layer for the ESMInterceptor service.
  * Modified: 2025-06-17 10:53:05 UTC
- * Dependency: ../../Service/Log/Live.js, ../APIFactory/Live.js, ../ExtensionPath/Live.js, ./Definition.js, ./Service.js, effect
+ * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ./Definition.js, ./Service.js, effect
  */
 
 /**
@@ -12,16 +12,20 @@
 
 import { Layer } from "effect";
 
-import LogLive from "../../Service/Log/Live.js";
-import APIFactoryLive from "../APIFactory/Live.js";
-import ExtensionPathLive from "../ExtensionPath/Live.js";
+import type LogService from "../../Service/Log/Service.js";
+import type APIFactoryService from "../APIFactory/Service.js";
+import type ExtensionPathService from "../ExtensionPath/Service.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
 /**
  * The live implementation layer for the ESMInterceptor service.
- * It depends on the APIFactory, ExtensionPath, and logging services.
+ * It correctly declares its dependencies on the APIFactory, ExtensionPath, and Log services.
  */
-export default Layer.effect(Service, Definition).pipe(
-	Layer.provide(Layer.mergeAll(APIFactoryLive, ExtensionPathLive, LogLive)),
-);
+const Live: Layer.Layer<
+	Service,
+	never,
+	APIFactoryService | ExtensionPathService | LogService
+> = Layer.effect(Service, Definition);
+
+export default Live;

@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Dispatcher/Live.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Provides the live implementation Layer for the Dispatcher service, which routes all incoming RPC messages from the Mountain host to appropriate handlers within Cocoon.
  * Modified: 2025-06-17 11:20:29 UTC
- * Dependency: ../../Cancellation.js, ../ProtocolAdapter.js, ./Definition.js, ./Service.js, effect
+ * Dependency: ../../Cancellation/Service.js, ../ProtocolAdapter/Service.js, ./Definition.js, ./Service.js, effect
  */
 
 /**
@@ -12,16 +12,19 @@
 
 import { Layer } from "effect";
 
-import { Live as CancellationLive } from "../../Cancellation.js";
-import { Live as ProtocolAdapterLive } from "../ProtocolAdapter.js";
+import type CancellationService from "../../Cancellation/Service.js";
+import type ProtocolAdapterService from "../ProtocolAdapter/Service.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
 /**
  * The live implementation Layer for the Dispatcher service.
- * It depends on the ProtocolAdapter (for the underlying transport) and the
- * Cancellation service (for handling cancellation signals).
+ * It correctly declares its dependencies on `ProtocolAdapterService` and `CancellationService`.
  */
-export default Layer.effect(Service, Definition).pipe(
-	Layer.provide(Layer.merge(ProtocolAdapterLive, CancellationLive)),
-);
+const Live: Layer.Layer<
+	Service,
+	never,
+	ProtocolAdapterService | CancellationService
+> = Layer.effect(Service, Definition);
+
+export default Live;

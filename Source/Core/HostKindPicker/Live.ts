@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Core/HostKindPicker/Live.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: This module provides the `Live` implementation Layer for the HostKindPicker service.
  * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ../../Service/Log.js, ./Definition.js, ./Service.js, effect
+ * Dependency: ../../Service/Log/Service.js, ./Definition.js, ./Service.js, effect
  */
 
 /**
@@ -12,12 +12,17 @@
 
 import { Layer } from "effect";
 
-import { Live as LogLive } from "../../Service/Log.js";
+import type LogService from "../../Service/Log/Service.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
 /**
  * The live implementation Layer for the HostKindPicker service.
- * It depends on the Log service for reporting its decisions.
+ * It correctly declares its dependency on the Log service.
  */
-export default Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));
+const Live: Layer.Layer<Service, never, LogService> = Layer.effect(
+	Service,
+	Definition,
+);
+
+export default Live;

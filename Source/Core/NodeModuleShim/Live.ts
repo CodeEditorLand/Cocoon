@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Live.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Provides the live implementation Layer for the NodeModuleShim service.
  * Modified: 2025-06-17 10:53:04 UTC
- * Dependency: ../../Service/Log/Live.js, ./Definition.js, ./Service.js, effect
+ * Dependency: ../../Service/InitData/Service.js, ../../Service/Log/Service.js, ./Definition.js, ./Service.js, effect
  */
 
 /**
@@ -12,14 +12,16 @@
 
 import { Layer } from "effect";
 
-import LogLive from "../../Service/Log/Live.js";
+import type InitDataService from "../../Service/InitData/Service.js";
+import type LogService from "../../Service/Log/Service.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
 /**
  * The live implementation Layer for the NodeModuleShim service.
- * It depends on the Log service for reporting interception events. The InitData
- * service is also an indirect dependency via the Definition, and must be
- * provided at the application level.
+ * It correctly declares its dependencies on Log and InitData services.
  */
-export default Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));
+const Live: Layer.Layer<Service, never, LogService | InitDataService> =
+	Layer.effect(Service, Definition);
+
+export default Live;
