@@ -66,7 +66,7 @@ const VSCodeOutputDirectory =
 (module as any).paths.unshift(VSCodeOutputDirectory);
 
 /**
- * The main logic that runs *after* the initial handshake with the host is complete.
+ * The logic that runs *after* the initial handshake with the host is complete.
  * This effect declares dependencies on all services required for the application's
  * full functionality.
  */
@@ -128,76 +128,7 @@ const PreHandshakeEffect = Effect.gen(function* (G) {
 	return InitializationData;
 });
 
-/**
- * The main entry point for the entire application.
- * It orchestrates the pre-handshake and post-handshake logic, composing all
- * layers correctly.
- */
-const MainEffect = Effect.gen(function* (G) {
-	// Step 1: Run the pre-handshake logic to get runtime initialization data.
-	const InitializationData = yield* G(PreHandshakeEffect);
-
-	// Step 2: Define the complete application layer by merging all service layers.
-	const ApplicationLayer = Layer.mergeAll(
-		APIFactoryLive,
-		ESMInterceptorLive,
-		ExtensionHostLive,
-		ExtensionPathLive,
-		HostKindPickerLive,
-		NodeModuleShimLive,
-		RequireInterceptorLive,
-		APIDeprecationLive,
-		AuthenticationLive,
-		CancellationLive,
-		ClipboardLive,
-		CommandLive,
-		ConfigurationLive,
-		DebugLive,
-		DiagnosticLive,
-		DialogLive,
-		DocumentLive,
-		EnvironmentLive,
-		ExtensionLive,
-		FileSystemLive,
-		FileSystemInformationLive,
-		IPCLive,
-		LanguageFeatureLive,
-		LocalizationLive,
-		LogLive,
-		MessageLive,
-		ProposedAPILive,
-		QuickInputLive,
-		SecretStorageLive,
-		StatusBarLive,
-		StorageLive,
-		StoragePathLive,
-		TaskLive,
-		TelemetryLive,
-		TreeViewLive,
-		WebViewPanelLive,
-		WindowLive,
-		WorkSpaceLive,
-	);
-
-	// Step 3: Create the layer for the runtime-dependent InitData.
-	const InitDataLayer = InitDataLive(InitializationData);
-
-	// Step 4: Create the final, fully-resolved layer by providing the
-	// runtime data layer to the main application layer.
-	const FinalApplicationLayer = ApplicationLayer.pipe(
-		Layer.provide(InitDataLayer),
-	);
-
-	// Step 5: Run the main application logic, providing it with the complete layer.
-	// This resolves all of its dependencies.
-	yield* G(PostHandshakeEffect.pipe(Effect.provide(FinalApplicationLayer)));
-}).pipe(
-	Effect.catchAllCause((Cause) =>
-		Effect.logFatal("Cocoon main process failed.", Cause),
-	),
-);
-
-// --- Application Layer Composition for Pre-Handshake ---
+// --- Application Layer Composition ---
 
 // Define the static configuration needed before the handshake.
 const ApplicationConfiguration: IPCConfiguration = {
@@ -219,13 +150,80 @@ const PreHandshakeDependencies = Layer.mergeAll(
 );
 const PreHandshakeLayer = IPCLive.pipe(Layer.provide(PreHandshakeDependencies));
 
-// --- Run the Application ---
-
-// Provide the minimal pre-handshake layer to the main effect.
-// The main effect will then build and provide the rest of the layers internally.
-const RunnableApplication = MainEffect.pipe(
-	Effect.provide(PreHandshakeLayer),
-	Effect.scoped, // Ensure all scoped services are properly finalized on exit.
+// This is the layer for all services that run *after* the handshake.
+// It has unresolved dependencies (like InitData) that will be provided dynamically.
+const MainApplicationLayer = Layer.mergeAll(
+	APIFactoryLive,
+	ESMInterceptorLive,
+	ExtensionHostLive,
+	ExtensionPathLive,
+	HostKindPickerLive,
+	NodeModuleShimLive,
+	RequireInterceptorLive,
+	APIDeprecationLive,
+	AuthenticationLive,
+	// CancellationLive is already in PreHandshakeLayer, so we don't need it here again.
+	ClipboardLive,
+	CommandLive,
+	ConfigurationLive,
+	DebugLive,
+	DiagnosticLive,
+	DialogLive,
+	DocumentLive,
+	EnvironmentLive,
+	ExtensionLive,
+	FileSystemLive,
+	FileSystemInformationLive,
+	// IPCLive is in PreHandshakeLayer
+	LanguageFeatureLive,
+	LocalizationLive,
+	LogLive,
+	MessageLive,
+	ProposedAPILive,
+	QuickInputLive,
+	SecretStorageLive,
+	StatusBarLive,
+	StorageLive,
+	StoragePathLive,
+	TaskLive,
+	TelemetryLive,
+	TreeViewLive,
+	WebViewPanelLive,
+	WindowLive,
+	WorkSpaceLive,
 );
 
+// --- Application Entry Point ---
+
+// 1. Start with the pre-handshake effect, providing its minimal required layer.
+const getInitializationData = PreHandshakeEffect.pipe(
+	Effect.provide(PreHandshakeLayer),
+);
+
+// 2. Use `Effect.flatMap` to chain the logic. The result of the first effect (`initData`)
+//    is used to construct the environment for the second effect.
+const RunnableApplication = getInitializationData.pipe(
+	Effect.flatMap((initData) => {
+		// 3. Create the layer for the runtime-dependent InitData.
+		const initDataLayer = InitDataLive(initData);
+
+		// 4. Create the final, fully-resolved layer for the main application logic
+		//    by providing the InitDataLayer to the MainApplicationLayer.
+		const finalLayer = MainApplicationLayer.pipe(
+			Layer.provide(initDataLayer),
+			// Also provide the PreHandshakeLayer so services like IPC are available to the main app.
+			Layer.provide(PreHandshakeLayer),
+		);
+
+		// 5. Run the main application logic, providing it with the complete layer.
+		return PostHandshakeEffect.pipe(Effect.provide(finalLayer));
+	}),
+	// 6. Add final error handling and scoping for the entire application.
+	Effect.catchAllCause((Cause) =>
+		Effect.logFatal("Cocoon main process failed.", Cause),
+	),
+	Effect.scoped,
+);
+
+// --- Run the Application ---
 NodeRuntime.runMain(RunnableApplication);
