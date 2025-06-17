@@ -24,6 +24,8 @@ import TerminateOnParentExitEffect from "./PatchProcess/TerminateOnParentExit.js
  * runs all patches concurrently where possible and ensures that the Node.js
  * environment is stable, secure, and properly configured before any extension
  * code is loaded.
+ *
+ * This effect now correctly declares its dependencies which are required by its child effects.
  */
 export default Effect.gen(function* (G) {
 	// All patches are now simple effects that declare their own dependencies.
@@ -41,6 +43,7 @@ export default Effect.gen(function* (G) {
 	];
 
 	// Run all patches concurrently.
+	// We need to `yield*` the effect so its requirements are bubbled up.
 	yield* G(
 		Effect.all(AllPatches, {
 			discard: true,
