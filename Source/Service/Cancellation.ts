@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Cancellation.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:43 UTC
- * Dependency: ./Cancellation/Definition.js, ./Cancellation/Error/InvalidTokenIDError.js, ./Cancellation/Service.js, ./Cancellation/Type/TokenAndScope.js, effect
- * Export: CancellationLive, InvalidTokenIDError, default, type TokenAndScope
+ * Modified: 2025-06-17 11:06:30 UTC
+ * Dependency: ./Cancellation/Error/InvalidTokenIDError.js, ./Cancellation/Live.js, ./Cancellation/Service.js, ./Cancellation/Type/TokenAndScope.js
+ * Export: InvalidTokenIDError, Live, Service, type TokenAndScope
  */
 
 /**
@@ -13,19 +13,9 @@
  * RPC operations that can be cancelled by the Mountain host.
  */
 
-import { Layer } from "effect";
-
-import Definition from "./Cancellation/Definition.js";
 import InvalidTokenIDError from "./Cancellation/Error/InvalidTokenIDError.js";
+import Live from "./Cancellation/Live.js";
 import Service from "./Cancellation/Service.js";
 import type TokenAndScope from "./Cancellation/Type/TokenAndScope.js";
 
-export { InvalidTokenIDError, type TokenAndScope };
-
-export { default as Service } from "./Cancellation/Service.js";
-
-/**
- * The live implementation Layer for the CancellationTokenProvider service.
- * This is a self-contained layer with no external dependencies.
- */
-export const CancellationLive = Layer.effect(Service, Definition);
+export { Service, Live, InvalidTokenIDError, type TokenAndScope };

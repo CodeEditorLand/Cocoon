@@ -39,14 +39,21 @@
 			{
 				"name": "@effect/language-service",
 				"transform": "@effect/language-service/transform",
-				"diagnostics": true, // controls Effect diagnostics (default: true)
+				"diagnostics": true,
 				"diagnosticSeverity": {
-					// allows to change per-rule default severity of the diagnostic in the whole project
-					"floatingEffect": "warning" // example for a rule, allowed values are off,error,warning,message,suggestion,
+					"duplicatePackage": "error",
+					"floatingEffect": "error",
+					"leakingRequirements": "error",
+					"missingEffectContext": "error",
+					"missingEffectError": "error",
+					"missingReturnYieldStar": "error",
+					"missingStarInYieldEffectGen": "error",
+					"unnecessaryEffectGen": "error",
+					"unnecessaryPipe": "error"
 				},
-				"quickinfo": true, // controls quickinfo over Effect (default: true)
-				"completions": true, // controls Effect completions (default: true)
-				"allowedDuplicatedPackages": [] // list of package names that has effect in peer dependencies and are allowed to be duplicated (default: [])
+				"quickinfo": true,
+				"completions": true,
+				"allowedDuplicatedPackages": []
 			}
 		]
 	},

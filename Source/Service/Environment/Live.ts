@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Environment/Live.ts
- * Responsibility: Implements the live Environment service layer for Mountain's backend, providing native OS environment capabilities through Tauri's IPC and clipboard integration.
- * Modified: 2025-06-17 10:32:37 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:19 UTC
  * Dependency: ./Definition.js, ./Service.js, effect
  */
 

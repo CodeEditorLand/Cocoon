@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Dialog/Error/DialogError.ts
- * Responsibility: Defines a custom error type for dialog operation failures within the Cocoon sidecar, wrapping underlying IPC or implementation errors to provide context-aware error handling.
- * Modified: 2025-06-17 10:32:40 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:21 UTC
  * Dependency: effect
  * Export: DialogError
  */

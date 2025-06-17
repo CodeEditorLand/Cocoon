@@ -1,1 +1,1 @@
-import{Layer as e}from"effect";import o from"./APIDeprecation/Definition.js";import r from"./APIDeprecation/Service.js";import{Live as i}from"./Log.js";import{default as L}from"./APIDeprecation/Service.js";const v=e.effect(r,o).pipe(e.provide(i));export{v as APIDeprecationLive,L as Service};
+import e from"./APIDeprecation/Live.js";import i from"./APIDeprecation/Service.js";export{e as APIDeprecationLive,i as Service};

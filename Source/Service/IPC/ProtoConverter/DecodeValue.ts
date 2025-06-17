@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtoConverter/DecodeValue.ts
- * Responsibility: Implements Protobuf Value decoding for the Vine IPC layer, converting protocol buffer values to JavaScript types with null/undefined handling and error wrapping to facilitate type-safe communication between the Cocoon sidecar and Mountain backend.
- * Modified: 2025-06-17 10:32:30 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:09 UTC
  * Dependency: ./Error.js, effect, google-protobuf/google/protobuf/struct_pb.js
  */
 

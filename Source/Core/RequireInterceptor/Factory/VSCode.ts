@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/RequireInterceptor/Factory/VSCode.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:52 UTC
+ * Responsibility: Implements the vscode module interceptor for the Cocoon sidecar, creating sandboxed API instances when extensions require('vscode') to enable secure VS Code extension compatibility in Land's MVP Path A strategy.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../../Core/APIFactory/Service.js, ../../../Core/ExtensionPath/Service.js, ../../../Service/Log/Service.js, ./Interface.js, vscode
  * Export: implements
  */

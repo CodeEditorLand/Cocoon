@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/WebView.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:08 UTC
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ./WebView/ConvertContentOptionToDTO.js, ./WebView/ConvertExtensionDataToDTO.js, ./WebView/ConvertPanelOptionToDTO.js, ./WebView/ConvertShowOptionToDTO.js
  * Export: WebView
  */

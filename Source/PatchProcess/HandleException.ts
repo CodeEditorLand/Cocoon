@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/HandleException.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:46 UTC
+ * Responsibility: Handles uncaught exceptions and promise rejections in the Cocoon sidecar process, reporting errors to the Mountain backend via the Vine IPC layer to prevent silent crashes from VS Code extensions.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../Service/IPC/Service.js, effect
  */
 

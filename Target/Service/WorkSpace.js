@@ -1,1 +1,1 @@
-import{Layer as o}from"effect";import{Live as r}from"./Configuration.js";import{Live as i}from"./Document.js";import{Live as t}from"./FileSystem.js";import{Live as m}from"./IPC.js";import p from"./WorkSpace/Definition.js";import f from"./WorkSpace/Service.js";import{default as x}from"./WorkSpace/Service.js";const d=e=>o.effect(f,p).pipe(o.provide(o.mergeAll(m(e),i(e),t(e),r(e))));export{d as Live,x as Service};
+import r from"./WorkSpace/Live.js";import p from"./WorkSpace/Service.js";export{r as Live,p as Service};

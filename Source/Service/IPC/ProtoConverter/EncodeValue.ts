@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtoConverter/EncodeValue.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:29 UTC
+ * Responsibility: Implements protocol buffer value encoding for JavaScript values in the Cocoon sidecar's IPC layer, converting native types to google.protobuf.Value structures to enable type-safe communication with the Mountain backend via the Vine transport.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ./Error.js, effect
  */
 

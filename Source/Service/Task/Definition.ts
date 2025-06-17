@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Task/Definition.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:21 UTC
+ * Modified: 2025-06-17 11:16:40 UTC
  * Dependency: ../../TypeConverter/Task.js, ../../Utility/CreateEventStream.js, ../Cancellation.js, ../IPC/Service.js, ./RPCHandlers/ProvideTasks.js, ./Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
@@ -16,7 +16,7 @@ import { Disposable, type TaskFilter, type TaskProvider } from "vscode";
 
 import { Task as TaskConverter } from "../../TypeConverter/Task.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
-import { CancellationLive } from "../Cancellation.js";
+import { Live as CancellationLive } from "../Cancellation.js";
 import IPCService from "../IPC/Service.js";
 import ProvideTasks from "./RPCHandlers/ProvideTasks.js";
 import type Service from "./Service.js";

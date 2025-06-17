@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/WorkSpace.ts
- * Responsibility: The aggregator module for the WorkSpace service.
- * Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 11:00:00 UTC
  * Dependency: ./WorkSpace/Live.js, ./WorkSpace/Service.js, vscode
- * Export: Live, Service, WorkspaceFolder
+ * Export: Live, Service, type WorkspaceFolder
  */
 
 /**

@@ -1,1 +1,1 @@
-import{Layer as r}from"effect";import{Live as t}from"./Clipboard.js";import p from"./Environment/Definition.js";import m from"./Environment/Service.js";import{Live as f}from"./IPC.js";import{default as I}from"./Environment/Service.js";const c=o=>{const i=f(o),e=t(o);return r.effect(m,p).pipe(r.provide(r.merge(i,e)))};export{c as Live,I as Service};
+import o from"./Environment/Live.js";import i from"./Environment/Service.js";export{o as Live,i as Service};

@@ -1,1 +1,1 @@
-import{Layer as o}from"effect";import{Live as e}from"./Command.js";import{Live as i}from"./IPC.js";import m from"./TreeView/Definition.js";import t from"./TreeView/Service.js";import{default as s}from"./TreeView/Service.js";const L=r=>o.effect(t,m).pipe(o.provide(o.merge(i(r),e(r))));export{L as Live,s as Service};
+import o from"./TreeView/Live.js";import i from"./TreeView/Service.js";export{o as Live,i as Service};

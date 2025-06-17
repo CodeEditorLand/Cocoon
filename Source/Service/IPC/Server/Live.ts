@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/Server/Live.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:31 UTC
+ * Modified: 2025-06-17 11:19:34 UTC
  * Dependency: ../Configuration.js, ../Dispatcher.js, ../Error.js, ./Acquire.js, ./Service.js, effect
  */
 
@@ -32,3 +32,5 @@ const Live: Layer.Layer<
 	gRPCConnectionError | IPCError,
 	IPCConfigurationService
 > = Layer.scoped(Service, Acquire).pipe(Layer.provide(DispatcherLive));
+
+export default Live;

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Debug/Definition.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:40 UTC
+ * Responsibility: Implements the debug service for the Cocoon sidecar using Effect, managing debug sessions and breakpoints while integrating with VS Code's debug configuration providers via the Vine IPC layer to support extension compatibility in MVP Path A.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../IPC/Service.js, ./Error.js, ./RegisterProvider.js, ./Service.js, ./Type.js, effect
  */
 

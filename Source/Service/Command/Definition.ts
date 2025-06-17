@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Command/Definition.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:42 UTC
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../TypeConverter/Command.js, ../IPC/Service.js, ../Telemetry/Service.js, ../WorkSpace/Service.js, ./Service.js, ./Type.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 

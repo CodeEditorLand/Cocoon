@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Diagnostic/Definition.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:39 UTC
+ * Responsibility: Implements the Diagnostic service for the Cocoon sidecar, providing methods to create diagnostic collections and handle IPC communication with the Mountain backend to synchronize VS Code extension diagnostics.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./DiagnosticCollectionImplementation.js, ./Service.js, effect, vscode
  */
 

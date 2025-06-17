@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Telemetry/Definition.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:20 UTC
+ * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: ../IPC/Service.js, ../InitData/Service.js, ../Log/Service.js, ./Service.js, effect, vs/base/common/errors.js, vs/platform/log/common/log.js, vs/platform/telemetry/common/telemetry.js
  * Export: ToLevel
  */

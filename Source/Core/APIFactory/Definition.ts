@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/Definition.ts
- * Responsibility: Implements the APIFactory service for the Cocoon sidecar, aggregating VS Code-compatible services to create sandboxed API instances that enable VS Code extensions to interact with Land's core components while maintaining isolation.
- * Modified: 2025-06-17 10:32:56 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:05 UTC
  * Dependency: ../../Service/APIDeprecation/Service.js, ../../Service/Command/Service.js, ../../Service/Debug/Service.js, ../../Service/Extension/Service.js, ../../Service/IPC/Service.js, ../../Service/LanguageFeature/Service.js, ../../Service/Log/Service.js, ../../Service/ProposedAPI/Service.js, ../../Service/StatusBar/Service.js, ../../Service/Task/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, ./Create.js, ./Service.js, effect, vs/platform/extensions/common/extensions.js
  */
 

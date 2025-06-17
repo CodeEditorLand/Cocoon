@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/Main.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:10 UTC
+ * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: ./Main/Location.js, ./Main/MarkdownString.js, ./Main/Position.js, ./Main/Range.js, ./Main/Selection.js, ./Main/TextEdit.js, ./Main/URI.js, ./Main/ViewColumn.js, ./Main/WorkspaceFolder.js
  * Export: Location, MarkdownString, Position, Range, Selection, TextEdit, URI, ViewColumn, WorkspaceFolder
  */

@@ -1,1 +1,1 @@
-import{Layer as o}from"effect";import{Live as r}from"./IPC.js";import e from"./Localization/Definition.js";import t from"./Localization/Service.js";import{default as c}from"./Localization/Service.js";const a=i=>o.effect(t,e).pipe(o.provide(r(i)));export{a as Live,c as Service};
+import o from"./Localization/Live.js";import i from"./Localization/Service.js";export{o as Live,i as Service};

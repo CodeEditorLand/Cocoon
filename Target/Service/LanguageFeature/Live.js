@@ -1,1 +1,1 @@
-import{Layer as o}from"effect";import{CancellationLive as e}from"../Cancellation.js";import{Live as r}from"../Command.js";import{Live as m}from"../Document.js";import{Live as t}from"../IPC.js";import p from"./Definition.js";import f from"./Service.js";const a=i=>o.effect(f,p).pipe(o.provide(o.mergeAll(t(i),m(i),e,r(i))));var u=a;export{u as default};
+import{Layer as r}from"effect";import e from"./Definition.js";import o from"./Service.js";var m=r.effect(o,e);export{m as default};

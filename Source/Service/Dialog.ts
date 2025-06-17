@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Dialog.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:37 UTC
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ./Dialog/Error.js, ./Dialog/Live.js, ./Dialog/Service.js, ./Dialog/Type.js
  * Export: DialogError, Live, Service, Type
  */

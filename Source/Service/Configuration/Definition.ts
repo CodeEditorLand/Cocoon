@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Configuration/Definition.ts
- * Responsibility: Implements the Configuration service for the Cocoon sidecar, managing workspace configuration retrieval and change events via IPC with the Mountain backend to support VS Code extension compatibility in MVP Path A.
- * Modified: 2025-06-17 10:32:42 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:22 UTC
  * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./CreateWorkSpaceConfiguration.js, ./Service.js, effect, vscode
  */
 

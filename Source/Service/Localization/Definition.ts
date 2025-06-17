@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Localization/Definition.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:28 UTC
+ * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../InitData/Service.js, ./Service.js, ./Support/FetchBundle.js, effect, node:path, vs/base/common/uri.js, vs/platform/extensions/common/extensions.js
  */
 

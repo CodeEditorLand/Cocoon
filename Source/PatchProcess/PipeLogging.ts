@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/PipeLogging.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:47 UTC
+ * Responsibility: Monkey-patches the global console object in the Cocoon sidecar to forward log, warn, and error messages to the Mountain backend via the Vine IPC layer, enabling centralized logging for extension debugging.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../Service/IPC/Service.js, effect
  */
 

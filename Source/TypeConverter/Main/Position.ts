@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/Main/Position.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:12 UTC
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../Type/ExtHostTypes.js, vs/editor/common/core/position.js, vscode
  */
 

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/Dispatcher/Live.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:33 UTC
+ * Modified: 2025-06-17 11:20:29 UTC
  * Dependency: ../../Cancellation.js, ../ProtocolAdapter.js, ./Definition.js, ./Service.js, effect
  */
 
@@ -12,7 +12,7 @@
 
 import { Layer } from "effect";
 
-import { CancellationLive } from "../../Cancellation.js";
+import { Live as CancellationLive } from "../../Cancellation.js";
 import { Live as ProtocolAdapterLive } from "../ProtocolAdapter.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";

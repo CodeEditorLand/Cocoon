@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/HostKindPicker.ts
- * Responsibility: Provides the HostKindPicker service to determine VS Code extension compatibility with the Cocoon (Node.js) extension host, enabling MVP Path A's sidecar-based extension support.
- * Modified: 2025-06-17 10:32:52 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:02 UTC
  * Dependency: ./HostKindPicker/Live.js, ./HostKindPicker/Service.js
  * Export: Live, Service
  */

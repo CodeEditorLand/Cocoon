@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/Definition.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:49 UTC
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ./CreateDynamicModule.js, ./Service.js, effect, node:buffer, node:module, node:url, node:worker_threads, vs/base/common/uuid.js, vscode
  */
 

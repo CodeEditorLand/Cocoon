@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:49 UTC
+ * Responsibility: Defines the Context.Tag and interface for the ESMInterceptor service in Cocoon, responsible for installing a Node.js loader hook to intercept 'vscode' imports and manage cleanup, enabling VS Code extension support in the sidecar process.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: effect
  * Export: ESMInterceptorService
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/SetStackTraceLimit.ts
- * Responsibility: Configures the Error.stackTraceLimit to 100 using Effect's synchronous side effect, enhancing debugging capabilities for complex asynchronous operations and Effect workflows in the Cocoon Node.js sidecar of the Land ecosystem.
- * Modified: 2025-06-17 10:32:47 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:04 UTC
  * Dependency: effect
  */
 

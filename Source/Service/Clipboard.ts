@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Clipboard.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:43 UTC
+ * Responsibility: Implements the clipboard service for the Cocoon sidecar by proxying read/write operations to the Mountain backend via the Vine IPC layer, enabling VS Code extensions to interact with the system clipboard.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ./Clipboard/Live.js, ./Clipboard/Service.js
  * Export: Live, Service
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Cancellation/Type/TokenAndScope.ts
- * Responsibility: Defines a TypeScript interface combining a VS Code CancellationToken with an Effect Scope to manage resource cleanup in the Cocoon Node.js sidecar process.
- * Modified: 2025-06-17 10:32:44 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:04 UTC
  * Dependency: effect, vs/base/common/cancellation.js
  * Export: Interface
  */

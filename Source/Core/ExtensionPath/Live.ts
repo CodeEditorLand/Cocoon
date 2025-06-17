@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ExtensionPath/Live.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:54 UTC
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../Service/InitData/Service.js, ./Definition.js, ./Service.js, effect
  */
 

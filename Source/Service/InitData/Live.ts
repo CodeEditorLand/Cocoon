@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/InitData/Live.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:32 UTC
+ * Responsibility: Provides the initialization data received from the Mountain backend to the Cocoon sidecar's extension host, enabling VS Code extensions to access critical runtime configuration during their startup process.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ./Service.js, effect, vs/workbench/services/extensions/common/extensionHostProtocol.js
  */
 

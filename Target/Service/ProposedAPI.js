@@ -1,1 +1,1 @@
-import{Layer as e}from"effect";import{Live as o}from"./Log.js";import r from"./ProposedAPI/Definition.js";import i from"./ProposedAPI/Service.js";import{default as c}from"./ProposedAPI/Service.js";const v=e.effect(i,r).pipe(e.provide(o));export{v as Live,c as Service};
+import o from"./ProposedAPI/Live.js";import i from"./ProposedAPI/Service.js";export{o as Live,i as Service};

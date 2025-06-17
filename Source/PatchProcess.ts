@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:46 UTC
+ * Modified: 2025-06-17 11:22:56 UTC
  * Dependency: ./PatchProcess/BlockNativesModule.js, ./PatchProcess/HandleException.js, ./PatchProcess/Live.js, ./PatchProcess/PatchProcessCrash.js, ./PatchProcess/PatchProcessExit.js, ./PatchProcess/PipeLogging.js, ./PatchProcess/SetElectronRunAsNode.js, ./PatchProcess/SetStackTraceLimit.js, ./PatchProcess/SetupEnvironment.js, ./PatchProcess/TerminateOnParentExit.js, effect
  */
 
@@ -9,7 +9,7 @@ import { Effect } from "effect";
 
 import BlockNativesModule from "./PatchProcess/BlockNativesModule.js";
 import HandleException from "./PatchProcess/HandleException.js";
-import { Live as ProcessPatchLive } from "./PatchProcess/Live.js";
+import ProcessPatchLive from "./PatchProcess/Live.js";
 import PatchProcessCrash from "./PatchProcess/PatchProcessCrash.js";
 import PatchProcessExit from "./PatchProcess/PatchProcessExit.js";
 import PipeLogging from "./PatchProcess/PipeLogging.js";

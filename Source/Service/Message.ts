@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Message.ts
- * Responsibility: The aggregator module for the Message service.
- * Modified: 2025-06-18
+ * Responsibility: Implements the message service for the Cocoon sidecar, proxying VS Code extension notification requests to the Mountain backend via the Vine IPC layer to display native UI messages in the Sky frontend.
+ * Modified: 2025-06-17 10:59:33 UTC
  * Dependency: ./Message/Live.js, ./Message/Service.js, ./Message/Type.js
- * Export: Live, Service, ExtensionSource
+ * Export: Live, Service, type ExtensionSource
  */
 
 /**

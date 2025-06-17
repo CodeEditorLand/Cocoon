@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/WorkSpace/Support/FindFiles.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:15 UTC
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../../TypeConverter/Main.js, ../../IPC/Service.js, effect, vscode
  */
 

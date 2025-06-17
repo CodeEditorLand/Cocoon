@@ -1,1 +1,1 @@
-import{Layer as r}from"effect";import{Live as e}from"../Configuration.js";import{Live as o}from"../Document.js";import{Live as t}from"../FileSystem.js";import{Live as m}from"../IPC.js";import f from"./Definition.js";import p from"./Service.js";function l(i){return r.effect(p,f).pipe(r.provide(r.mergeAll(m(i),o(i),t(i),e(i))))}export{l as default};
+import{Layer as r}from"effect";import e from"./Definition.js";import o from"./Service.js";var m=r.effect(o,e);export{m as default};

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Debug/Error/DebugProviderRegistrationError.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:41 UTC
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: effect
  * Export: DebugProviderRegistrationError
  */

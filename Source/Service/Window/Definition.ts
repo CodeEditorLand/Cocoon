@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Window/Definition.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:17 UTC
+ * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../WorkSpace/Service.js, ./Service.js, effect, vscode
  */
 

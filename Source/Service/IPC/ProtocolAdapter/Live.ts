@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Live.ts
- * Responsibility: Provides a Layer implementation for the ProtocolAdapter service, adapting gRPC communication to VS Code's IMessagePassingProtocol by composing the service definition with the ClientLive layer for gRPC transport in the Cocoon sidecar.
- * Modified: 2025-06-17 10:32:31 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:13 UTC
  * Dependency: ../Client.js, ./Definition.js, ./Service.js, effect
  */
 

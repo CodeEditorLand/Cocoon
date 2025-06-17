@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Service.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:50 UTC
+ * Responsibility: Implements a service in the Cocoon sidecar to intercept and shim requests for built-in Node.js modules, blocking unsafe APIs and providing controlled alternatives to ensure secure execution of VS Code extensions.
+ * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: ./Error.js, effect, vscode
  * Export: NodeModuleShimService
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/HostKindPicker/Definition.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:53 UTC
+ * Responsibility: Implements the logic to determine the appropriate extension host environment (Node.js-based Cocoon sidecar or web-only) for VS Code extensions, ensuring compatibility with Land's architecture by analyzing extensionKind declarations and browser capabilities.
+ * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: ../../Service/Log/Service.js, ./Service.js, effect, vs/platform/extensions/common/extensions.js, vs/workbench/services/extensions/common/extensionHostKind.js
  */
 

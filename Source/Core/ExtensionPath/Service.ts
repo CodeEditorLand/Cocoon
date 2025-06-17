@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ExtensionPath/Service.ts
- * Responsibility: Implements the ExtensionPath service in the Cocoon sidecar to map file URIs to their originating VS Code extensions, enabling proper resource resolution for extensions within the Land editor.
- * Modified: 2025-06-17 10:32:54 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:05 UTC
  * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode
  * Export: ExtensionPathService
  */

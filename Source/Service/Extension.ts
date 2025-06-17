@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Extension.ts
- * Responsibility: The aggregator module for the Extension service.
- * Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:59:13 UTC
  * Dependency: ./Extension/Live.js, ./Extension/Service.js
  * Export: Live, Service
  */

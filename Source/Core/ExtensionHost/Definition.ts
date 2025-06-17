@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ExtensionHost/Definition.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:54 UTC
+ * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: ../../Service/IPC/Service.js, ../../Service/InitData/Service.js, ../../Service/Log/Service.js, ../../Service/Telemetry/Service.js, ./Service.js, ./State.js, effect, vs/base/common/event.js, vs/base/common/uri.js, vs/platform/extensionManagement/common/implicitActivationEvents.js, vs/workbench/api/common/extHostTypes.js, vscode
  */
 

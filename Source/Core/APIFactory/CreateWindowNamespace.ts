@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateWindowNamespace.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:56 UTC
+ * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: ../../Service/StatusBar/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 

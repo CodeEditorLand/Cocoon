@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Error/ModuleBlockedError.ts
  * Responsibility: Defines a custom error (ModuleBlockedError) for the Cocoon sidecar's Node.js module shim, enforcing security by blocking extensions from requiring restricted core modules and redirecting them to use the vscode.* API surface instead.
- * Modified: 2025-06-17 10:32:50 UTC
+ * Modified: 2025-06-17 10:53:04 UTC
  * Dependency: ${this.ModuleName}, effect
  * Export: ModuleBlockedError
  */

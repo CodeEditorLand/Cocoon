@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/APIDeprecation.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:45 UTC
- * Dependency: ./APIDeprecation/Definition.js, ./APIDeprecation/Service.js, ./Log.js, effect
- * Export: APIDeprecationLive, default
+ * Modified: 2025-06-17 11:14:25 UTC
+ * Dependency: ./APIDeprecation/Live.js, ./APIDeprecation/Service.js
+ * Export: APIDeprecationLive, Service
  */
 
 /**
@@ -12,18 +12,7 @@
  * report and handle the usage of deprecated APIs by extensions.
  */
 
-import { Layer } from "effect";
-
-import Definition from "./APIDeprecation/Definition.js";
+import APIDeprecationLive from "./APIDeprecation/Live.js";
 import Service from "./APIDeprecation/Service.js";
-import { Live as LogLive } from "./Log.js";
 
-export { default as Service } from "./APIDeprecation/Service.js";
-
-/**
- * The live implementation Layer for the APIDeprecation service.
- * It depends on the Log service to output warnings.
- */
-export const APIDeprecationLive = Layer.effect(Service, Definition).pipe(
-	Layer.provide(LogLive),
-);
+export { Service, APIDeprecationLive };

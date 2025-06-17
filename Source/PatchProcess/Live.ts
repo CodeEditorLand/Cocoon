@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/Live.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:48 UTC
+ * Responsibility: Implements a live layer for the ProcessPatch service in Cocoon, capturing native Node.js process exit methods and intercepting termination attempts by extensions via an AllowExit predicate controlled by the Mountain backend through the Vine IPC layer.
+ * Modified: 2025-06-17 11:21:12 UTC
  * Dependency: ./Service.js, effect
  */
 
@@ -22,8 +22,8 @@ import Service from "./Service.js";
  *   environment should permit the process to be terminated by an extension.
  * @returns A `Layer` that provides the `ProcessPatch.Service`.
  */
-export default (AllowExit: () => boolean) => {
-	return Layer.succeed(Service, {
+export default (AllowExit: () => boolean) =>
+	Layer.succeed(Service, {
 		NativeExit: process.exit.bind(process),
 		NativeCrash:
 			typeof process.crash === "function"
@@ -31,4 +31,3 @@ export default (AllowExit: () => boolean) => {
 				: undefined,
 		AllowExit,
 	});
-};

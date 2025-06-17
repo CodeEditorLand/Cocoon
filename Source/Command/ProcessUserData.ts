@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Command/ProcessUserData.ts
- * Responsibility: Implements the ProcessUserData command workflow in the Cocoon sidecar, orchestrating text extraction from the active editor, backend service processing via Effect pipelines, and user feedback handling through Mountain's Track dispatcher.
- * Modified: 2025-06-17 10:32:57 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:24 UTC
  * Dependency: ../Service/Window/ShowInformationMessage.js, ./ProcessUserData/Error.js, ./ProcessUserData/GetActiveTextEditor.js, ./ProcessUserData/GetDocumentText.js, ./ProcessUserData/InvokeProcessingService.js, effect
  */
 

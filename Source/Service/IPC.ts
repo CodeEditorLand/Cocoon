@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:29 UTC
+ * Responsibility: Provides the primary IPC service for the Cocoon sidecar, implementing gRPC communication with the Mountain backend to enable VS Code extension hosting and interaction.
+ * Modified: 2025-06-17 10:52:55 UTC
  * Dependency: ./IPC/Configuration.js, ./IPC/Error.js, ./IPC/Live.js, ./IPC/Service.js
  * Export: Error, Live, Service, type IPCConfiguration
  */

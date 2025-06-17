@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateDebugNamespace.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:55 UTC
+ * Responsibility: Implements the vscode.debug API namespace for the Cocoon sidecar by delegating to the central DebugService, enabling VS Code extensions to interact with debugging sessions and breakpoints while maintaining sandboxing.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../Service/Debug/Service.js, ../../Service/IPC/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 

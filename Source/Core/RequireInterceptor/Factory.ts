@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/RequireInterceptor/Factory.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:52 UTC
+ * Responsibility: Provides factory implementations for the RequireInterceptor service in the Cocoon sidecar, specifically handling VS Code module interception to enable compatibility with VS Code extensions in the Land editor.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Export: default
  */
 

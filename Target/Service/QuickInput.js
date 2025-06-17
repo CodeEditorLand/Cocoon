@@ -1,1 +1,1 @@
-import{Layer as o}from"effect";import{Live as r}from"./IPC.js";import e from"./QuickInput/Definition.js";import t from"./QuickInput/Service.js";import{default as c}from"./QuickInput/Service.js";const a=i=>o.effect(t,e).pipe(o.provide(r(i)));export{a as Live,c as Service};
+import o from"./QuickInput/Live.js";import i from"./QuickInput/Service.js";export{o as Live,i as Service};

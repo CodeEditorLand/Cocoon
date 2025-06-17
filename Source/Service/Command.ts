@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Command.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:41 UTC
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ./Command/Live.js, ./Command/Service.js
  * Export: Live, Service, type CommandHandler, type CommandHandlerEntry, type TextEditorCommandHandler
  */

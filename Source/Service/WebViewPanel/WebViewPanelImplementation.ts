@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/WebViewPanel/WebViewPanelImplementation.ts
- * Responsibility: Implements the vscode.WebviewPanel interface for the Cocoon sidecar, providing VS Code extension compatibility by managing webview panel lifecycle and state synchronization with the Mountain backend via the Vine IPC layer.
- * Modified: 2025-06-17 10:32:17 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:25 UTC
  * Dependency: ../../TypeConverter/Main.js, ../../TypeConverter/WebView.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../WebView/WebViewImplementation.js, effect, vs/platform/extensions/common/extensions.js
  * Export: implements
  */

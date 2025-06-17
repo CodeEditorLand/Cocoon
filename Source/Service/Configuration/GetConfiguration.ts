@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Configuration/GetConfiguration.ts
- * Responsibility: Defines an Effect-based service for retrieving VS Code workspace configuration sections within the Cocoon sidecar, providing type-safe access to extension settings while abstracting Node.js/Vine IPC details for internal service use.
- * Modified: 2025-06-17 10:32:42 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:53:04 UTC
  * Dependency: ./Service.js, effect, vscode
  */
 

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Cancellation/Definition.ts
  * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:45 UTC
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ./Error/InvalidTokenIDError.js, ./Service.js, ./Type/TokenAndScope.js, effect, vs/base/common/cancellation.js
  */
 

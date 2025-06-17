@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/RequireInterceptor/Live.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:51 UTC
+ * Responsibility: Implements the live RequireInterceptor service layer for the Cocoon sidecar, integrating Node module shimming and API factory dependencies to enable VS Code extension compatibility by intercepting and modifying module loading behavior.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: ../../Service/Log/Live.js, ../APIFactory/Live.js, ../ExtensionPath/Live.js, ../NodeModuleShim/Live.js, ./Definition.js, ./Service.js, effect
  */
 

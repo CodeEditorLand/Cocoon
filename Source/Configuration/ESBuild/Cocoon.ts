@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Configuration/ESBuild/Cocoon.ts
- * Responsibility: Responsibility could not be determined.
- * Modified: 2025-06-17 10:32:56 UTC
+ * Responsibility: Configures ESBuild for the Cocoon Node.js sidecar process, defining build options and cleanup logic to bundle VS Code extension host dependencies during development.
+ * Modified: 2025-06-17 10:52:54 UTC
  * Dependency: esbuild
  * Export: Clean, On
  */
