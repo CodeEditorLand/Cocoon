@@ -32,7 +32,7 @@
 		"provenance": true
 	},
 	"dependencies": {
-		"@effect/platform": "0.85.0",
+		"@effect/platform": "0.85.1",
 		"@effect/platform-node": "0.86.2",
 		"@effect/stream": "0.37.1",
 		"@types/node": "24.0.3",
