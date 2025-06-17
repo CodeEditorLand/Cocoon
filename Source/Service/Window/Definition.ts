@@ -2,7 +2,7 @@
  * File: Cocoon/Source/Service/Window/Definition.ts
  * Responsibility:
  * Modified: 2025-06-17 21:19:09 UTC
- * Dependency: ../../TypeConverter/Main/Range.js, ../../TypeConverter/Main/URI.js, ../../TypeConverter/Main/ViewColumn.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect
+ * Dependency: ../../TypeConverter/Main/Range.js, ../../TypeConverter/Main/URI.js, ../../TypeConverter/Main/ViewColumn.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../WorkSpace/Service.js, ./Service.js, effect
  */
 
 /**
@@ -13,7 +13,6 @@
 import { Effect, Ref } from "effect";
 import type {
 	TextDocumentShowOptions,
-	TextEditor,
 	Uri,
 	WindowState,
 } from "vscode";
@@ -23,6 +22,7 @@ import URIConverter from "../../TypeConverter/Main/URI.js";
 import ViewColumnConverter from "../../TypeConverter/Main/ViewColumn.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import IPCService from "../IPC/Service.js";
+import WorkSpaceService from "../WorkSpace/Service.js"; // Import WorkSpace service
 import type Service from "./Service.js";
 
 /**
@@ -30,23 +30,13 @@ import type Service from "./Service.js";
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
+	const WorkSpace = yield* G(WorkSpaceService); // Get workspace service
 
 	const WindowStateRef = yield* G(
 		Ref.make<WindowState>({ focused: true, active: true }),
 	);
-	const TextEditorsMapRef = yield* G(Ref.make(new Map<string, TextEditor>()));
-	const ActiveTextEditorRef = yield* G(
-		Ref.make<TextEditor | undefined>(undefined),
-	);
-	const VisibleTextEditorsRef = yield* G(Ref.make<readonly TextEditor[]>([]));
 
 	const OnDidChangeWindowStateStream = CreateEventStream<WindowState>();
-	const { event: OnDidChangeActiveTextEditorEvent, Fire: FireActiveEditor } =
-		CreateEventStream<TextEditor | undefined>();
-	const {
-		event: OnDidChangeVisibleTextEditorsEvent,
-		Fire: FireVisibleEditors,
-	} = CreateEventStream<readonly TextEditor[]>();
 
 	const AcceptWindowStateChangedEffect = (isFocused: boolean) => {
 		const NewState = { focused: isFocused, active: isFocused };
@@ -54,28 +44,6 @@ export default Effect.gen(function* (G) {
 			Effect.andThen(OnDidChangeWindowStateStream.Fire(NewState)),
 		);
 	};
-
-	const AcceptEditorStateEffect = (
-		activeEditorId: string | undefined,
-		visibleEditorIds: string[],
-	) =>
-		Effect.gen(function* (G) {
-			const Editors = yield* G(Ref.get(TextEditorsMapRef));
-			const NewActive = activeEditorId
-				? Editors.get(activeEditorId)
-				: undefined;
-			const NewVisible = visibleEditorIds
-				.map((id) => Editors.get(id))
-				.filter(Boolean);
-
-			yield* G(Ref.set(ActiveTextEditorRef, NewActive));
-			yield* G(
-				Ref.set(VisibleTextEditorsRef, NewVisible as TextEditor[]),
-			);
-
-			yield* G(FireActiveEditor(NewActive));
-			yield* G(FireVisibleEditors(NewVisible as TextEditor[]));
-		});
 
 	yield* G(
 		Effect.sync(() => {
@@ -86,13 +54,6 @@ export default Effect.gen(function* (G) {
 						AcceptWindowStateChangedEffect(isFocused),
 					),
 			);
-			IPC.RegisterInvokeHandler(
-				"$acceptEditorState",
-				([activeId, visibleIds]) =>
-					Effect.runPromise(
-						AcceptEditorStateEffect(activeId, visibleIds),
-					),
-			);
 		}),
 	);
 
@@ -101,14 +62,7 @@ export default Effect.gen(function* (G) {
 			return Effect.runSync(Ref.get(WindowStateRef));
 		},
 		onDidChangeWindowState: OnDidChangeWindowStateStream.event,
-		get activeTextEditor() {
-			return Effect.runSync(Ref.get(ActiveTextEditorRef));
-		},
-		get visibleTextEditors() {
-			return Effect.runSync(Ref.get(VisibleTextEditorsRef));
-		},
-		onDidChangeActiveTextEditor: OnDidChangeActiveTextEditorEvent,
-		onDidChangeVisibleTextEditors: OnDidChangeVisibleTextEditorsEvent,
+
 		ShowTextDocument: (documentOrURI, columnOrOptions, preserveFocus) =>
 			Effect.gen(function* (G) {
 				let uri: Uri;
@@ -144,30 +98,24 @@ export default Effect.gen(function* (G) {
 					]),
 				);
 
-				// FIX: The findTextEditorById method must be part of the service type to be called here.
-				// For now, we will get it from the map directly.
-				const editor = (yield* G(Ref.get(TextEditorsMapRef))).get(
-					editorId,
+				// Now that WorkSpace manages the editor map, we need to get the editor from there.
+				// This assumes an IPC call will eventually update the WorkSpace service's editor map.
+				// A more robust implementation would wait for an event.
+				const editor = WorkSpace.visibleTextEditors.find(
+					(e) => (e as any).id === editorId,
 				);
+
 				if (!editor) {
 					return yield* G(
 						Effect.fail(
 							new Error(
-								`Could not find text editor with ID ${editorId}`,
+								`Could not find text editor with ID ${editorId} after showing it.`,
 							),
 						),
 					);
 				}
 				return editor;
 			}),
-	};
-
-	// The error `findTextEditorById does not exist` is because it's not on the service interface.
-	// We'll add it to the interface and implementation.
-	(ServiceImplementation as any).findTextEditorById = (id: string) => {
-		return Effect.runSync(
-			Ref.get(TextEditorsMapRef).pipe(Effect.map((m) => m.get(id))),
-		);
 	};
 
 	return ServiceImplementation;

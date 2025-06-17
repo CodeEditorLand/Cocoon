@@ -16,6 +16,8 @@ import { type Event } from "vs/base/common/event.js";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type {
+	// FIX: Define a placeholder for the missing type
+	TreeCheckboxChangeEvent,
 	TreeDataProvider,
 	TreeItem,
 	TreeView,
@@ -48,8 +50,8 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 		CreateEventStream<TreeViewVisibilityChangeEvent>();
 	readonly onDidChangeVisibility: Event<TreeViewVisibilityChangeEvent>;
 	private readonly OnDidChangeCheckboxStateEmitter =
-		CreateEventStream<TreeViewCheckboxChangeEvent<T>>();
-	readonly onDidChangeCheckboxState: Event<TreeViewCheckboxChangeEvent<T>>;
+		CreateEventStream<TreeCheckboxChangeEvent<T>>();
+	readonly onDidChangeCheckboxState: Event<TreeCheckboxChangeEvent<T>>;
 
 	constructor(
 		private readonly ViewID: string,
@@ -110,11 +112,9 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 				const Handle = this.GetHandleForElement(Element);
 				const CommandConverter = new CommandConverterDefinition(
 					this.Command.RegisterCommand,
-					// FIX: Wrap the promise-based execute in an Effect
+					// FIX: Correctly call the Effect-based ExecuteCommand
 					(command, ...args) =>
-						Effect.tryPromise(() =>
-							this.Command.ExecuteCommand(command, ...args),
-						),
+						this.Command.ExecuteCommand(command, ...args),
 					() => undefined,
 				);
 				return TreeViewConverter.Item.FromAPI(

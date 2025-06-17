@@ -177,11 +177,9 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 		}
 		const CommandConverter = new CommandConverterDefinition(
 			this.CommandService.RegisterCommand,
-			// FIX: Wrap the promise-based execute in an Effect
+			// FIX: Correctly call the Effect-based ExecuteCommand
 			(command, ...args) =>
-				Effect.tryPromise(() =>
-					this.CommandService.ExecuteCommand(command, ...args),
-				),
+				this.CommandService.ExecuteCommand(command, ...args),
 			() => undefined,
 		);
 		const DTO = StatusBarConverter.FromAPI(

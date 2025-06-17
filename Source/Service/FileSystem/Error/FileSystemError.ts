@@ -16,7 +16,7 @@ import { FileSystemError as VscFileSystemError, type Uri } from "vscode";
  * @returns A new `vscode.FileSystemError` instance.
  */
 export const MapToVSCodeError = (
-	Error: VscFileSystemError,
+	Error: FileSystemError,
 ): VscFileSystemError => {
 	const Cause: any = Error.cause;
 	const URI = Error.uri;
@@ -51,7 +51,9 @@ export const MapToVSCodeError = (
  * A tagged error for filesystem operations that wraps the underlying cause,
  * typically an IPC or gRPC error.
  */
-export default class extends Data.TaggedError("FileSystemError")<{
+export default class FileSystemError extends Data.TaggedError(
+	"FileSystemError",
+)<{
 	readonly cause: unknown;
 	readonly operation: string;
 	readonly uri?: Uri;

@@ -2,7 +2,7 @@
  * File: Cocoon/Source/Service/Window/GetActiveTextDocument.ts
  * Responsibility:
  * Modified: 2025-06-17 21:19:09 UTC
- * Dependency: ./Service.js, effect
+ * Dependency: ../WorkSpace/Service.js, effect
  */
 
 /**
@@ -13,12 +13,12 @@
 
 import { Effect, Option } from "effect";
 
-import WindowService from "./Service.js";
+import WorkSpaceService from "../WorkSpace/Service.js"; // FIX: Changed dependency from WindowService
 
 /**
  * An Effect that safely retrieves the `TextDocument` of the currently active editor.
  *
- * This Effect wraps the potentially `undefined` result of `vscode.window.activeTextEditor`
+ * This Effect wraps the potentially `undefined` result of `workspace.activeTextEditor`
  * in an `Option`. This forces callers to explicitly handle the case where no editor
  * is active, preventing runtime errors.
  *
@@ -27,6 +27,6 @@ import WindowService from "./Service.js";
  *   - `None` if no editor is active.
  */
 export default Effect.gen(function* () {
-	const Window = yield* WindowService;
-	return Option.fromNullable(Window.activeTextEditor?.document);
+	const WorkSpace = yield* WorkSpaceService; // FIX: Use WorkSpaceService
+	return Option.fromNullable(WorkSpace.activeTextEditor?.document);
 });

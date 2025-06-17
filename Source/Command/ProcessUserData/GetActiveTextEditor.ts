@@ -2,18 +2,18 @@
  * File: Cocoon/Source/Command/ProcessUserData/GetActiveTextEditor.ts
  * Responsibility:
  * Modified: 2025-06-17 21:19:46 UTC
- * Dependency: ../../Service/Window/Service.js, effect
+ * Dependency: ../../Service/WorkSpace/Service.js, effect
  */
 
 /**
  * @module GetActiveTextEditor
  * @description An Effect that retrieves the active VS Code text editor by
- * delegating to the Window service.
+ * delegating to the WorkSpace service.
  */
 
 import { Effect, Option } from "effect";
 
-import WindowService from "../../Service/Window/Service.js";
+import WorkSpaceService from "../../Service/WorkSpace/Service.js"; // FIX: Changed from WindowService to WorkSpaceService
 
 /**
  * An Effect that safely retrieves the active text editor.
@@ -21,6 +21,6 @@ import WindowService from "../../Service/Window/Service.js";
  * will be `None` if no editor is active, and `Some` otherwise.
  */
 export default Effect.gen(function* () {
-	const Window = yield* WindowService;
-	return Option.fromNullable(Window.activeTextEditor);
+	const WorkSpace = yield* WorkSpaceService; // FIX: Use WorkSpaceService
+	return Option.fromNullable(WorkSpace.activeTextEditor);
 });

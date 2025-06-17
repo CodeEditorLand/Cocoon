@@ -11,7 +11,7 @@
  */
 
 import { Effect, Ref } from "effect";
-import { Disposable, StatusBarAlignment, type StatusBarItem } from "vscode"; // FIX: Import StatusBarItem
+import { Disposable, StatusBarAlignment } from "vscode"; // FIX: Import StatusBarItem
 
 import CommandService from "../Command/Service.js";
 import IPCService from "../IPC/Service.js";
