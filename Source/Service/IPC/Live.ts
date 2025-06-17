@@ -24,13 +24,19 @@ import Service from "./Service.js";
 /**
  * The composed "live" Layer for the IPC service.
  *
- * This layer merges the individual parts of the IPC system. The final merged
- * layer will expose all dependencies, which must be provided at the composition root.
+ * This layer composes the individual parts of the IPC system. The final layer
+ * exposes the high-level IPC.Service and requires the dependencies of its
+ * sub-layers (like IPCConfigurationService).
  */
-export default Layer.mergeAll(
-	Layer.effect(Service, Definition),
-	ClientLive,
-	ServerLive,
-	DispatcherLive,
-	ProtocolAdapterLive,
+const IPCLive = Layer.effect(Service, Definition).pipe(
+	Layer.provide(
+		Layer.mergeAll(
+			ClientLive,
+			ServerLive,
+			DispatcherLive,
+			ProtocolAdapterLive,
+		),
+	),
 );
+
+export default IPCLive;
