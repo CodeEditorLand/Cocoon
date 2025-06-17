@@ -1,1 +1,1 @@
-import{Layer as e}from"effect";import r from"./Definition.js";import i from"./Service.js";const t=e.effect(i,r);var a=t;export{a as default};
+import{Layer as e}from"effect";import o from"./Definition.js";import r from"./Service.js";var t=e.effect(r,o);export{t as default};

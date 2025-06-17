@@ -1,1 +1,1 @@
-import{Data as e}from"effect";class t extends e.TaggedError("AuthenticationProviderExistsError"){constructor(r){super(r),this.message=`Authentication provider with ID '${this.ProviderID}' is already registered.`}message}var s=t;export{t as AuthenticationProviderExistsError,s as default};
+import{Data as e}from"effect";class t extends e.TaggedError("AuthenticationProviderExistsError"){constructor(r){super(r),this.message=`Authentication provider with ID '${this.ProviderID}' is already registered.`}message}export{t as default};

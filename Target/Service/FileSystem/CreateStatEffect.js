@@ -1,1 +1,0 @@
-import{Effect as r}from"effect";import*as m from"../../TypeConverter/Main.js";const s=(i,o)=>r.gen(function*(){const t=m.URI.FromAPI(i),e=yield*o.SendRequest("$stat",[t]);return{type:e.type,ctime:e.ctime,mtime:e.mtime,size:e.size,permissions:e.permissions}}).pipe(r.mapError(t=>new Error(String(t))));var p=s;export{p as default};

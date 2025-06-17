@@ -1,1 +1,0 @@
-import{Data as r}from"effect";import e from"./Error/AuthenticationProviderExistsError.js";class n extends r.TaggedError("AuthenticationProviderRegistrationError"){}export{e as AuthenticationProviderExistsError,n as AuthenticationProviderRegistrationError};

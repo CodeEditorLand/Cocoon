@@ -1,1 +1,1 @@
-import{Context as e}from"effect";class o extends e.Tag("Core/NodeModuleShim")(){}export{o as default};
+import{Context as o}from"effect";class e extends o.Tag("Core/NodeModuleShim")(){}export{e as default};

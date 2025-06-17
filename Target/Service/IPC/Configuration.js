@@ -1,1 +1,1 @@
-import{Context as o}from"effect";class i extends o.Tag("Service/IPCConfiguration")(){}export{i as IPCConfigurationService};
+import{Context as o}from"effect";class n extends o.Tag("Service/IPCConfiguration")(){}export{n as default};

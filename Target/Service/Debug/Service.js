@@ -1,1 +1,1 @@
-import{Context as e}from"effect";class o extends e.Tag("Service/Debug")(){}export{o as default};
+import{Context as e}from"effect";class r extends e.Tag("Service/Debug")(){}export{r as default};

@@ -1,1 +1,1 @@
-const i=(e,o)=>({id:e.identifier,location:o??e.extensionLocation});var n=i;export{n as default};
+var o=(e,i)=>({id:e.identifier,location:i??e.extensionLocation});export{o as default};
