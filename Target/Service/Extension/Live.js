@@ -1,1 +1,1 @@
-import{Layer as e}from"effect";import{Live as i}from"../../Core/ExtensionHost.js";import o from"./Definition.js";import r from"./Service.js";var n=e.effect(r,o).pipe(e.provide(i));export{n as default};
+import{Layer as e}from"effect";import r from"./Definition.js";import o from"./Service.js";const i=e.effect(o,r);var m=i;export{m as default};

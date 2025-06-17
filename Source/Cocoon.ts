@@ -7,60 +7,17 @@
 
 import * as Path from "node:path";
 import { NodeRuntime } from "@effect/platform-node";
-import { Cause, Deferred, Effect, Exit, Layer, Logger } from "effect";
+import { Deferred, Effect, Layer, Logger } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
-// --- Core Service Layer Imports ---
-import { Live as APIFactoryLive } from "./Core/APIFactory.js";
-import { Live as ESMInterceptorLive } from "./Core/ESMInterceptor.js";
-import { Live as ExtensionHostLive } from "./Core/ExtensionHost.js";
-import ExtensionHostService from "./Core/ExtensionHost/Service.js";
-import { Live as ExtensionPathLive } from "./Core/ExtensionPath.js";
-import { Live as HostKindPickerLive } from "./Core/HostKindPicker.js";
-import { Live as NodeModuleShimLive } from "./Core/NodeModuleShim.js";
-import { Live as RequireInterceptorLive } from "./Core/RequireInterceptor.js";
-import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
-// --- Process Patch Import ---
+// --- Consolidated Imports via Barrel Files ---
+import * as Core from "./Core.js";
 import RunProcessPatch from "./PatchProcess.js";
-// --- API Service Layer Imports ---
-import { APIDeprecationLive } from "./Service/APIDeprecation.js";
-import { Live as AuthenticationLive } from "./Service/Authentication.js";
-import { Live as CancellationLive } from "./Service/Cancellation.js";
-import { Live as ClipboardLive } from "./Service/Clipboard.js";
-import { Live as CommandLive } from "./Service/Command.js";
-import { Live as ConfigurationLive } from "./Service/Configuration.js";
-import { Live as DebugLive } from "./Service/Debug.js";
-import { Live as DiagnosticLive } from "./Service/Diagnostic.js";
-import { Live as DialogLive } from "./Service/Dialog.js";
-import { Live as DocumentLive } from "./Service/Document.js";
-import { Live as EnvironmentLive } from "./Service/Environment.js";
-import { Live as ExtensionLive } from "./Service/Extension.js";
-import { Live as FileSystemLive } from "./Service/FileSystem.js";
-import { Live as FileSystemInformationLive } from "./Service/FileSystemInformation.js";
-// --- Foundational Imports ---
-import InitDataLayerFactory from "./Service/InitData/Live.js";
+import * as Services from "./Service.js";
 import {
 	IPCConfigurationService,
 	type IPCConfiguration,
 } from "./Service/IPC/Configuration.js";
-import IPCLive from "./Service/IPC/Live.js";
-import IPCService from "./Service/IPC/Service.js";
-import { Live as LanguageFeatureLive } from "./Service/LanguageFeature.js";
-import { Live as LocalizationLive } from "./Service/Localization.js";
-import { Live as LogLive } from "./Service/Log.js";
-import { Live as MessageLive } from "./Service/Message.js";
-import { Live as ProposedAPILive } from "./Service/ProposedAPI.js";
-import { Live as QuickInputLive } from "./Service/QuickInput.js";
-import { Live as SecretStorageLive } from "./Service/SecretStorage.js";
-import { Live as StatusBarLive } from "./Service/StatusBar.js";
-import { Live as StorageLive } from "./Service/Storage.js";
-import { Live as StoragePathLive } from "./Service/StoragePath.js";
-import { Live as TaskLive } from "./Service/Task.js";
-import { Live as TelemetryLive } from "./Service/Telemetry.js";
-import { Live as TreeViewLive } from "./Service/TreeView.js";
-import { Live as WebViewPanelLive } from "./Service/WebViewPanel.js";
-import { Live as WindowLive } from "./Service/Window.js";
-import { Live as WorkSpaceLive } from "./Service/WorkSpace.js";
 
 // --- Pre-initialization Steps ---
 const VSCodeOutputDirectory =
@@ -68,13 +25,21 @@ const VSCodeOutputDirectory =
 	Path.resolve(__dirname, "../../../Dependency/VSCode/out");
 (module as any).paths.unshift(VSCodeOutputDirectory);
 
-// --- Application Logic ---
-const InitializeAfterHandshake = Effect.gen(function* (G) {
-	const Interceptor = yield* G(RequireInterceptorService);
+/**
+ * The main logic that runs *after* the initial handshake with the host is complete.
+ * This effect declares dependencies on all services required for the application's
+ * full functionality.
+ */
+const PostHandshakeEffect = Effect.gen(function* (G) {
+	yield* G(Effect.logInfo("Proceeding with full initialization..."));
+
+	yield* G(RunProcessPatch);
+
+	const Interceptor = yield* G(Core.RequireInterceptorService);
 	yield* G(Interceptor.Install());
 	yield* G(Effect.logInfo("Node.js require() interceptor installed."));
 
-	const Host = yield* G(ExtensionHostService);
+	const Host = yield* G(Core.ExtensionHostService);
 	yield* G(
 		Host.ActivateById(
 			"*" as any,
@@ -83,147 +48,145 @@ const InitializeAfterHandshake = Effect.gen(function* (G) {
 	);
 
 	yield* G(Effect.logInfo("Startup extensions activated."));
+	yield* G(Effect.logInfo("Cocoon is fully initialized and operational."));
+
+	// Keep the program alive indefinitely.
+	yield* G(Effect.never);
 });
 
-const Main = Effect.gen(function* (G) {
-	const InitializationBarrier = yield* G(Deferred.make<void, Error>());
-	const IPC = yield* G(IPCService);
+/**
+ * The logic that runs *before* the main application can be initialized.
+ * It has minimal dependencies and is responsible for establishing communication
+ * and receiving the initial data payload from the host.
+ * @returns An `Effect` that resolves with the `IExtensionHostInitData`.
+ */
+const PreHandshakeEffect = Effect.gen(function* (G) {
+	const InitializationBarrier = yield* G(
+		Deferred.make<IExtensionHostInitData, Error>(),
+	);
+	const IPC = yield* G(Services.IPCService);
 
+	// Register the handler that receives the initialization data.
+	// Upon receiving the data, it succeeds the Deferred, unblocking the main flow.
 	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
-		(InitializationData: IExtensionHostInitData) => {
-			// Step 1: Define the single, comprehensive application layer by merging
-			// every service layer in the application. The Effect runtime will resolve
-			// the complex dependency graph between them.
-			const ApplicationLayer = Layer.mergeAll(
-				APIFactoryLive,
-				ESMInterceptorLive,
-				ExtensionHostLive,
-				ExtensionPathLive,
-				HostKindPickerLive,
-				NodeModuleShimLive,
-				RequireInterceptorLive,
-				APIDeprecationLive,
-				AuthenticationLive,
-				CancellationLive,
-				ClipboardLive,
-				CommandLive,
-				ConfigurationLive,
-				DebugLive,
-				DiagnosticLive,
-				DialogLive,
-				DocumentLive,
-				EnvironmentLive,
-				ExtensionLive,
-				FileSystemLive,
-				FileSystemInformationLive,
-				IPCLive,
-				LanguageFeatureLive,
-				LocalizationLive,
-				LogLive,
-				MessageLive,
-				ProposedAPILive,
-				QuickInputLive,
-				SecretStorageLive,
-				StatusBarLive,
-				StorageLive,
-				StoragePathLive,
-				TaskLive,
-				TelemetryLive,
-				TreeViewLive,
-				WebViewPanelLive,
-				WindowLive,
-				WorkSpaceLive,
-			);
-
-			// Step 2: Define the "leaf" dependency layers. These provide the runtime
-			// data and built-in services needed by the ApplicationLayer.
-			const initDataLayer = InitDataLayerFactory(InitializationData);
-			const DependenciesLayer = Layer.mergeAll(
-				initDataLayer,
-				ConfigurationLayer,
-				Logger.logFmt, // FIX: Use a valid logger layer like `logFmt`
-			);
-
-			// Step 3: Provide the dependencies to the application layer.
-			// This resolves all remaining requirements, resulting in a complete layer.
-			const CompleteApplicationLayer = ApplicationLayer.pipe(
-				Layer.provide(DependenciesLayer),
-			);
-
-			// Step 4: Define the main logic to run after initialization.
-			const HandlerEffect = Effect.gen(function* (G) {
-				yield* G(
-					Effect.logInfo(
-						"Received 'initExtensionHost' data from Mountain.",
-					),
-				);
-				yield* G(RunProcessPatch);
-				yield* G(InitializeAfterHandshake);
-			});
-
-			// Step 5: Create the final runnable by providing the complete layer.
-			const Runnable = HandlerEffect.pipe(
-				Effect.provide(CompleteApplicationLayer),
-				Effect.scoped,
-			);
-
-			// Step 6: Execute the runnable.
-			const PromiseResult = Effect.runPromiseExit(Runnable).then(
-				(exit) => {
-					if (Exit.isSuccess(exit)) {
-						Effect.runFork(
-							Deferred.succeed(
-								InitializationBarrier,
-								undefined as void,
-							),
-						);
-					} else {
-						Effect.runFork(
-							Deferred.fail(
-								InitializationBarrier,
-								new Error(Cause.pretty(exit.cause)),
-							),
-						);
-					}
-				},
-			);
-
-			return PromiseResult;
-		},
+		(InitializationData: IExtensionHostInitData): Promise<void> =>
+			Effect.runPromise(
+				Deferred.succeed(
+					InitializationBarrier,
+					InitializationData,
+				).pipe(Effect.asVoid),
+			),
 	);
 
-	yield* G(IPC.SendNotification("$initialHandshake", []));
+	// Send the handshake notification and then wait for the barrier.
 	yield* G(Effect.logInfo("Cocoon is ready. Sent handshake to Mountain."));
-	yield* G(Deferred.await(InitializationBarrier));
-	yield* G(Effect.logInfo("Cocoon is fully initialized and operational."));
-	yield* G(Effect.never);
+	yield* G(IPC.SendNotification("$initialHandshake", []));
+	const InitializationData = yield* G(Deferred.await(InitializationBarrier));
+	yield* G(Effect.logInfo("Cocoon handshake complete."));
+
+	return InitializationData;
+});
+
+/**
+ * The main entry point for the entire application.
+ * It orchestrates the pre-handshake and post-handshake logic, composing all
+ * layers correctly.
+ */
+const MainEffect = Effect.gen(function* (G) {
+	// Step 1: Run the pre-handshake logic to get runtime initialization data.
+	const InitializationData = yield* G(PreHandshakeEffect);
+
+	// Step 2: Define the complete application layer by merging all service layers.
+	const ApplicationLayer = Layer.mergeAll(
+		Core.APIFactoryLive,
+		Core.ESMInterceptorLive,
+		Core.ExtensionHostLive,
+		Core.ExtensionPathLive,
+		Core.HostKindPickerLive,
+		Core.NodeModuleShimLive,
+		Core.RequireInterceptorLive,
+		Services.APIDeprecationLive,
+		Services.AuthenticationLive,
+		Services.CancellationLive,
+		Services.ClipboardLive,
+		Services.CommandLive,
+		Services.ConfigurationLive,
+		Services.DebugLive,
+		Services.DiagnosticLive,
+		Services.DialogLive,
+		Services.DocumentLive,
+		Services.EnvironmentLive,
+		Services.ExtensionLive,
+		Services.FileSystemLive,
+		Services.FileSystemInformationLive,
+		Services.IPCLive,
+		Services.LanguageFeatureLive,
+		Services.LocalizationLive,
+		Services.LogLive,
+		Services.MessageLive,
+		Services.ProposedAPILive,
+		Services.QuickInputLive,
+		Services.SecretStorageLive,
+		Services.StatusBarLive,
+		Services.StorageLive,
+		Services.StoragePathLive,
+		Services.TaskLive,
+		Services.TelemetryLive,
+		Services.TreeViewLive,
+		Services.WebViewPanelLive,
+		Services.WindowLive,
+		Services.WorkSpaceLive,
+	);
+
+	// Step 3: Create the layer for the runtime-dependent InitData.
+	const InitDataLayer = Services.InitDataLive(InitializationData);
+
+	// Step 4: Create the final, fully-resolved layer by providing the
+	// runtime data layer to the main application layer.
+	const FinalApplicationLayer = ApplicationLayer.pipe(
+		Layer.provide(InitDataLayer),
+	);
+
+	// Step 5: Run the main application logic, providing it with the complete layer.
+	// This resolves all of its dependencies.
+	yield* G(PostHandshakeEffect.pipe(Layer.provide(FinalApplicationLayer)));
 }).pipe(
-	Effect.catchAllCause((cause) =>
-		Effect.logFatal("Cocoon main process failed.", cause),
+	Effect.catchAllCause((Cause) =>
+		Effect.logFatal("Cocoon main process failed.", Cause),
 	),
 );
 
-// --- Application Layer Composition ---
+// --- Application Layer Composition for Pre-Handshake ---
+
+// Define the static configuration needed before the handshake.
 const ApplicationConfiguration: IPCConfiguration = {
 	MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
 	CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
 };
 
-// Create a layer that provides the static IPCConfigurationService.
+// Create a layer for the static IPC configuration.
 const ConfigurationLayer = Layer.succeed(
 	IPCConfigurationService,
 	ApplicationConfiguration,
 );
 
-// The layer needed for the initial handshake requires the IPC service and a logger.
+// The layer needed for the initial handshake only requires IPC and a logger.
 const PreHandshakeDependencies = Layer.merge(
 	ConfigurationLayer,
-	Logger.logFmt, // FIX: Use a valid logger layer
+	Logger.logFmt, // Use a default formatted logger.
 );
-const PreHandshakeLayer = IPCLive.pipe(Layer.provide(PreHandshakeDependencies));
+const PreHandshakeLayer = Services.IPCLive.pipe(
+	Layer.provide(PreHandshakeDependencies),
+);
 
 // --- Run the Application ---
-const RunnableApplication = Effect.provide(Main, PreHandshakeLayer);
+
+// Provide the minimal pre-handshake layer to the main effect.
+// The main effect will then build and provide the rest of the layers internally.
+const RunnableApplication = MainEffect.pipe(
+	Layer.provide(PreHandshakeLayer),
+	Effect.scoped, // Ensure all scoped services are properly finalized on exit.
+);
 
 NodeRuntime.runMain(RunnableApplication);

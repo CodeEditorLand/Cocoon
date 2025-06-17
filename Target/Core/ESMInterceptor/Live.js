@@ -1,1 +1,1 @@
-import{Layer as o}from"effect";import r from"../../Service/Log/Live.js";import e from"../APIFactory/Live.js";import i from"../ExtensionPath/Live.js";import m from"./Definition.js";import t from"./Service.js";var c=o.effect(t,m).pipe(o.provide(o.mergeAll(e,i,r)));export{c as default};
+import{Layer as e}from"effect";import r from"./Definition.js";import i from"./Service.js";const o=e.effect(i,r);var m=o;export{m as default};
