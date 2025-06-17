@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Task/RPCHandlers/ProvideTasks.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: Implements the RPC handler for providing tasks from an extension's TaskProvider.
  * Modified: 2025-06-17 10:53:23 UTC
- * Dependency: ../../../TypeConverter/Task.js, ../../Cancellation/Service.js, effect, vscode
  */
 
 /**
@@ -23,52 +22,52 @@ import CancellationService from "../../Cancellation/Service.js";
  * @param TokenID The ID of the cancellation token.
  * @returns An `Effect` that resolves to an array of Task DTOs.
  */
-const ProvideTasks = (
+const ProvideTasksEffect = (
 	Registry: Ref.Ref<Map<number, any>>,
 	Handle: number,
 	TokenID: number,
 ) => {
-	return Effect.gen(function* () {
-		// Retrieve the provider entry from the registry.
-		const Entry = (yield* Ref.get(Registry)).get(Handle);
+	return Effect.gen(function* (G) {
+		const Entry = (yield* G(Ref.get(Registry))).get(Handle);
 		if (!Entry) {
-			return yield* Effect.fail(
-				new Error(`Task provider with handle ${Handle} not found.`),
+			return yield* G(
+				Effect.fail(
+					new Error(`Task provider with handle ${Handle} not found.`),
+				),
 			);
 		}
 
-		// Check if the provider has a `provideTasks` method.
 		const Provider = Entry.Provider as TaskProvider;
 		if (!Provider.provideTasks) {
 			return [];
 		}
 
-		// Obtain the cancellation token for the operation.
-		const Cancellation = yield* CancellationService;
-		const { Token } = yield* Cancellation.ObtainToken(TokenID);
+		const Cancellation = yield* G(CancellationService);
+		// The `ObtainToken` method is now fully effectful and manages its own scope.
+		const Token = yield* G(Cancellation.ObtainToken(TokenID));
 
-		// Invoke the provider's `provideTasks` method.
-		const Tasks = yield* Effect.tryPromise({
-			try: () =>
-				Provider.provideTasks!(Token) as Promise<
-					Task[] | null | undefined
-				>,
-			catch: (CaughtError) => CaughtError,
-		});
+		const Tasks = yield* G(
+			Effect.tryPromise({
+				try: () =>
+					Provider.provideTasks!(Token) as Promise<
+						Task[] | null | undefined
+					>,
+				catch: (CaughtError) => CaughtError,
+			}),
+		);
 
-		// If no tasks are returned, provide an empty array.
 		if (!Tasks) {
 			return [];
 		}
 
-		// Convert the API-level tasks to their DTO representation.
 		return Tasks.map((Task: Task) =>
 			TaskConverter.FromAPI(Task, Entry.Extension),
 		);
 	}).pipe(
-		Effect.scoped, // Ensures cancellation token scope is handled correctly.
-		Effect.catchAll(() => Effect.succeed([])), // On error, return an empty array to avoid failing the entire RPC call.
+		// No longer need to provide the cancellation layer here.
+		// The effect correctly declares its dependency, which is satisfied by the runtime.
+		Effect.catchAll(() => Effect.succeed([])),
 	);
 };
 
-export default ProvideTasks;
+export default ProvideTasksEffect;

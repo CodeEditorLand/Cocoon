@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Task/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the Tasks service.
  * Modified: 2025-06-17 11:16:40 UTC
- * Dependency: ../../TypeConverter/Task.js, ../../Utility/CreateEventStream.js, ../Cancellation.js, ../IPC/Service.js, ./RPCHandlers/ProvideTasks.js, ./Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**
@@ -16,9 +15,8 @@ import { Disposable, type TaskFilter, type TaskProvider } from "vscode";
 
 import { Task as TaskConverter } from "../../TypeConverter/Task.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
-import { Live as CancellationLive } from "../Cancellation.js";
 import IPCService from "../IPC/Service.js";
-import ProvideTasks from "./RPCHandlers/ProvideTasks.js";
+import ProvideTasksEffect from "./RPCHandlers/ProvideTasks.js";
 import type Service from "./Service.js";
 
 let HandleCounter = 0;
@@ -26,16 +24,16 @@ let HandleCounter = 0;
 /**
  * An Effect that builds the live implementation of the Task service.
  */
-export default Effect.gen(function* () {
-	const IPC = yield* IPCService;
-	const TaskProviders = yield* Ref.make(new Map<number, any>());
+export default Effect.gen(function* (G) {
+	const IPC = yield* G(IPCService);
+	const TaskProvidersRef = yield* G(Ref.make(new Map<number, any>()));
 
 	// --- RPC Handlers ---
 	IPC.RegisterInvokeHandler("$provideTasks", ([Handle, TokenID]) =>
+		// The ProvideTasksEffect now correctly declares its dependencies,
+		// and the runtime will provide them. We just need to run it.
 		Effect.runPromise(
-			ProvideTasks(TaskProviders, Handle, TokenID).pipe(
-				Effect.provide(CancellationLive),
-			),
+			ProvideTasksEffect(TaskProvidersRef, Handle, TokenID),
 		),
 	);
 
@@ -60,7 +58,7 @@ export default Effect.gen(function* () {
 			Effect.sync(() => {
 				const Handle = ++HandleCounter;
 				Effect.runSync(
-					Ref.update(TaskProviders, (Map) =>
+					Ref.update(TaskProvidersRef, (Map) =>
 						Map.set(Handle, { Type, Provider, Extension }),
 					),
 				);
@@ -74,7 +72,7 @@ export default Effect.gen(function* () {
 
 				return new Disposable(() => {
 					const CleanupEffect = Ref.update(
-						TaskProviders,
+						TaskProvidersRef,
 						(Map) => (Map.delete(Handle), Map),
 					).pipe(
 						Effect.flatMap(() =>

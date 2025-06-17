@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/Command/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The class implementation of the CommandConverter.
  * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ./Type.js, vs/base/common/lifecycle.js, vs/base/common/uuid.js, vs/platform/commands/common/commands.js, vscode
  */
 
 /**
@@ -12,17 +11,15 @@
  * delegation for functions passed as arguments.
  */
 
+import { Effect } from "effect";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
 import { generateUuid } from "vs/base/common/uuid.js";
-// Do not import ICommand from platform, it is not the DTO.
-// import type { ICommand } from "vs/platform/commands/common/commands.js";
 import type * as VSCode from "vscode";
 
 import type { APICommand } from "./Type.js";
 
 /**
  * Represents the serializable DTO for a command sent over IPC.
- * This is distinct from the rich `ICommand` object from `vs/platform` which includes a handler function.
  */
 interface InternalCommand {
 	id: string;
@@ -31,7 +28,7 @@ interface InternalCommand {
 	arguments?: any[];
 }
 
-export default class {
+export default class CommandConverterDefinition {
 	private readonly DelegatingCommandID: string;
 	private readonly DelegatedCommands = new Map<string, VSCode.Command>();
 
@@ -44,7 +41,7 @@ export default class {
 		private readonly ExecuteCommand: <T>(
 			command: string,
 			...rest: any[]
-		) => Promise<T | undefined>,
+		) => Effect.Effect<T, Error>, // Changed to return Effect
 		private readonly LookupAPICommand: (
 			ID: string,
 		) => APICommand | undefined,
@@ -63,9 +60,12 @@ export default class {
 		if (!Command) {
 			throw new Error(`Unknown delegated command: ${ID}`);
 		}
-		return this.ExecuteCommand(
-			Command.command,
-			...[...(Command.arguments ?? []), ...ArgumentArray],
+		// The vscode API expects a Promise, so we must run the effect at this boundary.
+		return Effect.runPromise(
+			this.ExecuteCommand(
+				Command.command,
+				...[...(Command.arguments ?? []), ...ArgumentArray],
+			),
 		);
 	}
 

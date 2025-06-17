@@ -1,8 +1,7 @@
 /*
  * File: Cocoon/Source/Service/QuickInput/Definition.ts
- * Responsibility: Responsibility could not be determined.
+ * Responsibility: The live implementation of the QuickInput service.
  * Modified: 2025-06-17 10:52:55 UTC
- * Dependency: ../../TypeConverter/QuickInput.js, ../IPC/Service.js, ./Service.js, effect, vs/base/common/errors.js
  */
 
 /**
@@ -23,23 +22,28 @@ import { QuickInput as QuickInputConverter } from "../../TypeConverter/QuickInpu
 import IPCService from "../IPC/Service.js";
 import type Service from "./Service.js";
 
-export default Effect.gen(function* () {
-	const IPC = yield* IPCService;
+/**
+ * An Effect that builds the live implementation of the QuickInput service.
+ */
+export default Effect.gen(function* (G) {
+	const IPC = yield* G(IPCService);
 
-	const ShowQuickPick = <T extends QuickPickItem>(
+	const ShowQuickPickEffect = <T extends QuickPickItem>(
 		Items: readonly T[] | Promise<readonly T[]>,
 		Option: QuickPickOptions = {},
 		Token?: CancellationToken,
 	) =>
-		Effect.gen(function* () {
+		Effect.gen(function* (G) {
 			if (Token?.isCancellationRequested) {
-				return yield* Effect.interrupt;
+				return yield* G(Effect.interrupt);
 			}
 
-			const ResolvedItems = yield* Effect.tryPromise({
-				try: () => Promise.resolve(Items),
-				catch: (e) => e as Error,
-			});
+			const ResolvedItems = yield* G(
+				Effect.tryPromise({
+					try: () => Promise.resolve(Items),
+					catch: (e) => e as Error,
+				}),
+			);
 
 			const IPCOptions = {
 				...Option,
@@ -49,13 +53,16 @@ export default Effect.gen(function* () {
 				),
 			};
 
-			const ResultHandles = yield* IPC.SendRequest<
-				number[] | number | undefined
-			>("$showQuickPick", [IPCOptions]).pipe(
-				Effect.catchIf(isCancellationError, () =>
-					Effect.succeed(undefined),
+			const ResultHandles = yield* G(
+				IPC.SendRequest<number[] | number | undefined>(
+					"$showQuickPick",
+					[IPCOptions],
+				).pipe(
+					Effect.catchIf(isCancellationError, () =>
+						Effect.succeed(undefined),
+					),
+					Effect.mapError((cause) => new Error(String(cause))),
 				),
-				Effect.mapError((cause) => new Error(String(cause))),
 			);
 
 			if (Option?.canPickMany) {
@@ -74,13 +81,13 @@ export default Effect.gen(function* () {
 			return undefined;
 		});
 
-	const ShowInputBox = (
+	const ShowInputBoxEffect = (
 		Option?: InputBoxOptions,
 		Token?: CancellationToken,
 	) =>
-		Effect.gen(function* () {
+		Effect.gen(function* (G) {
 			if (Token?.isCancellationRequested) {
-				return yield* Effect.interrupt;
+				return yield* G(Effect.interrupt);
 			}
 
 			const IPCOptions = {
@@ -90,19 +97,21 @@ export default Effect.gen(function* () {
 				),
 			};
 
-			return yield* IPC.SendRequest<string | undefined>("$showInputBox", [
-				IPCOptions,
-			]).pipe(
-				Effect.catchIf(isCancellationError, () =>
-					Effect.succeed(undefined),
+			return yield* G(
+				IPC.SendRequest<string | undefined>("$showInputBox", [
+					IPCOptions,
+				]).pipe(
+					Effect.catchIf(isCancellationError, () =>
+						Effect.succeed(undefined),
+					),
+					Effect.mapError((cause) => new Error(String(cause))),
 				),
-				Effect.mapError((cause) => new Error(String(cause))),
 			);
 		});
 
 	const ServiceImplementation: Service["Type"] = {
-		ShowQuickPick: ShowQuickPick,
-		ShowInputBox: ShowInputBox,
+		ShowQuickPick: ShowQuickPickEffect,
+		ShowInputBox: ShowInputBoxEffect,
 		CreateQuickPick: () => {
 			throw new Error(
 				"Controller-based QuickPick is not implemented in Cocoon.",
