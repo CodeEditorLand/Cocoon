@@ -20,6 +20,4 @@ import Service from "./Service.js";
  * The live implementation Layer for the HostKindPicker service.
  * It depends on the Log service for reporting its decisions.
  */
-const Live = Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));
-
-export default Live;
+export default Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));

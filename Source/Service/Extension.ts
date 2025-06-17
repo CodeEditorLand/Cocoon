@@ -25,6 +25,6 @@ export { default as Service } from "./Extension/Service.js";
  * It depends on the core ExtensionHost service to get information about
  * and activate other extensions.
  */
-export const Live = Layer.effect(Service, Definition).pipe(
+export default Layer.effect(Service, Definition).pipe(
 	Layer.provide(ExtensionHostLive),
 );

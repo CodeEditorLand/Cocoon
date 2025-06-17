@@ -32,5 +32,3 @@ const Live: Layer.Layer<
 	gRPCConnectionError | IPCError,
 	IPCConfigurationService
 > = Layer.scoped(Service, Acquire).pipe(Layer.provide(DispatcherLive));
-
-export default Live;

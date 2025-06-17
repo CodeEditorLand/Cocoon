@@ -24,6 +24,4 @@ export { default as Service } from "./ProposedAPI/Service.js";
  * The live implementation Layer for the ProposedAPI service.
  * It depends on the Log and InitData services.
  */
-export const Live = Layer.effect(Service, Definition).pipe(
-	Layer.provide(LogLive),
-);
+export default Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));

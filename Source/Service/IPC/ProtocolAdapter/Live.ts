@@ -24,6 +24,6 @@ import Service from "./Service.js";
  * This layer builds the adapter by composing its `Definition` with the
  * `ClientLive` layer it depends on for the underlying gRPC transport.
  */
-const Live = Layer.effect(Service, Definition).pipe(Layer.provide(ClientLive));
-
-export default Live;
+export default Layer.effect(Service, Definition).pipe(
+	Layer.provide(ClientLive),
+);

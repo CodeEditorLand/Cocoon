@@ -22,8 +22,6 @@ import Service from "./Service.js";
  * It depends on the ProtocolAdapter (for the underlying transport) and the
  * Cancellation service (for handling cancellation signals).
  */
-const Live = Layer.effect(Service, Definition).pipe(
+export default Layer.effect(Service, Definition).pipe(
 	Layer.provide(Layer.merge(ProtocolAdapterLive, CancellationLive)),
 );
-
-export default Live;

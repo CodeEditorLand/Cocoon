@@ -20,6 +20,4 @@ import Service from "./Service.js";
  * It depends on several other services like Log, IPC, APIFactory, and InitData,
  * which must be provided to this layer.
  */
-const Live = Layer.effect(Service, Definition);
-
-export default Live;
+export default Layer.effect(Service, Definition);

@@ -22,6 +22,4 @@ import Service from "./Service.js";
  * service is also an indirect dependency via the Definition, and must be
  * provided at the application level.
  */
-const Live = Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));
-
-export default Live;
+export default Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));

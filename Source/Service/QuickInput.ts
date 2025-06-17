@@ -25,5 +25,7 @@ export { default as Service } from "./QuickInput/Service.js";
  * The live implementation Layer for the QuickInput service.
  * It depends on the IPC service for communication.
  */
-export const Live = (Configuration: IPCConfiguration) =>
-	Layer.effect(Service, Definition).pipe(Layer.provide(IPCLive(Configuration)));
+export default (Configuration: IPCConfiguration) =>
+	Layer.effect(Service, Definition).pipe(
+		Layer.provide(IPCLive(Configuration)),
+	);

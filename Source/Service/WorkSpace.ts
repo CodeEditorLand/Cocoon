@@ -30,7 +30,7 @@ export type { WorkspaceFolder };
  * The live implementation Layer for the WorkSpace service.
  * @param Configuration The IPC Configuration.
  */
-export const Live = (Configuration: IPCConfiguration) =>
+export default (Configuration: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
 		Layer.provide(
 			Layer.mergeAll(

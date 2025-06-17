@@ -27,7 +27,9 @@ export { default as Service } from "./Window/Service.js";
  * The live implementation Layer for the Window service.
  * @param Configuration The IPC Configuration.
  */
-export const Live = (Configuration: IPCConfiguration) =>
+export default (Configuration: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
-		Layer.provide(Layer.merge(IPCLive(Configuration), WorkSpaceLive(Configuration))),
+		Layer.provide(
+			Layer.merge(IPCLive(Configuration), WorkSpaceLive(Configuration)),
+		),
 	);

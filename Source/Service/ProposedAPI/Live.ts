@@ -12,7 +12,6 @@
 
 import { Layer } from "effect";
 
-import { Live as LogLive } from "../Log.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
 
@@ -20,6 +19,4 @@ import Service from "./Service.js";
  * The live implementation Layer for the ProposedAPI service.
  * It depends on the Log and InitData services.
  */
-const Live = Layer.effect(Service, Definition).pipe(Layer.provide(LogLive));
-
-export default Live;
+export default Layer.effect(Service, Definition);

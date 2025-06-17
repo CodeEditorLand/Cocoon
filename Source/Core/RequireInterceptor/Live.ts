@@ -24,7 +24,7 @@ import Service from "./Service.js";
  * It has dependencies on the APIFactory, ExtensionPath, NodeModuleShim, and Log services,
  * which are provided to it here.
  */
-const Live = Layer.effect(Service, Definition).pipe(
+export default Layer.effect(Service, Definition).pipe(
 	Layer.provide(
 		Layer.mergeAll(
 			APIFactoryLive,
@@ -34,5 +34,3 @@ const Live = Layer.effect(Service, Definition).pipe(
 		),
 	),
 );
-
-export default Live;

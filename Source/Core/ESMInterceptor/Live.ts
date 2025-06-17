@@ -22,8 +22,6 @@ import Service from "./Service.js";
  * The live implementation layer for the ESMInterceptor service.
  * It depends on the APIFactory, ExtensionPath, and logging services.
  */
-const Live = Layer.effect(Service, Definition).pipe(
+export default Layer.effect(Service, Definition).pipe(
 	Layer.provide(Layer.mergeAll(APIFactoryLive, ExtensionPathLive, LogLive)),
 );
-
-export default Live;

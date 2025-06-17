@@ -20,12 +20,10 @@ import Service from "./Service.js";
  * The live implementation layer for the ExtensionPath service.
  * It depends on the InitData service to get the list of all installed extensions.
  */
-const Live = Layer.effect(
+export default Layer.effect(
 	Service,
 	Effect.map(
 		InitDataService,
 		(InitData) => new Definition(InitData.extensions.allExtensions),
 	),
 );
-
-export default Live;

@@ -30,7 +30,7 @@ import Service from "./Service.js";
  * @param Configuration An object containing the `MountainAddress` and `CocoonAddress`.
  * @returns A self-contained `Layer` that provides the `IPC.Service`.
  */
-const Live = (Configuration: IPCConfiguration) => {
+export default (Configuration: IPCConfiguration) => {
 	const ConfigLayer = Layer.succeed(IPCConfigurationService, Configuration);
 
 	const DependenciesLayer = Layer.mergeAll(
@@ -44,5 +44,3 @@ const Live = (Configuration: IPCConfiguration) => {
 		Layer.provide(DependenciesLayer),
 	);
 };
-
-export default Live;

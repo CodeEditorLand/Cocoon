@@ -1,32 +1,18 @@
-/*
- * File: Cocoon/Source/Service/Diagnostic/Live.ts
- * Responsibility:
- * Modified: 2025-06-16 14:45:21 UTC
- * Dependency: ../IPC.js, ../IPC/Configuration.js, ./Definition.js, ./Service.js, effect
- */
-
 /**
  * @module Live (Diagnostic)
  * @description The live implementation Layer for the Diagnostics service.
  */
 
 import { Layer } from "effect";
+import type { DiagnosticCollection } from "vscode";
 
-import { Live as IPCLive } from "../IPC.js";
-import { type IPCConfiguration } from "../IPC/Configuration.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";
+
+export type { DiagnosticCollection };
 
 /**
  * The live implementation Layer for the Diagnostics service.
  * It depends on the IPC service for communication.
- * This is a factory that takes IPC configuration.
- * @param Configuration The IPC configuration.
  */
-const Live = (Configuration: IPCConfiguration) => {
-	return Layer.effect(Service, Definition).pipe(
-		Layer.provide(IPCLive(Configuration)),
-	);
-};
-
-export default Live;
+export default Layer.effect(Service, Definition);

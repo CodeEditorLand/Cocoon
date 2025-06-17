@@ -27,7 +27,9 @@ export { default as Service } from "./TreeView/Service.js";
  * It depends on the IPC and Command services.
  * @param Configuration The IPC configuration.
  */
-export const Live = (Configuration: IPCConfiguration) =>
+export default (Configuration: IPCConfiguration) =>
 	Layer.effect(Service, Definition).pipe(
-		Layer.provide(Layer.merge(IPCLive(Configuration), CommandLive(Configuration))),
+		Layer.provide(
+			Layer.merge(IPCLive(Configuration), CommandLive(Configuration)),
+		),
 	);

@@ -24,5 +24,3 @@ import Service from "./Service.js";
  */
 const Live: Layer.Layer<Service, gRPCConnectionError, IPCConfigurationService> =
 	Layer.scoped(Service, Acquire);
-
-export default Live;
