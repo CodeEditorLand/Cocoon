@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/PatchProcessCrash.ts
- * Responsibility:
- * Modified: 2025-06-16 14:00:34 UTC
+ * Responsibility: Implements a critical security patch for the Cocoon Node.js sidecar, overriding Electron's process.crash() to prevent VS Code extensions from terminating the host process by intercepting and logging crash attempts instead.
+ * Modified: 2025-06-17 10:32:47 UTC
  * Dependency: ./Service.js, effect
  */
 

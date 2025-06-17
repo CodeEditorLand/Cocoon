@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Message/Support/ParseArgument.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:57 UTC
+ * Responsibility: Parses overloaded arguments for message display functions in the Cocoon sidecar, normalizing options, items, and extension source references to support VS Code extension compatibility within the Land editor.
+ * Modified: 2025-06-17 10:32:27 UTC
  * Dependency: ../Type.js, vscode
  */
 

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/SecretStorage/Error.ts
- * Responsibility: Defines custom error classes for the SecretStorage service, specifically handling empty key and invalid value scenarios to enforce proper input validation when managing secrets.
- * Modified: 2025-06-15 19:16:53 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:24 UTC
  * Export: default
  */
 

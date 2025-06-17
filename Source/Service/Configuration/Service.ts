@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Configuration/Service.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:13 UTC
+ * Responsibility: Defines the ConfigurationService interface for managing workspace and user settings within the Cocoon sidecar, providing type-safe access to configuration values and change events using the Effect framework.
+ * Modified: 2025-06-17 10:32:42 UTC
  * Dependency: ./Type/WorkSpaceConfiguration.js, effect
  * Export: ConfigurationService
  */

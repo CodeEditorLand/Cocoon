@@ -1,8 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Cancellation/Error/InvalidTokenIDError.ts
- * Responsibility: Defines a custom error for an invalid cancellation token ID.
- *
- * Last-Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:45 UTC
+ * Dependency: effect
+ * Export: InvalidTokenIDError
  */
 
 import { Data } from "effect";

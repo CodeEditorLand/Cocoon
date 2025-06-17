@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateDebugNamespace.ts
- * Responsibility:
- * Modified: 2025-06-16 14:56:05 UTC
- * Dependency: ../../Service/Debug/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:55 UTC
+ * Dependency: ../../Service/Debug/Service.js, ../../Service/IPC/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**

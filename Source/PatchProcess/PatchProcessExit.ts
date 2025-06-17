@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/PatchProcessExit.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:20 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:47 UTC
  * Dependency: ./Error/ExitPreventedError.js, ./Service.js, effect
  */
 

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/Live.ts
- * Responsibility:
- * Modified: 2025-06-16 14:59:29 UTC
+ * Responsibility: Implements the live service layer for the APIFactory in the Cocoon sidecar using Effect, providing the necessary dependencies to facilitate communication with the Mountain backend via the Vine IPC layer.
+ * Modified: 2025-06-17 10:32:56 UTC
  * Dependency: ./Definition.js, ./Service.js, effect
  */
 

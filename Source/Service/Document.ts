@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Document.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:07 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:37 UTC
  * Dependency: ./Document/Live.js, ./Document/Service.js, ./Document/Type.js
  * Export: Live, Service, type DocumentEvent
  */

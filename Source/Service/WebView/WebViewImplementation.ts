@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/WebView/WebViewImplementation.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:47 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:18 UTC
  * Dependency: ../../TypeConverter/WebView.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, effect, vs/base/common/network.js, vs/platform/extensions/common/extensions.js, vscode
  * Export: implements
  */

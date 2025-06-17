@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/IPC/Live.ts
- * Responsibility:
- * Modified: 2025-06-16 14:45:21 UTC
- * Dependency: ./Client.js, ./Configuration.js, ./Definition.js, ./Dispatcher.js, ./ProtocolAdapter.js, ./Server.js, ./Service.js, effect
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:32 UTC
+ * Dependency: ./Client.js, ./Definition.js, ./Dispatcher.js, ./ProtocolAdapter.js, ./Server.js, ./Service.js, effect
  */
 
 /**

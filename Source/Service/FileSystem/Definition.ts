@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/Definition.ts
- * Responsibility:
- * Modified: 2025-06-16 14:42:01 UTC
- * Dependency: ../FileSystemInformation/Service.js, ../IPC/Service.js, ./CreateStatEffect.js, ./Service.js, effect, vscode
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:36 UTC
+ * Dependency: ../FileSystemInformation/Service.js, ../IPC/Service.js, ./CreateStatEffect.js, ./Service.js, effect
  */
 
 /**

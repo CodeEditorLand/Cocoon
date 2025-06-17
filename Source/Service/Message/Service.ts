@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Message/Service.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:56 UTC
+ * Responsibility: Defines the Message service interface for Cocoon's sidecar, proxying notification requests to the Mountain backend via the Vine IPC layer to enable VS Code extension compatibility within the Land editor.
+ * Modified: 2025-06-17 10:32:26 UTC
  * Dependency: effect, vscode
  * Export: MessageService
  */

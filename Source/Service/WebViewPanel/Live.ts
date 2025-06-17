@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/WebViewPanel/Live.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:39:42 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (WebViewPanel)
  * @description The live implementation Layer for the WebViewPanel service.

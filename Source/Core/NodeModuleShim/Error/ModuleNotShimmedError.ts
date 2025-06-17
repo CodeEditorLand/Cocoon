@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Error/ModuleNotShimmedError.ts
- * Responsibility: Defines a custom error for when an extension attempts
- * to require a Node.js module for which no shim exists.
- *
- * Last-Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:50 UTC
+ * Dependency: effect
+ * Export: ModuleNotShimmedError
  */
 
 import { Data } from "effect";

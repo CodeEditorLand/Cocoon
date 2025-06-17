@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Configuration/ESBuild/Cocoon.ts
- * Responsibility: Configures ESBuild options for the Maintain build system, defining TypeScript compilation targets, output directories, and environment-aware settings to optimize bundling of configuration files for the Land editor's architecture.
- * Modified: 2025-06-16 14:56:02 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:56 UTC
  * Dependency: esbuild
  * Export: Clean, On
  */

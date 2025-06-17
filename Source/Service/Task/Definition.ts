@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Task/Definition.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:50 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:21 UTC
  * Dependency: ../../TypeConverter/Task.js, ../../Utility/CreateEventStream.js, ../Cancellation.js, ../IPC/Service.js, ./RPCHandlers/ProvideTasks.js, ./Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 

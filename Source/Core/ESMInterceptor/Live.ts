@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/Live.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:27 UTC
+ * Responsibility: Implements the live dependency injection layer for the ESMInterceptor service in Cocoon, integrating APIFactory, ExtensionPath, and logging services to handle ES module interception for VS Code extension compatibility.
+ * Modified: 2025-06-17 10:32:48 UTC
  * Dependency: ../../Service/Log/Live.js, ../APIFactory/Live.js, ../ExtensionPath/Live.js, ./Definition.js, ./Service.js, effect
  */
 

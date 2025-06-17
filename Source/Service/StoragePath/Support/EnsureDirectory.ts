@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/StoragePath/Support/EnsureDirectory.ts
- * Responsibility:
- * Modified: 2025-06-16 00:42:02 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:24 UTC
  * Dependency: ../../FileSystem/Service.js, ../../Log/Service.js, effect, vscode
  */
 

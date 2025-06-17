@@ -1,3 +1,11 @@
+/*
+ * File: Cocoon/Source/Service/Command/Live.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:36:00 UTC
+ * Dependency: ./Definition.js, ./Service.js, ./Type.js, effect
+ * Export: type CommandHandler, type CommandHandlerEntry
+ */
+
 /**
  * @module Command
  * @description This module provides the `vscode.commands` API implementation,

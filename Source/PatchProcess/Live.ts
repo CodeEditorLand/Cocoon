@@ -1,9 +1,8 @@
 /*
  * File: Cocoon/Source/PatchProcess/Live.ts
- * Responsibility:
- * Modified: 2025-06-16 14:00:34 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:48 UTC
  * Dependency: ./Service.js, effect
- * Export: Live
  */
 
 /**

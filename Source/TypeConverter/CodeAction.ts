@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/TypeConverter/CodeAction.ts
- * Responsibility:
- * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Diagnostic.js, ./WorkSpaceEdit.js, vs/base/common/lifecycle.js, vs/editor/common/languages.js, vscode
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:14 UTC
+ * Dependency: ./Command/Definition.js, ./Diagnostic.js, vs/base/common/lifecycle.js, vs/editor/common/languages.js, vscode
  */
 
 /**

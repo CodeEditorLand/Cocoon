@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Log.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:55 UTC
- * Dependency: ./Log/Definition.js, ./Log/Service.js, effect
- * Export: Live, default
+ * Responsibility: The aggregator module for the Log service.
+ * Modified: 2025-06-18
+ * Dependency: ./Log/Live.js, ./Log/Service.js
+ * Export: Live, Service
  */
 
 /**
@@ -13,15 +13,7 @@
  * to declare a dependency on logging in a consistent way.
  */
 
-import { Layer } from "effect";
-
-import Definition from "./Log/Definition.js";
+import Live from "./Log/Live.js";
 import Service from "./Log/Service.js";
 
-export { default as Service } from "./Log/Service.js";
-
-/**
- * The live implementation Layer for the Log service.
- * It has no external dependencies.
- */
-export default Layer.effect(Service, Definition);
+export { Service, Live };

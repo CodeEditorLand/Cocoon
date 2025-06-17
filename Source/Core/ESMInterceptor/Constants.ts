@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ESMInterceptor/Constants.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:26 UTC
+ * Responsibility: Defines constants used by the Cocoon sidecar's ESM interception mechanism to enable module loading hooks and sandboxed API resolution for VS Code extensions.
+ * Modified: 2025-06-17 10:32:49 UTC
  * Export: ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME, LOADER_HOOK_SCRIPT_FILENAME
  */
 

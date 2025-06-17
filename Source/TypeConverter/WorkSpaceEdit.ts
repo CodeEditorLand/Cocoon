@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/TypeConverter/WorkSpaceEdit.ts
- * Responsibility:
- * Modified: 2025-06-16 14:04:01 UTC
- * Dependency: ./Main.js, vs/base/common/uri.js, vs/editor/common/model.js, vscode
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:08 UTC
+ * Dependency: ../Type/ExtHostTypes.js, ./Main.js, vs/base/common/uri.js, vs/editor/common/model.js, vscode
  * Export: IVersionInformationProvider
  */
 

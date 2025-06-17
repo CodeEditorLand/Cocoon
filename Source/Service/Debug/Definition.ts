@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Debug/Definition.ts
- * Responsibility:
- * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: ../IPC/Service.js, ./Error.js, ./RegisterProvider.js, ./Service.js, ./Type.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:40 UTC
+ * Dependency: ../IPC/Service.js, ./Error.js, ./RegisterProvider.js, ./Service.js, ./Type.js, effect
  */
 
 /**

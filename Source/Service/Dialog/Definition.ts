@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Dialog/Definition.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:10 UTC
+ * Responsibility: Implements the dialog service for the Cocoon sidecar using Effect and IPC, providing type-safe file open/save dialogs by converting VS Code options to DTOs and handling communication with the Mountain backend via the Vine IPC layer.
+ * Modified: 2025-06-17 10:32:39 UTC
  * Dependency: ../../TypeConverter/Dialog.js, ../IPC/Service.js, ./Error.js, ./Service.js, effect, vs/base/common/errors.js
  */
 

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Configuration/ESBuild/Target.ts
- * Responsibility:
- * Modified: 2025-06-16 14:56:03 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:56 UTC
  * Dependency: ./../../cocoon-esm-interceptor.js, esbuild
  * Export: On
  */

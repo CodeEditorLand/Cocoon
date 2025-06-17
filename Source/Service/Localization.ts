@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Localization.ts
- * Responsibility:
- * Modified: 2025-06-16 14:46:23 UTC
- * Dependency: ./IPC.js, ./IPC/Configuration.js, ./Localization/Definition.js, ./Localization/Service.js, effect
- * Export: Live, default
+ * Responsibility: The aggregator module for the Localization service.
+ * Modified: 2025-06-18
+ * Dependency: ./Localization/Live.js, ./Localization/Service.js
+ * Export: Live, Service
  */
 
 /**
@@ -12,20 +12,7 @@
  * loading and caching of localized string bundles (NLS) for extensions.
  */
 
-import { Layer } from "effect";
-
-import { Live as IPCLive } from "./IPC.js";
-import { type IPCConfiguration } from "./IPC/Configuration.js";
-import Definition from "./Localization/Definition.js";
+import Live from "./Localization/Live.js";
 import Service from "./Localization/Service.js";
 
-export { default as Service } from "./Localization/Service.js";
-
-/**
- * The live implementation Layer for the Localization service.
- * It depends on the IPC and InitData services.
- */
-export default (Configuration: IPCConfiguration) =>
-	Layer.effect(Service, Definition).pipe(
-		Layer.provide(IPCLive(Configuration)),
-	);
+export { Service, Live };

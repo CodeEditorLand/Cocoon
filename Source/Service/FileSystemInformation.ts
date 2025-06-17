@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/FileSystemInformation.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:04 UTC
+ * Responsibility: Provides filesystem capability information (notably path case-sensitivity) to the Cocoon sidecar, enabling VS Code extensions to handle platform-specific file system behaviors correctly.
+ * Modified: 2025-06-17 10:32:34 UTC
  * Dependency: ./FileSystemInformation/Live.js, ./FileSystemInformation/Service.js
  * Export: Live, Service
  */

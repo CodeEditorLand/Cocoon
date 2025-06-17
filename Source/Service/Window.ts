@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Window.ts
- * Responsibility:
- * Modified: 2025-06-16 14:46:10 UTC
- * Dependency: ./IPC.js, ./IPC/Configuration.js, ./Window/Definition.js, ./Window/Service.js, ./WorkSpace.js, effect
- * Export: Live, default
+ * Responsibility: The aggregator module for the Window service.
+ * Modified: 2025-06-18
+ * Dependency: ./Window/Live.js, ./Window/Service.js
+ * Export: Live, Service
  */
 
 /**
@@ -13,23 +13,7 @@
  * like dialogs, messages, and quick input.
  */
 
-import { Layer } from "effect";
-
-import { Live as IPCLive } from "./IPC.js";
-import { type IPCConfiguration } from "./IPC/Configuration.js";
-import Definition from "./Window/Definition.js";
+import Live from "./Window/Live.js";
 import Service from "./Window/Service.js";
-import { Live as WorkSpaceLive } from "./WorkSpace.js";
 
-export { default as Service } from "./Window/Service.js";
-
-/**
- * The live implementation Layer for the Window service.
- * @param Configuration The IPC Configuration.
- */
-export default (Configuration: IPCConfiguration) =>
-	Layer.effect(Service, Definition).pipe(
-		Layer.provide(
-			Layer.merge(IPCLive(Configuration), WorkSpaceLive(Configuration)),
-		),
-	);
+export { Service, Live };

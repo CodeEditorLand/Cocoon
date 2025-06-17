@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/AsExtensionEvent.ts
- * Responsibility:
- * Modified: 2025-06-16 14:56:04 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:55 UTC
  * Dependency: ../../Service/Log/Service.js, vs/platform/extensions/common/extensions.js, vscode
  */
 

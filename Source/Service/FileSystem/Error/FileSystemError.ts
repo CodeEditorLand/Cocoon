@@ -1,8 +1,9 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/Error/FileSystemError.ts
- * Responsibility: Defines custom errors and error handling for the FileSystem service.
- *
- * Last-Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:37 UTC
+ * Dependency: effect, vscode
+ * Export: FileSystemError, MapToVSCodeError
  */
 
 import { Data } from "effect";

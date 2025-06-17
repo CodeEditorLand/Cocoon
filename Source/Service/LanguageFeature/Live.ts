@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/LanguageFeature/Live.ts
+ * Responsibility: Implements the live layer for the LanguageFeature service using Effect, integrating with Mountain's Track dispatcher and Vine IPC layer to handle RPC calls for language features between the Sky frontend and Cocoon sidecar.
+ * Modified: 2025-06-17 10:35:18 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (LanguageFeature)
  * @description The live implementation Layer for the LanguageFeature service.

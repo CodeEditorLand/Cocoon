@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Dialog/Live.ts
+ * Responsibility: Implements the live Layer for the Dialog service in the Sky frontend, configuring IPC-based communication with the Mountain backend via the Vine transport layer to handle dialog interactions.
+ * Modified: 2025-06-17 10:32:39 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (Dialog)
  * @description The live implementation Layer for the Dialog service.

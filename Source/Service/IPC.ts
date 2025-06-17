@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC.ts
- * Responsibility:
- * Modified: 2025-06-16 14:47:36 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:29 UTC
  * Dependency: ./IPC/Configuration.js, ./IPC/Error.js, ./IPC/Live.js, ./IPC/Service.js
  * Export: Error, Live, Service, type IPCConfiguration
  */

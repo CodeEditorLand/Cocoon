@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Task/RPCHandlers/ProvideTasks.ts
- * Responsibility:
- * Modified: 2025-06-16 14:01:41 UTC
+ * Responsibility: Implements the RPC handler for the $provideTasks call in the Cocoon sidecar, invoking registered TaskProviders and converting VS Code Task objects to DTOs for IPC transmission via Vine to support the extension ecosystem.
+ * Modified: 2025-06-17 10:32:21 UTC
  * Dependency: ../../../TypeConverter/Task.js, ../../Cancellation/Service.js, effect, vscode
  */
 

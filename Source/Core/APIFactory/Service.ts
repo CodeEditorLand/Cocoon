@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/Service.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:28 UTC
+ * Responsibility: Defines the APIFactory service for the Cocoon sidecar, creating sandboxed vscode API replicas for individual extensions to enable VS Code extension compatibility within the Node.js environment.
+ * Modified: 2025-06-17 10:32:55 UTC
  * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode
  * Export: APIFactoryService
  */

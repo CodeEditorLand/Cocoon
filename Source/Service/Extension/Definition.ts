@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Extension/Definition.ts
- * Responsibility:
- * Modified: 2025-06-16 03:16:36 UTC
- * Dependency: ../../Core/ExtensionHost/Service.js, ../../Utility/CreateEventStream.js, ../InitData/Service.js, ./CreateAPIObject.js, ./Service.js, effect, vs/platform/extensionManagement/common/implicitActivationEvents.js, vs/workbench/services/extensions/common/extensionDescriptionRegistry.js, vscode
+ * Responsibility: Implements the live Extension service for the Cocoon sidecar, providing the vscode.extensions API surface by bridging VS Code's extension activation system with Land's ExtensionHost service and extension registry.
+ * Modified: 2025-06-17 10:32:35 UTC
+ * Dependency: ../../Core/ExtensionHost/Service.js, ../../Utility/CreateEventStream.js, ../InitData/Service.js, ./CreateAPIObject.js, ./Service.js, effect, vs/platform/extensionManagement/common/implicitActivationEvents.js, vscode
  */
 
 /**

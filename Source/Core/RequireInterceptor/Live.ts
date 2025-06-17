@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/RequireInterceptor/Live.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:23 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:51 UTC
  * Dependency: ../../Service/Log/Live.js, ../APIFactory/Live.js, ../ExtensionPath/Live.js, ../NodeModuleShim/Live.js, ./Definition.js, ./Service.js, effect
  */
 

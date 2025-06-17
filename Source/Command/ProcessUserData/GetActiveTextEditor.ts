@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Command/ProcessUserData/GetActiveTextEditor.ts
- * Responsibility: Implements a Cocoon command to safely retrieve the active VS Code text editor by delegating to the Window service, enabling extension functionality that requires editor context in the Land MVP Path A architecture.
- * Modified: 2025-06-16 14:55:44 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:58 UTC
  * Dependency: ../../Service/Window/Service.js, effect, vscode
  */
 

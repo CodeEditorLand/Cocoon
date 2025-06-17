@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateTasksNamespace.ts
- * Responsibility: Implements the vscode.tasks API surface for the Cocoon sidecar, delegating task execution and event handling to the central TaskService while sandboxing extension interactions.
- * Modified: 2025-06-16 14:56:06 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:56 UTC
  * Dependency: ../../Service/Task/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 

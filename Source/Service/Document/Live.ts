@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Document/Live.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:38 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (Document)
  * @description The live implementation Layer for the Document service.

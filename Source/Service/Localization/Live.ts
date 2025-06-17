@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Localization/Live.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:36:02 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (Localization)
  * @description The live implementation Layer for the Localization service.

@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Authentication/Error/AuthenticationProviderExistsError.ts
- * Responsibility: Defines a custom error for when an extension attempts to
- * register an authentication provider with an ID that is already in use.
- *
- * Last-Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:45 UTC
+ * Dependency: effect
+ * Export: AuthenticationProviderExistsError
  */
 
 import { Data } from "effect";

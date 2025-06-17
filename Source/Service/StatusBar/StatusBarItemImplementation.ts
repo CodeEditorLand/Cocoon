@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/StatusBar/StatusBarItemImplementation.ts
- * Responsibility:
- * Modified: 2025-06-16 01:08:56 UTC
- * Dependency: ../../Type/ExtHostTypes.js, ../../TypeConverter/Command/Definition.js, ../../TypeConverter/StatusBar.js, ../IPC/Service.js, effect
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:22 UTC
+ * Dependency: ../../Type/ExtHostTypes.js, ../../TypeConverter/Command.js, ../../TypeConverter/StatusBar.js, ../IPC/Service.js, effect
  * Export: implements
  */
 

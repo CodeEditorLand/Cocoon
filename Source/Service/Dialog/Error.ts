@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Dialog/Error.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:10 UTC
+ * Responsibility: Defines a custom DialogError class for the Cocoon sidecar's Dialog service, standardizing error handling in dialog-related operations to ensure consistent error reporting across the IPC layer (Vine) between Cocoon and Mountain.
+ * Modified: 2025-06-17 10:32:39 UTC
  * Export: default
  */
 

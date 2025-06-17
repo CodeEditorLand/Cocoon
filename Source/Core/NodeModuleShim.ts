@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim.ts
- * Responsibility: Provides the NodeModuleShim service to intercept and manage Node.js module requests in the Cocoon sidecar, blocking unsafe built-ins while allowing controlled access through secure shims.
- * Modified: 2025-06-15 19:17:21 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:49 UTC
  * Dependency: ./NodeModuleShim/Error.js, ./NodeModuleShim/Live.js, ./NodeModuleShim/Service.js
  * Export: Error, Live, Service
  */

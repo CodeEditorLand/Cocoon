@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/RequireInterceptor/Factory/VSCode.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:24 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:52 UTC
  * Dependency: ../../../Core/APIFactory/Service.js, ../../../Core/ExtensionPath/Service.js, ../../../Service/Log/Service.js, ./Interface.js, vscode
  * Export: implements
  */

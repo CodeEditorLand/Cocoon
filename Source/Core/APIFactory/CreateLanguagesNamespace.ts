@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/CreateLanguagesNamespace.ts
- * Responsibility: Implements the vscode.languages API surface for the Cocoon sidecar by delegating language feature registrations (hover, completions, definitions) to the LanguageFeatureService, enabling VS Code extension compatibility within Land's Node.js environment.
- * Modified: 2025-06-16 14:56:05 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:55 UTC
  * Dependency: ../../Service/LanguageFeature/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 

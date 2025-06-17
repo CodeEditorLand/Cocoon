@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/WebView/ConvertExtensionDataToDTO.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:40 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:09 UTC
  * Dependency: vs/platform/extensions/common/extensions.js, vscode
  */
 

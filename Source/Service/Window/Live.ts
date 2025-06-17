@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Window/Live.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:39:58 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (Window)
  * @description The live implementation Layer for the Window service.

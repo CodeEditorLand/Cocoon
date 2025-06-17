@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Service.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:59 UTC
+ * Responsibility: Implements the IPC protocol adapter service for the Cocoon sidecar, bridging VS Code's RPCProtocol with the Vine transport layer to enable extension host communication via Mountain's gRPC-based IPC.
+ * Modified: 2025-06-17 10:32:30 UTC
  * Dependency: effect, vs/base/parts/ipc/common/ipc.js
  * Export: ProtocolAdapterService
  */

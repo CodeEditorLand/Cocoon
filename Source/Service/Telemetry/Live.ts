@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Telemetry/Live.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:39:10 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (Telemetry)
  * @description The live implementation Layer for the Telemetry service.

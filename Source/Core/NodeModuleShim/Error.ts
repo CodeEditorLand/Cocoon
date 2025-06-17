@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Error.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:23 UTC
+ * Responsibility: Exports custom error classes for the Cocoon sidecar's Node.js module shimming system, enforcing security policies when blocked modules are accessed or required modules lack proper shims.
+ * Modified: 2025-06-17 10:32:50 UTC
  * Export: default
  */
 

@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/TreeView/TreeViewImplementation.ts
- * Responsibility:
- * Modified: 2025-06-16 14:01:41 UTC
- * Dependency: ../../TypeConverter/Command.js, ../../TypeConverter/TreeView.js, ../../Utility/CreateEventStream.js, ../Command/Service.js, ../IPC/Service.js, effect, vs/base/common/event.js, vs/base/common/uuid.js, vs/platform/extensions/common/extensions.js, vscode
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:19 UTC
+ * Dependency: ../../TypeConverter/Command/Definition.js, ../../TypeConverter/TreeView.js, ../../Utility/CreateEventStream.js, ../Command/Service.js, ../IPC/Service.js, effect, vs/base/common/event.js, vs/base/common/uuid.js, vs/platform/extensions/common/extensions.js
  */
 
 /**

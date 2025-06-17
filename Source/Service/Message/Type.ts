@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Message/Type.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:56 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:26 UTC
  * Dependency: vs/platform/extensions/common/extensions.js
  * Export: Interface
  */

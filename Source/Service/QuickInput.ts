@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/QuickInput.ts
- * Responsibility:
- * Modified: 2025-06-16 14:46:10 UTC
- * Dependency: ./IPC.js, ./IPC/Configuration.js, ./QuickInput/Definition.js, ./QuickInput/Service.js, effect
- * Export: Live, default
+ * Responsibility: The aggregator module for the QuickInput service.
+ * Modified: 2025-06-18
+ * Dependency: ./QuickInput/Live.js, ./QuickInput/Service.js
+ * Export: Live, Service
  */
 
 /**
@@ -12,20 +12,7 @@
  * `showInputBox` APIs.
  */
 
-import { Layer } from "effect";
-
-import { Live as IPCLive } from "./IPC.js";
-import { type IPCConfiguration } from "./IPC/Configuration.js";
-import Definition from "./QuickInput/Definition.js";
+import Live from "./QuickInput/Live.js";
 import Service from "./QuickInput/Service.js";
 
-export { default as Service } from "./QuickInput/Service.js";
-
-/**
- * The live implementation Layer for the QuickInput service.
- * It depends on the IPC service for communication.
- */
-export default (Configuration: IPCConfiguration) =>
-	Layer.effect(Service, Definition).pipe(
-		Layer.provide(IPCLive(Configuration)),
-	);
+export { Service, Live };

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/Dispatcher/Service.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:03 UTC
+ * Responsibility: Implements the Dispatcher service for the Cocoon sidecar, routing incoming RPC messages from the Mountain backend via the Vine IPC layer to appropriate handlers and managing request/notification lifecycle.
+ * Modified: 2025-06-17 10:32:33 UTC
  * Dependency: effect, vscode
  * Export: DispatcherService
  */

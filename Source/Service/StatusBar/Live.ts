@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/StatusBar/Live.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:38:14 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (StatusBar)
  * @description The live implementation Layer for the StatusBar service.

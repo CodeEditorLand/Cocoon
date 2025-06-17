@@ -1,8 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Debug/Error/DebugProviderRegistrationError.ts
- * Responsibility: Defines a custom error for debug provider registration failures.
- *
- * Last-Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:41 UTC
+ * Dependency: effect
+ * Export: DebugProviderRegistrationError
  */
 
 import { Data } from "effect";

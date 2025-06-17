@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/ProposedAPI/Live.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:55 UTC
- * Dependency: ../Log.js, ./Definition.js, ./Service.js, effect
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:37:28 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
  */
 
 /**

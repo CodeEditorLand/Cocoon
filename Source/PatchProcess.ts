@@ -1,11 +1,8 @@
 /*
  * File: Cocoon/Source/PatchProcess.ts
- * Responsibility: Provides low-level patches and setup for the Node.js process,
- * ensuring it behaves correctly as an extension host.
- *
- * This logic is synthesized from VS Code's `bootstrap-node.ts` and `bootstrap-fork.ts`.
- *
- * Last-Modified: 2025-06-17
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:46 UTC
+ * Dependency: ./PatchProcess/BlockNativesModule.js, ./PatchProcess/HandleException.js, ./PatchProcess/Live.js, ./PatchProcess/PatchProcessCrash.js, ./PatchProcess/PatchProcessExit.js, ./PatchProcess/PipeLogging.js, ./PatchProcess/SetElectronRunAsNode.js, ./PatchProcess/SetStackTraceLimit.js, ./PatchProcess/SetupEnvironment.js, ./PatchProcess/TerminateOnParentExit.js, effect
  */
 
 import { Effect } from "effect";

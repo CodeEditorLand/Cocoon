@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/InitData/Service.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:03 UTC
+ * Responsibility: Provides the initial configuration data payload from the Mountain backend to the Cocoon sidecar, enabling VS Code extension host initialization through a type-safe Effect service context.
+ * Modified: 2025-06-17 10:32:32 UTC
  * Dependency: effect, vs/workbench/services/extensions/common/extensionHostProtocol.js
  * Export: InitDataService
  */

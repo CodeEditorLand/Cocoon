@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Diagnostic/Service.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:09 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:38 UTC
  * Dependency: effect, vscode
  * Export: DiagnosticService
  */

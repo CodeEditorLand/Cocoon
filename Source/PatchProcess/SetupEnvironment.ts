@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/SetupEnvironment.ts
- * Responsibility: Configures proxy environment variables based on the Mountain backend's InitData service to enable network communication for extensions running in the Cocoon Node.js sidecar.
- * Modified: 2025-06-16 14:00:34 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:46 UTC
  * Dependency: ../Service/InitData/Service.js, effect
  */
 

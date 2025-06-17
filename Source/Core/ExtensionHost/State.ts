@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ExtensionHost/State.ts
- * Responsibility: Defines the internal state representation for activated VS Code extensions within the Cocoon sidecar, tracking activation status, module references, and subscriptions to manage extension lifecycle in the Node.js extension host.
- * Modified: 2025-06-15 19:17:25 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:53 UTC
  * Dependency: vs/platform/extensions/common/extensions.js, vscode
  * Export: ActivatedExtension
  */

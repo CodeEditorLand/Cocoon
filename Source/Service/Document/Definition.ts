@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Service/Document/Definition.ts
- * Responsibility:
- * Modified: 2025-06-16 14:00:34 UTC
- * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect, vs/base/parts/ipc/common/ipc.js, vs/workbench/api/common/extHostDocumentData.js, vscode
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:38 UTC
+ * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect, vs/editor/common/model/mirrorTextModel.js, vs/workbench/api/common/extHost.protocol.js, vs/workbench/api/common/extHostDocumentData.js, vscode
  */
 
 /**

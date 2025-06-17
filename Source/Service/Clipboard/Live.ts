@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Clipboard/Live.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:43 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (Clipboard)
  * @description The live implementation Layer for the Clipboard service.

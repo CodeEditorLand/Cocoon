@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/ExtensionHost/Service.ts
- * Responsibility:
- * Modified: 2025-06-16 14:41:58 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:53 UTC
  * Dependency: effect
  * Export: ExtensionActivationReason, ExtensionHostService
  */

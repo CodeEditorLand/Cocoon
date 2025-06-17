@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/WebViewPanel/Definition.ts
- * Responsibility:
- * Modified: 2025-06-16 14:00:34 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:18 UTC
  * Dependency: ../../TypeConverter/WebView.js, ../IPC/Service.js, ./Service.js, ./WebViewPanelImplementation.js, effect, vs/base/common/uuid.js, vs/platform/extensions/common/extensions.js
  */
 

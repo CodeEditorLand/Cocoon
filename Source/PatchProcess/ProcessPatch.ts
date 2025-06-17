@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/PatchProcess/ProcessPatch.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:19 UTC
+ * Responsibility: Provides the ProcessPatch service entry point for Cocoon's sidecar, exposing native process patching functions and configuration to enable VS Code extension compatibility within the Node.js environment.
+ * Modified: 2025-06-17 10:32:47 UTC
  * Dependency: ./Live.js, ./Service.js
  * Export: Live, Service
  */

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/WebView/ConvertShowOptionToDTO.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:39 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:09 UTC
  * Dependency: ../Main/ViewColumn.js, vscode
  */
 

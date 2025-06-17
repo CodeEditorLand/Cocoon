@@ -1,8 +1,9 @@
 /*
  * File: Cocoon/Source/Service/IPC/Error/IPCError.ts
- * Responsibility: Defines a generic, tagged error for IPC-related failures.
- *
- * Last-Modified: 2025-06-18
+ * Responsibility: Defines a generic, tagged error class for handling IPC-related failures in the Cocoon Node.js sidecar, providing structured error context for issues like network errors or message serialization failures during communication via the Vine IPC layer.
+ * Modified: 2025-06-17 10:32:32 UTC
+ * Dependency: effect
+ * Export: IPCError
  */
 
 import { Data } from "effect";

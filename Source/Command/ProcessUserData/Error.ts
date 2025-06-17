@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Command/ProcessUserData/Error.ts
- * Responsibility:
- * Modified: 2025-06-16 14:55:44 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:58 UTC
  * Dependency: effect
  * Export: ActiveEditorNotFoundError, ProcessingServiceError
  */

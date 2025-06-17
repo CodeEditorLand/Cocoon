@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Diagnostic/Definition.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:10 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:39 UTC
  * Dependency: ../../TypeConverter/Main.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./DiagnosticCollectionImplementation.js, ./Service.js, effect, vscode
  */
 

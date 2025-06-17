@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Localization/Support/FetchBundle.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:58 UTC
+ * Responsibility: Implements an Effect-based service for fetching NLS (National Language Support) JSON bundles via IPC in the Cocoon sidecar, enabling localization support for VS Code extensions by communicating with the Mountain backend through the Vine IPC layer.
+ * Modified: 2025-06-17 10:32:29 UTC
  * Dependency: ../../../TypeConverter/Main.js, ../../IPC/Service.js, effect, vscode
  */
 

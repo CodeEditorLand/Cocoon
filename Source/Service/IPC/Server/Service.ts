@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/Server/Service.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:00 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:30 UTC
  * Dependency: @grpc/grpc-js, effect
  * Export: ServerService
  */

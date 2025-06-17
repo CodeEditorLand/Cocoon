@@ -1,8 +1,8 @@
 /*
  * File: Cocoon/Source/Core/APIFactory/Create.ts
- * Responsibility:
- * Modified: 2025-06-16 14:56:04 UTC
- * Dependency: ../../Service/APIDeprecation/Service.js, ../../Service/Command/Service.js, ../../Service/Debug/Service.js, ../../Service/Extension/Service.js, ../../Service/LanguageFeature/Service.js, ../../Service/Log/Service.js, ../../Service/ProposedAPI/Service.js, ../../Service/StatusBar/Service.js, ../../Service/Task/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, ../../Type/ExtHostTypes.js, ./AsExtensionEvent.js, ./CreateCommandNamespace.js, ./CreateDebugNamespace.js, ./CreateLanguagesNamespace.js, ./CreateTasksNamespace.js, ./CreateWindowNamespace.js, ./CreateWorkSpaceNamespace.js, effect, vs/platform/extensions/common/extensions.js, vscode
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:55 UTC
+ * Dependency: ../../Service/APIDeprecation/Service.js, ../../Service/Command/Service.js, ../../Service/Debug/Service.js, ../../Service/Extension/Service.js, ../../Service/IPC/Service.js, ../../Service/LanguageFeature/Service.js, ../../Service/Log/Service.js, ../../Service/ProposedAPI/Service.js, ../../Service/StatusBar/Service.js, ../../Service/Task/Service.js, ../../Service/TreeView/Service.js, ../../Service/WebViewPanel/Service.js, ../../Service/Window/Service.js, ../../Service/WorkSpace/Service.js, ./AsExtensionEvent.js, ./CreateCommandNamespace.js, ./CreateDebugNamespace.js, ./CreateLanguagesNamespace.js, ./CreateTasksNamespace.js, ./CreateWindowNamespace.js, ./CreateWorkSpaceNamespace.js, effect, vs/base/common/event.js, vs/platform/extensions/common/extensions.js, vscode
  */
 
 /**

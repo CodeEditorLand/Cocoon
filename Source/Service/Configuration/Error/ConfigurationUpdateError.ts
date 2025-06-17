@@ -1,8 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Configuration/Error/ConfigurationUpdateError.ts
- * Responsibility: Defines a custom error for configuration update failures.
- *
- * Last-Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:43 UTC
+ * Dependency: effect
+ * Export: ConfigurationUpdateError
  */
 
 import { Data } from "effect";

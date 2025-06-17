@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/TypeConverter/Completion.ts
- * Responsibility:
- * Modified: 2025-06-15 23:33:56 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:13 UTC
  * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, vs/base/common/htmlContent.js, vs/base/common/lifecycle.js, vs/editor/common/core/range.js, vs/editor/common/languages.js, vs/editor/common/model.js, vscode
  */
 

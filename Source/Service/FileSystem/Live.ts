@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/FileSystem/Live.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:34:23 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (FileSystem)
  * @description This module provides the `Live` implementation Layer for the FileSystem service.

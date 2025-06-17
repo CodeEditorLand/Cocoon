@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Command/Type.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:13 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:41 UTC
  * Dependency: vs/platform/extensions/common/extensions.js, vscode
  * Export: CommandHandler, CommandHandlerEntry, TextEditorCommandHandler
  */

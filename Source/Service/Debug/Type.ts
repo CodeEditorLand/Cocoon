@@ -1,8 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Debug/Type.ts
- * Responsibility: Holds specific types for the Debug service.
- * Modified: 2025-06-18
- * Dependency: vs/platform/extensions/common/extensions.js, vscode
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:40 UTC
+ * Dependency: vs/platform/extensions/common/extensions.js
+ * Export: AnyProvider, Debugger, ProviderEntry
  */
 
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";

@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/Dispatcher/Definition.ts
- * Responsibility:
- * Modified: 2025-06-16 14:01:41 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:33 UTC
  * Dependency: ../../Cancellation/Service.js, ../ProtocolAdapter/Service.js, ./Service.js, effect, vs/workbench/services/extensions/common/rpcProtocol.js
  */
 

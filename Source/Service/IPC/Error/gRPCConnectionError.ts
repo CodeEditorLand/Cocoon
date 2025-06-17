@@ -1,8 +1,9 @@
 /*
  * File: Cocoon/Source/Service/IPC/Error/gRPCConnectionError.ts
- * Responsibility: Defines a custom, structured error for gRPC connection failures.
- *
- * Last-Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:33 UTC
+ * Dependency: effect
+ * Export: GPCConnectionError
  */
 
 import { Data } from "effect";

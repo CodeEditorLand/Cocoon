@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/TreeView/Definition.ts
- * Responsibility:
- * Modified: 2025-06-15 19:16:48 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:19 UTC
  * Dependency: ../../TypeConverter/TreeView.js, ../Command/Service.js, ../IPC/Service.js, ./Service.js, ./TreeViewImplementation.js, effect, vs/platform/extensions/common/extensions.js, vscode
  */
 

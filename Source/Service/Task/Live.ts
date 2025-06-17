@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/Task/Live.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:38:55 UTC
+ * Dependency: ./Definition.js, ./Service.js, effect
+ */
+
 /**
  * @module Live (Task)
  * @description The live implementation Layer for the Tasks service.

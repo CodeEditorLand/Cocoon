@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Clipboard/Service.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:15 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:43 UTC
  * Dependency: effect, vscode
  * Export: ClipboardService
  */

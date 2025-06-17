@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Configuration/CreateWorkSpaceConfiguration.ts
- * Responsibility:
- * Modified: 2025-06-15 21:13:19 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:43 UTC
  * Dependency: ../IPC/Service.js, ../Log/Service.js, effect, vs/base/common/objects.js, vs/workbench/api/common/extHostConfiguration.js, vscode
  */
 

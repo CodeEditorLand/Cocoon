@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Message/Definition.ts
- * Responsibility:
- * Modified: 2025-06-16 14:42:04 UTC
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:26 UTC
  * Dependency: ../IPC/Service.js, ./Service.js, ./Support/ParseArgument.js, ./Type.js, effect, vscode
  */
 

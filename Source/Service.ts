@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service.ts
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:43:54 UTC
+ * Dependency: ./Service/APIDeprecation.js, ./Service/Authentication.js, ./Service/Cancellation.js, ./Service/Clipboard.js, ./Service/Command.js, ./Service/Configuration.js, ./Service/Debug.js, ./Service/Diagnostic.js, ./Service/Dialog.js, ./Service/Document.js, ./Service/Environment.js, ./Service/Extension.js, ./Service/FileSystem.js, ./Service/FileSystemInformation.js, ./Service/LanguageFeature.js, ./Service/Localization.js, ./Service/Log.js, ./Service/Message.js, ./Service/ProposedAPI.js, ./Service/QuickInput.js, ./Service/SecretStorage.js, ./Service/StatusBar.js, ./Service/Storage.js, ./Service/StoragePath.js, ./Service/Task.js, ./Service/Telemetry.js, ./Service/TreeView.js, ./Service/WebViewPanel.js, ./Service/Window.js, ./Service/WorkSpace.js, effect
+ */
+
 /**
  * @module Service
  * @description This is the aggregator module for all services that implement the
@@ -9,7 +16,7 @@ import { Layer } from "effect";
 
 import { APIDeprecationLive } from "./Service/APIDeprecation.js";
 import { Live as AuthenticationLive } from "./Service/Authentication.js";
-import { CancellationLive } from "./Service/Cancellation.js";
+import { Live as CancellationLive } from "./Service/Cancellation.js";
 import { Live as ClipboardLive } from "./Service/Clipboard.js";
 import { Live as CommandLive } from "./Service/Command.js";
 import { Live as ConfigurationLive } from "./Service/Configuration.js";

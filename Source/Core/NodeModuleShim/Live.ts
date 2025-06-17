@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Live.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:22 UTC
+ * Responsibility: Provides the live implementation layer for the NodeModuleShim service in Cocoon, intercepting Node.js module requires to enable VS Code extension compatibility, and depends on the Log service for event reporting.
+ * Modified: 2025-06-17 10:32:50 UTC
  * Dependency: ../../Service/Log/Live.js, ./Definition.js, ./Service.js, effect
  */
 

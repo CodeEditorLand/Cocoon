@@ -1,9 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Diagnostic.ts
- * Responsibility:
- * Modified: 2025-06-15 19:17:09 UTC
- * Dependency: ./Diagnostic/Definition.js, ./Diagnostic/Service.js, ./IPC.js, ./IPC/Configuration.js, effect, vscode
- * Export: Live, default
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:43:13 UTC
+ * Dependency: ./Diagnostic/Live.js, ./Diagnostic/Service.js
+ * Export: Live, Service
  */
 
 /**

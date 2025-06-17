@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/Diagnostic/DiagnosticCollectionImplementation.ts
- * Responsibility:
- * Modified: 2025-06-16 00:41:56 UTC
+ * Responsibility: Implements the vscode.DiagnosticCollection interface for the Cocoon sidecar, proxying diagnostic management operations to the Mountain backend via the Vine IPC layer to enable VS Code extension compatibility while maintaining centralized state control.
+ * Modified: 2025-06-17 10:32:38 UTC
  * Dependency: ../../TypeConverter/Diagnostic.js, ../../TypeConverter/Main.js, ../IPC/Service.js, effect, vscode
  * Export: implements
  */

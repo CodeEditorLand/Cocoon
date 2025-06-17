@@ -1,8 +1,9 @@
 /*
  * File: Cocoon/Source/Service/IPC/ProtoConverter/Error/ProtoSerializationError.ts
- * Responsibility: Defines custom errors for Protobuf serialization/deserialization.
- *
- * Last-Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:30 UTC
+ * Dependency: effect
+ * Export: ProtoSerializationError
  */
 
 import { Data } from "effect";

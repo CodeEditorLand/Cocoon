@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/CreateStatEffect.ts
- * Responsibility: Creates an Effect to get file metadata via IPC.
- * Modified: 2025-06-18
+ * Responsibility: Responsibility could not be determined.
+ * Modified: 2025-06-17 10:32:36 UTC
  * Dependency: ../../TypeConverter/Main.js, ../IPC/Service.js, effect, vscode
  */
 
