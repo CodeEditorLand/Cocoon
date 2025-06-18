@@ -1,7 +1,8 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { DevTools } from "@effect/experimental";
 import { NodeSdk } from "@effect/opentelemetry";
-import { NodeRuntime } from "@effect/platform-node";
+import { NodeRuntime, NodeSocket } from "@effect/platform-node";
 import {
   BatchSpanProcessor,
   ConsoleSpanExporter
@@ -565,64 +566,83 @@ class RequireInterceptorService extends Effect.Service()(
     __name(this, "RequireInterceptorService");
   }
 }
-const traceLayer = /* @__PURE__ */ __name((name, layer) => Layer.withSpan(layer, name), "traceLayer");
 const TracingLive = NodeSdk.layer(() => ({
   resource: { serviceName: "cocoon-skeleton" },
   spanProcessor: new BatchSpanProcessor(new ConsoleSpanExporter())
 }));
-const AllServicesUnresolved = Layer.mergeAll(
-  traceLayer("APIFactoryService", APIFactoryService.Default),
-  traceLayer("ESMInterceptorService", ESMInterceptorService.Default),
-  traceLayer("ExtensionHostService", ExtensionHostService.Default),
-  traceLayer("ExtensionPathService", ExtensionPathService.Default),
-  traceLayer("HostKindPickerService", HostKindPickerService.Default),
-  traceLayer("NodeModuleShimService", NodeModuleShimService.Default),
-  traceLayer("RequireInterceptorService", RequireInterceptorService.Default),
-  traceLayer("ProcessPatchService", ProcessPatchService.Default),
-  traceLayer("APIDeprecationService", APIDeprecationService.Default),
-  traceLayer("AuthenticationService", AuthenticationService.Default),
-  traceLayer("CancellationService", CancellationService.Default),
-  traceLayer("ClipboardService", ClipboardService.Default),
-  traceLayer("CommandService", CommandService.Default),
-  traceLayer("ConfigurationService", ConfigurationService.Default),
-  traceLayer("DebugService", DebugService.Default),
-  traceLayer("DiagnosticService", DiagnosticService.Default),
-  traceLayer("DialogService", DialogService.Default),
-  traceLayer("DocumentService", DocumentService.Default),
-  traceLayer("EnvironmentService", EnvironmentService.Default),
-  traceLayer("ExtensionService", ExtensionService.Default),
-  traceLayer("FileSystemService", FileSystemService.Default),
-  traceLayer(
-    "FileSystemInformationService",
-    FileSystemInformationService.Default
-  ),
-  traceLayer("IPCService", IPCService.Default),
-  traceLayer("LanguageFeatureService", LanguageFeatureService.Default),
-  traceLayer("LocalizationService", LocalizationService.Default),
-  traceLayer("MessageService", MessageService.Default),
-  traceLayer("ProposedAPIService", ProposedAPIService.Default),
-  traceLayer("QuickInputService", QuickInputService.Default),
-  traceLayer("SecretStorageService", SecretStorageService.Default),
-  traceLayer("StatusBarService", StatusBarService.Default),
-  traceLayer("StorageService", StorageService.Default),
-  traceLayer("StoragePathService", StoragePathService.Default),
-  traceLayer("TaskService", TaskService.Default),
-  traceLayer("TelemetryService", TelemetryService.Default),
-  traceLayer("TreeViewService", TreeViewService.Default),
-  traceLayer("WebViewPanelService", WebViewPanelService.Default),
-  traceLayer("WindowService", WindowService.Default),
-  traceLayer("WorkSpaceService", WorkSpaceService.Default),
-  traceLayer("IPCConfigurationService", IPCConfigurationService.Default),
-  traceLayer("InitDataService", InitDataService.Default),
-  traceLayer("LoggerService", LoggerService.Default)
+const DevToolsLive = DevTools.layerWebSocket().pipe(
+  Layer.provide(NodeSocket.layerWebSocketConstructor)
 );
-const ApplicationLive = Layer.provide(
-  AllServicesUnresolved,
-  AllServicesUnresolved
+const buildNextLevel = /* @__PURE__ */ __name((servicesToBuild, dependencyLayer) => {
+  const combinedProvider = Layer.merge(dependencyLayer, servicesToBuild);
+  const resolvedServices = Layer.provide(servicesToBuild, combinedProvider);
+  return Layer.merge(dependencyLayer, resolvedServices);
+}, "buildNextLevel");
+const L0_Services = Layer.mergeAll(
+  ConfigurationService.Default,
+  CancellationService.Default,
+  LanguageFeatureService.Default,
+  IPCConfigurationService.Default,
+  InitDataService.Default,
+  ProcessPatchService.Default
 );
-const MainEffect = Effect.gen(function* () {
+const Logger_Layer = Layer.provide(LoggerService.Default, L0_Services);
+const L0_Complete = Layer.merge(L0_Services, Logger_Layer);
+const Core_Services = Layer.mergeAll(
+  APIDeprecationService.Default,
+  HostKindPickerService.Default,
+  ExtensionPathService.Default,
+  NodeModuleShimService.Default
+);
+const Core_Live = buildNextLevel(Core_Services, L0_Complete);
+const L1_Services = Layer.mergeAll(IPCService.Default);
+const L1_Live = buildNextLevel(L1_Services, Core_Live);
+const L2_Services = Layer.mergeAll(
+  ClipboardService.Default,
+  DebugService.Default,
+  DiagnosticService.Default,
+  DialogService.Default,
+  DocumentService.Default,
+  LocalizationService.Default,
+  MessageService.Default,
+  QuickInputService.Default,
+  WebViewPanelService.Default,
+  WindowService.Default,
+  AuthenticationService.Default,
+  FileSystemInformationService.Default,
+  ProposedAPIService.Default,
+  SecretStorageService.Default,
+  StorageService.Default,
+  TaskService.Default,
+  TelemetryService.Default,
+  EnvironmentService.Default
+);
+const L2_Live = buildNextLevel(L2_Services, L1_Live);
+const L3_Services = Layer.mergeAll(
+  FileSystemService.Default,
+  CommandService.Default
+);
+const L3_Live = buildNextLevel(L3_Services, L2_Live);
+const L4_Services = Layer.mergeAll(
+  StoragePathService.Default,
+  WorkSpaceService.Default,
+  StatusBarService.Default,
+  TreeViewService.Default,
+  ExtensionHostService.Default
+);
+const L4_Live = buildNextLevel(L4_Services, L3_Live);
+const L5_Services = Layer.mergeAll(ExtensionService.Default);
+const L5_Live = buildNextLevel(L5_Services, L4_Live);
+const L6_Services = Layer.mergeAll(APIFactoryService.Default);
+const L6_Live = buildNextLevel(L6_Services, L5_Live);
+const L7_Services = Layer.mergeAll(
+  ESMInterceptorService.Default,
+  RequireInterceptorService.Default
+);
+const ApplicationLive = buildNextLevel(L7_Services, L6_Live);
+const mainLogic = Effect.gen(function* () {
   const logger = yield* LoggerService;
-  yield* logger.log("Main effect running...");
+  yield* logger.log("Main logic running...");
   yield* ExtensionHostService;
   yield* RequireInterceptorService;
   yield* APIFactoryService;
@@ -632,14 +652,17 @@ const MainEffect = Effect.gen(function* () {
     "Cocoon skeleton is fully initialized. All services were resolved."
   );
   yield* Effect.never;
-}).pipe(
-  // Provide both the application layer and the tracing layer
-  Effect.provide(Layer.merge(ApplicationLive, TracingLive)),
+});
+const FullLayer = Layer.mergeAll(ApplicationLive, TracingLive, DevToolsLive);
+const buildAndGetEnv = Layer.build(FullLayer);
+const MainEffect = buildAndGetEnv.pipe(
+  Effect.flatMap(
+    (environment) => Effect.provide(mainLogic, environment)
+  ),
+  Effect.withSpan("cocoon-main-app-manual-eager"),
   Effect.catchAllCause(
     (cause) => Effect.logFatal("Cocoon main process failed.", cause)
-  ),
-  // Wrap the entire application in a root span for context
-  Effect.withSpan("cocoon-main-app")
+  )
 );
 NodeRuntime.runMain(MainEffect);
-//# sourceMappingURL=Cocoon_Single_Whole.js.map
+//# sourceMappingURL=Cocoon_Single_Manual.js.map

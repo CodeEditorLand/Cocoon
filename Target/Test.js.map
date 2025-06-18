@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../Source/Test.ts"],
-  "sourcesContent": ["import { DevTools } from \"@effect/experimental\";\nimport { NodeRuntime, NodeSocket } from \"@effect/platform-node\";\nimport { Effect, Layer } from \"effect\";\n\nconst program = Effect.log(\"Hello!\").pipe(\n\tEffect.delay(2000),\n\tEffect.withSpan(\"Hi\", { attributes: { foo: \"bar\" } }),\n\tEffect.forever,\n);\nconst DevToolsLive = DevTools.layerWebSocket().pipe(\n\tLayer.provide(NodeSocket.layerWebSocketConstructor),\n);\n\nprogram.pipe(Effect.provide(DevToolsLive), NodeRuntime.runMain);\n"],
-  "mappings": "AAAA,SAAS,gBAAgB;AACzB,SAAS,aAAa,kBAAkB;AACxC,SAAS,QAAQ,aAAa;AAE9B,MAAM,UAAU,OAAO,IAAI,QAAQ,EAAE;AAAA,EACpC,OAAO,MAAM,GAAI;AAAA,EACjB,OAAO,SAAS,MAAM,EAAE,YAAY,EAAE,KAAK,MAAM,EAAE,CAAC;AAAA,EACpD,OAAO;AACR;AACA,MAAM,eAAe,SAAS,eAAe,EAAE;AAAA,EAC9C,MAAM,QAAQ,WAAW,yBAAyB;AACnD;AAEA,QAAQ,KAAK,OAAO,QAAQ,YAAY,GAAG,YAAY,OAAO;",
-  "names": []
-}
