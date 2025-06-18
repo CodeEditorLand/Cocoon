@@ -109,8 +109,8 @@ class APIDeprecationService extends Effect.Service()(
   "Service/APIDeprecation",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] APIDeprecationService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] APIDeprecationService");
       return {};
     })
   }
@@ -123,8 +123,8 @@ class HostKindPickerService extends Effect.Service()(
   "Core/HostKindPicker",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] HostKindPickerService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] HostKindPickerService");
       return {};
     })
   }
@@ -137,8 +137,8 @@ class NodeModuleShimService extends Effect.Service()(
   "Core/NodeModuleShim",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] NodeModuleShimService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] NodeModuleShimService");
       yield* InitDataService;
       return {};
     })
@@ -285,8 +285,8 @@ class AuthenticationService extends Effect.Service()(
   "Service/Authentication",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] AuthenticationService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] AuthenticationService");
       yield* IPCService;
       return {};
     })
@@ -300,8 +300,8 @@ class FileSystemInformationService extends Effect.Service()(
   "Service/FileSystemInformation",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] FileSystemInformationService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] FileSystemInformationService");
       yield* IPCService;
       return {};
     })
@@ -315,8 +315,8 @@ class ProposedAPIService extends Effect.Service()(
   "Service/ProposedAPI",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] ProposedAPIService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] ProposedAPIService");
       yield* InitDataService;
       return {};
     })
@@ -330,8 +330,8 @@ class SecretStorageService extends Effect.Service()(
   "Service/SecretStorage",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] SecretStorageService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] SecretStorageService");
       yield* IPCService;
       return {};
     })
@@ -345,8 +345,8 @@ class StorageService extends Effect.Service()(
   "Service/Storage",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] StorageService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] StorageService");
       yield* IPCService;
       return {};
     })
@@ -360,8 +360,8 @@ class TelemetryService extends Effect.Service()(
   "Service/Telemetry",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] TelemetryService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] TelemetryService");
       yield* InitDataService;
       yield* IPCService;
       return {};
@@ -420,8 +420,8 @@ class StoragePathService extends Effect.Service()(
   "Service/StoragePath",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] StoragePathService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] StoragePathService");
       yield* InitDataService;
       yield* FileSystemService;
       return {};
@@ -480,8 +480,8 @@ class ExtensionHostService extends Effect.Service()(
   "Core/ExtensionHost",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] ExtensionHostService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] ExtensionHostService");
       yield* IPCService;
       yield* InitDataService;
       yield* TelemetryService;
@@ -511,8 +511,8 @@ class APIFactoryService extends Effect.Service()(
   "Core/APIFactory",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] APIFactoryService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] APIFactoryService");
       yield* APIDeprecationService;
       yield* CommandService;
       yield* DebugService;
@@ -538,8 +538,8 @@ class ESMInterceptorService extends Effect.Service()(
   "Core/ESMInterceptor",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] ESMInterceptorService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] ESMInterceptorService");
       yield* APIFactoryService;
       yield* ExtensionPathService;
       return {};
@@ -554,8 +554,8 @@ class RequireInterceptorService extends Effect.Service()(
   "Core/RequireInterceptor",
   {
     effect: Effect.gen(function* () {
-      const logger = yield* LoggerService;
-      yield* logger.log("... [CONSTRUCTOR] RequireInterceptorService");
+      const Logger = yield* LoggerService;
+      yield* Logger.log("... [CONSTRUCTOR] RequireInterceptorService");
       yield* APIFactoryService;
       yield* ExtensionPathService;
       yield* NodeModuleShimService;
@@ -571,8 +571,9 @@ const TracingLive = NodeSdk.layer(() => ({
   resource: { serviceName: "cocoon-skeleton" },
   spanProcessor: new BatchSpanProcessor(new ConsoleSpanExporter())
 }));
-const DevToolsLive = DevTools.layerWebSocket().pipe(
-  Layer.provide(NodeSocket.layerWebSocketConstructor)
+const DevToolsLive = Layer.provide(
+  DevTools.layerWebSocket(),
+  NodeSocket.layerWebSocketConstructor
 );
 const L1_World = Layer.mergeAll(
   ConfigurationService.Default,
@@ -656,23 +657,23 @@ const L10_Services = Layer.mergeAll(
 const AppLayer = Layer.merge(L9_World, L10_Services).pipe(
   Layer.provide(L9_World)
 );
-const mainLogic = Effect.gen(function* () {
-  const logger = yield* LoggerService;
-  yield* logger.log("--- Main logic started. Base logger is available. ---");
-  yield* logger.log(
+const MainLogic = Effect.gen(function* () {
+  const Logger = yield* LoggerService;
+  yield* Logger.log("--- Main logic started. Base Logger is available. ---");
+  yield* Logger.log(
     "--- Triggering full initialization by requesting top-level services... ---"
   );
   yield* RequireInterceptorService;
   yield* ESMInterceptorService;
-  yield* logger.log(
+  yield* Logger.log(
     "--- Initialization complete. All services are built and memoized. ---"
   );
-  yield* logger.log("Application is now running and will hang indefinitely.");
+  yield* Logger.log("Application is now running and will hang indefinitely.");
   yield* Effect.never;
 });
-const MainEffect = Effect.provide(mainLogic, AppLayer).pipe(
+const MainEffect = Effect.provide(MainLogic, AppLayer).pipe(
   Effect.provide(Layer.merge(TracingLive, DevToolsLive)),
-  Effect.withSpan("cocoon-main-app-fixed"),
+  Effect.withSpan("cocoon-skeleton"),
   Effect.catchAllCause(
     (cause) => Effect.logFatal("Cocoon main process failed.", cause)
   )

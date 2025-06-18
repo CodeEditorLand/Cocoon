@@ -49,5 +49,10 @@
 	"publishConfig": {
 		"access": "public",
 		"provenance": true
+	},
+	"pnpm": {
+		"overrides": {
+			"effect": "3.16.8"
+		}
 	}
 }
