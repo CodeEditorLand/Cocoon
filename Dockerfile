@@ -10,4 +10,4 @@ RUN pnpm install
 
 COPY . .
 
-CMD ["node", "./Target/Cocoon_Single.js"]
+CMD ["node", "./Target/Skeleton.js"]

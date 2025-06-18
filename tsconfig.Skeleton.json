@@ -58,5 +58,5 @@
 
 	"extends": "@playform/build/tsconfig",
 
-	"include": ["Source", "@types/node"]
+	"include": ["Source/Skeleton.ts", "@types/node"]
 }
