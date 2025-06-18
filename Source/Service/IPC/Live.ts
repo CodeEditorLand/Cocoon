@@ -1,7 +1,7 @@
 /*
  * File: Cocoon/Source/Service/IPC/Live.ts
  * Responsibility: Provides the composed "live" Layer for the entire IPC service.
- * Modified: 2025-06-18 11:00:00 UTC
+ * Modified: 2025-06-18 12:00:00 UTC
  */
 
 /**
@@ -24,15 +24,25 @@ import Service from "./Service.js";
 
 /**
  * A layer that bundles all the internal dependencies required by the main IPC service.
- * This layer itself requires the IPCConfigurationService to build its sub-components.
+ * This is the collection of all sub-components of the IPC system.
  */
-const IPCInternalDepsLive = Layer.mergeAll(
+const IPCInternalComponents = Layer.mergeAll(
 	ClientLive,
 	ServerLive,
 	DispatcherLive,
 	ProtocolAdapterLive,
 	// The Dispatcher requires the CancellationService, so we include it here.
 	CancellationLive,
+);
+
+/**
+ * A fully resolved layer for all internal IPC dependencies.
+ * By providing the component layer to itself, we resolve all cross-dependencies
+ * between the sub-services (e.g., ProtocolAdapter needing ClientService).
+ * The only remaining dependency is the external IPCConfigurationService.
+ */
+const IPCInternalDepsLive = IPCInternalComponents.pipe(
+	Layer.provide(IPCInternalComponents),
 );
 
 /**
@@ -44,14 +54,12 @@ const IPCServiceLive = Layer.effect(Service, Definition);
 /**
  * The final, composed "live" Layer for the IPC service.
  *
- * This layer is constructed by providing the internal dependencies layer
- * to the main IPC service layer. This resolves all dependencies except for
- * the external `IPCConfigurationService`, which is correctly exposed as
- * the final requirement.
- *
- * The potential `gRPCConnectionError` from the internal dependencies is treated
- * as a fatal defect using `Layer.orDie`, ensuring the final layer has a `never`
- * error channel.
+ * This layer is constructed by providing the fully resolved internal dependencies layer
+ * to the main IPC service layer. The potential `gRPCConnectionError` from the
+- * internal dependencies is treated as a fatal defect using `Layer.orDie`,
+- * ensuring the final layer has a `never` error channel.
++ * internal dependencies is treated as a fatal defect, ensuring the final layer has a
++ * `never` error channel.
  */
 const IPCLive: Layer.Layer<Service, never, IPCConfigurationService> =
 	IPCServiceLive.pipe(Layer.provide(IPCInternalDepsLive), Layer.orDie);
