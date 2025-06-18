@@ -1,20 +1,18 @@
 /*
- * File: Cocoon_Single_Atomic_EagerBuild_v3.ts
- * Approach: The definitive solution. Merges all layers, then uses Layer.build
- * to eagerly construct the entire environment before the main logic runs.
- * Includes OpenTelemetry tracing and Effect DevTools.
- * This version uses Effect.provide(effect, context) for compatibility.
+ * File: Cocoon_Single_Atomic_Final.ts
+ * Approach: The definitive solution. Uses the high-level `Effect.provide`
+ * with an array of layers, which handles all merging, dependency resolution,
+ * and scoping automatically. Includes Tracing and DevTools.
  */
 
 import { DevTools } from "@effect/experimental";
-// Import required OpenTelemetry modules for tracing
 import { NodeSdk } from "@effect/opentelemetry";
 import { NodeRuntime, NodeSocket } from "@effect/platform-node";
 import {
 	BatchSpanProcessor,
 	ConsoleSpanExporter,
 } from "@opentelemetry/sdk-trace-base";
-import { Context, Effect, Layer } from "effect";
+import { Effect, Layer } from "effect";
 
 // --- Placeholder Types & Service Definitions (Unchanged) ---
 interface IExtensionHostInitData {
@@ -428,65 +426,14 @@ const TracingLive = NodeSdk.layer(() => ({
 	resource: { serviceName: "cocoon-skeleton" },
 	spanProcessor: new BatchSpanProcessor(new ConsoleSpanExporter()),
 }));
-
 const DevToolsLive = DevTools.layerWebSocket().pipe(
 	Layer.provide(NodeSocket.layerWebSocketConstructor),
 );
 
-// --- Atomic Layer Composition ---
-const AllServicesUnresolved = Layer.mergeAll(
-	APIFactoryService.Default,
-	ESMInterceptorService.Default,
-	ExtensionHostService.Default,
-	ExtensionPathService.Default,
-	HostKindPickerService.Default,
-	NodeModuleShimService.Default,
-	RequireInterceptorService.Default,
-	ProcessPatchService.Default,
-	APIDeprecationService.Default,
-	AuthenticationService.Default,
-	CancellationService.Default,
-	ClipboardService.Default,
-	CommandService.Default,
-	ConfigurationService.Default,
-	DebugService.Default,
-	DiagnosticService.Default,
-	DialogService.Default,
-	DocumentService.Default,
-	EnvironmentService.Default,
-	ExtensionService.Default,
-	FileSystemService.Default,
-	FileSystemInformationService.Default,
-	IPCService.Default,
-	LanguageFeatureService.Default,
-	LocalizationService.Default,
-	MessageService.Default,
-	ProposedAPIService.Default,
-	QuickInputService.Default,
-	SecretStorageService.Default,
-	StatusBarService.Default,
-	StorageService.Default,
-	StoragePathService.Default,
-	TaskService.Default,
-	TelemetryService.Default,
-	TreeViewService.Default,
-	WebViewPanelService.Default,
-	WindowService.Default,
-	WorkSpaceService.Default,
-	IPCConfigurationService.Default,
-	InitDataService.Default,
-	LoggerService.Default,
-);
-
-const ApplicationLive = Layer.provide(
-	AllServicesUnresolved,
-	AllServicesUnresolved,
-);
-
-// --- Main Logic (Requires a fully-formed environment) ---
-const mainLogic = Effect.gen(function* () {
+// --- Main Application Effect ---
+const MainEffect = Effect.gen(function* () {
 	const logger = yield* LoggerService;
-	yield* logger.log("Main logic running...");
+	yield* logger.log("Main effect running...");
 	yield* ExtensionHostService;
 	yield* RequireInterceptorService;
 	yield* APIFactoryService;
@@ -500,25 +447,59 @@ const mainLogic = Effect.gen(function* () {
 		"Cocoon skeleton is fully initialized. All services were resolved.",
 	);
 	yield* Effect.never;
-});
-
-// --- Final Eager Build and Execution ---
-const FullLayer = Layer.mergeAll(ApplicationLive, TracingLive, DevToolsLive);
-
-// This is an Effect that, when run, builds the layer and yields the Context.
-const buildAndGetEnv = Layer.build(FullLayer);
-
-// The final executable Effect.
-const MainEffect = buildAndGetEnv.pipe(
-	// We use flatMap to get the `environment` (which is a Context)
-	// and then provide it to our mainLogic.
-	Effect.flatMap((environment: Context.Context<any>) =>
-		Effect.provide(mainLogic, environment),
-	),
-	Effect.withSpan("cocoon-main-app-eager"),
+}).pipe(
+	// Provide an array of all layers. Effect will handle merging,
+	// dependency resolution, and scoping automatically.
+	Effect.provide([
+		APIFactoryService.Default,
+		ESMInterceptorService.Default,
+		ExtensionHostService.Default,
+		ExtensionPathService.Default,
+		HostKindPickerService.Default,
+		NodeModuleShimService.Default,
+		RequireInterceptorService.Default,
+		ProcessPatchService.Default,
+		APIDeprecationService.Default,
+		AuthenticationService.Default,
+		CancellationService.Default,
+		ClipboardService.Default,
+		CommandService.Default,
+		ConfigurationService.Default,
+		DebugService.Default,
+		DiagnosticService.Default,
+		DialogService.Default,
+		DocumentService.Default,
+		EnvironmentService.Default,
+		ExtensionService.Default,
+		FileSystemService.Default,
+		FileSystemInformationService.Default,
+		IPCService.Default,
+		LanguageFeatureService.Default,
+		LocalizationService.Default,
+		MessageService.Default,
+		ProposedAPIService.Default,
+		QuickInputService.Default,
+		SecretStorageService.Default,
+		StatusBarService.Default,
+		StorageService.Default,
+		StoragePathService.Default,
+		TaskService.Default,
+		TelemetryService.Default,
+		TreeViewService.Default,
+		WebViewPanelService.Default,
+		WindowService.Default,
+		WorkSpaceService.Default,
+		IPCConfigurationService.Default,
+		InitDataService.Default,
+		LoggerService.Default,
+		// Utility layers
+		TracingLive,
+		DevToolsLive,
+	]),
 	Effect.catchAllCause((cause) =>
 		Effect.logFatal("Cocoon main process failed.", cause),
 	),
+	Effect.withSpan("cocoon-main-app-atomic"),
 );
 
 // --- Run the Application ---

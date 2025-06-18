@@ -1,19 +1,18 @@
 /*
- * File: Cocoon_Single_Manual_EagerBuild_v3.ts
- * Approach: A manual, step-by-step composition, but made robust by using
- * Layer.build to eagerly construct the final layer. Includes tracing and DevTools.
- * This version uses Effect.provide(effect, context) for compatibility.
+ * File: Cocoon_Single_Manual_Final.ts
+ * Approach: A manual composition of layers, which can be fragile for complex graphs.
+ * The final layer is provided along with utility layers.
+ * Includes tracing and DevTools.
  */
 
 import { DevTools } from "@effect/experimental";
-// Import required OpenTelemetry modules for tracing
 import { NodeSdk } from "@effect/opentelemetry";
 import { NodeRuntime, NodeSocket } from "@effect/platform-node";
 import {
 	BatchSpanProcessor,
 	ConsoleSpanExporter,
 } from "@opentelemetry/sdk-trace-base";
-import { Context, Effect, Layer } from "effect";
+import { Effect, Layer } from "effect";
 
 // --- Placeholder Types & Service Definitions (Unchanged) ---
 interface IExtensionHostInitData {
@@ -431,16 +430,8 @@ const DevToolsLive = DevTools.layerWebSocket().pipe(
 	Layer.provide(NodeSocket.layerWebSocketConstructor),
 );
 
-// --- Manual Layer Composition ---
-const buildNextLevel = (
-	servicesToBuild: Layer.Layer<any, any, any>,
-	dependencyLayer: Layer.Layer<any, any, any>,
-) => {
-	const combinedProvider = Layer.merge(dependencyLayer, servicesToBuild);
-	const resolvedServices = Layer.provide(servicesToBuild, combinedProvider);
-	return Layer.merge(dependencyLayer, resolvedServices);
-};
-const L0_Services = Layer.mergeAll(
+// --- Manual Layer Composition (Corrected) ---
+const BaseServices = Layer.mergeAll(
 	ConfigurationService.Default,
 	CancellationService.Default,
 	LanguageFeatureService.Default,
@@ -448,18 +439,16 @@ const L0_Services = Layer.mergeAll(
 	InitDataService.Default,
 	ProcessPatchService.Default,
 );
-const Logger_Layer = Layer.provide(LoggerService.Default, L0_Services);
-const L0_Complete = Layer.merge(L0_Services, Logger_Layer);
-const Core_Services = Layer.mergeAll(
+const LoggerLive = Layer.provide(LoggerService.Default, BaseServices);
+const FoundationLive = Layer.merge(BaseServices, LoggerLive);
+const CoreServices = Layer.mergeAll(
 	APIDeprecationService.Default,
 	HostKindPickerService.Default,
 	ExtensionPathService.Default,
 	NodeModuleShimService.Default,
 );
-const Core_Live = buildNextLevel(Core_Services, L0_Complete);
-const L1_Services = Layer.mergeAll(IPCService.Default);
-const L1_Live = buildNextLevel(L1_Services, Core_Live);
-const L2_Services = Layer.mergeAll(
+const L1Services = Layer.mergeAll(IPCService.Default);
+const L2Services = Layer.mergeAll(
 	ClipboardService.Default,
 	DebugService.Default,
 	DiagnosticService.Default,
@@ -479,34 +468,46 @@ const L2_Services = Layer.mergeAll(
 	TelemetryService.Default,
 	EnvironmentService.Default,
 );
-const L2_Live = buildNextLevel(L2_Services, L1_Live);
-const L3_Services = Layer.mergeAll(
+const L3Services = Layer.mergeAll(
 	FileSystemService.Default,
 	CommandService.Default,
 );
-const L3_Live = buildNextLevel(L3_Services, L2_Live);
-const L4_Services = Layer.mergeAll(
+const L4Services = Layer.mergeAll(
 	StoragePathService.Default,
 	WorkSpaceService.Default,
 	StatusBarService.Default,
 	TreeViewService.Default,
 	ExtensionHostService.Default,
 );
-const L4_Live = buildNextLevel(L4_Services, L3_Live);
-const L5_Services = Layer.mergeAll(ExtensionService.Default);
-const L5_Live = buildNextLevel(L5_Services, L4_Live);
-const L6_Services = Layer.mergeAll(APIFactoryService.Default);
-const L6_Live = buildNextLevel(L6_Services, L5_Live);
-const L7_Services = Layer.mergeAll(
+const L5Services = Layer.mergeAll(ExtensionService.Default);
+const L6Services = Layer.mergeAll(APIFactoryService.Default);
+const L7Services = Layer.mergeAll(
 	ESMInterceptorService.Default,
 	RequireInterceptorService.Default,
 );
-const ApplicationLive = buildNextLevel(L7_Services, L6_Live);
 
-// --- Main Logic (Requires a fully-formed environment) ---
-const mainLogic = Effect.gen(function* () {
+// Merge all layers into a single, unresolved layer
+const AllServicesUnresolved = Layer.mergeAll(
+	FoundationLive,
+	CoreServices,
+	L1Services,
+	L2Services,
+	L3Services,
+	L4Services,
+	L5Services,
+	L6Services,
+	L7Services,
+);
+// Resolve all internal dependencies in one step
+const ApplicationLive = Layer.provide(
+	AllServicesUnresolved,
+	AllServicesUnresolved,
+);
+
+// --- Main Application Effect ---
+const MainEffect = Effect.gen(function* () {
 	const logger = yield* LoggerService;
-	yield* logger.log("Main logic running...");
+	yield* logger.log("Main effect running...");
 	yield* ExtensionHostService;
 	yield* RequireInterceptorService;
 	yield* APIFactoryService;
@@ -520,19 +521,12 @@ const mainLogic = Effect.gen(function* () {
 		"Cocoon skeleton is fully initialized. All services were resolved.",
 	);
 	yield* Effect.never;
-});
-
-// --- Final Eager Build and Execution ---
-const FullLayer = Layer.mergeAll(ApplicationLive, TracingLive, DevToolsLive);
-const buildAndGetEnv = Layer.build(FullLayer);
-const MainEffect = buildAndGetEnv.pipe(
-	Effect.flatMap((environment: Context.Context<any>) =>
-		Effect.provide(mainLogic, environment),
-	),
-	Effect.withSpan("cocoon-main-app-manual-eager"),
+}).pipe(
+	Effect.provide([ApplicationLive, TracingLive, DevToolsLive]),
 	Effect.catchAllCause((cause) =>
 		Effect.logFatal("Cocoon main process failed.", cause),
 	),
+	Effect.withSpan("cocoon-main-app-manual"),
 );
 
 // --- Run the Application ---

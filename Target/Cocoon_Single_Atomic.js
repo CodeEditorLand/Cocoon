@@ -573,56 +573,9 @@ const TracingLive = NodeSdk.layer(() => ({
 const DevToolsLive = DevTools.layerWebSocket().pipe(
   Layer.provide(NodeSocket.layerWebSocketConstructor)
 );
-const AllServicesUnresolved = Layer.mergeAll(
-  APIFactoryService.Default,
-  ESMInterceptorService.Default,
-  ExtensionHostService.Default,
-  ExtensionPathService.Default,
-  HostKindPickerService.Default,
-  NodeModuleShimService.Default,
-  RequireInterceptorService.Default,
-  ProcessPatchService.Default,
-  APIDeprecationService.Default,
-  AuthenticationService.Default,
-  CancellationService.Default,
-  ClipboardService.Default,
-  CommandService.Default,
-  ConfigurationService.Default,
-  DebugService.Default,
-  DiagnosticService.Default,
-  DialogService.Default,
-  DocumentService.Default,
-  EnvironmentService.Default,
-  ExtensionService.Default,
-  FileSystemService.Default,
-  FileSystemInformationService.Default,
-  IPCService.Default,
-  LanguageFeatureService.Default,
-  LocalizationService.Default,
-  MessageService.Default,
-  ProposedAPIService.Default,
-  QuickInputService.Default,
-  SecretStorageService.Default,
-  StatusBarService.Default,
-  StorageService.Default,
-  StoragePathService.Default,
-  TaskService.Default,
-  TelemetryService.Default,
-  TreeViewService.Default,
-  WebViewPanelService.Default,
-  WindowService.Default,
-  WorkSpaceService.Default,
-  IPCConfigurationService.Default,
-  InitDataService.Default,
-  LoggerService.Default
-);
-const ApplicationLive = Layer.provide(
-  AllServicesUnresolved,
-  AllServicesUnresolved
-);
-const mainLogic = Effect.gen(function* () {
+const MainEffect = Effect.gen(function* () {
   const logger = yield* LoggerService;
-  yield* logger.log("Main logic running...");
+  yield* logger.log("Main effect running...");
   yield* ExtensionHostService;
   yield* RequireInterceptorService;
   yield* APIFactoryService;
@@ -632,19 +585,59 @@ const mainLogic = Effect.gen(function* () {
     "Cocoon skeleton is fully initialized. All services were resolved."
   );
   yield* Effect.never;
-});
-const FullLayer = Layer.mergeAll(ApplicationLive, TracingLive, DevToolsLive);
-const buildAndGetEnv = Layer.build(FullLayer);
-const MainEffect = buildAndGetEnv.pipe(
-  // We use flatMap to get the `environment` (which is a Context)
-  // and then provide it to our mainLogic.
-  Effect.flatMap(
-    (environment) => Effect.provide(mainLogic, environment)
-  ),
-  Effect.withSpan("cocoon-main-app-eager"),
+}).pipe(
+  // Provide an array of all layers. Effect will handle merging,
+  // dependency resolution, and scoping automatically.
+  Effect.provide([
+    APIFactoryService.Default,
+    ESMInterceptorService.Default,
+    ExtensionHostService.Default,
+    ExtensionPathService.Default,
+    HostKindPickerService.Default,
+    NodeModuleShimService.Default,
+    RequireInterceptorService.Default,
+    ProcessPatchService.Default,
+    APIDeprecationService.Default,
+    AuthenticationService.Default,
+    CancellationService.Default,
+    ClipboardService.Default,
+    CommandService.Default,
+    ConfigurationService.Default,
+    DebugService.Default,
+    DiagnosticService.Default,
+    DialogService.Default,
+    DocumentService.Default,
+    EnvironmentService.Default,
+    ExtensionService.Default,
+    FileSystemService.Default,
+    FileSystemInformationService.Default,
+    IPCService.Default,
+    LanguageFeatureService.Default,
+    LocalizationService.Default,
+    MessageService.Default,
+    ProposedAPIService.Default,
+    QuickInputService.Default,
+    SecretStorageService.Default,
+    StatusBarService.Default,
+    StorageService.Default,
+    StoragePathService.Default,
+    TaskService.Default,
+    TelemetryService.Default,
+    TreeViewService.Default,
+    WebViewPanelService.Default,
+    WindowService.Default,
+    WorkSpaceService.Default,
+    IPCConfigurationService.Default,
+    InitDataService.Default,
+    LoggerService.Default,
+    // Utility layers
+    TracingLive,
+    DevToolsLive
+  ]),
   Effect.catchAllCause(
     (cause) => Effect.logFatal("Cocoon main process failed.", cause)
-  )
+  ),
+  Effect.withSpan("cocoon-main-app-atomic")
 );
 NodeRuntime.runMain(MainEffect);
 //# sourceMappingURL=Cocoon_Single_Atomic.js.map

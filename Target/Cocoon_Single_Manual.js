@@ -573,12 +573,7 @@ const TracingLive = NodeSdk.layer(() => ({
 const DevToolsLive = DevTools.layerWebSocket().pipe(
   Layer.provide(NodeSocket.layerWebSocketConstructor)
 );
-const buildNextLevel = /* @__PURE__ */ __name((servicesToBuild, dependencyLayer) => {
-  const combinedProvider = Layer.merge(dependencyLayer, servicesToBuild);
-  const resolvedServices = Layer.provide(servicesToBuild, combinedProvider);
-  return Layer.merge(dependencyLayer, resolvedServices);
-}, "buildNextLevel");
-const L0_Services = Layer.mergeAll(
+const BaseServices = Layer.mergeAll(
   ConfigurationService.Default,
   CancellationService.Default,
   LanguageFeatureService.Default,
@@ -586,18 +581,16 @@ const L0_Services = Layer.mergeAll(
   InitDataService.Default,
   ProcessPatchService.Default
 );
-const Logger_Layer = Layer.provide(LoggerService.Default, L0_Services);
-const L0_Complete = Layer.merge(L0_Services, Logger_Layer);
-const Core_Services = Layer.mergeAll(
+const LoggerLive = Layer.provide(LoggerService.Default, BaseServices);
+const FoundationLive = Layer.merge(BaseServices, LoggerLive);
+const CoreServices = Layer.mergeAll(
   APIDeprecationService.Default,
   HostKindPickerService.Default,
   ExtensionPathService.Default,
   NodeModuleShimService.Default
 );
-const Core_Live = buildNextLevel(Core_Services, L0_Complete);
-const L1_Services = Layer.mergeAll(IPCService.Default);
-const L1_Live = buildNextLevel(L1_Services, Core_Live);
-const L2_Services = Layer.mergeAll(
+const L1Services = Layer.mergeAll(IPCService.Default);
+const L2Services = Layer.mergeAll(
   ClipboardService.Default,
   DebugService.Default,
   DiagnosticService.Default,
@@ -617,32 +610,41 @@ const L2_Services = Layer.mergeAll(
   TelemetryService.Default,
   EnvironmentService.Default
 );
-const L2_Live = buildNextLevel(L2_Services, L1_Live);
-const L3_Services = Layer.mergeAll(
+const L3Services = Layer.mergeAll(
   FileSystemService.Default,
   CommandService.Default
 );
-const L3_Live = buildNextLevel(L3_Services, L2_Live);
-const L4_Services = Layer.mergeAll(
+const L4Services = Layer.mergeAll(
   StoragePathService.Default,
   WorkSpaceService.Default,
   StatusBarService.Default,
   TreeViewService.Default,
   ExtensionHostService.Default
 );
-const L4_Live = buildNextLevel(L4_Services, L3_Live);
-const L5_Services = Layer.mergeAll(ExtensionService.Default);
-const L5_Live = buildNextLevel(L5_Services, L4_Live);
-const L6_Services = Layer.mergeAll(APIFactoryService.Default);
-const L6_Live = buildNextLevel(L6_Services, L5_Live);
-const L7_Services = Layer.mergeAll(
+const L5Services = Layer.mergeAll(ExtensionService.Default);
+const L6Services = Layer.mergeAll(APIFactoryService.Default);
+const L7Services = Layer.mergeAll(
   ESMInterceptorService.Default,
   RequireInterceptorService.Default
 );
-const ApplicationLive = buildNextLevel(L7_Services, L6_Live);
-const mainLogic = Effect.gen(function* () {
+const AllServicesUnresolved = Layer.mergeAll(
+  FoundationLive,
+  CoreServices,
+  L1Services,
+  L2Services,
+  L3Services,
+  L4Services,
+  L5Services,
+  L6Services,
+  L7Services
+);
+const ApplicationLive = Layer.provide(
+  AllServicesUnresolved,
+  AllServicesUnresolved
+);
+const MainEffect = Effect.gen(function* () {
   const logger = yield* LoggerService;
-  yield* logger.log("Main logic running...");
+  yield* logger.log("Main effect running...");
   yield* ExtensionHostService;
   yield* RequireInterceptorService;
   yield* APIFactoryService;
@@ -652,17 +654,12 @@ const mainLogic = Effect.gen(function* () {
     "Cocoon skeleton is fully initialized. All services were resolved."
   );
   yield* Effect.never;
-});
-const FullLayer = Layer.mergeAll(ApplicationLive, TracingLive, DevToolsLive);
-const buildAndGetEnv = Layer.build(FullLayer);
-const MainEffect = buildAndGetEnv.pipe(
-  Effect.flatMap(
-    (environment) => Effect.provide(mainLogic, environment)
-  ),
-  Effect.withSpan("cocoon-main-app-manual-eager"),
+}).pipe(
+  Effect.provide([ApplicationLive, TracingLive, DevToolsLive]),
   Effect.catchAllCause(
     (cause) => Effect.logFatal("Cocoon main process failed.", cause)
-  )
+  ),
+  Effect.withSpan("cocoon-main-app-manual")
 );
 NodeRuntime.runMain(MainEffect);
 //# sourceMappingURL=Cocoon_Single_Manual.js.map
