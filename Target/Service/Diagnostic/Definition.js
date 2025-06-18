@@ -1,1 +1,39 @@
-import{Effect as o}from"effect";import m from"Source/TypeConverter/Main/URI.js";import a from"../../Utility/CreateEventStream.js";import s from"../IPC/Service.js";import p from"./DiagnosticCollectionImplementation.js";let v=0;var I=o.gen(function*(){const t=yield*s,{event:n,Fire:i}=a();return yield*o.sync(()=>t.RegisterInvokeHandler("$acceptMarkerData",([e])=>{const r=e.map(c=>m.ToAPI(c));return o.runPromise(i(r))})),{onDidChangeDiagnostics:n,CreateDiagnosticCollection:e=>{const r=`cocoon-diag-${v++}-${e??"anon"}`;return new p(e??"",r,t)}}});export{I as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import URIConverter from "Source/TypeConverter/Main/URI.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import IPCService from "../IPC/Service.js";
+import DiagnosticCollectionImplementation from "./DiagnosticCollectionImplementation.js";
+let OwnerCounter = 0;
+var Definition_default = Effect.gen(function* () {
+  const IPC = yield* IPCService;
+  const { event, Fire } = CreateEventStream();
+  yield* Effect.sync(
+    () => IPC.RegisterInvokeHandler(
+      "$acceptMarkerData",
+      ([uriComponentsArray]) => {
+        const RevivedUris = uriComponentsArray.map(
+          (DTO) => URIConverter.ToAPI(DTO)
+        );
+        return Effect.runPromise(Fire(RevivedUris));
+      }
+    )
+  );
+  const ServiceImplementation = {
+    onDidChangeDiagnostics: event,
+    CreateDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
+      const Owner = `cocoon-diag-${OwnerCounter++}-${Name ?? "anon"}`;
+      return new DiagnosticCollectionImplementation(
+        Name ?? "",
+        Owner,
+        IPC
+      );
+    }, "CreateDiagnosticCollection")
+  };
+  return ServiceImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

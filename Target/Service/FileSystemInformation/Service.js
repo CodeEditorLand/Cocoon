@@ -1,1 +1,14 @@
-import{Context as e}from"effect";class i extends e.Tag("Service/FileSystemInformation")(){}export{i as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Context } from "effect";
+class FileSystemInformationService extends Context.Tag(
+  "Service/FileSystemInformation"
+)() {
+  static {
+    __name(this, "FileSystemInformationService");
+  }
+}
+export {
+  FileSystemInformationService as default
+};
+//# sourceMappingURL=Service.js.map

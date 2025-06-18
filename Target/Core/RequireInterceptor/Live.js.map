@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/RequireInterceptor/Live.ts"],
+  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Core/RequireInterceptor/Live.ts\r\n * Responsibility:\r\n * Modified: 2025-06-17 21:19:38 UTC\r\n * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ../NodeModuleShim/Service.js, ./Definition.js, ./Service.js, effect\r\n */\r\n\r\n/**\r\n * @module Live (RequireInterceptor)\r\n * @description The live implementation layer for the RequireInterceptor service.\r\n */\r\n\r\nimport { Layer } from \"effect\";\r\n\r\nimport type LogService from \"../../Service/Log/Service.js\";\r\nimport type APIFactoryService from \"../APIFactory/Service.js\";\r\nimport type ExtensionPathService from \"../ExtensionPath/Service.js\";\r\nimport NodeModuleShimService from \"../NodeModuleShim/Service.js\";\r\nimport Definition from \"./Definition.js\";\r\nimport Service from \"./Service.js\";\r\n\r\n/**\r\n * The live implementation layer for the RequireInterceptor service.\r\n * It correctly declares its dependencies on APIFactory, ExtensionPath, NodeModuleShim, and Log services.\r\n */\r\nconst Live: Layer.Layer<\r\n\tService,\r\n\tnever,\r\n\t| APIFactoryService\r\n\t| ExtensionPathService\r\n\t| NodeModuleShimService\r\n\t| LogService\r\n> = Layer.effect(Service, Definition);\r\n\r\nexport default Live;\r\n"],
+  "mappings": "AAYA,SAAS,aAAa;AAMtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAOF,MAAM,OAAO,SAAS,UAAU;AAEpC,IAAO,eAAQ;",
+  "names": []
+}

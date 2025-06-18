@@ -1,1 +1,62 @@
-import{Effect as o}from"effect";import{FileSystemError as t}from"vscode";import a from"../../TypeConverter/Main/URI.js";import p from"../FileSystemInformation/Service.js";import f from"../IPC/Service.js";var u=o.gen(function*(m){const s=yield*m(p),c=yield*m(f),l=e=>o.gen(function*(r){const n=a.FromAPI(e),i=yield*r(c.SendRequest("$stat",[n]));return{type:i.type,ctime:i.ctime,mtime:i.mtime,size:i.size,permissions:i.permissions}}).pipe(o.mapError(r=>new Error(String(r))));return{stat:e=>o.runPromise(l(e)),readDirectory:e=>Promise.reject(new t(`readDirectory not implemented for ${e}`)),createDirectory:e=>Promise.reject(new t(`createDirectory not implemented for ${e}`)),readFile:e=>Promise.reject(new t(`readFile not implemented for ${e}`)),writeFile:(e,r)=>Promise.reject(new t(`writeFile not implemented for ${e}`)),delete:(e,r)=>Promise.reject(new t(`delete not implemented for ${e}`)),rename:(e,r,n)=>Promise.reject(new t(`rename not implemented for ${e}`)),copy:(e,r,n)=>Promise.reject(new t(`copy not implemented for ${e}`)),isWritableFileSystem:e=>s.isWritableFileSystem(e),onDidChangeFile:s.onDidChangeFile}});export{u as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import {
+  FileSystemError as VscFileSystemError
+} from "vscode";
+import URIConverter from "../../TypeConverter/Main/URI.js";
+import FileSystemInformationService from "../FileSystemInformation/Service.js";
+import IPCService from "../IPC/Service.js";
+var Definition_default = Effect.gen(function* (G) {
+  const FsInfo = yield* G(FileSystemInformationService);
+  const IPC = yield* G(IPCService);
+  const StatEffect = /* @__PURE__ */ __name((uri) => Effect.gen(function* (G2) {
+    const UriDTO = URIConverter.FromAPI(uri);
+    const StatDTO = yield* G2(IPC.SendRequest("$stat", [UriDTO]));
+    const FileStat = {
+      type: StatDTO.type,
+      ctime: StatDTO.ctime,
+      mtime: StatDTO.mtime,
+      size: StatDTO.size,
+      permissions: StatDTO.permissions
+    };
+    return FileStat;
+  }).pipe(Effect.mapError((cause) => new Error(String(cause)))), "StatEffect");
+  const ServiceImplementation = {
+    stat: /* @__PURE__ */ __name((uri) => Effect.runPromise(StatEffect(uri)), "stat"),
+    readDirectory: /* @__PURE__ */ __name((uri) => Promise.reject(
+      new VscFileSystemError(
+        `readDirectory not implemented for ${uri}`
+      )
+    ), "readDirectory"),
+    createDirectory: /* @__PURE__ */ __name((uri) => Promise.reject(
+      new VscFileSystemError(
+        `createDirectory not implemented for ${uri}`
+      )
+    ), "createDirectory"),
+    readFile: /* @__PURE__ */ __name((uri) => Promise.reject(
+      new VscFileSystemError(`readFile not implemented for ${uri}`)
+    ), "readFile"),
+    writeFile: /* @__PURE__ */ __name((uri, _Content) => Promise.reject(
+      new VscFileSystemError(`writeFile not implemented for ${uri}`)
+    ), "writeFile"),
+    delete: /* @__PURE__ */ __name((uri, _Options) => Promise.reject(
+      new VscFileSystemError(`delete not implemented for ${uri}`)
+    ), "delete"),
+    rename: /* @__PURE__ */ __name((source, _Target, _Options) => Promise.reject(
+      new VscFileSystemError(`rename not implemented for ${source}`)
+    ), "rename"),
+    copy: /* @__PURE__ */ __name((source, _Target, _Options) => Promise.reject(
+      new VscFileSystemError(`copy not implemented for ${source}`)
+    ), "copy"),
+    isWritableFileSystem: /* @__PURE__ */ __name((scheme) => {
+      return FsInfo.isWritableFileSystem(scheme);
+    }, "isWritableFileSystem"),
+    onDidChangeFile: FsInfo.onDidChangeFile
+  };
+  return ServiceImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

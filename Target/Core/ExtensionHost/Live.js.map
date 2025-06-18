@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/ExtensionHost/Live.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Core/ExtensionHost/Live.ts\n * Responsibility: Implements the live runtime layer for the Cocoon sidecar's ExtensionHost service using Effect, providing dependency wiring for VS Code extension hosting capabilities in the Node.js sidecar process.\n * Modified: 2025-06-17 21:19:41 UTC\n * Dependency: ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (ExtensionHost)\n * @description The live implementation Layer for the Extension Host service.\n */\n\nimport { Layer } from \"effect\";\n\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the ExtensionHost service.\n * It depends on several other services like Log, IPC, APIFactory, and InitData,\n * which must be provided to this layer.\n */\nexport default Layer.effect(Service, Definition);\n"],
+  "mappings": "AAYA,SAAS,aAAa;AAEtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAOpB,IAAO,eAAQ,MAAM,OAAO,SAAS,UAAU;",
+  "names": []
+}

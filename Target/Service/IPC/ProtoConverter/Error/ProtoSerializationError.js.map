@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../../Source/Service/IPC/ProtoConverter/Error/ProtoSerializationError.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/ProtoConverter/Error/ProtoSerializationError.ts\n * Responsibility:\n * Modified: 2025-06-17 10:52:54 UTC\n * Dependency: effect\n * Export: ProtoSerializationError\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A tagged error representing a failure during the conversion between a\n * JavaScript value and a Google Protobuf `Value` type.\n */\nexport default class extends Data.TaggedError(\"ProtoSerializationError\")<{\n\treadonly cause: unknown;\n\treadonly Direction: \"Encoding\" | \"Decoding\";\n}> {\n\tconstructor(properties: {\n\t\treadonly cause: unknown;\n\t\treadonly Direction: \"Encoding\" | \"Decoding\";\n\t}) {\n\t\tsuper(properties);\n\t\tthis.message = `Protobuf ${this.Direction} failed: ${this.cause}`;\n\t}\n\tpublic override readonly message: string;\n}\n"],
+  "mappings": ";;AAQA,SAAS,YAAY;AAMrB,MAAO,wCAAsB,KAAK,YAAY,yBAAyB,EAGpE;AAAA,EAjBH,OAiBG;AAAA;AAAA;AAAA,EACF,YAAY,YAGT;AACF,UAAM,UAAU;AAChB,SAAK,UAAU,YAAY,KAAK,SAAS,YAAY,KAAK,KAAK;AAAA,EAChE;AAAA,EACyB;AAC1B;",
+  "names": []
+}

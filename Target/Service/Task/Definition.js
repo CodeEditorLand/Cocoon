@@ -1,1 +1,79 @@
-import{Effect as e,Ref as m}from"effect";import{Disposable as E}from"vscode";import{Task as p}from"../../TypeConverter/Task.js";import s from"../../Utility/CreateEventStream.js";import S from"../Cancellation/Service.js";import P from"../IPC/Service.js";import y from"./RPCHandlers/ProvideTasks.js";let D=0;var O=e.gen(function*(i){const o=yield*i(P),T=yield*i(S),c=yield*i(m.make(new Map));o.RegisterInvokeHandler("$provideTasks",([r,t])=>e.runPromise(y(c,r,t,T)));const f=s(),v=s(),l=s(),u=s();return{onDidStartTask:f.event,onDidEndTask:v.event,onDidStartTaskProcess:l.event,onDidEndTaskProcess:u.event,taskExecutions:[],RegisterTaskProvider:(r,t,n)=>e.sync(()=>{const a=++D;return e.runSync(m.update(c,d=>d.set(a,{Type:r,Provider:t,Extension:n}))),e.runFork(o.SendNotification("$registerTaskProvider",[a,r])),new E(()=>{const d=m.update(c,k=>(k.delete(a),k)).pipe(e.flatMap(()=>o.SendNotification("$unregisterTaskProvider",[a])));e.runFork(d)})}),FetchTasks:r=>o.SendRequest("$fetchTasks",[r]).pipe(e.map(t=>t.map(n=>p.ToAPI(n))),e.mapError(t=>new Error(String(t)))),ExecuteTask:(r,t)=>o.SendRequest("$executeTask",[p.FromAPI(r,t)]).pipe(e.map(n=>p.Execution.ToAPI(n,r)),e.mapError(n=>new Error(String(n))))}});export{O as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect, Ref } from "effect";
+import { Disposable } from "vscode";
+import { Task as TaskConverter } from "../../TypeConverter/Task.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import CancellationService from "../Cancellation/Service.js";
+import IPCService from "../IPC/Service.js";
+import ProvideTasksEffect from "./RPCHandlers/ProvideTasks.js";
+let HandleCounter = 0;
+var Definition_default = Effect.gen(function* (G) {
+  const IPC = yield* G(IPCService);
+  const Cancellation = yield* G(CancellationService);
+  const TaskProvidersRef = yield* G(Ref.make(/* @__PURE__ */ new Map()));
+  IPC.RegisterInvokeHandler(
+    "$provideTasks",
+    ([Handle, TokenID]) => Effect.runPromise(
+      ProvideTasksEffect(TaskProvidersRef, Handle, TokenID, Cancellation)
+    )
+  );
+  const OnDidStartTaskEvent = CreateEventStream();
+  const OnDidEndTaskEvent = CreateEventStream();
+  const OnDidStartTaskProcessEvent = CreateEventStream();
+  const OnDidEndTaskProcessEvent = CreateEventStream();
+  const TaskImplementation = {
+    onDidStartTask: OnDidStartTaskEvent.event,
+    onDidEndTask: OnDidEndTaskEvent.event,
+    onDidStartTaskProcess: OnDidStartTaskProcessEvent.event,
+    onDidEndTaskProcess: OnDidEndTaskProcessEvent.event,
+    taskExecutions: [],
+    RegisterTaskProvider: /* @__PURE__ */ __name((Type, Provider, Extension) => Effect.sync(() => {
+      const Handle = ++HandleCounter;
+      Effect.runSync(
+        Ref.update(
+          TaskProvidersRef,
+          (Map2) => Map2.set(Handle, { Type, Provider, Extension })
+        )
+      );
+      Effect.runFork(
+        IPC.SendNotification("$registerTaskProvider", [
+          Handle,
+          Type
+        ])
+      );
+      return new Disposable(() => {
+        const CleanupEffect = Ref.update(
+          TaskProvidersRef,
+          (Map2) => (Map2.delete(Handle), Map2)
+        ).pipe(
+          Effect.flatMap(
+            () => IPC.SendNotification("$unregisterTaskProvider", [
+              Handle
+            ])
+          )
+        );
+        Effect.runFork(CleanupEffect);
+      });
+    }), "RegisterTaskProvider"),
+    FetchTasks: /* @__PURE__ */ __name((Filter) => IPC.SendRequest("$fetchTasks", [Filter]).pipe(
+      Effect.map(
+        (DTOs) => DTOs.map((DTO) => TaskConverter.ToAPI(DTO))
+      ),
+      Effect.mapError((cause) => new Error(String(cause)))
+    ), "FetchTasks"),
+    ExecuteTask: /* @__PURE__ */ __name((TaskToExecute, Extension) => IPC.SendRequest("$executeTask", [
+      TaskConverter.FromAPI(TaskToExecute, Extension)
+    ]).pipe(
+      Effect.map(
+        (DTO) => TaskConverter.Execution.ToAPI(DTO, TaskToExecute)
+      ),
+      Effect.mapError((cause) => new Error(String(cause)))
+    ), "ExecuteTask")
+  };
+  return TaskImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

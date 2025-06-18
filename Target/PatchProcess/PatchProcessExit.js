@@ -1,1 +1,34 @@
-import{Effect as e}from"effect";import i from"./Error/ExitPreventedError.js";import n from"./Service.js";const l=e.gen(function*(r){const o=yield*r(n);process.exit=t=>{if(o.AllowExit())return e.runSync(e.logInfo(`'process.exit(${t??""})' was called and ALLOWED by host policy. Terminating.`)),o.NativeExit(t);const s=`'process.exit(${t??""})' was called but PREVENTED by host policy.`,c=new i({message:s,AttemptedCode:t});throw e.runSync(e.logWarning("Blocked call to process.exit by host policy.",c)),c},yield*r(e.logTrace("Successfully patched 'process.exit'."))});var f=l;export{f as default};
+import { Effect } from "effect";
+import ExitPreventedError from "./Error/ExitPreventedError.js";
+import ProcessPatchService from "./Service.js";
+const PatchProcessExitEffect = Effect.gen(function* (G) {
+  const ProcessPatch = yield* G(ProcessPatchService);
+  process.exit = (Code) => {
+    if (ProcessPatch.AllowExit()) {
+      Effect.runSync(
+        Effect.logInfo(
+          `'process.exit(${Code ?? ""})' was called and ALLOWED by host policy. Terminating.`
+        )
+      );
+      return ProcessPatch.NativeExit(Code);
+    }
+    const ErrorMessage = `'process.exit(${Code ?? ""})' was called but PREVENTED by host policy.`;
+    const PreventionError = new ExitPreventedError({
+      message: ErrorMessage,
+      AttemptedCode: Code
+    });
+    Effect.runSync(
+      Effect.logWarning(
+        "Blocked call to process.exit by host policy.",
+        PreventionError
+      )
+    );
+    throw PreventionError;
+  };
+  yield* G(Effect.logTrace("Successfully patched 'process.exit'."));
+});
+var PatchProcessExit_default = PatchProcessExitEffect;
+export {
+  PatchProcessExit_default as default
+};
+//# sourceMappingURL=PatchProcessExit.js.map

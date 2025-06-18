@@ -1,1 +1,82 @@
-import{Effect as r}from"effect";import s from"../../TypeConverter/Diagnostic.js";import a from"../../TypeConverter/Main/URI.js";import d from"../../Utility/CreateEventStream.js";class m{constructor(e,i,t){this.name=e;this.Owner=i;this.IPC=t}IsDisposed=!1;OnDidDisposeStream=d();CreateSetEffect(e,i){if(this.IsDisposed)return r.void;const t=i?s.FromAPIArray(i):void 0,o=a.FromAPI(e);return this.IPC.SendNotification("$changeMany",[this.Owner,[[o,t]]])}set(e,i){if(!this.IsDisposed)if(Array.isArray(e)){const t=e.map(([o,n])=>[a.FromAPI(o),n?s.FromAPIArray(n):void 0]);r.runFork(this.IPC.SendNotification("$changeMany",[this.Owner,t]))}else r.runFork(this.CreateSetEffect(e,i))}delete(e){this.set(e,void 0)}clear(){this.IsDisposed||r.runFork(this.IPC.SendNotification("$clear",[this.Owner]))}dispose(){this.IsDisposed||(this.IsDisposed=!0,this.clear(),r.runFork(this.OnDidDisposeStream.Fire()))}forEach(){}get(e){}has(e){return!1}[Symbol.iterator](){return[][Symbol.iterator]()}}export{m as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import DiagnosticConverter from "../../TypeConverter/Diagnostic.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+class DiagnosticCollectionImplementation_default {
+  constructor(name, Owner, IPC) {
+    this.name = name;
+    this.Owner = Owner;
+    this.IPC = IPC;
+  }
+  static {
+    __name(this, "default");
+  }
+  IsDisposed = false;
+  OnDidDisposeStream = CreateEventStream();
+  CreateSetEffect(Uri, Diagnostics) {
+    if (this.IsDisposed) {
+      return Effect.void;
+    }
+    const DiagnosticsDTO = Diagnostics ? DiagnosticConverter.FromAPIArray(Diagnostics) : void 0;
+    const UriDTO = URIConverter.FromAPI(Uri);
+    return this.IPC.SendNotification("$changeMany", [
+      this.Owner,
+      [[UriDTO, DiagnosticsDTO]]
+    ]);
+  }
+  set(uriOrEntries, diagnostics) {
+    if (this.IsDisposed) {
+      return;
+    }
+    if (Array.isArray(uriOrEntries)) {
+      const ConvertedEntries = uriOrEntries.map(([Uri, Diags]) => [
+        URIConverter.FromAPI(Uri),
+        Diags ? DiagnosticConverter.FromAPIArray(Diags) : void 0
+      ]);
+      Effect.runFork(
+        this.IPC.SendNotification("$changeMany", [
+          this.Owner,
+          ConvertedEntries
+        ])
+      );
+    } else {
+      Effect.runFork(
+        this.CreateSetEffect(uriOrEntries, diagnostics)
+      );
+    }
+  }
+  delete(uri) {
+    this.set(uri, void 0);
+  }
+  clear() {
+    if (this.IsDisposed) {
+      return;
+    }
+    Effect.runFork(this.IPC.SendNotification("$clear", [this.Owner]));
+  }
+  dispose() {
+    if (this.IsDisposed) {
+      return;
+    }
+    this.IsDisposed = true;
+    this.clear();
+    Effect.runFork(this.OnDidDisposeStream.Fire());
+  }
+  forEach() {
+  }
+  get(_uri) {
+    return void 0;
+  }
+  has(_uri) {
+    return false;
+  }
+  [Symbol.iterator]() {
+    return [][Symbol.iterator]();
+  }
+}
+export {
+  DiagnosticCollectionImplementation_default as default
+};
+//# sourceMappingURL=DiagnosticCollectionImplementation.js.map

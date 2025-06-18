@@ -1,1 +1,9 @@
-import{Layer as r}from"effect";import o from"./Acquire.js";import e from"./Service.js";const i=r.scoped(e,o);var m=i;export{m as default};
+import { Layer } from "effect";
+import Acquire from "./Acquire.js";
+import Service from "./Service.js";
+const Live = Layer.scoped(Service, Acquire);
+var Live_default = Live;
+export {
+  Live_default as default
+};
+//# sourceMappingURL=Live.js.map

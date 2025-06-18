@@ -1,1 +1,63 @@
-import{Task as t,ProcessExecution as c}from"../Type/ExtHostTypes.js";const a=(e,n)=>{const i=e.definition,o=e.execution,s={_id:e._id,definition:{...i,type:i.type},name:e.name,source:{id:n.identifier.value,label:e.source,scope:e.scope},execution:void 0,isBackground:e.isBackground,group:e.group?.id,presentationOptions:e.presentationOptions,problemMatchers:e.problemMatchers,hasDefinedMatchers:e.hasDefinedMatchers};return o&&(s.execution={...o}),s},r=e=>{const n=e.execution?new c(e.execution.process,e.execution.args,e.execution.options):void 0,i=new t(e.definition,e.source.scope,e.name,e.source.label,n,e.problemMatchers);return i._id=e._id,i},u={ToAPI:(e,n)=>({task:n,terminate:()=>{}})},p={FromAPI:a,ToAPI:r,Execution:u};export{p as Task};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Task as ExtHostTask, ProcessExecution } from "../Type/ExtHostTypes.js";
+const FromAPI = /* @__PURE__ */ __name((TaskToConvert, Extension) => {
+  const Definition = TaskToConvert.definition;
+  const Execution2 = TaskToConvert.execution;
+  const Result = {
+    _id: TaskToConvert._id,
+    definition: {
+      ...Definition,
+      type: Definition.type
+    },
+    name: TaskToConvert.name,
+    source: {
+      id: Extension.identifier.value,
+      label: TaskToConvert.source,
+      scope: TaskToConvert.scope
+    },
+    execution: void 0,
+    isBackground: TaskToConvert.isBackground,
+    group: TaskToConvert.group?.id,
+    presentationOptions: TaskToConvert.presentationOptions,
+    problemMatchers: TaskToConvert.problemMatchers,
+    hasDefinedMatchers: TaskToConvert.hasDefinedMatchers
+  };
+  if (Execution2) {
+    Result.execution = {
+      ...Execution2
+    };
+  }
+  return Result;
+}, "FromAPI");
+const ToAPI = /* @__PURE__ */ __name((DTO) => {
+  const Execution2 = DTO.execution ? new ProcessExecution(
+    DTO.execution.process,
+    DTO.execution.args,
+    DTO.execution.options
+  ) : void 0;
+  const ConvertedTask = new ExtHostTask(
+    DTO.definition,
+    DTO.source.scope,
+    DTO.name,
+    DTO.source.label,
+    Execution2,
+    DTO.problemMatchers
+  );
+  ConvertedTask._id = DTO._id;
+  return ConvertedTask;
+}, "ToAPI");
+const Execution = {
+  ToAPI: /* @__PURE__ */ __name((_DTO, TaskToExecute) => {
+    return {
+      task: TaskToExecute,
+      terminate: /* @__PURE__ */ __name(() => {
+      }, "terminate")
+    };
+  }, "ToAPI")
+};
+const Task = { FromAPI, ToAPI, Execution };
+export {
+  Task
+};
+//# sourceMappingURL=Task.js.map

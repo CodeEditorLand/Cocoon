@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/SecretStorage/Error/InvalidValueError.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/SecretStorage/Error/InvalidValueError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:15 UTC\n * Dependency: effect\n * Export: extends\n */\n\n/**\n * @module InvalidValueError (SecretStorage/Error)\n * @description Defines a custom error for when a non-string value is provided to secret storage.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that a value other than a string was provided to be stored,\n * which is not allowed by the API.\n */\nexport default class extends Data.TaggedError(\"InvalidValueError\")<{}> {\n\tpublic override readonly message: string;\n\tconstructor() {\n\t\tsuper();\n\n\t\tthis.message = \"Secret value must be a string.\";\n\t}\n}\n"],
+  "mappings": ";;AAaA,SAAS,YAAY;AAMrB,MAAO,kCAAsB,KAAK,YAAY,mBAAmB,EAAM;AAAA,EAnBvE,OAmBuE;AAAA;AAAA;AAAA,EAC7C;AAAA,EACzB,cAAc;AACb,UAAM;AAEN,SAAK,UAAU;AAAA,EAChB;AACD;",
+  "names": []
+}

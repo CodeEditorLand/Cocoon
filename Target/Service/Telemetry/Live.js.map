@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Telemetry/Live.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Telemetry/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:11 UTC\n * Dependency: ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (Telemetry)\n * @description The live implementation Layer for the Telemetry service.\n */\n\nimport { Layer } from \"effect\";\n\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the Telemetry service.\n */\nexport default Layer.effect(Service, Definition);\n"],
+  "mappings": "AAYA,SAAS,aAAa;AAEtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAKpB,IAAO,eAAQ,MAAM,OAAO,SAAS,UAAU;",
+  "names": []
+}

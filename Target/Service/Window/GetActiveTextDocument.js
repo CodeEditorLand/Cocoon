@@ -1,1 +1,10 @@
-import{Effect as t,Option as e}from"effect";import i from"./Service.js";var f=t.gen(function*(){const o=yield*i;return e.fromNullable(o.activeTextEditor?.document)});export{f as default};
+import { Effect, Option } from "effect";
+import WindowService from "./Service.js";
+var GetActiveTextDocument_default = Effect.gen(function* () {
+  const Window = yield* WindowService;
+  return Option.fromNullable(Window.activeTextEditor?.document);
+});
+export {
+  GetActiveTextDocument_default as default
+};
+//# sourceMappingURL=GetActiveTextDocument.js.map

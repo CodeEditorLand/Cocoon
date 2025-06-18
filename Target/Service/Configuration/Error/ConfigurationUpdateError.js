@@ -1,1 +1,21 @@
-import{Data as e}from"effect";class o extends e.TaggedError("ConfigurationUpdateError"){constructor(r){super(r),this.message=`Failed to update configuration for key '${this.key}'.`}message}var t=o;export{o as ConfigurationUpdateError,t as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Data } from "effect";
+class ConfigurationUpdateError extends Data.TaggedError(
+  "ConfigurationUpdateError"
+) {
+  static {
+    __name(this, "ConfigurationUpdateError");
+  }
+  constructor(properties) {
+    super(properties);
+    this.message = `Failed to update configuration for key '${this.key}'.`;
+  }
+  message;
+}
+var ConfigurationUpdateError_default = ConfigurationUpdateError;
+export {
+  ConfigurationUpdateError,
+  ConfigurationUpdateError_default as default
+};
+//# sourceMappingURL=ConfigurationUpdateError.js.map

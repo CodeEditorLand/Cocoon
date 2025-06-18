@@ -1,1 +1,42 @@
-import{Effect as n}from"effect";var r=n.gen(function*(){return{Trace:(o,...e)=>n.logTrace(o).pipe(n.annotateLogs({data:e.length===1?e[0]:e})),Debug:(o,...e)=>n.logDebug(o).pipe(n.annotateLogs({data:e.length===1?e[0]:e})),Info:(o,...e)=>n.logInfo(o).pipe(n.annotateLogs({data:e.length===1?e[0]:e})),Warn:(o,...e)=>n.logWarning(o).pipe(n.annotateLogs({data:e.length===1?e[0]:e})),Error:(o,...e)=>n.logError(o).pipe(n.annotateLogs({data:e.length===1?e[0]:e})),Fatal:(o,...e)=>n.logFatal(o).pipe(n.annotateLogs({data:e.length===1?e[0]:e}))}});export{r as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+var Definition_default = Effect.gen(function* () {
+  const ServiceImplementation = {
+    Trace: /* @__PURE__ */ __name((Message, ...Data) => Effect.logTrace(Message).pipe(
+      Effect.annotateLogs({
+        data: Data.length === 1 ? Data[0] : Data
+      })
+    ), "Trace"),
+    Debug: /* @__PURE__ */ __name((Message, ...Data) => Effect.logDebug(Message).pipe(
+      Effect.annotateLogs({
+        data: Data.length === 1 ? Data[0] : Data
+      })
+    ), "Debug"),
+    Info: /* @__PURE__ */ __name((Message, ...Data) => Effect.logInfo(Message).pipe(
+      Effect.annotateLogs({
+        data: Data.length === 1 ? Data[0] : Data
+      })
+    ), "Info"),
+    Warn: /* @__PURE__ */ __name((Message, ...Data) => Effect.logWarning(Message).pipe(
+      Effect.annotateLogs({
+        data: Data.length === 1 ? Data[0] : Data
+      })
+    ), "Warn"),
+    Error: /* @__PURE__ */ __name((Message, ...Data) => Effect.logError(Message).pipe(
+      Effect.annotateLogs({
+        data: Data.length === 1 ? Data[0] : Data
+      })
+    ), "Error"),
+    Fatal: /* @__PURE__ */ __name((Message, ...Data) => Effect.logFatal(Message).pipe(
+      Effect.annotateLogs({
+        data: Data.length === 1 ? Data[0] : Data
+      })
+    ), "Fatal")
+  };
+  return ServiceImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

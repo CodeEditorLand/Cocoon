@@ -1,1 +1,93 @@
-import{Effect as e}from"effect";import{isCancellationError as l}from"vs/base/common/errors.js";import u from"../../TypeConverter/QuickInput.js";import m from"../IPC/Service.js";var E=e.gen(function*(d){const a=yield*d(m);return{ShowQuickPick:(c,n={},s)=>e.gen(function*(t){if(s?.isCancellationRequested)return yield*t(e.interrupt);const r=yield*t(e.tryPromise({try:()=>Promise.resolve(c),catch:o=>o})),f={...n,items:u.SerializeItems(r),buttons:u.SerializeButtons(n.buttons)},i=yield*t(a.SendRequest("$showQuickPick",[f]).pipe(e.catchIf(l,()=>e.succeed(void 0)),e.mapError(o=>new Error(String(o)))));if(n?.canPickMany){if(!Array.isArray(i))return;const o=new Set(i);return r.filter((y,p)=>o.has(p))}if(typeof i=="number"&&i>=0)return r[i]}),ShowInputBox:(c,n)=>e.gen(function*(s){if(n?.isCancellationRequested)return yield*s(e.interrupt);const t={...c,buttons:u.SerializeButtons(c?.buttons)};return yield*s(a.SendRequest("$showInputBox",[t]).pipe(e.catchIf(l,()=>e.succeed(void 0)),e.mapError(r=>new Error(String(r)))))}),CreateQuickPick:()=>{throw new Error("Controller-based QuickPick is not implemented in Cocoon.")},CreateInputBox:()=>{throw new Error("Controller-based InputBox is not implemented in Cocoon.")}}});export{E as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import { isCancellationError } from "vs/base/common/errors.js";
+import QuickInputConverter from "../../TypeConverter/QuickInput.js";
+import IPCService from "../IPC/Service.js";
+var Definition_default = Effect.gen(function* (G) {
+  const IPC = yield* G(IPCService);
+  const ShowQuickPickEffect = /* @__PURE__ */ __name((Items, Option = {}, Token) => Effect.gen(function* (G2) {
+    if (Token?.isCancellationRequested) {
+      return yield* G2(Effect.interrupt);
+    }
+    const ResolvedItems = yield* G2(
+      Effect.tryPromise({
+        try: /* @__PURE__ */ __name(() => Promise.resolve(Items), "try"),
+        catch: /* @__PURE__ */ __name((e) => e, "catch")
+      })
+    );
+    const IPCOptions = {
+      ...Option,
+      items: QuickInputConverter.SerializeItems(ResolvedItems),
+      buttons: QuickInputConverter.SerializeButtons(
+        Option.buttons
+      )
+    };
+    const ResultHandles = yield* G2(
+      IPC.SendRequest(
+        "$showQuickPick",
+        [IPCOptions]
+      ).pipe(
+        Effect.catchIf(
+          isCancellationError,
+          () => Effect.succeed(void 0)
+        ),
+        Effect.mapError((cause) => new Error(String(cause)))
+      )
+    );
+    if (Option?.canPickMany) {
+      if (!Array.isArray(ResultHandles)) {
+        return void 0;
+      }
+      const SelectedIndices = new Set(ResultHandles);
+      return ResolvedItems.filter(
+        (_, index) => SelectedIndices.has(index)
+      );
+    }
+    if (typeof ResultHandles === "number" && ResultHandles >= 0) {
+      return ResolvedItems[ResultHandles];
+    }
+    return void 0;
+  }), "ShowQuickPickEffect");
+  const ShowInputBoxEffect = /* @__PURE__ */ __name((Option, Token) => Effect.gen(function* (G2) {
+    if (Token?.isCancellationRequested) {
+      return yield* G2(Effect.interrupt);
+    }
+    const IPCOptions = {
+      ...Option,
+      buttons: QuickInputConverter.SerializeButtons(
+        Option?.buttons
+      )
+    };
+    return yield* G2(
+      IPC.SendRequest("$showInputBox", [
+        IPCOptions
+      ]).pipe(
+        Effect.catchIf(
+          isCancellationError,
+          () => Effect.succeed(void 0)
+        ),
+        Effect.mapError((cause) => new Error(String(cause)))
+      )
+    );
+  }), "ShowInputBoxEffect");
+  const ServiceImplementation = {
+    ShowQuickPick: ShowQuickPickEffect,
+    ShowInputBox: ShowInputBoxEffect,
+    CreateQuickPick: /* @__PURE__ */ __name(() => {
+      throw new Error(
+        "Controller-based QuickPick is not implemented in Cocoon."
+      );
+    }, "CreateQuickPick"),
+    CreateInputBox: /* @__PURE__ */ __name(() => {
+      throw new Error(
+        "Controller-based InputBox is not implemented in Cocoon."
+      );
+    }, "CreateInputBox")
+  };
+  return ServiceImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

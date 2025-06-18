@@ -1,1 +1,48 @@
-import*as f from"node:path";import{Effect as c}from"effect";import{Uri as l}from"vscode";import p from"../InitData/Service.js";import d from"../Log/Service.js";import s from"./Support/EnsureDirectory.js";var U=c.gen(function*(){const t=yield*p,m=yield*d,i=t.environment.globalStorageHome,n=t.environment.workspaceStorageHome;yield*s(i,"Global"),yield*s(n,"WorkSpace");const a=(e,o)=>{if(!e||!o?.identifier?.value)return;const r=o.identifier.value.replace(/[^a-z0-9-]/gi,"_").toLowerCase();return l.joinPath(e,r)};return{GetWorkSpaceStorageURI:e=>a(n,e),GetGlobalStorageURI:e=>{const o=a(i,e);if(!o){const r=f.join(process.cwd(),".cocoon-data/global",e.identifier.value.toLowerCase());return c.runSync(m.Error(`FATAL: Could not resolve global storage path for ${e.identifier.value}. Falling back to ${r}`)),l.file(r)}return o}}});export{U as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import * as Path from "node:path";
+import { Effect } from "effect";
+import { Uri } from "vscode";
+import InitDataService from "../InitData/Service.js";
+import LogService from "../Log/Service.js";
+import EnsureDirectory from "./Support/EnsureDirectory.js";
+var Definition_default = Effect.gen(function* () {
+  const InitData = yield* InitDataService;
+  const Log = yield* LogService;
+  const GlobalStorageURI = InitData.environment.globalStorageHome;
+  const WorkSpaceStorageURI = InitData.environment.workspaceStorageHome;
+  yield* EnsureDirectory(GlobalStorageURI, "Global");
+  yield* EnsureDirectory(WorkSpaceStorageURI, "WorkSpace");
+  const GetPathForExtension = /* @__PURE__ */ __name((BaseURI, Extension) => {
+    if (!BaseURI || !Extension?.identifier?.value) {
+      return void 0;
+    }
+    const ExtensionSubdirectory = Extension.identifier.value.replace(/[^a-z0-9-]/gi, "_").toLowerCase();
+    return Uri.joinPath(BaseURI, ExtensionSubdirectory);
+  }, "GetPathForExtension");
+  const StoragePathImplementation = {
+    GetWorkSpaceStorageURI: /* @__PURE__ */ __name((Extension) => GetPathForExtension(WorkSpaceStorageURI, Extension), "GetWorkSpaceStorageURI"),
+    GetGlobalStorageURI: /* @__PURE__ */ __name((Extension) => {
+      const URI = GetPathForExtension(GlobalStorageURI, Extension);
+      if (!URI) {
+        const EmergencyPath = Path.join(
+          process.cwd(),
+          ".cocoon-data/global",
+          Extension.identifier.value.toLowerCase()
+        );
+        Effect.runSync(
+          Log.Error(
+            `FATAL: Could not resolve global storage path for ${Extension.identifier.value}. Falling back to ${EmergencyPath}`
+          )
+        );
+        return Uri.file(EmergencyPath);
+      }
+      return URI;
+    }, "GetGlobalStorageURI")
+  };
+  return StoragePathImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

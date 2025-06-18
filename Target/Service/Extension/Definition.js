@@ -1,1 +1,71 @@
-import{Effect as e,Option as i,Ref as s}from"effect";import{ImplicitActivationEvents as d}from"vs/platform/extensionManagement/common/implicitActivationEvents.js";import{ExtensionDescriptionRegistry as f}from"vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";import y from"../../Core/ExtensionHost/Service.js";import x from"../../Utility/CreateEventStream.js";import u from"../InitData/Service.js";import m from"./CreateAPIObject.js";var h=e.gen(function*(){const r=yield*y,v=yield*u,{event:l}=x(),c=yield*s.make(i.none()),E={readActivationEvents:t=>d.readActivationEvents(t)},a=new f(E,v.extensions.allExtensions),p={onDidChange:l,GetExtension:t=>e.succeed(a.getExtensionDescription(t)).pipe(e.map(i.fromNullable),e.map(i.map(n=>m(n,r)))),GetAll:()=>s.get(c).pipe(e.flatMap(i.match({onSome:t=>e.succeed(t),onNone:()=>e.gen(function*(){const n=a.getAllExtensionDescriptions().map(o=>m(o,r));return yield*s.set(c,i.some(n)),n})}))),Activate:t=>e.gen(function*(){const n=yield*p.GetExtension(t);if(i.isNone(n))return yield*e.fail(new Error(`Extension '${t}' not found.`));const o=n.value;return yield*e.promise(()=>o.activate()),o})};return p});export{h as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect, Option, Ref } from "effect";
+import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
+import {
+  ExtensionDescriptionRegistry
+} from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+import ExtensionHostService from "../../Core/ExtensionHost/Service.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import InitDataService from "../InitData/Service.js";
+import CreateAPIObject from "./CreateAPIObject.js";
+var Definition_default = Effect.gen(function* () {
+  const ExtensionHost = yield* ExtensionHostService;
+  const InitData = yield* InitDataService;
+  const { event: OnDidChangeEvent } = CreateEventStream();
+  const AllExtensionsCache = yield* Ref.make(Option.none());
+  const ActivationEventsReader = {
+    readActivationEvents: /* @__PURE__ */ __name((description) => ImplicitActivationEvents.readActivationEvents(description), "readActivationEvents")
+  };
+  const ExtensionRegistry = new ExtensionDescriptionRegistry(
+    ActivationEventsReader,
+    InitData.extensions.allExtensions
+  );
+  const ServiceImplementation = {
+    onDidChange: OnDidChangeEvent,
+    GetExtension: /* @__PURE__ */ __name((extensionId) => Effect.succeed(
+      ExtensionRegistry.getExtensionDescription(extensionId)
+    ).pipe(
+      Effect.map(Option.fromNullable),
+      Effect.map(
+        Option.map(
+          (description) => CreateAPIObject(description, ExtensionHost)
+        )
+      )
+    ), "GetExtension"),
+    GetAll: /* @__PURE__ */ __name(() => Ref.get(AllExtensionsCache).pipe(
+      Effect.flatMap(
+        Option.match({
+          onSome: /* @__PURE__ */ __name((cache) => Effect.succeed(cache), "onSome"),
+          onNone: /* @__PURE__ */ __name(() => Effect.gen(function* () {
+            const descriptions = ExtensionRegistry.getAllExtensionDescriptions();
+            const newCache = descriptions.map(
+              (desc) => CreateAPIObject(desc, ExtensionHost)
+            );
+            yield* Ref.set(
+              AllExtensionsCache,
+              Option.some(newCache)
+            );
+            return newCache;
+          }), "onNone")
+        })
+      )
+    ), "GetAll"),
+    Activate: /* @__PURE__ */ __name((extensionId) => Effect.gen(function* () {
+      const maybeExtension = yield* ServiceImplementation.GetExtension(extensionId);
+      if (Option.isNone(maybeExtension)) {
+        return yield* Effect.fail(
+          new Error(`Extension '${extensionId}' not found.`)
+        );
+      }
+      const extension = maybeExtension.value;
+      yield* Effect.promise(() => extension.activate());
+      return extension;
+    }), "Activate")
+  };
+  return ServiceImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

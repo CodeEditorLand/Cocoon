@@ -1,1 +1,93 @@
-import{Effect as r}from"effect";import o from"../../Utility/CreateEventStream.js";import n from"./Error/EmptyKeyError.js";import a from"./Error/InvalidValueError.js";class s{constructor(e,t,i){this.ExtensionID=e;this.IPC=t;this.Log=i;this.onDidChange=this.OnDidChangeEventStream.event}OnDidChangeEventStream=o();onDidChange;CreateGetEffect(e){return r.gen(this,function*(t){return e?yield*t(this.IPC.SendRequest("$getPassword",[this.ExtensionID,e])):yield*t(new n)}).pipe(r.catchTag("IPCError",t=>this.Log.Error(`SecretStorage.get failed for key '${e}' in ext '${this.ExtensionID}'.`,t).pipe(r.flatMap(()=>r.succeed(void 0)))))}CreateStoreEffect(e,t){return r.gen(this,function*(i){if(!e)return yield*i(new n);if(typeof t!="string")return yield*i(new a);yield*i(this.IPC.SendNotification("$setPassword",[this.ExtensionID,e,t])),yield*i(this.OnDidChangeEventStream.Fire({key:e}))}).pipe(r.catchAll(i=>this.Log.Error(`SecretStorage.store failed for key '${e}' in ext '${this.ExtensionID}'.`,i).pipe(r.flatMap(()=>r.void))))}CreateDeleteEffect(e){return r.gen(this,function*(t){if(!e)return yield*t(new n);yield*t(this.IPC.SendNotification("$deletePassword",[this.ExtensionID,e])),yield*t(this.OnDidChangeEventStream.Fire({key:e}))}).pipe(r.catchAll(t=>this.Log.Error(`SecretStorage.delete failed for key '${e}' in ext '${this.ExtensionID}'.`,t).pipe(r.flatMap(()=>r.void))))}get=e=>r.runPromise(this.CreateGetEffect(e));store=(e,t)=>r.runPromise(this.CreateStoreEffect(e,t));delete=e=>r.runPromise(this.CreateDeleteEffect(e))}export{s as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import EmptyKeyError from "./Error/EmptyKeyError.js";
+import InvalidValueError from "./Error/InvalidValueError.js";
+class SecretStorageImplementation {
+  constructor(ExtensionID, IPC, Log) {
+    this.ExtensionID = ExtensionID;
+    this.IPC = IPC;
+    this.Log = Log;
+    this.onDidChange = this.OnDidChangeEventStream.event;
+  }
+  static {
+    __name(this, "SecretStorageImplementation");
+  }
+  OnDidChangeEventStream = CreateEventStream();
+  onDidChange;
+  CreateGetEffect(Key) {
+    return Effect.gen(this, function* (G) {
+      if (!Key) {
+        return yield* G(new EmptyKeyError());
+      }
+      return yield* G(
+        this.IPC.SendRequest("$getPassword", [
+          this.ExtensionID,
+          Key
+        ])
+      );
+    }).pipe(
+      Effect.catchTag(
+        "IPCError",
+        (Error2) => this.Log.Error(
+          `SecretStorage.get failed for key '${Key}' in ext '${this.ExtensionID}'.`,
+          Error2
+        ).pipe(Effect.flatMap(() => Effect.succeed(void 0)))
+      )
+    );
+  }
+  CreateStoreEffect(Key, Value) {
+    return Effect.gen(this, function* (G) {
+      if (!Key) {
+        return yield* G(new EmptyKeyError());
+      }
+      if (typeof Value !== "string") {
+        return yield* G(new InvalidValueError());
+      }
+      yield* G(
+        this.IPC.SendNotification("$setPassword", [
+          this.ExtensionID,
+          Key,
+          Value
+        ])
+      );
+      yield* G(this.OnDidChangeEventStream.Fire({ key: Key }));
+    }).pipe(
+      Effect.catchAll(
+        (Error2) => this.Log.Error(
+          `SecretStorage.store failed for key '${Key}' in ext '${this.ExtensionID}'.`,
+          Error2
+        ).pipe(Effect.flatMap(() => Effect.void))
+      )
+    );
+  }
+  CreateDeleteEffect(Key) {
+    return Effect.gen(this, function* (G) {
+      if (!Key) {
+        return yield* G(new EmptyKeyError());
+      }
+      yield* G(
+        this.IPC.SendNotification("$deletePassword", [
+          this.ExtensionID,
+          Key
+        ])
+      );
+      yield* G(this.OnDidChangeEventStream.Fire({ key: Key }));
+    }).pipe(
+      Effect.catchAll(
+        (Error2) => this.Log.Error(
+          `SecretStorage.delete failed for key '${Key}' in ext '${this.ExtensionID}'.`,
+          Error2
+        ).pipe(Effect.flatMap(() => Effect.void))
+      )
+    );
+  }
+  get = /* @__PURE__ */ __name((Key) => Effect.runPromise(this.CreateGetEffect(Key)), "get");
+  store = /* @__PURE__ */ __name((Key, Value) => Effect.runPromise(this.CreateStoreEffect(Key, Value)), "store");
+  delete = /* @__PURE__ */ __name((Key) => Effect.runPromise(this.CreateDeleteEffect(Key)), "delete");
+}
+export {
+  SecretStorageImplementation as default
+};
+//# sourceMappingURL=SecretStorageImplementation.js.map

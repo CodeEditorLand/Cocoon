@@ -1,1 +1,14 @@
-import{Context as e}from"effect";class n extends e.Tag("Service/Environment")(){}export{n as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Context } from "effect";
+class EnvironmentService extends Context.Tag(
+  "Service/Environment"
+)() {
+  static {
+    __name(this, "EnvironmentService");
+  }
+}
+export {
+  EnvironmentService as default
+};
+//# sourceMappingURL=Service.js.map

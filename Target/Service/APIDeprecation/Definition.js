@@ -1,1 +1,48 @@
-import{Effect as p}from"effect";import g from"../Log/Service.js";var x=p.gen(function*(m){const d=yield*m(g),s=(r,n,o)=>d.Warn(`Extension '${r.value}' used deprecated API: '${n}'. Message: ${o}`);return{Report:s,Deprecated:(r,n,o)=>{const l=e=>s(r,`${n} (property: ${String(e)})`,o);return(e,t)=>{let c=e[t],f=!1;const a=i=>{f||(p.runFork(l(i)),f=!0)};Object.defineProperty(e,t,{configurable:!0,enumerable:!0,get(){return a(t),c},set(i){a(t),c=i}})}}}});export{x as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import LogService from "../Log/Service.js";
+var Definition_default = Effect.gen(function* (G) {
+  const Log = yield* G(LogService);
+  const ReportEffect = /* @__PURE__ */ __name((ExtensionID, Usage, Message) => Log.Warn(
+    `Extension '${ExtensionID.value}' used deprecated API: '${Usage}'. Message: ${Message}`
+  ), "ReportEffect");
+  const DeprecatedDecorator = /* @__PURE__ */ __name((ExtensionID, Feature, Message) => {
+    const CreateReportEffect = /* @__PURE__ */ __name((PropertyName) => ReportEffect(
+      ExtensionID,
+      `${Feature} (property: ${String(PropertyName)})`,
+      Message
+    ), "CreateReportEffect");
+    return (Target, PropertyKey) => {
+      let BackingField = Target[PropertyKey];
+      let HasReported = false;
+      const ReportOnce = /* @__PURE__ */ __name((Key) => {
+        if (!HasReported) {
+          Effect.runFork(CreateReportEffect(Key));
+          HasReported = true;
+        }
+      }, "ReportOnce");
+      Object.defineProperty(Target, PropertyKey, {
+        configurable: true,
+        enumerable: true,
+        get() {
+          ReportOnce(PropertyKey);
+          return BackingField;
+        },
+        set(NewValue) {
+          ReportOnce(PropertyKey);
+          BackingField = NewValue;
+        }
+      });
+    };
+  }, "DeprecatedDecorator");
+  const ServiceImplementation = {
+    Report: ReportEffect,
+    Deprecated: DeprecatedDecorator
+  };
+  return ServiceImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

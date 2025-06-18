@@ -1,1 +1,49 @@
-import{Effect as e}from"effect";import f from"../../FileSystem/Service.js";import o from"../../Log/Service.js";const c=(n,t)=>e.if(n!==void 0,{onTrue:()=>e.gen(function*(){const r=n,s=yield*f;return yield*e.tryPromise(()=>s.createDirectory(r)).pipe(e.catchAll(i=>o.pipe(e.flatMap(a=>a.Error(`Failed to ensure ${t} storage directory exists at ${r.toString()}`,i))))),yield*o.pipe(e.flatMap(i=>i.Trace(`${t} storage directory ensured at: ${r.fsPath}`))),!0}),onFalse:()=>o.pipe(e.flatMap(r=>r.Trace(`${t} storage URI is not defined; skipping creation.`)),e.as(!1))});var u=c;export{u as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import FileSystemService from "../../FileSystem/Service.js";
+import LogService from "../../Log/Service.js";
+const EnsureDirectory = /* @__PURE__ */ __name((DirectoryURI, ScopeName) => {
+  return Effect.if(DirectoryURI !== void 0, {
+    // If the URI is defined, ensure the directory exists.
+    onTrue: /* @__PURE__ */ __name(() => Effect.gen(function* () {
+      const URI = DirectoryURI;
+      const Fs = yield* FileSystemService;
+      yield* Effect.tryPromise(() => Fs.createDirectory(URI)).pipe(
+        // If creation fails, log the error.
+        Effect.catchAll(
+          (Error2) => LogService.pipe(
+            Effect.flatMap(
+              (Log) => Log.Error(
+                `Failed to ensure ${ScopeName} storage directory exists at ${URI.toString()}`,
+                Error2
+              )
+            )
+          )
+        )
+      );
+      yield* LogService.pipe(
+        Effect.flatMap(
+          (Log) => Log.Trace(
+            `${ScopeName} storage directory ensured at: ${URI.fsPath}`
+          )
+        )
+      );
+      return true;
+    }), "onTrue"),
+    // If the URI is not defined, log a trace message and return false.
+    onFalse: /* @__PURE__ */ __name(() => LogService.pipe(
+      Effect.flatMap(
+        (Log) => Log.Trace(
+          `${ScopeName} storage URI is not defined; skipping creation.`
+        )
+      ),
+      Effect.as(false)
+    ), "onFalse")
+  });
+}, "EnsureDirectory");
+var EnsureDirectory_default = EnsureDirectory;
+export {
+  EnsureDirectory_default as default
+};
+//# sourceMappingURL=EnsureDirectory.js.map

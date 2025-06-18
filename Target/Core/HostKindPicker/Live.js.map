@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/HostKindPicker/Live.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Core/HostKindPicker/Live.ts\n * Responsibility: Implements the live layer for the HostKindPicker service using Effect's Layer, declaring its dependency on the Log service to facilitate environment-specific configuration within the Cocoon sidecar.\n * Modified: 2025-06-17 21:19:40 UTC\n * Dependency: ../../Service/Log/Service.js, ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (HostKindPicker)\n * @description This module provides the `Live` implementation Layer for the HostKindPicker service.\n */\n\nimport { Layer } from \"effect\";\n\nimport type LogService from \"../../Service/Log/Service.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the HostKindPicker service.\n * It correctly declares its dependency on the Log service.\n */\nconst Live: Layer.Layer<Service, never, LogService> = Layer.effect(\n\tService,\n\tDefinition,\n);\n\nexport default Live;\n"],
+  "mappings": "AAYA,SAAS,aAAa;AAGtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAAgD,MAAM;AAAA,EAC3D;AAAA,EACA;AACD;AAEA,IAAO,eAAQ;",
+  "names": []
+}

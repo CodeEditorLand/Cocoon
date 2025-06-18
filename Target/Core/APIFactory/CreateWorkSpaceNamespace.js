@@ -1,1 +1,66 @@
-import{Effect as p}from"effect";import{Disposable as d}from"vscode";const m=(o,t,s,r,i)=>({get workspaceFolders(){return o.workspaceFolders},get name(){return o.name},get workspaceFile(){return o.workspaceFile},get isTrusted(){return o.isTrusted},get fs(){return o.fs},get textDocuments(){return t.TextDocuments},get rootPath(){p.runFork(s.Report(i.identifier,"workspace.rootPath","Use `workspace.workspaceFolders` instead."));const e=o.workspaceFolders;return e&&e.length>0?e[0].uri.fsPath:void 0},onDidChangeWorkspaceFolders:r(o.onDidChangeWorkspaceFolders),onDidOpenTextDocument:r(t.onDidOpenTextDocument),onDidCloseTextDocument:r(t.onDidCloseTextDocument),onDidChangeTextDocument:r(t.onDidChangeTextDocument),getWorkspaceFolder:e=>o.getWorkspaceFolder(e),openTextDocument:e=>o.openTextDocument(e),findFiles:(e,n,a,c)=>o.findFiles(e,n,a,c),getConfiguration:(e,n)=>o.getConfiguration(e,n),applyEdit:e=>o.applyEdit(e),registerTextDocumentContentProvider:(e,n)=>new d(()=>{})});var l=m;export{l as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import { Disposable } from "vscode";
+const CreateWorkSpaceNamespace = /* @__PURE__ */ __name((WorkSpace, Document, Deprecation, AsEvent, Extension) => {
+  const WorkspaceNamespace = {
+    // --- Properties ---
+    get workspaceFolders() {
+      return WorkSpace.workspaceFolders;
+    },
+    get name() {
+      return WorkSpace.name;
+    },
+    get workspaceFile() {
+      return WorkSpace.workspaceFile;
+    },
+    get isTrusted() {
+      return WorkSpace.isTrusted;
+    },
+    get fs() {
+      return WorkSpace.fs;
+    },
+    // The `textDocuments` property correctly belongs to the Document service.
+    get textDocuments() {
+      return Document.TextDocuments;
+    },
+    // --- Deprecated rootPath ---
+    get rootPath() {
+      Effect.runFork(
+        Deprecation.Report(
+          Extension.identifier,
+          "workspace.rootPath",
+          "Use `workspace.workspaceFolders` instead."
+        )
+      );
+      const Folders = WorkSpace.workspaceFolders;
+      return Folders && Folders.length > 0 ? Folders[0].uri.fsPath : void 0;
+    },
+    // --- Events ---
+    onDidChangeWorkspaceFolders: AsEvent(
+      WorkSpace.onDidChangeWorkspaceFolders
+    ),
+    // Document events correctly come from the Document service.
+    onDidOpenTextDocument: AsEvent(Document.onDidOpenTextDocument),
+    onDidCloseTextDocument: AsEvent(Document.onDidCloseTextDocument),
+    onDidChangeTextDocument: AsEvent(Document.onDidChangeTextDocument),
+    // --- Methods (now return Effects) ---
+    getWorkspaceFolder: /* @__PURE__ */ __name((Uri) => {
+      return WorkSpace.getWorkspaceFolder(Uri);
+    }, "getWorkspaceFolder"),
+    openTextDocument: /* @__PURE__ */ __name((UriOrOptions) => WorkSpace.openTextDocument(UriOrOptions), "openTextDocument"),
+    findFiles: /* @__PURE__ */ __name((Include, Exclude, MaxResults, Token) => WorkSpace.findFiles(Include, Exclude, MaxResults, Token), "findFiles"),
+    getConfiguration: /* @__PURE__ */ __name((Section, Scope) => WorkSpace.getConfiguration(Section, Scope), "getConfiguration"),
+    applyEdit: /* @__PURE__ */ __name((Edit) => WorkSpace.applyEdit(Edit), "applyEdit"),
+    registerTextDocumentContentProvider: /* @__PURE__ */ __name((_Scheme, _Provider) => {
+      return new Disposable(() => {
+      });
+    }, "registerTextDocumentContentProvider")
+  };
+  return WorkspaceNamespace;
+}, "CreateWorkSpaceNamespace");
+var CreateWorkSpaceNamespace_default = CreateWorkSpaceNamespace;
+export {
+  CreateWorkSpaceNamespace_default as default
+};
+//# sourceMappingURL=CreateWorkSpaceNamespace.js.map

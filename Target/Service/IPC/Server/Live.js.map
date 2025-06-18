@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/IPC/Server/Live.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/Server/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:20 UTC\n * Dependency: ../Configuration.js, ../Dispatcher/Service.js, ../Error/gRPCConnectionError.js, ./Acquire.js, ./Service.js, effect\n */\n\n/**\n * @module Live (IPC/Server)\n * @description Provides a `Layer` for the managed gRPC server, which listens\n * for incoming requests from the `Mountain` backend.\n */\n\nimport { Layer } from \"effect\";\n\nimport type IPCConfigurationService from \"../Configuration.js\";\nimport type DispatcherService from \"../Dispatcher/Service.js\";\nimport type gRPCConnectionError from \"../Error/gRPCConnectionError.js\";\nimport Acquire from \"./Acquire.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation `Layer` for the gRPC Server service.\n *\n * This scoped layer creates and manages the lifecycle of the gRPC server instance.\n * It correctly declares its dependencies on `DispatcherService` and `IPCConfigurationService`.\n */\nconst Live: Layer.Layer<\n\tService,\n\tgRPCConnectionError,\n\tDispatcherService | IPCConfigurationService\n> = Layer.scoped(Service, Acquire);\n\nexport default Live;\n"],
+  "mappings": "AAaA,SAAS,aAAa;AAKtB,OAAO,aAAa;AACpB,OAAO,aAAa;AAQpB,MAAM,OAIF,MAAM,OAAO,SAAS,OAAO;AAEjC,IAAO,eAAQ;",
+  "names": []
+}

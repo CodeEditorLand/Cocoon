@@ -1,1 +1,13 @@
-import{Effect as e}from"effect";const n=t=>e.sync(()=>{t.close()}).pipe(e.tap(()=>e.logInfo("gRPC client connection closed.")));var c=n;export{c as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+const Release = /* @__PURE__ */ __name((Client) => {
+  return Effect.sync(() => {
+    Client.close();
+  }).pipe(Effect.tap(() => Effect.logInfo("gRPC client connection closed.")));
+}, "Release");
+var Release_default = Release;
+export {
+  Release_default as default
+};
+//# sourceMappingURL=Release.js.map

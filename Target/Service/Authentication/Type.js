@@ -1,1 +1,29 @@
-const e=o=>({id:o.id,accessToken:o.accessToken,account:{label:o.account.label,id:o.account.id},scopes:o.scopes}),t=o=>({id:o.id,accessToken:o.accessToken,account:{label:o.account.label,id:o.account.id},scopes:o.scopes});export{t as ConvertSessionToInternal,e as ConvertSessionToVSCode};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+const ConvertSessionToVSCode = /* @__PURE__ */ __name((Session) => {
+  return {
+    id: Session.id,
+    accessToken: Session.accessToken,
+    account: {
+      label: Session.account.label,
+      id: Session.account.id
+    },
+    scopes: Session.scopes
+  };
+}, "ConvertSessionToVSCode");
+const ConvertSessionToInternal = /* @__PURE__ */ __name((Session) => {
+  return {
+    id: Session.id,
+    accessToken: Session.accessToken,
+    account: {
+      label: Session.account.label,
+      id: Session.account.id
+    },
+    scopes: Session.scopes
+  };
+}, "ConvertSessionToInternal");
+export {
+  ConvertSessionToInternal,
+  ConvertSessionToVSCode
+};
+//# sourceMappingURL=Type.js.map

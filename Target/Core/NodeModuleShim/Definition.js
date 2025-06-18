@@ -1,1 +1,65 @@
-import{Effect as d,Exit as e}from"effect";import h from"../../Service/InitData/Service.js";import u from"../../Service/Log/Service.js";import S from"./Error/ModuleBlockedError.js";import M from"./Error/ModuleNotShimmedError.js";import y from"./Shim/Crypto.js";import v from"./Shim/Os.js";import n from"./Shim/Process.js";var I=d.gen(function*(r){const s=yield*r(u),c=yield*r(h),t=v(c),i=y(),p=new Set(["fs","node:fs","fs/promises","node:fs/promises","path","node:path","child_process","node:child_process","worker_threads","node:worker_threads","cluster","node:cluster","vm","node:vm"]),f=new Map([["os",t],["node:os",t],["crypto",i],["node:crypto",i],["process",n],["node:process",n]]);return{Load(o,l){const a=l?.fsPath||"unknown module";if(d.runFork(s.Trace(`Intercepted require('${o}') from '${a}'.`)),p.has(o))return e.fail(new S({ModuleName:o}));const m=f.get(o);return m?e.succeed(m):e.fail(new M({ModuleName:o}))}}});export{I as default};
+import { Effect, Exit } from "effect";
+import InitDataService from "../../Service/InitData/Service.js";
+import LogService from "../../Service/Log/Service.js";
+import ModuleBlockedError from "./Error/ModuleBlockedError.js";
+import ModuleNotShimmedError from "./Error/ModuleNotShimmedError.js";
+import CreateCryptoShim from "./Shim/Crypto.js";
+import CreateOsShim from "./Shim/Os.js";
+import ProcessShim from "./Shim/Process.js";
+var Definition_default = Effect.gen(function* (G) {
+  const Log = yield* G(LogService);
+  const InitData = yield* G(InitDataService);
+  const OsShim = CreateOsShim(InitData);
+  const CryptoShim = CreateCryptoShim();
+  const BlockedModules = /* @__PURE__ */ new Set([
+    "fs",
+    "node:fs",
+    "fs/promises",
+    "node:fs/promises",
+    "path",
+    "node:path",
+    "child_process",
+    "node:child_process",
+    "worker_threads",
+    "node:worker_threads",
+    "cluster",
+    "node:cluster",
+    "vm",
+    "node:vm"
+  ]);
+  const Shims = /* @__PURE__ */ new Map([
+    ["os", OsShim],
+    ["node:os", OsShim],
+    ["crypto", CryptoShim],
+    ["node:crypto", CryptoShim],
+    ["process", ProcessShim],
+    ["node:process", ProcessShim]
+  ]);
+  const NodeModuleShim = {
+    Load(Request, ParentURI) {
+      const RequesterPath = ParentURI?.fsPath || "unknown module";
+      Effect.runFork(
+        Log.Trace(
+          `Intercepted require('${Request}') from '${RequesterPath}'.`
+        )
+      );
+      if (BlockedModules.has(Request)) {
+        return Exit.fail(
+          new ModuleBlockedError({ ModuleName: Request })
+        );
+      }
+      const Shim = Shims.get(Request);
+      if (Shim) {
+        return Exit.succeed(Shim);
+      }
+      return Exit.fail(
+        new ModuleNotShimmedError({ ModuleName: Request })
+      );
+    }
+  };
+  return NodeModuleShim;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

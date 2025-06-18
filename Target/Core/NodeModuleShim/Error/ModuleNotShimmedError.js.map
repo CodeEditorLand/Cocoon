@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Core/NodeModuleShim/Error/ModuleNotShimmedError.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Core/NodeModuleShim/Error/ModuleNotShimmedError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:39 UTC\n * Dependency: effect\n * Export: ModuleNotShimmedError\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that an extension attempted to require a built-in Node.js\n * module for which no safe, sandboxed shim has been implemented.\n */\nexport class ModuleNotShimmedError extends Data.TaggedError(\n\t\"ModuleNotShimmedError\",\n)<{\n\treadonly ModuleName: string;\n}> {\n\tconstructor(properties: { readonly ModuleName: string }) {\n\t\tsuper(properties);\n\t\tthis.message = `Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`;\n\t}\n\tpublic override readonly message: string;\n}\n\nexport default ModuleNotShimmedError;\n"],
+  "mappings": ";;AAQA,SAAS,YAAY;AAMd,MAAM,8BAA8B,KAAK;AAAA,EAC/C;AACD,EAEG;AAAA,EAlBH,OAkBG;AAAA;AAAA;AAAA,EACF,YAAY,YAA6C;AACxD,UAAM,UAAU;AAChB,SAAK,UAAU,WAAW,KAAK,UAAU;AAAA,EAC1C;AAAA,EACyB;AAC1B;AAEA,IAAO,gCAAQ;",
+  "names": []
+}

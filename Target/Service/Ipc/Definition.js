@@ -1,1 +1,99 @@
-import{Effect as o,Ref as m}from"effect";import I from"./Client/Service.js";import w from"./Dispatcher/Service.js";import a from"./Error/IPCError.js";import u from"./Generated.js";import S from"./ProtocolAdapter/Service.js";import v from"./ProtoConverter/DecodeValue.js";import p from"./ProtoConverter/EncodeValue.js";import y from"./ProtoConverter/Error/ProtoSerializationError.js";var N=o.gen(function*(){const d=yield*I,f=yield*w,P=yield*S,R=yield*m.make(1),l=(n,r,e)=>o.gen(function*(){const t=yield*m.getAndUpdate(R,c=>c+1),i=yield*p(r),s=new u.GenericRequest;s.setRequestid(t),s.setMethod(n),s.setParams(i);const E=yield*o.tryPromise({try:()=>d.processCocoonRequest(s),catch:c=>new a({cause:c,context:`gRPC request '${n}' failed.`})});return yield*v(E.getResult())}).pipe(o.mapError(t=>t instanceof y?new a({cause:t,context:"Proto serialization/deserialization failed"}):t)),C=(n,r)=>o.gen(function*(){const e=yield*p(r),t=new u.GenericNotification;t.setMethod(n),t.setParams(e),yield*o.tryPromise({try:()=>d.sendCocoonNotification(t),catch:i=>new a({cause:i,context:`gRPC notification '${n}' failed.`})})}).pipe(o.mapError(e=>e instanceof y?new a({cause:e,context:"Proto serialization/deserialization failed"}):e),o.asVoid),g=n=>new Proxy({},{get(r,e){return typeof e=="string"&&e.startsWith("$")?(...t)=>{const i=`${n}/${e}`;return o.runPromise(l(i,t))}:r[e]}});return{SendRequest:l,SendNotification:C,SendCancel:f.CancelOperation,CreateProtocolAdapter:()=>P,CreateProxy:g,RegisterInvokeHandler:f.RegisterInvokeHandler}});export{N as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect, Ref } from "effect";
+import ClientService from "./Client/Service.js";
+import DispatcherService from "./Dispatcher/Service.js";
+import IPCError from "./Error/IPCError.js";
+import Generated from "./Generated.js";
+import ProtocolAdapterService from "./ProtocolAdapter/Service.js";
+import DecodeValue from "./ProtoConverter/DecodeValue.js";
+import EncodeValue from "./ProtoConverter/EncodeValue.js";
+import ProtoSerializationError from "./ProtoConverter/Error/ProtoSerializationError.js";
+var Definition_default = Effect.gen(function* () {
+  const Client = yield* ClientService;
+  const Dispatcher = yield* DispatcherService;
+  const ProtocolAdapter = yield* ProtocolAdapterService;
+  const RequestIDCounter = yield* Ref.make(1);
+  const SendRequest = /* @__PURE__ */ __name((Method, Parameters, _TimeoutMilliseconds) => Effect.gen(function* () {
+    const RequestID = yield* Ref.getAndUpdate(
+      RequestIDCounter,
+      (n) => n + 1
+    );
+    const EncodedParameter = yield* EncodeValue(Parameters);
+    const RequestMessage = new Generated.GenericRequest();
+    RequestMessage.setRequestid(RequestID);
+    RequestMessage.setMethod(Method);
+    RequestMessage.setParams(EncodedParameter);
+    const ResponseMessage = yield* Effect.tryPromise({
+      try: /* @__PURE__ */ __name(() => Client.processCocoonRequest(RequestMessage), "try"),
+      catch: /* @__PURE__ */ __name((cause) => new IPCError({
+        cause,
+        context: `gRPC request '${Method}' failed.`
+      }), "catch")
+    });
+    const DecodedResult = yield* DecodeValue(
+      ResponseMessage.getResult()
+    );
+    return DecodedResult;
+  }).pipe(
+    Effect.mapError((error) => {
+      if (error instanceof ProtoSerializationError) {
+        return new IPCError({
+          cause: error,
+          context: "Proto serialization/deserialization failed"
+        });
+      }
+      return error;
+    })
+  ), "SendRequest");
+  const SendNotification = /* @__PURE__ */ __name((Method, Parameters) => Effect.gen(function* () {
+    const EncodedParameter = yield* EncodeValue(Parameters);
+    const NotificationMessage = new Generated.GenericNotification();
+    NotificationMessage.setMethod(Method);
+    NotificationMessage.setParams(EncodedParameter);
+    yield* Effect.tryPromise({
+      try: /* @__PURE__ */ __name(() => Client.sendCocoonNotification(NotificationMessage), "try"),
+      catch: /* @__PURE__ */ __name((cause) => new IPCError({
+        cause,
+        context: `gRPC notification '${Method}' failed.`
+      }), "catch")
+    });
+  }).pipe(
+    Effect.mapError((error) => {
+      if (error instanceof ProtoSerializationError) {
+        return new IPCError({
+          cause: error,
+          context: "Proto serialization/deserialization failed"
+        });
+      }
+      return error;
+    }),
+    Effect.asVoid
+  ), "SendNotification");
+  const CreateProxy = /* @__PURE__ */ __name((Channel) => {
+    return new Proxy({}, {
+      get(_target, prop) {
+        if (typeof prop === "string" && prop.startsWith("$")) {
+          return (...args) => {
+            const method = `${Channel}/${prop}`;
+            return Effect.runPromise(SendRequest(method, args));
+          };
+        }
+        return _target[prop];
+      }
+    });
+  }, "CreateProxy");
+  const IPCImplementation = {
+    SendRequest,
+    SendNotification,
+    SendCancel: Dispatcher.CancelOperation,
+    CreateProtocolAdapter: /* @__PURE__ */ __name(() => ProtocolAdapter, "CreateProtocolAdapter"),
+    CreateProxy,
+    RegisterInvokeHandler: Dispatcher.RegisterInvokeHandler
+  };
+  return IPCImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

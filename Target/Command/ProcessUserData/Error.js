@@ -1,1 +1,33 @@
-import{Data as e}from"effect";class n extends e.TaggedError("ActiveEditorNotFoundError"){message;constructor(){super(),this.message="No active text editor found. Please open a file to process."}}class i extends e.TaggedError("ProcessingServiceError"){message;constructor(s){super(s);const o=this.cause instanceof Error?this.cause.message:String(this.cause);this.message=`Failed to connect to the processing service: ${o}`}}export{n as ActiveEditorNotFoundError,i as ProcessingServiceError};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Data } from "effect";
+class ActiveEditorNotFoundError extends Data.TaggedError(
+  "ActiveEditorNotFoundError"
+) {
+  static {
+    __name(this, "ActiveEditorNotFoundError");
+  }
+  message;
+  constructor() {
+    super();
+    this.message = "No active text editor found. Please open a file to process.";
+  }
+}
+class ProcessingServiceError extends Data.TaggedError(
+  "ProcessingServiceError"
+) {
+  static {
+    __name(this, "ProcessingServiceError");
+  }
+  message;
+  constructor(Properties) {
+    super(Properties);
+    const CauseMessage = this.cause instanceof Error ? this.cause.message : String(this.cause);
+    this.message = `Failed to connect to the processing service: ${CauseMessage}`;
+  }
+}
+export {
+  ActiveEditorNotFoundError,
+  ProcessingServiceError
+};
+//# sourceMappingURL=Error.js.map

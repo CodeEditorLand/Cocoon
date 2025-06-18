@@ -1,1 +1,12 @@
-import{Context as e}from"effect";class i extends e.Tag("Service/TreeView")(){}export{i as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Context } from "effect";
+class TreeViewService extends Context.Tag("Service/TreeView")() {
+  static {
+    __name(this, "TreeViewService");
+  }
+}
+export {
+  TreeViewService as default
+};
+//# sourceMappingURL=Service.js.map

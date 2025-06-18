@@ -1,1 +1,119 @@
-import{Effect as i,Ref as n}from"effect";import b from"../../TypeConverter/Main/Range.js";import F from"../../TypeConverter/Main/URI.js";import I from"../../TypeConverter/Main/ViewColumn.js";import l from"../../Utility/CreateEventStream.js";import R from"../IPC/Service.js";var j=i.gen(function*(d){const a=yield*d(R),m=yield*d(n.make({focused:!0,active:!0})),f=yield*d(n.make(new Map)),g=yield*d(n.make(void 0)),p=yield*d(n.make([])),E=l(),{event:T,Fire:x}=l(),{event:w,Fire:C}=l(),h=e=>{const t={focused:e,active:e};return n.set(m,t).pipe(i.andThen(E.Fire(t)))},D=(e,t)=>i.gen(function*(o){const s=yield*o(n.get(f)),c=e?s.get(e):void 0,r=t.map(u=>s.get(u)).filter(Boolean);yield*o(n.set(g,c)),yield*o(n.set(p,r)),yield*o(x(c)),yield*o(C(r))});yield*d(i.sync(()=>{a.RegisterInvokeHandler("$acceptWindowStateChanged",([e])=>i.runPromise(h(e))),a.RegisterInvokeHandler("$acceptEditorState",([e,t])=>i.runPromise(D(e,t)))}));const v={get state(){return i.runSync(n.get(m))},onDidChangeWindowState:E.event,get activeTextEditor(){return i.runSync(n.get(g))},get visibleTextEditors(){return i.runSync(n.get(p))},onDidChangeActiveTextEditor:T,onDidChangeVisibleTextEditors:w,ShowTextDocument:(e,t,o)=>i.gen(function*(s){let c;"uri"in e?c=e.uri:c=e;const r=typeof t=="object"?t:void 0,u=r?{preserveFocus:o??r.preserveFocus,selection:r.selection?b.FromAPI(r.selection):void 0}:void 0,A=typeof t=="number"?I.FromAPI(t):void 0,y=yield*s(a.SendRequest("$showTextDocument",[F.FromAPI(c),A,u])),S=(yield*s(n.get(f))).get(y);return S||(yield*s(i.fail(new Error(`Could not find text editor with ID ${y}`))))})};return v.findTextEditorById=e=>i.runSync(n.get(f).pipe(i.map(t=>t.get(e)))),v});export{j as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect, Ref } from "effect";
+import {
+  EventEmitter
+} from "vscode";
+import RangeConverter from "../../TypeConverter/Main/Range.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
+import ViewColumnConverter from "../../TypeConverter/Main/ViewColumn.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import IPCService from "../IPC/Service.js";
+var Definition_default = Effect.gen(function* (G) {
+  const IPC = yield* G(IPCService);
+  const WindowStateRef = yield* G(
+    Ref.make({ focused: true, active: true })
+  );
+  const TextEditorsMapRef = yield* G(Ref.make(/* @__PURE__ */ new Map()));
+  const ActiveTextEditorRef = yield* G(
+    Ref.make(void 0)
+  );
+  const VisibleTextEditorsRef = yield* G(Ref.make([]));
+  const OnDidChangeWindowStateStream = CreateEventStream();
+  const { event: OnDidChangeActiveTextEditorEvent, Fire: FireActiveEditor } = CreateEventStream();
+  const {
+    event: OnDidChangeVisibleTextEditorsEvent,
+    Fire: FireVisibleEditors
+  } = CreateEventStream();
+  const AcceptWindowStateChangedEffect = /* @__PURE__ */ __name((isFocused) => {
+    const NewState = { focused: isFocused, active: isFocused };
+    return Ref.set(WindowStateRef, NewState).pipe(
+      Effect.andThen(OnDidChangeWindowStateStream.Fire(NewState))
+    );
+  }, "AcceptWindowStateChangedEffect");
+  const AcceptEditorStateEffect = /* @__PURE__ */ __name((activeEditorId, visibleEditorIds) => Effect.gen(function* (G2) {
+    const Editors = yield* G2(Ref.get(TextEditorsMapRef));
+    const NewActive = activeEditorId ? Editors.get(activeEditorId) : void 0;
+    const NewVisible = visibleEditorIds.map((id) => Editors.get(id)).filter(Boolean);
+    yield* G2(Ref.set(ActiveTextEditorRef, NewActive));
+    yield* G2(
+      Ref.set(VisibleTextEditorsRef, NewVisible)
+    );
+    yield* G2(FireActiveEditor(NewActive));
+    yield* G2(FireVisibleEditors(NewVisible));
+  }), "AcceptEditorStateEffect");
+  yield* G(
+    Effect.sync(() => {
+      IPC.RegisterInvokeHandler(
+        "$acceptWindowStateChanged",
+        ([isFocused]) => Effect.runPromise(
+          AcceptWindowStateChangedEffect(isFocused)
+        )
+      );
+      IPC.RegisterInvokeHandler(
+        "$acceptEditorState",
+        ([activeId, visibleIds]) => Effect.runPromise(
+          AcceptEditorStateEffect(activeId, visibleIds)
+        )
+      );
+    })
+  );
+  const ServiceImplementation = {
+    get state() {
+      return Effect.runSync(Ref.get(WindowStateRef));
+    },
+    onDidChangeWindowState: OnDidChangeWindowStateStream.event,
+    get activeTextEditor() {
+      return Effect.runSync(Ref.get(ActiveTextEditorRef));
+    },
+    get visibleTextEditors() {
+      return Effect.runSync(Ref.get(VisibleTextEditorsRef));
+    },
+    onDidChangeActiveTextEditor: OnDidChangeActiveTextEditorEvent,
+    onDidChangeVisibleTextEditors: OnDidChangeVisibleTextEditorsEvent,
+    // Stubs for other events, a full implementation would use CreateEventStream
+    onDidChangeTextEditorSelection: new EventEmitter().event,
+    onDidChangeTextEditorVisibleRanges: new EventEmitter().event,
+    onDidChangeTextEditorOptions: new EventEmitter().event,
+    onDidChangeTextEditorViewColumn: new EventEmitter().event,
+    ShowTextDocument: /* @__PURE__ */ __name((documentOrURI, columnOrOptions, preserveFocus) => Effect.gen(function* (G2) {
+      let uri;
+      if ("uri" in documentOrURI) {
+        uri = documentOrURI.uri;
+      } else {
+        uri = documentOrURI;
+      }
+      const options = typeof columnOrOptions === "object" ? columnOrOptions : void 0;
+      const optionsDTO = options ? {
+        preserveFocus: preserveFocus ?? options.preserveFocus,
+        selection: options.selection ? RangeConverter.FromAPI(options.selection) : void 0
+      } : void 0;
+      const viewColumnDTO = typeof columnOrOptions === "number" ? ViewColumnConverter.FromAPI(columnOrOptions) : void 0;
+      const editorId = yield* G2(
+        IPC.SendRequest("$showTextDocument", [
+          URIConverter.FromAPI(uri),
+          viewColumnDTO,
+          optionsDTO
+        ])
+      );
+      const editor = (yield* G2(Ref.get(TextEditorsMapRef))).get(
+        editorId
+      );
+      if (!editor) {
+        return yield* G2(
+          Effect.fail(
+            new Error(
+              `Could not find text editor with ID ${editorId}`
+            )
+          )
+        );
+      }
+      return editor;
+    }), "ShowTextDocument")
+  };
+  return ServiceImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

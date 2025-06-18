@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Storage/Service.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Storage/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:13 UTC\n * Dependency: effect, vscode\n * Export: StorageService\n */\n\n/**\n * @module Service (Storage)\n * @description Defines the interface and Context.Tag for the Storage service factory.\n * This service is responsible for creating `Memento` instances, which provide\n * persistent key-value storage scoped to an extension.\n */\n\nimport { Context } from \"effect\";\nimport type { Memento } from \"vscode\";\n\n/**\n * The `Context.Tag` for the Storage service factory.\n */\nexport default class StorageService extends Context.Tag(\"Service/Storage\")<\n\tStorageService,\n\t{\n\t\t/**\n\t\t * Creates a Memento instance.\n\t\t * @param ExtensionID The ID of the extension requesting the storage.\n\t\t * @param IsGlobal If `true`, creates a global storage memento (shared across workspaces);\n\t\t *   otherwise, a workspace-scoped one.\n\t\t * @returns A `Memento` instance.\n\t\t */\n\t\treadonly CreateMemento: (\n\t\t\tExtensionID: string,\n\t\t\tIsGlobal: boolean,\n\t\t) => Memento;\n\t}\n>() {}\n"],
+  "mappings": ";;AAeA,SAAS,eAAe;AAMxB,MAAO,uBAAqC,QAAQ,IAAI,iBAAiB,EAevE,EAAE;AAAA,EApCJ,OAoCI;AAAA;AAAA;AAAC;",
+  "names": []
+}

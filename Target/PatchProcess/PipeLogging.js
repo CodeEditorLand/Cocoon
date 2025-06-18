@@ -1,1 +1,63 @@
-import{Effect as t}from"effect";import c from"../Service/IPC/Service.js";const a=r=>{const l=[];for(let e=0;e<r.length;e++){const n=r[e];if(typeof n=="object")try{l.push(JSON.stringify(n))}catch(o){l.push(`[Unserializable Object: ${o}]`)}else l.push(String(n))}return l.join(" ")},g=t.gen(function*(r){if(process.env.VSCODE_PIPE_LOGGING!=="true")return yield*r(t.logTrace("Console log piping is disabled by environment variable."));const l=yield*r(c),e=(o,i)=>{const s={type:"__$console",severity:o,arguments:a(i)};return l.SendNotification("$log",[s])},n={log:console.log,warn:console.warn,error:console.error};console.log=(...o)=>{n.log.apply(console,o),t.runFork(e("log",o))},console.warn=(...o)=>{n.warn.apply(console,o),t.runFork(e("warn",o))},console.error=(...o)=>{n.error.apply(console,o),t.runFork(e("error",o))},yield*r(t.logTrace("Global console object patched to pipe logs to host."))});var f=g;export{f as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import IPCService from "../Service/IPC/Service.js";
+const SafeToString = /* @__PURE__ */ __name((Arguments) => {
+  const Slices = [];
+  for (let i = 0; i < Arguments.length; i++) {
+    const Argument = Arguments[i];
+    if (typeof Argument === "object") {
+      try {
+        Slices.push(JSON.stringify(Argument));
+      } catch (e) {
+        Slices.push(`[Unserializable Object: ${e}]`);
+      }
+    } else {
+      Slices.push(String(Argument));
+    }
+  }
+  return Slices.join(" ");
+}, "SafeToString");
+const PipeLoggingEffect = Effect.gen(function* (G) {
+  if (process.env["VSCODE_PIPE_LOGGING"] !== "true") {
+    return yield* G(
+      Effect.logTrace(
+        "Console log piping is disabled by environment variable."
+      )
+    );
+  }
+  const IPC = yield* G(IPCService);
+  const ForwardConsoleCall = /* @__PURE__ */ __name((Severity, Arguments) => {
+    const Payload = {
+      type: "__$console",
+      severity: Severity,
+      arguments: SafeToString(Arguments)
+    };
+    return IPC.SendNotification("$log", [Payload]);
+  }, "ForwardConsoleCall");
+  const OriginalConsole = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error
+  };
+  console.log = (...args) => {
+    OriginalConsole.log.apply(console, args);
+    Effect.runFork(ForwardConsoleCall("log", args));
+  };
+  console.warn = (...args) => {
+    OriginalConsole.warn.apply(console, args);
+    Effect.runFork(ForwardConsoleCall("warn", args));
+  };
+  console.error = (...args) => {
+    OriginalConsole.error.apply(console, args);
+    Effect.runFork(ForwardConsoleCall("error", args));
+  };
+  yield* G(
+    Effect.logTrace("Global console object patched to pipe logs to host.")
+  );
+});
+var PipeLogging_default = PipeLoggingEffect;
+export {
+  PipeLogging_default as default
+};
+//# sourceMappingURL=PipeLogging.js.map

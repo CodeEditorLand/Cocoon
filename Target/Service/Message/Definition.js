@@ -1,1 +1,89 @@
-import{Effect as p}from"effect";import g from"../IPC/Service.js";import m from"./Support/ParseArgument.js";const c=(d,i,u,s,t,e)=>p.gen(function*(r){const o=t.map((n,l)=>({title:typeof n=="string"?n:n.title,isCloseAffordance:typeof n=="object"?!!n.isCloseAffordance:!1,handle:l})),a={severity:i,message:u,options:{modal:s.modal,detail:s.detail},items:o,source:e?{identifier:typeof e.id=="string"?e.id:e.id.value,name:e.displayName}:void 0},f=yield*r(d.SendRequest("$showMessage",[a.severity,a.message,a.options,a.items,a.source]).pipe(p.mapError(n=>new Error(String(n)))));if(f!=null&&f>=0&&f<t.length){const n=t[f];if(typeof n!="string")return n}});var v=p.gen(function*(d){const i=yield*d(g);return{ShowInformationMessage:(s,...t)=>{const{Option:e,Items:r,Source:o}=m(t);return c(i,1,s,e,r,o)},ShowWarningMessage:(s,...t)=>{const{Option:e,Items:r,Source:o}=m(t);return c(i,2,s,e,r,o)},ShowErrorMessage:(s,...t)=>{const{Option:e,Items:r,Source:o}=m(t);return c(i,3,s,e,r,o)}}});export{v as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import IPCService from "../IPC/Service.js";
+import ParseArgument from "./Support/ParseArgument.js";
+const ShowMessageEffect = /* @__PURE__ */ __name((IPC, Severity, Message, Option, Items, Source) => {
+  return Effect.gen(function* (G) {
+    const ItemsForIPC = Items.map((item, index) => ({
+      title: typeof item === "string" ? item : item.title,
+      isCloseAffordance: typeof item === "object" ? !!item.isCloseAffordance : false,
+      handle: index
+    }));
+    const DTO = {
+      severity: Severity,
+      message: Message,
+      options: { modal: Option.modal, detail: Option.detail },
+      items: ItemsForIPC,
+      source: Source ? {
+        identifier: typeof Source.id === "string" ? Source.id : Source.id.value,
+        name: Source.displayName
+      } : void 0
+    };
+    const ResultHandle = yield* G(
+      IPC.SendRequest("$showMessage", [
+        DTO.severity,
+        DTO.message,
+        DTO.options,
+        DTO.items,
+        DTO.source
+      ]).pipe(Effect.mapError((cause) => new Error(String(cause))))
+    );
+    if (ResultHandle === void 0 || ResultHandle === null) {
+      return void 0;
+    }
+    if (ResultHandle >= 0 && ResultHandle < Items.length) {
+      const resultItem = Items[ResultHandle];
+      if (typeof resultItem !== "string") {
+        return resultItem;
+      }
+    }
+    return void 0;
+  });
+}, "ShowMessageEffect");
+var Definition_default = Effect.gen(function* (G) {
+  const IPC = yield* G(IPCService);
+  const ServiceImplementation = {
+    ShowInformationMessage: /* @__PURE__ */ __name((message, ...args) => {
+      const { Option, Items, Source } = ParseArgument(args);
+      return ShowMessageEffect(
+        IPC,
+        1,
+        // Severity.Info
+        message,
+        Option,
+        Items,
+        Source
+      );
+    }, "ShowInformationMessage"),
+    ShowWarningMessage: /* @__PURE__ */ __name((message, ...args) => {
+      const { Option, Items, Source } = ParseArgument(args);
+      return ShowMessageEffect(
+        IPC,
+        2,
+        // Severity.Warning
+        message,
+        Option,
+        Items,
+        Source
+      );
+    }, "ShowWarningMessage"),
+    ShowErrorMessage: /* @__PURE__ */ __name((message, ...args) => {
+      const { Option, Items, Source } = ParseArgument(args);
+      return ShowMessageEffect(
+        IPC,
+        3,
+        // Severity.Error
+        message,
+        Option,
+        Items,
+        Source
+      );
+    }, "ShowErrorMessage")
+  };
+  return ServiceImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

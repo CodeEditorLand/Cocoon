@@ -1,1 +1,12 @@
-import{Context as e}from"effect";class o extends e.Tag("Core/APIFactory")(){}export{o as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Context } from "effect";
+class APIFactoryService extends Context.Tag("Core/APIFactory")() {
+  static {
+    __name(this, "APIFactoryService");
+  }
+}
+export {
+  APIFactoryService as default
+};
+//# sourceMappingURL=Service.js.map

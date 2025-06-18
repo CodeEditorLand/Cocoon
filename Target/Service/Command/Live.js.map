@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Command/Live.ts"],
+  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Service/Command/Live.ts\r\n * Responsibility:\r\n * Modified: 2025-06-17 21:19:31 UTC\r\n * Dependency: ./Definition.js, ./Service.js, effect\r\n */\r\n\r\n/**\r\n * @module Command\r\n * @description This module provides the `vscode.commands` API implementation,\r\n * managing command registration and execution.\r\n */\r\n\r\nimport { Layer } from \"effect\";\r\n\r\nimport IPCService from \"../IPC/Service.js\";\r\nimport TelemetryService from \"../Telemetry/Service.js\";\r\nimport WindowService from \"../Window/Service.js\";\r\nimport Definition from \"./Definition.js\";\r\nimport Service from \"./Service.js\";\r\n\r\n/**\r\n * The live implementation Layer for the Command service.\r\n * It depends on the IPC, Telemetry, and Window services.\r\n */\r\nconst Live: Layer.Layer<\r\n\tService,\r\n\tnever,\r\n\tIPCService | TelemetryService | WindowService\r\n> = Layer.effect(Service, Definition);\r\n\r\nexport default Live;\r\n"],
+  "mappings": "AAaA,SAAS,aAAa;AAKtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAIF,MAAM,OAAO,SAAS,UAAU;AAEpC,IAAO,eAAQ;",
+  "names": []
+}

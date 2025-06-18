@@ -1,1 +1,46 @@
-import{Effect as e,Ref as r}from"effect";import g from"../../Utility/CreateEventStream.js";import m from"../IPC/Service.js";import p from"../Log/Service.js";import C from"./CreateWorkSpaceConfiguration.js";var h=e.gen(function*(){const t=yield*m,c=yield*p,a=yield*r.make({}),f=g();return yield*e.sync(()=>t.RegisterInvokeHandler("$acceptConfigurationChanged",([o,i])=>e.gen(function*(){yield*r.set(a,o),yield*f.Fire({affectsConfiguration:(n,u)=>i.keys.includes(n)})}).pipe(e.runPromise))),{GetConfiguration:(o,i)=>t.SendRequest("$getConfiguration",[o,i]).pipe(e.tap(n=>r.set(a,n)),e.map(n=>C(n,o??"",t,c))),onDidChangeConfiguration:f.event}});export{h as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect, Ref } from "effect";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import IPCService from "../IPC/Service.js";
+import LogService from "../Log/Service.js";
+import CreateWorkSpaceConfiguration from "./CreateWorkSpaceConfiguration.js";
+var Definition_default = Effect.gen(function* () {
+  const IPC = yield* IPCService;
+  const Log = yield* LogService;
+  const ConfigCache = yield* Ref.make({});
+  const OnDidChangeEvent = CreateEventStream();
+  yield* Effect.sync(
+    () => IPC.RegisterInvokeHandler(
+      "$acceptConfigurationChanged",
+      ([NewConfig, Change]) => Effect.gen(function* () {
+        yield* Ref.set(ConfigCache, NewConfig);
+        yield* OnDidChangeEvent.Fire({
+          affectsConfiguration: /* @__PURE__ */ __name((Section, _Scope) => (
+            // A real implementation would need to check the scope properly.
+            Change.keys.includes(Section)
+          ), "affectsConfiguration")
+        });
+      }).pipe(Effect.runPromise)
+    )
+  );
+  const ConfigurationImplementation = {
+    GetConfiguration: /* @__PURE__ */ __name((Section, Scope) => IPC.SendRequest("$getConfiguration", [Section, Scope]).pipe(
+      Effect.tap((NewConfig) => Ref.set(ConfigCache, NewConfig)),
+      Effect.map(
+        (NewConfig) => CreateWorkSpaceConfiguration(
+          NewConfig,
+          Section ?? "",
+          IPC,
+          Log
+        )
+      )
+    ), "GetConfiguration"),
+    onDidChangeConfiguration: OnDidChangeEvent.event
+  };
+  return ConfigurationImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

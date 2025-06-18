@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/InitData/Live.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/InitData/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:23 UTC\n * Dependency: ./Service.js, effect, vs/workbench/services/extensions/common/extensionHostProtocol.js\n */\n\n/**\n * @module Live (InitData)\n * @description Provides the live implementation layer for the InitData service.\n */\n\nimport { Layer } from \"effect\";\nimport type { IExtensionHostInitData } from \"vs/workbench/services/extensions/common/extensionHostProtocol.js\";\n\nimport Service from \"./Service.js\";\n\n/**\n * A factory function that creates a live `Layer` for the `InitData` service.\n *\n * This layer simply succeeds with the provided `InitDataObject`, making it\n * available in the context for all other services that depend on it. This\n * layer should be constructed exactly once during the application's startup\n * handshake process.\n *\n * @param InitDataObject The `IExtensionHostInitData` object received from the Mountain host.\n * @returns A `Layer` that provides the `InitData.Service`.\n */\nexport default (InitDataObject: IExtensionHostInitData) =>\n\tLayer.succeed(Service, InitDataObject);\n"],
+  "mappings": ";;AAYA,SAAS,aAAa;AAGtB,OAAO,aAAa;AAapB,IAAO,eAAQ,wBAAC,mBACf,MAAM,QAAQ,SAAS,cAAc,GADvB;",
+  "names": []
+}

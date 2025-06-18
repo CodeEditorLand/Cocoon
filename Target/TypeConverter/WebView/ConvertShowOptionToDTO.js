@@ -1,1 +1,13 @@
-import n from"../Main/ViewColumn.js";var i=(e,o)=>({viewColumn:n.FromAPI(e),preserveFocus:o});export{i as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import ViewColumnConverter from "../Main/ViewColumn.js";
+var ConvertShowOptionToDTO_default = /* @__PURE__ */ __name((ViewColumn, PreserveFocus) => {
+  return {
+    viewColumn: ViewColumnConverter.FromAPI(ViewColumn),
+    preserveFocus: PreserveFocus
+  };
+}, "default");
+export {
+  ConvertShowOptionToDTO_default as default
+};
+//# sourceMappingURL=ConvertShowOptionToDTO.js.map

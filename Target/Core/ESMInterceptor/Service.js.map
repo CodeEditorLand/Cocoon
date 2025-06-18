@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/ESMInterceptor/Service.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Core/ESMInterceptor/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:42 UTC\n * Dependency: effect\n * Export: ESMInterceptorService\n */\n\n/**\n * @module Service (ESMInterceptor)\n * @description Defines the interface and Context.Tag for the ESMInterceptor service.\n * This service is responsible for installing the Node.js loader hook that\n * intercepts `import 'vscode'` statements.\n */\n\nimport { Context, type Effect } from \"effect\";\n\n/**\n * The Context.Tag for the ESMInterceptor service.\n */\nexport default class ESMInterceptorService extends Context.Tag(\n\t\"Core/ESMInterceptor\",\n)<\n\tESMInterceptorService,\n\t{\n\t\t/**\n\t\t * An Effect that, when executed, installs the ESM loader hook\n\t\t * and handles cleanup of all resources (MessagePorts, globals).\n\t\t * The scope is managed internally and not leaked to the caller.\n\t\t */\n\t\treadonly Install: () => Effect.Effect<void, Error>;\n\t}\n>() {}\n"],
+  "mappings": ";;AAeA,SAAS,eAA4B;AAKrC,MAAO,8BAA4C,QAAQ;AAAA,EAC1D;AACD,EAUE,EAAE;AAAA,EAhCJ,OAgCI;AAAA;AAAA;AAAC;",
+  "names": []
+}

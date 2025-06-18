@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/Debug/Error/StartDebuggingError.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Debug/Error/StartDebuggingError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:30 UTC\n * Dependency: effect\n * Export: StartDebuggingError\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that a `startDebugging` call failed.\n */\nexport class StartDebuggingError extends Data.TaggedError(\n\t\"StartDebuggingError\",\n)<{\n\treadonly cause: unknown;\n}> {\n\tconstructor(properties: { readonly cause: unknown }) {\n\t\tsuper(properties);\n\t\tthis.message = `Failed to start debugging session.`;\n\t}\n\tpublic override readonly message: string;\n}\n\nexport default StartDebuggingError;\n"],
+  "mappings": ";;AAQA,SAAS,YAAY;AAKd,MAAM,4BAA4B,KAAK;AAAA,EAC7C;AACD,EAEG;AAAA,EAjBH,OAiBG;AAAA;AAAA;AAAA,EACF,YAAY,YAAyC;AACpD,UAAM,UAAU;AAChB,SAAK,UAAU;AAAA,EAChB;AAAA,EACyB;AAC1B;AAEA,IAAO,8BAAQ;",
+  "names": []
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/ExtensionPath/Service.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Core/ExtensionPath/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:41 UTC\n * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode\n * Export: ExtensionPathService\n */\n\n/**\n * @module Service (ExtensionPath)\n * @description Defines the interface and Context.Tag for the ExtensionPath service.\n * This service is responsible for mapping file URIs to their owner extension.\n */\n\nimport { Context } from \"effect\";\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\nimport type { Uri } from \"vscode\";\n\nexport default class ExtensionPathService extends Context.Tag(\n\t\"Core/ExtensionPath\",\n)<\n\tExtensionPathService,\n\t{\n\t\t/**\n\t\t * Synchronously finds the extension that a given file URI belongs to.\n\t\t * @param path The URI to check.\n\t\t * @returns An `IExtensionDescription` if a match is found, otherwise `undefined`.\n\t\t */\n\t\treadonly FindSubstr: (path: Uri) => IExtensionDescription | undefined;\n\t}\n>() {}\n"],
+  "mappings": ";;AAcA,SAAS,eAAe;AAIxB,MAAO,6BAA2C,QAAQ;AAAA,EACzD;AACD,EAUE,EAAE;AAAA,EA9BJ,OA8BI;AAAA;AAAA;AAAC;",
+  "names": []
+}

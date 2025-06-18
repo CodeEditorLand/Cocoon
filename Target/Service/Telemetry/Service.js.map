@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Telemetry/Service.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Telemetry/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:11 UTC\n * Dependency: effect, vs/workbench/api/common/extHostTelemetry.js\n * Export: TelemetryService\n */\n\n/**\n * @module Service (Telemetry)\n * @description Defines the interface and Context.Tag for the Telemetry service.\n */\n\nimport { Context } from \"effect\";\nimport type { IExtHostTelemetry } from \"vs/workbench/api/common/extHostTelemetry.js\";\n\n/**\n * The `Context.Tag` for the `vscode.env.telemetry` API service.\n */\nexport default class TelemetryService extends Context.Tag(\"Service/Telemetry\")<\n\tTelemetryService,\n\tIExtHostTelemetry\n>() {}\n"],
+  "mappings": ";;AAaA,SAAS,eAAe;AAMxB,MAAO,yBAAuC,QAAQ,IAAI,mBAAmB,EAG3E,EAAE;AAAA,EAtBJ,OAsBI;AAAA;AAAA;AAAC;",
+  "names": []
+}

@@ -1,1 +1,80 @@
-import*as s from"node:path";import*as c from"@grpc/grpc-js";import*as C from"@grpc/proto-loader";import{Effect as n}from"effect";import f from"../Configuration.js";import i from"../Error/gRPCConnectionError.js";import l from"./Release.js";const d=t=>n.tryPromise({try:()=>C.load(t,{keepCase:!0,longs:String,enums:String,defaults:!0,oneofs:!0}),catch:e=>new i({Cause:e,Context:"ProtoLoadFailed"})}),u=(t,e)=>n.try({try:()=>{const r=t.vine_ipc.MountainService;return new r(e,c.credentials.createInsecure())},catch:o=>new i({Cause:o,Context:"ClientInstantiationFailed"})}),P=t=>n.async(e=>{t.waitForReady(Date.now()+1e4,o=>{e(o?n.fail(new i({Cause:o,Context:"ClientNotReady"})):n.void)})});var R=n.acquireRelease(n.gen(function*(){const t=yield*f,e=s.join(process.cwd(),"proto/vine.proto"),o=yield*d(e),r=c.loadPackageDefinition(o),a=yield*u(r,t.MountainAddress);return yield*P(a),yield*n.logInfo(`gRPC client connected to Mountain at ${t.MountainAddress}.`),a}),t=>l(t));export{R as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import * as Path from "node:path";
+import * as GRPC from "@grpc/grpc-js";
+import * as protoLoader from "@grpc/proto-loader";
+import { Effect } from "effect";
+import IPCConfigurationService from "../Configuration.js";
+import gRPCConnectionError from "../Error/gRPCConnectionError.js";
+import Release from "./Release.js";
+const LoadProtoDefinition = /* @__PURE__ */ __name((ProtoPath) => {
+  return Effect.tryPromise({
+    try: /* @__PURE__ */ __name(() => protoLoader.load(ProtoPath, {
+      keepCase: true,
+      longs: String,
+      enums: String,
+      defaults: true,
+      oneofs: true
+    }), "try"),
+    catch: /* @__PURE__ */ __name((Cause) => new gRPCConnectionError({
+      Cause,
+      Context: "ProtoLoadFailed"
+    }), "catch")
+  });
+}, "LoadProtoDefinition");
+const CreateClientInstance = /* @__PURE__ */ __name((PackageDefinition, ServerAddress) => {
+  return Effect.try({
+    try: /* @__PURE__ */ __name(() => {
+      const Proto = PackageDefinition["vine_ipc"];
+      const ClientConstructor = Proto["MountainService"];
+      return new ClientConstructor(
+        ServerAddress,
+        GRPC.credentials.createInsecure()
+      );
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Cause) => new gRPCConnectionError({
+      Cause,
+      Context: "ClientInstantiationFailed"
+    }), "catch")
+  });
+}, "CreateClientInstance");
+const WaitForClientReady = /* @__PURE__ */ __name((Client) => {
+  return Effect.async((Resume) => {
+    Client.waitForReady(Date.now() + 1e4, (Error2) => {
+      if (Error2) {
+        Resume(
+          Effect.fail(
+            new gRPCConnectionError({
+              Cause: Error2,
+              Context: "ClientNotReady"
+            })
+          )
+        );
+      } else {
+        Resume(Effect.void);
+      }
+    });
+  });
+}, "WaitForClientReady");
+var Acquire_default = Effect.acquireRelease(
+  Effect.gen(function* () {
+    const Configuration = yield* IPCConfigurationService;
+    const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
+    const Definition = yield* LoadProtoDefinition(ProtoPath);
+    const GrpcObject = GRPC.loadPackageDefinition(Definition);
+    const Client = yield* CreateClientInstance(
+      GrpcObject,
+      Configuration.MountainAddress
+    );
+    yield* WaitForClientReady(Client);
+    yield* Effect.logInfo(
+      `gRPC client connected to Mountain at ${Configuration.MountainAddress}.`
+    );
+    return Client;
+  }),
+  (Client) => Release(Client)
+);
+export {
+  Acquire_default as default
+};
+//# sourceMappingURL=Acquire.js.map

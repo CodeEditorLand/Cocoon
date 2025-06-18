@@ -1,1 +1,22 @@
-import{Effect as e}from"effect";import p from"../Error/IPCError.js";const s=t=>e.tryPromise({try:()=>new Promise((r,n)=>t.tryShutdown(o=>o?n(o):r())),catch:r=>new p({cause:r,context:"gRPC server shutdown failed"})}).pipe(e.tap(()=>e.logInfo("Cocoon gRPC server shut down.")));var i=s;export{i as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import IPCError from "../Error/IPCError.js";
+const Release = /* @__PURE__ */ __name((Server) => {
+  return Effect.tryPromise({
+    try: /* @__PURE__ */ __name(() => new Promise(
+      (Resolve, Reject) => Server.tryShutdown(
+        (Error2) => Error2 ? Reject(Error2) : Resolve()
+      )
+    ), "try"),
+    catch: /* @__PURE__ */ __name((cause) => new IPCError({
+      cause,
+      context: "gRPC server shutdown failed"
+    }), "catch")
+  }).pipe(Effect.tap(() => Effect.logInfo("Cocoon gRPC server shut down.")));
+}, "Release");
+var Release_default = Release;
+export {
+  Release_default as default
+};
+//# sourceMappingURL=Release.js.map

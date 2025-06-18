@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/Dialog/Error/DialogError.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Dialog/Error/DialogError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:27 UTC\n * Dependency: effect\n * Export: DialogError\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that a dialog operation failed. This is a generic\n * wrapper for IPC or other underlying errors.\n */\nexport class DialogError extends Data.TaggedError(\"DialogError\")<{\n\treadonly cause: unknown;\n\treadonly context: string;\n}> {\n\tconstructor(properties: {\n\t\treadonly cause: unknown;\n\t\treadonly context: string;\n\t}) {\n\t\tsuper(properties);\n\t\tthis.message = `Dialog operation failed: ${this.context}`;\n\t}\n\tpublic override readonly message: string;\n}\n\nexport default DialogError;\n"],
+  "mappings": ";;AAQA,SAAS,YAAY;AAMd,MAAM,oBAAoB,KAAK,YAAY,aAAa,EAG5D;AAAA,EAjBH,OAiBG;AAAA;AAAA;AAAA,EACF,YAAY,YAGT;AACF,UAAM,UAAU;AAChB,SAAK,UAAU,4BAA4B,KAAK,OAAO;AAAA,EACxD;AAAA,EACyB;AAC1B;AAEA,IAAO,sBAAQ;",
+  "names": []
+}

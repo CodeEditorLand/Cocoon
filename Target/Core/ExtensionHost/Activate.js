@@ -1,1 +1,19 @@
-import{Effect as o}from"effect";import n from"../../Service/Configuration/GetConfiguration.js";import t from"../../Service/Window/ShowInformationMessage.js";var s=o.gen(function*(){const e=(yield*n("cocoon")).get("showWelcomeMessage",!0);yield*o.logInfo("Cocoon extension is now active."),yield*o.when(t("Welcome to Cocoon!"),()=>e)});export{s as default};
+import { Effect } from "effect";
+import GetConfiguration from "../../Service/Configuration/GetConfiguration.js";
+import ShowInformationMessage from "../../Service/Window/ShowInformationMessage.js";
+var Activate_default = Effect.gen(function* () {
+  const Configuration = yield* GetConfiguration("cocoon");
+  const ShouldShowWelcomeMessage = Configuration.get(
+    "showWelcomeMessage",
+    true
+  );
+  yield* Effect.logInfo("Cocoon extension is now active.");
+  yield* Effect.when(
+    ShowInformationMessage("Welcome to Cocoon!"),
+    () => ShouldShowWelcomeMessage
+  );
+});
+export {
+  Activate_default as default
+};
+//# sourceMappingURL=Activate.js.map

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Window/ShowInformationMessage.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Window/ShowInformationMessage.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:08 UTC\n * Dependency: ../Message/Service.js, effect, vscode\n */\n\n/**\n * @module ShowInformationMessage\n * @description An Effect-based wrapper for the `vscode.window.showInformationMessage` API.\n * This is an internal helper that uses the central Message service.\n */\n\nimport { Effect } from \"effect\";\nimport type * as VSCode from \"vscode\";\n\nimport MessageService from \"../Message/Service.js\";\n\n/**\n * An Effect that displays an informational message to the user.\n * It delegates to the central `Message.Service`.\n */\nconst ShowInformationMessage = <T extends VSCode.MessageItem>(\n\tMessage: string,\n\t...ItemsOrOptions: (T | VSCode.MessageOptions)[]\n): Effect.Effect<T | undefined, Error, MessageService> =>\n\tEffect.flatMap(MessageService, (Service) =>\n\t\tService.ShowInformationMessage<T>(Message, ...ItemsOrOptions),\n\t);\n\nexport default ShowInformationMessage;\n"],
+  "mappings": ";;AAaA,SAAS,cAAc;AAGvB,OAAO,oBAAoB;AAM3B,MAAM,yBAAyB,wBAC9B,YACG,mBAEH,OAAO;AAAA,EAAQ;AAAA,EAAgB,CAAC,YAC/B,QAAQ,uBAA0B,SAAS,GAAG,cAAc;AAC7D,GAN8B;AAQ/B,IAAO,iCAAQ;",
+  "names": []
+}

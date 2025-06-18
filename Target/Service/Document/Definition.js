@@ -1,1 +1,125 @@
-import{Effect as n,Option as D,Ref as m}from"effect";import{ExtHostDocumentData as M}from"vs/workbench/api/common/extHostDocumentData.js";import h from"../../TypeConverter/Main/Range.js";import g from"../../TypeConverter/Main/URI.js";import s from"../../Utility/CreateEventStream.js";import R from"../IPC/Service.js";var k=n.gen(function*(u){const d=yield*u(R),i=yield*u(m.make(new Map)),v=d.CreateProxy("$rpc:mainThreadDocuments"),l=s(),p=s(),f=s(),y=s(),x=e=>n.gen(function*(t){const c=g.ToAPI(e.uri),o=new M(v,c,e.lines,e.eol,e.versionId,e.languageId,e.isDirty,e.encoding);yield*t(m.update(i,r=>r.set(o.document.uri.toString(),o))),yield*t(l.Fire(o.document))}),I=e=>n.gen(function*(t){const c=g.ToAPI(e).toString(),o=(yield*t(m.get(i))).get(c);o&&(yield*t(m.update(i,r=>(r.delete(c),r))),yield*t(p.Fire(o.document)))}),T=(e,t)=>n.gen(function*(c){const o=g.ToAPI(e).toString(),r=(yield*c(m.get(i))).get(o);if(r){const S={changes:t.changes,eol:t.eol,versionId:t.versionId,isUndoing:!1,isRedoing:!1};r.onEvents(S),yield*c(f.Fire({document:r.document,contentChanges:t.changes.map(a=>({range:h.ToAPI(a.range),rangeOffset:a.rangeOffset,rangeLength:a.rangeLength,text:a.text})),reason:t.reason}))}});return yield*u(n.sync(()=>{d.RegisterInvokeHandler("$acceptModelAdded",([e])=>n.runPromise(x(e))),d.RegisterInvokeHandler("$acceptModelRemoved",([e])=>n.runPromise(I(e))),d.RegisterInvokeHandler("$acceptModelChanged",([e,t])=>n.runPromise(T(e,t)))})),{get TextDocuments(){const e=n.runSync(m.get(i));return Array.from(e.values()).map(t=>t.document)},onDidOpenTextDocument:l.event,onDidCloseTextDocument:p.event,onDidChangeTextDocument:f.event,onDidSaveTextDocument:y.event,GetDocument:e=>m.get(i).pipe(n.map(t=>D.fromNullable(t.get(e.toString()))),n.map(D.map(t=>t.document)))}});export{k as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect, Option, Ref } from "effect";
+import { ExtHostDocumentData } from "vs/workbench/api/common/extHostDocumentData.js";
+import RangeConverter from "../../TypeConverter/Main/Range.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
+import CreateEventStream from "../../Utility/CreateEventStream.js";
+import IPCService from "../IPC/Service.js";
+var Definition_default = Effect.gen(function* (G) {
+  const IPC = yield* G(IPCService);
+  const DocumentMapRef = yield* G(
+    Ref.make(/* @__PURE__ */ new Map())
+  );
+  const MainThreadDocumentsProxy = IPC.CreateProxy(
+    "$rpc:mainThreadDocuments"
+  );
+  const OnDidOpenTextDocumentStream = CreateEventStream();
+  const OnDidCloseTextDocumentStream = CreateEventStream();
+  const OnDidChangeTextDocumentStream = CreateEventStream();
+  const OnDidSaveTextDocumentStream = CreateEventStream();
+  const AcceptModelAddedEffect = /* @__PURE__ */ __name((Data) => Effect.gen(function* (G2) {
+    const RevivedURI = URIConverter.ToAPI(Data.uri);
+    const DocumentData = new ExtHostDocumentData(
+      MainThreadDocumentsProxy,
+      RevivedURI,
+      Data.lines,
+      Data.eol,
+      Data.versionId,
+      Data.languageId,
+      Data.isDirty,
+      Data.encoding
+    );
+    yield* G2(
+      Ref.update(
+        DocumentMapRef,
+        (Map2) => Map2.set(DocumentData.document.uri.toString(), DocumentData)
+      )
+    );
+    yield* G2(OnDidOpenTextDocumentStream.Fire(DocumentData.document));
+  }), "AcceptModelAddedEffect");
+  const AcceptModelRemovedEffect = /* @__PURE__ */ __name((UriDTO) => Effect.gen(function* (G2) {
+    const URIString = URIConverter.ToAPI(UriDTO).toString();
+    const DocumentData = (yield* G2(Ref.get(DocumentMapRef))).get(
+      URIString
+    );
+    if (DocumentData) {
+      yield* G2(
+        Ref.update(
+          DocumentMapRef,
+          (Map2) => (Map2.delete(URIString), Map2)
+        )
+      );
+      yield* G2(
+        OnDidCloseTextDocumentStream.Fire(DocumentData.document)
+      );
+    }
+  }), "AcceptModelRemovedEffect");
+  const AcceptModelChangedEffect = /* @__PURE__ */ __name((UriDTO, ChangeEventDTO) => Effect.gen(function* (G2) {
+    const URIString = URIConverter.ToAPI(UriDTO).toString();
+    const DocumentData = (yield* G2(Ref.get(DocumentMapRef))).get(
+      URIString
+    );
+    if (DocumentData) {
+      const ModelChangedEvent = {
+        changes: ChangeEventDTO.changes,
+        eol: ChangeEventDTO.eol,
+        versionId: ChangeEventDTO.versionId,
+        isUndoing: false,
+        isRedoing: false
+      };
+      DocumentData.onEvents(ModelChangedEvent);
+      yield* G2(
+        OnDidChangeTextDocumentStream.Fire({
+          document: DocumentData.document,
+          contentChanges: ChangeEventDTO.changes.map(
+            (Change) => ({
+              range: RangeConverter.ToAPI(Change.range),
+              rangeOffset: Change.rangeOffset,
+              rangeLength: Change.rangeLength,
+              text: Change.text
+            })
+          ),
+          reason: ChangeEventDTO.reason
+        })
+      );
+    }
+  }), "AcceptModelChangedEffect");
+  yield* G(
+    Effect.sync(() => {
+      IPC.RegisterInvokeHandler(
+        "$acceptModelAdded",
+        ([Data]) => Effect.runPromise(AcceptModelAddedEffect(Data))
+      );
+      IPC.RegisterInvokeHandler(
+        "$acceptModelRemoved",
+        ([Uri]) => Effect.runPromise(AcceptModelRemovedEffect(Uri))
+      );
+      IPC.RegisterInvokeHandler(
+        "$acceptModelChanged",
+        ([Uri, Changes]) => Effect.runPromise(AcceptModelChangedEffect(Uri, Changes))
+      );
+    })
+  );
+  const DocumentImplementation = {
+    get TextDocuments() {
+      const Map2 = Effect.runSync(Ref.get(DocumentMapRef));
+      return Array.from(Map2.values()).map((data) => data.document);
+    },
+    onDidOpenTextDocument: OnDidOpenTextDocumentStream.event,
+    onDidCloseTextDocument: OnDidCloseTextDocumentStream.event,
+    onDidChangeTextDocument: OnDidChangeTextDocumentStream.event,
+    onDidSaveTextDocument: OnDidSaveTextDocumentStream.event,
+    GetDocument: /* @__PURE__ */ __name((URI) => Ref.get(DocumentMapRef).pipe(
+      Effect.map(
+        (Map2) => Option.fromNullable(Map2.get(URI.toString()))
+      ),
+      Effect.map(Option.map((data) => data.document))
+    ), "GetDocument")
+  };
+  return DocumentImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

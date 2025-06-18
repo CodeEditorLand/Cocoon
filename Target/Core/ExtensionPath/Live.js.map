@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/ExtensionPath/Live.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Core/ExtensionPath/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 10:52:54 UTC\n * Dependency: ../../Service/InitData/Service.js, ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (ExtensionPath)\n * @description Provides the live implementation layer for the ExtensionPath service.\n */\n\nimport { Effect, Layer } from \"effect\";\n\nimport InitDataService from \"../../Service/InitData/Service.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation layer for the ExtensionPath service.\n * It depends on the InitData service to get the list of all installed extensions.\n */\nexport default Layer.effect(\n\tService,\n\tEffect.map(\n\t\tInitDataService,\n\t\t(InitData) => new Definition(InitData.extensions.allExtensions),\n\t),\n);\n"],
+  "mappings": "AAYA,SAAS,QAAQ,aAAa;AAE9B,OAAO,qBAAqB;AAC5B,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,IAAO,eAAQ,MAAM;AAAA,EACpB;AAAA,EACA,OAAO;AAAA,IACN;AAAA,IACA,CAAC,aAAa,IAAI,WAAW,SAAS,WAAW,aAAa;AAAA,EAC/D;AACD;",
+  "names": []
+}

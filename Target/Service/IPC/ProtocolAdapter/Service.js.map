@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/IPC/ProtocolAdapter/Service.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:20 UTC\n * Dependency: effect, vs/base/parts/ipc/common/ipc.js\n * Export: ProtocolAdapterService\n */\n\n/**\n * @module Service (IPC/ProtocolAdapter)\n * @description Defines the service interface and `Context.Tag` for the\n * `ProtocolAdapter`. This adapter allows VS Code's `RPCProtocol` to use\n * our gRPC implementation as its underlying transport layer.\n */\n\nimport { Context, type Effect } from \"effect\";\nimport type { IMessagePassingProtocol } from \"vs/base/parts/ipc/common/ipc.js\";\n\nexport default class ProtocolAdapterService extends Context.Tag(\n\t\"IPC/ProtocolAdapter\",\n)<\n\tProtocolAdapterService,\n\tIMessagePassingProtocol & {\n\t\t/**\n\t\t * An `Effect` that processes a raw binary buffer received from the host and\n\t\t * fires the `onMessage` event for the `RPCProtocol` to consume.\n\t\t * @param Data The raw `Uint8Array` received from `Mountain`.\n\t\t */\n\t\treadonly ProcessIncomingData: (\n\t\t\tData: Uint8Array,\n\t\t) => Effect.Effect<void, never>;\n\t}\n>() {}\n"],
+  "mappings": ";;AAeA,SAAS,eAA4B;AAGrC,MAAO,+BAA6C,QAAQ;AAAA,EAC3D;AACD,EAYE,EAAE;AAAA,EAhCJ,OAgCI;AAAA;AAAA;AAAC;",
+  "names": []
+}

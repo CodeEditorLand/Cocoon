@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/Authentication/Live.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Authentication/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:33 UTC\n * Dependency: ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (Authentication)\n * @description The live implementation Layer for the Authentication service.\n */\n\nimport { Layer } from \"effect\";\n\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the Authentication service.\n * It depends on the IPC and Log services for communication.\n */\nexport default Layer.effect(Service, Definition);\n"],
+  "mappings": "AAYA,SAAS,aAAa;AAEtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,IAAO,eAAQ,MAAM,OAAO,SAAS,UAAU;",
+  "names": []
+}

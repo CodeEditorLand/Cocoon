@@ -1,1 +1,14 @@
-import{Context as e}from"effect";class n extends e.Tag("Core/ExtensionHost")(){}export{n as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Context } from "effect";
+class ExtensionHostService extends Context.Tag(
+  "Core/ExtensionHost"
+)() {
+  static {
+    __name(this, "ExtensionHostService");
+  }
+}
+export {
+  ExtensionHostService as default
+};
+//# sourceMappingURL=Service.js.map

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/WorkSpace/Live.ts"],
+  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Service/WorkSpace/Live.ts\r\n * Responsibility:\r\n * Modified: 2025-06-17 21:19:08 UTC\r\n * Dependency: ./Definition.js, ./Service.js, effect\r\n */\r\n\r\n/**\r\n * @module Live (WorkSpace)\r\n * @description The live implementation Layer for the WorkSpace service.\r\n */\r\n\r\nimport { Layer } from \"effect\";\r\n\r\nimport ConfigurationService from \"../Configuration/Service.js\";\r\nimport DocumentService from \"../Document/Service.js\";\r\nimport FileSystemService from \"../FileSystem/Service.js\";\r\nimport IPCService from \"../IPC/Service.js\";\r\nimport Definition from \"./Definition.js\";\r\nimport Service from \"./Service.js\";\r\n\r\n/**\r\n * The live implementation Layer for the WorkSpace service.\r\n */\r\nconst Live: Layer.Layer<\r\n\tService,\r\n\tnever,\r\n\tIPCService | DocumentService | FileSystemService | ConfigurationService\r\n> = Layer.effect(Service, Definition);\r\n\r\nexport default Live;\r\n"],
+  "mappings": "AAYA,SAAS,aAAa;AAMtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAKpB,MAAM,OAIF,MAAM,OAAO,SAAS,UAAU;AAEpC,IAAO,eAAQ;",
+  "names": []
+}

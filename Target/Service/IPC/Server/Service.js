@@ -1,1 +1,12 @@
-import{Context as e}from"effect";class r extends e.Tag("IPC/Server")(){}export{r as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Context } from "effect";
+class ServerService extends Context.Tag("IPC/Server")() {
+  static {
+    __name(this, "ServerService");
+  }
+}
+export {
+  ServerService as default
+};
+//# sourceMappingURL=Service.js.map

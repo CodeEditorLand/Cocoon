@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/NodeModuleShim/Live.ts"],
+  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Core/NodeModuleShim/Live.ts\r\n * Responsibility: Provides the live implementation Layer for the NodeModuleShim service.\r\n * Modified: 2025-06-17 11:42:01 UTC\r\n */\r\n\r\n/**\r\n * @module Live (NodeModuleShim)\r\n * @description Provides the live implementation Layer for the NodeModuleShim service.\r\n */\r\n\r\nimport { Layer } from \"effect\";\r\n\r\nimport InitDataService from \"../../Service/InitData/Service.js\";\r\nimport LogService from \"../../Service/Log/Service.js\";\r\nimport Definition from \"./Definition.js\";\r\nimport NodeModuleShimService from \"./Service.js\";\r\n\r\n/**\r\n * The live implementation Layer for the NodeModuleShim service.\r\n * It correctly declares its dependencies on Log and InitData services.\r\n */\r\nconst Live: Layer.Layer<\r\n\tNodeModuleShimService,\r\n\tnever,\r\n\tLogService | InitDataService\r\n> = Layer.effect(NodeModuleShimService, Definition);\r\n\r\nexport default Live;\r\n"],
+  "mappings": "AAWA,SAAS,aAAa;AAItB,OAAO,gBAAgB;AACvB,OAAO,2BAA2B;AAMlC,MAAM,OAIF,MAAM,OAAO,uBAAuB,UAAU;AAElD,IAAO,eAAQ;",
+  "names": []
+}

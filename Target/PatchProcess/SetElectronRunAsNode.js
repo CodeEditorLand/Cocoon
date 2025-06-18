@@ -1,1 +1,13 @@
-import{Effect as e}from"effect";const t=e.sync(()=>{process.env.ELECTRON_RUN_AS_NODE="1"}).pipe(e.tap(()=>e.logTrace("Set `ELECTRON_RUN_AS_NODE` environment variable.")));var n=t;export{n as default};
+import { Effect } from "effect";
+const SetElectronRunAsNode = Effect.sync(() => {
+  process.env["ELECTRON_RUN_AS_NODE"] = "1";
+}).pipe(
+  Effect.tap(
+    () => Effect.logTrace("Set `ELECTRON_RUN_AS_NODE` environment variable.")
+  )
+);
+var SetElectronRunAsNode_default = SetElectronRunAsNode;
+export {
+  SetElectronRunAsNode_default as default
+};
+//# sourceMappingURL=SetElectronRunAsNode.js.map

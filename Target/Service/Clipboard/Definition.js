@@ -1,1 +1,37 @@
-import{Effect as e}from"effect";import c from"../IPC/Service.js";var l=e.gen(function*(r){const i=yield*r(c),o=i.SendRequest("$clipboardReadText",[]).pipe(e.map(t=>t??""),e.catchAll(()=>e.succeed(""))),n=t=>i.SendNotification("$clipboardWriteText",[t]).pipe(e.catchAll(()=>e.void));return{readText:()=>e.runPromise(o),writeText:t=>e.runPromise(n(t))}});export{l as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect } from "effect";
+import IPCService from "../IPC/Service.js";
+var Definition_default = Effect.gen(function* (G) {
+  const IPC = yield* G(IPCService);
+  const ReadTextEffect = IPC.SendRequest(
+    "$clipboardReadText",
+    []
+  ).pipe(
+    Effect.map((Result) => Result ?? ""),
+    // Ensure we always return a string
+    Effect.catchAll(() => Effect.succeed(""))
+    // On failure, return an empty string
+  );
+  const WriteTextEffect = /* @__PURE__ */ __name((Text) => IPC.SendNotification("$clipboardWriteText", [Text]).pipe(
+    Effect.catchAll(() => Effect.void)
+    // Ignore errors for fire-and-forget
+  ), "WriteTextEffect");
+  const ClipboardImplementation = {
+    /**
+     * Reads text from the clipboard. This builds and runs the ReadTextEffect,
+     * returning a Promise to conform to the vscode API.
+     */
+    readText: /* @__PURE__ */ __name(() => Effect.runPromise(ReadTextEffect), "readText"),
+    /**
+     * Writes text to the clipboard. This builds and runs the WriteTextEffect,
+     * returning a Promise to conform to the vscode API.
+     */
+    writeText: /* @__PURE__ */ __name((Text) => Effect.runPromise(WriteTextEffect(Text)), "writeText")
+  };
+  return ClipboardImplementation;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

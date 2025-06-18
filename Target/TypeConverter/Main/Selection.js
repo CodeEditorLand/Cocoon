@@ -1,1 +1,27 @@
-import{Position as e,Selection as r}from"../../Type/ExtHostTypes.js";const i=o=>({selectionStartLineNumber:o.start.line+1,selectionStartColumn:o.start.character+1,positionLineNumber:o.end.line+1,positionColumn:o.end.character+1}),c=o=>{const t=new e(o.selectionStartLineNumber-1,o.selectionStartColumn-1),n=new e(o.positionLineNumber-1,o.positionColumn-1);return new r(t,n)};var m={FromAPI:i,ToAPI:c};export{m as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Position, Selection } from "../../Type/ExtHostTypes.js";
+const FromAPI = /* @__PURE__ */ __name((SelectionInstance) => {
+  return {
+    selectionStartLineNumber: SelectionInstance.start.line + 1,
+    selectionStartColumn: SelectionInstance.start.character + 1,
+    positionLineNumber: SelectionInstance.end.line + 1,
+    positionColumn: SelectionInstance.end.character + 1
+  };
+}, "FromAPI");
+const ToAPI = /* @__PURE__ */ __name((SelectionDTO) => {
+  const Anchor = new Position(
+    SelectionDTO.selectionStartLineNumber - 1,
+    SelectionDTO.selectionStartColumn - 1
+  );
+  const Active = new Position(
+    SelectionDTO.positionLineNumber - 1,
+    SelectionDTO.positionColumn - 1
+  );
+  return new Selection(Anchor, Active);
+}, "ToAPI");
+var Selection_default = { FromAPI, ToAPI };
+export {
+  Selection_default as default
+};
+//# sourceMappingURL=Selection.js.map

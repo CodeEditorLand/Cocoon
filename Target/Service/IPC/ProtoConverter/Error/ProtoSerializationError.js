@@ -1,1 +1,17 @@
-import{Data as o}from"effect";class n extends o.TaggedError("ProtoSerializationError"){constructor(e){super(e),this.message=`Protobuf ${this.Direction} failed: ${this.cause}`}message}export{n as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Data } from "effect";
+class ProtoSerializationError_default extends Data.TaggedError("ProtoSerializationError") {
+  static {
+    __name(this, "default");
+  }
+  constructor(properties) {
+    super(properties);
+    this.message = `Protobuf ${this.Direction} failed: ${this.cause}`;
+  }
+  message;
+}
+export {
+  ProtoSerializationError_default as default
+};
+//# sourceMappingURL=ProtoSerializationError.js.map

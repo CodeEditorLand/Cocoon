@@ -1,1 +1,120 @@
-import{Effect as i,Ref as s}from"effect";import{generateUuid as S}from"vs/base/common/uuid.js";import{Disposable as C}from"vscode";import R from"../../TypeConverter/WebView/ConvertContentOptionToDTO.js";import I from"../../TypeConverter/WebView/ConvertPanelOptionToDTO.js";import O from"../../TypeConverter/WebView/ConvertShowOptionToDTO.js";import z from"../IPC/Service.js";import T from"./WebViewPanelImplementation.js";var N=i.gen(function*(f){const o=yield*f(z),a=yield*f(s.make(new Map)),p=e=>i.gen(function*(n){const t=(yield*n(s.get(a))).get(e);t&&t.dispose()}),P=(e,n)=>i.gen(function*(t){(yield*t(s.get(a))).get(e)?.fireDidReceiveMessage(n)}),u=(e,n)=>i.gen(function*(t){(yield*t(s.get(a))).get(e)?.updateViewState(n)});return yield*f(i.sync(()=>{o.RegisterInvokeHandler("$onDidDisposeWebview",([e])=>i.runPromise(p(e))),o.RegisterInvokeHandler("$onDidReceiveMessage",([e,n])=>i.runPromise(P(e,n))),o.RegisterInvokeHandler("$onDidChangeWebviewPanelViewState",([e,n])=>i.runPromise(u(e,n))),o.RegisterInvokeHandler("$deserializeWebviewPanel",()=>i.runPromise(i.succeed(void 0)))})),{CreateWebviewPanel:(e,n,t,r,d={})=>i.gen(function*(m){const l=S(),g=typeof r=="object"?r.viewColumn:r,w=typeof r=="object"?!!r.preserveFocus:!1,D=O(g,w),b=I(d),y=R(e,d);yield*m(o.SendRequest("$createWebviewPanel",[l,n,t,D,b,y]));const W=()=>i.runFork(s.update(a,c=>(c.delete(l),c))),v=new T(l,o,e,W,n,t,d,g);return yield*m(s.update(a,c=>c.set(l,v))),v}),RegisterWebviewPanelSerializer:(e,n,t)=>i.sync(()=>(o.SendNotification("$registerWebviewPanelSerializer",[n,{}]),new C(()=>{o.SendNotification("$unregisterWebviewPanelSerializer",[n])})))}});export{N as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Effect, Ref } from "effect";
+import { generateUuid } from "vs/base/common/uuid.js";
+import { Disposable } from "vscode";
+import ConvertContentOptionToDTO from "../../TypeConverter/WebView/ConvertContentOptionToDTO.js";
+import ConvertPanelOptionToDTO from "../../TypeConverter/WebView/ConvertPanelOptionToDTO.js";
+import ConvertShowOptionToDTO from "../../TypeConverter/WebView/ConvertShowOptionToDTO.js";
+import IPCService from "../IPC/Service.js";
+import WebViewPanelImplementation from "./WebViewPanelImplementation.js";
+var Definition_default = Effect.gen(function* (G) {
+  const IPC = yield* G(IPCService);
+  const ActivePanelsRef = yield* G(
+    Ref.make(/* @__PURE__ */ new Map())
+  );
+  const OnDidDisposeWebviewEffect = /* @__PURE__ */ __name((Handle) => Effect.gen(function* (G2) {
+    const Panel = (yield* G2(Ref.get(ActivePanelsRef))).get(Handle);
+    if (Panel) {
+      Panel.dispose();
+    }
+  }), "OnDidDisposeWebviewEffect");
+  const OnDidReceiveMessageEffect = /* @__PURE__ */ __name((Handle, Message) => Effect.gen(function* (G2) {
+    const Panel = (yield* G2(Ref.get(ActivePanelsRef))).get(Handle);
+    Panel?.fireDidReceiveMessage(Message);
+  }), "OnDidReceiveMessageEffect");
+  const OnDidChangeViewStateEffect = /* @__PURE__ */ __name((Handle, NewState) => Effect.gen(function* (G2) {
+    const Panel = (yield* G2(Ref.get(ActivePanelsRef))).get(Handle);
+    Panel?.updateViewState(NewState);
+  }), "OnDidChangeViewStateEffect");
+  yield* G(
+    Effect.sync(() => {
+      IPC.RegisterInvokeHandler(
+        "$onDidDisposeWebview",
+        ([Handle]) => Effect.runPromise(OnDidDisposeWebviewEffect(Handle))
+      );
+      IPC.RegisterInvokeHandler(
+        "$onDidReceiveMessage",
+        ([Handle, Message]) => Effect.runPromise(
+          OnDidReceiveMessageEffect(Handle, Message)
+        )
+      );
+      IPC.RegisterInvokeHandler(
+        "$onDidChangeWebviewPanelViewState",
+        ([Handle, NewState]) => Effect.runPromise(
+          OnDidChangeViewStateEffect(Handle, NewState)
+        )
+      );
+      IPC.RegisterInvokeHandler(
+        "$deserializeWebviewPanel",
+        () => Effect.runPromise(Effect.succeed(void 0))
+        // Stubbed
+      );
+    })
+  );
+  const WebViewPanelFactory = {
+    CreateWebviewPanel: /* @__PURE__ */ __name((Extension, ViewType, Title, ShowOptions, Options = {}) => Effect.gen(function* (G2) {
+      const Handle = generateUuid();
+      const ViewColumnValue = typeof ShowOptions === "object" ? ShowOptions.viewColumn : ShowOptions;
+      const PreserveFocus = typeof ShowOptions === "object" ? !!ShowOptions.preserveFocus : false;
+      const ShowOptionsDTO = ConvertShowOptionToDTO(
+        ViewColumnValue,
+        PreserveFocus
+      );
+      const PanelOptionsDTO = ConvertPanelOptionToDTO(Options);
+      const ContentOptionsDTO = ConvertContentOptionToDTO(
+        Extension,
+        Options
+      );
+      yield* G2(
+        IPC.SendRequest("$createWebviewPanel", [
+          Handle,
+          ViewType,
+          Title,
+          ShowOptionsDTO,
+          PanelOptionsDTO,
+          ContentOptionsDTO
+        ])
+      );
+      const OnDispose = /* @__PURE__ */ __name(() => Effect.runFork(
+        Ref.update(
+          ActivePanelsRef,
+          (Map2) => (Map2.delete(Handle), Map2)
+        )
+      ), "OnDispose");
+      const Panel = new WebViewPanelImplementation(
+        Handle,
+        IPC,
+        Extension,
+        OnDispose,
+        ViewType,
+        Title,
+        Options,
+        ViewColumnValue
+      );
+      yield* G2(
+        Ref.update(
+          ActivePanelsRef,
+          (Map2) => Map2.set(Handle, Panel)
+        )
+      );
+      return Panel;
+    }), "CreateWebviewPanel"),
+    RegisterWebviewPanelSerializer: /* @__PURE__ */ __name((_Extension, ViewType, _Serializer) => Effect.sync(() => {
+      IPC.SendNotification("$registerWebviewPanelSerializer", [
+        ViewType,
+        {}
+      ]);
+      return new Disposable(() => {
+        IPC.SendNotification("$unregisterWebviewPanelSerializer", [
+          ViewType
+        ]);
+      });
+    }), "RegisterWebviewPanelSerializer")
+  };
+  return WebViewPanelFactory;
+});
+export {
+  Definition_default as default
+};
+//# sourceMappingURL=Definition.js.map

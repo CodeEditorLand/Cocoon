@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/Authentication/Error/AuthenticationProviderExistsError.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Authentication/Error/AuthenticationProviderExistsError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:35 UTC\n * Dependency: effect\n * Export: extends\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that an extension attempted to register an authentication\n * provider with an ID that is already in use.\n */\nexport default class extends Data.TaggedError(\n\t\"AuthenticationProviderExistsError\",\n)<{\n\treadonly ProviderID: string;\n}> {\n\tconstructor(properties: { readonly ProviderID: string }) {\n\t\tsuper(properties);\n\t\tthis.message = `Authentication provider with ID '${this.ProviderID}' is already registered.`;\n\t}\n\tpublic override readonly message: string;\n}\n"],
+  "mappings": ";;AAQA,SAAS,YAAY;AAMrB,MAAO,kDAAsB,KAAK;AAAA,EACjC;AACD,EAEG;AAAA,EAlBH,OAkBG;AAAA;AAAA;AAAA,EACF,YAAY,YAA6C;AACxD,UAAM,UAAU;AAChB,SAAK,UAAU,oCAAoC,KAAK,UAAU;AAAA,EACnE;AAAA,EACyB;AAC1B;",
+  "names": []
+}

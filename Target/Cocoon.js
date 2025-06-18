@@ -1,1 +1,149 @@
-import*as c from"node:path";import{NodeRuntime as f}from"@effect/platform-node";import{Deferred as m,Effect as i,Layer as r,Logger as l}from"effect";import d from"./Core/APIFactory/Live.js";import v from"./Core/ESMInterceptor/Live.js";import L from"./Core/ExtensionHost/Live.js";import u from"./Core/ExtensionHost/Service.js";import y from"./Core/ExtensionPath/Live.js";import I from"./Core/HostKindPicker/Live.js";import g from"./Core/NodeModuleShim/Live.js";import C from"./Core/RequireInterceptor/Live.js";import P from"./Core/RequireInterceptor/Service.js";import h from"./PatchProcess.js";import D from"./Service/APIDeprecation/Live.js";import S from"./Service/Authentication/Live.js";import s from"./Service/Cancellation/Live.js";import A from"./Service/Clipboard/Live.js";import E from"./Service/Command/Live.js";import H from"./Service/Configuration/Live.js";import k from"./Service/Debug/Live.js";import x from"./Service/Diagnostic/Live.js";import R from"./Service/Dialog/Live.js";import M from"./Service/Document/Live.js";import F from"./Service/Environment/Live.js";import N from"./Service/Extension/Live.js";import O from"./Service/FileSystem/Live.js";import w from"./Service/FileSystemInformation/Live.js";import z from"./Service/InitData/Live.js";import V from"./Service/IPC/Configuration.js";import p from"./Service/IPC/Live.js";import _ from"./Service/IPC/Service.js";import b from"./Service/LanguageFeature/Live.js";import T from"./Service/Localization/Live.js";import q from"./Service/Log/Live.js";import B from"./Service/Message/Live.js";import W from"./Service/ProposedAPI/Live.js";import j from"./Service/QuickInput/Live.js";import U from"./Service/SecretStorage/Live.js";import K from"./Service/StatusBar/Live.js";import Q from"./Service/Storage/Live.js";import $ from"./Service/StoragePath/Live.js";import J from"./Service/Task/Live.js";import X from"./Service/Telemetry/Live.js";import Y from"./Service/TreeView/Live.js";import Z from"./Service/WebViewPanel/Live.js";import G from"./Service/Window/Live.js";import oo from"./Service/WorkSpace/Live.js";const io=process.env.VSCODE_OUT_DIR??c.resolve(__dirname,"../../../Dependency/VSCode/out");module.paths.unshift(io);const eo=i.gen(function*(o){yield*o(i.logInfo("Proceeding with full initialization...")),yield*o(h);const e=yield*o(P);yield*o(e.Install()),yield*o(i.logInfo("Node.js require() interceptor installed."));const t=yield*o(u);yield*o(t.ActivateById("*",{startup:!0,activationEvent:"*"})),yield*o(i.logInfo("Startup extensions activated.")),yield*o(i.logInfo("Cocoon is fully initialized and operational.")),yield*o(i.never)}),to=i.gen(function*(o){const e=yield*o(m.make()),t=yield*o(_);t.RegisterInvokeHandler("initExtensionHost",a=>i.runPromise(m.succeed(e,a).pipe(i.asVoid))),yield*o(i.logInfo("Cocoon is ready. Sent handshake to Mountain.")),yield*o(t.SendNotification("$initialHandshake",[]));const n=yield*o(m.await(e));return yield*o(i.logInfo("Cocoon handshake complete.")),n}),ro=i.gen(function*(o){const e=yield*o(to),t=r.mergeAll(d,v,L,y,I,g,C,D,S,s,A,E,H,k,x,R,M,F,N,O,w,p,b,T,q,B,W,j,U,K,Q,$,J,X,Y,Z,G,oo),n=z(e),a=t.pipe(r.provide(n));yield*o(eo.pipe(i.provide(a)))}).pipe(i.catchAllCause(o=>i.logFatal("Cocoon main process failed.",o))),no={MountainAddress:process.env.MOUNTAIN_ADDR??"localhost:50051",CocoonAddress:process.env.COCOON_ADDR??"localhost:50052"},ao=r.succeed(V,no),mo=r.mergeAll(ao,l.logFmt,s),so=p.pipe(r.provide(mo)),po=ro.pipe(i.provide(so),i.scoped);f.runMain(po);
+import * as Path from "node:path";
+import { NodeRuntime } from "@effect/platform-node";
+import { Deferred, Effect, Layer, Logger } from "effect";
+import APIFactoryLive from "./Core/APIFactory/Live.js";
+import ESMInterceptorLive from "./Core/ESMInterceptor/Live.js";
+import ExtensionHostLive from "./Core/ExtensionHost/Live.js";
+import ExtensionHostService from "./Core/ExtensionHost/Service.js";
+import ExtensionPathLive from "./Core/ExtensionPath/Live.js";
+import HostKindPickerLive from "./Core/HostKindPicker/Live.js";
+import NodeModuleShimLive from "./Core/NodeModuleShim/Live.js";
+import RequireInterceptorLive from "./Core/RequireInterceptor/Live.js";
+import RequireInterceptorService from "./Core/RequireInterceptor/Service.js";
+import RunProcessPatch from "./PatchProcess.js";
+import APIDeprecationLive from "./Service/APIDeprecation/Live.js";
+import AuthenticationLive from "./Service/Authentication/Live.js";
+import CancellationLive from "./Service/Cancellation/Live.js";
+import ClipboardLive from "./Service/Clipboard/Live.js";
+import CommandLive from "./Service/Command/Live.js";
+import ConfigurationLive from "./Service/Configuration/Live.js";
+import DebugLive from "./Service/Debug/Live.js";
+import DiagnosticLive from "./Service/Diagnostic/Live.js";
+import DialogLive from "./Service/Dialog/Live.js";
+import DocumentLive from "./Service/Document/Live.js";
+import EnvironmentLive from "./Service/Environment/Live.js";
+import ExtensionLive from "./Service/Extension/Live.js";
+import FileSystemLive from "./Service/FileSystem/Live.js";
+import FileSystemInformationLive from "./Service/FileSystemInformation/Live.js";
+import InitDataLive from "./Service/InitData/Live.js";
+import IPCConfigurationService from "./Service/IPC/Configuration.js";
+import IPCLive from "./Service/IPC/Live.js";
+import IPCService from "./Service/IPC/Service.js";
+import LanguageFeatureLive from "./Service/LanguageFeature/Live.js";
+import LocalizationLive from "./Service/Localization/Live.js";
+import LogLive from "./Service/Log/Live.js";
+import MessageLive from "./Service/Message/Live.js";
+import ProposedAPILive from "./Service/ProposedAPI/Live.js";
+import QuickInputLive from "./Service/QuickInput/Live.js";
+import SecretStorageLive from "./Service/SecretStorage/Live.js";
+import StatusBarLive from "./Service/StatusBar/Live.js";
+import StorageLive from "./Service/Storage/Live.js";
+import StoragePathLive from "./Service/StoragePath/Live.js";
+import TaskLive from "./Service/Task/Live.js";
+import TelemetryLive from "./Service/Telemetry/Live.js";
+import TreeViewLive from "./Service/TreeView/Live.js";
+import WebViewPanelLive from "./Service/WebViewPanel/Live.js";
+import WindowLive from "./Service/Window/Live.js";
+import WorkSpaceLive from "./Service/WorkSpace/Live.js";
+const VSCodeOutputDirectory = process.env["VSCODE_OUT_DIR"] ?? Path.resolve(__dirname, "../../../Dependency/VSCode/out");
+module.paths.unshift(VSCodeOutputDirectory);
+const CoreInfraLayer = Layer.mergeAll(
+  Layer.succeed(IPCConfigurationService, {
+    MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
+    CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052"
+  }),
+  Logger.logFmt,
+  CancellationLive
+).pipe(Layer.provide(IPCLive));
+const CoreServicesLayer = Layer.mergeAll(
+  LogLive,
+  TelemetryLive,
+  NodeModuleShimLive,
+  RequireInterceptorLive,
+  ESMInterceptorLive,
+  ExtensionPathLive,
+  HostKindPickerLive
+).pipe(Layer.provide(CoreInfraLayer));
+const AppServicesLayer = Layer.mergeAll(
+  APIDeprecationLive,
+  AuthenticationLive,
+  ClipboardLive,
+  CommandLive,
+  ConfigurationLive,
+  DebugLive,
+  DiagnosticLive,
+  DialogLive,
+  DocumentLive,
+  EnvironmentLive,
+  ExtensionLive,
+  FileSystemLive,
+  FileSystemInformationLive,
+  LanguageFeatureLive,
+  LocalizationLive,
+  MessageLive,
+  ProposedAPILive,
+  QuickInputLive,
+  SecretStorageLive,
+  StatusBarLive,
+  StorageLive,
+  StoragePathLive,
+  TaskLive,
+  TreeViewLive,
+  WebViewPanelLive,
+  WindowLive,
+  WorkSpaceLive
+).pipe(Layer.provide(CoreServicesLayer));
+const TopLevelLayer = Layer.mergeAll(APIFactoryLive, ExtensionHostLive).pipe(
+  Layer.provide(AppServicesLayer)
+  // Depends on AppServicesLayer
+);
+const PreHandshakeEffect = Effect.gen(function* (G) {
+  const InitializationBarrier = yield* G(
+    Deferred.make()
+  );
+  const IPC = yield* G(IPCService);
+  IPC.RegisterInvokeHandler(
+    "initExtensionHost",
+    (data) => Effect.runPromise(
+      Deferred.succeed(InitializationBarrier, data).pipe(
+        Effect.asVoid
+      )
+    )
+  );
+  yield* G(IPC.SendNotification("$initialHandshake", []));
+  return yield* G(Deferred.await(InitializationBarrier));
+});
+const PostHandshakeEffect = Effect.gen(function* (G) {
+  yield* G(Effect.logInfo("Proceeding with full initialization..."));
+  yield* G(RunProcessPatch);
+  const Interceptor = yield* G(RequireInterceptorService);
+  yield* G(Interceptor.Install());
+  yield* G(Effect.logInfo("Node.js require() interceptor installed."));
+  const Host = yield* G(ExtensionHostService);
+  yield* G(
+    Host.ActivateById(
+      "*",
+      { startup: true, activationEvent: "*" }
+    )
+  );
+  yield* G(Effect.logInfo("Startup extensions activated."));
+  yield* G(Effect.logInfo("Cocoon is fully initialized and operational."));
+  yield* G(Effect.never);
+});
+const MainEffect = Effect.gen(function* (G) {
+  const InitializationData = yield* G(
+    PreHandshakeEffect.pipe(Effect.provide(CoreInfraLayer))
+  );
+  const InitDataLayer = InitDataLive(InitializationData);
+  const FinalApplicationLayer = TopLevelLayer.pipe(
+    Layer.provide(InitDataLayer)
+  );
+  yield* G(PostHandshakeEffect.pipe(Effect.provide(FinalApplicationLayer)));
+}).pipe(
+  Effect.catchAllCause(
+    (Cause) => Effect.logFatal("Cocoon main process failed.", Cause)
+  ),
+  Effect.scoped
+);
+NodeRuntime.runMain(MainEffect);
+//# sourceMappingURL=Cocoon.js.map

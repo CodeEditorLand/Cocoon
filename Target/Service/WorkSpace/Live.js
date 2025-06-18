@@ -1,1 +1,9 @@
-import{Layer as r}from"effect";import e from"./Definition.js";import o from"./Service.js";var m=r.effect(o,e);export{m as default};
+import { Layer } from "effect";
+import Definition from "./Definition.js";
+import Service from "./Service.js";
+const Live = Layer.effect(Service, Definition);
+var Live_default = Live;
+export {
+  Live_default as default
+};
+//# sourceMappingURL=Live.js.map

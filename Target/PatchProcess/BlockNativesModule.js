@@ -1,1 +1,46 @@
-import*as t from"node:module";import{Data as l,Effect as a}from"effect";class c extends l.TaggedError("ModulePatchError"){constructor(e){super(e),this.message=`Failed to patch Node.js module loader: ${this.context}`}message}const d=a.try({try:()=>{if(typeof t._load=="function"){const o=t._load;t._load=function(e,n,r){if(e==="natives"){const s="Attempt to load deprecated 'natives' module blocked. This module is not available in the Cocoon runtime.";throw new Error(s)}return o.call(this,e,n,r)}}},catch:o=>new c({context:"Failed during 'natives' block setup.",cause:o})}).pipe(a.tap(()=>a.logTrace("Module._load patched to block 'natives' module.")));var u=d;export{u as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import * as Module from "node:module";
+import { Data, Effect } from "effect";
+class ModulePatchError extends Data.TaggedError("ModulePatchError") {
+  static {
+    __name(this, "ModulePatchError");
+  }
+  constructor(Properties) {
+    super(Properties);
+    this.message = `Failed to patch Node.js module loader: ${this.context}`;
+  }
+  message;
+}
+const BlockNativesModuleEffect = Effect.try({
+  try: /* @__PURE__ */ __name(() => {
+    if (typeof Module._load === "function") {
+      const OriginalLoad = Module._load;
+      Module._load = function(Request, Parent, IsMain) {
+        if (Request === "natives") {
+          const ErrorMessage = "Attempt to load deprecated 'natives' module blocked. This module is not available in the Cocoon runtime.";
+          console.warn(`[Cocoon PatchProcess] ${ErrorMessage}`);
+          throw new Error(ErrorMessage);
+        }
+        return OriginalLoad.call(this, Request, Parent, IsMain);
+      };
+    } else {
+      console.warn(
+        "[Cocoon PatchProcess] Module._load not found. Skipping 'natives' block patch."
+      );
+    }
+  }, "try"),
+  catch: /* @__PURE__ */ __name((cause) => new ModulePatchError({
+    context: "Failed during 'natives' block setup.",
+    cause
+  }), "catch")
+}).pipe(
+  Effect.tap(
+    () => Effect.logTrace("Module._load patched to block 'natives' module.")
+  )
+);
+var BlockNativesModule_default = BlockNativesModuleEffect;
+export {
+  BlockNativesModule_default as default
+};
+//# sourceMappingURL=BlockNativesModule.js.map

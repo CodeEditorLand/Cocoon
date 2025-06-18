@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Service/IPC/Error/gRPCConnectionError.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/Error/gRPCConnectionError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:22 UTC\n * Dependency: effect\n * Export: GPCConnectionError\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A structured error indicating a failure during a gRPC connection attempt or\n * server setup.\n *\n * This error is tagged with \"gRPCConnectionError\" for precise handling with\n * `Effect.catchTag`. It captures the underlying `Cause` and provides a `Context`\n * string to indicate which part of the connection process failed.\n */\nexport class GPCConnectionError extends Data.TaggedError(\n\t\"gRPCConnectionError\",\n)<{\n\treadonly Cause: unknown;\n\treadonly Context:\n\t\t| \"ProtoLoadFailed\"\n\t\t| \"ClientInstantiationFailed\"\n\t\t| \"ClientNotReady\"\n\t\t| \"ServerBindFailed\"\n\t\t| \"ServerStartFailed\";\n}> {}\n\nexport default GPCConnectionError;\n"],
+  "mappings": ";;AAQA,SAAS,YAAY;AAUd,MAAM,2BAA2B,KAAK;AAAA,EAC5C;AACD,EAQG;AAAA,EA5BH,OA4BG;AAAA;AAAA;AAAC;AAEJ,IAAO,8BAAQ;",
+  "names": []
+}

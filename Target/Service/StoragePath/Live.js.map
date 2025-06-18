@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Service/StoragePath/Live.ts"],
+  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Service/StoragePath/Live.ts\r\n * Responsibility:\r\n * Modified: 2025-06-17 21:19:12 UTC\r\n * Dependency: ./Definition.js, ./Service.js, effect\r\n */\r\n\r\nimport { Layer } from \"effect\";\r\n\r\nimport FileSystemService from \"../FileSystem/Service.js\";\r\nimport InitDataService from \"../InitData/Service.js\";\r\nimport LogService from \"../Log/Service.js\";\r\nimport Definition from \"./Definition.js\";\r\nimport Service from \"./Service.js\";\r\n\r\n/**\r\n * The live implementation Layer for the StoragePath service.\r\n * It depends on the FileSystem, Log, and InitData services.\r\n */\r\nconst Live: Layer.Layer<\r\n\tService,\r\n\tnever,\r\n\tInitDataService | LogService | FileSystemService\r\n> = Layer.effect(Service, Definition);\r\n\r\nexport default Live;\r\n"],
+  "mappings": "AAOA,SAAS,aAAa;AAKtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAIF,MAAM,OAAO,SAAS,UAAU;AAEpC,IAAO,eAAQ;",
+  "names": []
+}

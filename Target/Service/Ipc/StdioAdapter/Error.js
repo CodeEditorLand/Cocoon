@@ -1,1 +1,12 @@
-import{Data as e}from"effect";class o extends e.TaggedError("StdioError"){}export{o as default};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Data } from "effect";
+class Error_default extends Data.TaggedError("StdioError") {
+  static {
+    __name(this, "default");
+  }
+}
+export {
+  Error_default as default
+};
+//# sourceMappingURL=Error.js.map

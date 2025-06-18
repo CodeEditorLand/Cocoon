@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Core/ESMInterceptor/Live.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Core/ESMInterceptor/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:43 UTC\n * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (ESMInterceptor)\n * @description The live implementation layer for the ESMInterceptor service.\n */\n\nimport { Layer } from \"effect\";\n\nimport type LogService from \"../../Service/Log/Service.js\";\nimport type APIFactoryService from \"../APIFactory/Service.js\";\nimport type ExtensionPathService from \"../ExtensionPath/Service.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation layer for the ESMInterceptor service.\n * It correctly declares its dependencies on the APIFactory, ExtensionPath, and Log services.\n */\nconst Live: Layer.Layer<\n\tService,\n\tnever,\n\tAPIFactoryService | ExtensionPathService | LogService\n> = Layer.effect(Service, Definition);\n\nexport default Live;\n"],
+  "mappings": "AAYA,SAAS,aAAa;AAKtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAIF,MAAM,OAAO,SAAS,UAAU;AAEpC,IAAO,eAAQ;",
+  "names": []
+}
