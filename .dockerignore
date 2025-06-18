@@ -1,0 +1,17 @@
+.dockerignore
+.env
+.git
+.github
+.gitignore
+*.log
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+Configuration
+CONTRIBUTING.md
+docker-compose.yml
+Dockerfile
+docs
+LICENSE
+node_modules
+README.md
+SECURITY.md

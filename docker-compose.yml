@@ -1,0 +1,13 @@
+services:
+    jaeger:
+        image: jaegertracing/all-in-one:latest
+        ports:
+            - "16686:16686"
+            - "4318:4318"
+
+    app:
+        build: .
+        depends_on:
+            - jaeger
+        environment:
+            - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://jaeger:4318/v1/traces

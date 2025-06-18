@@ -26,20 +26,6 @@ class ConfigurationService extends Effect.Service()(
     __name(this, "ConfigurationService");
   }
 }
-class LoggerService extends Effect.Service()("Service/Logger", {
-  effect: Effect.gen(function* () {
-    const config = yield* ConfigurationService;
-    return {
-      log: /* @__PURE__ */ __name((message) => Effect.sync(() => {
-        console.log(`[${config.logLevel}] ${message}`);
-      }), "log")
-    };
-  })
-}) {
-  static {
-    __name(this, "LoggerService");
-  }
-}
 class ProcessPatchService extends Effect.Service()(
   "PatchProcess/ProcessPatch",
   { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
@@ -80,38 +66,17 @@ class InitDataService extends Effect.Service()(
     __name(this, "InitDataService");
   }
 }
-class APIDeprecationService extends Effect.Service()(
-  "Service/APIDeprecation",
-  {
-    effect: Effect.gen(function* () {
-      yield* LoggerService;
-      return {};
-    })
-  }
-) {
+class LoggerService extends Effect.Service()("Service/Logger", {
+  sync: /* @__PURE__ */ __name(() => ({
+    log: /* @__PURE__ */ __name((message) => Effect.sync(() => console.log(`[LOG] ${message}`)), "log")
+  }), "sync")
+}) {
   static {
-    __name(this, "APIDeprecationService");
-  }
-}
-class HostKindPickerService extends Effect.Service()(
-  "Core/HostKindPicker",
-  {
-    effect: Effect.gen(function* () {
-      yield* LoggerService;
-      return {};
-    })
-  }
-) {
-  static {
-    __name(this, "HostKindPickerService");
+    __name(this, "LoggerService");
   }
 }
 class IPCService extends Effect.Service()("Service/IPC", {
-  effect: Effect.gen(function* () {
-    yield* IPCConfigurationService;
-    yield* CancellationService;
-    return {};
-  })
+  sync: /* @__PURE__ */ __name(() => ({}), "sync")
 }) {
   static {
     __name(this, "IPCService");
@@ -119,26 +84,31 @@ class IPCService extends Effect.Service()("Service/IPC", {
 }
 class ExtensionPathService extends Effect.Service()(
   "Core/ExtensionPath",
-  {
-    effect: Effect.gen(function* () {
-      yield* InitDataService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "ExtensionPathService");
   }
 }
+class APIDeprecationService extends Effect.Service()(
+  "Service/APIDeprecation",
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
+) {
+  static {
+    __name(this, "APIDeprecationService");
+  }
+}
+class HostKindPickerService extends Effect.Service()(
+  "Core/HostKindPicker",
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
+) {
+  static {
+    __name(this, "HostKindPickerService");
+  }
+}
 class NodeModuleShimService extends Effect.Service()(
   "Core/NodeModuleShim",
-  {
-    effect: Effect.gen(function* () {
-      yield* LoggerService;
-      yield* InitDataService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "NodeModuleShimService");
@@ -146,22 +116,14 @@ class NodeModuleShimService extends Effect.Service()(
 }
 class ClipboardService extends Effect.Service()(
   "Service/Clipboard",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "ClipboardService");
   }
 }
 class DebugService extends Effect.Service()("Service/Debug", {
-  effect: Effect.gen(function* () {
-    yield* IPCService;
-    return {};
-  })
+  sync: /* @__PURE__ */ __name(() => ({}), "sync")
 }) {
   static {
     __name(this, "DebugService");
@@ -169,22 +131,14 @@ class DebugService extends Effect.Service()("Service/Debug", {
 }
 class DiagnosticService extends Effect.Service()(
   "Service/Diagnostic",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "DiagnosticService");
   }
 }
 class DialogService extends Effect.Service()("Service/Dialog", {
-  effect: Effect.gen(function* () {
-    yield* IPCService;
-    return {};
-  })
+  sync: /* @__PURE__ */ __name(() => ({}), "sync")
 }) {
   static {
     __name(this, "DialogService");
@@ -192,39 +146,15 @@ class DialogService extends Effect.Service()("Service/Dialog", {
 }
 class DocumentService extends Effect.Service()(
   "Service/Document",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "DocumentService");
   }
 }
-class LocalizationService extends Effect.Service()(
-  "Service/Localization",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      yield* InitDataService;
-      return {};
-    })
-  }
-) {
-  static {
-    __name(this, "LocalizationService");
-  }
-}
 class MessageService extends Effect.Service()(
   "Service/Message",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "MessageService");
@@ -232,12 +162,7 @@ class MessageService extends Effect.Service()(
 }
 class QuickInputService extends Effect.Service()(
   "Service/QuickInput",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "QuickInputService");
@@ -245,36 +170,30 @@ class QuickInputService extends Effect.Service()(
 }
 class WebViewPanelService extends Effect.Service()(
   "Service/WebViewPanel",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "WebViewPanelService");
   }
 }
 class WindowService extends Effect.Service()("Service/Window", {
-  effect: Effect.gen(function* () {
-    yield* IPCService;
-    return {};
-  })
+  sync: /* @__PURE__ */ __name(() => ({}), "sync")
 }) {
   static {
     __name(this, "WindowService");
   }
 }
+class LocalizationService extends Effect.Service()(
+  "Service/Localization",
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
+) {
+  static {
+    __name(this, "LocalizationService");
+  }
+}
 class AuthenticationService extends Effect.Service()(
   "Service/Authentication",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      yield* LoggerService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "AuthenticationService");
@@ -282,13 +201,7 @@ class AuthenticationService extends Effect.Service()(
 }
 class FileSystemInformationService extends Effect.Service()(
   "Service/FileSystemInformation",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      yield* LoggerService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "FileSystemInformationService");
@@ -296,13 +209,7 @@ class FileSystemInformationService extends Effect.Service()(
 }
 class ProposedAPIService extends Effect.Service()(
   "Service/ProposedAPI",
-  {
-    effect: Effect.gen(function* () {
-      yield* InitDataService;
-      yield* LoggerService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "ProposedAPIService");
@@ -310,13 +217,7 @@ class ProposedAPIService extends Effect.Service()(
 }
 class SecretStorageService extends Effect.Service()(
   "Service/SecretStorage",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      yield* LoggerService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "SecretStorageService");
@@ -324,24 +225,14 @@ class SecretStorageService extends Effect.Service()(
 }
 class StorageService extends Effect.Service()(
   "Service/Storage",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      yield* LoggerService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "StorageService");
   }
 }
 class TaskService extends Effect.Service()("Service/Task", {
-  effect: Effect.gen(function* () {
-    yield* IPCService;
-    yield* CancellationService;
-    return {};
-  })
+  sync: /* @__PURE__ */ __name(() => ({}), "sync")
 }) {
   static {
     __name(this, "TaskService");
@@ -349,14 +240,7 @@ class TaskService extends Effect.Service()("Service/Task", {
 }
 class TelemetryService extends Effect.Service()(
   "Service/Telemetry",
-  {
-    effect: Effect.gen(function* () {
-      yield* InitDataService;
-      yield* IPCService;
-      yield* LoggerService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "TelemetryService");
@@ -364,16 +248,7 @@ class TelemetryService extends Effect.Service()(
 }
 class EnvironmentService extends Effect.Service()(
   "Service/Environment",
-  {
-    effect: Effect.suspend(
-      () => Effect.gen(function* () {
-        yield* IPCService;
-        yield* InitDataService;
-        yield* ClipboardService;
-        return {};
-      })
-    )
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "EnvironmentService");
@@ -381,13 +256,7 @@ class EnvironmentService extends Effect.Service()(
 }
 class FileSystemService extends Effect.Service()(
   "Service/FileSystem",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      yield* FileSystemInformationService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "FileSystemService");
@@ -395,16 +264,7 @@ class FileSystemService extends Effect.Service()(
 }
 class CommandService extends Effect.Service()(
   "Service/Command",
-  {
-    effect: Effect.suspend(
-      () => Effect.gen(function* () {
-        yield* IPCService;
-        yield* TelemetryService;
-        yield* WindowService;
-        return {};
-      })
-    )
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "CommandService");
@@ -412,14 +272,7 @@ class CommandService extends Effect.Service()(
 }
 class StoragePathService extends Effect.Service()(
   "Service/StoragePath",
-  {
-    effect: Effect.gen(function* () {
-      yield* InitDataService;
-      yield* LoggerService;
-      yield* FileSystemService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "StoragePathService");
@@ -427,17 +280,7 @@ class StoragePathService extends Effect.Service()(
 }
 class WorkSpaceService extends Effect.Service()(
   "Service/WorkSpace",
-  {
-    effect: Effect.suspend(
-      () => Effect.gen(function* () {
-        yield* IPCService;
-        yield* DocumentService;
-        yield* FileSystemService;
-        yield* ConfigurationService;
-        return {};
-      })
-    )
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "WorkSpaceService");
@@ -445,13 +288,7 @@ class WorkSpaceService extends Effect.Service()(
 }
 class StatusBarService extends Effect.Service()(
   "Service/StatusBar",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      yield* CommandService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "StatusBarService");
@@ -459,13 +296,7 @@ class StatusBarService extends Effect.Service()(
 }
 class TreeViewService extends Effect.Service()(
   "Service/TreeView",
-  {
-    effect: Effect.gen(function* () {
-      yield* IPCService;
-      yield* CommandService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "TreeViewService");
@@ -473,17 +304,7 @@ class TreeViewService extends Effect.Service()(
 }
 class ExtensionHostService extends Effect.Service()(
   "Core/ExtensionHost",
-  {
-    effect: Effect.suspend(
-      () => Effect.gen(function* () {
-        yield* IPCService;
-        yield* InitDataService;
-        yield* LoggerService;
-        yield* TelemetryService;
-        return {};
-      })
-    )
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "ExtensionHostService");
@@ -491,13 +312,7 @@ class ExtensionHostService extends Effect.Service()(
 }
 class ExtensionService extends Effect.Service()(
   "Service/Extension",
-  {
-    effect: Effect.gen(function* () {
-      yield* ExtensionHostService;
-      yield* InitDataService;
-      return {};
-    })
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "ExtensionService");
@@ -505,27 +320,7 @@ class ExtensionService extends Effect.Service()(
 }
 class APIFactoryService extends Effect.Service()(
   "Core/APIFactory",
-  {
-    effect: Effect.suspend(
-      () => Effect.gen(function* () {
-        yield* APIDeprecationService;
-        yield* CommandService;
-        yield* DebugService;
-        yield* DocumentService;
-        yield* ExtensionService;
-        yield* LanguageFeatureService;
-        yield* LoggerService;
-        yield* ProposedAPIService;
-        yield* StatusBarService;
-        yield* TaskService;
-        yield* TreeViewService;
-        yield* WebViewPanelService;
-        yield* WindowService;
-        yield* WorkSpaceService;
-        return {};
-      })
-    )
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "APIFactoryService");
@@ -533,16 +328,7 @@ class APIFactoryService extends Effect.Service()(
 }
 class ESMInterceptorService extends Effect.Service()(
   "Core/ESMInterceptor",
-  {
-    effect: Effect.suspend(
-      () => Effect.gen(function* () {
-        yield* APIFactoryService;
-        yield* ExtensionPathService;
-        yield* LoggerService;
-        return {};
-      })
-    )
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "ESMInterceptorService");
@@ -550,17 +336,7 @@ class ESMInterceptorService extends Effect.Service()(
 }
 class RequireInterceptorService extends Effect.Service()(
   "Core/RequireInterceptor",
-  {
-    effect: Effect.suspend(
-      () => Effect.gen(function* () {
-        yield* APIFactoryService;
-        yield* ExtensionPathService;
-        yield* NodeModuleShimService;
-        yield* LoggerService;
-        return {};
-      })
-    )
-  }
+  { sync: /* @__PURE__ */ __name(() => ({}), "sync") }
 ) {
   static {
     __name(this, "RequireInterceptorService");
@@ -573,34 +349,29 @@ const TracingLive = NodeSdk.layer(() => ({
 const DevToolsLive = DevTools.layerWebSocket().pipe(
   Layer.provide(NodeSocket.layerWebSocketConstructor)
 );
-const BaseServices = Layer.mergeAll(
+const AppLayer = Layer.mergeAll(
   ConfigurationService.Default,
+  ProcessPatchService.Default,
   CancellationService.Default,
   LanguageFeatureService.Default,
   IPCConfigurationService.Default,
   InitDataService.Default,
-  ProcessPatchService.Default
-);
-const LoggerLive = Layer.provide(LoggerService.Default, BaseServices);
-const FoundationLive = Layer.merge(BaseServices, LoggerLive);
-const CoreServices = Layer.mergeAll(
+  LoggerService.Default,
+  IPCService.Default,
+  ExtensionPathService.Default,
   APIDeprecationService.Default,
   HostKindPickerService.Default,
-  ExtensionPathService.Default,
-  NodeModuleShimService.Default
-);
-const L1Services = Layer.mergeAll(IPCService.Default);
-const L2Services = Layer.mergeAll(
+  NodeModuleShimService.Default,
   ClipboardService.Default,
   DebugService.Default,
   DiagnosticService.Default,
   DialogService.Default,
   DocumentService.Default,
-  LocalizationService.Default,
   MessageService.Default,
   QuickInputService.Default,
   WebViewPanelService.Default,
   WindowService.Default,
+  LocalizationService.Default,
   AuthenticationService.Default,
   FileSystemInformationService.Default,
   ProposedAPIService.Default,
@@ -608,58 +379,36 @@ const L2Services = Layer.mergeAll(
   StorageService.Default,
   TaskService.Default,
   TelemetryService.Default,
-  EnvironmentService.Default
-);
-const L3Services = Layer.mergeAll(
+  EnvironmentService.Default,
   FileSystemService.Default,
-  CommandService.Default
-);
-const L4Services = Layer.mergeAll(
+  CommandService.Default,
   StoragePathService.Default,
   WorkSpaceService.Default,
   StatusBarService.Default,
   TreeViewService.Default,
-  ExtensionHostService.Default
-);
-const L5Services = Layer.mergeAll(ExtensionService.Default);
-const L6Services = Layer.mergeAll(APIFactoryService.Default);
-const L7Services = Layer.mergeAll(
+  ExtensionHostService.Default,
+  ExtensionService.Default,
+  APIFactoryService.Default,
   ESMInterceptorService.Default,
   RequireInterceptorService.Default
 );
-const AllServicesUnresolved = Layer.mergeAll(
-  FoundationLive,
-  CoreServices,
-  L1Services,
-  L2Services,
-  L3Services,
-  L4Services,
-  L5Services,
-  L6Services,
-  L7Services
-);
-const ApplicationLive = Layer.provide(
-  AllServicesUnresolved,
-  AllServicesUnresolved
-);
-const MainEffect = Effect.gen(function* () {
+const mainLogic = Effect.gen(function* () {
   const logger = yield* LoggerService;
-  yield* logger.log("Main effect running...");
-  yield* ExtensionHostService;
-  yield* RequireInterceptorService;
-  yield* APIFactoryService;
-  const RunProcessPatch = Effect.void;
-  yield* RunProcessPatch;
+  yield* logger.log("Main logic running...");
+  const apiFactory = yield* APIFactoryService;
+  const commandService = yield* CommandService;
+  yield* logger.log("High-level services resolved successfully.");
   yield* logger.log(
     "Cocoon skeleton is fully initialized. All services were resolved."
   );
   yield* Effect.never;
-}).pipe(
-  Effect.provide([ApplicationLive, TracingLive, DevToolsLive]),
+});
+const MainEffect = Effect.provide(mainLogic, AppLayer).pipe(
+  Effect.provide(Layer.merge(TracingLive, DevToolsLive)),
+  Effect.withSpan("cocoon-main-app-fixed"),
   Effect.catchAllCause(
     (cause) => Effect.logFatal("Cocoon main process failed.", cause)
-  ),
-  Effect.withSpan("cocoon-main-app-manual")
+  )
 );
 NodeRuntime.runMain(MainEffect);
-//# sourceMappingURL=Cocoon_Single_Manual.js.map
+//# sourceMappingURL=Cocoon_Single.js.map

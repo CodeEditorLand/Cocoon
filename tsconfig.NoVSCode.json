@@ -1,0 +1,62 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+
+	"compilerOptions": {
+		"baseUrl": "./",
+
+		"emitDeclarationOnly": false,
+
+		"emitDecoratorMetadata": true,
+
+		"experimentalDecorators": true,
+
+		"module": "ESNext",
+
+		"moduleResolution": "Bundler",
+
+		"noEmit": true,
+
+		"outDir": "Target",
+
+		"rootDirs": ["."],
+
+		"target": "ESNext",
+
+		// vs/compatbile
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"verbatimModuleSyntax": false,
+		"strict": false,
+		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
+		"skipLibCheck": true,
+		"isolatedModules": false,
+
+		"plugins": [
+			{
+				"name": "@effect/language-service",
+				"transform": "@effect/language-service/transform",
+				"diagnostics": true,
+				"diagnosticSeverity": {
+					"duplicatePackage": "error",
+					"floatingEffect": "error",
+					"leakingRequirements": "error",
+					"missingEffectContext": "error",
+					"missingEffectError": "error",
+					"missingReturnYieldStar": "error",
+					"missingStarInYieldEffectGen": "error",
+					"unnecessaryEffectGen": "error",
+					"unnecessaryPipe": "error"
+				},
+				"quickinfo": true,
+				"completions": true,
+				"allowedDuplicatedPackages": []
+			}
+		]
+	},
+
+	"exclude": ["Target"],
+
+	"extends": "@playform/build/tsconfig",
+
+	"include": ["Source", "@types/node"]
+}
