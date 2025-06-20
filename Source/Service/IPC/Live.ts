@@ -1,8 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Live.ts
- * Responsibility: Provides the composed "live" Layer for the entire IPC service.
- * Modified: 2025-06-18 12:00:00 UTC
- */
+
 
 /**
  * @module Live (IPC)

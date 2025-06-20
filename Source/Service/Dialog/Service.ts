@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Dialog/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:27 UTC
- * Dependency: ./Error/DialogError.js, ./Type.js, effect, vscode
- * Export: DialogService
- */
+
 
 /**
  * @module Service (Dialog)

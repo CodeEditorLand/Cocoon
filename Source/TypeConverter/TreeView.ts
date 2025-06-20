@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/TreeView.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:04 UTC
- * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Main/MarkdownString.js, ./Main/URI.js, vs/platform/extensions/common/extensions.js, vscode
- * Export: TreeView
- */
+
 
 /**
  * @module TreeView (TypeConverter)

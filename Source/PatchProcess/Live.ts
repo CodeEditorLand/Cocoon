@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/PatchProcess/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:36 UTC
- * Dependency: ./Service.js, effect
- */
+
 
 /**
  * @module Live (ProcessPatch)

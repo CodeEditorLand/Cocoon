@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Dispatcher/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:22 UTC
- * Dependency: ../../Cancellation/Service.js, ../ProtocolAdapter/Service.js, ./Service.js, effect, vs/workbench/services/extensions/common/rpcProtocol.js
- */
+
 
 /**
  * @module Definition (IPC/Dispatcher)

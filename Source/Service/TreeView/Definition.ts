@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/TreeView/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:11 UTC
- * Dependency: ../../TypeConverter/TreeView.js, ../Command/Service.js, ../IPC/Service.js, ./Service.js, ./TreeViewImplementation.js, effect, vs/platform/extensions/common/extensions.js, vscode
- */
+
 
 /**
  * @module Definition (TreeView)

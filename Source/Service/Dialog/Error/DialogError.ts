@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Dialog/Error/DialogError.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:27 UTC
- * Dependency: effect
- * Export: DialogError
- */
+
 
 import { Data } from "effect";
 

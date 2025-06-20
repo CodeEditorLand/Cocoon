@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/NodeModuleShim/Shim/Crypto.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:38 UTC
- * Dependency: node:crypto
- */
+
 
 /**
  * @module Crypto (NodeModuleShim/Shim)

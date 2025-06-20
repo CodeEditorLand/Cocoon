@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/WebViewPanel/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:10 UTC
- * Dependency: ../../TypeConverter/WebView/ConvertContentOptionToDTO.js, ../../TypeConverter/WebView/ConvertPanelOptionToDTO.js, ../../TypeConverter/WebView/ConvertShowOptionToDTO.js, ../IPC/Service.js, ./Service.js, ./WebViewPanelImplementation.js, effect, vs/base/common/uuid.js, vs/platform/extensions/common/extensions.js, vscode
- */
+
 
 /**
  * @module Definition (WebViewPanel)

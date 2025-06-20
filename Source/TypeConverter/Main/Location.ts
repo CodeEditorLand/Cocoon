@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/Main/Location.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:06 UTC
- * Dependency: ./Range.js, ./URI.js, vs/base/common/uri.js, vs/editor/common/core/range.js, vscode
- */
+
 
 /**
  * @module Location (Main/TypeConverter)

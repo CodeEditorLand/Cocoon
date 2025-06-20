@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Window/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:09 UTC
- * Dependency: ../../TypeConverter/Main/Range.js, ../../TypeConverter/Main/URI.js, ../../TypeConverter/Main/ViewColumn.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect
- */
+
 
 /**
  * @module Definition (Window)

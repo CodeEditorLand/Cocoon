@@ -1,8 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Debug/RegisterProvider.ts
- * Responsibility: A generic helper Effect for registering debug-related providers.
- * Modified: 2025-06-17 10:52:55 UTC
- */
+
 
 /**
  * @module RegisterProvider (Debug)

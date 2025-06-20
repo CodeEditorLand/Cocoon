@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Diagnostic/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:28 UTC
- * Dependency: ./Definition.js, ./Service.js, effect, vscode
- */
+
 
 /**
  * @module Live (Diagnostic)

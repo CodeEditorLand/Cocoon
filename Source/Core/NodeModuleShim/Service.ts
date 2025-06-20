@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Core/NodeModuleShim/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:39 UTC
- * Dependency: ./Error/ModuleBlockedError.js, ./Error/ModuleNotShimmedError.js, effect, vscode
- * Export: NodeModuleShim, NodeModuleShimService
- */
+
 
 /**
  * @module Service (NodeModuleShim)

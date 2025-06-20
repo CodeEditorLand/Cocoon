@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/WebViewPanel/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:09 UTC
- * Dependency: effect, vs/platform/extensions/common/extensions.js
- * Export: WebViewPanelService
- */
+
 
 /**
  * @module Service (WebViewPanel)

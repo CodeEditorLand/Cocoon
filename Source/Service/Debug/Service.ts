@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Debug/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:30 UTC
- * Dependency: ./Error/DebugProviderRegistrationError.js, ./Error/StartDebuggingError.js, effect, vs/platform/extensions/common/extensions.js
- * Export: DebugService
- */
+
 
 /**
  * @module Service (Debug)

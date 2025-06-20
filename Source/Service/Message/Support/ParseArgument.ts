@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Message/Support/ParseArgument.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:16 UTC
- * Dependency: ../Type.js, vscode
- */
+
 
 /**
  * @module ParseArgument (Message/Support)

@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/WorkSpaceEdit.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:03 UTC
- * Dependency: ../Type/ExtHostTypes.js, ./Main/TextEdit.js, ./Main/URI.js, vs/base/common/uri.js, vs/editor/common/model.js, vscode
- * Export: IVersionInformationProvider
- */
+
 
 /**
  * @module WorkSpaceEdit (TypeConverter)

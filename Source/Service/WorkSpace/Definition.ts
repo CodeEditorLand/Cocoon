@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/WorkSpace/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:08 UTC
- * Dependency: ../../TypeConverter/Main/URI.js, ../../TypeConverter/Main/WorkspaceFolder.js, ../../TypeConverter/WorkSpaceEdit.js, ../Configuration/Service.js, ../Document/Service.js, ../FileSystem/Service.js, ../IPC/Service.js, ./Service.js, ./State.js, ./Support/FindFiles.js, ./Support/OpenTextDocument.js, Source/Utility/CreateEventStream.js, effect, vs/base/common/event.js
- */
+
 
 /**
  * @module Definition (WorkSpace)

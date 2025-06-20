@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Document/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:27 UTC
- * Dependency: effect, vscode
- * Export: DocumentService
- */
+
 
 /**
  * @module Service (Document)

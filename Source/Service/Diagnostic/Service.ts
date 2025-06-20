@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Diagnostic/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:28 UTC
- * Dependency: effect, vscode
- * Export: DiagnosticService
- */
+
 
 /**
  * @module Service (Diagnostic)

@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/WebView/ConvertPanelOptionToDTO.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:03 UTC
- * Dependency: vscode
- */
+
 
 /**
  * @module ConvertPanelOptionToDTO

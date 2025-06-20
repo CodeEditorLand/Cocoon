@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Authentication/Type.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:33 UTC
- * Dependency: vscode
- * Export: ConvertSessionToInternal, ConvertSessionToVSCode
- */
+
 
 /**
  * @module Type (Authentication)

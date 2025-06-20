@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/ExtensionHost/Activate.ts
- * Responsibility:
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: ../../Service/Configuration/GetConfiguration.js, ../../Service/Window/ShowInformationMessage.js, effect
- */
+
 
 /**
  * @module Activate

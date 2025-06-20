@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Command/ProcessUserData/GetActiveTextEditor.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:46 UTC
- * Dependency: ../../Service/Window/Service.js, effect
- */
+
 
 /**
  * @module GetActiveTextEditor

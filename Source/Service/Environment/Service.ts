@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Environment/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:25 UTC
- * Dependency: effect, vscode
- * Export: EnvironmentService
- */
+
 
 /**
  * @module Service (Environment)

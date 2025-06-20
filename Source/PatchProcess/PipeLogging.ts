@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/PatchProcess/PipeLogging.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:36 UTC
- * Dependency: ../Service/IPC/Service.js, effect
- */
+
 
 /**
  * @module PipeLogging (PatchProcess)

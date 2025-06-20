@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/QuickInput/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:15 UTC
- * Dependency: effect
- * Export: QuickInputService
- */
+
 
 /**
  * @module Service (QuickInput)

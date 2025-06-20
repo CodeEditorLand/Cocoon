@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/APIFactory/CreateCommandNamespace.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:45 UTC
- * Dependency: ../../Service/Command/Service.js, vs/platform/extensions/common/extensions.js, vscode
- */
+
 
 /**
  * @module CreateCommandNamespace

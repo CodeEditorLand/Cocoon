@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Cancellation/Error/InvalidTokenIDError.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:32 UTC
- * Dependency: effect
- * Export: InvalidTokenIDError
- */
+
 
 import { Data } from "effect";
 

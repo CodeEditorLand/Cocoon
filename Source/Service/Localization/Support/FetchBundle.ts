@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Localization/Support/FetchBundle.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:19 UTC
- * Dependency: ../../../TypeConverter/Main/URI.js, ../../IPC/Service.js, effect, vscode
- */
+
 
 /**
  * @module FetchBundle (Localization/Support)

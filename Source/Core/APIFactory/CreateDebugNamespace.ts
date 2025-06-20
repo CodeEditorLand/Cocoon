@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/APIFactory/CreateDebugNamespace.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:44 UTC
- * Dependency: ../../Service/Debug/Service.js, vs/platform/extensions/common/extensions.js, vscode
- */
+
 
 /**
  * @module CreateDebugNamespace

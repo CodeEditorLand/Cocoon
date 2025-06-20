@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/QuickInput/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:16 UTC
- * Dependency: ../../TypeConverter/QuickInput.js, ../IPC/Service.js, ./Service.js, effect, vs/base/common/errors.js
- */
+
 
 /**
  * @module Definition (QuickInput)

@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Window/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:09 UTC
- * Dependency: effect
- * Export: WindowService
- */
+
 
 /**
  * @module Service (Window)

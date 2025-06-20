@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Log/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:17 UTC
- * Dependency: ./Service.js, effect
- */
+
 
 /**
  * @module Definition (Log)

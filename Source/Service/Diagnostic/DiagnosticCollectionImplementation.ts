@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Diagnostic/DiagnosticCollectionImplementation.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:28 UTC
- * Dependency: ../../TypeConverter/Diagnostic.js, ../../TypeConverter/Main/URI.js, ../IPC/Service.js, effect, vscode
- * Export: implements
- */
+
 
 /**
  * @module DiagnosticCollectionImplementation (Service)

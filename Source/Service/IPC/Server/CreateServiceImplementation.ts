@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Server/CreateServiceImplementation.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:20 UTC
- * Dependency: ../Dispatcher/Service.js, ../Generated.js, ../ProtoConverter/DecodeValue.js, ../ProtoConverter/EncodeValue.js, @grpc/grpc-js, effect
- */
+
 
 /**
  * @module CreateServiceImplementation (IPC/Server)

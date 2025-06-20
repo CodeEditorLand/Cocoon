@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Command/ProcessUserData/InvokeProcessingService.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:45 UTC
- * Dependency: ../../Service/IPC/Service.js, ./Error.js, effect
- */
+
 
 /**
  * @module InvokeProcessingService

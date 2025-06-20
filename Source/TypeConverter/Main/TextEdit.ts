@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/Main/TextEdit.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:05 UTC
- * Dependency: ./Range.js, vs/editor/common/model.js, vscode
- */
+
 
 /**
  * @module TextEdit (Main/TypeConverter)

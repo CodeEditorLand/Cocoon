@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/ProposedAPI/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:16 UTC
- * Dependency: ../Log/Service.js, ./Service.js, effect
- */
+
 
 /**
  * @module Definition (ProposedAPI)

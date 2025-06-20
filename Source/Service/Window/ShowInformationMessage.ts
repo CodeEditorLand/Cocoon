@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Window/ShowInformationMessage.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:08 UTC
- * Dependency: ../Message/Service.js, effect, vscode
- */
+
 
 /**
  * @module ShowInformationMessage

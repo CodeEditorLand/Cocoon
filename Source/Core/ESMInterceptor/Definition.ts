@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/ESMInterceptor/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:44 UTC
- * Dependency: ../../Service/Log/Service.js, ../APIFactory/Service.js, ../ExtensionPath/Service.js, ./CreateDynamicModule.js, ./Service.js, effect, node:buffer, node:module, node:url, node:worker_threads, vs/base/common/uuid.js, vscode
- */
+
 
 /**
  * @module Definition (ESMInterceptor)

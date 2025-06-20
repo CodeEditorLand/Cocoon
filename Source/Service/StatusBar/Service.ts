@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/StatusBar/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:14 UTC
- * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode
- * Export: StatusBarService
- */
+
 
 /**
  * @module Service (StatusBar)

@@ -1,8 +1,4 @@
-/*
- * File: Cocoon/Source/Core/NodeModuleShim/Definition.ts
- * Responsibility: The live implementation of the `NodeModuleShim` service.
- * Modified: 2025-06-17 11:42:01 UTC
- */
+
 
 /**
  * @module Definition (NodeModuleShim)

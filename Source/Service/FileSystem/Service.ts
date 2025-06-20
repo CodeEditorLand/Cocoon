@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/FileSystem/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:24 UTC
- * Dependency: effect, vscode
- * Export: FileSystemService, FileSystemServiceType
- */
+
 
 /**
  * @module Service (FileSystem)

@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Debug/Error/StartDebuggingError.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:30 UTC
- * Dependency: effect
- * Export: StartDebuggingError
- */
+
 
 import { Data } from "effect";
 

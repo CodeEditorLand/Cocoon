@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/InitData/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:23 UTC
- * Dependency: ./Service.js, effect, vs/workbench/services/extensions/common/extensionHostProtocol.js
- */
+
 
 /**
  * @module Live (InitData)

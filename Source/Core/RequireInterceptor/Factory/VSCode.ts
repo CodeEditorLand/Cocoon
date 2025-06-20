@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Core/RequireInterceptor/Factory/VSCode.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:38 UTC
- * Dependency: ../../../Core/APIFactory/Service.js, ../../../Core/ExtensionPath/Service.js, ../../../Service/Log/Service.js, ./Interface.js, vscode
- * Export: implements
- */
+
 
 /**
  * @module VSCodeNodeModuleFactory (RequireInterceptor/Factory)

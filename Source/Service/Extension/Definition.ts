@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Extension/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:26 UTC
- * Dependency: ../../Core/ExtensionHost/Service.js, ../../Utility/CreateEventStream.js, ../InitData/Service.js, ./CreateAPIObject.js, ./Service.js, effect, vs/platform/extensionManagement/common/implicitActivationEvents.js, vscode
- */
+
 
 /**
  * @module Definition (Extension)

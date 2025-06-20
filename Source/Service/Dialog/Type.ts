@@ -1,8 +1,3 @@
-/*
- * File: Cocoon/Source/Service/Dialog/Type.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:26 UTC
- */
 
 /**
  * @module Type (Dialog)

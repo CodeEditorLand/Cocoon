@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/Main/Selection.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:05 UTC
- * Dependency: ../../Type/ExtHostTypes.js, vs/editor/common/core/selection.js, vscode
- */
+
 
 /**
  * @module Selection (Main/TypeConverter)

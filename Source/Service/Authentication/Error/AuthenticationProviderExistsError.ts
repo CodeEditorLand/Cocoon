@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Authentication/Error/AuthenticationProviderExistsError.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:35 UTC
- * Dependency: effect
- * Export: extends
- */
+
 
 import { Data } from "effect";
 

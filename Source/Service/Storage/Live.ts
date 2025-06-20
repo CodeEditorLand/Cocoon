@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Storage/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:13 UTC
- * Dependency: ./Definition.js, ./Service.js, effect
- */
+
 
 /**
  * @module Live (Storage)

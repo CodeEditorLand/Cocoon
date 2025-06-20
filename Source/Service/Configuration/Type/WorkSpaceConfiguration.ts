@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Configuration/Type/WorkSpaceConfiguration.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:29 UTC
- * Dependency: vscode
- */
+
 
 /**
  * @module WorkSpaceConfiguration (Configuration/Type)

@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/SecretStorage/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:14 UTC
- * Dependency: effect, vscode
- * Export: SecretStorageService
- */
+
 
 /**
  * @module Service (SecretStorage)

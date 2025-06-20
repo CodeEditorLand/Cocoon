@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/FileSystem/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:24 UTC
- * Dependency: ../../TypeConverter/Main/URI.js, ../FileSystemInformation/Service.js, ../IPC/Service.js, ./Service.js, effect
- */
+
 
 /**
  * @module Definition (FileSystem)

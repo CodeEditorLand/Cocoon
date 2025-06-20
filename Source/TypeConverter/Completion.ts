@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/Completion.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:06 UTC
- * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Main/MarkdownString.js, ./Main/Range.js, ./Main/TextEdit.js, vs/base/common/htmlContent.js, vs/base/common/lifecycle.js, vs/editor/common/core/range.js, vs/editor/common/languages.js, vs/editor/common/model.js, vscode
- */
+
 
 /**
  * @module Completion (TypeConverter)

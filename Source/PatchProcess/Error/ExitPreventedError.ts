@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/PatchProcess/Error/ExitPreventedError.ts
- * Responsibility: Defines a structured error type thrown when the Cocoon sidecar intercepts and blocks a VS Code extension's attempt to terminate the Node.js process, enforcing host control over extension lifecycle management.
- * Modified: 2025-06-17 21:19:35 UTC
- * Dependency: effect
- * Export: extends
- */
+
 
 /**
  * @module ExitPreventedError (PatchProcess/Error)

@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/APIFactory/CreateTasksNamespace.ts
- * Responsibility: Constructs the vscode.tasks API namespace for the Cocoon sidecar, delegating to the core TaskService while sandboxing extension access to task execution and management functionality.
- * Modified: 2025-06-17 21:19:44 UTC
- * Dependency: ../../Service/Task/Service.js, vs/platform/extensions/common/extensions.js, vscode
- */
+
 
 /**
  * @module CreateTasksNamespace

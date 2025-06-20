@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Authentication/Error/AuthenticationProviderRegistrationError.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:34 UTC
- * Dependency: effect
- * Export: extends
- */
+
 
 /**
  * @module Error (Authentication)

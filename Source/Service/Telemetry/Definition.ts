@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Telemetry/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:11 UTC
- * Dependency: ../IPC/Service.js, ../InitData/Service.js, ../Log/Service.js, ./Service.js, effect, vs/base/common/errors.js, vs/platform/log/common/log.js, vs/platform/telemetry/common/telemetry.js
- * Export: ToLevel
- */
+
 
 /**
  * @module Definition (Telemetry)

@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Configuration/ESBuild/Cocoon.ts
- * Responsibility: Configures ESBuild for the Cocoon Node.js sidecar process, defining build options and cleanup logic to bundle VS Code extension host dependencies during development.
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: esbuild
- * Export: Clean, On
- */
+
 export const On = process.env["NODE_ENV"] === "development" ||
     process.env["TAURI_ENV_DEBUG"] === "true";
 export const Clean = process.env["Clean"] === "true";

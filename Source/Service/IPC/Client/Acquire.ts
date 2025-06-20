@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Client/Acquire.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:23 UTC
- * Dependency: ../Configuration.js, ../Error/gRPCConnectionError.js, ../Generated.js, ./Release.js, @grpc/grpc-js, @grpc/proto-loader, effect, node:path
- */
+
 
 /**
  * @module Acquire (IPC/Client)

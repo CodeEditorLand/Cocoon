@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/Command/Type.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:06 UTC
- * Export: APICommand, APICommandArgument, APICommandResult
- */
+
 
 /**
  * @module Type (Command/TypeConverter)

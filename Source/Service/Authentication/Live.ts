@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Authentication/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:33 UTC
- * Dependency: ./Definition.js, ./Service.js, effect
- */
+
 
 /**
  * @module Live (Authentication)

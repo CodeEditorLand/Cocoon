@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/Diagnostic.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:06 UTC
- * Dependency: ./Main/URI.js, vs/base/common/uri.js, vscode
- */
+
 
 /**
  * @module Diagnostic (TypeConverter)

@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/StoragePath/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:12 UTC
- * Dependency: ./Definition.js, ./Service.js, effect
- */
+
 
 import { Layer } from "effect";
 

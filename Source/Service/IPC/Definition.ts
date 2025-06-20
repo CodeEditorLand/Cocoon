@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:22 UTC
- * Dependency: ./Client/Service.js, ./Dispatcher/Service.js, ./Error/IPCError.js, ./Generated.js, ./ProtoConverter/DecodeValue.js, ./ProtoConverter/EncodeValue.js, ./ProtoConverter/Error/ProtoSerializationError.js, ./ProtocolAdapter/Service.js, ./Service.js, effect
- */
+
 
 /**
  * @module Definition (IPC)

@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Core/RequireInterceptor/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:37 UTC
- * Dependency: effect
- * Export: RequireInterceptorService
- */
+
 
 /**
  * @module Service (RequireInterceptor)

@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/APIFactory/CreateWorkSpaceNamespace.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:43 UTC
- * Dependency: ../../Service/APIDeprecation/Service.js, ../../Service/Document/Service.js, ../../Service/WorkSpace/Service.js, effect, vs/platform/extensions/common/extensions.js, vscode
- */
+
 
 /**
  * @module CreateWorkSpaceNamespace

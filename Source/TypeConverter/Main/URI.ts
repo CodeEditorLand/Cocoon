@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/Main/URI.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:05 UTC
- * Dependency: ../../Type/ExtHostTypes.js, vs/base/common/uri.js, vscode
- */
+
 
 /**
  * @module URI (Main/TypeConverter)

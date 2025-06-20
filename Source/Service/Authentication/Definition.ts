@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Authentication/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:33 UTC
- * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Error/AuthenticationProviderExistsError.js, ./Error/AuthenticationProviderRegistrationError.js, ./Service.js, ./Type.js, effect, vs/base/common/lifecycle.js
- */
+
 
 /**
  * @module Definition (Authentication)

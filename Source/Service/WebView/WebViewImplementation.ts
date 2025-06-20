@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/WebView/WebViewImplementation.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:10 UTC
- * Dependency: ../../TypeConverter/WebView/ConvertContentOptionToDTO.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, effect, vs/base/common/network.js, vs/platform/extensions/common/extensions.js, vscode
- * Export: implements
- */
+
 
 /**
  * @module WebViewImplementation

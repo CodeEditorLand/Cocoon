@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Storage/MementoImplementation.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:13 UTC
- * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, effect, vscode
- * Export: MementoImplementation
- */
+
 
 /**
  * @module MementoImplementation

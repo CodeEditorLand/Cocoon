@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/Main/Position.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:05 UTC
- * Dependency: ../../Type/ExtHostTypes.js, vs/editor/common/core/position.js, vscode
- */
+
 
 /**
  * @module Position (Main/TypeConverter)

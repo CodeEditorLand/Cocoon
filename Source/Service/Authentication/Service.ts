@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Authentication/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:33 UTC
- * Dependency: ./Error/AuthenticationProviderExistsError.js, ./Error/AuthenticationProviderRegistrationError.js, effect, vs/base/common/lifecycle.js
- * Export: AuthenticationService
- */
+
 
 /**
  * @module Service (Authentication)

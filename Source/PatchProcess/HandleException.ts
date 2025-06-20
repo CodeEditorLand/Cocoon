@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/PatchProcess/HandleException.ts
- * Responsibility: Sets up global exception handlers in the Cocoon sidecar process to report uncaught errors and promise rejections to the Mountain backend via the Vine IPC layer, ensuring error visibility across components.
- * Modified: 2025-06-17 21:19:37 UTC
- * Dependency: ../Service/IPC/Service.js, effect
- */
+
 
 /**
  * @module HandleException (PatchProcess)

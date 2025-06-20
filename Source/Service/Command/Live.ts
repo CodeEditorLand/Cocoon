@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Command/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:31 UTC
- * Dependency: ./Definition.js, ./Service.js, effect
- */
+
 
 /**
  * @module Command

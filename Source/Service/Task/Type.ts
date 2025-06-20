@@ -1,8 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Task/Type.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:11 UTC
- */
+
 
 /**
  * @module Type (Task)

@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/SecretStorage/SecretStorageImplementation.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:14 UTC
- * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Error/EmptyKeyError.js, ./Error/InvalidValueError.js, effect, vscode
- * Export: SecretStorageImplementation
- */
+
 
 /**
  * @module SecretStorageImplementation

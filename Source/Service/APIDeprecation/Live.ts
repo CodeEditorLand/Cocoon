@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/APIDeprecation/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:33 UTC
- * Dependency: ../Log/Service.js, ./Definition.js, ./Service.js, effect
- */
+
 
 /**
  * @module Live (APIDeprecation)

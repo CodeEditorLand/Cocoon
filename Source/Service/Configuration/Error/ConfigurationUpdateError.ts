@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Configuration/Error/ConfigurationUpdateError.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:29 UTC
- * Dependency: effect
- * Export: ConfigurationUpdateError
- */
+
 
 import { Data } from "effect";
 

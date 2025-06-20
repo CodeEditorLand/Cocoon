@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Storage/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:13 UTC
- * Dependency: ../IPC/Service.js, ../Log/Service.js, ./MementoImplementation.js, ./Service.js, effect, vscode
- */
+
 
 /**
  * @module Definition (Storage)

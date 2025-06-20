@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Core/NodeModuleShim/Error/ModuleNotShimmedError.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:39 UTC
- * Dependency: effect
- * Export: ModuleNotShimmedError
- */
+
 
 import { Data } from "effect";
 

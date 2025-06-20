@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/ProtoConverter/Error/ProtoSerializationError.ts
- * Responsibility:
- * Modified: 2025-06-17 10:52:54 UTC
- * Dependency: effect
- * Export: ProtoSerializationError
- */
+
 
 import { Data } from "effect";
 

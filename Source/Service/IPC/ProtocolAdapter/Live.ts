@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Live.ts
- * Responsibility: Provides a Layer for the ProtocolAdapter service. This adapter makes the gRPC communication channel compatible with VS Code's IMessagePassingProtocol, required by RPCProtocol.
- * Modified: 2025-06-17 10:53:13 UTC
- * Dependency: ../Client/Service.js, ./Definition.js, ./Service.js, effect
- */
+
 
 /**
  * @module Live (IPC/ProtocolAdapter)

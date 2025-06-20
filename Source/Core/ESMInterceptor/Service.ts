@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Core/ESMInterceptor/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:42 UTC
- * Dependency: effect
- * Export: ESMInterceptorService
- */
+
 
 /**
  * @module Service (ESMInterceptor)

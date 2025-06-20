@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/PatchProcess/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:36 UTC
- * Dependency: effect
- * Export: ProcessPatchService
- */
+
 
 /**
  * @module Service (ProcessPatch)

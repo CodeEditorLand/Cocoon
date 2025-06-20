@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/StatusBar/StatusBarItemImplementation.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:13 UTC
- * Dependency: ../../Type/ExtHostTypes.js, ../../TypeConverter/Command/Definition.js, ../../TypeConverter/StatusBar.js, ../Command/Service.js, ../IPC/Service.js, effect
- * Export: StatusBarItemImplementation
- */
+
 
 /**
  * @module StatusBarItemImplementation

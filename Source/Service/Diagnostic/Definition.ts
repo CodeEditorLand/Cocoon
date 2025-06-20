@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Diagnostic/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:28 UTC
- * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./DiagnosticCollectionImplementation.js, ./Service.js, Source/TypeConverter/Main/URI.js, effect, vscode
- */
+
 
 /**
  * @module Definition (Diagnostic)

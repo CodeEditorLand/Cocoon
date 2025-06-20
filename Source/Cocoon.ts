@@ -1,8 +1,4 @@
-/*
- * File: Cocoon/Source/Cocoon.ts
- * Responsibility: Orchestrates the entire application lifecycle using a hierarchical layering strategy.
- * Modified: 2025-06-18 10:00:00 UTC
- */
+
 
 import * as Path from "node:path";
 import { NodeRuntime } from "@effect/platform-node";

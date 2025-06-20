@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/ExtensionHost/Live.ts
- * Responsibility: Implements the live runtime layer for the Cocoon sidecar's ExtensionHost service using Effect, providing dependency wiring for VS Code extension hosting capabilities in the Node.js sidecar process.
- * Modified: 2025-06-17 21:19:41 UTC
- * Dependency: ./Definition.js, ./Service.js, effect
- */
+
 
 /**
  * @module Live (ExtensionHost)

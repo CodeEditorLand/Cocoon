@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Telemetry/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:11 UTC
- * Dependency: effect, vs/workbench/api/common/extHostTelemetry.js
- * Export: TelemetryService
- */
+
 
 /**
  * @module Service (Telemetry)

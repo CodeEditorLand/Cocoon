@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Utility/CreateEventStream.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:03 UTC
- * Dependency: effect, vs/base/common/event.js
- * Export: EventStream
- */
+
 
 /**
  * @module CreateEventStream

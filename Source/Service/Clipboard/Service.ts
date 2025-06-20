@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Clipboard/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:32 UTC
- * Dependency: effect, vscode
- * Export: ClipboardService
- */
+
 
 /**
  * @module Service (Clipboard)

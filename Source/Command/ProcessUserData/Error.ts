@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Command/ProcessUserData/Error.ts
- * Responsibility: Defines custom tagged errors for the ProcessUserData command workflow in the Cocoon sidecar, providing structured error handling for editor availability and backend service communication failures through the Vine IPC layer.
- * Modified: 2025-06-17 21:19:46 UTC
- * Dependency: effect
- * Export: ActiveEditorNotFoundError, ProcessingServiceError
- */
+
 
 /**
  * @module Error (ProcessUserData)

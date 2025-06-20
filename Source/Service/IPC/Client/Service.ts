@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Client/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:23 UTC
- * Dependency: ../Generated.js, effect
- * Export: ClientService
- */
+
 
 /**
  * @module Service (IPC/Client)

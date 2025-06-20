@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/FileSystemInformation/Service.ts
- * Responsibility: Defines the FileSystemInformation service interface for the Cocoon sidecar, providing VS Code extension-compatible filesystem metadata and capabilities to support extension host functionality in Land's MVP Path A.
- * Modified: 2025-06-17 21:19:24 UTC
- * Dependency: effect, vs/base/common/resources.js, vs/platform/files/common/files.js, vscode
- * Export: FileSystemInformationService
- */
+
 
 /**
  * @module Service (FileSystemInformation)

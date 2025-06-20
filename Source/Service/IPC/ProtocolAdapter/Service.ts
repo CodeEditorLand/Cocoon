@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:20 UTC
- * Dependency: effect, vs/base/parts/ipc/common/ipc.js
- * Export: ProtocolAdapterService
- */
+
 
 /**
  * @module Service (IPC/ProtocolAdapter)

@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/ProposedAPI/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:16 UTC
- * Dependency: ./Definition.js, ./Service.js, effect
- */
+
 
 /**
  * @module Live (ProposedAPI)

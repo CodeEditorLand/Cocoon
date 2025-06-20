@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Server/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:20 UTC
- * Dependency: ../Configuration.js, ../Dispatcher/Service.js, ../Error/gRPCConnectionError.js, ./Acquire.js, ./Service.js, effect
- */
+
 
 /**
  * @module Live (IPC/Server)

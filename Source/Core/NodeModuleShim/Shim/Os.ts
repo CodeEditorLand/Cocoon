@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/NodeModuleShim/Shim/Os.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:38 UTC
- * Dependency: node:os, vs/workbench/services/extensions/common/extensionHostProtocol.js
- */
+
 
 /**
  * @module Os (NodeModuleShim/Shim)

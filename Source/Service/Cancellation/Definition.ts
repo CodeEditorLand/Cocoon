@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Cancellation/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:32 UTC
- * Dependency: ./Error/InvalidTokenIDError.js, ./Service.js, effect, vs/base/common/cancellation.js
- */
+
 
 /**
  * @module Definition (Cancellation)

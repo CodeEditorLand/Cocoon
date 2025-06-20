@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Configuration/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:28 UTC
- * Dependency: ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./CreateWorkSpaceConfiguration.js, ./Service.js, effect, vscode
- */
+
 
 /**
  * @module Definition (Configuration)

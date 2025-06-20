@@ -1,8 +1,4 @@
-/*
- * File: Cocoon/Source/Core/APIFactory/Definition.ts
- * Responsibility: The primary factory function that constructs the `vscode` API object for a given extension.
- * Modified: 2025-06-17 11:42:01 UTC
- */
+
 
 /**
  * @module Create (APIFactory)

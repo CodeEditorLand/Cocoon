@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Core/ESMInterceptor/DynamicModuleTemplate.ts
- * Responsibility: Provides a template for dynamically generating ESM modules that intercept 'vscode' imports in extensions, creating sandboxed API instances for the Cocoon sidecar to securely expose VS Code extension APIs.
- * Modified: 2025-06-17 21:19:43 UTC
- * Dependency: vscode
- * Export: DynamicModuleTemplate, window
- */
+
 
 /**
  * @module DynamicModuleTemplate (ESMInterceptor)

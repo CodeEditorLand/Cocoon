@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Dialog/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:26 UTC
- * Dependency: ../../TypeConverter/Dialog.js, ../IPC/Service.js, ./Error/DialogError.js, ./Service.js, effect, vs/base/common/errors.js
- */
+
 
 /**
  * @module Definition (Dialog)

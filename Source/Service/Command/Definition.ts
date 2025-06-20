@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Command/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:31 UTC
- * Dependency: ../IPC/Service.js, ../Telemetry/Service.js, ../Window/Service.js, ./Service.js, ./Type.js, effect, vs/platform/extensions/common/extensions.js, vscode
- */
+
 
 /**
  * @module Definition (Command)

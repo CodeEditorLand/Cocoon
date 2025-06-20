@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Task/RPCHandlers/ProvideTasks.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:12 UTC
- * Dependency: ../../../TypeConverter/Task.js, ../../Cancellation/Service.js, effect, vscode
- */
+
 
 /**
  * @module ProvideTasks (Task/RPCHandlers)

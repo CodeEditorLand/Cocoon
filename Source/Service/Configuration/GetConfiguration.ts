@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Configuration/GetConfiguration.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:28 UTC
- * Dependency: ./Service.js, effect, vscode
- */
+
 
 /**
  * @module GetConfiguration

@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/ESMInterceptor/CreateDynamicModule.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:44 UTC
- * Dependency: ./Constants.js, ./DynamicModuleTemplate.js, vscode
- */
+
 
 /**
  * @module CreateDynamicModule (ESMInterceptor)

@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/PatchProcess/SetStackTraceLimit.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:35 UTC
- * Dependency: effect
- */
+
 
 /**
  * @module SetStackTraceLimit

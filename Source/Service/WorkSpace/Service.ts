@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/WorkSpace/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:08 UTC
- * Dependency: effect
- * Export: WorkSpaceService
- */
+
 
 /**
  * @module Service (WorkSpace)

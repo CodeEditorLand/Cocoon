@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Core/RequireInterceptor/Factory/Interface.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:38 UTC
- * Dependency: vscode
- * Export: INodeModuleFactory
- */
+
 
 /**
  * @module INodeModuleFactory (RequireInterceptor/Factory)

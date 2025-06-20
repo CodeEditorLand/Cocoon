@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/Main/MarkdownString.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:06 UTC
- * Dependency: ../../Type/ExtHostTypes.js, vs/base/common/uri.js, vscode
- */
+
 
 /**
  * @module MarkdownString (Main/TypeConverter)

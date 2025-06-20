@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Dispatcher/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:22 UTC
- * Dependency: effect, vscode
- * Export: DispatcherService
- */
+
 
 /**
  * @module Service (IPC/Dispatcher)

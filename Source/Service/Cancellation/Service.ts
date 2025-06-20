@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Cancellation/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:31 UTC
- * Dependency: ./Error/InvalidTokenIDError.js, effect, vscode
- * Export: CancellationService
- */
+
 
 /**
  * @module Service (Cancellation)

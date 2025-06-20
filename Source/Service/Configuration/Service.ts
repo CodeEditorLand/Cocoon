@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Configuration/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:29 UTC
- * Dependency: ./Type/WorkSpaceConfiguration.js, effect
- * Export: ConfigurationService
- */
+
 
 /**
  * @module Service (Configuration)

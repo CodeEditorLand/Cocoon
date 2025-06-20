@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Storage/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:13 UTC
- * Dependency: effect, vscode
- * Export: StorageService
- */
+
 
 /**
  * @module Service (Storage)

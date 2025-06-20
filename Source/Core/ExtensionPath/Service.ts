@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Core/ExtensionPath/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:41 UTC
- * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode
- * Export: ExtensionPathService
- */
+
 
 /**
  * @module Service (ExtensionPath)

@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Error/gRPCConnectionError.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:22 UTC
- * Dependency: effect
- * Export: GPCConnectionError
- */
+
 
 import { Data } from "effect";
 

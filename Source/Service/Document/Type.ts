@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Document/Type.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:27 UTC
- * Dependency: vscode
- */
+
 
 /**
  * @module Type (Document)

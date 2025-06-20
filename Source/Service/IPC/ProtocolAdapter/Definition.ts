@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:21 UTC
- * Dependency: ../Client/Service.js, ../Error/IPCError.js, ../Generated.js, ./Service.js, effect, vs/base/common/buffer.js, vs/base/common/event.js
- */
+
 
 /**
  * @module Definition (IPC/ProtocolAdapter)

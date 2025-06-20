@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/NodeModuleShim/Shim/Process.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:38 UTC
- * Dependency: node:events
- */
+
 
 /**
  * @module Process (NodeModuleShim/Shim)

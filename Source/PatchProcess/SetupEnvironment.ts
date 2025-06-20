@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/PatchProcess/SetupEnvironment.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:35 UTC
- * Dependency: ../Service/InitData/Service.js, effect
- */
+
 
 /**
  * @module SetupEnvironment

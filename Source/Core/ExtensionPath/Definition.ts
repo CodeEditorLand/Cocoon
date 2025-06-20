@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Core/ExtensionPath/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:42 UTC
- * Dependency: node:path, vs/base/common/uri.js, vscode
- */
+
 
 /**
  * @module Definition (ExtensionPath)

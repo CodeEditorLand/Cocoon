@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/ProposedAPI/Service.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:16 UTC
- * Dependency: effect, vs/platform/extensions/common/extensions.js
- * Export: ProposedAPIService
- */
+
 
 /**
  * @module Service (ProposedAPI)

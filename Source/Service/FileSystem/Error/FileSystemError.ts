@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/FileSystem/Error/FileSystemError.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:25 UTC
- * Dependency: effect, vscode
- * Export: MapToVSCodeError, extends
- */
+
 
 import { Data } from "effect";
 import { FileSystemError as VscFileSystemError, type Uri } from "vscode";

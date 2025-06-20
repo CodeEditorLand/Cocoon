@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/WebViewPanel/WebViewPanelImplementation.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:09 UTC
- * Dependency: ../../TypeConverter/Main/URI.js, ../../TypeConverter/WebView/ConvertShowOptionToDTO.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../WebView/WebViewImplementation.js, effect, vs/platform/extensions/common/extensions.js
- * Export: implements
- */
+
 
 /**
  * @module WebViewPanelImplementation

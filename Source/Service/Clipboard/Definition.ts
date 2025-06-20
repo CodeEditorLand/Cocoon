@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Clipboard/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:32 UTC
- * Dependency: ../IPC/Service.js, effect, vscode
- */
+
 
 /**
  * @module Definition (Clipboard)

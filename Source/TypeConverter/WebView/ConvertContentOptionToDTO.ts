@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/WebView/ConvertContentOptionToDTO.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:04 UTC
- * Dependency: vs/platform/extensions/common/extensions.js, vscode
- */
+
 
 /**
  * @module ConvertContentOptionToDTO

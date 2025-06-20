@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Configuration.ts
- * Responsibility: Defines the network address configuration for IPC communication between the Cocoon sidecar and Mountain backend using gRPC, specifying the Mountain server location and Cocoon's listening endpoint.
- * Modified: 2025-06-17 21:19:22 UTC
- * Dependency: effect
- * Export: IPCConfiguration, IPCConfigurationService
- */
+
 
 /**
  * @module Configuration (IPC)

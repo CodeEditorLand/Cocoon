@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/FileSystemInformation/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:24 UTC
- * Dependency: ../../TypeConverter/Main/URI.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ../Log/Service.js, ./Service.js, effect, vs/base/common/platform.js, vs/base/common/resources.js, vs/platform/files/common/files.js, vscode
- */
+
 
 /**
  * @module Definition (FileSystemInformation)

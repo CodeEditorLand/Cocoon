@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/StatusBar.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:04 UTC
- * Dependency: ../Type/ExtHostTypes.js, ./Command/Definition.js, ./Main/MarkdownString.js, vscode
- */
+
 
 /**
  * @module StatusBar (TypeConverter)

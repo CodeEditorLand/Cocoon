@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Window/Live.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:09 UTC
- * Dependency: ./Definition.js, ./Service.js, effect
- */
+
 
 /**
  * @module Live (Window)

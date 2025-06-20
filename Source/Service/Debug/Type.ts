@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Debug/Type.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:29 UTC
- * Dependency: vs/platform/extensions/common/extensions.js
- * Export: AnyProvider, Debugger, ProviderEntry
- */
+
 
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type {

@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/CodeAction.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:07 UTC
- * Dependency: ./Command/Definition.js, ./Diagnostic.js, vs/base/common/lifecycle.js, vs/editor/common/languages.js, vscode
- */
+
 
 /**
  * @module CodeAction (TypeConverter)

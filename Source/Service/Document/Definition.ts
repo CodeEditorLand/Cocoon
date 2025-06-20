@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Document/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:27 UTC
- * Dependency: ../../TypeConverter/Main/Range.js, ../../TypeConverter/Main/URI.js, ../../Utility/CreateEventStream.js, ../IPC/Service.js, ./Service.js, effect, vs/editor/common/model/mirrorTextModel.js, vs/workbench/api/common/extHost.protocol.js, vs/workbench/api/common/extHostDocumentData.js, vscode
- */
+
 
 /**
  * @module Definition (Document)

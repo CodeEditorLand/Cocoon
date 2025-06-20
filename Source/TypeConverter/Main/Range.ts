@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/TypeConverter/Main/Range.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:05 UTC
- * Dependency: ../../Type/ExtHostTypes.js, vs/editor/common/core/range.js, vscode
- */
+
 
 /**
  * @module Range (Main/TypeConverter)

@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Message/Type.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:16 UTC
- * Dependency: vs/platform/extensions/common/extensions.js
- * Export: Interface
- */
+
 
 /**
  * @module Type (Message)

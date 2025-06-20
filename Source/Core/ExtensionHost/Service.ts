@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Core/ExtensionHost/Service.ts
- * Responsibility: Implements the core service interface for managing VS Code extension lifecycles within the Cocoon sidecar, handling activation, deactivation, and status checks for extensions in the Node.js environment.
- * Modified: 2025-06-17 21:19:40 UTC
- * Dependency: effect
- * Export: ExtensionActivationReason, ExtensionHostService
- */
+
 
 /**
  * @module Service (ExtensionHost)

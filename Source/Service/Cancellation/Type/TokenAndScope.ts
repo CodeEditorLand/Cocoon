@@ -1,10 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Cancellation/Type/TokenAndScope.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:32 UTC
- * Dependency: effect, vs/base/common/cancellation.js
- * Export: Interface
- */
+
 
 /**
  * @module TokenAndScope (Cancellation/Type)

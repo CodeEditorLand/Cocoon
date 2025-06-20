@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/Debug/Definition.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:30 UTC
- * Dependency: ../IPC/Service.js, ./RegisterProvider.js, ./Service.js, ./Type.js, effect
- */
+
 
 /**
  * @module Definition (Debug)

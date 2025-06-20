@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Server/Acquire.ts
- * Responsibility: Implements the gRPC server acquisition and startup logic for the Cocoon sidecar, loading protocol definitions and binding service implementations to enable IPC communication with the Mountain backend via the Vine layer.
- * Modified: 2025-06-17 21:19:20 UTC
- * Dependency: ../Configuration.js, ../Dispatcher/Service.js, ../Error/gRPCConnectionError.js, ./CreateServiceImplementation.js, ./Release.js, @grpc/grpc-js, @grpc/proto-loader, effect, node:path
- */
+
 
 /**
  * @module Acquire (IPC/Server)

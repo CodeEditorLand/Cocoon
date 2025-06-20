@@ -1,9 +1,4 @@
-/*
- * File: Cocoon/Source/Service/IPC/Generated.ts
- * Responsibility:
- * Modified: 2025-06-17 21:19:21 UTC
- * Export: MountainService
- */
+
 
 /**
  * @module Generated (IPC)
