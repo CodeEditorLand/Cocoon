@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (SecretStorage)
  * @description Defines the interface and Context.Tag for the SecretStorage service factory.

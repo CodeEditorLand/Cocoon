@@ -1,5 +1,3 @@
-
-
 /**
  * @module ConvertPanelOptionToDTO
  * @description Converts `vscode.WebviewPanelOptions` into a serializable DTO.

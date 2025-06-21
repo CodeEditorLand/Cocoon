@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (InitData)
  * @description Defines the interface and Context.Tag for the InitData service.

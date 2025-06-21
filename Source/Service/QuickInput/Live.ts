@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (QuickInput)
  * @description The live implementation Layer for the QuickInput service.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (NodeModuleShim)
  * @description The live implementation of the `NodeModuleShim` service, which

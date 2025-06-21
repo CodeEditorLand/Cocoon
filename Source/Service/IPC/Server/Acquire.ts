@@ -1,5 +1,3 @@
-
-
 /**
  * @module Acquire (IPC/Server)
  * @description Defines the `Effect` for acquiring and starting the `Cocoon`

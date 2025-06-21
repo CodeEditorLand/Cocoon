@@ -1,5 +1,3 @@
-
-
 /**
  * @module DynamicModuleTemplate (ESMInterceptor)
  * @description A raw text template for the dynamically generated 'vscode' module.

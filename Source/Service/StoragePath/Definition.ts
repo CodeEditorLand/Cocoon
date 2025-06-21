@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (StoragePath)
  * @description The live implementation of the StoragePath service.

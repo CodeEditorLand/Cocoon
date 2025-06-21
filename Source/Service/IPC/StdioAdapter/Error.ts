@@ -1,5 +1,3 @@
-
-
 /**
  * @module Error (StdioAdapter)
  * @description Defines custom, tagged errors for the Stdio IPC layer. This layer

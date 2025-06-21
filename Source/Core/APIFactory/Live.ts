@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (APIFactory)
  * @description The live implementation `Layer` for the `APIFactory` service.

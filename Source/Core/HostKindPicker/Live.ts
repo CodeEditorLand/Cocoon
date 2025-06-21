@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (HostKindPicker)
  * @description This module provides the `Live` implementation Layer for the HostKindPicker service.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module TerminateOnParentExit
  * @description An Effect that ensures the Cocoon process terminates gracefully

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Authentication)
  * @description Defines the interface and Context.Tag for the Authentication service.

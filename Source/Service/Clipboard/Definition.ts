@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Clipboard)
  * @description The live implementation of the Clipboard service. It proxies

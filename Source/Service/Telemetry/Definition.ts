@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Telemetry)
  * @description Implements the telemetry service, handling event collection and forwarding

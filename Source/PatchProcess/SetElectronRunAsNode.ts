@@ -1,5 +1,3 @@
-
-
 /**
  * @module SetElectronRunAsNode
  * @description An Effect that sets an environment variable to signal that

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Command)
  * @description The live implementation of the Command service.

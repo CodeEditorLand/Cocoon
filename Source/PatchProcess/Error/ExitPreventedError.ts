@@ -1,5 +1,3 @@
-
-
 /**
  * @module ExitPreventedError (PatchProcess/Error)
  * @description Defines a custom, structured error that is thrown when an extension's

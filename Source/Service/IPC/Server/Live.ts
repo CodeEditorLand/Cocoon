@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (IPC/Server)
  * @description Provides a `Layer` for the managed gRPC server, which listens

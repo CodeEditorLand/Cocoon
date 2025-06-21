@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (TreeView)
  * @description The live implementation of the TreeView service factory.

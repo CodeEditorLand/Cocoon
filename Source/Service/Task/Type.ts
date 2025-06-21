@@ -1,5 +1,3 @@
-
-
 /**
  * @module Type (Task)
  * @description Defines aliases for the complex types from the `vscode`

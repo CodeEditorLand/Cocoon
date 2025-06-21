@@ -1,5 +1,3 @@
-
-
 import { Effect, Layer } from "effect";
 
 import BlockNativesModuleEffect from "./PatchProcess/BlockNativesModule.js";

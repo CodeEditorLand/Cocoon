@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Debug)
  * @description The live implementation of the Debug service.

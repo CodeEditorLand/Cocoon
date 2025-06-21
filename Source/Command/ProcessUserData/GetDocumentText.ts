@@ -1,5 +1,3 @@
-
-
 /**
  * @module GetDocumentText
  * @description An Effect that retrieves the full text content of a document.

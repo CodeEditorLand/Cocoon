@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (QuickInput)
  * @description Defines the interface and Context.Tag for the QuickInput service.

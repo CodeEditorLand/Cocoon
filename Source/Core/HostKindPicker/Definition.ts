@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (HostKindPicker)
  * @description The live implementation of the HostKindPicker service.

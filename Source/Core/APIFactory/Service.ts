@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (APIFactory)
  * @description Defines the interface and Context.Tag for the APIFactory service.

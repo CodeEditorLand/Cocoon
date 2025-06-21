@@ -1,5 +1,3 @@
-
-
 /**
  * @module VSCodeNodeModuleFactory (RequireInterceptor/Factory)
  * @description A factory that creates the `vscode` API object when an extension

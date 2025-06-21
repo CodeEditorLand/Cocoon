@@ -1,5 +1,3 @@
-
-
 /**
  * @module WorkspaceFolder (Main/TypeConverter)
  * @description Converts `vscode.WorkspaceFolder` to its DTO representation.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Dialog)
  * @description Defines the interface and Context.Tag for the Dialog service,

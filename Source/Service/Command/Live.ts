@@ -1,5 +1,3 @@
-
-
 /**
  * @module Command
  * @description This module provides the `vscode.commands` API implementation,

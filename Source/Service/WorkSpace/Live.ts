@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (WorkSpace)
  * @description The live implementation Layer for the WorkSpace service.

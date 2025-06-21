@@ -1,5 +1,3 @@
-
-
 /**
  * @module OpenTextDocument (WorkSpace/Support)
  * @description An Effect for the `workspace.openTextDocument` API.

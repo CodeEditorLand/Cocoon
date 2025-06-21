@@ -1,5 +1,3 @@
-
-
 /**
  * @module Error (Authentication)
  * @description Exports all custom, tagged errors for the Authentication service.

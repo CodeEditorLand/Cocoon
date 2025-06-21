@@ -1,5 +1,3 @@
-
-
 /**
  * @module State (WorkSpace)
  * @description Defines the internal state representation for the workspace.

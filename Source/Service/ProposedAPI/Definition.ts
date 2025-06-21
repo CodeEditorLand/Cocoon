@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (ProposedAPI)
  * @description The live implementation of the ProposedAPI service.

@@ -1,5 +1,3 @@
-
-
 import * as Path from "node:path";
 import { NodeRuntime } from "@effect/platform-node";
 import { Deferred, Effect, Layer, Logger } from "effect";

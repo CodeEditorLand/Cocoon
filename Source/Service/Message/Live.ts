@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Message)
  * @description The live implementation Layer for the Message service.

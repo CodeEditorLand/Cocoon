@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (StatusBar)
  * @description Defines the interface and Context.Tag for the StatusBar service.

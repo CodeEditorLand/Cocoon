@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Storage)
  * @description The live implementation of the Storage service factory.

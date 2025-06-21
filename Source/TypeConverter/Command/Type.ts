@@ -1,5 +1,3 @@
-
-
 /**
  * @module Type (Command/TypeConverter)
  * @description Defines types for describing command signatures, enabling

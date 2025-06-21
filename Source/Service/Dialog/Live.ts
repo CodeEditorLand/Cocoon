@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Dialog)
  * @description The live implementation Layer for the Dialog service.

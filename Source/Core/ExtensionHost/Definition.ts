@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (ExtensionHost)
  * @description The live implementation of the ExtensionHost service, which manages

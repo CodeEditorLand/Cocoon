@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (StoragePath)
  * @description Defines the interface and Context.Tag for the StoragePath service.

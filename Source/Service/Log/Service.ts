@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Log)
  * @description Defines the interface and Context.Tag for the Log service.

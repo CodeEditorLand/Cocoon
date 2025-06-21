@@ -1,5 +1,3 @@
-
-
 /**
  * @module ExtHostTypes
  * @description Provides the concrete implementations of the core `vscode` API types,

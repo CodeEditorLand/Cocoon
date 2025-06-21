@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (ExtensionPath)
  * @description Defines the interface and Context.Tag for the ExtensionPath service.

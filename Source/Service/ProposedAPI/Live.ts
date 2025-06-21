@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (ProposedAPI)
  * @description The live implementation Layer for the ProposedAPI service.

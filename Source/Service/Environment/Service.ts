@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Environment)
  * @description Defines the interface and Context.Tag for the Environment service,

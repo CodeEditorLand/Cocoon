@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (IPC)
  * @description Defines the high-level service interface and `Context.Tag` for

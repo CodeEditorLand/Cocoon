@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Window)
  * @description The live implementation Layer for the Window service.

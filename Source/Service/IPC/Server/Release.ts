@@ -1,5 +1,3 @@
-
-
 /**
  * @module Release (IPC/Server)
  * @description Defines the `Effect` for gracefully shutting down the `Cocoon`

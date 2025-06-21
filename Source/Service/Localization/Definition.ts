@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Localization)
  * @description The live implementation of the Localization service.

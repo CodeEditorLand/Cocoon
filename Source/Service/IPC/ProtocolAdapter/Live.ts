@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (IPC/ProtocolAdapter)
  * @description Provides a `Layer` for the `ProtocolAdapter` service.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module ConvertContentOptionToDTO
  * @description Converts a `vscode.WebviewOptions` object into a serializable DTO.

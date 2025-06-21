@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Diagnostic)
  * @description Defines the interface and Context.Tag for the Diagnostic service.

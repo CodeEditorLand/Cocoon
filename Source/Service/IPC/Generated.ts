@@ -1,5 +1,3 @@
-
-
 /**
  * @module Generated (IPC)
  * @description This module re-exports all the message and client types that are

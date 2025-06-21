@@ -1,5 +1,3 @@
-
-
 /**
  * @module QuickInput (TypeConverter)
  * @description Type converters for the QuickInput APIs (`showQuickPick`, `showInputBox`).

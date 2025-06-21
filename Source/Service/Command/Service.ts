@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Command)
  * @description Defines the interface and Context.Tag for the Command service.

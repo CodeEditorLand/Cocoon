@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Clipboard)
  * @description Defines the interface and Context.Tag for the Clipboard service.

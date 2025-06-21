@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Extension)
  * @description The live implementation of the Extension service.

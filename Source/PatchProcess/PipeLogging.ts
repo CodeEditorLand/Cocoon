@@ -1,5 +1,3 @@
-
-
 /**
  * @module PipeLogging (PatchProcess)
  * @description An Effect that intercepts `console.*` calls and pipes them as

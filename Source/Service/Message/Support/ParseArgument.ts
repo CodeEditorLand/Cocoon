@@ -1,5 +1,3 @@
-
-
 /**
  * @module ParseArgument (Message/Support)
  * @description A helper function to parse the overloaded arguments of the

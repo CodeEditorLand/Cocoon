@@ -1,5 +1,3 @@
-
-
 /**
  * @module Type (Command)
  * @description Defines types used by the Command service.

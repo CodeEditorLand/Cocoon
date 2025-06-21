@@ -1,5 +1,3 @@
-
-
 /**
  * @module PatchProcessExit (PatchProcess)
  * @description An Effect that patches the global `process.exit` function, allowing

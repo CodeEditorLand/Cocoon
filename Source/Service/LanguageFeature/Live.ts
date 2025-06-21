@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (LanguageFeature)
  * @description The live implementation Layer for the LanguageFeature service.

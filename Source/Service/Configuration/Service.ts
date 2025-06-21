@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Configuration)
  * @description Defines the interface and Context.Tag for the Configuration service.

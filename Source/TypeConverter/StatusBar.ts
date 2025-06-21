@@ -1,5 +1,3 @@
-
-
 /**
  * @module StatusBar (TypeConverter)
  * @description Type converters for the `vscode.StatusBarItem` API.

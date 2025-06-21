@@ -1,5 +1,3 @@
-
-
 /**
  * @module ProcessUserData (Command)
  * @description The main module for the 'ProcessUserData' command.

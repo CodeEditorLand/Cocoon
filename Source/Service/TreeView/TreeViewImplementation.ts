@@ -1,5 +1,3 @@
-
-
 /**
  * @module TreeViewImplementation
  * @description The controller class that manages a single tree view and its data provider.

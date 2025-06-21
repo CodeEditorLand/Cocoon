@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Cancellation)
  * @description The live implementation `Layer` for the CancellationTokenProvider service.

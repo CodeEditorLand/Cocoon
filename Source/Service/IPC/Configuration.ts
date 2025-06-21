@@ -1,5 +1,3 @@
-
-
 /**
  * @module Configuration (IPC)
  * @description Defines the configuration interface and service Tag for the

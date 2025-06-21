@@ -1,5 +1,3 @@
-
-
 /**
  * @module URI (Main/TypeConverter)
  * @description Converts between `vscode.URI` and its DTO representation.

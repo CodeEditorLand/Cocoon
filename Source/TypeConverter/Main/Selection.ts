@@ -1,5 +1,3 @@
-
-
 /**
  * @module Selection (Main/TypeConverter)
  * @description Converts between `vscode.Selection` and its DTO representation.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Diagnostic)
  * @description The live implementation Layer for the Diagnostics service.

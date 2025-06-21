@@ -1,5 +1,3 @@
-
-
 /**
  * @module TreeView (TypeConverter)
  * @description Implements type converters for the `vscode.TreeView` and `vscode.TreeItem` APIs,

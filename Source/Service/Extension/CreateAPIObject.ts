@@ -1,5 +1,3 @@
-
-
 /**
  * @module CreateAPIObject (Extension)
  * @description A factory function that creates the public-facing `vscode.Extension` object.

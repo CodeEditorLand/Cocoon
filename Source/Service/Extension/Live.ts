@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Extension)
  * @description The live implementation Layer for the Extension service.

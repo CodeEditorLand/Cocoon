@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (ExtensionPath)
  * @description Provides the live implementation layer for the ExtensionPath service.

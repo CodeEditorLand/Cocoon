@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Window)
  * @description Defines the interface and Context.Tag for the core Window service.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Range (Main/TypeConverter)
  * @description Converts between `vscode.Range` and its DTO representation.

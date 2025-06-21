@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (SecretStorage)
  * @description The live implementation of the SecretStorage service factory.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (StatusBar)
  * @description The live implementation Layer for the StatusBar service.

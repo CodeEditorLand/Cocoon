@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Authentication)
  * @description The live implementation of the Authentication service.

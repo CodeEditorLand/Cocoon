@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (WorkSpace)
  * @description The live implementation of the WorkSpace service. This service is now

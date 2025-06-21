@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (NodeModuleShim)
  * @description Provides the live implementation Layer for the NodeModuleShim service.

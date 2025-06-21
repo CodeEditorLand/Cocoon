@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (LanguageFeature)
  * @description The live implementation of the LanguageFeature service. This is

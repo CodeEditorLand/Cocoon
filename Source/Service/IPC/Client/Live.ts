@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (IPC/Client)
  * @description Provides a managed gRPC client connection from `Cocoon` to

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Storage)
  * @description Defines the interface and Context.Tag for the Storage service factory.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (StatusBar)
  * @description The live implementation of the StatusBar service.

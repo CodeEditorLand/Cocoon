@@ -1,5 +1,3 @@
-
-
 /**
  * @module CreateDynamicModule (ESMInterceptor)
  * @description Generates the full JavaScript source code for a dynamic 'vscode'

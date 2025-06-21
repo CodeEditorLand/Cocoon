@@ -1,5 +1,3 @@
-
-
 /**
  * @module WebViewPanelImplementation
  * @description The concrete implementation of the `vscode.WebviewPanel` interface.

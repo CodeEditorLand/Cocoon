@@ -1,5 +1,3 @@
-
-
 /**
  * @module Process (NodeModuleShim/Shim)
  * @description A controlled shim for the Node.js `process` global object.

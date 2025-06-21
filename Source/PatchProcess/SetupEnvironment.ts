@@ -1,5 +1,3 @@
-
-
 /**
  * @module SetupEnvironment
  * @description An Effect that configures the process environment based on

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Dialog (TypeConverter)
  * @description Type converters for the Dialog APIs (`showOpenDialog`, `showSaveDialog`).

@@ -1,5 +1,3 @@
-
-
 /**
  * @module WebViewImplementation
  * @description The concrete implementation of the `vscode.Webview` interface. An

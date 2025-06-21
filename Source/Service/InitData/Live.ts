@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (InitData)
  * @description Provides the live implementation layer for the InitData service.

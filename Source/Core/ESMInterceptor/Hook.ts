@@ -1,5 +1,3 @@
-
-
 /**
  * @module Hook (ESMInterceptor)
  * @description Implements the Node.js ESM loader hooks (`initialize` and `resolve`).

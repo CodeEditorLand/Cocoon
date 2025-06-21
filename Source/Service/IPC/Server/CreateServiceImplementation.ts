@@ -1,5 +1,3 @@
-
-
 /**
  * @module CreateServiceImplementation (IPC/Server)
  * @description Creates the implementation object for the `Cocoon` gRPC service.

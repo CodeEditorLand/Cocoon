@@ -1,5 +1,3 @@
-
-
 /**
  * @module GetActiveTextEditor
  * @description An Effect that retrieves the active VS Code text editor by

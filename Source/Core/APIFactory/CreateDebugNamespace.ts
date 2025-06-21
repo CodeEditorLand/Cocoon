@@ -1,5 +1,3 @@
-
-
 /**
  * @module CreateDebugNamespace
  * @description Constructs the `vscode.debug` namespace for the API object.

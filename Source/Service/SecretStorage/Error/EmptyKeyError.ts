@@ -1,5 +1,3 @@
-
-
 /**
  * @module EmptyKeyError (SecretStorage/Error)
  * @description Defines a custom error for when an empty key is used with secret storage.

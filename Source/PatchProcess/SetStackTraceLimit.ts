@@ -1,5 +1,3 @@
-
-
 /**
  * @module SetStackTraceLimit
  * @description An Effect that increases the stack trace limit for better

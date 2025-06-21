@@ -1,5 +1,3 @@
-
-
 /**
  * @module Task (TypeConverter)
  * @description Implements type converters for `vscode.Task` and related types.

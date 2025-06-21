@@ -1,5 +1,3 @@
-
-
 /**
  * @module ConvertExtensionDataToDTO
  * @description Converts an `IExtensionDescription` object into a simplified

@@ -1,5 +1,3 @@
-
-
 /**
  * @module ConvertShowOptionToDTO
  * @description Converts `vscode.WebviewPanel` show options into a

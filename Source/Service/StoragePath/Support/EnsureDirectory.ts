@@ -1,5 +1,3 @@
-
-
 /**
  * @module EnsureDirectory (Support)
  * @description Defines an Effect to idempotently create a directory, ensuring it

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Message)
  * @description The live implementation of the Message service.

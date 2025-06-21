@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Command/TypeConverter)
  * @description The class implementation of the CommandConverter. It handles the

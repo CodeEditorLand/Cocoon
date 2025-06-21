@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (QuickInput)
  * @description The live implementation of the QuickInput service.

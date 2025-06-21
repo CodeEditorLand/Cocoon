@@ -1,5 +1,3 @@
-
-
 /**
  * @module PatchProcessCrash (PatchProcess)
  * @description An Effect that patches the Electron-specific `process.crash` function

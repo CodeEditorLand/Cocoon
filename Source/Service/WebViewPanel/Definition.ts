@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (WebViewPanel)
  * @description The live implementation of the WebViewPanel service factory.

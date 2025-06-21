@@ -1,4 +1,3 @@
-
 /**
  * @module Type (Dialog)
  * @description Defines aliases for the option types used by the Dialog service,

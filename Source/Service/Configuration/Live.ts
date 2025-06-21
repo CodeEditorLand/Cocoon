@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Configuration)
  * @description The live implementation Layer for the Configuration service.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module CreateLanguagesNamespace
  * @description Constructs the `vscode.languages` namespace for the API object.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Release (IPC/Client)
  * @description Defines the `Effect` for gracefully closing the gRPC client

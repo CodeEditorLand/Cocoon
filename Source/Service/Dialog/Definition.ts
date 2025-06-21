@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Dialog)
  * @description The live implementation of the Dialog service.

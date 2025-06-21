@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Task)
  * @description The live implementation of the Tasks service.

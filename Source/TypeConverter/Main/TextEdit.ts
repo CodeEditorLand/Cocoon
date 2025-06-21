@@ -1,5 +1,3 @@
-
-
 /**
  * @module TextEdit (Main/TypeConverter)
  * @description Converts between `vscode.TextEdit` and its DTO representation.

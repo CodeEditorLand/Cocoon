@@ -1,5 +1,3 @@
-
-
 /**
  * @module MementoImplementation
  * @description The concrete implementation of the `vscode.Memento` interface.

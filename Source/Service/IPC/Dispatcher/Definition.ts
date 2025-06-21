@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (IPC/Dispatcher)
  * @description The live implementation of the Dispatcher service.

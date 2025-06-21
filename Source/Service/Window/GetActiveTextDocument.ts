@@ -1,5 +1,3 @@
-
-
 /**
  * @module GetActiveTextDocument
  * @description An Effect-based utility for safely retrieving the active text document.

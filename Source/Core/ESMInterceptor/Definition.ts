@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (ESMInterceptor)
  * @description The live implementation of the ESMInterceptor service. This module

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Log)
  * @description The live implementation of the Log service.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (ESMInterceptor)
  * @description The live implementation layer for the ESMInterceptor service.

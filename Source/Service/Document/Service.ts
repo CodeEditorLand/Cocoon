@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Document)
  * @description Defines the interface and Context.Tag for the Document service.

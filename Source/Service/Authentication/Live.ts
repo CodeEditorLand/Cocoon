@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Authentication)
  * @description The live implementation Layer for the Authentication service.

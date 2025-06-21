@@ -1,5 +1,3 @@
-
-
 /**
  * @module MarkdownString (Main/TypeConverter)
  * @description Converts between `vscode.MarkdownString` and its DTO representation.

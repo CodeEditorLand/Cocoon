@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Task)
  * @description The live implementation Layer for the Tasks service.

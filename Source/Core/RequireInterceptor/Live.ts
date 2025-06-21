@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (RequireInterceptor)
  * @description The live implementation layer for the RequireInterceptor service.

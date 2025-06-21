@@ -1,5 +1,3 @@
-
-
 /**
  * @module Error (ProcessUserData)
  * @description Defines custom, tagged errors for the ProcessUserData command workflow.

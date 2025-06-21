@@ -1,5 +1,3 @@
-
-
 /**
  * @module InvokeProcessingService
  * @description An Effect that sends text to a backend service for processing.

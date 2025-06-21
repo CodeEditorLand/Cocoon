@@ -1,5 +1,3 @@
-
-
 /**
  * @module Type (Message)
  * @description Defines types used by the Message service, such as the

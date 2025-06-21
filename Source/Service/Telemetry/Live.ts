@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Telemetry)
  * @description The live implementation Layer for the Telemetry service.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (IPC/ProtocolAdapter)
  * @description The live implementation of the `ProtocolAdapter` service.

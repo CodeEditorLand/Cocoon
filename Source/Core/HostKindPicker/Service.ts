@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (HostKindPicker)
  * @description Defines the interface and Context.Tag for the HostKindPicker service.

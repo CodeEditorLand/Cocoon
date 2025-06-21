@@ -1,5 +1,3 @@
-
-
 /**
  * @module WorkSpaceConfiguration (Configuration/Type)
  * @description Defines types for the Configuration service, primarily an alias

@@ -1,5 +1,3 @@
-
-
 /**
  * @module RegisterProvider (Debug)
  * @description A generic helper Effect for registering debug-related providers

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Constants (ESMInterceptor)
  * @description Defines constants used by the ESM interception mechanism.

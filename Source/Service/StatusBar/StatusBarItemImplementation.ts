@@ -1,5 +1,3 @@
-
-
 /**
  * @module StatusBarItemImplementation
  * @description The concrete implementation of the `vscode.StatusBarItem` interface.

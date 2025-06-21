@@ -1,5 +1,3 @@
-
-
 /**
  * @module CreateTasksNamespace
  * @description Constructs the `vscode.tasks` namespace for the API object.

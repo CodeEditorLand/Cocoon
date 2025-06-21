@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (TreeView)
  * @description Defines the interface and Context.Tag for the TreeView service.

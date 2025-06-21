@@ -1,5 +1,3 @@
-
-
 /**
  * @module AsExtensionEvent
  * @description Defines a higher-order function that wraps a raw event emitter

@@ -1,5 +1,3 @@
-
-
 // Purpose: ESBuild configuration for the project.
 //
 // Description:

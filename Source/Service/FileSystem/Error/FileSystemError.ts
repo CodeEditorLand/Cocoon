@@ -1,5 +1,3 @@
-
-
 import { Data } from "effect";
 import { FileSystemError as VscFileSystemError, type Uri } from "vscode";
 

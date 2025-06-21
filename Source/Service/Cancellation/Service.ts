@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Cancellation)
  * @description Defines the interface and Context.Tag for the CancellationTokenProvider service.

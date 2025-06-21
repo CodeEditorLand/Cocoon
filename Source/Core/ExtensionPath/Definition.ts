@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (ExtensionPath)
  * @description The class implementation for the ExtensionPath service. This

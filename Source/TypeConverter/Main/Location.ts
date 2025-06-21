@@ -1,5 +1,3 @@
-
-
 /**
  * @module Location (Main/TypeConverter)
  * @description Converts between `vscode.Location` and its DTO representation.

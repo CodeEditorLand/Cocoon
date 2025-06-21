@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (APIDeprecation)
  * @description The live implementation of the APIDeprecation service.

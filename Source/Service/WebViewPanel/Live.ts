@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (WebViewPanel)
  * @description The live implementation Layer for the WebViewPanel service.

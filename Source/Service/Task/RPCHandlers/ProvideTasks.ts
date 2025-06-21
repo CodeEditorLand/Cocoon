@@ -1,5 +1,3 @@
-
-
 /**
  * @module ProvideTasks (Task/RPCHandlers)
  * @description Implements the RPC handler for providing tasks from an extension's TaskProvider.

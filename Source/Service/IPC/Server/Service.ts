@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (IPC/Server)
  * @description Defines the service type and `Context.Tag` for the `Cocoon` gRPC

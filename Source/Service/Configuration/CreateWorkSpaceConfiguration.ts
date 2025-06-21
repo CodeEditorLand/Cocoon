@@ -1,5 +1,3 @@
-
-
 /**
  * @module CreateWorkSpaceConfiguration
  * @description A factory function that creates the `vscode.WorkSpaceConfiguration`

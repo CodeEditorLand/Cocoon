@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Diagnostic)
  * @description The live implementation of the Diagnostic service.

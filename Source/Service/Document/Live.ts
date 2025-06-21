@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Document)
  * @description The live implementation Layer for the Document service.

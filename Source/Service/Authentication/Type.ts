@@ -1,5 +1,3 @@
-
-
 /**
  * @module Type (Authentication)
  * @description Defines types for the Authentication service, including the

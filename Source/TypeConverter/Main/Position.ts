@@ -1,5 +1,3 @@
-
-
 /**
  * @module Position (Main/TypeConverter)
  * @description Converts between `vscode.Position` and its DTO representation.

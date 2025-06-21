@@ -1,5 +1,3 @@
-
-
 /**
  * @module InvalidValueError (SecretStorage/Error)
  * @description Defines a custom error for when a non-string value is provided to secret storage.

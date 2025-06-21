@@ -1,5 +1,3 @@
-
-
 /**
  * @module FindFiles (WorkSpace/Support)
  * @description An Effect for the `workspace.findFiles` API.

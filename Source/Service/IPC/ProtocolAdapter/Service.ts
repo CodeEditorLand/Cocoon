@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (IPC/ProtocolAdapter)
  * @description Defines the service interface and `Context.Tag` for the

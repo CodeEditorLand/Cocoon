@@ -1,5 +1,3 @@
-
-
 /**
  * @module Activate
  * @description Defines the primary `Effect` workflow for activating an

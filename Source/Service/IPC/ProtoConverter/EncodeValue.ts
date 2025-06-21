@@ -1,5 +1,3 @@
-
-
 /**
  * @module EncodeValue
  * @description An Effect-based function to encode a JavaScript value into a

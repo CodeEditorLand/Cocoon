@@ -1,5 +1,3 @@
-
-
 /**
  * @module Type (Document)
  * @description Defines internal types for the Document service, specifically

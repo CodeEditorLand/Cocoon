@@ -1,5 +1,3 @@
-
-
 /**
  * @module ShowInformationMessage
  * @description An Effect-based wrapper for the `vscode.window.showInformationMessage` API.

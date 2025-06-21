@@ -1,5 +1,3 @@
-
-
 /**
  * @module SecretStorageImplementation
  * @description The concrete implementation of the `vscode.SecretStorage` interface.

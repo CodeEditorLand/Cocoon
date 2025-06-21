@@ -1,5 +1,3 @@
-
-
 /**
  * @module DiagnosticCollectionImplementation (Service)
  * @description The concrete implementation of the `vscode.DiagnosticCollection` interface.

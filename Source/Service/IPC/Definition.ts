@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (IPC)
  * @description Provides the live implementation of the high-level `IPC.Service`.

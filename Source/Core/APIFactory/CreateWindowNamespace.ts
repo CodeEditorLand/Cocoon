@@ -1,5 +1,3 @@
-
-
 /**
  * @module CreateWindowNamespace
  * @description Constructs the `vscode.window` namespace for the API object.

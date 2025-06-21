@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (ExtensionHost)
  * @description The live implementation Layer for the Extension Host service.

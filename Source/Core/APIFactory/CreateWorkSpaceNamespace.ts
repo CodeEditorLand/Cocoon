@@ -1,5 +1,3 @@
-
-
 /**
  * @module CreateWorkSpaceNamespace
  * @description Constructs the `vscode.workspace` namespace for the API object.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Create (APIFactory)
  * @description The primary factory function that constructs the `vscode` API

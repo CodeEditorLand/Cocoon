@@ -1,5 +1,3 @@
-
-
 /**
  * @module HandleException (PatchProcess)
  * @description An Effect that sets up global handlers for uncaught exceptions and

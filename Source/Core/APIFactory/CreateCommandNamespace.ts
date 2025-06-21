@@ -1,5 +1,3 @@
-
-
 /**
  * @module CreateCommandNamespace
  * @description Constructs the `vscode.commands` namespace for the API object

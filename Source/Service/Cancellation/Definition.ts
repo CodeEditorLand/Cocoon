@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Cancellation)
  * @description The live implementation of the CancellationTokenProvider service.

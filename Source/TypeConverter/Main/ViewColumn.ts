@@ -1,5 +1,3 @@
-
-
 /**
  * @module ViewColumn (Main/TypeConverter)
  * @description Converts the `vscode.ViewColumn` enum to its internal DTO representation.

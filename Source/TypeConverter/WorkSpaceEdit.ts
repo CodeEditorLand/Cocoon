@@ -1,5 +1,3 @@
-
-
 /**
  * @module WorkSpaceEdit (TypeConverter)
  * @description Implements converters for `vscode.WorkSpaceEdit` and its components,

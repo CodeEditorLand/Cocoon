@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Window)
  * @description The live implementation of the core Window service.

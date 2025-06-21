@@ -1,5 +1,3 @@
-
-
 /**
  * @module CodeAction (TypeConverter)
  * @description Implements type converters for `vscode.CodeAction` and related types,

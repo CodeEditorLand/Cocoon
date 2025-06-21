@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (RequireInterceptor)
  * @description Defines the interface and Context.Tag for the RequireInterceptor service.

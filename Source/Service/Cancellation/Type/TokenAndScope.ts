@@ -1,5 +1,3 @@
-
-
 /**
  * @module TokenAndScope (Cancellation/Type)
  * @description Defines custom types for the cancellation service.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Command/TypeConverter)
  * @description Defines the interface for the CommandConverter. This service is

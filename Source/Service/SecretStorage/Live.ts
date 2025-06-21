@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (SecretStorage)
  * @description The live implementation Layer for the SecretStorage service.

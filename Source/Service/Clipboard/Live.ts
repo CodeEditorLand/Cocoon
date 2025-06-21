@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (Clipboard)
  * @description The live implementation Layer for the Clipboard service.

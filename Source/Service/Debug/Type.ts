@@ -1,5 +1,3 @@
-
-
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type {
 	Breakpoint,

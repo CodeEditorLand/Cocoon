@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (LanguageFeature)
  * @description Defines the interface and Context.Tag for the LanguageFeature service.

@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (Telemetry)
  * @description Defines the interface and Context.Tag for the Telemetry service.

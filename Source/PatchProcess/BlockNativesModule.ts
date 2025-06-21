@@ -1,5 +1,3 @@
-
-
 /**
  * @module BlockNativesModule (PatchProcess)
  * @description An Effect that patches Node.js's internal module loader to

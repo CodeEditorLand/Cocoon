@@ -1,5 +1,3 @@
-
-
 /**
  * @module Live (IPC)
  * @description This module provides the composed "live" Layer for the entire IPC service.

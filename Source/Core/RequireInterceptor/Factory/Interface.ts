@@ -1,5 +1,3 @@
-
-
 /**
  * @module INodeModuleFactory (RequireInterceptor/Factory)
  * @description Defines the interface for a factory that creates module instances

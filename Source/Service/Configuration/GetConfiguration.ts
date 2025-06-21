@@ -1,5 +1,3 @@
-
-
 /**
  * @module GetConfiguration
  * @description Defines an `Effect`-based wrapper for retrieving a VS Code

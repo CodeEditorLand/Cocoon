@@ -1,5 +1,3 @@
-
-
 /**
  * @module Service (IPC/Client)
  * @description Defines the service interface and `Context.Tag` for the low-level

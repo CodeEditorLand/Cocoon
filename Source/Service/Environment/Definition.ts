@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Environment)
  * @description The live implementation of the Environment service.

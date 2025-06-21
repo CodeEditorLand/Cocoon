@@ -1,5 +1,3 @@
-
-
 /**
  * @module Completion (TypeConverter)
  * @description Defines type converters for code completion (IntelliSense) features,

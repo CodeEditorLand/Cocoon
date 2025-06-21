@@ -1,5 +1,3 @@
-
-
 /**
  * @module Acquire (IPC/Client)
  * @description Defines the `Effect` for acquiring and preparing the gRPC client

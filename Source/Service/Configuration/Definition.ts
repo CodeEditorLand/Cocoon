@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (Configuration)
  * @description The live implementation of the Configuration service.

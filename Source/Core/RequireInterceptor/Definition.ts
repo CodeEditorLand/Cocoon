@@ -1,5 +1,3 @@
-
-
 /**
  * @module Definition (RequireInterceptor)
  * @description The live implementation of the RequireInterceptor service. It

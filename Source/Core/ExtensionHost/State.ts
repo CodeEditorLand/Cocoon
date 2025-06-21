@@ -1,5 +1,3 @@
-
-
 /**
  * @module State (ExtensionHost)
  * @description Defines the internal state representation for an activated extension.
