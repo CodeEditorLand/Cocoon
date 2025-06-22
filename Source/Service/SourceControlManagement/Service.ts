@@ -1,8 +1,8 @@
 /*
- * File: Cocoon/Source/Service/SCM/Service.ts
- * Role: Defines the interface and Context.Tag for the Source Control Management (SCM) service.
+ * File: Cocoon/Source/Service/SourceControlManagement/Service.ts
+ * Role: Defines the interface and Context.Tag for the Source Control Management (SourceControlManagement) service.
  * Responsibilities:
- *   1. Declare the contract for the SCM service, which allows extensions to create
+ *   1. Declare the contract for the SourceControlManagement service, which allows extensions to create
  *      and manage SourceControl instances.
  *   2. This is the public API surface consumed by other services or the API factory.
  */
@@ -10,8 +10,8 @@
 import { Context } from "effect";
 import type { SourceControl, Uri } from "vscode";
 
-export default class SCMService extends Context.Tag("Service/SCM")<
-	SCMService,
+export default class SourceControlManagementService extends Context.Tag("Service/SourceControlManagement")<
+	SourceControlManagementService,
 	{
 		/**
 		 * Creates a new source control manager.
@@ -30,6 +30,6 @@ export default class SCMService extends Context.Tag("Service/SCM")<
 		 */
 		readonly Providers: readonly SourceControl[];
 
-		// ... other SCM service properties and events
+		// ... other SourceControlManagement service properties and events
 	}
 >() {}
