@@ -1,7 +1,10 @@
-/**
- * @module Service (StatusBar)
- * @description Defines the interface and Context.Tag for the StatusBar service.
- * This service implements the `vscode.window.createStatusBarItem` API.
+/*
+ * File: Cocoon/Source/Service/StatusBar/Service.ts
+ * Role: Defines the interface and Context.Tag for the StatusBar service.
+ * Responsibilities:
+ *   1. Declare the contract for the StatusBar service, which provides access to
+ *      creating status bar items and showing temporary messages.
+ *   2. This is the public API surface consumed by other services or the API factory.
  */
 
 import { Context, type Effect } from "effect";
@@ -14,14 +17,14 @@ export default class StatusBarService extends Context.Tag("Service/StatusBar")<
 		/**
 		 * Creates a new status bar item.
 		 * @param Extension The extension creating the item.
-		 * @param ID An optional identifier for the item.
+		 * @param Id An optional identifier for the item.
 		 * @param Alignment Optional alignment for the item.
 		 * @param Priority Optional priority for the item.
 		 * @returns An `Effect` that synchronously resolves to a `StatusBarItem`.
 		 */
 		readonly CreateStatusBarItem: (
 			Extension: IExtensionDescription,
-			ID?: string,
+			Id?: string,
 			Alignment?: StatusBarAlignment,
 			Priority?: number,
 		) => Effect.Effect<StatusBarItem, never>;

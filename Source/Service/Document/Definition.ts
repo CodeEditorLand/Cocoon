@@ -1,13 +1,25 @@
-/**
- * @module Definition (Document)
- * @description The live implementation of the Document service.
+/*
+ * File: Cocoon/Source/Service/Document/Definition.ts
+ * Role: The live implementation of the Document service.
+ * Responsibilities:
+ *   1. Manages the lifecycle of text documents (add, remove, change).
+ *   2. Provides the public `vscode.workspace` API related to documents.
+ *   3. Manages registration and invocation of `TextDocumentContentProvider`s.
+ *   4. Acts as the extension host-side counterpart to `MainThreadDocuments` in Mountain.
  */
 
 import { Effect, Option, Ref } from "effect";
 import type { IModelChangedEvent } from "vs/editor/common/model/mirrorTextModel.js";
 import { MainThreadDocumentsShape } from "vs/workbench/api/common/extHost.protocol.js";
 import { ExtHostDocumentData } from "vs/workbench/api/common/extHostDocumentData.js";
-import type { TextDocument, TextDocumentChangeEvent, Uri } from "vscode";
+import {
+	CancellationTokenSource,
+	Disposable,
+	type TextDocument,
+	type TextDocumentChangeEvent,
+	type TextDocumentContentProvider,
+	type Uri,
+} from "vscode";
 
 import RangeConverter from "../../TypeConverter/Main/Range.js";
 import URIConverter from "../../TypeConverter/Main/URI.js";
@@ -23,6 +35,9 @@ export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
 	const DocumentMapRef = yield* G(
 		Ref.make(new Map<string, ExtHostDocumentData>()),
+	);
+	const ContentProvidersRef = yield* G(
+		Ref.make(new Map<string, TextDocumentContentProvider>()),
 	);
 
 	const MainThreadDocumentsProxy = IPC.CreateProxy<MainThreadDocumentsShape>(
@@ -110,6 +125,43 @@ export default Effect.gen(function* (G) {
 			}
 		});
 
+	const ProvideTextDocumentContentEffect = (UriComponents: any) =>
+		Effect.gen(function* (G) {
+			const Uri = URIConverter.ToAPI(UriComponents);
+			const Scheme = Uri.scheme;
+
+			const Providers = yield* G(Ref.get(ContentProvidersRef));
+			const Provider = Option.fromNullable(Providers.get(Scheme));
+
+			if (
+				Option.isNone(Provider) ||
+				!Provider.value.provideTextDocumentContent
+			) {
+				return Option.none<string>();
+			}
+
+			// The provideTextDocumentContent method returns a ProviderResult<string>, which is Thenable<string | undefined | null> | string | undefined | null.
+			// We need to handle this. Effect.tryPromise is perfect.
+			const Token = new CancellationTokenSource().token;
+			const Content = yield* G(
+				Effect.tryPromise({
+					try: () =>
+						Provider.value.provideTextDocumentContent!(Uri, Token),
+					catch: (UnknownError) =>
+						new Error(
+							`Content provider for scheme "${Scheme}" threw an error: ${UnknownError}`,
+						),
+				}),
+			);
+
+			return Option.fromNullable(Content);
+		}).pipe(
+			Effect.catchAll((Error) =>
+				Effect.logError(Error).pipe(Effect.as(Option.none<string>())),
+			),
+			Effect.map(Option.getOrElse(() => null)), // Convert Option<string> to string | null
+		);
+
 	// --- Register Handlers ---
 	yield* G(
 		Effect.sync(() => {
@@ -122,6 +174,13 @@ export default Effect.gen(function* (G) {
 			IPC.RegisterInvokeHandler("$acceptModelChanged", ([Uri, Changes]) =>
 				Effect.runPromise(AcceptModelChangedEffect(Uri, Changes)),
 			);
+			IPC.RegisterInvokeHandler(
+				"$provideTextDocumentContent",
+				([UriComponents]) =>
+					Effect.runPromise(
+						ProvideTextDocumentContentEffect(UriComponents),
+					),
+			);
 		}),
 	);
 
@@ -131,10 +190,10 @@ export default Effect.gen(function* (G) {
 			const Map = Effect.runSync(Ref.get(DocumentMapRef));
 			return Array.from(Map.values()).map((data) => data.document);
 		},
-		onDidOpenTextDocument: OnDidOpenTextDocumentStream.event,
-		onDidCloseTextDocument: OnDidCloseTextDocumentStream.event,
-		onDidChangeTextDocument: OnDidChangeTextDocumentStream.event,
-		onDidSaveTextDocument: OnDidSaveTextDocumentStream.event,
+		OnDidOpenTextDocument: OnDidOpenTextDocumentStream.event,
+		OnDidCloseTextDocument: OnDidCloseTextDocumentStream.event,
+		OnDidChangeTextDocument: OnDidChangeTextDocumentStream.event,
+		OnDidSaveTextDocument: OnDidSaveTextDocumentStream.event,
 		GetDocument: (URI: Uri) =>
 			Ref.get(DocumentMapRef).pipe(
 				Effect.map((Map) =>
@@ -142,6 +201,38 @@ export default Effect.gen(function* (G) {
 				),
 				Effect.map(Option.map((data) => data.document)),
 			),
+		RegisterTextDocumentContentProvider: (
+			Scheme: string,
+			Provider: TextDocumentContentProvider,
+		): Disposable => {
+			// Register with the host so it knows it can request content for this scheme.
+			Effect.runFork(
+				IPC.SendNotification("$registerTextDocumentContentProvider", [
+					Scheme,
+				]),
+			);
+			// Store locally for invocation.
+			Effect.runSync(
+				Ref.update(ContentProvidersRef, (Map) =>
+					Map.set(Scheme, Provider),
+				),
+			);
+
+			return new Disposable(() => {
+				const UnregisterEffect = Ref.update(
+					ContentProvidersRef,
+					(Map) => (Map.delete(Scheme), Map),
+				).pipe(
+					Effect.andThen(
+						IPC.SendNotification(
+							"$unregisterTextDocumentContentProvider",
+							[Scheme],
+						),
+					),
+				);
+				Effect.runFork(UnregisterEffect);
+			});
+		},
 	};
 
 	return DocumentImplementation;

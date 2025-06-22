@@ -1,56 +1,40 @@
-/**
- * @module DiagnosticCollectionImplementation (Service)
- * @description The concrete implementation of the `vscode.DiagnosticCollection` interface.
- * Each instance of this class represents a single, named collection of diagnostics
- * created by an extension.
+/*
+ * File: Cocoon/Source/Service/Diagnostic/DiagnosticCollectionImplementation.ts
+ * Role: The concrete implementation of the `vscode.DiagnosticCollection` interface.
+ * Responsibilities:
+ *   1. Maintains a local cache of diagnostics for synchronous access (`get`, `has`, `forEach`).
+ *   2. Proxies all state-changing operations (`set`, `clear`, `delete`, `dispose`)
+ *      to the Mountain host process via IPC notifications.
+ *   3. Ensures that no operations are performed after the collection is disposed.
  */
 
 import { Effect } from "effect";
 import type { Diagnostic, DiagnosticCollection, Uri } from "vscode";
+import { URI } from "vscode-uri";
 
 import DiagnosticConverter from "../../TypeConverter/Diagnostic.js";
 import URIConverter from "../../TypeConverter/Main/URI.js";
-import CreateEventStream, {
-	type EventStream,
-} from "../../Utility/CreateEventStream.js";
 import type IPCService from "../IPC/Service.js";
 
 /**
- * A class that implements the `vscode.DiagnosticCollection` interface, providing a
- * proxy for managing diagnostics that are ultimately stored in the Mountain host process.
+ * A class that implements the `vscode.DiagnosticCollection` interface. It caches
+ * diagnostics locally for synchronous read operations while sending all write
+ * operations to the Mountain host process, which remains the source of truth.
  */
-export default class implements DiagnosticCollection {
+export default class DiagnosticCollectionImplementation
+	implements DiagnosticCollection
+{
 	private IsDisposed = false;
-	private readonly OnDidDisposeStream: EventStream<void> =
-		CreateEventStream<void>();
+	private readonly DiagnosticsCache = new Map<
+		string,
+		readonly Diagnostic[]
+	>();
 
 	constructor(
 		public readonly name: string,
 		private readonly Owner: string, // An internal ID for this collection, linking it to its creator.
 		private readonly IPC: IPCService["Type"],
 	) {}
-
-	private CreateSetEffect(
-		Uri: Uri,
-		Diagnostics: readonly Diagnostic[] | undefined,
-	) {
-		// If the collection has been disposed, do nothing.
-		if (this.IsDisposed) {
-			return Effect.void;
-		}
-
-		// Convert the API-level diagnostics to their DTO representation for IPC.
-		const DiagnosticsDTO = Diagnostics
-			? DiagnosticConverter.FromAPIArray(Diagnostics)
-			: undefined;
-		const UriDTO = URIConverter.FromAPI(Uri);
-
-		// Send the notification to the host process to update the diagnostics.
-		return this.IPC.SendNotification("$changeMany", [
-			this.Owner,
-			[[UriDTO, DiagnosticsDTO]],
-		]);
-	}
 
 	set(uri: Uri, diagnostics: readonly Diagnostic[] | undefined): void;
 	set(entries: ReadonlyArray<[Uri, readonly Diagnostic[] | undefined]>): void;
@@ -64,38 +48,63 @@ export default class implements DiagnosticCollection {
 			return;
 		}
 
-		// Handle the case where an array of entries is provided.
-		if (Array.isArray(uriOrEntries)) {
-			// Step 1: Convert all URI and Diagnostic objects to their DTOs.
-			const ConvertedEntries = uriOrEntries.map(([Uri, Diags]) => [
-				URIConverter.FromAPI(Uri),
-				Diags ? DiagnosticConverter.FromAPIArray(Diags) : undefined,
-			]);
-			// Step 2: Send the batch update notification.
-			Effect.runFork(
-				this.IPC.SendNotification("$changeMany", [
-					this.Owner,
-					ConvertedEntries,
-				]),
-			);
-		} else {
-			// Handle the case where a single URI and diagnostics are provided.
-			// The `if` condition ensures `uriOrEntries` is a `Uri` here. We assert it for the compiler.
-			Effect.runFork(
-				this.CreateSetEffect(uriOrEntries as Uri, diagnostics),
-			);
+		if (!Array.isArray(uriOrEntries)) {
+			// Handle the single entry case by converting it to the array case.
+			this.set([[uriOrEntries, diagnostics]]);
+			return;
 		}
+
+		// Handle the batch entry case.
+		const EntriesToUpdate = uriOrEntries as ReadonlyArray<
+			[Uri, readonly Diagnostic[] | undefined]
+		>;
+		if (EntriesToUpdate.length === 0) {
+			return;
+		}
+
+		// Step 1: Update the local cache.
+		for (const [URI, Diagnostics] of EntriesToUpdate) {
+			const URIString = URI.toString();
+			if (Diagnostics && Diagnostics.length > 0) {
+				this.DiagnosticsCache.set(URIString, Diagnostics);
+			} else {
+				this.DiagnosticsCache.delete(URIString);
+			}
+		}
+
+		// Step 2: Convert all URI and Diagnostic objects to their DTOs for IPC.
+		const ConvertedEntries = EntriesToUpdate.map(([URI, Diags]) => [
+			URIConverter.FromAPI(URI),
+			Diags ? DiagnosticConverter.FromAPIArray(Diags) : undefined,
+		]);
+
+		// Step 3: Send the batch update notification to the host.
+		Effect.runFork(
+			this.IPC.SendNotification("$changeMany", [
+				this.Owner,
+				ConvertedEntries,
+			]),
+		);
 	}
 
 	delete(uri: Uri): void {
-		// Deleting is equivalent to setting the diagnostics for a URI to undefined.
-		this.set(uri, undefined);
+		// Deleting is equivalent to setting the diagnostics for a URI to undefined/empty.
+		// We can reuse the `set` logic for this.
+		if (this.IsDisposed) {
+			return;
+		}
+		// Only send an update if the URI was actually in the cache.
+		if (this.DiagnosticsCache.has(uri.toString())) {
+			this.set(uri, undefined);
+		}
 	}
 
 	clear(): void {
 		if (this.IsDisposed) {
 			return;
 		}
+		// Clear the local cache first.
+		this.DiagnosticsCache.clear();
 		// Send a notification to clear all diagnostics for this collection in the host.
 		Effect.runFork(this.IPC.SendNotification("$clear", [this.Owner]));
 	}
@@ -105,28 +114,46 @@ export default class implements DiagnosticCollection {
 			return;
 		}
 		this.IsDisposed = true;
+		// Clear remote diagnostics and then the local cache.
 		this.clear();
-		// Notify listeners that this collection has been disposed.
-		Effect.runFork(this.OnDidDisposeStream.Fire());
 	}
 
-	forEach(): void {
-		// This is a no-op because the extension host does not hold the diagnostic state.
-		// The state is managed by the Mountain process.
+	forEach(
+		callback: (
+			uri: Uri,
+			diagnostics: readonly Diagnostic[],
+			collection: DiagnosticCollection,
+		) => any,
+		thisArg?: any,
+	): void {
+		for (const [URIString, Diagnostics] of this.DiagnosticsCache) {
+			callback.call(thisArg, URI.parse(URIString), Diagnostics, this);
+		}
 	}
 
-	get(_uri: Uri): readonly Diagnostic[] | undefined {
-		// This is a no-op because the extension host does not hold the state.
-		return undefined;
+	get(uri: Uri): readonly Diagnostic[] | undefined {
+		return this.DiagnosticsCache.get(uri.toString());
 	}
 
-	has(_uri: Uri): boolean {
-		// This is a no-op because the extension host does not hold the state.
-		return false;
+	has(uri: Uri): boolean {
+		return this.DiagnosticsCache.has(uri.toString());
 	}
 
 	[Symbol.iterator](): Iterator<[Uri, readonly Diagnostic[]]> {
-		// This is a no-op because the extension host does not hold the state.
-		return [][Symbol.iterator]();
+		const InnerIterator = this.DiagnosticsCache.entries();
+
+		return {
+			next: () => {
+				const Next = InnerIterator.next();
+				if (Next.done) {
+					return { value: undefined, done: true };
+				}
+				const [URIString, Diagnostics] = Next.value;
+				return {
+					value: [URI.parse(URIString), Diagnostics],
+					done: false,
+				};
+			},
+		};
 	}
 }

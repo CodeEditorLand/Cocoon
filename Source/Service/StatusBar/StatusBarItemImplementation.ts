@@ -1,31 +1,37 @@
-/**
- * @module StatusBarItemImplementation
- * @description The concrete implementation of the `vscode.StatusBarItem` interface.
+/*
+ * File: Cocoon/Source/Service/StatusBar/StatusBarItemImplementation.ts
+ * Role: The concrete implementation of the `vscode.StatusBarItem` interface.
+ * Responsibilities:
+ *   1. Holds the state for a single status bar item (text, color, command, etc.).
+ *   2. Proxies all state changes to the Mountain host process via IPC notifications.
+ *   3. Manages its own visibility and lifecycle (show, hide, dispose).
  */
 
 import { Effect } from "effect";
 import type {
 	AccessibilityInformation,
-	CancellationToken,
 	Command,
 	MarkdownString,
-	ProviderResult,
 	StatusBarAlignment,
 	StatusBarItem,
 	ThemeColor,
 } from "vscode";
 
-import * as ExtHostTypes from "../../Type/ExtHostTypes.js";
 import CommandConverterDefinition from "../../TypeConverter/Command/Definition.js";
 import StatusBarConverter from "../../TypeConverter/StatusBar.js";
 import type CommandService from "../Command/Service.js";
 import type IPCService from "../IPC/Service.js";
 
+/**
+ * A class that implements the `vscode.StatusBarItem` interface, providing a
+ * proxy for managing a status bar item whose state is ultimately stored and
+ * rendered in the Mountain host process.
+ */
 export default class StatusBarItemImplementation implements StatusBarItem {
 	private IsDisposed = false;
 	private IsVisible = false;
 
-	// --- Backing fields ---
+	// --- Backing fields for properties ---
 	private _id: string;
 	private _name: string | undefined;
 	private _alignment: StatusBarAlignment;
@@ -38,7 +44,8 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	private _accessibilityInformation: AccessibilityInformation | undefined;
 
 	constructor(
-		private readonly EntryID: string,
+		private readonly EntryID: string, // An internal, unique UUID for this instance.
+		private readonly ExtensionID: string,
 		private readonly IPC: IPCService["Type"],
 		private readonly CommandService: CommandService["Type"],
 		private readonly OnDidDispose: () => void,
@@ -50,24 +57,20 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 		this._alignment = InitialAlignment;
 		this._priority = InitialPriority;
 	}
-	tooltip2:
-		| string
-		| MarkdownString
-		| ((
-				token: CancellationToken,
-		  ) => ProviderResult<string | MarkdownString | undefined>)
-		| undefined;
 
-	// ... (getters and setters are correct) ...
+	// --- Getters and Setters ---
 	get id(): string {
 		return this._id;
 	}
+
 	get alignment(): StatusBarAlignment {
 		return this._alignment;
 	}
+
 	get priority(): number | undefined {
 		return this._priority;
 	}
+
 	get name(): string | undefined {
 		return this._name;
 	}
@@ -77,6 +80,7 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
+
 	get text(): string {
 		return this._text;
 	}
@@ -86,6 +90,7 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
+
 	get tooltip(): string | MarkdownString | undefined {
 		return this._tooltip;
 	}
@@ -95,23 +100,17 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
+
 	get color(): string | ThemeColor | undefined {
 		return this._color;
 	}
 	set color(Value: string | ThemeColor | undefined) {
 		if (this._color !== Value) {
 			this._color = Value;
-			if (
-				Value instanceof ExtHostTypes.ThemeColor &&
-				Value.id === "statusBarItem.errorForeground"
-			) {
-				this.backgroundColor = new ExtHostTypes.ThemeColor(
-					"statusBarItem.errorBackground",
-				);
-			}
 			this.Update();
 		}
 	}
+
 	get backgroundColor(): ThemeColor | undefined {
 		return this._backgroundColor;
 	}
@@ -121,6 +120,7 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
+
 	get command(): string | Command | undefined {
 		return this._command;
 	}
@@ -130,6 +130,7 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 			this.Update();
 		}
 	}
+
 	get accessibilityInformation(): AccessibilityInformation | undefined {
 		return this._accessibilityInformation;
 	}
@@ -141,21 +142,25 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	}
 
 	// --- Public Methods ---
-	show(): void {
+	public show(): void {
 		if (!this.IsVisible) {
 			this.IsVisible = true;
 			this.Update();
 		}
 	}
-	hide(): void {
+
+	public hide(): void {
 		if (this.IsVisible) {
 			this.IsVisible = false;
-			Effect.runFork(
-				this.IPC.SendNotification("$disposeEntry", [this.EntryID]),
+			const DisposeEffect = this.IPC.SendNotification(
+				"$statusBar:dispose",
+				[this.EntryID],
 			);
+			Effect.runFork(DisposeEffect);
 		}
 	}
-	dispose(): void {
+
+	public dispose(): void {
 		if (!this.IsDisposed) {
 			this.IsDisposed = true;
 			this.hide();
@@ -167,17 +172,23 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 		if (this.IsDisposed || !this.IsVisible) {
 			return;
 		}
+
 		const CommandConverter = new CommandConverterDefinition(
 			this.CommandService.RegisterCommand,
 			(command, ...args) =>
 				this.CommandService.ExecuteCommand(command, ...args),
-			() => undefined,
+			() => undefined, // getCommands is not needed for serialization.
 		);
+
 		const DTO = StatusBarConverter.FromAPI(
 			this,
 			this.EntryID,
+			this.ExtensionID,
 			CommandConverter,
 		);
-		Effect.runFork(this.IPC.SendNotification("$setEntry", [DTO]));
+
+		// Use an effect to send the notification via IPC.
+		const UpdateEffect = this.IPC.SendNotification("$statusBar:set", [DTO]);
+		Effect.runFork(UpdateEffect);
 	}
 }

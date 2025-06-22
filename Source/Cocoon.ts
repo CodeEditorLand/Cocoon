@@ -1,3 +1,15 @@
+/*
+ * File: Cocoon/Source/Cocoon.ts
+ * Role: Main entry point for the Cocoon extension host process.
+ * Responsibilities:
+ *   1. Sets up the Node.js environment and module paths.
+ *   2. Composes the entire application using Effect-TS layers.
+ *   3. Handles the initial handshake with the Mountain host process.
+ *   4. Installs the 'require' interceptor to provide the 'vscode' module.
+ *   5. Activates extensions based on startup events.
+ *   6. Listens for and handles a graceful shutdown signal.
+ */
+
 import * as Path from "node:path";
 import { NodeRuntime } from "@effect/platform-node";
 import { Deferred, Effect, Layer, Logger } from "effect";
@@ -128,6 +140,7 @@ const PreHandshakeEffect = Effect.gen(function* (G) {
 		Deferred.make<IExtensionHostInitData, Error>(),
 	);
 	const IPC = yield* G(IPCService);
+
 	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
 		(data: IExtensionHostInitData) =>
@@ -137,6 +150,22 @@ const PreHandshakeEffect = Effect.gen(function* (G) {
 				),
 			),
 	);
+
+	// --- NEW: Shutdown Handler ---
+	const ShutdownEffect = Effect.logInfo(
+		"[Cocoon] Received shutdown signal from Mountain.",
+	).pipe(
+		Effect.andThen(() => {
+			// This will trigger the `beforeExit` hook that NodeRuntime registers,
+			// which in turn runs the finalizers for the main fiber's scope.
+			process.exit(0);
+		}),
+	);
+
+	IPC.RegisterInvokeHandler("$shutdown", () =>
+		Effect.runPromise(ShutdownEffect),
+	);
+
 	yield* G(IPC.SendNotification("$initialHandshake", []));
 	return yield* G(Deferred.await(InitializationBarrier));
 });
@@ -156,6 +185,29 @@ const PostHandshakeEffect = Effect.gen(function* (G) {
 	);
 	yield* G(Effect.logInfo("Startup extensions activated."));
 	yield* G(Effect.logInfo("Cocoon is fully initialized and operational."));
+
+	// --- NEW: Add a finalizer for graceful shutdown ---
+	yield* G(
+		Effect.addFinalizer(() =>
+			Effect.logInfo(
+				"Cocoon is shutting down. Deactivating all extensions...",
+			).pipe(
+				Effect.andThen(Host.DeactivateAll()),
+				Effect.andThen(
+					Effect.logInfo(
+						"All extensions deactivated. Graceful shutdown complete.",
+					),
+				),
+				Effect.catchAllCause((Cause) =>
+					Effect.logError(
+						"Error during extension deactivation.",
+						Cause,
+					),
+				),
+			),
+		),
+	);
+
 	yield* G(Effect.never);
 });
 

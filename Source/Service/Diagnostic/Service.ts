@@ -1,7 +1,10 @@
-/**
- * @module Service (Diagnostic)
- * @description Defines the interface and Context.Tag for the Diagnostic service.
- * This service allows extensions to report problems in the workspace.
+/*
+ * File: Cocoon/Source/Service/Diagnostic/Service.ts
+ * Role: Defines the interface and Context.Tag for the Diagnostic service.
+ * Responsibilities:
+ *   1. Declare the contract for the Diagnostic service, which provides access to
+ *      creating diagnostic collections and listening for changes.
+ *   2. This is the public API surface consumed by other services or the API factory.
  */
 
 import { Context } from "effect";
@@ -15,7 +18,7 @@ export default class DiagnosticService extends Context.Tag(
 		/**
 		 * An event that fires when the diagnostics for a resource have changed.
 		 */
-		readonly onDidChangeDiagnostics: Event<readonly Uri[]>;
+		readonly OnDidChangeDiagnostics: Event<readonly Uri[]>;
 
 		/**
 		 * Creates a new diagnostic collection.

@@ -1,16 +1,15 @@
-/**
- * @module Service (Storage)
- * @description Defines the interface and Context.Tag for the Storage service factory.
- * This service is responsible for creating `Memento` instances, which provide
- * persistent key-value storage scoped to an extension.
+/*
+ * File: Cocoon/Source/Service/Storage/Service.ts
+ * Role: Defines the interface and Context.Tag for the Storage service factory.
+ * Responsibilities:
+ *   1. Declare the contract for the Storage service, which is responsible for creating
+ *      `Memento` instances for persistent key-value storage.
+ *   2. This is the public API surface consumed by other services or the API factory.
  */
 
 import { Context } from "effect";
 import type { Memento } from "vscode";
 
-/**
- * The `Context.Tag` for the Storage service factory.
- */
 export default class StorageService extends Context.Tag("Service/Storage")<
 	StorageService,
 	{

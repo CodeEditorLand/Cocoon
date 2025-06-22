@@ -1,8 +1,10 @@
-/**
- * @module Service (LanguageFeature)
- * @description Defines the interface and Context.Tag for the LanguageFeature service.
- * This service manages the registration of all language feature providers, such
- * as hover providers, completion item providers, etc.
+/*
+ * File: Cocoon/Source/Service/LanguageFeature/Service.ts
+ * Role: Defines the interface and Context.Tag for the LanguageFeature service.
+ * Responsibilities:
+ *   1. Declare the contract for the LanguageFeature service, which allows extensions
+ *      to register various language feature providers (e.g., hover, completion).
+ *   2. This is the public API surface consumed by other services or the API factory.
  */
 
 import { Context, type Effect } from "effect";
@@ -15,6 +17,7 @@ import type {
 	Disposable,
 	DocumentSelector,
 	HoverProvider,
+	ReferenceProvider,
 } from "vscode";
 
 export default class LanguageFeatureService extends Context.Tag(
@@ -38,6 +41,12 @@ export default class LanguageFeatureService extends Context.Tag(
 		readonly RegisterDefinitionProvider: (
 			Selector: DocumentSelector,
 			Provider: DefinitionProvider,
+			Extension: IExtensionDescription,
+		) => Effect.Effect<Disposable, Error>;
+
+		readonly RegisterReferenceProvider: (
+			Selector: DocumentSelector,
+			Provider: ReferenceProvider,
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, Error>;
 
