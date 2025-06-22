@@ -1,6 +1,7 @@
-/**
- * @module Configuration (IPC)
- * @description Defines the configuration interface and service Tag for the
+/*
+ * File: Cocoon/Source/Service/IPC/Configuration.ts
+ *
+ * This file defines the configuration interface and service Tag for the
  * IPC service, specifying the network addresses for communication.
  */
 

@@ -1,6 +1,7 @@
-/**
- * @module SetElectronRunAsNode
- * @description An Effect that sets an environment variable to signal that
+/*
+ * File: Cocoon/Source/PatchProcess/SetElectronRunAsNode.ts
+ *
+ * This file contains an Effect that sets an environment variable to signal that
  * the process is running in a Node.js-like environment, even if under Electron.
  */
 import { Effect } from "effect";

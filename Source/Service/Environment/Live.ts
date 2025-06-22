@@ -1,6 +1,7 @@
-/**
- * @module Live (Environment)
- * @description The live implementation Layer for the Environment service.
+/*
+ * File: Cocoon/Source/Service/Environment/Live.ts
+ *
+ * This file provides the live implementation Layer for the Environment service.
  */
 
 import { Layer } from "effect";

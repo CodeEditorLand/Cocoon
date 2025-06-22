@@ -1,6 +1,7 @@
-/**
- * @module Type (Document)
- * @description Defines internal types for the Document service, specifically
+/*
+ * File: Cocoon/Source/Service/Document/Type.ts
+ *
+ * This file defines internal types for the Document service, specifically
  * the union of all possible document lifecycle events.
  */
 

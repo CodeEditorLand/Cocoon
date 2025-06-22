@@ -1,6 +1,7 @@
-/**
- * @module Live (Clipboard)
- * @description The live implementation Layer for the Clipboard service.
+/*
+ * File: Cocoon/Source/Service/Clipboard/Live.ts
+ *
+ * This file provides the live implementation Layer for the Clipboard service.
  */
 
 import { Layer } from "effect";

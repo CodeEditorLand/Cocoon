@@ -1,6 +1,7 @@
-/**
- * @module Live (Dialog)
- * @description The live implementation Layer for the Dialog service.
+/*
+ * File: Cocoon/Source/Service/Dialog/Live.ts
+ *
+ * This file provides the live implementation Layer for the Dialog service.
  */
 
 import { Layer } from "effect";

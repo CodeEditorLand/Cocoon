@@ -1,6 +1,7 @@
-/**
- * @module Service (InitData)
- * @description Defines the interface and Context.Tag for the InitData service.
+/*
+ * File: Cocoon/Source/Service/InitData/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the InitData service.
  * This is a simple value service that holds the initial data payload sent from
  * the Mountain host process upon startup.
  */

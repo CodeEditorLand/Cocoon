@@ -1,7 +1,7 @@
-/**
- * @module Service (Dialog)
- * @description Defines the interface and Context.Tag for the Dialog service,
-
+/*
+ * File: Cocoon/Source/Service/Dialog/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the Dialog service,
  * which provides `vscode.window` dialog functions like `showOpenDialog`.
  */
 
@@ -22,7 +22,6 @@ export default class DialogService extends Context.Tag("Service/Dialog")<
 		 */
 		readonly ShowOpenDialog: (
 			Options?: OpenDialogOptions,
-
 			Token?: CancellationToken,
 		) => Effect.Effect<Uri[] | undefined, DialogError>;
 
@@ -34,7 +33,6 @@ export default class DialogService extends Context.Tag("Service/Dialog")<
 		 */
 		readonly ShowSaveDialog: (
 			Options?: SaveDialogOptions,
-
 			Token?: CancellationToken,
 		) => Effect.Effect<Uri | undefined, DialogError>;
 	}

@@ -1,6 +1,7 @@
-/**
- * @module Service (Localization)
- * @description Defines the interface and Context.Tag for the Localization service.
+/*
+ * File: Cocoon/Source/Service/Localization/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the Localization service.
  * This service manages loading and caching NLS (National Language Support)
  * string bundles for extensions.
  */
@@ -43,7 +44,6 @@ export default class LocalizationService extends Context.Tag(
 
 		/**
 		 * An event that fires once localization has been initialized for the host,
-
 		 * indicating that it is safe to start loading extension bundles.
 		 */
 		readonly onDidInitializeLocalization: Event<void>;

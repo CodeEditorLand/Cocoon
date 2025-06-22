@@ -1,6 +1,7 @@
-/**
- * @module Live (IPC/Dispatcher)
- * @description Provides the live implementation Layer for the Dispatcher service.
+/*
+ * File: Cocoon/Source/Service/IPC/Dispatcher/Live.ts
+ *
+ * This file provides the live implementation Layer for the Dispatcher service.
  */
 
 import { Layer } from "effect";

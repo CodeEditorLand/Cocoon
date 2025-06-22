@@ -1,6 +1,7 @@
-/**
- * @module TerminateOnParentExit
- * @description An Effect that ensures the Cocoon process terminates gracefully
+/*
+ * File: Cocoon/Source/PatchProcess/TerminateOnParentExit.ts
+ *
+ * This file contains an Effect that ensures the Cocoon process terminates gracefully
  * if its parent process (the main VS Code window or Mountain host) exits
  * unexpectedly.
  */
@@ -26,7 +27,6 @@ const TerminateOnParentExit = Effect.gen(function* () {
 	}
 
 	const ParentPID = Number.parseInt(ParentPIDString, 10);
-
 	if (Number.isNaN(ParentPID)) {
 		return yield* Effect.logWarning(
 			`Invalid VSCODE_PID '${ParentPIDString}', cannot monitor parent process.`,
@@ -47,14 +47,12 @@ const TerminateOnParentExit = Effect.gen(function* () {
 				yield* Effect.logInfo(
 					`Parent process ${ParentPID} is no longer running. Exiting Cocoon gracefully.`,
 				);
-
 				process.exit(0);
 			}
 
 			// Wait for 5 seconds before checking again.
 			yield* Effect.sleep("5 seconds");
 		}
-
 		// Fork as a daemon so it doesn't block shutdown.
 	}).pipe(Effect.forkDaemon);
 

@@ -1,6 +1,7 @@
-/**
- * @module GetConfiguration
- * @description Defines an `Effect`-based wrapper for retrieving a VS Code
+/*
+ * File: Cocoon/Source/Service/Configuration/GetConfiguration.ts
+ *
+ * This file defines an `Effect`-based wrapper for retrieving a VS Code
  * workspace configuration section. This is intended for use by other internal
  * services or commands within Cocoon, not for direct exposure to extensions.
  */
@@ -21,7 +22,6 @@ import ConfigurationService from "./Service.js";
  */
 const GetConfiguration = (
 	Section?: string,
-
 	Scope?: VSCode.ConfigurationScope | null,
 ): Effect.Effect<
 	VSCode.WorkspaceConfiguration,

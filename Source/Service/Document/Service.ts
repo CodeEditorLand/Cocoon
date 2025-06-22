@@ -1,6 +1,7 @@
-/**
- * @module Service (Document)
- * @description Defines the interface and Context.Tag for the Document service.
+/*
+ * File: Cocoon/Source/Service/Document/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the Document service.
  * This service is the single source of truth for the state of all open text
  * documents in the extension host.
  */
@@ -15,16 +16,16 @@ export default class DocumentService extends Context.Tag("Service/Document")<
 		readonly TextDocuments: readonly TextDocument[];
 
 		/** An event that is emitted when a text document is opened. */
-		readonly onDidOpenTextDocument: Event<TextDocument>;
+		readonly OnDidOpenTextDocument: Event<TextDocument>;
 
 		/** An event that is emitted when a text document is closed. */
-		readonly onDidCloseTextDocument: Event<TextDocument>;
+		readonly OnDidCloseTextDocument: Event<TextDocument>;
 
 		/** An event that is emitted when a text document is changed. */
-		readonly onDidChangeTextDocument: Event<TextDocumentChangeEvent>;
+		readonly OnDidChangeTextDocument: Event<TextDocumentChangeEvent>;
 
 		/** An event that is emitted when a text document is saved. */
-		readonly onDidSaveTextDocument: Event<TextDocument>;
+		readonly OnDidSaveTextDocument: Event<TextDocument>;
 
 		/**
 		 * Retrieves a text document for a given URI.

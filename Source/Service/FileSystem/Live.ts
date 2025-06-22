@@ -1,6 +1,7 @@
-/**
- * @module Live (FileSystem)
- * @description This module provides the `Live` implementation Layer for the FileSystem service.
+/*
+ * File: Cocoon/Source/Service/FileSystem/Live.ts
+ *
+ * This file provides the `Live` implementation Layer for the FileSystem service.
  */
 
 import { Layer } from "effect";

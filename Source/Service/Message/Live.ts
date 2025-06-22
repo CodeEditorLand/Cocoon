@@ -1,6 +1,7 @@
-/**
- * @module Live (Message)
- * @description The live implementation Layer for the Message service.
+/*
+ * File: Cocoon/Source/Service/Message/Live.ts
+ *
+ * This file provides the live implementation Layer for the Message service.
  */
 
 import { Layer } from "effect";

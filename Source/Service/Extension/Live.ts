@@ -1,6 +1,7 @@
-/**
- * @module Live (Extension)
- * @description The live implementation Layer for the Extension service.
+/*
+ * File: Cocoon/Source/Service/Extension/Live.ts
+ *
+ * This file provides the live implementation Layer for the Extension service.
  */
 
 import { Layer } from "effect";

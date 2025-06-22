@@ -1,6 +1,7 @@
-/**
- * @module TokenAndScope (Cancellation/Type)
- * @description Defines custom types for the cancellation service.
+/*
+ * File: Cocoon/Source/Service/Cancellation/Type/TokenAndScope.ts
+ *
+ * This file defines custom types for the cancellation service.
  */
 
 import type { Scope } from "effect";
@@ -12,6 +13,5 @@ import type { CancellationToken } from "vs/base/common/cancellation.js";
  */
 export default interface Interface {
 	readonly Token: CancellationToken;
-
 	readonly Scope: Scope.Scope;
 }

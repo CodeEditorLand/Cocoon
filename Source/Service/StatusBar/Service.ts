@@ -1,10 +1,9 @@
 /*
  * File: Cocoon/Source/Service/StatusBar/Service.ts
- * Role: Defines the interface and Context.Tag for the StatusBar service.
- * Responsibilities:
- *   1. Declare the contract for the StatusBar service, which provides access to
- *      creating status bar items and showing temporary messages.
- *   2. This is the public API surface consumed by other services or the API factory.
+ *
+ * This file defines the interface and Context.Tag for the StatusBar service. Its
+ * responsibilities are to declare the contract for creating status bar items
+ * and showing temporary messages.
  */
 
 import { Context, type Effect } from "effect";
@@ -24,11 +23,8 @@ export default class StatusBarService extends Context.Tag("Service/StatusBar")<
 		 */
 		readonly CreateStatusBarItem: (
 			Extension: IExtensionDescription,
-
 			Id?: string,
-
 			Alignment?: StatusBarAlignment,
-
 			Priority?: number,
 		) => Effect.Effect<StatusBarItem, never>;
 
@@ -40,7 +36,6 @@ export default class StatusBarService extends Context.Tag("Service/StatusBar")<
 		 */
 		readonly SetStatusBarMessage: (
 			Text: string,
-
 			HideOrPromise?: number | Promise<any>,
 		) => Disposable;
 	}

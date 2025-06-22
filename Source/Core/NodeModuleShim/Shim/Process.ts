@@ -1,6 +1,7 @@
-/**
- * @module Process (NodeModuleShim/Shim)
- * @description A controlled shim for the Node.js `process` global object.
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Shim/Process.ts
+ *
+ * This file provides a controlled shim for the Node.js `process` global object.
  *
  * This shim selectively exposes safe properties and methods from the real `process`
  * object. It returns copies of sensitive data like `env` to prevent modification
@@ -39,7 +40,6 @@ const CreateSanitizedEnvironment = (): {
 		}
 	}
 
-	// Freeze the final object
 	return Object.freeze(SanitizedEnvironment);
 };
 
@@ -53,28 +53,22 @@ const ProcessShim = {
 	get platform(): NodeJS.Platform {
 		return ActualNodeProcess.platform;
 	},
-
 	get arch(): string {
 		return ActualNodeProcess.arch;
 	},
-
 	get versions(): NodeJS.ProcessVersions {
 		// Return a copy
 		return { ...ActualNodeProcess.versions };
 	},
-
 	get pid(): number {
 		return ActualNodeProcess.pid;
 	},
-
 	get ppid(): number {
 		return ActualNodeProcess.ppid;
 	},
-
 	get execPath(): string {
 		return ActualNodeProcess.execPath;
 	},
-
 	get title(): string {
 		// Hard-code the title
 		return "Cocoon Extension Host";
@@ -84,32 +78,24 @@ const ProcessShim = {
 	get env(): { [key: string]: string | undefined } {
 		return CreateSanitizedEnvironment();
 	},
-
 	get argv(): string[] {
 		return [...ActualNodeProcess.argv];
 	},
-
 	get execArgv(): string[] {
 		return [...ActualNodeProcess.execArgv];
 	},
 
 	// --- Safe Methods (delegated directly) ---
 	cwd: () => ActualNodeProcess.cwd(),
-
 	memoryUsage: () => ActualNodeProcess.memoryUsage(),
-
 	hrtime: (time?: [number, number]) => ActualNodeProcess.hrtime(time),
-
 	uptime: () => ActualNodeProcess.uptime(),
-
 	nextTick: (callback: (...args: any[]) => void, ...args: any[]) =>
 		ActualNodeProcess.nextTick(callback, ...args),
 
 	// --- Dangerous Methods ---
-	// These are exposed initially but are expected to be patched by the `PatchProcess` module.
-	// This allows us to control them without breaking extensions that expect them to exist.
+	// These are exposed initially but are expected to be patched by `PatchProcess`.
 	exit: (code?: number): never => ActualNodeProcess.exit(code),
-
 	kill: (pid: number, signal?: string | number) =>
 		ActualNodeProcess.kill(pid, signal),
 
@@ -117,11 +103,9 @@ const ProcessShim = {
 	chdir: (_directory: string) => {
 		throw new Error("`process.chdir()` is not allowed in extensions.");
 	},
-
 	setuid: (_id: number | string) => {
 		throw new Error("`process.setuid()` is not allowed in extensions.");
 	},
-
 	setgid: (_id: number | string) => {
 		throw new Error("`process.setgid()` is not allowed in extensions.");
 	},

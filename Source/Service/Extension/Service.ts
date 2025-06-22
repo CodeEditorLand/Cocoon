@@ -1,7 +1,8 @@
-/**
- * @module Service (Extension)
- * @description Defines the interface and Context.Tag for the Extension service.
- * This service implements the `vscode.extensions` API.
+/*
+ * File: Cocoon/Source/Service/Extension/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the Extension service,
+ * which implements the `vscode.extensions` API.
  */
 
 import { Context, Option, type Effect } from "effect";

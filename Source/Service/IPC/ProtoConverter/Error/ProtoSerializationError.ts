@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/IPC/ProtoConverter/Error/ProtoSerializationError.ts
+ *
+ * This file defines a custom error for failures during conversion between
+ * JavaScript values and Google Protobuf `Value` types.
+ */
+
 import { Data } from "effect";
 
 /**
@@ -6,18 +13,14 @@ import { Data } from "effect";
  */
 export default class extends Data.TaggedError("ProtoSerializationError")<{
 	readonly cause: unknown;
-
 	readonly Direction: "Encoding" | "Decoding";
 }> {
 	constructor(properties: {
 		readonly cause: unknown;
-
 		readonly Direction: "Encoding" | "Decoding";
 	}) {
 		super(properties);
-
 		this.message = `Protobuf ${this.Direction} failed: ${this.cause}`;
 	}
-
 	public override readonly message: string;
 }

@@ -1,10 +1,10 @@
 /*
  * File: Cocoon/Source/Service/Diagnostic/Definition.ts
- * Role: The live implementation of the Diagnostic service.
- * Responsibilities:
- *   1. Provide the `vscode.languages.createDiagnosticCollection` factory method.
- *   2. Manage the `vscode.languages.onDidChangeDiagnostics` event.
- *   3. Listen for diagnostic updates pushed from the Mountain host process.
+ *
+ * This file contains the live implementation of the Diagnostic service. Its primary
+ * responsibilities are to provide the `createDiagnosticCollection` factory method,
+ * manage the `onDidChangeDiagnostics` event, and listen for diagnostic updates
+ * pushed from the Mountain host process.
  */
 
 import { Effect } from "effect";
@@ -23,7 +23,6 @@ export default Effect.gen(function* (G) {
 
 	const {
 		event: OnDidChangeDiagnosticsEvent,
-
 		Fire: FireDidChangeDiagnostics,
 	} = CreateEventStream<readonly Uri[]>();
 
@@ -34,12 +33,10 @@ export default Effect.gen(function* (G) {
 		Effect.sync(() =>
 			IPC.RegisterInvokeHandler(
 				"$acceptMarkerData",
-
 				([URIComponentsArray]): Promise<void> => {
 					const RevivedURIs = URIComponentsArray.map((DTO: any) =>
 						URIConverter.ToAPI(DTO),
 					);
-
 					return Effect.runPromise(
 						FireDidChangeDiagnostics(RevivedURIs),
 					);
@@ -49,17 +46,13 @@ export default Effect.gen(function* (G) {
 	);
 
 	const ServiceImplementation: Service["Type"] = {
-		onDidChangeDiagnostics: OnDidChangeDiagnosticsEvent,
-
+		OnDidChangeDiagnostics: OnDidChangeDiagnosticsEvent,
 		CreateDiagnosticCollection: (Name?: string) => {
 			// Each collection gets a unique owner ID to separate its diagnostics on the host.
 			const Owner = `cocoon-diag-${OwnerCounter++}-${Name ?? "anon"}`;
-
 			return new DiagnosticCollectionImplementation(
 				Name ?? "",
-
 				Owner,
-
 				IPC,
 			);
 		},

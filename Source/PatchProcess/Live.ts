@@ -1,6 +1,7 @@
-/**
- * @module Live (ProcessPatch)
- * @description Provides the live implementation layer for the ProcessPatch service.
+/*
+ * File: Cocoon/Source/PatchProcess/Live.ts
+ *
+ * This file provides the live implementation layer for the ProcessPatch service.
  * This layer captures the original native process functions before they can be
  * overwritten by any other patches.
  */
@@ -11,11 +12,10 @@ import Service from "./Service.js";
 
 /**
  * The live `Layer` for the `ProcessPatch.Service`.
- * It reads its configuration from the environment, with a default.
+ * It reads its configuration from the environment, with a default. The potential
+ * `ConfigError` is caught and a default service implementation is provided,
+ * ensuring the final layer has a `never` error channel.
  */
-// FIX: The Layer's error type must be `never`. We handle any potential
-// `ConfigError` by using `Effect.catchAll` to provide a default service
-// implementation in case of failure.
 const Live: Layer.Layer<Service, never, never> = Layer.effect(
 	Service,
 	Effect.gen(function* (G) {

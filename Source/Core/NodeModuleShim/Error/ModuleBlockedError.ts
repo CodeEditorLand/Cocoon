@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Error/ModuleBlockedError.ts
+ *
+ * This file defines a custom error for when an extension attempts to require a
+ * Node.js module that is explicitly blocked by the host.
+ */
+
 import { Data } from "effect";
 
 /**
@@ -9,10 +16,8 @@ export class ModuleBlockedError extends Data.TaggedError("ModuleBlockedError")<{
 }> {
 	constructor(properties: { readonly ModuleName: string }) {
 		super(properties);
-
 		this.message = `[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`;
 	}
-
 	public override readonly message: string;
 }
 

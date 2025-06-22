@@ -1,7 +1,8 @@
-/**
- * @module HandleException (PatchProcess)
- * @description An Effect that sets up global handlers for uncaught exceptions and
- * unhandled promise rejections, reporting them to the Mountain host process.
+/*
+ * File: Cocoon/Source/PatchProcess/HandleException.ts
+ *
+ * This file contains an Effect that sets up global handlers for uncaught exceptions
+ * and unhandled promise rejections, reporting them to the Mountain host process.
  */
 
 import { Effect } from "effect";

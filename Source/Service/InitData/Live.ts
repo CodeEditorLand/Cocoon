@@ -1,6 +1,7 @@
-/**
- * @module Live (InitData)
- * @description Provides the live implementation layer for the InitData service.
+/*
+ * File: Cocoon/Source/Service/InitData/Live.ts
+ *
+ * This file provides the live implementation layer for the InitData service.
  */
 
 import { Layer } from "effect";

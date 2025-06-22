@@ -1,6 +1,7 @@
-/**
- * @module Service (HostKindPicker)
- * @description Defines the interface and Context.Tag for the HostKindPicker service.
+/*
+ * File: Cocoon/Source/Core/HostKindPicker/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the HostKindPicker service.
  * This service is responsible for determining if an extension is compatible with
  * the Cocoon (Node.js) extension host environment.
  */

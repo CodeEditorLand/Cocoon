@@ -1,6 +1,7 @@
-/**
- * @module Service (Configuration)
- * @description Defines the interface and Context.Tag for the Configuration service.
+/*
+ * File: Cocoon/Source/Service/Configuration/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the Configuration service.
  * This service manages access to all workspace and user settings.
  */
 
@@ -26,7 +27,6 @@ export default class ConfigurationService extends Context.Tag(
 		 */
 		readonly GetConfiguration: (
 			Section?: string,
-
 			Scope?: ConfigurationScope,
 		) => Effect.Effect<WorkSpaceConfiguration, Error>;
 

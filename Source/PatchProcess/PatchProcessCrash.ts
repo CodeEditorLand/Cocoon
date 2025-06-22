@@ -1,7 +1,8 @@
-/**
- * @module PatchProcessCrash (PatchProcess)
- * @description An Effect that patches the Electron-specific `process.crash` function
- * to prevent extensions from terminating the host process.
+/*
+ * File: Cocoon/Source/PatchProcess/PatchProcessCrash.ts
+ *
+ * This file contains an Effect that patches the Electron-specific `process.crash`
+ * function to prevent extensions from terminating the host process.
  */
 
 import { Effect } from "effect";

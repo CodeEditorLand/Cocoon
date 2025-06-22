@@ -1,6 +1,7 @@
-/**
- * @module Live (IPC/ProtocolAdapter)
- * @description Provides a `Layer` for the `ProtocolAdapter` service.
+/*
+ * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Live.ts
+ *
+ * This file provides a `Layer` for the `ProtocolAdapter` service.
  */
 
 import { Layer } from "effect";
@@ -15,7 +16,6 @@ import Service from "./Service.js";
  */
 const Live: Layer.Layer<Service, never, ClientService> = Layer.effect(
 	Service,
-
 	Definition,
 );
 

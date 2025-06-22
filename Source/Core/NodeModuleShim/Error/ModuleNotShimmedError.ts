@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Error/ModuleNotShimmedError.ts
+ *
+ * This file defines a custom error for when an extension attempts to require a
+ * Node.js module for which no safe shim has been implemented.
+ */
+
 import { Data } from "effect";
 
 /**
@@ -11,10 +18,8 @@ export class ModuleNotShimmedError extends Data.TaggedError(
 }> {
 	constructor(properties: { readonly ModuleName: string }) {
 		super(properties);
-
 		this.message = `Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`;
 	}
-
 	public override readonly message: string;
 }
 

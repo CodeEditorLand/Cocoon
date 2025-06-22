@@ -1,6 +1,7 @@
-/**
- * @module Live (NodeModuleShim)
- * @description Provides the live implementation Layer for the NodeModuleShim service.
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Live.ts
+ *
+ * This file provides the live implementation Layer for the NodeModuleShim service.
  */
 
 import { Layer } from "effect";

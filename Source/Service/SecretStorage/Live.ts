@@ -1,6 +1,7 @@
-/**
- * @module Live (SecretStorage)
- * @description The live implementation Layer for the SecretStorage service.
+/*
+ * File: Cocoon/Source/Service/SecretStorage/Live.ts
+ *
+ * This file provides the live implementation Layer for the SecretStorage service.
  */
 
 import { Layer } from "effect";
@@ -12,5 +13,4 @@ import Service from "./Service.js";
  * The live implementation Layer for the SecretStorage service.
  * It depends on the IPC and Log services.
  */
-
 export default Layer.effect(Service, Definition);

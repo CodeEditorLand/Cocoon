@@ -1,6 +1,7 @@
-/**
- * @module Service (ProposedAPI)
- * @description Defines the interface and Context.Tag for the ProposedAPI service.
+/*
+ * File: Cocoon/Source/Service/ProposedAPI/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the ProposedAPI service.
  * This service manages and checks the enablement status of proposed
  * (experimental) VS Code APIs for extensions.
  */
@@ -24,7 +25,6 @@ export default class ProposedAPIService extends Context.Tag(
 		 */
 		readonly IsEnabled: (
 			ExtensionID: ExtensionIdentifier,
-
 			ProposalName: string,
 		) => boolean;
 	}

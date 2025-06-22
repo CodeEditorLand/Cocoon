@@ -1,6 +1,7 @@
-/**
- * @module Service (ExtensionPath)
- * @description Defines the interface and Context.Tag for the ExtensionPath service.
+/*
+ * File: Cocoon/Source/Core/ExtensionPath/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the ExtensionPath service.
  * This service is responsible for mapping file URIs to their owner extension.
  */
 

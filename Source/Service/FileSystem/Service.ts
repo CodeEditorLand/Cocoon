@@ -1,7 +1,7 @@
-/**
- * @module Service (FileSystem)
- * @description Defines the interface and Context.Tag for the FileSystem service,
-
+/*
+ * File: Cocoon/Source/Service/FileSystem/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the FileSystem service,
  * which implements the `vscode.workspace.fs` API.
  */
 

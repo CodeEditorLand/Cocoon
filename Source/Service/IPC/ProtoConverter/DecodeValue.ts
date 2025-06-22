@@ -1,6 +1,7 @@
-/**
- * @module DecodeValue
- * @description An Effect-based function to decode a `google.protobuf.Value`
+/*
+ * File: Cocoon/Source/Service/IPC/ProtoConverter/DecodeValue.ts
+ *
+ * This file contains an Effect-based function to decode a `google.protobuf.Value`
  * into a JavaScript value.
  */
 
@@ -16,7 +17,6 @@ import ProtoSerializationError from "./Error/ProtoSerializationError.js";
  *
  * @param ProtoValueInstance The Protobuf Value to decode.
  * @returns An `Effect` that resolves to the corresponding JavaScript value,
-
  *   or fails with a `ProtoSerializationError`.
  */
 export default (
@@ -27,21 +27,17 @@ export default (
 			if (ProtoValueInstance === undefined) {
 				return undefined;
 			}
-
 			if (
 				ProtoValueInstance.getKindCase() ===
 				ProtoValue.KindCase.NULL_VALUE
 			) {
 				return null;
 			}
-
 			return ProtoValueInstance.toJavaScript();
 		},
-
 		catch: (cause) =>
 			new ProtoSerializationError({
 				cause: cause,
-
 				Direction: "Decoding",
 			}),
 	});

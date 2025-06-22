@@ -1,6 +1,7 @@
-/**
- * @module Service (RequireInterceptor)
- * @description Defines the interface and Context.Tag for the RequireInterceptor service.
+/*
+ * File: Cocoon/Source/Core/RequireInterceptor/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the RequireInterceptor service.
  * This service is responsible for patching Node.js's `require` to provide sandboxed
  * APIs to extensions.
  */

@@ -1,7 +1,8 @@
-/**
- * @module Create (APIFactory)
- * @description The primary factory function that constructs the `vscode` API
- * object for a given extension. This serves as the `Definition` for the service.
+/*
+ * File: Cocoon/Source/Core/APIFactory/Definition.ts
+ *
+ * This file contains the primary factory function that constructs the `vscode` API object
+ * for a given extension. This serves as the `Definition` for the APIFactory service.
  */
 
 import { Effect } from "effect";
@@ -33,13 +34,15 @@ import CreateWindowNamespace from "./CreateWindowNamespace.js";
 import CreateWorkSpaceNamespace from "./CreateWorkSpaceNamespace.js";
 
 const CreateExtensionsAPI = (
-	_extensionService: ExtensionService["Type"],
+	ExtensionServiceInstance: ExtensionService["Type"],
 ): typeof VSCode.extensions => ({
-	getExtension: (_extensionId: string) => undefined,
+	getExtension: (extensionId: string) =>
+		Effect.runSync(ExtensionServiceInstance.GetExtension(extensionId)),
 	get all() {
-		return [];
+		return Effect.runSync(ExtensionServiceInstance.GetAll());
 	},
 	get allAcrossExtensionHosts() {
+		// Not supported in this architecture.
 		return [];
 	},
 	onDidChange: new Emitter<void>().event,
@@ -81,7 +84,6 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 			AsEvent,
 			ExtensionDescription,
 		);
-
 		const WindowNamespace = CreateWindowNamespace(
 			Window,
 			StatusBar,
@@ -101,13 +103,11 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 			AsEvent,
 			ExtensionDescription,
 		);
-
 		const DebugNamespace = CreateDebugNamespace(
 			Debug,
 			AsEvent,
 			ExtensionDescription,
 		);
-
 		const ExtensionsNamespace = CreateExtensionsAPI(Extension);
 
 		const API: Partial<typeof VSCode> = {

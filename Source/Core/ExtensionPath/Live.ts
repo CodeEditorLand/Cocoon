@@ -1,6 +1,7 @@
-/**
- * @module Live (ExtensionPath)
- * @description Provides the live implementation layer for the ExtensionPath service.
+/*
+ * File: Cocoon/Source/Core/ExtensionPath/Live.ts
+ *
+ * This file provides the live implementation layer for the ExtensionPath service.
  */
 
 import { Effect, Layer } from "effect";
@@ -15,10 +16,8 @@ import Service from "./Service.js";
  */
 export default Layer.effect(
 	Service,
-
 	Effect.map(
 		InitDataService,
-
 		(InitData) => new Definition(InitData.extensions.allExtensions),
 	),
 );

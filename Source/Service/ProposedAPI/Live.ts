@@ -1,6 +1,7 @@
-/**
- * @module Live (ProposedAPI)
- * @description The live implementation Layer for the ProposedAPI service.
+/*
+ * File: Cocoon/Source/Service/ProposedAPI/Live.ts
+ *
+ * This file provides the live implementation Layer for the ProposedAPI service.
  */
 
 import { Layer } from "effect";

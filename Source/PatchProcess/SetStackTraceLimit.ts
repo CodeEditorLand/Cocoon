@@ -1,6 +1,7 @@
-/**
- * @module SetStackTraceLimit
- * @description An Effect that increases the stack trace limit for better
+/*
+ * File: Cocoon/Source/PatchProcess/SetStackTraceLimit.ts
+ *
+ * This file contains an Effect that increases the stack trace limit for better
  * debugging of complex, asynchronous operations.
  */
 import { Effect } from "effect";

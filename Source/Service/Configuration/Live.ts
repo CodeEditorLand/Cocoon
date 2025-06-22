@@ -1,6 +1,7 @@
-/**
- * @module Live (Configuration)
- * @description The live implementation Layer for the Configuration service.
+/*
+ * File: Cocoon/Source/Service/Configuration/Live.ts
+ *
+ * This file provides the live implementation Layer for the Configuration service.
  */
 
 import { Layer } from "effect";
@@ -16,7 +17,6 @@ import Service from "./Service.js";
  */
 const Live: Layer.Layer<Service, never, IPCService | LogService> = Layer.effect(
 	Service,
-
 	Definition,
 );
 

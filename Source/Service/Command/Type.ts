@@ -1,6 +1,7 @@
-/**
- * @module Type (Command)
- * @description Defines types used by the Command service.
+/*
+ * File: Cocoon/Source/Service/Command/Type.ts
+ *
+ * This file defines types used by the Command service.
  */
 
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
@@ -17,9 +18,7 @@ export type CommandHandler = (...args: any[]) => any;
  */
 export type TextEditorCommandHandler = (
 	editor: TextEditor,
-
 	edit: TextEditorEdit,
-
 	...args: any[]
 ) => any;
 
@@ -29,11 +28,8 @@ export type TextEditorCommandHandler = (
  */
 export interface CommandHandlerEntry {
 	readonly Handler: CommandHandler;
-
 	readonly ThisArgument: any;
-
 	readonly Extension: IExtensionDescription;
-
 	/** Indicates if the command requires an active text editor. */
 	readonly IsTextEditorCommand: boolean;
 }

@@ -1,6 +1,7 @@
-/**
- * @module Live (QuickInput)
- * @description The live implementation Layer for the QuickInput service.
+/*
+ * File: Cocoon/Source/Service/QuickInput/Live.ts
+ *
+ * This file provides the live implementation Layer for the QuickInput service.
  */
 
 import { Layer } from "effect";

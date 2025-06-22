@@ -1,6 +1,7 @@
-/**
- * @module ExitPreventedError (PatchProcess/Error)
- * @description Defines a custom, structured error that is thrown when an extension's
+/*
+ * File: Cocoon/Source/PatchProcess/Error/ExitPreventedError.ts
+ *
+ * This file defines a custom, structured error that is thrown when an extension's
  * attempt to call `process.exit` is intercepted and blocked by the host's policy.
  */
 

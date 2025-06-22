@@ -1,6 +1,7 @@
-/**
- * @module FetchBundle (Localization/Support)
- * @description An Effect for fetching an NLS (National Language Support)
+/*
+ * File: Cocoon/Source/Service/Localization/Support/FetchBundle.ts
+ *
+ * This file contains an Effect for fetching an NLS (National Language Support)
  * JSON bundle from the host via IPC.
  */
 
@@ -22,7 +23,6 @@ export default (IPC: IPCService["Type"], BundleURI: Uri) =>
 		URIConverter.FromAPI(BundleURI),
 	]).pipe(
 		Effect.map((content) => (content ? JSON.parse(content) : {})),
-
 		// If the bundle doesn't exist or fails to parse, we gracefully treat it as an empty object.
 		Effect.catchAll(() => Effect.succeed({})),
 	);

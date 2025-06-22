@@ -1,6 +1,7 @@
-/**
- * @module Service (Cancellation)
- * @description Defines the interface and Context.Tag for the CancellationTokenProvider service.
+/*
+ * File: Cocoon/Source/Service/Cancellation/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the CancellationTokenProvider service.
  * This service manages cancellation tokens for long-running RPC operations.
  */
 
@@ -23,8 +24,6 @@ export default class CancellationService extends Context.Tag(
 		 */
 		readonly ObtainToken: (
 			TokenID: number,
-
-			// FIXED: No more Scope requirement.
 		) => Effect.Effect<CancellationToken, InvalidTokenIDError>;
 
 		/**

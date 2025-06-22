@@ -1,6 +1,7 @@
-/**
- * @module Live (Document)
- * @description The live implementation Layer for the Document service.
+/*
+ * File: Cocoon/Source/Service/Document/Live.ts
+ *
+ * This file provides the live implementation Layer for the Document service.
  */
 
 import { Layer } from "effect";

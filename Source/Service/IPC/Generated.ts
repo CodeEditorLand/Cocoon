@@ -1,10 +1,11 @@
-/**
- * @module Generated (IPC)
- * @description This module re-exports all the message and client types that are
+/*
+ * File: Cocoon/Source/Service/IPC/Generated.ts
+ *
+ * This module re-exports all the message and client types that are
  * automatically generated from the `vine.proto` file by a tool like `ts-proto`.
  * This provides a single, stable import path for the rest of the application.
  *
- * Note: This file is a placeholder for the actual generated code.
+ * NOTE: This file is a placeholder for the actual generated code.
  */
 
 // --- Synthesized Placeholder Types ---
@@ -14,19 +15,14 @@ class Empty {}
 
 class GenericRequest {
 	setRequestid(_ID: number) {}
-
 	setMethod(_Method: string) {}
-
 	setParams(_Parameters: any) {}
-
 	getRequestid(): number {
 		return 0;
 	}
-
 	getMethod(): string {
 		return "";
 	}
-
 	getParams(): any {
 		return undefined;
 	}
@@ -34,9 +30,7 @@ class GenericRequest {
 
 class GenericResponse {
 	setRequestid(_ID: number) {}
-
 	setResult(_Result: any) {}
-
 	getResult(): any {
 		return undefined;
 	}
@@ -44,21 +38,16 @@ class GenericResponse {
 
 class GenericNotification {
 	private Method = "";
-
 	private Parameter: any;
-
 	setMethod(Method: string) {
 		this.Method = Method;
 	}
-
 	setParams(Parameters: any) {
 		this.Parameter = Parameters;
 	}
-
 	getMethod(): string {
-		return this.method;
+		return this.Method;
 	}
-
 	getParams(): any {
 		return this.Parameter;
 	}
@@ -72,7 +61,6 @@ class CancelOperationRequest {
 
 class RPCDataPayload {
 	setBuffer(_Buffer: Uint8Array) {}
-
 	getBuffer_asU8(): Uint8Array {
 		return new Uint8Array();
 	}
@@ -80,9 +68,7 @@ class RPCDataPayload {
 
 export interface MountainService {
 	processCocoonRequest(Request: GenericRequest): Promise<GenericResponse>;
-
 	sendCocoonNotification(Notification: GenericNotification): Promise<Empty>;
-
 	sendRPCDataToMountain(Payload: RPCDataPayload): Promise<Empty>;
 }
 
@@ -93,16 +79,10 @@ const MountainServiceClient = (() => {}) as unknown as {
 
 export default {
 	Empty,
-
 	GenericRequest,
-
 	GenericResponse,
-
 	GenericNotification,
-
 	CancelOperationRequest,
-
 	RPCDataPayload,
-
 	MountainServiceClient,
 };

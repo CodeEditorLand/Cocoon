@@ -1,10 +1,8 @@
 /*
  * File: Cocoon/Source/Service/SourceControlManagement/Service.ts
- * Role: Defines the interface and Context.Tag for the Source Control Management (SourceControlManagement) service.
- * Responsibilities:
- *   1. Declare the contract for the SourceControlManagement service, which allows extensions to create
- *      and manage SourceControl instances.
- *   2. This is the public API surface consumed by other services or the API factory.
+ *
+ * This file defines the interface and Context.Tag for the Source Control Management service.
+ * Its responsibilities are to declare the contract for creating and managing SourceControl instances.
  */
 
 import { Context } from "effect";
@@ -23,9 +21,7 @@ export default class SourceControlManagementService extends Context.Tag(
 		 */
 		readonly CreateSourceControl: (
 			Id: string,
-
 			Label: string,
-
 			RootURI?: Uri,
 		) => SourceControl;
 
@@ -33,7 +29,5 @@ export default class SourceControlManagementService extends Context.Tag(
 		 * Provides a readonly list of all source control instances.
 		 */
 		readonly Providers: readonly SourceControl[];
-
-		// ... other SourceControlManagement service properties and events
 	}
 >() {}

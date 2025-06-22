@@ -1,6 +1,7 @@
-/**
- * @module Definition (HostKindPicker)
- * @description The live implementation of the HostKindPicker service.
+/*
+ * File: Cocoon/Source/Core/HostKindPicker/Definition.ts
+ *
+ * This file contains the live implementation of the HostKindPicker service.
  */
 
 import { Effect } from "effect";

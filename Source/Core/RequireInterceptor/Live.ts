@@ -1,6 +1,7 @@
-/**
- * @module Live (RequireInterceptor)
- * @description The live implementation layer for the RequireInterceptor service.
+/*
+ * File: Cocoon/Source/Core/RequireInterceptor/Live.ts
+ *
+ * This file provides the live implementation layer for the RequireInterceptor service.
  */
 
 import { Layer } from "effect";

@@ -1,6 +1,7 @@
-/**
- * @module Live (Localization)
- * @description The live implementation Layer for the Localization service.
+/*
+ * File: Cocoon/Source/Service/Localization/Live.ts
+ *
+ * This file provides the live implementation Layer for the Localization service.
  */
 
 import { Layer } from "effect";

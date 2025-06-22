@@ -1,6 +1,7 @@
-/**
- * @module Live (IPC)
- * @description This module provides the composed "live" Layer for the entire IPC service.
+/*
+ * File: Cocoon/Source/Service/IPC/Live.ts
+ *
+ * This file provides the composed "live" Layer for the entire IPC service.
  * It brings together the client, server, dispatcher, and protocol adapter into
  * a single, manageable layer.
  */
@@ -22,14 +23,10 @@ import Service from "./Service.js";
  */
 const IPCInternalComponents = Layer.mergeAll(
 	ClientLive,
-
 	ServerLive,
-
 	DispatcherLive,
-
 	ProtocolAdapterLive,
-
-	// The Dispatcher requires the CancellationService, so we include it here.
+	// The Dispatcher requires the CancellationService
 	CancellationLive,
 );
 
@@ -54,11 +51,8 @@ const IPCServiceLive = Layer.effect(Service, Definition);
  *
  * This layer is constructed by providing the fully resolved internal dependencies layer
  * to the main IPC service layer. The potential `gRPCConnectionError` from the
-- * internal dependencies is treated as a fatal defect using `Layer.orDie`,
-
-- * ensuring the final layer has a `never` error channel.
-+ * internal dependencies is treated as a fatal defect, ensuring the final layer has a
-+ * `never` error channel.
+ * internal dependencies is treated as a fatal defect, ensuring the final layer has a
+ * `never` error channel.
  */
 const IPCLive: Layer.Layer<Service, never, IPCConfigurationService> =
 	IPCServiceLive.pipe(Layer.provide(IPCInternalDepsLive), Layer.orDie);

@@ -1,6 +1,7 @@
-/**
- * @module BlockNativesModule (PatchProcess)
- * @description An Effect that patches Node.js's internal module loader to
+/*
+ * File: Cocoon/Source/PatchProcess/BlockNativesModule.ts
+ *
+ * This file contains an Effect that patches Node.js's internal module loader to
  * block the loading of the deprecated 'natives' module.
  */
 
@@ -32,7 +33,6 @@ const BlockNativesModuleEffect = Effect.try({
 	try: () => {
 		if (typeof (Module as any)._load === "function") {
 			const OriginalLoad = (Module as any)._load;
-
 			(Module as any)._load = function (
 				Request: string,
 				Parent: any,

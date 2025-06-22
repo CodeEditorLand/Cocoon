@@ -1,6 +1,7 @@
-/**
- * @module Definition (IPC/ProtocolAdapter)
- * @description The live implementation of the `ProtocolAdapter` service.
+/*
+ * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Definition.ts
+ *
+ * This file contains the live implementation of the `ProtocolAdapter` service.
  * This adapter is responsible for handling raw binary data communication for
  * VS Code's core RPC mechanism.
  */
@@ -35,24 +36,19 @@ export default Effect.gen(function* () {
 		Effect.tryPromise({
 			try: () => {
 				const Payload = new Generated.RPCDataPayload();
-
 				Payload.setBuffer(Buffer.buffer);
-
 				// The gRPC method is assumed to be available on the client service.
 				return Client.sendRPCDataToMountain(Payload);
 			},
-
 			catch: (cause) =>
 				new IPCError({
 					cause,
-
 					context: "sendRPCDataToMountain failed",
 				}),
 		}).pipe(
 			Effect.catchAll((error) =>
 				Effect.logError("Failed to send RPC data via gRPC", error),
 			),
-
 			Effect.asVoid,
 		);
 
@@ -65,9 +61,7 @@ export default Effect.gen(function* () {
 		send: (Buffer) => {
 			Effect.runFork(Send(Buffer));
 		},
-
 		onMessage: OnMessageEmitter.event,
-
 		/**
 		 * An `Effect` that processes incoming raw data from `Mountain` by
 		 * firing the `onMessage` event.

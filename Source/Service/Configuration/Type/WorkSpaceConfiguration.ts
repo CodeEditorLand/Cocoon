@@ -1,6 +1,7 @@
-/**
- * @module WorkSpaceConfiguration (Configuration/Type)
- * @description Defines types for the Configuration service, primarily an alias
+/*
+ * File: Cocoon/Source/Service/Configuration/Type/WorkSpaceConfiguration.ts
+ *
+ * This file defines types for the Configuration service, primarily an alias
  * for the `vscode.WorkspaceConfiguration` interface.
  */
 

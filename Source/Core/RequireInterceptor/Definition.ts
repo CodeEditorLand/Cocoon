@@ -1,7 +1,8 @@
-/**
- * @module Definition (RequireInterceptor)
- * @description The live implementation of the RequireInterceptor service. It
- * patches Node.js's `require` function to intercept module loads.
+/*
+ * File: Cocoon/Source/Core/RequireInterceptor/Definition.ts
+ *
+ * This file contains the live implementation of the RequireInterceptor service.
+ * It patches Node.js's `require` function to intercept module loads.
  */
 
 import * as Module from "node:module";
@@ -22,11 +23,8 @@ import type Service from "./Service.js";
  */
 export default Effect.gen(function* (G) {
 	const APIFactory = yield* G(APIFactoryService);
-
 	const ExtensionPath = yield* G(ExtensionPathService);
-
 	const Log = yield* G(LogService);
-
 	const NodeModuleShim = yield* G(NodeModuleShimService);
 
 	const Factories = new Map<string, INodeModuleFactory>([
@@ -34,7 +32,6 @@ export default Effect.gen(function* (G) {
 	]);
 
 	const OriginalRequire = Module.prototype.require;
-
 	let IsInstalled = false;
 
 	const InstallEffect = () =>
@@ -47,21 +44,16 @@ export default Effect.gen(function* (G) {
 				Effect.sync(() => {
 					(Module.prototype as any).require = function (
 						this: NodeModule,
-
 						Request: string,
 					): any {
 						const Factory = Factories.get(Request);
-
 						if (Factory) {
 							const ParentURI = this.filename
 								? URI.file(this.filename)
 								: URI.parse("unknown:/unknown");
-
 							return Factory.Load(
 								Request,
-
 								ParentURI as Uri,
-
 								(Req) => OriginalRequire.call(this, Req),
 							);
 						}
@@ -70,13 +62,10 @@ export default Effect.gen(function* (G) {
 							const ParentURI = this.filename
 								? URI.file(this.filename)
 								: URI.parse("unknown:/unknown");
-
 							const ShimResult = NodeModuleShim.Load(
 								Request,
-
 								ParentURI as Uri,
 							);
-
 							if (Exit.isSuccess(ShimResult)) {
 								return ShimResult.value;
 							} else {
@@ -86,7 +75,6 @@ export default Effect.gen(function* (G) {
 
 						return OriginalRequire.call(this, Request);
 					};
-
 					IsInstalled = true;
 				}),
 			);

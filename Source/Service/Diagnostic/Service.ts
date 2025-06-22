@@ -1,10 +1,9 @@
 /*
  * File: Cocoon/Source/Service/Diagnostic/Service.ts
- * Role: Defines the interface and Context.Tag for the Diagnostic service.
- * Responsibilities:
- *   1. Declare the contract for the Diagnostic service, which provides access to
- *      creating diagnostic collections and listening for changes.
- *   2. This is the public API surface consumed by other services or the API factory.
+ *
+ * This file defines the interface and Context.Tag for the Diagnostic service. Its
+ * responsibilities are to declare the contract for providing access to creating
+ * diagnostic collections and listening for changes.
  */
 
 import { Context } from "effect";

@@ -1,6 +1,7 @@
-/**
- * @module Service (Authentication)
- * @description Defines the interface and Context.Tag for the Authentication service.
+/*
+ * File: Cocoon/Source/Service/Authentication/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the Authentication service.
  */
 
 import { Context, type Effect } from "effect";
@@ -28,11 +29,8 @@ export default class AuthenticationService extends Context.Tag(
 		 */
 		readonly GetSession: (
 			RequestingExtension: Extension<any>,
-
 			ProviderID: string,
-
 			Scopes: readonly string[],
-
 			Options: AuthenticationGetSessionOptions,
 		) => Effect.Effect<AuthenticationSession | undefined, Error>;
 
@@ -41,9 +39,7 @@ export default class AuthenticationService extends Context.Tag(
 		 */
 		readonly ListSessions: (
 			RequestingExtension: Extension<any>,
-
 			ProviderID: string,
-
 			Scopes?: readonly string[],
 		) => Effect.Effect<readonly AuthenticationSession[], Error>;
 
@@ -52,11 +48,8 @@ export default class AuthenticationService extends Context.Tag(
 		 */
 		readonly RegisterAuthenticationProvider: (
 			ID: string,
-
 			Label: string,
-
 			Provider: AuthenticationProvider,
-
 			Options?: { readonly supportsMultipleAccounts?: boolean },
 		) => Effect.Effect<
 			IDisposable,

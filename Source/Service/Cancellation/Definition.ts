@@ -1,6 +1,7 @@
-/**
- * @module Definition (Cancellation)
- * @description The live implementation of the CancellationTokenProvider service.
+/*
+ * File: Cocoon/Source/Service/Cancellation/Definition.ts
+ *
+ * This file contains the live implementation of the CancellationTokenProvider service.
  */
 
 import { Effect, HashMap, Ref } from "effect";
@@ -17,9 +18,8 @@ export default Effect.gen(function* () {
 		HashMap.empty<number, CancellationTokenSource>(),
 	);
 
-	// FIXED: `ObtainToken` now encapsulates its scope management.
+	// This method encapsulates the scope management for a cancellation token.
 	const ObtainToken = (TokenID: number) => {
-		// Define the scoped effect that acquires and releases the token source.
 		const acquireAndReleaseToken = Effect.acquireRelease(
 			Effect.gen(function* () {
 				if (TokenID <= 0) {
@@ -27,66 +27,50 @@ export default Effect.gen(function* () {
 						new InvalidTokenIDError({ TokenID }),
 					);
 				}
-
 				const existingSource = yield* Ref.get(SourceMap).pipe(
 					Effect.map(HashMap.get(TokenID)),
 				);
-
 				if (existingSource._tag === "Some") {
 					yield* Effect.logTrace(
 						`Reusing CancellationTokenSource for TokenID: ${TokenID}.`,
 					);
-
 					return existingSource.value;
 				}
-
 				const newSource = new CancellationTokenSource();
-
 				yield* Ref.update(SourceMap, HashMap.set(TokenID, newSource));
-
 				yield* Effect.logTrace(
 					`Created new CancellationTokenSource for TokenID: ${TokenID}.`,
 				);
-
 				return newSource;
 			}),
-
 			(source) =>
 				Ref.get(SourceMap).pipe(
 					Effect.flatMap((map) => {
 						const currentSource = HashMap.get(map, TokenID);
-
 						if (
 							currentSource._tag === "Some" &&
 							currentSource.value === source
 						) {
 							return Ref.update(
 								SourceMap,
-
 								HashMap.remove(TokenID),
 							).pipe(
 								Effect.tap(() => {
 									source.dispose();
-
 									return Effect.logTrace(
 										`Disposed and removed CancellationTokenSource for TokenID: ${TokenID}.`,
 									);
 								}),
 							);
 						}
-
 						return Effect.void;
 					}),
-
 					// Failure to release is a fatal error.
 					Effect.orDie,
 				),
-
-			// Only return the token
 		).pipe(Effect.map((source) => source.token));
 
 		// Use Effect.scoped to run the acquire/release logic in a temporary,
-
 		// self-contained scope that is closed when the consumer's effect ends.
 		return Effect.scoped(acquireAndReleaseToken);
 	};
@@ -98,16 +82,13 @@ export default Effect.gen(function* () {
 					`Attempted to cancel with an invalid TokenID: '${TokenID}'.`,
 				);
 			}
-
 			const maybeSource = yield* Ref.get(SourceMap).pipe(
 				Effect.map(HashMap.get(TokenID)),
 			);
-
 			if (maybeSource._tag === "Some") {
 				yield* Effect.logDebug(
 					`Received cancellation signal. Cancelling operation for TokenID: ${TokenID}.`,
 				);
-
 				maybeSource.value.cancel();
 			} else {
 				yield* Effect.logWarning(
@@ -125,19 +106,14 @@ export default Effect.gen(function* () {
 					)}) managed CancellationTokenSources.`,
 				),
 			),
-
 			Effect.flatMap((map) =>
 				Effect.forEach(
 					HashMap.values(map),
-
 					(source) => Effect.sync(() => source.dispose()),
-
 					{ discard: true, concurrency: "unbounded" },
 				),
 			),
-
 			Effect.flatMap(() => Ref.set(SourceMap, HashMap.empty())),
-
 			Effect.tap(() =>
 				Effect.logTrace(
 					"All CancellationTokenSources disposed and map cleared.",
@@ -145,15 +121,13 @@ export default Effect.gen(function* () {
 			),
 		);
 
-	// BEST PRACTICE: Register DisposeAll as a finalizer for the service's own scope.
+	// Register DisposeAll as a finalizer for the service's own scope.
 	// This ensures cleanup happens automatically when the application shuts down.
 	yield* Effect.addFinalizer(() => DisposeAll());
 
 	const ServiceImplementation: Service["Type"] = {
 		ObtainToken,
-
 		CancelToken,
-
 		DisposeAll,
 	};
 

@@ -1,6 +1,7 @@
-/**
- * @module Service (QuickInput)
- * @description Defines the interface and Context.Tag for the QuickInput service.
+/*
+ * File: Cocoon/Source/Service/QuickInput/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the QuickInput service.
  * This service implements the `vscode.window.showQuickPick` and `showInputBox` APIs.
  */
 
@@ -27,9 +28,7 @@ export default class QuickInputService extends Context.Tag(
 		 */
 		readonly ShowQuickPick: <T extends QuickPickItem>(
 			Items: readonly T[] | Promise<readonly T[]>,
-
 			Option?: QuickPickOptions,
-
 			Token?: CancellationToken,
 		) => Effect.Effect<T | T[] | undefined, Error>;
 
@@ -40,7 +39,6 @@ export default class QuickInputService extends Context.Tag(
 		 */
 		readonly ShowInputBox: (
 			Option?: InputBoxOptions,
-
 			Token?: CancellationToken,
 		) => Effect.Effect<string | undefined, Error>;
 

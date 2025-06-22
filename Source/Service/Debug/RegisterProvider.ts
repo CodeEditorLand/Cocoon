@@ -1,6 +1,7 @@
-/**
- * @module RegisterProvider (Debug)
- * @description A generic helper Effect for registering debug-related providers
+/*
+ * File: Cocoon/Source/Service/Debug/RegisterProvider.ts
+ *
+ * This file contains a generic helper Effect for registering debug-related providers
  * (e.g., `DebugConfigurationProvider`, `DebugAdapterDescriptorFactory`).
  */
 
@@ -23,20 +24,15 @@ let HandleCounter = 0;
  */
 const RegisterProviderEffect = <T>(
 	Registry: Ref.Ref<Map<number, T>>,
-
 	Data: T,
 ): Effect.Effect<Disposable, DebugProviderRegistrationError, IPCService> => {
 	return Effect.gen(function* (G) {
 		const IPC = yield* G(IPCService);
-
 		const Handle = ++HandleCounter;
-
 		yield* G(Ref.update(Registry, (Map) => Map.set(Handle, Data)));
-
 		yield* G(
 			IPC.SendNotification("$registerDebugConfigurationProvider", [
 				Handle,
-
 				// The data object is known to have a 'type' property.
 				(Data as any).Type,
 			]).pipe(
@@ -44,7 +40,6 @@ const RegisterProviderEffect = <T>(
 					(cause) =>
 						new DebugProviderRegistrationError({
 							DebugType: (Data as any).Type,
-
 							cause,
 						}),
 				),
@@ -52,10 +47,8 @@ const RegisterProviderEffect = <T>(
 		);
 
 		// Define the cleanup logic as a separate Effect.
-		// It will close over the `IPC` instance from the parent scope.
 		const CleanupEffect = Effect.gen(function* (G) {
 			yield* G(Ref.update(Registry, (Map) => (Map.delete(Handle), Map)));
-
 			yield* G(
 				IPC.SendNotification("$unregisterDebugConfigurationProvider", [
 					Handle,

@@ -1,6 +1,7 @@
-/**
- * @module Live (IPC/Server)
- * @description Provides a `Layer` for the managed gRPC server, which listens
+/*
+ * File: Cocoon/Source/Service/IPC/Server/Live.ts
+ *
+ * This file provides a `Layer` for the managed gRPC server, which listens
  * for incoming requests from the `Mountain` backend.
  */
 

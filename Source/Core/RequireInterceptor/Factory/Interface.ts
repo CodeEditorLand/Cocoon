@@ -1,6 +1,7 @@
-/**
- * @module INodeModuleFactory (RequireInterceptor/Factory)
- * @description Defines the interface for a factory that creates module instances
+/*
+ * File: Cocoon/Source/Core/RequireInterceptor/Factory/Interface.ts
+ *
+ * This file defines the interface for a factory that creates module instances
  * for intercepted `require` calls.
  */
 
@@ -21,9 +22,7 @@ export default interface INodeModuleFactory {
 	 */
 	Load(
 		Request: string,
-
 		ParentURI: VSCode.Uri,
-
 		OriginalRequire: (request: string) => any,
 	): any;
 }

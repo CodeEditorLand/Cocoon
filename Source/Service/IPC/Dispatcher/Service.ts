@@ -1,6 +1,7 @@
-/**
- * @module Service (IPC/Dispatcher)
- * @description Defines the interface and Context.Tag for the Dispatcher service.
+/*
+ * File: Cocoon/Source/Service/IPC/Dispatcher/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the Dispatcher service.
  * This service is the central router for all incoming RPC messages from the
  * Mountain host.
  */
@@ -13,13 +14,11 @@ export default class DispatcherService extends Context.Tag("IPC/Dispatcher")<
 	{
 		readonly DispatchRequest: (
 			Method: string,
-
 			ParameterArray: readonly any[],
 		) => Effect.Effect<any, Error>;
 
 		readonly DispatchNotification: (
 			Method: string,
-
 			ParameterArray: readonly any[],
 		) => Effect.Effect<void, never>;
 
@@ -33,7 +32,6 @@ export default class DispatcherService extends Context.Tag("IPC/Dispatcher")<
 
 		readonly RegisterInvokeHandler: (
 			Channel: string,
-
 			Handler: (...ArgumentArray: any[]) => Promise<any>,
 		) => Disposable;
 	}

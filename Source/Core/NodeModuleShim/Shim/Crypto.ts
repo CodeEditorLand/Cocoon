@@ -1,6 +1,7 @@
-/**
- * @module Crypto (NodeModuleShim/Shim)
- * @description A controlled shim for the Node.js `crypto` module.
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Shim/Crypto.ts
+ *
+ * This file provides a controlled shim for the Node.js `crypto` module.
  *
  * This shim provides a safe subset of the `crypto` module's functionality to extensions.
  * It directly delegates common, safe operations (like hashing and random data generation)
@@ -25,35 +26,23 @@ const CreateStub = (Name: string) => {
 };
 
 /**
- * The shim object for the `crypto` module.
+ * Creates the shim object for the `crypto` module.
  */
 const CreateCryptoShim = () => {
 	return {
 		// --- Direct Delegations (Safe Functions) ---
 		createHash: NodeCrypto.createHash,
-
 		createHmac: NodeCrypto.createHmac,
-
 		randomBytes: NodeCrypto.randomBytes,
-
 		getRandomValues: NodeCrypto.getRandomValues,
-
 		randomUUID: NodeCrypto.randomUUID,
-
 		randomFill: NodeCrypto.randomFill,
-
 		randomFillSync: NodeCrypto.randomFillSync,
-
 		pbkdf2: NodeCrypto.pbkdf2,
-
 		pbkdf2Sync: NodeCrypto.pbkdf2Sync,
-
 		timingSafeEqual: NodeCrypto.timingSafeEqual,
-
 		getHashes: NodeCrypto.getHashes,
-
 		getCiphers: NodeCrypto.getCiphers,
-
 		constants: NodeCrypto.constants,
 
 		// --- Blocked / Stubbed Functions (Sensitive or Complex) ---
@@ -61,19 +50,12 @@ const CreateCryptoShim = () => {
 			typeof NodeCrypto.generatePrime === "function"
 				? CreateStub("generatePrime")
 				: undefined,
-
 		generateKeyPair: CreateStub("generateKeyPair"),
-
 		generateKeyPairSync: CreateStub("generateKeyPairSync"),
-
 		createCipheriv: CreateStub("createCipheriv"),
-
 		createDecipheriv: CreateStub("createDecipheriv"),
-
 		createSign: CreateStub("createSign"),
-
 		createVerify: CreateStub("createVerify"),
-
 		// Add other sensitive functions to the blocklist as needed.
 	};
 };

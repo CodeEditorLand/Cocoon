@@ -1,6 +1,7 @@
-/**
- * @module State (ExtensionHost)
- * @description Defines the internal state representation for an activated extension.
+/*
+ * File: Cocoon/Source/Core/ExtensionHost/State.ts
+ *
+ * This file defines the internal state representation for an activated extension.
  * This interface holds all the relevant information about an extension after its
  * `activate()` function has been successfully called.
  */

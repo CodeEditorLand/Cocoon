@@ -1,6 +1,7 @@
-/**
- * @module Service (ExtensionHost)
- * @description Defines the interface and Context.Tag for the ExtensionHost service.
+/*
+ * File: Cocoon/Source/Core/ExtensionHost/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the ExtensionHost service.
  * This service is the core engine responsible for managing the lifecycle of all
  * extensions: loading, activating, and deactivating them.
  */
@@ -53,10 +54,10 @@ export default class ExtensionHostService extends Context.Tag(
 		 * Gets the exports of an activated extension.
 		 * @param ID The identifier of the extension.
 		 * @returns An `Effect` that resolves to the `exports` object, or `undefined`.
+		 *          The effect can fail if the extension failed to activate.
 		 */
 		readonly GetExtensionExports: (
 			ID: ExtensionIdentifier,
-			// The effect can fail if the extension failed to activate.
 		) => Effect.Effect<any, Error>;
 
 		/**

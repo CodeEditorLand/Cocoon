@@ -1,6 +1,7 @@
-/**
- * @module Definition (FileSystemInformation)
- * @description The live implementation of the FileSystemInformation service.
+/*
+ * File: Cocoon/Source/Service/FileSystemInformation/Definition.ts
+ *
+ * This file contains the live implementation of the FileSystemInformation service.
  */
 
 import { Effect, HashMap, Ref } from "effect";
@@ -20,7 +21,6 @@ import type Service from "./Service.js";
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
-
 	const Log = yield* G(LogService);
 
 	const CapabilitiesMapRef = yield* G(
@@ -33,43 +33,36 @@ export default Effect.gen(function* (G) {
 	const GetCapabilitiesEffect = (Scheme: string) =>
 		Ref.get(CapabilitiesMapRef).pipe(
 			Effect.map(HashMap.get(Scheme)),
-
 			Effect.map((MaybeCapabilities) => {
 				if (MaybeCapabilities._tag === "Some") {
 					return MaybeCapabilities.value;
 				}
-
 				if (Scheme === "file") {
 					return isWindows
 						? FileSystemProviderCapabilities.FileReadWrite
 						: FileSystemProviderCapabilities.FileReadWrite |
 								FileSystemProviderCapabilities.PathCaseSensitive;
 				}
-
 				return undefined;
 			}),
 		);
 
 	const ExtURIInstance: IExtUri = new ExtUri((Uri) => {
 		const Capabilities = Effect.runSync(GetCapabilitiesEffect(Uri.scheme));
-
 		const IgnoreCase = Capabilities
 			? !(Capabilities & FileSystemProviderCapabilities.PathCaseSensitive)
 			: isWindows;
-
 		Effect.runFork(
 			Log.Trace(
 				`ExtURI check for scheme '${Uri.scheme}', ignoring case: ${IgnoreCase}`,
 			),
 		);
-
 		return IgnoreCase;
 	});
 
 	// --- RPC Handler ---
 	const AcceptProviderCapabilitiesEffect = (
 		Scheme: string,
-
 		Capabilities: FileSystemProviderCapabilities | null,
 	) =>
 		Effect.gen(function* (G) {
@@ -77,7 +70,6 @@ export default Effect.gen(function* (G) {
 				yield* G(
 					Ref.update(CapabilitiesMapRef, HashMap.remove(Scheme)),
 				);
-
 				yield* G(
 					Log.Trace(`Cleared capabilities for scheme '${Scheme}'.`),
 				);
@@ -85,11 +77,9 @@ export default Effect.gen(function* (G) {
 				yield* G(
 					Ref.update(
 						CapabilitiesMapRef,
-
 						HashMap.set(Scheme, Capabilities),
 					),
 				);
-
 				yield* G(
 					Log.Trace(
 						`Updated capabilities for scheme '${Scheme}' to: ${Capabilities}`,
@@ -100,7 +90,6 @@ export default Effect.gen(function* (G) {
 
 	IPC.RegisterInvokeHandler(
 		"$acceptProviderInfos",
-
 		([Scheme, Capabilities]) =>
 			Effect.runPromise(
 				AcceptProviderCapabilitiesEffect(Scheme, Capabilities),
@@ -112,7 +101,6 @@ export default Effect.gen(function* (G) {
 			FireFileChangeEvent(
 				Events.map((Event: any) => ({
 					type: Event.type,
-
 					uri: URIConverter.ToAPI(Event.uri),
 				})),
 			),
@@ -121,14 +109,10 @@ export default Effect.gen(function* (G) {
 
 	const ServiceImplementation: Service["Type"] = {
 		ExtURI: ExtURIInstance,
-
 		GetCapabilities: GetCapabilitiesEffect,
-
 		onDidChangeFile: OnDidChangeFileEvent,
-
 		isWritableFileSystem: (Scheme) => {
 			const Capabilities = Effect.runSync(GetCapabilitiesEffect(Scheme));
-
 			return Capabilities
 				? !(Capabilities & FileSystemProviderCapabilities.Readonly)
 				: true;

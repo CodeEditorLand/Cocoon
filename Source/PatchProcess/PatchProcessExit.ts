@@ -1,7 +1,8 @@
-/**
- * @module PatchProcessExit (PatchProcess)
- * @description An Effect that patches the global `process.exit` function, allowing
- * the host to control whether the process is allowed to terminate.
+/*
+ * File: Cocoon/Source/PatchProcess/PatchProcessExit.ts
+ *
+ * This file contains an Effect that patches the global `process.exit` function,
+ * allowing the host to control whether the process is allowed to terminate.
  */
 
 import { Effect } from "effect";
@@ -24,7 +25,6 @@ const PatchProcessExitEffect = Effect.gen(function* (G) {
 					})' was called and ALLOWED by host policy. Terminating.`,
 				),
 			);
-
 			return ProcessPatch.NativeExit(Code);
 		}
 
@@ -34,14 +34,12 @@ const PatchProcessExitEffect = Effect.gen(function* (G) {
 
 		const PreventionError = new ExitPreventedError({
 			message: ErrorMessage,
-
 			AttemptedCode: Code,
 		});
 
 		Effect.runSync(
 			Effect.logWarning(
 				"Blocked call to process.exit by host policy.",
-
 				PreventionError,
 			),
 		);

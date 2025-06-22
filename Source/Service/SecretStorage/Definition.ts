@@ -1,6 +1,7 @@
-/**
- * @module Definition (SecretStorage)
- * @description The live implementation of the SecretStorage service factory.
+/*
+ * File: Cocoon/Source/Service/SecretStorage/Definition.ts
+ *
+ * This file contains the live implementation of the SecretStorage service factory.
  */
 
 import { Effect } from "effect";
@@ -15,7 +16,6 @@ import type Service from "./Service.js";
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
-
 	const Log = yield* G(LogService);
 
 	const SecretStorageFactoryImplementation: Service["Type"] = {
@@ -25,7 +25,6 @@ export default Effect.gen(function* (G) {
 					`Created SecretStorage for extension: '${ExtensionID}'`,
 				),
 			);
-
 			return new SecretStorageImplementation(ExtensionID, IPC, Log);
 		},
 	};

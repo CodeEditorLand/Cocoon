@@ -1,11 +1,9 @@
 /*
  * File: Cocoon/Source/Service/StatusBar/Definition.ts
- * Role: The live implementation of the StatusBar service.
- * Responsibilities:
- *   1. Provides factory methods for creating status bar items (`createStatusBarItem`).
- *   2. Manages the display of temporary status bar messages (`setStatusBarMessage`).
- *   3. Proxies all status bar state changes to the Mountain host process via IPC.
- *   4. Tracks active status bar items created by extensions.
+ *
+ * This file contains the live implementation of the StatusBar service. Its responsibilities
+ * include providing factory methods for creating status bar items, managing temporary
+ * messages, proxying state changes to the host, and tracking active items.
  */
 
 import { Effect, Ref } from "effect";
@@ -23,9 +21,7 @@ import StatusBarItemImplementation from "./StatusBarItemImplementation.js";
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
-
 	const Command = yield* G(CommandService);
-
 	const ActiveItemsRef = yield* G(
 		Ref.make(new Map<string, StatusBarItemImplementation>()),
 	);
@@ -33,27 +29,21 @@ export default Effect.gen(function* (G) {
 	const StatusBarImplementation: Service["Type"] = {
 		CreateStatusBarItem: (
 			Extension: IExtensionDescription,
-
 			ID?: string,
-
 			Alignment?: StatusBarAlignment,
-
 			Priority?: number,
 		) =>
 			Effect.sync(() => {
 				// Internal, unique ID for this instance.
 				const EntryID = GenerateUUID();
-
 				const ItemID = ID ?? `${Extension.identifier.value}.${EntryID}`;
-
 				const FinalAlignment = Alignment ?? StatusBarAlignment.Left;
 
+				// Callback for when the item is disposed, to remove it from the active map.
 				const OnDispose = () => {
-					// Callback for when the item is disposed, to remove it from the active map.
 					Effect.runSync(
 						Ref.update(
 							ActiveItemsRef,
-
 							(Map) => (Map.delete(EntryID), Map),
 						),
 					);
@@ -61,19 +51,12 @@ export default Effect.gen(function* (G) {
 
 				const Entry = new StatusBarItemImplementation(
 					EntryID,
-
 					Extension.identifier.value,
-
 					IPC,
-
 					Command,
-
 					OnDispose,
-
 					ItemID,
-
 					FinalAlignment,
-
 					Priority,
 				);
 
@@ -82,32 +65,27 @@ export default Effect.gen(function* (G) {
 						Map.set(EntryID, Entry),
 					),
 				);
-
 				return Entry;
 			}),
 
 		SetStatusBarMessage: (Text, HideOrPromise) => {
 			const HideId = `status.message.${GenerateUUID()}`;
-
 			const ShowEffect = IPC.SendNotification("$setStatusBarMessage", [
 				HideId,
-
 				Text,
 			]);
-
 			const HideEffect = IPC.SendNotification(
 				"$disposeStatusBarMessage",
-
 				[HideId],
 			);
 
 			Effect.runFork(ShowEffect);
 
 			if (typeof HideOrPromise === "number") {
-				// Hide after a timeout.
+				// Hide after a timeout
 				setTimeout(() => Effect.runFork(HideEffect), HideOrPromise);
 			} else if (HideOrPromise) {
-				// Hide when the promise resolves.
+				// Hide when the promise resolves
 				HideOrPromise.then(() => Effect.runFork(HideEffect));
 			}
 

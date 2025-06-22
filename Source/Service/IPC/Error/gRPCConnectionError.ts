@@ -1,3 +1,10 @@
+/*
+ * File: Cocoon/Source/Service/IPC/Error/gRPCConnectionError.ts
+ *
+ * This file defines a structured error for failures during a gRPC connection
+ * attempt or server setup.
+ */
+
 import { Data } from "effect";
 
 /**
@@ -12,7 +19,6 @@ export class GPCConnectionError extends Data.TaggedError(
 	"gRPCConnectionError",
 )<{
 	readonly Cause: unknown;
-
 	readonly Context:
 		| "ProtoLoadFailed"
 		| "ClientInstantiationFailed"

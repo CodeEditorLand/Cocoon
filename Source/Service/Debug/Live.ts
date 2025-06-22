@@ -1,6 +1,7 @@
-/**
- * @module Live (Debug)
- * @description This module provides the `Live` implementation Layer for the Debug service.
+/*
+ * File: Cocoon/Source/Service/Debug/Live.ts
+ *
+ * This file provides the `Live` implementation Layer for the Debug service.
  */
 
 import { Layer } from "effect";
@@ -15,7 +16,6 @@ import Service from "./Service.js";
  */
 const Live: Layer.Layer<Service, never, IPCService> = Layer.effect(
 	Service,
-
 	Definition,
 );
 

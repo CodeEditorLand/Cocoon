@@ -1,6 +1,7 @@
-/**
- * @module Service (IPC/ProtocolAdapter)
- * @description Defines the service interface and `Context.Tag` for the
+/*
+ * File: Cocoon/Source/Service/IPC/ProtocolAdapter/Service.ts
+ *
+ * This file defines the service interface and `Context.Tag` for the
  * `ProtocolAdapter`. This adapter allows VS Code's `RPCProtocol` to use
  * our gRPC implementation as its underlying transport layer.
  */

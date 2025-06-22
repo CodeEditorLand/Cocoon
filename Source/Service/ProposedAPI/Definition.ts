@@ -1,6 +1,7 @@
-/**
- * @module Definition (ProposedAPI)
- * @description The live implementation of the ProposedAPI service.
+/*
+ * File: Cocoon/Source/Service/ProposedAPI/Definition.ts
+ *
+ * This file contains the live implementation of the ProposedAPI service.
  */
 
 import { Effect, HashMap } from "effect";
@@ -14,7 +15,6 @@ function ParseConfiguration(
 	Configuration: string[] | IEnabledApiProposals | undefined,
 ): { GlobalAPIs: Set<string>; ExtensionAPIs: Map<string, Set<string>> } {
 	const GlobalAPIs = new Set<string>();
-
 	const ExtensionAPIs = new Map<string, Set<string>>();
 
 	if (Array.isArray(Configuration)) {
@@ -24,7 +24,6 @@ function ParseConfiguration(
 	} else if (typeof Configuration === "object" && Configuration !== null) {
 		for (const Key in Configuration) {
 			const Proposals = (Configuration as any)[Key];
-
 			if (Array.isArray(Proposals)) {
 				if (Key === "*") {
 					for (const Proposal of Proposals) {
@@ -33,45 +32,35 @@ function ParseConfiguration(
 				} else {
 					const ExistingSet =
 						ExtensionAPIs.get(Key) ?? new Set<string>();
-
 					for (const Proposal of Proposals) {
 						ExistingSet.add(Proposal);
 					}
-
 					ExtensionAPIs.set(Key, ExistingSet);
 				}
 			}
 		}
 	}
-
 	return { GlobalAPIs, ExtensionAPIs };
 }
 
 export default Effect.gen(function* () {
 	const Log = yield* LogService;
 
-	// According to `extensionHostProtocol.ts`, `IExtensionHostInitData` does not contain a `product` property,
-
-	// and `IEnvironment` does not contain `extensionEnabledApiProposals`.
-	// Therefore, we must assume this configuration is not available via InitData.
-	// The implementation is stubbed to be 'disabled' until the data source is corrected.
+	// NOTE: The `IExtensionHostInitData` interface does not contain a `product` property,
+	// nor does `IEnvironment` contain `extensionEnabledApiProposals`. This is a
+	// divergence from VS Code's setup. This implementation is stubbed to be
+	// 'disabled' until the data source contract is updated.
 	const ProductConfiguration = ParseConfiguration(undefined);
-
 	const EnvironmentConfiguration = ParseConfiguration(undefined);
 
 	const AllGlobalAPIs = new Set([
 		...ProductConfiguration.GlobalAPIs,
-
 		...EnvironmentConfiguration.GlobalAPIs,
 	]);
-
 	const AllExtensionAPIs = new Map(ProductConfiguration.ExtensionAPIs);
-
 	EnvironmentConfiguration.ExtensionAPIs.forEach((Proposals, ExtId) => {
 		const Existing = AllExtensionAPIs.get(ExtId) ?? new Set<string>();
-
 		Proposals.forEach((p) => Existing.add(p));
-
 		AllExtensionAPIs.set(ExtId, Existing);
 	});
 
@@ -88,17 +77,13 @@ export default Effect.gen(function* () {
 			if (AllGlobalAPIs.has(ProposalName)) {
 				return true;
 			}
-
 			const ExtensionProposals = HashMap.get(
 				ReadonlyExtensionAPIs,
-
 				ExtensionID.value,
 			);
-
 			if (ExtensionProposals._tag === "Some") {
 				return ExtensionProposals.value.has(ProposalName);
 			}
-
 			return false;
 		},
 	};

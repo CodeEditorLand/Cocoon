@@ -1,6 +1,7 @@
-/**
- * @module Live (APIDeprecation)
- * @description The live implementation `Layer` for the APIDeprecation service.
+/*
+ * File: Cocoon/Source/Service/APIDeprecation/Live.ts
+ *
+ * This file provides the live implementation `Layer` for the APIDeprecation service.
  */
 
 import { Layer } from "effect";
@@ -15,7 +16,6 @@ import Service from "./Service.js";
  */
 const Live: Layer.Layer<Service, never, LogService> = Layer.effect(
 	Service,
-
 	Definition,
 );
 

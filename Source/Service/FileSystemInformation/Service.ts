@@ -1,6 +1,7 @@
-/**
- * @module Service (FileSystemInformation)
- * @description Defines the interface and Context.Tag for the FileSystemInformation service.
+/*
+ * File: Cocoon/Source/Service/FileSystemInformation/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the FileSystemInformation service.
  */
 
 import { Context, type Effect } from "effect";
@@ -27,7 +28,6 @@ export default class FileSystemInformationService extends Context.Tag(
 		readonly onDidChangeFile: Event<readonly FileChangeEvent[]>;
 
 		/** Checks if a filesystem for a given scheme is writable. */
-		// This should be a method that returns boolean | undefined, not an Effect.
 		readonly isWritableFileSystem: (scheme: string) => boolean | undefined;
 
 		/**

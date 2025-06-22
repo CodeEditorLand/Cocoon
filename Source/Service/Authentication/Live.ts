@@ -1,6 +1,7 @@
-/**
- * @module Live (Authentication)
- * @description The live implementation Layer for the Authentication service.
+/*
+ * File: Cocoon/Source/Service/Authentication/Live.ts
+ *
+ * This file provides the live implementation Layer for the Authentication service.
  */
 
 import { Layer } from "effect";

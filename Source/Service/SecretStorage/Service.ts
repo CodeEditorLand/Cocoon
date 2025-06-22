@@ -1,6 +1,7 @@
-/**
- * @module Service (SecretStorage)
- * @description Defines the interface and Context.Tag for the SecretStorage service factory.
+/*
+ * File: Cocoon/Source/Service/SecretStorage/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the SecretStorage service factory.
  * This service is responsible for creating `SecretStorage` instances that are scoped
  * to a specific extension.
  */

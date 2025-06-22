@@ -1,6 +1,7 @@
-/**
- * @module Live (Log)
- * @description The live implementation `Layer` for the Log service.
+/*
+ * File: Cocoon/Source/Service/Log/Live.ts
+ *
+ * This file provides the live implementation `Layer` for the Log service.
  */
 
 import { Layer } from "effect";

@@ -1,6 +1,7 @@
-/**
- * @module Live (IPC/Client)
- * @description Provides a managed gRPC client connection from `Cocoon` to
+/*
+ * File: Cocoon/Source/Service/IPC/Client/Live.ts
+ *
+ * This file provides a managed gRPC client connection from `Cocoon` to
  * `Mountain`, exposing the connection as a `Layer` that can be used by other
  * services.
  */

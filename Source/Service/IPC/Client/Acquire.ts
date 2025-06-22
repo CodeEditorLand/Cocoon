@@ -1,6 +1,7 @@
-/**
- * @module Acquire (IPC/Client)
- * @description Defines the `Effect` for acquiring and preparing the gRPC client
+/*
+ * File: Cocoon/Source/Service/IPC/Client/Acquire.ts
+ *
+ * This file defines the `Effect` for acquiring and preparing the gRPC client
  * resource, which is responsible for communication with the `Mountain` backend.
  */
 
@@ -26,20 +27,14 @@ const LoadProtoDefinition = (
 		try: () =>
 			protoLoader.load(ProtoPath, {
 				keepCase: true,
-
 				longs: String,
-
 				enums: String,
-
 				defaults: true,
-
 				oneofs: true,
 			}),
-
 		catch: (Cause) =>
 			new gRPCConnectionError({
 				Cause,
-
 				Context: "ProtoLoadFailed",
 			}),
 	});
@@ -51,28 +46,22 @@ const LoadProtoDefinition = (
  */
 const CreateClientInstance = (
 	PackageDefinition: GRPC.GrpcObject,
-
 	ServerAddress: string,
 ): Effect.Effect<ClientInstance, gRPCConnectionError> => {
 	return Effect.try({
 		try: () => {
 			const Proto = PackageDefinition["vine_ipc"] as GRPC.GrpcObject;
-
 			const ClientConstructor = Proto[
 				"MountainService"
 			] as GRPC.ServiceClientConstructor;
-
 			return new ClientConstructor(
 				ServerAddress,
-
 				GRPC.credentials.createInsecure(),
 			) as unknown as ClientInstance;
 		},
-
 		catch: (Cause) =>
 			new gRPCConnectionError({
 				Cause,
-
 				Context: "ClientInstantiationFailed",
 			}),
 	});
@@ -92,7 +81,6 @@ const WaitForClientReady = (
 					Effect.fail(
 						new gRPCConnectionError({
 							Cause: Error,
-
 							Context: "ClientNotReady",
 						}),
 					),
@@ -108,37 +96,25 @@ const WaitForClientReady = (
  * An `Effect` that acquires the gRPC client as a managed resource. This effect
  * handles loading the protocol definition, creating the client, waiting for a
  * connection, and registering a release action.
- * @export
- * @default
  */
 export default Effect.acquireRelease(
 	Effect.gen(function* () {
-		// Step 1: Get the IPC configuration from the context.
 		const Configuration = yield* IPCConfigurationService;
-
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
-		// Step 2: Load the .proto definition and create the gRPC client.
 		const Definition = yield* LoadProtoDefinition(ProtoPath);
-
 		const GrpcObject = GRPC.loadPackageDefinition(Definition);
-
 		const Client = yield* CreateClientInstance(
 			GrpcObject,
-
 			Configuration.MountainAddress,
 		);
 
-		// Step 3: Wait for the client to connect to the server.
 		yield* WaitForClientReady(Client);
-
 		yield* Effect.logInfo(
 			`gRPC client connected to Mountain at ${Configuration.MountainAddress}.`,
 		);
 
-		// Step 4: Return the ready client.
 		return Client;
 	}),
-
 	(Client) => Release(Client),
 );

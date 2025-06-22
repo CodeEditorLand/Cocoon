@@ -1,6 +1,7 @@
-/**
- * @module Definition (APIDeprecation)
- * @description The live implementation of the APIDeprecation service.
+/*
+ * File: Cocoon/Source/Service/APIDeprecation/Definition.ts
+ *
+ * This file contains the live implementation of the APIDeprecation service.
  */
 
 import { Effect } from "effect";
@@ -17,9 +18,7 @@ export default Effect.gen(function* (G) {
 
 	const ReportEffect = (
 		ExtensionID: ExtensionIdentifier,
-
 		Usage: string,
-
 		Message: string,
 	): Effect.Effect<void, never> =>
 		Log.Warn(
@@ -28,23 +27,18 @@ export default Effect.gen(function* (G) {
 
 	const DeprecatedDecorator = (
 		ExtensionID: ExtensionIdentifier,
-
 		Feature: string,
-
 		Message: string,
 	): PropertyDecorator => {
 		const CreateReportEffect = (PropertyName: string | symbol) =>
 			ReportEffect(
 				ExtensionID,
-
 				`${Feature} (property: ${String(PropertyName)})`,
-
 				Message,
 			);
 
 		return (Target: Object, PropertyKey: string | symbol): void => {
 			let BackingField: any = (Target as any)[PropertyKey];
-
 			let HasReported = false;
 
 			const ReportOnce = (Key: string | symbol) => {
@@ -52,25 +46,19 @@ export default Effect.gen(function* (G) {
 					// `runFork` is appropriate here because a property accessor must be
 					// synchronous, but logging is an asynchronous side effect.
 					Effect.runFork(CreateReportEffect(Key));
-
 					HasReported = true;
 				}
 			};
 
 			Object.defineProperty(Target, PropertyKey, {
 				configurable: true,
-
 				enumerable: true,
-
 				get() {
 					ReportOnce(PropertyKey);
-
 					return BackingField;
 				},
-
 				set(NewValue: any) {
 					ReportOnce(PropertyKey);
-
 					BackingField = NewValue;
 				},
 			});
@@ -79,7 +67,6 @@ export default Effect.gen(function* (G) {
 
 	const ServiceImplementation: Service["Type"] = {
 		Report: ReportEffect,
-
 		Deprecated: DeprecatedDecorator,
 	};
 

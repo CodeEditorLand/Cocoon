@@ -1,6 +1,7 @@
-/**
- * @module Service (APIDeprecation)
- * @description Defines the interface and Context.Tag for the APIDeprecation service.
+/*
+ * File: Cocoon/Source/Service/APIDeprecation/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the APIDeprecation service.
  * This service is used by the APIFactory to report and handle the usage of
  * deprecated APIs by extensions.
  */
@@ -22,9 +23,7 @@ export default class APIDeprecationService extends Context.Tag(
 		 */
 		readonly Report: (
 			ExtensionID: ExtensionIdentifier,
-
 			Usage: string,
-
 			Message: string,
 		) => Effect.Effect<void, never>;
 
@@ -37,9 +36,7 @@ export default class APIDeprecationService extends Context.Tag(
 		 */
 		readonly Deprecated: (
 			ExtensionID: ExtensionIdentifier,
-
 			Feature: string,
-
 			Message: string,
 		) => PropertyDecorator;
 	}

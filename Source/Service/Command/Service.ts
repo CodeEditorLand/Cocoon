@@ -1,7 +1,8 @@
-/**
- * @module Service (Command)
- * @description Defines the interface and Context.Tag for the Command service.
- * This service manages the registration and execution of all commands.
+/*
+ * File: Cocoon/Source/Service/Command/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the Command service, which
+ * manages the registration and execution of all commands.
  */
 
 import { Context, type Effect } from "effect";
@@ -23,11 +24,8 @@ export default class CommandService extends Context.Tag("Service/Command")<
 		 */
 		readonly RegisterCommand: (
 			ID: string,
-
 			Handler: CommandHandler,
-
 			ThisArgument?: any,
-
 			ExtensionDescription?: IExtensionDescription,
 		) => Disposable;
 
@@ -36,11 +34,8 @@ export default class CommandService extends Context.Tag("Service/Command")<
 		 */
 		readonly RegisterTextEditorCommand: (
 			ID: string,
-
 			Handler: TextEditorCommandHandler,
-
 			ThisArgument?: any,
-
 			ExtensionDescription?: IExtensionDescription,
 		) => Disposable;
 
@@ -52,7 +47,6 @@ export default class CommandService extends Context.Tag("Service/Command")<
 		 */
 		readonly ExecuteCommand: <T>(
 			ID: string,
-
 			...Arguments: any[]
 		) => Effect.Effect<T, Error>;
 

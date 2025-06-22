@@ -1,6 +1,7 @@
-/**
- * @module Definition (ExtensionPath)
- * @description The class implementation for the ExtensionPath service. This
+/*
+ * File: Cocoon/Source/Core/ExtensionPath/Definition.ts
+ *
+ * This file contains the class implementation for the ExtensionPath service. This
  * service is responsible for mapping file URIs to their owner extension.
  */
 
@@ -14,7 +15,6 @@ import type * as VSCode from "vscode";
 
 interface ExtensionPathEntry {
 	readonly Path: string;
-
 	readonly Identifier: ExtensionIdentifier;
 }
 
@@ -28,7 +28,6 @@ export default class {
 
 	constructor(Extensions: readonly IExtensionDescription[]) {
 		const MutablePaths: ExtensionPathEntry[] = [];
-
 		for (const Extension of Extensions) {
 			if (Extension.extensionLocation) {
 				MutablePaths.push({

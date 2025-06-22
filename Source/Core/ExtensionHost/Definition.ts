@@ -1,6 +1,7 @@
-/**
- * @module Definition (ExtensionHost)
- * @description The live implementation of the ExtensionHost service, which manages
+/*
+ * File: Cocoon/Source/Core/ExtensionHost/Definition.ts
+ *
+ * This file contains the live implementation of the ExtensionHost service, which manages
  * the lifecycle of all extensions.
  */
 
@@ -50,7 +51,7 @@ export default Effect.gen(function* (G) {
 		InitData.extensions.allExtensions,
 	);
 
-	// This is an internal helper. It should handle its own errors and not let them leak.
+	// An internal helper to deactivate an extension and clean up its resources.
 	const DeactivateEffect = (Extension: ActivatedExtension) =>
 		Effect.gen(function* (G) {
 			yield* G(
@@ -193,7 +194,7 @@ export default Effect.gen(function* (G) {
 					Description.identifier,
 					// activationTimings
 					[],
-					// TZe activation timing
+					// activation timing
 					[],
 				]),
 			);
@@ -268,14 +269,12 @@ export default Effect.gen(function* (G) {
 							),
 						),
 					);
-
 					yield* G(
 						Effect.sync(() =>
 							Telemetry.onExtensionError(ID, ErrorToReport),
 						),
 					);
 				});
-
 				return ErrorHandlingEffect.pipe(Effect.asVoid);
 			}),
 		);

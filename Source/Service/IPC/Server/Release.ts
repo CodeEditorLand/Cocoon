@@ -1,6 +1,7 @@
-/**
- * @module Release (IPC/Server)
- * @description Defines the `Effect` for gracefully shutting down the `Cocoon`
+/*
+ * File: Cocoon/Source/Service/IPC/Server/Release.ts
+ *
+ * This file defines the `Effect` for gracefully shutting down the `Cocoon`
  * gRPC server.
  */
 
@@ -14,7 +15,6 @@ import IPCError from "../Error/IPCError.js";
  *
  * This is designed to be used as the release action in an `acquireRelease`
  * constructor. It wraps the callback-based `tryShutdown` method in a promise,
-
  * ensuring it integrates cleanly into the `Effect` ecosystem.
  *
  * @param Server The gRPC server instance to shut down.
@@ -27,11 +27,9 @@ const Release = (Server: GRPC.Server) => {
 					Error ? Reject(Error) : Resolve(),
 				),
 			),
-
 		catch: (cause) =>
 			new IPCError({
 				cause,
-
 				context: "gRPC server shutdown failed",
 			}),
 	}).pipe(Effect.tap(() => Effect.logInfo("Cocoon gRPC server shut down.")));

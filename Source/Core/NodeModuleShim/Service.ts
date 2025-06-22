@@ -1,6 +1,7 @@
-/**
- * @module Service (NodeModuleShim)
- * @description Defines the interface and Context.Tag for the NodeModuleShim service.
+/*
+ * File: Cocoon/Source/Core/NodeModuleShim/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the NodeModuleShim service.
  * This service is responsible for intercepting requests for built-in Node.js
  * modules, blocking some and providing safe shims for others.
  */
@@ -11,7 +12,9 @@ import type { Uri } from "vscode";
 import type ModuleBlockedError from "./Error/ModuleBlockedError.js";
 import type ModuleNotShimmedError from "./Error/ModuleNotShimmedError.js";
 
-// FIX: Define the service interface separately so the class can implement it directly.
+/**
+ * Defines the service interface for the NodeModuleShim.
+ */
 export interface NodeModuleShim {
 	/**
 	 * Synchronously loads a shim for a requested built-in Node.js module.
@@ -24,7 +27,6 @@ export interface NodeModuleShim {
 	 */
 	readonly Load: (
 		Request: string,
-
 		ParentURI?: Uri,
 	) => Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError>;
 }

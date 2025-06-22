@@ -1,6 +1,7 @@
-/**
- * @module Definition (Authentication)
- * @description The live implementation of the Authentication service.
+/*
+ * File: Cocoon/Source/Service/Authentication/Definition.ts
+ *
+ * This file contains the live implementation of the Authentication service.
  */
 
 import { Effect, Ref } from "effect";
@@ -25,7 +26,6 @@ import { ConvertSessionToInternal, ConvertSessionToVSCode } from "./Type.js";
  */
 export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
-
 	const Log = yield* LogService;
 
 	const LocalProviders = yield* Ref.make(
@@ -33,14 +33,12 @@ export default Effect.gen(function* () {
 	);
 
 	const OnDidChangeProvidersEvent = CreateEventStream<any>();
-
 	const OnDidChangeSessionsEvent = CreateEventStream<any>();
 
 	// --- RPC Handlers ---
 	const CreateSession = (ProviderID: string, Scopes: readonly string[]) =>
 		Effect.gen(function* () {
 			const Provider = (yield* Ref.get(LocalProviders)).get(ProviderID);
-
 			if (!Provider) {
 				return yield* Effect.fail(
 					new Error(
@@ -48,27 +46,21 @@ export default Effect.gen(function* () {
 					),
 				);
 			}
-
 			const Session = yield* Effect.tryPromise({
 				try: () => Provider.createSession(Scopes, {}),
-
 				catch: (CaughtError) => CaughtError,
 			});
-
 			return ConvertSessionToInternal(Session);
 		});
 
 	const RemoveSession = (ProviderID: string, SessionID: string) =>
 		Effect.gen(function* () {
 			const Provider = (yield* Ref.get(LocalProviders)).get(ProviderID);
-
 			if (!Provider?.removeSession) {
 				return;
 			}
-
 			yield* Effect.tryPromise({
 				try: () => Provider.removeSession!(SessionID),
-
 				catch: (CaughtError) => CaughtError,
 			});
 		});
@@ -89,20 +81,14 @@ export default Effect.gen(function* () {
 	const AuthenticationImplementation: Service["Type"] = {
 		GetSession: (
 			RequestingExtension: Extension<any>,
-
 			ProviderID: string,
-
 			Scopes: readonly string[],
-
 			Options: AuthenticationGetSessionOptions,
 		) =>
 			IPC.SendRequest<any | undefined>("$getSession", [
 				RequestingExtension.id,
-
 				ProviderID,
-
 				Scopes,
-
 				// This will require a new TypeConverter in a real implementation
 				Options,
 			]).pipe(
@@ -111,51 +97,39 @@ export default Effect.gen(function* () {
 						? ConvertSessionToVSCode(Info)
 						: (undefined as AuthenticationSession | undefined),
 				),
-
 				Effect.tapError((Error) =>
 					Log.Error(
 						`GetSession for provider '${ProviderID}' failed.`,
-
 						Error,
 					),
 				),
-
 				Effect.mapError((e) => new Error(String(e))),
 			),
 
 		ListSessions: (
 			RequestingExtension: Extension<any>,
-
 			ProviderID: string,
-
 			Scopes?: readonly string[],
 		) =>
 			IPC.SendRequest<any[]>("$getSessions", [
 				RequestingExtension.id,
-
 				ProviderID,
-
 				Scopes,
 			]).pipe(
 				Effect.map((Infos) => Infos.map(ConvertSessionToVSCode)),
-
 				Effect.tapError((Error) =>
 					Log.Error(
 						`ListSessions for provider '${ProviderID}' failed.`,
-
 						Error,
 					),
 				),
-
 				Effect.mapError((e) => new Error(String(e))),
-
 				Effect.catchAll(() => Effect.succeed([])),
 			),
 
 		RegisterAuthenticationProvider: (ID, Label, Provider, Options) =>
 			Effect.gen(function* () {
 				const Providers = yield* Ref.get(LocalProviders);
-
 				if (Providers.has(ID)) {
 					return yield* Effect.fail(
 						new AuthenticationProviderExistsError({
@@ -163,16 +137,12 @@ export default Effect.gen(function* () {
 						}),
 					);
 				}
-
 				yield* Ref.update(LocalProviders, (Map) =>
 					Map.set(ID, Provider),
 				);
-
 				yield* IPC.SendNotification("$registerAuthenticationProvider", [
 					ID,
-
 					Label,
-
 					!!Options?.supportsMultipleAccounts,
 				]).pipe(
 					Effect.mapError(
@@ -182,32 +152,26 @@ export default Effect.gen(function* () {
 							}),
 					),
 				);
-
 				const Disposable: IDisposable = {
 					dispose: () => {
 						const CleanupEffect = Ref.update(
 							LocalProviders,
-
 							(Map) => (Map.delete(ID), Map),
 						).pipe(
 							Effect.flatMap(() =>
 								IPC.SendNotification(
 									"$unregisterAuthenticationProvider",
-
 									[ID],
 								),
 							),
 						);
-
 						Effect.runFork(CleanupEffect);
 					},
 				};
-
 				return Disposable;
 			}),
 
 		onDidChangeAuthenticationProviders: OnDidChangeProvidersEvent.event,
-
 		onDidChangeSessions: OnDidChangeSessionsEvent.event,
 	};
 

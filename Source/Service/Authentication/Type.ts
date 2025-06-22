@@ -1,6 +1,7 @@
-/**
- * @module Type (Authentication)
- * @description Defines types for the Authentication service, including the
+/*
+ * File: Cocoon/Source/Service/Authentication/Type.ts
+ *
+ * This file defines types for the Authentication service, including the
  * conversion logic between the public `vscode.AuthenticationSession` and the
  * internal `IAuthenticationSession` DTO.
  */
@@ -18,15 +19,11 @@ export const ConvertSessionToVSCode = (
 ): VSCode.AuthenticationSession => {
 	return {
 		id: Session.id,
-
 		accessToken: Session.accessToken,
-
 		account: {
 			label: Session.account.label,
-
 			id: Session.account.id,
 		},
-
 		scopes: Session.scopes,
 	};
 };
@@ -41,15 +38,11 @@ export const ConvertSessionToInternal = (
 ): IAuthenticationSession => {
 	return {
 		id: Session.id,
-
 		accessToken: Session.accessToken,
-
 		account: {
 			label: Session.account.label,
-
 			id: Session.account.id,
 		},
-
 		scopes: Session.scopes,
 	};
 };

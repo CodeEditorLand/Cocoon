@@ -1,6 +1,7 @@
-/**
- * @module Live (HostKindPicker)
- * @description This module provides the `Live` implementation Layer for the HostKindPicker service.
+/*
+ * File: Cocoon/Source/Core/HostKindPicker/Live.ts
+ *
+ * This file provides the `Live` implementation Layer for the HostKindPicker service.
  */
 
 import { Layer } from "effect";

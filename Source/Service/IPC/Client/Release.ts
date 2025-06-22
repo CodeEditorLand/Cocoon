@@ -1,6 +1,7 @@
-/**
- * @module Release (IPC/Client)
- * @description Defines the `Effect` for gracefully closing the gRPC client
+/*
+ * File: Cocoon/Source/Service/IPC/Client/Release.ts
+ *
+ * This file defines the `Effect` for gracefully closing the gRPC client
  * connection to the Mountain host.
  */
 
@@ -22,7 +23,6 @@ type ClientInstance = MountainService & GRPC.Client;
  */
 const Release = (Client: ClientInstance) => {
 	return Effect.sync(() => {
-		// The generated client has a close() method
 		Client.close();
 	}).pipe(Effect.tap(() => Effect.logInfo("gRPC client connection closed.")));
 };

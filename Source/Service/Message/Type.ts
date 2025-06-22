@@ -1,6 +1,7 @@
-/**
- * @module Type (Message)
- * @description Defines types used by the Message service, such as the
+/*
+ * File: Cocoon/Source/Service/Message/Type.ts
+ *
+ * This file defines types used by the Message service, such as the
  * structure for identifying the source of a message.
  */
 

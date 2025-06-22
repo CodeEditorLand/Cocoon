@@ -1,6 +1,7 @@
-/**
- * @module Service (ProcessPatch)
- * @description Defines the interface and Context.Tag for the ProcessPatch service.
+/*
+ * File: Cocoon/Source/PatchProcess/Service.ts
+ *
+ * This file defines the interface and Context.Tag for the ProcessPatch service.
  * This service provides the necessary native functions and configuration for the
  * other process patching Effects, such as `PatchProcessExit`.
  */

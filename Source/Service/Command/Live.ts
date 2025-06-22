@@ -1,8 +1,8 @@
-/**
- * @module Command
- * @description This module provides the `vscode.commands` API implementation,
-
- * managing command registration and execution.
+/*
+ * File: Cocoon/Source/Service/Command/Live.ts
+ *
+ * This file provides the live implementation Layer for the Command service, managing
+ * command registration and execution.
  */
 
 import { Layer } from "effect";
