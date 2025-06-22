@@ -26,6 +26,7 @@ export default class implements WebviewPanel {
 	fireDidReceiveMessage(_Message: any) {
 		throw new Error("Method not implemented.");
 	}
+
 	private IsDisposed = false;
 
 	private _title: string;

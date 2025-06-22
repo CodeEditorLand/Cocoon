@@ -22,7 +22,8 @@ const CreateWindowNamespace = (
 	TreeView: TreeViewService["Type"],
 	AsEvent: <T>(event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
-	WorkSpace: WorkSpaceService["Type"], // Pass WorkSpace for editor state
+	// Pass WorkSpace for editor state
+	WorkSpace: WorkSpaceService["Type"],
 ): typeof VSCode.window => {
 	const WindowNamespace: Partial<typeof VSCode.window> = {
 		// --- Properties ---

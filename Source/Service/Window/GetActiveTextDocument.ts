@@ -21,5 +21,6 @@ import WindowService from "./Service.js";
  */
 export default Effect.gen(function* () {
 	const Window = yield* WindowService;
+
 	return Option.fromNullable(Window.activeTextEditor?.document);
 });

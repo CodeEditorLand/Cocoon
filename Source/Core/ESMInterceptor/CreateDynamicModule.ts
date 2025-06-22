@@ -37,7 +37,8 @@ const CreateDynamicModule = (
 
 	// Populate the template with the dynamic values.
 	return DynamicModuleTemplate.replace(
-		"__BUILD_TIME_GLOBAL_API_FUNCTION_NAME__", // Placeholder in the template
+		// Placeholder in the template
+		"__BUILD_TIME_GLOBAL_API_FUNCTION_NAME__",
 		`'${ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME}'`,
 	)
 		.replace("__RUNTIME_API_KEY__", `'${APIKey}'`)

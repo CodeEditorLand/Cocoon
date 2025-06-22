@@ -13,14 +13,17 @@ export interface EventStream<T> {
 	 * @returns An `Effect` that completes when the event has been published.
 	 */
 	readonly Fire: (Data: T) => Effect.Effect<void, never>;
+
 	/**
 	 * The underlying Effect PubSub for stream processing.
 	 */
 	readonly PubSub: PubSub.PubSub<T>;
+
 	/**
 	 * The VS Code-compatible `Event` interface.
 	 */
 	readonly event: Event<T>;
+
 	/**
 	 * Shuts down the underlying PubSub, completing the stream.
 	 */
@@ -33,21 +36,27 @@ export interface EventStream<T> {
  */
 const CreateEventStream = <T>(): EventStream<T> => {
 	const VscodeEmitter = new Emitter<T>();
+
 	const PubSubInstance = Effect.runSync(PubSub.unbounded<T>());
 
 	const Fire = (Data: T): Effect.Effect<void, never> =>
 		PubSub.publish(PubSubInstance, Data).pipe(
 			Effect.andThen(Effect.sync(() => VscodeEmitter.fire(Data))),
+
 			Effect.asVoid,
 		);
 
 	const event: Event<T> = VscodeEmitter.event;
+
 	const Shutdown = () => PubSub.shutdown(PubSubInstance);
 
 	return {
 		Fire,
+
 		PubSub: PubSubInstance,
+
 		event,
+
 		Shutdown,
 	};
 };

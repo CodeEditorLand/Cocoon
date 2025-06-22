@@ -17,17 +17,22 @@ import type Service from "./Service.js";
  */
 export default Effect.gen(function* () {
 	const IPC = yield* IPCService;
+
 	const Log = yield* LogService;
+
 	const ConfigCache = yield* Ref.make<object>({});
+
 	const OnDidChangeEvent = CreateEventStream<ConfigurationChangeEvent>();
 
 	// Register the handler for when Mountain pushes a configuration update.
 	yield* Effect.sync(() =>
 		IPC.RegisterInvokeHandler(
 			"$acceptConfigurationChanged",
+
 			([NewConfig, Change]) =>
 				Effect.gen(function* () {
 					yield* Ref.set(ConfigCache, NewConfig);
+
 					yield* OnDidChangeEvent.Fire({
 						affectsConfiguration: (Section: string, _Scope?: any) =>
 							// A real implementation would need to check the scope properly.
@@ -41,15 +46,20 @@ export default Effect.gen(function* () {
 		GetConfiguration: (Section, Scope) =>
 			IPC.SendRequest<object>("$getConfiguration", [Section, Scope]).pipe(
 				Effect.tap((NewConfig) => Ref.set(ConfigCache, NewConfig)),
+
 				Effect.map((NewConfig) =>
 					CreateWorkSpaceConfiguration(
 						NewConfig,
+
 						Section ?? "",
+
 						IPC,
+
 						Log,
 					),
 				),
 			),
+
 		onDidChangeConfiguration: OnDidChangeEvent.event,
 	};
 

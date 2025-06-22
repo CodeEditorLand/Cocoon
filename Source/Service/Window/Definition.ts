@@ -32,22 +32,29 @@ export default Effect.gen(function* (G) {
 	const WindowStateRef = yield* G(
 		Ref.make<WindowState>({ focused: true, active: true }),
 	);
+
 	const TextEditorsMapRef = yield* G(Ref.make(new Map<string, TextEditor>()));
+
 	const ActiveTextEditorRef = yield* G(
 		Ref.make<TextEditor | undefined>(undefined),
 	);
+
 	const VisibleTextEditorsRef = yield* G(Ref.make<readonly TextEditor[]>([]));
 
 	const OnDidChangeWindowStateStream = CreateEventStream<WindowState>();
+
 	const { event: OnDidChangeActiveTextEditorEvent, Fire: FireActiveEditor } =
 		CreateEventStream<TextEditor | undefined>();
+
 	const {
 		event: OnDidChangeVisibleTextEditorsEvent,
+
 		Fire: FireVisibleEditors,
 	} = CreateEventStream<readonly TextEditor[]>();
 
 	const AcceptWindowStateChangedEffect = (isFocused: boolean) => {
 		const NewState = { focused: isFocused, active: isFocused };
+
 		return Ref.set(WindowStateRef, NewState).pipe(
 			Effect.andThen(OnDidChangeWindowStateStream.Fire(NewState)),
 		);
@@ -55,23 +62,28 @@ export default Effect.gen(function* (G) {
 
 	const AcceptEditorStateEffect = (
 		activeEditorId: string | undefined,
+
 		visibleEditorIds: string[],
 	) =>
 		Effect.gen(function* (G) {
 			const Editors = yield* G(Ref.get(TextEditorsMapRef));
+
 			const NewActive = activeEditorId
 				? Editors.get(activeEditorId)
 				: undefined;
+
 			const NewVisible = visibleEditorIds
 				.map((id) => Editors.get(id))
 				.filter(Boolean);
 
 			yield* G(Ref.set(ActiveTextEditorRef, NewActive));
+
 			yield* G(
 				Ref.set(VisibleTextEditorsRef, NewVisible as TextEditor[]),
 			);
 
 			yield* G(FireActiveEditor(NewActive));
+
 			yield* G(FireVisibleEditors(NewVisible as TextEditor[]));
 		});
 
@@ -79,13 +91,16 @@ export default Effect.gen(function* (G) {
 		Effect.sync(() => {
 			IPC.RegisterInvokeHandler(
 				"$acceptWindowStateChanged",
+
 				([isFocused]) =>
 					Effect.runPromise(
 						AcceptWindowStateChangedEffect(isFocused),
 					),
 			);
+
 			IPC.RegisterInvokeHandler(
 				"$acceptEditorState",
+
 				([activeId, visibleIds]) =>
 					Effect.runPromise(
 						AcceptEditorStateEffect(activeId, visibleIds),
@@ -98,27 +113,38 @@ export default Effect.gen(function* (G) {
 		get state() {
 			return Effect.runSync(Ref.get(WindowStateRef));
 		},
+
 		onDidChangeWindowState: OnDidChangeWindowStateStream.event,
+
 		get activeTextEditor() {
 			return Effect.runSync(Ref.get(ActiveTextEditorRef));
 		},
+
 		get visibleTextEditors() {
 			return Effect.runSync(Ref.get(VisibleTextEditorsRef));
 		},
+
 		onDidChangeActiveTextEditor: OnDidChangeActiveTextEditorEvent,
+
 		onDidChangeVisibleTextEditors: OnDidChangeVisibleTextEditorsEvent,
+
 		// Stubs for other events, a full implementation would use CreateEventStream
 		onDidChangeTextEditorSelection:
 			new EventEmitter<TextEditorSelectionChangeEvent>().event,
+
 		onDidChangeTextEditorVisibleRanges:
 			new EventEmitter<TextEditorVisibleRangesChangeEvent>().event,
+
 		onDidChangeTextEditorOptions:
 			new EventEmitter<TextEditorOptionsChangeEvent>().event,
+
 		onDidChangeTextEditorViewColumn:
 			new EventEmitter<TextEditorViewColumnChangeEvent>().event,
+
 		ShowTextDocument: (documentOrURI, columnOrOptions, preserveFocus) =>
 			Effect.gen(function* (G) {
 				let uri: Uri;
+
 				if ("uri" in documentOrURI) {
 					uri = documentOrURI.uri;
 				} else {
@@ -129,15 +155,18 @@ export default Effect.gen(function* (G) {
 					typeof columnOrOptions === "object"
 						? (columnOrOptions as TextDocumentShowOptions)
 						: undefined;
+
 				const optionsDTO = options
 					? {
 							preserveFocus:
 								preserveFocus ?? options.preserveFocus,
+
 							selection: options.selection
 								? RangeConverter.FromAPI(options.selection)
 								: undefined,
 						}
 					: undefined;
+
 				const viewColumnDTO =
 					typeof columnOrOptions === "number"
 						? ViewColumnConverter.FromAPI(columnOrOptions)
@@ -146,7 +175,9 @@ export default Effect.gen(function* (G) {
 				const editorId = yield* G(
 					IPC.SendRequest<string>("$showTextDocument", [
 						URIConverter.FromAPI(uri),
+
 						viewColumnDTO,
+
 						optionsDTO,
 					]),
 				);
@@ -154,6 +185,7 @@ export default Effect.gen(function* (G) {
 				const editor = (yield* G(Ref.get(TextEditorsMapRef))).get(
 					editorId,
 				);
+
 				if (!editor) {
 					return yield* G(
 						Effect.fail(
@@ -163,6 +195,7 @@ export default Effect.gen(function* (G) {
 						),
 					);
 				}
+
 				return editor;
 			}),
 	};

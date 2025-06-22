@@ -72,9 +72,11 @@ const CreateDebugNamespace = (
 		removeBreakpoints: (breakpoints) =>
 			Debug.RemoveBreakpoints(breakpoints) as any,
 		registerDebugVisualizationProvider: (_id, _provider) =>
-			new EventEmitter<any>().event as any, // Stub
+			// Stub
+			new EventEmitter<any>().event as any,
 		registerDebugVisualizationTreeProvider: (_id, _provider) =>
-			new EventEmitter<any>().event as any, // Stub
+			// Stub
+			new EventEmitter<any>().event as any,
 		asDebugSourceUri: (source, session) => {
 			const sourcePath = (source as any).path;
 			if (typeof sourcePath === "string") {

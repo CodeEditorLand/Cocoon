@@ -121,20 +121,32 @@ export default Effect.gen(function* (G) {
 				subscriptions: [],
 				extensionPath: URI.revive(Description.extensionLocation).fsPath,
 				extensionUri: URI.revive(Description.extensionLocation),
-				storageUri: URI.parse("file:///extension-storage"), // Stub
-				globalStorageUri: URI.parse("file:///global-storage"), // Stub
-				logUri: URI.parse("file:///logs"), // Stub
-				extensionMode: 1, // Production
-				secrets: undefined as any, // Provided by SecretStorage service
-				storagePath: "/extension-storage", // Stub
-				globalStoragePath: "/global-storage", // Stub
-				logPath: "/logs", // Stub
-				extension: undefined as any, // Lazily set
-				environmentVariableCollection: undefined as any, // Stub
+				// Stub
+				storageUri: URI.parse("file:///extension-storage"),
+				// Stub
+				globalStorageUri: URI.parse("file:///global-storage"),
+				// Stub
+				logUri: URI.parse("file:///logs"),
+				// Production
+				extensionMode: 1,
+				// Provided by SecretStorage service
+				secrets: undefined as any,
+				// Stub
+				storagePath: "/extension-storage",
+				// Stub
+				globalStoragePath: "/global-storage",
+				// Stub
+				logPath: "/logs",
+				// Lazily set
+				extension: undefined as any,
+				// Stub
+				environmentVariableCollection: undefined as any,
 				asAbsolutePath: (path) => path,
 				languageModelAccessInformation: LanguageModelAccessInformation,
-				workspaceState: undefined as any, // Provided by Storage service
-				globalState: undefined as any, // Provided by Storage service
+				// Provided by Storage service
+				workspaceState: undefined as any,
+				// Provided by Storage service
+				globalState: undefined as any,
 				extensionRuntime: ExtensionRuntime.Node,
 				messagePassingProtocol: undefined,
 			};
@@ -179,8 +191,10 @@ export default Effect.gen(function* (G) {
 			yield* G(
 				IPC.SendNotification("$onDidActivateExtension", [
 					Description.identifier,
-					[], // activationTimings
-					[], // TZe activation timing
+					// activationTimings
+					[],
+					// TZe activation timing
+					[],
 				]),
 			);
 		});

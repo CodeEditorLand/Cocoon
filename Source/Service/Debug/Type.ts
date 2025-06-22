@@ -21,7 +21,9 @@ export type AnyProvider =
  */
 export interface ProviderEntry {
 	readonly Type: string;
+
 	readonly Provider: AnyProvider;
+
 	readonly Extension: IExtensionDescription;
 }
 
@@ -30,9 +32,14 @@ export interface ProviderEntry {
  */
 export interface Debugger {
 	readonly ActiveDebugSession: DebugSession | undefined;
+
 	readonly ActiveDebugConsole: DebugConsole;
+
 	readonly Breakpoints: readonly Breakpoint[];
+
 	readonly DebugConfigurationProviders: Map<number, ProviderEntry>;
+
 	readonly DebugAdapterDescriptorFactories: Map<number, ProviderEntry>;
+
 	readonly DebugAdapterTrackerFactories: Map<number, ProviderEntry>;
 }

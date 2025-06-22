@@ -29,32 +29,52 @@ import type IPCService from "../IPC/Service.js";
  */
 export default class StatusBarItemImplementation implements StatusBarItem {
 	private IsDisposed = false;
+
 	private IsVisible = false;
 
 	// --- Backing fields for properties ---
 	private _id: string;
+
 	private _name: string | undefined;
+
 	private _alignment: StatusBarAlignment;
+
 	private _priority: number | undefined;
+
 	private _text = "";
+
 	private _tooltip: string | MarkdownString | undefined;
+
 	private _color: string | ThemeColor | undefined;
+
 	private _backgroundColor: ThemeColor | undefined;
+
 	private _command: string | Command | undefined;
+
 	private _accessibilityInformation: AccessibilityInformation | undefined;
 
 	constructor(
-		private readonly EntryID: string, // An internal, unique UUID for this instance.
+		// An internal, unique UUID for this instance.
+		private readonly EntryID: string,
+
 		private readonly ExtensionID: string,
+
 		private readonly IPC: IPCService["Type"],
+
 		private readonly CommandService: CommandService["Type"],
+
 		private readonly OnDidDispose: () => void,
+
 		InitialID: string,
+
 		InitialAlignment: StatusBarAlignment,
+
 		InitialPriority?: number,
 	) {
 		this._id = InitialID;
+
 		this._alignment = InitialAlignment;
+
 		this._priority = InitialPriority;
 	}
 
@@ -74,9 +94,11 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	get name(): string | undefined {
 		return this._name;
 	}
+
 	set name(Value: string | undefined) {
 		if (this._name !== Value) {
 			this._name = Value;
+
 			this.Update();
 		}
 	}
@@ -84,9 +106,11 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	get text(): string {
 		return this._text;
 	}
+
 	set text(Value: string) {
 		if (this._text !== Value) {
 			this._text = Value;
+
 			this.Update();
 		}
 	}
@@ -94,9 +118,11 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	get tooltip(): string | MarkdownString | undefined {
 		return this._tooltip;
 	}
+
 	set tooltip(Value: string | MarkdownString | undefined) {
 		if (this._tooltip !== Value) {
 			this._tooltip = Value;
+
 			this.Update();
 		}
 	}
@@ -104,9 +130,11 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	get color(): string | ThemeColor | undefined {
 		return this._color;
 	}
+
 	set color(Value: string | ThemeColor | undefined) {
 		if (this._color !== Value) {
 			this._color = Value;
+
 			this.Update();
 		}
 	}
@@ -114,9 +142,11 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	get backgroundColor(): ThemeColor | undefined {
 		return this._backgroundColor;
 	}
+
 	set backgroundColor(Value: ThemeColor | undefined) {
 		if (this._backgroundColor !== Value) {
 			this._backgroundColor = Value;
+
 			this.Update();
 		}
 	}
@@ -124,9 +154,11 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	get command(): string | Command | undefined {
 		return this._command;
 	}
+
 	set command(Value: string | Command | undefined) {
 		if (this._command !== Value) {
 			this._command = Value;
+
 			this.Update();
 		}
 	}
@@ -134,9 +166,11 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	get accessibilityInformation(): AccessibilityInformation | undefined {
 		return this._accessibilityInformation;
 	}
+
 	set accessibilityInformation(Value: AccessibilityInformation | undefined) {
 		if (this._accessibilityInformation !== Value) {
 			this._accessibilityInformation = Value;
+
 			this.Update();
 		}
 	}
@@ -145,6 +179,7 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	public show(): void {
 		if (!this.IsVisible) {
 			this.IsVisible = true;
+
 			this.Update();
 		}
 	}
@@ -152,10 +187,13 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	public hide(): void {
 		if (this.IsVisible) {
 			this.IsVisible = false;
+
 			const DisposeEffect = this.IPC.SendNotification(
 				"$statusBar:dispose",
+
 				[this.EntryID],
 			);
+
 			Effect.runFork(DisposeEffect);
 		}
 	}
@@ -163,7 +201,9 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 	public dispose(): void {
 		if (!this.IsDisposed) {
 			this.IsDisposed = true;
+
 			this.hide();
+
 			this.OnDidDispose();
 		}
 	}
@@ -175,20 +215,27 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 
 		const CommandConverter = new CommandConverterDefinition(
 			this.CommandService.RegisterCommand,
+
 			(command, ...args) =>
 				this.CommandService.ExecuteCommand(command, ...args),
-			() => undefined, // getCommands is not needed for serialization.
+
+			// getCommands is not needed for serialization.
+			() => undefined,
 		);
 
 		const DTO = StatusBarConverter.FromAPI(
 			this,
+
 			this.EntryID,
+
 			this.ExtensionID,
+
 			CommandConverter,
 		);
 
 		// Use an effect to send the notification via IPC.
 		const UpdateEffect = this.IPC.SendNotification("$statusBar:set", [DTO]);
+
 		Effect.runFork(UpdateEffect);
 	}
 }

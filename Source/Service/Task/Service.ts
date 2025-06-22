@@ -22,8 +22,11 @@ export default class TaskService extends Context.Tag("Service/Task")<
 	TaskService,
 	{
 		readonly onDidStartTask: Event<TaskStartEvent>;
+
 		readonly onDidEndTask: Event<TaskEndEvent>;
+
 		readonly onDidStartTaskProcess: Event<TaskProcessStartEvent>;
+
 		readonly onDidEndTaskProcess: Event<TaskProcessEndEvent>;
 
 		readonly taskExecutions: readonly TaskExecution[];
@@ -37,7 +40,9 @@ export default class TaskService extends Context.Tag("Service/Task")<
 		 */
 		readonly RegisterTaskProvider: <T extends Task>(
 			Type: string,
+
 			Provider: TaskProvider<T>,
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, Error>;
 
@@ -58,6 +63,7 @@ export default class TaskService extends Context.Tag("Service/Task")<
 		 */
 		readonly ExecuteTask: (
 			TaskToExecute: Task,
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<TaskExecution, Error>;
 	}

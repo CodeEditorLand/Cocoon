@@ -15,8 +15,11 @@ import RangeConverter from "./Range.js";
 function toExtHostRange(range: VscRange): ExtHostRange {
 	return new ExtHostRange(
 		range.start.line,
+
 		range.start.character,
+
 		range.end.line,
+
 		range.end.character,
 	);
 }
@@ -30,7 +33,9 @@ const FromAPI = (
 	TextEditInstance: VscTextEdit,
 ): IIdentifiedSingleEditOperation => ({
 	text: TextEditInstance.newText,
+
 	range: RangeConverter.FromAPI(TextEditInstance.range),
+
 	forceMoveMarkers: false,
 });
 
@@ -42,6 +47,7 @@ const FromAPI = (
 const ToAPI = (TextEditDTO: IIdentifiedSingleEditOperation): VscTextEdit =>
 	new ExtHostTextEdit(
 		toExtHostRange(RangeConverter.ToAPI(TextEditDTO.range)),
+
 		TextEditDTO.text ?? "",
 	);
 

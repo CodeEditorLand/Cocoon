@@ -23,7 +23,9 @@ import StatusBarItemImplementation from "./StatusBarItemImplementation.js";
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
+
 	const Command = yield* G(CommandService);
+
 	const ActiveItemsRef = yield* G(
 		Ref.make(new Map<string, StatusBarItemImplementation>()),
 	);
@@ -31,13 +33,19 @@ export default Effect.gen(function* (G) {
 	const StatusBarImplementation: Service["Type"] = {
 		CreateStatusBarItem: (
 			Extension: IExtensionDescription,
+
 			ID?: string,
+
 			Alignment?: StatusBarAlignment,
+
 			Priority?: number,
 		) =>
 			Effect.sync(() => {
-				const EntryID = GenerateUUID(); // Internal, unique ID for this instance.
+				// Internal, unique ID for this instance.
+				const EntryID = GenerateUUID();
+
 				const ItemID = ID ?? `${Extension.identifier.value}.${EntryID}`;
+
 				const FinalAlignment = Alignment ?? StatusBarAlignment.Left;
 
 				const OnDispose = () => {
@@ -45,6 +53,7 @@ export default Effect.gen(function* (G) {
 					Effect.runSync(
 						Ref.update(
 							ActiveItemsRef,
+
 							(Map) => (Map.delete(EntryID), Map),
 						),
 					);
@@ -52,12 +61,19 @@ export default Effect.gen(function* (G) {
 
 				const Entry = new StatusBarItemImplementation(
 					EntryID,
+
 					Extension.identifier.value,
+
 					IPC,
+
 					Command,
+
 					OnDispose,
+
 					ItemID,
+
 					FinalAlignment,
+
 					Priority,
 				);
 
@@ -72,12 +88,16 @@ export default Effect.gen(function* (G) {
 
 		SetStatusBarMessage: (Text, HideOrPromise) => {
 			const HideId = `status.message.${GenerateUUID()}`;
+
 			const ShowEffect = IPC.SendNotification("$setStatusBarMessage", [
 				HideId,
+
 				Text,
 			]);
+
 			const HideEffect = IPC.SendNotification(
 				"$disposeStatusBarMessage",
+
 				[HideId],
 			);
 

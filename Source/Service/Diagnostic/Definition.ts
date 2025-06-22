@@ -20,8 +20,10 @@ let OwnerCounter = 0;
 
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
+
 	const {
 		event: OnDidChangeDiagnosticsEvent,
+
 		Fire: FireDidChangeDiagnostics,
 	} = CreateEventStream<readonly Uri[]>();
 
@@ -32,10 +34,12 @@ export default Effect.gen(function* (G) {
 		Effect.sync(() =>
 			IPC.RegisterInvokeHandler(
 				"$acceptMarkerData",
+
 				([URIComponentsArray]): Promise<void> => {
 					const RevivedURIs = URIComponentsArray.map((DTO: any) =>
 						URIConverter.ToAPI(DTO),
 					);
+
 					return Effect.runPromise(
 						FireDidChangeDiagnostics(RevivedURIs),
 					);
@@ -50,9 +54,12 @@ export default Effect.gen(function* (G) {
 		CreateDiagnosticCollection: (Name?: string) => {
 			// Each collection gets a unique owner ID to separate its diagnostics on the host.
 			const Owner = `cocoon-diag-${OwnerCounter++}-${Name ?? "anon"}`;
+
 			return new DiagnosticCollectionImplementation(
 				Name ?? "",
+
 				Owner,
+
 				IPC,
 			);
 		},

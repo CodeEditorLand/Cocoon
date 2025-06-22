@@ -16,6 +16,7 @@ import Service from "./Service.js";
  */
 const Live: Layer.Layer<Service, never, IPCService | LogService> = Layer.effect(
 	Service,
+
 	// The Definition effect uses IPC.SendRequest, which can fail.
 	// We treat this as a fatal error for layer construction using orDie.
 	// This ensures the Layer's error channel is `never`.

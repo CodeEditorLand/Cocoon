@@ -26,6 +26,7 @@ export default class ConfigurationService extends Context.Tag(
 		 */
 		readonly GetConfiguration: (
 			Section?: string,
+
 			Scope?: ConfigurationScope,
 		) => Effect.Effect<WorkSpaceConfiguration, Error>;
 

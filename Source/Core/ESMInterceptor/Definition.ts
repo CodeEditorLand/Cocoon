@@ -237,7 +237,8 @@ export default Effect.gen(function* (G) {
 					Error,
 				),
 			),
-			Effect.scoped, // Use Effect.scoped to discharge the Scope requirement from addFinalizer
+			// Use Effect.scoped to discharge the Scope requirement from addFinalizer
+			Effect.scoped,
 		);
 
 	const ESMInterceptorImplementation: Service["Type"] = {

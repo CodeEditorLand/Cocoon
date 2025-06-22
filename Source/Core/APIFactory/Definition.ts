@@ -89,7 +89,8 @@ const CreateAPIFactoryEffect = Effect.gen(function* (G) {
 			TreeView,
 			AsEvent,
 			ExtensionDescription,
-			WorkSpace, // Pass WorkSpace for editor properties
+			// Pass WorkSpace for editor properties
+			WorkSpace,
 		);
 		const LanguagesNamespace = CreateLanguagesNamespace(
 			LanguageFeature,

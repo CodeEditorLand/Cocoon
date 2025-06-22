@@ -23,7 +23,9 @@ export default class CancellationService extends Context.Tag(
 		 */
 		readonly ObtainToken: (
 			TokenID: number,
-		) => Effect.Effect<CancellationToken, InvalidTokenIDError>; // FIXED: No more Scope requirement.
+
+			// FIXED: No more Scope requirement.
+		) => Effect.Effect<CancellationToken, InvalidTokenIDError>;
 
 		/**
 		 * Signals cancellation for a specific token ID.

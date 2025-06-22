@@ -24,6 +24,7 @@ export default class ProposedAPIService extends Context.Tag(
 		 */
 		readonly IsEnabled: (
 			ExtensionID: ExtensionIdentifier,
+
 			ProposalName: string,
 		) => boolean;
 	}

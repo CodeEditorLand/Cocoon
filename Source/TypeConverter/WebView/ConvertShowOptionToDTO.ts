@@ -11,8 +11,12 @@ import ViewColumnConverter from "../Main/ViewColumn.js";
 // Placeholder for internal VS Code DTO
 interface IEditorOptions {
 	preserveFocus?: boolean;
-	selection?: any; // Should be IRange
+
+	// Should be IRange
+	selection?: any;
+
 	pinned?: boolean;
+
 	sticky?: boolean;
 }
 
@@ -27,10 +31,12 @@ interface IEditorOptions {
  */
 export default (
 	ViewColumn: VSCode.ViewColumn | undefined,
+
 	PreserveFocus: boolean,
 ): { viewColumn?: number; preserveFocus: boolean } & IEditorOptions => {
 	return {
 		viewColumn: ViewColumnConverter.FromAPI(ViewColumn),
+
 		preserveFocus: PreserveFocus,
 	};
 };

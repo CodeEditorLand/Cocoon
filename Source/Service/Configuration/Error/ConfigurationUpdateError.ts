@@ -8,12 +8,15 @@ export class ConfigurationUpdateError extends Data.TaggedError(
 	"ConfigurationUpdateError",
 )<{
 	readonly key: string;
+
 	readonly cause: unknown;
 }> {
 	constructor(properties: { readonly key: string; readonly cause: unknown }) {
 		super(properties);
+
 		this.message = `Failed to update configuration for key '${this.key}'.`;
 	}
+
 	public override readonly message: string;
 }
 

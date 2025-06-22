@@ -6,6 +6,7 @@
  *
  * The key pattern used here is the "Progressive World Build" for layer composition.
  * This pattern explicitly builds the application's environment level-by-level,
+
  *
  * ensuring that all service dependencies are correctly resolved at each stage. This approach
  * is robust and solves the common "Service not found" errors that can occur with
@@ -680,6 +681,7 @@ const TracingLive = NodeSdk.layer(() => ({
 /** A layer for the Effect DevTools, which requires a WebSocket constructor. */
 const DevToolsLive = Layer.provide(
 	DevTools.layerWebSocket(),
+
 	NodeSocket.layerWebSocketConstructor,
 );
 

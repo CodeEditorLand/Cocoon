@@ -56,7 +56,8 @@ export default class ExtensionHostService extends Context.Tag(
 		 */
 		readonly GetExtensionExports: (
 			ID: ExtensionIdentifier,
-		) => Effect.Effect<any, Error>; // The effect can fail if the extension failed to activate.
+			// The effect can fail if the extension failed to activate.
+		) => Effect.Effect<any, Error>;
 
 		/**
 		 * Checks if an extension is currently activated.

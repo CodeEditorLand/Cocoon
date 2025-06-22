@@ -10,8 +10,10 @@ export class StartDebuggingError extends Data.TaggedError(
 }> {
 	constructor(properties: { readonly cause: unknown }) {
 		super(properties);
+
 		this.message = `Failed to start debugging session.`;
 	}
+
 	public override readonly message: string;
 }
 

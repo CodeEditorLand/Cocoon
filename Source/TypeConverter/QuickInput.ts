@@ -18,6 +18,7 @@ export default {
 				typeof Item === "string"
 					? { label: Item }
 					: (Item as QuickPickItem);
+
 			// Attach our own index to map the result back later.
 			return { ...Base, handle: Index };
 		});
@@ -33,6 +34,7 @@ export default {
 			// VS Code's internal quick input buttons have an iconPath property
 			// which can be a dark/light theme URI object. We need to handle this.
 			const iconPath = (Button as any).iconPath;
+
 			return {
 				// FIX: `Uri.revive` does not exist on the public API.
 				// The DTO should be built from the raw URI data.
@@ -41,11 +43,14 @@ export default {
 					? "dark" in iconPath && "light" in iconPath
 						? {
 								dark: Uri.parse(iconPath.dark).toJSON(),
+
 								light: Uri.parse(iconPath.light).toJSON(),
 							}
 						: Uri.parse(iconPath.toString()).toJSON()
 					: undefined,
+
 				tooltip: Button.tooltip,
+
 				handle: Index,
 			};
 		});

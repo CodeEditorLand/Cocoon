@@ -15,8 +15,10 @@ import Service from "./Service.js";
  */
 export default Layer.effect(
 	Service,
+
 	Effect.map(
 		InitDataService,
+
 		(InitData) => new Definition(InitData.extensions.allExtensions),
 	),
 );

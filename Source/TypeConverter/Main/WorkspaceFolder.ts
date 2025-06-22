@@ -11,7 +11,9 @@ import URIConverter from "./URI.js";
 const FromDTO = (DTO: IWorkspaceFolderData): WorkspaceFolder => {
 	return {
 		uri: URIConverter.ToAPI(DTO.uri),
+
 		name: DTO.name,
+
 		index: DTO.index,
 	};
 };

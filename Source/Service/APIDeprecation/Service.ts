@@ -22,7 +22,9 @@ export default class APIDeprecationService extends Context.Tag(
 		 */
 		readonly Report: (
 			ExtensionID: ExtensionIdentifier,
+
 			Usage: string,
+
 			Message: string,
 		) => Effect.Effect<void, never>;
 
@@ -35,7 +37,9 @@ export default class APIDeprecationService extends Context.Tag(
 		 */
 		readonly Deprecated: (
 			ExtensionID: ExtensionIdentifier,
+
 			Feature: string,
+
 			Message: string,
 		) => PropertyDecorator;
 	}

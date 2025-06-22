@@ -14,13 +14,17 @@ import type INodeModuleFactory from "./Interface.js";
 export default class implements INodeModuleFactory {
 	constructor(
 		private readonly APIFactory: APIFactoryService["Type"],
+
 		private readonly ExtensionPath: ExtensionPathService["Type"],
+
 		private readonly Log: LogService["Type"],
 	) {}
 
 	public Load(
 		_Request: "vscode",
+
 		ParentURI: VSCode.Uri,
+
 		_OriginalRequire: (request: string) => any,
 	): any {
 		const Extension = this.ExtensionPath.FindSubstr(ParentURI);
@@ -36,6 +40,7 @@ export default class implements INodeModuleFactory {
 		this.Log.Error(
 			`FATAL: require('vscode') was called from an unknown location: ${ParentURI.fsPath}. Could not determine extension owner.`,
 		);
+
 		throw new Error(
 			"[Cocoon] `require('vscode')` may only be called from an extension.",
 		);

@@ -81,7 +81,8 @@ export async function resolve(
 						`Timeout resolving module import: "${Specifier}"`,
 					),
 				);
-			}, 5000); // 5-second timeout for resolution
+				// 5-second timeout for resolution
+			}, 5000);
 			PendingPromises.set(RequestID, { Resolve, Reject, TimeoutID });
 		});
 

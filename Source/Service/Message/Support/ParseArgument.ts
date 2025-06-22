@@ -10,7 +10,9 @@ import type ExtensionSource from "../Type.js";
 
 interface ParsedArguments {
 	Option: MessageOptions;
+
 	Items: (string | MessageItem)[];
+
 	Source?: ExtensionSource;
 }
 
@@ -22,8 +24,11 @@ interface ParsedArguments {
  */
 export default (Arguments: any[]): ParsedArguments => {
 	let Option: MessageOptions = {};
+
 	let Items: (string | MessageItem)[] = [];
+
 	let Source: ExtensionSource | undefined = undefined;
+
 	let CurrentIndex = 0;
 
 	// Check for MessageOptions (it's an object, but not a MessageItem or ExtensionSource)

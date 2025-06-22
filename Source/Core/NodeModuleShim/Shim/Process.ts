@@ -13,6 +13,7 @@
 import { EventEmitter } from "node:events";
 
 class ProcessShimBase extends EventEmitter {}
+
 const ActualNodeProcess = process;
 
 /**
@@ -24,6 +25,7 @@ const CreateSanitizedEnvironment = (): {
 	[key: string]: string | undefined;
 } => {
 	const SanitizedEnvironment: { [key: string]: string | undefined } = {};
+
 	for (const key in ActualNodeProcess.env) {
 		if (Object.prototype.hasOwnProperty.call(ActualNodeProcess.env, key)) {
 			// Filter out internal variables
@@ -36,7 +38,9 @@ const CreateSanitizedEnvironment = (): {
 			}
 		}
 	}
-	return Object.freeze(SanitizedEnvironment); // Freeze the final object
+
+	// Freeze the final object
+	return Object.freeze(SanitizedEnvironment);
 };
 
 /**
@@ -49,41 +53,55 @@ const ProcessShim = {
 	get platform(): NodeJS.Platform {
 		return ActualNodeProcess.platform;
 	},
+
 	get arch(): string {
 		return ActualNodeProcess.arch;
 	},
+
 	get versions(): NodeJS.ProcessVersions {
-		return { ...ActualNodeProcess.versions }; // Return a copy
+		// Return a copy
+		return { ...ActualNodeProcess.versions };
 	},
+
 	get pid(): number {
 		return ActualNodeProcess.pid;
 	},
+
 	get ppid(): number {
 		return ActualNodeProcess.ppid;
 	},
+
 	get execPath(): string {
 		return ActualNodeProcess.execPath;
 	},
+
 	get title(): string {
-		return "Cocoon Extension Host"; // Hard-code the title
+		// Hard-code the title
+		return "Cocoon Extension Host";
 	},
 
 	// --- Properties with Sanitization (return a safe copy) ---
 	get env(): { [key: string]: string | undefined } {
 		return CreateSanitizedEnvironment();
 	},
+
 	get argv(): string[] {
 		return [...ActualNodeProcess.argv];
 	},
+
 	get execArgv(): string[] {
 		return [...ActualNodeProcess.execArgv];
 	},
 
 	// --- Safe Methods (delegated directly) ---
 	cwd: () => ActualNodeProcess.cwd(),
+
 	memoryUsage: () => ActualNodeProcess.memoryUsage(),
+
 	hrtime: (time?: [number, number]) => ActualNodeProcess.hrtime(time),
+
 	uptime: () => ActualNodeProcess.uptime(),
+
 	nextTick: (callback: (...args: any[]) => void, ...args: any[]) =>
 		ActualNodeProcess.nextTick(callback, ...args),
 
@@ -91,6 +109,7 @@ const ProcessShim = {
 	// These are exposed initially but are expected to be patched by the `PatchProcess` module.
 	// This allows us to control them without breaking extensions that expect them to exist.
 	exit: (code?: number): never => ActualNodeProcess.exit(code),
+
 	kill: (pid: number, signal?: string | number) =>
 		ActualNodeProcess.kill(pid, signal),
 
@@ -98,9 +117,11 @@ const ProcessShim = {
 	chdir: (_directory: string) => {
 		throw new Error("`process.chdir()` is not allowed in extensions.");
 	},
+
 	setuid: (_id: number | string) => {
 		throw new Error("`process.setuid()` is not allowed in extensions.");
 	},
+
 	setgid: (_id: number | string) => {
 		throw new Error("`process.setgid()` is not allowed in extensions.");
 	},

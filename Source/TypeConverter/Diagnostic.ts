@@ -1,6 +1,7 @@
 /**
  * @module Diagnostic (TypeConverter)
  * @description Implements type converters for `vscode.Diagnostic` and related types,
+
  * translating between the rich API objects and their serializable DTOs for IPC.
  */
 
@@ -44,10 +45,15 @@ const RelatedInformationFromAPI = (
 	relatedInformation: VSCode.DiagnosticRelatedInformation,
 ): IRelatedInformation => ({
 	resource: relatedInformation.location.uri as VscURI,
+
 	message: relatedInformation.message,
+
 	startLineNumber: relatedInformation.location.range.start.line + 1,
+
 	startColumn: relatedInformation.location.range.start.character + 1,
+
 	endLineNumber: relatedInformation.location.range.end.line + 1,
+
 	endColumn: relatedInformation.location.range.end.character + 1,
 });
 
@@ -62,17 +68,22 @@ const RelatedInformationToAPI = (
 	new DiagnosticRelatedInformation(
 		new Location(
 			URIConverter.ToAPI(relatedInformationDTO.resource),
+
 			new Range(
 				new Position(
 					relatedInformationDTO.startLineNumber - 1,
+
 					relatedInformationDTO.startColumn - 1,
 				),
+
 				new Position(
 					relatedInformationDTO.endLineNumber - 1,
+
 					relatedInformationDTO.endColumn - 1,
 				),
 			),
 		),
+
 		relatedInformationDTO.message,
 	);
 
@@ -86,19 +97,29 @@ const FromAPI = (diagnostic: VSCode.Diagnostic): IMarkerData => ({
 		typeof diagnostic.code === "object"
 			? {
 					value: String(diagnostic.code.value),
+
 					target: diagnostic.code.target as VscURI,
 				}
 			: String(diagnostic.code),
+
 	severity: ToMarkerSeverity(diagnostic.severity),
+
 	message: diagnostic.message,
+
 	source: diagnostic.source,
+
 	startLineNumber: diagnostic.range.start.line + 1,
+
 	startColumn: diagnostic.range.start.character + 1,
+
 	endLineNumber: diagnostic.range.end.line + 1,
+
 	endColumn: diagnostic.range.end.character + 1,
+
 	relatedInformation: diagnostic.relatedInformation?.map(
 		RelatedInformationFromAPI,
 	),
+
 	tags: diagnostic.tags as unknown as MarkerTag[],
 });
 
@@ -111,31 +132,43 @@ const ToAPI = (markerDataDTO: IMarkerData): VSCode.Diagnostic => {
 	const RangeValue = new Range(
 		new Position(
 			markerDataDTO.startLineNumber - 1,
+
 			markerDataDTO.startColumn - 1,
 		),
+
 		new Position(
 			markerDataDTO.endLineNumber - 1,
+
 			markerDataDTO.endColumn - 1,
 		),
 	);
+
 	const DiagnosticValue = new Diagnostic(
 		RangeValue,
+
 		markerDataDTO.message,
+
 		FromMarkerSeverity(markerDataDTO.severity as MarkerSeverity),
 	);
+
 	DiagnosticValue.source = markerDataDTO.source;
+
 	if (typeof markerDataDTO.code === "object" && markerDataDTO.code) {
 		DiagnosticValue.code = {
 			value: markerDataDTO.code.value,
+
 			target: URIConverter.ToAPI(markerDataDTO.code.target),
 		};
 	} else {
 		DiagnosticValue.code = markerDataDTO.code;
 	}
+
 	DiagnosticValue.relatedInformation = markerDataDTO.relatedInformation?.map(
 		RelatedInformationToAPI,
 	);
+
 	DiagnosticValue.tags = markerDataDTO.tags as unknown as DiagnosticTag[];
+
 	return DiagnosticValue;
 };
 

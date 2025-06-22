@@ -31,47 +31,62 @@ export default Effect.gen(function* () {
 				const existingSource = yield* Ref.get(SourceMap).pipe(
 					Effect.map(HashMap.get(TokenID)),
 				);
+
 				if (existingSource._tag === "Some") {
 					yield* Effect.logTrace(
 						`Reusing CancellationTokenSource for TokenID: ${TokenID}.`,
 					);
+
 					return existingSource.value;
 				}
 
 				const newSource = new CancellationTokenSource();
+
 				yield* Ref.update(SourceMap, HashMap.set(TokenID, newSource));
+
 				yield* Effect.logTrace(
 					`Created new CancellationTokenSource for TokenID: ${TokenID}.`,
 				);
+
 				return newSource;
 			}),
+
 			(source) =>
 				Ref.get(SourceMap).pipe(
 					Effect.flatMap((map) => {
 						const currentSource = HashMap.get(map, TokenID);
+
 						if (
 							currentSource._tag === "Some" &&
 							currentSource.value === source
 						) {
 							return Ref.update(
 								SourceMap,
+
 								HashMap.remove(TokenID),
 							).pipe(
 								Effect.tap(() => {
 									source.dispose();
+
 									return Effect.logTrace(
 										`Disposed and removed CancellationTokenSource for TokenID: ${TokenID}.`,
 									);
 								}),
 							);
 						}
+
 						return Effect.void;
 					}),
-					Effect.orDie, // Failure to release is a fatal error.
+
+					// Failure to release is a fatal error.
+					Effect.orDie,
 				),
-		).pipe(Effect.map((source) => source.token)); // Only return the token
+
+			// Only return the token
+		).pipe(Effect.map((source) => source.token));
 
 		// Use Effect.scoped to run the acquire/release logic in a temporary,
+
 		// self-contained scope that is closed when the consumer's effect ends.
 		return Effect.scoped(acquireAndReleaseToken);
 	};
@@ -83,13 +98,16 @@ export default Effect.gen(function* () {
 					`Attempted to cancel with an invalid TokenID: '${TokenID}'.`,
 				);
 			}
+
 			const maybeSource = yield* Ref.get(SourceMap).pipe(
 				Effect.map(HashMap.get(TokenID)),
 			);
+
 			if (maybeSource._tag === "Some") {
 				yield* Effect.logDebug(
 					`Received cancellation signal. Cancelling operation for TokenID: ${TokenID}.`,
 				);
+
 				maybeSource.value.cancel();
 			} else {
 				yield* Effect.logWarning(
@@ -107,14 +125,19 @@ export default Effect.gen(function* () {
 					)}) managed CancellationTokenSources.`,
 				),
 			),
+
 			Effect.flatMap((map) =>
 				Effect.forEach(
 					HashMap.values(map),
+
 					(source) => Effect.sync(() => source.dispose()),
+
 					{ discard: true, concurrency: "unbounded" },
 				),
 			),
+
 			Effect.flatMap(() => Ref.set(SourceMap, HashMap.empty())),
+
 			Effect.tap(() =>
 				Effect.logTrace(
 					"All CancellationTokenSources disposed and map cleared.",
@@ -128,7 +151,9 @@ export default Effect.gen(function* () {
 
 	const ServiceImplementation: Service["Type"] = {
 		ObtainToken,
+
 		CancelToken,
+
 		DisposeAll,
 	};
 

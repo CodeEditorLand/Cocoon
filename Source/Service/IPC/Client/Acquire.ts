@@ -26,14 +26,20 @@ const LoadProtoDefinition = (
 		try: () =>
 			protoLoader.load(ProtoPath, {
 				keepCase: true,
+
 				longs: String,
+
 				enums: String,
+
 				defaults: true,
+
 				oneofs: true,
 			}),
+
 		catch: (Cause) =>
 			new gRPCConnectionError({
 				Cause,
+
 				Context: "ProtoLoadFailed",
 			}),
 	});
@@ -45,22 +51,28 @@ const LoadProtoDefinition = (
  */
 const CreateClientInstance = (
 	PackageDefinition: GRPC.GrpcObject,
+
 	ServerAddress: string,
 ): Effect.Effect<ClientInstance, gRPCConnectionError> => {
 	return Effect.try({
 		try: () => {
 			const Proto = PackageDefinition["vine_ipc"] as GRPC.GrpcObject;
+
 			const ClientConstructor = Proto[
 				"MountainService"
 			] as GRPC.ServiceClientConstructor;
+
 			return new ClientConstructor(
 				ServerAddress,
+
 				GRPC.credentials.createInsecure(),
 			) as unknown as ClientInstance;
 		},
+
 		catch: (Cause) =>
 			new gRPCConnectionError({
 				Cause,
+
 				Context: "ClientInstantiationFailed",
 			}),
 	});
@@ -80,6 +92,7 @@ const WaitForClientReady = (
 					Effect.fail(
 						new gRPCConnectionError({
 							Cause: Error,
+
 							Context: "ClientNotReady",
 						}),
 					),
@@ -102,18 +115,23 @@ export default Effect.acquireRelease(
 	Effect.gen(function* () {
 		// Step 1: Get the IPC configuration from the context.
 		const Configuration = yield* IPCConfigurationService;
+
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
 		// Step 2: Load the .proto definition and create the gRPC client.
 		const Definition = yield* LoadProtoDefinition(ProtoPath);
+
 		const GrpcObject = GRPC.loadPackageDefinition(Definition);
+
 		const Client = yield* CreateClientInstance(
 			GrpcObject,
+
 			Configuration.MountainAddress,
 		);
 
 		// Step 3: Wait for the client to connect to the server.
 		yield* WaitForClientReady(Client);
+
 		yield* Effect.logInfo(
 			`gRPC client connected to Mountain at ${Configuration.MountainAddress}.`,
 		);
@@ -121,5 +139,6 @@ export default Effect.acquireRelease(
 		// Step 4: Return the ready client.
 		return Client;
 	}),
+
 	(Client) => Release(Client),
 );

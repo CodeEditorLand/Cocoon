@@ -81,7 +81,8 @@ const CoreInfraLayer = Layer.mergeAll(
 	} satisfies IPCConfiguration),
 	Logger.logFmt,
 	CancellationLive,
-).pipe(Layer.provide(IPCLive)); // IPCLive depends on the services above
+	// IPCLive depends on the services above
+).pipe(Layer.provide(IPCLive));
 
 // STAGE 2: Core Services Layer
 // Provides essential host services that depend on the infrastructure.
@@ -93,7 +94,8 @@ const CoreServicesLayer = Layer.mergeAll(
 	ESMInterceptorLive,
 	ExtensionPathLive,
 	HostKindPickerLive,
-).pipe(Layer.provide(CoreInfraLayer)); // Depends on CoreInfraLayer
+	// Depends on CoreInfraLayer
+).pipe(Layer.provide(CoreInfraLayer));
 
 // STAGE 3: Application Services Layer
 // Provides high-level services that mimic the vscode API.
@@ -125,12 +127,14 @@ const AppServicesLayer = Layer.mergeAll(
 	WebViewPanelLive,
 	WindowLive,
 	WorkSpaceLive,
-).pipe(Layer.provide(CoreServicesLayer)); // Depends on CoreServicesLayer
+	// Depends on CoreServicesLayer
+).pipe(Layer.provide(CoreServicesLayer));
 
 // STAGE 4: Top-Level Business Logic Layer
 // Provides the final, most complex services that orchestrate everything.
 const TopLevelLayer = Layer.mergeAll(APIFactoryLive, ExtensionHostLive).pipe(
-	Layer.provide(AppServicesLayer), // Depends on AppServicesLayer
+	// Depends on AppServicesLayer
+	Layer.provide(AppServicesLayer),
 );
 
 // --- Effect Definitions ---

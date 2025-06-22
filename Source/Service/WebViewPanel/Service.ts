@@ -24,14 +24,19 @@ export default class WebViewPanelService extends Context.Tag(
 		 */
 		readonly CreateWebviewPanel: (
 			Extension: IExtensionDescription,
+
 			ViewType: string,
+
 			Title: string,
+
 			ShowOptions:
 				| ViewColumn
 				| {
 						readonly viewColumn: ViewColumn;
+
 						readonly preserveFocus?: boolean;
 				  },
+
 			Options?: WebviewPanelOptions & WebviewOptions,
 		) => Effect.Effect<WebviewPanel, Error>;
 
@@ -40,7 +45,9 @@ export default class WebViewPanelService extends Context.Tag(
 		 */
 		readonly RegisterWebviewPanelSerializer: (
 			Extension: IExtensionDescription,
+
 			ViewType: string,
+
 			Serializer: WebviewPanelSerializer,
 		) => Effect.Effect<Disposable, Error>;
 	}

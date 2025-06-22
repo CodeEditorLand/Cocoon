@@ -27,7 +27,9 @@ export default class IPCService extends Context.Tag("Service/IPC")<
 		 */
 		readonly SendRequest: <Res = unknown>(
 			Method: string,
+
 			Parameters: readonly unknown[],
+
 			TimeoutMilliseconds?: number,
 		) => Effect.Effect<Res, IPCError>;
 
@@ -40,6 +42,7 @@ export default class IPCService extends Context.Tag("Service/IPC")<
 		 */
 		readonly SendNotification: (
 			Method: string,
+
 			Parameters: readonly unknown[],
 		) => Effect.Effect<void, IPCError>;
 
@@ -69,6 +72,7 @@ export default class IPCService extends Context.Tag("Service/IPC")<
 		 */
 		readonly RegisterInvokeHandler: (
 			Channel: string,
+
 			Handler: (...Arguments: any[]) => Promise<any>,
 		) => Disposable;
 	}

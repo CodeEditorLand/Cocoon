@@ -61,7 +61,7 @@ To understand how `Cocoon`'s internal components interact to provide the
 high-fidelity `vscode` API, please refer to the detailed technical breakdown in
 [`docs/Deep Dive.md`](docs/Deep%20Dive.md). This document explains the roles of
 the `Core` services (like `ApiFactory` and `ExtensionHost`), the `Service`
-shims, and the gRPC-based `IpcProvider`.
+shims, and the gRPC-based `IPCProvider`.
 
 ---
 
@@ -86,7 +86,7 @@ communicating with `Mountain`.
 1.  `Mountain` launches `Cocoon` with initialization data.
 2.  `Cocoon`'s `Index.ts` bootstraps the application:
     - `PatchProcess` hardens the environment.
-    - `IpcProvider` establishes the gRPC connection and performs a handshake.
+    - `IPCProvider` establishes the gRPC connection and performs a handshake.
     - The main `AppLayer` is built, composing all services.
     - The real VS Code `ExtHostExtensionService` is instantiated within this
       Effect-TS environment.
@@ -124,7 +124,7 @@ graph LR
         AppLayer["Cocoon AppLayer"]:::effectts
         CoreServices["Core Services (ApiFactory, ExtensionHost)"]:::cocoon
         APIServices["API Service Shims (Workspace, Window, etc.)"]:::cocoon
-        IPCService["IpcProvider (gRPC Client & Server)"]:::cocoon
+        IPCService["IPCProvider (gRPC Client & Server)"]:::cocoon
 
         Index -- Builds & Runs --> AppLayer
         AppLayer -- Composes --> CoreServices

@@ -22,6 +22,7 @@ const SetupEnvironment = Effect.gen(function* () {
 	// The `IEnvironment` interface does not contain httpProxy/httpsProxy directly.
 	// However, `useHostProxy` signals that we should use the host's proxy settings.
 	// We'll assume the host's environment variables are already set and this process inherits them,
+
 	// or that the host provides them through another mechanism if `useHostProxy` is true.
 	// For now, we will remove the direct setting of these variables as the properties don't exist on the type.
 	// If proxy support is needed, it would require a change in IExtensionHostInitData or another IPC call.

@@ -25,14 +25,20 @@ const LoadProtoDefinition = (
 		try: () =>
 			protoLoader.load(ProtoPath, {
 				keepCase: true,
+
 				longs: String,
+
 				enums: String,
+
 				defaults: true,
+
 				oneofs: true,
 			}),
+
 		catch: (cause) =>
 			new gRPCConnectionError({
 				Cause: cause,
+
 				Context: "ProtoLoadFailed",
 			}),
 	});
@@ -43,18 +49,22 @@ const LoadProtoDefinition = (
  */
 const StartServer = (
 	Server: GRPC.Server,
+
 	ServerAddress: string,
 ): Effect.Effect<void, gRPCConnectionError> => {
 	return Effect.async<void, gRPCConnectionError>((Resume) => {
 		Server.bindAsync(
 			ServerAddress,
+
 			GRPC.ServerCredentials.createInsecure(),
+
 			(Error, _Port) => {
 				if (Error) {
 					Resume(
 						Effect.fail(
 							new gRPCConnectionError({
 								Cause: Error,
+
 								Context: "ServerBindFailed",
 							}),
 						),
@@ -62,12 +72,14 @@ const StartServer = (
 				} else {
 					try {
 						Server.start();
+
 						Resume(Effect.void);
 					} catch (CaughtError) {
 						Resume(
 							Effect.fail(
 								new gRPCConnectionError({
 									Cause: CaughtError,
+
 									Context: "ServerStartFailed",
 								}),
 							),
@@ -82,6 +94,7 @@ const StartServer = (
 /**
  * An `Effect` that acquires the gRPC server as a managed resource. This handles
  * loading the protocol definition, creating the server with its service implementation,
+
  * starting it, and registering a release action.
  * @export
  * @default
@@ -90,23 +103,30 @@ export default Effect.acquireRelease(
 	Effect.gen(function* () {
 		// Step 1: Get IPC configuration and dispatcher service from the context.
 		const Configuration = yield* IPCConfigurationService;
+
 		const Dispatcher = yield* DispatcherService;
+
 		const ProtoPath = Path.join(process.cwd(), "proto/vine.proto");
 
 		// Step 2: Load the .proto definition and get the service definition.
 		const Definition = yield* LoadProtoDefinition(ProtoPath);
+
 		const Proto = GRPC.loadPackageDefinition(Definition)[
 			"vine_ipc"
 		] as GRPC.GrpcObject;
+
 		const ServiceDefinition = Proto["CocoonService"]["service"];
 
 		// Step 3: Create and configure the gRPC server instance.
 		const Server = new GRPC.Server();
+
 		const Implementation = CreateServiceImplementation(Dispatcher);
+
 		Server.addService(ServiceDefinition, Implementation);
 
 		// Step 4: Start the server and log its status.
 		yield* StartServer(Server, Configuration.CocoonAddress);
+
 		yield* Effect.logInfo(
 			`Cocoon gRPC server listening at ${Configuration.CocoonAddress}.`,
 		);
@@ -114,5 +134,6 @@ export default Effect.acquireRelease(
 		// Step 5: Return the running server instance.
 		return Server;
 	}),
+
 	(Server) => Release(Server).pipe(Effect.orDie),
 );

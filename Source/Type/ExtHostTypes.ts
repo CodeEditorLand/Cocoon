@@ -1,6 +1,7 @@
 /**
  * @module ExtHostTypes
  * @description Provides the concrete implementations of the core `vscode` API types,
+
  * such as `URI`, `Range`, `Position`, `Disposable`, and all enums.
  * Synthesized from `vscode.d.ts` and VS Code's internal `extHostTypes.ts`.
  */
@@ -117,6 +118,7 @@ export class Position implements VSCode.Position {
 			| number
 			| { lineDelta?: number; characterDelta?: number }
 			| undefined,
+
 		characterDelta = 0,
 	): VSCode.Position {
 		if (lineDeltaOrChange === null || lineDeltaOrChange === undefined) {
@@ -126,12 +128,14 @@ export class Position implements VSCode.Position {
 		if (typeof lineDeltaOrChange === "number") {
 			return new Position(
 				this.line + lineDeltaOrChange,
+
 				this.character + characterDelta,
 			);
 		}
 
 		return new Position(
 			this.line + (lineDeltaOrChange.lineDelta ?? 0),
+
 			this.character + (lineDeltaOrChange.characterDelta ?? 0),
 		);
 	}
@@ -145,6 +149,7 @@ export class Position implements VSCode.Position {
 			| number
 			| { line?: number; character?: number }
 			| undefined,
+
 		character: number = this.character,
 	): VSCode.Position {
 		if (lineOrChange === null || lineOrChange === undefined) {
@@ -157,6 +162,7 @@ export class Position implements VSCode.Position {
 
 		return new Position(
 			lineOrChange.line ?? this.line,
+
 			lineOrChange.character ?? this.character,
 		);
 	}
@@ -175,15 +181,21 @@ export class Range implements VSCode.Range {
 
 	constructor(
 		startLine: number,
+
 		startCharacter: number,
+
 		endLine: number,
+
 		endCharacter: number,
 	);
 
 	constructor(
 		startLineOrPosition: number | Position,
+
 		startCharacterOrPosition: number | Position,
+
 		endLine?: number,
+
 		endCharacter?: number,
 	) {
 		let start: Position;
@@ -280,6 +292,7 @@ export class Range implements VSCode.Range {
 			| Position
 			| { start?: Position; end?: Position }
 			| undefined,
+
 		end: Position = this.end,
 	): Range {
 		if (startOrChange === null || startOrChange === undefined) {
@@ -292,6 +305,7 @@ export class Range implements VSCode.Range {
 
 		return new Range(
 			startOrChange.start ?? this.start,
+
 			startOrChange.end ?? this.end,
 		);
 	}
@@ -321,8 +335,11 @@ export class Selection extends Range implements VSCode.Selection {
 	override toJSON(): any {
 		return {
 			start: this.start.toJSON(),
+
 			end: this.end.toJSON(),
+
 			active: this.active.toJSON(),
+
 			anchor: this.anchor.toJSON(),
 		};
 	}
@@ -331,12 +348,14 @@ export class Selection extends Range implements VSCode.Selection {
 export class Location implements VSCode.Location {
 	constructor(
 		public uri: VSCode.Uri,
+
 		public range: Range,
 	) {}
 
 	toJSON(): any {
 		return {
 			uri: this.uri,
+
 			range: this.range.toJSON(),
 		};
 	}
@@ -359,7 +378,9 @@ export class Diagnostic implements VSCode.Diagnostic {
 
 	constructor(
 		range: Range,
+
 		message: string,
+
 		severity: VSCode.DiagnosticSeverity = DiagnosticSeverity.Error,
 	) {
 		this.range = range;
@@ -372,7 +393,9 @@ export class Diagnostic implements VSCode.Diagnostic {
 	toJSON(): any {
 		return {
 			message: this.message,
+
 			severity: DiagnosticSeverity[this.severity],
+
 			range: this.range.toJSON(),
 		};
 	}
@@ -383,6 +406,7 @@ export class DiagnosticRelatedInformation
 {
 	constructor(
 		public location: Location,
+
 		public message: string,
 	) {}
 }
@@ -410,6 +434,7 @@ export class TreeItem implements VSCode.TreeItem {
 
 	constructor(
 		labelOrUri: string | VSCode.Uri | VSCode.TreeItemLabel,
+
 		collapsibleState?: VSCode.TreeItemCollapsibleState,
 	) {
 		if (typeof labelOrUri === "string" || isTreeItemLabel(labelOrUri)) {
@@ -460,6 +485,7 @@ export class MarkdownString implements VSCode.MarkdownString {
 	toJSON(): any {
 		return {
 			value: this.value,
+
 			isTrusted: this.isTrusted,
 		};
 	}
@@ -476,6 +502,7 @@ export class ThemeIcon implements VSCode.ThemeIcon {
 
 	constructor(
 		public id: string,
+
 		public color?: ThemeColor,
 	) {}
 }
@@ -483,6 +510,7 @@ export class ThemeIcon implements VSCode.ThemeIcon {
 export class TextEdit implements VSCode.TextEdit {
 	constructor(
 		public range: Range,
+
 		public newText: string,
 	) {}
 
@@ -501,6 +529,7 @@ export class TextEdit implements VSCode.TextEdit {
 	static setEndOfLine(eol: VSCode.EndOfLine): TextEdit {
 		const r = new TextEdit(
 			new Range(new Position(0, 0), new Position(0, 0)),
+
 			"",
 		);
 
@@ -541,6 +570,7 @@ export class CompletionItem implements VSCode.CompletionItem {
 
 	constructor(
 		label: string | VSCode.CompletionItemLabel,
+
 		kind?: VSCode.CompletionItemKind,
 	) {
 		this.label = label;
@@ -558,7 +588,9 @@ export class ProcessExecution implements VSCode.ProcessExecution {
 
 	constructor(
 		process: string,
+
 		args: string[],
+
 		options?: VSCode.ProcessExecutionOptions,
 	) {
 		this.process = process;
@@ -614,16 +646,21 @@ export class Task implements VSCode.Task {
 
 	constructor(
 		definition: VSCode.TaskDefinition,
+
 		scope:
 			| VSCode.TaskScope.Global
 			| VSCode.TaskScope.Workspace
 			| VSCode.WorkspaceFolder,
+
 		name: string,
+
 		source: string,
+
 		execution?:
 			| VSCode.ProcessExecution
 			| VSCode.ShellExecution
 			| VSCode.CustomExecution,
+
 		problemMatchers?: string[],
 	) {
 		this.definition = definition;
@@ -651,6 +688,7 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 
 	public set(
 		uri: VSCode.Uri,
+
 		edits: readonly (VSCode.TextEdit | any)[] | undefined,
 	): void {
 		this._edits.set(uri.toString(), edits ? [...edits] : []);
@@ -659,6 +697,7 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 	public entries(): [VSCode.Uri, VSCode.TextEdit[]][] {
 		return Array.from(this._edits.entries()).map(([uri, edits]) => [
 			URI.parse(uri),
+
 			edits,
 		]);
 	}
@@ -677,7 +716,9 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 
 	public renameFile(
 		_oldUri: VSCode.Uri,
+
 		_newUri: VSCode.Uri,
+
 		_options?: {
 			readonly overwrite?: boolean;
 
@@ -689,6 +730,7 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 
 	public createFile(
 		_uri: VSCode.Uri,
+
 		_options?: {
 			readonly overwrite?: boolean;
 
@@ -700,6 +742,7 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 
 	public deleteFile(
 		_uri: VSCode.Uri,
+
 		_options?: {
 			readonly recursive?: boolean;
 
@@ -711,7 +754,9 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 
 	public replace(
 		_uri: VSCode.Uri,
+
 		_range: VSCode.Range,
+
 		_newText: string,
 	): void {
 		// Not implemented in shim
@@ -719,7 +764,9 @@ export class WorkspaceEdit implements VSCode.WorkspaceEdit {
 
 	public insert(
 		_uri: VSCode.Uri,
+
 		_position: VSCode.Position,
+
 		_newText: string,
 	): void {
 		// Not implemented in shim

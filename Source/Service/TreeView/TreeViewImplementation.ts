@@ -26,65 +26,90 @@ import type IPCService from "../IPC/Service.js";
 
 export default class TreeViewImplementation<T> implements TreeView<T> {
 	private readonly ElementToHandleMap = new Map<T, string>();
+
 	public readonly handleToElementMap = new Map<string, T>();
 
 	private readonly OnDidExpandElementEmitter =
 		CreateEventStream<TreeViewExpansionEvent<T>>();
+
 	readonly onDidExpandElement: Event<TreeViewExpansionEvent<T>>;
+
 	private readonly OnDidCollapseElementEmitter =
 		CreateEventStream<TreeViewExpansionEvent<T>>();
+
 	readonly onDidCollapseElement: Event<TreeViewExpansionEvent<T>>;
+
 	private readonly OnDidChangeSelectionEmitter =
 		CreateEventStream<TreeViewSelectionChangeEvent<T>>();
+
 	readonly onDidChangeSelection: Event<TreeViewSelectionChangeEvent<T>>;
+
 	private readonly OnDidChangeVisibilityEmitter =
 		CreateEventStream<TreeViewVisibilityChangeEvent>();
+
 	readonly onDidChangeVisibility: Event<TreeViewVisibilityChangeEvent>;
+
 	private readonly OnDidChangeCheckboxStateEmitter =
 		CreateEventStream<TreeCheckboxChangeEvent<T>>();
+
 	readonly onDidChangeCheckboxState: Event<TreeCheckboxChangeEvent<T>>;
 
 	constructor(
 		private readonly ViewID: string,
+
 		private readonly DataProvider: TreeDataProvider<T>,
+
 		private readonly IPC: IPCService["Type"],
+
 		private readonly Command: CommandService["Type"],
+
 		private readonly Extension: IExtensionDescription,
 	) {
 		this.onDidExpandElement = this.OnDidExpandElementEmitter.event;
+
 		this.onDidCollapseElement = this.OnDidCollapseElementEmitter.event;
+
 		this.onDidChangeSelection = this.OnDidChangeSelectionEmitter.event;
+
 		this.onDidChangeVisibility = this.OnDidChangeVisibilityEmitter.event;
+
 		this.onDidChangeCheckboxState =
 			this.OnDidChangeCheckboxStateEmitter.event;
 
 		if (this.DataProvider.onDidChangeTreeData) {
 			this.DataProvider.onDidChangeTreeData((Elements) => {
 				const HandlesToRefresh = this.GetHandlesToRefresh(Elements);
+
 				Effect.runFork(
 					this.IPC.SendNotification(`$refreshTreeView`, [
 						this.ViewID,
+
 						HandlesToRefresh,
 					]),
 				);
 			});
 		}
 	}
+
 	activeItem: T | undefined;
+
 	onDidChangeActiveItem: Event<TreeViewActiveItemChangeEvent<T>>;
 
 	public GetChildrenEffect(Element?: T): Effect.Effect<any[], Error> {
 		return Effect.tryPromise({
 			try: () => this.DataProvider.getChildren(Element) as Promise<T[]>,
+
 			catch: (CaughtError) => CaughtError as Error,
 		}).pipe(
 			Effect.flatMap((Children) => {
 				if (!Children) {
 					return Effect.succeed([]);
 				}
+
 				const ItemEffects = Children.map((Child) =>
 					this.ResolveAndCacheItem(Child, undefined),
 				);
+
 				return Effect.all(ItemEffects);
 			}),
 		);
@@ -92,26 +117,36 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 
 	private ResolveAndCacheItem(
 		Element: T,
+
 		ParentHandle: string | undefined,
 	): Effect.Effect<any, Error> {
 		return Effect.tryPromise({
 			try: () =>
 				this.DataProvider.getTreeItem(Element) as Promise<TreeItem>,
+
 			catch: (CaughtError) => CaughtError as Error,
 		}).pipe(
 			Effect.map((TreeItem) => {
 				const Handle = this.GetHandleForElement(Element);
+
 				const CommandConverter = new CommandConverterDefinition(
 					this.Command.RegisterCommand,
+
 					(command, ...args) =>
 						this.Command.ExecuteCommand(command, ...args),
+
 					() => undefined,
 				);
+
 				return TreeViewConverter.Item.FromAPI(
 					this.Extension,
+
 					TreeItem,
+
 					Handle,
+
 					ParentHandle,
+
 					CommandConverter,
 				);
 			}),
@@ -122,9 +157,13 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 		if (this.ElementToHandleMap.has(Element)) {
 			return this.ElementToHandleMap.get(Element)!;
 		}
+
 		const Handle = generateUuid();
+
 		this.ElementToHandleMap.set(Element, Handle);
+
 		this.handleToElementMap.set(Handle, Element);
+
 		return Handle;
 	}
 
@@ -138,26 +177,33 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 		) {
 			return undefined;
 		}
+
 		if (Array.isArray(Elements)) {
 			return Elements.map(
 				(Element) => this.ElementToHandleMap.get(Element) || null,
 			);
 		}
+
 		return [this.ElementToHandleMap.get(Elements as T) || null];
 	}
 
 	reveal(
 		Element: T,
+
 		Options?: {
 			select?: boolean;
+
 			focus?: boolean;
+
 			expand?: boolean | number;
 		},
 	): Promise<void> {
 		return Effect.runPromise(
 			this.IPC.SendNotification("$revealTreeViewItem", [
 				this.ViewID,
+
 				this.GetHandleForElement(Element),
+
 				Options,
 			]),
 		);
@@ -165,18 +211,29 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 
 	dispose() {
 		this.OnDidExpandElementEmitter.Shutdown();
+
 		this.OnDidCollapseElementEmitter.Shutdown();
+
 		this.OnDidChangeSelectionEmitter.Shutdown();
+
 		this.OnDidChangeVisibilityEmitter.Shutdown();
+
 		this.OnDidChangeCheckboxStateEmitter.Shutdown();
+
 		this.ElementToHandleMap.clear();
+
 		this.handleToElementMap.clear();
 	}
 
 	selection: readonly T[] = [];
+
 	visible = true;
+
 	message?: string;
+
 	title?: string;
+
 	description?: string;
+
 	badge?: { value: number; tooltip: string };
 }

@@ -22,7 +22,8 @@ type ClientInstance = MountainService & GRPC.Client;
  */
 const Release = (Client: ClientInstance) => {
 	return Effect.sync(() => {
-		Client.close(); // The generated client has a close() method
+		// The generated client has a close() method
+		Client.close();
 	}).pipe(Effect.tap(() => Effect.logInfo("gRPC client connection closed.")));
 };
 

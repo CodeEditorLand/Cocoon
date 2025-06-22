@@ -17,12 +17,14 @@ import URIConverter from "./URI.js";
 
 interface ILocationDTO {
 	uri: UriComponents;
+
 	range: IRange;
 }
 
 const FromAPI = (LocationInstance: VSCodeLocation): ILocationDTO => {
 	return {
 		uri: URIConverter.FromAPI(LocationInstance.uri),
+
 		range: RangeConverter.FromAPI(LocationInstance.range),
 	};
 };
@@ -30,13 +32,17 @@ const FromAPI = (LocationInstance: VSCodeLocation): ILocationDTO => {
 const ToAPI = (LocationDTO: ILocationDTO): VSCodeLocation => {
 	return new VscLocation(
 		URIConverter.ToAPI(LocationDTO.uri),
+
 		new Range(
 			new Position(
 				LocationDTO.range.startLineNumber - 1,
+
 				LocationDTO.range.startColumn - 1,
 			),
+
 			new Position(
 				LocationDTO.range.endLineNumber - 1,
+
 				LocationDTO.range.endColumn - 1,
 			),
 		),

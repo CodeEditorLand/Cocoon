@@ -23,21 +23,28 @@ let HandleCounter = 0;
  */
 const RegisterProviderEffect = <T>(
 	Registry: Ref.Ref<Map<number, T>>,
+
 	Data: T,
 ): Effect.Effect<Disposable, DebugProviderRegistrationError, IPCService> => {
 	return Effect.gen(function* (G) {
 		const IPC = yield* G(IPCService);
+
 		const Handle = ++HandleCounter;
+
 		yield* G(Ref.update(Registry, (Map) => Map.set(Handle, Data)));
+
 		yield* G(
 			IPC.SendNotification("$registerDebugConfigurationProvider", [
 				Handle,
-				(Data as any).Type, // The data object is known to have a 'type' property.
+
+				// The data object is known to have a 'type' property.
+				(Data as any).Type,
 			]).pipe(
 				Effect.mapError(
 					(cause) =>
 						new DebugProviderRegistrationError({
 							DebugType: (Data as any).Type,
+
 							cause,
 						}),
 				),
@@ -48,6 +55,7 @@ const RegisterProviderEffect = <T>(
 		// It will close over the `IPC` instance from the parent scope.
 		const CleanupEffect = Effect.gen(function* (G) {
 			yield* G(Ref.update(Registry, (Map) => (Map.delete(Handle), Map)));
+
 			yield* G(
 				IPC.SendNotification("$unregisterDebugConfigurationProvider", [
 					Handle,

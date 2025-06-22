@@ -11,4 +11,5 @@ import type { WorkspaceConfiguration } from "vscode";
  * a snapshot of configuration values for a specific section.
  */
 type WorkSpaceConfiguration = WorkspaceConfiguration;
+
 export default WorkSpaceConfiguration;

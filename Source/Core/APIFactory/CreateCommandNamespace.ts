@@ -59,9 +59,12 @@ const CreateCommandNamespace = (
 	return {
 		registerCommand: RegisterCommand,
 		registerTextEditorCommand: RegisterTextEditorCommand,
-		registerDiffInformationCommand: RegisterCommand, // Alias to generic registration
-		executeCommand: ExecuteCommand as any, // Cast to `any` to satisfy the `Promise` in the vscode.d.ts, will be handled by caller
-		getCommands: GetCommands as any, // Cast to `any` to satisfy the `Promise` in the vscode.d.ts, will be handled by caller
+		// Alias to generic registration
+		registerDiffInformationCommand: RegisterCommand,
+		// Cast to `any` to satisfy the `Promise` in the vscode.d.ts, will be handled by caller
+		executeCommand: ExecuteCommand as any,
+		// Cast to `any` to satisfy the `Promise` in the vscode.d.ts, will be handled by caller
+		getCommands: GetCommands as any,
 	};
 };
 

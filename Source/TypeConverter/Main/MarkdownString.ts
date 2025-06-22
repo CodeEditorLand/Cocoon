@@ -21,8 +21,11 @@ const FromAPI = (
 	MarkdownStringInstance: VscMarkdownString,
 ): IMarkdownString => ({
 	value: MarkdownStringInstance.value,
+
 	isTrusted: MarkdownStringInstance.isTrusted,
+
 	baseUri: MarkdownStringInstance.baseUri as unknown as URI,
+
 	supportHtml: MarkdownStringInstance.supportHtml,
 });
 
@@ -34,13 +37,17 @@ const FromAPI = (
 const ToAPI = (MarkdownStringDTO: IMarkdownString): VscMarkdownString => {
 	const result = new MarkdownString(
 		MarkdownStringDTO.value,
+
 		typeof MarkdownStringDTO.isTrusted === "boolean"
 			? MarkdownStringDTO.isTrusted
 			: !!(MarkdownStringDTO.isTrusted as MarkdownStringTrustedOptions),
 	);
+
 	result.baseUri =
 		MarkdownStringDTO.baseUri as unknown as VscMarkdownString["baseUri"];
+
 	result.supportHtml = MarkdownStringDTO.supportHtml;
+
 	return result;
 };
 

@@ -19,12 +19,16 @@ import type CancellationService from "../../Cancellation/Service.js";
  */
 const ProvideTasksEffect = (
 	Registry: Ref.Ref<Map<number, any>>,
+
 	Handle: number,
+
 	TokenID: number,
+
 	Cancellation: CancellationService["Type"],
 ) => {
 	return Effect.gen(function* (G) {
 		const Entry = (yield* G(Ref.get(Registry))).get(Handle);
+
 		if (!Entry) {
 			return yield* G(
 				Effect.fail(
@@ -34,6 +38,7 @@ const ProvideTasksEffect = (
 		}
 
 		const Provider = Entry.Provider as TaskProvider;
+
 		if (!Provider.provideTasks) {
 			return [];
 		}
@@ -46,6 +51,7 @@ const ProvideTasksEffect = (
 					Provider.provideTasks!(Token) as Promise<
 						Task[] | null | undefined
 					>,
+
 				catch: (CaughtError) => CaughtError as Error,
 			}),
 		);
@@ -59,6 +65,7 @@ const ProvideTasksEffect = (
 		);
 	}).pipe(
 		Effect.scoped,
+
 		Effect.catchAll(() => Effect.succeed([])),
 	);
 };

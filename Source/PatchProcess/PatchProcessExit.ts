@@ -24,20 +24,24 @@ const PatchProcessExitEffect = Effect.gen(function* (G) {
 					})' was called and ALLOWED by host policy. Terminating.`,
 				),
 			);
+
 			return ProcessPatch.NativeExit(Code);
 		}
 
 		const ErrorMessage = `'process.exit(${
 			Code ?? ""
 		})' was called but PREVENTED by host policy.`;
+
 		const PreventionError = new ExitPreventedError({
 			message: ErrorMessage,
+
 			AttemptedCode: Code,
 		});
 
 		Effect.runSync(
 			Effect.logWarning(
 				"Blocked call to process.exit by host policy.",
+
 				PreventionError,
 			),
 		);

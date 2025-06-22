@@ -43,6 +43,7 @@ export default class LocalizationService extends Context.Tag(
 
 		/**
 		 * An event that fires once localization has been initialized for the host,
+
 		 * indicating that it is safe to start loading extension bundles.
 		 */
 		readonly onDidInitializeLocalization: Event<void>;

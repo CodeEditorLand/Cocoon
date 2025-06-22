@@ -21,7 +21,8 @@ var Cocoon_default = {
   plugins: [
     {
       name: "Target",
-      // @ts-ignore
+// @ts-ignore
+     
       setup({ onStart, initialOptions: { outdir } }) {
         switch (true) {
           case Clean === true:

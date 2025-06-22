@@ -18,11 +18,15 @@ export const ConvertSessionToVSCode = (
 ): VSCode.AuthenticationSession => {
 	return {
 		id: Session.id,
+
 		accessToken: Session.accessToken,
+
 		account: {
 			label: Session.account.label,
+
 			id: Session.account.id,
 		},
+
 		scopes: Session.scopes,
 	};
 };
@@ -37,11 +41,15 @@ export const ConvertSessionToInternal = (
 ): IAuthenticationSession => {
 	return {
 		id: Session.id,
+
 		accessToken: Session.accessToken,
+
 		account: {
 			label: Session.account.label,
+
 			id: Session.account.id,
 		},
+
 		scopes: Session.scopes,
 	};
 };

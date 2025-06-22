@@ -22,8 +22,11 @@ import type Service from "./Service.js";
  */
 export default Effect.gen(function* (G) {
 	const APIFactory = yield* G(APIFactoryService);
+
 	const ExtensionPath = yield* G(ExtensionPathService);
+
 	const Log = yield* G(LogService);
+
 	const NodeModuleShim = yield* G(NodeModuleShimService);
 
 	const Factories = new Map<string, INodeModuleFactory>([
@@ -31,6 +34,7 @@ export default Effect.gen(function* (G) {
 	]);
 
 	const OriginalRequire = Module.prototype.require;
+
 	let IsInstalled = false;
 
 	const InstallEffect = () =>
@@ -43,16 +47,21 @@ export default Effect.gen(function* (G) {
 				Effect.sync(() => {
 					(Module.prototype as any).require = function (
 						this: NodeModule,
+
 						Request: string,
 					): any {
 						const Factory = Factories.get(Request);
+
 						if (Factory) {
 							const ParentURI = this.filename
 								? URI.file(this.filename)
 								: URI.parse("unknown:/unknown");
+
 							return Factory.Load(
 								Request,
+
 								ParentURI as Uri,
+
 								(Req) => OriginalRequire.call(this, Req),
 							);
 						}
@@ -61,8 +70,10 @@ export default Effect.gen(function* (G) {
 							const ParentURI = this.filename
 								? URI.file(this.filename)
 								: URI.parse("unknown:/unknown");
+
 							const ShimResult = NodeModuleShim.Load(
 								Request,
+
 								ParentURI as Uri,
 							);
 
@@ -72,8 +83,10 @@ export default Effect.gen(function* (G) {
 								throw Cause.squash(ShimResult.cause);
 							}
 						}
+
 						return OriginalRequire.call(this, Request);
 					};
+
 					IsInstalled = true;
 				}),
 			);

@@ -11,8 +11,11 @@ import type { Uri, WorkspaceFolder } from "vscode";
 export default class {
 	constructor(
 		public readonly ID: string,
+
 		public readonly Name: string,
+
 		public readonly Folders: readonly WorkspaceFolder[],
+
 		public readonly Configuration: Uri | undefined,
 	) {}
 }

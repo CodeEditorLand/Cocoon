@@ -19,13 +19,16 @@ import type Service from "./Service.js";
 
 /**
  * An Effect that builds the live implementation of the Extension service,
+
  * which corresponds to the `vscode.extensions` API namespace.
  */
 export default Effect.gen(function* () {
 	const ExtensionHost = yield* ExtensionHostService;
+
 	const InitData = yield* InitDataService;
 
 	const { event: OnDidChangeEvent } = CreateEventStream<void>();
+
 	const AllExtensionsCache = yield* Ref.make<
 		Option.Option<readonly Extension<any>[]>
 	>(Option.none());
@@ -37,16 +40,19 @@ export default Effect.gen(function* () {
 
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		ActivationEventsReader,
+
 		InitData.extensions.allExtensions,
 	);
 
 	const ServiceImplementation: Service["Type"] = {
 		onDidChange: OnDidChangeEvent,
+
 		GetExtension: <T>(extensionId: string) =>
 			Effect.succeed(
 				ExtensionRegistry.getExtensionDescription(extensionId),
 			).pipe(
 				Effect.map(Option.fromNullable),
+
 				Effect.map(
 					Option.map((description) =>
 						CreateAPIObject<T>(description, ExtensionHost),
@@ -59,17 +65,22 @@ export default Effect.gen(function* () {
 				Effect.flatMap(
 					Option.match({
 						onSome: (cache) => Effect.succeed(cache),
+
 						onNone: () =>
 							Effect.gen(function* () {
 								const descriptions =
 									ExtensionRegistry.getAllExtensionDescriptions();
+
 								const newCache = descriptions.map((desc) =>
 									CreateAPIObject<any>(desc, ExtensionHost),
 								);
+
 								yield* Ref.set(
 									AllExtensionsCache,
+
 									Option.some(newCache),
 								);
+
 								return newCache;
 							}),
 					}),
@@ -80,13 +91,17 @@ export default Effect.gen(function* () {
 			Effect.gen(function* () {
 				const maybeExtension =
 					yield* ServiceImplementation.GetExtension<T>(extensionId);
+
 				if (Option.isNone(maybeExtension)) {
 					return yield* Effect.fail(
 						new Error(`Extension '${extensionId}' not found.`),
 					);
 				}
+
 				const extension = maybeExtension.value;
+
 				yield* Effect.promise(() => extension.activate());
+
 				return extension;
 			}),
 	};

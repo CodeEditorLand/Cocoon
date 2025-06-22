@@ -18,6 +18,7 @@ import RangeConverter from "./Main/Range.js";
 // This is the DTO structure expected by Mountain's HoverResultDTO
 interface HoverDTO {
 	Contents: IMarkdownString[];
+
 	Range?: IRange;
 }
 
@@ -31,9 +32,11 @@ const FromAPI = (Hover: VscodeHover): HoverDTO => {
 			if (Content instanceof ExtHostTypes.MarkdownString) {
 				return MarkdownStringConverter.FromAPI(Content);
 			}
+
 			// Treat plain strings as markdown, wrapping them in the DTO structure.
 			return { value: Content as string, isTrusted: false };
 		}),
+
 		Range: Hover.range ? RangeConverter.FromAPI(Hover.range) : undefined,
 	};
 };
@@ -42,10 +45,12 @@ const ToAPI = (DTO: HoverDTO): VscodeHover => {
 	const Contents = DTO.Contents.map((ContentDTO) =>
 		MarkdownStringConverter.ToAPI(ContentDTO),
 	);
+
 	const Range = DTO.Range ? RangeConverter.ToAPI(DTO.Range) : undefined;
 
 	return new ExtHostTypes.Hover(Contents, Range);
 };
 
 const HoverConverter = { FromAPI, ToAPI };
+
 export default HoverConverter;

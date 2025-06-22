@@ -14,6 +14,7 @@ import type { IExtensionHostInitData } from "vs/workbench/services/extensions/co
  *
  * This function is a factory that takes the `InitData` as input. This is
  * crucial because it allows the shim to be constructed with static,
+
  * host-approved data, making its methods synchronous and conformant to the
  * real `os` API.
  *
@@ -31,40 +32,61 @@ const CreateOsShim = (InitData: IExtensionHostInitData) => {
 
 	const OsShim = {
 		EOL: IsWindows ? "\r\n" : "\n",
+
 		arch: () => process.arch,
+
 		platform: () => process.platform,
+
 		constants: NodeOs.constants,
+
 		cpus: () => NodeOs.cpus(),
+
 		freemem: () => NodeOs.freemem(),
+
 		homedir: () =>
 			UserHome.fsPath ||
 			process.env["HOME"] ||
 			process.env["USERPROFILE"] ||
 			"",
+
 		hostname: () => InitData.environment.appHost || "localhost",
+
 		loadavg: () => NodeOs.loadavg(),
+
 		networkInterfaces: () => NodeOs.networkInterfaces(),
+
 		release: () => NodeOs.release(),
-		tmpdir: () => NodeOs.tmpdir(), // tmpdir is generally safe to expose.
+
+		// tmpdir is generally safe to expose.
+		tmpdir: () => NodeOs.tmpdir(),
+
 		totalmem: () => NodeOs.totalmem(),
+
 		type: () =>
 			IsWindows
 				? "Windows_NT"
 				: process.platform === "darwin"
 					? "Darwin"
 					: "Linux",
+
 		userInfo: (_options?: { encoding: string }) => {
 			// Return a mocked/sanitized version to avoid exposing real user info.
 			const Username =
 				UserHome.fsPath.split(/\/|\\/).pop() || "cocoon-user";
+
 			return {
 				uid: -1,
+
 				gid: -1,
+
 				username: Username,
+
 				homedir: UserHome.fsPath,
+
 				shell: null,
 			};
 		},
+
 		uptime: () => NodeOs.uptime(),
 	};
 

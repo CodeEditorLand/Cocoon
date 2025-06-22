@@ -28,8 +28,11 @@ export default class AuthenticationService extends Context.Tag(
 		 */
 		readonly GetSession: (
 			RequestingExtension: Extension<any>,
+
 			ProviderID: string,
+
 			Scopes: readonly string[],
+
 			Options: AuthenticationGetSessionOptions,
 		) => Effect.Effect<AuthenticationSession | undefined, Error>;
 
@@ -38,7 +41,9 @@ export default class AuthenticationService extends Context.Tag(
 		 */
 		readonly ListSessions: (
 			RequestingExtension: Extension<any>,
+
 			ProviderID: string,
+
 			Scopes?: readonly string[],
 		) => Effect.Effect<readonly AuthenticationSession[], Error>;
 
@@ -47,8 +52,11 @@ export default class AuthenticationService extends Context.Tag(
 		 */
 		readonly RegisterAuthenticationProvider: (
 			ID: string,
+
 			Label: string,
+
 			Provider: AuthenticationProvider,
+
 			Options?: { readonly supportsMultipleAccounts?: boolean },
 		) => Effect.Effect<
 			IDisposable,

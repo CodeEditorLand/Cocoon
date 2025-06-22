@@ -20,12 +20,14 @@ import LogService from "../../Log/Service.js";
  * @param DirectoryURI The optional `URI` of the directory to create. If
  *   undefined, the effect does nothing.
  * @param ScopeName A friendly name for the directory's purpose (e.g.,
+
  *   "Global Storage"), used for logging.
  * @returns An `Effect` that resolves to `true` if the directory was ensured
  *   or `false` if the URI was not provided.
  */
 const EnsureDirectory = (
 	DirectoryURI: Uri | undefined,
+
 	ScopeName: string,
 ): Effect.Effect<boolean, never, FileSystemService | LogService> => {
 	// Conditionally execute based on whether the DirectoryURI is defined.
@@ -35,6 +37,7 @@ const EnsureDirectory = (
 			Effect.gen(function* () {
 				// The condition guarantees DirectoryURI is not undefined here.
 				const URI = DirectoryURI!;
+
 				const Fs = yield* FileSystemService;
 
 				// Create the directory. The underlying `createDirectory` is idempotent.
@@ -45,6 +48,7 @@ const EnsureDirectory = (
 							Effect.flatMap((Log) =>
 								Log.Error(
 									`Failed to ensure ${ScopeName} storage directory exists at ${URI.toString()}`,
+
 									Error,
 								),
 							),
@@ -63,6 +67,7 @@ const EnsureDirectory = (
 
 				return true;
 			}),
+
 		// If the URI is not defined, log a trace message and return false.
 		onFalse: () =>
 			LogService.pipe(
@@ -71,6 +76,7 @@ const EnsureDirectory = (
 						`${ScopeName} storage URI is not defined; skipping creation.`,
 					),
 				),
+
 				Effect.as(false),
 			),
 	});

@@ -13,6 +13,7 @@ export interface IPCConfiguration {
 	 * @example "localhost:50051"
 	 */
 	readonly MountainAddress: string;
+
 	/**
 	 * The network address where the `Cocoon` gRPC server should listen.
 	 * @example "localhost:50052"

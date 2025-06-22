@@ -17,25 +17,35 @@ import type { APICommand } from "./Type.js";
  */
 interface InternalCommand {
 	id: string;
+
 	title: string;
+
 	tooltip?: string;
+
 	arguments?: any[];
 }
 
 export default class CommandConverterDefinition {
 	private readonly DelegatingCommandID: string;
+
 	private readonly DelegatedCommands = new Map<string, VSCode.Command>();
 
 	constructor(
 		private readonly RegisterCommand: (
 			ID: string,
+
 			Handler: (...args: any[]) => any,
+
 			ThisArgument: any,
 		) => IDisposable,
+
 		private readonly ExecuteCommand: <T>(
 			command: string,
+
 			...rest: any[]
-		) => Effect.Effect<T, Error>, // Changed to return Effect
+			// Changed to return Effect
+		) => Effect.Effect<T, Error>,
+
 		private readonly LookupAPICommand: (
 			ID: string,
 		) => APICommand | undefined,
@@ -44,20 +54,25 @@ export default class CommandConverterDefinition {
 
 		this.RegisterCommand(
 			this.DelegatingCommandID,
+
 			this.ExecuteDelegatedCommand,
+
 			this,
 		);
 	}
 
 	private ExecuteDelegatedCommand(ID: string, ...ArgumentArray: any[]): any {
 		const Command = this.DelegatedCommands.get(ID);
+
 		if (!Command) {
 			throw new Error(`Unknown delegated command: ${ID}`);
 		}
+
 		// The vscode API expects a Promise, so we must run the effect at this boundary.
 		return Effect.runPromise(
 			this.ExecuteCommand(
 				Command.command,
+
 				...[...(Command.arguments ?? []), ...ArgumentArray],
 			),
 		);
@@ -65,6 +80,7 @@ export default class CommandConverterDefinition {
 
 	public ToInternal(
 		Command: VSCode.Command,
+
 		DisposableArray: IDisposable[],
 	): InternalCommand | undefined {
 		if (!Command) {
@@ -72,14 +88,18 @@ export default class CommandConverterDefinition {
 		}
 
 		const APICommandValue = this.LookupAPICommand(Command.command);
+
 		if (APICommandValue) {
 			const ConvertedArgumentArray =
 				Command.arguments?.map((Argument, i) =>
 					APICommandValue.Arguments[i].Convert(Argument),
 				) ?? [];
+
 			return {
 				id: APICommandValue.InternalID,
+
 				title: Command.title,
+
 				arguments: ConvertedArgumentArray,
 			};
 		}
@@ -89,20 +109,27 @@ export default class CommandConverterDefinition {
 			Command.arguments.some((Argument) => typeof Argument === "function")
 		) {
 			const ID = generateUuid();
+
 			this.DelegatedCommands.set(ID, Command);
+
 			DisposableArray.push({
 				dispose: () => this.DelegatedCommands.delete(ID),
 			});
+
 			return {
 				id: this.DelegatingCommandID,
+
 				title: Command.title,
+
 				arguments: [ID, ...(Command.arguments ?? [])],
 			};
 		}
 
 		return {
 			id: Command.command,
+
 			title: Command.title,
+
 			arguments: Command.arguments,
 		};
 	}
@@ -113,10 +140,14 @@ export default class CommandConverterDefinition {
 		if (!CommandDTO) {
 			return undefined;
 		}
+
 		return {
 			command: CommandDTO.id,
+
 			title: CommandDTO.title,
+
 			tooltip: CommandDTO.tooltip,
+
 			arguments: CommandDTO.arguments,
 		};
 	}

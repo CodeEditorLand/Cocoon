@@ -19,6 +19,7 @@ import type * as VSCode from "vscode";
 export default (Options: VSCode.WebviewPanelOptions): IWebviewPanelOptions => {
 	return {
 		enableFindWidget: Options.enableFindWidget,
+
 		retainContextWhenHidden: Options.retainContextWhenHidden,
 	};
 };

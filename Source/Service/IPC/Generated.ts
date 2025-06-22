@@ -43,16 +43,16 @@ class GenericResponse {
 }
 
 class GenericNotification {
-	private method = "";
+	private Method = "";
 
-	private params: any;
+	private Parameter: any;
 
 	setMethod(Method: string) {
-		this.method = Method;
+		this.Method = Method;
 	}
 
 	setParams(Parameters: any) {
-		this.params = Parameters;
+		this.Parameter = Parameters;
 	}
 
 	getMethod(): string {
@@ -60,7 +60,7 @@ class GenericNotification {
 	}
 
 	getParams(): any {
-		return this.params;
+		return this.Parameter;
 	}
 }
 
@@ -93,10 +93,16 @@ const MountainServiceClient = (() => {}) as unknown as {
 
 export default {
 	Empty,
+
 	GenericRequest,
+
 	GenericResponse,
+
 	GenericNotification,
+
 	CancelOperationRequest,
+
 	RPCDataPayload,
+
 	MountainServiceClient,
 };

@@ -23,33 +23,48 @@ import type Service from "./Service.js";
  */
 class TerminalProxyImplementation implements Terminal {
 	private readonly _OnDidWrite = new Emitter<string>();
+
 	public readonly onDidWrite: Event<string> = this._OnDidWrite.event;
 
 	private readonly _OnDidClose = new Emitter<void>();
+
 	public readonly onDidClose: Event<void> = this._OnDidClose.event;
 
 	private readonly _OnDidOpen = new Emitter<Terminal>();
+
 	public readonly onDidOpen: Event<Terminal> = this._OnDidOpen.event;
 
 	private readonly _OnDidChangeState = new Emitter<TerminalState>();
+
 	public readonly onDidChangeState: Event<TerminalState> =
 		this._OnDidChangeState.event;
 
 	public readonly name: string;
+
 	public readonly processId: Promise<number | undefined>;
+
 	public readonly creationOptions: Readonly<TerminalOptions>;
-	public readonly exitStatus = undefined; // Not fully implemented yet.
-	public readonly state: TerminalState = { isInteractedWith: false }; // Not fully implemented yet.
+
+	// Not fully implemented yet.
+	public readonly exitStatus = undefined;
+
+	// Not fully implemented yet.
+	public readonly state: TerminalState = { isInteractedWith: false };
 
 	private IsDisposed = false;
 
 	constructor(
-		public readonly ID: number, // The ID assigned by Mountain
+		// The ID assigned by Mountain
+		public readonly ID: number,
+
 		private readonly IPC: IPCService["Type"],
+
 		Options: TerminalOptions,
 	) {
 		this.name = Options.name ?? `terminal-${ID}`;
+
 		this.creationOptions = Object.freeze(Options);
+
 		this.processId = Effect.runPromise(
 			this.IPC.SendRequest<number | undefined>("$terminal:pid", [
 				this.ID,
@@ -61,7 +76,9 @@ class TerminalProxyImplementation implements Terminal {
 		if (this.IsDisposed) {
 			return;
 		}
+
 		const Line = text + (addNewLine ? "\r" : "");
+
 		Effect.runFork(
 			this.IPC.SendNotification("$terminal:sendText", [this.ID, Line]),
 		);
@@ -71,9 +88,11 @@ class TerminalProxyImplementation implements Terminal {
 		if (this.IsDisposed) {
 			return;
 		}
+
 		Effect.runFork(
 			this.IPC.SendNotification("$terminal:show", [
 				this.ID,
+
 				preserveFocus,
 			]),
 		);
@@ -83,6 +102,7 @@ class TerminalProxyImplementation implements Terminal {
 		if (this.IsDisposed) {
 			return;
 		}
+
 		Effect.runFork(this.IPC.SendNotification("$terminal:hide", [this.ID]));
 	}
 
@@ -90,12 +110,19 @@ class TerminalProxyImplementation implements Terminal {
 		if (this.IsDisposed) {
 			return;
 		}
+
 		this.IsDisposed = true;
+
 		this._OnDidClose.fire();
+
 		this._OnDidClose.dispose();
+
 		this._OnDidWrite.dispose();
+
 		this._OnDidOpen.dispose();
+
 		this._OnDidChangeState.dispose();
+
 		Effect.runFork(
 			this.IPC.SendNotification("$terminal:dispose", [this.ID]),
 		);
@@ -105,6 +132,7 @@ class TerminalProxyImplementation implements Terminal {
 	public _FireWrite(data: string): void {
 		this._OnDidWrite.fire(data);
 	}
+
 	public _FireClose(): void {
 		this.dispose();
 	}
@@ -115,9 +143,11 @@ class TerminalProxyImplementation implements Terminal {
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
+
 	const ActiveTerminalsRef = yield* G(
 		Ref.make(new Map<number, TerminalProxyImplementation>()),
 	);
+
 	const ActiveTerminalRef = yield* G(
 		Ref.make<TerminalProxyImplementation | undefined>(undefined),
 	);
@@ -126,27 +156,37 @@ export default Effect.gen(function* (G) {
 	const OnDidChangeActiveTerminalEmitter = new Emitter<
 		Terminal | undefined
 	>();
+
 	const OnDidOpenTerminalEmitter = new Emitter<Terminal>();
+
 	const OnDidCloseTerminalEmitter = new Emitter<Terminal>();
 
 	// --- RPC Handlers ---
 	IPC.RegisterInvokeHandler("$acceptTerminalProcessData", ([ID, Data]) => {
 		const Term = Effect.runSync(Ref.get(ActiveTerminalsRef)).get(ID);
+
 		Term?._FireWrite(Data);
+
 		return Promise.resolve();
 	});
+
 	IPC.RegisterInvokeHandler("$acceptTerminalProcessExit", ([ID]) => {
 		const Term = Effect.runSync(Ref.get(ActiveTerminalsRef)).get(ID);
+
 		if (Term) {
 			Term._FireClose();
+
 			Effect.runSync(
 				Ref.update(ActiveTerminalsRef, (Map) => {
 					Map.delete(ID);
+
 					return Map;
 				}),
 			);
+
 			OnDidCloseTerminalEmitter.fire(Term);
 		}
+
 		return Promise.resolve();
 	});
 
@@ -155,13 +195,17 @@ export default Effect.gen(function* (G) {
 		get activeTerminal() {
 			return Effect.runSync(Ref.get(ActiveTerminalRef));
 		},
+
 		get terminals() {
 			return Array.from(
 				Effect.runSync(Ref.get(ActiveTerminalsRef)).values(),
 			);
 		},
+
 		onDidChangeActiveTerminal: OnDidChangeActiveTerminalEmitter.event,
+
 		onDidOpenTerminal: OnDidOpenTerminalEmitter.event,
+
 		onDidCloseTerminal: OnDidCloseTerminalEmitter.event,
 
 		createTerminal(OptionsOrName?: TerminalOptions | string): Terminal {
@@ -175,13 +219,16 @@ export default Effect.gen(function* (G) {
 			const Result = Effect.runSync(
 				IPC.SendRequest<{ id: number; pid: number; name: string }>(
 					"$terminal:create",
+
 					[Options],
 				),
 			);
 
 			const Proxy = new TerminalProxyImplementation(
 				Result.id,
+
 				IPC,
+
 				Options,
 			);
 
@@ -190,6 +237,7 @@ export default Effect.gen(function* (G) {
 					Map.set(Result.id, Proxy),
 				),
 			);
+
 			OnDidOpenTerminalEmitter.fire(Proxy);
 
 			return Proxy;

@@ -10,7 +10,9 @@
 import { Context } from "effect";
 import type { SourceControl, Uri } from "vscode";
 
-export default class SourceControlManagementService extends Context.Tag("Service/SourceControlManagement")<
+export default class SourceControlManagementService extends Context.Tag(
+	"Service/SourceControlManagement",
+)<
 	SourceControlManagementService,
 	{
 		/**
@@ -21,7 +23,9 @@ export default class SourceControlManagementService extends Context.Tag("Service
 		 */
 		readonly CreateSourceControl: (
 			Id: string,
+
 			Label: string,
+
 			RootURI?: Uri,
 		) => SourceControl;
 

@@ -26,16 +26,26 @@ import type Service from "./Service.js";
  */
 export const ToLevel = (logLevel: VscLogLevel): TelemetryLevel => {
 	switch (logLevel) {
-		case 0: // Off
+		// Off
+		case 0:
 			return TelemetryLevel.NONE;
-		case 1: // Trace
-		case 2: // Debug
-		case 3: // Info
+
+		// Trace
+		case 1:
+		// Debug
+		case 2:
+		// Info
+		case 3:
 			return TelemetryLevel.USAGE;
-		case 4: // Warning
+
+		// Warning
+		case 4:
 			return TelemetryLevel.ERROR;
-		case 5: // Error
+
+		// Error
+		case 5:
 			return TelemetryLevel.ERROR;
+
 		default:
 			return TelemetryLevel.NONE;
 	}
@@ -46,7 +56,9 @@ export const ToLevel = (logLevel: VscLogLevel): TelemetryLevel => {
  */
 export default Effect.gen(function* () {
 	const InitData = yield* InitDataService;
+
 	const IPC = yield* IPCService;
+
 	const Log = yield* LogService;
 
 	// --- State ---
@@ -54,8 +66,10 @@ export default Effect.gen(function* () {
 	const telemetryLevelRef = yield* Ref.make<TelemetryLevel>(
 		ToLevel(InitData.logLevel),
 	);
+
 	const productConfigRef = yield* Ref.make<{
 		usage: boolean;
+
 		error: boolean;
 	}>({ usage: true, error: true });
 
@@ -65,33 +79,44 @@ export default Effect.gen(function* () {
 	): Effect.Effect<boolean, never> =>
 		Effect.gen(function* () {
 			const level = yield* Ref.get(telemetryLevelRef);
+
 			if (level < TelemetryLevel.ERROR) {
 				return false;
 			}
+
 			const config = yield* Ref.get(productConfigRef);
+
 			if (Type === "error" && !config.error) {
 				return false;
 			}
+
 			if (Type === "usage" && level < TelemetryLevel.USAGE) {
 				return false;
 			}
+
 			if (Type === "usage" && !config.usage) {
 				return false;
 			}
+
 			return true;
 		});
 
 	const LogExtensionError = (
 		Extension: ExtensionIdentifier,
+
 		CaughtError: Error | SerializedError,
 	): Effect.Effect<void, never> => {
 		const SerializableError: SerializedError =
 			CaughtError instanceof Error
 				? {
 						name: CaughtError.name,
+
 						message: CaughtError.message,
+
 						stack: CaughtError.stack ?? "",
+
 						$isError: true,
+
 						noTelemetry: false,
 					}
 				: CaughtError;
@@ -99,15 +124,18 @@ export default Effect.gen(function* () {
 		return Effect.whenEffect(
 			Log.Error(
 				`Extension error reported for '${Extension.value}'.`,
+
 				SerializableError,
 			).pipe(
 				Effect.flatMap(() =>
 					IPC.SendNotification("$onExtensionError", [
 						Extension,
+
 						SerializableError,
 					]),
 				),
 			),
+
 			ShouldSendEvent("error"),
 		).pipe(Effect.catchAll(() => Effect.void));
 	};
@@ -116,47 +144,70 @@ export default Effect.gen(function* () {
 	// This object now fully stubs the IExtHostTelemetry interface.
 	const TelemetryImplementation: Service["Type"] = {
 		_serviceBrand: undefined,
+
 		_onDidChangeTelemetryEnabled: undefined as any,
+
 		onDidChangeTelemetryEnabled: undefined as any,
+
 		_onDidChangeTelemetryConfiguration: undefined as any,
+
 		onDidChangeTelemetryConfiguration: undefined as any,
+
 		getTelemetryConfiguration: () => {
 			const level = Effect.runSync(Ref.get(telemetryLevelRef));
+
 			return level >= TelemetryLevel.USAGE;
 		},
+
 		getTelemetryDetails: () => {
 			const level = Effect.runSync(Ref.get(telemetryLevelRef));
+
 			const config = Effect.runSync(Ref.get(productConfigRef));
+
 			return {
 				isCrashEnabled: level >= TelemetryLevel.CRASH,
+
 				isErrorsEnabled: config.error && level >= TelemetryLevel.ERROR,
+
 				isUsageEnabled: config.usage && level >= TelemetryLevel.USAGE,
 			};
 		},
+
 		instantiateLogger: (
 			_extension: IExtensionDescription,
+
 			_sender: any,
+
 			_options?: any,
 		) => ({}) as any,
+
 		getBuiltInCommonProperties: (_extension: IExtensionDescription) => ({}),
+
 		$initializeTelemetryLevel(level, _supportsTelemetry, productConfig) {
 			Effect.runSync(Ref.set(telemetryLevelRef, level));
+
 			Effect.runSync(
 				Ref.set(
 					productConfigRef,
+
 					productConfig ?? { usage: true, error: true },
 				),
 			);
 		},
+
 		$onDidChangeTelemetryLevel(level) {
 			Effect.runSync(Ref.set(telemetryLevelRef, level));
+
 			// In a full implementation, this would also fire the onDidChange... events.
 		},
+
 		onExtensionError: (
 			Extension: ExtensionIdentifier,
+
 			Error: Error,
 		): boolean => {
 			Effect.runFork(LogExtensionError(Extension, Error));
+
 			return false;
 		},
 	} as unknown as Service["Type"];

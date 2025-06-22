@@ -32,44 +32,59 @@ import OpenTextDocumentEffect from "./Support/OpenTextDocument.js";
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
+
 	const Document = yield* G(DocumentService);
+
 	const Fs = yield* G(FileSystemService);
+
 	const Configuration = yield* G(ConfigurationService);
 
 	const InternalWorkSpaceRef = yield* G(
 		Ref.make<InternalWorkSpace | undefined>(undefined),
 	);
+
 	const TextEditorsMapRef = yield* G(Ref.make(new Map<string, TextEditor>()));
+
 	const ActiveTextEditorRef = yield* G(
 		Ref.make<TextEditor | undefined>(undefined),
 	);
+
 	const VisibleTextEditorsRef = yield* G(Ref.make<readonly TextEditor[]>([]));
 
 	const OnDidChangeFoldersEvent = new Emitter<any>();
+
 	const { event: OnDidChangeActiveTextEditorEvent, Fire: FireActiveEditor } =
 		CreateEventStream<TextEditor | undefined>();
+
 	const {
 		event: OnDidChangeVisibleTextEditorsEvent,
+
 		Fire: FireVisibleEditors,
 	} = CreateEventStream<readonly TextEditor[]>();
 
 	const AcceptWorkspaceDataEffect = (data: any) =>
 		Effect.gen(function* (G) {
 			const OldWorkSpace = yield* G(Ref.get(InternalWorkSpaceRef));
+
 			const NewWorkSpace = new InternalWorkSpace(
 				data.id,
+
 				data.name,
+
 				data.folders.map((f: any) =>
 					WorkSpaceFolderConverter.FromDTO(f),
 				),
+
 				data.configuration
 					? URIConverter.ToAPI(data.configuration)
 					: undefined,
 			);
+
 			yield* G(Ref.set(InternalWorkSpaceRef, NewWorkSpace));
 
 			const OldFolders: readonly WorkspaceFolder[] =
 				OldWorkSpace?.Folders ?? [];
+
 			const NewFolders = NewWorkSpace.Folders;
 
 			const Added = NewFolders.filter(
@@ -78,6 +93,7 @@ export default Effect.gen(function* (G) {
 						(of) => of.uri.toString() === f.uri.toString(),
 					),
 			);
+
 			const Removed = OldFolders.filter(
 				(f) =>
 					!NewFolders.some(
@@ -88,6 +104,7 @@ export default Effect.gen(function* (G) {
 			if (Added.length > 0 || Removed.length > 0) {
 				OnDidChangeFoldersEvent.fire({
 					added: Added,
+
 					removed: Removed,
 				});
 			}
@@ -95,23 +112,28 @@ export default Effect.gen(function* (G) {
 
 	const AcceptEditorStateEffect = (
 		activeEditorId: string | undefined,
+
 		visibleEditorIds: string[],
 	) =>
 		Effect.gen(function* (G) {
 			const Editors = yield* G(Ref.get(TextEditorsMapRef));
+
 			const NewActive = activeEditorId
 				? Editors.get(activeEditorId)
 				: undefined;
+
 			const NewVisible = visibleEditorIds
 				.map((id) => Editors.get(id))
 				.filter(Boolean);
 
 			yield* G(Ref.set(ActiveTextEditorRef, NewActive));
+
 			yield* G(
 				Ref.set(VisibleTextEditorsRef, NewVisible as TextEditor[]),
 			);
 
 			yield* G(FireActiveEditor(NewActive));
+
 			yield* G(FireVisibleEditors(NewVisible as TextEditor[]));
 		});
 
@@ -120,8 +142,10 @@ export default Effect.gen(function* (G) {
 			IPC.RegisterInvokeHandler("$acceptWorkspaceData", ([data]) =>
 				Effect.runPromise(AcceptWorkspaceDataEffect(data)),
 			);
+
 			IPC.RegisterInvokeHandler(
 				"$acceptEditorState",
+
 				([activeId, visibleIds]) =>
 					Effect.runPromise(
 						AcceptEditorStateEffect(activeId, visibleIds),
@@ -139,6 +163,7 @@ export default Effect.gen(function* (G) {
 				),
 			);
 		},
+
 		get workspaceFile() {
 			return Effect.runSync(
 				Ref.get(InternalWorkSpaceRef).pipe(
@@ -146,6 +171,7 @@ export default Effect.gen(function* (G) {
 				),
 			);
 		},
+
 		get workspaceFolders() {
 			return Effect.runSync(
 				Ref.get(InternalWorkSpaceRef).pipe(
@@ -153,25 +179,34 @@ export default Effect.gen(function* (G) {
 				),
 			);
 		},
+
 		get isTrusted() {
-			return true; // Stubbed value
+			// Stubbed value
+			return true;
 		},
+
 		onDidChangeWorkspaceFolders: OnDidChangeFoldersEvent.event,
 
 		// Editor State Properties
 		get activeTextEditor() {
 			return Effect.runSync(Ref.get(ActiveTextEditorRef));
 		},
+
 		get visibleTextEditors() {
 			return Effect.runSync(Ref.get(VisibleTextEditorsRef));
 		},
 
 		// Editor State Events
 		onDidChangeActiveTextEditor: OnDidChangeActiveTextEditorEvent,
+
 		onDidChangeVisibleTextEditors: OnDidChangeVisibleTextEditorsEvent,
+
 		onDidChangeTextEditorSelection: new Emitter<any>().event,
+
 		onDidChangeTextEditorVisibleRanges: new Emitter<any>().event,
+
 		onDidChangeTextEditorOptions: new Emitter<any>().event,
+
 		onDidChangeTextEditorViewColumn: new Emitter<any>().event,
 
 		// Methods
@@ -182,24 +217,32 @@ export default Effect.gen(function* (G) {
 						Effect.map((ws) => ws?.Folders),
 					),
 				) ?? [];
+
 			return folders.find((f) => uri.fsPath.startsWith(f.uri.fsPath));
 		},
+
 		findFiles: (include, exclude, max, token) =>
 			FindFilesEffect(IPC, include, exclude, max, token).pipe(
 				Effect.mapError((e) => new Error(String(e))),
 			),
+
 		openTextDocument: (options) =>
 			OpenTextDocumentEffect(IPC, Document, options).pipe(
 				Effect.mapError((e) => new Error(String(e))),
 			),
+
 		getConfiguration: Configuration.GetConfiguration,
+
 		applyEdit: (edit: WorkspaceEdit) =>
 			IPC.SendRequest<boolean>("$applyWorkspaceEdit", [
 				WorkSpaceEditConverter.FromAPI(edit),
 			]).pipe(Effect.mapError((e) => new Error(String(e)))),
+
 		fs: Fs,
+
 		registerTextDocumentContentProvider: (_scheme, _provider) =>
-			new Disposable(() => {}), // Stub
+			// Stub
+			new Disposable(() => {}),
 	};
 
 	return ServiceImplementation;

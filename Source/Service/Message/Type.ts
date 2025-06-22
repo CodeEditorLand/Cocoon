@@ -15,6 +15,7 @@ export default interface Interface {
 	 * The identifier of the extension.
 	 */
 	readonly id: string | ExtensionIdentifier;
+
 	/**
 	 * The display name of the extension.
 	 */

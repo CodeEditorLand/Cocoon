@@ -22,6 +22,7 @@ export default interface Interface {
 	 */
 	readonly ToInternal: (
 		Command: VSCode.Command,
+
 		Disposables: IDisposable[],
 	) => ICommand | undefined;
 

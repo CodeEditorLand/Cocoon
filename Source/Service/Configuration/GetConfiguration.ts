@@ -21,6 +21,7 @@ import ConfigurationService from "./Service.js";
  */
 const GetConfiguration = (
 	Section?: string,
+
 	Scope?: VSCode.ConfigurationScope | null,
 ): Effect.Effect<
 	VSCode.WorkspaceConfiguration,

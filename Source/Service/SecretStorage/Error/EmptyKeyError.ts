@@ -10,6 +10,7 @@ import { Data } from "effect";
  */
 export default class extends Data.TaggedError("EmptyKeyError")<{}> {
 	public override readonly message: string;
+
 	constructor() {
 		super();
 

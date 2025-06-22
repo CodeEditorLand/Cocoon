@@ -19,7 +19,9 @@ import type IPCService from "../../IPC/Service.js";
  */
 export default (
 	IPC: IPCService["Type"],
+
 	Document: DocumentService["Type"],
+
 	options?: { language?: string; content?: string } | Uri,
 ): Effect.Effect<TextDocument, Error> =>
 	Effect.gen(function* (G) {
@@ -56,6 +58,7 @@ export default (
 			return yield* G(
 				Option.match(Doc, {
 					onSome: (doc) => Effect.succeed(doc),
+
 					onNone: () =>
 						Effect.fail(
 							new Error(

@@ -10,8 +10,11 @@
 export class APICommandArgument<V, D> {
 	constructor(
 		public readonly Name: string,
+
 		public readonly Description: string,
+
 		public readonly Validate: (Value: V) => boolean,
+
 		public readonly Convert: (Value: V) => D,
 	) {}
 }
@@ -22,6 +25,7 @@ export class APICommandArgument<V, D> {
 export class APICommandResult<V, R> {
 	constructor(
 		public readonly Name: string,
+
 		public readonly Convert: (Value: V) => R,
 	) {}
 }
@@ -34,9 +38,13 @@ export class APICommandResult<V, R> {
 export class APICommand {
 	constructor(
 		public readonly ID: string,
+
 		public readonly InternalID: string,
+
 		public readonly Description: string,
+
 		public readonly Arguments: readonly APICommandArgument<any, any>[],
+
 		public readonly Result: APICommandResult<any, any>,
 	) {}
 }

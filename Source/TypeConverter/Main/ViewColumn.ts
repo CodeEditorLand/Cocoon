@@ -7,7 +7,9 @@ import { ViewColumn as VscViewColumn } from "vs/workbench/api/common/extHostType
 
 // Placeholders for internal VS Code constants
 const ActiveEditorGroup = -1;
+
 const SIDE_GROUP = -2;
+
 type EditorGroup = number;
 
 /**
@@ -24,14 +26,17 @@ const FromAPI = (ViewColumn?: VscViewColumn): EditorGroup | undefined => {
 	switch (ViewColumn) {
 		case VscViewColumn.Active:
 			return ActiveEditorGroup;
+
 		case VscViewColumn.Beside:
 			return SIDE_GROUP;
+
 		default:
 			// ViewColumn.One, Two, etc. are 1-based, but EditorGroup is 0-based.
 			if (ViewColumn >= VscViewColumn.One) {
 				return ViewColumn - 1;
 			}
 	}
+
 	return undefined;
 };
 

@@ -24,6 +24,7 @@ export interface NodeModuleShim {
 	 */
 	readonly Load: (
 		Request: string,
+
 		ParentURI?: Uri,
 	) => Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError>;
 }

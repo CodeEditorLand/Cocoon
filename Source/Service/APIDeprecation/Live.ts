@@ -15,6 +15,8 @@ import Service from "./Service.js";
  */
 const Live: Layer.Layer<Service, never, LogService> = Layer.effect(
 	Service,
+
 	Definition,
 );
+
 export default Live;

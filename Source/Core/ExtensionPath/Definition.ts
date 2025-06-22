@@ -14,6 +14,7 @@ import type * as VSCode from "vscode";
 
 interface ExtensionPathEntry {
 	readonly Path: string;
+
 	readonly Identifier: ExtensionIdentifier;
 }
 
@@ -27,6 +28,7 @@ export default class {
 
 	constructor(Extensions: readonly IExtensionDescription[]) {
 		const MutablePaths: ExtensionPathEntry[] = [];
+
 		for (const Extension of Extensions) {
 			if (Extension.extensionLocation) {
 				MutablePaths.push({

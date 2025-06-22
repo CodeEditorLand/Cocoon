@@ -12,5 +12,6 @@ import type { CancellationToken } from "vs/base/common/cancellation.js";
  */
 export default interface Interface {
 	readonly Token: CancellationToken;
+
 	readonly Scope: Scope.Scope;
 }

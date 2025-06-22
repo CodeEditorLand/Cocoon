@@ -16,6 +16,7 @@ import Service from "./Service.js";
  */
 const Live: Layer.Layer<Service, never, IPCService | LogService> = Layer.effect(
 	Service,
+
 	Definition,
 );
 

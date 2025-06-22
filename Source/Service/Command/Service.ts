@@ -23,8 +23,11 @@ export default class CommandService extends Context.Tag("Service/Command")<
 		 */
 		readonly RegisterCommand: (
 			ID: string,
+
 			Handler: CommandHandler,
+
 			ThisArgument?: any,
+
 			ExtensionDescription?: IExtensionDescription,
 		) => Disposable;
 
@@ -33,8 +36,11 @@ export default class CommandService extends Context.Tag("Service/Command")<
 		 */
 		readonly RegisterTextEditorCommand: (
 			ID: string,
+
 			Handler: TextEditorCommandHandler,
+
 			ThisArgument?: any,
+
 			ExtensionDescription?: IExtensionDescription,
 		) => Disposable;
 
@@ -46,6 +52,7 @@ export default class CommandService extends Context.Tag("Service/Command")<
 		 */
 		readonly ExecuteCommand: <T>(
 			ID: string,
+
 			...Arguments: any[]
 		) => Effect.Effect<T, Error>;
 

@@ -22,6 +22,7 @@ export default (IPC: IPCService["Type"], BundleURI: Uri) =>
 		URIConverter.FromAPI(BundleURI),
 	]).pipe(
 		Effect.map((content) => (content ? JSON.parse(content) : {})),
+
 		// If the bundle doesn't exist or fails to parse, we gracefully treat it as an empty object.
 		Effect.catchAll(() => Effect.succeed({})),
 	);

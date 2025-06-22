@@ -27,33 +27,45 @@ export default class LanguageFeatureService extends Context.Tag(
 	{
 		readonly RegisterHoverProvider: (
 			Selector: DocumentSelector,
+
 			Provider: HoverProvider,
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, Error>;
 
 		readonly RegisterCompletionItemProvider: (
 			Selector: DocumentSelector,
+
 			Provider: CompletionItemProvider,
+
 			TriggerCharacters: string[],
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, Error>;
 
 		readonly RegisterDefinitionProvider: (
 			Selector: DocumentSelector,
+
 			Provider: DefinitionProvider,
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, Error>;
 
 		readonly RegisterReferenceProvider: (
 			Selector: DocumentSelector,
+
 			Provider: ReferenceProvider,
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, Error>;
 
 		readonly RegisterCodeActionsProvider: (
 			Selector: DocumentSelector,
+
 			Provider: CodeActionProvider,
+
 			Metadata: CodeActionProviderMetadata | undefined,
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, Error>;
 

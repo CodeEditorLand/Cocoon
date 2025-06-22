@@ -30,13 +30,21 @@ export default Effect.gen(function* (G) {
 	// The runtime will provide the necessary services via layers.
 	const AllPatches = [
 		PatchProcessCrashEffect,
+
 		PatchProcessExitEffect,
+
 		SetStackTraceLimitEffect,
+
 		SetupEnvironmentEffect,
+
 		SetElectronRunAsNodeEffect,
+
 		BlockNativesModuleEffect,
+
 		PipeLoggingEffect,
+
 		HandleExceptionEffect,
+
 		TerminateOnParentExitEffect,
 	];
 
@@ -44,6 +52,7 @@ export default Effect.gen(function* (G) {
 	yield* G(
 		Effect.all(AllPatches, {
 			discard: true,
+
 			concurrency: "unbounded",
 		}).pipe(Effect.provide(PatchLayer)),
 	);
@@ -51,9 +60,11 @@ export default Effect.gen(function* (G) {
 	Effect.tap(() =>
 		Effect.logDebug("All core process patches have been applied."),
 	),
+
 	Effect.catchAll((Error) =>
 		Effect.logFatal(
 			"A critical error occurred during the bootstrap process patching. The environment may be unstable.",
+
 			Error,
 		),
 	),

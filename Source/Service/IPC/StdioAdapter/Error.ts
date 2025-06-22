@@ -8,5 +8,6 @@ import { Data } from "effect";
 
 export default class extends Data.TaggedError("StdioError")<{
 	readonly cause: unknown;
+
 	readonly context: "JsonParseFailed" | "RequestTimeout" | "WriteFailed";
 }> {}

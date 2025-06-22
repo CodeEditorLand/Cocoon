@@ -24,7 +24,9 @@ export default Effect.gen(function* (G) {
 
 	const ShowQuickPickEffect = <T extends QuickPickItem>(
 		Items: readonly T[] | Promise<readonly T[]>,
+
 		Option: QuickPickOptions = {},
+
 		Token?: CancellationToken,
 	) =>
 		Effect.gen(function* (G) {
@@ -35,13 +37,16 @@ export default Effect.gen(function* (G) {
 			const ResolvedItems = yield* G(
 				Effect.tryPromise({
 					try: () => Promise.resolve(Items),
+
 					catch: (e) => e as Error,
 				}),
 			);
 
 			const IPCOptions = {
 				...Option,
+
 				items: QuickInputConverter.SerializeItems(ResolvedItems),
+
 				buttons: QuickInputConverter.SerializeButtons(
 					(Option as any).buttons,
 				),
@@ -50,11 +55,13 @@ export default Effect.gen(function* (G) {
 			const ResultHandles = yield* G(
 				IPC.SendRequest<number[] | number | undefined>(
 					"$showQuickPick",
+
 					[IPCOptions],
 				).pipe(
 					Effect.catchIf(isCancellationError, () =>
 						Effect.succeed(undefined),
 					),
+
 					Effect.mapError((cause) => new Error(String(cause))),
 				),
 			);
@@ -63,7 +70,9 @@ export default Effect.gen(function* (G) {
 				if (!Array.isArray(ResultHandles)) {
 					return undefined;
 				}
+
 				const SelectedIndices = new Set(ResultHandles as number[]);
+
 				return ResolvedItems.filter((_, index) =>
 					SelectedIndices.has(index),
 				) as T[];
@@ -72,11 +81,13 @@ export default Effect.gen(function* (G) {
 			if (typeof ResultHandles === "number" && ResultHandles >= 0) {
 				return ResolvedItems[ResultHandles] as T;
 			}
+
 			return undefined;
 		});
 
 	const ShowInputBoxEffect = (
 		Option?: InputBoxOptions,
+
 		Token?: CancellationToken,
 	) =>
 		Effect.gen(function* (G) {
@@ -86,6 +97,7 @@ export default Effect.gen(function* (G) {
 
 			const IPCOptions = {
 				...Option,
+
 				buttons: QuickInputConverter.SerializeButtons(
 					(Option as any)?.buttons,
 				),
@@ -98,6 +110,7 @@ export default Effect.gen(function* (G) {
 					Effect.catchIf(isCancellationError, () =>
 						Effect.succeed(undefined),
 					),
+
 					Effect.mapError((cause) => new Error(String(cause))),
 				),
 			);
@@ -105,12 +118,15 @@ export default Effect.gen(function* (G) {
 
 	const ServiceImplementation: Service["Type"] = {
 		ShowQuickPick: ShowQuickPickEffect,
+
 		ShowInputBox: ShowInputBoxEffect,
+
 		CreateQuickPick: () => {
 			throw new Error(
 				"Controller-based QuickPick is not implemented in Cocoon.",
 			);
 		},
+
 		CreateInputBox: () => {
 			throw new Error(
 				"Controller-based InputBox is not implemented in Cocoon.",

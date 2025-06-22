@@ -29,42 +29,64 @@ export default class WorkSpaceService extends Context.Tag("Service/WorkSpace")<
 	{
 		// --- Workspace Properties ---
 		readonly name: string | undefined;
+
 		readonly workspaceFile: Uri | undefined;
+
 		readonly workspaceFolders: readonly WorkspaceFolder[] | undefined;
+
 		readonly isTrusted: boolean;
+
 		readonly onDidChangeWorkspaceFolders: Event<WorkspaceFoldersChangeEvent>;
 
 		// --- Editor State Properties ---
 		readonly activeTextEditor: TextEditor | undefined;
+
 		readonly visibleTextEditors: readonly TextEditor[];
+
 		readonly onDidChangeActiveTextEditor: Event<TextEditor | undefined>;
+
 		readonly onDidChangeVisibleTextEditors: Event<readonly TextEditor[]>;
+
 		readonly onDidChangeTextEditorSelection: Event<TextEditorSelectionChangeEvent>;
+
 		readonly onDidChangeTextEditorVisibleRanges: Event<TextEditorVisibleRangesChangeEvent>;
+
 		readonly onDidChangeTextEditorOptions: Event<TextEditorOptionsChangeEvent>;
+
 		readonly onDidChangeTextEditorViewColumn: Event<TextEditorViewColumnChangeEvent>;
 
 		// --- Methods ---
 		readonly getWorkspaceFolder: (uri: Uri) => WorkspaceFolder | undefined;
+
 		readonly findFiles: (
 			include: GlobPattern,
+
 			exclude?: GlobPattern | null,
+
 			maxResults?: number,
+
 			token?: CancellationToken,
 		) => Effect.Effect<Uri[], Error>;
+
 		readonly openTextDocument: (
 			options?: any,
 		) => Effect.Effect<TextDocument, Error>;
+
 		readonly getConfiguration: (
 			section?: string,
+
 			scope?: any,
 		) => Effect.Effect<WorkspaceConfiguration, Error>;
+
 		readonly applyEdit: (
 			edit: WorkspaceEdit,
 		) => Effect.Effect<boolean, Error>;
+
 		readonly fs: FileSystem;
+
 		readonly registerTextDocumentContentProvider: (
 			scheme: string,
+
 			provider: any,
 		) => any;
 	}

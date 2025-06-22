@@ -16,10 +16,13 @@ export default class DocumentService extends Context.Tag("Service/Document")<
 
 		/** An event that is emitted when a text document is opened. */
 		readonly onDidOpenTextDocument: Event<TextDocument>;
+
 		/** An event that is emitted when a text document is closed. */
 		readonly onDidCloseTextDocument: Event<TextDocument>;
+
 		/** An event that is emitted when a text document is changed. */
 		readonly onDidChangeTextDocument: Event<TextDocumentChangeEvent>;
+
 		/** An event that is emitted when a text document is saved. */
 		readonly onDidSaveTextDocument: Event<TextDocument>;
 

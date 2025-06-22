@@ -13,6 +13,7 @@ export const MapToVSCodeError = (
 	Error: FileSystemError,
 ): VscFileSystemError => {
 	const Cause: any = Error.cause;
+
 	const URI = Error.uri;
 
 	// Safely access properties on the `cause` object.
@@ -20,6 +21,7 @@ export const MapToVSCodeError = (
 		Cause && typeof Cause === "object" && "code" in Cause
 			? String(Cause.code)
 			: "";
+
 	const CauseMessage =
 		Cause && typeof Cause === "object" && "message" in Cause
 			? String(Cause.message)
@@ -28,12 +30,15 @@ export const MapToVSCodeError = (
 	if (CauseCode === "EntryNotFound" || CauseMessage.includes("not found")) {
 		return VscFileSystemError.FileNotFound(URI);
 	}
+
 	if (CauseCode === "EntryExists" || CauseMessage.includes("exists")) {
 		return VscFileSystemError.FileExists(URI);
 	}
+
 	if (CauseCode === "NoPermissions") {
 		return VscFileSystemError.NoPermissions(URI);
 	}
+
 	// Add other mappings for codes like 'FileIsADirectory', 'FileNotADirectory', etc.
 
 	return new VscFileSystemError(
@@ -43,10 +48,13 @@ export const MapToVSCodeError = (
 
 /**
  * A tagged error for filesystem operations that wraps the underlying cause,
+
  * typically an IPC or gRPC error.
  */
 export default class extends Data.TaggedError("FileSystemError")<{
 	readonly cause: unknown;
+
 	readonly operation: string;
+
 	readonly uri?: Uri;
 }> {}

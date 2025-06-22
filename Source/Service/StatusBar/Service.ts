@@ -24,8 +24,11 @@ export default class StatusBarService extends Context.Tag("Service/StatusBar")<
 		 */
 		readonly CreateStatusBarItem: (
 			Extension: IExtensionDescription,
+
 			Id?: string,
+
 			Alignment?: StatusBarAlignment,
+
 			Priority?: number,
 		) => Effect.Effect<StatusBarItem, never>;
 
@@ -37,6 +40,7 @@ export default class StatusBarService extends Context.Tag("Service/StatusBar")<
 		 */
 		readonly SetStatusBarMessage: (
 			Text: string,
+
 			HideOrPromise?: number | Promise<any>,
 		) => Disposable;
 	}

@@ -40,7 +40,8 @@ const Live: Layer.Layer<Service, never, never> = Layer.effect(
 						typeof process.crash === "function"
 							? process.crash.bind(process)
 							: undefined,
-					AllowExit: () => false, // Default to not allowing exit on error.
+					// Default to not allowing exit on error.
+					AllowExit: () => false,
 				}),
 			),
 		),

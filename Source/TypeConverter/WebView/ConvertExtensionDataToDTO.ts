@@ -10,6 +10,7 @@ import type * as VSCode from "vscode";
 // This type is not directly available, so we define a compatible shape.
 interface IWebviewExtensionDescription {
 	readonly id: IExtensionDescription["identifier"];
+
 	readonly location: IExtensionDescription["extensionLocation"];
 }
 
@@ -23,10 +24,12 @@ interface IWebviewExtensionDescription {
  */
 export default (
 	ExtensionDescription: IExtensionDescription,
+
 	resource?: VSCode.Uri,
 ): IWebviewExtensionDescription => {
 	return {
 		id: ExtensionDescription.identifier,
+
 		location: resource ?? ExtensionDescription.extensionLocation,
 	};
 };

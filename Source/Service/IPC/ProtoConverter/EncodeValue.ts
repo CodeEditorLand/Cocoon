@@ -28,14 +28,19 @@ export default (
 			if (JsValue === undefined) {
 				// According to Protobuf `Value` spec, `undefined` should be treated as `null`.
 				const Value = new ProtoValue();
+
 				Value.setNullValue(NullValue.NULL_VALUE);
+
 				return Value;
 			}
+
 			return ProtoValue.fromJavaScript(JsValue);
 		},
+
 		catch: (cause) =>
 			new ProtoSerializationError({
 				cause,
+
 				Direction: "Encoding",
 			}),
 	});

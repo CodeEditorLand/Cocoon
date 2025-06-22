@@ -20,6 +20,7 @@ import WebViewPanelImplementation from "./WebViewPanelImplementation.js";
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
+
 	const ActivePanelsRef = yield* G(
 		Ref.make(new Map<string, WebViewPanelImplementation>()),
 	);
@@ -28,6 +29,7 @@ export default Effect.gen(function* (G) {
 	const OnDidDisposeWebviewEffect = (Handle: string) =>
 		Effect.gen(function* (G) {
 			const Panel = (yield* G(Ref.get(ActivePanelsRef))).get(Handle);
+
 			if (Panel) {
 				Panel.dispose();
 			}
@@ -36,12 +38,14 @@ export default Effect.gen(function* (G) {
 	const OnDidReceiveMessageEffect = (Handle: string, Message: any) =>
 		Effect.gen(function* (G) {
 			const Panel = (yield* G(Ref.get(ActivePanelsRef))).get(Handle);
+
 			Panel?.fireDidReceiveMessage(Message);
 		});
 
 	const OnDidChangeViewStateEffect = (Handle: string, NewState: any) =>
 		Effect.gen(function* (G) {
 			const Panel = (yield* G(Ref.get(ActivePanelsRef))).get(Handle);
+
 			Panel?.updateViewState(NewState);
 		});
 
@@ -51,23 +55,30 @@ export default Effect.gen(function* (G) {
 			IPC.RegisterInvokeHandler("$onDidDisposeWebview", ([Handle]) =>
 				Effect.runPromise(OnDidDisposeWebviewEffect(Handle)),
 			);
+
 			IPC.RegisterInvokeHandler(
 				"$onDidReceiveMessage",
+
 				([Handle, Message]) =>
 					Effect.runPromise(
 						OnDidReceiveMessageEffect(Handle, Message),
 					),
 			);
+
 			IPC.RegisterInvokeHandler(
 				"$onDidChangeWebviewPanelViewState",
+
 				([Handle, NewState]) =>
 					Effect.runPromise(
 						OnDidChangeViewStateEffect(Handle, NewState),
 					),
 			);
+
 			IPC.RegisterInvokeHandler(
 				"$deserializeWebviewPanel",
-				() => Effect.runPromise(Effect.succeed(undefined)), // Stubbed
+
+				// Stubbed
+				() => Effect.runPromise(Effect.succeed(undefined)),
 			);
 		}),
 	);
@@ -75,17 +86,23 @@ export default Effect.gen(function* (G) {
 	const WebViewPanelFactory: Service["Type"] = {
 		CreateWebviewPanel: (
 			Extension,
+
 			ViewType,
+
 			Title,
+
 			ShowOptions,
+
 			Options = {},
 		) =>
 			Effect.gen(function* (G) {
 				const Handle = generateUuid();
+
 				const ViewColumnValue =
 					typeof ShowOptions === "object"
 						? ShowOptions.viewColumn
 						: ShowOptions;
+
 				const PreserveFocus =
 					typeof ShowOptions === "object"
 						? !!ShowOptions.preserveFocus
@@ -93,21 +110,30 @@ export default Effect.gen(function* (G) {
 
 				const ShowOptionsDTO = ConvertShowOptionToDTO(
 					ViewColumnValue,
+
 					PreserveFocus,
 				);
+
 				const PanelOptionsDTO = ConvertPanelOptionToDTO(Options);
+
 				const ContentOptionsDTO = ConvertContentOptionToDTO(
 					Extension,
+
 					Options,
 				);
 
 				yield* G(
 					IPC.SendRequest<string>("$createWebviewPanel", [
 						Handle,
+
 						ViewType,
+
 						Title,
+
 						ShowOptionsDTO,
+
 						PanelOptionsDTO,
+
 						ContentOptionsDTO,
 					]),
 				);
@@ -116,38 +142,52 @@ export default Effect.gen(function* (G) {
 					Effect.runFork(
 						Ref.update(
 							ActivePanelsRef,
+
 							(Map) => (Map.delete(Handle), Map),
 						),
 					);
 
 				const Panel = new WebViewPanelImplementation(
 					Handle,
+
 					IPC,
+
 					Extension,
+
 					OnDispose,
+
 					ViewType,
+
 					Title,
+
 					Options,
+
 					ViewColumnValue,
 				);
+
 				yield* G(
 					Ref.update(ActivePanelsRef, (Map) =>
 						Map.set(Handle, Panel),
 					),
 				);
+
 				return Panel;
 			}),
 
 		RegisterWebviewPanelSerializer: (
 			_Extension: IExtensionDescription,
+
 			ViewType: string,
+
 			_Serializer: WebviewPanelSerializer,
 		) =>
 			Effect.sync(() => {
 				IPC.SendNotification("$registerWebviewPanelSerializer", [
 					ViewType,
+
 					{},
 				]);
+
 				return new Disposable(() => {
 					IPC.SendNotification("$unregisterWebviewPanelSerializer", [
 						ViewType,

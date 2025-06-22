@@ -13,8 +13,10 @@ const SerializeFilters = (Filters?: {
 	if (!Filters) {
 		return undefined;
 	}
+
 	return Object.entries(Filters).map(([Name, Extensions]) => ({
 		name: Name,
+
 		extensions: Extensions,
 	}));
 };
@@ -24,9 +26,12 @@ const OpenDialogOption = {
 		if (!Options) {
 			return undefined;
 		}
+
 		return {
 			...Options,
+
 			defaultUri: Options.defaultUri?.toJSON(),
+
 			filters: SerializeFilters(Options.filters),
 		};
 	},
@@ -37,9 +42,12 @@ const SaveDialogOption = {
 		if (!Options) {
 			return undefined;
 		}
+
 		return {
 			...Options,
+
 			defaultUri: Options.defaultUri?.toJSON(),
+
 			filters: SerializeFilters(Options.filters),
 		};
 	},
@@ -50,18 +58,23 @@ const DialogResult = {
 		if (!DTO) {
 			return undefined;
 		}
+
 		return ExtHostTypes.URI.revive(DTO);
 	},
+
 	ToURIArray: (DTOs: any[] | undefined): Uri[] | undefined => {
 		if (!DTOs || !Array.isArray(DTOs)) {
 			return undefined;
 		}
+
 		return DTOs.map(DialogResult.ToURI).filter((URI): URI is Uri => !!URI);
 	},
 };
 
 export default {
 	OpenDialogOption,
+
 	SaveDialogOption,
+
 	DialogResult,
 };

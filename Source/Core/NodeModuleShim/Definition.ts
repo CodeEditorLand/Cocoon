@@ -35,27 +35,45 @@ export default Effect.gen(function* (G) {
 
 	const BlockedModules = new Set<string>([
 		"fs",
+
 		"node:fs",
+
 		"fs/promises",
+
 		"node:fs/promises",
+
 		"path",
+
 		"node:path",
+
 		"child_process",
+
 		"node:child_process",
+
 		"worker_threads",
+
 		"node:worker_threads",
+
 		"cluster",
+
 		"node:cluster",
+
 		"vm",
+
 		"node:vm",
 	]);
 
 	const Shims = new Map<string, any>([
 		["os", OsShim],
+
 		["node:os", OsShim],
+
 		["crypto", CryptoShim],
+
 		["node:crypto", CryptoShim],
+
 		["process", ProcessShim],
+
 		["node:process", ProcessShim],
 	]);
 
@@ -63,6 +81,7 @@ export default Effect.gen(function* (G) {
 	const NodeModuleShim: NodeModuleShimService["Type"] = {
 		Load(
 			Request: string,
+
 			ParentURI?: Uri,
 		): Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError> {
 			const RequesterPath = ParentURI?.fsPath || "unknown module";

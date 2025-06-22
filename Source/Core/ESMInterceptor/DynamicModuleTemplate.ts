@@ -18,12 +18,16 @@
  *   dynamically generated `export const ...` statements.
  */
 export const DynamicModuleTemplate = `
-  // This global function is defined in the main Cocoon process. The ESM loader
-  // hook tells this dynamic module which key to use to retrieve its sandboxed API.
+// This global function is defined in the main Cocoon process. The ESM loader
+ 
+// hook tells this dynamic module which key to use to retrieve its sandboxed API.
+ 
   const VSCodeAPI = globalThis[__BUILD_TIME_GLOBAL_API_FUNCTION_NAME__]('__RUNTIME_API_KEY__');
 
-  // This check is a critical safeguard. If it fails, something is fundamentally
-  // broken in the interception or API factory process.
+// This check is a critical safeguard. If it fails, something is fundamentally
+ 
+// broken in the interception or API factory process.
+ 
   if (!VSCodeAPI) {
     throw new Error(
       'Cocoon Critical Error: Failed to retrieve vscode API instance for ESM module. ' +
@@ -31,10 +35,13 @@ export const DynamicModuleTemplate = `
     );
   }
 
-  // Dynamically generated exports are injected here.
-  // e.g., export const window = VSCodeAPI['window'];
+// Dynamically generated exports are injected here.
+ 
+// e.g., export const window = VSCodeAPI['window'];
+ 
   __RUNTIME_EXPORT_STATEMENTS__
 
-  // The default export allows for \`import vscode from 'vscode'\`.
+// The default export allows for \`import vscode from 'vscode'\`.
+ 
   export default VSCodeAPI;
 `;

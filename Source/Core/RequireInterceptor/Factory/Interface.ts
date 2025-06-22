@@ -21,7 +21,9 @@ export default interface INodeModuleFactory {
 	 */
 	Load(
 		Request: string,
+
 		ParentURI: VSCode.Uri,
+
 		OriginalRequire: (request: string) => any,
 	): any;
 }

@@ -6,14 +6,18 @@ import { Data } from "effect";
  */
 export default class extends Data.TaggedError("ProtoSerializationError")<{
 	readonly cause: unknown;
+
 	readonly Direction: "Encoding" | "Decoding";
 }> {
 	constructor(properties: {
 		readonly cause: unknown;
+
 		readonly Direction: "Encoding" | "Decoding";
 	}) {
 		super(properties);
+
 		this.message = `Protobuf ${this.Direction} failed: ${this.cause}`;
 	}
+
 	public override readonly message: string;
 }

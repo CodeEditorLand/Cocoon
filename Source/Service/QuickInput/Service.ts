@@ -27,7 +27,9 @@ export default class QuickInputService extends Context.Tag(
 		 */
 		readonly ShowQuickPick: <T extends QuickPickItem>(
 			Items: readonly T[] | Promise<readonly T[]>,
+
 			Option?: QuickPickOptions,
+
 			Token?: CancellationToken,
 		) => Effect.Effect<T | T[] | undefined, Error>;
 
@@ -38,6 +40,7 @@ export default class QuickInputService extends Context.Tag(
 		 */
 		readonly ShowInputBox: (
 			Option?: InputBoxOptions,
+
 			Token?: CancellationToken,
 		) => Effect.Effect<string | undefined, Error>;
 

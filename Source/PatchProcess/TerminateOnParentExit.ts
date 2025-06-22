@@ -18,6 +18,7 @@ import { Effect } from "effect";
  */
 const TerminateOnParentExit = Effect.gen(function* () {
 	const ParentPIDString = process.env["VSCODE_PID"];
+
 	if (!ParentPIDString) {
 		return yield* Effect.logTrace(
 			"No `VSCODE_PID` found, skipping parent exit monitoring.",
@@ -25,6 +26,7 @@ const TerminateOnParentExit = Effect.gen(function* () {
 	}
 
 	const ParentPID = Number.parseInt(ParentPIDString, 10);
+
 	if (Number.isNaN(ParentPID)) {
 		return yield* Effect.logWarning(
 			`Invalid VSCODE_PID '${ParentPIDString}', cannot monitor parent process.`,
@@ -45,12 +47,16 @@ const TerminateOnParentExit = Effect.gen(function* () {
 				yield* Effect.logInfo(
 					`Parent process ${ParentPID} is no longer running. Exiting Cocoon gracefully.`,
 				);
+
 				process.exit(0);
 			}
+
 			// Wait for 5 seconds before checking again.
 			yield* Effect.sleep("5 seconds");
 		}
-	}).pipe(Effect.forkDaemon); // Fork as a daemon so it doesn't block shutdown.
+
+		// Fork as a daemon so it doesn't block shutdown.
+	}).pipe(Effect.forkDaemon);
 
 	yield* MonitoringLoop;
 });

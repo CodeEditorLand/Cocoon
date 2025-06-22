@@ -11,21 +11,29 @@ import type IPCService from "../../IPC/Service.js";
 
 export default (
 	IPC: IPCService["Type"],
+
 	include: GlobPattern,
+
 	exclude: GlobPattern | null | undefined,
+
 	maxResults: number | undefined,
+
 	token: CancellationToken | undefined,
 ) =>
 	Effect.gen(function* () {
 		// A real implementation would acquire a token ID from the cancellation service.
 		// For now, we pass a placeholder ID. The `_id` property is internal to VS Code's
 		// CancellationTokenSource and not on the public interface.
-		const TokenID = token ? 1 : 0; // Placeholder logic
+		// Placeholder logic
+		const TokenID = token ? 1 : 0;
 
 		const ResultDTOs = yield* IPC.SendRequest<any[]>("$findFiles", [
 			include,
+
 			exclude,
+
 			maxResults,
+
 			TokenID,
 		]);
 

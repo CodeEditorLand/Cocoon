@@ -14,18 +14,23 @@ type InvokeHandler = (...Arguments: any[]) => Promise<any>;
 
 export default Effect.gen(function* () {
 	const ProtocolAdapter = yield* ProtocolAdapterService;
+
 	const Cancellation = yield* CancellationService;
+
 	const RPCProtocolInstance = new RPCProtocol(ProtocolAdapter);
+
 	const InvokeHandlers = yield* Ref.make(new Map<string, InvokeHandler>());
 
 	const DispatchRequest = (Method: string, Parameters: readonly any[]) =>
 		Effect.gen(function* () {
 			const Handlers = yield* Ref.get(InvokeHandlers);
+
 			const CustomHandler = Handlers.get(Method);
 
 			if (CustomHandler) {
 				return yield* Effect.tryPromise({
 					try: () => CustomHandler(...Parameters),
+
 					catch: (e) => e as Error,
 				});
 			} else {
@@ -33,13 +38,16 @@ export default Effect.gen(function* () {
 					const Handler = (RPCProtocolInstance as any)._getHandler(
 						Method,
 					);
+
 					if (Handler) {
 						return yield* Effect.tryPromise({
 							try: () => Handler(...Parameters),
+
 							catch: (e) => e as Error,
 						});
 					}
 				}
+
 				return yield* Effect.fail(
 					new Error(`No handler found for RPC method: ${Method}`),
 				);
@@ -51,6 +59,7 @@ export default Effect.gen(function* () {
 			if ((RPCProtocolInstance as any)._receiveNotification) {
 				(RPCProtocolInstance as any)._receiveNotification(
 					Method,
+
 					Parameters,
 				);
 			}
@@ -58,20 +67,28 @@ export default Effect.gen(function* () {
 
 	const DispatcherImplementation: Service["Type"] = {
 		DispatchRequest,
+
 		DispatchNotification,
+
 		CancelOperation: Cancellation.CancelToken,
+
 		ProcessIncomingData: ProtocolAdapter.ProcessIncomingData,
+
 		RegisterInvokeHandler: (Channel, Handler) => {
 			const RegisterEffect = Ref.update(InvokeHandlers, (Map) =>
 				Map.set(Channel, Handler),
 			);
+
 			Effect.runSync(RegisterEffect);
+
 			return {
 				dispose: () => {
 					const UnregisterEffect = Ref.update(
 						InvokeHandlers,
+
 						(Map) => (Map.delete(Channel), Map),
 					);
+
 					Effect.runFork(UnregisterEffect);
 				},
 			};

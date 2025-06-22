@@ -11,6 +11,7 @@ import { Context } from "effect";
  * The `Context.Tag` for the gRPC server instance.
  *
  * This tag provides access to the raw server object if needed, for example,
+
  * by the `acquireRelease` logic that manages its lifecycle.
  */
 export default class ServerService extends Context.Tag("IPC/Server")<

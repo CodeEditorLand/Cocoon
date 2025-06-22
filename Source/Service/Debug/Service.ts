@@ -28,14 +28,21 @@ export default class DebugService extends Context.Tag("Service/Debug")<
 	{
 		// --- Events ---
 		readonly onDidChangeActiveDebugSession: Event<DebugSession | undefined>;
+
 		readonly onDidStartDebugSession: Event<DebugSession>;
+
 		readonly onDidReceiveDebugSessionCustomEvent: Event<DebugSessionCustomEvent>;
+
 		readonly onDidTerminateDebugSession: Event<DebugSession>;
-		readonly onDidChangeBreakpoints: Event<any>; // BreakpointsChangeEvent
+
+		// BreakpointsChangeEvent
+		readonly onDidChangeBreakpoints: Event<any>;
 
 		// --- Properties ---
 		readonly activeDebugSession: DebugSession | undefined;
+
 		readonly activeDebugConsole: DebugConsole;
+
 		readonly breakpoints: readonly Breakpoint[];
 
 		// --- Methods ---
@@ -43,25 +50,33 @@ export default class DebugService extends Context.Tag("Service/Debug")<
 		// The IPCService dependency will be handled by the live implementation and should not be part of the service interface.
 		readonly RegisterDebugConfigurationProvider: (
 			DebugType: string,
+
 			Provider: DebugConfigurationProvider,
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
 
 		readonly RegisterDebugAdapterDescriptorFactory: (
 			DebugType: string,
+
 			Factory: DebugAdapterDescriptorFactory,
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
 
 		readonly RegisterDebugAdapterTrackerFactory: (
 			DebugType: string,
+
 			Factory: DebugAdapterTrackerFactory,
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<Disposable, DebugProviderRegistrationError>;
 
 		readonly StartDebugging: (
 			Folder: WorkspaceFolder | undefined,
+
 			Configuration: string | DebugConfiguration,
+
 			Options?: DebugSessionOptions,
 		) => Effect.Effect<boolean, StartDebuggingError>;
 

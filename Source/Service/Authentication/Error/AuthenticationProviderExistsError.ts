@@ -11,7 +11,9 @@ export default class extends Data.TaggedError(
 }> {
 	constructor(properties: { readonly ProviderID: string }) {
 		super(properties);
+
 		this.message = `Authentication provider with ID '${this.ProviderID}' is already registered.`;
 	}
+
 	public override readonly message: string;
 }

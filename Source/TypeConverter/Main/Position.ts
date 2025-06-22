@@ -16,6 +16,7 @@ import { Position } from "../../Type/ExtHostTypes.js";
  */
 const FromAPI = (PositionInstance: VscPosition): IPosition => ({
 	lineNumber: PositionInstance.line + 1,
+
 	column: PositionInstance.character + 1,
 });
 

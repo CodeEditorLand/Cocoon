@@ -20,10 +20,14 @@ export default Effect.gen(function* (G) {
 	 */
 	const ReadTextEffect = IPC.SendRequest<string>(
 		"$clipboardReadText",
+
 		[],
 	).pipe(
-		Effect.map((Result) => Result ?? ""), // Ensure we always return a string
-		Effect.catchAll(() => Effect.succeed("")), // On failure, return an empty string
+		// Ensure we always return a string
+		Effect.map((Result) => Result ?? ""),
+
+		// On failure, return an empty string
+		Effect.catchAll(() => Effect.succeed("")),
 	);
 
 	/**
@@ -32,18 +36,21 @@ export default Effect.gen(function* (G) {
 	 */
 	const WriteTextEffect = (Text: string) =>
 		IPC.SendNotification("$clipboardWriteText", [Text]).pipe(
-			Effect.catchAll(() => Effect.void), // Ignore errors for fire-and-forget
+			// Ignore errors for fire-and-forget
+			Effect.catchAll(() => Effect.void),
 		);
 
 	const ClipboardImplementation: Clipboard = {
 		/**
 		 * Reads text from the clipboard. This builds and runs the ReadTextEffect,
+
 		 * returning a Promise to conform to the vscode API.
 		 */
 		readText: () => Effect.runPromise(ReadTextEffect),
 
 		/**
 		 * Writes text to the clipboard. This builds and runs the WriteTextEffect,
+
 		 * returning a Promise to conform to the vscode API.
 		 */
 		writeText: (Text: string) => Effect.runPromise(WriteTextEffect(Text)),

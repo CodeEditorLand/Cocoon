@@ -25,26 +25,34 @@ const CreateServiceImplementation = (
 				typeof Generated.GenericRequest.prototype,
 				typeof Generated.GenericResponse.prototype
 			>,
+
 			Callback: GRPC.sendUnaryData<
 				typeof Generated.GenericResponse.prototype
 			>,
 		) => {
 			const Request = Call.request;
+
 			const RequestID = Request.getRequestid();
 
 			const ProcessEffect = Effect.gen(function* () {
 				const DecodedParameter = yield* DecodeValue(
 					Request.getParams(),
 				);
+
 				const Result = yield* Dispatcher.DispatchRequest(
 					Request.getMethod(),
+
 					Array.isArray(DecodedParameter) ? DecodedParameter : [],
 				);
+
 				const EncodedResult = yield* EncodeValue(Result);
 
 				const Response = new Generated.GenericResponse();
+
 				Response.setRequestid(RequestID);
+
 				Response.setResult(EncodedResult);
+
 				return Response;
 			}).pipe(
 				Effect.catchAll((err) =>
@@ -60,14 +68,19 @@ const CreateServiceImplementation = (
 				} else {
 					const RPCError: GRPC.ServiceError = {
 						code: GRPC.status.INTERNAL,
+
 						details:
 							Exit.cause._tag === "Fail"
 								? String(Exit.cause.error)
 								: "Unknown Effect Failure",
+
 						metadata: new GRPC.Metadata(),
+
 						name: "EffectFailure",
+
 						message: "Effect failed to complete in gRPC handler.",
 					};
+
 					Callback(RPCError, null);
 				}
 			});
@@ -81,18 +94,23 @@ const CreateServiceImplementation = (
 				typeof Generated.GenericNotification.prototype,
 				typeof Generated.Empty.prototype
 			>,
+
 			Callback: GRPC.sendUnaryData<typeof Generated.Empty.prototype>,
 		) => {
 			const Notification = Call.request;
+
 			const ProcessEffect = DecodeValue(Notification.getParams()).pipe(
 				Effect.flatMap((DecodedParameter) =>
 					Dispatcher.DispatchNotification(
 						Notification.getMethod(),
+
 						Array.isArray(DecodedParameter) ? DecodedParameter : [],
 					),
 				),
 			);
+
 			Effect.runFork(ProcessEffect);
+
 			Callback(null, new Generated.Empty());
 		},
 
@@ -104,13 +122,17 @@ const CreateServiceImplementation = (
 				typeof Generated.RPCDataPayload.prototype,
 				typeof Generated.Empty.prototype
 			>,
+
 			Callback: GRPC.sendUnaryData<typeof Generated.Empty.prototype>,
 		) => {
 			const Payload = Call.request;
+
 			const ProcessEffect = Dispatcher.ProcessIncomingData(
 				Payload.getBuffer_asU8(),
 			);
+
 			Effect.runFork(ProcessEffect);
+
 			Callback(null, new Generated.Empty());
 		},
 
@@ -122,13 +144,17 @@ const CreateServiceImplementation = (
 				typeof Generated.CancelOperationRequest.prototype,
 				typeof Generated.Empty.prototype
 			>,
+
 			Callback: GRPC.sendUnaryData<typeof Generated.Empty.prototype>,
 		) => {
 			const Request = Call.request;
+
 			const ProcessEffect = Dispatcher.CancelOperation(
 				Request.getRequestid(),
 			);
+
 			Effect.runFork(ProcessEffect);
+
 			Callback(null, new Generated.Empty());
 		},
 	};

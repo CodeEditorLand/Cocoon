@@ -9,7 +9,8 @@ import type * as VSCode from "vscode";
 import { Disposable } from "vscode";
 
 import type APIDeprecationService from "../../Service/APIDeprecation/Service.js";
-import type DocumentService from "../../Service/Document/Service.js"; // Import DocumentService
+// Import DocumentService
+import type DocumentService from "../../Service/Document/Service.js";
 import type WorkSpaceService from "../../Service/WorkSpace/Service.js";
 
 /**
@@ -92,7 +93,8 @@ const CreateWorkSpaceNamespace = (
 		applyEdit: (Edit: VSCode.WorkspaceEdit) =>
 			WorkSpace.applyEdit(Edit) as any,
 		registerTextDocumentContentProvider: (_Scheme, _Provider) => {
-			return new Disposable(() => {}); // Stub
+			// Stub
+			return new Disposable(() => {});
 		},
 	} as unknown as typeof VSCode.workspace;
 

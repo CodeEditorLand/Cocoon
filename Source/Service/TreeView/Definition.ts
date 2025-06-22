@@ -18,7 +18,9 @@ import TreeViewImplementation from "./TreeViewImplementation.js";
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
+
 	const Command = yield* G(CommandService);
+
 	const ActiveViewsRef = yield* G(
 		Ref.make(new Map<string, TreeViewImplementation<any>>()),
 	);
@@ -27,23 +29,29 @@ export default Effect.gen(function* (G) {
 	const GetChildrenEffect = (ViewID: string, ParentHandle?: string) =>
 		Effect.gen(function* (G) {
 			const View = (yield* G(Ref.get(ActiveViewsRef))).get(ViewID);
+
 			if (!View) {
 				return [];
 			}
+
 			const ParentElement = ParentHandle
 				? View.handleToElementMap.get(ParentHandle)
 				: undefined;
+
 			return yield* G(View.GetChildrenEffect(ParentElement));
 		});
 
 	const DisposeTreeViewEffect = (ViewID: string) =>
 		Effect.gen(function* (G) {
 			const View = (yield* G(Ref.get(ActiveViewsRef))).get(ViewID);
+
 			if (View) {
 				View.dispose();
+
 				yield* G(
 					Ref.update(
 						ActiveViewsRef,
+
 						(Map) => (Map.delete(ViewID), Map),
 					),
 				);
@@ -55,9 +63,11 @@ export default Effect.gen(function* (G) {
 		Effect.sync(() => {
 			IPC.RegisterInvokeHandler(
 				"$getChildren",
+
 				([ViewID, ParentHandle]) =>
 					Effect.runPromise(GetChildrenEffect(ViewID, ParentHandle)),
 			);
+
 			IPC.RegisterInvokeHandler("$disposeTreeView", ([ViewID]) =>
 				Effect.runPromise(DisposeTreeViewEffect(ViewID)),
 			);
@@ -67,7 +77,9 @@ export default Effect.gen(function* (G) {
 	const TreeViewFactory: Service["Type"] = {
 		CreateTreeView: <T>(
 			ViewID: string,
+
 			Options: TreeViewOptions<T>,
+
 			Extension: IExtensionDescription,
 		) =>
 			Effect.gen(function* (G) {
@@ -80,6 +92,7 @@ export default Effect.gen(function* (G) {
 						),
 					);
 				}
+
 				if (!Options.treeDataProvider) {
 					return yield* G(
 						Effect.fail(
@@ -91,20 +104,27 @@ export default Effect.gen(function* (G) {
 				}
 
 				const OptionDTO = TreeViewConverter.Option.FromAPI(Options);
+
 				yield* G(
 					IPC.SendNotification("$registerTreeDataProvider", [
 						ViewID,
+
 						OptionDTO,
 					]),
 				);
 
 				const ExtHostView = new TreeViewImplementation<T>(
 					ViewID,
+
 					Options.treeDataProvider,
+
 					IPC,
+
 					Command,
+
 					Extension,
 				);
+
 				yield* G(
 					Ref.update(ActiveViewsRef, (Map) =>
 						Map.set(ViewID, ExtHostView),

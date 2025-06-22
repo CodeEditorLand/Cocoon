@@ -25,6 +25,7 @@ export default class DiagnosticCollectionImplementation
 	implements DiagnosticCollection
 {
 	private IsDisposed = false;
+
 	private readonly DiagnosticsCache = new Map<
 		string,
 		readonly Diagnostic[]
@@ -32,16 +33,22 @@ export default class DiagnosticCollectionImplementation
 
 	constructor(
 		public readonly name: string,
-		private readonly Owner: string, // An internal ID for this collection, linking it to its creator.
+
+		// An internal ID for this collection, linking it to its creator.
+		private readonly Owner: string,
+
 		private readonly IPC: IPCService["Type"],
 	) {}
 
 	set(uri: Uri, diagnostics: readonly Diagnostic[] | undefined): void;
+
 	set(entries: ReadonlyArray<[Uri, readonly Diagnostic[] | undefined]>): void;
+
 	set(
 		uriOrEntries:
 			| Uri
 			| ReadonlyArray<[Uri, readonly Diagnostic[] | undefined]>,
+
 		diagnostics?: readonly Diagnostic[],
 	): void {
 		if (this.IsDisposed) {
@@ -51,6 +58,7 @@ export default class DiagnosticCollectionImplementation
 		if (!Array.isArray(uriOrEntries)) {
 			// Handle the single entry case by converting it to the array case.
 			this.set([[uriOrEntries, diagnostics]]);
+
 			return;
 		}
 
@@ -58,6 +66,7 @@ export default class DiagnosticCollectionImplementation
 		const EntriesToUpdate = uriOrEntries as ReadonlyArray<
 			[Uri, readonly Diagnostic[] | undefined]
 		>;
+
 		if (EntriesToUpdate.length === 0) {
 			return;
 		}
@@ -65,6 +74,7 @@ export default class DiagnosticCollectionImplementation
 		// Step 1: Update the local cache.
 		for (const [URI, Diagnostics] of EntriesToUpdate) {
 			const URIString = URI.toString();
+
 			if (Diagnostics && Diagnostics.length > 0) {
 				this.DiagnosticsCache.set(URIString, Diagnostics);
 			} else {
@@ -75,6 +85,7 @@ export default class DiagnosticCollectionImplementation
 		// Step 2: Convert all URI and Diagnostic objects to their DTOs for IPC.
 		const ConvertedEntries = EntriesToUpdate.map(([URI, Diags]) => [
 			URIConverter.FromAPI(URI),
+
 			Diags ? DiagnosticConverter.FromAPIArray(Diags) : undefined,
 		]);
 
@@ -82,6 +93,7 @@ export default class DiagnosticCollectionImplementation
 		Effect.runFork(
 			this.IPC.SendNotification("$changeMany", [
 				this.Owner,
+
 				ConvertedEntries,
 			]),
 		);
@@ -93,6 +105,7 @@ export default class DiagnosticCollectionImplementation
 		if (this.IsDisposed) {
 			return;
 		}
+
 		// Only send an update if the URI was actually in the cache.
 		if (this.DiagnosticsCache.has(uri.toString())) {
 			this.set(uri, undefined);
@@ -103,8 +116,10 @@ export default class DiagnosticCollectionImplementation
 		if (this.IsDisposed) {
 			return;
 		}
+
 		// Clear the local cache first.
 		this.DiagnosticsCache.clear();
+
 		// Send a notification to clear all diagnostics for this collection in the host.
 		Effect.runFork(this.IPC.SendNotification("$clear", [this.Owner]));
 	}
@@ -113,7 +128,9 @@ export default class DiagnosticCollectionImplementation
 		if (this.IsDisposed) {
 			return;
 		}
+
 		this.IsDisposed = true;
+
 		// Clear remote diagnostics and then the local cache.
 		this.clear();
 	}
@@ -121,9 +138,12 @@ export default class DiagnosticCollectionImplementation
 	forEach(
 		callback: (
 			uri: Uri,
+
 			diagnostics: readonly Diagnostic[],
+
 			collection: DiagnosticCollection,
 		) => any,
+
 		thisArg?: any,
 	): void {
 		for (const [URIString, Diagnostics] of this.DiagnosticsCache) {
@@ -145,12 +165,16 @@ export default class DiagnosticCollectionImplementation
 		return {
 			next: () => {
 				const Next = InnerIterator.next();
+
 				if (Next.done) {
 					return { value: undefined, done: true };
 				}
+
 				const [URIString, Diagnostics] = Next.value;
+
 				return {
 					value: [URI.parse(URIString), Diagnostics],
+
 					done: false,
 				};
 			},

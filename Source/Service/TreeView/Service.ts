@@ -20,7 +20,9 @@ export default class TreeViewService extends Context.Tag("Service/TreeView")<
 		 */
 		readonly CreateTreeView: <T>(
 			ViewID: string,
+
 			Options: TreeViewOptions<T>,
+
 			Extension: IExtensionDescription,
 		) => Effect.Effect<TreeView<T>, Error>;
 	}

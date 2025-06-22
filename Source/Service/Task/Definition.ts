@@ -20,7 +20,9 @@ let HandleCounter = 0;
  */
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
+
 	const Cancellation = yield* G(CancellationService);
+
 	const TaskProvidersRef = yield* G(Ref.make(new Map<number, any>()));
 
 	// --- RPC Handlers ---
@@ -32,34 +34,46 @@ export default Effect.gen(function* (G) {
 
 	// --- Event Emitters ---
 	const OnDidStartTaskEvent = CreateEventStream<any>();
+
 	const OnDidEndTaskEvent = CreateEventStream<any>();
+
 	const OnDidStartTaskProcessEvent = CreateEventStream<any>();
+
 	const OnDidEndTaskProcessEvent = CreateEventStream<any>();
 
 	const TaskImplementation: Service["Type"] = {
 		onDidStartTask: OnDidStartTaskEvent.event,
+
 		onDidEndTask: OnDidEndTaskEvent.event,
+
 		onDidStartTaskProcess: OnDidStartTaskProcessEvent.event,
+
 		onDidEndTaskProcess: OnDidEndTaskProcessEvent.event,
+
 		taskExecutions: [],
 
 		RegisterTaskProvider: (Type, Provider, Extension) =>
 			Effect.sync(() => {
 				const Handle = ++HandleCounter;
+
 				Effect.runSync(
 					Ref.update(TaskProvidersRef, (Map) =>
 						Map.set(Handle, { Type, Provider, Extension }),
 					),
 				);
+
 				Effect.runFork(
 					IPC.SendNotification("$registerTaskProvider", [
 						Handle,
+
 						Type,
 					]),
 				);
+
 				return new Disposable(() => {
 					const CleanupEffect = Ref.update(
 						TaskProvidersRef,
+
 						(Map) => (Map.delete(Handle), Map),
 					).pipe(
 						Effect.flatMap(() =>
@@ -68,6 +82,7 @@ export default Effect.gen(function* (G) {
 							]),
 						),
 					);
+
 					Effect.runFork(CleanupEffect);
 				});
 			}),
@@ -77,6 +92,7 @@ export default Effect.gen(function* (G) {
 				Effect.map((DTOs) =>
 					DTOs.map((DTO) => TaskConverter.ToAPI(DTO)),
 				),
+
 				Effect.mapError((cause) => new Error(String(cause))),
 			),
 
@@ -87,6 +103,7 @@ export default Effect.gen(function* (G) {
 				Effect.map((DTO) =>
 					TaskConverter.Execution.ToAPI(DTO, TaskToExecute),
 				),
+
 				Effect.mapError((cause) => new Error(String(cause))),
 			),
 	};
