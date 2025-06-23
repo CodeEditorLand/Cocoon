@@ -11,10 +11,10 @@ import {
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { Extension } from "vscode";
 
+import CreateAPIObject from "../../Core/Extension/CreateAPIObject.js";
 import ExtensionHostService from "../../Core/ExtensionHost/Service.js";
 import CreateEventStream from "../../Utility/CreateEventStream.js";
 import InitDataService from "../InitData/Service.js";
-import CreateAPIObject from "./CreateAPIObject.js";
 import type Service from "./Service.js";
 
 /**

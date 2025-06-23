@@ -61,7 +61,7 @@ export default Effect.gen(function* (G) {
 		// Methods
 		RegisterDebugConfigurationProvider: (DebugType, Provider, Extension) =>
 			RegisterProviderEffect(
-				(yield* G(DebugStateRef)).DebugConfigurationProviders,
+				(yield * G(DebugStateRef)).DebugConfigurationProviders,
 				{
 					Type: DebugType,
 					Provider,
@@ -74,7 +74,7 @@ export default Effect.gen(function* (G) {
 			Extension,
 		) =>
 			RegisterProviderEffect(
-				(yield* G(DebugStateRef)).DebugAdapterDescriptorFactories,
+				(yield * G(DebugStateRef)).DebugAdapterDescriptorFactories,
 				{
 					Type: DebugType,
 					Provider: Factory,
@@ -83,7 +83,7 @@ export default Effect.gen(function* (G) {
 			).pipe(Effect.provideService(IPCService, IPC)),
 		RegisterDebugAdapterTrackerFactory: (DebugType, Factory, Extension) =>
 			RegisterProviderEffect(
-				(yield* G(DebugStateRef)).DebugAdapterTrackerFactories,
+				(yield * G(DebugStateRef)).DebugAdapterTrackerFactories,
 				{
 					Type: DebugType,
 					Provider: Factory,

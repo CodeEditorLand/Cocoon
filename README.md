@@ -118,7 +118,7 @@ graph LR
     classDef effectts fill:#cfc,stroke:#333,stroke-width:1px;
     classDef vscode fill:#ddd,stroke:#666,stroke-width:1px,stroke-dasharray: 5 5;
 
-    subgraph "Cocoon 🦋 (Node.js Sidecar)"
+    subgraph "Cocoon 🦋 (Node.js SideCar)"
         direction TB
         Index["Index.ts (Main Entry)"]:::effectts
         AppLayer["Cocoon AppLayer"]:::effectts
