@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/APIDeprecation/Live.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/APIDeprecation/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:33 UTC\n * Dependency: ../Log/Service.js, ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (APIDeprecation)\n * @description The live implementation `Layer` for the APIDeprecation service.\n */\n\nimport { Layer } from \"effect\";\n\nimport type LogService from \"../Log/Service.js\";\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the APIDeprecation service.\n * It correctly declares its dependency on the Log service.\n */\nconst Live: Layer.Layer<Service, never, LogService> = Layer.effect(\n\tService,\n\tDefinition,\n);\nexport default Live;\n"],
-  "mappings": "AAYA,SAAS,aAAa;AAGtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAAgD,MAAM;AAAA,EAC3D;AAAA,EACA;AACD;AACA,IAAO,eAAQ;",
-  "names": []
-}

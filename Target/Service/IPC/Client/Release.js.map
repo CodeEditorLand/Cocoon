@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/IPC/Client/Release.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/Client/Release.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:23 UTC\n * Dependency: ../Generated.js, @grpc/grpc-js, effect\n */\n\n/**\n * @module Release (IPC/Client)\n * @description Defines the `Effect` for gracefully closing the gRPC client\n * connection to the Mountain host.\n */\n\nimport type * as GRPC from \"@grpc/grpc-js\";\nimport { Effect } from \"effect\";\n\nimport type { MountainService } from \"../Generated.js\";\n\ntype ClientInstance = MountainService & GRPC.Client;\n\n/**\n * An `Effect` that closes the gRPC client connection.\n *\n * This is designed to be used as the release action in an `acquireRelease`\n * constructor, ensuring that the connection to `Mountain` is properly torn\n * down when the application scope ends.\n *\n * @param Client The gRPC client instance to close.\n */\nconst Release = (Client: ClientInstance) => {\n\treturn Effect.sync(() => {\n\t\tClient.close(); // The generated client has a close() method\n\t}).pipe(Effect.tap(() => Effect.logInfo(\"gRPC client connection closed.\")));\n};\n\nexport default Release;\n"],
-  "mappings": ";;AAcA,SAAS,cAAc;AAevB,MAAM,UAAU,wBAAC,WAA2B;AAC3C,SAAO,OAAO,KAAK,MAAM;AACxB,WAAO,MAAM;AAAA,EACd,CAAC,EAAE,KAAK,OAAO,IAAI,MAAM,OAAO,QAAQ,gCAAgC,CAAC,CAAC;AAC3E,GAJgB;AAMhB,IAAO,kBAAQ;",
-  "names": []
-}

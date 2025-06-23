@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Core/ESMInterceptor/Constants.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Core/ESMInterceptor/Constants.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:44 UTC\n * Export: ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME, LOADER_HOOK_SCRIPT_FILENAME\n */\n\n/**\n * @module Constants (ESMInterceptor)\n * @description Defines constants used by the ESM interception mechanism.\n */\n\n/**\n * The filename of the standalone script that implements the loader hook logic.\n * This file is loaded by Node.js in a separate \"loader thread\".\n */\nexport const LOADER_HOOK_SCRIPT_FILENAME = \"Hook.js\";\n\n/**\n * The name of the function exposed on the `globalThis` object.\n * The dynamically generated `vscode` module will call this function to retrieve\n * its specific, sandboxed API instance.\n */\nexport const ESM_INTERCEPTOR_GLOBAL_API_FUNCTION_NAME =\n\t\"_COCOON_RESOLVE_ESM_VSCODE_API\";\n"],
-  "mappings": "AAgBO,MAAM,8BAA8B;AAOpC,MAAM,2CACZ;",
-  "names": []
-}

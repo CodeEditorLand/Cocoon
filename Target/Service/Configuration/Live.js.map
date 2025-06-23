@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Configuration/Live.ts"],
-  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Service/Configuration/Live.ts\r\n * Responsibility:\r\n * Modified: 2025-06-17 21:19:29 UTC\r\n * Dependency: ./Definition.js, ./Service.js, effect\r\n */\r\n\r\n/**\r\n * @module Live (Configuration)\r\n * @description The live implementation Layer for the Configuration service.\r\n */\r\n\r\nimport { Layer } from \"effect\";\r\n\r\nimport IPCService from \"../IPC/Service.js\";\r\nimport LogService from \"../Log/Service.js\";\r\nimport Definition from \"./Definition.js\";\r\nimport Service from \"./Service.js\";\r\n\r\n/**\r\n * The live implementation Layer for the Configuration service.\r\n * It depends on the IPC and Log services.\r\n */\r\nconst Live: Layer.Layer<Service, never, IPCService | LogService> = Layer.effect(\r\n\tService,\r\n\tDefinition,\r\n);\r\n\r\nexport default Live;\r\n"],
-  "mappings": "AAYA,SAAS,aAAa;AAItB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAA6D,MAAM;AAAA,EACxE;AAAA,EACA;AACD;AAEA,IAAO,eAAQ;",
-  "names": []
-}

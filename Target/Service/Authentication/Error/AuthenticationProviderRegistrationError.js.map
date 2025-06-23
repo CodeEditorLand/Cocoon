@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Authentication/Error/AuthenticationProviderRegistrationError.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Authentication/Error/AuthenticationProviderRegistrationError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:34 UTC\n * Dependency: effect\n * Export: extends\n */\n\n/**\n * @module Error (Authentication)\n * @description Exports all custom, tagged errors for the Authentication service.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating a failure during the registration of an authentication provider.\n * This is a more generic error type.\n */\nexport default class extends Data.TaggedError(\n\t\"AuthenticationProviderRegistrationError\",\n)<{\n\treadonly cause: unknown;\n}> {}\n"],
-  "mappings": ";;AAaA,SAAS,YAAY;AAMrB,MAAO,wDAAsB,KAAK;AAAA,EACjC;AACD,EAEG;AAAA,EAvBH,OAuBG;AAAA;AAAA;AAAC;",
-  "names": []
-}

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Clipboard/Service.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Clipboard/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:32 UTC\n * Dependency: effect, vscode\n * Export: ClipboardService\n */\n\n/**\n * @module Service (Clipboard)\n * @description Defines the interface and Context.Tag for the Clipboard service.\n * This service implements the `vscode.env.clipboard` API.\n */\n\nimport { Context } from \"effect\";\nimport type { Clipboard } from \"vscode\";\n\n/**\n * The Context.Tag for the Clipboard service.\n */\nexport default class ClipboardService extends Context.Tag(\"Service/Clipboard\")<\n\tClipboardService,\n\tClipboard\n>() {}\n"],
-  "mappings": ";;AAcA,SAAS,eAAe;AAMxB,MAAO,yBAAuC,QAAQ,IAAI,mBAAmB,EAG3E,EAAE;AAAA,EAvBJ,OAuBI;AAAA;AAAA;AAAC;",
-  "names": []
-}

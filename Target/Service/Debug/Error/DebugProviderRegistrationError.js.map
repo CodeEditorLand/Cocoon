@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Debug/Error/DebugProviderRegistrationError.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Debug/Error/DebugProviderRegistrationError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:31 UTC\n * Dependency: effect\n * Export: DebugProviderRegistrationError\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that a debug provider (e.g., configuration provider or\n * adapter factory) failed to register.\n */\nexport class DebugProviderRegistrationError extends Data.TaggedError(\n\t\"DebugProviderRegistrationError\",\n)<{\n\treadonly DebugType: string;\n\treadonly cause?: unknown;\n}> {\n\tconstructor(properties: {\n\t\treadonly DebugType: string;\n\t\treadonly cause?: unknown;\n\t}) {\n\t\tsuper(properties);\n\t\tthis.message = `Failed to register debug provider for type '${this.DebugType}'.`;\n\t}\n\tpublic override readonly message: string;\n}\n\nexport default DebugProviderRegistrationError;\n"],
-  "mappings": ";;AAQA,SAAS,YAAY;AAMd,MAAM,uCAAuC,KAAK;AAAA,EACxD;AACD,EAGG;AAAA,EAnBH,OAmBG;AAAA;AAAA;AAAA,EACF,YAAY,YAGT;AACF,UAAM,UAAU;AAChB,SAAK,UAAU,+CAA+C,KAAK,SAAS;AAAA,EAC7E;AAAA,EACyB;AAC1B;AAEA,IAAO,yCAAQ;",
-  "names": []
-}

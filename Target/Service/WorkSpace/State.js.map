@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/WorkSpace/State.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/WorkSpace/State.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:08 UTC\n * Dependency: vscode\n */\n\n/**\n * @module State (WorkSpace)\n * @description Defines the internal state representation for the workspace.\n */\nimport type { Uri, WorkspaceFolder } from \"vscode\";\n\n/**\n * A simple class to hold the core properties of the workspace state as\n * received from the host.\n */\nexport default class {\n\tconstructor(\n\t\tpublic readonly ID: string,\n\t\tpublic readonly Name: string,\n\t\tpublic readonly Folders: readonly WorkspaceFolder[],\n\t\tpublic readonly Configuration: Uri | undefined,\n\t) {}\n}\n"],
-  "mappings": ";;AAiBA,MAAO,cAAc;AAAA,EACpB,YACiB,IACA,MACA,SACA,eACf;AAJe;AACA;AACA;AACA;AAAA,EACd;AAAA,EAvBJ,OAiBqB;AAAA;AAAA;AAOrB;",
-  "names": []
-}

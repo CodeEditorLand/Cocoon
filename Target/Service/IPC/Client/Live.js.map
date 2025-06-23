@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/IPC/Client/Live.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/Client/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:23 UTC\n * Dependency: ../Configuration.js, ../Error/gRPCConnectionError.js, ./Acquire.js, ./Service.js, effect\n */\n\n/**\n * @module Live (IPC/Client)\n * @description Provides a managed gRPC client connection from `Cocoon` to\n * `Mountain`, exposing the connection as a `Layer` that can be used by other\n * services.\n */\n\nimport { Layer } from \"effect\";\n\nimport IPCConfigurationService from \"../Configuration.js\";\nimport type gRPCConnectionError from \"../Error/gRPCConnectionError.js\";\nimport Acquire from \"./Acquire.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation `Layer` for the gRPC Client service.\n */\nconst Live: Layer.Layer<Service, gRPCConnectionError, IPCConfigurationService> =\n\tLayer.scoped(Service, Acquire);\n\nexport default Live;\n"],
-  "mappings": "AAcA,SAAS,aAAa;AAItB,OAAO,aAAa;AACpB,OAAO,aAAa;AAKpB,MAAM,OACL,MAAM,OAAO,SAAS,OAAO;AAE9B,IAAO,eAAQ;",
-  "names": []
-}

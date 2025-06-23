@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/SecretStorage/Service.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/SecretStorage/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:14 UTC\n * Dependency: effect, vscode\n * Export: SecretStorageService\n */\n\n/**\n * @module Service (SecretStorage)\n * @description Defines the interface and Context.Tag for the SecretStorage service factory.\n * This service is responsible for creating `SecretStorage` instances that are scoped\n * to a specific extension.\n */\n\nimport { Context } from \"effect\";\nimport type { SecretStorage } from \"vscode\";\n\n/**\n * The `Context.Tag` for the SecretStorage service factory.\n */\nexport default class SecretStorageService extends Context.Tag(\n\t\"Service/SecretStorage\",\n)<\n\tSecretStorageService,\n\t{\n\t\t/**\n\t\t * Creates a `SecretStorage` instance for a given extension.\n\t\t * @param ExtensionID The ID of the extension requesting the storage.\n\t\t * @returns A `SecretStorage` instance.\n\t\t */\n\t\treadonly CreateStorage: (ExtensionID: string) => SecretStorage;\n\t}\n>() {}\n"],
-  "mappings": ";;AAeA,SAAS,eAAe;AAMxB,MAAO,6BAA2C,QAAQ;AAAA,EACzD;AACD,EAUE,EAAE;AAAA,EAjCJ,OAiCI;AAAA;AAAA;AAAC;",
-  "names": []
-}

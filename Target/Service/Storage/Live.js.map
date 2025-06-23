@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Storage/Live.ts"],
-  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Service/Storage/Live.ts\r\n * Responsibility:\r\n * Modified: 2025-06-17 21:19:13 UTC\r\n * Dependency: ./Definition.js, ./Service.js, effect\r\n */\r\n\r\n/**\r\n * @module Live (Storage)\r\n * @description The live implementation Layer for the Storage service.\r\n */\r\n\r\nimport { Effect, Layer } from \"effect\";\r\n\r\nimport IPCService from \"../IPC/Service.js\";\r\nimport LogService from \"../Log/Service.js\";\r\nimport Definition from \"./Definition.js\";\r\nimport Service from \"./Service.js\";\r\n\r\n/**\r\n * The live implementation Layer for the Storage service.\r\n * It depends on IPC and Log services.\r\n */\r\nconst Live: Layer.Layer<Service, never, IPCService | LogService> = Layer.effect(\r\n\tService,\r\n\t// The Definition effect uses IPC.SendRequest, which can fail.\r\n\t// We treat this as a fatal error for layer construction using orDie.\r\n\t// This ensures the Layer's error channel is `never`.\r\n\tDefinition.pipe(Effect.orDie),\r\n);\r\n\r\nexport default Live;\r\n"],
-  "mappings": "AAYA,SAAS,QAAQ,aAAa;AAI9B,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAA6D,MAAM;AAAA,EACxE;AAAA;AAAA;AAAA;AAAA,EAIA,WAAW,KAAK,OAAO,KAAK;AAC7B;AAEA,IAAO,eAAQ;",
-  "names": []
-}

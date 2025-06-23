@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/IPC/Configuration.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/Configuration.ts\n * Responsibility: Defines the network address configuration for IPC communication between the Cocoon sidecar and Mountain backend using gRPC, specifying the Mountain server location and Cocoon's listening endpoint.\n * Modified: 2025-06-17 21:19:22 UTC\n * Dependency: effect\n * Export: IPCConfiguration, IPCConfigurationService\n */\n\n/**\n * @module Configuration (IPC)\n * @description Defines the configuration interface and service Tag for the\n * IPC service, specifying the network addresses for communication.\n */\n\nimport { Context } from \"effect\";\n\n// This is the data structure for the configuration.\nexport interface IPCConfiguration {\n\t/**\n\t * The network address of the `Mountain` gRPC server.\n\t * @example \"localhost:50051\"\n\t */\n\treadonly MountainAddress: string;\n\t/**\n\t * The network address where the `Cocoon` gRPC server should listen.\n\t * @example \"localhost:50052\"\n\t */\n\treadonly CocoonAddress: string;\n}\n\n/**\n * The `Context.Tag` for the `IPCConfiguration` service.\n * This allows the configuration to be provided and injected as a formal dependency.\n */\nexport default class IPCConfigurationService extends Context.Tag(\n\t\"Service/IPCConfiguration\",\n)<IPCConfigurationService, IPCConfiguration>() {}\n"],
-  "mappings": ";;AAcA,SAAS,eAAe;AAoBxB,MAAO,gCAA8C,QAAQ;AAAA,EAC5D;AACD,EAA6C,EAAE;AAAA,EApC/C,OAoC+C;AAAA;AAAA;AAAC;",
-  "names": []
-}

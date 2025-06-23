@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/WebViewPanel/Live.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/WebViewPanel/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:10 UTC\n * Dependency: ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (WebViewPanel)\n * @description The live implementation Layer for the WebViewPanel service.\n */\n\nimport { Layer } from \"effect\";\n\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the WebViewPanel service.\n * It depends on the IPC service for communication and Log for diagnostics.\n */\nexport default Layer.effect(Service, Definition);\n"],
-  "mappings": "AAYA,SAAS,aAAa;AAEtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,IAAO,eAAQ,MAAM,OAAO,SAAS,UAAU;",
-  "names": []
-}

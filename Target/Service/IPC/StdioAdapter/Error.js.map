@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/IPC/StdioAdapter/Error.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/StdioAdapter/Error.ts\n * Responsibility: Defines custom tagged errors for the StdioAdapter IPC layer in the Cocoon sidecar, handling JSON parsing failures, timeouts, and write errors during communication with the Mountain backend via the Vine transport.\n * Modified: 2025-06-17 21:19:19 UTC\n * Dependency: effect\n * Export: extends\n */\n\n/**\n * @module Error (StdioAdapter)\n * @description Defines custom, tagged errors for the Stdio IPC layer. This layer\n * is an alternative to gRPC for simpler communication scenarios.\n */\n\nimport { Data } from \"effect\";\n\nexport default class extends Data.TaggedError(\"StdioError\")<{\n\treadonly cause: unknown;\n\treadonly context: \"JsonParseFailed\" | \"RequestTimeout\" | \"WriteFailed\";\n}> {}\n"],
-  "mappings": ";;AAcA,SAAS,YAAY;AAErB,MAAO,sBAAsB,KAAK,YAAY,YAAY,EAGvD;AAAA,EAnBH,OAmBG;AAAA;AAAA;AAAC;",
-  "names": []
-}

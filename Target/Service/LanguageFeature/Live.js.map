@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/LanguageFeature/Live.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/LanguageFeature/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:18 UTC\n * Dependency: ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (LanguageFeature)\n * @description The live implementation Layer for the LanguageFeature service.\n */\n\nimport { Layer } from \"effect\";\n\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the LanguageFeature service.\n * It has many core dependencies for handling RPC calls, including IPC for\n * transport, Document for accessing document state, Cancellation for handling\n * cancellation signals, and Command for converting command objects.\n */\nexport default Layer.effect(Service, Definition);\n"],
-  "mappings": "AAYA,SAAS,aAAa;AAEtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAQpB,IAAO,eAAQ,MAAM,OAAO,SAAS,UAAU;",
-  "names": []
-}

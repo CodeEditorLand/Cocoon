@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Core/NodeModuleShim/Error/ModuleBlockedError.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Core/NodeModuleShim/Error/ModuleBlockedError.ts\n * Responsibility: Defines a custom error (ModuleBlockedError) for the Cocoon sidecar's Node.js module shim, enforcing security by blocking extensions from requiring restricted core modules and redirecting them to use the vscode.* API surface instead.\n * Modified: 2025-06-17 10:53:04 UTC\n * Dependency: ${this.ModuleName}, effect\n * Export: ModuleBlockedError\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that an extension attempted to require a built-in Node.js\n * module that is explicitly blocked by the host for security or stability reasons.\n */\nexport class ModuleBlockedError extends Data.TaggedError(\"ModuleBlockedError\")<{\n\treadonly ModuleName: string;\n}> {\n\tconstructor(properties: { readonly ModuleName: string }) {\n\t\tsuper(properties);\n\t\tthis.message = `[Cocoon] require('${this.ModuleName}') is disallowed. Extensions MUST use the appropriate 'vscode.*' API for this functionality.`;\n\t}\n\tpublic override readonly message: string;\n}\n\nexport default ModuleBlockedError;\n"],
-  "mappings": ";;AAQA,SAAS,YAAY;AAMd,MAAM,2BAA2B,KAAK,YAAY,oBAAoB,EAE1E;AAAA,EAhBH,OAgBG;AAAA;AAAA;AAAA,EACF,YAAY,YAA6C;AACxD,UAAM,UAAU;AAChB,SAAK,UAAU,qBAAqB,KAAK,UAAU;AAAA,EACpD;AAAA,EACyB;AAC1B;AAEA,IAAO,6BAAQ;",
-  "names": []
-}

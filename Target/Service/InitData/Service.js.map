@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/InitData/Service.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/InitData/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:23 UTC\n * Dependency: effect, vs/workbench/services/extensions/common/extensionHostProtocol.js\n * Export: InitDataService\n */\n\n/**\n * @module Service (InitData)\n * @description Defines the interface and Context.Tag for the InitData service.\n * This is a simple value service that holds the initial data payload sent from\n * the Mountain host process upon startup.\n */\n\nimport { Context } from \"effect\";\nimport type { IExtensionHostInitData } from \"vs/workbench/services/extensions/common/extensionHostProtocol.js\";\n\n/**\n * The Context.Tag for the InitData service. Other services will use this Tag\n * to declare their dependency on the initial host configuration data.\n */\nexport default class InitDataService extends Context.Tag(\"Service/InitData\")<\n\tInitDataService,\n\tIExtensionHostInitData\n>() {}\n"],
-  "mappings": ";;AAeA,SAAS,eAAe;AAOxB,MAAO,wBAAsC,QAAQ,IAAI,kBAAkB,EAGzE,EAAE;AAAA,EAzBJ,OAyBI;AAAA;AAAA;AAAC;",
-  "names": []
-}

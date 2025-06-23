@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/PatchProcess/SetElectronRunAsNode.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/PatchProcess/SetElectronRunAsNode.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:36 UTC\n * Dependency: effect\n */\n\n/**\n * @module SetElectronRunAsNode\n * @description An Effect that sets an environment variable to signal that\n * the process is running in a Node.js-like environment, even if under Electron.\n */\nimport { Effect } from \"effect\";\n\n/**\n * An Effect that sets the `ELECTRON_RUN_AS_NODE` environment variable to '1'.\n * This is a convention used by many Node.js native modules to adjust their\n * behavior when running inside an Electron renderer or main process, ensuring\n * they function as if in a standard Node.js runtime.\n *\n * This is a synchronous side effect that should be run once at startup.\n */\nconst SetElectronRunAsNode = Effect.sync(() => {\n\tprocess.env[\"ELECTRON_RUN_AS_NODE\"] = \"1\";\n}).pipe(\n\tEffect.tap(() =>\n\t\tEffect.logTrace(\"Set `ELECTRON_RUN_AS_NODE` environment variable.\"),\n\t),\n);\n\nexport default SetElectronRunAsNode;\n"],
-  "mappings": "AAYA,SAAS,cAAc;AAUvB,MAAM,uBAAuB,OAAO,KAAK,MAAM;AAC9C,UAAQ,IAAI,sBAAsB,IAAI;AACvC,CAAC,EAAE;AAAA,EACF,OAAO;AAAA,IAAI,MACV,OAAO,SAAS,kDAAkD;AAAA,EACnE;AACD;AAEA,IAAO,+BAAQ;",
-  "names": []
-}

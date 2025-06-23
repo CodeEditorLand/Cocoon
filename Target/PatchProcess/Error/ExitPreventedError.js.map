@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/PatchProcess/Error/ExitPreventedError.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/PatchProcess/Error/ExitPreventedError.ts\n * Responsibility: Defines a structured error type thrown when the Cocoon sidecar intercepts and blocks a VS Code extension's attempt to terminate the Node.js process, enforcing host control over extension lifecycle management.\n * Modified: 2025-06-17 21:19:35 UTC\n * Dependency: effect\n * Export: extends\n */\n\n/**\n * @module ExitPreventedError (PatchProcess/Error)\n * @description Defines a custom, structured error that is thrown when an extension's\n * attempt to call `process.exit` is intercepted and blocked by the host's policy.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A structured, tagged error representing a blocked process termination attempt.\n *\n * This error is thrown synchronously by the patched `process.exit` function\n * to halt the execution of the misbehaving extension code.\n */\nexport default class extends Data.TaggedError(\"ExitPreventedError\")<{\n\t/** A descriptive message explaining that the exit was blocked. */\n\treadonly message: string;\n\t/** The exit code that the extension attempted to use. */\n\treadonly AttemptedCode?: number;\n}> {}\n"],
-  "mappings": ";;AAcA,SAAS,YAAY;AAQrB,MAAO,mCAAsB,KAAK,YAAY,oBAAoB,EAK/D;AAAA,EA3BH,OA2BG;AAAA;AAAA;AAAC;",
-  "names": []
-}

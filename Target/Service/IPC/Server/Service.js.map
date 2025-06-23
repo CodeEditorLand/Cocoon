@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/IPC/Server/Service.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/Server/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:19 UTC\n * Dependency: @grpc/grpc-js, effect\n * Export: ServerService\n */\n\n/**\n * @module Service (IPC/Server)\n * @description Defines the service type and `Context.Tag` for the `Cocoon` gRPC\n * server instance.\n */\n\nimport type * as gRPC from \"@grpc/grpc-js\";\nimport { Context } from \"effect\";\n\n/**\n * The `Context.Tag` for the gRPC server instance.\n *\n * This tag provides access to the raw server object if needed, for example,\n * by the `acquireRelease` logic that manages its lifecycle.\n */\nexport default class ServerService extends Context.Tag(\"IPC/Server\")<\n\tServerService,\n\tgRPC.Server\n>() {}\n"],
-  "mappings": ";;AAeA,SAAS,eAAe;AAQxB,MAAO,sBAAoC,QAAQ,IAAI,YAAY,EAGjE,EAAE;AAAA,EA1BJ,OA0BI;AAAA;AAAA;AAAC;",
-  "names": []
-}

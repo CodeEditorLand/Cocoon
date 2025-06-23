@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/PatchProcess/SetStackTraceLimit.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/PatchProcess/SetStackTraceLimit.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:35 UTC\n * Dependency: effect\n */\n\n/**\n * @module SetStackTraceLimit\n * @description An Effect that increases the stack trace limit for better\n * debugging of complex, asynchronous operations.\n */\nimport { Effect } from \"effect\";\n\n/**\n * An Effect that sets `Error.stackTraceLimit` to 100.\n *\n * The default stack trace limit in V8/Node.js is often too low (e.g., 10)\n * to be useful for debugging deep, recursive, or highly-composed Effect\n * workflows. This synchronous side effect increases the limit to provide more\n * detailed stack traces when errors occur.\n *\n * This should be run once at the very beginning of the application's lifecycle.\n */\nconst SetStackTraceLimit = Effect.sync(() => {\n\tError.stackTraceLimit = 100;\n}).pipe(\n\tEffect.tap(() =>\n\t\tEffect.logTrace(\"Increased `Error.stackTraceLimit` to 100.\"),\n\t),\n);\n\nexport default SetStackTraceLimit;\n"],
-  "mappings": "AAYA,SAAS,cAAc;AAYvB,MAAM,qBAAqB,OAAO,KAAK,MAAM;AAC5C,QAAM,kBAAkB;AACzB,CAAC,EAAE;AAAA,EACF,OAAO;AAAA,IAAI,MACV,OAAO,SAAS,2CAA2C;AAAA,EAC5D;AACD;AAEA,IAAO,6BAAQ;",
-  "names": []
-}

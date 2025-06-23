@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Command/ProcessUserData/GetActiveTextEditor.ts"],
-  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Command/ProcessUserData/GetActiveTextEditor.ts\r\n * Responsibility:\r\n * Modified: 2025-06-17 21:19:46 UTC\r\n * Dependency: ../../Service/Window/Service.js, effect\r\n */\r\n\r\n/**\r\n * @module GetActiveTextEditor\r\n * @description An Effect that retrieves the active VS Code text editor by\r\n * delegating to the Window service.\r\n */\r\n\r\nimport { Effect, Option } from \"effect\";\r\n\r\nimport WindowService from \"../../Service/Window/Service.js\";\r\n\r\n/**\r\n * An Effect that safely retrieves the active text editor.\r\n * @returns An `Effect` that resolves to an `Option<vscode.TextEditor>`, which\r\n * will be `None` if no editor is active, and `Some` otherwise.\r\n */\r\nexport default Effect.gen(function* () {\r\n\tconst Window = yield* WindowService;\r\n\treturn Option.fromNullable(Window.activeTextEditor);\r\n});\r\n"],
-  "mappings": "AAaA,SAAS,QAAQ,cAAc;AAE/B,OAAO,mBAAmB;AAO1B,IAAO,8BAAQ,OAAO,IAAI,aAAa;AACtC,QAAM,SAAS,OAAO;AACtB,SAAO,OAAO,aAAa,OAAO,gBAAgB;AACnD,CAAC;",
-  "names": []
-}

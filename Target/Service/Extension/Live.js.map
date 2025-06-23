@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Extension/Live.ts"],
-  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Service/Extension/Live.ts\r\n * Responsibility:\r\n * Modified: 2025-06-17 21:19:26 UTC\r\n * Dependency: ../../Core/ExtensionHost/Service.js, ../InitData/Service.js, ./Definition.js, ./Service.js, effect\r\n */\r\n\r\n/**\r\n * @module Live (Extension)\r\n * @description The live implementation Layer for the Extension service.\r\n */\r\n\r\nimport { Layer } from \"effect\";\r\n\r\nimport ExtensionHostService from \"../../Core/ExtensionHost/Service.js\";\r\nimport InitDataService from \"../InitData/Service.js\";\r\nimport Definition from \"./Definition.js\";\r\nimport Service from \"./Service.js\";\r\n\r\n/**\r\n * The live implementation Layer for the Extension service.\r\n * It correctly declares its dependency on the core ExtensionHost and InitData services.\r\n */\r\nconst Live: Layer.Layer<\r\n\tService,\r\n\tnever,\r\n\tExtensionHostService | InitDataService\r\n> = Layer.effect(Service, Definition);\r\n\r\nexport default Live;\r\n"],
-  "mappings": "AAYA,SAAS,aAAa;AAItB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAIF,MAAM,OAAO,SAAS,UAAU;AAEpC,IAAO,eAAQ;",
-  "names": []
-}

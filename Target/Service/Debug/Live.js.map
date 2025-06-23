@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Debug/Live.ts"],
-  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Service/Debug/Live.ts\r\n * Responsibility:\r\n * Modified: 2025-06-17 21:19:30 UTC\r\n * Dependency: ./Definition.js, ./Service.js, effect\r\n */\r\n\r\n/**\r\n * @module Live (Debug)\r\n * @description This module provides the `Live` implementation Layer for the Debug service.\r\n */\r\n\r\nimport { Layer } from \"effect\";\r\n\r\nimport IPCService from \"../IPC/Service.js\";\r\nimport Definition from \"./Definition.js\";\r\nimport Service from \"./Service.js\";\r\n\r\n/**\r\n * The live implementation Layer for the Debug service.\r\n * It depends on the IPC service.\r\n */\r\nconst Live: Layer.Layer<Service, never, IPCService> = Layer.effect(\r\n\tService,\r\n\tDefinition,\r\n);\r\n\r\nexport default Live;\r\n"],
-  "mappings": "AAYA,SAAS,aAAa;AAGtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,MAAM,OAAgD,MAAM;AAAA,EAC3D;AAAA,EACA;AACD;AAEA,IAAO,eAAQ;",
-  "names": []
-}

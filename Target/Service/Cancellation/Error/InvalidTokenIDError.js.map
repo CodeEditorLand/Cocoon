@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Cancellation/Error/InvalidTokenIDError.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Cancellation/Error/InvalidTokenIDError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:32 UTC\n * Dependency: effect\n * Export: InvalidTokenIDError\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A tagged error indicating that an invalid token ID was provided. Cancellation\n * tokens are identified by positive integers.\n */\nexport class InvalidTokenIDError extends Data.TaggedError(\n\t\"InvalidTokenIDError\",\n)<{\n\treadonly TokenID: number;\n}> {\n\tconstructor(properties: { readonly TokenID: number }) {\n\t\tsuper(properties);\n\t\tthis.message = `Invalid TokenID ('${this.TokenID}') provided. Must be a positive number.`;\n\t}\n\tpublic override readonly message: string;\n}\n\nexport default InvalidTokenIDError;\n"],
-  "mappings": ";;AAQA,SAAS,YAAY;AAMd,MAAM,4BAA4B,KAAK;AAAA,EAC7C;AACD,EAEG;AAAA,EAlBH,OAkBG;AAAA;AAAA;AAAA,EACF,YAAY,YAA0C;AACrD,UAAM,UAAU;AAChB,SAAK,UAAU,qBAAqB,KAAK,OAAO;AAAA,EACjD;AAAA,EACyB;AAC1B;AAEA,IAAO,8BAAQ;",
-  "names": []
-}

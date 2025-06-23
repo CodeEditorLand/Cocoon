@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Diagnostic/Service.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Diagnostic/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:28 UTC\n * Dependency: effect, vscode\n * Export: DiagnosticService\n */\n\n/**\n * @module Service (Diagnostic)\n * @description Defines the interface and Context.Tag for the Diagnostic service.\n * This service allows extensions to report problems in the workspace.\n */\n\nimport { Context } from \"effect\";\nimport type { DiagnosticCollection, Event, Uri } from \"vscode\";\n\nexport default class DiagnosticService extends Context.Tag(\n\t\"Service/Diagnostic\",\n)<\n\tDiagnosticService,\n\t{\n\t\t/**\n\t\t * An event that fires when the diagnostics for a resource have changed.\n\t\t */\n\t\treadonly onDidChangeDiagnostics: Event<readonly Uri[]>;\n\n\t\t/**\n\t\t * Creates a new diagnostic collection.\n\t\t * @param Name An optional name for the collection, e.g., 'typescript'.\n\t\t * @returns A new `DiagnosticCollection` instance.\n\t\t */\n\t\treadonly CreateDiagnosticCollection: (\n\t\t\tName?: string,\n\t\t) => DiagnosticCollection;\n\t}\n>() {}\n"],
-  "mappings": ";;AAcA,SAAS,eAAe;AAGxB,MAAO,0BAAwC,QAAQ;AAAA,EACtD;AACD,EAiBE,EAAE;AAAA,EApCJ,OAoCI;AAAA;AAAA;AAAC;",
-  "names": []
-}

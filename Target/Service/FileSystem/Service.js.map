@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/FileSystem/Service.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/FileSystem/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:24 UTC\n * Dependency: effect, vscode\n * Export: FileSystemService, FileSystemServiceType\n */\n\n/**\n * @module Service (FileSystem)\n * @description Defines the interface and Context.Tag for the FileSystem service,\n * which implements the `vscode.workspace.fs` API.\n */\n\nimport { Context } from \"effect\";\nimport type { Event, FileChangeEvent, FileSystem } from \"vscode\";\n\n/**\n * A service interface that combines the standard `vscode.FileSystem`\n * methods with the `onDidChangeFile` event.\n */\nexport interface FileSystemServiceType extends FileSystem {\n\treadonly onDidChangeFile: Event<readonly FileChangeEvent[]>;\n}\n\n/**\n * The `Context.Tag` for the `vscode.workspace.fs` API service.\n */\nexport default class FileSystemService extends Context.Tag(\n\t\"Service/FileSystem\",\n)<FileSystemService, FileSystemServiceType>() {}\n"],
-  "mappings": ";;AAcA,SAAS,eAAe;AAcxB,MAAO,0BAAwC,QAAQ;AAAA,EACtD;AACD,EAA4C,EAAE;AAAA,EA9B9C,OA8B8C;AAAA;AAAA;AAAC;",
-  "names": []
-}

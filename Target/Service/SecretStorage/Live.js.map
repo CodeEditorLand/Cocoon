@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/SecretStorage/Live.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/SecretStorage/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:14 UTC\n * Dependency: ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (SecretStorage)\n * @description The live implementation Layer for the SecretStorage service.\n */\n\nimport { Layer } from \"effect\";\n\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the SecretStorage service.\n * It depends on the IPC and Log services.\n */\n\nexport default Layer.effect(Service, Definition);\n"],
-  "mappings": "AAYA,SAAS,aAAa;AAEtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAOpB,IAAO,eAAQ,MAAM,OAAO,SAAS,UAAU;",
-  "names": []
-}

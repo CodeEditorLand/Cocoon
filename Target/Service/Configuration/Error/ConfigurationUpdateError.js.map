@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/Configuration/Error/ConfigurationUpdateError.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Configuration/Error/ConfigurationUpdateError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:29 UTC\n * Dependency: effect\n * Export: ConfigurationUpdateError\n */\n\nimport { Data } from \"effect\";\n\n/**\n * An error indicating that an attempt to update a configuration value failed.\n * This could be due to permission issues, invalid values, or IPC failures.\n */\nexport class ConfigurationUpdateError extends Data.TaggedError(\n\t\"ConfigurationUpdateError\",\n)<{\n\treadonly key: string;\n\treadonly cause: unknown;\n}> {\n\tconstructor(properties: { readonly key: string; readonly cause: unknown }) {\n\t\tsuper(properties);\n\t\tthis.message = `Failed to update configuration for key '${this.key}'.`;\n\t}\n\tpublic override readonly message: string;\n}\n\nexport default ConfigurationUpdateError;\n"],
-  "mappings": ";;AAQA,SAAS,YAAY;AAMd,MAAM,iCAAiC,KAAK;AAAA,EAClD;AACD,EAGG;AAAA,EAnBH,OAmBG;AAAA;AAAA;AAAA,EACF,YAAY,YAA+D;AAC1E,UAAM,UAAU;AAChB,SAAK,UAAU,2CAA2C,KAAK,GAAG;AAAA,EACnE;AAAA,EACyB;AAC1B;AAEA,IAAO,mCAAQ;",
-  "names": []
-}

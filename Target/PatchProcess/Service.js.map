@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/PatchProcess/Service.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/PatchProcess/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:36 UTC\n * Dependency: effect\n * Export: ProcessPatchService\n */\n\n/**\n * @module Service (ProcessPatch)\n * @description Defines the interface and Context.Tag for the ProcessPatch service.\n * This service provides the necessary native functions and configuration for the\n * other process patching Effects, such as `PatchProcessExit`.\n */\n\nimport { Context } from \"effect\";\n\n/**\n * The `Context.Tag` for the ProcessPatch service.\n */\nexport default class ProcessPatchService extends Context.Tag(\n\t\"PatchProcess/ProcessPatch\",\n)<\n\tProcessPatchService,\n\t{\n\t\t/** The original, native `process.exit` function. */\n\t\treadonly NativeExit: (Code?: number) => never;\n\t\t/** The original, native `process.crash` function, if it exists. */\n\t\treadonly NativeCrash?: () => void;\n\t\t/** A predicate function that returns `true` if the process is allowed to exit. */\n\t\treadonly AllowExit: () => boolean;\n\t}\n>() {}\n"],
-  "mappings": ";;AAeA,SAAS,eAAe;AAKxB,MAAO,4BAA0C,QAAQ;AAAA,EACxD;AACD,EAUE,EAAE;AAAA,EAhCJ,OAgCI;AAAA;AAAA;AAAC;",
-  "names": []
-}

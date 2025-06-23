@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/IPC/Client/Service.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/Client/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:23 UTC\n * Dependency: ../Generated.js, effect\n * Export: ClientService\n */\n\n/**\n * @module Service (IPC/Client)\n * @description Defines the service interface and `Context.Tag` for the low-level\n * gRPC client that communicates from Cocoon to the `Mountain` backend.\n */\n\nimport { Context } from \"effect\";\n\n// This import assumes a tool like `ts-proto` has generated TypeScript types\n// from the `vine.proto` file.\nimport type { MountainService } from \"../Generated.js\";\n\n/**\n * The `Context.Tag` for the gRPC client service.\n *\n * This tag is used by other services to declare their dependency on the raw\n * gRPC client.\n */\nexport default class ClientService extends Context.Tag(\"IPC/Client\")<\n\tClientService,\n\tMountainService\n>() {}\n"],
-  "mappings": ";;AAcA,SAAS,eAAe;AAYxB,MAAO,sBAAoC,QAAQ,IAAI,YAAY,EAGjE,EAAE;AAAA,EA7BJ,OA6BI;AAAA;AAAA;AAAC;",
-  "names": []
-}

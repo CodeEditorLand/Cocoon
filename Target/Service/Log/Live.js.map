@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Log/Live.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/Log/Live.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:17 UTC\n * Dependency: ./Definition.js, ./Service.js, effect\n */\n\n/**\n * @module Live (Log)\n * @description The live implementation `Layer` for the Log service.\n */\n\nimport { Layer } from \"effect\";\n\nimport Definition from \"./Definition.js\";\nimport Service from \"./Service.js\";\n\n/**\n * The live implementation Layer for the Log service.\n * It has no external dependencies.\n */\nexport default Layer.effect(Service, Definition);\n"],
-  "mappings": "AAYA,SAAS,aAAa;AAEtB,OAAO,gBAAgB;AACvB,OAAO,aAAa;AAMpB,IAAO,eAAQ,MAAM,OAAO,SAAS,UAAU;",
-  "names": []
-}

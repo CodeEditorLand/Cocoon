@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/TreeView/Service.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/TreeView/Service.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:10 UTC\n * Dependency: effect, vs/platform/extensions/common/extensions.js, vscode\n * Export: TreeViewService\n */\n\n/**\n * @module Service (TreeView)\n * @description Defines the interface and Context.Tag for the TreeView service.\n * This service implements the `vscode.window.createTreeView` API.\n */\n\nimport { Context, type Effect } from \"effect\";\nimport type { IExtensionDescription } from \"vs/platform/extensions/common/extensions.js\";\nimport type { TreeView, TreeViewOptions } from \"vscode\";\n\nexport default class TreeViewService extends Context.Tag(\"Service/TreeView\")<\n\tTreeViewService,\n\t{\n\t\t/**\n\t\t * Creates a new tree view.\n\t\t * @param ViewID The ID of the view, which must match a view contribution in `package.json`.\n\t\t * @param Options Options for the tree view, including the data provider.\n\t\t * @param Extension The extension creating the view.\n\t\t * @returns An `Effect` that resolves to the created `TreeView` instance.\n\t\t */\n\t\treadonly CreateTreeView: <T>(\n\t\t\tViewID: string,\n\t\t\tOptions: TreeViewOptions<T>,\n\t\t\tExtension: IExtensionDescription,\n\t\t) => Effect.Effect<TreeView<T>, Error>;\n\t}\n>() {}\n"],
-  "mappings": ";;AAcA,SAAS,eAA4B;AAIrC,MAAO,wBAAsC,QAAQ,IAAI,kBAAkB,EAgBzE,EAAE;AAAA,EAlCJ,OAkCI;AAAA;AAAA;AAAC;",
-  "names": []
-}

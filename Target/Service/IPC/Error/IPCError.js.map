@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Service/IPC/Error/IPCError.ts"],
-  "sourcesContent": ["/*\n * File: Cocoon/Source/Service/IPC/Error/IPCError.ts\n * Responsibility:\n * Modified: 2025-06-17 21:19:22 UTC\n * Dependency: effect\n * Export: extends\n */\n\nimport { Data } from \"effect\";\n\n/**\n * A generic error for failures that occur during an IPC request or notification,\n * such as a network error or a failure to serialize/deserialize a message.\n */\nexport default class extends Data.TaggedError(\"IPCError\")<{\n\treadonly cause: unknown;\n\treadonly context: string;\n}> {}\n"],
-  "mappings": ";;AAQA,SAAS,YAAY;AAMrB,MAAO,yBAAsB,KAAK,YAAY,UAAU,EAGrD;AAAA,EAjBH,OAiBG;AAAA;AAAA;AAAC;",
-  "names": []
-}

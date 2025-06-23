@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/Service/Window/GetActiveTextDocument.ts"],
-  "sourcesContent": ["/*\r\n * File: Cocoon/Source/Service/Window/GetActiveTextDocument.ts\r\n * Responsibility:\r\n * Modified: 2025-06-17 21:19:09 UTC\r\n * Dependency: ./Service.js, effect\r\n */\r\n\r\n/**\r\n * @module GetActiveTextDocument\r\n * @description An Effect-based utility for safely retrieving the active text document.\r\n * This is an internal helper, not a service.\r\n */\r\n\r\nimport { Effect, Option } from \"effect\";\r\n\r\nimport WindowService from \"./Service.js\";\r\n\r\n/**\r\n * An Effect that safely retrieves the `TextDocument` of the currently active editor.\r\n *\r\n * This Effect wraps the potentially `undefined` result of `vscode.window.activeTextEditor`\r\n * in an `Option`. This forces callers to explicitly handle the case where no editor\r\n * is active, preventing runtime errors.\r\n *\r\n * @returns An `Effect` that synchronously resolves to an `Option<vscode.TextDocument>`.\r\n *   - `Some<TextDocument>` if an editor is active.\r\n *   - `None` if no editor is active.\r\n */\r\nexport default Effect.gen(function* () {\r\n\tconst Window = yield* WindowService;\r\n\treturn Option.fromNullable(Window.activeTextEditor?.document);\r\n});\r\n"],
-  "mappings": "AAaA,SAAS,QAAQ,cAAc;AAE/B,OAAO,mBAAmB;AAa1B,IAAO,gCAAQ,OAAO,IAAI,aAAa;AACtC,QAAM,SAAS,OAAO;AACtB,SAAO,OAAO,aAAa,OAAO,kBAAkB,QAAQ;AAC7D,CAAC;",
-  "names": []
-}
