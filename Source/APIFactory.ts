@@ -209,10 +209,8 @@ export class APIFactoryService extends Effect.Service<APIFactory>()(
 		effect: Effect.gen(function* () {
 			const Logger = yield* LoggerService;
 			const ProposedAPI = yield* ProposedAPIService;
-			const APIDeprecation = yield* APIDeprecationService;
 			const Command = yield* CommandService;
 			const WorkSpace = yield* WorkSpaceService;
-			const Document = yield* DocumentService;
 			const Window = yield* WindowService;
 			const LanguageFeature = yield* LanguageFeatureService;
 			const Debug = yield* DebugService;

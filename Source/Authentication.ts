@@ -65,6 +65,9 @@ export class AuthenticationService extends Effect.Service<IExtHostAuthentication
 				withProgress: <R>() =>
 					Promise.resolve(undefined as unknown as R),
 				withProgressFromSource: () => Promise.resolve(),
+				$showProgress: () => {},
+				$hideProgress: () => {},
+				$resolveProgressStep: () => {},
 			} as unknown as IExtHostProgress;
 
 			return new NodeExtHostAuthentication(
