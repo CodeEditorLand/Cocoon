@@ -21,7 +21,7 @@ import {
 	ConsoleSpanExporter,
 } from "@opentelemetry/sdk-trace-base";
 
-// --- Service Imports (PascalCase) ---
+// --- Service Imports ---
 import { APIDeprecationService } from "./APIDeprecation.js";
 import { APIFactoryService } from "./APIFactory.js";
 import { AuthenticationService } from "./Authentication.js";

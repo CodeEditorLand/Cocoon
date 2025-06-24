@@ -13,7 +13,6 @@ import type {
 import * as VSCode from "vscode";
 import { Position, Range, Selection, Disposable } from "vscode";
 
-// Corrected PascalCase Imports
 import { APIDeprecationService } from "./APIDeprecation.js";
 import { CommandService } from "./Command.js";
 import { DebugService } from "./Debug.js";
