@@ -1,3 +1,5 @@
+--- START OF FILE Configuration.ts ---
+
 /**
  * @module Configuration
  * @description Defines the service for providing access to merged user, workspace,
@@ -26,25 +28,15 @@ import { joinPath } from "vs/base/common/resources.js";
 const ResolveConfigurationFile = (
 	ConfigDirectoryEffect: Effect.Effect<VSCodeURI, IntegrationPathProblem>,
 	FileName: string,
-): Effect.Effect<
-	object,
-	IntegrationConfigurationProblem | IntegrationPathProblem
-> =>
+): Effect.Effect<object, IntegrationConfigurationProblem | IntegrationPathProblem> =>
 	Effect.flatMap(ConfigDirectoryEffect, (ConfigDirectory) =>
-		ReadRawFile(
-			ConfigDirectory.with({
-				path: joinPath(ConfigDirectory, FileName).path,
-			}),
-		).pipe(
+		ReadRawFile(ConfigDirectory.with({ path: joinPath(ConfigDirectory, FileName).path })).pipe(
 			Effect.flatMap(ParseJson),
 			Effect.catchAll(() => Effect.succeed({})),
 		),
 	).pipe(
 		Effect.mapError(
-			(e) =>
-				e as unknown as
-					| IntegrationConfigurationProblem
-					| IntegrationPathProblem,
+			(e) => e as unknown as (IntegrationConfigurationProblem | IntegrationPathProblem),
 		),
 	);
 
@@ -106,8 +98,7 @@ export class ConfigurationService extends Effect.Service<IConfigurationService>(
 					section?: string | IConfigurationOverrides,
 					_overrides?: IConfigurationOverrides,
 				): T {
-					const Key =
-						typeof section === "string" ? section : undefined;
+					const Key = typeof section === "string" ? section : undefined;
 					if (!Key) {
 						return ConfigurationData as T;
 					}
@@ -118,9 +109,7 @@ export class ConfigurationService extends Effect.Service<IConfigurationService>(
 					key: string,
 					_overrides?: any,
 				): IConfigurationValue<T> => {
-					const value = Service.getValue(key, _overrides) as
-						| T
-						| undefined;
+					const value = Service.getValue(key, _overrides) as T | undefined;
 					return {
 						key: key,
 						value,
