@@ -13,13 +13,13 @@ import type { IExtHostRpcService } from "vs/workbench/api/common/extHostRpcServi
 import type { IExtHostWindow } from "vs/workbench/api/common/extHostWindow.js";
 import type { ExtHostUrls as IExtHostUrls } from "vs/workbench/api/common/extHostUrls.js";
 import type { IExtHostProgress } from "vs/workbench/api/common/extHostProgress.js";
-import type { ILoggerService } from "vs/platform/log/common/log.js";
-import type { IExtHostInitDataService } from "vs/workbench/services/extensions/common/extHostInitDataService.js";
+import type { ILogService } from "vs/platform/log/common/log.js";
 import { Emitter } from "vs/base/common/event.js";
 import { IPCService } from "./IPC.js";
 import { InitDataService } from "./InitData.js";
 import { WindowService } from "./Window.js";
 import { LoggerService } from "./Logger.js";
+import type { IExtHostInitDataService } from "vs/workbench/api/common/extHostInitDataService.js";
 
 /**
  * @class AuthenticationService
@@ -56,15 +56,16 @@ export class AuthenticationService extends Effect.Service<IExtHostAuthentication
 					Promise.resolve({
 						resolved: "file:///",
 						dispose: () => {},
-					}),
+					} as any),
 				handleExternalQuery: () => Promise.resolve(false),
-			};
+			} as unknown as IExtHostUrls;
 
 			const ProgressServiceStub: IExtHostProgress = {
 				_serviceBrand: undefined,
 				withProgress: <R>() =>
 					Promise.resolve(undefined as unknown as R),
-			};
+				withProgressFromSource: () => Promise.resolve(),
+			} as unknown as IExtHostProgress;
 
 			return new NodeExtHostAuthentication(
 				RpcServiceAdapter,
@@ -72,8 +73,8 @@ export class AuthenticationService extends Effect.Service<IExtHostAuthentication
 				Window as unknown as IExtHostWindow,
 				UrlsServiceStub,
 				ProgressServiceStub,
-				Logger as unknown as ILoggerService,
-				Logger as unknown as ILoggerService,
+				Logger as unknown as ILogService,
+				Logger as unknown as ILogService,
 			);
 		}),
 	},

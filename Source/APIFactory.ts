@@ -11,20 +11,27 @@ import type {
 	ExtensionIdentifier,
 } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
-import { Position, Range, Selection } from "./Platform/VSCode/Type.js";
-import type { Disposable } from "vscode";
+import {
+	Position,
+	Range,
+	Selection,
+	Disposable,
+} from "./Platform/VSCode/Type.js";
 
 // Corrected PascalCase Imports
 import { APIDeprecationService } from "./APIDeprecation.js";
 import { CommandService, type Command } from "./Command.js";
-import { DebugService } from "./Debug.js";
+import { DebugService, type DebugInterface } from "./Debug.js";
 import { DocumentService } from "./Document.js";
 import { ExtensionService, type Extension } from "./Extension.js";
-import { LanguageFeatureService } from "./LanguageFeature.js";
+import {
+	LanguageFeatureService,
+	type LanguageFeature,
+} from "./LanguageFeature.js";
 import { LoggerService, type Logger } from "./Logger.js";
 import { ProposedAPIService } from "./ProposedAPI.js";
 import { StatusBarService, type StatusBar } from "./StatusBar.js";
-import { TaskService } from "./Task.js";
+import { TaskService, type Task } from "./Task.js";
 import { TreeViewService, type TreeView } from "./TreeView.js";
 import { WebViewPanelService, type WebViewPanel } from "./WebViewPanel.js";
 import { WindowService, type Window } from "./Window.js";
@@ -137,7 +144,7 @@ const CreateWindowNamespace = (
 		createTreeView: <T>(
 			ViewId: string,
 			Options: VSCode.TreeViewOptions<T>,
-		) =>
+		): VSCode.TreeView<T> =>
 			Effect.runSync(
 				Effect.orDie(
 					TreeView.CreateTreeView(ViewId, Options, Extension),
@@ -150,7 +157,7 @@ const CreateWindowNamespace = (
 				| VSCode.ViewColumn
 				| { viewColumn: VSCode.ViewColumn; preserveFocus?: boolean },
 			Options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions,
-		) =>
+		): VSCode.WebviewPanel =>
 			Effect.runSync(
 				Effect.orDie(
 					WebViewPanel.CreateWebviewPanel(
@@ -165,7 +172,7 @@ const CreateWindowNamespace = (
 		registerWebviewPanelSerializer: (
 			ViewType: string,
 			Serializer: VSCode.WebviewPanelSerializer,
-		) =>
+		): Disposable =>
 			Effect.runSync(
 				WebViewPanel.RegisterWebviewPanelSerializer(
 					Extension,
@@ -271,7 +278,7 @@ export class APIFactoryService extends Effect.Service<APIFactory>()(
 					extensions: CreateExtensionsAPI(Extension),
 					Position,
 					Range,
-					Selection: Selection as any,
+					Selection: Selection as unknown as typeof VSCode.Selection,
 				};
 
 				if (

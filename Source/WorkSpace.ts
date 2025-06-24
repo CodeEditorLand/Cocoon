@@ -7,31 +7,31 @@
 
 import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
-import type {
-	CancellationToken,
-	Event,
-	FileSystem as VSCodeFileSystem,
-	GlobPattern,
-	TextDocument,
-	TextEditor,
-	TextEditorOptionsChangeEvent,
-	TextEditorSelectionChangeEvent,
-	TextEditorViewColumnChangeEvent,
-	TextEditorVisibleRangesChangeEvent,
-	Uri,
-	WorkspaceConfiguration,
-	WorkspaceEdit,
-	WorkspaceFolder,
-	WorkspaceFoldersChangeEvent,
+import {
 	Disposable,
-	TextDocumentContentProvider,
+	type CancellationToken,
+	type Event,
+	type FileSystem as VSCodeFileSystem,
+	type GlobPattern,
+	type TextDocument,
+	type TextEditor,
+	type TextEditorOptionsChangeEvent,
+	type TextEditorSelectionChangeEvent,
+	type TextEditorViewColumnChangeEvent,
+	type TextEditorVisibleRangesChangeEvent,
+	type Uri,
+	type WorkspaceConfiguration,
+	type WorkspaceEdit,
+	type WorkspaceFolder,
+	type WorkspaceFoldersChangeEvent,
+	type TextDocumentContentProvider,
 } from "vscode";
 import { URI } from "vscode-uri";
 
 import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
 import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { ConfigurationService, type Configuration } from "./Configuration.js";
+import { ConfigurationService } from "./Configuration.js";
 import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";
@@ -259,7 +259,7 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 									Schedule.compose(Schedule.recurs(100)),
 								),
 							}),
-							Effect.flatMap(Option.toEffect),
+							Effect.flatMap(Option.getOrThrow),
 							Effect.mapError(
 								() =>
 									new Error(
