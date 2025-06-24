@@ -21,17 +21,14 @@ import {
 // Corrected PascalCase Imports
 import { APIDeprecationService } from "./APIDeprecation.js";
 import { CommandService, type Command } from "./Command.js";
-import { DebugService, type DebugInterface } from "./Debug.js";
+import { DebugService } from "./Debug.js";
 import { DocumentService } from "./Document.js";
 import { ExtensionService, type Extension } from "./Extension.js";
-import {
-	LanguageFeatureService,
-	type LanguageFeature,
-} from "./LanguageFeature.js";
+import { LanguageFeatureService } from "./LanguageFeature.js";
 import { LoggerService, type Logger } from "./Logger.js";
 import { ProposedAPIService } from "./ProposedAPI.js";
 import { StatusBarService, type StatusBar } from "./StatusBar.js";
-import { TaskService, type Task } from "./Task.js";
+import { TaskService } from "./Task.js";
 import { TreeViewService, type TreeView } from "./TreeView.js";
 import { WebViewPanelService, type WebViewPanel } from "./WebViewPanel.js";
 import { WindowService, type Window } from "./Window.js";
@@ -278,7 +275,7 @@ export class APIFactoryService extends Effect.Service<APIFactory>()(
 					extensions: CreateExtensionsAPI(Extension),
 					Position,
 					Range,
-					Selection: Selection as unknown as typeof VSCode.Selection,
+					Selection: Selection as any,
 				};
 
 				if (

@@ -11,7 +11,7 @@ import { WorkspaceEdit as VSCodeWorkspaceEdit } from "../Platform/VSCode/Type.js
 import {
 	FromAPI as TextEditFromAPI,
 	ToAPI as TextEditToAPI,
-} from "./Main/TextEdit.2Ts";
+} from "./Main/TextEdit.js";
 import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "./Main/URI.js";
 
 // Placeholders for internal VS Code DTOs

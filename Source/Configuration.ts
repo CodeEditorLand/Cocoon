@@ -13,7 +13,6 @@ import type {
 	IConfigurationOverrides,
 } from "vs/platform/configuration/common/configuration.js";
 import { Emitter } from "vs/base/common/event.js";
-import type { URI } from "./Platform/VSCode/Type.js";
 import { ApplicationConfigurationProblem } from "./Configuration/ApplicationConfigurationProblem.js";
 import type { IntegrationConfigurationProblem } from "./Integration/Tauri/Configuration/Error.js";
 import type { IntegrationPathProblem } from "./Integration/Tauri/Path/Error.js";

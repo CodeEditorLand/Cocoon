@@ -1,6 +1,6 @@
 /**
  * @module Type
- * @description Provides the concrete implementations of the core `vscode` API types,
+ * @description Provides the concrete implementations of core `vscode` API types,
  * such as `URI`, `Range`, `Position`, `Disposable`, and all enums.
  * This is synthesized from `vscode.d.ts` and VS Code's internal `extHostTypes.ts`.
  */
@@ -26,6 +26,10 @@ import {
 	ViewColumn,
 	ThemeIcon as VSCodeThemeIcon,
 	TreeItemCollapsibleState,
+	ProcessExecution as VSCodeProcessExecution,
+	Task as VSCodeTask,
+	WorkspaceEdit as VSCodeWorkspaceEdit,
+	TextEdit as VSCodeTextEdit,
 } from "vscode";
 
 // Foundational Re-exports
@@ -35,6 +39,10 @@ export const CancellationError = VSCodeCancellationError;
 export const EventEmitter = Emitter;
 export const URI = VSCodeURI;
 export const ThemeIcon = VSCodeThemeIcon;
+export const ProcessExecution = VSCodeProcessExecution;
+export const Task = VSCodeTask;
+export const WorkspaceEdit = VSCodeWorkspaceEdit;
+export const TextEdit = VSCodeTextEdit;
 
 // Service Classes
 export class Position implements VSCode.Position {
@@ -239,10 +247,40 @@ export class Range implements VSCode.Range {
 export class Selection extends Range implements VSCode.Selection {
 	readonly anchor: Position;
 	readonly active: Position;
-	constructor(anchor: Position, active: Position) {
-		super(anchor, active);
-		this.anchor = anchor;
-		this.active = active;
+	constructor(anchor: Position, active: Position);
+	constructor(
+		anchorLine: number,
+		anchorCharacter: number,
+		activeLine: number,
+		activeCharacter: number,
+	);
+	constructor(
+		anchor: Position | number,
+		active: Position | number,
+		activeLine?: number,
+		activeCharacter?: number,
+	) {
+		let anchorPos: Position;
+		let activePos: Position;
+
+		if (
+			typeof anchor === "number" &&
+			typeof active === "number" &&
+			typeof activeLine === "number" &&
+			typeof activeCharacter === "number"
+		) {
+			anchorPos = new Position(anchor, active);
+			activePos = new Position(activeLine, activeCharacter);
+		} else if (anchor instanceof Position && active instanceof Position) {
+			anchorPos = anchor;
+			activePos = active;
+		} else {
+			throw new Error("Invalid arguments");
+		}
+
+		super(anchorPos, activePos);
+		this.anchor = anchorPos;
+		this.active = activePos;
 	}
 	get isReversed(): boolean {
 		return this.active.isBefore(this.anchor);

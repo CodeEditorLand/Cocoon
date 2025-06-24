@@ -162,104 +162,123 @@ const PostHandshakeEffect = Effect.gen(function* () {
 // --- Main Application Logic ---
 const MainEffect = Effect.gen(function* () {
 	// Level 0: Foundational Services (no dependencies on other app services)
-	const L0_World = Layer.mergeAll(
+	const L0_Services = Layer.mergeAll(
 		IPCConfigurationService.Default,
 		CancellationService.Default,
+		LoggerService.Default, // Logger can be foundational
 	);
+	const L0_World = L0_Services;
 
 	// 1. Run pre-handshake with its minimal layer to get the init data.
 	const InitializationData = yield* Effect.provide(
 		PreHandshakeEffect,
-		L0_World,
+		Layer.provide(IPCService.Default, L0_World),
 	);
 
 	// 2. Create the runtime-dependent InitData layer.
-	const InitDataLayer = Layer.succeed(InitDataService, InitializationData);
+	const InitDataLayer = Layer.succeed(
+		InitDataService,
+		InitDataService.of(InitializationData),
+	);
 
 	// 3. Compose the final, complete application layer using the Progressive World Build pattern.
 	const L1_Services = Layer.mergeAll(
-		LoggerService.Default,
-		IPCService.Default,
 		ConfigurationService.Default,
 		LanguageFeatureService.Default,
+		TelemetryService.Default, // Depends on Logger, InitData
 	);
-	const L1_World = L1_Services.pipe(Layer.provide(L0_World));
+	const L1_World = L1_Services.pipe(
+		Layer.provide(Layer.merge(L0_World, InitDataLayer)),
+	);
 
-	const L2_Services = Layer.mergeAll(ExtensionPathService.Default);
+	const L2_Services = Layer.mergeAll(
+		ExtensionPathService.Default,
+		HostKindPickerService.Default, // Depends on Logger
+		NodeModuleShimService.Default, // Depends on Logger, InitData
+	);
 	const L2_World = Layer.merge(L1_World, L2_Services).pipe(
-		Layer.provide(Layer.merge(L1_World, InitDataLayer)),
+		Layer.provide(L1_World),
 	);
 
 	const L3_Services = Layer.mergeAll(
-		APIDeprecationService.Default,
-		HostKindPickerService.Default,
-		NodeModuleShimService.Default,
+		APIDeprecationService.Default, // Depends on Logger
+		ClipboardService.Default, // Depends on ... (stubs)
+		DialogService.Default, // Depends on IPC
+		DocumentService.Default, // Depends on IPC
+		MessageService.Default, // Depends on IPC
+		QuickInputService.Default, // Depends on IPC
+		ProposedAPIService.Default, // Depends on Logger, InitData
+		SecretStorageService.Default, // Depends on IPC, Logger
 	);
 	const L3_World = Layer.merge(L2_World, L3_Services).pipe(
 		Layer.provide(L2_World),
 	);
 
 	const L4_Services = Layer.mergeAll(
-		ClipboardService.Default,
-		DebugService.Default,
-		DialogService.Default,
-		DocumentService.Default,
-		MessageService.Default,
-		QuickInputService.Default,
-		WebViewPanelService.Default,
-		WindowService.Default,
-		AuthenticationService.Default,
-		FileSystemInformationService.Default,
-		ProposedAPIService.Default,
-		SecretStorageService.Default,
-		StorageService.Default,
-		TaskService.Default,
-		TelemetryService.Default,
+		AuthenticationService.Default, // Depends on IPC, InitData, Window, Logger
+		FileSystemInformationService.Default, // Depends on IPC, Logger
 	);
 	const L4_World = Layer.merge(L3_World, L4_Services).pipe(
 		Layer.provide(L3_World),
 	);
 
 	const L5_Services = Layer.mergeAll(
-		EnvironmentService.Default,
-		FileSystemService.Default,
-		CommandService.Default,
+		FileSystemService.Default, // Depends on IPC, FSInfo
+		StorageService.Default, // Depends on IPC, Logger
+		WindowService.Default, // Depends on IPC, WorkSpace
 	);
 	const L5_World = Layer.merge(L4_World, L5_Services).pipe(
 		Layer.provide(L4_World),
 	);
 
 	const L6_Services = Layer.mergeAll(
-		StoragePathService.Default,
-		WorkSpaceService.Default,
-		StatusBarService.Default,
-		TreeViewService.Default,
+		CommandService.Default, // Depends on IPC, Telemetry, Window
+		StoragePathService.Default, // Depends on InitData, Logger, FileSystem
 	);
 	const L6_World = Layer.merge(L5_World, L6_Services).pipe(
 		Layer.provide(L5_World),
 	);
 
-	const L7_Services = Layer.mergeAll(ExtensionHostService.Default);
+	const L7_Services = Layer.mergeAll(
+		DebugService.Default, // Depends on IPC
+		StatusBarService.Default, // Depends on IPC, Command
+		TaskService.Default, // Depends on IPC, Cancellation
+		TreeViewService.Default, // Depends on IPC, Command
+		WebViewPanelService.Default, // Depends on IPC
+		WorkSpaceService.Default, // Depends on IPC, Document, FileSystem, Configuration
+	);
 	const L7_World = Layer.merge(L6_World, L7_Services).pipe(
 		Layer.provide(L6_World),
 	);
 
-	const L8_Services = Layer.mergeAll(ExtensionService.Default);
+	const L8_Services = Layer.mergeAll(
+		EnvironmentService.Default, // Depends on IPC, InitData, Clipboard
+		ExtensionHostService.Default, // Depends on Logger, IPC, InitData, Telemetry
+	);
 	const L8_World = Layer.merge(L7_World, L8_Services).pipe(
 		Layer.provide(L7_World),
 	);
 
-	const L9_Services = Layer.mergeAll(APIFactoryService.Default);
+	const L9_Services = Layer.mergeAll(
+		ExtensionService.Default, // Depends on ExtHost, InitData
+	);
 	const L9_World = Layer.merge(L8_World, L9_Services).pipe(
 		Layer.provide(L8_World),
+	);
+
+	const L10_Services = Layer.mergeAll(
+		APIFactoryService.Default, // Depends on many...
+	);
+	const L10_World = Layer.merge(L9_World, L10_Services).pipe(
+		Layer.provide(L9_World),
 	);
 
 	const TopLevelServices = Layer.mergeAll(
 		RequireInterceptorService.Default,
 		ESMInterceptorService.Default,
 	);
-	const FinalApplicationLayer = Layer.merge(L9_World, TopLevelServices).pipe(
-		Layer.provide(L9_World),
+	const FinalApplicationLayer = Layer.merge(L10_World, TopLevelServices).pipe(
+		Layer.provide(L10_World),
 	);
 
 	// 4. Run the main post-handshake logic with all dependencies now resolved.

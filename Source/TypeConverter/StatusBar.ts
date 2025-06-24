@@ -4,7 +4,7 @@
  */
 
 import type { Command, StatusBarItem as VSCodeStatusBarItem } from "vscode";
-import { Command as CommandConverter } from "./Command.js";
+import { type Command as CommandConverter } from "./Command.js";
 import { MarkdownString, ThemeColor } from "../Platform/VSCode/Type.js";
 import { FromAPI as MarkdownStringFromAPI } from "./Main/MarkdownString.js";
 
@@ -33,7 +33,7 @@ interface IStatusbarEntry {
 export const FromAPI = (
 	From: VSCodeStatusBarItem,
 	EntryId: string,
-	ExtensionId: string,
+	_ExtensionId: string,
 	CommandConverter: CommandConverter,
 ): IStatusbarEntry => {
 	return {
