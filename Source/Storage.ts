@@ -6,7 +6,8 @@
  */
 
 import { Effect, Ref, Schedule } from "effect";
-import { Emitter, type Memento } from "vscode";
+import { Emitter } from "vs/base/common/event.js";
+import type { Memento } from "vscode";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 
@@ -26,13 +27,13 @@ class MementoProxyImplementation implements Memento {
 	public get<T>(key: string): T | undefined;
 	public get<T>(key: string, defaultValue: T): T;
 	public get<T>(key: string, defaultValue?: T): T | undefined {
-		const State = Ref.unsafeGet(this.StateRef);
+		const State = Ref.get(this.StateRef);
 		const Value = State[key];
 		return Value !== undefined ? Value : defaultValue;
 	}
 
 	public keys(): readonly string[] {
-		const State = Ref.unsafeGet(this.StateRef);
+		const State = Ref.get(this.StateRef);
 		return Object.keys(State);
 	}
 
@@ -154,16 +155,16 @@ export class StorageService extends Effect.Service<StorageService>()(
 					? GlobalStorageRef
 					: WorkspaceStorageRef;
 				const ExtensionState =
-					(Ref.unsafeGet(RootStateRef) as any)[ExtensionId] ?? {};
-				const ExtensionStateRef = Ref.unsafeMake(ExtensionState);
+					(Ref.get(RootStateRef) as any)[ExtensionId] ?? {};
+				const ExtensionStateRef = Ref.make(ExtensionState);
 				const MarkAsDirtyCallback = () => {
 					const DirtyFlagRef = IsGlobal
 						? IsGlobalDirty
 						: IsWorkspaceDirty;
-					Ref.unsafeSet(DirtyFlagRef, true);
-					Ref.unsafeUpdate(RootStateRef, (CurrentRoot) => ({
+					Ref.set(DirtyFlagRef, true);
+					Ref.update(RootStateRef, (CurrentRoot) => ({
 						...CurrentRoot,
-						[ExtensionId]: Ref.unsafeGet(ExtensionStateRef),
+						[ExtensionId]: Ref.get(ExtensionStateRef),
 					}));
 				};
 				return new MementoProxyImplementation(

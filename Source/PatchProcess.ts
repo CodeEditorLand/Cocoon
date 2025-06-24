@@ -6,7 +6,7 @@
  * secure, and properly configured before any extension code is loaded.
  */
 
-import { Effect } from "effect";
+import { Effect, Config } from "effect";
 import * as Module from "node:module";
 import { Data } from "effect";
 import { InitDataService } from "./InitData.js";
@@ -27,7 +27,7 @@ export interface PatchProcess {
 }
 
 /**
- * @class PatchProcess
+ * @class PatchProcessService
  * @description The `Effect.Service` for the `PatchProcess` service.
  * This service is a crucial part of the sandboxing mechanism. It captures the
  * original, native `process` functions before they can be overwritten, and it
@@ -37,11 +37,7 @@ export class PatchProcessService extends Effect.Service<PatchProcessService>()(
 	"Service/PatchProcess",
 	{
 		effect: Effect.gen(function* () {
-			// This logic was originally in `Live.ts`.
-			// It's effectful due to its dependency on `Config`.
-			const AllowExit = yield* Effect.config(
-				Effect.boolean("AllowExit"),
-			).pipe(
+			const AllowExit = yield* Config.boolean("AllowExit").pipe(
 				Effect.catchAll((Error) =>
 					Effect.log(
 						"Failed to load PatchProcess config, using defaults.",
@@ -54,7 +50,7 @@ export class PatchProcessService extends Effect.Service<PatchProcessService>()(
 			return {
 				NativeExit: process.exit.bind(process),
 				NativeCrash:
-					typeof process.crash === "function"
+					"crash" in process && typeof process.crash === "function"
 						? process.crash.bind(process)
 						: undefined,
 				AllowExit: () => AllowExit,
@@ -65,9 +61,6 @@ export class PatchProcessService extends Effect.Service<PatchProcessService>()(
 
 // --- Individual Patch Effects ---
 
-/**
- * @description An `Effect` that sets the `ELECTRON_RUN_AS_NODE` environment variable.
- */
 const SetElectronRunAsNode = Effect.sync(() => {
 	process.env["ELECTRON_RUN_AS_NODE"] = "1";
 }).pipe(
@@ -76,9 +69,6 @@ const SetElectronRunAsNode = Effect.sync(() => {
 	),
 );
 
-/**
- * @description An `Effect` that increases the stack trace limit for better debugging.
- */
 const SetStackTraceLimit = Effect.sync(() => {
 	Error.stackTraceLimit = 100;
 }).pipe(
@@ -87,10 +77,6 @@ const SetStackTraceLimit = Effect.sync(() => {
 	),
 );
 
-/**
- * @description An `Effect` that patches `process.crash()` to prevent extensions from
- * terminating the host process.
- */
 const PatchProcessCrash = Effect.gen(function* () {
 	const Service = yield* PatchProcessService;
 	if (Service.NativeCrash) {
@@ -113,9 +99,6 @@ const PatchProcessCrash = Effect.gen(function* () {
 	}
 });
 
-/**
- * @description An `Effect` that replaces `process.exit` with a controlled version.
- */
 const PatchProcessExit = Effect.gen(function* () {
 	const Service = yield* PatchProcessService;
 	process.exit = (Code?: number): never => {
@@ -143,9 +126,6 @@ const PatchProcessExit = Effect.gen(function* () {
 	yield* Effect.logTrace("Successfully patched 'process.exit'.");
 });
 
-/**
- * @description A tagged error for failures during the patching of the Node.js module loader.
- */
 class ModulePatchProblem extends Data.TaggedError("ModulePatchProblem")<{
 	readonly Context: string;
 	readonly Cause?: unknown;
@@ -160,9 +140,6 @@ class ModulePatchProblem extends Data.TaggedError("ModulePatchProblem")<{
 	}
 }
 
-/**
- * @description An `Effect` that monkey-patches `Module._load` to block the deprecated 'natives' module.
- */
 const BlockNativesModule = Effect.try({
 	try: () => {
 		if (typeof (Module as any)._load === "function") {
@@ -210,10 +187,6 @@ const SafeToString = (Arguments: ArrayLike<unknown>): string => {
 	return Slices.join(" ");
 };
 
-/**
- * @description An `Effect` that intercepts `console.*` calls and pipes them as
- * structured log messages to the parent (Mountain) process via IPC.
- */
 const PipeLogging = Effect.gen(function* () {
 	if (process.env["VSCODE_PIPE_LOGGING"] !== "true") {
 		return yield* Effect.logTrace(
@@ -254,9 +227,6 @@ const PipeLogging = Effect.gen(function* () {
 	);
 });
 
-/**
- * @description An `Effect` that attaches global exception handlers to the Node.js `process`.
- */
 const HandleException = Effect.gen(function* () {
 	if (process.env["VSCODE_HANDLES_UNCAUGHT_ERRORS"] === "true") {
 		return yield* Effect.logTrace(
@@ -294,9 +264,6 @@ const HandleException = Effect.gen(function* () {
 	yield* Effect.logTrace("Global exception handlers installed.");
 });
 
-/**
- * @description An `Effect` that configures the process environment based on `InitData`.
- */
 const SetupEnvironment = Effect.gen(function* () {
 	const InitData = yield* InitDataService;
 	if (InitData.environment.useHostProxy) {
@@ -310,9 +277,6 @@ const SetupEnvironment = Effect.gen(function* () {
 	),
 );
 
-/**
- * @description An `Effect` that ensures the Cocoon process terminates if its parent process exits.
- */
 const TerminateOnParentExit = Effect.gen(function* () {
 	const ParentPidString = process.env["VSCODE_PID"];
 	if (!ParentPidString) {

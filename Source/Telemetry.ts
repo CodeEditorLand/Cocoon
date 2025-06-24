@@ -13,7 +13,6 @@ import type {
 } from "vs/platform/extensions/common/extensions.js";
 import type {
 	LogLevel as VSCodeLogLevel,
-	ILoggerService,
 	ILogger,
 } from "vs/platform/log/common/log.js";
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
@@ -21,6 +20,7 @@ import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry
 import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
+import type { TelemetryLoggerOptions, TelemetrySender } from "vscode";
 
 /**
  * @description An internal helper to convert the `LogLevel` from the host to the
@@ -45,10 +45,10 @@ const ConvertToTelemetryLevel = (LogLevel: VSCodeLogLevel): TelemetryLevel => {
 };
 
 /**
- * @class Telemetry
+ * @class TelemetryService
  * @description The `Effect.Service` for the Telemetry service.
  */
-export class TelemetryService extends Effect.Service<TelemetryService>()(
+export class TelemetryService extends Effect.Service<IExtHostTelemetry>()(
 	"Service/Telemetry",
 	{
 		effect: Effect.gen(function* () {
@@ -131,8 +131,8 @@ export class TelemetryService extends Effect.Service<TelemetryService>()(
 				},
 				instantiateLogger: (
 					_extension: IExtensionDescription,
-					_sender: any,
-					_options?: any,
+					_sender: TelemetrySender,
+					_options?: TelemetryLoggerOptions,
 				): ILogger => ({}) as any,
 				getBuiltInCommonProperties: (
 					_extension: IExtensionDescription,

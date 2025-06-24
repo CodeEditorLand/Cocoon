@@ -89,10 +89,9 @@ export class CommandService extends Effect.Service<CommandService>()(
 			const GetCommands = (
 				FilterInternal = false,
 			): Effect.Effect<string[], Error> => {
-				return IPC.SendRequest<string[]>(
-					"$getCommands",
-					[FilterInternal], // Wrap in array
-				);
+				return IPC.SendRequest<string[]>("$getCommands", [
+					FilterInternal,
+				]);
 			};
 
 			const Service: IExtHostCommands = {
@@ -101,7 +100,9 @@ export class CommandService extends Effect.Service<CommandService>()(
 				registerTextEditorCommand: (id, handler, thisArg) =>
 					Effect.runSync(RegisterCommand(id, handler.bind(thisArg))),
 				executeCommand: <T>(id: string, ...args: any[]) =>
-					Effect.runPromise(ExecuteCommand<T>(id, ...args)),
+					Effect.runPromise(
+						ExecuteCommand<T | undefined>(id, ...args),
+					) as Promise<T>,
 				getCommands: (filterInternal) =>
 					Effect.runPromise(GetCommands(filterInternal)),
 			};

@@ -29,7 +29,7 @@ const EnsureDirectory = (
 			Effect.gen(function* () {
 				const Uri = DirectoryUri!;
 				const FileSystem = yield* FileSystemService;
-				const Logger = yield* Logger;
+				const Logger = yield* LoggerService;
 				yield* Effect.tryPromise(() =>
 					FileSystem.createDirectory(Uri),
 				).pipe(
@@ -46,7 +46,7 @@ const EnsureDirectory = (
 				return true;
 			}),
 		onFalse: () =>
-			Effect.flatMap(Logger, (Log) =>
+			Effect.flatMap(LoggerService, (Log) =>
 				Log.Trace(
 					`${ScopeName} storage URI is not defined; skipping creation.`,
 				),
@@ -65,7 +65,7 @@ export interface StoragePath {
 }
 
 /**
- * @class StoragePath
+ * @class StoragePathService
  * @description The `Effect.Service` for resolving extension storage paths.
  */
 export class StoragePathService extends Effect.Service<StoragePathService>()(

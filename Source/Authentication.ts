@@ -11,7 +11,7 @@ import type { IExtHostAuthentication } from "vs/workbench/api/common/extHostAuth
 import { NodeExtHostAuthentication } from "vs/workbench/api/node/extHostAuthentication.js";
 import type { IExtHostRpcService } from "vs/workbench/api/common/extHostRpcService.js";
 import type { IExtHostWindow } from "vs/workbench/api/common/extHostWindow.js";
-import type { IExtHostUrls } from "vs/workbench/api/common/extHostUrls.js";
+import type { ExtHostUrls as IExtHostUrls } from "vs/workbench/api/common/extHostUrls.js";
 import type { IExtHostProgress } from "vs/workbench/api/common/extHostProgress.js";
 import type { ILoggerService } from "vs/platform/log/common/log.js";
 import { Emitter } from "vs/base/common/event.js";
@@ -19,6 +19,7 @@ import { IPCService } from "./IPC.js";
 import { InitDataService } from "./InitData.js";
 import { WindowService } from "./Window.js";
 import { LoggerService } from "./Logger.js";
+import type { IExtHostInitDataService } from "vs/workbench/api/common/extHostInitDataService.js";
 
 /**
  * @class AuthenticationService
@@ -37,8 +38,10 @@ export class AuthenticationService extends Effect.Service<IExtHostAuthentication
 				_serviceBrand: undefined,
 				getProxy: <T>(Identifier: any): T =>
 					IPC.CreateProxy(Identifier.path),
-				set: () => ({}) as any,
+				set: <T, R extends T>(_id: any, _instance: R) => _instance,
 				dispose: () => {},
+				assertRegistered: () => {},
+				drain: () => Promise.resolve(),
 			};
 
 			const UrlsServiceStub: IExtHostUrls = {
@@ -60,18 +63,18 @@ export class AuthenticationService extends Effect.Service<IExtHostAuthentication
 
 			const ProgressServiceStub: IExtHostProgress = {
 				_serviceBrand: undefined,
-				withProgress: () => Promise.resolve(),
+				withProgress: <R>() => Promise.resolve(undefined as R),
 				resolveProgressStep: () => {},
 			};
 
 			return new NodeExtHostAuthentication(
 				RpcServiceAdapter,
-				InitData,
-				Window as IExtHostWindow,
+				InitData as unknown as IExtHostInitDataService,
+				Window as unknown as IExtHostWindow,
 				UrlsServiceStub,
 				ProgressServiceStub,
-				Logger as ILoggerService,
-				Logger,
+				Logger as unknown as ILoggerService,
+				Logger as unknown as ILoggerService,
 			);
 		}),
 	},

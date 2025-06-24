@@ -58,34 +58,23 @@ const CreateSafeEvent = <T>(
 
 const CreateCommandNamespace = (
 	Command: Command,
-	ExtensionDescription: IExtensionDescription,
+	_ExtensionDescription: IExtensionDescription,
 ): typeof VSCode.commands => {
 	return {
-		registerCommand: (Id, Handler, ThisArgument): Disposable =>
-			Command.registerCommand(
-				Id,
-				Handler,
-				ThisArgument,
-				ExtensionDescription,
-			),
-		registerTextEditorCommand: (Id, Handler, ThisArgument): Disposable =>
-			Command.registerTextEditorCommand(
-				Id,
-				Handler,
-				ThisArgument,
-				ExtensionDescription,
-			),
+		registerCommand: (Id, Handler, ThisArgument): VSCode.Disposable =>
+			Command.registerCommand(Id, Handler, ThisArgument),
+		registerTextEditorCommand: (
+			Id,
+			Handler,
+			ThisArgument,
+		): VSCode.Disposable =>
+			Command.registerTextEditorCommand(Id, Handler, ThisArgument),
 		registerDiffInformationCommand: (
 			Id,
 			Handler,
 			ThisArgument,
-		): Disposable =>
-			Command.registerCommand(
-				Id,
-				Handler,
-				ThisArgument,
-				ExtensionDescription,
-			),
+		): VSCode.Disposable =>
+			Command.registerCommand(Id, Handler, ThisArgument),
 		executeCommand: <T>(Id: string, ...Argument: any[]) =>
 			Command.executeCommand<T>(Id, ...Argument),
 		getCommands: (FilterInternal?: boolean) =>
@@ -124,17 +113,9 @@ const CreateWindowNamespace = (
 		get onDidChangeVisibleTextEditors() {
 			return AsEvent(WorkSpace.onDidChangeVisibleTextEditors);
 		},
-		showTextDocument: (
-			documentOrUri: any,
-			columnOrOptions: any,
-			preserveFocus: any,
-		) =>
+		showTextDocument: (documentOrUri: any, columnOrOptions?: any) =>
 			RunEffectAndReturnPromise(
-				Window.ShowTextDocument(
-					documentOrUri,
-					columnOrOptions,
-					preserveFocus,
-				),
+				Window.ShowTextDocument(documentOrUri, columnOrOptions),
 			),
 		createStatusBarItem: ((...args: any[]) => {
 			let id: string | undefined,
@@ -154,11 +135,21 @@ const CreateWindowNamespace = (
 				),
 			);
 		}) as any,
-		createTreeView: (ViewId, Options) =>
+		createTreeView: <T>(
+			ViewId: string,
+			Options: VSCode.TreeViewOptions<T>,
+		) =>
 			RunEffectAndReturnPromise(
 				TreeView.CreateTreeView(ViewId, Options, Extension),
 			),
-		createWebviewPanel: (ViewType, Title, ShowOptions, Options) =>
+		createWebviewPanel: (
+			ViewType: string,
+			Title: string,
+			ShowOptions:
+				| VSCode.ViewColumn
+				| { viewColumn: VSCode.ViewColumn; preserveFocus?: boolean },
+			Options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions,
+		) =>
 			RunEffectAndReturnPromise(
 				WebViewPanel.CreateWebviewPanel(
 					Extension,
@@ -168,7 +159,10 @@ const CreateWindowNamespace = (
 					Options,
 				),
 			),
-		registerWebviewPanelSerializer: (ViewType, Serializer) =>
+		registerWebviewPanelSerializer: (
+			ViewType: string,
+			Serializer: VSCode.WebviewPanelSerializer,
+		) =>
 			Effect.runSync(
 				WebViewPanel.RegisterWebviewPanelSerializer(
 					Extension,
@@ -266,14 +260,15 @@ export class APIFactoryService extends Effect.Service<APIFactory>()(
 						ExtensionDescription,
 						WorkSpace,
 					),
-					workspace: WorkSpace,
-					languages: LanguageFeature,
-					debug: Debug,
-					tasks: Task,
+					workspace: WorkSpace as unknown as typeof VSCode.workspace,
+					languages:
+						LanguageFeature as unknown as typeof VSCode.languages,
+					debug: Debug as unknown as typeof VSCode.debug,
+					tasks: Task as unknown as typeof VSCode.tasks,
 					extensions: CreateExtensionsAPI(Extension),
 					Position,
 					Range,
-					Selection,
+					Selection: Selection as unknown as typeof VSCode.Selection,
 				};
 
 				if (
