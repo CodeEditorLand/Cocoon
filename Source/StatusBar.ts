@@ -15,11 +15,10 @@ import {
 	type MarkdownString,
 	type StatusBarItem as VSCodeStatusBarItem,
 	type ThemeColor,
-	type CancellationToken,
-	type ProviderResult,
 } from "vscode";
 import { FromAPI as StatusBarItemToDTO } from "./TypeConverter/StatusBar.js";
-import { CommandService } from "./Command.js";
+import { Command as CommandConverter } from "./TypeConverter/Command.js";
+import { Command, CommandService } from "./Command.js";
 import { IPC, IPCService } from "./IPC.js";
 
 /**
@@ -45,7 +44,7 @@ class StatusBarItemImplementation implements VSCodeStatusBarItem {
 		private readonly EntryId: string,
 		private readonly ExtensionId: string,
 		private readonly IPC: IPC,
-		private readonly Command: CommandService,
+		private readonly Command: Command,
 		private readonly OnDidDispose: () => void,
 		InitialId: string,
 		InitialAlignment: StatusBarAlignment,
@@ -55,13 +54,6 @@ class StatusBarItemImplementation implements VSCodeStatusBarItem {
 		this._alignment = InitialAlignment;
 		this._priority = InitialPriority;
 	}
-	tooltip2:
-		| string
-		| MarkdownString
-		| ((
-				token: CancellationToken,
-		  ) => ProviderResult<string | MarkdownString | undefined>)
-		| undefined;
 
 	get id(): string {
 		return this._id;
@@ -160,16 +152,16 @@ class StatusBarItemImplementation implements VSCodeStatusBarItem {
 
 	private Update(): void {
 		if (this.IsDisposed || !this.IsVisible) return;
-		const CommandConverter = new CommandToDTO(
+		const TheCommandConverter = new CommandConverter(
 			this.Command.registerCommand,
-			(command, ...args) => this.Command.executeCommand(command, ...args),
+			this.Command.executeCommand as any,
 			() => undefined,
 		);
 		const DTO = StatusBarItemToDTO(
 			this,
 			this.EntryId,
 			this.ExtensionId,
-			CommandConverter,
+			TheCommandConverter,
 		);
 		Effect.runFork(this.IPC.SendNotification("$statusBar:set", [DTO]));
 	}
@@ -238,8 +230,29 @@ export class StatusBarService extends Effect.Service<StatusBar>()(
 						);
 						return Entry;
 					}),
-				SetStatusBarMessage: (Text, HideOrPromise) => {
-					// ... (Implementation from previous turn, unchanged) ...
+				SetStatusBarMessage: (
+					text: string,
+					hideOrPromise?: number | Promise<any>,
+				) => {
+					const HideId = `status.message.${generateUuid()}`;
+					const ShowEffect = IPC.SendNotification(
+						"$setStatusBarMessage",
+						[HideId, text],
+					);
+					const HideEffect = IPC.SendNotification(
+						"$disposeStatusBarMessage",
+						[HideId],
+					);
+					Effect.runFork(ShowEffect);
+					if (typeof hideOrPromise === "number") {
+						setTimeout(
+							() => Effect.runFork(HideEffect),
+							hideOrPromise,
+						);
+					} else if (hideOrPromise) {
+						hideOrPromise.then(() => Effect.runFork(HideEffect));
+					}
+					return new Disposable(() => Effect.runFork(HideEffect));
 				},
 			};
 		}),

@@ -7,7 +7,7 @@
 
 import { Effect, HashMap, Ref } from "effect";
 import { isWindows } from "vs/base/common/platform.js";
-import { type IExtUri } from "vs/base/common/resources.js";
+import { ExtUri, type IExtUri } from "vs/base/common/resources.js";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
 import type { Event, FileChangeEvent } from "vscode";
 import { IPCService } from "./IPC.js";
@@ -29,7 +29,7 @@ export interface FileSystemInformation {
 }
 
 /**
- * @class FileSystemInformation
+ * @class FileSystemInformationService
  * @description The `Effect.Service` for providing filesystem metadata.
  */
 export class FileSystemInformationService extends Effect.Service<FileSystemInformationService>()(
@@ -61,7 +61,7 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 					}),
 				);
 
-			const ExtUri: IExtUri = new ExtUri((Uri) => {
+			const ExtUriInstance: IExtUri = new ExtUri((Uri) => {
 				const Capabilities = Effect.runSync(
 					GetCapabilities(Uri.scheme),
 				);
@@ -123,7 +123,7 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 			);
 
 			return {
-				ExtURI: ExtUri,
+				ExtURI: ExtUriInstance,
 				GetCapabilities,
 				onDidChangeFile: OnDidChangeFileEvent,
 				IsWritableFileSystem: (Scheme: string) => {

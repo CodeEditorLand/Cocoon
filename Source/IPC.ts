@@ -48,7 +48,7 @@ export interface IPC {
 }
 
 /**
- * @class IPC
+ * @class IPCService
  * @description The `Effect.Service` for IPC. It is a scoped service because it
  * manages the lifecycle of a gRPC client, ensuring it is gracefully acquired and released.
  */
@@ -121,56 +121,32 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 		const InvokeHandlersRef = yield* Ref.make(
 			new Map<string, (...args: any[]) => Promise<any>>(),
 		);
-		const RPC = new RPCProtocol({
-			send: (Buffer) =>
-				Effect.runFork(
-					Effect.tryPromise({
-						try: () => {
-							const Payload = new Proto.RPCDataPayload();
-							Payload.setBuffer(Buffer.buffer);
-							return GrpcClient.sendRPCDataToMountain(Payload);
-						},
-						catch: (Cause) =>
-							new IPCProblem({
-								Cause,
-								Context: "sendRPCDataToMountain failed",
-							}),
-					}).pipe(
-						Effect.catchAll((Error) =>
-							Effect.logError(
-								"Failed to send RPC data via gRPC",
-								Error,
-							),
-						),
-						Effect.asVoid,
-					),
-				),
-			onMessage: OnMessageEmitter.event,
-		});
 
-		const DispatchRequest = (Method: string, Parameters: readonly any[]) =>
-			Effect.gen(function* () {
-				const Handlers = yield* Ref.get(InvokeHandlersRef);
-				const CustomHandler = Handlers.get(Method);
-				if (CustomHandler) {
-					return yield* Effect.tryPromise({
-						try: () => CustomHandler(...Parameters),
-						catch: (e) => e as Error,
-					});
-				}
-				if ((RPC as any)._getHandler) {
-					const Handler = (RPC as any)._getHandler(Method);
-					if (Handler) {
-						return yield* Effect.tryPromise({
-							try: () => Handler(...Parameters),
-							catch: (e) => e as Error,
-						});
-					}
-				}
-				return yield* Effect.fail(
-					new Error(`No handler found for RPC method: ${Method}`),
-				);
-			});
+		const SendRPCData = (Buffer: VSBuffer) =>
+			Effect.tryPromise({
+				try: () => {
+					const Payload = new Proto.RPCDataPayload();
+					Payload.setBuffer(Buffer.buffer);
+					return GrpcClient.sendRPCDataToMountain(Payload);
+				},
+				catch: (Cause) =>
+					new IPCProblem({
+						Cause,
+						Context: "sendRPCDataToMountain failed",
+					}),
+			}).pipe(
+				Effect.catchAll((Error) =>
+					Effect.logError("Failed to send RPC data via gRPC", Error),
+				),
+				Effect.asVoid,
+			);
+
+		const ProtocolAdapter: IMessagePassingProtocol = {
+			send: (Buffer) => Effect.runFork(SendRPCData(Buffer)),
+			onMessage: OnMessageEmitter.event,
+		};
+
+		const RPCProtocolInstance = new RPCProtocol(ProtocolAdapter);
 
 		const ServiceImplementation: IPC = {
 			SendRequest: <ResponseType = unknown>(
@@ -245,7 +221,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 			SendCancel: Cancellation.CancelToken,
 
 			CreateProtocolAdapter: () => ({
-				...RPC,
+				...RPCProtocolInstance,
 				ProcessIncomingData: (Data) =>
 					Effect.sync(() =>
 						OnMessageEmitter.fire(VSBuffer.wrap(Data)),

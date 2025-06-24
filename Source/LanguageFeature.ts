@@ -14,8 +14,8 @@ import type {
 	ReferenceProvider,
 	CodeActionProviderMetadata,
 	DocumentSelector,
-	IExtensionDescription,
 } from "vscode";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 
 /**
  * @interface LanguageFeature

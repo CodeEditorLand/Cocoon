@@ -103,7 +103,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 					Effect.runPromise(ExecuteCommand<T>(id, ...args)),
 				getCommands: (filterInternal) =>
 					Effect.runPromise(GetCommands(filterInternal)),
-			} as unknown as IExtHostCommands; // Cast to satisfy full interface from vscode.d.ts
+			} as unknown as IExtHostCommands;
 
 			return Service;
 		}),

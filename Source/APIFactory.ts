@@ -11,12 +11,8 @@ import type {
 	ExtensionIdentifier,
 } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
-import {
-	Position,
-	Range,
-	Selection,
-	Disposable,
-} from "./Platform/VSCode/Type.js";
+import { Position, Range, Selection } from "./Platform/VSCode/Type.js";
+import type { Disposable } from "vscode";
 
 // Corrected PascalCase Imports
 import { APIDeprecationService } from "./APIDeprecation.js";

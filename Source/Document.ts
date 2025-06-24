@@ -17,6 +17,7 @@ import {
 	type TextDocumentChangeEvent,
 	type TextDocumentContentProvider,
 	type Uri,
+	type ProviderResult,
 } from "vscode";
 import { ToAPI as RangeToAPI } from "./TypeConverter/Main/Range.js";
 import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
@@ -43,7 +44,7 @@ export interface Document {
 }
 
 /**
- * @class Document
+ * @class DocumentService
  * @description The `Effect.Service` for managing text documents.
  */
 export class DocumentService extends Effect.Service<DocumentService>()(
@@ -152,17 +153,14 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 						return Option.none<string>();
 					}
 					const Token = new CancellationTokenSource().token;
-					const Content = yield* Effect.tryPromise({
-						try: () =>
-							Provider.value.provideTextDocumentContent!(
+					const Content = yield* Effect.promise(() =>
+						Promise.resolve(
+							Provider.value.provideTextDocumentContent(
 								Uri,
 								Token,
-							),
-						catch: (UnknownError) =>
-							new Error(
-								`Content provider for scheme "${Scheme}" threw an error: ${UnknownError}`,
-							),
-					});
+							) as ProviderResult<string>,
+						),
+					);
 					return Option.fromNullable(Content);
 				}).pipe(
 					Effect.catchAll((Error) =>
@@ -192,7 +190,8 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 
 			return {
 				get TextDocuments() {
-					return Array.from(Ref.get(DocumentMapRef).values()).map(
+					const documentMap = Effect.runSync(Ref.get(DocumentMapRef));
+					return Array.from(documentMap.values()).map(
 						(data) => data.document,
 					);
 				},

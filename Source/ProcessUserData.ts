@@ -7,7 +7,7 @@
  */
 
 import { Effect, Option, Data } from "effect";
-import { Window, WindowService } from "./Window.js";
+import { WindowService } from "./Window.js";
 import { IPC, IPCService } from "./IPC.js";
 
 // --- Custom Errors ---
@@ -56,8 +56,8 @@ export class ProcessingServiceProblem extends Data.TaggedError(
 const GetActiveTextEditor = Effect.gen(function* () {
 	// A full implementation would get this from the WorkSpace service.
 	// For now, this is a stub.
-	const Window = yield* WindowService;
-	return Option.fromNullable(Window.activeTextEditor);
+	const TheWindow = yield* WindowService;
+	return Option.fromNullable(TheWindow.activeTextEditor);
 });
 
 /**
@@ -98,11 +98,15 @@ const InvokeProcessingService = (
 	});
 };
 
+const ShowInformationMessage = (message: string) =>
+	Effect.flatMap(WindowService, (w) =>
+		(w as any).ShowInformationMessage(message),
+	);
+
 /**
  * @description An `Effect` that encapsulates the entire workflow for processing user data.
  */
 export const ProcessUserData = Effect.gen(function* () {
-	const Window = yield* WindowService;
 	const MaybeEditor = yield* GetActiveTextEditor;
 	const Editor = yield* Effect.mapError(
 		MaybeEditor,
@@ -110,27 +114,21 @@ export const ProcessUserData = Effect.gen(function* () {
 	);
 	const TextContent = yield* GetDocumentText(Editor.document);
 	const ProcessingResult = yield* InvokeProcessingService(TextContent);
-	yield* Window.ShowInformationMessage(
+	yield* ShowInformationMessage(
 		`Processing complete: ${ProcessingResult.ID}`,
 	);
 }).pipe(
 	// Declaratively handle all known, tagged failure cases for this workflow.
 	Effect.catchTags({
 		ActiveEditorNotFoundProblem: (Error) =>
-			Effect.flatMap(WindowService, (w) =>
-				w.ShowInformationMessage(Error.message),
-			),
+			ShowInformationMessage(Error.message),
 		ProcessingServiceProblem: (Error) =>
-			Effect.flatMap(WindowService, (w) =>
-				w.ShowInformationMessage(Error.message),
-			),
+			ShowInformationMessage(Error.message),
 	}),
 	// Catch any other unexpected error.
 	Effect.catchAll((Error) =>
-		Effect.flatMap(WindowService, (w) =>
-			w.ShowInformationMessage(
-				`An unexpected error occurred: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
-			),
+		ShowInformationMessage(
+			`An unexpected error occurred: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
 		),
 	),
 );
