@@ -68,9 +68,8 @@ export class Command {
 
 	constructor(
 		private readonly RegisterCommand: (
-			global: boolean,
 			id: string,
-			handler: <T>(...args: any[]) => T | PromiseLike<T>,
+			handler: (...args: any[]) => any,
 			thisArg?: any,
 		) => IDisposable,
 		private readonly ExecuteCommand: <T>(
@@ -83,7 +82,6 @@ export class Command {
 	) {
 		this.DelegatingCommandId = `_cocoon.delegate.${generateUuid()}`;
 		this.RegisterCommand(
-			true,
 			this.DelegatingCommandId,
 			this.ExecuteDelegatedCommand.bind(this),
 			this,

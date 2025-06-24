@@ -69,7 +69,6 @@ export class CommandService extends Effect.Service<CommandService>()(
 			const RegisterCommand = (
 				_global: boolean,
 				Id: string,
-				_Handler: (...args: any[]) => any,
 			): Effect.Effect<Disposable, Error> => {
 				return IPC.SendNotification("$registerCommand", [Id]).pipe(
 					Effect.map(() => ({ dispose: () => {} })),
@@ -96,14 +95,10 @@ export class CommandService extends Effect.Service<CommandService>()(
 			};
 
 			const Service: IExtHostCommands = {
-				registerCommand: (id, handler, thisArg) =>
-					Effect.runSync(
-						RegisterCommand(true, id, handler.bind(thisArg)),
-					),
-				registerTextEditorCommand: (id, handler, thisArg) =>
-					Effect.runSync(
-						RegisterCommand(true, id, handler.bind(thisArg)),
-					),
+				registerCommand: (id, _handler, _thisArg) =>
+					Effect.runSync(RegisterCommand(true, id)),
+				registerTextEditorCommand: (id, _handler, _thisArg) =>
+					Effect.runSync(RegisterCommand(true, id)),
 				executeCommand: <T>(id: string, ...args: any[]) =>
 					Effect.runPromise(ExecuteCommand<T>(id, ...args)),
 				getCommands: (filterInternal) =>

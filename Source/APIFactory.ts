@@ -56,15 +56,18 @@ const CreateCommandNamespace = (
 ): typeof VSCode.commands => {
 	return {
 		registerCommand: (Id, Handler, ThisArgument): Disposable =>
-			Command.registerCommand(true, Id, Handler, ThisArgument),
+			Command.registerCommand(Id, Handler, ThisArgument),
+		registerTextEditorCommand: (Id, Handler, ThisArgument): Disposable =>
+			Command.registerTextEditorCommand(Id, Handler, ThisArgument),
+		registerDiffInformationCommand: (
+			Id,
+			Handler,
+			ThisArgument,
+		): Disposable => Command.registerCommand(Id, Handler, ThisArgument),
 		executeCommand: <T>(Id: string, ...Argument: any[]) =>
 			Command.executeCommand<T>(Id, ...Argument),
 		getCommands: (FilterInternal?: boolean) =>
 			Command.getCommands(FilterInternal),
-		registerCommand: undefined,
-		registerTextEditorCommand: undefined,
-		executeCommand: undefined,
-		getCommands: undefined,
 	};
 };
 
