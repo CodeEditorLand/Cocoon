@@ -11,22 +11,23 @@ import {
 	Disposable,
 	StatusBarAlignment,
 	type AccessibilityInformation,
-	type Command as VscCommand,
+	type Command as VSCodeCommand,
 	type MarkdownString,
-	type StatusBarItem as VscStatusBarItem,
+	type StatusBarItem as VSCodeStatusBarItem,
 	type ThemeColor,
+	type CancellationToken,
+	type ProviderResult,
 } from "vscode";
-import { Command as CommandConverter } from "./TypeConverter/Command.js";
 import { FromAPI as StatusBarItemToDTO } from "./TypeConverter/StatusBar.js";
 import { CommandService } from "./Command.js";
-import { IPCService } from "./IPC.js";
+import { IPC, IPCService } from "./IPC.js";
 
 /**
  * @class StatusBarItemImplementation
  * @description An internal class that implements the `vscode.StatusBarItem` interface.
- * @implements {VscStatusBarItem}
+ * @implements {VSCodeStatusBarItem}
  */
-class StatusBarItemImplementation implements VscStatusBarItem {
+class StatusBarItemImplementation implements VSCodeStatusBarItem {
 	private IsDisposed = false;
 	private IsVisible = false;
 	private _id: string;
@@ -37,14 +38,14 @@ class StatusBarItemImplementation implements VscStatusBarItem {
 	private _tooltip: string | MarkdownString | undefined;
 	private _color: string | ThemeColor | undefined;
 	private _backgroundColor: ThemeColor | undefined;
-	private _command: string | VscCommand | undefined;
+	private _command: string | VSCodeCommand | undefined;
 	private _accessibilityInformation: AccessibilityInformation | undefined;
 
 	constructor(
 		private readonly EntryId: string,
 		private readonly ExtensionId: string,
-		private readonly IPCService: IPCService,
-		private readonly CommandService: Command,
+		private readonly IPC: IPC,
+		private readonly Command: CommandService,
 		private readonly OnDidDispose: () => void,
 		InitialId: string,
 		InitialAlignment: StatusBarAlignment,
@@ -54,6 +55,13 @@ class StatusBarItemImplementation implements VscStatusBarItem {
 		this._alignment = InitialAlignment;
 		this._priority = InitialPriority;
 	}
+	tooltip2:
+		| string
+		| MarkdownString
+		| ((
+				token: CancellationToken,
+		  ) => ProviderResult<string | MarkdownString | undefined>)
+		| undefined;
 
 	get id(): string {
 		return this._id;
@@ -109,10 +117,10 @@ class StatusBarItemImplementation implements VscStatusBarItem {
 			this.Update();
 		}
 	}
-	get command(): string | VscCommand | undefined {
+	get command(): string | VSCodeCommand | undefined {
 		return this._command;
 	}
-	set command(Value: string | VscCommand | undefined) {
+	set command(Value: string | VSCodeCommand | undefined) {
 		if (this._command !== Value) {
 			this._command = Value;
 			this.Update();
@@ -138,9 +146,7 @@ class StatusBarItemImplementation implements VscStatusBarItem {
 		if (this.IsVisible) {
 			this.IsVisible = false;
 			Effect.runFork(
-				this.IPCService.SendNotification("$statusBar:dispose", [
-					this.EntryId,
-				]),
+				this.IPC.SendNotification("$statusBar:dispose", [this.EntryId]),
 			);
 		}
 	}
@@ -155,9 +161,8 @@ class StatusBarItemImplementation implements VscStatusBarItem {
 	private Update(): void {
 		if (this.IsDisposed || !this.IsVisible) return;
 		const CommandConverter = new CommandToDTO(
-			this.CommandService.registerCommand,
-			(command, ...args) =>
-				this.CommandService.executeCommand(command, ...args),
+			this.Command.registerCommand,
+			(command, ...args) => this.Command.executeCommand(command, ...args),
 			() => undefined,
 		);
 		const DTO = StatusBarItemToDTO(
@@ -166,9 +171,7 @@ class StatusBarItemImplementation implements VscStatusBarItem {
 			this.ExtensionId,
 			CommandConverter,
 		);
-		Effect.runFork(
-			this.IPCService.SendNotification("$statusBar:set", [DTO]),
-		);
+		Effect.runFork(this.IPC.SendNotification("$statusBar:set", [DTO]));
 	}
 }
 
@@ -182,7 +185,7 @@ export interface StatusBar {
 		Id?: string,
 		Alignment?: StatusBarAlignment,
 		Priority?: number,
-	) => Effect.Effect<VscStatusBarItem, never>;
+	) => Effect.Effect<VSCodeStatusBarItem, never>;
 	readonly SetStatusBarMessage: (
 		Text: string,
 		HideOrPromise?: number | Promise<any>,
@@ -197,8 +200,8 @@ export class StatusBarService extends Effect.Service<StatusBar>()(
 	"Service/StatusBar",
 	{
 		effect: Effect.gen(function* () {
-			const IPCService = yield* IPCService;
-			const CommandServiceInstance = yield* CommandService;
+			const IPC = yield* IPCService;
+			const Command = yield* CommandService;
 			const ActiveItemsRef = yield* Ref.make(
 				new Map<string, StatusBarItemImplementation>(),
 			);
@@ -221,8 +224,8 @@ export class StatusBarService extends Effect.Service<StatusBar>()(
 						const Entry = new StatusBarItemImplementation(
 							EntryId,
 							Extension.identifier.value,
-							IPCService,
-							CommandServiceInstance,
+							IPC,
+							Command,
 							OnDispose,
 							ItemId,
 							FinalAlignment,

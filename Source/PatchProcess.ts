@@ -9,8 +9,8 @@
 import { Effect } from "effect";
 import * as Module from "node:module";
 import { Data } from "effect";
-import { InitData } from "./InitData.js";
-import { IPC } from "./IPC.js";
+import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
 import { ExitPreventedProblem } from "./PatchProcess/ExitPreventedProblem.js";
 
 // --- Service Definition ---
@@ -92,7 +92,7 @@ const SetStackTraceLimit = Effect.sync(() => {
  * terminating the host process.
  */
 const PatchProcessCrash = Effect.gen(function* () {
-	const Service = yield* PatchProcess;
+	const Service = yield* PatchProcessService;
 	if (Service.NativeCrash) {
 		process.crash = (): void => {
 			const PreventionStack = new Error(
@@ -117,7 +117,7 @@ const PatchProcessCrash = Effect.gen(function* () {
  * @description An `Effect` that replaces `process.exit` with a controlled version.
  */
 const PatchProcessExit = Effect.gen(function* () {
-	const Service = yield* PatchProcess;
+	const Service = yield* PatchProcessService;
 	process.exit = (Code?: number): never => {
 		if (Service.AllowExit()) {
 			Effect.runSync(
@@ -220,7 +220,7 @@ const PipeLogging = Effect.gen(function* () {
 			"Console log piping is disabled by environment variable.",
 		);
 	}
-	const IPCService = yield* IPC;
+	const IPC = yield* IPCService;
 	const ForwardConsoleCall = (
 		Severity: "log" | "warn" | "error",
 		Arguments: ArrayLike<unknown>,
@@ -230,7 +230,7 @@ const PipeLogging = Effect.gen(function* () {
 			severity: Severity,
 			arguments: SafeToString(Arguments),
 		};
-		return IPCService.SendNotification("$log", [Payload]);
+		return IPC.SendNotification("$log", [Payload]);
 	};
 	const OriginalConsole = {
 		log: console.log,
@@ -263,7 +263,7 @@ const HandleException = Effect.gen(function* () {
 			"Skipping global exception handler setup; will be handled by RPC protocol.",
 		);
 	}
-	const IPCService = yield* IPC;
+	const IPC = yield* IPCService;
 	const LogError = (Type: string, CaughtError: unknown) => {
 		const Message =
 			CaughtError instanceof Error
@@ -274,7 +274,7 @@ const HandleException = Effect.gen(function* () {
 			severity: "error",
 			arguments: `[${Type}] ${Message}`,
 		};
-		return IPCService.SendNotification("$log", [Payload]).pipe(
+		return IPC.SendNotification("$log", [Payload]).pipe(
 			Effect.catchAll((ErrorValue) =>
 				Effect.sync(() =>
 					console.error(
@@ -298,8 +298,8 @@ const HandleException = Effect.gen(function* () {
  * @description An `Effect` that configures the process environment based on `InitData`.
  */
 const SetupEnvironment = Effect.gen(function* () {
-	const InitDataService = yield* InitData;
-	if (InitDataService.environment.useHostProxy) {
+	const InitData = yield* InitDataService;
+	if (InitData.environment.useHostProxy) {
 		yield* Effect.logInfo(
 			"Host proxy is enabled. Assuming proxy environment variables are inherited.",
 		);
@@ -371,5 +371,5 @@ export const RunPatchProcess = Effect.gen(function* () {
 			Error,
 		),
 	),
-	Effect.provide(PatchProcess.Default),
+	Effect.provide(PatchProcessService.Default),
 );

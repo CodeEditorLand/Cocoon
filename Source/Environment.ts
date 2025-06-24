@@ -8,18 +8,12 @@
 
 import { Effect, Ref } from "effect";
 import { Schemas } from "vs/base/common/network.js";
-import {
-	UIKind,
-	type Clipboard,
-	type Event,
-	type LogLevel,
-	type Uri,
-} from "vscode";
-import { ToApi as UriToApi } from "./TypeConverter/Main/Uri.js";
+import { UIKind, type Event, type LogLevel, type Uri } from "vscode";
+import { ToAPI as UriToApi } from "./TypeConverter/Main/URI.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { Clipboard as ClipboardService } from "./Clipboard.js";
-import { InitData } from "./InitData.js";
-import { IPC } from "./IPC.js";
+import { ClipboardService } from "./Clipboard.js";
+import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
 
 // This is defined in `vs/platform/telemetry/common/telemetry.js`.
 const TelemetryLevel = { NONE: 0, CRASH: 1, ERROR: 2, USAGE: 3 };
@@ -61,12 +55,12 @@ export class EnvironmentService extends Effect.Service<EnvironmentService>()(
 	"Service/Environment",
 	{
 		effect: Effect.gen(function* () {
-			const InitDataService = yield* InitData;
-			const IPCService = yield* IPC;
+			const InitData = yield* InitDataService;
+			const IPC = yield* IPCService;
 			const Clipboard = yield* ClipboardService;
 
 			const LogLevelRef = yield* Ref.make(
-				InitDataService.logLevel as number as LogLevel,
+				InitData.logLevel as number as LogLevel,
 			);
 			const { event: OnDidChangeLogLevel, Fire: FireLogLevel } =
 				CreateEventStream<LogLevel>();
@@ -74,69 +68,66 @@ export class EnvironmentService extends Effect.Service<EnvironmentService>()(
 			const { event: OnDidChangeTelemetryEnabled } =
 				CreateEventStream<boolean>();
 
-			IPCService.RegisterInvokeHandler(
-				"$onDidChangeLogLevel",
-				([Level]) => Effect.runPromise(FireLogLevel(Level)),
+			IPC.RegisterInvokeHandler("$onDidChangeLogLevel", ([Level]) =>
+				Effect.runPromise(FireLogLevel(Level)),
 			);
 
 			const OpenExternal = (Target: Uri) =>
-				IPCService.SendRequest<boolean>("$openUri", [
+				IPC.SendRequest<boolean>("$openUri", [
 					Target.toJSON(),
 					{ allowExternalSchemes: true },
 				]).pipe(Effect.map((Result) => !!Result));
 
 			const AsExternalUri = (Target: Uri) =>
-				IPCService.SendRequest<any>("$asExternalUri", [
-					Target.toJSON(),
-				]).pipe(Effect.map((Dto) => UriToApi(Dto)));
+				IPC.SendRequest<any>("$asExternalUri", [Target.toJSON()]).pipe(
+					Effect.map((Dto) => UriToApi(Dto)),
+				);
 
 			const GetAppRoot = () => {
-				const AppRootUri = InitDataService.environment.appRoot;
+				const AppRootUri = InitData.environment.appRoot;
 				return AppRootUri?.scheme === Schemas.file
 					? AppRootUri.fsPath
 					: undefined;
 			};
 
 			const TelemetryLevelValue =
-				InitDataService.logLevel ?? TelemetryLevel.NONE;
-			const IsTrusted = InitDataService.workspace
-				? ((InitDataService.workspace as any).isTrusted ?? true)
+				InitData.logLevel ?? TelemetryLevel.NONE;
+			const IsTrusted = InitData.workspace
+				? ((InitData.workspace as any).isTrusted ?? true)
 				: true;
 
 			const ServiceImplementation: Environment = {
-				appName: InitDataService.environment.appName || "Cocoon Editor",
+				appName: InitData.environment.appName || "Cocoon Editor",
 				appRoot: GetAppRoot(),
-				appHost: InitDataService.environment.appHost || "desktop",
-				uriScheme:
-					InitDataService.environment.appUriScheme || "cocoon-code",
-				language: InitDataService.environment.appLanguage || "en",
-				machineId: InitDataService.telemetryInfo.machineId,
-				sessionId: InitDataService.telemetryInfo.sessionId,
+				appHost: InitData.environment.appHost || "desktop",
+				uriScheme: InitData.environment.appUriScheme || "cocoon-code",
+				language: InitData.environment.appLanguage || "en",
+				machineId: InitData.telemetryInfo.machineId,
+				sessionId: InitData.telemetryInfo.sessionId,
 				isTrusted: IsTrusted,
-				isRemote: !!InitDataService.remote?.isRemote,
-				remoteName: InitDataService.remote?.authority?.split("+")[0],
+				isRemote: !!InitData.remote?.isRemote,
+				remoteName: InitData.remote?.authority?.split("+")[0],
 				shell:
 					process.platform === "win32"
 						? process.env["ComSpec"] || "pwsh.exe"
 						: process.env["SHELL"] || "/bin/sh",
-				uiKind:
-					InitDataService.uiKind === 2 ? UIKind.Web : UIKind.Desktop,
+				uiKind: InitData.uiKind === 2 ? UIKind.Web : UIKind.Desktop,
 				isNewAppInstall:
 					Date.now() -
 						new Date(
-							InitDataService.telemetryInfo.firstSessionDate,
+							InitData.telemetryInfo.firstSessionDate,
 						).getTime() <
 					1000 * 60 * 60 * 24,
-				isBuilt: InitDataService.quality !== "development",
+				isBuilt: InitData.quality !== "development",
 				get logLevel() {
 					return Effect.runSync(Ref.get(LogLevelRef));
 				},
 				get isTelemetryEnabled() {
 					return TelemetryLevelValue >= TelemetryLevel.USAGE;
 				},
-				onDidChangeLogLevel,
-				onDidChangeShell,
-				onDidChangeTelemetryEnabled,
+				onDidChangeLogLevel: OnDidChangeLogLevel,
+				onDidChangeShell: OnDidChangeShell,
+				onDidChangeTelemetryEnabled: OnDidChangeTelemetryEnabled,
 				clipboard: Clipboard,
 				openExternal: (Target) =>
 					Effect.runPromise(OpenExternal(Target)),

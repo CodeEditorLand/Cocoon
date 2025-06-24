@@ -10,11 +10,11 @@ import { URI } from "../../Platform/VSCode/Type.js";
 /**
  * @description Converts a `vscode.URI` object into a plain JSON object for IPC.
  * This uses the canonical `.toJSON()` method.
- * @param URIInstance The `vscode.URI` instance to convert.
+ * @param URI The `vscode.URI` instance to convert.
  * @returns The `UriComponents` DTO.
  */
-export const FromAPI = (URIInstance: VSCodeURI): UriComponents =>
-	URIInstance.toJSON();
+export const FromAPI = (URI: VSCodeURI): UriComponents =>
+	URI.toJSON();
 
 /**
  * @description Revives a URI DTO back into a `vscode.URI` class instance.

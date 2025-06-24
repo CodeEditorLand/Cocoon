@@ -19,12 +19,9 @@ import {
 	type Uri,
 } from "vscode";
 import { ToAPI as RangeToAPI } from "./TypeConverter/Main/Range.js";
-import {
-	ToAPI as UriToAPI,
-	FromAPI as UriFromAPI,
-} from "./TypeConverter/Main/Uri.js";
+import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { IPC } from "./IPC.js";
+import { IPCService } from "./IPC.js";
 
 /**
  * @interface Document
@@ -53,7 +50,7 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 	"Service/Document",
 	{
 		effect: Effect.gen(function* () {
-			const IPCService = yield* IPC;
+			const IPC = yield* IPCService;
 			const DocumentMapRef = yield* Ref.make(
 				new Map<string, ExtHostDocumentData>(),
 			);
@@ -61,7 +58,7 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 				new Map<string, TextDocumentContentProvider>(),
 			);
 			const MainThreadDocumentsProxy =
-				IPCService.CreateProxy<MainThreadDocumentsShape>(
+				IPC.CreateProxy<MainThreadDocumentsShape>(
 					"$rpc:mainThreadDocuments",
 				);
 
@@ -176,18 +173,16 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 					Effect.map(Option.getOrElse(() => null)),
 				);
 
-			IPCService.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
+			IPC.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
 				Effect.runPromise(AcceptModelAdded(Data)),
 			);
-			IPCService.RegisterInvokeHandler("$acceptModelRemoved", ([Uri]) =>
+			IPC.RegisterInvokeHandler("$acceptModelRemoved", ([Uri]) =>
 				Effect.runPromise(AcceptModelRemoved(Uri)),
 			);
-			IPCService.RegisterInvokeHandler(
-				"$acceptModelChanged",
-				([Uri, Changes]) =>
-					Effect.runPromise(AcceptModelChanged(Uri, Changes)),
+			IPC.RegisterInvokeHandler("$acceptModelChanged", ([Uri, Changes]) =>
+				Effect.runPromise(AcceptModelChanged(Uri, Changes)),
 			);
-			IPCService.RegisterInvokeHandler(
+			IPC.RegisterInvokeHandler(
 				"$provideTextDocumentContent",
 				([UriComponents]) =>
 					Effect.runPromise(
@@ -197,9 +192,9 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 
 			return {
 				get TextDocuments() {
-					return Array.from(
-						Ref.unsafeGet(DocumentMapRef).values(),
-					).map((data) => data.document);
+					return Array.from(Ref.get(DocumentMapRef).values()).map(
+						(data) => data.document,
+					);
 				},
 				OnDidOpenTextDocument,
 				OnDidCloseTextDocument,
@@ -214,7 +209,7 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 					),
 				RegisterTextDocumentContentProvider: (Scheme, Provider) => {
 					Effect.runFork(
-						IPCService.SendNotification(
+						IPC.SendNotification(
 							"$registerTextDocumentContentProvider",
 							[Scheme],
 						),
@@ -230,7 +225,7 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 							(Map) => (Map.delete(Scheme), Map),
 						).pipe(
 							Effect.andThen(
-								IPCService.SendNotification(
+								IPC.SendNotification(
 									"$unregisterTextDocumentContentProvider",
 									[Scheme],
 								),

@@ -21,7 +21,7 @@ import {
 	type DebugAdapterTrackerFactory,
 	type DebugConsole,
 } from "vscode";
-import { IPC } from "./IPC.js";
+import { IPCService } from "./IPC.js";
 import { DebugProviderRegistrationProblem } from "./Debug/DebugProviderRegistrationProblem.js";
 import { StartDebuggingProblem } from "./Debug/StartDebuggingProblem.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
@@ -105,7 +105,7 @@ export class DebugService extends Effect.Service<DebugService>()(
 	"Service/Debug",
 	{
 		effect: Effect.gen(function* () {
-			const IPCService = yield* IPC;
+			const IPC = yield* IPCService;
 			let HandleCounter = 0;
 
 			const DebugStateRef = yield* Ref.make<DebuggerState>({
@@ -143,7 +143,7 @@ export class DebugService extends Effect.Service<DebugService>()(
 					yield* Ref.update(RegistryRef, (TheMap) =>
 						TheMap.set(Handle, Data),
 					);
-					yield* IPCService.SendNotification(
+					yield* IPC.SendNotification(
 						"$registerDebugConfigurationProvider",
 						[Handle, Data.Type],
 					).pipe(
@@ -160,7 +160,7 @@ export class DebugService extends Effect.Service<DebugService>()(
 						(TheMap) => (TheMap.delete(Handle), TheMap),
 					).pipe(
 						Effect.andThen(
-							IPCService.SendNotification(
+							IPC.SendNotification(
 								"$unregisterDebugConfigurationProvider",
 								[Handle],
 							),
@@ -171,13 +171,13 @@ export class DebugService extends Effect.Service<DebugService>()(
 
 			return {
 				get activeDebugSession() {
-					return Ref.unsafeGet(DebugStateRef).ActiveDebugSession;
+					return Ref.get(DebugStateRef).ActiveDebugSession;
 				},
 				get activeDebugConsole() {
-					return Ref.unsafeGet(DebugStateRef).ActiveDebugConsole;
+					return Ref.get(DebugStateRef).ActiveDebugConsole;
 				},
 				get breakpoints() {
-					return Ref.unsafeGet(DebugStateRef).Breakpoints;
+					return Ref.get(DebugStateRef).Breakpoints;
 				},
 				onDidChangeActiveDebugSession:
 					OnDidChangeActiveDebugSessionEvent,
@@ -194,8 +194,7 @@ export class DebugService extends Effect.Service<DebugService>()(
 					Extension,
 				) =>
 					RegisterProvider(
-						Ref.unsafeGet(DebugStateRef)
-							.DebugConfigurationProviders,
+						Ref.get(DebugStateRef).DebugConfigurationProviders,
 						{ Type: DebugType, Provider, Extension },
 					),
 				RegisterDebugAdapterDescriptorFactory: (
@@ -204,8 +203,7 @@ export class DebugService extends Effect.Service<DebugService>()(
 					Extension,
 				) =>
 					RegisterProvider(
-						Ref.unsafeGet(DebugStateRef)
-							.DebugAdapterDescriptorFactories,
+						Ref.get(DebugStateRef).DebugAdapterDescriptorFactories,
 						{ Type: DebugType, Provider: Factory, Extension },
 					),
 				RegisterDebugAdapterTrackerFactory: (
@@ -214,8 +212,7 @@ export class DebugService extends Effect.Service<DebugService>()(
 					Extension,
 				) =>
 					RegisterProvider(
-						Ref.unsafeGet(DebugStateRef)
-							.DebugAdapterTrackerFactories,
+						Ref.get(DebugStateRef).DebugAdapterTrackerFactories,
 						{ Type: DebugType, Provider: Factory, Extension },
 					),
 
@@ -234,15 +231,14 @@ export class DebugService extends Effect.Service<DebugService>()(
 							lifecycleManagedByParent:
 								Options?.lifecycleManagedByParent,
 						};
-						const IsSuccess =
-							yield* IPCService.SendRequest<boolean>(
-								"$startDebugging",
-								[
-									Folder?.uri.toJSON(),
-									ConfigurationDTO,
-									OptionsDTO,
-								],
-							);
+						const IsSuccess = yield* IPC.SendRequest<boolean>(
+							"$startDebugging",
+							[
+								Folder?.uri.toJSON(),
+								ConfigurationDTO,
+								OptionsDTO,
+							],
+						);
 						if (IsSuccess) {
 							yield* Effect.logInfo(
 								"Debug session started successfully.",
@@ -261,14 +257,14 @@ export class DebugService extends Effect.Service<DebugService>()(
 							.ActiveDebugSession;
 						const SessionToStop = Session ?? ActiveSession;
 						if (!SessionToStop) {
-							return yield* Effect.logWarn(
+							return yield* Effect.logWarning(
 								"StopDebugging called but no session is active.",
 							);
 						}
 						yield* Effect.logInfo(
 							`Request to stop debugging session: ${SessionToStop.id}`,
 						);
-						yield* IPCService.SendNotification("$stopDebugging", [
+						yield* IPC.SendNotification("$stopDebugging", [
 							SessionToStop.id,
 						]);
 					}).pipe(

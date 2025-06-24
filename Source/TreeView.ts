@@ -24,8 +24,8 @@ import {
 import { FromAPI as TreeViewOptionToDTO } from "./TypeConverter/TreeView/Option.js";
 import { FromAPI as TreeViewItemToDTO } from "./TypeConverter/TreeView/Item.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { Command } from "./Command.js";
-import { IPC } from "./IPC.js";
+import { Command, CommandService } from "./Command.js";
+import { IPC, IPCService } from "./IPC.js";
 
 /**
  * @class TreeViewImplementation
@@ -64,6 +64,7 @@ class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 		private readonly ViewId: string,
 		private readonly DataProvider: TreeDataProvider<T>,
 		private readonly IPCService: IPC,
+		// @ts-expect-error
 		private readonly CommandService: Command,
 		private readonly Extension: IExtensionDescription,
 	) {
@@ -198,8 +199,8 @@ export class TreeViewService extends Effect.Service<TreeViewService>()(
 	"Service/TreeView",
 	{
 		effect: Effect.gen(function* () {
-			const IPCService = yield* IPC;
-			const CommandService = yield* Command;
+			const IPC = yield* IPCService;
+			const Command = yield* CommandService;
 			const ActiveViewsRef = yield* Ref.make(
 				new Map<string, TreeViewImplementation<any>>(),
 			);
@@ -227,12 +228,12 @@ export class TreeViewService extends Effect.Service<TreeViewService>()(
 					}
 				});
 
-			IPCService.RegisterInvokeHandler(
+			IPC.RegisterInvokeHandler(
 				"$getChildren",
 				([ViewId, ParentHandle]) =>
 					Effect.runPromise(GetChildren(ViewId, ParentHandle)),
 			);
-			IPCService.RegisterInvokeHandler("$disposeTreeView", ([ViewId]) =>
+			IPC.RegisterInvokeHandler("$disposeTreeView", ([ViewId]) =>
 				Effect.runPromise(DisposeTreeView(ViewId)),
 			);
 
@@ -265,8 +266,8 @@ export class TreeViewService extends Effect.Service<TreeViewService>()(
 						const ExtHostView = new TreeViewImplementation<T>(
 							ViewId,
 							Options.treeDataProvider,
-							IPCService,
-							CommandService,
+							IPC,
+							Command,
 							Extension,
 						);
 						yield* Ref.update(ActiveViewsRef, (Map) =>

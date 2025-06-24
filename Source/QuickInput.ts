@@ -18,7 +18,7 @@ import {
 	SerializeButtons,
 	SerializeItems,
 } from "./TypeConverter/QuickInput.js";
-import { IPC } from "./IPC.js";
+import { IPCService } from "./IPC.js";
 
 /**
  * @interface QuickInput
@@ -46,7 +46,7 @@ export class QuickInputService extends Effect.Service<QuickInputService>()(
 	"Service/QuickInput",
 	{
 		effect: Effect.gen(function* () {
-			const IPCService = yield* IPC;
+			const IPC = yield* IPCService;
 
 			const ShowQuickPick = <T extends QuickPickItem>(
 				Items: readonly T[] | Promise<readonly T[]>,
@@ -66,7 +66,7 @@ export class QuickInputService extends Effect.Service<QuickInputService>()(
 						items: SerializeItems(ResolvedItems),
 						buttons: SerializeButtons((Option as any).buttons),
 					};
-					const ResultHandles = yield* IPCService.SendRequest<
+					const ResultHandles = yield* IPC.SendRequest<
 						number[] | number | undefined
 					>("$showQuickPick", [IPCOptions]).pipe(
 						Effect.catchIf(isCancellationError, () =>
@@ -104,7 +104,7 @@ export class QuickInputService extends Effect.Service<QuickInputService>()(
 						...Option,
 						buttons: SerializeButtons((Option as any)?.buttons),
 					};
-					return yield* IPCService.SendRequest<string | undefined>(
+					return yield* IPC.SendRequest<string | undefined>(
 						"$showInputBox",
 						[IPCOptions],
 					).pipe(

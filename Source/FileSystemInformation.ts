@@ -7,13 +7,13 @@
 
 import { Effect, HashMap, Ref } from "effect";
 import { isWindows } from "vs/base/common/platform.js";
-import { ExtUri, type IExtUri } from "vs/base/common/resources.js";
+import { type IExtUri } from "vs/base/common/resources.js";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
 import type { Event, FileChangeEvent } from "vscode";
-import { IPC } from "./IPC.js";
-import { Logger } from "./Logger.js";
+import { IPCService } from "./IPC.js";
+import { LoggerService } from "./Logger.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { ToAPI } from "./TypeConverter/Main/Uri.js";
+import { ToAPI } from "./TypeConverter/Main/URI.js";
 
 /**
  * @interface FileSystemInformation
@@ -36,8 +36,8 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 	"Service/FileSystemInformation",
 	{
 		effect: Effect.gen(function* () {
-			const IPCService = yield* IPC;
-			const LogService = yield* Logger;
+			const IPC = yield* IPCService;
+			const Logger = yield* LoggerService;
 
 			const CapabilitiesMapRef = yield* Ref.make(
 				HashMap.empty<string, FileSystemProviderCapabilities>(),
@@ -61,7 +61,7 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 					}),
 				);
 
-			const ExtUriInstance: IExtUri = new ExtUri((Uri) => {
+			const ExtUri: IExtUri = new ExtUri((Uri) => {
 				const Capabilities = Effect.runSync(
 					GetCapabilities(Uri.scheme),
 				);
@@ -72,7 +72,7 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 						)
 					: isWindows;
 				Effect.runFork(
-					LogService.Trace(
+					Logger.Trace(
 						`ExtURI check for scheme '${Uri.scheme}', ignoring case: ${IgnoreCase}`,
 					),
 				);
@@ -89,7 +89,7 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 							CapabilitiesMapRef,
 							HashMap.remove(Scheme),
 						);
-						yield* LogService.Trace(
+						yield* Logger.Trace(
 							`Cleared capabilities for scheme '${Scheme}'.`,
 						);
 					} else {
@@ -97,21 +97,21 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 							CapabilitiesMapRef,
 							HashMap.set(Scheme, Capabilities),
 						);
-						yield* LogService.Trace(
+						yield* Logger.Trace(
 							`Updated capabilities for scheme '${Scheme}' to: ${Capabilities}`,
 						);
 					}
 				});
 
 			// Register RPC handlers
-			IPCService.RegisterInvokeHandler(
+			IPC.RegisterInvokeHandler(
 				"$acceptProviderInfos",
 				([Scheme, Capabilities]) =>
 					Effect.runPromise(
 						AcceptProviderCapabilities(Scheme, Capabilities),
 					),
 			);
-			IPCService.RegisterInvokeHandler("$onFileEvent", ([Events]) =>
+			IPC.RegisterInvokeHandler("$onFileEvent", ([Events]) =>
 				Effect.runPromise(
 					FireFileChangeEvent(
 						Events.map((Event: any) => ({
@@ -123,7 +123,7 @@ export class FileSystemInformationService extends Effect.Service<FileSystemInfor
 			);
 
 			return {
-				ExtURI: ExtUriInstance,
+				ExtURI: ExtUri,
 				GetCapabilities,
 				onDidChangeFile: OnDidChangeFileEvent,
 				IsWritableFileSystem: (Scheme: string) => {

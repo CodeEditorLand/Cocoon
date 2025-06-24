@@ -8,7 +8,7 @@
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { ExtensionHostKind } from "vs/workbench/services/extensions/common/extensionHostKind.js";
-import { Logger } from "./Logger.js";
+import { LoggerService } from "./Logger.js";
 
 /**
  * @interface HostKindPicker
@@ -36,7 +36,7 @@ export class HostKindPickerService extends Effect.Service<HostKindPickerService>
 	"Service/HostKindPicker",
 	{
 		effect: Effect.gen(function* () {
-			const LogService = yield* Logger;
+			const Logger = yield* LoggerService;
 
 			const Pick = (
 				ExtensionDescription: IExtensionDescription,
@@ -61,7 +61,7 @@ export class HostKindPickerService extends Effect.Service<HostKindPickerService>
 							!ExtensionDescription.browser);
 
 					if (HasNodeRequirement) {
-						yield* LogService.Trace(
+						yield* Logger.Trace(
 							`HostKindPicker: Selecting LocalProcess for extension '${ExtensionDescription.identifier.value}'.`,
 						);
 						return ExtensionHostKind.LocalProcess;
@@ -70,14 +70,14 @@ export class HostKindPickerService extends Effect.Service<HostKindPickerService>
 					// If it's explicitly a 'web' extension and has no Node.js requirement,
 					// it cannot run in our Node.js-based Cocoon host.
 					if (DeclaredKinds.has("web") && !HasNodeRequirement) {
-						yield* LogService.Trace(
+						yield* Logger.Trace(
 							`HostKindPicker: Extension '${ExtensionDescription.identifier.value}' is Web-only and not suitable for Cocoon.`,
 						);
 						return null;
 					}
 
 					// Fallback for any other unusual configuration.
-					yield* LogService.Warn(
+					yield* Logger.Warn(
 						`HostKindPicker: No suitable host kind found for extension '${ExtensionDescription.identifier.value}'. Defaulting to 'null'.`,
 					);
 					return null;

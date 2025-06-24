@@ -18,7 +18,7 @@ import {
 	ToURI as DTOToURI,
 	ToURIArray as DTOToURIArray,
 } from "./TypeConverter/Dialog/DialogResult.js";
-import { IPC } from "./IPC.js";
+import { IPC, IPCService } from "./IPC.js";
 import { DialogProblem } from "./Dialog/DialogProblem.js";
 
 /**
@@ -26,7 +26,7 @@ import { DialogProblem } from "./Dialog/DialogProblem.js";
  * cancellation tokens, DTO conversion, and error mapping.
  */
 const CreateDialogEffect = <Option, DTO, Result>(
-	IPCService: IPC,
+	IPC: IPC,
 	IPCMethod: string,
 	Options: Option | undefined,
 	Token: CancellationToken | undefined,
@@ -38,9 +38,7 @@ const CreateDialogEffect = <Option, DTO, Result>(
 			return yield* Effect.interrupt;
 		}
 		const DTO = OptionsToDTO(Options);
-		const RPCResult = yield* IPCService.SendRequest<any>(IPCMethod, [
-			DTO,
-		]).pipe(
+		const RPCResult = yield* IPC.SendRequest<any>(IPCMethod, [DTO]).pipe(
 			Effect.catchIf(isCancellationError, () =>
 				Effect.succeed(undefined),
 			),
@@ -79,7 +77,7 @@ export class DialogService extends Effect.Service<DialogService>()(
 	"Service/Dialog",
 	{
 		effect: Effect.gen(function* () {
-			const IPCService = yield* IPC;
+			const IPC = yield* IPCService;
 
 			return {
 				ShowOpenDialog: (Options, Token) =>
@@ -88,7 +86,7 @@ export class DialogService extends Effect.Service<DialogService>()(
 						any,
 						Uri[] | undefined
 					>(
-						IPCService,
+						IPC,
 						"$showOpenDialog",
 						Options,
 						Token,
@@ -97,7 +95,7 @@ export class DialogService extends Effect.Service<DialogService>()(
 					),
 				ShowSaveDialog: (Options, Token) =>
 					CreateDialogEffect<SaveDialogOptions, any, Uri | undefined>(
-						IPCService,
+						IPC,
 						"$showSaveDialog",
 						Options,
 						Token,

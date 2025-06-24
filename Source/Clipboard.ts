@@ -6,8 +6,7 @@
  */
 
 import { Effect, Runtime } from "effect";
-import type { IClipboardService } from "vs/platform/clipboard/common/clipboardService.js";
-import type { Uri } from "./Platform/VSCode/Type.js";
+import type { URI } from "./Platform/VSCode/Type.js";
 import { ApplicationClipboardProblem } from "./Clipboard/ApplicationClipboardProblem.js";
 
 // --- NOTE: Integration-level imports are placeholders as the source was not provided. ---
@@ -75,11 +74,11 @@ export class ClipboardService extends Effect.Service<ClipboardService>()(
 				return this.writeText(Text);
 			},
 
-			writeResources: (ResourceList: Uri[]): Promise<void> => {
+			writeResources: (ResourceList: (typeof URI)[]): Promise<void> => {
 				return RunIntegrationEffect(WriteResourceList(ResourceList));
 			},
 
-			readResources: (): Promise<Uri[]> => {
+			readResources: (): Promise<(typeof URI)[]> => {
 				return RunIntegrationEffect(ReadResourceList);
 			},
 

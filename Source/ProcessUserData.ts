@@ -7,8 +7,8 @@
  */
 
 import { Effect, Option, Data } from "effect";
-import { Window } from "./Window.js";
-import { IPC } from "./IPC.js";
+import { WindowService } from "./Window.js";
+import { IPC, IPCService } from "./IPC.js";
 
 // --- Custom Errors ---
 
@@ -54,8 +54,8 @@ export class ProcessingServiceProblem extends Data.TaggedError(
  * @returns An `Effect` resolving to an `Option<vscode.TextEditor>`.
  */
 const GetActiveTextEditor = Effect.gen(function* () {
-	const WindowService = yield* Window;
-	return Option.fromNullable(WindowService.activeTextEditor);
+	const Window = yield* Window;
+	return Option.fromNullable(Window.activeTextEditor);
 });
 
 /**
@@ -87,8 +87,8 @@ const InvokeProcessingService = (
 	TextContent: string,
 ): Effect.Effect<ProcessingResult, ProcessingServiceProblem, IPC> => {
 	return Effect.gen(function* () {
-		const IPCService = yield* IPC;
-		return yield* IPCService.SendRequest<ProcessingResult>("$processText", [
+		const IPC = yield* IPCService;
+		return yield* IPC.SendRequest<ProcessingResult>("$processText", [
 			TextContent,
 		]).pipe(
 			Effect.mapError((Cause) => new ProcessingServiceProblem({ Cause })),
@@ -100,7 +100,7 @@ const InvokeProcessingService = (
  * @description An `Effect` that encapsulates the entire workflow for processing user data.
  */
 export const ProcessUserData = Effect.gen(function* () {
-	const WindowService = yield* Window;
+	const Window = yield* WindowService;
 	const MaybeEditor = yield* GetActiveTextEditor;
 	const Editor = yield* Effect.mapError(
 		MaybeEditor,
@@ -108,7 +108,7 @@ export const ProcessUserData = Effect.gen(function* () {
 	);
 	const TextContent = yield* GetDocumentText(Editor.document);
 	const ProcessingResult = yield* InvokeProcessingService(TextContent);
-	yield* WindowService.ShowInformationMessage(
+	yield* Window.ShowInformationMessage(
 		`Processing complete: ${ProcessingResult.ID}`,
 	);
 }).pipe(

@@ -3,7 +3,7 @@
  * @description Type converters for the `vscode.StatusBarItem` API.
  */
 
-import type { Command, StatusBarItem as VscStatusBarItem } from "vscode";
+import type { Command, StatusBarItem as VSCodeStatusBarItem } from "vscode";
 import { Command as CommandConverter } from "./Command.js";
 import { MarkdownString, ThemeColor } from "../Platform/VSCode/Type.js";
 import { FromAPI as MarkdownStringFromAPI } from "./Main/MarkdownString.js";
@@ -27,14 +27,15 @@ interface IStatusbarEntry {
  * @param From The `vscode.StatusBarItem` instance to convert.
  * @param EntryId The internal UUID for this status bar item instance.
  * @param ExtensionId The identifier of the extension that owns this item.
- * @param CommandConverterInstance An instance of the command converter.
+ * @param CommandConverter An instance of the command converter.
  * @returns The `IStatusbarEntry` DTO.
  */
 export const FromAPI = (
-	From: VscStatusBarItem,
+	From: VSCodeStatusBarItem,
 	EntryId: string,
+	// @ts-expect-error
 	ExtensionId: string,
-	CommandConverterInstance: CommandConverter,
+	CommandConverter: CommandConverter,
 ): IStatusbarEntry => {
 	return {
 		id: EntryId,
@@ -47,7 +48,7 @@ export const FromAPI = (
 					? MarkdownStringFromAPI(From.tooltip)
 					: undefined,
 		command: From.command
-			? CommandConverterInstance.ToInternal(From.command as Command, [])
+			? CommandConverter.ToInternal(From.command as Command, [])
 			: undefined,
 		priority: From.priority,
 		alignment: From.alignment === 1 /* Left */ ? 0 : 1, // Corrected enum mapping

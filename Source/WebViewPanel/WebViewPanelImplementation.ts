@@ -17,10 +17,7 @@ import type {
 	WebviewPanelOnDidChangeViewStateEvent,
 	WebviewPanelOptions,
 } from "vscode";
-import {
-	ToAPI as UriToAPI,
-	FromAPI as UriFromAPI,
-} from "../TypeConverter/Main/Uri.js";
+import { FromAPI as UriFromAPI } from "../TypeConverter/Main/URI.js";
 import { ConvertShowOptionToDTO } from "../TypeConverter/WebView/ConvertShowOptionToDTO.js";
 import { CreateEventStream } from "../Utility/CreateEventStream.js";
 import type { IPC } from "../IPC.js";
@@ -52,7 +49,8 @@ export class WebViewPanelImplementation implements WebviewPanel {
 
 	constructor(
 		private readonly Handle: string,
-		private readonly IPCService: IPC,
+		private readonly IPC: IPC,
+		// @ts-expect-error
 		private readonly Extension: IExtensionDescription,
 		private readonly OnDidDisposeCallback: () => void,
 		InitialViewType: string,
@@ -64,7 +62,7 @@ export class WebViewPanelImplementation implements WebviewPanel {
 		this.options = InitialOptions;
 		this.webview = new WebViewImplementation(
 			Handle,
-			IPCService,
+			IPC,
 			Extension,
 			InitialOptions,
 		);
@@ -92,10 +90,7 @@ export class WebViewPanelImplementation implements WebviewPanel {
 		if (this.IsDisposed || this._title === Value) return;
 		this._title = Value;
 		Effect.runFork(
-			this.IPCService.SendNotification("$setWebviewTitle", [
-				this.Handle,
-				Value,
-			]),
+			this.IPC.SendNotification("$setWebviewTitle", [this.Handle, Value]),
 		);
 	}
 	get iconPath():
@@ -116,7 +111,7 @@ export class WebViewPanelImplementation implements WebviewPanel {
 				}
 			: undefined;
 		Effect.runFork(
-			this.IPCService.SendNotification("$setWebviewIconPath", [
+			this.IPC.SendNotification("$setWebviewIconPath", [
 				this.Handle,
 				IconPathDTO,
 			]),
@@ -128,7 +123,7 @@ export class WebViewPanelImplementation implements WebviewPanel {
 		const ViewColumnDTO = ViewColumn
 			? ConvertShowOptionToDTO(ViewColumn, PreserveFocus ?? false)
 			: undefined;
-		this.IPCService.SendNotification("$revealWebviewPanel", [
+		this.IPC.SendNotification("$revealWebviewPanel", [
 			this.Handle,
 			ViewColumnDTO,
 			PreserveFocus,
@@ -142,7 +137,7 @@ export class WebViewPanelImplementation implements WebviewPanel {
 		this.OnDidDisposeCallback();
 		(this.webview as WebViewImplementation).dispose();
 		Effect.runFork(
-			this.IPCService.SendNotification("$disposeWebview", [this.Handle]),
+			this.IPC.SendNotification("$disposeWebview", [this.Handle]),
 		);
 	}
 

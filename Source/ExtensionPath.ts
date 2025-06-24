@@ -13,7 +13,7 @@ import type {
 	ExtensionIdentifier,
 } from "vs/platform/extensions/common/extensions.js";
 import type { Uri } from "vscode";
-import { InitData } from "./InitData.js";
+import { InitDataService } from "./InitData.js";
 
 /**
  * @interface ExtensionPathEntry
@@ -42,8 +42,8 @@ export class ExtensionPathService extends Effect.Service<ExtensionPathService>()
 	"Service/ExtensionPath",
 	{
 		effect: Effect.gen(function* () {
-			const InitDataService = yield* InitData;
-			const Extensions = InitDataService.extensions.allExtensions;
+			const InitData = yield* InitDataService;
+			const Extensions = InitData.extensions.allExtensions;
 			const MutablePaths: ExtensionPathEntry[] = [];
 
 			for (const Extension of Extensions) {

@@ -18,9 +18,9 @@ import type {
 } from "vs/platform/log/common/log.js";
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
-import { InitData } from "./InitData.js";
-import { IPC } from "./IPC.js";
-import { Logger } from "./Logger.js";
+import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
+import { LoggerService } from "./Logger.js";
 
 /**
  * @description An internal helper to convert the `LogLevel` from the host to the
@@ -52,12 +52,12 @@ export class TelemetryService extends Effect.Service<TelemetryService>()(
 	"Service/Telemetry",
 	{
 		effect: Effect.gen(function* () {
-			const InitDataService = yield* InitData;
-			const IPCService = yield* IPC;
-			const LogService = yield* Logger;
+			const InitData = yield* InitDataService;
+			const IPC = yield* IPCService;
+			const Logger = yield* LoggerService;
 
 			const TelemetryLevelRef = yield* Ref.make<TelemetryLevel>(
-				ConvertToTelemetryLevel(InitDataService.logLevel),
+				ConvertToTelemetryLevel(InitData.logLevel),
 			);
 			const ProductConfigRef = yield* Ref.make<{
 				usage: boolean;
@@ -94,12 +94,12 @@ export class TelemetryService extends Effect.Service<TelemetryService>()(
 						: CaughtError;
 
 				return Effect.whenEffect(
-					LogService.Error(
+					Logger.Error(
 						`Extension error reported for '${Extension.value}'.`,
 						SerializableError,
 					).pipe(
 						Effect.andThen(
-							IPCService.SendNotification("$onExtensionError", [
+							IPC.SendNotification("$onExtensionError", [
 								Extension,
 								SerializableError,
 							]),

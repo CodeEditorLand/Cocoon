@@ -22,44 +22,44 @@ import {
 } from "@opentelemetry/sdk-trace-base";
 
 // --- Service Imports (PascalCase) ---
-import { APIDeprecation } from "./APIDeprecation.js";
-import { APIFactory } from "./APIFactory.js";
-import { Authentication } from "./Authentication.js";
-import { Cancellation } from "./Cancellation.js";
-import { Clipboard } from "./Clipboard.js";
-import { Command } from "./Command.js";
-import { Configuration } from "./Configuration.js";
-import { Debug } from "./Debug.js";
-import { Dialog } from "./Dialog.js";
-import { Document } from "./Document.js";
-import { Environment } from "./Environment.js";
-import { ESMInterceptor } from "./ESMInterceptor.js";
-import { Extension } from "./Extension.js";
-import { ExtensionHost } from "./ExtensionHost.js";
-import { ExtensionPath } from "./ExtensionPath.js";
-import { FileSystem } from "./FileSystem.js";
-import { FileSystemInformation } from "./FileSystemInformation.js";
-import { HostKindPicker } from "./HostKindPicker.js";
-import { InitData } from "./InitData.js";
-import { IPC } from "./IPC.js";
-import { IPCConfiguration } from "./IPCConfiguration.js";
-import { LanguageFeature } from "./LanguageFeature.js";
-import { Logger } from "./Logger.js";
-import { Message } from "./Message.js";
-import { NodeModuleShim } from "./NodeModuleShim.js";
-import { ProposedAPI } from "./ProposedAPI.js";
-import { QuickInput } from "./QuickInput.js";
-import { RequireInterceptor } from "./RequireInterceptor.js";
-import { SecretStorage } from "./SecretStorage.js";
-import { StatusBar } from "./StatusBar.js";
-import { Storage } from "./Storage.js";
-import { StoragePath } from "./StoragePath.js";
-import { Task } from "./Task.js";
-import { Telemetry } from "./Telemetry.js";
-import { TreeView } from "./TreeView.js";
-import { WebViewPanel } from "./WebViewPanel.js";
-import { Window } from "./Window.js";
-import { Workspace } from "./Workspace.js";
+import { APIDeprecationService } from "./APIDeprecation.js";
+import { APIFactoryService } from "./APIFactory.js";
+import { AuthenticationService } from "./Authentication.js";
+import { CancellationService } from "./Cancellation.js";
+import { ClipboardService } from "./Clipboard.js";
+import { CommandService } from "./Command.js";
+import { ConfigurationService } from "./Configuration.js";
+import { DebugService } from "./Debug.js";
+import { DialogService } from "./Dialog.js";
+import { DocumentService } from "./Document.js";
+import { EnvironmentService } from "./Environment.js";
+import { ESMInterceptorService } from "./ESMInterceptor.js";
+import { ExtensionService } from "./Extension.js";
+import { ExtensionHostService } from "./ExtensionHost.js";
+import { ExtensionPathService } from "./ExtensionPath.js";
+import { FileSystemService } from "./FileSystem.js";
+import { FileSystemInformationService } from "./FileSystemInformation.js";
+import { HostKindPickerService } from "./HostKindPicker.js";
+import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
+import { IPCConfigurationService } from "./IPCConfiguration.js";
+import { LanguageFeatureService } from "./LanguageFeature.js";
+import { LoggerService } from "./Logger.js";
+import { MessageService } from "./Message.js";
+import { NodeModuleShimService } from "./NodeModuleShim.js";
+import { ProposedAPIService } from "./ProposedAPI.js";
+import { QuickInputService } from "./QuickInput.js";
+import { RequireInterceptorService } from "./RequireInterceptor.js";
+import { SecretStorageService } from "./SecretStorage.js";
+import { StatusBarService } from "./StatusBar.js";
+import { StorageService } from "./Storage.js";
+import { StoragePathService } from "./StoragePath.js";
+import { TaskService } from "./Task.js";
+import { TelemetryService } from "./Telemetry.js";
+import { TreeViewService } from "./TreeView.js";
+import { WebViewPanelService } from "./WebViewPanel.js";
+import { WindowService } from "./Window.js";
+import { WorkSpaceService } from "./WorkSpace.js";
 import { RunPatchProcess } from "./PatchProcess.js";
 
 // --- Pre-initialization Steps ---
@@ -97,9 +97,9 @@ const PreHandshakeEffect = Effect.gen(function* () {
 		IExtensionHostInitData,
 		Error
 	>();
-	const IPCService = yield* IPC;
+	const IPC = yield* IPCService;
 
-	IPCService.RegisterInvokeHandler(
+	IPC.RegisterInvokeHandler(
 		"initExtensionHost",
 		(Data: IExtensionHostInitData) =>
 			Effect.runPromise(
@@ -116,11 +116,11 @@ const PreHandshakeEffect = Effect.gen(function* () {
 			process.exit(0);
 		}),
 	);
-	IPCService.RegisterInvokeHandler("$shutdown", () =>
+	IPC.RegisterInvokeHandler("$shutdown", () =>
 		Effect.runPromise(ShutdownEffect),
 	);
 
-	yield* IPCService.SendNotification("$initialHandshake", []);
+	yield* IPC.SendNotification("$initialHandshake", []);
 	return yield* Deferred.await(InitializationBarrier);
 });
 
@@ -128,11 +128,11 @@ const PostHandshakeEffect = Effect.gen(function* () {
 	yield* Effect.logInfo("Proceeding with full initialization...");
 	yield* RunPatchProcess;
 
-	const Interceptor = yield* RequireInterceptor;
+	const Interceptor = yield* RequireInterceptorService;
 	yield* Interceptor.Install();
 	yield* Effect.logInfo("Node.js require() interceptor installed.");
 
-	const Host = yield* ExtensionHost;
+	const Host = yield* ExtensionHostService;
 	yield* Host.ActivateById(
 		"*" as any,
 		{ startup: true, activationEvent: "*" } as any,
@@ -163,8 +163,8 @@ const PostHandshakeEffect = Effect.gen(function* () {
 const MainEffect = Effect.gen(function* () {
 	// Level 0: Foundational Services (no dependencies on other app services)
 	const L0_World = Layer.mergeAll(
-		IPCConfiguration.Default,
-		Cancellation.Default,
+		IPCConfigurationService.Default,
+		CancellationService.Default,
 	);
 
 	// 1. Run pre-handshake with its minimal layer to get the init data.
@@ -174,89 +174,89 @@ const MainEffect = Effect.gen(function* () {
 	);
 
 	// 2. Create the runtime-dependent InitData layer.
-	const InitDataLayer = Layer.succeed(InitData, InitializationData);
+	const InitDataLayer = Layer.succeed(InitDataService, InitializationData);
 
 	// 3. Compose the final, complete application layer using the Progressive World Build pattern.
 	const L1_Services = Layer.mergeAll(
-		Logger.Default,
-		IPC.Default,
-		Configuration.Default,
-		LanguageFeature.Default,
+		LoggerService.Default,
+		IPCService.Default,
+		ConfigurationService.Default,
+		LanguageFeatureService.Default,
 	);
 	const L1_World = L1_Services.pipe(Layer.provide(L0_World));
 
-	const L2_Services = Layer.mergeAll(ExtensionPath.Default);
+	const L2_Services = Layer.mergeAll(ExtensionPathService.Default);
 	const L2_World = Layer.merge(L1_World, L2_Services).pipe(
 		Layer.provide(Layer.merge(L1_World, InitDataLayer)),
 	);
 
 	const L3_Services = Layer.mergeAll(
-		APIDeprecation.Default,
-		HostKindPicker.Default,
-		NodeModuleShim.Default,
+		APIDeprecationService.Default,
+		HostKindPickerService.Default,
+		NodeModuleShimService.Default,
 	);
 	const L3_World = Layer.merge(L2_World, L3_Services).pipe(
 		Layer.provide(L2_World),
 	);
 
 	const L4_Services = Layer.mergeAll(
-		Clipboard.Default,
-		Debug.Default,
-		Dialog.Default,
-		Document.Default,
-		Message.Default,
-		QuickInput.Default,
-		WebViewPanel.Default,
-		Window.Default,
-		Authentication.Default,
-		FileSystemInformation.Default,
-		ProposedAPI.Default,
-		SecretStorage.Default,
-		Storage.Default,
-		Task.Default,
-		Telemetry.Default,
+		ClipboardService.Default,
+		DebugService.Default,
+		DialogService.Default,
+		DocumentService.Default,
+		MessageService.Default,
+		QuickInputService.Default,
+		WebViewPanelService.Default,
+		WindowService.Default,
+		AuthenticationService.Default,
+		FileSystemInformationService.Default,
+		ProposedAPIService.Default,
+		SecretStorageService.Default,
+		StorageService.Default,
+		TaskService.Default,
+		TelemetryService.Default,
 	);
 	const L4_World = Layer.merge(L3_World, L4_Services).pipe(
 		Layer.provide(L3_World),
 	);
 
 	const L5_Services = Layer.mergeAll(
-		Environment.Default,
-		FileSystem.Default,
-		Command.Default,
+		EnvironmentService.Default,
+		FileSystemService.Default,
+		CommandService.Default,
 	);
 	const L5_World = Layer.merge(L4_World, L5_Services).pipe(
 		Layer.provide(L4_World),
 	);
 
 	const L6_Services = Layer.mergeAll(
-		StoragePath.Default,
-		Workspace.Default,
-		StatusBar.Default,
-		TreeView.Default,
+		StoragePathService.Default,
+		WorkSpaceService.Default,
+		StatusBarService.Default,
+		TreeViewService.Default,
 	);
 	const L6_World = Layer.merge(L5_World, L6_Services).pipe(
 		Layer.provide(L5_World),
 	);
 
-	const L7_Services = Layer.mergeAll(ExtensionHost.Default);
+	const L7_Services = Layer.mergeAll(ExtensionHostService.Default);
 	const L7_World = Layer.merge(L6_World, L7_Services).pipe(
 		Layer.provide(L6_World),
 	);
 
-	const L8_Services = Layer.mergeAll(Extension.Default);
+	const L8_Services = Layer.mergeAll(ExtensionService.Default);
 	const L8_World = Layer.merge(L7_World, L8_Services).pipe(
 		Layer.provide(L7_World),
 	);
 
-	const L9_Services = Layer.mergeAll(APIFactory.Default);
+	const L9_Services = Layer.mergeAll(APIFactoryService.Default);
 	const L9_World = Layer.merge(L8_World, L9_Services).pipe(
 		Layer.provide(L8_World),
 	);
 
 	const TopLevelServices = Layer.mergeAll(
-		RequireInterceptor.Default,
-		ESMInterceptor.Default,
+		RequireInterceptorService.Default,
+		ESMInterceptorService.Default,
 	);
 	const FinalApplicationLayer = Layer.merge(L9_World, TopLevelServices).pipe(
 		Layer.provide(L9_World),

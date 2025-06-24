@@ -8,8 +8,8 @@
 
 import { Effect, Exit } from "effect";
 import type { Uri } from "vscode";
-import { InitData } from "./InitData.js";
-import { Logger } from "./Logger.js";
+import { InitDataService } from "./InitData.js";
+import { LoggerService } from "./Logger.js";
 import { ModuleBlockedProblem } from "./NodeModuleShim/ModuleBlockedProblem.js";
 import { ModuleNotShimmedProblem } from "./NodeModuleShim/ModuleNotShimmedProblem.js";
 import { CreateCryptoShim } from "./NodeModuleShim/Crypto.js";
@@ -42,10 +42,10 @@ export class NodeModuleShimService extends Effect.Service<NodeModuleShimService>
 	"Service/NodeModuleShim",
 	{
 		effect: Effect.gen(function* () {
-			const LogService = yield* Logger;
-			const InitDataService = yield* InitData;
+			const Logger = yield* LoggerService;
+			const InitData = yield* InitDataService;
 
-			const OsShim = CreateOsShim(InitDataService);
+			const OsShim = CreateOsShim(InitData);
 			const CryptoShim = CreateCryptoShim();
 
 			const BlockedModules = new Set<string>([
@@ -82,7 +82,7 @@ export class NodeModuleShimService extends Effect.Service<NodeModuleShimService>
 			> => {
 				const RequesterPath = ParentUri?.fsPath || "unknown module";
 				Effect.runFork(
-					LogService.Trace(
+					Logger.Trace(
 						`Intercepted require('${Request}') from '${RequesterPath}'.`,
 					),
 				);

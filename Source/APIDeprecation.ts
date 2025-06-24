@@ -49,14 +49,14 @@ export class APIDeprecationService extends Effect.Service<APIDeprecationService>
 	"Service/APIDeprecation",
 	{
 		effect: Effect.gen(function* () {
-			const LogService = yield* LoggerService;
+			const Logger = yield* LoggerService;
 
 			const Report = (
 				ExtensionId: ExtensionIdentifier,
 				Usage: string,
 				Message: string,
 			): Effect.Effect<void, never> =>
-				LogService.Warn(
+				Logger.Warn(
 					`Extension '${ExtensionId.value}' used deprecated API: '${Usage}'. Message: ${Message}`,
 				);
 

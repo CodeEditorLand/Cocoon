@@ -25,8 +25,8 @@ import {
 	ExecutionToAPI,
 } from "./TypeConverter/Task.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { Cancellation } from "./Cancellation.js";
-import { IPC } from "./IPC.js";
+import { Cancellation, CancellationService } from "./Cancellation.js";
+import { IPCService } from "./IPC.js";
 
 /**
  * @interface ProviderEntry
@@ -43,14 +43,14 @@ export interface ProviderEntry<T extends VSCodeTask> {
  * @param Registry A `Ref` containing all registered task providers.
  * @param Handle The handle of the specific provider to invoke.
  * @param TokenId The ID of the cancellation token for this operation.
- * @param CancellationService The service to obtain the cancellation token from.
+ * @param Cancellation The service to obtain the cancellation token from.
  * @returns An `Effect` that resolves to an array of Task DTOs or fails.
  */
 const ProvideTasks = (
 	Registry: Ref.Ref<Map<number, ProviderEntry<VSCodeTask>>>,
 	Handle: number,
 	TokenId: number,
-	CancellationService: Cancellation,
+	Cancellation: Cancellation,
 ) => {
 	return Effect.gen(function* () {
 		const Entry = (yield* Ref.get(Registry)).get(Handle);
@@ -62,8 +62,7 @@ const ProvideTasks = (
 		const Provider = Entry.Provider as TaskProvider;
 		if (!Provider.provideTasks) return [];
 
-		const CancellationToken =
-			yield* CancellationService.ObtainToken(TokenId);
+		const CancellationToken = yield* Cancellation.ObtainToken(TokenId);
 		const Tasks = yield* Effect.tryPromise({
 			try: () =>
 				Provider.provideTasks(CancellationToken) as Promise<
@@ -112,14 +111,14 @@ export interface Task {
  */
 export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 	effect: Effect.gen(function* () {
-		const IPCService = yield* IPC;
-		const CancellationService = yield* Cancellation;
+		const IPC = yield* IPCService;
+		const Cancellation = yield* CancellationService;
 		let HandleCounter = 0;
 		const TaskProvidersRef = yield* Ref.make(
 			new Map<number, ProviderEntry<any>>(),
 		);
 
-		IPCService.RegisterInvokeHandler(
+		IPC.RegisterInvokeHandler(
 			"$provideTasks",
 			([Handle, TokenId]: [number, number]) =>
 				Effect.runPromise(
@@ -127,7 +126,7 @@ export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 						TaskProvidersRef,
 						Handle,
 						TokenId,
-						CancellationService,
+						Cancellation,
 					),
 				),
 		);
@@ -167,7 +166,7 @@ export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 						),
 					);
 					Effect.runFork(
-						IPCService.SendNotification("$registerTaskProvider", [
+						IPC.SendNotification("$registerTaskProvider", [
 							Handle,
 							Type,
 						]),
@@ -178,7 +177,7 @@ export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 							(Map) => (Map.delete(Handle), Map),
 						).pipe(
 							Effect.andThen(
-								IPCService.SendNotification(
+								IPC.SendNotification(
 									"$unregisterTaskProvider",
 									[Handle],
 								),
@@ -188,14 +187,14 @@ export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 					});
 				}),
 			FetchTasks: (Filter?: TaskFilter) =>
-				IPCService.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
+				IPC.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
 					Effect.map((TaskDTOs) =>
 						TaskDTOs.map((DTO) => TaskToAPI(DTO)),
 					),
 					Effect.mapError((Cause) => new Error(String(Cause))),
 				),
 			ExecuteTask: (TaskToExecute, Extension) =>
-				IPCService.SendRequest<any>("$executeTask", [
+				IPC.SendRequest<any>("$executeTask", [
 					TaskFromAPI(TaskToExecute, Extension),
 				]).pipe(
 					Effect.map((ExecutionDTO) =>

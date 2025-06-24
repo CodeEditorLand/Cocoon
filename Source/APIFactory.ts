@@ -18,21 +18,21 @@ import { APIDeprecationService } from "./APIDeprecation.js";
 import { CommandService } from "./Command.js";
 import { DebugService } from "./Debug.js";
 import { DocumentService } from "./Document.js";
-import { ExtensionService } from "./Extension.js";
+import { Extension, ExtensionService } from "./Extension.js";
 import { LanguageFeatureService } from "./LanguageFeature.js";
-import { Logger } from "./Logger.js";
+import { Logger, LoggerService } from "./Logger.js";
 import { ProposedAPIService } from "./ProposedAPI.js";
-import { StatusBarService } from "./StatusBar.js";
+import { StatusBar, StatusBarService } from "./StatusBar.js";
 import { TaskService } from "./Task.js";
-import { TreeViewService } from "./TreeView.js";
-import { WebViewPanelService } from "./WebViewPanel.js";
+import { TreeView, TreeViewService } from "./TreeView.js";
+import { WebViewPanel, WebViewPanelService } from "./WebViewPanel.js";
 import { WindowService } from "./Window.js";
-import { WorkspaceService } from "./Workspace.js";
+import { WorkSpaceService } from "./WorkSpace.js";
 
 // --- Internal Namespace Factory helpers ---
 const CreateSafeEvent = <T>(
 	ExtensionId: ExtensionIdentifier,
-	LogService: Logger,
+	Logger: Logger,
 	ActualEvent: VSCode.Event<T>,
 ): VSCode.Event<T> => {
 	return (Listener, ThisArgument, Disposables) => {
@@ -40,7 +40,7 @@ const CreateSafeEvent = <T>(
 			try {
 				Listener.call(ThisArgument, Event);
 			} catch (error) {
-				LogService.Error(
+				Logger.Error(
 					`[${ExtensionId.value}] FAILED to handle event:`,
 					error,
 				);
@@ -53,46 +53,46 @@ const CreateSafeEvent = <T>(
 };
 
 const CreateCommandNamespace = (
-	CommandServiceInstance: CommandService,
+	Command: Command,
 	ExtensionDescription: IExtensionDescription,
 ): typeof VSCode.commands => {
 	return {
 		registerCommand: (Id, Handler, ThisArgument) =>
-			CommandServiceInstance.registerCommand(
+			Command.registerCommand(
 				Id,
 				Handler,
 				ThisArgument,
 				ExtensionDescription,
 			),
 		registerTextEditorCommand: (Id, Handler, ThisArgument) =>
-			CommandServiceInstance.registerTextEditorCommand(
+			Command.registerTextEditorCommand(
 				Id,
 				Handler,
 				ThisArgument,
 				ExtensionDescription,
 			),
 		registerDiffInformationCommand: (Id, Handler, ThisArgument) =>
-			CommandServiceInstance.registerCommand(
+			Command.registerCommand(
 				Id,
 				Handler,
 				ThisArgument,
 				ExtensionDescription,
 			),
 		executeCommand: <T>(Id: string, ...Argument: any[]) =>
-			CommandServiceInstance.executeCommand<T>(Id, ...Argument),
+			Command.executeCommand<T>(Id, ...Argument),
 		getCommands: (FilterInternal?: boolean) =>
-			CommandServiceInstance.getCommands(FilterInternal),
+			Command.getCommands(FilterInternal),
 	};
 };
 
 const CreateWindowNamespace = (
-	WindowServiceInstance: WindowService,
-	StatusBarServiceInstance: StatusBarService,
-	WebViewPanelServiceInstance: WebViewPanelService,
-	TreeViewServiceInstance: TreeViewService,
+	Window: Window,
+	StatusBar: StatusBar,
+	WebViewPanel: WebViewPanel,
+	TreeView: TreeView,
 	AsEvent: <T>(Event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
-	WorkspaceServiceInstance: WorkspaceService,
+	WorkSpace: WorkSpace,
 ): typeof VSCode.window => {
 	// This function must return an object matching vscode.window
 	const RunEffectAndReturnPromise = <T, E>(TheEffect: Effect.Effect<T, E>) =>
@@ -100,30 +100,26 @@ const CreateWindowNamespace = (
 
 	const WindowNamespace: Partial<typeof VSCode.window> = {
 		get state() {
-			return WindowServiceInstance.state;
+			return Window.state;
 		},
 		get onDidChangeWindowState() {
-			return AsEvent(WindowServiceInstance.onDidChangeWindowState);
+			return AsEvent(Window.onDidChangeWindowState);
 		},
 		get activeTextEditor() {
-			return WorkspaceServiceInstance.activeTextEditor;
+			return WorkSpace.activeTextEditor;
 		},
 		get visibleTextEditors() {
-			return WorkspaceServiceInstance.visibleTextEditors;
+			return WorkSpace.visibleTextEditors;
 		},
 		get onDidChangeActiveTextEditor() {
-			return AsEvent(
-				WorkspaceServiceInstance.onDidChangeActiveTextEditor,
-			);
+			return AsEvent(WorkSpace.onDidChangeActiveTextEditor);
 		},
 		get onDidChangeVisibleTextEditors() {
-			return AsEvent(
-				WorkspaceServiceInstance.onDidChangeVisibleTextEditors,
-			);
+			return AsEvent(WorkSpace.onDidChangeVisibleTextEditors);
 		},
 		showTextDocument: (documentOrUri, columnOrOptions, preserveFocus) =>
 			RunEffectAndReturnPromise(
-				WindowServiceInstance.ShowTextDocument(
+				Window.ShowTextDocument(
 					documentOrUri as any,
 					columnOrOptions,
 					preserveFocus,
@@ -139,7 +135,7 @@ const CreateWindowNamespace = (
 				[alignment, priority] = args;
 			}
 			return Effect.runSync(
-				StatusBarServiceInstance.CreateStatusBarItem(
+				StatusBar.CreateStatusBarItem(
 					Extension,
 					id,
 					alignment,
@@ -148,16 +144,10 @@ const CreateWindowNamespace = (
 			);
 		}) as any,
 		createTreeView: (ViewId, Options) =>
-			Effect.runSync(
-				TreeViewServiceInstance.CreateTreeView(
-					ViewId,
-					Options,
-					Extension,
-				),
-			),
+			Effect.runSync(TreeView.CreateTreeView(ViewId, Options, Extension)),
 		createWebviewPanel: (ViewType, Title, ShowOptions, Options) =>
 			Effect.runSync(
-				WebViewPanelServiceInstance.CreateWebviewPanel(
+				WebViewPanel.CreateWebviewPanel(
 					Extension,
 					ViewType,
 					Title,
@@ -167,7 +157,7 @@ const CreateWindowNamespace = (
 			),
 		registerWebviewPanelSerializer: (ViewType, Serializer) =>
 			Effect.runSync(
-				WebViewPanelServiceInstance.RegisterWebviewPanelSerializer(
+				WebViewPanel.RegisterWebviewPanelSerializer(
 					Extension,
 					ViewType,
 					Serializer,
@@ -207,35 +197,30 @@ export class APIFactoryService extends Effect.Service<APIFactory>()(
 	"Service/APIFactory",
 	{
 		effect: Effect.gen(function* () {
-			const LogService = yield* Logger;
-			const ProposedAPIServiceInstance = yield* ProposedAPI;
-			const APIDeprecationServiceInstance = yield* APIDeprecation;
-			const CommandServiceInstance = yield* CommandService;
-			const WorkspaceServiceInstance = yield* WorkspaceService;
-			const DocumentServiceInstance = yield* DocumentService;
-			const WindowServiceInstance = yield* WindowService;
-			const LanguageFeatureServiceInstance =
-				yield* LanguageFeatureService;
-			const DebugServiceInstance = yield* DebugService;
-			const TaskServiceInstance = yield* TaskService;
-			const ExtensionServiceInstance = yield* ExtensionService;
-			const WebViewPanelServiceInstance = yield* WebViewPanelService;
-			const TreeViewServiceInstance = yield* TreeViewService;
-			const StatusBarServiceInstance = yield* StatusBarService;
+			const Logger = yield* LoggerService;
+			const ProposedAPI = yield* ProposedAPIService;
+			const APIDeprecation = yield* APIDeprecationService;
+			const Command = yield* CommandService;
+			const WorkSpace = yield* WorkSpaceService;
+			const Document = yield* DocumentService;
+			const Window = yield* WindowService;
+			const LanguageFeature = yield* LanguageFeatureService;
+			const Debug = yield* DebugService;
+			const Task = yield* TaskService;
+			const Extension = yield* ExtensionService;
+			const WebViewPanel = yield* WebViewPanelService;
+			const TreeView = yield* TreeViewService;
+			const StatusBar = yield* StatusBarService;
 
 			const CreateExtensionsAPI = (
-				ExtensionServiceInstance: ExtensionService,
+				Extension: Extension,
 			): typeof VSCode.extensions => ({
 				getExtension: <T>(extensionId: string) =>
 					Option.getOrUndefined(
-						Effect.runSync(
-							ExtensionServiceInstance.GetExtension<T>(
-								extensionId,
-							),
-						),
+						Effect.runSync(Extension.GetExtension<T>(extensionId)),
 					),
 				get all() {
-					return Effect.runSync(ExtensionServiceInstance.GetAll());
+					return Effect.runSync(Extension.GetAll());
 				},
 				get allAcrossExtensionHosts() {
 					return [];
@@ -249,37 +234,37 @@ export class APIFactoryService extends Effect.Service<APIFactory>()(
 				const SafeEvent = <T>(SourceEvent: VSCode.Event<T>) =>
 					CreateSafeEvent(
 						ExtensionDescription.identifier,
-						LogService,
+						Logger,
 						SourceEvent,
 					);
 
 				const API: Partial<typeof VSCode> = {
 					version: "1.85.0",
 					commands: CreateCommandNamespace(
-						CommandServiceInstance,
+						Command,
 						ExtensionDescription,
 					),
 					window: CreateWindowNamespace(
-						WindowServiceInstance,
-						StatusBarServiceInstance,
-						WebViewPanelServiceInstance,
-						TreeViewServiceInstance,
+						Window,
+						StatusBar,
+						WebViewPanel,
+						TreeView,
 						SafeEvent,
 						ExtensionDescription,
-						WorkspaceServiceInstance,
+						WorkSpace,
 					),
-					workspace: WorkspaceServiceInstance,
-					languages: LanguageFeatureServiceInstance,
-					debug: DebugServiceInstance,
-					tasks: TaskServiceInstance,
-					extensions: CreateExtensionsAPI(ExtensionServiceInstance),
+					workspace: WorkSpace,
+					languages: LanguageFeature,
+					debug: Debug,
+					tasks: Task,
+					extensions: CreateExtensionsAPI(Extension),
 					Position,
 					Range,
 					Selection,
 				};
 
 				if (
-					ProposedAPIServiceInstance.IsEnabled(
+					ProposedAPI.IsEnabled(
 						ExtensionDescription.identifier,
 						"someProposedApi",
 					)

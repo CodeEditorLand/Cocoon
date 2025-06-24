@@ -24,23 +24,23 @@ export interface EventStream<T> {
  */
 export const CreateEventStream = <T>(): EventStream<T> => {
 	const VSCodeEmitter = new Emitter<T>();
-	const PubSubInstance = Effect.runSync(PubSub.unbounded<T>());
+	const PubSub = Effect.runSync(PubSub.unbounded<T>());
 
 	const Fire = (Data: T): Effect.Effect<void, never> =>
-		PubSub.publish(PubSubInstance, Data).pipe(
+		PubSub.publish(PubSub, Data).pipe(
 			Effect.andThen(Effect.sync(() => VSCodeEmitter.fire(Data))),
 			Effect.asVoid,
 		);
 
 	const Shutdown = () =>
 		Effect.all([
-			PubSub.shutdown(PubSubInstance),
+			PubSub.shutdown(PubSub),
 			Effect.sync(() => VSCodeEmitter.dispose()),
 		]).pipe(Effect.asVoid);
 
 	return {
 		Fire,
-		PubSub: PubSubInstance,
+		PubSub: PubSub,
 		event: VSCodeEmitter.event,
 		Shutdown,
 	};

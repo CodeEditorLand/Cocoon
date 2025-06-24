@@ -6,7 +6,7 @@
 
 import { Effect, HashMap } from "effect";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
-import { Logger } from "./Logger.js";
+import { LoggerService } from "./Logger.js";
 
 type EnabledAPIProposals = Record<string, string[]>;
 
@@ -62,7 +62,7 @@ export class ProposedAPIService extends Effect.Service<ProposedAPIService>()(
 	"Service/ProposedAPI",
 	{
 		effect: Effect.gen(function* () {
-			const LogService = yield* Logger;
+			const Logger = yield* LoggerService;
 			// NOTE: This implementation remains stubbed as per the original `Definition.ts`.
 			// A full implementation would read from `InitData.product.enabledAPIProposals` and `InitData.environment.extensionEnabledAPIProposals`.
 			const ProductConfiguration = ParseConfiguration(undefined);
@@ -86,7 +86,7 @@ export class ProposedAPIService extends Effect.Service<ProposedAPIService>()(
 				AllExtensionAPIs.entries(),
 			);
 
-			yield* LogService.Info(
+			yield* Logger.InfoService(
 				"Proposed API provider initialized. No proposals found in InitData. All proposals will be disabled.",
 			);
 

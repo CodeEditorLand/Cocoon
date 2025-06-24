@@ -19,10 +19,10 @@ import {
 	type IActivationEventsReader,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { ExtensionContext, LanguageModelAccessInformation } from "vscode";
-import { InitData } from "./InitData.js";
-import { IPC } from "./IPC.js";
-import { Logger } from "./Logger.js";
-import { Telemetry } from "./Telemetry.js";
+import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
+import { LoggerService } from "./Logger.js";
+import { TelemetryService } from "./Telemetry.js";
 
 /**
  * @interface ExtensionActivationReason
@@ -83,10 +83,10 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 	"Service/ExtensionHost",
 	{
 		effect: Effect.gen(function* () {
-			const LogService = yield* Logger;
-			const IPCService = yield* IPC;
-			const InitDataService = yield* InitData;
-			const TelemetryService = yield* Telemetry;
+			const Logger = yield* LoggerService;
+			const IPC = yield* IPCService;
+			const InitData = yield* InitDataService;
+			const Telemetry = yield* TelemetryService;
 
 			const ActivatedExtensionsRef = yield* Ref.make(
 				new Map<string, ActivatedExtension>(),
@@ -97,19 +97,19 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 			};
 			const ExtensionRegistry = new ExtensionDescriptionRegistry(
 				ActivationEventsReader,
-				InitDataService.extensions.allExtensions,
+				InitData.extensions.allExtensions,
 			);
 
 			const Deactivate = (Extension: ActivatedExtension) =>
 				Effect.gen(function* () {
-					yield* LogService.Info(
+					yield* Logger.Info(
 						`Deactivating extension '${Extension.Id.value}'...`,
 					);
 					for (const Subscription of Extension.Subscriptions) {
 						yield* Effect.tryPromise({
 							try: () => Promise.resolve(Subscription.dispose()),
 							catch: (CaughtError) =>
-								LogService.Warn(
+								Logger.Warn(
 									`Error during subscription disposal for ${Extension.Id.value}`,
 									CaughtError,
 								),
@@ -125,13 +125,13 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 								),
 						}).pipe(
 							Effect.catchAll((error) =>
-								LogService.Error(error.message),
+								Logger.Error(error.message),
 							),
 						);
 					}
 				}).pipe(
 					Effect.catchAllCause((cause) =>
-						LogService.Warn("Deactivation error occurred", cause),
+						Logger.Warn("Deactivation error occurred", cause),
 					),
 				);
 
@@ -140,7 +140,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 				Reason: ExtensionActivationReason,
 			) =>
 				Effect.gen(function* () {
-					yield* LogService.Info(
+					yield* Logger.Info(
 						`Activating extension '${Description.identifier.value}' (Reason: ${Reason.activationEvent}).`,
 					);
 					const Module = yield* Effect.tryPromise({
@@ -210,13 +210,14 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 					yield* Ref.update(ActivatedExtensionsRef, (Map) =>
 						Map.set(Description.identifier.value, Activated),
 					);
-					yield* LogService.Info(
+					yield* Logger.Info(
 						`Successfully activated extension '${Description.identifier.value}'.`,
 					);
-					yield* IPCService.SendNotification(
-						"$onDidActivateExtension",
-						[Description.identifier, [], []],
-					);
+					yield* IPC.SendNotification("$onDidActivateExtension", [
+						Description.identifier,
+						[],
+						[],
+					]);
 				});
 
 			const OnDidActivateExtension = (
@@ -225,8 +226,8 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 				Effect.sync(() => {
 					// This would typically involve an event emitter. For simplicity, we'll log it.
 					// This is a hook for other services to react to an extension activating.
-					const OriginalHandler = IPCService.RegisterInvokeHandler;
-					IPCService.RegisterInvokeHandler = (channel, handler) => {
+					const OriginalHandler = IPC.RegisterInvokeHandler;
+					IPC.RegisterInvokeHandler = (channel, handler) => {
 						if (channel === "$onDidActivateExtension") {
 							const newHandler = (args: any[]) => {
 								const extensionId =
@@ -256,11 +257,11 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 						const MaybeDescription =
 							ExtensionRegistry.getExtensionDescription(Id);
 						if (!MaybeDescription)
-							return yield* LogService.Warn(
+							return yield* Logger.Warn(
 								`Cannot activate unknown extension '${Id.value}'.`,
 							);
 						if (!MaybeDescription.main)
-							return yield* LogService.Warn(
+							return yield* Logger.Warn(
 								`Cannot activate extension '${Id.value}' because it has no 'main' entry point.`,
 							);
 						yield* DoActivate(MaybeDescription, Reason);
@@ -283,7 +284,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 									ActivatedExtensionsRef,
 									(Map) => Map.set(Id.value, Activated),
 								);
-								yield* IPCService.SendNotification(
+								yield* IPC.SendNotification(
 									"$onExtensionActivationError",
 									[
 										Id,
@@ -295,14 +296,14 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 									],
 								).pipe(
 									Effect.catchAllCause((cause) =>
-										LogService.Warn(
+										Logger.Warn(
 											"Failed to send activation error notification",
 											cause,
 										),
 									),
 								);
 								yield* Effect.sync(() =>
-									TelemetryService.onExtensionError(
+									Telemetry.onExtensionError(
 										Id,
 										ErrorToReport,
 									),

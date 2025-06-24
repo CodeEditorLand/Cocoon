@@ -9,9 +9,9 @@ import { Effect } from "effect";
 import * as Path from "node:path";
 import { type IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Uri } from "vscode";
-import { FileSystem } from "./FileSystem.js";
-import { InitData } from "./InitData.js";
-import { Logger } from "./Logger.js";
+import { FileSystem, FileSystemService } from "./FileSystem.js";
+import { InitDataService } from "./InitData.js";
+import { Logger, LoggerService } from "./Logger.js";
 
 /**
  * @description An internal helper `Effect` to idempotently create a directory.
@@ -28,17 +28,19 @@ const EnsureDirectory = (
 		onTrue: () =>
 			Effect.gen(function* () {
 				const Uri = DirectoryUri!;
-				const Fs = yield* FileSystem;
-				const LogService = yield* Logger;
-				yield* Effect.tryPromise(() => Fs.createDirectory(Uri)).pipe(
+				const FileSystem = yield* FileSystemService;
+				const Logger = yield* Logger;
+				yield* Effect.tryPromise(() =>
+					FileSystem.createDirectory(Uri),
+				).pipe(
 					Effect.catchAll((Error) =>
-						LogService.Error(
+						Logger.Error(
 							`Failed to ensure ${ScopeName} storage directory exists at ${Uri.toString()}`,
 							Error,
 						),
 					),
 				);
-				yield* LogService.Trace(
+				yield* Logger.Trace(
 					`${ScopeName} storage directory ensured at: ${Uri.fsPath}`,
 				);
 				return true;
@@ -70,12 +72,12 @@ export class StoragePathService extends Effect.Service<StoragePathService>()(
 	"Service/StoragePath",
 	{
 		effect: Effect.gen(function* () {
-			const InitDataService = yield* InitData;
-			const LogService = yield* Logger;
+			const InitData = yield* InitDataService;
+			const Logger = yield* LoggerService;
 
-			const GlobalStorageUri = InitDataService.environment
+			const GlobalStorageUri = InitData.environment
 				.globalStorageHome as Uri;
-			const WorkSpaceStorageUri = InitDataService.environment
+			const WorkSpaceStorageUri = InitData.environment
 				.workspaceStorageHome as Uri;
 
 			yield* EnsureDirectory(GlobalStorageUri, "Global");
@@ -110,7 +112,7 @@ export class StoragePathService extends Effect.Service<StoragePathService>()(
 							Extension.identifier.value.toLowerCase(),
 						);
 						Effect.runSync(
-							LogService.Error(
+							Logger.Error(
 								`FATAL: Could not resolve global storage path for ${Extension.identifier.value}. Falling back to ${EmergencyPath}`,
 							),
 						);

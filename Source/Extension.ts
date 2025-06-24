@@ -14,28 +14,28 @@ import {
 import type { Event, Extension as VSCodeExtension } from "vscode";
 import { ExtensionKind } from "vscode";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ExtensionHost } from "./ExtensionHost.js";
-import { InitData } from "./InitData.js";
+import { ExtensionHost, ExtensionHostService } from "./ExtensionHost.js";
+import { InitDataService } from "./InitData.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
 
 /**
  * @description An internal helper function to create the public-facing
  * `vscode.Extension` API object for a given extension description.
  * @param Description The internal description of the extension.
- * @param ExtensionHostService The central service for extension lifecycle management.
+ * @param ExtensionHost The central service for extension lifecycle management.
  * @returns A frozen, public `vscode.Extension` object.
  */
 const CreateAPIObject = <T>(
 	Description: IExtensionDescription,
-	ExtensionHostService: ExtensionHost,
+	ExtensionHost: ExtensionHost,
 ): VSCodeExtension<T> => {
 	const Activate = Effect.gen(function* () {
-		yield* ExtensionHostService.ActivateById(Description.identifier, {
+		yield* ExtensionHost.ActivateById(Description.identifier, {
 			startup: false,
 			extensionId: Description.identifier,
 			activationEvent: "api",
 		});
-		const Exports = yield* ExtensionHostService.GetExtensionExports(
+		const Exports = yield* ExtensionHost.GetExtensionExports(
 			Description.identifier,
 		);
 		return Exports as T;
@@ -47,7 +47,7 @@ const CreateAPIObject = <T>(
 			: Description.extensionKind
 				? [Description.extensionKind]
 				: ["workspace"];
-		if (Kinds.includes("workspace")) return ExtensionKind.WorkSpace;
+		if (Kinds.includes("workspace")) return ExtensionKind.Workspace;
 		return ExtensionKind.UI;
 	};
 
@@ -57,7 +57,7 @@ const CreateAPIObject = <T>(
 		extensionPath: Description.extensionLocation.fsPath,
 		get isActive(): boolean {
 			return Effect.runSync(
-				ExtensionHostService.IsActivated(Description.identifier),
+				ExtensionHost.IsActivated(Description.identifier),
 			);
 		},
 		get packageJSON() {
@@ -67,9 +67,7 @@ const CreateAPIObject = <T>(
 		get exports() {
 			return Effect.runSync(
 				Effect.catchAll(
-					ExtensionHostService.GetExtensionExports(
-						Description.identifier,
-					),
+					ExtensionHost.GetExtensionExports(Description.identifier),
 					() => Effect.succeed(undefined),
 				),
 			);
@@ -107,8 +105,8 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 	"Service/Extension",
 	{
 		effect: Effect.gen(function* () {
-			const ExtensionHostService = yield* ExtensionHost;
-			const InitDataService = yield* InitData;
+			const ExtensionHost = yield* ExtensionHostService;
+			const InitData = yield* InitDataService;
 
 			const { event: OnDidChangeEvent } = CreateEventStream<void>();
 			const AllExtensionsCache = yield* Ref.make<
@@ -122,7 +120,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 
 			const ExtensionRegistry = new ExtensionDescriptionRegistry(
 				ActivationEventsReader,
-				InitDataService.extensions.allExtensions,
+				InitData.extensions.allExtensions,
 			);
 
 			const GetExtension = <T>(ExtensionId: string) =>
@@ -132,10 +130,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					Effect.map(Option.fromNullable),
 					Effect.map(
 						Option.map((Description) =>
-							CreateAPIObject<T>(
-								Description,
-								ExtensionHostService,
-							),
+							CreateAPIObject<T>(Description, ExtensionHost),
 						),
 					),
 				);
@@ -153,7 +148,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 										(Description) =>
 											CreateAPIObject<any>(
 												Description,
-												ExtensionHostService,
+												ExtensionHost,
 											),
 									);
 									yield* Ref.set(
