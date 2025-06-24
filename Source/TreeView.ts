@@ -10,7 +10,6 @@ import type { Event } from "vs/base/common/event.js";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import {
-	Disposable,
 	type TreeCheckboxChangeEvent,
 	type TreeDataProvider,
 	type TreeItem,
@@ -18,13 +17,11 @@ import {
 	type TreeViewActiveItemChangeEvent,
 	type TreeViewExpansionEvent,
 	type TreeViewOptions,
-	type TreeViewSelectionChangeEvent,
 	type TreeViewVisibilityChangeEvent,
 } from "vscode";
 import { FromAPI as TreeViewOptionToDTO } from "./TypeConverter/TreeView/Option.js";
 import { FromAPI as TreeViewItemToDTO } from "./TypeConverter/TreeView/Item.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { Command, CommandService } from "./Command.js";
 import { IPC, IPCService } from "./IPC.js";
 
 /**
@@ -64,7 +61,6 @@ class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 		private readonly ViewId: string,
 		private readonly DataProvider: TreeDataProvider<T>,
 		private readonly IPC: IPC,
-		private readonly Command: Command,
 		private readonly Extension: IExtensionDescription,
 	) {
 		this.onDidExpandElement = this.OnDidExpandElementEmitter.event;
@@ -199,7 +195,6 @@ export class TreeViewService extends Effect.Service<TreeViewService>()(
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
-			const Command = yield* CommandService;
 			const ActiveViewsRef = yield* Ref.make(
 				new Map<string, TreeViewImplementation<any>>(),
 			);
@@ -266,7 +261,6 @@ export class TreeViewService extends Effect.Service<TreeViewService>()(
 							ViewId,
 							Options.treeDataProvider,
 							IPC,
-							Command,
 							Extension,
 						);
 						yield* Ref.update(ActiveViewsRef, (Map) =>
