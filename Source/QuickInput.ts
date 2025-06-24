@@ -42,7 +42,7 @@ export interface QuickInput {
  * @class QuickInput
  * @description The `Effect.Service` for the QuickInput service.
  */
-export class QuickInput extends Effect.Service<QuickInput>()(
+export class QuickInputService extends Effect.Service<QuickInputService>()(
 	"Service/QuickInput",
 	{
 		effect: Effect.gen(function* () {

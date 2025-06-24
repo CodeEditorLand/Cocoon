@@ -10,7 +10,7 @@ import type { IExtensionDescription } from "vs/platform/extensions/common/extens
 import {
 	Disposable,
 	type Event,
-	type Task as VscTask,
+	type Task as VSCodeTask,
 	type TaskEndEvent,
 	type TaskExecution,
 	type TaskFilter,
@@ -32,7 +32,7 @@ import { IPC } from "./IPC.js";
  * @interface ProviderEntry
  * @description An internal type associating a task provider with its metadata.
  */
-export interface ProviderEntry<T extends VscTask> {
+export interface ProviderEntry<T extends VSCodeTask> {
 	readonly Type: string;
 	readonly Provider: TaskProvider<T>;
 	readonly Extension: IExtensionDescription;
@@ -47,7 +47,7 @@ export interface ProviderEntry<T extends VscTask> {
  * @returns An `Effect` that resolves to an array of Task DTOs or fails.
  */
 const ProvideTasks = (
-	Registry: Ref.Ref<Map<number, ProviderEntry<VscTask>>>,
+	Registry: Ref.Ref<Map<number, ProviderEntry<VSCodeTask>>>,
 	Handle: number,
 	TokenId: number,
 	CancellationService: Cancellation,
@@ -67,13 +67,13 @@ const ProvideTasks = (
 		const Tasks = yield* Effect.tryPromise({
 			try: () =>
 				Provider.provideTasks(CancellationToken) as Promise<
-					VscTask[] | null | undefined
+					VSCodeTask[] | null | undefined
 				>,
 			catch: (CaughtError) => CaughtError as Error,
 		});
 
 		if (!Tasks) return [];
-		return Tasks.map((TheTask: VscTask) =>
+		return Tasks.map((TheTask: VSCodeTask) =>
 			TaskFromAPI(TheTask, Entry.Extension),
 		);
 	}).pipe(
@@ -92,16 +92,16 @@ export interface Task {
 	readonly onDidStartTaskProcess: Event<TaskProcessStartEvent>;
 	readonly onDidEndTaskProcess: Event<TaskProcessEndEvent>;
 	readonly taskExecutions: readonly TaskExecution[];
-	readonly RegisterTaskProvider: <T extends VscTask>(
+	readonly RegisterTaskProvider: <T extends VSCodeTask>(
 		type: string,
 		provider: TaskProvider<T>,
 		extension: IExtensionDescription,
 	) => Effect.Effect<Disposable, Error>;
 	readonly FetchTasks: (
 		filter?: TaskFilter,
-	) => Effect.Effect<VscTask[], Error>;
+	) => Effect.Effect<VSCodeTask[], Error>;
 	readonly ExecuteTask: (
-		task: VscTask,
+		task: VSCodeTask,
 		extension: IExtensionDescription,
 	) => Effect.Effect<TaskExecution, Error>;
 }
@@ -110,7 +110,7 @@ export interface Task {
  * @class Task
  * @description The `Effect.Service` for the Task service.
  */
-export class Task extends Effect.Service<Task>()("Service/Task", {
+export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 	effect: Effect.gen(function* () {
 		const IPCService = yield* IPC;
 		const CancellationService = yield* Cancellation;
@@ -149,7 +149,7 @@ export class Task extends Effect.Service<Task>()("Service/Task", {
 				return [];
 			},
 
-			RegisterTaskProvider: <T extends VscTask>(
+			RegisterTaskProvider: <T extends VSCodeTask>(
 				Type: string,
 				Provider: TaskProvider<T>,
 				Extension: IExtensionDescription,

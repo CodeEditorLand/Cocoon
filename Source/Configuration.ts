@@ -12,7 +12,7 @@ import type {
 	IConfigurationValue,
 } from "vs/platform/configuration/common/configuration.js";
 import { Emitter } from "vs/base/common/event.js";
-import type { Uri } from "./Platform/Vscode/Type.js";
+import type { Uri } from "./Platform/VSCode/Type.js";
 import { ApplicationConfigurationProblem } from "./Configuration/ApplicationConfigurationProblem.js";
 
 // --- NOTE: Integration-level imports are placeholders as the source was not provided. ---
@@ -100,7 +100,7 @@ const GetValueFromObject = (
  * complete configuration on initialization and provides methods to access the merged
  * settings.
  */
-export class Configuration extends Effect.Service<IConfigurationService>()(
+export class ConfigurationService extends Effect.Service<ConfigurationService>()(
 	"vscode/ConfigurationService",
 	{
 		effect: Effect.gen(function* () {

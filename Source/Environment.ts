@@ -57,7 +57,7 @@ export interface Environment {
  * @class Environment
  * @description The `Effect.Service` for the `vscode.env` API service.
  */
-export class Environment extends Effect.Service<Environment>()(
+export class EnvironmentService extends Effect.Service<EnvironmentService>()(
 	"Service/Environment",
 	{
 		effect: Effect.gen(function* () {

@@ -7,7 +7,7 @@
 
 import { Effect, Runtime } from "effect";
 import type { IClipboardService } from "vs/platform/clipboard/common/clipboardService.js";
-import type { Uri } from "./Platform/Vscode/Type.js";
+import type { Uri } from "./Platform/VSCode/Type.js";
 import { ApplicationClipboardProblem } from "./Clipboard/ApplicationClipboardProblem.js";
 
 // --- NOTE: Integration-level imports are placeholders as the source was not provided. ---
@@ -46,7 +46,7 @@ const RunIntegrationEffect = <SuccessType>(
  * an implementation of VS Code's `IClipboardService`, where each method
  * returns a `Promise` by running an underlying `Effect`.
  */
-export class Clipboard extends Effect.Service<IClipboardService>()(
+export class ClipboardService extends Effect.Service<ClipboardService>()(
 	"vscode/ClipboardService",
 	{
 		sync: () => ({

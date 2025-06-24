@@ -13,5 +13,5 @@ import { Data } from "effect";
  */
 export class IPCProblem extends Data.TaggedError("IPCProblem")<{
 	readonly Cause: unknown;
-	readonly context: string;
+	readonly Context: string;
 }> {}

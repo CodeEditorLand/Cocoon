@@ -13,14 +13,14 @@ import { Data } from "effect";
  */
 export class DialogProblem extends Data.TaggedError("DialogProblem")<{
 	readonly Cause: unknown;
-	readonly context: string;
+	readonly Context: string;
 }> {
 	public override readonly message: string;
 	constructor(Properties: {
 		readonly Cause: unknown;
-		readonly context: string;
+		readonly Context: string;
 	}) {
 		super(Properties);
-		this.message = `Dialog operation failed: ${this.context}`;
+		this.message = `Dialog operation failed: ${this.Context}`;
 	}
 }

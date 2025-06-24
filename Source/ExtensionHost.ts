@@ -79,7 +79,7 @@ export interface ExtensionHost {
  * @class ExtensionHost
  * @description The `Effect.Service` for the ExtensionHost.
  */
-export class ExtensionHost extends Effect.Service<ExtensionHost>()(
+export class ExtensionHostService extends Effect.Service<ExtensionHostService>()(
 	"Service/ExtensionHost",
 	{
 		effect: Effect.gen(function* () {

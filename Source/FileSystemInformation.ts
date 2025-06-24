@@ -32,7 +32,7 @@ export interface FileSystemInformation {
  * @class FileSystemInformation
  * @description The `Effect.Service` for providing filesystem metadata.
  */
-export class FileSystemInformation extends Effect.Service<FileSystemInformation>()(
+export class FileSystemInformationService extends Effect.Service<FileSystemInformationService>()(
 	"Service/FileSystemInformation",
 	{
 		effect: Effect.gen(function* () {

@@ -63,10 +63,10 @@ import { Workspace } from "./Workspace.js";
 import { RunPatchProcess } from "./PatchProcess.js";
 
 // --- Pre-initialization Steps ---
-const VscodeOutputDirectory =
+const VSCodeOutputDirectory =
 	process.env["VSCODE_OUT_DIR"] ??
 	Path.resolve(__dirname, "../../../Dependency/VSCode/out");
-(module as any).paths.unshift(VscodeOutputDirectory);
+(module as any).paths.unshift(VSCodeOutputDirectory);
 
 // --- Placeholder Types ---
 interface IExtensionHostInitData {

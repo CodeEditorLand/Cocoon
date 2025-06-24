@@ -47,8 +47,8 @@ const CreateDialogEffect = <Option, DTO, Result>(
 			Effect.mapError(
 				(cause) =>
 					new DialogProblem({
-						cause,
-						context: `IPC call to ${IPCMethod} failed`,
+						Cause: cause,
+						Context: `IPC call to ${IPCMethod} failed`,
 					}),
 			),
 		);
@@ -72,32 +72,39 @@ export interface Dialog {
 }
 
 /**
- * @class Dialog
+ * @class DialogService
  * @description The `Effect.Service` for handling native dialogs.
  */
-export class Dialog extends Effect.Service<Dialog>()("Service/Dialog", {
-	effect: Effect.gen(function* () {
-		const IPCService = yield* IPC;
+export class DialogService extends Effect.Service<DialogService>()(
+	"Service/Dialog",
+	{
+		effect: Effect.gen(function* () {
+			const IPCService = yield* IPC;
 
-		return {
-			ShowOpenDialog: (Options, Token) =>
-				CreateDialogEffect<OpenDialogOptions, any, Uri[] | undefined>(
-					IPCService,
-					"$showOpenDialog",
-					Options,
-					Token,
-					(Opts?: OpenDialogOptions) => OpenDialogOptionToDTO(Opts),
-					(Result: any): Uri[] | undefined => DTOToURIArray(Result),
-				),
-			ShowSaveDialog: (Options, Token) =>
-				CreateDialogEffect<SaveDialogOptions, any, Uri | undefined>(
-					IPCService,
-					"$showSaveDialog",
-					Options,
-					Token,
-					SaveDialogOptionToDTO,
-					(Result: any): Uri | undefined => DTOToURI(Result),
-				),
-		};
-	}),
-}) {}
+			return {
+				ShowOpenDialog: (Options, Token) =>
+					CreateDialogEffect<
+						OpenDialogOptions,
+						any,
+						Uri[] | undefined
+					>(
+						IPCService,
+						"$showOpenDialog",
+						Options,
+						Token,
+						OpenDialogOptionToDTO,
+						DTOToURIArray,
+					),
+				ShowSaveDialog: (Options, Token) =>
+					CreateDialogEffect<SaveDialogOptions, any, Uri | undefined>(
+						IPCService,
+						"$showSaveDialog",
+						Options,
+						Token,
+						SaveDialogOptionToDTO,
+						DTOToURI,
+					),
+			};
+		}),
+	},
+) {}

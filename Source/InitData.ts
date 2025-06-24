@@ -47,7 +47,7 @@ const DummyInitData: IExtensionHostInitData = {
  * The default implementation provides dummy data, but in the final application,
  * this will be replaced with a layer constructed from real data received via IPC.
  */
-export class InitData extends Effect.Service<IExtensionHostInitData>()(
+export class InitDataService extends Effect.Service<InitDataService>()(
 	"Service/InitData",
 	{
 		sync: () => DummyInitData,

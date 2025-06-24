@@ -38,7 +38,7 @@ export interface ExtensionPath {
  * It builds an in-memory index of all extension paths on initialization for
  * fast, synchronous lookups.
  */
-export class ExtensionPath extends Effect.Service<ExtensionPath>()(
+export class ExtensionPathService extends Effect.Service<ExtensionPathService>()(
 	"Service/ExtensionPath",
 	{
 		effect: Effect.gen(function* () {

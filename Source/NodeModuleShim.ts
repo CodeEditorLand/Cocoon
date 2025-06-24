@@ -38,7 +38,7 @@ export interface NodeModuleShim {
  * @class NodeModuleShim
  * @description The `Effect.Service` for providing sandboxed shims for Node.js modules.
  */
-export class NodeModuleShim extends Effect.Service<NodeModuleShim>()(
+export class NodeModuleShimService extends Effect.Service<NodeModuleShimService>()(
 	"Service/NodeModuleShim",
 	{
 		effect: Effect.gen(function* () {

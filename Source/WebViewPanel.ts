@@ -3,21 +3,21 @@
  * @description Defines the service for creating and managing `vscode.WebviewPanel` instances.
  */
 
-import { Effect, Layer, Ref } from "effect";
+import { Effect, Ref } from "effect";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import {
 	Disposable,
 	type ViewColumn,
 	type WebviewOptions,
-	type WebviewPanel as VscWebviewPanel,
+	type WebviewPanel as VSCodeWebviewPanel,
 	type WebviewPanelOptions,
 	type WebviewPanelSerializer,
 } from "vscode";
 import { ConvertContentOptionToDTO } from "./TypeConverter/WebView/ConvertContentOptionToDTO.js";
 import { ConvertPanelOptionToDTO } from "./TypeConverter/WebView/ConvertPanelOptionToDTO.js";
 import { ConvertShowOptionToDTO } from "./TypeConverter/WebView/ConvertShowOptionToDTO.js";
-import { IPC } from "./IPC.js";
+import { IPCService } from "./IPC.js";
 import { WebViewPanelImplementation } from "./WebViewPanel/WebViewPanelImplementation.js";
 
 /**
@@ -33,7 +33,7 @@ export interface WebViewPanel {
 			| ViewColumn
 			| { viewColumn: ViewColumn; preserveFocus?: boolean },
 		Options?: WebviewPanelOptions & WebviewOptions,
-	) => Effect.Effect<VscWebviewPanel, Error>;
+	) => Effect.Effect<VSCodeWebviewPanel, Error>;
 	readonly RegisterWebviewPanelSerializer: (
 		Extension: IExtensionDescription,
 		ViewType: string,
@@ -45,11 +45,11 @@ export interface WebViewPanel {
  * @class WebViewPanel
  * @description The `Effect.Service` for managing webview panels.
  */
-export class WebViewPanel extends Effect.Service<WebViewPanel>()(
+export class WebViewPanelService extends Effect.Service<WebViewPanelService>()(
 	"Service/WebViewPanel",
 	{
 		effect: Effect.gen(function* () {
-			const IPCService = yield* IPC;
+			const IPC = yield* IPCService;
 			const ActivePanelsRef = yield* Ref.make(
 				new Map<string, WebViewPanelImplementation>(),
 			);
@@ -73,21 +73,20 @@ export class WebViewPanel extends Effect.Service<WebViewPanel>()(
 					Panel?.updateViewState(NewState);
 				});
 
-			IPCService.RegisterInvokeHandler(
-				"$onDidDisposeWebview",
-				([Handle]) => Effect.runPromise(OnDidDisposeWebview(Handle)),
+			IPC.RegisterInvokeHandler("$onDidDisposeWebview", ([Handle]) =>
+				Effect.runPromise(OnDidDisposeWebview(Handle)),
 			);
-			IPCService.RegisterInvokeHandler(
+			IPC.RegisterInvokeHandler(
 				"$onDidReceiveMessage",
 				([Handle, Message]) =>
 					Effect.runPromise(OnDidReceiveMessage(Handle, Message)),
 			);
-			IPCService.RegisterInvokeHandler(
+			IPC.RegisterInvokeHandler(
 				"$onDidChangeWebviewPanelViewState",
 				([Handle, NewState]) =>
 					Effect.runPromise(OnDidChangeViewState(Handle, NewState)),
 			);
-			IPCService.RegisterInvokeHandler("$deserializeWebviewPanel", () =>
+			IPC.RegisterInvokeHandler("$deserializeWebviewPanel", () =>
 				Effect.runPromise(Effect.succeed(undefined)),
 			); // Stubbed
 
@@ -120,17 +119,14 @@ export class WebViewPanel extends Effect.Service<WebViewPanel>()(
 							Options,
 						);
 
-						yield* IPCService.SendRequest<string>(
-							"$createWebviewPanel",
-							[
-								Handle,
-								ViewType,
-								Title,
-								ShowOptionsDTO,
-								PanelOptionsDTO,
-								ContentOptionsDTO,
-							],
-						);
+						yield* IPC.SendRequest<string>("$createWebviewPanel", [
+							Handle,
+							ViewType,
+							Title,
+							ShowOptionsDTO,
+							PanelOptionsDTO,
+							ContentOptionsDTO,
+						]);
 
 						const OnDispose = () =>
 							Effect.runFork(
@@ -141,7 +137,7 @@ export class WebViewPanel extends Effect.Service<WebViewPanel>()(
 							);
 						const Panel = new WebViewPanelImplementation(
 							Handle,
-							IPCService,
+							IPC,
 							Extension,
 							OnDispose,
 							ViewType,
@@ -160,12 +156,12 @@ export class WebViewPanel extends Effect.Service<WebViewPanel>()(
 					_Serializer,
 				) =>
 					Effect.sync(() => {
-						IPCService.SendNotification(
+						IPC.SendNotification(
 							"$registerWebviewPanelSerializer",
 							[ViewType, {}],
 						);
 						return new Disposable(() => {
-							IPCService.SendNotification(
+							IPC.SendNotification(
 								"$unregisterWebviewPanelSerializer",
 								[ViewType],
 							);

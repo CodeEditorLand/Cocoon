@@ -1,39 +1,35 @@
 /**
  * @module APIFactory
  * @description Defines the service responsible for constructing a complete, sandboxed
- * `vscode` API object for a given extension. It composes the various API namespaces
- * (e.g., `commands`, `window`, `workspace`) from their respective, underlying services.
+ * `vscode` API object for a given extension.
  */
 
-import { Effect } from "effect";
+import { Effect, Option } from "effect";
 import { Emitter } from "vs/base/common/event.js";
 import type {
 	IExtensionDescription,
 	ExtensionIdentifier,
 } from "vs/platform/extensions/common/extensions.js";
 import * as VSCode from "vscode";
-import { Position, Range, Selection } from "vscode";
-import { APIDeprecation } from "./APIDeprecation.js";
-import { Command } from "./Command.js";
-import { Debug } from "./Debug.js";
-import { Document } from "./Document.js";
-import { Extension } from "./Extension.js";
-import { LanguageFeature } from "./LanguageFeature.js";
+import { Position, Range, Selection, Disposable } from "vscode";
+
+// Corrected PascalCase Imports
+import { APIDeprecationService } from "./APIDeprecation.js";
+import { CommandService } from "./Command.js";
+import { DebugService } from "./Debug.js";
+import { DocumentService } from "./Document.js";
+import { ExtensionService } from "./Extension.js";
+import { LanguageFeatureService } from "./LanguageFeature.js";
 import { Logger } from "./Logger.js";
-import { ProposedAPI } from "./ProposedAPI.js";
-import { StatusBar } from "./StatusBar.js";
-import { Task } from "./Task.js";
-import { TreeView } from "./TreeView.js";
-import { WebViewPanel } from "./WebViewPanel.js";
-import { Window } from "./Window.js";
-import { WorkSpace } from "./WorkSpace.js";
+import { ProposedAPIService } from "./ProposedAPI.js";
+import { StatusBarService } from "./StatusBar.js";
+import { TaskService } from "./Task.js";
+import { TreeViewService } from "./TreeView.js";
+import { WebViewPanelService } from "./WebViewPanel.js";
+import { WindowService } from "./Window.js";
+import { WorkspaceService } from "./Workspace.js";
 
-// --- NOTE: Internal Namespace Factory helpers are now co-located for clarity. ---
-
-/**
- * @description Wraps a raw event emitter to provide safe error handling for
- * extension listeners, preventing one extension's faulty listener from crashing the host.
- */
+// --- Internal Namespace Factory helpers ---
 const CreateSafeEvent = <T>(
 	ExtensionId: ExtensionIdentifier,
 	LogService: Logger,
@@ -56,89 +52,81 @@ const CreateSafeEvent = <T>(
 	};
 };
 
-/**
- * @description Constructs the `vscode.commands` namespace for the API object.
- */
 const CreateCommandNamespace = (
-	CommandService: Command,
+	CommandServiceInstance: CommandService,
 	ExtensionDescription: IExtensionDescription,
 ): typeof VSCode.commands => {
 	return {
 		registerCommand: (Id, Handler, ThisArgument) =>
-			Effect.runSync(
-				CommandService.registerCommand(
-					Id,
-					Handler,
-					ThisArgument,
-					ExtensionDescription,
-				),
+			CommandServiceInstance.registerCommand(
+				Id,
+				Handler,
+				ThisArgument,
+				ExtensionDescription,
 			),
 		registerTextEditorCommand: (Id, Handler, ThisArgument) =>
-			Effect.runSync(
-				CommandService.registerTextEditorCommand(
-					Id,
-					Handler,
-					ThisArgument,
-					ExtensionDescription,
-				),
+			CommandServiceInstance.registerTextEditorCommand(
+				Id,
+				Handler,
+				ThisArgument,
+				ExtensionDescription,
 			),
 		registerDiffInformationCommand: (Id, Handler, ThisArgument) =>
-			Effect.runSync(
-				CommandService.registerCommand(
-					Id,
-					Handler,
-					ThisArgument,
-					ExtensionDescription,
-				),
+			CommandServiceInstance.registerCommand(
+				Id,
+				Handler,
+				ThisArgument,
+				ExtensionDescription,
 			),
 		executeCommand: <T>(Id: string, ...Argument: any[]) =>
-			Effect.runPromise(
-				CommandService.executeCommand<T>(Id, ...Argument),
-			),
+			CommandServiceInstance.executeCommand<T>(Id, ...Argument),
 		getCommands: (FilterInternal?: boolean) =>
-			Effect.runPromise(CommandService.getCommands(FilterInternal)),
+			CommandServiceInstance.getCommands(FilterInternal),
 	};
 };
 
-/**
- * @description Constructs the `vscode.window` namespace for the API object.
- */
 const CreateWindowNamespace = (
-	WindowService: Window,
-	StatusBarService: StatusBar,
-	WebViewPanelService: WebViewPanel,
-	TreeViewService: TreeView,
+	WindowServiceInstance: WindowService,
+	StatusBarServiceInstance: StatusBarService,
+	WebViewPanelServiceInstance: WebViewPanelService,
+	TreeViewServiceInstance: TreeViewService,
 	AsEvent: <T>(Event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
-	WorkSpaceService: WorkSpace,
+	WorkspaceServiceInstance: WorkspaceService,
 ): typeof VSCode.window => {
+	// This function must return an object matching vscode.window
 	const RunEffectAndReturnPromise = <T, E>(TheEffect: Effect.Effect<T, E>) =>
 		Effect.runPromise(Effect.mapError(TheEffect, (e) => e as Error));
+
 	const WindowNamespace: Partial<typeof VSCode.window> = {
 		get state() {
-			return WindowService.state;
+			return WindowServiceInstance.state;
 		},
 		get onDidChangeWindowState() {
-			return AsEvent(WindowService.onDidChangeWindowState);
+			return AsEvent(WindowServiceInstance.onDidChangeWindowState);
 		},
 		get activeTextEditor() {
-			return WorkSpaceService.activeTextEditor;
+			return WorkspaceServiceInstance.activeTextEditor;
 		},
 		get visibleTextEditors() {
-			return WorkSpaceService.visibleTextEditors;
+			return WorkspaceServiceInstance.visibleTextEditors;
 		},
 		get onDidChangeActiveTextEditor() {
-			return AsEvent(WorkSpaceService.onDidChangeActiveTextEditor);
+			return AsEvent(
+				WorkspaceServiceInstance.onDidChangeActiveTextEditor,
+			);
 		},
 		get onDidChangeVisibleTextEditors() {
-			return AsEvent(WorkSpaceService.onDidChangeVisibleTextEditors);
+			return AsEvent(
+				WorkspaceServiceInstance.onDidChangeVisibleTextEditors,
+			);
 		},
-		showTextDocument: (DocumentOrUri, ColumnOrOptions, PreserveFocus) =>
+		showTextDocument: (documentOrUri, columnOrOptions, preserveFocus) =>
 			RunEffectAndReturnPromise(
-				WindowService.ShowTextDocument(
-					DocumentOrUri,
-					ColumnOrOptions,
-					PreserveFocus,
+				WindowServiceInstance.ShowTextDocument(
+					documentOrUri as any,
+					columnOrOptions,
+					preserveFocus,
 				),
 			),
 		createStatusBarItem: ((...args: any[]) => {
@@ -151,7 +139,7 @@ const CreateWindowNamespace = (
 				[alignment, priority] = args;
 			}
 			return Effect.runSync(
-				StatusBarService.CreateStatusBarItem(
+				StatusBarServiceInstance.CreateStatusBarItem(
 					Extension,
 					id,
 					alignment,
@@ -160,12 +148,16 @@ const CreateWindowNamespace = (
 			);
 		}) as any,
 		createTreeView: (ViewId, Options) =>
-			RunEffectAndReturnPromise(
-				TreeViewService.CreateTreeView(ViewId, Options, Extension),
+			Effect.runSync(
+				TreeViewServiceInstance.CreateTreeView(
+					ViewId,
+					Options,
+					Extension,
+				),
 			),
 		createWebviewPanel: (ViewType, Title, ShowOptions, Options) =>
-			RunEffectAndReturnPromise(
-				WebViewPanelService.CreateWebviewPanel(
+			Effect.runSync(
+				WebViewPanelServiceInstance.CreateWebviewPanel(
 					Extension,
 					ViewType,
 					Title,
@@ -175,7 +167,7 @@ const CreateWindowNamespace = (
 			),
 		registerWebviewPanelSerializer: (ViewType, Serializer) =>
 			Effect.runSync(
-				WebViewPanelService.RegisterWebviewPanelSerializer(
+				WebViewPanelServiceInstance.RegisterWebviewPanelSerializer(
 					Extension,
 					ViewType,
 					Serializer,
@@ -202,48 +194,48 @@ const CreateWindowNamespace = (
  * @description The contract for the APIFactory service.
  */
 export interface APIFactory {
-	/**
-	 * Creates a complete, sandboxed `vscode` API object for a given extension.
-	 * @param ExtensionDescription The description of the extension to create the API for.
-	 * @returns A fully-formed `vscode` API object.
-	 */
 	readonly CreateAPI: (
 		ExtensionDescription: IExtensionDescription,
 	) => typeof VSCode;
 }
 
 /**
- * @class APIFactory
- * @description The `Effect.Service` for the APIFactory. This is a high-level service
- * that aggregates almost all other services to construct the final `vscode` object
- * that is exposed to extensions.
+ * @class APIFactoryService
+ * @description The `Effect.Service` for the APIFactory.
  */
-export class APIFactory extends Effect.Service<APIFactory>()(
+export class APIFactoryService extends Effect.Service<APIFactory>()(
 	"Service/APIFactory",
 	{
 		effect: Effect.gen(function* () {
 			const LogService = yield* Logger;
-			const ProposedAPIService = yield* ProposedAPI;
-			const APIDeprecationService = yield* APIDeprecation;
-			const CommandService = yield* Command;
-			const WorkSpaceService = yield* WorkSpace;
-			const DocumentService = yield* Document;
-			const WindowService = yield* Window;
-			const LanguageFeatureService = yield* LanguageFeature;
-			const DebugService = yield* Debug;
-			const TaskService = yield* Task;
-			const ExtensionService = yield* Extension;
-			const WebViewPanelService = yield* WebViewPanel;
-			const TreeViewService = yield* TreeView;
-			const StatusBarService = yield* StatusBar;
+			const ProposedAPIServiceInstance = yield* ProposedAPI;
+			const APIDeprecationServiceInstance = yield* APIDeprecation;
+			const CommandServiceInstance = yield* CommandService;
+			const WorkspaceServiceInstance = yield* WorkspaceService;
+			const DocumentServiceInstance = yield* DocumentService;
+			const WindowServiceInstance = yield* WindowService;
+			const LanguageFeatureServiceInstance =
+				yield* LanguageFeatureService;
+			const DebugServiceInstance = yield* DebugService;
+			const TaskServiceInstance = yield* TaskService;
+			const ExtensionServiceInstance = yield* ExtensionService;
+			const WebViewPanelServiceInstance = yield* WebViewPanelService;
+			const TreeViewServiceInstance = yield* TreeViewService;
+			const StatusBarServiceInstance = yield* StatusBarService;
 
 			const CreateExtensionsAPI = (
-				ExtensionService: Extension,
+				ExtensionServiceInstance: ExtensionService,
 			): typeof VSCode.extensions => ({
-				getExtension: (ExtensionId: string) =>
-					Effect.runSync(ExtensionService.GetExtension(ExtensionId)),
+				getExtension: <T>(extensionId: string) =>
+					Option.getOrUndefined(
+						Effect.runSync(
+							ExtensionServiceInstance.GetExtension<T>(
+								extensionId,
+							),
+						),
+					),
 				get all() {
-					return Effect.runSync(ExtensionService.GetAll());
+					return Effect.runSync(ExtensionServiceInstance.GetAll());
 				},
 				get allAcrossExtensionHosts() {
 					return [];
@@ -261,51 +253,40 @@ export class APIFactory extends Effect.Service<APIFactory>()(
 						SourceEvent,
 					);
 
-				// --- Namespace Construction ---
-				const CommandNamespace = CreateCommandNamespace(
-					CommandService,
-					ExtensionDescription,
-				);
-				const WorkSpaceNamespace = WorkSpaceService; // The service itself now implements the namespace
-				const WindowNamespace = CreateWindowNamespace(
-					WindowService,
-					StatusBarService,
-					WebViewPanelService,
-					TreeViewService,
-					SafeEvent,
-					ExtensionDescription,
-					WorkSpaceService,
-				);
-				const LanguagesNamespace = LanguageFeatureService; // The service itself implements the namespace
-				const TasksNamespace = TaskService;
-				const DebugNamespace = DebugService;
-				const ExtensionsNamespace =
-					CreateExtensionsAPI(ExtensionService);
-
 				const API: Partial<typeof VSCode> = {
 					version: "1.85.0",
-					commands: CommandNamespace,
-					window: WindowNamespace,
-					workspace: WorkSpaceNamespace,
-					languages: LanguagesNamespace,
-					debug: DebugNamespace,
-					tasks: TasksNamespace,
-					extensions: ExtensionsNamespace,
+					commands: CreateCommandNamespace(
+						CommandServiceInstance,
+						ExtensionDescription,
+					),
+					window: CreateWindowNamespace(
+						WindowServiceInstance,
+						StatusBarServiceInstance,
+						WebViewPanelServiceInstance,
+						TreeViewServiceInstance,
+						SafeEvent,
+						ExtensionDescription,
+						WorkspaceServiceInstance,
+					),
+					workspace: WorkspaceServiceInstance,
+					languages: LanguageFeatureServiceInstance,
+					debug: DebugServiceInstance,
+					tasks: TaskServiceInstance,
+					extensions: CreateExtensionsAPI(ExtensionServiceInstance),
 					Position,
 					Range,
 					Selection,
 				};
 
 				if (
-					ProposedAPIService.IsEnabled(
+					ProposedAPIServiceInstance.IsEnabled(
 						ExtensionDescription.identifier,
-						"someProposedAPI",
+						"someProposedApi",
 					)
 				) {
-					// Object.assign(API, { someProposedAPI: ... });
+					// Stub for proposed API logic
 				}
 
-				// Deep freeze the final API object to prevent modification by extensions.
 				for (const Key in API) {
 					if (Object.prototype.hasOwnProperty.call(API, Key)) {
 						const Property = (API as any)[Key];

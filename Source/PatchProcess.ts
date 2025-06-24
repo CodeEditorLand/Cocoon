@@ -33,7 +33,7 @@ export interface PatchProcess {
  * original, native `process` functions before they can be overwritten, and it
  * holds the configuration that determines whether termination is allowed.
  */
-export class PatchProcess extends Effect.Service<PatchProcess>()(
+export class PatchProcessService extends Effect.Service<PatchProcessService>()(
 	"Service/PatchProcess",
 	{
 		effect: Effect.gen(function* () {

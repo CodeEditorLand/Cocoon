@@ -6,7 +6,7 @@
 
 import { Effect } from "effect";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
-import { Logger } from "./Logger.js";
+import { LoggerService } from "./Logger.js";
 
 /**
  * @interface APIDeprecation
@@ -45,11 +45,11 @@ export interface APIDeprecation {
  * @description The `Effect.Service` for handling API deprecations. It provides
  * methods to report usage and a decorator to automatically wrap deprecated properties.
  */
-export class APIDeprecation extends Effect.Service<APIDeprecation>()(
+export class APIDeprecationService extends Effect.Service<APIDeprecationService>()(
 	"Service/APIDeprecation",
 	{
 		effect: Effect.gen(function* () {
-			const LogService = yield* Logger;
+			const LogService = yield* LoggerService;
 
 			const Report = (
 				ExtensionId: ExtensionIdentifier,

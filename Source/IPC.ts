@@ -7,21 +7,19 @@
 
 import * as gRPC from "@grpc/grpc-js";
 import * as ProtoLoader from "@grpc/proto-loader";
-import { Effect, Layer, Ref } from "effect";
+import { Effect, Ref } from "effect";
 import * as Path from "node:path";
 import { RPCProtocol } from "vs/workbench/services/extensions/common/rpcProtocol.js";
 import { VSBuffer } from "vs/base/common/buffer.js";
 import { Emitter } from "vs/base/common/event.js";
 import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
 import type { Disposable } from "vscode";
-import { Cancellation } from "./Cancellation.js";
-import { IPCConfiguration } from "./IPCConfiguration.js";
+import { CancellationService } from "./Cancellation.js";
+import { IPCConfigurationService } from "./IPCConfiguration.js";
 import { gRPCConnectionError } from "./IPC/gRPCConnectionError.js";
 import { IPCProblem } from "./IPC/IPCProblem.js";
 import { Proto } from "./IPC/Generated.js";
 import { ProtoSerializationProblem } from "./IPC/ProtoConverter/ProtoSerializationProblem.js";
-
-// --- NOTE: ProtoConverter helpers are assumed to be refactored and available. ---
 import { EncodeValue } from "./IPC/ProtoConverter/EncodeValue.js";
 import { DecodeValue } from "./IPC/ProtoConverter/DecodeValue.js";
 
@@ -29,7 +27,7 @@ import { DecodeValue } from "./IPC/ProtoConverter/DecodeValue.js";
  * @interface IPC
  * @description The contract for the IPC service.
  */
-export interface Interface {
+export interface IPC {
 	readonly SendRequest: <ResponseType = unknown>(
 		Method: string,
 		Parameters: readonly unknown[],
@@ -52,17 +50,14 @@ export interface Interface {
 /**
  * @class IPC
  * @description The `Effect.Service` for IPC. It is a scoped service because it
- * manages the lifecycle of a gRPC client and server connection, ensuring they
- * are gracefully acquired and released.
+ * manages the lifecycle of a gRPC client, ensuring it is gracefully acquired and released.
  */
-export class IPC extends Effect.Service<IPC>()("Service/IPC", {
+export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 	scoped: Effect.gen(function* () {
-		// --- Service Dependencies ---
-		const Config = yield* IPCConfiguration;
-		const CancellationService = yield* Cancellation;
+		const Config = yield* IPCConfigurationService;
+		const Cancellation = yield* CancellationService;
 
-		// --- Acquire gRPC Client Resource ---
-		const gRPCClient = yield* Effect.acquireRelease(
+		const GrpcClient = yield* Effect.acquireRelease(
 			Effect.gen(function* () {
 				const ProtoPath = Path.join(
 					process.cwd(),
@@ -83,9 +78,9 @@ export class IPC extends Effect.Service<IPC>()("Service/IPC", {
 							Context: "ProtoLoadFailed",
 						}),
 				});
-				const gRPCObject = gRPC.loadPackageDefinition(Definition);
+				const GrpcObject = gRPC.loadPackageDefinition(Definition);
 				const ClientConstructor = (
-					gRPCObject["vine_ipc"] as gRPC.GrpcObject
+					GrpcObject["vine_ipc"] as gRPC.GrpcObject
 				)["MountainService"] as gRPC.ServiceClientConstructor;
 				const Client = new ClientConstructor(
 					Config.MountainAddress,
@@ -121,7 +116,6 @@ export class IPC extends Effect.Service<IPC>()("Service/IPC", {
 				),
 		);
 
-		// --- Internal State & Logic ---
 		const RequestIdCounter = yield* Ref.make(1);
 		const OnMessageEmitter = new Emitter<VSBuffer>();
 		const InvokeHandlersRef = yield* Ref.make(
@@ -134,12 +128,12 @@ export class IPC extends Effect.Service<IPC>()("Service/IPC", {
 						try: () => {
 							const Payload = new Proto.RPCDataPayload();
 							Payload.setBuffer(Buffer.buffer);
-							return gRPCClient.sendRPCDataToMountain(Payload);
+							return GrpcClient.sendRPCDataToMountain(Payload);
 						},
 						catch: (Cause) =>
 							new IPCProblem({
 								Cause,
-								context: "sendRPCDataToMountain failed",
+								Context: "sendRPCDataToMountain failed",
 							}),
 					}).pipe(
 						Effect.catchAll((Error) =>
@@ -180,7 +174,6 @@ export class IPC extends Effect.Service<IPC>()("Service/IPC", {
 				);
 			});
 
-		// --- Service Implementation ---
 		const ServiceImplementation: IPC = {
 			SendRequest: <ResponseType = unknown>(
 				Method: string,
@@ -198,7 +191,7 @@ export class IPC extends Effect.Service<IPC>()("Service/IPC", {
 					RequestMessage.setParams(EncodedParameter);
 					const ResponseMessage = (yield* Effect.tryPromise({
 						try: () =>
-							gRPCClient.processCocoonRequest(RequestMessage),
+							GrpcClient.processCocoonRequest(RequestMessage),
 						catch: (Cause) =>
 							new IPCProblem({
 								Cause,
@@ -217,14 +210,11 @@ export class IPC extends Effect.Service<IPC>()("Service/IPC", {
 									Context:
 										"Proto serialization/deserialization failed",
 								})
-							: (Error as IPCProblem),
+							: Error,
 					),
 				),
 
-			SendNotification: (
-				Method: string,
-				Parameters: readonly unknown[],
-			) =>
+			SendNotification: (Method, Parameters) =>
 				Effect.gen(function* () {
 					const EncodedParameter = yield* EncodeValue(Parameters);
 					const NotificationMessage = new Proto.GenericNotification();
@@ -232,7 +222,7 @@ export class IPC extends Effect.Service<IPC>()("Service/IPC", {
 					NotificationMessage.setParams(EncodedParameter);
 					yield* Effect.tryPromise({
 						try: () =>
-							gRPCClient.sendCocoonNotification(
+							GrpcClient.sendCocoonNotification(
 								NotificationMessage,
 							),
 						catch: (Cause) =>
@@ -249,16 +239,16 @@ export class IPC extends Effect.Service<IPC>()("Service/IPC", {
 									Context:
 										"Proto serialization/deserialization failed",
 								})
-							: (Error as IPCProblem),
+							: Error,
 					),
 					Effect.asVoid,
 				),
 
-			SendCancel: CancellationService.CancelToken,
+			SendCancel: Cancellation.CancelToken,
 
 			CreateProtocolAdapter: () => ({
 				...RPCProtocolInstance,
-				ProcessIncomingData: (Data: Uint8Array) =>
+				ProcessIncomingData: (Data) =>
 					Effect.sync(() =>
 						OnMessageEmitter.fire(VSBuffer.wrap(Data)),
 					),

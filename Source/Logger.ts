@@ -46,43 +46,46 @@ export interface Logger {
  * logging API for use throughout the application. It automatically annotates
  * log messages with any additional data provided.
  */
-export class Logger extends Effect.Service<Logger>()("Service/Logger", {
-	sync: () => ({
-		Trace: (Message, ...Data) =>
-			Effect.logTrace(Message).pipe(
-				Effect.annotateLogs({
-					data: Data.length === 1 ? Data[0] : Data,
-				}),
-			),
-		Debug: (Message, ...Data) =>
-			Effect.logDebug(Message).pipe(
-				Effect.annotateLogs({
-					data: Data.length === 1 ? Data[0] : Data,
-				}),
-			),
-		Info: (Message, ...Data) =>
-			Effect.logInfo(Message).pipe(
-				Effect.annotateLogs({
-					data: Data.length === 1 ? Data[0] : Data,
-				}),
-			),
-		Warn: (Message, ...Data) =>
-			Effect.logWarning(Message).pipe(
-				Effect.annotateLogs({
-					data: Data.length === 1 ? Data[0] : Data,
-				}),
-			),
-		Error: (Message, ...Data) =>
-			Effect.logError(Message).pipe(
-				Effect.annotateLogs({
-					data: Data.length === 1 ? Data[0] : Data,
-				}),
-			),
-		Fatal: (Message, ...Data) =>
-			Effect.logFatal(Message).pipe(
-				Effect.annotateLogs({
-					data: Data.length === 1 ? Data[0] : Data,
-				}),
-			),
-	}),
-}) {}
+export class LoggerService extends Effect.Service<LoggerService>()(
+	"Service/Logger",
+	{
+		sync: () => ({
+			Trace: (Message, ...Data) =>
+				Effect.logTrace(Message).pipe(
+					Effect.annotateLogs({
+						data: Data.length === 1 ? Data[0] : Data,
+					}),
+				),
+			Debug: (Message, ...Data) =>
+				Effect.logDebug(Message).pipe(
+					Effect.annotateLogs({
+						data: Data.length === 1 ? Data[0] : Data,
+					}),
+				),
+			Info: (Message, ...Data) =>
+				Effect.logInfo(Message).pipe(
+					Effect.annotateLogs({
+						data: Data.length === 1 ? Data[0] : Data,
+					}),
+				),
+			Warn: (Message, ...Data) =>
+				Effect.logWarning(Message).pipe(
+					Effect.annotateLogs({
+						data: Data.length === 1 ? Data[0] : Data,
+					}),
+				),
+			Error: (Message, ...Data) =>
+				Effect.logError(Message).pipe(
+					Effect.annotateLogs({
+						data: Data.length === 1 ? Data[0] : Data,
+					}),
+				),
+			Fatal: (Message, ...Data) =>
+				Effect.logFatal(Message).pipe(
+					Effect.annotateLogs({
+						data: Data.length === 1 ? Data[0] : Data,
+					}),
+				),
+		}),
+	},
+) {}

@@ -34,7 +34,7 @@ export interface IPCConfiguration {
  * values from environment variables (`MOUNTAIN_ADDR`, `COCOON_ADDR`) with
  * sensible defaults.
  */
-export class IPCConfiguration extends Effect.Service<IPCConfiguration>()(
+export class IPCConfigurationService extends Effect.Service<IPCConfigurationService>()(
 	"Service/IPCConfiguration",
 	{
 		effect: Effect.gen(function* () {

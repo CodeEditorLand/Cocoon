@@ -32,7 +32,7 @@ export interface HostKindPicker {
  * It analyzes an extension's `package.json` to decide if it can run in the
  * Cocoon (Node.js) environment.
  */
-export class HostKindPicker extends Effect.Service<HostKindPicker>()(
+export class HostKindPickerService extends Effect.Service<HostKindPickerService>()(
 	"Service/HostKindPicker",
 	{
 		effect: Effect.gen(function* () {

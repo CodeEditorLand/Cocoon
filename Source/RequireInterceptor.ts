@@ -70,7 +70,7 @@ export interface RequireInterceptor {
  * @class RequireInterceptor
  * @description The `Effect.Service` for the RequireInterceptor.
  */
-export class RequireInterceptor extends Effect.Service<RequireInterceptor>()(
+export class RequireInterceptorService extends Effect.Service<RequireInterceptorService>()(
 	"Service/RequireInterceptor",
 	{
 		effect: Effect.gen(function* () {

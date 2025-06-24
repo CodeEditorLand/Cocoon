@@ -49,186 +49,197 @@ export interface Document {
  * @class Document
  * @description The `Effect.Service` for managing text documents.
  */
-export class Document extends Effect.Service<Document>()("Service/Document", {
-	effect: Effect.gen(function* () {
-		const IPCService = yield* IPC;
-		const DocumentMapRef = yield* Ref.make(
-			new Map<string, ExtHostDocumentData>(),
-		);
-		const ContentProvidersRef = yield* Ref.make(
-			new Map<string, TextDocumentContentProvider>(),
-		);
-		const MainThreadDocumentsProxy =
-			IPCService.CreateProxy<MainThreadDocumentsShape>(
-				"$rpc:mainThreadDocuments",
+export class DocumentService extends Effect.Service<DocumentService>()(
+	"Service/Document",
+	{
+		effect: Effect.gen(function* () {
+			const IPCService = yield* IPC;
+			const DocumentMapRef = yield* Ref.make(
+				new Map<string, ExtHostDocumentData>(),
 			);
-
-		const { event: OnDidOpenTextDocument, Fire: FireOpen } =
-			CreateEventStream<TextDocument>();
-		const { event: OnDidCloseTextDocument, Fire: FireClose } =
-			CreateEventStream<TextDocument>();
-		const { event: OnDidChangeTextDocument, Fire: FireChange } =
-			CreateEventStream<TextDocumentChangeEvent>();
-		const { event: OnDidSaveTextDocument } =
-			CreateEventStream<TextDocument>();
-
-		// --- RPC Handlers ---
-		const AcceptModelAdded = (Data: any) =>
-			Effect.gen(function* () {
-				const RevivedUri = UriToAPI(Data.uri);
-				const DocumentData = new ExtHostDocumentData(
-					MainThreadDocumentsProxy,
-					RevivedUri,
-					Data.lines,
-					Data.eol,
-					Data.versionId,
-					Data.languageId,
-					Data.isDirty,
-					Data.encoding,
+			const ContentProvidersRef = yield* Ref.make(
+				new Map<string, TextDocumentContentProvider>(),
+			);
+			const MainThreadDocumentsProxy =
+				IPCService.CreateProxy<MainThreadDocumentsShape>(
+					"$rpc:mainThreadDocuments",
 				);
-				yield* Ref.update(DocumentMapRef, (Map) =>
-					Map.set(DocumentData.document.uri.toString(), DocumentData),
-				);
-				yield* FireOpen(DocumentData.document);
-			});
 
-		const AcceptModelRemoved = (UriDTO: any) =>
-			Effect.gen(function* () {
-				const UriString = UriToAPI(UriDTO).toString();
-				const DocumentData = (yield* Ref.get(DocumentMapRef)).get(
-					UriString,
-				);
-				if (DocumentData) {
-					yield* Ref.update(
-						DocumentMapRef,
-						(Map) => (Map.delete(UriString), Map),
+			const { event: OnDidOpenTextDocument, Fire: FireOpen } =
+				CreateEventStream<TextDocument>();
+			const { event: OnDidCloseTextDocument, Fire: FireClose } =
+				CreateEventStream<TextDocument>();
+			const { event: OnDidChangeTextDocument, Fire: FireChange } =
+				CreateEventStream<TextDocumentChangeEvent>();
+			const { event: OnDidSaveTextDocument } =
+				CreateEventStream<TextDocument>();
+
+			// --- RPC Handlers ---
+			const AcceptModelAdded = (Data: any) =>
+				Effect.gen(function* () {
+					const RevivedUri = UriToAPI(Data.uri);
+					const DocumentData = new ExtHostDocumentData(
+						MainThreadDocumentsProxy,
+						RevivedUri,
+						Data.lines,
+						Data.eol,
+						Data.versionId,
+						Data.languageId,
+						Data.isDirty,
+						Data.encoding,
 					);
-					yield* FireClose(DocumentData.document);
-				}
-			});
-
-		const AcceptModelChanged = (UriDTO: any, ChangeEventDTO: any) =>
-			Effect.gen(function* () {
-				const UriString = UriToAPI(UriDTO).toString();
-				const DocumentData = (yield* Ref.get(DocumentMapRef)).get(
-					UriString,
-				);
-				if (DocumentData) {
-					const ModelChangedEvent: IModelChangedEvent = {
-						changes: ChangeEventDTO.changes,
-						eol: ChangeEventDTO.eol,
-						versionId: ChangeEventDTO.versionId,
-						isUndoing: false,
-						isRedoing: false,
-					};
-					DocumentData.onEvents(ModelChangedEvent);
-					yield* FireChange({
-						document: DocumentData.document,
-						contentChanges: ChangeEventDTO.changes.map(
-							(Change: any) => ({
-								range: RangeToAPI(Change.range),
-								rangeOffset: Change.rangeOffset,
-								rangeLength: Change.rangeLength,
-								text: Change.text,
-							}),
+					yield* Ref.update(DocumentMapRef, (Map) =>
+						Map.set(
+							DocumentData.document.uri.toString(),
+							DocumentData,
 						),
-						reason: ChangeEventDTO.reason,
-					});
-				}
-			});
-
-		const ProvideTextDocumentContent = (UriComponents: any) =>
-			Effect.gen(function* () {
-				const Uri = UriToAPI(UriComponents);
-				const Scheme = Uri.scheme;
-				const Providers = yield* Ref.get(ContentProvidersRef);
-				const Provider = Option.fromNullable(Providers.get(Scheme));
-				if (
-					Option.isNone(Provider) ||
-					!Provider.value.provideTextDocumentContent
-				) {
-					return Option.none<string>();
-				}
-				const Token = new CancellationTokenSource().token;
-				const Content = yield* Effect.tryPromise({
-					try: () =>
-						Provider.value.provideTextDocumentContent!(Uri, Token),
-					catch: (UnknownError) =>
-						new Error(
-							`Content provider for scheme "${Scheme}" threw an error: ${UnknownError}`,
-						),
+					);
+					yield* FireOpen(DocumentData.document);
 				});
-				return Option.fromNullable(Content);
-			}).pipe(
-				Effect.catchAll((Error) =>
-					Effect.logError(Error).pipe(
-						Effect.as(Option.none<string>()),
-					),
-				),
-				Effect.map(Option.getOrElse(() => null)),
-			);
 
-		IPCService.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
-			Effect.runPromise(AcceptModelAdded(Data)),
-		);
-		IPCService.RegisterInvokeHandler("$acceptModelRemoved", ([Uri]) =>
-			Effect.runPromise(AcceptModelRemoved(Uri)),
-		);
-		IPCService.RegisterInvokeHandler(
-			"$acceptModelChanged",
-			([Uri, Changes]) =>
-				Effect.runPromise(AcceptModelChanged(Uri, Changes)),
-		);
-		IPCService.RegisterInvokeHandler(
-			"$provideTextDocumentContent",
-			([UriComponents]) =>
-				Effect.runPromise(ProvideTextDocumentContent(UriComponents)),
-		);
+			const AcceptModelRemoved = (UriDTO: any) =>
+				Effect.gen(function* () {
+					const UriString = UriToAPI(UriDTO).toString();
+					const DocumentData = (yield* Ref.get(DocumentMapRef)).get(
+						UriString,
+					);
+					if (DocumentData) {
+						yield* Ref.update(
+							DocumentMapRef,
+							(Map) => (Map.delete(UriString), Map),
+						);
+						yield* FireClose(DocumentData.document);
+					}
+				});
 
-		return {
-			get TextDocuments() {
-				return Array.from(Ref.unsafeGet(DocumentMapRef).values()).map(
-					(data) => data.document,
-				);
-			},
-			OnDidOpenTextDocument,
-			OnDidCloseTextDocument,
-			OnDidChangeTextDocument,
-			OnDidSaveTextDocument,
-			GetDocument: (Uri: Uri) =>
-				Ref.get(DocumentMapRef).pipe(
-					Effect.map((Map) =>
-						Option.fromNullable(Map.get(Uri.toString())),
-					),
-					Effect.map(Option.map((data) => data.document)),
-				),
-			RegisterTextDocumentContentProvider: (Scheme, Provider) => {
-				Effect.runFork(
-					IPCService.SendNotification(
-						"$registerTextDocumentContentProvider",
-						[Scheme],
-					),
-				);
-				Effect.runSync(
-					Ref.update(ContentProvidersRef, (Map) =>
-						Map.set(Scheme, Provider),
-					),
-				);
-				return new Disposable(() => {
-					const Unregister = Ref.update(
-						ContentProvidersRef,
-						(Map) => (Map.delete(Scheme), Map),
-					).pipe(
-						Effect.andThen(
-							IPCService.SendNotification(
-								"$unregisterTextDocumentContentProvider",
-								[Scheme],
+			const AcceptModelChanged = (UriDTO: any, ChangeEventDTO: any) =>
+				Effect.gen(function* () {
+					const UriString = UriToAPI(UriDTO).toString();
+					const DocumentData = (yield* Ref.get(DocumentMapRef)).get(
+						UriString,
+					);
+					if (DocumentData) {
+						const ModelChangedEvent: IModelChangedEvent = {
+							changes: ChangeEventDTO.changes,
+							eol: ChangeEventDTO.eol,
+							versionId: ChangeEventDTO.versionId,
+							isUndoing: false,
+							isRedoing: false,
+						};
+						DocumentData.onEvents(ModelChangedEvent);
+						yield* FireChange({
+							document: DocumentData.document,
+							contentChanges: ChangeEventDTO.changes.map(
+								(Change: any) => ({
+									range: RangeToAPI(Change.range),
+									rangeOffset: Change.rangeOffset,
+									rangeLength: Change.rangeLength,
+									text: Change.text,
+								}),
 							),
+							reason: ChangeEventDTO.reason,
+						});
+					}
+				});
+
+			const ProvideTextDocumentContent = (UriComponents: any) =>
+				Effect.gen(function* () {
+					const Uri = UriToAPI(UriComponents);
+					const Scheme = Uri.scheme;
+					const Providers = yield* Ref.get(ContentProvidersRef);
+					const Provider = Option.fromNullable(Providers.get(Scheme));
+					if (
+						Option.isNone(Provider) ||
+						!Provider.value.provideTextDocumentContent
+					) {
+						return Option.none<string>();
+					}
+					const Token = new CancellationTokenSource().token;
+					const Content = yield* Effect.tryPromise({
+						try: () =>
+							Provider.value.provideTextDocumentContent!(
+								Uri,
+								Token,
+							),
+						catch: (UnknownError) =>
+							new Error(
+								`Content provider for scheme "${Scheme}" threw an error: ${UnknownError}`,
+							),
+					});
+					return Option.fromNullable(Content);
+				}).pipe(
+					Effect.catchAll((Error) =>
+						Effect.logError(Error).pipe(
+							Effect.as(Option.none<string>()),
+						),
+					),
+					Effect.map(Option.getOrElse(() => null)),
+				);
+
+			IPCService.RegisterInvokeHandler("$acceptModelAdded", ([Data]) =>
+				Effect.runPromise(AcceptModelAdded(Data)),
+			);
+			IPCService.RegisterInvokeHandler("$acceptModelRemoved", ([Uri]) =>
+				Effect.runPromise(AcceptModelRemoved(Uri)),
+			);
+			IPCService.RegisterInvokeHandler(
+				"$acceptModelChanged",
+				([Uri, Changes]) =>
+					Effect.runPromise(AcceptModelChanged(Uri, Changes)),
+			);
+			IPCService.RegisterInvokeHandler(
+				"$provideTextDocumentContent",
+				([UriComponents]) =>
+					Effect.runPromise(
+						ProvideTextDocumentContent(UriComponents),
+					),
+			);
+
+			return {
+				get TextDocuments() {
+					return Array.from(
+						Ref.unsafeGet(DocumentMapRef).values(),
+					).map((data) => data.document);
+				},
+				OnDidOpenTextDocument,
+				OnDidCloseTextDocument,
+				OnDidChangeTextDocument,
+				OnDidSaveTextDocument,
+				GetDocument: (Uri: Uri) =>
+					Ref.get(DocumentMapRef).pipe(
+						Effect.map((Map) =>
+							Option.fromNullable(Map.get(Uri.toString())),
+						),
+						Effect.map(Option.map((data) => data.document)),
+					),
+				RegisterTextDocumentContentProvider: (Scheme, Provider) => {
+					Effect.runFork(
+						IPCService.SendNotification(
+							"$registerTextDocumentContentProvider",
+							[Scheme],
 						),
 					);
-					Effect.runFork(Unregister);
-				});
-			},
-		};
-	}),
-}) {}
+					Effect.runSync(
+						Ref.update(ContentProvidersRef, (Map) =>
+							Map.set(Scheme, Provider),
+						),
+					);
+					return new Disposable(() => {
+						const Unregister = Ref.update(
+							ContentProvidersRef,
+							(Map) => (Map.delete(Scheme), Map),
+						).pipe(
+							Effect.andThen(
+								IPCService.SendNotification(
+									"$unregisterTextDocumentContentProvider",
+									[Scheme],
+								),
+							),
+						);
+						Effect.runFork(Unregister);
+					});
+				},
+			};
+		}),
+	},
+) {}

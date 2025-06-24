@@ -11,7 +11,7 @@ import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
-import type { Event, Extension as VscExtension } from "vscode";
+import type { Event, Extension as VSCodeExtension } from "vscode";
 import { ExtensionKind } from "vscode";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { ExtensionHost } from "./ExtensionHost.js";
@@ -28,7 +28,7 @@ import { CreateEventStream } from "./Utility/CreateEventStream.js";
 const CreateAPIObject = <T>(
 	Description: IExtensionDescription,
 	ExtensionHostService: ExtensionHost,
-): VscExtension<T> => {
+): VSCodeExtension<T> => {
 	const Activate = Effect.gen(function* () {
 		yield* ExtensionHostService.ActivateById(Description.identifier, {
 			startup: false,
@@ -51,7 +51,7 @@ const CreateAPIObject = <T>(
 		return ExtensionKind.UI;
 	};
 
-	const ExtensionAPIObject: VscExtension<T> = {
+	const ExtensionAPIObject: VSCodeExtension<T> = {
 		id: Description.identifier.value,
 		extensionUri: Description.extensionLocation,
 		extensionPath: Description.extensionLocation.fsPath,
@@ -89,18 +89,21 @@ export interface Extension {
 	readonly onDidChange: Event<void>;
 	readonly GetExtension: <T>(
 		ExtensionId: string,
-	) => Effect.Effect<Option.Option<VscExtension<T>>, never>;
-	readonly GetAll: () => Effect.Effect<readonly VscExtension<any>[], never>;
+	) => Effect.Effect<Option.Option<VSCodeExtension<T>>, never>;
+	readonly GetAll: () => Effect.Effect<
+		readonly VSCodeExtension<any>[],
+		never
+	>;
 	readonly Activate: <T>(
 		ExtensionId: string,
-	) => Effect.Effect<VscExtension<T>, Error>;
+	) => Effect.Effect<VSCodeExtension<T>, Error>;
 }
 
 /**
  * @class Extension
  * @description The `Effect.Service` for the Extension service.
  */
-export class Extension extends Effect.Service<Extension>()(
+export class ExtensionService extends Effect.Service<ExtensionService>()(
 	"Service/Extension",
 	{
 		effect: Effect.gen(function* () {
@@ -109,7 +112,7 @@ export class Extension extends Effect.Service<Extension>()(
 
 			const { event: OnDidChangeEvent } = CreateEventStream<void>();
 			const AllExtensionsCache = yield* Ref.make<
-				Option.Option<readonly VscExtension<any>[]>
+				Option.Option<readonly VSCodeExtension<any>[]>
 			>(Option.none());
 
 			const ActivationEventsReader: IActivationEventsReader = {

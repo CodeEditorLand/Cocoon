@@ -5,7 +5,6 @@
  * delegation for functions passed as arguments.
  */
 
-import { Effect } from "effect";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type * as VSCode from "vscode";
@@ -37,8 +36,6 @@ export class APICommandResult<V, R> {
 /**
  * @interface APICommand
  * @description A descriptor for a built-in API command, detailing its signature.
- * This allows for automated marshalling and unmarshalling of command
- * arguments and results when communicating with the host.
  */
 export class APICommand {
 	constructor(
@@ -78,7 +75,7 @@ export class Command {
 		private readonly ExecuteCommand: <T>(
 			command: string,
 			...rest: any[]
-		) => Effect.Effect<T, Error>,
+		) => Promise<T | undefined>,
 		private readonly LookupAPICommand: (
 			Id: string,
 		) => APICommand | undefined,
@@ -86,19 +83,19 @@ export class Command {
 		this.DelegatingCommandId = `_cocoon.delegate.${generateUuid()}`;
 		this.RegisterCommand(
 			this.DelegatingCommandId,
-			this.ExecuteDelegatedCommand,
+			this.ExecuteDelegatedCommand.bind(this),
 			this,
 		);
 	}
 
 	private ExecuteDelegatedCommand(Id: string, ...ArgumentArray: any[]): any {
 		const Command = this.DelegatedCommands.get(Id);
-		if (!Command) throw new Error(`Unknown delegated command: ${Id}`);
-		return Effect.runPromise(
-			this.ExecuteCommand(
-				Command.command,
-				...[...(Command.arguments ?? []), ...ArgumentArray],
-			),
+		if (!Command) {
+			throw new Error(`Unknown delegated command: ${Id}`);
+		}
+		return this.ExecuteCommand(
+			Command.command,
+			...[...(Command.arguments ?? []), ...ArgumentArray],
 		);
 	}
 
@@ -107,6 +104,7 @@ export class Command {
 		DisposableArray: IDisposable[],
 	): InternalCommand | undefined {
 		if (!Command) return undefined;
+
 		const APICommandValue = this.LookupAPICommand(Command.command);
 		if (APICommandValue) {
 			const ConvertedArgumentArray =
@@ -119,6 +117,7 @@ export class Command {
 				arguments: ConvertedArgumentArray,
 			};
 		}
+
 		if (
 			Array.isArray(Command.arguments) &&
 			Command.arguments.some((Argument) => typeof Argument === "function")
@@ -134,6 +133,7 @@ export class Command {
 				arguments: [Id, ...(Command.arguments ?? [])],
 			};
 		}
+
 		return {
 			id: Command.command,
 			title: Command.title,

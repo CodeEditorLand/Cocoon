@@ -66,7 +66,7 @@ export interface StoragePath {
  * @class StoragePath
  * @description The `Effect.Service` for resolving extension storage paths.
  */
-export class StoragePath extends Effect.Service<StoragePath>()(
+export class StoragePathService extends Effect.Service<StoragePathService>()(
 	"Service/StoragePath",
 	{
 		effect: Effect.gen(function* () {

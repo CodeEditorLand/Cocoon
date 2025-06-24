@@ -52,7 +52,7 @@ export interface CommandHandlerEntry {
  * the `IExtHostCommands` interface from VS Code's source code to ensure 1:1 API
  * compatibility.
  */
-export class Command extends Effect.Service<IExtHostCommands>()(
+export class CommandService extends Effect.Service<CommandService>()(
 	"Service/Command",
 	{
 		// Note: The original implementation in `Definition.ts` used the full `ExtHostCommands` class from VS Code.

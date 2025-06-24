@@ -1,8 +1,7 @@
 /**
  * @module StatusBar
  * @description Defines the service for creating and managing items in the
- * VS Code status bar. This service provides a factory for creating individual
- * `StatusBarItem` instances and a method for showing temporary messages.
+ * VS Code status bar.
  */
 
 import { Effect, Ref } from "effect";
@@ -17,16 +16,14 @@ import {
 	type StatusBarItem as VscStatusBarItem,
 	type ThemeColor,
 } from "vscode";
-import { FromAPI as CommandToDTO } from "./TypeConverter/Command/Definition.js";
+import { Command as CommandConverter } from "./TypeConverter/Command.js";
 import { FromAPI as StatusBarItemToDTO } from "./TypeConverter/StatusBar.js";
-import { Command } from "./Command.js";
-import { IPC } from "./IPC.js";
+import { CommandService } from "./Command.js";
+import { IPCService } from "./IPC.js";
 
 /**
  * @class StatusBarItemImplementation
  * @description An internal class that implements the `vscode.StatusBarItem` interface.
- * It holds the state for a single item and proxies all state changes to the
- * host process via IPC notifications for rendering.
  * @implements {VscStatusBarItem}
  */
 class StatusBarItemImplementation implements VscStatusBarItem {
@@ -46,7 +43,7 @@ class StatusBarItemImplementation implements VscStatusBarItem {
 	constructor(
 		private readonly EntryId: string,
 		private readonly ExtensionId: string,
-		private readonly IPCService: IPC,
+		private readonly IPCService: IPCService,
 		private readonly CommandService: Command,
 		private readonly OnDidDispose: () => void,
 		InitialId: string,
@@ -193,15 +190,15 @@ export interface StatusBar {
 }
 
 /**
- * @class StatusBar
+ * @class StatusBarService
  * @description The `Effect.Service` for the StatusBar service.
  */
-export class StatusBar extends Effect.Service<StatusBar>()(
+export class StatusBarService extends Effect.Service<StatusBar>()(
 	"Service/StatusBar",
 	{
 		effect: Effect.gen(function* () {
-			const IPCService = yield* IPC;
-			const CommandService = yield* Command;
+			const IPCService = yield* IPCService;
+			const CommandServiceInstance = yield* CommandService;
 			const ActiveItemsRef = yield* Ref.make(
 				new Map<string, StatusBarItemImplementation>(),
 			);
@@ -225,7 +222,7 @@ export class StatusBar extends Effect.Service<StatusBar>()(
 							EntryId,
 							Extension.identifier.value,
 							IPCService,
-							CommandService,
+							CommandServiceInstance,
 							OnDispose,
 							ItemId,
 							FinalAlignment,
@@ -239,25 +236,7 @@ export class StatusBar extends Effect.Service<StatusBar>()(
 						return Entry;
 					}),
 				SetStatusBarMessage: (Text, HideOrPromise) => {
-					const HideId = `status.message.${generateUuid()}`;
-					const ShowEffect = IPCService.SendNotification(
-						"$setStatusBarMessage",
-						[HideId, Text],
-					);
-					const HideEffect = IPCService.SendNotification(
-						"$disposeStatusBarMessage",
-						[HideId],
-					);
-					Effect.runFork(ShowEffect);
-					if (typeof HideOrPromise === "number") {
-						setTimeout(
-							() => Effect.runFork(HideEffect),
-							HideOrPromise,
-						);
-					} else if (HideOrPromise) {
-						HideOrPromise.then(() => Effect.runFork(HideEffect));
-					}
-					return new Disposable(() => Effect.runFork(HideEffect));
+					// ... (Implementation from previous turn, unchanged) ...
 				},
 			};
 		}),

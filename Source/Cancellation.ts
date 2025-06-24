@@ -6,43 +6,20 @@
  * unnecessary work in asynchronous workflows.
  */
 
-import { Effect, HashMap, Ref } from "effect";
+import { Effect, HashMap, Ref, Scope } from "effect";
 import { CancellationTokenSource } from "vs/base/common/cancellation.js";
 import { InvalidTokenIdError } from "./Cancellation/InvalidTokenIdError.js";
+import type { CancellationToken } from "vscode";
 
 /**
  * @interface Cancellation
  * @description The contract for the Cancellation service.
  */
 export interface Cancellation {
-	/**
-	 * Obtains a `CancellationToken` for a given ID. This method returns a scoped
-	 * `Effect`, ensuring the token source is automatically released when the
-	 * scope is closed. If a source for the ID already exists, it is reused.
-	 * @param TokenId - The numeric identifier for the token.
-	 * @returns A scoped `Effect` that resolves to a `vscode.CancellationToken`.
-	 */
 	readonly ObtainToken: (
 		TokenId: number,
-	) => Effect.Effect<
-		import("vscode").CancellationToken,
-		InvalidTokenIdError,
-		Effect.Scope
-	>;
-
-	/**
-	 * Signals cancellation for a given token ID. If a `CancellationTokenSource`
-	 * exists for the ID, its `cancel()` method is called.
-	 * @param TokenId - The numeric identifier of the token to cancel.
-	 * @returns An `Effect` that completes when the cancellation signal has been sent.
-	 */
+	) => Effect.Effect<CancellationToken, InvalidTokenIdError, Scope.Scope>;
 	readonly CancelToken: (TokenId: number) => Effect.Effect<void, never>;
-
-	/**
-	 * Disposes of all currently managed `CancellationTokenSource` instances and
-	 * clears the internal registry. This is typically called on service shutdown.
-	 * @returns An `Effect` that completes when all sources have been disposed.
-	 */
 	readonly DisposeAll: () => Effect.Effect<void, never>;
 }
 
@@ -52,7 +29,7 @@ export interface Cancellation {
  * This service is scoped because it manages resources (`CancellationTokenSource`
  * instances) that must be cleaned up gracefully upon application shutdown.
  */
-export class Cancellation extends Effect.Service<Cancellation>()(
+export class CancellationService extends Effect.Service<CancellationService>()(
 	"Service/Cancellation",
 	{
 		scoped: Effect.gen(function* () {
@@ -60,8 +37,8 @@ export class Cancellation extends Effect.Service<Cancellation>()(
 				HashMap.empty<number, CancellationTokenSource>(),
 			);
 
-			const ObtainToken = (TokenId: number) => {
-				const AcquireAndReleaseToken = Effect.acquireRelease(
+			const ObtainToken = (TokenId: number) =>
+				Effect.acquireRelease(
 					Effect.gen(function* () {
 						if (TokenId <= 0) {
 							return yield* new InvalidTokenIdError({ TokenId });
@@ -114,10 +91,6 @@ export class Cancellation extends Effect.Service<Cancellation>()(
 						),
 				).pipe(Effect.map((Source) => Source.token));
 
-				// The returned Effect is scoped, ensuring automatic resource cleanup.
-				return Effect.scoped(AcquireAndReleaseToken);
-			};
-
 			const CancelToken = (TokenId: number) =>
 				Effect.gen(function* () {
 					if (TokenId <= 0) {
@@ -144,7 +117,9 @@ export class Cancellation extends Effect.Service<Cancellation>()(
 				Ref.get(SourceMap).pipe(
 					Effect.tap((TheMap) =>
 						Effect.logDebug(
-							`Disposing all (${HashMap.size(TheMap)}) managed CancellationTokenSources.`,
+							`Disposing all (${HashMap.size(
+								TheMap,
+							)}) managed CancellationTokenSources.`,
 						),
 					),
 					Effect.flatMap((TheMap) =>
@@ -162,7 +137,6 @@ export class Cancellation extends Effect.Service<Cancellation>()(
 					),
 				);
 
-			// Register a finalizer to be run when the service's scope is closed.
 			yield* Effect.addFinalizer(() => DisposeAll());
 
 			return {

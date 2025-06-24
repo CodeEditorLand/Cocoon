@@ -12,7 +12,7 @@ import type {
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
 import type {
-	LogLevel as VscLogLevel,
+	LogLevel as VSCodeLogLevel,
 	ILoggerService,
 	ILogger,
 } from "vs/platform/log/common/log.js";
@@ -28,7 +28,7 @@ import { Logger } from "./Logger.js";
  * @param LogLevel The log level from the host.
  * @returns The corresponding `TelemetryLevel`.
  */
-const ConvertToTelemetryLevel = (LogLevel: VscLogLevel): TelemetryLevel => {
+const ConvertToTelemetryLevel = (LogLevel: VSCodeLogLevel): TelemetryLevel => {
 	switch (LogLevel) {
 		case 0:
 			return TelemetryLevel.NONE;
@@ -48,7 +48,7 @@ const ConvertToTelemetryLevel = (LogLevel: VscLogLevel): TelemetryLevel => {
  * @class Telemetry
  * @description The `Effect.Service` for the Telemetry service.
  */
-export class Telemetry extends Effect.Service<IExtHostTelemetry>()(
+export class TelemetryService extends Effect.Service<TelemetryService>()(
 	"Service/Telemetry",
 	{
 		effect: Effect.gen(function* () {

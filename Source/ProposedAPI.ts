@@ -58,7 +58,7 @@ export interface ProposedAPI {
  * configuration at startup and provides a synchronous method to check if a
  * specific proposal is enabled for a given extension.
  */
-export class ProposedAPI extends Effect.Service<ProposedAPI>()(
+export class ProposedAPIService extends Effect.Service<ProposedAPIService>()(
 	"Service/ProposedAPI",
 	{
 		effect: Effect.gen(function* () {
