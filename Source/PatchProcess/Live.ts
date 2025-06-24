@@ -1,38 +1,40 @@
 /*
  * File: Cocoon/Source/PatchProcess/Live.ts
- *
- * This file provides the live implementation layer for the ProcessPatch service.
- * This layer captures the original native process functions before they can be
- * overwritten by any other patches.
+ * Role: Provides the "live" implementation Layer for the ProcessPatch service.
+ * Responsibilities:
+ *   - Defines the `Layer` that constructs the live `ProcessPatch` service.
+ *   - Captures the original native process functions before they can be
+ *     overwritten by other patches.
  */
 
 import { Config, Effect, Layer, LogLevel } from "effect";
-
-import Service from "./Service.js";
+import { ProcessPatch } from "./Service.js";
 
 /**
  * The live `Layer` for the `ProcessPatch.Service`.
- * It reads its configuration from the environment, with a default. The potential
- * `ConfigError` is caught and a default service implementation is provided,
- * ensuring the final layer has a `never` error channel.
+ *
+ * It reads its `AllowExit` configuration from the environment, with a safe
+ * default (`false`). Any potential `Config.Error` is caught, logged as a warning,
+ * and a default service implementation is provided. This ensures the final layer
+ * has a `never` error channel and the application can always start.
  */
-const Live: Layer.Layer<Service, never, never> = Layer.effect(
-	Service,
-	Effect.gen(function* (G) {
-		const allowExit = yield* G(Config.boolean("AllowExit"));
+const Live: Layer.Layer<ProcessPatch, never, never> = Layer.effect(
+	ProcessPatch,
+	Effect.gen(function* (Generator) {
+		const AllowExit = yield* Generator(Config.boolean("AllowExit"));
 		return {
 			NativeExit: process.exit.bind(process),
 			NativeCrash:
 				typeof process.crash === "function"
 					? process.crash.bind(process)
 					: undefined,
-			AllowExit: () => allowExit,
+			AllowExit: () => AllowExit,
 		};
 	}).pipe(
-		Effect.catchAll((error) =>
+		Effect.catchAll((Error) =>
 			Effect.log("Failed to load ProcessPatch config, using defaults.", {
-				error,
-				logLevel: LogLevel.Warning,
+				Error,
+				LogLevel: LogLevel.Warning,
 			}).pipe(
 				Effect.as({
 					NativeExit: process.exit.bind(process),
@@ -40,8 +42,7 @@ const Live: Layer.Layer<Service, never, never> = Layer.effect(
 						typeof process.crash === "function"
 							? process.crash.bind(process)
 							: undefined,
-					// Default to not allowing exit on error.
-					AllowExit: () => false,
+					AllowExit: () => false, // Default to not allowing exit on error.
 				}),
 			),
 		),

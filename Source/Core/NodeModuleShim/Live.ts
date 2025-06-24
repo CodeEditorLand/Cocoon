@@ -1,24 +1,22 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Live.ts
- *
- * This file provides the live implementation Layer for the NodeModuleShim service.
+ * Role: Provides the live implementation Layer for the NodeModuleShim service.
+ * Responsibilities:
+ *   - Defines the `Layer` that constructs the live `NodeModuleShim` service instance
+ *     and provides it with its necessary dependencies.
  */
 
 import { Layer } from "effect";
-
-import InitDataService from "../../Service/InitData/Service.js";
-import LogService from "../../Service/Log/Service.js";
-import Definition from "./Definition.js";
-import NodeModuleShimService from "./Service.js";
+import { Definition } from "./Definition.js";
+import { NodeModuleShim } from "./Service.js";
+import { InitData } from "../../Service/InitData/Service.js";
+import { Logger } from "../../Service/Log/Service.js";
 
 /**
- * The live implementation Layer for the NodeModuleShim service.
- * It correctly declares its dependencies on Log and InitData services.
+ * The live implementation `Layer` for the `NodeModuleShim` service.
+ * It correctly declares its dependencies on `Logger` and `InitData` services.
  */
-const Live: Layer.Layer<
-	NodeModuleShimService,
-	never,
-	LogService | InitDataService
-> = Layer.effect(NodeModuleShimService, Definition);
+const Live: Layer.Layer<NodeModuleShim, never, Logger | InitData> =
+	Layer.effect(NodeModuleShim, Definition);
 
 export default Live;

@@ -1,156 +1,78 @@
 /*
  * File: Cocoon/Source/Service/Command/Definition.ts
- *
- * This file contains the live implementation of the Command service.
+ * Role: Provides the live implementation of the Command service.
+ * Responsibilities:
+ *   - This module directly instantiates the canonical `ExtHostCommands` class from
+ *     VS Code's source code, following the "Fidelity-First" pattern.
+ *   - It provides our Effect-native services (like `IPC` and `Log`) to the
+ *     constructor of `ExtHostCommands` to satisfy its dependencies.
  */
 
-import { Effect, Ref } from "effect";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable } from "vscode";
-
-import IPCService from "../IPC/Service.js";
-import TelemetryService from "../Telemetry/Service.js";
-import WindowService from "../Window/Service.js";
-import type Service from "./Service.js";
-import type { CommandHandler, CommandHandlerEntry } from "./Type.js";
+import { Effect } from "effect";
+import { ExtHostCommands } from "vs/workbench/api/node/extHostCommands.js";
+import { MainContext } from "vs/workbench/api/common/extHost.protocol.js";
+import { ILogService } from "vs/platform/log/common/log.js";
+import { IExtHostRpcService } from "vs/workbench/api/common/extHostRpcService.js";
+import { IPC } from "../IPC/Service.js";
+import { Logger } from "../Log/Service.js";
+import { ExtensionHost } from "../../Core/ExtensionHost/Service.js";
 
 /**
- * An Effect that builds the live implementation of the Command service.
+ * An `Effect` that builds the live implementation of the `Command` service.
+ *
+ * This definition demonstrates the "Fidelity-First" pattern by creating an
+ * instance of the original `ExtHostCommands` class from VS Code's source.
+ * We adapt our `IPC.Service` to the `IExtHostRpcService` interface that the
+ * constructor expects.
  */
-export default Effect.gen(function* (G) {
-	const IPC = yield* G(IPCService);
-	const Telemetry = yield* G(TelemetryService);
-	const Window = yield* G(WindowService);
+const Definition = Effect.gen(function* (Generator) {
+	const IPCService = yield* Generator(IPC);
+	const LogService = yield* Generator(Logger);
+	const ExtensionHostService = yield* Generator(ExtensionHost);
 
-	const CommandRegistryRef = yield* G(
-		Ref.make(new Map<string, CommandHandlerEntry>()),
+	/**
+	 * An adapter that makes our `IPC.Service` conform to the `IExtHostRpcService`
+	 * interface expected by VS Code's services.
+	 */
+	const RpcServiceAdapter: IExtHostRpcService = {
+		_serviceBrand: undefined,
+		getProxy: <T>(identifier: any): T => {
+			// `getProxy` is used to create a proxy to a MainThread service.
+			// Our `IPC.Service` already provides a more generic `CreateProxy`.
+			// We assume the identifier's path is the channel name.
+			const channel = identifier.path;
+			return IPCService.CreateProxy(channel);
+		},
+		set: () => {
+			// This is for registering ExtHost parts, which we handle via Layers.
+			return {} as any;
+		},
+		dispose: () => {},
+	};
+
+	// The `ExtHostCommands` constructor expects the RPC proxy for `MainThreadCommands`.
+	const MainThreadCommandsProxy = RpcServiceAdapter.getProxy(
+		MainContext.MainThreadCommands,
 	);
 
-	const ExecuteCommandEffect = <T>(
-		ID: string,
-		...Arguments: any[]
-	): Effect.Effect<T, Error> =>
-		Effect.gen(function* (G) {
-			const Registry = yield* G(Ref.get(CommandRegistryRef));
-			const Entry = Registry.get(ID);
-			if (Entry) {
-				const { Handler, ThisArgument, Extension } = Entry;
-				return yield* G(
-					Effect.tryPromise({
-						try: () =>
-							Promise.resolve(
-								Handler.apply(ThisArgument, Arguments),
-							),
-						catch: (e) =>
-							new Error(`Command '${ID}' execution failed: ${e}`),
-					}).pipe(
-						Effect.catchAll((e) =>
-							Effect.sync(() =>
-								Telemetry.onExtensionError(
-									Extension.identifier,
-									e,
-								),
-							).pipe(Effect.andThen(Effect.fail(e))),
-						),
-					),
-				);
-			}
+	// Instantiate the original VS Code class, providing our services as dependencies.
+	const ServiceInstance = new ExtHostCommands(
+		RpcServiceAdapter,
+		MainThreadCommandsProxy,
+		LogService,
+	);
 
-			const Result = yield* G(
-				IPC.SendRequest("$executeCommand", [ID, ...Arguments]).pipe(
-					Effect.mapError((cause) => new Error(String(cause))),
-				),
-			);
-			return Result as T;
-		});
+	// The `ExtHostCommands` class has an `$onExtensionActivated` method that needs
+	// to be connected to our `ExtensionHost` service. This is a crucial part of
+	// adapting the original class to our system.
+	Effect.runFork(
+		ExtensionHostService.OnDidActivateExtension((Extension) =>
+			// @ts-expect-error - This is a private method we are calling for integration.
+			ServiceInstance.$onExtensionActivated(Extension),
+		),
+	);
 
-	const RegisterCommand = (
-		ID: string,
-		Handler: CommandHandler,
-		IsTextEditorCommand: boolean,
-		ThisArgument?: any,
-		Extension?: IExtensionDescription,
-	) => {
-		const Entry: CommandHandlerEntry = {
-			Handler,
-			ThisArgument,
-			Extension: Extension!,
-			IsTextEditorCommand,
-		};
-		const RegisterEffect = Ref.update(CommandRegistryRef, (map) =>
-			map.set(ID, Entry),
-		).pipe(
-			Effect.flatMap(() =>
-				IPC.SendNotification("$registerCommand", [ID]),
-			),
-		);
-		Effect.runFork(RegisterEffect);
-
-		return new Disposable(() => {
-			const UnregisterEffect = Ref.update(
-				CommandRegistryRef,
-				(map) => (map.delete(ID), map),
-			).pipe(
-				Effect.flatMap(() =>
-					IPC.SendNotification("$unregisterCommand", [ID]),
-				),
-			);
-			Effect.runFork(UnregisterEffect);
-		});
-	};
-
-	const ServiceImplementation: Service["Type"] = {
-		ExecuteCommand: ExecuteCommandEffect,
-		RegisterCommand: (ID, Handler, ThisArgument, Extension) => {
-			return RegisterCommand(ID, Handler, false, ThisArgument, Extension);
-		},
-		RegisterTextEditorCommand: (ID, Handler, ThisArgument, Extension) => {
-			const WrappedHandler: CommandHandler = (...args: any[]) => {
-				const Editor = Window.activeTextEditor;
-				if (!Editor) {
-					console.warn(
-						`Cannot execute text editor command "${ID}" without an active text editor.`,
-					);
-					return;
-				}
-				// The `edit` method on TextEditor is Promise-based.
-				return Editor.edit((editBuilder) => {
-					Handler(Editor, editBuilder, ...args);
-				});
-			};
-			return RegisterCommand(
-				ID,
-				WrappedHandler,
-				true,
-				ThisArgument,
-				Extension,
-			);
-		},
-		GetCommands: (FilterInternal = false) =>
-			IPC.SendRequest<string[]>("$getCommands", []).pipe(
-				Effect.mapError((cause) => new Error(String(cause))),
-				Effect.flatMap((RemoteCommands) =>
-					Ref.get(CommandRegistryRef).pipe(
-						Effect.map((LocalRegistry) => {
-							const LocalCommands = Array.from(
-								LocalRegistry.keys(),
-							);
-							const AllCommands = [
-								...new Set([
-									...RemoteCommands,
-									...LocalCommands,
-								]),
-							];
-							return FilterInternal
-								? AllCommands.filter(
-										(cmd) => !cmd.startsWith("_"),
-									)
-								: AllCommands;
-						}),
-					),
-				),
-			),
-	};
-
-	return ServiceImplementation;
+	return ServiceInstance;
 });
+
+export default Definition;

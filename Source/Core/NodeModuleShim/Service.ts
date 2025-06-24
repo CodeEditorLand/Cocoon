@@ -1,39 +1,38 @@
 /*
  * File: Cocoon/Source/Core/NodeModuleShim/Service.ts
- *
- * This file defines the interface and Context.Tag for the NodeModuleShim service.
- * This service is responsible for intercepting requests for built-in Node.js
- * modules, blocking some and providing safe shims for others.
+ * Role: Defines the interface and Effect.Service for the NodeModuleShim service.
+ * Responsibilities:
+ *   - Declare the contract for the service that intercepts requests for built-in
+ *     Node.js modules, blocking some and providing safe shims for others.
+ *   - Provide the `Effect.Service` class for dependency injection.
  */
 
-import { Context, Exit } from "effect";
+import { Exit } from "effect";
 import type { Uri } from "vscode";
-
-import type ModuleBlockedError from "./Error/ModuleBlockedError.js";
-import type ModuleNotShimmedError from "./Error/ModuleNotShimmedError.js";
+import type { ModuleBlockedProblem } from "./Error.js";
+import type { ModuleNotShimmedProblem } from "./Error.js";
 
 /**
- * Defines the service interface for the NodeModuleShim.
+ * The `Effect.Service` for the `NodeModuleShim`.
+ *
+ * This service is a critical part of the sandbox, ensuring that extensions cannot
+ * access sensitive Node.js APIs directly, forcing them to use the provided
+ * `vscode.*` APIs instead.
  */
-export interface NodeModuleShim {
+export class NodeModuleShim extends Effect.Service<NodeModuleShim>(
+	"Core/NodeModuleShim",
+)<{
 	/**
 	 * Synchronously loads a shim for a requested built-in Node.js module.
 	 * This method must be synchronous to be compatible with `require`.
 	 *
-	 * @param Request The name of the module being requested (e.g., 'fs', 'node:os').
-	 * @param ParentURI The URI of the file that made the `require` call.
+	 * @param Request - The name of the module being requested (e.g., 'fs', 'node:os').
+	 * @param ParentURI - The URI of the file that made the `require` call.
 	 * @returns An `Exit` that contains the shimmed module on success, or a
-	 *   `ModuleBlockedError` or `ModuleNotShimmedError` on failure.
+	 *   `ModuleBlockedProblem` or `ModuleNotShimmedProblem` on failure.
 	 */
 	readonly Load: (
 		Request: string,
 		ParentURI?: Uri,
-	) => Exit.Exit<any, ModuleBlockedError | ModuleNotShimmedError>;
-}
-
-export class NodeModuleShimService extends Context.Tag("Core/NodeModuleShim")<
-	NodeModuleShimService,
-	NodeModuleShim
->() {}
-
-export default NodeModuleShimService;
+	) => Exit.Exit<any, ModuleBlockedProblem | ModuleNotShimmedProblem>;
+}>() {}

@@ -1,48 +1,54 @@
-/**
- * @module Live (APIFactory)
- * @description The live implementation `Layer` for the `APIFactory` service.
+/*
+ * File: Cocoon/Source/Core/APIFactory/Live.ts
+ * Role: Provides the "live" implementation Layer for the APIFactory service.
+ * Responsibilities:
+ *   - This module defines the `Layer` that constructs the live `APIFactory` service,
+ *     providing it with all of its necessary service dependencies.
  */
 
 import { Layer } from "effect";
-
-import APIDeprecationService from "../../Service/APIDeprecation/Service.js";
-import CommandService from "../../Service/Command/Service.js";
-import DebugService from "../../Service/Debug/Service.js";
-import DocumentService from "../../Service/Document/Service.js";
-import ExtensionService from "../../Service/Extension/Service.js";
-import LanguageFeatureService from "../../Service/LanguageFeature/Service.js";
-import LogService from "../../Service/Log/Service.js";
-import ProposedAPIService from "../../Service/ProposedAPI/Service.js";
-import StatusBarService from "../../Service/StatusBar/Service.js";
-import TaskService from "../../Service/Task/Service.js";
-import TreeViewService from "../../Service/TreeView/Service.js";
-import WebViewPanelService from "../../Service/WebViewPanel/Service.js";
-import WindowService from "../../Service/Window/Service.js";
-import WorkSpaceService from "../../Service/WorkSpace/Service.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
+import { APIDeprecation } from "../../Service/APIDeprecation/Service.js";
+import { Command } from "../../Service/Command/Service.js";
+import { Debug } from "../../Service/Debug/Service.js";
+import { Document } from "../../Service/Document/Service.js";
+import { Extension } from "../../Service/Extension/Service.js";
+import { LanguageFeature } from "../../Service/LanguageFeature/Service.js";
+import { Logger } from "../../Service/Log/Service.js";
+import { ProposedAPI } from "../../Service/ProposedAPI/Service.js";
+import { StatusBar } from "../../Service/StatusBar/Service.js";
+import { Task } from "../../Service/Task/Service.js";
+import { TreeView } from "../../Service/TreeView/Service.js";
+import { WebViewPanel } from "../../Service/WebViewPanel/Service.js";
+import { Window } from "../../Service/Window/Service.js";
+import { Workspace } from "../../Service/WorkSpace/Service.js";
+import { Definition } from "./Definition.js";
+import { APIFactory } from "./Service.js";
 
 /**
  * The live implementation `Layer` for the `APIFactory` service.
- * It provides all the necessary service layers required by the `Definition`.
+ *
+ * It uses `Layer.effect` to construct the service from its `Definition`.
+ * The dependencies listed in the third type parameter represent the "world"
+ * of services that must be available in the context for this layer to be built.
+ * This is a high-level service that depends on nearly every other application service.
  */
 const Live: Layer.Layer<
-	Service,
+	APIFactory,
 	never,
-	| LogService
-	| ProposedAPIService
-	| APIDeprecationService
-	| CommandService
-	| WorkSpaceService
-	| DocumentService
-	| WindowService
-	| LanguageFeatureService
-	| DebugService
-	| TaskService
-	| ExtensionService
-	| WebViewPanelService
-	| TreeViewService
-	| StatusBarService
-> = Layer.effect(Service, Definition);
+	| Logger
+	| ProposedAPI
+	| APIDeprecation
+	| Command
+	| Workspace
+	| Document
+	| Window
+	| LanguageFeature
+	| Debug
+	| Task
+	| Extension
+	| WebViewPanel
+	| TreeView
+	| StatusBar
+> = Layer.effect(APIFactory, Definition);
 
 export default Live;

@@ -1,26 +1,24 @@
 /*
  * File: Cocoon/Source/Service/Command/Live.ts
- *
- * This file provides the live implementation Layer for the Command service, managing
- * command registration and execution.
+ * Role: Provides the "live" implementation Layer for the Command service.
+ * Responsibilities:
+ *   - Defines the `Layer` that constructs the live `Command` service
+ *     and provides it with its necessary dependencies.
  */
 
 import { Layer } from "effect";
-
-import IPCService from "../IPC/Service.js";
-import TelemetryService from "../Telemetry/Service.js";
-import WindowService from "../Window/Service.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
+import { Definition } from "./Definition.js";
+import { Command } from "./Service.js";
+import { IPC } from "../IPC/Service.js";
+import { Logger } from "../Log/Service.js";
+import { ExtensionHost } from "../../Core/ExtensionHost/Service.js";
 
 /**
- * The live implementation Layer for the Command service.
- * It depends on the IPC, Telemetry, and Window services.
+ * The live implementation `Layer` for the `Command` service.
+ * It depends on `IPC`, `Logger`, and now `ExtensionHost` to correctly
+ * instantiate the original `ExtHostCommands` class.
  */
-const Live: Layer.Layer<
-	Service,
-	never,
-	IPCService | TelemetryService | WindowService
-> = Layer.effect(Service, Definition);
+const Live: Layer.Layer<Command, never, IPC | Logger | ExtensionHost> =
+	Layer.effect(Command, Definition);
 
 export default Live;

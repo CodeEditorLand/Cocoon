@@ -1,22 +1,20 @@
 /*
  * File: Cocoon/Source/Service/Debug/Live.ts
- *
- * This file provides the `Live` implementation Layer for the Debug service.
+ * Role: Provides the "live" implementation Layer for the Debug service.
+ * Responsibilities:
+ *   - This module defines the `Layer` that constructs the live `Debug` service
+ *     and provides it with its necessary dependencies.
  */
 
 import { Layer } from "effect";
-
-import IPCService from "../IPC/Service.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
+import { Definition } from "./Definition.js";
+import { Debug } from "./Service.js";
+import { IPC } from "../IPC/Service.js";
 
 /**
- * The live implementation Layer for the Debug service.
- * It depends on the IPC service.
+ * The live implementation `Layer` for the `Debug` service.
+ * It depends on the `IPC` service for communication with the host.
  */
-const Live: Layer.Layer<Service, never, IPCService> = Layer.effect(
-	Service,
-	Definition,
-);
+const Live: Layer.Layer<Debug, never, IPC> = Layer.effect(Debug, Definition);
 
 export default Live;

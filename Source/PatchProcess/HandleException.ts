@@ -1,30 +1,32 @@
 /*
  * File: Cocoon/Source/PatchProcess/HandleException.ts
- *
- * This file contains an Effect that sets up global handlers for uncaught exceptions
- * and unhandled promise rejections, reporting them to the Mountain host process.
+ * Role: Sets up global handlers for uncaught exceptions and unhandled promise rejections.
+ * Responsibilities:
+ *   - Attaches listeners to `process.on('uncaughtException', ...)` and
+ *     `process.on('unhandledRejection', ...)` to act as a final safety net.
+ *   - Reports any captured errors to the Mountain host process via IPC for logging.
  */
 
 import { Effect } from "effect";
-
-import IPCService from "../Service/IPC/Service.js";
+import { IPC } from "../Service/IPC/Service.js";
 
 /**
- * An Effect that attaches listeners to the Node.js `process` object.
- * This serves as a final safety net to ensure that errors are captured and logged.
+ * An `Effect` that attaches global exception handlers to the Node.js `process`.
+ * It depends on the `IPC` service to forward captured errors to the host.
  */
-const HandleExceptionEffect = Effect.gen(function* (G) {
+export const HandleException = Effect.gen(function* (Generator) {
+	// VS Code can optionally manage this itself through its RPC protocol.
 	if (process.env["VSCODE_HANDLES_UNCAUGHT_ERRORS"] === "true") {
-		return yield* G(
+		return yield* Generator(
 			Effect.logTrace(
 				"Skipping global exception handler setup; will be handled by RPC protocol.",
 			),
 		);
 	}
 
-	const IPC = yield* G(IPCService);
+	const IPCService = yield* Generator(IPC);
 
-	const LogError = (Type: string, CaughtError: any) => {
+	const LogError = (Type: string, CaughtError: unknown) => {
 		const Message =
 			CaughtError instanceof Error
 				? CaughtError.stack || CaughtError.message
@@ -36,11 +38,12 @@ const HandleExceptionEffect = Effect.gen(function* (G) {
 			arguments: `[${Type}] ${Message}`,
 		};
 
-		return IPC.SendNotification("$log", [Payload]).pipe(
+		return IPCService.SendNotification("$log", [Payload]).pipe(
 			Effect.catchAll((ErrorValue) =>
+				// If we can't even send the error to the host, log to stderr as a last resort.
 				Effect.sync(() =>
 					console.error(
-						`[HandleException] Failed to send error to host: ${ErrorValue}`,
+						`[HandleException] FATAL: Failed to send error to host: ${ErrorValue}`,
 						Payload,
 					),
 				),
@@ -56,7 +59,5 @@ const HandleExceptionEffect = Effect.gen(function* (G) {
 		Effect.runFork(LogError("unhandledRejection", Reason));
 	});
 
-	yield* G(Effect.logTrace("Global exception handlers installed."));
+	yield* Generator(Effect.logTrace("Global exception handlers installed."));
 });
-
-export default HandleExceptionEffect;

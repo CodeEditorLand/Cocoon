@@ -1,21 +1,22 @@
 /*
  * File: Cocoon/Source/Service/APIDeprecation/Live.ts
- *
- * This file provides the live implementation `Layer` for the APIDeprecation service.
+ * Role: Provides the "live" implementation Layer for the APIDeprecation service.
+ * Responsibilities:
+ *   - Defines the `Layer` that constructs the live `APIDeprecation` service
+ *     and provides it with its necessary dependencies.
  */
 
 import { Layer } from "effect";
-
-import type LogService from "../Log/Service.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
+import { Definition } from "./Definition.js";
+import { APIDeprecation } from "./Service.js";
+import { Logger } from "../Log/Service.js";
 
 /**
- * The live implementation Layer for the APIDeprecation service.
- * It correctly declares its dependency on the Log service.
+ * The live implementation `Layer` for the `APIDeprecation` service.
+ * It correctly declares its dependency on the `Logger` service.
  */
-const Live: Layer.Layer<Service, never, LogService> = Layer.effect(
-	Service,
+const Live: Layer.Layer<APIDeprecation, never, Logger> = Layer.effect(
+	APIDeprecation,
 	Definition,
 );
 

@@ -1,54 +1,55 @@
 /*
  * File: Cocoon/Source/PatchProcess.ts
- *
- * This file defines the main orchestrator `Effect` that composes all individual
- * process-level patches. This should be one of the very first `Effect`s run at
- * application startup to ensure the Node.js environment is stable and secure.
+ * Role: Main Orchestrator for Process-Level Patches
+ * Responsibilities:
+ *   - This file defines the main orchestrator `Effect` that composes and applies
+ *     all individual process-level patches at application startup.
+ *   - It ensures the Node.js environment is stable, secure, and properly
+ *     configured before any extension code is loaded.
  */
 
 import { Effect, Layer } from "effect";
 
-import BlockNativesModuleEffect from "./PatchProcess/BlockNativesModule.js";
-import HandleExceptionEffect from "./PatchProcess/HandleException.js";
-import ProcessPatchLive from "./PatchProcess/Live.js";
-import PatchProcessCrashEffect from "./PatchProcess/PatchProcessCrash.js";
-import PatchProcessExitEffect from "./PatchProcess/PatchProcessExit.js";
-import PipeLoggingEffect from "./PatchProcess/PipeLogging.js";
-import SetElectronRunAsNodeEffect from "./PatchProcess/SetElectronRunAsNode.js";
-import SetStackTraceLimitEffect from "./PatchProcess/SetStackTraceLimit.js";
-import SetupEnvironmentEffect from "./PatchProcess/SetupEnvironment.js";
-import TerminateOnParentExitEffect from "./PatchProcess/TerminateOnParentExit.js";
+import { BlockNativesModule } from "./PatchProcess/BlockNativesModule.js";
+import { HandleException } from "./PatchProcess/HandleException.js";
+import { Live as ProcessPatchLive } from "./PatchProcess/Live.js";
+import { PatchProcessCrash } from "./PatchProcess/PatchProcessCrash.js";
+import { PatchProcessExit } from "./PatchProcess/PatchProcessExit.js";
+import { PipeLogging } from "./PatchProcess/PipeLogging.js";
+import { SetElectronRunAsNode } from "./PatchProcess/SetElectronRunAsNode.js";
+import { SetStackTraceLimit } from "./PatchProcess/SetStackTraceLimit.js";
+import { SetupEnvironment } from "./PatchProcess/SetupEnvironment.js";
+import { TerminateOnParentExit } from "./PatchProcess/TerminateOnParentExit.js";
 
 /**
- * A layer that provides the necessary services for the patching process.
- * This includes the ProcessPatchService itself, which other patches depend on.
+ * A `Layer` that provides the necessary services for the patching process.
+ * This includes the `ProcessPatch` service itself, which other patches depend on.
  */
 const PatchLayer = Layer.mergeAll(ProcessPatchLive);
 
 /**
- * The main orchestrator `Effect` that composes all individual process-level patches.
+ * The main orchestrator `Effect` for applying all core process patches.
  *
- * It runs all patches concurrently where possible and ensures that the Node.js
- * environment is stable, secure, and properly configured before any extension
- * code is loaded.
+ * It runs all patches concurrently where possible, providing them with their
+ * required services via the `PatchLayer`. This `Effect` should be one of the
+ * very first to run at application startup.
  */
-export default Effect.gen(function* (G) {
-	// All patches are now simple effects that declare their own dependencies.
-	// The runtime will provide the necessary services via layers.
+export const RunProcessPatch = Effect.gen(function* (Generator) {
+	// A list of all patch effects to be applied.
 	const AllPatches = [
-		PatchProcessCrashEffect,
-		PatchProcessExitEffect,
-		SetStackTraceLimitEffect,
-		SetupEnvironmentEffect,
-		SetElectronRunAsNodeEffect,
-		BlockNativesModuleEffect,
-		PipeLoggingEffect,
-		HandleExceptionEffect,
-		TerminateOnParentExitEffect,
+		PatchProcessCrash,
+		PatchProcessExit,
+		SetStackTraceLimit,
+		SetupEnvironment,
+		SetElectronRunAsNode,
+		BlockNativesModule,
+		PipeLogging,
+		HandleException,
+		TerminateOnParentExit,
 	];
 
 	// Run all patches concurrently, providing them with their required services.
-	yield* G(
+	yield* Generator(
 		Effect.all(AllPatches, {
 			discard: true,
 			concurrency: "unbounded",

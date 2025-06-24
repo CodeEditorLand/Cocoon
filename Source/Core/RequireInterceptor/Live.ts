@@ -1,29 +1,28 @@
 /*
  * File: Cocoon/Source/Core/RequireInterceptor/Live.ts
- *
- * This file provides the live implementation layer for the RequireInterceptor service.
+ * Role: Provides the "live" implementation Layer for the RequireInterceptor service.
+ * Responsibilities:
+ *   - Defines the `Layer` that constructs the live `RequireInterceptor` service
+ *     and provides it with its necessary dependencies.
  */
 
 import { Layer } from "effect";
-
-import type LogService from "../../Service/Log/Service.js";
-import type APIFactoryService from "../APIFactory/Service.js";
-import type ExtensionPathService from "../ExtensionPath/Service.js";
-import NodeModuleShimService from "../NodeModuleShim/Service.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
+import { Definition } from "./Definition.js";
+import { RequireInterceptor } from "./Service.js";
+import { Logger } from "../../Service/Log/Service.js";
+import { APIFactory } from "../APIFactory/Service.js";
+import { ExtensionPath } from "../ExtensionPath/Service.js";
+import { NodeModuleShim } from "../NodeModuleShim/Service.js";
 
 /**
- * The live implementation layer for the RequireInterceptor service.
- * It correctly declares its dependencies on APIFactory, ExtensionPath, NodeModuleShim, and Log services.
+ * The live implementation `Layer` for the `RequireInterceptor` service.
+ * It correctly declares its dependencies on `APIFactory`, `ExtensionPath`,
+ * `NodeModuleShim`, and `Logger` services.
  */
 const Live: Layer.Layer<
-	Service,
+	RequireInterceptor,
 	never,
-	| APIFactoryService
-	| ExtensionPathService
-	| NodeModuleShimService
-	| LogService
-> = Layer.effect(Service, Definition);
+	APIFactory | ExtensionPath | NodeModuleShim | Logger
+> = Layer.effect(RequireInterceptor, Definition);
 
 export default Live;

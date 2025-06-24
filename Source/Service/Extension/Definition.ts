@@ -1,6 +1,9 @@
-/**
- * @module Definition (Extension)
- * @description The live implementation of the Extension service.
+/*
+ * File: Cocoon/Source/Service/Extension/Definition.ts
+ * Role: The live implementation of the Extension service.
+ * Responsibilities:
+ *   - Implements the `vscode.extensions` API namespace.
+ *   - Manages access to extension descriptions and activation states.
  */
 
 import { Effect, Option, Ref } from "effect";
@@ -11,51 +14,47 @@ import {
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { Extension } from "vscode";
 
-import CreateAPIObject from "../../Core/Extension/CreateAPIObject.js";
-import ExtensionHostService from "../../Core/ExtensionHost/Service.js";
-import CreateEventStream from "../../Utility/CreateEventStream.js";
-import InitDataService from "../InitData/Service.js";
-import type Service from "./Service.js";
+import { ExtensionHost } from "../../Core/ExtensionHost/Service.js";
+import { InitData } from "../InitData/Service.js";
+import { CreateEventStream } from "../../Utility/CreateEventStream.js";
+import { CreateAPIObject } from "../../Core/Extension/CreateAPIObject.js";
+import type { Extension as ExtensionService } from "./Service.js";
 
 /**
- * An Effect that builds the live implementation of the Extension service,
-
- * which corresponds to the `vscode.extensions` API namespace.
+ * An `Effect` that builds the live implementation of the `Extension` service.
  */
-export default Effect.gen(function* () {
-	const ExtensionHost = yield* ExtensionHostService;
-
-	const InitData = yield* InitDataService;
+const Definition = Effect.gen(function* (Generator) {
+	const ExtensionHostService = yield* Generator(ExtensionHost);
+	const InitDataService = yield* Generator(InitData);
 
 	const { event: OnDidChangeEvent } = CreateEventStream<void>();
 
-	const AllExtensionsCache = yield* Ref.make<
-		Option.Option<readonly Extension<any>[]>
-	>(Option.none());
+	// A cache to avoid repeatedly creating API objects for `GetAll`.
+	const AllExtensionsCache = yield* Generator(
+		Ref.make<Option.Option<readonly Extension<any>[]>>(Option.none()),
+	);
 
 	const ActivationEventsReader: IActivationEventsReader = {
-		readActivationEvents: (description) =>
-			ImplicitActivationEvents.readActivationEvents(description),
+		readActivationEvents: (Description) =>
+			ImplicitActivationEvents.readActivationEvents(Description),
 	};
 
 	const ExtensionRegistry = new ExtensionDescriptionRegistry(
 		ActivationEventsReader,
-
-		InitData.extensions.allExtensions,
+		InitDataService.extensions.allExtensions,
 	);
 
-	const ServiceImplementation: Service["Type"] = {
+	const ServiceImplementation: ExtensionService["Type"] = {
 		onDidChange: OnDidChangeEvent,
 
-		GetExtension: <T>(extensionId: string) =>
+		GetExtension: <T>(ExtensionId: string) =>
 			Effect.succeed(
-				ExtensionRegistry.getExtensionDescription(extensionId),
+				ExtensionRegistry.getExtensionDescription(ExtensionId),
 			).pipe(
 				Effect.map(Option.fromNullable),
-
 				Effect.map(
-					Option.map((description) =>
-						CreateAPIObject<T>(description, ExtensionHost),
+					Option.map((Description) =>
+						CreateAPIObject<T>(Description, ExtensionHostService),
 					),
 				),
 			),
@@ -64,47 +63,49 @@ export default Effect.gen(function* () {
 			Ref.get(AllExtensionsCache).pipe(
 				Effect.flatMap(
 					Option.match({
-						onSome: (cache) => Effect.succeed(cache),
-
+						onSome: (Cache) => Effect.succeed(Cache),
 						onNone: () =>
-							Effect.gen(function* () {
-								const descriptions =
+							Effect.gen(function* (Generator) {
+								const Descriptions =
 									ExtensionRegistry.getAllExtensionDescriptions();
-
-								const newCache = descriptions.map((desc) =>
-									CreateAPIObject<any>(desc, ExtensionHost),
+								const NewCache = Descriptions.map(
+									(Description) =>
+										CreateAPIObject<any>(
+											Description,
+											ExtensionHostService,
+										),
 								);
-
-								yield* Ref.set(
-									AllExtensionsCache,
-
-									Option.some(newCache),
+								yield* Generator(
+									Ref.set(
+										AllExtensionsCache,
+										Option.some(NewCache),
+									),
 								);
-
-								return newCache;
+								return NewCache;
 							}),
 					}),
 				),
 			),
 
-		Activate: <T>(extensionId: string) =>
-			Effect.gen(function* () {
-				const maybeExtension =
-					yield* ServiceImplementation.GetExtension<T>(extensionId);
-
-				if (Option.isNone(maybeExtension)) {
-					return yield* Effect.fail(
-						new Error(`Extension '${extensionId}' not found.`),
+		Activate: <T>(ExtensionId: string) =>
+			Effect.gen(function* (Generator) {
+				const MaybeExtension = yield* Generator(
+					ServiceImplementation.GetExtension<T>(ExtensionId),
+				);
+				if (Option.isNone(MaybeExtension)) {
+					return yield* Generator(
+						Effect.fail(
+							new Error(`Extension '${ExtensionId}' not found.`),
+						),
 					);
 				}
-
-				const extension = maybeExtension.value;
-
-				yield* Effect.promise(() => extension.activate());
-
-				return extension;
+				const TheExtension = MaybeExtension.value;
+				yield* Generator(Effect.promise(() => TheExtension.activate()));
+				return TheExtension;
 			}),
 	};
 
 	return ServiceImplementation;
 });
+
+export default Definition;

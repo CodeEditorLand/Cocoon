@@ -1,35 +1,40 @@
 /*
  * File: Cocoon/Source/PatchProcess/BlockNativesModule.ts
- *
- * This file contains an Effect that patches Node.js's internal module loader to
- * block the loading of the deprecated 'natives' module.
+ * Role: Provides an Effect to block the deprecated 'natives' Node.js module.
+ * Responsibilities:
+ *   - Monkey-patches `Module._load` to throw an error if an extension
+ *     attempts to `require('natives')`, preventing use of this outdated and
+ *     unsupported module.
  */
 
 import * as Module from "node:module";
 import { Data, Effect } from "effect";
 
-class ModulePatchError extends Data.TaggedError("ModulePatchError")<{
-	readonly context: string;
-	readonly cause?: unknown;
+/**
+ * A tagged error for failures during the patching of the Node.js module loader.
+ */
+class ModulePatchProblem extends Data.TaggedError("ModulePatchProblem")<{
+	readonly Context: string;
+	readonly Cause?: unknown;
 }> {
 	constructor(Properties: {
-		readonly context: string;
-		readonly cause?: unknown;
+		readonly Context: string;
+		readonly Cause?: unknown;
 	}) {
 		super(Properties);
-		this.message = `Failed to patch Node.js module loader: ${this.context}`;
+		this.message = `Failed to patch Node.js module loader: ${this.Context}`;
 	}
 	public override readonly message: string;
 }
 
 /**
- * An Effect that, when executed, monkey-patches `Module._load` to throw an
+ * An `Effect` that, when executed, monkey-patches `Module._load` to throw an
  * error if an extension attempts to `require('natives')`.
  *
  * @returns An `Effect` that resolves when the patch is applied, or fails with a
- *   `ModulePatchError`.
+ *   `ModulePatchProblem`.
  */
-const BlockNativesModuleEffect = Effect.try({
+export const BlockNativesModule = Effect.try({
 	try: () => {
 		if (typeof (Module as any)._load === "function") {
 			const OriginalLoad = (Module as any)._load;
@@ -52,15 +57,13 @@ const BlockNativesModuleEffect = Effect.try({
 			);
 		}
 	},
-	catch: (cause) =>
-		new ModulePatchError({
-			context: "Failed during 'natives' block setup.",
-			cause,
+	catch: (Cause) =>
+		new ModulePatchProblem({
+			Context: "Failed during 'natives' block setup.",
+			Cause,
 		}),
 }).pipe(
 	Effect.tap(() =>
 		Effect.logTrace("Module._load patched to block 'natives' module."),
 	),
 );
-
-export default BlockNativesModuleEffect;

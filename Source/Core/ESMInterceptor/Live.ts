@@ -1,24 +1,27 @@
-/**
- * @module Live (ESMInterceptor)
- * @description The live implementation layer for the ESMInterceptor service.
+/*
+ * File: Cocoon/Source/Core/ESMInterceptor/Live.ts
+ * Role: Provides the "live" implementation Layer for the ESMInterceptor service.
+ * Responsibilities:
+ *   - Defines the `Layer` that constructs the live `ESMInterceptor` service
+ *     and provides it with its necessary dependencies.
  */
 
 import { Layer } from "effect";
-
-import type LogService from "../../Service/Log/Service.js";
-import type APIFactoryService from "../APIFactory/Service.js";
-import type ExtensionPathService from "../ExtensionPath/Service.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
+import { Definition } from "./Definition.js";
+import { ESMInterceptor } from "./Service.js";
+import { APIFactory } from "../APIFactory/Service.js";
+import { ExtensionPath } from "../ExtensionPath/Service.js";
+import { Logger } from "../../Service/Log/Service.js";
 
 /**
- * The live implementation layer for the ESMInterceptor service.
- * It correctly declares its dependencies on the APIFactory, ExtensionPath, and Log services.
+ * The live implementation `Layer` for the `ESMInterceptor` service.
+ * It correctly declares its dependencies on the `APIFactory`, `ExtensionPath`,
+ * and `Logger` services.
  */
 const Live: Layer.Layer<
-	Service,
+	ESMInterceptor,
 	never,
-	APIFactoryService | ExtensionPathService | LogService
-> = Layer.effect(Service, Definition);
+	APIFactory | ExtensionPath | Logger
+> = Layer.effect(ESMInterceptor, Definition);
 
 export default Live;

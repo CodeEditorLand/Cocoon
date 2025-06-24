@@ -1,21 +1,22 @@
 /*
  * File: Cocoon/Source/Core/HostKindPicker/Live.ts
- *
- * This file provides the `Live` implementation Layer for the HostKindPicker service.
+ * Role: Provides the "live" implementation Layer for the HostKindPicker service.
+ * Responsibilities:
+ *   - Defines the `Layer` that constructs the live `HostKindPicker` service
+ *     and provides it with its necessary dependencies.
  */
 
 import { Layer } from "effect";
-
-import type LogService from "../../Service/Log/Service.js";
-import Definition from "./Definition.js";
-import Service from "./Service.js";
+import { Definition } from "./Definition.js";
+import { HostKindPicker } from "./Service.js";
+import { Logger } from "../../Service/Log/Service.js";
 
 /**
- * The live implementation Layer for the HostKindPicker service.
- * It correctly declares its dependency on the Log service.
+ * The live implementation `Layer` for the `HostKindPicker` service.
+ * It correctly declares its dependency on the `Logger` service.
  */
-const Live: Layer.Layer<Service, never, LogService> = Layer.effect(
-	Service,
+const Live: Layer.Layer<HostKindPicker, never, Logger> = Layer.effect(
+	HostKindPicker,
 	Definition,
 );
 

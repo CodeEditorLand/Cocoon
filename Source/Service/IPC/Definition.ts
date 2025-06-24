@@ -1,125 +1,132 @@
 /*
  * File: Cocoon/Source/Service/IPC/Definition.ts
- *
- * This file provides the live implementation of the high-level `IPC.Service`.
- * This definition constructs the service by delegating to its underlying
- * dependencies for client communication and request dispatching.
+ * Role: Provides the live implementation of the high-level `IPC.Service`.
+ * Responsibilities:
+ *   - Constructs the service by composing its underlying dependencies: the gRPC
+ *     Client, the RPC Dispatcher, and the ProtocolAdapter.
  */
 
 import { Effect, Ref } from "effect";
-
-import ClientService from "./Client/Service.js";
-import DispatcherService from "./Dispatcher/Service.js";
-import IPCError from "./Error/IPCError.js";
-import Generated from "./Generated.js";
-import ProtocolAdapterService from "./ProtocolAdapter/Service.js";
-import DecodeValue from "./ProtoConverter/DecodeValue.js";
-import EncodeValue from "./ProtoConverter/EncodeValue.js";
-import ProtoSerializationError from "./ProtoConverter/Error/ProtoSerializationError.js";
-import type Service from "./Service.js";
+import { Proto } from "./Generated.js";
+import { IPCProblem } from "./Error.js";
+import { ProtoSerializationProblem } from "./ProtoConverter/Error.js";
+import { Client } from "./Client/Service.js";
+import { Dispatcher } from "./Dispatcher/Service.js";
+import { ProtocolAdapter } from "./ProtocolAdapter/Service.js";
+import { IPC } from "./Service.js";
+import { EncodeValue, DecodeValue } from "./ProtoConverter/mod.js";
 
 /**
  * An `Effect` that builds the live implementation of the `IPC.Service`.
  */
-export default Effect.gen(function* () {
-	const Client = yield* ClientService;
-	const Dispatcher = yield* DispatcherService;
-	const ProtocolAdapter = yield* ProtocolAdapterService;
+const Definition = Effect.gen(function* (Generator) {
+	const IPCClient = yield* Generator(Client);
+	const RPCDispatcher = yield* Generator(Dispatcher);
+	const ProtocolAdapterService = yield* Generator(ProtocolAdapter);
 
-	const RequestIDCounter = yield* Ref.make(1);
+	const RequestIDCounter = yield* Generator(Ref.make(1));
 
-	const SendRequest = <Res = unknown>(
+	const SendRequest = <ResponseType = unknown>(
 		Method: string,
 		Parameters: readonly unknown[],
 		_TimeoutMilliseconds?: number,
-	): Effect.Effect<Res, IPCError> =>
-		Effect.gen(function* () {
-			const RequestID = yield* Ref.getAndUpdate(
-				RequestIDCounter,
-				(n) => n + 1,
+	): Effect.Effect<ResponseType, IPCProblem> =>
+		Effect.gen(function* (Generator) {
+			const RequestID = yield* Generator(
+				Ref.getAndUpdate(RequestIDCounter, (n) => n + 1),
 			);
-			const EncodedParameter = yield* EncodeValue(Parameters);
-			const RequestMessage = new Generated.GenericRequest();
+			const EncodedParameter = yield* Generator(EncodeValue(Parameters));
+			const RequestMessage = new Proto.GenericRequest();
 			RequestMessage.setRequestid(RequestID);
 			RequestMessage.setMethod(Method);
 			RequestMessage.setParams(EncodedParameter);
-			const ResponseMessage = (yield* Effect.tryPromise({
-				try: () => Client.processCocoonRequest(RequestMessage),
-				catch: (cause) =>
-					new IPCError({
-						cause,
-						context: `gRPC request '${Method}' failed.`,
-					}),
-			})) as typeof Generated.GenericResponse.prototype;
-			const DecodedResult = yield* DecodeValue(
-				ResponseMessage.getResult(),
+
+			const ResponseMessage = (yield* Generator(
+				Effect.tryPromise({
+					try: () => IPCClient.processCocoonRequest(RequestMessage),
+					catch: (Cause) =>
+						new IPCProblem({
+							Cause,
+							Context: `gRPC request '${Method}' failed.`,
+						}),
+				}),
+			)) as typeof Proto.GenericResponse.prototype;
+
+			const DecodedResult = yield* Generator(
+				DecodeValue(ResponseMessage.getResult()),
 			);
-			return DecodedResult as Res;
+			return DecodedResult as ResponseType;
 		}).pipe(
-			Effect.mapError((error) => {
-				if (error instanceof ProtoSerializationError) {
-					return new IPCError({
-						cause: error,
-						context: "Proto serialization/deserialization failed",
+			Effect.mapError((Error) => {
+				if (Error instanceof ProtoSerializationProblem) {
+					return new IPCProblem({
+						Cause: Error,
+						Context: "Proto serialization/deserialization failed",
 					});
 				}
-				return error as IPCError;
+				return Error as IPCProblem;
 			}),
 		);
 
 	const SendNotification = (
 		Method: string,
 		Parameters: readonly unknown[],
-	): Effect.Effect<void, IPCError> =>
-		Effect.gen(function* () {
-			const EncodedParameter = yield* EncodeValue(Parameters);
-			const NotificationMessage = new Generated.GenericNotification();
+	): Effect.Effect<void, IPCProblem> =>
+		Effect.gen(function* (Generator) {
+			const EncodedParameter = yield* Generator(EncodeValue(Parameters));
+			const NotificationMessage = new Proto.GenericNotification();
 			NotificationMessage.setMethod(Method);
 			NotificationMessage.setParams(EncodedParameter);
-			yield* Effect.tryPromise({
-				try: () => Client.sendCocoonNotification(NotificationMessage),
-				catch: (cause) =>
-					new IPCError({
-						cause,
-						context: `gRPC notification '${Method}' failed.`,
-					}),
-			});
+			yield* Generator(
+				Effect.tryPromise({
+					try: () =>
+						IPCClient.sendCocoonNotification(NotificationMessage),
+					catch: (Cause) =>
+						new IPCProblem({
+							Cause,
+							Context: `gRPC notification '${Method}' failed.`,
+						}),
+				}),
+			);
 		}).pipe(
-			Effect.mapError((error) => {
-				if (error instanceof ProtoSerializationError) {
-					return new IPCError({
-						cause: error,
-						context: "Proto serialization/deserialization failed",
+			Effect.mapError((Error) => {
+				if (Error instanceof ProtoSerializationProblem) {
+					return new IPCProblem({
+						Cause: Error,
+						Context: "Proto serialization/deserialization failed",
 					});
 				}
-				return error as IPCError;
+				return Error as IPCProblem;
 			}),
 			Effect.asVoid,
 		);
 
 	const CreateProxy = <T extends object>(Channel: string): T => {
 		return new Proxy({} as T, {
-			get(_target, prop) {
-				if (typeof prop === "string" && prop.startsWith("$")) {
-					return (...args: any[]) => {
-						const method = `${Channel}/${prop}`;
-						// The proxy needs to return a Promise to match the VS Code API.
-						return Effect.runPromise(SendRequest(method, args));
+			get(_Target, Property) {
+				if (typeof Property === "string" && Property.startsWith("$")) {
+					return (...Arguments: any[]) => {
+						const Method = `${Channel}/${Property}`;
+						return Effect.runPromise(
+							SendRequest(Method, Arguments),
+						);
 					};
 				}
-				return (_target as any)[prop];
+				return (_Target as any)[Property];
 			},
 		});
 	};
 
-	const IPCImplementation: Service["Type"] = {
+	const IPCImplementation: IPC["Type"] = {
 		SendRequest,
 		SendNotification,
-		SendCancel: Dispatcher.CancelOperation,
-		CreateProtocolAdapter: () => ProtocolAdapter,
+		SendCancel: RPCDispatcher.CancelOperation,
+		CreateProtocolAdapter: () => ProtocolAdapterService,
 		CreateProxy,
-		RegisterInvokeHandler: Dispatcher.RegisterInvokeHandler,
+		RegisterInvokeHandler: RPCDispatcher.RegisterInvokeHandler,
 	};
 
 	return IPCImplementation;
 });
+
+export default Definition;

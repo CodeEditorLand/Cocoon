@@ -1,17 +1,21 @@
 /*
  * File: Cocoon/Source/Service/Clipboard/Service.ts
- *
- * This file defines the interface and Context.Tag for the Clipboard service,
- * which implements the `vscode.env.clipboard` API.
+ * Role: Defines the service interface and Effect.Service for the application-level
+ *       clipboard service, which conforms to the `IClipboardService` from VS Code.
+ * Responsibilities:
+ *   - Declare the contract for the Clipboard service.
+ *   - Provide an `Effect.Service` class that acts as both the service interface
+ *     and the dependency injection tag.
  */
 
-import { Context } from "effect";
-import type { Clipboard } from "vscode";
+import { Effect } from "effect";
+import type { IClipboardService } from "vs/platform/clipboard/common/clipboardService.js";
 
 /**
- * The Context.Tag for the Clipboard service.
+ * The `Effect.Service` class for the Clipboard service.
+ * This class defines the service interface and also serves as the `Context.Tag`.
+ * It is an alias for VS Code's `IClipboardService` to ensure API compatibility.
  */
-export default class ClipboardService extends Context.Tag("Service/Clipboard")<
-	ClipboardService,
-	Clipboard
->() {}
+export class ClipboardService extends Effect.Service<IClipboardService>(
+	"vscode/ClipboardService",
+) {}

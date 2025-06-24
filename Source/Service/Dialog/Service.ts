@@ -1,39 +1,41 @@
 /*
  * File: Cocoon/Source/Service/Dialog/Service.ts
- *
- * This file defines the interface and Context.Tag for the Dialog service,
- * which provides `vscode.window` dialog functions like `showOpenDialog`.
+ * Role: Defines the service interface and Effect.Service for the Dialog service.
+ * Responsibilities:
+ *   - Declare the contract for the service that provides `vscode.window` dialog
+ *     functions like `showOpenDialog` and `showSaveDialog`.
+ *   - Provide the `Effect.Service` class for dependency injection.
  */
 
-import { Context, type Effect } from "effect";
+import { Effect } from "effect";
 import type { CancellationToken, Uri } from "vscode";
-
-import type DialogError from "./Error/DialogError.js";
+import type { DialogProblem } from "./Error.js";
 import type { OpenDialogOptions, SaveDialogOptions } from "./Type.js";
 
-export default class DialogService extends Context.Tag("Service/Dialog")<
-	DialogService,
-	{
-		/**
-		 * Shows an open file dialog to the user.
-		 * @param Options Options for the open dialog.
-		 * @param Token An optional cancellation token.
-		 * @returns An `Effect` that resolves with an array of selected URIs, or `undefined` if cancelled.
-		 */
-		readonly ShowOpenDialog: (
-			Options?: OpenDialogOptions,
-			Token?: CancellationToken,
-		) => Effect.Effect<Uri[] | undefined, DialogError>;
+/**
+ * The `Effect.Service` for the Dialog service.
+ * This service is responsible for creating and managing native file dialogs.
+ */
+export class Dialog extends Effect.Service<Dialog>("Service/Dialog")<{
+	/**
+	 * Shows an open file dialog to the user.
+	 * @param Options - Options to configure the open dialog.
+	 * @param Token - An optional `CancellationToken`.
+	 * @returns An `Effect` that resolves with an array of selected `Uri`s, or `undefined` if cancelled.
+	 */
+	readonly ShowOpenDialog: (
+		Options?: OpenDialogOptions,
+		Token?: CancellationToken,
+	) => Effect.Effect<Uri[] | undefined, DialogProblem>;
 
-		/**
-		 * Shows a save file dialog to the user.
-		 * @param Options Options for the save dialog.
-		 * @param Token An optional cancellation token.
-		 * @returns An `Effect` that resolves with the selected URI, or `undefined` if cancelled.
-		 */
-		readonly ShowSaveDialog: (
-			Options?: SaveDialogOptions,
-			Token?: CancellationToken,
-		) => Effect.Effect<Uri | undefined, DialogError>;
-	}
->() {}
+	/**
+	 * Shows a save file dialog to the user.
+	 * @param Options - Options to configure the save dialog.
+	 * @param Token - An optional `CancellationToken`.
+	 * @returns An `Effect` that resolves with the selected `Uri`, or `undefined` if cancelled.
+	 */
+	readonly ShowSaveDialog: (
+		Options?: SaveDialogOptions,
+		Token?: CancellationToken,
+	) => Effect.Effect<Uri | undefined, DialogProblem>;
+}>() {}

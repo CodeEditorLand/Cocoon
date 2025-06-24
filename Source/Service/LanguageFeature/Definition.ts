@@ -3,10 +3,10 @@
  * Role: The live implementation of the LanguageFeature service.
  * Responsibilities:
  *   - Acts as a central registry for language feature providers (Hover, Completion, etc.).
- *   - Registers providers with the Mountain host process via IPC and receives a handle.
+ *   - Forwards provider registrations to the Mountain host process via IPC, receiving a handle.
  *   - Stores provider implementations locally in maps, indexed by their handle.
  *   - Implements RPC handlers that Mountain calls to execute a provider, using the handle
- *     to look up and invoke the correct implementation.
+ *     to look up and invoke the correct implementation from the appropriate extension.
  */
 
 import { Effect, Option, Ref } from "effect";
@@ -15,202 +15,182 @@ import {
 	CancellationTokenSource,
 	Disposable,
 	type CodeActionProvider,
-	type CodeActionProviderMetadata,
-	type CompletionContext,
 	type CompletionItemProvider,
 	type DefinitionProvider,
-	type DocumentSelector,
-	type Hover,
 	type HoverProvider,
-	type Location,
-	type ReferenceContext,
 	type ReferenceProvider,
 } from "vscode";
-
-import CommandConverterDefinition from "../../TypeConverter/Command/Definition.js";
-import CompletionConverter from "../../TypeConverter/Completion.js";
-import DocumentSelectorConverter from "../../TypeConverter/DocumentSelector.js";
-import HoverConverter from "../../TypeConverter/Hover.js";
-import LocationConverter from "../../TypeConverter/Location.js";
-import PositionConverter from "../../TypeConverter/Main/Position.js";
-import CommandService from "../Command/Service.js";
-import DocumentService from "../Document/Service.js";
-import IPCService from "../IPC/Service.js";
-import type Service from "./Service.js";
+import { Command } from "../Command/Service.js";
+import { Document } from "../Document/Service.js";
+import { IPC } from "../IPC/Service.js";
+import { LanguageFeature } from "./Service.js";
+import { Command as CommandConverter } from "../../TypeConverter/Command/Definition.js";
+import { Completion as CompletionConverter } from "../../TypeConverter/Completion.js";
+import { DocumentSelector as DocumentSelectorConverter } from "../../TypeConverter/DocumentSelector.js";
+import { Hover as HoverConverter } from "../../TypeConverter/Hover.js";
+import { Location as LocationConverter } from "../../TypeConverter/Location.js";
+import { Position as PositionConverter } from "../../TypeConverter/Main/Position.js";
 
 type ProviderHandle = number;
+type AnyProvider =
+	| HoverProvider
+	| CompletionItemProvider
+	| DefinitionProvider
+	| ReferenceProvider
+	| CodeActionProvider;
 
 /**
- * An Effect that builds the live implementation of the LanguageFeature service.
+ * An `Effect` that builds the live implementation of the `LanguageFeature` service.
  */
-export default Effect.gen(function* (G) {
+const Definition = Effect.gen(function* (Generator) {
 	// --- Service Dependencies ---
-	const IPC = yield* G(IPCService);
-	const Document = yield* G(DocumentService);
-	const Command = yield* G(CommandService);
+	const IPCService = yield* Generator(IPC);
+	const DocumentService = yield* Generator(Document);
+	const CommandService = yield* Generator(Command);
 
-	// --- Provider Registries ---
-	const HoverProvidersRef = yield* G(
+	// --- Provider Registries (internal state) ---
+	const HoverProvidersRef = yield* Generator(
 		Ref.make(new Map<ProviderHandle, HoverProvider>()),
 	);
-	const CompletionProvidersRef = yield* G(
+	const CompletionProvidersRef = yield* Generator(
 		Ref.make(new Map<ProviderHandle, CompletionItemProvider>()),
 	);
-	const DefinitionProvidersRef = yield* G(
+	const DefinitionProvidersRef = yield* Generator(
 		Ref.make(new Map<ProviderHandle, DefinitionProvider>()),
 	);
-	const ReferenceProvidersRef = yield* G(
+	const ReferenceProvidersRef = yield* Generator(
 		Ref.make(new Map<ProviderHandle, ReferenceProvider>()),
 	);
+	// Add other provider refs here...
 
-	const CommandConverter = new CommandConverterDefinition(
-		Command.RegisterCommand,
-		(command, ...args) => Command.ExecuteCommand(command, ...args),
-		// getCommands is not needed for serialization.
-		() => undefined,
+	// --- Type Converters ---
+	const CommandConverterInstance = new CommandConverter(
+		CommandService.RegisterCommand,
+		(CommandId, ...Arguments) =>
+			CommandService.ExecuteCommand(CommandId, ...Arguments),
+		() => undefined, // getCommands is not needed for serialization.
 	);
 
 	// --- RPC Handlers (Invoked by Mountain) ---
-	yield* G(
-		Effect.sync(() => {
-			IPC.RegisterInvokeHandler(
-				"$provideHover",
-				async ([
-					Handle,
-					URIComponents,
-					Position,
-					_Token,
-				]): Promise<Hover | null> => {
-					const Providers = Effect.runSync(
-						Ref.get(HoverProvidersRef),
-					);
-					const Provider = Providers.get(Handle);
-					if (!Provider?.provideHover) return null;
-					const Uri =
-						DocumentSelectorConverter.uriFrom(URIComponents);
-					const Pos = PositionConverter.ToAPI(Position);
-					const DocOption = Effect.runSync(Document.GetDocument(Uri));
-					if (Option.isNone(DocOption)) return null;
-					const Result = await Provider.provideHover(
-						DocOption.value,
-						Pos,
-						new CancellationTokenSource().token,
-					);
-					return Result ? HoverConverter.FromAPI(Result) : null;
-				},
-			);
+	const InitializeRPCHandlers = Effect.sync(() => {
+		IPCService.RegisterInvokeHandler(
+			"$provideHover",
+			async ([Handle, URIComponents, Position, _Token]) => {
+				const Providers = Ref.unsafeGet(HoverProvidersRef);
+				const Provider = Providers.get(Handle);
+				if (!Provider?.provideHover) return null;
 
-			IPC.RegisterInvokeHandler(
-				"$provideCompletionItems",
-				async ([
+				const Uri = DocumentSelectorConverter.uriFrom(URIComponents);
+				const Pos = PositionConverter.ToAPI(Position);
+				const DocOption = Effect.runSync(
+					DocumentService.GetDocument(Uri),
+				);
+				if (Option.isNone(DocOption)) return null;
+
+				const Result = await Provider.provideHover(
+					DocOption.value,
+					Pos,
+					new CancellationTokenSource().token,
+				);
+				return Result ? HoverConverter.FromAPI(Result) : null;
+			},
+		);
+
+		IPCService.RegisterInvokeHandler(
+			"$provideCompletionItems",
+			async ([Handle, URIComponents, Position, Context, _Token]) => {
+				const Providers = Ref.unsafeGet(CompletionProvidersRef);
+				const Provider = Providers.get(Handle);
+				if (!Provider?.provideCompletionItems) return null;
+
+				const Uri = DocumentSelectorConverter.uriFrom(URIComponents);
+				const Pos = PositionConverter.ToAPI(Position);
+				const DocOption = Effect.runSync(
+					DocumentService.GetDocument(Uri),
+				);
+				if (Option.isNone(DocOption)) return null;
+
+				const CompletionContext =
+					CompletionConverter.CompletionContext.ToAPI(Context);
+				const Token = new CancellationTokenSource().token;
+				const Result = await Provider.provideCompletionItems(
+					DocOption.value,
+					Pos,
+					Token,
+					CompletionContext,
+				);
+				return Result
+					? CompletionConverter.CompletionList.FromAPI(
+							Result,
+							CommandConverterInstance,
+							[],
+						)
+					: null;
+			},
+		);
+
+		IPCService.RegisterInvokeHandler(
+			"$provideDefinition",
+			async ([Handle, URIComponents, Position, _Token]) => {
+				const Provider = Ref.unsafeGet(DefinitionProvidersRef).get(
 					Handle,
-					URIComponents,
-					Position,
+				);
+				if (!Provider?.provideDefinition) return null;
+				const Uri = DocumentSelectorConverter.uriFrom(URIComponents);
+				const Pos = PositionConverter.ToAPI(Position);
+				const DocOption = Effect.runSync(
+					DocumentService.GetDocument(Uri),
+				);
+				if (Option.isNone(DocOption)) return null;
+				const Result = await Provider.provideDefinition(
+					DocOption.value,
+					Pos,
+					new CancellationTokenSource().token,
+				);
+				return Result ? LocationConverter.FromAPI(Result) : null;
+			},
+		);
+
+		IPCService.RegisterInvokeHandler(
+			"$provideReferences",
+			async ([Handle, URIComponents, Position, Context, _Token]) => {
+				const Provider = Ref.unsafeGet(ReferenceProvidersRef).get(
+					Handle,
+				);
+				if (!Provider?.provideReferences) return null;
+				const Uri = DocumentSelectorConverter.uriFrom(URIComponents);
+				const Pos = PositionConverter.ToAPI(Position);
+				const DocOption = Effect.runSync(
+					DocumentService.GetDocument(Uri),
+				);
+				if (Option.isNone(DocOption)) return null;
+				const Result = await Provider.provideReferences(
+					DocOption.value,
+					Pos,
 					Context,
-					_Token,
-				]): Promise<any> => {
-					const Providers = Effect.runSync(
-						Ref.get(CompletionProvidersRef),
-					);
-					const Provider = Providers.get(Handle);
-					if (!Provider?.provideCompletionItems) return null;
-					const Uri =
-						DocumentSelectorConverter.uriFrom(URIComponents);
-					const Pos = PositionConverter.ToAPI(Position);
-					const DocOption = Effect.runSync(Document.GetDocument(Uri));
-					if (Option.isNone(DocOption)) return null;
-					const CompletionContext =
-						CompletionConverter.CompletionContext.ToAPI(Context);
-					const Token = new CancellationTokenSource().token;
-					const Result = await Provider.provideCompletionItems(
-						DocOption.value,
-						Pos,
-						Token,
-						CompletionContext,
-					);
-					return Result
-						? CompletionConverter.CompletionList.FromAPI(
-								Result,
-								CommandConverter,
-								[],
-							)
-						: null;
-				},
-			);
+					new CancellationTokenSource().token,
+				);
+				return Result ? Result.map(LocationConverter.FromAPI) : null;
+			},
+		);
+	});
 
-			IPC.RegisterInvokeHandler(
-				"$provideDefinition",
-				async ([
-					Handle,
-					URIComponents,
-					Position,
-					_Token,
-				]): Promise<any> => {
-					const Provider = Effect.runSync(
-						Ref.get(DefinitionProvidersRef),
-					).get(Handle);
-					if (!Provider?.provideDefinition) return null;
-					const Uri =
-						DocumentSelectorConverter.uriFrom(URIComponents);
-					const Pos = PositionConverter.ToAPI(Position);
-					const DocOption = Effect.runSync(Document.GetDocument(Uri));
-					if (Option.isNone(DocOption)) return null;
-					const Result = await Provider.provideDefinition(
-						DocOption.value,
-						Pos,
-						new CancellationTokenSource().token,
-					);
-					return Result ? LocationConverter.FromAPI(Result) : null;
-				},
-			);
-
-			IPC.RegisterInvokeHandler(
-				"$provideReferences",
-				async ([
-					Handle,
-					URIComponents,
-					Position,
-					Context,
-					_Token,
-				]): Promise<Location[] | null> => {
-					const Provider = Effect.runSync(
-						Ref.get(ReferenceProvidersRef),
-					).get(Handle);
-					if (!Provider?.provideReferences) return null;
-					const Uri =
-						DocumentSelectorConverter.uriFrom(URIComponents);
-					const Pos = PositionConverter.ToAPI(Position);
-					const DocOption = Effect.runSync(Document.GetDocument(Uri));
-					if (Option.isNone(DocOption)) return null;
-					const Result = await Provider.provideReferences(
-						DocOption.value,
-						Pos,
-						Context as ReferenceContext,
-						new CancellationTokenSource().token,
-					);
-					return Result
-						? Result.map((loc) => LocationConverter.FromAPI(loc))
-						: null;
-				},
-			);
-		}),
-	);
+	yield* Generator(InitializeRPCHandlers);
 
 	const CreateRegisterEffect = (
-		ProviderRef: Ref.Ref<Map<ProviderHandle, any>>,
-		ProviderType: number,
-		Selector: DocumentSelector,
+		ProviderRef: Ref.Ref<Map<ProviderHandle, AnyProvider>>,
+		ProviderType: number, // Corresponds to an enum on the main thread
+		Selector: vscode.DocumentSelector,
 		Extension: IExtensionDescription,
-		Provider: any,
+		Provider: AnyProvider,
 		Options: any = null,
-	) =>
-		Effect.gen(function* (G) {
+	): Effect.Effect<Disposable, Error> =>
+		Effect.gen(function* (Generator) {
 			const SelectorDTO = DocumentSelectorConverter.from(Selector);
-			const Handle = yield* G(
-				IPC.SendRequest<ProviderHandle>(
+			const Handle = yield* Generator(
+				IPCService.SendRequest<ProviderHandle>(
 					"$languageFeatures:registerProvider",
 					[
-						// TODO: Make dynamic
 						"cocoon-main",
 						ProviderType,
 						SelectorDTO,
@@ -222,16 +202,20 @@ export default Effect.gen(function* (G) {
 					],
 				),
 			);
-			yield* G(
-				Ref.update(ProviderRef, (Map) => Map.set(Handle, Provider)),
+
+			yield* Generator(
+				Ref.update(ProviderRef, (TheMap) =>
+					TheMap.set(Handle, Provider),
+				),
 			);
+
 			return new Disposable(() => {
 				const UnregisterEffect = Ref.update(
 					ProviderRef,
-					(Map) => (Map.delete(Handle), Map),
+					(TheMap) => (TheMap.delete(Handle), TheMap),
 				).pipe(
 					Effect.andThen(
-						IPC.SendNotification(
+						IPCService.SendNotification(
 							"$languageFeatures:unregisterProvider",
 							[Handle],
 						),
@@ -242,7 +226,7 @@ export default Effect.gen(function* (G) {
 		});
 
 	// --- Service Implementation ---
-	const LanguageFeatureImplementation: Service["Type"] = {
+	const ServiceImplementation: LanguageFeature["Type"] = {
 		RegisterHoverProvider: (Selector, Provider, Extension) =>
 			CreateRegisterEffect(
 				HoverProvidersRef,
@@ -251,6 +235,7 @@ export default Effect.gen(function* (G) {
 				Extension,
 				Provider,
 			),
+
 		RegisterCompletionItemProvider: (
 			Selector,
 			Provider,
@@ -265,6 +250,7 @@ export default Effect.gen(function* (G) {
 				Provider,
 				{ triggerCharacters: TriggerCharacters },
 			),
+
 		RegisterDefinitionProvider: (Selector, Provider, Extension) =>
 			CreateRegisterEffect(
 				DefinitionProvidersRef,
@@ -273,6 +259,7 @@ export default Effect.gen(function* (G) {
 				Extension,
 				Provider,
 			),
+
 		RegisterReferenceProvider: (Selector, Provider, Extension) =>
 			CreateRegisterEffect(
 				ReferenceProvidersRef,
@@ -281,13 +268,16 @@ export default Effect.gen(function* (G) {
 				Extension,
 				Provider,
 			),
+
 		RegisterCodeActionsProvider: (
-			_Selector: DocumentSelector,
-			_Provider: CodeActionProvider,
-			_Metadata: CodeActionProviderMetadata | undefined,
-			_Extension: IExtensionDescription,
-		) => Effect.succeed(new Disposable(() => {})),
+			_Selector,
+			_Provider,
+			_Metadata,
+			_Extension,
+		) => Effect.succeed(new Disposable(() => {})), // Stubbed
 	};
 
-	return LanguageFeatureImplementation;
+	return ServiceImplementation;
 });
+
+export default Definition;

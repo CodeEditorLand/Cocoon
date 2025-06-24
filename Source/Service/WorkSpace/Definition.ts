@@ -1,249 +1,267 @@
-/**
- * @module Definition (WorkSpace)
- * @description The live implementation of the WorkSpace service. This service is now
- * responsible for both workspace-level concerns and editor state.
+/*
+ * File: Cocoon/Source/Service/WorkSpace/Definition.ts
+ * Role: Provides the live implementation of the Workspace service.
+ * Responsibilities:
+ *   - Implements the `vscode.workspace` API surface.
+ *   - Manages and exposes workspace-level state (e.g., folders, name).
+ *   - Manages and exposes editor state (e.g., active and visible editors).
+ *   - Orchestrates complex operations like finding files, opening documents, and
+ *     applying workspace edits by delegating to the host via the IPC service.
  */
 
-import { Effect, Ref } from "effect";
-import CreateEventStream from "Source/Utility/CreateEventStream.js";
+import { Effect, Option, Ref } from "effect";
 import { Emitter } from "vs/base/common/event.js";
-import {
-	Disposable,
-	type TextEditor,
-	type Uri,
-	type WorkspaceEdit,
-	type WorkspaceFolder,
+import type {
+	CancellationToken,
+	GlobPattern,
+	TextDocument,
+	TextEditor,
+	Uri,
+	WorkspaceConfiguration,
+	WorkspaceEdit,
+	WorkspaceFolder,
 } from "vscode";
+import { URI } from "vscode-uri";
 
-import URIConverter from "../../TypeConverter/Main/URI.js";
-import WorkSpaceFolderConverter from "../../TypeConverter/Main/WorkspaceFolder.js";
-import { default as WorkSpaceEditConverter } from "../../TypeConverter/WorkSpaceEdit.js";
-import ConfigurationService from "../Configuration/Service.js";
-import DocumentService from "../Document/Service.js";
-import FileSystemService from "../FileSystem/Service.js";
-import IPCService from "../IPC/Service.js";
-import type WorkSpaceService from "./Service.js";
-import InternalWorkSpace from "./State.js";
-import FindFilesEffect from "./Support/FindFiles.js";
-import OpenTextDocumentEffect from "./Support/OpenTextDocument.js";
+import { URI as URIConverter } from "../../TypeConverter/Main/URI.js";
+import { WorkspaceFolder as WorkspaceFolderConverter } from "../../TypeConverter/Main/WorkspaceFolder.js";
+import { WorkspaceEdit as WorkspaceEditConverter } from "../../TypeConverter/WorkSpaceEdit.js";
+import { CreateEventStream } from "../../Utility/CreateEventStream.js";
+import { Configuration } from "../Configuration/Service.js";
+import { Document } from "../Document/Service.js";
+import { FileSystem } from "../FileSystem/Service.js";
+import { IPC } from "../IPC/Service.js";
+import { Workspace } from "./Service.js";
+import { InternalWorkspace } from "./State.js";
 
 /**
- * An Effect that builds the live implementation of the WorkSpace service.
+ * An `Effect` that builds the live implementation of the `Workspace` service.
  */
-export default Effect.gen(function* (G) {
-	const IPC = yield* G(IPCService);
+const Definition = Effect.gen(function* (Generator) {
+	// --- Service Dependencies ---
+	const IPCService = yield* Generator(IPC);
+	const DocumentService = yield* Generator(Document);
+	const FileSystemService = yield* Generator(FileSystem);
+	const ConfigurationService = yield* Generator(Configuration);
 
-	const Document = yield* G(DocumentService);
-
-	const Fs = yield* G(FileSystemService);
-
-	const Configuration = yield* G(ConfigurationService);
-
-	const InternalWorkSpaceRef = yield* G(
-		Ref.make<InternalWorkSpace | undefined>(undefined),
+	// --- Internal State Management ---
+	const InternalWorkspaceRef = yield* Generator(
+		Ref.make<InternalWorkspace | undefined>(undefined),
 	);
-
-	const TextEditorsMapRef = yield* G(Ref.make(new Map<string, TextEditor>()));
-
-	const ActiveTextEditorRef = yield* G(
+	// This state is duplicated from the Window service for now. In a full architecture,
+	// this would be the single source of truth, and the Window service would consume it.
+	const TextEditorsMapRef = yield* Generator(
+		Ref.make(new Map<string, TextEditor>()),
+	);
+	const ActiveTextEditorRef = yield* Generator(
 		Ref.make<TextEditor | undefined>(undefined),
 	);
+	const VisibleTextEditorsRef = yield* Generator(
+		Ref.make<readonly TextEditor[]>([]),
+	);
 
-	const VisibleTextEditorsRef = yield* G(Ref.make<readonly TextEditor[]>([]));
-
+	// --- Event Emitters ---
 	const OnDidChangeFoldersEvent = new Emitter<any>();
-
 	const { event: OnDidChangeActiveTextEditorEvent, Fire: FireActiveEditor } =
 		CreateEventStream<TextEditor | undefined>();
-
 	const {
 		event: OnDidChangeVisibleTextEditorsEvent,
-
 		Fire: FireVisibleEditors,
 	} = CreateEventStream<readonly TextEditor[]>();
 
-	const AcceptWorkspaceDataEffect = (data: any) =>
-		Effect.gen(function* (G) {
-			const OldWorkSpace = yield* G(Ref.get(InternalWorkSpaceRef));
-
-			const NewWorkSpace = new InternalWorkSpace(
-				data.id,
-
-				data.name,
-
-				data.folders.map((f: any) =>
-					WorkSpaceFolderConverter.FromDTO(f),
+	// --- RPC Handlers ---
+	const AcceptWorkspaceDataEffect = (Data: any) =>
+		Effect.gen(function* (Generator) {
+			const OldWorkspace = yield* Generator(
+				Ref.get(InternalWorkspaceRef),
+			);
+			const NewWorkspace = new InternalWorkspace(
+				Data.id,
+				Data.name,
+				Data.folders.map((FolderDTO: any) =>
+					WorkspaceFolderConverter.FromDTO(FolderDTO),
 				),
-
-				data.configuration
-					? URIConverter.ToAPI(data.configuration)
+				Data.configuration
+					? URIConverter.ToAPI(Data.configuration)
 					: undefined,
 			);
 
-			yield* G(Ref.set(InternalWorkSpaceRef, NewWorkSpace));
+			yield* Generator(Ref.set(InternalWorkspaceRef, NewWorkspace));
 
 			const OldFolders: readonly WorkspaceFolder[] =
-				OldWorkSpace?.Folders ?? [];
+				OldWorkspace?.Folders ?? [];
+			const NewFolders = NewWorkspace.Folders;
 
-			const NewFolders = NewWorkSpace.Folders;
-
-			const Added = NewFolders.filter(
-				(f) =>
+			// Fire event if folders have changed.
+			const AddedFolders = NewFolders.filter(
+				(Folder) =>
 					!OldFolders.some(
-						(of) => of.uri.toString() === f.uri.toString(),
+						(OldFolder) =>
+							OldFolder.uri.toString() === Folder.uri.toString(),
 					),
 			);
-
-			const Removed = OldFolders.filter(
-				(f) =>
+			const RemovedFolders = OldFolders.filter(
+				(Folder) =>
 					!NewFolders.some(
-						(nf) => nf.uri.toString() === f.uri.toString(),
+						(NewFolder) =>
+							NewFolder.uri.toString() === Folder.uri.toString(),
 					),
 			);
 
-			if (Added.length > 0 || Removed.length > 0) {
+			if (AddedFolders.length > 0 || RemovedFolders.length > 0) {
 				OnDidChangeFoldersEvent.fire({
-					added: Added,
-
-					removed: Removed,
+					added: AddedFolders,
+					removed: RemovedFolders,
 				});
 			}
 		});
 
 	const AcceptEditorStateEffect = (
-		activeEditorId: string | undefined,
-
-		visibleEditorIds: string[],
+		ActiveEditorId: string | undefined,
+		VisibleEditorIds: string[],
 	) =>
-		Effect.gen(function* (G) {
-			const Editors = yield* G(Ref.get(TextEditorsMapRef));
-
-			const NewActive = activeEditorId
-				? Editors.get(activeEditorId)
+		Effect.gen(function* (Generator) {
+			const EditorsMap = yield* Generator(Ref.get(TextEditorsMapRef));
+			const NewActiveEditor = ActiveEditorId
+				? EditorsMap.get(ActiveEditorId)
 				: undefined;
+			const NewVisibleEditors = VisibleEditorIds.map((ID) =>
+				EditorsMap.get(ID),
+			).filter((Editor): Editor is TextEditor => !!Editor);
 
-			const NewVisible = visibleEditorIds
-				.map((id) => Editors.get(id))
-				.filter(Boolean);
-
-			yield* G(Ref.set(ActiveTextEditorRef, NewActive));
-
-			yield* G(
-				Ref.set(VisibleTextEditorsRef, NewVisible as TextEditor[]),
-			);
-
-			yield* G(FireActiveEditor(NewActive));
-
-			yield* G(FireVisibleEditors(NewVisible as TextEditor[]));
+			yield* Generator(Ref.set(ActiveTextEditorRef, NewActiveEditor));
+			yield* Generator(Ref.set(VisibleTextEditorsRef, NewVisibleEditors));
+			yield* Generator(FireActiveEditor(NewActiveEditor));
+			yield* Generator(FireVisibleEditors(NewVisibleEditors));
 		});
 
-	yield* G(
+	// Register handlers to react to state changes pushed from the host.
+	yield* Generator(
 		Effect.sync(() => {
-			IPC.RegisterInvokeHandler("$acceptWorkspaceData", ([data]) =>
-				Effect.runPromise(AcceptWorkspaceDataEffect(data)),
+			IPCService.RegisterInvokeHandler("$acceptWorkspaceData", ([Data]) =>
+				Effect.runPromise(AcceptWorkspaceDataEffect(Data)),
 			);
-
-			IPC.RegisterInvokeHandler(
+			IPCService.RegisterInvokeHandler(
 				"$acceptEditorState",
-
-				([activeId, visibleIds]) =>
+				([ActiveId, VisibleIds]) =>
 					Effect.runPromise(
-						AcceptEditorStateEffect(activeId, visibleIds),
+						AcceptEditorStateEffect(ActiveId, VisibleIds),
 					),
 			);
 		}),
 	);
 
-	const ServiceImplementation: WorkSpaceService["Type"] = {
-		// Workspace properties
+	// --- Service Implementation ---
+	const ServiceImplementation: Workspace["Type"] = {
+		// --- Workspace Properties ---
 		get name() {
-			return Effect.runSync(
-				Ref.get(InternalWorkSpaceRef).pipe(
-					Effect.map((ws) => ws?.Name),
-				),
-			);
+			return Ref.unsafeGet(InternalWorkspaceRef)?.Name;
 		},
-
 		get workspaceFile() {
-			return Effect.runSync(
-				Ref.get(InternalWorkSpaceRef).pipe(
-					Effect.map((ws) => ws?.Configuration),
-				),
-			);
+			return Ref.unsafeGet(InternalWorkspaceRef)?.Configuration;
 		},
-
 		get workspaceFolders() {
-			return Effect.runSync(
-				Ref.get(InternalWorkSpaceRef).pipe(
-					Effect.map((ws) => ws?.Folders),
-				),
-			);
+			return Ref.unsafeGet(InternalWorkspaceRef)?.Folders;
 		},
-
 		get isTrusted() {
-			// Stubbed value
+			// This would be driven by the host in a full implementation.
 			return true;
 		},
 
-		onDidChangeWorkspaceFolders: OnDidChangeFoldersEvent.event,
-
-		// Editor State Properties
+		// --- Editor State Properties ---
 		get activeTextEditor() {
-			return Effect.runSync(Ref.get(ActiveTextEditorRef));
+			return Ref.unsafeGet(ActiveTextEditorRef);
 		},
-
 		get visibleTextEditors() {
-			return Effect.runSync(Ref.get(VisibleTextEditorsRef));
+			return Ref.unsafeGet(VisibleTextEditorsRef);
 		},
 
-		// Editor State Events
+		// --- Events ---
+		onDidChangeWorkspaceFolders: OnDidChangeFoldersEvent.event,
 		onDidChangeActiveTextEditor: OnDidChangeActiveTextEditorEvent,
-
 		onDidChangeVisibleTextEditors: OnDidChangeVisibleTextEditorsEvent,
+		onDidChangeTextEditorSelection: new Emitter<any>().event, // Stubbed
+		onDidChangeTextEditorVisibleRanges: new Emitter<any>().event, // Stubbed
+		onDidChangeTextEditorOptions: new Emitter<any>().event, // Stubbed
+		onDidChangeTextEditorViewColumn: new Emitter<any>().event, // Stubbed
 
-		onDidChangeTextEditorSelection: new Emitter<any>().event,
-
-		onDidChangeTextEditorVisibleRanges: new Emitter<any>().event,
-
-		onDidChangeTextEditorOptions: new Emitter<any>().event,
-
-		onDidChangeTextEditorViewColumn: new Emitter<any>().event,
-
-		// Methods
+		// --- Methods ---
 		getWorkspaceFolder: (uri: Uri) => {
-			const folders =
-				Effect.runSync(
-					Ref.get(InternalWorkSpaceRef).pipe(
-						Effect.map((ws) => ws?.Folders),
-					),
-				) ?? [];
-
-			return folders.find((f) => uri.fsPath.startsWith(f.uri.fsPath));
+			const Folders = Ref.unsafeGet(InternalWorkspaceRef)?.Folders ?? [];
+			return Folders.find((Folder) =>
+				uri.fsPath.startsWith(Folder.uri.fsPath),
+			);
 		},
 
-		findFiles: (include, exclude, max, token) =>
-			FindFilesEffect(IPC, include, exclude, max, token).pipe(
-				Effect.mapError((e) => new Error(String(e))),
+		findFiles: (Include, Exclude, MaxResults, Token) =>
+			IPCService.SendRequest<Uri[]>("findFiles", [
+				Include,
+				Exclude,
+				MaxResults,
+				// A real implementation would use a cancellation service.
+				Token ? 1 : 0,
+			]).pipe(
+				Effect.map((Uris) => Uris.map(URI.revive)),
+				Effect.mapError((Cause) => new Error(String(Cause))),
 			),
 
-		openTextDocument: (options) =>
-			OpenTextDocumentEffect(IPC, Document, options).pipe(
-				Effect.mapError((e) => new Error(String(e))),
-			),
+		openTextDocument: (OptionsOrUri?: any) =>
+			Effect.gen(function* (Generator) {
+				const IsUri = OptionsOrUri instanceof URI;
+				const UriToOpen = IsUri ? OptionsOrUri : undefined;
 
-		getConfiguration: Configuration.GetConfiguration,
+				if (UriToOpen) {
+					const ExistingDocument = yield* Generator(
+						DocumentService.GetDocument(UriToOpen),
+					);
+					if (Option.isSome(ExistingDocument)) {
+						return ExistingDocument.value;
+					}
+				}
 
-		applyEdit: (edit: WorkspaceEdit) =>
-			IPC.SendRequest<boolean>("$applyWorkspaceEdit", [
-				WorkSpaceEditConverter.FromAPI(edit),
-			]).pipe(Effect.mapError((e) => new Error(String(e)))),
+				const DTO = IsUri
+					? URIConverter.FromAPI(OptionsOrUri)
+					: OptionsOrUri;
+				const ResultDTO = yield* Generator(
+					IPCService.SendRequest<any>("$openTextDocument", [DTO]),
+				);
+				const ResultUri = URIConverter.ToAPI(ResultDTO.uri);
 
-		fs: Fs,
+				// After requesting, we must wait for the document to actually be created.
+				// We poll the DocumentService until the document appears.
+				const WaitForDocument = DocumentService.GetDocument(
+					ResultUri,
+				).pipe(
+					Effect.repeat({
+						schedule: Schedule.spaced(50).pipe(
+							Schedule.whileInput((Option) => Option.isNone()),
+							Schedule.compose(Schedule.recurs(100)), // Timeout after 5s
+						),
+					}),
+					Effect.flatMap(Option.toEffect),
+					Effect.mapError(
+						() =>
+							new Error(
+								`Failed to find newly opened document: ${ResultUri.toString()}`,
+							),
+					),
+				);
 
-		registerTextDocumentContentProvider: (_scheme, _provider) =>
-			// Stub
-			new Disposable(() => {}),
+				return yield* Generator(WaitForDocument);
+			}),
+
+		getConfiguration: ConfigurationService.GetConfiguration,
+
+		applyEdit: (Edit: WorkspaceEdit) =>
+			IPCService.SendRequest<boolean>("$applyWorkspaceEdit", [
+				WorkspaceEditConverter.FromAPI(Edit),
+			]).pipe(Effect.mapError((Cause) => new Error(String(Cause)))),
+
+		fs: FileSystemService,
+		registerTextDocumentContentProvider: () => new Disposable(() => {}), // Stubbed
 	};
 
 	return ServiceImplementation;
 });
+
+export default Definition;

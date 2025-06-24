@@ -1,26 +1,29 @@
-/**
- * @module GetActiveTextDocument
- * @description An Effect-based utility for safely retrieving the active text document.
- * This is an internal helper, not a service.
+/*
+ * File: Cocoon/Source/Service/Window/GetActiveTextDocument.ts
+ * Role: A utility Effect for safely retrieving the active text document.
+ * Responsibilities:
+ *   - Provide a declarative and type-safe way to get the active document by
+ *     using the `Workspace` service, which manages editor state.
  */
 
 import { Effect, Option } from "effect";
-
-import WindowService from "./Service.js";
+import { Workspace } from "../WorkSpace/Service.js";
 
 /**
- * An Effect that safely retrieves the `TextDocument` of the currently active editor.
+ * An `Effect` that safely retrieves the `TextDocument` of the currently active editor.
  *
- * This Effect wraps the potentially `undefined` result of `vscode.window.activeTextEditor`
- * in an `Option`. This forces callers to explicitly handle the case where no editor
- * is active, preventing runtime errors.
+ * This utility uses the `Workspace` service, which is the source of truth for the
+ * active editor state. It wraps the potentially `undefined` result of
+.activeTextEditor` in an `Option`, forcing callers to explicitly
+ * handle the case where no editor is active, thereby preventing runtime errors.
  *
  * @returns An `Effect` that synchronously resolves to an `Option<vscode.TextDocument>`.
  *   - `Some<TextDocument>` if an editor is active.
  *   - `None` if no editor is active.
  */
-export default Effect.gen(function* () {
-	const Window = yield* WindowService;
-
-	return Option.fromNullable(Window.activeTextEditor?.document);
+const GetActiveTextDocument = Effect.gen(function* (Generator) {
+	const WorkspaceService = yield* Generator(Workspace);
+	return Option.fromNullable(WorkspaceService.activeTextEditor?.document);
 });
+
+export default GetActiveTextDocument;

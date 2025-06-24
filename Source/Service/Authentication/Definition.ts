@@ -1,179 +1,83 @@
 /*
  * File: Cocoon/Source/Service/Authentication/Definition.ts
- *
- * This file contains the live implementation of the Authentication service.
+ * Role: Provides the live implementation of the Authentication service.
+ * Responsibilities:
+ *   - Instantiates the canonical `NodeExtHostAuthentication` class from VS Code's
+ *     source code, which manages all authentication logic.
+ *   - Provides our Effect-native services, adapted to the interfaces expected
+ *     by the `NodeExtHostAuthentication` constructor.
  */
 
-import { Effect, Ref } from "effect";
-import type { IDisposable } from "vs/base/common/lifecycle.js";
-import type {
-	AuthenticationGetSessionOptions,
-	AuthenticationProvider,
-	AuthenticationSession,
-	Extension,
-} from "vscode";
-
-import CreateEventStream from "../../Utility/CreateEventStream.js";
-import IPCService from "../IPC/Service.js";
-import LogService from "../Log/Service.js";
-import AuthenticationProviderExistsError from "./Error/AuthenticationProviderExistsError.js";
-import AuthenticationProviderRegistrationError from "./Error/AuthenticationProviderRegistrationError.js";
-import type Service from "./Service.js";
-import { ConvertSessionToInternal, ConvertSessionToVSCode } from "./Type.js";
+import { Effect } from "effect";
+import { NodeExtHostAuthentication } from "vs/workbench/api/node/extHostAuthentication.js";
+import type { IExtHostRpcService } from "vs/workbench/api/common/extHostRpcService.js";
+import type { IExtHostWindow } from "vs/workbench/api/common/extHostWindow.js";
+import type { IExtHostUrls } from "vs/workbench/api/common/extHostUrls.js";
+import type { IExtHostProgress } from "vs/workbench/api/common/extHostProgress.js";
+import type { ILoggerService } from "vs/platform/log/common/log.js";
+import { IPC } from "../IPC/Service.js";
+import { InitData } from "../InitData/Service.js";
+import { Window } from "../Window/Service.js";
+// Assuming Urls and Progress services will be created. For now, we use stubs.
+import { Logger } from "../Log/Service.js";
 
 /**
- * An Effect that builds the live implementation of the Authentication service.
+ * An `Effect` that builds the live implementation of the `Authentication` service.
+ *
+ * This definition demonstrates the "Fidelity-First" pattern by creating an
+ * instance of the original `NodeExtHostAuthentication` class. It adapts our
+ * services to the interfaces required by its constructor.
  */
-export default Effect.gen(function* () {
-	const IPC = yield* IPCService;
-	const Log = yield* LogService;
+const Definition = Effect.gen(function* (Generator) {
+	const IPCService = yield* Generator(IPC);
+	const InitDataService = yield* Generator(InitData);
+	const WindowService = yield* Generator(Window);
+	const LoggerService = yield* Generator(Logger);
 
-	const LocalProviders = yield* Ref.make(
-		new Map<string, AuthenticationProvider>(),
-	);
-
-	const OnDidChangeProvidersEvent = CreateEventStream<any>();
-	const OnDidChangeSessionsEvent = CreateEventStream<any>();
-
-	// --- RPC Handlers ---
-	const CreateSession = (ProviderID: string, Scopes: readonly string[]) =>
-		Effect.gen(function* () {
-			const Provider = (yield* Ref.get(LocalProviders)).get(ProviderID);
-			if (!Provider) {
-				return yield* Effect.fail(
-					new Error(
-						`No auth provider with id '${ProviderID}' is registered.`,
-					),
-				);
-			}
-			const Session = yield* Effect.tryPromise({
-				try: () => Provider.createSession(Scopes, {}),
-				catch: (CaughtError) => CaughtError,
-			});
-			return ConvertSessionToInternal(Session);
-		});
-
-	const RemoveSession = (ProviderID: string, SessionID: string) =>
-		Effect.gen(function* () {
-			const Provider = (yield* Ref.get(LocalProviders)).get(ProviderID);
-			if (!Provider?.removeSession) {
-				return;
-			}
-			yield* Effect.tryPromise({
-				try: () => Provider.removeSession!(SessionID),
-				catch: (CaughtError) => CaughtError,
-			});
-		});
-
-	yield* Effect.sync(() =>
-		IPC.RegisterInvokeHandler("$createSession", ([ID, Scopes]) =>
-			Effect.runPromise(CreateSession(ID, Scopes)),
-		),
-	);
-
-	yield* Effect.sync(() =>
-		IPC.RegisterInvokeHandler("$removeSession", ([ID, SessionID]) =>
-			Effect.runPromise(RemoveSession(ID, SessionID)),
-		),
-	);
-
-	// --- Service Implementation ---
-	const AuthenticationImplementation: Service["Type"] = {
-		GetSession: (
-			RequestingExtension: Extension<any>,
-			ProviderID: string,
-			Scopes: readonly string[],
-			Options: AuthenticationGetSessionOptions,
-		) =>
-			IPC.SendRequest<any | undefined>("$getSession", [
-				RequestingExtension.id,
-				ProviderID,
-				Scopes,
-				// This will require a new TypeConverter in a real implementation
-				Options,
-			]).pipe(
-				Effect.map((Info) =>
-					Info
-						? ConvertSessionToVSCode(Info)
-						: (undefined as AuthenticationSession | undefined),
-				),
-				Effect.tapError((Error) =>
-					Log.Error(
-						`GetSession for provider '${ProviderID}' failed.`,
-						Error,
-					),
-				),
-				Effect.mapError((e) => new Error(String(e))),
-			),
-
-		ListSessions: (
-			RequestingExtension: Extension<any>,
-			ProviderID: string,
-			Scopes?: readonly string[],
-		) =>
-			IPC.SendRequest<any[]>("$getSessions", [
-				RequestingExtension.id,
-				ProviderID,
-				Scopes,
-			]).pipe(
-				Effect.map((Infos) => Infos.map(ConvertSessionToVSCode)),
-				Effect.tapError((Error) =>
-					Log.Error(
-						`ListSessions for provider '${ProviderID}' failed.`,
-						Error,
-					),
-				),
-				Effect.mapError((e) => new Error(String(e))),
-				Effect.catchAll(() => Effect.succeed([])),
-			),
-
-		RegisterAuthenticationProvider: (ID, Label, Provider, Options) =>
-			Effect.gen(function* () {
-				const Providers = yield* Ref.get(LocalProviders);
-				if (Providers.has(ID)) {
-					return yield* Effect.fail(
-						new AuthenticationProviderExistsError({
-							ProviderID: ID,
-						}),
-					);
-				}
-				yield* Ref.update(LocalProviders, (Map) =>
-					Map.set(ID, Provider),
-				);
-				yield* IPC.SendNotification("$registerAuthenticationProvider", [
-					ID,
-					Label,
-					!!Options?.supportsMultipleAccounts,
-				]).pipe(
-					Effect.mapError(
-						(cause) =>
-							new AuthenticationProviderRegistrationError({
-								cause,
-							}),
-					),
-				);
-				const Disposable: IDisposable = {
-					dispose: () => {
-						const CleanupEffect = Ref.update(
-							LocalProviders,
-							(Map) => (Map.delete(ID), Map),
-						).pipe(
-							Effect.flatMap(() =>
-								IPC.SendNotification(
-									"$unregisterAuthenticationProvider",
-									[ID],
-								),
-							),
-						);
-						Effect.runFork(CleanupEffect);
-					},
-				};
-				return Disposable;
-			}),
-
-		onDidChangeAuthenticationProviders: OnDidChangeProvidersEvent.event,
-		onDidChangeSessions: OnDidChangeSessionsEvent.event,
+	/**
+	 * An adapter to make our `IPC.Service` conform to the `IExtHostRpcService`.
+	 */
+	const RpcServiceAdapter: IExtHostRpcService = {
+		_serviceBrand: undefined,
+		getProxy: <T>(Identifier: any): T =>
+			IPCService.CreateProxy(Identifier.path),
+		set: () => ({}) as any,
+		dispose: () => {},
 	};
 
-	return AuthenticationImplementation;
+	// --- Stubs for required dependencies that are not yet implemented ---
+	const UrlsServiceStub: IExtHostUrls = {
+		_serviceBrand: undefined,
+		registerUriHandler: () => ({ dispose: () => {} }),
+		unregisterUriHandler: () => {},
+		createAppUri: (uri) => Promise.resolve(uri),
+		get onDidOpenUri() {
+			return new Emitter<any>().event;
+		},
+		resolveExternalUri: () =>
+			Promise.resolve({ resolved: "file:///", dispose: () => {} }),
+		setDelegate: () => {},
+		handleExternalQuery: () => Promise.resolve(false),
+	};
+
+	const ProgressServiceStub: IExtHostProgress = {
+		_serviceBrand: undefined,
+		withProgress: () => Promise.resolve(),
+		resolveProgressStep: () => {},
+	};
+
+	// Instantiate the original VS Code class, providing our services and stubs.
+	const ServiceInstance = new NodeExtHostAuthentication(
+		RpcServiceAdapter,
+		InitDataService,
+		WindowService as IExtHostWindow, // Cast as the full interface is implemented by our Window service + stubs.
+		UrlsServiceStub,
+		ProgressServiceStub,
+		LoggerService as ILoggerService, // Cast as it matches the required methods.
+		LoggerService, // The second LogService is for the base logger.
+	);
+
+	return ServiceInstance;
 });
+
+export default Definition;

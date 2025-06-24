@@ -1,72 +1,22 @@
 /*
  * File: Cocoon/Source/Service/Authentication/Service.ts
- *
- * This file defines the interface and Context.Tag for the Authentication service.
+ * Role: Defines the service interface and Effect.Service for the Authentication service.
+ * Responsibilities:
+ *   - Declare the contract for the service that implements the `vscode.authentication` API.
+ *   - Provide the `Effect.Service` class for dependency injection, directly using
+ *     the `IExtHostAuthentication` interface for maximum fidelity.
  */
 
-import { Context, type Effect } from "effect";
-import type { IDisposable } from "vs/base/common/lifecycle.js";
-import type {
-	AuthenticationGetSessionOptions,
-	AuthenticationProvider,
-	AuthenticationProviderInformation,
-	AuthenticationSession,
-	AuthenticationSessionsChangeEvent,
-	Event,
-	Extension,
-} from "vscode";
+import { Effect } from "effect";
+import type { IExtHostAuthentication } from "vs/workbench/api/common/extHostAuthentication.js";
 
-import type AuthenticationProviderExistsError from "./Error/AuthenticationProviderExistsError.js";
-import type AuthenticationProviderRegistrationError from "./Error/AuthenticationProviderRegistrationError.js";
-
-export default class AuthenticationService extends Context.Tag(
+/**
+ * The `Effect.Service` for the Authentication service.
+ *
+ * This service directly implements the `IExtHostAuthentication` interface from
+ * VS Code's source code. It is responsible for managing authentication providers,
+ * sessions, and handling the authentication flows required by extensions.
+ */
+export class Authentication extends Effect.Service<IExtHostAuthentication>(
 	"Service/Authentication",
-)<
-	AuthenticationService,
-	{
-		/**
-		 * Requests an authentication session from a provider managed by the host.
-		 */
-		readonly GetSession: (
-			RequestingExtension: Extension<any>,
-			ProviderID: string,
-			Scopes: readonly string[],
-			Options: AuthenticationGetSessionOptions,
-		) => Effect.Effect<AuthenticationSession | undefined, Error>;
-
-		/**
-		 * Lists all available sessions for a given provider.
-		 */
-		readonly ListSessions: (
-			RequestingExtension: Extension<any>,
-			ProviderID: string,
-			Scopes?: readonly string[],
-		) => Effect.Effect<readonly AuthenticationSession[], Error>;
-
-		/**
-		 * Registers an authentication provider that runs within Cocoon.
-		 */
-		readonly RegisterAuthenticationProvider: (
-			ID: string,
-			Label: string,
-			Provider: AuthenticationProvider,
-			Options?: { readonly supportsMultipleAccounts?: boolean },
-		) => Effect.Effect<
-			IDisposable,
-			| AuthenticationProviderRegistrationError
-			| AuthenticationProviderExistsError
-		>;
-
-		/**
-		 * An event that fires when authentication providers are added or removed.
-		 */
-		readonly onDidChangeAuthenticationProviders: Event<
-			readonly AuthenticationProviderInformation[]
-		>;
-
-		/**
-		 * An event that fires when authentication sessions change.
-		 */
-		readonly onDidChangeSessions: Event<AuthenticationSessionsChangeEvent>;
-	}
->() {}
+) {}

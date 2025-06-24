@@ -1,16 +1,20 @@
 /*
  * File: Cocoon/Source/Service/Dialog/Live.ts
- *
- * This file provides the live implementation Layer for the Dialog service.
+ * Role: Provides the "live" implementation Layer for the Dialog service.
+ * Responsibilities:
+ *   - Defines the `Layer` that constructs the live `Dialog` service instance
+ *     and provides it with its necessary dependencies.
  */
 
 import { Layer } from "effect";
-
-import Definition from "./Definition.js";
-import Service from "./Service.js";
+import { Definition } from "./Definition.js";
+import { Dialog } from "./Service.js";
+import { IPC } from "../IPC/Service.js";
 
 /**
- * The live implementation Layer for the Dialog service.
- * It depends on the IPC service for all communication.
+ * The live implementation `Layer` for the `Dialog` service.
+ * It depends on the `IPC` service for all communication with the native host.
  */
-export default Layer.effect(Service, Definition);
+const Live: Layer.Layer<Dialog, never, IPC> = Layer.effect(Dialog, Definition);
+
+export default Live;

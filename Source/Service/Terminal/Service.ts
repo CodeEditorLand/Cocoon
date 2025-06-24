@@ -1,50 +1,23 @@
 /*
  * File: Cocoon/Source/Service/Terminal/Service.ts
- * Role: Defines the interface and Context.Tag for the Terminal service.
+ * Role: Defines the service interface and Effect.Service for the Terminal service.
  * Responsibilities:
- *   1. Declare the contract for the Terminal service, which provides access to
- *      creating and managing terminal instances.
- *   2. This is the public API surface consumed by other services or the API factory.
+ *   - Declare the contract for the service that provides the `vscode.window.terminals`
+ *     and `vscode.window.createTerminal` APIs.
+ *   - Provide the `Effect.Service` class for dependency injection, directly using
+ *     the `IExtHostTerminalService` interface for maximum fidelity.
  */
 
-import { Context } from "effect";
-import type { Event, Terminal, TerminalOptions } from "vscode";
+import { Effect } from "effect";
+import type { IExtHostTerminalService } from "vs/workbench/api/common/extHostTerminalService.js";
 
-export default class TerminalService extends Context.Tag("Service/Terminal")<
-	TerminalService,
-	{
-		/**
-		 * The currently active terminal.
-		 */
-		readonly activeTerminal: Terminal | undefined;
-
-		/**
-		 * A list of all open terminals.
-		 */
-		readonly terminals: readonly Terminal[];
-
-		/**
-		 * An event that fires when the active terminal has changed.
-		 */
-		readonly onDidChangeActiveTerminal: Event<Terminal | undefined>;
-
-		/**
-		 * An event that fires when a terminal has been opened.
-		 */
-		readonly onDidOpenTerminal: Event<Terminal>;
-
-		/**
-		 * An event that fires when a terminal has been closed.
-		 */
-		readonly onDidCloseTerminal: Event<Terminal>;
-
-		/**
-		 * Creates a new terminal instance.
-		 * @param OptionsOrName The options for the new terminal, or just its name.
-		 * @returns A new `Terminal` instance.
-		 */
-		readonly createTerminal: (
-			OptionsOrName?: TerminalOptions | string,
-		) => Terminal;
-	}
->() {}
+/**
+ * The `Effect.Service` for the `Terminal` service.
+ *
+ * This service directly implements the `IExtHostTerminalService` interface from
+ * VS Code's source code. It is responsible for creating, managing, and exposing
+ * the state of all integrated terminal instances.
+ */
+export class Terminal extends Effect.Service<IExtHostTerminalService>(
+	"Service/Terminal",
+) {}

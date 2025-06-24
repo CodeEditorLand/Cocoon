@@ -1,11 +1,13 @@
 /*
  * File: Cocoon/Source/Service/QuickInput/Service.ts
- *
- * This file defines the interface and Context.Tag for the QuickInput service.
- * This service implements the `vscode.window.showQuickPick` and `showInputBox` APIs.
+ * Role: Defines the service interface and Effect.Service for the QuickInput service.
+ * Responsibilities:
+ *   - Declare the contract for the service that implements the `vscode.window.showQuickPick`
+ *     and `showInputBox` APIs.
+ *   - Provide the `Effect.Service` class for dependency injection.
  */
 
-import { Context, type Effect } from "effect";
+import { Effect } from "effect";
 import type {
 	CancellationToken,
 	InputBox,
@@ -15,43 +17,45 @@ import type {
 	QuickPickOptions,
 } from "vscode";
 
-export default class QuickInputService extends Context.Tag(
+/**
+ * The `Effect.Service` for the QuickInput service.
+ * This service provides methods for showing quick pick selection lists and
+ * free-text input boxes to the user.
+ */
+export class QuickInput extends Effect.Service<QuickInput>(
 	"Service/QuickInput",
-)<
-	QuickInputService,
-	{
-		/**
-		 * Shows a selection list.
-		 * @param Items An array of items to show in the pick list.
-		 * @param Option Configures the behavior of the pick list.
-		 * @param Token A token that can be used to cancel the pick list.
-		 */
-		readonly ShowQuickPick: <T extends QuickPickItem>(
-			Items: readonly T[] | Promise<readonly T[]>,
-			Option?: QuickPickOptions,
-			Token?: CancellationToken,
-		) => Effect.Effect<T | T[] | undefined, Error>;
+)<{
+	/**
+	 * Shows a selection list to the user.
+	 * @param Items - An array of items to show in the pick list.
+	 * @param Option - Configuration options for the pick list.
+	 * @param Token - A token that can be used to cancel the operation.
+	 */
+	readonly ShowQuickPick: <T extends QuickPickItem>(
+		Items: readonly T[] | Promise<readonly T[]>,
+		Option?: QuickPickOptions,
+		Token?: CancellationToken,
+	) => Effect.Effect<T | T[] | undefined, Error>;
 
-		/**
-		 * Opens an input box to ask the user for input.
-		 * @param Option Configures the behavior of the input box.
-		 * @param Token A token that can be used to cancel the input box.
-		 */
-		readonly ShowInputBox: (
-			Option?: InputBoxOptions,
-			Token?: CancellationToken,
-		) => Effect.Effect<string | undefined, Error>;
+	/**
+	 * Opens an input box to ask the user for input.
+	 * @param Option - Configuration options for the input box.
+	 * @param Token - A token that can be used to cancel the operation.
+	 */
+	readonly ShowInputBox: (
+		Option?: InputBoxOptions,
+		Token?: CancellationToken,
+	) => Effect.Effect<string | undefined, Error>;
 
-		/**
-		 * Creates a new quick pick.
-		 * Note: This is for the controller-based QuickInput and is more complex.
-		 */
-		readonly CreateQuickPick: <T extends QuickPickItem>() => QuickPick<T>;
+	/**
+	 * Creates a new quick pick controller.
+	 * @note This is for the more complex, stateful QuickInput API and is stubbed.
+	 */
+	readonly CreateQuickPick: <T extends QuickPickItem>() => QuickPick<T>;
 
-		/**
-		 * Creates a new input box.
-		 * Note: This is for the controller-based QuickInput and is more complex.
-		 */
-		readonly CreateInputBox: () => InputBox;
-	}
->() {}
+	/**
+	 * Creates a new input box controller.
+	 * @note This is for the more complex, stateful QuickInput API and is stubbed.
+	 */
+	readonly CreateInputBox: () => InputBox;
+}>() {}

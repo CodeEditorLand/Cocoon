@@ -1,21 +1,23 @@
 /*
  * File: Cocoon/Source/Service/IPC/Live.ts
- *
- * This file provides the composed "live" Layer for the entire IPC service.
- * It brings together the client, server, dispatcher, and protocol adapter into
- * a single, manageable layer.
+ * Role: Provides the composed "live" Layer for the entire IPC service.
+ * Responsibilities:
+ *   - Composes all individual IPC sub-component layers (`Client`, `Server`, `Dispatcher`,
+ *     `ProtocolAdapter`) into a single, manageable layer.
+ *   - Resolves all internal dependencies within the IPC system.
  */
 
 import { Layer } from "effect";
 
-import CancellationLive from "../Cancellation/Live.js";
-import ClientLive from "./Client/Live.js";
-import type IPCConfigurationService from "./Configuration.js";
-import Definition from "./Definition.js";
-import DispatcherLive from "./Dispatcher/Live.js";
-import ProtocolAdapterLive from "./ProtocolAdapter/Live.js";
-import ServerLive from "./Server/Live.js";
-import Service from "./Service.js";
+import { Live as CancellationLive } from "../Cancellation/mod.js";
+import { Live as ClientLive } from "./Client/mod.js";
+import { Live as DispatcherLive } from "./Dispatcher/mod.js";
+import { Live as ProtocolAdapterLive } from "./ProtocolAdapter/mod.js";
+import { Live as ServerLive } from "./Server/mod.js";
+import { Definition } from "./Definition.js";
+import { IPC } from "./Service.js";
+import type { Configuration as IPCConfiguration } from "./Service.js";
+import type { GRPCConnectionProblem } from "./Error.js";
 
 /**
  * A layer that bundles all the internal dependencies required by the main IPC service.
@@ -34,9 +36,9 @@ const IPCInternalComponents = Layer.mergeAll(
  * A fully resolved layer for all internal IPC dependencies.
  * By providing the component layer to itself, we resolve all cross-dependencies
  * between the sub-services (e.g., ProtocolAdapter needing ClientService).
- * The only remaining dependency is the external IPCConfigurationService.
+ * The only remaining dependency is the external `IPC.Configuration`.
  */
-const IPCInternalDepsLive = IPCInternalComponents.pipe(
+const IPCInternalDependenciesLive = IPCInternalComponents.pipe(
 	Layer.provide(IPCInternalComponents),
 );
 
@@ -44,17 +46,19 @@ const IPCInternalDepsLive = IPCInternalComponents.pipe(
  * The main `IPCService` layer definition.
  * This layer declares its dependencies on the internal components.
  */
-const IPCServiceLive = Layer.effect(Service, Definition);
+const IPCServiceLive = Layer.effect(IPC, Definition);
 
 /**
- * The final, composed "live" Layer for the IPC service.
+ * The final, composed "live" `Layer` for the IPC service.
  *
  * This layer is constructed by providing the fully resolved internal dependencies layer
- * to the main IPC service layer. The potential `gRPCConnectionError` from the
+ * to the main IPC service layer. The potential `GRPCConnectionProblem` from the
  * internal dependencies is treated as a fatal defect, ensuring the final layer has a
  * `never` error channel.
  */
-const IPCLive: Layer.Layer<Service, never, IPCConfigurationService> =
-	IPCServiceLive.pipe(Layer.provide(IPCInternalDepsLive), Layer.orDie);
+const Live: Layer.Layer<IPC, never, IPCConfiguration> = IPCServiceLive.pipe(
+	Layer.provide(IPCInternalDependenciesLive),
+	Layer.orDie,
+);
 
-export default IPCLive;
+export default Live;

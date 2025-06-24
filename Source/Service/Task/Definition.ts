@@ -1,112 +1,143 @@
-/**
- * @module Definition (Task)
- * @description The live implementation of the Tasks service.
+/*
+ * File: Cocoon/Source/Service/Task/Definition.ts
+ * Role: Provides the live implementation of the Task service.
+ * Responsibilities:
+ *   - Implements the `vscode.tasks` API surface.
+ *   - Manages the registration and lifecycle of `TaskProvider`s.
+ *   - Orchestrates task fetching and execution by proxying requests to the host
+ *     process via the IPC service.
+ *   - Listens for and dispatches task-related events from the host.
  */
 
 import { Effect, Ref } from "effect";
-import { Disposable, type TaskFilter } from "vscode";
-
+import { type IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import {
+	Disposable,
+	type Task,
+	type TaskExecution,
+	type TaskFilter,
+	type TaskProvider,
+} from "vscode";
 import { Task as TaskConverter } from "../../TypeConverter/Task.js";
-import CreateEventStream from "../../Utility/CreateEventStream.js";
-import CancellationService from "../Cancellation/Service.js";
-import IPCService from "../IPC/Service.js";
-import ProvideTasksEffect from "./RPCHandlers/ProvideTasks.js";
-import type Service from "./Service.js";
+import { CreateEventStream } from "../../Utility/CreateEventStream.js";
+import { Cancellation } from "../Cancellation/Service.js";
+import { IPC } from "../IPC/Service.js";
+import { ProvideTasksEffect } from "./RPCHandlers/ProvideTasks.js";
+import { Task as TaskService } from "./Service.js";
+import type { ProviderEntry } from "./Type.js";
 
 let HandleCounter = 0;
 
 /**
- * An Effect that builds the live implementation of the Task service.
+ * An `Effect` that builds the live implementation of the `Task` service.
  */
-export default Effect.gen(function* (G) {
-	const IPC = yield* G(IPCService);
+const Definition = Effect.gen(function* (Generator) {
+	// --- Service Dependencies ---
+	const IPCService = yield* Generator(IPC);
+	const CancellationService = yield* Generator(Cancellation);
 
-	const Cancellation = yield* G(CancellationService);
-
-	const TaskProvidersRef = yield* G(Ref.make(new Map<number, any>()));
+	// --- Internal State ---
+	const TaskProvidersRef = yield* Generator(
+		Ref.make(new Map<number, ProviderEntry<any>>()),
+	);
 
 	// --- RPC Handlers ---
-	IPC.RegisterInvokeHandler("$provideTasks", ([Handle, TokenID]) =>
-		Effect.runPromise(
-			ProvideTasksEffect(TaskProvidersRef, Handle, TokenID, Cancellation),
-		),
+	// Register the handler that the host will call to request tasks from a provider.
+	IPCService.RegisterInvokeHandler(
+		"$provideTasks",
+		([Handle, TokenID]: [number, number]) =>
+			Effect.runPromise(
+				ProvideTasksEffect(
+					TaskProvidersRef,
+					Handle,
+					TokenID,
+					CancellationService,
+				),
+			),
 	);
 
 	// --- Event Emitters ---
-	const OnDidStartTaskEvent = CreateEventStream<any>();
+	const { event: OnDidStartTaskEvent } = CreateEventStream<any>();
+	const { event: OnDidEndTaskEvent } = CreateEventStream<any>();
+	const { event: OnDidStartTaskProcessEvent } = CreateEventStream<any>();
+	const { event: OnDidEndTaskProcessEvent } = CreateEventStream<any>();
 
-	const OnDidEndTaskEvent = CreateEventStream<any>();
+	// --- Service Implementation ---
+	const ServiceImplementation: TaskService["Type"] = {
+		// --- Events ---
+		onDidStartTask: OnDidStartTaskEvent,
+		onDidEndTask: OnDidEndTaskEvent,
+		onDidStartTaskProcess: OnDidStartTaskProcessEvent,
+		onDidEndTaskProcess: OnDidEndTaskProcessEvent,
 
-	const OnDidStartTaskProcessEvent = CreateEventStream<any>();
+		// --- Properties ---
+		get taskExecutions(): readonly TaskExecution[] {
+			// A full implementation would need to track active executions.
+			return [];
+		},
 
-	const OnDidEndTaskProcessEvent = CreateEventStream<any>();
-
-	const TaskImplementation: Service["Type"] = {
-		onDidStartTask: OnDidStartTaskEvent.event,
-
-		onDidEndTask: OnDidEndTaskEvent.event,
-
-		onDidStartTaskProcess: OnDidStartTaskProcessEvent.event,
-
-		onDidEndTaskProcess: OnDidEndTaskProcessEvent.event,
-
-		taskExecutions: [],
-
-		RegisterTaskProvider: (Type, Provider, Extension) =>
+		// --- Methods ---
+		RegisterTaskProvider: <T extends Task>(
+			Type: string,
+			Provider: TaskProvider<T>,
+			Extension: IExtensionDescription,
+		): Effect.Effect<Disposable, Error> =>
 			Effect.sync(() => {
 				const Handle = ++HandleCounter;
+				const Entry: ProviderEntry<T> = { Type, Provider, Extension };
 
+				// Store the provider locally.
 				Effect.runSync(
 					Ref.update(TaskProvidersRef, (Map) =>
-						Map.set(Handle, { Type, Provider, Extension }),
+						Map.set(Handle, Entry),
 					),
 				);
 
+				// Notify the host that a provider for this type is available.
 				Effect.runFork(
-					IPC.SendNotification("$registerTaskProvider", [
+					IPCService.SendNotification("$registerTaskProvider", [
 						Handle,
-
 						Type,
 					]),
 				);
 
+				// Return a disposable to clean up the registration.
 				return new Disposable(() => {
 					const CleanupEffect = Ref.update(
 						TaskProvidersRef,
-
 						(Map) => (Map.delete(Handle), Map),
 					).pipe(
 						Effect.flatMap(() =>
-							IPC.SendNotification("$unregisterTaskProvider", [
-								Handle,
-							]),
+							IPCService.SendNotification(
+								"$unregisterTaskProvider",
+								[Handle],
+							),
 						),
 					);
-
 					Effect.runFork(CleanupEffect);
 				});
 			}),
 
 		FetchTasks: (Filter?: TaskFilter) =>
-			IPC.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
-				Effect.map((DTOs) =>
-					DTOs.map((DTO) => TaskConverter.ToAPI(DTO)),
+			IPCService.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
+				Effect.map((TaskDTOs) =>
+					TaskDTOs.map((DTO) => TaskConverter.ToAPI(DTO)),
 				),
-
-				Effect.mapError((cause) => new Error(String(cause))),
+				Effect.mapError((Cause) => new Error(String(Cause))),
 			),
 
 		ExecuteTask: (TaskToExecute, Extension) =>
-			IPC.SendRequest<any>("$executeTask", [
+			IPCService.SendRequest<any>("$executeTask", [
 				TaskConverter.FromAPI(TaskToExecute, Extension),
 			]).pipe(
-				Effect.map((DTO) =>
-					TaskConverter.Execution.ToAPI(DTO, TaskToExecute),
+				Effect.map((ExecutionDTO) =>
+					TaskConverter.Execution.ToAPI(ExecutionDTO, TaskToExecute),
 				),
-
-				Effect.mapError((cause) => new Error(String(cause))),
+				Effect.mapError((Cause) => new Error(String(Cause))),
 			),
 	};
 
-	return TaskImplementation;
+	return ServiceImplementation;
 });
+
+export default Definition;

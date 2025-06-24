@@ -1,30 +1,29 @@
 /*
  * File: Cocoon/Source/Service/Storage/Service.ts
- * Role: Defines the interface and Context.Tag for the Storage service factory.
+ * Role: Defines the interface and Effect.Service for the Storage service factory.
  * Responsibilities:
- *   1. Declare the contract for the Storage service, which is responsible for creating
- *      `Memento` instances for persistent key-value storage.
- *   2. This is the public API surface consumed by other services or the API factory.
+ *   - Declare the contract for the service responsible for creating `Memento`
+ *     instances for persistent, scoped key-value storage.
+ *   - Provide the `Effect.Service` class for dependency injection.
  */
 
-import { Context } from "effect";
+import { Effect } from "effect";
 import type { Memento } from "vscode";
 
-export default class StorageService extends Context.Tag("Service/Storage")<
-	StorageService,
-	{
-		/**
-		 * Creates a Memento instance.
-		 * @param ExtensionID The ID of the extension requesting the storage.
-		 * @param IsGlobal If `true`, creates a global storage memento (shared across workspaces);
-
-		 *   otherwise, a workspace-scoped one.
-		 * @returns A `Memento` instance.
-		 */
-		readonly CreateMemento: (
-			ExtensionID: string,
-
-			IsGlobal: boolean,
-		) => Memento;
-	}
->() {}
+/**
+ * The `Effect.Service` for the Storage service factory.
+ *
+ * This service doesn't provide a Memento instance directly, but rather a factory
+ * function (`CreateMemento`) that constructs Memento instances scoped to a
+ * specific extension and storage type (Global or Workspace).
+ */
+export class Storage extends Effect.Service<Storage>("Service/Storage")<{
+	/**
+	 * Creates a `Memento` instance for persistent key-value storage.
+	 * @param ExtensionID - The ID of the extension requesting the storage.
+	 * @param IsGlobal - If `true`, creates a global storage memento (shared
+	 *   across workspaces); otherwise, a workspace-scoped one.
+	 * @returns A `Memento` instance providing synchronous `get` and `update` methods.
+	 */
+	readonly CreateMemento: (ExtensionID: string, IsGlobal: boolean) => Memento;
+}>() {}

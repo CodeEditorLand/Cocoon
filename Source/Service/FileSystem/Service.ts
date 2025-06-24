@@ -1,24 +1,25 @@
 /*
  * File: Cocoon/Source/Service/FileSystem/Service.ts
- *
- * This file defines the interface and Context.Tag for the FileSystem service,
- * which implements the `vscode.workspace.fs` API.
+ * Role: Defines the service interface and Effect.Service for the FileSystem service.
+ * Responsibilities:
+ *   - Declare the contract for the service that implements the `vscode.workspace.fs` API.
+ *   - Provide the `Effect.Service` class that acts as the dependency injection tag.
  */
 
-import { Context } from "effect";
+import { Effect } from "effect";
 import type { Event, FileChangeEvent, FileSystem } from "vscode";
 
 /**
- * A service interface that combines the standard `vscode.FileSystem`
- * methods with the `onDidChangeFile` event.
+ * A service interface that combines the standard `vscode.FileSystem` methods
+ * with the `onDidChangeFile` event for a complete file system abstraction.
  */
 export interface FileSystemServiceType extends FileSystem {
 	readonly onDidChangeFile: Event<readonly FileChangeEvent[]>;
 }
 
 /**
- * The `Context.Tag` for the `vscode.workspace.fs` API service.
+ * The `Effect.Service` for the `vscode.workspace.fs` API service.
  */
-export default class FileSystemService extends Context.Tag(
+export class FileSystem extends Effect.Service<FileSystem>(
 	"Service/FileSystem",
 )<FileSystemService, FileSystemServiceType>() {}
