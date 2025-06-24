@@ -33,7 +33,6 @@ interface IStatusbarEntry {
 export const FromAPI = (
 	From: VSCodeStatusBarItem,
 	EntryId: string,
-	// @ts-expect-error
 	ExtensionId: string,
 	CommandConverter: CommandConverter,
 ): IStatusbarEntry => {

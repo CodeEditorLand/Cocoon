@@ -50,7 +50,6 @@ export class WebViewPanelImplementation implements WebviewPanel {
 	constructor(
 		private readonly Handle: string,
 		private readonly IPC: IPC,
-		// @ts-expect-error
 		private readonly Extension: IExtensionDescription,
 		private readonly OnDidDisposeCallback: () => void,
 		InitialViewType: string,

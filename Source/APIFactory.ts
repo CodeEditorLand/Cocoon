@@ -10,23 +10,29 @@ import type {
 	IExtensionDescription,
 	ExtensionIdentifier,
 } from "vs/platform/extensions/common/extensions.js";
-import * as VSCode from "vscode";
-import { Position, Range, Selection, Disposable } from "vscode";
+import type * as VSCode from "vscode";
+import {
+	Position,
+	Range,
+	Selection,
+	Disposable,
+} from "./Platform/VSCode/Type.js";
 
+// Corrected PascalCase Imports
 import { APIDeprecationService } from "./APIDeprecation.js";
-import { CommandService } from "./Command.js";
+import { CommandService, type Command } from "./Command.js";
 import { DebugService } from "./Debug.js";
 import { DocumentService } from "./Document.js";
-import { Extension, ExtensionService } from "./Extension.js";
+import { ExtensionService, type Extension } from "./Extension.js";
 import { LanguageFeatureService } from "./LanguageFeature.js";
-import { Logger, LoggerService } from "./Logger.js";
+import { LoggerService, type Logger } from "./Logger.js";
 import { ProposedAPIService } from "./ProposedAPI.js";
-import { StatusBar, StatusBarService } from "./StatusBar.js";
+import { StatusBarService, type StatusBar } from "./StatusBar.js";
 import { TaskService } from "./Task.js";
-import { TreeView, TreeViewService } from "./TreeView.js";
-import { WebViewPanel, WebViewPanelService } from "./WebViewPanel.js";
-import { WindowService } from "./Window.js";
-import { WorkSpaceService } from "./WorkSpace.js";
+import { TreeViewService, type TreeView } from "./TreeView.js";
+import { WebViewPanelService, type WebViewPanel } from "./WebViewPanel.js";
+import { WindowService, type Window } from "./Window.js";
+import { WorkSpaceService, type WorkSpace } from "./WorkSpace.js";
 
 // --- Internal Namespace Factory helpers ---
 const CreateSafeEvent = <T>(
@@ -45,8 +51,7 @@ const CreateSafeEvent = <T>(
 				);
 			}
 		};
-		const Handle = ActualEvent(SafeListener);
-		Disposables?.push(Handle);
+		const Handle = ActualEvent(SafeListener, undefined, Disposables);
 		return Handle;
 	};
 };
@@ -56,21 +61,25 @@ const CreateCommandNamespace = (
 	ExtensionDescription: IExtensionDescription,
 ): typeof VSCode.commands => {
 	return {
-		registerCommand: (Id, Handler, ThisArgument) =>
+		registerCommand: (Id, Handler, ThisArgument): Disposable =>
 			Command.registerCommand(
 				Id,
 				Handler,
 				ThisArgument,
 				ExtensionDescription,
 			),
-		registerTextEditorCommand: (Id, Handler, ThisArgument) =>
+		registerTextEditorCommand: (Id, Handler, ThisArgument): Disposable =>
 			Command.registerTextEditorCommand(
 				Id,
 				Handler,
 				ThisArgument,
 				ExtensionDescription,
 			),
-		registerDiffInformationCommand: (Id, Handler, ThisArgument) =>
+		registerDiffInformationCommand: (
+			Id,
+			Handler,
+			ThisArgument,
+		): Disposable =>
 			Command.registerCommand(
 				Id,
 				Handler,
@@ -93,7 +102,6 @@ const CreateWindowNamespace = (
 	Extension: IExtensionDescription,
 	WorkSpace: WorkSpace,
 ): typeof VSCode.window => {
-	// This function must return an object matching vscode.window
 	const RunEffectAndReturnPromise = <T, E>(TheEffect: Effect.Effect<T, E>) =>
 		Effect.runPromise(Effect.mapError(TheEffect, (e) => e as Error));
 
@@ -116,10 +124,14 @@ const CreateWindowNamespace = (
 		get onDidChangeVisibleTextEditors() {
 			return AsEvent(WorkSpace.onDidChangeVisibleTextEditors);
 		},
-		showTextDocument: (documentOrUri, columnOrOptions, preserveFocus) =>
+		showTextDocument: (
+			documentOrUri: any,
+			columnOrOptions: any,
+			preserveFocus: any,
+		) =>
 			RunEffectAndReturnPromise(
 				Window.ShowTextDocument(
-					documentOrUri as any,
+					documentOrUri,
 					columnOrOptions,
 					preserveFocus,
 				),
@@ -143,9 +155,11 @@ const CreateWindowNamespace = (
 			);
 		}) as any,
 		createTreeView: (ViewId, Options) =>
-			Effect.runSync(TreeView.CreateTreeView(ViewId, Options, Extension)),
+			RunEffectAndReturnPromise(
+				TreeView.CreateTreeView(ViewId, Options, Extension),
+			),
 		createWebviewPanel: (ViewType, Title, ShowOptions, Options) =>
-			Effect.runSync(
+			RunEffectAndReturnPromise(
 				WebViewPanel.CreateWebviewPanel(
 					Extension,
 					ViewType,

@@ -7,7 +7,7 @@
  */
 
 import { Effect, Option, Data } from "effect";
-import { WindowService } from "./Window.js";
+import { Window, WindowService } from "./Window.js";
 import { IPC, IPCService } from "./IPC.js";
 
 // --- Custom Errors ---
@@ -54,7 +54,9 @@ export class ProcessingServiceProblem extends Data.TaggedError(
  * @returns An `Effect` resolving to an `Option<vscode.TextEditor>`.
  */
 const GetActiveTextEditor = Effect.gen(function* () {
-	const Window = yield* Window;
+	// A full implementation would get this from the WorkSpace service.
+	// For now, this is a stub.
+	const Window = yield* WindowService;
 	return Option.fromNullable(Window.activeTextEditor);
 });
 
@@ -87,8 +89,8 @@ const InvokeProcessingService = (
 	TextContent: string,
 ): Effect.Effect<ProcessingResult, ProcessingServiceProblem, IPC> => {
 	return Effect.gen(function* () {
-		const IPC = yield* IPCService;
-		return yield* IPC.SendRequest<ProcessingResult>("$processText", [
+		const TheIPC = yield* IPCService;
+		return yield* TheIPC.SendRequest<ProcessingResult>("$processText", [
 			TextContent,
 		]).pipe(
 			Effect.mapError((Cause) => new ProcessingServiceProblem({ Cause })),
@@ -115,17 +117,17 @@ export const ProcessUserData = Effect.gen(function* () {
 	// Declaratively handle all known, tagged failure cases for this workflow.
 	Effect.catchTags({
 		ActiveEditorNotFoundProblem: (Error) =>
-			Effect.flatMap(Window, (w) =>
+			Effect.flatMap(WindowService, (w) =>
 				w.ShowInformationMessage(Error.message),
 			),
 		ProcessingServiceProblem: (Error) =>
-			Effect.flatMap(Window, (w) =>
+			Effect.flatMap(WindowService, (w) =>
 				w.ShowInformationMessage(Error.message),
 			),
 	}),
 	// Catch any other unexpected error.
 	Effect.catchAll((Error) =>
-		Effect.flatMap(Window, (w) =>
+		Effect.flatMap(WindowService, (w) =>
 			w.ShowInformationMessage(
 				`An unexpected error occurred: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
 			),

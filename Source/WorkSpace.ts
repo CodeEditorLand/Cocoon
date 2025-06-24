@@ -8,7 +8,6 @@
 import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
 import {
-	Disposable,
 	type CancellationToken,
 	type Event,
 	type FileSystem as VSCodeFileSystem,
@@ -23,8 +22,8 @@ import {
 } from "vscode";
 import { URI } from "vscode-uri";
 import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
-import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
-import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
+import { FromDTO as WorkSpaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
+import { FromAPI as WorkSpaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
 import { ConfigurationService } from "./Configuration.js";
 import { DocumentService } from "./Document.js";
@@ -116,7 +115,7 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 						Data.id,
 						Data.name,
 						Data.folders.map((FolderDTO: any) =>
-							WorkspaceFolderFromDTO(FolderDTO),
+							WorkSpaceFolderFromDTO(FolderDTO),
 						),
 						Data.configuration
 							? UriToAPI(Data.configuration)
@@ -263,7 +262,7 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 					) as any,
 				applyEdit: (Edit: WorkspaceEdit) =>
 					IPC.SendRequest<boolean>("$applyWorkspaceEdit", [
-						WorkspaceEditFromAPI(Edit),
+						WorkSpaceEditFromAPI(Edit),
 					]).pipe(
 						Effect.mapError((Cause) => new Error(String(Cause))),
 					),

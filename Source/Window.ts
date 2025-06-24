@@ -27,6 +27,7 @@ import { WorkSpaceService } from "./WorkSpace.js";
 export interface Window {
 	readonly state: WindowState;
 	readonly onDidChangeWindowState: Event<WindowState>;
+	readonly activeTextEditor: TextEditor | undefined; // Added for APIFactory
 	readonly ShowTextDocument: (
 		documentOrUri: Uri | TextDocument,
 		columnOrOptions?: ViewColumn | TextDocumentShowOptions,
@@ -98,7 +99,6 @@ export class WindowService extends Effect.Service<WindowService>()(
 						[TheUri.toJSON(), ViewColumnDTO, OptionsDTO],
 					);
 
-					// The Workspace service is the source of truth for editors.
 					const Editor = WorkSpace.visibleTextEditors.find(
 						(e) => (e as any).id === EditorId,
 					);
@@ -118,6 +118,10 @@ export class WindowService extends Effect.Service<WindowService>()(
 					return Effect.runSync(Ref.get(WindowStateRef));
 				},
 				onDidChangeWindowState: OnDidChangeWindowState,
+				get activeTextEditor() {
+					// This should be sourced from WorkSpaceService
+					return WorkSpace.activeTextEditor;
+				},
 				ShowTextDocument,
 			};
 		}),

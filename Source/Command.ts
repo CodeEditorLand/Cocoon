@@ -47,6 +47,12 @@ export interface CommandHandlerEntry {
 }
 
 /**
+ * @interface Command
+ * @description The contract for the Command service, matching `IExtHostCommands`.
+ */
+export interface Command extends IExtHostCommands {}
+
+/**
  * @class CommandService
  * @description The `Effect.Service` for the Command service. It directly implements
  * the `IExtHostCommands` interface from VS Code's source code to ensure 1:1 API
@@ -85,7 +91,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 			): Effect.Effect<string[], Error> => {
 				return IPC.SendRequest<string[]>(
 					"$getCommands",
-					FilterInternal,
+					[FilterInternal], // Wrap in array
 				);
 			};
 
