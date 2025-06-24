@@ -1,39 +1,53 @@
 /*
  * File: Cocoon/Source/Service/Log/Service.ts
- *
- * This file defines the interface and Context.Tag for the Log service.
- * This is a simple, internal logging facade that other services can use,
- * which will eventually route to the main `Effect` logger.
+ * Role: Defines the Logger service interface and provides its default "live" implementation.
+ * Responsibilities:
+ *   - Provide a simple, internal logging facade that other services can use.
+ *   - Route internal logs to the main Effect logger.
  */
 
-import { Context, type Effect } from "effect";
+import { Effect } from "effect";
 
-export default class LogService extends Context.Tag("Service/Log")<
-	LogService,
-	{
-		readonly Trace: (
-			Message: string,
-			...Data: readonly any[]
-		) => Effect.Effect<void, never>;
-		readonly Debug: (
-			Message: string,
-			...Data: readonly any[]
-		) => Effect.Effect<void, never>;
-		readonly Info: (
-			Message: string,
-			...Data: readonly any[]
-		) => Effect.Effect<void, never>;
-		readonly Warn: (
-			Message: string,
-			...Data: readonly any[]
-		) => Effect.Effect<void, never>;
-		readonly Error: (
-			Message: string,
-			...Data: readonly any[]
-		) => Effect.Effect<void, never>;
-		readonly Fatal: (
-			Message: string,
-			...Data: readonly any[]
-		) => Effect.Effect<void, never>;
-	}
->() {}
+export class Logger extends Effect.Service<Logger>()("Service/Logger", {
+	// A `sync` constructor is sufficient as it simply returns an object of functions.
+	// The methods themselves return Effects, which is where the asynchronous
+	// logging work happens.
+	sync: () => ({
+		Trace: (Message, ...Data) =>
+			Effect.logTrace(Message).pipe(
+				Effect.annotateLogs({
+					data: Data.length === 1 ? Data[0] : Data,
+				}),
+			),
+		Debug: (Message, ...Data) =>
+			Effect.logDebug(Message).pipe(
+				Effect.annotateLogs({
+					data: Data.length === 1 ? Data[0] : Data,
+				}),
+			),
+		Info: (Message, ...Data) =>
+			Effect.logInfo(Message).pipe(
+				Effect.annotateLogs({
+					data: Data.length === 1 ? Data[0] : Data,
+				}),
+			),
+		Warn: (Message, ...Data) =>
+			Effect.logWarning(Message).pipe(
+				Effect.annotateLogs({
+					data: Data.length === 1 ? Data[0] : Data,
+				}),
+			),
+		Error: (Message, ...Data) =>
+			Effect.logError(Message).pipe(
+				Effect.annotateLogs({
+					data: Data.length === 1 ? Data[0] : Data,
+				}),
+			),
+		Fatal: (Message, ...Data) =>
+			Effect.logFatal(Message).pipe(
+				Effect.annotateLogs({
+					data: Data.length === 1 ? Data[0] : Data,
+				}),
+			),
+	}),
+}) {}

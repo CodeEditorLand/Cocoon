@@ -45,7 +45,7 @@ export default Effect.gen(function* (G) {
 		),
 	);
 
-	const ServiceImplementation: Service["Type"] = {
+	const ServiceImplementation: Service = {
 		OnDidChangeDiagnostics: OnDidChangeDiagnosticsEvent,
 		CreateDiagnosticCollection: (Name?: string) => {
 			// Each collection gets a unique owner ID to separate its diagnostics on the host.

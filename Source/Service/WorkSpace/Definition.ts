@@ -152,7 +152,7 @@ const Definition = Effect.gen(function* (Generator) {
 	);
 
 	// --- Service Implementation ---
-	const ServiceImplementation: Workspace["Type"] = {
+	const ServiceImplementation: Workspace = {
 		// --- Workspace Properties ---
 		get name() {
 			return Ref.unsafeGet(InternalWorkspaceRef)?.Name;

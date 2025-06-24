@@ -12,127 +12,6 @@
  *   4. Listens for and handles a graceful shutdown signal from the host.
  */
 
-import * as Path from "node:path";
-import { DevTools } from "@effect/experimental";
-import { NodeRuntime } from "@effect/platform-node";
-import { NodeSdk } from "@effect/opentelemetry";
-import { NodeSocket } from "@effect/platform-node";
-import {
-	BatchSpanProcessor,
-	ConsoleSpanExporter,
-} from "@opentelemetry/sdk-trace-base";
-import { Deferred, Effect, Layer, Logger } from "effect";
-import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
-
-// --- Service Imports (using the new `PascalCase` service names) ---
-import { APIFactory, Live as APIFactoryLive } from "./Core/APIFactory/mod.js";
-import {
-	ESMInterceptor,
-	Live as ESMInterceptorLive,
-} from "./Core/ESMInterceptor/mod.js";
-import {
-	ExtensionHost,
-	Live as ExtensionHostLive,
-} from "./Core/ExtensionHost/mod.js";
-import {
-	ExtensionPath,
-	Live as ExtensionPathLive,
-} from "./Core/ExtensionPath/mod.js";
-import {
-	HostKindPicker,
-	Live as HostKindPickerLive,
-} from "./Core/HostKindPicker/mod.js";
-import {
-	NodeModuleShim,
-	Live as NodeModuleShimLive,
-} from "./Core/NodeModuleShim/mod.js";
-import {
-	RequireInterceptor,
-	Live as RequireInterceptorLive,
-} from "./Core/RequireInterceptor/mod.js";
-import { RunProcessPatch } from "./PatchProcess.js";
-import {
-	APIDeprecation,
-	Live as APIDeprecationLive,
-} from "./Service/APIDeprecation/mod.js";
-import {
-	Authentication,
-	Live as AuthenticationLive,
-} from "./Service/Authentication/mod.js";
-import {
-	Cancellation,
-	Live as CancellationLive,
-} from "./Service/Cancellation/mod.js";
-import { Clipboard, Live as ClipboardLive } from "./Service/Clipboard/mod.js";
-import { Command, Live as CommandLive } from "./Service/Command/mod.js";
-import {
-	Configuration,
-	Live as ConfigurationLive,
-} from "./Service/Configuration/mod.js";
-import { Debug, Live as DebugLive } from "./Service/Debug/mod.js";
-import {
-	Diagnostic,
-	Live as DiagnosticLive,
-} from "./Service/Diagnostic/mod.js";
-import { Dialog, Live as DialogLive } from "./Service/Dialog/mod.js";
-import { Document, Live as DocumentLive } from "./Service/Document/mod.js";
-import {
-	Environment,
-	Live as EnvironmentLive,
-} from "./Service/Environment/mod.js";
-import { Extension, Live as ExtensionLive } from "./Service/Extension/mod.js";
-import {
-	FileSystem,
-	Live as FileSystemLive,
-} from "./Service/FileSystem/mod.js";
-import {
-	FileSystemInformation,
-	Live as FileSystemInformationLive,
-} from "./Service/FileSystemInformation/mod.js";
-import { InitData, Live as InitDataLive } from "./Service/InitData/mod.js";
-import {
-	Configuration as IPCConfiguration,
-	IPC,
-	Live as IPCLive,
-} from "./Service/IPC/mod.js";
-import {
-	LanguageFeature,
-	Live as LanguageFeatureLive,
-} from "./Service/LanguageFeature/mod.js";
-import {
-	Localization,
-	Live as LocalizationLive,
-} from "./Service/Localization/mod.js";
-import { Logger, Live as LoggerLive } from "./Service/Log/mod.js";
-import { Message, Live as MessageLive } from "./Service/Message/mod.js";
-import {
-	ProposedAPI,
-	Live as ProposedAPILive,
-} from "./Service/ProposedAPI/mod.js";
-import {
-	QuickInput,
-	Live as QuickInputLive,
-} from "./Service/QuickInput/mod.js";
-import {
-	SecretStorage,
-	Live as SecretStorageLive,
-} from "./Service/SecretStorage/mod.js";
-import { StatusBar, Live as StatusBarLive } from "./Service/StatusBar/mod.js";
-import { Storage, Live as StorageLive } from "./Service/Storage/mod.js";
-import {
-	StoragePath,
-	Live as StoragePathLive,
-} from "./Service/StoragePath/mod.js";
-import { Task, Live as TaskLive } from "./Service/Task/mod.js";
-import { Telemetry, Live as TelemetryLive } from "./Service/Telemetry/mod.js";
-import { TreeView, Live as TreeViewLive } from "./Service/TreeView/mod.js";
-import {
-	WebViewPanel,
-	Live as WebViewPanelLive,
-} from "./Service/WebViewPanel/mod.js";
-import { Window, Live as WindowLive } from "./Service/Window/mod.js";
-import { Workspace, Live as WorkspaceLive } from "./Service/WorkSpace/mod.js";
-
 // --- Pre-initialization Steps ---
 const VSCodeOutputDirectory =
 	process.env["VSCODE_OUT_DIR"] ??
@@ -152,7 +31,7 @@ const UtilityLayers = Layer.merge(TracingLive, DevToolsLive);
 
 // --- Hierarchical Layer Composition (Progressive World Build) ---
 
-// Level 1: Core Infrastructure Layer (zero or minimal dependencies)
+// Level 1: Service Infrastructure Layer (zero or minimal dependencies)
 const L1_World = Layer.mergeAll(
 	Layer.succeed(IPCConfiguration, {
 		MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
@@ -162,7 +41,7 @@ const L1_World = Layer.mergeAll(
 	CancellationLive,
 ).pipe(Layer.provide(IPCLive));
 
-// Level 2: Core Services Layer
+// Level 2: Service Services Layer
 const L2_Services = Layer.mergeAll(
 	LoggerLive,
 	TelemetryLive,

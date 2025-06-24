@@ -15,7 +15,7 @@ import DecodeValue from "../ProtoConverter/DecodeValue.js";
 import EncodeValue from "../ProtoConverter/EncodeValue.js";
 
 const CreateServiceImplementation = (
-	Dispatcher: DispatcherService["Type"],
+	Dispatcher: DispatcherService,
 ): UntypedServiceImplementation => {
 	return {
 		/**

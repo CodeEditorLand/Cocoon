@@ -63,7 +63,7 @@ const Definition = Effect.gen(function* (Generator) {
 	const { event: OnDidEndTaskProcessEvent } = CreateEventStream<any>();
 
 	// --- Service Implementation ---
-	const ServiceImplementation: TaskService["Type"] = {
+	const ServiceImplementation: TaskService = {
 		// --- Events ---
 		onDidStartTask: OnDidStartTaskEvent,
 		onDidEndTask: OnDidEndTaskEvent,

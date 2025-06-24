@@ -1,44 +1,74 @@
 /*
  * File: Cocoon/Source/Service/APIDeprecation/Service.ts
- * Role: Defines the interface and Effect.Service for the APIDeprecation service.
+ * Role: Defines the APIDeprecation service interface and provides its default "live" implementation.
  * Responsibilities:
- *   - Declare the contract for the service used to report and handle the usage
- *     of deprecated APIs by extensions.
- *   - Provide the `Effect.Service` class for dependency injection.
+ *   - Declare the contract for reporting and handling deprecated API usage.
+ *   - Provide the `Effect.Service` class and its default Layer for dependency injection.
  */
 
 import { Effect } from "effect";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
+import { Logger } from "../Log/Service.js";
 
-/**
- * The `Effect.Service` for the `APIDeprecation` service.
- */
-export class APIDeprecation extends Effect.Service<APIDeprecation>(
+export class APIDeprecation extends Effect.Service<APIDeprecation>()(
 	"Service/APIDeprecation",
-)<{
-	/**
-	 * Creates an `Effect` that, when run, logs a warning that a deprecated API was used.
-	 * @param ExtensionID - The identifier of the extension that used the API.
-	 * @param Usage - A string identifying the deprecated API (e.g., 'workspace.rootPath').
-	 * @param Message - The deprecation message to show the user.
-	 * @returns An `Effect` that resolves when the warning has been logged.
-	 */
-	readonly Report: (
-		ExtensionID: ExtensionIdentifier,
-		Usage: string,
-		Message: string,
-	) => Effect.Effect<void, never>;
+	{
+		effect: Effect.gen(function* (Generator) {
+			const LogService = yield* Generator(Logger);
 
-	/**
-	 * Creates a property decorator that automatically reports usage of a deprecated
-	 * property whenever it is accessed or set.
-	 * @param ExtensionID - The identifier of the extension that will use this API.
-	 * @param Feature - A string identifying the deprecated feature or property name.
-	 * @param Message - The deprecation message.
-	 */
-	readonly Deprecated: (
-		ExtensionID: ExtensionIdentifier,
-		Feature: string,
-		Message: string,
-	) => PropertyDecorator;
-}>() {}
+			const ReportEffect = (
+				ExtensionID: ExtensionIdentifier,
+				Usage: string,
+				Message: string,
+			): Effect.Effect<void, never> =>
+				LogService.Warn(
+					`Extension '${ExtensionID.value}' used deprecated API: '${Usage}'. Message: ${Message}`,
+				);
+
+			const DeprecatedDecorator = (
+				ExtensionID: ExtensionIdentifier,
+				Feature: string,
+				Message: string,
+			): PropertyDecorator => {
+				const CreateReportEffect = (PropertyName: string | symbol) =>
+					ReportEffect(
+						ExtensionID,
+						`${Feature} (property: ${String(PropertyName)})`,
+						Message,
+					);
+
+				return (Target: Object, PropertyKey: string | symbol): void => {
+					let BackingField: any = (Target as any)[PropertyKey];
+					let HasReported = false;
+
+					const ReportOnce = (Key: string | symbol) => {
+						if (!HasReported) {
+							Effect.runFork(CreateReportEffect(Key));
+							HasReported = true;
+						}
+					};
+
+					Object.defineProperty(Target, PropertyKey, {
+						configurable: true,
+						enumerable: true,
+						get() {
+							ReportOnce(PropertyKey);
+							return BackingField;
+						},
+						set(NewValue: any) {
+							ReportOnce(PropertyKey);
+							BackingField = NewValue;
+						},
+					});
+				};
+			};
+
+			const ServiceImplementation = {
+				Report: ReportEffect,
+				Deprecated: DeprecatedDecorator,
+			};
+
+			return ServiceImplementation;
+		}),
+	},
+) {}

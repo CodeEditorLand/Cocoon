@@ -1,38 +1,100 @@
 /*
  * File: Cocoon/Source/Service/IPC/Dispatcher/Service.ts
- *
- * This file defines the interface and Context.Tag for the Dispatcher service.
- * This service is the central router for all incoming RPC messages from the
- * Mountain host.
+ * Role: Defines the Dispatcher service interface and provides its default "live" implementation.
+ * Responsibilities:
+ *   - Act as the central router for all incoming RPC messages from the Mountain host.
  */
 
-import { Context, type Effect } from "effect";
+import { Context, Effect, Ref } from "effect";
+import { RPCProtocol } from "vs/workbench/services/extensions/common/rpcProtocol.js";
 import type { Disposable } from "vscode";
 
-export default class DispatcherService extends Context.Tag("IPC/Dispatcher")<
-	DispatcherService,
-	{
-		readonly DispatchRequest: (
-			Method: string,
-			ParameterArray: readonly any[],
-		) => Effect.Effect<any, Error>;
+import { Cancellation } from "../../Cancellation/Service.js";
+import { ProtocolAdapter } from "../ProtocolAdapter/Service.js";
 
-		readonly DispatchNotification: (
-			Method: string,
-			ParameterArray: readonly any[],
-		) => Effect.Effect<void, never>;
+type InvokeHandler = (...Arguments: any[]) => Promise<any>;
 
-		readonly CancelOperation: (
-			RequestID: number,
-		) => Effect.Effect<void, never>;
+export class Dispatcher extends Effect.Service<Dispatcher>()("IPC/Dispatcher", {
+	effect: Effect.gen(function* (Generator) {
+		const ProtocolAdapterService = yield* Generator(ProtocolAdapter);
+		const CancellationService = yield* Generator(Cancellation);
 
-		readonly ProcessIncomingData: (
-			Data: Uint8Array,
-		) => Effect.Effect<void, never>;
+		const RPCProtocolInstance = new RPCProtocol(ProtocolAdapterService);
+		const InvokeHandlersRef = yield* Generator(
+			Ref.make(new Map<string, InvokeHandler>()),
+		);
 
-		readonly RegisterInvokeHandler: (
-			Channel: string,
-			Handler: (...ArgumentArray: any[]) => Promise<any>,
-		) => Disposable;
-	}
->() {}
+		const ServiceImplementation = {
+			DispatchRequest: (Method: string, Parameters: readonly any[]) =>
+				Effect.gen(function* (Generator) {
+					const Handlers = yield* Generator(
+						Ref.get(InvokeHandlersRef),
+					);
+					const CustomHandler = Handlers.get(Method);
+					if (CustomHandler) {
+						return yield* Generator(
+							Effect.tryPromise({
+								try: () => CustomHandler(...Parameters),
+								catch: (e) => e as Error,
+							}),
+						);
+					}
+					if ((RPCProtocolInstance as any)._getHandler) {
+						const Handler = (
+							RPCProtocolInstance as any
+						)._getHandler(Method);
+						if (Handler) {
+							return yield* Generator(
+								Effect.tryPromise({
+									try: () => Handler(...Parameters),
+									catch: (e) => e as Error,
+								}),
+							);
+						}
+					}
+					return yield* Generator(
+						Effect.fail(
+							new Error(
+								`No handler found for RPC method: ${Method}`,
+							),
+						),
+					);
+				}),
+			DispatchNotification: (
+				Method: string,
+				Parameters: readonly any[],
+			) =>
+				Effect.sync(() => {
+					if ((RPCProtocolInstance as any)._receiveNotification) {
+						(RPCProtocolInstance as any)._receiveNotification(
+							Method,
+							Parameters,
+						);
+					}
+				}),
+			CancelOperation: CancellationService.CancelToken,
+			ProcessIncomingData: ProtocolAdapterService.ProcessIncomingData,
+			RegisterInvokeHandler: (
+				Channel: string,
+				Handler: InvokeHandler,
+			): Disposable => {
+				Effect.runSync(
+					Ref.update(InvokeHandlersRef, (Map) =>
+						Map.set(Channel, Handler),
+					),
+				);
+				return {
+					dispose: () => {
+						Effect.runFork(
+							Ref.update(
+								InvokeHandlersRef,
+								(Map) => (Map.delete(Channel), Map),
+							),
+						);
+					},
+				};
+			},
+		};
+		return ServiceImplementation;
+	}),
+}) {}

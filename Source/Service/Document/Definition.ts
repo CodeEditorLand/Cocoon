@@ -182,7 +182,7 @@ export default Effect.gen(function* (G) {
 	);
 
 	// --- Service Implementation ---
-	const DocumentImplementation: Service["Type"] = {
+	const DocumentImplementation: Service = {
 		get TextDocuments() {
 			const Map = Effect.runSync(Ref.get(DocumentMapRef));
 			return Array.from(Map.values()).map((data) => data.document);

@@ -107,7 +107,7 @@ export default Effect.gen(function* (G) {
 		),
 	);
 
-	const ServiceImplementation: Service["Type"] = {
+	const ServiceImplementation: Service = {
 		ExtURI: ExtURIInstance,
 		GetCapabilities: GetCapabilitiesEffect,
 		onDidChangeFile: OnDidChangeFileEvent,

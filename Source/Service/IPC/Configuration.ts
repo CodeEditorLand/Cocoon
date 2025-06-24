@@ -1,31 +1,32 @@
 /*
  * File: Cocoon/Source/Service/IPC/Configuration.ts
- *
- * This file defines the configuration interface and service Tag for the
- * IPC service, specifying the network addresses for communication.
+ * Role: Defines the configuration interface and provides the default "live" implementation
+ *       for the IPC service using Effect.Service.
+ * Responsibilities:
+ *   - Declare the data structure for IPC network configuration.
+ *   - Provide the `Effect.Service` class and its default Layer that reads from environment variables.
  */
 
-import { Context } from "effect";
+import { Effect } from "effect";
 
 // This is the data structure for the configuration.
 export interface IPCConfiguration {
-	/**
-	 * The network address of the `Mountain` gRPC server.
-	 * @example "localhost:50051"
-	 */
 	readonly MountainAddress: string;
-
-	/**
-	 * The network address where the `Cocoon` gRPC server should listen.
-	 * @example "localhost:50052"
-	 */
 	readonly CocoonAddress: string;
 }
 
 /**
- * The `Context.Tag` for the `IPCConfiguration` service.
+ * The `Effect.Service` for the `IPCConfiguration`.
  * This allows the configuration to be provided and injected as a formal dependency.
+ * The default implementation reads from environment variables.
  */
-export default class IPCConfigurationService extends Context.Tag(
+export class Configuration extends Effect.Service<IPCConfiguration>()(
 	"Service/IPCConfiguration",
-)<IPCConfigurationService, IPCConfiguration>() {}
+	{
+		// `sync` is used because reading from `process.env` is a synchronous operation.
+		sync: () => ({
+			MountainAddress: process.env["MOUNTAIN_ADDR"] ?? "localhost:50051",
+			CocoonAddress: process.env["COCOON_ADDR"] ?? "localhost:50052",
+		}),
+	},
+) {}

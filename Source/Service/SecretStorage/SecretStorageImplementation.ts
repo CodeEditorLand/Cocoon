@@ -22,8 +22,8 @@ export default class SecretStorageImplementation implements SecretStorage {
 
 	constructor(
 		private readonly ExtensionID: string,
-		private readonly IPC: IPCService["Type"],
-		private readonly Log: LogService["Type"],
+		private readonly IPC: IPCService,
+		private readonly Log: LogService,
 	) {
 		this.onDidChange = this.OnDidChangeEventStream.event;
 		// A real implementation would need to listen to an IPC event from the host

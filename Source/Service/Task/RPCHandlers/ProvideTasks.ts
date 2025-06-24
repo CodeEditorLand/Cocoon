@@ -26,7 +26,7 @@ export const ProvideTasksEffect = (
 	Registry: Ref.Ref<Map<number, ProviderEntry<Task>>>,
 	Handle: number,
 	TokenID: number,
-	CancellationService: Cancellation["Type"],
+	CancellationService: Cancellation,
 ) => {
 	return Effect.gen(function* (Generator) {
 		const Entry = (yield* Generator(Ref.get(Registry))).get(Handle);

@@ -72,7 +72,7 @@ export default Effect.gen(function* () {
 		`Proposed API provider initialized. No proposals found in InitData. All proposals will be disabled.`,
 	);
 
-	const ServiceImplementation: Service["Type"] = {
+	const ServiceImplementation: Service = {
 		IsEnabled: (ExtensionID, ProposalName) => {
 			if (AllGlobalAPIs.has(ProposalName)) {
 				return true;

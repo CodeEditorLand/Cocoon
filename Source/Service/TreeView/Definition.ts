@@ -74,7 +74,7 @@ export default Effect.gen(function* (G) {
 		}),
 	);
 
-	const TreeViewFactory: Service["Type"] = {
+	const TreeViewFactory: Service = {
 		CreateTreeView: <T>(
 			ViewID: string,
 

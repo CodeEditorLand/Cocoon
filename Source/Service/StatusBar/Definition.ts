@@ -26,7 +26,7 @@ export default Effect.gen(function* (G) {
 		Ref.make(new Map<string, StatusBarItemImplementation>()),
 	);
 
-	const StatusBarImplementation: Service["Type"] = {
+	const StatusBarImplementation: Service = {
 		CreateStatusBarItem: (
 			Extension: IExtensionDescription,
 			ID?: string,

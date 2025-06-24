@@ -38,7 +38,7 @@ export const EventEmitter = Emitter;
 
 export const URI = VscURI;
 
-// --- Core Classes ---
+// --- Service Classes ---
 
 export class Position implements VSCode.Position {
 	readonly line: number;

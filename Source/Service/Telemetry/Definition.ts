@@ -142,7 +142,7 @@ export default Effect.gen(function* () {
 
 	// --- Implementation ---
 	// This object now fully stubs the IExtHostTelemetry interface.
-	const TelemetryImplementation: Service["Type"] = {
+	const TelemetryImplementation: Service = {
 		_serviceBrand: undefined,
 
 		_onDidChangeTelemetryEnabled: undefined as any,
@@ -210,7 +210,7 @@ export default Effect.gen(function* () {
 
 			return false;
 		},
-	} as unknown as Service["Type"];
+	} as unknown as Service;
 
 	return TelemetryImplementation;
 });

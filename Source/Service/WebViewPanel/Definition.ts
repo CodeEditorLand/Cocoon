@@ -83,7 +83,7 @@ export default Effect.gen(function* (G) {
 		}),
 	);
 
-	const WebViewPanelFactory: Service["Type"] = {
+	const WebViewPanelFactory: Service = {
 		CreateWebviewPanel: (
 			Extension,
 

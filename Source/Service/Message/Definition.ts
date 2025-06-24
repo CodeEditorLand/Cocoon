@@ -13,7 +13,7 @@ import ParseArgument from "./Support/ParseArgument.js";
 import type ExtensionSource from "./Type.js";
 
 const ShowMessageEffect = <T extends MessageItem>(
-	IPC: IPCService["Type"],
+	IPC: IPCService,
 	// Corresponds to vs/base/common/severity
 	Severity: number,
 	Message: string,
@@ -78,7 +78,7 @@ const ShowMessageEffect = <T extends MessageItem>(
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
 
-	const ServiceImplementation: Service["Type"] = {
+	const ServiceImplementation: Service = {
 		ShowInformationMessage: (message, ...args) => {
 			const { Option, Items, Source } = ParseArgument(args);
 			return ShowMessageEffect(

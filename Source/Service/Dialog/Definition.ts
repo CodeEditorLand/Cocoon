@@ -19,7 +19,7 @@ import DialogError from "./Error/DialogError.js";
 import type Service from "./Service.js";
 
 const CreateDialogEffect = <Option, DTO, Result>(
-	IPC: IPCService["Type"],
+	IPC: IPCService,
 	IPCMethod: string,
 	Options: Option | undefined,
 	Token: CancellationToken | undefined,
@@ -56,7 +56,7 @@ const CreateDialogEffect = <Option, DTO, Result>(
 export default Effect.gen(function* (G) {
 	const IPC = yield* G(IPCService);
 
-	const DialogImplementation: Service["Type"] = {
+	const DialogImplementation: Service = {
 		ShowOpenDialog: (
 			Options?: OpenDialogOptions,
 			Token?: CancellationToken,

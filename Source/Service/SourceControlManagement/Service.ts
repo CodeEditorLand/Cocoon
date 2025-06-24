@@ -1,33 +1,34 @@
 /*
  * File: Cocoon/Source/Service/SourceControlManagement/Service.ts
- *
- * This file defines the interface and Context.Tag for the Source Control Management service.
- * Its responsibilities are to declare the contract for creating and managing SourceControl instances.
+ * Role: Defines the interface and provides the default "live" implementation for the SCM service.
+ * Responsibilities:
+ *   - Declare the contract for creating and managing SourceControl instances.
  */
 
-import { Context } from "effect";
+import { Effect } from "effect";
 import type { SourceControl, Uri } from "vscode";
 
-export default class SourceControlManagementService extends Context.Tag(
+export class SourceControlManagement extends Effect.Service<SourceControlManagement>()(
 	"Service/SourceControlManagement",
-)<
-	SourceControlManagementService,
 	{
-		/**
-		 * Creates a new source control manager.
-		 * @param Id A unique identifier for the source control.
-		 * @param Label A human-readable label for the source control.
-		 * @param RootURI The root of the repository.
-		 */
-		readonly CreateSourceControl: (
-			Id: string,
-			Label: string,
-			RootURI?: Uri,
-		) => SourceControl;
-
-		/**
-		 * Provides a readonly list of all source control instances.
-		 */
-		readonly Providers: readonly SourceControl[];
-	}
->() {}
+		// This service is not yet implemented, so we provide a sync constructor
+		// that returns a stubbed implementation.
+		sync: () => ({
+			CreateSourceControl: (
+				Id: string,
+				Label: string,
+				RootURI?: Uri,
+			): SourceControl => {
+				// Stubbed implementation
+				console.warn(
+					`STUB: SourceControlManagement.CreateSourceControl called for ${Id}`,
+				);
+				return {} as SourceControl;
+			},
+			get Providers(): readonly SourceControl[] {
+				// Stubbed implementation
+				return [];
+			},
+		}),
+	},
+) {}

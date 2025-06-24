@@ -1,13 +1,12 @@
 /*
  * File: Cocoon/Source/Service/Window/Service.ts
- * Role: Defines the interface and Effect.Service for the core Window service.
+ * Role: Defines the Window service interface and provides its default "live" implementation.
  * Responsibilities:
- *   - Declare the contract for the service that manages window-level state and
- *     orchestrates calls to sub-services like dialogs, messages, and quick input.
- *   - Provide the `Effect.Service` for dependency injection.
+ *   - Manage window-level state (e.g., focus).
+ *   - Orchestrate calls to show documents, delegating to the host.
  */
 
-import { Effect } from "effect";
+import { Effect, Ref } from "effect";
 import type {
 	Event,
 	TextDocument,
@@ -16,23 +15,98 @@ import type {
 	Uri,
 	ViewColumn,
 	WindowState,
+	TextEditorSelectionChangeEvent,
+	TextEditorVisibleRangesChangeEvent,
+	TextEditorOptionsChangeEvent,
+	TextEditorViewColumnChangeEvent,
 } from "vscode";
+import { Emitter } from "vs/base/common/event.js";
+import RangeConverter from "../../TypeConverter/Main/Range.js";
+import URIConverter from "../../TypeConverter/Main/URI.js";
+import ViewColumnConverter from "../../TypeConverter/Main/ViewColumn.js";
+import { CreateEventStream } from "../../Utility/CreateEventStream.js";
+import { IPC } from "../IPC/Service.js";
 
-/**
- * The `Effect.Service` for the core `vscode.window` properties and methods.
- *
- * This service focuses on window state (`focused`, `active`) and the primary
- * action of showing a text document. Other `vscode.window` functionalities
- * (like `showQuickPick`, `showInformationMessage`) are handled by their own
- * dedicated services (`QuickInput`, `Message`) to maintain separation of concerns.
- * The `APIFactory` is responsible for assembling these into the final `vscode.window` object.
- */
-export class Window extends Effect.Service<Window>("Service/Window")<{
-	readonly state: WindowState;
-	readonly onDidChangeWindowState: Event<WindowState>;
-	readonly ShowTextDocument: (
-		documentOrURI: Uri | TextDocument,
-		columnOrOptions?: ViewColumn | TextDocumentShowOptions,
-		preserveFocus?: boolean,
-	) => Effect.Effect<TextEditor, Error>;
-}>() {}
+export class Window extends Effect.Service<Window>()("Service/Window", {
+	effect: Effect.gen(function* (Generator) {
+		const IPCService = yield* Generator(IPC);
+
+		// Note: TextEditor state is now managed by the Workspace service.
+		// This service only manages window-level state.
+		const WindowStateRef = yield* Generator(
+			Ref.make<WindowState>({ focused: true, active: true }),
+		);
+		const OnDidChangeWindowStateStream = CreateEventStream<WindowState>();
+
+		const AcceptWindowStateChangedEffect = (IsFocused: boolean) => {
+			const NewState = { focused: IsFocused, active: IsFocused };
+			return Ref.set(WindowStateRef, NewState).pipe(
+				Effect.andThen(OnDidChangeWindowStateStream.Fire(NewState)),
+			);
+		};
+
+		IPCService.RegisterInvokeHandler(
+			"$acceptWindowStateChanged",
+			([IsFocused]) =>
+				Effect.runPromise(AcceptWindowStateChangedEffect(IsFocused)),
+		);
+
+		const ServiceImplementation = {
+			get state() {
+				return Effect.runSync(Ref.get(WindowStateRef));
+			},
+			onDidChangeWindowState: OnDidChangeWindowStateStream.event,
+
+			ShowTextDocument: (
+				documentOrURI: Uri | TextDocument,
+				columnOrOptions?: ViewColumn | TextDocumentShowOptions,
+				preserveFocus?: boolean,
+			): Effect.Effect<TextEditor, Error> =>
+				Effect.gen(function* (Generator) {
+					// This method would depend on the Workspace service to get the editor instance
+					// after the IPC call. For this refactoring, we keep the original logic,
+					// but a full architectural review might move this to the Workspace service.
+					const TheUri: Uri =
+						"uri" in documentOrURI
+							? documentOrURI.uri
+							: documentOrURI;
+					const Options =
+						typeof columnOrOptions === "object"
+							? (columnOrOptions as TextDocumentShowOptions)
+							: undefined;
+					const OptionsDTO = Options
+						? {
+								preserveFocus:
+									preserveFocus ?? Options.preserveFocus,
+								selection: Options.selection
+									? RangeConverter.FromAPI(Options.selection)
+									: undefined,
+							}
+						: undefined;
+					const ViewColumnDTO =
+						typeof columnOrOptions === "number"
+							? ViewColumnConverter.FromAPI(columnOrOptions)
+							: undefined;
+
+					// This is a simplification. A full implementation would need to get the editor object
+					// from the Workspace service after the host confirms it's shown.
+					const EditorId = yield* Generator(
+						IPCService.SendRequest<string>("$showTextDocument", [
+							URIConverter.FromAPI(TheUri),
+							ViewColumnDTO,
+							OptionsDTO,
+						]),
+					);
+					return yield* Generator(
+						Effect.fail(
+							new Error(
+								`Editor lookup for ID '${EditorId}' is not implemented in this refactored service. This logic belongs in the Workspace service.`,
+							),
+						),
+					);
+				}),
+		};
+
+		return ServiceImplementation;
+	}),
+}) {}

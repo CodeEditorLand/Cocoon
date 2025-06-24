@@ -1,83 +1,248 @@
 /*
  * File: Cocoon/Source/Service/Debug/Service.ts
- * Role: Defines the service interface and Effect.Service for the Debug service.
+ * Role: Defines the Debug service interface and provides its default "live" implementation.
  * Responsibilities:
- *   - Declare the contract for the service that manages debugging sessions,
- *     breakpoints, and debug-related providers.
- *   - Provide the `Effect.Service` class that acts as the dependency injection tag.
+ *   - Manage debugging sessions, breakpoints, and debug-related providers.
+ *   - Provide the `Effect.Service` class and its default Layer for dependency injection.
  */
 
-import { Effect } from "effect";
+import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type {
-	Breakpoint,
-	DebugAdapterDescriptorFactory,
-	DebugAdapterTrackerFactory,
-	DebugConfiguration,
-	DebugConfigurationProvider,
-	DebugConsole,
-	DebugSession,
-	DebugSessionCustomEvent,
-	DebugSessionOptions,
+import {
 	Disposable,
-	Event,
-	WorkspaceFolder,
+	type Breakpoint,
+	type DebugConfiguration,
+	type DebugSession,
+	type DebugSessionCustomEvent,
+	type DebugSessionOptions,
+	type WorkspaceFolder,
+	type Event,
+	type DebugAdapterDescriptorFactory,
+	type DebugConfigurationProvider,
+	type DebugAdapterTrackerFactory,
+	type DebugConsole,
 } from "vscode";
-import type { DebugProviderRegistrationProblem } from "./Error.js";
-import type { StartDebuggingProblem } from "./Error.js";
 
-/**
- * The `Effect.Service` for the Debug service.
- * This service implements the `vscode.debug` namespace API.
- */
-export class Debug extends Effect.Service<Debug>("Service/Debug")<{
-	// --- Events ---
-	readonly onDidChangeActiveDebugSession: Event<DebugSession | undefined>;
-	readonly onDidStartDebugSession: Event<DebugSession>;
-	readonly onDidReceiveDebugSessionCustomEvent: Event<DebugSessionCustomEvent>;
-	readonly onDidTerminateDebugSession: Event<DebugSession>;
-	readonly onDidChangeBreakpoints: Event<any>; // BreakpointsChangeEvent
+import { IPC } from "../IPC/Service.js";
+import { DebugProviderRegistrationProblem } from "./Error/DebugProviderRegistrationProblem.js";
+import { StartDebuggingProblem } from "./Error/StartDebuggingError.js";
+import { CreateEventStream } from "../../Utility/CreateEventStream.js";
+import type { ProviderEntry, Debugger as DebuggerState } from "./Type.js";
 
-	// --- Properties ---
-	readonly activeDebugSession: DebugSession | undefined;
-	readonly activeDebugConsole: DebugConsole;
-	readonly breakpoints: readonly Breakpoint[];
+export class Debug extends Effect.Service<Debug>()("Service/Debug", {
+	effect: Effect.gen(function* (Generator) {
+		const IPCService = yield* Generator(IPC);
 
-	// --- Provider Registration Methods ---
-	readonly RegisterDebugConfigurationProvider: (
-		DebugType: string,
-		Provider: DebugConfigurationProvider,
-		Extension: IExtensionDescription,
-	) => Effect.Effect<Disposable, DebugProviderRegistrationProblem>;
+		let HandleCounter = 0;
 
-	readonly RegisterDebugAdapterDescriptorFactory: (
-		DebugType: string,
-		Factory: DebugAdapterDescriptorFactory,
-		Extension: IExtensionDescription,
-	) => Effect.Effect<Disposable, DebugProviderRegistrationProblem>;
+		const DebugStateRef = yield* Generator(
+			Ref.make<DebuggerState>({
+				ActiveDebugSession: undefined,
+				ActiveDebugConsole: {
+					append: (_Value: string) => {},
+					appendLine: (_Value: string) => {},
+				},
+				Breakpoints: [],
+				DebugConfigurationProviders: new Map<number, ProviderEntry>(),
+				DebugAdapterDescriptorFactories: new Map<
+					number,
+					ProviderEntry
+				>(),
+				DebugAdapterTrackerFactories: new Map<number, ProviderEntry>(),
+			}),
+		);
 
-	readonly RegisterDebugAdapterTrackerFactory: (
-		DebugType: string,
-		Factory: DebugAdapterTrackerFactory,
-		Extension: IExtensionDescription,
-	) => Effect.Effect<Disposable, DebugProviderRegistrationProblem>;
+		const OnDidChangeActiveDebugSessionEvent = CreateEventStream<
+			DebugSession | undefined
+		>();
+		const OnDidStartDebugSessionEvent = CreateEventStream<DebugSession>();
+		const OnDidReceiveDebugSessionCustomEvent = CreateEventStream<any>();
+		const OnDidTerminateDebugSessionEvent =
+			CreateEventStream<DebugSession>();
+		const OnDidChangeBreakpointsEvent = CreateEventStream<any>();
 
-	// --- Core Debugging Methods ---
-	readonly StartDebugging: (
-		Folder: WorkspaceFolder | undefined,
-		Configuration: string | DebugConfiguration,
-		Options?: DebugSessionOptions,
-	) => Effect.Effect<boolean, StartDebuggingProblem>;
+		const RegisterProviderEffect = <T>(
+			RegistryRef: Ref.Ref<Map<number, T>>,
+			Data: T,
+		) =>
+			Effect.gen(function* (Generator) {
+				const Handle = ++HandleCounter;
+				yield* Generator(
+					Ref.update(RegistryRef, (TheMap) =>
+						TheMap.set(Handle, Data),
+					),
+				);
+				yield* Generator(
+					IPCService.SendNotification(
+						"$registerDebugConfigurationProvider",
+						[Handle, (Data as any).Type],
+					).pipe(
+						Effect.mapError(
+							(cause) =>
+								new DebugProviderRegistrationProblem({
+									DebugType: (Data as any).Type,
+									cause,
+								}),
+						),
+					),
+				);
+				const CleanupEffect = Ref.update(
+					RegistryRef,
+					(TheMap) => (TheMap.delete(Handle), TheMap),
+				).pipe(
+					Effect.andThen(
+						IPCService.SendNotification(
+							"$unregisterDebugConfigurationProvider",
+							[Handle],
+						),
+					),
+				);
+				return new Disposable(() => Effect.runFork(CleanupEffect));
+			});
 
-	readonly StopDebugging: (
-		Session?: DebugSession,
-	) => Effect.Effect<void, Error>;
+		const StartDebuggingEffect = (
+			Folder: WorkspaceFolder | undefined,
+			NameOrConfiguration: string | DebugConfiguration,
+			Options?: DebugSessionOptions,
+		) =>
+			Effect.gen(function* (Generator) {
+				yield* Generator(
+					Effect.logInfo(
+						`Request to start debugging in folder: ${Folder?.name ?? "None"}`,
+						NameOrConfiguration,
+					),
+				);
+				const ConfigurationDTO =
+					typeof NameOrConfiguration === "string"
+						? { name: NameOrConfiguration }
+						: NameOrConfiguration;
+				const OptionsDTO = {
+					parentSession: Options?.parentSession?.id,
+					lifecycleManagedByParent: Options?.lifecycleManagedByParent,
+				};
+				const Success = yield* Generator(
+					IPCService.SendRequest<boolean>("$startDebugging", [
+						Folder?.uri.toJSON(),
+						ConfigurationDTO,
+						OptionsDTO,
+					]),
+				);
+				if (Success) {
+					yield* Generator(
+						Effect.logInfo("Debug session started successfully."),
+					);
+				}
+				return Success;
+			}).pipe(
+				Effect.mapError(
+					(Cause) => new StartDebuggingProblem({ Cause }),
+				),
+			);
 
-	readonly AddBreakpoints: (
-		Breakpoints: readonly Breakpoint[],
-	) => Effect.Effect<void, Error>;
+		const StopDebuggingEffect = (Session?: DebugSession) =>
+			Effect.gen(function* (Generator) {
+				const ActiveSession = (yield* Generator(Ref.get(DebugStateRef)))
+					.ActiveDebugSession;
+				const SessionToStop = Session ?? ActiveSession;
+				if (!SessionToStop) {
+					return yield* Generator(
+						Effect.logWarn(
+							"StopDebugging called but no session is active.",
+						),
+					);
+				}
+				yield* Generator(
+					Effect.logInfo(
+						`Request to stop debugging session: ${SessionToStop.id}`,
+					),
+				);
+				yield* Generator(
+					IPCService.SendNotification("$stopDebugging", [
+						SessionToStop.id,
+					]),
+				);
+			}).pipe(
+				Effect.mapError(
+					(Cause) =>
+						new Error("Failed to stop debugging session.", {
+							cause: Cause,
+						}),
+				),
+			);
 
-	readonly RemoveBreakpoints: (
-		Breakpoints: readonly Breakpoint[],
-	) => Effect.Effect<void, Error>;
-}>() {}
+		const ServiceImplementation = {
+			get activeDebugSession() {
+				return Ref.unsafeGet(DebugStateRef).ActiveDebugSession;
+			},
+			get activeDebugConsole() {
+				return Ref.unsafeGet(DebugStateRef).ActiveDebugConsole;
+			},
+			get breakpoints() {
+				return Ref.unsafeGet(DebugStateRef).Breakpoints;
+			},
+			onDidChangeActiveDebugSession:
+				OnDidChangeActiveDebugSessionEvent.event,
+			onDidStartDebugSession: OnDidStartDebugSessionEvent.event,
+			onDidReceiveDebugSessionCustomEvent:
+				OnDidReceiveDebugSessionCustomEvent.event,
+			onDidTerminateDebugSession: OnDidTerminateDebugSessionEvent.event,
+			onDidChangeBreakpoints: OnDidChangeBreakpointsEvent.event,
+
+			RegisterDebugConfigurationProvider: (
+				DebugType: string,
+				Provider: DebugConfigurationProvider,
+				Extension: IExtensionDescription,
+			) =>
+				RegisterProviderEffect(
+					Ref.unsafeGet(DebugStateRef).DebugConfigurationProviders,
+					{
+						Type: DebugType,
+						Provider,
+						Extension,
+					} as unknown as ProviderEntry,
+				),
+			RegisterDebugAdapterDescriptorFactory: (
+				DebugType: string,
+				Factory: DebugAdapterDescriptorFactory,
+				Extension: IExtensionDescription,
+			) =>
+				RegisterProviderEffect(
+					Ref.unsafeGet(DebugStateRef)
+						.DebugAdapterDescriptorFactories,
+					{
+						Type: DebugType,
+						Provider: Factory,
+						Extension,
+					} as unknown as ProviderEntry,
+				),
+			RegisterDebugAdapterTrackerFactory: (
+				DebugType: string,
+				Factory: DebugAdapterTrackerFactory,
+				Extension: IExtensionDescription,
+			) =>
+				RegisterProviderEffect(
+					Ref.unsafeGet(DebugStateRef).DebugAdapterTrackerFactories,
+					{
+						Type: DebugType,
+						Provider: Factory,
+						Extension,
+					} as unknown as ProviderEntry,
+				),
+
+			StartDebugging: StartDebuggingEffect,
+			StopDebugging: StopDebuggingEffect,
+			AddBreakpoints: (_Breakpoints: readonly Breakpoint[]) =>
+				Effect.sync(() =>
+					console.warn("STUB: Debug.AddBreakpoints not implemented."),
+				),
+			RemoveBreakpoints: (_Breakpoints: readonly Breakpoint[]) =>
+				Effect.sync(() =>
+					console.warn(
+						"STUB: Debug.RemoveBreakpoints not implemented.",
+					),
+				),
+		};
+
+		return ServiceImplementation;
+	}),
+}) {}

@@ -14,7 +14,6 @@ import { Client } from "./Client/Service.js";
 import { Dispatcher } from "./Dispatcher/Service.js";
 import { ProtocolAdapter } from "./ProtocolAdapter/Service.js";
 import { IPC } from "./Service.js";
-import { EncodeValue, DecodeValue } from "./ProtoConverter/mod.js";
 
 /**
  * An `Effect` that builds the live implementation of the `IPC.Service`.
@@ -117,7 +116,7 @@ const Definition = Effect.gen(function* (Generator) {
 		});
 	};
 
-	const IPCImplementation: IPC["Type"] = {
+	const IPCImplementation: IPC = {
 		SendRequest,
 		SendNotification,
 		SendCancel: RPCDispatcher.CancelOperation,

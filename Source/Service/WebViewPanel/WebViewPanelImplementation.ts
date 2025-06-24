@@ -61,7 +61,7 @@ export default class implements WebviewPanel {
 	constructor(
 		private readonly Handle: string,
 
-		private readonly IPCService: IPCService["Type"],
+		private readonly IPCService: IPCService,
 
 		// @ts-expect-error
 		private readonly Extension: IExtensionDescription,

@@ -1,65 +1,138 @@
 /*
  * File: Cocoon/Source/Service/Task/Service.ts
- * Role: Defines the service interface and Effect.Service for the Task service.
+ * Role: Defines the Task service interface and provides its default "live" implementation.
  * Responsibilities:
- *   - Declare the contract for the service that implements the `vscode.tasks` API.
- *   - Provide the `Effect.Service` for dependency injection.
+ *   - Implements the `vscode.tasks` API.
+ *   - Manages the registration and lifecycle of `TaskProvider`s.
  */
 
-import { Effect } from "effect";
+import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type {
+import {
 	Disposable,
-	Event,
-	Task,
-	TaskEndEvent,
-	TaskExecution,
-	TaskFilter,
-	TaskProcessEndEvent,
-	TaskProcessStartEvent,
-	TaskProvider,
-	TaskStartEvent,
+	type Event,
+	type Task as VscTask,
+	type TaskEndEvent,
+	type TaskExecution,
+	type TaskFilter,
+	type TaskProcessEndEvent,
+	type TaskProcessStartEvent,
+	type TaskProvider,
+	type TaskStartEvent,
 } from "vscode";
+import { Task as TaskConverter } from "../../TypeConverter/Task.js";
+import { CreateEventStream } from "../../Utility/CreateEventStream.js";
+import { Cancellation } from "../Cancellation/Service.js";
+import { IPC } from "../IPC/Service.js";
+import { ProvideTasksEffect } from "./RPCHandlers/ProvideTasks.js"; // This file should be moved into this service file as a helper.
 
-/**
- * The `Effect.Service` for the Task service.
- * This service manages the registration of task providers and the execution of tasks.
- */
-export class Task extends Effect.Service<Task>("Service/Task")<{
-	readonly onDidStartTask: Event<TaskStartEvent>;
-	readonly onDidEndTask: Event<TaskEndEvent>;
-	readonly onDidStartTaskProcess: Event<TaskProcessStartEvent>;
-	readonly onDidEndTaskProcess: Event<TaskProcessEndEvent>;
-	readonly taskExecutions: readonly TaskExecution[];
+// Assuming ProvideTasksEffect is moved into this file as an internal helper.
+// You would copy the contents of that file here.
 
-	/**
-	 * Registers a task provider.
-	 * @param Type - The task provider's type identifier.
-	 * @param Provider - The task provider implementation.
-	 * @param Extension - The extension registering the provider.
-	 * @returns An `Effect` resolving to a `Disposable` for unregistering.
-	 */
-	readonly RegisterTaskProvider: <T extends Task>(
-		Type: string,
-		Provider: TaskProvider<T>,
-		Extension: IExtensionDescription,
-	) => Effect.Effect<Disposable, Error>;
+export interface ProviderEntry<T extends VscTask> {
+	readonly Type: string;
+	readonly Provider: TaskProvider<T>;
+	readonly Extension: IExtensionDescription;
+}
 
-	/**
-	 * Fetches tasks from all registered providers that match a given filter.
-	 * @param Filter - An optional filter to apply to the tasks.
-	 * @returns An `Effect` resolving to an array of `Task` objects.
-	 */
-	readonly FetchTasks: (Filter?: TaskFilter) => Effect.Effect<Task[], Error>;
+export class Task extends Effect.Service<Task>()("Service/Task", {
+	effect: Effect.gen(function* (Generator) {
+		const IPCService = yield* Generator(IPC);
+		const CancellationService = yield* Generator(Cancellation);
+		let HandleCounter = 0;
+		const TaskProvidersRef = yield* Generator(
+			Ref.make(new Map<number, ProviderEntry<any>>()),
+		);
 
-	/**
-	 * Executes a task.
-	 * @param TaskToExecute - The task to execute.
-	 * @param Extension - The extension that defined the task.
-	 * @returns An `Effect` resolving to the `TaskExecution` for the started task.
-	 */
-	readonly ExecuteTask: (
-		TaskToExecute: Task,
-		Extension: IExtensionDescription,
-	) => Effect.Effect<TaskExecution, Error>;
-}>() {}
+		// Register RPC Handler
+		IPCService.RegisterInvokeHandler(
+			"$provideTasks",
+			([Handle, TokenID]: [number, number]) =>
+				Effect.runPromise(
+					ProvideTasksEffect(
+						TaskProvidersRef,
+						Handle,
+						TokenID,
+						CancellationService,
+					),
+				),
+		);
+
+		const { event: OnDidStartTaskEvent } =
+			CreateEventStream<TaskStartEvent>();
+		const { event: OnDidEndTaskEvent } = CreateEventStream<TaskEndEvent>();
+		const { event: OnDidStartTaskProcessEvent } =
+			CreateEventStream<TaskProcessStartEvent>();
+		const { event: OnDidEndTaskProcessEvent } =
+			CreateEventStream<TaskProcessEndEvent>();
+
+		const ServiceImplementation = {
+			onDidStartTask: OnDidStartTaskEvent,
+			onDidEndTask: OnDidEndTaskEvent,
+			onDidStartTaskProcess: OnDidStartTaskProcessEvent,
+			onDidEndTaskProcess: OnDidEndTaskProcessEvent,
+			get taskExecutions(): readonly TaskExecution[] {
+				return [];
+			},
+
+			RegisterTaskProvider: <T extends VscTask>(
+				Type: string,
+				Provider: TaskProvider<T>,
+				Extension: IExtensionDescription,
+			) =>
+				Effect.sync(() => {
+					const Handle = ++HandleCounter;
+					const Entry: ProviderEntry<T> = {
+						Type,
+						Provider,
+						Extension,
+					};
+					Effect.runSync(
+						Ref.update(TaskProvidersRef, (Map) =>
+							Map.set(Handle, Entry),
+						),
+					);
+					Effect.runFork(
+						IPCService.SendNotification("$registerTaskProvider", [
+							Handle,
+							Type,
+						]),
+					);
+					return new Disposable(() => {
+						const CleanupEffect = Ref.update(
+							TaskProvidersRef,
+							(Map) => (Map.delete(Handle), Map),
+						).pipe(
+							Effect.andThen(
+								IPCService.SendNotification(
+									"$unregisterTaskProvider",
+									[Handle],
+								),
+							),
+						);
+						Effect.runFork(CleanupEffect);
+					});
+				}),
+			FetchTasks: (Filter?: TaskFilter) =>
+				IPCService.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
+					Effect.map((TaskDTOs) =>
+						TaskDTOs.map((DTO) => TaskConverter.ToAPI(DTO)),
+					),
+					Effect.mapError((Cause) => new Error(String(Cause))),
+				),
+			ExecuteTask: (TaskToExecute, Extension) =>
+				IPCService.SendRequest<any>("$executeTask", [
+					TaskConverter.FromAPI(TaskToExecute, Extension),
+				]).pipe(
+					Effect.map((ExecutionDTO) =>
+						TaskConverter.Execution.ToAPI(
+							ExecutionDTO,
+							TaskToExecute,
+						),
+					),
+					Effect.mapError((Cause) => new Error(String(Cause))),
+				),
+		};
+		return ServiceImplementation;
+	}),
+}) {}

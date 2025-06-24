@@ -138,7 +138,7 @@ export default Effect.gen(function* (G) {
 	);
 
 	// Define the service implementation (the Memento factory).
-	const StorageImplementation: Service["Type"] = {
+	const StorageImplementation: Service = {
 		CreateMemento: (ExtensionID: string, IsGlobal: boolean): Memento => {
 			const RootStateRef = IsGlobal
 				? GlobalStorageRef

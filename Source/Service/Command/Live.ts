@@ -11,7 +11,7 @@ import { Definition } from "./Definition.js";
 import { Command } from "./Service.js";
 import { IPC } from "../IPC/Service.js";
 import { Logger } from "../Log/Service.js";
-import { ExtensionHost } from "../../Core/ExtensionHost/Service.js";
+import { ExtensionHost } from "../../Service/ExtensionHost/Service.js";
 
 /**
  * The live implementation `Layer` for the `Command` service.

@@ -45,7 +45,7 @@ export default Effect.gen(function* () {
 		return { DefaultBundleURI, LanguageBundleURI };
 	};
 
-	const ServiceImplementation: Service["Type"] = {
+	const ServiceImplementation: Service = {
 		GetBundle: (ExtensionID) =>
 			Ref.get(NlsCache).pipe(
 				Effect.map((cache) =>

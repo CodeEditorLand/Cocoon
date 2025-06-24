@@ -153,7 +153,7 @@ class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 
 /** Manages paths for extensions. */
 class ExtensionPathService extends Effect.Service<ExtensionPathService>()(
-	"Core/ExtensionPath",
+	"Service/ExtensionPath",
 
 	{
 		effect: Effect.gen(function* () {
@@ -183,7 +183,7 @@ class APIDeprecationService extends Effect.Service<APIDeprecationService>()(
 
 /** Helps determine the kind of host environment. */
 class HostKindPickerService extends Effect.Service<HostKindPickerService>()(
-	"Core/HostKindPicker",
+	"Service/HostKindPicker",
 
 	{
 		effect: Effect.gen(function* () {
@@ -198,7 +198,7 @@ class HostKindPickerService extends Effect.Service<HostKindPickerService>()(
 
 /** Provides shims for Node.js modules. */
 class NodeModuleShimService extends Effect.Service<NodeModuleShimService>()(
-	"Core/NodeModuleShim",
+	"Service/NodeModuleShim",
 
 	{
 		effect: Effect.gen(function* () {
@@ -550,7 +550,7 @@ class TreeViewService extends Effect.Service<TreeViewService>()(
 // --- Level 7 Services ---
 
 class ExtensionHostService extends Effect.Service<ExtensionHostService>()(
-	"Core/ExtensionHost",
+	"Service/ExtensionHost",
 
 	{
 		effect: Effect.gen(function* () {
@@ -588,7 +588,7 @@ class ExtensionService extends Effect.Service<ExtensionService>()(
 // --- Level 9 Services ---
 
 class APIFactoryService extends Effect.Service<APIFactoryService>()(
-	"Core/APIFactory",
+	"Service/APIFactory",
 
 	{
 		effect: Effect.gen(function* () {
@@ -630,7 +630,7 @@ class APIFactoryService extends Effect.Service<APIFactoryService>()(
 // --- Level 10 Services: Top-level services that depend on the API Factory ---
 
 class ESMInterceptorService extends Effect.Service<ESMInterceptorService>()(
-	"Core/ESMInterceptor",
+	"Service/ESMInterceptor",
 
 	{
 		effect: Effect.gen(function* () {
@@ -648,7 +648,7 @@ class ESMInterceptorService extends Effect.Service<ESMInterceptorService>()(
 ) {}
 
 class RequireInterceptorService extends Effect.Service<RequireInterceptorService>()(
-	"Core/RequireInterceptor",
+	"Service/RequireInterceptor",
 
 	{
 		effect: Effect.gen(function* () {

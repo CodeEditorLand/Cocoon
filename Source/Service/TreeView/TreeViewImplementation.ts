@@ -59,9 +59,9 @@ export default class TreeViewImplementation<T> implements TreeView<T> {
 
 		private readonly DataProvider: TreeDataProvider<T>,
 
-		private readonly IPC: IPCService["Type"],
+		private readonly IPC: IPCService,
 
-		private readonly Command: CommandService["Type"],
+		private readonly Command: CommandService,
 
 		private readonly Extension: IExtensionDescription,
 	) {

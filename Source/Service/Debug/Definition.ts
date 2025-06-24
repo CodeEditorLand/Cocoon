@@ -133,7 +133,7 @@ const Definition = Effect.gen(function* (Generator) {
 
 	// --- Service Implementation ---
 
-	const ServiceImplementation: Debug["Type"] = {
+	const ServiceImplementation: Debug = {
 		// --- Properties ---
 		get activeDebugSession() {
 			return Ref.unsafeGet(DebugStateRef).ActiveDebugSession;
@@ -188,7 +188,7 @@ const Definition = Effect.gen(function* (Generator) {
 				} as unknown as ProviderEntry,
 			).pipe(Effect.provideService(IPC, IPCService)),
 
-		// --- Core Methods ---
+		// --- Service Methods ---
 		StartDebugging: StartDebuggingEffect,
 		StopDebugging: StopDebuggingEffect,
 

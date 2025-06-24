@@ -6,7 +6,7 @@
 
 import { Layer } from "effect";
 
-import ExtensionHostService from "../../Core/ExtensionHost/Service.js";
+import ExtensionHostService from "../../Service/ExtensionHost/Service.js";
 import InitDataService from "../InitData/Service.js";
 import Definition from "./Definition.js";
 import Service from "./Service.js";

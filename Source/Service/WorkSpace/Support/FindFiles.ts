@@ -10,7 +10,7 @@ import URIConverter from "../../../TypeConverter/Main/URI.js";
 import type IPCService from "../../IPC/Service.js";
 
 export default (
-	IPC: IPCService["Type"],
+	IPC: IPCService,
 
 	include: GlobPattern,
 

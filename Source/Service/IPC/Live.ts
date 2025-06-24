@@ -9,11 +9,6 @@
 
 import { Layer } from "effect";
 
-import { Live as CancellationLive } from "../Cancellation/mod.js";
-import { Live as ClientLive } from "./Client/mod.js";
-import { Live as DispatcherLive } from "./Dispatcher/mod.js";
-import { Live as ProtocolAdapterLive } from "./ProtocolAdapter/mod.js";
-import { Live as ServerLive } from "./Server/mod.js";
 import { Definition } from "./Definition.js";
 import { IPC } from "./Service.js";
 import type { Configuration as IPCConfiguration } from "./Service.js";

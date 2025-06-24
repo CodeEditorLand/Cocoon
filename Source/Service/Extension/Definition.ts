@@ -14,10 +14,10 @@ import {
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { Extension } from "vscode";
 
-import { ExtensionHost } from "../../Core/ExtensionHost/Service.js";
+import { ExtensionHost } from "../../Service/ExtensionHost/Service.js";
 import { InitData } from "../InitData/Service.js";
 import { CreateEventStream } from "../../Utility/CreateEventStream.js";
-import { CreateAPIObject } from "../../Core/Extension/CreateAPIObject.js";
+import { CreateAPIObject } from "../../Service/Extension/CreateAPIObject.js";
 import type { Extension as ExtensionService } from "./Service.js";
 
 /**
@@ -44,7 +44,7 @@ const Definition = Effect.gen(function* (Generator) {
 		InitDataService.extensions.allExtensions,
 	);
 
-	const ServiceImplementation: ExtensionService["Type"] = {
+	const ServiceImplementation: ExtensionService = {
 		onDidChange: OnDidChangeEvent,
 
 		GetExtension: <T>(ExtensionId: string) =>

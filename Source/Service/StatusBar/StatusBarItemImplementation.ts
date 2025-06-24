@@ -46,8 +46,8 @@ export default class StatusBarItemImplementation implements StatusBarItem {
 		// Internal, unique UUID for this instance.
 		private readonly EntryID: string,
 		private readonly ExtensionID: string,
-		private readonly IPC: IPCService["Type"],
-		private readonly CommandService: CommandService["Type"],
+		private readonly IPC: IPCService,
+		private readonly CommandService: CommandService,
 		private readonly OnDidDispose: () => void,
 		InitialID: string,
 		InitialAlignment: StatusBarAlignment,

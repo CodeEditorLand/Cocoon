@@ -226,7 +226,7 @@ const Definition = Effect.gen(function* (Generator) {
 		});
 
 	// --- Service Implementation ---
-	const ServiceImplementation: LanguageFeature["Type"] = {
+	const ServiceImplementation: LanguageFeature = {
 		RegisterHoverProvider: (Selector, Provider, Extension) =>
 			CreateRegisterEffect(
 				HoverProvidersRef,

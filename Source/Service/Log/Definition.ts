@@ -13,7 +13,7 @@ import type Service from "./Service.js";
  * It provides a simple facade over the main `Effect` logger.
  */
 export default Effect.gen(function* () {
-	const ServiceImplementation: Service["Type"] = {
+	const ServiceImplementation: Service = {
 		Trace: (Message, ...Data) =>
 			Effect.logTrace(Message).pipe(
 				Effect.annotateLogs({

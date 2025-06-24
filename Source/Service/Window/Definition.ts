@@ -109,7 +109,7 @@ export default Effect.gen(function* (G) {
 		}),
 	);
 
-	const ServiceImplementation: Service["Type"] = {
+	const ServiceImplementation: Service = {
 		get state() {
 			return Effect.runSync(Ref.get(WindowStateRef));
 		},

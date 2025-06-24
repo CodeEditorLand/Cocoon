@@ -57,7 +57,7 @@ export default Effect.gen(function* () {
 			}
 		});
 
-	const DispatcherImplementation: Service["Type"] = {
+	const DispatcherImplementation: Service = {
 		DispatchRequest,
 		DispatchNotification,
 		CancelOperation: Cancellation.CancelToken,

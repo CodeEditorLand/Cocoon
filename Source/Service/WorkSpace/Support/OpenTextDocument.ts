@@ -18,9 +18,9 @@ import type IPCService from "../../IPC/Service.js";
  * @returns An `Effect` that resolves to the opened `TextDocument`.
  */
 export default (
-	IPC: IPCService["Type"],
+	IPC: IPCService,
 
-	Document: DocumentService["Type"],
+	Document: DocumentService,
 
 	options?: { language?: string; content?: string } | Uri,
 ): Effect.Effect<TextDocument, Error> =>

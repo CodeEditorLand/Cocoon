@@ -31,7 +31,7 @@ export default class implements Webview {
 		// A unique ID for this webview instance
 		public readonly Handle: string,
 
-		private readonly IPC: IPCService["Type"],
+		private readonly IPC: IPCService,
 
 		private readonly Extension: IExtensionDescription,
 

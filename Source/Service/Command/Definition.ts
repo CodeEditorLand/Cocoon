@@ -15,7 +15,7 @@ import { ILogService } from "vs/platform/log/common/log.js";
 import { IExtHostRpcService } from "vs/workbench/api/common/extHostRpcService.js";
 import { IPC } from "../IPC/Service.js";
 import { Logger } from "../Log/Service.js";
-import { ExtensionHost } from "../../Core/ExtensionHost/Service.js";
+import { ExtensionHost } from "../../Service/ExtensionHost/Service.js";
 
 /**
  * An `Effect` that builds the live implementation of the `Command` service.

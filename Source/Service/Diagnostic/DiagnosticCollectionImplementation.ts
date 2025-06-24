@@ -33,7 +33,7 @@ export default class DiagnosticCollectionImplementation
 		public readonly name: string,
 		// An internal ID for this collection
 		private readonly Owner: string,
-		private readonly IPC: IPCService["Type"],
+		private readonly IPC: IPCService,
 	) {}
 
 	set(uri: Uri, diagnostics: readonly Diagnostic[] | undefined): void;

@@ -1,42 +1,34 @@
 /*
  * File: Cocoon/Source/Service/WebViewPanel/Service.ts
- * Role: Defines the service interface and provides the default "live" implementation using Effect.Service.
+ * Role: Defines the WebViewPanel service interface and provides its default "live" implementation.
  * Responsibilities:
- *   - Declare the contract for creating and managing webview panels.
- *   - Provide the `Effect.Service` class and its default Layer for dependency injection.
+ *   - Declare the contract for creating and managing webview panels using Effect.Service.
+ *   - Provide the default Layer (`WebViewPanel.Default`) for dependency injection.
  */
 
-import { Effect, Ref } from "effect";
+import { Effect, Layer, Ref } from "effect";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import {
 	Disposable,
-	type WebviewPanelSerializer,
 	type ViewColumn,
 	type WebviewOptions,
 	type WebviewPanel,
 	type WebviewPanelOptions,
+	type WebviewPanelSerializer,
 } from "vscode";
 
 import ConvertContentOptionToDTO from "../../TypeConverter/WebView/ConvertContentOptionToDTO.js";
 import ConvertPanelOptionToDTO from "../../TypeConverter/WebView/ConvertPanelOptionToDTO.js";
 import ConvertShowOptionToDTO from "../../TypeConverter/WebView/ConvertShowOptionToDTO.js";
-import { IPCService } from "../IPC/Service.js"; // Assuming IPCService is defined with Effect.Service or Context.Tag
+import { IPCService } from "../IPC/Service.js";
 import WebViewPanelImplementation from "./WebViewPanelImplementation.js";
 
-/**
- * The `Effect.Service` for the WebViewPanel service.
- * This service implements the `vscode.window.createWebviewPanel` API, allowing
- * extensions to create custom, web-based views within the editor.
- *
- * This class definition combines the service interface, the implementation logic,
- * and the default layer (`WebViewPanel.Default`) into one.
- */
 export class WebViewPanel extends Effect.Service<WebViewPanel>()(
-	"Service/WebViewPanel", // The service tag
+	"Service/WebViewPanel",
 	{
 		// The `effect` property defines how to construct the service.
-		// This logic was previously in your Definition.ts file.
+		// This logic comes from your `Definition.ts` file.
 		effect: Effect.gen(function* () {
 			// 1. Yield dependencies. Effect will provide them from the context.
 			const IPC = yield* IPCService;
@@ -69,7 +61,7 @@ export class WebViewPanel extends Effect.Service<WebViewPanel>()(
 				});
 
 			// --- Register Handlers ---
-			// We run this synchronously during the service construction.
+			// Run this setup logic synchronously during service construction.
 			IPC.RegisterInvokeHandler("$onDidDisposeWebview", ([Handle]) =>
 				Effect.runPromise(OnDidDisposeWebviewEffect(Handle)),
 			);
@@ -89,8 +81,7 @@ export class WebViewPanel extends Effect.Service<WebViewPanel>()(
 			);
 			IPC.RegisterInvokeHandler(
 				"$deserializeWebviewPanel",
-				// Stubbed
-				() => Effect.runPromise(Effect.succeed(undefined)),
+				() => Effect.runPromise(Effect.succeed(undefined)), // Stubbed
 			);
 
 			// 2. Return the implementation object that matches the service interface.
@@ -155,7 +146,6 @@ export class WebViewPanel extends Effect.Service<WebViewPanel>()(
 						yield* Ref.update(ActivePanelsRef, (Map) =>
 							Map.set(Handle, Panel),
 						);
-
 						return Panel;
 					}),
 

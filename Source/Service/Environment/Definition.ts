@@ -69,7 +69,7 @@ export default Effect.gen(function* () {
 		? ((InitData.workspace as any).isTrusted ?? true)
 		: true;
 
-	const ServiceImplementation: Service["Type"] = {
+	const ServiceImplementation: Service = {
 		appName: InitData.environment.appName || "Cocoon Editor",
 		appRoot: GetAppRoot(),
 		appHost: InitData.environment.appHost || "desktop",
