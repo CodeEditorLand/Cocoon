@@ -21,7 +21,7 @@ import { FromAPI as UriFromAPI } from "../TypeConverter/Main/URI.js";
 import { ConvertShowOptionToDTO } from "../TypeConverter/WebView/ConvertShowOptionToDTO.js";
 import { CreateEventStream } from "../Utility/CreateEventStream.js";
 import type { IPC } from "../IPC.js";
-import { WebViewImplementation } from "./WebViewImplementation.js"; // This will be created next.
+import { WebViewImplementation } from "./WebViewImplementation.js";
 
 /**
  * @class WebViewPanelImplementation
@@ -50,7 +50,7 @@ export class WebViewPanelImplementation implements WebviewPanel {
 	constructor(
 		private readonly Handle: string,
 		private readonly IPC: IPC,
-		private readonly Extension: IExtensionDescription,
+		Extension: IExtensionDescription,
 		private readonly OnDidDisposeCallback: () => void,
 		InitialViewType: string,
 		InitialTitle: string,
@@ -130,7 +130,9 @@ export class WebViewPanelImplementation implements WebviewPanel {
 	}
 
 	public dispose(): void {
-		if (this.IsDisposed) return;
+		if (this.IsDisposed) {
+			return;
+		}
 		this.IsDisposed = true;
 		this.OnDidDisposeEmitter.Fire();
 		this.OnDidDisposeCallback();

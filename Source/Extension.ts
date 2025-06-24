@@ -98,7 +98,7 @@ export interface Extension {
 }
 
 /**
- * @class Extension
+ * @class ExtensionService
  * @description The `Effect.Service` for the Extension service.
  */
 export class ExtensionService extends Effect.Service<ExtensionService>()(
@@ -120,7 +120,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 
 			const ExtensionRegistry = new ExtensionDescriptionRegistry(
 				ActivationEventsReader,
-				InitData.extensions.allExtensions,
+				InitData.extensions.allExtensions as IExtensionDescription[],
 			);
 
 			const GetExtension = <T>(ExtensionId: string) =>

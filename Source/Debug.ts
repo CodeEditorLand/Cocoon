@@ -53,7 +53,7 @@ export interface DebuggerState {
 }
 
 /**
- * @interface Debug
+ * @interface DebugInterface
  * @description The contract for the Debug service, mirroring `IExtHostDebug`.
  */
 export interface DebugInterface {
@@ -98,10 +98,10 @@ export interface DebugInterface {
 }
 
 /**
- * @class Debug
+ * @class DebugService
  * @description The `Effect.Service` for the Debug service.
  */
-export class DebugService extends Effect.Service<DebugService>()(
+export class DebugService extends Effect.Service<DebugInterface>()(
 	"Service/Debug",
 	{
 		effect: Effect.gen(function* () {
@@ -141,7 +141,7 @@ export class DebugService extends Effect.Service<DebugService>()(
 				Effect.gen(function* () {
 					const Handle = ++HandleCounter;
 					yield* Ref.update(RegistryRef, (TheMap) =>
-						TheMap.set(Handle, Data),
+						TheMap.set(Handle, Data as unknown as ProviderEntry),
 					);
 					yield* IPC.SendNotification(
 						"$registerDebugConfigurationProvider",
@@ -169,15 +169,17 @@ export class DebugService extends Effect.Service<DebugService>()(
 					return new Disposable(() => Effect.runFork(Cleanup));
 				});
 
+			const GetState = () => Ref.get(DebugStateRef);
+
 			return {
 				get activeDebugSession() {
-					return Ref.get(DebugStateRef).ActiveDebugSession;
+					return Effect.runSync(GetState()).ActiveDebugSession;
 				},
 				get activeDebugConsole() {
-					return Ref.get(DebugStateRef).ActiveDebugConsole;
+					return Effect.runSync(GetState()).ActiveDebugConsole;
 				},
 				get breakpoints() {
-					return Ref.get(DebugStateRef).Breakpoints;
+					return Effect.runSync(GetState()).Breakpoints;
 				},
 				onDidChangeActiveDebugSession:
 					OnDidChangeActiveDebugSessionEvent,
@@ -194,7 +196,8 @@ export class DebugService extends Effect.Service<DebugService>()(
 					Extension,
 				) =>
 					RegisterProvider(
-						Ref.get(DebugStateRef).DebugConfigurationProviders,
+						Effect.runSync(GetState())
+							.DebugConfigurationProviders as any,
 						{ Type: DebugType, Provider, Extension },
 					),
 				RegisterDebugAdapterDescriptorFactory: (
@@ -203,7 +206,8 @@ export class DebugService extends Effect.Service<DebugService>()(
 					Extension,
 				) =>
 					RegisterProvider(
-						Ref.get(DebugStateRef).DebugAdapterDescriptorFactories,
+						Effect.runSync(GetState())
+							.DebugAdapterDescriptorFactories as any,
 						{ Type: DebugType, Provider: Factory, Extension },
 					),
 				RegisterDebugAdapterTrackerFactory: (
@@ -212,7 +216,8 @@ export class DebugService extends Effect.Service<DebugService>()(
 					Extension,
 				) =>
 					RegisterProvider(
-						Ref.get(DebugStateRef).DebugAdapterTrackerFactories,
+						Effect.runSync(GetState())
+							.DebugAdapterTrackerFactories as any,
 						{ Type: DebugType, Provider: Factory, Extension },
 					),
 

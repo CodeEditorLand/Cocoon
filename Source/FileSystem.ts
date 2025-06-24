@@ -13,7 +13,6 @@ import {
 	type FileSystem as VSCodeFileSystem,
 	type Uri,
 } from "vscode";
-import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
 import { FileSystemInformationService } from "./FileSystemInformation.js";
 import { IPCService } from "./IPC.js";
 

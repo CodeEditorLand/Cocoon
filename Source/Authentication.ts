@@ -14,12 +14,12 @@ import type { IExtHostWindow } from "vs/workbench/api/common/extHostWindow.js";
 import type { ExtHostUrls as IExtHostUrls } from "vs/workbench/api/common/extHostUrls.js";
 import type { IExtHostProgress } from "vs/workbench/api/common/extHostProgress.js";
 import type { ILogService } from "vs/platform/log/common/log.js";
+import type { IExtHostInitDataService } from "vs/workbench/api/common/extHostInitDataService.js";
 import { Emitter } from "vs/base/common/event.js";
 import { IPCService } from "./IPC.js";
 import { InitDataService } from "./InitData.js";
 import { WindowService } from "./Window.js";
 import { LoggerService } from "./Logger.js";
-import type { IExtHostInitDataService } from "vs/workbench/api/common/extHostInitDataService.js";
 
 /**
  * @class AuthenticationService
@@ -62,13 +62,16 @@ export class AuthenticationService extends Effect.Service<IExtHostAuthentication
 
 			const ProgressServiceStub: IExtHostProgress = {
 				_serviceBrand: undefined,
+				_proxy: undefined as any,
+				_handles: new Map(),
+				_mapHandleToCancellationSource: new Map(),
 				withProgress: <R>() =>
 					Promise.resolve(undefined as unknown as R),
 				withProgressFromSource: () => Promise.resolve(),
 				$showProgress: () => {},
 				$hideProgress: () => {},
 				$resolveProgressStep: () => {},
-			} as unknown as IExtHostProgress;
+			};
 
 			return new NodeExtHostAuthentication(
 				RpcServiceAdapter,

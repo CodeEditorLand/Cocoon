@@ -162,12 +162,11 @@ const PostHandshakeEffect = Effect.gen(function* () {
 // --- Main Application Logic ---
 const MainEffect = Effect.gen(function* () {
 	// Level 0: Foundational Services (no dependencies on other app services)
-	const L0_Services = Layer.mergeAll(
+	const L0_World = Layer.mergeAll(
 		IPCConfigurationService.Default,
 		CancellationService.Default,
 		LoggerService.Default,
 	);
-	const L0_World = L0_Services;
 
 	// 1. Run pre-handshake with its minimal layer to get the init data.
 	const InitializationData = yield* Effect.provide(
@@ -186,13 +185,13 @@ const MainEffect = Effect.gen(function* () {
 		IPCService.Default,
 		ConfigurationService.Default,
 		LanguageFeatureService.Default,
+		TelemetryService.Default,
 	);
 	const L1_World = L1_Services.pipe(
 		Layer.provide(Layer.merge(L0_World, InitDataLayer)),
 	);
 
 	const L2_Services = Layer.mergeAll(
-		TelemetryService.Default,
 		ExtensionPathService.Default,
 		HostKindPickerService.Default,
 		NodeModuleShimService.Default,

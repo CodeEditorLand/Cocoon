@@ -76,7 +76,7 @@ export interface ExtensionHost {
 }
 
 /**
- * @class ExtensionHost
+ * @class ExtensionHostService
  * @description The `Effect.Service` for the ExtensionHost.
  */
 export class ExtensionHostService extends Effect.Service<ExtensionHostService>()(
@@ -97,7 +97,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 			};
 			const ExtensionRegistry = new ExtensionDescriptionRegistry(
 				ActivationEventsReader,
-				InitData.extensions.allExtensions,
+				InitData.extensions.allExtensions as IExtensionDescription[],
 			);
 
 			const Deactivate = (Extension: ActivatedExtension) =>
@@ -179,7 +179,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 						globalState: undefined as any, // Provided by Storage service
 						extensionRuntime: ExtensionRuntime.Node,
 						messagePassingProtocol: undefined,
-					};
+					} as ExtensionContext;
 
 					const ActivationFunction = Module.activate as
 						| Function
@@ -221,30 +221,10 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 				});
 
 			const OnDidActivateExtension = (
-				callback: (extension: IExtensionDescription) => void,
+				_callback: (extension: IExtensionDescription) => void,
 			) =>
 				Effect.sync(() => {
-					// This would typically involve an event emitter. For simplicity, we'll log it.
-					// This is a hook for other services to react to an extension activating.
-					const OriginalHandler = IPC.RegisterInvokeHandler;
-					IPC.RegisterInvokeHandler = (channel, handler) => {
-						if (channel === "$onDidActivateExtension") {
-							const newHandler = (args: any[]) => {
-								const extensionId =
-									args[0] as ExtensionIdentifier;
-								const description =
-									ExtensionRegistry.getExtensionDescription(
-										extensionId,
-									);
-								if (description) {
-									callback(description);
-								}
-								return handler(args);
-							};
-							return OriginalHandler(channel, newHandler);
-						}
-						return OriginalHandler(channel, handler);
-					};
+					// Stub to satisfy interface. A real impl would use PubSub.
 				});
 
 			return {

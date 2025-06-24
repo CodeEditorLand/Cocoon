@@ -221,6 +221,8 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 			SendCancel: Cancellation.CancelToken,
 
 			CreateProtocolAdapter: () => ({
+				send: ProtocolAdapter.send,
+				onMessage: ProtocolAdapter.onMessage,
 				...RPCProtocolInstance,
 				ProcessIncomingData: (Data) =>
 					Effect.sync(() =>

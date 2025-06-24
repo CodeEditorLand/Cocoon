@@ -13,6 +13,7 @@ import type {
 	IConfigurationOverrides,
 } from "vs/platform/configuration/common/configuration.js";
 import { Emitter } from "vs/base/common/event.js";
+import { type URI as VSCodeURI } from "./Platform/VSCode/Type.js";
 import { ApplicationConfigurationProblem } from "./Configuration/ApplicationConfigurationProblem.js";
 import type { IntegrationConfigurationProblem } from "./Integration/Tauri/Configuration/Error.js";
 import type { IntegrationPathProblem } from "./Integration/Tauri/Path/Error.js";
@@ -23,9 +24,12 @@ import { ResolveWorkSpacePath } from "./Integration/Tauri/Path/WorkSpace.js";
 import { joinPath } from "vs/base/common/resources.js";
 
 const ResolveConfigurationFile = (
-	ConfigDirectoryEffect: Effect.Effect<URI, IntegrationPathProblem>,
+	ConfigDirectoryEffect: Effect.Effect<VSCodeURI, IntegrationPathProblem>,
 	FileName: string,
-): Effect.Effect<object, IntegrationConfigurationProblem> =>
+): Effect.Effect<
+	object,
+	IntegrationConfigurationProblem | IntegrationPathProblem
+> =>
 	Effect.flatMap(ConfigDirectoryEffect, (ConfigDirectory) =>
 		ReadRawFile(
 			ConfigDirectory.with({
@@ -36,7 +40,12 @@ const ResolveConfigurationFile = (
 			Effect.catchAll(() => Effect.succeed({})),
 		),
 	).pipe(
-		Effect.mapError((e) => e as unknown as IntegrationConfigurationProblem),
+		Effect.mapError(
+			(e) =>
+				e as unknown as
+					| IntegrationConfigurationProblem
+					| IntegrationPathProblem,
+		),
 	);
 
 const ResolveConfiguration = Effect.all(
@@ -56,7 +65,7 @@ const ResolveConfiguration = Effect.all(
 	Effect.mapError(
 		(Cause) =>
 			new ApplicationConfigurationProblem({
-				Cause: Cause as IntegrationConfigurationProblem,
+				Cause: Cause as IntegrationConfigurationProblem, // This cast is still necessary
 				Context: "FailedToResolveConfiguration",
 			}),
 	),
@@ -95,7 +104,7 @@ export class ConfigurationService extends Effect.Service<IConfigurationService>(
 
 				getValue<T>(
 					section?: string | IConfigurationOverrides,
-					overrides?: IConfigurationOverrides,
+					_overrides?: IConfigurationOverrides,
 				): T {
 					const Key =
 						typeof section === "string" ? section : undefined;
@@ -104,21 +113,22 @@ export class ConfigurationService extends Effect.Service<IConfigurationService>(
 					}
 					return GetValueFromObject(ConfigurationData, Key) as T;
 				},
-
 				updateValue: () => Promise.resolve(),
 				inspect: <T>(
 					key: string,
 					_overrides?: any,
 				): IConfigurationValue<T> => {
-					const value = Service.getValue(key, _overrides);
+					const value = Service.getValue(key, _overrides) as
+						| T
+						| undefined;
 					return {
-						key,
-						value: value as T,
-						defaultValue: value as T | undefined,
-						userValue: value as T | undefined,
-						workspaceValue: value as T | undefined,
-						workspaceFolderValue: value as T | undefined,
-					};
+						key: key,
+						value,
+						defaultValue: value,
+						userValue: value,
+						workspaceValue: value,
+						workspaceFolderValue: value,
+					} as IConfigurationValue<T>;
 				},
 				keys: () => ({
 					default: [],
@@ -128,7 +138,7 @@ export class ConfigurationService extends Effect.Service<IConfigurationService>(
 				}),
 				reloadConfiguration: () => Promise.resolve(),
 				onDidChangeConfiguration: new Emitter<any>().event,
-			};
+			} as unknown as IConfigurationService;
 
 			return Service;
 		}),

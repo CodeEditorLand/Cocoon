@@ -15,10 +15,8 @@ import { Position, Range, Selection } from "./Platform/VSCode/Type.js";
 import type { Disposable } from "vscode";
 
 // Corrected PascalCase Imports
-import { APIDeprecationService } from "./APIDeprecation.js";
 import { CommandService, type Command } from "./Command.js";
 import { DebugService } from "./Debug.js";
-import { DocumentService } from "./Document.js";
 import { ExtensionService, type Extension } from "./Extension.js";
 import { LanguageFeatureService } from "./LanguageFeature.js";
 import { LoggerService, type Logger } from "./Logger.js";

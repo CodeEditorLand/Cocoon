@@ -15,10 +15,12 @@ import {
 	type MarkdownString,
 	type StatusBarItem as VSCodeStatusBarItem,
 	type ThemeColor,
+	type CancellationToken,
+	type ProviderResult,
 } from "vscode";
 import { FromAPI as StatusBarItemToDTO } from "./TypeConverter/StatusBar.js";
 import { Command as CommandConverter } from "./TypeConverter/Command.js";
-import { Command, CommandService } from "./Command.js";
+import { Command as CommandInterface, CommandService } from "./Command.js";
 import { IPC, IPCService } from "./IPC.js";
 
 /**
@@ -39,12 +41,19 @@ class StatusBarItemImplementation implements VSCodeStatusBarItem {
 	private _backgroundColor: ThemeColor | undefined;
 	private _command: string | VSCodeCommand | undefined;
 	private _accessibilityInformation: AccessibilityInformation | undefined;
+	public tooltip2:
+		| string
+		| MarkdownString
+		| ((
+				token: CancellationToken,
+		  ) => ProviderResult<string | MarkdownString | undefined>)
+		| undefined;
 
 	constructor(
 		private readonly EntryId: string,
 		private readonly ExtensionId: string,
 		private readonly IPC: IPC,
-		private readonly Command: Command,
+		private readonly Command: CommandInterface,
 		private readonly OnDidDispose: () => void,
 		InitialId: string,
 		InitialAlignment: StatusBarAlignment,

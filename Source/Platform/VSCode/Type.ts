@@ -7,7 +7,6 @@
 import { CancellationTokenSource as VSCodeCancellationTokenSource } from "vs/base/common/cancellation.js";
 import { CancellationError as VSCodeCancellationError } from "vs/base/common/errors.js";
 import { Emitter } from "vs/base/common/event.js";
-import * as Lifecycle from "vs/base/common/lifecycle.js";
 import { URI as VSCodeURI } from "vs/base/common/uri.js";
 import { FileType as VSCodeFileType } from "vs/platform/files/common/files.js";
 import type * as VSCode from "vscode";
@@ -33,7 +32,18 @@ import {
 } from "vscode";
 
 // Foundational Re-exports
-export const Disposable = Lifecycle.Disposable;
+export class Disposable implements VSCode.Disposable {
+	private _callOnDispose: () => any;
+	constructor(callOnDispose: () => any) {
+		this._callOnDispose = callOnDispose;
+	}
+	dispose(): any {
+		this._callOnDispose();
+	}
+	[Symbol.dispose](): void {
+		this.dispose();
+	}
+}
 export const CancellationTokenSource = VSCodeCancellationTokenSource;
 export const CancellationError = VSCodeCancellationError;
 export const EventEmitter = Emitter;

@@ -53,7 +53,7 @@ export interface ProposedAPI {
 }
 
 /**
- * @class ProposedAPI
+ * @class ProposedAPIService
  * @description The `Effect.Service` for managing proposed APIs. It reads the
  * configuration at startup and provides a synchronous method to check if a
  * specific proposal is enabled for a given extension.
@@ -86,7 +86,7 @@ export class ProposedAPIService extends Effect.Service<ProposedAPIService>()(
 				AllExtensionAPIs.entries(),
 			);
 
-			yield* Logger.InfoService(
+			yield* Logger.Info(
 				"Proposed API provider initialized. No proposals found in InitData. All proposals will be disabled.",
 			);
 
