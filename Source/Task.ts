@@ -1,0 +1,208 @@
+/**
+ * @module Task
+ * @description Defines the service for implementing the `vscode.tasks` API, which
+ * manages the registration and lifecycle of `TaskProvider`s and orchestrates
+ * task fetching and execution by proxying requests to the host process.
+ */
+
+import { Effect, Ref } from "effect";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import {
+	Disposable,
+	type Event,
+	type Task as VscTask,
+	type TaskEndEvent,
+	type TaskExecution,
+	type TaskFilter,
+	type TaskProcessEndEvent,
+	type TaskProcessStartEvent,
+	type TaskProvider,
+	type TaskStartEvent,
+} from "vscode";
+import {
+	FromAPI as TaskFromAPI,
+	ToAPI as TaskToAPI,
+	ExecutionToAPI,
+} from "./TypeConverter/Task.js";
+import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { Cancellation } from "./Cancellation.js";
+import { IPC } from "./IPC.js";
+
+/**
+ * @interface ProviderEntry
+ * @description An internal type associating a task provider with its metadata.
+ */
+export interface ProviderEntry<T extends VscTask> {
+	readonly Type: string;
+	readonly Provider: TaskProvider<T>;
+	readonly Extension: IExtensionDescription;
+}
+
+/**
+ * @description An internal helper Effect that handles the `$provideTasks` RPC call from the host.
+ * @param Registry A `Ref` containing all registered task providers.
+ * @param Handle The handle of the specific provider to invoke.
+ * @param TokenId The ID of the cancellation token for this operation.
+ * @param CancellationService The service to obtain the cancellation token from.
+ * @returns An `Effect` that resolves to an array of Task DTOs or fails.
+ */
+const ProvideTasks = (
+	Registry: Ref.Ref<Map<number, ProviderEntry<VscTask>>>,
+	Handle: number,
+	TokenId: number,
+	CancellationService: Cancellation,
+) => {
+	return Effect.gen(function* () {
+		const Entry = (yield* Ref.get(Registry)).get(Handle);
+		if (!Entry)
+			return yield* Effect.fail(
+				new Error(`Task provider with handle ${Handle} not found.`),
+			);
+
+		const Provider = Entry.Provider as TaskProvider;
+		if (!Provider.provideTasks) return [];
+
+		const CancellationToken =
+			yield* CancellationService.ObtainToken(TokenId);
+		const Tasks = yield* Effect.tryPromise({
+			try: () =>
+				Provider.provideTasks(CancellationToken) as Promise<
+					VscTask[] | null | undefined
+				>,
+			catch: (CaughtError) => CaughtError as Error,
+		});
+
+		if (!Tasks) return [];
+		return Tasks.map((TheTask: VscTask) =>
+			TaskFromAPI(TheTask, Entry.Extension),
+		);
+	}).pipe(
+		Effect.scoped, // Ensures the CancellationToken's scope is properly managed
+		Effect.catchAll(() => Effect.succeed([])), // Gracefully return empty array on any error
+	);
+};
+
+/**
+ * @interface Task
+ * @description The contract for the Task service.
+ */
+export interface Task {
+	readonly onDidStartTask: Event<TaskStartEvent>;
+	readonly onDidEndTask: Event<TaskEndEvent>;
+	readonly onDidStartTaskProcess: Event<TaskProcessStartEvent>;
+	readonly onDidEndTaskProcess: Event<TaskProcessEndEvent>;
+	readonly taskExecutions: readonly TaskExecution[];
+	readonly RegisterTaskProvider: <T extends VscTask>(
+		type: string,
+		provider: TaskProvider<T>,
+		extension: IExtensionDescription,
+	) => Effect.Effect<Disposable, Error>;
+	readonly FetchTasks: (
+		filter?: TaskFilter,
+	) => Effect.Effect<VscTask[], Error>;
+	readonly ExecuteTask: (
+		task: VscTask,
+		extension: IExtensionDescription,
+	) => Effect.Effect<TaskExecution, Error>;
+}
+
+/**
+ * @class Task
+ * @description The `Effect.Service` for the Task service.
+ */
+export class Task extends Effect.Service<Task>()("Service/Task", {
+	effect: Effect.gen(function* () {
+		const IPCService = yield* IPC;
+		const CancellationService = yield* Cancellation;
+		let HandleCounter = 0;
+		const TaskProvidersRef = yield* Ref.make(
+			new Map<number, ProviderEntry<any>>(),
+		);
+
+		IPCService.RegisterInvokeHandler(
+			"$provideTasks",
+			([Handle, TokenId]: [number, number]) =>
+				Effect.runPromise(
+					ProvideTasks(
+						TaskProvidersRef,
+						Handle,
+						TokenId,
+						CancellationService,
+					),
+				),
+		);
+
+		const { event: OnDidStartTaskEvent } =
+			CreateEventStream<TaskStartEvent>();
+		const { event: OnDidEndTaskEvent } = CreateEventStream<TaskEndEvent>();
+		const { event: OnDidStartTaskProcessEvent } =
+			CreateEventStream<TaskProcessStartEvent>();
+		const { event: OnDidEndTaskProcessEvent } =
+			CreateEventStream<TaskProcessEndEvent>();
+
+		return {
+			onDidStartTask: OnDidStartTaskEvent,
+			onDidEndTask: OnDidEndTaskEvent,
+			onDidStartTaskProcess: OnDidStartTaskProcessEvent,
+			onDidEndTaskProcess: OnDidEndTaskProcessEvent,
+			get taskExecutions(): readonly TaskExecution[] {
+				return [];
+			},
+
+			RegisterTaskProvider: <T extends VscTask>(
+				Type: string,
+				Provider: TaskProvider<T>,
+				Extension: IExtensionDescription,
+			) =>
+				Effect.sync(() => {
+					const Handle = ++HandleCounter;
+					const Entry: ProviderEntry<T> = {
+						Type,
+						Provider,
+						Extension,
+					};
+					Effect.runSync(
+						Ref.update(TaskProvidersRef, (Map) =>
+							Map.set(Handle, Entry),
+						),
+					);
+					Effect.runFork(
+						IPCService.SendNotification("$registerTaskProvider", [
+							Handle,
+							Type,
+						]),
+					);
+					return new Disposable(() => {
+						const Cleanup = Ref.update(
+							TaskProvidersRef,
+							(Map) => (Map.delete(Handle), Map),
+						).pipe(
+							Effect.andThen(
+								IPCService.SendNotification(
+									"$unregisterTaskProvider",
+									[Handle],
+								),
+							),
+						);
+						Effect.runFork(Cleanup);
+					});
+				}),
+			FetchTasks: (Filter?: TaskFilter) =>
+				IPCService.SendRequest<any[]>("$fetchTasks", [Filter]).pipe(
+					Effect.map((TaskDTOs) =>
+						TaskDTOs.map((DTO) => TaskToAPI(DTO)),
+					),
+					Effect.mapError((Cause) => new Error(String(Cause))),
+				),
+			ExecuteTask: (TaskToExecute, Extension) =>
+				IPCService.SendRequest<any>("$executeTask", [
+					TaskFromAPI(TaskToExecute, Extension),
+				]).pipe(
+					Effect.map((ExecutionDTO) =>
+						ExecutionToAPI(ExecutionDTO, TaskToExecute),
+					),
+					Effect.mapError((Cause) => new Error(String(Cause))),
+				),
+		};
+	}),
+}) {}
