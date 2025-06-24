@@ -67,6 +67,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 			yield* WindowService;
 
 			const RegisterCommand = (
+				_global: boolean,
 				Id: string,
 				_Handler: (...args: any[]) => any,
 			): Effect.Effect<Disposable, Error> => {
@@ -96,9 +97,13 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 			const Service: IExtHostCommands = {
 				registerCommand: (id, handler, thisArg) =>
-					Effect.runSync(RegisterCommand(id, handler.bind(thisArg))),
+					Effect.runSync(
+						RegisterCommand(true, id, handler.bind(thisArg)),
+					),
 				registerTextEditorCommand: (id, handler, thisArg) =>
-					Effect.runSync(RegisterCommand(id, handler.bind(thisArg))),
+					Effect.runSync(
+						RegisterCommand(true, id, handler.bind(thisArg)),
+					),
 				executeCommand: <T>(id: string, ...args: any[]) =>
 					Effect.runPromise(ExecuteCommand<T>(id, ...args)),
 				getCommands: (filterInternal) =>
