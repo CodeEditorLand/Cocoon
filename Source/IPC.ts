@@ -121,7 +121,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 		const InvokeHandlersRef = yield* Ref.make(
 			new Map<string, (...args: any[]) => Promise<any>>(),
 		);
-		const RPCProtocol = new RPCProtocol({
+		const RPC = new RPCProtocol({
 			send: (Buffer) =>
 				Effect.runFork(
 					Effect.tryPromise({
@@ -158,10 +158,8 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 						catch: (e) => e as Error,
 					});
 				}
-				if ((RPCProtocol as any)._getHandler) {
-					const Handler = (RPCProtocol as any)._getHandler(
-						Method,
-					);
+				if ((RPC as any)._getHandler) {
+					const Handler = (RPC as any)._getHandler(Method);
 					if (Handler) {
 						return yield* Effect.tryPromise({
 							try: () => Handler(...Parameters),
@@ -247,7 +245,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 			SendCancel: Cancellation.CancelToken,
 
 			CreateProtocolAdapter: () => ({
-				...RPCProtocol,
+				...RPC,
 				ProcessIncomingData: (Data) =>
 					Effect.sync(() =>
 						OnMessageEmitter.fire(VSBuffer.wrap(Data)),

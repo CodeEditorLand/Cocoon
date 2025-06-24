@@ -1,6 +1,6 @@
 /**
  * @module Type
- * @description Provides concrete implementations of core `vscode` API types,
+ * @description Provides the concrete implementations of the core `vscode` API types,
  * such as `URI`, `Range`, `Position`, `Disposable`, and all enums.
  * This is synthesized from `vscode.d.ts` and VS Code's internal `extHostTypes.ts`.
  */
@@ -24,6 +24,8 @@ import {
 	StatusBarAlignment,
 	TextEditorCursorStyle,
 	ViewColumn,
+	ThemeIcon as VSCodeThemeIcon,
+	TreeItemCollapsibleState,
 } from "vscode";
 
 // Foundational Re-exports
@@ -32,6 +34,7 @@ export const CancellationTokenSource = VSCodeCancellationTokenSource;
 export const CancellationError = VSCodeCancellationError;
 export const EventEmitter = Emitter;
 export const URI = VSCodeURI;
+export const ThemeIcon = VSCodeThemeIcon;
 
 // Service Classes
 export class Position implements VSCode.Position {
@@ -87,13 +90,15 @@ export class Position implements VSCode.Position {
 			| undefined,
 		characterDelta = 0,
 	): VSCode.Position {
-		if (lineDeltaOrChange === null || lineDeltaOrChange === undefined)
+		if (lineDeltaOrChange === null || lineDeltaOrChange === undefined) {
 			return this;
-		if (typeof lineDeltaOrChange === "number")
+		}
+		if (typeof lineDeltaOrChange === "number") {
 			return new Position(
 				this.line + lineDeltaOrChange,
 				this.character + characterDelta,
 			);
+		}
 		return new Position(
 			this.line + (lineDeltaOrChange.lineDelta ?? 0),
 			this.character + (lineDeltaOrChange.characterDelta ?? 0),
@@ -108,9 +113,12 @@ export class Position implements VSCode.Position {
 			| undefined,
 		character: number = this.character,
 	): VSCode.Position {
-		if (lineOrChange === null || lineOrChange === undefined) return this;
-		if (typeof lineOrChange === "number")
+		if (lineOrChange === null || lineOrChange === undefined) {
+			return this;
+		}
+		if (typeof lineOrChange === "number") {
 			return new Position(lineOrChange, character);
+		}
 		return new Position(
 			lineOrChange.line ?? this.line,
 			lineOrChange.character ?? this.character,
@@ -156,6 +164,7 @@ export class Range implements VSCode.Range {
 		} else {
 			throw new Error("Invalid arguments");
 		}
+
 		if (start.isAfter(end)) {
 			this.start = end;
 			this.end = start;
@@ -171,11 +180,12 @@ export class Range implements VSCode.Range {
 		return this.start.line === this.end.line;
 	}
 	contains(positionOrRange: Position | Range): boolean {
-		if (positionOrRange instanceof Range)
+		if (positionOrRange instanceof Range) {
 			return (
 				this.contains(positionOrRange.start) &&
 				this.contains(positionOrRange.end)
 			);
+		}
 		return (
 			positionOrRange.isAfterOrEqual(this.start) &&
 			positionOrRange.isBeforeOrEqual(this.end)
@@ -189,7 +199,9 @@ export class Range implements VSCode.Range {
 			? this.start
 			: other.start;
 		const end = this.end.isBefore(other.end) ? this.end : other.end;
-		if (start.isAfter(end)) return undefined;
+		if (start.isAfter(end)) {
+			return undefined;
+		}
 		return new Range(start, end);
 	}
 	union(other: Range): Range {
@@ -208,9 +220,12 @@ export class Range implements VSCode.Range {
 			| undefined,
 		end: Position = this.end,
 	): Range {
-		if (startOrChange === null || startOrChange === undefined) return this;
-		if (startOrChange instanceof Position)
+		if (startOrChange === null || startOrChange === undefined) {
+			return this;
+		}
+		if (startOrChange instanceof Position) {
 			return new Range(startOrChange, end);
+		}
 		return new Range(
 			startOrChange.start ?? this.start,
 			startOrChange.end ?? this.end,
@@ -221,7 +236,87 @@ export class Range implements VSCode.Range {
 	}
 }
 
-// ... Other VS Code type implementations (Selection, Location, etc.) would go here ...
+export class Selection extends Range implements VSCode.Selection {
+	readonly anchor: Position;
+	readonly active: Position;
+	constructor(anchor: Position, active: Position) {
+		super(anchor, active);
+		this.anchor = anchor;
+		this.active = active;
+	}
+	get isReversed(): boolean {
+		return this.active.isBefore(this.anchor);
+	}
+	override toJSON(): any {
+		return {
+			start: this.start.toJSON(),
+			end: this.end.toJSON(),
+			active: this.active.toJSON(),
+			anchor: this.anchor.toJSON(),
+		};
+	}
+}
+
+export class MarkdownString implements VSCode.MarkdownString {
+	value: string;
+	isTrusted?: boolean;
+	supportThemeIcons?: boolean;
+	supportHtml?: boolean;
+	baseUri?: VSCode.Uri;
+	constructor(value = "", isTrusted = false) {
+		this.value = value;
+		this.isTrusted = isTrusted;
+	}
+	appendText(value: string): MarkdownString {
+		this.value += value;
+		return this;
+	}
+	appendMarkdown(value: string): MarkdownString {
+		this.value += value;
+		return this;
+	}
+	appendCodeblock(value: string, language = ""): MarkdownString {
+		this.value += `\n\`\`\`${language}\n${value}\n\`\`\`\n`;
+		return this;
+	}
+	toJSON(): any {
+		return {
+			value: this.value,
+			isTrusted: this.isTrusted,
+		};
+	}
+}
+
+export class ThemeColor implements VSCode.ThemeColor {
+	constructor(public id: string) {}
+}
+
+export class TreeItem implements VSCode.TreeItem {
+	label?: string | VSCode.TreeItemLabel;
+	resourceURI?: VSCode.Uri;
+	collapsibleState?: VSCode.TreeItemCollapsibleState;
+	id?: string;
+	description?: string;
+	command?: VSCode.Command;
+	constructor(
+		labelOrUri: string | VSCode.Uri | VSCode.TreeItemLabel,
+		collapsibleState: VSCode.TreeItemCollapsibleState = TreeItemCollapsibleState.None,
+	) {
+		if (typeof labelOrUri === "string" || isTreeItemLabel(labelOrUri)) {
+			this.label = labelOrUri;
+		} else {
+			this.resourceURI = labelOrUri;
+		}
+		this.collapsibleState = collapsibleState;
+	}
+}
+function isTreeItemLabel(thing: any): thing is VSCode.TreeItemLabel {
+	return (
+		thing &&
+		typeof thing === "object" &&
+		typeof (thing as VSCode.TreeItemLabel).label === "string"
+	);
+}
 
 export {
 	ViewColumn,
@@ -236,6 +331,7 @@ export {
 	SnippetString,
 	CompletionItemTag,
 	DiagnosticSeverity,
+	TreeItemCollapsibleState,
 };
 
 export const FileType = VSCodeFileType;

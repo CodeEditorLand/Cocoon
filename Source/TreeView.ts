@@ -63,9 +63,8 @@ class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 	constructor(
 		private readonly ViewId: string,
 		private readonly DataProvider: TreeDataProvider<T>,
-		private readonly IPCService: IPC,
-		// @ts-expect-error
-		private readonly CommandService: Command,
+		private readonly IPC: IPC,
+		private readonly Command: Command,
 		private readonly Extension: IExtensionDescription,
 	) {
 		this.onDidExpandElement = this.OnDidExpandElementEmitter.event;
@@ -79,7 +78,7 @@ class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 			this.DataProvider.onDidChangeTreeData((Elements) => {
 				const HandlesToRefresh = this.GetHandlesToRefresh(Elements);
 				Effect.runFork(
-					this.IPCService.SendNotification(`$refreshTreeView`, [
+					this.IPC.SendNotification(`$refreshTreeView`, [
 						this.ViewId,
 						HandlesToRefresh,
 					]),
@@ -160,7 +159,7 @@ class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 		},
 	): Promise<void> {
 		return Effect.runPromise(
-			this.IPCService.SendNotification("$revealTreeViewItem", [
+			this.IPC.SendNotification("$revealTreeViewItem", [
 				this.ViewId,
 				this.GetHandleForElement(Element),
 				Options,
@@ -259,7 +258,7 @@ export class TreeViewService extends Effect.Service<TreeViewService>()(
 							);
 						}
 						const OptionDTO = TreeViewOptionToDTO(Options);
-						yield* IPCService.SendNotification(
+						yield* IPC.SendNotification(
 							"$registerTreeDataProvider",
 							[ViewId, OptionDTO],
 						);
