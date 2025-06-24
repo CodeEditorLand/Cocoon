@@ -7,7 +7,11 @@
 import type { UriComponents } from "vs/base/common/uri.js";
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type * as VSCode from "vscode";
-import { WorkSpaceEdit as VSCodeWorkspaceEdit } from "../Platform/VSCode/Type.js";
+import { WorkspaceEdit as VSCodeWorkspaceEdit } from "../Platform/VSCode/Type.js";
+import {
+	FromAPI as TextEditFromAPI,
+	ToAPI as TextEditToAPI,
+} from "./Main/TextEdit.2Ts";
 import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "./Main/URI.js";
 
 // Placeholders for internal VS Code DTOs

@@ -7,28 +7,35 @@
 
 import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
-import {
-	type CancellationToken,
-	type Event,
-	type FileSystem as VSCodeFileSystem,
-	type GlobPattern,
-	type TextDocument,
-	type TextEditor,
-	type Uri,
-	type WorkspaceConfiguration,
-	type WorkspaceEdit,
-	type WorkspaceFolder,
-	type WorkspaceFoldersChangeEvent,
+import type {
+	CancellationToken,
+	Event,
+	FileSystem as VSCodeFileSystem,
+	GlobPattern,
+	TextDocument,
+	TextEditor,
+	TextEditorOptionsChangeEvent,
+	TextEditorSelectionChangeEvent,
+	TextEditorViewColumnChangeEvent,
+	TextEditorVisibleRangesChangeEvent,
+	Uri,
+	WorkspaceConfiguration,
+	WorkspaceEdit,
+	WorkspaceFolder,
+	WorkspaceFoldersChangeEvent,
+	Disposable,
+	TextDocumentContentProvider,
 } from "vscode";
 import { URI } from "vscode-uri";
-import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
-import { FromDTO as WorkSpaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
-import { FromAPI as WorkSpaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
+
+import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
+import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { ConfigurationService } from "./Configuration.js";
+import { ConfigurationService, type Configuration } from "./Configuration.js";
 import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";
+import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
 
 class InternalWorkspace {
 	constructor(
@@ -69,6 +76,14 @@ export interface WorkSpace {
 		scope?: any,
 	) => Effect.Effect<WorkspaceConfiguration, Error>;
 	readonly applyEdit: (edit: WorkspaceEdit) => Effect.Effect<boolean, Error>;
+	readonly registerTextDocumentContentProvider: (
+		scheme: string,
+		provider: TextDocumentContentProvider,
+	) => Disposable;
+	readonly onDidChangeTextEditorSelection: Event<TextEditorSelectionChangeEvent>;
+	readonly onDidChangeTextEditorVisibleRanges: Event<TextEditorVisibleRangesChangeEvent>;
+	readonly onDidChangeTextEditorOptions: Event<TextEditorOptionsChangeEvent>;
+	readonly onDidChangeTextEditorViewColumn: Event<TextEditorViewColumnChangeEvent>;
 }
 
 /**
@@ -115,7 +130,7 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 						Data.id,
 						Data.name,
 						Data.folders.map((FolderDTO: any) =>
-							WorkSpaceFolderFromDTO(FolderDTO),
+							WorkspaceFolderFromDTO(FolderDTO),
 						),
 						Data.configuration
 							? UriToAPI(Data.configuration)
@@ -176,44 +191,42 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 					Effect.runPromise(AcceptEditorState(ActiveId, VisibleIds)),
 			);
 
-			return {
+			const service: WorkSpace = {
 				get name() {
-					return Ref.unsafeGet(InternalWorkspaceRef)?.Name;
+					return Ref.get(InternalWorkspaceRef)?.Name;
 				},
 				get workspaceFile() {
-					return Ref.unsafeGet(InternalWorkspaceRef)?.Configuration;
+					return Ref.get(InternalWorkspaceRef)?.Configuration;
 				},
 				get workspaceFolders() {
-					return Ref.unsafeGet(InternalWorkspaceRef)?.Folders;
+					return Ref.get(InternalWorkspaceRef)?.Folders;
 				},
-				get isTrusted() {
-					return true;
-				},
+				isTrusted: true,
 				fs: FileSystem,
 				get activeTextEditor() {
-					return Ref.unsafeGet(ActiveTextEditorRef);
+					return Ref.get(ActiveTextEditorRef);
 				},
 				get visibleTextEditors() {
-					return Ref.unsafeGet(VisibleTextEditorsRef);
+					return Ref.get(VisibleTextEditorsRef);
 				},
 				onDidChangeWorkspaceFolders: OnDidChangeFoldersEvent.event,
-				onDidChangeActiveTextEditor: OnDidChangeActiveTextEditor,
-				onDidChangeVisibleTextEditors: OnDidChangeVisibleTextEditors,
+				onDidChangeActiveTextEditor,
+				onDidChangeVisibleTextEditors,
 				getWorkspaceFolder: (uri: Uri) => {
 					const Folders =
-						Ref.unsafeGet(InternalWorkspaceRef)?.Folders ?? [];
+						Ref.get(InternalWorkspaceRef)?.Folders ?? [];
 					return Folders.find((Folder) =>
 						uri.fsPath.startsWith(Folder.uri.fsPath),
 					);
 				},
 				findFiles: (Include, Exclude, MaxResults, Token) =>
-					IPC.SendRequest<Uri[]>("findFiles", [
+					IPC.SendRequest<(Uri | null | undefined)[]>("findFiles", [
 						Include,
 						Exclude,
 						MaxResults,
 						Token ? 1 : 0,
 					]).pipe(
-						Effect.map((Uris) => Uris.map(URI.revive)),
+						Effect.map((Uris) => Uris.filter((u): u is Uri => !!u)),
 						Effect.mapError((Cause) => new Error(String(Cause))),
 					),
 				openTextDocument: (OptionsOrUri?: any) =>
@@ -240,7 +253,9 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 						).pipe(
 							Effect.repeat({
 								schedule: Schedule.spaced(50).pipe(
-									Schedule.whileInput((o) => o.isNone()),
+									Schedule.whileInput((o) =>
+										Option.isNone(o),
+									),
 									Schedule.compose(Schedule.recurs(100)),
 								),
 							}),
@@ -255,18 +270,23 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 						return yield* WaitForDocument;
 					}),
 				getConfiguration: (section?: string, scope?: any) =>
-					// The Configuration service from VS Code doesn't return an Effect,
-					// so we wrap it to align with our programming model.
 					Effect.sync(() =>
 						Configuration.getValue(section, scope),
 					) as any,
 				applyEdit: (Edit: WorkspaceEdit) =>
 					IPC.SendRequest<boolean>("$applyWorkspaceEdit", [
-						WorkSpaceEditFromAPI(Edit),
+						WorkspaceEditFromAPI(Edit),
 					]).pipe(
 						Effect.mapError((Cause) => new Error(String(Cause))),
 					),
+				registerTextDocumentContentProvider:
+					Document.RegisterTextDocumentContentProvider,
+				onDidChangeTextEditorSelection: new Emitter<any>().event,
+				onDidChangeTextEditorVisibleRanges: new Emitter<any>().event,
+				onDidChangeTextEditorOptions: new Emitter<any>().event,
+				onDidChangeTextEditorViewColumn: new Emitter<any>().event,
 			};
+			return service;
 		}),
 	},
 ) {}

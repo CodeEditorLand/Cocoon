@@ -27,21 +27,21 @@ const EnsureDirectory = (
 	Effect.if(DirectoryUri !== undefined, {
 		onTrue: () =>
 			Effect.gen(function* () {
-				const Uri = DirectoryUri!;
+				const TheUri = DirectoryUri!;
 				const FileSystem = yield* FileSystemService;
 				const Logger = yield* LoggerService;
 				yield* Effect.tryPromise(() =>
-					FileSystem.createDirectory(Uri),
+					FileSystem.createDirectory(TheUri),
 				).pipe(
 					Effect.catchAll((Error) =>
 						Logger.Error(
-							`Failed to ensure ${ScopeName} storage directory exists at ${Uri.toString()}`,
+							`Failed to ensure ${ScopeName} storage directory exists at ${TheUri.toString()}`,
 							Error,
 						),
 					),
 				);
 				yield* Logger.Trace(
-					`${ScopeName} storage directory ensured at: ${Uri.fsPath}`,
+					`${ScopeName} storage directory ensured at: ${TheUri.fsPath}`,
 				);
 				return true;
 			}),

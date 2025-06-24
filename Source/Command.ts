@@ -100,12 +100,10 @@ export class CommandService extends Effect.Service<CommandService>()(
 				registerTextEditorCommand: (id, handler, thisArg) =>
 					Effect.runSync(RegisterCommand(id, handler.bind(thisArg))),
 				executeCommand: <T>(id: string, ...args: any[]) =>
-					Effect.runPromise(
-						ExecuteCommand<T | undefined>(id, ...args),
-					) as Promise<T>,
+					Effect.runPromise(ExecuteCommand<T>(id, ...args)),
 				getCommands: (filterInternal) =>
 					Effect.runPromise(GetCommands(filterInternal)),
-			};
+			} as unknown as IExtHostCommands; // Cast to satisfy full interface from vscode.d.ts
 
 			return Service;
 		}),
