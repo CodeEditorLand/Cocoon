@@ -25,7 +25,7 @@
 	"dependencies": {
 		"@effect/platform": "0.85.2",
 		"@effect/platform-node": "0.86.5",
-		"effect": "3.16.8",
+		"effect": "3.16.9",
 		"google-protobuf": "3.21.4"
 	},
 	"devDependencies": {
@@ -52,7 +52,7 @@
 	},
 	"pnpm": {
 		"overrides": {
-			"effect": "3.16.8"
+			"effect": "3.16.9"
 		}
 	}
 }
