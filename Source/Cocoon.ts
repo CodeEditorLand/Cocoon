@@ -79,7 +79,7 @@ const DevToolsLive = Layer.provide(
 	DevTools.layerWebSocket(),
 	NodeSocket.layerWebSocketConstructor,
 );
-const UtilityLayers = Layer.merge(TracingLive, DevToolsLive);
+const UtilityLayers = Layer.mergeAll(TracingLive, DevToolsLive);
 
 // --- Effect Definitions ---
 const PreHandshakeEffect = Effect.gen(function* () {
@@ -108,7 +108,6 @@ const PreHandshakeEffect = Effect.gen(function* () {
 	);
 	IPC.RegisterInvokeHandler("$shutdown", () =>
 		Effect.runPromise(
-			// The provided Effect must have its requirements satisfied.
 			Effect.provide(ShutdownEffect, LoggerService.Default),
 		),
 	);
@@ -170,8 +169,9 @@ const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 		LanguageFeatureService.Default,
 		TelemetryService.Default,
 	);
-	const L1_World = L1_Services.pipe(
-		Layer.provide(Layer.merge(L0_World, InitDataLayer)),
+	const L1_World = Layer.provide(
+		L1_Services,
+		Layer.merge(L0_World, InitDataLayer),
 	);
 
 	const L2_Services = Layer.mergeAll(
@@ -179,9 +179,7 @@ const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 		HostKindPickerService.Default,
 		NodeModuleShimService.Default,
 	);
-	const L2_World = Layer.merge(L1_World, L2_Services).pipe(
-		Layer.provide(L1_World),
-	);
+	const L2_World = Layer.provide(L2_Services, L1_World);
 
 	const L3_Services = Layer.mergeAll(
 		APIDeprecationService.Default,
@@ -194,41 +192,31 @@ const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 		SecretStorageService.Default,
 		FileSystemInformationService.Default,
 	);
-	const L3_World = Layer.merge(L2_World, L3_Services).pipe(
-		Layer.provide(L2_World),
-	);
+	const L3_World = Layer.provide(L3_Services, L2_World);
 
 	const L4_Services = Layer.mergeAll(
 		TaskService.Default,
 		AuthenticationService.Default,
 	);
-	const L4_World = Layer.merge(L3_World, L4_Services).pipe(
-		Layer.provide(L3_World),
-	);
+	const L4_World = Layer.provide(L4_Services, L3_World);
 
 	const L5_Services = Layer.mergeAll(
 		FileSystemService.Default,
 		StorageService.Default,
 	);
-	const L5_World = Layer.merge(L4_World, L5_Services).pipe(
-		Layer.provide(L4_World),
-	);
+	const L5_World = Layer.provide(L5_Services, L4_World);
 
 	const L6_Services = Layer.mergeAll(
 		StoragePathService.Default,
 		WindowService.Default,
 	);
-	const L6_World = Layer.merge(L5_World, L6_Services).pipe(
-		Layer.provide(L5_World),
-	);
+	const L6_World = Layer.provide(L6_Services, L5_World);
 
 	const L7_Services = Layer.mergeAll(
 		CommandService.Default,
 		WorkSpaceService.Default,
 	);
-	const L7_World = Layer.merge(L6_World, L7_Services).pipe(
-		Layer.provide(L6_World),
-	);
+	const L7_World = Layer.provide(L7_Services, L6_World);
 
 	const L8_Services = Layer.mergeAll(
 		DebugService.Default,
@@ -238,32 +226,24 @@ const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 		EnvironmentService.Default,
 		ExtensionHostService.Default,
 	);
-	const L8_World = Layer.merge(L7_World, L8_Services).pipe(
-		Layer.provide(L7_World),
-	);
+	const L8_World = Layer.provide(L8_Services, L7_World);
 
 	const L9_Services = Layer.mergeAll(ExtensionService.Default);
-	const L9_World = Layer.merge(L8_World, L9_Services).pipe(
-		Layer.provide(L8_World),
-	);
+	const L9_World = Layer.provide(L9_Services, L8_World);
 
 	const L10_Services = Layer.mergeAll(APIFactoryService.Default);
-	const L10_World = Layer.merge(L9_World, L10_Services).pipe(
-		Layer.provide(L9_World),
-	);
+	const L10_World = Layer.provide(L10_Services, L9_World);
 
 	const TopLevelServices = Layer.mergeAll(
 		RequireInterceptorService.Default,
 		ESMInterceptorService.Default,
 	);
-	return Layer.merge(L10_World, TopLevelServices).pipe(
-		Layer.provide(L10_World),
-	);
+	return Layer.provide(TopLevelServices, L10_World);
 };
 
 // --- Main Application Logic ---
 const MainEffect = Effect.gen(function* () {
-	// FIX: Define the minimal layer needed for the pre-handshake step.
+	// 1. Run pre-handshake with its minimal layer to get the init data.
 	const PreHandshakeLayer = Layer.provide(
 		IPCService.Default,
 		Layer.mergeAll(
@@ -272,8 +252,6 @@ const MainEffect = Effect.gen(function* () {
 			LoggerService.Default,
 		),
 	);
-
-	// 1. Run pre-handshake to get the init data.
 	const InitializationData = yield* Effect.provide(
 		PreHandshakeEffect,
 		PreHandshakeLayer,
@@ -288,7 +266,7 @@ const MainEffect = Effect.gen(function* () {
 	Effect.catchAllCause((Cause) =>
 		Effect.logFatal("Cocoon main process failed.", Cause),
 	),
-	// Provide foundational utility layers for the entire application scope, including logging.
+	// FIX: Provide the foundational utility layers that are external to the main app logic.
 	Effect.provide(Layer.merge(UtilityLayers, LoggerService.Default)),
 	Effect.scoped,
 );
