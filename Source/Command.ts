@@ -8,13 +8,13 @@
 
 import { Effect } from "effect";
 import type { IExtHostCommands } from "vs/workbench/api/common/extHostCommands.js";
-import { ICommandMetadata } from "vs/platform/commands/common/commands.js";
-
 import type {
 	IExtensionDescription,
 	IRelaxedExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
 import type { TextEditor, TextEditorEdit, Disposable } from "vscode";
+import type { ICommandMetadata } from "vs/platform/commands/common/commands.js";
+
 import { IPCService } from "./IPC.js";
 import { TelemetryService } from "./Telemetry.js";
 import { WindowService } from "./Window.js";

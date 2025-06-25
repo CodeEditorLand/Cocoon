@@ -1,24 +1,16 @@
 /**
  * @module Clipboard
  * @description Defines the service for interacting with the system clipboard,
- * implementing the `IClipboardService` contract from VS Code for high fidelity.
+ * implementing the `vscode.Clipboard` contract.
  * This service proxies all clipboard operations to the native host (`Mountain`) via IPC.
  */
 
 import { Effect, Runtime } from "effect";
-import type { URI } from "./Platform/VSCode/Type.js";
 import { ApplicationClipboardProblem } from "./Clipboard/ApplicationClipboardProblem.js";
+import type { Clipboard } from "vscode";
 
-// --- NOTE: Integration-level imports are placeholders as the source was not provided. ---
 import type { IntegrationClipboardProblem } from "./Integration/Tauri/Clipboard/Problem.js";
-import {
-	ReadImage,
-	ReadResourceList,
-	ReadText,
-	WriteResourceList,
-	WriteText,
-	HasResourceList,
-} from "./Integration/Tauri/Clipboard/Wrapper.js";
+import { ReadText, WriteText } from "./Integration/Tauri/Clipboard/Wrapper.js";
 
 /**
  * @description An internal helper to bridge the declarative Effect world with the
@@ -40,54 +32,20 @@ const RunIntegrationEffect = <SuccessType>(
 };
 
 /**
- * @class Clipboard
+ * @class ClipboardService
  * @description The `Effect.Service` for the Clipboard service. It provides
- * an implementation of VS Code's `IClipboardService`, where each method
+ * an implementation of VS Code's `vscode.Clipboard` interface, where each method
  * returns a `Promise` by running an underlying `Effect`.
  */
 export class ClipboardService extends Effect.Service<ClipboardService>()(
 	"vscode/ClipboardService",
 	{
-		sync: () => ({
-			_serviceBrand: undefined,
-
-			triggerPaste: (
-				_TargetWindowId: number,
-			): Promise<void> | undefined => {
-				// This is a complex UI interaction and is stubbed for now.
-				return undefined;
+		sync: (): Clipboard => ({
+			writeText: (text: string): Promise<void> => {
+				return RunIntegrationEffect(WriteText(text));
 			},
-
-			writeText: (Text: string): Promise<void> => {
-				return RunIntegrationEffect(WriteText(Text));
-			},
-
 			readText: (): Promise<string> => {
-				return RunIntegrationEffect(ReadText);
-			},
-
-			readFindText: function (): Promise<string> {
-				return this.readText();
-			},
-
-			writeFindText: function (Text: string): Promise<void> {
-				return this.writeText(Text);
-			},
-
-			writeResources: (ResourceList: (typeof URI)[]): Promise<void> => {
-				return RunIntegrationEffect(WriteResourceList(ResourceList));
-			},
-
-			readResources: (): Promise<(typeof URI)[]> => {
-				return RunIntegrationEffect(ReadResourceList);
-			},
-
-			hasResources: (): Promise<boolean> => {
-				return RunIntegrationEffect(HasResourceList);
-			},
-
-			readImage: (): Promise<Uint8Array> => {
-				return RunIntegrationEffect(ReadImage);
+				return RunIntegrationEffect(ReadText());
 			},
 		}),
 	},

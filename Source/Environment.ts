@@ -8,15 +8,19 @@
 
 import { Effect, Ref } from "effect";
 import { Schemas } from "vs/base/common/network.js";
-import { UIKind, type Event, type LogLevel, type Uri } from "vscode";
+import {
+	UIKind,
+	type Event,
+	type LogLevel,
+	type Uri,
+	type Clipboard,
+} from "vscode";
 import { ToAPI as UriToApi } from "./TypeConverter/Main/URI.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
 import { ClipboardService } from "./Clipboard.js";
 import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
-
-// This is defined in `vs/platform/telemetry/common/telemetry.js`.
-const TelemetryLevel = { NONE: 0, CRASH: 1, ERROR: 2, USAGE: 3 };
+import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 
 /**
  * @interface Environment
@@ -128,7 +132,7 @@ export class EnvironmentService extends Effect.Service<EnvironmentService>()(
 				onDidChangeLogLevel: OnDidChangeLogLevel,
 				onDidChangeShell: OnDidChangeShell,
 				onDidChangeTelemetryEnabled: OnDidChangeTelemetryEnabled,
-				clipboard: Clipboard,
+				clipboard: Clipboard as unknown as Clipboard,
 				openExternal: (Target) =>
 					Effect.runPromise(OpenExternal(Target)),
 				asExternalUri: (Target) =>

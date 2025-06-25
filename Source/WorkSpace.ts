@@ -116,11 +116,11 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 			const OnDidChangeFoldersEvent =
 				new Emitter<WorkspaceFoldersChangeEvent>();
 			const {
-				event: OnDidChangeActiveTextEditor,
+				event: onDidChangeActiveTextEditor,
 				Fire: FireActiveEditor,
 			} = CreateEventStream<TextEditor | undefined>();
 			const {
-				event: OnDidChangeVisibleTextEditors,
+				event: onDidChangeVisibleTextEditors,
 				Fire: FireVisibleEditors,
 			} = CreateEventStream<readonly TextEditor[]>();
 
@@ -194,28 +194,31 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 
 			const service: WorkSpace = {
 				get name() {
-					return Ref.get(InternalWorkspaceRef)?.Name;
+					return Effect.runSync(Ref.get(InternalWorkspaceRef))?.Name;
 				},
 				get workspaceFile() {
-					return Ref.get(InternalWorkspaceRef)?.Configuration;
+					return Effect.runSync(Ref.get(InternalWorkspaceRef))
+						?.Configuration;
 				},
 				get workspaceFolders() {
-					return Ref.get(InternalWorkspaceRef)?.Folders;
+					return Effect.runSync(Ref.get(InternalWorkspaceRef))
+						?.Folders;
 				},
 				isTrusted: true,
 				fs: FileSystem,
 				get activeTextEditor() {
-					return Ref.get(ActiveTextEditorRef);
+					return Effect.runSync(Ref.get(ActiveTextEditorRef));
 				},
 				get visibleTextEditors() {
-					return Ref.get(VisibleTextEditorsRef);
+					return Effect.runSync(Ref.get(VisibleTextEditorsRef));
 				},
 				onDidChangeWorkspaceFolders: OnDidChangeFoldersEvent.event,
 				onDidChangeActiveTextEditor,
 				onDidChangeVisibleTextEditors,
 				getWorkspaceFolder: (uri: Uri) => {
 					const Folders =
-						Ref.get(InternalWorkspaceRef)?.Folders ?? [];
+						Effect.runSync(Ref.get(InternalWorkspaceRef))
+							?.Folders ?? [];
 					return Folders.find((Folder) =>
 						uri.fsPath.startsWith(Folder.uri.fsPath),
 					);

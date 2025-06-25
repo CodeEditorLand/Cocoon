@@ -53,10 +53,15 @@ const CreateSafeEvent = <T>(
 const CreateCommandNamespace = (
 	Command: Command,
 	_ExtensionDescription: IExtensionDescription,
-): Omit<typeof VSCode.commands, "registerTextEditorCommand"> => {
+): typeof VSCode.commands => {
+	// This function creates the public `vscode.commands` object. The public API
+	// doesn't have the `global` parameter for `registerCommand`.
 	return {
 		registerCommand: (Id, Handler, ThisArgument): Disposable =>
 			Command.registerCommand(true, Id, Handler, ThisArgument),
+		registerTextEditorCommand: (Id, Handler, ThisArgument): Disposable =>
+			// @ts-expect-error
+			Command.registerTextEditorCommand(Id, Handler, ThisArgument),
 		executeCommand: <T>(Id: string, ...Argument: any[]) =>
 			Command.executeCommand<T>(Id, ...Argument),
 		getCommands: (FilterInternal?: boolean) =>
