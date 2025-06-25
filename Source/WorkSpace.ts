@@ -7,10 +7,10 @@
 
 import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
-import type { IConfigurationValue } from "vs/platform/configuration/common/configuration.js";
 import type {
 	CancellationToken,
 	ConfigurationScope,
+	ConfigurationTarget,
 	Disposable,
 	Event,
 	GlobPattern,
@@ -268,7 +268,9 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 							Effect.repeat(
 								Schedule.spaced(50).pipe(
 									Schedule.whileInput(
-										(o: Option.Option<TextDocument>) =>
+										(
+											o: Option.Option<TextDocument>,
+										): o is Option.None<TextDocument> =>
 											Option.isNone(o),
 									),
 									Schedule.compose(Schedule.recurs(100)),
@@ -301,7 +303,7 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 							if (value === undefined) {
 								return defaultValue as T;
 							}
-							return value as T;
+							return value;
 						},
 						has: (key: string): boolean => {
 							const fullKey = section ? `${section}.${key}` : key;
@@ -314,27 +316,35 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 						},
 						inspect: <T>(key: string) => {
 							const fullKey = section ? `${section}.${key}` : key;
-							return ApplicationConfiguration.inspect<T>(
-								fullKey,
-								scope ?? undefined,
-							) as IConfigurationValue<T>;
+							const inspection =
+								ApplicationConfiguration.inspect<T>(
+									fullKey,
+									scope ?? undefined,
+								);
+							return { key: fullKey, ...inspection };
 						},
 						update: (
 							key: string,
 							value: any,
 							configurationTarget?:
 								| boolean
-								| ConfigurationScope
+								| ConfigurationTarget
 								| null,
+							overrideInLanguage?: boolean,
 						): Promise<void> => {
 							const fullKey = section ? `${section}.${key}` : key;
 							return ApplicationConfiguration.updateValue(
 								fullKey,
 								value,
-								configurationTarget ?? undefined,
+								{
+									overrideIdentifiers: overrideInLanguage
+										? [(scope as any)?.languageId]
+										: undefined,
+								},
+								configurationTarget as any,
 							);
 						},
-					}),
+					} as WorkspaceConfiguration),
 				applyEdit: (Edit: WorkspaceEdit) =>
 					IPC.SendRequest<boolean>("$applyWorkspaceEdit", [
 						WorkspaceEditFromAPI(Edit),

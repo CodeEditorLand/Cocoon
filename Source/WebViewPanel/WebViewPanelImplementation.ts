@@ -30,7 +30,7 @@ import { WebViewImplementation } from "./WebViewImplementation.js";
 export class WebViewPanelImplementation implements WebviewPanel {
 	private IsDisposed = false;
 	private _title: string;
-	// FIX: Interface allows iconPath to be undefined.
+	// FIX: Make the internal property optional to correctly implement the interface.
 	private _iconPath?: Uri | { readonly light: Uri; readonly dark: Uri };
 	private _active: boolean;
 	private _visible: boolean;
@@ -67,13 +67,13 @@ export class WebViewPanelImplementation implements WebviewPanel {
 		this._viewColumn = InitialViewColumn;
 		this._active = true;
 		this._visible = true;
-		// FIX: Initialize iconPath to satisfy the interface contract.
+		// FIX: Initialize the property to satisfy the interface contract at construction time.
 		this._iconPath = undefined;
 		this.onDidDispose = this.OnDidDisposeEmitter.event;
 		this.onDidChangeViewState = this.OnDidChangeViewStateEmitter.event;
 	}
 
-	get viewColumn(): ViewColumn {
+	get viewColumn(): ViewColumn | undefined {
 		return this._viewColumn;
 	}
 	get active(): boolean {
@@ -104,14 +104,15 @@ export class WebViewPanelImplementation implements WebviewPanel {
 		if (this.IsDisposed || this._iconPath === Value) return;
 		this._iconPath = Value;
 		const IconPathDTO = Value
-			? {
-					light: UriFromAPI(
-						"light" in Value ? Value.light : (Value as Uri),
-					),
-					dark: UriFromAPI(
-						"dark" in Value ? Value.dark : (Value as Uri),
-					),
-				}
+			? "light" in Value && "dark" in Value
+				? {
+						light: UriFromAPI(Value.light),
+						dark: UriFromAPI(Value.dark),
+					}
+				: {
+						light: UriFromAPI(Value as Uri),
+						dark: UriFromAPI(Value as Uri),
+					}
 			: undefined;
 		Effect.runFork(
 			this.IPC.SendNotification("$setWebviewIconPath", [

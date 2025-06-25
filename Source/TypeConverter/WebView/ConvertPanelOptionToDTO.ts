@@ -15,13 +15,10 @@ import type * as VSCode from "vscode";
 export const ConvertPanelOptionToDTO = (
 	Options: VSCode.WebviewPanelOptions,
 ): WebviewPanelOptions => {
-	// FIX: Create a new DTO object instead of mutating the original `Options`.
-	const dto: WebviewPanelOptions = {};
-	if (Options.enableFindWidget) {
-		dto.enableFindWidget = Options.enableFindWidget;
-	}
-	if (Options.retainContextWhenHidden) {
-		dto.retainContextWhenHidden = Options.retainContextWhenHidden;
-	}
-	return dto;
+	// FIX: Return a new object literal. This initializes the readonly properties
+	// which is allowed, as opposed to assigning to them after creation.
+	return {
+		enableFindWidget: Options.enableFindWidget,
+		retainContextWhenHidden: Options.retainContextWhenHidden,
+	};
 };
