@@ -36,6 +36,7 @@ export interface Environment {
 	readonly sessionId: string;
 	readonly isTrusted: boolean;
 	readonly isRemote: boolean;
+	// FIX: remoteName is optional in the VS Code API.
 	readonly remoteName?: string;
 	readonly shell: string;
 	readonly uiKind: UIKind;
@@ -102,7 +103,7 @@ export class EnvironmentService extends Effect.Service<EnvironmentService>()(
 
 			const ServiceImplementation: Environment = {
 				appName: InitData.environment.appName || "Cocoon Editor",
-				appRoot: GetAppRoot() as string,
+				appRoot: GetAppRoot(),
 				appHost: InitData.environment.appHost || "desktop",
 				uriScheme: InitData.environment.appUriScheme || "cocoon-code",
 				language: InitData.environment.appLanguage || "en",

@@ -162,7 +162,10 @@ class StatusBarItemImplementation implements VSCodeStatusBarItem {
 	private Update(): void {
 		if (this.IsDisposed || !this.IsVisible) return;
 		const TheCommandConverter = new CommandConverter(
-			this.Command.registerCommand,
+			// FIX: Pass a function with the correct signature for the converter.
+			// The converter uses this to register *internal* commands, not global ones.
+			(_global, id, handler, thisArg) =>
+				this.Command.registerCommand(false, id, handler, thisArg),
 			this.Command.executeCommand as any,
 			() => undefined,
 		);
@@ -208,7 +211,12 @@ export class StatusBarService extends Effect.Service<StatusBarService>()(
 			);
 
 			return {
-				CreateStatusBarItem: (Extension, Id, Alignment, Priority) =>
+				CreateStatusBarItem: (
+					Extension: IExtensionDescription,
+					Id?: string,
+					Alignment?: StatusBarAlignment,
+					Priority?: number,
+				) =>
 					Effect.sync(() => {
 						const EntryId = generateUuid();
 						const ItemId =

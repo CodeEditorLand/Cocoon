@@ -7,7 +7,7 @@
 import { Effect } from "effect";
 import type { Event } from "vs/base/common/event.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import type { TreeCheckboxChangeEvent, TreeDataProvider, TreeViewActiveItemChangeEvent, TreeViewExpansionEvent, TreeViewOptions, TreeViewVisibilityChangeEvent, TreeView as VSCodeTreeView } from "vscode";
+import type { TreeCheckboxChangeEvent, TreeDataProvider, TreeViewExpansionEvent, TreeViewOptions, TreeViewVisibilityChangeEvent, TreeView as VSCodeTreeView } from "vscode";
 import { type IPC, IPCService } from "./IPC.js";
 /**
  * @class TreeViewImplementation
@@ -33,8 +33,9 @@ declare class TreeViewImplementation<T> implements VSCodeTreeView<T> {
     readonly onDidChangeVisibility: Event<TreeViewVisibilityChangeEvent>;
     private readonly OnDidChangeCheckboxStateEmitter;
     readonly onDidChangeCheckboxState: Event<TreeCheckboxChangeEvent<T>>;
+    private readonly OnDidChangeActiveItemEmitter;
+    readonly onDidChangeActiveItem: Event<T>;
     activeItem: T | undefined;
-    onDidChangeActiveItem: Event<TreeViewActiveItemChangeEvent<T>>;
     selection: readonly T[];
     visible: boolean;
     message?: string;

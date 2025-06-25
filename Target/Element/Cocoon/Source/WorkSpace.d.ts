@@ -5,8 +5,7 @@
  * orchestrating complex operations like finding files and applying edits.
  */
 import { Effect } from "effect";
-import type { CancellationToken, Disposable, Event, GlobPattern, TextDocument, TextDocumentContentProvider, TextEditor, TextEditorOptionsChangeEvent, TextEditorSelectionChangeEvent, TextEditorViewColumnChangeEvent, TextEditorVisibleRangesChangeEvent, Uri, FileSystem as VSCodeFileSystem, WorkspaceConfiguration, WorkspaceEdit, WorkspaceFolder, WorkspaceFoldersChangeEvent } from "vscode";
-import type { ConfigurationScope } from "vscode";
+import type { CancellationToken, ConfigurationScope, Disposable, Event, GlobPattern, TextDocument, TextDocumentContentProvider, TextEditor, TextEditorOptionsChangeEvent, TextEditorSelectionChangeEvent, TextEditorViewColumnChangeEvent, TextEditorVisibleRangesChangeEvent, Uri, FileSystem as VSCodeFileSystem, WorkspaceConfiguration, WorkspaceEdit, WorkspaceFolder, WorkspaceFoldersChangeEvent } from "vscode";
 import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";

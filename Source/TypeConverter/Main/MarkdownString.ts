@@ -8,7 +8,7 @@ import type {
 	MarkdownStringTrustedOptions,
 } from "vs/base/common/htmlContent.js";
 import type { URI } from "vs/base/common/uri.js";
-import type { MarkdownString as VSCodeMarkdownString } from "vscode";
+import type { MarkdownString as VSCodeMarkdownString, Uri } from "vscode";
 import { MarkdownString } from "../../Platform/VSCode/Type.js";
 
 /**
@@ -20,9 +20,16 @@ export const FromAPI = (
 	MarkdownStringInstance: VSCodeMarkdownString,
 ): IMarkdownString => ({
 	value: MarkdownStringInstance.value,
-	isTrusted: MarkdownStringInstance.isTrusted,
-	baseUri: MarkdownStringInstance.baseUri as unknown as URI,
-	supportHtml: MarkdownStringInstance.supportHtml,
+	// FIX: Handle exactOptionalPropertyTypes
+	...(MarkdownStringInstance.isTrusted && {
+		isTrusted: MarkdownStringInstance.isTrusted,
+	}),
+	...(MarkdownStringInstance.baseUri && {
+		baseUri: MarkdownStringInstance.baseUri as unknown as URI,
+	}),
+	...(MarkdownStringInstance.supportHtml && {
+		supportHtml: MarkdownStringInstance.supportHtml,
+	}),
 });
 
 /**
@@ -39,8 +46,12 @@ export const ToAPI = (
 			? MarkdownStringDTO.isTrusted
 			: !!(MarkdownStringDTO.isTrusted as MarkdownStringTrustedOptions),
 	);
-	result.baseUri =
-		MarkdownStringDTO.baseUri as unknown as VSCodeMarkdownString["baseUri"];
-	result.supportHtml = MarkdownStringDTO.supportHtml;
+	// FIX: Handle optional properties correctly
+	if (MarkdownStringDTO.baseUri) {
+		result.baseUri = MarkdownStringDTO.baseUri as unknown as Uri;
+	}
+	if (MarkdownStringDTO.supportHtml) {
+		result.supportHtml = MarkdownStringDTO.supportHtml;
+	}
 	return result;
 };

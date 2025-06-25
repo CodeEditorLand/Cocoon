@@ -3,7 +3,7 @@
  * @description Converts `vscode.WebviewPanelOptions` into a serializable DTO.
  */
 
-import type { WebviewPanelOptions as IWebviewPanelOptions } from "vscode";
+import type { WebviewPanelOptions } from "vscode";
 import type * as VSCode from "vscode";
 
 /**
@@ -14,9 +14,14 @@ import type * as VSCode from "vscode";
  */
 export const ConvertPanelOptionToDTO = (
 	Options: VSCode.WebviewPanelOptions,
-): IWebviewPanelOptions => {
-	return {
-		enableFindWidget: Options.enableFindWidget,
-		retainContextWhenHidden: Options.retainContextWhenHidden,
-	};
+): WebviewPanelOptions => {
+	// FIX: Handle exactOptionalPropertyTypes by conditionally adding properties
+	const dto: WebviewPanelOptions = {};
+	if (Options.enableFindWidget) {
+		dto.enableFindWidget = Options.enableFindWidget;
+	}
+	if (Options.retainContextWhenHidden) {
+		dto.retainContextWhenHidden = Options.retainContextWhenHidden;
+	}
+	return dto;
 };

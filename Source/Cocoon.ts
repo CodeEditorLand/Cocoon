@@ -108,6 +108,7 @@ const PreHandshakeEffect = Effect.gen(function* () {
 	);
 	IPC.RegisterInvokeHandler("$shutdown", () =>
 		// FIX: Provide the LoggerService dependency for the shutdown effect to run.
+		// The provided Effect must have its requirements satisfied.
 		Effect.runPromise(
 			Effect.provide(ShutdownEffect, LoggerService.Default),
 		),
@@ -152,28 +153,20 @@ const PostHandshakeEffect = Effect.gen(function* () {
 	yield* Effect.never;
 });
 
-// --- Main Application Logic ---
-const MainEffect = Effect.gen(function* () {
+// --- Layer Composition ---
+const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 	// Level 0: Foundational Services (no dependencies on other app services)
 	const L0_World = Layer.mergeAll(
 		IPCConfigurationService.Default,
 		CancellationService.Default,
 		LoggerService.Default,
 	);
-
-	// 1. Run pre-handshake with its minimal layer to get the init data.
-	const InitializationData = yield* Effect.provide(
-		PreHandshakeEffect,
-		Layer.provide(IPCService.Default, L0_World),
-	);
-
-	// 2. Create the runtime-dependent InitData layer.
 	const InitDataLayer = Layer.succeed(
 		InitDataService,
 		InitDataService.of(InitializationData),
 	);
 
-	// 3. Compose the final, complete application layer using the Progressive World Build pattern.
+	// 1. Compose the final, complete application layer using the Progressive World Build pattern.
 	const L1_Services = Layer.mergeAll(
 		IPCService.Default,
 		ApplicationConfigurationService.Default,
@@ -266,17 +259,36 @@ const MainEffect = Effect.gen(function* () {
 		RequireInterceptorService.Default,
 		ESMInterceptorService.Default,
 	);
-	const FinalApplicationLayer = Layer.merge(L10_World, TopLevelServices).pipe(
+	return Layer.merge(L10_World, TopLevelServices).pipe(
 		Layer.provide(L10_World),
 	);
+};
 
-	// 4. Run the main post-handshake logic with all dependencies now resolved.
+// --- Main Application Logic ---
+const MainEffect = Effect.gen(function* () {
+	// Level 0: Foundational Services for pre-handshake
+	const L0_World = Layer.mergeAll(
+		IPCConfigurationService.Default,
+		CancellationService.Default,
+		LoggerService.Default,
+	);
+
+	// 1. Run pre-handshake with its minimal layer to get the init data.
+	const InitializationData = yield* Effect.provide(
+		PreHandshakeEffect,
+		Layer.provide(IPCService.Default, L0_World),
+	);
+
+	// 2. Compose the final, complete application layer using the now-available data.
+	const FinalApplicationLayer = composeAppLayer(InitializationData);
+
+	// 3. Run the main post-handshake logic with all dependencies now resolved.
 	yield* Effect.provide(PostHandshakeEffect, FinalApplicationLayer);
 }).pipe(
 	Effect.catchAllCause((Cause) =>
 		Effect.logFatal("Cocoon main process failed.", Cause),
 	),
-	// FIX: Add LoggerService to the provided utility layers to satisfy dependencies of the catchAllCause log.
+	// FIX: Provide foundational layers for the entire application scope, including error logging.
 	Effect.provide(Layer.merge(UtilityLayers, LoggerService.Default)),
 	Effect.scoped,
 );

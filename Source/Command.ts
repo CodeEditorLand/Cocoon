@@ -9,11 +9,9 @@ import { Effect, Ref } from "effect";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { MainThreadCommandsShape } from "vs/workbench/api/common/extHost.protocol.js";
-// FIX: Remove duplicate and incorrect import of TextEditorCommand.
-import type { TextEditorCommand } from "vscode";
+import type * as VSCode from "vscode";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
-// FIX: Removed unused TelemetryService import.
 import { WindowService } from "./Window.js";
 
 /**
@@ -30,7 +28,12 @@ export interface Command {
 	) => IDisposable;
 	readonly registerTextEditorCommand: (
 		id: string,
-		callback: TextEditorCommand,
+		// FIX: Use the correct inline type for the callback, as `TextEditorCommand` is not an exported type.
+		callback: (
+			textEditor: VSCode.TextEditor,
+			edit: VSCode.TextEditorEdit,
+			...args: any[]
+		) => void,
 		thisArg?: any,
 	) => IDisposable;
 	readonly executeCommand: <T>(
@@ -85,13 +88,9 @@ export class CommandService extends Effect.Service<CommandService>()(
 			) =>
 				Effect.tryPromise({
 					try: async () => {
-						// FIX: Removed unused 'Id' from destructuring.
 						const { Callback, ThisArg, Extension } = Command;
 						if (Extension) {
-							// Telemetry.onExtensionActivation(
-							// 	Extension.identifier,
-							// 	{ startup: false, activationEvent: `onCommand:${Id}` } as any,
-							// );
+							// Telemetry.onExtensionActivation(...)
 						}
 						return Callback.apply(ThisArg, Arguments);
 					},
@@ -170,7 +169,12 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 				registerTextEditorCommand: (
 					Id: string,
-					Callback: TextEditorCommand,
+					// FIX: Use the correct inline type for the callback.
+					Callback: (
+						textEditor: VSCode.TextEditor,
+						edit: VSCode.TextEditorEdit,
+						...args: any[]
+					) => void,
 					ThisArg?: any,
 				): IDisposable => {
 					const AdaptedCallback = (
@@ -178,18 +182,22 @@ export class CommandService extends Effect.Service<CommandService>()(
 					): any | Promise<any> => {
 						const ActiveEditor = Window.activeTextEditor;
 						if (!ActiveEditor) {
-							Logger.Warn(
-								`Cannot execute text editor command '${Id}' because there is no active text editor.`,
+							Effect.runSync(
+								Logger.Warn(
+									`Cannot execute text editor command '${Id}' because there is no active text editor.`,
+								),
 							);
 							return undefined;
 						}
 						// This is a simplified version. A full implementation would involve
-						// marshalling TextEditorEdit objects.
-						return Callback.apply(ThisArg, [
-							ActiveEditor,
-							{} as any, // Placeholder for TextEditorEdit
-							...args,
-						]);
+						// marshalling TextEditorEdit objects and handling the promise correctly.
+						return ActiveEditor.edit((editBuilder) => {
+							Callback.apply(ThisArg, [
+								ActiveEditor,
+								editBuilder,
+								...args,
+							]);
+						});
 					};
 					return ServiceImplementation.registerCommand(
 						true,
@@ -212,13 +220,15 @@ export class CommandService extends Effect.Service<CommandService>()(
 								AllCommands.get(Id)!,
 								Arguments,
 							),
-						) as Promise<T | undefined>; // FIX: Correctly cast the return type.
+						) as Promise<T | undefined>;
 					}
-					// FIX: Provide the required cancellation token argument (0 for none).
-					return MainThreadProxy.$executeCommand(Id, Arguments, 0);
+					return MainThreadProxy.$executeCommand(
+						Id,
+						Arguments,
+						true,
+					) as Promise<T | undefined>;
 				},
 
-				// FIX: Corrected signature to match VS Code protocol.
 				GetCommands: (FilterInternal = false): Promise<string[]> =>
 					MainThreadProxy.$getCommands(FilterInternal),
 			};

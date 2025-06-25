@@ -59,12 +59,16 @@ export const FromAPI = (
 
 		for (const SingleEdit of URIEditArray) {
 			if (SingleEdit instanceof VSCodeTextEdit) {
-				Result.edits.push({
+				// FIX: Conditionally add versionId for exactOptionalPropertyTypes
+				const textEditDto: IWorkspaceTextEditDTO = {
 					_type: "text",
 					resource: Resource,
 					edit: TextEditFromAPI(SingleEdit),
-					versionId: VersionId,
-				});
+				};
+				if (VersionId !== undefined) {
+					textEditDto.versionId = VersionId;
+				}
+				Result.edits.push(textEditDto);
 			} else {
 				// This branch handles potential future file operations added to `entries`,
 				// though the current public API only provides TextEdits.

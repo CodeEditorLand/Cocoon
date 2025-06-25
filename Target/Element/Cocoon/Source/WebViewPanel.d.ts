@@ -20,8 +20,11 @@ export interface WebViewPanel {
 }
 declare const WebViewPanelService_base: Effect.Service.Class<WebViewPanelService, "Service/WebViewPanel", {
     readonly effect: Effect.Effect<{
-        CreateWebviewPanel: (Extension: any, ViewType: any, Title: any, ShowOptions: any, Options?: {}) => Effect.Effect<WebViewPanelImplementation, import("./IPC/IPCProblem.js").IPCProblem, never>;
-        RegisterWebviewPanelSerializer: (_Extension: any, ViewType: any, _Serializer: any) => Effect.Effect<Disposable, never, never>;
+        CreateWebviewPanel: (Extension: IExtensionDescription, ViewType: string, Title: string, ShowOptions: ViewColumn | {
+            viewColumn: ViewColumn;
+            preserveFocus?: boolean;
+        }, Options?: WebviewPanelOptions & WebviewOptions) => Effect.Effect<WebViewPanelImplementation, import("./IPC/IPCProblem.js").IPCProblem, never>;
+        RegisterWebviewPanelSerializer: (_Extension: IExtensionDescription, ViewType: string, _Serializer: WebviewPanelSerializer) => Effect.Effect<Disposable, never, never>;
     }, never, IPCService>;
 }>;
 /**

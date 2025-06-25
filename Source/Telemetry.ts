@@ -17,7 +17,11 @@ import type {
 } from "vs/platform/log/common/log.js";
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
-import type { TelemetryLoggerOptions, TelemetrySender } from "vscode";
+import type {
+	TelemetryLogger,
+	TelemetryLoggerOptions,
+	TelemetrySender,
+} from "vscode";
 import { IPCService } from "./IPC.js";
 import { InitDataService } from "./InitData.js";
 import { LoggerService } from "./Logger.js";
@@ -129,11 +133,20 @@ export class TelemetryService extends Effect.Service<IExtHostTelemetry>()(
 							Config.usage && Level >= TelemetryLevel.USAGE,
 					};
 				},
+				// FIX: Return a stub that conforms to the TelemetryLogger interface.
 				instantiateLogger: (
 					_extension: IExtensionDescription,
 					_sender: TelemetrySender,
 					_options?: TelemetryLoggerOptions,
-				): ILogger => ({}) as any,
+				): TelemetryLogger =>
+					({
+						logUsage: () => {},
+						logError: () => {},
+						isUsageEnabled: false,
+						isErrorsEnabled: false,
+						onDidChangeEnableStates: new AbortController().signal,
+						dispose: () => {},
+					}) as any,
 				getBuiltInCommonProperties: (
 					_extension: IExtensionDescription,
 				) => ({}),

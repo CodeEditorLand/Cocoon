@@ -9,6 +9,7 @@ import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
 import type {
 	CancellationToken,
+	ConfigurationScope,
 	Disposable,
 	Event,
 	GlobPattern,
@@ -28,7 +29,6 @@ import type {
 } from "vscode";
 import { URI } from "vscode-uri";
 
-import type { ConfigurationScope } from "vscode";
 import { ApplicationConfigurationService } from "./ApplicationConfiguration.js";
 import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
@@ -255,24 +255,35 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 						const ResultDTO = yield* IPC.SendRequest<any>(
 							"$openTextDocument",
 							[DTO],
+						).pipe(
+							Effect.mapError(
+								(cause) => new Error(String(cause)),
+							),
 						);
 						const ResultUri = UriToAPI(ResultDTO.uri);
+						// FIX: Use Option.match to handle failure case and correct repeat schedule.
 						const WaitForDocument = Document.GetDocument(
 							ResultUri,
 						).pipe(
-							Effect.repeat({
-								schedule: Schedule.spaced(50).pipe(
-									Schedule.whileInput((o) =>
-										Option.isNone(o),
+							Effect.repeat(
+								Schedule.spaced(50).pipe(
+									Schedule.whileInput(
+										(o: Option.Option<TextDocument>) =>
+											Option.isNone(o),
 									),
 									Schedule.compose(Schedule.recurs(100)),
 								),
-							}),
-							Effect.someOrFail(
-								() =>
-									new Error(
-										`Failed to find newly opened document after timeout: ${ResultUri.toString()}`,
-									),
+							),
+							Effect.flatMap(
+								Option.match({
+									onNone: () =>
+										Effect.fail(
+											new Error(
+												`Failed to find newly opened document after timeout: ${ResultUri.toString()}`,
+											),
+										),
+									onSome: Effect.succeed,
+								}),
 							),
 						);
 						return yield* WaitForDocument;
@@ -280,10 +291,50 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 				getConfiguration: (
 					section?: string,
 					scope?: ConfigurationScope | null,
-				) =>
-					Effect.sync(() =>
-						ApplicationConfiguration.getValue(section, scope),
-					) as any,
+				): Effect.Effect<WorkspaceConfiguration, Error> =>
+					// FIX: Return a valid WorkspaceConfiguration object.
+					Effect.succeed({
+						get: <T>(key: string, defaultValue?: T): T => {
+							const fullKey = section ? `${section}.${key}` : key;
+							// The `as any` is a concession to the complexity of perfectly typing this proxy.
+							return (
+								ApplicationConfiguration.getValue(
+									fullKey,
+									scope,
+								) ?? defaultValue
+							);
+						},
+						has: (key: string): boolean => {
+							const fullKey = section ? `${section}.${key}` : key;
+							return (
+								ApplicationConfiguration.getValue(
+									fullKey,
+									scope,
+								) !== undefined
+							);
+						},
+						inspect: <T>(key: string) => {
+							const fullKey = section ? `${section}.${key}` : key;
+							return ApplicationConfiguration.inspect<T>(
+								fullKey,
+								scope,
+							);
+						},
+						update: (
+							key: string,
+							value: any,
+							_configurationTarget?:
+								| boolean
+								| ConfigurationScope
+								| null,
+						): Promise<void> => {
+							const fullKey = section ? `${section}.${key}` : key;
+							return ApplicationConfiguration.updateValue(
+								fullKey,
+								value,
+							);
+						},
+					}),
 				applyEdit: (Edit: WorkspaceEdit) =>
 					IPC.SendRequest<boolean>("$applyWorkspaceEdit", [
 						WorkspaceEditFromAPI(Edit),

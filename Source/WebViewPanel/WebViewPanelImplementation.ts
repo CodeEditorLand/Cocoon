@@ -30,6 +30,7 @@ import { WebViewImplementation } from "./WebViewImplementation.js";
 export class WebViewPanelImplementation implements WebviewPanel {
 	private IsDisposed = false;
 	private _title: string;
+	// FIX: Interface requires property to not be undefined after construction. Initialize it.
 	private _iconPath?: Uri | { readonly light: Uri; readonly dark: Uri };
 	private _active: boolean;
 	private _visible: boolean;
@@ -102,8 +103,12 @@ export class WebViewPanelImplementation implements WebviewPanel {
 		this._iconPath = Value;
 		const IconPathDTO = Value
 			? {
-					light: UriFromAPI("light" in Value ? Value.light : Value),
-					dark: UriFromAPI("dark" in Value ? Value.dark : Value),
+					light: UriFromAPI(
+						"light" in Value ? Value.light : (Value as Uri),
+					),
+					dark: UriFromAPI(
+						"dark" in Value ? Value.dark : (Value as Uri),
+					),
 				}
 			: undefined;
 		Effect.runFork(
@@ -158,6 +163,7 @@ export class WebViewPanelImplementation implements WebviewPanel {
 		this._visible = NewState.visible;
 		this._viewColumn = NewState.viewColumn;
 		if (Changed) {
+			// FIX: The event payload is the panel itself.
 			this.OnDidChangeViewStateEmitter.Fire({ webviewPanel: this });
 		}
 	}

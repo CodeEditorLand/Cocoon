@@ -92,11 +92,13 @@ export class WebViewPanelService extends Effect.Service<WebViewPanelService>()(
 
 			return {
 				CreateWebviewPanel: (
-					Extension,
-					ViewType,
-					Title,
-					ShowOptions,
-					Options = {},
+					Extension: IExtensionDescription,
+					ViewType: string,
+					Title: string,
+					ShowOptions:
+						| ViewColumn
+						| { viewColumn: ViewColumn; preserveFocus?: boolean },
+					Options: WebviewPanelOptions & WebviewOptions = {},
 				) =>
 					Effect.gen(function* () {
 						const Handle = generateUuid();
@@ -151,9 +153,9 @@ export class WebViewPanelService extends Effect.Service<WebViewPanelService>()(
 						return Panel;
 					}),
 				RegisterWebviewPanelSerializer: (
-					_Extension,
-					ViewType,
-					_Serializer,
+					_Extension: IExtensionDescription,
+					ViewType: string,
+					_Serializer: WebviewPanelSerializer,
 				) =>
 					Effect.sync(() => {
 						IPC.SendNotification(

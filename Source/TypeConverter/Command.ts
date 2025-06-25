@@ -68,6 +68,7 @@ export class Command {
 
 	constructor(
 		private readonly RegisterCommand: (
+			global: boolean, // Changed from 'id' to 'global' to match CommandService
 			id: string,
 			handler: (...args: any[]) => any,
 			thisArg?: any,
@@ -82,6 +83,7 @@ export class Command {
 	) {
 		this.DelegatingCommandId = `_cocoon.delegate.${generateUuid()}`;
 		this.RegisterCommand(
+			false, // Not a global command
 			this.DelegatingCommandId,
 			this.ExecuteDelegatedCommand.bind(this),
 			this,
@@ -109,7 +111,8 @@ export class Command {
 		if (APICommandValue) {
 			const ConvertedArgumentArray =
 				Command.arguments?.map((Argument, i) =>
-					APICommandValue.Arguments[i].Convert(Argument),
+					// FIX: Use non-null assertion assuming argument lengths match the API contract.
+					APICommandValue.Arguments[i]!.Convert(Argument),
 				) ?? [];
 			return {
 				id: APICommandValue.InternalId,
@@ -133,24 +136,32 @@ export class Command {
 				arguments: [Id, ...(Command.arguments ?? [])],
 			};
 		}
-
-		return {
+		// FIX: Handle exactOptionalPropertyTypes for tooltip
+		const result: InternalCommand = {
 			id: Command.command,
 			title: Command.title,
-			tooltip: Command.tooltip,
 			arguments: Command.arguments,
 		};
+		if (Command.tooltip) {
+			result.tooltip = Command.tooltip;
+		}
+		return result;
 	}
 
 	public FromInternal(
 		CommandDTO: InternalCommand,
 	): VSCode.Command | undefined {
 		if (!CommandDTO) return undefined;
-		return {
+
+		// FIX: Handle exactOptionalPropertyTypes for tooltip
+		const result: VSCode.Command = {
 			command: CommandDTO.id,
 			title: CommandDTO.title,
-			tooltip: CommandDTO.tooltip,
 			arguments: CommandDTO.arguments,
 		};
+		if (CommandDTO.tooltip) {
+			result.tooltip = CommandDTO.tooltip;
+		}
+		return result;
 	}
 }

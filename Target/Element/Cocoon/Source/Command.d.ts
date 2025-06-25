@@ -6,7 +6,7 @@
  */
 import { Effect } from "effect";
 import type { IDisposable } from "vs/base/common/lifecycle.js";
-import type { TextEditorCommand } from "vscode";
+import type * as VSCode from "vscode";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 import { WindowService } from "./Window.js";
@@ -17,7 +17,7 @@ import { WindowService } from "./Window.js";
  */
 export interface Command {
     readonly registerCommand: (global: boolean, id: string, command: <T>(...args: any[]) => T | Promise<T>, thisArg?: any) => IDisposable;
-    readonly registerTextEditorCommand: (id: string, callback: TextEditorCommand, thisArg?: any) => IDisposable;
+    readonly registerTextEditorCommand: (id: string, callback: (textEditor: VSCode.TextEditor, edit: VSCode.TextEditorEdit, ...args: any[]) => void, thisArg?: any) => IDisposable;
     readonly executeCommand: <T>(id: string, ...args: any[]) => Promise<T | undefined>;
     readonly GetCommands: (FilterInternal?: boolean) => Promise<string[]>;
 }

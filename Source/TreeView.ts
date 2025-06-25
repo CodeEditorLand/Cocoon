@@ -13,7 +13,7 @@ import type {
 	TreeCheckboxChangeEvent,
 	TreeDataProvider,
 	TreeItem,
-	TreeViewActiveItemChangeEvent,
+	// FIX: TreeViewActiveItemChangeEvent is not a public API type. The event is `onDidChangeActiveItem` with a payload of `T | undefined`.
 	TreeViewExpansionEvent,
 	TreeViewOptions,
 	TreeViewVisibilityChangeEvent,
@@ -48,8 +48,11 @@ class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 	private readonly OnDidChangeCheckboxStateEmitter =
 		CreateEventStream<TreeCheckboxChangeEvent<T>>();
 	readonly onDidChangeCheckboxState: Event<TreeCheckboxChangeEvent<T>>;
+	// FIX: onDidChangeActiveItem is a complex event; stubbing for now.
+	private readonly OnDidChangeActiveItemEmitter = CreateEventStream<T>();
+	readonly onDidChangeActiveItem: Event<T>;
+
 	activeItem: T | undefined;
-	onDidChangeActiveItem: Event<TreeViewActiveItemChangeEvent<T>>;
 	selection: readonly T[] = [];
 	visible = true;
 	message?: string;
@@ -69,6 +72,7 @@ class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 		this.onDidChangeVisibility = this.OnDidChangeVisibilityEmitter.event;
 		this.onDidChangeCheckboxState =
 			this.OnDidChangeCheckboxStateEmitter.event;
+		this.onDidChangeActiveItem = this.OnDidChangeActiveItemEmitter.event;
 
 		if (this.DataProvider.onDidChangeTreeData) {
 			this.DataProvider.onDidChangeTreeData((Elements) => {
@@ -169,6 +173,7 @@ class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 		this.OnDidChangeSelectionEmitter.Shutdown();
 		this.OnDidChangeVisibilityEmitter.Shutdown();
 		this.OnDidChangeCheckboxStateEmitter.Shutdown();
+		this.OnDidChangeActiveItemEmitter.Shutdown();
 		this.ElementToHandleMap.clear();
 		this.handleToElementMap.clear();
 	}

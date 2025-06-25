@@ -27,13 +27,15 @@ class MementoProxyImplementation implements Memento {
 	public get<T>(key: string): T | undefined;
 	public get<T>(key: string, defaultValue: T): T;
 	public get<T>(key: string, defaultValue?: T): T | undefined {
-		const State = Ref.get(this.StateRef);
+		// FIX: Must run the Effect to get the state synchronously.
+		const State = Effect.runSync(Ref.get(this.StateRef));
 		const Value = State[key];
 		return Value !== undefined ? Value : defaultValue;
 	}
 
 	public keys(): readonly string[] {
-		const State = Ref.get(this.StateRef);
+		// FIX: Must run the Effect to get the state synchronously.
+		const State = Effect.runSync(Ref.get(this.StateRef));
 		return Object.keys(State);
 	}
 
@@ -154,18 +156,27 @@ export class StorageService extends Effect.Service<StorageService>()(
 				const RootStateRef = IsGlobal
 					? GlobalStorageRef
 					: WorkspaceStorageRef;
-				const ExtensionState =
-					(Ref.get(RootStateRef) as any)[ExtensionId] ?? {};
-				const ExtensionStateRef = Ref.make(ExtensionState);
+				// FIX: Synchronously get state and create the extension-specific Ref
+				const RootState = Effect.runSync(Ref.get(RootStateRef));
+				const ExtensionState = (RootState as any)[ExtensionId] ?? {};
+				const ExtensionStateRef = Effect.runSync(
+					Ref.make(ExtensionState),
+				);
 				const MarkAsDirtyCallback = () => {
-					const DirtyFlagRef = IsGlobal
-						? IsGlobalDirty
-						: IsWorkspaceDirty;
-					Ref.set(DirtyFlagRef, true);
-					Ref.update(RootStateRef, (CurrentRoot) => ({
-						...CurrentRoot,
-						[ExtensionId]: Ref.get(ExtensionStateRef),
-					}));
+					// FIX: Compose and run the update logic as a single Effect
+					const UpdateEffect = Effect.gen(function* () {
+						const DirtyFlagRef = IsGlobal
+							? IsGlobalDirty
+							: IsWorkspaceDirty;
+						yield* Ref.set(DirtyFlagRef, true);
+						const extensionStateValue =
+							yield* Ref.get(ExtensionStateRef);
+						yield* Ref.update(RootStateRef, (CurrentRoot) => ({
+							...CurrentRoot,
+							[ExtensionId]: extensionStateValue,
+						}));
+					});
+					Effect.runFork(UpdateEffect);
 				};
 				return new MementoProxyImplementation(
 					ExtensionStateRef,
