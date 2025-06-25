@@ -73,7 +73,6 @@ const CreateAPIObject = <T>(
 			);
 		},
 		activate: (): Promise<T> => Effect.runPromise(Activate),
-		isFromDifferentExtensionHost: false, // Not applicable in Cocoon's single-host model.
 	};
 
 	return Object.freeze(ExtensionAPIObject);

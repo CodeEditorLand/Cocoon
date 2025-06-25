@@ -6,33 +6,55 @@ export const On =
 
 export const Clean = process.env["Clean"] === "true";
 
+export const Bundle = process.env["Bundle"] === "true";
+
+export const Compile = process.env["Compile"] === "true";
+
 /**
  * @module ESBuild
  *
  */
 export default {
 	color: true,
+
 	format: "esm",
+
 	logLevel: "debug",
+
 	metafile: true,
+
 	minify: !On,
+
 	outdir: "Configuration",
+
 	platform: "node",
+
 	target: "esnext",
+
 	tsconfig: "tsconfig.json",
+
 	write: true,
+
 	legalComments: On ? "inline" : "none",
-	bundle: false,
+
+	bundle: Bundle,
+
 	assetNames: "Asset/[name]-[hash]",
+
 	sourcemap: On,
+
 	drop: On ? [] : ["debugger"],
+
 	ignoreAnnotations: !On,
+
 	keepNames: On,
+
 	plugins: [
 		{
 			name: "Target",
+
 			// @ts-ignore
-			setup({ onStart, initialOption: { outdir } }) {
+			setup({ onStart, initialOptions: { outdir } }) {
 				switch (true) {
 					case Clean === true:
 						onStart(async () => {
@@ -57,7 +79,14 @@ export default {
 			},
 		},
 	],
+
 	outbase: "Source/Configuration",
+
+	loader: {
+		".json": "copy",
+
+		".sh": "copy",
+	},
 } satisfies BuildOptions as BuildOptions;
 
 export const { sep, posix } = await import("node:path");

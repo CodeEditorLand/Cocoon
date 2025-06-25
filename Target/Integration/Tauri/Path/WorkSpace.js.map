@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Integration/Tauri/Path/WorkSpace.ts"],
+  "sourcesContent": ["/**\n * @module WorkSpace\n * @description Defines a stubbed `Effect` for resolving the workspace settings path.\n * This file is a placeholder to resolve import errors.\n */\n\nimport { Effect } from \"effect\";\nimport type { Uri } from \"vscode\";\n\nexport const ResolveWorkSpacePath = (): Effect.Effect<Uri, any> => {\n\treturn Effect.fail(\n\t\tnew Error(\"ResolveWorkSpacePath integration is a stub.\"),\n\t);\n};\n"],
+  "mappings": ";;AAMA,SAAS,cAAc;AAGhB,MAAM,uBAAuB,6BAA+B;AAClE,SAAO,OAAO;AAAA,IACb,IAAI,MAAM,6CAA6C;AAAA,EACxD;AACD,GAJoC;",
+  "names": []
+}

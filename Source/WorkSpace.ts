@@ -31,7 +31,7 @@ import { URI } from "vscode-uri";
 import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
 import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { ConfigurationService } from "./Configuration.js";
+import { ConfigurationService } from "./ApplicationConfiguration.js";
 import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/TypeConverter/Dialog/DialogResult.ts"],
+  "sourcesContent": ["/**\n * @module DialogResult\n * @description Converts dialog result DTOs back into `vscode.Uri` objects.\n */\n\nimport type { Uri } from \"vscode\";\nimport { URI } from \"../../Platform/VSCode/Type.js\";\n\n/**\n * @description Revives a single URI DTO into a `vscode.Uri` instance.\n * @param DTO The raw DTO from IPC.\n * @returns A `vscode.Uri` or `undefined`.\n */\nexport const ToURI = (DTO: any): Uri | undefined => {\n\tif (!DTO) {\n\t\treturn undefined;\n\t}\n\treturn URI.revive(DTO);\n};\n\n/**\n * @description Revives an array of URI DTOs into an array of `vscode.Uri` instances.\n * @param DTOs The raw DTO array from IPC.\n * @returns A `Uri[]` or `undefined`.\n */\nexport const ToURIArray = (DTOs: any[] | undefined): Uri[] | undefined => {\n\tif (!DTOs || !Array.isArray(DTOs)) {\n\t\treturn undefined;\n\t}\n\treturn DTOs.map(ToURI).filter((URIValue): URIValue is Uri => !!URIValue);\n};\n"],
+  "mappings": ";;AAMA,SAAS,WAAW;AAOb,MAAM,QAAQ,wBAAC,QAA8B;AACnD,MAAI,CAAC,KAAK;AACT,WAAO;AAAA,EACR;AACA,SAAO,IAAI,OAAO,GAAG;AACtB,GALqB;AAYd,MAAM,aAAa,wBAAC,SAA+C;AACzE,MAAI,CAAC,QAAQ,CAAC,MAAM,QAAQ,IAAI,GAAG;AAClC,WAAO;AAAA,EACR;AACA,SAAO,KAAK,IAAI,KAAK,EAAE,OAAO,CAAC,aAA8B,CAAC,CAAC,QAAQ;AACxE,GAL0B;",
+  "names": []
+}

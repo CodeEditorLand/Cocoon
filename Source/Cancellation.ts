@@ -8,7 +8,7 @@
 
 import { Effect, HashMap, Ref, Scope } from "effect";
 import { CancellationTokenSource } from "vs/base/common/cancellation.js";
-import { InvalidTokenIdError } from "./Cancellation/InvalidTokenIdError.js";
+import { InvalidTokenIdProblem } from "./Cancellation/InvalidTokenIdProblem.js";
 import type { CancellationToken } from "vscode";
 
 /**
@@ -18,7 +18,7 @@ import type { CancellationToken } from "vscode";
 export interface Cancellation {
 	readonly ObtainToken: (
 		TokenId: number,
-	) => Effect.Effect<CancellationToken, InvalidTokenIdError, Scope.Scope>;
+	) => Effect.Effect<CancellationToken, InvalidTokenIdProblem, Scope.Scope>;
 	readonly CancelToken: (TokenId: number) => Effect.Effect<void, never>;
 	readonly DisposeAll: () => Effect.Effect<void, never>;
 }
@@ -41,7 +41,7 @@ export class CancellationService extends Effect.Service<CancellationService>()(
 				Effect.acquireRelease(
 					Effect.gen(function* () {
 						if (TokenId <= 0) {
-							return yield* new InvalidTokenIdError({ TokenId });
+							return yield* new InvalidTokenIdProblem({ TokenId });
 						}
 						const ExistingSource = yield* Ref.get(SourceMap).pipe(
 							Effect.map(HashMap.get(TokenId)),

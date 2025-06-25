@@ -1,140 +1,53 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 const On = (await import("./Cocoon.js")).On;
-var Target_default = /* @__PURE__ */ __name(async (Current) => {
-  const [deepmergeMod, cocoonMod, ulidMod, playformBuildEntryMod] = await Promise.all([
-    import("deepmerge-ts"),
-// Base esbuild configuration
-   
-    import("./Cocoon.js"),
-// For generating unique IDs
-   
-    import("ulid"),
-// Utility for determining entry points
-   
-    import("@playform/build/Target/Function/Entry.js")
-  ]);
-  const { deepmerge } = deepmergeMod;
-  const CocoonDefaultConfig = cocoonMod.default;
-  const { ulid } = ulidMod;
-  const getEntryPoints = playformBuildEntryMod.default;
-  return deepmerge(CocoonDefaultConfig, {
-// Specifies the output directory for compiled files.
-   
+const Bundle = (await import("./Cocoon.js")).Bundle;
+const Compile = (await import("./Cocoon.js")).Compile;
+const Merge = (await import("deepmerge-ts")).deepmerge;
+var Target_default = /* @__PURE__ */ __name(async (Current) => Merge(
+  (await import("./Cocoon.js")).default,
+  {
     outdir: "Target",
-// Conditionally remove debugger statements and console logs for production builds.
-   
     drop: On ? [] : ["debugger", "console"],
-// Defines global constants to be replaced in the code at build time.
-   
     define: {
-// Development mode flag
-     
       __DEV__: On ? "true" : "false",
-// Unique build increment identifier
-     
-      __INCREMENT__: `"${`${On ? "DEVELOPMENT" : "PRODUCTION"}-${ulid()}`}"`,
-// Critical for the Cocoon ESM Interceptor:
-     
-// Replaces `ESBUILD_REPLACED_GLOBAL_API_FUNCTION_NAME` in template files
-     
-// with the actual string value of the global function name.
-     
-// `JSON.stringify` ensures it's inserted as a valid string literal.
-     
-      "ESBUILD_REPLACED_GLOBAL_API_FUNCTION_NAME": JSON.stringify(
-// COCOON_ESM_INTERCEPTOR_GLOBAL_API_FN_NAME,
-       
-        `_COCOON_RESOLVE_ESM_VSCODE_API`
-      )
+      __INCREMENT__: `"${`${On ? "DEVELOPMENT" : "PRODUCTION"}-${(await import("ulid")).ulid()}`}"`
     },
-// Configures how esbuild should load files with specific extensions.
-   
-    loader: {
-// Treat '.template.ts' and '.template.js' files as raw text.
-     
-// This is used by `dynamic.ts` to import the content of template files.
-     
-      ".template.ts": "text",
-// If you also have .js templates
-     
-      ".template.js": "text"
-    },
-// Enables dead code elimination.
-   
     treeShaking: true,
-// Defines the entry points for the build.
-   
-// Includes project-specific configuration and Cocoon ESM Interceptor source files.
-   
-    entryPoints: getEntryPoints(Current, [
-// Project-specific entry points
-     
-      "Source/Configuration/*",
-// Source files for the Cocoon ESM Interceptor.
-     
-// Esbuild will process these according to the overall configuration.
-     
-// Ensure these paths are correct relative to your project root or esbuild's CWD.
-     
-      "src/cocoon-esm-interceptor.ts",
-// Renamed from cocoon-esm-loader-hook.ts
-     
-      "src/cocoon-esm-interceptor/hook.ts",
-// Renamed from dynamic-vscode-module-generator.ts
-     
-      "src/cocoon-esm-interceptor/dynamic.ts"
-    ]),
-// Target platform is Node.js (important for the interceptor).
-   
-    platform: "node",
-// Output format is ECMAScript Modules.
-   
-    format: "esm",
-// `bundle: false` means esbuild processes each entry point into a separate output file
-   
-// without inlining dependencies from other files (unless they are from node_modules
-   
-// and not externalized, and platform allows).
-   
-// This has implications for how `_loadLoaderHookScriptContent` works (requires separate file)
-   
-// and how the text loader handles imports of templates (might not inline if not bundling).
-   
-    bundle: false,
-// `outbase: "."` means output paths are relative to the project root into `outdir`.
-   
-// e.g., `src/file.ts` -> `Target/src/file.js`.
-   
-// This should work with `_loadLoaderHookScriptContent` if the relative path
-   
-// in `_LOADER_HOOK_SCRIPT_FILENAME` is correct for the output structure.
-   
+    entryPoints: (await import("@playform/build/Target/Function/Entry.js")).default(Current, ["Source/Configuration/*"]),
+    platform: "browser",
     outbase: "Source",
-// Path to the tsconfig file for this build.
-   
-    tsconfig: "tsconfig.Target.json"
-// Specifies modules that should not be bundled and treated as external dependencies.
-   
-// external: [
-   
-// 	// Preserve any existing externals from Current.
-   
-// 	...(Current.external || []),
-   
-// 	// The 'vscode' module is always provided by the host environment.
-   
-// 	"vscode",
-   
-// 	// Common pattern for VS Code internal modules.
-   
-// 	"vs/*",
-   
-// ],
-   
-  });
-}, "default");
+    plugins: Compile ? Merge(
+      Current.plugins,
+      [
+        {
+          name: "Compile",
+          setup({ onEnd }) {
+            onEnd(async ({ metafile }) => {
+              const _Output = metafile?.outputs;
+              for (const Output in _Output) {
+                if (Object.prototype.hasOwnProperty.call(
+                  _Output,
+                  Output
+                )) {
+                  if (Output.endsWith(".js")) {
+                    (await import("@playform/build/Target/Function/Exec.js")).default(
+                      `Build '${Output}' 													--ESBuild Configuration/ESBuild/Target/Compile.js 													--TypeScript Configuration/tsconfig/Target/Compile.json`
+                    );
+                  }
+                }
+              }
+            });
+          }
+        }
+      ]
+    ) : []
+  }
+), "default");
 export {
+  Bundle,
+  Compile,
+  Merge,
   On,
   Target_default as default
 };

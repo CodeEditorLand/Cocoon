@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Integration/Tauri/File/ParseJson.ts"],
+  "sourcesContent": ["/**\n * @module ParseJson\n * @description Defines a stubbed `Effect` for parsing JSON at the integration layer.\n * This file is a placeholder to resolve import errors.\n */\n\nimport { Effect } from \"effect\";\n\nexport const ParseJson = (_JsonString: string): Effect.Effect<object, any> => {\n\treturn Effect.fail(new Error(\"ParseJson integration is a stub.\"));\n};\n"],
+  "mappings": ";;AAMA,SAAS,cAAc;AAEhB,MAAM,YAAY,wBAAC,gBAAoD;AAC7E,SAAO,OAAO,KAAK,IAAI,MAAM,kCAAkC,CAAC;AACjE,GAFyB;",
+  "names": []
+}

@@ -28,7 +28,7 @@ import { AuthenticationService } from "./Authentication.js";
 import { CancellationService } from "./Cancellation.js";
 import { ClipboardService } from "./Clipboard.js";
 import { CommandService } from "./Command.js";
-import { ConfigurationService } from "./Configuration.js";
+import { ConfigurationService } from "./ApplicationConfiguration.js";
 import { DebugService } from "./Debug.js";
 import { DialogService } from "./Dialog.js";
 import { DocumentService } from "./Document.js";

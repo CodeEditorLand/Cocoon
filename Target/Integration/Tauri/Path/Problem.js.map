@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Integration/Tauri/Path/Problem.ts"],
+  "sourcesContent": ["/**\n * @module Problem\n * @description Defines a placeholder for the IntegrationPathProblem type.\n * This file is a stub to resolve import errors. A real implementation would\n * define concrete error types from the Tauri integration layer.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * @class IntegrationPathProblem\n * @description A placeholder error type for path-related failures at the\n * integration layer.\n */\nexport class IntegrationPathProblem extends Data.TaggedError(\n\t\"IntegrationPathProblem\",\n)<{\n\treadonly Cause?: unknown;\n}> {}\n"],
+  "mappings": ";;AAOA,SAAS,YAAY;AAOd,MAAM,+BAA+B,KAAK;AAAA,EAChD;AACD,EAEG;AAAA,EAlBH,OAkBG;AAAA;AAAA;AAAC;",
+  "names": []
+}

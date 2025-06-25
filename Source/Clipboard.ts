@@ -10,7 +10,7 @@ import type { URI } from "./Platform/VSCode/Type.js";
 import { ApplicationClipboardProblem } from "./Clipboard/ApplicationClipboardProblem.js";
 
 // --- NOTE: Integration-level imports are placeholders as the source was not provided. ---
-import type { IntegrationClipboardProblem } from "./Integration/Tauri/Clipboard/Error.js";
+import type { IntegrationClipboardProblem } from "./Integration/Tauri/Clipboard/Problem.js";
 import {
 	ReadImage,
 	ReadResourceList,

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../Source/Cancellation/InvalidTokenIdProblem.ts"],
+  "sourcesContent": ["/**\n * @module InvalidTokenIdProblem\n * @description Defines a custom, tagged error for when an invalid token ID\n * is provided to the Cancellation service.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * @class InvalidTokenIdProblem\n * @description A tagged error indicating that an invalid token ID was provided.\n * Cancellation tokens are identified by positive integers.\n */\nexport class InvalidTokenIdProblem extends Data.TaggedError(\n\t\"InvalidTokenIdProblem\",\n)<{\n\treadonly TokenId: number;\n}> {\n\tpublic override readonly message: string;\n\tconstructor(Properties: { readonly TokenId: number }) {\n\t\tsuper(Properties);\n\t\tthis.message = `Invalid TokenId ('${this.TokenId}') provided. Must be a positive number.`;\n\t}\n}\n"],
+  "mappings": ";;AAMA,SAAS,YAAY;AAOd,MAAM,8BAA8B,KAAK;AAAA,EAC/C;AACD,EAEG;AAAA,EAjBH,OAiBG;AAAA;AAAA;AAAA,EACuB;AAAA,EACzB,YAAY,YAA0C;AACrD,UAAM,UAAU;AAChB,SAAK,UAAU,qBAAqB,KAAK,OAAO;AAAA,EACjD;AACD;",
+  "names": []
+}

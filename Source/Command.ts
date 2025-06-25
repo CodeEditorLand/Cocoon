@@ -8,7 +8,12 @@
 
 import { Effect } from "effect";
 import type { IExtHostCommands } from "vs/workbench/api/common/extHostCommands.js";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import { ICommandMetadata } from "vs/platform/commands/common/commands.js";
+
+import type {
+	IExtensionDescription,
+	IRelaxedExtensionDescription,
+} from "vs/platform/extensions/common/extensions.js";
 import type { TextEditor, TextEditorEdit, Disposable } from "vscode";
 import { IPCService } from "./IPC.js";
 import { TelemetryService } from "./Telemetry.js";
@@ -68,39 +73,55 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 			const RegisterCommand = (
 				_global: boolean,
-				Id: string,
+				id: string,
 			): Effect.Effect<Disposable, Error> => {
-				return IPC.SendNotification("$registerCommand", [Id]).pipe(
+				return IPC.SendNotification("$registerCommand", [id]).pipe(
 					Effect.map(() => ({ dispose: () => {} })),
 					Effect.mapError((e) => e as Error),
 				);
 			};
 
 			const ExecuteCommand = <T>(
-				Id: string,
-				...Arguments: any[]
+				id: string,
+				...args: any[]
 			): Effect.Effect<T, Error> => {
-				return IPC.SendRequest<T>("$executeCommand", [
-					Id,
-					...Arguments,
-				]);
+				return IPC.SendRequest<T>("$executeCommand", [id, ...args]);
 			};
 
 			const GetCommands = (
-				FilterInternal = false,
+				filterInternal = false,
 			): Effect.Effect<string[], Error> => {
 				return IPC.SendRequest<string[]>("$getCommands", [
-					FilterInternal,
+					filterInternal,
 				]);
 			};
 
+			// This implementation matches the IExtHostCommands interface
 			const Service: IExtHostCommands = {
-				registerCommand: (id, _handler, _thisArg) =>
-					Effect.runSync(RegisterCommand(true, id)),
-				registerTextEditorCommand: (id, _handler, _thisArg) =>
-					Effect.runSync(RegisterCommand(true, id)),
+				registerCommand: (
+					global: boolean,
+					id: string,
+					_handler: <T>(...args: any[]) => T | Promise<T>,
+					_thisArg?: any,
+					_metadata?: ICommandMetadata,
+					_extension?: Readonly<IRelaxedExtensionDescription>,
+				): Disposable => Effect.runSync(RegisterCommand(global, id)),
+
+				registerTextEditorCommand: (
+					id: string,
+					_handler: (
+						textEditor: TextEditor,
+						edit: TextEditorEdit,
+						...args: any[]
+					) => void,
+					_thisArg?: any,
+					_metadata?: ICommandMetadata,
+					_extension?: Readonly<IRelaxedExtensionDescription>,
+				): Disposable => Effect.runSync(RegisterCommand(true, id)),
+
 				executeCommand: <T>(id: string, ...args: any[]) =>
 					Effect.runPromise(ExecuteCommand<T>(id, ...args)),
+
 				getCommands: (filterInternal) =>
 					Effect.runPromise(GetCommands(filterInternal)),
 			} as unknown as IExtHostCommands;

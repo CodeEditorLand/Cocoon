@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Integration/Tauri/Path/Default.ts"],
+  "sourcesContent": ["/**\n * @module Default\n * @description Defines a stubbed `Effect` for resolving the default settings path.\n * This file is a placeholder to resolve import errors.\n */\n\nimport { Effect } from \"effect\";\nimport type { Uri } from \"vscode\";\n\nexport const ResolveFinalDefaultPath = (): Effect.Effect<Uri, any> => {\n\treturn Effect.fail(\n\t\tnew Error(\"ResolveFinalDefaultPath integration is a stub.\"),\n\t);\n};\n"],
+  "mappings": ";;AAMA,SAAS,cAAc;AAGhB,MAAM,0BAA0B,6BAA+B;AACrE,SAAO,OAAO;AAAA,IACb,IAAI,MAAM,gDAAgD;AAAA,EAC3D;AACD,GAJuC;",
+  "names": []
+}

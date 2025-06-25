@@ -7,7 +7,7 @@
 
 import { Effect } from "effect";
 import type { URI } from "../../../Platform/VSCode/Type.js";
-import { IntegrationClipboardProblem } from "./Error.js";
+import { IntegrationClipboardProblem } from "./Problem.js";
 
 const MakeStub = <T>(Name: string, DefaultValue: T) =>
 	Effect.logWarning(

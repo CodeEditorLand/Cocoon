@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Configuration/ESBuild/Target/Compile.ts"],
+  "sourcesContent": ["/*\n * File: Cocoon/Source/Configuration/ESBuild/Target/Compile.ts\n * Responsibility: Configures ESBuild options for the Compile target by merging base settings from the Target module with Compile-specific properties (bundle mode, output base, TypeScript config) to define the build process for the Land project.\n * Modified: 2025-06-09 00:59:16 UTC\n * Dependency: esbuild\n * Export: Bundle, Merge, On\n */\n\nimport type { BuildOptions } from \"esbuild\";\n\nexport const On = (await import(\"../Cocoon.js\")).On;\n\nexport const Bundle = (await import(\"../Cocoon.js\")).Bundle;\n\nexport const Merge = (await import(\"deepmerge-ts\")).deepmergeCustom({\n\tmergeArrays: false,\n});\n\n/**\n * @module ESBuild\n *\n */\nexport default async (Current: BuildOptions): Promise<BuildOptions> =>\n\tMerge<[BuildOptions, BuildOptions]>(\n\t\tawait (await import(\"../Target.js\")).default(Current),\n\n\t\t{\n\t\t\tbundle: true,\n\n\t\t\toutbase: \"Target\",\n\n\t\t\ttsconfig: \"Configuration/tsconfig/Target/Compile.json\",\n\n\t\t\tplugins: [],\n\n\t\t\tallowOverwrite: true,\n\t\t},\n\t);\n"],
+  "mappings": ";;AAUO,MAAM,MAAM,MAAM,OAAO,cAAc,GAAG;AAE1C,MAAM,UAAU,MAAM,OAAO,cAAc,GAAG;AAE9C,MAAM,SAAS,MAAM,OAAO,cAAc,GAAG,gBAAgB;AAAA,EACnE,aAAa;AACd,CAAC;AAMD,IAAO,kBAAQ,8BAAO,YACrB;AAAA,EACC,OAAO,MAAM,OAAO,cAAc,GAAG,QAAQ,OAAO;AAAA,EAEpD;AAAA,IACC,QAAQ;AAAA,IAER,SAAS;AAAA,IAET,UAAU;AAAA,IAEV,SAAS,CAAC;AAAA,IAEV,gBAAgB;AAAA,EACjB;AACD,GAfc;",
+  "names": []
+}

@@ -53,17 +53,10 @@ const CreateSafeEvent = <T>(
 const CreateCommandNamespace = (
 	Command: Command,
 	_ExtensionDescription: IExtensionDescription,
-): typeof VSCode.commands => {
+): Omit<typeof VSCode.commands, "registerTextEditorCommand"> => {
 	return {
 		registerCommand: (Id, Handler, ThisArgument): Disposable =>
-			Command.registerCommand(Id, Handler, ThisArgument),
-		registerTextEditorCommand: (Id, Handler, ThisArgument): Disposable =>
-			Command.registerTextEditorCommand(Id, Handler, ThisArgument),
-		registerDiffInformationCommand: (
-			Id,
-			Handler,
-			ThisArgument,
-		): Disposable => Command.registerCommand(Id, Handler, ThisArgument),
+			Command.registerCommand(true, Id, Handler, ThisArgument),
 		executeCommand: <T>(Id: string, ...Argument: any[]) =>
 			Command.executeCommand<T>(Id, ...Argument),
 		getCommands: (FilterInternal?: boolean) =>
@@ -227,9 +220,6 @@ export class APIFactoryService extends Effect.Service<APIFactory>()(
 					),
 				get all() {
 					return Effect.runSync(Extension.GetAll());
-				},
-				get allAcrossExtensionHosts() {
-					return [];
 				},
 				onDidChange: new Emitter<void>().event,
 			});

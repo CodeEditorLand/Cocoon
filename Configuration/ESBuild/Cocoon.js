@@ -1,5 +1,7 @@
 const On = process.env["NODE_ENV"] === "development" || process.env["TAURI_ENV_DEBUG"] === "true";
 const Clean = process.env["Clean"] === "true";
+const Bundle = process.env["Bundle"] === "true";
+const Compile = process.env["Compile"] === "true";
 var Cocoon_default = {
   color: true,
   format: "esm",
@@ -12,7 +14,7 @@ var Cocoon_default = {
   tsconfig: "tsconfig.json",
   write: true,
   legalComments: On ? "inline" : "none",
-  bundle: false,
+  bundle: Bundle,
   assetNames: "Asset/[name]-[hash]",
   sourcemap: On,
   drop: On ? [] : ["debugger"],
@@ -21,8 +23,7 @@ var Cocoon_default = {
   plugins: [
     {
       name: "Target",
-// @ts-ignore
-     
+      // @ts-ignore
       setup({ onStart, initialOptions: { outdir } }) {
         switch (true) {
           case Clean === true:
@@ -42,11 +43,17 @@ var Cocoon_default = {
       }
     }
   ],
-  outbase: "Source/Configuration"
+  outbase: "Source/Configuration",
+  loader: {
+    ".json": "copy",
+    ".sh": "copy"
+  }
 };
 const { sep, posix } = await import("node:path");
 export {
+  Bundle,
   Clean,
+  Compile,
   On,
   Cocoon_default as default,
   posix,

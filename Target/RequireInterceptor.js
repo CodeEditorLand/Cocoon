@@ -1,0 +1,90 @@
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Cause, Effect, Exit } from "effect";
+import * as Module from "node:module";
+import { URI } from "vs/base/common/uri.js";
+import { APIFactoryService } from "./APIFactory.js";
+import { ExtensionPathService } from "./ExtensionPath.js";
+import { NodeModuleShimService } from "./NodeModuleShim.js";
+import { LoggerService } from "./Logger.js";
+class VsCodeNodeModuleFactory {
+  constructor(APIFactory2, ExtensionPath2, Logger2) {
+    this.APIFactory = APIFactory2;
+    this.ExtensionPath = ExtensionPath2;
+    this.Logger = Logger2;
+  }
+  static {
+    __name(this, "VsCodeNodeModuleFactory");
+  }
+  Load(_Request, ParentUri) {
+    const Extension = this.ExtensionPath.FindSubstr(ParentUri);
+    if (Extension) {
+      return this.APIFactory.CreateAPI(Extension);
+    }
+    const ErrorMessage = `FATAL: require('vscode') was called from an unknown location: ${ParentUri.fsPath}. Could not determine extension owner.`;
+    this.Logger.Error(ErrorMessage);
+    throw new Error(
+      "[Cocoon] `require('vscode')` may only be called from an extension."
+    );
+  }
+}
+class RequireInterceptorService extends Effect.Service()(
+  "Service/RequireInterceptor",
+  {
+    effect: Effect.gen(function* () {
+      const APIFactory2 = yield* APIFactoryService;
+      const ExtensionPath2 = yield* ExtensionPathService;
+      const Logger2 = yield* LoggerService;
+      const NodeModuleShim = yield* NodeModuleShimService;
+      const Factories = /* @__PURE__ */ new Map([
+        [
+          "vscode",
+          new VsCodeNodeModuleFactory(
+            APIFactory2,
+            ExtensionPath2,
+            Logger2
+          )
+        ]
+      ]);
+      const OriginalRequire = Module.prototype.require;
+      let IsInstalled = false;
+      const Install = /* @__PURE__ */ __name(() => Effect.gen(function* () {
+        if (IsInstalled) return;
+        yield* Effect.sync(() => {
+          Module.prototype.require = function(Request) {
+            const Factory = Factories.get(Request);
+            if (Factory) {
+              const ParentUri = this.filename ? URI.file(this.filename) : URI.parse("unknown:/unknown");
+              return Factory.Load(Request, ParentUri);
+            }
+            if (Module.builtinModules.includes(Request)) {
+              const ParentUri = this.filename ? URI.file(this.filename) : URI.parse("unknown:/unknown");
+              const ShimResult = NodeModuleShim.Load(
+                Request,
+                ParentUri
+              );
+              if (Exit.isSuccess(ShimResult)) {
+                return ShimResult.value;
+              }
+              throw Cause.squash(ShimResult.cause);
+            }
+            return OriginalRequire.call(this, Request);
+          };
+          IsInstalled = true;
+        });
+        yield* Logger2.Info(
+          "Node.js require() interceptor has been successfully installed."
+        );
+      }), "Install");
+      return { Install };
+    })
+  }
+) {
+  static {
+    __name(this, "RequireInterceptorService");
+  }
+}
+export {
+  RequireInterceptorService
+};
+//# sourceMappingURL=RequireInterceptor.js.map

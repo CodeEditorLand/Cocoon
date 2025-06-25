@@ -5,7 +5,7 @@
  */
 
 import { Data } from "effect";
-import type { IntegrationClipboardProblem } from "../Integration/Tauri/Clipboard/Error.js";
+import type { IntegrationClipboardProblem } from "../Integration/Tauri/Clipboard/Problem.js";
 
 /**
  * @class ApplicationClipboardProblem

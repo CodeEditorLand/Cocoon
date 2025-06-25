@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../Source/NodeModuleShim/ModuleNotShimmedProblem.ts"],
+  "sourcesContent": ["/**\n * @module ModuleNotShimmedProblem\n * @description Defines a custom error for when an extension attempts to require\n * a Node.js module for which no safe shim has been implemented.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * @class ModuleNotShimmedProblem\n * @description An error indicating that an extension attempted to require a\n * built-in Node.js module for which no safe, sandboxed shim has been implemented.\n */\nexport class ModuleNotShimmedProblem extends Data.TaggedError(\n\t\"ModuleNotShimmedProblem\",\n)<{\n\treadonly ModuleName: string;\n}> {\n\tpublic override readonly message: string;\n\tconstructor(Properties: { readonly ModuleName: string }) {\n\t\tsuper(Properties);\n\t\tthis.message = `Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`;\n\t}\n}\n"],
+  "mappings": ";;AAMA,SAAS,YAAY;AAOd,MAAM,gCAAgC,KAAK;AAAA,EACjD;AACD,EAEG;AAAA,EAjBH,OAiBG;AAAA;AAAA;AAAA,EACuB;AAAA,EACzB,YAAY,YAA6C;AACxD,UAAM,UAAU;AAChB,SAAK,UAAU,WAAW,KAAK,UAAU;AAAA,EAC1C;AACD;",
+  "names": []
+}

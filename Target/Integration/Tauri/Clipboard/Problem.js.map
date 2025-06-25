@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Integration/Tauri/Clipboard/Problem.ts"],
+  "sourcesContent": ["/**\n * @module Problem\n * @description Defines a placeholder for the IntegrationClipboardProblem type.\n * This file is a stub to resolve import errors. A real implementation would\n * define concrete error types from the Tauri integration layer.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * @class IntegrationClipboardProblem\n * @description A placeholder error type for clipboard-related failures at the\n * integration layer.\n */\nexport class IntegrationClipboardProblem extends Data.TaggedError(\n\t\"IntegrationClipboardProblem\",\n)<{\n\treadonly Cause?: unknown;\n}> {}\n"],
+  "mappings": ";;AAOA,SAAS,YAAY;AAOd,MAAM,oCAAoC,KAAK;AAAA,EACrD;AACD,EAEG;AAAA,EAlBH,OAkBG;AAAA;AAAA;AAAC;",
+  "names": []
+}
