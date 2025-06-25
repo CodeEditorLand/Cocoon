@@ -31,13 +31,13 @@ export interface ExtensionHost {
 }
 declare const ExtensionHostService_base: Effect.Service.Class<ExtensionHostService, "Service/ExtensionHost", {
     readonly effect: Effect.Effect<{
-        ActivateById: (Id: any, Reason: any) => Effect.Effect<void, never, never>;
-        GetExtensionDescription: (Id: any) => Effect.Effect<Readonly<import("vs/platform/extensions/common/extensions.js").IRelaxedExtensionDescription> | undefined, never, never>;
-        GetExtensionExports: (Id: any) => Effect.Effect<any, Error, never>;
-        IsActivated: (Id: any) => Effect.Effect<boolean, never, never>;
+        ActivateById: (Id: ExtensionIdentifier, Reason: ExtensionActivationReason) => Effect.Effect<void, never, never>;
+        GetExtensionDescription: (Id: string | ExtensionIdentifier) => Effect.Effect<Readonly<import("vs/platform/extensions/common/extensions.js").IRelaxedExtensionDescription> | undefined, never, never>;
+        GetExtensionExports: (Id: ExtensionIdentifier) => Effect.Effect<any, Error, never>;
+        IsActivated: (Id: ExtensionIdentifier) => Effect.Effect<boolean, never, never>;
         DeactivateAll: () => Effect.Effect<void, never, never>;
         OnDidActivateExtension: (_callback: (extension: IExtensionDescription) => void) => Effect.Effect<void, never, never>;
-    }, never, LoggerService | import("vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | import("vs/workbench/api/common/extHostTelemetry.js").IExtHostTelemetry | IPCService>;
+    }, never, LoggerService | import("vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | IPCService | import("vs/workbench/api/common/extHostTelemetry.js").IExtHostTelemetry>;
 }>;
 /**
  * @class ExtensionHostService

@@ -7,22 +7,22 @@
 
 import { Effect, Option, Ref } from "effect";
 import type { IModelChangedEvent } from "vs/editor/common/model/mirrorTextModel.js";
-import { MainThreadDocumentsShape } from "vs/workbench/api/common/extHost.protocol.js";
+import type { MainThreadDocumentsShape } from "vs/workbench/api/common/extHost.protocol.js";
 import { ExtHostDocumentData } from "vs/workbench/api/common/extHostDocumentData.js";
 import {
 	CancellationTokenSource,
 	Disposable,
 	type Event,
+	type ProviderResult,
 	type TextDocument,
 	type TextDocumentChangeEvent,
 	type TextDocumentContentProvider,
 	type Uri,
-	type ProviderResult,
 } from "vscode";
+import { IPCService } from "./IPC.js";
 import { ToAPI as RangeToAPI } from "./TypeConverter/Main/Range.js";
 import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { IPCService } from "./IPC.js";
 
 /**
  * @interface Document
@@ -206,7 +206,10 @@ export class DocumentService extends Effect.Service<DocumentService>()(
 						),
 						Effect.map(Option.map((data) => data.document)),
 					),
-				RegisterTextDocumentContentProvider: (Scheme, Provider) => {
+				RegisterTextDocumentContentProvider: (
+					Scheme: string,
+					Provider: TextDocumentContentProvider,
+				) => {
 					Effect.runFork(
 						IPC.SendNotification(
 							"$registerTextDocumentContentProvider",

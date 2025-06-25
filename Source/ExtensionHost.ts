@@ -19,8 +19,8 @@ import {
 	type IActivationEventsReader,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { ExtensionContext, LanguageModelAccessInformation } from "vscode";
-import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
+import { InitDataService } from "./InitData.js";
 import { LoggerService } from "./Logger.js";
 import { TelemetryService } from "./Telemetry.js";
 
@@ -228,7 +228,11 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 				});
 
 			return {
-				ActivateById: (Id, Reason) =>
+				// FIX: Added explicit types for Id and Reason.
+				ActivateById: (
+					Id: ExtensionIdentifier,
+					Reason: ExtensionActivationReason,
+				) =>
 					Effect.gen(function* () {
 						const IsActivated = yield* Ref.get(
 							ActivatedExtensionsRef,
@@ -284,7 +288,7 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 								);
 								yield* Effect.sync(() =>
 									Telemetry.onExtensionError(
-										Id,
+										Id as any,
 										ErrorToReport,
 									),
 								);
@@ -292,12 +296,14 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 						),
 					),
 
-				GetExtensionDescription: (Id) =>
+				// FIX: Added explicit type for Id.
+				GetExtensionDescription: (Id: string | ExtensionIdentifier) =>
 					Effect.succeed(
 						ExtensionRegistry.getExtensionDescription(Id),
 					),
 
-				GetExtensionExports: (Id) =>
+				// FIX: Added explicit type for Id.
+				GetExtensionExports: (Id: ExtensionIdentifier) =>
 					Ref.get(ActivatedExtensionsRef).pipe(
 						Effect.flatMap((Map) => {
 							const Ext = Map.get(Id.value);
@@ -307,7 +313,8 @@ export class ExtensionHostService extends Effect.Service<ExtensionHostService>()
 						}),
 					),
 
-				IsActivated: (Id) =>
+				// FIX: Added explicit type for Id.
+				IsActivated: (Id: ExtensionIdentifier) =>
 					Ref.get(ActivatedExtensionsRef).pipe(
 						Effect.map((Map) => Map.has(Id.value)),
 					),

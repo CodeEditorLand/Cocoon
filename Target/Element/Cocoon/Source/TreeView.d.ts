@@ -7,8 +7,8 @@
 import { Effect } from "effect";
 import type { Event } from "vs/base/common/event.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { type TreeCheckboxChangeEvent, type TreeDataProvider, type TreeView as VSCodeTreeView, type TreeViewActiveItemChangeEvent, type TreeViewExpansionEvent, type TreeViewOptions, type TreeViewVisibilityChangeEvent } from "vscode";
-import { IPC, IPCService } from "./IPC.js";
+import type { TreeCheckboxChangeEvent, TreeDataProvider, TreeViewActiveItemChangeEvent, TreeViewExpansionEvent, TreeViewOptions, TreeViewVisibilityChangeEvent, TreeView as VSCodeTreeView } from "vscode";
+import { type IPC, IPCService } from "./IPC.js";
 /**
  * @class TreeViewImplementation
  * @description An internal class that implements the `vscode.TreeView` interface. It

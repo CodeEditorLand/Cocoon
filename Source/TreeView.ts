@@ -9,20 +9,20 @@ import { Effect, Ref } from "effect";
 import type { Event } from "vs/base/common/event.js";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import {
-	type TreeCheckboxChangeEvent,
-	type TreeDataProvider,
-	type TreeItem,
-	type TreeView as VSCodeTreeView,
-	type TreeViewActiveItemChangeEvent,
-	type TreeViewExpansionEvent,
-	type TreeViewOptions,
-	type TreeViewVisibilityChangeEvent,
+import type {
+	TreeCheckboxChangeEvent,
+	TreeDataProvider,
+	TreeItem,
+	TreeViewActiveItemChangeEvent,
+	TreeViewExpansionEvent,
+	TreeViewOptions,
+	TreeViewVisibilityChangeEvent,
+	TreeView as VSCodeTreeView,
 } from "vscode";
-import { FromAPI as TreeViewOptionToDTO } from "./TypeConverter/TreeView/Option.js";
+import { type IPC, IPCService } from "./IPC.js";
 import { FromAPI as TreeViewItemToDTO } from "./TypeConverter/TreeView/Item.js";
+import { FromAPI as TreeViewOptionToDTO } from "./TypeConverter/TreeView/Option.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { IPC, IPCService } from "./IPC.js";
 
 /**
  * @class TreeViewImplementation

@@ -12,15 +12,15 @@ import type {
 	SaveDialogOptions,
 	Uri,
 } from "vscode";
-import { ToDTO as OpenDialogOptionToDTO } from "./TypeConverter/Dialog/OpenDialogOption.js";
-import { ToDTO as SaveDialogOptionToDTO } from "./TypeConverter/Dialog/SaveDialogOption.js";
+import { DialogProblem } from "./Dialog/DialogProblem.js";
+import type { IPC } from "./IPC.js";
+import { IPCService } from "./IPC.js";
 import {
 	ToURI as DTOToURI,
 	ToURIArray as DTOToURIArray,
 } from "./TypeConverter/Dialog/DialogResult.js";
-import type { IPC } from "./IPC.js";
-import { IPCService } from "./IPC.js";
-import { DialogProblem } from "./Dialog/DialogProblem.js";
+import { ToDTO as OpenDialogOptionToDTO } from "./TypeConverter/Dialog/OpenDialogOption.js";
+import { ToDTO as SaveDialogOptionToDTO } from "./TypeConverter/Dialog/SaveDialogOption.js";
 
 /**
  * @description An internal helper to create an Effect for showing a dialog. It handles

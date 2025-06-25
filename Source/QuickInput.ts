@@ -14,11 +14,11 @@ import type {
 	QuickPickItem,
 	QuickPickOptions,
 } from "vscode";
+import { IPCService } from "./IPC.js";
 import {
 	SerializeButtons,
 	SerializeItems,
 } from "./TypeConverter/QuickInput.js";
-import { IPCService } from "./IPC.js";
 
 /**
  * @interface QuickInput

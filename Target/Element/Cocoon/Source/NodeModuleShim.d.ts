@@ -6,8 +6,8 @@
  * stability or security (like `fs` and `child_process`).
  */
 import { Effect, Exit } from "effect";
-import type { Uri } from "vscode";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
+import type { Uri } from "vscode";
 import { LoggerService } from "./Logger.js";
 import { ModuleBlockedProblem } from "./NodeModuleShim/ModuleBlockedProblem.js";
 import { ModuleNotShimmedProblem } from "./NodeModuleShim/ModuleNotShimmedProblem.js";

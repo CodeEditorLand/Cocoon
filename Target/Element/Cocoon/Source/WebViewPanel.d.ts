@@ -4,7 +4,7 @@
  */
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable, type ViewColumn, type WebviewOptions, type WebviewPanel as VSCodeWebviewPanel, type WebviewPanelOptions, type WebviewPanelSerializer } from "vscode";
+import { Disposable, type WebviewPanel as VSCodeWebviewPanel, type ViewColumn, type WebviewOptions, type WebviewPanelOptions, type WebviewPanelSerializer } from "vscode";
 import { IPCService } from "./IPC.js";
 import { WebViewPanelImplementation } from "./WebViewPanel/WebViewPanelImplementation.js";
 /**

@@ -8,19 +8,19 @@
 
 import { Effect, Ref } from "effect";
 import { Schemas } from "vs/base/common/network.js";
+import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 import {
-	UIKind,
+	type Clipboard,
 	type Event,
 	type LogLevel,
+	UIKind,
 	type Uri,
-	type Clipboard,
 } from "vscode";
+import { ClipboardService } from "./Clipboard.js";
+import { IPCService } from "./IPC.js";
+import { InitDataService } from "./InitData.js";
 import { ToAPI as UriToApi } from "./TypeConverter/Main/URI.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { ClipboardService } from "./Clipboard.js";
-import { InitDataService } from "./InitData.js";
-import { IPCService } from "./IPC.js";
-import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 
 /**
  * @interface Environment
@@ -102,7 +102,7 @@ export class EnvironmentService extends Effect.Service<EnvironmentService>()(
 
 			const ServiceImplementation: Environment = {
 				appName: InitData.environment.appName || "Cocoon Editor",
-				appRoot: GetAppRoot(),
+				appRoot: GetAppRoot() as string,
 				appHost: InitData.environment.appHost || "desktop",
 				uriScheme: InitData.environment.appUriScheme || "cocoon-code",
 				language: InitData.environment.appLanguage || "en",

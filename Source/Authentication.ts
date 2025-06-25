@@ -7,26 +7,23 @@
 
 import { Effect, Ref } from "effect";
 import type {
-	Event,
-	Disposable,
-	AuthenticationProvider,
-	AuthenticationProviderOptions,
-	AuthenticationSession,
 	AuthenticationGetSessionOptions,
+	AuthenticationProvider,
 	AuthenticationProviderInformation,
-	AuthenticationSessionsChangeEvent,
+	AuthenticationProviderOptions,
 	AuthenticationProviderSessionOptions,
+	AuthenticationSession,
+	AuthenticationSessionsChangeEvent,
+	Disposable,
+	Event,
 } from "vscode";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
-
-// A simplified, Effect-native implementation that mirrors the necessary
-// functionality of IExtHostAuthentication without depending on VS Code's internal classes.
+import { CreateEventStream } from "./Utility/CreateEventStream.js";
 
 /**
  * @interface Authentication
- * @description The contract for the Authentication service.
+ * @description The contract for the Authentication service, mirroring `vscode.authentication`.
  */
 export interface Authentication {
 	readonly getSession: (
@@ -71,59 +68,76 @@ export class AuthenticationService extends Effect.Service<AuthenticationService>
 			const IPC = yield* IPCService;
 			const Logger = yield* LoggerService;
 
-			const ProviderInfosRef = yield* Ref.make<
+			const ProviderInfosReference = yield* Ref.make<
 				AuthenticationProviderInformation[]
 			>([]);
 			const { event: OnDidChangeSessionsEvent } =
 				CreateEventStream<AuthenticationSessionsChangeEvent>();
 
+			/**
+			 * @description Fetches the list of available authentication providers from the host.
+			 * @returns An `Effect` that resolves to an array of provider information.
+			 */
 			const GetProviderInfos = (): Effect.Effect<
 				AuthenticationProviderInformation[],
 				Error
 			> =>
-				IPC.SendRequest<any[]>("$getAuthenticationProviders").pipe(
-					Effect.map((dtos) =>
-						dtos.map((dto) => ({ id: dto.id, label: dto.label })),
+				IPC.SendRequest<any[]>("$getAuthenticationProviders", []).pipe(
+					Effect.map((DataTransferObjects) =>
+						DataTransferObjects.map((DTO) => ({
+							id: DTO.id,
+							label: DTO.label,
+						})),
 					),
-					Effect.tap((infos) => Ref.set(ProviderInfosRef, infos)),
-					Effect.mapError((cause) => new Error(String(cause))),
+					Effect.tap((Infos) =>
+						Ref.set(ProviderInfosReference, Infos),
+					),
+					Effect.mapError((Cause) => new Error(String(Cause))),
 				);
 
-			// Initial fetch of providers
+			// Initial fetch of providers, running as a background fiber.
 			yield* Effect.forkDaemon(GetProviderInfos());
 
+			/**
+			 * @description Requests an authentication session from the host.
+			 * @returns An `Effect` that resolves to the session or undefined.
+			 */
 			const GetSession = (
-				providerId: string,
-				scopes: readonly string[],
-				options?: AuthenticationGetSessionOptions,
+				ProviderId: string,
+				Scopes: readonly string[],
+				Options?: AuthenticationGetSessionOptions,
 			): Effect.Effect<AuthenticationSession | undefined, Error> =>
 				IPC.SendRequest<AuthenticationSession | undefined>(
 					"$getSession",
-					[providerId, scopes, options ?? {}],
-				).pipe(Effect.mapError((cause) => new Error(String(cause))));
+					[ProviderId, Scopes, Options ?? {}],
+				).pipe(Effect.mapError((Cause) => new Error(String(Cause))));
 
+			/**
+			 * @description Requests the list of accounts for a provider from the host.
+			 * @returns An `Effect` that resolves to a readonly array of accounts.
+			 */
 			const GetAccounts = (
-				providerId: string,
+				ProviderId: string,
 			): Effect.Effect<readonly { label: string; id: string }[], Error> =>
 				IPC.SendRequest<readonly { label: string; id: string }[]>(
 					"$getAccounts",
-					[providerId],
-				).pipe(Effect.mapError((cause) => new Error(String(cause))));
+					[ProviderId],
+				).pipe(Effect.mapError((Cause) => new Error(String(Cause))));
 
-			const Service: Authentication = {
-				getSession: (providerId, scopes, options) =>
-					Effect.runPromise(GetSession(providerId, scopes, options)),
+			const ServiceImplementation: Authentication = {
+				getSession: (ProviderId, Scopes, Options) =>
+					Effect.runPromise(GetSession(ProviderId, Scopes, Options)),
 
-				getAccounts: (providerId) =>
-					Effect.runPromise(GetAccounts(providerId)),
+				getAccounts: (ProviderId) =>
+					Effect.runPromise(GetAccounts(ProviderId)),
 
 				onDidChangeSessions: OnDidChangeSessionsEvent,
 
 				registerAuthenticationProvider: (
-					_id: string,
-					_label: string,
-					_provider: AuthenticationProvider,
-					_options?: AuthenticationProviderOptions,
+					_Id: string,
+					_Label: string,
+					_Provider: AuthenticationProvider,
+					_Options?: AuthenticationProviderOptions,
 				): Disposable => {
 					// A real implementation would manage providers and proxy calls.
 					// This is stubbed as per the original analysis of OldCocoon.
@@ -138,54 +152,54 @@ export class AuthenticationService extends Effect.Service<AuthenticationService>
 				getProviderInfos: () => Effect.runPromise(GetProviderInfos()),
 
 				getSessions: (
-					providerId: string,
-					scopes: readonly string[],
-					options: AuthenticationGetSessionOptions,
+					ProviderId: string,
+					Scopes: readonly string[],
+					Options: AuthenticationGetSessionOptions,
 				) =>
 					// A real implementation would be more nuanced, but for now we can
 					// just delegate to a method that might exist on the host.
 					Effect.runPromise(
 						IPC.SendRequest<AuthenticationSession[]>(
 							"$getSessions",
-							[providerId, scopes, options],
+							[ProviderId, Scopes, Options],
 						).pipe(
 							Effect.mapError(
-								(cause) => new Error(String(cause)),
+								(Cause) => new Error(String(Cause)),
 							),
 						),
 					),
 
 				login: (
-					providerId: string,
-					scopes: readonly string[],
-					options: AuthenticationProviderSessionOptions,
+					ProviderId: string,
+					Scopes: readonly string[],
+					Options: AuthenticationProviderSessionOptions,
 				) =>
 					Effect.runPromise(
 						IPC.SendRequest<AuthenticationSession>("$login", [
-							providerId,
-							scopes,
-							options,
+							ProviderId,
+							Scopes,
+							Options,
 						]).pipe(
 							Effect.mapError(
-								(cause) => new Error(String(cause)),
+								(Cause) => new Error(String(Cause)),
 							),
 						),
 					),
 
-				logout: (providerId: string, sessionId: string) =>
+				logout: (ProviderId: string, SessionId: string) =>
 					Effect.runPromise(
 						IPC.SendNotification("$logout", [
-							providerId,
-							sessionId,
+							ProviderId,
+							SessionId,
 						]).pipe(
 							Effect.mapError(
-								(cause) => new Error(String(cause)),
+								(Cause) => new Error(String(Cause)),
 							),
 						),
 					),
 			};
 
-			return Service;
+			return ServiceImplementation;
 		}),
 	},
 ) {}

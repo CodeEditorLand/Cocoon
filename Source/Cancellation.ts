@@ -6,10 +6,10 @@
  * unnecessary work in asynchronous workflows.
  */
 
-import { Effect, HashMap, Ref, Scope } from "effect";
+import { Effect, HashMap, Ref, type Scope } from "effect";
 import { CancellationTokenSource } from "vs/base/common/cancellation.js";
-import { InvalidTokenIdProblem } from "./Cancellation/InvalidTokenIdProblem.js";
 import type { CancellationToken } from "vscode";
+import { InvalidTokenIdProblem } from "./Cancellation/InvalidTokenIdProblem.js";
 
 /**
  * @interface Cancellation
@@ -41,7 +41,9 @@ export class CancellationService extends Effect.Service<CancellationService>()(
 				Effect.acquireRelease(
 					Effect.gen(function* () {
 						if (TokenId <= 0) {
-							return yield* new InvalidTokenIdProblem({ TokenId });
+							return yield* new InvalidTokenIdProblem({
+								TokenId,
+							});
 						}
 						const ExistingSource = yield* Ref.get(SourceMap).pipe(
 							Effect.map(HashMap.get(TokenId)),

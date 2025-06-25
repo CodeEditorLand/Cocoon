@@ -3,7 +3,7 @@
  * @description Type converters for the QuickInput APIs (`showQuickPick`, `showInputBox`).
  */
 
-import { Uri, type QuickInputButton, type QuickPickItem } from "vscode";
+import type { QuickInputButton, QuickPickItem, Uri } from "vscode";
 
 /**
  * @description Serializes `QuickPickItem` or string arrays for IPC transport.

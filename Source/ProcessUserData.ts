@@ -6,9 +6,9 @@
  * the result to the user, with declarative, type-safe error handling.
  */
 
-import { Effect, Option, Data } from "effect";
+import { Data, Effect, Option } from "effect";
+import { type IPC, IPCService } from "./IPC.js";
 import { WindowService } from "./Window.js";
-import { IPC, IPCService } from "./IPC.js";
 
 // --- Custom Errors ---
 
@@ -120,13 +120,13 @@ export const ProcessUserData = Effect.gen(function* () {
 }).pipe(
 	// Declaratively handle all known, tagged failure cases for this workflow.
 	Effect.catchTags({
-		ActiveEditorNotFoundProblem: (Error) =>
+		ActiveEditorNotFoundProblem: (Error: { message: string }) =>
 			ShowInformationMessage(Error.message),
-		ProcessingServiceProblem: (Error) =>
+		ProcessingServiceProblem: (Error: { message: string }) =>
 			ShowInformationMessage(Error.message),
 	}),
 	// Catch any other unexpected error.
-	Effect.catchAll((Error) =>
+	Effect.catchAll((Error: any) =>
 		ShowInformationMessage(
 			`An unexpected error occurred: ${Error instanceof globalThis.Error ? Error.message : String(Error)}`,
 		),

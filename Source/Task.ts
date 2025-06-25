@@ -10,7 +10,6 @@ import type { IExtensionDescription } from "vs/platform/extensions/common/extens
 import {
 	Disposable,
 	type Event,
-	type Task as VSCodeTask,
 	type TaskEndEvent,
 	type TaskExecution,
 	type TaskFilter,
@@ -18,15 +17,16 @@ import {
 	type TaskProcessStartEvent,
 	type TaskProvider,
 	type TaskStartEvent,
+	type Task as VSCodeTask,
 } from "vscode";
+import { type Cancellation, CancellationService } from "./Cancellation.js";
+import { IPCService } from "./IPC.js";
 import {
+	ExecutionToAPI,
 	FromAPI as TaskFromAPI,
 	ToAPI as TaskToAPI,
-	ExecutionToAPI,
 } from "./TypeConverter/Task.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { Cancellation, CancellationService } from "./Cancellation.js";
-import { IPCService } from "./IPC.js";
 
 /**
  * @interface ProviderEntry

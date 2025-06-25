@@ -24,7 +24,7 @@ export declare class TerminalCommand implements ITerminalCommand {
     private readonly _xterm;
     private readonly _properties;
     get command(): string;
-    get commandLineConfidence(): "medium" | "low" | "high";
+    get commandLineConfidence(): "low" | "medium" | "high";
     get isTrusted(): boolean;
     get timestamp(): number;
     get duration(): number;

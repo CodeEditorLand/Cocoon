@@ -2334,8 +2334,8 @@ export declare const EditorOptions: {
     screenReaderAnnounceInlineSuggestion: IEditorOption<EditorOption.screenReaderAnnounceInlineSuggestion, boolean>;
     autoClosingBrackets: IEditorOption<EditorOption.autoClosingBrackets, "always" | "never" | "languageDefined" | "beforeWhitespace">;
     autoClosingComments: IEditorOption<EditorOption.autoClosingComments, "always" | "never" | "languageDefined" | "beforeWhitespace">;
-    autoClosingDelete: IEditorOption<EditorOption.autoClosingDelete, "always" | "auto" | "never">;
-    autoClosingOvertype: IEditorOption<EditorOption.autoClosingOvertype, "always" | "auto" | "never">;
+    autoClosingDelete: IEditorOption<EditorOption.autoClosingDelete, "auto" | "always" | "never">;
+    autoClosingOvertype: IEditorOption<EditorOption.autoClosingOvertype, "auto" | "always" | "never">;
     autoClosingQuotes: IEditorOption<EditorOption.autoClosingQuotes, "always" | "never" | "languageDefined" | "beforeWhitespace">;
     autoIndent: IEditorOption<EditorOption.autoIndent, EditorAutoIndentStrategy>;
     autoIndentOnPaste: IEditorOption<EditorOption.autoIndentOnPaste, boolean>;
@@ -2430,10 +2430,10 @@ export declare const EditorOptions: {
     renameOnType: IEditorOption<EditorOption.renameOnType, boolean>;
     renderControlCharacters: IEditorOption<EditorOption.renderControlCharacters, boolean>;
     renderFinalNewline: IEditorOption<EditorOption.renderFinalNewline, "on" | "off" | "dimmed">;
-    renderLineHighlight: IEditorOption<EditorOption.renderLineHighlight, "line" | "all" | "none" | "gutter">;
+    renderLineHighlight: IEditorOption<EditorOption.renderLineHighlight, "line" | "none" | "all" | "gutter">;
     renderLineHighlightOnlyWhenFocus: IEditorOption<EditorOption.renderLineHighlightOnlyWhenFocus, boolean>;
     renderValidationDecorations: IEditorOption<EditorOption.renderValidationDecorations, "on" | "off" | "editable">;
-    renderWhitespace: IEditorOption<EditorOption.renderWhitespace, "selection" | "all" | "none" | "boundary" | "trailing">;
+    renderWhitespace: IEditorOption<EditorOption.renderWhitespace, "selection" | "none" | "all" | "boundary" | "trailing">;
     revealHorizontalRightPadding: IEditorOption<EditorOption.revealHorizontalRightPadding, number>;
     roundedSelection: IEditorOption<EditorOption.roundedSelection, boolean>;
     rulers: IEditorOption<EditorOption.rulers, IRulerOption[]>;
@@ -2477,7 +2477,7 @@ export declare const EditorOptions: {
     wordWrapOverride2: IEditorOption<EditorOption.wordWrapOverride2, "on" | "off" | "inherit">;
     effectiveCursorStyle: IEditorOption<EditorOption.effectiveCursorStyle, TextEditorCursorStyle>;
     editorClassName: IEditorOption<EditorOption.editorClassName, string>;
-    defaultColorDecorators: IEditorOption<EditorOption.defaultColorDecorators, "always" | "auto" | "never">;
+    defaultColorDecorators: IEditorOption<EditorOption.defaultColorDecorators, "auto" | "always" | "never">;
     pixelRatio: IEditorOption<EditorOption.pixelRatio, number>;
     tabFocusMode: IEditorOption<EditorOption.tabFocusMode, boolean>;
     layoutInfo: IEditorOption<EditorOption.layoutInfo, EditorLayoutInfo>;

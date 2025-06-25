@@ -7,14 +7,14 @@
  */
 
 import { Effect, Exit } from "effect";
-import type { Uri } from "vscode";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
+import type { Uri } from "vscode";
 
 import { InitDataService } from "./InitData.js";
 import { LoggerService } from "./Logger.js";
+import { CreateCryptoShim } from "./NodeModuleShim/Crypto.js";
 import { ModuleBlockedProblem } from "./NodeModuleShim/ModuleBlockedProblem.js";
 import { ModuleNotShimmedProblem } from "./NodeModuleShim/ModuleNotShimmedProblem.js";
-import { CreateCryptoShim } from "./NodeModuleShim/Crypto.js";
 import { CreateOsShim } from "./NodeModuleShim/Os.js";
 import { ProcessShim } from "./NodeModuleShim/Process.js";
 

@@ -12,15 +12,15 @@ import type {
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
 import type {
-	LogLevel as VSCodeLogLevel,
 	ILogger,
+	LogLevel as VSCodeLogLevel,
 } from "vs/platform/log/common/log.js";
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
-import { InitDataService } from "./InitData.js";
-import { IPCService } from "./IPC.js";
-import { LoggerService } from "./Logger.js";
 import type { TelemetryLoggerOptions, TelemetrySender } from "vscode";
+import { IPCService } from "./IPC.js";
+import { InitDataService } from "./InitData.js";
+import { LoggerService } from "./Logger.js";
 
 /**
  * @description An internal helper to convert the `LogLevel` from the host to the

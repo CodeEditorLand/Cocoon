@@ -8,7 +8,7 @@
 			"vs/*": ["../../Dependency/Microsoft/Dependency/Editor/src/vs/*"]
 		},
 
-		"rootDirs": [".", "../../Dependency/Microsoft/Dependency/Editor/src/"]
+		"rootDirs": ["."]
 	},
 
 	"extends": "./tsconfig.json",

@@ -6,7 +6,7 @@
  */
 import { Effect } from "effect";
 import type { URI } from "../../../Platform/VSCode/Type.js";
-import { IntegrationClipboardProblem } from "./Problem.js";
+import type { IntegrationClipboardProblem } from "./Problem.js";
 export declare const WriteText: (_text: string) => Effect.Effect<void, never>;
 export declare const ReadText: Effect.Effect<string, IntegrationClipboardProblem>;
 export declare const WriteResourceList: (_resourceList: readonly (typeof URI)[]) => Effect.Effect<void, IntegrationClipboardProblem>;

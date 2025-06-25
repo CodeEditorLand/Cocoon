@@ -8,9 +8,9 @@ import { Effect } from "effect";
 import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
 import type { Disposable } from "vscode";
 import { CancellationService } from "./Cancellation.js";
-import { IPCConfigurationService } from "./IPCConfiguration.js";
-import { gRPCConnectionError } from "./IPC/gRPCConnectionError.js";
 import { IPCProblem } from "./IPC/IPCProblem.js";
+import { gRPCConnectionError } from "./IPC/gRPCConnectionError.js";
+import { IPCConfigurationService } from "./IPCConfiguration.js";
 /**
  * @interface IPC
  * @description The contract for the IPC service.

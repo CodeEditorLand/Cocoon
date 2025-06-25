@@ -5,10 +5,10 @@
  * necessary directories exist before they are accessed.
  */
 import { Effect } from "effect";
-import { type IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Uri } from "vscode";
-import { FileSystem } from "./FileSystem.js";
-import { Logger } from "./Logger.js";
+import { type FileSystem } from "./FileSystem.js";
+import { type Logger } from "./Logger.js";
 /**
  * @interface StoragePath
  * @description The contract for the StoragePath service.

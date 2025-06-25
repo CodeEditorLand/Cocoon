@@ -4,8 +4,8 @@
  */
 
 import type { Command, StatusBarItem as VSCodeStatusBarItem } from "vscode";
-import { Command as CommandConverter } from "./Command.js";
 import { MarkdownString, ThemeColor } from "../Platform/VSCode/Type.js";
+import type { Command as CommandConverter } from "./Command.js";
 import { FromAPI as MarkdownStringFromAPI } from "./Main/MarkdownString.js";
 
 // Placeholder DTO, matching VS Code's internal structure.

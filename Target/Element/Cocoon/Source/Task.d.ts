@@ -6,7 +6,7 @@
  */
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable, type Event, type Task as VSCodeTask, type TaskEndEvent, type TaskExecution, type TaskFilter, type TaskProcessEndEvent, type TaskProcessStartEvent, type TaskProvider, type TaskStartEvent } from "vscode";
+import { Disposable, type Event, type TaskEndEvent, type TaskExecution, type TaskFilter, type TaskProcessEndEvent, type TaskProcessStartEvent, type TaskProvider, type TaskStartEvent, type Task as VSCodeTask } from "vscode";
 import { CancellationService } from "./Cancellation.js";
 import { IPCService } from "./IPC.js";
 /**

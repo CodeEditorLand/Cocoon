@@ -5,8 +5,8 @@
  */
 import { Effect } from "effect";
 import type { CancellationToken, OpenDialogOptions, SaveDialogOptions, Uri } from "vscode";
-import { IPCService } from "./IPC.js";
 import { DialogProblem } from "./Dialog/DialogProblem.js";
+import { IPCService } from "./IPC.js";
 /**
  * @interface Dialog
  * @description The contract for the Dialog service.

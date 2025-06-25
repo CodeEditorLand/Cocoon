@@ -5,12 +5,12 @@
  * flows required by extensions, proxying requests to the host.
  */
 import { Effect } from "effect";
-import type { Event, Disposable, AuthenticationProvider, AuthenticationProviderOptions, AuthenticationSession, AuthenticationGetSessionOptions, AuthenticationProviderInformation, AuthenticationSessionsChangeEvent, AuthenticationProviderSessionOptions } from "vscode";
+import type { AuthenticationGetSessionOptions, AuthenticationProvider, AuthenticationProviderInformation, AuthenticationProviderOptions, AuthenticationProviderSessionOptions, AuthenticationSession, AuthenticationSessionsChangeEvent, Disposable, Event } from "vscode";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 /**
  * @interface Authentication
- * @description The contract for the Authentication service.
+ * @description The contract for the Authentication service, mirroring `vscode.authentication`.
  */
 export interface Authentication {
     readonly getSession: (providerId: string, scopes: readonly string[], options?: AuthenticationGetSessionOptions) => Promise<AuthenticationSession | undefined>;

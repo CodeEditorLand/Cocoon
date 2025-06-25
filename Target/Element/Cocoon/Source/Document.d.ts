@@ -28,7 +28,7 @@ declare const DocumentService_base: Effect.Service.Class<DocumentService, "Servi
         OnDidChangeTextDocument: import("vs/workbench/workbench.web.main.internal.js").Event<TextDocumentChangeEvent>;
         OnDidSaveTextDocument: import("vs/workbench/workbench.web.main.internal.js").Event<TextDocument>;
         GetDocument: (Uri: Uri) => Effect.Effect<Option.Option<TextDocument>, never, never>;
-        RegisterTextDocumentContentProvider: (Scheme: any, Provider: any) => Disposable;
+        RegisterTextDocumentContentProvider: (Scheme: string, Provider: TextDocumentContentProvider) => Disposable;
     }, never, IPCService>;
 }>;
 /**

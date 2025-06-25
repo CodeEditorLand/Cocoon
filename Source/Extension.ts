@@ -7,14 +7,14 @@
 
 import { Effect, Option, Ref } from "effect";
 import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { Event, Extension as VSCodeExtension } from "vscode";
 import { ExtensionKind } from "vscode";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { ExtensionHost, ExtensionHostService } from "./ExtensionHost.js";
+import { type ExtensionHost, ExtensionHostService } from "./ExtensionHost.js";
 import { InitDataService } from "./InitData.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
 

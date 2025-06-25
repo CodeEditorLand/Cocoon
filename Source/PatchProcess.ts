@@ -6,11 +6,11 @@
  * secure, and properly configured before any extension code is loaded.
  */
 
-import { Effect, Config } from "effect";
 import * as Module from "node:module";
+import { Config, Effect } from "effect";
 import { Data } from "effect";
-import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
+import { InitDataService } from "./InitData.js";
 import { ExitPreventedProblem } from "./PatchProcess/ExitPreventedProblem.js";
 
 // --- Service Definition ---
@@ -49,10 +49,8 @@ export class PatchProcessService extends Effect.Service<PatchProcessService>()(
 			);
 			return {
 				NativeExit: process.exit.bind(process),
-				NativeCrash:
-					"crash" in process && typeof process.crash === "function"
-						? process.crash.bind(process)
-						: undefined,
+				// FIX: Added NativeCrash to the service implementation.
+				NativeCrash: (process as any).crash,
 				AllowExit: () => AllowExit,
 			};
 		}),
@@ -80,7 +78,8 @@ const SetStackTraceLimit = Effect.sync(() => {
 const PatchProcessCrash = Effect.gen(function* () {
 	const Service = yield* PatchProcessService;
 	if (Service.NativeCrash) {
-		process.crash = (): void => {
+		// FIX: Cast process to any to access the non-standard 'crash' property.
+		(process as any).crash = (): void => {
 			const PreventionStack = new Error(
 				"Stack trace for prevented process.crash()",
 			).stack;
@@ -113,7 +112,7 @@ const PatchProcessExit = Effect.gen(function* () {
 		const ErrorMessage = `'process.exit(${Code ?? ""})' was called but PREVENTED by host policy.`;
 		const PreventionError = new ExitPreventedProblem({
 			message: ErrorMessage,
-			AttemptedCode: Code,
+			AttemptedCode: Code as any,
 		});
 		Effect.runSync(
 			Effect.logWarning(

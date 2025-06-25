@@ -10,7 +10,7 @@ import { Emitter } from "vs/base/common/event.js";
 import { URI as VSCodeURI } from "vs/base/common/uri.js";
 import { FileType as VSCodeFileType } from "vs/platform/files/common/files.js";
 import type * as VSCode from "vscode";
-import { CompletionItemKind, CompletionItemTag, ConfigurationTarget, DiagnosticSeverity, DiagnosticTag, EndOfLine, ProgressLocation, QuickPickItemKind, SnippetString, StatusBarAlignment, TextEditorCursorStyle, ViewColumn, TreeItemCollapsibleState } from "vscode";
+import { CompletionItemKind, CompletionItemTag, ConfigurationTarget, DiagnosticSeverity, DiagnosticTag, EndOfLine, ProgressLocation, QuickPickItemKind, SnippetString, StatusBarAlignment, TextEditorCursorStyle, TreeItemCollapsibleState, ViewColumn } from "vscode";
 export declare class Disposable implements VSCode.Disposable {
     private _callOnDispose;
     constructor(callOnDispose: () => any);

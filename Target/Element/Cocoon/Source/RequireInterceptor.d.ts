@@ -7,8 +7,8 @@
 import { Effect } from "effect";
 import { APIFactoryService } from "./APIFactory.js";
 import { ExtensionPathService } from "./ExtensionPath.js";
-import { NodeModuleShimService } from "./NodeModuleShim.js";
 import { LoggerService } from "./Logger.js";
+import { NodeModuleShimService } from "./NodeModuleShim.js";
 /**
  * @interface RequireInterceptor
  * @description The contract for the RequireInterceptor service.

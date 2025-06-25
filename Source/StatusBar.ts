@@ -8,20 +8,20 @@ import { Effect, Ref } from "effect";
 import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import {
-	Disposable,
-	StatusBarAlignment,
 	type AccessibilityInformation,
-	type Command as VSCodeCommand,
-	type MarkdownString,
-	type StatusBarItem as VSCodeStatusBarItem,
-	type ThemeColor,
 	type CancellationToken,
+	Disposable,
+	type MarkdownString,
 	type ProviderResult,
+	StatusBarAlignment,
+	type ThemeColor,
+	type Command as VSCodeCommand,
+	type StatusBarItem as VSCodeStatusBarItem,
 } from "vscode";
-import { FromAPI as StatusBarItemToDTO } from "./TypeConverter/StatusBar.js";
+import { type Command as CommandInterface, CommandService } from "./Command.js";
+import { type IPC, IPCService } from "./IPC.js";
 import { Command as CommandConverter } from "./TypeConverter/Command.js";
-import { Command as CommandInterface, CommandService } from "./Command.js";
-import { IPC, IPCService } from "./IPC.js";
+import { FromAPI as StatusBarItemToDTO } from "./TypeConverter/StatusBar.js";
 
 /**
  * @class StatusBarItemImplementation

@@ -5,12 +5,12 @@
  * extension is making a request.
  */
 
-import { Effect } from "effect";
 import * as Path from "node:path";
+import { Effect } from "effect";
 import { URI } from "vs/base/common/uri.js";
 import type {
-	IExtensionDescription,
 	ExtensionIdentifier,
+	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
 import type { Uri } from "vscode";
 import { InitDataService } from "./InitData.js";

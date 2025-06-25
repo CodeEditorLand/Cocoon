@@ -2,7 +2,7 @@
  * @module QuickInput
  * @description Type converters for the QuickInput APIs (`showQuickPick`, `showInputBox`).
  */
-import { type QuickInputButton, type QuickPickItem } from "vscode";
+import type { QuickInputButton, QuickPickItem } from "vscode";
 /**
  * @description Serializes `QuickPickItem` or string arrays for IPC transport.
  * @param Items The array of items to serialize.
@@ -10,7 +10,6 @@ import { type QuickInputButton, type QuickPickItem } from "vscode";
  */
 export declare const SerializeItems: <T extends QuickPickItem | string>(Items: readonly T[]) => {
     handle: number;
-    tooltip?: string | import("vscode").MarkdownString;
     label: string;
     kind?: import("vscode").QuickPickItemKind;
     iconPath?: import("vscode").IconPath;

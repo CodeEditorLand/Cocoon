@@ -5,17 +5,17 @@
  */
 
 import { Effect } from "effect";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Disposable } from "vscode";
 import type {
 	CodeActionProvider,
+	CodeActionProviderMetadata,
 	CompletionItemProvider,
 	DefinitionProvider,
+	DocumentSelector,
 	HoverProvider,
 	ReferenceProvider,
-	CodeActionProviderMetadata,
-	DocumentSelector,
 } from "vscode";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 
 /**
  * @interface LanguageFeature

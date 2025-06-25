@@ -14,10 +14,10 @@ import type {
 	ViewColumn,
 	WindowState,
 } from "vscode";
+import { IPCService } from "./IPC.js";
 import { FromAPI as RangeFromAPI } from "./TypeConverter/Main/Range.js";
 import { FromAPI as ViewColumnFromAPI } from "./TypeConverter/Main/ViewColumn.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { IPCService } from "./IPC.js";
 import { WorkSpaceService } from "./WorkSpace.js";
 
 /**

@@ -11,7 +11,6 @@
  * 6. Listening for and handling a graceful shutdown signal from the host.
  */
 
-import { Effect, Layer, Deferred } from "effect";
 import * as Path from "node:path";
 import { DevTools } from "@effect/experimental";
 import { NodeSdk } from "@effect/opentelemetry";
@@ -20,33 +19,35 @@ import {
 	BatchSpanProcessor,
 	ConsoleSpanExporter,
 } from "@opentelemetry/sdk-trace-base";
+import { Deferred, Effect, Layer } from "effect";
 
 // --- Service Imports (PascalCase) ---
 import { APIDeprecationService } from "./APIDeprecation.js";
 import { APIFactoryService } from "./APIFactory.js";
+import { ApplicationConfigurationService } from "./ApplicationConfiguration.js";
 import { AuthenticationService } from "./Authentication.js";
 import { CancellationService } from "./Cancellation.js";
 import { ClipboardService } from "./Clipboard.js";
 import { CommandService } from "./Command.js";
-import { ApplicationConfigurationService } from "./ApplicationConfiguration.js";
 import { DebugService } from "./Debug.js";
 import { DialogService } from "./Dialog.js";
 import { DocumentService } from "./Document.js";
-import { EnvironmentService } from "./Environment.js";
 import { ESMInterceptorService } from "./ESMInterceptor.js";
+import { EnvironmentService } from "./Environment.js";
 import { ExtensionService } from "./Extension.js";
 import { ExtensionHostService } from "./ExtensionHost.js";
 import { ExtensionPathService } from "./ExtensionPath.js";
 import { FileSystemService } from "./FileSystem.js";
 import { FileSystemInformationService } from "./FileSystemInformation.js";
 import { HostKindPickerService } from "./HostKindPicker.js";
-import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
 import { IPCConfigurationService } from "./IPCConfiguration.js";
+import { InitDataService } from "./InitData.js";
 import { LanguageFeatureService } from "./LanguageFeature.js";
 import { LoggerService } from "./Logger.js";
 import { MessageService } from "./Message.js";
 import { NodeModuleShimService } from "./NodeModuleShim.js";
+import { RunPatchProcess } from "./PatchProcess.js";
 import { ProposedAPIService } from "./ProposedAPI.js";
 import { QuickInputService } from "./QuickInput.js";
 import { RequireInterceptorService } from "./RequireInterceptor.js";
@@ -60,7 +61,6 @@ import { TreeViewService } from "./TreeView.js";
 import { WebViewPanelService } from "./WebViewPanel.js";
 import { WindowService } from "./Window.js";
 import { WorkSpaceService } from "./WorkSpace.js";
-import { RunPatchProcess } from "./PatchProcess.js";
 
 // --- Pre-initialization Steps ---
 const VSCodeOutputDirectory =
@@ -68,17 +68,7 @@ const VSCodeOutputDirectory =
 	Path.resolve(__dirname, "../../../Dependency/VSCode/out");
 (module as any).paths.unshift(VSCodeOutputDirectory);
 
-// --- Placeholder Types ---
-interface IExtensionHostInitData {
-	readonly extensions: { readonly allExtensions: readonly any[] };
-	readonly environment: any;
-	readonly logLevel: any;
-	readonly remote: any;
-	readonly telemetryInfo: any;
-	readonly uiKind: any;
-	readonly quality: any;
-	readonly workspace: any;
-}
+import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 // --- Utility Layers ---
 const TracingLive = NodeSdk.layer(() => ({
@@ -117,7 +107,10 @@ const PreHandshakeEffect = Effect.gen(function* () {
 		}),
 	);
 	IPC.RegisterInvokeHandler("$shutdown", () =>
-		Effect.runPromise(ShutdownEffect),
+		// FIX: Provide the LoggerService dependency for the shutdown effect to run.
+		Effect.runPromise(
+			Effect.provide(ShutdownEffect, LoggerService.Default),
+		),
 	);
 
 	yield* IPC.SendNotification("$initialHandshake", []);
@@ -283,7 +276,8 @@ const MainEffect = Effect.gen(function* () {
 	Effect.catchAllCause((Cause) =>
 		Effect.logFatal("Cocoon main process failed.", Cause),
 	),
-	Effect.provide(UtilityLayers),
+	// FIX: Add LoggerService to the provided utility layers to satisfy dependencies of the catchAllCause log.
+	Effect.provide(Layer.merge(UtilityLayers, LoggerService.Default)),
 	Effect.scoped,
 );
 

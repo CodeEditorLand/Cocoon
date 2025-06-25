@@ -5,9 +5,9 @@
  */
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable, StatusBarAlignment, type AccessibilityInformation, type Command as VSCodeCommand, type MarkdownString, type StatusBarItem as VSCodeStatusBarItem, type ThemeColor, type CancellationToken, type ProviderResult } from "vscode";
-import { Command as CommandInterface, CommandService } from "./Command.js";
-import { IPC, IPCService } from "./IPC.js";
+import { type AccessibilityInformation, type CancellationToken, Disposable, type MarkdownString, type ProviderResult, StatusBarAlignment, type ThemeColor, type Command as VSCodeCommand, type StatusBarItem as VSCodeStatusBarItem } from "vscode";
+import { type Command as CommandInterface, CommandService } from "./Command.js";
+import { type IPC, IPCService } from "./IPC.js";
 /**
  * @class StatusBarItemImplementation
  * @description An internal class that implements the `vscode.StatusBarItem` interface.

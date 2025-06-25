@@ -6,7 +6,7 @@
  * access to the system clipboard and methods for interacting with external URLs.
  */
 import { Effect } from "effect";
-import { UIKind, type Event, type LogLevel, type Uri, type Clipboard } from "vscode";
+import { type Clipboard, type Event, type LogLevel, UIKind, type Uri } from "vscode";
 import { ClipboardService } from "./Clipboard.js";
 import { IPCService } from "./IPC.js";
 /**

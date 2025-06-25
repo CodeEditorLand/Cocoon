@@ -5,23 +5,23 @@
  * contract from VS Code for high fidelity.
  */
 
-import { Effect } from "effect";
 import { deepmerge } from "deepmerge-ts";
+import { Effect } from "effect";
+import { Emitter } from "vs/base/common/event.js";
+import { joinPath } from "vs/base/common/resources.js";
 import type {
+	IConfigurationOverrides,
 	IConfigurationService,
 	IConfigurationValue,
-	IConfigurationOverrides,
 } from "vs/platform/configuration/common/configuration.js";
-import { Emitter } from "vs/base/common/event.js";
 import type { Uri } from "vscode";
 import { ApplicationConfigurationProblem } from "./ApplicationConfiguration/ApplicationConfigurationProblem.js";
 import type { IntegrationConfigurationProblem } from "./Integration/Tauri/Configuration/Problem.js";
-import type { IntegrationPathProblem } from "./Integration/Tauri/Path/Problem.js";
-import { ReadRawFile } from "./Integration/Tauri/File/ReadRawFile.js";
 import { ParseJson } from "./Integration/Tauri/File/ParseJson.js";
+import { ReadRawFile } from "./Integration/Tauri/File/ReadRawFile.js";
 import { ResolveFinalDefaultPath } from "./Integration/Tauri/Path/Default.js";
+import type { IntegrationPathProblem } from "./Integration/Tauri/Path/Problem.js";
 import { ResolveWorkSpacePath } from "./Integration/Tauri/Path/WorkSpace.js";
-import { joinPath } from "vs/base/common/resources.js";
 
 const ResolveConfigurationFile = (
 	ConfigDirectoryEffect: Effect.Effect<Uri, IntegrationPathProblem>,

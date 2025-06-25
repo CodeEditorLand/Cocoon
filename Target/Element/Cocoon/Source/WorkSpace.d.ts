@@ -5,11 +5,11 @@
  * orchestrating complex operations like finding files and applying edits.
  */
 import { Effect } from "effect";
-import { Disposable, type CancellationToken, type Event, type FileSystem as VSCodeFileSystem, type GlobPattern, type TextDocument, type TextEditor, type TextEditorOptionsChangeEvent, type TextEditorSelectionChangeEvent, type TextEditorViewColumnChangeEvent, type TextEditorVisibleRangesChangeEvent, type Uri, type WorkspaceConfiguration, type WorkspaceEdit, type WorkspaceFolder, type WorkspaceFoldersChangeEvent, type TextDocumentContentProvider } from "vscode";
+import type { CancellationToken, Disposable, Event, GlobPattern, TextDocument, TextDocumentContentProvider, TextEditor, TextEditorOptionsChangeEvent, TextEditorSelectionChangeEvent, TextEditorViewColumnChangeEvent, TextEditorVisibleRangesChangeEvent, Uri, FileSystem as VSCodeFileSystem, WorkspaceConfiguration, WorkspaceEdit, WorkspaceFolder, WorkspaceFoldersChangeEvent } from "vscode";
+import type { ConfigurationScope } from "vscode";
 import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";
-import type { ConfigurationScope } from "vscode";
 /**
  * @interface WorkSpace
  * @description The contract for the WorkSpace service, mirroring `vscode.workspace`.

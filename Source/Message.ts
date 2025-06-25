@@ -5,8 +5,8 @@
  */
 
 import { Effect } from "effect";
-import type { MessageItem, MessageOptions } from "vscode";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
+import type { MessageItem, MessageOptions } from "vscode";
 import { IPCService } from "./IPC.js";
 import type { IPC } from "./IPC.js";
 
@@ -18,14 +18,12 @@ interface ExtensionSource {
 interface ParsedArguments {
 	readonly Option: MessageOptions;
 	readonly Items: (string | MessageItem)[];
-	readonly Source?: ExtensionSource;
 }
 
 // Internal Helpers
 const ParseArgument = (Arguments: any[]): ParsedArguments => {
 	let Option: MessageOptions = {};
 	let Items: (string | MessageItem)[] = [];
-	let Source: ExtensionSource | undefined = undefined;
 	let CurrentIndex = 0;
 	if (
 		Arguments.length > CurrentIndex &&
@@ -36,14 +34,7 @@ const ParseArgument = (Arguments: any[]): ParsedArguments => {
 	) {
 		Option = Arguments[CurrentIndex++];
 	}
-	if (
-		Arguments.length > CurrentIndex &&
-		typeof Arguments[CurrentIndex] === "object" &&
-		Arguments[CurrentIndex] !== null &&
-		typeof (Arguments[CurrentIndex] as ExtensionSource).id === "string"
-	) {
-		Source = Arguments[CurrentIndex++];
-	}
+	// FIX: Removed unused 'Source' parsing logic.
 	Items = Arguments.slice(CurrentIndex).filter(
 		(item): item is string | MessageItem =>
 			typeof item === "string" ||
@@ -51,7 +42,7 @@ const ParseArgument = (Arguments: any[]): ParsedArguments => {
 				item !== null &&
 				typeof item.title === "string"),
 	);
-	return { Option, Items, Source };
+	return { Option, Items };
 };
 
 const CreateShowMessageEffect = <T extends MessageItem>(
@@ -133,42 +124,42 @@ export class MessageService extends Effect.Service<MessageService>()(
 					message: string,
 					...args: Array<string | T | MessageOptions>
 				) => {
-					const { Option, Items, Source } = ParseArgument(args);
+					const { Option, Items } = ParseArgument(args);
 					return CreateShowMessageEffect(
 						IPC,
 						1,
 						message,
 						Option,
 						Items,
-						Source,
+						undefined, // Source is not used
 					) as any;
 				},
 				ShowWarningMessage: <T extends MessageItem>(
 					message: string,
 					...args: Array<string | T | MessageOptions>
 				) => {
-					const { Option, Items, Source } = ParseArgument(args);
+					const { Option, Items } = ParseArgument(args);
 					return CreateShowMessageEffect(
 						IPC,
 						2,
 						message,
 						Option,
 						Items,
-						Source,
+						undefined, // Source is not used
 					) as any;
 				},
 				ShowErrorMessage: <T extends MessageItem>(
 					message: string,
 					...args: Array<string | T | MessageOptions>
 				) => {
-					const { Option, Items, Source } = ParseArgument(args);
+					const { Option, Items } = ParseArgument(args);
 					return CreateShowMessageEffect(
 						IPC,
 						3,
 						message,
 						Option,
 						Items,
-						Source,
+						undefined, // Source is not used
 					) as any;
 				},
 			};

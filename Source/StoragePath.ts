@@ -5,13 +5,13 @@
  * necessary directories exist before they are accessed.
  */
 
-import { Effect } from "effect";
 import * as Path from "node:path";
-import { type IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import { Effect } from "effect";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Uri } from "vscode";
-import { FileSystem, FileSystemService } from "./FileSystem.js";
+import { type FileSystem, FileSystemService } from "./FileSystem.js";
 import { InitDataService } from "./InitData.js";
-import { Logger, LoggerService } from "./Logger.js";
+import { type Logger, LoggerService } from "./Logger.js";
 
 /**
  * @description An internal helper `Effect` to idempotently create a directory.

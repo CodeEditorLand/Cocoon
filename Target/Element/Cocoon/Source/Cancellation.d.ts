@@ -5,9 +5,9 @@
  * of cancellation sources, which is crucial for preventing resource leaks and
  * unnecessary work in asynchronous workflows.
  */
-import { Effect, Scope } from "effect";
-import { InvalidTokenIdProblem } from "./Cancellation/InvalidTokenIdProblem.js";
+import { Effect, type Scope } from "effect";
 import type { CancellationToken } from "vscode";
+import { InvalidTokenIdProblem } from "./Cancellation/InvalidTokenIdProblem.js";
 /**
  * @interface Cancellation
  * @description The contract for the Cancellation service.

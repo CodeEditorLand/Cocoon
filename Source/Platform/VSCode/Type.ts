@@ -22,13 +22,13 @@ import {
 	SnippetString,
 	StatusBarAlignment,
 	TextEditorCursorStyle,
-	ViewColumn,
-	ThemeIcon as VSCodeThemeIcon,
 	TreeItemCollapsibleState,
 	ProcessExecution as VSCodeProcessExecution,
 	Task as VSCodeTask,
-	WorkspaceEdit as VSCodeWorkspaceEdit,
 	TextEdit as VSCodeTextEdit,
+	ThemeIcon as VSCodeThemeIcon,
+	WorkspaceEdit as VSCodeWorkspaceEdit,
+	ViewColumn,
 } from "vscode";
 
 // Foundational Re-exports

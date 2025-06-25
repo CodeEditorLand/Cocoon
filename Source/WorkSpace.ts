@@ -7,36 +7,36 @@
 
 import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
-import {
+import type {
+	CancellationToken,
 	Disposable,
-	type CancellationToken,
-	type Event,
-	type FileSystem as VSCodeFileSystem,
-	type GlobPattern,
-	type TextDocument,
-	type TextEditor,
-	type TextEditorOptionsChangeEvent,
-	type TextEditorSelectionChangeEvent,
-	type TextEditorViewColumnChangeEvent,
-	type TextEditorVisibleRangesChangeEvent,
-	type Uri,
-	type WorkspaceConfiguration,
-	type WorkspaceEdit,
-	type WorkspaceFolder,
-	type WorkspaceFoldersChangeEvent,
-	type TextDocumentContentProvider,
+	Event,
+	GlobPattern,
+	TextDocument,
+	TextDocumentContentProvider,
+	TextEditor,
+	TextEditorOptionsChangeEvent,
+	TextEditorSelectionChangeEvent,
+	TextEditorViewColumnChangeEvent,
+	TextEditorVisibleRangesChangeEvent,
+	Uri,
+	FileSystem as VSCodeFileSystem,
+	WorkspaceConfiguration,
+	WorkspaceEdit,
+	WorkspaceFolder,
+	WorkspaceFoldersChangeEvent,
 } from "vscode";
 import { URI } from "vscode-uri";
 
-import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
-import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import type { ConfigurationScope } from "vscode";
 import { ApplicationConfigurationService } from "./ApplicationConfiguration.js";
 import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";
 import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
-import type { ConfigurationScope } from "vscode";
+import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
+import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
+import { CreateEventStream } from "./Utility/CreateEventStream.js";
 
 class InternalWorkspace {
 	constructor(

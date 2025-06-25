@@ -3,7 +3,7 @@
  * @description Type converters for the `vscode.StatusBarItem` API.
  */
 import type { StatusBarItem as VSCodeStatusBarItem } from "vscode";
-import { Command as CommandConverter } from "./Command.js";
+import type { Command as CommandConverter } from "./Command.js";
 interface IStatusbarEntry {
     id: string;
     name: string | undefined;

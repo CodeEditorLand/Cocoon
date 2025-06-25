@@ -1,132 +1,229 @@
 /**
  * @module Command
- * @description Defines the service for registering and executing commands,
- * implementing the `IExtHostCommands` interface from VS Code for high fidelity.
- * This service is responsible for managing the command palette and direct command
- * invocations from extensions.
+ * @description Defines the service for managing and executing commands within the
+ * extension host. It implements the core logic of `vscode.commands`, handling
+ * command registration, execution, and retrieval.
  */
 
-import { Effect } from "effect";
-import type { IExtHostCommands } from "vs/workbench/api/common/extHostCommands.js";
-import type {
-	IExtensionDescription,
-	IRelaxedExtensionDescription,
-} from "vs/platform/extensions/common/extensions.js";
-import type { TextEditor, TextEditorEdit, Disposable } from "vscode";
-import type { ICommandMetadata } from "vs/platform/commands/common/commands.js";
-
+import { Effect, Ref } from "effect";
+import type { IDisposable } from "vs/base/common/lifecycle.js";
+import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import type { MainThreadCommandsShape } from "vs/workbench/api/common/extHost.protocol.js";
+// FIX: Remove duplicate and incorrect import of TextEditorCommand.
+import type { TextEditorCommand } from "vscode";
 import { IPCService } from "./IPC.js";
-import { TelemetryService } from "./Telemetry.js";
+import { LoggerService } from "./Logger.js";
+// FIX: Removed unused TelemetryService import.
 import { WindowService } from "./Window.js";
-
-// --- Service-Specific Types ---
-
-/**
- * @interface CommandHandler
- * @description A general-purpose command handler function.
- */
-export type CommandHandler = (...args: any[]) => any;
-
-/**
- * @interface TextEditorCommandHandler
- * @description A command handler specifically for text editor commands, which receives the
- * active editor and an edit builder as arguments.
- */
-export type TextEditorCommandHandler = (
-	Editor: TextEditor,
-	Edit: TextEditorEdit,
-	...args: any[]
-) => any;
-
-/**
- * @interface CommandHandlerEntry
- * @description The internal representation of a registered command, holding its
- * handler and the extension that registered it.
- */
-export interface CommandHandlerEntry {
-	readonly Handler: CommandHandler;
-	readonly ThisArgument: any;
-	readonly Extension: IExtensionDescription;
-	/** Indicates if the command requires an active text editor. */
-	readonly IsTextEditorCommand: boolean;
-}
 
 /**
  * @interface Command
- * @description The contract for the Command service, matching `IExtHostCommands`.
+ * @description The contract for the Command service, mirroring the public
+ * `vscode.commands` API surface but adapted for an Effect-TS environment.
  */
-export interface Command extends IExtHostCommands {}
+export interface Command {
+	readonly registerCommand: (
+		global: boolean,
+		id: string,
+		command: <T>(...args: any[]) => T | Promise<T>,
+		thisArg?: any,
+	) => IDisposable;
+	readonly registerTextEditorCommand: (
+		id: string,
+		callback: TextEditorCommand,
+		thisArg?: any,
+	) => IDisposable;
+	readonly executeCommand: <T>(
+		id: string,
+		...args: any[]
+	) => Promise<T | undefined>;
+	readonly GetCommands: (FilterInternal?: boolean) => Promise<string[]>;
+}
+
+/**
+ * @interface InternalCommand
+ * @description Represents the internal structure of a registered command, including
+ * its callback, argument transformations, and associated extension metadata.
+ */
+interface InternalCommand {
+	readonly Id: string;
+	readonly Callback: (...args: any[]) => any;
+	readonly ThisArg: any;
+	readonly Extension: IExtensionDescription | undefined;
+}
 
 /**
  * @class CommandService
- * @description The `Effect.Service` for the Command service. It directly implements
- * the `IExtHostCommands` interface from VS Code's source code to ensure 1:1 API
- * compatibility.
+ * @description The `Effect.Service` for the Command service. It manages the
+ * lifecycle of commands, proxies execution to the main thread when necessary,
+ * and handles argument marshalling.
  */
 export class CommandService extends Effect.Service<CommandService>()(
 	"Service/Command",
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
-			yield* TelemetryService;
-			yield* WindowService;
+			const Logger = yield* LoggerService;
+			const Window = yield* WindowService;
 
-			const RegisterCommand = (
-				_global: boolean,
-				id: string,
-			): Effect.Effect<Disposable, Error> => {
-				return IPC.SendNotification("$registerCommand", [id]).pipe(
-					Effect.map(() => ({ dispose: () => {} })),
-					Effect.mapError((e) => e as Error),
-				);
-			};
+			const CommandsReference = yield* Ref.make(
+				new Map<string, InternalCommand>(),
+			);
+			const MainThreadProxy = IPC.CreateProxy<MainThreadCommandsShape>(
+				"$rpc:mainThreadCommands",
+			);
 
-			const ExecuteCommand = <T>(
-				id: string,
-				...args: any[]
-			): Effect.Effect<T, Error> => {
-				return IPC.SendRequest<T>("$executeCommand", [id, ...args]);
-			};
+			/**
+			 * @description Executes a command that has been registered within this extension host.
+			 * @param Command The internal command object to execute.
+			 * @param Arguments The arguments to pass to the command's callback.
+			 * @returns An `Effect` that resolves with the command's result.
+			 */
+			const ExecuteLocalCommand = (
+				Command: InternalCommand,
+				Arguments: any[],
+			) =>
+				Effect.tryPromise({
+					try: async () => {
+						// FIX: Removed unused 'Id' from destructuring.
+						const { Callback, ThisArg, Extension } = Command;
+						if (Extension) {
+							// Telemetry.onExtensionActivation(
+							// 	Extension.identifier,
+							// 	{ startup: false, activationEvent: `onCommand:${Id}` } as any,
+							// );
+						}
+						return Callback.apply(ThisArg, Arguments);
+					},
+					catch: (Cause) => Cause as Error,
+				});
 
-			const GetCommands = (
-				filterInternal = false,
-			): Effect.Effect<string[], Error> => {
-				return IPC.SendRequest<string[]>("$getCommands", [
-					filterInternal,
-				]);
-			};
+			// Register the RPC handler for commands invoked from the main thread.
+			IPC.RegisterInvokeHandler(
+				"$executeContributedCommand",
+				([Id, ...Arguments]) =>
+					Effect.runPromise(
+						Ref.get(CommandsReference).pipe(
+							Effect.flatMap((Map) =>
+								Effect.fromNullable(Map.get(Id)),
+							),
+							Effect.flatMap((Command) =>
+								ExecuteLocalCommand(
+									Command as InternalCommand,
+									Arguments,
+								),
+							),
+							Effect.catchAll((Error) =>
+								Logger.Error(
+									`Failed to execute local command '${Id}'`,
+									Error,
+								).pipe(Effect.as(undefined)),
+							),
+						),
+					),
+			);
 
-			// This implementation matches the IExtHostCommands interface
-			const Service: IExtHostCommands = {
+			const ServiceImplementation: Command = {
 				registerCommand: (
-					global: boolean,
-					id: string,
-					_handler: <T>(...args: any[]) => T | Promise<T>,
-					_thisArg?: any,
-					_metadata?: ICommandMetadata,
-					_extension?: Readonly<IRelaxedExtensionDescription>,
-				): Disposable => Effect.runSync(RegisterCommand(global, id)),
+					Global: boolean,
+					Id: string,
+					Callback: <T>(...args: any[]) => T | Promise<T>,
+					ThisArg?: any,
+				): IDisposable => {
+					const CommandRegistration = Ref.update(
+						CommandsReference,
+						(Map) =>
+							Map.set(Id, {
+								Id,
+								Callback,
+								ThisArg,
+								Extension: undefined, // TODO: This needs to be captured from the context
+							}),
+					).pipe(
+						Effect.tap(() =>
+							Logger.Trace(`Command '${Id}' registered.`),
+						),
+					);
+
+					Effect.runSync(CommandRegistration);
+
+					if (Global) {
+						MainThreadProxy.$registerCommand(Id);
+					}
+
+					return {
+						dispose: () => {
+							const Cleanup = Ref.update(
+								CommandsReference,
+								(Map) => (Map.delete(Id), Map),
+							).pipe(
+								Effect.tap(() => {
+									if (Global) {
+										MainThreadProxy.$unregisterCommand(Id);
+									}
+								}),
+							);
+							Effect.runFork(Cleanup);
+						},
+					};
+				},
 
 				registerTextEditorCommand: (
-					id: string,
-					_handler: (
-						textEditor: TextEditor,
-						edit: TextEditorEdit,
+					Id: string,
+					Callback: TextEditorCommand,
+					ThisArg?: any,
+				): IDisposable => {
+					const AdaptedCallback = (
 						...args: any[]
-					) => void,
-					_thisArg?: any,
-					_metadata?: ICommandMetadata,
-					_extension?: Readonly<IRelaxedExtensionDescription>,
-				): Disposable => Effect.runSync(RegisterCommand(true, id)),
+					): any | Promise<any> => {
+						const ActiveEditor = Window.activeTextEditor;
+						if (!ActiveEditor) {
+							Logger.Warn(
+								`Cannot execute text editor command '${Id}' because there is no active text editor.`,
+							);
+							return undefined;
+						}
+						// This is a simplified version. A full implementation would involve
+						// marshalling TextEditorEdit objects.
+						return Callback.apply(ThisArg, [
+							ActiveEditor,
+							{} as any, // Placeholder for TextEditorEdit
+							...args,
+						]);
+					};
+					return ServiceImplementation.registerCommand(
+						true,
+						Id,
+						AdaptedCallback,
+					);
+				},
 
-				executeCommand: <T>(id: string, ...args: any[]) =>
-					Effect.runPromise(ExecuteCommand<T>(id, ...args)),
+				executeCommand: async <T>(
+					Id: string,
+					...Arguments: any[]
+				): Promise<T | undefined> => {
+					const AllCommands = await Effect.runPromise(
+						Ref.get(CommandsReference),
+					);
 
-				getCommands: (filterInternal) =>
-					Effect.runPromise(GetCommands(filterInternal)),
-			} as unknown as IExtHostCommands;
+					if (AllCommands.has(Id)) {
+						return Effect.runPromise(
+							ExecuteLocalCommand(
+								AllCommands.get(Id)!,
+								Arguments,
+							),
+						) as Promise<T | undefined>; // FIX: Correctly cast the return type.
+					}
+					// FIX: Provide the required cancellation token argument (0 for none).
+					return MainThreadProxy.$executeCommand(Id, Arguments, 0);
+				},
 
-			return Service;
+				// FIX: Corrected signature to match VS Code protocol.
+				GetCommands: (FilterInternal = false): Promise<string[]> =>
+					MainThreadProxy.$getCommands(FilterInternal),
+			};
+
+			return ServiceImplementation;
 		}),
 	},
 ) {}
