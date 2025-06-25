@@ -193,7 +193,11 @@ export class TaskService extends Effect.Service<TaskService>()("Service/Task", {
 					),
 					Effect.mapError((Cause) => new Error(String(Cause))),
 				),
-			ExecuteTask: (TaskToExecute, Extension) =>
+			// FIX: Add explicit types to parameters
+			ExecuteTask: (
+				TaskToExecute: VSCodeTask,
+				Extension: IExtensionDescription,
+			) =>
 				IPC.SendRequest<any>("$executeTask", [
 					TaskFromAPI(TaskToExecute, Extension),
 				]).pipe(

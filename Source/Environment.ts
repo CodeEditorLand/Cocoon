@@ -28,7 +28,7 @@ import { CreateEventStream } from "./Utility/CreateEventStream.js";
  */
 export interface Environment {
 	readonly appName: string;
-	readonly appRoot?: string;
+	readonly appRoot?: string | undefined;
 	readonly appHost: string;
 	readonly uriScheme: string;
 	readonly language: string;
@@ -36,8 +36,7 @@ export interface Environment {
 	readonly sessionId: string;
 	readonly isTrusted: boolean;
 	readonly isRemote: boolean;
-	// FIX: remoteName is optional in the VS Code API.
-	readonly remoteName?: string;
+	readonly remoteName?: string | undefined;
 	readonly shell: string;
 	readonly uiKind: UIKind;
 	readonly isNewAppInstall: boolean;

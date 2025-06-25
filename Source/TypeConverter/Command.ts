@@ -68,7 +68,7 @@ export class Command {
 
 	constructor(
 		private readonly RegisterCommand: (
-			global: boolean, // Changed from 'id' to 'global' to match CommandService
+			global: boolean,
 			id: string,
 			handler: (...args: any[]) => any,
 			thisArg?: any,
@@ -111,14 +111,16 @@ export class Command {
 		if (APICommandValue) {
 			const ConvertedArgumentArray =
 				Command.arguments?.map((Argument, i) =>
-					// FIX: Use non-null assertion assuming argument lengths match the API contract.
 					APICommandValue.Arguments[i]!.Convert(Argument),
 				) ?? [];
-			return {
+			const result: InternalCommand = {
 				id: APICommandValue.InternalId,
 				title: Command.title,
-				arguments: ConvertedArgumentArray,
 			};
+			if (ConvertedArgumentArray.length > 0) {
+				result.arguments = ConvertedArgumentArray;
+			}
+			return result;
 		}
 
 		if (
@@ -136,14 +138,17 @@ export class Command {
 				arguments: [Id, ...(Command.arguments ?? [])],
 			};
 		}
-		// FIX: Handle exactOptionalPropertyTypes for tooltip
+
 		const result: InternalCommand = {
 			id: Command.command,
 			title: Command.title,
-			arguments: Command.arguments,
 		};
 		if (Command.tooltip) {
 			result.tooltip = Command.tooltip;
+		}
+		// FIX: Conditionally add arguments to satisfy exactOptionalPropertyTypes.
+		if (Command.arguments) {
+			result.arguments = Command.arguments;
 		}
 		return result;
 	}
@@ -153,14 +158,16 @@ export class Command {
 	): VSCode.Command | undefined {
 		if (!CommandDTO) return undefined;
 
-		// FIX: Handle exactOptionalPropertyTypes for tooltip
 		const result: VSCode.Command = {
 			command: CommandDTO.id,
 			title: CommandDTO.title,
-			arguments: CommandDTO.arguments,
 		};
 		if (CommandDTO.tooltip) {
 			result.tooltip = CommandDTO.tooltip;
+		}
+		// FIX: Conditionally add arguments to satisfy exactOptionalPropertyTypes.
+		if (CommandDTO.arguments) {
+			result.arguments = CommandDTO.arguments;
 		}
 		return result;
 	}

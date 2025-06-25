@@ -107,9 +107,8 @@ const PreHandshakeEffect = Effect.gen(function* () {
 		}),
 	);
 	IPC.RegisterInvokeHandler("$shutdown", () =>
-		// FIX: Provide the LoggerService dependency for the shutdown effect to run.
-		// The provided Effect must have its requirements satisfied.
 		Effect.runPromise(
+			// The provided Effect must have its requirements satisfied.
 			Effect.provide(ShutdownEffect, LoggerService.Default),
 		),
 	);
@@ -155,7 +154,6 @@ const PostHandshakeEffect = Effect.gen(function* () {
 
 // --- Layer Composition ---
 const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
-	// Level 0: Foundational Services (no dependencies on other app services)
 	const L0_World = Layer.mergeAll(
 		IPCConfigurationService.Default,
 		CancellationService.Default,
@@ -166,7 +164,6 @@ const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 		InitDataService.of(InitializationData),
 	);
 
-	// 1. Compose the final, complete application layer using the Progressive World Build pattern.
 	const L1_Services = Layer.mergeAll(
 		IPCService.Default,
 		ApplicationConfigurationService.Default,
@@ -266,17 +263,20 @@ const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 
 // --- Main Application Logic ---
 const MainEffect = Effect.gen(function* () {
-	// Level 0: Foundational Services for pre-handshake
-	const L0_World = Layer.mergeAll(
-		IPCConfigurationService.Default,
-		CancellationService.Default,
-		LoggerService.Default,
+	// FIX: Define the minimal layer needed for the pre-handshake step.
+	const PreHandshakeLayer = Layer.provide(
+		IPCService.Default,
+		Layer.mergeAll(
+			IPCConfigurationService.Default,
+			CancellationService.Default,
+			LoggerService.Default,
+		),
 	);
 
-	// 1. Run pre-handshake with its minimal layer to get the init data.
+	// 1. Run pre-handshake to get the init data.
 	const InitializationData = yield* Effect.provide(
 		PreHandshakeEffect,
-		Layer.provide(IPCService.Default, L0_World),
+		PreHandshakeLayer,
 	);
 
 	// 2. Compose the final, complete application layer using the now-available data.
@@ -288,7 +288,7 @@ const MainEffect = Effect.gen(function* () {
 	Effect.catchAllCause((Cause) =>
 		Effect.logFatal("Cocoon main process failed.", Cause),
 	),
-	// FIX: Provide foundational layers for the entire application scope, including error logging.
+	// Provide foundational utility layers for the entire application scope, including logging.
 	Effect.provide(Layer.merge(UtilityLayers, LoggerService.Default)),
 	Effect.scoped,
 );

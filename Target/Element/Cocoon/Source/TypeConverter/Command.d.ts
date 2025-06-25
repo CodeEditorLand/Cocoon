@@ -58,8 +58,7 @@ export declare class Command {
     private readonly LookupAPICommand;
     private readonly DelegatingCommandId;
     private readonly DelegatedCommands;
-    constructor(RegisterCommand: (global: boolean, // Changed from 'id' to 'global' to match CommandService
-    id: string, handler: (...args: any[]) => any, thisArg?: any) => IDisposable, ExecuteCommand: <T>(command: string, ...rest: any[]) => Promise<T | undefined>, LookupAPICommand: (Id: string) => APICommand | undefined);
+    constructor(RegisterCommand: (global: boolean, id: string, handler: (...args: any[]) => any, thisArg?: any) => IDisposable, ExecuteCommand: <T>(command: string, ...rest: any[]) => Promise<T | undefined>, LookupAPICommand: (Id: string) => APICommand | undefined);
     private ExecuteDelegatedCommand;
     ToInternal(Command: VSCode.Command, DisposableArray: IDisposable[]): InternalCommand | undefined;
     FromInternal(CommandDTO: InternalCommand): VSCode.Command | undefined;

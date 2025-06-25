@@ -41,7 +41,7 @@ declare const TaskService_base: Effect.Service.Class<TaskService, "Service/Task"
         readonly taskExecutions: readonly TaskExecution[];
         RegisterTaskProvider: <T extends VSCodeTask>(Type: string, Provider: TaskProvider<T>, Extension: IExtensionDescription) => Effect.Effect<Disposable, never, never>;
         FetchTasks: (Filter?: TaskFilter) => Effect.Effect<VSCodeTask[], Error, never>;
-        ExecuteTask: (TaskToExecute: any, Extension: any) => Effect.Effect<TaskExecution, Error, never>;
+        ExecuteTask: (TaskToExecute: VSCodeTask, Extension: IExtensionDescription) => Effect.Effect<TaskExecution, Error, never>;
     }, never, CancellationService | IPCService>;
 }>;
 /**

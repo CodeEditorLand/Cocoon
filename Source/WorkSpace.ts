@@ -7,6 +7,7 @@
 
 import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
+import type { IConfigurationValue } from "vs/platform/configuration/common/configuration.js";
 import type {
 	CancellationToken,
 	ConfigurationScope,
@@ -261,7 +262,6 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 							),
 						);
 						const ResultUri = UriToAPI(ResultDTO.uri);
-						// FIX: Use Option.match to handle failure case and correct repeat schedule.
 						const WaitForDocument = Document.GetDocument(
 							ResultUri,
 						).pipe(
@@ -292,24 +292,23 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 					section?: string,
 					scope?: ConfigurationScope | null,
 				): Effect.Effect<WorkspaceConfiguration, Error> =>
-					// FIX: Return a valid WorkspaceConfiguration object.
 					Effect.succeed({
 						get: <T>(key: string, defaultValue?: T): T => {
 							const fullKey = section ? `${section}.${key}` : key;
-							// The `as any` is a concession to the complexity of perfectly typing this proxy.
-							return (
-								ApplicationConfiguration.getValue(
-									fullKey,
-									scope,
-								) ?? defaultValue
-							);
+							const value = ApplicationConfiguration.getValue<
+								T | undefined
+							>(fullKey, scope ?? undefined);
+							if (value === undefined) {
+								return defaultValue as T;
+							}
+							return value as T;
 						},
 						has: (key: string): boolean => {
 							const fullKey = section ? `${section}.${key}` : key;
 							return (
 								ApplicationConfiguration.getValue(
 									fullKey,
-									scope,
+									scope ?? undefined,
 								) !== undefined
 							);
 						},
@@ -317,13 +316,13 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 							const fullKey = section ? `${section}.${key}` : key;
 							return ApplicationConfiguration.inspect<T>(
 								fullKey,
-								scope,
-							);
+								scope ?? undefined,
+							) as IConfigurationValue<T>;
 						},
 						update: (
 							key: string,
 							value: any,
-							_configurationTarget?:
+							configurationTarget?:
 								| boolean
 								| ConfigurationScope
 								| null,
@@ -332,6 +331,7 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 							return ApplicationConfiguration.updateValue(
 								fullKey,
 								value,
+								configurationTarget ?? undefined,
 							);
 						},
 					}),

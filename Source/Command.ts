@@ -28,7 +28,6 @@ export interface Command {
 	) => IDisposable;
 	readonly registerTextEditorCommand: (
 		id: string,
-		// FIX: Use the correct inline type for the callback, as `TextEditorCommand` is not an exported type.
 		callback: (
 			textEditor: VSCode.TextEditor,
 			edit: VSCode.TextEditorEdit,
@@ -169,7 +168,6 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 				registerTextEditorCommand: (
 					Id: string,
-					// FIX: Use the correct inline type for the callback.
 					Callback: (
 						textEditor: VSCode.TextEditor,
 						edit: VSCode.TextEditorEdit,
@@ -189,8 +187,6 @@ export class CommandService extends Effect.Service<CommandService>()(
 							);
 							return undefined;
 						}
-						// This is a simplified version. A full implementation would involve
-						// marshalling TextEditorEdit objects and handling the promise correctly.
 						return ActiveEditor.edit((editBuilder) => {
 							Callback.apply(ThisArg, [
 								ActiveEditor,
@@ -229,8 +225,9 @@ export class CommandService extends Effect.Service<CommandService>()(
 					) as Promise<T | undefined>;
 				},
 
-				GetCommands: (FilterInternal = false): Promise<string[]> =>
-					MainThreadProxy.$getCommands(FilterInternal),
+				// FIX: MainThreadCommandsShape.$getCommands takes no arguments.
+				GetCommands: (_FilterInternal = false): Promise<string[]> =>
+					MainThreadProxy.$getCommands(),
 			};
 
 			return ServiceImplementation;

@@ -15,7 +15,7 @@ import type * as VSCode from "vscode";
 export const ConvertPanelOptionToDTO = (
 	Options: VSCode.WebviewPanelOptions,
 ): WebviewPanelOptions => {
-	// FIX: Handle exactOptionalPropertyTypes by conditionally adding properties
+	// FIX: Create a new DTO object instead of mutating the original `Options`.
 	const dto: WebviewPanelOptions = {};
 	if (Options.enableFindWidget) {
 		dto.enableFindWidget = Options.enableFindWidget;

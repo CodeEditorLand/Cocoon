@@ -6,25 +6,20 @@
  */
 
 import { Effect, Ref } from "effect";
+import { Emitter } from "vs/base/common/event.js";
 import type { SerializedError } from "vs/base/common/errors.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
-import type {
-	ILogger,
-	LogLevel as VSCodeLogLevel,
-} from "vs/platform/log/common/log.js";
+import type { LogLevel as VSCodeLogLevel } from "vs/platform/log/common/log.js";
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
-import type {
-	TelemetryLogger,
-	TelemetryLoggerOptions,
-	TelemetrySender,
-} from "vscode";
+import type { TelemetryLoggerOptions, TelemetrySender } from "vscode";
 import { IPCService } from "./IPC.js";
 import { InitDataService } from "./InitData.js";
 import { LoggerService } from "./Logger.js";
+import type { ExtHostTelemetryShape } from "vs/workbench/api/common/extHost.protocol.js";
 
 /**
  * @description An internal helper to convert the `LogLevel` from the host to the
@@ -113,12 +108,18 @@ export class TelemetryService extends Effect.Service<IExtHostTelemetry>()(
 				).pipe(Effect.catchAll(() => Effect.void));
 			};
 
+			// FIX: Provide a more complete stub to satisfy the IExtHostTelemetry interface.
 			const ServiceImplementation: IExtHostTelemetry = {
 				_serviceBrand: undefined,
-				_onDidChangeTelemetryEnabled: undefined as any,
-				onDidChangeTelemetryEnabled: undefined as any,
-				_onDidChangeTelemetryConfiguration: undefined as any,
-				onDidChangeTelemetryConfiguration: undefined as any,
+				_productConfig: { usage: true, error: true },
+				_level: TelemetryLevel.NONE,
+				_oldTelemetryEnablement: false,
+				_inLoggingOnlyMode: false,
+				_telemetryLoggers: new Map(),
+				_onDidChangeTelemetryConfiguration: new Emitter<void>(),
+				onDidChangeTelemetryConfiguration: new Emitter<void>().event,
+				_onDidChangeTelemetryEnabled: new Emitter<boolean>(),
+				onDidChangeTelemetryEnabled: new Emitter<boolean>().event,
 				getTelemetryConfiguration: () =>
 					Effect.runSync(Ref.get(TelemetryLevelRef)) >=
 					TelemetryLevel.USAGE,
@@ -133,27 +134,25 @@ export class TelemetryService extends Effect.Service<IExtHostTelemetry>()(
 							Config.usage && Level >= TelemetryLevel.USAGE,
 					};
 				},
-				// FIX: Return a stub that conforms to the TelemetryLogger interface.
 				instantiateLogger: (
 					_extension: IExtensionDescription,
 					_sender: TelemetrySender,
 					_options?: TelemetryLoggerOptions,
-				): TelemetryLogger =>
-					({
-						logUsage: () => {},
-						logError: () => {},
-						isUsageEnabled: false,
-						isErrorsEnabled: false,
-						onDidChangeEnableStates: new AbortController().signal,
-						dispose: () => {},
-					}) as any,
+				): any => ({
+					logUsage: () => {},
+					logError: () => {},
+					isUsageEnabled: false,
+					isErrorsEnabled: false,
+					onDidChangeEnableStates: new AbortController().signal,
+					dispose: () => {},
+				}),
 				getBuiltInCommonProperties: (
 					_extension: IExtensionDescription,
 				) => ({}),
 				$initializeTelemetryLevel(
-					level,
-					_supportsTelemetry,
-					productConfig,
+					level: TelemetryLevel,
+					_supportsTelemetry: any,
+					productConfig: any,
 				) {
 					Effect.runSync(Ref.set(TelemetryLevelRef, level));
 					Effect.runSync(
@@ -163,7 +162,7 @@ export class TelemetryService extends Effect.Service<IExtHostTelemetry>()(
 						),
 					);
 				},
-				$onDidChangeTelemetryLevel(level) {
+				$onDidChangeTelemetryLevel(level: any) {
 					Effect.runSync(Ref.set(TelemetryLevelRef, level));
 				},
 				onExtensionError: (
@@ -173,7 +172,8 @@ export class TelemetryService extends Effect.Service<IExtHostTelemetry>()(
 					Effect.runFork(LogExtensionError(Extension, Error));
 					return false;
 				},
-			};
+				dispose() {},
+			} as unknown as IExtHostTelemetry & ExtHostTelemetryShape;
 
 			return ServiceImplementation;
 		}),
