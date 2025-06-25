@@ -7,6 +7,7 @@
 
 import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
+import type { IConfigurationOverrides } from "vs/platform/configuration/common/configuration.js";
 import type {
 	CancellationToken,
 	ConfigurationScope,
@@ -38,6 +39,32 @@ import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
 import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
 import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
+
+// Helper to convert public scope to internal overrides
+const toConfigurationOverrides = (
+	scope: ConfigurationScope | null | undefined,
+): IConfigurationOverrides => {
+	if (!scope) {
+		return {};
+	}
+	if (URI.isUri(scope)) {
+		return { resource: scope };
+	}
+	if (typeof scope === "object") {
+		const resource = "uri" in scope && scope.uri ? scope.uri : undefined;
+		const languageId = "languageId" in scope ? scope.languageId : undefined;
+
+		const result: IConfigurationOverrides = {};
+		if (resource) {
+			result.resource = resource;
+		}
+		if (languageId) {
+			result.overrideIdentifier = languageId;
+		}
+		return result;
+	}
+	return {};
+};
 
 class InternalWorkspace {
 	constructor(
@@ -239,21 +266,22 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 					OptionsOrUri?:
 						| Uri
 						| { language?: string; content?: string },
-				): Effect.Effect<TextDocument, Error> =>
-					Effect.gen(function* () {
-						const IsUri = OptionsOrUri instanceof URI;
-						const UriToOpen = IsUri ? OptionsOrUri : undefined;
-						if (UriToOpen) {
-							const ExistingDocument =
-								yield* Document.GetDocument(UriToOpen);
-							if (Option.isSome(ExistingDocument)) {
-								return ExistingDocument.value;
+				): Effect.Effect<TextDocument, Error> => {
+					return Effect.gen(function* () {
+						if (OptionsOrUri instanceof URI) {
+							const maybeDoc =
+								yield* Document.GetDocument(OptionsOrUri);
+							if (Option.isSome(maybeDoc)) {
+								// FIX: Always return an Effect from a generator
+								return yield* Effect.succeed(maybeDoc.value);
 							}
 						}
-						const DTO = IsUri
-							? OptionsOrUri.toJSON()
-							: OptionsOrUri;
-						const ResultDTO = yield* IPC.SendRequest<any>(
+
+						const DTO =
+							OptionsOrUri instanceof URI
+								? OptionsOrUri.toJSON()
+								: OptionsOrUri;
+						const ResultDTO = yield* IPC.SendRequest<{ uri: any }>(
 							"$openTextDocument",
 							[DTO],
 						).pipe(
@@ -261,35 +289,39 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 								(cause) => new Error(String(cause)),
 							),
 						);
+
 						const ResultUri = UriToAPI(ResultDTO.uri);
-						const WaitForDocument = Document.GetDocument(
+
+						const getDocEffect = Document.GetDocument(
 							ResultUri,
 						).pipe(
-							Effect.repeat(
-								Schedule.spaced(50).pipe(
-									Schedule.whileInput(
-										(
-											o: Option.Option<TextDocument>,
-										): o is Option.None<TextDocument> =>
-											Option.isNone(o),
-									),
-									Schedule.compose(Schedule.recurs(100)),
-								),
-							),
-							Effect.flatMap(
-								Option.match({
+							Effect.flatMap((maybeDoc) =>
+								Option.match(maybeDoc, {
 									onNone: () =>
 										Effect.fail(
 											new Error(
-												`Failed to find newly opened document after timeout: ${ResultUri.toString()}`,
+												"Polling... Document not ready.",
 											),
 										),
-									onSome: Effect.succeed,
+									onSome: (doc) => Effect.succeed(doc),
 								}),
 							),
 						);
-						return yield* WaitForDocument;
-					}),
+
+						return yield* Effect.retry(getDocEffect, {
+							schedule: Schedule.spaced(50).pipe(
+								Schedule.compose(Schedule.recurs(100)),
+							),
+						}).pipe(
+							Effect.mapError(
+								() =>
+									new Error(
+										`Polling for document timed out: ${ResultUri.toString()}`,
+									),
+							),
+						);
+					}).pipe(Effect.withSpan("WorkSpace.openTextDocument"));
+				},
 				getConfiguration: (
 					section?: string,
 					scope?: ConfigurationScope | null,
@@ -299,18 +331,17 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 							const fullKey = section ? `${section}.${key}` : key;
 							const value = ApplicationConfiguration.getValue<
 								T | undefined
-							>(fullKey, scope ?? undefined);
-							if (value === undefined) {
-								return defaultValue as T;
-							}
-							return value;
+							>(fullKey, toConfigurationOverrides(scope));
+							return value === undefined
+								? (defaultValue as T)
+								: value;
 						},
 						has: (key: string): boolean => {
 							const fullKey = section ? `${section}.${key}` : key;
 							return (
 								ApplicationConfiguration.getValue(
 									fullKey,
-									scope ?? undefined,
+									toConfigurationOverrides(scope),
 								) !== undefined
 							);
 						},
@@ -319,9 +350,9 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 							const inspection =
 								ApplicationConfiguration.inspect<T>(
 									fullKey,
-									scope ?? undefined,
+									toConfigurationOverrides(scope),
 								);
-							return { key: fullKey, ...inspection };
+							return { key: fullKey, ...inspection } as any;
 						},
 						update: (
 							key: string,
@@ -333,14 +364,21 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 							overrideInLanguage?: boolean,
 						): Promise<void> => {
 							const fullKey = section ? `${section}.${key}` : key;
+							const scopeAsOverrides =
+								toConfigurationOverrides(scope);
+							if (
+								overrideInLanguage &&
+								scope &&
+								typeof scope === "object" &&
+								"languageId" in scope
+							) {
+								scopeAsOverrides.overrideIdentifier =
+									scope.languageId;
+							}
 							return ApplicationConfiguration.updateValue(
 								fullKey,
 								value,
-								{
-									overrideIdentifiers: overrideInLanguage
-										? [(scope as any)?.languageId]
-										: undefined,
-								},
+								scopeAsOverrides,
 								configurationTarget as any,
 							);
 						},

@@ -17,7 +17,7 @@ export declare class WebViewPanelImplementation implements WebviewPanel {
     private readonly OnDidDisposeCallback;
     private IsDisposed;
     private _title;
-    private _iconPath?;
+    private _iconPath;
     private _active;
     private _visible;
     private _viewColumn;
@@ -29,7 +29,7 @@ export declare class WebViewPanelImplementation implements WebviewPanel {
     readonly viewType: string;
     readonly options: WebviewPanelOptions;
     constructor(Handle: string, IPC: IPC, Extension: IExtensionDescription, OnDidDisposeCallback: () => void, InitialViewType: string, InitialTitle: string, InitialOptions: WebviewPanelOptions & WebviewOptions, InitialViewColumn: ViewColumn);
-    get viewColumn(): ViewColumn;
+    get viewColumn(): ViewColumn | undefined;
     get active(): boolean;
     get visible(): boolean;
     get title(): string;
@@ -37,11 +37,11 @@ export declare class WebViewPanelImplementation implements WebviewPanel {
     get iconPath(): Uri | {
         readonly light: Uri;
         readonly dark: Uri;
-    } | undefined;
+    };
     set iconPath(Value: Uri | {
         readonly light: Uri;
         readonly dark: Uri;
-    } | undefined);
+    });
     reveal(ViewColumn?: ViewColumn, PreserveFocus?: boolean): void;
     dispose(): void;
     fireDidReceiveMessage(Message: any): void;
