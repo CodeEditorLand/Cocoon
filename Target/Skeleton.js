@@ -18,12 +18,12 @@ const DUMMY_INIT_DATA = {
   quality: "",
   workspace: {}
 };
-class ConfigurationService extends Effect.Service()(
+class ApplicationConfigurationService extends Effect.Service()(
   "Service/Configuration",
   { sync: /* @__PURE__ */ __name(() => ({ logLevel: "INFO" }), "sync") }
 ) {
   static {
-    __name(this, "ConfigurationService");
+    __name(this, "ApplicationConfigurationService");
   }
 }
 class CancellationService extends Effect.Service()(
@@ -60,7 +60,7 @@ class InitDataService extends Effect.Service()(
 }
 class LoggerService extends Effect.Service()("Service/Logger", {
   effect: Effect.gen(function* () {
-    const Config = yield* ConfigurationService;
+    const Config = yield* ApplicationConfigurationService;
     console.log(
       `[CONSTRUCTOR] LoggerService Initializing with logLevel: ${Config.logLevel}`
     );
@@ -431,7 +431,7 @@ class WorkSpaceService extends Effect.Service()(
       yield* IPCService;
       yield* DocumentService;
       yield* FileSystemService;
-      yield* ConfigurationService;
+      yield* ApplicationConfigurationService;
       return {};
     })
   }
@@ -568,7 +568,7 @@ const DevToolsLive = Layer.provide(
   NodeSocket.layerWebSocketConstructor
 );
 const L1_World = Layer.mergeAll(
-  ConfigurationService.Default,
+  ApplicationConfigurationService.Default,
   CancellationService.Default,
   LanguageFeatureService.Default,
   IPCConfigurationService.Default,

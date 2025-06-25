@@ -28,7 +28,7 @@ import { AuthenticationService } from "./Authentication.js";
 import { CancellationService } from "./Cancellation.js";
 import { ClipboardService } from "./Clipboard.js";
 import { CommandService } from "./Command.js";
-import { ConfigurationService } from "./ApplicationConfiguration.js";
+import { ApplicationConfigurationService } from "./ApplicationConfiguration.js";
 import { DebugService } from "./Debug.js";
 import { DialogService } from "./Dialog.js";
 import { DocumentService } from "./Document.js";
@@ -183,7 +183,7 @@ const MainEffect = Effect.gen(function* () {
 	// 3. Compose the final, complete application layer using the Progressive World Build pattern.
 	const L1_Services = Layer.mergeAll(
 		IPCService.Default,
-		ConfigurationService.Default,
+		ApplicationConfigurationService.Default,
 		LanguageFeatureService.Default,
 		TelemetryService.Default,
 	);

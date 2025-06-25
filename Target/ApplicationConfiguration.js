@@ -54,8 +54,8 @@ const GetValueFromObject = /* @__PURE__ */ __name((ConfigurationObject, Key) => 
     ConfigurationObject
   );
 }, "GetValueFromObject");
-class ConfigurationService extends Effect.Service()(
-  "vscode/ConfigurationService",
+class ApplicationConfigurationService extends Effect.Service()(
+  "vscode/ApplicationConfigurationService",
   {
     effect: Effect.gen(function* () {
       const ConfigurationData = yield* ResolveConfiguration;
@@ -94,10 +94,10 @@ class ConfigurationService extends Effect.Service()(
   }
 ) {
   static {
-    __name(this, "ConfigurationService");
+    __name(this, "ApplicationConfigurationService");
   }
 }
 export {
-  ConfigurationService
+  ApplicationConfigurationService
 };
 //# sourceMappingURL=ApplicationConfiguration.js.map

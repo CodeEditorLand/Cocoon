@@ -6,7 +6,7 @@ import { URI } from "vscode-uri";
 import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
 import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { ConfigurationService } from "./ApplicationConfiguration.js";
+import { ApplicationConfigurationService } from "./ApplicationConfiguration.js";
 import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";
@@ -29,7 +29,7 @@ class WorkSpaceService extends Effect.Service()(
       const IPC = yield* IPCService;
       const Document = yield* DocumentService;
       const FileSystem = yield* FileSystemService;
-      const Configuration = yield* ConfigurationService;
+      const ApplicationConfiguration = yield* ApplicationConfigurationService;
       const InternalWorkspaceRef = yield* Ref.make(void 0);
       const TextEditorsMapRef = yield* Ref.make(
         /* @__PURE__ */ new Map()
@@ -168,7 +168,7 @@ class WorkSpaceService extends Effect.Service()(
           return yield* WaitForDocument;
         }), "openTextDocument"),
         getConfiguration: /* @__PURE__ */ __name((section, scope) => Effect.sync(
-          () => Configuration.getValue(section, scope)
+          () => ApplicationConfiguration.getValue(section, scope)
         ), "getConfiguration"),
         applyEdit: /* @__PURE__ */ __name((Edit) => IPC.SendRequest("$applyWorkspaceEdit", [
           WorkspaceEditFromAPI(Edit)

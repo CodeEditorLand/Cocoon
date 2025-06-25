@@ -65,7 +65,7 @@ const DUMMY_INIT_DATA: IExtensionHostInitData = {
 // --- Level 1 Services: The Foundation (No Dependencies) ---
 
 /** Manages application-wide configuration, such as log levels. */
-class ConfigurationService extends Effect.Service<ConfigurationService>()(
+class ApplicationConfigurationService extends Effect.Service<ApplicationConfigurationService>()(
 	"Service/Configuration",
 	{ sync: () => ({ logLevel: "INFO" as const }) },
 ) {}
@@ -99,7 +99,7 @@ class InitDataService extends Effect.Service<InitDataService>()(
 /** A service for application-wide logging. */
 class LoggerService extends Effect.Service<LoggerService>()("Service/Logger", {
 	effect: Effect.gen(function* () {
-		const Config = yield* ConfigurationService;
+		const Config = yield* ApplicationConfigurationService;
 		console.log(
 			`[CONSTRUCTOR] LoggerService Initializing with logLevel: ${Config.logLevel}`,
 		);
@@ -403,7 +403,7 @@ class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 			yield* IPCService;
 			yield* DocumentService;
 			yield* FileSystemService;
-			yield* ConfigurationService;
+			yield* ApplicationConfigurationService;
 			return {};
 		}),
 	},
@@ -537,7 +537,7 @@ const DevToolsLive = Layer.provide(
 
 // Level 1: The absolute foundation. Services with no dependencies.
 const L1_World = Layer.mergeAll(
-	ConfigurationService.Default,
+	ApplicationConfigurationService.Default,
 	CancellationService.Default,
 	LanguageFeatureService.Default,
 	IPCConfigurationService.Default,

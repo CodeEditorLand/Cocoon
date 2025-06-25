@@ -8,7 +8,7 @@ import type { IntegrationConfigurationProblem } from "../Integration/Tauri/Confi
 
 /**
  * @class ApplicationConfigurationProblem
- * @description Represents a failure within the Configuration application service.
+ * @description Represents a failure within the ApplicationConfiguration application service.
  * This error acts as a wrapper around a more specific problem from the
  * Integration layer (e.g., a file system error or a JSON parsing error).
  * This allows higher-level code to catch a single, well-defined error type
