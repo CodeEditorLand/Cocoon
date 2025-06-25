@@ -4,6 +4,7 @@
  * intercept `import 'vscode'` statements and provide a sandboxed API module.
  */
 import { Effect } from "effect";
+import { APIFactoryService } from "./APIFactory.js";
 import { ExtensionPathService } from "./ExtensionPath.js";
 import { LoggerService } from "./Logger.js";
 /**
@@ -20,7 +21,7 @@ export interface ESMInterceptor {
 declare const ESMInterceptorService_base: Effect.Service.Class<ESMInterceptorService, "Service/ESMInterceptor", {
     readonly effect: Effect.Effect<{
         Install: () => Effect.Effect<void, Error>;
-    }, never, LoggerService | import("./APIFactory.js").APIFactory | ExtensionPathService>;
+    }, never, LoggerService | APIFactoryService | ExtensionPathService>;
 }>;
 /**
  * @class ESMInterceptorService

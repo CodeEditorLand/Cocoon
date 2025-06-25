@@ -7,7 +7,6 @@
 import { Effect, Option } from "effect";
 import type { Event, Extension as VSCodeExtension } from "vscode";
 import { ExtensionHostService } from "./ExtensionHost.js";
-import { InitDataService } from "./InitData.js";
 /**
  * @interface Extension
  * @description The contract for the Extension service.
@@ -24,7 +23,7 @@ declare const ExtensionService_base: Effect.Service.Class<ExtensionService, "Ser
         GetExtension: <T>(ExtensionId: string) => Effect.Effect<Option.Option<VSCodeExtension<T>>, never, never>;
         GetAll: () => Effect.Effect<readonly VSCodeExtension<any>[], never, never>;
         Activate: <T>(ExtensionId: string) => Effect.Effect<VSCodeExtension<T>, Error, never>;
-    }, never, InitDataService | ExtensionHostService>;
+    }, never, import("vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | ExtensionHostService>;
 }>;
 /**
  * @class ExtensionService

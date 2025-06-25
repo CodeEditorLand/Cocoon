@@ -36,6 +36,7 @@ import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";
 import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
+import type { ConfigurationScope } from "vscode";
 
 class InternalWorkspace {
 	constructor(
@@ -73,7 +74,7 @@ export interface WorkSpace {
 	) => Effect.Effect<TextDocument, Error>;
 	readonly getConfiguration: (
 		section?: string,
-		scope?: any,
+		scope?: ConfigurationScope | null,
 	) => Effect.Effect<WorkspaceConfiguration, Error>;
 	readonly applyEdit: (edit: WorkspaceEdit) => Effect.Effect<boolean, Error>;
 	readonly registerTextDocumentContentProvider: (
@@ -233,7 +234,11 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 						Effect.map((Uris) => Uris.filter((u): u is Uri => !!u)),
 						Effect.mapError((Cause) => new Error(String(Cause))),
 					),
-				openTextDocument: (OptionsOrUri?: any) =>
+				openTextDocument: (
+					OptionsOrUri?:
+						| Uri
+						| { language?: string; content?: string },
+				): Effect.Effect<TextDocument, Error> =>
 					Effect.gen(function* () {
 						const IsUri = OptionsOrUri instanceof URI;
 						const UriToOpen = IsUri ? OptionsOrUri : undefined;
@@ -263,17 +268,19 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 									Schedule.compose(Schedule.recurs(100)),
 								),
 							}),
-							Effect.flatMap(Option.getOrThrow),
-							Effect.mapError(
+							Effect.someOrFail(
 								() =>
 									new Error(
-										`Failed to find newly opened document: ${ResultUri.toString()}`,
+										`Failed to find newly opened document after timeout: ${ResultUri.toString()}`,
 									),
 							),
 						);
 						return yield* WaitForDocument;
 					}),
-				getConfiguration: (section?: string, scope?: any) =>
+				getConfiguration: (
+					section?: string,
+					scope?: ConfigurationScope | null,
+				) =>
 					Effect.sync(() =>
 						ApplicationConfiguration.getValue(section, scope),
 					) as any,

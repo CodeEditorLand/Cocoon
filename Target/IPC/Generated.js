@@ -83,6 +83,12 @@ const Proto = {
   RPCDataPayload
 };
 export {
-  Proto
+  CancelOperationRequest,
+  Empty,
+  GenericNotification,
+  GenericRequest,
+  GenericResponse,
+  Proto,
+  RPCDataPayload
 };
 //# sourceMappingURL=Generated.js.map

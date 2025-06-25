@@ -5,25 +5,8 @@
  * many other services.
  */
 import { Effect } from "effect";
-/**
- * @interface IExtensionHostInitData
- * @description A placeholder interface representing the initial data payload
- * that the application might receive upon startup. In a real application, this
- * would be a rich, well-defined contract.
- */
-interface IExtensionHostInitData {
-    readonly extensions: {
-        readonly allExtensions: readonly any[];
-    };
-    readonly environment: any;
-    readonly logLevel: any;
-    readonly remote: any;
-    readonly telemetryInfo: any;
-    readonly uiKind: any;
-    readonly quality: any;
-    readonly workspace: any;
-}
-declare const InitDataService_base: Effect.Service.Class<InitDataService, "Service/InitData", {
+import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
+declare const InitDataService_base: Effect.Service.Class<IExtensionHostInitData, "Service/InitData", {
     readonly sync: () => IExtensionHostInitData;
 }>;
 /**

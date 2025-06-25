@@ -8,15 +8,15 @@ import {
   ToURI as DTOToURI,
   ToURIArray as DTOToURIArray
 } from "./TypeConverter/Dialog/DialogResult.js";
-import { IPC, IPCService } from "./IPC.js";
+import { IPCService } from "./IPC.js";
 import { DialogProblem } from "./Dialog/DialogProblem.js";
-const CreateDialogEffect = /* @__PURE__ */ __name((IPC2, IPCMethod, Options, Token, OptionsToDTO, ResultFromDTO) => {
+const CreateDialogEffect = /* @__PURE__ */ __name((IPC, IPCMethod, Options, Token, OptionsToDTO, ResultFromDTO) => {
   return Effect.gen(function* () {
     if (Token?.isCancellationRequested) {
       return yield* Effect.interrupt;
     }
     const DTO = OptionsToDTO(Options);
-    const RPCResult = yield* IPC2.SendRequest(IPCMethod, [DTO]).pipe(
+    const RPCResult = yield* IPC.SendRequest(IPCMethod, [DTO]).pipe(
       Effect.catchIf(
         isCancellationError,
         () => Effect.succeed(void 0)
@@ -35,10 +35,10 @@ class DialogService extends Effect.Service()(
   "Service/Dialog",
   {
     effect: Effect.gen(function* () {
-      const IPC2 = yield* IPCService;
+      const IPC = yield* IPCService;
       return {
         ShowOpenDialog: /* @__PURE__ */ __name((Options, Token) => CreateDialogEffect(
-          IPC2,
+          IPC,
           "$showOpenDialog",
           Options,
           Token,
@@ -46,7 +46,7 @@ class DialogService extends Effect.Service()(
           DTOToURIArray
         ), "ShowOpenDialog"),
         ShowSaveDialog: /* @__PURE__ */ __name((Options, Token) => CreateDialogEffect(
-          IPC2,
+          IPC,
           "$showSaveDialog",
           Options,
           Token,

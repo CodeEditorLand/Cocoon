@@ -21,9 +21,11 @@ const CreateSafeEvent = /* @__PURE__ */ __name((ExtensionId, Logger, ActualEvent
       try {
         Listener.call(ThisArgument, Event);
       } catch (error) {
-        Logger.Error(
-          `[${ExtensionId.value}] FAILED to handle event:`,
-          error
+        Effect.runFork(
+          Logger.Error(
+            `[${ExtensionId.value}] FAILED to handle event:`,
+            error
+          )
         );
       }
     }, "SafeListener");
@@ -140,12 +142,16 @@ class APIFactoryService extends Effect.Service()(
       const WebViewPanel = yield* WebViewPanelService;
       const TreeView = yield* TreeViewService;
       const StatusBar = yield* StatusBarService;
-      const CreateExtensionsAPI = /* @__PURE__ */ __name((Extension2) => ({
+      const CreateExtensionsAPI = /* @__PURE__ */ __name((ExtensionServiceInstance) => ({
         getExtension: /* @__PURE__ */ __name((extensionId) => Option.getOrUndefined(
-          Effect.runSync(Extension2.GetExtension(extensionId))
+          Effect.runSync(
+            ExtensionServiceInstance.GetExtension(
+              extensionId
+            )
+          )
         ), "getExtension"),
         get all() {
-          return Effect.runSync(Extension2.GetAll());
+          return Effect.runSync(ExtensionServiceInstance.GetAll());
         },
         onDidChange: new Emitter().event
       }), "CreateExtensionsAPI");

@@ -6,9 +6,9 @@
  * NOTE: This file is a placeholder for the actual generated code.
  */
 
-class Empty {}
+export class Empty {}
 
-class GenericRequest {
+export class GenericRequest {
 	setRequestid(_Id: number) {}
 	setMethod(_Method: string) {}
 	setParams(_Parameters: any) {}
@@ -23,7 +23,7 @@ class GenericRequest {
 	}
 }
 
-class GenericResponse {
+export class GenericResponse {
 	setRequestid(_Id: number) {}
 	setResult(_Result: any) {}
 	getResult(): any {
@@ -31,7 +31,7 @@ class GenericResponse {
 	}
 }
 
-class GenericNotification {
+export class GenericNotification {
 	private Method = "";
 	private Parameter: any;
 	setMethod(Method: string) {
@@ -48,13 +48,13 @@ class GenericNotification {
 	}
 }
 
-class CancelOperationRequest {
+export class CancelOperationRequest {
 	getRequestid(): number {
 		return 0;
 	}
 }
 
-class RPCDataPayload {
+export class RPCDataPayload {
 	setBuffer(_Buffer: Uint8Array) {}
 	getBuffer(): Uint8Array {
 		return new Uint8Array();

@@ -6,7 +6,6 @@
  */
 import { Effect } from "effect";
 import type { ExtensionIdentifier, IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 /**
@@ -38,7 +37,7 @@ declare const ExtensionHostService_base: Effect.Service.Class<ExtensionHostServi
         IsActivated: (Id: any) => Effect.Effect<boolean, never, never>;
         DeactivateAll: () => Effect.Effect<void, never, never>;
         OnDidActivateExtension: (_callback: (extension: IExtensionDescription) => void) => Effect.Effect<void, never, never>;
-    }, never, LoggerService | import("vs/workbench/api/common/extHostTelemetry.js").IExtHostTelemetry | IPCService | InitDataService>;
+    }, never, LoggerService | import("vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | import("vs/workbench/api/common/extHostTelemetry.js").IExtHostTelemetry | IPCService>;
 }>;
 /**
  * @class ExtensionHostService

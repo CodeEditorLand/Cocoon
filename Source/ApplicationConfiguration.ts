@@ -13,7 +13,7 @@ import type {
 	IConfigurationOverrides,
 } from "vs/platform/configuration/common/configuration.js";
 import { Emitter } from "vs/base/common/event.js";
-import { type URI as VSCodeURI } from "./Platform/VSCode/Type.js";
+import type { Uri } from "vscode";
 import { ApplicationConfigurationProblem } from "./ApplicationConfiguration/ApplicationConfigurationProblem.js";
 import type { IntegrationConfigurationProblem } from "./Integration/Tauri/Configuration/Problem.js";
 import type { IntegrationPathProblem } from "./Integration/Tauri/Path/Problem.js";
@@ -24,7 +24,7 @@ import { ResolveWorkSpacePath } from "./Integration/Tauri/Path/WorkSpace.js";
 import { joinPath } from "vs/base/common/resources.js";
 
 const ResolveConfigurationFile = (
-	ConfigDirectoryEffect: Effect.Effect<VSCodeURI, IntegrationPathProblem>,
+	ConfigDirectoryEffect: Effect.Effect<Uri, IntegrationPathProblem>,
 	FileName: string,
 ): Effect.Effect<
 	object,

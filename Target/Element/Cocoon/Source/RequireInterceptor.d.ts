@@ -5,7 +5,7 @@
  * module to extensions, ensuring each extension receives its own isolated API instance.
  */
 import { Effect } from "effect";
-import { APIFactory } from "./APIFactory.js";
+import { APIFactoryService } from "./APIFactory.js";
 import { ExtensionPathService } from "./ExtensionPath.js";
 import { NodeModuleShimService } from "./NodeModuleShim.js";
 import { LoggerService } from "./Logger.js";
@@ -23,7 +23,7 @@ export interface RequireInterceptor {
 declare const RequireInterceptorService_base: Effect.Service.Class<RequireInterceptorService, "Service/RequireInterceptor", {
     readonly effect: Effect.Effect<{
         Install: () => Effect.Effect<void, never, never>;
-    }, never, LoggerService | APIFactory | ExtensionPathService | NodeModuleShimService>;
+    }, never, LoggerService | APIFactoryService | ExtensionPathService | NodeModuleShimService>;
 }>;
 /**
  * @class RequireInterceptor

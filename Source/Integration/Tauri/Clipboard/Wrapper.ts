@@ -14,13 +14,13 @@ const MakeStub = <T>(Name: string, DefaultValue: T) =>
 		`Clipboard Integration: Function '${Name}' is a stub.`,
 	).pipe(Effect.as(DefaultValue));
 
-export const WriteText = (Text: string): Effect.Effect<void, never> =>
+export const WriteText = (_text: string): Effect.Effect<void, never> =>
 	MakeStub("WriteText", undefined);
 export const ReadText: Effect.Effect<string, IntegrationClipboardProblem> =
 	MakeStub("ReadText", "");
 
 export const WriteResourceList = (
-	ResourceList: (typeof URI)[],
+	_resourceList: readonly (typeof URI)[],
 ): Effect.Effect<void, IntegrationClipboardProblem> =>
 	MakeStub("WriteResourceList", undefined);
 export const ReadResourceList: Effect.Effect<
@@ -31,5 +31,3 @@ export const HasResourceList: Effect.Effect<
 	boolean,
 	IntegrationClipboardProblem
 > = MakeStub("HasResourceList", false);
-export const ReadImage: Effect.Effect<Uint8Array, IntegrationClipboardProblem> =
-	MakeStub("ReadImage", new Uint8Array());

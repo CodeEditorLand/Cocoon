@@ -92,7 +92,7 @@ export declare class ThemeColor implements VSCode.ThemeColor {
 }
 export declare class TreeItem implements VSCode.TreeItem {
     label?: string | VSCode.TreeItemLabel;
-    resourceURI?: VSCode.Uri;
+    resourceUri?: VSCode.Uri;
     collapsibleState?: VSCode.TreeItemCollapsibleState;
     id?: string;
     description?: string;

@@ -62,7 +62,7 @@ class WebViewImplementation {
   asWebviewUri(LocalResource) {
     const Authority = this.Extension.identifier.value.toLowerCase();
     return LocalResource.with({
-      scheme: Schemas["vscode-webview-resource"],
+      scheme: Schemas.vscodeFileResource,
       authority: Authority
     });
   }

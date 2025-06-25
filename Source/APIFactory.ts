@@ -15,18 +15,26 @@ import { Position, Range, Selection } from "./Platform/VSCode/Type.js";
 import type { Disposable } from "vscode";
 
 // Corrected PascalCase Imports
-import { CommandService, type Command } from "./Command.js";
+import { CommandService } from "./Command.js";
+import type { Command } from "./Command.js";
 import { DebugService } from "./Debug.js";
-import { ExtensionService, type Extension } from "./Extension.js";
+import { ExtensionService } from "./Extension.js";
+import type { Extension } from "./Extension.js";
 import { LanguageFeatureService } from "./LanguageFeature.js";
-import { LoggerService, type Logger } from "./Logger.js";
+import { LoggerService } from "./Logger.js";
+import type { Logger } from "./Logger.js";
 import { ProposedAPIService } from "./ProposedAPI.js";
-import { StatusBarService, type StatusBar } from "./StatusBar.js";
+import { StatusBarService } from "./StatusBar.js";
+import type { StatusBar } from "./StatusBar.js";
 import { TaskService } from "./Task.js";
-import { TreeViewService, type TreeView } from "./TreeView.js";
-import { WebViewPanelService, type WebViewPanel } from "./WebViewPanel.js";
-import { WindowService, type Window } from "./Window.js";
-import { WorkSpaceService, type WorkSpace } from "./WorkSpace.js";
+import { TreeViewService } from "./TreeView.js";
+import type { TreeView } from "./TreeView.js";
+import { WebViewPanelService } from "./WebViewPanel.js";
+import type { WebViewPanel } from "./WebViewPanel.js";
+import { WindowService } from "./Window.js";
+import type { Window } from "./Window.js";
+import { WorkSpaceService } from "./WorkSpace.js";
+import type { WorkSpace } from "./WorkSpace.js";
 
 // --- Internal Namespace Factory helpers ---
 const CreateSafeEvent = <T>(
@@ -39,9 +47,11 @@ const CreateSafeEvent = <T>(
 			try {
 				Listener.call(ThisArgument, Event);
 			} catch (error) {
-				Logger.Error(
-					`[${ExtensionId.value}] FAILED to handle event:`,
-					error,
+				Effect.runFork(
+					Logger.Error(
+						`[${ExtensionId.value}] FAILED to handle event:`,
+						error,
+					),
 				);
 			}
 		};
@@ -199,7 +209,7 @@ export interface APIFactory {
  * @class APIFactoryService
  * @description The `Effect.Service` for the APIFactory.
  */
-export class APIFactoryService extends Effect.Service<APIFactory>()(
+export class APIFactoryService extends Effect.Service<APIFactoryService>()(
 	"Service/APIFactory",
 	{
 		effect: Effect.gen(function* () {
@@ -217,14 +227,18 @@ export class APIFactoryService extends Effect.Service<APIFactory>()(
 			const StatusBar = yield* StatusBarService;
 
 			const CreateExtensionsAPI = (
-				Extension: Extension,
+				ExtensionServiceInstance: Extension,
 			): typeof VSCode.extensions => ({
 				getExtension: <T>(extensionId: string) =>
 					Option.getOrUndefined(
-						Effect.runSync(Extension.GetExtension<T>(extensionId)),
+						Effect.runSync(
+							ExtensionServiceInstance.GetExtension<T>(
+								extensionId,
+							),
+						),
 					),
 				get all() {
-					return Effect.runSync(Extension.GetAll());
+					return Effect.runSync(ExtensionServiceInstance.GetAll());
 				},
 				onDidChange: new Emitter<void>().event,
 			});

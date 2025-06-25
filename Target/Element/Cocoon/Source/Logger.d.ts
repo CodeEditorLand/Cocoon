@@ -20,12 +20,12 @@ export interface Logger {
 }
 declare const LoggerService_base: Effect.Service.Class<LoggerService, "Service/Logger", {
     readonly sync: () => {
-        Trace: (Message: any, ...Data: any[]) => Effect.Effect<void, never, never>;
-        Debug: (Message: any, ...Data: any[]) => Effect.Effect<void, never, never>;
-        Info: (Message: any, ...Data: any[]) => Effect.Effect<void, never, never>;
-        Warn: (Message: any, ...Data: any[]) => Effect.Effect<void, never, never>;
-        Error: (Message: any, ...Data: any[]) => Effect.Effect<void, never, never>;
-        Fatal: (Message: any, ...Data: any[]) => Effect.Effect<void, never, never>;
+        Trace: (Message: string, ...Data: unknown[]) => Effect.Effect<void, never, never>;
+        Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void, never, never>;
+        Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void, never, never>;
+        Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void, never, never>;
+        Error: (Message: string, ...Data: unknown[]) => Effect.Effect<void, never, never>;
+        Fatal: (Message: string, ...Data: unknown[]) => Effect.Effect<void, never, never>;
     };
 }>;
 /**

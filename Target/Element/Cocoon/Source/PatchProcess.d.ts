@@ -6,7 +6,6 @@
  * secure, and properly configured before any extension code is loaded.
  */
 import { Effect } from "effect";
-import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
 /**
  * @interface PatchProcess
@@ -39,5 +38,5 @@ export declare class PatchProcessService extends PatchProcessService_base {
  * It runs all patches concurrently where possible. This `Effect` should be one of the
  * very first to run at application startup.
  */
-export declare const RunPatchProcess: Effect.Effect<void, never, IPCService | InitDataService>;
+export declare const RunPatchProcess: Effect.Effect<void, never, import("vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | IPCService>;
 export {};

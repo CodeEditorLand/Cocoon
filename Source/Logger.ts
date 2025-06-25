@@ -50,37 +50,37 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 	"Service/Logger",
 	{
 		sync: () => ({
-			Trace: (Message, ...Data) =>
+			Trace: (Message: string, ...Data: unknown[]) =>
 				Effect.logTrace(Message).pipe(
 					Effect.annotateLogs({
 						data: Data.length === 1 ? Data[0] : Data,
 					}),
 				),
-			Debug: (Message, ...Data) =>
+			Debug: (Message: string, ...Data: unknown[]) =>
 				Effect.logDebug(Message).pipe(
 					Effect.annotateLogs({
 						data: Data.length === 1 ? Data[0] : Data,
 					}),
 				),
-			Info: (Message, ...Data) =>
+			Info: (Message: string, ...Data: unknown[]) =>
 				Effect.logInfo(Message).pipe(
 					Effect.annotateLogs({
 						data: Data.length === 1 ? Data[0] : Data,
 					}),
 				),
-			Warn: (Message, ...Data) =>
+			Warn: (Message: string, ...Data: unknown[]) =>
 				Effect.logWarning(Message).pipe(
 					Effect.annotateLogs({
 						data: Data.length === 1 ? Data[0] : Data,
 					}),
 				),
-			Error: (Message, ...Data) =>
+			Error: (Message: string, ...Data: unknown[]) =>
 				Effect.logError(Message).pipe(
 					Effect.annotateLogs({
 						data: Data.length === 1 ? Data[0] : Data,
 					}),
 				),
-			Fatal: (Message, ...Data) =>
+			Fatal: (Message: string, ...Data: unknown[]) =>
 				Effect.logFatal(Message).pipe(
 					Effect.annotateLogs({
 						data: Data.length === 1 ? Data[0] : Data,

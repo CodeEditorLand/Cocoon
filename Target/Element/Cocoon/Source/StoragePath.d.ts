@@ -8,7 +8,6 @@ import { Effect } from "effect";
 import { type IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { Uri } from "vscode";
 import { FileSystem } from "./FileSystem.js";
-import { InitDataService } from "./InitData.js";
 import { Logger } from "./Logger.js";
 /**
  * @interface StoragePath
@@ -22,7 +21,7 @@ declare const StoragePathService_base: Effect.Service.Class<StoragePathService, 
     readonly effect: Effect.Effect<{
         GetWorkSpaceStorageUri: (Extension: IExtensionDescription) => Uri | undefined;
         GetGlobalStorageUri: (Extension: IExtensionDescription) => Uri;
-    }, never, Logger | InitDataService | FileSystem>;
+    }, never, Logger | import("vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | FileSystem>;
 }>;
 /**
  * @class StoragePathService

@@ -11,7 +11,12 @@ import { CancellationService } from "./Cancellation.js";
 import { IPCConfigurationService } from "./IPCConfiguration.js";
 import { gRPCConnectionError } from "./IPC/gRPCConnectionError.js";
 import { IPCProblem } from "./IPC/IPCProblem.js";
-import { Proto } from "./IPC/Generated.js";
+import {
+  GenericRequest,
+  GenericResponse,
+  GenericNotification,
+  RPCDataPayload
+} from "./IPC/Generated.js";
 import { ProtoSerializationProblem } from "./IPC/ProtoConverter/ProtoSerializationProblem.js";
 import { EncodeValue } from "./IPC/ProtoConverter/EncodeValue.js";
 import { DecodeValue } from "./IPC/ProtoConverter/DecodeValue.js";
@@ -79,7 +84,7 @@ class IPCService extends Effect.Service()("Service/IPC", {
     );
     const SendRPCData = /* @__PURE__ */ __name((Buffer2) => Effect.tryPromise({
       try: /* @__PURE__ */ __name(() => {
-        const Payload = new Proto.RPCDataPayload();
+        const Payload = new RPCDataPayload();
         Payload.setBuffer(Buffer2.buffer);
         return GrpcClient.sendRPCDataToMountain(Payload);
       }, "try"),
@@ -105,7 +110,7 @@ class IPCService extends Effect.Service()("Service/IPC", {
           (n) => n + 1
         );
         const EncodedParameter = yield* EncodeValue(Parameters);
-        const RequestMessage = new Proto.GenericRequest();
+        const RequestMessage = new GenericRequest();
         RequestMessage.setRequestid(RequestId);
         RequestMessage.setMethod(Method);
         RequestMessage.setParams(EncodedParameter);
@@ -130,7 +135,7 @@ class IPCService extends Effect.Service()("Service/IPC", {
       ), "SendRequest"),
       SendNotification: /* @__PURE__ */ __name((Method, Parameters) => Effect.gen(function* () {
         const EncodedParameter = yield* EncodeValue(Parameters);
-        const NotificationMessage = new Proto.GenericNotification();
+        const NotificationMessage = new GenericNotification();
         NotificationMessage.setMethod(Method);
         NotificationMessage.setParams(EncodedParameter);
         yield* Effect.tryPromise({

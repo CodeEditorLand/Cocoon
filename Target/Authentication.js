@@ -56,10 +56,11 @@ class AuthenticationService extends Effect.Service()(
             )
           )
         ), "getSessions"),
-        login: /* @__PURE__ */ __name((providerId, scopes) => Effect.runPromise(
+        login: /* @__PURE__ */ __name((providerId, scopes, options) => Effect.runPromise(
           IPC.SendRequest("$login", [
             providerId,
-            scopes
+            scopes,
+            options
           ]).pipe(
             Effect.mapError(
               (cause) => new Error(String(cause))

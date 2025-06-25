@@ -7,7 +7,7 @@
  */
 import { Effect, Exit } from "effect";
 import type { Uri } from "vscode";
-import { InitDataService } from "./InitData.js";
+import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import { LoggerService } from "./Logger.js";
 import { ModuleBlockedProblem } from "./NodeModuleShim/ModuleBlockedProblem.js";
 import { ModuleNotShimmedProblem } from "./NodeModuleShim/ModuleNotShimmedProblem.js";
@@ -28,7 +28,7 @@ export interface NodeModuleShim {
 declare const NodeModuleShimService_base: Effect.Service.Class<NodeModuleShimService, "Service/NodeModuleShim", {
     readonly effect: Effect.Effect<{
         Load: (Request: string, ParentUri?: Uri) => Exit.Exit<any, ModuleBlockedProblem | ModuleNotShimmedProblem>;
-    }, never, LoggerService | InitDataService>;
+    }, never, LoggerService | IExtensionHostInitData>;
 }>;
 /**
  * @class NodeModuleShim

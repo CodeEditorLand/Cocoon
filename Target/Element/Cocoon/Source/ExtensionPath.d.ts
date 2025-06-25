@@ -7,7 +7,6 @@
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { Uri } from "vscode";
-import { InitDataService } from "./InitData.js";
 /**
  * @interface ExtensionPath
  * @description The contract for the ExtensionPath service.
@@ -18,7 +17,7 @@ export interface ExtensionPath {
 declare const ExtensionPathService_base: Effect.Service.Class<ExtensionPathService, "Service/ExtensionPath", {
     readonly effect: Effect.Effect<{
         FindSubstr: (PathUri: Uri) => IExtensionDescription | undefined;
-    }, never, InitDataService>;
+    }, never, import("vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData>;
 }>;
 /**
  * @class ExtensionPath

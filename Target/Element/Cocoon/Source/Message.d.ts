@@ -17,9 +17,9 @@ export interface Message {
 }
 declare const MessageService_base: Effect.Service.Class<MessageService, "Service/Message", {
     readonly effect: Effect.Effect<{
-        ShowInformationMessage: (message: any, ...args: any[]) => any;
-        ShowWarningMessage: (message: any, ...args: any[]) => any;
-        ShowErrorMessage: (message: any, ...args: any[]) => any;
+        ShowInformationMessage: <T extends MessageItem>(message: string, ...args: Array<string | T | MessageOptions>) => any;
+        ShowWarningMessage: <T extends MessageItem>(message: string, ...args: Array<string | T | MessageOptions>) => any;
+        ShowErrorMessage: <T extends MessageItem>(message: string, ...args: Array<string | T | MessageOptions>) => any;
     }, never, IPCService>;
 }>;
 /**

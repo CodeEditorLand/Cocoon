@@ -8,6 +8,8 @@
 
 import { Effect, Exit } from "effect";
 import type { Uri } from "vscode";
+import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
+
 import { InitDataService } from "./InitData.js";
 import { LoggerService } from "./Logger.js";
 import { ModuleBlockedProblem } from "./NodeModuleShim/ModuleBlockedProblem.js";
@@ -43,7 +45,8 @@ export class NodeModuleShimService extends Effect.Service<NodeModuleShimService>
 	{
 		effect: Effect.gen(function* () {
 			const Logger = yield* LoggerService;
-			const InitData = yield* InitDataService;
+			const InitData =
+				(yield* InitDataService) as unknown as IExtensionHostInitData;
 
 			const OsShim = CreateOsShim(InitData);
 			const CryptoShim = CreateCryptoShim();

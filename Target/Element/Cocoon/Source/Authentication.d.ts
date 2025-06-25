@@ -5,7 +5,7 @@
  * flows required by extensions, proxying requests to the host.
  */
 import { Effect } from "effect";
-import type { Event, Disposable, AuthenticationProvider, AuthenticationProviderOptions, AuthenticationSession, AuthenticationGetSessionOptions, AuthenticationProviderInformation, AuthenticationSessionsChangeEvent } from "vscode";
+import type { Event, Disposable, AuthenticationProvider, AuthenticationProviderOptions, AuthenticationSession, AuthenticationGetSessionOptions, AuthenticationProviderInformation, AuthenticationSessionsChangeEvent, AuthenticationProviderSessionOptions } from "vscode";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 /**
@@ -22,10 +22,10 @@ export interface Authentication {
     readonly registerAuthenticationProvider: (id: string, label: string, provider: AuthenticationProvider, options?: AuthenticationProviderOptions) => Disposable;
     readonly getProviderInfos: () => Promise<AuthenticationProviderInformation[]>;
     readonly getSessions: (providerId: string, scopes: readonly string[], options: AuthenticationGetSessionOptions) => Promise<readonly AuthenticationSession[]>;
-    readonly login: (providerId: string, scopes: readonly string[]) => Promise<AuthenticationSession>;
+    readonly login: (providerId: string, scopes: readonly string[], options: AuthenticationProviderSessionOptions) => Promise<AuthenticationSession>;
     readonly logout: (providerId: string, sessionId: string) => Promise<void>;
 }
-declare const AuthenticationService_base: Effect.Service.Class<Authentication, "Service/Authentication", {
+declare const AuthenticationService_base: Effect.Service.Class<AuthenticationService, "Service/Authentication", {
     readonly effect: Effect.Effect<Authentication, never, LoggerService | IPCService>;
 }>;
 /**

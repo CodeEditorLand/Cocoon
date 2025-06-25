@@ -95,6 +95,6 @@ export const ToAPI = (dto: any): VSCode.TreeItem => {
 	const Item = new ExtHostTypes.TreeItem(Label, dto.collapsibleState);
 	Item.id = dto.id;
 	(Item as any).description = dto.description;
-	Item.resourceURI = dto.resourceUri ? UriToAPI(dto.resourceUri) : undefined;
+	Item.resourceUri = dto.resourceUri ? UriToAPI(dto.resourceUri) : undefined;
 	return Item;
 };

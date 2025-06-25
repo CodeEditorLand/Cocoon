@@ -18,7 +18,7 @@ class ClipboardService extends Effect.Service()(
         return RunIntegrationEffect(WriteText(text));
       }, "writeText"),
       readText: /* @__PURE__ */ __name(() => {
-        return RunIntegrationEffect(ReadText());
+        return RunIntegrationEffect(ReadText);
       }, "readText")
     }), "sync")
   }

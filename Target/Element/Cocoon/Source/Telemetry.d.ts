@@ -6,11 +6,10 @@
  */
 import { Effect } from "effect";
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
-import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 declare const TelemetryService_base: Effect.Service.Class<IExtHostTelemetry, "Service/Telemetry", {
-    readonly effect: Effect.Effect<IExtHostTelemetry, never, LoggerService | IPCService | InitDataService>;
+    readonly effect: Effect.Effect<IExtHostTelemetry, never, LoggerService | import("vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | IPCService>;
 }>;
 /**
  * @class TelemetryService

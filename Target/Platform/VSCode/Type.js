@@ -271,7 +271,7 @@ class TreeItem {
     __name(this, "TreeItem");
   }
   label;
-  resourceURI;
+  resourceUri;
   collapsibleState;
   id;
   description;
@@ -280,7 +280,7 @@ class TreeItem {
     if (typeof labelOrUri === "string" || isTreeItemLabel(labelOrUri)) {
       this.label = labelOrUri;
     } else {
-      this.resourceURI = labelOrUri;
+      this.resourceUri = labelOrUri;
     }
     this.collapsibleState = collapsibleState;
   }

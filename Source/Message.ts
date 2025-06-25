@@ -8,6 +8,7 @@ import { Effect } from "effect";
 import type { MessageItem, MessageOptions } from "vscode";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
 import { IPCService } from "./IPC.js";
+import type { IPC } from "./IPC.js";
 
 // Internal Types
 interface ExtensionSource {
@@ -54,7 +55,7 @@ const ParseArgument = (Arguments: any[]): ParsedArguments => {
 };
 
 const CreateShowMessageEffect = <T extends MessageItem>(
-	IPC: IPCService,
+	IPC: IPC,
 	Severity: number, // Corresponds to vs/base/common/severity
 	Message: string,
 	Option: MessageOptions,
@@ -128,7 +129,10 @@ export class MessageService extends Effect.Service<MessageService>()(
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
 			return {
-				ShowInformationMessage: (message, ...args) => {
+				ShowInformationMessage: <T extends MessageItem>(
+					message: string,
+					...args: Array<string | T | MessageOptions>
+				) => {
 					const { Option, Items, Source } = ParseArgument(args);
 					return CreateShowMessageEffect(
 						IPC,
@@ -139,7 +143,10 @@ export class MessageService extends Effect.Service<MessageService>()(
 						Source,
 					) as any;
 				},
-				ShowWarningMessage: (message, ...args) => {
+				ShowWarningMessage: <T extends MessageItem>(
+					message: string,
+					...args: Array<string | T | MessageOptions>
+				) => {
 					const { Option, Items, Source } = ParseArgument(args);
 					return CreateShowMessageEffect(
 						IPC,
@@ -150,7 +157,10 @@ export class MessageService extends Effect.Service<MessageService>()(
 						Source,
 					) as any;
 				},
-				ShowErrorMessage: (message, ...args) => {
+				ShowErrorMessage: <T extends MessageItem>(
+					message: string,
+					...args: Array<string | T | MessageOptions>
+				) => {
 					const { Option, Items, Source } = ParseArgument(args);
 					return CreateShowMessageEffect(
 						IPC,

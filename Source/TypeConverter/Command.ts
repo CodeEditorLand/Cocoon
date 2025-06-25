@@ -137,6 +137,7 @@ export class Command {
 		return {
 			id: Command.command,
 			title: Command.title,
+			tooltip: Command.tooltip,
 			arguments: Command.arguments,
 		};
 	}

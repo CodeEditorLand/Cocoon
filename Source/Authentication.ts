@@ -15,6 +15,7 @@ import type {
 	AuthenticationGetSessionOptions,
 	AuthenticationProviderInformation,
 	AuthenticationSessionsChangeEvent,
+	AuthenticationProviderSessionOptions,
 } from "vscode";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
 import { IPCService } from "./IPC.js";
@@ -54,6 +55,7 @@ export interface Authentication {
 	readonly login: (
 		providerId: string,
 		scopes: readonly string[],
+		options: AuthenticationProviderSessionOptions,
 	) => Promise<AuthenticationSession>;
 	readonly logout: (providerId: string, sessionId: string) => Promise<void>;
 }
@@ -62,7 +64,7 @@ export interface Authentication {
  * @class AuthenticationService
  * @description The `Effect.Service` for the Authentication service.
  */
-export class AuthenticationService extends Effect.Service<Authentication>()(
+export class AuthenticationService extends Effect.Service<AuthenticationService>()(
 	"Service/Authentication",
 	{
 		effect: Effect.gen(function* () {
@@ -118,11 +120,11 @@ export class AuthenticationService extends Effect.Service<Authentication>()(
 				onDidChangeSessions: OnDidChangeSessionsEvent,
 
 				registerAuthenticationProvider: (
-					_id,
-					_label,
-					_provider,
-					_options,
-				) => {
+					_id: string,
+					_label: string,
+					_provider: AuthenticationProvider,
+					_options?: AuthenticationProviderOptions,
+				): Disposable => {
 					// A real implementation would manage providers and proxy calls.
 					// This is stubbed as per the original analysis of OldCocoon.
 					Effect.runSync(
@@ -135,7 +137,11 @@ export class AuthenticationService extends Effect.Service<Authentication>()(
 
 				getProviderInfos: () => Effect.runPromise(GetProviderInfos()),
 
-				getSessions: (providerId, scopes, options) =>
+				getSessions: (
+					providerId: string,
+					scopes: readonly string[],
+					options: AuthenticationGetSessionOptions,
+				) =>
 					// A real implementation would be more nuanced, but for now we can
 					// just delegate to a method that might exist on the host.
 					Effect.runPromise(
@@ -149,11 +155,16 @@ export class AuthenticationService extends Effect.Service<Authentication>()(
 						),
 					),
 
-				login: (providerId, scopes) =>
+				login: (
+					providerId: string,
+					scopes: readonly string[],
+					options: AuthenticationProviderSessionOptions,
+				) =>
 					Effect.runPromise(
 						IPC.SendRequest<AuthenticationSession>("$login", [
 							providerId,
 							scopes,
+							options,
 						]).pipe(
 							Effect.mapError(
 								(cause) => new Error(String(cause)),
@@ -161,7 +172,7 @@ export class AuthenticationService extends Effect.Service<Authentication>()(
 						),
 					),
 
-				logout: (providerId, sessionId) =>
+				logout: (providerId: string, sessionId: string) =>
 					Effect.runPromise(
 						IPC.SendNotification("$logout", [
 							providerId,

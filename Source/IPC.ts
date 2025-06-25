@@ -18,7 +18,13 @@ import { CancellationService } from "./Cancellation.js";
 import { IPCConfigurationService } from "./IPCConfiguration.js";
 import { gRPCConnectionError } from "./IPC/gRPCConnectionError.js";
 import { IPCProblem } from "./IPC/IPCProblem.js";
-import { Proto } from "./IPC/Generated.js";
+import {
+	GenericRequest,
+	GenericResponse,
+	GenericNotification,
+	RPCDataPayload,
+} from "./IPC/Generated.js";
+import type { MountainService } from "./IPC/Generated.js";
 import { ProtoSerializationProblem } from "./IPC/ProtoConverter/ProtoSerializationProblem.js";
 import { EncodeValue } from "./IPC/ProtoConverter/EncodeValue.js";
 import { DecodeValue } from "./IPC/ProtoConverter/DecodeValue.js";
@@ -85,7 +91,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 				const Client = new ClientConstructor(
 					Config.MountainAddress,
 					gRPC.credentials.createInsecure(),
-				) as Proto.MountainService & gRPC.Client;
+				) as unknown as MountainService & gRPC.Client;
 				yield* Effect.async<void, gRPCConnectionError>((Resume) => {
 					Client.waitForReady(
 						Date.now() + 10_000,
@@ -125,7 +131,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 		const SendRPCData = (Buffer: VSBuffer) =>
 			Effect.tryPromise({
 				try: () => {
-					const Payload = new Proto.RPCDataPayload();
+					const Payload = new RPCDataPayload();
 					Payload.setBuffer(Buffer.buffer);
 					return GrpcClient.sendRPCDataToMountain(Payload);
 				},
@@ -159,7 +165,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 						(n) => n + 1,
 					);
 					const EncodedParameter = yield* EncodeValue(Parameters);
-					const RequestMessage = new Proto.GenericRequest();
+					const RequestMessage = new GenericRequest();
 					RequestMessage.setRequestid(RequestId);
 					RequestMessage.setMethod(Method);
 					RequestMessage.setParams(EncodedParameter);
@@ -171,7 +177,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 								Cause,
 								Context: `gRPC request '${Method}' failed.`,
 							}),
-					})) as typeof Proto.GenericResponse.prototype;
+					})) as typeof GenericResponse.prototype;
 					const DecodedResult = yield* DecodeValue(
 						ResponseMessage.getResult(),
 					);
@@ -191,7 +197,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 			SendNotification: (Method, Parameters) =>
 				Effect.gen(function* () {
 					const EncodedParameter = yield* EncodeValue(Parameters);
-					const NotificationMessage = new Proto.GenericNotification();
+					const NotificationMessage = new GenericNotification();
 					NotificationMessage.setMethod(Method);
 					NotificationMessage.setParams(EncodedParameter);
 					yield* Effect.tryPromise({

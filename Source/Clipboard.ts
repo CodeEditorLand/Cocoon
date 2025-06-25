@@ -45,7 +45,7 @@ export class ClipboardService extends Effect.Service<ClipboardService>()(
 				return RunIntegrationEffect(WriteText(text));
 			},
 			readText: (): Promise<string> => {
-				return RunIntegrationEffect(ReadText());
+				return RunIntegrationEffect(ReadText);
 			},
 		}),
 	},

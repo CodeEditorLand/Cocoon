@@ -18,7 +18,8 @@ import {
 	ToURI as DTOToURI,
 	ToURIArray as DTOToURIArray,
 } from "./TypeConverter/Dialog/DialogResult.js";
-import { IPC, IPCService } from "./IPC.js";
+import type { IPC } from "./IPC.js";
+import { IPCService } from "./IPC.js";
 import { DialogProblem } from "./Dialog/DialogProblem.js";
 
 /**
@@ -80,7 +81,10 @@ export class DialogService extends Effect.Service<DialogService>()(
 			const IPC = yield* IPCService;
 
 			return {
-				ShowOpenDialog: (Options, Token) =>
+				ShowOpenDialog: (
+					Options?: OpenDialogOptions,
+					Token?: CancellationToken,
+				) =>
 					CreateDialogEffect<
 						OpenDialogOptions,
 						any,
@@ -93,7 +97,10 @@ export class DialogService extends Effect.Service<DialogService>()(
 						OpenDialogOptionToDTO,
 						DTOToURIArray,
 					),
-				ShowSaveDialog: (Options, Token) =>
+				ShowSaveDialog: (
+					Options?: SaveDialogOptions,
+					Token?: CancellationToken,
+				) =>
 					CreateDialogEffect<SaveDialogOptions, any, Uri | undefined>(
 						IPC,
 						"$showSaveDialog",

@@ -81,7 +81,7 @@ export class WebViewImplementation implements Webview {
 	public asWebviewUri(LocalResource: Uri): Uri {
 		const Authority = this.Extension.identifier.value.toLowerCase();
 		return LocalResource.with({
-			scheme: Schemas["vscode-webview-resource"],
+			scheme: Schemas.vscodeFileResource,
 			authority: Authority,
 		});
 	}

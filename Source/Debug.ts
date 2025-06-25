@@ -101,7 +101,7 @@ export interface DebugInterface {
  * @class DebugService
  * @description The `Effect.Service` for the Debug service.
  */
-export class DebugService extends Effect.Service<DebugInterface>()(
+export class DebugService extends Effect.Service<DebugService>()(
 	"Service/Debug",
 	{
 		effect: Effect.gen(function* () {

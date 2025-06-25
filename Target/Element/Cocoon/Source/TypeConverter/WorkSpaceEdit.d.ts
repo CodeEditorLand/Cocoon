@@ -6,25 +6,27 @@
 import type { UriComponents } from "vs/base/common/uri.js";
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type * as VSCode from "vscode";
-interface IWorkspaceTextEdit {
+interface IWorkspaceTextEditDTO {
+    _type: "text";
     resource: UriComponents;
-    textEdit: IIdentifiedSingleEditOperation;
+    edit: IIdentifiedSingleEditOperation;
+    metadata?: VSCode.WorkspaceEditEntryMetadata;
     versionId?: number;
-    metadata?: any;
 }
-interface IWorkspaceFileEdit {
+interface IWorkspaceFileEditDTO {
+    _type: "file";
     oldResource?: UriComponents;
     newResource?: UriComponents;
     options?: any;
-    metadata?: any;
+    metadata?: VSCode.WorkspaceEditEntryMetadata;
 }
-type IWorkspaceEdit = {
-    edits: Array<IWorkspaceTextEdit | IWorkspaceFileEdit>;
-    metadata?: any;
+type IWorkspaceEditDTO = {
+    edits: Array<IWorkspaceTextEditDTO | IWorkspaceFileEditDTO>;
+    metadata?: VSCode.WorkspaceEditMetadata;
 };
 export interface IVersionInformationProvider {
     GetTextDocumentVersion(Uri: VSCode.Uri): number | undefined;
 }
-export declare const FromAPI: (Edit: VSCode.WorkspaceEdit, VersionProvider?: IVersionInformationProvider) => IWorkspaceEdit;
-export declare const ToAPI: (DTO: IWorkspaceEdit) => VSCode.WorkspaceEdit;
+export declare const FromAPI: (Edit: VSCode.WorkspaceEdit, VersionProvider?: IVersionInformationProvider) => IWorkspaceEditDTO;
+export declare const ToAPI: (DTO: IWorkspaceEditDTO) => VSCode.WorkspaceEdit;
 export {};

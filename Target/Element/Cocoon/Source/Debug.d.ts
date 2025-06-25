@@ -52,7 +52,7 @@ export interface DebugInterface {
     readonly AddBreakpoints: (breakpoints: readonly Breakpoint[]) => Effect.Effect<void, never>;
     readonly RemoveBreakpoints: (breakpoints: readonly Breakpoint[]) => Effect.Effect<void, never>;
 }
-declare const DebugService_base: Effect.Service.Class<DebugInterface, "Service/Debug", {
+declare const DebugService_base: Effect.Service.Class<DebugService, "Service/Debug", {
     readonly effect: Effect.Effect<{
         readonly activeDebugSession: DebugSession | undefined;
         readonly activeDebugConsole: DebugConsole;

@@ -8,7 +8,6 @@
 import { Effect } from "effect";
 import { UIKind, type Event, type LogLevel, type Uri, type Clipboard } from "vscode";
 import { ClipboardService } from "./Clipboard.js";
-import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
 /**
  * @interface Environment
@@ -39,7 +38,7 @@ export interface Environment {
     readonly asExternalUri: (Target: Uri) => Promise<Uri>;
 }
 declare const EnvironmentService_base: Effect.Service.Class<EnvironmentService, "Service/Environment", {
-    readonly effect: Effect.Effect<Environment, never, IPCService | InitDataService | ClipboardService>;
+    readonly effect: Effect.Effect<Environment, never, import("vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | IPCService | ClipboardService>;
 }>;
 /**
  * @class Environment

@@ -25,8 +25,17 @@ export const ConvertShowOptionToDTO = (
 	ViewColumn: VSCode.ViewColumn | undefined,
 	PreserveFocus: boolean,
 ): { viewColumn?: number; preserveFocus: boolean } & IEditorOptions => {
-	return {
-		viewColumn: ViewColumnFromAPI(ViewColumn),
+	const DTO: {
+		viewColumn?: number;
+		preserveFocus: boolean;
+	} & IEditorOptions = {
 		preserveFocus: PreserveFocus,
 	};
+
+	const ViewColumnValue = ViewColumnFromAPI(ViewColumn);
+	if (ViewColumnValue !== undefined) {
+		DTO.viewColumn = ViewColumnValue;
+	}
+
+	return DTO;
 };

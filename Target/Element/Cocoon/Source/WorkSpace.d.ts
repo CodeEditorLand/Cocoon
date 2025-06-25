@@ -9,6 +9,7 @@ import { Disposable, type CancellationToken, type Event, type FileSystem as VSCo
 import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";
+import type { ConfigurationScope } from "vscode";
 /**
  * @interface WorkSpace
  * @description The contract for the WorkSpace service, mirroring `vscode.workspace`.
@@ -30,7 +31,7 @@ export interface WorkSpace {
         language?: string;
         content?: string;
     }) => Effect.Effect<TextDocument, Error>;
-    readonly getConfiguration: (section?: string, scope?: any) => Effect.Effect<WorkspaceConfiguration, Error>;
+    readonly getConfiguration: (section?: string, scope?: ConfigurationScope | null) => Effect.Effect<WorkspaceConfiguration, Error>;
     readonly applyEdit: (edit: WorkspaceEdit) => Effect.Effect<boolean, Error>;
     readonly registerTextDocumentContentProvider: (scheme: string, provider: TextDocumentContentProvider) => Disposable;
     readonly onDidChangeTextEditorSelection: Event<TextEditorSelectionChangeEvent>;

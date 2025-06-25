@@ -197,7 +197,7 @@ export interface StatusBar {
  * @class StatusBarService
  * @description The `Effect.Service` for the StatusBar service.
  */
-export class StatusBarService extends Effect.Service<StatusBar>()(
+export class StatusBarService extends Effect.Service<StatusBarService>()(
 	"Service/StatusBar",
 	{
 		effect: Effect.gen(function* () {

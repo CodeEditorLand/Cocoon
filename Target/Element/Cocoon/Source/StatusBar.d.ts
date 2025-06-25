@@ -63,7 +63,7 @@ export interface StatusBar {
     readonly CreateStatusBarItem: (Extension: IExtensionDescription, Id?: string, Alignment?: StatusBarAlignment, Priority?: number) => Effect.Effect<VSCodeStatusBarItem, never>;
     readonly SetStatusBarMessage: (Text: string, HideOrPromise?: number | Promise<any>) => Disposable;
 }
-declare const StatusBarService_base: Effect.Service.Class<StatusBar, "Service/StatusBar", {
+declare const StatusBarService_base: Effect.Service.Class<StatusBarService, "Service/StatusBar", {
     readonly effect: Effect.Effect<{
         CreateStatusBarItem: (Extension: any, Id: any, Alignment: any, Priority: any) => Effect.Effect<StatusBarItemImplementation, never, never>;
         SetStatusBarMessage: (text: string, hideOrPromise?: number | Promise<any>) => Disposable;

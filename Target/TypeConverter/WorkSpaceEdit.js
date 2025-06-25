@@ -1,6 +1,9 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { WorkspaceEdit as VSCodeWorkspaceEdit } from "../Platform/VSCode/Type.js";
+import {
+  WorkspaceEdit as VSCodeWorkspaceEdit,
+  TextEdit as VSCodeTextEdit
+} from "../Platform/VSCode/Type.js";
 import {
   FromAPI as TextEditFromAPI,
   ToAPI as TextEditToAPI
@@ -12,11 +15,15 @@ const FromAPI = /* @__PURE__ */ __name((Edit, VersionProvider) => {
     const Resource = UriFromAPI(URI);
     const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
     for (const SingleEdit of URIEditArray) {
-      Result.edits.push({
-        resource: Resource,
-        textEdit: TextEditFromAPI(SingleEdit),
-        versionId: VersionId
-      });
+      if (SingleEdit instanceof VSCodeTextEdit) {
+        Result.edits.push({
+          _type: "text",
+          resource: Resource,
+          edit: TextEditFromAPI(SingleEdit),
+          versionId: VersionId
+        });
+      } else {
+      }
     }
   }
   return Result;
@@ -24,29 +31,21 @@ const FromAPI = /* @__PURE__ */ __name((Edit, VersionProvider) => {
 const ToAPI = /* @__PURE__ */ __name((DTO) => {
   const Result = new VSCodeWorkspaceEdit();
   for (const Edit of DTO.edits) {
-    if ("textEdit" in Edit) {
-      const WorkspaceTextEdit = Edit;
-      const URI = UriToAPI(WorkspaceTextEdit.resource);
-      const TextEditArray = [TextEditToAPI(WorkspaceTextEdit.textEdit)];
+    if (Edit._type === "text") {
+      const URI = UriToAPI(Edit.resource);
+      const TextEditArray = [TextEditToAPI(Edit.edit)];
       Result.set(URI, TextEditArray);
-    } else {
-      const FileEdit = Edit;
-      if (FileEdit.oldResource && FileEdit.newResource) {
+    } else if (Edit._type === "file") {
+      if (Edit.oldResource && Edit.newResource) {
         Result.renameFile(
-          UriToAPI(FileEdit.oldResource),
-          UriToAPI(FileEdit.newResource),
-          FileEdit.options
+          UriToAPI(Edit.oldResource),
+          UriToAPI(Edit.newResource),
+          Edit.options
         );
-      } else if (FileEdit.newResource) {
-        Result.createFile(
-          UriToAPI(FileEdit.newResource),
-          FileEdit.options
-        );
-      } else if (FileEdit.oldResource) {
-        Result.deleteFile(
-          UriToAPI(FileEdit.oldResource),
-          FileEdit.options
-        );
+      } else if (Edit.newResource) {
+        Result.createFile(UriToAPI(Edit.newResource), Edit.options);
+      } else if (Edit.oldResource) {
+        Result.deleteFile(UriToAPI(Edit.oldResource), Edit.options);
       }
     }
   }

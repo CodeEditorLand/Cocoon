@@ -80,11 +80,13 @@ class WebViewPanelImplementation {
   reveal(ViewColumn, PreserveFocus) {
     if (this.IsDisposed) return;
     const ViewColumnDTO = ViewColumn ? ConvertShowOptionToDTO(ViewColumn, PreserveFocus ?? false) : void 0;
-    this.IPC.SendNotification("$revealWebviewPanel", [
-      this.Handle,
-      ViewColumnDTO,
-      PreserveFocus
-    ]);
+    Effect.runFork(
+      this.IPC.SendNotification("$revealWebviewPanel", [
+        this.Handle,
+        ViewColumnDTO,
+        PreserveFocus
+      ])
+    );
   }
   dispose() {
     if (this.IsDisposed) {

@@ -88,6 +88,7 @@ class Command {
     return {
       id: Command2.command,
       title: Command2.title,
+      tooltip: Command2.tooltip,
       arguments: Command2.arguments
     };
   }

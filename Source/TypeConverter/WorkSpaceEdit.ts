@@ -7,32 +7,41 @@
 import type { UriComponents } from "vs/base/common/uri.js";
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type * as VSCode from "vscode";
-import { WorkspaceEdit as VSCodeWorkspaceEdit } from "../Platform/VSCode/Type.js";
+import {
+	WorkspaceEdit as VSCodeWorkspaceEdit,
+	TextEdit as VSCodeTextEdit,
+} from "../Platform/VSCode/Type.js";
 import {
 	FromAPI as TextEditFromAPI,
 	ToAPI as TextEditToAPI,
 } from "./Main/TextEdit.js";
 import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "./Main/URI.js";
 
-// Placeholders for internal VS Code DTOs
-interface IWorkspaceTextEdit {
+// --- DTO Interfaces for IPC ---
+// These define the plain, serializable objects for IPC, decoupling from complex VS Code internal types.
+
+interface IWorkspaceTextEditDTO {
+	_type: "text";
 	resource: UriComponents;
-	textEdit: IIdentifiedSingleEditOperation;
+	edit: IIdentifiedSingleEditOperation;
+	metadata?: VSCode.WorkspaceEditEntryMetadata;
 	versionId?: number;
-	metadata?: any;
 }
 
-interface IWorkspaceFileEdit {
+interface IWorkspaceFileEditDTO {
+	_type: "file";
 	oldResource?: UriComponents;
 	newResource?: UriComponents;
-	options?: any;
-	metadata?: any;
+	options?: any; // Simplified to `any` to match the dynamic nature of file options
+	metadata?: VSCode.WorkspaceEditEntryMetadata;
 }
 
-type IWorkspaceEdit = {
-	edits: Array<IWorkspaceTextEdit | IWorkspaceFileEdit>;
-	metadata?: any;
+type IWorkspaceEditDTO = {
+	edits: Array<IWorkspaceTextEditDTO | IWorkspaceFileEditDTO>;
+	metadata?: VSCode.WorkspaceEditMetadata;
 };
+
+// --- Conversion Logic ---
 
 export interface IVersionInformationProvider {
 	GetTextDocumentVersion(Uri: VSCode.Uri): number | undefined;
@@ -41,48 +50,54 @@ export interface IVersionInformationProvider {
 export const FromAPI = (
 	Edit: VSCode.WorkspaceEdit,
 	VersionProvider?: IVersionInformationProvider,
-): IWorkspaceEdit => {
-	const Result: IWorkspaceEdit = { edits: [] };
+): IWorkspaceEditDTO => {
+	const Result: IWorkspaceEditDTO = { edits: [] };
+
 	for (const [URI, URIEditArray] of Edit.entries()) {
 		const Resource = UriFromAPI(URI);
 		const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
+
 		for (const SingleEdit of URIEditArray) {
-			Result.edits.push({
-				resource: Resource,
-				textEdit: TextEditFromAPI(SingleEdit),
-				versionId: VersionId,
-			});
+			if (SingleEdit instanceof VSCodeTextEdit) {
+				Result.edits.push({
+					_type: "text",
+					resource: Resource,
+					edit: TextEditFromAPI(SingleEdit),
+					versionId: VersionId,
+				});
+			} else {
+				// This branch handles potential future file operations added to `entries`,
+				// though the current public API only provides TextEdits.
+			}
 		}
 	}
+	// Note: The public `WorkspaceEdit.entries()` only returns text edits.
+	// File operations (create, rename, delete) are not exposed via `entries()`.
+	// A full implementation would need to access internal properties or a different API.
+	// This converter correctly handles the available public API surface.
+
 	return Result;
 };
 
-export const ToAPI = (DTO: IWorkspaceEdit): VSCode.WorkspaceEdit => {
+export const ToAPI = (DTO: IWorkspaceEditDTO): VSCode.WorkspaceEdit => {
 	const Result = new VSCodeWorkspaceEdit();
+
 	for (const Edit of DTO.edits) {
-		if ("textEdit" in Edit) {
-			const WorkspaceTextEdit = Edit as IWorkspaceTextEdit;
-			const URI = UriToAPI(WorkspaceTextEdit.resource);
-			const TextEditArray = [TextEditToAPI(WorkspaceTextEdit.textEdit)];
+		if (Edit._type === "text") {
+			const URI = UriToAPI(Edit.resource);
+			const TextEditArray = [TextEditToAPI(Edit.edit)];
 			Result.set(URI, TextEditArray);
-		} else {
-			const FileEdit = Edit as IWorkspaceFileEdit;
-			if (FileEdit.oldResource && FileEdit.newResource) {
+		} else if (Edit._type === "file") {
+			if (Edit.oldResource && Edit.newResource) {
 				Result.renameFile(
-					UriToAPI(FileEdit.oldResource),
-					UriToAPI(FileEdit.newResource),
-					FileEdit.options,
+					UriToAPI(Edit.oldResource),
+					UriToAPI(Edit.newResource),
+					Edit.options,
 				);
-			} else if (FileEdit.newResource) {
-				Result.createFile(
-					UriToAPI(FileEdit.newResource),
-					FileEdit.options,
-				);
-			} else if (FileEdit.oldResource) {
-				Result.deleteFile(
-					UriToAPI(FileEdit.oldResource),
-					FileEdit.options,
-				);
+			} else if (Edit.newResource) {
+				Result.createFile(UriToAPI(Edit.newResource), Edit.options);
+			} else if (Edit.oldResource) {
+				Result.deleteFile(UriToAPI(Edit.oldResource), Edit.options);
 			}
 		}
 	}

@@ -161,10 +161,9 @@ class WorkSpaceService extends Effect.Service()(
                 Schedule.compose(Schedule.recurs(100))
               )
             }),
-            Effect.flatMap(Option.getOrThrow),
-            Effect.mapError(
+            Effect.someOrFail(
               () => new Error(
-                `Failed to find newly opened document: ${ResultUri.toString()}`
+                `Failed to find newly opened document after timeout: ${ResultUri.toString()}`
               )
             )
           );

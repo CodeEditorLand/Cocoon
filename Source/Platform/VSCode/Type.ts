@@ -34,6 +34,7 @@ import {
 // Foundational Re-exports
 export class Disposable implements VSCode.Disposable {
 	private _callOnDispose: () => any;
+
 	constructor(callOnDispose: () => any) {
 		this._callOnDispose = callOnDispose;
 	}
@@ -57,7 +58,9 @@ export const TextEdit = VSCodeTextEdit;
 // Service Classes
 export class Position implements VSCode.Position {
 	readonly line: number;
+
 	readonly character: number;
+
 	constructor(line: number, character: number) {
 		if (line < 0) {
 			throw new Error("Illegal argument: line must be non-negative");
@@ -66,6 +69,7 @@ export class Position implements VSCode.Position {
 			throw new Error("Illegal argument: character must be non-negative");
 		}
 		this.line = line;
+
 		this.character = character;
 	}
 	isBefore(other: VSCode.Position): boolean {
@@ -91,16 +95,23 @@ export class Position implements VSCode.Position {
 	}
 	compareTo(other: VSCode.Position): number {
 		if (this.line < other.line) return -1;
+
 		if (this.line > other.line) return 1;
+
 		if (this.character < other.character) return -1;
+
 		if (this.character > other.character) return 1;
+
 		return 0;
 	}
 	translate(lineDelta?: number, characterDelta?: number): VSCode.Position;
+
 	translate(change: {
 		lineDelta?: number;
+
 		characterDelta?: number;
 	}): VSCode.Position;
+
 	translate(
 		lineDeltaOrChange:
 			| number
@@ -123,7 +134,9 @@ export class Position implements VSCode.Position {
 		);
 	}
 	with(line?: number, character?: number): VSCode.Position;
+
 	with(change: { line?: number; character?: number }): VSCode.Position;
+
 	with(
 		lineOrChange:
 			| number
@@ -149,14 +162,18 @@ export class Position implements VSCode.Position {
 
 export class Range implements VSCode.Range {
 	readonly start: Position;
+
 	readonly end: Position;
+
 	constructor(start: Position, end: Position);
+
 	constructor(
 		startLine: number,
 		startCharacter: number,
 		endLine: number,
 		endCharacter: number,
 	);
+
 	constructor(
 		startLineOrPosition: number | Position,
 		startCharacterOrPosition: number | Position,
@@ -164,7 +181,9 @@ export class Range implements VSCode.Range {
 		endCharacter?: number,
 	) {
 		let start: Position;
+
 		let end: Position;
+
 		if (
 			typeof startLineOrPosition === "number" &&
 			typeof startCharacterOrPosition === "number" &&
@@ -172,12 +191,14 @@ export class Range implements VSCode.Range {
 			typeof endCharacter === "number"
 		) {
 			start = new Position(startLineOrPosition, startCharacterOrPosition);
+
 			end = new Position(endLine, endCharacter);
 		} else if (
 			startLineOrPosition instanceof Position &&
 			startCharacterOrPosition instanceof Position
 		) {
 			start = startLineOrPosition;
+
 			end = startCharacterOrPosition;
 		} else {
 			throw new Error("Invalid arguments");
@@ -185,9 +206,11 @@ export class Range implements VSCode.Range {
 
 		if (start.isAfter(end)) {
 			this.start = end;
+
 			this.end = start;
 		} else {
 			this.start = start;
+
 			this.end = end;
 		}
 	}
@@ -216,7 +239,9 @@ export class Range implements VSCode.Range {
 		const start = this.start.isAfter(other.start)
 			? this.start
 			: other.start;
+
 		const end = this.end.isBefore(other.end) ? this.end : other.end;
+
 		if (start.isAfter(end)) {
 			return undefined;
 		}
@@ -226,11 +251,15 @@ export class Range implements VSCode.Range {
 		const start = this.start.isBefore(other.start)
 			? this.start
 			: other.start;
+
 		const end = this.end.isAfter(other.end) ? this.end : other.end;
+
 		return new Range(start, end);
 	}
 	with(start?: Position, end?: Position): Range;
+
 	with(change: { start?: Position; end?: Position }): Range;
+
 	with(
 		startOrChange:
 			| Position
@@ -256,14 +285,18 @@ export class Range implements VSCode.Range {
 
 export class Selection extends Range implements VSCode.Selection {
 	readonly anchor: Position;
+
 	readonly active: Position;
+
 	constructor(anchor: Position, active: Position);
+
 	constructor(
 		anchorLine: number,
 		anchorCharacter: number,
 		activeLine: number,
 		activeCharacter: number,
 	);
+
 	constructor(
 		anchor: Position | number,
 		active: Position | number,
@@ -271,6 +304,7 @@ export class Selection extends Range implements VSCode.Selection {
 		activeCharacter?: number,
 	) {
 		let anchorPos: Position;
+
 		let activePos: Position;
 
 		if (
@@ -280,16 +314,20 @@ export class Selection extends Range implements VSCode.Selection {
 			typeof activeCharacter === "number"
 		) {
 			anchorPos = new Position(anchor, active);
+
 			activePos = new Position(activeLine, activeCharacter);
 		} else if (anchor instanceof Position && active instanceof Position) {
 			anchorPos = anchor;
+
 			activePos = active;
 		} else {
 			throw new Error("Invalid arguments");
 		}
 
 		super(anchorPos, activePos);
+
 		this.anchor = anchorPos;
+
 		this.active = activePos;
 	}
 	get isReversed(): boolean {
@@ -307,24 +345,33 @@ export class Selection extends Range implements VSCode.Selection {
 
 export class MarkdownString implements VSCode.MarkdownString {
 	value: string;
+
 	isTrusted?: boolean;
+
 	supportThemeIcons?: boolean;
+
 	supportHtml?: boolean;
+
 	baseUri?: VSCode.Uri;
+
 	constructor(value = "", isTrusted = false) {
 		this.value = value;
+
 		this.isTrusted = isTrusted;
 	}
 	appendText(value: string): MarkdownString {
 		this.value += value;
+
 		return this;
 	}
 	appendMarkdown(value: string): MarkdownString {
 		this.value += value;
+
 		return this;
 	}
 	appendCodeblock(value: string, language = ""): MarkdownString {
 		this.value += `\n\`\`\`${language}\n${value}\n\`\`\`\n`;
+
 		return this;
 	}
 	toJSON(): any {
@@ -341,11 +388,17 @@ export class ThemeColor implements VSCode.ThemeColor {
 
 export class TreeItem implements VSCode.TreeItem {
 	label?: string | VSCode.TreeItemLabel;
-	resourceURI?: VSCode.Uri;
+
+	resourceUri?: VSCode.Uri;
+
 	collapsibleState?: VSCode.TreeItemCollapsibleState;
+
 	id?: string;
+
 	description?: string;
+
 	command?: VSCode.Command;
+
 	constructor(
 		labelOrUri: string | VSCode.Uri | VSCode.TreeItemLabel,
 		collapsibleState: VSCode.TreeItemCollapsibleState = TreeItemCollapsibleState.None,
@@ -353,7 +406,7 @@ export class TreeItem implements VSCode.TreeItem {
 		if (typeof labelOrUri === "string" || isTreeItemLabel(labelOrUri)) {
 			this.label = labelOrUri;
 		} else {
-			this.resourceURI = labelOrUri;
+			this.resourceUri = labelOrUri;
 		}
 		this.collapsibleState = collapsibleState;
 	}

@@ -5,9 +5,9 @@
  * This provides a single, stable import path for the rest of the application.
  * NOTE: This file is a placeholder for the actual generated code.
  */
-declare class Empty {
+export declare class Empty {
 }
-declare class GenericRequest {
+export declare class GenericRequest {
     setRequestid(_Id: number): void;
     setMethod(_Method: string): void;
     setParams(_Parameters: any): void;
@@ -15,12 +15,12 @@ declare class GenericRequest {
     getMethod(): string;
     getParams(): any;
 }
-declare class GenericResponse {
+export declare class GenericResponse {
     setRequestid(_Id: number): void;
     setResult(_Result: any): void;
     getResult(): any;
 }
-declare class GenericNotification {
+export declare class GenericNotification {
     private Method;
     private Parameter;
     setMethod(Method: string): void;
@@ -28,10 +28,10 @@ declare class GenericNotification {
     getMethod(): string;
     getParams(): any;
 }
-declare class CancelOperationRequest {
+export declare class CancelOperationRequest {
     getRequestid(): number;
 }
-declare class RPCDataPayload {
+export declare class RPCDataPayload {
     setBuffer(_Buffer: Uint8Array): void;
     getBuffer(): Uint8Array;
 }
@@ -48,4 +48,3 @@ export declare const Proto: {
     CancelOperationRequest: typeof CancelOperationRequest;
     RPCDataPayload: typeof RPCDataPayload;
 };
-export {};

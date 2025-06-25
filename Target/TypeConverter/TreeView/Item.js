@@ -51,7 +51,7 @@ const ToAPI = /* @__PURE__ */ __name((dto) => {
   const Item = new ExtHostTypes.TreeItem(Label, dto.collapsibleState);
   Item.id = dto.id;
   Item.description = dto.description;
-  Item.resourceURI = dto.resourceUri ? UriToAPI(dto.resourceUri) : void 0;
+  Item.resourceUri = dto.resourceUri ? UriToAPI(dto.resourceUri) : void 0;
   return Item;
 }, "ToAPI");
 export {

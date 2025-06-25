@@ -30,10 +30,7 @@ import { WebViewImplementation } from "./WebViewImplementation.js";
 export class WebViewPanelImplementation implements WebviewPanel {
 	private IsDisposed = false;
 	private _title: string;
-	private _iconPath:
-		| Uri
-		| { readonly light: Uri; readonly dark: Uri }
-		| undefined;
+	private _iconPath?: Uri | { readonly light: Uri; readonly dark: Uri };
 	private _active: boolean;
 	private _visible: boolean;
 	private _viewColumn: ViewColumn;
@@ -122,11 +119,13 @@ export class WebViewPanelImplementation implements WebviewPanel {
 		const ViewColumnDTO = ViewColumn
 			? ConvertShowOptionToDTO(ViewColumn, PreserveFocus ?? false)
 			: undefined;
-		this.IPC.SendNotification("$revealWebviewPanel", [
-			this.Handle,
-			ViewColumnDTO,
-			PreserveFocus,
-		]);
+		Effect.runFork(
+			this.IPC.SendNotification("$revealWebviewPanel", [
+				this.Handle,
+				ViewColumnDTO,
+				PreserveFocus,
+			]),
+		);
 	}
 
 	public dispose(): void {

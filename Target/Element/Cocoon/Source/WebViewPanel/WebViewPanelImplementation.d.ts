@@ -17,7 +17,7 @@ export declare class WebViewPanelImplementation implements WebviewPanel {
     private readonly OnDidDisposeCallback;
     private IsDisposed;
     private _title;
-    private _iconPath;
+    private _iconPath?;
     private _active;
     private _visible;
     private _viewColumn;
