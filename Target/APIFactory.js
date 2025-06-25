@@ -34,6 +34,10 @@ const CreateSafeEvent = /* @__PURE__ */ __name((ExtensionId, Logger, ActualEvent
 const CreateCommandNamespace = /* @__PURE__ */ __name((Command, _ExtensionDescription) => {
   return {
     registerCommand: /* @__PURE__ */ __name((Id, Handler, ThisArgument) => Command.registerCommand(true, Id, Handler, ThisArgument), "registerCommand"),
+    registerTextEditorCommand: /* @__PURE__ */ __name((Id, Handler, ThisArgument) => (
+      // @ts-expect-error
+      Command.registerTextEditorCommand(Id, Handler, ThisArgument)
+    ), "registerTextEditorCommand"),
     executeCommand: /* @__PURE__ */ __name((Id, ...Argument) => Command.executeCommand(Id, ...Argument), "executeCommand"),
     getCommands: /* @__PURE__ */ __name((FilterInternal) => Command.getCommands(FilterInternal), "getCommands")
   };

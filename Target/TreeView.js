@@ -2,10 +2,12 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Ref } from "effect";
 import { generateUuid } from "vs/base/common/uuid.js";
+import {
+} from "vscode";
 import { FromAPI as TreeViewOptionToDTO } from "./TypeConverter/TreeView/Option.js";
 import { FromAPI as TreeViewItemToDTO } from "./TypeConverter/TreeView/Item.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { IPCService } from "./IPC.js";
+import { IPC, IPCService } from "./IPC.js";
 class TreeViewImplementation {
   constructor(ViewId, DataProvider, IPC2, Extension) {
     this.ViewId = ViewId;

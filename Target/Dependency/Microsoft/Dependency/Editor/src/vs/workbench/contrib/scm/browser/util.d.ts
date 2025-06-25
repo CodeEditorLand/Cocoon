@@ -1,0 +1,36 @@
+import { ISCMHistoryItem, SCMHistoryItemChangeViewModelTreeElement, SCMHistoryItemLoadMoreTreeElement, SCMHistoryItemViewModelTreeElement } from '../common/history.js';
+import { ISCMResource, ISCMRepository, ISCMResourceGroup, ISCMInput, ISCMActionButton, ISCMViewService, ISCMProvider } from '../common/scm.js';
+import { IMenu } from '../../../../platform/actions/common/actions.js';
+import { IActionViewItemProvider } from '../../../../base/browser/ui/actionbar/actionbar.js';
+import { IDisposable } from '../../../../base/common/lifecycle.js';
+import { Action, IAction } from '../../../../base/common/actions.js';
+import { ICommandService } from '../../../../platform/commands/common/commands.js';
+import { Command } from '../../../../editor/common/languages.js';
+import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
+import { IResourceNode } from '../../../../base/common/resourceTree.js';
+import { IThemeService } from '../../../../platform/theme/common/themeService.js';
+import { IManagedHoverTooltipMarkdownString } from '../../../../base/browser/ui/hover/hover.js';
+export declare function isSCMViewService(element: any): element is ISCMViewService;
+export declare function isSCMRepository(element: any): element is ISCMRepository;
+export declare function isSCMInput(element: any): element is ISCMInput;
+export declare function isSCMActionButton(element: any): element is ISCMActionButton;
+export declare function isSCMResourceGroup(element: any): element is ISCMResourceGroup;
+export declare function isSCMResource(element: any): element is ISCMResource;
+export declare function isSCMResourceNode(element: any): element is IResourceNode<ISCMResource, ISCMResourceGroup>;
+export declare function isSCMHistoryItemViewModelTreeElement(element: any): element is SCMHistoryItemViewModelTreeElement;
+export declare function isSCMHistoryItemLoadMoreTreeElement(element: any): element is SCMHistoryItemLoadMoreTreeElement;
+export declare function isSCMHistoryItemChangeViewModelTreeElement(element: any): element is SCMHistoryItemChangeViewModelTreeElement;
+export declare function isSCMHistoryItemChangeNode(element: any): element is IResourceNode<ISCMHistoryItem, SCMHistoryItemChangeViewModelTreeElement>;
+export declare function connectPrimaryMenu(menu: IMenu, callback: (primary: IAction[], secondary: IAction[]) => void, primaryGroup?: string): IDisposable;
+export declare function collectContextMenuActions(menu: IMenu): IAction[];
+export declare class StatusBarAction extends Action {
+    private command;
+    private commandService;
+    constructor(command: Command, commandService: ICommandService);
+    run(): Promise<void>;
+}
+export declare function getActionViewItemProvider(instaService: IInstantiationService): IActionViewItemProvider;
+export declare function getProviderKey(provider: ISCMProvider): string;
+export declare function getRepositoryResourceCount(provider: ISCMProvider): number;
+export declare function getHistoryItemEditorTitle(historyItem: ISCMHistoryItem, maxLength?: number): string;
+export declare function getHistoryItemHoverContent(themeService: IThemeService, historyItem: ISCMHistoryItem): IManagedHoverTooltipMarkdownString;

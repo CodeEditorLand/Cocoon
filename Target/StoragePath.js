@@ -2,10 +2,11 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
 import * as Path from "node:path";
+import {} from "vs/platform/extensions/common/extensions.js";
 import { Uri } from "vscode";
-import { FileSystemService } from "./FileSystem.js";
+import { FileSystem, FileSystemService } from "./FileSystem.js";
 import { InitDataService } from "./InitData.js";
-import { LoggerService } from "./Logger.js";
+import { Logger, LoggerService } from "./Logger.js";
 const EnsureDirectory = /* @__PURE__ */ __name((DirectoryUri, ScopeName) => Effect.if(DirectoryUri !== void 0, {
   onTrue: /* @__PURE__ */ __name(() => Effect.gen(function* () {
     const TheUri = DirectoryUri;

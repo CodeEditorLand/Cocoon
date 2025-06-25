@@ -1,0 +1,45 @@
+import { IReference } from '../../../../../base/common/lifecycle.js';
+import { ITransaction } from '../../../../../base/common/observable.js';
+import { URI } from '../../../../../base/common/uri.js';
+import { TextEdit } from '../../../../../editor/common/languages.js';
+import { ILanguageService } from '../../../../../editor/common/languages/language.js';
+import { IModelService } from '../../../../../editor/common/services/model.js';
+import { IResolvedTextEditorModel, ITextModelService } from '../../../../../editor/common/services/resolverService.js';
+import { IConfigurationService } from '../../../../../platform/configuration/common/configuration.js';
+import { IFileService } from '../../../../../platform/files/common/files.js';
+import { IInstantiationService } from '../../../../../platform/instantiation/common/instantiation.js';
+import { IMarkerService } from '../../../../../platform/markers/common/markers.js';
+import { IUndoRedoElement, IUndoRedoService } from '../../../../../platform/undoRedo/common/undoRedo.js';
+import { IEditorPane } from '../../../../common/editor.js';
+import { IFilesConfigurationService } from '../../../../services/filesConfiguration/common/filesConfigurationService.js';
+import { ITextFileService } from '../../../../services/textfile/common/textfiles.js';
+import { ICellEditOperation } from '../../../notebook/common/notebookCommon.js';
+import { ChatEditKind, IModifiedEntryTelemetryInfo, IModifiedFileEntry, IModifiedFileEntryEditorIntegration, ISnapshotEntry } from '../../common/chatEditingService.js';
+import { IChatResponseModel } from '../../common/chatModel.js';
+import { IChatService } from '../../common/chatService.js';
+import { AbstractChatEditingModifiedFileEntry } from './chatEditingModifiedFileEntry.js';
+export declare class ChatEditingModifiedDocumentEntry extends AbstractChatEditingModifiedFileEntry implements IModifiedFileEntry {
+    private readonly _multiDiffEntryDelegate;
+    private readonly _textFileService;
+    readonly initialContent: string;
+    private readonly originalModel;
+    private readonly modifiedModel;
+    private readonly _docFileEditorModel;
+    get changesCount(): import("../../../../../base/common/observable.js").IObservable<number>;
+    readonly originalURI: URI;
+    private readonly _textModelChangeService;
+    constructor(resourceRef: IReference<IResolvedTextEditorModel>, _multiDiffEntryDelegate: {
+        collapse: (transaction: ITransaction | undefined) => void;
+    }, telemetryInfo: IModifiedEntryTelemetryInfo, kind: ChatEditKind, initialContent: string | undefined, markerService: IMarkerService, modelService: IModelService, textModelService: ITextModelService, languageService: ILanguageService, configService: IConfigurationService, fileConfigService: IFilesConfigurationService, chatService: IChatService, _textFileService: ITextFileService, fileService: IFileService, undoRedoService: IUndoRedoService, instantiationService: IInstantiationService);
+    equalsSnapshot(snapshot: ISnapshotEntry | undefined): boolean;
+    createSnapshot(requestId: string | undefined, undoStop: string | undefined): ISnapshotEntry;
+    restoreFromSnapshot(snapshot: ISnapshotEntry, restoreToDisk?: boolean): Promise<void>;
+    resetToInitialContent(): Promise<void>;
+    protected _areOriginalAndModifiedIdentical(): Promise<boolean>;
+    protected _resetEditsState(tx: ITransaction): void;
+    protected _createUndoRedoElement(response: IChatResponseModel): IUndoRedoElement;
+    acceptAgentEdits(resource: URI, textEdits: (TextEdit | ICellEditOperation)[], isLastEdits: boolean, responseModel: IChatResponseModel): Promise<void>;
+    protected _doAccept(): Promise<void>;
+    protected _doReject(): Promise<void>;
+    protected _createEditorIntegration(editor: IEditorPane): IModifiedFileEntryEditorIntegration;
+}

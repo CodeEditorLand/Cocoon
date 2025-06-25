@@ -1,0 +1,34 @@
+import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+import { IDialogService } from '../../../../platform/dialogs/common/dialogs.js';
+import { IEnvironmentService } from '../../../../platform/environment/common/environment.js';
+import { IExtensionGalleryManifestService, IExtensionGalleryManifest } from '../../../../platform/extensionManagement/common/extensionGalleryManifest.js';
+import { ExtensionGalleryManifestService as ExtensionGalleryManifestService } from '../../../../platform/extensionManagement/common/extensionGalleryManifestService.js';
+import { IFileService } from '../../../../platform/files/common/files.js';
+import { ISharedProcessService } from '../../../../platform/ipc/electron-browser/services.js';
+import { ILogService } from '../../../../platform/log/common/log.js';
+import { IProductService } from '../../../../platform/product/common/productService.js';
+import { IRequestService } from '../../../../platform/request/common/request.js';
+import { IStorageService } from '../../../../platform/storage/common/storage.js';
+import { ITelemetryService } from '../../../../platform/telemetry/common/telemetry.js';
+import { IDefaultAccountService } from '../../accounts/common/defaultAccount.js';
+import { IHostService } from '../../host/browser/host.js';
+import { IRemoteAgentService } from '../../remote/common/remoteAgentService.js';
+export declare class WorkbenchExtensionGalleryManifestService extends ExtensionGalleryManifestService implements IExtensionGalleryManifestService {
+    private readonly configurationService;
+    private readonly requestService;
+    private readonly defaultAccountService;
+    private readonly dialogService;
+    private readonly hostService;
+    private readonly logService;
+    private readonly commonHeadersPromise;
+    private extensionGalleryManifest;
+    private _onDidChangeExtensionGalleryManifest;
+    readonly onDidChangeExtensionGalleryManifest: import("../../../workbench.web.main.internal.js").Event<IExtensionGalleryManifest | null>;
+    constructor(productService: IProductService, environmentService: IEnvironmentService, fileService: IFileService, telemetryService: ITelemetryService, storageService: IStorageService, remoteAgentService: IRemoteAgentService, sharedProcessService: ISharedProcessService, configurationService: IConfigurationService, requestService: IRequestService, defaultAccountService: IDefaultAccountService, dialogService: IDialogService, hostService: IHostService, logService: ILogService);
+    private extensionGalleryManifestPromise;
+    getExtensionGalleryManifest(): Promise<IExtensionGalleryManifest | null>;
+    private doGetExtensionGalleryManifest;
+    private checkAccess;
+    private requestRestart;
+    private getExtensionGalleryManifestFromServiceUrl;
+}

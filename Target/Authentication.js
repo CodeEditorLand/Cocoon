@@ -1,70 +1,83 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect } from "effect";
-import { NodeExtHostAuthentication } from "vs/workbench/api/node/extHostAuthentication.js";
-import { Emitter } from "vs/base/common/event.js";
+import { Effect, Ref } from "effect";
+import { CreateEventStream } from "./Utility/CreateEventStream.js";
 import { IPCService } from "./IPC.js";
-import { InitDataService } from "./InitData.js";
-import { WindowService } from "./Window.js";
 import { LoggerService } from "./Logger.js";
 class AuthenticationService extends Effect.Service()(
   "Service/Authentication",
   {
     effect: Effect.gen(function* () {
       const IPC = yield* IPCService;
-      const InitData = yield* InitDataService;
-      const Window = yield* WindowService;
       const Logger = yield* LoggerService;
-      const RpcServiceAdapter = {
-        _serviceBrand: void 0,
-        getProxy: /* @__PURE__ */ __name((Identifier) => IPC.CreateProxy(Identifier.path), "getProxy"),
-        set: /* @__PURE__ */ __name((_id, _instance) => _instance, "set"),
-        dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose"),
-        assertRegistered: /* @__PURE__ */ __name(() => {
-        }, "assertRegistered"),
-        drain: /* @__PURE__ */ __name(() => Promise.resolve(), "drain")
+      const ProviderInfosRef = yield* Ref.make([]);
+      const { event: OnDidChangeSessionsEvent } = CreateEventStream();
+      const GetProviderInfos = /* @__PURE__ */ __name(() => IPC.SendRequest("$getAuthenticationProviders").pipe(
+        Effect.map(
+          (dtos) => dtos.map((dto) => ({ id: dto.id, label: dto.label }))
+        ),
+        Effect.tap((infos) => Ref.set(ProviderInfosRef, infos)),
+        Effect.mapError((cause) => new Error(String(cause)))
+      ), "GetProviderInfos");
+      yield* Effect.forkDaemon(GetProviderInfos());
+      const GetSession = /* @__PURE__ */ __name((providerId, scopes, options) => IPC.SendRequest(
+        "$getSession",
+        [providerId, scopes, options ?? {}]
+      ).pipe(Effect.mapError((cause) => new Error(String(cause)))), "GetSession");
+      const GetAccounts = /* @__PURE__ */ __name((providerId) => IPC.SendRequest(
+        "$getAccounts",
+        [providerId]
+      ).pipe(Effect.mapError((cause) => new Error(String(cause)))), "GetAccounts");
+      const Service = {
+        getSession: /* @__PURE__ */ __name((providerId, scopes, options) => Effect.runPromise(GetSession(providerId, scopes, options)), "getSession"),
+        getAccounts: /* @__PURE__ */ __name((providerId) => Effect.runPromise(GetAccounts(providerId)), "getAccounts"),
+        onDidChangeSessions: OnDidChangeSessionsEvent,
+        registerAuthenticationProvider: /* @__PURE__ */ __name((_id, _label, _provider, _options) => {
+          Effect.runSync(
+            Logger.Debug(
+              "STUB: registerAuthenticationProvider called."
+            )
+          );
+          return { dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") };
+        }, "registerAuthenticationProvider"),
+        getProviderInfos: /* @__PURE__ */ __name(() => Effect.runPromise(GetProviderInfos()), "getProviderInfos"),
+        getSessions: /* @__PURE__ */ __name((providerId, scopes, options) => (
+          // A real implementation would be more nuanced, but for now we can
+          // just delegate to a method that might exist on the host.
+          Effect.runPromise(
+            IPC.SendRequest(
+              "$getSessions",
+              [providerId, scopes, options]
+            ).pipe(
+              Effect.mapError(
+                (cause) => new Error(String(cause))
+              )
+            )
+          )
+        ), "getSessions"),
+        login: /* @__PURE__ */ __name((providerId, scopes) => Effect.runPromise(
+          IPC.SendRequest("$login", [
+            providerId,
+            scopes
+          ]).pipe(
+            Effect.mapError(
+              (cause) => new Error(String(cause))
+            )
+          )
+        ), "login"),
+        logout: /* @__PURE__ */ __name((providerId, sessionId) => Effect.runPromise(
+          IPC.SendNotification("$logout", [
+            providerId,
+            sessionId
+          ]).pipe(
+            Effect.mapError(
+              (cause) => new Error(String(cause))
+            )
+          )
+        ), "logout")
       };
-      const UrlsServiceStub = {
-        _serviceBrand: void 0,
-        registerUriHandler: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerUriHandler"),
-        setDelegate: /* @__PURE__ */ __name(() => {
-        }, "setDelegate"),
-        createAppUri: /* @__PURE__ */ __name((uri) => Promise.resolve(uri), "createAppUri"),
-        get onDidOpenUri() {
-          return new Emitter().event;
-        },
-        resolveExternalUri: /* @__PURE__ */ __name(() => Promise.resolve({
-          resolved: "file:///",
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "resolveExternalUri"),
-        handleExternalQuery: /* @__PURE__ */ __name(() => Promise.resolve(false), "handleExternalQuery")
-      };
-      const ProgressServiceStub = {
-        _serviceBrand: void 0,
-        _proxy: void 0,
-        _handles: /* @__PURE__ */ new Map(),
-        _mapHandleToCancellationSource: /* @__PURE__ */ new Map(),
-        withProgress: /* @__PURE__ */ __name(() => Promise.resolve(void 0), "withProgress"),
-        withProgressFromSource: /* @__PURE__ */ __name(() => Promise.resolve(), "withProgressFromSource"),
-        $showProgress: /* @__PURE__ */ __name(() => {
-        }, "$showProgress"),
-        $hideProgress: /* @__PURE__ */ __name(() => {
-        }, "$hideProgress"),
-        $resolveProgressStep: /* @__PURE__ */ __name(() => {
-        }, "$resolveProgressStep")
-      };
-      return new NodeExtHostAuthentication(
-        RpcServiceAdapter,
-        InitData,
-        Window,
-        UrlsServiceStub,
-        ProgressServiceStub,
-        Logger,
-        Logger
-      );
+      return Service;
     })
   }
 ) {

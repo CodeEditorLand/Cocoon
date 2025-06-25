@@ -2,19 +2,19 @@
 	"$schema": "https://json.schemastore.org/tsconfig",
 
 	"compilerOptions": {
-		"baseUrl": "./",
+		"allowImportingTsExtensions": false,
 
-		"emitDeclarationOnly": false,
+		"baseUrl": "./",
 
 		"emitDecoratorMetadata": true,
 
 		"experimentalDecorators": true,
 
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+
 		"module": "ESNext",
 
 		"moduleResolution": "Bundler",
-
-		"noEmit": true,
 
 		"outDir": "Target",
 
@@ -22,40 +22,45 @@
 			"vs/*": ["../../Dependency/Microsoft/Dependency/Editor/src/vs/*"]
 		},
 
-		"rootDirs": [".", "../../Dependency/Microsoft/Dependency/Editor/src/"],
-
-		"target": "ESNext",
-
-		// vs/compatbile
-		"lib": ["ESNext", "DOM", "DOM.Iterable"],
-		"verbatimModuleSyntax": false,
-		"strict": false,
-		"exactOptionalPropertyTypes": false,
-		"noUncheckedIndexedAccess": false,
-		"skipLibCheck": true,
-		"isolatedModules": false,
-
 		"plugins": [
 			{
-				"name": "@effect/language-service",
-				"transform": "@effect/language-service/transform",
-				"diagnostics": true,
+				"allowedDuplicatedPackages": [],
+
+				"completions": true,
+
 				"diagnosticSeverity": {
 					"duplicatePackage": "error",
+
 					"floatingEffect": "error",
+
 					"leakingRequirements": "error",
+
 					"missingEffectContext": "error",
+
 					"missingEffectError": "error",
+
 					"missingReturnYieldStar": "error",
+
 					"missingStarInYieldEffectGen": "error",
+
 					"unnecessaryEffectGen": "error",
+
 					"unnecessaryPipe": "error"
 				},
+
+				"diagnostics": true,
+
+				"name": "@effect/language-service",
+
 				"quickinfo": true,
-				"completions": true,
-				"allowedDuplicatedPackages": []
+
+				"transform": "@effect/language-service/transform"
 			}
-		]
+		],
+
+		"rootDirs": [".", "../../Dependency/Microsoft/Dependency/Editor/src/"],
+
+		"target": "ESNext"
 	},
 
 	"exclude": ["Target"],
@@ -64,12 +69,17 @@
 
 	"include": [
 		"Source",
+
 		"@types/node",
 
-		// "../../Dependency/Microsoft/Dependency/Editor/src/*.ts",
+		"../../Dependency/Microsoft/Dependency/Editor/src/*.ts",
+
 		"../../Dependency/Microsoft/Dependency/Editor/src/typings",
+
 		"../../Dependency/Microsoft/Dependency/Editor/src/vs/**/*.ts",
+
 		// "../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.proposed.*.d.ts",
+
 		"../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.d.ts"
 	]
 }

@@ -2,7 +2,7 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Option, Data } from "effect";
 import { WindowService } from "./Window.js";
-import { IPCService } from "./IPC.js";
+import { IPC, IPCService } from "./IPC.js";
 class ActiveEditorNotFoundProblem extends Data.TaggedError(
   "ActiveEditorNotFoundProblem"
 ) {

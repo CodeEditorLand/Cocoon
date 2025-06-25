@@ -1,6 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Option, Ref } from "effect";
+import { MainThreadDocumentsShape } from "vs/workbench/api/common/extHost.protocol.js";
 import { ExtHostDocumentData } from "vs/workbench/api/common/extHostDocumentData.js";
 import {
   CancellationTokenSource,

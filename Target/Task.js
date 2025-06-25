@@ -10,7 +10,7 @@ import {
   ExecutionToAPI
 } from "./TypeConverter/Task.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { CancellationService } from "./Cancellation.js";
+import { Cancellation, CancellationService } from "./Cancellation.js";
 import { IPCService } from "./IPC.js";
 const ProvideTasks = /* @__PURE__ */ __name((Registry, Handle, TokenId, Cancellation2) => {
   return Effect.gen(function* () {

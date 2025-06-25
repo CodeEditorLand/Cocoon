@@ -2,6 +2,9 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
+import {
+  Disposable
+} from "vscode";
 import { URI } from "vscode-uri";
 import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
 import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
@@ -40,11 +43,11 @@ class WorkSpaceService extends Effect.Service()(
       const VisibleTextEditorsRef = yield* Ref.make([]);
       const OnDidChangeFoldersEvent = new Emitter();
       const {
-        event: OnDidChangeActiveTextEditor,
+        event: onDidChangeActiveTextEditor,
         Fire: FireActiveEditor
       } = CreateEventStream();
       const {
-        event: OnDidChangeVisibleTextEditors,
+        event: onDidChangeVisibleTextEditors,
         Fire: FireVisibleEditors
       } = CreateEventStream();
       const AcceptWorkspaceData = /* @__PURE__ */ __name((Data) => Effect.gen(function* () {
@@ -98,27 +101,27 @@ class WorkSpaceService extends Effect.Service()(
       );
       const service = {
         get name() {
-          return Ref.get(InternalWorkspaceRef)?.Name;
+          return Effect.runSync(Ref.get(InternalWorkspaceRef))?.Name;
         },
         get workspaceFile() {
-          return Ref.get(InternalWorkspaceRef)?.Configuration;
+          return Effect.runSync(Ref.get(InternalWorkspaceRef))?.Configuration;
         },
         get workspaceFolders() {
-          return Ref.get(InternalWorkspaceRef)?.Folders;
+          return Effect.runSync(Ref.get(InternalWorkspaceRef))?.Folders;
         },
         isTrusted: true,
         fs: FileSystem,
         get activeTextEditor() {
-          return Ref.get(ActiveTextEditorRef);
+          return Effect.runSync(Ref.get(ActiveTextEditorRef));
         },
         get visibleTextEditors() {
-          return Ref.get(VisibleTextEditorsRef);
+          return Effect.runSync(Ref.get(VisibleTextEditorsRef));
         },
         onDidChangeWorkspaceFolders: OnDidChangeFoldersEvent.event,
         onDidChangeActiveTextEditor,
         onDidChangeVisibleTextEditors,
         getWorkspaceFolder: /* @__PURE__ */ __name((uri) => {
-          const Folders = Ref.get(InternalWorkspaceRef)?.Folders ?? [];
+          const Folders = Effect.runSync(Ref.get(InternalWorkspaceRef))?.Folders ?? [];
           return Folders.find(
             (Folder) => uri.fsPath.startsWith(Folder.uri.fsPath)
           );

@@ -3,6 +3,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Effect } from "effect";
 import { deepmerge } from "deepmerge-ts";
 import { Emitter } from "vs/base/common/event.js";
+import {} from "./Platform/VSCode/Type.js";
 import { ApplicationConfigurationProblem } from "./ApplicationConfiguration/ApplicationConfigurationProblem.js";
 import { ReadRawFile } from "./Integration/Tauri/File/ReadRawFile.js";
 import { ParseJson } from "./Integration/Tauri/File/ParseJson.js";

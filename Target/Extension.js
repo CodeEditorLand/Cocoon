@@ -6,7 +6,7 @@ import {
   ExtensionDescriptionRegistry
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import { ExtensionKind } from "vscode";
-import { ExtensionHostService } from "./ExtensionHost.js";
+import { ExtensionHost, ExtensionHostService } from "./ExtensionHost.js";
 import { InitDataService } from "./InitData.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
 const CreateAPIObject = /* @__PURE__ */ __name((Description, ExtensionHost2) => {

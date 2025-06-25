@@ -8,7 +8,7 @@ import {
   ToURI as DTOToURI,
   ToURIArray as DTOToURIArray
 } from "./TypeConverter/Dialog/DialogResult.js";
-import { IPCService } from "./IPC.js";
+import { IPC, IPCService } from "./IPC.js";
 import { DialogProblem } from "./Dialog/DialogProblem.js";
 const CreateDialogEffect = /* @__PURE__ */ __name((IPC2, IPCMethod, Options, Token, OptionsToDTO, ResultFromDTO) => {
   return Effect.gen(function* () {

@@ -1,0 +1,33 @@
+import { Emitter } from '../../../base/common/event.js';
+import { Disposable } from '../../../base/common/lifecycle.js';
+import { IConfigurationService } from '../../configuration/common/configuration.js';
+import { IEnvironmentService } from '../../environment/common/environment.js';
+import { IFileService } from '../../files/common/files.js';
+import { ILogService } from '../../log/common/log.js';
+import { IUriIdentityService } from '../../uriIdentity/common/uriIdentity.js';
+import { DidUninstallMcpServerEvent, IGalleryMcpServer, ILocalMcpServer, IMcpGalleryService, IMcpManagementService, InstallMcpServerEvent, InstallMcpServerResult, PackageType, UninstallMcpServerEvent } from './mcpManagement.js';
+export declare class McpManagementService extends Disposable implements IMcpManagementService {
+    private readonly configurationService;
+    private readonly mcpGalleryService;
+    private readonly fileService;
+    private readonly uriIdentityService;
+    private readonly logService;
+    _serviceBrand: undefined;
+    private readonly mcpLocation;
+    private readonly _onInstallMcpServer;
+    readonly onInstallMcpServer: import("../../../workbench/workbench.web.main.internal.js").Event<InstallMcpServerEvent>;
+    protected readonly _onDidInstallMcpServers: Emitter<InstallMcpServerResult[]>;
+    get onDidInstallMcpServers(): import("../../../workbench/workbench.web.main.internal.js").Event<InstallMcpServerResult[]>;
+    protected readonly _onUninstallMcpServer: Emitter<UninstallMcpServerEvent>;
+    get onUninstallMcpServer(): import("../../../workbench/workbench.web.main.internal.js").Event<UninstallMcpServerEvent>;
+    protected _onDidUninstallMcpServer: Emitter<DidUninstallMcpServerEvent>;
+    get onDidUninstallMcpServer(): import("../../../workbench/workbench.web.main.internal.js").Event<DidUninstallMcpServerEvent>;
+    constructor(configurationService: IConfigurationService, mcpGalleryService: IMcpGalleryService, fileService: IFileService, environmentService: IEnvironmentService, uriIdentityService: IUriIdentityService, logService: ILogService);
+    getInstalled(): Promise<ILocalMcpServer[]>;
+    private scanServer;
+    installFromGallery(server: IGalleryMcpServer, packageType?: PackageType): Promise<void>;
+    uninstall(server: ILocalMcpServer): Promise<void>;
+    private getServerConfig;
+    private getCommandName;
+    private getVariables;
+}

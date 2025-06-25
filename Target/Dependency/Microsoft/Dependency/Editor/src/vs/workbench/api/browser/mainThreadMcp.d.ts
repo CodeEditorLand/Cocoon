@@ -1,0 +1,37 @@
+import { Disposable } from '../../../base/common/lifecycle.js';
+import { IAuthorizationProtectedResourceMetadata, IAuthorizationServerMetadata } from '../../../base/common/oauth.js';
+import { UriComponents } from '../../../base/common/uri.js';
+import { IDialogService } from '../../../platform/dialogs/common/dialogs.js';
+import { LogLevel } from '../../../platform/log/common/log.js';
+import { IMcpRegistry } from '../../contrib/mcp/common/mcpRegistryTypes.js';
+import { McpCollectionDefinition, McpConnectionState, McpServerDefinition } from '../../contrib/mcp/common/mcpTypes.js';
+import { IAuthenticationMcpAccessService } from '../../services/authentication/browser/authenticationMcpAccessService.js';
+import { IAuthenticationMcpService } from '../../services/authentication/browser/authenticationMcpService.js';
+import { IAuthenticationMcpUsageService } from '../../services/authentication/browser/authenticationMcpUsageService.js';
+import { IAuthenticationService } from '../../services/authentication/common/authentication.js';
+import { IExtHostContext } from '../../services/extensions/common/extHostCustomers.js';
+import { MainThreadMcpShape } from '../common/extHost.protocol.js';
+export declare class MainThreadMcp extends Disposable implements MainThreadMcpShape {
+    private readonly _extHostContext;
+    private readonly _mcpRegistry;
+    private readonly dialogService;
+    private readonly _authenticationService;
+    private readonly authenticationMcpServersService;
+    private readonly authenticationMCPServerAccessService;
+    private readonly authenticationMCPServerUsageService;
+    private _serverIdCounter;
+    private readonly _servers;
+    private readonly _serverDefinitions;
+    private readonly _proxy;
+    private readonly _collectionDefinitions;
+    constructor(_extHostContext: IExtHostContext, _mcpRegistry: IMcpRegistry, dialogService: IDialogService, _authenticationService: IAuthenticationService, authenticationMcpServersService: IAuthenticationMcpService, authenticationMCPServerAccessService: IAuthenticationMcpAccessService, authenticationMCPServerUsageService: IAuthenticationMcpUsageService);
+    $upsertMcpCollection(collection: McpCollectionDefinition.FromExtHost, serversDto: McpServerDefinition.Serialized[]): void;
+    $deleteMcpCollection(collectionId: string): void;
+    $onDidChangeState(id: number, update: McpConnectionState): void;
+    $onDidPublishLog(id: number, level: LogLevel, log: string): void;
+    $onDidReceiveMessage(id: number, message: string): void;
+    $getTokenFromServerMetadata(id: number, authServerComponents: UriComponents, serverMetadata: IAuthorizationServerMetadata, resourceMetadata: IAuthorizationProtectedResourceMetadata | undefined): Promise<string | undefined>;
+    private continueWithIncorrectAccountPrompt;
+    private loginPrompt;
+    dispose(): void;
+}

@@ -1,6 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
+import { IntegrationClipboardProblem } from "./Problem.js";
 const MakeStub = /* @__PURE__ */ __name((Name, DefaultValue) => Effect.logWarning(
   `Clipboard Integration: Function '${Name}' is a stub.`
 ).pipe(Effect.as(DefaultValue)), "MakeStub");

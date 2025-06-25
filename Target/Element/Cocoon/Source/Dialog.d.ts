@@ -1,0 +1,30 @@
+/**
+ * @module Dialog
+ * @description Defines the service for showing native file dialogs, such as 'Open'
+ * and 'Save' dialogs. This service proxies requests to the host process via IPC.
+ */
+import { Effect } from "effect";
+import type { CancellationToken, OpenDialogOptions, SaveDialogOptions, Uri } from "vscode";
+import { IPCService } from "./IPC.js";
+import { DialogProblem } from "./Dialog/DialogProblem.js";
+/**
+ * @interface Dialog
+ * @description The contract for the Dialog service.
+ */
+export interface Dialog {
+    readonly ShowOpenDialog: (options?: OpenDialogOptions, token?: CancellationToken) => Effect.Effect<Uri[] | undefined, DialogProblem>;
+    readonly ShowSaveDialog: (options?: SaveDialogOptions, token?: CancellationToken) => Effect.Effect<Uri | undefined, DialogProblem>;
+}
+declare const DialogService_base: Effect.Service.Class<DialogService, "Service/Dialog", {
+    readonly effect: Effect.Effect<{
+        ShowOpenDialog: (Options: any, Token: any) => Effect.Effect<Uri[] | undefined, DialogProblem, never>;
+        ShowSaveDialog: (Options: any, Token: any) => Effect.Effect<Uri | undefined, DialogProblem, never>;
+    }, never, IPCService>;
+}>;
+/**
+ * @class DialogService
+ * @description The `Effect.Service` for handling native dialogs.
+ */
+export declare class DialogService extends DialogService_base {
+}
+export {};

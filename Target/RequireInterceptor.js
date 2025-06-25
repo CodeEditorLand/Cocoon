@@ -3,10 +3,10 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Cause, Effect, Exit } from "effect";
 import * as Module from "node:module";
 import { URI } from "vs/base/common/uri.js";
-import { APIFactoryService } from "./APIFactory.js";
-import { ExtensionPathService } from "./ExtensionPath.js";
+import { APIFactory, APIFactoryService } from "./APIFactory.js";
+import { ExtensionPath, ExtensionPathService } from "./ExtensionPath.js";
 import { NodeModuleShimService } from "./NodeModuleShim.js";
-import { LoggerService } from "./Logger.js";
+import { Logger, LoggerService } from "./Logger.js";
 class VsCodeNodeModuleFactory {
   constructor(APIFactory2, ExtensionPath2, Logger2) {
     this.APIFactory = APIFactory2;

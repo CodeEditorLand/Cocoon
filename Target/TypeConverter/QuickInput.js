@@ -1,5 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Uri } from "vscode";
 const SerializeItems = /* @__PURE__ */ __name((Items) => {
   return Items.map((Item, Index) => {
     const Base = typeof Item === "string" ? { label: Item } : Item;

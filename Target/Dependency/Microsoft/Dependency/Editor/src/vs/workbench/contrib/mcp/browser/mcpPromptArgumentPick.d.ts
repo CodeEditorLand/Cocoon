@@ -1,0 +1,35 @@
+import { CancellationToken } from '../../../../base/common/cancellation.js';
+import { Disposable } from '../../../../base/common/lifecycle.js';
+import { ILanguageService } from '../../../../editor/common/languages/language.js';
+import { IModelService } from '../../../../editor/common/services/model.js';
+import { IFileService } from '../../../../platform/files/common/files.js';
+import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
+import { ILabelService } from '../../../../platform/label/common/label.js';
+import { IQuickInputService } from '../../../../platform/quickinput/common/quickInput.js';
+import { IWorkspaceContextService } from '../../../../platform/workspace/common/workspace.js';
+import { ISearchService } from '../../../services/search/common/search.js';
+import { ITerminalGroupService, ITerminalService } from '../../terminal/browser/terminal.js';
+import { IMcpPrompt } from '../common/mcpTypes.js';
+export declare class McpPromptArgumentPick extends Disposable {
+    private readonly prompt;
+    private readonly _quickInputService;
+    private readonly _terminalService;
+    private readonly _searchService;
+    private readonly _workspaceContextService;
+    private readonly _labelService;
+    private readonly _fileService;
+    private readonly _modelService;
+    private readonly _languageService;
+    private readonly _terminalGroupService;
+    private readonly _instantiationService;
+    private readonly quickPick;
+    private _terminal?;
+    constructor(prompt: IMcpPrompt, _quickInputService: IQuickInputService, _terminalService: ITerminalService, _searchService: ISearchService, _workspaceContextService: IWorkspaceContextService, _labelService: ILabelService, _fileService: IFileService, _modelService: IModelService, _languageService: ILanguageService, _terminalGroupService: ITerminalGroupService, _instantiationService: IInstantiationService);
+    createArgs(token?: CancellationToken): Promise<Record<string, string | undefined> | undefined>;
+    private _getArg;
+    private _promptCompletions;
+    private _fileCompletions;
+    private _asyncCompletions;
+    private _getTerminalOutput;
+    private _getTerminalOutputInner;
+}

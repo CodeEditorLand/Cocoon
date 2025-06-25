@@ -8,8 +8,8 @@ import {
 } from "vscode";
 import { FromAPI as StatusBarItemToDTO } from "./TypeConverter/StatusBar.js";
 import { Command as CommandConverter } from "./TypeConverter/Command.js";
-import { CommandService } from "./Command.js";
-import { IPCService } from "./IPC.js";
+import { Command as CommandInterface, CommandService } from "./Command.js";
+import { IPC, IPCService } from "./IPC.js";
 class StatusBarItemImplementation {
   constructor(EntryId, ExtensionId, IPC2, Command, OnDidDispose, InitialId, InitialAlignment, InitialPriority) {
     this.EntryId = EntryId;
