@@ -1,54 +1,57 @@
 var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __name = (target, value) =>
+	__defProp(target, "name", { value, configurable: true });
 const On = (await import("./Cocoon.js")).On;
 const Bundle = (await import("./Cocoon.js")).Bundle;
 const Compile = (await import("./Cocoon.js")).Compile;
 const Merge = (await import("deepmerge-ts")).deepmerge;
-var Target_default = /* @__PURE__ */ __name(async (Current) => Merge(
-  (await import("./Cocoon.js")).default,
-  {
-    outdir: "Target",
-    drop: On ? [] : ["debugger", "console"],
-    define: {
-      __DEV__: On ? "true" : "false",
-      __INCREMENT__: `"${`${On ? "DEVELOPMENT" : "PRODUCTION"}-${(await import("ulid")).ulid()}`}"`
-    },
-    treeShaking: true,
-    entryPoints: (await import("@playform/build/Target/Function/Entry.js")).default(Current, ["Source/Configuration/*"]),
-    platform: "browser",
-    outbase: "Source",
-    plugins: Compile ? Merge(
-      Current.plugins,
-      [
-        {
-          name: "Compile",
-          setup({ onEnd }) {
-            onEnd(async ({ metafile }) => {
-              const _Output = metafile?.outputs;
-              for (const Output in _Output) {
-                if (Object.prototype.hasOwnProperty.call(
-                  _Output,
-                  Output
-                )) {
-                  if (Output.endsWith(".js")) {
-                    (await import("@playform/build/Target/Function/Exec.js")).default(
-                      `Build '${Output}' 													--ESBuild Configuration/ESBuild/Target/Compile.js 													--TypeScript Configuration/tsconfig/Target/Compile.json`
-                    );
-                  }
-                }
-              }
-            });
-          }
-        }
-      ]
-    ) : []
-  }
-), "default");
-export {
-  Bundle,
-  Compile,
-  Merge,
-  On,
-  Target_default as default
-};
+var Target_default = /* @__PURE__ */ __name(
+	async (Current) =>
+		Merge((await import("./Cocoon.js")).default, {
+			outdir: "Target",
+			drop: On ? [] : ["debugger", "console"],
+			define: {
+				__DEV__: On ? "true" : "false",
+				__INCREMENT__: `"${`${On ? "DEVELOPMENT" : "PRODUCTION"}-${(await import("ulid")).ulid()}`}"`,
+			},
+			treeShaking: true,
+			entryPoints: (
+				await import("@playform/build/Target/Function/Entry.js")
+			).default(Current, ["Source/Configuration/*"]),
+			platform: "browser",
+			outbase: "Source",
+			plugins: Compile
+				? Merge(Current.plugins, [
+						{
+							name: "Compile",
+							setup({ onEnd }) {
+								onEnd(async ({ metafile }) => {
+									const _Output = metafile?.outputs;
+									for (const Output in _Output) {
+										if (
+											Object.prototype.hasOwnProperty.call(
+												_Output,
+												Output,
+											)
+										) {
+											if (Output.endsWith(".js")) {
+												(
+													await import(
+														"@playform/build/Target/Function/Exec.js"
+													)
+												).default(
+													`Build '${Output}' 													--ESBuild Configuration/ESBuild/Target/Compile.js 													--TypeScript Configuration/tsconfig/Target/Compile.json`,
+												);
+											}
+										}
+									}
+								});
+							},
+						},
+					])
+				: [],
+		}),
+	"default",
+);
+export { Bundle, Compile, Merge, On, Target_default as default };
 //# sourceMappingURL=Target.js.map
