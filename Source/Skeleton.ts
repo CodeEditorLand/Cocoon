@@ -1,9 +1,8 @@
 /**
  * @module Skeleton
- * @description A single-file, complete application skeleton using dependency-free
- * mock services. This file is designed to compile successfully and serve as a
- * stable baseline for incrementally re-introducing real services to find the
- * source of dependency graph errors.
+ * @description A single-file application skeleton. This version replaces the L0
+ * skeletons with their real, dependency-free implementations. This is the first
+ * step in methodically debugging the dependency graph.
  */
 
 import { DevTools } from "@effect/experimental";
@@ -18,7 +17,6 @@ import type {
 	IConfigurationData,
 	IConfigurationService,
 } from "vs/platform/configuration/common/configuration";
-import type { ILogger } from "vs/platform/log/common/log.js";
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 import type {
 	ExtHostTelemetryLogger,
@@ -26,6 +24,12 @@ import type {
 } from "vs/workbench/api/common/extHostTelemetry.js";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import { LogLevel, UIKind } from "vscode";
+
+// --- STEP 1: Replace L0 Skeleton imports with real service imports ---
+import { CancellationService } from "./Cancellation.js";
+import { InitDataService } from "./InitData.js";
+import { IPCConfigurationService } from "./IPCConfiguration.js";
+import { LoggerService } from "./Logger.js";
 
 // =============================================================================
 // --- DUMMY DATA & INTERFACES ---
@@ -80,8 +84,6 @@ const DummyConfigurationService: IConfigurationService = {
 	getConfigurationData: (): IConfigurationData | null => null,
 };
 
-// This dummy object is now cast as `any` to bypass the private member check, which is a
-// limitation of TypeScript's structural typing when mocking a class instance with an object literal.
 const DummyTelemetryService: IExtHostTelemetry = {
 	_serviceBrand: undefined,
 	_productConfig: { usage: false, error: false },
@@ -119,31 +121,9 @@ const DummyTelemetryService: IExtHostTelemetry = {
 } as any;
 
 // =============================================================================
-// --- SKELETON SERVICE DEFINITIONS ---
+// --- SKELETON SERVICE DEFINITIONS (L1 and above) ---
 // =============================================================================
 
-class IPCConfigurationService extends Effect.Service<IPCConfigurationService>()(
-	"Service/IPCConfiguration",
-	{ sync: () => ({ MountainAddress: "", CocoonAddress: "" }) },
-) {}
-class CancellationService extends Effect.Service<CancellationService>()(
-	"Service/Cancellation",
-	{ sync: () => ({}) },
-) {}
-class InitDataService extends Effect.Service<IExtensionHostInitData>()(
-	"Service/InitData",
-	{ sync: () => DUMMY_INIT_DATA },
-) {}
-class LoggerService extends Effect.Service<LoggerService>()("Service/Logger", {
-	sync: () => ({
-		Trace: () => Effect.void,
-		Debug: () => Effect.void,
-		Info: () => Effect.void,
-		Warn: () => Effect.void,
-		Error: () => Effect.void,
-		Fatal: () => Effect.void,
-	}),
-}) {}
 class ApplicationConfigurationService extends Effect.Service<IConfigurationService>()(
 	"vscode/ApplicationConfigurationService",
 	{ sync: () => DummyConfigurationService },
@@ -288,7 +268,7 @@ class RequireInterceptorService extends Effect.Service<RequireInterceptorService
 // =============================================================================
 
 const composeAppLayer = (_initializationData: IExtensionHostInitData) => {
-	// --- Phase 1: Define Service Groupings Based on Dependency Graph ---
+	// Phase 1: Define Service Groupings Based on Dependency Graph
 	const L0_Services = Layer.mergeAll(
 		IPCConfigurationService.Default,
 		CancellationService.Default,
@@ -348,7 +328,7 @@ const composeAppLayer = (_initializationData: IExtensionHostInitData) => {
 		ESMInterceptorService.Default,
 	);
 
-	// --- Phase 2: Build the World with the robust `provideMerge` Pattern ---
+	// Phase 2: Build the World with the robust `provideMerge` Pattern
 	const L0_World = L0_Services;
 	const L1_World = L0_World.pipe(Layer.provideMerge(L1_Services));
 	const L2_World = L1_World.pipe(Layer.provideMerge(L2_Services));
@@ -360,7 +340,7 @@ const composeAppLayer = (_initializationData: IExtensionHostInitData) => {
 	const L8_World = L7_World.pipe(Layer.provideMerge(L8_Services));
 	const FinalAppWorld = L8_World.pipe(Layer.provideMerge(L9_Services));
 
-	// --- Step 3: Handle Construction Errors ---
+	// Phase 3: Handle Construction Errors
 	const AppLayer = FinalAppWorld.pipe(Layer.orDie);
 	return AppLayer;
 };
