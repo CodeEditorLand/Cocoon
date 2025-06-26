@@ -1,8 +1,7 @@
 /**
  * @module Skeleton
- * @description A single-file application skeleton. This version replaces the L0
- * skeletons with their real, dependency-free implementations. This is the first
- * step in methodically debugging the dependency graph.
+ * @description A single-file, complete application skeleton. This version uses the
+ * canonical `Layer.provide` chaining pattern to guarantee dependency resolution.
  */
 
 import { DevTools } from "@effect/experimental";
@@ -10,7 +9,7 @@ import { NodeSdk } from "@effect/opentelemetry";
 import { NodeRuntime, NodeSocket } from "@effect/platform-node";
 import { Effect, Layer } from "effect";
 
-// --- VS Code Internal Imports for Correct Dummy Implementations ---
+// --- VS Code Internal Imports ---
 import { Emitter } from "vs/base/common/event.js";
 import { DisposableStore, type IDisposable } from "vs/base/common/lifecycle.js";
 import type {
@@ -25,7 +24,7 @@ import type {
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import { LogLevel, UIKind } from "vscode";
 
-// --- STEP 1: Replace L0 Skeleton imports with real service imports ---
+// --- Real Service Imports (L0) ---
 import { CancellationService } from "./Cancellation.js";
 import { InitDataService } from "./InitData.js";
 import { IPCConfigurationService } from "./IPCConfiguration.js";
@@ -121,7 +120,7 @@ const DummyTelemetryService: IExtHostTelemetry = {
 } as any;
 
 // =============================================================================
-// --- SKELETON SERVICE DEFINITIONS (L1 and above) ---
+// --- SKELETON SERVICE DEFINITIONS ---
 // =============================================================================
 
 class ApplicationConfigurationService extends Effect.Service<IConfigurationService>()(
@@ -264,11 +263,11 @@ class RequireInterceptorService extends Effect.Service<RequireInterceptorService
 ) {}
 
 // =============================================================================
-// --- LAYER COMPOSITION: The Progressive World Build (Corrected) ---
+// --- LAYER COMPOSITION ---
 // =============================================================================
 
 const composeAppLayer = (_initializationData: IExtensionHostInitData) => {
-	// Phase 1: Define Service Groupings Based on Dependency Graph
+	// Group services by their logical layer
 	const L0_Services = Layer.mergeAll(
 		IPCConfigurationService.Default,
 		CancellationService.Default,
@@ -278,13 +277,13 @@ const composeAppLayer = (_initializationData: IExtensionHostInitData) => {
 	const L1_Services = Layer.mergeAll(
 		ApplicationConfigurationService.Default,
 		IPCService.Default,
+		LanguageFeatureService.Default,
 	);
 	const L2_Services = Layer.mergeAll(
 		TelemetryService.Default,
 		ExtensionPathService.Default,
 		HostKindPickerService.Default,
 		NodeModuleShimService.Default,
-		LanguageFeatureService.Default,
 		FileSystemInformationService.Default,
 	);
 	const L3_Services = Layer.mergeAll(
@@ -328,21 +327,20 @@ const composeAppLayer = (_initializationData: IExtensionHostInitData) => {
 		ESMInterceptorService.Default,
 	);
 
-	// Phase 2: Build the World with the robust `provideMerge` Pattern
-	const L0_World = L0_Services;
-	const L1_World = L0_World.pipe(Layer.provideMerge(L1_Services));
-	const L2_World = L1_World.pipe(Layer.provideMerge(L2_Services));
-	const L3_World = L2_World.pipe(Layer.provideMerge(L3_Services));
-	const L4_World = L3_World.pipe(Layer.provideMerge(L4_Services));
-	const L5_World = L4_World.pipe(Layer.provideMerge(L5_Services));
-	const L6_World = L5_World.pipe(Layer.provideMerge(L6_Services));
-	const L7_World = L6_World.pipe(Layer.provideMerge(L7_Services));
-	const L8_World = L7_World.pipe(Layer.provideMerge(L8_Services));
-	const FinalAppWorld = L8_World.pipe(Layer.provideMerge(L9_Services));
+	// Compose the layers sequentially, providing the output of the previous layer to the next.
+	const L1_World = Layer.provide(L1_Services, L0_Services);
+	const L2_World = Layer.provide(L2_Services, L1_World);
+	const L3_World = Layer.provide(L3_Services, L2_World);
+	const L4_World = Layer.provide(L4_Services, L3_World);
+	const L5_World = Layer.provide(L5_Services, L4_World);
+	const L6_World = Layer.provide(L6_Services, L5_World);
+	const L7_World = Layer.provide(L7_Services, L6_World);
+	const L8_World = Layer.provide(L8_Services, L7_World);
+	const FinalAppWorld = Layer.provide(L9_Services, L8_World);
 
-	// Phase 3: Handle Construction Errors
-	const AppLayer = FinalAppWorld.pipe(Layer.orDie);
-	return AppLayer;
+	// Merge the final composed layer with the base L0 services to make them available to the main effect.
+	// Then, handle potential construction errors.
+	return Layer.mergeAll(FinalAppWorld, L0_Services).pipe(Layer.orDie);
 };
 
 // --- Utility Layers ---
@@ -371,7 +369,7 @@ const MainLogic = Effect.gen(function* () {
 
 // --- Final Application Assembly and Execution ---
 const AppLayer = composeAppLayer(DUMMY_INIT_DATA);
-const FinalLayer = Layer.merge(AppLayer, UtilityLayers);
+const FinalLayer = Layer.mergeAll(AppLayer, UtilityLayers);
 
 const AppEffectWithRequirements = MainLogic.pipe(
 	Effect.catchAllCause((cause) =>
@@ -379,12 +377,9 @@ const AppEffectWithRequirements = MainLogic.pipe(
 	),
 );
 
-// We provide the FinalLayer to the entire application logic. This satisfies
-// all requirements of MainLogic AND its error handler.
 const ExecutableMainEffect = Effect.provide(
 	AppEffectWithRequirements,
 	FinalLayer,
 ).pipe(Effect.scoped);
 
-// Run the application.
 NodeRuntime.runMain(ExecutableMainEffect);
