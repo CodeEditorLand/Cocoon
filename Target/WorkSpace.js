@@ -2,18 +2,36 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
-import {
-  Disposable
-} from "vscode";
 import { URI } from "vscode-uri";
-import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
-import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
 import { ApplicationConfigurationService } from "./ApplicationConfiguration.js";
 import { DocumentService } from "./Document.js";
 import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";
 import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
+import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
+import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
+import { CreateEventStream } from "./Utility/CreateEventStream.js";
+const toConfigurationOverrides = /* @__PURE__ */ __name((scope) => {
+  if (!scope) {
+    return {};
+  }
+  if (URI.isUri(scope)) {
+    return { resource: scope };
+  }
+  if (typeof scope === "object") {
+    const resource = "uri" in scope && scope.uri ? scope.uri : void 0;
+    const languageId = "languageId" in scope ? scope.languageId : void 0;
+    const result = {};
+    if (resource) {
+      result.resource = resource;
+    }
+    if (languageId) {
+      result.overrideIdentifier = languageId;
+    }
+    return result;
+  }
+  return {};
+}, "toConfigurationOverrides");
 class InternalWorkspace {
   constructor(ID, Name, Folders, Configuration) {
     this.ID = ID;
@@ -135,43 +153,86 @@ class WorkSpaceService extends Effect.Service()(
           Effect.map((Uris) => Uris.filter((u) => !!u)),
           Effect.mapError((Cause) => new Error(String(Cause)))
         ), "findFiles"),
-        openTextDocument: /* @__PURE__ */ __name((OptionsOrUri) => Effect.gen(function* () {
-          const IsUri = OptionsOrUri instanceof URI;
-          const UriToOpen = IsUri ? OptionsOrUri : void 0;
-          if (UriToOpen) {
-            const ExistingDocument = yield* Document.GetDocument(UriToOpen);
-            if (Option.isSome(ExistingDocument)) {
-              return ExistingDocument.value;
+        openTextDocument: /* @__PURE__ */ __name((OptionsOrUri) => {
+          return Effect.gen(function* () {
+            if (OptionsOrUri instanceof URI) {
+              const maybeDoc = yield* Document.GetDocument(OptionsOrUri);
+              if (Option.isSome(maybeDoc)) {
+                return yield* Effect.succeed(maybeDoc.value);
+              }
             }
-          }
-          const DTO = IsUri ? OptionsOrUri.toJSON() : OptionsOrUri;
-          const ResultDTO = yield* IPC.SendRequest(
-            "$openTextDocument",
-            [DTO]
-          );
-          const ResultUri = UriToAPI(ResultDTO.uri);
-          const WaitForDocument = Document.GetDocument(
-            ResultUri
-          ).pipe(
-            Effect.repeat({
+            const DTO = OptionsOrUri instanceof URI ? OptionsOrUri.toJSON() : OptionsOrUri;
+            const ResultDTO = yield* IPC.SendRequest(
+              "$openTextDocument",
+              [DTO]
+            ).pipe(
+              Effect.mapError(
+                (cause) => new Error(String(cause))
+              )
+            );
+            const ResultUri = UriToAPI(ResultDTO.uri);
+            const getDocEffect = Document.GetDocument(
+              ResultUri
+            ).pipe(
+              Effect.flatMap(
+                (maybeDoc) => Option.match(maybeDoc, {
+                  onNone: /* @__PURE__ */ __name(() => Effect.fail(
+                    new Error(
+                      "Polling... Document not ready."
+                    )
+                  ), "onNone"),
+                  onSome: /* @__PURE__ */ __name((doc) => Effect.succeed(doc), "onSome")
+                })
+              )
+            );
+            return yield* Effect.retry(getDocEffect, {
               schedule: Schedule.spaced(50).pipe(
-                Schedule.whileInput(
-                  (o) => Option.isNone(o)
-                ),
                 Schedule.compose(Schedule.recurs(100))
               )
-            }),
-            Effect.someOrFail(
-              () => new Error(
-                `Failed to find newly opened document after timeout: ${ResultUri.toString()}`
+            }).pipe(
+              Effect.mapError(
+                () => new Error(
+                  `Polling for document timed out: ${ResultUri.toString()}`
+                )
               )
-            )
-          );
-          return yield* WaitForDocument;
-        }), "openTextDocument"),
-        getConfiguration: /* @__PURE__ */ __name((section, scope) => Effect.sync(
-          () => ApplicationConfiguration.getValue(section, scope)
-        ), "getConfiguration"),
+            );
+          }).pipe(Effect.withSpan("WorkSpace.openTextDocument"));
+        }, "openTextDocument"),
+        getConfiguration: /* @__PURE__ */ __name((section, scope) => Effect.succeed({
+          get: /* @__PURE__ */ __name((key, defaultValue) => {
+            const fullKey = section ? `${section}.${key}` : key;
+            const value = ApplicationConfiguration.getValue(fullKey, toConfigurationOverrides(scope));
+            return value === void 0 ? defaultValue : value;
+          }, "get"),
+          has: /* @__PURE__ */ __name((key) => {
+            const fullKey = section ? `${section}.${key}` : key;
+            return ApplicationConfiguration.getValue(
+              fullKey,
+              toConfigurationOverrides(scope)
+            ) !== void 0;
+          }, "has"),
+          inspect: /* @__PURE__ */ __name((key) => {
+            const fullKey = section ? `${section}.${key}` : key;
+            const inspection = ApplicationConfiguration.inspect(
+              fullKey,
+              toConfigurationOverrides(scope)
+            );
+            return { key: fullKey, ...inspection };
+          }, "inspect"),
+          update: /* @__PURE__ */ __name((key, value, configurationTarget, overrideInLanguage) => {
+            const fullKey = section ? `${section}.${key}` : key;
+            const scopeAsOverrides = toConfigurationOverrides(scope);
+            if (overrideInLanguage && scope && typeof scope === "object" && "languageId" in scope) {
+              scopeAsOverrides.overrideIdentifier = scope.languageId;
+            }
+            return ApplicationConfiguration.updateValue(
+              fullKey,
+              value,
+              scopeAsOverrides,
+              configurationTarget
+            );
+          }, "update")
+        }), "getConfiguration"),
         applyEdit: /* @__PURE__ */ __name((Edit) => IPC.SendRequest("$applyWorkspaceEdit", [
           WorkspaceEditFromAPI(Edit)
         ]).pipe(

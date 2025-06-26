@@ -2,23 +2,22 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Ref } from "effect";
 import { generateUuid } from "vs/base/common/uuid.js";
-import {
-} from "vscode";
-import { FromAPI as TreeViewOptionToDTO } from "./TypeConverter/TreeView/Option.js";
+import { IPCService } from "./IPC.js";
 import { FromAPI as TreeViewItemToDTO } from "./TypeConverter/TreeView/Item.js";
+import { FromAPI as TreeViewOptionToDTO } from "./TypeConverter/TreeView/Option.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { IPC, IPCService } from "./IPC.js";
 class TreeViewImplementation {
-  constructor(ViewId, DataProvider, IPC2, Extension) {
+  constructor(ViewId, DataProvider, IPC, Extension) {
     this.ViewId = ViewId;
     this.DataProvider = DataProvider;
-    this.IPC = IPC2;
+    this.IPC = IPC;
     this.Extension = Extension;
     this.onDidExpandElement = this.OnDidExpandElementEmitter.event;
     this.onDidCollapseElement = this.OnDidCollapseElementEmitter.event;
     this.onDidChangeSelection = this.OnDidChangeSelectionEmitter.event;
     this.onDidChangeVisibility = this.OnDidChangeVisibilityEmitter.event;
     this.onDidChangeCheckboxState = this.OnDidChangeCheckboxStateEmitter.event;
+    this.onDidChangeActiveItem = this.OnDidChangeActiveItemEmitter.event;
     if (this.DataProvider.onDidChangeTreeData) {
       this.DataProvider.onDidChangeTreeData((Elements) => {
         const HandlesToRefresh = this.GetHandlesToRefresh(Elements);
@@ -46,8 +45,10 @@ class TreeViewImplementation {
   onDidChangeVisibility;
   OnDidChangeCheckboxStateEmitter = CreateEventStream();
   onDidChangeCheckboxState;
-  activeItem;
+  // FIX: onDidChangeActiveItem is a complex event; stubbing for now.
+  OnDidChangeActiveItemEmitter = CreateEventStream();
   onDidChangeActiveItem;
+  activeItem;
   selection = [];
   visible = true;
   message;
@@ -121,6 +122,7 @@ class TreeViewImplementation {
     this.OnDidChangeSelectionEmitter.Shutdown();
     this.OnDidChangeVisibilityEmitter.Shutdown();
     this.OnDidChangeCheckboxStateEmitter.Shutdown();
+    this.OnDidChangeActiveItemEmitter.Shutdown();
     this.ElementToHandleMap.clear();
     this.handleToElementMap.clear();
   }
@@ -129,7 +131,7 @@ class TreeViewService extends Effect.Service()(
   "Service/TreeView",
   {
     effect: Effect.gen(function* () {
-      const IPC2 = yield* IPCService;
+      const IPC = yield* IPCService;
       const ActiveViewsRef = yield* Ref.make(
         /* @__PURE__ */ new Map()
       );
@@ -149,11 +151,11 @@ class TreeViewService extends Effect.Service()(
           );
         }
       }), "DisposeTreeView");
-      IPC2.RegisterInvokeHandler(
+      IPC.RegisterInvokeHandler(
         "$getChildren",
         ([ViewId, ParentHandle]) => Effect.runPromise(GetChildren(ViewId, ParentHandle))
       );
-      IPC2.RegisterInvokeHandler(
+      IPC.RegisterInvokeHandler(
         "$disposeTreeView",
         ([ViewId]) => Effect.runPromise(DisposeTreeView(ViewId))
       );
@@ -174,14 +176,14 @@ class TreeViewService extends Effect.Service()(
             );
           }
           const OptionDTO = TreeViewOptionToDTO(Options);
-          yield* IPC2.SendNotification(
+          yield* IPC.SendNotification(
             "$registerTreeDataProvider",
             [ViewId, OptionDTO]
           );
           const ExtHostView = new TreeViewImplementation(
             ViewId,
             Options.treeDataProvider,
-            IPC2,
+            IPC,
             Extension
           );
           yield* Ref.update(

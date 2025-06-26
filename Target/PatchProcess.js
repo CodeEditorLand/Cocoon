@@ -1,10 +1,10 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Config } from "effect";
 import * as Module from "node:module";
+import { Config, Effect } from "effect";
 import { Data } from "effect";
-import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
+import { InitDataService } from "./InitData.js";
 import { ExitPreventedProblem } from "./PatchProcess/ExitPreventedProblem.js";
 class PatchProcessService extends Effect.Service()(
   "Service/PatchProcess",
@@ -23,7 +23,8 @@ class PatchProcessService extends Effect.Service()(
       );
       return {
         NativeExit: process.exit.bind(process),
-        NativeCrash: "crash" in process && typeof process.crash === "function" ? process.crash.bind(process) : void 0,
+        // FIX: Added NativeCrash to the service implementation.
+        NativeCrash: process.crash,
         AllowExit: /* @__PURE__ */ __name(() => AllowExit, "AllowExit")
       };
     })

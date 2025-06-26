@@ -22,6 +22,7 @@ class WebViewPanelImplementation {
     this._viewColumn = InitialViewColumn;
     this._active = true;
     this._visible = true;
+    this._iconPath = void 0;
     this.onDidDispose = this.OnDidDisposeEmitter.event;
     this.onDidChangeViewState = this.OnDidChangeViewStateEmitter.event;
   }
@@ -30,6 +31,8 @@ class WebViewPanelImplementation {
   }
   IsDisposed = false;
   _title;
+  // FIX: The error indicates the interface expects a non-optional property.
+  // We will manage an internal `undefined` state but the public property will conform.
   _iconPath;
   _active;
   _visible;
@@ -60,15 +63,21 @@ class WebViewPanelImplementation {
       this.IPC.SendNotification("$setWebviewTitle", [this.Handle, Value])
     );
   }
+  // FIX: The public property must conform to the interface, even if the
+  // internal state can be undefined. We will cast this in the getter/setter.
   get iconPath() {
     return this._iconPath;
   }
   set iconPath(Value) {
-    if (this.IsDisposed || this._iconPath === Value) return;
-    this._iconPath = Value;
-    const IconPathDTO = Value ? {
-      light: UriFromAPI("light" in Value ? Value.light : Value),
-      dark: UriFromAPI("dark" in Value ? Value.dark : Value)
+    const internalValue = Value;
+    if (this.IsDisposed || this._iconPath === internalValue) return;
+    this._iconPath = internalValue;
+    const IconPathDTO = internalValue ? "light" in internalValue && "dark" in internalValue ? {
+      light: UriFromAPI(internalValue.light),
+      dark: UriFromAPI(internalValue.dark)
+    } : {
+      light: UriFromAPI(internalValue),
+      dark: UriFromAPI(internalValue)
     } : void 0;
     Effect.runFork(
       this.IPC.SendNotification("$setWebviewIconPath", [
@@ -110,7 +119,9 @@ class WebViewPanelImplementation {
     this._visible = NewState.visible;
     this._viewColumn = NewState.viewColumn;
     if (Changed) {
-      this.OnDidChangeViewStateEmitter.Fire({ webviewPanel: this });
+      this.OnDidChangeViewStateEmitter.Fire({
+        webviewPanel: this
+      });
     }
   }
 }

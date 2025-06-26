@@ -4,15 +4,15 @@ import { Effect, Ref } from "effect";
 import {
   Disposable
 } from "vscode";
+import { CancellationService } from "./Cancellation.js";
+import { IPCService } from "./IPC.js";
 import {
+  ExecutionToAPI,
   FromAPI as TaskFromAPI,
-  ToAPI as TaskToAPI,
-  ExecutionToAPI
+  ToAPI as TaskToAPI
 } from "./TypeConverter/Task.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { Cancellation, CancellationService } from "./Cancellation.js";
-import { IPCService } from "./IPC.js";
-const ProvideTasks = /* @__PURE__ */ __name((Registry, Handle, TokenId, Cancellation2) => {
+const ProvideTasks = /* @__PURE__ */ __name((Registry, Handle, TokenId, Cancellation) => {
   return Effect.gen(function* () {
     const Entry = (yield* Ref.get(Registry)).get(Handle);
     if (!Entry)
@@ -21,7 +21,7 @@ const ProvideTasks = /* @__PURE__ */ __name((Registry, Handle, TokenId, Cancella
       );
     const Provider = Entry.Provider;
     if (!Provider.provideTasks) return [];
-    const CancellationToken = yield* Cancellation2.ObtainToken(TokenId);
+    const CancellationToken = yield* Cancellation.ObtainToken(TokenId);
     const Tasks = yield* Effect.tryPromise({
       try: /* @__PURE__ */ __name(() => Provider.provideTasks(CancellationToken), "try"),
       catch: /* @__PURE__ */ __name((CaughtError) => CaughtError, "catch")
@@ -40,7 +40,7 @@ const ProvideTasks = /* @__PURE__ */ __name((Registry, Handle, TokenId, Cancella
 class TaskService extends Effect.Service()("Service/Task", {
   effect: Effect.gen(function* () {
     const IPC = yield* IPCService;
-    const Cancellation2 = yield* CancellationService;
+    const Cancellation = yield* CancellationService;
     let HandleCounter = 0;
     const TaskProvidersRef = yield* Ref.make(
       /* @__PURE__ */ new Map()
@@ -52,7 +52,7 @@ class TaskService extends Effect.Service()("Service/Task", {
           TaskProvidersRef,
           Handle,
           TokenId,
-          Cancellation2
+          Cancellation
         )
       )
     );
@@ -108,6 +108,7 @@ class TaskService extends Effect.Service()("Service/Task", {
         ),
         Effect.mapError((Cause) => new Error(String(Cause)))
       ), "FetchTasks"),
+      // FIX: Add explicit types to parameters
       ExecuteTask: /* @__PURE__ */ __name((TaskToExecute, Extension) => IPC.SendRequest("$executeTask", [
         TaskFromAPI(TaskToExecute, Extension)
       ]).pipe(

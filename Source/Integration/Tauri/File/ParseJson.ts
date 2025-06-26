@@ -1,11 +1,19 @@
 /**
  * @module ParseJson
- * @description Defines a stubbed `Effect` for parsing JSON at the integration layer.
- * This file is a placeholder to resolve import errors.
+ * @description Defines a safe Effect for parsing a JSON string.
  */
 
 import { Effect } from "effect";
+import { IntegrationConfigurationProblem } from "../Configuration/Problem.js";
 
-export const ParseJson = (_JsonString: string): Effect.Effect<object, any> => {
-	return Effect.fail(new Error("ParseJson integration is a stub."));
-};
+/**
+ * An Effect that safely parses a JSON string into an object.
+ * This is a standard library operation wrapped in an Effect for safety.
+ */
+export const ParseJson = (
+	JsonString: string,
+): Effect.Effect<object, IntegrationConfigurationProblem> =>
+	Effect.try({
+		try: () => JSON.parse(JsonString),
+		catch: (Cause) => new IntegrationConfigurationProblem({ Cause }),
+	});

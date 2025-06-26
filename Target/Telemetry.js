@@ -1,9 +1,10 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Ref } from "effect";
+import { Emitter } from "vs/base/common/event.js";
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
-import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
+import { InitDataService } from "./InitData.js";
 import { LoggerService } from "./Logger.js";
 const ConvertToTelemetryLevel = /* @__PURE__ */ __name((LogLevel) => {
   switch (LogLevel) {
@@ -66,10 +67,15 @@ class TelemetryService extends Effect.Service()(
       }, "LogExtensionError");
       const ServiceImplementation = {
         _serviceBrand: void 0,
-        _onDidChangeTelemetryEnabled: void 0,
-        onDidChangeTelemetryEnabled: void 0,
-        _onDidChangeTelemetryConfiguration: void 0,
-        onDidChangeTelemetryConfiguration: void 0,
+        _productConfig: { usage: true, error: true },
+        _level: TelemetryLevel.NONE,
+        _oldTelemetryEnablement: false,
+        _inLoggingOnlyMode: false,
+        _telemetryLoggers: /* @__PURE__ */ new Map(),
+        _onDidChangeTelemetryConfiguration: new Emitter(),
+        onDidChangeTelemetryConfiguration: new Emitter().event,
+        _onDidChangeTelemetryEnabled: new Emitter(),
+        onDidChangeTelemetryEnabled: new Emitter().event,
         getTelemetryConfiguration: /* @__PURE__ */ __name(() => Effect.runSync(Ref.get(TelemetryLevelRef)) >= TelemetryLevel.USAGE, "getTelemetryConfiguration"),
         getTelemetryDetails: /* @__PURE__ */ __name(() => {
           const Level = Effect.runSync(Ref.get(TelemetryLevelRef));
@@ -80,7 +86,17 @@ class TelemetryService extends Effect.Service()(
             isUsageEnabled: Config.usage && Level >= TelemetryLevel.USAGE
           };
         }, "getTelemetryDetails"),
-        instantiateLogger: /* @__PURE__ */ __name((_extension, _sender, _options) => ({}), "instantiateLogger"),
+        instantiateLogger: /* @__PURE__ */ __name((_extension, _sender, _options) => ({
+          logUsage: /* @__PURE__ */ __name(() => {
+          }, "logUsage"),
+          logError: /* @__PURE__ */ __name(() => {
+          }, "logError"),
+          isUsageEnabled: false,
+          isErrorsEnabled: false,
+          onDidChangeEnableStates: new AbortController().signal,
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "instantiateLogger"),
         getBuiltInCommonProperties: /* @__PURE__ */ __name((_extension) => ({}), "getBuiltInCommonProperties"),
         $initializeTelemetryLevel(level, _supportsTelemetry, productConfig) {
           Effect.runSync(Ref.set(TelemetryLevelRef, level));
@@ -97,7 +113,9 @@ class TelemetryService extends Effect.Service()(
         onExtensionError: /* @__PURE__ */ __name((Extension, Error2) => {
           Effect.runFork(LogExtensionError(Extension, Error2));
           return false;
-        }, "onExtensionError")
+        }, "onExtensionError"),
+        dispose() {
+        }
       };
       return ServiceImplementation;
     })

@@ -2,14 +2,14 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
 import { isCancellationError } from "vs/base/common/errors.js";
-import { ToDTO as OpenDialogOptionToDTO } from "./TypeConverter/Dialog/OpenDialogOption.js";
-import { ToDTO as SaveDialogOptionToDTO } from "./TypeConverter/Dialog/SaveDialogOption.js";
+import { DialogProblem } from "./Dialog/DialogProblem.js";
+import { IPCService } from "./IPC.js";
 import {
   ToURI as DTOToURI,
   ToURIArray as DTOToURIArray
 } from "./TypeConverter/Dialog/DialogResult.js";
-import { IPCService } from "./IPC.js";
-import { DialogProblem } from "./Dialog/DialogProblem.js";
+import { ToDTO as OpenDialogOptionToDTO } from "./TypeConverter/Dialog/OpenDialogOption.js";
+import { ToDTO as SaveDialogOptionToDTO } from "./TypeConverter/Dialog/SaveDialogOption.js";
 const CreateDialogEffect = /* @__PURE__ */ __name((IPC, IPCMethod, Options, Token, OptionsToDTO, ResultFromDTO) => {
   return Effect.gen(function* () {
     if (Token?.isCancellationRequested) {

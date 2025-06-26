@@ -3,17 +3,28 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { MarkdownString } from "../../Platform/VSCode/Type.js";
 const FromAPI = /* @__PURE__ */ __name((MarkdownStringInstance) => ({
   value: MarkdownStringInstance.value,
-  isTrusted: MarkdownStringInstance.isTrusted,
-  baseUri: MarkdownStringInstance.baseUri,
-  supportHtml: MarkdownStringInstance.supportHtml
+  // FIX: Handle exactOptionalPropertyTypes
+  ...MarkdownStringInstance.isTrusted && {
+    isTrusted: MarkdownStringInstance.isTrusted
+  },
+  ...MarkdownStringInstance.baseUri && {
+    baseUri: MarkdownStringInstance.baseUri
+  },
+  ...MarkdownStringInstance.supportHtml && {
+    supportHtml: MarkdownStringInstance.supportHtml
+  }
 }), "FromAPI");
 const ToAPI = /* @__PURE__ */ __name((MarkdownStringDTO) => {
   const result = new MarkdownString(
     MarkdownStringDTO.value,
     typeof MarkdownStringDTO.isTrusted === "boolean" ? MarkdownStringDTO.isTrusted : !!MarkdownStringDTO.isTrusted
   );
-  result.baseUri = MarkdownStringDTO.baseUri;
-  result.supportHtml = MarkdownStringDTO.supportHtml;
+  if (MarkdownStringDTO.baseUri) {
+    result.baseUri = MarkdownStringDTO.baseUri;
+  }
+  if (MarkdownStringDTO.supportHtml) {
+    result.supportHtml = MarkdownStringDTO.supportHtml;
+  }
   return result;
 }, "ToAPI");
 export {

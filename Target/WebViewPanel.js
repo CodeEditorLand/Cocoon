@@ -5,10 +5,10 @@ import { generateUuid } from "vs/base/common/uuid.js";
 import {
   Disposable
 } from "vscode";
+import { IPCService } from "./IPC.js";
 import { ConvertContentOptionToDTO } from "./TypeConverter/WebView/ConvertContentOptionToDTO.js";
 import { ConvertPanelOptionToDTO } from "./TypeConverter/WebView/ConvertPanelOptionToDTO.js";
 import { ConvertShowOptionToDTO } from "./TypeConverter/WebView/ConvertShowOptionToDTO.js";
-import { IPCService } from "./IPC.js";
 import { WebViewPanelImplementation } from "./WebViewPanel/WebViewPanelImplementation.js";
 class WebViewPanelService extends Effect.Service()(
   "Service/WebViewPanel",

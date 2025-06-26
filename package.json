@@ -25,6 +25,8 @@
 	"dependencies": {
 		"@effect/platform": "0.87.0",
 		"@effect/platform-node": "0.88.2",
+		"@tauri-apps/plugin-clipboard-manager": "2.3.0",
+		"@tauri-apps/plugin-fs": "2.4.0",
 		"effect": "3.16.9",
 		"google-protobuf": "3.21.4"
 	},

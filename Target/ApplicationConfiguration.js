@@ -1,14 +1,14 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect } from "effect";
 import { deepmerge } from "deepmerge-ts";
+import { Effect } from "effect";
 import { Emitter } from "vs/base/common/event.js";
+import { joinPath } from "vs/base/common/resources.js";
 import { ApplicationConfigurationProblem } from "./ApplicationConfiguration/ApplicationConfigurationProblem.js";
-import { ReadRawFile } from "./Integration/Tauri/File/ReadRawFile.js";
 import { ParseJson } from "./Integration/Tauri/File/ParseJson.js";
+import { ReadRawFile } from "./Integration/Tauri/File/ReadRawFile.js";
 import { ResolveFinalDefaultPath } from "./Integration/Tauri/Path/Default.js";
 import { ResolveWorkSpacePath } from "./Integration/Tauri/Path/WorkSpace.js";
-import { joinPath } from "vs/base/common/resources.js";
 const ResolveConfigurationFile = /* @__PURE__ */ __name((ConfigDirectoryEffect, FileName) => Effect.flatMap(
   ConfigDirectoryEffect,
   (ConfigDirectory) => ReadRawFile(

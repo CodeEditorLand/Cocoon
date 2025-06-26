@@ -1,9 +1,9 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect } from "effect";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
+import { CreateEventStream } from "./Utility/CreateEventStream.js";
 class EmptyKeyError extends Error {
   static {
     __name(this, "EmptyKeyError");

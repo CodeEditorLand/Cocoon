@@ -5,18 +5,14 @@ import { IPCService } from "./IPC.js";
 const ParseArgument = /* @__PURE__ */ __name((Arguments) => {
   let Option = {};
   let Items = [];
-  let Source = void 0;
   let CurrentIndex = 0;
   if (Arguments.length > CurrentIndex && typeof Arguments[CurrentIndex] === "object" && Arguments[CurrentIndex] !== null && !Arguments[CurrentIndex].title && !Arguments[CurrentIndex].id) {
     Option = Arguments[CurrentIndex++];
   }
-  if (Arguments.length > CurrentIndex && typeof Arguments[CurrentIndex] === "object" && Arguments[CurrentIndex] !== null && typeof Arguments[CurrentIndex].id === "string") {
-    Source = Arguments[CurrentIndex++];
-  }
   Items = Arguments.slice(CurrentIndex).filter(
     (item) => typeof item === "string" || typeof item === "object" && item !== null && typeof item.title === "string"
   );
-  return { Option, Items, Source };
+  return { Option, Items };
 }, "ParseArgument");
 const CreateShowMessageEffect = /* @__PURE__ */ __name((IPC, Severity, Message, Option, Items, Source) => {
   return Effect.gen(function* () {
@@ -55,36 +51,39 @@ class MessageService extends Effect.Service()(
       const IPC = yield* IPCService;
       return {
         ShowInformationMessage: /* @__PURE__ */ __name((message, ...args) => {
-          const { Option, Items, Source } = ParseArgument(args);
+          const { Option, Items } = ParseArgument(args);
           return CreateShowMessageEffect(
             IPC,
             1,
             message,
             Option,
             Items,
-            Source
+            void 0
+            // Source is not used
           );
         }, "ShowInformationMessage"),
         ShowWarningMessage: /* @__PURE__ */ __name((message, ...args) => {
-          const { Option, Items, Source } = ParseArgument(args);
+          const { Option, Items } = ParseArgument(args);
           return CreateShowMessageEffect(
             IPC,
             2,
             message,
             Option,
             Items,
-            Source
+            void 0
+            // Source is not used
           );
         }, "ShowWarningMessage"),
         ShowErrorMessage: /* @__PURE__ */ __name((message, ...args) => {
-          const { Option, Items, Source } = ParseArgument(args);
+          const { Option, Items } = ParseArgument(args);
           return CreateShowMessageEffect(
             IPC,
             3,
             message,
             Option,
             Items,
-            Source
+            void 0
+            // Source is not used
           );
         }, "ShowErrorMessage")
       };

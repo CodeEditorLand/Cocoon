@@ -1,17 +1,17 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Cause, Effect, Exit } from "effect";
 import * as Module from "node:module";
+import { Cause, Effect, Exit } from "effect";
 import { URI } from "vs/base/common/uri.js";
-import { APIFactory, APIFactoryService } from "./APIFactory.js";
-import { ExtensionPath, ExtensionPathService } from "./ExtensionPath.js";
+import { APIFactoryService } from "./APIFactory.js";
+import { ExtensionPathService } from "./ExtensionPath.js";
+import { LoggerService } from "./Logger.js";
 import { NodeModuleShimService } from "./NodeModuleShim.js";
-import { Logger, LoggerService } from "./Logger.js";
 class VsCodeNodeModuleFactory {
-  constructor(APIFactory2, ExtensionPath2, Logger2) {
-    this.APIFactory = APIFactory2;
-    this.ExtensionPath = ExtensionPath2;
-    this.Logger = Logger2;
+  constructor(APIFactory, ExtensionPath, Logger) {
+    this.APIFactory = APIFactory;
+    this.ExtensionPath = ExtensionPath;
+    this.Logger = Logger;
   }
   static {
     __name(this, "VsCodeNodeModuleFactory");
@@ -32,17 +32,17 @@ class RequireInterceptorService extends Effect.Service()(
   "Service/RequireInterceptor",
   {
     effect: Effect.gen(function* () {
-      const APIFactory2 = yield* APIFactoryService;
-      const ExtensionPath2 = yield* ExtensionPathService;
-      const Logger2 = yield* LoggerService;
+      const APIFactory = yield* APIFactoryService;
+      const ExtensionPath = yield* ExtensionPathService;
+      const Logger = yield* LoggerService;
       const NodeModuleShim = yield* NodeModuleShimService;
       const Factories = /* @__PURE__ */ new Map([
         [
           "vscode",
           new VsCodeNodeModuleFactory(
-            APIFactory2,
-            ExtensionPath2,
-            Logger2
+            APIFactory,
+            ExtensionPath,
+            Logger
           )
         ]
       ]);
@@ -72,7 +72,7 @@ class RequireInterceptorService extends Effect.Service()(
           };
           IsInstalled = true;
         });
-        yield* Logger2.Info(
+        yield* Logger.Info(
           "Node.js require() interceptor has been successfully installed."
         );
       }), "Install");

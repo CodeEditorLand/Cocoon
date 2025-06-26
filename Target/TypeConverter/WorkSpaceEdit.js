@@ -1,8 +1,8 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import {
-  WorkspaceEdit as VSCodeWorkspaceEdit,
-  TextEdit as VSCodeTextEdit
+  TextEdit as VSCodeTextEdit,
+  WorkspaceEdit as VSCodeWorkspaceEdit
 } from "../Platform/VSCode/Type.js";
 import {
   FromAPI as TextEditFromAPI,
@@ -16,12 +16,15 @@ const FromAPI = /* @__PURE__ */ __name((Edit, VersionProvider) => {
     const VersionId = VersionProvider?.GetTextDocumentVersion(URI);
     for (const SingleEdit of URIEditArray) {
       if (SingleEdit instanceof VSCodeTextEdit) {
-        Result.edits.push({
+        const textEditDto = {
           _type: "text",
           resource: Resource,
-          edit: TextEditFromAPI(SingleEdit),
-          versionId: VersionId
-        });
+          edit: TextEditFromAPI(SingleEdit)
+        };
+        if (VersionId !== void 0) {
+          textEditDto.versionId = VersionId;
+        }
+        Result.edits.push(textEditDto);
       } else {
       }
     }

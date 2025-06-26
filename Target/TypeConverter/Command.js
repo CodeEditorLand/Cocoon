@@ -40,6 +40,8 @@ class Command {
     this.LookupAPICommand = LookupAPICommand;
     this.DelegatingCommandId = `_cocoon.delegate.${generateUuid()}`;
     this.RegisterCommand(
+      false,
+      // Not a global command
       this.DelegatingCommandId,
       this.ExecuteDelegatedCommand.bind(this),
       this
@@ -67,11 +69,14 @@ class Command {
       const ConvertedArgumentArray = Command2.arguments?.map(
         (Argument, i) => APICommandValue.Arguments[i].Convert(Argument)
       ) ?? [];
-      return {
+      const result2 = {
         id: APICommandValue.InternalId,
-        title: Command2.title,
-        arguments: ConvertedArgumentArray
+        title: Command2.title
       };
+      if (ConvertedArgumentArray.length > 0) {
+        result2.arguments = ConvertedArgumentArray;
+      }
+      return result2;
     }
     if (Array.isArray(Command2.arguments) && Command2.arguments.some((Argument) => typeof Argument === "function")) {
       const Id = generateUuid();
@@ -85,21 +90,31 @@ class Command {
         arguments: [Id, ...Command2.arguments ?? []]
       };
     }
-    return {
+    const result = {
       id: Command2.command,
-      title: Command2.title,
-      tooltip: Command2.tooltip,
-      arguments: Command2.arguments
+      title: Command2.title
     };
+    if (Command2.tooltip) {
+      result.tooltip = Command2.tooltip;
+    }
+    if (Command2.arguments) {
+      result.arguments = Command2.arguments;
+    }
+    return result;
   }
   FromInternal(CommandDTO) {
     if (!CommandDTO) return void 0;
-    return {
+    const result = {
       command: CommandDTO.id,
-      title: CommandDTO.title,
-      tooltip: CommandDTO.tooltip,
-      arguments: CommandDTO.arguments
+      title: CommandDTO.title
     };
+    if (CommandDTO.tooltip) {
+      result.tooltip = CommandDTO.tooltip;
+    }
+    if (CommandDTO.arguments) {
+      result.arguments = CommandDTO.arguments;
+    }
+    return result;
   }
 }
 export {

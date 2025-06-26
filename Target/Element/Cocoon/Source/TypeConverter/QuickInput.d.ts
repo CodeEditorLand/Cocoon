@@ -10,6 +10,7 @@ import type { QuickInputButton, QuickPickItem } from "vscode";
  */
 export declare const SerializeItems: <T extends QuickPickItem | string>(Items: readonly T[]) => {
     handle: number;
+    tooltip?: string | import("vscode").MarkdownString;
     label: string;
     kind?: import("vscode").QuickPickItemKind;
     iconPath?: import("vscode").IconPath;

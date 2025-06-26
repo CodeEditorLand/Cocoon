@@ -69,7 +69,7 @@ export declare class ExtHostWorkspace implements ExtHostWorkspaceShape, IExtHost
      * Note, null/undefined have different and important meanings for "exclude"
      */
     findFiles(include: vscode.GlobPattern | undefined, exclude: vscode.GlobPattern | null | undefined, maxResults: number | undefined, extensionId: ExtensionIdentifier, token?: vscode.CancellationToken): Promise<vscode.Uri[]>;
-    findFiles2(filePatterns: readonly vscode.GlobPattern[], options: vscode.FindFiles2Options, extensionId: ExtensionIdentifier, token?: vscode.CancellationToken): Promise<vscode.Uri[]>;
+    findFiles2(filePatterns: readonly vscode.GlobPattern[], options: vscode.FindFiles2Options | undefined, extensionId: ExtensionIdentifier, token?: vscode.CancellationToken): Promise<vscode.Uri[]>;
     private _findFilesImpl;
     private _findFilesBase;
     findTextInFiles2(query: vscode.TextSearchQuery2, options: vscode.FindTextInFilesOptions2 | undefined, extensionId: ExtensionIdentifier, token?: vscode.CancellationToken): vscode.FindTextInFilesResponse;

@@ -6,8 +6,8 @@ import { ExtUri } from "vs/base/common/resources.js";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
 import { ToAPI } from "./TypeConverter/Main/URI.js";
+import { CreateEventStream } from "./Utility/CreateEventStream.js";
 class FileSystemInformationService extends Effect.Service()(
   "Service/FileSystemInformation",
   {

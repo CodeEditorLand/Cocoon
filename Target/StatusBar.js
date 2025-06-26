@@ -6,15 +6,15 @@ import {
   Disposable,
   StatusBarAlignment
 } from "vscode";
-import { FromAPI as StatusBarItemToDTO } from "./TypeConverter/StatusBar.js";
+import { CommandService } from "./Command.js";
+import { IPCService } from "./IPC.js";
 import { Command as CommandConverter } from "./TypeConverter/Command.js";
-import { Command as CommandInterface, CommandService } from "./Command.js";
-import { IPC, IPCService } from "./IPC.js";
+import { FromAPI as StatusBarItemToDTO } from "./TypeConverter/StatusBar.js";
 class StatusBarItemImplementation {
-  constructor(EntryId, ExtensionId, IPC2, Command, OnDidDispose, InitialId, InitialAlignment, InitialPriority) {
+  constructor(EntryId, ExtensionId, IPC, Command, OnDidDispose, InitialId, InitialAlignment, InitialPriority) {
     this.EntryId = EntryId;
     this.ExtensionId = ExtensionId;
-    this.IPC = IPC2;
+    this.IPC = IPC;
     this.Command = Command;
     this.OnDidDispose = OnDidDispose;
     this._id = InitialId;
@@ -133,7 +133,9 @@ class StatusBarItemImplementation {
   Update() {
     if (this.IsDisposed || !this.IsVisible) return;
     const TheCommandConverter = new CommandConverter(
-      this.Command.registerCommand,
+      // FIX: Pass a function with the correct signature for the converter.
+      // The converter uses this to register *internal* commands, not global ones.
+      (_global, id, handler, thisArg) => this.Command.registerCommand(false, id, handler, thisArg),
       this.Command.executeCommand,
       () => void 0
     );
@@ -150,7 +152,7 @@ class StatusBarService extends Effect.Service()(
   "Service/StatusBar",
   {
     effect: Effect.gen(function* () {
-      const IPC2 = yield* IPCService;
+      const IPC = yield* IPCService;
       const Command = yield* CommandService;
       const ActiveItemsRef = yield* Ref.make(
         /* @__PURE__ */ new Map()
@@ -169,7 +171,7 @@ class StatusBarService extends Effect.Service()(
           const Entry = new StatusBarItemImplementation(
             EntryId,
             Extension.identifier.value,
-            IPC2,
+            IPC,
             Command,
             OnDispose,
             ItemId,
@@ -186,11 +188,11 @@ class StatusBarService extends Effect.Service()(
         }), "CreateStatusBarItem"),
         SetStatusBarMessage: /* @__PURE__ */ __name((text, hideOrPromise) => {
           const HideId = `status.message.${generateUuid()}`;
-          const ShowEffect = IPC2.SendNotification(
+          const ShowEffect = IPC.SendNotification(
             "$setStatusBarMessage",
             [HideId, text]
           );
-          const HideEffect = IPC2.SendNotification(
+          const HideEffect = IPC.SendNotification(
             "$disposeStatusBarMessage",
             [HideId]
           );

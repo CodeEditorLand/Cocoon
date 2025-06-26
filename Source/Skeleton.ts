@@ -2,16 +2,9 @@
  * File: Cocoon/Source/Skeleton.ts
  *
  * This file defines a complete, fully asynchronous application skeleton using the Effect-TS library.
- * It demonstrates how to manage a complex dependency graph with dozens of interdependent services.
- *
- * The key pattern used here is the "Progressive World Build" for layer composition.
- * This pattern explicitly builds the application's environment level-by-level,
- * ensuring that all service dependencies are correctly resolved at each stage. This approach
- * is robust and solves the common "Service not found" errors that can occur with
- * simpler composition methods in highly complex applications.
- *
- * Logging has been added to the constructor of many services to provide a clear trace
- * of the initialization order when the application is run.
+ * It is built using the "Progressive World Build" pattern from the original, working Cocoon skeleton.
+ * This pattern ensures that the dependency injection layer is built up correctly, level-by-level,
+ * resulting in a self-sufficient final layer.
  */
 
 import { DevTools } from "@effect/experimental";
@@ -25,49 +18,7 @@ import { Effect, Layer } from "effect";
 import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import { LogLevel, UIKind } from "vscode";
 
-// =============================================================================
-// --- SERVICE DEFINITIONS & PLACEHOLDERS ---
-// =============================================================================
-
-const DUMMY_INIT_DATA: IExtensionHostInitData = {
-	version: "1.85.0",
-	quality: "stable",
-	commit: "dev",
-	parentPid: 0,
-	environment: {
-		isExtensionDevelopmentDebug: false,
-		appName: "Cocoon",
-		appHost: "desktop",
-		appLanguage: "en",
-		isExtensionTelemetryLoggingOnly: false,
-		appUriScheme: "cocoon-code",
-		globalStorageHome: {} as any,
-		workspaceStorageHome: {} as any,
-	},
-	workspace: null,
-	extensions: {
-		versionId: 0,
-		allExtensions: [],
-		activationEvents: {},
-		myExtensions: [],
-	},
-	telemetryInfo: {
-		sessionId: "",
-		machineId: "",
-		sqmId: "",
-		devDeviceId: "",
-		firstSessionDate: new Date().toISOString(),
-	},
-	logLevel: LogLevel.Info,
-	loggers: [],
-	logsLocation: {} as any,
-	autoStart: false,
-	remote: { isRemote: false, authority: undefined, connectionData: null },
-	consoleForward: { includeStack: false, logNative: false },
-	uiKind: UIKind.Desktop,
-};
-
-// --- Level 0/1: Foundational Services ---
+// --- Service Definitions ---
 class IPCConfigurationService extends Effect.Service<IPCConfigurationService>()(
 	"Service/IPCConfiguration",
 	{ sync: () => ({}) },
@@ -94,7 +45,6 @@ class InitDataService extends Effect.Service<IExtensionHostInitData>()(
 	"Service/InitData",
 	{ sync: () => DUMMY_INIT_DATA },
 ) {}
-
 class LoggerService extends Effect.Service<LoggerService>()("Service/Logger", {
 	effect: Effect.gen(function* () {
 		yield* ApplicationConfigurationService;
@@ -421,104 +371,152 @@ class ESMInterceptorService extends Effect.Service<ESMInterceptorService>()(
 ) {}
 
 // =============================================================================
-// --- LAYER COMPOSITION: The Progressive World Build ---
+// --- SERVICE DEFINITIONS & PLACEHOLDERS ---
 // =============================================================================
-const createLayer = () => {
-	// Level 0: Foundational Services
-	const L0_World = Layer.mergeAll(
-		IPCConfigurationService.Default,
-		CancellationService.Default,
-	);
-	const InitDataLayer = Layer.succeed(
-		InitDataService,
-		InitDataService.of(DUMMY_INIT_DATA),
-	);
 
-	// Level 1: Base services that depend on L0 and InitData
-	const L1_Services = Layer.mergeAll(
-		ApplicationConfigurationService.Default,
-		LoggerService.Default, // Logger now depends on AppConfig
-	);
-	const L1_World = Layer.provide(
-		L1_Services,
-		Layer.merge(L0_World, InitDataLayer),
-	);
-
-	// Level 2: Services that depend on L1
-	const L2_Services = Layer.mergeAll(
-		IPCService.Default,
-		HostKindPickerService.Default,
-		NodeModuleShimService.Default,
-		ExtensionPathService.Default,
-	);
-	const L2_World = Layer.provide(L2_Services, L1_World);
-
-	// Level 3
-	const L3_Services = Layer.mergeAll(
-		TelemetryService.Default,
-		APIDeprecationService.Default,
-		ClipboardService.Default,
-		DialogService.Default,
-		DocumentService.Default,
-		MessageService.Default,
-		QuickInputService.Default,
-		ProposedAPIService.Default,
-		SecretStorageService.Default,
-		FileSystemInformationService.Default,
-		TaskService.Default,
-		AuthenticationService.Default,
-	);
-	const L3_World = Layer.provide(L3_Services, L2_World);
-
-	// Level 4
-	const L4_Services = Layer.mergeAll(
-		FileSystemService.Default,
-		StorageService.Default,
-		EnvironmentService.Default,
-		WindowService.Default,
-	);
-	const L4_World = Layer.provide(L4_Services, L3_World);
-
-	// Level 5
-	const L5_Services = Layer.mergeAll(
-		StoragePathService.Default,
-		CommandService.Default,
-	);
-	const L5_World = Layer.provide(L5_Services, L4_World);
-
-	// Level 6
-	const L6_Services = Layer.mergeAll(
-		WorkSpaceService.Default,
-		StatusBarService.Default,
-		TreeViewService.Default,
-	);
-	const L6_World = Layer.provide(L6_Services, L5_World);
-
-	// Level 7
-	const L7_Services = Layer.mergeAll(
-		DebugService.Default,
-		WebViewPanelService.Default,
-		ExtensionHostService.Default,
-	);
-	const L7_World = Layer.provide(L7_Services, L6_World);
-
-	// Level 8
-	const L8_Services = Layer.mergeAll(ExtensionService.Default);
-	const L8_World = Layer.provide(L8_Services, L7_World);
-
-	// Level 9
-	const L9_Services = Layer.mergeAll(APIFactoryService.Default);
-	const L9_World = Layer.provide(L9_Services, L8_World);
-
-	// Top Level
-	const TopLevelServices = Layer.mergeAll(
-		RequireInterceptorService.Default,
-		ESMInterceptorService.Default,
-	);
-	return Layer.provide(TopLevelServices, L9_World);
+const DUMMY_INIT_DATA: IExtensionHostInitData = {
+	version: "1.85.0",
+	quality: "stable",
+	commit: "dev",
+	parentPid: 0,
+	environment: {
+		isExtensionDevelopmentDebug: false,
+		appName: "Cocoon",
+		appHost: "desktop",
+		appLanguage: "en",
+		isExtensionTelemetryLoggingOnly: false,
+		appUriScheme: "cocoon-code",
+		globalStorageHome: {} as any,
+		workspaceStorageHome: {} as any,
+	},
+	workspace: null,
+	extensions: {
+		versionId: 0,
+		allExtensions: [],
+		activationEvents: {},
+		myExtensions: [],
+	},
+	telemetryInfo: {
+		sessionId: "",
+		machineId: "",
+		sqmId: "",
+		devDeviceId: "",
+		firstSessionDate: new Date().toISOString(),
+	},
+	logLevel: LogLevel.Info,
+	loggers: [],
+	logsLocation: {} as any,
+	autoStart: false,
+	remote: { isRemote: false, authority: undefined, connectionData: null },
+	consoleForward: { includeStack: false, logNative: false },
+	uiKind: UIKind.Desktop,
 };
 
-const AppLayer = createLayer();
+// =============================================================================
+// --- LAYER COMPOSITION: The Progressive World Build (Corrected) ---
+// =============================================================================
+
+// Level 0: The absolute foundation. Services with no dependencies.
+const L0_World = Layer.mergeAll(
+	ApplicationConfigurationService.Default,
+	CancellationService.Default,
+	LanguageFeatureService.Default,
+	IPCConfigurationService.Default,
+	InitDataService.Default,
+);
+
+// Level 1: Services that depend only on Level 0.
+const L1_Services = Layer.mergeAll(
+	LoggerService.Default,
+	IPCService.Default,
+	ExtensionPathService.Default,
+);
+const L1_World = Layer.merge(L0_World, L1_Services).pipe(
+	Layer.provide(L0_World),
+);
+
+// Level 2: Services that depend on the L1_World.
+const L2_Services = Layer.mergeAll(
+	APIDeprecationService.Default,
+	HostKindPickerService.Default,
+	NodeModuleShimService.Default,
+	ClipboardService.Default,
+	DebugService.Default,
+	DialogService.Default,
+	DocumentService.Default,
+	MessageService.Default,
+	QuickInputService.Default,
+	WebViewPanelService.Default,
+	WindowService.Default,
+	TaskService.Default,
+	AuthenticationService.Default,
+	FileSystemInformationService.Default,
+	ProposedAPIService.Default,
+	SecretStorageService.Default,
+	StorageService.Default,
+	TelemetryService.Default,
+);
+const L2_World = Layer.merge(L1_World, L2_Services).pipe(
+	Layer.provide(L1_World),
+);
+
+// Level 3: Services that depend on the L2_World.
+const L3_Services = Layer.mergeAll(
+	EnvironmentService.Default,
+	FileSystemService.Default,
+	CommandService.Default,
+);
+const L3_World = Layer.merge(L2_World, L3_Services).pipe(
+	Layer.provide(L2_World),
+);
+
+// Level 4: Services that depend on the L3_World.
+const L4_Services = Layer.mergeAll(
+	StoragePathService.Default,
+	WorkSpaceService.Default,
+	StatusBarService.Default,
+	TreeViewService.Default,
+);
+const L4_World = Layer.merge(L3_World, L4_Services).pipe(
+	Layer.provide(L3_World),
+);
+
+// Level 5: Services that depend on the L4_World.
+const L5_Services = Layer.mergeAll(ExtensionHostService.Default);
+const L5_World = Layer.merge(L4_World, L5_Services).pipe(
+	Layer.provide(L4_World),
+);
+
+// Level 6: Services that depend on the L5_World.
+const L6_Services = Layer.mergeAll(ExtensionService.Default);
+const L6_World = Layer.merge(L5_World, L6_Services).pipe(
+	Layer.provide(L5_World),
+);
+
+// Level 7: Services that depend on the L6_World.
+const L7_Services = Layer.mergeAll(APIFactoryService.Default);
+const L7_World = Layer.merge(L6_World, L7_Services).pipe(
+	Layer.provide(L6_World),
+);
+
+// Level 8: The top-level services.
+const L8_Services = Layer.mergeAll(
+	ESMInterceptorService.Default,
+	RequireInterceptorService.Default,
+);
+const AppLayer = Layer.merge(L7_World, L8_Services).pipe(
+	Layer.provide(L7_World),
+);
+
+// --- Utility Layers ---
+const TracingLive = NodeSdk.layer(() => ({
+	resource: { serviceName: "cocoon-skeleton" },
+	spanProcessor: new BatchSpanProcessor(new ConsoleSpanExporter()),
+}));
+const DevToolsLive = Layer.provide(
+	DevTools.layerWebSocket(),
+	NodeSocket.layerWebSocketConstructor,
+);
 
 // --- Main Application Logic ---
 const MainLogic = Effect.gen(function* () {
@@ -536,28 +534,25 @@ const MainLogic = Effect.gen(function* () {
 	yield* Effect.never;
 });
 
-/** The final, executable Effect for the application. */
-const TracingLive = NodeSdk.layer(() => ({
-	resource: { serviceName: "cocoon-skeleton" },
-	spanProcessor: new BatchSpanProcessor(new ConsoleSpanExporter()),
-}));
-const DevToolsLive = Layer.provide(
-	DevTools.layerWebSocket(),
-	NodeSocket.layerWebSocketConstructor,
-);
+// --- Final Application Assembly and Execution ---
 
-// FIX: Combine the full application layer with the utility layers.
-const FinalLayer = Layer.merge(
-	AppLayer,
-	Layer.merge(TracingLive, DevToolsLive),
-);
+// Combine the application's self-sufficient layer with the utility layers.
+const FinalLayer = Layer.mergeAll(AppLayer, TracingLive, DevToolsLive);
 
-// FIX: Provide the final, complete layer to the main logic.
-// The resulting effect will have all dependencies satisfied (R = never).
-const MainEffect = Effect.provide(MainLogic, FinalLayer).pipe(
+// The MainEffect still has requirements (e.g., LoggerService for the catchAll).
+const MainEffectWithRequirements = MainLogic.pipe(
 	Effect.catchAllCause((cause) =>
+		// This logFatal still requires LoggerService, which is fine at this stage.
 		Effect.logFatal("Skeleton main process failed.", cause),
 	),
 );
 
-NodeRuntime.runMain(MainEffect);
+// Provide the final, complete layer to the *entire* application logic,
+// including its error handler. This resolves all requirements.
+const ExecutableMainEffect = Effect.provide(
+	MainEffectWithRequirements,
+	FinalLayer,
+);
+
+// ExecutableMainEffect is now of type `Effect<void, never, never>` and can be run.
+NodeRuntime.runMain(ExecutableMainEffect);

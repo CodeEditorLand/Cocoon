@@ -1,28 +1,27 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect } from "effect";
 import * as Path from "node:path";
-import {} from "vs/platform/extensions/common/extensions.js";
+import { Effect } from "effect";
 import { Uri } from "vscode";
-import { FileSystem, FileSystemService } from "./FileSystem.js";
+import { FileSystemService } from "./FileSystem.js";
 import { InitDataService } from "./InitData.js";
-import { Logger, LoggerService } from "./Logger.js";
+import { LoggerService } from "./Logger.js";
 const EnsureDirectory = /* @__PURE__ */ __name((DirectoryUri, ScopeName) => Effect.if(DirectoryUri !== void 0, {
   onTrue: /* @__PURE__ */ __name(() => Effect.gen(function* () {
     const TheUri = DirectoryUri;
-    const FileSystem2 = yield* FileSystemService;
-    const Logger2 = yield* LoggerService;
+    const FileSystem = yield* FileSystemService;
+    const Logger = yield* LoggerService;
     yield* Effect.tryPromise(
-      () => FileSystem2.createDirectory(TheUri)
+      () => FileSystem.createDirectory(TheUri)
     ).pipe(
       Effect.catchAll(
-        (Error2) => Logger2.Error(
+        (Error2) => Logger.Error(
           `Failed to ensure ${ScopeName} storage directory exists at ${TheUri.toString()}`,
           Error2
         )
       )
     );
-    yield* Logger2.Trace(
+    yield* Logger.Trace(
       `${ScopeName} storage directory ensured at: ${TheUri.fsPath}`
     );
     return true;
@@ -39,7 +38,7 @@ class StoragePathService extends Effect.Service()(
   {
     effect: Effect.gen(function* () {
       const InitData = yield* InitDataService;
-      const Logger2 = yield* LoggerService;
+      const Logger = yield* LoggerService;
       const GlobalStorageUri = InitData.environment.globalStorageHome;
       const WorkSpaceStorageUri = InitData.environment.workspaceStorageHome;
       yield* EnsureDirectory(GlobalStorageUri, "Global");
@@ -63,7 +62,7 @@ class StoragePathService extends Effect.Service()(
               Extension.identifier.value.toLowerCase()
             );
             Effect.runSync(
-              Logger2.Error(
+              Logger.Error(
                 `FATAL: Could not resolve global storage path for ${Extension.identifier.value}. Falling back to ${EmergencyPath}`
               )
             );

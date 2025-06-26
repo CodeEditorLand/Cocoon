@@ -8,8 +8,8 @@ import { ExtensionRuntime } from "vs/workbench/api/common/extHostTypes.js";
 import {
   ExtensionDescriptionRegistry
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
-import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
+import { InitDataService } from "./InitData.js";
 import { LoggerService } from "./Logger.js";
 import { TelemetryService } from "./Telemetry.js";
 class ExtensionHostService extends Effect.Service()(
@@ -142,6 +142,7 @@ class ExtensionHostService extends Effect.Service()(
       const OnDidActivateExtension = /* @__PURE__ */ __name((_callback) => Effect.sync(() => {
       }), "OnDidActivateExtension");
       return {
+        // FIX: Added explicit types for Id and Reason.
         ActivateById: /* @__PURE__ */ __name((Id, Reason) => Effect.gen(function* () {
           const IsActivated = yield* Ref.get(
             ActivatedExtensionsRef
@@ -200,9 +201,11 @@ class ExtensionHostService extends Effect.Service()(
             }).pipe(Effect.asVoid)
           )
         ), "ActivateById"),
+        // FIX: Added explicit type for Id.
         GetExtensionDescription: /* @__PURE__ */ __name((Id) => Effect.succeed(
           ExtensionRegistry.getExtensionDescription(Id)
         ), "GetExtensionDescription"),
+        // FIX: Added explicit type for Id.
         GetExtensionExports: /* @__PURE__ */ __name((Id) => Ref.get(ActivatedExtensionsRef).pipe(
           Effect.flatMap((Map2) => {
             const Ext = Map2.get(Id.value);
@@ -211,6 +214,7 @@ class ExtensionHostService extends Effect.Service()(
             return Effect.succeed(Ext?.Exports);
           })
         ), "GetExtensionExports"),
+        // FIX: Added explicit type for Id.
         IsActivated: /* @__PURE__ */ __name((Id) => Ref.get(ActivatedExtensionsRef).pipe(
           Effect.map((Map2) => Map2.has(Id.value))
         ), "IsActivated"),

@@ -16,12 +16,12 @@ class MementoProxyImplementation {
   OnDidChangeEmitter = new Emitter();
   onDidChange = this.OnDidChangeEmitter.event;
   get(key, defaultValue) {
-    const State = Ref.get(this.StateRef);
+    const State = Effect.runSync(Ref.get(this.StateRef));
     const Value = State[key];
     return Value !== void 0 ? Value : defaultValue;
   }
   keys() {
-    const State = Ref.get(this.StateRef);
+    const State = Effect.runSync(Ref.get(this.StateRef));
     return Object.keys(State);
   }
   update(key, value) {
@@ -115,15 +115,22 @@ class StorageService extends Effect.Service()(
       );
       const CreateMemento = /* @__PURE__ */ __name((ExtensionId, IsGlobal) => {
         const RootStateRef = IsGlobal ? GlobalStorageRef : WorkspaceStorageRef;
-        const ExtensionState = Ref.get(RootStateRef)[ExtensionId] ?? {};
-        const ExtensionStateRef = Ref.make(ExtensionState);
+        const RootState = Effect.runSync(Ref.get(RootStateRef));
+        const ExtensionState = RootState[ExtensionId] ?? {};
+        const ExtensionStateRef = Effect.runSync(
+          Ref.make(ExtensionState)
+        );
         const MarkAsDirtyCallback = /* @__PURE__ */ __name(() => {
-          const DirtyFlagRef = IsGlobal ? IsGlobalDirty : IsWorkspaceDirty;
-          Ref.set(DirtyFlagRef, true);
-          Ref.update(RootStateRef, (CurrentRoot) => ({
-            ...CurrentRoot,
-            [ExtensionId]: Ref.get(ExtensionStateRef)
-          }));
+          const UpdateEffect = Effect.gen(function* () {
+            const DirtyFlagRef = IsGlobal ? IsGlobalDirty : IsWorkspaceDirty;
+            yield* Ref.set(DirtyFlagRef, true);
+            const extensionStateValue = yield* Ref.get(ExtensionStateRef);
+            yield* Ref.update(RootStateRef, (CurrentRoot) => ({
+              ...CurrentRoot,
+              [ExtensionId]: extensionStateValue
+            }));
+          });
+          Effect.runFork(UpdateEffect);
         }, "MarkAsDirtyCallback");
         return new MementoProxyImplementation(
           ExtensionStateRef,

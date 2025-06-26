@@ -1,10 +1,10 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import { Effect, Ref } from "effect";
+import { IPCService } from "./IPC.js";
 import { FromAPI as RangeFromAPI } from "./TypeConverter/Main/Range.js";
 import { FromAPI as ViewColumnFromAPI } from "./TypeConverter/Main/ViewColumn.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-import { IPCService } from "./IPC.js";
 import { WorkSpaceService } from "./WorkSpace.js";
 class WindowService extends Effect.Service()(
   "Service/Window",

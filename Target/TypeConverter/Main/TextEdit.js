@@ -4,7 +4,7 @@ import {
   Range as ExtHostRange,
   TextEdit as ExtHostTextEdit
 } from "../../Platform/VSCode/Type.js";
-import { ToAPI as RangeToAPI, FromAPI as RangeFromAPI } from "./Range.js";
+import { FromAPI as RangeFromAPI, ToAPI as RangeToAPI } from "./Range.js";
 function ToExtHostRange(range) {
   return new ExtHostRange(
     range.start.line,

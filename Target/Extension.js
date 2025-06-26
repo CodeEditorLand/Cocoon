@@ -6,17 +6,17 @@ import {
   ExtensionDescriptionRegistry
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import { ExtensionKind } from "vscode";
-import { ExtensionHost, ExtensionHostService } from "./ExtensionHost.js";
+import { ExtensionHostService } from "./ExtensionHost.js";
 import { InitDataService } from "./InitData.js";
 import { CreateEventStream } from "./Utility/CreateEventStream.js";
-const CreateAPIObject = /* @__PURE__ */ __name((Description, ExtensionHost2) => {
+const CreateAPIObject = /* @__PURE__ */ __name((Description, ExtensionHost) => {
   const Activate = Effect.gen(function* () {
-    yield* ExtensionHost2.ActivateById(Description.identifier, {
+    yield* ExtensionHost.ActivateById(Description.identifier, {
       startup: false,
       extensionId: Description.identifier,
       activationEvent: "api"
     });
-    const Exports = yield* ExtensionHost2.GetExtensionExports(
+    const Exports = yield* ExtensionHost.GetExtensionExports(
       Description.identifier
     );
     return Exports;
@@ -32,7 +32,7 @@ const CreateAPIObject = /* @__PURE__ */ __name((Description, ExtensionHost2) => 
     extensionPath: Description.extensionLocation.fsPath,
     get isActive() {
       return Effect.runSync(
-        ExtensionHost2.IsActivated(Description.identifier)
+        ExtensionHost.IsActivated(Description.identifier)
       );
     },
     get packageJSON() {
@@ -42,7 +42,7 @@ const CreateAPIObject = /* @__PURE__ */ __name((Description, ExtensionHost2) => 
     get exports() {
       return Effect.runSync(
         Effect.catchAll(
-          ExtensionHost2.GetExtensionExports(Description.identifier),
+          ExtensionHost.GetExtensionExports(Description.identifier),
           () => Effect.succeed(void 0)
         )
       );
@@ -55,7 +55,7 @@ class ExtensionService extends Effect.Service()(
   "Service/Extension",
   {
     effect: Effect.gen(function* () {
-      const ExtensionHost2 = yield* ExtensionHostService;
+      const ExtensionHost = yield* ExtensionHostService;
       const InitData = yield* InitDataService;
       const { event: OnDidChangeEvent } = CreateEventStream();
       const AllExtensionsCache = yield* Ref.make(Option.none());
@@ -72,7 +72,7 @@ class ExtensionService extends Effect.Service()(
         Effect.map(Option.fromNullable),
         Effect.map(
           Option.map(
-            (Description) => CreateAPIObject(Description, ExtensionHost2)
+            (Description) => CreateAPIObject(Description, ExtensionHost)
           )
         )
       ), "GetExtension");
@@ -85,7 +85,7 @@ class ExtensionService extends Effect.Service()(
               const NewCache = Descriptions.map(
                 (Description) => CreateAPIObject(
                   Description,
-                  ExtensionHost2
+                  ExtensionHost
                 )
               );
               yield* Ref.set(
