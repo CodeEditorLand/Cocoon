@@ -78,7 +78,7 @@
 
 		"../../Dependency/Microsoft/Dependency/Editor/src/vs/**/*.ts",
 
-		"../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.proposed.*.d.ts",
+		// "../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.proposed.*.d.ts",
 
 		"../../Dependency/Microsoft/Dependency/Editor/src/vscode-dts/vscode.d.ts"
 	]
