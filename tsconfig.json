@@ -58,7 +58,7 @@
 			}
 		],
 
-		"rootDirs": ["."],
+		"rootDirs": [".", "../../Dependency/Microsoft/Dependency/Editor/src/"],
 
 		"target": "ESNext"
 	},
