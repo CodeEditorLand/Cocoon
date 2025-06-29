@@ -46,8 +46,8 @@ const EnsureDirectory = (
 				return true;
 			}),
 		onFalse: () =>
-			Effect.flatMap(LoggerService, (Log) =>
-				Log.Trace(
+			Effect.flatMap(LoggerService, (Logger) =>
+				Logger.Trace(
 					`${ScopeName} storage URI is not defined; skipping creation.`,
 				),
 			).pipe(Effect.as(false)),

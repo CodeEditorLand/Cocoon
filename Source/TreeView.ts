@@ -22,7 +22,7 @@ import type {
 import { type IPC, IPCService } from "./IPC.js";
 import { FromAPI as TreeViewItemToDTO } from "./TypeConverter/TreeView/Item.js";
 import { FromAPI as TreeViewOptionToDTO } from "./TypeConverter/TreeView/Option.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 
 /**
  * @class TreeViewImplementation
@@ -31,7 +31,7 @@ import { CreateEventStream } from "./Utility/CreateEventStream.js";
  * for data to the user-provided `TreeDataProvider`.
  * @implements {VSCodeTreeView<T>}
  */
-class TreeViewImplementation<T> implements VSCodeTreeView<T> {
+export class TreeViewImplementation<T> implements VSCodeTreeView<T> {
 	private readonly ElementToHandleMap = new Map<T, string>();
 	public readonly handleToElementMap = new Map<string, T>();
 	private readonly OnDidExpandElementEmitter =

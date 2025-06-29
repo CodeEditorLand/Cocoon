@@ -39,7 +39,7 @@ export interface ExtensionActivationReason {
  * @description Represents the internal state of an activated extension, holding
  * its module, exports, and subscriptions.
  */
-interface ActivatedExtension {
+export interface ActivatedExtension {
 	readonly Id: ExtensionIdentifier;
 	readonly Module: {
 		readonly activate?: Function;

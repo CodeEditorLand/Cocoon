@@ -17,7 +17,7 @@ import type {
 import type { Uri } from "vscode";
 import { ApplicationConfigurationProblem } from "./ApplicationConfiguration/ApplicationConfigurationProblem.js";
 import type { IntegrationConfigurationProblem } from "./Integration/Tauri/Configuration/Problem.js";
-import { ParseJson } from "./Integration/Tauri/File/ParseJson.js";
+import { ParseJSON } from "./Integration/Tauri/File/ParseJSON.js";
 import { ReadRawFile } from "./Integration/Tauri/File/ReadRawFile.js";
 import { ResolveFinalDefaultPath } from "./Integration/Tauri/Path/Default.js";
 import type { IntegrationPathProblem } from "./Integration/Tauri/Path/Problem.js";
@@ -36,7 +36,7 @@ const ResolveConfigurationFile = (
 				path: joinPath(ConfigDirectory, FileName).path,
 			}),
 		).pipe(
-			Effect.flatMap(ParseJson),
+			Effect.flatMap(ParseJSON),
 			Effect.catchAll(() => Effect.succeed({})),
 		),
 	).pipe(

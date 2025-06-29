@@ -20,7 +20,7 @@ import { ClipboardService } from "./Clipboard.js";
 import { IPCService } from "./IPC.js";
 import { InitDataService } from "./InitData.js";
 import { ToAPI as UriToApi } from "./TypeConverter/Main/URI.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 
 /**
  * @interface Environment

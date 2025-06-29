@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import type { Event, SecretStorage, SecretStorageChangeEvent } from "vscode";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 
 // Stubbed Errors
 class EmptyKeyError extends Error {

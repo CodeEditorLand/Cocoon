@@ -19,7 +19,7 @@ import type {
 } from "vscode";
 import { FromAPI as UriFromAPI } from "../TypeConverter/Main/URI.js";
 import { ConvertShowOptionToDTO } from "../TypeConverter/WebView/ConvertShowOptionToDTO.js";
-import { CreateEventStream } from "../Utility/CreateEventStream.js";
+import { CreateEventStream } from "../Utility/EventStream.js";
 import type { IPC } from "../IPC.js";
 import { WebViewImplementation } from "./WebViewImplementation.js";
 

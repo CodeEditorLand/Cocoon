@@ -17,7 +17,7 @@ import type {
 import { IPCService } from "./IPC.js";
 import { FromAPI as RangeFromAPI } from "./TypeConverter/Main/Range.js";
 import { FromAPI as ViewColumnFromAPI } from "./TypeConverter/Main/ViewColumn.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 import { WorkSpaceService } from "./WorkSpace.js";
 
 /**

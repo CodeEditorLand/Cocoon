@@ -24,7 +24,7 @@ import {
 import { DebugProviderRegistrationProblem } from "./Debug/DebugProviderRegistrationProblem.js";
 import { StartDebuggingProblem } from "./Debug/StartDebuggingProblem.js";
 import { IPCService } from "./IPC.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 
 /**
  * @interface ProviderEntry

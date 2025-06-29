@@ -28,7 +28,7 @@ import { FromAPI as StatusBarItemToDTO } from "./TypeConverter/StatusBar.js";
  * @description An internal class that implements the `vscode.StatusBarItem` interface.
  * @implements {VSCodeStatusBarItem}
  */
-class StatusBarItemImplementation implements VSCodeStatusBarItem {
+export class StatusBarItemImplementation implements VSCodeStatusBarItem {
 	private IsDisposed = false;
 	private IsVisible = false;
 	private _id: string;

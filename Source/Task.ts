@@ -26,7 +26,7 @@ import {
 	FromAPI as TaskFromAPI,
 	ToAPI as TaskToAPI,
 } from "./TypeConverter/Task.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 
 /**
  * @interface ProviderEntry

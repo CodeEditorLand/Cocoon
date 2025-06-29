@@ -16,7 +16,7 @@ import type { Event, Extension as VSCodeExtension } from "vscode";
 import { ExtensionKind } from "vscode";
 import { type ExtensionHost, ExtensionHostService } from "./ExtensionHost.js";
 import { InitDataService } from "./InitData.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 
 /**
  * @description An internal helper function to create the public-facing

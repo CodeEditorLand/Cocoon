@@ -19,7 +19,7 @@ import { InitDataService } from "./InitData.js";
  * @interface ExtensionPathEntry
  * @description An internal type to store the path and identifier for an extension.
  */
-interface ExtensionPathEntry {
+export interface ExtensionPathEntry {
 	readonly Path: string;
 	readonly Identifier: ExtensionIdentifier;
 }

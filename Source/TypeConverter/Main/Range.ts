@@ -4,7 +4,7 @@
  */
 
 import type { IRange } from "vs/editor/common/core/range.js";
-import type { Range as VscRange } from "vscode";
+import type { Range as VSCodeRange } from "vscode";
 
 import { Position, Range } from "../../Platform/VSCode/Type.js";
 
@@ -14,7 +14,7 @@ import { Position, Range } from "../../Platform/VSCode/Type.js";
  * @param RangeInstance The `vscode.Range` instance to convert.
  * @returns The `IRange` DTO.
  */
-export const FromAPI = (RangeInstance: VscRange): IRange => ({
+export const FromAPI = (RangeInstance: VSCodeRange): IRange => ({
 	startLineNumber: RangeInstance.start.line + 1,
 	startColumn: RangeInstance.start.character + 1,
 	endLineNumber: RangeInstance.end.line + 1,
@@ -26,7 +26,7 @@ export const FromAPI = (RangeInstance: VscRange): IRange => ({
  * @param RangeDTO The `IRange` DTO to revive.
  * @returns A new `vscode.Range` instance.
  */
-export const ToAPI = (RangeDTO: IRange): VscRange =>
+export const ToAPI = (RangeDTO: IRange): VSCodeRange =>
 	new Range(
 		new Position(RangeDTO.startLineNumber - 1, RangeDTO.startColumn - 1),
 		new Position(RangeDTO.endLineNumber - 1, RangeDTO.endColumn - 1),

@@ -47,7 +47,7 @@ export interface Command {
  * @description Represents the internal structure of a registered command, including
  * its callback, argument transformations, and associated extension metadata.
  */
-interface InternalCommand {
+export interface InternalCommand {
 	readonly Id: string;
 	readonly Callback: (...args: any[]) => any;
 	readonly ThisArg: any;

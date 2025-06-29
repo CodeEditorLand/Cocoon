@@ -4,14 +4,14 @@
  */
 
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
-import type { Range as VscRange, TextEdit as VscTextEdit } from "vscode";
+import type { Range as VSCodeRange, TextEdit as VSCodeTextEdit } from "vscode";
 import {
 	Range as ExtHostRange,
 	TextEdit as ExtHostTextEdit,
 } from "../../Platform/VSCode/Type.js";
 import { FromAPI as RangeFromAPI, ToAPI as RangeToAPI } from "./Range.js";
 
-function ToExtHostRange(range: VscRange): ExtHostRange {
+function ToExtHostRange(range: VSCodeRange): ExtHostRange {
 	return new ExtHostRange(
 		range.start.line,
 		range.start.character,
@@ -26,7 +26,7 @@ function ToExtHostRange(range: VscRange): ExtHostRange {
  * @returns The `IIdentifiedSingleEditOperation` DTO.
  */
 export const FromAPI = (
-	TextEditInstance: VscTextEdit,
+	TextEditInstance: VSCodeTextEdit,
 ): IIdentifiedSingleEditOperation => ({
 	text: TextEditInstance.newText,
 	range: RangeFromAPI(TextEditInstance.range),
@@ -40,7 +40,7 @@ export const FromAPI = (
  */
 export const ToAPI = (
 	TextEditDTO: IIdentifiedSingleEditOperation,
-): VscTextEdit =>
+): VSCodeTextEdit =>
 	new ExtHostTextEdit(
 		ToExtHostRange(RangeToAPI(TextEditDTO.range)),
 		TextEditDTO.text ?? "",

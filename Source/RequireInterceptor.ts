@@ -19,7 +19,7 @@ import { NodeModuleShimService } from "./NodeModuleShim.js";
  * @description The interface for a factory that can produce a module when
  * `require(Request)` is called by an extension.
  */
-interface NodeModuleFactory {
+export interface NodeModuleFactory {
 	/**
 	 * Loads or creates a module instance.
 	 * @param Request The exact string passed to `require` (e.g., 'vscode').
@@ -34,7 +34,7 @@ interface NodeModuleFactory {
  * @description A factory that creates the `vscode` API object for a specific extension.
  * @implements {NodeModuleFactory}
  */
-class VsCodeNodeModuleFactory implements NodeModuleFactory {
+export class VsCodeNodeModuleFactory implements NodeModuleFactory {
 	constructor(
 		private readonly APIFactory: APIFactory,
 		private readonly ExtensionPath: ExtensionPath,

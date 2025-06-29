@@ -13,7 +13,7 @@ import type { Event, FileChangeEvent } from "vscode";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 import { ToAPI } from "./TypeConverter/Main/URI.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 
 /**
  * @interface FileSystemInformation

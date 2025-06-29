@@ -75,7 +75,7 @@ const GetDocumentText = (
  * @interface ProcessingResult
  * @description The expected success response from the backend service.
  */
-interface ProcessingResult {
+export interface ProcessingResult {
 	readonly ID: string;
 	readonly Status: "Success";
 }
