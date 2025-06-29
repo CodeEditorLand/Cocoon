@@ -12,9 +12,9 @@ import type {
 	SaveDialogOptions,
 	Uri,
 } from "vscode";
+
 import { DialogProblem } from "./Dialog/DialogProblem.js";
-import type { IPC } from "./IPC.js";
-import { IPCService } from "./IPC.js";
+import { IPCService, type IPC } from "./IPC.js";
 import {
 	ToURI as DTOToURI,
 	ToURIArray as DTOToURIArray,

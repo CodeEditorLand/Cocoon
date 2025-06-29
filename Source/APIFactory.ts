@@ -12,29 +12,21 @@ import type {
 } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 import type { Disposable } from "vscode";
-import { Position, Range, Selection } from "./Platform/VSCode/Type.js";
 
 // Corrected PascalCase Imports
-import { CommandService } from "./Command.js";
-import type { Command } from "./Command.js";
+import { CommandService, type Command } from "./Command.js";
 import { DebugService } from "./Debug.js";
-import { ExtensionService } from "./Extension.js";
-import type { Extension } from "./Extension.js";
+import { ExtensionService, type Extension } from "./Extension.js";
 import { LanguageFeatureService } from "./LanguageFeature.js";
-import { LoggerService } from "./Logger.js";
-import type { Logger } from "./Logger.js";
+import { LoggerService, type Logger } from "./Logger.js";
+import { Position, Range, Selection } from "./Platform/VSCode/Type.js";
 import { ProposedAPIService } from "./ProposedAPI.js";
-import { StatusBarService } from "./StatusBar.js";
-import type { StatusBar } from "./StatusBar.js";
+import { StatusBarService, type StatusBar } from "./StatusBar.js";
 import { TaskService } from "./Task.js";
-import { TreeViewService } from "./TreeView.js";
-import type { TreeView } from "./TreeView.js";
-import { WebViewPanelService } from "./WebViewPanel.js";
-import type { WebViewPanel } from "./WebViewPanel.js";
-import { WindowService } from "./Window.js";
-import type { Window } from "./Window.js";
-import { WorkSpaceService } from "./WorkSpace.js";
-import type { WorkSpace } from "./WorkSpace.js";
+import { TreeViewService, type TreeView } from "./TreeView.js";
+import { WebViewPanelService, type WebViewPanel } from "./WebViewPanel.js";
+import { WindowService, type Window } from "./Window.js";
+import { WorkSpaceService, type WorkSpace } from "./WorkSpace.js";
 
 // --- Internal Namespace Factory helpers ---
 const CreateSafeEvent = <T>(

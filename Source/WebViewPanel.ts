@@ -8,12 +8,13 @@ import { generateUuid } from "vs/base/common/uuid.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import {
 	Disposable,
-	type WebviewPanel as VSCodeWebviewPanel,
 	type ViewColumn,
+	type WebviewPanel as VSCodeWebviewPanel,
 	type WebviewOptions,
 	type WebviewPanelOptions,
 	type WebviewPanelSerializer,
 } from "vscode";
+
 import { IPCService } from "./IPC.js";
 import { ConvertContentOptionToDTO } from "./TypeConverter/WebView/ConvertContentOptionToDTO.js";
 import { ConvertPanelOptionToDTO } from "./TypeConverter/WebView/ConvertPanelOptionToDTO.js";

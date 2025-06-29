@@ -6,20 +6,21 @@
  */
 
 import { Effect, Ref } from "effect";
-import { Emitter } from "vs/base/common/event.js";
 import type { SerializedError } from "vs/base/common/errors.js";
+import { Emitter } from "vs/base/common/event.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
 import type { LogLevel as VSCodeLogLevel } from "vs/platform/log/common/log.js";
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
+import type { ExtHostTelemetryShape } from "vs/workbench/api/common/extHost.protocol.js";
 import type { IExtHostTelemetry } from "vs/workbench/api/common/extHostTelemetry.js";
 import type { TelemetryLoggerOptions, TelemetrySender } from "vscode";
-import { IPCService } from "./IPC.js";
+
 import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
-import type { ExtHostTelemetryShape } from "vs/workbench/api/common/extHost.protocol.js";
 
 /**
  * @description An internal helper to convert the `LogLevel` from the host to the

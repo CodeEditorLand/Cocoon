@@ -15,6 +15,7 @@ import type {
 	IConfigurationValue,
 } from "vs/platform/configuration/common/configuration.js";
 import type { Uri } from "vscode";
+
 import { ApplicationConfigurationProblem } from "./ApplicationConfiguration/ApplicationConfigurationProblem.js";
 import type { IntegrationConfigurationProblem } from "./Integration/Tauri/Configuration/Problem.js";
 import { ParseJSON } from "./Integration/Tauri/File/ParseJSON.js";

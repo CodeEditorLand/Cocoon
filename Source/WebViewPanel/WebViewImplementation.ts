@@ -9,6 +9,7 @@ import { Effect } from "effect";
 import { Schemas } from "vs/base/common/network.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
+
 import type { IPC } from "../IPC.js";
 import { ConvertContentOptionToDTO } from "../TypeConverter/WebView/ConvertContentOptionToDTO.js";
 import { CreateEventStream } from "../Utility/EventStream.js";

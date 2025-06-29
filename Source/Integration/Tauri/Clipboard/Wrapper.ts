@@ -3,8 +3,9 @@
  * @description Defines Effect-based wrappers for Tauri's clipboard plugin.
  */
 
-import { Effect } from "effect";
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { Effect } from "effect";
+
 import { IntegrationClipboardProblem } from "./Problem.js";
 
 /**

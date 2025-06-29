@@ -8,7 +8,8 @@ import type {
 	MarkdownStringTrustedOptions,
 } from "vs/base/common/htmlContent.js";
 import type { URI } from "vs/base/common/uri.js";
-import type { MarkdownString as VSCodeMarkdownString, Uri } from "vscode";
+import type { Uri, MarkdownString as VSCodeMarkdownString } from "vscode";
+
 import { MarkdownString } from "../../Platform/VSCode/Type.js";
 
 /**

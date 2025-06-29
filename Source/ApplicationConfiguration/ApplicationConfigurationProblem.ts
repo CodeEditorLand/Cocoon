@@ -4,6 +4,7 @@
  */
 
 import { Data } from "effect";
+
 import type { IntegrationConfigurationProblem } from "../Integration/Tauri/Configuration/Problem.js";
 
 /**

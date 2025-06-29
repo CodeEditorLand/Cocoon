@@ -19,7 +19,8 @@ import type {
 	TreeViewVisibilityChangeEvent,
 	TreeView as VSCodeTreeView,
 } from "vscode";
-import { type IPC, IPCService } from "./IPC.js";
+
+import { IPCService, type IPC } from "./IPC.js";
 import { FromAPI as TreeViewItemToDTO } from "./TypeConverter/TreeView/Item.js";
 import { FromAPI as TreeViewOptionToDTO } from "./TypeConverter/TreeView/Option.js";
 import { CreateEventStream } from "./Utility/EventStream.js";

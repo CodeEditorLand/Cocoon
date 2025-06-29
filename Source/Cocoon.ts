@@ -14,6 +14,7 @@ import {
 	ConsoleSpanExporter,
 } from "@opentelemetry/sdk-trace-base";
 import { Deferred, Effect, Layer } from "effect";
+import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 // --- Service Imports (PascalCase) ---
 import { APIDeprecationService } from "./APIDeprecation.js";
@@ -26,17 +27,17 @@ import { CommandService } from "./Command.js";
 import { DebugService } from "./Debug.js";
 import { DialogService } from "./Dialog.js";
 import { DocumentService } from "./Document.js";
-import { ESMInterceptorService } from "./ESMInterceptor.js";
 import { EnvironmentService } from "./Environment.js";
+import { ESMInterceptorService } from "./ESMInterceptor.js";
 import { ExtensionService } from "./Extension.js";
 import { ExtensionHostService } from "./ExtensionHost.js";
 import { ExtensionPathService } from "./ExtensionPath.js";
 import { FileSystemService } from "./FileSystem.js";
 import { FileSystemInformationService } from "./FileSystemInformation.js";
 import { HostKindPickerService } from "./HostKindPicker.js";
+import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
 import { IPCConfigurationService } from "./IPCConfiguration.js";
-import { InitDataService } from "./InitData.js";
 import { LanguageFeatureService } from "./LanguageFeature.js";
 import { LoggerService } from "./Logger.js";
 import { MessageService } from "./Message.js";
@@ -61,8 +62,6 @@ const VSCodeOutputDirectory =
 	process.env["VSCODE_OUT_DIR"] ??
 	Path.resolve(__dirname, "../../../Dependency/VSCode/out");
 (module as any).paths.unshift(VSCodeOutputDirectory);
-
-import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 // --- Utility Layers ---
 const TracingLive = NodeSdk.layer(() => ({

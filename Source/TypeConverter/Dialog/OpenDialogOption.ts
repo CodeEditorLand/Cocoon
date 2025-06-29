@@ -4,6 +4,7 @@
  */
 
 import type { OpenDialogOptions } from "vscode";
+
 import { SerializeFilters } from "./Filter.js";
 
 /**

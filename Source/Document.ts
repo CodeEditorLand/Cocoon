@@ -19,6 +19,7 @@ import {
 	type TextDocumentContentProvider,
 	type Uri,
 } from "vscode";
+
 import { IPCService } from "./IPC.js";
 import { ToAPI as RangeToAPI } from "./TypeConverter/Main/Range.js";
 import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";

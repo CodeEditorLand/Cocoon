@@ -7,7 +7,8 @@
  */
 
 import { Data, Effect, Option } from "effect";
-import { type IPC, IPCService } from "./IPC.js";
+
+import { IPCService, type IPC } from "./IPC.js";
 import { WindowService } from "./Window.js";
 
 // --- Custom Errors ---

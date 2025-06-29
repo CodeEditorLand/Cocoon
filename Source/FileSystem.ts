@@ -6,13 +6,14 @@
 
 import { Effect } from "effect";
 import {
+	FileSystemError as VSCodeFileSystemError,
 	type Event,
 	type FileChangeEvent,
 	type FileStat,
 	type Uri,
 	type FileSystem as VSCodeFileSystem,
-	FileSystemError as VSCodeFileSystemError,
 } from "vscode";
+
 import { FileSystemInformationService } from "./FileSystemInformation.js";
 import { IPCService } from "./IPC.js";
 

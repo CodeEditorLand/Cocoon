@@ -10,6 +10,7 @@ import type { IDisposable } from "vs/base/common/lifecycle.js";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type { MainThreadCommandsShape } from "vs/workbench/api/common/extHost.protocol.js";
 import type * as VSCode from "vscode";
+
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 import { WindowService } from "./Window.js";

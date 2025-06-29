@@ -5,6 +5,7 @@
  */
 
 import { Data } from "effect";
+
 import type { IntegrationClipboardProblem } from "../Integration/Tauri/Clipboard/Problem.js";
 
 /**

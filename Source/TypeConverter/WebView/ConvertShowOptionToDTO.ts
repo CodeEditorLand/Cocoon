@@ -5,6 +5,7 @@
  */
 
 import type * as VSCode from "vscode";
+
 import { FromAPI as ViewColumnFromAPI } from "../Main/ViewColumn.js";
 
 interface IEditorOptions {

@@ -5,6 +5,7 @@
 
 import type { IWorkspaceFolderData } from "vs/platform/workspace/common/workspace.js";
 import type { WorkspaceFolder } from "vscode";
+
 import { ToAPI as UriToAPI } from "./URI.js";
 
 export const FromDTO = (DTO: IWorkspaceFolderData): WorkspaceFolder => {

@@ -4,6 +4,7 @@
  */
 
 import type { Uri } from "vscode";
+
 import { URI } from "../../Platform/VSCode/Type.js";
 
 /**

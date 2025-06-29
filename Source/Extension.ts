@@ -12,9 +12,13 @@ import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
-import type { Event, Extension as VSCodeExtension } from "vscode";
-import { ExtensionKind } from "vscode";
-import { type ExtensionHost, ExtensionHostService } from "./ExtensionHost.js";
+import {
+	ExtensionKind,
+	type Event,
+	type Extension as VSCodeExtension,
+} from "vscode";
+
+import { ExtensionHostService, type ExtensionHost } from "./ExtensionHost.js";
 import { InitDataService } from "./InitData.js";
 import { CreateEventStream } from "./Utility/EventStream.js";
 

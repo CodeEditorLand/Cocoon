@@ -6,6 +6,7 @@
 
 import { Effect } from "effect";
 import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
+
 import { LoggerService } from "./Logger.js";
 
 /**

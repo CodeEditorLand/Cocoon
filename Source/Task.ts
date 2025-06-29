@@ -19,7 +19,8 @@ import {
 	type TaskStartEvent,
 	type Task as VSCodeTask,
 } from "vscode";
-import { type Cancellation, CancellationService } from "./Cancellation.js";
+
+import { CancellationService, type Cancellation } from "./Cancellation.js";
 import { IPCService } from "./IPC.js";
 import {
 	ExecutionToAPI,

@@ -9,6 +9,7 @@
 import { Effect, HashMap, Ref, type Scope } from "effect";
 import { CancellationTokenSource } from "vs/base/common/cancellation.js";
 import type { CancellationToken } from "vscode";
+
 import { InvalidTokenIdProblem } from "./Cancellation/InvalidTokenIdProblem.js";
 
 /**

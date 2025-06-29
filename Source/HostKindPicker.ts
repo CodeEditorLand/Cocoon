@@ -8,6 +8,7 @@
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import { ExtensionHostKind } from "vs/workbench/services/extensions/common/extensionHostKind.js";
+
 import { LoggerService } from "./Logger.js";
 
 /**

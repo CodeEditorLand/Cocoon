@@ -4,6 +4,7 @@
  */
 
 import type { Command, StatusBarItem as VSCodeStatusBarItem } from "vscode";
+
 import { MarkdownString, ThemeColor } from "../Platform/VSCode/Type.js";
 import type { Command as CommandConverter } from "./Command.js";
 import { FromAPI as MarkdownStringFromAPI } from "./Main/MarkdownString.js";

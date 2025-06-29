@@ -10,15 +10,16 @@ import { Effect, Ref } from "effect";
 import { Schemas } from "vs/base/common/network.js";
 import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 import {
+	UIKind,
 	type Clipboard,
 	type Event,
 	type LogLevel,
-	UIKind,
 	type Uri,
 } from "vscode";
+
 import { ClipboardService } from "./Clipboard.js";
-import { IPCService } from "./IPC.js";
 import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
 import { ToAPI as UriToApi } from "./TypeConverter/Main/URI.js";
 import { CreateEventStream } from "./Utility/EventStream.js";
 

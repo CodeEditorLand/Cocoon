@@ -5,6 +5,7 @@
 
 import type { IIdentifiedSingleEditOperation } from "vs/editor/common/model.js";
 import type { Range as VSCodeRange, TextEdit as VSCodeTextEdit } from "vscode";
+
 import {
 	Range as ExtHostRange,
 	TextEdit as ExtHostTextEdit,

@@ -8,7 +8,6 @@ import { DevTools } from "@effect/experimental";
 import { NodeSdk } from "@effect/opentelemetry";
 import { NodeRuntime, NodeSocket } from "@effect/platform-node";
 import { Effect, Layer } from "effect";
-
 // --- VS Code Internal Imports ---
 import { Emitter } from "vs/base/common/event.js";
 import { DisposableStore, type IDisposable } from "vs/base/common/lifecycle.js";

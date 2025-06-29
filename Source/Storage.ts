@@ -8,6 +8,7 @@
 import { Effect, Ref, Schedule } from "effect";
 import { Emitter } from "vs/base/common/event.js";
 import type { Memento } from "vscode";
+
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 

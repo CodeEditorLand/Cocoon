@@ -5,6 +5,7 @@
 
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
+
 import {
 	Task as ExtHostTask,
 	ProcessExecution,

@@ -4,6 +4,7 @@
  */
 
 import type { SaveDialogOptions } from "vscode";
+
 import { SerializeFilters } from "./Filter.js";
 
 /**

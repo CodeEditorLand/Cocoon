@@ -8,6 +8,7 @@
 import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
 import {
+	Disposable,
 	type Breakpoint,
 	type DebugAdapterDescriptorFactory,
 	type DebugAdapterTrackerFactory,
@@ -17,10 +18,10 @@ import {
 	type DebugSession,
 	type DebugSessionCustomEvent,
 	type DebugSessionOptions,
-	Disposable,
 	type Event,
 	type WorkspaceFolder,
 } from "vscode";
+
 import { DebugProviderRegistrationProblem } from "./Debug/DebugProviderRegistrationProblem.js";
 import { StartDebuggingProblem } from "./Debug/StartDebuggingProblem.js";
 import { IPCService } from "./IPC.js";

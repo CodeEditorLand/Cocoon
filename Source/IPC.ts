@@ -14,19 +14,20 @@ import { Emitter } from "vs/base/common/event.js";
 import type { IMessagePassingProtocol } from "vs/base/parts/ipc/common/ipc.js";
 import { RPCProtocol } from "vs/workbench/services/extensions/common/rpcProtocol.js";
 import type { Disposable } from "vscode";
+
 import { CancellationService } from "./Cancellation.js";
 import {
 	GenericNotification,
 	GenericRequest,
-	type GenericResponse,
 	RPCDataPayload,
+	type GenericResponse,
+	type MountainService,
 } from "./IPC/Generated.js";
-import type { MountainService } from "./IPC/Generated.js";
+import { gRPCConnectionError } from "./IPC/gRPCConnectionError.js";
 import { IPCProblem } from "./IPC/IPCProblem.js";
 import { DecodeValue } from "./IPC/ProtoConverter/DecodeValue.js";
 import { EncodeValue } from "./IPC/ProtoConverter/EncodeValue.js";
 import { ProtoSerializationProblem } from "./IPC/ProtoConverter/ProtoSerializationProblem.js";
-import { gRPCConnectionError } from "./IPC/gRPCConnectionError.js";
 import { IPCConfigurationService } from "./IPCConfiguration.js";
 
 /**

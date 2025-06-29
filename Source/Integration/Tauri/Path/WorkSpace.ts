@@ -4,10 +4,11 @@
  * multi-root workspace concept, this often defaults to a user-level directory.
  */
 
+import { BaseDirectory, resolve } from "@tauri-apps/api/path";
 import { Effect } from "effect";
-import { resolve, BaseDirectory } from "@tauri-apps/api/path";
-import { URI } from "vscode-uri";
 import type { Uri } from "vscode";
+import { URI } from "vscode-uri";
+
 import { IntegrationPathProblem } from "./Problem.js";
 
 /**

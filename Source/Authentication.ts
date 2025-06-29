@@ -17,6 +17,7 @@ import type {
 	Disposable,
 	Event,
 } from "vscode";
+
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 import { CreateEventStream } from "./Utility/EventStream.js";

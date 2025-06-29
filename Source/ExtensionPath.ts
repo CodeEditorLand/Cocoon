@@ -13,6 +13,7 @@ import type {
 	IExtensionDescription,
 } from "vs/platform/extensions/common/extensions.js";
 import type { Uri } from "vscode";
+
 import { InitDataService } from "./InitData.js";
 
 /**

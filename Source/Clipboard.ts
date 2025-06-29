@@ -7,8 +7,8 @@
 
 import { Effect, Runtime } from "effect";
 import type { Clipboard } from "vscode";
-import { ApplicationClipboardProblem } from "./Clipboard/ApplicationClipboardProblem.js";
 
+import { ApplicationClipboardProblem } from "./Clipboard/ApplicationClipboardProblem.js";
 import type { IntegrationClipboardProblem } from "./Integration/Tauri/Clipboard/Problem.js";
 import { ReadText, WriteText } from "./Integration/Tauri/Clipboard/Wrapper.js";
 

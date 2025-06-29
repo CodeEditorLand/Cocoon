@@ -9,6 +9,7 @@ import {
 	NullValue,
 	Value as ProtoValue,
 } from "google-protobuf/google/protobuf/struct_pb.js";
+
 import { ProtoSerializationProblem } from "./ProtoSerializationProblem.js";
 
 /**

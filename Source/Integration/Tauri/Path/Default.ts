@@ -3,10 +3,11 @@
  * @description Resolves the default application configuration path using Tauri's API.
  */
 
+import { BaseDirectory, resolve } from "@tauri-apps/api/path";
 import { Effect } from "effect";
-import { resolve, BaseDirectory } from "@tauri-apps/api/path";
-import { URI } from "vscode-uri";
 import type { Uri } from "vscode";
+import { URI } from "vscode-uri";
+
 import { IntegrationPathProblem } from "./Problem.js";
 
 /**

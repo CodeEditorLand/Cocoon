@@ -5,6 +5,7 @@
  */
 
 import { Effect } from "effect";
+
 import { APIFactoryService } from "./APIFactory.js";
 import { ExtensionPathService } from "./ExtensionPath.js";
 import { LoggerService } from "./Logger.js";

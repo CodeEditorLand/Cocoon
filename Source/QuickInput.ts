@@ -14,6 +14,7 @@ import type {
 	QuickPickItem,
 	QuickPickOptions,
 } from "vscode";
+
 import { IPCService } from "./IPC.js";
 import {
 	SerializeButtons,

@@ -19,8 +19,9 @@ import {
 	type IActivationEventsReader,
 } from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { ExtensionContext, LanguageModelAccessInformation } from "vscode";
-import { IPCService } from "./IPC.js";
+
 import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 import { TelemetryService } from "./Telemetry.js";
 

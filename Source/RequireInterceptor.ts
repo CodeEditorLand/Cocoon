@@ -9,9 +9,10 @@ import * as Module from "node:module";
 import { Cause, Effect, Exit } from "effect";
 import { URI } from "vs/base/common/uri.js";
 import type { Uri } from "vscode";
-import { type APIFactory, APIFactoryService } from "./APIFactory.js";
-import { type ExtensionPath, ExtensionPathService } from "./ExtensionPath.js";
-import { type Logger, LoggerService } from "./Logger.js";
+
+import { APIFactoryService, type APIFactory } from "./APIFactory.js";
+import { ExtensionPathService, type ExtensionPath } from "./ExtensionPath.js";
+import { LoggerService, type Logger } from "./Logger.js";
 import { NodeModuleShimService } from "./NodeModuleShim.js";
 
 /**

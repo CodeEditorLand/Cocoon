@@ -6,15 +6,15 @@
 
 import { Effect } from "effect";
 import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
-import { Disposable } from "vscode";
-import type {
-	CodeActionProvider,
-	CodeActionProviderMetadata,
-	CompletionItemProvider,
-	DefinitionProvider,
-	DocumentSelector,
-	HoverProvider,
-	ReferenceProvider,
+import {
+	Disposable,
+	type CodeActionProvider,
+	type CodeActionProviderMetadata,
+	type CompletionItemProvider,
+	type DefinitionProvider,
+	type DocumentSelector,
+	type HoverProvider,
+	type ReferenceProvider,
 } from "vscode";
 
 /**

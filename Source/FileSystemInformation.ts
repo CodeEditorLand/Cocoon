@@ -10,6 +10,7 @@ import { isWindows } from "vs/base/common/platform.js";
 import { ExtUri, type IExtUri } from "vs/base/common/resources.js";
 import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
 import type { Event, FileChangeEvent } from "vscode";
+
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 import { ToAPI } from "./TypeConverter/Main/URI.js";
