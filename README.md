@@ -55,7 +55,7 @@ sent to `Mountain` for native execution.
 
 ---
 
-## Deep Dive & Component Breakdown 🔬
+## Deep Dive & Component Breakdown 🔬
 
 To understand how `Cocoon`'s internal components interact to provide the
 high-fidelity `vscode` API, please refer to the detailed technical breakdown in
