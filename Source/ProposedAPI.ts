@@ -4,8 +4,8 @@
  * status of proposed (experimental) VS Code APIs for extensions.
  */
 
-import { Effect, HashMap } from "effect";
 import type { ExtensionIdentifier } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import { Effect, HashMap } from "effect";
 
 import { LoggerService } from "./Logger.js";
 

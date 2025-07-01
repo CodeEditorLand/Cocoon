@@ -5,8 +5,8 @@
  * task fetching and execution by proxying requests to the host process.
  */
 
-import { Effect, Ref } from "effect";
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import { Effect, Ref } from "effect";
 import {
 	Disposable,
 	type Event,

@@ -4,8 +4,8 @@
  * and 'Save' dialogs. This service proxies requests to the host process via IPC.
  */
 
-import { Effect } from "effect";
 import { isCancellationError } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/errors.js";
+import { Effect } from "effect";
 import type {
 	CancellationToken,
 	OpenDialogOptions,

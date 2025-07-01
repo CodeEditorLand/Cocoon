@@ -4,8 +4,8 @@
  * deprecated APIs by extensions.
  */
 
-import { Effect } from "effect";
 import type { ExtensionIdentifier } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import { Effect } from "effect";
 
 import { LoggerService } from "./Logger.js";
 

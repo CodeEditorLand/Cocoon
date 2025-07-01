@@ -5,10 +5,13 @@
  * read-only status) and for firing file change events.
  */
 
-import { Effect, HashMap, Ref } from "effect";
 import { isWindows } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/platform.js";
-import { ExtUri, type IExtUri } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js";
+import {
+	ExtUri,
+	type IExtUri,
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js";
 import { FileSystemProviderCapabilities } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/files/common/files.js";
+import { Effect, HashMap, Ref } from "effect";
 import type { Event, FileChangeEvent } from "vscode";
 
 import { IPCService } from "./IPC.js";

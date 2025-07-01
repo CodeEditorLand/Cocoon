@@ -4,9 +4,9 @@
  * VS Code status bar.
  */
 
-import { Effect, Ref } from "effect";
 import { generateUuid } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uuid.js";
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import { Effect, Ref } from "effect";
 import {
 	Disposable,
 	StatusBarAlignment,

@@ -5,7 +5,6 @@
  * host process, respecting the user's configured privacy and logging levels.
  */
 
-import { Effect, Ref } from "effect";
 import type { SerializedError } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/errors.js";
 import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 import type {
@@ -16,6 +15,7 @@ import type { LogLevel as VSCodeLogLevel } from "@codeeditorland/output/Target/M
 import { TelemetryLevel } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/telemetry/common/telemetry.js";
 import type { ExtHostTelemetryShape } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHost.protocol.js";
 import type { IExtHostTelemetry } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTelemetry.js";
+import { Effect, Ref } from "effect";
 import type { TelemetryLoggerOptions, TelemetrySender } from "vscode";
 
 import { InitDataService } from "./InitData.js";

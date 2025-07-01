@@ -4,8 +4,8 @@
  * and Input Box UI elements.
  */
 
-import { Effect } from "effect";
 import { isCancellationError } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/errors.js";
+import { Effect } from "effect";
 import type {
 	CancellationToken,
 	InputBox,

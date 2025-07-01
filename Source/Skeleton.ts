@@ -4,13 +4,12 @@
  * canonical `Layer.provide` chaining pattern to guarantee dependency resolution.
  */
 
-import { DevTools } from "@effect/experimental";
-import { NodeSdk } from "@effect/opentelemetry";
-import { NodeRuntime, NodeSocket } from "@effect/platform-node";
-import { Effect, Layer } from "effect";
 // --- VS Code Internal Imports ---
 import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
-import { DisposableStore, type IDisposable } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js";
+import {
+	DisposableStore,
+	type IDisposable,
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js";
 import type {
 	IConfigurationData,
 	IConfigurationService,
@@ -21,6 +20,10 @@ import type {
 	IExtHostTelemetry,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTelemetry.js";
 import type { IExtensionHostInitData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionHostProtocol.js";
+import { DevTools } from "@effect/experimental";
+import { NodeSdk } from "@effect/opentelemetry";
+import { NodeRuntime, NodeSocket } from "@effect/platform-node";
+import { Effect, Layer } from "effect";
 import { LogLevel, UIKind } from "vscode";
 
 // --- Real Service Imports (L0) ---

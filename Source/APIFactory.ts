@@ -4,12 +4,12 @@
  * `vscode` API object for a given extension.
  */
 
-import { Effect, Option } from "effect";
 import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import { Effect, Option } from "effect";
 import type * as VSCode from "vscode";
 import type { Disposable } from "vscode";
 

@@ -5,8 +5,8 @@
  * caches it locally, provides a fast in-memory proxy, and batches writes to the host.
  */
 
-import { Effect, Ref, Schedule } from "effect";
 import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
+import { Effect, Ref, Schedule } from "effect";
 import type { Memento } from "vscode";
 
 import { IPCService } from "./IPC.js";

@@ -6,6 +6,7 @@
  */
 
 import * as Path from "node:path";
+import type { IExtensionHostInitData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import { DevTools } from "@effect/experimental";
 import { NodeSdk } from "@effect/opentelemetry";
 import { NodeRuntime, NodeSocket } from "@effect/platform-node";
@@ -14,7 +15,6 @@ import {
 	ConsoleSpanExporter,
 } from "@opentelemetry/sdk-trace-base";
 import { Deferred, Effect, Layer } from "effect";
-import type { IExtensionHostInitData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 // --- Service Imports (PascalCase) ---
 import { APIDeprecationService } from "./APIDeprecation.js";

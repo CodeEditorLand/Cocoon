@@ -5,13 +5,13 @@
  * the public-facing `vscode.Extension` API objects.
  */
 
-import { Effect, Option, Ref } from "effect";
 import { ImplicitActivationEvents } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensionManagement/common/implicitActivationEvents.js";
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
 import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+import { Effect, Option, Ref } from "effect";
 import {
 	ExtensionKind,
 	type Event,

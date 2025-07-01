@@ -6,8 +6,8 @@
  * unnecessary work in asynchronous workflows.
  */
 
-import { Effect, HashMap, Ref, type Scope } from "effect";
 import { CancellationTokenSource } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";
+import { Effect, HashMap, Ref, type Scope } from "effect";
 import type { CancellationToken } from "vscode";
 
 import { InvalidTokenIdProblem } from "./Cancellation/InvalidTokenIdProblem.js";

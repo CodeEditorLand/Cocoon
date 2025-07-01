@@ -5,7 +5,6 @@
  * central orchestrator for the extension ecosystem.
  */
 
-import { Effect, Ref } from "effect";
 import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 import { ImplicitActivationEvents } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensionManagement/common/implicitActivationEvents.js";
@@ -18,6 +17,7 @@ import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+import { Effect, Ref } from "effect";
 import type { ExtensionContext, LanguageModelAccessInformation } from "vscode";
 
 import { InitDataService } from "./InitData.js";

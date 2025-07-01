@@ -4,8 +4,8 @@
  * such as for hovers, completions, and definitions.
  */
 
-import { Effect } from "effect";
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import { Effect } from "effect";
 import {
 	Disposable,
 	type CodeActionProvider,

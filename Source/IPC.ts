@@ -6,13 +6,13 @@
  */
 
 import * as Path from "node:path";
-import * as gRPC from "@grpc/grpc-js";
-import * as ProtoLoader from "@grpc/proto-loader";
-import { Effect, Ref } from "effect";
 import { VSBuffer } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/buffer.js";
 import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 import type { IMessagePassingProtocol } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/parts/ipc/common/ipc.js";
 import { RPCProtocol } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/rpcProtocol.js";
+import * as gRPC from "@grpc/grpc-js";
+import * as ProtoLoader from "@grpc/proto-loader";
+import { Effect, Ref } from "effect";
 import type { Disposable } from "vscode";
 
 import { CancellationService } from "./Cancellation.js";

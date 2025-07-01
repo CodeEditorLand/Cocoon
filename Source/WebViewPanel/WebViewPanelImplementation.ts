@@ -5,8 +5,8 @@
  * host's perspective, proxying state changes to the Mountain host.
  */
 
-import { Effect } from "effect";
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import { Effect } from "effect";
 import type {
 	Event,
 	Uri,

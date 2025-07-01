@@ -4,8 +4,11 @@
  * PubSub with the VS Code Event API.
  */
 
+import {
+	Emitter,
+	type Event,
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 import { Effect, PubSub } from "effect";
-import { Emitter, type Event } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 
 /**
  * @interface EventStream

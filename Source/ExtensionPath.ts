@@ -6,12 +6,12 @@
  */
 
 import * as Path from "node:path";
-import { Effect } from "effect";
 import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import { Effect } from "effect";
 import type { Uri } from "vscode";
 
 import { InitDataService } from "./InitData.js";

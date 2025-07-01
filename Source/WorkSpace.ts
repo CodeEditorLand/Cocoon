@@ -5,9 +5,9 @@
  * orchestrating complex operations like finding files and applying edits.
  */
 
-import { Effect, Option, Ref, Schedule } from "effect";
 import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 import type { IConfigurationOverrides } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/configuration/common/configuration.js";
+import { Effect, Option, Ref, Schedule } from "effect";
 import type {
 	CancellationToken,
 	ConfigurationScope,

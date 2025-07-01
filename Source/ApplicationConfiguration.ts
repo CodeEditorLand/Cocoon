@@ -5,8 +5,6 @@
  * contract from VS Code for high fidelity.
  */
 
-import { deepmerge } from "deepmerge-ts";
-import { Effect } from "effect";
 import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 import { joinPath } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js";
 import type {
@@ -14,6 +12,8 @@ import type {
 	IConfigurationService,
 	IConfigurationValue,
 } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/configuration/common/configuration.js";
+import { deepmerge } from "deepmerge-ts";
+import { Effect } from "effect";
 import type { Uri } from "vscode";
 
 import { ApplicationConfigurationProblem } from "./ApplicationConfiguration/ApplicationConfigurationProblem.js";

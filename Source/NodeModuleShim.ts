@@ -6,8 +6,8 @@
  * stability or security (like `fs` and `child_process`).
  */
 
-import { Effect, Exit } from "effect";
 import type { IExtensionHostInitData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionHostProtocol.js";
+import { Effect, Exit } from "effect";
 import type { Uri } from "vscode";
 
 import { InitDataService } from "./InitData.js";

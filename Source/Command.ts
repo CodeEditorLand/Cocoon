@@ -5,10 +5,10 @@
  * command registration, execution, and retrieval.
  */
 
-import { Effect, Ref } from "effect";
 import type { IDisposable } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js";
 import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
 import type { MainThreadCommandsShape } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHost.protocol.js";
+import { Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
 import { IPCService } from "./IPC.js";
