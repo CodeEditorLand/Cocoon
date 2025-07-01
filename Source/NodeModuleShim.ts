@@ -7,7 +7,7 @@
  */
 
 import { Effect, Exit } from "effect";
-import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
+import type { IExtensionHostInitData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import type { Uri } from "vscode";
 
 import { InitDataService } from "./InitData.js";

@@ -5,7 +5,7 @@
  */
 
 import { Effect, PubSub } from "effect";
-import { Emitter, type Event } from "vs/base/common/event.js";
+import { Emitter, type Event } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 
 /**
  * @interface EventStream

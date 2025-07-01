@@ -7,11 +7,11 @@
 
 import * as Path from "node:path";
 import { Effect } from "effect";
-import { URI } from "vs/base/common/uri.js";
+import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
-} from "vs/platform/extensions/common/extensions.js";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
 import type { Uri } from "vscode";
 
 import { InitDataService } from "./InitData.js";

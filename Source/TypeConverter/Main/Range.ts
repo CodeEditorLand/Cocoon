@@ -3,7 +3,7 @@
  * @description Converts between `vscode.Range` and its DTO representation.
  */
 
-import type { IRange } from "vs/editor/common/core/range.js";
+import type { IRange } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/editor/common/core/range.js";
 import type { Range as VSCodeRange } from "vscode";
 
 import { Position, Range } from "../../Platform/VSCode/Type.js";

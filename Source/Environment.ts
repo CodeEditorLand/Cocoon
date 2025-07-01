@@ -7,8 +7,8 @@
  */
 
 import { Effect, Ref } from "effect";
-import { Schemas } from "vs/base/common/network.js";
-import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
+import { Schemas } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/network.js";
+import { TelemetryLevel } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/telemetry/common/telemetry.js";
 import {
 	UIKind,
 	type Clipboard,

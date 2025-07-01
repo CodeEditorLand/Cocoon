@@ -6,9 +6,9 @@
  */
 
 import { Effect, Ref } from "effect";
-import type { Event } from "vs/base/common/event.js";
-import { generateUuid } from "vs/base/common/uuid.js";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import type { Event } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
+import { generateUuid } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uuid.js";
+import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
 import type {
 	TreeCheckboxChangeEvent,
 	TreeDataProvider,

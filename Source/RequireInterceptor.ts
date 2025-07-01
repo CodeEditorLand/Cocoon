@@ -7,7 +7,7 @@
 
 import * as Module from "node:module";
 import { Cause, Effect, Exit } from "effect";
-import { URI } from "vs/base/common/uri.js";
+import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
 import type { Uri } from "vscode";
 
 import { APIFactoryService, type APIFactory } from "./APIFactory.js";

@@ -6,8 +6,8 @@
  */
 
 import { Effect } from "effect";
-import { Schemas } from "vs/base/common/network.js";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import { Schemas } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/network.js";
+import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
 
 import type { IPC } from "../IPC.js";

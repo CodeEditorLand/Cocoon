@@ -4,11 +4,11 @@
  * such as `URI`, `Range`, `Position`, `Disposable`, and all enums.
  * This is synthesized from `vscode.d.ts` and VS Code's internal `extHostTypes.ts`.
  */
-import { CancellationTokenSource as VSCodeCancellationTokenSource } from "vs/base/common/cancellation.js";
-import { CancellationError as VSCodeCancellationError } from "vs/base/common/errors.js";
-import { Emitter } from "vs/base/common/event.js";
-import { URI as VSCodeURI } from "vs/base/common/uri.js";
-import { FileType as VSCodeFileType } from "vs/platform/files/common/files.js";
+import { CancellationTokenSource as VSCodeCancellationTokenSource } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";
+import { CancellationError as VSCodeCancellationError } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/errors.js";
+import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
+import { URI as VSCodeURI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
+import { FileType as VSCodeFileType } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/files/common/files.js";
 import type * as VSCode from "vscode";
 import {
 	CompletionItemKind,

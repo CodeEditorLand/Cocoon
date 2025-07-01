@@ -6,9 +6,9 @@
  */
 
 import { Effect, HashMap, Ref } from "effect";
-import { isWindows } from "vs/base/common/platform.js";
-import { ExtUri, type IExtUri } from "vs/base/common/resources.js";
-import { FileSystemProviderCapabilities } from "vs/platform/files/common/files.js";
+import { isWindows } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/platform.js";
+import { ExtUri, type IExtUri } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js";
+import { FileSystemProviderCapabilities } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/files/common/files.js";
 import type { Event, FileChangeEvent } from "vscode";
 
 import { IPCService } from "./IPC.js";

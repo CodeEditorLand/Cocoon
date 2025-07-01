@@ -5,7 +5,7 @@
  */
 
 import { Effect } from "effect";
-import { isCancellationError } from "vs/base/common/errors.js";
+import { isCancellationError } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/errors.js";
 import type {
 	CancellationToken,
 	InputBox,

@@ -6,18 +6,18 @@
  */
 
 import { Effect, Ref } from "effect";
-import { Emitter } from "vs/base/common/event.js";
-import { URI } from "vs/base/common/uri.js";
-import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
+import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
+import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
+import { ImplicitActivationEvents } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensionManagement/common/implicitActivationEvents.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
-} from "vs/platform/extensions/common/extensions.js";
-import { ExtensionRuntime } from "vs/workbench/api/common/extHostTypes.js";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import { ExtensionRuntime } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js";
 import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
-} from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import type { ExtensionContext, LanguageModelAccessInformation } from "vscode";
 
 import { InitDataService } from "./InitData.js";

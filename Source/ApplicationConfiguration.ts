@@ -7,13 +7,13 @@
 
 import { deepmerge } from "deepmerge-ts";
 import { Effect } from "effect";
-import { Emitter } from "vs/base/common/event.js";
-import { joinPath } from "vs/base/common/resources.js";
+import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
+import { joinPath } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/resources.js";
 import type {
 	IConfigurationOverrides,
 	IConfigurationService,
 	IConfigurationValue,
-} from "vs/platform/configuration/common/configuration.js";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/configuration/common/configuration.js";
 import type { Uri } from "vscode";
 
 import { ApplicationConfigurationProblem } from "./ApplicationConfiguration/ApplicationConfigurationProblem.js";

@@ -5,7 +5,7 @@
  */
 
 import { Effect } from "effect";
-import type { ExtensionIdentifier } from "vs/platform/extensions/common/extensions.js";
+import type { ExtensionIdentifier } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
 import type { MessageItem, MessageOptions } from "vscode";
 
 import { IPCService, type IPC } from "./IPC.js";

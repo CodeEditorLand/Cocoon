@@ -6,7 +6,7 @@
  */
 
 import { Effect, Ref } from "effect";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
 import {
 	Disposable,
 	type Breakpoint,

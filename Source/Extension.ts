@@ -6,12 +6,12 @@
  */
 
 import { Effect, Option, Ref } from "effect";
-import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import { ImplicitActivationEvents } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensionManagement/common/implicitActivationEvents.js";
+import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
 import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
-} from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import {
 	ExtensionKind,
 	type Event,

@@ -9,18 +9,18 @@ import { NodeSdk } from "@effect/opentelemetry";
 import { NodeRuntime, NodeSocket } from "@effect/platform-node";
 import { Effect, Layer } from "effect";
 // --- VS Code Internal Imports ---
-import { Emitter } from "vs/base/common/event.js";
-import { DisposableStore, type IDisposable } from "vs/base/common/lifecycle.js";
+import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
+import { DisposableStore, type IDisposable } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js";
 import type {
 	IConfigurationData,
 	IConfigurationService,
-} from "vs/platform/configuration/common/configuration";
-import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/configuration/common/configuration";
+import { TelemetryLevel } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/telemetry/common/telemetry.js";
 import type {
 	ExtHostTelemetryLogger,
 	IExtHostTelemetry,
-} from "vs/workbench/api/common/extHostTelemetry.js";
-import type { IExtensionHostInitData } from "vs/workbench/services/extensions/common/extensionHostProtocol.js";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTelemetry.js";
+import type { IExtensionHostInitData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import { LogLevel, UIKind } from "vscode";
 
 // --- Real Service Imports (L0) ---

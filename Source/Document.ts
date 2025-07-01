@@ -6,9 +6,9 @@
  */
 
 import { Effect, Option, Ref } from "effect";
-import type { IModelChangedEvent } from "vs/editor/common/model/mirrorTextModel.js";
-import type { MainThreadDocumentsShape } from "vs/workbench/api/common/extHost.protocol.js";
-import { ExtHostDocumentData } from "vs/workbench/api/common/extHostDocumentData.js";
+import type { IModelChangedEvent } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/editor/common/model/mirrorTextModel.js";
+import type { MainThreadDocumentsShape } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHost.protocol.js";
+import { ExtHostDocumentData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostDocumentData.js";
 import {
 	CancellationTokenSource,
 	Disposable,

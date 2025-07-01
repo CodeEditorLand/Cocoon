@@ -7,7 +7,7 @@
  */
 
 import { Effect, HashMap, Ref, type Scope } from "effect";
-import { CancellationTokenSource } from "vs/base/common/cancellation.js";
+import { CancellationTokenSource } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/cancellation.js";
 import type { CancellationToken } from "vscode";
 
 import { InvalidTokenIdProblem } from "./Cancellation/InvalidTokenIdProblem.js";

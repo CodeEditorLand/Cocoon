@@ -5,8 +5,8 @@
  */
 
 import { Effect, Ref } from "effect";
-import { generateUuid } from "vs/base/common/uuid.js";
-import type { IExtensionDescription } from "vs/platform/extensions/common/extensions.js";
+import { generateUuid } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uuid.js";
+import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
 import {
 	Disposable,
 	StatusBarAlignment,

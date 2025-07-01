@@ -5,11 +5,11 @@
  */
 
 import { Effect, Option } from "effect";
-import { Emitter } from "vs/base/common/event.js";
+import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
-} from "vs/platform/extensions/common/extensions.js";
+} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
 import type { Disposable } from "vscode";
 
