@@ -27,13 +27,13 @@ export default async (Current: BuildOptions): Promise<BuildOptions> =>
 				__INCREMENT__: `"${`${On ? "DEVELOPMENT" : "PRODUCTION"}-${(await import("ulid")).ulid()}`}"`,
 			},
 
-			treeShaking: true,
+			treeShaking: !On,
 
 			entryPoints: (
 				await import("@playform/build/Target/Function/Entry.js")
 			).default(Current, ["Source/Configuration/*"]),
 
-			platform: "browser",
+			platform: "node",
 
 			outbase: "Source",
 
@@ -64,8 +64,8 @@ export default async (Current: BuildOptions): Promise<BuildOptions> =>
 														)
 													).default(
 														`Build '${Output}' \
-													--ESBuild Configuration/ESBuild/Target/Compile.js \
-													--TypeScript Configuration/tsconfig/Target/Compile.json`,
+															--ESBuild Configuration/ESBuild/Target/Compile.js \
+															--TypeScript Configuration/tsconfig/Target/Compile.json`,
 													);
 												}
 											}
