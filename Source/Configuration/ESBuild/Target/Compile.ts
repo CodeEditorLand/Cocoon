@@ -1,11 +1,3 @@
-/*
- * File: Cocoon/Source/Configuration/ESBuild/Target/Compile.ts
- * Responsibility: Configures ESBuild options for the Compile target by merging base settings from the Target module with Compile-specific properties (bundle mode, output base, TypeScript config) to define the build process for the Land project.
- * Modified: 2025-06-09 00:59:16 UTC
- * Dependency: esbuild
- * Export: Bundle, Merge, On
- */
-
 import type { BuildOptions } from "esbuild";
 
 export const On = (await import("../Cocoon.js")).On;

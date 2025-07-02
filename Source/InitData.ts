@@ -5,7 +5,7 @@
  * many other services.
  */
 
-import type { IExtensionHostInitData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionHostProtocol.js";
+import type { IExtensionHostInitData } from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import { Effect } from "effect";
 import { LogLevel, UIKind } from "vscode";
 

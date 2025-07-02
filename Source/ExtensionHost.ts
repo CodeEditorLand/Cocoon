@@ -5,18 +5,18 @@
  * central orchestrator for the extension ecosystem.
  */
 
-import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
-import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
-import { ImplicitActivationEvents } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensionManagement/common/implicitActivationEvents.js";
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
+import { URI } from "@codeeditorland/output/vs/base/common/uri.js";
+import { ImplicitActivationEvents } from "@codeeditorland/output/vs/platform/extensionManagement/common/implicitActivationEvents.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
-} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-import { ExtensionRuntime } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTypes.js";
+} from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
+import { ExtensionRuntime } from "@codeeditorland/output/vs/workbench/api/common/extHostTypes.js";
 import {
 	ExtensionDescriptionRegistry,
 	type IActivationEventsReader,
-} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+} from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
 import { Effect, Ref } from "effect";
 import type { ExtensionContext, LanguageModelAccessInformation } from "vscode";
 

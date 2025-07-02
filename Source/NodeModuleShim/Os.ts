@@ -6,7 +6,7 @@
  */
 
 import * as NodeOs from "node:os";
-import type { IExtensionHostInitData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionHostProtocol.js";
+import type { IExtensionHostInitData } from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 /**
  * @description A factory function that creates the shim object for the `os` module.

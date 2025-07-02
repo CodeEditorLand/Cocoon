@@ -3,7 +3,7 @@
  * @description Converts between `vscode.TextEdit` and its DTO representation.
  */
 
-import type { IIdentifiedSingleEditOperation } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/editor/common/model.js";
+import type { IIdentifiedSingleEditOperation } from "@codeeditorland/output/vs/editor/common/model.js";
 import type { Range as VSCodeRange, TextEdit as VSCodeTextEdit } from "vscode";
 
 import {

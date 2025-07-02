@@ -5,18 +5,11 @@
  * flows required by extensions, proxying requests to the host.
  */
 
-import { Effect, Ref } from "effect";
+import type { AuthenticationGetSessionOptions } from "@codeeditorland/output/vs/workbench/api/browser/mainThreadAuthentication.js";
 import type {
-	AuthenticationGetSessionOptions,
-	AuthenticationProvider,
-	AuthenticationProviderInformation,
-	AuthenticationProviderOptions,
-	AuthenticationProviderSessionOptions,
 	AuthenticationSession,
-	AuthenticationSessionsChangeEvent,
-	Disposable,
-	Event,
-} from "vscode";
+} from "@codeeditorland/output/vs/workbench/services/authentication/common/authentication.js";
+import { Effect, Ref } from "effect";
 
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";

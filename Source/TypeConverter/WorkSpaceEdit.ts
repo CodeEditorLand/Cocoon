@@ -4,8 +4,8 @@
  * handling complex transformations involving text edits, file operations, and versions.
  */
 
-import type { UriComponents } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
-import type { IIdentifiedSingleEditOperation } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/editor/common/model.js";
+import type { UriComponents } from "@codeeditorland/output/vs/base/common/uri.js";
+import type { IIdentifiedSingleEditOperation } from "@codeeditorland/output/vs/editor/common/model.js";
 import type * as VSCode from "vscode";
 
 import {

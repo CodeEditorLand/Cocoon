@@ -5,8 +5,8 @@
  * manifest properties (`extensionKind`).
  */
 
-import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-import { ExtensionHostKind } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionHostKind.js";
+import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
+import { ExtensionHostKind } from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostKind.js";
 import { Effect } from "effect";
 
 import { LoggerService } from "./Logger.js";

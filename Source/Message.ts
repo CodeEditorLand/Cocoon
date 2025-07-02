@@ -4,7 +4,7 @@
  * (`showInformationMessage`, `showWarningMessage`, `showErrorMessage`).
  */
 
-import type { ExtensionIdentifier } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import type { ExtensionIdentifier } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
 import { Effect } from "effect";
 import type { MessageItem, MessageOptions } from "vscode";
 

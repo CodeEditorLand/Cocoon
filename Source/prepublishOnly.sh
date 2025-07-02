@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-Build "Source/Configuration/**/*.ts" --ESBuild Source/Configuration/ESBuild/Cocoon.ts
+Build "Source/Configuration/**/*.{ts,json}" \
+	--ESBuild Source/Configuration/ESBuild/Cocoon.ts
 
 Build "Source/**/*.ts" \
-	--ESBuild Configuration/ESBuild/Target.js \
-	--TypeScript tsconfig.Target.json
+	--ESBuild Configuration/ESBuild/Target.js

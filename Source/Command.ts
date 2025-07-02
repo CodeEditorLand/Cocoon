@@ -5,9 +5,9 @@
  * command registration, execution, and retrieval.
  */
 
-import type { IDisposable } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js";
-import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
-import type { MainThreadCommandsShape } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHost.protocol.js";
+import type { IDisposable } from "@codeeditorland/output/vs/base/common/lifecycle.js";
+import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
+import type { MainThreadCommandsShape } from "@codeeditorland/output/vs/workbench/api/common/extHost.protocol.js";
 import { Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 

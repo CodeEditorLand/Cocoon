@@ -6,11 +6,11 @@
  */
 
 import * as Path from "node:path";
-import { URI } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uri.js";
+import { URI } from "@codeeditorland/output/vs/base/common/uri.js";
 import type {
 	ExtensionIdentifier,
 	IExtensionDescription,
-} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+} from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
 import { Effect } from "effect";
 import type { Uri } from "vscode";
 

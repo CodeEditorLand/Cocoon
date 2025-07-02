@@ -5,9 +5,9 @@
  * with the host and managing the lifecycle of each tree view.
  */
 
-import type { Event } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
-import { generateUuid } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/uuid.js";
-import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import type { Event } from "@codeeditorland/output/vs/base/common/event.js";
+import { generateUuid } from "@codeeditorland/output/vs/base/common/uuid.js";
+import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
 import { Effect, Ref } from "effect";
 import type {
 	TreeCheckboxChangeEvent,

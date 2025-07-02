@@ -2,9 +2,13 @@
 	"$schema": "https://json.schemastore.org/tsconfig",
 
 	"compilerOptions": {
-		"allowImportingTsExtensions": false,
-
 		"baseUrl": "./",
+
+		"composite": true,
+
+		"declarationMap": true,
+
+		"emitDeclarationOnly": true,
 
 		"emitDecoratorMetadata": true,
 
@@ -17,6 +21,10 @@
 		"moduleResolution": "Bundler",
 
 		"outDir": "Target",
+
+		"paths": {
+			"@codeeditorland/output/*": ["../Output/Target/Microsoft/VSCode/*"]
+		},
 
 		"plugins": [
 			{

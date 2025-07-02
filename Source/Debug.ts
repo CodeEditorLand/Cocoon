@@ -5,7 +5,7 @@
  * VS Code for high fidelity.
  */
 
-import type { IExtensionDescription } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/extensions/common/extensions.js";
+import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
 import { Effect, Ref } from "effect";
 import {
 	Disposable,

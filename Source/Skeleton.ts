@@ -5,21 +5,21 @@
  */
 
 // --- VS Code Internal Imports ---
-import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
 import {
 	DisposableStore,
 	type IDisposable,
-} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js";
+} from "@codeeditorland/output/vs/base/common/lifecycle.js";
 import type {
 	IConfigurationData,
 	IConfigurationService,
-} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/configuration/common/configuration";
-import { TelemetryLevel } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/telemetry/common/telemetry.js";
+} from "@codeeditorland/output/vs/platform/configuration/common/configuration";
+import { TelemetryLevel } from "@codeeditorland/output/vs/platform/telemetry/common/telemetry.js";
 import type {
 	ExtHostTelemetryLogger,
 	IExtHostTelemetry,
-} from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostTelemetry.js";
-import type { IExtensionHostInitData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/services/extensions/common/extensionHostProtocol.js";
+} from "@codeeditorland/output/vs/workbench/api/common/extHostTelemetry.js";
+import type { IExtensionHostInitData } from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import { DevTools } from "@effect/experimental";
 import { NodeSdk } from "@effect/opentelemetry";
 import { NodeRuntime, NodeSocket } from "@effect/platform-node";

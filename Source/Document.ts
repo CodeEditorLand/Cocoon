@@ -5,9 +5,9 @@
  * events, and provides an implementation of `vscode.workspace`'s document-related APIs.
  */
 
-import type { IModelChangedEvent } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/editor/common/model/mirrorTextModel.js";
-import type { MainThreadDocumentsShape } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHost.protocol.js";
-import { ExtHostDocumentData } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/workbench/api/common/extHostDocumentData.js";
+import type { IModelChangedEvent } from "@codeeditorland/output/vs/editor/common/model/mirrorTextModel.js";
+import type { MainThreadDocumentsShape } from "@codeeditorland/output/vs/workbench/api/common/extHost.protocol.js";
+import { ExtHostDocumentData } from "@codeeditorland/output/vs/workbench/api/common/extHostDocumentData.js";
 import { Effect, Option, Ref } from "effect";
 import {
 	CancellationTokenSource,

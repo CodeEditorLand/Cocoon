@@ -5,7 +5,7 @@
  * caches it locally, provides a fast in-memory proxy, and batches writes to the host.
  */
 
-import { Emitter } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/event.js";
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
 import { Effect, Ref, Schedule } from "effect";
 import type { Memento } from "vscode";
 

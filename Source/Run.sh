@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-Build "Source/Configuration/**/*.ts" \
+Build "Source/Configuration/**/*.{ts,json}" \
 	--ESBuild Source/Configuration/ESBuild/Cocoon.ts
 
 Build "Source/**/*.ts" \

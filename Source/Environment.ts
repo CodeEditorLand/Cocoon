@@ -6,8 +6,8 @@
  * access to the system clipboard and methods for interacting with external URLs.
  */
 
-import { Schemas } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/base/common/network.js";
-import { TelemetryLevel } from "@codeeditorland/output/Target/Microsoft/VSCode/vs/platform/telemetry/common/telemetry.js";
+import { Schemas } from "@codeeditorland/output/vs/base/common/network.js";
+import { TelemetryLevel } from "@codeeditorland/output/vs/platform/telemetry/common/telemetry.js";
 import { Effect, Ref } from "effect";
 import {
 	UIKind,
