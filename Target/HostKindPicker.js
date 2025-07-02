@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { ExtensionHostKind } from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostKind.js";
 import { Effect } from "effect";
-import { ExtensionHostKind } from "vs/workbench/services/extensions/common/extensionHostKind.js";
 import { LoggerService } from "./Logger.js";
 class HostKindPickerService extends Effect.Service()(
   "Service/HostKindPicker",

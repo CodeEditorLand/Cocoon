@@ -1,23 +1,23 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as Path from "node:path";
+import { VSBuffer } from "@codeeditorland/output/vs/base/common/buffer.js";
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
+import { RPCProtocol } from "@codeeditorland/output/vs/workbench/services/extensions/common/rpcProtocol.js";
 import * as gRPC from "@grpc/grpc-js";
 import * as ProtoLoader from "@grpc/proto-loader";
 import { Effect, Ref } from "effect";
-import { VSBuffer } from "vs/base/common/buffer.js";
-import { Emitter } from "vs/base/common/event.js";
-import { RPCProtocol } from "vs/workbench/services/extensions/common/rpcProtocol.js";
 import { CancellationService } from "./Cancellation.js";
 import {
   GenericNotification,
   GenericRequest,
   RPCDataPayload
 } from "./IPC/Generated.js";
+import { gRPCConnectionError } from "./IPC/gRPCConnectionError.js";
 import { IPCProblem } from "./IPC/IPCProblem.js";
 import { DecodeValue } from "./IPC/ProtoConverter/DecodeValue.js";
 import { EncodeValue } from "./IPC/ProtoConverter/EncodeValue.js";
 import { ProtoSerializationProblem } from "./IPC/ProtoConverter/ProtoSerializationProblem.js";
-import { gRPCConnectionError } from "./IPC/gRPCConnectionError.js";
 import { IPCConfigurationService } from "./IPCConfiguration.js";
 class IPCService extends Effect.Service()("Service/IPC", {
   scoped: Effect.gen(function* () {

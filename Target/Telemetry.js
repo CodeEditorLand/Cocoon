@@ -1,10 +1,10 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
+import { TelemetryLevel } from "@codeeditorland/output/vs/platform/telemetry/common/telemetry.js";
 import { Effect, Ref } from "effect";
-import { Emitter } from "vs/base/common/event.js";
-import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
-import { IPCService } from "./IPC.js";
 import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 const ConvertToTelemetryLevel = /* @__PURE__ */ __name((LogLevel) => {
   switch (LogLevel) {

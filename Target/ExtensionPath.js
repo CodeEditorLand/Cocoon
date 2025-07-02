@@ -1,8 +1,8 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as Path from "node:path";
+import { URI } from "@codeeditorland/output/vs/base/common/uri.js";
 import { Effect } from "effect";
-import { URI } from "vs/base/common/uri.js";
 import { InitDataService } from "./InitData.js";
 class ExtensionPathService extends Effect.Service()(
   "Service/ExtensionPath",

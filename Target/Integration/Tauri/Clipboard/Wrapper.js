@@ -1,19 +1,18 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { Effect } from "effect";
-const MakeStub = /* @__PURE__ */ __name((Name, DefaultValue) => Effect.logWarning(
-  `Clipboard Integration: Function '${Name}' is a stub.`
-).pipe(Effect.as(DefaultValue)), "MakeStub");
-const WriteText = /* @__PURE__ */ __name((_text) => MakeStub("WriteText", void 0), "WriteText");
-const ReadText = MakeStub("ReadText", "");
-const WriteResourceList = /* @__PURE__ */ __name((_resourceList) => MakeStub("WriteResourceList", void 0), "WriteResourceList");
-const ReadResourceList = MakeStub("ReadResourceList", []);
-const HasResourceList = MakeStub("HasResourceList", false);
+import { IntegrationClipboardProblem } from "./Problem.js";
+const WriteText = /* @__PURE__ */ __name((text) => Effect.tryPromise({
+  try: /* @__PURE__ */ __name(() => writeText(text), "try"),
+  catch: /* @__PURE__ */ __name((Cause) => new IntegrationClipboardProblem({ Cause }), "catch")
+}), "WriteText");
+const ReadText = Effect.tryPromise({
+  try: /* @__PURE__ */ __name(() => readText(), "try"),
+  catch: /* @__PURE__ */ __name((Cause) => new IntegrationClipboardProblem({ Cause }), "catch")
+});
 export {
-  HasResourceList,
-  ReadResourceList,
   ReadText,
-  WriteResourceList,
   WriteText
 };
 //# sourceMappingURL=Wrapper.js.map

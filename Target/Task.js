@@ -11,7 +11,7 @@ import {
   FromAPI as TaskFromAPI,
   ToAPI as TaskToAPI
 } from "./TypeConverter/Task.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 const ProvideTasks = /* @__PURE__ */ __name((Registry, Handle, TokenId, Cancellation) => {
   return Effect.gen(function* () {
     const Entry = (yield* Ref.get(Registry)).get(Handle);

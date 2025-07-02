@@ -1,6 +1,6 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { generateUuid } from "vs/base/common/uuid.js";
+import { generateUuid } from "@codeeditorland/output/vs/base/common/uuid.js";
 class APICommandArgument {
   constructor(Name, Description, Validate, Convert) {
     this.Name = Name;

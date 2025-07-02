@@ -1,10 +1,10 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { CancellationTokenSource as VSCodeCancellationTokenSource } from "vs/base/common/cancellation.js";
-import { CancellationError as VSCodeCancellationError } from "vs/base/common/errors.js";
-import { Emitter } from "vs/base/common/event.js";
-import { URI as VSCodeURI } from "vs/base/common/uri.js";
-import { FileType as VSCodeFileType } from "vs/platform/files/common/files.js";
+import { CancellationTokenSource as VSCodeCancellationTokenSource } from "@codeeditorland/output/vs/base/common/cancellation.js";
+import { CancellationError as VSCodeCancellationError } from "@codeeditorland/output/vs/base/common/errors.js";
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
+import { URI as VSCodeURI } from "@codeeditorland/output/vs/base/common/uri.js";
+import { FileType as VSCodeFileType } from "@codeeditorland/output/vs/platform/files/common/files.js";
 import {
   CompletionItemKind,
   CompletionItemTag,
@@ -18,12 +18,12 @@ import {
   StatusBarAlignment,
   TextEditorCursorStyle,
   TreeItemCollapsibleState,
+  ViewColumn,
   ProcessExecution as VSCodeProcessExecution,
   Task as VSCodeTask,
   TextEdit as VSCodeTextEdit,
   ThemeIcon as VSCodeThemeIcon,
-  WorkspaceEdit as VSCodeWorkspaceEdit,
-  ViewColumn
+  WorkspaceEdit as VSCodeWorkspaceEdit
 } from "vscode";
 class Disposable {
   static {

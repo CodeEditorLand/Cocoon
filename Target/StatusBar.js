@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { generateUuid } from "@codeeditorland/output/vs/base/common/uuid.js";
 import { Effect, Ref } from "effect";
-import { generateUuid } from "vs/base/common/uuid.js";
 import {
   Disposable,
   StatusBarAlignment
@@ -216,6 +216,7 @@ class StatusBarService extends Effect.Service()(
   }
 }
 export {
+  StatusBarItemImplementation,
   StatusBarService
 };
 //# sourceMappingURL=StatusBar.js.map

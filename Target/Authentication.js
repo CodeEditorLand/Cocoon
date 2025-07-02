@@ -3,7 +3,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Effect, Ref } from "effect";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 class AuthenticationService extends Effect.Service()(
   "Service/Authentication",
   {

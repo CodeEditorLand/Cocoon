@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { CancellationTokenSource } from "@codeeditorland/output/vs/base/common/cancellation.js";
 import { Effect, HashMap, Ref } from "effect";
-import { CancellationTokenSource } from "vs/base/common/cancellation.js";
 import { InvalidTokenIdProblem } from "./Cancellation/InvalidTokenIdProblem.js";
 class CancellationService extends Effect.Service()(
   "Service/Cancellation",

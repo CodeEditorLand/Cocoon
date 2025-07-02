@@ -1,15 +1,15 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Ref } from "effect";
-import { Emitter } from "vs/base/common/event.js";
-import { URI } from "vs/base/common/uri.js";
-import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
-import { ExtensionRuntime } from "vs/workbench/api/common/extHostTypes.js";
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
+import { URI } from "@codeeditorland/output/vs/base/common/uri.js";
+import { ImplicitActivationEvents } from "@codeeditorland/output/vs/platform/extensionManagement/common/implicitActivationEvents.js";
+import { ExtensionRuntime } from "@codeeditorland/output/vs/workbench/api/common/extHostTypes.js";
 import {
   ExtensionDescriptionRegistry
-} from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
-import { IPCService } from "./IPC.js";
+} from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+import { Effect, Ref } from "effect";
 import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 import { TelemetryService } from "./Telemetry.js";
 class ExtensionHostService extends Effect.Service()(

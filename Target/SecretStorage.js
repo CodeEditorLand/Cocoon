@@ -3,7 +3,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Effect } from "effect";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 class EmptyKeyError extends Error {
   static {
     __name(this, "EmptyKeyError");

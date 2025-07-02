@@ -3,7 +3,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { Effect } from "effect";
 import { FromAPI as UriFromAPI } from "../TypeConverter/Main/URI.js";
 import { ConvertShowOptionToDTO } from "../TypeConverter/WebView/ConvertShowOptionToDTO.js";
-import { CreateEventStream } from "../Utility/CreateEventStream.js";
+import { CreateEventStream } from "../Utility/EventStream.js";
 import { WebViewImplementation } from "./WebViewImplementation.js";
 class WebViewPanelImplementation {
   constructor(Handle, IPC, Extension, OnDidDisposeCallback, InitialViewType, InitialTitle, InitialOptions, InitialViewColumn) {

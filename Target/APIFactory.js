@@ -1,13 +1,13 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
 import { Effect, Option } from "effect";
-import { Emitter } from "vs/base/common/event.js";
-import { Position, Range, Selection } from "./Platform/VSCode/Type.js";
 import { CommandService } from "./Command.js";
 import { DebugService } from "./Debug.js";
 import { ExtensionService } from "./Extension.js";
 import { LanguageFeatureService } from "./LanguageFeature.js";
 import { LoggerService } from "./Logger.js";
+import { Position, Range, Selection } from "./Platform/VSCode/Type.js";
 import { ProposedAPIService } from "./ProposedAPI.js";
 import { StatusBarService } from "./StatusBar.js";
 import { TaskService } from "./Task.js";

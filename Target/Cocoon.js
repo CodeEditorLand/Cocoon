@@ -19,17 +19,17 @@ import { CommandService } from "./Command.js";
 import { DebugService } from "./Debug.js";
 import { DialogService } from "./Dialog.js";
 import { DocumentService } from "./Document.js";
-import { ESMInterceptorService } from "./ESMInterceptor.js";
 import { EnvironmentService } from "./Environment.js";
+import { ESMInterceptorService } from "./ESMInterceptor.js";
 import { ExtensionService } from "./Extension.js";
 import { ExtensionHostService } from "./ExtensionHost.js";
 import { ExtensionPathService } from "./ExtensionPath.js";
 import { FileSystemService } from "./FileSystem.js";
 import { FileSystemInformationService } from "./FileSystemInformation.js";
 import { HostKindPickerService } from "./HostKindPicker.js";
+import { InitDataService } from "./InitData.js";
 import { IPCService } from "./IPC.js";
 import { IPCConfigurationService } from "./IPCConfiguration.js";
-import { InitDataService } from "./InitData.js";
 import { LanguageFeatureService } from "./LanguageFeature.js";
 import { LoggerService } from "./Logger.js";
 import { MessageService } from "./Message.js";
@@ -51,8 +51,7 @@ import { WorkSpaceService } from "./WorkSpace.js";
 const VSCodeOutputDirectory = process.env["VSCODE_OUT_DIR"] ?? Path.resolve(__dirname, "../../../Dependency/VSCode/out");
 module.paths.unshift(VSCodeOutputDirectory);
 const TracingLive = NodeSdk.layer(() => ({
-  resource: { serviceName: "cocoon" },
-  spanProcessor: new BatchSpanProcessor(new ConsoleSpanExporter())
+  resource: { serviceName: "cocoon" }
 }));
 const DevToolsLive = Layer.provide(
   DevTools.layerWebSocket(),
@@ -120,28 +119,26 @@ const composeAppLayer = /* @__PURE__ */ __name((InitializationData) => {
   const L0_World = Layer.mergeAll(
     IPCConfigurationService.Default,
     CancellationService.Default,
-    LoggerService.Default
-  );
-  const InitDataLayer = Layer.succeed(
-    InitDataService,
-    InitDataService.of(InitializationData)
+    LoggerService.Default,
+    Layer.succeed(InitDataService, InitializationData)
   );
   const L1_Services = Layer.mergeAll(
     IPCService.Default,
     ApplicationConfigurationService.Default,
-    LanguageFeatureService.Default,
-    TelemetryService.Default
+    LanguageFeatureService.Default
   );
-  const L1_World = Layer.provide(
-    L1_Services,
-    Layer.merge(L0_World, InitDataLayer)
-  );
+  const L1_World = Layer.provide(L1_Services, L0_World);
   const L2_Services = Layer.mergeAll(
+    TelemetryService.Default,
+    // Depends on IPCService and LoggerService from L1
     ExtensionPathService.Default,
     HostKindPickerService.Default,
     NodeModuleShimService.Default
   );
-  const L2_World = Layer.provide(L2_Services, L1_World);
+  const L2_World = Layer.provide(
+    L2_Services,
+    Layer.merge(L0_World, L1_World)
+  );
   const L3_Services = Layer.mergeAll(
     APIDeprecationService.Default,
     ClipboardService.Default,
@@ -193,7 +190,7 @@ const composeAppLayer = /* @__PURE__ */ __name((InitializationData) => {
   );
   return Layer.provide(TopLevelServices, L10_World);
 }, "composeAppLayer");
-const MainEffect = Effect.gen(function* () {
+const AppEffectWithRequirements = Effect.gen(function* () {
   const PreHandshakeLayer = Layer.provide(
     IPCService.Default,
     Layer.mergeAll(
@@ -211,10 +208,12 @@ const MainEffect = Effect.gen(function* () {
 }).pipe(
   Effect.catchAllCause(
     (Cause) => Effect.logFatal("Cocoon main process failed.", Cause)
-  ),
-  // FIX: Provide the foundational utility layers that are external to the main app logic.
-  Effect.provide(Layer.merge(UtilityLayers, LoggerService.Default)),
-  Effect.scoped
+  )
 );
-NodeRuntime.runMain(MainEffect);
+const FinalLayer = Layer.mergeAll(UtilityLayers, LoggerService.Default);
+const ExecutableMainEffect = Effect.provide(
+  AppEffectWithRequirements,
+  FinalLayer
+).pipe(Effect.scoped);
+NodeRuntime.runMain(ExecutableMainEffect);
 //# sourceMappingURL=Cocoon.js.map

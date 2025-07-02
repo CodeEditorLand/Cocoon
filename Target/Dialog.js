@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { isCancellationError } from "@codeeditorland/output/vs/base/common/errors.js";
 import { Effect } from "effect";
-import { isCancellationError } from "vs/base/common/errors.js";
 import { DialogProblem } from "./Dialog/DialogProblem.js";
 import { IPCService } from "./IPC.js";
 import {

@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { ExtHostDocumentData } from "@codeeditorland/output/vs/workbench/api/common/extHostDocumentData.js";
 import { Effect, Option, Ref } from "effect";
-import { ExtHostDocumentData } from "vs/workbench/api/common/extHostDocumentData.js";
 import {
   CancellationTokenSource,
   Disposable
@@ -9,7 +9,7 @@ import {
 import { IPCService } from "./IPC.js";
 import { ToAPI as RangeToAPI } from "./TypeConverter/Main/Range.js";
 import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 class DocumentService extends Effect.Service()(
   "Service/Document",
   {

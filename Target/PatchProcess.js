@@ -1,10 +1,9 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as Module from "node:module";
-import { Config, Effect } from "effect";
-import { Data } from "effect";
-import { IPCService } from "./IPC.js";
+import { Config, Data, Effect } from "effect";
 import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
 import { ExitPreventedProblem } from "./PatchProcess/ExitPreventedProblem.js";
 class PatchProcessService extends Effect.Service()(
   "Service/PatchProcess",

@@ -28,7 +28,7 @@ const EnsureDirectory = /* @__PURE__ */ __name((DirectoryUri, ScopeName) => Effe
   }), "onTrue"),
   onFalse: /* @__PURE__ */ __name(() => Effect.flatMap(
     LoggerService,
-    (Log) => Log.Trace(
+    (Logger) => Logger.Trace(
       `${ScopeName} storage URI is not defined; skipping creation.`
     )
   ).pipe(Effect.as(false)), "onFalse")

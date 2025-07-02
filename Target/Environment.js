@@ -1,16 +1,16 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Schemas } from "@codeeditorland/output/vs/base/common/network.js";
+import { TelemetryLevel } from "@codeeditorland/output/vs/platform/telemetry/common/telemetry.js";
 import { Effect, Ref } from "effect";
-import { Schemas } from "vs/base/common/network.js";
-import { TelemetryLevel } from "vs/platform/telemetry/common/telemetry.js";
 import {
   UIKind
 } from "vscode";
 import { ClipboardService } from "./Clipboard.js";
-import { IPCService } from "./IPC.js";
 import { InitDataService } from "./InitData.js";
+import { IPCService } from "./IPC.js";
 import { ToAPI as UriToApi } from "./TypeConverter/Main/URI.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 class EnvironmentService extends Effect.Service()(
   "Service/Environment",
   {

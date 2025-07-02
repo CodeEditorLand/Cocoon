@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
 import { Effect, Option, Ref, Schedule } from "effect";
-import { Emitter } from "vs/base/common/event.js";
 import { URI } from "vscode-uri";
 import { ApplicationConfigurationService } from "./ApplicationConfiguration.js";
 import { DocumentService } from "./Document.js";
@@ -10,7 +10,7 @@ import { IPCService } from "./IPC.js";
 import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
 import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
 import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 const toConfigurationOverrides = /* @__PURE__ */ __name((scope) => {
   if (!scope) {
     return {};

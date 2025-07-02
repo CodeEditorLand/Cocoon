@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
 import { Effect, Ref, Schedule } from "effect";
-import { Emitter } from "vs/base/common/event.js";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 const DebounceMilliseconds = 1e3;

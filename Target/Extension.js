@@ -1,14 +1,16 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect, Option, Ref } from "effect";
-import { ImplicitActivationEvents } from "vs/platform/extensionManagement/common/implicitActivationEvents.js";
+import { ImplicitActivationEvents } from "@codeeditorland/output/vs/platform/extensionManagement/common/implicitActivationEvents.js";
 import {
   ExtensionDescriptionRegistry
-} from "vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
-import { ExtensionKind } from "vscode";
+} from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionDescriptionRegistry.js";
+import { Effect, Option, Ref } from "effect";
+import {
+  ExtensionKind
+} from "vscode";
 import { ExtensionHostService } from "./ExtensionHost.js";
 import { InitDataService } from "./InitData.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 const CreateAPIObject = /* @__PURE__ */ __name((Description, ExtensionHost) => {
   const Activate = Effect.gen(function* () {
     yield* ExtensionHost.ActivateById(Description.identifier, {

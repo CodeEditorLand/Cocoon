@@ -1,8 +1,8 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 import * as Module from "node:module";
+import { URI } from "@codeeditorland/output/vs/base/common/uri.js";
 import { Cause, Effect, Exit } from "effect";
-import { URI } from "vs/base/common/uri.js";
 import { APIFactoryService } from "./APIFactory.js";
 import { ExtensionPathService } from "./ExtensionPath.js";
 import { LoggerService } from "./Logger.js";
@@ -85,6 +85,7 @@ class RequireInterceptorService extends Effect.Service()(
   }
 }
 export {
-  RequireInterceptorService
+  RequireInterceptorService,
+  VsCodeNodeModuleFactory
 };
 //# sourceMappingURL=RequireInterceptor.js.map

@@ -1,11 +1,11 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+import { generateUuid } from "@codeeditorland/output/vs/base/common/uuid.js";
 import { Effect, Ref } from "effect";
-import { generateUuid } from "vs/base/common/uuid.js";
 import { IPCService } from "./IPC.js";
 import { FromAPI as TreeViewItemToDTO } from "./TypeConverter/TreeView/Item.js";
 import { FromAPI as TreeViewOptionToDTO } from "./TypeConverter/TreeView/Option.js";
-import { CreateEventStream } from "./Utility/CreateEventStream.js";
+import { CreateEventStream } from "./Utility/EventStream.js";
 class TreeViewImplementation {
   constructor(ViewId, DataProvider, IPC, Extension) {
     this.ViewId = ViewId;
@@ -201,6 +201,7 @@ class TreeViewService extends Effect.Service()(
   }
 }
 export {
+  TreeViewImplementation,
   TreeViewService
 };
 //# sourceMappingURL=TreeView.js.map
