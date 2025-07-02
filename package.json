@@ -43,7 +43,7 @@
 		"@opentelemetry/sdk-trace-web": "2.0.1",
 		"@playform/build": "0.2.5",
 		"@types/google-protobuf": "3.15.12",
-		"@types/node": "24.0.8",
+		"@types/node": "24.0.10",
 		"cross-env": "7.0.3",
 		"deepmerge-ts": "7.1.5",
 		"ts-patch": "3.3.0",
