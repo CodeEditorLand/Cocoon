@@ -20,9 +20,9 @@ export interface Extension {
 declare const ExtensionService_base: Effect.Service.Class<ExtensionService, "Service/Extension", {
     readonly effect: Effect.Effect<{
         onDidChange: import("@codeeditorland/output/vs/workbench/workbench.web.main.internal.js").Event<void>;
-        GetExtension: <T>(ExtensionId: string) => Effect.Effect<Option.Option<VSCodeExtension<T_1>>, never, never>;
+        GetExtension: <T>(ExtensionId: string) => Effect.Effect<Option.Option<VSCodeExtension<T>>, never, never>;
         GetAll: () => Effect.Effect<readonly VSCodeExtension<any>[], never, never>;
-        Activate: <T>(ExtensionId: string) => Effect.Effect<any, Error, never>;
+        Activate: <T>(ExtensionId: string) => Effect.Effect<VSCodeExtension<T>, Error, never>;
     }, never, import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | ExtensionHostService>;
 }>;
 /**

@@ -66,7 +66,7 @@ export interface StatusBar {
 declare const StatusBarService_base: Effect.Service.Class<StatusBarService, "Service/StatusBar", {
     readonly effect: Effect.Effect<{
         CreateStatusBarItem: (Extension: IExtensionDescription, Id?: string, Alignment?: StatusBarAlignment, Priority?: number) => Effect.Effect<StatusBarItemImplementation, never, never>;
-        SetStatusBarMessage: (text: string, hideOrPromise?: number | Promise<any>) => any;
+        SetStatusBarMessage: (text: string, hideOrPromise?: number | Promise<any>) => Disposable;
     }, never, IPCService | CommandService>;
 }>;
 /**

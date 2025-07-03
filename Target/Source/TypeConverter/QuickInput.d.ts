@@ -8,7 +8,18 @@ import type { QuickInputButton, QuickPickItem } from "vscode";
  * @param Items The array of items to serialize.
  * @returns A serializable representation of the items.
  */
-export declare const SerializeItems: <T extends QuickPickItem | string>(Items: readonly T[]) => any[];
+export declare const SerializeItems: <T extends QuickPickItem | string>(Items: readonly T[]) => {
+    handle: number;
+    tooltip?: string | import("vscode").MarkdownString;
+    label: string;
+    kind?: import("vscode").QuickPickItemKind;
+    iconPath?: import("vscode").IconPath;
+    description?: string;
+    detail?: string;
+    picked?: boolean;
+    alwaysShow?: boolean;
+    buttons?: readonly QuickInputButton[];
+}[];
 /**
  * @description Serializes `QuickInputButton` arrays for IPC transport.
  * @param Buttons The array of buttons to serialize.
@@ -16,7 +27,7 @@ export declare const SerializeItems: <T extends QuickPickItem | string>(Items: r
  */
 export declare const SerializeButtons: (Buttons?: readonly QuickInputButton[]) => {
     iconPath: any;
-    tooltip: any;
+    tooltip: string | undefined;
     handle: number;
 }[] | undefined;
 //# sourceMappingURL=QuickInput.d.ts.map

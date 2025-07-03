@@ -8,5 +8,16 @@ import type { OpenDialogOptions } from "vscode";
  * @param Options The `OpenDialogOptions` to convert.
  * @returns The serializable DTO.
  */
-export declare const ToDTO: (Options?: OpenDialogOptions) => any;
+export declare const ToDTO: (Options?: OpenDialogOptions) => {
+    defaultUri: any;
+    filters: {
+        name: string;
+        extensions: readonly string[];
+    }[] | undefined;
+    openLabel?: string;
+    canSelectFiles?: boolean;
+    canSelectFolders?: boolean;
+    canSelectMany?: boolean;
+    title?: string;
+} | undefined;
 //# sourceMappingURL=OpenDialogOption.d.ts.map

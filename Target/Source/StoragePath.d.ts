@@ -19,7 +19,7 @@ export interface StoragePath {
 }
 declare const StoragePathService_base: Effect.Service.Class<StoragePathService, "Service/StoragePath", {
     readonly effect: Effect.Effect<{
-        GetWorkSpaceStorageUri: (Extension: IExtensionDescription) => any;
+        GetWorkSpaceStorageUri: (Extension: IExtensionDescription) => Uri | undefined;
         GetGlobalStorageUri: (Extension: IExtensionDescription) => Uri;
     }, never, Logger | FileSystem | import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData>;
 }>;

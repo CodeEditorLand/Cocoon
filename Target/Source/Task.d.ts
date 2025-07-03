@@ -39,9 +39,9 @@ declare const TaskService_base: Effect.Service.Class<TaskService, "Service/Task"
         onDidStartTaskProcess: import("@codeeditorland/output/vs/workbench/workbench.web.main.internal.js").Event<TaskProcessStartEvent>;
         onDidEndTaskProcess: import("@codeeditorland/output/vs/workbench/workbench.web.main.internal.js").Event<TaskProcessEndEvent>;
         readonly taskExecutions: readonly TaskExecution[];
-        RegisterTaskProvider: <T extends VSCodeTask>(Type: string, Provider: TaskProvider<T>, Extension: IExtensionDescription) => Effect.Effect<any, never, never>;
-        FetchTasks: (Filter?: TaskFilter) => Effect.Effect<VSCode.Task[], Error, never>;
-        ExecuteTask: (TaskToExecute: VSCodeTask, Extension: IExtensionDescription) => Effect.Effect<VSCode.TaskExecution, Error, never>;
+        RegisterTaskProvider: <T extends VSCodeTask>(Type: string, Provider: TaskProvider<T>, Extension: IExtensionDescription) => Effect.Effect<Disposable, never, never>;
+        FetchTasks: (Filter?: TaskFilter) => Effect.Effect<VSCodeTask[], Error, never>;
+        ExecuteTask: (TaskToExecute: VSCodeTask, Extension: IExtensionDescription) => Effect.Effect<TaskExecution, Error, never>;
     }, never, CancellationService | IPCService>;
 }>;
 /**

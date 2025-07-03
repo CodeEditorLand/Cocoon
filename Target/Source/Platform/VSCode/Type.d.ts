@@ -21,11 +21,11 @@ export declare const CancellationTokenSource: typeof VSCodeCancellationTokenSour
 export declare const CancellationError: typeof VSCodeCancellationError;
 export declare const EventEmitter: typeof Emitter;
 export declare const URI: typeof VSCodeURI;
-export declare const ThemeIcon: any;
-export declare const ProcessExecution: any;
-export declare const Task: any;
-export declare const WorkspaceEdit: any;
-export declare const TextEdit: any;
+export declare const ThemeIcon: typeof VSCode.ThemeIcon;
+export declare const ProcessExecution: typeof VSCode.ProcessExecution;
+export declare const Task: typeof VSCode.Task;
+export declare const WorkspaceEdit: typeof VSCode.WorkspaceEdit;
+export declare const TextEdit: typeof VSCode.TextEdit;
 export declare class Position implements VSCode.Position {
     readonly line: number;
     readonly character: number;
