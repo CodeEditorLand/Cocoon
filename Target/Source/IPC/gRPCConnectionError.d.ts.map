@@ -1,0 +1,1 @@
+{"version":3,"file":"gRPCConnectionError.d.ts","sourceRoot":"","sources":["../../../Source/IPC/gRPCConnectionError.ts"],"names":[],"mappings":"AAAA;;;;GAIG;;;;AAIH;;;;;GAKG;AACH,qBAAa,mBAAoB,SAAQ,yBAEvC;IACD,QAAQ,CAAC,KAAK,EAAE,OAAO,CAAC;IACxB,QAAQ,CAAC,OAAO,EACb,iBAAiB,GACjB,2BAA2B,GAC3B,gBAAgB,GAChB,kBAAkB,GAClB,mBAAmB,GACnB,sBAAsB,CAAC;CAC1B,CAAC;CAAG"}

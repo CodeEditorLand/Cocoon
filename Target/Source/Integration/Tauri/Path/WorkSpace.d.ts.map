@@ -1,0 +1,1 @@
+{"version":3,"file":"WorkSpace.d.ts","sourceRoot":"","sources":["../../../../../Source/Integration/Tauri/Path/WorkSpace.ts"],"names":[],"mappings":"AAAA;;;;GAIG;AAGH,OAAO,EAAE,MAAM,EAAE,MAAM,QAAQ,CAAC;AAChC,OAAO,KAAK,EAAE,GAAG,EAAE,MAAM,QAAQ,CAAC;AAGlC,OAAO,EAAE,sBAAsB,EAAE,MAAM,cAAc,CAAC;AAEtD;;;;;GAKG;AACH,eAAO,MAAM,oBAAoB,QAAO,MAAM,CAAC,MAAM,CACpD,GAAG,EACH,sBAAsB,CAYpB,CAAC"}

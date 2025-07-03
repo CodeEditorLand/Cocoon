@@ -1,0 +1,1 @@
+{"version":3,"file":"InvalidTokenIdProblem.d.ts","sourceRoot":"","sources":["../../../Source/Cancellation/InvalidTokenIdProblem.ts"],"names":[],"mappings":"AAAA;;;;GAIG;;;;AAIH;;;;GAIG;AACH,qBAAa,qBAAsB,SAAQ,2BAEzC;IACD,QAAQ,CAAC,OAAO,EAAE,MAAM,CAAC;CACzB,CAAC;IACD,SAAyB,OAAO,EAAE,MAAM,CAAC;gBAC7B,UAAU,EAAE;QAAE,QAAQ,CAAC,OAAO,EAAE,MAAM,CAAA;KAAE;CAIpD"}
