@@ -32,7 +32,7 @@
 		"google-protobuf": "3.21.4"
 	},
 	"devDependencies": {
-		"@effect/experimental": "0.51.2",
+		"@effect/experimental": "0.51.6",
 		"@effect/language-service": "0.23.5",
 		"@effect/opentelemetry": "0.53.2",
 		"@opentelemetry/exporter-trace-otlp-http": "0.202.0",
