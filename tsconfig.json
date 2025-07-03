@@ -2,6 +2,8 @@
 	"$schema": "https://json.schemastore.org/tsconfig",
 
 	"compilerOptions": {
+		"allowImportingTsExtensions": false,
+
 		"baseUrl": "./",
 
 		"composite": true,
@@ -67,9 +69,23 @@
 		"target": "ESNext"
 	},
 
-	"exclude": ["Target", "node_modules"],
+	"exclude": ["Target"],
 
 	"extends": "@playform/build/tsconfig",
 
-	"include": ["Source", "@types/node"]
+	"include": [
+		"Source",
+
+		"@types/node",
+
+		"./node_modules/@codeeditorland/output/Target/Microsoft/VSCode/*.ts",
+
+		"./node_modules/@codeeditorland/output/Target/Microsoft/VSCode/typings",
+
+		"./node_modules/@codeeditorland/output/Target/Microsoft/VSCode/vs/**/*.ts",
+
+		"./node_modules/@codeeditorland/output/Target/Microsoft/VSCode/vscode-dts/vscode.proposed.*.d.ts",
+
+		"./node_modules/@codeeditorland/output/Target/Microsoft/VSCode/vscode-dts/vscode.d.ts"
+	]
 }
