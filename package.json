@@ -24,17 +24,17 @@
 	},
 	"dependencies": {
 		"@codeeditorland/output": "0.0.1",
-		"@effect/platform": "0.87.1",
-		"@effect/platform-node": "0.88.4",
+		"@effect/platform": "0.87.5",
+		"@effect/platform-node": "0.88.9",
 		"@tauri-apps/plugin-clipboard-manager": "2.3.0",
 		"@tauri-apps/plugin-fs": "2.4.0",
 		"effect": "3.16.11",
 		"google-protobuf": "3.21.4"
 	},
 	"devDependencies": {
-		"@effect/experimental": "0.51.2",
+		"@effect/experimental": "0.51.6",
 		"@effect/language-service": "0.23.5",
-		"@effect/opentelemetry": "0.53.2",
+		"@effect/opentelemetry": "0.53.5",
 		"@opentelemetry/exporter-trace-otlp-http": "0.202.0",
 		"@opentelemetry/sdk-logs": "0.202.0",
 		"@opentelemetry/sdk-metrics": "2.0.1",
