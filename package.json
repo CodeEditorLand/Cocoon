@@ -28,7 +28,7 @@
 		"@effect/platform-node": "0.88.11",
 		"@tauri-apps/plugin-clipboard-manager": "2.3.0",
 		"@tauri-apps/plugin-fs": "2.4.0",
-		"effect": "3.16.11",
+		"effect": "3.16.12",
 		"google-protobuf": "3.21.4"
 	},
 	"devDependencies": {
@@ -55,7 +55,7 @@
 	},
 	"pnpm": {
 		"overrides": {
-			"effect": "3.16.11"
+			"effect": "3.16.12"
 		}
 	}
 }
