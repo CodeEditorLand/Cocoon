@@ -200,7 +200,7 @@ through [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund established by
 [Next Generation Internet](https://ngi.eu) program. Learn more at the
 [NLnet project page](https://NLnet.NL/project/Land).
 
-<table border="0" cellpadding="10" cellspacing="0" width="100%">
+<table>
 	<thead>
 		<tr>
 			<th align="left"><strong>Land</strong></th>
