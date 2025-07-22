@@ -24,7 +24,11 @@
 	},
 	"dependencies": {
 		"@codeeditorland/output": "0.0.1",
+<<<<<<< HEAD
 		"@effect/platform": "0.88.1",
+=======
+		"@effect/platform": "0.88.2",
+>>>>>>> 6ce9f567231ac4c69e3894369e35e5e1b9c002cb
 		"@effect/platform-node": "0.91.0",
 		"@tauri-apps/plugin-clipboard-manager": "2.3.0",
 		"@tauri-apps/plugin-fs": "2.4.0",
@@ -33,7 +37,11 @@
 	},
 	"devDependencies": {
 		"@effect/experimental": "0.52.2",
+<<<<<<< HEAD
 		"@effect/language-service": "0.27.1",
+=======
+		"@effect/language-service": "0.27.2",
+>>>>>>> 6ce9f567231ac4c69e3894369e35e5e1b9c002cb
 		"@effect/opentelemetry": "0.54.1",
 		"@opentelemetry/exporter-trace-otlp-http": "0.203.0",
 		"@opentelemetry/sdk-logs": "0.203.0",
