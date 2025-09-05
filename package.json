@@ -36,7 +36,7 @@
 		"@effect/language-service": "0.38.1",
 		"@effect/opentelemetry": "0.56.5",
 		"@opentelemetry/exporter-trace-otlp-http": "0.204.0",
-		"@opentelemetry/sdk-logs": "0.203.0",
+		"@opentelemetry/sdk-logs": "0.204.0",
 		"@opentelemetry/sdk-metrics": "2.1.0",
 		"@opentelemetry/sdk-trace-base": "2.1.0",
 		"@opentelemetry/sdk-trace-node": "2.1.0",
