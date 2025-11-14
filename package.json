@@ -24,7 +24,7 @@
 	},
 	"dependencies": {
 		"@codeeditorland/output": "0.0.1",
-		"@effect/platform": "0.93.1",
+		"@effect/platform": "0.93.2",
 		"@effect/platform-node": "0.100.0",
 		"@tauri-apps/plugin-clipboard-manager": "2.3.2",
 		"@tauri-apps/plugin-fs": "2.4.4",
