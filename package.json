@@ -33,7 +33,7 @@
 	},
 	"devDependencies": {
 		"@effect/experimental": "0.57.11",
-		"@effect/language-service": "0.62.0",
+		"@effect/language-service": "0.62.3",
 		"@effect/opentelemetry": "0.59.3",
 		"@opentelemetry/exporter-trace-otlp-http": "0.208.0",
 		"@opentelemetry/sdk-logs": "0.208.0",
