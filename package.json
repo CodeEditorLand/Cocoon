@@ -39,7 +39,7 @@
 		"@opentelemetry/sdk-logs": "0.209.0",
 		"@opentelemetry/sdk-metrics": "2.3.0",
 		"@opentelemetry/sdk-trace-base": "2.4.0",
-		"@opentelemetry/sdk-trace-node": "2.3.0",
+		"@opentelemetry/sdk-trace-node": "2.4.0",
 		"@opentelemetry/sdk-trace-web": "2.4.0",
 		"@playform/build": "0.2.6",
 		"@types/google-protobuf": "3.15.12",
