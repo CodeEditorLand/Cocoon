@@ -7,8 +7,6 @@
  */
 import { Effect } from "effect";
 import { UIKind, type Clipboard, type Event, type LogLevel, type Uri } from "vscode";
-import { ClipboardService } from "./Clipboard.js";
-import { IPCService } from "./IPC.js";
 /**
  * @interface Environment
  * @description The contract for the Environment service, matching `vscode.env`.
@@ -38,7 +36,7 @@ export interface Environment {
     readonly asExternalUri: (Target: Uri) => Promise<Uri>;
 }
 declare const EnvironmentService_base: Effect.Service.Class<EnvironmentService, "Service/Environment", {
-    readonly effect: Effect.Effect<Environment, never, IPCService | import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | ClipboardService>;
+    readonly effect: Effect.Effect<Environment, never, any>;
 }>;
 /**
  * @class Environment

@@ -1,12 +1,1 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Effect } from "effect";
-import { IntegrationConfigurationProblem } from "../Configuration/Problem.js";
-const ParseJSON = /* @__PURE__ */ __name((JSONString) => Effect.try({
-  try: /* @__PURE__ */ __name(() => JSON.parse(JSONString), "try"),
-  catch: /* @__PURE__ */ __name((Cause) => new IntegrationConfigurationProblem({ Cause }), "catch")
-}), "ParseJSON");
-export {
-  ParseJSON
-};
-//# sourceMappingURL=ParseJson.js.map
+import{Effect as o}from"effect";import{IntegrationConfigurationProblem as e}from"../Configuration/Problem.js";const i=t=>o.try({try:()=>JSON.parse(t),catch:r=>new e({Cause:r})});export{i as ParseJSON};

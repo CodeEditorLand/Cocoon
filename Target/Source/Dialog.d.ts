@@ -18,7 +18,7 @@ export interface Dialog {
 declare const DialogService_base: Effect.Service.Class<DialogService, "Service/Dialog", {
     readonly effect: Effect.Effect<{
         ShowOpenDialog: (Options?: OpenDialogOptions, Token?: CancellationToken) => Effect.Effect<Uri[] | undefined, DialogProblem, never>;
-        ShowSaveDialog: (Options?: SaveDialogOptions, Token?: CancellationToken) => Effect.Effect<Uri | undefined, DialogProblem, never>;
+        ShowSaveDialog: (Options?: SaveDialogOptions, Token?: CancellationToken) => Effect.Effect<any, DialogProblem, never>;
     }, never, IPCService>;
 }>;
 /**

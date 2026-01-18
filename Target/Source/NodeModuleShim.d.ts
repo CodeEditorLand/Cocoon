@@ -5,10 +5,8 @@
  * `crypto`) and explicitly blocks access to modules that could compromise host
  * stability or security (like `fs` and `child_process`).
  */
-import type { IExtensionHostInitData } from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import { Effect, Exit } from "effect";
 import type { Uri } from "vscode";
-import { LoggerService } from "./Logger.js";
 import { ModuleBlockedProblem } from "./NodeModuleShim/ModuleBlockedProblem.js";
 import { ModuleNotShimmedProblem } from "./NodeModuleShim/ModuleNotShimmedProblem.js";
 /**
@@ -28,7 +26,7 @@ export interface NodeModuleShim {
 declare const NodeModuleShimService_base: Effect.Service.Class<NodeModuleShimService, "Service/NodeModuleShim", {
     readonly effect: Effect.Effect<{
         Load: (Request: string, ParentUri?: Uri) => Exit.Exit<any, ModuleBlockedProblem | ModuleNotShimmedProblem>;
-    }, never, LoggerService | IExtensionHostInitData>;
+    }, never, any>;
 }>;
 /**
  * @class NodeModuleShim

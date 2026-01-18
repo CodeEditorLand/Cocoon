@@ -19,7 +19,7 @@ export interface Cancellation {
 }
 declare const CancellationService_base: Effect.Service.Class<CancellationService, "Service/Cancellation", {
     readonly scoped: Effect.Effect<{
-        ObtainToken: (TokenId: number) => Effect.Effect<import("@codeeditorland/output/vs/base/common/cancellation.js").CancellationToken, InvalidTokenIdProblem, Scope.Scope>;
+        ObtainToken: (TokenId: number) => Effect.Effect<any, InvalidTokenIdProblem, Scope.Scope>;
         CancelToken: (TokenId: number) => Effect.Effect<void, never, never>;
         DisposeAll: () => Effect.Effect<void, never, never>;
     }, never, Scope.Scope>;

@@ -6,7 +6,6 @@
  * secure, and properly configured before any extension code is loaded.
  */
 import { Effect } from "effect";
-import { IPCService } from "./IPC.js";
 /**
  * @interface PatchProcess
  * @description The contract for the service that provides access to native process
@@ -19,7 +18,7 @@ export interface PatchProcess {
 }
 declare const PatchProcessService_base: Effect.Service.Class<PatchProcessService, "Service/PatchProcess", {
     readonly effect: Effect.Effect<{
-        NativeExit: (code?: number | string | null | undefined) => never;
+        NativeExit: (code?: number | string | null) => never;
         NativeCrash: any;
         AllowExit: () => boolean;
     }, never, never>;
@@ -38,6 +37,6 @@ export declare class PatchProcessService extends PatchProcessService_base {
  * It runs all patches concurrently where possible. This `Effect` should be one of the
  * very first to run at application startup.
  */
-export declare const RunPatchProcess: Effect.Effect<void, never, IPCService | import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData>;
+export declare const RunPatchProcess: Effect.Effect<void, never, any>;
 export {};
 //# sourceMappingURL=PatchProcess.d.ts.map

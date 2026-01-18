@@ -4,7 +4,6 @@
  * and application-default settings. It implements the `IConfigurationService`
  * contract from VS Code for high fidelity.
  */
-import type { IConfigurationService } from "@codeeditorland/output/vs/platform/configuration/common/configuration.js";
 import { Effect } from "effect";
 import { ApplicationConfigurationProblem } from "./ApplicationConfiguration/ApplicationConfigurationProblem.js";
 declare const ApplicationConfigurationService_base: Effect.Service.Class<IConfigurationService, "vscode/ApplicationConfigurationService", {

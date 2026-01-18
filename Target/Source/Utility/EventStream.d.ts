@@ -3,7 +3,6 @@
  * @description A utility for creating a hybrid event emitter that bridges Effect-TS
  * PubSub with the VS Code Event API.
  */
-import { type Event } from "@codeeditorland/output/vs/base/common/event.js";
 import { Effect, PubSub } from "effect";
 /**
  * @interface EventStream

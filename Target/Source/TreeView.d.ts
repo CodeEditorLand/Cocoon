@@ -4,7 +4,6 @@
  * This service acts as a factory, handling the registration of tree data providers
  * with the host and managing the lifecycle of each tree view.
  */
-import type { Event } from "@codeeditorland/output/vs/base/common/event.js";
 import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
 import { Effect } from "effect";
 import type { TreeCheckboxChangeEvent, TreeDataProvider, TreeViewExpansionEvent, TreeViewOptions, TreeViewVisibilityChangeEvent, TreeView as VSCodeTreeView } from "vscode";

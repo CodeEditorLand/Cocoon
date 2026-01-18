@@ -5,7 +5,6 @@
  * read-only status) and for firing file change events.
  */
 import { type IExtUri } from "@codeeditorland/output/vs/base/common/resources.js";
-import { FileSystemProviderCapabilities } from "@codeeditorland/output/vs/platform/files/common/files.js";
 import { Effect } from "effect";
 import type { Event, FileChangeEvent } from "vscode";
 import { IPCService } from "./IPC.js";
@@ -23,8 +22,8 @@ export interface FileSystemInformation {
 declare const FileSystemInformationService_base: Effect.Service.Class<FileSystemInformationService, "Service/FileSystemInformation", {
     readonly effect: Effect.Effect<{
         ExtURI: IExtUri;
-        GetCapabilities: (Scheme: string) => Effect.Effect<number | undefined, never, never>;
-        onDidChangeFile: import("@codeeditorland/output/vs/workbench/workbench.web.main.internal.js").Event<readonly FileChangeEvent[]>;
+        GetCapabilities: (Scheme: string) => Effect.Effect<any, never, never>;
+        onDidChangeFile: any;
         IsWritableFileSystem: (Scheme: string) => boolean;
     }, never, LoggerService | IPCService>;
 }>;

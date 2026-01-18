@@ -20,21 +20,21 @@ export declare const CreateOsShim: (InitData: IExtensionHostInitData) => Readonl
     constants: typeof NodeOs.constants;
     cpus: () => NodeOs.CpuInfo[];
     freemem: () => number;
-    homedir: () => string;
-    hostname: () => string;
+    homedir: () => any;
+    hostname: () => any;
     loadavg: () => number[];
     networkInterfaces: () => NodeJS.Dict<NodeOs.NetworkInterfaceInfo[]>;
     release: () => string;
     tmpdir: () => string;
     totalmem: () => number;
-    type: () => "Windows_NT" | "Darwin" | "Linux";
+    type: () => "Linux" | "Windows_NT" | "Darwin";
     userInfo: (_options?: {
         encoding: string;
     }) => {
         uid: number;
         gid: number;
-        username: string;
-        homedir: string;
+        username: any;
+        homedir: any;
         shell: null;
     };
     uptime: () => number;

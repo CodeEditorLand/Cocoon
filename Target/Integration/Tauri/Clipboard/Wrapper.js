@@ -1,18 +1,1 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { Effect } from "effect";
-import { IntegrationClipboardProblem } from "./Problem.js";
-const WriteText = /* @__PURE__ */ __name((text) => Effect.tryPromise({
-  try: /* @__PURE__ */ __name(() => writeText(text), "try"),
-  catch: /* @__PURE__ */ __name((Cause) => new IntegrationClipboardProblem({ Cause }), "catch")
-}), "WriteText");
-const ReadText = Effect.tryPromise({
-  try: /* @__PURE__ */ __name(() => readText(), "try"),
-  catch: /* @__PURE__ */ __name((Cause) => new IntegrationClipboardProblem({ Cause }), "catch")
-});
-export {
-  ReadText,
-  WriteText
-};
-//# sourceMappingURL=Wrapper.js.map
+import{readText as i,writeText as f}from"@tauri-apps/plugin-clipboard-manager";import{Effect as r}from"effect";import{IntegrationClipboardProblem as e}from"./Problem.js";const a=t=>r.tryPromise({try:()=>f(t),catch:o=>new e({Cause:o})}),p=r.tryPromise({try:()=>i(),catch:t=>new e({Cause:t})});export{p as ReadText,a as WriteText};

@@ -1,13 +1,1 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { readTextFile } from "@tauri-apps/plugin-fs";
-import { Effect } from "effect";
-import { IntegrationConfigurationProblem } from "../Configuration/Problem.js";
-const ReadRawFile = /* @__PURE__ */ __name((Uri) => Effect.tryPromise({
-  try: /* @__PURE__ */ __name(() => readTextFile(Uri.fsPath), "try"),
-  catch: /* @__PURE__ */ __name((Cause) => new IntegrationConfigurationProblem({ Cause }), "catch")
-}), "ReadRawFile");
-export {
-  ReadRawFile
-};
-//# sourceMappingURL=ReadRawFile.js.map
+import{readTextFile as o}from"@tauri-apps/plugin-fs";import{Effect as e}from"effect";import{IntegrationConfigurationProblem as i}from"../Configuration/Problem.js";const a=r=>e.tryPromise({try:()=>o(r.fsPath),catch:t=>new i({Cause:t})});export{a as ReadRawFile};

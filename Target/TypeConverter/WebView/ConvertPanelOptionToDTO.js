@@ -1,16 +1,1 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-const ConvertPanelOptionToDTO = /* @__PURE__ */ __name((Options) => {
-  const dto = {};
-  if (Options.enableFindWidget !== void 0) {
-    dto.enableFindWidget = Options.enableFindWidget;
-  }
-  if (Options.retainContextWhenHidden !== void 0) {
-    dto.retainContextWhenHidden = Options.retainContextWhenHidden;
-  }
-  return dto;
-}, "ConvertPanelOptionToDTO");
-export {
-  ConvertPanelOptionToDTO
-};
-//# sourceMappingURL=ConvertPanelOptionToDTO.js.map
+const t=e=>{const n={};return e.enableFindWidget!==void 0&&(n.enableFindWidget=e.enableFindWidget),e.retainContextWhenHidden!==void 0&&(n.retainContextWhenHidden=e.retainContextWhenHidden),n};export{t as ConvertPanelOptionToDTO};

@@ -1,12 +1,1 @@
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-import { Data } from "effect";
-class IPCProblem extends Data.TaggedError("IPCProblem") {
-  static {
-    __name(this, "IPCProblem");
-  }
-}
-export {
-  IPCProblem
-};
-//# sourceMappingURL=IPCProblem.js.map
+import{Data as r}from"effect";class n extends r.TaggedError("IPCProblem"){}export{n as IPCProblem};

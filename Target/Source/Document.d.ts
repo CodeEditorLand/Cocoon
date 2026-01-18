@@ -22,13 +22,13 @@ export interface Document {
 }
 declare const DocumentService_base: Effect.Service.Class<DocumentService, "Service/Document", {
     readonly effect: Effect.Effect<{
-        readonly TextDocuments: TextDocument[];
-        OnDidOpenTextDocument: import("@codeeditorland/output/vs/workbench/workbench.web.main.internal.js").Event<TextDocument>;
-        OnDidCloseTextDocument: import("@codeeditorland/output/vs/workbench/workbench.web.main.internal.js").Event<TextDocument>;
-        OnDidChangeTextDocument: import("@codeeditorland/output/vs/workbench/workbench.web.main.internal.js").Event<TextDocumentChangeEvent>;
-        OnDidSaveTextDocument: import("@codeeditorland/output/vs/workbench/workbench.web.main.internal.js").Event<TextDocument>;
-        GetDocument: (Uri: Uri) => Effect.Effect<Option.Option<TextDocument>, never, never>;
-        RegisterTextDocumentContentProvider: (Scheme: string, Provider: TextDocumentContentProvider) => Disposable;
+        readonly TextDocuments: any[];
+        OnDidOpenTextDocument: any;
+        OnDidCloseTextDocument: any;
+        OnDidChangeTextDocument: any;
+        OnDidSaveTextDocument: any;
+        GetDocument: (Uri: Uri) => Effect.Effect<Option.Option<any>, never, never>;
+        RegisterTextDocumentContentProvider: (Scheme: string, Provider: TextDocumentContentProvider) => any;
     }, never, IPCService>;
 }>;
 /**

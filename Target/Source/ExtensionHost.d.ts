@@ -6,8 +6,6 @@
  */
 import type { ExtensionIdentifier, IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
 import { Effect } from "effect";
-import { IPCService } from "./IPC.js";
-import { LoggerService } from "./Logger.js";
 /**
  * @interface ExtensionActivationReason
  * @description Describes the reason an extension is being activated.
@@ -48,12 +46,12 @@ export interface ExtensionHost {
 declare const ExtensionHostService_base: Effect.Service.Class<ExtensionHostService, "Service/ExtensionHost", {
     readonly effect: Effect.Effect<{
         ActivateById: (Id: ExtensionIdentifier, Reason: ExtensionActivationReason) => Effect.Effect<void, never, never>;
-        GetExtensionDescription: (Id: string | ExtensionIdentifier) => Effect.Effect<Readonly<import("@codeeditorland/output/vs/platform/extensions/common/extensions.js").IRelaxedExtensionDescription> | undefined, never, never>;
+        GetExtensionDescription: (Id: string | ExtensionIdentifier) => Effect.Effect<any, never, never>;
         GetExtensionExports: (Id: ExtensionIdentifier) => Effect.Effect<any, Error, never>;
         IsActivated: (Id: ExtensionIdentifier) => Effect.Effect<boolean, never, never>;
         DeactivateAll: () => Effect.Effect<void, never, never>;
         OnDidActivateExtension: (_callback: (extension: IExtensionDescription) => void) => Effect.Effect<void, never, never>;
-    }, never, LoggerService | IPCService | import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | import("@codeeditorland/output/vs/workbench/api/common/extHostTelemetry.js").IExtHostTelemetry>;
+    }, never, any>;
 }>;
 /**
  * @class ExtensionHostService

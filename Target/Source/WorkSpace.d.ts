@@ -6,9 +6,6 @@
  */
 import { Effect } from "effect";
 import type { CancellationToken, ConfigurationScope, Disposable, Event, GlobPattern, TextDocument, TextDocumentContentProvider, TextEditor, TextEditorOptionsChangeEvent, TextEditorSelectionChangeEvent, TextEditorViewColumnChangeEvent, TextEditorVisibleRangesChangeEvent, Uri, FileSystem as VSCodeFileSystem, WorkspaceConfiguration, WorkspaceEdit, WorkspaceFolder, WorkspaceFoldersChangeEvent } from "vscode";
-import { DocumentService } from "./Document.js";
-import { FileSystemService } from "./FileSystem.js";
-import { IPCService } from "./IPC.js";
 /**
  * @interface WorkSpace
  * @description The contract for the WorkSpace service, mirroring `vscode.workspace`.
@@ -39,7 +36,7 @@ export interface WorkSpace {
     readonly onDidChangeTextEditorViewColumn: Event<TextEditorViewColumnChangeEvent>;
 }
 declare const WorkSpaceService_base: Effect.Service.Class<WorkSpaceService, "Service/WorkSpace", {
-    readonly effect: Effect.Effect<WorkSpace, never, IPCService | import("@codeeditorland/output/vs/platform/configuration/common/configuration.js").IConfigurationService | DocumentService | FileSystemService>;
+    readonly effect: Effect.Effect<WorkSpace, never, any>;
 }>;
 /**
  * @class WorkSpaceService

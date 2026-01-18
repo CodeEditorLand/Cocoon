@@ -26,7 +26,7 @@ export interface IPC {
     readonly RegisterInvokeHandler: (Channel: string, Handler: (...args: any[]) => Promise<any>) => Disposable;
 }
 declare const IPCService_base: Effect.Service.Class<IPCService, "Service/IPC", {
-    readonly scoped: Effect.Effect<IPC, gRPCConnectionError, CancellationService | import("effect/Scope").Scope | IPCConfigurationService>;
+    readonly scoped: Effect.Effect<IPC, gRPCConnectionError, import("effect/Scope").Scope | CancellationService | IPCConfigurationService>;
 }>;
 /**
  * @class IPCService

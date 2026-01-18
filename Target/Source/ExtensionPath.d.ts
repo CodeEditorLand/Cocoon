@@ -25,7 +25,7 @@ export interface ExtensionPath {
 declare const ExtensionPathService_base: Effect.Service.Class<ExtensionPathService, "Service/ExtensionPath", {
     readonly effect: Effect.Effect<{
         FindSubstr: (PathUri: Uri) => IExtensionDescription | undefined;
-    }, never, import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData>;
+    }, never, IExtensionHostInitData>;
 }>;
 /**
  * @class ExtensionPath

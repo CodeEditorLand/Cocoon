@@ -24,7 +24,7 @@ declare const WebViewPanelService_base: Effect.Service.Class<WebViewPanelService
             viewColumn: ViewColumn;
             preserveFocus?: boolean;
         }, Options?: WebviewPanelOptions & WebviewOptions) => Effect.Effect<WebViewPanelImplementation, import("./IPC/IPCProblem.js").IPCProblem, never>;
-        RegisterWebviewPanelSerializer: (_Extension: IExtensionDescription, ViewType: string, _Serializer: WebviewPanelSerializer) => Effect.Effect<Disposable, never, never>;
+        RegisterWebviewPanelSerializer: (_Extension: IExtensionDescription, ViewType: string, _Serializer: WebviewPanelSerializer) => Effect.Effect<any, never, never>;
     }, never, IPCService>;
 }>;
 /**
