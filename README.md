@@ -59,7 +59,7 @@ sent to `Mountain` for native execution.
 
 To understand how `Cocoon`'s internal components interact to provide the
 high-fidelity `vscode` API, please refer to the detailed technical breakdown in
-[`docs/Deep Dive.md`](docs/Deep%20Dive.md). This document explains the roles of
+[`Documentation/GitHub/Deep Dive.md`](Documentation/GitHub/Deep%20Dive.md). This document explains the roles of
 the `Core` services (like `ApiFactory` and `ExtensionHost`), the `Service`
 shims, and the gRPC-based `IPCProvider`.
 
