@@ -1,1 +1,0 @@
-import{Data as r}from"effect";class o extends r.TaggedError("StartDebuggingProblem"){message;constructor(e){super(e),this.message="Failed to start debugging session."}}export{o as StartDebuggingProblem};

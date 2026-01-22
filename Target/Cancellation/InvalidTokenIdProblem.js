@@ -1,1 +1,0 @@
-import{Data as r}from"effect";class d extends r.TaggedError("InvalidTokenIdProblem"){message;constructor(e){super(e),this.message=`Invalid TokenId ('${this.TokenId}') provided. Must be a positive number.`}}export{d as InvalidTokenIdProblem};

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/Debug/StartDebuggingProblem.ts"],
-  "sourcesContent": ["/**\n * @module StartDebuggingProblem\n * @description Defines a custom, tagged error for failures that occur when\n * attempting to start a debugging session.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * @class StartDebuggingProblem\n * @description An error indicating that a `startDebugging` call failed. This\n * could be due to an invalid configuration, a failure to launch the debug\n * adapter, or an IPC communication issue.\n */\nexport class StartDebuggingProblem extends Data.TaggedError(\n\t\"StartDebuggingProblem\",\n)<{\n\treadonly Cause: unknown;\n}> {\n\tpublic override readonly message: string;\n\tconstructor(Properties: { readonly Cause: unknown }) {\n\t\tsuper(Properties);\n\t\tthis.message = `Failed to start debugging session.`;\n\t}\n}\n"],
-  "mappings": ";;AAMA,SAAS,YAAY;AAQd,MAAM,8BAA8B,KAAK;AAAA,EAC/C;AACD,EAEG;AAAA,EAlBH,OAkBG;AAAA;AAAA;AAAA,EACuB;AAAA,EACzB,YAAY,YAAyC;AACpD,UAAM,UAAU;AAChB,SAAK,UAAU;AAAA,EAChB;AACD;",
-  "names": []
-}

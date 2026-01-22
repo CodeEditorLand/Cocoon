@@ -1,1 +1,0 @@
-import{BaseDirectory as t,resolve as o}from"@tauri-apps/api/path";import{Effect as e}from"effect";import{URI as i}from"vscode-uri";import{IntegrationPathProblem as f}from"./Problem.js";const p=()=>e.tryPromise({try:async()=>{const r=await o(t.AppConfig.toString());return i.file(r)},catch:r=>new f({Cause:r})});export{p as ResolveWorkSpacePath};

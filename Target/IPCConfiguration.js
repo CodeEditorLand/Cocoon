@@ -1,1 +1,0 @@
-import{Effect as e}from"effect";class r extends e.Service()("Service/IPCConfiguration",{effect:e.gen(function*(){return{MountainAddress:process.env.MOUNTAIN_ADDR??"localhost:50051",CocoonAddress:process.env.COCOON_ADDR??"localhost:50052"}})}){}export{r as IPCConfigurationService};

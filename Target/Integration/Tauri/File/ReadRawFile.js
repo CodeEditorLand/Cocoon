@@ -1,1 +1,0 @@
-import{readTextFile as o}from"@tauri-apps/plugin-fs";import{Effect as e}from"effect";import{IntegrationConfigurationProblem as i}from"../Configuration/Problem.js";const a=r=>e.tryPromise({try:()=>o(r.fsPath),catch:t=>new i({Cause:t})});export{a as ReadRawFile};

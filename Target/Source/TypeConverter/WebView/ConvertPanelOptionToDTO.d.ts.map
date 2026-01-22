@@ -1,1 +1,0 @@
-{"version":3,"file":"ConvertPanelOptionToDTO.d.ts","sourceRoot":"","sources":["../../../../Source/TypeConverter/WebView/ConvertPanelOptionToDTO.ts"],"names":[],"mappings":"AAAA;;;GAGG;AAEH,OAAO,KAAK,EAAE,mBAAmB,EAAE,MAAM,QAAQ,CAAC;AAClD,OAAO,KAAK,KAAK,MAAM,MAAM,QAAQ,CAAC;AAEtC;;;;;GAKG;AACH,eAAO,MAAM,uBAAuB,GACnC,SAAS,MAAM,CAAC,mBAAmB,KACjC,mBAkBF,CAAC"}

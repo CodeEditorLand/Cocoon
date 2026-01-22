@@ -1,1 +1,0 @@
-import{Data as o}from"effect";class s extends o.TaggedError("ModuleNotShimmedProblem"){message;constructor(e){super(e),this.message=`Module '${this.ModuleName}' was intercepted, but no shim is defined for it.`}}export{s as ModuleNotShimmedProblem};

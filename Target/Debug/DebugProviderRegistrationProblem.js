@@ -1,1 +1,0 @@
-import{Data as r}from"effect";class n extends r.TaggedError("DebugProviderRegistrationProblem"){message;constructor(e){super(e),this.message=`Failed to register debug provider for type '${this.DebugType}'.`}}export{n as DebugProviderRegistrationProblem};

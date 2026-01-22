@@ -1,1 +1,0 @@
-import{readText as i,writeText as f}from"@tauri-apps/plugin-clipboard-manager";import{Effect as r}from"effect";import{IntegrationClipboardProblem as e}from"./Problem.js";const a=t=>r.tryPromise({try:()=>f(t),catch:o=>new e({Cause:o})}),p=r.tryPromise({try:()=>i(),catch:t=>new e({Cause:t})});export{p as ReadText,a as WriteText};

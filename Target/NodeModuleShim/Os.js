@@ -1,3 +1,0 @@
-import*as e from"node:os";const m=s=>{const t=process.platform==="win32",o=s.environment.globalStorageHome,n={EOL:t?`\r
-`:`
-`,arch:()=>process.arch,platform:()=>process.platform,constants:e.constants,cpus:()=>e.cpus(),freemem:()=>e.freemem(),homedir:()=>o.fsPath||process.env.HOME||process.env.USERPROFILE||"",hostname:()=>s.environment.appHost||"localhost",loadavg:()=>e.loadavg(),networkInterfaces:()=>e.networkInterfaces(),release:()=>e.release(),tmpdir:()=>e.tmpdir(),totalmem:()=>e.totalmem(),type:()=>t?"Windows_NT":process.platform==="darwin"?"Darwin":"Linux",userInfo:r=>({uid:-1,gid:-1,username:o.fsPath.split(/\/|\\/).pop()||"cocoon-user",homedir:o.fsPath,shell:null}),uptime:()=>e.uptime()};return Object.freeze(n)};export{m as CreateOsShim};

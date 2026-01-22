@@ -1,1 +1,0 @@
-import{Data as e}from"effect";class i extends e.TaggedError("ProtoSerializationProblem"){message;constructor(o){super(o),this.message=`Protobuf ${this.Direction} failed: ${this.Cause}`}}export{i as ProtoSerializationProblem};

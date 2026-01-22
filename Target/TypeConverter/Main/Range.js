@@ -1,1 +1,0 @@
-import{Position as o,Range as r}from"../../Platform/VSCode/Type.js";const n=e=>({startLineNumber:e.start.line+1,startColumn:e.start.character+1,endLineNumber:e.end.line+1,endColumn:e.end.character+1}),m=e=>new r(new o(e.startLineNumber-1,e.startColumn-1),new o(e.endLineNumber-1,e.endColumn-1));export{n as FromAPI,m as ToAPI};

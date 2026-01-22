@@ -1,1 +1,0 @@
-import{Effect as t}from"effect";import{Value as o}from"google-protobuf/google/protobuf/struct_pb.js";import{ProtoSerializationProblem as i}from"./ProtoSerializationProblem.js";const u=e=>t.try({try:()=>{if(e!==void 0)return e.getKindCase()===o.KindCase.NULL_VALUE?null:e.toJavaScript()},catch:r=>new i({Cause:r,Direction:"Decoding"})});export{u as DecodeValue};
