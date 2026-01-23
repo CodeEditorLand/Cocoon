@@ -1,11 +1,20 @@
-<table><tr>
-<td colspan="1"> <h3 align="center"> <picture>
-<source media="(prefers-color-scheme: dark)" srcset="https://PlayForm.Cloud/Dark/Image/GitHub/Land.svg">
-<source media="(prefers-color-scheme: light)" srcset="https://PlayForm.Cloud/Image/GitHub/Land.svg">
-<img width="28" alt="Land Logo" src="https://PlayForm.Cloud/Image/GitHub/Land.svg">
-</picture> </h3> </td> <td colspan="3" valign="top"> <h3 align="center"> Cocoon 🦋
-</h3> </td>
-</tr></table>
+<table>
+	<tr>
+		<td colspan="1">
+			<h3 align="center">
+				<picture>
+					<source media="(prefers-color-scheme: dark)" srcset="https://PlayForm.Cloud/Dark/Image/GitHub/Land.svg">
+					<source media="(prefers-color-scheme: light)" srcset="https://PlayForm.Cloud/Image/GitHub/Land.svg">
+					<img width="28" alt="Land Logo" src="https://PlayForm.Cloud/Image/GitHub/Land.svg">
+				</picture>
+			</h3>
+			</td>
+			<td colspan="3" valign="top">
+				<h3 align="center"> Cocoon 🦋
+			</h3>
+		</td>
+	</tr>
+</table>
 
 ---
 
@@ -59,9 +68,9 @@ sent to `Mountain` for native execution.
 
 To understand how `Cocoon`'s internal components interact to provide the
 high-fidelity `vscode` API, please refer to the detailed technical breakdown in
-[`Documentation/GitHub/Deep Dive.md`](Documentation/GitHub/Deep%20Dive.md). This document explains the roles of
-the `Core` services (like `ApiFactory` and `ExtensionHost`), the `Service`
-shims, and the gRPC-based `IPCProvider`.
+[`Documentation/GitHub/Deep Dive.md`](Documentation/GitHub/Deep%20Dive.md). This
+document explains the roles of the `Core` services (like `ApiFactory` and
+`ExtensionHost`), the `Service` shims, and the gRPC-based `IPCProvider`.
 
 ---
 
@@ -203,10 +212,18 @@ through [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund established by
 <table>
 	<thead>
 		<tr>
-			<th align="left"><strong>Land</strong></th>
-			<th align="left"><strong>PlayForm</strong></th>
-			<th align="left"><strong>NLnet</strong></th>
-			<th align="left"><strong>NGI0 Commons Fund</strong></th>
+			<th align="left">
+				<strong>Land</strong>
+			</th>
+			<th align="left">
+				<strong>PlayForm</strong>
+			</th>
+			<th align="left">
+				<strong>NLnet</strong>
+			</th>
+			<th align="left">
+				<strong>NGI0 Commons Fund</strong>
+			</th>
 		</tr>
 	</thead>
 	<tbody>
