@@ -19,11 +19,10 @@
 
 # **Cocoon** 🦋 Deep Dive & Architecture
 
-This document provides a detailed technical overview of the **Cocoon** project
-for developers. It explores the internal architecture, the sophisticated
-Extension Host API shimming, and the advanced Effect-TS patterns used to create
-a high-fidelity Visual Studio Code extension execution environment for the Land
-Code Editor.
+This document provides the technical foundation for implementing VSCode
+extension host compatibility within the Land ecosystem. **Cocoon** serves as the
+Node.js sidecar that provides high-fidelity VSCode extension API compatibility
+through Effect-TS implementations and gRPC communication with Mountain.
 
 ---
 
@@ -47,7 +46,7 @@ Code Editor.
 - **Role:** The main entry point of the Cocoon application, responsible for
   orchestrating the entire bootstrapping process and managing the application's
   lifecycle.
-- **Advanced Functionality:**
+- **Concrete Functionality:**
     - **Effect-TS Layer Composition:** Builds the complete `AppLayer` by
       composing all individual service layers (`ApiFactoryLayer`,
       `ExtensionHostLayer`, `IpcProviderLayer`, etc.).
@@ -79,7 +78,7 @@ Code Editor.
 
 - **Role:** Manages the core extension lifecycle, module interception, and API
   instance creation.
-- **Advanced Components:**
+- **Concrete Components:**
     - **`ExtensionHost.ts`:** The central orchestrator that activates VSCode
       extensions, manages their lifecycle, and coordinates API calls between
       extensions and `Mountain`.
@@ -95,7 +94,7 @@ Code Editor.
 
 - **Role:** Provides high-fidelity implementations of VSCode's Extension Host
   services, each implemented as an Effect-TS `Layer`.
-- **Advanced Service Architecture:**
+- **Concrete Service Architecture:**
     - **`CommandsProvider.ts`:** Implements `IExtHostCommands` with full command
       registration, execution, and context key support.
     - **`WorkspaceProvider.ts`:** Provides `IExtHostWorkspace` functionality
@@ -122,13 +121,13 @@ Code Editor.
 
 ---
 
-## Advanced Technical Architecture
+## Concrete Technical Architecture
 
 ### Core Architectural Components
 
 #### 1. Effect-TS Application Layer Architecture
 
-Cocoon's entire architecture is built around sophisticated Effect-TS layer
+Cocoon's entire architecture is built around concrete Effect-TS layer
 composition:
 
 ```mermaid
@@ -156,12 +155,9 @@ graph TB
     end
 ```
 
-**Technical Proof: Effect Composition Guarantees**
+**Concrete Effect Composition Guarantees**
 
-**Theorem:** Cocoon's layer composition ensures deterministic service
-availability.
-
-**Proof:**
+Cocoon's layer composition ensures deterministic service availability through:
 
 1. **Layer Dependency Resolution:** Each service layer declares its dependencies
    explicitly
@@ -227,27 +223,25 @@ graph LR
     Serializer --> Server
 ```
 
-### Advanced Technical Proofs
+### Concrete Technical Characteristics
 
 #### Performance Analysis: API Call Latency
 
 **Latency Breakdown:**
 
-- **Module Interception:** T_intercept = 0.05ms
-- **API Instance Creation:** T_api_create = 0.1ms
-- **Service Provider Routing:** T_routing = 0.02ms
-- **gRPC Serialization:** T_serialize = 0.15ms
-- **Network Latency:** T_network = 1-10ms (variable)
-- **Mountain Processing:** T_mountain = 0.5-5ms (effect-dependent)
-- **Response Deserialization:** T_deserialize = 0.1ms
+- **Module Interception:** ~0.05ms
+- **API Instance Creation:** ~0.1ms
+- **Service Provider Routing:** ~0.02ms
+- **gRPC Serialization:** ~0.15ms
+- **Network Latency:** 1-10ms (variable)
+- **Mountain Processing:** 0.5-5ms (effect-dependent)
+- **Response Deserialization:** ~0.1ms
 
-**Total API Call Latency:** T_total ≈ 0.42ms + T_network + T_mountain
+**Total API Call Latency:** ~0.42ms + network latency + Mountain processing time
 
-#### Security Implementation Proof
+#### Security Implementation Characteristics
 
-**Theorem:** The isolated API instance system prevents extension interference.
-
-**Proof:**
+The isolated API instance system prevents extension interference through:
 
 1. **Module Interception:** Each extension's `require('vscode')` is intercepted
 2. **Instance Isolation:** `ApiFactory` creates unique API instance per
@@ -391,3 +385,96 @@ modifications while leveraging Land's native backend capabilities.
 - **Health Checks:** Regular health check endpoints for process monitoring
 - **Metrics Collection:** Performance metrics for API call latencies
 - **Error Tracking:** Comprehensive error tracking with stack traces
+
+---
+
+## Concrete VSCode Service Lifting Architecture
+
+```mermaid
+graph TD
+    subgraph "Cocoon Extension Host"
+        Extensions["VSCode Extensions"]
+        ApiLayer["API Layer<br/>Module Interception"]
+        ServiceLayer["Service Layer<br/>Effect-TS Implementations"]
+        gRPCLayer["gRPC Layer<br/>Communication Bridge"]
+
+        Extensions --> ApiLayer
+        ApiLayer --> ServiceLayer
+        ServiceLayer --> gRPCLayer
+    end
+
+    subgraph "Communication Protocols"
+        Vine["Vine gRPC Protocol"]
+        Mountain["Mountain Backend"]
+
+        gRPCLayer --> Vine
+        Vine --> Mountain
+    end
+
+    subgraph "VSCode Service Mapping"
+        VSCodeAPI["VSCode API"]
+        CocoonServices["Cocoon Services"]
+        EffectTS["Effect-TS Layer"]
+
+        VSCodeAPI --> CocoonServices
+        CocoonServices --> EffectTS
+    end
+```
+
+#### Service Implementation Table
+
+| VSCode Service      | Cocoon Service      | Effect-TS Layer  | Communication Protocol |
+| :------------------ | :------------------ | :--------------- | :--------------------- |
+| `vscode.commands`   | `CommandsProvider`  | `Effect.Service` | Vine gRPC              |
+| `vscode.workspace`  | `WorkspaceProvider` | `Effect.Service` | Vine gRPC              |
+| `vscode.window`     | `WindowProvider`    | `Effect.Service` | Vine gRPC              |
+| `vscode.extensions` | `ExtensionProvider` | `Effect.Service` | Vine gRPC              |
+| `vscode.languages`  | `LanguageProvider`  | `Effect.Service` | Vine gRPC              |
+
+### Component Block Map
+
+```mermaid
+graph TB
+    subgraph "Cocoon Architecture Blocks"
+        Index["Index.ts<br/>Application Orchestrator"]
+        AppLayer["AppLayer<br/>Service Composition"]
+        CoreModules["Core Modules<br/>Runtime Engine"]
+        ServiceModules["Service Modules<br/>VSCode API Implementations"]
+        gRPCClient["gRPC Client<br/>Communication Bridge"]
+    end
+
+    subgraph "External Dependencies"
+        EffectTS["Effect-TS Framework"]
+        NodeJS["Node.js Runtime"]
+        Mountain["Mountain Backend"]
+        VSCode["VSCode API Definitions"]
+    end
+
+    EffectTS --> AppLayer
+    NodeJS --> Index
+    Mountain --> gRPCClient
+    VSCode --> ServiceModules
+
+    Index --> AppLayer
+    AppLayer --> CoreModules
+    CoreModules --> ServiceModules
+    ServiceModules --> gRPCClient
+    gRPCClient --> Mountain
+```
+
+### Service Communication Patterns
+
+```mermaid
+sequenceDiagram
+    participant Extension as VSCode Extension
+    participant Cocoon as Cocoon Service
+    participant gRPC as gRPC Client
+    participant Mountain as Mountain Backend
+
+    Extension->>Cocoon: vscode.commands.registerCommand()
+    Cocoon->>gRPC: Send CommandRegistrationRequest
+    gRPC->>Mountain: Execute gRPC call
+    Mountain->>gRPC: Return CommandRegistrationResponse
+    gRPC->>Cocoon: Provide response
+    Cocoon->>Extension: Return Disposable
+```
