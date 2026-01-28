@@ -1,6 +1,23 @@
 /**
- * @module Command
- * @description Defines the service for managing and executing commands within the
+ * @module Command (ARCHIVED)
+ * @description 
+ * ARCHIVED - This file has been adapted and moved to Source/Services/Command.ts
+ * 
+ * Patterns borrowed from this file:
+ * - Effect-TS service pattern with Context.Tag
+ * - Command registration with Ref-based registry
+ * - Remote command proxy pattern
+ * 
+ * New implementation in Source/Services/Command.ts includes:
+ * - Mountain gRPC integration (replaced IPC proxy)
+ * - Enhanced error handling and logging
+ * - Comprehensive TODOs for future improvements
+ * - Security validation framework
+ * - Performance tracking hooks
+ * 
+ * Archive kept for reference during further implementation work.
+ * 
+ * Original description: Defines the service for managing and executing commands within the
  * extension host. It implements the core logic of `vscode.commands`, handling
  * command registration, execution, and retrieval.
  */

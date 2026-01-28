@@ -20,7 +20,9 @@
 	"type": "module",
 	"scripts": {
 		"Run": "sh Source/Run.sh",
-		"prepublishOnly": "sh Source/prepublishOnly.sh"
+		"prepublishOnly": "sh Source/prepublishOnly.sh",
+		"build-grpc": "node Scripts/compile-grpc-protocol.js",
+		"compile-protocol": "node Scripts/compile-grpc-protocol.js"
 	},
 	"dependencies": {
 		"@codeeditorland/output": "0.0.1",
@@ -31,7 +33,9 @@
 		"effect": "3.19.15",
 		"google-protobuf": "4.0.1",
 		"@grpc/grpc-js": "^1.14.3",
-		"@grpc/proto-loader": "^0.8.0"
+		"@grpc/proto-loader": "^0.8.0",
+		"protobufjs": "^7.0.0",
+		"ts-protoc-gen": "^0.16.0"
 	},
 	"devDependencies": {
 		"@effect/experimental": "0.58.0",

@@ -3,18 +3,19 @@
 # Cocoon Run Script - Development Mode
 # Based on Mountain integration patterns
 
+# Compile gRPC protocol definitions
+# Specification: MOUNTAIN-COCOON-INTEGRATION.md (Protocol Compilation)
+echo "[Cocoon] Compiling gRPC protocol definitions..."
+npm run compile-protocol
+
+# Build configuration files
 Build "Source/Configuration/**/*.{ts,json}" \
 	--ESBuild Source/Configuration/ESBuild/Cocoon.ts
 
+# Build TypeScript source files with watch mode
 Build "Source/**/*.ts" \
 	--ESBuild Configuration/ESBuild/Target.js \
 	--Watch
-
-# TODO: Add gRPC protocol compilation step
-# Specification: MOUNTAIN-COCOON-INTEGRATION.md (Protocol Compilation)
-# Implementation: Compile Mountain's Vine.proto to TypeScript definitions
-# Dependencies: protoc compiler, @grpc/proto-loader
-# Validation: Protocol buffer compilation successful
 
 # TODO: Add Cocoon bootstrap script execution
 # Specification: MOUNTAIN-COCOON-INTEGRATION.md (Bootstrap Process)

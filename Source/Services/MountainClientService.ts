@@ -8,9 +8,9 @@
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (Mountain Client Implementation)
  */
 
-import { Effect, Layer, Context, pipe } from "effect";
-import * as grpc from '@grpc/grpc-js';
-import * as protoLoader from '@grpc/proto-loader';
+import { Effect, Layer } from "effect";
+import * as grpc from "@grpc/grpc-js";
+import * as protoLoader from "@grpc/proto-loader";
 import { IMountainClientService } from "../Interfaces/IMountainClientService";
 
 // gRPC service definitions from Mountain's Vine protocol
@@ -61,7 +61,7 @@ export class MountainClientService implements IMountainClientService {
     private requestCounter: number = 0;
     
     constructor() {
-        console.log('[MountainClientService] Initializing Mountain gRPC client');
+        console.log("[MountainClientService] Initializing Mountain gRPC client");
         
         // Parse environment variables
         this.parseEnvironment();
@@ -92,7 +92,7 @@ export class MountainClientService implements IMountainClientService {
      */
     async connect(): Promise<void> {
         if (this.isConnected) {
-            console.warn('[MountainClientService] Already connected to Mountain');
+            console.warn("[MountainClientService] Already connected to Mountain");
             return;
         }
         
@@ -121,11 +121,11 @@ export class MountainClientService implements IMountainClientService {
             this.connectionStartTime = Date.now();
             this.errorCount = 0;
             
-            console.log('[MountainClientService] Successfully connected to Mountain');
+            console.log("[MountainClientService] Successfully connected to Mountain");
             
         } catch (error) {
             this.errorCount++;
-            console.error('[MountainClientService] Failed to connect to Mountain:', error);
+            console.error("[MountainClientService] Failed to connect to Mountain:", error);
             throw error;
         }
     }
@@ -379,29 +379,29 @@ export class MountainClientService implements IMountainClientService {
      */
     async disconnect(): Promise<void> {
         if (!this.isConnected || !this.client) {
-            console.warn('[MountainClientService] Not connected to Mountain');
+            console.warn("[MountainClientService] Not connected to Mountain");
             return;
         }
         
-        console.log('[MountainClientService] Disconnecting from Mountain');
+        console.log("[MountainClientService] Disconnecting from Mountain");
         
         this.client.close();
         this.client = null;
         this.isConnected = false;
         
-        console.log('[MountainClientService] Disconnected from Mountain');
+        console.log("[MountainClientService] Disconnected from Mountain");
     }
     
     /**
      * Reconnect to Mountain
      */
     async reconnect(): Promise<void> {
-        console.log('[MountainClientService] Reconnecting to Mountain');
+        console.log("[MountainClientService] Reconnecting to Mountain");
         
         await this.disconnect();
         await this.connect();
         
-        console.log('[MountainClientService] Reconnected to Mountain');
+        console.log("[MountainClientService] Reconnected to Mountain");
     }
     
     /**

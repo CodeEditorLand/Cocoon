@@ -79,11 +79,11 @@ export class ExtensionHostService implements IExtensionHostService {
      */
     async initialize(): Promise<void> {
         if (this._started) {
-            console.warn('[ExtensionHostService] Already initialized');
+            console.warn("[ExtensionHostService] Already initialized");
             return;
         }
         
-        console.log('[ExtensionHostService] Initializing extension host');
+        console.log("[ExtensionHostService] Initializing extension host");
         
         try {
             // Initialize dependencies
@@ -96,10 +96,10 @@ export class ExtensionHostService implements IExtensionHostService {
             this._readyToRunExtensions = true;
             this._started = true;
             
-            console.log('[ExtensionHostService] Extension host initialized');
+            console.log("[ExtensionHostService] Extension host initialized");
             
         } catch (error) {
-            console.error('[ExtensionHostService] Failed to initialize:', error);
+            console.error("[ExtensionHostService] Failed to initialize:", error);
             throw error;
         }
     }
@@ -114,7 +114,7 @@ export class ExtensionHostService implements IExtensionHostService {
         // Initialize IPC service for Mountain communication
         await this.ipcService.initialize();
         
-        console.log('[ExtensionHostService] Dependencies initialized');
+        console.log("[ExtensionHostService] Dependencies initialized");
     }
     
     /**
@@ -136,7 +136,7 @@ export class ExtensionHostService implements IExtensionHostService {
             // Validation: Test with 100+ extension configurations
         }
         
-        console.log('[ExtensionHostService] Extension registry setup complete');
+        console.log("[ExtensionHostService] Extension registry setup complete");
     }
     
     /**
@@ -370,7 +370,7 @@ export class ExtensionHostService implements IExtensionHostService {
             console.log(`[ExtensionHostService] Extension host terminated with code ${code}`);
             
         } catch (error) {
-            console.error('[ExtensionHostService] Error during termination:', error);
+            console.error("[ExtensionHostService] Error during termination:", error);
         }
     }
     
@@ -388,7 +388,7 @@ export class ExtensionHostService implements IExtensionHostService {
             await this.configurationService.cleanup();
         }
         
-        console.log('[ExtensionHostService] Services cleaned up');
+        console.log("[ExtensionHostService] Services cleaned up");
     }
     
     /**

@@ -26,6 +26,10 @@ import { IPCService, IPCServiceLive } from "./Services/IPCService";
 import { GRPCServerService, GRPCServerServiceLive } from "./Services/GRPCServerService";
 import { MountainClientService, MountainClientServiceLive } from "./Services/MountainClientService";
 
+// Import channel implementations
+import { ExtensionChannel } from "./Services/ExtensionChannel";
+import { ConfigurationChannel } from "./Services/ConfigurationChannel";
+
 /**
  * Service descriptor interface
  */
@@ -109,10 +113,10 @@ export class ServiceMapping {
     }
     
     /**
-     * Initialize service mapping
+     * Initialize service mapping with channel registration
      */
     static initialize(): void {
-        console.log('[ServiceMapping] Initializing service mapping registry');
+        console.log("[ServiceMapping] Initializing service mapping registry");
         
         // Register Configuration Service
         this.registerService('ConfigurationService', {
@@ -149,11 +153,15 @@ export class ServiceMapping {
             dependencies: []
         });
         
-        // TODO: Register ModuleInterceptorService
-        // Specification: IMPLEMENTATION-SPECIFICATION.md (Module Interceptor Service)
-        // Implementation: Create ModuleInterceptorService implementation
-        // Dependencies: ExtensionHostService, SecurityService
-        // Validation: Test module interception functionality
+        // Initialize channels after services
+        this.initializeChannels();
+        
+        // Register ModuleInterceptorService
+        this.registerService('ModuleInterceptorService', {
+            interface: IModuleInterceptorService,
+            implementation: ModuleInterceptorServiceLive,
+            dependencies: []
+        });
         
         // TODO: Register APIFactoryService
         // Specification: IMPLEMENTATION-SPECIFICATION.md (API Factory Service)
@@ -161,8 +169,28 @@ export class ServiceMapping {
         // Dependencies: ModuleInterceptorService, ConfigurationService
         // Validation: Test VS Code API construction
         
-        console.log('[ServiceMapping] Service mapping registry initialized');
+        console.log("[ServiceMapping] Service mapping registry initialized");
         console.log(`[ServiceMapping] Registered services: ${this.getRegisteredServices().join(', ')}`);
+    }
+    
+    /**
+     * Initialize channels for service communication
+     */
+    private static initializeChannels(): void {
+        console.log("[ServiceMapping] Initializing channels");
+        
+        // Get IPC service instance
+        const ipcService = this.getService(IIPCService);
+        
+        // Create and register channels
+        const configurationChannel = new ConfigurationChannel(this.getService(IConfigurationService));
+        const extensionChannel = new ExtensionChannel(this.getService(IExtensionHostService));
+        
+        // Register channels with IPC service
+        ipcService.registerChannel('configuration', configurationChannel);
+        ipcService.registerChannel('extension', extensionChannel);
+        
+        console.log("[ServiceMapping] Channels registered: configuration, extension");
     }
     
     /**
@@ -192,7 +220,7 @@ export class ServiceMapping {
             }
         }
         
-        console.log('[ServiceMapping] All service dependencies validated');
+        console.log("[ServiceMapping] All service dependencies validated");
         return true;
     }
 }

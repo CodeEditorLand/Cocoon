@@ -8,11 +8,9 @@
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (gRPC Server Implementation)
  */
 
-import path from "path";
-
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import { Context, Effect, Layer, pipe } from "effect";
+import { Effect, Layer } from "effect";
 
 import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
 
