@@ -225,3 +225,68 @@
 3. Performance benchmark initial implementation
 
 This TODO consolidation provides a clear roadmap for implementing a production-ready Cocoon extension host that meets enterprise standards and integrates seamlessly with the existing architecture.
+
+## Mountain-Cocoon Integration TODOs
+
+### High Priority Integration TODOs
+```typescript
+// TODO: Implement proper Vine.proto loading and compilation
+// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Protocol Loading)
+// Implementation: Load actual Vine.proto from Mountain's Proto directory
+// Dependencies: Protocol buffer compilation, path resolution
+// Validation: Successful gRPC communication with Mountain
+
+// TODO: Implement request routing to services
+// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Service Integration Mapping)
+// Implementation: Service dispatcher with method pattern matching
+// Dependencies: ServiceMapping, error handling, performance monitoring
+// Validation: Test with all Mountain service methods
+
+// TODO: Implement connection pooling and retry logic
+// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Connection Management)
+// Implementation: Connection pooling with exponential backoff
+// Dependencies: Connection management library
+// Validation: Handle network failures gracefully
+```
+
+### Medium Priority Integration TODOs
+```typescript
+// TODO: Implement ExtensionHostService gRPC integration
+// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Extension Management)
+// Implementation: Route extension requests to Mountain
+// Dependencies: MountainClientService, error handling
+// Validation: End-to-end extension activation
+
+// TODO: Implement ConfigurationService synchronization
+// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Configuration Service)
+// Implementation: Sync configuration with Mountain
+// Dependencies: MountainClientService, conflict resolution
+// Validation: Real-time configuration synchronization
+
+// TODO: Implement readiness signaling and health checking
+// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Bootstrap Process)
+// Implementation: Send readiness notification to Mountain
+// Dependencies: MountainClientService, connection validation
+// Validation: Mountain acknowledges readiness signal
+```
+
+### Low Priority Integration TODOs
+```typescript
+// TODO: Implement TLS encryption for gRPC
+// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Security Implementation)
+// Implementation: TLS certificate management, encryption
+// Dependencies: Certificate authority, TLS libraries
+// Validation: Encrypted communication verified
+
+// TODO: Implement performance optimization
+// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Performance Requirements)
+// Implementation: Message compression, connection pooling
+// Dependencies: Compression libraries, performance monitoring
+// Validation: <10ms latency for gRPC calls
+
+// TODO: Implement comprehensive monitoring
+// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Monitoring)
+// Implementation: Metrics collection, logging, health checks
+// Dependencies: Monitoring framework, performance tools
+// Validation: Production-ready monitoring system
+```

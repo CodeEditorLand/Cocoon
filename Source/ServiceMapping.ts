@@ -16,11 +16,15 @@ import { IExtensionHostService } from "./Interfaces/IExtensionHostService";
 import { IIPCService } from "./Interfaces/IIPCService";
 import { IModuleInterceptorService } from "./Interfaces/IModuleInterceptorService";
 import { IAPIFactoryService } from "./Interfaces/IAPIFactoryService";
+import { IGRPCServerService } from "./Interfaces/IGRPCServerService";
+import { IMountainClientService } from "./Interfaces/IMountainClientService";
 
 // Import service implementations
 import { ConfigurationService, ConfigurationServiceLive } from "./Services/Configuration";
 import { ExtensionHostService, ExtensionHostServiceLive } from "./Services/ExtensionHostService";
 import { IPCService, IPCServiceLive } from "./Services/IPCService";
+import { GRPCServerService, GRPCServerServiceLive } from "./Services/GRPCServerService";
+import { MountainClientService, MountainClientServiceLive } from "./Services/MountainClientService";
 
 /**
  * Service descriptor interface
@@ -129,6 +133,20 @@ export class ServiceMapping {
             interface: IExtensionHostService,
             implementation: ExtensionHostServiceLive,
             dependencies: [IConfigurationService, IIPCService]
+        });
+        
+        // Register GRPC Server Service
+        this.registerService('GRPCServerService', {
+            interface: IGRPCServerService,
+            implementation: GRPCServerServiceLive,
+            dependencies: []
+        });
+        
+        // Register Mountain Client Service
+        this.registerService('MountainClientService', {
+            interface: IMountainClientService,
+            implementation: MountainClientServiceLive,
+            dependencies: []
         });
         
         // TODO: Register ModuleInterceptorService

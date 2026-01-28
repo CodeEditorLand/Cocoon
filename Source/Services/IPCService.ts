@@ -31,6 +31,7 @@ export class IPCService implements IIPCService {
         // Implementation: gRPC with protobuf, connection pooling, TLS
         // Dependencies: @grpc/grpc-js, protobuf schemas, certificate management
         // Validation: Performance test with 1000+ concurrent messages
+    }
     
     /**
      * Initialize IPC service

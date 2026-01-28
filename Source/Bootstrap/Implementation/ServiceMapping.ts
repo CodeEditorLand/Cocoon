@@ -348,7 +348,7 @@ export class ServiceMapping {
   }
 
   // Utility functions for nested configuration
-  function getNestedValue(obj: any, key: string): any {
+  private getNestedValue(obj: any, key: string): any {
     const keys = key.split('.');
     let current = obj;
 
@@ -363,7 +363,7 @@ export class ServiceMapping {
     return current;
   }
 
-  function setNestedValue(obj: any, key: string, value: any): void {
+  private setNestedValue(obj: any, key: string, value: any): void {
     const keys = key.split('.');
     let current = obj;
 
