@@ -8,11 +8,9 @@
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (gRPC Server Implementation)
  */
 
-import path from "path";
-
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
-import { Context, Effect, Layer, pipe } from "effect";
+import { Effect, Layer } from "effect";
 
 import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
 
@@ -62,7 +60,7 @@ interface CocoonServiceImplementation {
  * GRPCServerService implementation
  */
 export class GRPCServerService implements IGRPCServerService {
-	private readonly _serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
 	private server: grpc.Server | null = null;
 	private port: number = 50052; // Default Cocoon gRPC port
@@ -70,6 +68,7 @@ export class GRPCServerService implements IGRPCServerService {
 	private serviceImplementation: CocoonServiceImplementation;
 
 	constructor() {
+		this._serviceBrand = undefined;
 		console.log("[GRPCServerService] Initializing gRPC server");
 
 		// Parse environment variables
@@ -421,7 +420,7 @@ export class GRPCServerService implements IGRPCServerService {
 			running: this.isRunning,
 			port: this.port,
 			errorCount: 0, // TODO: Implement error counting
-			uptime: this.isRunning ? Date.now() - this.startTime : undefined,
+			uptime: this.isRunning ? Date.now() - this.startTime : undefined as number | undefined,
 		};
 	}
 

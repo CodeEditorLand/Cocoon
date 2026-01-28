@@ -8,7 +8,7 @@
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (Mountain Client Implementation)
  */
 
-import { Effect, Layer, Context, pipe } from "effect";
+import { Effect, Layer } from "effect";
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { IMountainClientService } from "../Interfaces/IMountainClientService";
@@ -50,7 +50,7 @@ type MountainServiceClient = {
  * MountainClientService implementation
  */
 export class MountainClientService implements IMountainClientService {
-    private readonly _serviceBrand: undefined;
+    readonly _serviceBrand: undefined;
     
     private client: grpc.Client | null = null;
     private mountainHost: string = 'localhost';
@@ -61,6 +61,7 @@ export class MountainClientService implements IMountainClientService {
     private requestCounter: number = 0;
     
     constructor() {
+        this._serviceBrand = undefined;
         console.log('[MountainClientService] Initializing Mountain gRPC client');
         
         // Parse environment variables
@@ -73,8 +74,8 @@ export class MountainClientService implements IMountainClientService {
      * Parse environment variables for configuration
      */
     private parseEnvironment(): void {
-        const mountainHost = process.env.MOUNTAIN_CONNECTION_HOST;
-        const mountainPort = process.env.MOUNTAIN_GRPC_PORT;
+        const mountainHost = process.env['MOUNTAIN_CONNECTION_HOST'];
+        const mountainPort = process.env['MOUNTAIN_GRPC_PORT'];
         
         if (mountainHost) {
             this.mountainHost = mountainHost;
@@ -112,16 +113,7 @@ export class MountainClientService implements IMountainClientService {
                     'grpc.max_receive_message_length': 1024 * 1024 * 100, // 100MB
                     'grpc.max_send_message_length': 1024 * 1024 * 100,      // 100MB
                 }
-            );
-            
-            // Wait for connection to be established
-            await this.waitForConnection();
-            
-            this.isConnected = true;
-            this.connectionStartTime = Date.now();
-            this.errorCount = 0;
-            
-            console.log('[MountainClientService] Successfully connected to Mountain');
+        ) as grpc.Client;
             
         } catch (error) {
             this.errorCount++;
@@ -419,7 +411,7 @@ export class MountainClientService implements IMountainClientService {
             mountainHost: this.mountainHost,
             mountainPort: this.mountainPort,
             errorCount: this.errorCount,
-            uptime: this.isConnected ? Date.now() - this.connectionStartTime : undefined
+            uptime: this.isConnected ? Date.now() - this.connectionStartTime : undefined as number | undefined
         };
     }
 }
