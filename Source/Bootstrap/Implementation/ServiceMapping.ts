@@ -378,14 +378,14 @@ export class ServiceMapping {
     current[keys[keys.length - 1]] = value;
   }
 
-  function collectKeys(obj: any, prefix: string, keys: string[]): void {
+  private collectKeys(obj: any, prefix: string, keys: string[]): void {
     for (const key in obj) {
       if (key.startsWith('_')) continue;
       
       const fullKey = prefix ? `${prefix}.${key}` : key;
       
       if (typeof obj[key] === 'object' && obj[key] !== null) {
-        collectKeys(obj[key], fullKey, keys);
+        this.collectKeys(obj[key], fullKey, keys);
       } else {
         keys.push(fullKey);
       }

@@ -1,208 +1,162 @@
 /**
  * @module CocoonMain
  * @description
- * Main entry point for Cocoon extension host process.
- * This follows Wind's pattern for bootstrap and service initialization.
- * 
- * Architecture:
- * 1. Service mapping and dependency injection
- * 2. IPC communication with Mountain
- * 3. Extension lifecycle management
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export { runCocoon };
-
+ * Main entry point for Cocoon extension host.
+ * Bootstrap script that initializes all services and starts the extension host.
+ */
+
+import { Effect, Layer } from "effect";
+import { NodeRuntime } from "@effect/platform-node";
+
+// Service mapping
+import { ServiceMappingInstance } from "./ServiceMapping.js";
+import { ExtensionHostService } from "./ServiceMapping.js";
+import { IPCService } from "./ServiceMapping.js";
+import { ModuleInterceptorService } from "./ServiceMapping.js";
+
+// --- Bootstrap Logic ---
+
+/**
+ * Bootstrap the Cocoon extension host
+ */
+const bootstrapCocoon = Effect.gen(function* () {
+    console.log("[CocoonMain] Starting Cocoon bootstrap...");
+    
+    // Validate service dependencies
+    yield* ServiceMappingInstance.validateDependencies();
+    
+    // Compose application layer
+    const appLayer = ServiceMappingInstance.composeAppLayer();
+    console.log("[CocoonMain] Application layer composed");
+    
+    // Initialize IPC communication
+    const ipcService = yield* IPCService;
+    console.log("[CocoonMain] IPC service initialized");
+    
+    // Install module interceptor
+    const moduleInterceptor = yield* ModuleInterceptorService;
+    yield* moduleInterceptor.install();
+    console.log("[CocoonMain] Module interceptor installed");
+    
+    // Perform handshake with Mountain
+    console.log("[CocoonMain] Performing handshake with Mountain...");
+    yield* performHandshake(ipcService);
+    console.log("[CocoonMain] Handshake with Mountain completed");
+    
+    // Initialize extension host
+    const extensionHost = yield* ExtensionHostService;
+    console.log("[CocoonMain] Extension host initialized");
+    
+    // Start extension activation
+    console.log("[CocoonMain] Activating startup extensions...");
+    yield* activateStartupExtensions(extensionHost);
+    console.log("[CocoonMain] Startup extensions activated");
+    
+    // Enter main event loop
+    console.log("[CocoonMain] Entering main event loop...");
+    yield* enterEventLoop(ipcService, extensionHost);
+});
+
+/**
+ * Perform handshake with Mountain
+ */
+const performHandshake = (ipcService: any) => Effect.gen(function* () {
+    // Send initial handshake notification
+    yield* ipcService.sendNotification("$initialHandshake", []);
+    
+    // Wait for initialization data
+    const initData = yield* ipcService.sendRequest("$getInitData", []);
+    console.log("[CocoonMain] Received initialization data from Mountain");
+    
+    return initData;
+}).pipe(
+    Effect.catchAll((error) => Effect.gen(function* () {
+        console.error("[CocoonMain] Handshake failed:", error);
+        yield* Effect.logError("Failed to handshake with Mountain");
+        return Effect.fail(error);
+    }))
+);
+
+/**
+ * Activate startup extensions
+ */
+const activateStartupExtensions = (extensionHost: any) => Effect.gen(function* () {
+    // TODO: Get extension list from Mountain
+    const startupExtensions = ["*" as any]; // Placeholder
+    
+    for (const extensionId of startupExtensions) {
+        yield* extensionHost.activateExtension(extensionId, "*");
+    }
+    
+    console.log(`[CocoonMain] Activated ${startupExtensions.length} startup extensions`);
+});
+
+/**
+ * Enter main event loop
+ */
+const enterEventLoop = (ipcService: any, extensionHost: any) => Effect.gen(function* () {
+    // Register IPC handlers
+    yield* registerIPCHandlers(ipcService, extensionHost);
+    
+    // Keep process alive
+    yield* Effect.never;
+});
+
+/**
+ * Register IPC handlers for Mountain communication
+ */
+const registerIPCHandlers = (ipcService: any, extensionHost: any) => Effect.gen(function* () {
+    console.log("[CocoonMain] Registering IPC handlers...");
+    
+    // Handle extension activation requests
+    yield* ipcService.registerHandler("$activateExtension", async (extensionId: string, activationEvent: string) => {
+        return Effect.runPromise(extensionHost.activateExtension(extensionId, activationEvent));
+    });
+    
+    // Handle extension deactivation requests
+    yield* ipcService.registerHandler("$deactivateExtension", async (extensionId: string) => {
+        return Effect.runPromise(extensionHost.deactivateExtension(extensionId));
+    });
+    
+    // Handle shutdown requests
+    yield* ipcService.registerHandler("$shutdown", async () => {
+        console.log("[CocoonMain] Received shutdown request from Mountain");
+        
+        // TODO: Implement proper deactivation
+        // Deactivate all extensions
+        
+        process.exit(0); // Exit process
+    });
+    
+    console.log("[CocoonMain] IPC handlers registered");
+});
+
+// --- Error handling and recovery ---
+
+/**
+ * Error handling and recovery
+ */
+const handleErrors = Effect.catchAll((error: any) => Effect.gen(function* () {
+    console.error("[CocoonMain] Fatal error:", error);
+    yield* Effect.logError("Cocoon process terminating due to error");
+    
+    // Attempt graceful shutdown
+    process.exit(1);
+}));
+
+// --- Main Execution ---
+
+/**
+ * Main entry point
+ */
+const main = bootstrapCocoon.pipe(
+    Effect.provide(ServiceMappingInstance.composeAppLayer()),
+    handleErrors
+);
+
+/**
+ * Run Cocoon
+ */
 const runCocoon = () => {
     console.log("[CocoonMain] Starting Cocoon extension host...");
     
@@ -214,15 +168,12 @@ const runCocoon = () => {
     }
     
     // Run the main effect
-    const main = bootstrapCocoon.pipe(
-        Effect.provide(ServiceMappingInstance.composeAppLayer()),
-        handleErrors
-    );
-    
     NodeRuntime.runMain(main);
 };
+
+export { runCocoon };
 
 // Export for testing
 if (require.main === module) {
     runCocoon();
-}  })    process.exit(1);    // Attempt graceful shutdown        yield* Effect.logError("Cocoon process terminating due to error");    console.error("[CocoonMain] Fatal error:", error);  Effect.gen(function* () {const handleErrors = Effect.catchAll((error: any) => */ * Error handling and recovery/**  });    console.log("[CocoonMain] IPC handlers registered");    });      process.exit(0);      // Exit process            // TODO: Implement proper deactivation      // Deactivate all extensions            console.log("[CocoonMain] Received shutdown request from Mountain");    yield* ipcService.registerHandler("$shutdown", async () => {    // Handle shutdown requests    });      );        extensionHost.deactivateExtension(extensionId)      return Effect.runPromise(    yield* ipcService.registerHandler("$deactivateExtension", async (extensionId: string) => {    // Handle extension deactivation requests    });      );        extensionHost.activateExtension(extensionId, activationEvent)      return Effect.runPromise(    yield* ipcService.registerHandler("$activateExtension", async (extensionId: string, activationEvent: string) => {    // Handle extension activation requests    console.log("[CocoonMain] Registering IPC handlers...");  Effect.gen(function* () {const registerIPCHandlers = (ipcService: any, extensionHost: any) => */ * Register IPC handlers for Mountain communication/**  });    yield* Effect.never;    // Keep process alive    yield* registerIPCHandlers(ipcService, extensionHost);    // Register IPC handlers    console.log("[CocoonMain] Entering main event loop...");  Effect.gen(function* () {const enterEventLoop = (ipcService: any, extensionHost: any) => */ * Enter main event loop/**  });    console.log(`[CocoonMain] Activated ${startupExtensions.length} startup extensions`);    }      yield* extensionHost.activateExtension(extensionId, "*");    for (const extensionId of startupExtensions) {    const startupExtensions = ["*" as any]; // Placeholder    // TODO: Get extension list from Mountain    console.log("[CocoonMain] Activating startup extensions...");  Effect.gen(function* () {const activateStartupExtensions = (extensionHost: any) => */ * Activate startup extensions/**  );    )      })        return Effect.fail(error);        yield* Effect.logError("Failed to handshake with Mountain");        console.error("[CocoonMain] Handshake failed:", error);      Effect.gen(function* () {    Effect.catchAll((error) =>  }).pipe(    return initData;    console.log("[CocoonMain] Received initialization data from Mountain");    const initData = yield* ipcService.sendRequest("$getInitData", []);    // Wait for initialization data    yield* ipcService.sendNotification("$initialHandshake", []);    // Send initial handshake notification    console.log("[CocoonMain] Performing handshake with Mountain...");  Effect.gen(function* () {const performHandshake = (ipcService: any) => */ * Perform handshake with Mountain/**});  yield* enterEventLoop(ipcService, extensionHost);  // Enter main event loop  console.log("[CocoonMain] Startup extensions activated");  yield* activateStartupExtensions(extensionHost);  // Start extension activation  console.log("[CocoonMain] Extension host initialized");  const extensionHost = yield* ExtensionHostService;  // Initialize extension host  console.log("[CocoonMain] Handshake with Mountain completed");  yield* performHandshake(ipcService);  // Perform handshake with Mountain  console.log("[CocoonMain] Module interceptor installed");  yield* moduleInterceptor.install();  const moduleInterceptor = yield* ModuleInterceptorService;  // Install module interceptor  console.log("[CocoonMain] IPC service initialized");  const ipcService = yield* IPCService;  // Initialize IPC communication  console.log("[CocoonMain] Application layer composed");  const appLayer = ServiceMappingInstance.composeAppLayer();  // Compose application layer  yield* ServiceMappingInstance.validateDependencies();  // Validate service dependencies  console.log("[CocoonMain] Starting Cocoon bootstrap...");const bootstrapCocoon = Effect.gen(function* () { */ * Bootstrap the Cocoon extension host/**// --- Bootstrap Logic ---import { ModuleInterceptorService } from "./ServiceMapping.js";import { IPCService } from "./ServiceMapping.js";import { ExtensionHostService } from "./ServiceMapping.js";import { ServiceMappingInstance } from "./ServiceMapping.js";// Service mappingimport { NodeRuntime } from "@effect/platform-node";import { Effect, Layer } from "effect"; */ * - Add error handling and recovery * - Create proper IPC communication * - Implement actual service implementations * TODOs: * 
+}
