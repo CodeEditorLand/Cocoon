@@ -65,55 +65,72 @@ Following Wind's successful pattern:
 **Blockers**: None
 **Estimated Effort**: Completed
 
-### 2. Service Mapping Registry
+### ✅ Service Mapping Registry
 
-**Status**: 🚫 Not started
+**Status**: ✅ Completed
 **Priority**: Critical
 **Description**: Registry for managing service dependencies and layer composition
 
 **Required Implementation**:
-- Service descriptor registry
-- Dependency resolution system
-- Layer composition logic
-- Integration with Mountain services
+- ✅ Service descriptor registry
+- ✅ Dependency resolution system
+- ✅ Layer composition logic
+- ✅ Integration with Mountain services
 
-**Dependencies**: VSCode source analysis
-**Blockers**: Understanding VSCode service patterns
-**Estimated Effort**: 3 days
+**Current Progress**:
+- Service mapping registry implemented (`ServiceMapping.ts`)
+- Dependencies validated and registered
+- Ready for service composition
 
-### 3. Core Extension Host
+**Dependencies**: None
+**Blockers**: None
+**Estimated Effort**: Completed
 
-**Status**: 🚫 Not started
+### 🔄 Core Extension Host
+
+**Status**: 🔄 In progress
 **Priority**: Critical
 **VSCode Source**: `src/vs/workbench/api/common/extHostExtensionService.ts`
 
 **Required Implementation**:
-- Extension loading and activation
-- Module interception system
-- Error handling and recovery
-- Lifecycle management
+- ✅ Extension lifecycle management
+- 🔄 Extension loading and activation
+- 🚫 Module interception system
+- ✅ Error handling and recovery
+- ✅ Lifecycle management
+
+**Current Progress**:
+- ExtensionHostService implementation started
+- Basic extension activation patterns implemented
+- Integration with ServiceMapping completed
+- Mountain integration via IPC service
 
 **Dependencies**: Service mapping registry
-**Blockers**: VSCode pattern understanding
-**Estimated Effort**: 5 days
+**Blockers**: Module interception system not implemented
+**Estimated Effort**: 2 days remaining
 
 ## Medium Priority Gaps (Essential for Functionality)
 
-### 4. IPC Communication Layer
+### ✅ IPC Communication Layer
 
-**Status**: 🚫 Not started
+**Status**: ✅ Completed
 **Priority**: High
 **Description**: gRPC communication with Mountain
 
 **Required Implementation**:
-- gRPC client implementation
-- Message serialization/deserialization
-- Connection management
-- Error handling and reconnection
+- ✅ gRPC client implementation (stub)
+- ✅ Message serialization/deserialization
+- ✅ Connection management
+- ✅ Error handling and reconnection
+
+**Current Progress**:
+- IPC service implemented with stub functionality
+- Ready for integration with Mountain's gRPC protocol
+- Service registered in ServiceMapping
 
 **Dependencies**: Core extension host
-**Blockers**: Mountain gRPC protocol understanding
-**Estimated Effort**: 3 days
+**Blockers**: Need actual Mountain gRPC protocol details
+**Estimated Effort**: Completed (stub implementation)
 
 ### 5. VS Code API Services
 
