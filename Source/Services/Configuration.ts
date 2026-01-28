@@ -83,7 +83,7 @@ export class ConfigurationService implements IConfigurationService {
             return defaultValue;
         }
 
-        const value = getNestedValue(scopeConfig, key);
+        const value = this.getNestedValue(scopeConfig, key);
         return value !== undefined ? value : defaultValue;
     }
     
@@ -97,10 +97,10 @@ export class ConfigurationService implements IConfigurationService {
             this.configuration.set(scope, scopeConfig);
         }
 
-        const oldValue = getNestedValue(scopeConfig, key);
+        const oldValue = this.getNestedValue(scopeConfig, key);
         
         if (oldValue !== value) {
-            setNestedValue(scopeConfig, key, value);
+            this.setNestedValue(scopeConfig, key, value);
             
             // Update timestamp
             scopeConfig._timestamp = Date.now();
