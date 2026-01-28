@@ -25,7 +25,12 @@ export class IPCService implements IIPCService {
     
     constructor() {
         console.log('[IPCService] Initializing stub IPC service');
-    }
+        
+        // TODO: Implement production-grade gRPC client
+        // Specification: ARCHITECTURE-SPECIFICATION.md (IPC Bridge Service)
+        // Implementation: gRPC with protobuf, connection pooling, TLS
+        // Dependencies: @grpc/grpc-js, protobuf schemas, certificate management
+        // Validation: Performance test with 1000+ concurrent messages
     
     /**
      * Initialize IPC service
@@ -66,6 +71,12 @@ export class IPCService implements IIPCService {
         // Simulate network delay
         await new Promise(resolve => setTimeout(resolve, 50));
         
+        // TODO: Implement message serialization/deserialization
+        // Specification: ARCHITECTURE-SPECIFICATION.md (IPC Bridge Service)
+        // Implementation: protobuf schema validation, compression
+        // Dependencies: protobuf schemas, compression libraries
+        // Validation: Test with large payloads (>10MB)
+        
         this._lastPing = Date.now();
         
         // Simulate Mountain response
@@ -74,6 +85,12 @@ export class IPCService implements IIPCService {
             data: { received: true, command, timestamp: Date.now() },
             messageId: `msg_${Date.now()}`
         };
+        
+        // TODO: Implement real Mountain gRPC protocol
+        // Specification: ARCHITECTURE-SPECIFICATION.md (IPC Bridge Service)
+        // Implementation: Mountain protobuf API integration
+        // Dependencies: Mountain protobuf definitions, authentication
+        // Validation: Integration testing with Mountain backend
         
         console.log(`[IPCService] Received response from Mountain for: ${command}`);
         

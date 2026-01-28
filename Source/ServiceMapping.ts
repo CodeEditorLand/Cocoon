@@ -14,6 +14,8 @@ import { Effect, Layer, Context, pipe } from "effect";
 import { IConfigurationService } from "./Interfaces/IConfigurationService";
 import { IExtensionHostService } from "./Interfaces/IExtensionHostService";
 import { IIPCService } from "./Interfaces/IIPCService";
+import { IModuleInterceptorService } from "./Interfaces/IModuleInterceptorService";
+import { IAPIFactoryService } from "./Interfaces/IAPIFactoryService";
 
 // Import service implementations
 import { ConfigurationService, ConfigurationServiceLive } from "./Services/Configuration";
@@ -128,6 +130,18 @@ export class ServiceMapping {
             implementation: ExtensionHostServiceLive,
             dependencies: [IConfigurationService, IIPCService]
         });
+        
+        // TODO: Register ModuleInterceptorService
+        // Specification: IMPLEMENTATION-SPECIFICATION.md (Module Interceptor Service)
+        // Implementation: Create ModuleInterceptorService implementation
+        // Dependencies: ExtensionHostService, SecurityService
+        // Validation: Test module interception functionality
+        
+        // TODO: Register APIFactoryService
+        // Specification: IMPLEMENTATION-SPECIFICATION.md (API Factory Service)
+        // Implementation: Create APIFactoryService implementation
+        // Dependencies: ModuleInterceptorService, ConfigurationService
+        // Validation: Test VS Code API construction
         
         console.log('[ServiceMapping] Service mapping registry initialized');
         console.log(`[ServiceMapping] Registered services: ${this.getRegisteredServices().join(', ')}`);

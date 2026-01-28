@@ -128,7 +128,11 @@ export class ExtensionHostService implements IExtensionHostService {
         
         if (extensionsConfig) {
             console.log(`[ExtensionHostService] Found ${extensionsConfig.length} extensions in configuration`);
-            // TODO: Load extensions into registry
+            // TODO: Implement extension registry with dynamic loading
+            // Specification: ARCHITECTURE-SPECIFICATION.md (Extension Host Service)
+            // Implementation: Load extensions from Wind's extension discovery service
+            // Dependencies: Wind extension discovery API, configuration service
+            // Validation: Test with 100+ extension configurations
         }
         
         console.log('[ExtensionHostService] Extension registry setup complete');
@@ -140,10 +144,18 @@ export class ExtensionHostService implements IExtensionHostService {
     private createExtensionRegistry(): ExtensionDescriptionRegistry {
         return {
             getAllExtensionDescriptions: (): IExtensionDescription[] => {
-                return []; // TODO: Implement extension loading
+                return []; // TODO: Implement extension registry with caching
+                // Specification: ARCHITECTURE-SPECIFICATION.md (Extension Host Service)
+                // Implementation: Cache extension metadata with TTL
+                // Dependencies: ConfigurationService, IPCService for Mountain sync
+                // Validation: Performance test with 500+ extensions
             },
             getExtensionDescription: (extensionId: string): IExtensionDescription | undefined => {
-                return undefined; // TODO: Implement extension lookup
+                return undefined; // TODO: Implement extension lookup with error handling
+                // Specification: ARCHITECTURE-SPECIFICATION.md (Extension Host Service)
+                // Implementation: Circuit breaker pattern for extension lookup
+                // Dependencies: Error recovery service, fallback mechanisms
+                // Validation: Test with missing and corrupted extensions
             }
         };
     }
@@ -239,8 +251,11 @@ export class ExtensionHostService implements IExtensionHostService {
         const modulePath = `${extension.extensionLocation}/${extension.main}`;
         console.log(`[ExtensionHostService] Loading module: ${modulePath}`);
         
-        // TODO: Implement module loading with interception
-        // This would use ModuleInterceptorService
+        // TODO: Implement advanced module interception with AST parsing
+        // Specification: ARCHITECTURE-SPECIFICATION.md (Module Interceptor Service)
+        // Implementation: Use ModuleInterceptorService.resolveModule() with security sandboxing
+        // Dependencies: ModuleInterceptorService, AST parser integration, security context
+        // Validation: Test with CommonJS and ESM extension modules, security audit
         
         // Mock implementation for now
         return {
@@ -280,7 +295,11 @@ export class ExtensionHostService implements IExtensionHostService {
             workspaceState: {},
             globalState: {},
             secrets: {},
-            // TODO: Add more context properties
+            // TODO: Implement complete VS Code extension context
+            // Specification: ARCHITECTURE-SPECIFICATION.md (API Factory Service)
+            // Implementation: Integrate with APIFactoryService.createExtensionContext()
+            // Dependencies: APIFactoryService, ConfigurationService, IPCService
+            // Validation: Validate against VS Code extension context API, performance benchmark
         };
     }
     
