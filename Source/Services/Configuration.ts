@@ -172,7 +172,7 @@ export class ConfigurationService implements IConfigurationService {
             return false;
         }
         
-        const value = getNestedValue(scopeConfig, key);
+        const value = this.getNestedValue(scopeConfig, key);
         return value !== undefined;
     }
     
@@ -238,7 +238,7 @@ export class ConfigurationService implements IConfigurationService {
             return { key } as IConfigurationValue<T>;
         }
 
-        const value = getNestedValue(scopeConfig, key);
+        const value = this.getNestedValue(scopeConfig, key);
         return {
             key,
             value
@@ -264,7 +264,7 @@ export class ConfigurationService implements IConfigurationService {
 /**
  * Get nested value from configuration object
  */
-function getNestedValue(obj: any, key: string): any {
+private getNestedValue(obj: any, key: string): any {
   const keys = key.split('.');
   let current = obj;
 
@@ -277,6 +277,24 @@ function getNestedValue(obj: any, key: string): any {
   }
 
   return current;
+}
+
+/**
+ * Set nested value in configuration object
+ */
+private setNestedValue(obj: any, key: string, value: any): void {
+  const keys = key.split('.');
+  let current = obj;
+
+  for (let i = 0; i < keys.length - 1; i++) {
+    const k = keys[i];
+    if (!(k in current) || typeof current[k] !== 'object') {
+      current[k] = {};
+    }
+    current = current[k];
+  }
+
+  current[keys[keys.length - 1]] = value;
 }
 
 /**
@@ -356,42 +374,7 @@ export const ConfigurationServiceLive = Layer.effect(
 );
 
 // --- Utility Functions ---
-
-/**
- * Get nested value from configuration object
- */
-function getNestedValue(obj: any, key: string): any {
-  const keys = key.split('.');
-  let current = obj;
-
-  for (const k of keys) {
-    if (current && typeof current === 'object' && k in current) {
-      current = current[k];
-    } else {
-      return undefined;
-    }
-  }
-
-  return current;
-}
-
-/**
- * Set nested value in configuration object
- */
-function setNestedValue(obj: any, key: string, value: any): void {
-  const keys = key.split('.');
-  let current = obj;
-
-  for (let i = 0; i < keys.length - 1; i++) {
-    const k = keys[i];
-    if (!(k in current) || typeof current[k] !== 'object') {
-      current[k] = {};
-    }
-    current = current[k];
-  }
-
-  current[keys[keys.length - 1]] = value;
-}
+// (Functions moved to class methods above)
 
 /**
  * Recursively collect configuration keys
