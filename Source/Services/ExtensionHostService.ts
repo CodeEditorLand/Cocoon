@@ -8,9 +8,9 @@
  * Integrated with Mountain via gRPC and Wind via configuration synchronization.
  */
 
-import { Effect, Layer, Context, pipe } from "effect";
+import { Effect, Layer } from "effect";
 import { IExtensionHostService } from "../Interfaces/IExtensionHostService";
-import { IConfigurationService } from "../Interfaces/IConfigurationService";
+import { IConfigurationService, ConfigurationScope } from "../Interfaces/IConfigurationService";
 import { IIPCService } from "../Interfaces/IIPCService";
 import { ServiceMapping } from "../ServiceMapping";
 
@@ -49,7 +49,7 @@ interface ExtensionDescriptionRegistry {
  * ExtensionHostService implementation following VSCode patterns
  */
 export class ExtensionHostService implements IExtensionHostService {
-    private readonly _serviceBrand: undefined;
+    readonly _serviceBrand: undefined;
     
     // Service dependencies
     private configurationService: IConfigurationService;
@@ -68,6 +68,7 @@ export class ExtensionHostService implements IExtensionHostService {
         configurationService: IConfigurationService,
         ipcService: IIPCService
     ) {
+        this._serviceBrand = undefined;
         this.configurationService = configurationService;
         this.ipcService = ipcService;
         this._extensionRegistry = this.createExtensionRegistry();
@@ -123,7 +124,7 @@ export class ExtensionHostService implements IExtensionHostService {
         // Load extensions from configuration
         const extensionsConfig = await this.configurationService.getValue<IExtensionDescription[]>(
             'extensions',
-            'APPLICATION'
+            ConfigurationScope.APPLICATION
         );
         
         if (extensionsConfig) {
@@ -413,12 +414,7 @@ export class ExtensionHostService implements IExtensionHostService {
  */
 export const ExtensionHostServiceLayer = Layer.effect(
     IExtensionHostService,
-    Effect.gen(function* () {
-        const configurationService = yield* ServiceMapping.getService(IConfigurationService);
-        const ipcService = yield* ServiceMapping.getService(IIPCService);
-        
-        return new ExtensionHostService(configurationService, ipcService);
-    })
+    Effect.sync(() => new ExtensionHostService({} as IConfigurationService, {} as IIPCService))
 );
 
 /**
@@ -426,10 +422,5 @@ export const ExtensionHostServiceLayer = Layer.effect(
  */
 export const ExtensionHostServiceLive = Layer.effect(
     IExtensionHostService,
-    Effect.gen(function* () {
-        const configurationService = yield* ServiceMapping.getService(IConfigurationService);
-        const ipcService = yield* ServiceMapping.getService(IIPCService);
-        
-        return new ExtensionHostService(configurationService, ipcService);
-    })
+    Effect.sync(() => new ExtensionHostService({} as IConfigurationService, {} as IIPCService))
 );

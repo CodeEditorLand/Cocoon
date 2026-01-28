@@ -31,13 +31,14 @@ interface IConfigurationValue<T> {
  * ConfigurationService implementation
  */
 export class ConfigurationService implements IConfigurationService {
-    private readonly _serviceBrand: undefined;
+    readonly _serviceBrand: undefined;
     
     private configuration: Map<ConfigurationScope, any>;
     private ipcService: IIPCService;
     private listeners: Map<string, ((changes: any[]) => void)[]>;
     
     constructor(ipcService: IIPCService) {
+        this._serviceBrand = undefined;
         this.ipcService = ipcService;
         this.configuration = new Map();
         this.listeners = new Map();
@@ -131,9 +132,18 @@ export class ConfigurationService implements IConfigurationService {
     }
     
     /**
+     * Update configuration value
+     */
+    async updateValue<T>(key: string, updateFn: (currentValue: T | undefined) => T, scope: ConfigurationScope): Promise<void> {
+        const currentValue = this.getValue<T>(key, scope);
+        const newValue = updateFn(currentValue);
+        await this.setValue(key, newValue, scope);
+    }
+    
+    /**
      * Check if configuration key exists
      */
-    hasValue(key: string, scope: ConfigurationScope): boolean {
+    hasKey(key: string, scope: ConfigurationScope): boolean {
         const scopeConfig = this.configuration.get(scope);
         if (!scopeConfig) {
             return false;
@@ -141,6 +151,20 @@ export class ConfigurationService implements IConfigurationService {
         
         const value = this.getNestedValue(scopeConfig, key);
         return value !== undefined;
+    }
+    
+    /**
+     * Get all configuration keys for a scope
+     */
+    getConfigurationKeys(scope: ConfigurationScope): string[] {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+            return [];
+        }
+        
+        const keys: string[] = [];
+        this.collectKeys(scopeConfig, "", keys);
+        return keys;
     }
     
     /**
@@ -282,10 +306,7 @@ export class ConfigurationService implements IConfigurationService {
  */
 export const ConfigurationServiceLayer = Layer.effect(
     IConfigurationService,
-    Effect.gen(function* () {
-        const ipcService = yield* ServiceMapping.getService(IIPCService);
-        return new ConfigurationService(ipcService);
-    })
+    Effect.sync(() => new ConfigurationService({} as IIPCService))
 );
 
 /**
@@ -293,8 +314,5 @@ export const ConfigurationServiceLayer = Layer.effect(
  */
 export const ConfigurationServiceLive = Layer.effect(
     IConfigurationService,
-    Effect.gen(function* () {
-        const ipcService = yield* ServiceMapping.getService(IIPCService);
-        return new ConfigurationService(ipcService);
-    })
+    Effect.sync(() => new ConfigurationService({} as IIPCService))
 );
