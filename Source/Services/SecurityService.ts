@@ -169,31 +169,97 @@ export class SecurityService {
 		}
     
     /**
-     * Initialize audit logging
-     */
-    private async initializeAuditLogging(): Promise<void> {
-        // TODO: Initialize audit logging system
-        // Specification: IMPLEMENTATION-SPECIFICATION.md (Audit Logging)
-        // Implementation: Set up audit log storage and rotation
-        // Dependencies: Logging service, Mountain backend
-        // Validation: Test audit log functionality
-        
-        console.log("[SecurityService] Audit logging initialized");
-    }
+	 * Initialize advanced audit logging system
+	 */
+	private async initializeAuditLogging(): Promise<void> {
+		try {
+			// Set up structured audit logging with rotation
+			this.auditLog = [];
+			
+			// Create audit log rotation timer
+			setInterval(() => {
+				this.rotateAuditLog();
+			}, 3600000); // Rotate every hour
+			
+			console.log("[SecurityService] Advanced audit logging initialized with hourly rotation");
+			
+		} catch (error) {
+			console.error("[SecurityService] Failed to initialize audit logging:", error);
+			throw error;
+		}
+	}
+	
+	/**
+	 * Rotate audit log to prevent memory bloat
+	 */
+	private rotateAuditLog(): void {
+		const maxLogSize = 10000; // Keep last 10,000 events
+		if (this.auditLog.length > maxLogSize) {
+			this.auditLog = this.auditLog.slice(-maxLogSize);
+			console.log(`[SecurityService] Audit log rotated, keeping ${maxLogSize} most recent events`);
+		}
     
     /**
-     * Initialize incident response
-     */
-    private async initializeIncidentResponse(): Promise<void> {
-        // TODO: Initialize incident response system
-        // Specification: IMPLEMENTATION-SPECIFICATION.md (Incident Response)
-        // Implementation: Set up incident tracking and response procedures
-        // Dependencies: Alerting service, Mountain backend
-        // Validation: Test incident response workflow
-        
-        console.log("[SecurityService] Incident response initialized");
-    }
-    
+	 * Initialize advanced incident response system
+	 */
+	private async initializeIncidentResponse(): Promise<void> {
+		try {
+			this.incidents = [];
+			
+			// Set up incident escalation timer
+			setInterval(() => {
+				this.escalateCriticalIncidents();
+			}, 300000); // Check every 5 minutes
+			
+			console.log("[SecurityService] Advanced incident response system initialized");
+			
+		} catch (error) {
+			console.error("[SecurityService] Failed to initialize incident response:", error);
+			throw error;
+		}
+	}
+	
+	/**
+	 * Escalate critical incidents automatically
+	 */
+	private escalateCriticalIncidents(): void {
+		const criticalIncidents = this.incidents.filter(incident => 
+			incident.severity === 'critical' && 
+			incident.status === 'open' && 
+			Date.now() - incident.timestamp > 300000 // 5 minutes
+		);
+		
+		if (criticalIncidents.length > 0) {
+			console.warn(`[SecurityService] Auto-escalating ${criticalIncidents.length} critical incidents`);
+			
+			criticalIncidents.forEach(incident => {
+				incident.actions.push('Automatically escalated due to timeout');
+				this.sendIncidentToMountain(incident);
+			});
+		}
+	}
+	
+	/**
+	 * Send incident to Mountain for centralized tracking
+	 */
+	private async sendIncidentToMountain(incident: IncidentResponse): Promise<void> {
+		try {
+			const { MountainClientService } = await import('./MountainClientService');
+			const mountainClient = new MountainClientService();
+			
+			await mountainClient.sendNotification('security.incident', {
+				incidentId: incident.id,
+				severity: incident.severity,
+				description: incident.description,
+				timestamp: incident.timestamp,
+				actions: incident.actions
+			});
+			
+			console.log(`[SecurityService] Incident ${incident.id} sent to Mountain`);
+			
+		} catch (error) {
+			console.warn(`[SecurityService] Failed to send incident ${incident.id} to Mountain:`, error);
+		}
     /**
      * Check module access permission
      */
@@ -394,18 +460,54 @@ export class SecurityService {
     }
     
     /**
-     * Log security event
-     */
-    private async logSecurityEvent(event: SecurityEvent): Promise<void> {
-        this.auditLog.push(event);
-        
-        // Check for incident escalation
-        if (event.severity === 'critical' || event.severity === 'high') {
-            await this.escalateIncident(event);
-        }
-        
-        console.log(`[SecurityService] Security event logged: ${event.type} - ${event.action} - ${event.outcome}`);
-    }
+	 * Log security event with advanced threat detection
+	 */
+	private async logSecurityEvent(event: SecurityEvent): Promise<void> {
+		this.auditLog.push(event);
+		
+		// Real-time threat detection
+		await this.detectThreatPatterns(event);
+		
+		// Check for incident escalation
+		if (event.severity === 'critical' || event.severity === 'high') {
+			await this.escalateIncident(event);
+		}
+		
+		console.log(`[SecurityService] Security event logged: ${event.type} - ${event.action} - ${event.outcome}`);
+	}
+	
+	/**
+	 * Detect threat patterns in real-time
+	 */
+	private async detectThreatPatterns(event: SecurityEvent): Promise<void> {
+		const recentEvents = this.auditLog.filter(e => 
+			Date.now() - e.timestamp < 60000 && // Last minute
+			e.extensionId === event.extensionId
+		);
+		
+		// Detect rapid-fire violations
+		if (recentEvents.length >= 10) {
+			const threatEvent: SecurityEvent = {
+				id: `threat-detection-${Date.now()}`,
+				type: 'violation',
+				severity: 'critical',
+				extensionId: event.extensionId,
+				action: 'threat_detection',
+				resource: 'security_system',
+				outcome: 'detected',
+				timestamp: Date.now(),
+				details: {
+					pattern: 'rapid_fire_violations',
+					eventCount: recentEvents.length,
+					timeWindow: '1 minute'
+				}
+			};
+			
+			this.auditLog.push(threatEvent);
+			await this.escalateIncident(threatEvent);
+			
+			console.warn(`[SecurityService] Threat detected: ${event.extensionId} - rapid fire violations`);
+		}
     
     /**
      * Escalate security incident
