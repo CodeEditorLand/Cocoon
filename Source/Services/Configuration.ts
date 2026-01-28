@@ -77,6 +77,8 @@ export class ConfigurationService implements IConfigurationService {
          * Dependencies: Wind configuration API, change detection service
          * Validation: Test configuration consistency across systems
          */
+    }
+    
     getValue<T>(key: string, scope: ConfigurationScope, defaultValue?: T): T | undefined {
         const scopeConfig = this.configuration.get(scope);
         if (!scopeConfig) {
