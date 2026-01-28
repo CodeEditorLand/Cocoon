@@ -20,6 +20,32 @@ import { Effect, Layer, Context } from "effect";
 // --- Service Tags ---
 
 /**
+ * Configuration Service Tag
+ * Manages configuration settings for extensions
+ */
+export class ConfigurationService extends Context.Tag("Service/Configuration")<
+  ConfigurationService,
+  {
+    readonly getValue: <T>(
+      key: string,
+      defaultValue?: T,
+      scope?: number
+    ) => T;
+    readonly updateValue: (
+      key: string,
+      value: any,
+      scope?: number
+    ) => Promise<void>;
+    readonly inspect: <T>(
+      key: string,
+      scope?: number
+    ) => any;
+    readonly keys: () => string[];
+    readonly reloadConfiguration: () => Promise<void>;
+  }
+>() {}
+
+/**
  * Extension Host Service Tag
  * Manages extension lifecycle and activation
  */
