@@ -69,14 +69,7 @@ export class ConfigurationService implements IConfigurationService {
                 this.configuration.set(ConfigurationScope.PROFILE, initialConfiguration.profile);
             }
         }
-        
-        /**
-         * TODO: Implement configuration synchronization with Wind
-         * Specification: ARCHITECTURE-SPECIFICATION.md (Configuration Service)
-         * Implementation: Real-time sync with Wind's configuration system
-         * Dependencies: Wind configuration API, change detection service
-         * Validation: Test configuration consistency across systems
-         */
+    }
     
     getValue<T>(key: string, scope: ConfigurationScope, defaultValue?: T): T | undefined {
         const scopeConfig = this.configuration.get(scope);
