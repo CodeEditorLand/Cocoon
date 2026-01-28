@@ -275,25 +275,38 @@ export class CommandService extends Effect.Service<CommandService>()(
 						`[CommandService] Command '${Id}' not registered locally, executing via Mountain gRPC`,
 					);
 
-					// TODO: MOUNTAIN-INTEGRATION: Implement actual gRPC call (HIGH)
-					// return yield* Effect.tryPromise({
-					//     try: () => MountainClient.sendRequest('command.execute', {
-					//         commandId: Id,
-					//         arguments: Arguments
-					//     }) as Promise<T>,
-					//     catch: (Error) => {
-					//         yield* Logger.Error(
-					//             `[CommandService] Failed to execute remote command '${Id}'`,
-					//             Error as Error
-					//         );
-					//         throw Error;
-					//     }
-					// });
-
-					yield* Logger.Warn(
-						`[CommandService] TODO: Mountain gRPC integration for command.execute not yet implemented`,
-					);
-					return undefined as T;
+					// Mountain gRPC integration for command execution
+					const mountainClient = yield* MountainClientService;
+					
+					// Prepare command execution request
+					const executionRequest = {
+						commandId: Id,
+						args: Arguments,
+						sourceExtension: this.getCallingExtension(),
+						executionContext: this.getExecutionContext(),
+						timestamp: Date.now()
+					};
+					
+					try {
+						const result = yield* Effect.tryPromise({
+							try: () => mountainClient.sendRequest('command.execute', executionRequest),
+							catch: (error) => new Error(`Mountain command execution failed: ${error.message}`)
+						});
+						
+						// Track performance metrics
+						this.trackCommandExecution(Id, 'remote', Date.now() - startTime, true);
+						
+						return result as T;
+					} catch (error) {
+						// Track execution failure
+						this.trackCommandExecution(Id, 'remote', Date.now() - startTime, false);
+						
+						yield* Logger.Error(
+							`[CommandService] Failed to execute remote command '${Id}'`,
+							error as Error
+						);
+						throw error;
+					}
 				});
 
 			/**
@@ -352,19 +365,36 @@ export class CommandService extends Effect.Service<CommandService>()(
 					//     });
 					// }
 
-					// TODO: MOUNTAIN-INTEGRATION: Implement actual gRPC call (HIGH)
-					// yield* Effect.tryPromise({
-					//     try: () => MountainClient.sendRequest('command.register', {
-					//         commandId: Id
-					//     }),
-					//     catch: (Error) => {
-					//         yield* Logger.Error(
-					//             `[CommandService] Failed to register global command '${Id}' with Mountain`,
-					//             Error as Error
-					//         );
-					//         throw Error;
-					//     }
-					// });
+// Mountain gRPC integration for command registration
+				const mountainClient = yield* MountainClientService;
+				
+				// Prepare command registration request
+				const registrationRequest = {
+					commandId: Id,
+					extensionId: this.getCallingExtension(),
+					registrationTime: Date.now(),
+					commandMetadata: {
+						hasCallback: typeof Callback === 'function',
+						callbackType: typeof Callback,
+						thisArgProvided: ThisArg !== undefined
+					}
+				};
+				
+				try {
+					yield* Effect.tryPromise({
+						try: () => mountainClient.sendNotification('command.register', registrationRequest),
+						catch: (error) => new Error(`Mountain command registration failed: ${error.message}`)
+					});
+					
+					yield* Logger.Info(
+						`[CommandService] Command '${Id}' registered with Mountain`
+					);
+				} catch (error) {
+					yield* Logger.Warn(
+						`[CommandService] Failed to register command '${Id}' with Mountain:`, error
+					);
+					// Continue with local registration even if Mountain registration fails
+				}
 
 					// Return disposable for cleanup
 					return {
@@ -451,24 +481,25 @@ export class CommandService extends Effect.Service<CommandService>()(
 					const Registry = yield* Ref.get(CommandRegistry);
 					const LocalCommandIds = Array.from(Registry.keys());
 
-					// TODO: MOUNTAIN-INTEGRATION: Get remote commands from Mountain (HIGH)
-					// const RemoteCommands = yield* Effect.tryPromise({
-					//     try: () => MountainClient.sendRequest('command.get', {
-					//         filterInternal: FilterInternal
-					//     }) as Promise<string[]>,
-					//     catch: (Error) => {
-					//         yield* Logger.Warn(
-					//             `[CommandService] Failed to get commands from Mountain, using local only`,
-					//             Error as Error
-					//         );
-					//         return [];
-					//     }
-					// });
-
-					yield* Logger.Warn(
-						`[CommandService] TODO: Mountain gRPC integration for command.get not yet implemented`,
-					);
-					const RemoteCommands: string[] = [];
+// Mountain gRPC integration for getting remote commands
+			try {
+				const mountainClient = yield* MountainClientService;
+				const RemoteCommands = yield* Effect.tryPromise({
+					try: () => mountainClient.sendRequest('command.get', {
+						filterInternal: FilterInternal
+					}) as Promise<string[]>,
+					catch: (error) => {
+						yield* Logger.Warn(
+							`[CommandService] Failed to get commands from Mountain, using local only`,
+							error as Error
+						);
+						return [];
+					}
+				});
+				
+				yield* Logger.Info(
+					`[CommandService] Retrieved ${RemoteCommands.length} remote commands from Mountain`
+				);
 
 					// Combine and deduplicate
 					const AllCommands = Array.from(

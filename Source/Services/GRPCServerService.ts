@@ -186,26 +186,107 @@ export class GRPCServerService implements IGRPCServerService {
 	private routeRequest(method: string, parameters: any): any {
 		console.log(`[GRPCServerService] Routing request: ${method}`);
 
-		// TODO: Implement comprehensive request routing
-		// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Service Integration Mapping)
-		// Implementation: Service dispatcher with method pattern matching
-		// Dependencies: ServiceMapping, error handling, performance monitoring
-		// Validation: Test with all Mountain service methods
+		// Service routing table with pattern matching
+		const routePatterns = {
+			'extension.\w+': async (method: string, params: any) => {
+				// Route to ExtensionHostService
+				const { ExtensionHostService } = await import('./ExtensionHostService');
+				const service = new ExtensionHostService({} as any, {} as any);
+				
+				switch (method) {
+					case 'extension.activate':
+						return await service.activateExtension(params.extensionId, params.reason);
+					case 'extension.deactivate':
+						await service.deactivateExtension(params.extensionId);
+						return { success: true };
+					case 'extension.get':
+						return service.getActivatedExtension(params.extensionId);
+					default:
+						throw new Error(`Unknown extension method: ${method}`);
+				}
+			},
+			
+			'configuration.\w+': async (method: string, params: any) => {
+				// Route to ConfigurationService
+				const { ConfigurationService } = await import('./Configuration');
+				const service = new ConfigurationService();
+				
+				switch (method) {
+					case 'configuration.get':
+						return await service.getValue(params.key, params.scope);
+					case 'configuration.set':
+						await service.setValue(params.key, params.value, params.scope);
+						return { success: true };
+					case 'configuration.update':
+						await service.updateValue(params.key, params.updater, params.scope);
+						return { success: true };
+					default:
+						throw new Error(`Unknown configuration method: ${method}`);
+				}
+			},
+			
+			'command.\w+': async (method: string, params: any) => {
+				// Route to CommandService
+				const { CommandService } = await import('./Command');
+				const service = new CommandService({} as any);
+				
+				switch (method) {
+					case 'command.execute':
+						return await service.executeCommand(params.commandId, ...(params.args || []));
+					case 'command.register':
+						const disposable = await service.registerCommand(params.commandId, params.callback);
+						return { disposableId: 'command-registration' };
+					case 'command.get':
+						return await service.getCommands();
+					default:
+						throw new Error(`Unknown command method: ${method}`);
+				}
+			},
+			
+			'performance.\w+': async (method: string, params: any) => {
+				// Route to PerformanceMonitoringService
+				const { PerformanceMonitoringService } = await import('./PerformanceMonitoringService');
+				const service = new PerformanceMonitoringService();
+				
+				switch (method) {
+					case 'performance.metrics':
+						return service.getMetrics();
+					case 'performance.alerts':
+						return service.getAlerts();
+					case 'performance.report':
+						return service.generateReport();
+					default:
+						throw new Error(`Unknown performance method: ${method}`);
+				}
+			},
+			
+			'security.\w+': async (method: string, params: any) => {
+				// Route to SecurityService
+				const { SecurityService } = await import('./SecurityService');
+				const service = new SecurityService();
+				
+				switch (method) {
+					case 'security.policy':
+						return await service.getSecurityPolicy(params.extensionId);
+					case 'security.audit':
+						return service.getAuditLog();
+					case 'security.incidents':
+						return service.getActiveIncidents();
+					default:
+						throw new Error(`Unknown security method: ${method}`);
+				}
+			}
+		};
 
-		// Mock implementation for now
-		switch (method) {
-			case "extension.activate":
-				return { activated: true, extensionId: parameters.extensionId };
-			case "configuration.get":
-				return { value: "mock-value", key: parameters.key };
-			case "extension.deactivate":
-				return {
-					deactivated: true,
-					extensionId: parameters.extensionId,
-				};
-			default:
-				throw new Error(`Unknown method: ${method}`);
+		// Find matching route pattern
+		for (const [pattern, handler] of Object.entries(routePatterns)) {
+			const regex = new RegExp(pattern);
+			if (regex.test(method)) {
+				return handler(method, parameters);
+			}
 		}
+
+		throw new Error(`Unknown method: ${method}`);
 	}
 
 	/**
@@ -306,59 +387,87 @@ export class GRPCServerService implements IGRPCServerService {
 	 * Load protocol definition
 	 */
 	private async loadProtocolDefinition(): Promise<protoLoader.PackageDefinition> {
-		// TODO: Load Vine.proto from Mountain's protocol definitions
-		// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Protocol Loading)
-		// Implementation: Load protobuf definition from Mountain's source
-		// Dependencies: Protocol buffer compilation, path resolution
-		// Validation: Test with actual Mountain Vine.proto file
-
-		// Mock implementation - would load actual Vine.proto
-		const protoContent = `
-            syntax = "proto3";
+        console.log("[GRPCServerService] Loading Vine.proto protocol definition");
+        
+        try {
+            // Load actual Vine.proto from Mountain's source
+            const fs = require('fs');
+            const path = require('path');
             
-            service CocoonService {
-                rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
-                rpc SendMountainNotification(GenericNotification) returns (Empty);
-                rpc CancelOperation(CancelOperationRequest) returns (Empty);
+            // Resolve Mountain's Proto directory
+            const mountainProtoPath = path.resolve(
+                __dirname, 
+                '../../../../Mountain/Proto/Vine.proto'
+            );
+            
+            if (fs.existsSync(mountainProtoPath)) {
+                console.log(`[GRPCServerService] Found Vine.proto at: ${mountainProtoPath}`);
+                
+                return protoLoader.loadSync(mountainProtoPath, {
+                    keepCase: true,
+                    longs: String,
+                    enums: String,
+                    defaults: true,
+                    oneofs: true,
+                    includeDirs: [path.dirname(mountainProtoPath)]
+                });
+            } else {
+                console.warn("[GRPCServerService] Vine.proto not found, using fallback implementation");
+                
+                // Fallback to mock implementation
+                const fallbackProtoContent = `
+                    syntax = "proto3";
+                    
+                    service CocoonService {
+                        rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
+                        rpc SendMountainNotification(GenericNotification) returns (Empty);
+                        rpc CancelOperation(CancelOperationRequest) returns (Empty);
+                    }
+                    
+                    message GenericRequest {
+                        uint64 RequestIdentifier = 1;
+                        string Method = 2;
+                        bytes Parameter = 3;
+                    }
+                    
+                    message GenericResponse {
+                        uint64 RequestIdentifier = 1;
+                        bool Success = 2;
+                        bytes Data = 3;
+                        string Error = 4;
+                    }
+                    
+                    message GenericNotification {
+                        string Method = 1;
+                        bytes Parameter = 2;
+                    }
+                    
+                    message CancelOperationRequest {
+                        uint64 RequestIdentifier = 1;
+                        string Reason = 2;
+                    }
+                    
+                    message Empty {}
+                `;
+                
+                // Create temporary file for fallback
+                const tempDir = require('os').tmpdir();
+                const tempProtoPath = path.join(tempDir, 'vine.proto');
+                fs.writeFileSync(tempProtoPath, fallbackProtoContent);
+                
+                return protoLoader.loadSync(tempProtoPath, {
+                    keepCase: true,
+                    longs: String,
+                    enums: String,
+                    defaults: true,
+                    oneofs: true,
+                });
             }
             
-            message GenericRequest {
-                uint64 RequestIdentifier = 1;
-                string Method = 2;
-                bytes Parameter = 3;
-            }
-            
-            message GenericResponse {
-                uint64 RequestIdentifier = 1;
-                bool Success = 2;
-                bytes Data = 3;
-                string Error = 4;
-            }
-            
-            message GenericNotification {
-                string Method = 1;
-                bytes Parameter = 2;
-            }
-            
-            message CancelOperationRequest {
-                uint64 RequestIdentifier = 1;
-                string Reason = 2;
-            }
-            
-            message Empty {}
-        `;
-
-		return protoLoader.loadSync("vine.proto", {
-			keepCase: true,
-			longs: String,
-			enums: String,
-			defaults: true,
-			oneofs: true,
-		});
-	}
-
-	/**
-	 * Start server with promise interface
+        } catch (error) {
+            console.error("[GRPCServerService] Failed to load protocol definition:", error);
+            throw new Error(`Failed to load Vine.proto: ${error.message}`);
+        }
 	 */
 	private startServer(): Promise<void> {
 		return new Promise((resolve, reject) => {

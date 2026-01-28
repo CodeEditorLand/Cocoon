@@ -164,34 +164,271 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
     }
     
     /**
-     * Analyze module security using AST parsing
-     */
-    private analyzeModuleSecurity(modulePath: string): { isSafe: boolean; reason: string } {
-        try {
-            // TODO: Implement actual AST-based security analysis
-            // Specification: ARCHITECTURE-SPECIFICATION.md (AST Security Analysis)
-            // Implementation: Parse module code and detect security violations
-            // Dependencies: AST parsing library, security rules
-            // Validation: Test with malicious module patterns
-            
-            // Mock implementation for now
-            const mockAnalysis = {
-                isSafe: true,
-                reason: "Basic security check passed"
-            };
-            
-            console.log(`[ModuleInterceptorService] Security analysis for ${modulePath}: ${mockAnalysis.reason}`);
-            
-            return mockAnalysis;
-            
-        } catch (error) {
-            console.error(`[ModuleInterceptorService] Security analysis failed for ${modulePath}:`, error);
-            return {
-                isSafe: false,
-                reason: `Security analysis error: ${error}`
-            };
+	 * Analyze module security using advanced AST parsing
+	 */
+	private analyzeModuleSecurity(modulePath: string): { isSafe: boolean; reason: string } {
+		try {
+			console.log(`[ModuleInterceptorService] Performing advanced AST security analysis for ${modulePath}`);
+			
+			// Load module source code with enhanced error handling
+			const fs = require('fs');
+			const path = require('path');
+			
+			const resolvedPath = require.resolve(modulePath);
+			const sourceCode = fs.readFileSync(resolvedPath, 'utf8');
+			
+			// Enhanced AST parsing with comprehensive options
+			const ast = acorn.parse(sourceCode, {
+				ecmaVersion: 'latest',
+				sourceType: 'module',
+				allowAwaitOutsideFunction: true,
+				allowImportExportEverywhere: true,
+				allowReturnOutsideFunction: true,
+				ranges: true,
+				locations: true
+			});
+			
+			// Advanced security analysis with multiple detection layers
+			const securityIssues: string[] = [];
+			const securityWarnings: string[] = [];
+			
+			// Layer 1: Dangerous function calls and patterns
+			walk.simple(ast, {
+				CallExpression(node: any) {
+					const callee = node.callee;
+					
+					// Detect dangerous function calls
+					if (callee.type === 'Identifier') {
+						const functionName = callee.name;
+						
+						if (this.isCriticalDangerousFunction(functionName)) {
+							securityIssues.push(`CRITICAL: Dangerous function call: ${functionName}`);
+						} else if (this.isDangerousFunction(functionName)) {
+							securityWarnings.push(`WARNING: Dangerous function call: ${functionName}`);
+						}
+					}
+					
+					// Detect dynamic code execution patterns
+					if (callee.type === 'MemberExpression' && 
+					    callee.object.type === 'Identifier' && callee.object.name === 'eval' &&
+					    callee.property.type === 'Identifier' && callee.property.name === 'constructor') {
+						securityIssues.push(`CRITICAL: Dynamic code execution via eval constructor`);
+					}
+				},
+				
+				MemberExpression(node: any) {
+					// Detect dangerous property access
+					if (node.object.type === 'Identifier' && node.property.type === 'Identifier') {
+						const objectName = node.object.name;
+						const propertyName = node.property.name;
+						
+						if (this.isCriticalDangerousPropertyAccess(objectName, propertyName)) {
+							securityIssues.push(`CRITICAL: Dangerous property access: ${objectName}.${propertyName}`);
+						} else if (this.isDangerousPropertyAccess(objectName, propertyName)) {
+							securityWarnings.push(`WARNING: Dangerous property access: ${objectName}.${propertyName}`);
+						}
+					}
+				},
+				
+				AssignmentExpression(node: any) {
+					// Detect dangerous assignments
+					if (node.left.type === 'MemberExpression') {
+						const left = node.left;
+						if (left.object.type === 'Identifier' && left.property.type === 'Identifier') {
+							const objectName = left.object.name;
+							const propertyName = left.property.name;
+							
+							if (this.isCriticalDangerousAssignment(objectName, propertyName)) {
+								securityIssues.push(`CRITICAL: Dangerous assignment: ${objectName}.${propertyName}`);
+							} else if (this.isDangerousAssignment(objectName, propertyName)) {
+								securityWarnings.push(`WARNING: Dangerous assignment: ${objectName}.${propertyName}`);
+							}
+						}
+					}
+				},
+				
+				ImportDeclaration(node: any) {
+					// Detect dangerous imports
+					const importSource = node.source.value;
+					if (this.isDangerousImport(importSource)) {
+						securityIssues.push(`CRITICAL: Dangerous import: ${importSource}`);
+					}
+				},
+				
+				NewExpression(node: any) {
+					// Detect dangerous constructor calls
+					if (node.callee.type === 'Identifier') {
+						const constructorName = node.callee.name;
+						if (this.isDangerousConstructor(constructorName)) {
+							securityIssues.push(`CRITICAL: Dangerous constructor: ${constructorName}`);
+						}
+					}
+				}
+			}, this);
+			
+			// Layer 2: Pattern-based security analysis
+			this.performPatternAnalysis(sourceCode, securityIssues, securityWarnings);
+			
+			// Combine results
+			const allIssues = [...securityIssues, ...securityWarnings];
+			const isSafe = securityIssues.length === 0;
+			const reason = allIssues.length > 0 
+				? `Security analysis: ${allIssues.join(', ')}`
+				: "Advanced AST security analysis passed all checks";
+			
+			console.log(`[ModuleInterceptorService] Security analysis for ${modulePath}: ${securityIssues.length} critical issues, ${securityWarnings.length} warnings`);
+			
+			return {
+				isSafe,
+				reason
+			};
+			
+		} catch (error) {
+			console.error(`[ModuleInterceptorService] Advanced security analysis failed for ${modulePath}:`, error);
+			return {
+				isSafe: false,
+				reason: `Advanced security analysis error: ${error}`
         }
     }
+    
+    /**
+	 * Check if function is critically dangerous (block immediately)
+	 */
+	private isCriticalDangerousFunction(functionName: string): boolean {
+		const criticalFunctions = [
+			'eval', 'Function', 'exec', 'spawn', 'execFile', 'fork',
+			'require', 'import', 'process.binding', 'vm.runInContext'
+		];
+		return criticalFunctions.includes(functionName);
+	}
+	
+	/**
+	 * Check if function is dangerous (warning level)
+	 */
+	private isDangerousFunction(functionName: string): boolean {
+		const dangerousFunctions = [
+			'setTimeout', 'setInterval', 'setImmediate',
+			'require.cache', 'module.constructor', 'global.eval'
+		];
+		return dangerousFunctions.includes(functionName);
+	}
+	
+	/**
+	 * Check if property access is critically dangerous
+	 */
+	private isCriticalDangerousPropertyAccess(objectName: string, propertyName: string): boolean {
+		const criticalAccesses = [
+			{ object: 'process', property: 'env' },
+			{ object: 'global', property: 'process' },
+			{ object: 'window', property: 'location' },
+			{ object: 'process', property: 'mainModule' },
+			{ object: 'process', property: 'binding' }
+		];
+		
+		return criticalAccesses.some(access => 
+			access.object === objectName && access.property === propertyName
+		);
+	}
+	
+	/**
+	 * Check if property access is dangerous
+	 */
+	private isDangerousPropertyAccess(objectName: string, propertyName: string): boolean {
+		const dangerousAccesses = [
+			{ object: 'global', property: 'eval' },
+			{ object: 'window', property: 'eval' },
+			{ object: 'process', property: 'argv' },
+			{ object: 'process', property: 'cwd' }
+		];
+		
+		return dangerousAccesses.some(access => 
+			access.object === objectName && access.property === propertyName
+		);
+    
+    /**
+     * Check if property access is dangerous
+     */
+    private isDangerousPropertyAccess(objectName: string, propertyName: string): boolean {
+        const dangerousAccesses = [
+            { object: 'process', property: 'env' },
+            { object: 'global', property: 'process' },
+            { object: 'window', property: 'location' }
+        ];
+        
+        return dangerousAccesses.some(access => 
+            access.object === objectName && access.property === propertyName
+        );
+    }
+    
+    /**
+	 * Check if assignment is critically dangerous
+	 */
+	private isCriticalDangerousAssignment(objectName: string, propertyName: string): boolean {
+		const criticalAssignments = [
+			{ object: 'process', property: 'env' },
+			{ object: 'global', property: 'process' },
+			{ object: 'require', property: 'cache' },
+			{ object: 'module', property: 'exports' }
+		];
+		
+		return criticalAssignments.some(assignment => 
+			assignment.object === objectName && assignment.property === propertyName
+		);
+	}
+	
+	/**
+	 * Check if assignment is dangerous
+	 */
+	private isDangerousAssignment(objectName: string, propertyName: string): boolean {
+		const dangerousAssignments = [
+			{ object: 'global', property: 'eval' },
+			{ object: 'window', property: 'eval' }
+		];
+		
+		return dangerousAssignments.some(assignment => 
+			assignment.object === objectName && assignment.property === propertyName
+		);
+	}
+	
+	/**
+	 * Check if import is dangerous
+	 */
+	private isDangerousImport(importSource: string): boolean {
+		const dangerousImports = [
+			'fs', 'child_process', 'net', 'http', 'https', 'os', 'crypto',
+			'vm', 'module', 'process', 'sys'
+		];
+		return dangerousImports.includes(importSource);
+	}
+	
+	/**
+	 * Check if constructor is dangerous
+	 */
+	private isDangerousConstructor(constructorName: string): boolean {
+		const dangerousConstructors = [
+			'Function', 'eval', 'process', 'require'
+		];
+		return dangerousConstructors.includes(constructorName);
+	}
+	
+	/**
+	 * Perform pattern-based security analysis
+	 */
+	private performPatternAnalysis(sourceCode: string, securityIssues: string[], securityWarnings: string[]): void {
+		const dangerousPatterns = [
+			{ pattern: /eval\s*\(/, description: 'Direct eval call' },
+			{ pattern: /Function\s*\(/, description: 'Function constructor' },
+			{ pattern: /require\s*\(\s*['"`]\s*[^'"`]*\s*['"`]\s*\)/, description: 'Dynamic require' },
+			{ pattern: /process\.binding/, description: 'Process binding access' },
+			{ pattern: /vm\.runInContext/, description: 'VM context execution' },
+			{ pattern: /child_process\.spawn/, description: 'Child process spawning' }
+		];
+		
+		for (const { pattern, description } of dangerousPatterns) {
+			if (pattern.test(sourceCode)) {
+				securityIssues.push(`CRITICAL: ${description} detected`);
+			}
+		}
     
     /**
      * Load and intercept module with security wrappers

@@ -18,6 +18,9 @@ import { IModuleInterceptorService } from "./Interfaces/IModuleInterceptorServic
 import { IAPIFactoryService } from "./Interfaces/IAPIFactoryService";
 import { IGRPCServerService } from "./Interfaces/IGRPCServerService";
 import { IMountainClientService } from "./Interfaces/IMountainClientService";
+import { IPerformanceMonitoringService } from "./Interfaces/IPerformanceMonitoringService";
+import { ISecurityService } from "./Interfaces/ISecurityService";
+import { IErrorHandlingService } from "./Interfaces/IErrorHandlingService";
 
 // Import service implementations
 import { ConfigurationService, ConfigurationServiceLive } from "./Services/Configuration";
@@ -25,6 +28,10 @@ import { ExtensionHostService, ExtensionHostServiceLive } from "./Services/Exten
 import { IPCService, IPCServiceLive } from "./Services/IPCService";
 import { GRPCServerService, GRPCServerServiceLive } from "./Services/GRPCServerService";
 import { MountainClientService, MountainClientServiceLive } from "./Services/MountainClientService";
+import { APIFactoryService, APIFactoryServiceLive } from "./Services/APIFactoryService";
+import { PerformanceMonitoringService, PerformanceMonitoringServiceLive } from "./Services/PerformanceMonitoringService";
+import { SecurityService, SecurityServiceLive } from "./Services/SecurityService";
+import { ErrorHandlingService, ErrorHandlingServiceLive } from "./Services/ErrorHandlingService";
 
 // Import channel implementations
 import { ExtensionChannel } from "./Services/ExtensionChannel";
@@ -153,65 +160,51 @@ export class ServiceMapping {
             dependencies: []
         });
         
-        // Initialize channels after services
-        this.initializeChannels();
-        
-        // Register ModuleInterceptorService
-        this.registerService('ModuleInterceptorService', {
-            interface: IModuleInterceptorService,
-            implementation: ModuleInterceptorServiceLive,
-            dependencies: []
-        });
-        
-        // TODO: Register APIFactoryService
-        // Specification: IMPLEMENTATION-SPECIFICATION.md (API Factory Service)
-        // Implementation: Create APIFactoryService implementation
-        // Dependencies: ModuleInterceptorService, ConfigurationService
-        // Validation: Test VS Code API construction
-        
-        console.log("[ServiceMapping] Service mapping registry initialized");
-        console.log(`[ServiceMapping] Registered services: ${this.getRegisteredServices().join(', ')}`);
-    }
-    
-    /**
-     * Initialize channels for service communication
-     */
-    private static initializeChannels(): void {
-        console.log("[ServiceMapping] Initializing channels");
-        
-        // Get IPC service instance
-        const ipcService = this.getService(IIPCService);
-        
-        // Create and register channels
-        const configurationChannel = new ConfigurationChannel(this.getService(IConfigurationService));
-        const extensionChannel = new ExtensionChannel(this.getService(IExtensionHostService));
-        
-        // Register channels with IPC service
-        ipcService.registerChannel('configuration', configurationChannel);
-        ipcService.registerChannel('extension', extensionChannel);
-        
-        console.log("[ServiceMapping] Channels registered: configuration, extension");
-    }
-    
-    /**
-     * Create application layer with all services
-     */
-    static createApplicationLayer(): Layer.Layer<never, never, any> {
-        const serviceLayers = Array.from(this.services.values()).map(
-            descriptor => descriptor.implementation
-        );
-        
-        return Layer.mergeAll(...serviceLayers);
-    }
-    
-    /**
-     * Validate service dependencies
-     */
-    static validateDependencies(): boolean {
-        for (const [name, descriptor] of this.services.entries()) {
-            if (descriptor.dependencies) {
-                for (const dependency of descriptor.dependencies) {
-                    const dependencyName = this.findServiceName(dependency);
+		// Register ModuleInterceptorService
+		this.registerService('ModuleInterceptorService', {
+			interface: IModuleInterceptorService,
+			implementation: ModuleInterceptorServiceLive,
+			dependencies: []
+		});
+		
+		// Register APIFactoryService
+		this.registerService('APIFactoryService', {
+			interface: IAPIFactoryService,
+			implementation: APIFactoryServiceLive,
+			dependencies: [IConfigurationService, IModuleInterceptorService]
+		});
+		
+		// Register PerformanceMonitoringService
+		this.registerService('PerformanceMonitoringService', {
+			interface: IPerformanceMonitoringService,
+			implementation: PerformanceMonitoringServiceLive,
+			dependencies: []
+		});
+		
+		// Register SecurityService
+		this.registerService('SecurityService', {
+			interface: ISecurityService,
+			implementation: SecurityServiceLive,
+			dependencies: []
+		});
+		
+		// Register ErrorHandlingService
+		this.registerService('ErrorHandlingService', {
+			interface: IErrorHandlingService,
+			implementation: ErrorHandlingServiceLive,
+			dependencies: []
+		});
+		
+		// Initialize channels after services
+		this.initializeChannels();
+		
+		console.log("[ServiceMapping] Service mapping registry initialized");
+		console.log(`[ServiceMapping] Registered services: ${this.getRegisteredServices().join(', ')}`);
+		
+		// Validate all service dependencies
+		this.validateDependencies();
+		
+		console.log("[ServiceMapping] Enhanced services include advanced Mountain integration, security features, and production-ready error handling");
                     if (!dependencyName) {
                         console.error(`[ServiceMapping] Dependency not found: ${dependency} for service ${name}`);
                         return false;

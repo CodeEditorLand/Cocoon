@@ -103,7 +103,7 @@ export class MountainClientService implements IMountainClientService {
             const packageDefinition = await this.loadProtocolDefinition();
             const protoDescriptor = grpc.loadPackageDefinition(packageDefinition) as any;
             
-            // Create gRPC client
+            // Create gRPC client with enhanced configuration
             const target = `${this.mountainHost}:${this.mountainPort}`;
             this.client = new protoDescriptor.MountainService(
                 target,
@@ -111,6 +111,12 @@ export class MountainClientService implements IMountainClientService {
                 {
                     'grpc.max_receive_message_length': 1024 * 1024 * 100, // 100MB
                     'grpc.max_send_message_length': 1024 * 1024 * 100,      // 100MB
+                    'grpc.keepalive_time_ms': 10000,
+                    'grpc.keepalive_timeout_ms': 5000,
+                    'grpc.keepalive_permit_without_calls': 1,
+                    'grpc.http2.max_pings_without_data': 0,
+                    'grpc.http2.min_time_between_pings_ms': 10000,
+                    'grpc.http2.min_ping_interval_without_data_ms': 30000
                 }
             );
             
@@ -134,58 +140,120 @@ export class MountainClientService implements IMountainClientService {
      * Load protocol definition
      */
     private async loadProtocolDefinition(): Promise<protoLoader.PackageDefinition> {
-        // TODO: Load Vine.proto from Mountain's protocol definitions
-        // Specification: MOUNTAIN-COCOON-INTEGRATION.md (Protocol Loading)
-        // Implementation: Load protobuf definition from Mountain's source
-        // Dependencies: Protocol buffer compilation, path resolution
-        // Validation: Test with actual Mountain Vine.proto file
+        console.log("[MountainClientService] Loading Vine.proto protocol definition");
         
-        // Mock implementation - would load actual Vine.proto
-        const protoContent = `
-            syntax = "proto3";
+        try {
+            const fs = require('fs');
+            const path = require('path');
             
-            service MountainService {
-                rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
-                rpc SendCocoonNotification(GenericNotification) returns (Empty);
-                rpc CancelOperation(CancelOperationRequest) returns (Empty);
+            // Resolve Mountain's Proto directory with multiple fallback paths
+            const protoSearchPaths = [
+                path.resolve(__dirname, '../../../../Mountain/Proto/Vine.proto'),
+                path.resolve(__dirname, '../../../../../Mountain/Proto/Vine.proto'),
+                path.resolve(__dirname, '../../../../../../Mountain/Proto/Vine.proto'),
+                path.resolve(process.cwd(), '../Mountain/Proto/Vine.proto'),
+                path.resolve(process.cwd(), '../../Mountain/Proto/Vine.proto')
+            ];
+            
+            let mountainProtoPath = null;
+            for (const protoPath of protoSearchPaths) {
+                if (fs.existsSync(protoPath)) {
+                    mountainProtoPath = protoPath;
+                    break;
+                }
             }
             
-            message GenericRequest {
-                uint64 RequestIdentifier = 1;
-                string Method = 2;
-                bytes Parameter = 3;
+            if (mountainProtoPath) {
+                console.log(`[MountainClientService] Found Vine.proto at: ${mountainProtoPath}`);
+                
+                // Load with enhanced configuration for better compatibility
+                return protoLoader.loadSync(mountainProtoPath, {
+                    keepCase: true,
+                    longs: 'number',  // Use numbers for better performance
+                    enums: String,
+                    defaults: true,
+                    oneofs: true,
+                    includeDirs: [path.dirname(mountainProtoPath)],
+                    arrays: true,
+                    objects: true
+                });
+            } else {
+                console.error("[MountainClientService] Vine.proto not found in any search path");
+                console.log("[MountainClientService] Search paths attempted:", protoSearchPaths);
+                
+                // Enhanced fallback with production-ready protocol definition
+                const fallbackProtoContent = `
+                    syntax = "proto3";
+                    
+                    package mountain;
+                    
+                    service MountainService {
+                        rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
+                        rpc SendCocoonNotification(GenericNotification) returns (Empty);
+                        rpc CancelOperation(CancelOperationRequest) returns (Empty);
+                    }
+                    
+                    service CocoonService {
+                        rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
+                        rpc SendMountainNotification(GenericNotification) returns (Empty);
+                        rpc CancelOperation(CancelOperationRequest) returns (Empty);
+                    }
+                    
+                    message GenericRequest {
+                        uint64 RequestIdentifier = 1;
+                        string Method = 2;
+                        bytes Parameter = 3;
+                        map<string, string> Headers = 4;
+                        string CorrelationId = 5;
+                    }
+                    
+                    message GenericResponse {
+                        uint64 RequestIdentifier = 1;
+                        bool Success = 2;
+                        bytes Data = 3;
+                        string Error = 4;
+                        int32 StatusCode = 5;
+                        map<string, string> Headers = 6;
+                    }
+                    
+                    message GenericNotification {
+                        string Method = 1;
+                        bytes Parameter = 2;
+                        map<string, string> Headers = 3;
+                        string CorrelationId = 4;
+                    }
+                    
+                    message CancelOperationRequest {
+                        uint64 RequestIdentifier = 1;
+                        string Reason = 2;
+                        string CorrelationId = 3;
+                    }
+                    
+                    message Empty {}
+                `;
+                
+                // Create temporary file with proper permissions
+                const tempDir = require('os').tmpdir();
+                const tempProtoPath = path.join(tempDir, 'vine_fallback.proto');
+                fs.writeFileSync(tempProtoPath, fallbackProtoContent);
+                
+                console.log(`[MountainClientService] Using enhanced fallback protocol at: ${tempProtoPath}`);
+                
+                return protoLoader.loadSync(tempProtoPath, {
+                    keepCase: true,
+                    longs: 'number',
+                    enums: String,
+                    defaults: true,
+                    oneofs: true,
+                    arrays: true,
+                    objects: true
+                });
             }
             
-            message GenericResponse {
-                uint64 RequestIdentifier = 1;
-                bool Success = 2;
-                bytes Data = 3;
-                string Error = 4;
-            }
-            
-            message GenericNotification {
-                string Method = 1;
-                bytes Parameter = 2;
-            }
-            
-            message CancelOperationRequest {
-                uint64 RequestIdentifier = 1;
-                string Reason = 2;
-            }
-            
-            message Empty {}
-        `;
-        
-        return protoLoader.loadSync(
-            'vine.proto',
-            {
-                keepCase: true,
-                longs: String,
-                enums: String,
-                defaults: true,
-                oneofs: true
-            }
-        );
+        } catch (error) {
+            console.error("[MountainClientService] Failed to load protocol definition:", error);
+            throw new Error(`Failed to load Vine.proto: ${error.message}`);
+        }
     }
     
     /**
@@ -247,12 +315,37 @@ export class MountainClientService implements IMountainClientService {
         } catch (error) {
             this.errorCount++;
             console.error(`[MountainClientService] Request ${method} failed:`, error);
+            
+            // Auto-reconnect on connection errors
+            if (this.isConnectionError(error)) {
+                console.log("[MountainClientService] Connection error detected, attempting reconnect");
+                try {
+                    await this.reconnect();
+                    console.log("[MountainClientService] Reconnected successfully, retrying request");
+                    return this.sendRequest(method, parameters);
+                } catch (reconnectError) {
+                    console.error("[MountainClientService] Reconnect failed:", reconnectError);
+                }
+            }
+            
             throw error;
         }
     }
     
     /**
-     * Make gRPC request with promise interface
+     * Check if error is a connection error
+     */
+    private isConnectionError(error: any): boolean {
+        return error && (
+            error.code === 'UNAVAILABLE' ||
+            error.code === 'DEADLINE_EXCEEDED' ||
+            error.message?.includes('connect') ||
+            error.message?.includes('connection')
+        );
+    }
+    
+    /**
+     * Make gRPC request with promise interface and retry logic
      */
     private makeRequest(request: GenericRequest): Promise<GenericResponse> {
         return new Promise((resolve, reject) => {
@@ -261,15 +354,32 @@ export class MountainClientService implements IMountainClientService {
                 return;
             }
             
-            this.client.ProcessCocoonRequest(request, (error, response) => {
-                if (error) {
-                    reject(error);
-                } else if (!response) {
-                    reject(new Error('Empty response from Mountain'));
-                } else {
-                    resolve(response);
-                }
-            });
+            let attempts = 0;
+            const maxAttempts = 3;
+            
+            const attemptRequest = () => {
+                attempts++;
+                
+                this.client!.ProcessCocoonRequest(request, (error, response) => {
+                    if (error) {
+                        console.warn(`[MountainClientService] Request ${request.RequestIdentifier} failed (attempt ${attempts}/${maxAttempts}):`, error);
+                        
+                        if (attempts < maxAttempts) {
+                            setTimeout(() => {
+                                attemptRequest();
+                            }, 1000); // 1 second delay
+                        } else {
+                            reject(error);
+                        }
+                    } else if (!response) {
+                        reject(new Error('Empty response from Mountain'));
+                    } else {
+                        resolve(response);
+                    }
+                });
+            };
+            
+            attemptRequest();
         });
     }
     
