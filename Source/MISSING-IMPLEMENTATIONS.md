@@ -4,8 +4,14 @@ This document tracks all missing implementations required for Cocoon to function
 
 ## Current Status Summary
 
+### ✅ Foundation Established
+- **.md-driven development framework** created
+- **Service mapping registry** implemented (`ServiceMapping.ts`)
+- **Main entry point** created (`CocoonMain.ts`)
+- **VSCode architecture analysis** documented (`EXTENSION-HOST-ANALYSIS.md`)
+
 ### ✅ Archived Implementation
-- **Original Cocoon source** has been moved to Archive/Original/
+- **Original Cocoon source** has been moved to Archive/
 - **Effect-TS architecture** preserved for reference
 - **gRPC communication** patterns documented
 
@@ -20,7 +26,7 @@ Following Wind's successful pattern:
 
 ### 1. VSCode Source Analysis
 
-**Status**: 🚫 Not started
+**Status**: 🔄 In progress
 **Priority**: Critical
 **VSCode Source**: `src/vs/workbench/api/common/extHostExtensionService.ts`
 
@@ -29,6 +35,10 @@ Following Wind's successful pattern:
 - Service initialization patterns
 - Error handling strategies
 - Performance optimization techniques
+
+**Current Progress**:
+- Architecture analysis completed based on existing knowledge
+- Need to read actual VSCode source files
 
 **Dependencies**: None
 **Blockers**: Need to access VSCode source files
