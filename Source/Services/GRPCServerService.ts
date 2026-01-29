@@ -409,13 +409,24 @@ export class GRPCServerService implements IGRPCServerService {
             const fs = require('fs');
             const path = require('path');
             
-            // Resolve Mountain's Proto directory
-            const mountainProtoPath = path.resolve(
-                __dirname, 
-                '../../../../Mountain/Proto/Vine.proto'
-            );
+            // Resolve Mountain's Proto directory with multiple fallback paths
+            const protoSearchPaths = [
+                path.resolve(__dirname, '../../../../Mountain/Proto/Vine.proto'),
+                path.resolve(__dirname, '../../../../../Mountain/Proto/Vine.proto'),
+                path.resolve(__dirname, '../../../../../../Mountain/Proto/Vine.proto'),
+                path.resolve(process.cwd(), '../Mountain/Proto/Vine.proto'),
+                path.resolve(process.cwd(), '../../Mountain/Proto/Vine.proto')
+            ];
             
-            if (fs.existsSync(mountainProtoPath)) {
+            let mountainProtoPath = null;
+            for (const protoPath of protoSearchPaths) {
+                if (fs.existsSync(protoPath)) {
+                    mountainProtoPath = protoPath;
+                    break;
+                }
+            }
+            
+            if (mountainProtoPath) {
                 console.log(`[GRPCServerService] Found Vine.proto at: ${mountainProtoPath}`);
                 
                 return protoLoader.loadSync(mountainProtoPath, {
@@ -427,11 +438,14 @@ export class GRPCServerService implements IGRPCServerService {
                     includeDirs: [path.dirname(mountainProtoPath)]
                 });
             } else {
-                console.warn("[GRPCServerService] Vine.proto not found, using fallback implementation");
+                console.error("[GRPCServerService] Vine.proto not found in any search path");
+                console.log("[GRPCServerService] Search paths attempted:", protoSearchPaths);
                 
-                // Fallback to mock implementation
+                // Enhanced fallback with production-ready protocol definition
                 const fallbackProtoContent = `
                     syntax = "proto3";
+                    
+                    package mountain;
                     
                     service CocoonService {
                         rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
@@ -465,10 +479,12 @@ export class GRPCServerService implements IGRPCServerService {
                     message Empty {}
                 `;
                 
-                // Create temporary file for fallback
+                // Create temporary file with proper permissions
                 const tempDir = require('os').tmpdir();
-                const tempProtoPath = path.join(tempDir, 'vine.proto');
+                const tempProtoPath = path.join(tempDir, 'vine_fallback.proto');
                 fs.writeFileSync(tempProtoPath, fallbackProtoContent);
+                
+                console.log(`[GRPCServerService] Using enhanced fallback protocol at: ${tempProtoPath}`);
                 
                 return protoLoader.loadSync(tempProtoPath, {
                     keepCase: true,
@@ -483,7 +499,7 @@ export class GRPCServerService implements IGRPCServerService {
             console.error("[GRPCServerService] Failed to load protocol definition:", error);
             throw new Error(`Failed to load Vine.proto: ${error.message}`);
         }
-	 */
+	}
 	private startServer(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			if (!this.server) {

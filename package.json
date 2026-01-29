@@ -32,10 +32,10 @@
 		"@tauri-apps/plugin-fs": "2.4.5",
 		"effect": "3.19.15",
 		"google-protobuf": "4.0.1",
-		"@grpc/grpc-js": "^1.14.3",
-		"@grpc/proto-loader": "^0.8.0",
-		"protobufjs": "^7.0.0",
-		"ts-protoc-gen": "^0.16.0"
+		"@grpc/grpc-js": "1.14.3",
+		"@grpc/proto-loader": "0.8.0",
+		"protobufjs": "8.0.0",
+		"ts-protoc-gen": "0.15.0"
 	},
 	"devDependencies": {
 		"@effect/experimental": "0.58.0",
@@ -53,9 +53,7 @@
 		"cross-env": "10.1.0",
 		"deepmerge-ts": "7.1.5",
 		"ts-patch": "3.3.0",
-		"ulid": "3.0.2",
-		"@types/grpc__grpc-js": "^1.9.0",
-		"@types/grpc__proto-loader": "^0.7.0"
+		"ulid": "3.0.2"
 	},
 	"publishConfig": {
 		"access": "public",

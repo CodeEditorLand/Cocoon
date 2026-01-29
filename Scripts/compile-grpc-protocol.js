@@ -12,9 +12,13 @@
 import { execSync } from "child_process";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
-const MOUNTAIN_PROTO_PATH = "../Mountain/Proto/Vine.proto";
-const OUTPUT_DIR = "../Source/Generated";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const MOUNTAIN_PROTO_PATH = join(__dirname, "../../../../Mountain/Proto/Vine.proto");
+const OUTPUT_DIR = join(__dirname, "../Source/Generated");
 const TS_PROTO_OUTPUT = join(OUTPUT_DIR, "Vine.ts");
 
 /**
@@ -84,7 +88,7 @@ function ensureOutputDirectory() {
 /**
  * Compile proto to TypeScript using protoc
  */
-async function compileProtoToTypeScript() {
+function compileProtoToTypeScript() {
     console.log("[compile-grpc-protocol] Compiling proto to TypeScript");
     
     const command = `protoc \
@@ -105,7 +109,7 @@ async function compileProtoToTypeScript() {
 /**
  * Generate service interfaces from compiled proto
  */
-async function generateServiceInterfaces() {
+function generateServiceInterfaces() {
     console.log("[compile-grpc-protocol] Generating service interfaces");
     
     const protoContent = readFileSync(MOUNTAIN_PROTO_PATH, "utf8");
