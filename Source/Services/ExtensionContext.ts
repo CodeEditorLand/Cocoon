@@ -547,4 +547,4 @@ export class ExtensionContextService extends Effect.Service<
 
 		return ServiceImplementation;
 	}),
-})
+});

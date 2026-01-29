@@ -534,7 +534,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 							);
 							return undefined;
 						},
-						catch: (error) {
+							catch: (error) => {
 							yield* Logger.Error(
 								`[WindowService] Failed to show save dialog`,
 								error as Error,

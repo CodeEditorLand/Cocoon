@@ -205,17 +205,22 @@ export class ServiceMapping {
 		this.validateDependencies();
 		
 		console.log("[ServiceMapping] Enhanced services include advanced Mountain integration, security features, and production-ready error handling");
-                    if (!dependencyName) {
-                        console.error(`[ServiceMapping] Dependency not found: ${dependency} for service ${name}`);
-                        return false;
-                    }
-                }
-            }
-        }
-        
-        console.log("[ServiceMapping] All service dependencies validated");
-        return true;
-    }
+	}
+
+	private validateDependencies(): boolean {
+		for (const [name, service] of this.services) {
+			for (const dependency of service.dependencies) {
+				const dependencyName = this.services.get(dependency);
+				if (!dependencyName) {
+					console.error(`[ServiceMapping] Dependency not found: ${dependency} for service ${name}`);
+					return false;
+				}
+			}
+		}
+		
+		console.log("[ServiceMapping] All service dependencies validated");
+		return true;
+	}
 }
 
 /**

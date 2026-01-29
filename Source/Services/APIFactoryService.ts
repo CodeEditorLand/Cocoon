@@ -269,16 +269,17 @@ export class APIFactoryService implements IAPIFactoryService {
 			extensionDevelopmentLocationURI: undefined,
 			
 			// Language properties
-			language: "en",
+			locale: "en",
 			
 			// Additional methods
 			getConfiguration: async (section?: string) => ({
 				get: (key: string) => undefined,
 				update: async (key: string, value: any) => {}
 			})
-    }
-    
-    /**
+		};
+	}
+	
+	/**
 	 * Create complete VS Code commands API
 	 */
 	private createCommandsAPI(context: ExtensionAPIContext): any {
@@ -406,12 +407,8 @@ export class APIFactoryService implements IAPIFactoryService {
 			onDidChangeActiveTextEditor: (listener: any) => ({ dispose: () => {} }),
 			onDidChangeVisibleTextEditors: (listener: any) => ({ dispose: () => {} }),
 			onDidChangeWindowState: (listener: any) => ({ dispose: () => {} })
-    }
-    
-    /**
-	 * Create complete VS Code workspace API
-	 */
-	private createWorkspaceAPI(context: ExtensionAPIContext): any {
+		};
+	}
 		const extensionId = context.extensionId;
 		
 		return {
@@ -477,7 +474,8 @@ export class APIFactoryService implements IAPIFactoryService {
 				}),
 				readDirectory: async (uri: any): Promise<[string, any][]> => []
 			}
-    }
+		};
+	}
     
     /**
      * Create extensions API

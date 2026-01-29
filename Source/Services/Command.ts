@@ -478,10 +478,10 @@ export class CommandService extends Effect.Service<CommandService>()(
 				FilterInternal: boolean = false,
 			): Effect.Effect<string[], Error> =>
 				Effect.gen(function* () {
-					const Registry = yield* Ref.get(CommandRegistry);
-					const LocalCommandIds = Array.from(Registry.keys());
+			const Registry = yield* Ref.get(CommandRegistry);
+			const LocalCommandIds = Array.from(Registry.keys());
 
-// Mountain gRPC integration for getting remote commands
+			// Mountain gRPC integration for getting remote commands
 			try {
 				const mountainClient = yield* MountainClientService;
 				const RemoteCommands = yield* Effect.tryPromise({
@@ -501,19 +501,28 @@ export class CommandService extends Effect.Service<CommandService>()(
 					`[CommandService] Retrieved ${RemoteCommands.length} remote commands from Mountain`
 				);
 
-					// Combine and deduplicate
-					const AllCommands = Array.from(
-						new Set([...LocalCommandIds, ...RemoteCommands]),
-					);
+				// Combine and deduplicate
+				const AllCommands = Array.from(
+					new Set([...LocalCommandIds, ...RemoteCommands]),
+				);
 
-					if (FilterInternal) {
-						// Filter out internal commands (starting with _)
-						return AllCommands.filter((Id) => !Id.startsWith("_"));
-					}
+				if (FilterInternal) {
+					// Filter out internal commands (starting with _)
+					return AllCommands.filter((Id) => !Id.startsWith("_"));
+				}
 
-					return AllCommands;
-				});
-
+				return AllCommands;
+			} catch (error) {
+				yield* Logger.Warn(
+					`[CommandService] Error getting remote commands, using local only`,
+					error as Error
+				);
+				if (FilterInternal) {
+					return LocalCommandIds.filter((Id) => !Id.startsWith("_"));
+				}
+				return LocalCommandIds;
+			}
+		});
 			// Return the service implementation with PascalCase method names
 			const ServiceImplementation: Command = {
 				RegisterCommand,

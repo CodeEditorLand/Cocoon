@@ -167,6 +167,7 @@ export class SecurityService {
 			console.error("[SecurityService] Failed to load security policies from Mountain:", error);
 			console.log("[SecurityService] Continuing with default security policies");
 		}
+	}
     
     /**
 	 * Initialize advanced audit logging system

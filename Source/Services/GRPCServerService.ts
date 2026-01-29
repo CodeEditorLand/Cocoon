@@ -115,10 +115,10 @@ export class GRPCServerService implements IGRPCServerService {
 	/**
 	 * Handle Mountain request
 	 */
-	private handleMountainRequest(
+	private async handleMountainRequest(
 		request: GenericRequest,
 		callback: grpc.sendUnaryData<GenericResponse>,
-	): void {
+	): Promise<void> {
 		const startTime = Date.now();
 		console.log(
 			`[GRPCServerService] Processing Mountain request: ${request.Method}`,

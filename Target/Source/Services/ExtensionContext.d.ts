@@ -169,5 +169,5 @@ declare const ExtensionContextService_base: Effect.Service.Class<ExtensionContex
  */
 export declare class ExtensionContextService extends ExtensionContextService_base {
 }
-export default ExtensionContextService;
+export {};
 //# sourceMappingURL=ExtensionContext.d.ts.map

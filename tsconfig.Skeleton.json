@@ -61,7 +61,7 @@
 
 	"exclude": ["Target", "node_modules"],
 
-	"extends": "@playform/build/tsconfig",
+	// "extends": "@playform/build/tsconfig", // Commented out - package not available
 
 	"include": ["Source/Skeleton.ts", "@types/node"]
 }

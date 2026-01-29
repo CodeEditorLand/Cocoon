@@ -31,6 +31,10 @@ export declare class MountainClientService implements IMountainClientService {
      */
     private isValidHost;
     /**
+     * Connect to Mountain gRPC server
+     */
+    connect(): Promise<void>;
+    /**
      * Load protocol definition
      */
     private loadProtocolDefinition;

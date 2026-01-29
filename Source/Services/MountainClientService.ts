@@ -105,6 +105,7 @@ export class MountainClientService implements IMountainClientService {
 		];
 		
 		return validHostPatterns.some(pattern => pattern.test(host));
+	}
     
     /**
      * Connect to Mountain gRPC server

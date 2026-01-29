@@ -168,6 +168,7 @@ export class ErrorHandlingService {
 				circuitBreakerBlocked: false,
 				finalFailure: true
 			}
+		};
     }
     
     /**

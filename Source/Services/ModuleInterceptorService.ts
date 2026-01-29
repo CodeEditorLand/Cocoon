@@ -288,7 +288,7 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			return {
 				isSafe: false,
 				reason: `Advanced security analysis error: ${error}`
-        }
+			};
     }
     
     /**

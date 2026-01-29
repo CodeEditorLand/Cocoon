@@ -22,7 +22,10 @@
 		"Run": "sh Source/Run.sh",
 		"prepublishOnly": "sh Source/prepublishOnly.sh",
 		"build-grpc": "node Scripts/compile-grpc-protocol.js",
-		"compile-protocol": "node Scripts/compile-grpc-protocol.js"
+		"compile-protocol": "node Scripts/compile-grpc-protocol.js",
+		"test": "vitest --run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest --coverage"
 	},
 	"dependencies": {
 		"@codeeditorland/output": "0.0.1",
@@ -52,8 +55,11 @@
 		"@types/node": "25.1.0",
 		"cross-env": "10.1.0",
 		"deepmerge-ts": "7.1.5",
+		"esbuild": "0.25.0",
 		"ts-patch": "3.3.0",
-		"ulid": "3.0.2"
+		"ulid": "3.0.2",
+		"vitest": "3.0.5",
+		"@vitest/coverage-v8": "3.0.5"
 	},
 	"publishConfig": {
 		"access": "public",

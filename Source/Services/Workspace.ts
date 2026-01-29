@@ -312,8 +312,8 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
             ): Effect.Effect<VSCode.TextDocument, Error> =>
                 Effect.gen(function* () {
                     let Uri: VSCode.Uri;
-                    let Language?: string;
-                    let Content?: string;
+                    let Language: string | undefined;
+                    let Content: string | undefined;
 
                     if (uriOrOptions) {
                         if ("uri" in uriOrOptions) {

@@ -172,6 +172,7 @@ export class PerformanceMonitoringService {
 			console.warn("[PerformanceMonitoringService] Failed to send metrics to Mountain:", error);
 			// Continue without telemetry if Mountain is unavailable
 		}
+	}
     /**
 	 * Get accurate CPU usage measurement
 	 */
