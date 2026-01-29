@@ -134,7 +134,7 @@ export class GRPCServerService implements IGRPCServerService {
 			// Dependencies: ServiceMapping, request validation, error handling
 			// Validation: Test with 1000+ concurrent requests
 
-			const responseData = this.routeRequest(request.Method, parameters);
+			const responseData = await this.routeRequest(request.Method, parameters);
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
@@ -183,42 +183,48 @@ export class GRPCServerService implements IGRPCServerService {
 	/**
 	 * Route request to appropriate service
 	 */
-	private routeRequest(method: string, parameters: any): any {
+	private async routeRequest(method: string, parameters: any): Promise<any> {
 		console.log(`[GRPCServerService] Routing request: ${method}`);
 
 		// Service routing table with pattern matching
 		const routePatterns = {
 			'extension.\w+': async (method: string, params: any) => {
-				// Route to ExtensionHostService
-				const { ExtensionHostService } = await import('./ExtensionHostService');
-				const service = new ExtensionHostService({} as any, {} as any);
+				// Route to ExtensionHostService via ServiceMapping
+				const { ServiceMapping } = await import('../ServiceMapping');
+				const { IExtensionHostService } = await import('../Interfaces/IExtensionHostService');
 				
 				switch (method) {
 					case 'extension.activate':
-						return await service.activateExtension(params.extensionId, params.reason);
+						const extensionHostService = await ServiceMapping.getService(IExtensionHostService);
+						return await extensionHostService.activateExtension(params.extensionId, params.reason);
 					case 'extension.deactivate':
-						await service.deactivateExtension(params.extensionId);
+						const extensionHostService2 = await ServiceMapping.getService(IExtensionHostService);
+						await extensionHostService2.deactivateExtension(params.extensionId);
 						return { success: true };
 					case 'extension.get':
-						return service.getActivatedExtension(params.extensionId);
+						const extensionHostService3 = await ServiceMapping.getService(IExtensionHostService);
+						return extensionHostService3.getActivatedExtension(params.extensionId);
 					default:
 						throw new Error(`Unknown extension method: ${method}`);
 				}
 			},
 			
 			'configuration.\w+': async (method: string, params: any) => {
-				// Route to ConfigurationService
-				const { ConfigurationService } = await import('./Configuration');
-				const service = new ConfigurationService();
+				// Route to ConfigurationService via ServiceMapping
+				const { ServiceMapping } = await import('../ServiceMapping');
+				const { IConfigurationService } = await import('../Interfaces/IConfigurationService');
 				
 				switch (method) {
 					case 'configuration.get':
-						return await service.getValue(params.key, params.scope);
+						const configService = await ServiceMapping.getService(IConfigurationService);
+						return await configService.getValue(params.key, params.scope);
 					case 'configuration.set':
-						await service.setValue(params.key, params.value, params.scope);
+						const configService2 = await ServiceMapping.getService(IConfigurationService);
+						await configService2.setValue(params.key, params.value, params.scope);
 						return { success: true };
 					case 'configuration.update':
-						await service.updateValue(params.key, params.updater, params.scope);
+						const configService3 = await ServiceMapping.getService(IConfigurationService);
+						await configService3.updateValue(params.key, params.updater, params.scope);
 						return { success: true };
 					default:
 						throw new Error(`Unknown configuration method: ${method}`);
@@ -226,52 +232,61 @@ export class GRPCServerService implements IGRPCServerService {
 			},
 			
 			'command.\w+': async (method: string, params: any) => {
-				// Route to CommandService
-				const { CommandService } = await import('./Command');
-				const service = new CommandService({} as any);
+				// Route to CommandService via ServiceMapping
+				const { ServiceMapping } = await import('../ServiceMapping');
+				const { IIPCService } = await import('../Interfaces/IIPCService');
 				
 				switch (method) {
 					case 'command.execute':
-						return await service.executeCommand(params.commandId, ...(params.args || []));
+						const ipcService = await ServiceMapping.getService(IIPCService);
+						return await ipcService.executeCommand(params.commandId, ...(params.args || []));
 					case 'command.register':
-						const disposable = await service.registerCommand(params.commandId, params.callback);
+						const ipcService2 = await ServiceMapping.getService(IIPCService);
+						const disposable = await ipcService2.registerCommand(params.commandId, params.callback);
 						return { disposableId: 'command-registration' };
 					case 'command.get':
-						return await service.getCommands();
+						const ipcService3 = await ServiceMapping.getService(IIPCService);
+						return await ipcService3.getCommands();
 					default:
 						throw new Error(`Unknown command method: ${method}`);
 				}
 			},
 			
 			'performance.\w+': async (method: string, params: any) => {
-				// Route to PerformanceMonitoringService
-				const { PerformanceMonitoringService } = await import('./PerformanceMonitoringService');
-				const service = new PerformanceMonitoringService();
+				// Route to PerformanceMonitoringService via ServiceMapping
+				const { ServiceMapping } = await import('../ServiceMapping');
+				const { IPerformanceMonitoringService } = await import('../Interfaces/IPerformanceMonitoringService');
 				
 				switch (method) {
 					case 'performance.metrics':
-						return service.getMetrics();
+						const perfService = await ServiceMapping.getService(IPerformanceMonitoringService);
+						return perfService.getMetrics();
 					case 'performance.alerts':
-						return service.getAlerts();
+						const perfService2 = await ServiceMapping.getService(IPerformanceMonitoringService);
+						return perfService2.getAlerts();
 					case 'performance.report':
-						return service.generateReport();
+						const perfService3 = await ServiceMapping.getService(IPerformanceMonitoringService);
+						return perfService3.generateReport();
 					default:
 						throw new Error(`Unknown performance method: ${method}`);
 				}
 			},
 			
 			'security.\w+': async (method: string, params: any) => {
-				// Route to SecurityService
-				const { SecurityService } = await import('./SecurityService');
-				const service = new SecurityService();
+				// Route to SecurityService via ServiceMapping
+				const { ServiceMapping } = await import('../ServiceMapping');
+				const { ISecurityService } = await import('../Interfaces/ISecurityService');
 				
 				switch (method) {
 					case 'security.policy':
-						return await service.getSecurityPolicy(params.extensionId);
+						const securityService = await ServiceMapping.getService(ISecurityService);
+						return await securityService.getSecurityPolicy(params.extensionId);
 					case 'security.audit':
-						return service.getAuditLog();
+						const securityService2 = await ServiceMapping.getService(ISecurityService);
+						return securityService2.getAuditLog();
 					case 'security.incidents':
-						return service.getActiveIncidents();
+						const securityService3 = await ServiceMapping.getService(ISecurityService);
+						return securityService3.getActiveIncidents();
 					default:
 						throw new Error(`Unknown security method: ${method}`);
 				}

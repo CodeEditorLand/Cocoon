@@ -40,9 +40,6 @@ async function bootstrap() {
         const services = ServiceMapping.getRegisteredServices();
         console.log(`[Cocoon] Registered services: ${services.join(', ')}`);
         
-        // Create application layer
-        const applicationLayer = ServiceMapping.createApplicationLayer();
-        
         // Start gRPC services
         await startServices();
         
@@ -98,11 +95,16 @@ async function signalReadiness() {
     console.log("[Cocoon] Signaling readiness to Mountain");
     
     try {
-        // TODO: Implement readiness signaling via gRPC
-        // Specification: MOUNTAIN-COCOON-INTEGRATION.md (Bootstrap Process)
-        // Implementation: Send readiness notification to Mountain
-        // Dependencies: MountainClientService, connection validation
-        // Validation: Mountain acknowledges readiness signal
+        // Send readiness notification to Mountain via gRPC
+        const mountainClientService = new MountainClientService();
+        await mountainClientService.connect();
+        
+        // Signal readiness with process information
+        await mountainClientService.sendNotification('cocoon.ready', {
+            pid: process.pid,
+            port: process.env.COCON_GRPC_PORT || '50052',
+            version: process.env.npm_package_version || '0.0.1'
+        });
         
         console.log("[Cocoon] Readiness signaled to Mountain");
         
@@ -119,11 +121,23 @@ async function handleShutdown(signal) {
     console.log(`[Cocoon] Received ${signal}, shutting down gracefully`);
     
     try {
-        // TODO: Implement graceful shutdown
-        // Specification: MOUNTAIN-COCOON-INTEGRATION.md (Process Management)
-        // Implementation: Stop gRPC services, cleanup resources
-        // Dependencies: Service cleanup methods, connection termination
-        // Validation: Clean shutdown without resource leaks
+        // Stop gRPC services and cleanup resources
+        const mountainClientService = new MountainClientService();
+        const grpcServerService = new GRPCServerService();
+        
+        // Send shutdown notification to Mountain
+        await mountainClientService.sendNotification('cocoon.shutdown', {
+            pid: process.pid,
+            reason: signal
+        });
+        
+        // Stop gRPC server
+        await grpcServerService.stop();
+        console.log("[Cocoon] gRPC server stopped");
+        
+        // Disconnect from Mountain
+        await mountainClientService.disconnect();
+        console.log("[Cocoon] Mountain client disconnected");
         
         console.log("[Cocoon] Graceful shutdown complete");
         process.exit(0);

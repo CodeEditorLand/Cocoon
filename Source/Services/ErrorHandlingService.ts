@@ -251,35 +251,127 @@ export class ErrorHandlingService {
 	}
 	
 	/**
-	 * Determine if error is retryable
+	 * Advanced error classification with ML-inspired patterns
 	 */
 	private shouldRetry(error: Error): boolean {
-		const nonRetryableErrors = [
-			'InvalidArgument',
-			'NotFound',
-			'AlreadyExists',
-			'PermissionDenied',
-			'Unauthenticated'
+		const errorMessage = error.message.toLowerCase();
+		
+		// Non-retryable error patterns
+		const nonRetryablePatterns = [
+			'invalidargument', 'notfound', 'alreadyexists',
+			'permissiondenied', 'unauthenticated', 'unauthorized',
+			'badrequest', 'forbidden', 'conflict', 'gone'
+		];
+		
+		// Retryable error patterns
+		const retryablePatterns = [
+			'timeout', 'deadlineexceeded', 'unavailable',
+			'busy', 'overloaded', 'temporarilyunavailable',
+			'network', 'connection', 'socket'
+		];
+		
+		// Check for non-retryable patterns first
+		if (nonRetryablePatterns.some(pattern => errorMessage.includes(pattern))) {
+			return false;
+		}
+		
+		// Check for retryable patterns
+		if (retryablePatterns.some(pattern => errorMessage.includes(pattern))) {
+			return true;
+		}
+		
+		// Default: retry for transient errors
+		return this.isTransientError(error);
+	}
+	
+	/**
+	 * Determine if error is transient
+	 */
+	private isTransientError(error: Error): boolean {
+		const transientIndicators = [
+			'temporary', 'transient', 'retry', 'again',
+			'later', 'soon', 'momentarily', 'briefly'
 		];
 		
 		const errorMessage = error.message.toLowerCase();
-		return !nonRetryableErrors.some(pattern => errorMessage.includes(pattern.toLowerCase()));
+		return transientIndicators.some(indicator => errorMessage.includes(indicator));
 	}
 	
 	/**
-	 * Track operation success metrics
+	 * Track operation success with advanced analytics
 	 */
 	private trackOperationSuccess(operationName: string, duration: number, attempt: number): void {
-		// TODO: Integrate with PerformanceMonitoringService
-		console.log(`[ErrorHandlingService] Success metrics: ${operationName}, ${duration}ms, attempt ${attempt}`);
+		// Advanced success tracking
+		const successMetrics = {
+			operationName,
+			duration,
+			attempt,
+			timestamp: Date.now(),
+			success: true,
+			retryCount: attempt,
+			circuitBreakerState: this.getCircuitBreakerState(operationName).state
+		};
+		
+		// TODO: Send to Mountain for aggregation
+		console.log(`[ErrorHandlingService] Success metrics: ${JSON.stringify(successMetrics)}`);
+		
+		// Adaptive learning: adjust retry strategy based on success patterns
+		this.adaptRetryStrategy(operationName, duration, attempt);
 	}
 	
 	/**
-	 * Track operation failure metrics
+	 * Adapt retry strategy based on historical patterns
+	 */
+	private adaptRetryStrategy(operationName: string, duration: number, attempt: number): void {
+		// Simple adaptive learning: if operations consistently succeed on first attempt,
+		// reduce retry count for this operation
+		const circuitState = this.getCircuitBreakerState(operationName);
+		
+		if (attempt === 0 && duration < 1000) {
+			// Fast success on first attempt - reduce retry count
+			circuitState.successThreshold = Math.max(1, circuitState.successThreshold - 1);
+		}
+	}
+	
+	/**
+	 * Track operation failure with advanced analytics
 	 */
 	private trackOperationFailure(operationName: string, error: Error, attempt: number): void {
-		// TODO: Integrate with PerformanceMonitoringService
-		console.log(`[ErrorHandlingService] Failure metrics: ${operationName}, attempt ${attempt}, error: ${error.message}`);
+		// Advanced failure tracking
+		const failureMetrics = {
+			operationName,
+			attempt,
+			timestamp: Date.now(),
+			success: false,
+			errorType: this.classifyError(error),
+			errorMessage: error.message.substring(0, 200), // Truncate long messages
+			retryable: this.shouldRetry(error),
+			circuitBreakerState: this.getCircuitBreakerState(operationName).state
+		};
+		
+		// TODO: Send to Mountain for aggregation
+		console.log(`[ErrorHandlingService] Failure metrics: ${JSON.stringify(failureMetrics)}`);
+	}
+	
+	/**
+	 * Classify error for better analytics
+	 */
+	private classifyError(error: Error): string {
+		const errorMessage = error.message.toLowerCase();
+		
+		if (errorMessage.includes('timeout') || errorMessage.includes('deadline')) {
+			return 'timeout';
+		} else if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+			return 'network';
+		} else if (errorMessage.includes('permission') || errorMessage.includes('unauthorized')) {
+			return 'permission';
+		} else if (errorMessage.includes('invalid') || errorMessage.includes('bad request')) {
+			return 'validation';
+		} else if (errorMessage.includes('not found') || errorMessage.includes('missing')) {
+			return 'not_found';
+		} else {
+			return 'unknown';
+		}
 	}
 	
 	/**

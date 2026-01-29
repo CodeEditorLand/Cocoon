@@ -247,7 +247,7 @@ export interface RPCDataPayload {
 /**
  * Entry point
  */
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
     compileGrpcProtocol().catch(error => {
         console.error("[compile-grpc-protocol] Error:", error);
         process.exit(1);

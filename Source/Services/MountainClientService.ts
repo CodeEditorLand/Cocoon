@@ -70,22 +70,41 @@ export class MountainClientService implements IMountainClientService {
     }
     
     /**
-     * Parse environment variables for configuration
-     */
-    private parseEnvironment(): void {
-        const mountainHost = process.env.MOUNTAIN_CONNECTION_HOST;
-        const mountainPort = process.env.MOUNTAIN_GRPC_PORT;
-        
-        if (mountainHost) {
-            this.mountainHost = mountainHost;
-        }
-        
-        if (mountainPort) {
-            this.mountainPort = parseInt(mountainPort, 10);
-        }
-        
-        console.log(`[MountainClientService] Environment parsed: MOUNTAIN_CONNECTION_HOST=${this.mountainHost}, MOUNTAIN_GRPC_PORT=${this.mountainPort}`);
-    }
+	 * Parse environment variables with advanced configuration
+	 */
+	private parseEnvironment(): void {
+		const mountainHost = process.env.MOUNTAIN_CONNECTION_HOST || 'localhost';
+		const mountainPort = process.env.MOUNTAIN_GRPC_PORT || '50051';
+		const connectionTimeout = process.env.MOUNTAIN_CONNECTION_TIMEOUT || '30000';
+		const maxRetries = process.env.MOUNTAIN_MAX_RETRIES || '3';
+		
+		this.mountainHost = mountainHost;
+		this.mountainPort = parseInt(mountainPort, 10);
+		
+		console.log(`[MountainClientService] Environment parsed: MOUNTAIN_CONNECTION_HOST=${this.mountainHost}, MOUNTAIN_GRPC_PORT=${this.mountainPort}`);
+		
+		// Advanced configuration validation
+		if (!this.isValidHost(this.mountainHost)) {
+			throw new Error(`Invalid Mountain host: ${this.mountainHost}`);
+		}
+		
+		if (this.mountainPort < 1 || this.mountainPort > 65535) {
+			throw new Error(`Invalid Mountain port: ${this.mountainPort}`);
+		}
+	}
+	
+	/**
+	 * Validate host configuration
+	 */
+	private isValidHost(host: string): boolean {
+		const validHostPatterns = [
+			/^localhost$/,
+			/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/, // IPv4
+			/^\[[0-9a-fA-F:]+\]$/, // IPv6
+			/^[a-zA-Z0-9.-]+$/ // Domain name
+		];
+		
+		return validHostPatterns.some(pattern => pattern.test(host));
     
     /**
      * Connect to Mountain gRPC server
@@ -146,91 +165,93 @@ export class MountainClientService implements IMountainClientService {
             const fs = require('fs');
             const path = require('path');
             
-            // Resolve Mountain's Proto directory with multiple fallback paths
-            const protoSearchPaths = [
-                path.resolve(__dirname, '../../../../Mountain/Proto/Vine.proto'),
-                path.resolve(__dirname, '../../../../../Mountain/Proto/Vine.proto'),
-                path.resolve(__dirname, '../../../../../../Mountain/Proto/Vine.proto'),
-                path.resolve(process.cwd(), '../Mountain/Proto/Vine.proto'),
-                path.resolve(process.cwd(), '../../Mountain/Proto/Vine.proto')
-            ];
-            
-            let mountainProtoPath = null;
-            for (const protoPath of protoSearchPaths) {
-                if (fs.existsSync(protoPath)) {
-                    mountainProtoPath = protoPath;
-                    break;
-                }
+        // Multiple fallback paths to find Mountain's Proto directory
+        const protoSearchPaths = [
+            path.resolve(__dirname, '../../../../Mountain/Proto/Vine.proto'),
+            path.resolve(__dirname, '../../../../../Mountain/Proto/Vine.proto'),
+            path.resolve(__dirname, '../../../../../../Mountain/Proto/Vine.proto'),
+            path.resolve(process.cwd(), '../Mountain/Proto/Vine.proto'),
+            path.resolve(process.cwd(), '../../Mountain/Proto/Vine.proto'),
+            path.resolve(process.cwd(), '../../../Mountain/Proto/Vine.proto'),
+            path.resolve(process.cwd(), 'Mountain/Proto/Vine.proto'),
+            path.resolve(process.cwd(), 'Application/CodeEditorLand/Land/Element/Mountain/Proto/Vine.proto')
+        ];
+        
+        let vineProtoPath = null;
+        for (const protoPath of protoSearchPaths) {
+            if (fs.existsSync(protoPath)) {
+                vineProtoPath = protoPath;
+                break;
             }
+        }
+        
+        if (vineProtoPath) {
+            console.log(`[MountainClientService] Found Vine.proto at: ${vineProtoPath}`);
             
-            if (mountainProtoPath) {
-                console.log(`[MountainClientService] Found Vine.proto at: ${mountainProtoPath}`);
+            return protoLoader.loadSync(vineProtoPath, {
+                keepCase: true,
+                longs: 'number',  // Use numbers for better performance
+                enums: String,
+                defaults: true,
+                oneofs: true,
+                includeDirs: [path.dirname(vineProtoPath)],
+                arrays: true,
+                objects: true
+            });
+        } else {
+            console.error("[MountainClientService] Vine.proto not found in any search path");
+            console.log("[MountainClientService] Search paths attempted:", protoSearchPaths);
+            
+            // Enhanced fallback with production-ready protocol definition
+            const fallbackProtoContent = `
+                syntax = "proto3";
                 
-                // Load with enhanced configuration for better compatibility
-                return protoLoader.loadSync(mountainProtoPath, {
-                    keepCase: true,
-                    longs: 'number',  // Use numbers for better performance
-                    enums: String,
-                    defaults: true,
-                    oneofs: true,
-                    includeDirs: [path.dirname(mountainProtoPath)],
-                    arrays: true,
-                    objects: true
-                });
-            } else {
-                console.error("[MountainClientService] Vine.proto not found in any search path");
-                console.log("[MountainClientService] Search paths attempted:", protoSearchPaths);
+                package vine_ipc;
                 
-                // Enhanced fallback with production-ready protocol definition
-                const fallbackProtoContent = `
-                    syntax = "proto3";
-                    
-                    package mountain;
-                    
-                    service MountainService {
-                        rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
-                        rpc SendCocoonNotification(GenericNotification) returns (Empty);
-                        rpc CancelOperation(CancelOperationRequest) returns (Empty);
-                    }
-                    
-                    service CocoonService {
-                        rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
-                        rpc SendMountainNotification(GenericNotification) returns (Empty);
-                        rpc CancelOperation(CancelOperationRequest) returns (Empty);
-                    }
-                    
-                    message GenericRequest {
-                        uint64 RequestIdentifier = 1;
-                        string Method = 2;
-                        bytes Parameter = 3;
-                        map<string, string> Headers = 4;
-                        string CorrelationId = 5;
-                    }
-                    
-                    message GenericResponse {
-                        uint64 RequestIdentifier = 1;
-                        bool Success = 2;
-                        bytes Data = 3;
-                        string Error = 4;
-                        int32 StatusCode = 5;
-                        map<string, string> Headers = 6;
-                    }
-                    
-                    message GenericNotification {
-                        string Method = 1;
-                        bytes Parameter = 2;
-                        map<string, string> Headers = 3;
-                        string CorrelationId = 4;
-                    }
-                    
-                    message CancelOperationRequest {
-                        uint64 RequestIdentifier = 1;
-                        string Reason = 2;
-                        string CorrelationId = 3;
-                    }
-                    
-                    message Empty {}
-                `;
+                service MountainService {
+                    rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
+                    rpc SendCocoonNotification(GenericNotification) returns (Empty);
+                    rpc CancelOperation(CancelOperationRequest) returns (Empty);
+                }
+                
+                service CocoonService {
+                    rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
+                    rpc SendMountainNotification(GenericNotification) returns (Empty);
+                    rpc CancelOperation(CancelOperationRequest) returns (Empty);
+                }
+                
+                message GenericRequest {
+                    uint64 RequestIdentifier = 1;
+                    string Method = 2;
+                    bytes Parameter = 3;
+                    map<string, string> Headers = 4;
+                    string CorrelationId = 5;
+                }
+                
+                message GenericResponse {
+                    uint64 RequestIdentifier = 1;
+                    bool Success = 2;
+                    bytes Data = 3;
+                    string Error = 4;
+                    int32 StatusCode = 5;
+                    map<string, string> Headers = 6;
+                }
+                
+                message GenericNotification {
+                    string Method = 1;
+                    bytes Parameter = 2;
+                    map<string, string> Headers = 3;
+                    string CorrelationId = 4;
+                }
+                
+                message CancelOperationRequest {
+                    uint64 RequestIdentifier = 1;
+                    string Reason = 2;
+                    string CorrelationId = 3;
+                }
+                
+                message Empty {}
+            `;
                 
                 // Create temporary file with proper permissions
                 const tempDir = require('os').tmpdir();
@@ -257,20 +278,29 @@ export class MountainClientService implements IMountainClientService {
     }
     
     /**
-     * Wait for connection to be established
-     */
-    private waitForConnection(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (!this.client) {
-                reject(new Error('Client not initialized'));
-                return;
-            }
-            
-            const deadline = new Date();
-            deadline.setSeconds(deadline.getSeconds() + 10); // 10 second timeout
-            
-            this.client.waitForReady(deadline, (error) => {
-                if (error) {
+	 * Wait for connection with advanced timeout handling
+	 */
+	private waitForConnection(): Promise<void> {
+		return new Promise((resolve, reject) => {
+			if (!this.client) {
+				reject(new Error('Client not initialized'));
+				return;
+			}
+			
+			const connectionTimeout = parseInt(process.env.MOUNTAIN_CONNECTION_TIMEOUT || '10000', 10);
+			const deadline = new Date();
+			deadline.setMilliseconds(deadline.getMilliseconds() + connectionTimeout);
+			
+			let timeoutId: NodeJS.Timeout;
+			
+			// Set timeout for connection attempt
+			timeoutId = setTimeout(() => {
+				reject(new Error(`Connection timeout after ${connectionTimeout}ms`));
+			}, connectionTimeout);
+			
+			this.client.waitForReady(deadline, (error) => {
+				clearTimeout(timeoutId);
+				
                     reject(error);
                 } else {
                     resolve();
@@ -280,57 +310,82 @@ export class MountainClientService implements IMountainClientService {
     }
     
     /**
-     * Send request to Mountain
-     */
-    async sendRequest(method: string, parameters: any): Promise<any> {
-        if (!this.isConnected || !this.client) {
-            throw new Error('Not connected to Mountain');
-        }
-        
-        const requestIdentifier = this.generateRequestId();
-        console.log(`[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`);
-        
-        try {
-            const request: GenericRequest = {
-                RequestIdentifier: requestIdentifier,
-                Method: method,
-                Parameter: Buffer.from(JSON.stringify(parameters))
-            };
-            
-            const response = await this.makeRequest(request);
-            
-            if (!response.Success) {
-                throw new Error(response.Error || 'Mountain request failed');
-            }
-            
-            // Parse response data
-            const responseData = response.Data 
-                ? JSON.parse(response.Data.toString('utf8'))
-                : {};
-            
-            console.log(`[MountainClientService] Request ${method} completed successfully`);
-            
-            return responseData;
-            
-        } catch (error) {
-            this.errorCount++;
-            console.error(`[MountainClientService] Request ${method} failed:`, error);
-            
-            // Auto-reconnect on connection errors
-            if (this.isConnectionError(error)) {
-                console.log("[MountainClientService] Connection error detected, attempting reconnect");
-                try {
-                    await this.reconnect();
-                    console.log("[MountainClientService] Reconnected successfully, retrying request");
-                    return this.sendRequest(method, parameters);
-                } catch (reconnectError) {
-                    console.error("[MountainClientService] Reconnect failed:", reconnectError);
-                }
-            }
-            
-            throw error;
-        }
-    }
+	 * Send request to Mountain with advanced features
+	 */
+	async sendRequest(method: string, parameters: any): Promise<any> {
+		if (!this.isConnected || !this.client) {
+			throw new Error('Not connected to Mountain');
+		}
+		
+		const requestIdentifier = this.generateRequestId();
+		const startTime = Date.now();
+		
+		console.log(`[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`);
+		
+		try {
+			const request: GenericRequest = {
+				RequestIdentifier: requestIdentifier,
+				Method: method,
+				Parameter: Buffer.from(JSON.stringify(parameters)),
+				Headers: {
+					'X-Request-ID': requestIdentifier.toString(),
+					'X-Timestamp': startTime.toString(),
+					'X-Source': 'Cocoon'
+				},
+				CorrelationId: `cocoon-${requestIdentifier}`
+			};
+			
+			const response = await this.makeRequest(request);
+			
+			const duration = Date.now() - startTime;
+			
+			if (!response.Success) {
+				throw new Error(response.Error || 'Mountain request failed');
+			}
+			
+			// Parse response data
+			const responseData = response.Data 
+				? JSON.parse(response.Data.toString('utf8'))
+				: {};
+			
+			console.log(`[MountainClientService] Request ${method} completed successfully in ${duration}ms`);
+			
+			// Track performance metrics
+			this.trackRequestMetrics(method, duration, true);
+			
+			return responseData;
+			
+		} catch (error) {
+			this.errorCount++;
+			const duration = Date.now() - startTime;
+			
+			console.error(`[MountainClientService] Request ${method} failed after ${duration}ms:`, error);
+			
+			// Track failure metrics
+			this.trackRequestMetrics(method, duration, false);
+			
+			// Auto-reconnect on connection errors
+			if (this.isConnectionError(error)) {
+				console.log("[MountainClientService] Connection error detected, attempting reconnect");
+				try {
+					await this.reconnect();
+					console.log("[MountainClientService] Reconnected successfully, retrying request");
+					return this.sendRequest(method, parameters);
+				} catch (reconnectError) {
+					console.error("[MountainClientService] Reconnect failed:", reconnectError);
+				}
+			}
+			
+			throw error;
+		}
+	}
+	
+	/**
+	 * Track request performance metrics
+	 */
+	private trackRequestMetrics(method: string, duration: number, success: boolean): void {
+		// TODO: Integrate with PerformanceMonitoringService
+		console.log(`[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`);
     
     /**
      * Check if error is a connection error

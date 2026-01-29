@@ -17,8 +17,11 @@ Build "Source/**/*.ts" \
 	--ESBuild Configuration/ESBuild/Target.js \
 	--Watch
 
-# TODO: Add Cocoon bootstrap script execution
+# Start Cocoon bootstrap script
 # Specification: MOUNTAIN-COCOON-INTEGRATION.md (Bootstrap Process)
-# Implementation: Node.js bootstrap script with environment setup
-# Dependencies: Node.js runtime, environment variables
-# Validation: Successful Cocoon launch by Mountain
+echo "[Cocoon] Starting Cocoon bootstrap..."
+node Scripts/cocoon/bootstrap-fork.js \
+    --port=50052 \
+    --mountain-host=localhost \
+    --mountain-port=50051 \
+    --debug=true
