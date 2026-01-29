@@ -6,6 +6,14 @@
  *
  * Based on VS Code's extension API construction patterns.
  * Specification: IMPLEMENTATION-SPECIFICATION.md (API Factory Service)
+ * TODO: Complete WebView panel API implementation
+ * TODO: Add comprehensive API validation
+ * TODO: Implement advanced security sandboxing
+ * TODO: Add cross-Element integration patterns
+ * TODO: Implement performance optimization for API construction
+ * TODO: Add Mountain integration for API discovery
+ * TODO: Implement API versioning and compatibility
+ * TODO: Add comprehensive error recovery patterns
  */
 import { Layer } from "effect";
 import { IAPIFactoryService, APIConstructionRequest, APIConstructionResult } from "../Interfaces/IAPIFactoryService";
