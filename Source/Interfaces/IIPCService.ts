@@ -10,7 +10,7 @@
  * Validation: Test with high-concurrency message handling
  */
 
-import { Context } from "effect";
+import * as Effect from "effect";
 import { CancellationToken } from "@codeeditorland/output/vs/base/common/cancellation";
 
 /**
@@ -123,4 +123,4 @@ export interface IIPCService {
 /**
  * Effect context for IPCService
  */
-export const IIPCService = Context.GenericTag<IIPCService>("IIPCService");
+export const IIPCService = Effect.Tag<IIPCService>("IIPCService");

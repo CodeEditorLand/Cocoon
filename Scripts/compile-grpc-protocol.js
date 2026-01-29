@@ -17,7 +17,7 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const MOUNTAIN_PROTO_PATH = join(__dirname, "../../../../Mountain/Proto/Vine.proto");
+const MOUNTAIN_PROTO_PATH = "../Mountain/Proto/Vine.proto";
 const OUTPUT_DIR = join(__dirname, "../Source/Generated");
 const TS_PROTO_OUTPUT = join(OUTPUT_DIR, "Vine.ts");
 
@@ -37,11 +37,8 @@ async function compileGrpcProtocol() {
         // Ensure output directory exists
         ensureOutputDirectory();
         
-        // Compile proto to TypeScript
+        // Compile proto to TypeScript using TypeScript gRPC tools
         await compileProtoToTypeScript();
-        
-        // Generate service interfaces
-        await generateServiceInterfaces();
         
         console.log("[compile-grpc-protocol] gRPC protocol compilation completed successfully");
         
@@ -86,141 +83,92 @@ function ensureOutputDirectory() {
 }
 
 /**
- * Compile proto to TypeScript using protoc
+ * Compile proto to TypeScript using protoc with ts-proto plugin
  */
 function compileProtoToTypeScript() {
     console.log("[compile-grpc-protocol] Compiling proto to TypeScript");
     
-    const command = `protoc \
-        --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts \
-        --ts_out=${OUTPUT_DIR} \
-        --proto_path=${dirname(MOUNTAIN_PROTO_PATH)} \
-        ${MOUNTAIN_PROTO_PATH}`;
+    // Try multiple approaches for protoc-gen-ts
+    const pluginPaths = [
+        './node_modules/.bin/protoc-gen-ts',
+        './node_modules/.bin/protoc-gen-ts.cmd',
+        './node_modules/.bin/protoc-gen-ts.exe',
+        './node_modules/.bin/protoc-gen-ts_proto',
+        'protoc-gen-ts'
+    ];
     
-    try {
-        execSync(command, { stdio: "inherit" });
-        console.log("[compile-grpc-protocol] Proto compilation successful");
-    } catch (error) {
-        console.error("[compile-grpc-protocol] Proto compilation failed");
-        throw error;
+    let successfulCompilation = false;
+    
+    for (const pluginPath of pluginPaths) {
+        try {
+            console.log(`[compile-grpc-protocol] Trying plugin: ${pluginPath}`);
+            
+            const command = `protoc \
+                --plugin=protoc-gen-ts=${pluginPath} \
+                --ts_out=${OUTPUT_DIR} \
+                --proto_path=${dirname(MOUNTAIN_PROTO_PATH)} \
+                ${MOUNTAIN_PROTO_PATH}`;
+            
+            execSync(command, { stdio: "inherit" });
+            console.log(`[compile-grpc-protocol] Proto compilation successful with ${pluginPath}`);
+            successfulCompilation = true;
+            break;
+            
+        } catch (error) {
+            console.warn(`[compile-grpc-protocol] Plugin ${pluginPath} failed:`, error.message);
+        }
+    }
+    
+    if (!successfulCompilation) {
+        console.error("[compile-grpc-protocol] All plugin attempts failed");
+        
+        // Fallback to generating TypeScript interfaces manually
+        console.log("[compile-grpc-protocol] Generating manual TypeScript interfaces...");
+        generateManualTypeScriptInterfaces();
+    } else {
+        // Generate enhanced service interfaces if compilation succeeded
+        generateServiceInterfaces();
     }
 }
 
 /**
- * Generate service interfaces from compiled proto
+ * Generate manual TypeScript interfaces when protoc-gen-ts is not available
  */
-function generateServiceInterfaces() {
-    console.log("[compile-grpc-protocol] Generating service interfaces");
+function generateManualTypeScriptInterfaces() {
+    console.log("[compile-grpc-protocol] Generating manual TypeScript interfaces");
     
-    const protoContent = readFileSync(MOUNTAIN_PROTO_PATH, "utf8");
-    
-    // Parse service definitions from proto
-    const serviceDefinitions = parseServiceDefinitions(protoContent);
-    
-    // Generate TypeScript interfaces
-    const tsInterfaces = generateTypeScriptInterfaces(serviceDefinitions);
-    
-    // Write interfaces to file
-    writeFileSync(TS_PROTO_OUTPUT, tsInterfaces);
-    console.log(`[compile-grpc-protocol] Generated service interfaces: ${TS_PROTO_OUTPUT}`);
-}
-
-/**
- * Parse service definitions from proto content
- */
-function parseServiceDefinitions(protoContent) {
-    const services = [];
-    
-    // Parse MountainService
-    const mountainServiceMatch = protoContent.match(/service MountainService \{[^}]+\}/s);
-    if (mountainServiceMatch) {
-        services.push({
-            name: "MountainService",
-            methods: parseServiceMethods(mountainServiceMatch[0])
-        });
-    }
-    
-    // Parse CocoonService
-    const cocoonServiceMatch = protoContent.match(/service CocoonService \{[^}]+\}/s);
-    if (cocoonServiceMatch) {
-        services.push({
-            name: "CocoonService", 
-            methods: parseServiceMethods(cocoonServiceMatch[0])
-        });
-    }
-    
-    return services;
-}
-
-/**
- * Parse service methods from service definition
- */
-function parseServiceMethods(serviceContent) {
-    const methods = [];
-    const methodRegex = /rpc\s+(\w+)\((\w+)\)\s+returns\s+\((\w+)\)/g;
-    let match;
-    
-    while ((match = methodRegex.exec(serviceContent)) !== null) {
-        methods.push({
-            name: match[1],
-            requestType: match[2],
-            responseType: match[3]
-        });
-    }
-    
-    return methods;
-}
-
-/**
- * Generate TypeScript interfaces from service definitions
- */
-function generateTypeScriptInterfaces(services) {
-    let tsCode = `/**
+    // Generate basic TypeScript interfaces based on Vine.proto
+    const tsInterfaces = `/**
  * @module Generated
  * @description
  * Auto-generated TypeScript interfaces from Mountain's Vine.proto
- * Generated by compile-grpc-protocol.js
+ * Generated by compile-grpc-protocol.js (manual fallback)
  * 
  * DO NOT EDIT MANUALLY - This file is automatically generated
  */
 
-`;
-    
-    // Generate service interfaces
-    services.forEach(service => {
-        tsCode += `export interface ${service.name} {
-`;
-        
-        service.methods.forEach(method => {
-            tsCode += `    ${method.name}(request: ${method.requestType}): Promise<${method.responseType}>;
-`;
-        });
-        
-        tsCode += `}
-
-`;
-    });
-    
-    // Generate message interfaces
-    tsCode += generateMessageInterfaces();
-    
-    return tsCode;
+// Service interfaces
+export interface MountainService {
+    ProcessCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendCocoonNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
 }
 
-/**
- * Generate message interfaces based on proto definitions
- */
-function generateMessageInterfaces() {
-    return `
+export interface CocoonService {
+    ProcessMountainRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendMountainNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+}
+
 // Message interfaces based on Vine.proto
 export interface GenericRequest {
-    RequestIdentifier: number;
+    RequestIdentifier: bigint;
     Method: string;
     Parameter: Buffer;
 }
 
 export interface GenericResponse {
-    RequestIdentifier: number;
+    RequestIdentifier: bigint;
     Result: Buffer;
     error?: RPCError;
 }
@@ -237,13 +185,184 @@ export interface RPCError {
 }
 
 export interface CancelOperationRequest {
-    RequestIdentifierToCancel: number;
+    RequestIdentifierToCancel: bigint;
 }
 
 export interface Empty {}
 
 export interface RPCDataPayload {
     Data: Buffer;
+}
+`;
+    
+    const fs = require('fs');
+    fs.writeFileSync(TS_PROTO_OUTPUT, tsInterfaces);
+    console.log(`[compile-grpc-protocol] Manual TypeScript interfaces generated: ${TS_PROTO_OUTPUT}`);
+}
+
+/**
+ * Generate enhanced service interfaces from proto content
+ */
+function generateServiceInterfaces() {
+    console.log("[compile-grpc-protocol] Generating enhanced service interfaces");
+    
+    const protoContent = readFileSync(MOUNTAIN_PROTO_PATH, "utf8");
+    
+    // Parse service definitions from proto with improved regex
+    const serviceDefinitions = parseServiceDefinitionsEnhanced(protoContent);
+    
+    // Generate enhanced TypeScript interfaces
+    const tsInterfaces = generateEnhancedTypeScriptInterfaces(serviceDefinitions);
+    
+    // Write interfaces to file
+    writeFileSync(TS_PROTO_OUTPUT, tsInterfaces);
+    console.log(`[compile-grpc-protocol] Generated enhanced service interfaces: ${TS_PROTO_OUTPUT}`);
+}
+
+/**
+ * Enhanced service definition parsing
+ */
+function parseServiceDefinitionsEnhanced(protoContent) {
+    const services = [];
+    
+    // Enhanced regex pattern to handle proto3 syntax
+    const servicePattern = /service\s+(\w+)\s*\{([^}]+)\}/g;
+    let serviceMatch;
+    
+    while ((serviceMatch = servicePattern.exec(protoContent)) !== null) {
+        const serviceName = serviceMatch[1];
+        const serviceBody = serviceMatch[2];
+        
+        services.push({
+            name: serviceName,
+            methods: parseServiceMethodsEnhanced(serviceBody)
+        });
+    }
+    
+    return services;
+}
+
+/**
+ * Enhanced service method parsing
+ */
+function parseServiceMethodsEnhanced(serviceBody) {
+    const methods = [];
+    const methodPattern = /rpc\s+(\w+)\s*\(\s*(\w+)\s*\)\s*returns\s*\(\s*(\w+)\s*\)/g;
+    let methodMatch;
+    
+    while ((methodMatch = methodPattern.exec(serviceBody)) !== null) {
+        methods.push({
+            name: methodMatch[1],
+            requestType: methodMatch[2],
+            responseType: methodMatch[3]
+        });
+    }
+    
+    return methods;
+}
+
+/**
+ * Generate enhanced TypeScript interfaces
+ */
+function generateEnhancedTypeScriptInterfaces(services) {
+    let tsCode = `/**
+ * @module Generated
+ * @description
+ * Auto-generated TypeScript interfaces from Mountain's Vine.proto
+ * Generated by compile-grpc-protocol.js
+ * 
+ * DO NOT EDIT MANUALLY - This file is automatically generated
+ * 
+ * Based on Mountain's Vine.proto specification
+ * Package: vine_ipc
+ */
+
+`;
+    
+    // Generate service interfaces with enhanced signatures
+    services.forEach(service => {
+        tsCode += `export interface ${service.name} {
+`;
+        
+        service.methods.forEach(method => {
+            tsCode += `    ${method.name}(request: ${method.requestType}): Promise<${method.responseType}>;
+`;
+        });
+        
+        tsCode += `}
+
+`;
+    });
+    
+    // Generate enhanced message interfaces
+    tsCode += generateEnhancedMessageInterfaces();
+    
+    return tsCode;
+}
+
+/**
+ * Generate enhanced message interfaces based on actual proto definitions
+ */
+function generateEnhancedMessageInterfaces() {
+    return `
+// Enhanced message interfaces based on actual Vine.proto
+export interface GenericRequest {
+    RequestIdentifier: bigint;
+    Method: string;
+    Parameter: Buffer;
+}
+
+export interface GenericResponse {
+    RequestIdentifier: bigint;
+    Result: Buffer;
+    error?: RPCError;
+}
+
+export interface GenericNotification {
+    Method: string;
+    Parameter: Buffer;
+}
+
+export interface RPCError {
+    Code: number;
+    Message: string;
+    Data?: Buffer;
+}
+
+export interface CancelOperationRequest {
+    RequestIdentifierToCancel: bigint;
+}
+
+export interface Empty {}
+
+export interface RPCDataPayload {
+    Data: Buffer;
+}
+
+// Enhanced interfaces for better TypeScript support
+export interface MountainServiceClient {
+    ProcessCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendCocoonNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+}
+
+export interface CocoonServiceClient {
+    ProcessMountainRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendMountainNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+}
+
+// Utility types for service implementations
+export type MountainServiceImplementation = {
+    ProcessCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendCocoonNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+}
+
+export type CocoonServiceImplementation = {
+    ProcessMountainRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendMountainNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
 }
 `;
 }

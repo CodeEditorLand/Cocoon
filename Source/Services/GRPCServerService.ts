@@ -14,47 +14,15 @@ import { Effect, Layer } from "effect";
 
 import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
 
-// gRPC service definitions from Mountain's Vine protocol
-interface GenericRequest {
-	RequestIdentifier: number;
-	Method: string;
-	Parameter: Buffer;
-}
-
-interface GenericResponse {
-	RequestIdentifier: number;
-	Success: boolean;
-	Data?: Buffer;
-	Error?: string;
-}
-
-interface GenericNotification {
-	Method: string;
-	Parameter: Buffer;
-}
-
-interface CancelOperationRequest {
-	RequestIdentifier: number;
-	Reason: string;
-}
-
-interface Empty {}
-
-// gRPC service interfaces
-interface CocoonServiceImplementation {
-	ProcessMountainRequest(
-		call: grpc.ServerUnaryCall<GenericRequest, GenericResponse>,
-		callback: grpc.sendUnaryData<GenericResponse>,
-	): void;
-	SendMountainNotification(
-		call: grpc.ServerUnaryCall<GenericNotification, Empty>,
-		callback: grpc.sendUnaryData<Empty>,
-	): void;
-	CancelOperation(
-		call: grpc.ServerUnaryCall<CancelOperationRequest, Empty>,
-		callback: grpc.sendUnaryData<Empty>,
-	): void;
-}
+// Import generated interfaces from Vine.proto
+import {
+    GenericRequest,
+    GenericResponse,
+    GenericNotification,
+    CancelOperationRequest,
+    Empty,
+    CocoonServiceImplementation
+} from "../Generated/Vine.js";
 
 /**
  * GRPCServerService implementation

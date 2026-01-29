@@ -7,7 +7,7 @@
  * Based on Mountain's Vine protocol specification.
  */
 
-import { Context } from "effect";
+import * as Effect from "effect";
 
 export interface IGRPCServerService {
     readonly _serviceBrand: undefined;

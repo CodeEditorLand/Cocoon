@@ -5,7 +5,7 @@
  * Constructs complete VS Code API surface with extension-specific scoping.
  */
 
-import { Context } from "effect";
+import * as Effect from "effect/Effect";
 
 // API construction types
 export interface APIConstructionRequest {
@@ -82,4 +82,4 @@ export interface IAPIFactoryService {
 /**
  * Effect context for APIFactoryService
  */
-export const IAPIFactoryService = Context.GenericTag<IAPIFactoryService>("IAPIFactoryService");
+export const IAPIFactoryService = Effect.Tag<IAPIFactoryService>("IAPIFactoryService");

@@ -5,7 +5,7 @@
  * Provides robust error recovery, circuit breaker logic, and automatic retry mechanisms.
  */
 
-import { Context } from "effect";
+import * as Effect from "effect/Effect";
 
 // Circuit breaker state
 export interface CircuitBreakerState {
@@ -84,4 +84,4 @@ export interface IErrorHandlingService {
 /**
  * Effect context for ErrorHandlingService
  */
-export const IErrorHandlingService = Context.GenericTag<IErrorHandlingService>("IErrorHandlingService");
+export const IErrorHandlingService = Effect.Tag<IErrorHandlingService>("IErrorHandlingService");

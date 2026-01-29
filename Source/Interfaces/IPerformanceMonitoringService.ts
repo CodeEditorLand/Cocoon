@@ -5,7 +5,7 @@
  * Provides real-time performance metrics collection and optimization insights.
  */
 
-import { Context } from "effect";
+import * as Effect from "effect";
 
 // Performance metrics interface
 export interface PerformanceMetrics {
@@ -81,4 +81,4 @@ export interface IPerformanceMonitoringService {
 /**
  * Effect context for PerformanceMonitoringService
  */
-export const IPerformanceMonitoringService = Context.GenericTag<IPerformanceMonitoringService>("IPerformanceMonitoringService");
+export const IPerformanceMonitoringService = Effect.Tag<IPerformanceMonitoringService>("IPerformanceMonitoringService");

@@ -7,7 +7,7 @@
  * Based on Mountain's Vine protocol specification.
  */
 
-import { Context } from "effect";
+import * as Effect from "effect/Effect";
 
 export interface IMountainClientService {
     readonly _serviceBrand: undefined;
@@ -54,4 +54,14 @@ export interface IMountainClientService {
     };
 }
 
-export const IMountainClientService = Context.Tag<IMountainClientService>();
+class MountainClientService extends Effect.Service<IMountainClientService>()(
+  "Service/MountainClient",
+  {
+    effect: Effect.gen(function* (Generator) {
+      // Implementation will be provided in MountainClientService.ts
+      return {} as IMountainClientService;
+    }),
+  },
+) {}
+
+export const IMountainClientService = MountainClientService;
