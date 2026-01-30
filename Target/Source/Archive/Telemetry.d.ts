@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import { IPCService } from "./IPC.js";
 import { LoggerService } from "./Logger.js";
 declare const TelemetryService_base: Effect.Service.Class<IExtHostTelemetry, "Service/Telemetry", {
-    readonly effect: Effect.Effect<IExtHostTelemetry, never, LoggerService | import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | IPCService>;
+    readonly effect: Effect.Effect<IExtHostTelemetry, never, LoggerService | IPCService | import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData>;
 }>;
 /**
  * @class TelemetryService

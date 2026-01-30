@@ -371,7 +371,6 @@ export class GRPCServerService implements IGRPCServerService {
 	 * Load protocol definition
 	 */
 	private async loadProtocolDefinition(): Promise<protoLoader.PackageDefinition> {
-<<<<<<< HEAD
 		// TODO: Load Vine.proto from Mountain's protocol definitions
 		// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Protocol Loading)
 		// Implementation: Load protobuf definition from Mountain's source

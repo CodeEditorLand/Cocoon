@@ -38,7 +38,7 @@ export interface Environment {
     readonly asExternalUri: (Target: Uri) => Promise<Uri>;
 }
 declare const EnvironmentService_base: Effect.Service.Class<EnvironmentService, "Service/Environment", {
-    readonly effect: Effect.Effect<Environment, never, import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | IPCService | ClipboardService>;
+    readonly effect: Effect.Effect<Environment, never, IPCService | import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | ClipboardService>;
 }>;
 /**
  * @class Environment

@@ -19,14 +19,14 @@
 	},
 	"type": "module",
 	"scripts": {
-		"build:ts": "node Source/build.ts",
 		"Run": "sh Source/Run.sh",
 		"prepublishOnly": "sh Source/prepublishOnly.sh",
 		"build-grpc": "node Scripts/compile-grpc-protocol.js",
 		"compile-protocol": "node Scripts/compile-grpc-protocol.js",
 		"test": "vitest --run",
 		"test:watch": "vitest",
-		"test:coverage": "vitest --coverage"
+		"test:coverage": "vitest --coverage",
+		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@codeeditorland/output": "0.0.1",

@@ -53,7 +53,7 @@ declare const ExtensionHostService_base: Effect.Service.Class<ExtensionHostServi
         IsActivated: (Id: ExtensionIdentifier) => Effect.Effect<boolean, never, never>;
         DeactivateAll: () => Effect.Effect<void, never, never>;
         OnDidActivateExtension: (_callback: (extension: IExtensionDescription) => void) => Effect.Effect<void, never, never>;
-    }, never, LoggerService | import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | IPCService | import("@codeeditorland/output/vs/workbench/api/common/extHostTelemetry.js").IExtHostTelemetry>;
+    }, never, LoggerService | IPCService | import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | import("@codeeditorland/output/vs/workbench/api/common/extHostTelemetry.js").IExtHostTelemetry>;
 }>;
 /**
  * @class ExtensionHostService

@@ -27,7 +27,7 @@ export declare const CreateOsShim: (InitData: IExtensionHostInitData) => Readonl
     release: () => string;
     tmpdir: () => string;
     totalmem: () => number;
-    type: () => "Windows_NT" | "Darwin" | "Linux";
+    type: () => "Linux" | "Windows_NT" | "Darwin";
     userInfo: (_options?: {
         encoding: string;
     }) => {

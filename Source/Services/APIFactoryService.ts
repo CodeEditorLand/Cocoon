@@ -593,111 +593,111 @@ export class APIFactoryService implements IAPIFactoryService {
 		// Implementation: Register custom services with API factory
 		// Dependencies: ServiceMapping, ServiceRegistry
 		// Validation: Test service registration and access
-    }
-    
-    /**
-     * Validate API compatibility
-     */
-    async validateAPICompatibility(extensionId: string, apiVersion: string): Promise<APIValidationResult> {
-        console.log(`[APIFactoryService] Validating API compatibility for ${extensionId}: ${apiVersion}`);
-        
-        const supportedVersions = this.apiVersions.get("vscode") || [];
-        const isSupported = supportedVersions.includes(apiVersion);
-        
-        return {
-            valid: isSupported,
-            missingAPIs: isSupported ? [] : ["Complete API surface"],
-            deprecatedAPIs: [],
-            performanceWarnings: []
-        };
-    }
-    
-    /**
-     * Get API usage statistics
-     */
-    async getUsageStatistics(): Promise<any> {
-        const avgTime = this.constructionMetrics.total > 0 
-            ? this.constructionMetrics.totalTime / this.constructionMetrics.total 
-            : 0;
-            
-        return {
-            totalAPIConstructions: this.constructionMetrics.total,
-            averageConstructionTime: avgTime,
+	}
+	
+	/**
+	 * Validate API compatibility
+	 */
+	async validateAPICompatibility(extensionId: string, apiVersion: string): Promise<APIValidationResult> {
+		console.log(`[APIFactoryService] Validating API compatibility for ${extensionId}: ${apiVersion}`);
+		
+		const supportedVersions = this.apiVersions.get("vscode") || [];
+		const isSupported = supportedVersions.includes(apiVersion);
+		
+		return {
+			valid: isSupported,
+			missingAPIs: isSupported ? [] : ["Complete API surface"],
+			deprecatedAPIs: [],
+			performanceWarnings: []
+		};
+	}
+	
+	/**
+	 * Get API usage statistics
+	 */
+	async getUsageStatistics(): Promise<any> {
+		const avgTime = this.constructionMetrics.total > 0 
+			? this.constructionMetrics.totalTime / this.constructionMetrics.total 
+			: 0;
+			
+		return {
+			totalAPIConstructions: this.constructionMetrics.total,
+			averageConstructionTime: avgTime,
             mostUsedAPIs: ["commands", "window", "workspace"],
-            performanceMetrics: {
-                cacheHitRate: this.apiCache.size > 0 ? 0.8 : 0,
-                constructionSuccessRate: 1.0
-            }
-        };
-    }
-    
-    /**
-     * Update API version
-     */
-    async updateAPIVersion(version: string): Promise<void> {
-        console.log(`[APIFactoryService] Updating API version to ${version}`);
-        
-        const currentVersions = this.apiVersions.get("vscode") || [];
-        if (!currentVersions.includes(version)) {
-            currentVersions.push(version);
-            this.apiVersions.set("vscode", currentVersions);
-        }
-        
-        // Clear cache on version update
-        this.apiCache.clear();
-    }
-    
-    /**
-     * Get cache key
-     */
-    private getCacheKey(extensionId: string, apiVersion: string): string {
-        return `${extensionId}:${apiVersion}`;
-    }
-    
-    /**
-     * Get API surface
-     */
-    private getAPISurface(): string[] {
-        return [
-            "env", "commands", "window", "workspace", "extensions", 
-            "languages", "debug", "scm", "authentication"
-        ];
-    }
-    
-    /**
-     * Update construction metrics
-     */
-    private updateMetrics(constructionTime: number): void {
-        this.constructionMetrics.total++;
-        this.constructionMetrics.totalTime += constructionTime;
-    }
-    
-    /**
-     * Cleanup API factory service
-     */
-    async cleanup(): Promise<void> {
-        console.log("[APIFactoryService] Cleaning up service");
-        
-        this.apiCache.clear();
-        this.apiVersions.clear();
-        this.constructionMetrics = { total: 0, totalTime: 0 };
-        
-        console.log("[APIFactoryService] Service cleaned up");
-    }
+			performanceMetrics: {
+				cacheHitRate: this.apiCache.size > 0 ? 0.8 : 0,
+				constructionSuccessRate: 1.0
+			}
+		};
+	}
+	
+	/**
+	 * Update API version
+	 */
+	async updateAPIVersion(version: string): Promise<void> {
+		console.log(`[APIFactoryService] Updating API version to ${version}`);
+		
+		const currentVersions = this.apiVersions.get("vscode") || [];
+		if (!currentVersions.includes(version)) {
+			currentVersions.push(version);
+			this.apiVersions.set("vscode", currentVersions);
+		}
+		
+		// Clear cache on version update
+		this.apiCache.clear();
+	}
+	
+	/**
+	 * Get cache key
+	 */
+	private getCacheKey(extensionId: string, apiVersion: string): string {
+		return `${extensionId}:${apiVersion}`;
+	}
+	
+	/**
+	 * Get API surface
+	 */
+	private getAPISurface(): string[] {
+		return [
+			"env", "commands", "window", "workspace", "extensions", 
+			"languages", "debug", "scm", "authentication"
+		];
+	}
+	
+	/**
+	 * Update construction metrics
+	 */
+	private updateMetrics(constructionTime: number): void {
+		this.constructionMetrics.total++;
+		this.constructionMetrics.totalTime += constructionTime;
+	}
+	
+	/**
+	 * Cleanup API factory service
+	 */
+	async cleanup(): Promise<void> {
+		console.log("[APIFactoryService] Cleaning up service");
+		
+		this.apiCache.clear();
+		this.apiVersions.clear();
+		this.constructionMetrics = { total: 0, totalTime: 0 };
+		
+		console.log("[APIFactoryService] Service cleaned up");
+	}
 }
 
 /**
  * Service layer for APIFactoryService
  */
 export const APIFactoryServiceLayer = Layer.effect(
-    IAPIFactoryService,
-    Effect.sync(() => new APIFactoryService({} as IConfigurationService, {} as IModuleInterceptorService))
+	IAPIFactoryService,
+	Effect.sync(() => new APIFactoryService({} as IConfigurationService, {} as IModuleInterceptorService))
 );
 
 /**
  * Live implementation for testing
  */
 export const APIFactoryServiceLive = Layer.effect(
-    IAPIFactoryService,
-    Effect.sync(() => new APIFactoryService({} as IConfigurationService, {} as IModuleInterceptorService))
+	IAPIFactoryService,
+	Effect.sync(() => new APIFactoryService({} as IConfigurationService, {} as IModuleInterceptorService))
 );

@@ -53,6 +53,6 @@ export interface IConfigurationService {
  * Effect context for ConfigurationService
  */
 export declare const IConfigurationService: <Self, Type extends Effect.Tag.AllowedType>() => import("effect/Context").TagClass<Self, IConfigurationService, Type> & (Type extends Record<PropertyKey, any> ? Effect.Tag.Proxy<Self, Type> : {}) & {
-    use: <X>(body: (_: Type) => X) => [X] extends [Effect.Effect<infer A, infer E, infer R>] ? Effect.Effect<A, E, Self | R> : [X] extends [PromiseLike<infer A_1>] ? Effect.Effect<A_1, import("effect/Cause").UnknownException, Self> : Effect.Effect<X, never, Self>;
+    use: <X>(body: (_: Type) => X) => [X] extends [Effect.Effect<infer A, infer E, infer R>] ? Effect.Effect<A, E, R | Self> : [X] extends [PromiseLike<infer A_1>] ? Effect.Effect<A_1, import("effect/Cause").UnknownException, Self> : Effect.Effect<X, never, Self>;
 };
 //# sourceMappingURL=IConfigurationService.d.ts.map
