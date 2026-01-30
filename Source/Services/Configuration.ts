@@ -140,6 +140,15 @@ export class ConfigurationService implements IConfigurationService {
 		value: T,
 		scope: ConfigurationScope,
 	): Promise<void> {
+		// Validate configuration key and value
+		if (!this.validateConfigurationKey(key)) {
+			throw new Error(`Invalid configuration key: ${key}`);
+		}
+
+		if (!this.validateConfigurationValue(key, value)) {
+			throw new Error(`Invalid configuration value for key ${key}: ${value}`);
+		}
+
 		let scopeConfig = this.configuration.get(scope);
 		if (!scopeConfig) {
 			scopeConfig = {};
@@ -180,6 +189,95 @@ export class ConfigurationService implements IConfigurationService {
 				await this.handleConfigurationConflict(error, key, value, scope);
 			}
 		}
+	}
+
+	/**
+	 * Validate configuration key
+	 */
+	private validateConfigurationKey(key: string): boolean {
+		// Key must be non-empty and follow naming conventions
+		if (!key || key.trim().length === 0) {
+			return false;
+		}
+
+		// Key must not contain invalid characters
+		const invalidChars = /[^a-zA-Z0-9._-]/;
+		if (invalidChars.test(key)) {
+			return false;
+		}
+
+		// Key must not start or end with dots
+		if (key.startsWith('.') || key.endsWith('.')) {
+			return false;
+		}
+
+		// Key must not contain consecutive dots
+		if (key.includes('..')) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Validate configuration value
+	 */
+	private validateConfigurationValue(key: string, value: any): boolean {
+		// Basic validation: value must not be undefined
+		if (value === undefined) {
+			return false;
+		}
+
+		// Type-specific validation based on key patterns
+		if (key.includes('zoomLevel') || key.includes('fontSize')) {
+			// Numeric values must be valid numbers
+			if (typeof value !== 'number' || !isFinite(value)) {
+				return false;
+			}
+			
+			// Range validation
+			if (key.includes('zoomLevel')) {
+				return value >= -8 && value <= 9; // Standard zoom level range
+			}
+			if (key.includes('fontSize')) {
+				return value >= 6 && value <= 100; // Reasonable font size range
+			}
+		}
+
+		// Boolean values must be actual booleans
+		if (key.includes('enable') || key.includes('show') || key.includes('visible')) {
+			return typeof value === 'boolean';
+		}
+
+		// String values must be non-empty strings
+		if (typeof value === 'string') {
+			return value.trim().length > 0;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Validate entire configuration scope
+	 */
+	validateScopeConfiguration(scope: ConfigurationScope): boolean {
+		const scopeConfig = this.configuration.get(scope);
+		if (!scopeConfig) {
+			return true; // Empty scope is valid
+		}
+
+		// Validate all keys and values in the scope
+		const keys: string[] = [];
+		this.collectKeys(scopeConfig, '', keys);
+
+		for (const key of keys) {
+			const value = this.getNestedValue(scopeConfig, key);
+			if (!this.validateConfigurationKey(key) || !this.validateConfigurationValue(key, value)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
