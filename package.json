@@ -19,6 +19,7 @@
 	},
 	"type": "module",
 	"scripts": {
+		"build:ts": "node Source/build.ts",
 		"Run": "sh Source/Run.sh",
 		"prepublishOnly": "sh Source/prepublishOnly.sh"
 	},

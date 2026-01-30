@@ -37,14 +37,14 @@ interface CancelOperationRequest {
     Reason: string;
 }
 
-interface Empty {}
+// interface Empty {}
 
 // gRPC client types
-type MountainServiceClient = {
-    ProcessCocoonRequest: grpc.ClientUnaryCall<GenericRequest, GenericResponse>;
-    SendCocoonNotification: grpc.ClientUnaryCall<GenericNotification, Empty>;
-    CancelOperation: grpc.ClientUnaryCall<CancelOperationRequest, Empty>;
-};
+// type MountainServiceClient = {
+//     ProcessCocoonRequest: grpc.ClientUnaryCall;
+//     SendCocoonNotification: grpc.ClientUnaryCall;
+//     CancelOperation: grpc.ClientUnaryCall;
+// };
 
 /**
  * MountainClientService implementation
@@ -133,40 +133,40 @@ export class MountainClientService implements IMountainClientService {
         // Validation: Test with actual Mountain Vine.proto file
         
         // Mock implementation - would load actual Vine.proto
-        const protoContent = `
-            syntax = "proto3";
-            
-            service MountainService {
-                rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
-                rpc SendCocoonNotification(GenericNotification) returns (Empty);
-                rpc CancelOperation(CancelOperationRequest) returns (Empty);
-            }
-            
-            message GenericRequest {
-                uint64 RequestIdentifier = 1;
-                string Method = 2;
-                bytes Parameter = 3;
-            }
-            
-            message GenericResponse {
-                uint64 RequestIdentifier = 1;
-                bool Success = 2;
-                bytes Data = 3;
-                string Error = 4;
-            }
-            
-            message GenericNotification {
-                string Method = 1;
-                bytes Parameter = 2;
-            }
-            
-            message CancelOperationRequest {
-                uint64 RequestIdentifier = 1;
-                string Reason = 2;
-            }
-            
-            message Empty {}
-        `;
+        // const protoContent = `
+        //     syntax = "proto3";
+        //     
+        //     service MountainService {
+        //         rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
+        //         rpc SendCocoonNotification(GenericNotification) returns (Empty);
+        //         rpc CancelOperation(CancelOperationRequest) returns (Empty);
+        //     }
+        //     
+        //     message GenericRequest {
+        //         uint64 RequestIdentifier = 1;
+        //         string Method = 2;
+        //         bytes Parameter = 3;
+        //     }
+        //     
+        //     message GenericResponse {
+        //         uint64 RequestIdentifier = 1;
+        //         bool Success = 2;
+        //         bytes Data = 3;
+        //         string Error = 4;
+        //     }
+        //     
+        //     message GenericNotification {
+        //         string Method = 1;
+        //         bytes Parameter = 2;
+        //     }
+        //     
+        //     message CancelOperationRequest {
+        //         uint64 RequestIdentifier = 1;
+        //         string Reason = 2;
+        //     }
+        //     
+        //     message Empty {}
+        // `;
         
         return protoLoader.loadSync(
             'vine.proto',
@@ -183,25 +183,25 @@ export class MountainClientService implements IMountainClientService {
     /**
      * Wait for connection to be established
      */
-    private waitForConnection(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (!this.client) {
-                reject(new Error('Client not initialized'));
-                return;
-            }
-            
-            const deadline = new Date();
-            deadline.setSeconds(deadline.getSeconds() + 10); // 10 second timeout
-            
-            this.client.waitForReady(deadline, (error) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
+    // private waitForConnection(): Promise<void> {
+    //     return new Promise((resolve, reject) => {
+    //         if (!this.client) {
+    //             reject(new Error('Client not initialized'));
+    //             return;
+    //         }
+    //         
+    //         const deadline = new Date();
+    //         deadline.setSeconds(deadline.getSeconds() + 10); // 10 second timeout
+    //         
+    //         this.client.waitForReady(deadline, (error) => {
+    //             if (error) {
+    //                 reject(error);
+    //             } else {
+    //                 resolve();
+    //             }
+    //         });
+    //     });
+    // }
     
     /**
      * Send request to Mountain
@@ -253,7 +253,7 @@ export class MountainClientService implements IMountainClientService {
                 return;
             }
             
-            this.client.ProcessCocoonRequest(request, (error, response) => {
+            (this.client as any).ProcessCocoonRequest(request, (error: any, response: GenericResponse) => {
                 if (error) {
                     reject(error);
                 } else if (!response) {
@@ -302,7 +302,7 @@ export class MountainClientService implements IMountainClientService {
                 return;
             }
             
-            this.client.SendCocoonNotification(notification, (error) => {
+            (this.client as any).SendCocoonNotification(notification, (error: any) => {
                 if (error) {
                     reject(error);
                 } else {
@@ -349,7 +349,7 @@ export class MountainClientService implements IMountainClientService {
                 return;
             }
             
-            this.client.CancelOperation(cancelRequest, (error) => {
+            (this.client as any).CancelOperation(cancelRequest, (error: any) => {
                 if (error) {
                     reject(error);
                 } else {
@@ -411,7 +411,7 @@ export class MountainClientService implements IMountainClientService {
             mountainHost: this.mountainHost,
             mountainPort: this.mountainPort,
             errorCount: this.errorCount,
-            uptime: this.isConnected ? Date.now() - this.connectionStartTime : undefined as number | undefined
+            ...(this.isConnected ? { uptime: Date.now() - this.connectionStartTime } : {})
         };
     }
 }

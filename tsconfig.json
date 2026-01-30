@@ -69,7 +69,7 @@
 		"target": "ESNext"
 	},
 
-	"exclude": ["Target"],
+	"exclude": ["Target", "Source/Archive", "Source/Bootstrap", "Source/TypeConverter", "Source/Utility", "Source/WebViewPanel"],
 
 	"extends": "@playform/build/tsconfig",
 

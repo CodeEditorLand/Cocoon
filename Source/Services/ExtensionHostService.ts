@@ -12,7 +12,7 @@ import { Effect, Layer } from "effect";
 import { IExtensionHostService } from "../Interfaces/IExtensionHostService";
 import { IConfigurationService, ConfigurationScope } from "../Interfaces/IConfigurationService";
 import { IIPCService } from "../Interfaces/IIPCService";
-import { ServiceMapping } from "../ServiceMapping";
+// import { ServiceMapping } from "../ServiceMapping";
 
 // Types matching VSCode patterns
 interface IExtensionDescription {
@@ -151,7 +151,7 @@ export class ExtensionHostService implements IExtensionHostService {
                 // Dependencies: ConfigurationService, IPCService for Mountain sync
                 // Validation: Performance test with 500+ extensions
             },
-            getExtensionDescription: (extensionId: string): IExtensionDescription | undefined => {
+            getExtensionDescription: (_extensionId: string): IExtensionDescription | undefined => {
                 return undefined; // TODO: Implement extension lookup with error handling
                 // Specification: ARCHITECTURE-SPECIFICATION.md (Extension Host Service)
                 // Implementation: Circuit breaker pattern for extension lookup
@@ -183,7 +183,7 @@ export class ExtensionHostService implements IExtensionHostService {
                 reason
             });
             
-            const activatedExtension = await this._doActivateExtension(extension, reason);
+            const activatedExtension = await this._doActivateExtension(extension);
             
             // Store activated extension
             this._activatedExtensions.set(extensionId, activatedExtension);
@@ -202,7 +202,7 @@ export class ExtensionHostService implements IExtensionHostService {
             // Notify Mountain about activation failure
             await this.ipcService.send('extension-activation-error', {
                 extensionId,
-                error: error.message
+                error: error instanceof Error ? error.message : String(error)
             });
             
             console.error(`[ExtensionHostService] Failed to activate extension ${extensionId}:`, error);
@@ -215,7 +215,7 @@ export class ExtensionHostService implements IExtensionHostService {
      */
     private async _doActivateExtension(
         extension: IExtensionDescription,
-        reason: ExtensionActivationReason
+        // reason: ExtensionActivationReason
     ): Promise<ActivatedExtension> {
         const startTime = Date.now();
         

@@ -54,4 +54,4 @@ export interface IMountainClientService {
     };
 }
 
-export const IMountainClientService = Context.Tag<IMountainClientService>();
+export const IMountainClientService = Context.GenericTag<IMountainClientService>("IMountainClientService");

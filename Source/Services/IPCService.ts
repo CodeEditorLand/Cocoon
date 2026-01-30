@@ -8,14 +8,14 @@
  */
 
 import { Effect, Layer } from "effect";
-import { IIPCService, IPCMessage, IPCResponse, IPCConnectionStatus } from "../Interfaces/IIPCService";
-import { ServiceMapping } from "../ServiceMapping";
+import type { IPCResponse, IPCConnectionStatus } from "../Interfaces/IIPCService";
+import { IIPCService } from "../Interfaces/IIPCService";
 
 /**
  * Stub IPC service implementation
  */
 export class IPCService implements IIPCService {
-    private readonly _serviceBrand: undefined;
+    readonly _serviceBrand: undefined;
     
     private _isConnected: boolean = false;
     private _connectionStartTime: number = 0;
@@ -24,6 +24,7 @@ export class IPCService implements IIPCService {
     private _listeners: Map<string, ((data: any) => void)[]> = new Map();
     
     constructor() {
+        this._serviceBrand = undefined;
         console.log('[IPCService] Initializing stub IPC service');
         
         // TODO: Implement production-grade gRPC client

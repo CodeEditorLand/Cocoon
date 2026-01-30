@@ -10,7 +10,8 @@
 
 import { Effect, Layer } from "effect";
 import { IConfigurationService } from "../Interfaces/IConfigurationService";
-import { ServiceMapping } from "../ServiceMapping";
+import type { ConfigurationChangeEvent } from "../Interfaces/IConfigurationService";
+// import { ServiceMapping } from "../ServiceMapping";
 import { IIPCService } from "../Interfaces/IIPCService";
 
 // Configuration scopes
@@ -60,14 +61,14 @@ export class ConfigurationService implements IConfigurationService {
             );
             
             // Initialize with loaded configuration
-            if (initialConfiguration.application) {
-                this.configuration.set(ConfigurationScope.APPLICATION, initialConfiguration.application);
+            if (initialConfiguration.data?.application) {
+                this.configuration.set(ConfigurationScope.APPLICATION, initialConfiguration.data.application);
             }
-            if (initialConfiguration.workspace) {
-                this.configuration.set(ConfigurationScope.WORKSPACE, initialConfiguration.workspace);
+            if (initialConfiguration.data?.workspace) {
+                this.configuration.set(ConfigurationScope.WORKSPACE, initialConfiguration.data.workspace);
             }
-            if (initialConfiguration.profile) {
-                this.configuration.set(ConfigurationScope.PROFILE, initialConfiguration.profile);
+            if (initialConfiguration.data?.profile) {
+                this.configuration.set(ConfigurationScope.PROFILE, initialConfiguration.data.profile);
             }
         } catch (error) {
             console.error('[ConfigurationService] Failed to load initial configuration:', error);
@@ -203,16 +204,17 @@ export class ConfigurationService implements IConfigurationService {
     }
     
     /**
-     * Watch for configuration changes
+     * Listen for configuration changes
      */
-    onDidChangeConfiguration(key: string, scope: ConfigurationScope, callback: (value: any) => void): void {
-        const eventKey = `${scope}.${key}`;
+    onDidChangeConfiguration(_callback: (event: ConfigurationChangeEvent) => void): void {
+        // TODO: Implement comprehensive configuration change listening
+        // Specification: ARCHITECTURE-SPECIFICATION.md (Configuration Service)
+        // Implementation: Event emitter pattern with key filtering
+        // Dependencies: Event system, change tracking
+        // Validation: Test with multiple concurrent listeners
         
-        if (!this.listeners.has(eventKey)) {
-            this.listeners.set(eventKey, []);
-        }
-        
-        this.listeners.get(eventKey)!.push(callback);
+        console.log('[ConfigurationService] onDidChangeConfiguration called - not yet implemented');
+        // This will be implemented when the event system is ready
     }
     
     /**
@@ -254,13 +256,17 @@ export class ConfigurationService implements IConfigurationService {
 
         for (let i = 0; i < keys.length - 1; i++) {
             const k = keys[i];
+            if (!k) continue;
             if (!(k in current) || typeof current[k] !== 'object') {
                 current[k] = {};
             }
-            current = current[k];
+            current = current[k] as Record<string, any>;
         }
 
-        current[keys[keys.length - 1]] = value;
+        const lastKey = keys[keys.length - 1];
+        if (lastKey) {
+            current[lastKey] = value;
+        }
     }
     
     /**

@@ -54,6 +54,7 @@ interface CocoonServiceImplementation {
 		call: grpc.ServerUnaryCall<CancelOperationRequest, Empty>,
 		callback: grpc.sendUnaryData<Empty>,
 	): void;
+	[x: string]: any; // Index signature for gRPC compatibility
 }
 
 /**
@@ -314,40 +315,41 @@ export class GRPCServerService implements IGRPCServerService {
 		// Validation: Test with actual Mountain Vine.proto file
 
 		// Mock implementation - would load actual Vine.proto
-		const protoContent = `
-            syntax = "proto3";
-            
-            service CocoonService {
-                rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
-                rpc SendMountainNotification(GenericNotification) returns (Empty);
-                rpc CancelOperation(CancelOperationRequest) returns (Empty);
-            }
-            
-            message GenericRequest {
-                uint64 RequestIdentifier = 1;
-                string Method = 2;
-                bytes Parameter = 3;
-            }
-            
-            message GenericResponse {
-                uint64 RequestIdentifier = 1;
-                bool Success = 2;
-                bytes Data = 3;
-                string Error = 4;
-            }
-            
-            message GenericNotification {
-                string Method = 1;
-                bytes Parameter = 2;
-            }
-            
-            message CancelOperationRequest {
-                uint64 RequestIdentifier = 1;
-                string Reason = 2;
-            }
-            
-            message Empty {}
-        `;
+		// Mock implementation - would load actual Vine.proto
+		// const protoContent = `
+        //     syntax = "proto3";
+        //     
+        //     service CocoonService {
+        //         rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
+        //         rpc SendMountainNotification(GenericNotification) returns (Empty);
+        //         rpc CancelOperation(CancelOperationRequest) returns (Empty);
+        //     }
+        //     
+        //     message GenericRequest {
+        //         uint64 RequestIdentifier = 1;
+        //         string Method = 2;
+        //         bytes Parameter = 3;
+        //     }
+        //     
+        //     message GenericResponse {
+        //         uint64 RequestIdentifier = 1;
+        //         bool Success = 2;
+        //         bytes Data = 3;
+        //         string Error = 4;
+        //     }
+        //     
+        //     message GenericNotification {
+        //         string Method = 1;
+        //         bytes Parameter = 2;
+        //     }
+        //     
+        //     message CancelOperationRequest {
+        //         uint64 RequestIdentifier = 1;
+        //         string Reason = 2;
+        //     }
+        //     
+        //     message Empty {}
+        // `;
 
 		return protoLoader.loadSync("vine.proto", {
 			keepCase: true,
@@ -420,7 +422,7 @@ export class GRPCServerService implements IGRPCServerService {
 			running: this.isRunning,
 			port: this.port,
 			errorCount: 0, // TODO: Implement error counting
-			uptime: this.isRunning ? Date.now() - this.startTime : undefined as number | undefined,
+			...(this.isRunning ? { uptime: Date.now() - this.startTime } : {})
 		};
 	}
 

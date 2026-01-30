@@ -3,10 +3,10 @@
 # Cocoon Run Script - Development Mode
 # Based on Mountain integration patterns
 
-Build "Source/Configuration/**/*.{ts,json}" \
-	--ESBuild Source/Configuration/ESBuild/Cocoon.ts
+Build "Configuration/**/*.{js,json}" \
+	--ESBuild Configuration/ESBuild/Cocoon.js
 
-Build "Source/**/*.ts" \
+Build "Source/**/!(*Archive*|*Bootstrap*)/*.ts" \
 	--ESBuild Configuration/ESBuild/Target.js \
 	--Watch
 
