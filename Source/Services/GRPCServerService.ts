@@ -8,7 +8,7 @@
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (gRPC Server Implementation)
  */
 
-import * as grpc from "@grpc/grpc-js";
+import { Server, ServerCredentials, loadPackageDefinition, sendUnaryData } from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
 
@@ -29,7 +29,7 @@ import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
 export class GRPCServerService implements IGRPCServerService {
 	readonly _serviceBrand: undefined;
 
-	private server: grpc.Server | null = null;
+	private server: Server | null = null;
 	private port: number = 50052; // Default Cocoon gRPC port
 	private isRunning: boolean = false;
 	private serviceImplementation: CocoonServiceImplementation;
@@ -66,16 +66,16 @@ export class GRPCServerService implements IGRPCServerService {
 	 */
 	private createServiceImplementation(): CocoonServiceImplementation {
 		return {
-			ProcessMountainRequest: (call, callback) => {
-				this.handleMountainRequest(call.request, callback);
+			ProcessMountainRequest: async (request: GenericRequest): Promise<GenericResponse> => {
+				return await this.handleMountainRequest(request);
 			},
-			SendMountainNotification: (call, callback) => {
-				this.handleMountainNotification(call.request);
-				callback(null, {});
+			SendMountainNotification: async (request: GenericNotification): Promise<Empty> => {
+				this.handleMountainNotification(request);
+				return {};
 			},
-			CancelOperation: (call, callback) => {
-				this.handleCancelOperation(call.request);
-				callback(null, {});
+			CancelOperation: async (request: CancelOperationRequest): Promise<Empty> => {
+				this.handleCancelOperation(request);
+				return {};
 			},
 		};
 	}
@@ -85,8 +85,7 @@ export class GRPCServerService implements IGRPCServerService {
 	 */
 	private async handleMountainRequest(
 		request: GenericRequest,
-		callback: grpc.sendUnaryData<GenericResponse>,
-	): Promise<void> {
+	): Promise<GenericResponse> {
 		const startTime = Date.now();
 		console.log(
 			`[GRPCServerService] Processing Mountain request: ${request.Method}`,
@@ -109,8 +108,7 @@ export class GRPCServerService implements IGRPCServerService {
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
-				Success: true,
-				Data: Buffer.from(JSON.stringify(responseData)),
+				Result: Buffer.from(JSON.stringify(responseData)),
 			};
 
 			const processingTime = Date.now() - startTime;
@@ -118,7 +116,7 @@ export class GRPCServerService implements IGRPCServerService {
 				`[GRPCServerService] Request ${request.Method} processed in ${processingTime}ms`,
 			);
 
-			callback(null, response);
+			return response;
 		} catch (error) {
 			console.error(
 				`[GRPCServerService] Error processing request ${request.Method}:`,
@@ -127,11 +125,15 @@ export class GRPCServerService implements IGRPCServerService {
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
-				Success: false,
-				Error: error instanceof Error ? error.message : "Unknown error",
+				Result: Buffer.from(JSON.stringify({})),
+				error: {
+					Code: 500,
+					Message: error instanceof Error ? error.message : "Unknown error",
+					Data: Buffer.from(JSON.stringify({})),
+				},
 			};
 
-			callback(null, response);
+			return response;
 		}
 	}
 
@@ -399,12 +401,12 @@ export class GRPCServerService implements IGRPCServerService {
 		try {
 			// Load protocol definition
 			const packageDefinition = await this.loadProtocolDefinition();
-			const protoDescriptor = grpc.loadPackageDefinition(
+			const protoDescriptor = loadPackageDefinition(
 				packageDefinition,
 			) as any;
 
 			// Create gRPC server
-			this.server = new grpc.Server({
+			this.server = new Server({
 				"grpc.max_receive_message_length": 1024 * 1024 * 100, // 100MB
 				"grpc.max_send_message_length": 1024 * 1024 * 100, // 100MB
 			});
@@ -595,7 +597,7 @@ export class GRPCServerService implements IGRPCServerService {
 				"[GRPCServerService] Failed to load protocol definition:",
 				error,
 			);
-			throw new Error(`Failed to load Vine.proto: ${error.message}`);
+			throw new Error(`Failed to load Vine.proto: ${error instanceof Error ? error.message : 'Unknown error'}`);
 		}
 	}
 	private startServer(): Promise<void> {
@@ -607,7 +609,7 @@ export class GRPCServerService implements IGRPCServerService {
 
 			this.server.bindAsync(
 				`0.0.0.0:${this.port}`,
-				grpc.ServerCredentials.createInsecure(),
+				ServerCredentials.createInsecure(),
 				(error, port) => {
 					if (error) {
 						reject(error);

@@ -18,6 +18,10 @@ import { IExtensionHostService } from "./Interfaces/IExtensionHostService";
 import { IGRPCServerService } from "./Interfaces/IGRPCServerService";
 import { IIPCService } from "./Interfaces/IIPCService";
 import { IModuleInterceptorService } from "./Interfaces/IModuleInterceptorService";
+import {
+	ModuleInterceptorService,
+	ModuleInterceptorServiceLive,
+} from "./Services/ModuleInterceptorService";
 import { IMountainClientService } from "./Interfaces/IMountainClientService";
 import { IPerformanceMonitoringService } from "./Interfaces/IPerformanceMonitoringService";
 import { ISecurityService } from "./Interfaces/ISecurityService";
