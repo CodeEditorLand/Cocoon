@@ -59,29 +59,29 @@ export class ConfigurationService implements IConfigurationService {
 		console.log("[ConfigurationService] Loading initial configuration");
 
 		try {
-			// Load initial configuration from Mountain
-			const initialConfiguration = await this.ipcService.send(
-				"configuration:load",
+			// Load initial configuration from Mountain using the new Tauri commands
+			const configData = await this.ipcService.send(
+				"get_configuration_data",
 				{},
 			);
 
 			// Initialize with loaded configuration
-			if (initialConfiguration.data?.application) {
+			if (configData.data?.application) {
 				this.configuration.set(
 					ConfigurationScope.APPLICATION,
-					initialConfiguration.data.application,
+					configData.data.application,
 				);
 			}
-			if (initialConfiguration.data?.workspace) {
+			if (configData.data?.workspace) {
 				this.configuration.set(
 					ConfigurationScope.WORKSPACE,
-					initialConfiguration.data.workspace,
+					configData.data.workspace,
 				);
 			}
-			if (initialConfiguration.data?.profile) {
+			if (configData.data?.profile) {
 				this.configuration.set(
 					ConfigurationScope.PROFILE,
-					initialConfiguration.data.profile,
+					configData.data.profile,
 				);
 			}
 		} catch (error) {
@@ -89,10 +89,27 @@ export class ConfigurationService implements IConfigurationService {
 				"[ConfigurationService] Failed to load initial configuration:",
 				error,
 			);
-			// Initialize with empty configuration
-			this.configuration.set(ConfigurationScope.APPLICATION, {});
-			this.configuration.set(ConfigurationScope.WORKSPACE, {});
-			this.configuration.set(ConfigurationScope.PROFILE, {});
+			// Initialize with default configuration
+			this.configuration.set(ConfigurationScope.APPLICATION, {
+				_version: 1,
+				_timestamp: Date.now(),
+				window: {
+					zoomLevel: 0,
+					theme: 'dark'
+				},
+				editor: {
+					fontSize: 14,
+					lineNumbers: 'on'
+				}
+			});
+			this.configuration.set(ConfigurationScope.WORKSPACE, {
+				_version: 1,
+				_timestamp: Date.now()
+			});
+			this.configuration.set(ConfigurationScope.PROFILE, {
+				_version: 1,
+				_timestamp: Date.now()
+			});
 		}
 
 		console.log("[ConfigurationService] Configuration service initialized");
@@ -138,12 +155,14 @@ export class ConfigurationService implements IConfigurationService {
 			scopeConfig._timestamp = Date.now();
 			scopeConfig._version = (scopeConfig._version || 0) + 1;
 
-			// Save to Mountain
+			// Save to Mountain using the new Tauri command
 			try {
-				await this.ipcService.send("configuration:update", {
-					scope,
-					key,
-					value,
+				await this.ipcService.send("save_configuration_data", {
+					configData: {
+						application: this.configuration.get(ConfigurationScope.APPLICATION) || {},
+						workspace: this.configuration.get(ConfigurationScope.WORKSPACE) || {},
+						profile: this.configuration.get(ConfigurationScope.PROFILE) || {}
+					}
 				});
 				console.log(
 					`[ConfigurationService] Configuration updated: ${key} = ${value}`,
@@ -156,7 +175,9 @@ export class ConfigurationService implements IConfigurationService {
 					`[ConfigurationService] Failed to update configuration: ${key}`,
 					error,
 				);
-				throw error;
+				
+				// Implement conflict resolution
+				await this.handleConfigurationConflict(error, key, value, scope);
 			}
 		}
 	}
@@ -257,6 +278,124 @@ export class ConfigurationService implements IConfigurationService {
 			"[ConfigurationService] onDidChangeConfiguration called - not yet implemented",
 		);
 		// This will be implemented when the event system is ready
+	}
+
+	/**
+	 * Handle configuration conflicts with retry logic
+	 */
+	private async handleConfigurationConflict(
+		error: any,
+		key: string,
+		value: any,
+		scope: ConfigurationScope
+	): Promise<void> {
+		console.warn("[ConfigurationService] Configuration conflict detected, implementing retry logic");
+
+		const maxRetries = 3;
+		const baseDelay = 100; // ms
+
+		for (let attempt = 1; attempt <= maxRetries; attempt++) {
+			const delay = baseDelay * Math.pow(2, attempt - 1);
+			console.log(`[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`);
+
+			await new Promise(resolve => setTimeout(resolve, delay));
+
+			try {
+				// Reload configuration first to get latest state
+				await this.initialize();
+
+				// Retry setting the value
+				let scopeConfig = this.configuration.get(scope);
+				if (!scopeConfig) {
+					scopeConfig = {};
+					this.configuration.set(scope, scopeConfig);
+				}
+
+				this.setNestedValue(scopeConfig, key, value);
+
+				// Update timestamp
+				scopeConfig._timestamp = Date.now();
+				scopeConfig._version = (scopeConfig._version || 0) + 1;
+
+				// Retry saving
+				await this.ipcService.send("save_configuration_data", {
+					configData: {
+						application: this.configuration.get(ConfigurationScope.APPLICATION) || {},
+						workspace: this.configuration.get(ConfigurationScope.WORKSPACE) || {},
+						profile: this.configuration.get(ConfigurationScope.PROFILE) || {}
+					}
+				});
+
+				console.log("[ConfigurationService] Configuration saved successfully after retry");
+				return;
+			} catch (retryError) {
+				console.error(`[ConfigurationService] Retry attempt ${attempt} failed:`, retryError);
+
+				if (attempt === maxRetries) {
+					console.error("[ConfigurationService] All retry attempts failed, configuration may be out of sync");
+					throw new Error(`Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Handle configuration conflicts with retry logic
+	 */
+	private async handleConfigurationConflict(
+		error: any,
+		key: string,
+		value: any,
+		scope: ConfigurationScope
+	): Promise<void> {
+		console.warn("[ConfigurationService] Configuration conflict detected, implementing retry logic");
+
+		const maxRetries = 3;
+		const baseDelay = 100; // ms
+
+		for (let attempt = 1; attempt <= maxRetries; attempt++) {
+			const delay = baseDelay * Math.pow(2, attempt - 1);
+			console.log(`[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`);
+
+			await new Promise(resolve => setTimeout(resolve, delay));
+
+			try {
+				// Reload configuration first to get latest state
+				await this.initialize();
+
+				// Retry setting the value
+				let scopeConfig = this.configuration.get(scope);
+				if (!scopeConfig) {
+					scopeConfig = {};
+					this.configuration.set(scope, scopeConfig);
+				}
+
+				this.setNestedValue(scopeConfig, key, value);
+
+				// Update timestamp
+				scopeConfig._timestamp = Date.now();
+				scopeConfig._version = (scopeConfig._version || 0) + 1;
+
+				// Retry saving
+				await this.ipcService.send("save_configuration_data", {
+					configData: {
+						application: this.configuration.get(ConfigurationScope.APPLICATION) || {},
+						workspace: this.configuration.get(ConfigurationScope.WORKSPACE) || {},
+						profile: this.configuration.get(ConfigurationScope.PROFILE) || {}
+					}
+				});
+
+				console.log("[ConfigurationService] Configuration saved successfully after retry");
+				return;
+			} catch (retryError) {
+				console.error(`[ConfigurationService] Retry attempt ${attempt} failed:`, retryError);
+
+				if (attempt === maxRetries) {
+					console.error("[ConfigurationService] All retry attempts failed, configuration may be out of sync");
+					throw new Error(`Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`);
+				}
+			}
+		}
 	}
 
 	/**
