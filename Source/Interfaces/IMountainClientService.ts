@@ -54,14 +54,12 @@ export interface IMountainClientService {
 	};
 }
 
-class MountainClientService extends Effect.Service<IMountainClientService>()(
+export const IMountainClientService = Effect.Service<IMountainClientService>()(
 	"Service/MountainClient",
 	{
-		effect: Effect.gen(function* (Generator) {
+		effect: Effect.gen(function* () {
 			// Implementation will be provided in MountainClientService.ts
 			return {} as IMountainClientService;
 		}),
 	},
-) {}
-
-export const IMountainClientService = MountainClientService;
+);

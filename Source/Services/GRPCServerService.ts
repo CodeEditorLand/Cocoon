@@ -8,7 +8,7 @@
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (gRPC Server Implementation)
  */
 
-import { Server, ServerCredentials, loadPackageDefinition, sendUnaryData } from "@grpc/grpc-js";
+import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
 
@@ -20,7 +20,7 @@ import {
 	GenericNotification,
 	GenericRequest,
 	GenericResponse,
-} from "../Generated/Vine.js";
+} from "../Generated/Vine";
 import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
 
 /**
@@ -29,7 +29,7 @@ import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
 export class GRPCServerService implements IGRPCServerService {
 	readonly _serviceBrand: undefined;
 
-	private server: Server | null = null;
+	private server: grpc.Server | null = null;
 	private port: number = 50052; // Default Cocoon gRPC port
 	private isRunning: boolean = false;
 	private serviceImplementation: CocoonServiceImplementation;
@@ -375,7 +375,7 @@ export class GRPCServerService implements IGRPCServerService {
 	 */
 	private handleCancelOperation(cancelRequest: CancelOperationRequest): void {
 		console.log(
-			`[GRPCServerService] Canceling operation: ${cancelRequest.RequestIdentifier}, reason: ${cancelRequest.Reason}`,
+			`[GRPCServerService] Canceling operation: ${cancelRequest.RequestIdentifierToCancel}`,
 		);
 
 		// TODO: Implement cancellation logic
@@ -401,12 +401,12 @@ export class GRPCServerService implements IGRPCServerService {
 		try {
 			// Load protocol definition
 			const packageDefinition = await this.loadProtocolDefinition();
-			const protoDescriptor = loadPackageDefinition(
+			const protoDescriptor = grpc.loadPackageDefinition(
 				packageDefinition,
 			) as any;
 
 			// Create gRPC server
-			this.server = new Server({
+			this.server = new grpc.Server({
 				"grpc.max_receive_message_length": 1024 * 1024 * 100, // 100MB
 				"grpc.max_send_message_length": 1024 * 1024 * 100, // 100MB
 			});
@@ -609,7 +609,7 @@ export class GRPCServerService implements IGRPCServerService {
 
 			this.server.bindAsync(
 				`0.0.0.0:${this.port}`,
-				ServerCredentials.createInsecure(),
+				grpc.credentials.createInsecure(),
 				(error, port) => {
 					if (error) {
 						reject(error);

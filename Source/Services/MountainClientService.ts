@@ -10,8 +10,6 @@
 
 import * as grpc from "@grpc/grpc-js";
 // Import generated interfaces from Vine.proto
-import * as grpc from "@grpc/grpc-js";
-import * as protoLoader from "@grpc/proto-loader";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
 
@@ -24,7 +22,6 @@ import {
 	MountainServiceClient,
 } from "../Generated/Vine";
 import {
-	IMountainClientService,
 	IMountainClientService,
 } from "../Interfaces/IMountainClientService";
 

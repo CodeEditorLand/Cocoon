@@ -24,6 +24,8 @@
 
 		"strict": true,
 
+		"skipLibCheck": true,
+
 		"noImplicitAny": true,
 
 		"noUncheckedIndexedAccess": true,
@@ -43,7 +45,7 @@
 		"outDir": "Target",
 
 		"paths": {
-			"@codeeditorland/output/*": ["../Output/Target/Microsoft/VSCode/*"]
+			"@codeeditorland/output/*": ["../Output/Target/Microsoft/VSCode/vs/*"]
 		},
 
 		"plugins": [
@@ -87,7 +89,9 @@
 		"target": "ESNext",
 
 		// Critical: Enable proper generator support in ES modules
-		"downlevelIteration": true
+		"downlevelIteration": true,
+		"lib": ["ESNext", "DOM", "DOM.Iterable", "ES2015.Generator"],
+		"module": "ESNext"
 	},
 
 	"exclude": ["Target", "Scripts/**/*.cjs", "**/*.cjs"],
