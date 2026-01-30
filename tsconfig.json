@@ -66,26 +66,21 @@
 
 		"rootDir": ".",
 
-		"target": "ESNext"
+		"target": "ESNext",
+
+		// Critical: Enable proper generator support in ES modules
+		"downlevelIteration": true
 	},
 
+<<<<<<< HEAD
 	"exclude": ["Target", "Source/Archive", "Source/Bootstrap", "Source/TypeConverter", "Source/Utility", "Source/WebViewPanel"],
 
 	"extends": "@playform/build/tsconfig",
+=======
+	"exclude": ["Target", "Scripts/**/*.cjs", "**/*.cjs"],
+>>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 
 	"include": [
-		"Source",
-
-		"@types/node",
-
-		"./node_modules/@codeeditorland/output/Target/Microsoft/VSCode/*.ts",
-
-		"./node_modules/@codeeditorland/output/Target/Microsoft/VSCode/typings",
-
-		"./node_modules/@codeeditorland/output/Target/Microsoft/VSCode/vs/**/*.ts",
-
-		"./node_modules/@codeeditorland/output/Target/Microsoft/VSCode/vscode-dts/vscode.proposed.*.d.ts",
-
-		"./node_modules/@codeeditorland/output/Target/Microsoft/VSCode/vscode-dts/vscode.d.ts"
+		"Source"
 	]
 }

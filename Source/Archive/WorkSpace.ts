@@ -1,6 +1,24 @@
 /**
- * @module WorkSpace
- * @description Defines the service that implements the `vscode.workspace` API.
+ * @module WorkSpace (ARCHIVED)
+ * @description 
+ * ARCHIVED - This file has been adapted and moved to Source/Services/Workspace.ts
+ * 
+ * Patterns borrowed from this file:
+ * - InternalWorkspace representation with delta calculation
+ * - Workspace folder change event emission
+ * - Text editor state tracking with Ref
+ * - Configuration service integration
+ * 
+ * New implementation in Source/Services/Workspace.ts includes:
+ * - Mountain gRPC integration (replaced IPC.SendRequest)
+ * - Enhanced workspace operations (FindTextInFiles, SaveAll, etc.)
+ * - Comprehensive TODOs for file system operations
+ * - TypeConverter integration hooks
+ * - Bidirectional configuration sync hooks
+ * 
+ * Archive kept for reference during further implementation work.
+ * 
+ * Original description: Defines the service that implements the `vscode.workspace` API.
  * It manages and exposes workspace-level state (e.g., folders, name) and editor state,
  * orchestrating complex operations like finding files and applying edits.
  */

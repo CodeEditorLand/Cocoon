@@ -1,6 +1,22 @@
 /**
- * @module Logger
- * @description Defines the service for internal application logging. This service
+ * @module Logger (ARCHIVED)
+ * @description 
+ * ARCHIVED - This file has been adapted and moved to Source/Services/Logger.ts
+ * 
+ * Patterns borrowed from this file:
+ * - Effect log function wrapping
+ * - Extension ID context tracking
+ * - Log level filtering
+ * 
+ * New implementation in Source/Services/Logger.ts includes:
+ * - Enhanced context management with Ref
+ * - Mountain log forwarding hooks
+ * - Comprehensive TODOs for advanced logging features
+ * - Structured log formatting
+ * 
+ * Archive kept for reference during further implementation work.
+ * 
+ * Original description: Defines the service for internal application logging. This service
  * provides a simple, structured facade over the main Effect logger, allowing
  * other services to log messages at various severity levels without directly
  * depending on the `Effect` module's logging implementation.

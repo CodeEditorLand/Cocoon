@@ -14,6 +14,7 @@ import { Effect, Layer } from "effect";
 
 import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
 
+<<<<<<< HEAD
 // gRPC service definitions from Mountain's Vine protocol
 interface GenericRequest {
 	RequestIdentifier: number;
@@ -56,6 +57,17 @@ interface CocoonServiceImplementation {
 	): void;
 	[x: string]: any; // Index signature for gRPC compatibility
 }
+=======
+// Import generated interfaces from Vine.proto
+import {
+    GenericRequest,
+    GenericResponse,
+    GenericNotification,
+    CancelOperationRequest,
+    Empty,
+    CocoonServiceImplementation
+} from "../Generated/Vine.js";
+>>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 
 /**
  * GRPCServerService implementation
@@ -117,10 +129,10 @@ export class GRPCServerService implements IGRPCServerService {
 	/**
 	 * Handle Mountain request
 	 */
-	private handleMountainRequest(
+	private async handleMountainRequest(
 		request: GenericRequest,
 		callback: grpc.sendUnaryData<GenericResponse>,
-	): void {
+	): Promise<void> {
 		const startTime = Date.now();
 		console.log(
 			`[GRPCServerService] Processing Mountain request: ${request.Method}`,
@@ -136,7 +148,7 @@ export class GRPCServerService implements IGRPCServerService {
 			// Dependencies: ServiceMapping, request validation, error handling
 			// Validation: Test with 1000+ concurrent requests
 
-			const responseData = this.routeRequest(request.Method, parameters);
+			const responseData = await this.routeRequest(request.Method, parameters);
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
@@ -185,29 +197,125 @@ export class GRPCServerService implements IGRPCServerService {
 	/**
 	 * Route request to appropriate service
 	 */
-	private routeRequest(method: string, parameters: any): any {
+	private async routeRequest(method: string, parameters: any): Promise<any> {
 		console.log(`[GRPCServerService] Routing request: ${method}`);
 
-		// TODO: Implement comprehensive request routing
-		// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Service Integration Mapping)
-		// Implementation: Service dispatcher with method pattern matching
-		// Dependencies: ServiceMapping, error handling, performance monitoring
-		// Validation: Test with all Mountain service methods
+		// Service routing table with pattern matching
+		const routePatterns = {
+			'extension.\w+': async (method: string, params: any) => {
+				// Route to ExtensionHostService via ServiceMapping
+				const { ServiceMapping } = await import('../ServiceMapping');
+				const { IExtensionHostService } = await import('../Interfaces/IExtensionHostService');
+				
+				switch (method) {
+					case 'extension.activate':
+						const extensionHostService = await ServiceMapping.getService(IExtensionHostService);
+						return await extensionHostService.activateExtension(params.extensionId, params.reason);
+					case 'extension.deactivate':
+						const extensionHostService2 = await ServiceMapping.getService(IExtensionHostService);
+						await extensionHostService2.deactivateExtension(params.extensionId);
+						return { success: true };
+					case 'extension.get':
+						const extensionHostService3 = await ServiceMapping.getService(IExtensionHostService);
+						return extensionHostService3.getActivatedExtension(params.extensionId);
+					default:
+						throw new Error(`Unknown extension method: ${method}`);
+				}
+			},
+			
+			'configuration.\w+': async (method: string, params: any) => {
+				// Route to ConfigurationService via ServiceMapping
+				const { ServiceMapping } = await import('../ServiceMapping');
+				const { IConfigurationService } = await import('../Interfaces/IConfigurationService');
+				
+				switch (method) {
+					case 'configuration.get':
+						const configService = await ServiceMapping.getService(IConfigurationService);
+						return await configService.getValue(params.key, params.scope);
+					case 'configuration.set':
+						const configService2 = await ServiceMapping.getService(IConfigurationService);
+						await configService2.setValue(params.key, params.value, params.scope);
+						return { success: true };
+					case 'configuration.update':
+						const configService3 = await ServiceMapping.getService(IConfigurationService);
+						await configService3.updateValue(params.key, params.updater, params.scope);
+						return { success: true };
+					default:
+						throw new Error(`Unknown configuration method: ${method}`);
+				}
+			},
+			
+			'command.\w+': async (method: string, params: any) => {
+				// Route to CommandService via ServiceMapping
+				const { ServiceMapping } = await import('../ServiceMapping');
+				const { IIPCService } = await import('../Interfaces/IIPCService');
+				
+				switch (method) {
+					case 'command.execute':
+						const ipcService = await ServiceMapping.getService(IIPCService);
+						return await ipcService.executeCommand(params.commandId, ...(params.args || []));
+					case 'command.register':
+						const ipcService2 = await ServiceMapping.getService(IIPCService);
+						const disposable = await ipcService2.registerCommand(params.commandId, params.callback);
+						return { disposableId: 'command-registration' };
+					case 'command.get':
+						const ipcService3 = await ServiceMapping.getService(IIPCService);
+						return await ipcService3.getCommands();
+					default:
+						throw new Error(`Unknown command method: ${method}`);
+				}
+			},
+			
+			'performance.\w+': async (method: string, params: any) => {
+				// Route to PerformanceMonitoringService via ServiceMapping
+				const { ServiceMapping } = await import('../ServiceMapping');
+				const { IPerformanceMonitoringService } = await import('../Interfaces/IPerformanceMonitoringService');
+				
+				switch (method) {
+					case 'performance.metrics':
+						const perfService = await ServiceMapping.getService(IPerformanceMonitoringService);
+						return perfService.getMetrics();
+					case 'performance.alerts':
+						const perfService2 = await ServiceMapping.getService(IPerformanceMonitoringService);
+						return perfService2.getAlerts();
+					case 'performance.report':
+						const perfService3 = await ServiceMapping.getService(IPerformanceMonitoringService);
+						return perfService3.generateReport();
+					default:
+						throw new Error(`Unknown performance method: ${method}`);
+				}
+			},
+			
+			'security.\w+': async (method: string, params: any) => {
+				// Route to SecurityService via ServiceMapping
+				const { ServiceMapping } = await import('../ServiceMapping');
+				const { ISecurityService } = await import('../Interfaces/ISecurityService');
+				
+				switch (method) {
+					case 'security.policy':
+						const securityService = await ServiceMapping.getService(ISecurityService);
+						return await securityService.getSecurityPolicy(params.extensionId);
+					case 'security.audit':
+						const securityService2 = await ServiceMapping.getService(ISecurityService);
+						return securityService2.getAuditLog();
+					case 'security.incidents':
+						const securityService3 = await ServiceMapping.getService(ISecurityService);
+						return securityService3.getActiveIncidents();
+					default:
+						throw new Error(`Unknown security method: ${method}`);
+				}
+			}
+		};
 
-		// Mock implementation for now
-		switch (method) {
-			case "extension.activate":
-				return { activated: true, extensionId: parameters.extensionId };
-			case "configuration.get":
-				return { value: "mock-value", key: parameters.key };
-			case "extension.deactivate":
-				return {
-					deactivated: true,
-					extensionId: parameters.extensionId,
-				};
-			default:
-				throw new Error(`Unknown method: ${method}`);
+		// Find matching route pattern
+		for (const [pattern, handler] of Object.entries(routePatterns)) {
+			const regex = new RegExp(pattern);
+			if (regex.test(method)) {
+				return handler(method, parameters);
+			}
 		}
+
+		throw new Error(`Unknown method: ${method}`);
 	}
 
 	/**
@@ -308,6 +416,7 @@ export class GRPCServerService implements IGRPCServerService {
 	 * Load protocol definition
 	 */
 	private async loadProtocolDefinition(): Promise<protoLoader.PackageDefinition> {
+<<<<<<< HEAD
 		// TODO: Load Vine.proto from Mountain's protocol definitions
 		// Specification: MOUNTAIN-COCOON-INTEGRATION.md (Protocol Loading)
 		// Implementation: Load protobuf definition from Mountain's source
@@ -358,11 +467,106 @@ export class GRPCServerService implements IGRPCServerService {
 			defaults: true,
 			oneofs: true,
 		});
+=======
+        console.log("[GRPCServerService] Loading Vine.proto protocol definition");
+        
+        try {
+            // Load actual Vine.proto from Mountain's source
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Resolve Mountain's Proto directory with multiple fallback paths
+            const protoSearchPaths = [
+                path.resolve(__dirname, '../../../../Mountain/Proto/Vine.proto'),
+                path.resolve(__dirname, '../../../../../Mountain/Proto/Vine.proto'),
+                path.resolve(__dirname, '../../../../../../Mountain/Proto/Vine.proto'),
+                path.resolve(process.cwd(), '../Mountain/Proto/Vine.proto'),
+                path.resolve(process.cwd(), '../../Mountain/Proto/Vine.proto')
+            ];
+            
+            let mountainProtoPath = null;
+            for (const protoPath of protoSearchPaths) {
+                if (fs.existsSync(protoPath)) {
+                    mountainProtoPath = protoPath;
+                    break;
+                }
+            }
+            
+            if (mountainProtoPath) {
+                console.log(`[GRPCServerService] Found Vine.proto at: ${mountainProtoPath}`);
+                
+                return protoLoader.loadSync(mountainProtoPath, {
+                    keepCase: true,
+                    longs: String,
+                    enums: String,
+                    defaults: true,
+                    oneofs: true,
+                    includeDirs: [path.dirname(mountainProtoPath)]
+                });
+            } else {
+                console.error("[GRPCServerService] Vine.proto not found in any search path");
+                console.log("[GRPCServerService] Search paths attempted:", protoSearchPaths);
+                
+                // Enhanced fallback with production-ready protocol definition
+                const fallbackProtoContent = `
+                    syntax = "proto3";
+                    
+                    package mountain;
+                    
+                    service CocoonService {
+                        rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
+                        rpc SendMountainNotification(GenericNotification) returns (Empty);
+                        rpc CancelOperation(CancelOperationRequest) returns (Empty);
+                    }
+                    
+                    message GenericRequest {
+                        uint64 RequestIdentifier = 1;
+                        string Method = 2;
+                        bytes Parameter = 3;
+                    }
+                    
+                    message GenericResponse {
+                        uint64 RequestIdentifier = 1;
+                        bool Success = 2;
+                        bytes Data = 3;
+                        string Error = 4;
+                    }
+                    
+                    message GenericNotification {
+                        string Method = 1;
+                        bytes Parameter = 2;
+                    }
+                    
+                    message CancelOperationRequest {
+                        uint64 RequestIdentifier = 1;
+                        string Reason = 2;
+                    }
+                    
+                    message Empty {}
+                `;
+                
+                // Create temporary file with proper permissions
+                const tempDir = require('os').tmpdir();
+                const tempProtoPath = path.join(tempDir, 'vine_fallback.proto');
+                fs.writeFileSync(tempProtoPath, fallbackProtoContent);
+                
+                console.log(`[GRPCServerService] Using enhanced fallback protocol at: ${tempProtoPath}`);
+                
+                return protoLoader.loadSync(tempProtoPath, {
+                    keepCase: true,
+                    longs: String,
+                    enums: String,
+                    defaults: true,
+                    oneofs: true,
+                });
+            }
+            
+        } catch (error) {
+            console.error("[GRPCServerService] Failed to load protocol definition:", error);
+            throw new Error(`Failed to load Vine.proto: ${error.message}`);
+        }
+>>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 	}
-
-	/**
-	 * Start server with promise interface
-	 */
 	private startServer(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			if (!this.server) {

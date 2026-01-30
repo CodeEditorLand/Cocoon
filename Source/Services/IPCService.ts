@@ -1,29 +1,100 @@
 /**
  * @module IPCService
  * @description
- * Stub implementation of IPC service for Mountain integration.
- * Based on Mountain's WindAdvancedSync patterns.
+ * Advanced IPC service implementation following VS Code's IPC patterns.
+ * Based on VS Code's IPCServer/IPCClient architecture with channels.
  * 
- * TODO: Replace with actual gRPC implementation once Mountain protocol is finalized.
+ * Architecture Specification: VS Code IPC Pattern Implementation
+ * Implementation: Channel-based RPC with cancellation support
+ * Validation: Test with high-concurrency message handling (>1000 req/sec)
  */
 
 import { Effect, Layer } from "effect";
+<<<<<<< HEAD
 import type { IPCResponse, IPCConnectionStatus } from "../Interfaces/IIPCService";
 import { IIPCService } from "../Interfaces/IIPCService";
+=======
+import { IIPCService, IChannel, IServerChannel, IMessagePassingProtocol, VSBuffer } from "../Interfaces/IIPCService";
+>>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 
 /**
- * Stub IPC service implementation
+ * VS Buffer implementation for binary-safe IPC
+ * Specification: src/vs/base/common/buffer.ts (VSBuffer)
+ * Implementation: Binary serialization wrapper
+ */
+class CocoonVSBuffer implements VSBuffer {
+    constructor(private readonly _buffer: Uint8Array) {}
+    
+    get buffer(): Uint8Array {
+        return this._buffer;
+    }
+    
+    get byteLength(): number {
+        return this._buffer.byteLength;
+    }
+    
+    toString(): string {
+        return new TextDecoder().decode(this._buffer);
+    }
+    
+    slice(start?: number, end?: number): VSBuffer {
+        return new CocoonVSBuffer(this._buffer.slice(start, end));
+    }
+    
+    static fromString(data: string): VSBuffer {
+        return new CocoonVSBuffer(new TextEncoder().encode(data));
+    }
+    
+    static wrap(buffer: Uint8Array): VSBuffer {
+        return new CocoonVSBuffer(buffer);
+    }
+}
+
+/**
+ * Message passing protocol implementation
+ * Specification: src/vs/base/parts/ipc/common/ipc.ts (IMessagePassingProtocol)
+ * Implementation: Binary-safe message serialization
+ */
+class CocoonMessagePassingProtocol implements IMessagePassingProtocol {
+    private readonly _onMessage = new Emitter<VSBuffer>();
+    readonly onMessage = this._onMessage.event;
+    
+    constructor(private _sendCallback?: (buffer: VSBuffer) => void) {}
+    
+    send(buffer: VSBuffer): void {
+        if (this._sendCallback) {
+            this._sendCallback(buffer);
+        }
+    }
+    
+    // Internal method for simulating message reception
+    simulateMessage(buffer: VSBuffer): void {
+        this._onMessage.fire(buffer);
+    }
+}
+
+/**
+ * Advanced IPC service implementation
+ * Specification: src/vs/base/parts/ipc/common/ipc.ts (IPCServer/IPCClient)
+ * Implementation: Multi-channel RPC system with cancellation
  */
 export class IPCService implements IIPCService {
     readonly _serviceBrand: undefined;
     
-    private _isConnected: boolean = false;
-    private _connectionStartTime: number = 0;
-    private _errorCount: number = 0;
-    private _lastPing: number = 0;
-    private _listeners: Map<string, ((data: any) => void)[]> = new Map();
+    private _protocol: IMessagePassingProtocol | null = null;
+    private _channels = new Map<string, IServerChannel<any>>();
+    private _isConnected = false;
+    private _connectionStartTime = 0;
+    private _messageCount = 0;
+    private _errorCount = 0;
+    private _lastPing = 0;
+    private _latencySamples: number[] = [];
+    
+    // Channel client for making requests
+    private _channelClient: IChannel | null = null;
     
     constructor() {
+<<<<<<< HEAD
         this._serviceBrand = undefined;
         console.log('[IPCService] Initializing stub IPC service');
         
@@ -32,127 +103,259 @@ export class IPCService implements IIPCService {
         // Implementation: gRPC with protobuf, connection pooling, TLS
         // Dependencies: @grpc/grpc-js, protobuf schemas, certificate management
         // Validation: Performance test with 1000+ concurrent messages
+=======
+        console.log('[IPCService] Initializing advanced IPC service');
+>>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
     }
     
     /**
-     * Initialize IPC service
+     * Initialize IPC service with protocol
      */
-    async initialize(): Promise<void> {
-        console.log('[IPCService] Initializing connection to Mountain');
+    async initialize(protocol: IMessagePassingProtocol): Promise<void> {
+        console.log('[IPCService] Initializing with protocol');
         
-        // Simulate connection establishment
-        await this.simulateConnection();
+        this._protocol = protocol;
+        
+        // Setup message handler
+        protocol.onMessage(buffer => {
+            this._handleMessage(buffer);
+        });
+        
+        // Establish connection
+        await this._establishConnection();
         
         this._isConnected = true;
         this._connectionStartTime = Date.now();
         this._lastPing = Date.now();
         
-        console.log('[IPCService] Connected to Mountain (stub)');
+        console.log('[IPCService] Advanced IPC service initialized');
     }
     
     /**
-     * Simulate connection establishment
+     * Establish connection with Mountain
      */
-    private async simulateConnection(): Promise<void> {
-        // Simulate connection delay
-        await new Promise(resolve => setTimeout(resolve, 100));
+    private async _establishConnection(): Promise<void> {
+        console.log('[IPCService] Establishing connection with Mountain');
         
-        console.log('[IPCService] Mountain connection established');
-    }
-    
-    /**
-     * Send message to Mountain
-     */
-    async send(command: string, data: any): Promise<IPCResponse> {
-        if (!this._isConnected) {
-            throw new Error('Not connected to Mountain');
-        }
+        // Send handshake
+        const handshakeBuffer = CocoonVSBuffer.fromString(JSON.stringify({
+            type: 'handshake',
+            timestamp: Date.now(),
+            version: '1.0.0'
+        }));
         
-        console.log(`[IPCService] Sending message to Mountain: ${command}`, data);
+        this._protocol!.send(handshakeBuffer);
         
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
-        // TODO: Implement message serialization/deserialization
-        // Specification: ARCHITECTURE-SPECIFICATION.md (IPC Bridge Service)
-        // Implementation: protobuf schema validation, compression
-        // Dependencies: protobuf schemas, compression libraries
-        // Validation: Test with large payloads (>10MB)
-        
-        this._lastPing = Date.now();
-        
-        // Simulate Mountain response
-        const response: IPCResponse = {
-            success: true,
-            data: { received: true, command, timestamp: Date.now() },
-            messageId: `msg_${Date.now()}`
-        };
-        
-        // TODO: Implement real Mountain gRPC protocol
-        // Specification: ARCHITECTURE-SPECIFICATION.md (IPC Bridge Service)
-        // Implementation: Mountain protobuf API integration
-        // Dependencies: Mountain protobuf definitions, authentication
-        // Validation: Integration testing with Mountain backend
-        
-        console.log(`[IPCService] Received response from Mountain for: ${command}`);
-        
-        return response;
-    }
-    
-    /**
-     * Listen for messages from Mountain
-     */
-    async listen(event: string, callback: (data: any) => void): Promise<void> {
-        if (!this._listeners.has(event)) {
-            this._listeners.set(event, []);
-        }
-        
-        this._listeners.get(event)!.push(callback);
-        
-        console.log(`[IPCService] Registered listener for event: ${event}`);
-    }
-    
-    /**
-     * Simulate receiving a message from Mountain
-     */
-    private async simulateMessageReceive(event: string, data: any): Promise<void> {
-        const listeners = this._listeners.get(event);
-        if (listeners) {
-            for (const listener of listeners) {
+        // Wait for handshake response
+        const response = await new Promise<VSBuffer>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error('Handshake timeout'));
+            }, 5000);
+            
+            const handler = this._protocol!.onMessage(buffer => {
                 try {
-                    listener(data);
+                    const data = JSON.parse(buffer.toString());
+                    if (data.type === 'handshake-response') {
+                        clearTimeout(timeout);
+                        resolve(buffer);
+                    }
                 } catch (error) {
-                    console.error(`[IPCService] Error in listener for ${event}:`, error);
+                    // Continue waiting
                 }
+            });
+        });
+        
+        console.log('[IPCService] Connection established with Mountain');
+    }
+    
+    /**
+     * Get channel for specific service
+     */
+    getChannel<T extends IChannel>(channelName: string): T {
+        // TODO: Implement proper channel routing
+        // Specification: src/vs/base/parts/ipc/common/ipc.ts (getChannel)
+        // Implementation: Channel factory with routing logic
+        
+        return {
+            call: async <T>(command: string, arg?: any, cancellationToken?: CancellationToken): Promise<T> => {
+                if (!this._isConnected) {
+                    throw new Error('Not connected to Mountain');
+                }
+                
+                const startTime = Date.now();
+                
+                try {
+                    const message = {
+                        type: 'call',
+                        channel: channelName,
+                        command,
+                        arg,
+                        timestamp: startTime,
+                        messageId: `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                    };
+                    
+                    const buffer = CocoonVSBuffer.fromString(JSON.stringify(message));
+                    this._protocol!.send(buffer);
+                    
+                    this._messageCount++;
+                    
+                    // Wait for response
+                    const response = await this._waitForResponse(message.messageId, cancellationToken);
+                    
+                    const latency = Date.now() - startTime;
+                    this._latencySamples.push(latency);
+                    
+                    return response as T;
+                    
+                } catch (error) {
+                    this._errorCount++;
+                    throw error;
+                }
+            },
+            
+            listen: <T>(event: string, arg?: any): Event<T> => {
+                // TODO: Implement event listening
+                // Specification: src/vs/base/parts/ipc/common/ipc.ts (listen)
+                // Implementation: Event emitter with filtering
+                
+                const emitter = new Emitter<T>();
+                
+                // Simulate event listening for now
+                return emitter.event;
             }
+        } as T;
+    }
+    
+    /**
+     * Register server channel for handling requests
+     */
+    registerChannel(channelName: string, channel: IServerChannel<any>): void {
+        console.log(`[IPCService] Registering channel: ${channelName}`);
+        this._channels.set(channelName, channel);
+    }
+    
+    /**
+     * Wait for response with cancellation support
+     */
+    private async _waitForResponse(messageId: string, cancellationToken?: CancellationToken): Promise<any> {
+        return new Promise((resolve, reject) => {
+            if (cancellationToken?.isCancellationRequested) {
+                reject(new Error('Request cancelled'));
+                return;
+            }
+            
+            const timeout = setTimeout(() => {
+                reject(new Error('Response timeout'));
+            }, 30000);
+            
+            const handler = this._protocol!.onMessage(buffer => {
+                try {
+                    const data = JSON.parse(buffer.toString());
+                    if (data.messageId === messageId) {
+                        clearTimeout(timeout);
+                        
+                        if (data.success) {
+                            resolve(data.result);
+                        } else {
+                            reject(new Error(data.error || 'Request failed'));
+                        }
+                    }
+                } catch (error) {
+                    // Continue waiting
+                }
+            });
+            
+            if (cancellationToken) {
+                cancellationToken.onCancellationRequested(() => {
+                    clearTimeout(timeout);
+                    reject(new Error('Request cancelled'));
+                });
+            }
+        });
+    }
+    
+    /**
+     * Handle incoming messages
+     */
+    private _handleMessage(buffer: VSBuffer): void {
+        try {
+            const data = JSON.parse(buffer.toString());
+            
+            if (data.type === 'handshake-response') {
+                console.log('[IPCService] Received handshake response');
+                return;
+            }
+            
+            if (data.type === 'call' && data.channel) {
+                this._handleCall(data);
+                return;
+            }
+            
+            console.log('[IPCService] Unhandled message type:', data.type);
+            
+        } catch (error) {
+            console.error('[IPCService] Failed to handle message:', error);
+        }
+    }
+    
+    /**
+     * Handle incoming call requests
+     */
+    private async _handleCall(data: any): Promise<void> {
+        const channel = this._channels.get(data.channel);
+        if (!channel) {
+            console.error(`[IPCService] Channel not found: ${data.channel}`);
+            return;
+        }
+        
+        try {
+            const result = await channel.call(data.command, data.arg);
+            
+            const response = {
+                type: 'response',
+                messageId: data.messageId,
+                success: true,
+                result,
+                timestamp: Date.now()
+            };
+            
+            const buffer = CocoonVSBuffer.fromString(JSON.stringify(response));
+            this._protocol!.send(buffer);
+            
+        } catch (error) {
+            const response = {
+                type: 'response',
+                messageId: data.messageId,
+                success: false,
+                error: error.message,
+                timestamp: Date.now()
+            };
+            
+            const buffer = CocoonVSBuffer.fromString(JSON.stringify(response));
+            this._protocol!.send(buffer);
         }
     }
     
     /**
      * Get connection status
      */
-    getConnectionStatus(): IPCConnectionStatus {
+    getConnectionStatus(): any {
         const now = Date.now();
         const connectionUptime = this._isConnected ? now - this._connectionStartTime : 0;
+        
+        // Calculate average latency
+        const averageLatency = this._latencySamples.length > 0
+            ? this._latencySamples.reduce((a, b) => a + b, 0) / this._latencySamples.length
+            : undefined;
         
         return {
             connected: this._isConnected,
             lastPing: this._lastPing,
             errorCount: this._errorCount,
-            connectionUptime
+            connectionUptime,
+            messageCount: this._messageCount,
+            averageLatency
         };
-    }
-    
-    /**
-     * Cleanup IPC service
-     */
-    async cleanup(): Promise<void> {
-        console.log('[IPCService] Cleaning up IPC service');
-        
-        this._isConnected = false;
-        this._listeners.clear();
-        
-        console.log('[IPCService] IPC service cleaned up');
     }
     
     /**
@@ -161,18 +364,27 @@ export class IPCService implements IIPCService {
     async reconnect(): Promise<void> {
         console.log('[IPCService] Reconnecting to Mountain');
         
-        await this.cleanup();
-        await this.initialize();
+        await this.dispose();
+        
+        if (this._protocol) {
+            await this.initialize(this._protocol);
+        }
         
         console.log('[IPCService] Reconnected to Mountain');
     }
     
     /**
-     * Simulate Mountain sending messages (for testing)
+     * Cleanup IPC service
      */
-    async simulateMountainMessage(event: string, data: any): Promise<void> {
-        console.log(`[IPCService] Simulating Mountain message: ${event}`, data);
-        await this.simulateMessageReceive(event, data);
+    dispose(): void {
+        console.log('[IPCService] Disposing IPC service');
+        
+        this._isConnected = false;
+        this._channels.clear();
+        this._protocol = null;
+        this._channelClient = null;
+        
+        console.log('[IPCService] IPC service disposed');
     }
 }
 
@@ -187,6 +399,8 @@ export const IPCServiceLayer = Layer.effect(
 /**
  * Live implementation
  */
+export { CocoonMessagePassingProtocol };
+
 export const IPCServiceLive = Layer.effect(
     IIPCService,
     Effect.sync(() => new IPCService())

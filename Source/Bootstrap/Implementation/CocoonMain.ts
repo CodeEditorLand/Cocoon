@@ -7,12 +7,17 @@
 
 import { Effect, Layer } from "effect";
 import { NodeRuntime } from "@effect/platform-node";
+import { Emitter } from "@codeeditorland/output/vscode-dts/vscode";
 
 // Service mapping
 import { ServiceMappingInstance } from "./ServiceMapping.js";
 import { ExtensionHostService } from "./ServiceMapping.js";
 import { IPCService } from "./ServiceMapping.js";
 import { ModuleInterceptorService } from "./ServiceMapping.js";
+import { ConfigurationService } from "./ServiceMapping.js";
+
+// Protocol implementation
+import { CocoonMessagePassingProtocol } from "../Services/IPCService.js";
 
 // --- Bootstrap Logic ---
 
@@ -29,9 +34,17 @@ const bootstrapCocoon = Effect.gen(function* () {
     const appLayer = ServiceMappingInstance.composeAppLayer();
     console.log("[CocoonMain] Application layer composed");
     
-    // Initialize IPC communication
+    // Initialize IPC communication with advanced protocol
     const ipcService = yield* IPCService;
-    console.log("[CocoonMain] IPC service initialized");
+    
+    // Create message passing protocol for Mountain communication
+    const protocol = new CocoonMessagePassingProtocol((buffer) => {
+        // TODO: Send to Mountain via gRPC
+        console.log("[CocoonMain] Sending message to Mountain");
+    });
+    
+    yield* Effect.promise(() => ipcService.initialize(protocol));
+    console.log("[CocoonMain] Advanced IPC service initialized");
     
     // Install module interceptor
     const moduleInterceptor = yield* ModuleInterceptorService;

@@ -16,13 +16,32 @@ import { IExtensionHostService } from "./Interfaces/IExtensionHostService";
 import { IIPCService } from "./Interfaces/IIPCService";
 import { IGRPCServerService } from "./Interfaces/IGRPCServerService";
 import { IMountainClientService } from "./Interfaces/IMountainClientService";
+import { IPerformanceMonitoringService } from "./Interfaces/IPerformanceMonitoringService";
+import { ISecurityService } from "./Interfaces/ISecurityService";
+import { IErrorHandlingService } from "./Interfaces/IErrorHandlingService";
 
 // Import service implementations
+<<<<<<< HEAD
 import { ConfigurationServiceLive } from "./Services/Configuration";
 import { ExtensionHostServiceLive } from "./Services/ExtensionHostService";
 import { IPCServiceLive } from "./Services/IPCService";
 import { GRPCServerServiceLive } from "./Services/GRPCServerService";
 import { MountainClientServiceLive } from "./Services/MountainClientService";
+=======
+import { ConfigurationService, ConfigurationServiceLive } from "./Services/Configuration";
+import { ExtensionHostService, ExtensionHostServiceLive } from "./Services/ExtensionHostService";
+import { IPCService, IPCServiceLive } from "./Services/IPCService";
+import { GRPCServerService, GRPCServerServiceLive } from "./Services/GRPCServerService";
+import { MountainClientService, MountainClientServiceLive } from "./Services/MountainClientService";
+import { APIFactoryService, APIFactoryServiceLive } from "./Services/APIFactoryService";
+import { PerformanceMonitoringService, PerformanceMonitoringServiceLive } from "./Services/PerformanceMonitoringService";
+import { SecurityService, SecurityServiceLive } from "./Services/SecurityService";
+import { ErrorHandlingService, ErrorHandlingServiceLive } from "./Services/ErrorHandlingService";
+
+// Import channel implementations
+import { ExtensionChannel } from "./Services/ExtensionChannel";
+import { ConfigurationChannel } from "./Services/ConfigurationChannel";
+>>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 
 /**
  * Service descriptor interface
@@ -104,10 +123,10 @@ export class ServiceMapping {
     }
     
     /**
-     * Initialize service mapping
+     * Initialize service mapping with channel registration
      */
     static initialize(): void {
-        console.log('[ServiceMapping] Initializing service mapping registry');
+        console.log("[ServiceMapping] Initializing service mapping registry");
         
         // Register Configuration Service
         this.registerService('ConfigurationService', {
@@ -144,6 +163,7 @@ export class ServiceMapping {
             dependencies: []
         });
         
+<<<<<<< HEAD
         // TODO: Register ModuleInterceptorService
         // Specification: IMPLEMENTATION-SPECIFICATION.md (Module Interceptor Service)
         // Implementation: Create ModuleInterceptorService implementation
@@ -190,6 +210,69 @@ export class ServiceMapping {
         console.log('[ServiceMapping] All service dependencies validated');
         return true;
     }
+=======
+		// Register ModuleInterceptorService
+		this.registerService('ModuleInterceptorService', {
+			interface: IModuleInterceptorService,
+			implementation: ModuleInterceptorServiceLive,
+			dependencies: []
+		});
+		
+		// Register APIFactoryService
+		this.registerService('APIFactoryService', {
+			interface: IAPIFactoryService,
+			implementation: APIFactoryServiceLive,
+			dependencies: [IConfigurationService, IModuleInterceptorService]
+		});
+		
+		// Register PerformanceMonitoringService
+		this.registerService('PerformanceMonitoringService', {
+			interface: IPerformanceMonitoringService,
+			implementation: PerformanceMonitoringServiceLive,
+			dependencies: []
+		});
+		
+		// Register SecurityService
+		this.registerService('SecurityService', {
+			interface: ISecurityService,
+			implementation: SecurityServiceLive,
+			dependencies: []
+		});
+		
+		// Register ErrorHandlingService
+		this.registerService('ErrorHandlingService', {
+			interface: IErrorHandlingService,
+			implementation: ErrorHandlingServiceLive,
+			dependencies: []
+		});
+		
+		// Initialize channels after services
+		this.initializeChannels();
+		
+		console.log("[ServiceMapping] Service mapping registry initialized");
+		console.log(`[ServiceMapping] Registered services: ${this.getRegisteredServices().join(', ')}`);
+		
+		// Validate all service dependencies
+		this.validateDependencies();
+		
+		console.log("[ServiceMapping] Enhanced services include advanced Mountain integration, security features, and production-ready error handling");
+	}
+
+	private validateDependencies(): boolean {
+		for (const [name, service] of this.services) {
+			for (const dependency of service.dependencies) {
+				const dependencyName = this.services.get(dependency);
+				if (!dependencyName) {
+					console.error(`[ServiceMapping] Dependency not found: ${dependency} for service ${name}`);
+					return false;
+				}
+			}
+		}
+		
+		console.log("[ServiceMapping] All service dependencies validated");
+		return true;
+	}
+>>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 }
 
 /**

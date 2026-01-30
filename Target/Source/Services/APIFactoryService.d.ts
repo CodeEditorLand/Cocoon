@@ -1,0 +1,83 @@
+/**
+ * @module APIFactoryService
+ * @description
+ * VS Code API factory service for Cocoon extension host.
+ * Constructs complete VS Code API surface with extension-specific scoping.
+ *
+ * Based on VS Code's extension API construction patterns.
+ * Specification: IMPLEMENTATION-SPECIFICATION.md (API Factory Service)
+ * TODO: Complete WebView panel API implementation
+ * TODO: Add comprehensive API validation
+ * TODO: Implement advanced security sandboxing
+ * TODO: Add cross-Element integration patterns
+ * TODO: Implement performance optimization for API construction
+ * TODO: Add Mountain integration for API discovery
+ * TODO: Implement API versioning and compatibility
+ * TODO: Add comprehensive error recovery patterns
+ */
+import { Layer } from "effect";
+import { IAPIFactoryService, APIConstructionRequest, APIConstructionResult } from "../Interfaces/IAPIFactoryService";
+import { IConfigurationService } from "../Interfaces/IConfigurationService";
+import { IModuleInterceptorService } from "../Interfaces/IModuleInterceptorService";
+/**
+ * APIFactoryService implementation
+ */
+export declare class APIFactoryService implements IAPIFactoryService {
+    private readonly _serviceBrand;
+    private configurationService;
+    private moduleInterceptorService;
+    private apiCache;
+    private apiVersions;
+    private constructionMetrics;
+    constructor(configurationService: IConfigurationService, moduleInterceptorService: IModuleInterceptorService);
+    /**
+     * Initialize API factory service
+     */
+    initialize(): Promise<void>;
+    /**
+     * Load API configuration
+     */
+    private loadAPIConfiguration;
+    /**
+     * Load API versions
+     */
+    private loadAPIVersions;
+    /**
+     * Initialize API cache
+     */
+    private initializeAPICache;
+    /**
+     * Create VS Code API for extension
+     */
+    createVSCodeAPI(request: APIConstructionRequest): Promise<APIConstructionResult>;
+    /**
+     * Create API context for extension
+     */
+    private createAPIContext;
+    /**
+     * Construct VS Code API surface
+     */
+    private constructVSCodeAPI;
+    /**
+     * Create complete VS Code environment API
+     */
+    private createEnvAPI;
+    /**
+     * Create complete VS Code commands API
+     */
+    private createCommandsAPI;
+    /**
+     * Create complete VS Code window API
+     */
+    private createWindowAPI;
+    const extensionId: any;
+}
+/**
+ * Service layer for APIFactoryService
+ */
+export declare const APIFactoryServiceLayer: Layer.Layer<IAPIFactoryService, never, never>;
+/**
+ * Live implementation for testing
+ */
+export declare const APIFactoryServiceLive: Layer.Layer<IAPIFactoryService, never, never>;
+//# sourceMappingURL=APIFactoryService.d.ts.map
