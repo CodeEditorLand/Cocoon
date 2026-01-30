@@ -9,6 +9,9 @@
  */
 import { Layer } from "effect";
 import { IMountainClientService } from "../Interfaces/IMountainClientService";
+/**
+ * MountainClientService implementation
+ */
 export declare class MountainClientService implements IMountainClientService {
     readonly _serviceBrand: undefined;
     private client;
@@ -27,6 +30,9 @@ export declare class MountainClientService implements IMountainClientService {
      * Validate host configuration
      */
     private isValidHost;
+    /**
+     * Connect to Mountain gRPC server
+     */
     connect(): Promise<void>;
     /**
      * Load protocol definition

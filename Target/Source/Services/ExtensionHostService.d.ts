@@ -74,6 +74,18 @@ export declare class ExtensionHostService implements IExtensionHostService {
      */
     private createExtensionContext;
     /**
+     * Check if extension is activated
+     */
+    isActivated(extensionId: string): boolean;
+    /**
+     * Get activated extension
+     */
+    getActivatedExtension(extensionId: string): ActivatedExtension | undefined;
+    /**
+     * Deactivate an extension
+     */
+    deactivateExtension(extensionId: string): Promise<void>;
+    /**
      * Terminate the extension host
      */
     terminate(reason: string, code?: number): Promise<void>;

@@ -7,6 +7,7 @@
  */
 
 import * as Module from "node:module";
+
 import { Config, Data, Effect } from "effect";
 
 import { InitDataService } from "./InitData.js";

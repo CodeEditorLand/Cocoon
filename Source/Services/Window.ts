@@ -38,18 +38,17 @@
  * - VSCODE-LIFT: src/vs/workbench/api/common/extHostWindow.ts (complete window API surface)
  */
 
-import { Effect, Ref, Context } from "effect";
+import { Context, Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
-
 // Import type converters
 import { FromAPI as OpenDialogOptionFromAPI } from "../TypeConverter/Dialog/OpenDialogOption.js";
 import { FromAPI as SaveDialogOptionFromAPI } from "../TypeConverter/Dialog/SaveDialogOption.js";
 import {
-	SerializeItems,
 	SerializeButtons,
+	SerializeItems,
 } from "../TypeConverter/QuickInput.js";
 import { FromAPI as StatusBarFromAPI } from "../TypeConverter/StatusBar.js";
 
@@ -58,19 +57,19 @@ import { FromAPI as StatusBarFromAPI } from "../TypeConverter/StatusBar.js";
  * @description Logger interface for service logging
  */
 export interface Logger {
-	readonly Trace: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Trace: (
+		Message: string,
+		...Data: unknown[]
+	) => Effect.Effect<void>;
 	readonly Debug: (
 		Message: string,
-		...Data: unknown[],
+		...Data: unknown[]
 	) => Effect.Effect<void>;
 	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
-	readonly Warn: (
-		Message: string,
-		...Data: unknown[],
-	) => Effect.Effect<void>;
+	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	readonly Error: (
 		Message: string,
-		...Data: unknown[],
+		...Data: unknown[]
 	) => Effect.Effect<void>;
 }
 
@@ -165,7 +164,8 @@ export class WindowService extends Effect.Service<WindowService>()(
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
 			const MountainClient = yield* IMountainClientService;
-			const WorkSpace = yield* Context.Tag<WorkSpace>("Service/WorkSpace");
+			const WorkSpace =
+				yield* Context.Tag<WorkSpace>("Service/WorkSpace");
 			const Logger = yield* Context.Tag<Logger>("Service/Logger");
 
 			// Window state tracking
@@ -186,9 +186,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 			 *
 			 * TODO: Wire this up to gRPC notification handler in GRPCServerService (HIGH)
 			 */
-			const AcceptWindowStateChange = (
-				State: VSCode.WindowState,
-			) =>
+			const AcceptWindowStateChange = (State: VSCode.WindowState) =>
 				Effect.gen(function* () {
 					yield* Ref.set(WindowStateRef, State);
 					yield* Logger.Debug(
@@ -213,7 +211,9 @@ export class WindowService extends Effect.Service<WindowService>()(
 			 */
 			const ShowTextDocument = (
 				DocumentOrUri: VSCode.Uri | VSCode.TextDocument,
-				ColumnOrOptions?: VSCode.ViewColumn | VSCode.TextDocumentShowOptions,
+				ColumnOrOptions?:
+					| VSCode.ViewColumn
+					| VSCode.TextDocumentShowOptions,
 				PreserveFocus?: boolean,
 			): Effect.Effect<VSCode.TextEditor, Error> =>
 				Effect.gen(function* () {
@@ -241,16 +241,18 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     options: OptionsDTO,
 							//     preserveFocus: PreserveFocus ?? false
 							// });
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowTextDocument`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowTextDocument`,
+								);
 							return "editor-1";
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show text document`,
-								error as Error,
-							);
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show text document`,
+									error as Error,
+								);
 							throw error;
 						},
 					});
@@ -302,16 +304,18 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//         items: Items
 							//     });
 							// }
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowInformationMessage`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowInformationMessage`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show information message`,
-								error as Error,
-							);
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show information message`,
+									error as Error,
+								);
 							throw error;
 						},
 					});
@@ -338,16 +342,18 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     message: Message,
 							//     items: Items
 							// });
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowWarningMessage`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowWarningMessage`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show warning message`,
-								error as Error,
-							);
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show warning message`,
+									error as Error,
+								);
 							throw error;
 						},
 					});
@@ -374,16 +380,18 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     message: Message,
 							//     items: Items
 							// });
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowErrorMessage`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowErrorMessage`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show error message`,
-								error as Error,
-							);
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show error message`,
+									error as Error,
+								);
 							throw error;
 						},
 					});
@@ -416,16 +424,18 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     options: Options,
 							//     buttons: ButtonsDTO
 							// });
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowQuickPick`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowQuickPick`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show quick pick`,
-								error as Error,
-							);
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show quick pick`,
+									error as Error,
+								);
 							throw error;
 						},
 					});
@@ -449,16 +459,18 @@ export class WindowService extends Effect.Service<WindowService>()(
 					return yield* Effect.tryPromise({
 						try: async () => {
 							// return await MountainClient.sendRequest('window.showInputBox', { options: Options });
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowInputBox`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowInputBox`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show input box`,
-								error as Error,
-							);
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show input box`,
+									error as Error,
+								);
 							throw error;
 						},
 					});
@@ -474,9 +486,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 				Options?: VSCode.OpenDialogOptions,
 			): Effect.Effect<VSCode.Uri[] | undefined, Error> =>
 				Effect.gen(function* () {
-					yield* Logger.Debug(
-						`[WindowService] Showing open dialog`,
-					);
+					yield* Logger.Debug(`[WindowService] Showing open dialog`);
 
 					// TODO: Serialize options using TypeConverter (MEDIUM)
 					// const OptionsDTO = Options ? OpenDialogOptionFromAPI(Options) : undefined;
@@ -490,16 +500,18 @@ export class WindowService extends Effect.Service<WindowService>()(
 							// if (Result && Result.length > 0) {
 							//     return Result.map(uri => VSCode.Uri.parse(uri));
 							// }
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowOpenDialog`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowOpenDialog`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show open dialog`,
-								error as Error,
-							);
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show open dialog`,
+									error as Error,
+								);
 							throw error;
 						},
 					});
@@ -515,9 +527,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 				Options?: VSCode.SaveDialogOptions,
 			): Effect.Effect<VSCode.Uri | undefined, Error> =>
 				Effect.gen(function* () {
-					yield* Logger.Debug(
-						`[WindowService] Showing save dialog`,
-					);
+					yield* Logger.Debug(`[WindowService] Showing save dialog`);
 
 					// TODO: Serialize options using TypeConverter (MEDIUM)
 					// const OptionsDTO = Options ? SaveDialogOptionFromAPI(Options) : undefined;
@@ -529,16 +539,18 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     options: OptionsDTO
 							// });
 							// return Result ? VSCode.Uri.parse(Result) : undefined;
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowSaveDialog`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowSaveDialog`,
+								);
 							return undefined;
 						},
-							catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show save dialog`,
-								error as Error,
-							);
+						catch: (error) => {
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show save dialog`,
+									error as Error,
+								);
 							throw error;
 						},
 					});
@@ -614,7 +626,10 @@ export class WindowService extends Effect.Service<WindowService>()(
 				Title: string,
 				ShowOptions:
 					| VSCode.ViewColumn
-					| { viewColumn: VSCode.ViewColumn; preserveFocus?: boolean },
+					| {
+							viewColumn: VSCode.ViewColumn;
+							preserveFocus?: boolean;
+					  },
 				Options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions,
 			): Effect.Effect<VSCode.WebviewPanel, Error> =>
 				Effect.gen(function* () {
@@ -665,45 +680,49 @@ export class WindowService extends Effect.Service<WindowService>()(
 /**
  * Window interface compatible with public VSCode API
  * This is what extensions see when they access vscode.window
- * 
+ *
  * TODO: Implement this as a namespace factory in APIFactoryService
  */
 export interface VSCodeWindowAPI {
-    readonly activeTextEditor: VSCode.TextEditor | undefined;
-    readonly visibleTextEditors: readonly VSCode.TextEditor [];
-    readonly activeColorTheme: VSCode.ColorTheme;
-    readonly state: VSCode.WindowState;
-    readonly onDidChangeActiveTextEditor: VSCode.Event<VSCode.TextEditor | undefined>;
-    readonly onDidChangeVisibleTextEditors: VSCode.Event<VSCode.TextEditor []>;
-    readonly onDidChangeWindowState: VSCode.Event<VSCode.WindowState>;
-    showTextDocument(
-        documentOrUri: VSCode.Uri | VSCode.TextDocument,
-        column?: VSCode.ViewColumn,
-        preserveFocus?: boolean
-    ): Thenable<VSCode.TextEditor>;
-    showInformationMessage(
-        message: string,
-        ...items: string[]
-    ): Thenable<string>;
-    showWarningMessage(
-        message: string,
-        ...items: string[]
-    ): Thenable<string>;
-    showErrorMessage(
-        message: string,
-        ...items: string[]
-    ): Thenable<string>;
-    showQuickPick<T extends string>(
-        items: readonly T[],
-        options?: VSCode.QuickPickOptions
-    ): Thenable<T | undefined>;
-    showInputBox(options?: VSCode.InputBoxOptions): Thenable<string | undefined>;
-    createStatusBarItem(id?: string, alignment?: VSCode.StatusBarAlignment, priority?: number): VSCode.StatusBarItem;
-    createOutputChannel(name: string): VSCode.OutputChannel;
-    createWebviewPanel(
-        viewType: string,
-        title: string,
-        showOptions: VSCode.ViewColumn | { viewColumn: VSCode.ViewColumn; preserveFocus?: boolean },
-        options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions
-    ): VSCode.WebviewPanel;
+	readonly activeTextEditor: VSCode.TextEditor | undefined;
+	readonly visibleTextEditors: readonly VSCode.TextEditor[];
+	readonly activeColorTheme: VSCode.ColorTheme;
+	readonly state: VSCode.WindowState;
+	readonly onDidChangeActiveTextEditor: VSCode.Event<
+		VSCode.TextEditor | undefined
+	>;
+	readonly onDidChangeVisibleTextEditors: VSCode.Event<VSCode.TextEditor[]>;
+	readonly onDidChangeWindowState: VSCode.Event<VSCode.WindowState>;
+	showTextDocument(
+		documentOrUri: VSCode.Uri | VSCode.TextDocument,
+		column?: VSCode.ViewColumn,
+		preserveFocus?: boolean,
+	): Thenable<VSCode.TextEditor>;
+	showInformationMessage(
+		message: string,
+		...items: string[]
+	): Thenable<string>;
+	showWarningMessage(message: string, ...items: string[]): Thenable<string>;
+	showErrorMessage(message: string, ...items: string[]): Thenable<string>;
+	showQuickPick<T extends string>(
+		items: readonly T[],
+		options?: VSCode.QuickPickOptions,
+	): Thenable<T | undefined>;
+	showInputBox(
+		options?: VSCode.InputBoxOptions,
+	): Thenable<string | undefined>;
+	createStatusBarItem(
+		id?: string,
+		alignment?: VSCode.StatusBarAlignment,
+		priority?: number,
+	): VSCode.StatusBarItem;
+	createOutputChannel(name: string): VSCode.OutputChannel;
+	createWebviewPanel(
+		viewType: string,
+		title: string,
+		showOptions:
+			| VSCode.ViewColumn
+			| { viewColumn: VSCode.ViewColumn; preserveFocus?: boolean },
+		options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions,
+	): VSCode.WebviewPanel;
 }

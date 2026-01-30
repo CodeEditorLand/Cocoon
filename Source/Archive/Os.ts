@@ -6,6 +6,7 @@
  */
 
 import * as NodeOs from "node:os";
+
 import type { IExtensionHostInitData } from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js";
 
 /**

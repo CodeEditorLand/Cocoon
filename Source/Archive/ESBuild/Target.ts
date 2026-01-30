@@ -59,9 +59,7 @@ export default async (Current: BuildOptions): Promise<BuildOptions> =>
 											) {
 												if (Output.endsWith(".js")) {
 													(
-														await import(
-															"@playform/build/Target/Function/Exec.js"
-														)
+														await import("@playform/build/Target/Function/Exec.js")
 													).default(
 														`Build '${Output}' \
 															--ESBuild Configuration/ESBuild/Target/Compile.js \

@@ -6,6 +6,7 @@
  */
 
 import * as Path from "node:path";
+
 import { URI } from "@codeeditorland/output/vs/base/common/uri.js";
 import type {
 	ExtensionIdentifier,

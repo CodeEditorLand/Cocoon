@@ -31,7 +31,7 @@
  * - LOW: Implement extension search by capabilities/features
  */
 
-import { Effect, Ref, Context } from "effect";
+import { Context, Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
@@ -50,14 +50,8 @@ export interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
-	readonly Info: (
-		Message: string,
-		...Data: unknown[]
-	) => Effect.Effect<void>;
-	readonly Warn: (
-		Message: string,
-		...Data: unknown[]
-	) => Effect.Effect<void>;
+	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
@@ -222,10 +216,7 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			 * - Local filesystem scan
 			 * - Marketplace (online)
 			 */
-			const DiscoverExtensions = (): Effect.Effect<
-				void,
-				Error
-			> =>
+			const DiscoverExtensions = (): Effect.Effect<void, Error> =>
 				Effect.gen(function* () {
 					Logger.Debug(
 						"[ExtensionService] Discovering extensions from configuration",
@@ -236,7 +227,10 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 						Record<string, any>
 					>("extensions", {});
 
-					const NewRegistry = new Map<string, IExtensionDescription>();
+					const NewRegistry = new Map<
+						string,
+						IExtensionDescription
+					>();
 
 					// Process configured extensions
 					for (const [ExtensionId, ExtensionData] of Object.entries(
@@ -272,9 +266,8 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 									ExtensionData.description
 										? ExtensionData.description
 										: undefined,
-								extensionLocation: VSCode.Uri.parse(
-									ExtensionLocation,
-								),
+								extensionLocation:
+									VSCode.Uri.parse(ExtensionLocation),
 								activationEvents:
 									typeof ExtensionData === "object" &&
 									ExtensionData.activationEvents
@@ -355,7 +348,9 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 				ExtensionId: string,
 			): Effect.Effect<IExtension<T> | undefined, never> =>
 				Effect.succeed(() => {
-					const Registry = Effect.runSync(Ref.get(ExtensionRegistryRef));
+					const Registry = Effect.runSync(
+						Ref.get(ExtensionRegistryRef),
+					);
 					const Description = Registry.get(ExtensionId);
 
 					if (!Description) {
@@ -365,7 +360,9 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 					const ActivationMap = Effect.runSync(
 						Ref.get(ExtensionActivationRef),
 					);
-					const ExportsMap = Effect.runSync(Ref.get(ExtensionExportsRef));
+					const ExportsMap = Effect.runSync(
+						Ref.get(ExtensionExportsRef),
+					);
 
 					const ExtensionObject: IExtension<T> = {
 						id: Description.identifier,
@@ -394,22 +391,23 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			 * TODO: LOW: Implement filtering by extension kind (UI/Workspace)
 			 * TODO: LOW: Implement sorting by activation priority
 			 */
-			const GetAllExtensions =
-				(): Effect.Effect<readonly IExtension[], never> =>
-					Effect.succeed(() => {
-						const Registry = Effect.runSync(
-							Ref.get(ExtensionRegistryRef),
-						);
-						const ActivationMap = Effect.runSync(
-							Ref.get(ExtensionActivationRef),
-						);
-						const ExportsMap = Effect.runSync(
-							Ref.get(ExtensionExportsRef),
-						);
+			const GetAllExtensions = (): Effect.Effect<
+				readonly IExtension[],
+				never
+			> =>
+				Effect.succeed(() => {
+					const Registry = Effect.runSync(
+						Ref.get(ExtensionRegistryRef),
+					);
+					const ActivationMap = Effect.runSync(
+						Ref.get(ExtensionActivationRef),
+					);
+					const ExportsMap = Effect.runSync(
+						Ref.get(ExtensionExportsRef),
+					);
 
-						const Extensions = Array.from(
-							Registry.entries(),
-						).map(([id, description]): IExtension => {
+					const Extensions = Array.from(Registry.entries()).map(
+						([id, description]): IExtension => {
 							return {
 								id: description.identifier,
 								extensionUri: description.extensionLocation,
@@ -419,10 +417,11 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 								packageJSON: description,
 								exports: ExportsMap.get(id),
 							};
-						});
+						},
+					);
 
-						return Extensions;
-					})();
+					return Extensions;
+				})();
 
 			/**
 			 * Get extension path by ID
@@ -431,18 +430,14 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 				ExtensionId: string,
 			): Effect.Effect<string | undefined, never> =>
 				Effect.succeed(() => {
-					const Extension = Effect.runSync(
-						GetExtension(ExtensionId),
-					);
+					const Extension = Effect.runSync(GetExtension(ExtensionId));
 					return Extension?.extensionPath;
 				});
 
 			/**
 			 * Register event handler for extension changes
 			 */
-			const OnDidChange = (
-				Listener: () => any,
-			): VSCode.Disposable => {
+			const OnDidChange = (Listener: () => any): VSCode.Disposable => {
 				OnDidChangeListeners.add(Listener);
 				const Disposable = {
 					dispose: () => {
@@ -472,7 +467,9 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 						NewMap.set(ExtensionId, Exports);
 						return NewMap;
 					});
-					Logger.Info(`[ExtensionService] Extension activated: ${ExtensionId}`);
+					Logger.Info(
+						`[ExtensionService] Extension activated: ${ExtensionId}`,
+					);
 				});
 
 			/**
@@ -487,7 +484,9 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 						NewMap.set(ExtensionId, false);
 						return NewMap;
 					});
-					Logger.Debug(`[ExtensionService] Extension deactivated: ${ExtensionId}`);
+					Logger.Debug(
+						`[ExtensionService] Extension deactivated: ${ExtensionId}`,
+					);
 				});
 
 			// Discover extensions on initialization

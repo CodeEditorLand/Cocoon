@@ -31,7 +31,7 @@
  * - LOW: Implement extension migration on version changes
  */
 
-import { Effect, Ref, Context } from "effect";
+import { Context, Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
@@ -50,14 +50,8 @@ export interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
-	readonly Info: (
-		Message: string,
-		...Data: unknown[]
-	) => Effect.Effect<void>;
-	readonly Warn: (
-		Message: string,
-		...Data: unknown[]
-	) => Effect.Effect<void>;
+	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
@@ -193,7 +187,9 @@ export class Memento {
 		//     })
 		// );
 
-		this.Logger.Debug(`[ExtensionContext] Memento cleared: ${this.ExtensionId}`);
+		this.Logger.Debug(
+			`[ExtensionContext] Memento cleared: ${this.ExtensionId}`,
+		);
 	}
 }
 
@@ -299,9 +295,7 @@ export class ExtensionSecretStorage {
 	 */
 	get onDidChange(): VSCode.Event<VSCode.SecretStorageChangeEvent> {
 		// TODO: MEDIUM: Implement secret change event from Mountain
-		return (
-			Listener: (event: VSCode.SecretStorageChangeEvent) => any,
-		) => {
+		return (Listener: (event: VSCode.SecretStorageChangeEvent) => any) => {
 			const Disposable = {
 				dispose: () => {
 					// Cleanup
@@ -355,196 +349,208 @@ export interface ExtensionContextService {
  * - MIGRATION: Add extension version migration support (LOW)
  * - TELEMETRY: Track extension activation metrics (LOW)
  */
-export class ExtensionContextService extends Effect.Service<
-	ExtensionContextService
->()("Service/ExtensionContext", {
-	effect: Effect.gen(function* () {
-		// Resolve service dependencies
-		const MountainClient = yield* IMountainClientService;
-		const Configuration = yield* Context.Tag<Configuration>(
-			"Service/Configuration",
-		);
-		const Logger = yield* Context.Tag<Logger>("Service/Logger");
+export class ExtensionContextService extends Effect.Service<ExtensionContextService>()(
+	"Service/ExtensionContext",
+	{
+		effect: Effect.gen(function* () {
+			// Resolve service dependencies
+			const MountainClient = yield* IMountainClientService;
+			const Configuration = yield* Context.Tag<Configuration>(
+				"Service/Configuration",
+			);
+			const Logger = yield* Context.Tag<Logger>("Service/Logger");
 
-		// Global subscription tracking for all extensions
-		const GlobalSubscriptionsRef = yield* Ref.make(new Map<string, Set<VSCode.Disposable>>());
+			// Global subscription tracking for all extensions
+			const GlobalSubscriptionsRef = yield* Ref.make(
+				new Map<string, Set<VSCode.Disposable>>(),
+			);
 
-		/**
-		 * Create extension context for activation
-		 *
-		 * Implementation Pattern: src/vs/workbench/api/common/extHostExtensionActivator.ts (createExtensionContext)
-		 *
-		 * TODOs:
-		 * - MIGRATION: Check for extension version differences and run migration (LOW)
-		 * - PERSISTENCE: Initialize state from previous extension activations (MEDIUM)
-		 */
-		const CreateExtensionContext = (
-			ExtensionId: string,
-			ExtensionDescription: IExtensionDescription,
-		): Effect.Effect<VSCode.ExtensionContext, Error> =>
-			Effect.gen(function* () {
-				Logger.Info(
-					`[ExtensionContext] Creating context for extension: ${ExtensionId}`,
-				);
-
-				// Create storage paths
-				const ExtensionPath = ExtensionDescription.extensionLocation.fsPath;
-				const StoragePath = `${ExtensionPath}/.storage`;
-				const GlobalStoragePath =
-					process.env.VSCODE_COCOON_GLOBAL_STORAGE ??
-					`${process.env.HOME ?? "."}/cocoon/global-storage`;
-
-				// Create mementos for state management
-				const WorkspaceStateRef = yield* Ref.make(
-					new Map<string, unknown>(),
-				);
-				const GlobalStateRef = yield* Ref.make(
-					new Map<string, unknown>(),
-				);
-
-				const WorkspaceState = new Memento(
-					WorkspaceStateRef,
-					ExtensionId,
-					Logger,
-					MountainClient,
-				);
-				const GlobalState = new Memento(
-					GlobalStateRef,
-					ExtensionId,
-					Logger,
-					MountainClient,
-				);
-
-				// Create secret storage
-				const SecretStorage = new ExtensionSecretStorage(
-					ExtensionId,
-					Logger,
-					MountainClient,
-				);
-
-				// Create subscription list for this extension
-				const Subscriptions = new Set<VSCode.Disposable>();
-				yield* Ref.update(GlobalSubscriptionsRef, (GlobalMap) => {
-					const NewMap = new Map(GlobalMap);
-					if (!NewMap.has(ExtensionId)) {
-						NewMap.set(ExtensionId, Subscriptions);
-					}
-					return NewMap;
-				});
-
-				/**
-				 * Create disposable that tracks with extension context
-				 */
-				const CreateTrackedDisposable = (
-					Disposable: VSCode.Disposable,
-				): VSCode.Disposable => ({
-					dispose: () => {
-						Subscriptions.delete(Disposable);
-						Disposable.dispose();
-					},
-				});
-
-				/**
-				 * asAbsolutePath implementation
-				 * Resolves relative paths against extension location
-				 */
-				const AsAbsolutePath = (relativePath: string): string => {
-					const Uri = VSCode.Uri.joinPath(
-						ExtensionDescription.extensionLocation,
-						relativePath,
-					);
-					return Uri.fsPath;
-				};
-
-				// Build extension context object
-				const ExtensionContext: VSCode.ExtensionContext = {
-					subscriptions: [] as VSCode.Disposable[], // VSCode's array-based subscriptions
-					workspaceState: {
-						get: (key, defaultValue) =>
-							WorkspaceState.get(key, defaultValue),
-						keys: () => WorkspaceState.keys(),
-						update: (key, value) => WorkspaceState.update(key, value),
-					} as any,
-					globalState: {
-						get: (key, defaultValue) =>
-							GlobalState.get(key, defaultValue),
-						keys: () => GlobalState.keys(),
-						update: (key, value) => GlobalState.update(key, value),
-					} as any,
-					secrets: {
-						get: (key) => SecretStorage.get(key),
-						store: (key, value) => SecretStorage.store(key, value),
-						delete: (key) => SecretStorage.delete(key),
-						onDidChange: SecretStorage.onDidChange,
-					},
-					storagePath: StoragePath,
-					globalStoragePath: GlobalStoragePath,
-					asAbsolutePath: AsAbsolutePath,
-					extensionUri: ExtensionDescription.extensionLocation,
-					extensionPath: ExtensionPath,
-					// TODO: Add extensionMode property when needed
-					// extensionMode: VSCode.ExtensionMode,
-				};
-
-				// TODO: LOW: Implement extension migration on version changes
-				// Check for previous version and run migration if needed
-				// const previousVersion = GlobalState.get('version');
-				// if (previousVersion !== ExtensionDescription.version) {
-				//     yield* runMigration(ExtensionId, previousVersion, ExtensionDescription.version);
-				//     yield* Effect.promise(() => GlobalState.update('version', ExtensionDescription.version));
-				// }
-
-				Logger.Debug(
-					`[ExtensionContext] Context created: ${ExtensionId} at ${ExtensionPath}`,
-				);
-
-				return ExtensionContext;
-			});
-
-		/**
-		 * Dispose all extension subscriptions
-		 *
-		 * TODO: Add cleanup method to clean up extension state on deactivation
-		 */
-		const DisposeExtension = (
-			ExtensionId: string,
-		): Effect.Effect<void, Error> =>
-			Effect.gen(function* () {
-				const GlobalSubscriptions = yield* Ref.get(GlobalSubscriptionsRef);
-				const Subscriptions = GlobalSubscriptions.get(ExtensionId);
-
-				if (Subscriptions) {
+			/**
+			 * Create extension context for activation
+			 *
+			 * Implementation Pattern: src/vs/workbench/api/common/extHostExtensionActivator.ts (createExtensionContext)
+			 *
+			 * TODOs:
+			 * - MIGRATION: Check for extension version differences and run migration (LOW)
+			 * - PERSISTENCE: Initialize state from previous extension activations (MEDIUM)
+			 */
+			const CreateExtensionContext = (
+				ExtensionId: string,
+				ExtensionDescription: IExtensionDescription,
+			): Effect.Effect<VSCode.ExtensionContext, Error> =>
+				Effect.gen(function* () {
 					Logger.Info(
-						`[ExtensionContext] Disposing ${Subscriptions.size} subscriptions for ${ExtensionId}`,
+						`[ExtensionContext] Creating context for extension: ${ExtensionId}`,
 					);
 
-					// Dispose all subscriptions
-					for (const Subscription of Subscriptions) {
-						Subscription.dispose();
-					}
+					// Create storage paths
+					const ExtensionPath =
+						ExtensionDescription.extensionLocation.fsPath;
+					const StoragePath = `${ExtensionPath}/.storage`;
+					const GlobalStoragePath =
+						process.env.VSCODE_COCOON_GLOBAL_STORAGE ??
+						`${process.env.HOME ?? "."}/cocoon/global-storage`;
 
-					// Clear from registry
+					// Create mementos for state management
+					const WorkspaceStateRef = yield* Ref.make(
+						new Map<string, unknown>(),
+					);
+					const GlobalStateRef = yield* Ref.make(
+						new Map<string, unknown>(),
+					);
+
+					const WorkspaceState = new Memento(
+						WorkspaceStateRef,
+						ExtensionId,
+						Logger,
+						MountainClient,
+					);
+					const GlobalState = new Memento(
+						GlobalStateRef,
+						ExtensionId,
+						Logger,
+						MountainClient,
+					);
+
+					// Create secret storage
+					const SecretStorage = new ExtensionSecretStorage(
+						ExtensionId,
+						Logger,
+						MountainClient,
+					);
+
+					// Create subscription list for this extension
+					const Subscriptions = new Set<VSCode.Disposable>();
 					yield* Ref.update(GlobalSubscriptionsRef, (GlobalMap) => {
 						const NewMap = new Map(GlobalMap);
-						NewMap.delete(ExtensionId);
+						if (!NewMap.has(ExtensionId)) {
+							NewMap.set(ExtensionId, Subscriptions);
+						}
 						return NewMap;
 					});
-				}
 
-				Logger.Debug(
-					`[ExtensionContext] Extension ${ExtensionId} disposed`,
-				);
-			});
+					/**
+					 * Create disposable that tracks with extension context
+					 */
+					const CreateTrackedDisposable = (
+						Disposable: VSCode.Disposable,
+					): VSCode.Disposable => ({
+						dispose: () => {
+							Subscriptions.delete(Disposable);
+							Disposable.dispose();
+						},
+					});
 
-		// Return the service implementation with PascalCase methods
-		const ServiceImplementation: ExtensionContextService = {
-			CreateExtensionContext,
-		};
+					/**
+					 * asAbsolutePath implementation
+					 * Resolves relative paths against extension location
+					 */
+					const AsAbsolutePath = (relativePath: string): string => {
+						const Uri = VSCode.Uri.joinPath(
+							ExtensionDescription.extensionLocation,
+							relativePath,
+						);
+						return Uri.fsPath;
+					};
 
-		Logger.Info(
-			`[ExtensionContext] ExtensionContextService initialized`,
-		);
+					// Build extension context object
+					const ExtensionContext: VSCode.ExtensionContext = {
+						subscriptions: [] as VSCode.Disposable[], // VSCode's array-based subscriptions
+						workspaceState: {
+							get: (key, defaultValue) =>
+								WorkspaceState.get(key, defaultValue),
+							keys: () => WorkspaceState.keys(),
+							update: (key, value) =>
+								WorkspaceState.update(key, value),
+						} as any,
+						globalState: {
+							get: (key, defaultValue) =>
+								GlobalState.get(key, defaultValue),
+							keys: () => GlobalState.keys(),
+							update: (key, value) =>
+								GlobalState.update(key, value),
+						} as any,
+						secrets: {
+							get: (key) => SecretStorage.get(key),
+							store: (key, value) =>
+								SecretStorage.store(key, value),
+							delete: (key) => SecretStorage.delete(key),
+							onDidChange: SecretStorage.onDidChange,
+						},
+						storagePath: StoragePath,
+						globalStoragePath: GlobalStoragePath,
+						asAbsolutePath: AsAbsolutePath,
+						extensionUri: ExtensionDescription.extensionLocation,
+						extensionPath: ExtensionPath,
+						// TODO: Add extensionMode property when needed
+						// extensionMode: VSCode.ExtensionMode,
+					};
 
-		return ServiceImplementation;
-	}),
-});
+					// TODO: LOW: Implement extension migration on version changes
+					// Check for previous version and run migration if needed
+					// const previousVersion = GlobalState.get('version');
+					// if (previousVersion !== ExtensionDescription.version) {
+					//     yield* runMigration(ExtensionId, previousVersion, ExtensionDescription.version);
+					//     yield* Effect.promise(() => GlobalState.update('version', ExtensionDescription.version));
+					// }
+
+					Logger.Debug(
+						`[ExtensionContext] Context created: ${ExtensionId} at ${ExtensionPath}`,
+					);
+
+					return ExtensionContext;
+				});
+
+			/**
+			 * Dispose all extension subscriptions
+			 *
+			 * TODO: Add cleanup method to clean up extension state on deactivation
+			 */
+			const DisposeExtension = (
+				ExtensionId: string,
+			): Effect.Effect<void, Error> =>
+				Effect.gen(function* () {
+					const GlobalSubscriptions = yield* Ref.get(
+						GlobalSubscriptionsRef,
+					);
+					const Subscriptions = GlobalSubscriptions.get(ExtensionId);
+
+					if (Subscriptions) {
+						Logger.Info(
+							`[ExtensionContext] Disposing ${Subscriptions.size} subscriptions for ${ExtensionId}`,
+						);
+
+						// Dispose all subscriptions
+						for (const Subscription of Subscriptions) {
+							Subscription.dispose();
+						}
+
+						// Clear from registry
+						yield* Ref.update(
+							GlobalSubscriptionsRef,
+							(GlobalMap) => {
+								const NewMap = new Map(GlobalMap);
+								NewMap.delete(ExtensionId);
+								return NewMap;
+							},
+						);
+					}
+
+					Logger.Debug(
+						`[ExtensionContext] Extension ${ExtensionId} disposed`,
+					);
+				});
+
+			// Return the service implementation with PascalCase methods
+			const ServiceImplementation: ExtensionContextService = {
+				CreateExtensionContext,
+			};
+
+			Logger.Info(
+				`[ExtensionContext] ExtensionContextService initialized`,
+			);
+
+			return ServiceImplementation;
+		}),
+	},
+) {}

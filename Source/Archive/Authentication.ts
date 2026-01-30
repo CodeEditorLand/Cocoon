@@ -6,9 +6,7 @@
  */
 
 import type { AuthenticationGetSessionOptions } from "@codeeditorland/output/vs/workbench/api/browser/mainThreadAuthentication.js";
-import type {
-	AuthenticationSession,
-} from "@codeeditorland/output/vs/workbench/services/authentication/common/authentication.js";
+import type { AuthenticationSession } from "@codeeditorland/output/vs/workbench/services/authentication/common/authentication.js";
 import { Effect, Ref } from "effect";
 
 import { IPCService } from "./IPC.js";

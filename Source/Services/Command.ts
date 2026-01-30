@@ -35,12 +35,11 @@
  * - VSCODE-LIFT: Lift complete command lifecycle from Dependency/Editor/extHostCommands.ts
  */
 
-import { Effect, Ref, Context } from "effect";
+import { Context, Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
-
 // Import type converters
 import { Command as CommandConverter } from "../TypeConverter/Command.js";
 
@@ -78,14 +77,8 @@ export interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
-	readonly Info: (
-		Message: string,
-		...Data: unknown[]
-	) => Effect.Effect<void>;
-	readonly Warn: (
-		Message: string,
-		...Data: unknown[]
-	) => Effect.Effect<void>;
+	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
@@ -127,9 +120,10 @@ export interface Command {
 		Id: string,
 		...Arguments: any[]
 	) => Effect.Effect<T | undefined, Error>;
-	readonly GetCommands: (FilterInternal?: boolean) => Effect.Effect<string[], Error>;
+	readonly GetCommands: (
+		FilterInternal?: boolean,
+	) => Effect.Effect<string[], Error>;
 }
-
 
 /**
  * @class CommandService
@@ -183,7 +177,10 @@ export class CommandService extends Effect.Service<CommandService>()(
 					);
 					return Disposable;
 				},
-				<T>(Id: string, ...Arguments: any[]): Promise<T | undefined> => {
+				<T>(
+					Id: string,
+					...Arguments: any[]
+				): Promise<T | undefined> => {
 					return Promise.resolve(undefined);
 				},
 				(Id: string) => undefined,
@@ -222,12 +219,14 @@ export class CommandService extends Effect.Service<CommandService>()(
 					// });
 
 					const Result = yield* Effect.tryPromise({
-						try: () => Promise.resolve(Callback.apply(ThisArg, Arguments)),
+						try: () =>
+							Promise.resolve(Callback.apply(ThisArg, Arguments)),
 						catch: (Cause) => {
-							yield* Logger.Error(
-								`[CommandService] Failed to execute command '${Id}'`,
-								Cause as Error,
-							);
+							yield *
+								Logger.Error(
+									`[CommandService] Failed to execute command '${Id}'`,
+									Cause as Error,
+								);
 							throw Cause;
 						},
 					});
@@ -266,7 +265,10 @@ export class CommandService extends Effect.Service<CommandService>()(
 					// Check if command is registered locally
 					if (Registry.has(Id)) {
 						const Command = Registry.get(Id)!;
-						const Result = yield* ExecuteLocalCommand(Command, Arguments);
+						const Result = yield* ExecuteLocalCommand(
+							Command,
+							Arguments,
+						);
 						return Result as T;
 					}
 
@@ -277,33 +279,50 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 					// Mountain gRPC integration for command execution
 					const mountainClient = yield* MountainClientService;
-					
+
 					// Prepare command execution request
 					const executionRequest = {
 						commandId: Id,
 						args: Arguments,
 						sourceExtension: this.getCallingExtension(),
 						executionContext: this.getExecutionContext(),
-						timestamp: Date.now()
+						timestamp: Date.now(),
 					};
-					
+
 					try {
 						const result = yield* Effect.tryPromise({
-							try: () => mountainClient.sendRequest('command.execute', executionRequest),
-							catch: (error) => new Error(`Mountain command execution failed: ${error.message}`)
+							try: () =>
+								mountainClient.sendRequest(
+									"command.execute",
+									executionRequest,
+								),
+							catch: (error) =>
+								new Error(
+									`Mountain command execution failed: ${error.message}`,
+								),
 						});
-						
+
 						// Track performance metrics
-						this.trackCommandExecution(Id, 'remote', Date.now() - startTime, true);
-						
+						this.trackCommandExecution(
+							Id,
+							"remote",
+							Date.now() - startTime,
+							true,
+						);
+
 						return result as T;
 					} catch (error) {
 						// Track execution failure
-						this.trackCommandExecution(Id, 'remote', Date.now() - startTime, false);
-						
+						this.trackCommandExecution(
+							Id,
+							"remote",
+							Date.now() - startTime,
+							false,
+						);
+
 						yield* Logger.Error(
 							`[CommandService] Failed to execute remote command '${Id}'`,
-							error as Error
+							error as Error,
 						);
 						throw error;
 					}
@@ -365,36 +384,44 @@ export class CommandService extends Effect.Service<CommandService>()(
 					//     });
 					// }
 
-// Mountain gRPC integration for command registration
-				const mountainClient = yield* MountainClientService;
-				
-				// Prepare command registration request
-				const registrationRequest = {
-					commandId: Id,
-					extensionId: this.getCallingExtension(),
-					registrationTime: Date.now(),
-					commandMetadata: {
-						hasCallback: typeof Callback === 'function',
-						callbackType: typeof Callback,
-						thisArgProvided: ThisArg !== undefined
+					// Mountain gRPC integration for command registration
+					const mountainClient = yield* MountainClientService;
+
+					// Prepare command registration request
+					const registrationRequest = {
+						commandId: Id,
+						extensionId: this.getCallingExtension(),
+						registrationTime: Date.now(),
+						commandMetadata: {
+							hasCallback: typeof Callback === "function",
+							callbackType: typeof Callback,
+							thisArgProvided: ThisArg !== undefined,
+						},
+					};
+
+					try {
+						yield* Effect.tryPromise({
+							try: () =>
+								mountainClient.sendNotification(
+									"command.register",
+									registrationRequest,
+								),
+							catch: (error) =>
+								new Error(
+									`Mountain command registration failed: ${error.message}`,
+								),
+						});
+
+						yield* Logger.Info(
+							`[CommandService] Command '${Id}' registered with Mountain`,
+						);
+					} catch (error) {
+						yield* Logger.Warn(
+							`[CommandService] Failed to register command '${Id}' with Mountain:`,
+							error,
+						);
+						// Continue with local registration even if Mountain registration fails
 					}
-				};
-				
-				try {
-					yield* Effect.tryPromise({
-						try: () => mountainClient.sendNotification('command.register', registrationRequest),
-						catch: (error) => new Error(`Mountain command registration failed: ${error.message}`)
-					});
-					
-					yield* Logger.Info(
-						`[CommandService] Command '${Id}' registered with Mountain`
-					);
-				} catch (error) {
-					yield* Logger.Warn(
-						`[CommandService] Failed to register command '${Id}' with Mountain:`, error
-					);
-					// Continue with local registration even if Mountain registration fails
-				}
 
 					// Return disposable for cleanup
 					return {
@@ -402,10 +429,13 @@ export class CommandService extends Effect.Service<CommandService>()(
 							Effect.runFork(
 								Effect.gen(function* () {
 									// Unregister from local registry
-									yield* Ref.update(CommandRegistry, (Registry) => {
-										Registry.delete(Id);
-										return Registry;
-									});
+									yield* Ref.update(
+										CommandRegistry,
+										(Registry) => {
+											Registry.delete(Id);
+											return Registry;
+										},
+									);
 
 									yield* Logger.Info(
 										`[CommandService] Command '${Id}' unregistered`,
@@ -454,13 +484,15 @@ export class CommandService extends Effect.Service<CommandService>()(
 							return undefined;
 						}
 
-						return ActiveEditor.edit((EditBuilder: VSCode.TextEditorEdit) => {
-							Callback.apply(ThisArg, [
-								ActiveEditor,
-								EditBuilder,
-								...Args,
-							]);
-						});
+						return ActiveEditor.edit(
+							(EditBuilder: VSCode.TextEditorEdit) => {
+								Callback.apply(ThisArg, [
+									ActiveEditor,
+									EditBuilder,
+									...Args,
+								]);
+							},
+						);
 					};
 
 					return yield* RegisterCommand(Id, AdaptedCallback, ThisArg);
@@ -478,51 +510,57 @@ export class CommandService extends Effect.Service<CommandService>()(
 				FilterInternal: boolean = false,
 			): Effect.Effect<string[], Error> =>
 				Effect.gen(function* () {
-			const Registry = yield* Ref.get(CommandRegistry);
-			const LocalCommandIds = Array.from(Registry.keys());
+					const Registry = yield* Ref.get(CommandRegistry);
+					const LocalCommandIds = Array.from(Registry.keys());
 
-			// Mountain gRPC integration for getting remote commands
-			try {
-				const mountainClient = yield* MountainClientService;
-				const RemoteCommands = yield* Effect.tryPromise({
-					try: () => mountainClient.sendRequest('command.get', {
-						filterInternal: FilterInternal
-					}) as Promise<string[]>,
-					catch: (error) => {
-						yield* Logger.Warn(
-							`[CommandService] Failed to get commands from Mountain, using local only`,
-							error as Error
+					// Mountain gRPC integration for getting remote commands
+					try {
+						const mountainClient = yield* MountainClientService;
+						const RemoteCommands = yield* Effect.tryPromise({
+							try: () =>
+								mountainClient.sendRequest("command.get", {
+									filterInternal: FilterInternal,
+								}) as Promise<string[]>,
+							catch: (error) => {
+								yield *
+									Logger.Warn(
+										`[CommandService] Failed to get commands from Mountain, using local only`,
+										error as Error,
+									);
+								return [];
+							},
+						});
+
+						yield* Logger.Info(
+							`[CommandService] Retrieved ${RemoteCommands.length} remote commands from Mountain`,
 						);
-						return [];
+
+						// Combine and deduplicate
+						const AllCommands = Array.from(
+							new Set([...LocalCommandIds, ...RemoteCommands]),
+						);
+
+						if (FilterInternal) {
+							// Filter out internal commands (starting with _)
+							return AllCommands.filter(
+								(Id) => !Id.startsWith("_"),
+							);
+						}
+
+						return AllCommands;
+					} catch (error) {
+						yield* Logger.Warn(
+							`[CommandService] Error getting remote commands, using local only`,
+							error as Error,
+						);
+						if (FilterInternal) {
+							return LocalCommandIds.filter(
+								(Id) => !Id.startsWith("_"),
+							);
+						}
+						return LocalCommandIds;
 					}
 				});
-				
-				yield* Logger.Info(
-					`[CommandService] Retrieved ${RemoteCommands.length} remote commands from Mountain`
-				);
-
-				// Combine and deduplicate
-				const AllCommands = Array.from(
-					new Set([...LocalCommandIds, ...RemoteCommands]),
-				);
-
-				if (FilterInternal) {
-					// Filter out internal commands (starting with _)
-					return AllCommands.filter((Id) => !Id.startsWith("_"));
-				}
-
-				return AllCommands;
-			} catch (error) {
-				yield* Logger.Warn(
-					`[CommandService] Error getting remote commands, using local only`,
-					error as Error
-				);
-				if (FilterInternal) {
-					return LocalCommandIds.filter((Id) => !Id.startsWith("_"));
-				}
-				return LocalCommandIds;
-			}
-		});
 			// Return the service implementation with PascalCase method names
 			const ServiceImplementation: Command = {
 				RegisterCommand,

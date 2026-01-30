@@ -6,6 +6,7 @@
  */
 
 import * as Module from "node:module";
+
 import { URI } from "@codeeditorland/output/vs/base/common/uri.js";
 import { Cause, Effect, Exit } from "effect";
 import type { Uri } from "vscode";

@@ -15,7 +15,7 @@ export declare const ConvertContentOptionToDTO: (ExtensionDescription: IExtensio
     enableCommandUris: boolean | readonly string[];
     enableScripts: boolean;
     enableForms: boolean;
-    localResourceRoots: any[] | readonly VSCode.Uri[];
+    localResourceRoots: readonly VSCode.Uri[] | any[];
     portMapping: readonly VSCode.WebviewPortMapping[];
 };
 //# sourceMappingURL=ConvertContentOptionToDTO.d.ts.map

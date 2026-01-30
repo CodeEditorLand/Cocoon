@@ -22,6 +22,24 @@
 
 		"moduleResolution": "Bundler",
 
+		"strict": true,
+
+		"noImplicitAny": true,
+
+		"noUncheckedIndexedAccess": true,
+
+		"exactOptionalPropertyTypes": true,
+
+		"noUnusedLocals": true,
+
+		"noUnusedParameters": true,
+
+		"noImplicitReturns": true,
+
+		"noFallthroughCasesInSwitch": true,
+
+		"noImplicitOverride": true,
+
 		"outDir": "Target",
 
 		"paths": {
@@ -72,7 +90,6 @@
 		"downlevelIteration": true
 	},
 
-<<<<<<< HEAD
 	"exclude": ["Target", "Scripts/**/*.cjs", "**/*.cjs"],
 
 	"include": [

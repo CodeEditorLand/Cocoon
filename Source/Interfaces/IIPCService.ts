@@ -3,15 +3,15 @@
  * @description
  * Advanced IPC communication interface following VS Code IPC patterns.
  * Based on VS Code's IChannel/IServerChannel architecture.
- * 
+ *
  * Architecture Specification: VSCode IPC Pattern Implementation
  * Implementation: Channel-based RPC with cancellation support
  * Dependencies: Effect-TS, VS Buffer serialization
  * Validation: Test with high-concurrency message handling
  */
 
-import * as Effect from "effect";
 import { CancellationToken } from "@codeeditorland/output/vs/base/common/cancellation";
+import * as Effect from "effect";
 
 /**
  * IPC Channel interface following VS Code's IChannel pattern
@@ -19,8 +19,12 @@ import { CancellationToken } from "@codeeditorland/output/vs/base/common/cancell
  * Implementation: Promise-based RPC with cancellation support
  */
 export interface IChannel {
-    call<T>(command: string, arg?: any, cancellationToken?: CancellationToken): Promise<T>;
-    listen<T>(event: string, arg?: any): Event<T>;
+	call<T>(
+		command: string,
+		arg?: any,
+		cancellationToken?: CancellationToken,
+	): Promise<T>;
+	listen<T>(event: string, arg?: any): Event<T>;
 }
 
 /**
@@ -29,8 +33,13 @@ export interface IChannel {
  * Implementation: Context-aware request handling
  */
 export interface IServerChannel<TContext = string> {
-    call<T>(ctx: TContext, command: string, arg?: any, cancellationToken?: CancellationToken): Promise<T>;
-    listen<T>(ctx: TContext, event: string, arg?: any): Event<T>;
+	call<T>(
+		ctx: TContext,
+		command: string,
+		arg?: any,
+		cancellationToken?: CancellationToken,
+	): Promise<T>;
+	listen<T>(ctx: TContext, event: string, arg?: any): Event<T>;
 }
 
 /**
@@ -39,8 +48,8 @@ export interface IServerChannel<TContext = string> {
  * Implementation: Binary-safe message serialization
  */
 export interface IMessagePassingProtocol {
-    send(buffer: VSBuffer): void;
-    readonly onMessage: Event<VSBuffer>;
+	send(buffer: VSBuffer): void;
+	readonly onMessage: Event<VSBuffer>;
 }
 
 /**
@@ -49,10 +58,10 @@ export interface IMessagePassingProtocol {
  * Implementation: Binary serialization wrapper
  */
 export interface VSBuffer {
-    readonly buffer: Uint8Array;
-    readonly byteLength: number;
-    toString(): string;
-    slice(start?: number, end?: number): VSBuffer;
+	readonly buffer: Uint8Array;
+	readonly byteLength: number;
+	toString(): string;
+	slice(start?: number, end?: number): VSBuffer;
 }
 
 /**
@@ -61,12 +70,12 @@ export interface VSBuffer {
  * Implementation: Connection health tracking
  */
 export interface IPCConnectionStatus {
-    connected: boolean;
-    lastPing?: number;
-    errorCount: number;
-    connectionUptime: number;
-    messageCount: number;
-    averageLatency?: number;
+	connected: boolean;
+	lastPing?: number;
+	errorCount: number;
+	connectionUptime: number;
+	messageCount: number;
+	averageLatency?: number;
 }
 
 /**
@@ -75,49 +84,49 @@ export interface IPCConnectionStatus {
  * Implementation: Multi-channel RPC system
  */
 export interface IIPCService {
-    readonly _serviceBrand: undefined;
-    
-    /**
-     * Get channel for specific service
-     * Specification: VS Code's getChannel pattern
-     * Implementation: Channel factory with routing
-     */
-    getChannel<T extends IChannel>(channelName: string): T;
-    
-    /**
-     * Register server channel for handling requests
-     * Specification: VS Code's registerChannel pattern
-     * Implementation: Channel registration with context
-     */
-    registerChannel(channelName: string, channel: IServerChannel<any>): void;
-    
-    /**
-     * Initialize IPC service with protocol
-     * Specification: IPC server/client initialization
-     * Implementation: Protocol binding and connection setup
-     */
-    initialize(protocol: IMessagePassingProtocol): Promise<void>;
-    
-    /**
-     * Get connection status
-     * Specification: Connection monitoring interface
-     * Implementation: Real-time metrics collection
-     */
-    getConnectionStatus(): IPCConnectionStatus;
-    
-    /**
-     * Reconnect to Mountain
-     * Specification: Connection recovery pattern
-     * Implementation: Graceful reconnection with state preservation
-     */
-    reconnect(): Promise<void>;
-    
-    /**
-     * Cleanup IPC service
-     * Specification: Disposable pattern implementation
-     * Implementation: Resource cleanup and connection termination
-     */
-    dispose(): void;
+	readonly _serviceBrand: undefined;
+
+	/**
+	 * Get channel for specific service
+	 * Specification: VS Code's getChannel pattern
+	 * Implementation: Channel factory with routing
+	 */
+	getChannel<T extends IChannel>(channelName: string): T;
+
+	/**
+	 * Register server channel for handling requests
+	 * Specification: VS Code's registerChannel pattern
+	 * Implementation: Channel registration with context
+	 */
+	registerChannel(channelName: string, channel: IServerChannel<any>): void;
+
+	/**
+	 * Initialize IPC service with protocol
+	 * Specification: IPC server/client initialization
+	 * Implementation: Protocol binding and connection setup
+	 */
+	initialize(protocol: IMessagePassingProtocol): Promise<void>;
+
+	/**
+	 * Get connection status
+	 * Specification: Connection monitoring interface
+	 * Implementation: Real-time metrics collection
+	 */
+	getConnectionStatus(): IPCConnectionStatus;
+
+	/**
+	 * Reconnect to Mountain
+	 * Specification: Connection recovery pattern
+	 * Implementation: Graceful reconnection with state preservation
+	 */
+	reconnect(): Promise<void>;
+
+	/**
+	 * Cleanup IPC service
+	 * Specification: Disposable pattern implementation
+	 * Implementation: Resource cleanup and connection termination
+	 */
+	dispose(): void;
 }
 
 /**

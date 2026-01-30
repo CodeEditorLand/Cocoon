@@ -9,75 +9,80 @@ import * as Effect from "effect";
 
 // Types matching VSCode patterns
 export interface IExtensionDescription {
-    identifier: string;
-    name: string;
-    version: string;
-    publisher: string;
-    extensionLocation: string;
-    activationEvents: string[];
-    main?: string;
+	identifier: string;
+	name: string;
+	version: string;
+	publisher: string;
+	extensionLocation: string;
+	activationEvents: string[];
+	main?: string;
 }
 
 export interface ExtensionActivationReason {
-    startup: boolean;
-    activationEvent: string;
-    extensionId: string;
+	startup: boolean;
+	activationEvent: string;
+	extensionId: string;
 }
 
 export interface ActivatedExtension {
-    activationTimes: {
-        codeLoadingTime: number;
-        activateCallTime: number;
-        activateResolvedTime: number;
-    };
-    exports?: any;
+	activationTimes: {
+		codeLoadingTime: number;
+		activateCallTime: number;
+		activateResolvedTime: number;
+	};
+	exports?: any;
 }
 
 export interface IExtensionHostService {
-    readonly _serviceBrand: undefined;
-    
-    /**
-     * Initialize the extension host service
-     */
-    initialize(): Promise<void>;
-    
-    /**
-     * Activate an extension
-     */
-    activateExtension(extensionId: string, reason: ExtensionActivationReason): Promise<ActivatedExtension>;
-    
-    /**
-     * Check if extension is activated
-     */
-    isActivated(extensionId: string): boolean;
-    
-    /**
-     * Get activated extension
-     */
-    getActivatedExtension(extensionId: string): ActivatedExtension | undefined;
-    
-    /**
-     * Deactivate an extension
-     */
-    deactivateExtension(extensionId: string): Promise<void>;
-    
-    /**
-     * Terminate the extension host
-     */
-    terminate(reason: string, code?: number): Promise<void>;
-    
-    /**
-     * Get extension host status
-     */
-    getStatus(): {
-        started: boolean;
-        terminating: boolean;
-        activatedExtensions: number;
-        ready: boolean;
-    };
+	readonly _serviceBrand: undefined;
+
+	/**
+	 * Initialize the extension host service
+	 */
+	initialize(): Promise<void>;
+
+	/**
+	 * Activate an extension
+	 */
+	activateExtension(
+		extensionId: string,
+		reason: ExtensionActivationReason,
+	): Promise<ActivatedExtension>;
+
+	/**
+	 * Check if extension is activated
+	 */
+	isActivated(extensionId: string): boolean;
+
+	/**
+	 * Get activated extension
+	 */
+	getActivatedExtension(extensionId: string): ActivatedExtension | undefined;
+
+	/**
+	 * Deactivate an extension
+	 */
+	deactivateExtension(extensionId: string): Promise<void>;
+
+	/**
+	 * Terminate the extension host
+	 */
+	terminate(reason: string, code?: number): Promise<void>;
+
+	/**
+	 * Get extension host status
+	 */
+	getStatus(): {
+		started: boolean;
+		terminating: boolean;
+		activatedExtensions: number;
+		ready: boolean;
+	};
 }
 
 /**
  * Effect context for ExtensionHostService
  */
-export const IExtensionHostService = Effect.Tag<IExtensionHostService>("IExtensionHostService");
+export const IExtensionHostService = Effect.Tag<IExtensionHostService>(
+	"IExtensionHostService",
+);

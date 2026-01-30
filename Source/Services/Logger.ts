@@ -31,7 +31,7 @@
  * - VSCODE-LIFT: src/vs/base/common/log.js (log formatting and levels)
  */
 
-import { Effect, Ref, Context } from "effect";
+import { Context, Effect, Ref } from "effect";
 
 /**
  * @interface Logger
@@ -49,14 +49,8 @@ export interface Logger {
 		Message: string,
 		...Data: unknown[]
 	) => Effect.Effect<void>;
-	readonly Info: (
-		Message: string,
-		...Data: unknown[]
-	) => Effect.Effect<void>;
-	readonly Warn: (
-		Message: string,
-		...Data: unknown[]
-	) => Effect.Effect<void>;
+	readonly Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	readonly Warn: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
 	readonly Error: (
 		Message: string,
 		...Data: unknown[]
@@ -112,9 +106,7 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 				ExtensionId?: string,
 			) => {
 				const Timestamp = new Date().toISOString();
-				const Prefix = `[${
-					Level.toUpperCase()
-				}${ExtensionId ? `:${ExtensionId}` : ""}]`;
+				const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
 				return `${Timestamp} ${Prefix} ${Message}`;
 			};
 
@@ -269,9 +261,7 @@ export class LoggerService extends Effect.Service<LoggerService>()(
 			/**
 			 * Set extension ID context for logging
 			 */
-			const SetExtensionId = (
-				ExtensionId: string,
-			): Effect.Effect<void> =>
+			const SetExtensionId = (ExtensionId: string): Effect.Effect<void> =>
 				Effect.gen(function* () {
 					yield* Ref.set(ExtensionIdRef, ExtensionId);
 				});

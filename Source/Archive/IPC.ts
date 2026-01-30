@@ -6,6 +6,7 @@
  */
 
 import * as Path from "node:path";
+
 import { VSBuffer } from "@codeeditorland/output/vs/base/common/buffer.js";
 import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
 import type { IMessagePassingProtocol } from "@codeeditorland/output/vs/base/parts/ipc/common/ipc.js";

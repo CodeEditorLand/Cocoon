@@ -1,22 +1,22 @@
 /**
  * @module Window (ARCHIVED)
- * @description 
+ * @description
  * ARCHIVED - This file has been adapted and moved to Source/Services/Window.ts
- * 
+ *
  * Patterns borrowed from this file:
  * - Window state tracking with Ref
  * - Text document display coordination
  * - Event stream pattern for state changes
- * 
+ *
  * New implementation in Source/Services/Window.ts includes:
  * - Mountain gRPC integration (replaced IPC.SendRequest)
  * - Enhanced show* methods (InformationMessage, WarningMessage, etc.)
  * - Comprehensive TODOs for all window operations
  * - StatusBar, OutputChannel, WebViewPanel integration hooks
  * - TypeConverter integration points
- * 
+ *
  * Archive kept for reference during further implementation work.
- * 
+ *
  * Original description: Defines the service for managing window-level state and orchestrating
  * calls to show documents in the editor, delegating to the host process via IPC.
  */

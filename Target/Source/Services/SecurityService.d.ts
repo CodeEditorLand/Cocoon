@@ -93,6 +93,10 @@ export declare class SecurityService {
      */
     private sendIncidentToMountain;
     /**
+     * Check module access permission
+     */
+    checkModuleAccess(extensionId: string, moduleId: string): Promise<boolean>;
+    /**
      * Check API access permission
      */
     checkAPIAccess(extensionId: string, apiName: string): Promise<boolean>;

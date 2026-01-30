@@ -6,6 +6,7 @@
  */
 
 import * as Path from "node:path";
+
 import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
 import { Effect } from "effect";
 import { Uri } from "vscode";
