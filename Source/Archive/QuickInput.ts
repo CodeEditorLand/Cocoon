@@ -60,7 +60,7 @@ export class QuickInputService extends Effect.Service<QuickInputService>()(
 					}
 					const ResolvedItems = yield* Effect.tryPromise({
 						try: () => Promise.resolve(Items),
-						catch: (Error) => Error as Error,
+						catch: (e) => e as Error,
 					});
 					const IPCOptions = {
 						...Option,

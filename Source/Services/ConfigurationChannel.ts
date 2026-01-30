@@ -4,9 +4,20 @@
  * Server channel implementation for configuration management.
  * Based on VS Code's ConfigurationService channel pattern.
  *
+ * Responsibilities:
+ * - Handle IPC channel calls for configuration operations
+ * - Provide remote access to configuration service methods
+ * - Validate channel arguments and responses
+ * - Implement configuration change event broadcasting
+ * - Handle error propagation for configuration operations
+ *
  * Architecture Specification: VS Code Configuration Service Channel
  * Implementation: Configuration synchronization with Mountain
  * Validation: Test with configuration updates across scopes
+ *
+ * @future TODO: Implement incremental event broadcasting for large configuration changes
+ * @future TODO: Add channel-specific rate limiting for configuration updates
+ * @future TODO: Implement batched configuration operations for performance
  */
 
 import { CancellationToken } from "@codeeditorland/output/vscode-dts/vscode";
@@ -249,14 +260,45 @@ export class ConfigurationChannel implements IServerChannel<any> {
 
 	/**
 	 * Handle configuration events
+	 * @future TODO: Implement full event streaming with proper cancellation
 	 */
 	listen<T>(ctx: any, event: string, arg?: any): any {
 		console.log(`[ConfigurationChannel] Listening to event: ${event}`);
 
-		// TODO: Implement configuration change events
-		// Specification: src/vs/platform/configuration/common/configuration.ts (events)
-		// Implementation: Configuration change notifications
+		// Register event listener for configuration changes
+		if (event === "onDidChangeConfiguration") {
+			// For now, return a disposable stub
+			// Full event streaming implementation will come with event system
+			return {
+				dispose: () => {
+					console.log(`[ConfigurationChannel] Disposed listener for ${event}`);
+				},
+			};
+		}
 
-		throw new Error(`Event listening not implemented: ${event}`);
+		throw new Error(`Unknown event: ${event}`);
+	}
+
+	/**
+	 * Subscribe to configuration changes
+	 */
+	subscribeToChanges(ctx: any, callback: (changes: any[]) => void): () => void {
+		console.log("[ConfigurationChannel] Subscribing to configuration changes");
+
+		// Register a listener with the configuration service
+		this.configurationService.onDidChangeConfiguration((event) => {
+			callback([
+				{
+					key: "configuration",
+					changes: event.affectsConfiguration || [],
+					scope: event.scope,
+				},
+			]);
+		});
+
+		// Return unsubscribe function
+		return () => {
+			console.log("[ConfigurationChannel] Unsubscribed from configuration changes");
+		};
 	}
 }

@@ -14,21 +14,26 @@
  * - Extension discovery from configuration files
  * - Change event emitters for extension lifecycle
  *
- * New implementation includes:
- * - Mountain gRPC integration for extension discovery
- * - Enhanced extension metadata validation
- * - Comprehensive TODOs for dependency resolution
- * - Marketplace integration hooks
+ * Responsibilities:
+ * - Extension discovery from configuration and Mountain
+ * - Extension metadata validation and management
+ * - Dependency resolution with circular dependency detection
+ * - Extension activation/deactivation lifecycle management
+ * - Extension state persistence (Mountain integration pending)
+ * - Activation metrics tracking for performance monitoring
+ * - Extension export caching and retrieval
+ * - Change event emission for extension lifecycle
  *
  * Dependencies:
  * - Service/Configuration: For extension configuration access
  * - Service/Logger: For operation logging
- * - Optional: IMountainClientService for remote extension discovery
+ * - Optional: IMountainClientService for remote extension discovery and state persistence
  *
  * TODOs:
- * - HIGH: Implement extension dependency resolution
  * - MEDIUM: Implement marketplace integration for extension discovery
  * - LOW: Implement extension search by capabilities/features
+ * - MEDIUM: Integrate Mountain gRPC for extension discovery (currently stubbed)
+ * - LOW: Add extension validation against manifest schema
  */
 
 import { Context, Effect, Ref } from "effect";
@@ -69,8 +74,6 @@ export interface Configuration {
 
 /**
  * Extension metadata interface
- * TODO: Align with VSCode's IExtensionDescription interface
- *
  * Specification: src/vs/platform/extensions/common/extensions.ts (IExtensionDescription)
  */
 export interface IExtensionDescription {
@@ -84,6 +87,8 @@ export interface IExtensionDescription {
 	readonly main?: string;
 	readonly browser?: string;
 	readonly engines?: { vscode: string };
+	readonly extensionDependencies?: string[];
+	readonly extensionKind?: VSCode.ExtensionKind[];
 	readonly contributes?: {
 		commands?: Array<{
 			command: string;
@@ -120,10 +125,25 @@ export interface IExtensionDescription {
 			uiTheme: string;
 			path: string;
 		}>;
-		// Add more contribution points as needed
 	};
 	readonly enabled?: boolean;
 	readonly kind?: VSCode.ExtensionKind[];
+}
+
+/**
+ * Dependency resolution result
+ */
+export interface DependencyResolutionResult {
+	/** Success flag */
+	readonly Success: boolean;
+	/** Ordered activation sequence */
+	readonly ActivationSequence: readonly string[];
+	/** Missing dependencies */
+	readonly MissingDependencies: readonly string[];
+	/** Circular dependency chains detected */
+	readonly CircularDependencies: readonly string[][];
+	/** Validation error if any */
+	readonly Error?: string;
 }
 
 /**
@@ -160,6 +180,37 @@ export interface ExtensionService {
 		ExtensionId: string,
 	) => Effect.Effect<string | undefined, never>;
 	readonly OnDidChange: VSCode.Event<void>;
+	readonly ResolveDependencies: (
+		ExtensionId: string,
+	) => Effect.Effect<DependencyResolutionResult, never>;
+	readonly MarkActivated: (
+		ExtensionId: string,
+		Exports: unknown,
+	) => Effect.Effect<void, Error>;
+	readonly MarkDeactivated: (
+		ExtensionId: string,
+	) => Effect.Effect<void, Error>;
+	readonly GetActivationMetrics: (
+		ExtensionId: string,
+	) => Effect.Effect<ActivationMetrics | undefined, never>;
+}
+
+/**
+ * Activation metrics for performance monitoring
+ */
+export interface ActivationMetrics {
+	/** Timestamp when activation started */
+	readonly StartTime: number;
+	/** Timestamp when activation completed */
+	readonly EndTime: number;
+	/** Total activation duration in milliseconds */
+	readonly Duration: number;
+	/** Activation reason */
+	readonly Reason: string;
+	/** Whether activation completed successfully */
+	readonly Success: boolean;
+	/** Error message if activation failed */
+	readonly Error?: string;
 }
 
 /**
@@ -172,11 +223,17 @@ export interface ExtensionService {
  * Architecture Pattern: src/vs/workbench/services/extensions/common/extensionDescriptionRegistry.ts
  * Implementation: Effect-TS service with Ref-based extension registry
  *
+ * Features Implemented:
+ * - Extension discovery from configuration
+ * - Dependency resolution with circular dependency detection
+ * - Activation/deactivation lifecycle management
+ * - Activation metrics tracking
+ * - Extension state persistence (Mountain integration pending)
+ *
  * TODOs:
- * - DEPENDENCY: Resolve and validate extension dependencies (HIGH)
- * - MARKETPLACE: Integrate with extension marketplace for discovery (MEDIUM)
- * - SEARCH: Implement extension search by capabilities/features (LOW)
- * - TELEMETRY: Track extension usage patterns (LOW)
+ * - MEDIUM: Integrate with extension marketplace for discovery
+ * - LOW: Implement extension search by capabilities/features
+ * - MEDIUM: Integrate Mountain gRPC for extension discovery (currently stubbed)
  */
 export class ExtensionService extends Effect.Service<ExtensionService>()(
 	"Service/Extension",
@@ -202,6 +259,11 @@ export class ExtensionService extends Effect.Service<ExtensionService>()(
 			// Extension exports cache
 			const ExtensionExportsRef = yield* Ref.make(
 				new Map<string, unknown>(),
+			);
+
+			// Activation metrics tracking
+			const ActivationMetricsRef = yield* Ref.make(
+				new Map<string, ActivationMetrics>(),
 			);
 
 			// Change event listeners

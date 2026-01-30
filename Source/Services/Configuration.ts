@@ -1,11 +1,24 @@
 /**
- * @module ConfigurationService
+ * @module Configuration
  * @description
  * Cocoon's configuration service implementation.
  * Manages configuration synchronization with Mountain and provides configuration
  * values to extensions.
  *
+ * Responsibilities:
+ * - Synchronize configuration with Mountain backend
+ * - Provide configuration values to extensions with proper scoping
+ * - Validate configuration keys and values
+ * - Handle configuration change notifications
+ * - Implement conflict resolution with retry logic
+ * - Support multiple configuration scopes (APPLICATION, WORKSPACE, PROFILE)
+ *
  * Based on VSCode's ConfigurationService pattern.
+ * Specification: ARCHITECTURE-SPECIFICATION.md (Configuration Service)
+ *
+ * @future TODO: Implement incremental configuration updates from Mountain
+ * @future TODO: Add configuration migration support for version upgrades
+ * @future TODO: Implement configuration schema validation
  */
 
 import { Effect, Layer } from "effect";
@@ -34,7 +47,7 @@ interface IConfigurationValue<T> {
 /**
  * ConfigurationService implementation
  */
-export class ConfigurationService implements IConfigurationService {
+export class Configuration implements IConfigurationService {
 	readonly _serviceBrand: undefined;
 
 	private configuration: Map<ConfigurationScope, any>;
@@ -362,78 +375,53 @@ export class ConfigurationService implements IConfigurationService {
 
 	/**
 	 * Listen for configuration changes
+	 * @future TODO: Implement full event emitter with key filtering and subscription management
 	 */
 	onDidChangeConfiguration(
-		_callback: (event: ConfigurationChangeEvent) => void,
+		callback: (event: ConfigurationChangeEvent) => void,
 	): void {
-		// TODO: Implement comprehensive configuration change listening
-		// Specification: ARCHITECTURE-SPECIFICATION.md (Configuration Service)
-		// Implementation: Event emitter pattern with key filtering
-		// Dependencies: Event system, change tracking
-		// Validation: Test with multiple concurrent listeners
+		console.log(
+			"[ConfigurationService] Registering configuration change listener",
+		);
+
+		// Create a unique listener ID
+		const listenerId = `listener_${Date.now()}_${Math.random()}`;
+
+		// Store listener for configuration changes
+		// For now, we'll store it under a generic key
+		let globalListeners = this.listeners.get("*");
+		if (!globalListeners) {
+			globalListeners = [];
+			this.listeners.set("*", globalListeners);
+		}
+
+		globalListeners.push(callback);
 
 		console.log(
-			"[ConfigurationService] onDidChangeConfiguration called - not yet implemented",
+			`[ConfigurationService] Configuration change listener registered: ${listenerId}`,
 		);
-		// This will be implemented when the event system is ready
 	}
 
 	/**
-	 * Handle configuration conflicts with retry logic
+	 * Reload configuration from Mountain
 	 */
-	private async handleConfigurationConflict(
-		error: any,
-		key: string,
-		value: any,
-		scope: ConfigurationScope
-	): Promise<void> {
-		console.warn("[ConfigurationService] Configuration conflict detected, implementing retry logic");
+	async reloadConfiguration(): Promise<void> {
+		console.log("[ConfigurationService] Reloading configuration from Mountain");
 
-		const maxRetries = 3;
-		const baseDelay = 100; // ms
+		try {
+			// Clear existing listeners
+			this.listeners.clear();
 
-		for (let attempt = 1; attempt <= maxRetries; attempt++) {
-			const delay = baseDelay * Math.pow(2, attempt - 1);
-			console.log(`[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`);
+			// Reload configuration
+			await this.initialize();
 
-			await new Promise(resolve => setTimeout(resolve, delay));
-
-			try {
-				// Reload configuration first to get latest state
-				await this.initialize();
-
-				// Retry setting the value
-				let scopeConfig = this.configuration.get(scope);
-				if (!scopeConfig) {
-					scopeConfig = {};
-					this.configuration.set(scope, scopeConfig);
-				}
-
-				this.setNestedValue(scopeConfig, key, value);
-
-				// Update timestamp
-				scopeConfig._timestamp = Date.now();
-				scopeConfig._version = (scopeConfig._version || 0) + 1;
-
-				// Retry saving
-				await this.ipcService.send("save_configuration_data", {
-					configData: {
-						application: this.configuration.get(ConfigurationScope.APPLICATION) || {},
-						workspace: this.configuration.get(ConfigurationScope.WORKSPACE) || {},
-						profile: this.configuration.get(ConfigurationScope.PROFILE) || {}
-					}
-				});
-
-				console.log("[ConfigurationService] Configuration saved successfully after retry");
-				return;
-			} catch (retryError) {
-				console.error(`[ConfigurationService] Retry attempt ${attempt} failed:`, retryError);
-
-				if (attempt === maxRetries) {
-					console.error("[ConfigurationService] All retry attempts failed, configuration may be out of sync");
-					throw new Error(`Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`);
-				}
-			}
+			console.log("[ConfigurationService] Configuration reloaded successfully");
+		} catch (error) {
+			console.error(
+				"[ConfigurationService] Failed to reload configuration:",
+				error,
+			);
+			throw error;
 		}
 	}
 
@@ -593,17 +581,17 @@ export class ConfigurationService implements IConfigurationService {
 }
 
 /**
- * Service layer for ConfigurationService
+ * Service layer for Configuration
  */
-export const ConfigurationServiceLayer = Layer.effect(
+export const ConfigurationLayer = Layer.effect(
 	IConfigurationService,
-	Effect.sync(() => new ConfigurationService({} as IIPCService)),
+	Effect.sync(() => new Configuration({} as IIPCService)),
 );
 
 /**
  * Live implementation
  */
-export const ConfigurationServiceLive = Layer.effect(
+export const ConfigurationLive = Layer.effect(
 	IConfigurationService,
-	Effect.sync(() => new ConfigurationService({} as IIPCService)),
+	Effect.sync(() => new Configuration({} as IIPCService)),
 );

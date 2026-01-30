@@ -2,14 +2,22 @@
  * @module MountainClientService
  * @description
  * Cocoon's gRPC client implementation for Mountain integration.
- * Connects to Mountain's gRPC server and implements MountainService client.
+ * Provides bidirectional communication with Mountain's gRPC server using the Vine protocol.
+ *
+ * RESPONSIBILITIES:
+ * - Establish and maintain gRPC connection to Mountain backend
+ * - Send requests and notifications to Mountain with proper serialization
+ * - Implement circuit breaker pattern for fault tolerance
+ * - Provide exponential backoff retry logic for transient failures
+ * - Monitor connection health and enable auto-reconnection
+ * - Cancel long-running operations on request
+ * - Track request/response metrics for observability
  *
  * Based on Mountain's Vine gRPC protocol specification.
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (Mountain Client Implementation)
  */
 
 import * as grpc from "@grpc/grpc-js";
-// Import generated interfaces from Vine.proto
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
 
@@ -26,7 +34,16 @@ import {
 } from "../Interfaces/IMountainClientService";
 
 /**
- * MountainClientService implementation
+ * Circuit breaker state for fault tolerance
+ */
+enum CircuitBreakerState {
+	Closed = "CLOSED",      // Normal operation
+	Open = "OPEN",          // Failing, reject requests
+	HalfOpen = "HALF_OPEN", // Testing if service recovered
+}
+
+/**
+ * MountainClientService implementation with fault tolerance and health monitoring
  */
 export class MountainClientService implements IMountainClientService {
 	readonly _serviceBrand: undefined;
@@ -38,6 +55,24 @@ export class MountainClientService implements IMountainClientService {
 	private connectionStartTime: number = 0;
 	private errorCount: number = 0;
 	private requestCounter: number = 0;
+
+	// Circuit breaker configuration
+	private circuitBreakerState: CircuitBreakerState = CircuitBreakerState.Closed;
+	private circuitBreakerFailureCount: number = 0;
+	private readonly circuitBreakerThreshold: number = 5; // Failures before opening
+	private readonly circuitBreakerTimeout: number = 60000; // 60 seconds to try recovery
+	private circuitBreakerOpenTime: number = 0;
+
+	// Retry configuration
+	private readonly maxRetries: number = 3;
+	private readonly baseRetryDelay: number = 1000; // Base delay in milliseconds
+	private readonly maxRetryDelay: number = 10000; // Maximum delay in milliseconds
+
+	// Health monitoring
+	private healthCheckInterval: NodeJS.Timeout | null = null;
+	private readonly healthCheckPeriod: number = 30000; // 30 seconds
+	private lastHealthCheck: number = 0;
+	private consecutiveSuccessfulHealthChecks: number = 0;
 
 	constructor() {
 		this._serviceBrand = undefined;
@@ -96,9 +131,19 @@ export class MountainClientService implements IMountainClientService {
 	}
 
 	/**
-	 * Connect to Mountain gRPC server
+	 * Connect to Mountain gRPC server with circuit breaker protection
 	 */
 	async connect(): Promise<void> {
+		// Check if circuit breaker is open
+		if (this.circuitBreakerState === CircuitBreakerState.Open) {
+			if (Date.now() - this.circuitBreakerOpenTime < this.circuitBreakerTimeout) {
+				throw new Error(`Circuit breaker is OPEN. Service unavailable. Last failure: ${new Date(this.circuitBreakerOpenTime).toISOString()}`);
+			}
+			// Transition to half-openstate to attempt recovery
+			console.log("[MountainClientService] Circuit breaker transitioning to HALF_OPEN for recovery");
+			this.circuitBreakerState = CircuitBreakerState.HalfOpen;
+		}
+
 		if (this.isConnected) {
 			console.warn(
 				"[MountainClientService] Already connected to Mountain",
@@ -140,16 +185,25 @@ export class MountainClientService implements IMountainClientService {
 			this.isConnected = true;
 			this.connectionStartTime = Date.now();
 			this.errorCount = 0;
+			this.consecutiveSuccessfulHealthChecks = 0;
+
+			// Start health monitoring
+			this.startHealthMonitoring();
 
 			console.log(
 				"[MountainClientService] Successfully connected to Mountain",
 			);
 		} catch (error) {
 			this.errorCount++;
+			this.circuitBreakerFailureCount++;
 			console.error(
 				"[MountainClientService] Failed to connect to Mountain:",
 				error,
 			);
+
+			// Update circuit breaker state
+			this.UpdateCircuitBreaker(false);
+
 			throw error;
 		}
 	}
@@ -285,9 +339,12 @@ export class MountainClientService implements IMountainClientService {
 	}
 
 	/**
-	 * Send request to Mountain with advanced features
+	 * Send request to Mountain with circuit breaker and retry logic
 	 */
 	async sendRequest(method: string, parameters: any): Promise<any> {
+		// Check circuit breaker state
+		this.CheckCircuitBreaker();
+
 		if (!this.isConnected || !this.client) {
 			throw new Error("Not connected to Mountain");
 		}
@@ -304,41 +361,46 @@ export class MountainClientService implements IMountainClientService {
 			const request: GenericRequest = {
 				RequestIdentifier: BigInt(requestIdentifier), // Use BigInt for uint64 compatibility
 				Method: method,
-				Parameter: Buffer.from(JSON.stringify(parameters || {})),
+				Parameter: this.SerializeParameters(parameters),
 			};
 
-			const response = await this.makeRequest(request);
+			// Execute with retry logic
+			const response = await this.SendRequestWithRetry(request);
 
 			const duration = Date.now() - startTime;
 
 			// Check for error in response
 			if (response.error) {
+				this.circuitBreakerFailureCount++;
+				this.UpdateCircuitBreaker(false);
 				throw new Error(
 					`Mountain request failed: ${response.error.Message} (Code: ${response.error.Code})`,
 				);
 			}
 
 			// Parse response data from Result field
-			const responseData = response.Result
-				? JSON.parse(response.Result.toString("utf8"))
-				: {};
+			const responseData = this.DeserializeResponse(response.Result);
 
 			console.log(
 				`[MountainClientService] Request ${method} completed successfully in ${duration}ms`,
 			);
 
-			// Track performance metrics
+			// Track performance metrics and update circuit breaker
 			this.trackRequestMetrics(method, duration, true);
+			this.UpdateCircuitBreaker(true);
 
 			return responseData;
 		} catch (error) {
 			this.errorCount++;
+			this.circuitBreakerFailureCount++;
 			const duration = Date.now() - startTime;
 
 			console.error(
 				`[MountainClientService] Request ${method} failed after ${duration}ms:`,
 				error,
 			);
+
+			this.UpdateCircuitBreaker(false);
 
 			// Auto-reconnect on connection errors
 			if (this.isConnectionError(error)) {
@@ -371,7 +433,12 @@ export class MountainClientService implements IMountainClientService {
 		duration: number,
 		success: boolean,
 	): void {
-		// TODO: Integrate with PerformanceMonitoringService
+		// TODO: FUTURE: Integrate with PerformanceMonitoringService for distributed tracing
+		// Specification: MOUNTAIN-MONITORING.md (Metrics Integration)
+		// Implementation: Push metrics to centralized monitoring system
+		// Dependencies: PerformanceMonitoringService, telemetry pipeline
+		// Validation: Verify metrics appear in monitoring dashboard
+
 		console.log(
 			`[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`,
 		);
@@ -426,6 +493,219 @@ export class MountainClientService implements IMountainClientService {
 		}
 
 		throw new Error("Max retry attempts exceeded");
+	}
+
+	/**
+	 * Send request with exponential backoff retry logic
+	 */
+	private async SendRequestWithRetry(
+		request: GenericRequest,
+	): Promise<GenericResponse> {
+		if (!this.client) {
+			throw new Error("Client not initialized");
+		}
+
+		let lastError: Error | null = null;
+
+		for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+			try {
+				const response = await this.client.ProcessCocoonRequest(request);
+				return response;
+			} catch (error) {
+				lastError = error as Error;
+
+				// Don't retry on non-transient errors
+				if (!this.isTransientError(error)) {
+					throw error;
+				}
+
+				if (attempt < this.maxRetries - 1) {
+					const delay = this.CalculateRetryDelay(attempt);
+					console.warn(
+						`[MountainClientService] Request ${request.RequestIdentifier} failed (attempt ${attempt + 1}/${this.maxRetries}), retrying in ${delay}ms:`,
+						error,
+					);
+					await new Promise((resolve) => setTimeout(resolve, delay));
+				}
+			}
+		}
+
+		throw lastError || new Error("Max retry attempts exceeded");
+	}
+
+	/**
+	 * Calculate retry delay with exponential backoff
+	 */
+	private CalculateRetryDelay(attempt: number): number {
+		const exponentialDelay = this.baseRetryDelay * Math.pow(2, attempt);
+		const jitter = Math.random() * 0.1 * exponentialDelay; // Add 10% jitter
+		return Math.min(exponentialDelay + jitter, this.maxRetryDelay);
+	}
+
+	/**
+	 * Check if error is transient and should be retried
+	 */
+	private isTransientError(error: any): boolean {
+		const transientCodes = [
+			"UNAVAILABLE",
+			"DEADLINE_EXCEEDED",
+			"INTERNAL",
+			"RESOURCE_EXHAUSTED",
+		];
+
+		return (
+			error &&
+			(transientCodes.includes(error.code) ||
+				error.code === 14 || // UNAVAILABLE
+				error.code === 4 || // DEADLINE_EXCEEDED
+				this.isConnectionError(error))
+		);
+	}
+
+	/**
+	 * Serialize parameters to buffer with validation
+	 */
+	private SerializeParameters(parameters: any): Buffer {
+		try {
+			// Validate parameters before serialization
+			if (parameters === null || parameters === undefined) {
+				return Buffer.from(JSON.stringify({}));
+			}
+
+			const serialized = JSON.stringify(parameters);
+			return Buffer.from(serialized, "utf8");
+		} catch (error) {
+			console.error("[MountainClientService] Failed to serialize parameters:", error);
+			throw new Error(`Parameter serialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+		}
+	}
+
+	/**
+	 * Deserialize response buffer with error handling
+	 */
+	private DeserializeResponse(buffer?: Buffer): any {
+		try {
+			if (!buffer || buffer.length === 0) {
+				return {};
+			}
+
+			const serialized = buffer.toString("utf8");
+			return JSON.parse(serialized);
+		} catch (error) {
+			console.error("[MountainClientService] Failed to deserialize response:", error);
+			// Return empty object on deserialization error to avoid breaking the caller
+			return {};
+		}
+	}
+
+	/**
+	 * Update circuit breaker state based on operation result
+	 */
+	private UpdateCircuitBreaker(success: boolean): void {
+		if (success) {
+			this.circuitBreakerFailureCount = 0;
+
+			// If in half-openstate, transition to closed
+			if (this.circuitBreakerState === CircuitBreakerState.HalfOpen) {
+				console.log("[MountainClientService] Circuit breaker transitioning to CLOSED (service recovered)");
+				this.circuitBreakerState = CircuitBreakerState.Closed;
+			}
+		} else {
+			this.circuitBreakerFailureCount++;
+
+			// Open circuit breaker if threshold reached
+			if (this.circuitBreakerFailureCount >= this.circuitBreakerThreshold) {
+				this.circuitBreakerState = CircuitBreakerState.Open;
+				this.circuitBreakerOpenTime = Date.now();
+				console.log(
+					`[MountainClientService] Circuit breaker OPENED after ${this.circuitBreakerFailureCount} failures`,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Check circuit breaker state and throw if open
+	 */
+	private CheckCircuitBreaker(): void {
+		if (this.circuitBreakerState === CircuitBreakerState.Open) {
+			if (Date.now() - this.circuitBreakerOpenTime >= this.circuitBreakerTimeout) {
+				// Transition to half-openstate to attempt recovery
+				this.circuitBreakerState = CircuitBreakerState.HalfOpen;
+				console.log("[MountainClientService] Circuit breaker transitioning to HALF_OPEN for recovery");
+			} else {
+				throw new Error(
+					`Circuit breaker is OPEN. Service unavailable. Time remaining until half-open: ${Math.round((this.circuitBreakerTimeout - (Date.now() - this.circuitBreakerOpenTime)) / 1000)}s`,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Start health monitoring
+	 */
+	private startHealthMonitoring(): void {
+		if (this.healthCheckInterval) {
+			return; // Already started
+		}
+
+		this.lastHealthCheck = Date.now();
+
+		this.healthCheckInterval = setInterval(() => {
+			this.performHealthCheck();
+		}, this.healthCheckPeriod);
+
+		console.log(
+			`[MountainClientService] Health monitoring started (interval: ${this.healthCheckPeriod}ms)`,
+		);
+	}
+
+	/**
+	 * Stop health monitoring
+	 */
+	private stopHealthMonitoring(): void {
+		if (this.healthCheckInterval) {
+			clearInterval(this.healthCheckInterval);
+			this.healthCheckInterval = null;
+			console.log("[MountainClientService] Health monitoring stopped");
+		}
+	}
+
+	/**
+	 * Perform health check
+	 */
+	private async performHealthCheck(): Promise<void> {
+		this.lastHealthCheck = Date.now();
+
+		try {
+			// Send a simple health check request
+			await this.sendRequest("health.check", {});
+			this.consecutiveSuccessfulHealthChecks++;
+
+			console.log(
+				`[MountainClientService] Health check passed (consecutive successes: ${this.consecutiveSuccessfulHealthChecks})`,
+			);
+
+			// Reset circuit breaker on repeated success
+			if (this.consecutiveSuccessfulHealthChecks >= 3 && this.circuitBreakerState === CircuitBreakerState.HalfOpen) {
+				this.UpdateCircuitBreaker(true);
+			}
+		} catch (error) {
+			this.consecutiveSuccessfulHealthChecks = 0;
+			this.errorCount++;
+			this.circuitBreakerFailureCount++;
+			this.UpdateCircuitBreaker(false);
+
+			console.error("[MountainClientService] Health check failed:", error);
+
+			// Trigger reconnection if not connected
+			if (!this.isConnected) {
+				console.log("[MountainClientService] Connection lost, attempting reconnect");
+				this.reconnect().catch((err) => {
+					console.error("[MountainClientService] Auto-reconnect failed:", err);
+				});
+			}
+		}
 	}
 
 	/**
@@ -555,6 +835,9 @@ export class MountainClientService implements IMountainClientService {
 
 		console.log("[MountainClientService] Disconnecting from Mountain");
 
+		// Stop health monitoring
+		this.stopHealthMonitoring();
+
 		this.client = null;
 		this.isConnected = false;
 
@@ -574,7 +857,7 @@ export class MountainClientService implements IMountainClientService {
 	}
 
 	/**
-	 * Get connection status
+	 * Get connection status with circuit breaker information
 	 */
 	getStatus(): {
 		connected: boolean;
@@ -582,6 +865,9 @@ export class MountainClientService implements IMountainClientService {
 		mountainPort: number;
 		errorCount: number;
 		uptime?: number;
+		circuitBreakerState: string;
+		circuitBreakerFailureCount: number;
+		lastHealthCheck?: Date;
 	} {
 		return {
 			connected: this.isConnected,
@@ -590,6 +876,11 @@ export class MountainClientService implements IMountainClientService {
 			errorCount: this.errorCount,
 			...(this.isConnected
 				? { uptime: Date.now() - this.connectionStartTime }
+				: {}),
+			circuitBreakerState: this.circuitBreakerState,
+			circuitBreakerFailureCount: this.circuitBreakerFailureCount,
+			...(this.lastHealthCheck
+				? { lastHealthCheck: new Date(this.lastHealthCheck) }
 				: {}),
 		};
 	}

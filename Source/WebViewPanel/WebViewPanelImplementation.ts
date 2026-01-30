@@ -1,8 +1,42 @@
 /**
  * @module WebViewPanelImplementation
- * @description The concrete implementation of the `vscode.WebviewPanel` interface.
- * An instance of this class represents a single webview panel from the extension
- * host's perspective, proxying state changes to the Mountain host.
+ * @description
+ * The concrete implementation of the `vscode.WebviewPanel` interface.
+ *
+ * RESPONSIBILITIES:
+ * - Proxies webview panel state to Mountain host via IPC notifications
+ * - Implements the full vscode.WebviewPanel interface
+ * - Manages webview panel lifecycle (create, reveal, dispose)
+ * - Tracks view state (active, visible, viewColumn) and fires change events
+ * - Delegates webview operations to WebViewImplementation instance
+ *
+ * ARCHITECTURE:
+ * - Pattern: src/vs/workbench/api/common/extHostWebview.ts
+ * - Communication: IPC notifications to Mountain host
+ * - State: Local cache of panel state with change detection
+ * - Events: Emitter for onDidChangeViewState and onDidDispose
+ *
+ * INTEGRATION:
+ * - IPC: SendNotification to relay state changes to Mountain
+ * - TypeConverter: URI conversions for iconPath
+ * - WebViewImplementation: Embedded webview instance
+ * - EventStream: Emitters for panel events
+ *
+ * IMPLEMENTATION NOTES:
+ * - IsDisposed flag prevents operations after disposal
+ * - State change detection prevents redundant notifications
+ * - IconPath supports both Uri and { light, dark } forms
+ * - All setters send IPC notifications to Mountain
+ *
+ * TODOs (Mountain Integration - HIGH):
+ * - Mountain needs to implement IPC handlers for $setWebviewTitle
+ * - Mountain needs to implement IPC handlers for $setWebviewIconPath
+ * - Mountain needs to implement IPC handlers for $revealWebviewPanel
+ * - Mountain needs to implement IPC handlers for $disposeWebview
+ *
+ * TODOs (Enhancements - LOW):
+ * - Add persistence for webview panel state restoration
+ * - Add webview panel serialization for session restore
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
