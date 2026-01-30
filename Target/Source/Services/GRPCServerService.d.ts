@@ -13,7 +13,7 @@ import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
  * GRPCServerService implementation
  */
 export declare class GRPCServerService implements IGRPCServerService {
-    private readonly _serviceBrand;
+    readonly _serviceBrand: undefined;
     private server;
     private port;
     private isRunning;

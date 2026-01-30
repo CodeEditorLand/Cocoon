@@ -21,13 +21,6 @@ import { ISecurityService } from "./Interfaces/ISecurityService";
 import { IErrorHandlingService } from "./Interfaces/IErrorHandlingService";
 
 // Import service implementations
-<<<<<<< HEAD
-import { ConfigurationServiceLive } from "./Services/Configuration";
-import { ExtensionHostServiceLive } from "./Services/ExtensionHostService";
-import { IPCServiceLive } from "./Services/IPCService";
-import { GRPCServerServiceLive } from "./Services/GRPCServerService";
-import { MountainClientServiceLive } from "./Services/MountainClientService";
-=======
 import { ConfigurationService, ConfigurationServiceLive } from "./Services/Configuration";
 import { ExtensionHostService, ExtensionHostServiceLive } from "./Services/ExtensionHostService";
 import { IPCService, IPCServiceLive } from "./Services/IPCService";
@@ -41,7 +34,6 @@ import { ErrorHandlingService, ErrorHandlingServiceLive } from "./Services/Error
 // Import channel implementations
 import { ExtensionChannel } from "./Services/ExtensionChannel";
 import { ConfigurationChannel } from "./Services/ConfigurationChannel";
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 
 /**
  * Service descriptor interface
@@ -163,54 +155,6 @@ export class ServiceMapping {
             dependencies: []
         });
         
-<<<<<<< HEAD
-        // TODO: Register ModuleInterceptorService
-        // Specification: IMPLEMENTATION-SPECIFICATION.md (Module Interceptor Service)
-        // Implementation: Create ModuleInterceptorService implementation
-        // Dependencies: ExtensionHostService, SecurityService
-        // Validation: Test module interception functionality
-        
-        // TODO: Register APIFactoryService
-        // Specification: IMPLEMENTATION-SPECIFICATION.md (API Factory Service)
-        // Implementation: Create APIFactoryService implementation
-        // Dependencies: ModuleInterceptorService, ConfigurationService
-        // Validation: Test VS Code API construction
-        
-        console.log('[ServiceMapping] Service mapping registry initialized');
-        console.log(`[ServiceMapping] Registered services: ${this.getRegisteredServices().join(', ')}`);
-    }
-    
-    /**
-     * Create application layer with all services
-     */
-    static createApplicationLayer(): Layer.Layer<never, never, any> {
-        const serviceLayers = Array.from(this.services.values()).map(
-            descriptor => descriptor.implementation
-        );
-        
-        return Layer.mergeAll(...serviceLayers as [Layer.Layer<never, never, any>, ...Layer.Layer<never, never, any>[]]);
-    }
-    
-    /**
-     * Validate service dependencies
-     */
-    static validateDependencies(): boolean {
-        for (const [name, descriptor] of this.services.entries()) {
-            if (descriptor.dependencies) {
-                for (const dependency of descriptor.dependencies) {
-                    const dependencyName = this.findServiceName(dependency);
-                    if (!dependencyName) {
-                        console.error(`[ServiceMapping] Dependency not found: ${dependency} for service ${name}`);
-                        return false;
-                    }
-                }
-            }
-        }
-        
-        console.log('[ServiceMapping] All service dependencies validated');
-        return true;
-    }
-=======
 		// Register ModuleInterceptorService
 		this.registerService('ModuleInterceptorService', {
 			interface: IModuleInterceptorService,
@@ -272,7 +216,6 @@ export class ServiceMapping {
 		console.log("[ServiceMapping] All service dependencies validated");
 		return true;
 	}
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 }
 
 /**

@@ -84,10 +84,10 @@ export declare class IPCService implements IIPCService {
 /**
  * Service layer for IPCService
  */
-export declare const IPCServiceLayer: Layer.Layer<IIPCService, never, never>;
+export declare const IPCServiceLayer: Layer.Layer<unknown, never, never>;
 /**
  * Live implementation
  */
 export { CocoonMessagePassingProtocol };
-export declare const IPCServiceLive: Layer.Layer<IIPCService, never, never>;
+export declare const IPCServiceLive: Layer.Layer<unknown, never, never>;
 //# sourceMappingURL=IPCService.d.ts.map

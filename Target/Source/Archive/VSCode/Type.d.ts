@@ -1,3 +1,13 @@
+/**
+ * @module Type
+ * @description Provides the concrete implementations of core `vscode` API types,
+ * such as `URI`, `Range`, `Position`, `Disposable`, and all enums.
+ * This is synthesized from `vscode.d.ts` and VS Code's internal `extHostTypes.ts`.
+ */
+import { CancellationTokenSource as VSCodeCancellationTokenSource } from "@codeeditorland/output/vs/base/common/cancellation.js";
+import { CancellationError as VSCodeCancellationError } from "@codeeditorland/output/vs/base/common/errors.js";
+import { Emitter } from "@codeeditorland/output/vs/base/common/event.js";
+import { URI as VSCodeURI } from "@codeeditorland/output/vs/base/common/uri.js";
 import type * as VSCode from "vscode";
 import { CompletionItemKind, CompletionItemTag, ConfigurationTarget, DiagnosticSeverity, DiagnosticTag, EndOfLine, ProgressLocation, QuickPickItemKind, SnippetString, StatusBarAlignment, TextEditorCursorStyle, TreeItemCollapsibleState, ViewColumn } from "vscode";
 export declare class Disposable implements VSCode.Disposable {
@@ -6,10 +16,10 @@ export declare class Disposable implements VSCode.Disposable {
     dispose(): any;
     [Symbol.dispose](): void;
 }
-export declare const CancellationTokenSource: any;
-export declare const CancellationError: any;
-export declare const EventEmitter: any;
-export declare const URI: any;
+export declare const CancellationTokenSource: typeof VSCodeCancellationTokenSource;
+export declare const CancellationError: typeof VSCodeCancellationError;
+export declare const EventEmitter: typeof Emitter;
+export declare const URI: typeof VSCodeURI;
 export declare const ThemeIcon: typeof VSCode.ThemeIcon;
 export declare const ProcessExecution: typeof VSCode.ProcessExecution;
 export declare const Task: typeof VSCode.Task;

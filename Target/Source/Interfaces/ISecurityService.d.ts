@@ -4,7 +4,6 @@
  * Interface for enterprise security service.
  * Provides security policy enforcement, audit logging, and incident response.
  */
-import { Context } from "effect";
 export interface SecurityPolicy {
     extensionId: string;
     allowedModules: string[];
@@ -106,5 +105,5 @@ export interface ISecurityService {
 /**
  * Effect context for SecurityService
  */
-export declare const ISecurityService: Context.Tag<ISecurityService, ISecurityService>;
+export declare const ISecurityService: any;
 //# sourceMappingURL=ISecurityService.d.ts.map

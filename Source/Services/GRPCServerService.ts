@@ -14,50 +14,6 @@ import { Effect, Layer } from "effect";
 
 import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
 
-<<<<<<< HEAD
-// gRPC service definitions from Mountain's Vine protocol
-interface GenericRequest {
-	RequestIdentifier: number;
-	Method: string;
-	Parameter: Buffer;
-}
-
-interface GenericResponse {
-	RequestIdentifier: number;
-	Success: boolean;
-	Data?: Buffer;
-	Error?: string;
-}
-
-interface GenericNotification {
-	Method: string;
-	Parameter: Buffer;
-}
-
-interface CancelOperationRequest {
-	RequestIdentifier: number;
-	Reason: string;
-}
-
-interface Empty {}
-
-// gRPC service interfaces
-interface CocoonServiceImplementation {
-	ProcessMountainRequest(
-		call: grpc.ServerUnaryCall<GenericRequest, GenericResponse>,
-		callback: grpc.sendUnaryData<GenericResponse>,
-	): void;
-	SendMountainNotification(
-		call: grpc.ServerUnaryCall<GenericNotification, Empty>,
-		callback: grpc.sendUnaryData<Empty>,
-	): void;
-	CancelOperation(
-		call: grpc.ServerUnaryCall<CancelOperationRequest, Empty>,
-		callback: grpc.sendUnaryData<Empty>,
-	): void;
-	[x: string]: any; // Index signature for gRPC compatibility
-}
-=======
 // Import generated interfaces from Vine.proto
 import {
     GenericRequest,
@@ -67,7 +23,6 @@ import {
     Empty,
     CocoonServiceImplementation
 } from "../Generated/Vine.js";
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 
 /**
  * GRPCServerService implementation
@@ -460,14 +415,6 @@ export class GRPCServerService implements IGRPCServerService {
         //     message Empty {}
         // `;
 
-		return protoLoader.loadSync("vine.proto", {
-			keepCase: true,
-			longs: String,
-			enums: String,
-			defaults: true,
-			oneofs: true,
-		});
-=======
         console.log("[GRPCServerService] Loading Vine.proto protocol definition");
         
         try {
@@ -565,7 +512,6 @@ export class GRPCServerService implements IGRPCServerService {
             console.error("[GRPCServerService] Failed to load protocol definition:", error);
             throw new Error(`Failed to load Vine.proto: ${error.message}`);
         }
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 	}
 	private startServer(): Promise<void> {
 		return new Promise((resolve, reject) => {

@@ -4,7 +4,6 @@
  * Interface for advanced module interception service.
  * Provides security sandboxing and module resolution for extensions.
  */
-import { Context } from "effect";
 export interface ModuleInterceptionRequest {
     moduleId: string;
     parentModule?: string;
@@ -78,5 +77,5 @@ export interface IModuleInterceptorService {
 /**
  * Effect context for ModuleInterceptorService
  */
-export declare const IModuleInterceptorService: Context.Tag<IModuleInterceptorService, IModuleInterceptorService>;
+export declare const IModuleInterceptorService: any;
 //# sourceMappingURL=IModuleInterceptorService.d.ts.map

@@ -1,0 +1,35 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+
+	"extends": "../../../tsconfig.json",
+
+	"compilerOptions": {
+		"baseUrl": "../../../Target",
+
+		"outDir": "../../../Target",
+
+		"noCheck": true,
+
+		"noEmit": true,
+
+		"declaration": false,
+
+		"declarationMap": false,
+
+		"emitDeclarationOnly": false,
+
+		"allowJs": true,
+
+		"checkJs": false,
+
+		"rootDirs": [
+			"../../../Target",
+
+			"../../../../../Dependency/Microsoft/Dependency/Editor/src/"
+		]
+	},
+
+	"include": ["../../../Target"],
+
+	"exclude": ["../../Dependency/Microsoft/Dependency/Editor/src"]
+}

@@ -12,7 +12,7 @@ import { Effect, Layer, Context } from "effect";
  * Service descriptor interface
  */
 export interface ServiceDescriptor<T> {
-    interface: Context.Tag<T, T>;
+    interface: Context.Tag<any, T>;
     implementation: Layer.Layer<never, never, T>;
     dependencies?: Context.Tag<any, any>[];
 }
@@ -28,11 +28,11 @@ export declare class ServiceMapping {
     /**
      * Get a service
      */
-    static getService<T>(interfaceTag: Context.Tag<T, T>): Effect.Effect<T, never, any>;
+    static getService<T>(interfaceTag: Context.Tag<any, T>): Effect.Effect<T, never, any>;
     /**
      * Get service layer
      */
-    static getServiceLayer<T>(interfaceTag: Context.Tag<T, T>): Layer.Layer<never, never, T>;
+    static getServiceLayer<T>(interfaceTag: Context.Tag<any, T>): Layer.Layer<never, never, T>;
     /**
      * Find service name by interface
      */

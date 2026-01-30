@@ -9,11 +9,8 @@
  */
 import { Layer } from "effect";
 import { IMountainClientService } from "../Interfaces/IMountainClientService";
-/**
- * MountainClientService implementation
- */
 export declare class MountainClientService implements IMountainClientService {
-    private readonly _serviceBrand;
+    readonly _serviceBrand: undefined;
     private client;
     private mountainHost;
     private mountainPort;
@@ -30,9 +27,6 @@ export declare class MountainClientService implements IMountainClientService {
      * Validate host configuration
      */
     private isValidHost;
-    /**
-     * Connect to Mountain gRPC server
-     */
     connect(): Promise<void>;
     /**
      * Load protocol definition
@@ -42,13 +36,63 @@ export declare class MountainClientService implements IMountainClientService {
      * Wait for connection with advanced timeout handling
      */
     private waitForConnection;
+    /**
+     * Send request to Mountain with advanced features
+     */
+    sendRequest(method: string, parameters: any): Promise<any>;
+    /**
+     * Track request performance metrics
+     */
+    private trackRequestMetrics;
+    /**
+     * Check if error is a connection error
+     */
+    private isConnectionError;
+    /**
+     * Make gRPC request with promise interface and retry logic
+     */
+    private makeRequest;
+    /**
+     * Send notification to Mountain
+     */
+    sendNotification(method: string, parameters: any): Promise<void>;
+    /**
+     * Make gRPC notification with promise interface
+     */
+    private makeNotification;
+    /**
+     * Cancel operation
+     */
+    cancelOperation(requestIdentifier: number, reason: string): Promise<void>;
+    /**
+     * Make gRPC cancel request with promise interface
+     */
+    private makeCancelRequest;
+    /**
+     * Generate unique request identifier
+     */
+    private generateRequestId;
+    /**
+     * Disconnect from Mountain
+     */
+    disconnect(): Promise<void>;
+    /**
+     * Reconnect to Mountain
+     */
+    reconnect(): Promise<void>;
+    /**
+     * Get connection status
+     */
+    getStatus(): {
+        connected: boolean;
+        mountainHost: string;
+        mountainPort: number;
+        errorCount: number;
+        uptime?: number;
+    };
 }
 /**
  * Service layer for MountainClientService
  */
-export declare const MountainClientServiceLayer: Layer.Layer<unknown, never, never>;
-/**
- * Live implementation
- */
-export declare const MountainClientServiceLive: Layer.Layer<unknown, never, never>;
+export declare const MountainClientServiceLayer: Layer.Layer<IMountainClientService, never, never>;
 //# sourceMappingURL=MountainClientService.d.ts.map

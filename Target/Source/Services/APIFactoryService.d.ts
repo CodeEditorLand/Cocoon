@@ -75,9 +75,9 @@ export declare class APIFactoryService implements IAPIFactoryService {
 /**
  * Service layer for APIFactoryService
  */
-export declare const APIFactoryServiceLayer: Layer.Layer<IAPIFactoryService, never, never>;
+export declare const APIFactoryServiceLayer: Layer.Layer<unknown, never, never>;
 /**
  * Live implementation for testing
  */
-export declare const APIFactoryServiceLive: Layer.Layer<IAPIFactoryService, never, never>;
+export declare const APIFactoryServiceLive: Layer.Layer<unknown, never, never>;
 //# sourceMappingURL=APIFactoryService.d.ts.map

@@ -4,7 +4,6 @@
  * Interface for Cocoon's extension host service.
  * Based on VSCode's extension host patterns.
  */
-import { Context } from "effect";
 export interface IExtensionDescription {
     identifier: string;
     name: string;
@@ -66,5 +65,5 @@ export interface IExtensionHostService {
 /**
  * Effect context for ExtensionHostService
  */
-export declare const IExtensionHostService: Context.Tag<IExtensionHostService, IExtensionHostService>;
+export declare const IExtensionHostService: any;
 //# sourceMappingURL=IExtensionHostService.d.ts.map

@@ -28,7 +28,7 @@ export interface APIFactory {
 declare const APIFactoryService_base: Effect.Service.Class<APIFactoryService, "Service/APIFactory", {
     readonly effect: Effect.Effect<{
         CreateAPI: (ExtensionDescription: IExtensionDescription) => typeof VSCode;
-    }, never, LoggerService | WorkSpaceService | WindowService | CommandService | DebugService | ExtensionService | LanguageFeatureService | ProposedAPIService | StatusBarService | TaskService | TreeViewService | WebViewPanelService>;
+    }, never, LoggerService | ProposedAPIService | CommandService | WindowService | WorkSpaceService | LanguageFeatureService | DebugService | TaskService | ExtensionService | WebViewPanelService | TreeViewService | StatusBarService>;
 }>;
 /**
  * @class APIFactoryService

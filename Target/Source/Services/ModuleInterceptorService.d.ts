@@ -121,10 +121,10 @@ export declare class ModuleInterceptorService implements IModuleInterceptorServi
 /**
  * Service layer for ModuleInterceptorService
  */
-export declare const ModuleInterceptorServiceLayer: Layer.Layer<IModuleInterceptorService, never, never>;
+export declare const ModuleInterceptorServiceLayer: Layer.Layer<unknown, never, never>;
 /**
  * Live implementation
  */
-export declare const ModuleInterceptorServiceLive: Layer.Layer<IModuleInterceptorService, never, never>;
+export declare const ModuleInterceptorServiceLive: Layer.Layer<unknown, never, never>;
 export default ModuleInterceptorService;
 //# sourceMappingURL=ModuleInterceptorService.d.ts.map

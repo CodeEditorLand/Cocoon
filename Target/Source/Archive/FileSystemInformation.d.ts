@@ -5,7 +5,6 @@
  * read-only status) and for firing file change events.
  */
 import { type IExtUri } from "@codeeditorland/output/vs/base/common/resources.js";
-import { FileSystemProviderCapabilities } from "@codeeditorland/output/vs/platform/files/common/files.js";
 import { Effect } from "effect";
 import type { Event, FileChangeEvent } from "vscode";
 import { IPCService } from "./IPC.js";

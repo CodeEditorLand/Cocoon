@@ -9,6 +9,7 @@
  */
 import { Layer } from "effect";
 import { IConfigurationService } from "../Interfaces/IConfigurationService";
+import type { ConfigurationChangeEvent } from "../Interfaces/IConfigurationService";
 import { IIPCService } from "../Interfaces/IIPCService";
 declare enum ConfigurationScope {
     APPLICATION = "APPLICATION",
@@ -62,9 +63,9 @@ export declare class ConfigurationService implements IConfigurationService {
      */
     inspect<T>(key: string, scope?: ConfigurationScope): IConfigurationValue<T>;
     /**
-     * Watch for configuration changes
+     * Listen for configuration changes
      */
-    onDidChangeConfiguration(key: string, scope: ConfigurationScope, callback: (value: any) => void): void;
+    onDidChangeConfiguration(_callback: (event: ConfigurationChangeEvent) => void): void;
     /**
      * Cleanup configuration service
      */
@@ -89,10 +90,10 @@ export declare class ConfigurationService implements IConfigurationService {
 /**
  * Service layer for ConfigurationService
  */
-export declare const ConfigurationServiceLayer: Layer.Layer<IConfigurationService, never, never>;
+export declare const ConfigurationServiceLayer: Layer.Layer<unknown, never, never>;
 /**
  * Live implementation
  */
-export declare const ConfigurationServiceLive: Layer.Layer<IConfigurationService, never, never>;
+export declare const ConfigurationServiceLive: Layer.Layer<unknown, never, never>;
 export {};
 //# sourceMappingURL=Configuration.d.ts.map

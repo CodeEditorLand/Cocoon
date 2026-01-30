@@ -4,7 +4,6 @@
  * Interface for performance monitoring service.
  * Provides real-time performance metrics collection and optimization insights.
  */
-import { Context } from "effect";
 export interface PerformanceMetrics {
     extensionLoadTime: number;
     apiCallLatency: number;
@@ -66,5 +65,5 @@ export interface IPerformanceMonitoringService {
 /**
  * Effect context for PerformanceMonitoringService
  */
-export declare const IPerformanceMonitoringService: Context.Tag<IPerformanceMonitoringService, IPerformanceMonitoringService>;
+export declare const IPerformanceMonitoringService: any;
 //# sourceMappingURL=IPerformanceMonitoringService.d.ts.map

@@ -10,12 +10,7 @@
  */
 
 import { Effect, Layer } from "effect";
-<<<<<<< HEAD
-import type { IPCResponse, IPCConnectionStatus } from "../Interfaces/IIPCService";
-import { IIPCService } from "../Interfaces/IIPCService";
-=======
 import { IIPCService, IChannel, IServerChannel, IMessagePassingProtocol, VSBuffer } from "../Interfaces/IIPCService";
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 
 /**
  * VS Buffer implementation for binary-safe IPC
@@ -94,18 +89,8 @@ export class IPCService implements IIPCService {
     private _channelClient: IChannel | null = null;
     
     constructor() {
-<<<<<<< HEAD
         this._serviceBrand = undefined;
-        console.log('[IPCService] Initializing stub IPC service');
-        
-        // TODO: Implement production-grade gRPC client
-        // Specification: ARCHITECTURE-SPECIFICATION.md (IPC Bridge Service)
-        // Implementation: gRPC with protobuf, connection pooling, TLS
-        // Dependencies: @grpc/grpc-js, protobuf schemas, certificate management
-        // Validation: Performance test with 1000+ concurrent messages
-=======
         console.log('[IPCService] Initializing advanced IPC service');
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
     }
     
     /**

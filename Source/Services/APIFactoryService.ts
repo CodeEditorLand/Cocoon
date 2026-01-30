@@ -340,9 +340,9 @@ export class APIFactoryService implements IAPIFactoryService {
 			executeCommandWithArguments: async (command: string, ...args: any[]): Promise<any> => {
 				return this.createCommandsAPI(context).executeCommand(command, ...args);
 			}
-    }
-    
-    /**
+	}
+	
+	/**
 	 * Create complete VS Code window API
 	 */
 	private createWindowAPI(context: ExtensionAPIContext): any {
@@ -417,6 +417,11 @@ export class APIFactoryService implements IAPIFactoryService {
 			onDidChangeWindowState: (listener: any) => ({ dispose: () => {} })
 		};
 	}
+	
+	/**
+	 * Create complete VS Code workspace API
+	 */
+	private createWorkspaceAPI(context: ExtensionAPIContext): any {
 		const extensionId = context.extensionId;
 		
 		return {
@@ -484,110 +489,110 @@ export class APIFactoryService implements IAPIFactoryService {
 			}
 		};
 	}
-    
-    /**
-     * Create extensions API
-     */
-    private createExtensionsAPI(context: ExtensionAPIContext): any {
-        return {
-            getExtension: (extensionId: string) => undefined,
-            all: []
-        };
-    }
-    
-    /**
-     * Create languages API
-     */
-    private createLanguagesAPI(context: ExtensionAPIContext): any {
-        return {
-            getLanguages: () => [],
-            createDiagnosticCollection: () => ({
-                set: () => {},
-                clear: () => {}
-            })
-        };
-    }
-    
-    /**
-     * Create debug API
-     */
-    private createDebugAPI(context: ExtensionAPIContext): any {
-        return {
-            registerDebugAdapterTracker: () => ({ dispose: () => {} }),
-            startDebugging: async () => false
-        };
-    }
-    
-    /**
-     * Create SCM API
-     */
-    private createSCMAPI(context: ExtensionAPIContext): any {
-        return {
-            createSourceControl: () => ({
-                createResourceGroup: () => ({})
-            })
-        };
-    }
-    
-    /**
-     * Create authentication API
-     */
-    private createAuthenticationAPI(context: ExtensionAPIContext): any {
-        return {
-            getSession: async () => undefined,
-            getSessions: async () => []
-        };
-    }
-    
-    /**
-     * Apply security policies to API
-     */
-    private async applySecurityPolicies(api: VSCodeAPI, securityContext: any): Promise<void> {
-        // TODO: Implement comprehensive security policy application
-        // Specification: IMPLEMENTATION-SPECIFICATION.md (Security Policies)
-        // Implementation: Apply security restrictions based on extension permissions
-        // Dependencies: SecurityService, ModuleInterceptorService
-        // Validation: Test security policy enforcement
-        
-        console.log(`[APIFactoryService] Applying security policies to API`);
-    }
-    
-    /**
-     * Create extension context
-     */
-    async createExtensionContext(extensionId: string, extensionDescription: any): Promise<any> {
-        console.log(`[APIFactoryService] Creating extension context for ${extensionId}`);
-        
-        return {
-            extension: {
-                id: extensionId,
-                extensionUri: extensionDescription.extensionLocation,
-                extensionPath: extensionDescription.extensionLocation,
-                isActive: true,
-                exports: undefined,
-                packageJSON: {}
-            },
-            subscriptions: [],
-            workspaceState: {},
-            globalState: {},
-            secrets: {},
-            asAbsolutePath: (relativePath: string) => {
-                return `${extensionDescription.extensionLocation}/${relativePath}`;
-            }
-        };
-    }
-    
-    /**
-     * Register API service
-     */
-    async registerService(serviceName: string, serviceImplementation: any): Promise<void> {
-        console.log(`[APIFactoryService] Registering service: ${serviceName}`);
-        
-        // TODO: Implement service registration
-        // Specification: IMPLEMENTATION-SPECIFICATION.md (Service Registration)
-        // Implementation: Register custom services with API factory
-        // Dependencies: ServiceMapping, ServiceRegistry
-        // Validation: Test service registration and access
+	
+	/**
+	 * Create extensions API
+	 */
+	private createExtensionsAPI(context: ExtensionAPIContext): any {
+		return {
+			getExtension: (extensionId: string) => undefined,
+			all: []
+		};
+	}
+	
+	/**
+	 * Create languages API
+	 */
+	private createLanguagesAPI(context: ExtensionAPIContext): any {
+		return {
+			getLanguages: () => [],
+			createDiagnosticCollection: () => ({
+				set: () => {},
+				clear: () => {}
+			})
+		};
+	}
+	
+	/**
+	 * Create debug API
+	 */
+	private createDebugAPI(context: ExtensionAPIContext): any {
+		return {
+			registerDebugAdapterTracker: () => ({ dispose: () => {} }),
+			startDebugging: async () => false
+		};
+	}
+	
+	/**
+	 * Create SCM API
+	 */
+	private createSCMAPI(context: ExtensionAPIContext): any {
+		return {
+			createSourceControl: () => ({
+				createResourceGroup: () => ({})
+			})
+		};
+	}
+	
+	/**
+	 * Create authentication API
+	 */
+	private createAuthenticationAPI(context: ExtensionAPIContext): any {
+		return {
+			getSession: async () => undefined,
+			getSessions: async () => []
+		};
+	}
+	
+	/**
+	 * Apply security policies to API
+	 */
+	private async applySecurityPolicies(api: VSCodeAPI, securityContext: any): Promise<void> {
+		// TODO: Implement comprehensive security policy application
+		// Specification: IMPLEMENTATION-SPECIFICATION.md (Security Policies)
+		// Implementation: Apply security restrictions based on extension permissions
+		// Dependencies: SecurityService, ModuleInterceptorService
+		// Validation: Test security policy enforcement
+		
+		console.log(`[APIFactoryService] Applying security policies to API`);
+	}
+	
+	/**
+	 * Create extension context
+	 */
+	async createExtensionContext(extensionId: string, extensionDescription: any): Promise<any> {
+		console.log(`[APIFactoryService] Creating extension context for ${extensionId}`);
+		
+		return {
+			extension: {
+				id: extensionId,
+				extensionUri: extensionDescription.extensionLocation,
+				extensionPath: extensionDescription.extensionLocation,
+				isActive: true,
+				exports: undefined,
+				packageJSON: {}
+			},
+			subscriptions: [],
+			workspaceState: {},
+			globalState: {},
+			secrets: {},
+			asAbsolutePath: (relativePath: string) => {
+				return `${extensionDescription.extensionLocation}/${relativePath}`;
+		}
+	};
+	}
+	
+	/**
+	 * Register API service
+	 */
+	async registerService(serviceName: string, serviceImplementation: any): Promise<void> {
+		console.log(`[APIFactoryService] Registering service: ${serviceName}`);
+		
+		// TODO: Implement service registration
+		// Specification: IMPLEMENTATION-SPECIFICATION.md (Service Registration)
+		// Implementation: Register custom services with API factory
+		// Dependencies: ServiceMapping, ServiceRegistry
+		// Validation: Test service registration and access
     }
     
     /**

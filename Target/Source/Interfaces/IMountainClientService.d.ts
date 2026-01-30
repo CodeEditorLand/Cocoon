@@ -6,7 +6,7 @@
  *
  * Based on Mountain's Vine protocol specification.
  */
-import { Context } from "effect";
+import * as Effect from "effect/Effect";
 export interface IMountainClientService {
     readonly _serviceBrand: undefined;
     /**
@@ -44,5 +44,11 @@ export interface IMountainClientService {
         uptime?: number;
     };
 }
-export declare const IMountainClientService: <Self, Shape>() => Context.TagClass<Self, IMountainClientService, Shape>;
+declare const MountainClientService_base: Effect.Service.Class<IMountainClientService, "Service/MountainClient", {
+    readonly effect: Effect.Effect<IMountainClientService, never, never>;
+}>;
+declare class MountainClientService extends MountainClientService_base {
+}
+export declare const IMountainClientService: typeof MountainClientService;
+export {};
 //# sourceMappingURL=IMountainClientService.d.ts.map

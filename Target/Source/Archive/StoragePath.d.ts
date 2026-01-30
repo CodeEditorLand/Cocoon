@@ -7,6 +7,8 @@
 import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
 import { Effect } from "effect";
 import { Uri } from "vscode";
+import { type FileSystem } from "./FileSystem.js";
+import { type Logger } from "./Logger.js";
 /**
  * @interface StoragePath
  * @description The contract for the StoragePath service.
@@ -19,7 +21,7 @@ declare const StoragePathService_base: Effect.Service.Class<StoragePathService, 
     readonly effect: Effect.Effect<{
         GetWorkSpaceStorageUri: (Extension: IExtensionDescription) => Uri;
         GetGlobalStorageUri: (Extension: IExtensionDescription) => Uri;
-    }, never, any>;
+    }, never, import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | FileSystem | Logger>;
 }>;
 /**
  * @class StoragePathService

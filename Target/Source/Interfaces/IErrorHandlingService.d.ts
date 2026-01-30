@@ -4,7 +4,7 @@
  * Interface for advanced error handling service with circuit breaker pattern.
  * Provides robust error recovery, circuit breaker logic, and automatic retry mechanisms.
  */
-import { Context } from "effect";
+import * as Effect from "effect/Effect";
 export interface CircuitBreakerState {
     serviceName: string;
     state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
@@ -65,5 +65,7 @@ export interface IErrorHandlingService {
 /**
  * Effect context for ErrorHandlingService
  */
-export declare const IErrorHandlingService: Context.Tag<IErrorHandlingService, IErrorHandlingService>;
+export declare const IErrorHandlingService: <Self, Type extends Effect.Tag.AllowedType>() => import("effect/Context").TagClass<Self, IErrorHandlingService, Type> & (Type extends Record<PropertyKey, any> ? Effect.Tag.Proxy<Self, Type> : {}) & {
+    use: <X>(body: (_: Type) => X) => [X] extends [Effect.Effect<infer A, infer E, infer R>] ? Effect.Effect<A, E, R | Self> : [X] extends [PromiseLike<infer A_1>] ? Effect.Effect<A_1, import("effect/Cause").UnknownException, Self> : Effect.Effect<X, never, Self>;
+};
 //# sourceMappingURL=IErrorHandlingService.d.ts.map

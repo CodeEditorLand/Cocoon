@@ -6,6 +6,8 @@
  */
 import type { ExtensionIdentifier, IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
 import { Effect } from "effect";
+import { IPCService } from "./IPC.js";
+import { LoggerService } from "./Logger.js";
 /**
  * @interface ExtensionActivationReason
  * @description Describes the reason an extension is being activated.
@@ -51,7 +53,7 @@ declare const ExtensionHostService_base: Effect.Service.Class<ExtensionHostServi
         IsActivated: (Id: ExtensionIdentifier) => Effect.Effect<boolean, never, never>;
         DeactivateAll: () => Effect.Effect<void, never, never>;
         OnDidActivateExtension: (_callback: (extension: IExtensionDescription) => void) => Effect.Effect<void, never, never>;
-    }, never, any>;
+    }, never, LoggerService | import("@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js").IExtensionHostInitData | IPCService | import("@codeeditorland/output/vs/workbench/api/common/extHostTelemetry.js").IExtHostTelemetry>;
 }>;
 /**
  * @class ExtensionHostService

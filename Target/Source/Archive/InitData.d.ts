@@ -4,6 +4,7 @@
  * Mountain host process upon startup. This data is critical for bootstrapping
  * many other services.
  */
+import type { IExtensionHostInitData } from "@codeeditorland/output/vs/workbench/services/extensions/common/extensionHostProtocol.js";
 import { Effect } from "effect";
 declare const InitDataService_base: Effect.Service.Class<IExtensionHostInitData, "Service/InitData", {
     readonly sync: () => IExtensionHostInitData;

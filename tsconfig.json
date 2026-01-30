@@ -73,12 +73,7 @@
 	},
 
 <<<<<<< HEAD
-	"exclude": ["Target", "Source/Archive", "Source/Bootstrap", "Source/TypeConverter", "Source/Utility", "Source/WebViewPanel"],
-
-	"extends": "@playform/build/tsconfig",
-=======
 	"exclude": ["Target", "Scripts/**/*.cjs", "**/*.cjs"],
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
 
 	"include": [
 		"Source"

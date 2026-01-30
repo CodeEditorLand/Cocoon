@@ -9,26 +9,19 @@
  */
 
 import { Effect, Layer } from "effect";
-<<<<<<< HEAD
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { IMountainClientService } from "../Interfaces/IMountainClientService";
 
-// gRPC service definitions from Mountain's Vine protocol
-interface GenericRequest {
-    RequestIdentifier: number;
-    Method: string;
-    Parameter: Buffer;
-}
-
-interface GenericResponse {
-    RequestIdentifier: number;
-    Success: boolean;
-    Data?: Buffer;
-    Error?: string;
-}
-
-interface GenericNotification {
+// Import generated interfaces from Vine.proto
+import {
+    GenericRequest,
+    GenericResponse,
+    GenericNotification,
+    CancelOperationRequest,
+    Empty,
+    MountainServiceClient
+} from "../Generated/Vine.js";
     Method: string;
     Parameter: Buffer;
 }
@@ -68,12 +61,8 @@ export class MountainClientService implements IMountainClientService {
     private requestCounter: number = 0;
     
     constructor() {
-<<<<<<< HEAD
         this._serviceBrand = undefined;
-        console.log('[MountainClientService] Initializing Mountain gRPC client');
-=======
         console.log("[MountainClientService] Initializing Mountain gRPC client");
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
         
         // Parse environment variables
         this.parseEnvironment();
@@ -82,24 +71,6 @@ export class MountainClientService implements IMountainClientService {
     }
     
     /**
-<<<<<<< HEAD
-     * Parse environment variables for configuration
-     */
-    private parseEnvironment(): void {
-        const mountainHost = process.env['MOUNTAIN_CONNECTION_HOST'];
-        const mountainPort = process.env['MOUNTAIN_GRPC_PORT'];
-        
-        if (mountainHost) {
-            this.mountainHost = mountainHost;
-        }
-        
-        if (mountainPort) {
-            this.mountainPort = parseInt(mountainPort, 10);
-        }
-        
-        console.log(`[MountainClientService] Environment parsed: MOUNTAIN_CONNECTION_HOST=${this.mountainHost}, MOUNTAIN_GRPC_PORT=${this.mountainPort}`);
-    }
-=======
 	 * Parse environment variables with advanced configuration
 	 */
 	private parseEnvironment(): void {
@@ -195,97 +166,7 @@ export class MountainClientService implements IMountainClientService {
      * Load protocol definition
      */
     private async loadProtocolDefinition(): Promise<protoLoader.PackageDefinition> {
-<<<<<<< HEAD
-        // TODO: Load Vine.proto from Mountain's protocol definitions
-        // Specification: MOUNTAIN-COCOON-INTEGRATION.md (Protocol Loading)
-        // Implementation: Load protobuf definition from Mountain's source
-        // Dependencies: Protocol buffer compilation, path resolution
-        // Validation: Test with actual Mountain Vine.proto file
-        
-        // Mock implementation - would load actual Vine.proto
-        // const protoContent = `
-        //     syntax = "proto3";
-        //     
-        //     service MountainService {
-        //         rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
-        //         rpc SendCocoonNotification(GenericNotification) returns (Empty);
-        //         rpc CancelOperation(CancelOperationRequest) returns (Empty);
-        //     }
-        //     
-        //     message GenericRequest {
-        //         uint64 RequestIdentifier = 1;
-        //         string Method = 2;
-        //         bytes Parameter = 3;
-        //     }
-        //     
-        //     message GenericResponse {
-        //         uint64 RequestIdentifier = 1;
-        //         bool Success = 2;
-        //         bytes Data = 3;
-        //         string Error = 4;
-        //     }
-        //     
-        //     message GenericNotification {
-        //         string Method = 1;
-        //         bytes Parameter = 2;
-        //     }
-        //     
-        //     message CancelOperationRequest {
-        //         uint64 RequestIdentifier = 1;
-        //         string Reason = 2;
-        //     }
-        //     
-        //     message Empty {}
-        // `;
-        
-        return protoLoader.loadSync(
-            'vine.proto',
-            {
-                keepCase: true,
-                longs: String,
-                enums: String,
-                defaults: true,
-                oneofs: true
-            }
-        );
-    }
-    
-    /**
-     * Wait for connection to be established
-     */
-    // private waitForConnection(): Promise<void> {
-    //     return new Promise((resolve, reject) => {
-    //         if (!this.client) {
-    //             reject(new Error('Client not initialized'));
-    //             return;
-    //         }
-    //         
-    //         const deadline = new Date();
-    //         deadline.setSeconds(deadline.getSeconds() + 10); // 10 second timeout
-    //         
-    //         this.client.waitForReady(deadline, (error) => {
-    //             if (error) {
-    //                 reject(error);
-    //             } else {
-    //                 resolve();
-    //             }
-    //         });
-    //     });
-    // }
-    
-    /**
-     * Send request to Mountain
-     */
-    async sendRequest(method: string, parameters: any): Promise<any> {
-        if (!this.isConnected || !this.client) {
-            throw new Error('Not connected to Mountain');
-        }
-        
-        const requestIdentifier = this.generateRequestId();
-        console.log(`[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`);
-=======
         console.log("[MountainClientService] Loading Vine.proto protocol definition");
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
         
         try {
             const fs = require('fs');
@@ -495,15 +376,6 @@ export class MountainClientService implements IMountainClientService {
         while (attempts < maxAttempts) {
             attempts++;
             
-<<<<<<< HEAD
-            (this.client as any).ProcessCocoonRequest(request, (error: any, response: GenericResponse) => {
-                if (error) {
-                    reject(error);
-                } else if (!response) {
-                    reject(new Error('Empty response from Mountain'));
-                } else {
-                    resolve(response);
-=======
             try {
                 const response = await this.client!.ProcessCocoonRequest(request);
                 return response;
@@ -512,7 +384,6 @@ export class MountainClientService implements IMountainClientService {
                 
                 if (attempts >= maxAttempts) {
                     throw error;
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
                 }
                 
                 // Wait before retry
@@ -615,23 +486,6 @@ export class MountainClientService implements IMountainClientService {
     /**
      * Make gRPC cancel request with promise interface
      */
-<<<<<<< HEAD
-    private makeCancelRequest(cancelRequest: CancelOperationRequest): Promise<void> {
-        return new Promise((resolve, reject) => {
-            if (!this.client) {
-                reject(new Error('Client not initialized'));
-                return;
-            }
-            
-            (this.client as any).CancelOperation(cancelRequest, (error: any) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve();
-                }
-            });
-        });
-=======
     private async makeCancelRequest(cancelRequest: CancelOperationRequest): Promise<void> {
         if (!this.client) {
             throw new Error('Client not initialized');
@@ -642,7 +496,6 @@ export class MountainClientService implements IMountainClientService {
         } catch (error) {
             throw error;
         }
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc
     }
     
     /**

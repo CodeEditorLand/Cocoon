@@ -54,9 +54,6 @@ export interface IMountainClientService {
     };
 }
 
-<<<<<<< HEAD
-export const IMountainClientService = Context.GenericTag<IMountainClientService>("IMountainClientService");
-=======
 class MountainClientService extends Effect.Service<IMountainClientService>()(
   "Service/MountainClient",
   {
@@ -68,4 +65,3 @@ class MountainClientService extends Effect.Service<IMountainClientService>()(
 ) {}
 
 export const IMountainClientService = MountainClientService;
->>>>>>> fa3d9b64bc09438d18e68bb2e9b3eaf4eb5d34cc

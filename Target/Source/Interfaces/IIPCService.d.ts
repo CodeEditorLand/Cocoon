@@ -9,8 +9,6 @@
  * Dependencies: Effect-TS, VS Buffer serialization
  * Validation: Test with high-concurrency message handling
  */
-import { Context } from "effect";
-import { CancellationToken } from "@codeeditorland/output/vs/base/common/cancellation";
 /**
  * IPC Channel interface following VS Code's IChannel pattern
  * Specification: src/vs/base/parts/ipc/common/ipc.ts (IChannel)
@@ -109,5 +107,5 @@ export interface IIPCService {
 /**
  * Effect context for IPCService
  */
-export declare const IIPCService: Context.Tag<IIPCService, IIPCService>;
+export declare const IIPCService: any;
 //# sourceMappingURL=IIPCService.d.ts.map

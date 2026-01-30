@@ -94,10 +94,10 @@ export declare class ExtensionHostService implements IExtensionHostService {
 /**
  * Service layer for ExtensionHostService
  */
-export declare const ExtensionHostServiceLayer: Layer.Layer<IExtensionHostService, never, never>;
+export declare const ExtensionHostServiceLayer: Layer.Layer<unknown, never, never>;
 /**
  * Live implementation for testing
  */
-export declare const ExtensionHostServiceLive: Layer.Layer<IExtensionHostService, never, never>;
+export declare const ExtensionHostServiceLive: Layer.Layer<unknown, never, never>;
 export {};
 //# sourceMappingURL=ExtensionHostService.d.ts.map

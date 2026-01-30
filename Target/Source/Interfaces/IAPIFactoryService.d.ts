@@ -4,7 +4,7 @@
  * Interface for VS Code API factory service.
  * Constructs complete VS Code API surface with extension-specific scoping.
  */
-import { Context } from "effect";
+import * as Effect from "effect/Effect";
 export interface APIConstructionRequest {
     extensionId: string;
     extensionDescription: any;
@@ -67,5 +67,7 @@ export interface IAPIFactoryService {
 /**
  * Effect context for APIFactoryService
  */
-export declare const IAPIFactoryService: Context.Tag<IAPIFactoryService, IAPIFactoryService>;
+export declare const IAPIFactoryService: <Self, Type extends Effect.Tag.AllowedType>() => import("effect/Context").TagClass<Self, IAPIFactoryService, Type> & (Type extends Record<PropertyKey, any> ? Effect.Tag.Proxy<Self, Type> : {}) & {
+    use: <X>(body: (_: Type) => X) => [X] extends [Effect.Effect<infer A, infer E, infer R>] ? Effect.Effect<A, E, R | Self> : [X] extends [PromiseLike<infer A_1>] ? Effect.Effect<A_1, import("effect/Cause").UnknownException, Self> : Effect.Effect<X, never, Self>;
+};
 //# sourceMappingURL=IAPIFactoryService.d.ts.map

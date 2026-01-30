@@ -6,7 +6,6 @@
  *
  * Based on Mountain's Vine protocol specification.
  */
-import { Context } from "effect";
 export interface IGRPCServerService {
     readonly _serviceBrand: undefined;
     /**
@@ -27,5 +26,5 @@ export interface IGRPCServerService {
         errorCount: number;
     };
 }
-export declare const IGRPCServerService: <Self, Shape>() => Context.TagClass<Self, IGRPCServerService, Shape>;
+export declare const IGRPCServerService: any;
 //# sourceMappingURL=IGRPCServerService.d.ts.map
