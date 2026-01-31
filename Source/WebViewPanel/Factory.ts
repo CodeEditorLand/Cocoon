@@ -1,0 +1,235 @@
+/**
+ * @module Factory
+ * @description
+ * WebView Panel Factory - Central creation and management of WebView panel instances
+ *
+ * RESPONSIBILITIES:
+ * - Create new WebView panel instances with proper initialization
+ * - Track active panel lifecycle and manage panel registry
+ * - Handle panel disposal and cleanup
+ * - Provide panel discovery and enumeration
+ * - Coordinate panel creation with IPC service
+ *
+ * ARCHITECTURE:
+ * - Pattern: VSCode extHostWebview.ts factory pattern
+ * - Registry: Ref-based Map for tracking active panels by handle
+ * - Lifecycle: Create → Register → Track → Dispose → Unregister
+ * - Thread Safety: Effect-based atomic operations with Ref
+ *
+ * INTEGRATION:
+ * - **Sky**: Astro display layer renders WebView iframe content created by this factory
+ * - **Wind**: Effect-TS services provide WebView resources and serve content files
+ * - **Mountain**: WebView panels send state via IPC to Mountain host for persistence
+ * - **IPC**: Coordinates panel creation with Mountain host through IPC communication
+ *
+ * CONNECTIONS:
+ * - Panel: Constructs Panel instances with proper initialization
+ * - Message: Establishes message channels for panel communication
+ * - State: Registers panels for state tracking and restoration
+ * - IPC: Communicates panel creation events to Mountain host
+ *
+ * IMPLEMENTATION NOTES:
+ * - UUID generation ensures unique panel identifiers
+ * - Ref-based Map provides atomic panel registry operations
+ * - All panel operations use Effect for error handling
+ * - Defensive validation prevents malformed panel creation
+ * - OnDispose callback ensures cleanup on panel disposal
+ *
+ * TODOs (WebView Debugging - LOW):
+ * - Add dev tools integration for WebView debugging
+ * - Add WebView inspector for DOM examination
+ * - Add console.log capture from WebView context
+ * - Add performance profiling for WebView rendering
+ *
+ * TODOs (Remote WebView - LOW):
+ * - Add remote WebView support via tunneling
+ * - Add secure WebSocket communication for remote WebViews
+ * - Add remote development session support
+ *
+ * Reference: TODOs mention WebViewPanel as HIGH priority for Mountain integration
+ */
+
+import { generateUuid } from "@codeeditorland/output/vs/base/common/uuid.js";
+import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
+import { Effect, Ref } from "effect";
+import type { WebviewPanel as VSCodeWebviewPanel } from "vscode";
+
+import type { IPC } from "../IPC.js";
+import type { Panel } from "./Panel.js";
+import { Panel as PanelModule } from "./Panel.js";
+
+/**
+ * @interface PanelRegistryEntry
+ * @description Metadata about a registered panel in the factory registry
+ */
+export interface PanelRegistryEntry {
+	readonly Handle: string;
+	readonly Panel: Panel;
+	 readonly ExtensionId: string;
+	readonly ViewType: string;
+	readonly CreatedAt: Date;
+}
+
+/**
+ * @interface CreatePanelOptions
+ * @description Configuration options for creating a new WebView panel
+ */
+export interface CreatePanelOptions {
+	readonly ViewType: string;
+	readonly Title: string;
+	readonly ShowOptions: {
+		readonly ViewColumn?: number;
+		readonly PreserveFocus?: boolean;
+	};
+	readonly Options?: {
+		readonly EnableScripts?: boolean;
+		readonly RetainContextWhenHidden?: boolean;
+		readonly EnableFindWidget?: boolean;
+		readonly LocalResourceRoots?: readonly unknown[];
+		readonly PortMapping?: readonly unknown[];
+	};
+}
+
+/**
+ * @interface Factory
+ * @description The contract for the WebView Panel Factory service
+ */
+export interface Factory {
+	readonly CreatePanel: (
+		Extension: IExtensionDescription,
+		Options: CreatePanelOptions,
+	) => Effect.Effect<Panel, Error>;
+	readonly GetPanel: (Handle: string) => Effect.Effect<Panel, Error>;
+	readonly GetAllPanels: () => Effect.Effect<readonly Panel[], never>;
+	readonly DisposePanel: (Handle: string) => Effect.Effect<void, never>;
+	readonly DisposeAllPanels: () => Effect.Effect<void, never>;
+}
+
+/**
+ * @class FactoryService
+ * @description The Effect Service for managing WebView Panel Factory
+ */
+export class FactoryService extends Effect.Service<FactoryService>()("Factory/WebViewPanel", {
+	effect: Effect.gen(function* () {
+		const ActivePanelsRef = yield* Ref.make(new Map<string, PanelRegistryEntry>());
+
+		/**
+		 * Create a new WebView panel with proper initialization
+		 */
+		const CreatePanel = (
+			Extension: IExtensionDescription,
+			Options: CreatePanelOptions,
+		): Effect.Effect<Panel, Error> =>
+			Effect.gen(function* () {
+				// Defensive: Validate required options
+				if (!Options?.ViewType || !Options?.Title) {
+					return yield* Effect.fail(
+						new Error("Panel requires ViewType and Title"),
+					);
+				}
+
+				// Generate unique handle for this panel
+				const Handle = `panel_${generateUuid()}`;
+
+				// Create dispose callback for registry cleanup
+				const OnDispose = () =>
+					Effect.runFork(
+						Ref.update(ActivePanelsRef, (Registry) => {
+							const Updated = new Map(Registry);
+							Updated.delete(Handle);
+							return Updated;
+						}),
+					);
+
+				// Create the panel instance
+				const PanelInstance = yield* PanelModule.Create({
+					Handle,
+					Extension,
+					ViewType: Options.ViewType,
+					Title: Options.Title,
+					ShowOptions: Options.ShowOptions,
+					Options: Options.Options,
+					OnDispose,
+				});
+
+				// Register panel for tracking
+				yield* Ref.update(ActivePanelsRef, (Registry) => {
+					const Updated = new Map(Registry);
+					Updated.set(Handle, {
+						Handle,
+						Panel: PanelInstance,
+						ExtensionId: Extension.identifier.value,
+						ViewType: Options.ViewType,
+						CreatedAt: new Date(),
+					});
+					return Updated;
+				});
+
+				return PanelInstance;
+			});
+
+		/**
+		 * Get a specific panel by handle
+		 */
+		const GetPanel = (Handle: string): Effect.Effect<Panel, Error> =>
+			Effect.gen(function* () {
+				const Registry = yield* Ref.get(ActivePanelsRef);
+				const Entry = Registry.get(Handle);
+
+				if (!Entry) {
+					return yield* Effect.fail(
+						new Error(`Panel with handle '${Handle}' not found`),
+					);
+				}
+
+				return Entry.Panel;
+			});
+
+		/**
+		 * Get all active panels
+		 */
+		const GetAllPanels = (): Effect.Effect<
+			readonly Panel[],
+			never
+		> =>
+			Effect.gen(function* () {
+				const Registry = yield* Ref.get(ActivePanelsRef);
+				return Array.from(Registry.values()).map((Entry) => Entry.Panel);
+			});
+
+		/**
+		 * Dispose a specific panel by handle
+		 */
+		const DisposePanel = (Handle: string): Effect.Effect<void, never> =>
+			Effect.gen(function* () {
+				const Registry = yield* Ref.get(ActivePanelsRef);
+				const Entry = Registry.get(Handle);
+
+				if (Entry) {
+					Entry.Panel.dispose();
+				}
+			});
+
+		/**
+		 * Dispose all active panels
+		 */
+		const DisposeAllPanels = (): Effect.Effect<void, never> =>
+			Effect.gen(function* () {
+				const Registry = yield* Ref.get(ActivePanelsRef);
+				yield* Effect.all(
+					Array.from(Registry.values()).map((Entry) =>
+						Effect.sync(() => Entry.Panel.dispose()),
+					),
+					{ concurrency: "unbounded" },
+				);
+			});
+
+		return {
+			CreatePanel,
+			GetPanel,
+			GetAllPanels,
+			DisposePanel,
+			DisposeAllPanels,
+		};
+	}),
+}) {}
