@@ -7,7 +7,7 @@
  * This registry manages service dependencies and provides dependency injection
  * capabilities following Effect-TS patterns.
  */
-import { Effect, Layer, Context } from "effect";
+import { Context, Effect, Layer } from "effect";
 /**
  * Service descriptor interface
  */
@@ -28,11 +28,11 @@ export declare class ServiceMapping {
     /**
      * Get a service
      */
-    static getService<T>(interfaceTag: Context.Tag<any, T>): Effect.Effect<T, never, any>;
+    static getService<T>(interfaceTag: Context.Tag<unknown, T>): Effect.Effect<T, never, unknown>;
     /**
      * Get service layer
      */
-    static getServiceLayer<T>(interfaceTag: Context.Tag<any, T>): Layer.Layer<never, never, T>;
+    static getServiceLayer<T>(interfaceTag: Context.Tag<unknown, T>): Layer.Layer<never, never, T>;
     /**
      * Find service name by interface
      */

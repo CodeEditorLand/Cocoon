@@ -12,10 +12,10 @@ import type * as VSCode from "vscode";
  * @returns A serializable DTO representing the webview's content options.
  */
 export declare const ConvertContentOptionToDTO: (ExtensionDescription: IExtensionDescription, Options: VSCode.WebviewOptions) => {
-    enableCommandUris: boolean | readonly string[];
-    enableScripts: boolean;
-    enableForms: boolean;
+    enableCommandUris: boolean | readonly string[] | undefined;
+    enableScripts: boolean | undefined;
+    enableForms: boolean | undefined;
     localResourceRoots: readonly VSCode.Uri[] | any[];
-    portMapping: readonly VSCode.WebviewPortMapping[];
+    portMapping: readonly VSCode.WebviewPortMapping[] | undefined;
 };
 //# sourceMappingURL=ConvertContentOptionToDTO.d.ts.map

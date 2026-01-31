@@ -13,8 +13,8 @@ export declare const ToDTO: (Options?: SaveDialogOptions) => {
     filters: {
         name: string;
         extensions: readonly string[];
-    }[];
+    }[] | undefined;
     saveLabel?: string;
     title?: string;
-};
+} | undefined;
 //# sourceMappingURL=SaveDialogOption.d.ts.map

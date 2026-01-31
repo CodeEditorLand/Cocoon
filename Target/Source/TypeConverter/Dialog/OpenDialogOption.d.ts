@@ -13,11 +13,11 @@ export declare const ToDTO: (Options?: OpenDialogOptions) => {
     filters: {
         name: string;
         extensions: readonly string[];
-    }[];
+    }[] | undefined;
     openLabel?: string;
     canSelectFiles?: boolean;
     canSelectFolders?: boolean;
     canSelectMany?: boolean;
     title?: string;
-};
+} | undefined;
 //# sourceMappingURL=OpenDialogOption.d.ts.map

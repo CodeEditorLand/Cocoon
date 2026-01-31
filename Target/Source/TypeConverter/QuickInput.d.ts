@@ -27,7 +27,7 @@ export declare const SerializeItems: <T extends QuickPickItem | string>(Items: r
  */
 export declare const SerializeButtons: (Buttons?: readonly QuickInputButton[]) => {
     iconPath: any;
-    tooltip: string;
+    tooltip: string | undefined;
     handle: number;
-}[];
+}[] | undefined;
 //# sourceMappingURL=QuickInput.d.ts.map

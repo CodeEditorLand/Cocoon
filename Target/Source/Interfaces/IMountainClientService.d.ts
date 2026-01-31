@@ -44,11 +44,7 @@ export interface IMountainClientService {
         uptime?: number;
     };
 }
-declare const MountainClientService_base: Effect.Service.Class<IMountainClientService, "Service/MountainClient", {
+export declare const IMountainClientService: Effect.Service.Class<IMountainClientService, "Service/MountainClient", {
     readonly effect: Effect.Effect<IMountainClientService, never, never>;
 }>;
-declare class MountainClientService extends MountainClientService_base {
-}
-export declare const IMountainClientService: typeof MountainClientService;
-export {};
 //# sourceMappingURL=IMountainClientService.d.ts.map

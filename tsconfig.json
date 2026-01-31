@@ -92,7 +92,5 @@
 
 	"exclude": ["Target", "Scripts/**/*.cjs", "**/*.cjs"],
 
-	"include": [
-		"Source"
-	]
+	"include": ["Source"]
 }

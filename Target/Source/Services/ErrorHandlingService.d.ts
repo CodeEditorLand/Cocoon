@@ -9,7 +9,7 @@
 import { Layer } from "effect";
 export interface CircuitBreakerState {
     serviceName: string;
-    state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+    state: "CLOSED" | "OPEN" | "HALF_OPEN";
     failureCount: number;
     lastFailureTime: number;
     successThreshold: number;

@@ -1,15 +1,27 @@
 /**
- * @module ConfigurationService
+ * @module Configuration
  * @description
  * Cocoon's configuration service implementation.
  * Manages configuration synchronization with Mountain and provides configuration
  * values to extensions.
  *
+ * Responsibilities:
+ * - Synchronize configuration with Mountain backend
+ * - Provide configuration values to extensions with proper scoping
+ * - Validate configuration keys and values
+ * - Handle configuration change notifications
+ * - Implement conflict resolution with retry logic
+ * - Support multiple configuration scopes (APPLICATION, WORKSPACE, PROFILE)
+ *
  * Based on VSCode's ConfigurationService pattern.
+ * Specification: ARCHITECTURE-SPECIFICATION.md (Configuration Service)
+ *
+ * @future TODO: Implement incremental configuration updates from Mountain
+ * @future TODO: Add configuration migration support for version upgrades
+ * @future TODO: Implement configuration schema validation
  */
 import { Layer } from "effect";
-import { IConfigurationService } from "../Interfaces/IConfigurationService";
-import type { ConfigurationChangeEvent } from "../Interfaces/IConfigurationService";
+import { IConfigurationService, type ConfigurationChangeEvent } from "../Interfaces/IConfigurationService";
 import { IIPCService } from "../Interfaces/IIPCService";
 declare enum ConfigurationScope {
     APPLICATION = "APPLICATION",
@@ -24,7 +36,7 @@ interface IConfigurationValue<T> {
 /**
  * ConfigurationService implementation
  */
-export declare class ConfigurationService implements IConfigurationService {
+export declare class Configuration implements IConfigurationService {
     readonly _serviceBrand: undefined;
     private configuration;
     private ipcService;
@@ -42,6 +54,18 @@ export declare class ConfigurationService implements IConfigurationService {
      * Set configuration value
      */
     setValue<T>(key: string, value: T, scope: ConfigurationScope): Promise<void>;
+    /**
+     * Validate configuration key
+     */
+    private validateConfigurationKey;
+    /**
+     * Validate configuration value
+     */
+    private validateConfigurationValue;
+    /**
+     * Validate entire configuration scope
+     */
+    validateScopeConfiguration(scope: ConfigurationScope): boolean;
     /**
      * Update configuration value
      */
@@ -64,8 +88,17 @@ export declare class ConfigurationService implements IConfigurationService {
     inspect<T>(key: string, scope?: ConfigurationScope): IConfigurationValue<T>;
     /**
      * Listen for configuration changes
+     * @future TODO: Implement full event emitter with key filtering and subscription management
      */
-    onDidChangeConfiguration(_callback: (event: ConfigurationChangeEvent) => void): void;
+    onDidChangeConfiguration(callback: (event: ConfigurationChangeEvent) => void): void;
+    /**
+     * Reload configuration from Mountain
+     */
+    reloadConfiguration(): Promise<void>;
+    /**
+     * Handle configuration conflicts with retry logic
+     */
+    private handleConfigurationConflict;
     /**
      * Cleanup configuration service
      */
@@ -88,12 +121,12 @@ export declare class ConfigurationService implements IConfigurationService {
     private notifyConfigurationChange;
 }
 /**
- * Service layer for ConfigurationService
+ * Service layer for Configuration
  */
-export declare const ConfigurationServiceLayer: Layer.Layer<unknown, never, never>;
+export declare const ConfigurationLayer: Layer.Layer<unknown, never, never>;
 /**
  * Live implementation
  */
-export declare const ConfigurationServiceLive: Layer.Layer<unknown, never, never>;
+export declare const ConfigurationLive: Layer.Layer<unknown, never, never>;
 export {};
 //# sourceMappingURL=Configuration.d.ts.map

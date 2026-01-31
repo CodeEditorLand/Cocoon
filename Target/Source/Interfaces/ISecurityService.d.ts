@@ -18,12 +18,12 @@ export interface SecurityPolicy {
 }
 export interface SecurityEvent {
     id: string;
-    type: 'access' | 'violation' | 'authentication' | 'authorization';
-    severity: 'low' | 'medium' | 'high' | 'critical';
+    type: "access" | "violation" | "authentication" | "authorization";
+    severity: "low" | "medium" | "high" | "critical";
     extensionId: string;
     action: string;
     resource: string;
-    outcome: 'allowed' | 'denied' | 'blocked';
+    outcome: "allowed" | "denied" | "blocked";
     timestamp: number;
     details: any;
 }
@@ -39,10 +39,10 @@ export interface AuditLog {
 }
 export interface IncidentResponse {
     id: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
+    severity: "low" | "medium" | "high" | "critical";
     description: string;
     actions: string[];
-    status: 'open' | 'investigating' | 'resolved' | 'closed';
+    status: "open" | "investigating" | "resolved" | "closed";
     timestamp: number;
     resolutionTime?: number;
 }

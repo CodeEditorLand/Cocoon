@@ -46,7 +46,6 @@ export interface OptimizationSuggestion {
  * PerformanceMonitoringService implementation
  */
 export class PerformanceMonitoringService {
-	private readonly _serviceBrand: undefined;
 
 	private metrics: PerformanceMetrics = {
 		extensionLoadTime: 0,

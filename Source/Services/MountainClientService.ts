@@ -681,43 +681,6 @@ message RPCDataPayload {
 		return connectionErrorPatterns.some(pattern => pattern === true);
 	}
 
-	/**
-	 * Make gRPC request with promise interface and retry logic
-	 */
-	private async makeRequest(
-		request: GenericRequest,
-	): Promise<GenericResponse> {
-		if (!this.client) {
-			throw new Error("Client not initialized");
-		}
-
-		let attempts = 0;
-		const maxAttempts = 3;
-
-		while (attempts < maxAttempts) {
-			attempts++;
-
-			try {
-				const response =
-					await this.client!.ProcessCocoonRequest(request);
-				return response;
-			} catch (error) {
-				console.warn(
-					`[MountainClientService] Request ${request.RequestIdentifier} failed (attempt ${attempts}/${maxAttempts}):`,
-					error,
-				);
-
-				if (attempts >= maxAttempts) {
-					throw error;
-				}
-
-				// Wait before retry
-				await new Promise((resolve) => setTimeout(resolve, 1000));
-			}
-		}
-
-		throw new Error("Max retry attempts exceeded");
-	}
 
 	/**
 	 * Send request with exponential backoff retry logic

@@ -8,8 +8,8 @@
  * Integrated with Mountain via gRPC and Wind via configuration synchronization.
  */
 import { Layer } from "effect";
-import { IExtensionHostService } from "../Interfaces/IExtensionHostService";
 import { IConfigurationService } from "../Interfaces/IConfigurationService";
+import { IExtensionHostService } from "../Interfaces/IExtensionHostService";
 import { IIPCService } from "../Interfaces/IIPCService";
 interface ExtensionActivationReason {
     startup: boolean;

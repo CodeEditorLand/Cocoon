@@ -8,9 +8,9 @@
  * Implementation: Extension lifecycle management via channels
  * Validation: Test with extension activation/deactivation cycles
  */
-import { IServerChannel } from "../Interfaces/IIPCService";
-import { IExtensionHostService } from "../Interfaces/IExtensionHostService";
 import { CancellationToken } from "@codeeditorland/output/vscode-dts/vscode";
+import { IExtensionHostService } from "../Interfaces/IExtensionHostService";
+import { IServerChannel } from "../Interfaces/IIPCService";
 /**
  * Extension host channel implementation
  * Specification: src/vs/workbench/api/common/extHostExtensionService.ts

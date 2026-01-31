@@ -64,15 +64,11 @@ export interface IncidentResponse {
  * SecurityService implementation
  */
 export class SecurityService {
-	private readonly _serviceBrand: undefined;
-
 	private policies: Map<string, SecurityPolicy> = new Map();
 	private auditLog: SecurityEvent[] = [];
 	private incidents: IncidentResponse[] = [];
-	private securityActive: boolean = false;
 
 	constructor() {
-		this._serviceBrand = undefined;
 		console.log("[SecurityService] Initializing security service");
 
 		// Load default security policies

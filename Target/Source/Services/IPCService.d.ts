@@ -9,7 +9,7 @@
  * Validation: Test with high-concurrency message handling (>1000 req/sec)
  */
 import { Layer } from "effect";
-import { IIPCService, IChannel, IServerChannel, IMessagePassingProtocol, VSBuffer } from "../Interfaces/IIPCService";
+import { IChannel, IIPCService, IMessagePassingProtocol, IServerChannel, VSBuffer } from "../Interfaces/IIPCService";
 /**
  * Message passing protocol implementation
  * Specification: src/vs/base/parts/ipc/common/ipc.ts (IMessagePassingProtocol)
@@ -19,7 +19,7 @@ declare class CocoonMessagePassingProtocol implements IMessagePassingProtocol {
     private _sendCallback?;
     private readonly _onMessage;
     readonly onMessage: any;
-    constructor(_sendCallback?: (buffer: VSBuffer) => void);
+    constructor(_sendCallback?: ((buffer: VSBuffer) => void) | undefined);
     send(buffer: VSBuffer): void;
     simulateMessage(buffer: VSBuffer): void;
 }

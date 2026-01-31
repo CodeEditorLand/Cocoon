@@ -12,5 +12,5 @@ export declare const SerializeFilters: (Filters?: {
 }) => {
     name: string;
     extensions: readonly string[];
-}[];
+}[] | undefined;
 //# sourceMappingURL=Filter.d.ts.map

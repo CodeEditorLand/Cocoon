@@ -48,7 +48,7 @@ import { Config, Data, Effect } from "effect";
 
 import { IPCService } from "../Services/IPCService.js";
 import { InitDataService } from "../Services/InitData.js";
-import { ExitPreventedProblem } from "../Archive/PatchProcess/ExitPreventedProblem.js";
+import { ExitPreventedProblem } from "../../Archive/PatchProcess/ExitPreventedProblem.js";
 import { SecurityPolicy } from "./Security.js";
 
 // --- Service Definition ---

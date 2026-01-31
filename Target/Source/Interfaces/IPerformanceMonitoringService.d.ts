@@ -16,7 +16,7 @@ export interface PerformanceMetrics {
 }
 export interface PerformanceAlert {
     id: string;
-    type: 'warning' | 'critical' | 'info';
+    type: "warning" | "critical" | "info";
     message: string;
     metric: keyof PerformanceMetrics;
     threshold: number;
@@ -26,8 +26,8 @@ export interface PerformanceAlert {
 export interface OptimizationSuggestion {
     id: string;
     description: string;
-    impact: 'low' | 'medium' | 'high';
-    difficulty: 'easy' | 'medium' | 'hard';
+    impact: "low" | "medium" | "high";
+    difficulty: "easy" | "medium" | "hard";
     estimatedSavings: number;
 }
 export interface IPerformanceMonitoringService {

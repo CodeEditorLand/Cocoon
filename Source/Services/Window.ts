@@ -323,7 +323,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 						}
 					}
 
-					// Construct request payload with TypeConverter integration
+					// Construct request payload
 					const RequestPayload = {
 						uri: Uri.toString(),
 						viewColumn: ViewColumnDTO,
@@ -563,7 +563,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 						? SerializeButtons(Options.buttons)
 						: undefined;
 
-					// Construct request payload with TypeConverter integration
+					// Construct request payload
 					const RequestPayload = {
 						items: ItemsDTO,
 						options: Options

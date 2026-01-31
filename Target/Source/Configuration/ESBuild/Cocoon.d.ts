@@ -1,4 +1,4 @@
-import type { BuildOptions } from 'esbuild';
+import type { BuildOptions } from "esbuild";
 /**
  * ESBuild configuration for Cocoon that properly handles TypeScript generators
  * with `yield*` syntax in ES modules environment.
