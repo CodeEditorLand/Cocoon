@@ -271,7 +271,9 @@ export class ConfigurationChannel implements IServerChannel<any> {
 			// Full event streaming implementation will come with event system
 			return {
 				dispose: () => {
-					console.log(`[ConfigurationChannel] Disposed listener for ${event}`);
+					console.log(
+						`[ConfigurationChannel] Disposed listener for ${event}`,
+					);
 				},
 			};
 		}
@@ -282,8 +284,13 @@ export class ConfigurationChannel implements IServerChannel<any> {
 	/**
 	 * Subscribe to configuration changes
 	 */
-	subscribeToChanges(ctx: any, callback: (changes: any[]) => void): () => void {
-		console.log("[ConfigurationChannel] Subscribing to configuration changes");
+	subscribeToChanges(
+		ctx: any,
+		callback: (changes: any[]) => void,
+	): () => void {
+		console.log(
+			"[ConfigurationChannel] Subscribing to configuration changes",
+		);
 
 		// Register a listener with the configuration service
 		this.configurationService.onDidChangeConfiguration((event) => {
@@ -298,7 +305,9 @@ export class ConfigurationChannel implements IServerChannel<any> {
 
 		// Return unsubscribe function
 		return () => {
-			console.log("[ConfigurationChannel] Unsubscribed from configuration changes");
+			console.log(
+				"[ConfigurationChannel] Unsubscribed from configuration changes",
+			);
 		};
 	}
 }

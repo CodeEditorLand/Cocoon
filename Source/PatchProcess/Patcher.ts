@@ -46,9 +46,9 @@ import * as Module from "node:module";
 
 import { Config, Data, Effect } from "effect";
 
-import { IPCService } from "../Services/IPCService.js";
-import { InitDataService } from "../Services/InitData.js";
 import { ExitPreventedProblem } from "../../Archive/PatchProcess/ExitPreventedProblem.js";
+import { InitDataService } from "../Services/InitData.js";
+import { IPCService } from "../Services/IPCService.js";
 import { SecurityPolicy } from "./Security.js";
 
 // --- Service Definition ---
@@ -111,7 +111,9 @@ export class PatcherService extends Effect.Service<PatcherService>()(
 			);
 
 			const SecurityPolicy = yield* Config.string("SecurityPolicy").pipe(
-				Effect.catchTag("MissingConfig", () => Effect.succeed("default")),
+				Effect.catchTag("MissingConfig", () =>
+					Effect.succeed("default"),
+				),
 				Config.map((Value) => ParseSecurityPolicy(Value)),
 			);
 
@@ -144,7 +146,9 @@ const SetElectronRunAsNode = Effect.sync(() => {
 const SetStackTraceLimit = Effect.sync(() => {
 	Error.stackTraceLimit = 100;
 }).pipe(
-	Effect.tap(() => Effect.logTrace("Increased `Error.stackTraceLimit` to 100")),
+	Effect.tap(() =>
+		Effect.logTrace("Increased `Error.stackTraceLimit` to 100"),
+	),
 );
 
 /**
@@ -353,9 +357,7 @@ const SetupEnvironment = Effect.gen(function* () {
 		);
 	}
 }).pipe(
-	Effect.tap(() =>
-		Effect.logTrace("Proxy environment variables configured"),
-	),
+	Effect.tap(() => Effect.logTrace("Proxy environment variables configured")),
 );
 
 /**
@@ -433,7 +435,9 @@ export const RunPatchProcess = Effect.gen(function* () {
 	];
 	yield* Effect.all(AllPatches, { discard: true, concurrency: "unbounded" });
 }).pipe(
-	Effect.tap(() => Effect.logDebug("All core process patches have been applied")),
+	Effect.tap(() =>
+		Effect.logDebug("All core process patches have been applied"),
+	),
 	Effect.catchAll((Error) =>
 		Effect.logFatal(
 			"Critical error during process patching. Environment may be unstable",

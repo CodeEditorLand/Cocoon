@@ -41,17 +41,18 @@
  * - **TBD**: Whitelisting mechanism for trusted extensions
  */
 
-import { Effect, Data, Queue } from "effect";
-import * as Process from "node:process";
 import * as FileSystem from "node:fs";
 import * as Path from "node:path";
+import * as Process from "node:process";
+
+import { Data, Effect, Queue } from "effect";
 
 import {
-	SecurityPolicy,
-	ValidatePathAccess,
-	ValidateNetworkAccess,
-	ValidateChildProcess,
 	DefaultSecurityPolicy,
+	SecurityPolicy,
+	ValidateChildProcess,
+	ValidateNetworkAccess,
+	ValidatePathAccess,
 } from "./Security.js";
 
 // --- Validation Result Types ---
@@ -63,7 +64,7 @@ export interface ValidationResult {
 	readonly Valid: boolean;
 	readonly Reason?: string;
 	readonly Severity: "info" | "warning" | "error" | "critical";
-	 readonly Timestamp: number;
+	readonly Timestamp: number;
 }
 
 /**
@@ -75,7 +76,7 @@ interface ProcessValidationState {
 	readonly FileAccessCount: Map<string, number>;
 	readonly NetworkAccessCount: Map<string, number>;
 	readonly ChildProcessCount: number;
-	 readonly ViolationCount: number;
+	readonly ViolationCount: number;
 	readonly SecurityPolicy: SecurityPolicy;
 }
 
@@ -114,7 +115,7 @@ export class BehaviorViolationError extends Data.TaggedError(
 interface ValidationMetrics {
 	readonly TotalValidations: number;
 	readonly FailedValidations: number;
-	 readonly LastValidationTime: number;
+	readonly LastValidationTime: number;
 	readonly AverageValidationTime: number;
 }
 
@@ -147,7 +148,8 @@ class ValidationMetricsStore {
 
 		// Update average
 		this._metrics.AverageValidationTime =
-			(this._metrics.AverageValidationTime * (this._metrics.TotalValidations - 1) +
+			(this._metrics.AverageValidationTime *
+				(this._metrics.TotalValidations - 1) +
 				Duration) /
 			this._metrics.TotalValidations;
 	}
@@ -223,7 +225,11 @@ export const ValidateFileSystemAccess = (
 		}
 
 		// Check against security policy
-		const PathValid = ValidatePathAccess(File, Operation, State.SecurityPolicy);
+		const PathValid = ValidatePathAccess(
+			File,
+			Operation,
+			State.SecurityPolicy,
+		);
 
 		if (!PathValid) {
 			State.ViolationCount++;
@@ -282,7 +288,10 @@ export const ValidateNetworkAccess = (
 			return Result;
 		}
 
-		const NetworkValid = ValidateNetworkAccess(Endpoint, State.SecurityPolicy);
+		const NetworkValid = ValidateNetworkAccess(
+			Endpoint,
+			State.SecurityPolicy,
+		);
 
 		if (!NetworkValid) {
 			State.ViolationCount++;
@@ -459,7 +468,8 @@ export const DetectSuspiciousBehavior = Effect.gen(function* () {
 	);
 	const NetworkRate = Array.from(State.NetworkAccessCount.values()).reduce(
 		(a, b) => a + b,
-		0 );
+		0,
+	);
 
 	// Detect rapid file access (possible scanning)
 	if (UptimeMinutes > 0 && AccessRate / UptimeMinutes > 100) {
@@ -554,7 +564,10 @@ export const RunSecurityValidation = Effect.gen(function* () {
 		Metrics: GetValidationMetrics(),
 	};
 
-	yield* Effect.logInfo("Comprehensive security validation completed", Result);
+	yield* Effect.logInfo(
+		"Comprehensive security validation completed",
+		Result,
+	);
 
 	return Result;
 });

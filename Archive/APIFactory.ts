@@ -24,9 +24,9 @@ import { ProposedAPIService } from "./ProposedAPI.js";
 import { StatusBarService, type StatusBar } from "./StatusBar.js";
 import { TaskService } from "./Task.js";
 import { TreeViewService, type TreeView } from "./TreeView.js";
-import { WebViewPanelService, type WebViewPanel } from "./WebViewPanel.js";
+import { WebviewPanelService, type WebviewPanel } from "./WebviewPanel.js";
 import { WindowService, type Window } from "./Window.js";
-import { WorkSpaceService, type WorkSpace } from "./WorkSpace.js";
+import { WorkspaceService, type Workspace } from "./Workspace.js";
 
 // --- Internal Namespace Factory helpers ---
 const CreateSafeEvent = <T>(
@@ -72,11 +72,11 @@ const CreateCommandNamespace = (
 const CreateWindowNamespace = (
 	Window: Window,
 	StatusBar: StatusBar,
-	WebViewPanel: WebViewPanel,
+	WebviewPanel: WebviewPanel,
 	TreeView: TreeView,
 	AsEvent: <T>(Event: VSCode.Event<T>) => VSCode.Event<T>,
 	Extension: IExtensionDescription,
-	WorkSpace: WorkSpace,
+	Workspace: Workspace,
 ): typeof VSCode.window => {
 	const RunEffectAndReturnPromise = <T, E>(TheEffect: Effect.Effect<T, E>) =>
 		Effect.runPromise(Effect.mapError(TheEffect, (e) => e as Error));
@@ -89,16 +89,16 @@ const CreateWindowNamespace = (
 			return AsEvent(Window.onDidChangeWindowState);
 		},
 		get activeTextEditor() {
-			return WorkSpace.activeTextEditor;
+			return Workspace.activeTextEditor;
 		},
 		get visibleTextEditors() {
-			return WorkSpace.visibleTextEditors;
+			return Workspace.visibleTextEditors;
 		},
 		get onDidChangeActiveTextEditor() {
-			return AsEvent(WorkSpace.onDidChangeActiveTextEditor);
+			return AsEvent(Workspace.onDidChangeActiveTextEditor);
 		},
 		get onDidChangeVisibleTextEditors() {
-			return AsEvent(WorkSpace.onDidChangeVisibleTextEditors);
+			return AsEvent(Workspace.onDidChangeVisibleTextEditors);
 		},
 		showTextDocument: (
 			documentOrUri: any,
@@ -149,7 +149,7 @@ const CreateWindowNamespace = (
 		): VSCode.WebviewPanel =>
 			Effect.runSync(
 				Effect.orDie(
-					WebViewPanel.CreateWebviewPanel(
+					WebviewPanel.CreateWebviewPanel(
 						Extension,
 						ViewType,
 						Title,
@@ -163,7 +163,7 @@ const CreateWindowNamespace = (
 			Serializer: VSCode.WebviewPanelSerializer,
 		): Disposable =>
 			Effect.runSync(
-				WebViewPanel.RegisterWebviewPanelSerializer(
+				WebviewPanel.RegisterWebviewPanelSerializer(
 					Extension,
 					ViewType,
 					Serializer,
@@ -206,13 +206,13 @@ export class APIFactoryService extends Effect.Service<APIFactoryService>()(
 			const Logger = yield* LoggerService;
 			const ProposedAPI = yield* ProposedAPIService;
 			const Command = yield* CommandService;
-			const WorkSpace = yield* WorkSpaceService;
+			const Workspace = yield* WorkspaceService;
 			const Window = yield* WindowService;
 			const LanguageFeature = yield* LanguageFeatureService;
 			const Debug = yield* DebugService;
 			const Task = yield* TaskService;
 			const Extension = yield* ExtensionService;
-			const WebViewPanel = yield* WebViewPanelService;
+			const WebviewPanel = yield* WebviewPanelService;
 			const TreeView = yield* TreeViewService;
 			const StatusBar = yield* StatusBarService;
 
@@ -252,13 +252,13 @@ export class APIFactoryService extends Effect.Service<APIFactoryService>()(
 					window: CreateWindowNamespace(
 						Window,
 						StatusBar,
-						WebViewPanel as any, // TODO: Fix this
+						WebviewPanel as any, // TODO: Fix this
 						TreeView,
 						SafeEvent,
 						ExtensionDescription,
-						WorkSpace,
+						Workspace,
 					),
-					workspace: WorkSpace as unknown as typeof VSCode.workspace,
+					workspace: Workspace as unknown as typeof VSCode.workspace,
 					languages:
 						LanguageFeature as unknown as typeof VSCode.languages,
 					debug: Debug as unknown as typeof VSCode.debug,

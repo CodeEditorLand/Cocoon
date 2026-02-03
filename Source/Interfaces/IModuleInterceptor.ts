@@ -102,6 +102,5 @@ export interface IModuleInterceptor {
 /**
  * Effect context for ModuleInterceptor
  */
-export const IModuleInterceptor = Effect.Tag<IModuleInterceptor>(
-	"IModuleInterceptor",
-);
+export const IModuleInterceptor =
+	Effect.Tag<IModuleInterceptor>("IModuleInterceptor");

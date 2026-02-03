@@ -1,10 +1,10 @@
 /**
  * @module Message
  * @description
- * WebView Message System - Message passing between extension and WebView contexts
+ * Webview Message System - Message passing between extension and Webview contexts
  *
  * RESPONSIBILITIES:
- * - Define message protocol for extension ↔ WebView communication
+ * - Define message protocol for extension ↔ Webview communication
  * - Handle message serialization and validation
  * - Provide message filtering and routing
  * - Support request/response pattern for async operations
@@ -17,14 +17,14 @@
  * - Security: Content security policy enforcement
  *
  * INTEGRATION:
- * - **Sky**: Astro display layer renders messages from WebView to extension
+ * - **Sky**: Astro display layer renders messages from Webview to extension
  * - **Wind**: Effect-TS services provide secure messaging infrastructure
  * - **Mountain**: Message state logged to Mountain for debugging and audit
  * - **Panel**: Panel module consumes message system for communication
  *
  * CONNECTIONS:
- * - Panel: Uses SendMessage for extension → WebView communication
- * - WebView: Receives and processes messages from extension
+ * - Panel: Uses SendMessage for extension → Webview communication
+ * - Webview: Receives and processes messages from extension
  * - IPC: Routes messages between extension host and Mountain
  *
  * IMPLEMENTATION NOTES:
@@ -52,7 +52,7 @@
  * - Compress large message payloads
  * - Add message caching for repeated requests
  *
- * Reference: TODOs mention WebViewPanel as HIGH priority for Mountain integration
+ * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
  */
 
 import { Effect } from "effect";
@@ -60,7 +60,7 @@ import type { Webview as VSCodeWebview } from "vscode";
 
 /**
  * @interface Message
- * @description Base message structure for extension ↔ WebView communication
+ * @description Base message structure for extension ↔ Webview communication
  */
 export interface Message {
 	readonly Type: string;
@@ -109,10 +109,10 @@ export interface EventMessage extends Message {
 }
 
 /**
- * @type WebViewMessage
+ * @type WebviewMessage
  * @description Union of all valid message types
  */
-export type WebViewMessage =
+export type WebviewMessage =
 	| RequestMessage
 	| ResponseMessage
 	| EventMessage;
@@ -122,7 +122,7 @@ export type WebViewMessage =
  * @description Handler function for processing messages
  */
 export type MessageHandler = (
-	Message: WebViewMessage,
+	Message: WebviewMessage,
 ) => Effect.Effect<void, Error>;
 
 /**
@@ -130,7 +130,7 @@ export type MessageHandler = (
  * @description Routes messages to appropriate handlers based on type
  */
 export interface MessageRouter {
-	readonly Handle: (Message: WebViewMessage) => Effect.Effect<void, Error>;
+	readonly Handle: (Message: WebviewMessage) => Effect.Effect<void, Error>;
 	readonly RegisterHandler: (
 		Type: string,
 		Handler: MessageHandler,
@@ -144,7 +144,7 @@ export interface MessageRouter {
  * @class MessageService
  * @description Service for message passing and routing
  */
-export class MessageService extends Effect.Service<MessageService>()("Message/WebViewPanel", {
+export class MessageService extends Effect.Service<MessageService>()("Message/WebviewPanel", {
 	effect: Effect.gen(function* () {
 		const HandlersRef = yield* Effect.tryMap(
 			Effect.sync(() => new Map<string, MessageHandler>()),
@@ -156,7 +156,7 @@ export class MessageService extends Effect.Service<MessageService>()("Message/We
 		 */
 		const ValidateMessage = (
 			Message: unknown,
-		): Effect.Effect<WebViewMessage, Error> =>
+		): Effect.Effect<WebviewMessage, Error> =>
 			Effect.gen(function* () {
 				// Defensive: Check if message is an object
 				if (
@@ -223,7 +223,7 @@ export class MessageService extends Effect.Service<MessageService>()("Message/We
 					);
 				}
 
-				return Msg as WebViewMessage;
+				return Msg as WebviewMessage;
 			});
 
 		/**
@@ -232,7 +232,7 @@ export class MessageService extends Effect.Service<MessageService>()("Message/We
 		const CreateMessage = (
 			Type: "Request" | "Response" | "Event",
 			Payload: unknown,
-		): WebViewMessage => ({
+		): WebviewMessage => ({
 			Type,
 			Payload: Payload as object,
 			Timestamp: Date.now(),
@@ -240,14 +240,14 @@ export class MessageService extends Effect.Service<MessageService>()("Message/We
 		});
 
 		/**
-		 * Send a message to a WebView
+		 * Send a message to a Webview
 		 */
 		const SendMessage = (
-			WebView: VSCodeWebview,
-			Message: WebViewMessage,
+			Webview: VSCodeWebview,
+			Message: WebviewMessage,
 		): Effect.Effect<boolean, never> =>
 			Effect.tryPromise({
-				try: () => WebView.postMessage(Message),
+				try: () => Webview.postMessage(Message),
 				catch: () => false,
 			});
 
@@ -276,7 +276,7 @@ export class MessageService extends Effect.Service<MessageService>()("Message/We
 		 * Route a message to its handler
 		 */
 		const RouteMessage = (
-			Message: WebViewMessage,
+			Message: WebviewMessage,
 		): Effect.Effect<void, Error> =>
 			Effect.gen(function* () {
 				const Handlers = HandlersRef.current;

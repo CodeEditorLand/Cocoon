@@ -1,6 +1,6 @@
 /**
- * @module WorkSpaceEdit
- * @description Implements converters for `vscode.WorkSpaceEdit` and its components,
+ * @module WorkspaceEdit
+ * @description Implements converters for `vscode.WorkspaceEdit` and its components,
  * handling complex transformations involving text edits, file operations, and versions.
  */
 

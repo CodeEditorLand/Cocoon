@@ -3,23 +3,23 @@
  * @description
  * Enhanced IPC messaging for Mountain-Wind communication with comprehensive binary-safe
  * serialization, message batching, compression hints, and defensive coding patterns.
- * 
+ *
  * This module provides the core messaging infrastructure for Inter-Process Communication
  * between the Wind frontend and Mountain backend, ensuring reliable data transmission
  * with robust error handling and performance optimization.
- * 
+ *
  * Mountain Connection Points:
  * - Linked with TauriIPCServer.rs for server-side message handling
  * - Used by WindAirCommands.ts for command serialization
  * - Integrated with ConfigurationBridge.rs for message routing
- * 
+ *
  * Key Features:
  * - Binary-safe VSBuffer implementation inspired by VSCode's buffer system
  * - Efficient message batching with configurable batch sizes
  * - Compression hints to optimize payload size for large messages
  * - Comprehensive validation and defensive coding patterns
  * - Type-safe serialization with explicit schema validation
- * 
+ *
  * @author Mountain IPC Infrastructure
  * @version 1.0.0
  * @since 2025-01-31
@@ -40,7 +40,7 @@ const MAX_BATCH_SIZE = 50 * 1024 * 1024;
 const MAX_BATCH_COUNT = 1000;
 
 /** Magic bytes for message header validation (MNT for Mountain) */
-const MESSAGE_HEADER_MAGIC = Buffer.from([0x4D, 0x4E, 0x54]);
+const MESSAGE_HEADER_MAGIC = Buffer.from([0x4d, 0x4e, 0x54]);
 
 /** Current protocol version */
 const PROTOCOL_VERSION = 1;
@@ -130,7 +130,7 @@ export interface IBatchMessage {
 	/** Batch metadata */
 	readonly BatchMetadata: {
 		readonly BatchID: string;
-		 readonly MessageCount: number;
+		readonly MessageCount: number;
 		readonly TotalSize: number;
 		readonly Timestamp: number;
 	};
@@ -192,7 +192,7 @@ export class VSBuffer {
 
 	/**
 	 * Creates a new VSBuffer with the specified capacity
-	 * 
+	 *
 	 * @param Capacity - Buffer capacity in bytes
 	 * @returns NewVSBuffer instance
 	 * @throws If capacity exceeds MAX_MESSAGE_SIZE
@@ -203,7 +203,7 @@ export class VSBuffer {
 		}
 		if (Capacity > MAX_MESSAGE_SIZE) {
 			throw new Error(
-				`Cannot allocate buffer larger than ${MAX_MESSAGE_SIZE} bytes: ${Capacity}`
+				`Cannot allocate buffer larger than ${MAX_MESSAGE_SIZE} bytes: ${Capacity}`,
 			);
 		}
 		return new VSBuffer(new Uint8Array(Capacity), 0);
@@ -211,7 +211,7 @@ export class VSBuffer {
 
 	/**
 	 * Wraps an existing Uint8Array in a VSBuffer
-	 * 
+	 *
 	 * @param Buffer - Uint8Array to wrap
 	 * @returns NewVSBuffer instance wrapping the provided array
 	 * @throws If buffer is null or undefined
@@ -225,12 +225,15 @@ export class VSBuffer {
 
 	/**
 	 * Creates a VSBuffer from a string
-	 * 
+	 *
 	 * @param String - String to convert
 	 * @param Encoding - Text encoding (default: utf-8)
 	 * @returns NewVSBuffer instance containing the encoded string
 	 */
-	public static FromString(String: string, Encoding: BufferEncoding = "utf-8"): VSBuffer {
+	public static FromString(
+		String: string,
+		Encoding: BufferEncoding = "utf-8",
+	): VSBuffer {
 		if (String === null || String === undefined) {
 			return new VSBuffer(new Uint8Array(0));
 		}
@@ -240,7 +243,7 @@ export class VSBuffer {
 
 	/**
 	 * Creates a VSBuffer from a buffer
-	 * 
+	 *
 	 * @param Buffer - Node Buffer to convert
 	 * @returns NewVSBuffer instance
 	 */
@@ -253,7 +256,7 @@ export class VSBuffer {
 
 	/**
 	 * Concatenates multiple VSBuffers into one
-	 * 
+	 *
 	 * @param Buffers - Array of VSBuffers to concatenate
 	 * @returns NewVSBuffer containing all concatenated data
 	 */
@@ -262,10 +265,13 @@ export class VSBuffer {
 			return new VSBuffer(new Uint8Array(0));
 		}
 
-		const TotalLength = Buffers.reduce((Sum, Buffer) => Sum + Buffer.length, 0);
+		const TotalLength = Buffers.reduce(
+			(Sum, Buffer) => Sum + Buffer.length,
+			0,
+		);
 		if (TotalLength > MAX_MESSAGE_SIZE) {
 			throw new Error(
-				`Concatenated buffer size ${TotalLength} exceeds maximum ${MAX_MESSAGE_SIZE}`
+				`Concatenated buffer size ${TotalLength} exceeds maximum ${MAX_MESSAGE_SIZE}`,
 			);
 		}
 
@@ -282,7 +288,7 @@ export class VSBuffer {
 
 	/**
 	 * Gets the underlying byte buffer
-	 * 
+	 *
 	 * @returns Uint8Array buffer
 	 */
 	public get byteBuffer(): Uint8Array {
@@ -291,26 +297,32 @@ export class VSBuffer {
 
 	/**
 	 * Converts the VSBuffer to a Node Buffer
-	 * 
+	 *
 	 * @returns Node Buffer
 	 */
 	public toBuffer(): Buffer {
-		return Buffer.from(this.buffer.buffer, this.buffer.byteOffset, this.length);
+		return Buffer.from(
+			this.buffer.buffer,
+			this.buffer.byteOffset,
+			this.length,
+		);
 	}
 
 	/**
 	 * Converts the VSBuffer to a string
-	 * 
+	 *
 	 * @param Encoding - Text encoding (default: utf-8)
 	 * @returns String representation of the buffer
 	 */
 	public toString(Encoding: BufferEncoding = "utf-8"): string {
-		return new TextDecoder(Encoding).decode(this.buffer.subarray(0, this.length));
+		return new TextDecoder(Encoding).decode(
+			this.buffer.subarray(0, this.length),
+		);
 	}
 
 	/**
 	 * Gets a byte at the specified index
-	 * 
+	 *
 	 * @param Index - Byte index
 	 * @returns Byte value at index
 	 * @throws If index is out of bounds
@@ -318,7 +330,7 @@ export class VSBuffer {
 	public getByte(Index: number): number {
 		if (Index < 0 || Index >= this.length) {
 			throw new Error(
-				`Index ${Index} out of bounds for buffer of length ${this.length}`
+				`Index ${Index} out of bounds for buffer of length ${this.length}`,
 			);
 		}
 		return this.buffer[Index];
@@ -326,7 +338,7 @@ export class VSBuffer {
 
 	/**
 	 * Sets a byte at the specified index
-	 * 
+	 *
 	 * @param Index - Byte index
 	 * @param Value - Byte value to set (0-255)
 	 * @throws If index is out of bounds or value is invalid
@@ -334,18 +346,20 @@ export class VSBuffer {
 	public setByte(Index: number, Value: number): void {
 		if (Index < 0 || Index >= this.length) {
 			throw new Error(
-				`Index ${Index} out of bounds for buffer of length ${this.length}`
+				`Index ${Index} out of bounds for buffer of length ${this.length}`,
 			);
 		}
 		if (Value < 0 || Value > 255 || !Number.isInteger(Value)) {
-			throw new Error(`Invalid byte value: ${Value} (must be 0-255 integer)`);
+			throw new Error(
+				`Invalid byte value: ${Value} (must be 0-255 integer)`,
+			);
 		}
 		this.buffer[Index] = Value;
 	}
 
 	/**
 	 * Sets multiple bytes from another buffer
-	 * 
+	 *
 	 * @param Offset - Starting offset in this buffer
 	 * @param Values - Uint8Array of values to set
 	 * @throws If offset is out of bounds or values won't fit
@@ -353,7 +367,7 @@ export class VSBuffer {
 	public setBytes(Offset: number, Values: Uint8Array): void {
 		if (Offset < 0 || Offset >= this.length) {
 			throw new Error(
-				`Offset ${Offset} out of bounds for buffer of length ${this.length}`
+				`Offset ${Offset} out of bounds for buffer of length ${this.length}`,
 			);
 		}
 		if (!Values) {
@@ -361,7 +375,7 @@ export class VSBuffer {
 		}
 		if (Offset + Values.length > this.length) {
 			throw new Error(
-				`Cannot set ${Values.length} bytes at offset ${Offset} in buffer of length ${this.length}`
+				`Cannot set ${Values.length} bytes at offset ${Offset} in buffer of length ${this.length}`,
 			);
 		}
 		this.buffer.set(Values, Offset);
@@ -369,7 +383,7 @@ export class VSBuffer {
 
 	/**
 	 * Reads a 32-bit unsigned integer at the specified offset (little-endian)
-	 * 
+	 *
 	 * @param Offset - Byte offset to read from
 	 * @returns 32-bit unsigned integer
 	 * @throws If offset is out of bounds
@@ -377,20 +391,21 @@ export class VSBuffer {
 	public readUInt32LE(Offset: number): number {
 		if (Offset < 0 || Offset + 4 > this.length) {
 			throw new Error(
-				`Cannot read UInt32LE at offset ${Offset} in buffer of length ${this.length}`
+				`Cannot read UInt32LE at offset ${Offset} in buffer of length ${this.length}`,
 			);
 		}
 		return (
-			this.buffer[Offset] |
-			(this.buffer[Offset + 1] << 8) |
-			(this.buffer[Offset + 2] << 16) |
-			(this.buffer[Offset + 3] << 24)
-		) >>> 0;
+			(this.buffer[Offset] |
+				(this.buffer[Offset + 1] << 8) |
+				(this.buffer[Offset + 2] << 16) |
+				(this.buffer[Offset + 3] << 24)) >>>
+			0
+		);
 	}
 
 	/**
 	 * Writes a 32-bit unsigned integer at the specified offset (little-endian)
-	 * 
+	 *
 	 * @param Offset - Byte offset to write to
 	 * @param Value - 32-bit unsigned integer to write
 	 * @throws If offset is out of bounds or value is invalid
@@ -398,7 +413,7 @@ export class VSBuffer {
 	public writeUInt32LE(Offset: number, Value: number): void {
 		if (Offset < 0 || Offset + 4 > this.length) {
 			throw new Error(
-				`Cannot write UInt32LE at offset ${Offset} in buffer of length ${this.length}`
+				`Cannot write UInt32LE at offset ${Offset} in buffer of length ${this.length}`,
 			);
 		}
 		if (Value < 0 || Value > 0xffffffff || !Number.isInteger(Value)) {
@@ -412,7 +427,7 @@ export class VSBuffer {
 
 	/**
 	 * Slices the buffer creating a new VSBuffer
-	 * 
+	 *
 	 * @param Start - Starting index (inclusive)
 	 * @param End - Ending index (exclusive)
 	 * @returns NewVSBuffer containing the sliced data
@@ -421,13 +436,13 @@ export class VSBuffer {
 	public slice(Start: number, End?: number): VSBuffer {
 		if (Start < 0 || Start > this.length) {
 			throw new Error(
-				`Invalid start index ${Start} for buffer of length ${this.length}`
+				`Invalid start index ${Start} for buffer of length ${this.length}`,
 			);
 		}
 		const ActualEnd = End ?? this.length;
 		if (ActualEnd < Start || ActualEnd > this.length) {
 			throw new Error(
-				`Invalid end index ${ActualEnd} for buffer of length ${this.length}`
+				`Invalid end index ${ActualEnd} for buffer of length ${this.length}`,
 			);
 		}
 		return new VSBuffer(this.buffer.slice(Start, ActualEnd));
@@ -440,7 +455,7 @@ export class VSBuffer {
 
 /**
  * Validates message metadata structure
- * 
+ *
  * @param Metadata - Metadata to validate
  * @returns True if valid, false otherwise
  */
@@ -448,19 +463,28 @@ function ValidateMetadata(Metadata: MessageMetadata): boolean {
 	if (!Metadata) {
 		return false;
 	}
-	if (typeof Metadata.MessageID !== "string" || Metadata.MessageID.length === 0) {
+	if (
+		typeof Metadata.MessageID !== "string" ||
+		Metadata.MessageID.length === 0
+	) {
 		return false;
 	}
 	if (typeof Metadata.Source !== "string" || Metadata.Source.length === 0) {
 		return false;
 	}
-	if (typeof Metadata.Destination !== "string" || Metadata.Destination.length === 0) {
+	if (
+		typeof Metadata.Destination !== "string" ||
+		Metadata.Destination.length === 0
+	) {
 		return false;
 	}
 	if (typeof Metadata.Timestamp !== "number" || Metadata.Timestamp <= 0) {
 		return false;
 	}
-	if (typeof Metadata.MessageType !== "string" || Metadata.MessageType.length === 0) {
+	if (
+		typeof Metadata.MessageType !== "string" ||
+		Metadata.MessageType.length === 0
+	) {
 		return false;
 	}
 	return true;
@@ -468,7 +492,7 @@ function ValidateMetadata(Metadata: MessageMetadata): boolean {
 
 /**
  * Validates message structure
- * 
+ *
  * @param Message - Message to validate
  * @returns True if valid, false otherwise
  */
@@ -485,9 +509,7 @@ function ValidateMessage(Message: IMessage): boolean {
 	if (Message.Data.length > MAX_MESSAGE_SIZE) {
 		return false;
 	}
-	if (
-		!Object.values(CompressionHint).includes(Message.CompressionHint)
-	) {
+	if (!Object.values(CompressionHint).includes(Message.CompressionHint)) {
 		return false;
 	}
 	if (typeof Message.Flags !== "number" || Message.Flags < 0) {
@@ -498,7 +520,7 @@ function ValidateMessage(Message: IMessage): boolean {
 
 /**
  * Validates batched message structure
- * 
+ *
  * @param Batch - Batched message to validate
  * @returns True if valid, false otherwise
  */
@@ -512,22 +534,34 @@ function ValidateBatchMessage(Batch: IBatchMessage): boolean {
 	if (!Batch.BatchMetadata) {
 		return false;
 	}
-	if (typeof Batch.BatchMetadata.BatchID !== "string" || Batch.BatchMetadata.BatchID.length === 0) {
+	if (
+		typeof Batch.BatchMetadata.BatchID !== "string" ||
+		Batch.BatchMetadata.BatchID.length === 0
+	) {
 		return false;
 	}
-	if (typeof Batch.BatchMetadata.MessageCount !== "number" || Batch.BatchMetadata.MessageCount <= 0) {
+	if (
+		typeof Batch.BatchMetadata.MessageCount !== "number" ||
+		Batch.BatchMetadata.MessageCount <= 0
+	) {
 		return false;
 	}
 	if (Batch.BatchMetadata.MessageCount > MAX_BATCH_COUNT) {
 		return false;
 	}
-	if (typeof Batch.BatchMetadata.TotalSize !== "number" || Batch.BatchMetadata.TotalSize <= 0) {
+	if (
+		typeof Batch.BatchMetadata.TotalSize !== "number" ||
+		Batch.BatchMetadata.TotalSize <= 0
+	) {
 		return false;
 	}
 	if (Batch.BatchMetadata.TotalSize > MAX_BATCH_SIZE) {
 		return false;
 	}
-	if (typeof Batch.BatchMetadata.Timestamp !== "number" || Batch.BatchMetadata.Timestamp <= 0) {
+	if (
+		typeof Batch.BatchMetadata.Timestamp !== "number" ||
+		Batch.BatchMetadata.Timestamp <= 0
+	) {
 		return false;
 	}
 
@@ -547,10 +581,10 @@ function ValidateBatchMessage(Batch: IBatchMessage): boolean {
 
 /**
  * Serializes a message into a binary-safe format with header and compression hints
- * 
+ *
  * @param Message - Message to serialize
  * @returns ISerializationResult with success/failure information
- * 
+ *
  * Binary Format:
  * - Header (8 bytes): Magic (3) + Version (1) + Flags (1) + Reserved (3)
  * - Metadata Length (4 bytes): Length of metadata JSON
@@ -677,7 +711,7 @@ export function SerializeMessage(Message: IMessage): ISerializationResult {
 
 /**
  * Deserializes a binary message into an IMessage structure
- * 
+ *
  * @param Data - Binary data to deserialize
  * @returns IDeserializationResult with message and validation information
  */
@@ -738,7 +772,9 @@ export function DeserializeMessage(Data: Uint8Array): IDeserializationResult {
 		const Version = Buffer.getByte(Offset);
 		Offset += 1;
 		if (Version !== PROTOCOL_VERSION) {
-			Warnings.push(`Protocol version mismatch: expected ${PROTOCOL_VERSION}, got ${Version}`);
+			Warnings.push(
+				`Protocol version mismatch: expected ${PROTOCOL_VERSION}, got ${Version}`,
+			);
 		}
 
 		const Flags = Buffer.getByte(Offset);
@@ -809,19 +845,26 @@ export function DeserializeMessage(Data: Uint8Array): IDeserializationResult {
 		}
 
 		// Read data
-		const MessageData = Buffer.slice(Offset, Offset + DataLength).byteBuffer;
+		const MessageData = Buffer.slice(
+			Offset,
+			Offset + DataLength,
+		).byteBuffer;
 		Offset += DataLength;
 
 		// Check for extra data
 		if (Offset < Data.length) {
-			Warnings.push(`Extra data at end of message: ${Data.length - Offset} bytes`);
+			Warnings.push(
+				`Extra data at end of message: ${Data.length - Offset} bytes`,
+			);
 		}
 
 		// Determine compression hint from flags
 		let CompressionHint = CompressionHint.None;
 		if (Flags & MessageFlags.Compressed) {
 			CompressionHint = CompressionHint.Balanced; // Default for compressed messages
-			Warnings.push("Message is compressed but decompression not implemented");
+			Warnings.push(
+				"Message is compressed but decompression not implemented",
+			);
 		}
 
 		const Message: IMessage = {
@@ -853,11 +896,11 @@ export function DeserializeMessage(Data: Uint8Array): IDeserializationResult {
 
 /**
  * Batches multiple messages into a single IBatchMessage structure
- * 
+ *
  * @param Messages - Array of messages to batch
  * @param CompressionHint - Compression hint for batch metadata
  * @returns ISerializationResult with batched data
- * 
+ *
  * Binary Format:
  * - Message Count (4 bytes): Number of messages in batch
  * - Batch Metadata Length (4 bytes): Length of batch metadata JSON
@@ -867,7 +910,7 @@ export function DeserializeMessage(Data: Uint8Array): IDeserializationResult {
  */
 export function BatchMessages(
 	Messages: IMessage[],
-	CompressionHint: CompressionHint = CompressionHint.Balanced
+	CompressionHint: CompressionHint = CompressionHint.Balanced,
 ): ISerializationResult {
 	const Warnings: string[] = [];
 	let OriginalSize = 0;
@@ -1015,7 +1058,7 @@ export function BatchMessages(
 
 /**
  * Unbatches a serialized batch message into individual messages
- * 
+ *
  * @param Data - Batched binary data
  * @returns IDeserializationResult with array of individual messages
  */
@@ -1139,18 +1182,22 @@ export function UnbatchMessages(Data: Uint8Array): IDeserializationResult & {
 			const Header = MessageHeaders[Index];
 			const MessageData = Buffer.slice(
 				Header.offset,
-				Header.offset + Header.length
+				Header.offset + Header.length,
 			).byteBuffer;
 
 			const Result = DeserializeMessage(MessageData);
 			if (!Result.Success) {
-				Warnings.push(`Failed to deserialize message ${Index}: ${Result.Error}`);
+				Warnings.push(
+					`Failed to deserialize message ${Index}: ${Result.Error}`,
+				);
 				continue;
 			}
 
 			// Ensure Result.Message is IMessage (not IBatchMessage)
 			if (Result.Message && "Messages" in Result.Message) {
-				Warnings.push(`Unexpected batch message found at index ${Index}`);
+				Warnings.push(
+					`Unexpected batch message found at index ${Index}`,
+				);
 				continue;
 			}
 
@@ -1159,7 +1206,7 @@ export function UnbatchMessages(Data: Uint8Array): IDeserializationResult & {
 
 		if (Messages.length !== MessageCount) {
 			Warnings.push(
-				`Expected ${MessageCount} messages, successfully deserialized ${Messages.length}`
+				`Expected ${MessageCount} messages, successfully deserialized ${Messages.length}`,
 			);
 		}
 
@@ -1187,7 +1234,7 @@ export function UnbatchMessages(Data: Uint8Array): IDeserializationResult & {
 
 /**
  * Generates a unique message ID
- * 
+ *
  * @returns Unique message identifier string
  */
 export function GenerateMessageID(): string {
@@ -1196,7 +1243,7 @@ export function GenerateMessageID(): string {
 
 /**
  * Creates a new message with the specified data and metadata
- * 
+ *
  * @param Data - Message payload data
  * @param MessageType - Type of message
  * @param Source - Source endpoint
@@ -1209,7 +1256,7 @@ export function CreateMessage(
 	MessageType: string,
 	Source: string,
 	Destination: string,
-	CompressionHint: CompressionHint = CompressionHint.None
+	CompressionHint: CompressionHint = CompressionHint.None,
 ): IMessage {
 	const DataBytes =
 		typeof Data === "string" ? VSBuffer.FromString(Data).byteBuffer : Data;
@@ -1230,7 +1277,7 @@ export function CreateMessage(
 
 /**
  * Gets the optimal compression hint based on message size and content
- * 
+ *
  * @param Message - Message to analyze
  * @returns Recommended compression hint
  */

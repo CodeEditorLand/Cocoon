@@ -1,10 +1,10 @@
 /**
  * @module Factory
  * @description
- * WebView Panel Factory - Central creation and management of WebView panel instances
+ * Webview Panel Factory - Central creation and management of Webview panel instances
  *
  * RESPONSIBILITIES:
- * - Create new WebView panel instances with proper initialization
+ * - Create new Webview panel instances with proper initialization
  * - Track active panel lifecycle and manage panel registry
  * - Handle panel disposal and cleanup
  * - Provide panel discovery and enumeration
@@ -17,9 +17,9 @@
  * - Thread Safety: Effect-based atomic operations with Ref
  *
  * INTEGRATION:
- * - **Sky**: Astro display layer renders WebView iframe content created by this factory
- * - **Wind**: Effect-TS services provide WebView resources and serve content files
- * - **Mountain**: WebView panels send state via IPC to Mountain host for persistence
+ * - **Sky**: Astro display layer renders Webview iframe content created by this factory
+ * - **Wind**: Effect-TS services provide Webview resources and serve content files
+ * - **Mountain**: Webview panels send state via IPC to Mountain host for persistence
  * - **IPC**: Coordinates panel creation with Mountain host through IPC communication
  *
  * CONNECTIONS:
@@ -35,18 +35,18 @@
  * - Defensive validation prevents malformed panel creation
  * - OnDispose callback ensures cleanup on panel disposal
  *
- * TODOs (WebView Debugging - LOW):
- * - Add dev tools integration for WebView debugging
- * - Add WebView inspector for DOM examination
- * - Add console.log capture from WebView context
- * - Add performance profiling for WebView rendering
+ * TODOs (Webview Debugging - LOW):
+ * - Add dev tools integration for Webview debugging
+ * - Add Webview inspector for DOM examination
+ * - Add console.log capture from Webview context
+ * - Add performance profiling for Webview rendering
  *
- * TODOs (Remote WebView - LOW):
- * - Add remote WebView support via tunneling
- * - Add secure WebSocket communication for remote WebViews
+ * TODOs (Remote Webview - LOW):
+ * - Add remote Webview support via tunneling
+ * - Add secure WebSocket communication for remote Webviews
  * - Add remote development session support
  *
- * Reference: TODOs mention WebViewPanel as HIGH priority for Mountain integration
+ * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
  */
 
 import { generateUuid } from "@codeeditorland/output/vs/base/common/uuid.js";
@@ -72,7 +72,7 @@ export interface PanelRegistryEntry {
 
 /**
  * @interface CreatePanelOptions
- * @description Configuration options for creating a new WebView panel
+ * @description Configuration options for creating a new Webview panel
  */
 export interface CreatePanelOptions {
 	readonly ViewType: string;
@@ -92,7 +92,7 @@ export interface CreatePanelOptions {
 
 /**
  * @interface Factory
- * @description The contract for the WebView Panel Factory service
+ * @description The contract for the Webview Panel Factory service
  */
 export interface Factory {
 	readonly CreatePanel: (
@@ -107,14 +107,14 @@ export interface Factory {
 
 /**
  * @class FactoryService
- * @description The Effect Service for managing WebView Panel Factory
+ * @description The Effect Service for managing Webview Panel Factory
  */
-export class FactoryService extends Effect.Service<FactoryService>()("Factory/WebViewPanel", {
+export class FactoryService extends Effect.Service<FactoryService>()("Factory/WebviewPanel", {
 	effect: Effect.gen(function* () {
 		const ActivePanelsRef = yield* Ref.make(new Map<string, PanelRegistryEntry>());
 
 		/**
-		 * Create a new WebView panel with proper initialization
+		 * Create a new Webview panel with proper initialization
 		 */
 		const CreatePanel = (
 			Extension: IExtensionDescription,

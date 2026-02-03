@@ -45,7 +45,7 @@ export interface IPCResponse {
 	readonly Success: boolean;
 	readonly Data?: unknown;
 	readonly ErrorMessage?: string;
-	 readonly ErrorCode?: number;
+	readonly ErrorCode?: number;
 }
 
 /**
@@ -68,7 +68,7 @@ export type IPCProtocolMessage = IPCRequest | IPCResponse | IPCNotification;
 export enum ProtocolMessageType {
 	Request = "request",
 	Response = "response",
-	Notification = "notification"
+	Notification = "notification",
 }
 
 /**
@@ -84,13 +84,15 @@ export interface ProtocolMessage {
  */
 export type RequestHandler<T = unknown, TResult = unknown> = (
 	parameter: T,
-	token: CancellationToken
+	token: CancellationToken,
 ) => Promise<TResult> | TResult;
 
 /**
  * Notification handler function type
  */
-export type NotificationHandler<T = unknown> = (data: T) => void | Promise<void>;
+export type NotificationHandler<T = unknown> = (
+	data: T,
+) => void | Promise<void>;
 
 /**
  * Channel handler registration
@@ -129,7 +131,7 @@ export const DEFAULT_PROTOCOL_OPTIONS: ProtocolOptions = {
 	Timeout: 30000,
 	MaxMessageSize: 10485760, // 10MB
 	EnableCompression: false,
-	EnableEncryption: false
+	EnableEncryption: false,
 } as const;
 
 /**
@@ -142,7 +144,9 @@ export function CreateRequestId(): string {
 /**
  * Determine message type for routing
  */
-export function GetMessageType(message: IPCProtocolMessage): ProtocolMessageType {
+export function GetMessageType(
+	message: IPCProtocolMessage,
+): ProtocolMessageType {
 	if ("Id" in message && "Channel" in message && "Method" in message) {
 		return ProtocolMessageType.Request;
 	}
@@ -195,7 +199,7 @@ export function ValidateMessage(message: unknown): boolean {
 export function WrapMessage(message: IPCProtocolMessage): ProtocolMessage {
 	return {
 		Type: GetMessageType(message),
-		Message: message
+		Message: message,
 	};
 }
 
@@ -212,13 +216,13 @@ export function UnwrapMessage(envelope: ProtocolMessage): IPCProtocolMessage {
 export function CreateErrorResponse(
 	id: string,
 	message: string,
-	code?: number
+	code?: number,
 ): IPCResponse {
 	return {
 		Id: id,
 		Success: false,
 		ErrorMessage: message,
-		ErrorCode: code
+		ErrorCode: code,
 	};
 }
 
@@ -229,7 +233,7 @@ export function CreateSuccessResponse<T>(id: string, data: T): IPCResponse {
 	return {
 		Id: id,
 		Success: true,
-		Data: data
+		Data: data,
 	};
 }
 
@@ -255,7 +259,9 @@ export function DeserializeMessage(buffer: VSBuffer): ProtocolMessage {
 
 		return message;
 	} catch (error) {
-		throw new Error(`Failed to deserialize IPC message: ${error instanceof Error ? error.message : String(error)}`);
+		throw new Error(
+			`Failed to deserialize IPC message: ${error instanceof Error ? error.message : String(error)}`,
+		);
 	}
 }
 
@@ -275,7 +281,9 @@ export function IsRequest(message: IPCProtocolMessage): message is IPCRequest {
 /**
  * Check if message is a response
  */
-export function IsResponse(message: IPCProtocolMessage): message is IPCResponse {
+export function IsResponse(
+	message: IPCProtocolMessage,
+): message is IPCResponse {
 	return (
 		"Id" in message &&
 		"Success" in message &&
@@ -287,7 +295,9 @@ export function IsResponse(message: IPCProtocolMessage): message is IPCResponse 
 /**
  * Check if message is a notification
  */
-export function IsNotification(message: IPCProtocolMessage): message is IPCNotification {
+export function IsNotification(
+	message: IPCProtocolMessage,
+): message is IPCNotification {
 	return (
 		"Channel" in message &&
 		"Type" in message &&

@@ -1,11 +1,11 @@
 /**
  * @module State
  * @description
- * WebView State Management - State persistence and restoration for WebView panels
+ * Webview State Management - State persistence and restoration for Webview panels
  *
  * RESPONSIBILITIES:
- * - Manage WebView panel state persistence across sessions
- * - Restore WebView panels from saved state on session restart
+ * - Manage Webview panel state persistence across sessions
+ * - Restore Webview panels from saved state on session restart
  * - Track panel position, content, and display state
  * - Handle state serialization for Mountain backend storage
  * - Coordinate state restoration with Factory and Panel
@@ -19,7 +19,7 @@
  * INTEGRATION:
  * - **Sky**: Astro display layer uses restored state for panel rendering
  * - **Wind**: Effect-TS services provide state storage and retrieval
- * - **Mountain**: WebView state persisted to Mountain backend for session restore
+ * - **Mountain**: Webview state persisted to Mountain backend for session restore
  * - **Factory**: Factory uses state to recreate panels on session restore
  * - **Panel**: Panel instances serialize state for persistence
  *
@@ -51,7 +51,7 @@
  * - Add state validation signatures
  * - Add state tampering detection
  *
- * Reference: TODOs mention WebViewPanel as HIGH priority for Mountain integration
+ * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
  */
 
 import { Effect } from "effect";
@@ -90,7 +90,7 @@ export interface PanelOptions {
 
 /**
  * @interface PanelState
- * @description Complete state of a WebView panel for persistence
+ * @description Complete state of a Webview panel for persistence
  */
 export interface PanelState {
 	readonly Version: number;
@@ -115,7 +115,7 @@ export interface PanelState {
 
 /**
  * @interface StateManager
- * @description Contract for WebView state management
+ * @description Contract for Webview state management
  */
 export interface StateManager {
 	readonly SavePanelState: (
@@ -141,9 +141,9 @@ const STATE_VERSION = 1;
 
 /**
  * @class StateService
- * @description Service for managing WebView panel state
+ * @description Service for managing Webview panel state
  */
-export class StateService extends Effect.Service<StateService>()("State/WebViewPanel", {
+export class StateService extends Effect.Service<StateService>()("State/WebviewPanel", {
 	effect: Effect.gen(function* () {
 		// In-memory cache of panel states (simplified implementation)
 		const StateCacheRef = yield* Effect.tryMap(

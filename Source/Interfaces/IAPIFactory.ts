@@ -95,5 +95,4 @@ export interface IAPIFactory {
 /**
  * Effect context for APIFactory
  */
-export const IAPIFactory =
-	Effect.Tag<IAPIFactory>("IAPIFactory");
+export const IAPIFactory = Effect.Tag<IAPIFactory>("IAPIFactory");

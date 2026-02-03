@@ -76,9 +76,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 	private telemetry: ModuleTelemetry;
 
 	constructor() {
-		console.log(
-			"[ModuleInterceptor] Initializing module interceptor",
-		);
+		console.log("[ModuleInterceptor] Initializing module interceptor");
 
 		this.config = this.loadDefaultConfig();
 		this.moduleCache = new Map();
@@ -92,9 +90,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			securityViolations: 0,
 		};
 
-		console.log(
-			"[ModuleInterceptor] Module interceptor initialized",
-		);
+		console.log("[ModuleInterceptor] Module interceptor initialized");
 	}
 
 	/**
@@ -171,7 +167,10 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			require.resolve("path");
 			console.log("[ModuleInterceptor] Module path resolution validated");
 		} catch (error) {
-			console.error("[ModuleInterceptor] Module path resolution failed:", error);
+			console.error(
+				"[ModuleInterceptor] Module path resolution failed:",
+				error,
+			);
 		}
 	}
 
@@ -272,7 +271,10 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 		try {
 			// Step 1: Check cache first
-			const cacheKey = this.getCacheKey(request.moduleId, request.extensionId);
+			const cacheKey = this.getCacheKey(
+				request.moduleId,
+				request.extensionId,
+			);
 			if (this.moduleCache.has(cacheKey)) {
 				const cacheEntry = this.moduleCache.get(cacheKey)!;
 				console.log(
@@ -287,7 +289,8 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			}
 
 			// Step 2: Get security policy for extension
-			const policy = this.securityPolicies.get(request.extensionId) ||
+			const policy =
+				this.securityPolicies.get(request.extensionId) ||
 				this.securityPolicies.get("default");
 
 			if (!policy) {
@@ -318,7 +321,10 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 			// Step 5: Analyze module security
 			const moduleSecurity = this.analyzeModuleSecurity(resolvedPath);
-			if (!moduleSecurity.isSafe && policy.securityLevel === SecurityLevel.TRUSTED) {
+			if (
+				!moduleSecurity.isSafe &&
+				policy.securityLevel === SecurityLevel.TRUSTED
+			) {
 				this.telemetry.securityViolations++;
 
 				return {
@@ -350,8 +356,10 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 			const analysisTime = Date.now() - startTime;
 			this.telemetry.averageAnalysisTime =
-				(this.telemetry.averageAnalysisTime * (this.telemetry.totalModulesLoaded - 1) +
-					analysisTime) / this.telemetry.totalModulesLoaded;
+				(this.telemetry.averageAnalysisTime *
+					(this.telemetry.totalModulesLoaded - 1) +
+					analysisTime) /
+				this.telemetry.totalModulesLoaded;
 
 			console.log(
 				`[ModuleInterceptor] Module ${request.moduleId} intercepted successfully in ${analysisTime}ms`,
@@ -394,8 +402,10 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		}
 
 		// Check allowed modules (whitelist mode)
-		if (policy.allowedModules.length > 0 &&
-			!policy.allowedModules.includes(modulePath)) {
+		if (
+			policy.allowedModules.length > 0 &&
+			!policy.allowedModules.includes(modulePath)
+		) {
 			// Module not in allowed list - check if it's a safe node builtin
 			if (!this.isSafeNodeBuiltin(modulePath)) {
 				console.warn(
@@ -474,9 +484,7 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		try {
 			// Validate module path doesn't escape allowed directories
 			if (!this.validateModulePath(modulePath)) {
-				throw new Error(
-					`Module path validation failed: ${modulePath}`,
-				);
+				throw new Error(`Module path validation failed: ${modulePath}`);
 			}
 
 			// Use Node.js module resolution
@@ -582,8 +590,13 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			throw new Error("Invalid policy: missing or invalid extensionId");
 		}
 
-		if (!Array.isArray(policy.allowedModules) || !Array.isArray(policy.blockedModules)) {
-			throw new Error("Invalid policy: allowedModules and blockedModules must be arrays");
+		if (
+			!Array.isArray(policy.allowedModules) ||
+			!Array.isArray(policy.blockedModules)
+		) {
+			throw new Error(
+				"Invalid policy: allowedModules and blockedModules must be arrays",
+			);
 		}
 
 		// Store policy
@@ -614,7 +627,8 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			`[ModuleInterceptor] Creating security context for ${extensionId}`,
 		);
 
-		const policy = this.securityPolicies.get(extensionId) ||
+		const policy =
+			this.securityPolicies.get(extensionId) ||
 			this.securityPolicies.get("default");
 
 		return {
@@ -656,7 +670,8 @@ export class ModuleInterceptor implements IModuleInterceptor {
 
 		try {
 			// Get security policy
-			const policy = this.securityPolicies.get(extensionId) ||
+			const policy =
+				this.securityPolicies.get(extensionId) ||
 				this.securityPolicies.get("default");
 
 			if (!policy) {
@@ -669,8 +684,10 @@ export class ModuleInterceptor implements IModuleInterceptor {
 			}
 
 			// Perform deep security analysis if needed
-			if (policy.securityLevel === SecurityLevel.SANDBOXED ||
-				policy.securityLevel === SecurityLevel.RESTRICTED) {
+			if (
+				policy.securityLevel === SecurityLevel.SANDBOXED ||
+				policy.securityLevel === SecurityLevel.RESTRICTED
+			) {
 				const resolvedPath = this.resolveModulePath(moduleId, "");
 				const analysis = this.analyzeModuleSecurity(resolvedPath);
 				return analysis.isSafe;
@@ -1295,7 +1312,9 @@ export class ModuleInterceptor implements IModuleInterceptor {
 		console.log("[ModuleInterceptor] Registering with security service");
 
 		// This will be implemented when SecurityService methods are available
-		console.log("[ModuleInterceptor] Security service registration complete");
+		console.log(
+			"[ModuleInterceptor] Security service registration complete",
+		);
 	}
 
 	/**

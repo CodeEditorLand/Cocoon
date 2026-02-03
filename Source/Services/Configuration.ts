@@ -108,20 +108,20 @@ export class Configuration implements IConfigurationService {
 				_timestamp: Date.now(),
 				window: {
 					zoomLevel: 0,
-					theme: 'dark'
+					theme: "dark",
 				},
 				editor: {
 					fontSize: 14,
-					lineNumbers: 'on'
-				}
+					lineNumbers: "on",
+				},
 			});
 			this.configuration.set(ConfigurationScope.WORKSPACE, {
 				_version: 1,
-				_timestamp: Date.now()
+				_timestamp: Date.now(),
 			});
 			this.configuration.set(ConfigurationScope.PROFILE, {
 				_version: 1,
-				_timestamp: Date.now()
+				_timestamp: Date.now(),
 			});
 		}
 
@@ -159,7 +159,9 @@ export class Configuration implements IConfigurationService {
 		}
 
 		if (!this.validateConfigurationValue(key, value)) {
-			throw new Error(`Invalid configuration value for key ${key}: ${value}`);
+			throw new Error(
+				`Invalid configuration value for key ${key}: ${value}`,
+			);
 		}
 
 		let scopeConfig = this.configuration.get(scope);
@@ -181,10 +183,19 @@ export class Configuration implements IConfigurationService {
 			try {
 				await this.ipcService.send("save_configuration_data", {
 					configData: {
-						application: this.configuration.get(ConfigurationScope.APPLICATION) || {},
-						workspace: this.configuration.get(ConfigurationScope.WORKSPACE) || {},
-						profile: this.configuration.get(ConfigurationScope.PROFILE) || {}
-					}
+						application:
+							this.configuration.get(
+								ConfigurationScope.APPLICATION,
+							) || {},
+						workspace:
+							this.configuration.get(
+								ConfigurationScope.WORKSPACE,
+							) || {},
+						profile:
+							this.configuration.get(
+								ConfigurationScope.PROFILE,
+							) || {},
+					},
 				});
 				console.log(
 					`[ConfigurationService] Configuration updated: ${key} = ${value}`,
@@ -197,9 +208,14 @@ export class Configuration implements IConfigurationService {
 					`[ConfigurationService] Failed to update configuration: ${key}`,
 					error,
 				);
-				
+
 				// Implement conflict resolution
-				await this.handleConfigurationConflict(error, key, value, scope);
+				await this.handleConfigurationConflict(
+					error,
+					key,
+					value,
+					scope,
+				);
 			}
 		}
 	}
@@ -220,12 +236,12 @@ export class Configuration implements IConfigurationService {
 		}
 
 		// Key must not start or end with dots
-		if (key.startsWith('.') || key.endsWith('.')) {
+		if (key.startsWith(".") || key.endsWith(".")) {
 			return false;
 		}
 
 		// Key must not contain consecutive dots
-		if (key.includes('..')) {
+		if (key.includes("..")) {
 			return false;
 		}
 
@@ -242,28 +258,32 @@ export class Configuration implements IConfigurationService {
 		}
 
 		// Type-specific validation based on key patterns
-		if (key.includes('zoomLevel') || key.includes('fontSize')) {
+		if (key.includes("zoomLevel") || key.includes("fontSize")) {
 			// Numeric values must be valid numbers
-			if (typeof value !== 'number' || !isFinite(value)) {
+			if (typeof value !== "number" || !isFinite(value)) {
 				return false;
 			}
-			
+
 			// Range validation
-			if (key.includes('zoomLevel')) {
+			if (key.includes("zoomLevel")) {
 				return value >= -8 && value <= 9; // Standard zoom level range
 			}
-			if (key.includes('fontSize')) {
+			if (key.includes("fontSize")) {
 				return value >= 6 && value <= 100; // Reasonable font size range
 			}
 		}
 
 		// Boolean values must be actual booleans
-		if (key.includes('enable') || key.includes('show') || key.includes('visible')) {
-			return typeof value === 'boolean';
+		if (
+			key.includes("enable") ||
+			key.includes("show") ||
+			key.includes("visible")
+		) {
+			return typeof value === "boolean";
 		}
 
 		// String values must be non-empty strings
-		if (typeof value === 'string') {
+		if (typeof value === "string") {
 			return value.trim().length > 0;
 		}
 
@@ -281,11 +301,14 @@ export class Configuration implements IConfigurationService {
 
 		// Validate all keys and values in the scope
 		const keys: string[] = [];
-		this.collectKeys(scopeConfig, '', keys);
+		this.collectKeys(scopeConfig, "", keys);
 
 		for (const key of keys) {
 			const value = this.getNestedValue(scopeConfig, key);
-			if (!this.validateConfigurationKey(key) || !this.validateConfigurationValue(key, value)) {
+			if (
+				!this.validateConfigurationKey(key) ||
+				!this.validateConfigurationValue(key, value)
+			) {
 				return false;
 			}
 		}
@@ -406,7 +429,9 @@ export class Configuration implements IConfigurationService {
 	 * Reload configuration from Mountain
 	 */
 	async reloadConfiguration(): Promise<void> {
-		console.log("[ConfigurationService] Reloading configuration from Mountain");
+		console.log(
+			"[ConfigurationService] Reloading configuration from Mountain",
+		);
 
 		try {
 			// Clear existing listeners
@@ -415,7 +440,9 @@ export class Configuration implements IConfigurationService {
 			// Reload configuration
 			await this.initialize();
 
-			console.log("[ConfigurationService] Configuration reloaded successfully");
+			console.log(
+				"[ConfigurationService] Configuration reloaded successfully",
+			);
 		} catch (error) {
 			console.error(
 				"[ConfigurationService] Failed to reload configuration:",
@@ -432,18 +459,22 @@ export class Configuration implements IConfigurationService {
 		error: any,
 		key: string,
 		value: any,
-		scope: ConfigurationScope
+		scope: ConfigurationScope,
 	): Promise<void> {
-		console.warn("[ConfigurationService] Configuration conflict detected, implementing retry logic");
+		console.warn(
+			"[ConfigurationService] Configuration conflict detected, implementing retry logic",
+		);
 
 		const maxRetries = 3;
 		const baseDelay = 100; // ms
 
 		for (let attempt = 1; attempt <= maxRetries; attempt++) {
 			const delay = baseDelay * Math.pow(2, attempt - 1);
-			console.log(`[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`);
+			console.log(
+				`[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`,
+			);
 
-			await new Promise(resolve => setTimeout(resolve, delay));
+			await new Promise((resolve) => setTimeout(resolve, delay));
 
 			try {
 				// Reload configuration first to get latest state
@@ -465,20 +496,38 @@ export class Configuration implements IConfigurationService {
 				// Retry saving
 				await this.ipcService.send("save_configuration_data", {
 					configData: {
-						application: this.configuration.get(ConfigurationScope.APPLICATION) || {},
-						workspace: this.configuration.get(ConfigurationScope.WORKSPACE) || {},
-						profile: this.configuration.get(ConfigurationScope.PROFILE) || {}
-					}
+						application:
+							this.configuration.get(
+								ConfigurationScope.APPLICATION,
+							) || {},
+						workspace:
+							this.configuration.get(
+								ConfigurationScope.WORKSPACE,
+							) || {},
+						profile:
+							this.configuration.get(
+								ConfigurationScope.PROFILE,
+							) || {},
+					},
 				});
 
-				console.log("[ConfigurationService] Configuration saved successfully after retry");
+				console.log(
+					"[ConfigurationService] Configuration saved successfully after retry",
+				);
 				return;
 			} catch (retryError) {
-				console.error(`[ConfigurationService] Retry attempt ${attempt} failed:`, retryError);
+				console.error(
+					`[ConfigurationService] Retry attempt ${attempt} failed:`,
+					retryError,
+				);
 
 				if (attempt === maxRetries) {
-					console.error("[ConfigurationService] All retry attempts failed, configuration may be out of sync");
-					throw new Error(`Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`);
+					console.error(
+						"[ConfigurationService] All retry attempts failed, configuration may be out of sync",
+					);
+					throw new Error(
+						`Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`,
+					);
 				}
 			}
 		}

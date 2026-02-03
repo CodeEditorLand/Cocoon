@@ -1,5 +1,5 @@
 /**
- * @module WebViewPanel
+ * @module WebviewPanel
  * @description Defines the service for creating and managing `vscode.WebviewPanel` instances.
  */
 
@@ -16,16 +16,16 @@ import {
 } from "vscode";
 
 import { IPCService } from "./IPC.js";
-import { ConvertContentOptionToDTO } from "./TypeConverter/WebView/ConvertContentOptionToDTO.js";
-import { ConvertPanelOptionToDTO } from "./TypeConverter/WebView/ConvertPanelOptionToDTO.js";
-import { ConvertShowOptionToDTO } from "./TypeConverter/WebView/ConvertShowOptionToDTO.js";
-import { WebViewPanelImplementation } from "./WebViewPanel/WebViewPanelImplementation.js";
+import { ConvertContentOptionToDTO } from "./TypeConverter/Webview/ConvertContentOptionToDTO.js";
+import { ConvertPanelOptionToDTO } from "./TypeConverter/Webview/ConvertPanelOptionToDTO.js";
+import { ConvertShowOptionToDTO } from "./TypeConverter/Webview/ConvertShowOptionToDTO.js";
+import { WebviewPanelImplementation } from "./WebviewPanel/WebviewPanelImplementation.js";
 
 /**
- * @interface WebViewPanel
- * @description The contract for the WebViewPanel service.
+ * @interface WebviewPanel
+ * @description The contract for the WebviewPanel service.
  */
-export interface WebViewPanel {
+export interface WebviewPanel {
 	readonly CreateWebviewPanel: (
 		Extension: IExtensionDescription,
 		ViewType: string,
@@ -43,16 +43,16 @@ export interface WebViewPanel {
 }
 
 /**
- * @class WebViewPanel
+ * @class WebviewPanel
  * @description The `Effect.Service` for managing webview panels.
  */
-export class WebViewPanelService extends Effect.Service<WebViewPanelService>()(
-	"Service/WebViewPanel",
+export class WebviewPanelService extends Effect.Service<WebviewPanelService>()(
+	"Service/WebviewPanel",
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
 			const ActivePanelsRef = yield* Ref.make(
-				new Map<string, WebViewPanelImplementation>(),
+				new Map<string, WebviewPanelImplementation>(),
 			);
 
 			// --- RPC Handlers ---
@@ -138,7 +138,7 @@ export class WebViewPanelService extends Effect.Service<WebViewPanelService>()(
 									(Map) => (Map.delete(Handle), Map),
 								),
 							);
-						const Panel = new WebViewPanelImplementation(
+						const Panel = new WebviewPanelImplementation(
 							Handle,
 							IPC,
 							Extension,

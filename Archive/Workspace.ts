@@ -1,5 +1,5 @@
 /**
- * @module WorkSpace (ARCHIVED)
+ * @module Workspace (ARCHIVED)
  * @description
  * ARCHIVED - This file has been adapted and moved to Source/Services/Workspace.ts
  *
@@ -55,7 +55,7 @@ import { FileSystemService } from "./FileSystem.js";
 import { IPCService } from "./IPC.js";
 import { ToAPI as UriToAPI } from "./TypeConverter/Main/URI.js";
 import { FromDTO as WorkspaceFolderFromDTO } from "./TypeConverter/Main/WorkspaceFolder.js";
-import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkSpaceEdit.js";
+import { FromAPI as WorkspaceEditFromAPI } from "./TypeConverter/WorkspaceEdit.js";
 import { CreateEventStream } from "./Utility/EventStream.js";
 
 // Helper to convert public scope to internal overrides
@@ -94,10 +94,10 @@ class InternalWorkspace {
 }
 
 /**
- * @interface WorkSpace
- * @description The contract for the WorkSpace service, mirroring `vscode.workspace`.
+ * @interface Workspace
+ * @description The contract for the Workspace service, mirroring `vscode.workspace`.
  */
-export interface WorkSpace {
+export interface Workspace {
 	readonly name: string | undefined;
 	readonly workspaceFile: Uri | undefined;
 	readonly workspaceFolders: readonly WorkspaceFolder[] | undefined;
@@ -134,11 +134,11 @@ export interface WorkSpace {
 }
 
 /**
- * @class WorkSpaceService
+ * @class WorkspaceService
  * @description The `Effect.Service` for the `vscode.workspace` API.
  */
-export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
-	"Service/WorkSpace",
+export class WorkspaceService extends Effect.Service<WorkspaceService>()(
+	"Service/Workspace",
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
@@ -239,7 +239,7 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 					Effect.runPromise(AcceptEditorState(ActiveId, VisibleIds)),
 			);
 
-			const service: WorkSpace = {
+			const service: Workspace = {
 				get name() {
 					return Effect.runSync(Ref.get(InternalWorkspaceRef))?.Name;
 				},
@@ -338,7 +338,7 @@ export class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
 									),
 							),
 						);
-					}).pipe(Effect.withSpan("WorkSpace.openTextDocument"));
+					}).pipe(Effect.withSpan("Workspace.openTextDocument"));
 				},
 				getConfiguration: (
 					section?: string,

@@ -46,7 +46,6 @@ export interface OptimizationSuggestion {
  * PerformanceMonitoringService implementation
  */
 export class PerformanceMonitoringService {
-
 	private metrics: PerformanceMetrics = {
 		extensionLoadTime: 0,
 		apiCallLatency: 0,

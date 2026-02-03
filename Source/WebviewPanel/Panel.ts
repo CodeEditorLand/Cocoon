@@ -1,11 +1,11 @@
 /**
  * @module Panel
  * @description
- * WebView Panel - Individual WebView panel implementation with full lifecycle management
+ * Webview Panel - Individual Webview panel implementation with full lifecycle management
  *
  * RESPONSIBILITIES:
- * - Implement complete WebView panel lifecycle (create, show, hide, dispose)
- * - Manage bidirectional message passing between extension and WebView
+ * - Implement complete Webview panel lifecycle (create, show, hide, dispose)
+ * - Manage bidirectional message passing between extension and Webview
  * - Track and manage panel state (active, visible, viewColumn)
  * - Handle panel visibility changes and state transitions
  * - Coordinate with IPC for state synchronization with Mountain
@@ -17,7 +17,7 @@
  * - Lifecycle: Initialize → Activate → Update → Deactivate → Dispose
  *
  * INTEGRATION:
- * - **Sky**: Astro display layer renders this panel's WebView iframe
+ * - **Sky**: Astro display layer renders this panel's Webview iframe
  * - **Wind**: Effect-TS services serve panel resources and content assets
  * - **Mountain**: Panel state persisted to Mountain backend via IPC for session restore
  * - **Message**: Message module handles bidirectional communication
@@ -34,13 +34,13 @@
  * - Defensive checks prevent operations after disposal
  * - State change detection prevents redundant IPC notifications
  * - EventStream provides Effect-TS compatible event system
- * - WebViewImplementation handles embedding webview instance
+ * - WebviewImplementation handles embedding webview instance
  *
- * TODOs (WebView Debugging - LOW):
+ * TODOs (Webview Debugging - LOW):
  * - Add DevTools integration for debugging panel content
- * - Add console capture from WebView context
+ * - Add console capture from Webview context
  * - Add performance monitoring (render times, memory usage)
- * - Add WebView inspector for DOM examination
+ * - Add Webview inspector for DOM examination
  *
  * TODOs (Performance Monitoring - LOW):
  * - Track initial panel creation time
@@ -48,12 +48,12 @@
  * - Monitor memory usage for each panel
  * - Track message round-trip latency
  *
- * TODOs (WebView Permissions - LOW):
- * - Implement permission request system for WebView
+ * TODOs (Webview Permissions - LOW):
+ * - Implement permission request system for Webview
  * - Permission dialogs for sensitive operations
  * - Permission persistence across sessions
  *
- * Reference: TODOs mention WebViewPanel as HIGH priority for Mountain integration
+ * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
@@ -70,7 +70,7 @@ import type {
 
 import type { IPC } from "../IPC.js";
 import { CreateEventStream } from "../Utility/EventStream.js";
-import { WebViewImplementation } from "./WebViewImplementation.js";
+import { WebviewImplementation } from "./WebviewImplementation.js";
 
 /**
  * @interface PanelOptions
@@ -108,7 +108,7 @@ export interface ViewState {
 /**
  * @class Panel
  * @implements {VSCodeWebviewPanel}
- * @description WebView Panel with complete lifecycle management
+ * @description Webview Panel with complete lifecycle management
  */
 export class Panel implements VSCodeWebviewPanel {
 	private IsDisposed = false;
@@ -147,7 +147,7 @@ export class Panel implements VSCodeWebviewPanel {
 		this.extension = Extension;
 		this.viewType = InitialViewType;
 		this.options = InitialOptions;
-		this.webview = new WebViewImplementation(
+		this.webview = new WebviewImplementation(
 			this.handle,
 			IPCSvc,
 			Extension,
@@ -251,18 +251,18 @@ export class Panel implements VSCodeWebviewPanel {
 		}
 		this.IsDisposed = true;
 		this.OnDidDisposeEmitter.Fire();
-		(this.webview as WebViewImplementation).dispose();
+		(this.webview as WebviewImplementation).dispose();
 		Effect.runFork(
 			this.ipcService.SendNotification("$disposeWebview", [this.handle]),
 		);
 	}
 
 	/**
-	 * Fire a message received event from the WebView
+	 * Fire a message received event from the Webview
 	 */
 	FireDidReceiveMessage(Message: unknown): void {
 		if (!this.IsDisposed) {
-			(this.webview as WebViewImplementation).fireDidReceiveMessage(
+			(this.webview as WebviewImplementation).fireDidReceiveMessage(
 				Message,
 			);
 		}

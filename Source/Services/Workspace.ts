@@ -5,7 +5,7 @@
  *
  * Architecture:
  * - Lifted from: src/vs/workbench/api/common/extHostWorkspace.ts (VSCode Dependency/Editor)
- * - Adapted from: Source/Archive/WorkSpace.ts (borrowed working patterns)
+ * - Adapted from: Source/Archive/Workspace.ts (borrowed working patterns)
  * - Mountain Integration: Delegates workspace operations via gRPC to backend
  *
  * Dependencies:
@@ -480,7 +480,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 * Apply workspace edit
 			 *
 			 * Implementation Pattern: src/vs/workbench/api/common/extHostWorkspace.ts (applyEdit)
-			 * TODO: Integrate TypeConverter/WorkSpaceEdit.ts for serialization
+			 * TODO: Integrate TypeConverter/WorkspaceEdit.ts for serialization
 			 */
 			const ApplyEdit = (
 				edit: VSCode.WorkspaceEdit,

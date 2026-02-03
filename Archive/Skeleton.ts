@@ -216,8 +216,8 @@ class StoragePathService extends Effect.Service<StoragePathService>()(
 class WindowService extends Effect.Service<WindowService>()("Service/Window", {
 	sync: () => ({}),
 }) {}
-class WorkSpaceService extends Effect.Service<WorkSpaceService>()(
-	"Service/WorkSpace",
+class WorkspaceService extends Effect.Service<WorkspaceService>()(
+	"Service/Workspace",
 	{ sync: () => ({}) },
 ) {}
 class CommandService extends Effect.Service<CommandService>()(
@@ -235,8 +235,8 @@ class TreeViewService extends Effect.Service<TreeViewService>()(
 	"Service/TreeView",
 	{ sync: () => ({}) },
 ) {}
-class WebViewPanelService extends Effect.Service<WebViewPanelService>()(
-	"Service/WebViewPanel",
+class WebviewPanelService extends Effect.Service<WebviewPanelService>()(
+	"Service/WebviewPanel",
 	{ sync: () => ({}) },
 ) {}
 class EnvironmentService extends Effect.Service<EnvironmentService>()(
@@ -306,7 +306,7 @@ const composeAppLayer = (_initializationData: IExtensionHostInitData) => {
 	);
 	const L5_Services = Layer.mergeAll(
 		StoragePathService.Default,
-		WorkSpaceService.Default,
+		WorkspaceService.Default,
 		EnvironmentService.Default,
 	);
 	const L6_Services = Layer.mergeAll(
@@ -317,7 +317,7 @@ const composeAppLayer = (_initializationData: IExtensionHostInitData) => {
 		DebugService.Default,
 		StatusBarService.Default,
 		TreeViewService.Default,
-		WebViewPanelService.Default,
+		WebviewPanelService.Default,
 	);
 	const L8_Services = Layer.mergeAll(
 		ExtensionHostService.Default,

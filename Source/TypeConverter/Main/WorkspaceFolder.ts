@@ -1,5 +1,5 @@
 /**
- * @module WorkSpaceFolder
+ * @module WorkspaceFolder
  * @description Converts `vscode.WorkspaceFolder` to its DTO representation.
  */
 

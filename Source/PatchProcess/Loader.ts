@@ -41,17 +41,18 @@
  * - **TBD**: Rate limiting and throttling controls
  */
 
-import { Effect, Layer, Context, Config } from "effect";
 import * as Process from "node:process";
 
-import { RunPatchProcess, PatcherService } from "./Patcher.js";
+import { Config, Context, Effect, Layer } from "effect";
+
+import { PatcherService, RunPatchProcess } from "./Patcher.js";
 import { PerformSecurityAudit, SecurityPolicy } from "./Security.js";
 import {
 	InitializeProcessValidation,
+	RunSecurityValidation,
+	ValidateChildProcessSpawn,
 	ValidateFileSystemAccess,
 	ValidateNetworkAccess,
-	ValidateChildProcessSpawn,
-	RunSecurityValidation,
 } from "./Validator.js";
 
 // --- Service Definition ---
@@ -88,12 +89,14 @@ export class LoaderService extends Effect.Service<LoaderService>()(
 	{
 		effect: Effect.gen(function* () {
 			const SecurityPolicy = yield* Config.string("SecurityPolicy").pipe(
-				Effect.catchTag("MissingConfig", () => Effect.succeed("default")),
+				Effect.catchTag("MissingConfig", () =>
+					Effect.succeed("default"),
+				),
 			);
 
-			const EnableMonitoring = yield* Config.boolean("EnableMonitoring").pipe(
-				Effect.catchAll(() => Effect.succeed(true)),
-			);
+			const EnableMonitoring = yield* Config.boolean(
+				"EnableMonitoring",
+			).pipe(Effect.catchAll(() => Effect.succeed(true)));
 
 			return {
 				LoadSecurityPatches: RunPatchProcess,
@@ -173,9 +176,12 @@ const StartPeriodicValidation = Effect.gen(function* () {
 
 			const ValidationResult = yield* RunSecurityValidation.pipe(
 				Effect.catchAll((Error) => {
-					return Effect.logError("Periodic security validation failed", {
-						Error,
-					});
+					return Effect.logError(
+						"Periodic security validation failed",
+						{
+							Error,
+						},
+					);
 				}),
 			);
 
@@ -313,7 +319,9 @@ export const InstallSecurityHooks = Effect.gen(function* () {
 const SetResourceLimits = Effect.gen(function* () {
 	// TODO: Implement resource limit setting
 	// This requires native Node.js API calls to setrlimit
-	yield* Effect.logTrace("Resource limit setting not yet implemented (needs native integration)");
+	yield* Effect.logTrace(
+		"Resource limit setting not yet implemented (needs native integration)",
+	);
 });
 
 /**

@@ -6,7 +6,7 @@
  *
  * Based on VS Code's extension API construction patterns.
  * Specification: IMPLEMENTATION-SPECIFICATION.md (API Factory Service)
- * TODO: Complete WebView panel API implementation
+ * TODO: Complete Webview panel API implementation
  * TODO: Add comprehensive API validation
  * TODO: Implement advanced security sandboxing
  * TODO: Add cross-Element integration patterns

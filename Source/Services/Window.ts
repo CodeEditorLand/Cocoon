@@ -29,14 +29,14 @@
  * - TypeConverter/Dialog/SaveDialogOption: Serializes save dialog options
  * - TypeConverter/QuickInput: Serializes quick pick items and input box options
  * - TypeConverter/StatusBar: Serializes status bar item state
- * - TypeConverter/WebView/*: Serializes webview panel and content options
+ * - TypeConverter/Webview/*: Serializes webview panel and content options
  * - TypeConverter/Main/ViewColumn: Converts VSCode.ViewColumn to internal DTO
  *
  * Dependencies:
  * - IMountainClientService: For gRPC communication with Mountain
  * - TypeConverter modules: For serialization of options and objects
  * - CreateEventStream: For window state change event emitters
- * - WebViewPanelImplementation: For webview panel proxy implementation
+ * - WebviewPanelImplementation: For webview panel proxy implementation
  *
  * IMPLEMENTATION NOTES:
  * - All window operations delegate to Mountain's native UI implementation via gRPC
@@ -81,16 +81,16 @@ import { IMountainClientService } from "../Interfaces/IMountainClientService.js"
 // Import type converters
 import { ToDTO as OpenDialogOptionToDTO } from "../TypeConverter/Dialog/OpenDialogOption.js";
 import { ToDTO as SaveDialogOptionToDTO } from "../TypeConverter/Dialog/SaveDialogOption.js";
+import { FromAPI as ViewColumnFromAPI } from "../TypeConverter/Main/ViewColumn.js";
 import {
 	SerializeButtons,
 	SerializeItems,
 } from "../TypeConverter/QuickInput.js";
 import { FromAPI as StatusBarFromAPI } from "../TypeConverter/StatusBar.js";
-import { FromAPI as ViewColumnFromAPI } from "../TypeConverter/Main/ViewColumn.js";
-import { ConvertPanelOptionToDTO } from "../TypeConverter/WebView/ConvertPanelOptionToDTO.js";
+import { ConvertPanelOptionToDTO } from "../TypeConverter/Webview/ConvertPanelOptionToDTO.js";
 import { CreateEventStream } from "../Utility/EventStream.js";
 // Import webview implementation
-import { WebViewPanelImplementation } from "../WebViewPanel/WebViewPanelImplementation.js";
+import { WebviewPanelImplementation } from "../WebviewPanel/WebviewPanelImplementation.js";
 
 /**
  * @interface Logger
@@ -114,10 +114,10 @@ export interface Logger {
 }
 
 /**
- * @interface WorkSpace
- * @description WorkSpace interface for accessing text editors
+ * @interface Workspace
+ * @description Workspace interface for accessing text editors
  */
-export interface WorkSpace {
+export interface Workspace {
 	readonly activeTextEditor: VSCode.TextEditor | undefined;
 	readonly visibleTextEditors: readonly VSCode.TextEditor[];
 }
@@ -220,7 +220,7 @@ export interface Window {
  * - WithProgress: COMPLETE (Progress reporter with cancellation)
  * - CreateStatusBarItem: COMPLETE (Full proxy implementation)
  * - CreateOutputChannel: COMPLETE (Full proxy implementation)
- * - CreateWebviewPanel: COMPLETE (TypeConverter/WebView)
+ * - CreateWebviewPanel: COMPLETE (TypeConverter/Webview)
  *
  * PENDING (Mountain Integration - HIGH):
  * - All gRPC calls marked with TODO need Mountain implementation
@@ -238,8 +238,8 @@ export class WindowService extends Effect.Service<WindowService>()(
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
 			const MountainClient = yield* IMountainClientService;
-			const WorkSpace =
-				yield* Context.Tag<WorkSpace>("Service/WorkSpace");
+			const Workspace =
+				yield* Context.Tag<Workspace>("Service/Workspace");
 			const Logger = yield* Context.Tag<Logger>("Service/Logger");
 
 			// Window state tracking
@@ -249,7 +249,8 @@ export class WindowService extends Effect.Service<WindowService>()(
 			});
 
 			// Event stream for window state changes
-			const OnDidChangeWindowStateStream = CreateEventStream<VSCode.WindowState>();
+			const OnDidChangeWindowStateStream =
+				CreateEventStream<VSCode.WindowState>();
 
 			/**
 			 * Accept window state change notification from Mountain
@@ -259,7 +260,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 			const AcceptWindowStateChange = (State: VSCode.WindowState) =>
 				Effect.gen(function* () {
 					const CurrentState = yield* Ref.get(WindowStateRef);
-					
+
 					// Only fire if state actually changed
 					if (
 						CurrentState.focused !== State.focused ||
@@ -340,22 +341,26 @@ export class WindowService extends Effect.Service<WindowService>()(
 						try: async () => {
 							// TODO: MOUNTAIN-INTEGRATION: Implement actual gRPC call (HIGH)
 							// return await MountainClient.sendRequest('window.showTextDocument', RequestPayload);
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowTextDocument`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowTextDocument`,
+								);
 							return "editor-1";
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show text document: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show text document: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to show text document: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to show text document: ${(error as Error).message}`);
 						},
 					});
 
 					// Find editor in workspace after Mountain processes the request
-					const Editor = WorkSpace.visibleTextEditors.find(
+					const Editor = Workspace.visibleTextEditors.find(
 						(e) => (e as any).id === EditorId,
 					);
 
@@ -410,17 +415,21 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     });
 							//     return Items[selectedIndex];
 							// }
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowInformationMessage`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowInformationMessage`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show information message: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show information message: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to show information message: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to show information message: ${(error as Error).message}`);
 						},
 					});
 
@@ -466,17 +475,21 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     });
 							//     return Items[selectedIndex];
 							// }
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowWarningMessage`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowWarningMessage`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show warning message: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show warning message: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to show warning message: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to show warning message: ${(error as Error).message}`);
 						},
 					});
 
@@ -522,17 +535,21 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     });
 							//     return Items[selectedIndex];
 							// }
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowErrorMessage`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowErrorMessage`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show error message: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show error message: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to show error message: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to show error message: ${(error as Error).message}`);
 						},
 					});
 
@@ -569,11 +586,12 @@ export class WindowService extends Effect.Service<WindowService>()(
 						options: Options
 							? {
 									placeHolder: Options.placeHolder,
-									matchOnDescription: Options.matchOnDescription,
+									matchOnDescription:
+										Options.matchOnDescription,
 									matchOnDetail: Options.matchOnDetail,
 									ignoreFocusLost: Options.ignoreFocusLost,
 									canPickMany: Options.canPickMany,
-							  }
+								}
 							: undefined,
 						buttons: ButtonsDTO,
 					};
@@ -583,17 +601,21 @@ export class WindowService extends Effect.Service<WindowService>()(
 						try: async () => {
 							// TODO: MOUNTAIN-INTEGRATION: Implement actual gRPC call (HIGH)
 							// const selectedIndex = await MountainClient.sendRequest('window.showQuickPick', RequestPayload);
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowQuickPick`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowQuickPick`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show quick pick: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show quick pick: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to show quick pick: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to show quick pick: ${(error as Error).message}`);
 						},
 					});
 
@@ -632,8 +654,10 @@ export class WindowService extends Effect.Service<WindowService>()(
 								placeHolder: Options.placeHolder,
 								password: Options.password,
 								ignoreFocusLost: Options.ignoreFocusLost,
-								validateInput: Options.validateInput ? Options.validateInput.toString() : undefined,
-						  }
+								validateInput: Options.validateInput
+									? Options.validateInput.toString()
+									: undefined,
+							}
 						: undefined;
 
 					// Delegates to Mountain's native input box implementation via gRPC
@@ -641,17 +665,21 @@ export class WindowService extends Effect.Service<WindowService>()(
 						try: async () => {
 							// TODO: MOUNTAIN-INTEGRATION: Implement actual gRPC call (HIGH)
 							// return await MountainClient.sendRequest('window.showInputBox', RequestPayload);
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowInputBox`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowInputBox`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show input box: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show input box: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to show input box: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to show input box: ${(error as Error).message}`);
 						},
 					});
 
@@ -685,17 +713,21 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     options: OptionsDTO
 							// });
 							// return resultURIs.map((uri: string) => VSCode.Uri.parse(uri));
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowOpenDialog`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowOpenDialog`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show open dialog: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show open dialog: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to show open dialog: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to show open dialog: ${(error as Error).message}`);
 						},
 					});
 
@@ -729,17 +761,21 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     options: OptionsDTO
 							// });
 							// return uri ? VSCode.Uri.parse(uri) : undefined;
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for ShowSaveDialog`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for ShowSaveDialog`,
+								);
 							return undefined;
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to show save dialog: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to show save dialog: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to show save dialog: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to show save dialog: ${(error as Error).message}`);
 						},
 					});
 
@@ -773,16 +809,26 @@ export class WindowService extends Effect.Service<WindowService>()(
 						name: undefined as string | undefined,
 						text: "",
 						tooltip: undefined as string | any | undefined,
-						command: undefined as string | VSCode.Command | undefined,
+						command: undefined as
+							| string
+							| VSCode.Command
+							| undefined,
 						alignment: Alignment ?? VSCode.StatusBarAlignment.Left,
 						priority: Priority,
-						backgroundColor: undefined as string | VSCode.ThemeColor | undefined,
-						color: undefined as string | VSCode.ThemeColor | undefined,
+						backgroundColor: undefined as
+							| string
+							| VSCode.ThemeColor
+							| undefined,
+						color: undefined as
+							| string
+							| VSCode.ThemeColor
+							| undefined,
 						isVisible: false,
 					};
 
 					// Convert alignment to DTO format
-					const AlignmentDTO = State.alignment === 1 /* Left */ ? 0 : 1;
+					const AlignmentDTO =
+						State.alignment === 1 /* Left */ ? 0 : 1;
 
 					// Send creation request to Mountain
 					yield* Effect.tryPromise({
@@ -793,16 +839,20 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     alignment: AlignmentDTO,
 							//     priority: Priority
 							// });
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for CreateStatusBarItem`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for CreateStatusBarItem`,
+								);
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to create status bar item: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to create status bar item: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to create status bar item: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to create status bar item: ${(error as Error).message}`);
 						},
 					});
 
@@ -819,102 +869,158 @@ export class WindowService extends Effect.Service<WindowService>()(
 						},
 						set text(value: string) {
 							State.text = value;
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send update to Mountain
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to update status bar text`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send update to Mountain
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to update status bar text`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						get tooltip() {
 							return State.tooltip;
 						},
-						set tooltip(value: string | VSCode.MarkdownString | undefined) {
+						set tooltip(
+							value: string | VSCode.MarkdownString | undefined,
+						) {
 							State.tooltip = value;
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send update to Mountain with proper serialization
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to update status bar tooltip`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send update to Mountain with proper serialization
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to update status bar tooltip`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						get command() {
 							return State.command;
 						},
-						set command(value: string | VSCode.Command | undefined) {
+						set command(
+							value: string | VSCode.Command | undefined,
+						) {
 							State.command = value;
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send update to Mountain
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to update status bar command`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send update to Mountain
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to update status bar command`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						get backgroundColor() {
 							return State.backgroundColor;
 						},
-						set backgroundColor(value: string | VSCode.ThemeColor | undefined) {
+						set backgroundColor(
+							value: string | VSCode.ThemeColor | undefined,
+						) {
 							State.backgroundColor = value;
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send update to Mountain
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to update status bar background color`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send update to Mountain
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to update status bar background color`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						get color() {
 							return State.color;
 						},
-						set color(value: string | VSCode.ThemeColor | undefined) {
+						set color(
+							value: string | VSCode.ThemeColor | undefined,
+						) {
 							State.color = value;
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send update to Mountain
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to update status bar color`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send update to Mountain
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to update status bar color`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						show(): void {
 							State.isVisible = true;
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send show to Mountain
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to show status bar item`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send show to Mountain
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to show status bar item`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						hide(): void {
 							State.isVisible = false;
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send hide to Mountain
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to hide status bar item`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send hide to Mountain
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to hide status bar item`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						dispose(): void {
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send dispose to Mountain
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to dispose status bar item`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send dispose to Mountain
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to dispose status bar item`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 					} as VSCode.StatusBarItem);
 				});
@@ -945,16 +1051,20 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     id: ChannelId,
 							//     name: Name
 							// });
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for CreateOutputChannel`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for CreateOutputChannel`,
+								);
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to create output channel: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to create output channel: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to create output channel: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to create output channel: ${(error as Error).message}`);
 						},
 					});
 
@@ -962,70 +1072,127 @@ export class WindowService extends Effect.Service<WindowService>()(
 					return yield* Effect.succeed({
 						name: Name,
 						append(value: string): void {
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send append to Mountain
-									yield* Logger.Debug(`[WindowService] OutputChannel '${Name}' append: ${value.slice(0, 100)}`);
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to append to output channel`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send append to Mountain
+										yield *
+											Logger.Debug(
+												`[WindowService] OutputChannel '${Name}' append: ${value.slice(0, 100)}`,
+											);
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to append to output channel`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						appendLine(value: string): void {
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send appendLine to Mountain
-									yield* Logger.Debug(`[WindowService] OutputChannel '${Name}' appendLine: ${value.slice(0, 100)}`);
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to appendLine to output channel`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send appendLine to Mountain
+										yield *
+											Logger.Debug(
+												`[WindowService] OutputChannel '${Name}' appendLine: ${value.slice(0, 100)}`,
+											);
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to appendLine to output channel`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						clear(): void {
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send clear to Mountain
-									yield* Logger.Debug(`[WindowService] OutputChannel '${Name}' cleared`);
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to clear output channel`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send clear to Mountain
+										yield *
+											Logger.Debug(
+												`[WindowService] OutputChannel '${Name}' cleared`,
+											);
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to clear output channel`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
-						show(columnOrPreserveFocus?: boolean | VSCode.ViewColumn, preserveFocus?: boolean): void {
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send show to Mountain
-									yield* Logger.Debug(`[WindowService] OutputChannel '${Name}' shown`);
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to show output channel`, err as Error);
-								},
-							}));
+						show(
+							columnOrPreserveFocus?: boolean | VSCode.ViewColumn,
+							preserveFocus?: boolean,
+						): void {
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send show to Mountain
+										yield *
+											Logger.Debug(
+												`[WindowService] OutputChannel '${Name}' shown`,
+											);
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to show output channel`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						hide(): void {
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send hide to Mountain
-									yield* Logger.Debug(`[WindowService] OutputChannel '${Name}' hidden`);
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to hide output channel`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send hide to Mountain
+										yield *
+											Logger.Debug(
+												`[WindowService] OutputChannel '${Name}' hidden`,
+											);
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to hide output channel`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						dispose(): void {
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send dispose to Mountain
-									yield* Logger.Debug(`[WindowService] OutputChannel '${Name}' disposed`);
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to dispose output channel`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send dispose to Mountain
+										yield *
+											Logger.Debug(
+												`[WindowService] OutputChannel '${Name}' disposed`,
+											);
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to dispose output channel`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 					} as VSCode.OutputChannel);
 				});
@@ -1036,8 +1203,8 @@ export class WindowService extends Effect.Service<WindowService>()(
 			 * Implementation Pattern: src/vs/workbench/api/common/extHostWebview.ts
 			 *
 			 * Integration:
-			 * - TypeConverter/WebView: Serializes panel and content options
-			 * - WebViewPanelImplementation: Provides webview panel proxy implementation
+			 * - TypeConverter/Webview: Serializes panel and content options
+			 * - WebviewPanelImplementation: Provides webview panel proxy implementation
 			 * - Mountain: Delegates to native webview UI via gRPC
 			 *
 			 * Features:
@@ -1071,7 +1238,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 							: ShowOptions.viewColumn;
 					const PreserveFocus =
 						typeof ShowOptions === "object"
-							? ShowOptions.preserveFocus ?? false
+							? (ShowOptions.preserveFocus ?? false)
 							: false;
 
 					// Parse options using TypeConverter
@@ -1083,8 +1250,9 @@ export class WindowService extends Effect.Service<WindowService>()(
 								enableCommandUris: Options.enableCommandUris,
 								portMapping: Options.portMapping,
 								localResourceRoots: Options.localResourceRoots,
-								retainContextWhenHidden: Options.retainContextWhenHidden,
-						  }
+								retainContextWhenHidden:
+									Options.retainContextWhenHidden,
+							}
 						: undefined;
 
 					// Get view column DTO
@@ -1105,16 +1273,20 @@ export class WindowService extends Effect.Service<WindowService>()(
 						try: async () => {
 							// TODO: MOUNTAIN-INTEGRATION: Implement actual gRPC call (HIGH)
 							// await MountainClient.sendRequest('window.createWebviewPanel', RequestPayload);
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for CreateWebviewPanel`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for CreateWebviewPanel`,
+								);
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to create webview panel: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to create webview panel: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to create webview panel: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to create webview panel: ${(error as Error).message}`);
 						},
 					});
 
@@ -1131,20 +1303,36 @@ export class WindowService extends Effect.Service<WindowService>()(
 					// Create IPC proxy for webview communication
 					// TODO: Get actual IPC service from context
 					type IPC = {
-						SendNotification: (method: string, params: unknown[]) => Effect.Effect<void, Error>;
-						SendRequest: <T>(method: string, params: unknown[]) => Effect.Effect<T, Error>;
+						SendNotification: (
+							method: string,
+							params: unknown[],
+						) => Effect.Effect<void, Error>;
+						SendRequest: <T>(
+							method: string,
+							params: unknown[],
+						) => Effect.Effect<T, Error>;
 					};
 
 					const IPCProxy: IPC = {
-						SendNotification: (method: string, _params: unknown[]) => {
+						SendNotification: (
+							method: string,
+							_params: unknown[],
+						) => {
 							return Effect.gen(function* () {
-								yield* Logger.Debug(`[WindowService] Webview notification: ${method}`);
+								yield* Logger.Debug(
+									`[WindowService] Webview notification: ${method}`,
+								);
 								// TODO: Send actual IPC notification to Mountain
 							});
 						},
-						SendRequest: <T,>(_method: string, _params: unknown[]): Effect.Effect<T, Error> => {
+						SendRequest: <T>(
+							_method: string,
+							_params: unknown[],
+						): Effect.Effect<T, Error> => {
 							return Effect.gen(function* () {
-								yield* Logger.Debug(`[WindowService] Webview request sent`);
+								yield* Logger.Debug(
+									`[WindowService] Webview request sent`,
+								);
 								// TODO: Send actual IPC request to Mountain and return result
 								return undefined as T;
 							});
@@ -1152,20 +1340,26 @@ export class WindowService extends Effect.Service<WindowService>()(
 					};
 
 					// Create and return webview panel implementation
-					const WebviewPanel = new WebViewPanelImplementation(
+					const WebviewPanel = new WebviewPanelImplementation(
 						PanelId,
 						IPCProxy,
 						ExtensionDescription,
 						() => {
 							// Dispose callback
-							Effect.runFork(Effect.tryPromise({
-								try: async () => {
-									// TODO: Send dispose notification to Mountain
-								},
-								catch: (err) => {
-									yield* Logger.Error(`[WindowService] Failed to dispose webview panel`, err as Error);
-								},
-							}));
+							Effect.runFork(
+								Effect.tryPromise({
+									try: async () => {
+										// TODO: Send dispose notification to Mountain
+									},
+									catch: (err) => {
+										yield *
+											Logger.Error(
+												`[WindowService] Failed to dispose webview panel`,
+												err as Error,
+											);
+									},
+								}),
+							);
 						},
 						ViewType,
 						Title,
@@ -1188,7 +1382,10 @@ export class WindowService extends Effect.Service<WindowService>()(
 			const WithProgress = <T>(
 				Options: VSCode.ProgressOptions,
 				Task: (
-					Progress: VSCode.Progress<{ message?: string; increment?: number }>,
+					Progress: VSCode.Progress<{
+						message?: string;
+						increment?: number;
+					}>,
 					Token: VSCode.CancellationToken,
 				) => Promise<T>,
 			): Effect.Effect<T, Error> =>
@@ -1201,20 +1398,30 @@ export class WindowService extends Effect.Service<WindowService>()(
 					// Create cancellation token
 					const CancellationToken: VSCode.CancellationToken = {
 						isCancellationRequested: false,
-						onCancellationRequested: (_listener: () => any): any => {
+						onCancellationRequested: (
+							_listener: () => any,
+						): any => {
 							return { dispose: () => {} };
 						},
 					};
 
 					// Create progress reporter
-					const ProgressReporter: VSCode.Progress<{ message?: string; increment?: number }> = {
-						report(value: { message?: string; increment?: number }): void {
-							Effect.runFork(Effect.gen(function* () {
-								yield* Logger.Debug(
-									`[WindowService] Progress update: ${value.message ?? ""}`,
-								);
-								// TODO: Send progress update to Mountain
-							}));
+					const ProgressReporter: VSCode.Progress<{
+						message?: string;
+						increment?: number;
+					}> = {
+						report(value: {
+							message?: string;
+							increment?: number;
+						}): void {
+							Effect.runFork(
+								Effect.gen(function* () {
+									yield* Logger.Debug(
+										`[WindowService] Progress update: ${value.message ?? ""}`,
+									);
+									// TODO: Send progress update to Mountain
+								}),
+							);
 						},
 					};
 
@@ -1228,16 +1435,20 @@ export class WindowService extends Effect.Service<WindowService>()(
 							//     title: Options.title,
 							//     cancellable: Options.cancellable ?? true
 							// });
-							yield* Logger.Warn(
-								`[WindowService] TODO: Implement Mountain gRPC call for WithProgress start`,
-							);
+							yield *
+								Logger.Warn(
+									`[WindowService] TODO: Implement Mountain gRPC call for WithProgress start`,
+								);
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to start progress: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to start progress: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Failed to start progress: ${(error as Error).message}`,
 							);
-							throw new Error(`Failed to start progress: ${(error as Error).message}`);
 						},
 					});
 
@@ -1245,11 +1456,14 @@ export class WindowService extends Effect.Service<WindowService>()(
 					const Result = yield* Effect.tryPromise({
 						try: () => Task(ProgressReporter, CancellationToken),
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Progress task failed: ${(error as Error).message}`,
-								error as Error,
+							yield *
+								Logger.Error(
+									`[WindowService] Progress task failed: ${(error as Error).message}`,
+									error as Error,
+								);
+							throw new Error(
+								`Progress task failed: ${(error as Error).message}`,
 							);
-							throw new Error(`Progress task failed: ${(error as Error).message}`);
 						},
 					});
 
@@ -1258,15 +1472,17 @@ export class WindowService extends Effect.Service<WindowService>()(
 						try: async () => {
 							// TODO: MOUNTAIN-INTEGRATION: Implement actual gRPC call
 							// await MountainClient.sendRequest('window.completeProgress', ProgressId);
-							yield* Logger.Debug(
-								`[WindowService] Progress complete (${ProgressId})`,
-							);
+							yield *
+								Logger.Debug(
+									`[WindowService] Progress complete (${ProgressId})`,
+								);
 						},
 						catch: (error) => {
-							yield* Logger.Error(
-								`[WindowService] Failed to complete progress: ${(error as Error).message}`,
-								error as Error,
-							);
+							yield *
+								Logger.Error(
+									`[WindowService] Failed to complete progress: ${(error as Error).message}`,
+									error as Error,
+								);
 							// Don't throw - we have the result
 						},
 					});
@@ -1280,10 +1496,10 @@ export class WindowService extends Effect.Service<WindowService>()(
 					return Effect.runSync(Ref.get(WindowStateRef));
 				},
 				get activeTextEditor() {
-					return WorkSpace.activeTextEditor;
+					return Workspace.activeTextEditor;
 				},
 				get visibleTextEditors() {
-					return WorkSpace.visibleTextEditors;
+					return Workspace.visibleTextEditors;
 				},
 				get onDidChangeWindowState() {
 					return OnDidChangeWindowStateStream.event;

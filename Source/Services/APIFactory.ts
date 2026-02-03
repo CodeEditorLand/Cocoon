@@ -17,7 +17,7 @@
  * Specification: IMPLEMENTATION-SPECIFICATION.md (API Factory)
  *
  * @future TODO: Integrate with Mountain API discovery (pending Mountain client from Agent 1)
- * @future TODO: Implement WebView panel API with full security sandboxing
+ * @future TODO: Implement Webview panel API with full security sandboxing
  * @future TODO: Add cross-Element integration patterns for Air/Echo/Sky services
  * @future TODO: Implement API telemetry and usage analytics
  */
@@ -154,7 +154,9 @@ export class APIFactory implements IAPIFactory {
 				{},
 			);
 			if (config) {
-				console.log("[APIFactory] Loaded API configuration from config");
+				console.log(
+					"[APIFactory] Loaded API configuration from config",
+				);
 			}
 		} catch (error) {
 			console.warn("[APIFactory] Using default API configuration");
@@ -285,7 +287,9 @@ export class APIFactory implements IAPIFactory {
 		);
 
 		this.apiCache.set(cacheKey, baseAPI);
-		console.log("[APIFactory] API cache initialized with pre-warmed entries");
+		console.log(
+			"[APIFactory] API cache initialized with pre-warmed entries",
+		);
 	}
 
 	/**
@@ -324,7 +328,10 @@ export class APIFactory implements IAPIFactory {
 
 			console.log("[APIFactory] Registered with ModuleInterceptor");
 		} catch (error) {
-			console.warn("[APIFactory] ModuleInterceptor registration failed:", error);
+			console.warn(
+				"[APIFactory] ModuleInterceptor registration failed:",
+				error,
+			);
 		}
 	}
 
@@ -360,7 +367,9 @@ export class APIFactory implements IAPIFactory {
 					success: false,
 					error: `API version ${request.apiVersion} not supported: ${validationResult.missingAPIs.join(", ")}`,
 					constructionTime: Date.now() - startTime,
-					apiSurface: this.getAPISurfaceForVersion(request.apiVersion),
+					apiSurface: this.getAPISurfaceForVersion(
+						request.apiVersion,
+					),
 				};
 			}
 
@@ -385,7 +394,9 @@ export class APIFactory implements IAPIFactory {
 					success: true,
 					vscodeAPI: this.apiCache.get(cacheKey),
 					constructionTime: Date.now() - startTime,
-					apiSurface: this.getAPISurfaceForVersion(request.apiVersion),
+					apiSurface: this.getAPISurfaceForVersion(
+						request.apiVersion,
+					),
 				};
 			}
 
@@ -460,12 +471,18 @@ export class APIFactory implements IAPIFactory {
 			return false;
 		}
 
-		if (!securityContext.extensionId || typeof securityContext.extensionId !== "string") {
+		if (
+			!securityContext.extensionId ||
+			typeof securityContext.extensionId !== "string"
+		) {
 			return false;
 		}
 
 		// Validate permissions array if present
-		if (securityContext.permissions && !Array.isArray(securityContext.permissions)) {
+		if (
+			securityContext.permissions &&
+			!Array.isArray(securityContext.permissions)
+		) {
 			return false;
 		}
 
@@ -626,10 +643,7 @@ export class APIFactory implements IAPIFactory {
 				...args: any[]
 			): Promise<any> => {
 				this.validateCommandAccess(extensionId, command);
-				console.log(
-					`[APIFactory] Executing command: ${command}`,
-					args,
-				);
+				console.log(`[APIFactory] Executing command: ${command}`, args);
 
 				return undefined;
 			},
@@ -723,9 +737,7 @@ export class APIFactory implements IAPIFactory {
 				items: any[],
 				options?: any,
 			): Promise<any> => {
-				console.log(
-					`[APIFactory] Quick pick: ${items.length} items`,
-				);
+				console.log(`[APIFactory] Quick pick: ${items.length} items`);
 				return undefined;
 			},
 
@@ -751,9 +763,7 @@ export class APIFactory implements IAPIFactory {
 
 			// Progress API
 			withProgress: async (options: any, task: any): Promise<any> => {
-				console.log(
-					`[APIFactory] Starting progress: ${options.title}`,
-				);
+				console.log(`[APIFactory] Starting progress: ${options.title}`);
 				await task({ report: (value: any) => {} });
 			},
 
@@ -937,7 +947,8 @@ export class APIFactory implements IAPIFactory {
 	 * Validate URI access
 	 */
 	private validateURIAccess(extensionId: string, uri: any): void {
-		const securityContext = this.securityPolicies.get(extensionId) ||
+		const securityContext =
+			this.securityPolicies.get(extensionId) ||
 			this.securityPolicies.get("default");
 
 		if (securityContext && !securityContext.allowNetworkAccess) {
@@ -957,14 +968,17 @@ export class APIFactory implements IAPIFactory {
 		type: "read" | "write",
 	): void {
 		// All extensions have clipboard access by default
-		console.log(`[APIFactory] Clipboard ${type} access granted to ${extensionId}`);
+		console.log(
+			`[APIFactory] Clipboard ${type} access granted to ${extensionId}`,
+		);
 	}
 
 	/**
 	 * Validate external access
 	 */
 	private validateExternalAccess(extensionId: string, target: any): void {
-		const securityContext = this.securityPolicies.get(extensionId) ||
+		const securityContext =
+			this.securityPolicies.get(extensionId) ||
 			this.securityPolicies.get("default");
 
 		if (securityContext && !securityContext.allowNetworkAccess) {
@@ -978,7 +992,8 @@ export class APIFactory implements IAPIFactory {
 	 * Validate config access
 	 */
 	private validateConfigAccess(extensionId: string, key: string): void {
-		const securityContext = this.securityPolicies.get(extensionId) ||
+		const securityContext =
+			this.securityPolicies.get(extensionId) ||
 			this.securityPolicies.get("default");
 
 		if (securityContext && securityContext.restrictedAPIs.length > 0) {
@@ -995,7 +1010,8 @@ export class APIFactory implements IAPIFactory {
 	 * Validate command access
 	 */
 	private validateCommandAccess(extensionId: string, command: string): void {
-		const securityContext = this.securityPolicies.get(extensionId) ||
+		const securityContext =
+			this.securityPolicies.get(extensionId) ||
 			this.securityPolicies.get("default");
 
 		const dangerousCommands = [
@@ -1017,10 +1033,14 @@ export class APIFactory implements IAPIFactory {
 	 * Validate webview access
 	 */
 	private validateWebviewAccess(extensionId: string, viewType: string): void {
-		const securityContext = this.securityPolicies.get(extensionId) ||
+		const securityContext =
+			this.securityPolicies.get(extensionId) ||
 			this.securityPolicies.get("default");
 
-		if (securityContext && securityContext.restrictedAPIs.includes("window.createWebviewPanel")) {
+		if (
+			securityContext &&
+			securityContext.restrictedAPIs.includes("window.createWebviewPanel")
+		) {
 			throw new Error(
 				`[APIFactory] Webview access denied for ${extensionId}: ${viewType}`,
 			);
@@ -1035,10 +1055,15 @@ export class APIFactory implements IAPIFactory {
 		type: "read" | "write",
 		path: any,
 	): void {
-		const securityContext = this.securityPolicies.get(extensionId) ||
+		const securityContext =
+			this.securityPolicies.get(extensionId) ||
 			this.securityPolicies.get("default");
 
-		if (securityContext && !securityContext.allowFileSystemAccess && type === "write") {
+		if (
+			securityContext &&
+			!securityContext.allowFileSystemAccess &&
+			type === "write"
+		) {
 			throw new Error(
 				`[APIFactory] File system write access denied for ${extensionId}: ${path}`,
 			);
@@ -1077,7 +1102,9 @@ export class APIFactory implements IAPIFactory {
 		if (!securityContext.allowFileSystemAccess) {
 			if (api.workspace && api.workspace.fs) {
 				api.workspace.fs.writeFile = async () => {
-					throw new Error("File system write access denied by security policy");
+					throw new Error(
+						"File system write access denied by security policy",
+					);
 				};
 			}
 		}
@@ -1161,23 +1188,29 @@ export class APIFactory implements IAPIFactory {
 		console.log(`[APIFactory] Registering service: ${serviceName}`);
 
 		// Validate service implementation
-		if (!serviceImplementation || typeof serviceImplementation !== "object") {
-			throw new Error(`Invalid service implementation for ${serviceName}`);
+		if (
+			!serviceImplementation ||
+			typeof serviceImplementation !== "object"
+		) {
+			throw new Error(
+				`Invalid service implementation for ${serviceName}`,
+			);
 		}
 
 		// Add service to available APIs
-		this.apiVersions.set(
-			serviceName,
-			[{
+		this.apiVersions.set(serviceName, [
+			{
 				version: "1.0.0",
 				availableAPIs: Object.keys(serviceImplementation),
 				deprecatedAPIs: [],
 				removedAPIs: [],
 				securityLevel: "strict",
-			}],
-		);
+			},
+		]);
 
-		console.log(`[APIFactory] Service ${serviceName} registered successfully`);
+		console.log(
+			`[APIFactory] Service ${serviceName} registered successfully`,
+		);
 	}
 
 	/**
@@ -1231,9 +1264,11 @@ export class APIFactory implements IAPIFactory {
 			this.constructionMetrics.statistics.entries(),
 		).sort((a, b) => b[1] - a[1]);
 
-		const cacheHitRate = this.apiCache.size > 0
-			? (this.constructionMetrics.total / (this.constructionMetrics.total + this.apiCache.size))
-			: 0;
+		const cacheHitRate =
+			this.apiCache.size > 0
+				? this.constructionMetrics.total /
+					(this.constructionMetrics.total + this.apiCache.size)
+				: 0;
 
 		return {
 			totalAPIConstructions: this.constructionMetrics.total,
@@ -1241,7 +1276,8 @@ export class APIFactory implements IAPIFactory {
 			mostUsedAPIs: sortedStats.slice(0, 5).map(([ext]) => ext),
 			performanceMetrics: {
 				cacheHitRate,
-				constructionSuccessRate: this.constructionMetrics.total > 0 ? 1.0 : 0,
+				constructionSuccessRate:
+					this.constructionMetrics.total > 0 ? 1.0 : 0,
 				averageCacheSize: this.apiCache.size,
 			},
 		};

@@ -54,11 +54,6 @@
  *      | Update UI state                           |
  * ```
  *
- * NAMING CONVENTION:
- * This module strictly follows the Land ecosystem's PascalCase naming convention.
- * Mountain DTOs use PascalCase for both struct names and field names (serde rename_all="PascalCase").
- * See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
- *
  * IMPLEMENTATION NOTES:
  * - All DTO fields use PascalCase to match Rust serde serialization
  * - Validation implements Mountain's business rules and constraints
@@ -126,11 +121,11 @@ export interface DocumentStateDTO {
 }
 
 /**
- * @interface WebViewStateDTO
- * @description Mountain's WebViewStateDTO serialized from Rust
- * Matches: Element/Mountain/Source/ApplicationState/DTO/WebViewStateDTO.rs
+ * @interface WebviewStateDTO
+ * @description Mountain's WebviewStateDTO serialized from Rust
+ * Matches: Element/Mountain/Source/ApplicationState/DTO/WebviewStateDTO.rs
  */
-export interface WebViewStateDTO {
+export interface WebviewStateDTO {
 	readonly Handle: string;
 	readonly ViewType: string;
 	readonly Title: string;
@@ -158,7 +153,9 @@ export interface TerminalStateDTO {
 	readonly ShellPath: string;
 	readonly ShellArguments: readonly string[];
 	readonly CurrentWorkingDirectory: string | undefined;
-	readonly EnvironmentVariables: ReadonlyMap<string, string | null> | undefined;
+	readonly EnvironmentVariables:
+		| ReadonlyMap<string, string | null>
+		| undefined;
 	readonly IsPTY: boolean;
 }
 
@@ -179,17 +176,17 @@ export interface OutputChannelStateDTO {
  */
 export interface TreeViewStateDTO {
 	readonly ViewId: string;
-	 readonly Title: string;
+	readonly Title: string;
 	readonly Description: string | undefined;
 	readonly Selection: readonly string[];
 	readonly ExpandState: Record<string, boolean>;
 }
 
 /**
- * @interface WorkSpaceFolderStateDTO
- * @description Mountain's WorkSpaceFolderStateDTO serialized from Rust
+ * @interface WorkspaceFolderStateDTO
+ * @description Mountain's WorkspaceFolderStateDTO serialized from Rust
  */
-export interface WorkSpaceFolderStateDTO {
+export interface WorkspaceFolderStateDTO {
 	readonly URI: string;
 	readonly Name: string;
 	readonly Identifier: number;
@@ -225,10 +222,10 @@ export interface DocumentState {
 }
 
 /**
- * @interface WebViewState
- * @description Wind's internal WebViewState type
+ * @interface WebviewState
+ * @description Wind's internal WebviewState type
  */
-export interface WebViewState {
+export interface WebviewState {
 	readonly handle: string;
 	readonly viewType: string;
 	readonly title: string;
@@ -254,7 +251,9 @@ export interface TerminalState {
 	readonly shellPath: string;
 	readonly shellArguments: readonly string[];
 	readonly currentWorkingDirectory: string | undefined;
-	readonly environmentVariables: ReadonlyMap<string, string | null> | undefined;
+	readonly environmentVariables:
+		| ReadonlyMap<string, string | null>
+		| undefined;
 	readonly isPTY: boolean;
 }
 
@@ -341,14 +340,18 @@ const ValidateDocumentStateDTO = (
 			new URL(dto.URI);
 		} catch {
 			return yield* Effect.fail(
-				new Error(`DocumentStateDTO.URI has invalid format: ${dto.URI}`),
+				new Error(
+					`DocumentStateDTO.URI has invalid format: ${dto.URI}`,
+				),
 			);
 		}
 
 		// Validate LanguageIdentifier
 		if (typeof dto.LanguageIdentifier !== "string") {
 			return yield* Effect.fail(
-				new Error("DocumentStateDTO.LanguageIdentifier must be a string"),
+				new Error(
+					"DocumentStateDTO.LanguageIdentifier must be a string",
+				),
 			);
 		}
 
@@ -402,7 +405,9 @@ const ValidateDocumentStateDTO = (
 		// Validate EOL
 		if (dto.EOL !== "\n" && dto.EOL !== "\r\n") {
 			return yield* Effect.fail(
-				new Error("DocumentStateDTO.EOL must be either '\\n' or '\\r\\n'"),
+				new Error(
+					"DocumentStateDTO.EOL must be either '\\n' or '\\r\\n'",
+				),
 			);
 		}
 
@@ -424,27 +429,24 @@ const ValidateDocumentStateDTO = (
 	});
 
 /**
- * Validate WebViewStateDTO fields
- * Implements validation from WebViewStateDTO::New
+ * Validate WebviewStateDTO fields
+ * Implements validation from WebviewStateDTO::New
  */
-const ValidateWebViewStateDTO = (
-	dto: WebViewStateDTO,
-): Effect.Effect<WebViewStateDTO, Error> =>
+const ValidateWebviewStateDTO = (
+	dto: WebviewStateDTO,
+): Effect.Effect<WebviewStateDTO, Error> =>
 	Effect.gen(function* () {
 		// Validate Handle
-		if (
-			typeof dto.Handle !== "string" ||
-			dto.Handle.trim().length === 0
-		) {
+		if (typeof dto.Handle !== "string" || dto.Handle.trim().length === 0) {
 			return yield* Effect.fail(
-				new Error("WebViewStateDTO.Handle cannot be empty"),
+				new Error("WebviewStateDTO.Handle cannot be empty"),
 			);
 		}
 
 		if (dto.Handle.length > MAX_HANDLE_LENGTH) {
 			return yield* Effect.fail(
 				new Error(
-					`WebViewStateDTO.Handle exceeds maximum length of ${MAX_HANDLE_LENGTH} bytes`,
+					`WebviewStateDTO.Handle exceeds maximum length of ${MAX_HANDLE_LENGTH} bytes`,
 				),
 			);
 		}
@@ -452,14 +454,14 @@ const ValidateWebViewStateDTO = (
 		// Validate ViewType
 		if (typeof dto.ViewType !== "string") {
 			return yield* Effect.fail(
-				new Error("WebViewStateDTO.ViewType must be a string"),
+				new Error("WebviewStateDTO.ViewType must be a string"),
 			);
 		}
 
 		if (dto.ViewType.length > MAX_VIEW_TYPE_LENGTH) {
 			return yield* Effect.fail(
 				new Error(
-					`WebViewStateDTO.ViewType exceeds maximum length of ${MAX_VIEW_TYPE_LENGTH} bytes`,
+					`WebviewStateDTO.ViewType exceeds maximum length of ${MAX_VIEW_TYPE_LENGTH} bytes`,
 				),
 			);
 		}
@@ -467,14 +469,14 @@ const ValidateWebViewStateDTO = (
 		// Validate Title
 		if (typeof dto.Title !== "string") {
 			return yield* Effect.fail(
-				new Error("WebViewStateDTO.Title must be a string"),
+				new Error("WebviewStateDTO.Title must be a string"),
 			);
 		}
 
 		if (dto.Title.length > MAX_WEBVIEW_TITLE_LENGTH) {
 			return yield* Effect.fail(
 				new Error(
-					`WebViewStateDTO.Title exceeds maximum length of ${MAX_WEBVIEW_TITLE_LENGTH} bytes`,
+					`WebviewStateDTO.Title exceeds maximum length of ${MAX_WEBVIEW_TITLE_LENGTH} bytes`,
 				),
 			);
 		}
@@ -482,14 +484,14 @@ const ValidateWebViewStateDTO = (
 		// Validate ContentOptions
 		if (!dto.ContentOptions || typeof dto.ContentOptions !== "object") {
 			return yield* Effect.fail(
-				new Error("WebViewStateDTO.ContentOptions must be an object"),
+				new Error("WebviewStateDTO.ContentOptions must be an object"),
 			);
 		}
 
 		if (typeof dto.ContentOptions.EnableScripts !== "boolean") {
 			return yield* Effect.fail(
 				new Error(
-					"WebViewStateDTO.ContentOptions.EnableScripts must be a boolean",
+					"WebviewStateDTO.ContentOptions.EnableScripts must be a boolean",
 				),
 			);
 		}
@@ -497,34 +499,31 @@ const ValidateWebViewStateDTO = (
 		if (!Array.isArray(dto.ContentOptions.LocalResourceRoots)) {
 			return yield* Effect.fail(
 				new Error(
-					"WebViewStateDTO.ContentOptions.LocalResourceRoots must be an array",
+					"WebviewStateDTO.ContentOptions.LocalResourceRoots must be an array",
 				),
 			);
 		}
 
 		// Validate PanelOptions
-		if (
-			dto.PanelOptions !== null &&
-			typeof dto.PanelOptions !== "object"
-		) {
+		if (dto.PanelOptions !== null && typeof dto.PanelOptions !== "object") {
 			return yield* Effect.fail(
-				new Error("WebViewStateDTO.PanelOptions must be an object or null"),
+				new Error(
+					"WebviewStateDTO.PanelOptions must be an object or null",
+				),
 			);
 		}
 
 		// Validate SideCarIdentifier
 		if (typeof dto.SideCarIdentifier !== "string") {
 			return yield* Effect.fail(
-				new Error("WebViewStateDTO.SideCarIdentifier must be a string"),
+				new Error("WebviewStateDTO.SideCarIdentifier must be a string"),
 			);
 		}
 
-		if (
-			dto.SideCarIdentifier.length > MAX_SIDECAR_IDENTIFIER_LENGTH
-		) {
+		if (dto.SideCarIdentifier.length > MAX_SIDECAR_IDENTIFIER_LENGTH) {
 			return yield* Effect.fail(
 				new Error(
-					`WebViewStateDTO.SideCarIdentifier exceeds maximum length of ${MAX_SIDECAR_IDENTIFIER_LENGTH} bytes`,
+					`WebviewStateDTO.SideCarIdentifier exceeds maximum length of ${MAX_SIDECAR_IDENTIFIER_LENGTH} bytes`,
 				),
 			);
 		}
@@ -532,17 +531,16 @@ const ValidateWebViewStateDTO = (
 		// Validate ExtensionIdentifier
 		if (typeof dto.ExtensionIdentifier !== "string") {
 			return yield* Effect.fail(
-				new Error("WebViewStateDTO.ExtensionIdentifier must be a string"),
+				new Error(
+					"WebviewStateDTO.ExtensionIdentifier must be a string",
+				),
 			);
 		}
 
-		if (
-			dto.ExtensionIdentifier.length >
-			MAX_EXTENSION_IDENTIFIER_LENGTH
-		) {
+		if (dto.ExtensionIdentifier.length > MAX_EXTENSION_IDENTIFIER_LENGTH) {
 			return yield* Effect.fail(
 				new Error(
-					`WebViewStateDTO.ExtensionIdentifier exceeds maximum length of ${MAX_EXTENSION_IDENTIFIER_LENGTH} bytes`,
+					`WebviewStateDTO.ExtensionIdentifier exceeds maximum length of ${MAX_EXTENSION_IDENTIFIER_LENGTH} bytes`,
 				),
 			);
 		}
@@ -550,14 +548,14 @@ const ValidateWebViewStateDTO = (
 		// Validate IsActive
 		if (typeof dto.IsActive !== "boolean") {
 			return yield* Effect.fail(
-				new Error("WebViewStateDTO.IsActive must be a boolean"),
+				new Error("WebviewStateDTO.IsActive must be a boolean"),
 			);
 		}
 
 		// Validate IsVisible
 		if (typeof dto.IsVisible !== "boolean") {
 			return yield* Effect.fail(
-				new Error("WebViewStateDTO.IsVisible must be a boolean"),
+				new Error("WebviewStateDTO.IsVisible must be a boolean"),
 			);
 		}
 
@@ -575,7 +573,9 @@ const ValidateTerminalStateDTO = (
 		// Validate Identifier
 		if (typeof dto.Identifier !== "number" || dto.Identifier <= 0) {
 			return yield* Effect.fail(
-				new Error("TerminalStateDTO.Identifier must be a positive number"),
+				new Error(
+					"TerminalStateDTO.Identifier must be a positive number",
+				),
 			);
 		}
 
@@ -628,7 +628,9 @@ const ValidateTerminalStateDTO = (
 			const arg = dto.ShellArguments[i]!;
 			if (typeof arg !== "string") {
 				return yield* Effect.fail(
-					new Error(`TerminalStateDTO.ShellArguments[${i}] must be a string`),
+					new Error(
+						`TerminalStateDTO.ShellArguments[${i}] must be a string`,
+					),
 				);
 			}
 
@@ -693,13 +695,13 @@ export const DocumentStateConvertToDTO = (
 	});
 
 /**
- * Convert Wind's WebViewState to Mountain's WebViewStateDTO
+ * Convert Wind's WebviewState to Mountain's WebviewStateDTO
  */
-export const WebViewStateConvertToDTO = (
-	state: WebViewState,
-): Effect.Effect<WebViewStateDTO, Error> =>
+export const WebviewStateConvertToDTO = (
+	state: WebviewState,
+): Effect.Effect<WebviewStateDTO, Error> =>
 	Effect.gen(function* () {
-		const dto: WebViewStateDTO = {
+		const dto: WebviewStateDTO = {
 			Handle: state.handle,
 			ViewType: state.viewType,
 			Title: state.title,
@@ -714,7 +716,7 @@ export const WebViewStateConvertToDTO = (
 			IsVisible: state.isVisible,
 		};
 
-		return yield* ValidateWebViewStateDTO(dto);
+		return yield* ValidateWebviewStateDTO(dto);
 	});
 
 /**
@@ -786,13 +788,13 @@ export const DocumentStateConvertFromDTO = (
 	});
 
 /**
- * Convert Mountain's WebViewStateDTO to Wind's WebViewState
+ * Convert Mountain's WebviewStateDTO to Wind's WebviewState
  */
-export const WebViewStateConvertFromDTO = (
-	dto: WebViewStateDTO,
-): Effect.Effect<WebViewState, Error> =>
+export const WebviewStateConvertFromDTO = (
+	dto: WebviewStateDTO,
+): Effect.Effect<WebviewState, Error> =>
 	Effect.gen(function* () {
-		const validated = yield* ValidateWebViewStateDTO(dto);
+		const validated = yield* ValidateWebviewStateDTO(dto);
 
 		return {
 			handle: validated.Handle,
@@ -845,16 +847,15 @@ export const ValidateDTO = <T extends Record<string, unknown>>(
 	Effect.gen(function* () {
 		// Infer DTO type from __typename field or structure
 		const typename =
-			dto.__typename ||
-			(dto as { readonly URI?: string }).URI
+			dto.__typename || (dto as { readonly URI?: string }).URI
 				? "DocumentStateDTO"
 				: (dto as { readonly Handle?: string }).Handle
-					? "WebViewStateDTO"
+					? "WebviewStateDTO"
 					: (dto as { readonly IsFocused?: boolean }).IsFocused !==
-							undefined
+						  undefined
 						? "WindowStateDTO"
-						: (dto as { readonly Identifier?: number }).Identifier !==
-								undefined
+						: (dto as { readonly Identifier?: number })
+									.Identifier !== undefined
 							? "TerminalStateDTO"
 							: "Unknown";
 
@@ -867,9 +868,9 @@ export const ValidateDTO = <T extends Record<string, unknown>>(
 				return yield* ValidateDocumentStateDTO(
 					dto as unknown as DocumentStateDTO,
 				) as unknown as Effect.Effect<T, Error>;
-			case "WebViewStateDTO":
-				return yield* ValidateWebViewStateDTO(
-					dto as unknown as WebViewStateDTO,
+			case "WebviewStateDTO":
+				return yield* ValidateWebviewStateDTO(
+					dto as unknown as WebviewStateDTO,
 				) as unknown as Effect.Effect<T, Error>;
 			case "TerminalStateDTO":
 				return yield* ValidateTerminalStateDTO(

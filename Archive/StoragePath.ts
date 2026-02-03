@@ -60,7 +60,7 @@ const EnsureDirectory = (
  * @description The contract for the StoragePath service.
  */
 export interface StoragePath {
-	readonly GetWorkSpaceStorageUri: (
+	readonly GetWorkspaceStorageUri: (
 		Extension: IExtensionDescription,
 	) => Uri | undefined;
 	readonly GetGlobalStorageUri: (Extension: IExtensionDescription) => Uri;
@@ -79,11 +79,11 @@ export class StoragePathService extends Effect.Service<StoragePathService>()(
 
 			const GlobalStorageUri = InitData.environment
 				.globalStorageHome as Uri;
-			const WorkSpaceStorageUri = InitData.environment
+			const WorkspaceStorageUri = InitData.environment
 				.workspaceStorageHome as Uri;
 
 			yield* EnsureDirectory(GlobalStorageUri, "Global");
-			yield* EnsureDirectory(WorkSpaceStorageUri, "WorkSpace");
+			yield* EnsureDirectory(WorkspaceStorageUri, "Workspace");
 
 			const GetPathForExtension = (
 				BaseUri: Uri | undefined,
@@ -97,8 +97,8 @@ export class StoragePathService extends Effect.Service<StoragePathService>()(
 			};
 
 			return {
-				GetWorkSpaceStorageUri: (Extension: IExtensionDescription) =>
-					GetPathForExtension(WorkSpaceStorageUri, Extension),
+				GetWorkspaceStorageUri: (Extension: IExtensionDescription) =>
+					GetPathForExtension(WorkspaceStorageUri, Extension),
 				GetGlobalStorageUri: (
 					Extension: IExtensionDescription,
 				): Uri => {

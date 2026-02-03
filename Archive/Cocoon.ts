@@ -54,9 +54,9 @@ import { StoragePathService } from "./StoragePath.js";
 import { TaskService } from "./Task.js";
 import { TelemetryService } from "./Telemetry.js";
 import { TreeViewService } from "./TreeView.js";
-import { WebViewPanelService } from "./WebViewPanel.js";
+import { WebviewPanelService } from "./WebviewPanel.js";
 import { WindowService } from "./Window.js";
-import { WorkSpaceService } from "./WorkSpace.js";
+import { WorkspaceService } from "./Workspace.js";
 
 // --- Pre-initialization Steps ---
 const VSCodeOutputDirectory =
@@ -210,7 +210,7 @@ const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 
 	const L7_Services = Layer.mergeAll(
 		CommandService.Default,
-		WorkSpaceService.Default,
+		WorkspaceService.Default,
 	);
 	const L7_World = Layer.provide(L7_Services, L6_World);
 
@@ -218,7 +218,7 @@ const composeAppLayer = (InitializationData: IExtensionHostInitData) => {
 		DebugService.Default,
 		StatusBarService.Default,
 		TreeViewService.Default,
-		WebViewPanelService.Default,
+		WebviewPanelService.Default,
 		EnvironmentService.Default,
 		ExtensionHostService.Default,
 	);

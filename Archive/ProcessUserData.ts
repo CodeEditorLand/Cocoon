@@ -55,7 +55,7 @@ export class ProcessingServiceProblem extends Data.TaggedError(
  * @returns An `Effect` resolving to an `Option<vscode.TextEditor>`.
  */
 const GetActiveTextEditor = Effect.gen(function* () {
-	// A full implementation would get this from the WorkSpace service.
+	// A full implementation would get this from the Workspace service.
 	// For now, this is a stub.
 	const TheWindow = yield* WindowService;
 	return Option.fromNullable(TheWindow.activeTextEditor);

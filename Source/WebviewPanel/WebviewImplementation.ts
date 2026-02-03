@@ -1,5 +1,5 @@
 /**
- * @module WebViewImplementation
+ * @module WebviewImplementation
  * @description The concrete implementation of the `vscode.Webview` interface.
  * An instance of this class represents a single webview from the extension host's
  * perspective, proxying state changes to the Mountain host.
@@ -11,14 +11,14 @@ import { Effect } from "effect";
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
 
 import type { IPC } from "../IPC.js";
-import { ConvertContentOptionToDTO } from "../TypeConverter/WebView/ConvertContentOptionToDTO.js";
+import { ConvertContentOptionToDTO } from "../TypeConverter/Webview/ConvertContentOptionToDTO.js";
 import { CreateEventStream } from "../Utility/EventStream.js";
 
 /**
- * @class WebViewImplementation
+ * @class WebviewImplementation
  * @implements {Webview}
  */
-export class WebViewImplementation implements Webview {
+export class WebviewImplementation implements Webview {
 	private IsDisposed = false;
 	private _html = "";
 	private _options: WebviewOptions;

@@ -19,10 +19,11 @@
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (gRPC Server Implementation)
  */
 
+import { EventEmitter } from "events";
+
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
-import { EventEmitter } from "events";
 
 // Import generated interfaces from Vine.proto
 import {
@@ -47,14 +48,19 @@ interface RequestTrackingEntry {
 /**
  * GRPCServerService implementation with bidirectional streaming support
  */
-export class GRPCServerService extends EventEmitter implements IGRPCServerService {
+export class GRPCServerService
+	extends EventEmitter
+	implements IGRPCServerService
+{
 	readonly _serviceBrand: undefined;
 
 	private server: grpc.Server | null = null;
 	private port: number = 50052; // Default Cocoon gRPC port
 	private isRunning: boolean = false;
 	private serviceImplementation: CocoonServiceImplementation;
-	private streamingHandlers: Set<grpc.ServerDuplexStream<GenericRequest, GenericResponse>> = new Set();
+	private streamingHandlers: Set<
+		grpc.ServerDuplexStream<GenericRequest, GenericResponse>
+	> = new Set();
 
 	// Authentication configuration
 	private authToken: string | null = null;
@@ -128,20 +134,26 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 	 */
 	private createServiceImplementation(): CocoonServiceImplementation {
 		return {
-			ProcessMountainRequest: async (request: GenericRequest): Promise<GenericResponse> => {
+			ProcessMountainRequest: async (
+				request: GenericRequest,
+			): Promise<GenericResponse> => {
 				if (!this.ValidateAuthentication()) {
 					throw new Error("Authentication failed");
 				}
 				return await this.handleMountainRequest(request);
 			},
-			SendMountainNotification: async (request: GenericNotification): Promise<Empty> => {
+			SendMountainNotification: async (
+				request: GenericNotification,
+			): Promise<Empty> => {
 				if (!this.ValidateAuthentication()) {
 					throw new Error("Authentication failed");
 				}
 				this.handleMountainNotification(request);
 				return {};
 			},
-			CancelOperation: async (request: CancelOperationRequest): Promise<Empty> => {
+			CancelOperation: async (
+				request: CancelOperationRequest,
+			): Promise<Empty> => {
 				if (!this.ValidateAuthentication()) {
 					throw new Error("Authentication failed");
 				}
@@ -159,21 +171,29 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 	 * Dependencies: Event marshaling, backpressure handling
 	 * Validation: Test with high-frequency event streams
 	 */
-	private startBidirectionalStreaming(stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>): void {
-		console.log("[GRPCServerService] Starting bidirectional streaming connection");
+	private startBidirectionalStreaming(
+		stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>,
+	): void {
+		console.log(
+			"[GRPCServerService] Starting bidirectional streaming connection",
+		);
 
 		// Add to streaming handlers
 		this.streamingHandlers.add(stream);
 
 		// Handle incoming data
 		stream.on("data", (request: GenericRequest) => {
-			console.log(`[GRPCServerService] Received streaming request: ${request.Method}`);
+			console.log(
+				`[GRPCServerService] Received streaming request: ${request.Method}`,
+			);
 			this.handleStreamingRequest(request, stream);
 		});
 
 		// Handle connection close
 		stream.on("close", () => {
-			console.log("[GRPCServerService] Bidirectional streaming connection closed");
+			console.log(
+				"[GRPCServerService] Bidirectional streaming connection closed",
+			);
 			this.streamingHandlers.delete(stream);
 		});
 
@@ -190,10 +210,16 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 	/**
 	 * Handle streaming request
 	 */
-	private async handleStreamingRequest(request: GenericRequest, stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>): Promise<void> {
+	private async handleStreamingRequest(
+		request: GenericRequest,
+		stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>,
+	): Promise<void> {
 		try {
 			const parameters = this.parseParameters(request.Parameter);
-			const responseData = await this.routeRequest(request.Method, parameters);
+			const responseData = await this.routeRequest(
+				request.Method,
+				parameters,
+			);
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
@@ -202,14 +228,20 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 
 			stream.write(response);
 		} catch (error) {
-			console.error(`[GRPCServerService] Streaming request failed for ${request.Method}:`, error);
+			console.error(
+				`[GRPCServerService] Streaming request failed for ${request.Method}:`,
+				error,
+			);
 
 			const response: GenericResponse = {
 				RequestIdentifier: request.RequestIdentifier,
 				Result: Buffer.from(JSON.stringify({})),
 				error: {
 					Code: 500,
-					Message: error instanceof Error ? error.message : "Unknown error",
+					Message:
+						error instanceof Error
+							? error.message
+							: "Unknown error",
 					Data: Buffer.from(JSON.stringify({})),
 				},
 			};
@@ -221,7 +253,9 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 	/**
 	 * Start keepalive for streaming connection
 	 */
-	private startKeepalive(stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>): void {
+	private startKeepalive(
+		stream: grpc.ServerDuplexStream<GenericRequest, GenericResponse>,
+	): void {
 		const keepaliveInterval = setInterval(() => {
 			if (!stream.writable) {
 				clearInterval(keepaliveInterval);
@@ -324,7 +358,10 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 				Result: Buffer.from(JSON.stringify({})),
 				error: {
 					Code: 500,
-					Message: error instanceof Error ? error.message : "Unknown error",
+					Message:
+						error instanceof Error
+							? error.message
+							: "Unknown error",
 					Data: Buffer.from(JSON.stringify({})),
 				},
 			};
@@ -350,7 +387,10 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 			const serialized = JSON.stringify(data);
 			return Buffer.from(serialized, "utf8");
 		} catch (error) {
-			console.error("[GRPCServerService] Failed to serialize response:", error);
+			console.error(
+				"[GRPCServerService] Failed to serialize response:",
+				error,
+			);
 			return Buffer.from("{}", "utf8");
 		}
 	}
@@ -373,7 +413,9 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 				"[GRPCServerService] Failed to parse parameters:",
 				error,
 			);
-			throw new Error(`Invalid parameter format: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Invalid parameter format: ${error instanceof Error ? error.message : "Unknown error"}`,
+			);
 		}
 	}
 
@@ -621,7 +663,9 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 				break;
 			default:
 				// Generic handler for unknown notification types
-				console.log(`[GRPCServerService] Generic notification handler for: ${method}`);
+				console.log(
+					`[GRPCServerService] Generic notification handler for: ${method}`,
+				);
 		}
 	}
 
@@ -631,9 +675,7 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 	private handleCancelOperation(cancelRequest: CancelOperationRequest): void {
 		const requestId = cancelRequest.RequestIdentifierToCancel;
 
-		console.log(
-			`[GRPCServerService] Canceling operation: ${requestId}`,
-		);
+		console.log(`[GRPCServerService] Canceling operation: ${requestId}`);
 
 		try {
 			// Look up the active request
@@ -644,19 +686,28 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 				if (requestEntry.cancelHandler) {
 					try {
 						requestEntry.cancelHandler();
-						console.log(`[GRPCServerService] Cancel handler executed for request ${requestId}`);
+						console.log(
+							`[GRPCServerService] Cancel handler executed for request ${requestId}`,
+						);
 					} catch (error) {
 						this.errorCount++;
-						console.error(`[GRPCServerService] Cancel handler failed for request ${requestId}:`, error);
+						console.error(
+							`[GRPCServerService] Cancel handler failed for request ${requestId}:`,
+							error,
+						);
 					}
 				}
 
 				// Remove from active requests
 				this.activeRequests.delete(requestId);
 
-				console.log(`[GRPCServerService] Request ${requestId} canceled successfully`);
+				console.log(
+					`[GRPCServerService] Request ${requestId} canceled successfully`,
+				);
 			} else {
-				console.warn(`[GRPCServerService] Request ${requestId} not found in active requests (may have already completed)`);
+				console.warn(
+					`[GRPCServerService] Request ${requestId} not found in active requests (may have already completed)`,
+				);
 			}
 		} catch (error) {
 			this.errorCount++;
@@ -675,7 +726,10 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 	 * Dependencies: CancellationService, operation context
 	 * Validation: Test with nested and parallel operations
 	 */
-	private registerCancelHandler(requestId: bigint, handler: () => void): void {
+	private registerCancelHandler(
+		requestId: bigint,
+		handler: () => void,
+	): void {
 		const entry = this.activeRequests.get(requestId);
 		if (entry) {
 			entry.cancelHandler = handler;
@@ -852,7 +906,9 @@ export class GRPCServerService extends EventEmitter implements IGRPCServerServic
 				"[GRPCServerService] Failed to load protocol definition:",
 				error,
 			);
-			throw new Error(`Failed to load Vine.proto: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw new Error(
+				`Failed to load Vine.proto: ${error instanceof Error ? error.message : "Unknown error"}`,
+			);
 		}
 	}
 	private startServer(): Promise<void> {

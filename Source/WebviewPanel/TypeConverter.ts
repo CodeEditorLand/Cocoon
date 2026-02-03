@@ -1,13 +1,13 @@
 /**
  * @module TypeConverter
  * @description
- * WebView Type Converter - Type conversions for WebView communication
+ * Webview Type Converter - Type conversions for Webview communication
  *
  * RESPONSIBILITIES:
- * - Convert between WebView types and internal representation types
+ * - Convert between Webview types and internal representation types
  * - Handle URI conversions between VSCode and internal formats
  * - Convert options and configuration objects
- * - Ensure type safety across WebView communication boundaries
+ * - Ensure type safety across Webview communication boundaries
  * - Provide defensive typing for untrusted external input
  *
  * ARCHITECTURE:
@@ -55,9 +55,9 @@
  *
  * The APIFactoryService type cast workaround mentioned in line 255 of Source/Services/APIFactoryService.ts
  * can be eliminated once this TypeConverter module is properly integrated. The workaround exists because
- * WebViewPanel types were not fully defined before. Now with this module:
+ * WebviewPanel types were not fully defined before. Now with this module:
  *
- * 1. Panel module provides complete WebView panel types
+ * 1. Panel module provides complete Webview panel types
  * 2. State module provides state persistence types
  * 3. Serializer module provides DTO conversion types
  * 4. This module provides bidirectional type conversion
@@ -68,7 +68,7 @@
  * - Remove type cast workaround and use proper type conversions
  * - Example: Convert VSCode.Uri to string for DTO, then back to Uri for API
  *
- * Reference: TODOs mention WebViewPanel as HIGH priority for Mountain integration
+ * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
  */
 
 import { Effect } from "effect";
@@ -79,7 +79,7 @@ import { MountainDTO } from "./Serializer.js";
 
 /**
  * @interface TypeConverter
- * @description Contract for WebView type conversions
+ * @description Contract for Webview type conversions
  */
 export interface TypeConverter {
 	readonly ConvertUriToString: (Uri: Uri) => string;
@@ -107,9 +107,9 @@ export interface TypeConverter {
 
 /**
  * @class TypeConverterService
- * @description Service for WebView type conversions
+ * @description Service for Webview type conversions
  */
-export class TypeConverterService extends Effect.Service<TypeConverterService>()("TypeConverter/WebViewPanel", {
+export class TypeConverterService extends Effect.Service<TypeConverterService>()("TypeConverter/WebviewPanel", {
 	effect: Effect.gen(function* () {
 		/**
 		 * Convert VSCode Uri to string representation

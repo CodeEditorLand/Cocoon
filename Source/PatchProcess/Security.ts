@@ -41,10 +41,11 @@
  * - **TBD**: Fine-grained file system ACLs (read-only, read-write)
  */
 
-import { Effect, Data } from "effect";
 import * as FileSystem from "node:fs";
 import * as Path from "node:path";
 import * as URL from "node:url";
+
+import { Data, Effect } from "effect";
 
 // --- Security Policy Definition ---
 
@@ -151,7 +152,9 @@ export class MemoryLimitExceededError extends Data.TaggedError(
 /**
  * Tagged error for file system access violations
  */
-export class FileAccessDeniedError extends Data.TaggedError("FileAccessDeniedError")<{
+export class FileAccessDeniedError extends Data.TaggedError(
+	"FileAccessDeniedError",
+)<{
 	readonly Path: string;
 	readonly Operation: "read" | "write" | "delete";
 	readonly Reason: string;
@@ -182,7 +185,9 @@ export class ChildProcessDeniedError extends Data.TaggedError(
 /**
  * Tagged error for CPU limit violations
  */
-export class CpuLimitExceededError extends Data.TaggedError("CpuLimitExceededError")<{
+export class CpuLimitExceededError extends Data.TaggedError(
+	"CpuLimitExceededError",
+)<{
 	readonly LimitPercent: number;
 	readonly CurrentUsage: number;
 	readonly ProcessId: number;
@@ -436,23 +441,26 @@ export const MergeSecurityPolicies = (
 ): SecurityPolicy => {
 	return {
 		AllowExit: Overrides.AllowExit ?? DefaultSecurityPolicy.AllowExit,
-		MaxMemoryMB:
-			Overrides.MaxMemoryMB ?? DefaultSecurityPolicy.MaxMemoryMB,
+		MaxMemoryMB: Overrides.MaxMemoryMB ?? DefaultSecurityPolicy.MaxMemoryMB,
 		MaxCpuPercent:
 			Overrides.MaxCpuPercent ?? DefaultSecurityPolicy.MaxCpuPercent,
-		AllowNetwork: Overrides.AllowNetwork ?? DefaultSecurityPolicy.AllowNetwork,
+		AllowNetwork:
+			Overrides.AllowNetwork ?? DefaultSecurityPolicy.AllowNetwork,
 		AllowedEndpoints:
-			Overrides.AllowedEndpoints ?? DefaultSecurityPolicy.AllowedEndpoints,
+			Overrides.AllowedEndpoints ??
+			DefaultSecurityPolicy.AllowedEndpoints,
 		AllowChildProcesses:
 			Overrides.AllowChildProcesses ??
 			DefaultSecurityPolicy.AllowChildProcesses,
 		AllowedChildCommands:
 			Overrides.AllowedChildCommands ??
 			DefaultSecurityPolicy.AllowedChildCommands,
-		AllowedPaths: Overrides.AllowedPaths ?? DefaultSecurityPolicy.AllowedPaths,
+		AllowedPaths:
+			Overrides.AllowedPaths ?? DefaultSecurityPolicy.AllowedPaths,
 		DeniedPaths: Overrides.DeniedPaths ?? DefaultSecurityPolicy.DeniedPaths,
 		MaxFileDescriptors:
-			Overrides.MaxFileDescriptors ?? DefaultSecurityPolicy.MaxFileDescriptors,
+			Overrides.MaxFileDescriptors ??
+			DefaultSecurityPolicy.MaxFileDescriptors,
 		MaxTimers: Overrides.MaxTimers ?? DefaultSecurityPolicy.MaxTimers,
 	};
 };

@@ -22,7 +22,7 @@ import { ParseJSON } from "./Integration/Tauri/File/ParseJSON.js";
 import { ReadRawFile } from "./Integration/Tauri/File/ReadRawFile.js";
 import { ResolveFinalDefaultPath } from "./Integration/Tauri/Path/Default.js";
 import type { IntegrationPathProblem } from "./Integration/Tauri/Path/Problem.js";
-import { ResolveWorkSpacePath } from "./Integration/Tauri/Path/WorkSpace.js";
+import { ResolveWorkspacePath } from "./Integration/Tauri/Path/Workspace.js";
 
 const ResolveConfigurationFile = (
 	ConfigDirectoryEffect: Effect.Effect<Uri, IntegrationPathProblem>,
@@ -55,14 +55,14 @@ const ResolveConfiguration = Effect.all(
 			ResolveFinalDefaultPath(),
 			"settings.json",
 		),
-		WorkSpace: ResolveConfigurationFile(
-			ResolveWorkSpacePath(),
+		Workspace: ResolveConfigurationFile(
+			ResolveWorkspacePath(),
 			"settings.json",
 		),
 	},
 	{ concurrency: "unbounded" },
 ).pipe(
-	Effect.map(({ User, WorkSpace }) => deepmerge(User, WorkSpace)),
+	Effect.map(({ User, Workspace }) => deepmerge(User, Workspace)),
 	Effect.mapError(
 		(Cause) =>
 			new ApplicationConfigurationProblem({

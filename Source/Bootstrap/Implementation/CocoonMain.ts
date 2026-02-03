@@ -9,14 +9,14 @@ import { Emitter } from "@codeeditorland/output/vscode-dts/vscode";
 import { NodeRuntime } from "@effect/platform-node";
 import { Effect, Layer } from "effect";
 
-// Protocol implementation
-import { CocoonMessagePassingProtocol } from "../Services/IPCService.js";
-// Service mapping
-import { ServiceMapping } from "../../ServiceMapping.js";
+import { IConfigurationService } from "../../Interfaces/IConfigurationService.js";
 import { IExtensionHostService } from "../../Interfaces/IExtensionHostService.js";
 import { IIPCService } from "../../Interfaces/IIPCService.js";
 import { IModuleInterceptorService } from "../../Interfaces/IModuleInterceptorService.js";
-import { IConfigurationService } from "../../Interfaces/IConfigurationService.js";
+// Service mapping
+import { ServiceMapping } from "../../ServiceMapping.js";
+// Protocol implementation
+import { CocoonMessagePassingProtocol } from "../Services/IPCService.js";
 
 // --- Bootstrap Logic ---
 

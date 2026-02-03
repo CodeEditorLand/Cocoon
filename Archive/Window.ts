@@ -12,7 +12,7 @@
  * - Mountain gRPC integration (replaced IPC.SendRequest)
  * - Enhanced show* methods (InformationMessage, WarningMessage, etc.)
  * - Comprehensive TODOs for all window operations
- * - StatusBar, OutputChannel, WebViewPanel integration hooks
+ * - StatusBar, OutputChannel, WebviewPanel integration hooks
  * - TypeConverter integration points
  *
  * Archive kept for reference during further implementation work.
@@ -36,7 +36,7 @@ import { IPCService } from "./IPC.js";
 import { FromAPI as RangeFromAPI } from "./TypeConverter/Main/Range.js";
 import { FromAPI as ViewColumnFromAPI } from "./TypeConverter/Main/ViewColumn.js";
 import { CreateEventStream } from "./Utility/EventStream.js";
-import { WorkSpaceService } from "./WorkSpace.js";
+import { WorkspaceService } from "./Workspace.js";
 
 /**
  * @interface Window
@@ -62,7 +62,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 	{
 		effect: Effect.gen(function* () {
 			const IPC = yield* IPCService;
-			const WorkSpace = yield* WorkSpaceService;
+			const Workspace = yield* WorkspaceService;
 
 			const WindowStateRef = yield* Ref.make<WindowState>({
 				focused: true,
@@ -117,7 +117,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 						[TheUri.toJSON(), ViewColumnDTO, OptionsDTO],
 					);
 
-					const Editor = WorkSpace.visibleTextEditors.find(
+					const Editor = Workspace.visibleTextEditors.find(
 						(e) => (e as any).id === EditorId,
 					);
 
@@ -137,7 +137,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 				},
 				onDidChangeWindowState: OnDidChangeWindowState,
 				get activeTextEditor() {
-					return WorkSpace.activeTextEditor;
+					return Workspace.activeTextEditor;
 				},
 				ShowTextDocument,
 			};

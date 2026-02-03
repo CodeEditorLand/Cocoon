@@ -1,11 +1,11 @@
 /**
  * @module Serializer
  * @description
- * WebView State Serializer - Convert WebView state to/from Mountain DTOs
+ * Webview State Serializer - Convert Webview state to/from Mountain DTOs
  *
  * RESPONSIBILITIES:
- * - Serialize WebView panel state to Mountain DTO format
- * - Deserialize Mountain DTOs back to WebView panel state
+ * - Serialize Webview panel state to Mountain DTO format
+ * - Deserialize Mountain DTOs back to Webview panel state
  * - Handle version compatibility and migration
  * - Ensure type safety in serialization/deserialization
  * - Validate DTO integrity during deserialization
@@ -50,7 +50,7 @@
  * - Add DTO signing for integrity verification
  * - Add tamper detection
  *
- * Reference: TODOs mention WebViewPanel as HIGH priority for Mountain integration
+ * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
  */
 
 import { Effect } from "effect";
@@ -60,7 +60,7 @@ import type { PanelOptions, PanelPosition, PanelState, PanelViewState } from "./
 
 /**
  * @interface MountainDTO
- * @description DTO format for WebView state in Mountain backend
+ * @description DTO format for Webview state in Mountain backend
  */
 export interface MountainDTO {
 	readonly Version: number;
@@ -92,7 +92,7 @@ export interface MountainDTO {
 
 /**
  * @interface Serializer
- * @description Contract for WebView state serialization
+ * @description Contract for Webview state serialization
  */
 export interface Serializer {
 	readonly SerializeToDTO: (
@@ -112,9 +112,9 @@ const DTO_VERSION = 1;
 
 /**
  * @class SerializerService
- * @description Service for serializing WebView state to/from Mountain DTOs
+ * @description Service for serializing Webview state to/from Mountain DTOs
  */
-export class SerializerService extends Effect.Service<SerializerService>()("Serializer/WebViewPanel", {
+export class SerializerService extends Effect.Service<SerializerService>()("Serializer/WebviewPanel", {
 	effect: Effect.gen(function* () {
 		/**
 		 * Validate a MountainDTO structure

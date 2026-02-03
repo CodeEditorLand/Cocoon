@@ -1,5 +1,5 @@
 /**
- * @module WebViewPanelImplementation
+ * @module WebviewPanelImplementation
  * @description
  * The concrete implementation of the `vscode.WebviewPanel` interface.
  *
@@ -8,7 +8,7 @@
  * - Implements the full vscode.WebviewPanel interface
  * - Manages webview panel lifecycle (create, reveal, dispose)
  * - Tracks view state (active, visible, viewColumn) and fires change events
- * - Delegates webview operations to WebViewImplementation instance
+ * - Delegates webview operations to WebviewImplementation instance
  *
  * ARCHITECTURE:
  * - Pattern: src/vs/workbench/api/common/extHostWebview.ts
@@ -19,7 +19,7 @@
  * INTEGRATION:
  * - IPC: SendNotification to relay state changes to Mountain
  * - TypeConverter: URI conversions for iconPath
- * - WebViewImplementation: Embedded webview instance
+ * - WebviewImplementation: Embedded webview instance
  * - EventStream: Emitters for panel events
  *
  * IMPLEMENTATION NOTES:
@@ -54,15 +54,15 @@ import type {
 
 import type { IPC } from "../IPC.js";
 import { FromAPI as UriFromAPI } from "../TypeConverter/Main/URI.js";
-import { ConvertShowOptionToDTO } from "../TypeConverter/WebView/ConvertShowOptionToDTO.js";
+import { ConvertShowOptionToDTO } from "../TypeConverter/Webview/ConvertShowOptionToDTO.js";
 import { CreateEventStream } from "../Utility/EventStream.js";
-import { WebViewImplementation } from "./WebViewImplementation.js";
+import { WebviewImplementation } from "./WebviewImplementation.js";
 
 /**
- * @class WebViewPanelImplementation
+ * @class WebviewPanelImplementation
  * @implements {WebviewPanel}
  */
-export class WebViewPanelImplementation implements WebviewPanel {
+export class WebviewPanelImplementation implements WebviewPanel {
 	private IsDisposed = false;
 	private _title: string;
 	// FIX: The error indicates the interface expects a non-optional property.
@@ -96,7 +96,7 @@ export class WebViewPanelImplementation implements WebviewPanel {
 	) {
 		this.viewType = InitialViewType;
 		this.options = InitialOptions;
-		this.webview = new WebViewImplementation(
+		this.webview = new WebviewImplementation(
 			Handle,
 			IPC,
 			Extension,
@@ -185,14 +185,14 @@ export class WebViewPanelImplementation implements WebviewPanel {
 		this.IsDisposed = true;
 		this.OnDidDisposeEmitter.Fire();
 		this.OnDidDisposeCallback();
-		(this.webview as WebViewImplementation).dispose();
+		(this.webview as WebviewImplementation).dispose();
 		Effect.runFork(
 			this.IPC.SendNotification("$disposeWebview", [this.Handle]),
 		);
 	}
 
 	public fireDidReceiveMessage(Message: any): void {
-		(this.webview as WebViewImplementation).fireDidReceiveMessage(Message);
+		(this.webview as WebviewImplementation).fireDidReceiveMessage(Message);
 	}
 	public updateViewState(NewState: {
 		readonly active: boolean;
