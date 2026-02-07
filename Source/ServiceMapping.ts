@@ -10,12 +10,17 @@ import { IExtensionHostService } from "./Interfaces/IExtensionHostService.js";
 import { IIPCService } from "./Interfaces/IIPCService.js";
 import { IModuleInterceptorService } from "./Interfaces/IModuleInterceptorService.js";
 import { IMountainClientService } from "./Interfaces/IMountainClientService.js";
+import { IFileSystemService } from "./Interfaces/IFileSystemService.js";
+import { ITerminalService } from "./Interfaces/ITerminalService.js";
+
 import { ConfigurationLayer } from "./Services/Configuration.js";
 import { ExtensionHostLayer } from "./Services/ExtensionHostService.js";
 import { IPCServiceLayer } from "./Services/IPCService.js";
 import { ModuleInterceptorLayer } from "./Services/ModuleInterceptorService.js";
 import { MountainClientLayer } from "./Services/MountainClientService.js";
 import { APIFactoryLayer, IAPIFactoryService } from "./Services/APIFactoryService.js";
+import { FileSystemService, FileSystemServiceLayer } from "./Services/FileSystemService.js";
+import { TerminalServiceLayer } from "./Services/TerminalService.js";
 
 /**
  * ServiceMapping implementation
@@ -31,7 +36,9 @@ export class ServiceMapping {
 			ConfigurationLayer,
 			ModuleInterceptorLayer,
 			ExtensionHostLayer,
-            APIFactoryLayer
+            APIFactoryLayer,
+            FileSystemServiceLayer,
+            TerminalServiceLayer
 		);
 
 	/**
@@ -41,9 +48,11 @@ export class ServiceMapping {
         // Base layers
 		const Base = Layer.merge(MountainClientLayer, IPCServiceLayer);
         
-        // Config depends on MountainClient
+        // Capabilities depend on Base
         const Config = ConfigurationLayer.pipe(Layer.provide(Base));
-        
+        const FS = FileSystemServiceLayer.pipe(Layer.provide(Base));
+        const Terminal = TerminalServiceLayer.pipe(Layer.provide(Base));
+
         // API Factory depends on MountainClient + Config
         const API = APIFactoryLayer.pipe(
             Layer.provide(Base),
@@ -62,7 +71,9 @@ export class ServiceMapping {
 
 		return Layer.mergeAll(
             Base, 
-            Config, 
+            Config,
+            FS,
+            Terminal,
             API, 
             ExtHost, 
             ModuleInt
