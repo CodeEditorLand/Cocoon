@@ -69,6 +69,10 @@ const bootstrapCocoon = Effect.gen(function* () {
 
 	// Initialize extension host
 	const extensionHost = yield* IExtensionHostService;
+    // We do NOT use 'yield*' here because initialize is async promise inside service
+    // But in Effect world, we should likely wrap it.
+    // Assuming extensionHost has a .initialize() method that returns Promise<void>
+	// yield* Effect.promise(() => extensionHost.initialize()); 
 	console.log("[CocoonMain] Extension host initialized");
 
 	// Start extension activation
@@ -88,11 +92,11 @@ const performHandshake = (ipcService: any) =>
 	Effect.gen(function* () {
 		// Send initial handshake notification
 		// Maps to 'System.InitialHandshake' in Mountain Spine
-		yield* ipcService.sendNotification("System", "InitialHandshake", []);
+		yield* Effect.promise(() => ipcService.sendNotification("System", "InitialHandshake", []));
 
 		// Wait for initialization data
 		// Maps to 'System.GetInitData' in Mountain Spine
-		const initData = yield* ipcService.sendRequest("System", "GetInitData", []);
+		const initData = yield* Effect.promise(() => ipcService.sendRequest("System", "GetInitData", []));
 		return initData;
 	}).pipe(
 		Effect.catchAll((error) =>
@@ -113,7 +117,7 @@ const activateStartupExtensions = (extensionHost: any) =>
 		const startupExtensions = ["*" as any]; // Placeholder
 
 		for (const extensionId of startupExtensions) {
-			yield* extensionHost.activateExtension(extensionId, "*");
+			yield* Effect.promise(() => extensionHost.activateExtension(extensionId, "*"));
 		}
 
 		console.log(
@@ -141,37 +145,33 @@ const registerIPCHandlers = (ipcService: any, extensionHost: any) =>
 		console.log("[CocoonMain] Registering IPC handlers...");
 
 		// Handle extension activation requests
-		yield* ipcService.registerHandler(
+		yield* Effect.promise(() => ipcService.registerHandler(
 			"$activateExtension",
 			async (extensionId: string, activationEvent: string) => {
-				return Effect.runPromise(
-					extensionHost.activateExtension(
-						extensionId,
-						activationEvent,
-					),
-				);
+				return extensionHost.activateExtension(
+                    extensionId,
+                    activationEvent,
+                );
 			},
-		);
+		));
 
 		// Handle extension deactivation requests
-		yield* ipcService.registerHandler(
+		yield* Effect.promise(() => ipcService.registerHandler(
 			"$deactivateExtension",
 			async (extensionId: string) => {
-				return Effect.runPromise(
-					extensionHost.deactivateExtension(extensionId),
-				);
+				return extensionHost.deactivateExtension(extensionId);
 			},
-		);
+		));
 
 		// Handle shutdown requests
-		yield* ipcService.registerHandler("$shutdown", async () => {
+		yield* Effect.promise(() => ipcService.registerHandler("$shutdown", async () => {
 			console.log("[CocoonMain] Received shutdown request from Mountain");
 
 			// TODO: Implement proper deactivation
 			// Deactivate all extensions
 
 			process.exit(0); // Exit process
-		});
+		}));
 
 		console.log("[CocoonMain] IPC handlers registered");
 	});
