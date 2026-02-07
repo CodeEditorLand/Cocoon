@@ -8,6 +8,8 @@
 import { Effect, Layer, Context } from "effect";
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
 import { IConfigurationService } from "../Interfaces/IConfigurationService.js";
+import { IFileSystemService } from "../Interfaces/IFileSystemService.js";
+import { ITerminalService } from "../Interfaces/ITerminalService.js";
 
 // --- API Service Interface ---
 
@@ -23,75 +25,85 @@ export const IAPIFactoryService = Context.Tag<IAPIFactoryService>();
  */
 const createVSCodeAPI = (
     mountainClient: IMountainClientService,
-    configService: IConfigurationService
+    configService: IConfigurationService,
+    fsService: IFileSystemService,
+    terminalService: ITerminalService
 ) => {
     return {
         // --- Window Namespace ---
         window: {
             showInformationMessage: async (message: string, ...items: string[]) => {
-                console.log(`[API] window.showInformationMessage: ${message}`);
-                
-                // Call Spine (v0.2 Windowing Batch)
-                // We send a request to Mountain backend
                 await mountainClient.sendRequest("window.showMessage", {
                     title: "Information",
                     message: message,
                     level: "info"
                 });
-
-                // In a real implementation, we'd wait for the user's choice from 'items'
-                // For now, return undefined (dismissed) or the first item if simple
                 return undefined;
             },
-
             showErrorMessage: async (message: string, ...items: string[]) => {
-                 console.log(`[API] window.showErrorMessage: ${message}`);
                  await mountainClient.sendRequest("window.showMessage", {
                     title: "Error",
                     message: message,
                     level: "error"
                 });
                 return undefined;
+            },
+            createTerminal: (options: any) => {
+                const name = typeof options === 'string' ? options : options.name;
+                const shellPath = typeof options === 'object' ? options.shellPath : undefined;
+                const cwd = typeof options === 'object' ? options.cwd : undefined;
+
+                // Create terminal asynchronously in background, return sync proxy
+                const terminalIdPromise = terminalService.createTerminal(name, shellPath, cwd);
+                
+                return {
+                    name,
+                    sendText: async (text: string) => {
+                        const id = await terminalIdPromise;
+                        await terminalService.sendText(id, text);
+                    },
+                    show: () => {}, // TODO: Implement UI focus
+                    hide: () => {},
+                    dispose: async () => {
+                         const id = await terminalIdPromise;
+                         await terminalService.kill(id);
+                    }
+                };
             }
         },
 
         // --- Workspace Namespace ---
         workspace: {
             getConfiguration: (section?: string) => {
-                // Return a configuration object that queries the ConfigService
                 return {
                     get: (key: string, defaultValue?: any) => {
                         const fullKey = section ? `${section}.${key}` : key;
-                        // Synchronous get from cache (v0.4 Config Batch)
                         return configService.getValue(fullKey, 0, defaultValue);
                     },
                     update: async (key: string, value: any, target: any) => {
                         const fullKey = section ? `${section}.${key}` : key;
-                        // Async update to Spine
                         await configService.setValue(fullKey, value, target);
                     }
                 };
             },
-            
-            // Stub for document handling (future v0.1.1 batch)
-            openTextDocument: async (options: any) => {
-                return {
-                    uri: options,
-                    getText: () => "",
-                    lineCount: 0
-                };
+            // Filesystem API
+            fs: {
+                stat: (uri: any) => fsService.stat(uri),
+                readFile: (uri: any) => fsService.readFile(uri),
+                writeFile: (uri: any, content: Uint8Array) => fsService.writeFile(uri, content),
+                readDirectory: (uri: any) => fsService.readDirectory(uri),
+                createDirectory: (uri: any) => fsService.createDirectory(uri),
+                delete: (uri: any, options: { recursive: boolean }) => fsService.delete(uri, options),
+                rename: (source: any, target: any, options: { overwrite: boolean }) => fsService.rename(source, target, options)
             }
         },
 
         // --- Commands Namespace ---
         commands: {
             registerCommand: (command: string, callback: (...args: any[]) => any) => {
-                console.log(`[API] Registered command: ${command}`);
-                // TODO: Register with Mountain for UI-driven execution
                 return { dispose: () => {} };
             },
             executeCommand: async (command: string, ...args: any[]) => {
-                console.log(`[API] Executing command: ${command}`);
                 return undefined;
             }
         },
@@ -114,9 +126,11 @@ export class APIFactoryService implements IAPIFactoryService {
 
     constructor(
         private mountainClient: IMountainClientService,
-        private configService: IConfigurationService
+        private configService: IConfigurationService,
+        private fsService: IFileSystemService,
+        private terminalService: ITerminalService
     ) {
-        this.api = createVSCodeAPI(mountainClient, configService);
+        this.api = createVSCodeAPI(mountainClient, configService, fsService, terminalService);
     }
 
     /**
@@ -135,6 +149,8 @@ export const APIFactoryLayer = Layer.effect(
     Effect.gen(function* () {
         const mountainClient = yield* IMountainClientService;
         const configService = yield* IConfigurationService;
-        return new APIFactoryService(mountainClient, configService);
+        const fsService = yield* IFileSystemService;
+        const terminalService = yield* ITerminalService;
+        return new APIFactoryService(mountainClient, configService, fsService, terminalService);
     })
 );
