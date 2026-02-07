@@ -5,7 +5,7 @@
  * Handles URI schemes and maps 'file://' requests to Mountain's FS Spine.
  */
 
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Context } from "effect";
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
 
 // --- Interfaces ---
@@ -19,6 +19,8 @@ export interface IFileSystemService {
     delete(uri: any, options: { recursive: boolean }): Promise<void>;
     rename(source: any, target: any, options: { overwrite: boolean }): Promise<void>;
 }
+
+export const IFileSystemService = Context.Tag<IFileSystemService>();
 
 // --- Implementation ---
 
@@ -54,9 +56,10 @@ export class FileSystemService implements IFileSystemService {
         }
         
         // Call Spine (v0.1 Filesystem Batch)
-        // We need to implement 'fs.writeFile' in Mountain backend first!
-        // For now, log it
-        console.log(`[FileSystem] Writing to ${uri.fsPath}`);
+        await this.mountainClient.sendRequest("fs.writeFile", {
+            path: uri.fsPath,
+            content: Array.from(content) // Serialize buffer to array
+        });
     }
 
     async readDirectory(uri: any): Promise<[string, any][]> {
@@ -73,14 +76,26 @@ export class FileSystemService implements IFileSystemService {
     }
 
     async createDirectory(uri: any): Promise<void> {
-         console.log(`[FileSystem] mkdir ${uri.fsPath}`);
+         await this.mountainClient.sendRequest("fs.createDir", uri.fsPath);
     }
 
     async delete(uri: any, options: { recursive: boolean }): Promise<void> {
-        console.log(`[FileSystem] delete ${uri.fsPath}`);
+        await this.mountainClient.sendRequest("fs.delete", uri.fsPath);
     }
 
     async rename(source: any, target: any, options: { overwrite: boolean }): Promise<void> {
-        console.log(`[FileSystem] rename ${source.fsPath} -> ${target.fsPath}`);
+        // Note: 'overwrite' flag support depends on backend logic, ignoring for now
+        await this.mountainClient.sendRequest("fs.rename", { from: source.fsPath, to: target.fsPath });
     }
 }
+
+/**
+ * Service Layer
+ */
+export const FileSystemServiceLayer = Layer.effect(
+    IFileSystemService,
+    Effect.gen(function* () {
+        const mountainClient = yield* IMountainClientService;
+        return new FileSystemService(mountainClient);
+    })
+);
