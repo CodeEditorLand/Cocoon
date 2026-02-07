@@ -13,10 +13,12 @@ import { IConfigurationService } from "../../Interfaces/IConfigurationService.js
 import { IExtensionHostService } from "../../Interfaces/IExtensionHostService.js";
 import { IIPCService } from "../../Interfaces/IIPCService.js";
 import { IModuleInterceptorService } from "../../Interfaces/IModuleInterceptorService.js";
+import { IMountainClientService } from "../../Interfaces/IMountainClientService.js";
 // Service mapping
 import { ServiceMapping } from "../../ServiceMapping.js";
 // Protocol implementation
-import { CocoonMessagePassingProtocol } from "../Services/IPCService.js";
+import { CocoonGrpcAdapter } from "../Services/Adapters/CocoonGrpcAdapter.js";
+import { MountainClientService } from "../Services/MountainClientService.js";
 
 // --- Bootstrap Logic ---
 
@@ -33,17 +35,27 @@ const bootstrapCocoon = Effect.gen(function* () {
 	const appLayer = ServiceMapping.composeAppLayer();
 	console.log("[CocoonMain] Application layer composed");
 
-	// Initialize IPC communication with advanced protocol
+	// 1. Initialize the Real gRPC Client
+	// This is the physical limb that connects to the Spine
+	const mountainClient = yield* IMountainClientService;
+	
+	try {
+		yield* Effect.promise(() => mountainClient.connect());
+		console.log("[CocoonMain] 🟢 Connected to Mountain gRPC Spine");
+	} catch (error) {
+		console.error("[CocoonMain] 🔴 Failed to connect to Mountain:", error);
+		process.exit(1);
+	}
+
+	// 2. Create the Spine Adapter (Bridge)
+    // This pipes VS Code IPC messages directly into gRPC
+    // Replacing the dummy 'CocoonMessagePassingProtocol'
+    const protocol = new CocoonGrpcAdapter(mountainClient);
+
+	// 3. Initialize IPC communication with the real adapter
 	const ipcService = yield* IIPCService;
-
-	// Create message passing protocol for Mountain communication
-	const protocol = new CocoonMessagePassingProtocol((buffer) => {
-		// TODO: Send to Mountain via gRPC
-		console.log("[CocoonMain] Sending message to Mountain");
-	});
-
 	yield* Effect.promise(() => ipcService.initialize(protocol));
-	console.log("[CocoonMain] Advanced IPC service initialized");
+	console.log("[CocoonMain] Advanced IPC service initialized with Spine Adapter");
 
 	// Install module interceptor
 	const moduleInterceptor = yield* IModuleInterceptorService;
@@ -52,8 +64,8 @@ const bootstrapCocoon = Effect.gen(function* () {
 
 	// Perform handshake with Mountain
 	console.log("[CocoonMain] Performing handshake with Mountain...");
-	yield* performHandshake(ipcService);
-	console.log("[CocoonMain] Handshake with Mountain completed");
+	const initData = yield* performHandshake(ipcService);
+	console.log("[CocoonMain] Handshake with Mountain completed", initData);
 
 	// Initialize extension host
 	const extensionHost = yield* IExtensionHostService;
@@ -72,15 +84,15 @@ const bootstrapCocoon = Effect.gen(function* () {
 /**
  * Perform handshake with Mountain
  */
-const performHandshake = (ipcService: unknown) =>
+const performHandshake = (ipcService: any) =>
 	Effect.gen(function* () {
 		// Send initial handshake notification
-		yield* ipcService.sendNotification("$initialHandshake", []);
+		// Maps to 'System.InitialHandshake' in Mountain Spine
+		yield* ipcService.sendNotification("System", "InitialHandshake", []);
 
 		// Wait for initialization data
-		const initData = yield* ipcService.sendRequest("$getInitData", []);
-		console.log("[CocoonMain] Received initialization data from Mountain");
-
+		// Maps to 'System.GetInitData' in Mountain Spine
+		const initData = yield* ipcService.sendRequest("System", "GetInitData", []);
 		return initData;
 	}).pipe(
 		Effect.catchAll((error) =>
@@ -95,7 +107,7 @@ const performHandshake = (ipcService: unknown) =>
 /**
  * Activate startup extensions
  */
-const activateStartupExtensions = (extensionHost: unknown) =>
+const activateStartupExtensions = (extensionHost: any) =>
 	Effect.gen(function* () {
 		// TODO: Get extension list from Mountain
 		const startupExtensions = ["*" as any]; // Placeholder
@@ -185,7 +197,7 @@ const handleErrors = Effect.catchAll((error: any) =>
  * Main entry point
  */
 const main = bootstrapCocoon.pipe(
-	Effect.provide(ServiceMappingInstance.composeAppLayer()),
+	Effect.provide(ServiceMapping.composeAppLayer()),
 	handleErrors,
 );
 
