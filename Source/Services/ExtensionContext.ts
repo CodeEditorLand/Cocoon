@@ -36,6 +36,7 @@ import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
+import { MountainGRPCClientService } from "./MountainGRPCClient.js";
 
 /**
  * @interface Logger
@@ -204,16 +205,16 @@ export class Memento {
 export class ExtensionSecretStorage {
 	private readonly ExtensionId: string;
 	private readonly Logger: Logger;
-	private readonly MountainClient?: IMountainClientService;
+	private readonly MountainClient?: IMountainClientService | null;
 
 	constructor(
 		ExtensionId: string,
 		Logger: Logger,
-		MountainClient?: IMountainClientService,
+		MountainClient?: IMountainClientService | null,
 	) {
 		this.ExtensionId = ExtensionId;
 		this.Logger = Logger;
-		this.MountainClient = MountainClient;
+		this.MountainClient = MountainClient ?? undefined;
 	}
 
 	/**
@@ -222,16 +223,19 @@ export class ExtensionSecretStorage {
 	 * @returns The secret value or undefined
 	 */
 	async get(key: string): Promise<string | undefined> {
-		// TODO: HIGH: Implement secure storage integration with Mountain
-		// return await Effect.runPromise(
-		//     Effect.tryPromise({
-		//         try: () => this.MountainClient?.sendRequest('secrets.get', {
-		//             extensionId: this.ExtensionId,
-		//             key
-		//         }) as Promise<string | undefined>,
-		//         catch: () => undefined
-		//     })
-		// );
+		// HIGH: Implement secure storage integration with Mountain
+		if (this.MountainClient) {
+			try {
+				const result = await this.MountainClient.sendRequest('getSecret', { key });
+				return result as string | undefined;
+			} catch (error) {
+				this.Logger.Error(
+					`[ExtensionContext] Failed to get secret: ${this.ExtensionId}.${key}`,
+					error as Error,
+				);
+				return undefined;
+			}
+		}
 
 		this.Logger.Debug(
 			`[ExtensionContext] Secret get: ${this.ExtensionId}.${key}`,
@@ -245,20 +249,22 @@ export class ExtensionSecretStorage {
 	 * @param value The secret value
 	 */
 	async store(key: string, value: string): Promise<void> {
-		// TODO: HIGH: Implement secure storage integration with Mountain
-		// await Effect.runPromise(
-		//     Effect.tryPromise({
-		//         try: () => this.MountainClient?.sendRequest('secrets.store', {
-		//             extensionId: this.ExtensionId,
-		//             key,
-		//             value
-		//         }),
-		//         catch: (error) => {
-		//             this.Logger.Error('[ExtensionContext] Failed to store secret', error as Error);
-		//             throw error;
-		//         }
-		//     })
-		// );
+		// HIGH: Implement secure storage integration with Mountain
+		if (this.MountainClient) {
+			try {
+				await this.MountainClient.sendNotification('storeSecret', { key, value });
+				this.Logger.Debug(
+					`[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`,
+				);
+				return;
+			} catch (error) {
+				this.Logger.Error(
+					`[ExtensionContext] Failed to store secret: ${this.ExtensionId}.${key}`,
+					error as Error,
+				);
+				throw error;
+			}
+		}
 
 		this.Logger.Debug(
 			`[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`,
@@ -270,19 +276,22 @@ export class ExtensionSecretStorage {
 	 * @param key The key to delete
 	 */
 	async delete(key: string): Promise<void> {
-		// TODO: HIGH: Implement secure storage integration with Mountain
-		// await Effect.runPromise(
-		//     Effect.tryPromise({
-		//         try: () => this.MountainClient?.sendRequest('secrets.delete', {
-		//             extensionId: this.ExtensionId,
-		//             key
-		//         }),
-		//         catch: (error) => {
-		//             this.Logger.Error('[ExtensionContext] Failed to delete secret', error as Error);
-		//             throw error;
-		//         }
-		//     })
-		// );
+		// HIGH: Implement secure storage integration with Mountain
+		if (this.MountainClient) {
+			try {
+				await this.MountainClient.sendNotification('deleteSecret', { key });
+				this.Logger.Debug(
+					`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`,
+				);
+				return;
+			} catch (error) {
+				this.Logger.Error(
+					`[ExtensionContext] Failed to delete secret: ${this.ExtensionId}.${key}`,
+					error as Error,
+				);
+				throw error;
+			}
+		}
 
 		this.Logger.Debug(
 			`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`,

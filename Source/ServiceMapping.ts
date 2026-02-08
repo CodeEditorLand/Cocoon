@@ -26,6 +26,7 @@ import { ExtensionHostLayer } from "./Services/ExtensionHostService.js";
 import { IPCServiceLayer } from "./Services/IPCService.js";
 import { ModuleInterceptorLayer } from "./Services/ModuleInterceptorService.js";
 import { MountainClientLayer } from "./Services/MountainClientService.js";
+import { MountainGRPCClientLayer } from "./Services/MountainGRPCClient.js";
 import { APIFactoryLayer } from "./Services/APIFactoryService.js";
 import { FileSystemServiceLayer } from "./Services/FileSystemService.js";
 import { TerminalServiceLayer } from "./Services/TerminalService.js";
@@ -59,14 +60,15 @@ export class ServiceMapping {
 	 * Compose application layer
 	 */
 	static composeAppLayer = () => {
-        // Base Infrastructure
+	       // Base Infrastructure
 		const Base = Layer.mergeAll(
-            MountainClientLayer, 
-            IPCServiceLayer,
-            SecurityServiceLive,
-            PerformanceMonitoringServiceLive,
-            ErrorHandlingServiceLive
-        );
+	           MountainClientLayer,
+	           MountainGRPCClientLayer,
+	           IPCServiceLayer,
+	           SecurityServiceLive,
+	           PerformanceMonitoringServiceLive,
+	           ErrorHandlingServiceLive
+	       );
         
         // Core Capabilities (Depend on Base)
         const Config = ConfigurationLayer.pipe(Layer.provide(Base));

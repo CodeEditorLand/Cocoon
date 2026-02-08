@@ -40,6 +40,7 @@ import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
+import { MountainGRPCClientService } from "./MountainGRPCClient.js";
 // Import type converters
 import { Command as CommandConverter } from "../TypeConverter/Command.js";
 
@@ -278,29 +279,11 @@ export class CommandService extends Effect.Service<CommandService>()(
 					);
 
 					// Mountain gRPC integration for command execution
-					const mountainClient = yield* MountainClientService;
-
-					// Prepare command execution request
-					const executionRequest = {
-						commandId: Id,
-						args: Arguments,
-						sourceExtension: this.getCallingExtension(),
-						executionContext: this.getExecutionContext(),
-						timestamp: Date.now(),
-					};
+					const mountainClient = yield* MountainGRPCClientService;
+					const startTime = Date.now();
 
 					try {
-						const result = yield* Effect.tryPromise({
-							try: () =>
-								mountainClient.sendRequest(
-									"command.execute",
-									executionRequest,
-								),
-							catch: (error) =>
-								new Error(
-									`Mountain command execution failed: ${error.message}`,
-								),
-						});
+						const result = yield* mountainClient.executeCommand(Id, ...Arguments);
 
 						// Track performance metrics
 						this.trackCommandExecution(
@@ -385,32 +368,12 @@ export class CommandService extends Effect.Service<CommandService>()(
 					// }
 
 					// Mountain gRPC integration for command registration
-					const mountainClient = yield* MountainClientService;
+					const mountainClient = yield* MountainGRPCClientService;
 
-					// Prepare command registration request
-					const registrationRequest = {
-						commandId: Id,
-						extensionId: this.getCallingExtension(),
-						registrationTime: Date.now(),
-						commandMetadata: {
-							hasCallback: typeof Callback === "function",
-							callbackType: typeof Callback,
-							thisArgProvided: ThisArg !== undefined,
-						},
-					};
+					const extensionId = this.getCallingExtension();
 
 					try {
-						yield* Effect.tryPromise({
-							try: () =>
-								mountainClient.sendNotification(
-									"command.register",
-									registrationRequest,
-								),
-							catch: (error) =>
-								new Error(
-									`Mountain command registration failed: ${error.message}`,
-								),
-						});
+						yield* mountainClient.registerCommand(Id, extensionId, `Command: ${Id}`);
 
 						yield* Logger.Info(
 							`[CommandService] Command '${Id}' registered with Mountain`,
@@ -515,21 +478,11 @@ export class CommandService extends Effect.Service<CommandService>()(
 
 					// Mountain gRPC integration for getting remote commands
 					try {
-						const mountainClient = yield* MountainClientService;
-						const RemoteCommands = yield* Effect.tryPromise({
-							try: () =>
-								mountainClient.sendRequest("command.get", {
-									filterInternal: FilterInternal,
-								}) as Promise<string[]>,
-							catch: (error) => {
-								yield *
-									Logger.Warn(
-										`[CommandService] Failed to get commands from Mountain, using local only`,
-										error as Error,
-									);
-								return [];
-							},
-						});
+						const mountainClient = yield* MountainGRPCClientService;
+						
+						// For now, just return local commands
+						// TODO: Implement getCommands in MountainGRPCClientService
+						const RemoteCommands: string[] = [];
 
 						yield* Logger.Info(
 							`[CommandService] Retrieved ${RemoteCommands.length} remote commands from Mountain`,
