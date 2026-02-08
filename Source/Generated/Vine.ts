@@ -10,74 +10,685 @@
  * Package: vine_ipc
  */
 
-export interface MountainService {
-	ProcessCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
-	SendCocoonNotification(request: GenericNotification): Promise<Empty>;
-	CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+
+// Enum types parsed from Vine.proto
+export enum ViewColumn {
+    VIEW_COLUMN_UNDEFINED = 0,
+    VIEW_COLUMN_ACTIVE = 1,
+    VIEW_COLUMN_ONE = 2,
+    VIEW_COLUMN_TWO = 3,
+    VIEW_COLUMN_THREE = 4,
+    VIEW_COLUMN_FOUR = 5,
+    VIEW_COLUMN_FIVE = 6,
+    VIEW_COLUMN_SIX = 7,
+    VIEW_COLUMN_SEVEN = 8,
+    VIEW_COLUMN_EIGHT = 9,
+    VIEW_COLUMN_NINE = 10,
 }
 
-export interface CocoonService {
-	ProcessMountainRequest(request: GenericRequest): Promise<GenericResponse>;
-	SendMountainNotification(request: GenericNotification): Promise<Empty>;
-	CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+export enum TextDocumentSaveReason {
+    SAVE_REASON_MANUAL = 0,
+    SAVE_REASON_AFTER_DELAY = 1,
+    SAVE_REASON_FOCUS_OUT = 2,
 }
 
-// Enhanced message interfaces based on actual Vine.proto
+
+// Message interfaces parsed from Vine.proto
+export interface Empty {
+}
+
 export interface GenericRequest {
-	RequestIdentifier: bigint;
-	Method: string;
-	Parameter: Buffer;
+    RequestIdentifier: number;
+    Method: string;
+    Parameter: Buffer;
 }
 
 export interface GenericResponse {
-	RequestIdentifier: bigint;
-	Result: Buffer;
-	error?: RPCError;
+    RequestIdentifier: number;
+    Result: Buffer;
+    error?: RPCError;
 }
 
 export interface GenericNotification {
-	Method: string;
-	Parameter: Buffer;
+    Method: string;
+    Parameter: Buffer;
 }
 
 export interface RPCError {
-	Code: number;
-	Message: string;
-	Data?: Buffer;
+    Code: number;
+    Message: string;
+    Data: Buffer;
 }
 
 export interface CancelOperationRequest {
-	RequestIdentifierToCancel: bigint;
+    RequestIdentifierToCancel: number;
 }
-
-export interface Empty {}
 
 export interface RPCDataPayload {
-	Data: Buffer;
+    Data: Buffer;
 }
+
+export interface Position {
+    line: number;
+    character: number;
+}
+
+export interface Range {
+    start: Position;
+    end: Position;
+}
+
+export interface Uri {
+    value: string;
+}
+
+export interface Argument {
+    string_value: string;
+    int_value: number;
+    bool_value: boolean;
+    bytes_value: Buffer;
+}
+
+export interface WorkspaceFolder {
+    uri: Uri;
+    name: string;
+}
+
+export interface InitExtensionHostRequest {
+    workspace_folders: WorkspaceFolder;
+    workspace_id: string;
+}
+
+export interface RegisterCommandRequest {
+    command_id: string;
+    extension_id: string;
+    title: string;
+}
+
+export interface ExecuteCommandRequest {
+    command_id: string;
+    arguments: Argument;
+}
+
+export interface ExecuteCommandResponse {
+    value: Buffer;
+    error?: RPCError;
+}
+
+export interface UnregisterCommandRequest {
+    command_id: string;
+}
+
+export interface RegisterProviderRequest {
+    language_selector: string;
+    handle: number;
+    extension_id: string;
+}
+
+export interface ProvideHoverRequest {
+    uri: Uri;
+    position: Position;
+    provider_handle: number;
+}
+
+export interface ProvideHoverResponse {
+    markdown: string;
+    range: Range;
+}
+
+export interface ProvideCompletionItemsRequest {
+    uri: Uri;
+    position: Position;
+    provider_handle: number;
+    trigger_character: string;
+}
+
+export interface ProvideCompletionItemsResponse {
+    items: CompletionItem;
+}
+
+export interface CompletionItem {
+    label: string;
+    kind: string;
+    detail: string;
+    documentation: Buffer;
+    insert_text: string;
+}
+
+export interface ProvideDefinitionRequest {
+    uri: Uri;
+    position: Position;
+    provider_handle: number;
+}
+
+export interface ProvideDefinitionResponse {
+    locations: Location;
+}
+
+export interface Location {
+    uri: Uri;
+    range: Range;
+}
+
+export interface ProvideReferencesRequest {
+    uri: Uri;
+    position: Position;
+    provider_handle: number;
+}
+
+export interface ProvideReferencesResponse {
+    locations: Location;
+}
+
+export interface ProvideCodeActionsRequest {
+    uri: Uri;
+    range: Range;
+    provider_handle: number;
+}
+
+export interface ProvideCodeActionsResponse {
+    actions: CodeAction;
+}
+
+export interface CodeAction {
+    title: string;
+    kind: string;
+    is_preferred: boolean;
+}
+
+export interface ShowTextDocumentRequest {
+    uri: Uri;
+    view_column: ViewColumn;
+    preserve_focus: boolean;
+}
+
+export interface ShowTextDocumentResponse {
+    success: boolean;
+}
+
+export interface ShowMessageRequest {
+    message: string;
+}
+
+export interface ShowMessageResponse {
+    success: boolean;
+}
+
+export interface CreateStatusBarItemRequest {
+    id: string;
+    text: string;
+    tooltip: string;
+}
+
+export interface CreateStatusBarItemResponse {
+    item_id: string;
+}
+
+export interface SetStatusBarTextRequest {
+    item_id: string;
+    text: string;
+}
+
+export interface CreateWebviewPanelRequest {
+    view_type: string;
+    title: string;
+    icon_path: string;
+    view_column: ViewColumn;
+    preserve_focus: boolean;
+    enable_find_widget: boolean;
+    retain_context_when_hidden: boolean;
+    local_resource_roots: string;
+}
+
+export interface CreateWebviewPanelResponse {
+    handle: number;
+}
+
+export interface SetWebviewHtmlRequest {
+    handle: number;
+    html: string;
+}
+
+export interface OnDidReceiveMessageRequest {
+    handle: number;
+    string_message: string;
+    bytes_message: Buffer;
+}
+
+export interface ReadFileRequest {
+    uri: Uri;
+}
+
+export interface ReadFileResponse {
+    content: Buffer;
+    encoding: string;
+}
+
+export interface WriteFileRequest {
+    uri: Uri;
+    content: Buffer;
+    encoding: string;
+}
+
+export interface StatRequest {
+    uri: Uri;
+}
+
+export interface StatResponse {
+    is_file: boolean;
+    is_directory: boolean;
+    size: number;
+    mtime: number;
+}
+
+export interface ReaddirRequest {
+    uri: Uri;
+}
+
+export interface ReaddirResponse {
+    entries: string;
+}
+
+export interface WatchFileRequest {
+    uri: Uri;
+}
+
+export interface FindFilesRequest {
+    pattern: string;
+    include: boolean;
+}
+
+export interface FindFilesResponse {
+    uris: string;
+}
+
+export interface FindTextInFilesRequest {
+    pattern: string;
+    include: string;
+    exclude: string;
+}
+
+export interface FindTextInFilesResponse {
+    matches: TextMatch;
+}
+
+export interface TextMatch {
+    uri: Uri;
+    range: Range;
+    preview: string;
+}
+
+export interface OpenDocumentRequest {
+    uri: Uri;
+    view_column: ViewColumn;
+}
+
+export interface OpenDocumentResponse {
+    success: boolean;
+}
+
+export interface SaveAllRequest {
+    includeUntitled: boolean;
+}
+
+export interface SaveAllResponse {
+    success: boolean;
+}
+
+export interface ApplyEditRequest {
+    uri: Uri;
+    edits: TextEdit;
+}
+
+export interface TextEdit {
+    range: Range;
+    new_text: string;
+}
+
+export interface ApplyEditResponse {
+    success: boolean;
+}
+
+export interface UpdateConfigurationRequest {
+    changed_keys: string;
+}
+
+export interface UpdateWorkspaceFoldersRequest {
+    additions: WorkspaceFolder;
+    removals: WorkspaceFolder;
+}
+
+export interface OpenTerminalRequest {
+    name: string;
+    shell_path: string;
+    shell_args: string;
+    cwd: string;
+}
+
+export interface TerminalInputRequest {
+    terminal_id: number;
+    data: Buffer;
+}
+
+export interface CloseTerminalRequest {
+    terminal_id: number;
+}
+
+export interface TerminalOpenedNotification {
+    terminal_id: number;
+    name: string;
+}
+
+export interface TerminalClosedNotification {
+    terminal_id: number;
+}
+
+export interface TerminalProcessIdNotification {
+    terminal_id: number;
+    process_id: number;
+}
+
+export interface TerminalDataNotification {
+    terminal_id: number;
+    data: Buffer;
+}
+
+export interface RegisterTreeViewProviderRequest {
+    view_id: string;
+    extension_id: string;
+}
+
+export interface GetTreeChildrenRequest {
+    view_id: string;
+    tree_item_handle: string;
+}
+
+export interface GetTreeChildrenResponse {
+    items: TreeItem;
+}
+
+export interface TreeItem {
+    handle: string;
+    label: string;
+    is_collapsed: boolean;
+    icon: string;
+}
+
+export interface RegisterScmProviderRequest {
+    scm_id: string;
+    extension_id: string;
+}
+
+export interface UpdateScmGroupRequest {
+    provider_id: string;
+    group_id: string;
+    resource_states: SourceControlResourceState;
+}
+
+export interface SourceControlResourceState {
+    uri: Uri;
+    state: string;
+    decorations: string;
+}
+
+export interface GitExecRequest {
+    repository_path: string;
+    args: string;
+}
+
+export interface GitExecResponse {
+    output: string;
+    exit_code: number;
+}
+
+export interface RegisterDebugAdapterRequest {
+    debug_type: string;
+    extension_id: string;
+}
+
+export interface DebugConfiguration {
+    type: string;
+    name: string;
+    request: string;
+}
+
+export interface StartDebuggingRequest {
+    debug_type: string;
+    configuration: DebugConfiguration;
+}
+
+export interface StartDebuggingResponse {
+    success: boolean;
+}
+
+export interface ParticipateInSaveRequest {
+    uri: Uri;
+    reason: TextDocumentSaveReason;
+}
+
+export interface TextEditForSave {
+    uri: Uri;
+    edits: TextEdit;
+}
+
+export interface ParticipateInSaveResponse {
+    edits: TextEditForSave;
+}
+
+export interface GetSecretRequest {
+    key: string;
+}
+
+export interface GetSecretResponse {
+    value: string;
+}
+
+export interface StoreSecretRequest {
+    key: string;
+    value: string;
+}
+
+export interface DeleteSecretRequest {
+    key: string;
+}
+
+export interface MountainService {
+    ProcessCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendCocoonNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+}
+
+export interface CocoonService {
+    ProcessMountainRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendMountainNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+    initial_handshake(request: Empty): Promise<Empty>;
+    init_extension_host(request: InitExtensionHostRequest): Promise<Empty>;
+    register_command(request: RegisterCommandRequest): Promise<Empty>;
+    execute_contributed_command(request: ExecuteCommandRequest): Promise<ExecuteCommandResponse>;
+    unregister_command(request: UnregisterCommandRequest): Promise<Empty>;
+    register_hover_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_hover(request: ProvideHoverRequest): Promise<ProvideHoverResponse>;
+    register_completion_item_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_completion_items(request: ProvideCompletionItemsRequest): Promise<ProvideCompletionItemsResponse>;
+    register_definition_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_definition(request: ProvideDefinitionRequest): Promise<ProvideDefinitionResponse>;
+    register_reference_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_references(request: ProvideReferencesRequest): Promise<ProvideReferencesResponse>;
+    register_code_actions_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_code_actions(request: ProvideCodeActionsRequest): Promise<ProvideCodeActionsResponse>;
+    show_text_document(request: ShowTextDocumentRequest): Promise<ShowTextDocumentResponse>;
+    show_information_message(request: ShowMessageRequest): Promise<ShowMessageResponse>;
+    show_warning_message(request: ShowMessageRequest): Promise<ShowMessageResponse>;
+    show_error_message(request: ShowMessageRequest): Promise<ShowMessageResponse>;
+    create_status_bar_item(request: CreateStatusBarItemRequest): Promise<CreateStatusBarItemResponse>;
+    set_status_bar_text(request: SetStatusBarTextRequest): Promise<Empty>;
+    create_webview_panel(request: CreateWebviewPanelRequest): Promise<CreateWebviewPanelResponse>;
+    set_webview_html(request: SetWebviewHtmlRequest): Promise<Empty>;
+    on_did_receive_message(request: OnDidReceiveMessageRequest): Promise<Empty>;
+    read_file(request: ReadFileRequest): Promise<ReadFileResponse>;
+    write_file(request: WriteFileRequest): Promise<Empty>;
+    stat(request: StatRequest): Promise<StatResponse>;
+    readdir(request: ReaddirRequest): Promise<ReaddirResponse>;
+    watch_file(request: WatchFileRequest): Promise<Empty>;
+    find_files(request: FindFilesRequest): Promise<FindFilesResponse>;
+    find_text_in_files(request: FindTextInFilesRequest): Promise<FindTextInFilesResponse>;
+    open_document(request: OpenDocumentRequest): Promise<OpenDocumentResponse>;
+    save_all(request: SaveAllRequest): Promise<SaveAllResponse>;
+    apply_edit(request: ApplyEditRequest): Promise<ApplyEditResponse>;
+    update_configuration(request: UpdateConfigurationRequest): Promise<Empty>;
+    update_workspace_folders(request: UpdateWorkspaceFoldersRequest): Promise<Empty>;
+    open_terminal(request: OpenTerminalRequest): Promise<Empty>;
+    terminal_input(request: TerminalInputRequest): Promise<Empty>;
+    close_terminal(request: CloseTerminalRequest): Promise<Empty>;
+    accept_terminal_opened(request: TerminalOpenedNotification): Promise<Empty>;
+    accept_terminal_closed(request: TerminalClosedNotification): Promise<Empty>;
+    accept_terminal_process_id(request: TerminalProcessIdNotification): Promise<Empty>;
+    accept_terminal_process_data(request: TerminalDataNotification): Promise<Empty>;
+    register_tree_view_provider(request: RegisterTreeViewProviderRequest): Promise<Empty>;
+    get_tree_children(request: GetTreeChildrenRequest): Promise<GetTreeChildrenResponse>;
+    register_scm_provider(request: RegisterScmProviderRequest): Promise<Empty>;
+    update_scm_group(request: UpdateScmGroupRequest): Promise<Empty>;
+    git_exec(request: GitExecRequest): Promise<GitExecResponse>;
+    register_debug_adapter(request: RegisterDebugAdapterRequest): Promise<Empty>;
+    start_debugging(request: StartDebuggingRequest): Promise<StartDebuggingResponse>;
+    participate_in_save(request: ParticipateInSaveRequest): Promise<ParticipateInSaveResponse>;
+    get_secret(request: GetSecretRequest): Promise<GetSecretResponse>;
+    store_secret(request: StoreSecretRequest): Promise<Empty>;
+    delete_secret(request: DeleteSecretRequest): Promise<Empty>;
+}
+
 
 // Enhanced interfaces for better TypeScript support
 export interface MountainServiceClient {
-	ProcessCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
-	SendCocoonNotification(request: GenericNotification): Promise<Empty>;
-	CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+    ProcessCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendCocoonNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+}
+
+export type MountainServiceImplementation = {
+    ProcessCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendCocoonNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
 }
 
 export interface CocoonServiceClient {
-	ProcessMountainRequest(request: GenericRequest): Promise<GenericResponse>;
-	SendMountainNotification(request: GenericNotification): Promise<Empty>;
-	CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+    ProcessMountainRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendMountainNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+    initial_handshake(request: Empty): Promise<Empty>;
+    init_extension_host(request: InitExtensionHostRequest): Promise<Empty>;
+    register_command(request: RegisterCommandRequest): Promise<Empty>;
+    execute_contributed_command(request: ExecuteCommandRequest): Promise<ExecuteCommandResponse>;
+    unregister_command(request: UnregisterCommandRequest): Promise<Empty>;
+    register_hover_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_hover(request: ProvideHoverRequest): Promise<ProvideHoverResponse>;
+    register_completion_item_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_completion_items(request: ProvideCompletionItemsRequest): Promise<ProvideCompletionItemsResponse>;
+    register_definition_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_definition(request: ProvideDefinitionRequest): Promise<ProvideDefinitionResponse>;
+    register_reference_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_references(request: ProvideReferencesRequest): Promise<ProvideReferencesResponse>;
+    register_code_actions_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_code_actions(request: ProvideCodeActionsRequest): Promise<ProvideCodeActionsResponse>;
+    show_text_document(request: ShowTextDocumentRequest): Promise<ShowTextDocumentResponse>;
+    show_information_message(request: ShowMessageRequest): Promise<ShowMessageResponse>;
+    show_warning_message(request: ShowMessageRequest): Promise<ShowMessageResponse>;
+    show_error_message(request: ShowMessageRequest): Promise<ShowMessageResponse>;
+    create_status_bar_item(request: CreateStatusBarItemRequest): Promise<CreateStatusBarItemResponse>;
+    set_status_bar_text(request: SetStatusBarTextRequest): Promise<Empty>;
+    create_webview_panel(request: CreateWebviewPanelRequest): Promise<CreateWebviewPanelResponse>;
+    set_webview_html(request: SetWebviewHtmlRequest): Promise<Empty>;
+    on_did_receive_message(request: OnDidReceiveMessageRequest): Promise<Empty>;
+    read_file(request: ReadFileRequest): Promise<ReadFileResponse>;
+    write_file(request: WriteFileRequest): Promise<Empty>;
+    stat(request: StatRequest): Promise<StatResponse>;
+    readdir(request: ReaddirRequest): Promise<ReaddirResponse>;
+    watch_file(request: WatchFileRequest): Promise<Empty>;
+    find_files(request: FindFilesRequest): Promise<FindFilesResponse>;
+    find_text_in_files(request: FindTextInFilesRequest): Promise<FindTextInFilesResponse>;
+    open_document(request: OpenDocumentRequest): Promise<OpenDocumentResponse>;
+    save_all(request: SaveAllRequest): Promise<SaveAllResponse>;
+    apply_edit(request: ApplyEditRequest): Promise<ApplyEditResponse>;
+    update_configuration(request: UpdateConfigurationRequest): Promise<Empty>;
+    update_workspace_folders(request: UpdateWorkspaceFoldersRequest): Promise<Empty>;
+    open_terminal(request: OpenTerminalRequest): Promise<Empty>;
+    terminal_input(request: TerminalInputRequest): Promise<Empty>;
+    close_terminal(request: CloseTerminalRequest): Promise<Empty>;
+    accept_terminal_opened(request: TerminalOpenedNotification): Promise<Empty>;
+    accept_terminal_closed(request: TerminalClosedNotification): Promise<Empty>;
+    accept_terminal_process_id(request: TerminalProcessIdNotification): Promise<Empty>;
+    accept_terminal_process_data(request: TerminalDataNotification): Promise<Empty>;
+    register_tree_view_provider(request: RegisterTreeViewProviderRequest): Promise<Empty>;
+    get_tree_children(request: GetTreeChildrenRequest): Promise<GetTreeChildrenResponse>;
+    register_scm_provider(request: RegisterScmProviderRequest): Promise<Empty>;
+    update_scm_group(request: UpdateScmGroupRequest): Promise<Empty>;
+    git_exec(request: GitExecRequest): Promise<GitExecResponse>;
+    register_debug_adapter(request: RegisterDebugAdapterRequest): Promise<Empty>;
+    start_debugging(request: StartDebuggingRequest): Promise<StartDebuggingResponse>;
+    participate_in_save(request: ParticipateInSaveRequest): Promise<ParticipateInSaveResponse>;
+    get_secret(request: GetSecretRequest): Promise<GetSecretResponse>;
+    store_secret(request: StoreSecretRequest): Promise<Empty>;
+    delete_secret(request: DeleteSecretRequest): Promise<Empty>;
 }
 
-// Utility types for service implementations
-export type MountainServiceImplementation = {
-	ProcessCocoonRequest(request: GenericRequest): Promise<GenericResponse>;
-	SendCocoonNotification(request: GenericNotification): Promise<Empty>;
-	CancelOperation(request: CancelOperationRequest): Promise<Empty>;
-};
-
 export type CocoonServiceImplementation = {
-	ProcessMountainRequest(request: GenericRequest): Promise<GenericResponse>;
-	SendMountainNotification(request: GenericNotification): Promise<Empty>;
-	CancelOperation(request: CancelOperationRequest): Promise<Empty>;
-};
+    ProcessMountainRequest(request: GenericRequest): Promise<GenericResponse>;
+    SendMountainNotification(request: GenericNotification): Promise<Empty>;
+    CancelOperation(request: CancelOperationRequest): Promise<Empty>;
+    initial_handshake(request: Empty): Promise<Empty>;
+    init_extension_host(request: InitExtensionHostRequest): Promise<Empty>;
+    register_command(request: RegisterCommandRequest): Promise<Empty>;
+    execute_contributed_command(request: ExecuteCommandRequest): Promise<ExecuteCommandResponse>;
+    unregister_command(request: UnregisterCommandRequest): Promise<Empty>;
+    register_hover_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_hover(request: ProvideHoverRequest): Promise<ProvideHoverResponse>;
+    register_completion_item_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_completion_items(request: ProvideCompletionItemsRequest): Promise<ProvideCompletionItemsResponse>;
+    register_definition_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_definition(request: ProvideDefinitionRequest): Promise<ProvideDefinitionResponse>;
+    register_reference_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_references(request: ProvideReferencesRequest): Promise<ProvideReferencesResponse>;
+    register_code_actions_provider(request: RegisterProviderRequest): Promise<Empty>;
+    provide_code_actions(request: ProvideCodeActionsRequest): Promise<ProvideCodeActionsResponse>;
+    show_text_document(request: ShowTextDocumentRequest): Promise<ShowTextDocumentResponse>;
+    show_information_message(request: ShowMessageRequest): Promise<ShowMessageResponse>;
+    show_warning_message(request: ShowMessageRequest): Promise<ShowMessageResponse>;
+    show_error_message(request: ShowMessageRequest): Promise<ShowMessageResponse>;
+    create_status_bar_item(request: CreateStatusBarItemRequest): Promise<CreateStatusBarItemResponse>;
+    set_status_bar_text(request: SetStatusBarTextRequest): Promise<Empty>;
+    create_webview_panel(request: CreateWebviewPanelRequest): Promise<CreateWebviewPanelResponse>;
+    set_webview_html(request: SetWebviewHtmlRequest): Promise<Empty>;
+    on_did_receive_message(request: OnDidReceiveMessageRequest): Promise<Empty>;
+    read_file(request: ReadFileRequest): Promise<ReadFileResponse>;
+    write_file(request: WriteFileRequest): Promise<Empty>;
+    stat(request: StatRequest): Promise<StatResponse>;
+    readdir(request: ReaddirRequest): Promise<ReaddirResponse>;
+    watch_file(request: WatchFileRequest): Promise<Empty>;
+    find_files(request: FindFilesRequest): Promise<FindFilesResponse>;
+    find_text_in_files(request: FindTextInFilesRequest): Promise<FindTextInFilesResponse>;
+    open_document(request: OpenDocumentRequest): Promise<OpenDocumentResponse>;
+    save_all(request: SaveAllRequest): Promise<SaveAllResponse>;
+    apply_edit(request: ApplyEditRequest): Promise<ApplyEditResponse>;
+    update_configuration(request: UpdateConfigurationRequest): Promise<Empty>;
+    update_workspace_folders(request: UpdateWorkspaceFoldersRequest): Promise<Empty>;
+    open_terminal(request: OpenTerminalRequest): Promise<Empty>;
+    terminal_input(request: TerminalInputRequest): Promise<Empty>;
+    close_terminal(request: CloseTerminalRequest): Promise<Empty>;
+    accept_terminal_opened(request: TerminalOpenedNotification): Promise<Empty>;
+    accept_terminal_closed(request: TerminalClosedNotification): Promise<Empty>;
+    accept_terminal_process_id(request: TerminalProcessIdNotification): Promise<Empty>;
+    accept_terminal_process_data(request: TerminalDataNotification): Promise<Empty>;
+    register_tree_view_provider(request: RegisterTreeViewProviderRequest): Promise<Empty>;
+    get_tree_children(request: GetTreeChildrenRequest): Promise<GetTreeChildrenResponse>;
+    register_scm_provider(request: RegisterScmProviderRequest): Promise<Empty>;
+    update_scm_group(request: UpdateScmGroupRequest): Promise<Empty>;
+    git_exec(request: GitExecRequest): Promise<GitExecResponse>;
+    register_debug_adapter(request: RegisterDebugAdapterRequest): Promise<Empty>;
+    start_debugging(request: StartDebuggingRequest): Promise<StartDebuggingResponse>;
+    participate_in_save(request: ParticipateInSaveRequest): Promise<ParticipateInSaveResponse>;
+    get_secret(request: GetSecretRequest): Promise<GetSecretResponse>;
+    store_secret(request: StoreSecretRequest): Promise<Empty>;
+    delete_secret(request: DeleteSecretRequest): Promise<Empty>;
+}
+
