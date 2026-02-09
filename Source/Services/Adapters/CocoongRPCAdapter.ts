@@ -1,12 +1,12 @@
 /**
- * @module CocoonGrpcAdapter
+ * @module CocoongRPCAdapter
  * @description
  * Adapter that bridges VS Code's IPC protocol (Buffer-based) to Mountain's Vine protocol (gRPC).
  * Acts as the 'Spine Adapter' on the Cocoon side, translating internal IPC messages
  * into binary gRPC requests for the Mountain backend.
  *
  * Architecture:
- * [Extension] -> [IPCService] -> [CocoonGrpcAdapter] -> [MountainClientService] -> [Network]
+ * [Extension] -> [IPCService] -> [CocoongRPCAdapter] -> [MountainClientService] -> [Network]
  */
 
 import { IMessagePassingProtocol, VSBuffer } from "../../Interfaces/IIPCService";
@@ -16,11 +16,11 @@ import { GenericRequest } from "../../Generated/Vine";
 /**
  * Adapter implementing IMessagePassingProtocol to pipe messages over gRPC
  */
-export class CocoonGrpcAdapter implements IMessagePassingProtocol {
+export class CocoongRPCAdapter implements IMessagePassingProtocol {
     private _onMessageCallback: ((buffer: VSBuffer) => void) | null = null;
 
     constructor(private mountainClient: IMountainClientService) {
-        console.log("[CocoonGrpcAdapter] Initialized Spine Adapter");
+        console.log("[CocoongRPCAdapter] Initialized Spine Adapter");
     }
 
     /**
@@ -40,11 +40,11 @@ export class CocoonGrpcAdapter implements IMessagePassingProtocol {
                 this.forwardRequestToMountain(message);
             } else if (message.type === 'response') {
                  // TODO: Handle responses if Mountain sends requests TO Cocoon
-                 console.log("[CocoonGrpcAdapter] Dropping outbound response (not implemented):", message);
+                 console.log("[CocoongRPCAdapter] Dropping outbound response (not implemented):", message);
             }
 
         } catch (error) {
-            console.error("[CocoonGrpcAdapter] Failed to forward message:", error);
+            console.error("[CocoongRPCAdapter] Failed to forward message:", error);
         }
     }
 
@@ -66,7 +66,7 @@ export class CocoonGrpcAdapter implements IMessagePassingProtocol {
         const vineMethod = `${ipcMessage.channel}.${ipcMessage.command}`;
 
         try {
-            console.log(`[CocoonGrpcAdapter] 🟢 Forwarding ${vineMethod} to Spine...`);
+            console.log(`[CocoongRPCAdapter] 🟢 Forwarding ${vineMethod} to Spine...`);
 
             // 3. Call Mountain (The Spine)
             // We await the result because IPC is request-response
@@ -97,7 +97,7 @@ export class CocoonGrpcAdapter implements IMessagePassingProtocol {
             }
 
         } catch (error: any) {
-            console.error(`[CocoonGrpcAdapter] 🔴 Spine call failed: ${vineMethod}`, error);
+            console.error(`[CocoongRPCAdapter] 🔴 Spine call failed: ${vineMethod}`, error);
 
             // Send error response
             const errorMessage = {

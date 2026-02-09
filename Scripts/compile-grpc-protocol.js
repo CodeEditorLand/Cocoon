@@ -24,7 +24,7 @@ const TS_PROTO_OUTPUT = join(OUTPUT_DIR, "Vine.ts");
 /**
  * Main compilation function
  */
-async function compileGrpcProtocol() {
+async function compilegRPCProtocol() {
     console.log("[compile-grpc-protocol] Starting gRPC protocol compilation");
     
     try {
@@ -522,10 +522,10 @@ function generateEnhancedClientInterfaces(services) {
  * Entry point
  */
 if (import.meta.url === `file://${process.argv[1]}`) {
-    compileGrpcProtocol().catch(error => {
+    compilegRPCProtocol().catch(error => {
         console.error("[compile-grpc-protocol] Error:", error);
         process.exit(1);
     });
 }
 
-export default compileGrpcProtocol;
+export default compilegRPCProtocol;

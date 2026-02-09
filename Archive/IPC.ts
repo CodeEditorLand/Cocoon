@@ -65,7 +65,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 		const Config = yield* IPCConfigurationService;
 		const Cancellation = yield* CancellationService;
 
-		const GrpcClient = yield* Effect.acquireRelease(
+		const gRPCClient = yield* Effect.acquireRelease(
 			Effect.gen(function* () {
 				const ProtoPath = Path.join(
 					process.cwd(),
@@ -86,9 +86,9 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 							Context: "ProtoLoadFailed",
 						}),
 				});
-				const GrpcObject = gRPC.loadPackageDefinition(Definition);
+				const gRPCObject = gRPC.loadPackageDefinition(Definition);
 				const ClientConstructor = (
-					GrpcObject["vine_ipc"] as gRPC.GrpcObject
+					gRPCObject["vine_ipc"] as gRPC.gRPCObject
 				)["MountainService"] as gRPC.ServiceClientConstructor;
 				const Client = new ClientConstructor(
 					Config.MountainAddress,
@@ -135,7 +135,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 				try: () => {
 					const Payload = new RPCDataPayload();
 					Payload.setBuffer(Buffer.buffer);
-					return GrpcClient.sendRPCDataToMountain(Payload);
+					return gRPCClient.sendRPCDataToMountain(Payload);
 				},
 				catch: (Cause) =>
 					new IPCProblem({
@@ -173,7 +173,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 					RequestMessage.setParams(EncodedParameter);
 					const ResponseMessage = (yield* Effect.tryPromise({
 						try: () =>
-							GrpcClient.processCocoonRequest(RequestMessage),
+							gRPCClient.processCocoonRequest(RequestMessage),
 						catch: (Cause) =>
 							new IPCProblem({
 								Cause,
@@ -204,7 +204,7 @@ export class IPCService extends Effect.Service<IPCService>()("Service/IPC", {
 					NotificationMessage.setParams(EncodedParameter);
 					yield* Effect.tryPromise({
 						try: () =>
-							GrpcClient.sendCocoonNotification(
+							gRPCClient.sendCocoonNotification(
 								NotificationMessage,
 							),
 						catch: (Cause) =>

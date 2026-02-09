@@ -24,13 +24,13 @@ async function bootstrap() {
     console.log(`[Cocoon] Parent PID: ${process.env.VSCODE_PARENT_PID || "unknown"}`);
     
     // Parse environment variables
-    const mountainGrpcPort = process.env.MOUNTAIN_GRPC_PORT || '50051';
-    const cocoonGrpcPort = process.env.COCON_GRPC_PORT || '50052';
+    const mountaingRPCPort = process.env.MOUNTAIN_GRPC_PORT || '50051';
+    const cocoongRPCPort = process.env.COCON_GRPC_PORT || '50052';
     const nodeEnv = process.env.NODE_ENV || 'production';
     
     console.log(`[Cocoon] Environment:`);
-    console.log(`  - MOUNTAIN_GRPC_PORT: ${mountainGrpcPort}`);
-    console.log(`  - COCOON_GRPC_PORT: ${cocoonGrpcPort}`);
+    console.log(`  - MOUNTAIN_GRPC_PORT: ${mountaingRPCPort}`);
+    console.log(`  - COCOON_GRPC_PORT: ${cocoongRPCPort}`);
     console.log(`  - NODE_ENV: ${nodeEnv}`);
     console.log(`  - VSCODE_PARENT_PID: ${process.env.VSCODE_PARENT_PID || 'unknown'}`);
     
