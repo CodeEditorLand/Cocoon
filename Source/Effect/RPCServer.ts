@@ -5,7 +5,7 @@
  * Manages the gRPC server for Mountain ← Cocoon communication.
  */
 
-import { Context, Effect, Layer, Schedule, SubscriptionRef } from "effect";
+import { Context, Effect, Layer, Schedule, SubscriptionRef, Ref } from "effect";
 import { TelemetryTag } from "./Telemetry.js";
 
 // ============================================================================
@@ -93,8 +93,7 @@ export interface RPCServerService {
 	readonly state: Effect.Effect<ServerState, never>;
 
 	/** Stream of state changes */
-	readonly stateChanges: Effect.Effect<Read{
-onlyArray<ServerState>, never>;
+	readonly stateChanges: Effect.Effect<ReadonlyArray<ServerState>, never>;
 
 	/** Start the gRPC server */
 	readonly start: (config?: ServerConfig) => Effect.Effect<void, ServerStartError>;
@@ -137,8 +136,14 @@ export const RPCServerLive = Layer.effect(
 		// Server config
 		let currentConfig: ServerConfig | undefined;
 
-		// Metrics
-		let metrics: ServerMetrics = {
+		// Metrics - use mutable let for tracking (use plain object, not readonly interface)
+		let metrics: {
+			uptime: number;
+			connections: number;
+			requestsHandled: number;
+			errors: number;
+			averageLatency: number;
+		} = {
 			uptime: 0,
 			connections: 0,
 			requestsHandled: 0,
@@ -174,7 +179,7 @@ export const RPCServerLive = Layer.effect(
 				};
 
 				// Update state to starting
-				yield* stateRef.set({
+				yield* Ref.set(stateRef, {
 					_tag: "Starting",
 					startTime: startTimeMs,
 				});
@@ -196,7 +201,7 @@ export const RPCServerLive = Layer.effect(
 					};
 
 					// Update state to running
-					yield* stateRef.set({
+					yield* Ref.set(stateRef, {
 						_tag: "Running",
 						address: currentConfig.host,
 						port: currentConfig.port,
@@ -208,7 +213,7 @@ export const RPCServerLive = Layer.effect(
 						`[RPCServer] Server started successfully on ${currentConfig.host}:${currentConfig.port}`,
 					);
 				} catch (error) {
-					yield* stateRef.set({
+					yield* Ref.set(stateRef, {
 						_tag: "Error",
 						error: String(error),
 					});
@@ -232,7 +237,7 @@ export const RPCServerLive = Layer.effect(
 			}
 
 			// Update state to stopping
-			yield* stateRef.set({
+			yield* Ref.set(stateRef, {
 				_tag: "Stopping",
 			});
 
@@ -242,25 +247,12 @@ export const RPCServerLive = Layer.effect(
 			yield* Effect.sleep("25 millis");
 
 			// Update state to stopped
-			yield* stateRef.set({
+			yield* Ref.set(stateRef, {
 				_tag: "Stopped",
 			});
 
 			telemetry.log("info", "[RPCServer] Server stopped successfully");
-		}).pipe(
-			Effect.catchAll((error) =>
-				Effect.gen(function* () {
-					yield* stateRef.set({
-						_tag: "Error",
-						error: String(error),
-					});
-
-					telemetry.log("error", `[RPCServer] Failed to stop server: ${String(error)}`);
-
-					return yield* Effect.fail(new ServerStopError("Failed to stop gRPC server", error));
-				}),
-			),
-		);
+		}) as Effect.Effect<void, ServerStopError | ServerNotRunningError>;
 
 		// Atom: Handle request
 		const handleRequest = (request: RPCRequest) =>
@@ -285,7 +277,7 @@ export const RPCServerLive = Layer.effect(
 				);
 
 				// Simulate request handling (in production, this would route to actual RPC handlers)
-				metrics.requestsHandled++;
+				metrics.requestsHandled = metrics.requestsHandled + 1;
 
 				// Simulate processing time
 				yield* Effect.sleep("5 millis");
@@ -297,8 +289,7 @@ export const RPCServerLive = Layer.effect(
 				if (latencies.length > 100) {
 					latencies.shift();
 				}
-				metrics.averageLatency =
-					latencies.reduce((sum, lat) => sum + lat, 0) / latencies.length;
+				metrics.averageLatency = latencies.reduce((sum, lat) => sum + lat, 0) / latencies.length;
 
 				telemetry.log(
 					"debug",
@@ -318,7 +309,7 @@ export const RPCServerLive = Layer.effect(
 			}).pipe(
 				Effect.catchAll((error) =>
 					Effect.gen(function* () {
-						metrics.errors++;
+						metrics.errors = metrics.errors + 1;
 
 						telemetry.log(
 							"error",
@@ -347,12 +338,12 @@ export const RPCServerLive = Layer.effect(
 			// Update uptime
 			metrics.uptime = Date.now() - startTime;
 
-			return { ...metrics };
+			return { ...metrics } as ServerMetrics;
 		});
 
 		return {
 			state: stateRef.get,
-			stateChanges: Effect.map(stateRef.get, (state) => [state]),
+			stateChanges: Effect.map(stateRef.get, (state) => [state] as readonly ServerState[]),
 			start,
 			stop,
 			handleRequest,
@@ -370,9 +361,9 @@ export const makeMockRPCServer = (): RPCServerService => {
 
 	return {
 		state: Effect.succeed(mockStateRef),
-		stateChanges: Effect.succeed([mockStateRef]),
+		stateChanges: Effect.succeed([mockStateRef] as readonly ServerState[]),
 		start: () => Effect.succeed(undefined),
-		stop: () => Effect.succeed(undefined),
+		stop: Effect.succeed(undefined as void),
 		handleRequest: (request: RPCRequest) =>
 			Effect.succeed({
 				requestId: request.requestId,
@@ -380,14 +371,13 @@ export const makeMockRPCServer = (): RPCServerService => {
 				data: { method: request.method, result: "mock" },
 				timestamp: Date.now(),
 			}),
-		getMetrics: () =>
-			Effect.succeed({
-				uptime: 0,{
-				connections: 0,
-				requestsHandled: 0,
-				errors: 0,
-				averageLatency: 0,
-			}),
+		getMetrics: Effect.succeed({
+			uptime: 0,
+			connections: 0,
+			requestsHandled: 0,
+			errors: 0,
+			averageLatency: 0,
+		} as ServerMetrics),
 	};
 };
 

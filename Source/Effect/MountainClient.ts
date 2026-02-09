@@ -5,7 +5,7 @@
  * Manages the gRPC client for Cocoon → Mountain communication.
  */
 
-import { Context, Effect, Layer, Schedule, SubscriptionRef } from "effect";
+import { Context, Effect, Layer, Schedule, SubscriptionRef, Ref } from "effect";
 import { TelemetryTag } from "./Telemetry.js";
 
 // ============================================================================
@@ -108,7 +108,7 @@ export interface MountainClientService {
 	readonly healthCheck: Effect.Effect<boolean, never>;
 
 	/** Get client metrics */
-	readonly getMetrics: Effect.Effect<ClientMetrics, never>;{
+	readonly getMetrics: Effect.Effect<ClientMetrics, never>;
 }
 
 // ============================================================================
@@ -139,8 +139,14 @@ export const MountainClientLive = Layer.effect(
 		// Client config
 		let currentConfig: ClientConfig | undefined;
 
-		// Metrics
-		let metrics: ClientMetrics = {
+		// Metrics - use mutable let for tracking
+		let metrics: {
+			totalRequests: number;
+			successfulRequests: number;
+			failedRequests: number;
+			averageLatency: number;
+			lastRequestTime: number;
+		} = {
 			totalRequests: 0,
 			successfulRequests: 0,
 			failedRequests: 0,
@@ -181,7 +187,7 @@ export const MountainClientLive = Layer.effect(
 				);
 
 				// Update state to connecting
-				yield* stateRef.set({
+				yield* Ref.set(stateRef, {
 					_tag: "Connecting",
 					attempt: 1,
 				});
@@ -230,7 +236,7 @@ export const MountainClientLive = Layer.effect(
 				}
 
 				// Update state to connected
-				yield* stateRef.set({
+				yield* Ref.set(stateRef, {
 					_tag: "Connected",
 					serverVersion,
 					connectedAt: Date.now(),
@@ -250,7 +256,7 @@ export const MountainClientLive = Layer.effect(
 			}
 
 			// Update state to disconnecting
-			yield* stateRef.set({
+			yield* Ref.set(stateRef, {
 				_tag: "Disconnecting",
 			});
 
@@ -260,7 +266,7 @@ export const MountainClientLive = Layer.effect(
 			yield* Effect.sleep("25 millis");
 
 			// Update state to disconnected
-			yield* stateRef.set({
+			yield* Ref.set(stateRef, {
 				_tag: "Disconnected",
 			});
 
@@ -278,7 +284,7 @@ export const MountainClientLive = Layer.effect(
 		}).pipe(
 			Effect.catchAll((error) =>
 				Effect.gen(function* () {
-					yield* stateRef.set({
+					yield* Ref.set(stateRef, {
 						_tag: "Error",
 						error: String(error),
 					});
@@ -304,7 +310,8 @@ export const MountainClientLive = Layer.effect(
 						return yield* Effect.fail(
 							new RPCError(method, "Not connected to Mountain"),
 						);
-					}{
+					}
+
 					telemetry.log(
 						"debug",
 						`[MountainClient] RPC call: ${method}`,
@@ -380,12 +387,11 @@ export const MountainClientLive = Layer.effect(
 		});
 
 		// Atom: Get metrics
-		const getMetrics = Effect.succeed(() => ({ ...metrics }));
+		const getMetrics = Effect.succeed({ ...metrics } as ClientMetrics);
 
 		return {
 			connectionState: stateRef.get,
-			connection{
-Changes: Effect.map(stateRef.get, (state) => [state]),
+			connectionChanges: Effect.map(stateRef.get, (state) => [state]),
 			connect,
 			disconnect,
 			rpc,
@@ -430,4 +436,3 @@ export const MountainClientMock = Layer.effect(
 	MountainClient,
 	Effect.succeed(makeMockMountainClient()),
 );
-ENDOFFILE{

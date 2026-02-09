@@ -3,226 +3,98 @@
  * @description
  * Main entry point for Cocoon extension host.
  * Bootstrap script that initializes all services and starts the extension host.
+ * 
+ * Supports both old-style service-based architecture and new Effect-TS based architecture.
  */
 
-import { Emitter } from "@codeeditorland/output/vscode-dts/vscode";
 import { NodeRuntime } from "@effect/platform-node";
-import { Effect, Layer } from "effect";
+import { Effect } from "effect";
 
-import { IConfigurationService } from "../../Interfaces/IConfigurationService.js";
-import { IExtensionHostService } from "../../Interfaces/IExtensionHostService.js";
-import { IIPCService } from "../../Interfaces/IIPCService.js";
-import { IModuleInterceptorService } from "../../Interfaces/IModuleInterceptorService.js";
-import { IMountainClientService } from "../../Interfaces/IMountainClientService.js";
-// Service mapping
-import { ServiceMapping } from "../../ServiceMapping.js";
-// Protocol implementation
-import { CocoonGrpcAdapter } from "../Services/Adapters/CocoonGrpcAdapter.js";
-import { MountainClientService } from "../Services/MountainClientService.js";
+import { EffectServices } from "../../ServiceMapping.js";
 
-// --- Bootstrap Logic ---
+// Effect services
+import { BootstrapTag, TelemetryTag } from "../../Effect/index.js";
+
+// ============================================================================
+// EFFECT-BASED BOOTSTRAP (NEW APPROACH)
+// ============================================================================
 
 /**
- * Bootstrap the Cocoon extension host
+ * Bootstrap the Cocoon extension host using Effect-TS services
+ * This is the modern, recommended approach
  */
-const bootstrapCocoon = Effect.gen(function* () {
-	console.log("[CocoonMain] Starting Cocoon bootstrap...");
+const bootstrapCocoonEffect = Effect.gen(function* () {
+	const telemetry = yield* TelemetryTag;
+	const bootstrap = yield* BootstrapTag;
 
-	// Validate service dependencies
-	yield* ServiceMapping.validateDependencies();
+	telemetry.log("info", "[CocoonMain] Starting Cocoon bootstrap with Effect-TS...");
 
-	// Compose application layer
-	const appLayer = ServiceMapping.composeAppLayer();
-	console.log("[CocoonMain] Application layer composed");
+	// Run the Effect-TS bootstrap orchestration
+	const result = yield* bootstrap.run({ debugMode: false });
 
-	// 1. Initialize the Real gRPC Client
-	// This is the physical limb that connects to the Spine
-	const mountainClient = yield* IMountainClientService;
-	
-	try {
-		yield* Effect.promise(() => mountainClient.connect());
-		console.log("[CocoonMain] 🟢 Connected to Mountain gRPC Spine");
-	} catch (error) {
-		console.error("[CocoonMain] 🔴 Failed to connect to Mountain:", error);
-		process.exit(1);
+	if (!result.success) {
+		telemetry.log("error", "[CocoonMain] Bootstrap failed");
+		for (const stage of result.stages) {
+			if (!stage.success) {
+				telemetry.log("error", `[CocoonMain]   - ${stage.stageName}: ${stage.error?.message}`);
+			}
+		}
+		return yield* Effect.die(new Error("Bootstrap failed"));
 	}
 
-	// 2. Create the Spine Adapter (Bridge)
-    // This pipes VS Code IPC messages directly into gRPC
-    // Replacing the dummy 'CocoonMessagePassingProtocol'
-    const protocol = new CocoonGrpcAdapter(mountainClient);
+	telemetry.log("info", "[CocoonMain] 🟢 Bootstrap completed successfully");
+	telemetry.log("info", `[CocoonMain] Total bootstrap time: ${result.totalDuration}ms`);
 
-	// 3. Initialize IPC communication with the real adapter
-	const ipcService = yield* IIPCService;
-	yield* Effect.promise(() => ipcService.initialize(protocol));
-	console.log("[CocoonMain] Advanced IPC service initialized with Spine Adapter");
-
-	// Install module interceptor
-	const moduleInterceptor = yield* IModuleInterceptorService;
-	yield* moduleInterceptor.install();
-	console.log("[CocoonMain] Module interceptor installed");
-
-	// Perform handshake with Mountain
-	console.log("[CocoonMain] Performing handshake with Mountain...");
-	const initData = yield* performHandshake(ipcService);
-	console.log("[CocoonMain] Handshake with Mountain completed", initData);
-
-	// Initialize extension host
-	const extensionHost = yield* IExtensionHostService;
-    // We do NOT use 'yield*' here because initialize is async promise inside service
-    // But in Effect world, we should likely wrap it.
-    // Assuming extensionHost has a .initialize() method that returns Promise<void>
-	// yield* Effect.promise(() => extensionHost.initialize()); 
-	console.log("[CocoonMain] Extension host initialized");
-
-	// Start extension activation
-	console.log("[CocoonMain] Activating startup extensions...");
-	yield* activateStartupExtensions(extensionHost);
-	console.log("[CocoonMain] Startup extensions activated");
-
-	// Enter main event loop
-	console.log("[CocoonMain] Entering main event loop...");
-	yield* enterEventLoop(ipcService, extensionHost);
+	// TODO: Enter main event loop for extension handling
+	telemetry.log("info", "[CocoonMain] Extension host ready");
 });
 
 /**
- * Perform handshake with Mountain
+ * Map unknown errors to Error type for consistent handling
  */
-const performHandshake = (ipcService: any) =>
-	Effect.gen(function* () {
-		// Send initial handshake notification
-		// Maps to 'System.InitialHandshake' in Mountain Spine
-		yield* Effect.promise(() => ipcService.sendNotification("System", "InitialHandshake", []));
-
-		// Wait for initialization data
-		// Maps to 'System.GetInitData' in Mountain Spine
-		const initData = yield* Effect.promise(() => ipcService.sendRequest("System", "GetInitData", []));
-		return initData;
-	}).pipe(
-		Effect.catchAll((error) =>
-			Effect.gen(function* () {
-				console.error("[CocoonMain] Handshake failed:", error);
-				yield* Effect.logError("Failed to handshake with Mountain");
-				return Effect.fail(error);
-			}),
-		),
-	);
-
-/**
- * Activate startup extensions
- */
-const activateStartupExtensions = (extensionHost: any) =>
-	Effect.gen(function* () {
-		// TODO: Get extension list from Mountain
-		const startupExtensions = ["*" as any]; // Placeholder
-
-		for (const extensionId of startupExtensions) {
-			yield* Effect.promise(() => extensionHost.activateExtension(extensionId, "*"));
-		}
-
-		console.log(
-			`[CocoonMain] Activated ${startupExtensions.length} startup extensions`,
-		);
-	});
-
-/**
- * Enter main event loop
- */
-const enterEventLoop = (ipcService: unknown, extensionHost: unknown) =>
-	Effect.gen(function* () {
-		// Register IPC handlers
-		yield* registerIPCHandlers(ipcService, extensionHost);
-
-		// Keep process alive
-		yield* Effect.never;
-	});
-
-/**
- * Register IPC handlers for Mountain communication
- */
-const registerIPCHandlers = (ipcService: any, extensionHost: any) =>
-	Effect.gen(function* () {
-		console.log("[CocoonMain] Registering IPC handlers...");
-
-		// Handle extension activation requests
-		yield* Effect.promise(() => ipcService.registerHandler(
-			"$activateExtension",
-			async (extensionId: string, activationEvent: string) => {
-				return extensionHost.activateExtension(
-                    extensionId,
-                    activationEvent,
-                );
-			},
-		));
-
-		// Handle extension deactivation requests
-		yield* Effect.promise(() => ipcService.registerHandler(
-			"$deactivateExtension",
-			async (extensionId: string) => {
-				return extensionHost.deactivateExtension(extensionId);
-			},
-		));
-
-		// Handle shutdown requests
-		yield* Effect.promise(() => ipcService.registerHandler("$shutdown", async () => {
-			console.log("[CocoonMain] Received shutdown request from Mountain");
-
-			// TODO: Implement proper deactivation
-			// Deactivate all extensions
-
-			process.exit(0); // Exit process
-		}));
-
-		console.log("[CocoonMain] IPC handlers registered");
-	});
-
-// --- Error handling and recovery ---
-
-/**
- * Error handling and recovery
- */
-const handleErrors = Effect.catchAll((error: any) =>
-	Effect.gen(function* () {
-		console.error("[CocoonMain] Fatal error:", error);
-		yield* Effect.logError("Cocoon process terminating due to error");
-
-		// Attempt graceful shutdown
-		process.exit(1);
-	}),
-);
-
-// --- Main Execution ---
-
-/**
- * Main entry point
- */
-const main = bootstrapCocoon.pipe(
-	Effect.provide(ServiceMapping.composeAppLayer()),
-	handleErrors,
-);
-
-/**
- * Run Cocoon
- */
-const runCocoon = () => {
-	console.log("[CocoonMain] Starting Cocoon extension host...");
-
-	// Apply VSCode output directory if available
-	const vsCodeOutputDir = process.env["VSCODE_OUT_DIR"];
-	if (vsCodeOutputDir) {
-		(module as any).paths.unshift(vsCodeOutputDir);
-		console.log(
-			`[CocoonMain] Added VSCode output directory: ${vsCodeOutputDir}`,
-		);
+const mapUnknownToError = (error: unknown): Error => {
+	if (error instanceof Error) {
+		return error;
 	}
-
-	// Run the main effect
-	NodeRuntime.runMain(main);
+	return new Error(String(error));
 };
 
-export { runCocoon };
+/**
+ * Main effect with error handling and cleanup
+ */
+const mainEffectWithServices = bootstrapCocoonEffect.pipe(
+	Effect.tapError((error) =>
+		Effect.gen(function* () {
+			const telemetry = yield* TelemetryTag;
+			const mappedError = mapUnknownToError(error);
+			telemetry.log("error", `[CocoonMain] Fatal error: ${mappedError.message}`);
+			if (mappedError.stack) {
+				telemetry.log("error", `[CocoonMain] Error stack: ${mappedError.stack}`);
+			}
+		}),
+	),
+	Effect.ensuring(
+		Effect.gen(function* () {
+			const telemetry = yield* TelemetryTag;
+			telemetry.log("info", "[CocoonMain] Cocoon extension host shutting down");
+		}),
+	),
+);
 
-// Export for testing
-if (require.main === module) {
-	runCocoon();
-}
+/**
+ * Provide all service layers to create a runnable effect
+ */
+const mainEffect = mainEffectWithServices.pipe(
+	Effect.provide(EffectServices.composeAppLayer()),
+	Effect.scoped,
+);
+
+// ============================================================================
+// MAIN ENTRY POINT
+// ============================================================================
+
+/**
+ * Main entry point for Cocoon extension host
+ * Uses Effect-TS NodeRuntime to run the application
+ */
+NodeRuntime.runMain(mainEffect);

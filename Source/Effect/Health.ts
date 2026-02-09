@@ -198,8 +198,7 @@ const makeHealthChecker = (): HealthService => ({
 		}),
 
 	monitorService: (serviceName: string, intervalMs: number) =>
-		Effect{
-.gen(function* () {
+		Effect.gen(function* () {
 			// Periodic health check using Effect.repeat
 			yield* makeHealthChecker().checkService(serviceName).pipe(
 				Effect.repeat(Schedule.spaced(`${intervalMs} millis`)),

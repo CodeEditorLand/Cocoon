@@ -17,6 +17,7 @@ import { Effect, Layer, Context } from "effect";
 import { TelemetryTag, withSpan } from "./Telemetry.js";
 import { HealthTag } from "./Health.js";
 import { MountainClientTag } from "./MountainClient.js";
+import { ModuleInterceptorTag } from "./ModuleInterceptor.js";
 import { RPCServerTag } from "./RPCServer.js";
 import { ExtensionTag } from "./Extension.js";
 
@@ -97,7 +98,7 @@ const stage2_Configuration = withSpan(
 
 		telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
 
-		return {{
+		return {
 			stageName: "Configuration",
 			success: true as boolean,
 			duration: 0,
@@ -133,13 +134,38 @@ const stage3_MountainConnection = withSpan(
 	}),
 );
 
-const stage4_RPCServer = withSpan(
-	"stage4_rpc_server",
+const stage4_ModuleInterceptor = withSpan(
+	"stage4_module_interceptor",
+	Effect.gen(function* () {
+		const telemetry = yield* TelemetryTag;
+		const moduleInterceptor = yield* ModuleInterceptorTag;
+
+		telemetry.log("info", "[Cocoon Bootstrap] Stage 4: Setting up module interceptor...");
+
+		// Initialize module interceptor service
+		yield* moduleInterceptor.initialize;
+		
+		// Install module interceptor into Node.js module system
+		yield* moduleInterceptor.install;
+
+		telemetry.log("info", "[Cocoon Bootstrap] Module interceptor installed successfully");
+
+		return {
+			stageName: "ModuleInterceptor",
+			success: true as boolean,
+			duration: 0,
+			error: undefined,
+		} satisfies StageResult;
+	}),
+);
+
+const stage5_RPCServer = withSpan(
+	"stage5_rpc_server",
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const rpcServer = yield* RPCServerTag;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Stage 4: Starting gRPC server...");
+		telemetry.log("info", "[Cocoon Bootstrap] Stage 5: Starting gRPC server...");
 
 		// Start gRPC server for Mountain ← Cocoon communication
 		yield* rpcServer.start({
@@ -158,13 +184,13 @@ const stage4_RPCServer = withSpan(
 	}),
 );
 
-const stage5_Extensions = withSpan(
-	"stage5_extensions",
+const stage6_Extensions = withSpan(
+	"stage6_extensions",
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const extension = yield* ExtensionTag;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Stage 5: Initializing extensions...");
+		telemetry.log("info", "[Cocoon Bootstrap] Stage 6: Initializing extensions...");
 
 		// Get all extensions
 		const extensions = yield* extension.getAll;
@@ -189,13 +215,13 @@ const stage5_Extensions = withSpan(
 	}),
 );
 
-const stage6_HealthCheck = withSpan(
-	"stage6_healthcheck",
+const stage7_HealthCheck = withSpan(
+	"stage7_healthcheck",
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 		const health = yield* HealthTag;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Stage 6: Running health checks...");
+		telemetry.log("info", "[Cocoon Bootstrap] Stage 7: Running health checks...");
 
 		const systemHealth = yield* health.checkAllServices();
 
@@ -239,9 +265,10 @@ const makeBootstrap = (): BootstrapService => ({
 				stage1_Environment,
 				stage2_Configuration,
 				stage3_MountainConnection,
-				stage4_RPCServer,
-				stage5_Extensions,
-				...(skipHealthCheck ? [] : [stage6_HealthCheck]),
+				stage4_ModuleInterceptor,
+				stage5_RPCServer,
+				stage6_Extensions,
+				...(skipHealthCheck ? [] : [stage7_HealthCheck]),
 			];
 
 			const results: StageResult[] = [];
@@ -334,8 +361,7 @@ export const BootstrapMock = Layer.effect(BootstrapTag, Effect.succeed(makeMockB
 // ============================================================================
 
 export const runBootstrap = (options?: BootstrapOptions) =>
-	Effect.gen(function*{
- () {
+	Effect.gen(function* () {
 		const bootstrap = yield* BootstrapTag;
 		return yield* bootstrap.run(options);
 	}).pipe(

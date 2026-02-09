@@ -45,6 +45,23 @@ export {
 	type HealthService,
 } from "./Health.js";
 
+// Module Interceptor
+export {
+	ModuleInterceptorTag,
+	ModuleInterceptor,
+	ModuleInterceptorLive,
+	ModuleInterceptorMock,
+	makeMockModuleInterceptor,
+	type SecurityLevel,
+	type SecurityPolicy,
+	type ModuleInterceptionRequest,
+	type ModuleInterceptionResult,
+	type InterceptionStats,
+	ModuleNotFoundError,
+	ModuleAccessDeniedError,
+	SecurityPolicyNotFoundError,
+} from "./ModuleInterceptor.js";
+
 // Mountain Client
 export {
 	MountainClientTag,
@@ -72,7 +89,6 @@ export {
 	type ServerConfig,
 	type ServerMetrics,
 	type RPCRequest,
-	type RPCResponse,
 	ServerStartError,
 	ServerStopError,
 	ServerNotRunningError,

@@ -6,6 +6,7 @@
  */
 
 import type * as VSCode from "vscode";
+import { Effect } from "effect";
 
 /**
  * Window state configuration
@@ -87,7 +88,7 @@ export interface DialogOptionsPayload {
 	message: string;
 	buttons?: string[];
 	items?: string[];
-	icon?: VSCode.MessageBoxOptions["icon"];
+	icon?: "info" | "warning" | "error" | "question" | "none";
 	modal?: boolean;
 }
 
@@ -111,7 +112,7 @@ export interface InputBoxOptionsPayload {
 	value?: string;
 	valueSelection?: [number, number];
 	prompt?: string;
- placeHolder?: string;
+	placeHolder?: string;
 	password?: boolean;
 	ignoreFocusOut?: boolean;
 	validateInput?: (value: string) => string | undefined | null;
@@ -125,7 +126,7 @@ export interface FileDialogOptionsPayload {
 	title?: string;
 	defaultUri?: string;
 	buttonLabel?: string;
-	filters?: VSCode.FileFilter;
+	filters?: { name: string; extensions: string[] }[];
 	canSelectFiles?: boolean;
 	canSelectFolders?: boolean;
 	canSelectMany?: boolean;
@@ -213,4 +214,6 @@ export interface Window {
 		Options?: VSCode.QuickPickOptions,
 	) => Effect.Effect<T | VSCode.QuickPickItem | undefined, Error>;
 	readonly ShowInputBox: (
-		Options?: VSCode.InputBox{
+		Options?: VSCode.InputBoxOptions,
+	) => Effect.Effect<string | undefined, Error>;
+}
