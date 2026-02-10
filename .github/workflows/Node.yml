@@ -92,3 +92,6 @@ jobs:
               with:
                   name: .-Node-${{ matrix.node-version }}-Target
                   path: ./Target
+
+            - run: pnpm run test
+              working-directory: .
