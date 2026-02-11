@@ -86,11 +86,10 @@
 
 		"target": "ESNext",
 
-		// Critical: Enable proper generator support in ES modules
 		"downlevelIteration": true
 	},
 
-	"exclude": ["Target", "Scripts/**/*.cjs", "**/*.cjs"],
+	"exclude": ["Target", "Scripts/**/*.cjs", "**/*.cjs", "Archive"],
 
 	"include": ["Source"]
 }
