@@ -15,7 +15,7 @@
     - `LLM-AUTONOMOUS-WORKFLOW.md` - Development methodology
 
 3. **Established Implementation Foundation**
-    - `EXTENSION-HOST-ANALYSIS.md` - VSCode architecture analysis
+    - `ExtensionHostAnalysis.md` - VSCode architecture analysis
     - `ServiceMapping.ts` - Dependency injection system
     - `CocoonMain.ts` - Main entry point
 
@@ -247,7 +247,7 @@ describe("ServiceName", () => {
 
 1. Update `IMPLEMENTATION-SUMMARY.md` with progress
 2. Update `MISSING-IMPLEMENTATIONS.md` with completed items
-3. Create `NEXT-SESSION-PLAN.md` for following session
+3. Create `NextSessionPlan.md` for following session
 4. Document any blockers or questions
 
 ## Expected Output
