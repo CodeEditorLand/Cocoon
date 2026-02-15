@@ -1,4 +1,5 @@
 # Cocoon Source Refactoring Strategy
+
 ## Advanced Batch File Separation & Standardization
 
 **Date**: 2025-01-28  
@@ -9,13 +10,16 @@
 
 ## Executive Summary
 
-This document outlines a comprehensive refactoring strategy for the `Element/Cocoon/Source` directory to achieve:
+This document outlines a comprehensive refactoring strategy for the
+`Element/Cocoon/Source` directory to achieve:
 
 - **1 file, 1 export** with nameless `export default`
-- **Standardized Naming Convention**: PascalCase, single-word, action-oriented, present tense, singular
+- **Standardized Naming Convention**: PascalCase, single-word, action-oriented,
+  present tense, singular
 - **Deduplication** using most complete implementations
 - **Comprehensive Documentation** with JSDoc/TypeDoc and @module tags
-- **VSCode Integration** validated against Dependency/Microsoft/Dependency/Editor/src
+- **VSCode Integration** validated against
+  Dependency/Microsoft/Dependency/Editor/src
 - **Effect-TS Best Practices** referenced from Documentation/Module/effect
 
 ---
@@ -25,19 +29,22 @@ This document outlines a comprehensive refactoring strategy for the `Element/Coc
 ### 1. File Structure Standards
 
 #### Principle: Single Responsibility per File
+
 - Each file contains exactly **one export**
 - Export should be **nameless**: `export default Implementation`
 - Prefer **function exports**: `export default (Args) => { ... }`
 - For complex implementations: `export default class Implementation { ... }`
 
 #### Naming Convention Rules
+
 - **PascalCase**: First letter of each word capitalized
 - **Single-word**: No underscores or hyphens (use PascalCase instead)
-- **Action-oriented**: Name what it *does*, not what it *is*
+- **Action-oriented**: Name what it _does_, not what it _is_
 - **Present tense**: Current action (e.g., `Activate` not `Activated`)
 - **Singular form**: One entity (e.g., `Extension` not `Extensions`)
 
 **Examples:**
+
 ```
 ❌ Bad: extension_host_service.ts
 ❌ Bad: loadExtensions.ts
@@ -85,22 +92,24 @@ Source/
 
 ### Category A: Effect/ Services ✅ ALREADY GOOD
 
-These services already follow the established patterns well. Just need refinement.
+These services already follow the established patterns well. Just need
+refinement.
 
 **Files:** `Effect/*.ts`
 
-| Current File | Lines | Status | Action |
-|-------------|-------|--------|--------|
-| `Effect/Bootstrap.ts` | 370 | ✅ Good | Refine documentation |
-| `Effect/Extension.ts` | ~300 | ✅ Good | Refine documentation |
-| `Effect/Health.ts` | 320 | ✅ Good | Refine documentation |
-| `Effect/ModuleInterceptor.ts` | ~250 | ✅ Good | Refine documentation |
-| `Effect/MountainClient.ts` | 528 | ✅ Good | Refine documentation |
-| `Effect/RPCServer.ts` | ~400 | ✅ Good | Refine documentation |
-| `Effect/Telemetry.ts` | 405 | ✅ Good | Refine documentation |
-| `Effect/index.ts` | 113 | ✅ Good | Keep as barrel |
+| Current File                  | Lines | Status  | Action               |
+| ----------------------------- | ----- | ------- | -------------------- |
+| `Effect/Bootstrap.ts`         | 370   | ✅ Good | Refine documentation |
+| `Effect/Extension.ts`         | ~300  | ✅ Good | Refine documentation |
+| `Effect/Health.ts`            | 320   | ✅ Good | Refine documentation |
+| `Effect/ModuleInterceptor.ts` | ~250  | ✅ Good | Refine documentation |
+| `Effect/MountainClient.ts`    | 528   | ✅ Good | Refine documentation |
+| `Effect/RPCServer.ts`         | ~400  | ✅ Good | Refine documentation |
+| `Effect/Telemetry.ts`         | 405   | ✅ Good | Refine documentation |
+| `Effect/index.ts`             | 113   | ✅ Good | Keep as barrel       |
 
 **Action Items:**
+
 1. Ensure each service exports nameless default where appropriate
 2. Add comprehensive @module documentation with links
 3. Verify Effect-TS patterns match documentation
@@ -112,18 +121,18 @@ These services already follow the established patterns well. Just need refinemen
 
 **Current Files:** `Services/*.ts`
 
-| Current File | Lines | Status | Action | Split Strategy |
-|-------------|-------|--------|--------|----------------|
-| `Services/APIFactory.ts` | 1394 | ⚠️ Too Large | Split | 8 separate files |
-| `Services/Command.ts` | 534 | ⚠️ Too Large | Split | 5 separate files |
-| `Services/Configuration.ts` | 637 | ⚠️ Too Large | Split | 4 separate files |
-| `Services/Extension.ts` | ~300 | ⚠️ Mixed | Refine | Move to Extension/ dir |
-| `Services/ExtensionHostService.ts` | 192 | ⚠️ Mixed | Split/Move | Extension/Activate.ts |
-| `Services/Window.ts` | 1498 | ⚠️ Massive | Split | 10 separate files |
-| `Services/Workspace.ts` | 720 | ⚠️ Large | Split | 6 separate files |
-| `Services/ExtensionContext.ts` | ~100 | ✅ OK | Move | Extension/Context.ts |
-| `Services/Logger.ts` | ~200 | ✅ OK | Move | Utility/Logger.ts |
-| `Services/Health.ts` | ~150 | ✅ Dup | Remove | Use Effect/Health.ts |
+| Current File                       | Lines | Status       | Action     | Split Strategy         |
+| ---------------------------------- | ----- | ------------ | ---------- | ---------------------- |
+| `Services/APIFactory.ts`           | 1394  | ⚠️ Too Large | Split      | 8 separate files       |
+| `Services/Command.ts`              | 534   | ⚠️ Too Large | Split      | 5 separate files       |
+| `Services/Configuration.ts`        | 637   | ⚠️ Too Large | Split      | 4 separate files       |
+| `Services/Extension.ts`            | ~300  | ⚠️ Mixed     | Refine     | Move to Extension/ dir |
+| `Services/ExtensionHostService.ts` | 192   | ⚠️ Mixed     | Split/Move | Extension/Activate.ts  |
+| `Services/Window.ts`               | 1498  | ⚠️ Massive   | Split      | 10 separate files      |
+| `Services/Workspace.ts`            | 720   | ⚠️ Large     | Split      | 6 separate files       |
+| `Services/ExtensionContext.ts`     | ~100  | ✅ OK        | Move       | Extension/Context.ts   |
+| `Services/Logger.ts`               | ~200  | ✅ OK        | Move       | Utility/Logger.ts      |
+| `Services/Health.ts`               | ~150  | ✅ Dup       | Remove     | Use Effect/Health.ts   |
 
 ---
 
@@ -194,7 +203,7 @@ Configuration/Events.ts - Configuration change events
 
 **Current Files:** `Interfaces/*.ts`
 
-| Current File | Status | Action | Notes |
-|-------------|--------|--------|-------|
-| `Interfaces/I*.ts` | Keep I prefix | Standardize | Keep TypeScript convention |
-| All interface files | ✅ OK | Add{
+| Current File        | Status        | Action      | Notes                      |
+| ------------------- | ------------- | ----------- | -------------------------- |
+| `Interfaces/I*.ts`  | Keep I prefix | Standardize | Keep TypeScript convention |
+| All interface files | ✅ OK         | Add{        |

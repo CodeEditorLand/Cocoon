@@ -1,4 +1,5 @@
 # Cocoon Source Refactoring Batch Plan
+
 ## Phase 1: Orchestration & Core Services
 
 ---
@@ -26,8 +27,9 @@ Element/Cocoon/Source/Orchestration/
  * @description
  * Provides dependency injection for traditional Promise-based service architecture.
  * Legacy services that use async/await patterns instead of Effect-TS.
- * 
+ *
  * @see {@link Element/Cocoon/Source/Services/} Legacy service implementations
  * @see {@link Element/Cocoon/Source/Orchestration/EffectServices.ts} Modern Effect-TS services
- * 
+ *
  * @deprecated Prefer EffectServices for new
+```
