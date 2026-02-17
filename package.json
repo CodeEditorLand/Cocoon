@@ -34,7 +34,7 @@
 		"@effect/platform-node": "0.104.1",
 		"@tauri-apps/plugin-clipboard-manager": "2.3.2",
 		"@tauri-apps/plugin-fs": "2.4.5",
-		"effect": "3.19.17",
+		"effect": "3.19.18",
 		"google-protobuf": "4.0.1",
 		"@grpc/grpc-js": "1.14.3",
 		"@grpc/proto-loader": "0.8.0",
