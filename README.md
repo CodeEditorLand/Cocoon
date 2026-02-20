@@ -64,7 +64,7 @@ sent to `Mountain` for native execution.
 
 ---
 
-## Deep Dive & Component Breakdown 🔬
+## Deep Dive & Component Breakdown 🔬
 
 To understand how `Cocoon`'s internal components interact to provide the
 high-fidelity `vscode` API, see the following source files:
@@ -152,7 +152,7 @@ classDef cocoon fill:#ccf,stroke:#333,stroke-width:2px;
 classDef effectts fill:#cfc,stroke:#333,stroke-width:1px;
 classDef vscode fill:#ddd,stroke:#666,stroke-width:1px,stroke-dasharray: 5 5;
 
-subgraph "Cocoon 🦋 (Node.js SideCar)"
+subgraph "Cocoon 🦋 (Node.js SideCar)"
 direction TB
 Bootstrap["Bootstrap/Implementation/CocoonMain.ts"]:::effectts
 AppLayer["Cocoon AppLayer"]:::effectts

@@ -125,28 +125,30 @@ Created**: Basic service mapping and bootstrap system
 ```typescript
 // Service interface matching VSCode
 export interface ServiceName {
-  readonly method1: (param: type) => Effect.Effect<returnType>;
-  readonly method2: (param: type) => Effect.Effect<returnType>;
+	readonly method1: (param: type) => Effect.Effect<returnType>;
+	readonly method2: (param: type) => Effect.Effect<returnType>;
 }
 
 // Effect-TS service implementation
 export class ServiceNameImpl extends Effect.Service<ServiceName>()(
-  "Service/ServiceName",
-  {
-    effect: Effect.gen(function* () {
-      // Dependencies
-      const dependency1 = yield* Dependency1Service;
+	"Service/ServiceName",
+	{
+		effect: Effect.gen(function* () {
+			// Dependencies
+			const dependency1 = yield* Dependency1Service;
 
-      return {
-        method1: (param) => Effect.gen(function* () {
-          // Implementation
-        }),
-        method2: (param) => Effect.gen(function* () {
-          // Implementation
-        }),
-      };
-    }),
-  }
+			return {
+				method1: (param) =>
+					Effect.gen(function* () {
+						// Implementation
+					}),
+				method2: (param) =>
+					Effect.gen(function* () {
+						// Implementation
+					}),
+			};
+		}),
+	},
 ) {}
 ```
 
@@ -162,17 +164,17 @@ export class ServiceNameImpl extends Effect.Service<ServiceName>()(
 
 ```typescript
 describe("ServiceName", () => {
-  it("should implement VSCode API correctly", async () => {
-    // Test API compatibility
-  });
+	it("should implement VSCode API correctly", async () => {
+		// Test API compatibility
+	});
 
-  it("should handle errors gracefully", async () => {
-    // Test error handling
-  });
+	it("should handle errors gracefully", async () => {
+		// Test error handling
+	});
 
-  it("should perform within VSCode benchmarks", async () => {
-    // Performance testing
-  });
+	it("should perform within VSCode benchmarks", async () => {
+		// Performance testing
+	});
 });
 ```
 
