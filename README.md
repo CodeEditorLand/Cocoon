@@ -64,13 +64,29 @@ sent to `Mountain` for native execution.
 
 ---
 
-## Deep Dive & Component Breakdown 🔬
+## Deep Dive & Component Breakdown 🔬
 
 To understand how `Cocoon`'s internal components interact to provide the
-high-fidelity `vscode` API, please refer to the detailed technical breakdown in
-[`Documentation/GitHub/DeepDive.md`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Documentation/GitHub/DeepDive.md). This
-document explains the roles of the `Core` services (like `ApiFactory` and
-`ExtensionHost`), the `Service` shims, and the gRPC-based `IPCProvider`.
+high-fidelity `vscode` API, see the following source files:
+
+- **[`Bootstrap/Implementation/CocoonMain.ts`](Source/Bootstrap/Implementation/CocoonMain.ts)** -
+  Main entry point and bootstrap orchestration
+- **[`Effect/Bootstrap.ts`](Source/Effect/Bootstrap.ts)** - Effect-TS bootstrap
+  stages (Environment, Configuration, Mountain Connection, Module Interceptor,
+  RPC Server, Extensions, Health Check)
+- **[`ServiceMapping.ts`](Source/ServiceMapping.ts)** - Dependency injection and
+  service composition
+- **[`Services/APIFactory.ts`](Source/Services/APIFactory.ts)** - Constructs the
+  `vscode` API object for extensions
+- **[`Services/ExtensionHostService.ts`](Source/Services/ExtensionHostService.ts)** -
+  Extension activation and lifecycle management
+- **[`Services/IPCService.ts`](Source/Services/IPCService.ts)** - Bi-directional
+  gRPC communication
+- **[`Services/MountainGRPCClient.ts`](Source/Services/MountainGRPCClient.ts)** -
+  gRPC client for Mountain backend
+- **[`PatchProcess/`](Source/PatchProcess/)** - Process hardening and security
+- **[`TypeConverter/`](Source/TypeConverter/)** - DTO serialization for gRPC
+  transport
 
 ---
 
@@ -79,37 +95,46 @@ document explains the roles of the `Core` services (like `ApiFactory` and
 Cocoon operates as a standalone Node.js process, carefully orchestrated by and
 communicating with `Mountain`.
 
-| Component within Cocoon            | Role & Key Responsibilities                                                                                                                                                                                                                     |
-| :--------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Node.js Process**                | The runtime environment for Cocoon.                                                                                                                                                                                                             |
-| **`Index.ts` (Main Orchestrator)** | The primary entry point. It composes all `Effect-TS` layers, establishes the gRPC connection, performs the initialization handshake with `Mountain`, and starts the extension host services.                                                    |
-| **`PatchProcess/`**                | Performs very early process hardening (patching `process.exit`, handling exceptions, piping logs), ensuring a stable foundation before any other code runs.                                                                                     |
-| **`Core/` Modules**                | Manages the extension runtime itself. `ExtensionHost.ts` activates extensions, `RequireInterceptor.ts` patches `require`, and `ApiFactory.ts` constructs the `vscode` object given to each extension.                                           |
-| **`Service/` Modules**             | A comprehensive collection of Effect-TS `Layer`s, each implementing a specific VS Code `IExtHost...` service interface (e.g., `CommandsProvider`, `WorkspaceProvider`, `WebviewProvider`). These shims are the core of the compatibility layer. |
-| **`Service/IPC.ts`**               | Implements both the gRPC client (to call `Mountain`) and server (to receive calls from `Mountain`), managing the entire bi-directional communication lifecycle.                                                                                 |
-| **`Type/` & `TypeConverter/`**     | `Type/` contains the concrete TypeScript class and enum definitions for the `vscode` API (e.g., `Uri`, `Range`). `TypeConverter/` provides pure functions to serialize these rich types into plain DTOs for gRPC transport.                     |
-| **Extension Code**                 | The JavaScript/TypeScript code of the VS Code extensions being hosted and run within the Cocoon environment.                                                                                                                                    |
+| Component within Cocoon                      | Role & Key Responsibilities                                                                                                                                                                                                                                                                                                                                    |
+| :------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js Process**                          | The runtime environment for Cocoon.                                                                                                                                                                                                                                                                                                                            |
+| **`Bootstrap/Implementation/CocoonMain.ts`** | The primary entry point. It composes all `Effect-TS` layers, establishes the gRPC connection, performs the initialization handshake with `Mountain`, and starts the extension host services.                                                                                                                                                                   |
+| **`PatchProcess/`**                          | Performs very early process hardening (patching `process.exit`, handling exceptions, piping logs), ensuring a stable foundation before any other code runs.                                                                                                                                                                                                    |
+| **`Effect/` Modules**                        | Orchestrates the bootstrap process. `Bootstrap.ts` coordinates initialization stages, `Extension.ts` manages extension lifecycle, `ModuleInterceptor.ts` patches `require` and `import`, and `Telemetry.ts` provides logging and tracing.                                                                                                                      |
+| **`Services/` Modules**                      | A comprehensive collection of Effect-TS `Layer`s, each implementing a specific VS Code `IExtHost...` service interface (e.g., `CommandsProvider`, `WorkspaceProvider`, `WebviewProvider`). These shims are the core of the compatibility layer. Key services include `APIFactory.ts`, `ExtensionHostService.ts`, `IPCService.ts`, and `MountainGRPCClient.ts`. |
+| **`IPC/` & `Services/IPC.ts`**               | `IPC/` contains the protocol layer (`Channel.ts`, `Handler.ts`, `Message.ts`, `Protocol.ts`). `Services/IPC.ts` implements both the gRPC client (to call `Mountain`) and server (to receive calls from `Mountain`), managing the entire bi-directional communication lifecycle.                                                                                |
+| **`TypeConverter/`**                         | Provides pure functions to serialize TypeScript types into plain DTOs for gRPC transport. Organized by feature: `Main/` (URI, Range, TextEdit), `Dialog/`, `TreeView/`, `Webview/`, `Task/`, `WorkspaceEdit/`. The actual `vscode` API class definitions are in the `Services/` modules that use them.                                                         |
+| **Extension Code**                           | The JavaScript/TypeScript code of the VS Code extensions being hosted and run within the Cocoon environment.                                                                                                                                                                                                                                                   |
 
 ### Interaction Flow (Example: `vscode.window.showInformationMessage`)
 
-1.  `Mountain` launches `Cocoon` with initialization data.
-2.  `Cocoon`'s `Index.ts` bootstraps the application:
+1. `Mountain` launches `Cocoon` with initialization data.
+2. `Cocoon`'s
+   [`Bootstrap/Implementation/CocoonMain.ts`](Source/Bootstrap/Implementation/CocoonMain.ts)
+   bootstraps the application:
     - `PatchProcess` hardens the environment.
-    - `IPCProvider` establishes the gRPC connection and performs a handshake.
-    - The main `AppLayer` is built, composing all services.
+    - `Effect/Bootstrap.ts` orchestrates the initialization stages (environment
+      detection, configuration, gRPC connection, module interceptor, RPC server,
+      extensions, health check).
+    - The main `AppLayer` is built via
+      [`ServiceMapping.ts`](Source/ServiceMapping.ts), composing all Effect-TS
+      services.
     - The real VS Code `ExtHostExtensionService` is instantiated within this
       Effect-TS environment.
-3.  `ExtHostExtensionService` activates an extension. The extension receives a
-    `vscode` API object constructed by the `ApiFactoryProvider`.
-4.  The extension calls `vscode.window.showInformationMessage("Hello")`.
-5.  The call is routed to the `MessageProvider` service.
-6.  The `MessageProvider` creates an `Effect` that sends a `showMessage` gRPC
-    request to `Mountain`.
-7.  `Mountain`'s `Vine` layer receives the request. Its `Track` dispatcher
-    routes it to the native UI handler.
-8.  `Mountain` displays the native UI notification and waits for user
-    interaction.
-9.  The result is sent back to `Cocoon` via a gRPC response.
+3. `ExtHostExtensionService` (in
+   [`Services/ExtensionHostService.ts`](Source/Services/ExtensionHostService.ts))
+   activates an extension. The extension receives a `vscode` API object
+   constructed by the [`APIFactory`](Source/Services/APIFactory.ts) service.
+4. The extension calls `vscode.window.showInformationMessage("Hello")`.
+5. The call is routed to the [`Window`](Source/Services/Window.ts) service.
+6. The `Window` service creates an `Effect` that sends a `showMessage` gRPC
+   request to `Mountain` via
+   [`MountainGRPCClient`](Source/Services/MountainGRPCClient.ts).
+7. `Mountain`'s `Vine` layer receives the request. Its `Track` dispatcher routes
+   it to the native UI handler.
+8. `Mountain` displays the native UI notification and waits for user
+   interaction.
+9. The result is sent back to `Cocoon` via a gRPC response.
 10. The `Effect` in `Cocoon` completes, resolving the promise returned to the
     extension's API call.
 
@@ -122,39 +147,44 @@ within the broader Land ecosystem.
 
 ```mermaid
 graph LR
-    classDef mountain fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef cocoon fill:#ccf,stroke:#333,stroke-width:2px;
-    classDef effectts fill:#cfc,stroke:#333,stroke-width:1px;
-    classDef vscode fill:#ddd,stroke:#666,stroke-width:1px,stroke-dasharray: 5 5;
+classDef mountain fill:#f9f,stroke:#333,stroke-width:2px;
+classDef cocoon fill:#ccf,stroke:#333,stroke-width:2px;
+classDef effectts fill:#cfc,stroke:#333,stroke-width:1px;
+classDef vscode fill:#ddd,stroke:#666,stroke-width:1px,stroke-dasharray: 5 5;
 
-    subgraph "Cocoon 🦋 (Node.js SideCar)"
-        direction TB
-        Index["Index.ts (Main Entry)"]:::effectts
-        AppLayer["Cocoon AppLayer"]:::effectts
-        CoreServices["Core Services (ApiFactory, ExtensionHost)"]:::cocoon
-        APIServices["API Service Shims (Workspace, Window, etc.)"]:::cocoon
-        IPCService["IPCProvider (gRPC Client & Server)"]:::cocoon
+subgraph "Cocoon 🦋 (Node.js SideCar)"
+direction TB
+Bootstrap["Bootstrap/Implementation/CocoonMain.ts"]:::effectts
+AppLayer["Cocoon AppLayer"]:::effectts
+EffectModules["Effect/ Modules (Bootstrap, Telemetry, Extension)"]:::effectts
+PatchProcess["PatchProcess/ (Process Hardening)"]:::cocoon
+APIServices["Services/ (APIFactory, ExtensionHost, Window, Workspace, etc.)"]:::cocoon
+IPCService["Services/IPCService.ts + IPC/ Protocol"]:::cocoon
+GRPCClient["Services/MountainGRPCClient.ts"]:::cocoon
+TypeConverter["TypeConverter/ (DTO Serialization)"]:::cocoon
 
-        Index -- Builds & Runs --> AppLayer
-        AppLayer -- Composes --> CoreServices
-        AppLayer -- Composes --> APIServices
-        AppLayer -- Composes --> IPCService
-        CoreServices -- Use --> APIServices
-        APIServices -- Use --> IPCService
-    end
+Bootstrap -- Builds & Runs --> AppLayer
+AppLayer -- Composes --> EffectModules
+AppLayer -- Composes --> APIServices
+AppLayer -- Composes --> IPCService
+APIServices -- Use --> GRPCClient
+APIServices -- Use --> TypeConverter
+GRPCClient -- Use --> IPCService
+PatchProcess -- Hardens --> Bootstrap
+end
 
-    subgraph "Mountain ⛰️ (Rust/Tauri Backend)"
-        VineGRPC["Vine gRPC Server"]:::mountain
-    end
+subgraph "Mountain ⛰️ (Rust/Tauri Backend)"
+VineGRPC["Vine gRPC Server"]:::mountain
+end
 
-    subgraph "VS Code Extension"
-        ExtensionCode["Extension Code"]:::vscode
-    end
+subgraph "VS Code Extension"
+ExtensionCode["Extension Code"]:::vscode
+end
 
-    CoreServices -- Provides `vscode` object to --> ExtensionCode
-    ExtensionCode -- Makes API calls to --> CoreServices
+APIServices -- Provides `vscode` object to --> ExtensionCode
+ExtensionCode -- Makes API calls to --> APIServices
 
-    IPCService -- gRPC <--> VineGRPC
+GRPCClient -- gRPC <--> VineGRPC
 ```
 
 ---
@@ -169,10 +199,14 @@ prepare the necessary VS Code platform code for Cocoon to consume.
 
 **Key Dependencies:**
 
-- `effect`: The core library for the entire application structure.
+- `effect` (v3.19.18): The core library for the entire application structure.
+- `@effect/platform` & `@effect/platform-node`: Effect-TS platform abstractions.
 - `@grpc/grpc-js` & `@grpc/proto-loader`: For gRPC communication.
+- `google-protobuf` & `protobufjs`: Protocol buffers for gRPC.
 - VS Code platform code (e.g., `vs/base`, `vs/platform`), sourced from the
   `Land/Dependency` submodule.
+
+**Current Version:** 0.0.1 (see [`package.json`](package.json))
 
 **Debugging Cocoon:**
 
@@ -190,14 +224,16 @@ prepare the necessary VS Code platform code for Cocoon to consume.
 This project is released into the public domain under the **Creative Commons CC0
 Universal** license. You are free to use, modify, distribute, and build upon
 this work for any purpose, without any restrictions. For the full legal text,
-see the [`LICENSE`](https://github.com/CodeEditorLand/Cocoon/tree/Current/) file.
+see the [`LICENSE`](https://github.com/CodeEditorLand/Cocoon/tree/Current/)
+file.
 
 ---
 
 ## Changelog 📜
 
-Stay updated with our progress! See [`CHANGELOG.md`](https://github.com/CodeEditorLand/Cocoon/tree/Current/) for a history
-of changes specific to **Cocoon**.
+Stay updated with our progress! See
+[`CHANGELOG.md`](https://github.com/CodeEditorLand/Cocoon/tree/Current/) for a
+history of changes specific to **Cocoon**.
 
 ---
 
