@@ -36,21 +36,21 @@
  * - URI string representation for DTO transport
  *
  * TODOs (DTO Versioning - LOW):
- * - Add automatic version migration
- * - Add backward compatibility handlers
- * - Add schema validation for each version
+ * FUTURE: Version migration - add migrateDTO() for version upgrades
+ * FUTURE: Backward compatibility - support v1 DTOs in v2 parser
+ * FUTURE: Schema validation - use zod for version-specific validation
  *
  * TODOs (DTO Compression - LOW):
- * - Add DTO compression for large payloads
- * - Add selective field serialization
- * - Add binary encoding for efficiency
+ * FUTURE: Compression - use zlib for payloads > 1KB
+ * FUTURE: Selective serialization - skip default values
+ * FUTURE: Binary encoding - use MessagePack for efficiency
  *
  * TODOs (DTO Security - LOW):
- * - Add DTO encryption for sensitive data
- * - Add DTO signing for integrity verification
- * - Add tamper detection
+ * FUTURE: Encryption - use AES-256-GCM for sensitive panel data
+ * FUTURE: Signing - add HMAC for integrity verification
+ * FUTURE: Tamper detection - verify signature before deserialization
  *
- * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
+ * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
 import { Effect } from "effect";

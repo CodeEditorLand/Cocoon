@@ -21,16 +21,16 @@
  * - **Output**: Inspired by VSCode's type conversion patterns
  *
  * **TODOs:**
- * - TODO: Define actual Mountain DTOs in Tauri backend (Mountain/Source/Platform.dto)
- * - TODO: Implement protobuf or JSON serialization based on Mountain protocol
- * - TODO: Add TypeScript type guards for DTO validation
- * - TODO: Implement schema validation with Zod or similar
- * - TODO: Wind: Create Effect-Based type converters for streaming
- * - TODO: Performance: Add conversion caching for frequent DTOs
- * - TODO: Testing: Add comprehensive unit tests for all converters
- * - TODO: Security: Validate all DTOs before/deserialization to prevent injection
- * - TODO: Documentation: Generate DTO schema documentation
- * - TODO: Versioning: Support DTO version migration and backward compatibility
+ * DEPENDENCY: Mountain DTO definitions - pending Mountain/Source/Platform.dto
+ * DEPENDENCY: Mountain protocol format - use gRPC/protobuf as per Mountain spec
+ * FUTURE: Type guards - add isOSInfo, isEnvironmentInfo type predicates
+ * FUTURE: Schema validation - use zod for runtime type checking
+ * DEPENDENCY: Wind Effect converters - create Effect-based streaming converters
+ * PERFORMANCE: Conversion cache - use MemoCache for frequent conversions
+ * TESTING: Unit tests - add vitest test suite for each converter
+ * SECURITY: DTO validation - sanitize all input before deserialization
+ * DOCUMENTATION: Schema docs - generate with quicktype or similar
+ * VERSIONING: Migration - support v1->v2 DTO conversion
  */
 
 import { Option } from "effect";

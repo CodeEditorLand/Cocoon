@@ -36,17 +36,17 @@
  * - OnDispose callback ensures cleanup on panel disposal
  *
  * TODOs (Webview Debugging - LOW):
- * - Add dev tools integration for Webview debugging
- * - Add Webview inspector for DOM examination
- * - Add console.log capture from Webview context
- * - Add performance profiling for Webview rendering
+ * FUTURE: Dev tools - enable webview.devtools == true option
+ * FUTURE: Inspector - create WebviewInspector command
+ * FUTURE: Console capture - intercept console messages via postMessage
+ * FUTURE: Profiling - track render time with performance.measure()
  *
  * TODOs (Remote Webview - LOW):
- * - Add remote Webview support via tunneling
- * - Add secure WebSocket communication for remote Webviews
- * - Add remote development session support
+ * FUTURE: Remote support - tunnel via Mountain WebSocket
+ * FUTURE: WebSocket - use secure wss:// for communication
+ * FUTURE: Dev sessions - support VS Code remote development
  *
- * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
+ * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
 import { generateUuid } from "@codeeditorland/output/vs/base/common/uuid.js";

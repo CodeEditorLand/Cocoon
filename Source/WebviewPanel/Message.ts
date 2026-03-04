@@ -35,24 +35,24 @@
  * - Request/response correlation with message IDs
  *
  * TODOs (Message Debugging - LOW):
- * - Add message logging and tracing
- * - Add message payload inspection tools
- * - Add message timing/performance metrics
- * - Add message replay for debugging
+ * FUTURE: Message logging - log all messages with trace level
+ * FUTURE: Payload inspection - add debug UI for message content
+ * FUTURE: Timing metrics - track message send/receive latency
+ * FUTURE: Message replay - allow replaying messages for debugging
  *
  * TODOs (Message Security - LOW):
- * - Add message encryption for sensitive data
- * - Add message origin validation
- * - Add message size limits and rate limiting
- * - Add message content sanitization
+ * FUTURE: Encryption - encrypt sensitive message payloads
+ * FUTURE: Origin validation - verify message origin matches panel
+ * FUTURE: Rate limiting - limit messages per panel per second
+ * FUTURE: Sanitization - sanitize message content before processing
  *
  * TODOs (Message Performance - LOW):
- * - Optimize message serialization overhead
- * - Batch message sending for bulk operations
- * - Compress large message payloads
- * - Add message caching for repeated requests
+ * PERFORMANCE: Serialization - optimize JSON.stringify usage
+ * PERFORMANCE: Batching - collect messages and send in batches
+ * PERFORMANCE: Compression - use zlib for large payloads
+ * PERFORMANCE: Caching - cache message responses for idempotent requests
  *
- * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
+ * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
 import { Effect } from "effect";

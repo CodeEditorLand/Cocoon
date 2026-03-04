@@ -23,12 +23,13 @@
  * - IMountainClientService: For forwarding logs to Mountain (optional)
  *
  * TODOs:
- * - MEDIUM: Implement log persistence and rotation
- * - MEDIUM: Add log filtering by extension ID and level
- * - MEDIUM: Forward critical logs to Mountain
- * - LOW: Track log volume for performance monitoring
- * - ARCHITECTURE-PATTERN: src/vs/platform/log/common/logService.ts (structured logging)
- * - VSCODE-LIFT: src/vs/base/common/log.js (log formatting and levels)
+ * FUTURE: Log persistence - use winston or pino for file logging
+ * FUTURE: Log rotation - implement size-based rotation (10MB files, keep 5)
+ * FUTURE: Log filtering - add Ref-based level filtering by extension ID
+ * FUTURE: Mountain forwarding - integrate with MountainClientService
+ * PERFORMANCE: Volume tracking - add metrics for log count by level
+ * ARCHITECTURE-PATTERN: See src/vs/platform/log/common/logService.ts
+ * VSCODE-LIFT: See src/vs/base/common/log.js for log formatting
  */
 
 import { Context, Effect, Ref } from "effect";
@@ -74,11 +75,11 @@ export interface Logger {
  * Implementation: Effect log functions with extension context annotation
  *
  * TODOs:
- * - PERSISTENCE: Implement log file persistence (MEDIUM)
- * - ROTATION: Add log rotation based on size and age (MEDIUM)
- * - FILTERING: Implement log filtering by extension and level (MEDIUM)
- * - FORWARDING: Forward critical logs to Mountain (MEDIUM)
- * - TELEMETRY: Track log volume for performance monitoring (LOW)
+ * FUTURE: Log persistence - write to rotating log files
+ * FUTURE: Log rotation - rotate by size (10MB) and age (daily)
+ * FUTURE: Log filtering - filter by extension ID and log level
+ * FUTURE: Mountain forwarding - send error/fatal logs to Mountain
+ * PERFORMANCE: Telemetry - track log count per level for monitoring
  */
 export class LoggerService extends Effect.Service<LoggerService>()(
 	"Service/Logger",

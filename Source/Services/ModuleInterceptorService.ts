@@ -718,8 +718,9 @@ export class ModuleInterceptorService implements IModuleInterceptorService {
 			workspaceState: new Map(),
 			subscriptions: [],
 			asAbsolutePath: (relativePath: string) => {
-				// TODO: Implement proper path resolution
-				return `/extensions/${extensionId}/${relativePath}`;
+			// FUTURE: Use ExtensionContext.extensionUri for proper path resolution
+			// For now, construct path from extension ID (placeholder)
+			return `/extensions/${extensionId}/${relativePath}`;
 			},
 		};
 

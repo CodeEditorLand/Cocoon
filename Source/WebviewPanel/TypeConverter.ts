@@ -37,19 +37,19 @@
  * - Type assertions with runtime checks where needed
  *
  * TODOs (Type Safety - LOW):
- * - Add full runtime type checking with zod or similar
- * - Add compile-time type generation for DTOs
- * - Add automatic type mapping discovery
+ * FUTURE: Runtime checking - use zod for full type validation
+ * FUTURE: Compile-time types - generate from DTO schema with quicktype
+ * FUTURE: Auto-discovery - use reflect-metadata for automatic mapping
  *
  * TODOs (Conversion Optimization - LOW):
- * - Cache conversion results for repeated conversions
- * - Optimize conversion of large object graphs
- * - Add lazy conversion for performance
+ * PERFORMANCE: Caching - cache converted objects by input hash
+ * PERFORMANCE: Large graphs - use shared buffer for object traversal
+ * PERFORMANCE: Lazy conversion - defer expensive conversions
  *
  * TODOs (Type Migration - LOW):
- * - Add automatic type migration for version changes
- * - Add backward compatibility type adapters
- * - Add type version tracking
+ * FUTURE: Auto-migration - implement migrateType() for version changes
+ * FUTURE: Backward compatibility - add TypeAdapter for older versions
+ * FUTURE: Version tracking - add version field to all DTOs
  *
  * INTEGRATION DOCUMENTATION (APIFactoryService):
  *

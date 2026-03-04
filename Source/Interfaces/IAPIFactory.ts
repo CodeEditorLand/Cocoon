@@ -4,7 +4,7 @@
  * Interface for VS Code API factory.
  * Constructs complete VS Code API surface with extension-specific scoping and security.
  *
- * @future TODO: Add cross-Element integration methods for Air/Echo/Sky services
+ * FUTURE: Cross-Element integration - add methods for Air/Echo/Sky when those Elements are ready
  */
 
 import * as Effect from "effect";

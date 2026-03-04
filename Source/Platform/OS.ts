@@ -19,16 +19,16 @@
  * - **Output**: References VSCode platform code patterns from Dependency/Microsoft/Dependency/Editor/src/vs/base/common/platform.ts
  *
  * **TODOs:**
- * - TODO: Implement Windows-specific path normalization (UNC paths, drive letters)
- * - TODO: Add Windows registry detection for system information
- * - TODO: Implement macOS version detection (Catalina, Big Sur, Monterey, Sonoma)
- * - TODO: Add Linux distribution detection (Ubuntu, Fedora, Debian, Arch, etc.)
- * - TODO: Implement WSL detection on Windows
- * - TODO: Add container detection (Docker, Kubernetes)
- * - TODO: Mountain: Define OSInfo DTO in Mountain for platform data transfer
- * - TODO: Wind: Create Effect-TS services for OS-specific operations
- * - TODO: Performance: Cache OS detection results for lifetime of application
- * - TODO: Security: Add OS-level security feature detection (SELinux, AppArmor, Gatekeeper)
+ * FUTURE: Windows path normalization - implement when Windows support is priority
+ * FUTURE: Windows registry - use native Windows APIs for system info
+ * FUTURE: macOS version detection - use os.release() for version parsing
+ * FUTURE: Linux dist detection - parse /etc/os-release for distribution info
+ * FUTURE: WSL detection - check /proc/sys/fs/binfmt_misc/WSLInterop
+ * FUTURE: Container detection - check for docker/containerd cgroup markers
+ * DEPENDENCY: Mountain OSInfo DTO - pending Mountain backend implementation
+ * DEPENDENCY: Wind Effect-TS services - integrate with Wind services
+ * PERFORMANCE: Use lazy initialization with cached Ref for OS detection
+ * SECURITY: Check /sys/kernel/security for SELinux/AppArmor presence
  */
 
 import { Effect, Option } from "effect";

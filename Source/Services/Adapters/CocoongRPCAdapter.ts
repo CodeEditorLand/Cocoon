@@ -39,7 +39,8 @@ export class CocoongRPCAdapter implements IMessagePassingProtocol {
             if (message.type === 'request' || message.type === 'call') {
                 this.forwardRequestToMountain(message);
             } else if (message.type === 'response') {
-                 // TODO: Handle responses if Mountain sends requests TO Cocoon
+                 // FUTURE: Handle responses when Mountain initiates requests to Cocoon
+                 // Currently, Cocoon only sends requests to Mountain, not the reverse
                  console.log("[CocoongRPCAdapter] Dropping outbound response (not implemented):", message);
             }
 

@@ -13,11 +13,11 @@
  *
  * ## TODOs
  *
- * - Windows: Job Objects and AppContainer for process isolation
- * - Linux: seccomp filters for system call restriction
- * - macOS: Sandbox enforcement and entitlements
- * - Security policy synchronization with Mountain
- * - Telemetry integration for security events
+ * FUTURE: Windows job objects - use win32 JobObject API
+ * FUTURE: Linux seccomp - use libseccomp for syscall filtering
+ * FUTURE: macOS sandbox - use OS Sandbox Entitlements
+ * DEPENDENCY: Mountain policy sync - pending Mountain backend
+ * FUTURE: Security telemetry - integrate with SecurityService
  */
 
 // --- Patcher Module ---

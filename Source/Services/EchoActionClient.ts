@@ -422,7 +422,8 @@ export class CocoonEchoClient {
 
 		this.heartbeatIntervalId = setInterval(() => {
 			this.lastHeartbeat = new Date();
-			// TODO: Send actual heartbeat EchoAction
+			// DEPENDENCY: Echo heartbeat action - needs Echo backend implementation
+			// Current: log heartbeat for debugging
 			this.logger.debug('Heartbeat sent');
 			this.metrics.increment('echo_client.heartbeat');
 		}, intervalMs);

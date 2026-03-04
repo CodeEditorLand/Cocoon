@@ -16,10 +16,10 @@
  * Based on VS Code's extension API construction patterns.
  * Specification: IMPLEMENTATION-SPECIFICATION.md (API Factory)
  *
- * @future TODO: Integrate with Mountain API discovery (pending Mountain client from Agent 1)
- * @future TODO: Implement Webview panel API with full security sandboxing
- * @future TODO: Add cross-Element integration patterns for Air/Echo/Sky services
- * @future TODO: Implement API telemetry and usage analytics
+ * FUTURE: Mountain API discovery - integrate with MountainClientService
+ * FUTURE: Webview panel API - implement secure webview panel factory
+ * FUTURE: Cross-Element integration - add patterns for Air/Echo/Sky
+ * PERFORMANCE: API telemetry - track API usage with PerformanceMonitoringService
  */
 
 import { Effect, Layer } from "effect";

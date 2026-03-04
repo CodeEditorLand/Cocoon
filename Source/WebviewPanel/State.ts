@@ -37,21 +37,21 @@
  * - State versioning for future compatibility
  *
  * TODOs (State Migration - LOW):
- * - Add state migration system for schema changes
- * - Add backward compatibility for older state versions
- * - Add state upgrade/downgrade handlers
+ * FUTURE: Migration system - implement migrateState() for schema changes
+ * FUTURE: Backward compatibility - handle v1 state in v2 parser
+ * FUTURE: Upgrade/downgrade - support state version conversion
  *
  * TODOs (State Compression - LOW):
- * - Add state compression for large payloads
- * - Add selective state restoration (partial load)
- * - Add lazy state loading for performance
+ * FUTURE: Compression - use zlib for large panel states
+ * FUTURE: Partial load - restore only visible portion of state
+ * FUTURE: Lazy loading - defer heavy state until needed
  *
  * TODOs (State Security - LOW):
- * - Add state encryption for sensitive panel content
- * - Add state validation signatures
- * - Add state tampering detection
+ * FUTURE: Encryption - encrypt sensitive panel content
+ * FUTURE: Signatures - add HMAC for state validation
+ * FUTURE: Tamper detection - verify state before restoration
  *
- * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
+ * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
 import { Effect } from "effect";

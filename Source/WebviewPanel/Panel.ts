@@ -37,23 +37,23 @@
  * - WebviewImplementation handles embedding webview instance
  *
  * TODOs (Webview Debugging - LOW):
- * - Add DevTools integration for debugging panel content
- * - Add console capture from Webview context
- * - Add performance monitoring (render times, memory usage)
- * - Add Webview inspector for DOM examination
+ * FUTURE: DevTools - enable via webview.options.enableDevTools
+ * FUTURE: Console capture - intercept via postMessage events
+ * FUTURE: Performance monitoring - use performance.now() for timing
+ * FUTURE: Inspector - create WebviewInspectorTreeProvider
  *
  * TODOs (Performance Monitoring - LOW):
- * - Track initial panel creation time
- * - Track content rendering performance
- * - Monitor memory usage for each panel
- * - Track message round-trip latency
+ * PERFORMANCE: Creation time - track panelOptions.preserveFocus
+ * PERFORMANCE: Render time - measure document.onload timing
+ * PERFORMANCE: Memory - use performance.memory if available
+ * PERFORMANCE: Latency - track message send/receive delta
  *
  * TODOs (Webview Permissions - LOW):
- * - Implement permission request system for Webview
- * - Permission dialogs for sensitive operations
- * - Permission persistence across sessions
+ * FUTURE: Permission system - implement PermissionManager
+ * FUTURE: Permission dialogs - showQuickPick for user consent
+ * FUTURE: Persistence - store in ExtensionContext.globalState
  *
- * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
+ * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";

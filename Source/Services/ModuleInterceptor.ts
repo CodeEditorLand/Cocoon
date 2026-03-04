@@ -16,9 +16,9 @@
  * Based on VS Code's extension host module interception pattern.
  * Specification: ARCHITECTURE-SPECIFICATION.md (Module Interceptor)
  *
- * @future TODO: Integrate with Mountain for module validation whitelist
- * @future TODO: Implement module telemetry collection for security analytics
- * @future TODO: Add module pre-loading optimization for performance
+ * FUTURE: Mountain whitelist - sync allowed modules via MountainClientService
+ * PERFORMANCE: Module telemetry - collect metrics for SecurityService analysis
+ * PERFORMANCE: Pre-loading - implement preloadModules() for common dependencies
  */
 
 import * as acorn from "acorn";

@@ -648,7 +648,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						?.Folders;
 				},
 				get isTrusted() {
-					// TODO: Implement trust flag from Mountain
+					// DEPENDENCY: Mountain trust status - default to true until Mountain provides trust state
 					return true;
 				},
 				get activeTextEditor() {

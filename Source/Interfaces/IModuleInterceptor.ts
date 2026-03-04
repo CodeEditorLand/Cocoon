@@ -4,7 +4,7 @@
  * Interface for advanced module interception service.
  * Provides security sandboxing and module resolution for extensions.
  *
- * @future TODO: Add module pre-loading optimization methods
+ * FUTURE: Module pre-loading - add preloadModules() for optimization
  */
 
 import * as Effect from "effect";

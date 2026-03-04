@@ -31,14 +31,14 @@
  *
  * ## TODOs
  *
- * - **TBD**: Windows AppContainer integration for process isolation
- * - **TBD**: Linux cgroups resource enforcement
- * - **TBD**: macOS sandbox profiles and entitlements
- * - **TBD**: Security policy versioning and migration
- * - **TBD**: Policy violation telemetry and alerting
- * - **TBD**: Context-aware policies (trusted vs untrusted extensions)
- * - **TBD**: Dynamic policy updates from Mountain
- * - **TBD**: Fine-grained file system ACLs (read-only, read-write)
+ * FUTURE: Windows AppContainer - use Windows.Security
+ * FUTURE: Linux cgroups - use cgroup v2 API
+ * FUTURE: macOS sandbox - use sandbox.h framework
+ * FUTURE: Policy versioning - implement policy migration
+ * FUTURE: Violation telemetry - integrate with SecurityService
+ * FUTURE: Context-aware - trust levels per extension
+ * DEPENDENCY: Dynamic policies - pending Mountain backend
+ * FUTURE: File ACLs - implement read-only/read-write modes
  */
 
 import * as FileSystem from "node:fs";

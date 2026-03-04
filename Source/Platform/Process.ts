@@ -21,17 +21,17 @@
  * - **Output**: References Node.js child_process patterns and VSCode process handling
  *
  * **TODOs:**
- * - TODO: Implement process pool management for resource efficiency
- * - TODO: Add process tree visualization and dependency tracking
- * - TODO: Implement Windows-specific process handling (job objects, process groups)
- * - TODO: Add macOS-specific process monitoring (Launch Services integration)
- * - TODO: Implement Linux process namespace and cgroup support
- * - TODO: Mountain: Define ProcessInfo, ProcessConfig DTOs for backend
- * - TODO: Wind: Create Effect-TS Process service with streaming support
- * - TODO: Security: Add process sandboxing and privilege dropping
- * - TODO: Security: Implement process whitelist/blacklist for execution
- * - TODO: Performance: Add process metrics collection (CPU, memory, I/O)
- * - TODO: Logging: Capture and buffer process output with structured logging
+ * FUTURE: Process pool - implement worker thread pool for frequent spawns
+ * FUTURE: Process tree - track parent-child relationships with pid mapping
+ * FUTURE: Windows job objects - use win32 api for process group management
+ * FUTURE: macOS Launch Services - use NSRunningApplication for monitoring
+ * FUTURE: Linux namespaces - use /proc/[pid]/ns for namespace detection
+ * DEPENDENCY: Mountain ProcessInfo/ProcessConfig DTOs - pending backend
+ * DEPENDENCY: Wind Effect-TS Process service - integrate with Wind
+ * SECURITY: Sandboxing - use chroot, seccomp, or sandbox-js
+ * SECURITY: Whitelist - validate against allowed executables list
+ * PERFORMANCE: Metrics - use pidusage or native os module for stats
+ * LOGGING: Buffer output - use RingBuffer for process stdout/stderr
  */
 
 import { Effect, Option } from "effect";

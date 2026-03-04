@@ -15,9 +15,9 @@
  * Implementation: Configuration synchronization with Mountain
  * Validation: Test with configuration updates across scopes
  *
- * @future TODO: Implement incremental event broadcasting for large configuration changes
- * @future TODO: Add channel-specific rate limiting for configuration updates
- * @future TODO: Implement batched configuration operations for performance
+ * FUTURE: Incremental broadcasting - send only changed keys, not full config
+ * PERFORMANCE: Rate limiting - use token bucket for config update bursts
+ * PERFORMANCE: Batching - collect multiple changes and send in batch
  */
 
 import { CancellationToken } from "@codeeditorland/output/vscode-dts/vscode";
