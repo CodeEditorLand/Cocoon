@@ -60,7 +60,9 @@ export class Configuration implements IConfigurationService {
 	 * Initialize the configuration service by fetching from Mountain
 	 */
 	async initialize(): Promise<void> {
-		console.log("[ConfigurationService] Loading initial configuration from Spine...");
+		console.log(
+			"[ConfigurationService] Loading initial configuration from Spine...",
+		);
 
 		try {
 			// Fetch full configuration from Mountain
@@ -70,7 +72,7 @@ export class Configuration implements IConfigurationService {
 				{},
 			);
 
-            // Initialize with loaded configuration
+			// Initialize with loaded configuration
 			// Expecting configData to match the structure { application: {...}, workspace: {...}, profile: {...} }
 			if (configData?.application) {
 				this.configuration.set(
@@ -91,14 +93,16 @@ export class Configuration implements IConfigurationService {
 				);
 			}
 
-			console.log("[ConfigurationService] Configuration loaded from Spine", configData);
-
+			console.log(
+				"[ConfigurationService] Configuration loaded from Spine",
+				configData,
+			);
 		} catch (error) {
 			console.error(
 				"[ConfigurationService] Failed to load initial configuration from Spine:",
 				error,
 			);
-            // Initialize with default configuration on failure
+			// Initialize with default configuration on failure
 			this.configuration.set(ConfigurationScope.APPLICATION, {
 				_version: 1,
 				_timestamp: Date.now(),
@@ -175,15 +179,15 @@ export class Configuration implements IConfigurationService {
 
 			// Save to Mountain using Spine
 			try {
-                // Determine integer scope for Spine protocol
-                let spineScope = 0;
-                if (scope === ConfigurationScope.WORKSPACE) spineScope = 1;
-                if (scope === ConfigurationScope.PROFILE) spineScope = 2;
+				// Determine integer scope for Spine protocol
+				let spineScope = 0;
+				if (scope === ConfigurationScope.WORKSPACE) spineScope = 1;
+				if (scope === ConfigurationScope.PROFILE) spineScope = 2;
 
 				await this.mountainClient.sendRequest("config.update", {
 					key,
-                    value,
-                    scope: spineScope
+					value,
+					scope: spineScope,
 				});
 				console.log(
 					`[ConfigurationService] Configuration updated: ${key} = ${value}`,
@@ -481,15 +485,15 @@ export class Configuration implements IConfigurationService {
 				scopeConfig._version = (scopeConfig._version || 0) + 1;
 
 				// Retry saving via Spine
-                let spineScope = 0;
-                if (scope === ConfigurationScope.WORKSPACE) spineScope = 1;
-                if (scope === ConfigurationScope.PROFILE) spineScope = 2;
+				let spineScope = 0;
+				if (scope === ConfigurationScope.WORKSPACE) spineScope = 1;
+				if (scope === ConfigurationScope.PROFILE) spineScope = 2;
 
 				await this.mountainClient.sendRequest("config.update", {
-                    key,
-                    value,
-                    scope: spineScope
-                });
+					key,
+					value,
+					scope: spineScope,
+				});
 
 				console.log(
 					"[ConfigurationService] Configuration saved successfully after retry",
@@ -594,9 +598,12 @@ export class Configuration implements IConfigurationService {
 			const listeners = this.listeners.get(eventKey);
 
 			// Also notify global listeners
-            const globalListeners = this.listeners.get("*");
+			const globalListeners = this.listeners.get("*");
 
-            const allListeners = [...(listeners || []), ...(globalListeners || [])];
+			const allListeners = [
+				...(listeners || []),
+				...(globalListeners || []),
+			];
 
 			if (allListeners.length > 0) {
 				for (const listener of allListeners) {
@@ -620,14 +627,14 @@ export class Configuration implements IConfigurationService {
 export const ConfigurationLayer = Layer.effect(
 	IConfigurationService,
 	Effect.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        const configService = new Configuration(mountainClient);
-        
-        // Auto-initialize
-        yield* Effect.promise(() => configService.initialize());
-        
-        return configService;
-    }),
+		const mountainClient = yield* IMountainClientService;
+		const configService = new Configuration(mountainClient);
+
+		// Auto-initialize
+		yield* Effect.promise(() => configService.initialize());
+
+		return configService;
+	}),
 );
 
 /**

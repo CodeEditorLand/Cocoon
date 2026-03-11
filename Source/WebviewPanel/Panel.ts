@@ -62,8 +62,8 @@ import type {
 	Event,
 	Uri,
 	ViewColumn,
-	Webview,
 	WebviewPanel as VSCodeWebviewPanel,
+	Webview,
 	WebviewPanelOnDidChangeViewStateEvent,
 	WebviewPanelOptions,
 } from "vscode";
@@ -167,13 +167,13 @@ export class Panel implements VSCodeWebviewPanel {
 	 */
 	static Create(Options: PanelOptions): Effect.Effect<Panel, never> {
 		return Effect.sync(() => {
-			const ViewColumnValue =
-				Options.ShowOptions.ViewColumn ?? 1;
+			const ViewColumnValue = Options.ShowOptions.ViewColumn ?? 1;
 
 			// Create a minimal IPC service mock for initialization
 			// In production, this would be injected via dependency injection
 			const mockIPC: any = {
-				SendNotification: (channel: string, params: unknown[]) => Effect.void,
+				SendNotification: (channel: string, params: unknown[]) =>
+					Effect.void,
 			};
 
 			const PanelInstance = new Panel(
@@ -207,7 +207,10 @@ export class Panel implements VSCodeWebviewPanel {
 		if (this.IsDisposed || this._title === Value) return;
 		this._title = Value;
 		Effect.runFork(
-			this.ipcService.SendNotification("$setWebviewTitle", [this.handle, Value]),
+			this.ipcService.SendNotification("$setWebviewTitle", [
+				this.handle,
+				Value,
+			]),
 		);
 	}
 	get iconPath(): Uri | { readonly light: Uri; readonly dark: Uri } {

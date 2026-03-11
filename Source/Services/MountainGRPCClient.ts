@@ -15,7 +15,8 @@
  * Low-level Client: /Element/Cocoon/Source/Services/MountainClientService.ts
  */
 
-import { Effect, Context, Layer } from "effect";
+import { Context, Effect, Layer } from "effect";
+
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
 import { Logger } from "./Logger.js";
 
@@ -114,7 +115,9 @@ export interface MountainGRPCClientService {
 	 * @param options - Status bar item configuration
 	 * @returns Effect<string, Error> - Returns the item ID
 	 */
-	createStatusBarItem(options: StatusBarItemOptions): Effect.Effect<string, Error>;
+	createStatusBarItem(
+		options: StatusBarItemOptions,
+	): Effect.Effect<string, Error>;
 
 	/**
 	 * Set the text of a status bar item
@@ -184,10 +187,7 @@ export interface MountainGRPCClientService {
 	 * @param viewColumn - View column to open in (optional)
 	 * @returns Effect<void, Error>
 	 */
-	openDocument(
-		uri: string,
-		viewColumn?: number,
-	): Effect.Effect<void, Error>;
+	openDocument(uri: string, viewColumn?: number): Effect.Effect<void, Error>;
 
 	/**
 	 * Save all open documents
@@ -301,9 +301,8 @@ export interface MountainGRPCClientService {
 /**
  * Service Tag for MountainGRPCClientService
  */
-export const MountainGRPCClientService = Context.GenericTag<
-	MountainGRPCClientService
->("Service/MountainGRPCClient");
+export const MountainGRPCClientService =
+	Context.GenericTag<MountainGRPCClientService>("Service/MountainGRPCClient");
 
 /**
  * Live implementation of MountainGRPCClientService
@@ -501,10 +500,12 @@ const MountainGRPCClientLive = Layer.effect(
 									? options.viewColumn - 2
 									: undefined,
 								preserveFocus: options.preserveFocus ?? false,
-								enableFindWidget: options.enableFindWidget ?? true,
+								enableFindWidget:
+									options.enableFindWidget ?? true,
 								retainContextWhenHidden:
 									options.retainContextWhenHidden ?? false,
-								localResourceRoots: options.localResourceRoots ?? [],
+								localResourceRoots:
+									options.localResourceRoots ?? [],
 							}),
 						catch: (error) =>
 							new Error(
@@ -558,7 +559,9 @@ const MountainGRPCClientLive = Layer.effect(
 								"onDidReceiveMessage",
 								{
 									handle,
-									stringMessage: isString ? message : undefined,
+									stringMessage: isString
+										? message
+										: undefined,
 									bytesMessage: isString
 										? undefined
 										: message,
@@ -628,7 +631,9 @@ const MountainGRPCClientLive = Layer.effect(
 						try: () =>
 							mountainClient.sendRequest("openDocument", {
 								uri: { value: uri },
-								viewColumn: viewColumn ? viewColumn - 2 : undefined,
+								viewColumn: viewColumn
+									? viewColumn - 2
+									: undefined,
 							}),
 						catch: (error) =>
 							new Error(
@@ -685,7 +690,8 @@ const MountainGRPCClientLive = Layer.effect(
 									range: {
 										start: {
 											line: edit.range.start.line,
-											character: edit.range.start.character,
+											character:
+												edit.range.start.character,
 										},
 										end: {
 											line: edit.range.end.line,
@@ -787,9 +793,12 @@ const MountainGRPCClientLive = Layer.effect(
 
 					yield* Effect.tryPromise({
 						try: () =>
-							mountainClient.sendNotification("unregisterCommand", {
-								commandId,
-							}),
+							mountainClient.sendNotification(
+								"unregisterCommand",
+								{
+									commandId,
+								},
+							),
 						catch: (error) =>
 							new Error(
 								`Failed to unregister command: ${error instanceof Error ? error.message : String(error)}`,
@@ -912,9 +921,7 @@ const MountainGRPCClientLive = Layer.effect(
 
 			stat: (uri) =>
 				Effect.gen(function* () {
-					yield* logger.debug(
-						`[MountainGRPCClient] stat: ${uri}`,
-					);
+					yield* logger.debug(`[MountainGRPCClient] stat: ${uri}`);
 
 					const result = yield* Effect.tryPromise({
 						try: () =>
@@ -938,9 +945,7 @@ const MountainGRPCClientLive = Layer.effect(
 
 			readdir: (uri) =>
 				Effect.gen(function* () {
-					yield* logger.debug(
-						`[MountainGRPCClient] readdir: ${uri}`,
-					);
+					yield* logger.debug(`[MountainGRPCClient] readdir: ${uri}`);
 
 					const result = yield* Effect.tryPromise({
 						try: () =>
@@ -1088,9 +1093,7 @@ const MountainGRPCClientMock = Layer.effect(
 
 			saveAll: () =>
 				Effect.gen(function* () {
-					yield* logger.debug(
-						"[MountainGRPCClientMock] saveAll",
-					);
+					yield* logger.debug("[MountainGRPCClientMock] saveAll");
 					return;
 				}),
 

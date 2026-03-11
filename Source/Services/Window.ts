@@ -78,7 +78,6 @@ import * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
-import { MountainGRPCClientService } from "./MountainGRPCClient.js";
 // Import type converters
 import { ToDTO as OpenDialogOptionToDTO } from "../TypeConverter/Dialog/OpenDialogOption.js";
 import { ToDTO as SaveDialogOptionToDTO } from "../TypeConverter/Dialog/SaveDialogOption.js";
@@ -92,6 +91,7 @@ import { ConvertPanelOptionToDTO } from "../TypeConverter/Webview/ConvertPanelOp
 import { CreateEventStream } from "../Utility/EventStream.js";
 // Import webview implementation
 import { WebviewPanelImplementation } from "../WebviewPanel/WebviewPanelImplementation.js";
+import { MountainGRPCClientService } from "./MountainGRPCClient.js";
 
 /**
  * @interface Logger
@@ -340,7 +340,9 @@ export class WindowService extends Effect.Service<WindowService>()(
 					// ARCHITECTURE-PATTERN: Mountain implements mainThreadWindow.$showTextDocument
 					const mountainClient = yield* MountainGRPCClientService;
 					yield* mountainClient.showTextDocument(Uri.toString(), {
-						viewColumn: ViewColumnDTO ? ViewColumnDTO + 2 : undefined, // Convert ViewColumn enum
+						viewColumn: ViewColumnDTO
+							? ViewColumnDTO + 2
+							: undefined, // Convert ViewColumn enum
 						preserveFocus: PreserveFocusValue === true,
 						preview: Preview === true,
 						selection: Selection
@@ -351,7 +353,7 @@ export class WindowService extends Effect.Service<WindowService>()(
 							: undefined,
 					});
 					const EditorId = "editor-" + Uri.toString().slice(-8);
-					
+
 					yield* Logger.Debug(
 						`[WindowService] Showed text document with ID: ${EditorId}`,
 					);
@@ -400,11 +402,11 @@ export class WindowService extends Effect.Service<WindowService>()(
 					// Delegates to Mountain's native dialog implementation via gRPC
 					// ARCHITECTURE-PATTERN: Mountain implements mainThreadWindow.$showMessage
 					const mountainClient = yield* MountainGRPCClientService;
-					
+
 					// For now, show the message without items support
 					// TODO: Add items support in Mountain gRPC protocol
 					yield* mountainClient.showInformationMessage(Message);
-					
+
 					// Return undefined for information messages (no selection)
 					return undefined;
 				});
@@ -436,11 +438,11 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 					// Delegates to Mountain's native dialog implementation via gRPC
 					const mountainClient = yield* MountainGRPCClientService;
-					
+
 					// For now, show the message without items support
 					// TODO: Add items support in Mountain gRPC protocol
 					yield* mountainClient.showWarningMessage(Message);
-					
+
 					return undefined;
 				});
 
@@ -471,11 +473,11 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 					// Delegates to Mountain's native dialog implementation via gRPC
 					const mountainClient = yield* MountainGRPCClientService;
-					
+
 					// For now, show the message without items support
 					// TODO: Add items support in Mountain gRPC protocol
 					yield* mountainClient.showErrorMessage(Message);
-					
+
 					return undefined;
 				});
 
@@ -524,14 +526,14 @@ export class WindowService extends Effect.Service<WindowService>()(
 						try: async () => {
 							// Make gRPC call to Mountain's native quick pick implementation
 							const response = await MountainClient.sendRequest(
-								'UserInterface.ShowQuickPick',
+								"UserInterface.ShowQuickPick",
 								[RequestPayload.items, RequestPayload.options],
 							);
-							
+
 							if (response === null || response === undefined) {
 								return undefined;
 							}
-							
+
 							// Response is an array of selected item values
 							const selectedItems = response as string[];
 							return selectedItems;
@@ -554,12 +556,12 @@ export class WindowService extends Effect.Service<WindowService>()(
 					}
 
 					const selectedValue = SelectedItems[0];
-					
+
 					// If items are strings, return the selected string
-					if (typeof Items[0] === 'string') {
+					if (typeof Items[0] === "string") {
 						return selectedValue as T;
 					}
-					
+
 					// If items are QuickPickItem[], find the matching item by label
 					return (Items as VSCode.QuickPickItem[]).find(
 						(item) => item.label === selectedValue,
@@ -604,15 +606,15 @@ export class WindowService extends Effect.Service<WindowService>()(
 						try: async () => {
 							// Make gRPC call to Mountain's native input box implementation
 							const response = await MountainClient.sendRequest(
-								'UserInterface.ShowInputBox',
+								"UserInterface.ShowInputBox",
 								[RequestPayload],
 							);
-							
+
 							// Return the user input or undefined if cancelled
 							if (response === null || response === undefined) {
 								return undefined;
 							}
-							
+
 							return response as string;
 						},
 						catch: (error) => {
@@ -654,17 +656,19 @@ export class WindowService extends Effect.Service<WindowService>()(
 						try: async () => {
 							// Make gRPC call to Mountain's native open dialog implementation
 							const response = await MountainClient.sendRequest(
-								'UserInterface.ShowOpenDialog',
+								"UserInterface.ShowOpenDialog",
 								[OptionsDTO],
 							);
-							
+
 							if (response === null || response === undefined) {
 								return undefined;
 							}
-							
+
 							// Response is an array of file paths, convert to URIs
 							const filePaths = response as string[];
-							return filePaths.map((path) => VSCode.Uri.file(path));
+							return filePaths.map((path) =>
+								VSCode.Uri.file(path),
+							);
 						},
 						catch: (error) => {
 							yield *
@@ -705,14 +709,14 @@ export class WindowService extends Effect.Service<WindowService>()(
 						try: async () => {
 							// Make gRPC call to Mountain's native save dialog implementation
 							const response = await MountainClient.sendRequest(
-								'UserInterface.ShowSaveDialog',
+								"UserInterface.ShowSaveDialog",
 								[OptionsDTO],
 							);
-							
+
 							if (response === null || response === undefined) {
 								return undefined;
 							}
-							
+
 							// Response is a file path string, convert to URI
 							const filePath = response as string;
 							return VSCode.Uri.file(filePath);
@@ -1209,8 +1213,11 @@ export class WindowService extends Effect.Service<WindowService>()(
 						viewColumn: ViewColumn ? ViewColumn - 2 : undefined,
 						preserveFocus: PreserveFocus ?? true,
 						enableFindWidget: Options?.enableFindWidget ?? true,
-						retainContextWhenHidden: Options?.retainContextWhenHidden ?? false,
-						localResourceRoots: Options?.localResourceRoots?.map((u) => u.toString()),
+						retainContextWhenHidden:
+							Options?.retainContextWhenHidden ?? false,
+						localResourceRoots: Options?.localResourceRoots?.map(
+							(u) => u.toString(),
+						),
 					});
 
 					// Need to get extension description - for now use a placeholder

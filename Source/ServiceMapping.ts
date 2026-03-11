@@ -9,49 +9,49 @@
 import { Layer } from "effect";
 
 // ============================================================================
+// EFFECT-TS SERVICE LAYERS
+// ============================================================================
+
+import {
+	BootstrapLive,
+	ExtensionLive,
+	HealthLive,
+	ModuleInterceptorLive,
+	MountainClientLive,
+	RPCServerLive,
+	TelemetryLive,
+} from "./Effect/index.js";
+// ============================================================================
 // OLD-STYLE SERVICE INTERFACES
 // ============================================================================
 
 import { IConfigurationService } from "./Interfaces/IConfigurationService.js";
+import { IErrorHandlingService } from "./Interfaces/IErrorHandlingService.js";
 import { IExtensionHostService } from "./Interfaces/IExtensionHostService.js";
 import { IIPCService } from "./Interfaces/IIPCService.js";
 import { IModuleInterceptorService } from "./Interfaces/IModuleInterceptorService.js";
 import { IMountainClientService } from "./Interfaces/IMountainClientService.js";
-import { ITerminalService } from "./Interfaces/ITerminalService.js";
-import { ISecurityService } from "./Interfaces/ISecurityService.js";
 import { IPerformanceMonitoringService } from "./Interfaces/IPerformanceMonitoringService.js";
-import { IErrorHandlingService } from "./Interfaces/IErrorHandlingService.js";
-import { IAPIFactoryService } from "./Services/APIFactoryService.js";
-
+import { ISecurityService } from "./Interfaces/ISecurityService.js";
+import { ITerminalService } from "./Interfaces/ITerminalService.js";
+import {
+	APIFactoryLayer,
+	IAPIFactoryService,
+} from "./Services/APIFactoryService.js";
 // ============================================================================
 // OLD-STYLE SERVICE LAYERS
 // ============================================================================
 
 import { ConfigurationLayer } from "./Services/Configuration.js";
+import { ErrorHandlingServiceLive } from "./Services/ErrorHandlingService.js";
 import { ExtensionHostLayer } from "./Services/ExtensionHostService.js";
 import { IPCServiceLayer } from "./Services/IPCService.js";
 import { ModuleInterceptorServiceLayer } from "./Services/ModuleInterceptorService.js";
 import { MountainClientServiceLayer } from "./Services/MountainClientService.js";
 import { MountainGRPCClientLayer } from "./Services/MountainGRPCClient.js";
-import { APIFactoryLayer } from "./Services/APIFactoryService.js";
-import { TerminalServiceLayer } from "./Services/TerminalService.js";
-import { SecurityServiceLive } from "./Services/SecurityService.js";
 import { PerformanceMonitoringServiceLive } from "./Services/PerformanceMonitoringService.js";
-import { ErrorHandlingServiceLive } from "./Services/ErrorHandlingService.js";
-
-// ============================================================================
-// EFFECT-TS SERVICE LAYERS
-// ============================================================================
-
-import {
-	TelemetryLive,
-	HealthLive,
-	MountainClientLive,
-	ModuleInterceptorLive,
-	ExtensionLive,
-	RPCServerLive,
-	BootstrapLive,
-} from "./Effect/index.js";
+import { SecurityServiceLive } from "./Services/SecurityService.js";
+import { TerminalServiceLayer } from "./Services/TerminalService.js";
 
 // ============================================================================
 // SERVICE MAPPING - OLD STYLE SERVICES
@@ -92,20 +92,22 @@ export const OldStyleServices = {
 			IPCServiceLayer,
 			SecurityServiceLive,
 			PerformanceMonitoringServiceLive,
-			ErrorHandlingServiceLive
+			ErrorHandlingServiceLive,
 		);
 
 		// Core Capabilities (Depend on Base)
 		const Config = ConfigurationLayer.pipe(Layer.provide(Base));
 		const Terminal = TerminalServiceLayer.pipe(Layer.provide(Base));
-		const ModuleInt = ModuleInterceptorServiceLayer.pipe(Layer.provide(Base));
+		const ModuleInt = ModuleInterceptorServiceLayer.pipe(
+			Layer.provide(Base),
+		);
 
 		// API Factory (Depends on Config, Terminal, ModuleInt)
 		const API = APIFactoryLayer.pipe(
 			Layer.provide(Base),
 			Layer.provide(Config),
 			Layer.provide(Terminal),
-			Layer.provide(ModuleInt)
+			Layer.provide(ModuleInt),
 		);
 
 		// Extension Host (Depends on API, Config, ModuleInt)
@@ -113,17 +115,10 @@ export const OldStyleServices = {
 			Layer.provide(Base),
 			Layer.provide(Config),
 			Layer.provide(API),
-			Layer.provide(ModuleInt)
+			Layer.provide(ModuleInt),
 		);
 
-		return Layer.mergeAll(
-			Base,
-			Config,
-			Terminal,
-			API,
-			ExtHost,
-			ModuleInt
-		);
+		return Layer.mergeAll(Base, Config, Terminal, API, ExtHost, ModuleInt);
 	},
 };
 
@@ -140,7 +135,7 @@ export const OldStyleServices = {
 export const EffectServices = {
 	/**
 	 * Compose the main Effect-TS application layer
-	 * 
+	 *
 	 * Layer dependencies:
 	 * - Telemetry (base, no dependencies)
 	 * - Health (depends on Telemetry)
@@ -156,8 +151,12 @@ export const EffectServices = {
 
 		// Layer 1: Services that depend only on Telemetry
 		const Health = HealthLive.pipe(Layer.provide(Telemetry));
-		const MountainClient = MountainClientLive.pipe(Layer.provide(Telemetry));
-		const ModuleInterceptor = ModuleInterceptorLive.pipe(Layer.provide(Telemetry));
+		const MountainClient = MountainClientLive.pipe(
+			Layer.provide(Telemetry),
+		);
+		const ModuleInterceptor = ModuleInterceptorLive.pipe(
+			Layer.provide(Telemetry),
+		);
 		const Extension = ExtensionLive.pipe(Layer.provide(Telemetry));
 		const RPCServer = RPCServerLive.pipe(Layer.provide(Telemetry));
 
@@ -168,7 +167,7 @@ export const EffectServices = {
 			Layer.provide(MountainClient),
 			Layer.provide(ModuleInterceptor),
 			Layer.provide(Extension),
-			Layer.provide(RPCServer)
+			Layer.provide(RPCServer),
 		);
 
 		// Merge all layers into a single application layer
@@ -179,7 +178,7 @@ export const EffectServices = {
 			ModuleInterceptor,
 			Extension,
 			RPCServer,
-			Bootstrap
+			Bootstrap,
 		);
 	},
 
@@ -207,8 +206,7 @@ export class ServiceMapping {
 	/**
 	 * Validate dependencies
 	 */
-	static validateDependencies = () =>
-		OldStyleServices.validateDependencies();
+	static validateDependencies = () => OldStyleServices.validateDependencies();
 
 	/**
 	 * Compose application layer

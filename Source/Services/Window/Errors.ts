@@ -75,7 +75,9 @@ export class StatusBarError extends Error {
 	readonly cause: unknown;
 
 	constructor(itemId: string, operation: string, cause: unknown) {
-		super(`StatusBar '${itemId}' operation '${operation}' failed: ${String(cause)}`);
+		super(
+			`StatusBar '${itemId}' operation '${operation}' failed: ${String(cause)}`,
+		);
 		this.itemId = itemId;
 		this.operation = operation;
 		this.cause = cause;
@@ -97,7 +99,9 @@ export class OutputChannelError extends Error {
 	readonly cause: unknown;
 
 	constructor(channelName: string, operation: string, cause: unknown) {
-		super(`OutputChannel '${channelName}' operation '${operation}' failed: ${String(cause)}`);
+		super(
+			`OutputChannel '${channelName}' operation '${operation}' failed: ${String(cause)}`,
+		);
 		this.channelName = channelName;
 		this.operation = operation;
 		this.cause = cause;
@@ -119,7 +123,9 @@ export class WebviewPanelError extends Error {
 	readonly cause: unknown;
 
 	constructor(viewType: string, operation: string, cause: unknown) {
-		super(`WebviewPanel '${viewType}' operation '${operation}' failed: ${String(cause)}`);
+		super(
+			`WebviewPanel '${viewType}' operation '${operation}' failed: ${String(cause)}`,
+		);
 		this.viewType = viewType;
 		this.operation = operation;
 		this.cause = cause;
@@ -161,7 +167,9 @@ export class TextDocumentError extends Error {
 	readonly cause: unknown;
 
 	constructor(documentUri: string, operation: string, cause: unknown) {
-		super(`TextDocument '${documentUri}' operation '${operation}' failed: ${String(cause)}`);
+		super(
+			`TextDocument '${documentUri}' operation '${operation}' failed: ${String(cause)}`,
+		);
 		this.documentUri = documentUri;
 		this.operation = operation;
 		this.cause = cause;

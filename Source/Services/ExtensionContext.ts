@@ -226,7 +226,10 @@ export class ExtensionSecretStorage {
 		// HIGH: Implement secure storage integration with Mountain
 		if (this.MountainClient) {
 			try {
-				const result = await this.MountainClient.sendRequest('getSecret', { key });
+				const result = await this.MountainClient.sendRequest(
+					"getSecret",
+					{ key },
+				);
 				return result as string | undefined;
 			} catch (error) {
 				this.Logger.Error(
@@ -252,7 +255,10 @@ export class ExtensionSecretStorage {
 		// HIGH: Implement secure storage integration with Mountain
 		if (this.MountainClient) {
 			try {
-				await this.MountainClient.sendNotification('storeSecret', { key, value });
+				await this.MountainClient.sendNotification("storeSecret", {
+					key,
+					value,
+				});
 				this.Logger.Debug(
 					`[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`,
 				);
@@ -279,7 +285,9 @@ export class ExtensionSecretStorage {
 		// HIGH: Implement secure storage integration with Mountain
 		if (this.MountainClient) {
 			try {
-				await this.MountainClient.sendNotification('deleteSecret', { key });
+				await this.MountainClient.sendNotification("deleteSecret", {
+					key,
+				});
 				this.Logger.Debug(
 					`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`,
 				);

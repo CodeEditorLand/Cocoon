@@ -3,17 +3,16 @@
  * @description
  * Main entry point for Cocoon extension host.
  * Bootstrap script that initializes all services and starts the extension host.
- * 
+ *
  * Supports both old-style service-based architecture and new Effect-TS based architecture.
  */
 
 import { NodeRuntime } from "@effect/platform-node";
 import { Effect } from "effect";
 
-import { EffectServices } from "../../ServiceMapping.js";
-
 // Effect services
 import { BootstrapTag, TelemetryTag } from "../../Effect/index.js";
+import { EffectServices } from "../../ServiceMapping.js";
 
 // ============================================================================
 // EFFECT-BASED BOOTSTRAP (NEW APPROACH)
@@ -27,7 +26,10 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 	const telemetry = yield* TelemetryTag;
 	const bootstrap = yield* BootstrapTag;
 
-	telemetry.log("info", "[CocoonMain] Starting Cocoon bootstrap with Effect-TS...");
+	telemetry.log(
+		"info",
+		"[CocoonMain] Starting Cocoon bootstrap with Effect-TS...",
+	);
 
 	// Run the Effect-TS bootstrap orchestration
 	const result = yield* bootstrap.run({ debugMode: false });
@@ -36,14 +38,20 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 		telemetry.log("error", "[CocoonMain] Bootstrap failed");
 		for (const stage of result.stages) {
 			if (!stage.success) {
-				telemetry.log("error", `[CocoonMain]   - ${stage.stageName}: ${stage.error?.message}`);
+				telemetry.log(
+					"error",
+					`[CocoonMain]   - ${stage.stageName}: ${stage.error?.message}`,
+				);
 			}
 		}
 		return yield* Effect.die(new Error("Bootstrap failed"));
 	}
 
 	telemetry.log("info", "[CocoonMain] 🟢 Bootstrap completed successfully");
-	telemetry.log("info", `[CocoonMain] Total bootstrap time: ${result.totalDuration}ms`);
+	telemetry.log(
+		"info",
+		`[CocoonMain] Total bootstrap time: ${result.totalDuration}ms`,
+	);
 
 	// TODO: Enter main event loop for extension handling
 	telemetry.log("info", "[CocoonMain] Extension host ready");
@@ -67,16 +75,25 @@ const mainEffectWithServices = bootstrapCocoonEffect.pipe(
 		Effect.gen(function* () {
 			const telemetry = yield* TelemetryTag;
 			const mappedError = mapUnknownToError(error);
-			telemetry.log("error", `[CocoonMain] Fatal error: ${mappedError.message}`);
+			telemetry.log(
+				"error",
+				`[CocoonMain] Fatal error: ${mappedError.message}`,
+			);
 			if (mappedError.stack) {
-				telemetry.log("error", `[CocoonMain] Error stack: ${mappedError.stack}`);
+				telemetry.log(
+					"error",
+					`[CocoonMain] Error stack: ${mappedError.stack}`,
+				);
 			}
 		}),
 	),
 	Effect.ensuring(
 		Effect.gen(function* () {
 			const telemetry = yield* TelemetryTag;
-			telemetry.log("info", "[CocoonMain] Cocoon extension host shutting down");
+			telemetry.log(
+				"info",
+				"[CocoonMain] Cocoon extension host shutting down",
+			);
 		}),
 	),
 );

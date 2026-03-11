@@ -6,7 +6,15 @@
  * Wraps the existing ModuleInterceptorService with Effect patterns.
  */
 
-import { Context, Effect, HashMap, Layer, Option, SubscriptionRef } from "effect";
+import {
+	Context,
+	Effect,
+	HashMap,
+	Layer,
+	Option,
+	SubscriptionRef,
+} from "effect";
+
 import { TelemetryTag } from "./Telemetry.js";
 
 // ============================================================================
@@ -56,14 +64,20 @@ export interface InterceptionStats {
 
 export class ModuleNotFoundError extends Error {
 	readonly _tag = "ModuleNotFoundError";
-	constructor(readonly moduleId: string, readonly extensionId: string) {
+	constructor(
+		readonly moduleId: string,
+		readonly extensionId: string,
+	) {
 		super(`Module not found: ${moduleId} for extension ${extensionId}`);
 	}
 }
 
 export class ModuleAccessDeniedError extends Error {
 	readonly _tag = "ModuleAccessDeniedError";
-	constructor(readonly moduleId: string, readonly reason: string) {
+	constructor(
+		readonly moduleId: string,
+		readonly reason: string,
+	) {
 		super(`Module access denied: ${moduleId} - ${reason}`);
 	}
 }
@@ -137,10 +151,9 @@ export interface ModuleInterceptorService {
 // SERVICE TAG
 // ============================================================================
 
-export class ModuleInterceptorTag extends Context.Tag("Cocoon/ModuleInterceptor")<
-	ModuleInterceptorTag,
-	ModuleInterceptorService
->() {}
+export class ModuleInterceptorTag extends Context.Tag(
+	"Cocoon/ModuleInterceptor",
+)<ModuleInterceptorTag, ModuleInterceptorService>() {}
 
 export const ModuleInterceptor = ModuleInterceptorTag;
 
@@ -150,7 +163,15 @@ export const ModuleInterceptor = ModuleInterceptorTag;
 
 const defaultSecurityPolicy = {
 	allowedModules: ["path", "url", "util", "events", "stream", "buffer"],
-	blockedModules: ["fs", "child_process", "net", "http", "https", "os", "crypto"],
+	blockedModules: [
+		"fs",
+		"child_process",
+		"net",
+		"http",
+		"https",
+		"os",
+		"crypto",
+	],
 	securityLevel: SecurityLevel.SANDBOXED,
 	maxMemoryUsage: 128 * 1024 * 1024, // 128MB
 	maxExecutionTime: 5000, // 5 seconds
@@ -185,26 +206,50 @@ export const ModuleInterceptorLive = Layer.effect(
 		// Check if module is a Node.js built-in
 		const isNodeBuiltin = (moduleId: string): boolean => {
 			const builtins = [
-				"fs", "path", "os", "net", "http", "https", "child_process",
-				"crypto", "util", "events", "stream", "buffer", "url", "querystring",
+				"fs",
+				"path",
+				"os",
+				"net",
+				"http",
+				"https",
+				"child_process",
+				"crypto",
+				"util",
+				"events",
+				"stream",
+				"buffer",
+				"url",
+				"querystring",
 			];
 			return builtins.includes(moduleId);
 		};
 
 		// Atom: Initialize
 		const initialize = Effect.gen(function* () {
-			telemetry.log("info", "[ModuleInterceptor] Initializing module interceptor service...");
+			telemetry.log(
+				"info",
+				"[ModuleInterceptor] Initializing module interceptor service...",
+			);
 			// Initialization logic would go here
 			yield* Effect.sleep("5 millis");
-			telemetry.log("info", "[ModuleInterceptor] Module interceptor service initialized");
+			telemetry.log(
+				"info",
+				"[ModuleInterceptor] Module interceptor service initialized",
+			);
 		});
 
 		// Atom: Install
 		const install = Effect.gen(function* () {
-			telemetry.log("info", "[ModuleInterceptor] Installing module interceptor...");
+			telemetry.log(
+				"info",
+				"[ModuleInterceptor] Installing module interceptor...",
+			);
 			// In production, this would patch Node.js require
 			yield* Effect.sleep("10 millis");
-			telemetry.log("info", "[ModuleInterceptor] Module interceptor installed successfully");
+			telemetry.log(
+				"info",
+				"[ModuleInterceptor] Module interceptor installed successfully",
+			);
 		});
 
 		// Atom: Intercept require
@@ -233,10 +278,13 @@ export const ModuleInterceptorLive = Layer.effect(
 					);
 				}
 
-				const policy = policyOpt._tag === "Some" ? policyOpt.value : {
-					...defaultSecurityPolicy,
-					extensionId: request.extensionId,
-				};
+				const policy =
+					policyOpt._tag === "Some"
+						? policyOpt.value
+						: {
+								...defaultSecurityPolicy,
+								extensionId: request.extensionId,
+							};
 
 				// Check blocked modules
 				if (policy.blockedModules.includes(request.moduleId)) {
@@ -261,7 +309,10 @@ export const ModuleInterceptorLive = Layer.effect(
 				}
 
 				// Check allowed modules
-				if (!policy.allowedModules.includes(request.moduleId) && !isNodeBuiltin(request.moduleId)) {
+				if (
+					!policy.allowedModules.includes(request.moduleId) &&
+					!isNodeBuiltin(request.moduleId)
+				) {
 					// For non-builtin and non-allowed modules, block
 					yield* telemetry.log(
 						"warn",
@@ -285,15 +336,19 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Check cache first
 				const cacheKey = `${request.extensionId}:${request.moduleId}`;
-				const cachedModule = HashMap.get(yield* moduleCacheRef.get, cacheKey);
+				const cachedModule = HashMap.get(
+					yield* moduleCacheRef.get,
+					cacheKey,
+				);
 
 				if (cachedModule._tag === "Some") {
 					const duration = Date.now() - startTime;
 					resolutionTimes.push(duration);
-					
+
 					// Update average
 					const allTimes = [...resolutionTimes];
-					const avgTime = allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
+					const avgTime =
+						allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
 					const statsAfter = yield* statsRef.get;
 					yield* statsRef.set({
 						...statsAfter,
@@ -325,14 +380,17 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Cache the module
 				const currentCache = yield* moduleCacheRef.get;
-				yield* moduleCacheRef.set(HashMap.set(currentCache, cacheKey, module));
+				yield* moduleCacheRef.set(
+					HashMap.set(currentCache, cacheKey, module),
+				);
 
 				const duration = Date.now() - startTime;
 				resolutionTimes.push(duration);
-				
+
 				// Update average
 				const allTimes = [...resolutionTimes];
-				const avgTime = allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
+				const avgTime =
+					allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
 				const statsAfter = yield* statsRef.get;
 				yield* statsRef.set({
 					...statsAfter,
@@ -354,7 +412,9 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Mock resolution
 				if (!modulePath) {
-					return yield* Effect.fail(new ModuleNotFoundError(modulePath, extensionId));
+					return yield* Effect.fail(
+						new ModuleNotFoundError(modulePath, extensionId),
+					);
 				}
 
 				// Return resolved path (mock)
@@ -366,7 +426,9 @@ export const ModuleInterceptorLive = Layer.effect(
 		const setSecurityPolicy = (policy: SecurityPolicy) =>
 			Effect.gen(function* () {
 				const currentPolicies = yield* policiesRef.get;
-				yield* policiesRef.set(HashMap.set(currentPolicies, policy.extensionId, policy));
+				yield* policiesRef.set(
+					HashMap.set(currentPolicies, policy.extensionId, policy),
+				);
 
 				telemetry.log(
 					"info",
@@ -381,14 +443,19 @@ export const ModuleInterceptorLive = Layer.effect(
 				const policy = HashMap.get(policies, extensionId);
 
 				if (policy._tag === "None") {
-					return yield* Effect.fail(new SecurityPolicyNotFoundError(extensionId));
+					return yield* Effect.fail(
+						new SecurityPolicyNotFoundError(extensionId),
+					);
 				}
 
 				return policy.value;
 			});
 
 		// Atom: Validate module security
-		const validateModuleSecurity = (extensionId: string, moduleId: string) =>
+		const validateModuleSecurity = (
+			extensionId: string,
+			moduleId: string,
+		) =>
 			Effect.gen(function* () {
 				const policies = yield* policiesRef.get;
 				const policyOpt = HashMap.get(policies, extensionId);
@@ -396,15 +463,19 @@ export const ModuleInterceptorLive = Layer.effect(
 				if (policyOpt._tag === "None") {
 					// Use default policy for validation
 					const policy = { ...defaultSecurityPolicy, extensionId };
-					return !policy.blockedModules.includes(moduleId) ||
+					return (
+						!policy.blockedModules.includes(moduleId) ||
 						policy.allowedModules.includes(moduleId) ||
-						isNodeBuiltin(moduleId);
+						isNodeBuiltin(moduleId)
+					);
 				}
 
 				const policy = policyOpt.value;
-				return !policy.blockedModules.includes(moduleId) ||
+				return (
+					!policy.blockedModules.includes(moduleId) ||
 					policy.allowedModules.includes(moduleId) ||
-					isNodeBuiltin(moduleId);
+					isNodeBuiltin(moduleId)
+				);
 			});
 
 		// Atom: Get statistics

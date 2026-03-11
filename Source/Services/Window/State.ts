@@ -7,8 +7,7 @@
 
 import { Effect, Ref } from "effect";
 
-import type { WindowStateConfig } from "./Types.js";
-import type { Logger } from "./Types.js";
+import type { Logger, WindowStateConfig } from "./Types.js";
 
 /**
  * Window state management service
@@ -44,7 +43,7 @@ export const WindowStateLive = Effect.gen(function* () {
 	const setState = (newState: WindowStateConfig) =>
 		Effect.gen(function* () {
 			const currentState = yield* getState;
-			
+
 			// Only log if state actually changed
 			if (
 				currentState.focused !== newState.focused ||
@@ -59,7 +58,7 @@ export const WindowStateLive = Effect.gen(function* () {
 					Effect.orElse(() => Effect.void),
 				);
 			}
-			
+
 			yield* Ref.set(stateRef, newState);
 			return newState;
 		});

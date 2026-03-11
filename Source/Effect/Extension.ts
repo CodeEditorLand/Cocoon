@@ -5,13 +5,8 @@
  * Manages extension lifecycle including activation, deactivation, and enumeration.
  */
 
-import {
-	Context,
-	Effect,
-	HashMap,
-	Layer,
-	SubscriptionRef,
-} from "effect";
+import { Context, Effect, HashMap, Layer, SubscriptionRef } from "effect";
+
 import { TelemetryTag } from "./Telemetry.js";
 
 // ============================================================================
@@ -77,7 +72,9 @@ export class ExtensionActivationError extends Error {
 		readonly extensionId: string,
 		override readonly cause: unknown,
 	) {
-		super(`Failed to activate extension '${extensionId}': ${String(cause)}`);
+		super(
+			`Failed to activate extension '${extensionId}': ${String(cause)}`,
+		);
 	}
 }
 
@@ -87,7 +84,9 @@ export class ExtensionDeactivationError extends Error {
 		readonly extensionId: string,
 		override readonly cause: unknown,
 	) {
-		super(`Failed to deactivate extension '${extensionId}': ${String(cause)}`);
+		super(
+			`Failed to deactivate extension '${extensionId}': ${String(cause)}`,
+		);
 	}
 }
 
@@ -100,13 +99,25 @@ export interface ExtensionService {
 	readonly getAll: Effect.Effect<ReadonlyArray<ExtensionHost>, never>;
 
 	/** Get extension by ID */
-	readonly getById: (id: string) => Effect.Effect<ExtensionHost, ExtensionNotFoundError>;
+	readonly getById: (
+		id: string,
+	) => Effect.Effect<ExtensionHost, ExtensionNotFoundError>;
 
 	/** Activate an extension */
-	readonly activate: (id: string) => Effect.Effect<ActivateResult, ExtensionActivationError | ExtensionNotFoundError>;
+	readonly activate: (
+		id: string,
+	) => Effect.Effect<
+		ActivateResult,
+		ExtensionActivationError | ExtensionNotFoundError
+	>;
 
 	/** Deactivate an extension */
-	readonly deactivate: (id: string) => Effect.Effect<DeactivateResult, ExtensionDeactivationError | ExtensionNotFoundError>;
+	readonly deactivate: (
+		id: string,
+	) => Effect.Effect<
+		DeactivateResult,
+		ExtensionDeactivationError | ExtensionNotFoundError
+	>;
 
 	/** Check if extension is active */
 	readonly isActive: (id: string) => Effect.Effect<boolean, never>;
@@ -115,7 +126,10 @@ export interface ExtensionService {
 	readonly getActiveCount: Effect.Effect<number, never>;
 
 	/** Stream of extension state changes */
-	readonly stateChanges: Effect.Effect<Readonly<Record<string, ExtensionState>>, never>;
+	readonly stateChanges: Effect.Effect<
+		Readonly<Record<string, ExtensionState>>,
+		never
+	>;
 }
 
 // ============================================================================
@@ -193,7 +207,10 @@ export const ExtensionLive = Layer.effect(
 					}),
 				);
 
-				telemetry.log("info", `[Extension] Activating extension: ${id}`);
+				telemetry.log(
+					"info",
+					`[Extension] Activating extension: ${id}`,
+				);
 
 				// Simulate activation (in production, this would load the extension module)
 				yield* Effect.sleep("10 millis");
@@ -233,31 +250,38 @@ export const ExtensionLive = Layer.effect(
 						const extensions = yield* extensionsRef.get;
 						yield* extensionsRef.set(
 							HashMap.set(extensions, id, {
-								... HashMap.get(extensions, id).pipe(Option.getOrElse(() => ({
-									id,
-									manifest: {
+								...HashMap.get(extensions, id).pipe(
+									Option.getOrElse(() => ({
 										id,
-										name: "Unknown",
-										version: "0.0.0",
-										description: "",
-										publisher: "",
-										entryPoint: "",
-										enabled: true,
-										activationEvents: [],
-										dependencies: [],
-										contributes: {},
-									},
-									state: { _tag: "Idle" },
-									activatedAt: undefined,
-									activationTime: undefined,
-								}))),
+										manifest: {
+											id,
+											name: "Unknown",
+											version: "0.0.0",
+											description: "",
+											publisher: "",
+											entryPoint: "",
+											enabled: true,
+											activationEvents: [],
+											dependencies: [],
+											contributes: {},
+										},
+										state: { _tag: "Idle" },
+										activatedAt: undefined,
+										activationTime: undefined,
+									})),
+								),
 								state: { _tag: "Error", error: String(error) },
 							}),
 						);
 
-						telemetry.log("error", `[Extension] Failed to activate ${id}: ${String(error)}`);
+						telemetry.log(
+							"error",
+							`[Extension] Failed to activate ${id}: ${String(error)}`,
+						);
 
-						return yield* Effect.fail(new ExtensionActivationError(id, error));
+						return yield* Effect.fail(
+							new ExtensionActivationError(id, error),
+						);
 					}),
 				),
 			) as any;
@@ -275,7 +299,10 @@ export const ExtensionLive = Layer.effect(
 				const current = extension.value;
 
 				// Check if already deactivated
-				if (current.state._tag === "Deactivated" || current.state._tag === "Idle") {
+				if (
+					current.state._tag === "Deactivated" ||
+					current.state._tag === "Idle"
+				) {
 					return {
 						extensionId: id,
 						success: true,
@@ -283,7 +310,10 @@ export const ExtensionLive = Layer.effect(
 					} satisfies DeactivateResult;
 				}
 
-				telemetry.log("info", `[Extension] Deactivating extension: ${id}`);
+				telemetry.log(
+					"info",
+					`[Extension] Deactivating extension: ${id}`,
+				);
 
 				// Update state to deactivating
 				yield* extensionsRef.set(
@@ -305,7 +335,10 @@ export const ExtensionLive = Layer.effect(
 					}),
 				);
 
-				telemetry.log("info", `[Extension] Deactivated extension: ${id}`);
+				telemetry.log(
+					"info",
+					`[Extension] Deactivated extension: ${id}`,
+				);
 
 				return {
 					extensionId: id,
@@ -319,9 +352,14 @@ export const ExtensionLive = Layer.effect(
 							return yield* Effect.fail(error);
 						}
 
-						telemetry.log("error", `[Extension] Failed to deactivate ${id}: ${String(error)}`);
+						telemetry.log(
+							"error",
+							`[Extension] Failed to deactivate ${id}: ${String(error)}`,
+						);
 
-						return yield* Effect.fail(new ExtensionDeactivationError(id, error));
+						return yield* Effect.fail(
+							new ExtensionDeactivationError(id, error),
+						);
 					}),
 				),
 			) as any;
@@ -371,7 +409,9 @@ export const ExtensionLive = Layer.effect(
 // MOCK FOR TESTING
 // ============================================================================
 
-export const makeMockExtension = (extensions: Array<ExtensionManifest> = []): ExtensionService => {
+export const makeMockExtension = (
+	extensions: Array<ExtensionManifest> = [],
+): ExtensionService => {
 	const mockExtensions = extensions.map((manifest) => ({
 		id: manifest.id,
 		manifest,
@@ -403,7 +443,12 @@ export const makeMockExtension = (extensions: Array<ExtensionManifest> = []): Ex
 				success: true,
 				error: undefined,
 			}),
-		isActive: (id: string) => Effect.succeed(mockExtensions.some((e) => e.id === id && e.state._tag === "Active")),
+		isActive: (id: string) =>
+			Effect.succeed(
+				mockExtensions.some(
+					(e) => e.id === id && e.state._tag === "Active",
+				),
+			),
 		getActiveCount: Effect.succeed(0),
 		stateChanges: Effect.succeed({}),
 	};

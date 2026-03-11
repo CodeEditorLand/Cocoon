@@ -13,13 +13,14 @@
  * 6. Health Checks
  */
 
-import { Effect, Layer, Context } from "effect";
-import { TelemetryTag, withSpan } from "./Telemetry.js";
-import { HealthTag } from "./Health.js";
-import { MountainClientTag } from "./MountainClient.js";
-import { ModuleInterceptorTag } from "./ModuleInterceptor.js";
-import { RPCServerTag } from "./RPCServer.js";
+import { Context, Effect, Layer } from "effect";
+
 import { ExtensionTag } from "./Extension.js";
+import { HealthTag } from "./Health.js";
+import { ModuleInterceptorTag } from "./ModuleInterceptor.js";
+import { MountainClientTag } from "./MountainClient.js";
+import { RPCServerTag } from "./RPCServer.js";
+import { TelemetryTag, withSpan } from "./Telemetry.js";
 
 // ============================================================================
 // TYPES
@@ -47,7 +48,9 @@ export interface BootstrapResult {
 }
 
 export interface BootstrapService {
-	readonly run: (options?: BootstrapOptions) => Effect.Effect<BootstrapResult, never>;
+	readonly run: (
+		options?: BootstrapOptions,
+	) => Effect.Effect<BootstrapResult, never>;
 }
 
 // ============================================================================
@@ -68,13 +71,19 @@ const stage1_Environment = withSpan(
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Stage 1: Detecting environment...");
+		telemetry.log(
+			"info",
+			"[Cocoon Bootstrap] Stage 1: Detecting environment...",
+		);
 
 		const nodeVersion = process.version;
 		const platform = process.platform;
 		const arch = process.arch;
 
-		telemetry.log("info", `[Cocoon Bootstrap] Node.js ${nodeVersion} on ${platform}/${arch}`);
+		telemetry.log(
+			"info",
+			`[Cocoon Bootstrap] Node.js ${nodeVersion} on ${platform}/${arch}`,
+		);
 
 		return {
 			stageName: "Environment",
@@ -90,7 +99,10 @@ const stage2_Configuration = withSpan(
 	Effect.gen(function* () {
 		const telemetry = yield* TelemetryTag;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Stage 2: Loading configuration...");
+		telemetry.log(
+			"info",
+			"[Cocoon Bootstrap] Stage 2: Loading configuration...",
+		);
 
 		// Configuration loading will be handled by Configuration service
 		// For now, we simulate it
@@ -113,7 +125,10 @@ const stage3_MountainConnection = withSpan(
 		const telemetry = yield* TelemetryTag;
 		const mountainClient = yield* MountainClientTag;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Stage 3: Connecting to Mountain...");
+		telemetry.log(
+			"info",
+			"[Cocoon Bootstrap] Stage 3: Connecting to Mountain...",
+		);
 
 		// Connect to Mountain backend
 		yield* mountainClient.connect({
@@ -123,7 +138,10 @@ const stage3_MountainConnection = withSpan(
 
 		const version = yield* mountainClient.version;
 
-		telemetry.log("info", `[Cocoon Bootstrap] Connected to Mountain (v${version})`);
+		telemetry.log(
+			"info",
+			`[Cocoon Bootstrap] Connected to Mountain (v${version})`,
+		);
 
 		return {
 			stageName: "MountainConnection",
@@ -140,15 +158,21 @@ const stage4_ModuleInterceptor = withSpan(
 		const telemetry = yield* TelemetryTag;
 		const moduleInterceptor = yield* ModuleInterceptorTag;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Stage 4: Setting up module interceptor...");
+		telemetry.log(
+			"info",
+			"[Cocoon Bootstrap] Stage 4: Setting up module interceptor...",
+		);
 
 		// Initialize module interceptor service
 		yield* moduleInterceptor.initialize;
-		
+
 		// Install module interceptor into Node.js module system
 		yield* moduleInterceptor.install;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Module interceptor installed successfully");
+		telemetry.log(
+			"info",
+			"[Cocoon Bootstrap] Module interceptor installed successfully",
+		);
 
 		return {
 			stageName: "ModuleInterceptor",
@@ -165,7 +189,10 @@ const stage5_RPCServer = withSpan(
 		const telemetry = yield* TelemetryTag;
 		const rpcServer = yield* RPCServerTag;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Stage 5: Starting gRPC server...");
+		telemetry.log(
+			"info",
+			"[Cocoon Bootstrap] Stage 5: Starting gRPC server...",
+		);
 
 		// Start gRPC server for Mountain ← Cocoon communication
 		yield* rpcServer.start({
@@ -190,11 +217,17 @@ const stage6_Extensions = withSpan(
 		const telemetry = yield* TelemetryTag;
 		const extension = yield* ExtensionTag;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Stage 6: Initializing extensions...");
+		telemetry.log(
+			"info",
+			"[Cocoon Bootstrap] Stage 6: Initializing extensions...",
+		);
 
 		// Get all extensions
 		const extensions = yield* extension.getAll;
-		telemetry.log("info", `[Cocoon Bootstrap] Found ${extensions.length} extensions`);
+		telemetry.log(
+			"info",
+			`[Cocoon Bootstrap] Found ${extensions.length} extensions`,
+		);
 
 		// Activate enabled extensions (in production, this would be based on configuration)
 		for (const ext of extensions) {
@@ -204,7 +237,10 @@ const stage6_Extensions = withSpan(
 		}
 
 		const activeCount = yield* extension.getActiveCount;
-		telemetry.log("info", `[Cocoon Bootstrap] Activated ${activeCount} extensions`);
+		telemetry.log(
+			"info",
+			`[Cocoon Bootstrap] Activated ${activeCount} extensions`,
+		);
 
 		return {
 			stageName: "Extensions",
@@ -221,7 +257,10 @@ const stage7_HealthCheck = withSpan(
 		const telemetry = yield* TelemetryTag;
 		const health = yield* HealthTag;
 
-		telemetry.log("info", "[Cocoon Bootstrap] Stage 7: Running health checks...");
+		telemetry.log(
+			"info",
+			"[Cocoon Bootstrap] Stage 7: Running health checks...",
+		);
 
 		const systemHealth = yield* health.checkAllServices();
 
@@ -232,7 +271,10 @@ const stage7_HealthCheck = withSpan(
 		);
 
 		if (systemHealth.overallStatus === "unhealthy") {
-			telemetry.log("error", "[Cocoon Bootstrap] Some services are unhealthy!");
+			telemetry.log(
+				"error",
+				"[Cocoon Bootstrap] Some services are unhealthy!",
+			);
 		}
 
 		return {
@@ -254,12 +296,25 @@ const makeBootstrap = (): BootstrapService => ({
 			const telemetry = yield* TelemetryTag;
 
 			const startTime = Date.now();
-			const { skipHealthCheck = false, debugMode = false } = options ?? {};
+			const { skipHealthCheck = false, debugMode = false } =
+				options ?? {};
 
-			telemetry.log("info", "[Cocoon Bootstrap] ===============================================");
-			telemetry.log("info", "[Cocoon Bootstrap] Cocoon Extension Host Bootstrap");
-			telemetry.log("info", `[Cocoon Bootstrap] Debug mode: ${debugMode}`);
-			telemetry.log("info", "[Cocoon Bootstrap] ===============================================");
+			telemetry.log(
+				"info",
+				"[Cocoon Bootstrap] ===============================================",
+			);
+			telemetry.log(
+				"info",
+				"[Cocoon Bootstrap] Cocoon Extension Host Bootstrap",
+			);
+			telemetry.log(
+				"info",
+				`[Cocoon Bootstrap] Debug mode: ${debugMode}`,
+			);
+			telemetry.log(
+				"info",
+				"[Cocoon Bootstrap] ===============================================",
+			);
 
 			const stages = [
 				stage1_Environment,
@@ -278,8 +333,13 @@ const makeBootstrap = (): BootstrapService => ({
 				let result: StageResult;
 				try {
 					// @ts-expect-error - Effect stages have different requirements that runtime handles correctly
-					const stageResult = yield* Effect.suspend(() => stage) as any;
-					result = { ...stageResult, duration: Date.now() - stageStartTime };
+					const stageResult = yield* Effect.suspend(
+						() => stage,
+					) as any;
+					result = {
+						...stageResult,
+						duration: Date.now() - stageStartTime,
+					};
 				} catch (e) {
 					const error = e instanceof Error ? e : new Error(String(e));
 					result = {
@@ -296,19 +356,31 @@ const makeBootstrap = (): BootstrapService => ({
 			const totalDuration = endTime - startTime;
 			const allSuccess = results.every((r) => r.success);
 
-			telemetry.log("info", "[Cocoon Bootstrap] ===============================================");
+			telemetry.log(
+				"info",
+				"[Cocoon Bootstrap] ===============================================",
+			);
 			telemetry.log(
 				"info",
 				`[Cocoon Bootstrap] ${allSuccess ? "✓ Bootstrap completed successfully" : "✗ Bootstrap failed"}`,
 			);
-			telemetry.log("info", `[Cocoon Bootstrap] Total duration: ${totalDuration}ms`);
-			telemetry.log("info", "[Cocoon Bootstrap] ===============================================");
+			telemetry.log(
+				"info",
+				`[Cocoon Bootstrap] Total duration: ${totalDuration}ms`,
+			);
+			telemetry.log(
+				"info",
+				"[Cocoon Bootstrap] ===============================================",
+			);
 
 			if (!allSuccess) {
 				const failedStages = results.filter((r) => !r.success);
 				telemetry.log("error", "[Cocoon Bootstrap] Failed stages:");
 				for (const failed of failedStages) {
-					telemetry.log("error", `[Cocoon Bootstrap]   - ${failed.stageName}: ${failed.error?.message || "Unknown error"}`);
+					telemetry.log(
+						"error",
+						`[Cocoon Bootstrap]   - ${failed.stageName}: ${failed.error?.message || "Unknown error"}`,
+					);
 				}
 			}
 
@@ -342,19 +414,56 @@ export const makeMockBootstrap = (): BootstrapService => ({
 				success: true,
 				totalDuration: 1,
 				stages: [
-					{ stageName: "Environment", success: true, duration: 0, error: undefined },
-					{ stageName: "Configuration", success: true, duration: 0, error: undefined },
-					{ stageName: "MountainConnection", success: true, duration: 0, error: undefined },
-					{ stageName: "RPCServer", success: true, duration: 0, error: undefined },
-					{ stageName: "Extensions", success: true, duration: 0, error: undefined },
-					...(options?.skipHealthCheck ? [] : [{ stageName: "HealthCheck", success: true, duration: 0, error: undefined }]),
+					{
+						stageName: "Environment",
+						success: true,
+						duration: 0,
+						error: undefined,
+					},
+					{
+						stageName: "Configuration",
+						success: true,
+						duration: 0,
+						error: undefined,
+					},
+					{
+						stageName: "MountainConnection",
+						success: true,
+						duration: 0,
+						error: undefined,
+					},
+					{
+						stageName: "RPCServer",
+						success: true,
+						duration: 0,
+						error: undefined,
+					},
+					{
+						stageName: "Extensions",
+						success: true,
+						duration: 0,
+						error: undefined,
+					},
+					...(options?.skipHealthCheck
+						? []
+						: [
+								{
+									stageName: "HealthCheck",
+									success: true,
+									duration: 0,
+									error: undefined,
+								},
+							]),
 				],
 				error: undefined,
 			} satisfies BootstrapResult;
 		}),
 });
 
-export const BootstrapMock = Layer.effect(BootstrapTag, Effect.succeed(makeMockBootstrap()));
+export const BootstrapMock = Layer.effect(
+	BootstrapTag,
+	Effect.succeed(makeMockBootstrap()),
+);
 
 // ============================================================================
 // CONVENIENCE EXPORTS
@@ -364,6 +473,4 @@ export const runBootstrap = (options?: BootstrapOptions) =>
 	Effect.gen(function* () {
 		const bootstrap = yield* BootstrapTag;
 		return yield* bootstrap.run(options);
-	}).pipe(
-		Effect.provide(BootstrapLive),
-	);
+	}).pipe(Effect.provide(BootstrapLive));

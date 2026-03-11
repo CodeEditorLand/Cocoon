@@ -30,9 +30,7 @@ export interface DialogService {
 /**
  * Tag for DialogService context
  */
-export const DialogService = Effect.Tag<DialogService>(
-	"Service/Window/Dialog",
-);
+export const DialogService = Effect.Tag<DialogService>("Service/Window/Dialog");
 
 /**
  * Create dialog service layer

@@ -330,11 +330,19 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					// Implement actual gRPC call to Mountain
 					// ARCHITECTURE-PATTERN: Mountain needs to implement file search
 					const mountainClient = yield* MountainGRPCClientService;
-					const pattern = typeof include === "string" ? include : include.pattern;
-					const excludePatterns = exclude ? (typeof exclude === "string" ? [exclude] : exclude.pattern) : undefined;
-					
-					const files = yield* mountainClient.findFiles(pattern, excludePatterns);
-					
+					const pattern =
+						typeof include === "string" ? include : include.pattern;
+					const excludePatterns = exclude
+						? typeof exclude === "string"
+							? [exclude]
+							: exclude.pattern
+						: undefined;
+
+					const files = yield* mountainClient.findFiles(
+						pattern,
+						excludePatterns,
+					);
+
 					// Return URIs
 					return files.map((uri: string) => ({
 						scheme: "file",
@@ -363,22 +371,48 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					// Implement actual gRPC call to Mountain
 					const mountainClient = yield* MountainGRPCClientService;
 					const pattern = query.pattern;
-					const includePatterns = options?.include ? (Array.isArray(options.include) ? options.include.map((p: any) => typeof p === "string" ? p : p.pattern) : [typeof options.include === "string" ? options.include : options.include.pattern]) : undefined;
-					const excludePatterns = options?.exclude ? (Array.isArray(options.exclude) ? options.exclude.map((p: any) => typeof p === "string" ? p : p.pattern) : [typeof options.exclude === "string" ? options.exclude : options.exclude.pattern]) : undefined;
-					
-					const matches = yield* mountainClient.findTextInFiles(pattern, includePatterns, excludePatterns);
-					
+					const includePatterns = options?.include
+						? Array.isArray(options.include)
+							? options.include.map((p: any) =>
+									typeof p === "string" ? p : p.pattern,
+								)
+							: [
+									typeof options.include === "string"
+										? options.include
+										: options.include.pattern,
+								]
+						: undefined;
+					const excludePatterns = options?.exclude
+						? Array.isArray(options.exclude)
+							? options.exclude.map((p: any) =>
+									typeof p === "string" ? p : p.pattern,
+								)
+							: [
+									typeof options.exclude === "string"
+										? options.exclude
+										: options.exclude.pattern,
+								]
+						: undefined;
+
+					const matches = yield* mountainClient.findTextInFiles(
+						pattern,
+						includePatterns,
+						excludePatterns,
+					);
+
 					// Return matches or null
-					return matches.length > 0 ? matches.map((m: any) => ({
-						scheme: "file",
-						authority: "",
-						path: m.uri,
-						query: "",
-						fragment: "",
-						fsPath: m.uri,
-						with: () => ({ scheme: "file", path: m.uri }),
-						toString: () => m.uri,
-					})) : null;
+					return matches.length > 0
+						? matches.map((m: any) => ({
+								scheme: "file",
+								authority: "",
+								path: m.uri,
+								query: "",
+								fragment: "",
+								fsPath: m.uri,
+								with: () => ({ scheme: "file", path: m.uri }),
+								toString: () => m.uri,
+							}))
+						: null;
 				});
 
 			/**
@@ -428,10 +462,10 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 
 					// Implement actual gRPC call to Mountain
 					const mountainClient = yield* MountainGRPCClientService;
-					
+
 					// Open document in Mountain
 					yield* mountainClient.openDocument(Uri.toString());
-					
+
 					// For now, return a mock document
 					// TODO: Get actual document from Mountain response
 					return {
@@ -443,12 +477,20 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						getText: () => Content || "",
 						lineCount: Content?.split("\n").length || 0,
 						lineAt: (lineOrPos: any) => ({
-							text: Content?.split("\n")[typeof lineOrPos === "number" ? lineOrPos : lineOrPos.line] || "",
+							text:
+								Content?.split("\n")[
+									typeof lineOrPos === "number"
+										? lineOrPos
+										: lineOrPos.line
+								] || "",
 						}),
 						offsetAt: () => 0,
 						positionAt: () => ({ line: 0, character: 0 }),
 						getWordRangeAtPosition: () => undefined,
-						validateRange: () => ({ start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }),
+						validateRange: () => ({
+							start: { line: 0, character: 0 },
+							end: { line: 0, character: 0 },
+						}),
 						validatePosition: () => ({ line: 0, character: 0 }),
 						save: () => Promise.resolve(true),
 						eol: 1,
@@ -491,23 +533,32 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					// Serialize edit using TypeConverter
 					// TODO: Use proper TypeConverter/WorkspaceEdit.ts for serialization
 					// For now, apply edits per document
-					
+
 					const mountainClient = yield* MountainGRPCClientService;
-					
+
 					// Get all document edits
 					for (const entry of edit.entries() ?? []) {
 						const [uri, edits] = entry;
 						const textEdits = edits.map((e: any) => ({
 							range: {
-								start: { line: e.range.start.line, character: e.range.start.character },
-								end: { line: e.range.end.line, character: e.range.end.character },
+								start: {
+									line: e.range.start.line,
+									character: e.range.start.character,
+								},
+								end: {
+									line: e.range.end.line,
+									character: e.range.end.character,
+								},
 							},
 							newText: e.newText,
 						}));
-						
-						yield* mountainClient.applyEdit(uri.toString(), textEdits);
+
+						yield* mountainClient.applyEdit(
+							uri.toString(),
+							textEdits,
+						);
 					}
-					
+
 					return true;
 				});
 
