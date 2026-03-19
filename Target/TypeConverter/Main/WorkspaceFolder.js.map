@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/TypeConverter/Main/WorkspaceFolder.ts"],
-  "sourcesContent": ["/**\n * @module WorkSpaceFolder\n * @description Converts `vscode.WorkspaceFolder` to its DTO representation.\n */\n\nimport type { IWorkspaceFolderData } from \"@codeeditorland/output/vs/platform/workspace/common/workspace.js\";\nimport type { WorkspaceFolder } from \"vscode\";\n\nimport { ToAPI as UriToAPI } from \"./URI.js\";\n\nexport const FromDTO = (DTO: IWorkspaceFolderData): WorkspaceFolder => {\n\treturn {\n\t\turi: UriToAPI(DTO.uri),\n\t\tname: DTO.name,\n\t\tindex: DTO.index,\n\t};\n};\n"],
-  "mappings": ";;AAQA,SAAS,SAAS,gBAAgB;AAE3B,MAAM,UAAU,wBAAC,QAA+C;AACtE,SAAO;AAAA,IACN,KAAK,SAAS,IAAI,GAAG;AAAA,IACrB,MAAM,IAAI;AAAA,IACV,OAAO,IAAI;AAAA,EACZ;AACD,GANuB;",
-  "names": []
-}

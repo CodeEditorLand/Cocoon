@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Integration/Tauri/File/ParseJson.ts"],
-  "sourcesContent": ["/**\n * @module ParseJSON\n * @description Defines a safe Effect for parsing a JSON string.\n */\n\nimport { Effect } from \"effect\";\n\nimport { IntegrationConfigurationProblem } from \"../Configuration/Problem.js\";\n\n/**\n * An Effect that safely parses a JSON string into an object.\n * This is a standard library operation wrapped in an Effect for safety.\n */\nexport const ParseJSON = (\n\tJSONString: string,\n): Effect.Effect<object, IntegrationConfigurationProblem> =>\n\tEffect.try({\n\t\ttry: () => JSON.parse(JSONString),\n\t\tcatch: (Cause) => new IntegrationConfigurationProblem({ Cause }),\n\t});\n"],
-  "mappings": ";;AAKA,SAAS,cAAc;AAEvB,SAAS,uCAAuC;AAMzC,MAAM,YAAY,wBACxB,eAEA,OAAO,IAAI;AAAA,EACV,KAAK,6BAAM,KAAK,MAAM,UAAU,GAA3B;AAAA,EACL,OAAO,wBAAC,UAAU,IAAI,gCAAgC,EAAE,MAAM,CAAC,GAAxD;AACR,CAAC,GANuB;",
-  "names": []
-}

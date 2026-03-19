@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/IPC/ProtoConverter/ProtoSerializationProblem.ts"],
-  "sourcesContent": ["/**\n * @module ProtoSerializationProblem\n * @description Defines a custom, tagged error for failures during conversion between\n * JavaScript values and Google Protobuf `Value` types.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * @class ProtoSerializationProblem\n * @description A tagged error representing a failure during the conversion between a\n * JavaScript value and a Google Protobuf `Value` type.\n */\nexport class ProtoSerializationProblem extends Data.TaggedError(\n\t\"ProtoSerializationProblem\",\n)<{\n\treadonly Cause: unknown;\n\treadonly Direction: \"Encoding\" | \"Decoding\";\n}> {\n\tpublic override readonly message: string;\n\tconstructor(Properties: {\n\t\treadonly Cause: unknown;\n\t\treadonly Direction: \"Encoding\" | \"Decoding\";\n\t}) {\n\t\tsuper(Properties);\n\t\tthis.message = `Protobuf ${this.Direction} failed: ${this.Cause}`;\n\t}\n}\n"],
-  "mappings": ";;AAMA,SAAS,YAAY;AAOd,MAAM,kCAAkC,KAAK;AAAA,EACnD;AACD,EAGG;AAAA,EAlBH,OAkBG;AAAA;AAAA;AAAA,EACuB;AAAA,EACzB,YAAY,YAGT;AACF,UAAM,UAAU;AAChB,SAAK,UAAU,YAAY,KAAK,SAAS,YAAY,KAAK,KAAK;AAAA,EAChE;AACD;",
-  "names": []
-}

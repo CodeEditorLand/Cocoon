@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Integration/Tauri/Clipboard/Wrapper.ts"],
-  "sourcesContent": ["/**\n * @module Wrapper\n * @description Defines Effect-based wrappers for Tauri's clipboard plugin.\n */\n\nimport { readText, writeText } from \"@tauri-apps/plugin-clipboard-manager\";\nimport { Effect } from \"effect\";\n\nimport { IntegrationClipboardProblem } from \"./Problem.js\";\n\n/**\n * An Effect that wraps the Tauri `clipboard.writeText` command.\n */\nexport const WriteText = (\n\ttext: string,\n): Effect.Effect<void, IntegrationClipboardProblem> =>\n\tEffect.tryPromise({\n\t\ttry: () => writeText(text),\n\t\tcatch: (Cause) => new IntegrationClipboardProblem({ Cause }),\n\t});\n\n/**\n * An Effect that wraps the Tauri `clipboard.readText` command.\n */\nexport const ReadText: Effect.Effect<string, IntegrationClipboardProblem> =\n\tEffect.tryPromise({\n\t\ttry: () => readText(),\n\t\tcatch: (Cause) => new IntegrationClipboardProblem({ Cause }),\n\t});\n"],
-  "mappings": ";;AAKA,SAAS,UAAU,iBAAiB;AACpC,SAAS,cAAc;AAEvB,SAAS,mCAAmC;AAKrC,MAAM,YAAY,wBACxB,SAEA,OAAO,WAAW;AAAA,EACjB,KAAK,6BAAM,UAAU,IAAI,GAApB;AAAA,EACL,OAAO,wBAAC,UAAU,IAAI,4BAA4B,EAAE,MAAM,CAAC,GAApD;AACR,CAAC,GANuB;AAWlB,MAAM,WACZ,OAAO,WAAW;AAAA,EACjB,KAAK,6BAAM,SAAS,GAAf;AAAA,EACL,OAAO,wBAAC,UAAU,IAAI,4BAA4B,EAAE,MAAM,CAAC,GAApD;AACR,CAAC;",
-  "names": []
-}

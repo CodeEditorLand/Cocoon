@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Integration/Tauri/File/ReadRawFile.ts"],
-  "sourcesContent": ["/**\n * @module ReadRawFile\n * @description Defines an Effect for reading a raw text file using Tauri's FS plugin.\n */\n\nimport { readTextFile } from \"@tauri-apps/plugin-fs\";\nimport { Effect } from \"effect\";\nimport type { Uri } from \"vscode\";\n\nimport { IntegrationConfigurationProblem } from \"../Configuration/Problem.js\";\n\n/**\n * An Effect that reads the content of a file at a given URI as a string.\n * It uses the `fs.readTextFile` command from the Tauri FS plugin.\n */\nexport const ReadRawFile = (\n\tUri: Uri,\n): Effect.Effect<string, IntegrationConfigurationProblem> =>\n\tEffect.tryPromise({\n\t\ttry: () => readTextFile(Uri.fsPath),\n\t\tcatch: (Cause) => new IntegrationConfigurationProblem({ Cause }),\n\t});\n"],
-  "mappings": ";;AAKA,SAAS,oBAAoB;AAC7B,SAAS,cAAc;AAGvB,SAAS,uCAAuC;AAMzC,MAAM,cAAc,wBAC1B,QAEA,OAAO,WAAW;AAAA,EACjB,KAAK,6BAAM,aAAa,IAAI,MAAM,GAA7B;AAAA,EACL,OAAO,wBAAC,UAAU,IAAI,gCAAgC,EAAE,MAAM,CAAC,GAAxD;AACR,CAAC,GANyB;",
-  "names": []
-}

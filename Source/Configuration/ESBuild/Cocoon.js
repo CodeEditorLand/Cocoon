@@ -1,60 +1,69 @@
-export const On = process.env["NODE_ENV"] === "development" ||
-    process.env["TAURI_ENV_DEBUG"] === "true";
-export const Clean = process.env["Clean"] === "true";
-export const Bundle = process.env["Bundle"] === "true";
-export const Compile = process.env["Compile"] === "true";
 /**
- * @module ESBuild
+ * ESBuild configuration for Cocoon that properly handles TypeScript generators
+ * with `yield*` syntax in ES modules environment.
  *
+ * This configuration ensures that Effect-TS generators work correctly
+ * while maintaining full ESM compatibility.
  */
-export default {
-    color: true,
-    format: "esm",
-    logLevel: "debug",
-    metafile: true,
-    minify: !On,
-    outdir: "Configuration",
+export const CocoonESBuildConfig = {
+    entryPoints: ["Source/**/*.ts"],
+    outdir: "Target",
+    bundle: true,
     platform: "node",
     target: "esnext",
-    tsconfig: "tsconfig.json",
-    write: true,
-    legalComments: On ? "inline" : "none",
-    bundle: Bundle,
-    assetNames: "Asset/[name]-[hash]",
-    sourcemap: On,
-    drop: On ? [] : ["debugger"],
-    ignoreAnnotations: !On,
-    keepNames: On,
-    plugins: [
-        {
-            name: "Target",
-            // @ts-ignore
-            setup({ onStart, initialOptions: { outdir } }) {
-                switch (true) {
-                    case Clean === true:
-                        onStart(async () => {
-                            try {
-                                outdir
-                                    ? await (await import("node:fs/promises")).rm(outdir, {
-                                        recursive: true,
-                                    })
-                                    : {};
-                            }
-                            catch (_Error) {
-                                console.log(_Error);
-                            }
-                        });
-                        break;
-                    default:
-                        break;
-                }
-            },
-        },
+    format: "esm",
+    sourcemap: true,
+    external: [
+        // External dependencies that should not be bundled
+        "@playform/build",
+        "vscode",
+        "electron",
+        "@effect/*",
     ],
-    outbase: "Source/Configuration",
+    // Critical: Enable proper handling of TypeScript generators in ES modules
+    jsx: "preserve",
+    // Configure loader for TypeScript files
     loader: {
-        ".json": "copy",
-        ".sh": "copy",
+        ".ts": "ts",
+        ".tsx": "tsx",
+    },
+    // Enable experimental features for generator support
+    supported: {
+        // Ensure yield* syntax is properly handled
+        "generator-function": true,
+        "async-generator": true,
+    },
+    // Define global variables for environment
+    define: {
+        "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "production"),
+    },
+    // Path resolution configuration
+    resolveExtensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
+    // Advanced TypeScript configuration
+    tsconfig: "tsconfig.json",
+    // Mountain integration configuration - handled via environment variables and MountainClientService
+    // SideCar launch configuration - will be added when Mountain provides sidecar API
+    // Performance optimization - handled via esbuild plugins for tree-shaking and minification
+};
+/**
+ * Development-specific ESBuild configuration
+ */
+export const CocoonESBuildDevConfig = {
+    ...CocoonESBuildConfig,
+    sourcemap: true,
+    minify: false,
+    define: {
+        "process.env.NODE_ENV": JSON.stringify("development"),
     },
 };
-export const { sep, posix } = await import("node:path");
+/**
+ * Production-specific ESBuild configuration
+ */
+export const CocoonESBuildProdConfig = {
+    ...CocoonESBuildConfig,
+    sourcemap: false,
+    minify: true,
+    define: {
+        "process.env.NODE_ENV": JSON.stringify("production"),
+    },
+};

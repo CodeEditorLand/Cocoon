@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"private": false,
 	"description": "Cocoon 🦋",
-	"homepage": "https://GitHub.Com/CodeEditorLand/Cocoon#readme",
+	"homepage": "https://GitHub.Com/CodeEditorLand/Cocoon?tab=readme-ov-file",
 	"bugs": {
 		"url": "https://GitHub.Com/CodeEditorLand/Cocoon/issues"
 	},
@@ -20,34 +20,47 @@
 	"type": "module",
 	"scripts": {
 		"Run": "sh Source/Run.sh",
-		"prepublishOnly": "sh Source/prepublishOnly.sh"
+		"prepublishOnly": "sh Source/prepublishOnly.sh",
+		"build-grpc": "node Scripts/compile-grpc-protocol.js",
+		"compile-protocol": "node Scripts/compile-grpc-protocol.js",
+		"test": "vitest --run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest --coverage",
+		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@codeeditorland/output": "0.0.1",
-		"@effect/platform": "0.93.5",
-		"@effect/platform-node": "0.102.0",
+		"@effect/platform": "0.94.5",
+		"@effect/platform-node": "0.104.1",
 		"@tauri-apps/plugin-clipboard-manager": "2.3.2",
-		"@tauri-apps/plugin-fs": "2.4.4",
-		"effect": "3.19.8",
-		"google-protobuf": "4.0.1"
+		"@tauri-apps/plugin-fs": "2.4.5",
+		"effect": "3.19.19",
+		"google-protobuf": "4.0.2",
+		"@grpc/grpc-js": "1.14.3",
+		"@grpc/proto-loader": "0.8.0",
+		"protobufjs": "8.0.0",
+		"ts-protoc-gen": "0.15.0"
 	},
 	"devDependencies": {
-		"@effect/experimental": "0.57.7",
-		"@effect/language-service": "0.57.1",
-		"@effect/opentelemetry": "0.59.1",
-		"@opentelemetry/exporter-trace-otlp-http": "0.208.0",
-		"@opentelemetry/sdk-logs": "0.208.0",
-		"@opentelemetry/sdk-metrics": "2.2.0",
-		"@opentelemetry/sdk-trace-base": "2.2.0",
-		"@opentelemetry/sdk-trace-node": "2.2.0",
-		"@opentelemetry/sdk-trace-web": "2.2.0",
-		"@playform/build": "0.2.5",
+		"@effect/experimental": "0.58.0",
+		"@effect/language-service": "0.77.0",
+		"@effect/opentelemetry": "0.61.0",
+		"@opentelemetry/exporter-trace-otlp-http": "0.212.0",
+		"@opentelemetry/sdk-logs": "0.213.0",
+		"@opentelemetry/sdk-metrics": "2.5.1",
+		"@opentelemetry/sdk-trace-base": "2.6.0",
+		"@opentelemetry/sdk-trace-node": "2.6.0",
+		"@opentelemetry/sdk-trace-web": "2.5.1",
+		"@playform/build": "0.3.0",
 		"@types/google-protobuf": "3.15.12",
-		"@types/node": "24.10.1",
+		"@types/node": "25.3.3",
 		"cross-env": "10.1.0",
 		"deepmerge-ts": "7.1.5",
+		"esbuild": "0.27.3",
 		"ts-patch": "3.3.0",
 		"ulid": "3.0.2"
+		"vitest": "4.0.18",
+		"@vitest/coverage-v8": "4.0.18"
 	},
 	"publishConfig": {
 		"access": "public",

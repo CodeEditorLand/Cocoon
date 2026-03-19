@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/IPC/IPCProblem.ts"],
-  "sourcesContent": ["/**\n * @module IPCProblem\n * @description Defines a generic, tagged error for failures that occur during an\n * IPC request or notification.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * @class IPCProblem\n * @description A generic error for failures during an IPC request or notification,\n * such as a network error or a failure to serialize/deserialize a message.\n */\nexport class IPCProblem extends Data.TaggedError(\"IPCProblem\")<{\n\treadonly Cause: unknown;\n\treadonly Context: string;\n}> {}\n"],
-  "mappings": ";;AAMA,SAAS,YAAY;AAOd,MAAM,mBAAmB,KAAK,YAAY,YAAY,EAG1D;AAAA,EAhBH,OAgBG;AAAA;AAAA;AAAC;",
-  "names": []
-}

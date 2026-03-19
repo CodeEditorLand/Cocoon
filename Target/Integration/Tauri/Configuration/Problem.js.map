@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../../Source/Integration/Tauri/Configuration/Problem.ts"],
-  "sourcesContent": ["/**\n * @module Problem\n * @description Defines a placeholder for the IntegrationConfigurationProblem type.\n * This file is a stub to resolve import errors. A real implementation would\n * define concrete error types from the Tauri integration layer.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * @class IntegrationConfigurationProblem\n * @description A placeholder error type for configuration-related failures at the\n * integration layer.\n */\nexport class IntegrationConfigurationProblem extends Data.TaggedError(\n\t\"IntegrationConfigurationProblem\",\n)<{\n\treadonly Cause?: unknown;\n}> {}\n"],
-  "mappings": ";;AAOA,SAAS,YAAY;AAOd,MAAM,wCAAwC,KAAK;AAAA,EACzD;AACD,EAEG;AAAA,EAlBH,OAkBG;AAAA;AAAA;AAAC;",
-  "names": []
-}

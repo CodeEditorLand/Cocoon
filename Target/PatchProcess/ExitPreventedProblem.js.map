@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../Source/PatchProcess/ExitPreventedProblem.ts"],
-  "sourcesContent": ["/**\n * @module ExitPreventedProblem\n * @description Defines a custom, structured error that is thrown when an extension's\n * attempt to call `process.exit` is intercepted and blocked by the host's policy.\n */\n\nimport { Data } from \"effect\";\n\n/**\n * @class ExitPreventedProblem\n * @description A structured, tagged error representing a blocked process termination attempt.\n * This error is thrown synchronously by the patched `process.exit` function\n * to halt the execution of the misbehaving extension code.\n */\nexport class ExitPreventedProblem extends Data.TaggedError(\n\t\"ExitPreventedProblem\",\n)<{\n\t/** A descriptive message explaining that the exit was blocked. */\n\treadonly message: string;\n\t/** The exit code that the extension attempted to use. */\n\treadonly AttemptedCode?: number;\n}> {}\n"],
-  "mappings": ";;AAMA,SAAS,YAAY;AAQd,MAAM,6BAA6B,KAAK;AAAA,EAC9C;AACD,EAKG;AAAA,EArBH,OAqBG;AAAA;AAAA;AAAC;",
-  "names": []
-}

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../Source/TypeConverter/Dialog/Filter.ts"],
-  "sourcesContent": ["/**\n * @module Filter\n * @description A shared helper to serialize dialog filters for IPC.\n */\n\n/**\n * @description Serializes dialog filter options into a DTO array.\n * @param Filters The filters object from `OpenDialogOptions` or `SaveDialogOptions`.\n * @returns A serializable array representation of the filters.\n */\nexport const SerializeFilters = (Filters?: {\n\treadonly [Name: string]: readonly string[];\n}) => {\n\tif (!Filters) {\n\t\treturn undefined;\n\t}\n\treturn Object.entries(Filters).map(([Name, Extensions]) => ({\n\t\tname: Name,\n\t\textensions: Extensions,\n\t}));\n};\n"],
-  "mappings": ";;AAUO,MAAM,mBAAmB,wBAAC,YAE3B;AACL,MAAI,CAAC,SAAS;AACb,WAAO;AAAA,EACR;AACA,SAAO,OAAO,QAAQ,OAAO,EAAE,IAAI,CAAC,CAAC,MAAM,UAAU,OAAO;AAAA,IAC3D,MAAM;AAAA,IACN,YAAY;AAAA,EACb,EAAE;AACH,GAVgC;",
-  "names": []
-}
