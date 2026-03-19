@@ -6,105 +6,120 @@
  */
 
 import { Effect, Layer } from "effect";
+
 import { IExtensionHostService } from "../Interfaces/IExtensionHostService.js";
 import { IModuleInterceptorService } from "../Interfaces/IModuleInterceptorService.js";
 import { IAPIFactoryService } from "../Services/APIFactoryService.js";
 
 // Types matching VSCode patterns
 interface IExtensionDescription {
-    identifier: string;
-    extensionLocation: string;
-    main?: string;
-    activationEvents: string[];
+	identifier: string;
+	extensionLocation: string;
+	main?: string;
+	activationEvents: string[];
 }
 
 interface ActivatedExtension {
-    activationTimes: {
-        codeLoadingTime: number;
-        activateCallTime: number;
-        activateResolvedTime: number;
-    };
-    exports?: any;
+	activationTimes: {
+		codeLoadingTime: number;
+		activateCallTime: number;
+		activateResolvedTime: number;
+	};
+	exports?: any;
 }
 
 /**
  * ExtensionHostService implementation
  */
 export class ExtensionHostService implements IExtensionHostService {
-    readonly _serviceBrand: undefined;
-    
-    // Extensions registry
-    private activatedExtensions: Map<string, ActivatedExtension> = new Map();
-    
-    constructor(
-        private moduleInterceptor: IModuleInterceptorService,
-        private apiFactory: IAPIFactoryService
-    ) {}
+	readonly _serviceBrand: undefined;
 
-    /**
-     * Activate an extension
-     */
-    async activateExtension(extensionId: string, activationEvent: string): Promise<void> {
-        if (this.activatedExtensions.has(extensionId)) {
-            return;
-        }
+	// Extensions registry
+	private activatedExtensions: Map<string, ActivatedExtension> = new Map();
 
-        console.log(`[ExtensionHost] Activating extension: ${extensionId} (Event: ${activationEvent})`);
+	constructor(
+		private moduleInterceptor: IModuleInterceptorService,
+		private apiFactory: IAPIFactoryService,
+	) {}
 
-        try {
-            const startTime = Date.now();
+	/**
+	 * Activate an extension
+	 */
+	async activateExtension(
+		extensionId: string,
+		activationEvent: string,
+	): Promise<void> {
+		if (this.activatedExtensions.has(extensionId)) {
+			return;
+		}
 
-            // 1. Prepare API instance for this extension
-            const vscodeAPI = this.apiFactory.createAPI();
+		console.log(
+			`[ExtensionHost] Activating extension: ${extensionId} (Event: ${activationEvent})`,
+		);
 
-            // 2. Register with module interceptor
-            // When the extension requires 'vscode', it gets our proxy
-            this.moduleInterceptor.registerAPI(extensionId, vscodeAPI);
+		try {
+			const startTime = Date.now();
 
-            // 3. Mock extension description (In real app, fetch from Registry)
-            const extension: IExtensionDescription = {
-                identifier: extensionId,
-                extensionLocation: `/extensions/${extensionId}`,
-                main: "extension.js",
-                activationEvents: [activationEvent]
-            };
+			// 1. Prepare API instance for this extension
+			const vscodeAPI = this.apiFactory.createAPI();
 
-            // 4. Load the extension module
-            const moduleLoadStart = Date.now();
-            const extensionModule = await this._loadExtensionModule(extension);
-            const codeLoadingTime = Date.now() - moduleLoadStart;
+			// 2. Register with module interceptor
+			// When the extension requires 'vscode', it gets our proxy
+			this.moduleInterceptor.registerAPI(extensionId, vscodeAPI);
 
-            // 5. Activate
-            const activateCallStart = Date.now();
-            const exports = await this._callActivate(extensionModule, extension);
-            const activateCallTime = Date.now() - activateCallStart;
-            const activateResolvedTime = Date.now() - startTime;
-            
-            this.activatedExtensions.set(extensionId, {
-                activationTimes: {
-                    codeLoadingTime,
-                    activateCallTime,
-                    activateResolvedTime
-                },
-                exports
-            });
+			// 3. Mock extension description (In real app, fetch from Registry)
+			const extension: IExtensionDescription = {
+				identifier: extensionId,
+				extensionLocation: `/extensions/${extensionId}`,
+				main: "extension.js",
+				activationEvents: [activationEvent],
+			};
 
-            console.log(`[ExtensionHost] ${extensionId} activated successfully in ${activateResolvedTime}ms`);
+			// 4. Load the extension module
+			const moduleLoadStart = Date.now();
+			const extensionModule = await this._loadExtensionModule(extension);
+			const codeLoadingTime = Date.now() - moduleLoadStart;
 
-        } catch (error) {
-            console.error(`[ExtensionHost] Failed to activate ${extensionId}:`, error);
-            throw error;
-        }
-    }
+			// 5. Activate
+			const activateCallStart = Date.now();
+			const exports = await this._callActivate(
+				extensionModule,
+				extension,
+			);
+			const activateCallTime = Date.now() - activateCallStart;
+			const activateResolvedTime = Date.now() - startTime;
 
-    /**
+			this.activatedExtensions.set(extensionId, {
+				activationTimes: {
+					codeLoadingTime,
+					activateCallTime,
+					activateResolvedTime,
+				},
+				exports,
+			});
+
+			console.log(
+				`[ExtensionHost] ${extensionId} activated successfully in ${activateResolvedTime}ms`,
+			);
+		} catch (error) {
+			console.error(
+				`[ExtensionHost] Failed to activate ${extensionId}:`,
+				error,
+			);
+			throw error;
+		}
+	}
+
+	/**
 	 * Load extension module with advanced interception
 	 */
-	private async _loadExtensionModule(extension: IExtensionDescription): Promise<any> {
-        if (!extension.main) {
-             // Fallback for no-code extensions (e.g. themes)
-             return { activate: () => {} };
-        }
+	private async _loadExtensionModule(
+		extension: IExtensionDescription,
+	): Promise<any> {
+		if (!extension.main) {
+			// Fallback for no-code extensions (e.g. themes)
+			return { activate: () => {} };
+		}
 
 		const modulePath = `${extension.extensionLocation}/${extension.main}`;
 		console.log(`[ExtensionHost] Loading module: ${modulePath}`);
@@ -118,7 +133,7 @@ export class ExtensionHostService implements IExtensionHostService {
 			);
 
 			// Load module with security interception
-            // Note: interceptRequire would be synchronous in Node, but we simulate it here
+			// Note: interceptRequire would be synchronous in Node, but we simulate it here
 			const extensionModule = this.moduleInterceptor.interceptRequire(
 				resolvedPath,
 				extension.extensionLocation,
@@ -126,21 +141,26 @@ export class ExtensionHostService implements IExtensionHostService {
 
 			return extensionModule;
 		} catch (error) {
-			console.error(`[ExtensionHost] Failed to load module ${modulePath}:`, error);
+			console.error(
+				`[ExtensionHost] Failed to load module ${modulePath}:`,
+				error,
+			);
 
-			// Fallback: If module interceptor fails (e.g. file not found in real FS), 
-            // we simulate a dummy module for development continuity
-            console.warn(`[ExtensionHost] Using dummy module for ${extension.identifier}`);
-            return {
-                activate: (context: any) => {
-                    console.log(`[${extension.identifier}] activate() called`);
-                },
-                deactivate: () => {}
-            };
+			// Fallback: If module interceptor fails (e.g. file not found in real FS),
+			// we simulate a dummy module for development continuity
+			console.warn(
+				`[ExtensionHost] Using dummy module for ${extension.identifier}`,
+			);
+			return {
+				activate: (context: any) => {
+					console.log(`[${extension.identifier}] activate() called`);
+				},
+				deactivate: () => {},
+			};
 		}
 	}
 
-    /**
+	/**
 	 * Call extension's activate function
 	 */
 	private async _callActivate(
@@ -148,44 +168,44 @@ export class ExtensionHostService implements IExtensionHostService {
 		extension: IExtensionDescription,
 	): Promise<any> {
 		if (typeof extensionModule.activate !== "function") {
-             // Allow extensions without activate (declarative only)
+			// Allow extensions without activate (declarative only)
 			return undefined;
 		}
 
 		// Create extension context
-        // We use a simplified context here, delegating complex parts to the API Factory if needed
+		// We use a simplified context here, delegating complex parts to the API Factory if needed
 		const context = {
-            subscriptions: [],
-            extensionPath: extension.extensionLocation,
-            globalState: { get: () => {}, update: () => {} },
-            workspaceState: { get: () => {}, update: () => {} },
-            secrets: { get: () => {}, store: () => {}, delete: () => {} }
-        };
+			subscriptions: [],
+			extensionPath: extension.extensionLocation,
+			globalState: { get: () => {}, update: () => {} },
+			workspaceState: { get: () => {}, update: () => {} },
+			secrets: { get: () => {}, store: () => {}, delete: () => {} },
+		};
 
 		// Call activate function
 		return await extensionModule.activate(context);
 	}
 
-    /**
-     * Deactivate an extension
-     */
-    async deactivateExtension(extensionId: string): Promise<void> {
-        if (!this.activatedExtensions.has(extensionId)) {
-            return;
-        }
-        console.log(`[ExtensionHost] Deactivating extension: ${extensionId}`);
-        this.activatedExtensions.delete(extensionId);
-    }
+	/**
+	 * Deactivate an extension
+	 */
+	async deactivateExtension(extensionId: string): Promise<void> {
+		if (!this.activatedExtensions.has(extensionId)) {
+			return;
+		}
+		console.log(`[ExtensionHost] Deactivating extension: ${extensionId}`);
+		this.activatedExtensions.delete(extensionId);
+	}
 }
 
 /**
  * Service Layer
  */
 export const ExtensionHostLayer = Layer.effect(
-    IExtensionHostService,
-    Effect.gen(function* () {
-        const moduleInterceptor = yield* IModuleInterceptorService;
-        const apiFactory = yield* IAPIFactoryService;
-        return new ExtensionHostService(moduleInterceptor, apiFactory);
-    })
+	IExtensionHostService,
+	Effect.gen(function* () {
+		const moduleInterceptor = yield* IModuleInterceptorService;
+		const apiFactory = yield* IAPIFactoryService;
+		return new ExtensionHostService(moduleInterceptor, apiFactory);
+	}),
 );

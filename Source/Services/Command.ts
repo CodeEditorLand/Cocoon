@@ -40,9 +40,9 @@ import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
-import { MountainGRPCClientService } from "./MountainGRPCClient.js";
 // Import type converters
 import { Command as CommandConverter } from "../TypeConverter/Command.js";
+import { MountainGRPCClientService } from "./MountainGRPCClient.js";
 
 /**
  * @interface InternalCommandMetadata
@@ -283,7 +283,10 @@ export class CommandService extends Effect.Service<CommandService>()(
 					const startTime = Date.now();
 
 					try {
-						const result = yield* mountainClient.executeCommand(Id, ...Arguments);
+						const result = yield* mountainClient.executeCommand(
+							Id,
+							...Arguments,
+						);
 
 						// Track performance metrics
 						this.trackCommandExecution(
@@ -373,7 +376,11 @@ export class CommandService extends Effect.Service<CommandService>()(
 					const extensionId = this.getCallingExtension();
 
 					try {
-						yield* mountainClient.registerCommand(Id, extensionId, `Command: ${Id}`);
+						yield* mountainClient.registerCommand(
+							Id,
+							extensionId,
+							`Command: ${Id}`,
+						);
 
 						yield* Logger.Info(
 							`[CommandService] Command '${Id}' registered with Mountain`,
@@ -479,7 +486,7 @@ export class CommandService extends Effect.Service<CommandService>()(
 					// Mountain gRPC integration for getting remote commands
 					try {
 						const mountainClient = yield* MountainGRPCClientService;
-						
+
 						// For now, just return local commands
 						// TODO: Implement getCommands in MountainGRPCClientService
 						const RemoteCommands: string[] = [];

@@ -30,10 +30,10 @@
  * - Optional: IMountainClientService for remote extension discovery and state persistence
  *
  * TODOs:
- * - MEDIUM: Implement marketplace integration for extension discovery
- * - LOW: Implement extension search by capabilities/features
- * - MEDIUM: Integrate Mountain gRPC for extension discovery (currently stubbed)
- * - LOW: Add extension validation against manifest schema
+ * FUTURE: Marketplace discovery - integrate with VS Code marketplace API
+ * FUTURE: Capability search - filter by extension.capabilities
+ * DEPENDENCY: Mountain gRPC - pending Mountain backend implementation
+ * FUTURE: Schema validation - validate package.json against schema
  */
 
 import { Context, Effect, Ref } from "effect";

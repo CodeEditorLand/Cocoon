@@ -36,27 +36,32 @@
  * - URI string representation for DTO transport
  *
  * TODOs (DTO Versioning - LOW):
- * - Add automatic version migration
- * - Add backward compatibility handlers
- * - Add schema validation for each version
+ * FUTURE: Version migration - add migrateDTO() for version upgrades
+ * FUTURE: Backward compatibility - support v1 DTOs in v2 parser
+ * FUTURE: Schema validation - use zod for version-specific validation
  *
  * TODOs (DTO Compression - LOW):
- * - Add DTO compression for large payloads
- * - Add selective field serialization
- * - Add binary encoding for efficiency
+ * FUTURE: Compression - use zlib for payloads > 1KB
+ * FUTURE: Selective serialization - skip default values
+ * FUTURE: Binary encoding - use MessagePack for efficiency
  *
  * TODOs (DTO Security - LOW):
- * - Add DTO encryption for sensitive data
- * - Add DTO signing for integrity verification
- * - Add tamper detection
+ * FUTURE: Encryption - use AES-256-GCM for sensitive panel data
+ * FUTURE: Signing - add HMAC for integrity verification
+ * FUTURE: Tamper detection - verify signature before deserialization
  *
- * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
+ * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
 import { Effect } from "effect";
 import type { Uri } from "vscode";
 
-import type { PanelOptions, PanelPosition, PanelState, PanelViewState } from "./State.js";
+import type {
+	PanelOptions,
+	PanelPosition,
+	PanelState,
+	PanelViewState,
+} from "./State.js";
 
 /**
  * @interface MountainDTO
@@ -64,13 +69,13 @@ import type { PanelOptions, PanelPosition, PanelState, PanelViewState } from "./
  */
 export interface MountainDTO {
 	readonly Version: number;
-	 readonly Handle: string;
+	readonly Handle: string;
 	readonly ExtensionId: string;
 	readonly ViewType: string;
 	readonly Title: string;
 	readonly ViewColumn: number;
 	readonly PreservedFocus: boolean;
-	 readonly IsActive: boolean;
+	readonly IsActive: boolean;
 	readonly IsVisible: boolean;
 	readonly Options: {
 		readonly EnableScripts?: boolean;
@@ -114,185 +119,202 @@ const DTO_VERSION = 1;
  * @class SerializerService
  * @description Service for serializing Webview state to/from Mountain DTOs
  */
-export class SerializerService extends Effect.Service<SerializerService>()("Serializer/WebviewPanel", {
-	effect: Effect.gen(function* () {
-		/**
-		 * Validate a MountainDTO structure
-		 */
-		const ValidateDTO = (DTO: unknown): Effect.Effect<MountainDTO, Error> =>
-			Effect.gen(function* () {
-				// Defensive: Check if DTO is an object
-				if (
-					typeof DTO !== "object" ||
-					DTO === null ||
-					Array.isArray(DTO)
-				) {
-					return yield* Effect.fail(
-						new Error("Mountain DTO must be an object"),
-					);
-				}
+export class SerializerService extends Effect.Service<SerializerService>()(
+	"Serializer/WebviewPanel",
+	{
+		effect: Effect.gen(function* () {
+			/**
+			 * Validate a MountainDTO structure
+			 */
+			const ValidateDTO = (
+				DTO: unknown,
+			): Effect.Effect<MountainDTO, Error> =>
+				Effect.gen(function* () {
+					// Defensive: Check if DTO is an object
+					if (
+						typeof DTO !== "object" ||
+						DTO === null ||
+						Array.isArray(DTO)
+					) {
+						return yield* Effect.fail(
+							new Error("Mountain DTO must be an object"),
+						);
+					}
 
-				const D = DTO as Record<string, unknown>;
+					const D = DTO as Record<string, unknown>;
 
-				// Check required fields
-				if (typeof D.Version !== "number") {
-					return yield* Effect.fail(new Error("Mountain DTO missing Version"));
-				}
+					// Check required fields
+					if (typeof D.Version !== "number") {
+						return yield* Effect.fail(
+							new Error("Mountain DTO missing Version"),
+						);
+					}
 
-				if (typeof D.Handle !== "string") {
-					return yield* Effect.fail(new Error("Mountain DTO missing Handle"));
-				}
+					if (typeof D.Handle !== "string") {
+						return yield* Effect.fail(
+							new Error("Mountain DTO missing Handle"),
+						);
+					}
 
-				if (typeof D.ExtensionId !== "string") {
-					return yield* Effect.fail(
-						new Error("Mountain DTO missing ExtensionId"),
-					);
-				}
+					if (typeof D.ExtensionId !== "string") {
+						return yield* Effect.fail(
+							new Error("Mountain DTO missing ExtensionId"),
+						);
+					}
 
-				if (typeof D.ViewType !== "string") {
-					return yield* Effect.fail(
-						new Error("Mountain DTO missing ViewType"),
-					);
-				}
+					if (typeof D.ViewType !== "string") {
+						return yield* Effect.fail(
+							new Error("Mountain DTO missing ViewType"),
+						);
+					}
 
-				if (typeof D.Title !== "string") {
-					return yield* Effect.fail(new Error("Mountain DTO missing Title"));
-				}
+					if (typeof D.Title !== "string") {
+						return yield* Effect.fail(
+							new Error("Mountain DTO missing Title"),
+						);
+					}
 
-				// Validate numeric fields
-				if (typeof D.ViewColumn !== "number") {
-					return yield* Effect.fail(
-						new Error("Mountain DTO has invalid ViewColumn"),
-					);
-				}
+					// Validate numeric fields
+					if (typeof D.ViewColumn !== "number") {
+						return yield* Effect.fail(
+							new Error("Mountain DTO has invalid ViewColumn"),
+						);
+					}
 
-				if (typeof D.PreservedFocus !== "boolean") {
-					return yield* Effect.fail(
-						new Error("Mountain DTO has invalid PreservedFocus"),
-					);
-				}
+					if (typeof D.PreservedFocus !== "boolean") {
+						return yield* Effect.fail(
+							new Error(
+								"Mountain DTO has invalid PreservedFocus",
+							),
+						);
+					}
 
-				if (typeof D.IsActive !== "boolean") {
-					return yield* Effect.fail(
-						new Error("Mountain DTO has invalid IsActive"),
-					);
-				}
+					if (typeof D.IsActive !== "boolean") {
+						return yield* Effect.fail(
+							new Error("Mountain DTO has invalid IsActive"),
+						);
+					}
 
-				if (typeof D.IsVisible !== "boolean") {
-					return yield* Effect.fail(
-						new Error("Mountain DTO has invalid IsVisible"),
-					);
-				}
+					if (typeof D.IsVisible !== "boolean") {
+						return yield* Effect.fail(
+							new Error("Mountain DTO has invalid IsVisible"),
+						);
+					}
 
-				// Validate Options object
-				if (
-					typeof D.Options !== "object" ||
-					D.Options === null ||
-					Array.isArray(D.Options)
-				) {
-					return yield* Effect.fail(
-						new Error("Mountain DTO has invalid Options"),
-					);
-				}
+					// Validate Options object
+					if (
+						typeof D.Options !== "object" ||
+						D.Options === null ||
+						Array.isArray(D.Options)
+					) {
+						return yield* Effect.fail(
+							new Error("Mountain DTO has invalid Options"),
+						);
+					}
 
-				const Options = D.Options as Record<string, unknown>;
-				if (
-					typeof Options.EnableScripts !== "undefined" &&
-					typeof Options.EnableScripts !== "boolean"
-				) {
-					return yield* Effect.fail(
-						new Error("Mountain DTO has invalid EnableScripts option"),
-					);
-				}
+					const Options = D.Options as Record<string, unknown>;
+					if (
+						typeof Options.EnableScripts !== "undefined" &&
+						typeof Options.EnableScripts !== "boolean"
+					) {
+						return yield* Effect.fail(
+							new Error(
+								"Mountain DTO has invalid EnableScripts option",
+							),
+						);
+					}
 
-				return D as MountainDTO;
-			});
+					return D as MountainDTO;
+				});
 
-		/**
-		 * Serialize PanelState to MountainDTO
-		 */
-		const SerializeToDTO = (
-			State: PanelState,
-		): Effect.Effect<MountainDTO, Error> =>
-			Effect.gen(function* () {
-				// Create DTO from PanelState
-				const DTO: MountainDTO = {
-					Version: DTO_VERSION,
-					Handle: State.Handle,
-					ExtensionId: State.ExtensionId,
-					ViewType: State.ViewType,
-					Title: State.Title,
-					ViewColumn: State.Position.ViewColumn,
-					PreservedFocus: State.Position.PreservedFocus,
-					IsActive: State.ViewState.Active,
-					IsVisible: State.ViewState.Visible,
-					Options: {
-						EnableScripts: State.Options.EnableScripts,
-						RetainContextWhenHidden:
-							State.Options.RetainContextWhenHidden,
-						EnableFindWidget: State.Options.EnableFindWidget,
-						LocalResourceRoots: State.Options.LocalResourceRoots as
-							| readonly string[]
-							| undefined,
-						PortMapping: State.Options.PortMapping,
-					},
-					IconPath: State.IconPath,
-					Content: State.Content,
-					Metadata: State.Metadata,
-				};
+			/**
+			 * Serialize PanelState to MountainDTO
+			 */
+			const SerializeToDTO = (
+				State: PanelState,
+			): Effect.Effect<MountainDTO, Error> =>
+				Effect.gen(function* () {
+					// Create DTO from PanelState
+					const DTO: MountainDTO = {
+						Version: DTO_VERSION,
+						Handle: State.Handle,
+						ExtensionId: State.ExtensionId,
+						ViewType: State.ViewType,
+						Title: State.Title,
+						ViewColumn: State.Position.ViewColumn,
+						PreservedFocus: State.Position.PreservedFocus,
+						IsActive: State.ViewState.Active,
+						IsVisible: State.ViewState.Visible,
+						Options: {
+							EnableScripts: State.Options.EnableScripts,
+							RetainContextWhenHidden:
+								State.Options.RetainContextWhenHidden,
+							EnableFindWidget: State.Options.EnableFindWidget,
+							LocalResourceRoots: State.Options
+								.LocalResourceRoots as
+								| readonly string[]
+								| undefined,
+							PortMapping: State.Options.PortMapping,
+						},
+						IconPath: State.IconPath,
+						Content: State.Content,
+						Metadata: State.Metadata,
+					};
 
-				return DTO;
-			});
+					return DTO;
+				});
 
-		/**
-		 * Deserialize MountainDTO to PanelState
-		 */
-		const DeserializeFromDTO = (
-			DTO: unknown,
-		): Effect.Effect<PanelState, Error> =>
-			Effect.gen(function* () {
-				// Validate DTO structure
-				const ValidatedDTO = yield* ValidateDTO(DTO);
+			/**
+			 * Deserialize MountainDTO to PanelState
+			 */
+			const DeserializeFromDTO = (
+				DTO: unknown,
+			): Effect.Effect<PanelState, Error> =>
+				Effect.gen(function* () {
+					// Validate DTO structure
+					const ValidatedDTO = yield* ValidateDTO(DTO);
 
-				// Convert DTO to PanelState
-				const State: PanelState = {
-					Version: ValidatedDTO.Version,
-					Handle: ValidatedDTO.Handle,
-					ExtensionId: ValidatedDTO.ExtensionId,
-					ViewType: ValidatedDTO.ViewType,
-					Title: ValidatedDTO.Title,
-					Position: {
-						ViewColumn: ValidatedDTO.ViewColumn,
-						PreservedFocus: ValidatedDTO.PreservedFocus,
-					},
-					ViewState: {
-						Active: ValidatedDTO.IsActive,
-						Visible: ValidatedDTO.IsVisible,
-						ViewColumn: ValidatedDTO.ViewColumn,
-					},
-					Options: {
-						EnableScripts: ValidatedDTO.Options.EnableScripts,
-						RetainContextWhenHidden:
-							ValidatedDTO.Options.RetainContextWhenHidden,
-						EnableFindWidget: ValidatedDTO.Options.EnableFindWidget,
-						LocalResourceRoots: ValidatedDTO.Options
-							.LocalResourceRoots as
-							| readonly string[]
-							| undefined,
-						PortMapping: ValidatedDTO.Options.PortMapping,
-					},
-					IconPath: ValidatedDTO.IconPath,
-					Content: ValidatedDTO.Content,
-					Metadata: ValidatedDTO.Metadata,
-				};
+					// Convert DTO to PanelState
+					const State: PanelState = {
+						Version: ValidatedDTO.Version,
+						Handle: ValidatedDTO.Handle,
+						ExtensionId: ValidatedDTO.ExtensionId,
+						ViewType: ValidatedDTO.ViewType,
+						Title: ValidatedDTO.Title,
+						Position: {
+							ViewColumn: ValidatedDTO.ViewColumn,
+							PreservedFocus: ValidatedDTO.PreservedFocus,
+						},
+						ViewState: {
+							Active: ValidatedDTO.IsActive,
+							Visible: ValidatedDTO.IsVisible,
+							ViewColumn: ValidatedDTO.ViewColumn,
+						},
+						Options: {
+							EnableScripts: ValidatedDTO.Options.EnableScripts,
+							RetainContextWhenHidden:
+								ValidatedDTO.Options.RetainContextWhenHidden,
+							EnableFindWidget:
+								ValidatedDTO.Options.EnableFindWidget,
+							LocalResourceRoots: ValidatedDTO.Options
+								.LocalResourceRoots as
+								| readonly string[]
+								| undefined,
+							PortMapping: ValidatedDTO.Options.PortMapping,
+						},
+						IconPath: ValidatedDTO.IconPath,
+						Content: ValidatedDTO.Content,
+						Metadata: ValidatedDTO.Metadata,
+					};
 
-				return State;
-			});
+					return State;
+				});
 
-		return {
-			SerializeToDTO,
-			DeserializeFromDTO,
-			ValidateDTO,
-		};
-	}),
-}) {}
+			return {
+				SerializeToDTO,
+				DeserializeFromDTO,
+				ValidateDTO,
+			};
+		}),
+	},
+) {}

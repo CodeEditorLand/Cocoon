@@ -29,14 +29,14 @@
  * - All setters send IPC notifications to Mountain
  *
  * TODOs (Mountain Integration - HIGH):
- * - Mountain needs to implement IPC handlers for $setWebviewTitle
- * - Mountain needs to implement IPC handlers for $setWebviewIconPath
- * - Mountain needs to implement IPC handlers for $revealWebviewPanel
- * - Mountain needs to implement IPC handlers for $disposeWebview
+ * DEPENDENCY: $setWebviewTitle - Mountain IPC handler pending
+ * DEPENDENCY: $setWebviewIconPath - Mountain IPC handler pending
+ * DEPENDENCY: $revealWebviewPanel - Mountain IPC handler pending
+ * DEPENDENCY: $disposeWebview - Mountain IPC handler pending
  *
  * TODOs (Enhancements - LOW):
- * - Add persistence for webview panel state restoration
- * - Add webview panel serialization for session restore
+ * FUTURE: State persistence - restore panel state on restart
+ * FUTURE: Session serialization - save/restore for workbench state
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";

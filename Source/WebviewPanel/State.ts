@@ -37,21 +37,21 @@
  * - State versioning for future compatibility
  *
  * TODOs (State Migration - LOW):
- * - Add state migration system for schema changes
- * - Add backward compatibility for older state versions
- * - Add state upgrade/downgrade handlers
+ * FUTURE: Migration system - implement migrateState() for schema changes
+ * FUTURE: Backward compatibility - handle v1 state in v2 parser
+ * FUTURE: Upgrade/downgrade - support state version conversion
  *
  * TODOs (State Compression - LOW):
- * - Add state compression for large payloads
- * - Add selective state restoration (partial load)
- * - Add lazy state loading for performance
+ * FUTURE: Compression - use zlib for large panel states
+ * FUTURE: Partial load - restore only visible portion of state
+ * FUTURE: Lazy loading - defer heavy state until needed
  *
  * TODOs (State Security - LOW):
- * - Add state encryption for sensitive panel content
- * - Add state validation signatures
- * - Add state tampering detection
+ * FUTURE: Encryption - encrypt sensitive panel content
+ * FUTURE: Signatures - add HMAC for state validation
+ * FUTURE: Tamper detection - verify state before restoration
  *
- * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
+ * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
 import { Effect } from "effect";
@@ -72,7 +72,7 @@ export interface PanelPosition {
  */
 export interface PanelViewState {
 	readonly Active: boolean;
-	 readonly Visible: boolean;
+	readonly Visible: boolean;
 	readonly ViewColumn: number;
 }
 
@@ -109,7 +109,7 @@ export interface PanelState {
 	readonly Metadata?: {
 		readonly CreatedAt: number;
 		readonly LastRestoredAt?: number;
-		 readonly User?: string;
+		readonly User?: string;
 	};
 }
 
@@ -124,9 +124,7 @@ export interface StateManager {
 	readonly RestorePanelState: (
 		Handle: string,
 	) => Effect.Effect<PanelState | null, Error>;
-	readonly DeletePanelState: (
-		Handle: string,
-	) => Effect.Effect<void, Error>;
+	readonly DeletePanelState: (Handle: string) => Effect.Effect<void, Error>;
 	readonly GetAllPanelStates: (
 		ExtensionId: string,
 	) => Effect.Effect<readonly PanelState[], Error>;
@@ -143,236 +141,249 @@ const STATE_VERSION = 1;
  * @class StateService
  * @description Service for managing Webview panel state
  */
-export class StateService extends Effect.Service<StateService>()("State/WebviewPanel", {
-	effect: Effect.gen(function* () {
-		// In-memory cache of panel states (simplified implementation)
-		const StateCacheRef = yield* Effect.tryMap(
-			Effect.sync(() => new Map<string, PanelState>()),
-			(error) => new Error(`Failed to create state cache: ${error}`),
-		);
+export class StateService extends Effect.Service<StateService>()(
+	"State/WebviewPanel",
+	{
+		effect: Effect.gen(function* () {
+			// In-memory cache of panel states (simplified implementation)
+			const StateCacheRef = yield* Effect.tryMap(
+				Effect.sync(() => new Map<string, PanelState>()),
+				(error) => new Error(`Failed to create state cache: ${error}`),
+			);
 
-		/**
-		 * Validate a PanelState structure
-		 */
-		const ValidateState = (
-			State: unknown,
-		): Effect.Effect<PanelState, Error> =>
-			Effect.gen(function* () {
-				// Defensive: Check if state is an object
-				if (
-					typeof State !== "object" ||
-					State === null ||
-					Array.isArray(State)
-				) {
-					return yield* Effect.fail(
-						new Error("Panel state must be an object"),
-					);
-				}
+			/**
+			 * Validate a PanelState structure
+			 */
+			const ValidateState = (
+				State: unknown,
+			): Effect.Effect<PanelState, Error> =>
+				Effect.gen(function* () {
+					// Defensive: Check if state is an object
+					if (
+						typeof State !== "object" ||
+						State === null ||
+						Array.isArray(State)
+					) {
+						return yield* Effect.fail(
+							new Error("Panel state must be an object"),
+						);
+					}
 
-				const S = State as Record<string, unknown>;
+					const S = State as Record<string, unknown>;
 
-				// Check required fields
-				if (typeof S.Version !== "number") {
-					return yield* Effect.fail(
-						new Error("Panel state missing Version"),
-					);
-				}
+					// Check required fields
+					if (typeof S.Version !== "number") {
+						return yield* Effect.fail(
+							new Error("Panel state missing Version"),
+						);
+					}
 
-				if (typeof S.Handle !== "string") {
-					return yield* Effect.fail(
-						new Error("Panel state missing Handle"),
-					);
-				}
+					if (typeof S.Handle !== "string") {
+						return yield* Effect.fail(
+							new Error("Panel state missing Handle"),
+						);
+					}
 
-				if (typeof S.ExtensionId !== "string") {
-					return yield* Effect.fail(
-						new Error("Panel state missing ExtensionId"),
-					);
-				}
+					if (typeof S.ExtensionId !== "string") {
+						return yield* Effect.fail(
+							new Error("Panel state missing ExtensionId"),
+						);
+					}
 
-				if (typeof S.ViewType !== "string") {
-					return yield* Effect.fail(
-						new Error("Panel state missing ViewType"),
-					);
-				}
+					if (typeof S.ViewType !== "string") {
+						return yield* Effect.fail(
+							new Error("Panel state missing ViewType"),
+						);
+					}
 
-				if (typeof S.Title !== "string") {
-					return yield* Effect.fail(
-						new Error("Panel state missing Title"),
-					);
-				}
+					if (typeof S.Title !== "string") {
+						return yield* Effect.fail(
+							new Error("Panel state missing Title"),
+						);
+					}
 
-				// Validate nested objects
-				if (
-					typeof S.Position !== "object" ||
-					S.Position === null ||
-					Array.isArray(S.Position)
-				) {
-					return yield* Effect.fail(
-						new Error("Panel state has invalid Position"),
-					);
-				}
+					// Validate nested objects
+					if (
+						typeof S.Position !== "object" ||
+						S.Position === null ||
+						Array.isArray(S.Position)
+					) {
+						return yield* Effect.fail(
+							new Error("Panel state has invalid Position"),
+						);
+					}
 
-				const Position = S.Position as Record<string, unknown>;
-				if (typeof Position.ViewColumn !== "number") {
-					return yield* Effect.fail(
-						new Error("Panel state has invalid ViewColumn"),
-					);
-				}
+					const Position = S.Position as Record<string, unknown>;
+					if (typeof Position.ViewColumn !== "number") {
+						return yield* Effect.fail(
+							new Error("Panel state has invalid ViewColumn"),
+						);
+					}
 
-				if (typeof Position.PreservedFocus !== "boolean") {
-					return yield* Effect.fail(
-						new Error("Panel state has invalid PreservedFocus"),
-					);
-				}
+					if (typeof Position.PreservedFocus !== "boolean") {
+						return yield* Effect.fail(
+							new Error("Panel state has invalid PreservedFocus"),
+						);
+					}
 
-				// Validate ViewState
-				if (
-					typeof S.ViewState !== "object" ||
-					S.ViewState === null ||
-					Array.isArray(S.ViewState)
-				) {
-					return yield* Effect.fail(
-						new Error("Panel state has invalid ViewState"),
-					);
-				}
+					// Validate ViewState
+					if (
+						typeof S.ViewState !== "object" ||
+						S.ViewState === null ||
+						Array.isArray(S.ViewState)
+					) {
+						return yield* Effect.fail(
+							new Error("Panel state has invalid ViewState"),
+						);
+					}
 
-				const ViewState = S.ViewState as Record<string, unknown>;
-				if (
-					typeof ViewState.Active !== "boolean" ||
-					typeof ViewState.Visible !== "boolean" ||
-					typeof ViewState.ViewColumn !== "number"
-				) {
-					return yield* Effect.fail(
-						new Error("Panel state has invalid ViewState"),
-					);
-				}
+					const ViewState = S.ViewState as Record<string, unknown>;
+					if (
+						typeof ViewState.Active !== "boolean" ||
+						typeof ViewState.Visible !== "boolean" ||
+						typeof ViewState.ViewColumn !== "number"
+					) {
+						return yield* Effect.fail(
+							new Error("Panel state has invalid ViewState"),
+						);
+					}
 
-				return S as PanelState;
-			});
+					return S as PanelState;
+				});
 
-		/**
-		 * Create a PanelState object
-		 */
-		const CreatePanelState = (Params: {
-			readonly Handle: string;
-			readonly ExtensionId: string;
-			readonly ViewType: string;
-			readonly Title: string;
-			readonly Position: PanelPosition;
-			readonly ViewState: PanelViewState;
-			readonly Options: PanelOptions;
-			readonly IconPath?: string;
-			readonly Content?: {
-				readonly Html?: string;
-				readonly Uris?: readonly string[];
+			/**
+			 * Create a PanelState object
+			 */
+			const CreatePanelState = (Params: {
+				readonly Handle: string;
+				readonly ExtensionId: string;
+				readonly ViewType: string;
+				readonly Title: string;
+				readonly Position: PanelPosition;
+				readonly ViewState: PanelViewState;
+				readonly Options: PanelOptions;
+				readonly IconPath?: string;
+				readonly Content?: {
+					readonly Html?: string;
+					readonly Uris?: readonly string[];
+				};
+			}) => {
+				const State: PanelState = {
+					Version: STATE_VERSION,
+					Handle: Params.Handle,
+					ExtensionId: Params.ExtensionId,
+					ViewType: Params.ViewType,
+					Title: Params.Title,
+					Position: Params.Position,
+					ViewState: Params.ViewState,
+					Options: Params.Options,
+					IconPath: Params.IconPath,
+					Content: Params.Content,
+					Metadata: {
+						CreatedAt: Date.now(),
+					},
+				};
+				return State;
 			};
-		}) => {
-			const State: PanelState = {
-				Version: STATE_VERSION,
-				Handle: Params.Handle,
-				ExtensionId: Params.ExtensionId,
-				ViewType: Params.ViewType,
-				Title: Params.Title,
-				Position: Params.Position,
-				ViewState: Params.ViewState,
-				Options: Params.Options,
-				IconPath: Params.IconPath,
-				Content: Params.Content,
-				Metadata: {
-					CreatedAt: Date.now(),
-				},
+
+			/**
+			 * Save panel state to cache
+			 */
+			const SavePanelState = (
+				PanelStateData: PanelState,
+			): Effect.Effect<void, Error> =>
+				Effect.gen(function* () {
+					yield* Effect.tryMap(
+						Effect.sync(() => {
+							StateCacheRef.current.set(
+								PanelStateData.Handle,
+								PanelStateData,
+							);
+						}),
+						(error) =>
+							new Error(`Failed to save panel state: ${error}`),
+					);
+
+					// TODO: Persist to Mountain backend via IPC
+					// TODO: Implement async persistence with error handling
+					// TODO: Add retry logic for failed persistence
+				});
+
+			/**
+			 * Restore panel state from cache
+			 */
+			const RestorePanelState = (
+				Handle: string,
+			): Effect.Effect<PanelState | null, Error> =>
+				Effect.gen(function* () {
+					const State = StateCacheRef.current.get(Handle);
+
+					if (!State) {
+						return null;
+					}
+
+					// Validate loaded state
+					const ValidatedState = yield* ValidateState(State);
+
+					return ValidatedState;
+				});
+
+			/**
+			 * Delete panel state
+			 */
+			const DeletePanelState = (
+				Handle: string,
+			): Effect.Effect<void, Error> =>
+				Effect.gen(function* () {
+					yield* Effect.tryMap(
+						Effect.sync(() => {
+							StateCacheRef.current.delete(Handle);
+						}),
+						(error) =>
+							new Error(`Failed to delete panel state: ${error}`),
+					);
+
+					// TODO: Delete from Mountain backend via IPC
+				});
+
+			/**
+			 * Get all panel states for an extension
+			 */
+			const GetAllPanelStates = (
+				ExtensionId: string,
+			): Effect.Effect<readonly PanelState[], Error> =>
+				Effect.gen(function* () {
+					const AllStates = Array.from(
+						StateCacheRef.current.values(),
+					);
+					return AllStates.filter(
+						(State) => State.ExtensionId === ExtensionId,
+					);
+				});
+
+			/**
+			 * Clear all panel states
+			 */
+			const ClearAllPanelStates = (): Effect.Effect<void, Error> =>
+				Effect.gen(function* () {
+					yield* Effect.tryMap(
+						Effect.sync(() => {
+							StateCacheRef.current.clear();
+						}),
+						(error) =>
+							new Error(`Failed to clear panel states: ${error}`),
+					);
+
+					// TODO: Clear from Mountain backend via IPC
+				});
+
+			return {
+				SavePanelState,
+				RestorePanelState,
+				DeletePanelState,
+				GetAllPanelStates,
+				ClearAllPanelStates,
 			};
-			return State;
-		};
-
-		/**
-		 * Save panel state to cache
-		 */
-		const SavePanelState = (
-			PanelStateData: PanelState,
-		): Effect.Effect<void, Error> =>
-			Effect.gen(function* () {
-				yield* Effect.tryMap(
-					Effect.sync(() => {
-						StateCacheRef.current.set(PanelStateData.Handle, PanelStateData);
-					}),
-					(error) => new Error(`Failed to save panel state: ${error}`),
-				);
-
-				// TODO: Persist to Mountain backend via IPC
-				// TODO: Implement async persistence with error handling
-				// TODO: Add retry logic for failed persistence
-			});
-
-		/**
-		 * Restore panel state from cache
-		 */
-		const RestorePanelState = (
-			Handle: string,
-		): Effect.Effect<PanelState | null, Error> =>
-			Effect.gen(function* () {
-				const State = StateCacheRef.current.get(Handle);
-
-				if (!State) {
-					return null;
-				}
-
-				// Validate loaded state
-				const ValidatedState = yield* ValidateState(State);
-
-				return ValidatedState;
-			});
-
-		/**
-		 * Delete panel state
-		 */
-		const DeletePanelState = (
-			Handle: string,
-		): Effect.Effect<void, Error> =>
-			Effect.gen(function* () {
-				yield* Effect.tryMap(
-					Effect.sync(() => {
-						StateCacheRef.current.delete(Handle);
-					}),
-					(error) => new Error(`Failed to delete panel state: ${error}`),
-				);
-
-				// TODO: Delete from Mountain backend via IPC
-			});
-
-		/**
-		 * Get all panel states for an extension
-		 */
-		const GetAllPanelStates = (
-			ExtensionId: string,
-		): Effect.Effect<readonly PanelState[], Error> =>
-			Effect.gen(function* () {
-				const AllStates = Array.from(StateCacheRef.current.values());
-				return AllStates.filter((State) => State.ExtensionId === ExtensionId);
-			});
-
-		/**
-		 * Clear all panel states
-		 */
-		const ClearAllPanelStates = (): Effect.Effect<void, Error> =>
-			Effect.gen(function* () {
-				yield* Effect.tryMap(
-					Effect.sync(() => {
-						StateCacheRef.current.clear();
-					}),
-					(error) => new Error(`Failed to clear panel states: ${error}`),
-				);
-
-				// TODO: Clear from Mountain backend via IPC
-			});
-
-		return {
-			SavePanelState,
-			RestorePanelState,
-			DeletePanelState,
-			GetAllPanelStates,
-			ClearAllPanelStates,
-		};
-	}),
-}) {}
+		}),
+	},
+) {}

@@ -71,19 +71,19 @@
  * - Integrity: Version numbers consistent with data state
  *
  * TODOs (Type Safety - MEDIUM):
- * - Generate TypeScript types from Rust DTO schema for compile-time safety
- * - Add zod or io-ts runtime type validation for comprehensive type checking
- * - Implement automatic schema migration for version changes
+ * DEPENDENCY: Type generation - depends on Mountain DTO schema
+ * FUTURE: Runtime validation - use zod for type guards
+ * FUTURE: Schema migration - implement migrateDTO() for versions
  *
  * TODOs (Performance - LOW):
- * - Cache conversion results for frequently converted objects
- * - Optimize serialization for large document payloads
- * - Add incremental conversion for partial state updates
+ * PERFORMANCE: Caching - cache conversions with Map by input hash
+ * PERFORMANCE: Large payloads - use streaming serialization
+ * PERFORMANCE: Incremental - convert only changed fields
  *
  * TODOs (Error Handling - MEDIUM):
- * - Add detailed error context for debugging conversion failures
- * - Implement retry logic for transient serialization errors
- * - Add telemetry for monitoring conversion performance and failures
+ * FUTURE: Error context - add conversion chain to error messages
+ * FUTURE: Retry logic - implement exponential backoff
+ * FUTURE: Telemetry - track conversion metrics
  */
 
 import { Effect } from "effect";

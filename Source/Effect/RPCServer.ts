@@ -5,7 +5,8 @@
  * Manages the gRPC server for Mountain ← Cocoon communication.
  */
 
-import { Context, Effect, Layer, Schedule, SubscriptionRef, Ref } from "effect";
+import { Context, Effect, Layer, Ref, Schedule, SubscriptionRef } from "effect";
+
 import { TelemetryTag } from "./Telemetry.js";
 
 // ============================================================================
@@ -15,7 +16,12 @@ import { TelemetryTag } from "./Telemetry.js";
 export type ServerState =
 	| { readonly _tag: "Idle" }
 	| { readonly _tag: "Starting"; readonly startTime: number }
-	| { readonly _tag: "Running"; readonly address: string; readonly port: number; readonly startedAt: number }
+	| {
+			readonly _tag: "Running";
+			readonly address: string;
+			readonly port: number;
+			readonly startedAt: number;
+	  }
 	| { readonly _tag: "Stopping" }
 	| { readonly _tag: "Stopped" }
 	| { readonly _tag: "Error"; readonly error: string };
@@ -96,13 +102,17 @@ export interface RPCServerService {
 	readonly stateChanges: Effect.Effect<ReadonlyArray<ServerState>, never>;
 
 	/** Start the gRPC server */
-	readonly start: (config?: ServerConfig) => Effect.Effect<void, ServerStartError>;
+	readonly start: (
+		config?: ServerConfig,
+	) => Effect.Effect<void, ServerStartError>;
 
 	/** Stop the gRPC server */
 	readonly stop: Effect.Effect<void, ServerStopError | ServerNotRunningError>;
 
 	/** Handle an RPC request */
-	readonly handleRequest: (request: RPCRequest) => Effect.Effect<RPCResponse, never>;
+	readonly handleRequest: (
+		request: RPCRequest,
+	) => Effect.Effect<RPCResponse, never>;
 
 	/** Get server metrics */
 	readonly getMetrics: Effect.Effect<ServerMetrics, ServerNotRunningError>;
@@ -184,7 +194,10 @@ export const RPCServerLive = Layer.effect(
 					startTime: startTimeMs,
 				});
 
-				telemetry.log("info", `[RPCServer] Starting server on ${currentConfig.host}:${currentConfig.port}...`);
+				telemetry.log(
+					"info",
+					`[RPCServer] Starting server on ${currentConfig.host}:${currentConfig.port}...`,
+				);
 
 				// Simulate server startup (in production, this would create gRPC server)
 				yield* Effect.sleep("50 millis");
@@ -218,10 +231,16 @@ export const RPCServerLive = Layer.effect(
 						error: String(error),
 					});
 
-					telemetry.log("error", `[RPCServer] Failed to start server: ${String(error)}`);
+					telemetry.log(
+						"error",
+						`[RPCServer] Failed to start server: ${String(error)}`,
+					);
 
 					return yield* Effect.fail(
-						new ServerStartError("Failed to start gRPC server", error),
+						new ServerStartError(
+							"Failed to start gRPC server",
+							error,
+						),
 					);
 				}
 			});
@@ -289,7 +308,9 @@ export const RPCServerLive = Layer.effect(
 				if (latencies.length > 100) {
 					latencies.shift();
 				}
-				metrics.averageLatency = latencies.reduce((sum, lat) => sum + lat, 0) / latencies.length;
+				metrics.averageLatency =
+					latencies.reduce((sum, lat) => sum + lat, 0) /
+					latencies.length;
 
 				telemetry.log(
 					"debug",
@@ -343,7 +364,10 @@ export const RPCServerLive = Layer.effect(
 
 		return {
 			state: stateRef.get,
-			stateChanges: Effect.map(stateRef.get, (state) => [state] as readonly ServerState[]),
+			stateChanges: Effect.map(
+				stateRef.get,
+				(state) => [state] as readonly ServerState[],
+			),
 			start,
 			stop,
 			handleRequest,

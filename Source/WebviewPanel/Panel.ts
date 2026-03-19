@@ -37,23 +37,23 @@
  * - WebviewImplementation handles embedding webview instance
  *
  * TODOs (Webview Debugging - LOW):
- * - Add DevTools integration for debugging panel content
- * - Add console capture from Webview context
- * - Add performance monitoring (render times, memory usage)
- * - Add Webview inspector for DOM examination
+ * FUTURE: DevTools - enable via webview.options.enableDevTools
+ * FUTURE: Console capture - intercept via postMessage events
+ * FUTURE: Performance monitoring - use performance.now() for timing
+ * FUTURE: Inspector - create WebviewInspectorTreeProvider
  *
  * TODOs (Performance Monitoring - LOW):
- * - Track initial panel creation time
- * - Track content rendering performance
- * - Monitor memory usage for each panel
- * - Track message round-trip latency
+ * PERFORMANCE: Creation time - track panelOptions.preserveFocus
+ * PERFORMANCE: Render time - measure document.onload timing
+ * PERFORMANCE: Memory - use performance.memory if available
+ * PERFORMANCE: Latency - track message send/receive delta
  *
  * TODOs (Webview Permissions - LOW):
- * - Implement permission request system for Webview
- * - Permission dialogs for sensitive operations
- * - Permission persistence across sessions
+ * FUTURE: Permission system - implement PermissionManager
+ * FUTURE: Permission dialogs - showQuickPick for user consent
+ * FUTURE: Persistence - store in ExtensionContext.globalState
  *
- * Reference: TODOs mention WebviewPanel as HIGH priority for Mountain integration
+ * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
 import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
@@ -62,8 +62,8 @@ import type {
 	Event,
 	Uri,
 	ViewColumn,
-	Webview,
 	WebviewPanel as VSCodeWebviewPanel,
+	Webview,
 	WebviewPanelOnDidChangeViewStateEvent,
 	WebviewPanelOptions,
 } from "vscode";
@@ -167,13 +167,13 @@ export class Panel implements VSCodeWebviewPanel {
 	 */
 	static Create(Options: PanelOptions): Effect.Effect<Panel, never> {
 		return Effect.sync(() => {
-			const ViewColumnValue =
-				Options.ShowOptions.ViewColumn ?? 1;
+			const ViewColumnValue = Options.ShowOptions.ViewColumn ?? 1;
 
 			// Create a minimal IPC service mock for initialization
 			// In production, this would be injected via dependency injection
 			const mockIPC: any = {
-				SendNotification: (channel: string, params: unknown[]) => Effect.void,
+				SendNotification: (channel: string, params: unknown[]) =>
+					Effect.void,
 			};
 
 			const PanelInstance = new Panel(
@@ -207,7 +207,10 @@ export class Panel implements VSCodeWebviewPanel {
 		if (this.IsDisposed || this._title === Value) return;
 		this._title = Value;
 		Effect.runFork(
-			this.ipcService.SendNotification("$setWebviewTitle", [this.handle, Value]),
+			this.ipcService.SendNotification("$setWebviewTitle", [
+				this.handle,
+				Value,
+			]),
 		);
 	}
 	get iconPath(): Uri | { readonly light: Uri; readonly dark: Uri } {

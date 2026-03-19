@@ -24,18 +24,18 @@ how VSCode manages extensions and provides the `vscode` API.
 ```typescript
 // VSCode pattern
 class ExtensionHostService {
-    async activateExtension(extension: IExtensionDescription): Promise<void> {
-        // Load extension module
-        // Create extension context
-        // Call extension's activate function
-        // Handle activation events
-    }
+	async activateExtension(extension: IExtensionDescription): Promise<void> {
+		// Load extension module
+		// Create extension context
+		// Call extension's activate function
+		// Handle activation events
+	}
 
-    async deactivateExtension(extensionId: string): Promise<void> {
-        // Call extension's deactivate function
-        // Clean up resources
-        // Remove from active extensions
-    }
+	async deactivateExtension(extensionId: string): Promise<void> {
+		// Call extension's deactivate function
+		// Clean up resources
+		// Remove from active extensions
+	}
 }
 ```
 
@@ -56,22 +56,22 @@ const instantiationService = new InstantiationService(services);
 ```typescript
 // VSCode intercepts require('vscode') calls
 class ExtHostRequireInterceptor {
-    intercept(moduleId: string): any {
-        if (moduleId === 'vscode') {
-            return this.createVSCodeAPI();
-        }
-        return originalRequire(moduleId);
-    }
+	intercept(moduleId: string): any {
+		if (moduleId === "vscode") {
+			return this.createVSCodeAPI();
+		}
+		return originalRequire(moduleId);
+	}
 
-    private createVSCodeAPI(): any {
-        // Construct vscode namespace with all services
-        return {
-            commands: this.commandsService,
-            window: this.windowService,
-            workspace: this.workspaceService,
-            // ... more APIs
-        };
-    }
+	private createVSCodeAPI(): any {
+		// Construct vscode namespace with all services
+		return {
+			commands: this.commandsService,
+			window: this.windowService,
+			workspace: this.workspaceService,
+			// ... more APIs
+		};
+	}
 }
 ```
 
@@ -167,10 +167,10 @@ class ExtHostRequireInterceptor {
 ```typescript
 // gRPC communication with Mountain
 class IPCService {
-    async sendRequest(method: string, params: any[]): Promise<any> {
-        // Send gRPC request to Mountain
-        // Handle response and errors
-    }
+	async sendRequest(method: string, params: any[]): Promise<any> {
+		// Send gRPC request to Mountain
+		// Handle response and errors
+	}
 }
 ```
 
@@ -179,10 +179,10 @@ class IPCService {
 ```typescript
 // Custom IPC protocol
 class MainThreadExtensionService {
-    async $activateExtension(extensionId: string): Promise<void> {
-        // Send IPC message to main process
-        // Handle response and errors
-    }
+	async $activateExtension(extensionId: string): Promise<void> {
+		// Send IPC message to main process
+		// Handle response and errors
+	}
 }
 ```
 

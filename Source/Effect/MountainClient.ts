@@ -5,7 +5,8 @@
  * Manages the gRPC client for Cocoon → Mountain communication.
  */
 
-import { Context, Effect, Layer, Schedule, SubscriptionRef, Ref } from "effect";
+import { Context, Effect, Layer, Ref, Schedule, SubscriptionRef } from "effect";
+
 import { TelemetryTag } from "./Telemetry.js";
 
 // ============================================================================
@@ -15,7 +16,11 @@ import { TelemetryTag } from "./Telemetry.js";
 export type ConnectionState =
 	| { readonly _tag: "Disconnected" }
 	| { readonly _tag: "Connecting"; readonly attempt: number }
-	| { readonly _tag: "Connected"; readonly serverVersion: string; readonly connectedAt: number }
+	| {
+			readonly _tag: "Connected";
+			readonly serverVersion: string;
+			readonly connectedAt: number;
+	  }
 	| { readonly _tag: "Disconnecting" }
 	| { readonly _tag: "Error"; readonly error: string };
 
@@ -88,10 +93,15 @@ export interface MountainClientService {
 	readonly connectionState: Effect.Effect<ConnectionState, never>;
 
 	/** Stream of connection state changes */
-	readonly connectionChanges: Effect.Effect<ReadonlyArray<ConnectionState>, never>;
+	readonly connectionChanges: Effect.Effect<
+		ReadonlyArray<ConnectionState>,
+		never
+	>;
 
 	/** Connect to Mountain backend */
-	readonly connect: (config?: ClientConfig) => Effect.Effect<void, ConnectionError>;
+	readonly connect: (
+		config?: ClientConfig,
+	) => Effect.Effect<void, ConnectionError>;
 
 	/** Disconnect from Mountain backend */
 	readonly disconnect: Effect.Effect<void, DisconnectionError>;
@@ -166,7 +176,10 @@ export const MountainClientLive = Layer.effect(
 				// Check if already connected
 				const currentState = yield* stateRef.get;
 				if (currentState._tag === "Connected") {
-					telemetry.log("warn", "[MountainClient] Already connected to Mountain");
+					telemetry.log(
+						"warn",
+						"[MountainClient] Already connected to Mountain",
+					);
 					return;
 				}
 
@@ -196,10 +209,16 @@ export const MountainClientLive = Layer.effect(
 				let connected = false;
 				let lastError: unknown;
 
-				for (let attempt = 1; attempt <= (currentConfig.maxRetries ?? 3); attempt++) {
+				for (
+					let attempt = 1;
+					attempt <= (currentConfig.maxRetries ?? 3);
+					attempt++
+				) {
 					try {
 						// Simulate connection delay
-						yield* Effect.sleep(`${currentConfig.retryDelay ?? 1000 / (attempt * 2)} millis`);
+						yield* Effect.sleep(
+							`${currentConfig.retryDelay ?? 1000 / (attempt * 2)} millis`,
+						);
 
 						// Simulate successful connection
 						connected = true;
@@ -228,10 +247,16 @@ export const MountainClientLive = Layer.effect(
 						error: String(lastError),
 					});
 
-					telemetry.log("error", `[MountainClient] Failed to connect to Mountain: ${String(lastError)}`);
+					telemetry.log(
+						"error",
+						`[MountainClient] Failed to connect to Mountain: ${String(lastError)}`,
+					);
 
 					return yield* Effect.fail(
-						new ConnectionError("Failed to connect to Mountain backend", lastError),
+						new ConnectionError(
+							"Failed to connect to Mountain backend",
+							lastError,
+						),
 					);
 				}
 
@@ -242,7 +267,10 @@ export const MountainClientLive = Layer.effect(
 					connectedAt: Date.now(),
 				});
 
-				telemetry.log("info", `[MountainClient] Connected to Mountain (v${serverVersion})`);
+				telemetry.log(
+					"info",
+					`[MountainClient] Connected to Mountain (v${serverVersion})`,
+				);
 			});
 
 		// Atom: Disconnect from Mountain
@@ -251,7 +279,10 @@ export const MountainClientLive = Layer.effect(
 
 			// Check if connected
 			if (currentState._tag !== "Connected") {
-				telemetry.log("warn", "[MountainClient] Not connected to Mountain");
+				telemetry.log(
+					"warn",
+					"[MountainClient] Not connected to Mountain",
+				);
 				return;
 			}
 
@@ -260,7 +291,10 @@ export const MountainClientLive = Layer.effect(
 				_tag: "Disconnecting",
 			});
 
-			telemetry.log("info", "[MountainClient] Disconnecting from Mountain...");
+			telemetry.log(
+				"info",
+				"[MountainClient] Disconnecting from Mountain...",
+			);
 
 			// Simulate disconnection (in production, this would close gRPC client)
 			yield* Effect.sleep("25 millis");
@@ -280,7 +314,10 @@ export const MountainClientLive = Layer.effect(
 			};
 			latencies.length = 0;
 
-			telemetry.log("info", "[MountainClient] Disconnected from Mountain");
+			telemetry.log(
+				"info",
+				"[MountainClient] Disconnected from Mountain",
+			);
 		}).pipe(
 			Effect.catchAll((error) =>
 				Effect.gen(function* () {
@@ -289,15 +326,21 @@ export const MountainClientLive = Layer.effect(
 						error: String(error),
 					});
 
-					telemetry.log("error", `[MountainClient] Failed to disconnect: ${String(error)}`);
+					telemetry.log(
+						"error",
+						`[MountainClient] Failed to disconnect: ${String(error)}`,
+					);
 
-					return yield* Effect.fail(new DisconnectionError("Failed to disconnect", error));
+					return yield* Effect.fail(
+						new DisconnectionError("Failed to disconnect", error),
+					);
 				}),
 			),
 		);
 
 		// Atom: Execute RPC method
-		const rpc = <T>(method: string) =>
+		const rpc =
+			<T>(method: string) =>
 			(params?: Record<string, unknown>) =>
 				Effect.gen(function* () {
 					const requestStartTime = Date.now();
@@ -334,7 +377,8 @@ export const MountainClientLive = Layer.effect(
 							latencies.shift();
 						}
 						metrics.averageLatency =
-							latencies.reduce((sum, lat) => sum + lat, 0) / latencies.length;
+							latencies.reduce((sum, lat) => sum + lat, 0) /
+							latencies.length;
 
 						metrics.lastRequestTime = Date.now();
 						metrics.successfulRequests++;
@@ -362,7 +406,11 @@ export const MountainClientLive = Layer.effect(
 						);
 
 						return yield* Effect.fail(
-							new RPCError(method, `RPC call failed: ${String(error)}`, error),
+							new RPCError(
+								method,
+								`RPC call failed: ${String(error)}`,
+								error,
+							),
 						);
 					}
 				});
@@ -407,14 +455,19 @@ export const MountainClientLive = Layer.effect(
 // ============================================================================
 
 export const makeMockMountainClient = (): MountainClientService => {
-	const mockState: ConnectionState = { _tag: "Connected", serverVersion: "1.0.0", connectedAt: Date.now() };
+	const mockState: ConnectionState = {
+		_tag: "Connected",
+		serverVersion: "1.0.0",
+		connectedAt: Date.now(),
+	};
 
 	return {
 		connectionState: Effect.succeed(mockState),
 		connectionChanges: Effect.succeed([mockState]),
 		connect: () => Effect.succeed(undefined),
 		disconnect: () => Effect.succeed(undefined),
-		rpc: <T>(method: string) =>
+		rpc:
+			<T>(method: string) =>
 			(params?: Record<string, unknown>) =>
 				Effect.succeed({
 					success: true,

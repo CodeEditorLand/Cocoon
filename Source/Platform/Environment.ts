@@ -20,16 +20,16 @@
  * - **Output**: References VSCode environment handling from Dependency/Microsoft/Dependency/Editor/src/vs/base/common/platform.ts
  *
  * **TODOs:**
- * - TODO: Implement .env file loading for development environments
- * - TODO: Add environment variable validation schemas with runtime checks
- * - TODO: Implement variable expansion (${VAR} syntax)
- * - TODO: Add environment variable change monitoring (fs.watch for .env files)
- * - TODO: Mountain: Define EnvironmentInfo DTO for environment state transfer
- * - TODO: Wind: Create Effect-TS Environment service with dependency injection
- * - TODO: Security: Mask sensitive values (passwords, tokens, keys) in logs
- * - TODO: Security: Add environment variable access control and permissions
- * - TODO: Performance: Implement LRU cache for frequently accessed variables
- * - TODO: Testing: Add comprehensive unit tests for environment variable parsing
+ * FUTURE: .env file loading - use dotenv package or custom parser
+ * FUTURE: Validation schemas - implement with zod for type-safe validation
+ * FUTURE: Variable expansion - implement ${VAR} and ${VAR:-default} syntax
+ * FUTURE: File monitoring - use fs.watch for .env file changes
+ * DEPENDENCY: Mountain EnvironmentInfo DTO - pending Mountain backend
+ * DEPENDENCY: Wind Effect-TS Environment service - integrate with Wind
+ * SECURITY: Mask in logs - filter PASSWORD, TOKEN, SECRET, KEY values
+ * SECURITY: Access control - implement per-variable permission system
+ * PERFORMANCE: Use Map with LRU cache for frequently accessed vars
+ * TESTING: Add jest unit tests for env parsing edge cases
  */
 
 import { Effect, Option } from "effect";

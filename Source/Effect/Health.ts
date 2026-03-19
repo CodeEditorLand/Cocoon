@@ -5,7 +5,8 @@
  * Replaces Bootstrap Stage6 - HealthCheck with Effect-based monitoring.
  */
 
-import { Effect, Context, Layer, Schedule } from "effect";
+import { Context, Effect, Layer, Schedule } from "effect";
+
 import { TelemetryTag } from "./Telemetry.js";
 
 // ============================================================================
@@ -36,7 +37,9 @@ export interface SystemHealth {
 }
 
 export interface HealthService {
-	readonly checkService: (serviceName: string) => Effect.Effect<ServiceHealth, never>;
+	readonly checkService: (
+		serviceName: string,
+	) => Effect.Effect<ServiceHealth, never>;
 	readonly checkAllServices: () => Effect.Effect<SystemHealth, never>;
 	readonly getOverallStatus: () => Effect.Effect<HealthStatus, never>;
 	readonly monitorService: (
@@ -95,26 +98,28 @@ const makeHealthChecker = (): HealthService => ({
 					// Check telemetry by logging a metric
 					const telemetryService = yield* TelemetryTag;
 					const telemetryTime = Date.now() - startTime;
-					return yield* telemetryService.log("info", "[Health] Telemetry health check").pipe(
-						Effect.map(() =>
-							createServiceHealth(
-								"Telemetry",
-								"healthy",
-								"Telemetry service available",
-								telemetryTime,
-							)
-						),
-						Effect.catchAll(() =>
-							Effect.succeed(
+					return yield* telemetryService
+						.log("info", "[Health] Telemetry health check")
+						.pipe(
+							Effect.map(() =>
 								createServiceHealth(
 									"Telemetry",
-									"unhealthy",
-									"Telemetry service error",
+									"healthy",
+									"Telemetry service available",
 									telemetryTime,
-								)
-							)
-						)
-					);
+								),
+							),
+							Effect.catchAll(() =>
+								Effect.succeed(
+									createServiceHealth(
+										"Telemetry",
+										"unhealthy",
+										"Telemetry service error",
+										telemetryTime,
+									),
+								),
+							),
+						);
 
 				case "grpc":
 					// Check gRPC service availability
@@ -127,7 +132,7 @@ const makeHealthChecker = (): HealthService => ({
 							"healthy",
 							"gRPC service available",
 							grpcTime,
-						)
+						),
 					);
 
 				case "extension":
@@ -139,7 +144,7 @@ const makeHealthChecker = (): HealthService => ({
 							"healthy",
 							"Extension service available",
 							extensionTime,
-						)
+						),
 					);
 
 				default:
@@ -157,18 +162,30 @@ const makeHealthChecker = (): HealthService => ({
 	checkAllServices: () =>
 		Effect.gen(function* () {
 			const telemetry = yield* TelemetryTag;
-			const services = ["environment", "telemetry", "grpc", "extension"] as const;
+			const services = [
+				"environment",
+				"telemetry",
+				"grpc",
+				"extension",
+			] as const;
 			const healthChecker = makeHealthChecker();
 
-			telemetry.log("info", "[Health] Running health checks for all services...");
+			telemetry.log(
+				"info",
+				"[Health] Running health checks for all services...",
+			);
 
 			const healthResults = yield* Effect.all(
 				services.map((service) => healthChecker.checkService(service)),
 			);
 
 			// Determine overall status
-			const unhealthyCount = healthResults.filter((h) => h.status === "unhealthy").length;
-			const degradedCount = healthResults.filter((h) => h.status === "degraded").length;
+			const unhealthyCount = healthResults.filter(
+				(h) => h.status === "unhealthy",
+			).length;
+			const degradedCount = healthResults.filter(
+				(h) => h.status === "degraded",
+			).length;
 
 			let overallStatus: HealthStatus = "healthy";
 			if (unhealthyCount > 0) {
@@ -200,9 +217,9 @@ const makeHealthChecker = (): HealthService => ({
 	monitorService: (serviceName: string, intervalMs: number) =>
 		Effect.gen(function* () {
 			// Periodic health check using Effect.repeat
-			yield* makeHealthChecker().checkService(serviceName).pipe(
-				Effect.repeat(Schedule.spaced(`${intervalMs} millis`)),
-			);
+			yield* makeHealthChecker()
+				.checkService(serviceName)
+				.pipe(Effect.repeat(Schedule.spaced(`${intervalMs} millis`)));
 		}),
 });
 
@@ -219,7 +236,9 @@ export const HealthLive = Layer.effect(
 // MOCK FOR TESTING
 // ============================================================================
 
-export const makeMockHealth = (overrides?: Partial<Record<string, HealthStatus>>): HealthService => ({
+export const makeMockHealth = (
+	overrides?: Partial<Record<string, HealthStatus>>,
+): HealthService => ({
 	checkService: (serviceName: string) =>
 		Effect.gen(function* () {
 			const defaultStatus: HealthStatus = "healthy";
@@ -227,7 +246,9 @@ export const makeMockHealth = (overrides?: Partial<Record<string, HealthStatus>>
 			return createServiceHealth(
 				serviceName,
 				status,
-				status === "healthy" ? "Mock service healthy" : "Mock service unhealthy",
+				status === "healthy"
+					? "Mock service healthy"
+					: "Mock service unhealthy",
 				0,
 			);
 		}),
@@ -262,4 +283,7 @@ export const makeMockHealth = (overrides?: Partial<Record<string, HealthStatus>>
 	monitorService: () => Effect.void,
 });
 
-export const HealthMock = Layer.effect(HealthTag, Effect.succeed(makeMockHealth()));
+export const HealthMock = Layer.effect(
+	HealthTag,
+	Effect.succeed(makeMockHealth()),
+);

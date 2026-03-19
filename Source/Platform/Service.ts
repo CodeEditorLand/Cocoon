@@ -22,16 +22,16 @@
  * - **Output**: References VSCode service layer patterns
  *
  * **TODOs:**
- * - TODO: Implement Platform service registration in Wind's Effect context
- * - TODO: Add platform-specific health checks and monitoring
- * - TODO: Implement observability (telemetry, metrics, distributed tracing)
- * - TODO: Add hot-reload support for platform detection changes
- * - TODO: Wind: Create PlatformServiceTag for Effect-TS dependency injection
- * - TODO: Wind: Initialize PlatformService in main Effect application
- * - TODO: Mountain: Add GRIPC endpoints for platform operations
- * - TODO: Testing: Add comprehensive integration tests for service layer
- * - TODO: Performance: Add adaptive caching based on usage patterns
- * - TODO: Documentation: Generate service API documentation
+ * DEPENDENCY: Wind Effect context registration - integrate with Wind layer
+ * FUTURE: Health checks - add /health endpoint with platform status
+ * FUTURE: Observability - integrate with OpenTelemetry for tracing
+ * FUTURE: Hot-reload - use fs.watch to detect platform info changes
+ * DEPENDENCY: Wind PlatformServiceTag - create in Wind services
+ * DEPENDENCY: Wind PlatformService init - call in Wind main()
+ * DEPENDENCY: Mountain GRPC endpoints - pending Mountain backend
+ * TESTING: Integration tests - add vitest integration test suite
+ * PERFORMANCE: Adaptive cache - track access patterns for cache size
+ * DOCUMENTATION: API docs - generate with TypeDoc
  */
 
 import { Array, Context, Effect, HashMap, Layer, Option } from "effect";

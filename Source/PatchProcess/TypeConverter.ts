@@ -325,7 +325,7 @@ export const ValidationStateToDTO = (
 		TotalValidations: FileAccessTotal + NetworkAccessTotal,
 		FailedValidations: State.ViolationCount,
 		LastValidationTime: Date.now(),
-		AverageValidationTime: 0, // TODO: Implement tracking
+		AverageValidationTime: 0, // FUTURE: Track running average of validation times
 		FileAccessCount: FileAccessTotal,
 		NetworkAccessCount: NetworkAccessTotal,
 		ChildProcessCount: State.ChildProcessCount,

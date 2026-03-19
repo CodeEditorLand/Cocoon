@@ -18,10 +18,10 @@ export * from "./State.js";
 export * from "./Dialog.js";
 
 // Service interfaces and layers will be added as modules are completed
-// QuickInput operations - TODO
-// FileDialog operations - TODO
-// StatusBar operations - TODO
-// OutputChannel operations - TODO
-// WebviewPanel operations - TODO
-// Progress operations - TODO
-// TextDocument operations - TODO
+// QuickInput operations - Future: implement Source/Services/Window/QuickInput.ts
+// FileDialog operations - Future: implement Source/Services/Window/FileDialog.ts
+// StatusBar operations - Future: implement Source/Services/Window/StatusBar.ts
+// OutputChannel operations - Future: integrated in main Window service
+// WebviewPanel operations - Future: implement in WebviewPanel module
+// Progress operations - Future: implement Source/Services/Window/Progress.ts
+// TextDocument operations - Future: integrate with DocumentService

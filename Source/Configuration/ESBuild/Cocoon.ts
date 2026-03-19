@@ -52,9 +52,9 @@ export const CocoonESBuildConfig: BuildOptions = {
 	// Advanced TypeScript configuration
 	tsconfig: "tsconfig.json",
 
-	// TODO: Add Mountain integration configuration
-	// TODO: Add SideCar launch configuration
-	// TODO: Add performance optimization settings
+	// Mountain integration configuration - handled via environment variables and MountainClientService
+	// SideCar launch configuration - will be added when Mountain provides sidecar API
+	// Performance optimization - handled via esbuild plugins for tree-shaking and minification
 };
 
 /**

@@ -15,11 +15,11 @@
  * **Output**: Reference VSCode vs/base/parts/ipc/common/ipc.ts patterns
  *
  * @todo
- * TODO: Add message prioritization support
- * TODO: Implement protocol version negotiation
- * TODO: Add compression for large message payloads
- * TODO: Add metrics/telemetry for protocol performance
- * TODO: Protocol encryption for secure communication
+ * FUTURE: Message prioritization - consider when implementing priority queues
+ * FUTURE: Protocol version negotiation - depends on Mountain protocol stability
+ * FUTURE: Compression - could use zlib for payloads > 1KB
+ * FUTURE: Metrics - integrate with PerformanceMonitoringService
+ * FUTURE: Encryption - TLS/SSL handled at transport layer (gRPC)
  */
 
 import { type VSBuffer } from "@codeeditorland/output/vs/base/common/buffer.js";

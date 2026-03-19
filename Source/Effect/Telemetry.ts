@@ -58,7 +58,9 @@ export class TelemetryCollectionError extends Error {
 		readonly operation: string,
 		override readonly cause: unknown,
 	) {
-		super(`Telemetry collection failed for '${operation}': ${String(cause)}`);
+		super(
+			`Telemetry collection failed for '${operation}': ${String(cause)}`,
+		);
 	}
 }
 
@@ -157,7 +159,11 @@ export const TelemetryLive = Layer.effect(
 				const events = yield* eventsRef.get;
 				yield* eventsRef.set([
 					...events,
-					{ type: "metric", timestamp: metric.timestamp, data: metric },
+					{
+						type: "metric",
+						timestamp: metric.timestamp,
+						data: metric,
+					},
 				]);
 
 				const currentMetrics = yield* metricsRef.get;
@@ -171,10 +177,7 @@ export const TelemetryLive = Layer.effect(
 			});
 
 		// Atom: Start a span
-		const startSpan = (
-			name: string,
-			labels?: Record<string, string>,
-		) =>
+		const startSpan = (name: string, labels?: Record<string, string>) =>
 			Effect.gen(function* () {
 				const startTime = Date.now();
 				const span: TelemetrySpan = {
@@ -213,12 +216,16 @@ export const TelemetryLive = Layer.effect(
 							]);
 
 							const currentSpans = yield* spansRef.get;
-							const nameSpans = HashMap.get(currentSpans, name).pipe(
-								Option.getOrElse(() => []),
-							);
+							const nameSpans = HashMap.get(
+								currentSpans,
+								name,
+							).pipe(Option.getOrElse(() => []));
 
 							yield* spansRef.set(
-								HashMap.set(currentSpans, name, [...nameSpans, completedSpan]),
+								HashMap.set(currentSpans, name, [
+									...nameSpans,
+									completedSpan,
+								]),
 							);
 						}),
 				} satisfies SpanHandle;
@@ -231,7 +238,11 @@ export const TelemetryLive = Layer.effect(
 			context?: Record<string, unknown>,
 		) =>
 			Effect.gen(function* () {
-				const logEntry: TelemetryLog = { level, message, context: context as Record<string, unknown> | undefined };
+				const logEntry: TelemetryLog = {
+					level,
+					message,
+					context: context as Record<string, unknown> | undefined,
+				};
 				const timestamp = Date.now();
 
 				const events = yield* eventsRef.get;
@@ -279,9 +290,12 @@ export const TelemetryLive = Layer.effect(
 					return 0;
 				}
 
-				const totalDuration = nameSpans.reduce((sum: number, span: TelemetrySpan) => {
-					return sum + (span.duration ?? 0);
-				}, 0);
+				const totalDuration = nameSpans.reduce(
+					(sum: number, span: TelemetrySpan) => {
+						return sum + (span.duration ?? 0);
+					},
+					0,
+				);
 
 				return totalDuration / nameSpans.length;
 			});
@@ -298,7 +312,9 @@ export const TelemetryLive = Layer.effect(
 					return 1.0;
 				}
 
-				const successCount = nameSpans.filter((span: TelemetrySpan) => span.success).length;
+				const successCount = nameSpans.filter(
+					(span: TelemetrySpan) => span.success,
+				).length;
 				return successCount / nameSpans.length;
 			});
 
