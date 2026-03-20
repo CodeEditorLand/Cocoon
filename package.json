@@ -42,7 +42,7 @@
 		"ts-protoc-gen": "0.15.0"
 	},
 	"devDependencies": {
-		"@effect/experimental": "0.59.0",
+		"@effect/experimental": "0.60.0",
 		"@effect/language-service": "0.80.0",
 		"@effect/opentelemetry": "0.63.0",
 		"@opentelemetry/exporter-trace-otlp-http": "0.213.0",
