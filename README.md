@@ -166,7 +166,7 @@ communicating with `Mountain`.
 
 ---
 
-## System Architecture Diagram
+## System Architecture Diagram 🏗️
 
 This diagram illustrates the internal architecture of Cocoon and its place
 within the broader Land ecosystem.
@@ -199,7 +199,7 @@ GRPCClient -- Use --> IPCService
 PatchProcess -- Hardens --> Bootstrap
 end
 
-subgraph "Mountain ⛰️ (Rust/Tauri Backend)"
+subgraph "Mountain ⛰️  (Rust/Tauri Backend)"
 VineGRPC["Vine gRPC Server"]:::mountain
 end
 
