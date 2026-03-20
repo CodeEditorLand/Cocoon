@@ -30,7 +30,7 @@
 	},
 	"dependencies": {
 		"@codeeditorland/output": "0.0.1",
-		"@effect/platform": "0.95.0",
+		"@effect/platform": "0.96.0",
 		"@effect/platform-node": "0.105.0",
 		"@grpc/grpc-js": "1.14.3",
 		"@grpc/proto-loader": "0.8.0",
