@@ -9,7 +9,6 @@
  * [Extension] -> [IPCService] -> [CocoongRPCAdapter] -> [MountainClientService] -> [Network]
  */
 
-import { GenericRequest } from "../../Generated/Vine";
 import {
 	IMessagePassingProtocol,
 	VSBuffer,
