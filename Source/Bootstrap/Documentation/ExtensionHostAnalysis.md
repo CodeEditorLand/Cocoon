@@ -77,7 +77,7 @@ class ExtHostRequireInterceptor {
 
 ## Cocoon Implementation vs VSCode Patterns
 
-### ✅ Compatible Patterns
+### ✅ Compatible Patterns
 
 1. **Extension Lifecycle Management**
     - Cocoon's `ExtensionHost.ts` follows VSCode patterns
@@ -94,7 +94,7 @@ class ExtHostRequireInterceptor {
     - Proper `require('vscode')` interception
     - ESM support (advanced feature)
 
-### 🔄 Differences Requiring Validation
+### 🔄 Differences Requiring Validation
 
 1. **Effect-TS vs OOP Architecture**
     - Cocoon uses functional Effect-TS patterns

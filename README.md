@@ -39,9 +39,9 @@ Land
 
 ---
 
-# **Cocoon** 🦋
+# **Cocoon** 🦋
 
-The Extension Host for Land 🏞️
+The Extension Host for Land 🏞️
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](https://github.com/CodeEditorLand/Cocoon/tree/Current/LICENSE)
 [![NPM Version](https://img.shields.io/npm/v/@codeeditorland/cocoon.svg)](https://www.npmjs.com/package/@codeeditorland/cocoon)
@@ -62,7 +62,7 @@ sent to `Mountain` for native execution.
 
 ---
 
-## Key Features & Architectural Highlights 🔐
+## Key Features & Architectural Highlights 🔐
 
 - **Effect-TS Native Architecture:** The entire `Cocoon` application is built
   with **Effect-TS**. All services, API shims, and IPC logic are implemented as
@@ -84,7 +84,7 @@ sent to `Mountain` for native execution.
 
 ---
 
-## Deep Dive & Component Breakdown 🔬
+## Deep Dive & Component Breakdown 🔬
 
 To understand how `Cocoon`'s internal components interact to provide the
 high-fidelity `vscode` API, see the following source files:
@@ -111,7 +111,7 @@ high-fidelity `vscode` API, see the following source files:
 
 ---
 
-## `Cocoon` in the Land Ecosystem 🦋 + 🏞️
+## `Cocoon` in the Land Ecosystem 🦋 + 🏞️
 
 Cocoon operates as a standalone Node.js process, carefully orchestrated by and
 communicating with `Mountain`.
@@ -214,7 +214,7 @@ GRPCClient -- gRPC <--> VineGRPC
 
 ---
 
-## Getting Started with Cocoon Development 🚀
+## Getting Started with Cocoon Development 🚀
 
 Cocoon is developed as a core component of the main **Land** project. To work on
 or run Cocoon, please follow the instructions in the main
