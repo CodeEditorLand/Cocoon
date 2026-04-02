@@ -39,7 +39,9 @@ Land
 
 ---
 
-# **Cocoon** 🦋 The Extension Host for Land 🏞️
+# **Cocoon** 🦋
+
+The Extension Host for Land 🏞️
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](https://github.com/CodeEditorLand/Cocoon/tree/Current/LICENSE)
 [![NPM Version](https://img.shields.io/npm/v/@codeeditorland/cocoon.svg)](https://www.npmjs.com/package/@codeeditorland/cocoon)
@@ -47,14 +49,12 @@ Land
 [![Effect Version](https://img.shields.io/badge/Effect-v3-blueviolet.svg)](https://www.npmjs.com/package/effect)
 
 Welcome to **Cocoon**, a core component of the **Land Code Editor**. Cocoon is a
-specialized Node.js sidecar process meticulously designed to host and execute
-existing Visual Studio Code extensions. It achieves this by providing a
-comprehensive, **Effect-TS native** environment that faithfully replicates the
-VS Code Extension Host API. This allows Land to leverage the vast and mature VS
-Code extension ecosystem, offering users a rich and familiar feature set from
-day one.
+specialized Node.js sidecar process designed to host and execute existing Visual
+Studio Code extensions. It provides a comprehensive, **Effect-TS native**
+environment that faithfully replicates the VS Code Extension Host API, allowing
+Land to leverage the mature VS Code extension ecosystem from day one.
 
-Cocoon's primary goal is to enable high compatibility with Node.js-based VS Code
+Cocoon's primary goal is high compatibility with Node.js-based VS Code
 extensions. It communicates with the main Rust-based Land backend (`Mountain`)
 via **gRPC** (`Vine` protocol), ensuring a performant and strongly-typed IPC
 channel. Cocoon translates extension API calls into declarative Effects that are
@@ -62,11 +62,11 @@ sent to `Mountain` for native execution.
 
 ---
 
-## Key Features & Architectural Highlights 🔐
+## Key Features & Architectural Highlights 🔐
 
 - **Effect-TS Native Architecture:** The entire `Cocoon` application is built
   with **Effect-TS**. All services, API shims, and IPC logic are implemented as
-  declarative, composable `Layer`s and `Effect`s, ensuring maximum robustness,
+  declarative, composable `Layer`s and `Effect`s, ensuring robustness,
   testability, and type safety.
 - **High-Fidelity VSCode API Shims:** Provides a comprehensive set of service
   shims (e.g., for `vscode.workspace`, `vscode.window`, `vscode.commands`) that
@@ -75,17 +75,16 @@ sent to `Mountain` for native execution.
   is handled via gRPC, providing a fast, modern, and strongly-typed contract for
   all IPC operations.
 - **Robust Module Interception:** Implements high-fidelity interceptors for both
-  CJS `require()` and ESM `import` statements, ensuring that calls to the
-  `'vscode'` module are correctly sandboxed and routed to the appropriate,
+  CJS `require()` and ESM `import` statements, ensuring calls to the `'vscode'`
+  module are correctly sandboxed and routed to the appropriate,
   extension-specific API instance.
-- **Process Hardening & Lifecycle Management:** Includes sophisticated process
-  patching to handle uncaught exceptions, pipe logs to the host, and
-  automatically terminate if the parent `Mountain` process exits, ensuring a
-  stable and well-behaved sidecar.
+- **Process Hardening & Lifecycle Management:** Includes process patching to
+  handle uncaught exceptions, pipe logs to the host, and automatically terminate
+  if the parent `Mountain` process exits, ensuring a stable sidecar.
 
 ---
 
-## Deep Dive & Component Breakdown 🔬
+## Deep Dive & Component Breakdown 🔬
 
 To understand how `Cocoon`'s internal components interact to provide the
 high-fidelity `vscode` API, see the following source files:
@@ -112,7 +111,7 @@ high-fidelity `vscode` API, see the following source files:
 
 ---
 
-## `Cocoon` in the Land Ecosystem 🦋 + 🏞️
+## `Cocoon` in the Land Ecosystem 🦋 + 🏞️
 
 Cocoon operates as a standalone Node.js process, carefully orchestrated by and
 communicating with `Mountain`.
@@ -178,7 +177,7 @@ classDef cocoon fill:#ccf,stroke:#333,stroke-width:2px;
 classDef effectts fill:#cfc,stroke:#333,stroke-width:1px;
 classDef vscode fill:#ddd,stroke:#666,stroke-width:1px,stroke-dasharray: 5 5;
 
-subgraph "Cocoon 🦋 (Node.js SideCar)"
+subgraph "Cocoon 🦋 (Node.js SideCar)"
 direction TB
 Bootstrap["Bootstrap/Implementation/CocoonMain.ts"]:::effectts
 AppLayer["Cocoon AppLayer"]:::effectts
@@ -199,7 +198,7 @@ GRPCClient -- Use --> IPCService
 PatchProcess -- Hardens --> Bootstrap
 end
 
-subgraph "Mountain ⛰️  (Rust/Tauri Backend)"
+subgraph "Mountain ⛰️  (Rust/Tauri Backend)"
 VineGRPC["Vine gRPC Server"]:::mountain
 end
 
@@ -215,7 +214,7 @@ GRPCClient -- gRPC <--> VineGRPC
 
 ---
 
-## Getting Started with Cocoon Development 🚀
+## Getting Started with Cocoon Development 🚀
 
 Cocoon is developed as a core component of the main **Land** project. To work on
 or run Cocoon, please follow the instructions in the main
@@ -248,10 +247,11 @@ prepare the necessary VS Code platform code for Cocoon to consume.
 ## License ⚖️
 
 This project is released into the public domain under the **Creative Commons CC0
-Universal** license. You are free to use, modify, distribute, and build upon
-this work for any purpose, without any restrictions. For the full legal text,
-see the [`LICENSE`](https://github.com/CodeEditorLand/Cocoon/tree/Current/)
-file.
+Universal** license.
+
+You are free to use, modify, distribute, and build upon this work for any
+purpose, without any restrictions. For the full legal text, see the
+[`LICENSE`](https://github.com/CodeEditorLand/Cocoon/tree/Current/) file.
 
 ---
 
@@ -270,6 +270,11 @@ through [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund established by
 [NLnet](https://NLnet.NL) with financial support from the European Commission's
 [Next Generation Internet](https://ngi.eu) program. Learn more at the
 [NLnet project page](https://NLnet.NL/project/Land).
+
+The project is operated by PlayForm, based in Sofia, Bulgaria.
+
+PlayForm acts as the open-source steward for Code Editor Land under the NGI0
+Commons Fund grant.
 
 <table>
 	<thead>
