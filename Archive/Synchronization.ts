@@ -151,7 +151,7 @@ export class SynchronizationService {
 		this._setupAdvancedReconnection();
 
 		console.log(
-			"[SynchronizationService] ✅ Advanced features initialized",
+			"[SynchronizationService] [OK] Advanced features initialized",
 		);
 	}
 
@@ -342,11 +342,11 @@ export class SynchronizationService {
 			this.startBackgroundSync();
 
 			console.log(
-				"[SynchronizationService] ✅ Service initialized successfully",
+				"[SynchronizationService] [OK] Service initialized successfully",
 			);
 		} catch (error) {
 			console.error(
-				"[SynchronizationService] ❌ Service initialization failed:",
+				"[SynchronizationService] [ERROR] Service initialization failed:",
 				error,
 			);
 			throw error;
@@ -373,7 +373,7 @@ export class SynchronizationService {
 			this.retryCount = 0;
 
 			console.log(
-				"[SynchronizationService] ✅ Connected to Mountain backend",
+				"[SynchronizationService] [OK] Connected to Mountain backend",
 			);
 
 			// Notify subscribers of connection
@@ -383,7 +383,7 @@ export class SynchronizationService {
 			});
 		} catch (error) {
 			console.error(
-				"[SynchronizationService] ❌ Failed to connect to Mountain backend:",
+				"[SynchronizationService] [ERROR] Failed to connect to Mountain backend:",
 				error,
 			);
 			this.isConnected = false;
@@ -406,12 +406,12 @@ export class SynchronizationService {
 				await this.performConnection();
 
 				console.log(
-					`[SynchronizationService] ✅ Connection attempt ${attempt} successful`,
+					`[SynchronizationService] [OK] Connection attempt ${attempt} successful`,
 				);
 				return;
 			} catch (error) {
 				console.warn(
-					`[SynchronizationService] ❌ Connection attempt ${attempt} failed:`,
+					`[SynchronizationService] [ERROR] Connection attempt ${attempt} failed:`,
 					error,
 				);
 
@@ -459,7 +459,7 @@ export class SynchronizationService {
 			});
 
 			console.log(
-				"[SynchronizationService] ✅ Connected to Mountain:",
+				"[SynchronizationService] [OK] Connected to Mountain:",
 				result,
 			);
 			return;
@@ -495,7 +495,7 @@ export class SynchronizationService {
 		}, 30000); // Check every 30 seconds
 
 		console.log(
-			"[SynchronizationService] ✅ Connection monitoring setup complete",
+			"[SynchronizationService] [OK] Connection monitoring setup complete",
 		);
 	}
 
@@ -522,7 +522,7 @@ export class SynchronizationService {
 		}, 100); // Broadcast every 100ms
 
 		console.log(
-			"[SynchronizationService] ✅ Background synchronization started",
+			"[SynchronizationService] [OK] Background synchronization started",
 		);
 	}
 
@@ -567,11 +567,11 @@ export class SynchronizationService {
 
 			const syncDuration = performance.now() - startTime;
 			console.log(
-				`[SynchronizationService] ✅ Document sync completed: ${successCount} success, ${errorCount} errors, ${syncDuration.toFixed(2)}ms`,
+				`[SynchronizationService] [OK] Document sync completed: ${successCount} success, ${errorCount} errors, ${syncDuration.toFixed(2)}ms`,
 			);
 		} catch (error) {
 			console.error(
-				"[SynchronizationService] ❌ Document synchronization failed:",
+				"[SynchronizationService] [ERROR] Document synchronization failed:",
 				error,
 			);
 			this._addErrorToWindow?.(error as Error);
@@ -630,11 +630,11 @@ export class SynchronizationService {
 
 			const duration = performance.now() - startTime;
 			console.log(
-				`[SynchronizationService] ✅ Change applied successfully in ${duration.toFixed(2)}ms: ${change.changeId}`,
+				`[SynchronizationService] [OK] Change applied successfully in ${duration.toFixed(2)}ms: ${change.changeId}`,
 			);
 		} catch (error) {
 			console.error(
-				`[SynchronizationService] ❌ Failed to apply change: ${change.changeId}`,
+				`[SynchronizationService] [ERROR] Failed to apply change: ${change.changeId}`,
 				error,
 			);
 			throw error;
@@ -737,7 +737,7 @@ export class SynchronizationService {
 			this.lastBroadcast = Date.now();
 		} catch (error) {
 			console.error(
-				"[SynchronizationService] ❌ Failed to broadcast updates:",
+				"[SynchronizationService] [ERROR] Failed to broadcast updates:",
 				error,
 			);
 			this._addErrorToWindow?.(error as Error);
@@ -782,7 +782,7 @@ export class SynchronizationService {
 		this.synchronizedDocuments.set(documentId, document);
 
 		console.log(
-			"[SynchronizationService] ✅ Document added for synchronization",
+			"[SynchronizationService] [OK] Document added for synchronization",
 		);
 	}
 
@@ -804,7 +804,7 @@ export class SynchronizationService {
 		this.pendingChanges.get(change.documentId)!.push(fullChange);
 
 		console.log(
-			`[SynchronizationService] ✅ Change queued: ${change.changeId}`,
+			`[SynchronizationService] [OK] Change queued: ${change.changeId}`,
 		);
 	}
 
@@ -898,11 +898,11 @@ export class SynchronizationService {
 			});
 
 			console.log(
-				"[SynchronizationService] ✅ Disconnected from Mountain",
+				"[SynchronizationService] [OK] Disconnected from Mountain",
 			);
 		} catch (error) {
 			console.error(
-				"[SynchronizationService] ❌ Error during disconnect:",
+				"[SynchronizationService] [ERROR] Error during disconnect:",
 				error,
 			);
 			this.isConnected = false;
@@ -943,7 +943,7 @@ export class SynchronizationService {
 			clearTimeout(this.connectionTimeout);
 		}
 
-		console.log("[SynchronizationService] ✅ Cleanup complete");
+		console.log("[SynchronizationService] [OK] Cleanup complete");
 	}
 
 	// Performance optimization methods

@@ -50,10 +50,10 @@
  * - Implement actual gRPC call in ShowInformationMessage
  * - Implement actual gRPC call in ShowWarningMessage
  * - Implement actual gRPC call in ShowErrorMessage
- * - ~~Implement actual gRPC call in ShowQuickPick~~ ✅ COMPLETE (Line 568-644)
- * - ~~Implement actual gRPC call in ShowInputBox~~ ✅ COMPLETE (Line 655-708)
- * - ~~Implement actual gRPC call in ShowOpenDialog~~ ✅ COMPLETE (Line 720-754)
- * - ~~Implement actual gRPC call in ShowSaveDialog~~ ✅ COMPLETE (Line 771-810)
+ * - ~~Implement actual gRPC call in ShowQuickPick~~ ✅ COMPLETE (Line 568-644)
+ * - ~~Implement actual gRPC call in ShowInputBox~~ ✅ COMPLETE (Line 655-708)
+ * - ~~Implement actual gRPC call in ShowOpenDialog~~ ✅ COMPLETE (Line 720-754)
+ * - ~~Implement actual gRPC call in ShowSaveDialog~~ ✅ COMPLETE (Line 771-810)
  * - Implement actual gRPC call in WithProgress
  * - Implement actual gRPC call in CreateStatusBarItem (and update methods)
  * - Implement actual gRPC call in CreateOutputChannel (and update methods)

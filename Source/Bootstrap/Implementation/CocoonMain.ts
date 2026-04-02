@@ -47,7 +47,7 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 		return yield* Effect.die(new Error("Bootstrap failed"));
 	}
 
-	telemetry.log("info", "[CocoonMain] 🟢 Bootstrap completed successfully");
+	telemetry.log("info", "[CocoonMain] [OK] Bootstrap completed successfully");
 	telemetry.log(
 		"info",
 		`[CocoonMain] Total bootstrap time: ${result.totalDuration}ms`,

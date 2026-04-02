@@ -362,7 +362,7 @@ const MainLogic = Effect.gen(function* () {
 		"Attempting to resolve a top-level service (RequireInterceptorService)...",
 	);
 	yield* RequireInterceptorService;
-	yield* Effect.log("✔ RequireInterceptorService resolved successfully.");
+	yield* Effect.log("[OK] RequireInterceptorService resolved successfully.");
 	yield* Effect.log(
 		"--- Full skeleton application layer is valid. Idling. ---",
 	);

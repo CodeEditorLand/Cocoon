@@ -75,7 +75,7 @@ export class CocoongRPCAdapter implements IMessagePassingProtocol {
 
 		try {
 			console.log(
-				`[CocoongRPCAdapter] 🟢 Forwarding ${vineMethod} to Spine...`,
+				`[CocoongRPCAdapter] Forwarding ${vineMethod} to Spine...`,
 			);
 
 			// 3. Call Mountain (The Spine)
@@ -107,7 +107,7 @@ export class CocoongRPCAdapter implements IMessagePassingProtocol {
 			}
 		} catch (error: any) {
 			console.error(
-				`[CocoongRPCAdapter] 🔴 Spine call failed: ${vineMethod}`,
+				`[CocoongRPCAdapter] Spine call failed: ${vineMethod}`,
 				error,
 			);
 

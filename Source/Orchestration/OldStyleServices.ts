@@ -92,7 +92,7 @@
 // Summary for Cocoon
 // ------------------
 // - **Type**: Go/Docker Extension Host
-// - **TODOs**: 267 found 🔴 (Highest)
+// - **TODOs**: 267 found 🔴 (Highest)
 // - **Key Features**: Language server, gRPC, Extension host
 // - **Last Commit Changes**: f6c9ce8 (async/await patterns)
 //

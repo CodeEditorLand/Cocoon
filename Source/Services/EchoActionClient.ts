@@ -3,15 +3,15 @@
  * @description
  * Cocoon Echo Action Client - Node.js extension host communication
  *
- * ☀️ 🔴 MOUNTAIN_COCOON_ONLY - Requires Node.js extension host
+ * ☀️ 🔴 MOUNTAIN_COCOON_ONLY - Requires Node.js extension host
  *
  * Provides bidirectional EchoAction communication with Mountain Spine.
  *
  * ## Supported Extension Hosts
  *
- * - ✅ Cocoon (Node.js) - Primary implementation
- * - ❌ Grove (WASM+Rhai) - Separate implementation
- * - ❌ Sky (WASM only) - Separate implementation
+ * - ✅ Cocoon (Node.js) - Primary implementation
+ * - ❌ Grove (WASM+Rhai) - Separate implementation
+ * - ❌ Sky (WASM only) - Separate implementation
  *
  * ## Feature Gates
  *
@@ -57,7 +57,7 @@ import { MetricsCollector } from "./MetricsCollector.js";
 
 /**
  * Cocoon Echo Action Client
- * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+ * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
  */
 export class CocoonEchoClient {
 	/** Mountain gRPC URL */
@@ -96,7 +96,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Create new Cocoon Echo client
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 *
 	 * @param mountainUrl - Mountain gRPC URL
 	 * @param hostId - Unique host identifier
@@ -110,7 +110,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Connect to Mountain
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async connect(): Promise<void> {
 		this.logger.info(`Connecting to Mountain at: ${this.mountainUrl}`);
@@ -135,7 +135,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Disconnect from Mountain
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async disconnect(): Promise<void> {
 		this.logger.info("Disconnecting from Mountain");
@@ -157,7 +157,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Register Cocoon as an extension host
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY - Host registration with Mountain
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY - Host registration with Mountain
 	 */
 	async register(): Promise<{
 		hostId: string;
@@ -236,7 +236,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Send EchoAction to Mountain
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async sendEchoAction(action: EchoAction): Promise<EchoActionResponse> {
 		if (!this.client) {
@@ -297,7 +297,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Send RPC via EchoAction
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async sendRpc(
 		rpcMethod: string,
@@ -331,7 +331,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Send event via EchoAction
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async sendEvent(
 		eventName: string,
@@ -359,7 +359,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Send state update via EchoAction
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async sendState(
 		stateType: string,
@@ -387,7 +387,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Query service discovery
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async discoverServices(serviceName?: string): Promise<any[]> {
 		const headers: Record<string, string> = {
@@ -414,7 +414,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Start heartbeat loop
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	private startHeartbeatLoop(): void {
 		if (!this.hostInfo) {
@@ -434,7 +434,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Get connection status
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	getStatus(): {
 		connected: boolean;
@@ -459,7 +459,7 @@ export class CocoonEchoClient {
 
 	/**
 	 * Reconnect to Mountain
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async reconnect(): Promise<void> {
 		this.logger.warn("Attempting to reconnect to Mountain");
@@ -519,7 +519,7 @@ export interface EchoActionResponseProps {
 export const CocoonEchoClientFactory = {
 	/**
 	 * Create and connect EchoAction client
-	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
+	 * ☀️ 🔴 MOUNTAIN_COCOON_ONLY
 	 */
 	async createAndConnect(
 		mountainUrl: string,
