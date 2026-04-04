@@ -263,6 +263,15 @@ history of changes specific to **Cocoon**.
 
 ---
 
+
+## See Also
+
+- [Architecture Overview](https://editor.land/Doc/architecture)
+- [Mountain](https://github.com/CodeEditorLand/Mountain)
+- [Wind](https://github.com/CodeEditorLand/Wind)
+- [Sky](https://github.com/CodeEditorLand/Sky)
+- [Vine](https://github.com/CodeEditorLand/Vine)
+
 ## Funding & Acknowledgements 🙏🏻
 
 **Cocoon** is a core element of the **Land** ecosystem. This project is funded
