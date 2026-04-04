@@ -708,28 +708,46 @@ export class APIFactory implements IAPIFactory {
 				};
 			},
 
-			// Message dialogs
+			// Message dialogs — routed to Mountain via Vine gRPC
 			showInformationMessage: async (
-				message: string,
-				...items: any[]
+				Message: string,
+				...Items: any[]
 			): Promise<any> => {
-				console.log(`[APIFactory] Info: ${message}`);
+				console.log(
+					`[APIFactory] ${extensionId}: showInformationMessage: ${Message}`,
+				);
+				this.mountainClient?.sendNotification(
+					"show_information_message",
+					{ message: Message },
+				);
 				return undefined;
 			},
 
 			showErrorMessage: async (
-				message: string,
-				...items: any[]
+				Message: string,
+				...Items: any[]
 			): Promise<any> => {
-				console.log(`[APIFactory] Error: ${message}`);
+				console.log(
+					`[APIFactory] ${extensionId}: showErrorMessage: ${Message}`,
+				);
+				this.mountainClient?.sendNotification(
+					"show_error_message",
+					{ message: Message },
+				);
 				return undefined;
 			},
 
 			showWarningMessage: async (
-				message: string,
-				...items: any[]
+				Message: string,
+				...Items: any[]
 			): Promise<any> => {
-				console.log(`[APIFactory] Warning: ${message}`);
+				console.log(
+					`[APIFactory] ${extensionId}: showWarningMessage: ${Message}`,
+				);
+				this.mountainClient?.sendNotification(
+					"show_warning_message",
+					{ message: Message },
+				);
 				return undefined;
 			},
 
@@ -737,8 +755,60 @@ export class APIFactory implements IAPIFactory {
 				items: any[],
 				options?: any,
 			): Promise<any> => {
-				console.log(`[APIFactory] Quick pick: ${items.length} items`);
-				return undefined;
+				console.log(
+					`[APIFactory] ${extensionId}: showQuickPick with ${items.length} items`,
+				);
+				try {
+					const Result =
+						await this.mountainClient?.sendRequest(
+							"show_quick_pick",
+							{
+								items: items.map((Item, Index) => ({
+									label:
+										typeof Item === "string"
+											? Item
+											: Item.label,
+									description: Item?.description || "",
+									detail: Item?.detail || "",
+									picked: Item?.picked || false,
+									always_show: Item?.alwaysShow || false,
+								})),
+								placeholder: options?.placeHolder || "",
+								can_pick_many:
+									options?.canPickMany || false,
+								title: options?.title || "",
+							},
+						);
+					return Result;
+				} catch {
+					return undefined;
+				}
+			},
+
+			showInputBox: async (options?: any): Promise<any> => {
+				console.log(
+					`[APIFactory] ${extensionId}: showInputBox`,
+				);
+				try {
+					const Result =
+						await this.mountainClient?.sendRequest(
+							"show_input_box",
+							{
+								prompt: options?.prompt || "",
+								value: options?.value || "",
+								placeholder:
+									options?.placeHolder || "",
+								title: options?.title || "",
+								password:
+									options?.password || false,
+							},
+						);
+					return Result?.cancelled
+						? undefined
+						: Result?.value;
+				} catch {
+					return undefined;
+				}
 			},
 
 			// Editor management
@@ -752,19 +822,175 @@ export class APIFactory implements IAPIFactory {
 				dispose: () => {},
 			}),
 
-			createOutputChannel: (name: string) => ({
-				append: (value: string) => {},
-				appendLine: (value: string) => {},
-				clear: () => {},
-				show: () => {},
-				hide: () => {},
-				dispose: () => {},
-			}),
+			createOutputChannel: (Name: string, LanguageId?: string) => {
+				let ChannelId: string | null = null;
 
-			// Progress API
-			withProgress: async (options: any, task: any): Promise<any> => {
-				console.log(`[APIFactory] Starting progress: ${options.title}`);
-				await task({ report: (value: any) => {} });
+				this.mountainClient
+					?.sendRequest("create_output_channel", {
+						name: Name,
+						language_id: LanguageId || "",
+						extension_id: extensionId,
+					})
+					.then((Response: any) => {
+						ChannelId = Response?.channel_id;
+					})
+					.catch(() => {});
+
+				return {
+					name: Name,
+					append: (Value: string) => {
+						if (ChannelId)
+							this.mountainClient?.sendNotification(
+								"append_output",
+								{
+									channel_id: ChannelId,
+									value: Value,
+								},
+							);
+					},
+					appendLine: (Value: string) => {
+						if (ChannelId)
+							this.mountainClient?.sendNotification(
+								"append_output",
+								{
+									channel_id: ChannelId,
+									value: Value + "\n",
+								},
+							);
+					},
+					clear: () => {
+						if (ChannelId)
+							this.mountainClient?.sendNotification(
+								"clear_output",
+								{ channel_id: ChannelId },
+							);
+					},
+					show: (PreserveFocus?: boolean) => {
+						if (ChannelId)
+							this.mountainClient?.sendNotification(
+								"show_output",
+								{
+									channel_id: ChannelId,
+									preserve_focus:
+										PreserveFocus || false,
+								},
+							);
+					},
+					hide: () => {},
+					dispose: () => {
+						if (ChannelId)
+							this.mountainClient?.sendNotification(
+								"dispose_output",
+								{ channel_id: ChannelId },
+							);
+					},
+					replace: (Value: string) => {
+						if (ChannelId) {
+							this.mountainClient?.sendNotification(
+								"clear_output",
+								{ channel_id: ChannelId },
+							);
+							this.mountainClient?.sendNotification(
+								"append_output",
+								{
+									channel_id: ChannelId,
+									value: Value,
+								},
+							);
+						}
+					},
+				};
+			},
+
+			// Progress API — routed to Mountain via Vine gRPC
+			withProgress: async (
+				Options: any,
+				Task: any,
+			): Promise<any> => {
+				console.log(
+					`[APIFactory] ${extensionId}: withProgress: ${Options.title}`,
+				);
+				let Handle: number | null = null;
+				try {
+					const Response =
+						await this.mountainClient?.sendRequest(
+							"show_progress",
+							{
+								handle: 0,
+								location:
+									Options.location || 0,
+								title: Options.title || "",
+								cancellable:
+									Options.cancellable || false,
+								extension_id: extensionId,
+							},
+						);
+					Handle = Response?.handle || null;
+				} catch {
+					// Fall through to local execution
+				}
+				const Progress = {
+					report: (Value: any) => {
+						if (Handle != null)
+							this.mountainClient?.sendNotification(
+								"report_progress",
+								{
+									handle: Handle,
+									message:
+										Value?.message || "",
+									increment:
+										Value?.increment || 0,
+								},
+							);
+					},
+				};
+				return Task(Progress);
+			},
+
+			createTerminal: (Options?: any) => {
+				const Name =
+					typeof Options === "string"
+						? Options
+						: Options?.name || "Terminal";
+				console.log(
+					`[APIFactory] ${extensionId}: createTerminal: ${Name}`,
+				);
+				this.mountainClient?.sendNotification(
+					"open_terminal",
+					{
+						name: Name,
+						shell_path:
+							typeof Options === "object"
+								? Options?.shellPath || ""
+								: "",
+						shell_args:
+							typeof Options === "object"
+								? Options?.shellArgs || []
+								: [],
+						cwd:
+							typeof Options === "object"
+								? Options?.cwd || ""
+								: "",
+					},
+				);
+				return {
+					name: Name,
+					processId: Promise.resolve(undefined),
+					sendText: (Text: string) => {
+						this.mountainClient?.sendNotification(
+							"terminal_input",
+							{ terminal_id: 0, data: Text },
+						);
+					},
+					show: () => {},
+					hide: () => {},
+					dispose: () => {
+						this.mountainClient?.sendNotification(
+							"close_terminal",
+							{ terminal_id: 0 },
+						);
+					},
+				};
 			},
 
 			// Additional properties
@@ -899,14 +1125,352 @@ export class APIFactory implements IAPIFactory {
 
 	/**
 	 * Create languages API
+	 *
+	 * Implements the full vscode.languages namespace. Each register*Provider
+	 * method assigns a unique handle, sends a registration RPC to Mountain
+	 * via the generic sendNotification channel, and returns a Disposable.
+	 *
+	 * When Mountain needs the provider's result (e.g., hover content), it
+	 * sends a provide_* RPC back to Cocoon. The Extension service routes
+	 * that request to the correct provider callback using the handle.
 	 */
 	private createLanguagesAPI(context: ExtensionAPIContext): any {
+		let NextHandle = 1;
+		const ProviderCallbacks = new Map<number, any>();
+		const ExtensionId = context.extensionId;
+
+		const RegisterProvider = (
+			Type: string,
+			Selector: any,
+			Provider: any,
+		) => {
+			const Handle = NextHandle++;
+			ProviderCallbacks.set(Handle, Provider);
+
+			console.log(
+				`[APIFactory] ${ExtensionId}: register ${Type} provider, handle=${Handle}`,
+			);
+
+			this.mountainClient?.sendNotification(`register_${Type}`, {
+				language_selector:
+					typeof Selector === "string"
+						? Selector
+						: JSON.stringify(Selector),
+				handle: Handle,
+				extension_id: ExtensionId,
+			});
+
+			return {
+				dispose: () => {
+					ProviderCallbacks.delete(Handle);
+					console.log(
+						`[APIFactory] ${ExtensionId}: disposed ${Type} provider, handle=${Handle}`,
+					);
+				},
+			};
+		};
+
 		return {
 			getLanguages: () => [],
-			createDiagnosticCollection: () => ({
-				set: () => {},
-				clear: () => {},
-			}),
+			setTextDocumentLanguage: async () => undefined,
+			match: () => 0,
+
+			createDiagnosticCollection: (Name?: string) => {
+				const Items = new Map();
+				return {
+					name: Name || "default",
+					set: (Uri: any, Diagnostics: any) =>
+						Items.set(Uri?.toString?.() || Uri, Diagnostics),
+					delete: (Uri: any) =>
+						Items.delete(Uri?.toString?.() || Uri),
+					clear: () => Items.clear(),
+					forEach: (Callback: any) => Items.forEach(Callback),
+					get: (Uri: any) =>
+						Items.get(Uri?.toString?.() || Uri),
+					has: (Uri: any) =>
+						Items.has(Uri?.toString?.() || Uri),
+					dispose: () => Items.clear(),
+				};
+			},
+
+			registerHoverProvider: (Selector: any, Provider: any) =>
+				RegisterProvider("hover_provider", Selector, Provider),
+
+			registerCompletionItemProvider: (
+				Selector: any,
+				Provider: any,
+				...TriggerCharacters: string[]
+			) =>
+				RegisterProvider(
+					"completion_item_provider",
+					Selector,
+					Provider,
+				),
+
+			registerDefinitionProvider: (Selector: any, Provider: any) =>
+				RegisterProvider(
+					"definition_provider",
+					Selector,
+					Provider,
+				),
+
+			registerReferenceProvider: (Selector: any, Provider: any) =>
+				RegisterProvider(
+					"reference_provider",
+					Selector,
+					Provider,
+				),
+
+			registerCodeActionsProvider: (
+				Selector: any,
+				Provider: any,
+				Metadata?: any,
+			) =>
+				RegisterProvider(
+					"code_actions_provider",
+					Selector,
+					Provider,
+				),
+
+			registerDocumentHighlightProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"document_highlight_provider",
+					Selector,
+					Provider,
+				),
+
+			registerDocumentSymbolProvider: (
+				Selector: any,
+				Provider: any,
+				Metadata?: any,
+			) =>
+				RegisterProvider(
+					"document_symbol_provider",
+					Selector,
+					Provider,
+				),
+
+			registerWorkspaceSymbolProvider: (Provider: any) =>
+				RegisterProvider(
+					"workspace_symbol_provider",
+					"*",
+					Provider,
+				),
+
+			registerRenameProvider: (Selector: any, Provider: any) =>
+				RegisterProvider("rename_provider", Selector, Provider),
+
+			registerDocumentFormattingEditProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"document_formatting_provider",
+					Selector,
+					Provider,
+				),
+
+			registerDocumentRangeFormattingEditProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"document_range_formatting_provider",
+					Selector,
+					Provider,
+				),
+
+			registerOnTypeFormattingEditProvider: (
+				Selector: any,
+				Provider: any,
+				FirstTriggerCharacter: string,
+				...MoreTriggerCharacters: string[]
+			) =>
+				RegisterProvider(
+					"on_type_formatting_provider",
+					Selector,
+					Provider,
+				),
+
+			registerSignatureHelpProvider: (
+				Selector: any,
+				Provider: any,
+				...TriggerCharactersOrMetadata: any[]
+			) =>
+				RegisterProvider(
+					"signature_help_provider",
+					Selector,
+					Provider,
+				),
+
+			registerCodeLensProvider: (Selector: any, Provider: any) =>
+				RegisterProvider(
+					"code_lens_provider",
+					Selector,
+					Provider,
+				),
+
+			registerFoldingRangeProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"folding_range_provider",
+					Selector,
+					Provider,
+				),
+
+			registerSelectionRangeProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"selection_range_provider",
+					Selector,
+					Provider,
+				),
+
+			registerDocumentSemanticTokensProvider: (
+				Selector: any,
+				Provider: any,
+				Legend: any,
+			) =>
+				RegisterProvider(
+					"semantic_tokens_provider",
+					Selector,
+					Provider,
+				),
+
+			registerDocumentRangeSemanticTokensProvider: (
+				Selector: any,
+				Provider: any,
+				Legend: any,
+			) =>
+				RegisterProvider(
+					"semantic_tokens_provider",
+					Selector,
+					Provider,
+				),
+
+			registerInlayHintsProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"inlay_hints_provider",
+					Selector,
+					Provider,
+				),
+
+			registerTypeHierarchyProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"type_hierarchy_provider",
+					Selector,
+					Provider,
+				),
+
+			registerCallHierarchyProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"call_hierarchy_provider",
+					Selector,
+					Provider,
+				),
+
+			registerLinkedEditingRangeProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"linked_editing_range_provider",
+					Selector,
+					Provider,
+				),
+
+			registerDocumentLinkProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"document_link_provider",
+					Selector,
+					Provider,
+				),
+
+			registerColorProvider: (Selector: any, Provider: any) =>
+				RegisterProvider(
+					"color_provider",
+					Selector,
+					Provider,
+				),
+
+			registerImplementationProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"implementation_provider",
+					Selector,
+					Provider,
+				),
+
+			registerTypeDefinitionProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"type_definition_provider",
+					Selector,
+					Provider,
+				),
+
+			registerDeclarationProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"declaration_provider",
+					Selector,
+					Provider,
+				),
+
+			registerEvaluatableExpressionProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"evaluatable_expression_provider",
+					Selector,
+					Provider,
+				),
+
+			registerInlineValuesProvider: (
+				Selector: any,
+				Provider: any,
+			) =>
+				RegisterProvider(
+					"inline_values_provider",
+					Selector,
+					Provider,
+				),
+
+			setLanguageConfiguration: (
+				Language: string,
+				Configuration: any,
+			) => {
+				console.log(
+					`[APIFactory] ${ExtensionId}: setLanguageConfiguration for ${Language}`,
+				);
+				return { dispose: () => {} };
+			},
 		};
 	}
 
