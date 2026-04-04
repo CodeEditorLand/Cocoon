@@ -48,17 +48,14 @@ The Extension Host for Land 🏞️
 [![Node.js Version](https://img.shields.io/badge/Node.js-v18+-blue.svg)](https://nodejs.org/)
 [![Effect Version](https://img.shields.io/badge/Effect-v3-blueviolet.svg)](https://www.npmjs.com/package/effect)
 
-Welcome to **Cocoon**, a core component of the **Land Code Editor**. Cocoon is a
-specialized Node.js sidecar process designed to host and execute existing Visual
-Studio Code extensions. It provides a comprehensive, **Effect-TS native**
-environment that faithfully replicates the VS Code Extension Host API, allowing
-Land to leverage the mature VS Code extension ecosystem from day one.
+Your entire VS Code extension library works out of the box. Cocoon hosts
+Node.js extensions in a managed sidecar process that mirrors the full VS Code
+Extension Host API. Install an extension, activate it, and it works exactly as
+it does in VS Code.
 
-Cocoon's primary goal is high compatibility with Node.js-based VS Code
-extensions. It communicates with the main Rust-based Land backend (`Mountain`)
-via **gRPC** (`Vine` protocol), ensuring a performant and strongly-typed IPC
-channel. Cocoon translates extension API calls into declarative Effects that are
-sent to `Mountain` for native execution.
+Cocoon talks to Mountain over gRPC (Vine protocol). Extension API calls become
+typed Effects that Mountain executes natively. The result: extensions run at
+Rust speed for I/O operations while keeping full Node.js compatibility.
 
 ---
 
