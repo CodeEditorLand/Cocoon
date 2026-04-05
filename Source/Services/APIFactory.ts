@@ -708,7 +708,7 @@ export class APIFactory implements IAPIFactory {
 				};
 			},
 
-			// Message dialogs — routed to Mountain via Vine gRPC
+			// Message dialogs - routed to Mountain via Vine gRPC
 			showInformationMessage: async (
 				Message: string,
 				...Items: any[]
@@ -902,7 +902,7 @@ export class APIFactory implements IAPIFactory {
 				};
 			},
 
-			// Progress API — routed to Mountain via Vine gRPC
+			// Progress API - routed to Mountain via Vine gRPC
 			withProgress: async (
 				Options: any,
 				Task: any,
