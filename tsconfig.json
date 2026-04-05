@@ -80,7 +80,7 @@
 			}
 		],
 
-		"rootDir": ".",
+		"rootDir": "./Source",
 
 		"target": "ESNext",
 
