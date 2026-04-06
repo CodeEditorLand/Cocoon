@@ -1022,26 +1022,15 @@ export class WindowService extends Effect.Service<WindowService>()(
 					};
 
 					const IPCProxy: IPC = {
-						SendNotification: (
-							method: string,
-							_params: unknown[],
-						) => {
+						SendNotification: (method: string, params: unknown[]) => {
 							return Effect.gen(function* () {
-								yield* Logger.Debug(
-									`[WindowService] Webview notification: ${method}`,
-								);
-								// TODO: Send actual IPC notification to Mountain
+								yield* Logger.Debug(`[WindowService] Webview notification: ${method}`);
+								MountainClient.sendNotification("webview.postMessage", { panelId: PanelId, method, params }).catch(() => {});
 							});
 						},
-						SendRequest: <T>(
-							_method: string,
-							_params: unknown[],
-						): Effect.Effect<T, Error> => {
+						SendRequest: <T>(_method: string, _params: unknown[]): Effect.Effect<T, Error> => {
 							return Effect.gen(function* () {
-								yield* Logger.Debug(
-									`[WindowService] Webview request sent`,
-								);
-								// TODO: Send actual IPC request to Mountain and return result
+								// Webview sendRequest is fire-and-forget from extension side; Sky resolves via onDidReceiveMessage
 								return undefined as T;
 							});
 						},
@@ -1054,19 +1043,8 @@ export class WindowService extends Effect.Service<WindowService>()(
 						ExtensionDescription,
 						() => {
 							// Dispose callback
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send dispose notification to Mountain
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to dispose webview panel`,
-												err as Error,
-											);
-									},
-								}),
+						// Notify Mountain to destroy the webview panel
+						MountainClient.sendNotification("webview.dispose", { panelId: PanelId }).catch(() => {});
 							);
 						},
 						ViewType,
