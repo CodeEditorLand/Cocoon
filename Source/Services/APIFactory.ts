@@ -32,6 +32,7 @@ import {
 } from "../Interfaces/IAPIFactory";
 import { IConfigurationService } from "../Interfaces/IConfigurationService";
 import { IModuleInterceptor } from "../Interfaces/IModuleInterceptor";
+import type { IMountainClientService } from "../Interfaces/IMountainClientService.js";
 
 // VS Code API surface definitions
 interface VSCodeAPI {
@@ -83,6 +84,8 @@ export class APIFactory implements IAPIFactory {
 
 	private configurationService: IConfigurationService;
 	private moduleInterceptor: IModuleInterceptor;
+	/** Injected after construction via setMountainClient(). Optional chaining used throughout. */
+	private mountainClient: IMountainClientService | undefined = undefined;
 	private apiCache: Map<string, VSCodeAPI> = new Map();
 	private apiVersions: Map<string, APIVersionMatrix[]> = new Map();
 	private securityPolicies: Map<string, SecurityContext> = new Map();
@@ -99,10 +102,12 @@ export class APIFactory implements IAPIFactory {
 	constructor(
 		configurationService: IConfigurationService,
 		moduleInterceptor: IModuleInterceptor,
+		mountainClient?: IMountainClientService,
 	) {
 		this._serviceBrand = undefined;
 		this.configurationService = configurationService;
 		this.moduleInterceptor = moduleInterceptor;
+		this.mountainClient = mountainClient;
 
 		console.log("[APIFactory] Initializing API factory");
 		this.loadAPIVersions();

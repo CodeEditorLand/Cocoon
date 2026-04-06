@@ -178,19 +178,66 @@ const createVSCodeAPI = (
 		},
 
 		// --- Commands Namespace ---
-		commands: {
-			registerCommand: (
-				command: string,
-				callback: (...args: any[]) => any,
-			) => {
-				console.log(`[APIFactory] Registered command: ${command}`);
-				return { dispose: () => {} };
-			},
-			executeCommand: async (command: string, ...args: any[]) => {
-				return undefined;
-			},
-			getCommands: async () => [],
-		},
+		commands: (() => {
+			// Local callback registry — handlers registered from this extension.
+			// When Mountain dispatches execute_contributed_command, Cocoon routes
+			// to the callback stored here by matching the commandId.
+			const LocalHandlers = new Map<
+				string,
+				(...args: readonly unknown[]) => unknown
+			>();
+
+			return {
+				registerCommand: (
+					command: string,
+					callback: (...args: any[]) => any,
+				) => {
+					LocalHandlers.set(command, callback);
+					// Notify Mountain so the command appears in the command palette
+					// and can be dispatched via execute_contributed_command gRPC.
+					mountainClient
+						.sendNotification("registerCommand", {
+							commandId: command,
+							extensionId: "unknown",
+							title: command,
+						})
+						.catch(() => {});
+					return {
+						dispose: () => {
+							LocalHandlers.delete(command);
+							mountainClient
+								.sendNotification("unregisterCommand", { commandId: command })
+								.catch(() => {});
+						},
+					};
+				},
+				executeCommand: async (command: string, ...args: any[]) => {
+					// Check local handlers first (same-process shortcut)
+					const Local = LocalHandlers.get(command);
+					if (Local !== undefined) {
+						return Local(...args);
+					}
+					// Delegate to Mountain's CommandRegistry
+					const Result = await mountainClient.sendRequest("executeCommand", {
+						commandId: command,
+						arguments: args.map((Arg) => {
+							if (typeof Arg === "string") return { stringValue: Arg };
+							if (typeof Arg === "number") return { intValue: Arg };
+							if (typeof Arg === "boolean") return { boolValue: Arg };
+							return { stringValue: JSON.stringify(Arg) };
+						}),
+					});
+					return Result?.result;
+				},
+				getCommands: async () => {
+					const Result = await mountainClient.sendRequest("executeCommand", {
+						commandId: "_getCommands",
+						arguments: [],
+					}).catch(() => null);
+					return Array.isArray(Result?.result) ? Result.result : [];
+				},
+			};
+		})(),
 
 		// --- Env Namespace ---
 		env: {
