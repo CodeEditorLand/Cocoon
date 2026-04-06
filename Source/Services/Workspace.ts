@@ -194,14 +194,20 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 				Effect.gen(function* () {
 					const OldWorkspace = yield* Ref.get(InternalWorkspaceRef);
 
-				// Map incoming workspace folder DTOs to VSCode.WorkspaceFolder objects
-				const Folders: VSCode.WorkspaceFolder[] = (Data.folders ?? []).map(
-					(F: any, Index: number) => ({
-						uri: VSCode.Uri.parse(typeof F === "string" ? F : F.uri ?? F.path ?? F),
-						name: F.name ?? (typeof F === "string" ? F.split("/").pop() ?? "" : ""),
+					// Map incoming workspace folder DTOs to VSCode.WorkspaceFolder objects
+					const Folders: VSCode.WorkspaceFolder[] = (
+						Data.folders ?? []
+					).map((F: any, Index: number) => ({
+						uri: VSCode.Uri.parse(
+							typeof F === "string" ? F : (F.uri ?? F.path ?? F),
+						),
+						name:
+							F.name ??
+							(typeof F === "string"
+								? (F.split("/").pop() ?? "")
+								: ""),
 						index: F.index ?? Index,
-					}),
-				);
+					}));
 
 					const NewWorkspace: InternalWorkspace = {
 						ID: Data.id,
@@ -474,12 +480,32 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					let DocumentContent = Content ?? "";
 					let DocumentLanguage = Language ?? "plaintext";
 					if (Uri.scheme === "file") {
-						const FileBytes = yield* Effect.either(mountainClient.readFile(Uri.toString()));
+						const FileBytes = yield* Effect.either(
+							mountainClient.readFile(Uri.toString()),
+						);
 						if (FileBytes._tag === "Right") {
-							DocumentContent = new TextDecoder().decode(FileBytes.right);
+							DocumentContent = new TextDecoder().decode(
+								FileBytes.right,
+							);
 							const Ext = Uri.fsPath.split(".").pop() ?? "";
-							const ExtMap: Record<string, string> = { ts: "typescript", tsx: "typescriptreact", js: "javascript", jsx: "javascriptreact", rs: "rust", py: "python", json: "json", md: "markdown", toml: "toml", yaml: "yaml", yml: "yaml", css: "css", html: "html", sh: "shellscript" };
-							DocumentLanguage = Language ?? ExtMap[Ext] ?? "plaintext";
+							const ExtMap: Record<string, string> = {
+								ts: "typescript",
+								tsx: "typescriptreact",
+								js: "javascript",
+								jsx: "javascriptreact",
+								rs: "rust",
+								py: "python",
+								json: "json",
+								md: "markdown",
+								toml: "toml",
+								yaml: "yaml",
+								yml: "yaml",
+								css: "css",
+								html: "html",
+								sh: "shellscript",
+							};
+							DocumentLanguage =
+								Language ?? ExtMap[Ext] ?? "plaintext";
 						}
 					}
 					const DocumentLines = DocumentContent.split("\n");
@@ -491,19 +517,46 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						isClosed: false,
 						getText: (Range?: any) => {
 							if (!Range) return DocumentContent;
-							return DocumentLines.slice(Range.start.line, Range.end.line + 1).join("\n");
+							return DocumentLines.slice(
+								Range.start.line,
+								Range.end.line + 1,
+							).join("\n");
 						},
 						lineCount: DocumentLines.length,
 						lineAt: (LineOrPos: any) => {
-							const Num = typeof LineOrPos === "number" ? LineOrPos : LineOrPos.line;
+							const Num =
+								typeof LineOrPos === "number"
+									? LineOrPos
+									: LineOrPos.line;
 							const Text = DocumentLines[Num] ?? "";
-							return { lineNumber: Num, text: Text, range: { start: { line: Num, character: 0 }, end: { line: Num, character: Text.length } }, firstNonWhitespaceCharacterIndex: Text.search(/\S|$/) };
+							return {
+								lineNumber: Num,
+								text: Text,
+								range: {
+									start: { line: Num, character: 0 },
+									end: { line: Num, character: Text.length },
+								},
+								firstNonWhitespaceCharacterIndex:
+									Text.search(/\S|$/),
+							};
 						},
-						offsetAt: (Pos: any) => DocumentLines.slice(0, Pos.line).reduce((Sum: number, L: string) => Sum + L.length + 1, 0) + Pos.character,
+						offsetAt: (Pos: any) =>
+							DocumentLines.slice(0, Pos.line).reduce(
+								(Sum: number, L: string) => Sum + L.length + 1,
+								0,
+							) + Pos.character,
 						positionAt: (Offset: number) => {
 							let Remaining = Offset;
-							for (let I = 0; I < DocumentLines.length; I++) { const Len = DocumentLines[I].length + 1; if (Remaining < Len) return { line: I, character: Remaining }; Remaining -= Len; }
-							return { line: DocumentLines.length - 1, character: 0 };
+							for (let I = 0; I < DocumentLines.length; I++) {
+								const Len = DocumentLines[I].length + 1;
+								if (Remaining < Len)
+									return { line: I, character: Remaining };
+								Remaining -= Len;
+							}
+							return {
+								line: DocumentLines.length - 1,
+								character: 0,
+							};
 						},
 						getWordRangeAtPosition: () => undefined,
 						validateRange: (R: any) => R,
