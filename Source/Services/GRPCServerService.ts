@@ -651,7 +651,9 @@ export class GRPCServerService
 		method: string,
 		parameters: any,
 	): Promise<any> {
-		const Args: any[] = Array.isArray(parameters) ? parameters : [parameters];
+		const Args: any[] = Array.isArray(parameters)
+			? parameters
+			: [parameters];
 
 		const Handle: number = Args[0];
 		const Provider = LanguageProviderRegistry.Get(Handle);
@@ -671,42 +673,167 @@ export class GRPCServerService
 				: (UriObj?.external ?? "file:///unknown");
 
 		const RawPos = Args[2] as
-			| { Line?: number; line?: number; Character?: number; character?: number }
+			| {
+					Line?: number;
+					line?: number;
+					Character?: number;
+					character?: number;
+			  }
 			| undefined;
-		const VsPosition = {
-			line: RawPos?.Line ?? RawPos?.line ?? 0,
-			character: RawPos?.Character ?? RawPos?.character ?? 0,
-		};
+		const PosLine = RawPos?.Line ?? RawPos?.line ?? 0;
+		const PosChar = RawPos?.Character ?? RawPos?.character ?? 0;
 
-		// Minimal VS Code TextDocument shim — extensions may call .uri, .fileName,
-		// .languageId. Full document content is not available without opening the
-		// model; getText() returns empty which is acceptable for most providers.
+		// VS Code-compatible Position shim with structural methods extensions may call.
+		const MakePosition = (Line: number, Character: number) => ({
+			line: Line,
+			character: Character,
+			isBefore: (other: any) =>
+				Line < other.line ||
+				(Line === other.line && Character < other.character),
+			isBeforeOrEqual: (other: any) =>
+				Line < other.line ||
+				(Line === other.line && Character <= other.character),
+			isAfter: (other: any) =>
+				Line > other.line ||
+				(Line === other.line && Character > other.character),
+			isAfterOrEqual: (other: any) =>
+				Line > other.line ||
+				(Line === other.line && Character >= other.character),
+			isEqual: (other: any) =>
+				Line === other.line && Character === other.character,
+			compareTo: (other: any) =>
+				Line !== other.line
+					? Line - other.line
+					: Character - other.character,
+			translate: (LineDeltaOrChange: any, CharDelta?: number) => {
+				if (typeof LineDeltaOrChange === "number") {
+					return MakePosition(
+						Line + LineDeltaOrChange,
+						Character + (CharDelta ?? 0),
+					);
+				}
+				return MakePosition(
+					Line + (LineDeltaOrChange?.lineDelta ?? 0),
+					Character + (LineDeltaOrChange?.characterDelta ?? 0),
+				);
+			},
+			with: (LineOrChange: any, Char?: number) => {
+				if (typeof LineOrChange === "number")
+					return MakePosition(LineOrChange, Char ?? Character);
+				return MakePosition(
+					LineOrChange?.line ?? Line,
+					LineOrChange?.character ?? Character,
+				);
+			},
+			toString: () => `(${Line},${Character})`,
+		});
+		const VsPosition = MakePosition(PosLine, PosChar);
+
+		// Try to get real document content from LanguageProviderRegistry or the
+		// VS Code document shim. Content is keyed by URI string in CocoonService's
+		// document mirror (if AcceptWorkspaceData populated it).
+		// For now: provide a structural TextDocument shim. Extensions that need
+		// getText() for actual text intelligence will work only if a document mirror
+		// is available; hover/definition providers that only use the position are
+		// fully functional.
+		const Ext = UriString.split(".").pop() ?? "";
+		const LangId = (() => {
+			switch (Ext) {
+				case "rs":
+					return "rust";
+				case "ts":
+				case "tsx":
+					return "typescript";
+				case "js":
+				case "jsx":
+				case "mjs":
+					return "javascript";
+				case "json":
+					return "json";
+				case "toml":
+					return "toml";
+				case "md":
+					return "markdown";
+				case "py":
+					return "python";
+				case "go":
+					return "go";
+				default:
+					return Ext || "plaintext";
+			}
+		})();
+
+		const MakeRange = (
+			StartLine: number,
+			StartChar: number,
+			EndLine: number,
+			EndChar: number,
+		) => ({
+			start: MakePosition(StartLine, StartChar),
+			end: MakePosition(EndLine, EndChar),
+			isEmpty: StartLine === EndLine && StartChar === EndChar,
+			isSingleLine: StartLine === EndLine,
+			contains: (_pos: any) => true,
+			isEqual: (_other: any) => false,
+			intersection: (_other: any) => undefined,
+			union: (other: any) => other,
+			with: (_start: any, _end: any) =>
+				MakeRange(StartLine, StartChar, EndLine, EndChar),
+		});
+
 		const VsDocument = {
-			uri: { toString: () => UriString, fsPath: UriString, external: UriString, $mid: 1 },
-			fileName: UriString,
-			languageId: UriString.split(".").pop() ?? "plaintext",
+			uri: {
+				toString: () => UriString,
+				fsPath: UriString.replace(/^file:\/\//, ""),
+				external: UriString,
+				$mid: 1,
+				scheme: "file",
+				path: UriString.replace(/^file:\/\//, ""),
+			},
+			fileName: UriString.replace(/^file:\/\//, ""),
+			languageId: LangId,
 			version: 1,
 			isDirty: false,
-			getText: () => "",
-			lineAt: (_line: number) => ({
-				text: "",
-				lineNumber: _line,
-				range: { start: VsPosition, end: VsPosition },
-				rangeIncludingLineBreak: { start: VsPosition, end: VsPosition },
-				firstNonWhitespaceCharacterIndex: 0,
-				isEmptyOrWhitespace: true,
-			}),
-			lineCount: 0,
-			offsetAt: () => 0,
-			positionAt: () => VsPosition,
-			validateRange: (r: any) => r,
-			validatePosition: (p: any) => p,
-			getWordRangeAtPosition: () => undefined,
+			isClosed: false,
+			eol: 1, // LF
+			getText: (_range?: any) => "",
+			lineAt: (LineOrPos: number | any) => {
+				const LineNum =
+					typeof LineOrPos === "number"
+						? LineOrPos
+						: (LineOrPos?.line ?? 0);
+				return {
+					text: "",
+					lineNumber: LineNum,
+					range: MakeRange(LineNum, 0, LineNum, 0),
+					rangeIncludingLineBreak: MakeRange(
+						LineNum,
+						0,
+						LineNum + 1,
+						0,
+					),
+					firstNonWhitespaceCharacterIndex: 0,
+					isEmptyOrWhitespace: true,
+				};
+			},
+			lineCount: 1,
+			offsetAt: (_pos: any) => 0,
+			positionAt: (_offset: number) => VsPosition,
+			validateRange: (R: any) => R,
+			validatePosition: (P: any) => P,
+			getWordRangeAtPosition: (_pos: any, _pattern?: RegExp) => undefined,
+			save: async () => false,
 		};
 
-		// Null cancellation token — extensions that check for cancellation will
-		// see it as never cancelled (acceptable for synchronous/fast providers).
-		const VsToken = { isCancellationRequested: false, onCancellationRequested: () => ({ dispose: () => {} }) };
+		// CancellationToken shim — never cancelled; extensions that await
+		// token.onCancellationRequested get a no-op disposable.
+		const VsToken = {
+			isCancellationRequested: false,
+			onCancellationRequested: (Listener: () => void) => {
+				void Listener; // suppress lint
+				return { dispose: () => {} };
+			},
+		};
 
 		const Context = Args[3];
 
@@ -722,7 +849,9 @@ export class GRPCServerService
 					// Normalize VS Code Hover { contents, range? } →
 					// Mountain HoverResultDTO { Contents: IMarkdownStringDTO[], Range? }
 					const RawContents = Result.contents;
-					const Contents: Array<{ Value: string }> = Array.isArray(RawContents)
+					const Contents: Array<{ Value: string }> = Array.isArray(
+						RawContents,
+					)
 						? RawContents.map((C: any) => ({
 								Value:
 									typeof C === "string"
@@ -731,7 +860,14 @@ export class GRPCServerService
 							}))
 						: typeof RawContents === "string"
 							? [{ Value: RawContents }]
-							: [{ Value: RawContents?.value ?? RawContents?.Value ?? "" }];
+							: [
+									{
+										Value:
+											RawContents?.value ??
+											RawContents?.Value ??
+											"",
+									},
+								];
 					// Normalize VS Code range { start: { line, character }, end: {...} } →
 					// RangeDTO { StartLineNumber, StartColumn, EndLineNumber, EndColumn }
 					const VsRange = Result.range ?? null;
@@ -748,15 +884,22 @@ export class GRPCServerService
 						: { Contents };
 				}
 
+				// Mountain sends "$provideCompletion" (Debug fmt of ProviderType::Completion)
+				case "$provideCompletion":
 				case "$provideCompletions": {
-					const Result = await (Provider as any).provideCompletionItems?.(
+					const Result = await (
+						Provider as any
+					).provideCompletionItems?.(
 						VsDocument,
 						VsPosition,
 						VsToken,
 						Context,
 					);
-					if (!Result) return { Suggestions: [], IsIncomplete: false };
-					const RawItems = Array.isArray(Result) ? Result : (Result.items ?? []);
+					if (!Result)
+						return { Suggestions: [], IsIncomplete: false };
+					const RawItems = Array.isArray(Result)
+						? Result
+						: (Result.items ?? []);
 					// Shape: CompletionListDTO { Suggestions: CompletionItemDTO[] }
 					return {
 						Suggestions: RawItems.map((Item: any) => ({
@@ -775,9 +918,9 @@ export class GRPCServerService
 							InsertText:
 								typeof Item.insertText === "string"
 									? Item.insertText
-									: (typeof Item.label === "string"
-											? Item.label
-											: (Item.label?.label ?? "")),
+									: typeof Item.label === "string"
+										? Item.label
+										: (Item.label?.label ?? ""),
 						})),
 						IsIncomplete: Result.isIncomplete ?? false,
 					};
@@ -794,7 +937,9 @@ export class GRPCServerService
 					// Shape: Vec<LocationDTO> { Uri: string, Range: RangeDTO }
 					return Locations.map((L: any) => ({
 						Uri: (L.uri ?? L.targetUri)?.toString?.() ?? UriString,
-						Range: this.NormalizeRange(L.range ?? L.targetSelectionRange),
+						Range: this.NormalizeRange(
+							L.range ?? L.targetSelectionRange,
+						),
 					}));
 				}
 
@@ -812,6 +957,8 @@ export class GRPCServerService
 					}));
 				}
 
+				// Mountain sends "$provideCodeAction" (ProviderType::CodeAction)
+				case "$provideCodeAction":
 				case "$provideCodeActions": {
 					const RangeArg = Args[2];
 					const ContextArg = Args[3];
@@ -824,8 +971,12 @@ export class GRPCServerService
 					return Result ?? null;
 				}
 
+				// Mountain sends "$provideDocumentHighlight" (ProviderType::DocumentHighlight)
+				case "$provideDocumentHighlight":
 				case "$provideDocumentHighlights": {
-					const Result = await (Provider as any).provideDocumentHighlights?.(
+					const Result = await (
+						Provider as any
+					).provideDocumentHighlights?.(
 						VsDocument,
 						VsPosition,
 						VsToken,
@@ -833,29 +984,35 @@ export class GRPCServerService
 					return Result ?? null;
 				}
 
+				// Mountain sends "$provideDocumentSymbol" (ProviderType::DocumentSymbol)
+				case "$provideDocumentSymbol":
 				case "$provideDocumentSymbols": {
-					const Result = await (Provider as any).provideDocumentSymbols?.(
-						VsDocument,
-						VsToken,
-					);
+					const Result = await (
+						Provider as any
+					).provideDocumentSymbols?.(VsDocument, VsToken);
 					return Result ?? null;
 				}
 
+				// Mountain sends "$provideWorkspaceSymbol" (ProviderType::WorkspaceSymbol)
+				case "$provideWorkspaceSymbol":
 				case "$provideWorkspaceSymbols": {
 					const Query = Args[1] as string;
-					const Result = await (Provider as any).provideWorkspaceSymbols?.(
-						Query,
-						VsToken,
-					);
+					const Result = await (
+						Provider as any
+					).provideWorkspaceSymbols?.(Query, VsToken);
 					return Result ?? null;
 				}
 
+				// Mountain: "$provideDocumentFormatting" / "$provideDocumentRangeFormatting"
+				case "$provideDocumentFormatting":
 				case "$provideDocumentFormattingEdits":
+				case "$provideDocumentRangeFormatting":
 				case "$provideDocumentRangeFormattingEdits": {
 					const RangeArg = Args[2];
 					const OptionsArg = Args[3];
 					const Fn =
-						method === "$provideDocumentFormattingEdits"
+						method === "$provideDocumentFormattingEdits" ||
+						method === "$provideDocumentFormatting"
 							? "provideDocumentFormattingEdits"
 							: "provideDocumentRangeFormattingEdits";
 					const Result = await (Provider as any)[Fn]?.(
@@ -868,7 +1025,9 @@ export class GRPCServerService
 				}
 
 				case "$provideSignatureHelp": {
-					const Result = await (Provider as any).provideSignatureHelp?.(
+					const Result = await (
+						Provider as any
+					).provideSignatureHelp?.(
 						VsDocument,
 						VsPosition,
 						VsToken,
@@ -877,6 +1036,8 @@ export class GRPCServerService
 					return Result ?? null;
 				}
 
+				// Mountain sends "$provideRename" (ProviderType::Rename)
+				case "$provideRename":
 				case "$provideRenameEdits": {
 					const NewName = Args[3] as string;
 					const Result = await (Provider as any).provideRenameEdits?.(
@@ -888,15 +1049,17 @@ export class GRPCServerService
 					return Result ?? null;
 				}
 
+				// Mountain sends "$provideFoldingRange" (ProviderType::FoldingRange)
+				case "$provideFoldingRange":
 				case "$provideFoldingRanges": {
-					const Result = await (Provider as any).provideFoldingRanges?.(
-						VsDocument,
-						Context,
-						VsToken,
-					);
+					const Result = await (
+						Provider as any
+					).provideFoldingRanges?.(VsDocument, Context, VsToken);
 					return Result ?? null;
 				}
 
+				// Mountain sends "$provideInlayHint" (ProviderType::InlayHint)
+				case "$provideInlayHint":
 				case "$provideInlayHints": {
 					const RangeArg = Args[2];
 					const Result = await (Provider as any).provideInlayHints?.(
@@ -907,6 +1070,8 @@ export class GRPCServerService
 					return Result ?? null;
 				}
 
+				// Mountain sends "$provideCodeLens" (ProviderType::CodeLens)
+				case "$provideCodeLens":
 				case "$provideCodeLenses": {
 					const Result = await (Provider as any).provideCodeLenses?.(
 						VsDocument,
@@ -916,7 +1081,9 @@ export class GRPCServerService
 				}
 
 				default:
-					console.warn(`[GRPCServerService] Unhandled $provide method: ${method}`);
+					console.warn(
+						`[GRPCServerService] Unhandled $provide method: ${method}`,
+					);
 					return null;
 			}
 		} catch (Error) {
