@@ -9,7 +9,7 @@
 </h3>
 </td>
 <td align="left" valign="middle">
-<h3 align="left"> + </h3>
+<h3 align="left"> + </h3>
 </td>
 <td align="left" valign="middle">
 <h3 align="left">
@@ -121,7 +121,7 @@ high-fidelity `vscode` API, see the following source files:
 
 ---
 
-## `Cocoon` in the Land Ecosystem&#x2001;🦋 + 🏞️
+## `Cocoon` in the Land Ecosystem&#x2001;🦋 + 🏞️
 
 Cocoon operates as a standalone Node.js process, carefully orchestrated by and
 communicating with `Mountain`.
@@ -190,7 +190,7 @@ AppLayer["Cocoon AppLayer"]:::effectts
 EffectModules["Effect/ Modules (Bootstrap, Telemetry, Extension)"]:::effectts
 PatchProcess["PatchProcess/ (Process Hardening)"]:::cocoon
 APIServices["Services/ (APIFactory, ExtensionHost, Window, Workspace, etc.)"]:::cocoon
-IPCService["Services/IPCService.ts + IPC/ Protocol"]:::cocoon
+IPCService["Services/IPCService.ts + IPC/ Protocol"]:::cocoon
 GRPCClient["Services/MountainGRPCClient.ts"]:::cocoon
 TypeConverter["TypeConverter/ (DTO Serialization)"]:::cocoon
 

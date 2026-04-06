@@ -204,19 +204,198 @@ const createVSCodeAPI = (
 			openExternal: async (target: any) => true,
 		},
 
-		// --- Stubs for Compatibility ---
+		// --- Extensions Namespace ---
 		extensions: {
 			getExtension: (id: string) => undefined,
 			all: [],
 		},
-		languages: {
-			getLanguages: () => [],
-			createDiagnosticCollection: () => ({
-				set: () => {},
-				clear: () => {},
-				dispose: () => {},
-			}),
-		},
+
+		// --- Languages Namespace ---
+		// Full provider registration surface lifted from extHostLanguageFeatures.ts.
+		// Each register*Provider sends a registration notification to Mountain so
+		// the editor can dispatch feature requests back to Cocoon.
+		languages: (() => {
+			let NextHandle = 1;
+			const ProviderCallbacks = new Map<number, any>();
+
+			const RegisterProvider = (
+				type: string,
+				selector: any,
+				provider: any,
+			) => {
+				const Handle = NextHandle++;
+				ProviderCallbacks.set(Handle, provider);
+				mountainClient
+					.sendNotification(`register_${type}`, {
+						language_selector:
+							typeof selector === "string"
+								? selector
+								: JSON.stringify(selector),
+						handle: Handle,
+					})
+					.catch(() => {}); // fire-and-forget
+				return { dispose: () => ProviderCallbacks.delete(Handle) };
+			};
+
+			return {
+				getLanguages: () => [],
+				setTextDocumentLanguage: async () => undefined,
+				match: () => 0,
+
+				createDiagnosticCollection: (name?: string) => {
+					const Items = new Map<string, any[]>();
+					return {
+						name: name ?? "default",
+						set: (uri: any, diagnostics: any) =>
+							Items.set(
+								uri?.toString?.() ?? String(uri),
+								diagnostics,
+							),
+						delete: (uri: any) =>
+							Items.delete(uri?.toString?.() ?? String(uri)),
+						clear: () => Items.clear(),
+						forEach: (cb: any) => Items.forEach(cb),
+						get: (uri: any) =>
+							Items.get(uri?.toString?.() ?? String(uri)),
+						has: (uri: any) =>
+							Items.has(uri?.toString?.() ?? String(uri)),
+						dispose: () => Items.clear(),
+					};
+				},
+
+				registerHoverProvider: (sel: any, p: any) =>
+					RegisterProvider("hover_provider", sel, p),
+				registerCompletionItemProvider: (
+					sel: any,
+					p: any,
+					..._: string[]
+				) => RegisterProvider("completion_item_provider", sel, p),
+				registerDefinitionProvider: (sel: any, p: any) =>
+					RegisterProvider("definition_provider", sel, p),
+				registerReferenceProvider: (sel: any, p: any) =>
+					RegisterProvider("reference_provider", sel, p),
+				registerCodeActionsProvider: (
+					sel: any,
+					p: any,
+					_meta?: any,
+				) => RegisterProvider("code_actions_provider", sel, p),
+				registerDocumentHighlightProvider: (sel: any, p: any) =>
+					RegisterProvider(
+						"document_highlight_provider",
+						sel,
+						p,
+					),
+				registerDocumentSymbolProvider: (
+					sel: any,
+					p: any,
+					_meta?: any,
+				) =>
+					RegisterProvider("document_symbol_provider", sel, p),
+				registerWorkspaceSymbolProvider: (p: any) =>
+					RegisterProvider(
+						"workspace_symbol_provider",
+						"*",
+						p,
+					),
+				registerRenameProvider: (sel: any, p: any) =>
+					RegisterProvider("rename_provider", sel, p),
+				registerDocumentFormattingEditProvider: (
+					sel: any,
+					p: any,
+				) =>
+					RegisterProvider(
+						"document_formatting_provider",
+						sel,
+						p,
+					),
+				registerDocumentRangeFormattingEditProvider: (
+					sel: any,
+					p: any,
+				) =>
+					RegisterProvider(
+						"document_range_formatting_provider",
+						sel,
+						p,
+					),
+				registerOnTypeFormattingEditProvider: (
+					sel: any,
+					p: any,
+					_first: string,
+					..._more: string[]
+				) =>
+					RegisterProvider(
+						"on_type_formatting_provider",
+						sel,
+						p,
+					),
+				registerSignatureHelpProvider: (
+					sel: any,
+					p: any,
+					..._: any[]
+				) => RegisterProvider("signature_help_provider", sel, p),
+				registerCodeLensProvider: (sel: any, p: any) =>
+					RegisterProvider("code_lens_provider", sel, p),
+				registerFoldingRangeProvider: (sel: any, p: any) =>
+					RegisterProvider("folding_range_provider", sel, p),
+				registerSelectionRangeProvider: (sel: any, p: any) =>
+					RegisterProvider("selection_range_provider", sel, p),
+				registerDocumentSemanticTokensProvider: (
+					sel: any,
+					p: any,
+					_legend: any,
+				) =>
+					RegisterProvider("semantic_tokens_provider", sel, p),
+				registerDocumentRangeSemanticTokensProvider: (
+					sel: any,
+					p: any,
+					_legend: any,
+				) =>
+					RegisterProvider("semantic_tokens_provider", sel, p),
+				registerInlayHintsProvider: (sel: any, p: any) =>
+					RegisterProvider("inlay_hints_provider", sel, p),
+				registerTypeHierarchyProvider: (sel: any, p: any) =>
+					RegisterProvider("type_hierarchy_provider", sel, p),
+				registerCallHierarchyProvider: (sel: any, p: any) =>
+					RegisterProvider("call_hierarchy_provider", sel, p),
+				registerLinkedEditingRangeProvider: (sel: any, p: any) =>
+					RegisterProvider(
+						"linked_editing_range_provider",
+						sel,
+						p,
+					),
+				registerDocumentLinkProvider: (sel: any, p: any) =>
+					RegisterProvider("document_link_provider", sel, p),
+				registerColorProvider: (sel: any, p: any) =>
+					RegisterProvider("color_provider", sel, p),
+				registerImplementationProvider: (sel: any, p: any) =>
+					RegisterProvider("implementation_provider", sel, p),
+				registerTypeDefinitionProvider: (sel: any, p: any) =>
+					RegisterProvider("type_definition_provider", sel, p),
+				registerDeclarationProvider: (sel: any, p: any) =>
+					RegisterProvider("declaration_provider", sel, p),
+				registerEvaluatableExpressionProvider: (
+					sel: any,
+					p: any,
+				) =>
+					RegisterProvider(
+						"evaluatable_expression_provider",
+						sel,
+						p,
+					),
+				registerInlineValuesProvider: (sel: any, p: any) =>
+					RegisterProvider("inline_values_provider", sel, p),
+
+				setLanguageConfiguration: (lang: string, _config: any) => {
+					mountainClient
+						.sendNotification(
+							"set_language_configuration",
+							{ language: lang },
+						)
+						.catch(() => {});
+					return { dispose: () => {} };
+				},
+			};
+		})(),
 		debug: {
 			startDebugging: async () => false,
 			activeDebugSession: undefined,

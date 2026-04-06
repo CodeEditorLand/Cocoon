@@ -589,6 +589,10 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 							defaultValue,
 						) as T;
 					},
+					has: (HasKey: string): boolean => {
+						const FullKey = section ? `${section}.${HasKey}` : HasKey;
+						return Configuration.hasKey(FullKey, 1);
+					},
 					update: <T>(
 						key: string,
 						value: T,
@@ -597,13 +601,17 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 						const FullKey = section ? `${section}.${key}` : key;
 						Configuration.updateValue(FullKey, value, 1);
 					},
-					inspect: (_key?: string) => {
-						// TODO: Implement full inspect method
+					inspect: (InspectKey?: string) => {
+						const FullKey = section
+							? InspectKey
+								? `${section}.${InspectKey}`
+								: section
+							: (InspectKey ?? "");
 						return {
-							key,
-							defaultValue: undefined,
-							globalValue: undefined,
-							workspaceValue: undefined,
+							key: FullKey,
+							defaultValue: Configuration.getValue(FullKey, 0, undefined),
+							globalValue: Configuration.getValue(FullKey, 1, undefined),
+							workspaceValue: Configuration.getValue(FullKey, 2, undefined),
 							workspaceFolderValue: undefined,
 						};
 					},
