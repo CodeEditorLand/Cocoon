@@ -242,10 +242,8 @@ graph LR
 
 ### Success Metrics
 
-- ✅ Extension loading time < 2 seconds
-- ✅ API call latency < 100ms
-- ✅ Memory usage comparable to VS Code
-- ✅ 95%+ VS Code extension compatibility
+- ✅ Extension loading time < 2 seconds - ✅ API call latency < 100ms - ✅
+Memory usage comparable to VS Code - ✅ 95%+ VS Code extension compatibility
 
 ## Conclusion
 

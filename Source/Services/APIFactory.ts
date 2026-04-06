@@ -735,10 +735,9 @@ export class APIFactory implements IAPIFactory {
 				console.log(
 					`[APIFactory] ${extensionId}: showErrorMessage: ${Message}`,
 				);
-				this.mountainClient?.sendNotification(
-					"show_error_message",
-					{ message: Message },
-				);
+				this.mountainClient?.sendNotification("show_error_message", {
+					message: Message,
+				});
 				return undefined;
 			},
 
@@ -749,10 +748,9 @@ export class APIFactory implements IAPIFactory {
 				console.log(
 					`[APIFactory] ${extensionId}: showWarningMessage: ${Message}`,
 				);
-				this.mountainClient?.sendNotification(
-					"show_warning_message",
-					{ message: Message },
-				);
+				this.mountainClient?.sendNotification("show_warning_message", {
+					message: Message,
+				});
 				return undefined;
 			},
 
@@ -764,26 +762,24 @@ export class APIFactory implements IAPIFactory {
 					`[APIFactory] ${extensionId}: showQuickPick with ${items.length} items`,
 				);
 				try {
-					const Result =
-						await this.mountainClient?.sendRequest(
-							"show_quick_pick",
-							{
-								items: items.map((Item, Index) => ({
-									label:
-										typeof Item === "string"
-											? Item
-											: Item.label,
-									description: Item?.description || "",
-									detail: Item?.detail || "",
-									picked: Item?.picked || false,
-									always_show: Item?.alwaysShow || false,
-								})),
-								placeholder: options?.placeHolder || "",
-								can_pick_many:
-									options?.canPickMany || false,
-								title: options?.title || "",
-							},
-						);
+					const Result = await this.mountainClient?.sendRequest(
+						"show_quick_pick",
+						{
+							items: items.map((Item, Index) => ({
+								label:
+									typeof Item === "string"
+										? Item
+										: Item.label,
+								description: Item?.description || "",
+								detail: Item?.detail || "",
+								picked: Item?.picked || false,
+								always_show: Item?.alwaysShow || false,
+							})),
+							placeholder: options?.placeHolder || "",
+							can_pick_many: options?.canPickMany || false,
+							title: options?.title || "",
+						},
+					);
 					return Result;
 				} catch {
 					return undefined;
@@ -791,26 +787,19 @@ export class APIFactory implements IAPIFactory {
 			},
 
 			showInputBox: async (options?: any): Promise<any> => {
-				console.log(
-					`[APIFactory] ${extensionId}: showInputBox`,
-				);
+				console.log(`[APIFactory] ${extensionId}: showInputBox`);
 				try {
-					const Result =
-						await this.mountainClient?.sendRequest(
-							"show_input_box",
-							{
-								prompt: options?.prompt || "",
-								value: options?.value || "",
-								placeholder:
-									options?.placeHolder || "",
-								title: options?.title || "",
-								password:
-									options?.password || false,
-							},
-						);
-					return Result?.cancelled
-						? undefined
-						: Result?.value;
+					const Result = await this.mountainClient?.sendRequest(
+						"show_input_box",
+						{
+							prompt: options?.prompt || "",
+							value: options?.value || "",
+							placeholder: options?.placeHolder || "",
+							title: options?.title || "",
+							password: options?.password || false,
+						},
+					);
+					return Result?.cancelled ? undefined : Result?.value;
 				} catch {
 					return undefined;
 				}
@@ -876,8 +865,7 @@ export class APIFactory implements IAPIFactory {
 								"show_output",
 								{
 									channel_id: ChannelId,
-									preserve_focus:
-										PreserveFocus || false,
+									preserve_focus: PreserveFocus || false,
 								},
 							);
 					},
@@ -908,28 +896,22 @@ export class APIFactory implements IAPIFactory {
 			},
 
 			// Progress API - routed to Mountain via Vine gRPC
-			withProgress: async (
-				Options: any,
-				Task: any,
-			): Promise<any> => {
+			withProgress: async (Options: any, Task: any): Promise<any> => {
 				console.log(
 					`[APIFactory] ${extensionId}: withProgress: ${Options.title}`,
 				);
 				let Handle: number | null = null;
 				try {
-					const Response =
-						await this.mountainClient?.sendRequest(
-							"show_progress",
-							{
-								handle: 0,
-								location:
-									Options.location || 0,
-								title: Options.title || "",
-								cancellable:
-									Options.cancellable || false,
-								extension_id: extensionId,
-							},
-						);
+					const Response = await this.mountainClient?.sendRequest(
+						"show_progress",
+						{
+							handle: 0,
+							location: Options.location || 0,
+							title: Options.title || "",
+							cancellable: Options.cancellable || false,
+							extension_id: extensionId,
+						},
+					);
 					Handle = Response?.handle || null;
 				} catch {
 					// Fall through to local execution
@@ -941,10 +923,8 @@ export class APIFactory implements IAPIFactory {
 								"report_progress",
 								{
 									handle: Handle,
-									message:
-										Value?.message || "",
-									increment:
-										Value?.increment || 0,
+									message: Value?.message || "",
+									increment: Value?.increment || 0,
 								},
 							);
 					},
@@ -960,24 +940,18 @@ export class APIFactory implements IAPIFactory {
 				console.log(
 					`[APIFactory] ${extensionId}: createTerminal: ${Name}`,
 				);
-				this.mountainClient?.sendNotification(
-					"open_terminal",
-					{
-						name: Name,
-						shell_path:
-							typeof Options === "object"
-								? Options?.shellPath || ""
-								: "",
-						shell_args:
-							typeof Options === "object"
-								? Options?.shellArgs || []
-								: [],
-						cwd:
-							typeof Options === "object"
-								? Options?.cwd || ""
-								: "",
-					},
-				);
+				this.mountainClient?.sendNotification("open_terminal", {
+					name: Name,
+					shell_path:
+						typeof Options === "object"
+							? Options?.shellPath || ""
+							: "",
+					shell_args:
+						typeof Options === "object"
+							? Options?.shellArgs || []
+							: [],
+					cwd: typeof Options === "object" ? Options?.cwd || "" : "",
+				});
 				return {
 					name: Name,
 					processId: Promise.resolve(undefined),
@@ -1190,10 +1164,8 @@ export class APIFactory implements IAPIFactory {
 						Items.delete(Uri?.toString?.() || Uri),
 					clear: () => Items.clear(),
 					forEach: (Callback: any) => Items.forEach(Callback),
-					get: (Uri: any) =>
-						Items.get(Uri?.toString?.() || Uri),
-					has: (Uri: any) =>
-						Items.has(Uri?.toString?.() || Uri),
+					get: (Uri: any) => Items.get(Uri?.toString?.() || Uri),
+					has: (Uri: any) => Items.has(Uri?.toString?.() || Uri),
 					dispose: () => Items.clear(),
 				};
 			},
@@ -1213,34 +1185,18 @@ export class APIFactory implements IAPIFactory {
 				),
 
 			registerDefinitionProvider: (Selector: any, Provider: any) =>
-				RegisterProvider(
-					"definition_provider",
-					Selector,
-					Provider,
-				),
+				RegisterProvider("definition_provider", Selector, Provider),
 
 			registerReferenceProvider: (Selector: any, Provider: any) =>
-				RegisterProvider(
-					"reference_provider",
-					Selector,
-					Provider,
-				),
+				RegisterProvider("reference_provider", Selector, Provider),
 
 			registerCodeActionsProvider: (
 				Selector: any,
 				Provider: any,
 				Metadata?: any,
-			) =>
-				RegisterProvider(
-					"code_actions_provider",
-					Selector,
-					Provider,
-				),
+			) => RegisterProvider("code_actions_provider", Selector, Provider),
 
-			registerDocumentHighlightProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
+			registerDocumentHighlightProvider: (Selector: any, Provider: any) =>
 				RegisterProvider(
 					"document_highlight_provider",
 					Selector,
@@ -1259,11 +1215,7 @@ export class APIFactory implements IAPIFactory {
 				),
 
 			registerWorkspaceSymbolProvider: (Provider: any) =>
-				RegisterProvider(
-					"workspace_symbol_provider",
-					"*",
-					Provider,
-				),
+				RegisterProvider("workspace_symbol_provider", "*", Provider),
 
 			registerRenameProvider: (Selector: any, Provider: any) =>
 				RegisterProvider("rename_provider", Selector, Provider),
@@ -1305,33 +1257,15 @@ export class APIFactory implements IAPIFactory {
 				Provider: any,
 				...TriggerCharactersOrMetadata: any[]
 			) =>
-				RegisterProvider(
-					"signature_help_provider",
-					Selector,
-					Provider,
-				),
+				RegisterProvider("signature_help_provider", Selector, Provider),
 
 			registerCodeLensProvider: (Selector: any, Provider: any) =>
-				RegisterProvider(
-					"code_lens_provider",
-					Selector,
-					Provider,
-				),
+				RegisterProvider("code_lens_provider", Selector, Provider),
 
-			registerFoldingRangeProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
-				RegisterProvider(
-					"folding_range_provider",
-					Selector,
-					Provider,
-				),
+			registerFoldingRangeProvider: (Selector: any, Provider: any) =>
+				RegisterProvider("folding_range_provider", Selector, Provider),
 
-			registerSelectionRangeProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
+			registerSelectionRangeProvider: (Selector: any, Provider: any) =>
 				RegisterProvider(
 					"selection_range_provider",
 					Selector,
@@ -1360,35 +1294,14 @@ export class APIFactory implements IAPIFactory {
 					Provider,
 				),
 
-			registerInlayHintsProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
-				RegisterProvider(
-					"inlay_hints_provider",
-					Selector,
-					Provider,
-				),
+			registerInlayHintsProvider: (Selector: any, Provider: any) =>
+				RegisterProvider("inlay_hints_provider", Selector, Provider),
 
-			registerTypeHierarchyProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
-				RegisterProvider(
-					"type_hierarchy_provider",
-					Selector,
-					Provider,
-				),
+			registerTypeHierarchyProvider: (Selector: any, Provider: any) =>
+				RegisterProvider("type_hierarchy_provider", Selector, Provider),
 
-			registerCallHierarchyProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
-				RegisterProvider(
-					"call_hierarchy_provider",
-					Selector,
-					Provider,
-				),
+			registerCallHierarchyProvider: (Selector: any, Provider: any) =>
+				RegisterProvider("call_hierarchy_provider", Selector, Provider),
 
 			registerLinkedEditingRangeProvider: (
 				Selector: any,
@@ -1400,52 +1313,24 @@ export class APIFactory implements IAPIFactory {
 					Provider,
 				),
 
-			registerDocumentLinkProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
-				RegisterProvider(
-					"document_link_provider",
-					Selector,
-					Provider,
-				),
+			registerDocumentLinkProvider: (Selector: any, Provider: any) =>
+				RegisterProvider("document_link_provider", Selector, Provider),
 
 			registerColorProvider: (Selector: any, Provider: any) =>
-				RegisterProvider(
-					"color_provider",
-					Selector,
-					Provider,
-				),
+				RegisterProvider("color_provider", Selector, Provider),
 
-			registerImplementationProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
-				RegisterProvider(
-					"implementation_provider",
-					Selector,
-					Provider,
-				),
+			registerImplementationProvider: (Selector: any, Provider: any) =>
+				RegisterProvider("implementation_provider", Selector, Provider),
 
-			registerTypeDefinitionProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
+			registerTypeDefinitionProvider: (Selector: any, Provider: any) =>
 				RegisterProvider(
 					"type_definition_provider",
 					Selector,
 					Provider,
 				),
 
-			registerDeclarationProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
-				RegisterProvider(
-					"declaration_provider",
-					Selector,
-					Provider,
-				),
+			registerDeclarationProvider: (Selector: any, Provider: any) =>
+				RegisterProvider("declaration_provider", Selector, Provider),
 
 			registerEvaluatableExpressionProvider: (
 				Selector: any,
@@ -1457,15 +1342,8 @@ export class APIFactory implements IAPIFactory {
 					Provider,
 				),
 
-			registerInlineValuesProvider: (
-				Selector: any,
-				Provider: any,
-			) =>
-				RegisterProvider(
-					"inline_values_provider",
-					Selector,
-					Provider,
-				),
+			registerInlineValuesProvider: (Selector: any, Provider: any) =>
+				RegisterProvider("inline_values_provider", Selector, Provider),
 
 			setLanguageConfiguration: (
 				Language: string,

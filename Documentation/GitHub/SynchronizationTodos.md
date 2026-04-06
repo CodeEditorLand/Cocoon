@@ -32,15 +32,11 @@ Wind (frontend), and Mountain (backend) implementations.
 
 ### 🔄 In Progress (Mountain)
 
-1. **Core Infrastructure**
-    - ✅ gRPC server (Vine)
-    - ✅ Effect system
-    - ✅ Extension management
+1. **Core Infrastructure** - ✅ gRPC server (Vine) - ✅ Effect system - ✅
+   Extension management
 
-2. **Integration Points**
-    - ✅ Cocoon sidecar management
-    - ✅ Extension scanning
-    - ✅ Command routing
+2. **Integration Points** - ✅ Cocoon sidecar management - ✅ Extension scanning
+   - ✅ Command routing
 
 ## Critical Integration TODOs
 
@@ -147,21 +143,18 @@ Wind Desktop Services (1.1) → Tauri IPC Bridge (1.2) → Extension API Forward
 
 ### Phase 1: Basic Integration
 
-- ✅ Cocoon can load and activate extensions
-- ✅ Mountain can communicate with Cocoon via gRPC
-- 🔄 Wind can communicate with Mountain via Tauri IPC
-- 🚫 Wind can forward extension API calls to Cocoon
+- ✅ Cocoon can load and activate extensions - ✅ Mountain can communicate with
+Cocoon via gRPC - 🔄 Wind can communicate with Mountain via Tauri IPC - 🚫 Wind
+can forward extension API calls to Cocoon
 
 ### Phase 2: Advanced Features
 
-- 🚫 Extension debugging support
-- 🚫 Performance optimization
-- 🚫 Multi-extension support
+- 🚫 Extension debugging support - 🚫 Performance optimization - 🚫
+Multi-extension support
 
 ### Phase 3: Production Ready
 
-- 🚫 95%+ VS Code extension compatibility
-- 🚫 Performance comparable to VS Code
+- 🚫 95%+ VS Code extension compatibility - 🚫 Performance comparable to VS Code
 - 🚫 Robust error handling
 
 ## Coordination Points

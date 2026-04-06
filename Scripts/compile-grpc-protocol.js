@@ -5,12 +5,11 @@
  * @description
  * Compile Mountain's Vine.proto to TypeScript definitions for Cocoon.
  * This script generates gRPC service definitions from Mountain's protocol buffer.
- * 
+ *
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (Protocol Compilation)
  */
-
 import { execSync } from "child_process";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
@@ -25,120 +24,142 @@ const TS_PROTO_OUTPUT = join(OUTPUT_DIR, "Vine.ts");
  * Main compilation function
  */
 async function compilegRPCProtocol() {
-    console.log("[compile-grpc-protocol] Starting gRPC protocol compilation");
-    
-    try {
-        // Check if protoc is available
-        checkProtocAvailability();
-        
-        // Ensure Mountain's proto file exists
-        ensureProtoFileExists();
-        
-        // Ensure output directory exists
-        ensureOutputDirectory();
-        
-        // Compile proto to TypeScript using TypeScript gRPC tools
-        await compileProtoToTypeScript();
-        
-        console.log("[compile-grpc-protocol] gRPC protocol compilation completed successfully");
-        
-    } catch (error) {
-        console.error("[compile-grpc-protocol] Protocol compilation failed:", error);
-        process.exit(1);
-    }
+	console.log("[compile-grpc-protocol] Starting gRPC protocol compilation");
+
+	try {
+		// Check if protoc is available
+		checkProtocAvailability();
+
+		// Ensure Mountain's proto file exists
+		ensureProtoFileExists();
+
+		// Ensure output directory exists
+		ensureOutputDirectory();
+
+		// Compile proto to TypeScript using TypeScript gRPC tools
+		await compileProtoToTypeScript();
+
+		console.log(
+			"[compile-grpc-protocol] gRPC protocol compilation completed successfully",
+		);
+	} catch (error) {
+		console.error(
+			"[compile-grpc-protocol] Protocol compilation failed:",
+			error,
+		);
+		process.exit(1);
+	}
 }
 
 /**
  * Check if protoc is available
  */
 function checkProtocAvailability() {
-    try {
-        execSync("protoc --version", { stdio: "ignore" });
-        console.log("[compile-grpc-protocol] protoc compiler found");
-    } catch (error) {
-        console.error("[compile-grpc-protocol] protoc compiler not found. Please install protobuf compiler.");
-        console.error("Installation: https://grpc.io/docs/protoc-installation/");
-        throw error;
-    }
+	try {
+		execSync("protoc --version", { stdio: "ignore" });
+		console.log("[compile-grpc-protocol] protoc compiler found");
+	} catch (error) {
+		console.error(
+			"[compile-grpc-protocol] protoc compiler not found. Please install protobuf compiler.",
+		);
+		console.error(
+			"Installation: https://grpc.io/docs/protoc-installation/",
+		);
+		throw error;
+	}
 }
 
 /**
  * Ensure Mountain's proto file exists
  */
 function ensureProtoFileExists() {
-    if (!existsSync(MOUNTAIN_PROTO_PATH)) {
-        throw new Error(`Mountain proto file not found at: ${MOUNTAIN_PROTO_PATH}`);
-    }
-    console.log(`[compile-grpc-protocol] Found proto file: ${MOUNTAIN_PROTO_PATH}`);
+	if (!existsSync(MOUNTAIN_PROTO_PATH)) {
+		throw new Error(
+			`Mountain proto file not found at: ${MOUNTAIN_PROTO_PATH}`,
+		);
+	}
+	console.log(
+		`[compile-grpc-protocol] Found proto file: ${MOUNTAIN_PROTO_PATH}`,
+	);
 }
 
 /**
  * Ensure output directory exists
  */
 function ensureOutputDirectory() {
-    if (!existsSync(OUTPUT_DIR)) {
-        execSync(`mkdir -p ${OUTPUT_DIR}`);
-        console.log(`[compile-grpc-protocol] Created output directory: ${OUTPUT_DIR}`);
-    }
+	if (!existsSync(OUTPUT_DIR)) {
+		execSync(`mkdir -p ${OUTPUT_DIR}`);
+		console.log(
+			`[compile-grpc-protocol] Created output directory: ${OUTPUT_DIR}`,
+		);
+	}
 }
 
 /**
  * Compile proto to TypeScript using protoc with ts-proto plugin
  */
 function compileProtoToTypeScript() {
-    console.log("[compile-grpc-protocol] Compiling proto to TypeScript");
-    
-    // Try multiple approaches for protoc-gen-ts
-    const pluginPaths = [
-        './node_modules/.bin/protoc-gen-ts',
-        './node_modules/.bin/protoc-gen-ts.cmd',
-        './node_modules/.bin/protoc-gen-ts.exe',
-        './node_modules/.bin/protoc-gen-ts_proto',
-        'protoc-gen-ts'
-    ];
-    
-    let successfulCompilation = false;
-    
-    for (const pluginPath of pluginPaths) {
-        try {
-            console.log(`[compile-grpc-protocol] Trying plugin: ${pluginPath}`);
-            
-            const command = `protoc \
+	console.log("[compile-grpc-protocol] Compiling proto to TypeScript");
+
+	// Try multiple approaches for protoc-gen-ts
+	const pluginPaths = [
+		"./node_modules/.bin/protoc-gen-ts",
+		"./node_modules/.bin/protoc-gen-ts.cmd",
+		"./node_modules/.bin/protoc-gen-ts.exe",
+		"./node_modules/.bin/protoc-gen-ts_proto",
+		"protoc-gen-ts",
+	];
+
+	let successfulCompilation = false;
+
+	for (const pluginPath of pluginPaths) {
+		try {
+			console.log(`[compile-grpc-protocol] Trying plugin: ${pluginPath}`);
+
+			const command = `protoc \
                 --plugin=protoc-gen-ts=${pluginPath} \
                 --ts_out=${OUTPUT_DIR} \
                 --proto_path=${dirname(MOUNTAIN_PROTO_PATH)} \
                 ${MOUNTAIN_PROTO_PATH}`;
-            
-            execSync(command, { stdio: "inherit" });
-            console.log(`[compile-grpc-protocol] Proto compilation successful with ${pluginPath}`);
-            successfulCompilation = true;
-            break;
-            
-        } catch (error) {
-            console.warn(`[compile-grpc-protocol] Plugin ${pluginPath} failed:`, error.message);
-        }
-    }
-    
-    if (!successfulCompilation) {
-        console.error("[compile-grpc-protocol] All plugin attempts failed");
-        
-        // Fallback to generating enhanced TypeScript interfaces by parsing proto
-        console.log("[compile-grpc-protocol] Generating enhanced TypeScript interfaces from proto...");
-        generateServiceInterfaces();
-    } else {
-        // Generate enhanced service interfaces if compilation succeeded
-        generateServiceInterfaces();
-    }
+
+			execSync(command, { stdio: "inherit" });
+			console.log(
+				`[compile-grpc-protocol] Proto compilation successful with ${pluginPath}`,
+			);
+			successfulCompilation = true;
+			break;
+		} catch (error) {
+			console.warn(
+				`[compile-grpc-protocol] Plugin ${pluginPath} failed:`,
+				error.message,
+			);
+		}
+	}
+
+	if (!successfulCompilation) {
+		console.error("[compile-grpc-protocol] All plugin attempts failed");
+
+		// Fallback to generating enhanced TypeScript interfaces by parsing proto
+		console.log(
+			"[compile-grpc-protocol] Generating enhanced TypeScript interfaces from proto...",
+		);
+		generateServiceInterfaces();
+	} else {
+		// Generate enhanced service interfaces if compilation succeeded
+		generateServiceInterfaces();
+	}
 }
 
 /**
  * Generate manual TypeScript interfaces when protoc-gen-ts is not available
  */
 function generateManualTypeScriptInterfaces() {
-    console.log("[compile-grpc-protocol] Generating manual TypeScript interfaces");
-    
-    // Generate basic TypeScript interfaces based on Vine.proto
-    const tsInterfaces = `/**
+	console.log(
+		"[compile-grpc-protocol] Generating manual TypeScript interfaces",
+	);
+
+	// Generate basic TypeScript interfaces based on Vine.proto
+	const tsInterfaces = `/**
  * @module Generated
  * @description
  * Auto-generated TypeScript interfaces from Mountain's Vine.proto
@@ -194,198 +215,206 @@ export interface RPCDataPayload {
     Data: Buffer;
 }
 `;
-    
-    const fs = require('fs');
-    fs.writeFileSync(TS_PROTO_OUTPUT, tsInterfaces);
-    console.log(`[compile-grpc-protocol] Manual TypeScript interfaces generated: ${TS_PROTO_OUTPUT}`);
+
+	const fs = require("fs");
+	fs.writeFileSync(TS_PROTO_OUTPUT, tsInterfaces);
+	console.log(
+		`[compile-grpc-protocol] Manual TypeScript interfaces generated: ${TS_PROTO_OUTPUT}`,
+	);
 }
 
 /**
  * Generate enhanced service interfaces from proto content
  */
 function generateServiceInterfaces() {
-    console.log("[compile-grpc-protocol] Generating enhanced service interfaces");
-    
-    const protoContent = readFileSync(MOUNTAIN_PROTO_PATH, "utf8");
-    
-    // Parse service definitions from proto with improved regex
-    const serviceDefinitions = parseServiceDefinitionsEnhanced(protoContent);
-    
-    // Generate enhanced TypeScript interfaces
-    const tsInterfaces = generateEnhancedTypeScriptInterfaces(serviceDefinitions);
-    
-    // Write interfaces to file
-    writeFileSync(TS_PROTO_OUTPUT, tsInterfaces);
-    console.log(`[compile-grpc-protocol] Generated enhanced service interfaces: ${TS_PROTO_OUTPUT}`);
+	console.log(
+		"[compile-grpc-protocol] Generating enhanced service interfaces",
+	);
+
+	const protoContent = readFileSync(MOUNTAIN_PROTO_PATH, "utf8");
+
+	// Parse service definitions from proto with improved regex
+	const serviceDefinitions = parseServiceDefinitionsEnhanced(protoContent);
+
+	// Generate enhanced TypeScript interfaces
+	const tsInterfaces =
+		generateEnhancedTypeScriptInterfaces(serviceDefinitions);
+
+	// Write interfaces to file
+	writeFileSync(TS_PROTO_OUTPUT, tsInterfaces);
+	console.log(
+		`[compile-grpc-protocol] Generated enhanced service interfaces: ${TS_PROTO_OUTPUT}`,
+	);
 }
 
 /**
  * Enhanced service definition parsing
  */
 function parseServiceDefinitionsEnhanced(protoContent) {
-    const services = [];
-    
-    // Enhanced regex pattern to handle proto3 syntax
-    const servicePattern = /service\s+(\w+)\s*\{([^}]+)\}/g;
-    let serviceMatch;
-    
-    while ((serviceMatch = servicePattern.exec(protoContent)) !== null) {
-        const serviceName = serviceMatch[1];
-        const serviceBody = serviceMatch[2];
-        
-        services.push({
-            name: serviceName,
-            methods: parseServiceMethodsEnhanced(serviceBody)
-        });
-    }
-    
-    return services;
+	const services = [];
+
+	// Enhanced regex pattern to handle proto3 syntax
+	const servicePattern = /service\s+(\w+)\s*\{([^}]+)\}/g;
+	let serviceMatch;
+
+	while ((serviceMatch = servicePattern.exec(protoContent)) !== null) {
+		const serviceName = serviceMatch[1];
+		const serviceBody = serviceMatch[2];
+
+		services.push({
+			name: serviceName,
+			methods: parseServiceMethodsEnhanced(serviceBody),
+		});
+	}
+
+	return services;
 }
 
 /**
  * Parse message definitions from proto
  */
 function parseMessageDefinitionsEnhanced(protoContent) {
-    const messages = [];
-    
-    // Pattern to match message definitions (handles empty messages too)
-    const messagePattern = /message\s+(\w+)\s*\{([^}]*)\}/g;
-    let messageMatch;
-    
-    while ((messageMatch = messagePattern.exec(protoContent)) !== null) {
-        const messageName = messageMatch[1];
-        const messageBody = messageMatch[2];
-        
-        // Parse fields from message body
-        const fields = parseMessageFields(messageBody);
-        
-        messages.push({
-            name: messageName,
-            fields: fields
-        });
-    }
-    
-    return messages;
+	const messages = [];
+
+	// Pattern to match message definitions (handles empty messages too)
+	const messagePattern = /message\s+(\w+)\s*\{([^}]*)\}/g;
+	let messageMatch;
+
+	while ((messageMatch = messagePattern.exec(protoContent)) !== null) {
+		const messageName = messageMatch[1];
+		const messageBody = messageMatch[2];
+
+		// Parse fields from message body
+		const fields = parseMessageFields(messageBody);
+
+		messages.push({
+			name: messageName,
+			fields: fields,
+		});
+	}
+
+	return messages;
 }
 
 /**
  * Parse enum definitions from proto
  */
 function parseEnumDefinitionsEnhanced(protoContent) {
-    const enums = [];
-    
-    // Pattern to match enum definitions
-    const enumPattern = /enum\s+(\w+)\s*\{([^}]+)\}/g;
-    let enumMatch;
-    
-    while ((enumMatch = enumPattern.exec(protoContent)) !== null) {
-        const enumName = enumMatch[1];
-        const enumBody = enumMatch[2];
-        
-        // Parse enum values
-        const values = parseEnumValues(enumBody);
-        
-        enums.push({
-            name: enumName,
-            values: values
-        });
-    }
-    
-    return enums;
+	const enums = [];
+
+	// Pattern to match enum definitions
+	const enumPattern = /enum\s+(\w+)\s*\{([^}]+)\}/g;
+	let enumMatch;
+
+	while ((enumMatch = enumPattern.exec(protoContent)) !== null) {
+		const enumName = enumMatch[1];
+		const enumBody = enumMatch[2];
+
+		// Parse enum values
+		const values = parseEnumValues(enumBody);
+
+		enums.push({
+			name: enumName,
+			values: values,
+		});
+	}
+
+	return enums;
 }
 
 /**
  * Parse enum values
  */
 function parseEnumValues(enumBody) {
-    const values = [];
-    
-    // Pattern to match enum values: NAME = number;
-    const valuePattern = /(\w+)\s*=\s*(\d+)/g;
-    let valueMatch;
-    
-    while ((valueMatch = valuePattern.exec(enumBody)) !== null) {
-        values.push({
-            name: valueMatch[1],
-            value: parseInt(valueMatch[2])
-        });
-    }
-    
-    return values;
+	const values = [];
+
+	// Pattern to match enum values: NAME = number;
+	const valuePattern = /(\w+)\s*=\s*(\d+)/g;
+	let valueMatch;
+
+	while ((valueMatch = valuePattern.exec(enumBody)) !== null) {
+		values.push({
+			name: valueMatch[1],
+			value: parseInt(valueMatch[2]),
+		});
+	}
+
+	return values;
 }
 
 /**
  * Parse message fields
  */
 function parseMessageFields(messageBody) {
-    const fields = [];
-    
-    // Pattern to match field definitions (simplified for proto3)
-    // Format: type name = number [options];
-    const fieldPattern = /(\w+)\s+(\w+)\s*=\s*\d+\s*(?:\[\s*([^]]+)\s*\])?;?/g;
-    let fieldMatch;
-    
-    while ((fieldMatch = fieldPattern.exec(messageBody)) !== null) {
-        const field = {
-            type: mapProtoTypeToTypeScript(fieldMatch[1]),
-            name: fieldMatch[2]
-        };
-        fields.push(field);
-    }
-    
-    return fields;
+	const fields = [];
+
+	// Pattern to match field definitions (simplified for proto3)
+	// Format: type name = number [options];
+	const fieldPattern = /(\w+)\s+(\w+)\s*=\s*\d+\s*(?:\[\s*([^]]+)\s*\])?;?/g;
+	let fieldMatch;
+
+	while ((fieldMatch = fieldPattern.exec(messageBody)) !== null) {
+		const field = {
+			type: mapProtoTypeToTypeScript(fieldMatch[1]),
+			name: fieldMatch[2],
+		};
+		fields.push(field);
+	}
+
+	return fields;
 }
 
 /**
  * Map protobuf types to TypeScript types
  */
 function mapProtoTypeToTypeScript(protoType) {
-    const typeMap = {
-        'string': 'string',
-        'int32': 'number',
-        'int64': 'number',
-        'uint32': 'number',
-        'uint64': 'number',
-        'sint32': 'number',
-        'sint64': 'number',
-        'fixed32': 'number',
-        'fixed64': 'number',
-        'sfixed32': 'number',
-        'sfixed64': 'number',
-        'float': 'number',
-        'double': 'number',
-        'bool': 'boolean',
-        'bytes': 'Buffer',
-        'repeated': undefined // This is a modifier, not a type
-    };
-    
-    return typeMap[protoType] || protoType;
+	const typeMap = {
+		"string": "string",
+		"int32": "number",
+		"int64": "number",
+		"uint32": "number",
+		"uint64": "number",
+		"sint32": "number",
+		"sint64": "number",
+		"fixed32": "number",
+		"fixed64": "number",
+		"sfixed32": "number",
+		"sfixed64": "number",
+		"float": "number",
+		"double": "number",
+		"bool": "boolean",
+		"bytes": "Buffer",
+		"repeated": undefined, // This is a modifier, not a type
+	};
+
+	return typeMap[protoType] || protoType;
 }
 
 /**
  * Enhanced service method parsing
  */
 function parseServiceMethodsEnhanced(serviceBody) {
-    const methods = [];
-    const methodPattern = /rpc\s+(\w+)\s*\(\s*(\w+)\s*\)\s*returns\s*\(\s*(\w+)\s*\)/g;
-    let methodMatch;
-    
-    while ((methodMatch = methodPattern.exec(serviceBody)) !== null) {
-        methods.push({
-            name: methodMatch[1],
-            requestType: methodMatch[2],
-            responseType: methodMatch[3]
-        });
-    }
-    
-    return methods;
+	const methods = [];
+	const methodPattern =
+		/rpc\s+(\w+)\s*\(\s*(\w+)\s*\)\s*returns\s*\(\s*(\w+)\s*\)/g;
+	let methodMatch;
+
+	while ((methodMatch = methodPattern.exec(serviceBody)) !== null) {
+		methods.push({
+			name: methodMatch[1],
+			requestType: methodMatch[2],
+			responseType: methodMatch[3],
+		});
+	}
+
+	return methods;
 }
 
 /**
  * Generate enhanced TypeScript interfaces
  */
 function generateEnhancedTypeScriptInterfaces(services) {
-    let tsCode = `/**
+	let tsCode = `/**
  * @module Generated
  * @description
  * Auto-generated TypeScript interfaces from Mountain's Vine.proto
@@ -399,133 +428,133 @@ function generateEnhancedTypeScriptInterfaces(services) {
 
 `;
 
-    // Parse proto content
-    const protoContent = readFileSync(MOUNTAIN_PROTO_PATH, "utf8");
-    
-    // Generate enums first
-    const enumDefinitions = parseEnumDefinitionsEnhanced(protoContent);
-    tsCode += generateEnumInterfaces(enumDefinitions);
-    
-    // Generate message interfaces
-    const messageDefinitions = parseMessageDefinitionsEnhanced(protoContent);
-    tsCode += generateMessageInterfaces(messageDefinitions);
-    
-    // Generate service interfaces with enhanced signatures
-    services.forEach(service => {
-        tsCode += `export interface ${service.name} {
+	// Parse proto content
+	const protoContent = readFileSync(MOUNTAIN_PROTO_PATH, "utf8");
+
+	// Generate enums first
+	const enumDefinitions = parseEnumDefinitionsEnhanced(protoContent);
+	tsCode += generateEnumInterfaces(enumDefinitions);
+
+	// Generate message interfaces
+	const messageDefinitions = parseMessageDefinitionsEnhanced(protoContent);
+	tsCode += generateMessageInterfaces(messageDefinitions);
+
+	// Generate service interfaces with enhanced signatures
+	services.forEach((service) => {
+		tsCode += `export interface ${service.name} {
 `;
-        
-        service.methods.forEach(method => {
-            tsCode += `    ${method.name}(request: ${method.requestType}): Promise<${method.responseType}>;
+
+		service.methods.forEach((method) => {
+			tsCode += `    ${method.name}(request: ${method.requestType}): Promise<${method.responseType}>;
 `;
-        });
-        
-        tsCode += `}
+		});
+
+		tsCode += `}
 
 `;
-    });
-    
-    // Generate enhanced client/implementation types
-    tsCode += generateEnhancedClientInterfaces(services);
-    
-    return tsCode;
+	});
+
+	// Generate enhanced client/implementation types
+	tsCode += generateEnhancedClientInterfaces(services);
+
+	return tsCode;
 }
 
 /**
  * Generate message interfaces from parsed message definitions
  */
 function generateMessageInterfaces(messageDefinitions) {
-    let tsCode = `
+	let tsCode = `
 // Message interfaces parsed from Vine.proto
 `;
 
-    messageDefinitions.forEach(message => {
-        tsCode += `export interface ${message.name} {
+	messageDefinitions.forEach((message) => {
+		tsCode += `export interface ${message.name} {
 `;
-        message.fields.forEach(field => {
-            const optional = field.name === 'error' ? '?' : '';
-            tsCode += `    ${field.name}${optional}: ${field.type};
+		message.fields.forEach((field) => {
+			const optional = field.name === "error" ? "?" : "";
+			tsCode += `    ${field.name}${optional}: ${field.type};
 `;
-        });
-        
-        tsCode += `}
+		});
+
+		tsCode += `}
 
 `;
-    });
+	});
 
-    return tsCode;
+	return tsCode;
 }
 
 /**
  * Generate enum interfaces from parsed enum definitions
  */
 function generateEnumInterfaces(enumDefinitions) {
-    let tsCode = `
+	let tsCode = `
 // Enum types parsed from Vine.proto
 `;
 
-    enumDefinitions.forEach(enumDef => {
-        tsCode += `export enum ${enumDef.name} {
+	enumDefinitions.forEach((enumDef) => {
+		tsCode += `export enum ${enumDef.name} {
 `;
-        enumDef.values.forEach(value => {
-            tsCode += `    ${value.name} = ${value.value},
+		enumDef.values.forEach((value) => {
+			tsCode += `    ${value.name} = ${value.value},
 `;
-        });
-        
-        tsCode += `}
+		});
+
+		tsCode += `}
 
 `;
-    });
+	});
 
-    return tsCode;
+	return tsCode;
 }
 
 /**
  * Generate enhanced client interfaces
  */
 function generateEnhancedClientInterfaces(services) {
-    let tsCode = `
+	let tsCode = `
 // Enhanced interfaces for better TypeScript support
 `;
 
-    services.forEach(service => {
-        const clientName = `${service.name}Client`;
-        const implementationName = `${service.name}Implementation`;
-        
-        tsCode += `export interface ${clientName} {
+	services.forEach((service) => {
+		const clientName = `${service.name}Client`;
+		const implementationName = `${service.name}Implementation`;
+
+		tsCode += `export interface ${clientName} {
 `;
-        service.methods.forEach(method => {
-            tsCode += `    ${method.name}(request: ${method.requestType}): Promise<${method.responseType}>;
+		service.methods.forEach((method) => {
+			tsCode += `    ${method.name}(request: ${method.requestType}): Promise<${method.responseType}>;
 `;
-        });
-        
-        tsCode += `}
+		});
+
+		tsCode += `}
 
 `;
 
-        tsCode += `export type ${implementationName} = {
+		tsCode += `export type ${implementationName} = {
 `;
-        service.methods.forEach(method => {
-            tsCode += `    ${method.name}(request: ${method.requestType}): Promise<${method.responseType}>;
+		service.methods.forEach((method) => {
+			tsCode += `    ${method.name}(request: ${method.requestType}): Promise<${method.responseType}>;
 `;
-        });
-        
-        tsCode += `}
+		});
+
+		tsCode += `}
 
 `;
-    });
+	});
 
-    return tsCode;
+	return tsCode;
 }
 
 /**
  * Entry point
  */
 if (import.meta.url === `file://${process.argv[1]}`) {
-    compilegRPCProtocol().catch(error => {
-        console.error("[compile-grpc-protocol] Error:", error);
-        process.exit(1);
-    });
+	compilegRPCProtocol().catch((error) => {
+		console.error("[compile-grpc-protocol] Error:", error);
+		process.exit(1);
+	});
 }
 
 export default compilegRPCProtocol;

@@ -805,158 +805,63 @@ export class WindowService extends Effect.Service<WindowService>()(
 						},
 						set text(value: string) {
 							State.text = value;
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send update to Mountain
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to update status bar text`,
-												err as Error,
-											);
-									},
-								}),
-							);
+							MountainClient.sendNotification(
+								"setStatusBarText",
+								{ itemId: ItemId, text: value },
+							).catch(() => {});
 						},
 						get tooltip() {
 							return State.tooltip;
 						},
-						set tooltip(
-							value: string | VSCode.MarkdownString | undefined,
-						) {
+						set tooltip(value: string | VSCode.MarkdownString | undefined) {
 							State.tooltip = value;
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send update to Mountain with proper serialization
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to update status bar tooltip`,
-												err as Error,
-											);
-									},
-								}),
-							);
 						},
 						get command() {
 							return State.command;
 						},
-						set command(
-							value: string | VSCode.Command | undefined,
-						) {
+						set command(value: string | VSCode.Command | undefined) {
 							State.command = value;
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send update to Mountain
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to update status bar command`,
-												err as Error,
-											);
-									},
-								}),
-							);
 						},
 						get backgroundColor() {
 							return State.backgroundColor;
 						},
-						set backgroundColor(
-							value: string | VSCode.ThemeColor | undefined,
-						) {
+						set backgroundColor(value: string | VSCode.ThemeColor | undefined) {
 							State.backgroundColor = value;
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send update to Mountain
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to update status bar background color`,
-												err as Error,
-											);
-									},
-								}),
-							);
 						},
 						get color() {
 							return State.color;
 						},
-						set color(
-							value: string | VSCode.ThemeColor | undefined,
-						) {
+						set color(value: string | VSCode.ThemeColor | undefined) {
 							State.color = value;
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send update to Mountain
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to update status bar color`,
-												err as Error,
-											);
-									},
-								}),
-							);
 						},
 						show(): void {
 							State.isVisible = true;
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send show to Mountain
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to show status bar item`,
-												err as Error,
-											);
-									},
-								}),
-							);
+							MountainClient.sendNotification(
+								"setStatusBarText",
+								{
+									itemId: ItemId,
+									text: State.text,
+									visible: true,
+								},
+							).catch(() => {});
 						},
 						hide(): void {
 							State.isVisible = false;
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send hide to Mountain
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to hide status bar item`,
-												err as Error,
-											);
-									},
-								}),
-							);
+							MountainClient.sendNotification(
+								"setStatusBarText",
+								{
+									itemId: ItemId,
+									text: State.text,
+									visible: false,
+								},
+							).catch(() => {});
 						},
 						dispose(): void {
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send dispose to Mountain
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to dispose status bar item`,
-												err as Error,
-											);
-									},
-								}),
-							);
+							State.isVisible = false;
+							MountainClient.sendNotification(
+								"disposeStatusBarItem",
+								{ itemId: ItemId },
+							).catch(() => {});
 						},
 					} as VSCode.StatusBarItem);
 				});
@@ -979,156 +884,29 @@ export class WindowService extends Effect.Service<WindowService>()(
 						`[WindowService] Creating output channel: ${Name} (${ChannelId})`,
 					);
 
-					// Send creation request to Mountain
-					yield* Effect.tryPromise({
-						try: async () => {
-							// TODO: MOUNTAIN-INTEGRATION: Implement actual gRPC call (HIGH)
-							// await MountainClient.sendRequest('window.createOutputChannel', {
-							//     id: ChannelId,
-							//     name: Name
-							// });
-							yield *
-								Logger.Warn(
-									`[WindowService] TODO: Implement Mountain gRPC call for CreateOutputChannel`,
-								);
-						},
-						catch: (error) => {
-							yield *
-								Logger.Error(
-									`[WindowService] Failed to create output channel: ${(error as Error).message}`,
-									error as Error,
-								);
-							throw new Error(
-								`Failed to create output channel: ${(error as Error).message}`,
-							);
-						},
-					});
+					// Notify Mountain to create the output channel (Sky renders it)
+					await MountainClient.sendNotification("output.create", { id: ChannelId, name: Name });
 
-					// Return output channel proxy with full interface implementation
+					// Return output channel proxy
 					return yield* Effect.succeed({
 						name: Name,
 						append(value: string): void {
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send append to Mountain
-										yield *
-											Logger.Debug(
-												`[WindowService] OutputChannel '${Name}' append: ${value.slice(0, 100)}`,
-											);
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to append to output channel`,
-												err as Error,
-											);
-									},
-								}),
-							);
+							MountainClient.sendNotification("output.append", { channel: ChannelId, value }).catch(() => {});
 						},
 						appendLine(value: string): void {
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send appendLine to Mountain
-										yield *
-											Logger.Debug(
-												`[WindowService] OutputChannel '${Name}' appendLine: ${value.slice(0, 100)}`,
-											);
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to appendLine to output channel`,
-												err as Error,
-											);
-									},
-								}),
-							);
+							MountainClient.sendNotification("output.appendLine", { channel: ChannelId, value }).catch(() => {});
 						},
 						clear(): void {
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send clear to Mountain
-										yield *
-											Logger.Debug(
-												`[WindowService] OutputChannel '${Name}' cleared`,
-											);
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to clear output channel`,
-												err as Error,
-											);
-									},
-								}),
-							);
+							MountainClient.sendNotification("output.clear", { channel: ChannelId }).catch(() => {});
 						},
-						show(
-							columnOrPreserveFocus?: boolean | VSCode.ViewColumn,
-							preserveFocus?: boolean,
-						): void {
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send show to Mountain
-										yield *
-											Logger.Debug(
-												`[WindowService] OutputChannel '${Name}' shown`,
-											);
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to show output channel`,
-												err as Error,
-											);
-									},
-								}),
-							);
+						show(_columnOrPreserveFocus?: boolean | VSCode.ViewColumn, _preserveFocus?: boolean): void {
+							MountainClient.sendNotification("output.show", { channel: ChannelId }).catch(() => {});
 						},
 						hide(): void {
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send hide to Mountain
-										yield *
-											Logger.Debug(
-												`[WindowService] OutputChannel '${Name}' hidden`,
-											);
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to hide output channel`,
-												err as Error,
-											);
-									},
-								}),
-							);
+							MountainClient.sendNotification("output.show", { channel: ChannelId, visible: false }).catch(() => {});
 						},
 						dispose(): void {
-							Effect.runFork(
-								Effect.tryPromise({
-									try: async () => {
-										// TODO: Send dispose to Mountain
-										yield *
-											Logger.Debug(
-												`[WindowService] OutputChannel '${Name}' disposed`,
-											);
-									},
-									catch: (err) => {
-										yield *
-											Logger.Error(
-												`[WindowService] Failed to dispose output channel`,
-												err as Error,
-											);
-									},
-								}),
-							);
+							MountainClient.sendNotification("output.dispose", { channel: ChannelId }).catch(() => {});
 						},
 					} as VSCode.OutputChannel);
 				});

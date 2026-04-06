@@ -33,7 +33,8 @@ export class FileSystemService implements IFileSystemService {
 	constructor(private mountainClient: IMountainClientService) {}
 
 	async stat(uri: any): Promise<any> {
-		const Path = uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
+		const Path =
+			uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
 		const Response = await this.mountainClient.sendRequest("fs.stat", Path);
 		if (!Response) throw new Error(`File not found: ${Path}`);
 		// Mountain returns: { type, is_file, is_directory, size, mtime }
@@ -77,7 +78,8 @@ export class FileSystemService implements IFileSystemService {
 		if (uri.scheme !== "file") {
 			throw new Error(`Unsupported scheme: ${uri.scheme}`);
 		}
-		const Path = uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
+		const Path =
+			uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
 		// Mountain now returns [{name, type}] where type 1=File 2=Directory
 		const Entries: Array<{ name: string; type: number }> =
 			await this.mountainClient.sendRequest("fs.listDir", Path);

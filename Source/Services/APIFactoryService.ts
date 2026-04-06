@@ -206,7 +206,9 @@ const createVSCodeAPI = (
 						dispose: () => {
 							LocalHandlers.delete(command);
 							mountainClient
-								.sendNotification("unregisterCommand", { commandId: command })
+								.sendNotification("unregisterCommand", {
+									commandId: command,
+								})
 								.catch(() => {});
 						},
 					};
@@ -218,22 +220,30 @@ const createVSCodeAPI = (
 						return Local(...args);
 					}
 					// Delegate to Mountain's CommandRegistry
-					const Result = await mountainClient.sendRequest("executeCommand", {
-						commandId: command,
-						arguments: args.map((Arg) => {
-							if (typeof Arg === "string") return { stringValue: Arg };
-							if (typeof Arg === "number") return { intValue: Arg };
-							if (typeof Arg === "boolean") return { boolValue: Arg };
-							return { stringValue: JSON.stringify(Arg) };
-						}),
-					});
+					const Result = await mountainClient.sendRequest(
+						"executeCommand",
+						{
+							commandId: command,
+							arguments: args.map((Arg) => {
+								if (typeof Arg === "string")
+									return { stringValue: Arg };
+								if (typeof Arg === "number")
+									return { intValue: Arg };
+								if (typeof Arg === "boolean")
+									return { boolValue: Arg };
+								return { stringValue: JSON.stringify(Arg) };
+							}),
+						},
+					);
 					return Result?.result;
 				},
 				getCommands: async () => {
-					const Result = await mountainClient.sendRequest("executeCommand", {
-						commandId: "_getCommands",
-						arguments: [],
-					}).catch(() => null);
+					const Result = await mountainClient
+						.sendRequest("executeCommand", {
+							commandId: "_getCommands",
+							arguments: [],
+						})
+						.catch(() => null);
 					return Array.isArray(Result?.result) ? Result.result : [];
 				},
 			};
@@ -241,14 +251,31 @@ const createVSCodeAPI = (
 
 		// --- Env Namespace ---
 		env: {
-			appName: "Cocoon",
+			appName: "CodeEditorLand",
 			appRoot: "/app",
 			language: "en-US",
 			clipboard: {
 				readText: async () => "",
-				writeText: async (value: string) => {},
+				writeText: async (_value: string) => {},
 			},
-			openExternal: async (target: any) => true,
+			openExternal: async (target: any) => {
+				const Url =
+					typeof target === "string"
+						? target
+						: (target?.toString?.() ?? "");
+				await mountainClient.sendNotification("openExternal", {
+					url: Url,
+				});
+				return true;
+			},
+			uriScheme: "codeeditorland",
+			appHost: "desktop",
+			remoteName: "",
+			isNewAppInstall: false,
+			isTelemetryEnabled: false,
+			onDidChangeTelemetryEnabled: {
+				event: () => ({ dispose: () => {} }),
+			},
 		},
 
 		// --- Extensions Namespace ---
@@ -321,40 +348,21 @@ const createVSCodeAPI = (
 					RegisterProvider("definition_provider", sel, p),
 				registerReferenceProvider: (sel: any, p: any) =>
 					RegisterProvider("reference_provider", sel, p),
-				registerCodeActionsProvider: (
-					sel: any,
-					p: any,
-					_meta?: any,
-				) => RegisterProvider("code_actions_provider", sel, p),
+				registerCodeActionsProvider: (sel: any, p: any, _meta?: any) =>
+					RegisterProvider("code_actions_provider", sel, p),
 				registerDocumentHighlightProvider: (sel: any, p: any) =>
-					RegisterProvider(
-						"document_highlight_provider",
-						sel,
-						p,
-					),
+					RegisterProvider("document_highlight_provider", sel, p),
 				registerDocumentSymbolProvider: (
 					sel: any,
 					p: any,
 					_meta?: any,
-				) =>
-					RegisterProvider("document_symbol_provider", sel, p),
+				) => RegisterProvider("document_symbol_provider", sel, p),
 				registerWorkspaceSymbolProvider: (p: any) =>
-					RegisterProvider(
-						"workspace_symbol_provider",
-						"*",
-						p,
-					),
+					RegisterProvider("workspace_symbol_provider", "*", p),
 				registerRenameProvider: (sel: any, p: any) =>
 					RegisterProvider("rename_provider", sel, p),
-				registerDocumentFormattingEditProvider: (
-					sel: any,
-					p: any,
-				) =>
-					RegisterProvider(
-						"document_formatting_provider",
-						sel,
-						p,
-					),
+				registerDocumentFormattingEditProvider: (sel: any, p: any) =>
+					RegisterProvider("document_formatting_provider", sel, p),
 				registerDocumentRangeFormattingEditProvider: (
 					sel: any,
 					p: any,
@@ -369,12 +377,7 @@ const createVSCodeAPI = (
 					p: any,
 					_first: string,
 					..._more: string[]
-				) =>
-					RegisterProvider(
-						"on_type_formatting_provider",
-						sel,
-						p,
-					),
+				) => RegisterProvider("on_type_formatting_provider", sel, p),
 				registerSignatureHelpProvider: (
 					sel: any,
 					p: any,
@@ -390,14 +393,12 @@ const createVSCodeAPI = (
 					sel: any,
 					p: any,
 					_legend: any,
-				) =>
-					RegisterProvider("semantic_tokens_provider", sel, p),
+				) => RegisterProvider("semantic_tokens_provider", sel, p),
 				registerDocumentRangeSemanticTokensProvider: (
 					sel: any,
 					p: any,
 					_legend: any,
-				) =>
-					RegisterProvider("semantic_tokens_provider", sel, p),
+				) => RegisterProvider("semantic_tokens_provider", sel, p),
 				registerInlayHintsProvider: (sel: any, p: any) =>
 					RegisterProvider("inlay_hints_provider", sel, p),
 				registerTypeHierarchyProvider: (sel: any, p: any) =>
@@ -405,11 +406,7 @@ const createVSCodeAPI = (
 				registerCallHierarchyProvider: (sel: any, p: any) =>
 					RegisterProvider("call_hierarchy_provider", sel, p),
 				registerLinkedEditingRangeProvider: (sel: any, p: any) =>
-					RegisterProvider(
-						"linked_editing_range_provider",
-						sel,
-						p,
-					),
+					RegisterProvider("linked_editing_range_provider", sel, p),
 				registerDocumentLinkProvider: (sel: any, p: any) =>
 					RegisterProvider("document_link_provider", sel, p),
 				registerColorProvider: (sel: any, p: any) =>
@@ -420,24 +417,16 @@ const createVSCodeAPI = (
 					RegisterProvider("type_definition_provider", sel, p),
 				registerDeclarationProvider: (sel: any, p: any) =>
 					RegisterProvider("declaration_provider", sel, p),
-				registerEvaluatableExpressionProvider: (
-					sel: any,
-					p: any,
-				) =>
-					RegisterProvider(
-						"evaluatable_expression_provider",
-						sel,
-						p,
-					),
+				registerEvaluatableExpressionProvider: (sel: any, p: any) =>
+					RegisterProvider("evaluatable_expression_provider", sel, p),
 				registerInlineValuesProvider: (sel: any, p: any) =>
 					RegisterProvider("inline_values_provider", sel, p),
 
 				setLanguageConfiguration: (lang: string, _config: any) => {
 					mountainClient
-						.sendNotification(
-							"set_language_configuration",
-							{ language: lang },
-						)
+						.sendNotification("set_language_configuration", {
+							language: lang,
+						})
 						.catch(() => {});
 					return { dispose: () => {} };
 				},

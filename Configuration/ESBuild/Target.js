@@ -1,1 +1,909 @@
-var Me=Object.defineProperty;var f=(e,t)=>()=>(e&&(t=e(e=0)),t);var l=(e,t)=>{for(var n in t)Me(e,n,{get:t[n],enumerable:!0})};var b={};l(b,{Bundle:()=>k,Clean:()=>j,Compile:()=>Ie,On:()=>m,default:()=>we,posix:()=>be,sep:()=>Ee});var m,j,k,Ie,we,Ee,be,O=f(async()=>{"use strict";m=process.env.NODE_ENV==="development"||process.env.TAURI_ENV_DEBUG==="true",j=process.env.Clean==="true",k=process.env.Bundle==="true",Ie=process.env.Compile==="true",we={color:!0,format:"esm",logLevel:"debug",metafile:!0,minify:!m,outdir:"Configuration",platform:"node",target:"esnext",tsconfig:"tsconfig.json",write:!0,legalComments:m?"inline":"none",bundle:k,assetNames:"Asset/[name]-[hash]",sourcemap:m,drop:m?[]:["debugger"],ignoreAnnotations:!m,keepNames:m,plugins:[{name:"Target",setup({onStart:e,initialOptions:{outdir:t}}){!0===(j===!0)&&e(async()=>{try{t&&await(await import("node:fs/promises")).rm(t,{recursive:!0})}catch(n){console.log(n)}})}}],outbase:"Source/Configuration",loader:{".json":"copy",".sh":"copy"}},{sep:Ee,posix:be}=await import("node:path")});var Y={};l(Y,{deepmerge:()=>ve,deepmergeCustom:()=>X,deepmergeInto:()=>Be,deepmergeIntoCustom:()=>K,getKeys:()=>_,getObjectType:()=>A,objectHasProperty:()=>V});function L(e,t){return t}function H(e,t){return e.filter(n=>n!==void 0)}function A(e){return typeof e!="object"||e===null?0:Array.isArray(e)?2:Oe(e)?1:e instanceof Set?3:e instanceof Map?4:5}function _(e){let t=new Set;for(let n of e)for(let r of[...Object.keys(n),...Object.getOwnPropertySymbols(n)])t.add(r);return t}function V(e,t){return typeof e=="object"&&Object.prototype.propertyIsEnumerable.call(e,t)}function R(e){let t=0,n=e[0]?.[Symbol.iterator]();return{[Symbol.iterator](){return{next(){do{if(n===void 0)return{done:!0,value:void 0};let r=n.next();if(r.done===!0){t+=1,n=e[t]?.[Symbol.iterator]();continue}return{done:!1,value:r.value}}while(!0)}}}}}function Oe(e){if(!W.includes(Object.prototype.toString.call(e)))return!1;let{constructor:t}=e;if(t===void 0)return!0;let n=t.prototype;return!(n===null||typeof n!="object"||!W.includes(Object.prototype.toString.call(n))||!n.hasOwnProperty("isPrototypeOf"))}function Ae(e,t,n){let r={};for(let o of _(e)){let i=[];for(let g of e)V(g,o)&&i.push(g[o]);if(i.length===0)continue;let s=t.metaDataUpdater(n,{key:o,parents:e}),u=z(i,t,s);u!==d.skip&&(o==="__proto__"?Object.defineProperty(r,o,{value:u,configurable:!0,enumerable:!0,writable:!0}):r[o]=u)}return r}function De(e){return e.flat()}function xe(e){return new Set(R(e))}function Re(e){return new Map(R(e))}function $e(e){return e.at(-1)}function ve(...e){return X({})(...e)}function X(e,t){let n=Ne(e,r);function r(...o){return z(o,n,t)}return r}function Ne(e,t){return{defaultMergeFunctions:D,mergeFunctions:{...D,...Object.fromEntries(Object.entries(e).filter(([n,r])=>Object.hasOwn(D,n)).map(([n,r])=>r===!1?[n,D.mergeOthers]:[n,r]))},metaDataUpdater:e.metaDataUpdater??L,deepmerge:t,useImplicitDefaultMerging:e.enableImplicitDefaultMerging??!1,filterValues:e.filterValues===!1?void 0:e.filterValues??H,actions:d}}function z(e,t,n){let r=t.filterValues?.(e,n)??e;if(r.length===0)return;if(r.length===1)return T(r,t,n);let o=A(r[0]);if(o!==0&&o!==5){for(let i=1;i<r.length;i++)if(A(r[i])!==o)return T(r,t,n)}switch(o){case 1:return Fe(r,t,n);case 2:return Se(r,t,n);case 3:return Ue(r,t,n);case 4:return Te(r,t,n);default:return T(r,t,n)}}function Fe(e,t,n){let r=t.mergeFunctions.mergeRecords(e,t,n);return r===d.defaultMerge||t.useImplicitDefaultMerging&&r===void 0&&t.mergeFunctions.mergeRecords!==t.defaultMergeFunctions.mergeRecords?t.defaultMergeFunctions.mergeRecords(e,t,n):r}function Se(e,t,n){let r=t.mergeFunctions.mergeArrays(e,t,n);return r===d.defaultMerge||t.useImplicitDefaultMerging&&r===void 0&&t.mergeFunctions.mergeArrays!==t.defaultMergeFunctions.mergeArrays?t.defaultMergeFunctions.mergeArrays(e):r}function Ue(e,t,n){let r=t.mergeFunctions.mergeSets(e,t,n);return r===d.defaultMerge||t.useImplicitDefaultMerging&&r===void 0&&t.mergeFunctions.mergeSets!==t.defaultMergeFunctions.mergeSets?t.defaultMergeFunctions.mergeSets(e):r}function Te(e,t,n){let r=t.mergeFunctions.mergeMaps(e,t,n);return r===d.defaultMerge||t.useImplicitDefaultMerging&&r===void 0&&t.mergeFunctions.mergeMaps!==t.defaultMergeFunctions.mergeMaps?t.defaultMergeFunctions.mergeMaps(e):r}function T(e,t,n){let r=t.mergeFunctions.mergeOthers(e,t,n);return r===d.defaultMerge||t.useImplicitDefaultMerging&&r===void 0&&t.mergeFunctions.mergeOthers!==t.defaultMergeFunctions.mergeOthers?t.defaultMergeFunctions.mergeOthers(e):r}function Ce(e,t,n,r){for(let o of _(t)){let i=[];for(let g of t)V(g,o)&&i.push(g[o]);if(i.length===0)continue;let s=n.metaDataUpdater(r,{key:o,parents:t}),u={value:i[0]};J(u,i,n,s),o==="__proto__"?Object.defineProperty(e.value,o,{value:u.value,configurable:!0,enumerable:!0,writable:!0}):e.value[o]=u.value}}function _e(e,t){e.value.push(...t.slice(1).flat())}function Ve(e,t){for(let n of R(t.slice(1)))e.value.add(n)}function Pe(e,t){for(let[n,r]of R(t.slice(1)))e.value.set(n,r)}function Ze(e,t){e.value=t.at(-1)}function Be(e,...t){K({})(e,...t)}function K(e,t){let n=je(e,r);function r(o,...i){J({value:o},[o,...i],n,t)}return r}function je(e,t){return{defaultMergeFunctions:x,mergeFunctions:{...x,...Object.fromEntries(Object.entries(e).filter(([n,r])=>Object.hasOwn(x,n)).map(([n,r])=>r===!1?[n,x.mergeOthers]:[n,r]))},metaDataUpdater:e.metaDataUpdater??L,deepmergeInto:t,filterValues:e.filterValues===!1?void 0:e.filterValues??H,actions:h}}function J(e,t,n,r){let o=n.filterValues?.(t,r)??t;if(o.length===0)return;if(o.length===1)return void C(e,o,n,r);let i=A(e.value);if(i!==0&&i!==5){for(let s=1;s<o.length;s++)if(A(o[s])!==i)return void C(e,o,n,r)}switch(i){case 1:return void ke(e,o,n,r);case 2:return void Ge(e,o,n,r);case 3:return void We(e,o,n,r);case 4:return void Le(e,o,n,r);default:return void C(e,o,n,r)}}function ke(e,t,n,r){n.mergeFunctions.mergeRecords(e,t,n,r)===h.defaultMerge&&n.defaultMergeFunctions.mergeRecords(e,t,n,r)}function Ge(e,t,n,r){n.mergeFunctions.mergeArrays(e,t,n,r)===h.defaultMerge&&n.defaultMergeFunctions.mergeArrays(e,t)}function We(e,t,n,r){n.mergeFunctions.mergeSets(e,t,n,r)===h.defaultMerge&&n.defaultMergeFunctions.mergeSets(e,t)}function Le(e,t,n,r){n.mergeFunctions.mergeMaps(e,t,n,r)===h.defaultMerge&&n.defaultMergeFunctions.mergeMaps(e,t)}function C(e,t,n,r){(n.mergeFunctions.mergeOthers(e,t,n,r)===h.defaultMerge||e.value===h.defaultMerge)&&n.defaultMergeFunctions.mergeOthers(e,t)}var d,h,G,W,D,x,Q=f(()=>{"use strict";d={defaultMerge:Symbol("deepmerge-ts: default merge"),skip:Symbol("deepmerge-ts: skip")},h={defaultMerge:d.defaultMerge};(function(e){e[e.NOT=0]="NOT",e[e.RECORD=1]="RECORD",e[e.ARRAY=2]="ARRAY",e[e.SET=3]="SET",e[e.MAP=4]="MAP",e[e.OTHER=5]="OTHER"})(G||(G={}));W=["[object Object]","[object Module]"];D={mergeRecords:Ae,mergeArrays:De,mergeSets:xe,mergeMaps:Re,mergeOthers:$e};x={mergeRecords:Ce,mergeArrays:_e,mergeSets:Ve,mergeMaps:Pe,mergeOthers:Ze}});var oe={};l(oe,{MAX_ULID:()=>He,MIN_ULID:()=>Xe,TIME_LEN:()=>p,TIME_MAX:()=>v,ULIDError:()=>c,ULIDErrorCode:()=>a,decodeTime:()=>et,encodeTime:()=>N,fixULIDBase32:()=>qe,incrementBase32:()=>te,isValid:()=>rt,monotonicFactory:()=>ot,ulid:()=>it,ulidToUUID:()=>st,uuidToULID:()=>at});import $ from"node:crypto";function Je(e){let t=Math.floor(e()*w)%w;return y.charAt(t)}function q(e,t,n){return t>e.length-1?e:e.substr(0,t)+n+e.substr(t+1)}function Ye(e){let t=[],n=0,r=0,o=new Uint8Array(e.slice().reverse());for(let i of o)for(r|=i<<n,n+=8;n>=5;)t.unshift(r&31),r>>>=5,n-=5;return n>0&&t.unshift(r&31),t.map(i=>ee.charAt(i)).join("")}function Qe(e){let t=e.toUpperCase().split("").reverse().join(""),n=[],r=0,o=0;for(let i of t){let s=ee.indexOf(i);if(s===-1)throw new Error(`Invalid base 32 character found in string: ${i}`);for(o|=s<<r,r+=5;r>=8;)n.unshift(o&255),o>>>=8,r-=8}return(r>=5||o>0)&&n.unshift(o&255),new Uint8Array(n)}function qe(e){return e.replace(/i/gi,"1").replace(/l/gi,"1").replace(/o/gi,"0").replace(/-/g,"")}function te(e){let t,n=e.length,r,o,i=e,s=w-1;for(;!t&&n-->=0;){if(r=i[n],o=y.indexOf(r),o===-1)throw new c(a.Base32IncorrectEncoding,"Incorrectly encoded string");if(o===s){i=q(i,n,y[0]);continue}t=q(i,n,y[o+1])}if(typeof t=="string")return t;throw new c(a.Base32IncorrectEncoding,"Failed incrementing string")}function et(e){if(e.length!==p+F)throw new c(a.DecodeTimeValueMalformed,"Malformed ULID");let t=e.substr(0,p).toUpperCase().split("").reverse().reduce((n,r,o)=>{let i=y.indexOf(r);if(i===-1)throw new c(a.DecodeTimeInvalidCharacter,`Time decode error: Invalid character: ${r}`);return n+=i*Math.pow(w,o)},0);if(t>v)throw new c(a.DecodeTimeValueMalformed,`Malformed ULID: timestamp too large: ${t}`);return t}function ne(e){let t=tt(),n=t&&(t.crypto||t.msCrypto)||(typeof $<"u"?$:null);if(typeof n?.getRandomValues=="function")return()=>{let r=new Uint8Array(1);return n.getRandomValues(r),r[0]/256};if(typeof n?.randomBytes=="function")return()=>n.randomBytes(1).readUInt8()/256;if($?.randomBytes)return()=>$.randomBytes(1).readUInt8()/256;throw new c(a.PRNGDetectFailure,"Failed to find a reliable PRNG")}function tt(){return nt()?self:typeof window<"u"?window:typeof global<"u"?global:typeof globalThis<"u"?globalThis:null}function re(e,t){let n="";for(;e>0;e--)n=Je(t)+n;return n}function N(e,t=p){if(isNaN(e))throw new c(a.EncodeTimeValueMalformed,`Time must be a number: ${e}`);if(e>v)throw new c(a.EncodeTimeSizeExceeded,`Cannot encode a time larger than ${v}: ${e}`);if(e<0)throw new c(a.EncodeTimeNegative,`Time must be positive: ${e}`);if(Number.isInteger(e)===!1)throw new c(a.EncodeTimeValueMalformed,`Time must be an integer: ${e}`);let n,r="";for(let o=t;o>0;o--)n=e%w,r=y.charAt(n)+r,e=(e-n)/w;return r}function nt(){return typeof WorkerGlobalScope<"u"&&self instanceof WorkerGlobalScope}function rt(e){return typeof e=="string"&&e.length===p+F&&e.toUpperCase().split("").every(t=>y.indexOf(t)!==-1)}function ot(e){let t=e||ne(),n=0,r;return function(i){let s=!i||isNaN(i)?Date.now():i;if(s<=n){let g=r=te(r);return N(n,p)+g}n=s;let u=r=re(F,t);return N(s,p)+u}}function it(e,t){let n=t||ne(),r=!e||isNaN(e)?Date.now():e;return N(r,p)+re(F,n)}function st(e){if(!ze.test(e))throw new c(a.ULIDInvalid,`Invalid ULID: ${e}`);let n=Qe(e),r=Array.from(n).map(o=>o.toString(16).padStart(2,"0")).join("");return r=r.substring(0,8)+"-"+r.substring(8,12)+"-"+r.substring(12,16)+"-"+r.substring(16,20)+"-"+r.substring(20),r.toUpperCase()}function at(e){if(!Ke.test(e))throw new c(a.UUIDInvalid,`Invalid UUID: ${e}`);let n=e.replace(/-/g,"").match(/.{1,2}/g);if(!n)throw new c(a.Unexpected,`Failed parsing UUID bytes: ${e}`);let r=new Uint8Array(n.map(o=>parseInt(o,16)));return Ye(r)}var ee,y,w,He,Xe,F,p,v,ze,Ke,a,c,ie=f(()=>{"use strict";ee="0123456789ABCDEFGHJKMNPQRSTVWXYZ",y="0123456789ABCDEFGHJKMNPQRSTVWXYZ",w=32,He="7ZZZZZZZZZZZZZZZZZZZZZZZZZ",Xe="00000000000000000000000000",F=16,p=10,v=0xffffffffffff,ze=/^[0-7][0-9a-hjkmnp-tv-zA-HJKMNP-TV-Z]{25}$/,Ke=/^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$/;(function(e){e.Base32IncorrectEncoding="B32_ENC_INVALID",e.DecodeTimeInvalidCharacter="DEC_TIME_CHAR",e.DecodeTimeValueMalformed="DEC_TIME_MALFORMED",e.EncodeTimeNegative="ENC_TIME_NEG",e.EncodeTimeSizeExceeded="ENC_TIME_SIZE_EXCEED",e.EncodeTimeValueMalformed="ENC_TIME_MALFORMED",e.PRNGDetectFailure="PRNG_DETECT",e.ULIDInvalid="ULID_INVALID",e.Unexpected="UNEXPECTED",e.UUIDInvalid="UUID_INVALID"})(a||(a={}));c=class extends Error{constructor(t,n){super(`${n} (${t})`),this.name="ULIDError",this.code=t}}});var se={};l(se,{default:()=>ct});var ct,ae=f(()=>{"use strict";ct=(async(...[e,t])=>JSON.parse((await(await import("node:fs/promises")).readFile(`${t??"."}/${e}`,"utf-8")).toString()))});var P={};l(P,{On:()=>M,default:()=>ut,posix:()=>lt,sep:()=>ft});var M,ut,ft,lt,Z=f(async()=>{"use strict";M=process.env.NODE_ENV==="development",ut={color:!0,format:"esm",logLevel:"debug",metafile:!0,minify:!M,outdir:"Target",platform:"node",target:"esnext",tsconfig:"tsconfig.json",write:!0,legalComments:M?"inline":"none",bundle:!1,assetNames:"Asset/[name]-[hash]",sourcemap:M,drop:M?[]:["debugger"],ignoreAnnotations:!M,keepNames:M,plugins:[{name:"Target",setup({onStart:e,initialOptions:{outdir:t}}){e(async()=>{try{t&&await(await import("node:fs/promises")).rm(t,{recursive:!0})}catch(n){console.log(n)}})}}],define:{"process.env.VERSION_PACKAGE":`'${(await(await Promise.resolve().then(()=>(ae(),se))).default("package.json"))?.version}'`}},{sep:ft,posix:lt}=await import("node:path")});var ce={};l(ce,{default:()=>dt,posix:()=>E});var dt,E,ue=f(async()=>{"use strict";dt=e=>{let t=e.replace(/[.+^${}()|[\]\\]/g,"\\$&").replace(/\*\*/g,".*").replace(/\*/g,`[^${E.sep}]+`);!e.startsWith("**")&&!e.startsWith("*")&&(t=`(?:^|\\${E.sep})${t}`),!e.endsWith("**")&&!e.endsWith("*")?t=`${t}(?:\\${E.sep}|$)`:!e.includes("*")&&!e.includes("/")&&e.startsWith(".")?t=`${t}$`:!e.includes("*")&&!e.includes("/")&&(t=`(?:^|\\${E.sep})${t}(?:\\${E.sep}|$)`);try{return new RegExp(t)}catch(n){return console.error(`[Exclude] Invalid regex generated from glob "${e}": ${t}`,n),new RegExp("$.")}},{posix:E}=await Z().then(()=>P)});var le={};l(le,{_Regex:()=>fe,default:()=>pt,posix:()=>I,sep:()=>B});var pt,I,B,fe,de=f(async()=>{"use strict";pt=(e,t)=>{if(!e)return!1;let n=e.split(B).join(I.sep);return t.some(r=>{if(!r)return!1;let o=r.split(B).join(I.sep);return!o.includes("*")&&!o.startsWith(".")&&(n.includes(`${I.sep}${o}${I.sep}`)||n.startsWith(`${o}${I.sep}`)||n.endsWith(`${I.sep}${o}`)||n===o)||o.startsWith(".")&&!o.includes("*")&&!o.includes("/")&&n.endsWith(o)||o.includes("*")&&fe(o).test(n)?!0:n.includes(o)?(console.warn(`[Exclude] Simple includes match (fallback): "${n}" includes "${o}"`),!0):!1})},{posix:I,sep:B}=await Z().then(()=>P),{default:fe}=await ue().then(()=>ce)});var pe={};l(pe,{Exclude:()=>S,default:()=>gt});var gt,S,ge=f(async()=>{"use strict";gt=(e,t)=>{let n=[];if(e.entryPoints){let r=e.entryPoints;if(Array.isArray(r)&&(r.length===0||typeof r[0]=="string"))n=r.filter(o=>!S(o,t));else if(Array.isArray(r)&&r.length>0&&typeof r[0]=="object"&&r[0]!==null&&"in"in r[0])n=r.filter(o=>!S(o.in,t));else if(!Array.isArray(r)&&typeof r=="object"&&r!==null){let o=r,i={};for(let s in o)if(Object.prototype.hasOwnProperty.call(o,s)){let u=o[s];u!==void 0&&(S(u,t)||(i[s]=u))}n=i}else Array.isArray(r)&&r.length===0?n=[]:n=r}else n=[];return n},{default:S}=await de().then(()=>le)});var me={};l(me,{default:()=>mt});var mt,he=f(()=>{"use strict";mt=(async(...[e,t=async n=>console.log(n)])=>{try{let{stdout:n,stderr:r}=(await import("child_process")).exec(e);typeof t=="function"&&(n?.on("data",async o=>await t(o.trim())),r?.on("data",async o=>await t(o.trim(),!0)))}catch(n){console.log(n)}})});var U=(await O().then(()=>b)).On,It=(await O().then(()=>b)).Bundle,ht=(await O().then(()=>b)).Compile,ye=(await Promise.resolve().then(()=>(Q(),Y))).deepmerge,wt=async e=>ye((await O().then(()=>b)).default,{outdir:"Target",drop:U?[]:["debugger","console"],define:{__DEV__:U?"true":"false",__INCREMENT__:`"${`${U?"DEVELOPMENT":"PRODUCTION"}-${(await Promise.resolve().then(()=>(ie(),oe))).ulid()}`}"`},treeShaking:!U,entryPoints:(await ge().then(()=>pe)).default(e,["Source/Configuration/*"]),platform:"node",outbase:"Source",plugins:ht?ye(e.plugins,[{name:"Compile",setup({onEnd:t}){t(async({metafile:n})=>{let r=n?.outputs;for(let o in r)Object.prototype.hasOwnProperty.call(r,o)&&o.endsWith(".js")&&(await Promise.resolve().then(()=>(he(),me))).default(`Build '${o}' 															--ESBuild Configuration/ESBuild/Target/Compile.js 															--TypeScript Configuration/tsconfig/Target/Compile.json`)})}}]):[]});export{It as Bundle,ht as Compile,ye as Merge,U as On,wt as default};
+import $ from "node:crypto";
+
+var Me = Object.defineProperty;
+var f = (e, t) => () => (e && (t = e((e = 0))), t);
+var l = (e, t) => {
+	for (var n in t) Me(e, n, { get: t[n], enumerable: !0 });
+};
+var b = {};
+l(b, {
+	Bundle: () => k,
+	Clean: () => j,
+	Compile: () => Ie,
+	On: () => m,
+	default: () => we,
+	posix: () => be,
+	sep: () => Ee,
+});
+var m,
+	j,
+	k,
+	Ie,
+	we,
+	Ee,
+	be,
+	O = f(async () => {
+		"use strict";
+		((m =
+			process.env.NODE_ENV === "development" ||
+			process.env.TAURI_ENV_DEBUG === "true"),
+			(j = process.env.Clean === "true"),
+			(k = process.env.Bundle === "true"),
+			(Ie = process.env.Compile === "true"),
+			(we = {
+				color: !0,
+				format: "esm",
+				logLevel: "debug",
+				metafile: !0,
+				minify: !m,
+				outdir: "Configuration",
+				platform: "node",
+				target: "esnext",
+				tsconfig: "tsconfig.json",
+				write: !0,
+				legalComments: m ? "inline" : "none",
+				bundle: k,
+				assetNames: "Asset/[name]-[hash]",
+				sourcemap: m,
+				drop: m ? [] : ["debugger"],
+				ignoreAnnotations: !m,
+				keepNames: m,
+				plugins: [
+					{
+						name: "Target",
+						setup({ onStart: e, initialOptions: { outdir: t } }) {
+							!0 === (j === !0) &&
+								e(async () => {
+									try {
+										t &&
+											(await (
+												await import("node:fs/promises")
+											).rm(t, { recursive: !0 }));
+									} catch (n) {
+										console.log(n);
+									}
+								});
+						},
+					},
+				],
+				outbase: "Source/Configuration",
+				loader: { ".json": "copy", ".sh": "copy" },
+			}),
+			({ sep: Ee, posix: be } = await import("node:path")));
+	});
+var Y = {};
+l(Y, {
+	deepmerge: () => ve,
+	deepmergeCustom: () => X,
+	deepmergeInto: () => Be,
+	deepmergeIntoCustom: () => K,
+	getKeys: () => _,
+	getObjectType: () => A,
+	objectHasProperty: () => V,
+});
+function L(e, t) {
+	return t;
+}
+function H(e, t) {
+	return e.filter((n) => n !== void 0);
+}
+function A(e) {
+	return typeof e != "object" || e === null
+		? 0
+		: Array.isArray(e)
+			? 2
+			: Oe(e)
+				? 1
+				: e instanceof Set
+					? 3
+					: e instanceof Map
+						? 4
+						: 5;
+}
+function _(e) {
+	let t = new Set();
+	for (let n of e)
+		for (let r of [...Object.keys(n), ...Object.getOwnPropertySymbols(n)])
+			t.add(r);
+	return t;
+}
+function V(e, t) {
+	return (
+		typeof e == "object" && Object.prototype.propertyIsEnumerable.call(e, t)
+	);
+}
+function R(e) {
+	let t = 0,
+		n = e[0]?.[Symbol.iterator]();
+	return {
+		[Symbol.iterator]() {
+			return {
+				next() {
+					do {
+						if (n === void 0) return { done: !0, value: void 0 };
+						let r = n.next();
+						if (r.done === !0) {
+							((t += 1), (n = e[t]?.[Symbol.iterator]()));
+							continue;
+						}
+						return { done: !1, value: r.value };
+					} while (!0);
+				},
+			};
+		},
+	};
+}
+function Oe(e) {
+	if (!W.includes(Object.prototype.toString.call(e))) return !1;
+	let { constructor: t } = e;
+	if (t === void 0) return !0;
+	let n = t.prototype;
+	return !(
+		n === null ||
+		typeof n != "object" ||
+		!W.includes(Object.prototype.toString.call(n)) ||
+		!n.hasOwnProperty("isPrototypeOf")
+	);
+}
+function Ae(e, t, n) {
+	let r = {};
+	for (let o of _(e)) {
+		let i = [];
+		for (let g of e) V(g, o) && i.push(g[o]);
+		if (i.length === 0) continue;
+		let s = t.metaDataUpdater(n, { key: o, parents: e }),
+			u = z(i, t, s);
+		u !== d.skip &&
+			(o === "__proto__"
+				? Object.defineProperty(r, o, {
+						value: u,
+						configurable: !0,
+						enumerable: !0,
+						writable: !0,
+					})
+				: (r[o] = u));
+	}
+	return r;
+}
+function De(e) {
+	return e.flat();
+}
+function xe(e) {
+	return new Set(R(e));
+}
+function Re(e) {
+	return new Map(R(e));
+}
+function $e(e) {
+	return e.at(-1);
+}
+function ve(...e) {
+	return X({})(...e);
+}
+function X(e, t) {
+	let n = Ne(e, r);
+	function r(...o) {
+		return z(o, n, t);
+	}
+	return r;
+}
+function Ne(e, t) {
+	return {
+		defaultMergeFunctions: D,
+		mergeFunctions: {
+			...D,
+			...Object.fromEntries(
+				Object.entries(e)
+					.filter(([n, r]) => Object.hasOwn(D, n))
+					.map(([n, r]) => (r === !1 ? [n, D.mergeOthers] : [n, r])),
+			),
+		},
+		metaDataUpdater: e.metaDataUpdater ?? L,
+		deepmerge: t,
+		useImplicitDefaultMerging: e.enableImplicitDefaultMerging ?? !1,
+		filterValues: e.filterValues === !1 ? void 0 : (e.filterValues ?? H),
+		actions: d,
+	};
+}
+function z(e, t, n) {
+	let r = t.filterValues?.(e, n) ?? e;
+	if (r.length === 0) return;
+	if (r.length === 1) return T(r, t, n);
+	let o = A(r[0]);
+	if (o !== 0 && o !== 5) {
+		for (let i = 1; i < r.length; i++) if (A(r[i]) !== o) return T(r, t, n);
+	}
+	switch (o) {
+		case 1:
+			return Fe(r, t, n);
+		case 2:
+			return Se(r, t, n);
+		case 3:
+			return Ue(r, t, n);
+		case 4:
+			return Te(r, t, n);
+		default:
+			return T(r, t, n);
+	}
+}
+function Fe(e, t, n) {
+	let r = t.mergeFunctions.mergeRecords(e, t, n);
+	return r === d.defaultMerge ||
+		(t.useImplicitDefaultMerging &&
+			r === void 0 &&
+			t.mergeFunctions.mergeRecords !==
+				t.defaultMergeFunctions.mergeRecords)
+		? t.defaultMergeFunctions.mergeRecords(e, t, n)
+		: r;
+}
+function Se(e, t, n) {
+	let r = t.mergeFunctions.mergeArrays(e, t, n);
+	return r === d.defaultMerge ||
+		(t.useImplicitDefaultMerging &&
+			r === void 0 &&
+			t.mergeFunctions.mergeArrays !==
+				t.defaultMergeFunctions.mergeArrays)
+		? t.defaultMergeFunctions.mergeArrays(e)
+		: r;
+}
+function Ue(e, t, n) {
+	let r = t.mergeFunctions.mergeSets(e, t, n);
+	return r === d.defaultMerge ||
+		(t.useImplicitDefaultMerging &&
+			r === void 0 &&
+			t.mergeFunctions.mergeSets !== t.defaultMergeFunctions.mergeSets)
+		? t.defaultMergeFunctions.mergeSets(e)
+		: r;
+}
+function Te(e, t, n) {
+	let r = t.mergeFunctions.mergeMaps(e, t, n);
+	return r === d.defaultMerge ||
+		(t.useImplicitDefaultMerging &&
+			r === void 0 &&
+			t.mergeFunctions.mergeMaps !== t.defaultMergeFunctions.mergeMaps)
+		? t.defaultMergeFunctions.mergeMaps(e)
+		: r;
+}
+function T(e, t, n) {
+	let r = t.mergeFunctions.mergeOthers(e, t, n);
+	return r === d.defaultMerge ||
+		(t.useImplicitDefaultMerging &&
+			r === void 0 &&
+			t.mergeFunctions.mergeOthers !==
+				t.defaultMergeFunctions.mergeOthers)
+		? t.defaultMergeFunctions.mergeOthers(e)
+		: r;
+}
+function Ce(e, t, n, r) {
+	for (let o of _(t)) {
+		let i = [];
+		for (let g of t) V(g, o) && i.push(g[o]);
+		if (i.length === 0) continue;
+		let s = n.metaDataUpdater(r, { key: o, parents: t }),
+			u = { value: i[0] };
+		(J(u, i, n, s),
+			o === "__proto__"
+				? Object.defineProperty(e.value, o, {
+						value: u.value,
+						configurable: !0,
+						enumerable: !0,
+						writable: !0,
+					})
+				: (e.value[o] = u.value));
+	}
+}
+function _e(e, t) {
+	e.value.push(...t.slice(1).flat());
+}
+function Ve(e, t) {
+	for (let n of R(t.slice(1))) e.value.add(n);
+}
+function Pe(e, t) {
+	for (let [n, r] of R(t.slice(1))) e.value.set(n, r);
+}
+function Ze(e, t) {
+	e.value = t.at(-1);
+}
+function Be(e, ...t) {
+	K({})(e, ...t);
+}
+function K(e, t) {
+	let n = je(e, r);
+	function r(o, ...i) {
+		J({ value: o }, [o, ...i], n, t);
+	}
+	return r;
+}
+function je(e, t) {
+	return {
+		defaultMergeFunctions: x,
+		mergeFunctions: {
+			...x,
+			...Object.fromEntries(
+				Object.entries(e)
+					.filter(([n, r]) => Object.hasOwn(x, n))
+					.map(([n, r]) => (r === !1 ? [n, x.mergeOthers] : [n, r])),
+			),
+		},
+		metaDataUpdater: e.metaDataUpdater ?? L,
+		deepmergeInto: t,
+		filterValues: e.filterValues === !1 ? void 0 : (e.filterValues ?? H),
+		actions: h,
+	};
+}
+function J(e, t, n, r) {
+	let o = n.filterValues?.(t, r) ?? t;
+	if (o.length === 0) return;
+	if (o.length === 1) return void C(e, o, n, r);
+	let i = A(e.value);
+	if (i !== 0 && i !== 5) {
+		for (let s = 1; s < o.length; s++)
+			if (A(o[s]) !== i) return void C(e, o, n, r);
+	}
+	switch (i) {
+		case 1:
+			return void ke(e, o, n, r);
+		case 2:
+			return void Ge(e, o, n, r);
+		case 3:
+			return void We(e, o, n, r);
+		case 4:
+			return void Le(e, o, n, r);
+		default:
+			return void C(e, o, n, r);
+	}
+}
+function ke(e, t, n, r) {
+	n.mergeFunctions.mergeRecords(e, t, n, r) === h.defaultMerge &&
+		n.defaultMergeFunctions.mergeRecords(e, t, n, r);
+}
+function Ge(e, t, n, r) {
+	n.mergeFunctions.mergeArrays(e, t, n, r) === h.defaultMerge &&
+		n.defaultMergeFunctions.mergeArrays(e, t);
+}
+function We(e, t, n, r) {
+	n.mergeFunctions.mergeSets(e, t, n, r) === h.defaultMerge &&
+		n.defaultMergeFunctions.mergeSets(e, t);
+}
+function Le(e, t, n, r) {
+	n.mergeFunctions.mergeMaps(e, t, n, r) === h.defaultMerge &&
+		n.defaultMergeFunctions.mergeMaps(e, t);
+}
+function C(e, t, n, r) {
+	(n.mergeFunctions.mergeOthers(e, t, n, r) === h.defaultMerge ||
+		e.value === h.defaultMerge) &&
+		n.defaultMergeFunctions.mergeOthers(e, t);
+}
+var d,
+	h,
+	G,
+	W,
+	D,
+	x,
+	Q = f(() => {
+		"use strict";
+		((d = {
+			defaultMerge: Symbol("deepmerge-ts: default merge"),
+			skip: Symbol("deepmerge-ts: skip"),
+		}),
+			(h = { defaultMerge: d.defaultMerge }));
+		(function (e) {
+			((e[(e.NOT = 0)] = "NOT"),
+				(e[(e.RECORD = 1)] = "RECORD"),
+				(e[(e.ARRAY = 2)] = "ARRAY"),
+				(e[(e.SET = 3)] = "SET"),
+				(e[(e.MAP = 4)] = "MAP"),
+				(e[(e.OTHER = 5)] = "OTHER"));
+		})(G || (G = {}));
+		W = ["[object Object]", "[object Module]"];
+		D = {
+			mergeRecords: Ae,
+			mergeArrays: De,
+			mergeSets: xe,
+			mergeMaps: Re,
+			mergeOthers: $e,
+		};
+		x = {
+			mergeRecords: Ce,
+			mergeArrays: _e,
+			mergeSets: Ve,
+			mergeMaps: Pe,
+			mergeOthers: Ze,
+		};
+	});
+var oe = {};
+l(oe, {
+	MAX_ULID: () => He,
+	MIN_ULID: () => Xe,
+	TIME_LEN: () => p,
+	TIME_MAX: () => v,
+	ULIDError: () => c,
+	ULIDErrorCode: () => a,
+	decodeTime: () => et,
+	encodeTime: () => N,
+	fixULIDBase32: () => qe,
+	incrementBase32: () => te,
+	isValid: () => rt,
+	monotonicFactory: () => ot,
+	ulid: () => it,
+	ulidToUUID: () => st,
+	uuidToULID: () => at,
+});
+function Je(e) {
+	let t = Math.floor(e() * w) % w;
+	return y.charAt(t);
+}
+function q(e, t, n) {
+	return t > e.length - 1 ? e : e.substr(0, t) + n + e.substr(t + 1);
+}
+function Ye(e) {
+	let t = [],
+		n = 0,
+		r = 0,
+		o = new Uint8Array(e.slice().reverse());
+	for (let i of o)
+		for (r |= i << n, n += 8; n >= 5; )
+			(t.unshift(r & 31), (r >>>= 5), (n -= 5));
+	return (n > 0 && t.unshift(r & 31), t.map((i) => ee.charAt(i)).join(""));
+}
+function Qe(e) {
+	let t = e.toUpperCase().split("").reverse().join(""),
+		n = [],
+		r = 0,
+		o = 0;
+	for (let i of t) {
+		let s = ee.indexOf(i);
+		if (s === -1)
+			throw new Error(`Invalid base 32 character found in string: ${i}`);
+		for (o |= s << r, r += 5; r >= 8; )
+			(n.unshift(o & 255), (o >>>= 8), (r -= 8));
+	}
+	return ((r >= 5 || o > 0) && n.unshift(o & 255), new Uint8Array(n));
+}
+function qe(e) {
+	return e
+		.replace(/i/gi, "1")
+		.replace(/l/gi, "1")
+		.replace(/o/gi, "0")
+		.replace(/-/g, "");
+}
+function te(e) {
+	let t,
+		n = e.length,
+		r,
+		o,
+		i = e,
+		s = w - 1;
+	for (; !t && n-- >= 0; ) {
+		if (((r = i[n]), (o = y.indexOf(r)), o === -1))
+			throw new c(
+				a.Base32IncorrectEncoding,
+				"Incorrectly encoded string",
+			);
+		if (o === s) {
+			i = q(i, n, y[0]);
+			continue;
+		}
+		t = q(i, n, y[o + 1]);
+	}
+	if (typeof t == "string") return t;
+	throw new c(a.Base32IncorrectEncoding, "Failed incrementing string");
+}
+function et(e) {
+	if (e.length !== p + F)
+		throw new c(a.DecodeTimeValueMalformed, "Malformed ULID");
+	let t = e
+		.substr(0, p)
+		.toUpperCase()
+		.split("")
+		.reverse()
+		.reduce((n, r, o) => {
+			let i = y.indexOf(r);
+			if (i === -1)
+				throw new c(
+					a.DecodeTimeInvalidCharacter,
+					`Time decode error: Invalid character: ${r}`,
+				);
+			return (n += i * Math.pow(w, o));
+		}, 0);
+	if (t > v)
+		throw new c(
+			a.DecodeTimeValueMalformed,
+			`Malformed ULID: timestamp too large: ${t}`,
+		);
+	return t;
+}
+function ne(e) {
+	let t = tt(),
+		n = (t && (t.crypto || t.msCrypto)) || (typeof $ < "u" ? $ : null);
+	if (typeof n?.getRandomValues == "function")
+		return () => {
+			let r = new Uint8Array(1);
+			return (n.getRandomValues(r), r[0] / 256);
+		};
+	if (typeof n?.randomBytes == "function")
+		return () => n.randomBytes(1).readUInt8() / 256;
+	if ($?.randomBytes) return () => $.randomBytes(1).readUInt8() / 256;
+	throw new c(a.PRNGDetectFailure, "Failed to find a reliable PRNG");
+}
+function tt() {
+	return nt()
+		? self
+		: typeof window < "u"
+			? window
+			: typeof global < "u"
+				? global
+				: typeof globalThis < "u"
+					? globalThis
+					: null;
+}
+function re(e, t) {
+	let n = "";
+	for (; e > 0; e--) n = Je(t) + n;
+	return n;
+}
+function N(e, t = p) {
+	if (isNaN(e))
+		throw new c(a.EncodeTimeValueMalformed, `Time must be a number: ${e}`);
+	if (e > v)
+		throw new c(
+			a.EncodeTimeSizeExceeded,
+			`Cannot encode a time larger than ${v}: ${e}`,
+		);
+	if (e < 0) throw new c(a.EncodeTimeNegative, `Time must be positive: ${e}`);
+	if (Number.isInteger(e) === !1)
+		throw new c(
+			a.EncodeTimeValueMalformed,
+			`Time must be an integer: ${e}`,
+		);
+	let n,
+		r = "";
+	for (let o = t; o > 0; o--)
+		((n = e % w), (r = y.charAt(n) + r), (e = (e - n) / w));
+	return r;
+}
+function nt() {
+	return typeof WorkerGlobalScope < "u" && self instanceof WorkerGlobalScope;
+}
+function rt(e) {
+	return (
+		typeof e == "string" &&
+		e.length === p + F &&
+		e
+			.toUpperCase()
+			.split("")
+			.every((t) => y.indexOf(t) !== -1)
+	);
+}
+function ot(e) {
+	let t = e || ne(),
+		n = 0,
+		r;
+	return function (i) {
+		let s = !i || isNaN(i) ? Date.now() : i;
+		if (s <= n) {
+			let g = (r = te(r));
+			return N(n, p) + g;
+		}
+		n = s;
+		let u = (r = re(F, t));
+		return N(s, p) + u;
+	};
+}
+function it(e, t) {
+	let n = t || ne(),
+		r = !e || isNaN(e) ? Date.now() : e;
+	return N(r, p) + re(F, n);
+}
+function st(e) {
+	if (!ze.test(e)) throw new c(a.ULIDInvalid, `Invalid ULID: ${e}`);
+	let n = Qe(e),
+		r = Array.from(n)
+			.map((o) => o.toString(16).padStart(2, "0"))
+			.join("");
+	return (
+		(r =
+			r.substring(0, 8) +
+			"-" +
+			r.substring(8, 12) +
+			"-" +
+			r.substring(12, 16) +
+			"-" +
+			r.substring(16, 20) +
+			"-" +
+			r.substring(20)),
+		r.toUpperCase()
+	);
+}
+function at(e) {
+	if (!Ke.test(e)) throw new c(a.UUIDInvalid, `Invalid UUID: ${e}`);
+	let n = e.replace(/-/g, "").match(/.{1,2}/g);
+	if (!n) throw new c(a.Unexpected, `Failed parsing UUID bytes: ${e}`);
+	let r = new Uint8Array(n.map((o) => parseInt(o, 16)));
+	return Ye(r);
+}
+var ee,
+	y,
+	w,
+	He,
+	Xe,
+	F,
+	p,
+	v,
+	ze,
+	Ke,
+	a,
+	c,
+	ie = f(() => {
+		"use strict";
+		((ee = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"),
+			(y = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"),
+			(w = 32),
+			(He = "7ZZZZZZZZZZZZZZZZZZZZZZZZZ"),
+			(Xe = "00000000000000000000000000"),
+			(F = 16),
+			(p = 10),
+			(v = 0xffffffffffff),
+			(ze = /^[0-7][0-9a-hjkmnp-tv-zA-HJKMNP-TV-Z]{25}$/),
+			(Ke = /^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$/));
+		(function (e) {
+			((e.Base32IncorrectEncoding = "B32_ENC_INVALID"),
+				(e.DecodeTimeInvalidCharacter = "DEC_TIME_CHAR"),
+				(e.DecodeTimeValueMalformed = "DEC_TIME_MALFORMED"),
+				(e.EncodeTimeNegative = "ENC_TIME_NEG"),
+				(e.EncodeTimeSizeExceeded = "ENC_TIME_SIZE_EXCEED"),
+				(e.EncodeTimeValueMalformed = "ENC_TIME_MALFORMED"),
+				(e.PRNGDetectFailure = "PRNG_DETECT"),
+				(e.ULIDInvalid = "ULID_INVALID"),
+				(e.Unexpected = "UNEXPECTED"),
+				(e.UUIDInvalid = "UUID_INVALID"));
+		})(a || (a = {}));
+		c = class extends Error {
+			constructor(t, n) {
+				(super(`${n} (${t})`),
+					(this.name = "ULIDError"),
+					(this.code = t));
+			}
+		};
+	});
+var se = {};
+l(se, { default: () => ct });
+var ct,
+	ae = f(() => {
+		"use strict";
+		ct = async (...[e, t]) =>
+			JSON.parse(
+				(
+					await (
+						await import("node:fs/promises")
+					).readFile(`${t ?? "."}/${e}`, "utf-8")
+				).toString(),
+			);
+	});
+var P = {};
+l(P, { On: () => M, default: () => ut, posix: () => lt, sep: () => ft });
+var M,
+	ut,
+	ft,
+	lt,
+	Z = f(async () => {
+		"use strict";
+		((M = process.env.NODE_ENV === "development"),
+			(ut = {
+				color: !0,
+				format: "esm",
+				logLevel: "debug",
+				metafile: !0,
+				minify: !M,
+				outdir: "Target",
+				platform: "node",
+				target: "esnext",
+				tsconfig: "tsconfig.json",
+				write: !0,
+				legalComments: M ? "inline" : "none",
+				bundle: !1,
+				assetNames: "Asset/[name]-[hash]",
+				sourcemap: M,
+				drop: M ? [] : ["debugger"],
+				ignoreAnnotations: !M,
+				keepNames: M,
+				plugins: [
+					{
+						name: "Target",
+						setup({ onStart: e, initialOptions: { outdir: t } }) {
+							e(async () => {
+								try {
+									t &&
+										(await (
+											await import("node:fs/promises")
+										).rm(t, { recursive: !0 }));
+								} catch (n) {
+									console.log(n);
+								}
+							});
+						},
+					},
+				],
+				define: {
+					"process.env.VERSION_PACKAGE": `'${(await (await Promise.resolve().then(() => (ae(), se))).default("package.json"))?.version}'`,
+				},
+			}),
+			({ sep: ft, posix: lt } = await import("node:path")));
+	});
+var ce = {};
+l(ce, { default: () => dt, posix: () => E });
+var dt,
+	E,
+	ue = f(async () => {
+		"use strict";
+		((dt = (e) => {
+			let t = e
+				.replace(/[.+^${}()|[\]\\]/g, "\\$&")
+				.replace(/\*\*/g, ".*")
+				.replace(/\*/g, `[^${E.sep}]+`);
+			(!e.startsWith("**") &&
+				!e.startsWith("*") &&
+				(t = `(?:^|\\${E.sep})${t}`),
+				!e.endsWith("**") && !e.endsWith("*")
+					? (t = `${t}(?:\\${E.sep}|$)`)
+					: !e.includes("*") && !e.includes("/") && e.startsWith(".")
+						? (t = `${t}$`)
+						: !e.includes("*") &&
+							!e.includes("/") &&
+							(t = `(?:^|\\${E.sep})${t}(?:\\${E.sep}|$)`));
+			try {
+				return new RegExp(t);
+			} catch (n) {
+				return (
+					console.error(
+						`[Exclude] Invalid regex generated from glob "${e}": ${t}`,
+						n,
+					),
+					new RegExp("$.")
+				);
+			}
+		}),
+			({ posix: E } = await Z().then(() => P)));
+	});
+var le = {};
+l(le, { _Regex: () => fe, default: () => pt, posix: () => I, sep: () => B });
+var pt,
+	I,
+	B,
+	fe,
+	de = f(async () => {
+		"use strict";
+		((pt = (e, t) => {
+			if (!e) return !1;
+			let n = e.split(B).join(I.sep);
+			return t.some((r) => {
+				if (!r) return !1;
+				let o = r.split(B).join(I.sep);
+				return (!o.includes("*") &&
+					!o.startsWith(".") &&
+					(n.includes(`${I.sep}${o}${I.sep}`) ||
+						n.startsWith(`${o}${I.sep}`) ||
+						n.endsWith(`${I.sep}${o}`) ||
+						n === o)) ||
+					(o.startsWith(".") &&
+						!o.includes("*") &&
+						!o.includes("/") &&
+						n.endsWith(o)) ||
+					(o.includes("*") && fe(o).test(n))
+					? !0
+					: n.includes(o)
+						? (console.warn(
+								`[Exclude] Simple includes match (fallback): "${n}" includes "${o}"`,
+							),
+							!0)
+						: !1;
+			});
+		}),
+			({ posix: I, sep: B } = await Z().then(() => P)),
+			({ default: fe } = await ue().then(() => ce)));
+	});
+var pe = {};
+l(pe, { Exclude: () => S, default: () => gt });
+var gt,
+	S,
+	ge = f(async () => {
+		"use strict";
+		((gt = (e, t) => {
+			let n = [];
+			if (e.entryPoints) {
+				let r = e.entryPoints;
+				if (
+					Array.isArray(r) &&
+					(r.length === 0 || typeof r[0] == "string")
+				)
+					n = r.filter((o) => !S(o, t));
+				else if (
+					Array.isArray(r) &&
+					r.length > 0 &&
+					typeof r[0] == "object" &&
+					r[0] !== null &&
+					"in" in r[0]
+				)
+					n = r.filter((o) => !S(o.in, t));
+				else if (
+					!Array.isArray(r) &&
+					typeof r == "object" &&
+					r !== null
+				) {
+					let o = r,
+						i = {};
+					for (let s in o)
+						if (Object.prototype.hasOwnProperty.call(o, s)) {
+							let u = o[s];
+							u !== void 0 && (S(u, t) || (i[s] = u));
+						}
+					n = i;
+				} else Array.isArray(r) && r.length === 0 ? (n = []) : (n = r);
+			} else n = [];
+			return n;
+		}),
+			({ default: S } = await de().then(() => le)));
+	});
+var me = {};
+l(me, { default: () => mt });
+var mt,
+	he = f(() => {
+		"use strict";
+		mt = async (...[e, t = async (n) => console.log(n)]) => {
+			try {
+				let { stdout: n, stderr: r } = (
+					await import("child_process")
+				).exec(e);
+				typeof t == "function" &&
+					(n?.on("data", async (o) => await t(o.trim())),
+					r?.on("data", async (o) => await t(o.trim(), !0)));
+			} catch (n) {
+				console.log(n);
+			}
+		};
+	});
+var U = (await O().then(() => b)).On,
+	It = (await O().then(() => b)).Bundle,
+	ht = (await O().then(() => b)).Compile,
+	ye = (await Promise.resolve().then(() => (Q(), Y))).deepmerge,
+	wt = async (e) =>
+		ye((await O().then(() => b)).default, {
+			outdir: "Target",
+			drop: U ? [] : ["debugger", "console"],
+			define: {
+				__DEV__: U ? "true" : "false",
+				__INCREMENT__: `"${`${U ? "DEVELOPMENT" : "PRODUCTION"}-${(await Promise.resolve().then(() => (ie(), oe))).ulid()}`}"`,
+			},
+			treeShaking: !U,
+			entryPoints: (await ge().then(() => pe)).default(e, [
+				"Source/Configuration/*",
+			]),
+			platform: "node",
+			outbase: "Source",
+			plugins: ht
+				? ye(e.plugins, [
+						{
+							name: "Compile",
+							setup({ onEnd: t }) {
+								t(async ({ metafile: n }) => {
+									let r = n?.outputs;
+									for (let o in r)
+										Object.prototype.hasOwnProperty.call(
+											r,
+											o,
+										) &&
+											o.endsWith(".js") &&
+											(
+												await Promise.resolve().then(
+													() => (he(), me),
+												)
+											).default(
+												`Build '${o}' 															--ESBuild Configuration/ESBuild/Target/Compile.js 															--TypeScript Configuration/tsconfig/Target/Compile.json`,
+											);
+								});
+							},
+						},
+					])
+				: [],
+		});
+export { It as Bundle, ht as Compile, ye as Merge, U as On, wt as default };
