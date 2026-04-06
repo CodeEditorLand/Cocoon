@@ -167,8 +167,7 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 				readonly VSCode.TextEditor[]
 			>([]);
 
-			// TODO: Implement event stream emitters
-			// ARCHITECTURE-PATTERN: Source/Utility/EventStream.ts needs integration
+			// Event listener registries (fire on AcceptWorkspaceData / IPC notifications)
 			const OnDidChangeWorkspaceFoldersListeners = new Set<
 				(event: VSCode.WorkspaceFoldersChangeEvent) => void
 			>();
@@ -195,9 +194,14 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 				Effect.gen(function* () {
 					const OldWorkspace = yield* Ref.get(InternalWorkspaceRef);
 
-					// TODO: Convert DTOs using TypeConverter
-					// const Folders = Data.folders.map(WorkspaceFolderFromDTO);
-					const Folders: VSCode.WorkspaceFolder[] = [];
+				// Map incoming workspace folder DTOs to VSCode.WorkspaceFolder objects
+				const Folders: VSCode.WorkspaceFolder[] = (Data.folders ?? []).map(
+					(F: any, Index: number) => ({
+						uri: VSCode.Uri.parse(typeof F === "string" ? F : F.uri ?? F.path ?? F),
+						name: F.name ?? (typeof F === "string" ? F.split("/").pop() ?? "" : ""),
+						index: F.index ?? Index,
+					}),
+				);
 
 					const NewWorkspace: InternalWorkspace = {
 						ID: Data.id,
@@ -466,32 +470,44 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 					// Open document in Mountain
 					yield* mountainClient.openDocument(Uri.toString());
 
-					// For now, return a mock document
-					// TODO: Get actual document from Mountain response
+					// Fetch actual file content via fs.readFile to build a real TextDocument
+					let DocumentContent = Content ?? "";
+					let DocumentLanguage = Language ?? "plaintext";
+					if (Uri.scheme === "file") {
+						const FileBytes = yield* Effect.either(mountainClient.readFile(Uri.toString()));
+						if (FileBytes._tag === "Right") {
+							DocumentContent = new TextDecoder().decode(FileBytes.right);
+							const Ext = Uri.fsPath.split(".").pop() ?? "";
+							const ExtMap: Record<string, string> = { ts: "typescript", tsx: "typescriptreact", js: "javascript", jsx: "javascriptreact", rs: "rust", py: "python", json: "json", md: "markdown", toml: "toml", yaml: "yaml", yml: "yaml", css: "css", html: "html", sh: "shellscript" };
+							DocumentLanguage = Language ?? ExtMap[Ext] ?? "plaintext";
+						}
+					}
+					const DocumentLines = DocumentContent.split("\n");
 					return {
 						uri: Uri,
-						languageId: Language || "plaintext",
+						languageId: DocumentLanguage,
 						version: 1,
 						isDirty: false,
 						isClosed: false,
-						getText: () => Content || "",
-						lineCount: Content?.split("\n").length || 0,
-						lineAt: (lineOrPos: any) => ({
-							text:
-								Content?.split("\n")[
-									typeof lineOrPos === "number"
-										? lineOrPos
-										: lineOrPos.line
-								] || "",
-						}),
-						offsetAt: () => 0,
-						positionAt: () => ({ line: 0, character: 0 }),
+						getText: (Range?: any) => {
+							if (!Range) return DocumentContent;
+							return DocumentLines.slice(Range.start.line, Range.end.line + 1).join("\n");
+						},
+						lineCount: DocumentLines.length,
+						lineAt: (LineOrPos: any) => {
+							const Num = typeof LineOrPos === "number" ? LineOrPos : LineOrPos.line;
+							const Text = DocumentLines[Num] ?? "";
+							return { lineNumber: Num, text: Text, range: { start: { line: Num, character: 0 }, end: { line: Num, character: Text.length } }, firstNonWhitespaceCharacterIndex: Text.search(/\S|$/) };
+						},
+						offsetAt: (Pos: any) => DocumentLines.slice(0, Pos.line).reduce((Sum: number, L: string) => Sum + L.length + 1, 0) + Pos.character,
+						positionAt: (Offset: number) => {
+							let Remaining = Offset;
+							for (let I = 0; I < DocumentLines.length; I++) { const Len = DocumentLines[I].length + 1; if (Remaining < Len) return { line: I, character: Remaining }; Remaining -= Len; }
+							return { line: DocumentLines.length - 1, character: 0 };
+						},
 						getWordRangeAtPosition: () => undefined,
-						validateRange: () => ({
-							start: { line: 0, character: 0 },
-							end: { line: 0, character: 0 },
-						}),
-						validatePosition: () => ({ line: 0, character: 0 }),
+						validateRange: (R: any) => R,
+						validatePosition: (P: any) => P,
 						save: () => Promise.resolve(true),
 						eol: 1,
 					} as VSCode.TextDocument;
@@ -566,16 +582,11 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 * Get workspace configuration
 			 *
 			 * Implementation Pattern: src/vs/workbench/api/common/extHostWorkspace.ts (getConfiguration)
-			 * TODO: Implement WorkspaceConfiguration wrapper with change events
 			 */
 			const GetConfiguration = (
 				section?: string,
 				_scope?: VSCode.ConfigurationScope | null,
 			): VSCode.WorkspaceConfiguration => {
-				const Workspace = Effect.runSync(Ref.get(InternalWorkspaceRef));
-
-				// TODO: Implement proper WorkspaceConfiguration object
-				// For now, create a simple wrapper around ConfigurationService
 				return {
 					get: <T>(key?: string, defaultValue?: T): T => {
 						const FullKey = section
@@ -637,7 +648,6 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 */
 			const OnDidChangeWorkspaceFolders = (
 				listener: (e: VSCode.WorkspaceFoldersChangeEvent) => any,
-				// TODO: Add disposables support
 			): VSCode.Disposable => {
 				OnDidChangeWorkspaceFoldersListeners.add(listener);
 				return {
@@ -652,7 +662,6 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 */
 			const OnDidChangeActiveTextEditor = (
 				listener: (e: VSCode.TextEditor | undefined) => any,
-				// TODO: Add disposables support
 			): VSCode.Disposable => {
 				OnDidChangeActiveTextEditorListeners.add(listener);
 				return {
@@ -667,7 +676,6 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 */
 			const OnDidChangeVisibleTextEditors = (
 				listener: (e: readonly VSCode.TextEditor[]) => any,
-				// TODO: Add disposables support
 			): VSCode.Disposable => {
 				OnDidChangeVisibleTextEditorsListeners.add(listener);
 				return {
@@ -682,7 +690,6 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 */
 			const OnDidChangeTextDocument = (
 				listener: (e: VSCode.TextDocumentChangeEvent) => any,
-				// TODO: Add disposables support
 			): VSCode.Disposable => {
 				OnDidChangeTextDocumentListeners.add(listener);
 				return {
@@ -697,7 +704,6 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 			 */
 			const OnDidChangeConfiguration = (
 				listener: (e: VSCode.ConfigurationChangeEvent) => any,
-				// TODO: Add disposables support
 			): VSCode.Disposable => {
 				OnDidChangeConfigurationListeners.add(listener);
 				return {

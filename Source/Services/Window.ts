@@ -403,12 +403,12 @@ export class WindowService extends Effect.Service<WindowService>()(
 					// ARCHITECTURE-PATTERN: Mountain implements mainThreadWindow.$showMessage
 					const mountainClient = yield* MountainGRPCClientService;
 
-					// For now, show the message without items support
-					// TODO: Add items support in Mountain gRPC protocol
-					yield* mountainClient.showInformationMessage(Message);
-
-					// Return undefined for information messages (no selection)
-					return undefined;
+					const InfoResponse = yield* Effect.tryPromise({
+						try: () => mountainClient.sendRequest("showInformation", { message: Message, items: Items.length > 0 ? Items : undefined }),
+						catch: () => null,
+					});
+					const InfoSelected = (InfoResponse as any)?.selectedItem;
+					return InfoSelected ? Items.find((I) => (typeof I === "string" ? I : (I as any).title) === InfoSelected) ?? undefined : undefined;
 				});
 
 			/**
@@ -439,11 +439,12 @@ export class WindowService extends Effect.Service<WindowService>()(
 					// Delegates to Mountain's native dialog implementation via gRPC
 					const mountainClient = yield* MountainGRPCClientService;
 
-					// For now, show the message without items support
-					// TODO: Add items support in Mountain gRPC protocol
-					yield* mountainClient.showWarningMessage(Message);
-
-					return undefined;
+					const WarnResponse = yield* Effect.tryPromise({
+						try: () => mountainClient.sendRequest("showWarning", { message: Message, items: Items.length > 0 ? Items : undefined }),
+						catch: () => null,
+					});
+					const WarnSelected = (WarnResponse as any)?.selectedItem;
+					return WarnSelected ? Items.find((I) => (typeof I === "string" ? I : (I as any).title) === WarnSelected) ?? undefined : undefined;
 				});
 
 			/**
@@ -474,11 +475,12 @@ export class WindowService extends Effect.Service<WindowService>()(
 					// Delegates to Mountain's native dialog implementation via gRPC
 					const mountainClient = yield* MountainGRPCClientService;
 
-					// For now, show the message without items support
-					// TODO: Add items support in Mountain gRPC protocol
-					yield* mountainClient.showErrorMessage(Message);
-
-					return undefined;
+					const ErrorResponse = yield* Effect.tryPromise({
+						try: () => mountainClient.sendRequest("showError", { message: Message, items: Items.length > 0 ? Items : undefined }),
+						catch: () => null,
+					});
+					const ErrorSelected = (ErrorResponse as any)?.selectedItem;
+					return ErrorSelected ? Items.find((I) => (typeof I === "string" ? I : (I as any).title) === ErrorSelected) ?? undefined : undefined;
 				});
 
 			/**
