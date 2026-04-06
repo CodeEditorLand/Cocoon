@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # Build configuration files
 Build "Source/Configuration/**/*.{ts,json}" \

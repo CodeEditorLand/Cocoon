@@ -1118,46 +1118,15 @@ export class WindowService extends Effect.Service<WindowService>()(
 						message?: string;
 						increment?: number;
 					}> = {
-						report(value: {
-							message?: string;
-							increment?: number;
-						}): void {
-							Effect.runFork(
-								Effect.gen(function* () {
-									yield* Logger.Debug(
-										`[WindowService] Progress update: ${value.message ?? ""}`,
-									);
-									// TODO: Send progress update to Mountain
-								}),
-							);
+						report(value: { message?: string; increment?: number }): void {
+							MountainClient.sendNotification("progress.update", { id: ProgressId, message: value.message, increment: value.increment }).catch(() => {});
 						},
 					};
 
 					// Send progress start notification to Mountain
-					yield* Effect.tryPromise({
-						try: async () => {
-							// TODO: MOUNTAIN-INTEGRATION: Implement actual gRPC call
-							// await MountainClient.sendRequest('window.startProgress', {
-							//     id: ProgressId,
-							//     location: Options.location,
-							//     title: Options.title,
-							//     cancellable: Options.cancellable ?? true
-							// });
-							yield *
-								Logger.Warn(
-									`[WindowService] TODO: Implement Mountain gRPC call for WithProgress start`,
-								);
-						},
-						catch: (error) => {
-							yield *
-								Logger.Error(
-									`[WindowService] Failed to start progress: ${(error as Error).message}`,
-									error as Error,
-								);
-							throw new Error(
-								`Failed to start progress: ${(error as Error).message}`,
-							);
-						},
+					// Notify Mountain to show progress indicator
+					await MountainClient.sendNotification("progress.start", {
+						id: ProgressId, location: Options.location, title: Options.title, cancellable: Options.cancellable ?? false,
 					});
 
 					// Execute the task
@@ -1176,24 +1145,8 @@ export class WindowService extends Effect.Service<WindowService>()(
 					});
 
 					// Send progress complete notification to Mountain
-					yield* Effect.tryPromise({
-						try: async () => {
-							// TODO: MOUNTAIN-INTEGRATION: Implement actual gRPC call
-							// await MountainClient.sendRequest('window.completeProgress', ProgressId);
-							yield *
-								Logger.Debug(
-									`[WindowService] Progress complete (${ProgressId})`,
-								);
-						},
-						catch: (error) => {
-							yield *
-								Logger.Error(
-									`[WindowService] Failed to complete progress: ${(error as Error).message}`,
-									error as Error,
-								);
-							// Don't throw - we have the result
-						},
-					});
+					// Notify Mountain to hide progress indicator
+					await MountainClient.sendNotification("progress.complete", { id: ProgressId });
 
 					return Result;
 				});
