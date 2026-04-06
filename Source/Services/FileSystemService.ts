@@ -33,14 +33,17 @@ export class FileSystemService implements IFileSystemService {
 	constructor(private mountainClient: IMountainClientService) {}
 
 	async stat(uri: any): Promise<any> {
-		// Maps to 'fs.stat' in Spine (Future Batch)
-		// For now, we simulate a file stat if we can read it
-		try {
-			await this.readFile(uri);
-			return { type: 1, ctime: 0, mtime: 0, size: 0 }; // File
-		} catch {
-			throw new Error("File not found");
-		}
+		const Path = uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
+		const Response = await this.mountainClient.sendRequest("fs.stat", Path);
+		if (!Response) throw new Error(`File not found: ${Path}`);
+		// Mountain returns: { type, is_file, is_directory, size, mtime }
+		// VS Code FileType: 0=Unknown, 1=File, 2=Directory, 64=SymbolicLink
+		return {
+			type: Response.type ?? 1,
+			ctime: 0,
+			mtime: Response.mtime ?? 0,
+			size: Response.size ?? 0,
+		};
 	}
 
 	async readFile(uri: any): Promise<Uint8Array> {
@@ -74,16 +77,13 @@ export class FileSystemService implements IFileSystemService {
 		if (uri.scheme !== "file") {
 			throw new Error(`Unsupported scheme: ${uri.scheme}`);
 		}
-
-		// Call Spine (v0.1 Filesystem Batch)
-		// Maps to 'fs.listDir'
-		const entries: string[] = await this.mountainClient.sendRequest(
-			"fs.listDir",
-			uri.fsPath,
+		const Path = uri.fsPath ?? uri.path ?? uri.toString().replace("file://", "");
+		// Mountain now returns [{name, type}] where type 1=File 2=Directory
+		const Entries: Array<{ name: string; type: number }> =
+			await this.mountainClient.sendRequest("fs.listDir", Path);
+		return (Entries ?? []).map((E) =>
+			typeof E === "string" ? [E, 1] : [E.name, E.type],
 		);
-
-		// Map to [name, type] tuple
-		return entries.map((name) => [name, 1]); // 1=File (Simplification)
 	}
 
 	async createDirectory(uri: any): Promise<void> {
