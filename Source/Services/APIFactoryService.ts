@@ -12,6 +12,7 @@ import { IFileSystemService } from "../Interfaces/IFileSystemService.js";
 import { IModuleInterceptorService } from "../Interfaces/IModuleInterceptorService.js";
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
 import { ITerminalService } from "../Interfaces/ITerminalService.js";
+import * as LanguageProviderRegistry from "./LanguageProviderRegistry.js";
 
 // --- API Service Interface ---
 
@@ -290,7 +291,6 @@ const createVSCodeAPI = (
 		// the editor can dispatch feature requests back to Cocoon.
 		languages: (() => {
 			let NextHandle = 1;
-			const ProviderCallbacks = new Map<number, any>();
 
 			const RegisterProvider = (
 				type: string,
@@ -298,7 +298,9 @@ const createVSCodeAPI = (
 				provider: any,
 			) => {
 				const Handle = NextHandle++;
-				ProviderCallbacks.set(Handle, provider);
+				// Store in the shared registry so GRPCServerService can invoke
+				// this provider when Mountain calls $provide* via gRPC.
+				LanguageProviderRegistry.Register(Handle, provider);
 				mountainClient
 					.sendNotification(`register_${type}`, {
 						language_selector:
@@ -308,7 +310,9 @@ const createVSCodeAPI = (
 						handle: Handle,
 					})
 					.catch(() => {}); // fire-and-forget
-				return { dispose: () => ProviderCallbacks.delete(Handle) };
+				return {
+					dispose: () => LanguageProviderRegistry.Unregister(Handle),
+				};
 			};
 
 			return {

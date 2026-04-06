@@ -35,6 +35,7 @@ import {
 	GenericResponse,
 } from "../Generated/Vine";
 import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
+import * as LanguageProviderRegistry from "./LanguageProviderRegistry.js";
 
 /**
  * Request tracking entry for cancellation support
@@ -371,12 +372,16 @@ export class GRPCServerService
 	}
 
 	/**
-	 * Validate request method format
+	 * Validate request method format.
+	 * Accepts:
+	 *   - "service.method" (e.g., "extension.activate")
+	 *   - "$provideFeature" (e.g., "$provideHover", "$provideCompletions")
+	 *     Mountain invokes these when Sky requests language intelligence.
 	 */
 	private IsValidMethod(method: string): boolean {
-		// Valid format: service.method (e.g., "extension.activate", "configuration.get")
-		const methodPattern = /^[a-z]+\.[a-z]+$/;
-		return methodPattern.test(method);
+		const DotMethod = /^[a-zA-Z]+\.[a-zA-Z]+$/.test(method);
+		const ProvideMethod = /^\$provide[A-Z][a-zA-Z]+$/.test(method);
+		return DotMethod || ProvideMethod;
 	}
 
 	/**
@@ -603,7 +608,324 @@ export class GRPCServerService
 			}
 		}
 
+		// Language feature provider invocation: "$provideHover", "$provideCompletions", etc.
+		// Mountain calls these when Sky's Monaco editor requests language intelligence.
+		// parameters = [handle, uriObject, position?, context?]
+		if (/^\$provide[A-Z]/.test(method)) {
+			return this.InvokeLanguageProvider(method, parameters);
+		}
+
 		throw new Error(`Unknown method: ${method}`);
+	}
+
+	/**
+	 * Normalize a VS Code range { start: { line, character }, end: {...} } →
+	 * Mountain's RangeDTO { StartLineNumber, StartColumn, EndLineNumber, EndColumn }.
+	 */
+	private NormalizeRange(VsRange: any): {
+		StartLineNumber: number;
+		StartColumn: number;
+		EndLineNumber: number;
+		EndColumn: number;
+	} {
+		return {
+			StartLineNumber: VsRange?.start?.line ?? 0,
+			StartColumn: VsRange?.start?.character ?? 0,
+			EndLineNumber: VsRange?.end?.line ?? 0,
+			EndColumn: VsRange?.end?.character ?? 0,
+		};
+	}
+
+	/**
+	 * Invoke a language feature provider stored in LanguageProviderRegistry.
+	 *
+	 * Called for methods matching /^\$provide[A-Z]/. Mountain passes:
+	 *   params[0]  = provider handle (number)
+	 *   params[1]  = URI object  { external: "file:///...", $mid: 1 }
+	 *   params[2]  = Position    { Line/line, Character/character }  (most features)
+	 *   params[3]  = Context / Options (completion, code actions, etc.)
+	 *
+	 * Returns the raw VS Code provider result (serialized by the caller).
+	 */
+	private async InvokeLanguageProvider(
+		method: string,
+		parameters: any,
+	): Promise<any> {
+		const Args: any[] = Array.isArray(parameters) ? parameters : [parameters];
+
+		const Handle: number = Args[0];
+		const Provider = LanguageProviderRegistry.Get(Handle);
+
+		if (!Provider) {
+			console.warn(
+				`[GRPCServerService] Provider handle ${Handle} not found for ${method}`,
+			);
+			return null;
+		}
+
+		// Build VS Code-compatible document and position shims from Mountain params.
+		const UriObj = Args[1] as { external?: string } | string | undefined;
+		const UriString =
+			typeof UriObj === "string"
+				? UriObj
+				: (UriObj?.external ?? "file:///unknown");
+
+		const RawPos = Args[2] as
+			| { Line?: number; line?: number; Character?: number; character?: number }
+			| undefined;
+		const VsPosition = {
+			line: RawPos?.Line ?? RawPos?.line ?? 0,
+			character: RawPos?.Character ?? RawPos?.character ?? 0,
+		};
+
+		// Minimal VS Code TextDocument shim — extensions may call .uri, .fileName,
+		// .languageId. Full document content is not available without opening the
+		// model; getText() returns empty which is acceptable for most providers.
+		const VsDocument = {
+			uri: { toString: () => UriString, fsPath: UriString, external: UriString, $mid: 1 },
+			fileName: UriString,
+			languageId: UriString.split(".").pop() ?? "plaintext",
+			version: 1,
+			isDirty: false,
+			getText: () => "",
+			lineAt: (_line: number) => ({
+				text: "",
+				lineNumber: _line,
+				range: { start: VsPosition, end: VsPosition },
+				rangeIncludingLineBreak: { start: VsPosition, end: VsPosition },
+				firstNonWhitespaceCharacterIndex: 0,
+				isEmptyOrWhitespace: true,
+			}),
+			lineCount: 0,
+			offsetAt: () => 0,
+			positionAt: () => VsPosition,
+			validateRange: (r: any) => r,
+			validatePosition: (p: any) => p,
+			getWordRangeAtPosition: () => undefined,
+		};
+
+		// Null cancellation token — extensions that check for cancellation will
+		// see it as never cancelled (acceptable for synchronous/fast providers).
+		const VsToken = { isCancellationRequested: false, onCancellationRequested: () => ({ dispose: () => {} }) };
+
+		const Context = Args[3];
+
+		try {
+			switch (method) {
+				case "$provideHover": {
+					const Result = await (Provider as any).provideHover?.(
+						VsDocument,
+						VsPosition,
+						VsToken,
+					);
+					if (!Result) return null;
+					// Normalize VS Code Hover { contents, range? } →
+					// Mountain HoverResultDTO { Contents: IMarkdownStringDTO[], Range? }
+					const RawContents = Result.contents;
+					const Contents: Array<{ Value: string }> = Array.isArray(RawContents)
+						? RawContents.map((C: any) => ({
+								Value:
+									typeof C === "string"
+										? C
+										: (C?.value ?? C?.Value ?? ""),
+							}))
+						: typeof RawContents === "string"
+							? [{ Value: RawContents }]
+							: [{ Value: RawContents?.value ?? RawContents?.Value ?? "" }];
+					// Normalize VS Code range { start: { line, character }, end: {...} } →
+					// RangeDTO { StartLineNumber, StartColumn, EndLineNumber, EndColumn }
+					const VsRange = Result.range ?? null;
+					const Range = VsRange
+						? {
+								StartLineNumber: VsRange.start?.line ?? 0,
+								StartColumn: VsRange.start?.character ?? 0,
+								EndLineNumber: VsRange.end?.line ?? 0,
+								EndColumn: VsRange.end?.character ?? 0,
+							}
+						: undefined;
+					return Range !== undefined
+						? { Contents, Range }
+						: { Contents };
+				}
+
+				case "$provideCompletions": {
+					const Result = await (Provider as any).provideCompletionItems?.(
+						VsDocument,
+						VsPosition,
+						VsToken,
+						Context,
+					);
+					if (!Result) return { Suggestions: [], IsIncomplete: false };
+					const RawItems = Array.isArray(Result) ? Result : (Result.items ?? []);
+					// Shape: CompletionListDTO { Suggestions: CompletionItemDTO[] }
+					return {
+						Suggestions: RawItems.map((Item: any) => ({
+							Label:
+								typeof Item.label === "string"
+									? Item.label
+									: (Item.label?.label ?? ""),
+							Kind: Item.kind ?? 0,
+							Detail: Item.detail ?? undefined,
+							Documentation:
+								typeof Item.documentation === "string"
+									? { Value: Item.documentation }
+									: Item.documentation?.value !== undefined
+										? { Value: Item.documentation.value }
+										: undefined,
+							InsertText:
+								typeof Item.insertText === "string"
+									? Item.insertText
+									: (typeof Item.label === "string"
+											? Item.label
+											: (Item.label?.label ?? "")),
+						})),
+						IsIncomplete: Result.isIncomplete ?? false,
+					};
+				}
+
+				case "$provideDefinition": {
+					const Result = await (Provider as any).provideDefinition?.(
+						VsDocument,
+						VsPosition,
+						VsToken,
+					);
+					if (!Result) return null;
+					const Locations = Array.isArray(Result) ? Result : [Result];
+					// Shape: Vec<LocationDTO> { Uri: string, Range: RangeDTO }
+					return Locations.map((L: any) => ({
+						Uri: (L.uri ?? L.targetUri)?.toString?.() ?? UriString,
+						Range: this.NormalizeRange(L.range ?? L.targetSelectionRange),
+					}));
+				}
+
+				case "$provideReferences": {
+					const Result = await (Provider as any).provideReferences?.(
+						VsDocument,
+						VsPosition,
+						Context ?? { includeDeclaration: true },
+						VsToken,
+					);
+					if (!Result) return null;
+					return (Result as any[]).map((L: any) => ({
+						Uri: L.uri?.toString?.() ?? UriString,
+						Range: this.NormalizeRange(L.range),
+					}));
+				}
+
+				case "$provideCodeActions": {
+					const RangeArg = Args[2];
+					const ContextArg = Args[3];
+					const Result = await (Provider as any).provideCodeActions?.(
+						VsDocument,
+						RangeArg,
+						ContextArg,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideDocumentHighlights": {
+					const Result = await (Provider as any).provideDocumentHighlights?.(
+						VsDocument,
+						VsPosition,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideDocumentSymbols": {
+					const Result = await (Provider as any).provideDocumentSymbols?.(
+						VsDocument,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideWorkspaceSymbols": {
+					const Query = Args[1] as string;
+					const Result = await (Provider as any).provideWorkspaceSymbols?.(
+						Query,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideDocumentFormattingEdits":
+				case "$provideDocumentRangeFormattingEdits": {
+					const RangeArg = Args[2];
+					const OptionsArg = Args[3];
+					const Fn =
+						method === "$provideDocumentFormattingEdits"
+							? "provideDocumentFormattingEdits"
+							: "provideDocumentRangeFormattingEdits";
+					const Result = await (Provider as any)[Fn]?.(
+						VsDocument,
+						RangeArg,
+						OptionsArg,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideSignatureHelp": {
+					const Result = await (Provider as any).provideSignatureHelp?.(
+						VsDocument,
+						VsPosition,
+						VsToken,
+						Context,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideRenameEdits": {
+					const NewName = Args[3] as string;
+					const Result = await (Provider as any).provideRenameEdits?.(
+						VsDocument,
+						VsPosition,
+						NewName,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideFoldingRanges": {
+					const Result = await (Provider as any).provideFoldingRanges?.(
+						VsDocument,
+						Context,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideInlayHints": {
+					const RangeArg = Args[2];
+					const Result = await (Provider as any).provideInlayHints?.(
+						VsDocument,
+						RangeArg,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideCodeLenses": {
+					const Result = await (Provider as any).provideCodeLenses?.(
+						VsDocument,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				default:
+					console.warn(`[GRPCServerService] Unhandled $provide method: ${method}`);
+					return null;
+			}
+		} catch (Error) {
+			console.error(
+				`[GRPCServerService] Provider ${Handle} threw for ${method}:`,
+				Error,
+			);
+			return null;
+		}
 	}
 
 	/**
