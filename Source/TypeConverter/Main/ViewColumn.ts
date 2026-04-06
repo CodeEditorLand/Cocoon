@@ -3,7 +3,10 @@
  * @description Converts the `vscode.ViewColumn` enum to its internal DTO representation.
  */
 
-import { ViewColumn as VSCodeViewColumn } from "vscode";
+// ViewColumn enum from the real VS Code source via @codeeditorland/output.
+const { ViewColumn: VSCodeViewColumn } = await import(
+	"@codeeditorland/output/vs/workbench/api/common/extHostTypes.js"
+);
 
 // VS Code internal constants for editor groups
 const ActiveEditorGroup = -1;

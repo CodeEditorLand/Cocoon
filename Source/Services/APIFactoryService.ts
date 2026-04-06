@@ -14,6 +14,21 @@ import { IMountainClientService } from "../Interfaces/IMountainClientService.js"
 import { ITerminalService } from "../Interfaces/ITerminalService.js";
 import * as LanguageProviderRegistry from "./LanguageProviderRegistry.js";
 
+// Real VS Code type constructors from @codeeditorland/output (compiled from VS Code source).
+// Loaded once at module init - all extensions share these class definitions.
+const VsCodeTypes = await import(
+	"@codeeditorland/output/vs/workbench/api/common/extHostTypes.js"
+);
+const { URI } = await import(
+	"@codeeditorland/output/vs/base/common/uri.js"
+);
+const { CancellationTokenSource, CancellationToken } = await import(
+	"@codeeditorland/output/vs/base/common/cancellation.js"
+);
+const { Emitter } = await import(
+	"@codeeditorland/output/vs/base/common/event.js"
+);
+
 // --- API Service Interface ---
 
 export interface IAPIFactoryService {
@@ -48,6 +63,69 @@ const createVSCodeAPI = (
 ): VSCodeAPI => {
 	return {
 		version: "1.88.0",
+
+		// --- Type Constructors (real VS Code classes from @codeeditorland/output) ---
+		Position: VsCodeTypes.Position,
+		Range: VsCodeTypes.Range,
+		Location: VsCodeTypes.Location,
+		Selection: VsCodeTypes.Selection,
+		MarkdownString: VsCodeTypes.MarkdownString,
+		Hover: VsCodeTypes.Hover,
+		CompletionItem: VsCodeTypes.CompletionItem,
+		CompletionItemKind: VsCodeTypes.CompletionItemKind,
+		CompletionItemTag: VsCodeTypes.CompletionItemTag,
+		CompletionList: VsCodeTypes.CompletionList,
+		CompletionTriggerKind: VsCodeTypes.CompletionTriggerKind,
+		Diagnostic: VsCodeTypes.Diagnostic,
+		DiagnosticSeverity: VsCodeTypes.DiagnosticSeverity,
+		DiagnosticTag: VsCodeTypes.DiagnosticTag,
+		DiagnosticRelatedInformation: VsCodeTypes.DiagnosticRelatedInformation,
+		TextEdit: VsCodeTypes.TextEdit,
+		WorkspaceEdit: VsCodeTypes.WorkspaceEdit,
+		SnippetString: VsCodeTypes.SnippetString,
+		SnippetTextEdit: VsCodeTypes.SnippetTextEdit,
+		SymbolKind: VsCodeTypes.SymbolKind,
+		SymbolInformation: VsCodeTypes.SymbolInformation,
+		DocumentSymbol: VsCodeTypes.DocumentSymbol,
+		CodeActionKind: VsCodeTypes.CodeActionKind,
+		CodeAction: VsCodeTypes.CodeAction,
+		CodeActionTriggerKind: VsCodeTypes.CodeActionTriggerKind,
+		SignatureHelp: VsCodeTypes.SignatureHelp,
+		SignatureHelpTriggerKind: VsCodeTypes.SignatureHelpTriggerKind,
+		SignatureInformation: VsCodeTypes.SignatureInformation,
+		ParameterInformation: VsCodeTypes.ParameterInformation,
+		InlayHint: VsCodeTypes.InlayHint,
+		InlayHintKind: VsCodeTypes.InlayHintKind,
+		InlayHintLabelPart: VsCodeTypes.InlayHintLabelPart,
+		FoldingRange: VsCodeTypes.FoldingRange,
+		FoldingRangeKind: VsCodeTypes.FoldingRangeKind,
+		DocumentHighlight: VsCodeTypes.DocumentHighlight,
+		DocumentHighlightKind: VsCodeTypes.DocumentHighlightKind,
+		DocumentLink: VsCodeTypes.DocumentLink,
+		SelectionRange: VsCodeTypes.SelectionRange,
+		SemanticTokensLegend: VsCodeTypes.SemanticTokensLegend,
+		SemanticTokensBuilder: VsCodeTypes.SemanticTokensBuilder,
+		SemanticTokens: VsCodeTypes.SemanticTokens,
+		RelativePattern: VsCodeTypes.RelativePattern,
+		Disposable: VsCodeTypes.Disposable,
+		StatusBarAlignment: VsCodeTypes.StatusBarAlignment,
+		ThemeColor: VsCodeTypes.ThemeColor,
+		ThemeIcon: VsCodeTypes.ThemeIcon,
+		TreeItem: VsCodeTypes.TreeItem,
+		TreeItemCollapsibleState: VsCodeTypes.TreeItemCollapsibleState,
+		ViewColumn: VsCodeTypes.ViewColumn,
+		EndOfLine: VsCodeTypes.EndOfLine,
+		FileSystemError: VsCodeTypes.FileSystemError,
+		FileChangeType: VsCodeTypes.FileChangeType,
+		ConfigurationTarget: VsCodeTypes.ConfigurationTarget,
+		DecorationRangeBehavior: VsCodeTypes.DecorationRangeBehavior,
+		TextDocumentSaveReason: VsCodeTypes.TextDocumentSaveReason,
+		// URI is exposed as 'Uri' to match the vscode API surface
+		Uri: URI,
+		CancellationTokenSource,
+		CancellationToken,
+		// Emitter is the vscode.EventEmitter equivalent
+		EventEmitter: Emitter,
 
 		// --- Window Namespace ---
 		window: {

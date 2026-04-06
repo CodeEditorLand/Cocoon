@@ -10,7 +10,12 @@
  * communication in the Mountain/Wind ecosystem.
  */
 
-import { CancellationToken } from "vscode";
+import type { CancellationToken } from "vscode";
+
+// Real VS Code CancellationTokenSource — replaces the hand-rolled class below.
+const { CancellationTokenSource } = await import(
+	"@codeeditorland/output/vs/base/common/cancellation.js"
+);
 
 import { Logger } from "../Utility/Logger";
 import { Result, type Err, type Ok } from "../Utility/Result";
@@ -438,55 +443,7 @@ export class IPCHandler {
 	}
 }
 
-/**
- * Simple CancellationTokenSource implementation
- */
-class CancellationTokenSource {
-	private _isCancelled: boolean = false;
-	private readonly listeners: Set<() => void> = new Set();
-
-	public get isCancellationRequested(): boolean {
-		return this._isCancelled;
-	}
-
-	public get token(): CancellationToken {
-		return {
-			isCancellationRequested: this._isCancelled,
-			onCancellationRequested: (callback: () => void) => {
-				if (this._isCancelled) {
-					callback();
-				} else {
-					this.listeners.add(callback);
-				}
-				return {
-					dispose: () => this.listeners.delete(callback),
-				};
-			},
-		};
-	}
-
-	public cancel(): void {
-		if (this._isCancelled) {
-			return;
-		}
-
-		this._isCancelled = true;
-
-		for (const listener of this.listeners) {
-			try {
-				listener();
-			} catch (error) {
-				console.error("Error in cancellation callback:", error);
-			}
-		}
-
-		this.listeners.clear();
-	}
-
-	public dispose(): void {
-		this.listeners.clear();
-	}
-}
+// CancellationTokenSource is now imported from @codeeditorland/output at the top of this file.
 
 /**
  * Export default handler factory function

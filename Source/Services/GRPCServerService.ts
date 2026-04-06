@@ -683,51 +683,12 @@ export class GRPCServerService
 		const PosLine = RawPos?.Line ?? RawPos?.line ?? 0;
 		const PosChar = RawPos?.Character ?? RawPos?.character ?? 0;
 
-		// VS Code-compatible Position shim with structural methods extensions may call.
-		const MakePosition = (Line: number, Character: number) => ({
-			line: Line,
-			character: Character,
-			isBefore: (other: any) =>
-				Line < other.line ||
-				(Line === other.line && Character < other.character),
-			isBeforeOrEqual: (other: any) =>
-				Line < other.line ||
-				(Line === other.line && Character <= other.character),
-			isAfter: (other: any) =>
-				Line > other.line ||
-				(Line === other.line && Character > other.character),
-			isAfterOrEqual: (other: any) =>
-				Line > other.line ||
-				(Line === other.line && Character >= other.character),
-			isEqual: (other: any) =>
-				Line === other.line && Character === other.character,
-			compareTo: (other: any) =>
-				Line !== other.line
-					? Line - other.line
-					: Character - other.character,
-			translate: (LineDeltaOrChange: any, CharDelta?: number) => {
-				if (typeof LineDeltaOrChange === "number") {
-					return MakePosition(
-						Line + LineDeltaOrChange,
-						Character + (CharDelta ?? 0),
-					);
-				}
-				return MakePosition(
-					Line + (LineDeltaOrChange?.lineDelta ?? 0),
-					Character + (LineDeltaOrChange?.characterDelta ?? 0),
-				);
-			},
-			with: (LineOrChange: any, Char?: number) => {
-				if (typeof LineOrChange === "number")
-					return MakePosition(LineOrChange, Char ?? Character);
-				return MakePosition(
-					LineOrChange?.line ?? Line,
-					LineOrChange?.character ?? Character,
-				);
-			},
-			toString: () => `(${Line},${Character})`,
-		});
-		const VsPosition = MakePosition(PosLine, PosChar);
+		// Real VS Code Position and Range classes from @codeeditorland/output.
+		// Compiled from the VS Code source tree — no hand-written shims.
+		const { Position, Range } = await import(
+			"@codeeditorland/output/vs/workbench/api/common/extHostTypes.js"
+		);
+		const VsPosition = new Position(PosLine, PosChar);
 
 		// Try to get real document content from LanguageProviderRegistry or the
 		// VS Code document shim. Content is keyed by URI string in CocoonService's
@@ -763,24 +724,6 @@ export class GRPCServerService
 			}
 		})();
 
-		const MakeRange = (
-			StartLine: number,
-			StartChar: number,
-			EndLine: number,
-			EndChar: number,
-		) => ({
-			start: MakePosition(StartLine, StartChar),
-			end: MakePosition(EndLine, EndChar),
-			isEmpty: StartLine === EndLine && StartChar === EndChar,
-			isSingleLine: StartLine === EndLine,
-			contains: (_pos: any) => true,
-			isEqual: (_other: any) => false,
-			intersection: (_other: any) => undefined,
-			union: (other: any) => other,
-			with: (_start: any, _end: any) =>
-				MakeRange(StartLine, StartChar, EndLine, EndChar),
-		});
-
 		const VsDocument = {
 			uri: {
 				toString: () => UriString,
@@ -805,13 +748,8 @@ export class GRPCServerService
 				return {
 					text: "",
 					lineNumber: LineNum,
-					range: MakeRange(LineNum, 0, LineNum, 0),
-					rangeIncludingLineBreak: MakeRange(
-						LineNum,
-						0,
-						LineNum + 1,
-						0,
-					),
+					range: new Range(LineNum, 0, LineNum, 0),
+					rangeIncludingLineBreak: new Range(LineNum, 0, LineNum + 1, 0),
 					firstNonWhitespaceCharacterIndex: 0,
 					isEmptyOrWhitespace: true,
 				};
@@ -825,15 +763,10 @@ export class GRPCServerService
 			save: async () => false,
 		};
 
-		// CancellationToken shim — never cancelled; extensions that await
-		// token.onCancellationRequested get a no-op disposable.
-		const VsToken = {
-			isCancellationRequested: false,
-			onCancellationRequested: (Listener: () => void) => {
-				void Listener; // suppress lint
-				return { dispose: () => {} };
-			},
-		};
+		const { CancellationTokenSource } = await import(
+			"@codeeditorland/output/vs/base/common/cancellation.js"
+		);
+		const VsToken = new CancellationTokenSource().token;
 
 		const Context = Args[3];
 
@@ -871,7 +804,7 @@ export class GRPCServerService
 					// Normalize VS Code range { start: { line, character }, end: {...} } →
 					// RangeDTO { StartLineNumber, StartColumn, EndLineNumber, EndColumn }
 					const VsRange = Result.range ?? null;
-					const Range = VsRange
+					const RangeDTO = VsRange
 						? {
 								StartLineNumber: VsRange.start?.line ?? 0,
 								StartColumn: VsRange.start?.character ?? 0,
@@ -879,8 +812,8 @@ export class GRPCServerService
 								EndColumn: VsRange.end?.character ?? 0,
 							}
 						: undefined;
-					return Range !== undefined
-						? { Contents, Range }
+					return RangeDTO !== undefined
+						? { Contents, Range: RangeDTO }
 						: { Contents };
 				}
 

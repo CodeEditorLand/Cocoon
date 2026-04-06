@@ -74,7 +74,7 @@
  */
 
 import { Context, Effect, Ref } from "effect";
-import * as VSCode from "vscode";
+import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";

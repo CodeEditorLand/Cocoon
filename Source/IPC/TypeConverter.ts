@@ -89,6 +89,11 @@
 import { Effect } from "effect";
 import type { Uri } from "vscode";
 
+// URI class for runtime use — the `import type` above is erased at runtime.
+const { URI } = await import(
+	"@codeeditorland/output/vs/base/common/uri.js"
+);
+
 // ============================================================================
 // DTO Type Definitions (generated from Mountain Rust DTOs)
 // ============================================================================
@@ -769,8 +774,8 @@ export const DocumentStateConvertFromDTO = (
 	Effect.gen(function* () {
 		const validated = yield* ValidateDocumentStateDTO(dto);
 
-		// Parse URI using VSCode Uri interface
-		const uri = Uri.parse(validated.URI);
+		// Parse URI using the real VS Code URI class from @codeeditorland/output.
+		const uri = URI.parse(validated.URI) as unknown as Uri;
 
 		// Validate EOL is either \n or \r\n
 		const eol = validated.EOL === "\r\n" ? "\r\n" : "\n";

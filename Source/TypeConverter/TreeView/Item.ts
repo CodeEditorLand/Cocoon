@@ -5,9 +5,11 @@
 
 import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
 import type * as VSCode from "vscode";
-import { TreeItemCollapsibleState } from "vscode";
 
+// TreeItemCollapsibleState comes from the Platform/VSCode barrel (real VS Code source).
 import * as ExtHostTypes from "../../Platform/VSCode/Type.js";
+
+const { TreeItemCollapsibleState } = ExtHostTypes;
 import type { Command } from "../Command.js";
 import { FromAPI as MarkdownStringFromAPI } from "../Main/MarkdownString.js";
 import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "../Main/URI.js";
