@@ -38,7 +38,7 @@
 		"@tauri-apps/plugin-fs": "2.5.0",
 		"effect": "3.21.0",
 		"google-protobuf": "4.0.2",
-		"protobufjs": "8.0.0",
+		"protobufjs": "8.0.1",
 		"ts-protoc-gen": "0.15.0"
 	},
 	"devDependencies": {
