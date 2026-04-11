@@ -1,0 +1,1 @@
+import{Effect as e,Layer as g}from"effect";const i=e.Tag("Service/Window/Dialog"),f=e.gen(function*(){const o=(r,n=[])=>e.gen(function*(){}),t=(r,n=[])=>e.gen(function*(){}),s=(r,n=[])=>e.gen(function*(){});return i.of({ShowInformationMessage:o,ShowWarningMessage:t,ShowErrorMessage:s})}),c=g.effect(i,f);export{c as DialogLayer,f as DialogLive,i as DialogService};

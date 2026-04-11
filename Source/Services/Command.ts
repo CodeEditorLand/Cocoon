@@ -223,11 +223,6 @@ export class CommandService extends Effect.Service<CommandService>()(
 						try: () =>
 							Promise.resolve(Callback.apply(ThisArg, Arguments)),
 						catch: (Cause) => {
-							yield *
-								Logger.Error(
-									`[CommandService] Failed to execute command '${Id}'`,
-									Cause as Error,
-								);
 							throw Cause;
 						},
 					});

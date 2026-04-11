@@ -1,0 +1,1 @@
+import*as i from"effect/Effect";var n=(e=>(e.APPLICATION="APPLICATION",e.WORKSPACE="WORKSPACE",e.PROFILE="PROFILE",e))(n||{});const o=i.Tag("IConfigurationService");export{n as ConfigurationScope,o as IConfigurationService};

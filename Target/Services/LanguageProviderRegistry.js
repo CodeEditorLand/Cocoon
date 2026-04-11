@@ -1,0 +1,1 @@
+const r=new Map;function t(e,n){r.set(e,n)}function o(e){r.delete(e)}function i(e){return r.get(e)}function u(){return Array.from(r.keys())}export{i as Get,u as ListHandles,t as Register,o as Unregister};

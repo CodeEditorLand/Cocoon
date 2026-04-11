@@ -541,13 +541,8 @@ export class WindowService extends Effect.Service<WindowService>()(
 							return selectedItems;
 						},
 						catch: (error) => {
-							yield *
-								Logger.Error(
-									`[WindowService] Failed to show quick pick: ${(error as Error).message}`,
-									error as Error,
-								);
 							throw new Error(
-								`Failed to show quick pick: ${(error as Error).message}`,
+								`Progress task failed: ${(error as Error).message}`,
 							);
 						},
 					});
@@ -620,11 +615,6 @@ export class WindowService extends Effect.Service<WindowService>()(
 							return response as string;
 						},
 						catch: (error) => {
-							yield *
-								Logger.Error(
-									`[WindowService] Failed to show input box: ${(error as Error).message}`,
-									error as Error,
-								);
 							throw new Error(
 								`Failed to show input box: ${(error as Error).message}`,
 							);
@@ -673,11 +663,6 @@ export class WindowService extends Effect.Service<WindowService>()(
 							);
 						},
 						catch: (error) => {
-							yield *
-								Logger.Error(
-									`[WindowService] Failed to show open dialog: ${(error as Error).message}`,
-									error as Error,
-								);
 							throw new Error(
 								`Failed to show open dialog: ${(error as Error).message}`,
 							);
@@ -724,11 +709,6 @@ export class WindowService extends Effect.Service<WindowService>()(
 							return VSCode.Uri.file(filePath);
 						},
 						catch: (error) => {
-							yield *
-								Logger.Error(
-									`[WindowService] Failed to show save dialog: ${(error as Error).message}`,
-									error as Error,
-								);
 							throw new Error(
 								`Failed to show save dialog: ${(error as Error).message}`,
 							);
@@ -887,7 +867,10 @@ export class WindowService extends Effect.Service<WindowService>()(
 					);
 
 					// Notify Mountain to create the output channel (Sky renders it)
-					await MountainClient.sendNotification("output.create", { id: ChannelId, name: Name });
+					yield* Effect.tryPromise({
+						try: () => MountainClient.sendNotification("output.create", { id: ChannelId, name: Name }),
+						catch: () => new Error("Failed to create output channel"),
+					});
 
 					// Return output channel proxy
 					return yield* Effect.succeed({
@@ -1045,9 +1028,8 @@ export class WindowService extends Effect.Service<WindowService>()(
 						ExtensionDescription,
 						() => {
 							// Dispose callback
-						// Notify Mountain to destroy the webview panel
-						MountainClient.sendNotification("webview.dispose", { panelId: PanelId }).catch(() => {});
-							);
+							// Notify Mountain to destroy the webview panel
+							MountainClient.sendNotification("webview.dispose", { panelId: PanelId }).catch(() => {});
 						},
 						ViewType,
 						Title,
@@ -1105,19 +1087,17 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 					// Send progress start notification to Mountain
 					// Notify Mountain to show progress indicator
-					await MountainClient.sendNotification("progress.start", {
-						id: ProgressId, location: Options.location, title: Options.title, cancellable: Options.cancellable ?? false,
+					yield* Effect.tryPromise({
+						try: () => MountainClient.sendNotification("progress.start", {
+							id: ProgressId, location: Options.location, title: Options.title, cancellable: Options.cancellable ?? false,
+						}),
+						catch: () => new Error("Failed to start progress"),
 					});
 
 					// Execute the task
 					const Result = yield* Effect.tryPromise({
 						try: () => Task(ProgressReporter, CancellationToken),
 						catch: (error) => {
-							yield *
-								Logger.Error(
-									`[WindowService] Progress task failed: ${(error as Error).message}`,
-									error as Error,
-								);
 							throw new Error(
 								`Progress task failed: ${(error as Error).message}`,
 							);
@@ -1126,7 +1106,10 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 					// Send progress complete notification to Mountain
 					// Notify Mountain to hide progress indicator
-					await MountainClient.sendNotification("progress.complete", { id: ProgressId });
+					yield* Effect.tryPromise({
+						try: () => MountainClient.sendNotification("progress.complete", { id: ProgressId }),
+						catch: () => new Error("Failed to complete progress"),
+					});
 
 					return Result;
 				});

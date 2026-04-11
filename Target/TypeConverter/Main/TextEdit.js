@@ -1,0 +1,1 @@
+import{Range as t,TextEdit as o}from"../../Platform/VSCode/Type.js";import{FromAPI as n,ToAPI as r}from"./Range.js";function i(e){return new t(e.start.line,e.start.character,e.end.line,e.end.character)}const s=e=>({text:e.newText,range:n(e.range),forceMoveMarkers:!1}),m=e=>new o(i(r(e.range)),e.text??"");export{s as FromAPI,m as ToAPI};

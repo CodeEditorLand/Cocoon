@@ -179,10 +179,16 @@ export const RPCServerLive = Layer.effect(
 					return;
 				}
 
-				// Set config
+				// Set config — port from env var or default 50052
+				// Mountain sets COCOON_GRPC_PORT when spawning Cocoon.
+				// Must NOT be 50051 (Mountain's own gRPC server).
+				const CocoonPort = parseInt(
+					process.env["COCOON_GRPC_PORT"] || "50052",
+					10,
+				);
 				currentConfig = config ?? {
 					host: "0.0.0.0",
-					port: 50051,
+					port: CocoonPort,
 					maxConnections: 100,
 					enableCompression: true,
 					enableTls: false,

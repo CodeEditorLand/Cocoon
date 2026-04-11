@@ -130,10 +130,15 @@ const stage3_MountainConnection = withSpan(
 			"[Cocoon Bootstrap] Stage 3: Connecting to Mountain...",
 		);
 
-		// Connect to Mountain backend
+		// Connect to Mountain's gRPC server (MountainService on port 50051).
+		// Mountain sets MOUNTAIN_GRPC_PORT env var when spawning Cocoon.
+		const MountainPort = parseInt(
+			process.env["MOUNTAIN_GRPC_PORT"] || "50051",
+			10,
+		);
 		yield* mountainClient.connect({
 			host: "localhost",
-			port: 50052,
+			port: MountainPort,
 		});
 
 		const version = yield* mountainClient.version;
