@@ -1302,7 +1302,6 @@ export function GetOptimalCompressionHint(Message: IMessage): CompressionHint {
 // ============================================================================
 
 export {
-	VSBuffer,
 	type IMessage,
 	type IBatchMessage,
 	type ISerializationResult,

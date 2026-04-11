@@ -184,3 +184,5 @@ export default class OldStyleServices {
 	 * Builds the dependency graph with proper layering:
 	 * - Base Infrastructure (no dependencies)
 	 * - Core Capabilities (depend on Base)
+	 */
+}

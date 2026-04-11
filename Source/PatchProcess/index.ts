@@ -53,7 +53,7 @@ export {
 export {
 	InitializeProcessValidation,
 	ValidateFileSystemAccess,
-	ValidateNetworkAccess,
+	ValidateNetworkAccess as ValidateNetworkAccessValidator,
 	ValidateChildProcessSpawn,
 	ValidateMemoryUsage,
 	DetectSuspiciousBehavior,
