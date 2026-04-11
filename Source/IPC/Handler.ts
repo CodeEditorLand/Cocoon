@@ -12,7 +12,7 @@
 
 import type { CancellationToken } from "vscode";
 
-// Real VS Code CancellationTokenSource — replaces the hand-rolled class below.
+// Real VS Code CancellationTokenSource - replaces the hand-rolled class below.
 const { CancellationTokenSource } = await import(
 	"@codeeditorland/output/vs/base/common/cancellation.js"
 );

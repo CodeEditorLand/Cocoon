@@ -258,7 +258,7 @@ const createVSCodeAPI = (
 
 		// --- Commands Namespace ---
 		commands: (() => {
-			// Local callback registry — handlers registered from this extension.
+			// Local callback registry - handlers registered from this extension.
 			// When Mountain dispatches execute_contributed_command, Cocoon routes
 			// to the callback stored here by matching the commandId.
 			const LocalHandlers = new Map<

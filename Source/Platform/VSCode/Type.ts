@@ -2,7 +2,7 @@
  * @module Type
  * @description
  * Single source of truth for all VS Code runtime type constructors in Cocoon.
- * Re-exports the compiled VS Code source from @codeeditorland/output —
+ * Re-exports the compiled VS Code source from @codeeditorland/output -
  * no hand-written shims, no local reimplementations.
  *
  * All TypeConverter modules import from here so that there is exactly one
@@ -17,7 +17,7 @@
  *  - cancellation.js  → CancellationToken, CancellationTokenSource
  */
 
-// Full VS Code extHostTypes barrel — every constructor and enum extension code uses.
+// Full VS Code extHostTypes barrel - every constructor and enum extension code uses.
 export * from "@codeeditorland/output/vs/workbench/api/common/extHostTypes.js";
 
 // URI is imported internally by extHostTypes but not re-exported; add it explicitly.

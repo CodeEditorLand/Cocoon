@@ -684,7 +684,7 @@ export class GRPCServerService
 		const PosChar = RawPos?.Character ?? RawPos?.character ?? 0;
 
 		// Real VS Code Position and Range classes from @codeeditorland/output.
-		// Compiled from the VS Code source tree — no hand-written shims.
+		// Compiled from the VS Code source tree - no hand-written shims.
 		const { Position, Range } = await import(
 			"@codeeditorland/output/vs/workbench/api/common/extHostTypes.js"
 		);
