@@ -109,7 +109,7 @@ high-fidelity `vscode` API, see the following source files:
 
 ---
 
-## `Cocoon`&#x2001;🦋 in the `Land`&#x2001;🏞️ Ecosystem&#x2001;&#x2001;&#x2001;🦋&#x2001;+&#x2001;🏞️
+## `Cocoon`&#x2001;🦋 in the `Land`&#x2001;🏞️ Ecosystem&#x2001;🦋&#x2001;+&#x2001;🏞️
 
 `Cocoon` operates as a standalone `Node.js` process, carefully orchestrated by
 and communicating with `Mountain`.
