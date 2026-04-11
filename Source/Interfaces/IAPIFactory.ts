@@ -7,7 +7,7 @@
  * FUTURE: Cross-Element integration - add methods for Air/Echo/Sky when those Elements are ready
  */
 
-import * as Effect from "effect";
+import { Context } from "effect";
 
 // API construction types
 export interface APIConstructionRequest {
@@ -95,4 +95,4 @@ export interface IAPIFactory {
 /**
  * Effect context for APIFactory
  */
-export const IAPIFactory = Effect.Tag<IAPIFactory>("IAPIFactory");
+export const IAPIFactory = Context.Tag<IAPIFactory>("IAPIFactory");

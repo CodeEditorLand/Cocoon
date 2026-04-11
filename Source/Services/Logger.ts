@@ -64,6 +64,10 @@ export interface Logger {
 	readonly GetExtensionId: () => Effect.Effect<string>;
 }
 
+// Runtime Tag for the Logger interface — needed because esbuild erases
+// type-only exports but consumers import { Logger } at runtime.
+export const Logger = Context.Tag<Logger>("Service/Logger");
+
 /**
  * @class LoggerService
  * @description

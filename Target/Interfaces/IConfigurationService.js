@@ -1,1 +1,1 @@
-import*as i from"effect/Effect";var n=(e=>(e.APPLICATION="APPLICATION",e.WORKSPACE="WORKSPACE",e.PROFILE="PROFILE",e))(n||{});const o=i.Tag("IConfigurationService");export{n as ConfigurationScope,o as IConfigurationService};
+import{Context as i}from"effect";var o=(e=>(e.APPLICATION="APPLICATION",e.WORKSPACE="WORKSPACE",e.PROFILE="PROFILE",e))(o||{});const t=i.Tag("IConfigurationService");export{o as ConfigurationScope,t as IConfigurationService};

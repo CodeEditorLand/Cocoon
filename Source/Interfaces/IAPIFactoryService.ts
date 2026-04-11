@@ -6,6 +6,7 @@
  */
 
 import * as Effect from "effect/Effect";
+import { Context } from "effect";
 
 // API construction types
 export interface APIConstructionRequest {
@@ -94,4 +95,4 @@ export interface IAPIFactoryService {
  * Effect context for APIFactoryService
  */
 export const IAPIFactoryService =
-	Effect.Tag<IAPIFactoryService>("IAPIFactoryService");
+	Context.Tag<IAPIFactoryService>("IAPIFactoryService");

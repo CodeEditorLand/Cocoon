@@ -1,1 +1,1 @@
-import*as e from"effect";const r=e.Tag("IPerformanceMonitoringService");export{r as IPerformanceMonitoringService};
+import{Context as e}from"effect";const i=e.Tag("IPerformanceMonitoringService");export{i as IPerformanceMonitoringService};

@@ -6,6 +6,7 @@
  */
 
 import * as Effect from "effect/Effect";
+import { Context } from "effect";
 
 // Circuit breaker state
 export interface CircuitBreakerState {
@@ -86,6 +87,6 @@ export interface IErrorHandlingService {
 /**
  * Effect context for ErrorHandlingService
  */
-export const IErrorHandlingService = Effect.Tag<IErrorHandlingService>(
+export const IErrorHandlingService = Context.Tag<IErrorHandlingService>(
 	"IErrorHandlingService",
 );

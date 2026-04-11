@@ -5,7 +5,7 @@
  * Following Wind Effect-TS atomic module pattern.
  */
 
-import { Effect, Ref } from "effect";
+import { Effect, Ref, Context} from "effect";
 
 import type { Logger, WindowStateConfig } from "./Types.js";
 
@@ -23,7 +23,7 @@ export interface WindowStateService {
 /**
  * Tag for WindowStateService context
  */
-export const WindowStateService = Effect.Tag<WindowStateService>(
+export const WindowStateService = Context.Tag<WindowStateService>(
 	"Service/Window/State",
 );
 

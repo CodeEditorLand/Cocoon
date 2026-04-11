@@ -6,6 +6,7 @@
  */
 
 import * as Effect from "effect/Effect";
+import { Context } from "effect";
 
 // Configuration scopes matching VSCode patterns
 export enum ConfigurationScope {
@@ -80,6 +81,6 @@ export interface IConfigurationService {
 /**
  * Effect context for ConfigurationService
  */
-export const IConfigurationService = Effect.Tag<IConfigurationService>(
+export const IConfigurationService = Context.Tag<IConfigurationService>(
 	"IConfigurationService",
 );

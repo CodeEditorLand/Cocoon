@@ -5,7 +5,7 @@
  * Based on VSCode's extension host patterns.
  */
 
-import * as Effect from "effect";
+import { Context } from "effect";
 
 // Types matching VSCode patterns
 export interface IExtensionDescription {
@@ -83,6 +83,6 @@ export interface IExtensionHostService {
 /**
  * Effect context for ExtensionHostService
  */
-export const IExtensionHostService = Effect.Tag<IExtensionHostService>(
+export const IExtensionHostService = Context.Tag<IExtensionHostService>(
 	"IExtensionHostService",
 );

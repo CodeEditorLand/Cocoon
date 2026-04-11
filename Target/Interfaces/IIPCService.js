@@ -1,1 +1,1 @@
-import*as e from"effect";const n=e.Tag("IIPCService");export{n as IIPCService};
+import{Context as e}from"effect";const t=e.Tag("IIPCService");export{t as IIPCService};

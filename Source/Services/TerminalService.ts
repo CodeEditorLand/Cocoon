@@ -5,7 +5,7 @@
  * Manages PTY processes via Mountain.
  */
 
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Context} from "effect";
 
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
 
@@ -22,7 +22,7 @@ export interface ITerminalService {
 	kill(terminalId: number): Promise<void>;
 }
 
-export const ITerminalService = Effect.Tag("ITerminalService")<
+export const ITerminalService = Context.Tag("ITerminalService")<
 	ITerminalService,
 	ITerminalService
 >();

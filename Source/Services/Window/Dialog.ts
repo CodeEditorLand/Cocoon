@@ -5,7 +5,7 @@
  * Following Wind Effect-TS atomic module pattern.
  */
 
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Context} from "effect";
 
 import { DialogError } from "./Errors.js";
 
@@ -30,7 +30,7 @@ export interface DialogService {
 /**
  * Tag for DialogService context
  */
-export const DialogService = Effect.Tag<DialogService>("Service/Window/Dialog");
+export const DialogService = Context.Tag<DialogService>("Service/Window/Dialog");
 
 /**
  * Create dialog service layer

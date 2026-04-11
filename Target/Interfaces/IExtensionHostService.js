@@ -1,1 +1,1 @@
-import*as e from"effect";const t=e.Tag("IExtensionHostService");export{t as IExtensionHostService};
+import{Context as e}from"effect";const n=e.Tag("IExtensionHostService");export{n as IExtensionHostService};

@@ -5,7 +5,7 @@
  * Provides security sandboxing and module resolution for extensions.
  */
 
-import * as Effect from "effect";
+import { Context } from "effect";
 
 // Module interception types
 export interface ModuleInterceptionRequest {
@@ -100,6 +100,6 @@ export interface IModuleInterceptorService {
 /**
  * Effect context for ModuleInterceptorService
  */
-export const IModuleInterceptorService = Effect.Tag<IModuleInterceptorService>(
+export const IModuleInterceptorService = Context.Tag<IModuleInterceptorService>(
 	"IModuleInterceptorService",
 );

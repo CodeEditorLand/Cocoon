@@ -11,7 +11,7 @@
  */
 
 import { CancellationToken } from "@codeeditorland/output/vs/base/common/cancellation";
-import * as Effect from "effect";
+import { Context } from "effect";
 
 /**
  * IPC Channel interface following VS Code's IChannel pattern
@@ -132,4 +132,4 @@ export interface IIPCService {
 /**
  * Effect context for IPCService
  */
-export const IIPCService = Effect.Tag<IIPCService>("IIPCService");
+export const IIPCService = Context.Tag<IIPCService>("IIPCService");

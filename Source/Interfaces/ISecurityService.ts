@@ -5,7 +5,7 @@
  * Provides security policy enforcement, audit logging, and incident response.
  */
 
-import * as Effect from "effect";
+import { Context } from "effect";
 
 // Security policy interface
 export interface SecurityPolicy {
@@ -133,4 +133,4 @@ export interface ISecurityService {
  * Effect context for SecurityService
  */
 export const ISecurityService =
-	Effect.Tag<ISecurityService>("ISecurityService");
+	Context.Tag<ISecurityService>("ISecurityService");
