@@ -7,7 +7,7 @@
 import {
 	Emitter,
 	type Event,
-} from "@codeeditorland/output/vs/base/common/event.js";
+} from "@codeeditorland/output/vs/base/common/event";
 import { Effect, PubSub } from "effect";
 
 /**

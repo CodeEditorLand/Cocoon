@@ -49,8 +49,8 @@
  * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
-import { generateUuid } from "@codeeditorland/output/vs/base/common/uuid.js";
-import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
+import { generateUuid } from "@codeeditorland/output/vs/base/common/uuid";
+import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions";
 import { Effect, Ref } from "effect";
 import type { WebviewPanel as VSCodeWebviewPanel } from "vscode";
 

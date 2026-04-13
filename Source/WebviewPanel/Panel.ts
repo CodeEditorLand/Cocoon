@@ -56,7 +56,7 @@
  * Reference: WebviewPanel is HIGH priority for Mountain integration
  */
 
-import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
+import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions";
 import { Effect } from "effect";
 import type {
 	Event,

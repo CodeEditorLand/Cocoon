@@ -5,8 +5,8 @@
  * perspective, proxying state changes to the Mountain host.
  */
 
-import { Schemas } from "@codeeditorland/output/vs/base/common/network.js";
-import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
+import { Schemas } from "@codeeditorland/output/vs/base/common/network";
+import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions";
 import { Effect } from "effect";
 import type { Event, Uri, Webview, WebviewOptions } from "vscode";
 

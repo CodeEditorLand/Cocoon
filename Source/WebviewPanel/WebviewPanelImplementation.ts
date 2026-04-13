@@ -39,7 +39,7 @@
  * FUTURE: Session serialization - save/restore for workbench state
  */
 
-import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions.js";
+import type { IExtensionDescription } from "@codeeditorland/output/vs/platform/extensions/common/extensions";
 import { Effect } from "effect";
 import type {
 	Event,

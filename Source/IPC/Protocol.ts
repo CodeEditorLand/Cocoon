@@ -22,9 +22,9 @@
  * FUTURE: Encryption - TLS/SSL handled at transport layer (gRPC)
  */
 
-import { type VSBuffer } from "@codeeditorland/output/vs/base/common/buffer.js";
-import { type CancellationToken } from "@codeeditorland/output/vs/base/common/cancellation.js";
-import { type IDisposable } from "@codeeditorland/output/vs/base/common/lifecycle.js";
+import { type VSBuffer } from "@codeeditorland/output/vs/base/common/buffer";
+import { type CancellationToken } from "@codeeditorland/output/vs/base/common/cancellation";
+import { type IDisposable } from "@codeeditorland/output/vs/base/common/lifecycle";
 
 /**
  * Request message sent from extension host to request data or actions

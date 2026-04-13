@@ -3,7 +3,7 @@
  * @description Converts `vscode.WorkspaceFolder` to its DTO representation.
  */
 
-import type { IWorkspaceFolderData } from "@codeeditorland/output/vs/platform/workspace/common/workspace.js";
+import type { IWorkspaceFolderData } from "@codeeditorland/output/vs/platform/workspace/common/workspace";
 import type { WorkspaceFolder } from "vscode";
 
 import { ToAPI as UriToAPI } from "./URI.js";

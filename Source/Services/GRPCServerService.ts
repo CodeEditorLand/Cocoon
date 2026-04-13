@@ -686,7 +686,7 @@ export class GRPCServerService
 		// Real VS Code Position and Range classes from @codeeditorland/output.
 		// Compiled from the VS Code source tree - no hand-written shims.
 		const { Position, Range } = await import(
-			"@codeeditorland/output/vs/workbench/api/common/extHostTypes.js"
+			"@codeeditorland/output/vs/workbench/api/common/extHostTypes"
 		);
 		const VsPosition = new Position(PosLine, PosChar);
 
@@ -764,7 +764,7 @@ export class GRPCServerService
 		};
 
 		const { CancellationTokenSource } = await import(
-			"@codeeditorland/output/vs/base/common/cancellation.js"
+			"@codeeditorland/output/vs/base/common/cancellation"
 		);
 		const VsToken = new CancellationTokenSource().token;
 

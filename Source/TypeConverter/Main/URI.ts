@@ -4,7 +4,7 @@
  * This file has been created to resolve an import cycle.
  */
 
-import type { UriComponents } from "@codeeditorland/output/vs/base/common/uri.js";
+import type { UriComponents } from "@codeeditorland/output/vs/base/common/uri";
 import type { Uri as VSCodeURI } from "vscode";
 
 import { URI } from "../../Platform/VSCode/Type.js";
