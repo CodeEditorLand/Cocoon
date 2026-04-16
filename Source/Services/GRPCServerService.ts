@@ -981,43 +981,60 @@ export class GRPCServerService
 				commands: {
 					registerCommand: (Command: string, Callback: Function) => {
 						LanguageProviderRegistry.RegisterCommand(Command, Callback);
+						this.SendToMountain("registerCommand", { commandId: Command }).catch(() => {});
 						return { dispose: () => {} };
 					},
-					executeCommand: async (Command: string, ..._Args: unknown[]) => {
-						console.log(`[vscodeAPI] executeCommand: ${Command}`);
-						return undefined;
+					executeCommand: async (Command: string, ...Args: unknown[]) => {
+						// Try local handler first, then forward to Mountain
+						const LocalResult = LanguageProviderRegistry.ExecuteCommand(Command, ...Args);
+						if (LocalResult !== undefined) return LocalResult;
+						try {
+							return await this.mountainClient?.sendRequest("executeCommand", { commandId: Command, args: Args });
+						} catch { return undefined; }
 					},
 					getCommands: async () => [] as string[],
 				},
 				languages: {
 					registerHoverProvider: (Selector: any, Provider: any) => {
 						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
-						console.log(`[vscodeAPI] registerHoverProvider: handle=${Handle}`);
+						const Lang = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+						this.SendToMountain("register_hover_provider", { handle: Handle, language_selector: Lang, extension_id: "" }).catch(() => {});
 						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
 					},
 					registerCompletionItemProvider: (Selector: any, Provider: any, ...TriggerChars: string[]) => {
 						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
-						console.log(`[vscodeAPI] registerCompletionItemProvider: handle=${Handle}`);
+						const Lang = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+						this.SendToMountain("register_completion_item_provider", { handle: Handle, language_selector: Lang, extension_id: "" }).catch(() => {});
 						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
 					},
 					registerDefinitionProvider: (Selector: any, Provider: any) => {
 						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						const Lang = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+						this.SendToMountain("register_definition_provider", { handle: Handle, language_selector: Lang, extension_id: "" }).catch(() => {});
 						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
 					},
 					registerReferenceProvider: (Selector: any, Provider: any) => {
 						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						const Lang = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+						this.SendToMountain("register_reference_provider", { handle: Handle, language_selector: Lang, extension_id: "" }).catch(() => {});
 						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
 					},
 					registerCodeActionsProvider: (Selector: any, Provider: any) => {
 						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						const Lang = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+						this.SendToMountain("register_code_actions_provider", { handle: Handle, language_selector: Lang, extension_id: "" }).catch(() => {});
 						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
 					},
 					registerDocumentSymbolProvider: (Selector: any, Provider: any) => {
 						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						const Lang = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+						this.SendToMountain("register_document_symbol_provider", { handle: Handle, language_selector: Lang, extension_id: "" }).catch(() => {});
 						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
 					},
 					registerDocumentFormattingEditProvider: (Selector: any, Provider: any) => {
 						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						const Lang = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+						this.SendToMountain("register_document_formatting_provider", { handle: Handle, language_selector: Lang, extension_id: "" }).catch(() => {});
 						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
 					},
 					createDiagnosticCollection: (Name?: string) => ({
@@ -1266,6 +1283,11 @@ export class GRPCServerService
 	/** Track which extensions have already been activated (prevents double-activation) */
 	private readonly activatedExtensions: Set<string> = new Set();
 
+	/** Document content mirror — caches text content keyed by URI string.
+	 * Updated by $acceptModelChanged notifications from Mountain.
+	 * Read by InvokeLanguageProvider's VsDocument.getText() for real-time content. */
+	private readonly documentContentCache: Map<string, string> = new Map();
+
 	/** Reverse gRPC client for sending messages back to Mountain */
 	private mountainClient: import("./MountainClientService.js").MountainClientService | null = null;
 
@@ -1430,6 +1452,13 @@ export class GRPCServerService
 
 		const LoadContent = (): string => {
 			if (CachedContent !== null) return CachedContent;
+			// Prefer document content cache (has unsaved edits from Mountain)
+			const MirrorContent = this.documentContentCache.get(UriString);
+			if (MirrorContent !== undefined) {
+				CachedContent = MirrorContent;
+				return CachedContent;
+			}
+			// Fallback: read from disk
 			try {
 				// eslint-disable-next-line @typescript-eslint/no-require-imports
 				const Fs = require("node:fs");
@@ -1857,12 +1886,89 @@ export class GRPCServerService
 			case "system.shutdown":
 				this.emit("systemShutdown", parameters);
 				break;
+			case "$acceptModelChanged":
+			case "document.didChange":
+				this.HandleDocumentChange(parameters);
+				break;
+			case "$acceptModelOpen":
+			case "document.didOpen":
+				this.HandleDocumentOpen(parameters);
+				break;
+			case "$acceptModelClosed":
+			case "document.didClose":
+				this.HandleDocumentClose(parameters);
+				break;
 			default:
 				// Generic handler for unknown notification types
 				console.log(
 					`[GRPCServerService] Generic notification handler for: ${method}`,
 				);
 		}
+	}
+
+	/**
+	 * Handle document content change from Mountain.
+	 * Updates the document content cache so InvokeLanguageProvider returns fresh text.
+	 */
+	private HandleDocumentChange(Parameters: any): void {
+		const Uri: string =
+			Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
+		const Content: string | undefined =
+			Parameters?.content ?? Parameters?.Content ?? Parameters?.text;
+
+		if (Uri && Content !== undefined) {
+			this.documentContentCache.set(Uri, Content);
+		} else if (Uri && Parameters?.changes) {
+			// Incremental changes — apply edits to cached content
+			const Existing = this.documentContentCache.get(Uri) ?? "";
+			let Updated = Existing;
+			const Changes: any[] = Array.isArray(Parameters.changes) ? Parameters.changes : [];
+			// Apply changes in reverse order (largest offset first) to avoid index shifts
+			const Sorted = [...Changes].sort((A: any, B: any) =>
+				(B.rangeOffset ?? 0) - (A.rangeOffset ?? 0)
+			);
+			for (const Change of Sorted) {
+				const Offset = Change.rangeOffset ?? 0;
+				const Length = Change.rangeLength ?? 0;
+				const Text = Change.text ?? "";
+				Updated = Updated.substring(0, Offset) + Text + Updated.substring(Offset + Length);
+			}
+			this.documentContentCache.set(Uri, Updated);
+		}
+	}
+
+	/**
+	 * Handle document open from Mountain — cache initial content.
+	 */
+	private HandleDocumentOpen(Parameters: any): void {
+		const Uri: string =
+			Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
+		const Content: string | undefined =
+			Parameters?.content ?? Parameters?.Content ?? Parameters?.text;
+
+		if (Uri && Content !== undefined) {
+			this.documentContentCache.set(Uri, Content);
+			console.log(`[GRPCServerService] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`);
+		}
+	}
+
+	/**
+	 * Handle document close from Mountain — remove from cache.
+	 */
+	private HandleDocumentClose(Parameters: any): void {
+		const Uri: string =
+			Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
+		if (Uri) {
+			this.documentContentCache.delete(Uri);
+		}
+	}
+
+	/**
+	 * Get cached document content, or null if not cached.
+	 * Used by InvokeLanguageProvider's VsDocument.getText().
+	 */
+	public GetDocumentContent(Uri: string): string | null {
+		return this.documentContentCache.get(Uri) ?? null;
 	}
 
 	/**
