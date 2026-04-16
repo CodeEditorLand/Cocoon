@@ -8,6 +8,7 @@
 import { Context, Effect, Layer, Ref, Schedule, SubscriptionRef } from "effect";
 
 import { TelemetryTag } from "./Telemetry.js";
+import { MountainClientService as RealMountainClient } from "../Services/MountainClientService.js";
 
 // ============================================================================
 // TYPES
@@ -146,6 +147,9 @@ export const MountainClientLive = Layer.effect(
 			_tag: "Disconnected",
 		});
 
+		// Real gRPC client (from MountainClientService)
+		let realClient: RealMountainClient | undefined;
+
 		// Client config
 		let currentConfig: ClientConfig | undefined;
 
@@ -205,57 +209,28 @@ export const MountainClientLive = Layer.effect(
 					attempt: 1,
 				});
 
-				// Simulate connection with retries (in production, this would create gRPC client)
-				let connected = false;
-				let lastError: unknown;
-
-				for (
-					let attempt = 1;
-					attempt <= (currentConfig.maxRetries ?? 3);
-					attempt++
-				) {
-					try {
-						// Simulate connection delay
-						yield* Effect.sleep(
-							`${currentConfig.retryDelay ?? 1000 / (attempt * 2)} millis`,
-						);
-
-						// Simulate successful connection
-						connected = true;
-						serverVersion = "1.0.0";
-						break;
-					} catch (error) {
-						lastError = error;
-						telemetry.log(
-							"warn",
-							`[MountainClient] Connection attempt ${attempt} failed: ${String(error)}`,
-						);
-
-						if (attempt < (currentConfig.maxRetries ?? 3)) {
-							// Increment attempt number
-							yield* stateRef.set({
-								_tag: "Connecting",
-								attempt: attempt + 1,
-							});
-						}
-					}
-				}
-
-				if (!connected) {
-					yield* stateRef.set({
+				// Connect real gRPC client to Mountain
+				try {
+					realClient = new RealMountainClient();
+					(realClient as any).mountainHost = currentConfig.host;
+					(realClient as any).mountainPort = currentConfig.port;
+					yield* Effect.promise(() => realClient!.connect());
+					serverVersion = "1.0.0";
+				} catch (error) {
+					yield* Ref.set(stateRef, {
 						_tag: "Error",
-						error: String(lastError),
+						error: String(error),
 					});
 
 					telemetry.log(
 						"error",
-						`[MountainClient] Failed to connect to Mountain: ${String(lastError)}`,
+						`[MountainClient] Failed to connect to Mountain: ${String(error)}`,
 					);
 
 					return yield* Effect.fail(
 						new ConnectionError(
 							"Failed to connect to Mountain backend",
-							lastError,
+							error,
 						),
 					);
 				}
@@ -296,8 +271,11 @@ export const MountainClientLive = Layer.effect(
 				"[MountainClient] Disconnecting from Mountain...",
 			);
 
-			// Simulate disconnection (in production, this would close gRPC client)
-			yield* Effect.sleep("25 millis");
+			// Disconnect real gRPC client
+			if (realClient) {
+				yield* Effect.promise(() => realClient!.disconnect());
+				realClient = undefined;
+			}
 
 			// Update state to disconnected
 			yield* Ref.set(stateRef, {
@@ -364,22 +342,23 @@ export const MountainClientLive = Layer.effect(
 					// Update metrics
 					metrics.totalRequests++;
 
-					// Simulate RPC call (in production, this would make actual gRPC call)
+					// Real gRPC call via MountainClientService
 					try {
-						// Simulate processing time
-						yield* Effect.sleep("10 millis");
+						if (!realClient) {
+							return yield* Effect.fail(
+								new RPCError(method, "Not connected to Mountain"),
+							);
+						}
+						const Result = yield* Effect.promise(() =>
+							realClient!.sendRequest(method, params),
+						);
 
 						const processingTime = Date.now() - requestStartTime;
-
-						// Update latency tracking
 						latencies.push(processingTime);
-						if (latencies.length > 100) {
-							latencies.shift();
-						}
+						if (latencies.length > 100) latencies.shift();
 						metrics.averageLatency =
 							latencies.reduce((sum, lat) => sum + lat, 0) /
 							latencies.length;
-
 						metrics.lastRequestTime = Date.now();
 						metrics.successfulRequests++;
 
@@ -388,15 +367,7 @@ export const MountainClientLive = Layer.effect(
 							`[MountainClient] RPC success: ${method} (${processingTime}ms)`,
 						);
 
-						// Return mock response (in production, this would return actual data)
-						return {
-							success: true,
-							data: {
-								method,
-								params,
-								timestamp: Date.now(),
-							},
-						} as T;
+						return Result as T;
 					} catch (error) {
 						metrics.failedRequests++;
 

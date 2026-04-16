@@ -1,11 +1,18 @@
 import type { BuildOptions } from "esbuild";
 
+export * from "./Constant/EnvironmentConstant.js";
+
+export { default as BaseConfig } from "./Config/BaseConfig.js";
+export { default as TargetConfig } from "./Config/TargetConfig.js";
+export { default as CompileConfig } from "./Config/CompileConfig.js";
+
 /**
  * ESBuild configuration for Cocoon that properly handles TypeScript generators
  * with `yield*` syntax in ES modules environment.
  *
- * This configuration ensures that Effect-TS generators work correctly
- * while maintaining full ESM compatibility.
+ * This is the canonical external list for Cocoon's build pipeline.
+ * The actual build uses Config/TargetConfig.ts and Config/CompileConfig.ts
+ * which inherit this external array.
  */
 export const CocoonESBuildConfig: BuildOptions = {
 	entryPoints: ["Source/**/*.ts"],
@@ -16,50 +23,34 @@ export const CocoonESBuildConfig: BuildOptions = {
 	format: "esm",
 	sourcemap: true,
 	external: [
-		// External dependencies that should not be bundled
 		"@playform/build",
 		"vscode",
 		"electron",
 		"@effect/*",
+		"@grpc/grpc-js",
+		"@grpc/proto-loader",
+		"google-protobuf",
+		"protobufjs",
+		"node:*",
 	],
-
-	// Critical: Enable proper handling of TypeScript generators in ES modules
 	jsx: "preserve",
-
-	// Configure loader for TypeScript files
 	loader: {
 		".ts": "ts",
 		".tsx": "tsx",
 	},
-
-	// Enable experimental features for generator support
 	supported: {
-		// Ensure yield* syntax is properly handled
 		"generator-function": true,
 		"async-generator": true,
 	},
-
-	// Define global variables for environment
 	define: {
 		"process.env.NODE_ENV": JSON.stringify(
 			process.env.NODE_ENV || "production",
 		),
 	},
-
-	// Path resolution configuration
 	resolveExtensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
-
-	// Advanced TypeScript configuration
 	tsconfig: "tsconfig.json",
-
-	// Mountain integration configuration - handled via environment variables and MountainClientService
-	// SideCar launch configuration - will be added when Mountain provides sidecar API
-	// Performance optimization - handled via esbuild plugins for tree-shaking and minification
 };
 
-/**
- * Development-specific ESBuild configuration
- */
 export const CocoonESBuildDevConfig: BuildOptions = {
 	...CocoonESBuildConfig,
 	sourcemap: true,
@@ -69,9 +60,6 @@ export const CocoonESBuildDevConfig: BuildOptions = {
 	},
 };
 
-/**
- * Production-specific ESBuild configuration
- */
 export const CocoonESBuildProdConfig: BuildOptions = {
 	...CocoonESBuildConfig,
 	sourcemap: false,

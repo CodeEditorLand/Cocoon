@@ -199,10 +199,13 @@ const stage5_RPCServer = withSpan(
 			"[Cocoon Bootstrap] Stage 5: Starting gRPC server...",
 		);
 
-		// Start gRPC server for Mountain ← Cocoon communication
+		// Start gRPC server for Mountain ← Cocoon communication.
+		// Port from env var (set by Mountain) or default 50052.
+		const CocoonPort = parseInt(process.env["COCOON_GRPC_PORT"] || "50052", 10);
+		console.log(`[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`);
 		yield* rpcServer.start({
 			host: "0.0.0.0",
-			port: 50051,
+			port: CocoonPort,
 		});
 
 		telemetry.log("info", "[Cocoon Bootstrap] gRPC server started");
@@ -335,26 +338,25 @@ const makeBootstrap = (): BootstrapService => ({
 
 			for (const stage of stages) {
 				const stageStartTime = Date.now();
-				let result: StageResult;
-				try {
-					// @ts-expect-error - Effect stages have different requirements that runtime handles correctly
-					const stageResult = yield* Effect.suspend(
-						() => stage,
-					) as any;
-					result = {
-						...stageResult,
-						duration: Date.now() - stageStartTime,
-					};
-				} catch (e) {
-					const error = e instanceof Error ? e : new Error(String(e));
-					result = {
-						stageName: "Unknown",
-						success: false as boolean,
-						duration: Date.now() - stageStartTime,
-						error,
-					} satisfies StageResult;
-				}
-				results.push(result);
+				// Wrap each stage in Effect.catchAllCause to survive fiber failures.
+				// JavaScript try/catch does NOT catch Effect fiber failures.
+				const SafeStage = Effect.suspend(() => stage as any).pipe(
+					Effect.catchAllCause((Cause) => {
+						const Message = String(Cause).slice(0, 300);
+						console.warn(`[Cocoon Bootstrap] Stage failed (continuing): ${Message}`);
+						return Effect.succeed({
+							stageName: "Failed",
+							success: false as boolean,
+							duration: Date.now() - stageStartTime,
+							error: new Error(Message),
+						} satisfies StageResult);
+					}),
+				);
+				const result = yield* SafeStage as any;
+				results.push({
+					...result,
+					duration: Date.now() - stageStartTime,
+				});
 			}
 
 			const endTime = Date.now();

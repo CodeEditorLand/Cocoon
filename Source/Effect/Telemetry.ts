@@ -11,6 +11,7 @@ import {
 	HashMap,
 	Layer,
 	Option,
+	Ref,
 	Stream,
 	SubscriptionRef,
 } from "effect";
@@ -157,7 +158,7 @@ export const TelemetryLive = Layer.effect(
 				};
 
 				const events = yield* eventsRef.get;
-				yield* eventsRef.set([
+				yield* Ref.set(eventsRef, [
 					...events,
 					{
 						type: "metric",
@@ -171,7 +172,7 @@ export const TelemetryLive = Layer.effect(
 					Option.getOrElse(() => []),
 				);
 
-				yield* metricsRef.set(
+				yield* Ref.set(metricsRef,
 					HashMap.set(currentMetrics, name, [...nameMetrics, metric]),
 				);
 			});
@@ -188,7 +189,7 @@ export const TelemetryLive = Layer.effect(
 				};
 
 				const events = yield* eventsRef.get;
-				yield* eventsRef.set([
+				yield* Ref.set(eventsRef, [
 					...events,
 					{ type: "span", timestamp: startTime, data: span },
 				]);
@@ -206,7 +207,7 @@ export const TelemetryLive = Layer.effect(
 							};
 
 							const events = yield* eventsRef.get;
-							yield* eventsRef.set([
+							yield* Ref.set(eventsRef, [
 								...events,
 								{
 									type: "span",
@@ -221,7 +222,7 @@ export const TelemetryLive = Layer.effect(
 								name,
 							).pipe(Option.getOrElse(() => []));
 
-							yield* spansRef.set(
+							yield* Ref.set(spansRef,
 								HashMap.set(currentSpans, name, [
 									...nameSpans,
 									completedSpan,
@@ -246,7 +247,7 @@ export const TelemetryLive = Layer.effect(
 				const timestamp = Date.now();
 
 				const events = yield* eventsRef.get;
-				yield* eventsRef.set([
+				yield* Ref.set(eventsRef, [
 					...events,
 					{ type: "log", timestamp, data: logEntry },
 				]);
@@ -320,16 +321,16 @@ export const TelemetryLive = Layer.effect(
 
 		// Atom: Flush all telemetry data
 		const flush = Effect.gen(function* () {
-			yield* metricsRef.set(HashMap.empty());
-			yield* spansRef.set(HashMap.empty());
-			yield* eventsRef.set([]);
+			yield* Ref.set(metricsRef,HashMap.empty());
+			yield* Ref.set(spansRef,HashMap.empty());
+			yield* Ref.set(eventsRef, []);
 		});
 
 		return {
 			recordMetric,
 			startSpan,
 			log,
-			events: Stream.fromSubscription(eventsRef.changes),
+			events: eventsRef.changes,
 			getMetrics,
 			getAverageDuration,
 			getSuccessRate,

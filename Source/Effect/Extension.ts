@@ -5,7 +5,7 @@
  * Manages extension lifecycle including activation, deactivation, and enumeration.
  */
 
-import { Context, Effect, HashMap, Layer, SubscriptionRef } from "effect";
+import { Context, Effect, HashMap, Layer, Option, Ref, SubscriptionRef } from "effect";
 
 import { TelemetryTag } from "./Telemetry.js";
 
@@ -160,7 +160,7 @@ export const ExtensionLive = Layer.effect(
 		// Atom: Get all extensions
 		const getAll = Effect.gen(function* () {
 			const extensions = yield* extensionsRef.get;
-			return Array.from(extensions.values());
+			return Array.from(HashMap.values(extensions));
 		});
 
 		// Atom: Get extension by ID
@@ -200,7 +200,7 @@ export const ExtensionLive = Layer.effect(
 				}
 
 				// Update state to activating
-				yield* extensionsRef.set(
+				yield* Ref.set(extensionsRef,
 					HashMap.set(extensions, id, {
 						...current,
 						state: { _tag: "Activating", startTime },
@@ -219,7 +219,7 @@ export const ExtensionLive = Layer.effect(
 
 				// Update state to active
 				const updatedExtensions = yield* extensionsRef.get;
-				yield* extensionsRef.set(
+				yield* Ref.set(extensionsRef,
 					HashMap.set(updatedExtensions, id, {
 						...current,
 						state: { _tag: "Active", activatedAt: startTime },
@@ -248,7 +248,7 @@ export const ExtensionLive = Layer.effect(
 
 						// Update state to error
 						const extensions = yield* extensionsRef.get;
-						yield* extensionsRef.set(
+						yield* Ref.set(extensionsRef,
 							HashMap.set(extensions, id, {
 								...HashMap.get(extensions, id).pipe(
 									Option.getOrElse(() => ({
@@ -316,7 +316,7 @@ export const ExtensionLive = Layer.effect(
 				);
 
 				// Update state to deactivating
-				yield* extensionsRef.set(
+				yield* Ref.set(extensionsRef,
 					HashMap.set(extensions, id, {
 						...current,
 						state: { _tag: "Deactivating" },
@@ -328,7 +328,7 @@ export const ExtensionLive = Layer.effect(
 
 				// Update state to deactivated
 				const updatedExtensions = yield* extensionsRef.get;
-				yield* extensionsRef.set(
+				yield* Ref.set(extensionsRef,
 					HashMap.set(updatedExtensions, id, {
 						...current,
 						state: { _tag: "Deactivated" },
@@ -380,14 +380,14 @@ export const ExtensionLive = Layer.effect(
 		// Atom: Get active extensions count
 		const getActiveCount = Effect.gen(function* () {
 			const extensions = yield* extensionsRef.get;
-			const values = Array.from(extensions.values());
+			const values = Array.from(HashMap.values(extensions));
 			return values.filter((ext) => ext.state._tag === "Active").length;
 		});
 
 		// Atom: Get state changes
 		const stateChanges = Effect.map(extensionsRef.get, (extensions) => {
 			const result: Record<string, ExtensionState> = {};
-			for (const [id, host] of extensions) {
+			for (const [id, host] of HashMap.entries(extensions)) {
 				result[id] = host.state;
 			}
 			return result;

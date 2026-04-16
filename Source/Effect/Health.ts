@@ -82,20 +82,17 @@ const makeHealthChecker = (): HealthService => ({
 			const startTime = Date.now();
 
 			switch (serviceName.toLowerCase()) {
-				case "environment":
-					// Environment is always available in Node.js
+				case "environment": {
 					const envTime = Date.now() - startTime;
-					return Effect.succeed(
-						createServiceHealth(
-							"Environment",
-							"healthy",
-							"Environment service available",
-							envTime,
-						),
+					return createServiceHealth(
+						"Environment",
+						"healthy",
+						"Environment service available",
+						envTime,
 					);
+				}
 
-				case "telemetry":
-					// Check telemetry by logging a metric
+				case "telemetry": {
 					const telemetryService = yield* TelemetryTag;
 					const telemetryTime = Date.now() - startTime;
 					return yield* telemetryService
@@ -120,41 +117,34 @@ const makeHealthChecker = (): HealthService => ({
 								),
 							),
 						);
+				}
 
-				case "grpc":
-					// Check gRPC service availability
+				case "grpc": {
 					const grpcTime = Date.now() - startTime;
-					// For now, assume gRPC is available if we can create the service
-					// In production, this would check actual gRPC server status
-					return Effect.succeed(
-						createServiceHealth(
-							"gRPC",
-							"healthy",
-							"gRPC service available",
-							grpcTime,
-						),
+					return createServiceHealth(
+						"gRPC",
+						"healthy",
+						"gRPC service available",
+						grpcTime,
 					);
+				}
 
-				case "extension":
-					// Check extension service
+				case "extension": {
 					const extensionTime = Date.now() - startTime;
-					return Effect.succeed(
-						createServiceHealth(
-							"Extension",
-							"healthy",
-							"Extension service available",
-							extensionTime,
-						),
+					return createServiceHealth(
+						"Extension",
+						"healthy",
+						"Extension service available",
+						extensionTime,
 					);
+				}
 
 				default:
-					return Effect.succeed(
-						createServiceHealth(
-							serviceName,
-							"unknown",
-							`Unknown service: ${serviceName}`,
-							0,
-						),
+					return createServiceHealth(
+						serviceName,
+						"unknown",
+						`Unknown service: ${serviceName}`,
+						0,
 					);
 			}
 		}),

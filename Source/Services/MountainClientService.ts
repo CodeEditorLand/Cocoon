@@ -20,10 +20,19 @@
  * Generated Types: /Element/Cocoon/Source/Generated/Vine.ts
  */
 
+import { createRequire } from "module";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
 import { v4 as uuidv4 } from "uuid";
+
+// ESM compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
 
 import {
 	CancelOperationRequest,
@@ -307,7 +316,7 @@ export class MountainClientService implements IMountainClientService {
 				"grpc.enable_channelz": 0, // Disable channelz for perf
 			};
 
-			this.client = new protoDescriptor.MountainService(
+			this.client = new (protoDescriptor.Vine?.MountainService || protoDescriptor.MountainService)(
 				target,
 				grpc.credentials.createInsecure(),
 				channelOptions,
@@ -362,13 +371,21 @@ export class MountainClientService implements IMountainClientService {
 			const fs = require("fs");
 			const path = require("path");
 
-			// Use the correct path to Mountain's Proto directory
-			const vineProtoPath = path.resolve(
-				__dirname,
-				"../../../../Mountain/Proto/Vine.proto",
-			);
+			// Search multiple paths for Mountain's Proto directory
+			const SearchPaths = [
+				path.resolve(__dirname, "../../../../Mountain/Proto/Vine.proto"),
+				path.resolve(__dirname, "../../../../../Mountain/Proto/Vine.proto"),
+				path.resolve(__dirname, "../../../../../../Element/Mountain/Proto/Vine.proto"),
+				path.resolve(process.cwd(), "Element/Mountain/Proto/Vine.proto"),
+				path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto"),
+				path.resolve(process.cwd(), "../Element/Mountain/Proto/Vine.proto"),
+			];
+			let vineProtoPath: string | null = null;
+			for (const P of SearchPaths) {
+				if (fs.existsSync(P)) { vineProtoPath = P; break; }
+			}
 
-			if (fs.existsSync(vineProtoPath)) {
+			if (vineProtoPath) {
 				console.log(
 					`[MountainClientService] Found Vine.proto at: ${vineProtoPath}`,
 				);
@@ -394,7 +411,7 @@ export class MountainClientService implements IMountainClientService {
 				// Fallback to inline protocol definition exactly matching the actual Vine.proto
 				const fallbackProtoContent = `syntax = "proto3";
 
-package vine_ipc;
+package Vine;
 
 service MountainService {
     rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
@@ -484,12 +501,13 @@ message RPCDataPayload {
 
 			// Use gRPC's built-in channel state monitoring
 			const startTime = Date.now();
-			const timeout = 10000; // 10 second connection timeout
+			const timeout = 3000; // 3 second connection timeout (fast fail for bootstrap)
 
 			const checkConnection = () => {
 				const channel = (this.client as any).getChannel();
 				if (channel) {
-					const state = channel.getConnectivityState(false);
+					// Pass true to trigger connection attempt (false just returns IDLE without connecting)
+					const state = channel.getConnectivityState(true);
 
 					if (state === grpc.connectivityState.READY) {
 						console.log(
@@ -761,8 +779,18 @@ message RPCDataPayload {
 
 		for (let attempt = 0; attempt < this.maxRetries; attempt++) {
 			try {
-				const response =
-					await this.client.ProcessCocoonRequest(request);
+				// @grpc/grpc-js proto-loaded clients use callback style, not promises
+				const response = await new Promise<GenericResponse>(
+					(resolve, reject) => {
+						this.client!.ProcessCocoonRequest(
+							request,
+							(error: any, response: any) => {
+								if (error) reject(error);
+								else resolve(response);
+							},
+						);
+					},
+				);
 				return response;
 			} catch (error) {
 				lastError = error as Error;
@@ -948,8 +976,17 @@ message RPCDataPayload {
 		this.lastHealthCheck = Date.now();
 
 		try {
-			// Send a simple health check request
-			await this.sendRequest("health.check", {});
+			// Check gRPC channel connectivity state instead of sending an RPC
+			// (Mountain doesn't implement a health.check handler)
+			const channel = (this.client as any)?.getChannel?.();
+			if (channel) {
+				const state = channel.getConnectivityState(false);
+				if (state !== 2 /* READY */) {
+					throw new Error(
+						`Channel not ready (state: ${state})`,
+					);
+				}
+			}
 			this.consecutiveSuccessfulHealthChecks++;
 
 			console.log(
@@ -1037,7 +1074,16 @@ message RPCDataPayload {
 		}
 
 		try {
-			await this.client.SendCocoonNotification(notification);
+			// @grpc/grpc-js proto-loaded clients use callback style, not promises
+			await new Promise<void>((resolve, reject) => {
+				this.client!.SendCocoonNotification(
+					notification,
+					(error: any) => {
+						if (error) reject(error);
+						else resolve();
+					},
+				);
+			});
 		} catch (error) {
 			throw error;
 		}
@@ -1092,7 +1138,16 @@ message RPCDataPayload {
 		}
 
 		try {
-			await this.client.CancelOperation(cancelRequest);
+			// @grpc/grpc-js proto-loaded clients use callback style, not promises
+			await new Promise<void>((resolve, reject) => {
+				this.client!.CancelOperation(
+					cancelRequest,
+					(error: any) => {
+						if (error) reject(error);
+						else resolve();
+					},
+				);
+			});
 		} catch (error) {
 			throw error;
 		}

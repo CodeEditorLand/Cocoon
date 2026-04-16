@@ -42,7 +42,8 @@
  * - **TBD**: Process priority management for extension isolation
  */
 
-import * as Module from "node:module";
+import ModuleNS from "node:module";
+const Module = ModuleNS as any;
 
 import { Config, Data, Effect } from "effect";
 

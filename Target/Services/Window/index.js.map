@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/Services/Window/index.ts"],
+  "sourcesContent": ["/**\n * @module Services/Window\n * @description\n * Barrel export for Window service atomic modules.\n * Following Wind Effect-TS atomic module pattern.\n */\n\n// Error types\nexport * as WindowErrors from \"./Errors.js\";\n\n// Type definitions\nexport * as WindowTypes from \"./Types.js\";\n\n// State management\nexport * from \"./State.js\";\n\n// Dialog operations\nexport * from \"./Dialog.js\";\n\n// Service interfaces and layers will be added as modules are completed\n// QuickInput operations - Future: implement Source/Services/Window/QuickInput.ts\n// FileDialog operations - Future: implement Source/Services/Window/FileDialog.ts\n// StatusBar operations - Future: implement Source/Services/Window/StatusBar.ts\n// OutputChannel operations - Future: integrated in main Window service\n// WebviewPanel operations - Future: implement in WebviewPanel module\n// Progress operations - Future: implement Source/Services/Window/Progress.ts\n// TextDocument operations - Future: integrate with DocumentService\n"],
+  "mappings": "AAQA,YAAY,kBAAkB;AAG9B,YAAY,iBAAiB;AAG7B,cAAc;AAGd,cAAc;",
+  "names": []
+}

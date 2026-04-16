@@ -8,6 +8,7 @@
 import { Context, Effect, Layer, Ref, Schedule, SubscriptionRef } from "effect";
 
 import { TelemetryTag } from "./Telemetry.js";
+import { GRPCServerService } from "../Services/GRPCServerService.js";
 
 // ============================================================================
 // TYPES
@@ -143,6 +144,9 @@ export const RPCServerLive = Layer.effect(
 			_tag: "Idle",
 		});
 
+		// Real gRPC server instance (from GRPCServerService)
+		let grpcServer: GRPCServerService | undefined;
+
 		// Server config
 		let currentConfig: ServerConfig | undefined;
 
@@ -200,15 +204,19 @@ export const RPCServerLive = Layer.effect(
 					startTime: startTimeMs,
 				});
 
+				console.log(`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`);
 				telemetry.log(
 					"info",
-					`[RPCServer] Starting server on ${currentConfig.host}:${currentConfig.port}...`,
+					`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
 				);
 
-				// Simulate server startup (in production, this would create gRPC server)
-				yield* Effect.sleep("50 millis");
-
 				try {
+					// Create and start the real gRPC server
+					grpcServer = new GRPCServerService();
+					// Set port from config (GRPCServerService defaults to 50052)
+					(grpcServer as any).port = currentConfig.port;
+					yield* Effect.promise(() => grpcServer!.start());
+
 					// Initialize metrics
 					startTime = Date.now();
 					metrics = {
@@ -229,7 +237,7 @@ export const RPCServerLive = Layer.effect(
 
 					telemetry.log(
 						"info",
-						`[RPCServer] Server started successfully on ${currentConfig.host}:${currentConfig.port}`,
+						`[RPCServer] gRPC server started on ${currentConfig.host}:${currentConfig.port}`,
 					);
 				} catch (error) {
 					yield* Ref.set(stateRef, {
@@ -239,7 +247,7 @@ export const RPCServerLive = Layer.effect(
 
 					telemetry.log(
 						"error",
-						`[RPCServer] Failed to start server: ${String(error)}`,
+						`[RPCServer] Failed to start gRPC server: ${String(error)}`,
 					);
 
 					return yield* Effect.fail(
@@ -266,10 +274,13 @@ export const RPCServerLive = Layer.effect(
 				_tag: "Stopping",
 			});
 
-			telemetry.log("info", "[RPCServer] Stopping server...");
+			telemetry.log("info", "[RPCServer] Stopping gRPC server...");
 
-			// Simulate server shutdown (in production, this would gracefully shutdown gRPC server)
-			yield* Effect.sleep("25 millis");
+			// Stop the real gRPC server
+			if (grpcServer) {
+				yield* Effect.promise(() => grpcServer!.stop());
+				grpcServer = undefined;
+			}
 
 			// Update state to stopped
 			yield* Ref.set(stateRef, {

@@ -94,7 +94,7 @@ high-fidelity `vscode` API, see the following source files:
   Module Interceptor, RPC Server, Extensions, Health Check).
 - **[`ServiceMapping.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/ServiceMapping.ts)** -
   Dependency injection and service composition.
-- **[`Services/APIFactory.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/APIFactory.ts)** -
+- **[`Services/APIFactory.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/APIFactoryService.ts)** -
   Constructs the `vscode` API object for extensions.
 - **[`Services/ExtensionHostService.ts`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/ExtensionHostService.ts)** -
   Extension activation and lifecycle management.
@@ -140,7 +140,7 @@ and communicating with `Mountain`.
       composing all `Effect-TS` services.
 3. `ExtHostExtensionService` activates an extension. The extension receives a
    `vscode` API object constructed by
-   [`APIFactory`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/APIFactory.ts).
+   [`APIFactory`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/APIFactoryService.ts).
 4. The extension calls `vscode.window.showInformationMessage("Hello")`.
 5. The call is routed to the
    [`Window`](https://github.com/CodeEditorLand/Cocoon/tree/Current/Source/Services/Window.ts)

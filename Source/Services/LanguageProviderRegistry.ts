@@ -49,6 +49,42 @@ export function Get(Handle: number): ProviderObject | undefined {
 }
 
 /**
+ * Auto-incrementing handle counter for extensions that register providers
+ * through the vscode API shim (where the handle is assigned by Cocoon).
+ */
+let NextHandle = 10000;
+
+/**
+ * Register a provider and auto-assign a handle.
+ * Returns the assigned handle so the caller can wire dispose().
+ */
+export function RegisterAutoHandle(Provider: ProviderObject): number {
+	const Handle = NextHandle++;
+	Callbacks.set(Handle, Provider);
+	return Handle;
+}
+
+/** Command registry — maps command IDs to callbacks. */
+const Commands = new Map<string, Function>();
+
+/**
+ * Register a command callback.
+ * Called by the vscode API shim when extensions call commands.registerCommand().
+ */
+export function RegisterCommand(CommandId: string, Callback: Function): void {
+	Commands.set(CommandId, Callback);
+}
+
+/**
+ * Execute a registered command by ID.
+ */
+export function ExecuteCommand(CommandId: string, ...Args: unknown[]): unknown {
+	const Handler = Commands.get(CommandId);
+	if (Handler) return Handler(...Args);
+	return undefined;
+}
+
+/**
  * Return all currently registered handles and their provider types.
  * Useful for diagnostics.
  */

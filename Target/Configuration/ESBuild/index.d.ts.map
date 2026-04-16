@@ -1,0 +1,1 @@
+{"version":3,"file":"index.d.ts","sourceRoot":"","sources":["../../../Source/Configuration/ESBuild/index.ts"],"names":[],"mappings":"AAAA,cAAc,mCAAmC,CAAC;AAClD,OAAO,EAAE,GAAG,EAAE,KAAK,EAAE,MAAM,WAAW,CAAC;AAEvC,OAAO,EAAE,OAAO,IAAI,UAAU,EAAE,MAAM,wBAAwB,CAAC;AAC/D,OAAO,EAAE,OAAO,IAAI,YAAY,EAAE,MAAM,0BAA0B,CAAC;AACnE,OAAO,EAAE,OAAO,IAAI,aAAa,EAAE,MAAM,2BAA2B,CAAC"}

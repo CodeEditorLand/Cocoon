@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Source/TypeConverter/Dialog/OpenDialogOption.ts"],
+  "sourcesContent": ["/**\n * @module OpenDialogOption\n * @description Converts `vscode.OpenDialogOptions` to its DTO representation.\n */\n\nimport type { OpenDialogOptions } from \"vscode\";\n\nimport { SerializeFilters } from \"./Filter.js\";\n\n/**\n * @description Converts `vscode.OpenDialogOptions` to a plain DTO for IPC.\n * @param Options The `OpenDialogOptions` to convert.\n * @returns The serializable DTO.\n */\nexport const ToDTO = (Options?: OpenDialogOptions) => {\n\tif (!Options) {\n\t\treturn undefined;\n\t}\n\treturn {\n\t\t...Options,\n\t\tdefaultUri: Options.defaultUri?.toJSON(),\n\t\tfilters: SerializeFilters(Options.filters),\n\t};\n};\n"],
+  "mappings": ";;AAOA,SAAS,wBAAwB;AAO1B,MAAM,QAAQ,wBAAC,YAAgC;AACrD,MAAI,CAAC,SAAS;AACb,WAAO;AAAA,EACR;AACA,SAAO;AAAA,IACN,GAAG;AAAA,IACH,YAAY,QAAQ,YAAY,OAAO;AAAA,IACvC,SAAS,iBAAiB,QAAQ,OAAO;AAAA,EAC1C;AACD,GATqB;",
+  "names": []
+}

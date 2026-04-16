@@ -6,13 +6,21 @@
 
 		"baseUrl": "./",
 
+		"composite": true,
+
 		"declarationMap": true,
+
+		"downlevelIteration": true,
 
 		"emitDeclarationOnly": true,
 
 		"emitDecoratorMetadata": true,
 
+		"exactOptionalPropertyTypes": true,
+
 		"experimentalDecorators": true,
+
+		"ignoreDeprecations": "6.0",
 
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
 
@@ -20,23 +28,19 @@
 
 		"moduleResolution": "Bundler",
 
-		"strict": true,
+		"noFallthroughCasesInSwitch": true,
 
 		"noImplicitAny": true,
 
-		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
 
-		"exactOptionalPropertyTypes": true,
+		"noImplicitReturns": true,
+
+		"noUncheckedIndexedAccess": true,
 
 		"noUnusedLocals": true,
 
 		"noUnusedParameters": true,
-
-		"noImplicitReturns": true,
-
-		"noFallthroughCasesInSwitch": true,
-
-		"noImplicitOverride": true,
 
 		"outDir": "Target",
 
@@ -82,9 +86,9 @@
 
 		"rootDir": "./Source",
 
-		"target": "ESNext",
+		"strict": true,
 
-		"downlevelIteration": true
+		"target": "ESNext"
 	},
 
 	"exclude": ["Target", "Scripts/**/*.cjs", "**/*.cjs", "Archive"],

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../Source/Interfaces/IFileSystemService.ts"],
+  "sourcesContent": ["export { IFileSystemService } from \"../Services/FileSystemService.js\";\n"],
+  "mappings": "AAAA,SAAS,0BAA0B;",
+  "names": []
+}

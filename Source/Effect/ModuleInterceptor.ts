@@ -12,6 +12,7 @@ import {
 	HashMap,
 	Layer,
 	Option,
+	Ref,
 	SubscriptionRef,
 } from "effect";
 
@@ -100,9 +101,19 @@ export interface ModuleInterceptorService {
 	readonly initialize: Effect.Effect<void, never>;
 
 	/**
-	 * Install module interceptor into Node.js module system
+	 * Install module interceptor into Node.js module system.
+	 * Patches Module._load to intercept require('vscode').
 	 */
 	readonly install: Effect.Effect<void, never>;
+
+	/**
+	 * Register a vscode API instance for an extension.
+	 * When the extension calls require('vscode'), this API is returned.
+	 */
+	readonly registerVscodeAPI: (
+		extensionId: string,
+		api: unknown,
+	) => Effect.Effect<void, never>;
 
 	/**
 	 * Intercept module require calls
@@ -238,17 +249,69 @@ export const ModuleInterceptorLive = Layer.effect(
 			);
 		});
 
-		// Atom: Install
+		// vscode API registry: extensionId → vscode API instance
+		const vscodeAPIRegistry = new Map<string, unknown>();
+
+		// Atom: Install — patches Node.js Module._load to intercept require('vscode')
 		const install = Effect.gen(function* () {
 			telemetry.log(
 				"info",
-				"[ModuleInterceptor] Installing module interceptor...",
+				"[ModuleInterceptor] Installing Node.js Module._load hook...",
 			);
-			// In production, this would patch Node.js require
-			yield* Effect.sleep("10 millis");
+
+			const NodeModule = (yield* Effect.try(() => {
+				// eslint-disable-next-line @typescript-eslint/no-require-imports
+				return require("module") as typeof import("module");
+			})) as any;
+
+			const OriginalLoad = NodeModule._load;
+
+			NodeModule._load = function PatchedLoad(
+				Request: string,
+				Parent: any,
+				IsMain: boolean,
+			) {
+				// Intercept require('vscode') — return the API shim
+				if (Request === "vscode") {
+					// Determine which extension is loading by checking parent filename
+					const ParentFilename: string =
+						Parent?.filename ?? Parent?.id ?? "";
+
+					// Look up registered API for this extension, or use default
+					for (const [ExtensionId, API] of vscodeAPIRegistry) {
+						if (ParentFilename.includes(ExtensionId)) {
+							return API;
+						}
+					}
+
+					// Fallback: return the last registered API (single-extension mode)
+					if (vscodeAPIRegistry.size > 0) {
+						const LastAPI = [...vscodeAPIRegistry.values()].pop();
+						return LastAPI;
+					}
+
+					// Bridge fallback: GRPCServerService sets globalThis.__cocoonVscodeAPI
+					// before activating extensions. Bridges imperative activation
+					// with the Effect-TS module interception layer.
+					const GlobalAPI = (globalThis as any).__cocoonVscodeAPI;
+					if (GlobalAPI) {
+						return GlobalAPI;
+					}
+
+					// No API registered yet — return empty namespace
+					console.warn(
+						`[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`,
+					);
+					return {};
+				}
+
+				// All other modules: pass through to Node.js
+				return OriginalLoad.apply(this, [Request, Parent, IsMain]);
+			};
+
 			telemetry.log(
 				"info",
-				"[ModuleInterceptor] Module interceptor installed successfully",
+				"[ModuleInterceptor] Module._load hook installed — require('vscode') intercepted",
 			);
 		});
 
@@ -259,7 +322,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Update statistics
 				const currentStats = yield* statsRef.get;
-				yield* statsRef.set({
+				yield* Ref.set(statsRef,{
 					...currentStats,
 					totalInterceptions: currentStats.totalInterceptions + 1,
 				});
@@ -295,7 +358,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 					// Update statistics
 					const statsAfter = yield* statsRef.get;
-					yield* statsRef.set({
+					yield* Ref.set(statsRef,{
 						...statsAfter,
 						blockedModules: statsAfter.blockedModules + 1,
 						securityViolations: statsAfter.securityViolations + 1,
@@ -321,7 +384,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 					// Update statistics
 					const statsAfter = yield* statsRef.get;
-					yield* statsRef.set({
+					yield* Ref.set(statsRef,{
 						...statsAfter,
 						blockedModules: statsAfter.blockedModules + 1,
 						securityViolations: statsAfter.securityViolations + 1,
@@ -350,7 +413,7 @@ export const ModuleInterceptorLive = Layer.effect(
 					const avgTime =
 						allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
 					const statsAfter = yield* statsRef.get;
-					yield* statsRef.set({
+					yield* Ref.set(statsRef,{
 						...statsAfter,
 						averageResolutionTime: avgTime,
 					});
@@ -380,7 +443,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Cache the module
 				const currentCache = yield* moduleCacheRef.get;
-				yield* moduleCacheRef.set(
+				yield* Ref.set(moduleCacheRef,
 					HashMap.set(currentCache, cacheKey, module),
 				);
 
@@ -392,7 +455,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				const avgTime =
 					allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
 				const statsAfter = yield* statsRef.get;
-				yield* statsRef.set({
+				yield* Ref.set(statsRef,{
 					...statsAfter,
 					averageResolutionTime: avgTime,
 				});
@@ -426,7 +489,7 @@ export const ModuleInterceptorLive = Layer.effect(
 		const setSecurityPolicy = (policy: SecurityPolicy) =>
 			Effect.gen(function* () {
 				const currentPolicies = yield* policiesRef.get;
-				yield* policiesRef.set(
+				yield* Ref.set(policiesRef,
 					HashMap.set(currentPolicies, policy.extensionId, policy),
 				);
 
@@ -483,9 +546,20 @@ export const ModuleInterceptorLive = Layer.effect(
 			return yield* statsRef.get;
 		});
 
+		// Atom: Register vscode API for an extension
+		const registerVscodeAPI = (extensionId: string, api: unknown) =>
+			Effect.gen(function* () {
+				vscodeAPIRegistry.set(extensionId, api);
+				telemetry.log(
+					"info",
+					`[ModuleInterceptor] Registered vscode API for extension: ${extensionId}`,
+				);
+			});
+
 		return {
 			initialize,
 			install,
+			registerVscodeAPI,
 			interceptRequire,
 			resolveModule,
 			setSecurityPolicy,
@@ -508,6 +582,11 @@ export const makeMockModuleInterceptor = (): ModuleInterceptorService => ({
 	install: Effect.gen(function* () {
 		yield* Effect.sleep("1 millis");
 	}),
+
+	registerVscodeAPI: (_extensionId, _api) =>
+		Effect.gen(function* () {
+			yield* Effect.sleep("1 millis");
+		}),
 
 	interceptRequire: (request) =>
 		Effect.gen(function* () {

@@ -20,10 +20,18 @@
  */
 
 import { EventEmitter } from "events";
+import { createRequire } from "module";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
+
+// ESM compatibility — provide __dirname and require() for proto loading
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
 
 // Import generated interfaces from Vine.proto
 import {
@@ -135,31 +143,56 @@ export class GRPCServerService
 	 */
 	private createServiceImplementation(): CocoonServiceImplementation {
 		return {
-			ProcessMountainRequest: async (
-				request: GenericRequest,
-			): Promise<GenericResponse> => {
+			ProcessMountainRequest: (
+				Call: grpc.ServerUnaryCall<GenericRequest, GenericResponse>,
+				Callback: grpc.sendUnaryData<GenericResponse>,
+			) => {
 				if (!this.ValidateAuthentication()) {
-					throw new Error("Authentication failed");
+					Callback({
+						code: grpc.status.UNAUTHENTICATED,
+						details: "Authentication failed",
+					});
+					return;
 				}
-				return await this.handleMountainRequest(request);
+				this.handleMountainRequest(Call.request)
+					.then((Response) => Callback(null, Response))
+					.catch((Error) =>
+						Callback({
+							code: grpc.status.INTERNAL,
+							details:
+								Error instanceof globalThis.Error
+									? Error.message
+									: "Unknown error",
+						}),
+					);
 			},
-			SendMountainNotification: async (
-				request: GenericNotification,
-			): Promise<Empty> => {
+			SendMountainNotification: (
+				Call: grpc.ServerUnaryCall<GenericNotification, Empty>,
+				Callback: grpc.sendUnaryData<Empty>,
+			) => {
 				if (!this.ValidateAuthentication()) {
-					throw new Error("Authentication failed");
+					Callback({
+						code: grpc.status.UNAUTHENTICATED,
+						details: "Authentication failed",
+					});
+					return;
 				}
-				this.handleMountainNotification(request);
-				return {};
+				this.handleMountainNotification(Call.request);
+				Callback(null, {});
 			},
-			CancelOperation: async (
-				request: CancelOperationRequest,
-			): Promise<Empty> => {
+			CancelOperation: (
+				Call: grpc.ServerUnaryCall<CancelOperationRequest, Empty>,
+				Callback: grpc.sendUnaryData<Empty>,
+			) => {
 				if (!this.ValidateAuthentication()) {
-					throw new Error("Authentication failed");
+					Callback({
+						code: grpc.status.UNAUTHENTICATED,
+						details: "Authentication failed",
+					});
+					return;
 				}
-				this.handleCancelOperation(request);
-				return {};
+				this.handleCancelOperation(Call.request);
+				Callback(null, {});
 			},
 		};
 	}
@@ -377,11 +410,15 @@ export class GRPCServerService
 	 *   - "service.method" (e.g., "extension.activate")
 	 *   - "$provideFeature" (e.g., "$provideHover", "$provideCompletions")
 	 *     Mountain invokes these when Sky requests language intelligence.
+	 *   - "InitializeExtensionHost" — Mountain's extension host init handshake
+	 *   - "$deltaExtensions", "$activateByEvent", "$startExtensionHost"
+	 *     Mountain's extension host lifecycle methods
 	 */
 	private IsValidMethod(method: string): boolean {
 		const DotMethod = /^[a-zA-Z]+\.[a-zA-Z]+$/.test(method);
 		const ProvideMethod = /^\$provide[A-Z][a-zA-Z]+$/.test(method);
-		return DotMethod || ProvideMethod;
+		const ExtensionHostMethod = /^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost)$/.test(method);
+		return DotMethod || ProvideMethod || ExtensionHostMethod;
 	}
 
 	/**
@@ -608,6 +645,20 @@ export class GRPCServerService
 			}
 		}
 
+		// Extension host lifecycle methods from Mountain
+		if (method === "InitializeExtensionHost") {
+			return this.HandleInitializeExtensionHost(parameters);
+		}
+		if (method === "$deltaExtensions") {
+			return this.HandleDeltaExtensions(parameters);
+		}
+		if (method === "$activateByEvent") {
+			return this.HandleActivateByEvent(parameters);
+		}
+		if (method === "$startExtensionHost") {
+			return this.HandleStartExtensionHost(parameters);
+		}
+
 		// Language feature provider invocation: "$provideHover", "$provideCompletions", etc.
 		// Mountain calls these when Sky's Monaco editor requests language intelligence.
 		// parameters = [handle, uriObject, position?, context?]
@@ -616,6 +667,659 @@ export class GRPCServerService
 		}
 
 		throw new Error(`Unknown method: ${method}`);
+	}
+
+	// ==================================================================
+	// Extension Host Lifecycle Handlers
+	// ==================================================================
+
+	/**
+	 * Handle InitializeExtensionHost from Mountain.
+	 * Receives the full IExtensionHostInitData payload (extensions list,
+	 * workspace, environment, telemetry, paths). Stores init data and
+	 * returns "initialized" so Mountain unblocks.
+	 */
+	private async HandleInitializeExtensionHost(
+		parameters: any,
+	): Promise<string> {
+		const Extensions: any[] = parameters?.extensions ?? [];
+
+		console.log(
+			`[GRPCServerService] InitializeExtensionHost received ${Extensions.length} extensions`,
+		);
+
+		// Store init data for later use by extension activation
+		this.extensionHostInitData = parameters;
+
+		// Build extension registry and activation event index
+		this.extensionRegistry.clear();
+		this.activationEventIndex.clear();
+
+		for (const Extension of Extensions) {
+			const Identifier =
+				Extension?.identifier?.value ??
+				Extension?.identifier?.id ??
+				Extension?.identifier ??
+				"unknown";
+
+			this.extensionRegistry.set(Identifier, Extension);
+
+			const ActivationEvents: string[] =
+				Extension?.activationEvents ?? [];
+
+			for (const Event of ActivationEvents) {
+				const Existing = this.activationEventIndex.get(Event) ?? [];
+				Existing.push(Identifier);
+				this.activationEventIndex.set(Event, Existing);
+			}
+		}
+
+		this.extensionHostReady = true;
+
+		console.log(
+			`[GRPCServerService] Extension registry: ${this.extensionRegistry.size} extensions, ${this.activationEventIndex.size} activation events`,
+		);
+
+		// Emit event so other Cocoon services can react
+		this.emit("extensionHostInitialized", {
+			extensionCount: this.extensionRegistry.size,
+			autoStart: parameters?.autoStart ?? false,
+		});
+
+		// Mountain's gRPC is now confirmed running (it just called us).
+		// Reconnect MountainClientService in the background so Cocoon can
+		// send notifications back (provider registrations, extension host
+		// messages, etc.). Fire-and-forget — don't block the response.
+		this.ConnectToMountain().catch((Error) => {
+			console.warn(
+				"[GRPCServerService] Background Mountain reconnect failed:",
+				Error instanceof globalThis.Error ? Error.message : String(Error),
+			);
+		});
+
+		return "initialized";
+	}
+
+	/**
+	 * Handle $deltaExtensions from Mountain.
+	 * Receives extension list diffs (added/removed) after initial load.
+	 */
+	private async HandleDeltaExtensions(parameters: any): Promise<any> {
+		const Added: any[] = parameters?.toAdd ?? [];
+		const Removed: any[] = parameters?.toRemove ?? [];
+
+		console.log(
+			`[GRPCServerService] $deltaExtensions: +${Added.length} -${Removed.length}`,
+		);
+
+		// Add new extensions to registry
+		for (const Extension of Added) {
+			const Identifier =
+				Extension?.identifier?.value ??
+				Extension?.identifier?.id ??
+				Extension?.identifier ??
+				"unknown";
+
+			this.extensionRegistry.set(Identifier, Extension);
+
+			const ActivationEvents: string[] =
+				Extension?.activationEvents ?? [];
+
+			for (const Event of ActivationEvents) {
+				const Existing = this.activationEventIndex.get(Event) ?? [];
+
+				if (!Existing.includes(Identifier)) {
+					Existing.push(Identifier);
+					this.activationEventIndex.set(Event, Existing);
+				}
+			}
+		}
+
+		// Remove extensions from registry
+		for (const Extension of Removed) {
+			const Identifier =
+				Extension?.identifier?.value ??
+				Extension?.identifier?.id ??
+				Extension?.identifier ??
+				"unknown";
+
+			this.extensionRegistry.delete(Identifier);
+		}
+
+		this.emit("deltaExtensions", { added: Added.length, removed: Removed.length });
+
+		return {
+			success: true,
+			registrySize: this.extensionRegistry.size,
+		};
+	}
+
+	/**
+	 * Handle $activateByEvent from Mountain.
+	 * Activates all extensions that declare the given activation event.
+	 */
+	private async HandleActivateByEvent(parameters: any): Promise<any> {
+		// Ensure the vscode API shim is available before any extension loads
+		await this.EnsureVscodeAPIRegistered();
+
+		const ActivationEvent =
+			typeof parameters === "string"
+				? parameters
+				: parameters?.activationEvent ?? parameters?.event ?? "*";
+
+		// For "*" we activate all extensions that have any activation event.
+		// For a specific event we activate matching ones AND "*" ones.
+		let MatchingExtensions: string[];
+		if (ActivationEvent === "*") {
+			// Collect all extensions across every event bucket (deduplicated)
+			const All = new Set<string>();
+			for (const Ids of this.activationEventIndex.values()) {
+				for (const Id of Ids) All.add(Id);
+			}
+			MatchingExtensions = [...All];
+		} else {
+			const Specific = this.activationEventIndex.get(ActivationEvent) ?? [];
+			const Star = this.activationEventIndex.get("*") ?? [];
+			MatchingExtensions = [...new Set([...Specific, ...Star])];
+		}
+
+		console.log(
+			`[GRPCServerService] $activateByEvent: ${ActivationEvent} → ${MatchingExtensions.length} extensions`,
+		);
+		if (MatchingExtensions.length > 0) {
+			console.log(
+				`[GRPCServerService] Activating: ${MatchingExtensions.slice(0, 5).join(", ")}${MatchingExtensions.length > 5 ? ` (+${MatchingExtensions.length - 5} more)` : ""}`,
+			);
+		} else {
+			console.log(
+				`[GRPCServerService] Available events: ${[...this.activationEventIndex.keys()].slice(0, 10).join(", ")}${this.activationEventIndex.size > 10 ? ` (+${this.activationEventIndex.size - 10} more)` : ""}`,
+			);
+		}
+
+		// Fire-and-forget — activate each matching extension asynchronously.
+		// We cap concurrent activations to avoid flooding the event loop.
+		const ToActivate = MatchingExtensions.filter(Id => !this.activatedExtensions.has(Id));
+		console.log(`[GRPCServerService] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`);
+
+		for (const ExtId of ToActivate) {
+			this.ActivateExtension(ExtId, ActivationEvent).catch((Err: unknown) => {
+				const Msg = Err instanceof Error ? Err.message : String(Err);
+				console.warn(`[GRPCServerService] Activation failed for ${ExtId}: ${Msg}`);
+			});
+		}
+
+		// Keep legacy event for any listeners
+		this.emit("activateByEvent", {
+			event: ActivationEvent,
+			extensions: MatchingExtensions,
+		});
+
+		return {
+			success: true,
+			activated: ToActivate.length,
+		};
+	}
+
+	/**
+	 * Create a vscode API shim and register it on globalThis so the Module._load
+	 * hook can return it when extensions call require('vscode').
+	 * Uses real VS Code type constructors from @codeeditorland/output.
+	 */
+	private async EnsureVscodeAPIRegistered(): Promise<void> {
+		if ((globalThis as any).__cocoonVscodeAPI) return;
+
+		try {
+			const VsCodeTypes = await import(
+				"@codeeditorland/output/vs/workbench/api/common/extHostTypes"
+			);
+			const { URI } = await import(
+				"@codeeditorland/output/vs/base/common/uri"
+			);
+			const { CancellationTokenSource } = await import(
+				"@codeeditorland/output/vs/base/common/cancellation"
+			);
+			const { Emitter } = await import(
+				"@codeeditorland/output/vs/base/common/event"
+			);
+
+			const API = {
+				version: "1.88.0",
+				// Type constructors
+				Position: VsCodeTypes.Position,
+				Range: VsCodeTypes.Range,
+				Location: VsCodeTypes.Location,
+				Selection: VsCodeTypes.Selection,
+				MarkdownString: VsCodeTypes.MarkdownString,
+				Hover: VsCodeTypes.Hover,
+				CompletionItem: VsCodeTypes.CompletionItem,
+				CompletionItemKind: VsCodeTypes.CompletionItemKind,
+				CompletionList: VsCodeTypes.CompletionList,
+				CompletionTriggerKind: VsCodeTypes.CompletionTriggerKind,
+				Diagnostic: VsCodeTypes.Diagnostic,
+				DiagnosticSeverity: VsCodeTypes.DiagnosticSeverity,
+				TextEdit: VsCodeTypes.TextEdit,
+				WorkspaceEdit: VsCodeTypes.WorkspaceEdit,
+				SnippetString: VsCodeTypes.SnippetString,
+				SymbolKind: VsCodeTypes.SymbolKind,
+				SymbolInformation: VsCodeTypes.SymbolInformation,
+				DocumentSymbol: VsCodeTypes.DocumentSymbol,
+				CodeActionKind: VsCodeTypes.CodeActionKind,
+				CodeAction: VsCodeTypes.CodeAction,
+				SignatureHelp: VsCodeTypes.SignatureHelp,
+				SignatureInformation: VsCodeTypes.SignatureInformation,
+				ParameterInformation: VsCodeTypes.ParameterInformation,
+				InlayHint: VsCodeTypes.InlayHint,
+				InlayHintKind: VsCodeTypes.InlayHintKind,
+				FoldingRange: VsCodeTypes.FoldingRange,
+				FoldingRangeKind: VsCodeTypes.FoldingRangeKind,
+				DocumentHighlight: VsCodeTypes.DocumentHighlight,
+				DocumentHighlightKind: VsCodeTypes.DocumentHighlightKind,
+				SelectionRange: VsCodeTypes.SelectionRange,
+				SemanticTokensLegend: VsCodeTypes.SemanticTokensLegend,
+				SemanticTokensBuilder: VsCodeTypes.SemanticTokensBuilder,
+				SemanticTokens: VsCodeTypes.SemanticTokens,
+				RelativePattern: VsCodeTypes.RelativePattern,
+				Disposable: VsCodeTypes.Disposable,
+				StatusBarAlignment: VsCodeTypes.StatusBarAlignment,
+				ThemeColor: VsCodeTypes.ThemeColor,
+				ThemeIcon: VsCodeTypes.ThemeIcon,
+				TreeItem: VsCodeTypes.TreeItem,
+				TreeItemCollapsibleState: VsCodeTypes.TreeItemCollapsibleState,
+				ViewColumn: VsCodeTypes.ViewColumn,
+				EndOfLine: VsCodeTypes.EndOfLine,
+				ConfigurationTarget: VsCodeTypes.ConfigurationTarget,
+				Uri: URI,
+				CancellationTokenSource,
+				EventEmitter: Emitter,
+				// Namespaces — minimal stubs wired to Mountain via gRPC
+				window: {
+					showInformationMessage: async (..._Args: unknown[]) => undefined,
+					showErrorMessage: async (..._Args: unknown[]) => undefined,
+					showWarningMessage: async (..._Args: unknown[]) => undefined,
+					createTerminal: () => ({ sendText: async () => {}, show: () => {}, hide: () => {}, dispose: () => {} }),
+					createStatusBarItem: () => ({ show: () => {}, hide: () => {}, dispose: () => {}, text: "", tooltip: "" }),
+					createOutputChannel: () => ({ append: () => {}, appendLine: () => {}, clear: () => {}, show: () => {}, hide: () => {}, dispose: () => {} }),
+					withProgress: async (_Opt: unknown, Task: any) => Task({ report: () => {} }),
+					onDidChangeActiveTextEditor: () => ({ dispose: () => {} }),
+					onDidChangeVisibleTextEditors: () => ({ dispose: () => {} }),
+					onDidChangeTextEditorSelection: () => ({ dispose: () => {} }),
+					onDidChangeTextEditorVisibleRanges: () => ({ dispose: () => {} }),
+					activeTextEditor: undefined,
+					visibleTextEditors: [],
+				},
+				workspace: {
+					workspaceFolders: [],
+					getConfiguration: () => ({
+						get: (_Key: string, DefaultValue?: unknown) => DefaultValue,
+						update: async () => {},
+						has: () => false,
+						inspect: () => undefined,
+					}),
+					findFiles: async () => [],
+					openTextDocument: async (Uri: any) => ({
+						getText: () => "",
+						uri: Uri,
+						languageId: "plaintext",
+						lineCount: 0,
+						fileName: "",
+					}),
+					onDidOpenTextDocument: () => ({ dispose: () => {} }),
+					onDidCloseTextDocument: () => ({ dispose: () => {} }),
+					onDidChangeTextDocument: () => ({ dispose: () => {} }),
+					onDidChangeConfiguration: () => ({ dispose: () => {} }),
+					onDidChangeWorkspaceFolders: () => ({ dispose: () => {} }),
+					fs: {
+						stat: async () => ({ type: 1, size: 0, ctime: 0, mtime: 0 }),
+						readFile: async () => new Uint8Array(),
+						writeFile: async () => {},
+						readDirectory: async () => [],
+						createDirectory: async () => {},
+						delete: async () => {},
+						rename: async () => {},
+					},
+				},
+				commands: {
+					registerCommand: (Command: string, Callback: Function) => {
+						LanguageProviderRegistry.RegisterCommand(Command, Callback);
+						return { dispose: () => {} };
+					},
+					executeCommand: async (Command: string, ..._Args: unknown[]) => {
+						console.log(`[vscodeAPI] executeCommand: ${Command}`);
+						return undefined;
+					},
+					getCommands: async () => [] as string[],
+				},
+				languages: {
+					registerHoverProvider: (Selector: any, Provider: any) => {
+						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						console.log(`[vscodeAPI] registerHoverProvider: handle=${Handle}`);
+						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
+					},
+					registerCompletionItemProvider: (Selector: any, Provider: any, ...TriggerChars: string[]) => {
+						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						console.log(`[vscodeAPI] registerCompletionItemProvider: handle=${Handle}`);
+						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
+					},
+					registerDefinitionProvider: (Selector: any, Provider: any) => {
+						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
+					},
+					registerReferenceProvider: (Selector: any, Provider: any) => {
+						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
+					},
+					registerCodeActionsProvider: (Selector: any, Provider: any) => {
+						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
+					},
+					registerDocumentSymbolProvider: (Selector: any, Provider: any) => {
+						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
+					},
+					registerDocumentFormattingEditProvider: (Selector: any, Provider: any) => {
+						const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+						return { dispose: () => LanguageProviderRegistry.Unregister(Handle) };
+					},
+					createDiagnosticCollection: (Name?: string) => ({
+						name: Name ?? "default",
+						set: () => {},
+						delete: () => {},
+						clear: () => {},
+						forEach: () => {},
+						get: () => [],
+						has: () => false,
+						dispose: () => {},
+					}),
+					registerSignatureHelpProvider: (_S: any, _P: any) => ({ dispose: () => {} }),
+					registerDocumentHighlightProvider: (_S: any, _P: any) => ({ dispose: () => {} }),
+					registerCodeLensProvider: (_S: any, _P: any) => ({ dispose: () => {} }),
+					registerRenameProvider: (_S: any, _P: any) => ({ dispose: () => {} }),
+					registerFoldingRangeProvider: (_S: any, _P: any) => ({ dispose: () => {} }),
+					registerSelectionRangeProvider: (_S: any, _P: any) => ({ dispose: () => {} }),
+					registerDocumentSemanticTokensProvider: (_S: any, _P: any, _L: any) => ({ dispose: () => {} }),
+					registerInlayHintsProvider: (_S: any, _P: any) => ({ dispose: () => {} }),
+					getLanguages: async () => [] as string[],
+					match: () => 0,
+					onDidChangeDiagnostics: () => ({ dispose: () => {} }),
+					getDiagnostics: () => [],
+				},
+				extensions: {
+					getExtension: (_Id: string) => undefined,
+					all: [],
+					onDidChange: () => ({ dispose: () => {} }),
+				},
+				env: {
+					appName: "CodeEditorLand",
+					appRoot: "",
+					language: "en",
+					machineId: "land",
+					sessionId: "land-session",
+					uriScheme: "vscode",
+					clipboard: { readText: async () => "", writeText: async () => {} },
+				},
+				debug: {
+					registerDebugAdapterDescriptorFactory: () => ({ dispose: () => {} }),
+					registerDebugConfigurationProvider: () => ({ dispose: () => {} }),
+					startDebugging: async () => false,
+					onDidStartDebugSession: () => ({ dispose: () => {} }),
+					onDidTerminateDebugSession: () => ({ dispose: () => {} }),
+					onDidChangeActiveDebugSession: () => ({ dispose: () => {} }),
+					onDidReceiveDebugSessionCustomEvent: () => ({ dispose: () => {} }),
+					activeDebugSession: undefined,
+					breakpoints: [],
+				},
+				tasks: {
+					registerTaskProvider: () => ({ dispose: () => {} }),
+					fetchTasks: async () => [],
+					executeTask: async () => undefined,
+					onDidStartTask: () => ({ dispose: () => {} }),
+					onDidEndTask: () => ({ dispose: () => {} }),
+				},
+				scm: {
+					createSourceControl: () => ({
+						inputBox: { value: "" },
+						createResourceGroup: () => ({ resourceStates: [], dispose: () => {} }),
+						dispose: () => {},
+					}),
+				},
+				authentication: {
+					registerAuthenticationProvider: () => ({ dispose: () => {} }),
+					getSession: async () => undefined,
+					onDidChangeSessions: () => ({ dispose: () => {} }),
+				},
+			};
+
+			(globalThis as any).__cocoonVscodeAPI = API;
+			console.log("[GRPCServerService] vscode API shim registered on globalThis.__cocoonVscodeAPI");
+		} catch (Err: unknown) {
+			console.warn(
+				"[GRPCServerService] Failed to create vscode API shim:",
+				Err instanceof Error ? Err.message : String(Err),
+			);
+		}
+	}
+
+	/**
+	 * Load and activate a single extension from disk.
+	 * Expects extensionRegistry entries from Mountain's InitializeExtensionHost.
+	 */
+	private async ActivateExtension(ExtensionId: string, ActivationEvent: string): Promise<void> {
+		// Guard: only activate once
+		if (this.activatedExtensions.has(ExtensionId)) return;
+		this.activatedExtensions.add(ExtensionId);
+
+		const Extension = this.extensionRegistry.get(ExtensionId);
+		if (!Extension) return;
+
+		// Mountain sends ExtensionLocation as a file:// URL (from url::Url::from_directory_path)
+		const LocationRaw: unknown =
+			Extension?.ExtensionLocation ??
+			Extension?.extensionLocation ??
+			Extension?.location?.path ??
+			Extension?.location;
+		const MainFile: string | undefined = Extension?.main ?? Extension?.Main;
+
+		// Declarative extensions (themes, grammars) have no main — mark activated and return.
+		if (!LocationRaw || !MainFile) {
+			return;
+		}
+
+		// Convert file:// URL to filesystem path
+		let ExtensionPath: string;
+		try {
+			ExtensionPath = new URL(String(LocationRaw)).pathname.replace(/\/$/, "");
+		} catch {
+			ExtensionPath = String(LocationRaw).replace(/^file:\/\//, "").replace(/\/$/, "");
+		}
+
+		const ModulePath = `${ExtensionPath}/${MainFile}`;
+
+		console.log(`[GRPCServerService] Loading ${ExtensionId} from ${ModulePath}`);
+
+		try {
+			// Module._load is patched by ModuleInterceptor — require('vscode') returns our API shim.
+			// eslint-disable-next-line @typescript-eslint/no-require-imports
+			const ExtModule: { activate?: (ctx: unknown) => unknown } = require(ModulePath);
+
+			if (typeof ExtModule?.activate === "function") {
+				const Context = this.CreateExtensionContext(Extension, ExtensionPath);
+				await ExtModule.activate(Context);
+				console.log(`[GRPCServerService] ${ExtensionId} activated (event: ${ActivationEvent})`);
+			}
+		} catch (Err: unknown) {
+			// Remove from set so a retry is possible
+			this.activatedExtensions.delete(ExtensionId);
+			throw Err;
+		}
+	}
+
+	/**
+	 * Build a minimal VS Code ExtensionContext for activating an extension.
+	 */
+	private CreateExtensionContext(Extension: any, ExtensionPath: string): unknown {
+		const ExtId: string =
+			Extension?.identifier?.value ??
+			Extension?.identifier?.id ??
+			Extension?.identifier ??
+			"";
+
+		return {
+			subscriptions: [] as { dispose(): unknown }[],
+			extensionPath: ExtensionPath,
+			extensionUri: {
+				scheme: "file",
+				path: ExtensionPath,
+				fsPath: ExtensionPath,
+				authority: "",
+				query: "",
+				fragment: "",
+				with: () => ({}),
+				toString: () => `file://${ExtensionPath}`,
+			},
+			globalState: {
+				get: (_Key: string, DefaultValue?: unknown) => DefaultValue,
+				update: async (_Key: string, _Value: unknown) => {},
+				keys: () => [] as string[],
+				setKeysForSync: (_Keys: string[]) => {},
+			},
+			workspaceState: {
+				get: (_Key: string, DefaultValue?: unknown) => DefaultValue,
+				update: async (_Key: string, _Value: unknown) => {},
+				keys: () => [] as string[],
+			},
+			secrets: {
+				get: async (_Key: string) => undefined as string | undefined,
+				store: async (_Key: string, _Value: string) => {},
+				delete: async (_Key: string) => {},
+				onDidChange: (_Listener: unknown) => ({ dispose: () => {} }),
+			},
+			environmentVariableCollection: {
+				persistent: true,
+				description: undefined,
+				append: () => {},
+				prepend: () => {},
+				replace: () => {},
+				get: () => undefined,
+				forEach: () => {},
+				delete: () => {},
+				clear: () => {},
+				getScoped: () => ({}),
+				[Symbol.iterator]: () => ([] as unknown[]).values(),
+			},
+			storagePath: undefined,
+			globalStoragePath: undefined,
+			logPath: undefined,
+			storageUri: undefined,
+			globalStorageUri: undefined,
+			logUri: undefined,
+			extensionMode: 1, // ExtensionMode.Production
+			extension: {
+				id: ExtId,
+				extensionUri: { scheme: "file", path: ExtensionPath, fsPath: ExtensionPath },
+				extensionPath: ExtensionPath,
+				isActive: true,
+				packageJSON: Extension,
+				extensionKind: 1,
+				exports: undefined,
+				activate: async () => {},
+			},
+			languageModelAccessInformation: {
+				canSendRequest: (_Model: unknown) => false,
+				onDidChange: (_Listener: unknown) => ({ dispose: () => {} }),
+			},
+		};
+	}
+
+	/**
+	 * Handle $startExtensionHost from Mountain.
+	 * Signals that the extension host should begin processing.
+	 */
+	private async HandleStartExtensionHost(parameters: any): Promise<any> {
+		console.log(
+			`[GRPCServerService] $startExtensionHost received (registry: ${this.extensionRegistry.size} extensions)`,
+		);
+
+		this.emit("startExtensionHost", {
+			extensionCount: this.extensionRegistry.size,
+			ready: this.extensionHostReady,
+		});
+
+		return {
+			success: true,
+			ready: this.extensionHostReady,
+			extensionCount: this.extensionRegistry.size,
+		};
+	}
+
+	/** Stored initialization data from Mountain's InitializeExtensionHost */
+	private extensionHostInitData: any = null;
+
+	/** Indexed extensions from InitializeExtensionHost, keyed by identifier */
+	private extensionRegistry: Map<string, any> = new Map();
+
+	/** Activation event → extension identifiers that declare it */
+	private activationEventIndex: Map<string, string[]> = new Map();
+
+	/** Whether the extension host has been initialized */
+	private extensionHostReady: boolean = false;
+
+	/** Track which extensions have already been activated (prevents double-activation) */
+	private readonly activatedExtensions: Set<string> = new Set();
+
+	/** Reverse gRPC client for sending messages back to Mountain */
+	private mountainClient: import("./MountainClientService.js").MountainClientService | null = null;
+
+	/**
+	 * Connect to Mountain's gRPC server (MountainService on :50051).
+	 * Called after InitializeExtensionHost confirms Mountain is running.
+	 * Creates a new MountainClientService instance and connects.
+	 */
+	private async ConnectToMountain(): Promise<void> {
+		if (this.mountainClient) {
+			console.log("[GRPCServerService] Already connected to Mountain");
+			return;
+		}
+
+		const MountainPort = parseInt(
+			process.env["MOUNTAIN_GRPC_PORT"] || "50051",
+			10,
+		);
+
+		console.log(
+			`[GRPCServerService] Connecting to Mountain gRPC at localhost:${MountainPort}...`,
+		);
+
+		const { MountainClientService } = await import(
+			"./MountainClientService.js"
+		);
+		const Client = new MountainClientService();
+		await Client.connect();
+
+		this.mountainClient = Client;
+
+		console.log(
+			`[GRPCServerService] Connected to Mountain gRPC — return path active`,
+		);
+
+		this.emit("mountainConnected", { port: MountainPort });
+	}
+
+	/**
+	 * Send a notification back to Mountain (for forwarding to Wind).
+	 * Used for extension host protocol messages, provider registrations, etc.
+	 */
+	async SendToMountain(
+		Method: string,
+		Parameters: any,
+	): Promise<void> {
+		if (!this.mountainClient) {
+			console.warn(
+				`[GRPCServerService] Cannot send ${Method} to Mountain — not connected`,
+			);
+			return;
+		}
+
+		await this.mountainClient.sendNotification(Method, Parameters);
 	}
 
 	/**
@@ -690,13 +1394,9 @@ export class GRPCServerService
 		);
 		const VsPosition = new Position(PosLine, PosChar);
 
-		// Try to get real document content from LanguageProviderRegistry or the
-		// VS Code document shim. Content is keyed by URI string in CocoonService's
-		// document mirror (if AcceptWorkspaceData populated it).
-		// For now: provide a structural TextDocument shim. Extensions that need
-		// getText() for actual text intelligence will work only if a document mirror
-		// is available; hover/definition providers that only use the position are
-		// fully functional.
+		// Build a TextDocument shim that reads content from disk lazily.
+		// Extensions calling getText() get real file content; lineAt() returns
+		// real lines. Content is cached per invocation to avoid repeated I/O.
 		const Ext = UriString.split(".").pop() ?? "";
 		const LangId = (() => {
 			switch (Ext) {
@@ -724,42 +1424,116 @@ export class GRPCServerService
 			}
 		})();
 
+		const FsPath = UriString.replace(/^file:\/\//, "");
+		let CachedContent: string | null = null;
+		let CachedLines: string[] | null = null;
+
+		const LoadContent = (): string => {
+			if (CachedContent !== null) return CachedContent;
+			try {
+				// eslint-disable-next-line @typescript-eslint/no-require-imports
+				const Fs = require("node:fs");
+				CachedContent = Fs.readFileSync(FsPath, "utf8") as string;
+			} catch {
+				CachedContent = "";
+			}
+			return CachedContent;
+		};
+
+		const GetLines = (): string[] => {
+			if (CachedLines !== null) return CachedLines;
+			CachedLines = LoadContent().split(/\r?\n/);
+			return CachedLines;
+		};
+
 		const VsDocument = {
 			uri: {
 				toString: () => UriString,
-				fsPath: UriString.replace(/^file:\/\//, ""),
+				fsPath: FsPath,
 				external: UriString,
 				$mid: 1,
 				scheme: "file",
-				path: UriString.replace(/^file:\/\//, ""),
+				path: FsPath,
 			},
-			fileName: UriString.replace(/^file:\/\//, ""),
+			fileName: FsPath,
 			languageId: LangId,
 			version: 1,
 			isDirty: false,
 			isClosed: false,
 			eol: 1, // LF
-			getText: (_range?: any) => "",
+			getText: (_range?: any) => {
+				const Text = LoadContent();
+				if (!_range) return Text;
+				// Range-limited getText: extract substring
+				const Lines = GetLines();
+				const StartLine = _range?.start?.line ?? 0;
+				const StartChar = _range?.start?.character ?? 0;
+				const EndLine = _range?.end?.line ?? Lines.length - 1;
+				const EndChar = _range?.end?.character ?? (Lines[EndLine]?.length ?? 0);
+				if (StartLine === EndLine) {
+					return (Lines[StartLine] ?? "").substring(StartChar, EndChar);
+				}
+				const Result: string[] = [];
+				Result.push((Lines[StartLine] ?? "").substring(StartChar));
+				for (let I = StartLine + 1; I < EndLine; I++) Result.push(Lines[I] ?? "");
+				Result.push((Lines[EndLine] ?? "").substring(0, EndChar));
+				return Result.join("\n");
+			},
 			lineAt: (LineOrPos: number | any) => {
 				const LineNum =
 					typeof LineOrPos === "number"
 						? LineOrPos
 						: (LineOrPos?.line ?? 0);
+				const Lines = GetLines();
+				const LineText = Lines[LineNum] ?? "";
+				const FirstNonWS = LineText.search(/\S/);
 				return {
-					text: "",
+					text: LineText,
 					lineNumber: LineNum,
-					range: new Range(LineNum, 0, LineNum, 0),
+					range: new Range(LineNum, 0, LineNum, LineText.length),
 					rangeIncludingLineBreak: new Range(LineNum, 0, LineNum + 1, 0),
-					firstNonWhitespaceCharacterIndex: 0,
-					isEmptyOrWhitespace: true,
+					firstNonWhitespaceCharacterIndex: FirstNonWS === -1 ? LineText.length : FirstNonWS,
+					isEmptyOrWhitespace: LineText.trim().length === 0,
 				};
 			},
-			lineCount: 1,
-			offsetAt: (_pos: any) => 0,
-			positionAt: (_offset: number) => VsPosition,
+			get lineCount() { return GetLines().length; },
+			offsetAt: (Pos: any) => {
+				const Lines = GetLines();
+				let Offset = 0;
+				const TargetLine = Pos?.line ?? 0;
+				for (let I = 0; I < TargetLine && I < Lines.length; I++) {
+					Offset += Lines[I].length + 1; // +1 for newline
+				}
+				return Offset + (Pos?.character ?? 0);
+			},
+			positionAt: (Offset: number) => {
+				const Lines = GetLines();
+				let Remaining = Offset;
+				for (let I = 0; I < Lines.length; I++) {
+					if (Remaining <= Lines[I].length) {
+						return new Position(I, Remaining);
+					}
+					Remaining -= Lines[I].length + 1;
+				}
+				return new Position(Lines.length - 1, (Lines[Lines.length - 1] ?? "").length);
+			},
 			validateRange: (R: any) => R,
 			validatePosition: (P: any) => P,
-			getWordRangeAtPosition: (_pos: any, _pattern?: RegExp) => undefined,
+			getWordRangeAtPosition: (Pos: any, Pattern?: RegExp) => {
+				const Lines = GetLines();
+				const Line = Lines[Pos?.line ?? 0] ?? "";
+				const Regex = Pattern ?? /\w+/g;
+				const Col = Pos?.character ?? 0;
+				let Match: RegExpExecArray | null;
+				// Reset regex for global patterns
+				Regex.lastIndex = 0;
+				while ((Match = Regex.exec(Line)) !== null) {
+					if (Match.index <= Col && Match.index + Match[0].length >= Col) {
+						return new Range(Pos.line, Match.index, Pos.line, Match.index + Match[0].length);
+					}
+				}
+				return undefined;
+			},
 			save: async () => false,
 		};
 
@@ -1185,8 +1959,9 @@ export class GRPCServerService
 			});
 
 			// Add service implementation
+			const CocoonSvc = protoDescriptor.Vine?.CocoonService || protoDescriptor.CocoonService;
 			this.server.addService(
-				protoDescriptor.CocoonService.service,
+				CocoonSvc.service,
 				this.serviceImplementation,
 			);
 
@@ -1272,7 +2047,7 @@ export class GRPCServerService
 				const fallbackProtoContent = `
                     syntax = "proto3";
 
-                    package mountain;
+                    package Vine;
 
                     service CocoonService {
                         rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
@@ -1342,7 +2117,7 @@ export class GRPCServerService
 
 			this.server.bindAsync(
 				`0.0.0.0:${this.port}`,
-				grpc.credentials.createInsecure(),
+				grpc.ServerCredentials.createInsecure(),
 				(error, port) => {
 					if (error) {
 						reject(error);
@@ -1350,7 +2125,7 @@ export class GRPCServerService
 						console.log(
 							`[GRPCServerService] Server bound to port ${port}`,
 						);
-						this.server!.start();
+						// server.start() removed — no longer needed in @grpc/grpc-js v1.12+
 						resolve();
 					}
 				},
