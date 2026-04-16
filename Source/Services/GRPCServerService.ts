@@ -998,7 +998,7 @@ export class GRPCServerService
 						const LocalResult = LanguageProviderRegistry.ExecuteCommand(Command, ...Args);
 						if (LocalResult !== undefined) return LocalResult;
 						try {
-							return await this.mountainClient?.sendRequest("executeCommand", { commandId: Command, args: Args });
+							return await this.mountainClient?.sendRequest("executeCommand", { commandId: Command, arguments: Args });
 						} catch { return undefined; }
 					},
 					getCommands: async () => [] as string[],
@@ -2078,15 +2078,23 @@ export class GRPCServerService
 		// $acceptModelAdded sends an array of DocumentStateDTOs
 		const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
 		for (const Model of Models) {
+			// DocumentStateDTO uses URI (PascalCase, serde rename_all)
 			const Uri: string =
-				Model?.uri?.external ?? Model?.uri ?? Model?.Uri ??
-				Model?.URI ?? "";
-			const Content: string | undefined =
-				Model?.content ?? Model?.Content ?? Model?.text ?? Model?.Lines;
+				Model?.URI?.toString?.() ?? Model?.URI ??
+				Model?.uri?.external ?? Model?.uri ?? Model?.Uri ?? "";
+			// Content can be: Lines (Vec<String>), content (String), text (String)
+			const Lines = Model?.Lines ?? Model?.lines;
+			const EOL = Model?.EOL ?? Model?.eol ?? "\n";
+			let Content: string | undefined;
+			if (Array.isArray(Lines)) {
+				Content = Lines.join(EOL);
+			} else {
+				Content = Model?.content ?? Model?.Content ?? Model?.text;
+			}
 
 			if (Uri && Content !== undefined) {
-				this.documentContentCache.set(Uri, typeof Content === "string" ? Content : "");
-				console.log(`[GRPCServerService] Document opened: ${Uri.slice(-60)} (${String(Content).length} chars)`);
+				this.documentContentCache.set(Uri, Content);
+				console.log(`[GRPCServerService] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`);
 			}
 		}
 	}
