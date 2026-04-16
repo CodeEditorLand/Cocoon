@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../Source/Services/MetricsCollector.ts"],
   "sourcesContent": ["/**\n * @module MetricsCollector\n * @description Minimal metrics collection stub for Cocoon services.\n */\n\nexport class MetricsCollector {\n\tprivate readonly Metrics: Map<string, number> = new Map();\n\n\tRecord(Name: string, Value: number): void {\n\t\tthis.Metrics.set(Name, (this.Metrics.get(Name) || 0) + Value);\n\t}\n\n\tGet(Name: string): number {\n\t\treturn this.Metrics.get(Name) || 0;\n\t}\n\n\tGetAll(): Record<string, number> {\n\t\treturn Object.fromEntries(this.Metrics);\n\t}\n\n\tReset(): void {\n\t\tthis.Metrics.clear();\n\t}\n}\n"],
-  "mappings": ";;AAKO,MAAM,iBAAiB;AAAA,EAL9B,OAK8B;AAAA;AAAA;AAAA,EACZ,UAA+B,oBAAI,IAAI;AAAA,EAExD,OAAO,MAAc,OAAqB;AACzC,SAAK,QAAQ,IAAI,OAAO,KAAK,QAAQ,IAAI,IAAI,KAAK,KAAK,KAAK;AAAA,EAC7D;AAAA,EAEA,IAAI,MAAsB;AACzB,WAAO,KAAK,QAAQ,IAAI,IAAI,KAAK;AAAA,EAClC;AAAA,EAEA,SAAiC;AAChC,WAAO,OAAO,YAAY,KAAK,OAAO;AAAA,EACvC;AAAA,EAEA,QAAc;AACb,SAAK,QAAQ,MAAM;AAAA,EACpB;AACD;",
+  "mappings": ";;;;AAKO,IAAM,mBAAN,MAAuB;AAAA,EAL9B,OAK8B;AAAA;AAAA;AAAA,EACZ,UAA+B,oBAAI,IAAI;AAAA,EAExD,OAAO,MAAc,OAAqB;AACzC,SAAK,QAAQ,IAAI,OAAO,KAAK,QAAQ,IAAI,IAAI,KAAK,KAAK,KAAK;AAAA,EAC7D;AAAA,EAEA,IAAI,MAAsB;AACzB,WAAO,KAAK,QAAQ,IAAI,IAAI,KAAK;AAAA,EAClC;AAAA,EAEA,SAAiC;AAChC,WAAO,OAAO,YAAY,KAAK,OAAO;AAAA,EACvC;AAAA,EAEA,QAAc;AACb,SAAK,QAAQ,MAAM;AAAA,EACpB;AACD;",
   "names": []
 }

@@ -1,1 +1,195 @@
-import{Context as E,Effect as r,Ref as s}from"effect";import{IMountainClientService as m}from"../Interfaces/IMountainClientService.js";class R extends r.Service()("Service/Extension",{effect:r.gen(function*(){const w=yield*m,u=yield*E.Tag("Service/Configuration"),c=yield*E.Tag("Service/Logger"),d=yield*s.make(new Map),f=yield*s.make(new Map),g=yield*s.make(new Map),M=yield*s.make(new Map),l=new Set,x=()=>r.gen(function*(){c.Debug("[ExtensionService] Discovering extensions from configuration");const n=u.GetValue("extensions",{}),o=new Map;for(const[i,e]of Object.entries(n))try{const a=typeof e=="string"?e:e.path,b={identifier:i,displayName:typeof e=="object"&&e.displayName?e.displayName:i,version:typeof e=="object"&&e.version?e.version:"0.0.0",publisher:typeof e=="object"&&e.publisher?e.publisher:void 0,description:typeof e=="object"&&e.description?e.description:void 0,extensionLocation:VSCode.Uri.parse(a),activationEvents:typeof e=="object"&&e.activationEvents?e.activationEvents:void 0,main:typeof e=="object"&&e.main?e.main:void 0,browser:typeof e=="object"&&e.browser?e.browser:void 0,contributes:typeof e=="object"&&e.contributes?e.contributes:void 0};o.set(i,b),c.Debug(`[ExtensionService] Extension discovered: ${i}`)}catch(a){c.Error(`[ExtensionService] Failed to parse extension config for ${i}`,a)}const t=yield*s.get(d);(o.size!==t.size||Array.from(o.keys()).some(i=>!t.has(i)||JSON.stringify(o.get(i))!==JSON.stringify(t.get(i))))&&(yield*s.set(d,o),c.Info(`[ExtensionService] Extensions discovered: ${o.size} extensions`),l.forEach(i=>i()))}),y=n=>r.succeed(()=>{const t=r.runSync(s.get(d)).get(n);if(!t)return;const i=r.runSync(s.get(f)),e=r.runSync(s.get(g));return{id:t.identifier,extensionUri:t.extensionLocation,extensionPath:t.extensionLocation.fsPath,isActive:i.get(n)??!1,packageJSON:t,exports:e.get(n),extensionKind:t.kind?.[0],activate:async()=>(c.Warn(`[ExtensionService] activate() called on ${n}, but activation is handled by ExtensionHostService`),e.get(n))}})(),p=()=>r.succeed(()=>{const n=r.runSync(s.get(d)),o=r.runSync(s.get(f)),t=r.runSync(s.get(g));return Array.from(n.entries()).map(([e,a])=>({id:a.identifier,extensionUri:a.extensionLocation,extensionPath:a.extensionLocation.fsPath,isActive:o.get(e)??!1,packageJSON:a,exports:t.get(e)}))})(),v=n=>r.succeed(()=>r.runSync(y(n))?.extensionPath),S=n=>(l.add(n),{dispose:()=>{l.delete(n)}}),h=(n,o)=>r.gen(function*(){yield*s.update(f,t=>{const i=new t(t);return i.set(n,!0),i}),yield*s.update(g,t=>{const i=new t(t);return i.set(n,o),i}),c.Info(`[ExtensionService] Extension activated: ${n}`)}),k=n=>r.gen(function*(){yield*s.update(f,o=>{const t=new o(o);return t.set(n,!1),t}),c.Debug(`[ExtensionService] Extension deactivated: ${n}`)});return yield*x(),{GetExtension:y,GetAllExtensions:p,GetExtensionPath:v,OnDidChange:S}})}){}export{R as ExtensionService};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Interfaces/IMountainClientService.ts
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
+  "Service/MountainClient",
+  {
+    effect: Effect.gen(function* () {
+      return {};
+    })
+  }
+);
+
+// Source/Services/Extension.ts
+import { Context, Effect as Effect2, Ref } from "effect";
+var ExtensionService = class extends Effect2.Service()(
+  "Service/Extension",
+  {
+    effect: Effect2.gen(function* () {
+      const MountainClient = yield* IMountainClientService;
+      const Configuration = yield* Context.Tag(
+        "Service/Configuration"
+      );
+      const Logger = yield* Context.Tag("Service/Logger");
+      const ExtensionRegistryRef = yield* Ref.make(
+        /* @__PURE__ */ new Map()
+      );
+      const ExtensionActivationRef = yield* Ref.make(
+        /* @__PURE__ */ new Map()
+      );
+      const ExtensionExportsRef = yield* Ref.make(
+        /* @__PURE__ */ new Map()
+      );
+      const ActivationMetricsRef = yield* Ref.make(
+        /* @__PURE__ */ new Map()
+      );
+      const OnDidChangeListeners = /* @__PURE__ */ new Set();
+      const DiscoverExtensions = /* @__PURE__ */ __name(() => Effect2.gen(function* () {
+        Logger.Debug(
+          "[ExtensionService] Discovering extensions from configuration"
+        );
+        const ExtensionsConfig = Configuration.GetValue("extensions", {});
+        const NewRegistry = /* @__PURE__ */ new Map();
+        for (const [ExtensionId, ExtensionData] of Object.entries(
+          ExtensionsConfig
+        )) {
+          try {
+            const ExtensionLocation = typeof ExtensionData === "string" ? ExtensionData : ExtensionData.path;
+            const Description = {
+              identifier: ExtensionId,
+              displayName: typeof ExtensionData === "object" && ExtensionData.displayName ? ExtensionData.displayName : ExtensionId,
+              version: typeof ExtensionData === "object" && ExtensionData.version ? ExtensionData.version : "0.0.0",
+              publisher: typeof ExtensionData === "object" && ExtensionData.publisher ? ExtensionData.publisher : void 0,
+              description: typeof ExtensionData === "object" && ExtensionData.description ? ExtensionData.description : void 0,
+              extensionLocation: VSCode.Uri.parse(ExtensionLocation),
+              activationEvents: typeof ExtensionData === "object" && ExtensionData.activationEvents ? ExtensionData.activationEvents : void 0,
+              main: typeof ExtensionData === "object" && ExtensionData.main ? ExtensionData.main : void 0,
+              browser: typeof ExtensionData === "object" && ExtensionData.browser ? ExtensionData.browser : void 0,
+              contributes: typeof ExtensionData === "object" && ExtensionData.contributes ? ExtensionData.contributes : void 0
+            };
+            NewRegistry.set(ExtensionId, Description);
+            Logger.Debug(
+              `[ExtensionService] Extension discovered: ${ExtensionId}`
+            );
+          } catch (error) {
+            Logger.Error(
+              `[ExtensionService] Failed to parse extension config for ${ExtensionId}`,
+              error
+            );
+          }
+        }
+        const OldRegistry = yield* Ref.get(ExtensionRegistryRef);
+        if (NewRegistry.size !== OldRegistry.size || Array.from(NewRegistry.keys()).some(
+          (key) => !OldRegistry.has(key) || JSON.stringify(NewRegistry.get(key)) !== JSON.stringify(OldRegistry.get(key))
+        )) {
+          yield* Ref.set(ExtensionRegistryRef, NewRegistry);
+          Logger.Info(
+            `[ExtensionService] Extensions discovered: ${NewRegistry.size} extensions`
+          );
+          OnDidChangeListeners.forEach((Listener) => Listener());
+        }
+      }), "DiscoverExtensions");
+      const GetExtension = /* @__PURE__ */ __name((ExtensionId) => Effect2.succeed(() => {
+        const Registry = Effect2.runSync(
+          Ref.get(ExtensionRegistryRef)
+        );
+        const Description = Registry.get(ExtensionId);
+        if (!Description) {
+          return void 0;
+        }
+        const ActivationMap = Effect2.runSync(
+          Ref.get(ExtensionActivationRef)
+        );
+        const ExportsMap = Effect2.runSync(
+          Ref.get(ExtensionExportsRef)
+        );
+        const ExtensionObject = {
+          id: Description.identifier,
+          extensionUri: Description.extensionLocation,
+          extensionPath: Description.extensionLocation.fsPath,
+          isActive: ActivationMap.get(ExtensionId) ?? false,
+          packageJSON: Description,
+          exports: ExportsMap.get(ExtensionId),
+          extensionKind: Description.kind?.[0],
+          activate: /* @__PURE__ */ __name(async () => {
+            Logger.Warn(
+              `[ExtensionService] activate() called on ${ExtensionId}, but activation is handled by ExtensionHostService`
+            );
+            return ExportsMap.get(ExtensionId);
+          }, "activate")
+        };
+        return ExtensionObject;
+      })(), "GetExtension");
+      const GetAllExtensions = /* @__PURE__ */ __name(() => Effect2.succeed(() => {
+        const Registry = Effect2.runSync(
+          Ref.get(ExtensionRegistryRef)
+        );
+        const ActivationMap = Effect2.runSync(
+          Ref.get(ExtensionActivationRef)
+        );
+        const ExportsMap = Effect2.runSync(
+          Ref.get(ExtensionExportsRef)
+        );
+        const Extensions = Array.from(Registry.entries()).map(
+          ([id, description]) => {
+            return {
+              id: description.identifier,
+              extensionUri: description.extensionLocation,
+              extensionPath: description.extensionLocation.fsPath,
+              isActive: ActivationMap.get(id) ?? false,
+              packageJSON: description,
+              exports: ExportsMap.get(id)
+            };
+          }
+        );
+        return Extensions;
+      })(), "GetAllExtensions");
+      const GetExtensionPath = /* @__PURE__ */ __name((ExtensionId) => Effect2.succeed(() => {
+        const Extension = Effect2.runSync(GetExtension(ExtensionId));
+        return Extension?.extensionPath;
+      }), "GetExtensionPath");
+      const OnDidChange = /* @__PURE__ */ __name((Listener) => {
+        OnDidChangeListeners.add(Listener);
+        const Disposable = {
+          dispose: /* @__PURE__ */ __name(() => {
+            OnDidChangeListeners.delete(Listener);
+          }, "dispose")
+        };
+        return Disposable;
+      }, "OnDidChange");
+      const MarkActivated = /* @__PURE__ */ __name((ExtensionId, Exports) => Effect2.gen(function* () {
+        yield* Ref.update(ExtensionActivationRef, (Map2) => {
+          const NewMap = new Map2(Map2);
+          NewMap.set(ExtensionId, true);
+          return NewMap;
+        });
+        yield* Ref.update(ExtensionExportsRef, (Map2) => {
+          const NewMap = new Map2(Map2);
+          NewMap.set(ExtensionId, Exports);
+          return NewMap;
+        });
+        Logger.Info(
+          `[ExtensionService] Extension activated: ${ExtensionId}`
+        );
+      }), "MarkActivated");
+      const MarkDeactivated = /* @__PURE__ */ __name((ExtensionId) => Effect2.gen(function* () {
+        yield* Ref.update(ExtensionActivationRef, (Map2) => {
+          const NewMap = new Map2(Map2);
+          NewMap.set(ExtensionId, false);
+          return NewMap;
+        });
+        Logger.Debug(
+          `[ExtensionService] Extension deactivated: ${ExtensionId}`
+        );
+      }), "MarkDeactivated");
+      yield* DiscoverExtensions();
+      const ServiceImplementation = {
+        GetExtension,
+        GetAllExtensions,
+        GetExtensionPath,
+        OnDidChange
+      };
+      return ServiceImplementation;
+    })
+  }
+) {
+  static {
+    __name(this, "ExtensionService");
+  }
+};
+export {
+  ExtensionService
+};
+//# sourceMappingURL=Extension.js.map

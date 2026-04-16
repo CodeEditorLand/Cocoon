@@ -1,1 +1,330 @@
-import{Context as h,Effect as a,Ref as g}from"effect";import{IMountainClientService as L}from"../Interfaces/IMountainClientService.js";class y{Storage;ExtensionId;Logger;MountainClient;constructor(e,o,n,s){this.Storage=e,this.ExtensionId=o,this.Logger=n,this.MountainClient=s,a.runFork(a.gen(function*(){}))}get(e,o){const s=a.runSync(g.get(this.Storage)).get(e);return s!==void 0?s:o}keys(){const e=a.runSync(g.get(this.Storage));return Array.from(e.keys())}async update(e,o){a.runSync(g.update(this.Storage,n=>{const s=new n(n);return s.set(e,o),s})),this.Logger.Debug(`[ExtensionContext] Memento updated: ${this.ExtensionId}.${e}`)}clear(){a.runSync(g.set(this.Storage,new Map)),this.Logger.Debug(`[ExtensionContext] Memento cleared: ${this.ExtensionId}`)}}class ${ExtensionId;Logger;MountainClient;constructor(e,o,n){this.ExtensionId=e,this.Logger=o,this.MountainClient=n??void 0}async get(e){if(this.MountainClient)try{return await this.MountainClient.sendRequest("getSecret",{key:e})}catch(o){this.Logger.Error(`[ExtensionContext] Failed to get secret: ${this.ExtensionId}.${e}`,o);return}this.Logger.Debug(`[ExtensionContext] Secret get: ${this.ExtensionId}.${e}`)}async store(e,o){if(this.MountainClient)try{await this.MountainClient.sendNotification("storeSecret",{key:e,value:o}),this.Logger.Debug(`[ExtensionContext] Secret stored: ${this.ExtensionId}.${e}`);return}catch(n){throw this.Logger.Error(`[ExtensionContext] Failed to store secret: ${this.ExtensionId}.${e}`,n),n}this.Logger.Debug(`[ExtensionContext] Secret stored: ${this.ExtensionId}.${e}`)}async delete(e){if(this.MountainClient)try{await this.MountainClient.sendNotification("deleteSecret",{key:e}),this.Logger.Debug(`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${e}`);return}catch(o){throw this.Logger.Error(`[ExtensionContext] Failed to delete secret: ${this.ExtensionId}.${e}`,o),o}this.Logger.Debug(`[ExtensionContext] Secret deleted: ${this.ExtensionId}.${e}`)}get onDidChange(){return e=>({dispose:()=>{}})}}class P extends a.Service()("Service/ExtensionContext",{effect:a.gen(function*(){const e=yield*L,o=yield*h.Tag("Service/Configuration"),n=yield*h.Tag("Service/Logger"),s=yield*g.make(new Map),p=(r,l)=>a.gen(function*(){n.Info(`[ExtensionContext] Creating context for extension: ${r}`);const c=l.extensionLocation.fsPath,d=`${c}/.storage`,u=process.env.VSCODE_COCOON_GLOBAL_STORAGE??`${process.env.HOME??"."}/cocoon/global-storage`,b=yield*g.make(new Map),M=yield*g.make(new Map),x=new y(b,r,n,e),C=new y(M,r,n,e),f=new $(r,n,e),E=new Set;yield*g.update(s,t=>{const i=new Map(t);return i.has(r)||i.set(r,E),i});const V=t=>({dispose:()=>{E.delete(t),t.dispose()}}),w=t=>VSCode.Uri.joinPath(l.extensionLocation,t).fsPath,D={subscriptions:[],workspaceState:{get:(t,i)=>x.get(t,i),keys:()=>x.keys(),update:(t,i)=>x.update(t,i)},globalState:{get:(t,i)=>C.get(t,i),keys:()=>C.keys(),update:(t,i)=>C.update(t,i)},secrets:{get:t=>f.get(t),store:(t,i)=>f.store(t,i),delete:t=>f.delete(t),onDidChange:f.onDidChange},storagePath:d,globalStoragePath:u,asAbsolutePath:w,extensionUri:l.extensionLocation,extensionPath:c};return n.Debug(`[ExtensionContext] Context created: ${r} at ${c}`),D}),m=r=>a.gen(function*(){const c=(yield*g.get(s)).get(r);if(c){n.Info(`[ExtensionContext] Disposing ${c.size} subscriptions for ${r}`);for(const d of c)d.dispose();yield*g.update(s,d=>{const u=new Map(d);return u.delete(r),u})}n.Debug(`[ExtensionContext] Extension ${r} disposed`)}),v={CreateExtensionContext:p};return n.Info("[ExtensionContext] ExtensionContextService initialized"),v})}){}export{P as ExtensionContextService,$ as ExtensionSecretStorage,y as Memento};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Interfaces/IMountainClientService.ts
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
+  "Service/MountainClient",
+  {
+    effect: Effect.gen(function* () {
+      return {};
+    })
+  }
+);
+
+// Source/Services/ExtensionContext.ts
+import { Context, Effect as Effect2, Ref } from "effect";
+var Memento = class {
+  static {
+    __name(this, "Memento");
+  }
+  Storage;
+  ExtensionId;
+  Logger;
+  MountainClient;
+  constructor(Storage, ExtensionId, Logger, MountainClient) {
+    this.Storage = Storage;
+    this.ExtensionId = ExtensionId;
+    this.Logger = Logger;
+    this.MountainClient = MountainClient;
+    Effect2.runFork(
+      Effect2.gen(function* () {
+        try {
+        } catch (error) {
+        }
+      })
+    );
+  }
+  /**
+   * Get a value from memento storage
+   * @param key The key to get
+   * @param defaultValue The default value if key doesn't exist
+   * @returns The stored value or default
+   */
+  get(key, defaultValue) {
+    const Map2 = Effect2.runSync(Ref.get(this.Storage));
+    const Value = Map2.get(key);
+    return Value !== void 0 ? Value : defaultValue;
+  }
+  /**
+   * Get all keys in memento storage
+   * @returns Array of all keys
+   */
+  keys() {
+    const Map2 = Effect2.runSync(Ref.get(this.Storage));
+    return Array.from(Map2.keys());
+  }
+  /**
+   * Update a value in memento storage
+   * @param key The key to update
+   * @param value The new value
+   * @returns Promise that resolves when update is complete
+   */
+  async update(key, value) {
+    Effect2.runSync(
+      Ref.update(this.Storage, (Map2) => {
+        const NewMap = new Map2(Map2);
+        NewMap.set(key, value);
+        return NewMap;
+      })
+    );
+    this.Logger.Debug(
+      `[ExtensionContext] Memento updated: ${this.ExtensionId}.${key}`
+    );
+  }
+  /**
+   * Clear all values in memento storage
+   */
+  clear() {
+    Effect2.runSync(Ref.set(this.Storage, /* @__PURE__ */ new Map()));
+    this.Logger.Debug(
+      `[ExtensionContext] Memento cleared: ${this.ExtensionId}`
+    );
+  }
+};
+var ExtensionSecretStorage = class {
+  static {
+    __name(this, "ExtensionSecretStorage");
+  }
+  ExtensionId;
+  Logger;
+  MountainClient;
+  constructor(ExtensionId, Logger, MountainClient) {
+    this.ExtensionId = ExtensionId;
+    this.Logger = Logger;
+    this.MountainClient = MountainClient ?? void 0;
+  }
+  /**
+   * Get a secret from storage
+   * @param key The key to get
+   * @returns The secret value or undefined
+   */
+  async get(key) {
+    if (this.MountainClient) {
+      try {
+        const result = await this.MountainClient.sendRequest(
+          "getSecret",
+          { key }
+        );
+        return result;
+      } catch (error) {
+        this.Logger.Error(
+          `[ExtensionContext] Failed to get secret: ${this.ExtensionId}.${key}`,
+          error
+        );
+        return void 0;
+      }
+    }
+    this.Logger.Debug(
+      `[ExtensionContext] Secret get: ${this.ExtensionId}.${key}`
+    );
+    return void 0;
+  }
+  /**
+   * Store a secret
+   * @param key The key to store
+   * @param value The secret value
+   */
+  async store(key, value) {
+    if (this.MountainClient) {
+      try {
+        await this.MountainClient.sendNotification("storeSecret", {
+          key,
+          value
+        });
+        this.Logger.Debug(
+          `[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`
+        );
+        return;
+      } catch (error) {
+        this.Logger.Error(
+          `[ExtensionContext] Failed to store secret: ${this.ExtensionId}.${key}`,
+          error
+        );
+        throw error;
+      }
+    }
+    this.Logger.Debug(
+      `[ExtensionContext] Secret stored: ${this.ExtensionId}.${key}`
+    );
+  }
+  /**
+   * Delete a secret
+   * @param key The key to delete
+   */
+  async delete(key) {
+    if (this.MountainClient) {
+      try {
+        await this.MountainClient.sendNotification("deleteSecret", {
+          key
+        });
+        this.Logger.Debug(
+          `[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`
+        );
+        return;
+      } catch (error) {
+        this.Logger.Error(
+          `[ExtensionContext] Failed to delete secret: ${this.ExtensionId}.${key}`,
+          error
+        );
+        throw error;
+      }
+    }
+    this.Logger.Debug(
+      `[ExtensionContext] Secret deleted: ${this.ExtensionId}.${key}`
+    );
+  }
+  /**
+   * Get the onDidChange secret event
+   * @returns Event that fires when secrets change
+   */
+  get onDidChange() {
+    return (Listener) => {
+      const Disposable = {
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose")
+      };
+      return Disposable;
+    };
+  }
+};
+var ExtensionContextService = class extends Effect2.Service()(
+  "Service/ExtensionContext",
+  {
+    effect: Effect2.gen(function* () {
+      const MountainClient = yield* IMountainClientService;
+      const Configuration = yield* Context.Tag(
+        "Service/Configuration"
+      );
+      const Logger = yield* Context.Tag("Service/Logger");
+      const GlobalSubscriptionsRef = yield* Ref.make(
+        /* @__PURE__ */ new Map()
+      );
+      const CreateExtensionContext = /* @__PURE__ */ __name((ExtensionId, ExtensionDescription) => Effect2.gen(function* () {
+        Logger.Info(
+          `[ExtensionContext] Creating context for extension: ${ExtensionId}`
+        );
+        const ExtensionPath = ExtensionDescription.extensionLocation.fsPath;
+        const StoragePath = `${ExtensionPath}/.storage`;
+        const GlobalStoragePath = process.env.VSCODE_COCOON_GLOBAL_STORAGE ?? `${process.env.HOME ?? "."}/cocoon/global-storage`;
+        const WorkspaceStateRef = yield* Ref.make(
+          /* @__PURE__ */ new Map()
+        );
+        const GlobalStateRef = yield* Ref.make(
+          /* @__PURE__ */ new Map()
+        );
+        const WorkspaceState = new Memento(
+          WorkspaceStateRef,
+          ExtensionId,
+          Logger,
+          MountainClient
+        );
+        const GlobalState = new Memento(
+          GlobalStateRef,
+          ExtensionId,
+          Logger,
+          MountainClient
+        );
+        const SecretStorage = new ExtensionSecretStorage(
+          ExtensionId,
+          Logger,
+          MountainClient
+        );
+        const Subscriptions = /* @__PURE__ */ new Set();
+        yield* Ref.update(GlobalSubscriptionsRef, (GlobalMap) => {
+          const NewMap = new Map(GlobalMap);
+          if (!NewMap.has(ExtensionId)) {
+            NewMap.set(ExtensionId, Subscriptions);
+          }
+          return NewMap;
+        });
+        const CreateTrackedDisposable = /* @__PURE__ */ __name((Disposable) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+            Subscriptions.delete(Disposable);
+            Disposable.dispose();
+          }, "dispose")
+        }), "CreateTrackedDisposable");
+        const AsAbsolutePath = /* @__PURE__ */ __name((relativePath) => {
+          const Uri = VSCode.Uri.joinPath(
+            ExtensionDescription.extensionLocation,
+            relativePath
+          );
+          return Uri.fsPath;
+        }, "AsAbsolutePath");
+        const ExtensionContext = {
+          subscriptions: [],
+          // VSCode's array-based subscriptions
+          workspaceState: {
+            get: /* @__PURE__ */ __name((key, defaultValue) => WorkspaceState.get(key, defaultValue), "get"),
+            keys: /* @__PURE__ */ __name(() => WorkspaceState.keys(), "keys"),
+            update: /* @__PURE__ */ __name((key, value) => WorkspaceState.update(key, value), "update")
+          },
+          globalState: {
+            get: /* @__PURE__ */ __name((key, defaultValue) => GlobalState.get(key, defaultValue), "get"),
+            keys: /* @__PURE__ */ __name(() => GlobalState.keys(), "keys"),
+            update: /* @__PURE__ */ __name((key, value) => GlobalState.update(key, value), "update")
+          },
+          secrets: {
+            get: /* @__PURE__ */ __name((key) => SecretStorage.get(key), "get"),
+            store: /* @__PURE__ */ __name((key, value) => SecretStorage.store(key, value), "store"),
+            delete: /* @__PURE__ */ __name((key) => SecretStorage.delete(key), "delete"),
+            onDidChange: SecretStorage.onDidChange
+          },
+          storagePath: StoragePath,
+          globalStoragePath: GlobalStoragePath,
+          asAbsolutePath: AsAbsolutePath,
+          extensionUri: ExtensionDescription.extensionLocation,
+          extensionPath: ExtensionPath
+          // TODO: Add extensionMode property when needed
+          // extensionMode: VSCode.ExtensionMode,
+        };
+        Logger.Debug(
+          `[ExtensionContext] Context created: ${ExtensionId} at ${ExtensionPath}`
+        );
+        return ExtensionContext;
+      }), "CreateExtensionContext");
+      const DisposeExtension = /* @__PURE__ */ __name((ExtensionId) => Effect2.gen(function* () {
+        const GlobalSubscriptions = yield* Ref.get(
+          GlobalSubscriptionsRef
+        );
+        const Subscriptions = GlobalSubscriptions.get(ExtensionId);
+        if (Subscriptions) {
+          Logger.Info(
+            `[ExtensionContext] Disposing ${Subscriptions.size} subscriptions for ${ExtensionId}`
+          );
+          for (const Subscription of Subscriptions) {
+            Subscription.dispose();
+          }
+          yield* Ref.update(
+            GlobalSubscriptionsRef,
+            (GlobalMap) => {
+              const NewMap = new Map(GlobalMap);
+              NewMap.delete(ExtensionId);
+              return NewMap;
+            }
+          );
+        }
+        Logger.Debug(
+          `[ExtensionContext] Extension ${ExtensionId} disposed`
+        );
+      }), "DisposeExtension");
+      const ServiceImplementation = {
+        CreateExtensionContext
+      };
+      Logger.Info(
+        `[ExtensionContext] ExtensionContextService initialized`
+      );
+      return ServiceImplementation;
+    })
+  }
+) {
+  static {
+    __name(this, "ExtensionContextService");
+  }
+};
+export {
+  ExtensionContextService,
+  ExtensionSecretStorage,
+  Memento
+};
+//# sourceMappingURL=ExtensionContext.js.map

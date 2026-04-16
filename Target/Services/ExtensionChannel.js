@@ -1,1 +1,129 @@
-class s{constructor(t){this.extensionHostService=t}extensionHostService;async call(t,e,n,i){switch(e){case"activateExtension":return await this.handleActivateExtension(n);case"deactivateExtension":return await this.handleDeactivateExtension(n);case"getExtensionExports":return await this.handleGetExtensionExports(n);case"getExtensionStatus":return await this.handleGetExtensionStatus(n);default:throw new Error(`Unknown command: ${e}`)}}async handleActivateExtension(t){const{extensionId:e,activationEvent:n}=t;if(!e||!n)throw new Error("Missing extensionId or activationEvent");try{const i=await this.extensionHostService.activateExtension(e,{startup:!0,activationEvent:n,extensionId:e});return{success:!0,activationTimes:i.activationTimes,exports:i.exports}}catch(i){throw i}}async handleDeactivateExtension(t){const{extensionId:e}=t;if(!e)throw new Error("Missing extensionId");try{return await this.extensionHostService.deactivateExtension(e),{success:!0,extensionId:e}}catch(n){throw n}}async handleGetExtensionExports(t){const{extensionId:e}=t;if(!e)throw new Error("Missing extensionId");const n=this.extensionHostService.getActivatedExtension(e);if(!n)throw new Error(`Extension ${e} not activated`);return{success:!0,exports:n.exports}}async handleGetExtensionStatus(t){const{extensionId:e}=t;if(!e)throw new Error("Missing extensionId");const n=this.extensionHostService.isActivated(e),i=this.extensionHostService.getActivatedExtension(e);return{success:!0,activated:n,activationTimes:i?.activationTimes,extensionId:e}}listen(t,e,n){throw new Error(`Event listening not implemented: ${e}`)}}export{s as ExtensionChannel};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Services/ExtensionChannel.ts
+var ExtensionChannel = class {
+  constructor(extensionHostService) {
+    this.extensionHostService = extensionHostService;
+  }
+  extensionHostService;
+  static {
+    __name(this, "ExtensionChannel");
+  }
+  /**
+   * Handle extension-related calls
+   */
+  async call(ctx, command, arg, cancellationToken) {
+    console.log(`[ExtensionChannel] Handling call: ${command}`);
+    switch (command) {
+      case "activateExtension":
+        return await this.handleActivateExtension(arg);
+      case "deactivateExtension":
+        return await this.handleDeactivateExtension(arg);
+      case "getExtensionExports":
+        return await this.handleGetExtensionExports(arg);
+      case "getExtensionStatus":
+        return await this.handleGetExtensionStatus(arg);
+      default:
+        throw new Error(`Unknown command: ${command}`);
+    }
+  }
+  /**
+   * Handle extension activation
+   */
+  async handleActivateExtension(arg) {
+    const { extensionId, activationEvent } = arg;
+    if (!extensionId || !activationEvent) {
+      throw new Error("Missing extensionId or activationEvent");
+    }
+    console.log(`[ExtensionChannel] Activating extension: ${extensionId}`);
+    try {
+      const activatedExtension = await this.extensionHostService.activateExtension(extensionId, {
+        startup: true,
+        activationEvent,
+        extensionId
+      });
+      return {
+        success: true,
+        activationTimes: activatedExtension.activationTimes,
+        exports: activatedExtension.exports
+      };
+    } catch (error) {
+      console.error(
+        `[ExtensionChannel] Failed to activate extension ${extensionId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+  /**
+   * Handle extension deactivation
+   */
+  async handleDeactivateExtension(arg) {
+    const { extensionId } = arg;
+    if (!extensionId) {
+      throw new Error("Missing extensionId");
+    }
+    console.log(
+      `[ExtensionChannel] Deactivating extension: ${extensionId}`
+    );
+    try {
+      await this.extensionHostService.deactivateExtension(extensionId);
+      return {
+        success: true,
+        extensionId
+      };
+    } catch (error) {
+      console.error(
+        `[ExtensionChannel] Failed to deactivate extension ${extensionId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+  /**
+   * Get extension exports
+   */
+  async handleGetExtensionExports(arg) {
+    const { extensionId } = arg;
+    if (!extensionId) {
+      throw new Error("Missing extensionId");
+    }
+    const activatedExtension = this.extensionHostService.getActivatedExtension(extensionId);
+    if (!activatedExtension) {
+      throw new Error(`Extension ${extensionId} not activated`);
+    }
+    return {
+      success: true,
+      exports: activatedExtension.exports
+    };
+  }
+  /**
+   * Get extension status
+   */
+  async handleGetExtensionStatus(arg) {
+    const { extensionId } = arg;
+    if (!extensionId) {
+      throw new Error("Missing extensionId");
+    }
+    const isActivated = this.extensionHostService.isActivated(extensionId);
+    const activatedExtension = this.extensionHostService.getActivatedExtension(extensionId);
+    return {
+      success: true,
+      activated: isActivated,
+      activationTimes: activatedExtension?.activationTimes,
+      extensionId
+    };
+  }
+  /**
+   * Handle extension events
+   */
+  listen(ctx, event, arg) {
+    console.log(`[ExtensionChannel] Listening to event: ${event}`);
+    throw new Error(`Event listening not implemented: ${event}`);
+  }
+};
+export {
+  ExtensionChannel
+};
+//# sourceMappingURL=ExtensionChannel.js.map

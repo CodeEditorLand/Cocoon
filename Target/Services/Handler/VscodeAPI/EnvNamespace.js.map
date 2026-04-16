@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Services/Handler/VscodeAPI/EnvNamespace.ts"],
+  "sourcesContent": ["/**\n * @module Handler/VscodeAPI/EnvNamespace\n * @description\n * Factory for the vscode.env namespace shim.\n * Provides: appName, appRoot, language, machineId, sessionId,\n * uriScheme, clipboard.\n */\n\nimport type { HandlerContext } from \"../HandlerContext.js\";\n\nconst CreateEnvNamespace = (\n\t_Context: HandlerContext,\n) => ({\n\tappName: \"CodeEditorLand\",\n\tappRoot: \"\",\n\tlanguage: \"en\",\n\tmachineId: \"land\",\n\tsessionId: \"land-session\",\n\turiScheme: \"vscode\",\n\tclipboard: { readText: async () => \"\", writeText: async () => {} },\n});\n\nexport default CreateEnvNamespace;\n"],
+  "mappings": ";;;;AAUA,IAAM,qBAAqB,wBAC1B,cACK;AAAA,EACL,SAAS;AAAA,EACT,SAAS;AAAA,EACT,UAAU;AAAA,EACV,WAAW;AAAA,EACX,WAAW;AAAA,EACX,WAAW;AAAA,EACX,WAAW,EAAE,UAAU,mCAAY,IAAZ,aAAgB,WAAW,mCAAY;AAAA,EAAC,GAAb,aAAe;AAClE,IAV2B;AAY3B,IAAO,uBAAQ;",
+  "names": []
+}

@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../Source/Services/InitData.ts"],
   "sourcesContent": ["/**\n * @module Services/InitData\n * @description Extension host initialization data service tag.\n */\n\nimport { Context, Effect, Layer } from \"effect\";\n\nexport interface InitData {\n\treadonly commit: string;\n\treadonly version: string;\n\treadonly parentPid: number;\n\treadonly extensions: ReadonlyArray<unknown>;\n\treadonly workspace: unknown;\n\treadonly environment: Record<string, unknown>;\n}\n\nexport class InitDataService extends Context.Tag(\"Cocoon/InitData\")<\n\tInitDataService,\n\tInitData\n>() {}\n\nexport const InitDataLive = Layer.succeed(InitDataService, {\n\tcommit: \"dev\",\n\tversion: \"0.0.1\",\n\tparentPid: process.pid,\n\textensions: [],\n\tworkspace: null,\n\tenvironment: {},\n});\n\nexport default InitData;\n"],
-  "mappings": ";;AAKA,SAAS,SAAiB,aAAa;AAWhC,MAAM,wBAAwB,QAAQ,IAAI,iBAAiB,EAGhE,EAAE;AAAA,EAnBJ,OAmBI;AAAA;AAAA;AAAC;AAEE,MAAM,eAAe,MAAM,QAAQ,iBAAiB;AAAA,EAC1D,QAAQ;AAAA,EACR,SAAS;AAAA,EACT,WAAW,QAAQ;AAAA,EACnB,YAAY,CAAC;AAAA,EACb,WAAW;AAAA,EACX,aAAa,CAAC;AACf,CAAC;",
+  "mappings": ";;;;AAKA,SAAS,SAAiB,aAAa;AAWhC,IAAM,kBAAN,cAA8B,QAAQ,IAAI,iBAAiB,EAGhE,EAAE;AAAA,EAnBJ,OAmBI;AAAA;AAAA;AAAC;AAEE,IAAM,eAAe,MAAM,QAAQ,iBAAiB;AAAA,EAC1D,QAAQ;AAAA,EACR,SAAS;AAAA,EACT,WAAW,QAAQ;AAAA,EACnB,YAAY,CAAC;AAAA,EACb,WAAW;AAAA,EACX,aAAa,CAAC;AACf,CAAC;",
   "names": []
 }

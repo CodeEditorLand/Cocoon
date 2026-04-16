@@ -1,4 +1,339 @@
-import{createRequire as v}from"module";import{fileURLToPath as f}from"url";import{dirname as g}from"path";import*as c from"@grpc/grpc-js";import*as m from"@grpc/proto-loader";import{v4 as C}from"uuid";import{IMountainClientService as M}from"../Interfaces/IMountainClientService";const S=f(import.meta.url),h=g(S),d=v(import.meta.url);class N{_serviceBrand;client=null;channel=null;mountainHost="localhost";mountainPort=50051;connectionState="DISCONNECTED";connectionStartTime=0;errorCount=0;requestCounter=0;activeRequests=new Map;circuitBreakerState="CLOSED";circuitBreakerFailureCount=0;circuitBreakerSuccessCount=0;circuitBreakerThreshold=5;circuitBreakerSuccessThreshold=3;circuitBreakerTimeout=6e4;circuitBreakerOpenTime=0;circuitBreakerHalfOpenAttempts=0;maxRetries=3;baseRetryDelay=1e3;maxRetryDelay=1e4;retryJitterFactor=.2;healthCheckInterval=null;healthCheckPeriod=3e4;lastHealthCheck=0;consecutiveSuccessfulHealthChecks=0;healthCheckFailures=0;lastHealthCheckError=null;totalRequests=0;totalFailures=0;totalSuccesses=0;averageResponseTime=0;maxResponseTime=0;minResponseTime=1/0;clientVersion="1.0.0";clientId=C();sessionId=C();constructor(){this._serviceBrand=void 0,this.parseEnvironment(),this.registerShutdownHandlers()}parseEnvironment(){const e=process.env.MOUNTAIN_CONNECTION_HOST||"localhost",t=process.env.MOUNTAIN_GRPC_PORT||"50051",n=process.env.MOUNTAIN_CONNECTION_TIMEOUT||"30000",i=process.env.MOUNTAIN_MAX_RETRIES||"3",o=process.env.MOUNTAIN_ENABLE_TLS||"false",r=process.env.MOUNTAIN_HEALTH_CHECK_PERIOD||"30000";if(this.mountainHost=e,this.mountainPort=parseInt(t,10),i&&(this.maxRetries=parseInt(i,10)),r&&(this.healthCheckPeriod=parseInt(r,10)),!this.isValidHost(this.mountainHost))throw new Error(`Invalid Mountain host: ${this.mountainHost}`);if(this.mountainPort<1||this.mountainPort>65535)throw new Error(`Invalid Mountain port: ${this.mountainPort}`);(this.maxRetries<0||this.maxRetries>10)&&(this.maxRetries=3),(this.healthCheckPeriod<5e3||this.healthCheckPeriod>12e4)&&(this.healthCheckPeriod=3e4)}isValidHost(e){return!e||e.trim().length===0?!1:[/^localhost$/,/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,/^\[[0-9a-fA-F:]+\]$/,/^[0-9a-fA-F:]+$/,/^[a-zA-Z0-9.-]+$/,/^[a-zA-Z0-9_-]+$/,/^unix:[\/\\].+$/].some(n=>n.test(e))}registerShutdownHandlers(){process.on("SIGTERM",()=>{this.disconnect().catch(e=>{})}),process.on("SIGINT",()=>{this.disconnect().catch(e=>{})}),typeof process<"u"&&process.env&&process.env.VSCODE_PID}async connect(){if(this.CheckCircuitBreaker(),!(this.connectionState==="CONNECTED"||this.connectionState==="CONNECTING")){this.connectionState="CONNECTING";try{const e=await this.loadProtocolDefinition(),t=c.loadPackageDefinition(e),n=`${this.mountainHost}:${this.mountainPort}`,i={"grpc.max_receive_message_length":1024*1024*100,"grpc.max_send_message_length":1024*1024*100,"grpc.keepalive_time_ms":1e4,"grpc.keepalive_timeout_ms":5e3,"grpc.keepalive_permit_without_calls":1,"grpc.http2.max_pings_without_data":0,"grpc.http2.min_time_between_pings_ms":1e4,"grpc.http2.min_ping_interval_without_data_ms":3e4,"grpc.enable_retries":1,"grpc.max_retry_attempts":3,"grpc.initial_reconnect_backoff_ms":1e3,"grpc.max_reconnect_backoff_ms":3e4,"grpc.enable_channelz":0};this.client=new(t.Vine?.MountainService||t.MountainService)(n,c.credentials.createInsecure(),i),await this.waitForConnection(),this.connectionState="CONNECTED",this.connectionStartTime=Date.now(),this.errorCount=0,this.consecutiveSuccessfulHealthChecks=0,this.healthCheckFailures=0,this.startHealthMonitoring(),this.UpdateCircuitBreaker(!0)}catch(e){throw this.connectionState="FAILED",this.errorCount++,this.circuitBreakerFailureCount++,this.UpdateCircuitBreaker(!1,e),new Error(`Failed to connect to Mountain: ${e instanceof Error?e.message:"Unknown error"}`)}}}async loadProtocolDefinition(){try{const e=d("fs"),t=d("path"),n=[t.resolve(h,"../../../../Mountain/Proto/Vine.proto"),t.resolve(h,"../../../../../Mountain/Proto/Vine.proto"),t.resolve(h,"../../../../../../Element/Mountain/Proto/Vine.proto"),t.resolve(process.cwd(),"Element/Mountain/Proto/Vine.proto"),t.resolve(process.cwd(),"../Mountain/Proto/Vine.proto"),t.resolve(process.cwd(),"../Element/Mountain/Proto/Vine.proto")];let i=null;for(const o of n)if(e.existsSync(o)){i=o;break}if(i)return m.loadSync(i,{keepCase:!0,longs:String,enums:String,defaults:!0,oneofs:!0,includeDirs:[t.dirname(i)],arrays:!0,objects:!0,bytes:Buffer});{const o=`syntax = "proto3";
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Interfaces/IMountainClientService.ts
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
+  "Service/MountainClient",
+  {
+    effect: Effect.gen(function* () {
+      return {};
+    })
+  }
+);
+
+// Source/Services/MountainClientService.ts
+import { createRequire } from "module";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import * as grpc from "@grpc/grpc-js";
+import * as protoLoader from "@grpc/proto-loader";
+import { v4 as uuidv4 } from "uuid";
+var __filename = fileURLToPath(import.meta.url);
+var __dirname = dirname(__filename);
+var require2 = createRequire(import.meta.url);
+var CircuitBreakerState = /* @__PURE__ */ ((CircuitBreakerState2) => {
+  CircuitBreakerState2["Closed"] = "CLOSED";
+  CircuitBreakerState2["Open"] = "OPEN";
+  CircuitBreakerState2["HalfOpen"] = "HALF_OPEN";
+  return CircuitBreakerState2;
+})(CircuitBreakerState || {});
+var ConnectionState = /* @__PURE__ */ ((ConnectionState2) => {
+  ConnectionState2["Disconnected"] = "DISCONNECTED";
+  ConnectionState2["Connecting"] = "CONNECTING";
+  ConnectionState2["Connected"] = "CONNECTED";
+  ConnectionState2["Degraded"] = "DEGRADED";
+  ConnectionState2["Failed"] = "FAILED";
+  return ConnectionState2;
+})(ConnectionState || {});
+var MountainClientService = class {
+  static {
+    __name(this, "MountainClientService");
+  }
+  _serviceBrand;
+  // Core gRPC client and connection state
+  client = null;
+  channel = null;
+  mountainHost = "localhost";
+  mountainPort = 50051;
+  // Default Mountain gRPC port
+  connectionState = "DISCONNECTED" /* Disconnected */;
+  connectionStartTime = 0;
+  errorCount = 0;
+  requestCounter = 0;
+  activeRequests = /* @__PURE__ */ new Map();
+  // Circuit breaker configuration with enhanced tracking
+  circuitBreakerState = "CLOSED" /* Closed */;
+  circuitBreakerFailureCount = 0;
+  circuitBreakerSuccessCount = 0;
+  circuitBreakerThreshold = 5;
+  // Consecutive failures before opening
+  circuitBreakerSuccessThreshold = 3;
+  // Consecutive successes to close
+  circuitBreakerTimeout = 6e4;
+  // 60 seconds recovery timeout
+  circuitBreakerOpenTime = 0;
+  circuitBreakerHalfOpenAttempts = 0;
+  // Retry configuration with exponential backoff and jitter
+  maxRetries = 3;
+  baseRetryDelay = 1e3;
+  // Base delay in milliseconds
+  maxRetryDelay = 1e4;
+  // Maximum delay in milliseconds
+  retryJitterFactor = 0.2;
+  // 20% jitter
+  // Health monitoring with comprehensive tracking
+  healthCheckInterval = null;
+  healthCheckPeriod = 3e4;
+  // 30 seconds
+  lastHealthCheck = 0;
+  consecutiveSuccessfulHealthChecks = 0;
+  healthCheckFailures = 0;
+  lastHealthCheckError = null;
+  // Performance metrics
+  totalRequests = 0;
+  totalFailures = 0;
+  totalSuccesses = 0;
+  averageResponseTime = 0;
+  maxResponseTime = 0;
+  minResponseTime = Infinity;
+  // Connection metadata
+  clientVersion = "1.0.0";
+  clientId = uuidv4();
+  sessionId = uuidv4();
+  constructor() {
+    this._serviceBrand = void 0;
+    console.log(
+      `[MountainClientService] Initializing Mountain gRPC client (ID: ${this.clientId})`
+    );
+    this.parseEnvironment();
+    console.log(
+      `[MountainClientService] Configured for ${this.mountainHost}:${this.mountainPort}, Session: ${this.sessionId}`
+    );
+    this.registerShutdownHandlers();
+  }
+  /**
+   * Parse environment variables with comprehensive configuration validation
+   */
+  parseEnvironment() {
+    const mountainHost = process.env.MOUNTAIN_CONNECTION_HOST || "localhost";
+    const mountainPort = process.env.MOUNTAIN_GRPC_PORT || "50051";
+    const connectionTimeout = process.env.MOUNTAIN_CONNECTION_TIMEOUT || "30000";
+    const maxRetries = process.env.MOUNTAIN_MAX_RETRIES || "3";
+    const enableTLS = process.env.MOUNTAIN_ENABLE_TLS || "false";
+    const healthCheckPeriod = process.env.MOUNTAIN_HEALTH_CHECK_PERIOD || "30000";
+    this.mountainHost = mountainHost;
+    this.mountainPort = parseInt(mountainPort, 10);
+    if (maxRetries) {
+      this.maxRetries = parseInt(maxRetries, 10);
+    }
+    if (healthCheckPeriod) {
+      this.healthCheckPeriod = parseInt(healthCheckPeriod, 10);
+    }
+    console.log(
+      `[MountainClientService] Environment parsed: MOUNTAIN_CONNECTION_HOST=${this.mountainHost}, MOUNTAIN_GRPC_PORT=${this.mountainPort}, MAX_RETRIES=${this.maxRetries}`
+    );
+    if (!this.isValidHost(this.mountainHost)) {
+      throw new Error(`Invalid Mountain host: ${this.mountainHost}`);
+    }
+    if (this.mountainPort < 1 || this.mountainPort > 65535) {
+      throw new Error(`Invalid Mountain port: ${this.mountainPort}`);
+    }
+    if (this.maxRetries < 0 || this.maxRetries > 10) {
+      console.warn(
+        `[MountainClientService] Invalid max retries: ${this.maxRetries}, using default: 3`
+      );
+      this.maxRetries = 3;
+    }
+    if (this.healthCheckPeriod < 5e3 || this.healthCheckPeriod > 12e4) {
+      console.warn(
+        `[MountainClientService] Invalid health check period: ${this.healthCheckPeriod}ms, using default: 30000ms`
+      );
+      this.healthCheckPeriod = 3e4;
+    }
+  }
+  /**
+   * Validate host configuration with comprehensive pattern matching
+   */
+  isValidHost(host) {
+    if (!host || host.trim().length === 0) {
+      return false;
+    }
+    const validHostPatterns = [
+      /^localhost$/,
+      // localhost
+      /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
+      // IPv4
+      /^\[[0-9a-fA-F:]+\]$/,
+      // IPv6 (bracketed)
+      /^[0-9a-fA-F:]+$/,
+      // IPv6 (unbracketed)
+      /^[a-zA-Z0-9.-]+$/,
+      // Domain name
+      /^[a-zA-Z0-9_-]+$/,
+      // Simple hostname
+      /^unix:[\/\\].+$/
+      // Unix domain socket
+    ];
+    return validHostPatterns.some((pattern) => pattern.test(host));
+  }
+  /**
+   * Register graceful shutdown handlers for VS Code extension compatibility
+   */
+  registerShutdownHandlers() {
+    process.on("SIGTERM", () => {
+      console.log(
+        "[MountainClientService] Received SIGTERM, shutting down gracefully"
+      );
+      this.disconnect().catch((error) => {
+        console.error(
+          "[MountainClientService] Graceful shutdown failed:",
+          error
+        );
+      });
+    });
+    process.on("SIGINT", () => {
+      console.log(
+        "[MountainClientService] Received SIGINT, shutting down gracefully"
+      );
+      this.disconnect().catch((error) => {
+        console.error(
+          "[MountainClientService] Graceful shutdown failed:",
+          error
+        );
+      });
+    });
+    if (typeof process !== "undefined" && process.env && process.env.VSCODE_PID) {
+      console.log(
+        "[MountainClientService] Running in VS Code extension context"
+      );
+    }
+  }
+  /**
+   * Connect to Mountain gRPC server with comprehensive circuit breaker protection
+   * and proper gRPC channel management
+   */
+  async connect() {
+    this.CheckCircuitBreaker();
+    if (this.connectionState === "CONNECTED" /* Connected */ || this.connectionState === "CONNECTING" /* Connecting */) {
+      console.warn(
+        `[MountainClientService] Already ${this.connectionState.toLowerCase()} to Mountain`
+      );
+      return;
+    }
+    console.log(
+      `[MountainClientService] Connecting to Mountain at ${this.mountainHost}:${this.mountainPort} (Session: ${this.sessionId})`
+    );
+    this.connectionState = "CONNECTING" /* Connecting */;
+    try {
+      const packageDefinition = await this.loadProtocolDefinition();
+      const protoDescriptor = grpc.loadPackageDefinition(
+        packageDefinition
+      );
+      const target = `${this.mountainHost}:${this.mountainPort}`;
+      const channelOptions = {
+        "grpc.max_receive_message_length": 1024 * 1024 * 100,
+        // 100MB max message size
+        "grpc.max_send_message_length": 1024 * 1024 * 100,
+        // 100MB max message size
+        "grpc.keepalive_time_ms": 1e4,
+        // 10s keepalive ping
+        "grpc.keepalive_timeout_ms": 5e3,
+        // 5s keepalive timeout
+        "grpc.keepalive_permit_without_calls": 1,
+        // Allow keepalive without calls
+        "grpc.http2.max_pings_without_data": 0,
+        // No pings without data
+        "grpc.http2.min_time_between_pings_ms": 1e4,
+        // 10s min between pings
+        "grpc.http2.min_ping_interval_without_data_ms": 3e4,
+        // 30s min ping interval
+        "grpc.enable_retries": 1,
+        // Enable gRPC built-in retries
+        "grpc.max_retry_attempts": 3,
+        // Max retry attempts
+        "grpc.initial_reconnect_backoff_ms": 1e3,
+        // Initial reconnect backoff
+        "grpc.max_reconnect_backoff_ms": 3e4,
+        // Max reconnect backoff
+        "grpc.enable_channelz": 0
+        // Disable channelz for perf
+      };
+      this.client = new (protoDescriptor.Vine?.MountainService || protoDescriptor.MountainService)(
+        target,
+        grpc.credentials.createInsecure(),
+        channelOptions
+      );
+      await this.waitForConnection();
+      this.connectionState = "CONNECTED" /* Connected */;
+      this.connectionStartTime = Date.now();
+      this.errorCount = 0;
+      this.consecutiveSuccessfulHealthChecks = 0;
+      this.healthCheckFailures = 0;
+      this.startHealthMonitoring();
+      console.log(
+        `[MountainClientService] Successfully connected to Mountain (Session: ${this.sessionId})`
+      );
+      this.UpdateCircuitBreaker(true);
+    } catch (error) {
+      this.connectionState = "FAILED" /* Failed */;
+      this.errorCount++;
+      this.circuitBreakerFailureCount++;
+      console.error(
+        `[MountainClientService] Failed to connect to Mountain:`,
+        error
+      );
+      this.UpdateCircuitBreaker(false, error);
+      throw new Error(
+        `Failed to connect to Mountain: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+  }
+  /**
+   * Load protocol definition with comprehensive error handling and fallback strategies
+   */
+  async loadProtocolDefinition() {
+    console.log(
+      "[MountainClientService] Loading Vine.proto protocol definition"
+    );
+    try {
+      const fs = require2("fs");
+      const path = require2("path");
+      const SearchPaths = [
+        path.resolve(__dirname, "../../../../Mountain/Proto/Vine.proto"),
+        path.resolve(__dirname, "../../../../../Mountain/Proto/Vine.proto"),
+        path.resolve(__dirname, "../../../../../../Element/Mountain/Proto/Vine.proto"),
+        path.resolve(process.cwd(), "Element/Mountain/Proto/Vine.proto"),
+        path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto"),
+        path.resolve(process.cwd(), "../Element/Mountain/Proto/Vine.proto")
+      ];
+      let vineProtoPath = null;
+      for (const P of SearchPaths) {
+        if (fs.existsSync(P)) {
+          vineProtoPath = P;
+          break;
+        }
+      }
+      if (vineProtoPath) {
+        console.log(
+          `[MountainClientService] Found Vine.proto at: ${vineProtoPath}`
+        );
+        return protoLoader.loadSync(vineProtoPath, {
+          keepCase: true,
+          // Preserve field names
+          longs: String,
+          // Use String for uint64 compatibility
+          enums: String,
+          // Use String for enum compatibility
+          defaults: true,
+          // Include default values
+          oneofs: true,
+          // Support oneof fields
+          includeDirs: [path.dirname(vineProtoPath)],
+          // Include proto directory
+          arrays: true,
+          // Support repeated fields
+          objects: true,
+          // Support message objects
+          bytes: Buffer
+          // Use Buffer for bytes fields
+        });
+      } else {
+        console.warn(
+          "[MountainClientService] Vine.proto not found at:",
+          vineProtoPath
+        );
+        const fallbackProtoContent = `syntax = "proto3";
 
 package Vine;
 
@@ -45,4 +380,583 @@ message Empty {}
 
 message RPCDataPayload {
     bytes Data = 1;
-}`,r=d("os").tmpdir(),a=t.join(r,"vine_fallback.proto");return e.writeFileSync(a,o),m.loadSync(a,{keepCase:!0,longs:String,enums:String,defaults:!0,oneofs:!0,arrays:!0,objects:!0,bytes:Buffer})}}catch(e){throw new Error(`Failed to load Vine.proto: ${e instanceof Error?e.message:"Unknown error"}`)}}waitForConnection(){return new Promise((e,t)=>{if(!this.client){t(new Error("Client not initialized"));return}const n=Date.now(),i=3e3,o=()=>{const r=this.client.getChannel();if(r){const a=r.getConnectivityState(!0);if(a===c.connectivityState.READY){e();return}else if(a===c.connectivityState.TRANSIENT_FAILURE||a===c.connectivityState.SHUTDOWN){t(new Error(`Connection failed with state: ${c.connectivityState[a]}`));return}}if(Date.now()-n>i){t(new Error("Connection timeout exceeded"));return}setTimeout(o,100)};setTimeout(o,100)})}async sendRequest(e,t,n){if(this.CheckCircuitBreaker(),this.connectionState!=="CONNECTED"||!this.client)throw new Error("Not connected to Mountain");const i=this.generateRequestId(),o=Date.now();this.activeRequests.set(BigInt(i),{method:e,startTime:o});try{if(n?.isCancellationRequested)throw new Error("Request cancelled before execution");const r={RequestIdentifier:BigInt(i),Method:e,Parameter:this.SerializeParameters(t)},a=await this.SendRequestWithRetry(r,n),l=Date.now()-o;if(a.error){const s=a.error;this.circuitBreakerFailureCount++,this.UpdateCircuitBreaker(!1,new Error(`RPC Error: ${s.Message} (Code: ${s.Code})`));const u=new Error(`Mountain request failed: ${s.Message}`);throw u.code=s.Code,u.data=s.Data?this.DeserializeResponse(s.Data):void 0,u}const p=this.DeserializeResponse(a.Result);return this.trackRequestMetrics(e,l,!0),this.UpdateCircuitBreaker(!0),p}catch(r){const a=Date.now()-o;if(this.errorCount++,this.circuitBreakerFailureCount++,this.UpdateCircuitBreaker(!1,r),n?.isCancellationRequested)throw new Error(`Request ${i} was cancelled`);if(this.isConnectionError(r))try{return await this.reconnect(),this.sendRequest(e,t,n)}catch{}throw r}finally{this.activeRequests.delete(BigInt(i))}}trackRequestMetrics(e,t,n){this.totalRequests++,n?this.totalSuccesses++:this.totalFailures++,this.averageResponseTime=(this.averageResponseTime*(this.totalRequests-1)+t)/this.totalRequests,this.maxResponseTime=Math.max(this.maxResponseTime,t),this.minResponseTime=Math.min(this.minResponseTime,t)}isConnectionError(e){return e?[e.code==="UNAVAILABLE",e.code==="DEADLINE_EXCEEDED",e.code==="CANCELLED",e.code==="UNKNOWN",e.code===14,e.code===4,e.code===1,e.code===2,e.message?.includes("connect"),e.message?.includes("connection"),e.message?.includes("socket"),e.message?.includes("network"),e.message?.includes("ECONN"),e.message?.includes("ENOTFOUND"),e.message?.includes("ETIMEDOUT"),e.message?.includes("refused"),e.message?.includes("timeout"),e.message?.includes("channel"),e.code==="ECONNREFUSED",e.code==="ECONNRESET",e.code==="ETIMEDOUT",e.code==="ENOTFOUND"].some(n=>n===!0):!1}async SendRequestWithRetry(e){if(!this.client)throw new Error("Client not initialized");let t=null;for(let n=0;n<this.maxRetries;n++)try{return await new Promise((o,r)=>{this.client.ProcessCocoonRequest(e,(a,l)=>{a?r(a):o(l)})})}catch(i){if(t=i,!this.isTransientError(i))throw i;if(n<this.maxRetries-1){const o=this.CalculateRetryDelay(n);await new Promise(r=>setTimeout(r,o))}}throw t||new Error("Max retry attempts exceeded")}CalculateRetryDelay(e){const t=this.baseRetryDelay*Math.pow(2,e),n=Math.random()*.1*t;return Math.min(t+n,this.maxRetryDelay)}isTransientError(e){return e&&(["UNAVAILABLE","DEADLINE_EXCEEDED","INTERNAL","RESOURCE_EXHAUSTED"].includes(e.code)||e.code===14||e.code===4||this.isConnectionError(e))}SerializeParameters(e){try{if(e==null)return Buffer.from(JSON.stringify({}));const t=JSON.stringify(e);return Buffer.from(t,"utf8")}catch(t){throw new Error(`Parameter serialization failed: ${t instanceof Error?t.message:"Unknown error"}`)}}DeserializeResponse(e){try{if(!e||e.length===0)return{};const t=e.toString("utf8");return JSON.parse(t)}catch{return{}}}UpdateCircuitBreaker(e){e?(this.circuitBreakerFailureCount=0,this.circuitBreakerState==="HALF_OPEN"&&(this.circuitBreakerState="CLOSED")):(this.circuitBreakerFailureCount++,this.circuitBreakerFailureCount>=this.circuitBreakerThreshold&&(this.circuitBreakerState="OPEN",this.circuitBreakerOpenTime=Date.now()))}CheckCircuitBreaker(){if(this.circuitBreakerState==="OPEN")if(Date.now()-this.circuitBreakerOpenTime>=this.circuitBreakerTimeout)this.circuitBreakerState="HALF_OPEN";else throw new Error(`Circuit breaker is OPEN. Service unavailable. Time remaining until half-open: ${Math.round((this.circuitBreakerTimeout-(Date.now()-this.circuitBreakerOpenTime))/1e3)}s`)}startHealthMonitoring(){this.healthCheckInterval||(this.lastHealthCheck=Date.now(),this.healthCheckInterval=setInterval(()=>{this.performHealthCheck()},this.healthCheckPeriod))}stopHealthMonitoring(){this.healthCheckInterval&&(clearInterval(this.healthCheckInterval),this.healthCheckInterval=null)}async performHealthCheck(){this.lastHealthCheck=Date.now();try{const e=this.client?.getChannel?.();if(e){const t=e.getConnectivityState(!1);if(t!==2)throw new Error(`Channel not ready (state: ${t})`)}this.consecutiveSuccessfulHealthChecks++,this.consecutiveSuccessfulHealthChecks>=3&&this.circuitBreakerState==="HALF_OPEN"&&this.UpdateCircuitBreaker(!0)}catch{this.consecutiveSuccessfulHealthChecks=0,this.errorCount++,this.circuitBreakerFailureCount++,this.UpdateCircuitBreaker(!1),this.isConnected||this.reconnect().catch(t=>{})}}async sendNotification(e,t){if(!this.isConnected||!this.client)throw new Error("Not connected to Mountain");try{const n={Method:e,Parameter:Buffer.from(JSON.stringify(t))};await this.makeNotification(n)}catch{this.errorCount++}}async makeNotification(e){if(!this.client)throw new Error("Client not initialized");try{await new Promise((t,n)=>{this.client.SendCocoonNotification(e,i=>{i?n(i):t()})})}catch(t){throw t}}async cancelOperation(e,t){if(!this.isConnected||!this.client)throw new Error("Not connected to Mountain");try{const n={RequestIdentifierToCancel:BigInt(e)};await this.makeCancelRequest(n)}catch{this.errorCount++}}async makeCancelRequest(e){if(!this.client)throw new Error("Client not initialized");try{await new Promise((t,n)=>{this.client.CancelOperation(e,i=>{i?n(i):t()})})}catch(t){throw t}}generateRequestId(){return++this.requestCounter}async disconnect(){!this.isConnected||!this.client||(this.stopHealthMonitoring(),this.client=null,this.isConnected=!1)}async reconnect(){await this.disconnect(),await this.connect()}getStatus(){return{connected:this.isConnected,mountainHost:this.mountainHost,mountainPort:this.mountainPort,errorCount:this.errorCount,...this.isConnected?{uptime:Date.now()-this.connectionStartTime}:{},circuitBreakerState:this.circuitBreakerState,circuitBreakerFailureCount:this.circuitBreakerFailureCount,...this.lastHealthCheck?{lastHealthCheck:new Date(this.lastHealthCheck)}:{}}}}const I=M.Default;export{N as MountainClientService,I as MountainClientServiceLayer};
+}`;
+        const tempDir = require2("os").tmpdir();
+        const tempProtoPath = path.join(tempDir, "vine_fallback.proto");
+        fs.writeFileSync(tempProtoPath, fallbackProtoContent);
+        console.log(
+          `[MountainClientService] Using fallback protocol at: ${tempProtoPath}`
+        );
+        return protoLoader.loadSync(tempProtoPath, {
+          keepCase: true,
+          longs: String,
+          enums: String,
+          defaults: true,
+          oneofs: true,
+          arrays: true,
+          objects: true,
+          bytes: Buffer
+        });
+      }
+    } catch (error) {
+      console.error(
+        "[MountainClientService] Failed to load protocol definition:",
+        error
+      );
+      throw new Error(
+        `Failed to load Vine.proto: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+  }
+  /**
+   * Wait for connection with comprehensive timeout and readiness checking
+   */
+  waitForConnection() {
+    return new Promise((resolve, reject) => {
+      if (!this.client) {
+        reject(new Error("Client not initialized"));
+        return;
+      }
+      const startTime = Date.now();
+      const timeout = 3e3;
+      const checkConnection = /* @__PURE__ */ __name(() => {
+        const channel = this.client.getChannel();
+        if (channel) {
+          const state = channel.getConnectivityState(true);
+          if (state === grpc.connectivityState.READY) {
+            console.log(
+              "[MountainClientService] Connection established and ready"
+            );
+            resolve();
+            return;
+          } else if (state === grpc.connectivityState.TRANSIENT_FAILURE || state === grpc.connectivityState.SHUTDOWN) {
+            reject(
+              new Error(
+                `Connection failed with state: ${grpc.connectivityState[state]}`
+              )
+            );
+            return;
+          }
+        }
+        if (Date.now() - startTime > timeout) {
+          reject(new Error("Connection timeout exceeded"));
+          return;
+        }
+        setTimeout(checkConnection, 100);
+      }, "checkConnection");
+      setTimeout(checkConnection, 100);
+    });
+  }
+  /**
+   * Send request to Mountain with comprehensive circuit breaker, retry logic,
+   * cancellation support, and VS Code extension compatibility
+   */
+  async sendRequest(method, parameters, cancellationToken) {
+    this.CheckCircuitBreaker();
+    if (this.connectionState !== "CONNECTED" /* Connected */ || !this.client) {
+      throw new Error("Not connected to Mountain");
+    }
+    const requestIdentifier = this.generateRequestId();
+    const startTime = Date.now();
+    this.activeRequests.set(BigInt(requestIdentifier), {
+      method,
+      startTime
+    });
+    console.log(
+      `[MountainClientService] Sending request to Mountain: ${method}, ID: ${requestIdentifier}`
+    );
+    try {
+      if (cancellationToken?.isCancellationRequested) {
+        throw new Error("Request cancelled before execution");
+      }
+      const request = {
+        RequestIdentifier: BigInt(requestIdentifier),
+        Method: method,
+        Parameter: this.SerializeParameters(parameters)
+      };
+      const response = await this.SendRequestWithRetry(
+        request,
+        cancellationToken
+      );
+      const duration = Date.now() - startTime;
+      if (response.error) {
+        const rpcError = response.error;
+        this.circuitBreakerFailureCount++;
+        this.UpdateCircuitBreaker(
+          false,
+          new Error(
+            `RPC Error: ${rpcError.Message} (Code: ${rpcError.Code})`
+          )
+        );
+        const error = new Error(
+          `Mountain request failed: ${rpcError.Message}`
+        );
+        error.code = rpcError.Code;
+        error.data = rpcError.Data ? this.DeserializeResponse(rpcError.Data) : void 0;
+        throw error;
+      }
+      const responseData = this.DeserializeResponse(response.Result);
+      console.log(
+        `[MountainClientService] Request ${method} completed successfully in ${duration}ms`
+      );
+      this.trackRequestMetrics(method, duration, true);
+      this.UpdateCircuitBreaker(true);
+      return responseData;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      this.errorCount++;
+      this.circuitBreakerFailureCount++;
+      console.error(
+        `[MountainClientService] Request ${method} failed after ${duration}ms:`,
+        error
+      );
+      this.UpdateCircuitBreaker(false, error);
+      if (cancellationToken?.isCancellationRequested) {
+        console.log(
+          `[MountainClientService] Request ${requestIdentifier} was cancelled`
+        );
+        throw new Error(`Request ${requestIdentifier} was cancelled`);
+      }
+      if (this.isConnectionError(error)) {
+        console.log(
+          "[MountainClientService] Connection error detected, attempting auto-reconnect"
+        );
+        try {
+          await this.reconnect();
+          console.log(
+            "[MountainClientService] Auto-reconnect successful, retrying request"
+          );
+          return this.sendRequest(
+            method,
+            parameters,
+            cancellationToken
+          );
+        } catch (reconnectError) {
+          console.error(
+            "[MountainClientService] Auto-reconnect failed:",
+            reconnectError
+          );
+        }
+      }
+      throw error;
+    } finally {
+      this.activeRequests.delete(BigInt(requestIdentifier));
+    }
+  }
+  /**
+   * Track comprehensive request performance metrics for observability
+   */
+  trackRequestMetrics(method, duration, success) {
+    this.totalRequests++;
+    if (success) {
+      this.totalSuccesses++;
+    } else {
+      this.totalFailures++;
+    }
+    this.averageResponseTime = (this.averageResponseTime * (this.totalRequests - 1) + duration) / this.totalRequests;
+    this.maxResponseTime = Math.max(this.maxResponseTime, duration);
+    this.minResponseTime = Math.min(this.minResponseTime, duration);
+    console.log(
+      `[MountainClientService] Request metrics: ${method}, ${duration}ms, success: ${success}`
+    );
+  }
+  /**
+   * Check if error is a connection error with comprehensive pattern matching
+   */
+  isConnectionError(error) {
+    if (!error) return false;
+    const connectionErrorPatterns = [
+      // gRPC error codes
+      error.code === "UNAVAILABLE",
+      error.code === "DEADLINE_EXCEEDED",
+      error.code === "CANCELLED",
+      error.code === "UNKNOWN",
+      // Numeric gRPC error codes
+      error.code === 14,
+      // UNAVAILABLE
+      error.code === 4,
+      // DEADLINE_EXCEEDED
+      error.code === 1,
+      // CANCELLED
+      error.code === 2,
+      // UNKNOWN
+      // Error message patterns
+      error.message?.includes("connect"),
+      error.message?.includes("connection"),
+      error.message?.includes("socket"),
+      error.message?.includes("network"),
+      error.message?.includes("ECONN"),
+      error.message?.includes("ENOTFOUND"),
+      error.message?.includes("ETIMEDOUT"),
+      error.message?.includes("refused"),
+      error.message?.includes("timeout"),
+      error.message?.includes("channel"),
+      // Node.js error codes
+      error.code === "ECONNREFUSED",
+      error.code === "ECONNRESET",
+      error.code === "ETIMEDOUT",
+      error.code === "ENOTFOUND"
+    ];
+    return connectionErrorPatterns.some((pattern) => pattern === true);
+  }
+  /**
+   * Send request with exponential backoff retry logic
+   */
+  async SendRequestWithRetry(request) {
+    if (!this.client) {
+      throw new Error("Client not initialized");
+    }
+    let lastError = null;
+    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+      try {
+        const response = await new Promise(
+          (resolve, reject) => {
+            this.client.ProcessCocoonRequest(
+              request,
+              (error, response2) => {
+                if (error) reject(error);
+                else resolve(response2);
+              }
+            );
+          }
+        );
+        return response;
+      } catch (error) {
+        lastError = error;
+        if (!this.isTransientError(error)) {
+          throw error;
+        }
+        if (attempt < this.maxRetries - 1) {
+          const delay = this.CalculateRetryDelay(attempt);
+          console.warn(
+            `[MountainClientService] Request ${request.RequestIdentifier} failed (attempt ${attempt + 1}/${this.maxRetries}), retrying in ${delay}ms:`,
+            error
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+    }
+    throw lastError || new Error("Max retry attempts exceeded");
+  }
+  /**
+   * Calculate retry delay with exponential backoff
+   */
+  CalculateRetryDelay(attempt) {
+    const exponentialDelay = this.baseRetryDelay * Math.pow(2, attempt);
+    const jitter = Math.random() * 0.1 * exponentialDelay;
+    return Math.min(exponentialDelay + jitter, this.maxRetryDelay);
+  }
+  /**
+   * Check if error is transient and should be retried
+   */
+  isTransientError(error) {
+    const transientCodes = [
+      "UNAVAILABLE",
+      "DEADLINE_EXCEEDED",
+      "INTERNAL",
+      "RESOURCE_EXHAUSTED"
+    ];
+    return error && (transientCodes.includes(error.code) || error.code === 14 || // UNAVAILABLE
+    error.code === 4 || // DEADLINE_EXCEEDED
+    this.isConnectionError(error));
+  }
+  /**
+   * Serialize parameters to buffer with validation
+   */
+  SerializeParameters(parameters) {
+    try {
+      if (parameters === null || parameters === void 0) {
+        return Buffer.from(JSON.stringify({}));
+      }
+      const serialized = JSON.stringify(parameters);
+      return Buffer.from(serialized, "utf8");
+    } catch (error) {
+      console.error(
+        "[MountainClientService] Failed to serialize parameters:",
+        error
+      );
+      throw new Error(
+        `Parameter serialization failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+  }
+  /**
+   * Deserialize response buffer with error handling
+   */
+  DeserializeResponse(buffer) {
+    try {
+      if (!buffer || buffer.length === 0) {
+        return {};
+      }
+      const serialized = buffer.toString("utf8");
+      return JSON.parse(serialized);
+    } catch (error) {
+      console.error(
+        "[MountainClientService] Failed to deserialize response:",
+        error
+      );
+      return {};
+    }
+  }
+  /**
+   * Update circuit breaker state based on operation result
+   */
+  UpdateCircuitBreaker(success) {
+    if (success) {
+      this.circuitBreakerFailureCount = 0;
+      if (this.circuitBreakerState === "HALF_OPEN" /* HalfOpen */) {
+        console.log(
+          "[MountainClientService] Circuit breaker transitioning to CLOSED (service recovered)"
+        );
+        this.circuitBreakerState = "CLOSED" /* Closed */;
+      }
+    } else {
+      this.circuitBreakerFailureCount++;
+      if (this.circuitBreakerFailureCount >= this.circuitBreakerThreshold) {
+        this.circuitBreakerState = "OPEN" /* Open */;
+        this.circuitBreakerOpenTime = Date.now();
+        console.log(
+          `[MountainClientService] Circuit breaker OPENED after ${this.circuitBreakerFailureCount} failures`
+        );
+      }
+    }
+  }
+  /**
+   * Check circuit breaker state and throw if open
+   */
+  CheckCircuitBreaker() {
+    if (this.circuitBreakerState === "OPEN" /* Open */) {
+      if (Date.now() - this.circuitBreakerOpenTime >= this.circuitBreakerTimeout) {
+        this.circuitBreakerState = "HALF_OPEN" /* HalfOpen */;
+        console.log(
+          "[MountainClientService] Circuit breaker transitioning to HALF_OPEN for recovery"
+        );
+      } else {
+        throw new Error(
+          `Circuit breaker is OPEN. Service unavailable. Time remaining until half-open: ${Math.round((this.circuitBreakerTimeout - (Date.now() - this.circuitBreakerOpenTime)) / 1e3)}s`
+        );
+      }
+    }
+  }
+  /**
+   * Start health monitoring
+   */
+  startHealthMonitoring() {
+    if (this.healthCheckInterval) {
+      return;
+    }
+    this.lastHealthCheck = Date.now();
+    this.healthCheckInterval = setInterval(() => {
+      this.performHealthCheck();
+    }, this.healthCheckPeriod);
+    console.log(
+      `[MountainClientService] Health monitoring started (interval: ${this.healthCheckPeriod}ms)`
+    );
+  }
+  /**
+   * Stop health monitoring
+   */
+  stopHealthMonitoring() {
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+      this.healthCheckInterval = null;
+      console.log("[MountainClientService] Health monitoring stopped");
+    }
+  }
+  /**
+   * Perform health check
+   */
+  async performHealthCheck() {
+    this.lastHealthCheck = Date.now();
+    try {
+      const channel = this.client?.getChannel?.();
+      if (channel) {
+        const state = channel.getConnectivityState(false);
+        if (state !== 2) {
+          throw new Error(
+            `Channel not ready (state: ${state})`
+          );
+        }
+      }
+      this.consecutiveSuccessfulHealthChecks++;
+      console.log(
+        `[MountainClientService] Health check passed (consecutive successes: ${this.consecutiveSuccessfulHealthChecks})`
+      );
+      if (this.consecutiveSuccessfulHealthChecks >= 3 && this.circuitBreakerState === "HALF_OPEN" /* HalfOpen */) {
+        this.UpdateCircuitBreaker(true);
+      }
+    } catch (error) {
+      this.consecutiveSuccessfulHealthChecks = 0;
+      this.errorCount++;
+      this.circuitBreakerFailureCount++;
+      this.UpdateCircuitBreaker(false);
+      console.error(
+        "[MountainClientService] Health check failed:",
+        error
+      );
+      if (!this.isConnected) {
+        console.log(
+          "[MountainClientService] Connection lost, attempting reconnect"
+        );
+        this.reconnect().catch((err) => {
+          console.error(
+            "[MountainClientService] Auto-reconnect failed:",
+            err
+          );
+        });
+      }
+    }
+  }
+  /**
+   * Send notification to Mountain
+   */
+  async sendNotification(method, parameters) {
+    if (!this.isConnected || !this.client) {
+      throw new Error("Not connected to Mountain");
+    }
+    console.log(
+      `[MountainClientService] Sending notification to Mountain: ${method}`
+    );
+    try {
+      const notification = {
+        Method: method,
+        Parameter: Buffer.from(JSON.stringify(parameters))
+      };
+      await this.makeNotification(notification);
+      console.log(
+        `[MountainClientService] Notification ${method} sent successfully`
+      );
+    } catch (error) {
+      this.errorCount++;
+      console.error(
+        `[MountainClientService] Notification ${method} failed:`,
+        error
+      );
+      console.warn(
+        `[MountainClientService] Notification ${method} failed, but continuing (fire-and-forget)`
+      );
+    }
+  }
+  /**
+   * Make gRPC notification with promise interface
+   */
+  async makeNotification(notification) {
+    if (!this.client) {
+      throw new Error("Client not initialized");
+    }
+    try {
+      await new Promise((resolve, reject) => {
+        this.client.SendCocoonNotification(
+          notification,
+          (error) => {
+            if (error) reject(error);
+            else resolve();
+          }
+        );
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+  /**
+   * Cancel operation
+   */
+  async cancelOperation(requestIdentifier, reason) {
+    if (!this.isConnected || !this.client) {
+      throw new Error("Not connected to Mountain");
+    }
+    console.log(
+      `[MountainClientService] Canceling operation: ${requestIdentifier}, reason: ${reason}`
+    );
+    try {
+      const cancelRequest = {
+        RequestIdentifierToCancel: BigInt(requestIdentifier)
+        // Use BigInt for uint64 compatibility
+      };
+      await this.makeCancelRequest(cancelRequest);
+      console.log(
+        `[MountainClientService] Operation ${requestIdentifier} canceled`
+      );
+    } catch (error) {
+      this.errorCount++;
+      console.error(
+        `[MountainClientService] Cancel operation ${requestIdentifier} failed:`,
+        error
+      );
+      console.warn(
+        `[MountainClientService] Cancel operation ${requestIdentifier} failed, but continuing`
+      );
+    }
+  }
+  /**
+   * Make gRPC cancel request with promise interface
+   */
+  async makeCancelRequest(cancelRequest) {
+    if (!this.client) {
+      throw new Error("Client not initialized");
+    }
+    try {
+      await new Promise((resolve, reject) => {
+        this.client.CancelOperation(
+          cancelRequest,
+          (error) => {
+            if (error) reject(error);
+            else resolve();
+          }
+        );
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+  /**
+   * Generate unique request identifier
+   */
+  generateRequestId() {
+    return ++this.requestCounter;
+  }
+  /**
+   * Disconnect from Mountain
+   */
+  async disconnect() {
+    if (!this.isConnected || !this.client) {
+      console.warn("[MountainClientService] Not connected to Mountain");
+      return;
+    }
+    console.log("[MountainClientService] Disconnecting from Mountain");
+    this.stopHealthMonitoring();
+    this.client = null;
+    this.isConnected = false;
+    console.log("[MountainClientService] Disconnected from Mountain");
+  }
+  /**
+   * Reconnect to Mountain
+   */
+  async reconnect() {
+    console.log("[MountainClientService] Reconnecting to Mountain");
+    await this.disconnect();
+    await this.connect();
+    console.log("[MountainClientService] Reconnected to Mountain");
+  }
+  /**
+   * Get connection status with circuit breaker information
+   */
+  getStatus() {
+    return {
+      connected: this.isConnected,
+      mountainHost: this.mountainHost,
+      mountainPort: this.mountainPort,
+      errorCount: this.errorCount,
+      ...this.isConnected ? { uptime: Date.now() - this.connectionStartTime } : {},
+      circuitBreakerState: this.circuitBreakerState,
+      circuitBreakerFailureCount: this.circuitBreakerFailureCount,
+      ...this.lastHealthCheck ? { lastHealthCheck: new Date(this.lastHealthCheck) } : {}
+    };
+  }
+};
+var MountainClientServiceLayer = IMountainClientService.Default;
+export {
+  MountainClientService,
+  MountainClientServiceLayer
+};
+//# sourceMappingURL=MountainClientService.js.map

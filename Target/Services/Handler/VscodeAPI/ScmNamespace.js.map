@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Services/Handler/VscodeAPI/ScmNamespace.ts"],
+  "sourcesContent": ["/**\n * @module Handler/VscodeAPI/ScmNamespace\n * @description\n * Factory for the vscode.scm namespace shim.\n * Provides: createSourceControl with input box and resource group stubs.\n */\n\nimport type { HandlerContext } from \"../HandlerContext.js\";\n\nconst CreateScmNamespace = (\n\t_Context: HandlerContext,\n) => ({\n\tcreateSourceControl: () => ({\n\t\tinputBox: { value: \"\" },\n\t\tcreateResourceGroup: () => ({ resourceStates: [], dispose: () => {} }),\n\t\tdispose: () => {},\n\t}),\n});\n\nexport default CreateScmNamespace;\n"],
+  "mappings": ";;;;AASA,IAAM,qBAAqB,wBAC1B,cACK;AAAA,EACL,qBAAqB,8BAAO;AAAA,IAC3B,UAAU,EAAE,OAAO,GAAG;AAAA,IACtB,qBAAqB,8BAAO,EAAE,gBAAgB,CAAC,GAAG,SAAS,6BAAM;AAAA,IAAC,GAAP,WAAS,IAA/C;AAAA,IACrB,SAAS,6BAAM;AAAA,IAAC,GAAP;AAAA,EACV,IAJqB;AAKtB,IAR2B;AAU3B,IAAO,uBAAQ;",
+  "names": []
+}

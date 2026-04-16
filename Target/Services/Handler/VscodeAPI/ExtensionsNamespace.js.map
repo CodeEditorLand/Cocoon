@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"],
+  "sourcesContent": ["/**\n * @module Handler/VscodeAPI/ExtensionsNamespace\n * @description\n * Factory for the vscode.extensions namespace shim.\n * Provides: getExtension, all, onDidChange.\n */\n\nimport type { HandlerContext } from \"../HandlerContext.js\";\n\nconst CreateExtensionsNamespace = (\n\t_Context: HandlerContext,\n) => ({\n\tgetExtension: (_Identifier: string) => undefined,\n\tall: [],\n\tonDidChange: () => ({ dispose: () => {} }),\n});\n\nexport default CreateExtensionsNamespace;\n"],
+  "mappings": ";;;;AASA,IAAM,4BAA4B,wBACjC,cACK;AAAA,EACL,cAAc,wBAAC,gBAAwB,QAAzB;AAAA,EACd,KAAK,CAAC;AAAA,EACN,aAAa,8BAAO,EAAE,SAAS,6BAAM;AAAA,EAAC,GAAP,WAAS,IAA3B;AACd,IANkC;AAQlC,IAAO,8BAAQ;",
+  "names": []
+}

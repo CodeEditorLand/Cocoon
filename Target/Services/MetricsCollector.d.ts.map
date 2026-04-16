@@ -1,1 +1,0 @@
-{"version":3,"file":"MetricsCollector.d.ts","sourceRoot":"","sources":["../../Source/Services/MetricsCollector.ts"],"names":[],"mappings":"AAAA;;;GAGG;AAEH,qBAAa,gBAAgB;IAC5B,OAAO,CAAC,QAAQ,CAAC,OAAO,CAAkC;IAE1D,MAAM,CAAC,IAAI,EAAE,MAAM,EAAE,KAAK,EAAE,MAAM,GAAG,IAAI;IAIzC,GAAG,CAAC,IAAI,EAAE,MAAM,GAAG,MAAM;IAIzB,MAAM,IAAI,MAAM,CAAC,MAAM,EAAE,MAAM,CAAC;IAIhC,KAAK,IAAI,IAAI;CAGb"}

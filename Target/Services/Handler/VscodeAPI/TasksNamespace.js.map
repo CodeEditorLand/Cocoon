@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../Source/Services/Handler/VscodeAPI/TasksNamespace.ts"],
+  "sourcesContent": ["/**\n * @module Handler/VscodeAPI/TasksNamespace\n * @description\n * Factory for the vscode.tasks namespace shim.\n * Provides stub implementations for task provider registration,\n * task fetching, execution, and lifecycle events.\n */\n\nimport type { HandlerContext } from \"../HandlerContext.js\";\n\nconst CreateTasksNamespace = (\n\t_Context: HandlerContext,\n) => ({\n\tregisterTaskProvider: () => ({ dispose: () => {} }),\n\tfetchTasks: async () => [],\n\texecuteTask: async () => undefined,\n\tonDidStartTask: () => ({ dispose: () => {} }),\n\tonDidEndTask: () => ({ dispose: () => {} }),\n});\n\nexport default CreateTasksNamespace;\n"],
+  "mappings": ";;;;AAUA,IAAM,uBAAuB,wBAC5B,cACK;AAAA,EACL,sBAAsB,8BAAO,EAAE,SAAS,6BAAM;AAAA,EAAC,GAAP,WAAS,IAA3B;AAAA,EACtB,YAAY,mCAAY,CAAC,GAAb;AAAA,EACZ,aAAa,mCAAY,QAAZ;AAAA,EACb,gBAAgB,8BAAO,EAAE,SAAS,6BAAM;AAAA,EAAC,GAAP,WAAS,IAA3B;AAAA,EAChB,cAAc,8BAAO,EAAE,SAAS,6BAAM;AAAA,EAAC,GAAP,WAAS,IAA3B;AACf,IAR6B;AAU7B,IAAO,yBAAQ;",
+  "names": []
+}

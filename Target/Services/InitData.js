@@ -1,1 +1,23 @@
-import{Context as n,Layer as e}from"effect";class t extends n.Tag("Cocoon/InitData")(){}const i=e.succeed(t,{commit:"dev",version:"0.0.1",parentPid:process.pid,extensions:[],workspace:null,environment:{}});export{i as InitDataLive,t as InitDataService};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Services/InitData.ts
+import { Context, Layer } from "effect";
+var InitDataService = class extends Context.Tag("Cocoon/InitData")() {
+  static {
+    __name(this, "InitDataService");
+  }
+};
+var InitDataLive = Layer.succeed(InitDataService, {
+  commit: "dev",
+  version: "0.0.1",
+  parentPid: process.pid,
+  extensions: [],
+  workspace: null,
+  environment: {}
+});
+export {
+  InitDataLive,
+  InitDataService
+};
+//# sourceMappingURL=InitData.js.map

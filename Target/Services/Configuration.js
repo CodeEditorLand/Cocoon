@@ -1,1 +1,487 @@
-import{Effect as l,Layer as g}from"effect";import{IConfigurationService as C}from"../Interfaces/IConfigurationService.js";import{IMountainClientService as d}from"../Interfaces/IMountainClientService.js";class p{_serviceBrand;configuration;mountainClient;listeners;constructor(i){this._serviceBrand=void 0,this.mountainClient=i,this.configuration=new Map,this.listeners=new Map}async initialize(){try{const i=await this.mountainClient.sendRequest("config.reload",{});i?.application&&this.configuration.set("APPLICATION",i.application),i?.workspace&&this.configuration.set("WORKSPACE",i.workspace),i?.profile&&this.configuration.set("PROFILE",i.profile)}catch{this.configuration.set("APPLICATION",{_version:1,_timestamp:Date.now(),window:{zoomLevel:0,theme:"dark"},editor:{fontSize:14,lineNumbers:"on"}}),this.configuration.set("WORKSPACE",{_version:1,_timestamp:Date.now()}),this.configuration.set("PROFILE",{_version:1,_timestamp:Date.now()})}}getValue(i,e="APPLICATION",t){const n=this.configuration.get(e);if(!n)return t;const o=this.getNestedValue(n,i);return o!==void 0?o:t}async setValue(i,e,t){if(!this.validateConfigurationKey(i))throw new Error(`Invalid configuration key: ${i}`);if(!this.validateConfigurationValue(i,e))throw new Error(`Invalid configuration value for key ${i}: ${e}`);let n=this.configuration.get(t);if(n||(n={},this.configuration.set(t,n)),this.getNestedValue(n,i)!==e){this.setNestedValue(n,i,e),n._timestamp=Date.now(),n._version=(n._version||0)+1;try{let r=0;t==="WORKSPACE"&&(r=1),t==="PROFILE"&&(r=2),await this.mountainClient.sendRequest("config.update",{key:i,value:e,scope:r}),this.notifyConfigurationChange([i],t)}catch(r){await this.handleConfigurationConflict(r,i,e,t)}}}validateConfigurationKey(i){return!(!i||i.trim().length===0||/[^a-zA-Z0-9._-]/.test(i)||i.startsWith(".")||i.endsWith(".")||i.includes(".."))}validateConfigurationValue(i,e){if(e===void 0)return!1;if(i.includes("zoomLevel")||i.includes("fontSize")){if(typeof e!="number"||!isFinite(e))return!1;if(i.includes("zoomLevel"))return e>=-8&&e<=9;if(i.includes("fontSize"))return e>=6&&e<=100}return i.includes("enable")||i.includes("show")||i.includes("visible")?typeof e=="boolean":typeof e=="string"?e.trim().length>0:!0}validateScopeConfiguration(i){const e=this.configuration.get(i);if(!e)return!0;const t=[];this.collectKeys(e,"",t);for(const n of t){const o=this.getNestedValue(e,n);if(!this.validateConfigurationKey(n)||!this.validateConfigurationValue(n,o))return!1}return!0}async updateValue(i,e,t){const n=this.getValue(i,t),o=e(n);await this.setValue(i,o,t)}hasKey(i,e){const t=this.configuration.get(e);return t?this.getNestedValue(t,i)!==void 0:!1}getConfigurationKeys(i){const e=this.configuration.get(i);if(!e)return[];const t=[];return this.collectKeys(e,"",t),t}async getAllValues(i){const e=this.configuration.get(i);if(!e)return{};const t={};this.collectKeys(e,"",Object.keys(t));for(const n of Object.keys(t))t[n]=this.getNestedValue(e,n);return t}inspect(i,e="APPLICATION"){const t=this.configuration.get(e);if(!t)return{key:i};const n=this.getNestedValue(t,i);return{key:i,value:n}}onDidChangeConfiguration(i){const e=`listener_${Date.now()}_${Math.random()}`;let t=this.listeners.get("*");t||(t=[],this.listeners.set("*",t)),t.push(i)}async reloadConfiguration(){try{this.listeners.clear(),await this.initialize()}catch(i){throw i}}async handleConfigurationConflict(i,e,t,n){const o=3,r=100;for(let s=1;s<=o;s++){const c=r*Math.pow(2,s-1);await new Promise(a=>setTimeout(a,c));try{await this.initialize();let a=this.configuration.get(n);a||(a={},this.configuration.set(n,a)),this.setNestedValue(a,e,t),a._timestamp=Date.now(),a._version=(a._version||0)+1;let f=0;n==="WORKSPACE"&&(f=1),n==="PROFILE"&&(f=2),await this.mountainClient.sendRequest("config.update",{key:e,value:t,scope:f});return}catch(a){if(s===o)throw new Error(`Configuration synchronization failed after ${o} attempts: ${a}`)}}}async cleanup(){this.listeners.clear(),this.configuration.clear()}getNestedValue(i,e){const t=e.split(".");let n=i;for(const o of t)if(n&&typeof n=="object"&&o in n)n=n[o];else return;return n}setNestedValue(i,e,t){const n=e.split(".");let o=i;for(let s=0;s<n.length-1;s++){const c=n[s];c&&((!(c in o)||typeof o[c]!="object")&&(o[c]={}),o=o[c])}const r=n[n.length-1];r&&(o[r]=t)}collectKeys(i,e,t){for(const n in i){if(n.startsWith("_"))continue;const o=e?`${e}.${n}`:n;typeof i[n]=="object"&&i[n]!==null?this.collectKeys(i[n],o,t):t.push(o)}}notifyConfigurationChange(i,e){for(const t of i){const n=`${e}.${t}`,o=this.listeners.get(n),r=this.listeners.get("*"),s=[...o||[],...r||[]];if(s.length>0)for(const c of s)try{c([{key:t,scope:e}])}catch{}}}}const h=g.effect(C,l.gen(function*(){const u=yield*d,i=new p(u);return yield*l.promise(()=>i.initialize()),i})),y=h;export{p as Configuration,h as ConfigurationLayer,y as ConfigurationLive};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+
+// Source/Interfaces/IConfigurationService.ts
+import { Context } from "effect";
+var ConfigurationScope = /* @__PURE__ */ ((ConfigurationScope3) => {
+  ConfigurationScope3["APPLICATION"] = "APPLICATION";
+  ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
+  ConfigurationScope3["PROFILE"] = "PROFILE";
+  return ConfigurationScope3;
+})(ConfigurationScope || {});
+var IConfigurationService = Context.Tag(
+  "IConfigurationService"
+);
+
+// Source/Interfaces/IMountainClientService.ts
+import * as Effect2 from "effect/Effect";
+var IMountainClientService = Effect2.Service()(
+  "Service/MountainClient",
+  {
+    effect: Effect2.gen(function* () {
+      return {};
+    })
+  }
+);
+
+// Source/Services/Configuration.ts
+import { Effect as Effect3, Layer } from "effect";
+var ConfigurationScope2 = /* @__PURE__ */ ((ConfigurationScope3) => {
+  ConfigurationScope3["APPLICATION"] = "APPLICATION";
+  ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
+  ConfigurationScope3["PROFILE"] = "PROFILE";
+  return ConfigurationScope3;
+})(ConfigurationScope2 || {});
+var Configuration = class {
+  static {
+    __name(this, "Configuration");
+  }
+  _serviceBrand;
+  configuration;
+  mountainClient;
+  listeners;
+  constructor(mountainClient) {
+    this._serviceBrand = void 0;
+    this.mountainClient = mountainClient;
+    this.configuration = /* @__PURE__ */ new Map();
+    this.listeners = /* @__PURE__ */ new Map();
+    console.log(
+      "[ConfigurationService] Initializing configuration service with Universal Spine"
+    );
+  }
+  /**
+   * Initialize the configuration service by fetching from Mountain
+   */
+  async initialize() {
+    console.log(
+      "[ConfigurationService] Loading initial configuration from Spine..."
+    );
+    try {
+      const configData = await this.mountainClient.sendRequest(
+        "config.reload",
+        {}
+      );
+      if (configData?.application) {
+        this.configuration.set(
+          "APPLICATION" /* APPLICATION */,
+          configData.application
+        );
+      }
+      if (configData?.workspace) {
+        this.configuration.set(
+          "WORKSPACE" /* WORKSPACE */,
+          configData.workspace
+        );
+      }
+      if (configData?.profile) {
+        this.configuration.set(
+          "PROFILE" /* PROFILE */,
+          configData.profile
+        );
+      }
+      console.log(
+        "[ConfigurationService] Configuration loaded from Spine",
+        configData
+      );
+    } catch (error) {
+      console.error(
+        "[ConfigurationService] Failed to load initial configuration from Spine:",
+        error
+      );
+      this.configuration.set("APPLICATION" /* APPLICATION */, {
+        _version: 1,
+        _timestamp: Date.now(),
+        window: {
+          zoomLevel: 0,
+          theme: "dark"
+        },
+        editor: {
+          fontSize: 14,
+          lineNumbers: "on"
+        }
+      });
+      this.configuration.set("WORKSPACE" /* WORKSPACE */, {
+        _version: 1,
+        _timestamp: Date.now()
+      });
+      this.configuration.set("PROFILE" /* PROFILE */, {
+        _version: 1,
+        _timestamp: Date.now()
+      });
+    }
+  }
+  /**
+   * Get configuration value
+   */
+  getValue(key, scope = "APPLICATION" /* APPLICATION */, defaultValue) {
+    const scopeConfig = this.configuration.get(scope);
+    if (!scopeConfig) {
+      return defaultValue;
+    }
+    const value = this.getNestedValue(scopeConfig, key);
+    return value !== void 0 ? value : defaultValue;
+  }
+  /**
+   * Set configuration value
+   */
+  async setValue(key, value, scope) {
+    if (!this.validateConfigurationKey(key)) {
+      throw new Error(`Invalid configuration key: ${key}`);
+    }
+    if (!this.validateConfigurationValue(key, value)) {
+      throw new Error(
+        `Invalid configuration value for key ${key}: ${value}`
+      );
+    }
+    let scopeConfig = this.configuration.get(scope);
+    if (!scopeConfig) {
+      scopeConfig = {};
+      this.configuration.set(scope, scopeConfig);
+    }
+    const oldValue = this.getNestedValue(scopeConfig, key);
+    if (oldValue !== value) {
+      this.setNestedValue(scopeConfig, key, value);
+      scopeConfig._timestamp = Date.now();
+      scopeConfig._version = (scopeConfig._version || 0) + 1;
+      try {
+        let spineScope = 0;
+        if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
+        if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
+        await this.mountainClient.sendRequest("config.update", {
+          key,
+          value,
+          scope: spineScope
+        });
+        console.log(
+          `[ConfigurationService] Configuration updated: ${key} = ${value}`
+        );
+        this.notifyConfigurationChange([key], scope);
+      } catch (error) {
+        console.error(
+          `[ConfigurationService] Failed to update configuration: ${key}`,
+          error
+        );
+        await this.handleConfigurationConflict(
+          error,
+          key,
+          value,
+          scope
+        );
+      }
+    }
+  }
+  /**
+   * Validate configuration key
+   */
+  validateConfigurationKey(key) {
+    if (!key || key.trim().length === 0) {
+      return false;
+    }
+    const invalidChars = /[^a-zA-Z0-9._-]/;
+    if (invalidChars.test(key)) {
+      return false;
+    }
+    if (key.startsWith(".") || key.endsWith(".")) {
+      return false;
+    }
+    if (key.includes("..")) {
+      return false;
+    }
+    return true;
+  }
+  /**
+   * Validate configuration value
+   */
+  validateConfigurationValue(key, value) {
+    if (value === void 0) {
+      return false;
+    }
+    if (key.includes("zoomLevel") || key.includes("fontSize")) {
+      if (typeof value !== "number" || !isFinite(value)) {
+        return false;
+      }
+      if (key.includes("zoomLevel")) {
+        return value >= -8 && value <= 9;
+      }
+      if (key.includes("fontSize")) {
+        return value >= 6 && value <= 100;
+      }
+    }
+    if (key.includes("enable") || key.includes("show") || key.includes("visible")) {
+      return typeof value === "boolean";
+    }
+    if (typeof value === "string") {
+      return value.trim().length > 0;
+    }
+    return true;
+  }
+  /**
+   * Validate entire configuration scope
+   */
+  validateScopeConfiguration(scope) {
+    const scopeConfig = this.configuration.get(scope);
+    if (!scopeConfig) {
+      return true;
+    }
+    const keys = [];
+    this.collectKeys(scopeConfig, "", keys);
+    for (const key of keys) {
+      const value = this.getNestedValue(scopeConfig, key);
+      if (!this.validateConfigurationKey(key) || !this.validateConfigurationValue(key, value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  /**
+   * Update configuration value
+   */
+  async updateValue(key, updateFn, scope) {
+    const currentValue = this.getValue(key, scope);
+    const newValue = updateFn(currentValue);
+    await this.setValue(key, newValue, scope);
+  }
+  /**
+   * Check if configuration key exists
+   */
+  hasKey(key, scope) {
+    const scopeConfig = this.configuration.get(scope);
+    if (!scopeConfig) {
+      return false;
+    }
+    const value = this.getNestedValue(scopeConfig, key);
+    return value !== void 0;
+  }
+  /**
+   * Get all configuration keys for a scope
+   */
+  getConfigurationKeys(scope) {
+    const scopeConfig = this.configuration.get(scope);
+    if (!scopeConfig) {
+      return [];
+    }
+    const keys = [];
+    this.collectKeys(scopeConfig, "", keys);
+    return keys;
+  }
+  /**
+   * Get all configuration values for a scope
+   */
+  async getAllValues(scope) {
+    const scopeConfig = this.configuration.get(scope);
+    if (!scopeConfig) {
+      return {};
+    }
+    const result = {};
+    this.collectKeys(scopeConfig, "", Object.keys(result));
+    for (const key of Object.keys(result)) {
+      result[key] = this.getNestedValue(scopeConfig, key);
+    }
+    return result;
+  }
+  /**
+   * Inspect configuration value
+   */
+  inspect(key, scope = "APPLICATION" /* APPLICATION */) {
+    const scopeConfig = this.configuration.get(scope);
+    if (!scopeConfig) {
+      return { key };
+    }
+    const value = this.getNestedValue(scopeConfig, key);
+    return {
+      key,
+      value
+    };
+  }
+  /**
+   * Listen for configuration changes
+   */
+  onDidChangeConfiguration(callback) {
+    console.log(
+      "[ConfigurationService] Registering configuration change listener"
+    );
+    const listenerId = `listener_${Date.now()}_${Math.random()}`;
+    let globalListeners = this.listeners.get("*");
+    if (!globalListeners) {
+      globalListeners = [];
+      this.listeners.set("*", globalListeners);
+    }
+    globalListeners.push(callback);
+    console.log(
+      `[ConfigurationService] Configuration change listener registered: ${listenerId}`
+    );
+  }
+  /**
+   * Reload configuration from Mountain
+   */
+  async reloadConfiguration() {
+    console.log(
+      "[ConfigurationService] Reloading configuration from Mountain"
+    );
+    try {
+      this.listeners.clear();
+      await this.initialize();
+      console.log(
+        "[ConfigurationService] Configuration reloaded successfully"
+      );
+    } catch (error) {
+      console.error(
+        "[ConfigurationService] Failed to reload configuration:",
+        error
+      );
+      throw error;
+    }
+  }
+  /**
+   * Handle configuration conflicts with retry logic
+   */
+  async handleConfigurationConflict(error, key, value, scope) {
+    console.warn(
+      "[ConfigurationService] Configuration conflict detected, implementing retry logic"
+    );
+    const maxRetries = 3;
+    const baseDelay = 100;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      console.log(
+        `[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      try {
+        await this.initialize();
+        let scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          scopeConfig = {};
+          this.configuration.set(scope, scopeConfig);
+        }
+        this.setNestedValue(scopeConfig, key, value);
+        scopeConfig._timestamp = Date.now();
+        scopeConfig._version = (scopeConfig._version || 0) + 1;
+        let spineScope = 0;
+        if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
+        if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
+        await this.mountainClient.sendRequest("config.update", {
+          key,
+          value,
+          scope: spineScope
+        });
+        console.log(
+          "[ConfigurationService] Configuration saved successfully after retry"
+        );
+        return;
+      } catch (retryError) {
+        console.error(
+          `[ConfigurationService] Retry attempt ${attempt} failed:`,
+          retryError
+        );
+        if (attempt === maxRetries) {
+          console.error(
+            "[ConfigurationService] All retry attempts failed, configuration may be out of sync"
+          );
+          throw new Error(
+            `Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`
+          );
+        }
+      }
+    }
+  }
+  /**
+   * Cleanup configuration service
+   */
+  async cleanup() {
+    console.log("[ConfigurationService] Cleaning up configuration service");
+    this.listeners.clear();
+    this.configuration.clear();
+    console.log("[ConfigurationService] Configuration service cleaned up");
+  }
+  /**
+   * Get nested value from configuration object
+   */
+  getNestedValue(obj, key) {
+    const keys = key.split(".");
+    let current = obj;
+    for (const k of keys) {
+      if (current && typeof current === "object" && k in current) {
+        current = current[k];
+      } else {
+        return void 0;
+      }
+    }
+    return current;
+  }
+  /**
+   * Set nested value in configuration object
+   */
+  setNestedValue(obj, key, value) {
+    const keys = key.split(".");
+    let current = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const k = keys[i];
+      if (!k) continue;
+      if (!(k in current) || typeof current[k] !== "object") {
+        current[k] = {};
+      }
+      current = current[k];
+    }
+    const lastKey = keys[keys.length - 1];
+    if (lastKey) {
+      current[lastKey] = value;
+    }
+  }
+  /**
+   * Collect all configuration keys
+   */
+  collectKeys(obj, prefix, keys) {
+    for (const key in obj) {
+      if (key.startsWith("_")) continue;
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+      if (typeof obj[key] === "object" && obj[key] !== null) {
+        this.collectKeys(obj[key], fullKey, keys);
+      } else {
+        keys.push(fullKey);
+      }
+    }
+  }
+  /**
+   * Notify configuration change listeners
+   */
+  notifyConfigurationChange(keys, scope) {
+    for (const key of keys) {
+      const eventKey = `${scope}.${key}`;
+      const listeners = this.listeners.get(eventKey);
+      const globalListeners = this.listeners.get("*");
+      const allListeners = [
+        ...listeners || [],
+        ...globalListeners || []
+      ];
+      if (allListeners.length > 0) {
+        for (const listener of allListeners) {
+          try {
+            listener([{ key, scope }]);
+          } catch (error) {
+            console.error(
+              `[ConfigurationService] Error in listener for ${eventKey}:`,
+              error
+            );
+          }
+        }
+      }
+    }
+  }
+};
+var ConfigurationLayer = Layer.effect(
+  IConfigurationService,
+  Effect3.gen(function* () {
+    const mountainClient = yield* IMountainClientService;
+    const configService = new Configuration(mountainClient);
+    yield* Effect3.promise(() => configService.initialize());
+    return configService;
+  })
+);
+var ConfigurationLive = ConfigurationLayer;
+export {
+  Configuration,
+  ConfigurationLayer,
+  ConfigurationLive
+};
+//# sourceMappingURL=Configuration.js.map
