@@ -933,9 +933,18 @@ export class GRPCServerService
 				EventEmitter: Emitter,
 				// Namespaces — minimal stubs wired to Mountain via gRPC
 				window: {
-					showInformationMessage: async (..._Args: unknown[]) => undefined,
-					showErrorMessage: async (..._Args: unknown[]) => undefined,
-					showWarningMessage: async (..._Args: unknown[]) => undefined,
+					showInformationMessage: async (Message: string, ...Items: unknown[]) => {
+						this.SendToMountain("window.showMessage", { message: Message, level: "info", items: Items }).catch(() => {});
+						return undefined;
+					},
+					showErrorMessage: async (Message: string, ...Items: unknown[]) => {
+						this.SendToMountain("window.showMessage", { message: Message, level: "error", items: Items }).catch(() => {});
+						return undefined;
+					},
+					showWarningMessage: async (Message: string, ...Items: unknown[]) => {
+						this.SendToMountain("window.showMessage", { message: Message, level: "warn", items: Items }).catch(() => {});
+						return undefined;
+					},
 					createTerminal: () => ({ sendText: async () => {}, show: () => {}, hide: () => {}, dispose: () => {} }),
 					createStatusBarItem: () => ({ show: () => {}, hide: () => {}, dispose: () => {}, text: "", tooltip: "" }),
 					createOutputChannel: () => ({ append: () => {}, appendLine: () => {}, clear: () => {}, show: () => {}, hide: () => {}, dispose: () => {} }),
@@ -1180,19 +1189,39 @@ export class GRPCServerService
 			Extension?.identifier ??
 			"";
 
+		// Resolve real storage paths for the extension
+		const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
+		const StorageBase = `${HomeDir}/.codeeditorland/extensions/storage`;
+		const GlobalStorageBase = `${HomeDir}/.codeeditorland/globalStorage`;
+		const LogBase = `${HomeDir}/.codeeditorland/logs`;
+		const ExtStoragePath = `${StorageBase}/${ExtId}`;
+		const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
+		const LogPath = `${LogBase}/${ExtId}`;
+
+		// Ensure directories exist (fire-and-forget)
+		try {
+			// eslint-disable-next-line @typescript-eslint/no-require-imports
+			const Fs = require("node:fs");
+			Fs.mkdirSync(ExtStoragePath, { recursive: true });
+			Fs.mkdirSync(GlobalStoragePath, { recursive: true });
+			Fs.mkdirSync(LogPath, { recursive: true });
+		} catch {}
+
+		const MakeUri = (Path: string) => ({
+			scheme: "file",
+			path: Path,
+			fsPath: Path,
+			authority: "",
+			query: "",
+			fragment: "",
+			with: () => ({}),
+			toString: () => `file://${Path}`,
+		});
+
 		return {
 			subscriptions: [] as { dispose(): unknown }[],
 			extensionPath: ExtensionPath,
-			extensionUri: {
-				scheme: "file",
-				path: ExtensionPath,
-				fsPath: ExtensionPath,
-				authority: "",
-				query: "",
-				fragment: "",
-				with: () => ({}),
-				toString: () => `file://${ExtensionPath}`,
-			},
+			extensionUri: MakeUri(ExtensionPath),
 			globalState: {
 				get: (_Key: string, DefaultValue?: unknown) => DefaultValue,
 				update: async (_Key: string, _Value: unknown) => {},
@@ -1205,9 +1234,17 @@ export class GRPCServerService
 				keys: () => [] as string[],
 			},
 			secrets: {
-				get: async (_Key: string) => undefined as string | undefined,
-				store: async (_Key: string, _Value: string) => {},
-				delete: async (_Key: string) => {},
+				get: async (Key: string) => {
+					try {
+						return await this.mountainClient?.sendRequest("secrets.get", { key: Key }) as string | undefined;
+					} catch { return undefined; }
+				},
+				store: async (Key: string, Value: string) => {
+					try { await this.mountainClient?.sendRequest("secrets.store", { key: Key, value: Value }); } catch {}
+				},
+				delete: async (Key: string) => {
+					try { await this.mountainClient?.sendRequest("secrets.delete", { key: Key }); } catch {}
+				},
 				onDidChange: (_Listener: unknown) => ({ dispose: () => {} }),
 			},
 			environmentVariableCollection: {
@@ -1223,12 +1260,12 @@ export class GRPCServerService
 				getScoped: () => ({}),
 				[Symbol.iterator]: () => ([] as unknown[]).values(),
 			},
-			storagePath: undefined,
-			globalStoragePath: undefined,
-			logPath: undefined,
-			storageUri: undefined,
-			globalStorageUri: undefined,
-			logUri: undefined,
+			storagePath: ExtStoragePath,
+			globalStoragePath: GlobalStoragePath,
+			logPath: LogPath,
+			storageUri: MakeUri(ExtStoragePath),
+			globalStorageUri: MakeUri(GlobalStoragePath),
+			logUri: MakeUri(LogPath),
 			extensionMode: 1, // ExtensionMode.Production
 			extension: {
 				id: ExtId,
@@ -1816,6 +1853,88 @@ export class GRPCServerService
 					return Result ?? null;
 				}
 
+				case "$provideOnTypeFormatting":
+				case "$provideOnTypeFormattingEdits": {
+					const TypeChar = Args[2] as string;
+					const TypeOptions = Args[3];
+					const Result = await (Provider as any).provideOnTypeFormattingEdits?.(
+						VsDocument,
+						VsPosition,
+						TypeChar,
+						TypeOptions ?? {},
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideSelectionRange":
+				case "$provideSelectionRanges": {
+					const Positions = Args[2];
+					const Result = await (Provider as any).provideSelectionRanges?.(
+						VsDocument,
+						Array.isArray(Positions) ? Positions.map((P: any) => new Position(P?.line ?? P?.Line ?? 0, P?.character ?? P?.Character ?? 0)) : [VsPosition],
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideSemanticTokens":
+				case "$provideSemanticTokensFull": {
+					const Result = await (Provider as any).provideDocumentSemanticTokens?.(
+						VsDocument,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideCallHierarchy":
+				case "$provideCallHierarchyIncomingCalls": {
+					const Item = Args[1];
+					const Result = await (Provider as any).provideCallHierarchyIncomingCalls?.(
+						Item,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideCallHierarchyOutgoingCalls": {
+					const Item = Args[1];
+					const Result = await (Provider as any).provideCallHierarchyOutgoingCalls?.(
+						Item,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideTypeHierarchy":
+				case "$provideTypeHierarchySupertypes": {
+					const Item = Args[1];
+					const Result = await (Provider as any).provideTypeHierarchySupertypes?.(
+						Item,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideTypeHierarchySubtypes": {
+					const Item = Args[1];
+					const Result = await (Provider as any).provideTypeHierarchySubtypes?.(
+						Item,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
+				case "$provideLinkedEditingRange":
+				case "$provideLinkedEditingRanges": {
+					const Result = await (Provider as any).provideLinkedEditingRanges?.(
+						VsDocument,
+						VsPosition,
+						VsToken,
+					);
+					return Result ?? null;
+				}
+
 				default:
 					console.warn(
 						`[GRPCServerService] Unhandled $provide method: ${method}`,
@@ -1890,13 +2009,19 @@ export class GRPCServerService
 			case "document.didChange":
 				this.HandleDocumentChange(parameters);
 				break;
+			case "$acceptModelAdded":
 			case "$acceptModelOpen":
 			case "document.didOpen":
 				this.HandleDocumentOpen(parameters);
 				break;
+			case "$acceptModelRemoved":
 			case "$acceptModelClosed":
 			case "document.didClose":
 				this.HandleDocumentClose(parameters);
+				break;
+			case "$acceptModelSaved":
+			case "document.didSave":
+				// Document saved — content on disk matches cache, no action needed
 				break;
 			default:
 				// Generic handler for unknown notification types
@@ -1911,18 +2036,27 @@ export class GRPCServerService
 	 * Updates the document content cache so InvokeLanguageProvider returns fresh text.
 	 */
 	private HandleDocumentChange(Parameters: any): void {
-		const Uri: string =
-			Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
+		// Mountain sends $acceptModelChanged as [uriComponents, eventData]
+		let Uri: string;
+		let EventData: any;
+		if (Array.isArray(Parameters) && Parameters.length >= 2) {
+			Uri = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
+			EventData = Parameters[1];
+		} else {
+			Uri = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
+			EventData = Parameters;
+		}
+
 		const Content: string | undefined =
-			Parameters?.content ?? Parameters?.Content ?? Parameters?.text;
+			EventData?.content ?? EventData?.Content ?? EventData?.text;
 
 		if (Uri && Content !== undefined) {
 			this.documentContentCache.set(Uri, Content);
-		} else if (Uri && Parameters?.changes) {
+		} else if (Uri && (EventData?.changes || Parameters?.changes)) {
 			// Incremental changes — apply edits to cached content
 			const Existing = this.documentContentCache.get(Uri) ?? "";
 			let Updated = Existing;
-			const Changes: any[] = Array.isArray(Parameters.changes) ? Parameters.changes : [];
+			const Changes: any[] = Array.isArray(EventData?.changes) ? EventData.changes : (Array.isArray(Parameters?.changes) ? Parameters.changes : []);
 			// Apply changes in reverse order (largest offset first) to avoid index shifts
 			const Sorted = [...Changes].sort((A: any, B: any) =>
 				(B.rangeOffset ?? 0) - (A.rangeOffset ?? 0)
@@ -1941,14 +2075,19 @@ export class GRPCServerService
 	 * Handle document open from Mountain — cache initial content.
 	 */
 	private HandleDocumentOpen(Parameters: any): void {
-		const Uri: string =
-			Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
-		const Content: string | undefined =
-			Parameters?.content ?? Parameters?.Content ?? Parameters?.text;
+		// $acceptModelAdded sends an array of DocumentStateDTOs
+		const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
+		for (const Model of Models) {
+			const Uri: string =
+				Model?.uri?.external ?? Model?.uri ?? Model?.Uri ??
+				Model?.URI ?? "";
+			const Content: string | undefined =
+				Model?.content ?? Model?.Content ?? Model?.text ?? Model?.Lines;
 
-		if (Uri && Content !== undefined) {
-			this.documentContentCache.set(Uri, Content);
-			console.log(`[GRPCServerService] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`);
+			if (Uri && Content !== undefined) {
+				this.documentContentCache.set(Uri, typeof Content === "string" ? Content : "");
+				console.log(`[GRPCServerService] Document opened: ${Uri.slice(-60)} (${String(Content).length} chars)`);
+			}
 		}
 	}
 
@@ -1956,10 +2095,14 @@ export class GRPCServerService
 	 * Handle document close from Mountain — remove from cache.
 	 */
 	private HandleDocumentClose(Parameters: any): void {
-		const Uri: string =
-			Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
-		if (Uri) {
-			this.documentContentCache.delete(Uri);
+		// $acceptModelRemoved sends [uriComponents]
+		const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
+		for (const Item of Items) {
+			const Uri: string =
+				Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+			if (Uri) {
+				this.documentContentCache.delete(Uri);
+			}
 		}
 	}
 
