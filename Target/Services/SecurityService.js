@@ -315,11 +315,8 @@ var init_MountainClientService = __esm({
           const path = require2("path");
           const SearchPaths = [
             path.resolve(__dirname, "../../../../Mountain/Proto/Vine.proto"),
-            path.resolve(__dirname, "../../../../../Mountain/Proto/Vine.proto"),
-            path.resolve(__dirname, "../../../../../../Element/Mountain/Proto/Vine.proto"),
             path.resolve(process.cwd(), "Element/Mountain/Proto/Vine.proto"),
-            path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto"),
-            path.resolve(process.cwd(), "../Element/Mountain/Proto/Vine.proto")
+            path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto")
           ];
           let vineProtoPath = null;
           for (const P of SearchPaths) {

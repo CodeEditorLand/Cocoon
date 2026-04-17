@@ -37,26 +37,87 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
   registerSelectionRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_selection_range_provider", Selector, Provider), "registerSelectionRangeProvider"),
   registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(Context, LanguageProviderRegistry, "register_semantic_tokens_provider", Selector, Provider), "registerDocumentSemanticTokensProvider"),
   registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_inlay_hints_provider", Selector, Provider), "registerInlayHintsProvider"),
-  createDiagnosticCollection: /* @__PURE__ */ __name((Name) => ({
-    name: Name ?? "default",
-    set: /* @__PURE__ */ __name(() => {
-    }, "set"),
-    delete: /* @__PURE__ */ __name(() => {
-    }, "delete"),
-    clear: /* @__PURE__ */ __name(() => {
-    }, "clear"),
-    forEach: /* @__PURE__ */ __name(() => {
-    }, "forEach"),
-    get: /* @__PURE__ */ __name(() => [], "get"),
-    has: /* @__PURE__ */ __name(() => false, "has"),
-    dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose")
-  }), "createDiagnosticCollection"),
-  getLanguages: /* @__PURE__ */ __name(async () => [], "getLanguages"),
-  match: /* @__PURE__ */ __name(() => 0, "match"),
-  onDidChangeDiagnostics: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-  }, "dispose") }), "onDidChangeDiagnostics"),
-  getDiagnostics: /* @__PURE__ */ __name(() => [], "getDiagnostics")
+  createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
+    const Owner = Name ?? "default";
+    const Store = /* @__PURE__ */ new Map();
+    return {
+      name: Owner,
+      set: /* @__PURE__ */ __name((UriOrEntries, Diagnostics) => {
+        if (Array.isArray(UriOrEntries) && Diagnostics === void 0) {
+          const Entries = UriOrEntries;
+          for (const [Uri, D] of Entries) {
+            Store.set(String(Uri), D ?? []);
+          }
+        } else {
+          Store.set(String(UriOrEntries), Diagnostics ?? []);
+        }
+        Context.MountainClient?.sendRequest("Diagnostic.Set", [
+          Owner,
+          [...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D }))
+        ]).catch(() => {
+        });
+      }, "set"),
+      delete: /* @__PURE__ */ __name((Uri) => {
+        Store.delete(String(Uri));
+        Context.MountainClient?.sendRequest("Diagnostic.Set", [
+          Owner,
+          [...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D }))
+        ]).catch(() => {
+        });
+      }, "delete"),
+      clear: /* @__PURE__ */ __name(() => {
+        Store.clear();
+        Context.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
+          () => {
+          }
+        );
+      }, "clear"),
+      forEach: /* @__PURE__ */ __name((Callback) => {
+        const Self = null;
+        for (const [Uri, Diagnostics] of Store) {
+          Callback(Uri, Diagnostics, Self);
+        }
+      }, "forEach"),
+      get: /* @__PURE__ */ __name((Uri) => Store.get(String(Uri)) ?? [], "get"),
+      has: /* @__PURE__ */ __name((Uri) => Store.has(String(Uri)), "has"),
+      dispose: /* @__PURE__ */ __name(() => {
+        Store.clear();
+        Context.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
+          () => {
+          }
+        );
+      }, "dispose")
+    };
+  }, "createDiagnosticCollection"),
+  getLanguages: /* @__PURE__ */ __name(async () => {
+    try {
+      const Result = await Context.MountainClient?.sendRequest(
+        "Languages.GetAll",
+        []
+      );
+      return Array.isArray(Result) ? Result : [];
+    } catch {
+      return [];
+    }
+  }, "getLanguages"),
+  setTextDocumentLanguage: /* @__PURE__ */ __name(async (Document, LanguageId) => {
+    Context.SendToMountain("languages.setDocumentLanguage", {
+      uri: Document?.uri?.toString?.() ?? "",
+      languageId: LanguageId
+    }).catch(() => {
+    });
+    return Document;
+  }, "setTextDocumentLanguage"),
+  match: /* @__PURE__ */ __name((_Selector, _Document) => 10, "match"),
+  onDidChangeDiagnostics: /* @__PURE__ */ __name((Listener) => {
+    Context.Emitter.on("diagnostics.didChange", Listener);
+    return {
+      dispose: /* @__PURE__ */ __name(() => {
+        Context.Emitter.off("diagnostics.didChange", Listener);
+      }, "dispose")
+    };
+  }, "onDidChangeDiagnostics"),
+  getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics")
 }), "CreateLanguagesNamespace");
 var LanguagesNamespace_default = CreateLanguagesNamespace;
 export {

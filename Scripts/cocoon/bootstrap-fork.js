@@ -27,7 +27,7 @@ async function bootstrap() {
 
 	// Parse environment variables
 	const mountaingRPCPort = process.env.MOUNTAIN_GRPC_PORT || "50051";
-	const cocoongRPCPort = process.env.COCON_GRPC_PORT || "50052";
+	const cocoongRPCPort = process.env.COCOON_GRPC_PORT || "50052";
 	const nodeEnv = process.env.NODE_ENV || "production";
 
 	console.log(`[Cocoon] Environment:`);
@@ -106,7 +106,7 @@ async function signalReadiness() {
 		// Signal readiness with process information
 		await mountainClientService.sendNotification("cocoon.ready", {
 			pid: process.pid,
-			port: process.env.COCON_GRPC_PORT || "50052",
+			port: process.env.COCOON_GRPC_PORT || "50052",
 			version: process.env.npm_package_version || "0.0.1",
 		});
 

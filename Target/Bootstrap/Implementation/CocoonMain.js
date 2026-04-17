@@ -1417,11 +1417,8 @@ var init_MountainClientService = __esm({
           const path = require2("path");
           const SearchPaths = [
             path.resolve(__dirname, "../../../../Mountain/Proto/Vine.proto"),
-            path.resolve(__dirname, "../../../../../Mountain/Proto/Vine.proto"),
-            path.resolve(__dirname, "../../../../../../Element/Mountain/Proto/Vine.proto"),
             path.resolve(process.cwd(), "Element/Mountain/Proto/Vine.proto"),
-            path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto"),
-            path.resolve(process.cwd(), "../Element/Mountain/Proto/Vine.proto")
+            path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto")
           ];
           let vineProtoPath = null;
           for (const P of SearchPaths) {
@@ -23133,55 +23130,477 @@ var WindowNamespace_exports = {};
 __export(WindowNamespace_exports, {
   default: () => WindowNamespace_default
 });
-var CreateWindowNamespace, WindowNamespace_default;
+var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
 var init_WindowNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
     "use strict";
-    CreateWindowNamespace = /* @__PURE__ */ __name((Context22) => ({
-      showInformationMessage: /* @__PURE__ */ __name(async (Message, ...Items) => {
-        Context22.SendToMountain("window.showMessage", { message: Message, level: "info", items: Items }).catch(() => {
+    MakeEventSubscriber = /* @__PURE__ */ __name((Context22, EventName) => (Callback) => {
+      Context22.Emitter.on(EventName, Callback);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context22.Emitter.off(EventName, Callback);
+        }, "dispose")
+      };
+    }, "MakeEventSubscriber");
+    OutputChannelCounter = 0;
+    TerminalCounter = 0;
+    StatusBarCounter = 0;
+    CreateWindowNamespace = /* @__PURE__ */ __name((Context22) => {
+      const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
+        Context22.SendToMountain("window.showMessage", {
+          message: Message,
+          level: Level,
+          items: Items
+        }).catch(() => {
         });
         return void 0;
-      }, "showInformationMessage"),
-      showErrorMessage: /* @__PURE__ */ __name(async (Message, ...Items) => {
-        Context22.SendToMountain("window.showMessage", { message: Message, level: "error", items: Items }).catch(() => {
-        });
-        return void 0;
-      }, "showErrorMessage"),
-      showWarningMessage: /* @__PURE__ */ __name(async (Message, ...Items) => {
-        Context22.SendToMountain("window.showMessage", { message: Message, level: "warn", items: Items }).catch(() => {
-        });
-        return void 0;
-      }, "showWarningMessage"),
-      createTerminal: /* @__PURE__ */ __name(() => ({ sendText: /* @__PURE__ */ __name(async () => {
-      }, "sendText"), show: /* @__PURE__ */ __name(() => {
-      }, "show"), hide: /* @__PURE__ */ __name(() => {
-      }, "hide"), dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "createTerminal"),
-      createStatusBarItem: /* @__PURE__ */ __name(() => ({ show: /* @__PURE__ */ __name(() => {
-      }, "show"), hide: /* @__PURE__ */ __name(() => {
-      }, "hide"), dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose"), text: "", tooltip: "" }), "createStatusBarItem"),
-      createOutputChannel: /* @__PURE__ */ __name(() => ({ append: /* @__PURE__ */ __name(() => {
-      }, "append"), appendLine: /* @__PURE__ */ __name(() => {
-      }, "appendLine"), clear: /* @__PURE__ */ __name(() => {
-      }, "clear"), show: /* @__PURE__ */ __name(() => {
-      }, "show"), hide: /* @__PURE__ */ __name(() => {
-      }, "hide"), dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "createOutputChannel"),
-      withProgress: /* @__PURE__ */ __name(async (_Option, Task3) => Task3({ report: /* @__PURE__ */ __name(() => {
-      }, "report") }), "withProgress"),
-      onDidChangeActiveTextEditor: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeActiveTextEditor"),
-      onDidChangeVisibleTextEditors: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeVisibleTextEditors"),
-      onDidChangeTextEditorSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeTextEditorSelection"),
-      onDidChangeTextEditorVisibleRanges: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeTextEditorVisibleRanges"),
-      activeTextEditor: void 0,
-      visibleTextEditors: []
-    }), "CreateWindowNamespace");
+      }, "ShowMessage");
+      return {
+        showInformationMessage: ShowMessage("info"),
+        showErrorMessage: ShowMessage("error"),
+        showWarningMessage: ShowMessage("warn"),
+        showQuickPick: /* @__PURE__ */ __name(async (Items, _Options) => {
+          Context22.SendToMountain("window.showQuickPick", { items: Items }).catch(
+            () => {
+            }
+          );
+          return void 0;
+        }, "showQuickPick"),
+        showInputBox: /* @__PURE__ */ __name(async (_Options) => {
+          Context22.SendToMountain("window.showInputBox", {}).catch(() => {
+          });
+          return void 0;
+        }, "showInputBox"),
+        showOpenDialog: /* @__PURE__ */ __name(async (_Options) => [], "showOpenDialog"),
+        showSaveDialog: /* @__PURE__ */ __name(async (_Options) => void 0, "showSaveDialog"),
+        createTerminal: /* @__PURE__ */ __name((Options) => {
+          const Handle = `terminal:${++TerminalCounter}`;
+          const Name = Options?.name ?? `Terminal ${TerminalCounter}`;
+          Context22.SendToMountain("window.createTerminal", {
+            handle: Handle,
+            name: Name,
+            options: Options ?? {}
+          }).catch(() => {
+          });
+          return {
+            name: Name,
+            processId: Promise.resolve(void 0),
+            sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
+              Context22.SendToMountain("terminal.sendText", {
+                handle: Handle,
+                text: Text
+              }).catch(() => {
+              });
+            }, "sendText"),
+            show: /* @__PURE__ */ __name((PreserveFocus) => {
+              Context22.SendToMountain("terminal.show", {
+                handle: Handle,
+                preserveFocus: PreserveFocus
+              }).catch(() => {
+              });
+            }, "show"),
+            hide: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("terminal.hide", { handle: Handle }).catch(
+                () => {
+                }
+              );
+            }, "hide"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("terminal.dispose", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "createTerminal"),
+        createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => {
+          const Handle = `statusBar:${++StatusBarCounter}`;
+          const Item = {
+            id: Handle,
+            alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
+            priority: Priority,
+            text: "",
+            tooltip: "",
+            command: void 0,
+            show: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("statusBar.update", {
+                handle: Handle,
+                text: Item.text,
+                tooltip: Item.tooltip,
+                command: Item.command,
+                visible: true
+              }).catch(() => {
+              });
+            }, "show"),
+            hide: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("statusBar.update", {
+                handle: Handle,
+                visible: false
+              }).catch(() => {
+              });
+            }, "hide"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("statusBar.dispose", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+          return Item;
+        }, "createStatusBarItem"),
+        createOutputChannel: /* @__PURE__ */ __name((Name, Options) => {
+          const Handle = `outputChannel:${++OutputChannelCounter}`;
+          const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
+          Context22.SendToMountain("outputChannel.create", {
+            handle: Handle,
+            name: Name,
+            log: IsLog
+          }).catch(() => {
+          });
+          const Channel = {
+            name: Name,
+            append: /* @__PURE__ */ __name((Value) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: Value
+              }).catch(() => {
+              });
+            }, "append"),
+            appendLine: /* @__PURE__ */ __name((Value) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `${Value}
+`
+              }).catch(() => {
+              });
+            }, "appendLine"),
+            clear: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("outputChannel.clear", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "clear"),
+            show: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("outputChannel.show", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "show"),
+            hide: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("outputChannel.hide", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "hide"),
+            replace: /* @__PURE__ */ __name((Value) => {
+              Context22.SendToMountain("outputChannel.clear", {
+                handle: Handle
+              }).catch(() => {
+              });
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: Value
+              }).catch(() => {
+              });
+            }, "replace"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("outputChannel.dispose", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose"),
+            // LogOutputChannel additions — returned when the caller passes
+            // `{ log: true }`. Kept on the base channel for simplicity;
+            // these are inert on non-log channels.
+            logLevel: 2,
+            // LogLevel.Info
+            onDidChangeLogLevel: /* @__PURE__ */ __name((_Listener) => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "onDidChangeLogLevel"),
+            trace: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[trace] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "trace"),
+            debug: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[debug] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "debug"),
+            info: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[info] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "info"),
+            warn: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[warn] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "warn"),
+            error: /* @__PURE__ */ __name((MessageOrError, ..._Arguments) => {
+              const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[error] ${Text}
+`
+              }).catch(() => {
+              });
+            }, "error")
+          };
+          void IsLog;
+          return Channel;
+        }, "createOutputChannel"),
+        createTextEditorDecorationType: /* @__PURE__ */ __name((Options) => {
+          const Key = `decoration:${Math.random().toString(36).slice(2)}`;
+          Context22.SendToMountain("window.createTextEditorDecorationType", {
+            key: Key,
+            options: Options ?? {}
+          }).catch(() => {
+          });
+          return {
+            key: Key,
+            dispose: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("window.disposeTextEditorDecorationType", {
+                key: Key
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "createTextEditorDecorationType"),
+        registerTerminalQuickFixProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTerminalQuickFixProvider"),
+        registerTerminalCompletionProvider: /* @__PURE__ */ __name((_Id, _Provider, ..._TriggerCharacters) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTerminalCompletionProvider"),
+        createQuickPick: /* @__PURE__ */ __name(() => ({
+          value: "",
+          placeholder: void 0,
+          items: [],
+          activeItems: [],
+          selectedItems: [],
+          canSelectMany: false,
+          matchOnDescription: false,
+          matchOnDetail: false,
+          busy: false,
+          enabled: true,
+          ignoreFocusOut: false,
+          step: void 0,
+          totalSteps: void 0,
+          title: void 0,
+          buttons: [],
+          show: /* @__PURE__ */ __name(() => {
+          }, "show"),
+          hide: /* @__PURE__ */ __name(() => {
+          }, "hide"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose"),
+          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidAccept"),
+          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeValue"),
+          onDidChangeActive: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeActive"),
+          onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeSelection"),
+          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidTriggerButton"),
+          onDidTriggerItemButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidTriggerItemButton"),
+          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidHide")
+        }), "createQuickPick"),
+        createInputBox: /* @__PURE__ */ __name(() => ({
+          value: "",
+          valueSelection: void 0,
+          placeholder: void 0,
+          password: false,
+          busy: false,
+          enabled: true,
+          ignoreFocusOut: false,
+          prompt: void 0,
+          validationMessage: void 0,
+          step: void 0,
+          totalSteps: void 0,
+          title: void 0,
+          buttons: [],
+          show: /* @__PURE__ */ __name(() => {
+          }, "show"),
+          hide: /* @__PURE__ */ __name(() => {
+          }, "hide"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose"),
+          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidAccept"),
+          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeValue"),
+          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidTriggerButton"),
+          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidHide")
+        }), "createInputBox"),
+        createWebviewPanel: /* @__PURE__ */ __name((_ViewType, _Title, _ShowOptions, _Options) => ({
+          viewType: _ViewType,
+          title: _Title,
+          iconPath: void 0,
+          webview: {
+            options: {},
+            html: "",
+            cspSource: "",
+            asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
+            postMessage: /* @__PURE__ */ __name(async () => false, "postMessage"),
+            onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidReceiveMessage")
+          },
+          options: {},
+          viewColumn: 1,
+          active: true,
+          visible: true,
+          reveal: /* @__PURE__ */ __name(() => {
+          }, "reveal"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose"),
+          onDidDispose: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidDispose"),
+          onDidChangeViewState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeViewState")
+        }), "createWebviewPanel"),
+        showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
+          Context22.SendToMountain("window.showTextDocument", {
+            document: _Document,
+            column: _Column,
+            preserveFocus: _PreserveFocus
+          }).catch(() => {
+          });
+          return void 0;
+        }, "showTextDocument"),
+        showNotebookDocument: /* @__PURE__ */ __name(async (_Document, _Options) => void 0, "showNotebookDocument"),
+        tabGroups: {
+          all: [],
+          activeTabGroup: {
+            tabs: [],
+            isActive: true,
+            viewColumn: 1,
+            activeTab: void 0
+          },
+          onDidChangeTabs: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeTabs"),
+          onDidChangeTabGroups: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeTabGroups"),
+          close: /* @__PURE__ */ __name(async () => true, "close")
+        },
+        activeColorTheme: {
+          kind: 2,
+          // ColorThemeKind.Dark
+          onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChange")
+        },
+        onDidChangeActiveColorTheme: MakeEventSubscriber(
+          Context22,
+          "window.didChangeActiveColorTheme"
+        ),
+        createTreeView: /* @__PURE__ */ __name((_Id, _Options) => ({
+          reveal: /* @__PURE__ */ __name(async () => {
+          }, "reveal"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose"),
+          selection: [],
+          visible: true,
+          title: void 0,
+          description: void 0,
+          message: void 0,
+          badge: void 0,
+          onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeSelection"),
+          onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeVisibility"),
+          onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidCollapseElement"),
+          onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidExpandElement"),
+          onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeCheckboxState")
+        }), "createTreeView"),
+        registerTreeDataProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTreeDataProvider"),
+        registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerWebviewPanelSerializer"),
+        registerWebviewViewProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerWebviewViewProvider"),
+        registerCustomEditorProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerCustomEditorProvider"),
+        registerFileDecorationProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerFileDecorationProvider"),
+        registerUriHandler: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerUriHandler"),
+        registerTerminalLinkProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTerminalLinkProvider"),
+        registerTerminalProfileProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTerminalProfileProvider"),
+        registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerProfileContentHandler"),
+        registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerExternalUriOpener"),
+        withProgress: /* @__PURE__ */ __name(async (_Option, Task3) => Task3({ report: /* @__PURE__ */ __name(() => {
+        }, "report") }), "withProgress"),
+        setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
+          Context22.SendToMountain("statusBar.message", {
+            text: Text,
+            hideAfter: typeof HideAfter === "number" ? HideAfter : void 0
+          }).catch(() => {
+          });
+          return { dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") };
+        }, "setStatusBarMessage"),
+        // Events sourced from Mountain gRPC notifications → Context.Emitter
+        onDidChangeActiveTextEditor: MakeEventSubscriber(
+          Context22,
+          "window.didChangeActiveTextEditor"
+        ),
+        onDidChangeVisibleTextEditors: MakeEventSubscriber(
+          Context22,
+          "window.didChangeVisibleTextEditors"
+        ),
+        onDidChangeTextEditorSelection: MakeEventSubscriber(
+          Context22,
+          "window.didChangeTextEditorSelection"
+        ),
+        onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
+          Context22,
+          "window.didChangeTextEditorVisibleRanges"
+        ),
+        onDidChangeTextEditorOptions: MakeEventSubscriber(
+          Context22,
+          "window.didChangeTextEditorOptions"
+        ),
+        onDidChangeTextEditorViewColumn: MakeEventSubscriber(
+          Context22,
+          "window.didChangeTextEditorViewColumn"
+        ),
+        onDidOpenTerminal: MakeEventSubscriber(Context22, "window.didOpenTerminal"),
+        onDidCloseTerminal: MakeEventSubscriber(Context22, "window.didCloseTerminal"),
+        onDidChangeWindowState: MakeEventSubscriber(
+          Context22,
+          "window.didChangeWindowState"
+        ),
+        activeTextEditor: void 0,
+        visibleTextEditors: [],
+        terminals: [],
+        activeTerminal: void 0,
+        state: { focused: true, active: true }
+      };
+    }, "CreateWindowNamespace");
     WindowNamespace_default = CreateWindowNamespace;
   }
 });
@@ -23191,69 +23610,225 @@ var WorkspaceNamespace_exports = {};
 __export(WorkspaceNamespace_exports, {
   default: () => WorkspaceNamespace_default
 });
-var CreateWorkspaceNamespace, WorkspaceNamespace_default;
+var EventSubscriber, Call, CreateWorkspaceNamespace, WorkspaceNamespace_default;
 var init_WorkspaceNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts"() {
     "use strict";
-    CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context22) => ({
-      workspaceFolders: [],
-      getConfiguration: /* @__PURE__ */ __name(() => ({
-        get: /* @__PURE__ */ __name((_Key, DefaultValue) => DefaultValue, "get"),
-        update: /* @__PURE__ */ __name(async () => {
-        }, "update"),
-        has: /* @__PURE__ */ __name(() => false, "has"),
-        inspect: /* @__PURE__ */ __name(() => void 0, "inspect")
-      }), "getConfiguration"),
-      findFiles: /* @__PURE__ */ __name(async () => [], "findFiles"),
-      openTextDocument: /* @__PURE__ */ __name(async (Uri2) => ({
-        getText: /* @__PURE__ */ __name(() => "", "getText"),
-        uri: Uri2,
-        languageId: "plaintext",
-        lineCount: 0,
-        fileName: ""
-      }), "openTextDocument"),
-      onDidOpenTextDocument: /* @__PURE__ */ __name((Listener) => {
-        Context22.WorkspaceEventEmitter.on("didOpenTextDocument", Listener);
-        return { dispose: /* @__PURE__ */ __name(() => {
-          Context22.WorkspaceEventEmitter.removeListener("didOpenTextDocument", Listener);
-        }, "dispose") };
-      }, "onDidOpenTextDocument"),
-      onDidCloseTextDocument: /* @__PURE__ */ __name((Listener) => {
-        Context22.WorkspaceEventEmitter.on("didCloseTextDocument", Listener);
-        return { dispose: /* @__PURE__ */ __name(() => {
-          Context22.WorkspaceEventEmitter.removeListener("didCloseTextDocument", Listener);
-        }, "dispose") };
-      }, "onDidCloseTextDocument"),
-      onDidChangeTextDocument: /* @__PURE__ */ __name((Listener) => {
-        Context22.WorkspaceEventEmitter.on("didChangeTextDocument", Listener);
-        return { dispose: /* @__PURE__ */ __name(() => {
-          Context22.WorkspaceEventEmitter.removeListener("didChangeTextDocument", Listener);
-        }, "dispose") };
-      }, "onDidChangeTextDocument"),
-      onDidSaveTextDocument: /* @__PURE__ */ __name((Listener) => {
-        Context22.WorkspaceEventEmitter.on("didSaveTextDocument", Listener);
-        return { dispose: /* @__PURE__ */ __name(() => {
-          Context22.WorkspaceEventEmitter.removeListener("didSaveTextDocument", Listener);
-        }, "dispose") };
-      }, "onDidSaveTextDocument"),
-      onDidChangeConfiguration: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeConfiguration"),
-      onDidChangeWorkspaceFolders: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeWorkspaceFolders"),
-      fs: {
-        stat: /* @__PURE__ */ __name(async () => ({ type: 1, size: 0, ctime: 0, mtime: 0 }), "stat"),
-        readFile: /* @__PURE__ */ __name(async () => new Uint8Array(), "readFile"),
-        writeFile: /* @__PURE__ */ __name(async () => {
-        }, "writeFile"),
-        readDirectory: /* @__PURE__ */ __name(async () => [], "readDirectory"),
-        createDirectory: /* @__PURE__ */ __name(async () => {
-        }, "createDirectory"),
-        delete: /* @__PURE__ */ __name(async () => {
-        }, "delete"),
-        rename: /* @__PURE__ */ __name(async () => {
-        }, "rename")
+    EventSubscriber = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
+      Context22.WorkspaceEventEmitter.on(EventName, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context22.WorkspaceEventEmitter.removeListener(EventName, Listener);
+        }, "dispose")
+      };
+    }, "EventSubscriber");
+    Call = /* @__PURE__ */ __name(async (Context22, Method, Parameters) => {
+      try {
+        return await Context22.MountainClient?.sendRequest(Method, Parameters);
+      } catch {
+        return void 0;
       }
-    }), "CreateWorkspaceNamespace");
+    }, "Call");
+    CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context22) => {
+      const InitWorkspace = Context22.ExtensionHostInitData?.workspace ?? Context22.ExtensionHostInitData?.workspaceData ?? {};
+      return {
+        workspaceFolders: InitWorkspace.folders ?? [],
+        name: InitWorkspace.name,
+        workspaceFile: void 0,
+        rootPath: void 0,
+        textDocuments: [],
+        notebookDocuments: [],
+        getConfiguration: /* @__PURE__ */ __name((Section, _Scope) => ({
+          get: /* @__PURE__ */ __name((Key, DefaultValue) => {
+            const Full = Section ? `${Section}.${Key}` : Key;
+            void Call(Context22, "Configuration.Inspect", [Full]);
+            return DefaultValue;
+          }, "get"),
+          update: /* @__PURE__ */ __name(async (Key, Value, Target) => {
+            const Full = Section ? `${Section}.${Key}` : Key;
+            const TargetIndex = Target === 2 ? 1 : Target === true ? 0 : typeof Target === "number" ? Target : 0;
+            await Call(Context22, "Configuration.Update", [
+              Full,
+              Value,
+              TargetIndex
+            ]);
+          }, "update"),
+          has: /* @__PURE__ */ __name((Key) => {
+            void Key;
+            return false;
+          }, "has"),
+          inspect: /* @__PURE__ */ __name(() => void 0, "inspect")
+        }), "getConfiguration"),
+        findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
+          const Pattern = typeof Include === "string" ? Include : Include?.pattern ?? "";
+          const ExcludePattern = typeof Exclude === "string" ? Exclude : Exclude?.pattern;
+          const Results = await Call(Context22, "Search.TextSearch", {
+            pattern: Pattern,
+            include: Pattern,
+            exclude: ExcludePattern,
+            maxResults: MaxResults,
+            isRegExp: false,
+            isCaseSensitive: false,
+            isWordMatch: false
+          });
+          return Results ?? [];
+        }, "findFiles"),
+        openTextDocument: /* @__PURE__ */ __name(async (UriOrPath) => {
+          const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
+          const Cached = Context22.DocumentContentCache.get(UriString);
+          const Text = Cached ?? await Call(Context22, "FileSystem.ReadFile", [UriString]) ?? "";
+          return {
+            uri: UriOrPath,
+            fileName: UriString,
+            languageId: "plaintext",
+            isDirty: false,
+            isClosed: false,
+            isUntitled: false,
+            version: 1,
+            eol: 1,
+            lineCount: Text.split("\n").length,
+            getText: /* @__PURE__ */ __name(() => Text, "getText"),
+            save: /* @__PURE__ */ __name(async () => true, "save")
+          };
+        }, "openTextDocument"),
+        saveAll: /* @__PURE__ */ __name(async (_IncludeUntitled) => {
+          await Call(Context22, "Document.Save", []);
+          return true;
+        }, "saveAll"),
+        applyEdit: /* @__PURE__ */ __name(async (_Edit) => {
+          Context22.SendToMountain("workspace.applyEdit", _Edit).catch(() => {
+          });
+          return true;
+        }, "applyEdit"),
+        asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
+        updateWorkspaceFolders: /* @__PURE__ */ __name(() => false, "updateWorkspaceFolders"),
+        onDidOpenTextDocument: EventSubscriber(Context22, "didOpenTextDocument"),
+        onDidCloseTextDocument: EventSubscriber(Context22, "didCloseTextDocument"),
+        onDidChangeTextDocument: EventSubscriber(Context22, "didChangeTextDocument"),
+        onDidSaveTextDocument: EventSubscriber(Context22, "didSaveTextDocument"),
+        onWillSaveTextDocument: EventSubscriber(Context22, "willSaveTextDocument"),
+        onDidCreateFiles: EventSubscriber(Context22, "didCreateFiles"),
+        onDidDeleteFiles: EventSubscriber(Context22, "didDeleteFiles"),
+        onDidRenameFiles: EventSubscriber(Context22, "didRenameFiles"),
+        onDidChangeConfiguration: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeConfiguration"),
+        onDidChangeWorkspaceFolders: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeWorkspaceFolders"),
+        registerTextDocumentContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTextDocumentContentProvider"),
+        registerFileSystemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerFileSystemProvider"),
+        registerTaskProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTaskProvider"),
+        registerNotebookContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerNotebookContentProvider"),
+        registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerNotebookSerializer"),
+        registerRemoteAuthorityResolver: /* @__PURE__ */ __name((_AuthorityPrefix, _Resolver) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerRemoteAuthorityResolver"),
+        registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerResourceLabelFormatter"),
+        registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerDocumentPasteEditProvider"),
+        registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerDocumentDropEditProvider"),
+        registerEditSessionIdentityProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerEditSessionIdentityProvider"),
+        registerShareProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerShareProvider"),
+        registerCanonicalUriProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerCanonicalUriProvider"),
+        onDidGrantWorkspaceTrust: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidGrantWorkspaceTrust"),
+        isTrusted: true,
+        trusted: true,
+        requestWorkspaceTrust: /* @__PURE__ */ __name(async () => true, "requestWorkspaceTrust"),
+        onDidOpenNotebookDocument: EventSubscriber(Context22, "didOpenNotebookDocument"),
+        onDidCloseNotebookDocument: EventSubscriber(Context22, "didCloseNotebookDocument"),
+        onDidChangeNotebookDocument: EventSubscriber(Context22, "didChangeNotebookDocument"),
+        onDidSaveNotebookDocument: EventSubscriber(Context22, "didSaveNotebookDocument"),
+        onWillSaveNotebookDocument: EventSubscriber(Context22, "willSaveNotebookDocument"),
+        onWillRenameFiles: EventSubscriber(Context22, "willRenameFiles"),
+        onWillCreateFiles: EventSubscriber(Context22, "willCreateFiles"),
+        onWillDeleteFiles: EventSubscriber(Context22, "willDeleteFiles"),
+        registerTunnelProvider: /* @__PURE__ */ __name((_Provider, _Information) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTunnelProvider"),
+        openTunnel: /* @__PURE__ */ __name(async (_TunnelOptions) => ({
+          remoteAddress: { port: 0, host: "localhost" },
+          localAddress: "",
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "openTunnel"),
+        tunnels: Promise.resolve([]),
+        onDidChangeTunnels: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeTunnels"),
+        registerPortAttributesProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerPortAttributesProvider"),
+        createFileSystemWatcher: /* @__PURE__ */ __name(() => ({
+          ignoreCreateEvents: false,
+          ignoreChangeEvents: false,
+          ignoreDeleteEvents: false,
+          onDidCreate: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidCreate"),
+          onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChange"),
+          onDidDelete: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidDelete"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "createFileSystemWatcher"),
+        fs: {
+          // FileSystem.Stat is not yet in CreateEffectForRequest — falls back
+          // to defaults via Call's try/catch until the Rust route is added.
+          stat: /* @__PURE__ */ __name(async (Uri2) => await Call(Context22, "FileSystem.Stat", [String(Uri2)]) ?? {
+            type: 1,
+            size: 0,
+            ctime: 0,
+            mtime: 0
+          }, "stat"),
+          readFile: /* @__PURE__ */ __name(async (Uri2) => {
+            const Text = await Call(Context22, "FileSystem.ReadFile", [
+              String(Uri2)
+            ]) ?? "";
+            return new TextEncoder().encode(Text);
+          }, "readFile"),
+          writeFile: /* @__PURE__ */ __name(async (Uri2, Content) => {
+            const Text = new TextDecoder().decode(Content);
+            await Call(Context22, "FileSystem.WriteFile", [
+              String(Uri2),
+              Text
+            ]);
+          }, "writeFile"),
+          readDirectory: /* @__PURE__ */ __name(async (Uri2) => await Call(Context22, "FileSystem.ReadDirectory", [
+            String(Uri2)
+          ]) ?? [], "readDirectory"),
+          createDirectory: /* @__PURE__ */ __name(async (Uri2) => {
+            await Call(Context22, "FileSystem.CreateDirectory", [
+              String(Uri2)
+            ]);
+          }, "createDirectory"),
+          delete: /* @__PURE__ */ __name(async (Uri2, Options) => {
+            await Call(Context22, "FileSystem.Delete", [
+              String(Uri2),
+              Options?.recursive ?? false
+            ]);
+          }, "delete"),
+          rename: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
+            await Call(Context22, "FileSystem.Rename", [
+              String(Source),
+              String(Target)
+            ]);
+          }, "rename"),
+          copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
+            await Call(Context22, "FileSystem.Copy", [
+              String(Source),
+              String(Target)
+            ]);
+          }, "copy"),
+          isWritableFileSystem: /* @__PURE__ */ __name((_Scheme) => true, "isWritableFileSystem")
+        }
+      };
+    }, "CreateWorkspaceNamespace");
     WorkspaceNamespace_default = CreateWorkspaceNamespace;
   }
 });
@@ -23270,21 +23845,64 @@ var init_CommandsNamespace = __esm({
     CreateCommandsNamespace = /* @__PURE__ */ __name((Context22, LanguageProviderRegistry) => ({
       registerCommand: /* @__PURE__ */ __name((Command, Callback) => {
         LanguageProviderRegistry.RegisterCommand(Command, Callback);
-        Context22.SendToMountain("registerCommand", { commandId: Command }).catch(() => {
-        });
-        return { dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") };
+        Context22.SendToMountain("registerCommand", { commandId: Command }).catch(
+          () => {
+          }
+        );
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            LanguageProviderRegistry.UnregisterCommand(Command);
+            Context22.SendToMountain("unregisterCommand", {
+              commandId: Command
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
       }, "registerCommand"),
+      registerTextEditorCommand: /* @__PURE__ */ __name((Command, Callback) => {
+        LanguageProviderRegistry.RegisterCommand(Command, Callback);
+        Context22.SendToMountain("registerCommand", {
+          commandId: Command,
+          kind: "textEditor"
+        }).catch(() => {
+        });
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            LanguageProviderRegistry.UnregisterCommand(Command);
+            Context22.SendToMountain("unregisterCommand", {
+              commandId: Command
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerTextEditorCommand"),
       executeCommand: /* @__PURE__ */ __name(async (Command, ...Arguments) => {
-        const LocalResult = LanguageProviderRegistry.ExecuteCommand(Command, ...Arguments);
+        const LocalResult = LanguageProviderRegistry.ExecuteCommand(
+          Command,
+          ...Arguments
+        );
         if (LocalResult !== void 0) return LocalResult;
         try {
-          return await Context22.MountainClient?.sendRequest("executeCommand", { commandId: Command, arguments: Arguments });
+          return await Context22.MountainClient?.sendRequest("Command.Execute", [
+            Command,
+            ...Arguments
+          ]);
         } catch {
           return void 0;
         }
       }, "executeCommand"),
-      getCommands: /* @__PURE__ */ __name(async () => [], "getCommands")
+      getCommands: /* @__PURE__ */ __name(async (FilterInternal) => {
+        try {
+          const Response = await Context22.MountainClient?.sendRequest(
+            "Command.GetAll",
+            [FilterInternal ?? false]
+          );
+          if (Array.isArray(Response)) return Response;
+          return [];
+        } catch {
+          return [];
+        }
+      }, "getCommands")
     }), "CreateCommandsNamespace");
     CommandsNamespace_default = CreateCommandsNamespace;
   }
@@ -23334,26 +23952,87 @@ var init_LanguagesNamespace = __esm({
       registerSelectionRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_selection_range_provider", Selector, Provider), "registerSelectionRangeProvider"),
       registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(Context22, LanguageProviderRegistry, "register_semantic_tokens_provider", Selector, Provider), "registerDocumentSemanticTokensProvider"),
       registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_inlay_hints_provider", Selector, Provider), "registerInlayHintsProvider"),
-      createDiagnosticCollection: /* @__PURE__ */ __name((Name) => ({
-        name: Name ?? "default",
-        set: /* @__PURE__ */ __name(() => {
-        }, "set"),
-        delete: /* @__PURE__ */ __name(() => {
-        }, "delete"),
-        clear: /* @__PURE__ */ __name(() => {
-        }, "clear"),
-        forEach: /* @__PURE__ */ __name(() => {
-        }, "forEach"),
-        get: /* @__PURE__ */ __name(() => [], "get"),
-        has: /* @__PURE__ */ __name(() => false, "has"),
-        dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose")
-      }), "createDiagnosticCollection"),
-      getLanguages: /* @__PURE__ */ __name(async () => [], "getLanguages"),
-      match: /* @__PURE__ */ __name(() => 0, "match"),
-      onDidChangeDiagnostics: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeDiagnostics"),
-      getDiagnostics: /* @__PURE__ */ __name(() => [], "getDiagnostics")
+      createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
+        const Owner = Name ?? "default";
+        const Store = /* @__PURE__ */ new Map();
+        return {
+          name: Owner,
+          set: /* @__PURE__ */ __name((UriOrEntries, Diagnostics) => {
+            if (Array.isArray(UriOrEntries) && Diagnostics === void 0) {
+              const Entries = UriOrEntries;
+              for (const [Uri2, D] of Entries) {
+                Store.set(String(Uri2), D ?? []);
+              }
+            } else {
+              Store.set(String(UriOrEntries), Diagnostics ?? []);
+            }
+            Context22.MountainClient?.sendRequest("Diagnostic.Set", [
+              Owner,
+              [...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D }))
+            ]).catch(() => {
+            });
+          }, "set"),
+          delete: /* @__PURE__ */ __name((Uri2) => {
+            Store.delete(String(Uri2));
+            Context22.MountainClient?.sendRequest("Diagnostic.Set", [
+              Owner,
+              [...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D }))
+            ]).catch(() => {
+            });
+          }, "delete"),
+          clear: /* @__PURE__ */ __name(() => {
+            Store.clear();
+            Context22.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
+              () => {
+              }
+            );
+          }, "clear"),
+          forEach: /* @__PURE__ */ __name((Callback) => {
+            const Self = null;
+            for (const [Uri2, Diagnostics] of Store) {
+              Callback(Uri2, Diagnostics, Self);
+            }
+          }, "forEach"),
+          get: /* @__PURE__ */ __name((Uri2) => Store.get(String(Uri2)) ?? [], "get"),
+          has: /* @__PURE__ */ __name((Uri2) => Store.has(String(Uri2)), "has"),
+          dispose: /* @__PURE__ */ __name(() => {
+            Store.clear();
+            Context22.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
+              () => {
+              }
+            );
+          }, "dispose")
+        };
+      }, "createDiagnosticCollection"),
+      getLanguages: /* @__PURE__ */ __name(async () => {
+        try {
+          const Result = await Context22.MountainClient?.sendRequest(
+            "Languages.GetAll",
+            []
+          );
+          return Array.isArray(Result) ? Result : [];
+        } catch {
+          return [];
+        }
+      }, "getLanguages"),
+      setTextDocumentLanguage: /* @__PURE__ */ __name(async (Document, LanguageId) => {
+        Context22.SendToMountain("languages.setDocumentLanguage", {
+          uri: Document?.uri?.toString?.() ?? "",
+          languageId: LanguageId
+        }).catch(() => {
+        });
+        return Document;
+      }, "setTextDocumentLanguage"),
+      match: /* @__PURE__ */ __name((_Selector, _Document) => 10, "match"),
+      onDidChangeDiagnostics: /* @__PURE__ */ __name((Listener) => {
+        Context22.Emitter.on("diagnostics.didChange", Listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.Emitter.off("diagnostics.didChange", Listener);
+          }, "dispose")
+        };
+      }, "onDidChangeDiagnostics"),
+      getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics")
     }), "CreateLanguagesNamespace");
     LanguagesNamespace_default = CreateLanguagesNamespace;
   }
@@ -23364,15 +24043,39 @@ var ExtensionsNamespace_exports = {};
 __export(ExtensionsNamespace_exports, {
   default: () => ExtensionsNamespace_default
 });
-var CreateExtensionsNamespace, ExtensionsNamespace_default;
+var ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
 var init_ExtensionsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
     "use strict";
-    CreateExtensionsNamespace = /* @__PURE__ */ __name((_Context) => ({
-      getExtension: /* @__PURE__ */ __name((_Identifier) => void 0, "getExtension"),
-      all: [],
-      onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChange")
+    ToExtensionObject = /* @__PURE__ */ __name((Context22, Id, Raw) => ({
+      id: Id,
+      extensionUri: Raw?.extensionLocation ?? { scheme: "file", path: "", fsPath: "" },
+      extensionPath: Raw?.extensionLocation?.fsPath ?? Raw?.extensionLocation?.path ?? "",
+      isActive: Context22.ActivatedExtensions.has(Id),
+      packageJSON: Raw,
+      extensionKind: 1,
+      exports: void 0,
+      activate: /* @__PURE__ */ __name(async () => {
+      }, "activate")
+    }), "ToExtensionObject");
+    CreateExtensionsNamespace = /* @__PURE__ */ __name((Context22) => ({
+      getExtension: /* @__PURE__ */ __name((Identifier) => {
+        const Raw = Context22.ExtensionRegistry.get(Identifier);
+        return Raw ? ToExtensionObject(Context22, Identifier, Raw) : void 0;
+      }, "getExtension"),
+      get all() {
+        return [...Context22.ExtensionRegistry.entries()].map(
+          ([Id, Raw]) => ToExtensionObject(Context22, Id, Raw)
+        );
+      },
+      onDidChange: /* @__PURE__ */ __name((Listener) => {
+        Context22.Emitter.on("deltaExtensions", Listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.Emitter.off("deltaExtensions", Listener);
+          }, "dispose")
+        };
+      }, "onDidChange")
     }), "CreateExtensionsNamespace");
     ExtensionsNamespace_default = CreateExtensionsNamespace;
   }
@@ -23387,16 +24090,63 @@ var CreateEnvNamespace, EnvNamespace_default;
 var init_EnvNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/EnvNamespace.ts"() {
     "use strict";
-    CreateEnvNamespace = /* @__PURE__ */ __name((_Context) => ({
-      appName: "CodeEditorLand",
-      appRoot: "",
-      language: "en",
-      machineId: "land",
-      sessionId: "land-session",
-      uriScheme: "vscode",
-      clipboard: { readText: /* @__PURE__ */ __name(async () => "", "readText"), writeText: /* @__PURE__ */ __name(async () => {
-      }, "writeText") }
-    }), "CreateEnvNamespace");
+    CreateEnvNamespace = /* @__PURE__ */ __name((Context22) => {
+      const Env = Context22.ExtensionHostInitData?.environment ?? {};
+      const Call2 = /* @__PURE__ */ __name(async (Method, Parameters) => {
+        try {
+          return await Context22.MountainClient?.sendRequest(Method, Parameters);
+        } catch {
+          return void 0;
+        }
+      }, "Call");
+      return {
+        appName: Env["appName"] ?? "CodeEditorLand",
+        appRoot: Env["appRoot"] ?? "",
+        appHost: Env["appHost"] ?? "desktop",
+        uiKind: 1,
+        // vscode.UIKind.Desktop
+        language: Env["language"] ?? "en",
+        machineId: Context22.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
+        sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
+        isNewAppInstall: false,
+        isTelemetryEnabled: false,
+        onDidChangeTelemetryEnabled: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeTelemetryEnabled"),
+        uriScheme: Env["uriScheme"] ?? "vscode",
+        shell: Env["shell"] ?? process.env["SHELL"] ?? "",
+        remoteName: void 0,
+        clipboard: {
+          // Clipboard.Read / Clipboard.Write not yet routed — catch returns
+          // empty string / undefined until the Rust dispatcher adds them.
+          readText: /* @__PURE__ */ __name(async () => await Call2("Clipboard.Read", []) ?? "", "readText"),
+          writeText: /* @__PURE__ */ __name(async (Value) => {
+            await Call2("Clipboard.Write", [Value]);
+          }, "writeText")
+        },
+        openExternal: /* @__PURE__ */ __name(async (Target) => {
+          const Ok = await Call2("NativeHost.OpenExternal", [
+            typeof Target === "string" ? Target : String(Target)
+          ]);
+          return Ok ?? false;
+        }, "openExternal"),
+        asExternalUri: /* @__PURE__ */ __name(async (Target) => Target, "asExternalUri"),
+        createTelemetryLogger: /* @__PURE__ */ __name((_Sender, _Options) => ({
+          isUsageEnabled: false,
+          isErrorsEnabled: false,
+          onDidChangeEnableStates: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeEnableStates"),
+          logUsage: /* @__PURE__ */ __name((_EventName, _Data) => {
+          }, "logUsage"),
+          logError: /* @__PURE__ */ __name((_EventNameOrError, _Data) => {
+          }, "logError"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "createTelemetryLogger"),
+        logLevel: 2,
+        onDidChangeLogLevel: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeLogLevel")
+      };
+    }, "CreateEnvNamespace");
     EnvNamespace_default = CreateEnvNamespace;
   }
 });
@@ -23406,25 +24156,116 @@ var DebugNamespace_exports = {};
 __export(DebugNamespace_exports, {
   default: () => DebugNamespace_default
 });
-var CreateDebugNamespace, DebugNamespace_default;
+var DebugProviderCounter, EventSubscriber2, CreateDebugNamespace, DebugNamespace_default;
 var init_DebugNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/DebugNamespace.ts"() {
     "use strict";
-    CreateDebugNamespace = /* @__PURE__ */ __name((_Context) => ({
-      registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerDebugAdapterDescriptorFactory"),
-      registerDebugConfigurationProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerDebugConfigurationProvider"),
-      startDebugging: /* @__PURE__ */ __name(async () => false, "startDebugging"),
-      onDidStartDebugSession: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidStartDebugSession"),
-      onDidTerminateDebugSession: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidTerminateDebugSession"),
-      onDidChangeActiveDebugSession: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeActiveDebugSession"),
-      onDidReceiveDebugSessionCustomEvent: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidReceiveDebugSessionCustomEvent"),
+    DebugProviderCounter = 0;
+    EventSubscriber2 = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
+      Context22.Emitter.on(EventName, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context22.Emitter.off(EventName, Listener);
+        }, "dispose")
+      };
+    }, "EventSubscriber");
+    CreateDebugNamespace = /* @__PURE__ */ __name((Context22) => ({
+      registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((DebugType, _Factory) => {
+        const Handle = `debugAdapter:${++DebugProviderCounter}`;
+        Context22.SendToMountain("register_debug_adapter", {
+          handle: Handle,
+          debug_type: DebugType,
+          extension_id: ""
+        }).catch(() => {
+        });
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.SendToMountain("unregister_debug_adapter", {
+              handle: Handle
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerDebugAdapterDescriptorFactory"),
+      registerDebugConfigurationProvider: /* @__PURE__ */ __name((DebugType, _Provider) => {
+        const Handle = `debugConfig:${++DebugProviderCounter}`;
+        Context22.SendToMountain("register_debug_configuration_provider", {
+          handle: Handle,
+          debug_type: DebugType
+        }).catch(() => {
+        });
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.SendToMountain("unregister_debug_configuration_provider", {
+              handle: Handle
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerDebugConfigurationProvider"),
+      registerDebugAdapterTrackerFactory: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerDebugAdapterTrackerFactory"),
+      startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
+        try {
+          const Response = await Context22.MountainClient?.sendRequest("Debug.Start", [
+            Folder,
+            NameOrConfig,
+            ParentSession
+          ]);
+          return Boolean(Response?.success);
+        } catch {
+          return false;
+        }
+      }, "startDebugging"),
+      stopDebugging: /* @__PURE__ */ __name(async (Session) => {
+        try {
+          await Context22.MountainClient?.sendRequest("Debug.Stop", [Session]);
+        } catch {
+        }
+      }, "stopDebugging"),
+      addBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
+        Context22.SendToMountain("debug.addBreakpoints", {
+          breakpoints: Breakpoints
+        }).catch(() => {
+        });
+      }, "addBreakpoints"),
+      removeBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
+        Context22.SendToMountain("debug.removeBreakpoints", {
+          breakpoints: Breakpoints
+        }).catch(() => {
+        });
+      }, "removeBreakpoints"),
+      asDebugSourceUri: /* @__PURE__ */ __name((Source) => Source, "asDebugSourceUri"),
+      onDidStartDebugSession: EventSubscriber2(Context22, "debug.didStartSession"),
+      onDidTerminateDebugSession: EventSubscriber2(
+        Context22,
+        "debug.didTerminateSession"
+      ),
+      onDidChangeActiveDebugSession: EventSubscriber2(
+        Context22,
+        "debug.didChangeActiveSession"
+      ),
+      onDidReceiveDebugSessionCustomEvent: EventSubscriber2(
+        Context22,
+        "debug.didReceiveCustomEvent"
+      ),
+      onDidChangeBreakpoints: EventSubscriber2(Context22, "debug.didChangeBreakpoints"),
       activeDebugSession: void 0,
+      activeDebugConsole: {
+        append: /* @__PURE__ */ __name((Value) => {
+          Context22.SendToMountain("debug.consoleAppend", { value: Value }).catch(
+            () => {
+            }
+          );
+        }, "append"),
+        appendLine: /* @__PURE__ */ __name((Value) => {
+          Context22.SendToMountain("debug.consoleAppend", {
+            value: `${Value}
+`
+          }).catch(() => {
+          });
+        }, "appendLine")
+      },
       breakpoints: []
     }), "CreateDebugNamespace");
     DebugNamespace_default = CreateDebugNamespace;
@@ -23436,19 +24277,59 @@ var TasksNamespace_exports = {};
 __export(TasksNamespace_exports, {
   default: () => TasksNamespace_default
 });
-var CreateTasksNamespace, TasksNamespace_default;
+var TaskProviderCounter, EventSubscriber3, CreateTasksNamespace, TasksNamespace_default;
 var init_TasksNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/TasksNamespace.ts"() {
     "use strict";
-    CreateTasksNamespace = /* @__PURE__ */ __name((_Context) => ({
-      registerTaskProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerTaskProvider"),
-      fetchTasks: /* @__PURE__ */ __name(async () => [], "fetchTasks"),
-      executeTask: /* @__PURE__ */ __name(async () => void 0, "executeTask"),
-      onDidStartTask: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidStartTask"),
-      onDidEndTask: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidEndTask")
+    TaskProviderCounter = 0;
+    EventSubscriber3 = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
+      Context22.Emitter.on(EventName, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context22.Emitter.off(EventName, Listener);
+        }, "dispose")
+      };
+    }, "EventSubscriber");
+    CreateTasksNamespace = /* @__PURE__ */ __name((Context22) => ({
+      registerTaskProvider: /* @__PURE__ */ __name((TaskType, _Provider) => {
+        const Handle = `taskProvider:${++TaskProviderCounter}`;
+        Context22.SendToMountain("register_task_provider", {
+          handle: Handle,
+          task_type: TaskType,
+          extension_id: ""
+        }).catch(() => {
+        });
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.SendToMountain("unregister_task_provider", {
+              handle: Handle
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerTaskProvider"),
+      fetchTasks: /* @__PURE__ */ __name(async (Filter) => {
+        try {
+          const Response = await Context22.MountainClient?.sendRequest("Task.Fetch", [
+            Filter
+          ]);
+          return Array.isArray(Response) ? Response : [];
+        } catch {
+          return [];
+        }
+      }, "fetchTasks"),
+      executeTask: /* @__PURE__ */ __name(async (Task3) => {
+        try {
+          return await Context22.MountainClient?.sendRequest("Task.Execute", [Task3]);
+        } catch {
+          return void 0;
+        }
+      }, "executeTask"),
+      onDidStartTask: EventSubscriber3(Context22, "task.didStart"),
+      onDidEndTask: EventSubscriber3(Context22, "task.didEnd"),
+      onDidStartTaskProcess: EventSubscriber3(Context22, "task.didStartProcess"),
+      onDidEndTaskProcess: EventSubscriber3(Context22, "task.didEndProcess"),
+      taskExecutions: []
     }), "CreateTasksNamespace");
     TasksNamespace_default = CreateTasksNamespace;
   }
@@ -23459,18 +24340,84 @@ var ScmNamespace_exports = {};
 __export(ScmNamespace_exports, {
   default: () => ScmNamespace_default
 });
-var CreateScmNamespace, ScmNamespace_default;
+var ScmCounter, CreateScmNamespace, ScmNamespace_default;
 var init_ScmNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
     "use strict";
-    CreateScmNamespace = /* @__PURE__ */ __name((_Context) => ({
-      createSourceControl: /* @__PURE__ */ __name(() => ({
-        inputBox: { value: "" },
-        createResourceGroup: /* @__PURE__ */ __name(() => ({ resourceStates: [], dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "createResourceGroup"),
-        dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose")
-      }), "createSourceControl")
+    ScmCounter = 0;
+    CreateScmNamespace = /* @__PURE__ */ __name((Context22) => ({
+      createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
+        const Handle = `scm:${++ScmCounter}`;
+        Context22.SendToMountain("register_scm_provider", {
+          handle: Handle,
+          id: Id,
+          label: Label,
+          root_uri: RootUri,
+          extension_id: ""
+        }).catch(() => {
+        });
+        const Groups = /* @__PURE__ */ new Map();
+        return {
+          id: Id,
+          label: Label,
+          rootUri: RootUri,
+          inputBox: {
+            value: "",
+            placeholder: "",
+            enabled: true,
+            visible: true
+          },
+          createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
+            const GroupHandle = `${Handle}/${GroupId}`;
+            Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
+            Context22.SendToMountain("register_scm_resource_group", {
+              scm_handle: Handle,
+              group_handle: GroupHandle,
+              group_id: GroupId,
+              label: GroupLabel
+            }).catch(() => {
+            });
+            const State = { resourceStates: [] };
+            return {
+              id: GroupId,
+              label: GroupLabel,
+              get resourceStates() {
+                return State.resourceStates;
+              },
+              set resourceStates(Value) {
+                State.resourceStates = Value;
+                Context22.SendToMountain("update_scm_group", {
+                  scm_handle: Handle,
+                  group_handle: GroupHandle,
+                  resource_states: Value
+                }).catch(() => {
+                });
+              },
+              dispose: /* @__PURE__ */ __name(() => {
+                Context22.SendToMountain("unregister_scm_resource_group", {
+                  scm_handle: Handle,
+                  group_handle: GroupHandle
+                }).catch(() => {
+                });
+                Groups.delete(GroupId);
+              }, "dispose")
+            };
+          }, "createResourceGroup"),
+          statusBarCommands: [],
+          count: 0,
+          commitTemplate: "",
+          acceptInputCommand: void 0,
+          quickDiffProvider: void 0,
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.SendToMountain("unregister_scm_provider", {
+              handle: Handle
+            }).catch(() => {
+            });
+            Groups.clear();
+          }, "dispose")
+        };
+      }, "createSourceControl"),
+      inputBox: { value: "" }
     }), "CreateScmNamespace");
     ScmNamespace_default = CreateScmNamespace;
   }
@@ -23481,16 +24428,61 @@ var AuthenticationNamespace_exports = {};
 __export(AuthenticationNamespace_exports, {
   default: () => AuthenticationNamespace_default
 });
-var CreateAuthenticationNamespace, AuthenticationNamespace_default;
+var AuthProviderCounter, EventSubscriber4, CreateAuthenticationNamespace, AuthenticationNamespace_default;
 var init_AuthenticationNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts"() {
     "use strict";
-    CreateAuthenticationNamespace = /* @__PURE__ */ __name((_Context) => ({
-      registerAuthenticationProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerAuthenticationProvider"),
-      getSession: /* @__PURE__ */ __name(async () => void 0, "getSession"),
-      onDidChangeSessions: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeSessions")
+    AuthProviderCounter = 0;
+    EventSubscriber4 = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
+      Context22.Emitter.on(EventName, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context22.Emitter.off(EventName, Listener);
+        }, "dispose")
+      };
+    }, "EventSubscriber");
+    CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context22) => ({
+      registerAuthenticationProvider: /* @__PURE__ */ __name((ProviderId, Label, _Provider, Options) => {
+        const Handle = `authProvider:${++AuthProviderCounter}`;
+        Context22.SendToMountain("register_authentication_provider", {
+          handle: Handle,
+          provider_id: ProviderId,
+          label: Label,
+          supports_multiple_accounts: Options?.supportsMultipleAccounts ?? false,
+          extension_id: ""
+        }).catch(() => {
+        });
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.SendToMountain("unregister_authentication_provider", {
+              handle: Handle
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerAuthenticationProvider"),
+      getSession: /* @__PURE__ */ __name(async (ProviderId, Scopes, Options) => {
+        try {
+          return await Context22.MountainClient?.sendRequest(
+            "Authentication.GetSession",
+            [ProviderId, Scopes, Options ?? {}]
+          );
+        } catch {
+          return void 0;
+        }
+      }, "getSession"),
+      getAccounts: /* @__PURE__ */ __name(async (ProviderId) => {
+        try {
+          const Result = await Context22.MountainClient?.sendRequest(
+            "Authentication.GetAccounts",
+            [ProviderId]
+          );
+          return Array.isArray(Result) ? Result : [];
+        } catch {
+          return [];
+        }
+      }, "getAccounts"),
+      onDidChangeSessions: EventSubscriber4(Context22, "auth.didChangeSessions")
     }), "CreateAuthenticationNamespace");
     AuthenticationNamespace_default = CreateAuthenticationNamespace;
   }
@@ -23501,11 +24493,13 @@ var LanguageProviderRegistry_exports = {};
 __export(LanguageProviderRegistry_exports, {
   ExecuteCommand: () => ExecuteCommand,
   Get: () => Get,
+  ListCommands: () => ListCommands,
   ListHandles: () => ListHandles,
   Register: () => Register,
   RegisterAutoHandle: () => RegisterAutoHandle,
   RegisterCommand: () => RegisterCommand,
-  Unregister: () => Unregister
+  Unregister: () => Unregister,
+  UnregisterCommand: () => UnregisterCommand
 });
 function Register(Handle, Provider) {
   Callbacks.set(Handle, Provider);
@@ -23529,6 +24523,12 @@ function ExecuteCommand(CommandId, ...Args) {
   if (Handler) return Handler(...Args);
   return void 0;
 }
+function UnregisterCommand(CommandId) {
+  Commands.delete(CommandId);
+}
+function ListCommands() {
+  return Array.from(Commands.keys());
+}
 function ListHandles() {
   return Array.from(Callbacks.keys());
 }
@@ -23545,12 +24545,14 @@ var init_LanguageProviderRegistry = __esm({
     Commands = /* @__PURE__ */ new Map();
     __name(RegisterCommand, "RegisterCommand");
     __name(ExecuteCommand, "ExecuteCommand");
+    __name(UnregisterCommand, "UnregisterCommand");
+    __name(ListCommands, "ListCommands");
     __name(ListHandles, "ListHandles");
   }
 });
 
 // Source/Services/Handler/ExtensionHostHandler.ts
-var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent, HandleStartExtensionHost, EnsureVscodeAPIRegistered, ActivateExtension, CreateExtensionContext, ExtensionHostHandler_default;
+var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent, HandleStartExtensionHost, InstallVscodeModuleHooks, EnsureVscodeAPIRegistered, ActivateExtension, CreateExtensionContext, ExtensionHostHandler_default;
 var init_ExtensionHostHandler = __esm({
   "Source/Services/Handler/ExtensionHostHandler.ts"() {
     "use strict";
@@ -23675,62 +24677,261 @@ var init_ExtensionHostHandler = __esm({
         extensionCount: Context22.ExtensionRegistry.size
       };
     }, "HandleStartExtensionHost");
+    InstallVscodeModuleHooks = /* @__PURE__ */ __name(async () => {
+      if (globalThis.__cocoonModuleHooksInstalled) return;
+      globalThis.__cocoonModuleHooksInstalled = true;
+      const ModuleModule = await import("module");
+      const CreateRequire = ModuleModule.createRequire;
+      const LocalRequire = CreateRequire(import.meta.url);
+      try {
+        const NodeModule = LocalRequire("module");
+        const OriginalLoad = NodeModule._load;
+        NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
+          if (Request === "vscode") {
+            const API = globalThis.__cocoonVscodeAPI;
+            if (API) return API;
+            console.warn(
+              "[ExtensionHostHandler] require('vscode') called before shim registered \u2014 returning empty namespace"
+            );
+            return {};
+          }
+          return OriginalLoad.call(this, Request, Parent, IsMain);
+        }, "PatchedLoad");
+        console.log(
+          "[ExtensionHostHandler] Module._load hook installed \u2014 require('vscode') intercepted"
+        );
+      } catch (Err) {
+        console.warn(
+          "[ExtensionHostHandler] Failed to patch Module._load:",
+          Err instanceof Error ? Err.message : String(Err)
+        );
+      }
+      try {
+        const NodeModule = LocalRequire("module");
+        if (typeof NodeModule.register === "function") {
+          const VscodeExportNames = [
+            // Namespaces
+            "window",
+            "workspace",
+            "commands",
+            "languages",
+            "extensions",
+            "env",
+            "debug",
+            "tasks",
+            "scm",
+            "authentication",
+            "l10n",
+            "notebooks",
+            "tests",
+            "comments",
+            "chat",
+            "lm",
+            "interactive",
+            // Type constructors
+            "Position",
+            "Range",
+            "Location",
+            "LocationLink",
+            "Selection",
+            "MarkdownString",
+            "Hover",
+            "CompletionItem",
+            "CompletionItemKind",
+            "CompletionItemTag",
+            "CompletionList",
+            "CompletionTriggerKind",
+            "Diagnostic",
+            "DiagnosticSeverity",
+            "DiagnosticTag",
+            "DiagnosticRelatedInformation",
+            "TextEdit",
+            "WorkspaceEdit",
+            "SnippetString",
+            "SnippetTextEdit",
+            "SymbolKind",
+            "SymbolTag",
+            "SymbolInformation",
+            "DocumentSymbol",
+            "CodeActionKind",
+            "CodeAction",
+            "CodeActionTriggerKind",
+            "CodeLens",
+            "SignatureHelp",
+            "SignatureHelpTriggerKind",
+            "SignatureInformation",
+            "ParameterInformation",
+            "InlayHint",
+            "InlayHintKind",
+            "InlayHintLabelPart",
+            "FoldingRange",
+            "FoldingRangeKind",
+            "DocumentHighlight",
+            "DocumentHighlightKind",
+            "SelectionRange",
+            "SemanticTokensLegend",
+            "SemanticTokensBuilder",
+            "SemanticTokens",
+            "SemanticTokensEdit",
+            "SemanticTokensEdits",
+            "RelativePattern",
+            "Disposable",
+            "StatusBarAlignment",
+            "ThemeColor",
+            "ThemeIcon",
+            "TreeItem",
+            "TreeItemCollapsibleState",
+            "TreeItemCheckboxState",
+            "ViewColumn",
+            "EndOfLine",
+            "ConfigurationTarget",
+            "Uri",
+            "CancellationTokenSource",
+            "CancellationError",
+            "EventEmitter",
+            "FileType",
+            "FilePermission",
+            "FileSystemError",
+            "DataTransfer",
+            "DataTransferItem",
+            "TextDocumentChangeReason",
+            "TextDocumentSaveReason",
+            "TextEditorCursorStyle",
+            "TextEditorLineNumbersStyle",
+            "TextEditorRevealType",
+            "TextEditorSelectionChangeKind",
+            "DecorationRangeBehavior",
+            "OverviewRulerLane",
+            "ColorPresentation",
+            "ColorInformation",
+            "Color",
+            "QuickPickItemKind",
+            "InputBoxValidationSeverity",
+            "ProgressLocation",
+            "NotebookCellData",
+            "NotebookCellKind",
+            "NotebookCellOutput",
+            "NotebookCellOutputItem",
+            "NotebookData",
+            "NotebookEdit",
+            "NotebookRange",
+            "TestRunProfileKind",
+            "TestMessage",
+            "TestRunRequest",
+            "TestTag",
+            "DebugAdapterExecutable",
+            "DebugAdapterInlineImplementation",
+            "DebugAdapterNamedPipeServer",
+            "DebugAdapterServer",
+            "Breakpoint",
+            "FunctionBreakpoint",
+            "SourceBreakpoint",
+            "TerminalLink",
+            "TerminalLocation",
+            "TerminalProfile",
+            "TaskGroup",
+            "TaskScope",
+            "TaskRevealKind",
+            "TaskPanelKind",
+            "ShellExecution",
+            "ProcessExecution",
+            "CustomExecution",
+            "Task",
+            "CommentMode",
+            "CommentThreadCollapsibleState",
+            "CommentThreadState",
+            "ExtensionKind",
+            "ExtensionMode",
+            "UIKind",
+            "LogLevel",
+            "LanguageStatusSeverity",
+            "TextSearchContext",
+            "TextSearchMatch",
+            "DocumentLink",
+            "LinkedEditingRanges",
+            "EvaluatableExpression",
+            "InlineValueText",
+            "InlineValueVariableLookup",
+            "InlineValueEvaluatableExpression",
+            "TypeHierarchyItem",
+            "CallHierarchyItem",
+            "CallHierarchyIncomingCall",
+            "CallHierarchyOutgoingCall",
+            // Fields
+            "version"
+          ];
+          const NamedExports = VscodeExportNames.map((Name) => `export const ${Name} = API.${Name};`).join("\n");
+          const BridgeSource = [
+            "const API = globalThis.__cocoonVscodeAPI || {};",
+            NamedExports,
+            "export default API;",
+            "export const __esModule = true;"
+          ].join("\n");
+          const LoaderSource = `
+				const BRIDGE_URL = 'vscode-shim:///vscode';
+				const BRIDGE_SOURCE = ${JSON.stringify(BridgeSource)};
+				export async function resolve(Specifier, Context, NextResolve) {
+					if (Specifier === 'vscode') {
+						return { url: BRIDGE_URL, shortCircuit: true, format: 'module' };
+					}
+					return NextResolve(Specifier, Context);
+				}
+				export async function load(Url, Context, NextLoad) {
+					if (Url === BRIDGE_URL) {
+						return { format: 'module', source: BRIDGE_SOURCE, shortCircuit: true };
+					}
+					return NextLoad(Url, Context);
+				}
+			`;
+          const LoaderURL = `data:text/javascript;base64,${Buffer.from(LoaderSource).toString("base64")}`;
+          try {
+            NodeModule.register(LoaderURL, import.meta.url);
+            console.log(
+              "[ExtensionHostHandler] ESM loader registered \u2014 import 'vscode' intercepted"
+            );
+          } catch (RegisterErr) {
+            console.warn(
+              "[ExtensionHostHandler] module.register failed (ESM imports of 'vscode' will fail):",
+              RegisterErr instanceof Error ? RegisterErr.message : String(RegisterErr)
+            );
+          }
+        }
+      } catch (Err) {
+        console.warn(
+          "[ExtensionHostHandler] ESM loader setup skipped:",
+          Err instanceof Error ? Err.message : String(Err)
+        );
+      }
+    }, "InstallVscodeModuleHooks");
     EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context22) => {
+      await InstallVscodeModuleHooks();
       if (globalThis.__cocoonVscodeAPI) return;
       try {
         const VsCodeTypes2 = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
         const { URI: URI3 } = await Promise.resolve().then(() => (init_uri(), uri_exports));
         const { CancellationTokenSource: CancellationTokenSource3 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
         const { Emitter: Emitter4 } = await Promise.resolve().then(() => (init_event(), event_exports));
+        const LogLevelEnum = {
+          Off: 0,
+          Trace: 1,
+          Debug: 2,
+          Info: 3,
+          Warning: 4,
+          Error: 5,
+          0: "Off",
+          1: "Trace",
+          2: "Debug",
+          3: "Info",
+          4: "Warning",
+          5: "Error"
+        };
         const API = {
+          ...VsCodeTypes2,
           version: "1.88.0",
-          // Type constructors
-          Position: VsCodeTypes2.Position,
-          Range: VsCodeTypes2.Range,
-          Location: VsCodeTypes2.Location,
-          Selection: VsCodeTypes2.Selection,
-          MarkdownString: VsCodeTypes2.MarkdownString,
-          Hover: VsCodeTypes2.Hover,
-          CompletionItem: VsCodeTypes2.CompletionItem,
-          CompletionItemKind: VsCodeTypes2.CompletionItemKind,
-          CompletionList: VsCodeTypes2.CompletionList,
-          CompletionTriggerKind: VsCodeTypes2.CompletionTriggerKind,
-          Diagnostic: VsCodeTypes2.Diagnostic,
-          DiagnosticSeverity: VsCodeTypes2.DiagnosticSeverity,
-          TextEdit: VsCodeTypes2.TextEdit,
-          WorkspaceEdit: VsCodeTypes2.WorkspaceEdit,
-          SnippetString: VsCodeTypes2.SnippetString,
-          SymbolKind: VsCodeTypes2.SymbolKind,
-          SymbolInformation: VsCodeTypes2.SymbolInformation,
-          DocumentSymbol: VsCodeTypes2.DocumentSymbol,
-          CodeActionKind: VsCodeTypes2.CodeActionKind,
-          CodeAction: VsCodeTypes2.CodeAction,
-          SignatureHelp: VsCodeTypes2.SignatureHelp,
-          SignatureInformation: VsCodeTypes2.SignatureInformation,
-          ParameterInformation: VsCodeTypes2.ParameterInformation,
-          InlayHint: VsCodeTypes2.InlayHint,
-          InlayHintKind: VsCodeTypes2.InlayHintKind,
-          FoldingRange: VsCodeTypes2.FoldingRange,
-          FoldingRangeKind: VsCodeTypes2.FoldingRangeKind,
-          DocumentHighlight: VsCodeTypes2.DocumentHighlight,
-          DocumentHighlightKind: VsCodeTypes2.DocumentHighlightKind,
-          SelectionRange: VsCodeTypes2.SelectionRange,
-          SemanticTokensLegend: VsCodeTypes2.SemanticTokensLegend,
-          SemanticTokensBuilder: VsCodeTypes2.SemanticTokensBuilder,
-          SemanticTokens: VsCodeTypes2.SemanticTokens,
-          RelativePattern: VsCodeTypes2.RelativePattern,
-          Disposable: VsCodeTypes2.Disposable,
-          StatusBarAlignment: VsCodeTypes2.StatusBarAlignment,
-          ThemeColor: VsCodeTypes2.ThemeColor,
-          ThemeIcon: VsCodeTypes2.ThemeIcon,
-          TreeItem: VsCodeTypes2.TreeItem,
-          TreeItemCollapsibleState: VsCodeTypes2.TreeItemCollapsibleState,
-          ViewColumn: VsCodeTypes2.ViewColumn,
-          EndOfLine: VsCodeTypes2.EndOfLine,
-          ConfigurationTarget: VsCodeTypes2.ConfigurationTarget,
           Uri: URI3,
           CancellationTokenSource: CancellationTokenSource3,
           EventEmitter: Emitter4,
+          LogLevel: LogLevelEnum,
           // Namespaces — each in its own file under VscodeAPI/
           window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(Context22),
           workspace: (await Promise.resolve().then(() => (init_WorkspaceNamespace(), WorkspaceNamespace_exports))).default(Context22),
@@ -23741,10 +24942,200 @@ var init_ExtensionHostHandler = __esm({
           debug: (await Promise.resolve().then(() => (init_DebugNamespace(), DebugNamespace_exports))).default(Context22),
           tasks: (await Promise.resolve().then(() => (init_TasksNamespace(), TasksNamespace_exports))).default(Context22),
           scm: (await Promise.resolve().then(() => (init_ScmNamespace(), ScmNamespace_exports))).default(Context22),
-          authentication: (await Promise.resolve().then(() => (init_AuthenticationNamespace(), AuthenticationNamespace_exports))).default(Context22)
+          authentication: (await Promise.resolve().then(() => (init_AuthenticationNamespace(), AuthenticationNamespace_exports))).default(Context22),
+          // Lightweight stub namespaces — no Mountain route yet, returns
+          // safe defaults so extensions that reference them don't crash.
+          l10n: {
+            t: /* @__PURE__ */ __name((Message, ...Arguments) => {
+              const Raw = typeof Message === "string" ? Message : Message?.message ?? String(Message);
+              if (!Arguments.length) return Raw;
+              return Raw.replace(/\{(\d+)\}/g, (_Match, Index) => {
+                const Replacement = Arguments[Number(Index)];
+                return Replacement === void 0 ? "" : String(Replacement);
+              });
+            }, "t"),
+            bundle: void 0,
+            uri: void 0
+          },
+          notebooks: {
+            createNotebookController: /* @__PURE__ */ __name(() => ({
+              id: "",
+              notebookType: "",
+              supportedLanguages: [],
+              label: "",
+              supportsExecutionOrder: false,
+              executeHandler: /* @__PURE__ */ __name(() => {
+              }, "executeHandler"),
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose"),
+              createNotebookCellExecution: /* @__PURE__ */ __name(() => ({
+                start: /* @__PURE__ */ __name(() => {
+                }, "start"),
+                end: /* @__PURE__ */ __name(() => {
+                }, "end"),
+                replaceOutput: /* @__PURE__ */ __name(async () => {
+                }, "replaceOutput"),
+                appendOutput: /* @__PURE__ */ __name(async () => {
+                }, "appendOutput"),
+                clearOutput: /* @__PURE__ */ __name(async () => {
+                }, "clearOutput"),
+                replaceOutputItems: /* @__PURE__ */ __name(async () => {
+                }, "replaceOutputItems"),
+                appendOutputItems: /* @__PURE__ */ __name(async () => {
+                }, "appendOutputItems"),
+                executionOrder: void 0
+              }), "createNotebookCellExecution"),
+              onDidChangeSelectedNotebooks: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose") }), "onDidChangeSelectedNotebooks"),
+              updateNotebookAffinity: /* @__PURE__ */ __name(() => {
+              }, "updateNotebookAffinity")
+            }), "createNotebookController"),
+            registerNotebookCellStatusBarItemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerNotebookCellStatusBarItemProvider"),
+            registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerNotebookSerializer"),
+            registerRendererCommunication: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerRendererCommunication"),
+            createRendererMessaging: /* @__PURE__ */ __name(() => ({
+              postMessage: /* @__PURE__ */ __name(async () => false, "postMessage"),
+              onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose") }), "onDidReceiveMessage")
+            }), "createRendererMessaging"),
+            onDidChangeNotebookCellExecutionState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidChangeNotebookCellExecutionState")
+          },
+          lm: {
+            registerTool: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerTool"),
+            invokeTool: /* @__PURE__ */ __name(async () => ({ content: [] }), "invokeTool"),
+            selectChatModels: /* @__PURE__ */ __name(async () => [], "selectChatModels"),
+            registerChatModelProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerChatModelProvider"),
+            tools: [],
+            onDidChangeChatModels: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidChangeChatModels")
+          },
+          chat: {
+            createChatParticipant: /* @__PURE__ */ __name(() => ({
+              id: "",
+              iconPath: void 0,
+              requester: void 0,
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose"),
+              followupProvider: void 0,
+              onDidReceiveFeedback: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose") }), "onDidReceiveFeedback")
+            }), "createChatParticipant"),
+            registerChatVariableResolver: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerChatVariableResolver"),
+            registerMappedEditsProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerMappedEditsProvider"),
+            registerChatOutputRenderer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerChatOutputRenderer"),
+            registerRelatedFilesProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerRelatedFilesProvider"),
+            registerChatSessionProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerChatSessionProvider"),
+            registerChatSessionItemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerChatSessionItemProvider")
+          },
+          tests: {
+            createTestController: /* @__PURE__ */ __name(() => ({
+              id: "",
+              label: "",
+              items: { size: 0, replace: /* @__PURE__ */ __name(() => {
+              }, "replace"), forEach: /* @__PURE__ */ __name(() => {
+              }, "forEach"), add: /* @__PURE__ */ __name(() => {
+              }, "add"), delete: /* @__PURE__ */ __name(() => {
+              }, "delete"), get: /* @__PURE__ */ __name(() => void 0, "get") },
+              createRunProfile: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose") }), "createRunProfile"),
+              resolveHandler: void 0,
+              refreshHandler: void 0,
+              createTestItem: /* @__PURE__ */ __name(() => ({}), "createTestItem"),
+              createTestRun: /* @__PURE__ */ __name(() => ({
+                enqueued: /* @__PURE__ */ __name(() => {
+                }, "enqueued"),
+                started: /* @__PURE__ */ __name(() => {
+                }, "started"),
+                skipped: /* @__PURE__ */ __name(() => {
+                }, "skipped"),
+                failed: /* @__PURE__ */ __name(() => {
+                }, "failed"),
+                errored: /* @__PURE__ */ __name(() => {
+                }, "errored"),
+                passed: /* @__PURE__ */ __name(() => {
+                }, "passed"),
+                end: /* @__PURE__ */ __name(() => {
+                }, "end"),
+                appendOutput: /* @__PURE__ */ __name(() => {
+                }, "appendOutput"),
+                token: { isCancellationRequested: false, onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+                }, "dispose") }), "onCancellationRequested") }
+              }), "createTestRun"),
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "createTestController")
+          },
+          comments: {
+            createCommentController: /* @__PURE__ */ __name(() => ({
+              id: "",
+              label: "",
+              commentingRangeProvider: void 0,
+              reactionHandler: void 0,
+              options: void 0,
+              createCommentThread: /* @__PURE__ */ __name(() => ({
+                uri: void 0,
+                range: void 0,
+                comments: [],
+                collapsibleState: 0,
+                canReply: true,
+                contextValue: void 0,
+                label: void 0,
+                state: void 0,
+                dispose: /* @__PURE__ */ __name(() => {
+                }, "dispose")
+              }), "createCommentThread"),
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "createCommentController")
+          },
+          interactive: {
+            registerInteractiveEditorSessionProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerInteractiveEditorSessionProvider"),
+            transferActiveChat: /* @__PURE__ */ __name(async () => {
+            }, "transferActiveChat")
+          }
         };
         globalThis.__cocoonVscodeAPI = API;
         console.log("[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI");
+        const CriticalNames = [
+          "Diagnostic",
+          "CodeAction",
+          "CodeLens",
+          "CompletionItem",
+          "SymbolInformation",
+          "DocumentLink",
+          "TypeHierarchyItem",
+          "CallHierarchyItem",
+          "SemanticTokensBuilder",
+          "SemanticTokens",
+          "RelativePattern",
+          "Position",
+          "Range",
+          "Hover",
+          "LogLevel"
+        ];
+        const Missing = CriticalNames.filter((Name) => API[Name] === void 0);
+        if (Missing.length) {
+          console.warn(
+            `[ExtensionHostHandler] vscode API shim missing critical symbols: ${Missing.join(", ")}`
+          );
+        } else {
+          console.log(
+            "[ExtensionHostHandler] vscode API shim critical symbols OK"
+          );
+        }
       } catch (Err) {
         console.warn(
           "[ExtensionHostHandler] Failed to create vscode API shim:",
@@ -23769,15 +25160,42 @@ var init_ExtensionHostHandler = __esm({
         ExtensionPath = String(LocationRaw).replace(/^file:\/\//, "").replace(/\/$/, "");
       }
       const ModulePath = `${ExtensionPath}/${MainFile}`;
-      console.log(`[ExtensionHostHandler] Loading ${ExtensionId} from ${ModulePath}`);
+      const ModuleType = Extension2?.type ?? Extension2?.Type;
+      const IsESM = ModuleType === "module" || /\.mjs$/i.test(MainFile) || /\.mts$/i.test(MainFile);
+      console.log(
+        `[ExtensionHostHandler] Loading ${ExtensionId} (${IsESM ? "ESM" : "CJS"}) from ${ModulePath}`
+      );
       try {
-        const { createRequire: createRequire3 } = await import("module");
-        const Require = createRequire3(import.meta.url);
-        const ExtModule = Require(ModulePath);
-        if (typeof ExtModule?.activate === "function") {
+        let ExtModule;
+        if (IsESM) {
+          const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
+          ExtModule = await import(ImportURL);
+        } else {
+          const { createRequire: createRequire3 } = await import("module");
+          const Require = createRequire3(import.meta.url);
+          try {
+            ExtModule = Require(ModulePath);
+          } catch (RequireErr) {
+            const Msg = RequireErr instanceof Error ? RequireErr.message : String(RequireErr);
+            if (/ERR_REQUIRE_ESM|Cannot use import statement/i.test(Msg)) {
+              const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
+              ExtModule = await import(ImportURL);
+            } else {
+              throw RequireErr;
+            }
+          }
+        }
+        const ActivateFn = typeof ExtModule?.activate === "function" ? ExtModule.activate : typeof ExtModule?.default?.activate === "function" ? ExtModule.default.activate : void 0;
+        if (typeof ActivateFn === "function") {
           const ExtContext = CreateExtensionContext(Context22, Extension2, ExtensionPath);
-          await ExtModule.activate(ExtContext);
-          console.log(`[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`);
+          await ActivateFn(ExtContext);
+          console.log(
+            `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`
+          );
+        } else {
+          console.warn(
+            `[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`
+          );
         }
       } catch (Err) {
         Context22.ActivatedExtensions.delete(ExtensionId);
@@ -29554,7 +30972,7 @@ var init_GRPCServerService = __esm({
        */
       createServiceImplementation() {
         return {
-          ProcessMountainRequest: /* @__PURE__ */ __name((Call, Callback) => {
+          ProcessMountainRequest: /* @__PURE__ */ __name((Call2, Callback) => {
             if (!this.ValidateAuthentication()) {
               Callback({
                 code: grpc2.status.UNAUTHENTICATED,
@@ -29562,14 +30980,14 @@ var init_GRPCServerService = __esm({
               });
               return;
             }
-            this.handleMountainRequest(Call.request).then((Response) => Callback(null, Response)).catch(
+            this.handleMountainRequest(Call2.request).then((Response) => Callback(null, Response)).catch(
               (Error2) => Callback({
                 code: grpc2.status.INTERNAL,
                 details: Error2 instanceof globalThis.Error ? Error2.message : "Unknown error"
               })
             );
           }, "ProcessMountainRequest"),
-          SendMountainNotification: /* @__PURE__ */ __name((Call, Callback) => {
+          SendMountainNotification: /* @__PURE__ */ __name((Call2, Callback) => {
             if (!this.ValidateAuthentication()) {
               Callback({
                 code: grpc2.status.UNAUTHENTICATED,
@@ -29577,10 +30995,10 @@ var init_GRPCServerService = __esm({
               });
               return;
             }
-            this.handleMountainNotification(Call.request);
+            this.handleMountainNotification(Call2.request);
             Callback(null, {});
           }, "SendMountainNotification"),
-          CancelOperation: /* @__PURE__ */ __name((Call, Callback) => {
+          CancelOperation: /* @__PURE__ */ __name((Call2, Callback) => {
             if (!this.ValidateAuthentication()) {
               Callback({
                 code: grpc2.status.UNAUTHENTICATED,
@@ -29588,7 +31006,7 @@ var init_GRPCServerService = __esm({
               });
               return;
             }
-            this.handleCancelOperation(Call.request);
+            this.handleCancelOperation(Call2.request);
             Callback(null, {});
           }, "CancelOperation")
         };

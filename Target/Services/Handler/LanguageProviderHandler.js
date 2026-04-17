@@ -20762,6 +20762,14 @@ function ExecuteCommand(CommandId, ...Args) {
   return void 0;
 }
 __name(ExecuteCommand, "ExecuteCommand");
+function UnregisterCommand(CommandId) {
+  Commands.delete(CommandId);
+}
+__name(UnregisterCommand, "UnregisterCommand");
+function ListCommands() {
+  return Array.from(Commands.keys());
+}
+__name(ListCommands, "ListCommands");
 function ListHandles() {
   return Array.from(Callbacks.keys());
 }

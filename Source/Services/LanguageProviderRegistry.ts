@@ -85,6 +85,21 @@ export function ExecuteCommand(CommandId: string, ...Args: unknown[]): unknown {
 }
 
 /**
+ * Remove a command registration. Called by the dispose() returned to
+ * extensions from `vscode.commands.registerCommand(...)`.
+ */
+export function UnregisterCommand(CommandId: string): void {
+	Commands.delete(CommandId);
+}
+
+/**
+ * Return all currently registered command IDs.
+ */
+export function ListCommands(): readonly string[] {
+	return Array.from(Commands.keys());
+}
+
+/**
  * Return all currently registered handles and their provider types.
  * Useful for diagnostics.
  */

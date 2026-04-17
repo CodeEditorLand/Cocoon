@@ -371,14 +371,17 @@ export class MountainClientService implements IMountainClientService {
 			const fs = require("fs");
 			const path = require("path");
 
-			// Search multiple paths for Mountain's Proto directory
+			// Search multiple paths for Mountain's Proto directory.
+			// Cocoon source/bundle lives at Land/Element/Cocoon/{Source,Target}/Services/.
+			// From __dirname, ../../../../Mountain/... lands in Land/Element/Mountain/.
+			// From cwd=Land/, Element/Mountain/... is correct.
+			// From cwd=Land/Element/Cocoon/, ../Mountain/... is correct.
+			// Never re-add an "Element/" prefix after going up past Land/Element/ —
+			// that produces a bogus Land/Element/Element/Mountain/... path.
 			const SearchPaths = [
 				path.resolve(__dirname, "../../../../Mountain/Proto/Vine.proto"),
-				path.resolve(__dirname, "../../../../../Mountain/Proto/Vine.proto"),
-				path.resolve(__dirname, "../../../../../../Element/Mountain/Proto/Vine.proto"),
 				path.resolve(process.cwd(), "Element/Mountain/Proto/Vine.proto"),
 				path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto"),
-				path.resolve(process.cwd(), "../Element/Mountain/Proto/Vine.proto"),
 			];
 			let vineProtoPath: string | null = null;
 			for (const P of SearchPaths) {

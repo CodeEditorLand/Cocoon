@@ -83,20 +83,86 @@ const CreateLanguagesNamespace = (
 		RegisterProvider(Context, LanguageProviderRegistry, "register_semantic_tokens_provider", Selector, Provider),
 	registerInlayHintsProvider: (Selector: any, Provider: any) =>
 		RegisterProvider(Context, LanguageProviderRegistry, "register_inlay_hints_provider", Selector, Provider),
-	createDiagnosticCollection: (Name?: string) => ({
-		name: Name ?? "default",
-		set: () => {},
-		delete: () => {},
-		clear: () => {},
-		forEach: () => {},
-		get: () => [],
-		has: () => false,
-		dispose: () => {},
-	}),
-	getLanguages: async () => [] as string[],
-	match: () => 0,
-	onDidChangeDiagnostics: () => ({ dispose: () => {} }),
-	getDiagnostics: () => [],
+	createDiagnosticCollection: (Name?: string) => {
+		const Owner = Name ?? "default";
+		const Store = new Map<string, unknown[]>();
+		return {
+			name: Owner,
+			set: (UriOrEntries: unknown, Diagnostics?: unknown[]) => {
+				// Two overloads: (uri, diagnostics) and (entries: [uri, diagnostics][])
+				if (Array.isArray(UriOrEntries) && Diagnostics === undefined) {
+					const Entries = UriOrEntries as Array<[unknown, unknown[]]>;
+					for (const [Uri, D] of Entries) {
+						Store.set(String(Uri), D ?? []);
+					}
+				} else {
+					Store.set(String(UriOrEntries), Diagnostics ?? []);
+				}
+				// Single-shot Diagnostic.Set over the whole collection.
+				Context.MountainClient?.sendRequest("Diagnostic.Set", [
+					Owner,
+					[...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D })),
+				]).catch(() => {});
+			},
+			delete: (Uri: unknown) => {
+				Store.delete(String(Uri));
+				Context.MountainClient?.sendRequest("Diagnostic.Set", [
+					Owner,
+					[...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D })),
+				]).catch(() => {});
+			},
+			clear: () => {
+				Store.clear();
+				Context.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
+					() => {},
+				);
+			},
+			forEach: (
+				Callback: (Uri: unknown, Diagnostics: unknown[], Collection: unknown) => void,
+			) => {
+				const Self = null;
+				for (const [Uri, Diagnostics] of Store) {
+					Callback(Uri, Diagnostics, Self);
+				}
+			},
+			get: (Uri: unknown): unknown[] => Store.get(String(Uri)) ?? [],
+			has: (Uri: unknown): boolean => Store.has(String(Uri)),
+			dispose: () => {
+				Store.clear();
+				Context.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
+					() => {},
+				);
+			},
+		};
+	},
+	getLanguages: async (): Promise<string[]> => {
+		try {
+			const Result = await Context.MountainClient?.sendRequest(
+				"Languages.GetAll",
+				[],
+			);
+			return Array.isArray(Result) ? (Result as string[]) : [];
+		} catch {
+			return [];
+		}
+	},
+	setTextDocumentLanguage: async (Document: any, LanguageId: string) => {
+		Context.SendToMountain("languages.setDocumentLanguage", {
+			uri: Document?.uri?.toString?.() ?? "",
+			languageId: LanguageId,
+		}).catch(() => {});
+		return Document;
+	},
+	match: (_Selector: any, _Document: any): number => 10,
+	onDidChangeDiagnostics: (Listener: (...Arguments: any[]) => any) => {
+		Context.Emitter.on("diagnostics.didChange", Listener);
+		return {
+			dispose: () => {
+				Context.Emitter.off("diagnostics.didChange", Listener);
+			},
+		};
+	},
+	getDiagnostics: (_Resource?: unknown): unknown[] => [],
 });
 
 export default CreateLanguagesNamespace;
