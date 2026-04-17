@@ -15,6 +15,41 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		unknown
 	>;
 
+	// Mountain delivers `appRoot` as a `file://` URL string
+	// (`url::Url::from_directory_path`). VS Code's `vscode.env.appRoot`
+	// contract is a plain filesystem path — extensions pass it straight to
+	// `path.join(appRoot, 'product.json')` and then `fs.readFile`. Strip the
+	// `file://` scheme and percent-decode so those calls resolve correctly.
+	const NormalizeAppRoot = (Raw: unknown): string => {
+		if (typeof Raw !== "string" || Raw.length === 0) {
+			console.log(
+				"[LandFix:EnvNs] appRoot empty or non-string, returning ''",
+			);
+			return "";
+		}
+		if (!Raw.startsWith("file:")) {
+			console.log(`[LandFix:EnvNs] appRoot already plain path: ${Raw}`);
+			return Raw;
+		}
+		try {
+			const Normalised = decodeURIComponent(
+				new URL(Raw).pathname,
+			).replace(/\/$/, "");
+			console.log(
+				`[LandFix:EnvNs] appRoot normalised file-URL ${Raw} → ${Normalised}`,
+			);
+			return Normalised;
+		} catch (Error: unknown) {
+			const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
+			console.warn(
+				`[LandFix:EnvNs] appRoot URL parse failed (${
+					Error instanceof Error ? Error.message : String(Error)
+				}); fallback ${Raw} → ${Fallback}`,
+			);
+			return Fallback;
+		}
+	};
+
 	const Call = async <T>(
 		Method: string,
 		Parameters: unknown,
@@ -31,7 +66,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 
 	return {
 		appName: (Env["appName"] as string) ?? "CodeEditorLand",
-		appRoot: (Env["appRoot"] as string) ?? "",
+		appRoot: NormalizeAppRoot(Env["appRoot"]),
 		appHost: (Env["appHost"] as string) ?? "desktop",
 		uiKind: 1, // vscode.UIKind.Desktop
 		language: (Env["language"] as string) ?? "en",

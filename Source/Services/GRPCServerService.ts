@@ -136,6 +136,15 @@ export class GRPCServerService
 		this._serviceBrand = undefined;
 		console.log("[GRPCServerService] Initializing gRPC server");
 
+		// Extensions register many listeners (one per language client, webview,
+		// tree view, etc.). The default Node cap of 10 produces noisy
+		// `MaxListenersExceededWarning` spam during boot. 0 = unlimited.
+		this.setMaxListeners(0);
+		this.workspaceEventEmitter.setMaxListeners(0);
+		console.log(
+			"[LandFix:GRPCSvc] setMaxListeners(0) applied on self + workspaceEventEmitter",
+		);
+
 		// Parse environment variables
 		this.parseEnvironment();
 

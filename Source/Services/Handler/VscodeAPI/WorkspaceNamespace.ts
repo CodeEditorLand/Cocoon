@@ -39,6 +39,205 @@ const Call = async <T>(
 	}
 };
 
+// Directories that nearly every extension wants excluded from `findFiles`. The
+// stub previously returned `[]`, which was conservative but broke
+// `npm.hasPackageJson`, TS tsconfig discovery, and a handful of others. Now we
+// walk the workspace ourselves; these prefixes keep the walk bounded.
+const DefaultExcludeSegments = new Set([
+	".git",
+	"node_modules",
+	".astro",
+	".next",
+	".nuxt",
+	".cache",
+	".turbo",
+	".pnpm",
+	"Target",
+	"target",
+	"dist",
+	"out",
+	"build",
+	".DS_Store",
+]);
+
+/**
+ * Convert a VS Code glob (tolerates `**`, `*`, `?`, `{a,b}`, char classes) to
+ * an anchored regex. This is not a full minimatch — we support the subset the
+ * built-in extensions use on activate: `**\/package.json`, `**\/*.ts`,
+ * `{**\/tsconfig.json,**\/tsconfig.*.json}`. Unknown constructs fall through
+ * as literal characters so worst case a stricter pattern just matches nothing.
+ */
+const GlobToRegex = (Glob: string): RegExp => {
+	let Expression = "^";
+	let CurlyDepth = 0;
+	for (let I = 0; I < Glob.length; I++) {
+		const Character = Glob[I]!;
+		const Next = Glob[I + 1];
+		if (Character === "*" && Next === "*") {
+			// `**/` or `**` — match anything including `/`
+			Expression += ".*";
+			I++;
+			if (Glob[I + 1] === "/") I++;
+		} else if (Character === "*") {
+			Expression += "[^/]*";
+		} else if (Character === "?") {
+			Expression += "[^/]";
+		} else if (Character === "{") {
+			Expression += "(?:";
+			CurlyDepth++;
+		} else if (Character === "}") {
+			if (CurlyDepth > 0) {
+				Expression += ")";
+				CurlyDepth--;
+			} else {
+				Expression += "\\}";
+			}
+		} else if (Character === "," && CurlyDepth > 0) {
+			Expression += "|";
+		} else if (/[.+^$()|\[\]\\]/.test(Character)) {
+			Expression += "\\" + Character;
+		} else {
+			Expression += Character;
+		}
+	}
+	Expression += "$";
+	return new RegExp(Expression);
+};
+
+/**
+ * Normalise VS Code's GlobPattern overloads to a plain string. Accepts a raw
+ * string, a RelativePattern-shaped object, or a Uri-shaped object. We only
+ * need the pattern — base resolution is handled by the workspace walk.
+ */
+const ExtractGlobPattern = (Raw: unknown): string | undefined => {
+	if (typeof Raw === "string" && Raw.length > 0) return Raw;
+	if (Raw && typeof Raw === "object") {
+		const Obj = Raw as Record<string, unknown>;
+		if (typeof Obj["pattern"] === "string")
+			return Obj["pattern"] as string;
+		if (typeof Obj["glob"] === "string") return Obj["glob"] as string;
+	}
+	return undefined;
+};
+
+/**
+ * Strip `file://` from a workspace-folder URI (string or UriComponents-ish
+ * object) to get a filesystem path we can walk with `fs.readdir`.
+ */
+const FolderToFsPath = (FolderUri: unknown): string | undefined => {
+	const Raw =
+		typeof FolderUri === "string"
+			? FolderUri
+			: (FolderUri as Record<string, unknown>)?.["fsPath"] ??
+				(FolderUri as Record<string, unknown>)?.["path"] ??
+				(FolderUri as Record<string, unknown>)?.["external"];
+	if (typeof Raw !== "string" || Raw.length === 0) return undefined;
+	if (Raw.startsWith("file:")) {
+		try {
+			return decodeURIComponent(new URL(Raw).pathname);
+		} catch {
+			return Raw.replace(/^file:\/\//, "");
+		}
+	}
+	return Raw;
+};
+
+const FindFilesLocal = async (
+	_Context: HandlerContext,
+	Folders: Array<{ uri: unknown; name: string; index: number }>,
+	Include: unknown,
+	Exclude?: unknown,
+	MaxResults?: number,
+): Promise<Array<{ scheme: string; path: string; fsPath: string }>> => {
+	const IncludePattern = ExtractGlobPattern(Include);
+	const ExcludePattern = ExtractGlobPattern(Exclude);
+	const Cap =
+		typeof MaxResults === "number" && MaxResults > 0
+			? MaxResults
+			: 10_000;
+
+	console.log(
+		`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}`,
+	);
+
+	if (!IncludePattern) {
+		console.warn("[LandFix:WsNs] findFiles: no include pattern → []");
+		return [];
+	}
+
+	let IncludeRegex: RegExp;
+	try {
+		IncludeRegex = GlobToRegex(IncludePattern);
+	} catch (Error: unknown) {
+		console.warn(
+			`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${
+				Error instanceof Error ? Error.message : String(Error)
+			}`,
+		);
+		return [];
+	}
+	let ExcludeRegex: RegExp | undefined;
+	if (ExcludePattern) {
+		try {
+			ExcludeRegex = GlobToRegex(ExcludePattern);
+		} catch {}
+	}
+
+	const { readdir } = await import("node:fs/promises");
+	const { join, relative, sep } = await import("node:path");
+
+	const Results: Array<{
+		scheme: string;
+		path: string;
+		fsPath: string;
+	}> = [];
+
+	const Walk = async (Root: string, Current: string): Promise<void> => {
+		if (Results.length >= Cap) return;
+		let Entries: Array<{ name: string; isDirectory(): boolean }>;
+		try {
+			Entries = (await readdir(Current, {
+				withFileTypes: true,
+			})) as unknown as Array<{
+				name: string;
+				isDirectory(): boolean;
+			}>;
+		} catch {
+			return;
+		}
+		for (const Entry of Entries) {
+			if (Results.length >= Cap) return;
+			const Name = Entry.name;
+			if (DefaultExcludeSegments.has(Name)) continue;
+			const Full = join(Current, Name);
+			const RelativeFromRoot = relative(Root, Full).split(sep).join("/");
+			if (Entry.isDirectory()) {
+				await Walk(Root, Full);
+				continue;
+			}
+			if (ExcludeRegex && ExcludeRegex.test(RelativeFromRoot)) continue;
+			if (!IncludeRegex.test(RelativeFromRoot)) continue;
+			Results.push({ scheme: "file", path: Full, fsPath: Full });
+		}
+	};
+
+	for (const Folder of Folders) {
+		const FsPath = FolderToFsPath(Folder?.uri);
+		if (!FsPath) {
+			console.warn(
+				`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})`,
+			);
+			continue;
+		}
+		await Walk(FsPath, FsPath);
+	}
+
+	console.log(
+		`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}`,
+	);
+	return Results;
+};
+
 const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 	const InitWorkspace = (Context.ExtensionHostInitData?.workspace ??
 		Context.ExtensionHostInitData?.workspaceData ??
@@ -92,31 +291,13 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			Exclude?: unknown,
 			MaxResults?: number,
 		): Promise<unknown[]> => {
-			// Dispatcher has Search.TextSearch — closest existing route. Real
-			// findFiles would need a dedicated Search.FindFiles handler.
-			// Mountain expects a TextSearchQuery struct, not positional args.
-			const Pattern =
-				typeof Include === "string"
-					? Include
-					: ((Include as { pattern?: string })?.pattern ?? "");
-			const ExcludePattern =
-				typeof Exclude === "string"
-					? Exclude
-					: (Exclude as { pattern?: string })?.pattern;
-			const Results = await Call<unknown[]>(
+			return FindFilesLocal(
 				Context,
-				"Search.TextSearch",
-				{
-					pattern: Pattern,
-					include: Pattern,
-					exclude: ExcludePattern,
-					maxResults: MaxResults,
-					isRegExp: false,
-					isCaseSensitive: false,
-					isWordMatch: false,
-				},
+				InitWorkspace.folders ?? [],
+				Include,
+				Exclude,
+				MaxResults,
 			);
-			return Results ?? [];
 		},
 
 		openTextDocument: async (UriOrPath: any) => {
@@ -273,11 +454,50 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 					mtime: 0,
 				},
 			readFile: async (Uri: any): Promise<Uint8Array> => {
-				const Text =
-					(await Call<string>(Context, "FileSystem.ReadFile", [
-						String(Uri),
-					])) ?? "";
-				return new TextEncoder().encode(Text);
+				// Use raw sendRequest so we can discriminate a benign
+				// "Resource not found" (extensions probing for optional cache
+				// files) from a genuine I/O error. The raw-error path throws
+				// a vscode `FileSystemError.FileNotFound`, which extensions'
+				// own try/catch handles cleanly instead of the previous
+				// empty-bytes-then-SyntaxError chain (see terminal-suggest on
+				// first run).
+				const UriString = String(Uri);
+				try {
+					const Text = (await Context.MountainClient?.sendRequest(
+						"FileSystem.ReadFile",
+						[UriString],
+					)) as string | undefined;
+					return new TextEncoder().encode(Text ?? "");
+				} catch (Err: unknown) {
+					const Message =
+						Err instanceof Error ? Err.message : String(Err);
+					const LooksLike404 = /resource not found|ENOENT|not found/i.test(
+						Message,
+					);
+					if (LooksLike404) {
+						console.log(
+							`[LandFix:FsRead] 404 → FileNotFound for ${UriString}`,
+						);
+						const Api = (globalThis as any).__cocoonVscodeAPI;
+						const FileNotFound =
+							Api?.FileSystemError?.FileNotFound;
+						if (typeof FileNotFound === "function") {
+							throw FileNotFound(Uri);
+						}
+						// Fallback: shape a VS Code-ish error so `instanceof`
+						// and `.code` checks work even without the real class.
+						const Synthetic: any = new Error(
+							`EntryNotFound (FileSystemError): ${UriString}`,
+						);
+						Synthetic.code = "FileNotFound";
+						Synthetic.name = "FileSystemError";
+						throw Synthetic;
+					}
+					console.warn(
+						`[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}`,
+					);
+					throw Err;
+				}
 			},
 			writeFile: async (Uri: any, Content: Uint8Array) => {
 				const Text = new TextDecoder().decode(Content);

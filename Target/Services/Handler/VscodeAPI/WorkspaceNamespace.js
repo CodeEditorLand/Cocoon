@@ -23,6 +23,149 @@ var Call = /* @__PURE__ */ __name(async (Context, Method, Parameters) => {
     return void 0;
   }
 }, "Call");
+var DefaultExcludeSegments = /* @__PURE__ */ new Set([
+  ".git",
+  "node_modules",
+  ".astro",
+  ".next",
+  ".nuxt",
+  ".cache",
+  ".turbo",
+  ".pnpm",
+  "Target",
+  "target",
+  "dist",
+  "out",
+  "build",
+  ".DS_Store"
+]);
+var GlobToRegex = /* @__PURE__ */ __name((Glob) => {
+  let Expression = "^";
+  let CurlyDepth = 0;
+  for (let I = 0; I < Glob.length; I++) {
+    const Character = Glob[I];
+    const Next = Glob[I + 1];
+    if (Character === "*" && Next === "*") {
+      Expression += ".*";
+      I++;
+      if (Glob[I + 1] === "/") I++;
+    } else if (Character === "*") {
+      Expression += "[^/]*";
+    } else if (Character === "?") {
+      Expression += "[^/]";
+    } else if (Character === "{") {
+      Expression += "(?:";
+      CurlyDepth++;
+    } else if (Character === "}") {
+      if (CurlyDepth > 0) {
+        Expression += ")";
+        CurlyDepth--;
+      } else {
+        Expression += "\\}";
+      }
+    } else if (Character === "," && CurlyDepth > 0) {
+      Expression += "|";
+    } else if (/[.+^$()|\[\]\\]/.test(Character)) {
+      Expression += "\\" + Character;
+    } else {
+      Expression += Character;
+    }
+  }
+  Expression += "$";
+  return new RegExp(Expression);
+}, "GlobToRegex");
+var ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
+  if (typeof Raw === "string" && Raw.length > 0) return Raw;
+  if (Raw && typeof Raw === "object") {
+    const Obj = Raw;
+    if (typeof Obj["pattern"] === "string")
+      return Obj["pattern"];
+    if (typeof Obj["glob"] === "string") return Obj["glob"];
+  }
+  return void 0;
+}, "ExtractGlobPattern");
+var FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
+  const Raw = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
+  if (typeof Raw !== "string" || Raw.length === 0) return void 0;
+  if (Raw.startsWith("file:")) {
+    try {
+      return decodeURIComponent(new URL(Raw).pathname);
+    } catch {
+      return Raw.replace(/^file:\/\//, "");
+    }
+  }
+  return Raw;
+}, "FolderToFsPath");
+var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, Exclude, MaxResults) => {
+  const IncludePattern = ExtractGlobPattern(Include);
+  const ExcludePattern = ExtractGlobPattern(Exclude);
+  const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
+  console.log(
+    `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}`
+  );
+  if (!IncludePattern) {
+    console.warn("[LandFix:WsNs] findFiles: no include pattern \u2192 []");
+    return [];
+  }
+  let IncludeRegex;
+  try {
+    IncludeRegex = GlobToRegex(IncludePattern);
+  } catch (Error2) {
+    console.warn(
+      `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}`
+    );
+    return [];
+  }
+  let ExcludeRegex;
+  if (ExcludePattern) {
+    try {
+      ExcludeRegex = GlobToRegex(ExcludePattern);
+    } catch {
+    }
+  }
+  const { readdir } = await import("node:fs/promises");
+  const { join, relative, sep } = await import("node:path");
+  const Results = [];
+  const Walk = /* @__PURE__ */ __name(async (Root, Current) => {
+    if (Results.length >= Cap) return;
+    let Entries;
+    try {
+      Entries = await readdir(Current, {
+        withFileTypes: true
+      });
+    } catch {
+      return;
+    }
+    for (const Entry of Entries) {
+      if (Results.length >= Cap) return;
+      const Name = Entry.name;
+      if (DefaultExcludeSegments.has(Name)) continue;
+      const Full = join(Current, Name);
+      const RelativeFromRoot = relative(Root, Full).split(sep).join("/");
+      if (Entry.isDirectory()) {
+        await Walk(Root, Full);
+        continue;
+      }
+      if (ExcludeRegex && ExcludeRegex.test(RelativeFromRoot)) continue;
+      if (!IncludeRegex.test(RelativeFromRoot)) continue;
+      Results.push({ scheme: "file", path: Full, fsPath: Full });
+    }
+  }, "Walk");
+  for (const Folder of Folders) {
+    const FsPath = FolderToFsPath(Folder?.uri);
+    if (!FsPath) {
+      console.warn(
+        `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})`
+      );
+      continue;
+    }
+    await Walk(FsPath, FsPath);
+  }
+  console.log(
+    `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}`
+  );
+  return Results;
+}, "FindFilesLocal");
 var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
   const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
   return {
@@ -54,22 +197,13 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
       inspect: /* @__PURE__ */ __name(() => void 0, "inspect")
     }), "getConfiguration"),
     findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
-      const Pattern = typeof Include === "string" ? Include : Include?.pattern ?? "";
-      const ExcludePattern = typeof Exclude === "string" ? Exclude : Exclude?.pattern;
-      const Results = await Call(
+      return FindFilesLocal(
         Context,
-        "Search.TextSearch",
-        {
-          pattern: Pattern,
-          include: Pattern,
-          exclude: ExcludePattern,
-          maxResults: MaxResults,
-          isRegExp: false,
-          isCaseSensitive: false,
-          isWordMatch: false
-        }
+        InitWorkspace.folders ?? [],
+        Include,
+        Exclude,
+        MaxResults
       );
-      return Results ?? [];
     }, "findFiles"),
     openTextDocument: /* @__PURE__ */ __name(async (UriOrPath) => {
       const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
@@ -217,10 +351,39 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
         mtime: 0
       }, "stat"),
       readFile: /* @__PURE__ */ __name(async (Uri) => {
-        const Text = await Call(Context, "FileSystem.ReadFile", [
-          String(Uri)
-        ]) ?? "";
-        return new TextEncoder().encode(Text);
+        const UriString = String(Uri);
+        try {
+          const Text = await Context.MountainClient?.sendRequest(
+            "FileSystem.ReadFile",
+            [UriString]
+          );
+          return new TextEncoder().encode(Text ?? "");
+        } catch (Err) {
+          const Message = Err instanceof Error ? Err.message : String(Err);
+          const LooksLike404 = /resource not found|ENOENT|not found/i.test(
+            Message
+          );
+          if (LooksLike404) {
+            console.log(
+              `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}`
+            );
+            const Api = globalThis.__cocoonVscodeAPI;
+            const FileNotFound = Api?.FileSystemError?.FileNotFound;
+            if (typeof FileNotFound === "function") {
+              throw FileNotFound(Uri);
+            }
+            const Synthetic = new Error(
+              `EntryNotFound (FileSystemError): ${UriString}`
+            );
+            Synthetic.code = "FileNotFound";
+            Synthetic.name = "FileSystemError";
+            throw Synthetic;
+          }
+          console.warn(
+            `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}`
+          );
+          throw Err;
+        }
       }, "readFile"),
       writeFile: /* @__PURE__ */ __name(async (Uri, Content) => {
         const Text = new TextDecoder().decode(Content);

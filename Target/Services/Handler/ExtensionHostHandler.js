@@ -21246,7 +21246,7 @@ var WorkspaceNamespace_exports = {};
 __export(WorkspaceNamespace_exports, {
   default: () => WorkspaceNamespace_default
 });
-var EventSubscriber, Call, CreateWorkspaceNamespace, WorkspaceNamespace_default;
+var EventSubscriber, Call, DefaultExcludeSegments, GlobToRegex, ExtractGlobPattern, FolderToFsPath, FindFilesLocal, CreateWorkspaceNamespace, WorkspaceNamespace_default;
 var init_WorkspaceNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts"() {
     "use strict";
@@ -21271,6 +21271,149 @@ var init_WorkspaceNamespace = __esm({
         return void 0;
       }
     }, "Call");
+    DefaultExcludeSegments = /* @__PURE__ */ new Set([
+      ".git",
+      "node_modules",
+      ".astro",
+      ".next",
+      ".nuxt",
+      ".cache",
+      ".turbo",
+      ".pnpm",
+      "Target",
+      "target",
+      "dist",
+      "out",
+      "build",
+      ".DS_Store"
+    ]);
+    GlobToRegex = /* @__PURE__ */ __name((Glob) => {
+      let Expression = "^";
+      let CurlyDepth = 0;
+      for (let I = 0; I < Glob.length; I++) {
+        const Character = Glob[I];
+        const Next = Glob[I + 1];
+        if (Character === "*" && Next === "*") {
+          Expression += ".*";
+          I++;
+          if (Glob[I + 1] === "/") I++;
+        } else if (Character === "*") {
+          Expression += "[^/]*";
+        } else if (Character === "?") {
+          Expression += "[^/]";
+        } else if (Character === "{") {
+          Expression += "(?:";
+          CurlyDepth++;
+        } else if (Character === "}") {
+          if (CurlyDepth > 0) {
+            Expression += ")";
+            CurlyDepth--;
+          } else {
+            Expression += "\\}";
+          }
+        } else if (Character === "," && CurlyDepth > 0) {
+          Expression += "|";
+        } else if (/[.+^$()|\[\]\\]/.test(Character)) {
+          Expression += "\\" + Character;
+        } else {
+          Expression += Character;
+        }
+      }
+      Expression += "$";
+      return new RegExp(Expression);
+    }, "GlobToRegex");
+    ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
+      if (typeof Raw === "string" && Raw.length > 0) return Raw;
+      if (Raw && typeof Raw === "object") {
+        const Obj = Raw;
+        if (typeof Obj["pattern"] === "string")
+          return Obj["pattern"];
+        if (typeof Obj["glob"] === "string") return Obj["glob"];
+      }
+      return void 0;
+    }, "ExtractGlobPattern");
+    FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
+      const Raw = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
+      if (typeof Raw !== "string" || Raw.length === 0) return void 0;
+      if (Raw.startsWith("file:")) {
+        try {
+          return decodeURIComponent(new URL(Raw).pathname);
+        } catch {
+          return Raw.replace(/^file:\/\//, "");
+        }
+      }
+      return Raw;
+    }, "FolderToFsPath");
+    FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, Exclude, MaxResults) => {
+      const IncludePattern = ExtractGlobPattern(Include);
+      const ExcludePattern = ExtractGlobPattern(Exclude);
+      const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
+      console.log(
+        `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}`
+      );
+      if (!IncludePattern) {
+        console.warn("[LandFix:WsNs] findFiles: no include pattern \u2192 []");
+        return [];
+      }
+      let IncludeRegex;
+      try {
+        IncludeRegex = GlobToRegex(IncludePattern);
+      } catch (Error2) {
+        console.warn(
+          `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}`
+        );
+        return [];
+      }
+      let ExcludeRegex;
+      if (ExcludePattern) {
+        try {
+          ExcludeRegex = GlobToRegex(ExcludePattern);
+        } catch {
+        }
+      }
+      const { readdir } = await import("node:fs/promises");
+      const { join: join3, relative: relative2, sep: sep2 } = await import("node:path");
+      const Results = [];
+      const Walk = /* @__PURE__ */ __name(async (Root, Current) => {
+        if (Results.length >= Cap) return;
+        let Entries;
+        try {
+          Entries = await readdir(Current, {
+            withFileTypes: true
+          });
+        } catch {
+          return;
+        }
+        for (const Entry of Entries) {
+          if (Results.length >= Cap) return;
+          const Name = Entry.name;
+          if (DefaultExcludeSegments.has(Name)) continue;
+          const Full = join3(Current, Name);
+          const RelativeFromRoot = relative2(Root, Full).split(sep2).join("/");
+          if (Entry.isDirectory()) {
+            await Walk(Root, Full);
+            continue;
+          }
+          if (ExcludeRegex && ExcludeRegex.test(RelativeFromRoot)) continue;
+          if (!IncludeRegex.test(RelativeFromRoot)) continue;
+          Results.push({ scheme: "file", path: Full, fsPath: Full });
+        }
+      }, "Walk");
+      for (const Folder of Folders) {
+        const FsPath = FolderToFsPath(Folder?.uri);
+        if (!FsPath) {
+          console.warn(
+            `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})`
+          );
+          continue;
+        }
+        await Walk(FsPath, FsPath);
+      }
+      console.log(
+        `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}`
+      );
+      return Results;
+    }, "FindFilesLocal");
     CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
       const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
       return {
@@ -21302,22 +21445,13 @@ var init_WorkspaceNamespace = __esm({
           inspect: /* @__PURE__ */ __name(() => void 0, "inspect")
         }), "getConfiguration"),
         findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
-          const Pattern = typeof Include === "string" ? Include : Include?.pattern ?? "";
-          const ExcludePattern = typeof Exclude === "string" ? Exclude : Exclude?.pattern;
-          const Results = await Call(
+          return FindFilesLocal(
             Context,
-            "Search.TextSearch",
-            {
-              pattern: Pattern,
-              include: Pattern,
-              exclude: ExcludePattern,
-              maxResults: MaxResults,
-              isRegExp: false,
-              isCaseSensitive: false,
-              isWordMatch: false
-            }
+            InitWorkspace.folders ?? [],
+            Include,
+            Exclude,
+            MaxResults
           );
-          return Results ?? [];
         }, "findFiles"),
         openTextDocument: /* @__PURE__ */ __name(async (UriOrPath) => {
           const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
@@ -21465,10 +21599,39 @@ var init_WorkspaceNamespace = __esm({
             mtime: 0
           }, "stat"),
           readFile: /* @__PURE__ */ __name(async (Uri2) => {
-            const Text = await Call(Context, "FileSystem.ReadFile", [
-              String(Uri2)
-            ]) ?? "";
-            return new TextEncoder().encode(Text);
+            const UriString = String(Uri2);
+            try {
+              const Text = await Context.MountainClient?.sendRequest(
+                "FileSystem.ReadFile",
+                [UriString]
+              );
+              return new TextEncoder().encode(Text ?? "");
+            } catch (Err) {
+              const Message = Err instanceof Error ? Err.message : String(Err);
+              const LooksLike404 = /resource not found|ENOENT|not found/i.test(
+                Message
+              );
+              if (LooksLike404) {
+                console.log(
+                  `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}`
+                );
+                const Api = globalThis.__cocoonVscodeAPI;
+                const FileNotFound = Api?.FileSystemError?.FileNotFound;
+                if (typeof FileNotFound === "function") {
+                  throw FileNotFound(Uri2);
+                }
+                const Synthetic = new Error(
+                  `EntryNotFound (FileSystemError): ${UriString}`
+                );
+                Synthetic.code = "FileNotFound";
+                Synthetic.name = "FileSystemError";
+                throw Synthetic;
+              }
+              console.warn(
+                `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}`
+              );
+              throw Err;
+            }
           }, "readFile"),
           writeFile: /* @__PURE__ */ __name(async (Uri2, Content) => {
             const Text = new TextDecoder().decode(Content);
@@ -21796,6 +21959,18 @@ var init_LanguagesNamespace = __esm({
         Selector,
         Provider
       ), "registerInlayHintsProvider"),
+      registerWorkspaceSymbolProvider: /* @__PURE__ */ __name((Provider) => {
+        console.log(
+          "[LandFix:LangNs] registerWorkspaceSymbolProvider called"
+        );
+        return RegisterProvider(
+          Context,
+          LanguageProviderRegistry,
+          "register_workspace_symbol_provider",
+          "*",
+          Provider
+        );
+      }, "registerWorkspaceSymbolProvider"),
       createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
         const Owner = Name ?? "default";
         const Store = /* @__PURE__ */ new Map();
@@ -21898,7 +22073,26 @@ var init_LanguagesNamespace = __esm({
       registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
         dispose: /* @__PURE__ */ __name(() => {
         }, "dispose")
-      }), "registerMappedEditsProvider")
+      }), "registerMappedEditsProvider"),
+      createLanguageStatusItem: /* @__PURE__ */ __name((Identifier, _Selector) => {
+        console.log(
+          `[LandFix:LangNs] createLanguageStatusItem id=${Identifier}`
+        );
+        const Item = {
+          id: Identifier,
+          name: void 0,
+          selector: _Selector,
+          severity: 0,
+          text: "",
+          detail: void 0,
+          busy: false,
+          command: void 0,
+          accessibilityInformation: void 0,
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        };
+        return Item;
+      }, "createLanguageStatusItem")
     }), "CreateLanguagesNamespace");
     LanguagesNamespace_default = CreateLanguagesNamespace;
   }
@@ -21909,12 +22103,65 @@ var ExtensionsNamespace_exports = {};
 __export(ExtensionsNamespace_exports, {
   default: () => ExtensionsNamespace_default
 });
-var NoopDisposable, MakePermissiveExports, ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
+var NoopDisposable, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
 var init_ExtensionsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
     "use strict";
     NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") };
+    MakeMultiStub = /* @__PURE__ */ __name(() => {
+      const StubTarget = /* @__PURE__ */ __name(function MultiStub() {
+        return StubProxy;
+      }, "MultiStub");
+      StubTarget.dispose = () => {
+      };
+      StubTarget[Symbol.iterator] = function* () {
+      };
+      const ArrayShim = [];
+      const ArrayMethods = [
+        "forEach",
+        "map",
+        "filter",
+        "find",
+        "findIndex",
+        "some",
+        "every",
+        "reduce",
+        "reduceRight",
+        "includes",
+        "indexOf",
+        "lastIndexOf",
+        "slice",
+        "concat",
+        "join",
+        "entries",
+        "keys",
+        "values",
+        "flat",
+        "flatMap"
+      ];
+      for (const Name of ArrayMethods) {
+        StubTarget[Name] = ArrayShim[Name];
+      }
+      const StubProxy = new Proxy(StubTarget, {
+        get(Target, Property) {
+          if (Property in Target) {
+            return Target[Property];
+          }
+          if (Property === "then") return void 0;
+          if (typeof Property === "symbol") return void 0;
+          return StubProxy;
+        },
+        apply() {
+          return StubProxy;
+        },
+        has() {
+          return true;
+        }
+      });
+      return StubProxy;
+    }, "MakeMultiStub");
+    Stub = MakeMultiStub();
     MakePermissiveExports = /* @__PURE__ */ __name(() => {
       const Base = {
         enabled: true
@@ -21925,7 +22172,7 @@ var init_ExtensionsNamespace = __esm({
             return Target[Property];
           }
           if (typeof Property !== "string") {
-            return void 0;
+            return Stub[Property];
           }
           if (Property === "then") return void 0;
           if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
@@ -21937,20 +22184,73 @@ var init_ExtensionsNamespace = __esm({
           if (Property.startsWith("get") || Property.startsWith("create")) {
             return (..._Args) => MakePermissiveExports();
           }
-          return (..._Args) => void 0;
+          return Stub;
         }
       });
     }, "MakePermissiveExports");
+    NormalizeLocation = /* @__PURE__ */ __name((Raw) => {
+      const VsCodeUri = globalThis.__cocoonVscodeAPI?.Uri;
+      const UriFactoryAvailable = VsCodeUri && typeof VsCodeUri.file === "function";
+      const MakeUri = /* @__PURE__ */ __name((Path) => {
+        if (UriFactoryAvailable) {
+          return VsCodeUri.file(Path);
+        }
+        return {
+          scheme: "file",
+          authority: "",
+          path: Path,
+          query: "",
+          fragment: "",
+          fsPath: Path,
+          with(Change) {
+            return { ...this, ...Change };
+          },
+          toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString"),
+          toJSON() {
+            return { scheme: "file", path: Path };
+          }
+        };
+      }, "MakeUri");
+      if (typeof Raw === "string" && Raw.length > 0) {
+        let Path = Raw;
+        if (Raw.startsWith("file:")) {
+          try {
+            Path = decodeURIComponent(new URL(Raw).pathname);
+          } catch (Error2) {
+            console.warn(
+              `[LandFix:ExtNs] URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip`
+            );
+            Path = Raw.replace(/^file:\/\//, "");
+          }
+        }
+        Path = Path.replace(/\/$/, "");
+        console.log(
+          `[LandFix:ExtNs] string extensionLocation ${Raw} \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})`
+        );
+        return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
+      }
+      if (Raw && typeof Raw === "object") {
+        const Obj = Raw;
+        const Path = typeof Obj["fsPath"] === "string" && Obj["fsPath"] || typeof Obj["path"] === "string" && Obj["path"] || (typeof Obj["external"] === "string" ? NormalizeLocation(Obj["external"]).ExtensionPath : "");
+        console.log(
+          `[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})`
+        );
+        return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
+      }
+      console.warn(
+        `[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`
+      );
+      return { ExtensionPath: "", ExtensionUri: MakeUri("") };
+    }, "NormalizeLocation");
     ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => {
       const Exports = MakePermissiveExports();
+      const { ExtensionPath, ExtensionUri } = NormalizeLocation(
+        Raw?.extensionLocation
+      );
       return {
         id: Id,
-        extensionUri: Raw?.extensionLocation ?? {
-          scheme: "file",
-          path: "",
-          fsPath: ""
-        },
-        extensionPath: Raw?.extensionLocation?.fsPath ?? Raw?.extensionLocation?.path ?? "",
+        extensionUri: ExtensionUri,
+        extensionPath: ExtensionPath,
         // Reporting `isActive: true` mirrors VS Code's behaviour for
         // built-ins that have completed activation; without it, callers
         // like the `github` extension treat the extension as missing.
@@ -22006,6 +22306,33 @@ var init_EnvNamespace = __esm({
     "use strict";
     CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
       const Env = Context.ExtensionHostInitData?.environment ?? {};
+      const NormalizeAppRoot = /* @__PURE__ */ __name((Raw) => {
+        if (typeof Raw !== "string" || Raw.length === 0) {
+          console.log(
+            "[LandFix:EnvNs] appRoot empty or non-string, returning ''"
+          );
+          return "";
+        }
+        if (!Raw.startsWith("file:")) {
+          console.log(`[LandFix:EnvNs] appRoot already plain path: ${Raw}`);
+          return Raw;
+        }
+        try {
+          const Normalised = decodeURIComponent(
+            new URL(Raw).pathname
+          ).replace(/\/$/, "");
+          console.log(
+            `[LandFix:EnvNs] appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`
+          );
+          return Normalised;
+        } catch (Error2) {
+          const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
+          console.warn(
+            `[LandFix:EnvNs] appRoot URL parse failed (${Error2 instanceof Error2 ? Error2.message : String(Error2)}); fallback ${Raw} \u2192 ${Fallback}`
+          );
+          return Fallback;
+        }
+      }, "NormalizeAppRoot");
       const Call2 = /* @__PURE__ */ __name(async (Method, Parameters) => {
         try {
           return await Context.MountainClient?.sendRequest(
@@ -22018,7 +22345,7 @@ var init_EnvNamespace = __esm({
       }, "Call");
       return {
         appName: Env["appName"] ?? "CodeEditorLand",
-        appRoot: Env["appRoot"] ?? "",
+        appRoot: NormalizeAppRoot(Env["appRoot"]),
         appHost: Env["appHost"] ?? "desktop",
         uiKind: 1,
         // vscode.UIKind.Desktop
@@ -23166,6 +23493,33 @@ var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, Acti
     ExtensionPath = String(LocationRaw).replace(/^file:\/\//, "").replace(/\/$/, "");
   }
   const ModulePath = `${ExtensionPath}/${MainFile}`;
+  try {
+    const { access } = await import("node:fs/promises");
+    let Exists = false;
+    let Resolved = ModulePath;
+    for (const Candidate of [ModulePath, `${ModulePath}.js`]) {
+      try {
+        await access(Candidate);
+        Exists = true;
+        Resolved = Candidate;
+        break;
+      } catch {
+      }
+    }
+    if (!Exists) {
+      console.warn(
+        `[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})`
+      );
+      return;
+    }
+    console.log(
+      `[LandFix:Preflight] ${ExtensionId} main resolved \u2192 ${Resolved}`
+    );
+  } catch (Err) {
+    console.warn(
+      `[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${Err instanceof Error ? Err.message : String(Err)}`
+    );
+  }
   const ModuleType = Extension?.type ?? Extension?.Type;
   const IsESM = ModuleType === "module" || /\.mjs$/i.test(MainFile) || /\.mts$/i.test(MainFile);
   console.log(
@@ -23215,9 +23569,9 @@ var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, Acti
 var CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, ExtensionPath) => {
   const ExtId = Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "";
   const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
-  const StorageBase = `${HomeDir}/.codeeditorland/extensions/storage`;
-  const GlobalStorageBase = `${HomeDir}/.codeeditorland/globalStorage`;
-  const LogBase = `${HomeDir}/.codeeditorland/logs`;
+  const StorageBase = `${HomeDir}/.land/extensionStorage`;
+  const GlobalStorageBase = `${HomeDir}/.land/globalStorage`;
+  const LogBase = `${HomeDir}/.land/logs`;
   const ExtStoragePath = `${StorageBase}/${ExtId}`;
   const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
   const LogPath = `${LogBase}/${ExtId}`;

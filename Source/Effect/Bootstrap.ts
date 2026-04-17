@@ -329,19 +329,23 @@ const makeBootstrap = (): BootstrapService => ({
 				"[Cocoon Bootstrap] ===============================================",
 			);
 
-			const stages = [
-				stage1_Environment,
-				stage2_Configuration,
-				stage3_MountainConnection,
-				stage4_ModuleInterceptor,
-				stage5_RPCServer,
-				stage6_Extensions,
-				...(skipHealthCheck ? [] : [stage7_HealthCheck]),
+			const stages: Array<[string, unknown]> = [
+				["Environment", stage1_Environment],
+				["Configuration", stage2_Configuration],
+				["MountainConnection", stage3_MountainConnection],
+				["ModuleInterceptor", stage4_ModuleInterceptor],
+				["RPCServer", stage5_RPCServer],
+				["Extensions", stage6_Extensions],
+				...(skipHealthCheck
+					? []
+					: ([["HealthCheck", stage7_HealthCheck]] as Array<
+							[string, unknown]
+						>)),
 			];
 
 			const results: StageResult[] = [];
 
-			for (const stage of stages) {
+			for (const [StageName, stage] of stages) {
 				const stageStartTime = Date.now();
 				// Wrap each stage in Effect.catchAllCause to survive fiber failures.
 				// JavaScript try/catch does NOT catch Effect fiber failures.
@@ -349,10 +353,10 @@ const makeBootstrap = (): BootstrapService => ({
 					Effect.catchAllCause((Cause) => {
 						const Message = String(Cause).slice(0, 300);
 						console.warn(
-							`[Cocoon Bootstrap] Stage failed (continuing): ${Message}`,
+							`[LandFix:Bootstrap] Stage "${StageName}" failed (continuing): ${Message}`,
 						);
 						return Effect.succeed({
-							stageName: "Failed",
+							stageName: StageName,
 							success: false as boolean,
 							duration: Date.now() - stageStartTime,
 							error: new Error(Message),
@@ -360,6 +364,20 @@ const makeBootstrap = (): BootstrapService => ({
 					}),
 				);
 				const result = yield* SafeStage as any;
+				if (result?.success === false) {
+					console.warn(
+						`[LandFix:Bootstrap] Stage "${StageName}" reported failure: ${
+							(result as { error?: { message?: string } }).error
+								?.message ?? "<no message>"
+						}`,
+					);
+				} else {
+					console.log(
+						`[LandFix:Bootstrap] Stage "${StageName}" OK in ${
+							Date.now() - stageStartTime
+						}ms`,
+					);
+				}
 				results.push({
 					...result,
 					duration: Date.now() - stageStartTime,

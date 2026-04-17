@@ -266,6 +266,18 @@ const CreateLanguagesNamespace = (
 			Selector,
 			Provider,
 		),
+	registerWorkspaceSymbolProvider: (Provider: any) => {
+		console.log(
+			"[LandFix:LangNs] registerWorkspaceSymbolProvider called",
+		);
+		return RegisterProvider(
+			Context,
+			LanguageProviderRegistry,
+			"register_workspace_symbol_provider",
+			"*",
+			Provider,
+		);
+	},
 	createDiagnosticCollection: (Name?: string) => {
 		const Owner = Name ?? "default";
 		const Store = new Map<string, unknown[]>();
@@ -380,6 +392,24 @@ const CreateLanguagesNamespace = (
 	registerMappedEditsProvider: (_Selector: unknown, _Provider: unknown) => ({
 		dispose: () => {},
 	}),
+	createLanguageStatusItem: (Identifier: string, _Selector: unknown) => {
+		console.log(
+			`[LandFix:LangNs] createLanguageStatusItem id=${Identifier}`,
+		);
+		const Item: Record<string, unknown> = {
+			id: Identifier,
+			name: undefined,
+			selector: _Selector,
+			severity: 0,
+			text: "",
+			detail: undefined,
+			busy: false,
+			command: undefined,
+			accessibilityInformation: undefined,
+			dispose: () => {},
+		};
+		return Item;
+	},
 });
 
 export default CreateLanguagesNamespace;

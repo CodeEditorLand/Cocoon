@@ -895,6 +895,42 @@ const ActivateExtension = async (
 
 	const ModulePath = `${ExtensionPath}/${MainFile}`;
 
+	// Preflight: if the declared main file is absent on disk (e.g. Copilot's
+	// `dist/extension.js` is not shipped in the source-tree checkout), skip
+	// activation with a clean message instead of letting Node throw a
+	// `Cannot find module` ERR_MODULE_NOT_FOUND stack. Tolerate both the raw
+	// path and the common `.js` extension VS Code omits from `main`.
+	try {
+		const { access } = await import("node:fs/promises");
+		let Exists = false;
+		let Resolved = ModulePath;
+		for (const Candidate of [ModulePath, `${ModulePath}.js`]) {
+			try {
+				await access(Candidate);
+				Exists = true;
+				Resolved = Candidate;
+				break;
+			} catch {}
+		}
+		if (!Exists) {
+			console.warn(
+				`[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})`,
+			);
+			return;
+		}
+		console.log(
+			`[LandFix:Preflight] ${ExtensionId} main resolved → ${Resolved}`,
+		);
+	} catch (Err: unknown) {
+		// If `node:fs/promises` is unavailable for any reason, fall through
+		// to the normal require/import path and let it surface the error.
+		console.warn(
+			`[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${
+				Err instanceof Error ? Err.message : String(Err)
+			}`,
+		);
+	}
+
 	// Inspect package.json to determine CJS vs ESM. If type === "module" OR
 	// the main file has an .mjs extension, we must use dynamic import(). CJS
 	// require() would throw ERR_REQUIRE_ESM for ESM modules.
@@ -988,13 +1024,13 @@ const CreateExtensionContext = (
 
 	// Resolve real storage paths for the extension
 	const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
-	// Keep per-extension storage OUT of `~/.codeeditorland/extensions/` —
+	// Keep per-extension storage OUT of `~/.land/extensions/` —
 	// that directory is now a user-extension scan path in Mountain's
 	// `ScanPathConfigure.rs`, and the scanner warns on non-extension
 	// siblings like `storage/`. Use a dedicated, non-scanned root.
-	const StorageBase = `${HomeDir}/.codeeditorland/extensionStorage`;
-	const GlobalStorageBase = `${HomeDir}/.codeeditorland/globalStorage`;
-	const LogBase = `${HomeDir}/.codeeditorland/logs`;
+	const StorageBase = `${HomeDir}/.land/extensionStorage`;
+	const GlobalStorageBase = `${HomeDir}/.land/globalStorage`;
+	const LogBase = `${HomeDir}/.land/logs`;
 	const ExtStoragePath = `${StorageBase}/${ExtId}`;
 	const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
 	const LogPath = `${LogBase}/${ExtId}`;

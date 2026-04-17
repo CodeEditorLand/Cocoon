@@ -203,6 +203,18 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
     Selector,
     Provider
   ), "registerInlayHintsProvider"),
+  registerWorkspaceSymbolProvider: /* @__PURE__ */ __name((Provider) => {
+    console.log(
+      "[LandFix:LangNs] registerWorkspaceSymbolProvider called"
+    );
+    return RegisterProvider(
+      Context,
+      LanguageProviderRegistry,
+      "register_workspace_symbol_provider",
+      "*",
+      Provider
+    );
+  }, "registerWorkspaceSymbolProvider"),
   createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
     const Owner = Name ?? "default";
     const Store = /* @__PURE__ */ new Map();
@@ -305,7 +317,26 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
   registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
     dispose: /* @__PURE__ */ __name(() => {
     }, "dispose")
-  }), "registerMappedEditsProvider")
+  }), "registerMappedEditsProvider"),
+  createLanguageStatusItem: /* @__PURE__ */ __name((Identifier, _Selector) => {
+    console.log(
+      `[LandFix:LangNs] createLanguageStatusItem id=${Identifier}`
+    );
+    const Item = {
+      id: Identifier,
+      name: void 0,
+      selector: _Selector,
+      severity: 0,
+      text: "",
+      detail: void 0,
+      busy: false,
+      command: void 0,
+      accessibilityInformation: void 0,
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose")
+    };
+    return Item;
+  }, "createLanguageStatusItem")
 }), "CreateLanguagesNamespace");
 var LanguagesNamespace_default = CreateLanguagesNamespace;
 export {

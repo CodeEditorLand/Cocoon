@@ -4,6 +4,33 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 // Source/Services/Handler/VscodeAPI/EnvNamespace.ts
 var CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
   const Env = Context.ExtensionHostInitData?.environment ?? {};
+  const NormalizeAppRoot = /* @__PURE__ */ __name((Raw) => {
+    if (typeof Raw !== "string" || Raw.length === 0) {
+      console.log(
+        "[LandFix:EnvNs] appRoot empty or non-string, returning ''"
+      );
+      return "";
+    }
+    if (!Raw.startsWith("file:")) {
+      console.log(`[LandFix:EnvNs] appRoot already plain path: ${Raw}`);
+      return Raw;
+    }
+    try {
+      const Normalised = decodeURIComponent(
+        new URL(Raw).pathname
+      ).replace(/\/$/, "");
+      console.log(
+        `[LandFix:EnvNs] appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`
+      );
+      return Normalised;
+    } catch (Error2) {
+      const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
+      console.warn(
+        `[LandFix:EnvNs] appRoot URL parse failed (${Error2 instanceof Error2 ? Error2.message : String(Error2)}); fallback ${Raw} \u2192 ${Fallback}`
+      );
+      return Fallback;
+    }
+  }, "NormalizeAppRoot");
   const Call = /* @__PURE__ */ __name(async (Method, Parameters) => {
     try {
       return await Context.MountainClient?.sendRequest(
@@ -16,7 +43,7 @@ var CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
   }, "Call");
   return {
     appName: Env["appName"] ?? "CodeEditorLand",
-    appRoot: Env["appRoot"] ?? "",
+    appRoot: NormalizeAppRoot(Env["appRoot"]),
     appHost: Env["appHost"] ?? "desktop",
     uiKind: 1,
     // vscode.UIKind.Desktop

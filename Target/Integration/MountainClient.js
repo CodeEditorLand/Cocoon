@@ -509,10 +509,18 @@ message RPCDataPayload {
       const duration = Date.now() - startTime;
       this.errorCount++;
       this.circuitBreakerFailureCount++;
-      console.error(
-        `[MountainClientService] Request ${method} failed after ${duration}ms:`,
-        error
-      );
+      const ErrorMessage = error instanceof Error ? error.message : String(error);
+      const IsBenignNotFound = method === "FileSystem.ReadFile" && /resource not found|ENOENT|not found/i.test(ErrorMessage);
+      if (IsBenignNotFound) {
+        console.log(
+          `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) \u2014 ${ErrorMessage}`
+        );
+      } else {
+        console.error(
+          `[MountainClientService] Request ${method} failed after ${duration}ms:`,
+          error
+        );
+      }
       this.UpdateCircuitBreaker(false, error);
       if (cancellationToken?.isCancellationRequested) {
         console.log(

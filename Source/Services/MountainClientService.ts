@@ -652,10 +652,28 @@ message RPCDataPayload {
 			this.errorCount++;
 			this.circuitBreakerFailureCount++;
 
-			console.error(
-				`[MountainClientService] Request ${method} failed after ${duration}ms:`,
-				error,
-			);
+			// Benign 404s on `FileSystem.ReadFile` are very common — every
+			// extension that probes for an optional cache file (terminal-
+			// suggest, json-language-features schema associations, …) hits
+			// this path. Downgrade to `info` so the error log stays focused
+			// on genuine failures. The downstream `readFile` shim converts
+			// the throw into `vscode.FileSystemError.FileNotFound` and
+			// extensions handle it via their own try/catch.
+			const ErrorMessage =
+				error instanceof Error ? error.message : String(error);
+			const IsBenignNotFound =
+				method === "FileSystem.ReadFile" &&
+				/resource not found|ENOENT|not found/i.test(ErrorMessage);
+			if (IsBenignNotFound) {
+				console.log(
+					`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) — ${ErrorMessage}`,
+				);
+			} else {
+				console.error(
+					`[MountainClientService] Request ${method} failed after ${duration}ms:`,
+					error,
+				);
+			}
 
 			// Update circuit breaker with detailed error information
 			this.UpdateCircuitBreaker(false, error);

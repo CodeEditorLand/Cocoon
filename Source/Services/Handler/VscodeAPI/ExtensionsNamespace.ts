@@ -38,7 +38,6 @@ const MakeMultiStub = (): any => {
 		return StubProxy;
 	};
 	StubTarget.dispose = () => {};
-	StubTarget.length = 0;
 	StubTarget[Symbol.iterator] = function* () {
 		// Empty iterator — `for (...of stub)` completes with 0 elements.
 	};
@@ -135,19 +134,90 @@ const MakePermissiveExports = (): any => {
 	});
 };
 
+// Mountain ships `extensionLocation` as either a `file://` URL string or an
+// already-shaped UriComponents object. `vscode.extensions.all[…].extensionUri`
+// is handed straight to `Uri.joinPath(uri, …)` by the language-features
+// extensions; that call throws `cannot call joinPath on URI without path`
+// unless the value is a real `URI` instance (or at minimum an object with a
+// non-empty `.path` and a working `.with({ path })`). Normalise every
+// reasonable shape into a single filesystem path + real URI.
+const NormalizeLocation = (
+	Raw: unknown,
+): { ExtensionPath: string; ExtensionUri: any } => {
+	const VsCodeUri = (globalThis as any).__cocoonVscodeAPI?.Uri;
+	const UriFactoryAvailable =
+		VsCodeUri && typeof VsCodeUri.file === "function";
+	const MakeUri = (Path: string): any => {
+		if (UriFactoryAvailable) {
+			return VsCodeUri.file(Path);
+		}
+		return {
+			scheme: "file",
+			authority: "",
+			path: Path,
+			query: "",
+			fragment: "",
+			fsPath: Path,
+			with(this: any, Change: any) {
+				return { ...this, ...Change };
+			},
+			toString: () => `file://${Path}`,
+			toJSON() {
+				return { scheme: "file", path: Path };
+			},
+		};
+	};
+
+	if (typeof Raw === "string" && Raw.length > 0) {
+		let Path = Raw;
+		if (Raw.startsWith("file:")) {
+			try {
+				Path = decodeURIComponent(new URL(Raw).pathname);
+			} catch (Error: unknown) {
+				console.warn(
+					`[LandFix:ExtNs] URL parse failed for ${Raw}: ${
+						Error instanceof Error ? Error.message : String(Error)
+					}; using fallback strip`,
+				);
+				Path = Raw.replace(/^file:\/\//, "");
+			}
+		}
+		Path = Path.replace(/\/$/, "");
+		console.log(
+			`[LandFix:ExtNs] string extensionLocation ${Raw} → path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})`,
+		);
+		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
+	}
+
+	if (Raw && typeof Raw === "object") {
+		const Obj = Raw as Record<string, unknown>;
+		const Path =
+			(typeof Obj["fsPath"] === "string" && (Obj["fsPath"] as string)) ||
+			(typeof Obj["path"] === "string" && (Obj["path"] as string)) ||
+			(typeof Obj["external"] === "string"
+				? NormalizeLocation(Obj["external"]).ExtensionPath
+				: "");
+		console.log(
+			`[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})`,
+		);
+		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
+	}
+
+	console.warn(
+		`[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`,
+	);
+	return { ExtensionPath: "", ExtensionUri: MakeUri("") };
+};
+
 const ToExtensionObject = (Context: HandlerContext, Id: string, Raw: any) => {
 	const Exports = MakePermissiveExports();
+	const { ExtensionPath, ExtensionUri } = NormalizeLocation(
+		Raw?.extensionLocation,
+	);
 	return {
 		id: Id,
-		extensionUri: Raw?.extensionLocation ?? {
-			scheme: "file",
-			path: "",
-			fsPath: "",
-		},
-		extensionPath:
-			Raw?.extensionLocation?.fsPath ??
-			Raw?.extensionLocation?.path ??
-			"",
+		extensionUri: ExtensionUri,
+		extensionPath: ExtensionPath,
 		// Reporting `isActive: true` mirrors VS Code's behaviour for
 		// built-ins that have completed activation; without it, callers
 		// like the `github` extension treat the extension as missing.
