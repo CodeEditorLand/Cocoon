@@ -13,6 +13,8 @@
 
 import type { HandlerContext } from "./HandlerContext.js";
 
+import * as NodeFS from "node:fs";
+
 import * as LanguageProviderRegistry from "../LanguageProviderRegistry.js";
 
 /**
@@ -194,6 +196,18 @@ const HandleActivateByEvent = async (
 		ActivateExtension(Context, ExtId, ActivationEvent).catch((Err: unknown) => {
 			const Msg = Err instanceof Error ? Err.message : String(Err);
 			console.warn(`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`);
+			// For `Class extends value undefined` errors, surface the top
+			// of the stack so we can locate which module (and which base
+			// class) actually failed to resolve. Cascade-7's critical-
+			// symbol diagnostic confirmed the 14 most-used classes are
+			// present on the shim, so the missing symbol is somewhere
+			// deeper — only the stack can say where.
+			if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
+				const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
+				console.warn(
+					`[ExtensionHostHandler] Class-extends stack for ${ExtId}:\n${Stack}`,
+				);
+			}
 		});
 	}
 
@@ -462,13 +476,42 @@ const EnsureVscodeAPIRegistered = async (
 			5: "Error",
 		};
 
+		// CancellationError lives in `vs/base/common/errors`, not extHostTypes
+		// — the spread misses it. vscode-languageclient/lib/common/features.js
+		// does `class LSPCancellationError extends vscode.CancellationError`
+		// at module-load time; undefined throws "Class extends value
+		// undefined" and the whole language-features activate fails. A
+		// minimal stub suffices.
+		class CancellationError extends Error {
+			constructor() {
+				super("Canceled");
+				this.name = "Canceled";
+			}
+		}
+
+		// OverviewRulerLane is defined in `vs/editor/common/model` (bitmask
+		// flags), not extHostTypes. vscode.merge-conflict's decorator calls
+		// `vscode.OverviewRulerLane.Full` — undefined crashes activation.
+		const OverviewRulerLane: Record<string | number, string | number> = {
+			Left: 1,
+			Center: 2,
+			Right: 4,
+			Full: 7,
+			1: "Left",
+			2: "Center",
+			4: "Right",
+			7: "Full",
+		};
+
 		const API: Record<string, unknown> = {
 			...(VsCodeTypes as unknown as Record<string, unknown>),
 			version: "1.88.0",
 			Uri: URI,
 			CancellationTokenSource,
+			CancellationError,
 			EventEmitter: Emitter,
 			LogLevel: LogLevelEnum,
+			OverviewRulerLane,
 			// Namespaces — each in its own file under VscodeAPI/
 			window: (await import("./VscodeAPI/WindowNamespace.js")).default(Context),
 			workspace: (await import("./VscodeAPI/WorkspaceNamespace.js")).default(Context),
@@ -616,6 +659,8 @@ const EnsureVscodeAPIRegistered = async (
 			"SymbolInformation", "DocumentLink", "TypeHierarchyItem",
 			"CallHierarchyItem", "SemanticTokensBuilder", "SemanticTokens",
 			"RelativePattern", "Position", "Range", "Hover", "LogLevel",
+			"CancellationError", "CancellationTokenSource", "EventEmitter",
+			"Uri", "Disposable",
 		];
 		const Missing = CriticalNames.filter((Name) => API[Name] === undefined);
 		if (Missing.length) {
@@ -768,14 +813,36 @@ const CreateExtensionContext = (
 	const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
 	const LogPath = `${LogBase}/${ExtId}`;
 
-	// Ensure directories exist (fire-and-forget)
+	// Ensure directories exist (fire-and-forget). Cocoon runs as an ESM
+	// bundle, so bare `require("node:fs")` throws "Dynamic require of
+	// 'node:fs' is not supported" — use the static `NodeFS` import.
 	try {
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const Fs = require("node:fs");
-		Fs.mkdirSync(ExtStoragePath, { recursive: true });
-		Fs.mkdirSync(GlobalStoragePath, { recursive: true });
-		Fs.mkdirSync(LogPath, { recursive: true });
+		NodeFS.mkdirSync(ExtStoragePath, { recursive: true });
+		NodeFS.mkdirSync(GlobalStoragePath, { recursive: true });
+		NodeFS.mkdirSync(LogPath, { recursive: true });
 	} catch {}
+
+	// Mountain's scanner keeps only a subset of package.json fields. VS
+	// Code extensions expect the FULL manifest on
+	// `context.extension.packageJSON` — notably `aiKey`, which
+	// `@vscode/extension-telemetry` reads at constructor time and calls
+	// `aiKey.length` on. A missing aiKey throws `Cannot read properties of
+	// undefined (reading 'length')` and the whole activate fails.
+	// Read the real package.json from disk and merge it over the scanned
+	// descriptor so every published field is present.
+	let FullPackageJSON: Record<string, unknown> = Extension as Record<string, unknown>;
+	try {
+		const Contents = NodeFS.readFileSync(
+			`${ExtensionPath}/package.json`,
+			"utf8",
+		);
+		const Parsed = JSON.parse(Contents) as Record<string, unknown>;
+		FullPackageJSON = { ...Parsed, ...(Extension as Record<string, unknown>) };
+	} catch {
+		// If we can't read it, fall back to the scanner payload. Extensions
+		// that rely on manifest-only fields will fail at activate time and
+		// surface a clear error on the next pass.
+	}
 
 	const MakeUri = (Path: string) => ({
 		scheme: "file",
@@ -792,6 +859,15 @@ const CreateExtensionContext = (
 		subscriptions: [] as { dispose(): unknown }[],
 		extensionPath: ExtensionPath,
 		extensionUri: MakeUri(ExtensionPath),
+		// VS Code API: `context.asAbsolutePath(relative)` returns the
+		// extension path joined with a relative path. The 4 language-
+		// features extensions all call this immediately in their activate
+		// function to resolve server bundle locations; without it, they
+		// fail before vscode-languageclient even constructs.
+		asAbsolutePath: (RelativePath: string) => {
+			const Trimmed = RelativePath.replace(/^\.?\//, "");
+			return `${ExtensionPath}/${Trimmed}`;
+		},
 		globalState: {
 			get: (_Key: string, DefaultValue?: unknown) => DefaultValue,
 			update: async (_Key: string, _Value: unknown) => {},
@@ -842,7 +918,7 @@ const CreateExtensionContext = (
 			extensionUri: { scheme: "file", path: ExtensionPath, fsPath: ExtensionPath },
 			extensionPath: ExtensionPath,
 			isActive: true,
-			packageJSON: Extension,
+			packageJSON: FullPackageJSON,
 			extensionKind: 1,
 			exports: undefined,
 			activate: async () => {},

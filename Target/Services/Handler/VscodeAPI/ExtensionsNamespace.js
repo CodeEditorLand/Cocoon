@@ -2,6 +2,27 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts
+var MakePermissiveExports = /* @__PURE__ */ __name(() => new Proxy(
+  {
+    enabled: true,
+    getAPI: /* @__PURE__ */ __name((_Version) => MakePermissiveExports(), "getAPI")
+  },
+  {
+    get(Target, Property) {
+      if (Property in Target) {
+        return Target[Property];
+      }
+      if (typeof Property === "string") {
+        if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+          return () => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") });
+        }
+        if (Property === "then") return void 0;
+      }
+      return () => void 0;
+    }
+  }
+), "MakePermissiveExports");
 var ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => ({
   id: Id,
   extensionUri: Raw?.extensionLocation ?? { scheme: "file", path: "", fsPath: "" },
@@ -9,7 +30,7 @@ var ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => ({
   isActive: Context.ActivatedExtensions.has(Id),
   packageJSON: Raw,
   extensionKind: 1,
-  exports: void 0,
+  exports: MakePermissiveExports(),
   activate: /* @__PURE__ */ __name(async () => {
   }, "activate")
 }), "ToExtensionObject");

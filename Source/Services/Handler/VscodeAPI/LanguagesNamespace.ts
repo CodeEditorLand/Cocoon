@@ -163,6 +163,32 @@ const CreateLanguagesNamespace = (
 		};
 	},
 	getDiagnostics: (_Resource?: unknown): unknown[] => [],
+	registerDocumentPasteEditProvider: (
+		_Selector: unknown,
+		_Provider: unknown,
+		_Metadata?: unknown,
+	) => ({ dispose: () => {} }),
+	registerDocumentDropEditProvider: (
+		_Selector: unknown,
+		_Provider: unknown,
+		_Metadata?: unknown,
+	) => ({ dispose: () => {} }),
+	registerInlineCompletionItemProvider: (
+		_Selector: unknown,
+		_Provider: unknown,
+	) => ({ dispose: () => {} }),
+	registerInlineEditProvider: (
+		_Selector: unknown,
+		_Provider: unknown,
+	) => ({ dispose: () => {} }),
+	registerMultiDocumentHighlightProvider: (
+		_Selector: unknown,
+		_Provider: unknown,
+	) => ({ dispose: () => {} }),
+	registerMappedEditsProvider: (
+		_Selector: unknown,
+		_Provider: unknown,
+	) => ({ dispose: () => {} }),
 });
 
 export default CreateLanguagesNamespace;

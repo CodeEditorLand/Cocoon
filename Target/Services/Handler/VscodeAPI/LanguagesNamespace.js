@@ -117,7 +117,19 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
       }, "dispose")
     };
   }, "onDidChangeDiagnostics"),
-  getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics")
+  getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
+  registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") }), "registerDocumentPasteEditProvider"),
+  registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") }), "registerDocumentDropEditProvider"),
+  registerInlineCompletionItemProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") }), "registerInlineCompletionItemProvider"),
+  registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") }), "registerInlineEditProvider"),
+  registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") }), "registerMultiDocumentHighlightProvider"),
+  registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+  }, "dispose") }), "registerMappedEditsProvider")
 }), "CreateLanguagesNamespace");
 var LanguagesNamespace_default = CreateLanguagesNamespace;
 export {

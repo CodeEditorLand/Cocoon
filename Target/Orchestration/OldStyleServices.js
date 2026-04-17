@@ -25828,7 +25828,19 @@ var init_LanguagesNamespace = __esm({
           }, "dispose")
         };
       }, "onDidChangeDiagnostics"),
-      getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics")
+      getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
+      registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerDocumentPasteEditProvider"),
+      registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerDocumentDropEditProvider"),
+      registerInlineCompletionItemProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerInlineCompletionItemProvider"),
+      registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerInlineEditProvider"),
+      registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerMultiDocumentHighlightProvider"),
+      registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerMappedEditsProvider")
     }), "CreateLanguagesNamespace");
     LanguagesNamespace_default = CreateLanguagesNamespace;
   }
@@ -25839,10 +25851,31 @@ var ExtensionsNamespace_exports = {};
 __export(ExtensionsNamespace_exports, {
   default: () => ExtensionsNamespace_default
 });
-var ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
+var MakePermissiveExports, ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
 var init_ExtensionsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
     "use strict";
+    MakePermissiveExports = /* @__PURE__ */ __name(() => new Proxy(
+      {
+        enabled: true,
+        getAPI: /* @__PURE__ */ __name((_Version) => MakePermissiveExports(), "getAPI")
+      },
+      {
+        get(Target, Property) {
+          if (Property in Target) {
+            return Target[Property];
+          }
+          if (typeof Property === "string") {
+            if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+              return () => ({ dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose") });
+            }
+            if (Property === "then") return void 0;
+          }
+          return () => void 0;
+        }
+      }
+    ), "MakePermissiveExports");
     ToExtensionObject = /* @__PURE__ */ __name((Context22, Id, Raw) => ({
       id: Id,
       extensionUri: Raw?.extensionLocation ?? { scheme: "file", path: "", fsPath: "" },
@@ -25850,7 +25883,7 @@ var init_ExtensionsNamespace = __esm({
       isActive: Context22.ActivatedExtensions.has(Id),
       packageJSON: Raw,
       extensionKind: 1,
-      exports: void 0,
+      exports: MakePermissiveExports(),
       activate: /* @__PURE__ */ __name(async () => {
       }, "activate")
     }), "ToExtensionObject");
@@ -26285,6 +26318,7 @@ var init_AuthenticationNamespace = __esm({
 });
 
 // Source/Services/Handler/ExtensionHostHandler.ts
+import * as NodeFS from "node:fs";
 var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent, HandleStartExtensionHost, InstallVscodeModuleHooks, EnsureVscodeAPIRegistered, ActivateExtension, CreateExtensionContext, ExtensionHostHandler_default;
 var init_ExtensionHostHandler = __esm({
   "Source/Services/Handler/ExtensionHostHandler.ts"() {
@@ -26385,6 +26419,13 @@ var init_ExtensionHostHandler = __esm({
         ActivateExtension(Context22, ExtId, ActivationEvent).catch((Err) => {
           const Msg = Err instanceof Error ? Err.message : String(Err);
           console.warn(`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`);
+          if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
+            const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
+            console.warn(
+              `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
+${Stack}`
+            );
+          }
         });
       }
       Context22.Emitter.emit("activateByEvent", {
@@ -26658,13 +26699,34 @@ var init_ExtensionHostHandler = __esm({
           4: "Warning",
           5: "Error"
         };
+        class CancellationError2 extends Error {
+          static {
+            __name(this, "CancellationError");
+          }
+          constructor() {
+            super("Canceled");
+            this.name = "Canceled";
+          }
+        }
+        const OverviewRulerLane = {
+          Left: 1,
+          Center: 2,
+          Right: 4,
+          Full: 7,
+          1: "Left",
+          2: "Center",
+          4: "Right",
+          7: "Full"
+        };
         const API = {
           ...VsCodeTypes2,
           version: "1.88.0",
           Uri: URI3,
           CancellationTokenSource: CancellationTokenSource3,
+          CancellationError: CancellationError2,
           EventEmitter: Emitter4,
           LogLevel: LogLevelEnum,
+          OverviewRulerLane,
           // Namespaces — each in its own file under VscodeAPI/
           window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(Context22),
           workspace: (await Promise.resolve().then(() => (init_WorkspaceNamespace(), WorkspaceNamespace_exports))).default(Context22),
@@ -26857,7 +26919,12 @@ var init_ExtensionHostHandler = __esm({
           "Position",
           "Range",
           "Hover",
-          "LogLevel"
+          "LogLevel",
+          "CancellationError",
+          "CancellationTokenSource",
+          "EventEmitter",
+          "Uri",
+          "Disposable"
         ];
         const Missing = CriticalNames.filter((Name) => API[Name] === void 0);
         if (Missing.length) {
@@ -26945,10 +27012,19 @@ var init_ExtensionHostHandler = __esm({
       const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
       const LogPath = `${LogBase}/${ExtId}`;
       try {
-        const Fs = __require("node:fs");
-        Fs.mkdirSync(ExtStoragePath, { recursive: true });
-        Fs.mkdirSync(GlobalStoragePath, { recursive: true });
-        Fs.mkdirSync(LogPath, { recursive: true });
+        NodeFS.mkdirSync(ExtStoragePath, { recursive: true });
+        NodeFS.mkdirSync(GlobalStoragePath, { recursive: true });
+        NodeFS.mkdirSync(LogPath, { recursive: true });
+      } catch {
+      }
+      let FullPackageJSON = Extension2;
+      try {
+        const Contents = NodeFS.readFileSync(
+          `${ExtensionPath}/package.json`,
+          "utf8"
+        );
+        const Parsed = JSON.parse(Contents);
+        FullPackageJSON = { ...Parsed, ...Extension2 };
       } catch {
       }
       const MakeUri = /* @__PURE__ */ __name((Path) => ({
@@ -26965,6 +27041,15 @@ var init_ExtensionHostHandler = __esm({
         subscriptions: [],
         extensionPath: ExtensionPath,
         extensionUri: MakeUri(ExtensionPath),
+        // VS Code API: `context.asAbsolutePath(relative)` returns the
+        // extension path joined with a relative path. The 4 language-
+        // features extensions all call this immediately in their activate
+        // function to resolve server bundle locations; without it, they
+        // fail before vscode-languageclient even constructs.
+        asAbsolutePath: /* @__PURE__ */ __name((RelativePath) => {
+          const Trimmed = RelativePath.replace(/^\.?\//, "");
+          return `${ExtensionPath}/${Trimmed}`;
+        }, "asAbsolutePath"),
         globalState: {
           get: /* @__PURE__ */ __name((_Key, DefaultValue) => DefaultValue, "get"),
           update: /* @__PURE__ */ __name(async (_Key, _Value) => {
@@ -27034,7 +27119,7 @@ var init_ExtensionHostHandler = __esm({
           extensionUri: { scheme: "file", path: ExtensionPath, fsPath: ExtensionPath },
           extensionPath: ExtensionPath,
           isActive: true,
-          packageJSON: Extension2,
+          packageJSON: FullPackageJSON,
           extensionKind: 1,
           exports: void 0,
           activate: /* @__PURE__ */ __name(async () => {
