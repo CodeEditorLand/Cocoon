@@ -174,7 +174,7 @@ var TextDocumentError = class _TextDocumentError extends Error {
 var Types_exports = {};
 
 // Source/Services/Window/State.ts
-import { Effect, Ref, Context } from "effect";
+import { Context, Effect, Ref } from "effect";
 var WindowStateService = Context.Tag(
   "Service/Window/State"
 );
@@ -213,8 +213,10 @@ var WindowStateLayer = Layer.effect(
 );
 
 // Source/Services/Window/Dialog.ts
-import { Effect as Effect2, Layer as Layer2, Context as Context2 } from "effect";
-var DialogService = Context2.Tag("Service/Window/Dialog");
+import { Context as Context2, Effect as Effect2, Layer as Layer2 } from "effect";
+var DialogService = Context2.Tag(
+  "Service/Window/Dialog"
+);
 var DialogLive = Effect2.gen(function* () {
   const ShowInformationMessage = /* @__PURE__ */ __name((message, items = []) => Effect2.gen(function* () {
     return void 0;

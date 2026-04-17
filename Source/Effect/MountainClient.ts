@@ -7,8 +7,8 @@
 
 import { Context, Effect, Layer, Ref, Schedule, SubscriptionRef } from "effect";
 
-import { TelemetryTag } from "./Telemetry.js";
 import { MountainClientService as RealMountainClient } from "../Services/MountainClientService.js";
+import { TelemetryTag } from "./Telemetry.js";
 
 // ============================================================================
 // TYPES
@@ -346,7 +346,10 @@ export const MountainClientLive = Layer.effect(
 					try {
 						if (!realClient) {
 							return yield* Effect.fail(
-								new RPCError(method, "Not connected to Mountain"),
+								new RPCError(
+									method,
+									"Not connected to Mountain",
+								),
 							);
 						}
 						const Result = yield* Effect.promise(() =>

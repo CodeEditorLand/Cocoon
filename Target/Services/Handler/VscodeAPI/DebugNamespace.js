@@ -38,9 +38,12 @@ var CreateDebugNamespace = /* @__PURE__ */ __name((Context) => ({
     });
     return {
       dispose: /* @__PURE__ */ __name(() => {
-        Context.SendToMountain("unregister_debug_configuration_provider", {
-          handle: Handle
-        }).catch(() => {
+        Context.SendToMountain(
+          "unregister_debug_configuration_provider",
+          {
+            handle: Handle
+          }
+        ).catch(() => {
         });
       }, "dispose")
     };
@@ -49,11 +52,10 @@ var CreateDebugNamespace = /* @__PURE__ */ __name((Context) => ({
   }, "dispose") }), "registerDebugAdapterTrackerFactory"),
   startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
     try {
-      const Response = await Context.MountainClient?.sendRequest("Debug.Start", [
-        Folder,
-        NameOrConfig,
-        ParentSession
-      ]);
+      const Response = await Context.MountainClient?.sendRequest(
+        "Debug.Start",
+        [Folder, NameOrConfig, ParentSession]
+      );
       return Boolean(Response?.success);
     } catch {
       return false;
@@ -91,14 +93,17 @@ var CreateDebugNamespace = /* @__PURE__ */ __name((Context) => ({
     Context,
     "debug.didReceiveCustomEvent"
   ),
-  onDidChangeBreakpoints: EventSubscriber(Context, "debug.didChangeBreakpoints"),
+  onDidChangeBreakpoints: EventSubscriber(
+    Context,
+    "debug.didChangeBreakpoints"
+  ),
   activeDebugSession: void 0,
   activeDebugConsole: {
     append: /* @__PURE__ */ __name((Value) => {
-      Context.SendToMountain("debug.consoleAppend", { value: Value }).catch(
-        () => {
-        }
-      );
+      Context.SendToMountain("debug.consoleAppend", {
+        value: Value
+      }).catch(() => {
+      });
     }, "append"),
     appendLine: /* @__PURE__ */ __name((Value) => {
       Context.SendToMountain("debug.consoleAppend", {

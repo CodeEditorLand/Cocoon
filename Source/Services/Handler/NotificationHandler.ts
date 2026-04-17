@@ -19,10 +19,26 @@ import type { EventEmitter } from "events";
 const HandleSpecificNotification = (
 	Emitter: EventEmitter,
 	DocumentContentCache: Map<string, string>,
-	HandleDocumentChange: (Cache: Map<string, string>, Parameters: any, WorkspaceEventEmitter?: EventEmitter) => void,
-	HandleDocumentOpen: (Cache: Map<string, string>, Parameters: any, WorkspaceEventEmitter?: EventEmitter) => void,
-	HandleDocumentClose: (Cache: Map<string, string>, Parameters: any, WorkspaceEventEmitter?: EventEmitter) => void,
-	HandleDocumentSave: (Cache: Map<string, string>, Parameters: any, WorkspaceEventEmitter?: EventEmitter) => void,
+	HandleDocumentChange: (
+		Cache: Map<string, string>,
+		Parameters: any,
+		WorkspaceEventEmitter?: EventEmitter,
+	) => void,
+	HandleDocumentOpen: (
+		Cache: Map<string, string>,
+		Parameters: any,
+		WorkspaceEventEmitter?: EventEmitter,
+	) => void,
+	HandleDocumentClose: (
+		Cache: Map<string, string>,
+		Parameters: any,
+		WorkspaceEventEmitter?: EventEmitter,
+	) => void,
+	HandleDocumentSave: (
+		Cache: Map<string, string>,
+		Parameters: any,
+		WorkspaceEventEmitter?: EventEmitter,
+	) => void,
 	Method: string,
 	Parameters: any,
 	WorkspaceEventEmitter?: EventEmitter,
@@ -45,21 +61,37 @@ const HandleSpecificNotification = (
 			break;
 		case "$acceptModelChanged":
 		case "document.didChange":
-			HandleDocumentChange(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+			HandleDocumentChange(
+				DocumentContentCache,
+				Parameters,
+				WorkspaceEventEmitter,
+			);
 			break;
 		case "$acceptModelAdded":
 		case "$acceptModelOpen":
 		case "document.didOpen":
-			HandleDocumentOpen(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+			HandleDocumentOpen(
+				DocumentContentCache,
+				Parameters,
+				WorkspaceEventEmitter,
+			);
 			break;
 		case "$acceptModelRemoved":
 		case "$acceptModelClosed":
 		case "document.didClose":
-			HandleDocumentClose(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+			HandleDocumentClose(
+				DocumentContentCache,
+				Parameters,
+				WorkspaceEventEmitter,
+			);
 			break;
 		case "$acceptModelSaved":
 		case "document.didSave":
-			HandleDocumentSave(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+			HandleDocumentSave(
+				DocumentContentCache,
+				Parameters,
+				WorkspaceEventEmitter,
+			);
 			break;
 		default:
 			// Generic handler for unknown notification types

@@ -44,9 +44,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		showWarningMessage: ShowMessage("warn"),
 
 		showQuickPick: async (Items: unknown, _Options: unknown) => {
-			Context.SendToMountain("window.showQuickPick", { items: Items }).catch(
-				() => {},
-			);
+			Context.SendToMountain("window.showQuickPick", {
+				items: Items,
+			}).catch(() => {});
 			return undefined;
 		},
 		showInputBox: async (_Options: unknown) => {
@@ -80,9 +80,9 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 					}).catch(() => {});
 				},
 				hide: () => {
-					Context.SendToMountain("terminal.hide", { handle: Handle }).catch(
-						() => {},
-					);
+					Context.SendToMountain("terminal.hide", {
+						handle: Handle,
+					}).catch(() => {});
 				},
 				dispose: () => {
 					Context.SendToMountain("terminal.dispose", {
@@ -99,7 +99,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			const Handle = `statusBar:${++StatusBarCounter}`;
 			const Item = {
 				id: Handle,
-				alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
+				alignment:
+					typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
 				priority: Priority,
 				text: "",
 				tooltip: "",
@@ -219,7 +220,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				error: (MessageOrError: unknown, ..._Arguments: unknown[]) => {
 					const Text =
 						MessageOrError instanceof Error
-							? MessageOrError.stack ?? MessageOrError.message
+							? (MessageOrError.stack ?? MessageOrError.message)
 							: String(MessageOrError);
 					Context.SendToMountain("outputChannel.append", {
 						handle: Handle,
@@ -231,9 +232,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			return Channel;
 		},
 
-		createTextEditorDecorationType: (
-			Options?: Record<string, unknown>,
-		) => {
+		createTextEditorDecorationType: (Options?: Record<string, unknown>) => {
 			const Key = `decoration:${Math.random().toString(36).slice(2)}`;
 			Context.SendToMountain("window.createTextEditorDecorationType", {
 				key: Key,
@@ -242,9 +241,12 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			return {
 				key: Key,
 				dispose: () => {
-					Context.SendToMountain("window.disposeTextEditorDecorationType", {
-						key: Key,
-					}).catch(() => {});
+					Context.SendToMountain(
+						"window.disposeTextEditorDecorationType",
+						{
+							key: Key,
+						},
+					).catch(() => {});
 				},
 			};
 		},
@@ -351,10 +353,8 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			return undefined;
 		},
 
-		showNotebookDocument: async (
-			_Document: unknown,
-			_Options?: unknown,
-		) => undefined,
+		showNotebookDocument: async (_Document: unknown, _Options?: unknown) =>
+			undefined,
 
 		tabGroups: {
 			all: [] as unknown[],
@@ -402,22 +402,26 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		registerUriHandler: () => ({ dispose: () => {} }),
 		registerTerminalLinkProvider: () => ({ dispose: () => {} }),
 		registerTerminalProfileProvider: () => ({ dispose: () => {} }),
-		registerProfileContentHandler: (
-			_Id: string,
-			_Handler: unknown,
-		) => ({ dispose: () => {} }),
+		registerProfileContentHandler: (_Id: string, _Handler: unknown) => ({
+			dispose: () => {},
+		}),
 		registerExternalUriOpener: (
 			_Id: string,
 			_Opener: unknown,
 			_Metadata?: unknown,
 		) => ({ dispose: () => {} }),
 
-		withProgress: async (_Option: unknown, Task: any) => Task({ report: () => {} }),
+		withProgress: async (_Option: unknown, Task: any) =>
+			Task({ report: () => {} }),
 
-		setStatusBarMessage: (Text: string, HideAfter?: number | Thenable<unknown>) => {
+		setStatusBarMessage: (
+			Text: string,
+			HideAfter?: number | Thenable<unknown>,
+		) => {
 			Context.SendToMountain("statusBar.message", {
 				text: Text,
-				hideAfter: typeof HideAfter === "number" ? HideAfter : undefined,
+				hideAfter:
+					typeof HideAfter === "number" ? HideAfter : undefined,
 			}).catch(() => {});
 			return { dispose: () => {} };
 		},
@@ -447,8 +451,14 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			Context,
 			"window.didChangeTextEditorViewColumn",
 		),
-		onDidOpenTerminal: MakeEventSubscriber(Context, "window.didOpenTerminal"),
-		onDidCloseTerminal: MakeEventSubscriber(Context, "window.didCloseTerminal"),
+		onDidOpenTerminal: MakeEventSubscriber(
+			Context,
+			"window.didOpenTerminal",
+		),
+		onDidCloseTerminal: MakeEventSubscriber(
+			Context,
+			"window.didCloseTerminal",
+		),
 		onDidChangeWindowState: MakeEventSubscriber(
 			Context,
 			"window.didChangeWindowState",

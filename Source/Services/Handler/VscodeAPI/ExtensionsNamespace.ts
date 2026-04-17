@@ -14,40 +14,73 @@ import type { HandlerContext } from "../HandlerContext.js";
 // `vscode.git-base`, `vscode.git`, `vscode.github`, the consumer calls
 // methods like `onDidChangeEnablement(...)`, `getAPI()`, etc. Returning
 // `undefined` causes activation to throw on the first method access.
-// A permissive Proxy returns no-op functions for anything accessed,
-// with a shared `enabled: true` and disposable-producing event hooks.
-const MakePermissiveExports = (): unknown =>
-	new Proxy(
-		{
-			enabled: true,
-			getAPI: (_Version?: number) => MakePermissiveExports(),
+// A permissive Proxy returns disposable-producing stubs for anything
+// accessed. Critical behaviors:
+//   - `register*(...)` returns `{ dispose: () => {} }` (VS Code contract)
+//   - `onDid*(cb)` / `onWill*(cb)` returns `{ dispose: () => {} }`
+//   - `enabled` is `true` (so consumers see the extension as active)
+//   - Any other property access yields another permissive proxy so
+//     chained calls like `.getAPI(1).registerX()` work.
+const NoopDisposable = { dispose: () => {} };
+const MakePermissiveExports = (): any => {
+	const Base: Record<string, unknown> = {
+		enabled: true,
+	};
+	return new Proxy(Base, {
+		get(Target, Property) {
+			if (Property in Target) {
+				return (Target as Record<PropertyKey, unknown>)[Property];
+			}
+			if (typeof Property !== "string") {
+				return undefined;
+			}
+			// Not a thenable — must not look like a promise to `await`.
+			if (Property === "then") return undefined;
+			// Event subscriptions: `onDidX(cb)` / `onWillX(cb)` → disposable.
+			if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+				return (_Listener?: unknown) => NoopDisposable;
+			}
+			// Registration APIs: return disposable so `disposables.add(...)` works.
+			if (Property.startsWith("register")) {
+				return (..._Args: unknown[]) => NoopDisposable;
+			}
+			// Factory-style: getAPI(v), getGitAPI(), etc. return another
+			// permissive proxy so chained access succeeds.
+			if (Property.startsWith("get") || Property.startsWith("create")) {
+				return (..._Args: unknown[]) => MakePermissiveExports();
+			}
+			// Fallback — callable returning undefined.
+			return (..._Args: unknown[]) => undefined;
 		},
-		{
-			get(Target, Property) {
-				if (Property in Target) {
-					return (Target as Record<PropertyKey, unknown>)[Property];
-				}
-				if (typeof Property === "string") {
-					if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
-						return () => ({ dispose: () => {} });
-					}
-					if (Property === "then") return undefined; // not a thenable
-				}
-				return () => undefined;
-			},
-		},
-	);
+	});
+};
 
-const ToExtensionObject = (Context: HandlerContext, Id: string, Raw: any) => ({
-	id: Id,
-	extensionUri: Raw?.extensionLocation ?? { scheme: "file", path: "", fsPath: "" },
-	extensionPath: Raw?.extensionLocation?.fsPath ?? Raw?.extensionLocation?.path ?? "",
-	isActive: Context.ActivatedExtensions.has(Id),
-	packageJSON: Raw,
-	extensionKind: 1,
-	exports: MakePermissiveExports(),
-	activate: async () => {},
-});
+const ToExtensionObject = (Context: HandlerContext, Id: string, Raw: any) => {
+	const Exports = MakePermissiveExports();
+	return {
+		id: Id,
+		extensionUri: Raw?.extensionLocation ?? {
+			scheme: "file",
+			path: "",
+			fsPath: "",
+		},
+		extensionPath:
+			Raw?.extensionLocation?.fsPath ??
+			Raw?.extensionLocation?.path ??
+			"",
+		// Reporting `isActive: true` mirrors VS Code's behaviour for
+		// built-ins that have completed activation; without it, callers
+		// like the `github` extension treat the extension as missing.
+		isActive: true,
+		packageJSON: Raw,
+		extensionKind: 1,
+		exports: Exports,
+		// Critical: `activate()` must resolve to the SAME exports object
+		// so consumers like `vscode.github` can chain
+		// `gitExtension.activate().then(api => api.onDidChangeEnablement(...))`.
+		activate: async () => Exports,
+	};
+};
 
 const CreateExtensionsNamespace = (Context: HandlerContext) => ({
 	getExtension: (Identifier: string) => {
@@ -55,6 +88,14 @@ const CreateExtensionsNamespace = (Context: HandlerContext) => ({
 		return Raw ? ToExtensionObject(Context, Identifier, Raw) : undefined;
 	},
 	get all() {
+		return [...Context.ExtensionRegistry.entries()].map(([Id, Raw]) =>
+			ToExtensionObject(Context, Id, Raw),
+		);
+	},
+	// Some extensions (html-language-features) iterate
+	// `extensions.allAcrossExtensionHosts`; return the same array as `all`
+	// so `for (...of...)` does not throw on `is not iterable`.
+	get allAcrossExtensionHosts() {
 		return [...Context.ExtensionRegistry.entries()].map(([Id, Raw]) =>
 			ToExtensionObject(Context, Id, Raw),
 		);

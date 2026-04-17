@@ -21,21 +21,37 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter, DocumentConten
       break;
     case "$acceptModelChanged":
     case "document.didChange":
-      HandleDocumentChange(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+      HandleDocumentChange(
+        DocumentContentCache,
+        Parameters,
+        WorkspaceEventEmitter
+      );
       break;
     case "$acceptModelAdded":
     case "$acceptModelOpen":
     case "document.didOpen":
-      HandleDocumentOpen(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+      HandleDocumentOpen(
+        DocumentContentCache,
+        Parameters,
+        WorkspaceEventEmitter
+      );
       break;
     case "$acceptModelRemoved":
     case "$acceptModelClosed":
     case "document.didClose":
-      HandleDocumentClose(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+      HandleDocumentClose(
+        DocumentContentCache,
+        Parameters,
+        WorkspaceEventEmitter
+      );
       break;
     case "$acceptModelSaved":
     case "document.didSave":
-      HandleDocumentSave(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+      HandleDocumentSave(
+        DocumentContentCache,
+        Parameters,
+        WorkspaceEventEmitter
+      );
       break;
     default:
       console.log(

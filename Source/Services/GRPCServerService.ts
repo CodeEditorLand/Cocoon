@@ -28,17 +28,12 @@
 
 import { EventEmitter } from "events";
 import { createRequire } from "module";
-import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { fileURLToPath } from "url";
 
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
-
-// ESM compatibility — provide __dirname and require() for proto loading
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const require = createRequire(import.meta.url);
 
 // Import generated interfaces from Vine.proto
 import {
@@ -50,14 +45,18 @@ import {
 	GenericResponse,
 } from "../Generated/Vine";
 import { IGRPCServerService } from "../Interfaces/IGRPCServerService";
-
+import DocumentContentHandler from "./Handler/DocumentContentHandler.js";
+import ExtensionHostHandler from "./Handler/ExtensionHostHandler.js";
 // Import handler modules
 import type { HandlerContext } from "./Handler/HandlerContext.js";
-import ExtensionHostHandler from "./Handler/ExtensionHostHandler.js";
 import InvokeLanguageProvider from "./Handler/LanguageProviderHandler.js";
-import DocumentContentHandler from "./Handler/DocumentContentHandler.js";
 import HandleSpecificNotification from "./Handler/NotificationHandler.js";
 import RouteRequest from "./Handler/RequestRoutingHandler.js";
+
+// ESM compatibility — provide __dirname and require() for proto loading
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
 
 /**
  * Request tracking entry for cancellation support
@@ -123,7 +122,9 @@ export class GRPCServerService
 	private readonly documentContentCache: Map<string, string> = new Map();
 
 	/** Reverse gRPC client for sending messages back to Mountain */
-	private mountainClient: import("./MountainClientService.js").MountainClientService | null = null;
+	private mountainClient:
+		| import("./MountainClientService.js").MountainClientService
+		| null = null;
 
 	/** Workspace document lifecycle event emitter.
 	 * Fires didOpenTextDocument, didChangeTextDocument,
@@ -164,25 +165,38 @@ export class GRPCServerService
 				ActivationEventIndex: this.activationEventIndex,
 				ActivatedExtensions: this.activatedExtensions,
 				DocumentContentCache: this.documentContentCache,
-				SendToMountain: (Method: string, Parameters: any) => this.SendToMountain(Method, Parameters),
+				SendToMountain: (Method: string, Parameters: any) =>
+					this.SendToMountain(Method, Parameters),
 				ConnectToMountain: () => this.ConnectToMountain(),
 			} as HandlerContext,
 			{
 				ExtensionHostInitData: {
-					get() { return Self.extensionHostInitData; },
-					set(Value: any) { Self.extensionHostInitData = Value; },
+					get() {
+						return Self.extensionHostInitData;
+					},
+					set(Value: any) {
+						Self.extensionHostInitData = Value;
+					},
 					enumerable: true,
 					configurable: true,
 				},
 				ExtensionHostReady: {
-					get() { return Self.extensionHostReady; },
-					set(Value: boolean) { Self.extensionHostReady = Value; },
+					get() {
+						return Self.extensionHostReady;
+					},
+					set(Value: boolean) {
+						Self.extensionHostReady = Value;
+					},
 					enumerable: true,
 					configurable: true,
 				},
 				MountainClient: {
-					get() { return Self.mountainClient; },
-					set(Value: any) { Self.mountainClient = Value; },
+					get() {
+						return Self.mountainClient;
+					},
+					set(Value: any) {
+						Self.mountainClient = Value;
+					},
 					enumerable: true,
 					configurable: true,
 				},
@@ -521,7 +535,10 @@ export class GRPCServerService
 	private IsValidMethod(method: string): boolean {
 		const DotMethod = /^[a-zA-Z]+\.[a-zA-Z]+$/.test(method);
 		const ProvideMethod = /^\$provide[A-Z][a-zA-Z]+$/.test(method);
-		const ExtensionHostMethod = /^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost)$/.test(method);
+		const ExtensionHostMethod =
+			/^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost)$/.test(
+				method,
+			);
 		return DotMethod || ProvideMethod || ExtensionHostMethod;
 	}
 
@@ -582,23 +599,39 @@ export class GRPCServerService
 		const Context = this.GetHandlerContext();
 
 		if (method === "InitializeExtensionHost") {
-			return ExtensionHostHandler.HandleInitializeExtensionHost(Context, parameters);
+			return ExtensionHostHandler.HandleInitializeExtensionHost(
+				Context,
+				parameters,
+			);
 		}
 		if (method === "$deltaExtensions") {
-			return ExtensionHostHandler.HandleDeltaExtensions(Context, parameters);
+			return ExtensionHostHandler.HandleDeltaExtensions(
+				Context,
+				parameters,
+			);
 		}
 		if (method === "$activateByEvent") {
-			return ExtensionHostHandler.HandleActivateByEvent(Context, parameters);
+			return ExtensionHostHandler.HandleActivateByEvent(
+				Context,
+				parameters,
+			);
 		}
 		if (method === "$startExtensionHost") {
-			return ExtensionHostHandler.HandleStartExtensionHost(Context, parameters);
+			return ExtensionHostHandler.HandleStartExtensionHost(
+				Context,
+				parameters,
+			);
 		}
 
 		// Language feature provider invocation: "$provideHover", "$provideCompletions", etc.
 		// Mountain calls these when Sky's Monaco editor requests language intelligence.
 		// parameters = [handle, uriObject, position?, context?]
 		if (/^\$provide[A-Z]/.test(method)) {
-			return InvokeLanguageProvider(method, parameters, this.documentContentCache);
+			return InvokeLanguageProvider(
+				method,
+				parameters,
+				this.documentContentCache,
+			);
 		}
 
 		throw new Error(`Unknown method: ${method}`);
@@ -658,7 +691,10 @@ export class GRPCServerService
 	 * Used by InvokeLanguageProvider's VsDocument.getText().
 	 */
 	public GetDocumentContent(Uri: string): string | null {
-		return DocumentContentHandler.GetDocumentContent(this.documentContentCache, Uri);
+		return DocumentContentHandler.GetDocumentContent(
+			this.documentContentCache,
+			Uri,
+		);
 	}
 
 	// ==================================================================
@@ -756,9 +792,8 @@ export class GRPCServerService
 			`[GRPCServerService] Connecting to Mountain gRPC at localhost:${MountainPort}...`,
 		);
 
-		const { MountainClientService } = await import(
-			"./MountainClientService.js"
-		);
+		const { MountainClientService } =
+			await import("./MountainClientService.js");
 		const Client = new MountainClientService();
 		await Client.connect();
 
@@ -775,10 +810,7 @@ export class GRPCServerService
 	 * Send a notification back to Mountain (for forwarding to Wind).
 	 * Used for extension host protocol messages, provider registrations, etc.
 	 */
-	async SendToMountain(
-		Method: string,
-		Parameters: any,
-	): Promise<void> {
+	async SendToMountain(Method: string, Parameters: any): Promise<void> {
 		if (!this.mountainClient) {
 			console.warn(
 				`[GRPCServerService] Cannot send ${Method} to Mountain — not connected`,
@@ -820,7 +852,9 @@ export class GRPCServerService
 			});
 
 			// Add service implementation
-			const CocoonSvc = protoDescriptor.Vine?.CocoonService || protoDescriptor.CocoonService;
+			const CocoonSvc =
+				protoDescriptor.Vine?.CocoonService ||
+				protoDescriptor.CocoonService;
 			this.server.addService(
 				CocoonSvc.service,
 				this.serviceImplementation,

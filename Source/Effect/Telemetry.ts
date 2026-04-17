@@ -172,7 +172,8 @@ export const TelemetryLive = Layer.effect(
 					Option.getOrElse(() => []),
 				);
 
-				yield* Ref.set(metricsRef,
+				yield* Ref.set(
+					metricsRef,
 					HashMap.set(currentMetrics, name, [...nameMetrics, metric]),
 				);
 			});
@@ -222,7 +223,8 @@ export const TelemetryLive = Layer.effect(
 								name,
 							).pipe(Option.getOrElse(() => []));
 
-							yield* Ref.set(spansRef,
+							yield* Ref.set(
+								spansRef,
 								HashMap.set(currentSpans, name, [
 									...nameSpans,
 									completedSpan,
@@ -321,8 +323,8 @@ export const TelemetryLive = Layer.effect(
 
 		// Atom: Flush all telemetry data
 		const flush = Effect.gen(function* () {
-			yield* Ref.set(metricsRef,HashMap.empty());
-			yield* Ref.set(spansRef,HashMap.empty());
+			yield* Ref.set(metricsRef, HashMap.empty());
+			yield* Ref.set(spansRef, HashMap.empty());
 			yield* Ref.set(eventsRef, []);
 		});
 

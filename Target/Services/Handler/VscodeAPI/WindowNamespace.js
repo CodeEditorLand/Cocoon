@@ -28,10 +28,10 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     showErrorMessage: ShowMessage("error"),
     showWarningMessage: ShowMessage("warn"),
     showQuickPick: /* @__PURE__ */ __name(async (Items, _Options) => {
-      Context.SendToMountain("window.showQuickPick", { items: Items }).catch(
-        () => {
-        }
-      );
+      Context.SendToMountain("window.showQuickPick", {
+        items: Items
+      }).catch(() => {
+      });
       return void 0;
     }, "showQuickPick"),
     showInputBox: /* @__PURE__ */ __name(async (_Options) => {
@@ -68,10 +68,10 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           });
         }, "show"),
         hide: /* @__PURE__ */ __name(() => {
-          Context.SendToMountain("terminal.hide", { handle: Handle }).catch(
-            () => {
-            }
-          );
+          Context.SendToMountain("terminal.hide", {
+            handle: Handle
+          }).catch(() => {
+          });
         }, "hide"),
         dispose: /* @__PURE__ */ __name(() => {
           Context.SendToMountain("terminal.dispose", {
@@ -241,9 +241,12 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       return {
         key: Key,
         dispose: /* @__PURE__ */ __name(() => {
-          Context.SendToMountain("window.disposeTextEditorDecorationType", {
-            key: Key
-          }).catch(() => {
+          Context.SendToMountain(
+            "window.disposeTextEditorDecorationType",
+            {
+              key: Key
+            }
+          ).catch(() => {
           });
         }, "dispose")
       };
@@ -416,8 +419,10 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     }, "dispose") }), "registerTerminalLinkProvider"),
     registerTerminalProfileProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerTerminalProfileProvider"),
-    registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerProfileContentHandler"),
+    registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose")
+    }), "registerProfileContentHandler"),
     registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerExternalUriOpener"),
     withProgress: /* @__PURE__ */ __name(async (_Option, Task) => Task({ report: /* @__PURE__ */ __name(() => {
@@ -456,8 +461,14 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       Context,
       "window.didChangeTextEditorViewColumn"
     ),
-    onDidOpenTerminal: MakeEventSubscriber(Context, "window.didOpenTerminal"),
-    onDidCloseTerminal: MakeEventSubscriber(Context, "window.didCloseTerminal"),
+    onDidOpenTerminal: MakeEventSubscriber(
+      Context,
+      "window.didOpenTerminal"
+    ),
+    onDidCloseTerminal: MakeEventSubscriber(
+      Context,
+      "window.didCloseTerminal"
+    ),
     onDidChangeWindowState: MakeEventSubscriber(
       Context,
       "window.didChangeWindowState"

@@ -92,7 +92,11 @@ const BuildTextDocument = (
 			fragment: "",
 			with: () => ({}),
 			toString: () => Uri,
-			toJSON: () => ({ scheme: "file", path: FileName, fsPath: FileName }),
+			toJSON: () => ({
+				scheme: "file",
+				path: FileName,
+				fsPath: FileName,
+			}),
 		},
 		fileName: FileName,
 		languageId: ResolvedLanguage,
@@ -103,9 +107,13 @@ const BuildTextDocument = (
 			const StartLine = Range?.start?.line ?? 0;
 			const StartCharacter = Range?.start?.character ?? 0;
 			const EndLine = Range?.end?.line ?? Lines.length - 1;
-			const EndCharacter = Range?.end?.character ?? (Lines[EndLine]?.length ?? 0);
+			const EndCharacter =
+				Range?.end?.character ?? Lines[EndLine]?.length ?? 0;
 			if (StartLine === EndLine) {
-				return (Lines[StartLine] ?? "").substring(StartCharacter, EndCharacter);
+				return (Lines[StartLine] ?? "").substring(
+					StartCharacter,
+					EndCharacter,
+				);
 			}
 			const Result: string[] = [];
 			Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
@@ -115,8 +123,18 @@ const BuildTextDocument = (
 			Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter));
 			return Result.join("\n");
 		},
-		lineAt: (LineOrPosition: number | { line: number }): { text: string; lineNumber: number; range: any; isEmptyOrWhitespace: boolean } => {
-			const LineNumber = typeof LineOrPosition === "number" ? LineOrPosition : LineOrPosition.line;
+		lineAt: (
+			LineOrPosition: number | { line: number },
+		): {
+			text: string;
+			lineNumber: number;
+			range: any;
+			isEmptyOrWhitespace: boolean;
+		} => {
+			const LineNumber =
+				typeof LineOrPosition === "number"
+					? LineOrPosition
+					: LineOrPosition.line;
 			const Text = Lines[LineNumber] ?? "";
 			return {
 				text: Text,
@@ -134,7 +152,11 @@ const BuildTextDocument = (
 		eol: 1, // EndOfLine.LF
 		offsetAt: (Position: { line: number; character: number }): number => {
 			let Offset = 0;
-			for (let Index = 0; Index < Position.line && Index < Lines.length; Index++) {
+			for (
+				let Index = 0;
+				Index < Position.line && Index < Lines.length;
+				Index++
+			) {
 				Offset += (Lines[Index]?.length ?? 0) + 1; // +1 for newline
 			}
 			return Offset + Position.character;
@@ -148,7 +170,10 @@ const BuildTextDocument = (
 				}
 				Remaining -= LineLength;
 			}
-			return { line: Lines.length - 1, character: Lines[Lines.length - 1]?.length ?? 0 };
+			return {
+				line: Lines.length - 1,
+				character: Lines[Lines.length - 1]?.length ?? 0,
+			};
 		},
 		validateRange: (Range: any) => Range,
 		validatePosition: (Position: any) => Position,
@@ -200,7 +225,11 @@ const HandleDocumentChange = (
 		Uri = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
 		EventData = Parameters[1];
 	} else {
-		Uri = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
+		Uri =
+			Parameters?.uri?.external ??
+			Parameters?.uri ??
+			Parameters?.Uri ??
+			"";
 		EventData = Parameters;
 	}
 
@@ -213,16 +242,23 @@ const HandleDocumentChange = (
 		// Incremental changes — apply edits to cached content
 		const Existing = DocumentContentCache.get(Uri) ?? "";
 		let Updated = Existing;
-		const Changes: any[] = Array.isArray(EventData?.changes) ? EventData.changes : (Array.isArray(Parameters?.changes) ? Parameters.changes : []);
+		const Changes: any[] = Array.isArray(EventData?.changes)
+			? EventData.changes
+			: Array.isArray(Parameters?.changes)
+				? Parameters.changes
+				: [];
 		// Apply changes in reverse order (largest offset first) to avoid index shifts
-		const Sorted = [...Changes].sort((A: any, B: any) =>
-			(B.rangeOffset ?? 0) - (A.rangeOffset ?? 0)
+		const Sorted = [...Changes].sort(
+			(A: any, B: any) => (B.rangeOffset ?? 0) - (A.rangeOffset ?? 0),
 		);
 		for (const Change of Sorted) {
 			const Offset = Change.rangeOffset ?? 0;
 			const Length = Change.rangeLength ?? 0;
 			const Text = Change.text ?? "";
-			Updated = Updated.substring(0, Offset) + Text + Updated.substring(Offset + Length);
+			Updated =
+				Updated.substring(0, Offset) +
+				Text +
+				Updated.substring(Offset + Length);
 		}
 		DocumentContentCache.set(Uri, Updated);
 	}
@@ -255,8 +291,12 @@ const HandleDocumentOpen = (
 	for (const Model of Models) {
 		// DocumentStateDTO uses URI (PascalCase, serde rename_all)
 		const Uri: string =
-			Model?.URI?.toString?.() ?? Model?.URI ??
-			Model?.uri?.external ?? Model?.uri ?? Model?.Uri ?? "";
+			Model?.URI?.toString?.() ??
+			Model?.URI ??
+			Model?.uri?.external ??
+			Model?.uri ??
+			Model?.Uri ??
+			"";
 		// Content can be: Lines (Vec<String>), content (String), text (String)
 		const Lines = Model?.Lines ?? Model?.lines;
 		const EOL = Model?.EOL ?? Model?.eol ?? "\n";
@@ -273,10 +313,17 @@ const HandleDocumentOpen = (
 		if (Uri && Content !== undefined) {
 			DocumentContentCache.set(Uri, Content);
 			DocumentVersionMap.set(Uri, 1);
-			console.log(`[DocumentContentHandler] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`);
+			console.log(
+				`[DocumentContentHandler] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`,
+			);
 
 			if (WorkspaceEventEmitter) {
-				const Document = BuildTextDocument(Uri, Content, 1, LanguageIdentifier);
+				const Document = BuildTextDocument(
+					Uri,
+					Content,
+					1,
+					LanguageIdentifier,
+				);
 				WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
 			}
 		}
@@ -296,7 +343,11 @@ const HandleDocumentClose = (
 	const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
 	for (const Item of Items) {
 		const Uri: string =
-			Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+			Item?.external ??
+			Item?.uri?.external ??
+			Item?.uri ??
+			Item?.Uri ??
+			"";
 		if (Uri) {
 			// Build document from cache before removing
 			if (WorkspaceEventEmitter) {
@@ -329,7 +380,11 @@ const HandleDocumentSave = (
 		const Uri: string =
 			typeof Item === "string"
 				? Item
-				: Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+				: (Item?.external ??
+					Item?.uri?.external ??
+					Item?.uri ??
+					Item?.Uri ??
+					"");
 		if (Uri) {
 			const CachedContent = DocumentContentCache.get(Uri) ?? "";
 			const Version = DocumentVersionMap.get(Uri) ?? 1;

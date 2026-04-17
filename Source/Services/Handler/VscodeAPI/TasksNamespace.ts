@@ -43,9 +43,10 @@ const CreateTasksNamespace = (Context: HandlerContext) => ({
 		try {
 			// Task.Fetch — not yet routed in CreateEffectForRequest.
 			// Falls back to empty array via catch while Rust side is wired.
-			const Response = await Context.MountainClient?.sendRequest("Task.Fetch", [
-				Filter,
-			]);
+			const Response = await Context.MountainClient?.sendRequest(
+				"Task.Fetch",
+				[Filter],
+			);
 			return Array.isArray(Response) ? Response : [];
 		} catch {
 			return [];
@@ -55,7 +56,9 @@ const CreateTasksNamespace = (Context: HandlerContext) => ({
 	executeTask: async (Task: unknown): Promise<unknown> => {
 		try {
 			// Task.Execute — not yet routed in CreateEffectForRequest.
-			return await Context.MountainClient?.sendRequest("Task.Execute", [Task]);
+			return await Context.MountainClient?.sendRequest("Task.Execute", [
+				Task,
+			]);
 		} catch {
 			return undefined;
 		}

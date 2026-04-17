@@ -5,7 +5,15 @@
  * Manages extension lifecycle including activation, deactivation, and enumeration.
  */
 
-import { Context, Effect, HashMap, Layer, Option, Ref, SubscriptionRef } from "effect";
+import {
+	Context,
+	Effect,
+	HashMap,
+	Layer,
+	Option,
+	Ref,
+	SubscriptionRef,
+} from "effect";
 
 import { TelemetryTag } from "./Telemetry.js";
 
@@ -200,7 +208,8 @@ export const ExtensionLive = Layer.effect(
 				}
 
 				// Update state to activating
-				yield* Ref.set(extensionsRef,
+				yield* Ref.set(
+					extensionsRef,
 					HashMap.set(extensions, id, {
 						...current,
 						state: { _tag: "Activating", startTime },
@@ -219,7 +228,8 @@ export const ExtensionLive = Layer.effect(
 
 				// Update state to active
 				const updatedExtensions = yield* extensionsRef.get;
-				yield* Ref.set(extensionsRef,
+				yield* Ref.set(
+					extensionsRef,
 					HashMap.set(updatedExtensions, id, {
 						...current,
 						state: { _tag: "Active", activatedAt: startTime },
@@ -248,7 +258,8 @@ export const ExtensionLive = Layer.effect(
 
 						// Update state to error
 						const extensions = yield* extensionsRef.get;
-						yield* Ref.set(extensionsRef,
+						yield* Ref.set(
+							extensionsRef,
 							HashMap.set(extensions, id, {
 								...HashMap.get(extensions, id).pipe(
 									Option.getOrElse(() => ({
@@ -316,7 +327,8 @@ export const ExtensionLive = Layer.effect(
 				);
 
 				// Update state to deactivating
-				yield* Ref.set(extensionsRef,
+				yield* Ref.set(
+					extensionsRef,
 					HashMap.set(extensions, id, {
 						...current,
 						state: { _tag: "Deactivating" },
@@ -328,7 +340,8 @@ export const ExtensionLive = Layer.effect(
 
 				// Update state to deactivated
 				const updatedExtensions = yield* extensionsRef.get;
-				yield* Ref.set(extensionsRef,
+				yield* Ref.set(
+					extensionsRef,
 					HashMap.set(updatedExtensions, id, {
 						...current,
 						state: { _tag: "Deactivated" },

@@ -20874,7 +20874,13 @@ function Unregister(Handle) {
 }
 __name(Unregister, "Unregister");
 function Get(Handle) {
-  return Callbacks.get(Handle);
+  const Provider = Callbacks.get(Handle);
+  if (process.env.LAND_DEV_LOG) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
 }
 __name(Get, "Get");
 var NextHandle = 1e4;

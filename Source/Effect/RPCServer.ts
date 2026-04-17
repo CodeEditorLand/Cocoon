@@ -7,8 +7,8 @@
 
 import { Context, Effect, Layer, Ref, Schedule, SubscriptionRef } from "effect";
 
-import { TelemetryTag } from "./Telemetry.js";
 import { GRPCServerService } from "../Services/GRPCServerService.js";
+import { TelemetryTag } from "./Telemetry.js";
 
 // ============================================================================
 // TYPES
@@ -204,7 +204,9 @@ export const RPCServerLive = Layer.effect(
 					startTime: startTimeMs,
 				});
 
-				console.log(`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`);
+				console.log(
+					`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,
+				);
 				telemetry.log(
 					"info",
 					`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`,

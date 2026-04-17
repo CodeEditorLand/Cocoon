@@ -33,8 +33,8 @@ __export(MountainClientService_exports, {
   MountainClientServiceLayer: () => MountainClientServiceLayer
 });
 import { createRequire } from "module";
-import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { fileURLToPath } from "url";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { v4 as uuidv4 } from "uuid";
@@ -314,8 +314,14 @@ var init_MountainClientService = __esm({
           const fs = require2("fs");
           const path = require2("path");
           const SearchPaths = [
-            path.resolve(__dirname, "../../../../Mountain/Proto/Vine.proto"),
-            path.resolve(process.cwd(), "Element/Mountain/Proto/Vine.proto"),
+            path.resolve(
+              __dirname,
+              "../../../../Mountain/Proto/Vine.proto"
+            ),
+            path.resolve(
+              process.cwd(),
+              "Element/Mountain/Proto/Vine.proto"
+            ),
             path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto")
           ];
           let vineProtoPath = null;
@@ -794,9 +800,7 @@ message RPCDataPayload {
           if (channel) {
             const state = channel.getConnectivityState(false);
             if (state !== 2) {
-              throw new Error(
-                `Channel not ready (state: ${state})`
-              );
+              throw new Error(`Channel not ready (state: ${state})`);
             }
           }
           this.consecutiveSuccessfulHealthChecks++;
@@ -918,13 +922,10 @@ message RPCDataPayload {
         }
         try {
           await new Promise((resolve, reject) => {
-            this.client.CancelOperation(
-              cancelRequest,
-              (error) => {
-                if (error) reject(error);
-                else resolve();
-              }
-            );
+            this.client.CancelOperation(cancelRequest, (error) => {
+              if (error) reject(error);
+              else resolve();
+            });
           });
         } catch (error) {
           throw error;

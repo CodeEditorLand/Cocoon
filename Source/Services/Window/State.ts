@@ -5,7 +5,7 @@
  * Following Wind Effect-TS atomic module pattern.
  */
 
-import { Effect, Ref, Context} from "effect";
+import { Context, Effect, Ref } from "effect";
 
 import type { Logger, WindowStateConfig } from "./Types.js";
 

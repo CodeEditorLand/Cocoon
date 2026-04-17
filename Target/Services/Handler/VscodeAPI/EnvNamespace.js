@@ -6,7 +6,10 @@ var CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
   const Env = Context.ExtensionHostInitData?.environment ?? {};
   const Call = /* @__PURE__ */ __name(async (Method, Parameters) => {
     try {
-      return await Context.MountainClient?.sendRequest(Method, Parameters);
+      return await Context.MountainClient?.sendRequest(
+        Method,
+        Parameters
+      );
     } catch {
       return void 0;
     }

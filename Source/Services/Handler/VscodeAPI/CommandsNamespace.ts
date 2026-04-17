@@ -20,7 +20,10 @@ const CreateCommandsNamespace = (
 	Context: HandlerContext,
 	LanguageProviderRegistry: typeof import("../../LanguageProviderRegistry.js"),
 ) => ({
-	registerCommand: (Command: string, Callback: (...Arguments: unknown[]) => unknown) => {
+	registerCommand: (
+		Command: string,
+		Callback: (...Arguments: unknown[]) => unknown,
+	) => {
 		LanguageProviderRegistry.RegisterCommand(Command, Callback);
 		Context.SendToMountain("registerCommand", { commandId: Command }).catch(
 			() => {},
@@ -65,10 +68,10 @@ const CreateCommandsNamespace = (
 		if (LocalResult !== undefined) return LocalResult;
 		try {
 			// Routed by Mountain via Track::SideCarRequest → Command.Execute effect.
-			return await Context.MountainClient?.sendRequest("Command.Execute", [
-				Command,
-				...Arguments,
-			]);
+			return await Context.MountainClient?.sendRequest(
+				"Command.Execute",
+				[Command, ...Arguments],
+			);
 		} catch {
 			return undefined;
 		}

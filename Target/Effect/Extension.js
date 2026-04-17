@@ -226,7 +226,15 @@ var withSpan = /* @__PURE__ */ __name((name, effect, labels) => Effect.gen(funct
 }), "withSpan");
 
 // Source/Effect/Extension.ts
-import { Context as Context2, Effect as Effect2, HashMap as HashMap2, Layer as Layer2, Option as Option2, Ref as Ref2, SubscriptionRef as SubscriptionRef2 } from "effect";
+import {
+  Context as Context2,
+  Effect as Effect2,
+  HashMap as HashMap2,
+  Layer as Layer2,
+  Option as Option2,
+  Ref as Ref2,
+  SubscriptionRef as SubscriptionRef2
+} from "effect";
 var ExtensionNotFoundError = class extends Error {
   constructor(extensionId) {
     super(`Extension not found: ${extensionId}`);

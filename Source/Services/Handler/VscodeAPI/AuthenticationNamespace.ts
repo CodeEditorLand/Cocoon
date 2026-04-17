@@ -34,7 +34,8 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) => ({
 			handle: Handle,
 			provider_id: ProviderId,
 			label: Label,
-			supports_multiple_accounts: Options?.supportsMultipleAccounts ?? false,
+			supports_multiple_accounts:
+				Options?.supportsMultipleAccounts ?? false,
 			extension_id: "",
 		}).catch(() => {});
 		return {

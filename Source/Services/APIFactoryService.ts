@@ -16,18 +16,12 @@ import * as LanguageProviderRegistry from "./LanguageProviderRegistry.js";
 
 // Real VS Code type constructors from @codeeditorland/output (compiled from VS Code source).
 // Loaded once at module init - all extensions share these class definitions.
-const VsCodeTypes = await import(
-	"@codeeditorland/output/vs/workbench/api/common/extHostTypes"
-);
-const { URI } = await import(
-	"@codeeditorland/output/vs/base/common/uri"
-);
-const { CancellationTokenSource, CancellationToken } = await import(
-	"@codeeditorland/output/vs/base/common/cancellation"
-);
-const { Emitter } = await import(
-	"@codeeditorland/output/vs/base/common/event"
-);
+const VsCodeTypes =
+	await import("@codeeditorland/output/vs/workbench/api/common/extHostTypes");
+const { URI } = await import("@codeeditorland/output/vs/base/common/uri");
+const { CancellationTokenSource, CancellationToken } =
+	await import("@codeeditorland/output/vs/base/common/cancellation");
+const { Emitter } = await import("@codeeditorland/output/vs/base/common/event");
 
 // --- API Service Interface ---
 

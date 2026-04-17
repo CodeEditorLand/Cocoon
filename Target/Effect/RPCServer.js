@@ -15,246 +15,16 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// Source/Effect/Telemetry.ts
-import {
-  Context,
-  Effect,
-  HashMap,
-  Layer,
-  Option,
-  Ref,
-  Stream,
-  SubscriptionRef
-} from "effect";
-var TelemetryCollectionError, TelemetryTag, Telemetry, TelemetryLive, makeMockTelemetry, TelemetryMock, withSpan;
-var init_Telemetry = __esm({
-  "Source/Effect/Telemetry.ts"() {
-    "use strict";
-    TelemetryCollectionError = class extends Error {
-      constructor(operation, cause) {
-        super(
-          `Telemetry collection failed for '${operation}': ${String(cause)}`
-        );
-        this.operation = operation;
-        this.cause = cause;
-      }
-      operation;
-      cause;
-      static {
-        __name(this, "TelemetryCollectionError");
-      }
-      _tag = "TelemetryCollectionError";
-    };
-    TelemetryTag = class extends Context.Tag("Cocoon/Telemetry")() {
-      static {
-        __name(this, "TelemetryTag");
-      }
-    };
-    Telemetry = TelemetryTag;
-    TelemetryLive = Layer.effect(
-      Telemetry,
-      Effect.gen(function* () {
-        const metricsRef = yield* SubscriptionRef.make(HashMap.empty());
-        const spansRef = yield* SubscriptionRef.make(HashMap.empty());
-        const eventsRef = yield* SubscriptionRef.make([]);
-        const recordMetric = /* @__PURE__ */ __name((name, value, labels) => Effect.gen(function* () {
-          const metric = {
-            name,
-            value,
-            timestamp: Date.now(),
-            labels
-          };
-          const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            {
-              type: "metric",
-              timestamp: metric.timestamp,
-              data: metric
-            }
-          ]);
-          const currentMetrics = yield* metricsRef.get;
-          const nameMetrics = HashMap.get(currentMetrics, name).pipe(
-            Option.getOrElse(() => [])
-          );
-          yield* Ref.set(
-            metricsRef,
-            HashMap.set(currentMetrics, name, [...nameMetrics, metric])
-          );
-        }), "recordMetric");
-        const startSpan = /* @__PURE__ */ __name((name, labels) => Effect.gen(function* () {
-          const startTime = Date.now();
-          const span = {
-            name,
-            startTime,
-            success: false,
-            labels: labels ?? {}
-          };
-          const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            { type: "span", timestamp: startTime, data: span }
-          ]);
-          return {
-            end: /* @__PURE__ */ __name((success, error) => Effect.gen(function* () {
-              const endTime = Date.now();
-              const completedSpan = {
-                ...span,
-                endTime,
-                duration: endTime - startTime,
-                success,
-                error
-              };
-              const events2 = yield* eventsRef.get;
-              yield* Ref.set(eventsRef, [
-                ...events2,
-                {
-                  type: "span",
-                  timestamp: endTime,
-                  data: completedSpan
-                }
-              ]);
-              const currentSpans = yield* spansRef.get;
-              const nameSpans = HashMap.get(
-                currentSpans,
-                name
-              ).pipe(Option.getOrElse(() => []));
-              yield* Ref.set(
-                spansRef,
-                HashMap.set(currentSpans, name, [
-                  ...nameSpans,
-                  completedSpan
-                ])
-              );
-            }), "end")
-          };
-        }), "startSpan");
-        const log = /* @__PURE__ */ __name((level, message, context) => Effect.gen(function* () {
-          const logEntry = {
-            level,
-            message,
-            context
-          };
-          const timestamp = Date.now();
-          const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            { type: "log", timestamp, data: logEntry }
-          ]);
-          const prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
-          switch (level) {
-            case "debug":
-              console.debug(prefix, message, context ?? "");
-              break;
-            case "info":
-              console.info(prefix, message, context ?? "");
-              break;
-            case "warn":
-              console.warn(prefix, message, context ?? "");
-              break;
-            case "error":
-              console.error(prefix, message, context ?? "");
-              break;
-          }
-        }), "log");
-        const getMetrics = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
-          const metrics = yield* metricsRef.get;
-          return HashMap.get(metrics, name).pipe(
-            Option.getOrElse(() => [])
-          );
-        }), "getMetrics");
-        const getAverageDuration = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
-          const spans = yield* spansRef.get;
-          const nameSpans = HashMap.get(spans, name).pipe(
-            Option.getOrElse(() => [])
-          );
-          if (nameSpans.length === 0) {
-            return 0;
-          }
-          const totalDuration = nameSpans.reduce(
-            (sum2, span) => {
-              return sum2 + (span.duration ?? 0);
-            },
-            0
-          );
-          return totalDuration / nameSpans.length;
-        }), "getAverageDuration");
-        const getSuccessRate = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
-          const spans = yield* spansRef.get;
-          const nameSpans = HashMap.get(spans, name).pipe(
-            Option.getOrElse(() => [])
-          );
-          if (nameSpans.length === 0) {
-            return 1;
-          }
-          const successCount = nameSpans.filter(
-            (span) => span.success
-          ).length;
-          return successCount / nameSpans.length;
-        }), "getSuccessRate");
-        const flush = Effect.gen(function* () {
-          yield* Ref.set(metricsRef, HashMap.empty());
-          yield* Ref.set(spansRef, HashMap.empty());
-          yield* Ref.set(eventsRef, []);
-        });
-        return {
-          recordMetric,
-          startSpan,
-          log,
-          events: eventsRef.changes,
-          getMetrics,
-          getAverageDuration,
-          getSuccessRate,
-          flush
-        };
-      })
-    );
-    makeMockTelemetry = /* @__PURE__ */ __name(() => ({
-      recordMetric: /* @__PURE__ */ __name(() => Effect.void, "recordMetric"),
-      startSpan: /* @__PURE__ */ __name(() => Effect.succeed({
-        end: /* @__PURE__ */ __name(() => Effect.void, "end")
-      }), "startSpan"),
-      log: /* @__PURE__ */ __name((level, message, context) => Effect.sync(() => {
-        const prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
-        console.log(prefix, message, context ?? "");
-      }), "log"),
-      events: Stream.empty,
-      getMetrics: /* @__PURE__ */ __name(() => Effect.succeed([]), "getMetrics"),
-      getAverageDuration: /* @__PURE__ */ __name(() => Effect.succeed(0), "getAverageDuration"),
-      getSuccessRate: /* @__PURE__ */ __name(() => Effect.succeed(1), "getSuccessRate"),
-      flush: Effect.void
-    }), "makeMockTelemetry");
-    TelemetryMock = Layer.effect(
-      Telemetry,
-      Effect.succeed(makeMockTelemetry())
-    );
-    withSpan = /* @__PURE__ */ __name((name, effect, labels) => Effect.gen(function* () {
-      const telemetry = yield* Telemetry;
-      const span = yield* telemetry.startSpan(name, labels);
-      const result = yield* effect.pipe(
-        Effect.catchAll(
-          (error) => Effect.gen(function* () {
-            yield* span.end(false, String(error));
-            return yield* Effect.fail(error);
-          })
-        )
-      );
-      yield* span.end(true);
-      return result;
-    }), "withSpan");
-  }
-});
-
 // Source/Interfaces/IMountainClientService.ts
-import * as Effect2 from "effect/Effect";
+import * as Effect from "effect/Effect";
 var IMountainClientService;
 var init_IMountainClientService = __esm({
   "Source/Interfaces/IMountainClientService.ts"() {
     "use strict";
-    IMountainClientService = Effect2.Service()(
+    IMountainClientService = Effect.Service()(
       "Service/MountainClient",
       {
-        effect: Effect2.gen(function* () {
+        effect: Effect.gen(function* () {
           return {};
         })
       }
@@ -269,8 +39,8 @@ __export(MountainClientService_exports, {
   MountainClientServiceLayer: () => MountainClientServiceLayer
 });
 import { createRequire } from "module";
-import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { fileURLToPath } from "url";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { v4 as uuidv4 } from "uuid";
@@ -550,8 +320,14 @@ var init_MountainClientService = __esm({
           const fs = require2("fs");
           const path = require2("path");
           const SearchPaths = [
-            path.resolve(__dirname, "../../../../Mountain/Proto/Vine.proto"),
-            path.resolve(process.cwd(), "Element/Mountain/Proto/Vine.proto"),
+            path.resolve(
+              __dirname,
+              "../../../../Mountain/Proto/Vine.proto"
+            ),
+            path.resolve(
+              process.cwd(),
+              "Element/Mountain/Proto/Vine.proto"
+            ),
             path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto")
           ];
           let vineProtoPath = null;
@@ -1030,9 +806,7 @@ message RPCDataPayload {
           if (channel) {
             const state = channel.getConnectivityState(false);
             if (state !== 2) {
-              throw new Error(
-                `Channel not ready (state: ${state})`
-              );
+              throw new Error(`Channel not ready (state: ${state})`);
             }
           }
           this.consecutiveSuccessfulHealthChecks++;
@@ -1154,13 +928,10 @@ message RPCDataPayload {
         }
         try {
           await new Promise((resolve2, reject) => {
-            this.client.CancelOperation(
-              cancelRequest,
-              (error) => {
-                if (error) reject(error);
-                else resolve2();
-              }
-            );
+            this.client.CancelOperation(cancelRequest, (error) => {
+              if (error) reject(error);
+              else resolve2();
+            });
           });
         } catch (error) {
           throw error;
@@ -1216,12 +987,268 @@ message RPCDataPayload {
 });
 
 // Source/Interfaces/IGRPCServerService.ts
-import { Context as Context2 } from "effect";
+import { Context } from "effect";
 var IGRPCServerService;
 var init_IGRPCServerService = __esm({
   "Source/Interfaces/IGRPCServerService.ts"() {
     "use strict";
-    IGRPCServerService = Context2.GenericTag("IGRPCServerService");
+    IGRPCServerService = Context.GenericTag("IGRPCServerService");
+  }
+});
+
+// Source/Services/Handler/DocumentContentHandler.ts
+var InferLanguageIdentifier, BuildTextDocument, DocumentVersionMap, HandleDocumentChange, HandleDocumentOpen, HandleDocumentClose, HandleDocumentSave, GetDocumentContent, DocumentContentHandler_default;
+var init_DocumentContentHandler = __esm({
+  "Source/Services/Handler/DocumentContentHandler.ts"() {
+    "use strict";
+    InferLanguageIdentifier = /* @__PURE__ */ __name((Uri2) => {
+      const ExtensionMatch = Uri2.match(/\.([^./?#]+)(?:\?|#|$)/);
+      if (!ExtensionMatch?.[1]) return "plaintext";
+      const Extension2 = ExtensionMatch[1].toLowerCase();
+      const LanguageMap = {
+        ts: "typescript",
+        tsx: "typescriptreact",
+        js: "javascript",
+        jsx: "javascriptreact",
+        json: "json",
+        jsonc: "jsonc",
+        md: "markdown",
+        html: "html",
+        htm: "html",
+        css: "css",
+        scss: "scss",
+        less: "less",
+        xml: "xml",
+        yaml: "yaml",
+        yml: "yaml",
+        toml: "toml",
+        rs: "rust",
+        py: "python",
+        rb: "ruby",
+        go: "go",
+        java: "java",
+        c: "c",
+        cpp: "cpp",
+        h: "c",
+        hpp: "cpp",
+        cs: "csharp",
+        swift: "swift",
+        sh: "shellscript",
+        bash: "shellscript",
+        zsh: "shellscript",
+        ps1: "powershell",
+        sql: "sql",
+        graphql: "graphql",
+        proto: "proto3",
+        dockerfile: "dockerfile",
+        vue: "vue",
+        svelte: "svelte",
+        astro: "astro",
+        txt: "plaintext"
+      };
+      return LanguageMap[Extension2] ?? "plaintext";
+    }, "InferLanguageIdentifier");
+    BuildTextDocument = /* @__PURE__ */ __name((Uri2, Content, Version = 1, LanguageIdentifier) => {
+      const Lines = Content.split(/\r?\n/);
+      const FileName = Uri2.replace(/^file:\/\//, "");
+      const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri2);
+      return {
+        uri: {
+          scheme: "file",
+          path: FileName,
+          fsPath: FileName,
+          authority: "",
+          query: "",
+          fragment: "",
+          with: /* @__PURE__ */ __name(() => ({}), "with"),
+          toString: /* @__PURE__ */ __name(() => Uri2, "toString"),
+          toJSON: /* @__PURE__ */ __name(() => ({
+            scheme: "file",
+            path: FileName,
+            fsPath: FileName
+          }), "toJSON")
+        },
+        fileName: FileName,
+        languageId: ResolvedLanguage,
+        version: Version,
+        lineCount: Lines.length,
+        getText: /* @__PURE__ */ __name((Range3) => {
+          if (!Range3) return Content;
+          const StartLine = Range3?.start?.line ?? 0;
+          const StartCharacter = Range3?.start?.character ?? 0;
+          const EndLine = Range3?.end?.line ?? Lines.length - 1;
+          const EndCharacter = Range3?.end?.character ?? Lines[EndLine]?.length ?? 0;
+          if (StartLine === EndLine) {
+            return (Lines[StartLine] ?? "").substring(
+              StartCharacter,
+              EndCharacter
+            );
+          }
+          const Result = [];
+          Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
+          for (let Index = StartLine + 1; Index < EndLine; Index++) {
+            Result.push(Lines[Index] ?? "");
+          }
+          Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter));
+          return Result.join("\n");
+        }, "getText"),
+        lineAt: /* @__PURE__ */ __name((LineOrPosition) => {
+          const LineNumber = typeof LineOrPosition === "number" ? LineOrPosition : LineOrPosition.line;
+          const Text = Lines[LineNumber] ?? "";
+          return {
+            text: Text,
+            lineNumber: LineNumber,
+            range: {
+              start: { line: LineNumber, character: 0 },
+              end: { line: LineNumber, character: Text.length }
+            },
+            isEmptyOrWhitespace: Text.trim().length === 0
+          };
+        }, "lineAt"),
+        isUntitled: false,
+        isDirty: false,
+        isClosed: false,
+        eol: 1,
+        // EndOfLine.LF
+        offsetAt: /* @__PURE__ */ __name((Position3) => {
+          let Offset = 0;
+          for (let Index = 0; Index < Position3.line && Index < Lines.length; Index++) {
+            Offset += (Lines[Index]?.length ?? 0) + 1;
+          }
+          return Offset + Position3.character;
+        }, "offsetAt"),
+        positionAt: /* @__PURE__ */ __name((Offset) => {
+          let Remaining = Offset;
+          for (let Index = 0; Index < Lines.length; Index++) {
+            const LineLength = (Lines[Index]?.length ?? 0) + 1;
+            if (Remaining < LineLength) {
+              return { line: Index, character: Remaining };
+            }
+            Remaining -= LineLength;
+          }
+          return {
+            line: Lines.length - 1,
+            character: Lines[Lines.length - 1]?.length ?? 0
+          };
+        }, "positionAt"),
+        validateRange: /* @__PURE__ */ __name((Range3) => Range3, "validateRange"),
+        validatePosition: /* @__PURE__ */ __name((Position3) => Position3, "validatePosition"),
+        getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
+        save: /* @__PURE__ */ __name(async () => false, "save")
+      };
+    }, "BuildTextDocument");
+    DocumentVersionMap = /* @__PURE__ */ new Map();
+    HandleDocumentChange = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      let Uri2;
+      let EventData;
+      if (Array.isArray(Parameters) && Parameters.length >= 2) {
+        Uri2 = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
+        EventData = Parameters[1];
+      } else {
+        Uri2 = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
+        EventData = Parameters;
+      }
+      const Content = EventData?.content ?? EventData?.Content ?? EventData?.text;
+      if (Uri2 && Content !== void 0) {
+        DocumentContentCache.set(Uri2, Content);
+      } else if (Uri2 && (EventData?.changes || Parameters?.changes)) {
+        const Existing = DocumentContentCache.get(Uri2) ?? "";
+        let Updated = Existing;
+        const Changes = Array.isArray(EventData?.changes) ? EventData.changes : Array.isArray(Parameters?.changes) ? Parameters.changes : [];
+        const Sorted = [...Changes].sort(
+          (A, B) => (B.rangeOffset ?? 0) - (A.rangeOffset ?? 0)
+        );
+        for (const Change of Sorted) {
+          const Offset = Change.rangeOffset ?? 0;
+          const Length = Change.rangeLength ?? 0;
+          const Text = Change.text ?? "";
+          Updated = Updated.substring(0, Offset) + Text + Updated.substring(Offset + Length);
+        }
+        DocumentContentCache.set(Uri2, Updated);
+      }
+      if (Uri2 && WorkspaceEventEmitter) {
+        const CurrentVersion = (DocumentVersionMap.get(Uri2) ?? 1) + 1;
+        DocumentVersionMap.set(Uri2, CurrentVersion);
+        const CachedContent = DocumentContentCache.get(Uri2) ?? "";
+        const Document = BuildTextDocument(Uri2, CachedContent, CurrentVersion);
+        WorkspaceEventEmitter.emit("didChangeTextDocument", {
+          document: Document,
+          contentChanges: EventData?.changes ?? Parameters?.changes ?? [],
+          reason: void 0
+        });
+      }
+    }, "HandleDocumentChange");
+    HandleDocumentOpen = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
+      for (const Model of Models) {
+        const Uri2 = Model?.URI?.toString?.() ?? Model?.URI ?? Model?.uri?.external ?? Model?.uri ?? Model?.Uri ?? "";
+        const Lines = Model?.Lines ?? Model?.lines;
+        const EOL = Model?.EOL ?? Model?.eol ?? "\n";
+        let Content;
+        if (Array.isArray(Lines)) {
+          Content = Lines.join(EOL);
+        } else {
+          Content = Model?.content ?? Model?.Content ?? Model?.text;
+        }
+        const LanguageIdentifier = Model?.LanguageIdentifier ?? Model?.languageId ?? Model?.language;
+        if (Uri2 && Content !== void 0) {
+          DocumentContentCache.set(Uri2, Content);
+          DocumentVersionMap.set(Uri2, 1);
+          console.log(
+            `[DocumentContentHandler] Document opened: ${Uri2.slice(-60)} (${Content.length} chars)`
+          );
+          if (WorkspaceEventEmitter) {
+            const Document = BuildTextDocument(
+              Uri2,
+              Content,
+              1,
+              LanguageIdentifier
+            );
+            WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
+          }
+        }
+      }
+    }, "HandleDocumentOpen");
+    HandleDocumentClose = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
+      for (const Item of Items) {
+        const Uri2 = Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+        if (Uri2) {
+          if (WorkspaceEventEmitter) {
+            const CachedContent = DocumentContentCache.get(Uri2) ?? "";
+            const Version = DocumentVersionMap.get(Uri2) ?? 1;
+            const Document = BuildTextDocument(Uri2, CachedContent, Version);
+            WorkspaceEventEmitter.emit("didCloseTextDocument", Document);
+          }
+          DocumentContentCache.delete(Uri2);
+          DocumentVersionMap.delete(Uri2);
+        }
+      }
+    }, "HandleDocumentClose");
+    HandleDocumentSave = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      if (!WorkspaceEventEmitter) return;
+      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
+      for (const Item of Items) {
+        const Uri2 = typeof Item === "string" ? Item : Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+        if (Uri2) {
+          const CachedContent = DocumentContentCache.get(Uri2) ?? "";
+          const Version = DocumentVersionMap.get(Uri2) ?? 1;
+          const Document = BuildTextDocument(Uri2, CachedContent, Version);
+          WorkspaceEventEmitter.emit("didSaveTextDocument", Document);
+        }
+      }
+    }, "HandleDocumentSave");
+    GetDocumentContent = /* @__PURE__ */ __name((DocumentContentCache, Uri2) => {
+      return DocumentContentCache.get(Uri2) ?? null;
+    }, "GetDocumentContent");
+    DocumentContentHandler_default = {
+      HandleDocumentChange,
+      HandleDocumentOpen,
+      HandleDocumentClose,
+      HandleDocumentSave,
+      GetDocumentContent,
+      BuildTextDocument
+    };
   }
 });
 
@@ -22001,10 +22028,10 @@ var init_WindowNamespace = __esm({
         showErrorMessage: ShowMessage("error"),
         showWarningMessage: ShowMessage("warn"),
         showQuickPick: /* @__PURE__ */ __name(async (Items, _Options) => {
-          Context22.SendToMountain("window.showQuickPick", { items: Items }).catch(
-            () => {
-            }
-          );
+          Context22.SendToMountain("window.showQuickPick", {
+            items: Items
+          }).catch(() => {
+          });
           return void 0;
         }, "showQuickPick"),
         showInputBox: /* @__PURE__ */ __name(async (_Options) => {
@@ -22041,10 +22068,10 @@ var init_WindowNamespace = __esm({
               });
             }, "show"),
             hide: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("terminal.hide", { handle: Handle }).catch(
-                () => {
-                }
-              );
+              Context22.SendToMountain("terminal.hide", {
+                handle: Handle
+              }).catch(() => {
+              });
             }, "hide"),
             dispose: /* @__PURE__ */ __name(() => {
               Context22.SendToMountain("terminal.dispose", {
@@ -22214,9 +22241,12 @@ var init_WindowNamespace = __esm({
           return {
             key: Key,
             dispose: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("window.disposeTextEditorDecorationType", {
-                key: Key
-              }).catch(() => {
+              Context22.SendToMountain(
+                "window.disposeTextEditorDecorationType",
+                {
+                  key: Key
+                }
+              ).catch(() => {
               });
             }, "dispose")
           };
@@ -22389,8 +22419,10 @@ var init_WindowNamespace = __esm({
         }, "dispose") }), "registerTerminalLinkProvider"),
         registerTerminalProfileProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerTerminalProfileProvider"),
-        registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerProfileContentHandler"),
+        registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerProfileContentHandler"),
         registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerExternalUriOpener"),
         withProgress: /* @__PURE__ */ __name(async (_Option, Task3) => Task3({ report: /* @__PURE__ */ __name(() => {
@@ -22429,8 +22461,14 @@ var init_WindowNamespace = __esm({
           Context22,
           "window.didChangeTextEditorViewColumn"
         ),
-        onDidOpenTerminal: MakeEventSubscriber(Context22, "window.didOpenTerminal"),
-        onDidCloseTerminal: MakeEventSubscriber(Context22, "window.didCloseTerminal"),
+        onDidOpenTerminal: MakeEventSubscriber(
+          Context22,
+          "window.didOpenTerminal"
+        ),
+        onDidCloseTerminal: MakeEventSubscriber(
+          Context22,
+          "window.didCloseTerminal"
+        ),
         onDidChangeWindowState: MakeEventSubscriber(
           Context22,
           "window.didChangeWindowState"
@@ -22459,13 +22497,19 @@ var init_WorkspaceNamespace = __esm({
       Context22.WorkspaceEventEmitter.on(EventName, Listener);
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          Context22.WorkspaceEventEmitter.removeListener(EventName, Listener);
+          Context22.WorkspaceEventEmitter.removeListener(
+            EventName,
+            Listener
+          );
         }, "dispose")
       };
     }, "EventSubscriber");
     Call = /* @__PURE__ */ __name(async (Context22, Method, Parameters) => {
       try {
-        return await Context22.MountainClient?.sendRequest(Method, Parameters);
+        return await Context22.MountainClient?.sendRequest(
+          Method,
+          Parameters
+        );
       } catch {
         return void 0;
       }
@@ -22503,21 +22547,27 @@ var init_WorkspaceNamespace = __esm({
         findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
           const Pattern = typeof Include === "string" ? Include : Include?.pattern ?? "";
           const ExcludePattern = typeof Exclude === "string" ? Exclude : Exclude?.pattern;
-          const Results = await Call(Context22, "Search.TextSearch", {
-            pattern: Pattern,
-            include: Pattern,
-            exclude: ExcludePattern,
-            maxResults: MaxResults,
-            isRegExp: false,
-            isCaseSensitive: false,
-            isWordMatch: false
-          });
+          const Results = await Call(
+            Context22,
+            "Search.TextSearch",
+            {
+              pattern: Pattern,
+              include: Pattern,
+              exclude: ExcludePattern,
+              maxResults: MaxResults,
+              isRegExp: false,
+              isCaseSensitive: false,
+              isWordMatch: false
+            }
+          );
           return Results ?? [];
         }, "findFiles"),
         openTextDocument: /* @__PURE__ */ __name(async (UriOrPath) => {
           const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
           const Cached = Context22.DocumentContentCache.get(UriString);
-          const Text = Cached ?? await Call(Context22, "FileSystem.ReadFile", [UriString]) ?? "";
+          const Text = Cached ?? await Call(Context22, "FileSystem.ReadFile", [
+            UriString
+          ]) ?? "";
           return {
             uri: UriOrPath,
             fileName: UriString,
@@ -22537,17 +22587,28 @@ var init_WorkspaceNamespace = __esm({
           return true;
         }, "saveAll"),
         applyEdit: /* @__PURE__ */ __name(async (_Edit) => {
-          Context22.SendToMountain("workspace.applyEdit", _Edit).catch(() => {
-          });
+          Context22.SendToMountain("workspace.applyEdit", _Edit).catch(
+            () => {
+            }
+          );
           return true;
         }, "applyEdit"),
         asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
         updateWorkspaceFolders: /* @__PURE__ */ __name(() => false, "updateWorkspaceFolders"),
         onDidOpenTextDocument: EventSubscriber(Context22, "didOpenTextDocument"),
-        onDidCloseTextDocument: EventSubscriber(Context22, "didCloseTextDocument"),
-        onDidChangeTextDocument: EventSubscriber(Context22, "didChangeTextDocument"),
+        onDidCloseTextDocument: EventSubscriber(
+          Context22,
+          "didCloseTextDocument"
+        ),
+        onDidChangeTextDocument: EventSubscriber(
+          Context22,
+          "didChangeTextDocument"
+        ),
         onDidSaveTextDocument: EventSubscriber(Context22, "didSaveTextDocument"),
-        onWillSaveTextDocument: EventSubscriber(Context22, "willSaveTextDocument"),
+        onWillSaveTextDocument: EventSubscriber(
+          Context22,
+          "willSaveTextDocument"
+        ),
         onDidCreateFiles: EventSubscriber(Context22, "didCreateFiles"),
         onDidDeleteFiles: EventSubscriber(Context22, "didDeleteFiles"),
         onDidRenameFiles: EventSubscriber(Context22, "didRenameFiles"),
@@ -22567,8 +22628,10 @@ var init_WorkspaceNamespace = __esm({
         }, "dispose") }), "registerNotebookSerializer"),
         registerRemoteAuthorityResolver: /* @__PURE__ */ __name((_AuthorityPrefix, _Resolver) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerRemoteAuthorityResolver"),
-        registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerResourceLabelFormatter"),
+        registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerResourceLabelFormatter"),
         registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerDocumentPasteEditProvider"),
         registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -22584,11 +22647,26 @@ var init_WorkspaceNamespace = __esm({
         isTrusted: true,
         trusted: true,
         requestWorkspaceTrust: /* @__PURE__ */ __name(async () => true, "requestWorkspaceTrust"),
-        onDidOpenNotebookDocument: EventSubscriber(Context22, "didOpenNotebookDocument"),
-        onDidCloseNotebookDocument: EventSubscriber(Context22, "didCloseNotebookDocument"),
-        onDidChangeNotebookDocument: EventSubscriber(Context22, "didChangeNotebookDocument"),
-        onDidSaveNotebookDocument: EventSubscriber(Context22, "didSaveNotebookDocument"),
-        onWillSaveNotebookDocument: EventSubscriber(Context22, "willSaveNotebookDocument"),
+        onDidOpenNotebookDocument: EventSubscriber(
+          Context22,
+          "didOpenNotebookDocument"
+        ),
+        onDidCloseNotebookDocument: EventSubscriber(
+          Context22,
+          "didCloseNotebookDocument"
+        ),
+        onDidChangeNotebookDocument: EventSubscriber(
+          Context22,
+          "didChangeNotebookDocument"
+        ),
+        onDidSaveNotebookDocument: EventSubscriber(
+          Context22,
+          "didSaveNotebookDocument"
+        ),
+        onWillSaveNotebookDocument: EventSubscriber(
+          Context22,
+          "willSaveNotebookDocument"
+        ),
         onWillRenameFiles: EventSubscriber(Context22, "willRenameFiles"),
         onWillCreateFiles: EventSubscriber(Context22, "willCreateFiles"),
         onWillDeleteFiles: EventSubscriber(Context22, "willDeleteFiles"),
@@ -22621,7 +22699,9 @@ var init_WorkspaceNamespace = __esm({
         fs: {
           // FileSystem.Stat is not yet in CreateEffectForRequest — falls back
           // to defaults via Call's try/catch until the Rust route is added.
-          stat: /* @__PURE__ */ __name(async (Uri2) => await Call(Context22, "FileSystem.Stat", [String(Uri2)]) ?? {
+          stat: /* @__PURE__ */ __name(async (Uri2) => await Call(Context22, "FileSystem.Stat", [
+            String(Uri2)
+          ]) ?? {
             type: 1,
             size: 0,
             ctime: 0,
@@ -22724,10 +22804,10 @@ var init_CommandsNamespace = __esm({
         );
         if (LocalResult !== void 0) return LocalResult;
         try {
-          return await Context22.MountainClient?.sendRequest("Command.Execute", [
-            Command,
-            ...Arguments
-          ]);
+          return await Context22.MountainClient?.sendRequest(
+            "Command.Execute",
+            [Command, ...Arguments]
+          );
         } catch {
           return void 0;
         }
@@ -22761,38 +22841,204 @@ var init_LanguagesNamespace = __esm({
     RegisterProvider = /* @__PURE__ */ __name((Context22, LanguageProviderRegistry, MethodName, Selector, Provider) => {
       const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
       const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
-      Context22.SendToMountain(MethodName, { handle: Handle, language_selector: Language2, extension_id: "" }).catch(() => {
+      Context22.SendToMountain(MethodName, {
+        handle: Handle,
+        language_selector: Language2,
+        extension_id: ""
+      }).catch(() => {
       });
       return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
     }, "RegisterProvider");
     CreateLanguagesNamespace = /* @__PURE__ */ __name((Context22, LanguageProviderRegistry) => ({
-      registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_hover_provider", Selector, Provider), "registerHoverProvider"),
-      registerCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider, ..._TriggerCharacters) => RegisterProvider(Context22, LanguageProviderRegistry, "register_completion_item_provider", Selector, Provider), "registerCompletionItemProvider"),
-      registerDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_definition_provider", Selector, Provider), "registerDefinitionProvider"),
-      registerReferenceProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_reference_provider", Selector, Provider), "registerReferenceProvider"),
-      registerCodeActionsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_code_actions_provider", Selector, Provider), "registerCodeActionsProvider"),
-      registerDocumentSymbolProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_document_symbol_provider", Selector, Provider), "registerDocumentSymbolProvider"),
-      registerDocumentFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_document_formatting_provider", Selector, Provider), "registerDocumentFormattingEditProvider"),
-      registerDocumentRangeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_document_range_formatting_provider", Selector, Provider), "registerDocumentRangeFormattingEditProvider"),
-      registerOnTypeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider, _FirstTrigger, ..._MoreTriggers) => RegisterProvider(Context22, LanguageProviderRegistry, "register_on_type_formatting_provider", Selector, Provider), "registerOnTypeFormattingEditProvider"),
-      registerTypeDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_type_definition_provider", Selector, Provider), "registerTypeDefinitionProvider"),
-      registerImplementationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_implementation_provider", Selector, Provider), "registerImplementationProvider"),
-      registerDeclarationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_declaration_provider", Selector, Provider), "registerDeclarationProvider"),
-      registerDocumentLinkProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_document_link_provider", Selector, Provider), "registerDocumentLinkProvider"),
-      registerColorProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_color_provider", Selector, Provider), "registerColorProvider"),
-      registerLinkedEditingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_linked_editing_range_provider", Selector, Provider), "registerLinkedEditingRangeProvider"),
-      registerCallHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_call_hierarchy_provider", Selector, Provider), "registerCallHierarchyProvider"),
-      registerTypeHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_type_hierarchy_provider", Selector, Provider), "registerTypeHierarchyProvider"),
-      registerEvaluatableExpressionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_evaluatable_expression_provider", Selector, Provider), "registerEvaluatableExpressionProvider"),
-      registerInlineValuesProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_inline_values_provider", Selector, Provider), "registerInlineValuesProvider"),
-      registerSignatureHelpProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_signature_help_provider", Selector, Provider), "registerSignatureHelpProvider"),
-      registerDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_document_highlight_provider", Selector, Provider), "registerDocumentHighlightProvider"),
-      registerCodeLensProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_code_lens_provider", Selector, Provider), "registerCodeLensProvider"),
-      registerRenameProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_rename_provider", Selector, Provider), "registerRenameProvider"),
-      registerFoldingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_folding_range_provider", Selector, Provider), "registerFoldingRangeProvider"),
-      registerSelectionRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_selection_range_provider", Selector, Provider), "registerSelectionRangeProvider"),
-      registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(Context22, LanguageProviderRegistry, "register_semantic_tokens_provider", Selector, Provider), "registerDocumentSemanticTokensProvider"),
-      registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_inlay_hints_provider", Selector, Provider), "registerInlayHintsProvider"),
+      registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_hover_provider",
+        Selector,
+        Provider
+      ), "registerHoverProvider"),
+      registerCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider, ..._TriggerCharacters) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_completion_item_provider",
+        Selector,
+        Provider
+      ), "registerCompletionItemProvider"),
+      registerDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_definition_provider",
+        Selector,
+        Provider
+      ), "registerDefinitionProvider"),
+      registerReferenceProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_reference_provider",
+        Selector,
+        Provider
+      ), "registerReferenceProvider"),
+      registerCodeActionsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_code_actions_provider",
+        Selector,
+        Provider
+      ), "registerCodeActionsProvider"),
+      registerDocumentSymbolProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_document_symbol_provider",
+        Selector,
+        Provider
+      ), "registerDocumentSymbolProvider"),
+      registerDocumentFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_document_formatting_provider",
+        Selector,
+        Provider
+      ), "registerDocumentFormattingEditProvider"),
+      registerDocumentRangeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_document_range_formatting_provider",
+        Selector,
+        Provider
+      ), "registerDocumentRangeFormattingEditProvider"),
+      registerOnTypeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider, _FirstTrigger, ..._MoreTriggers) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_on_type_formatting_provider",
+        Selector,
+        Provider
+      ), "registerOnTypeFormattingEditProvider"),
+      registerTypeDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_type_definition_provider",
+        Selector,
+        Provider
+      ), "registerTypeDefinitionProvider"),
+      registerImplementationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_implementation_provider",
+        Selector,
+        Provider
+      ), "registerImplementationProvider"),
+      registerDeclarationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_declaration_provider",
+        Selector,
+        Provider
+      ), "registerDeclarationProvider"),
+      registerDocumentLinkProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_document_link_provider",
+        Selector,
+        Provider
+      ), "registerDocumentLinkProvider"),
+      registerColorProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_color_provider",
+        Selector,
+        Provider
+      ), "registerColorProvider"),
+      registerLinkedEditingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_linked_editing_range_provider",
+        Selector,
+        Provider
+      ), "registerLinkedEditingRangeProvider"),
+      registerCallHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_call_hierarchy_provider",
+        Selector,
+        Provider
+      ), "registerCallHierarchyProvider"),
+      registerTypeHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_type_hierarchy_provider",
+        Selector,
+        Provider
+      ), "registerTypeHierarchyProvider"),
+      registerEvaluatableExpressionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_evaluatable_expression_provider",
+        Selector,
+        Provider
+      ), "registerEvaluatableExpressionProvider"),
+      registerInlineValuesProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_inline_values_provider",
+        Selector,
+        Provider
+      ), "registerInlineValuesProvider"),
+      registerSignatureHelpProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_signature_help_provider",
+        Selector,
+        Provider
+      ), "registerSignatureHelpProvider"),
+      registerDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_document_highlight_provider",
+        Selector,
+        Provider
+      ), "registerDocumentHighlightProvider"),
+      registerCodeLensProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_code_lens_provider",
+        Selector,
+        Provider
+      ), "registerCodeLensProvider"),
+      registerRenameProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_rename_provider",
+        Selector,
+        Provider
+      ), "registerRenameProvider"),
+      registerFoldingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_folding_range_provider",
+        Selector,
+        Provider
+      ), "registerFoldingRangeProvider"),
+      registerSelectionRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_selection_range_provider",
+        Selector,
+        Provider
+      ), "registerSelectionRangeProvider"),
+      registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_semantic_tokens_provider",
+        Selector,
+        Provider
+      ), "registerDocumentSemanticTokensProvider"),
+      registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_inlay_hints_provider",
+        Selector,
+        Provider
+      ), "registerInlayHintsProvider"),
       createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
         const Owner = Name ?? "default";
         const Store = /* @__PURE__ */ new Map();
@@ -22809,7 +23055,10 @@ var init_LanguagesNamespace = __esm({
             }
             Context22.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
-              [...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D }))
+              [...Store.entries()].map(([U, D]) => ({
+                uri: U,
+                diagnostics: D
+              }))
             ]).catch(() => {
             });
           }, "set"),
@@ -22817,16 +23066,19 @@ var init_LanguagesNamespace = __esm({
             Store.delete(String(Uri2));
             Context22.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
-              [...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D }))
+              [...Store.entries()].map(([U, D]) => ({
+                uri: U,
+                diagnostics: D
+              }))
             ]).catch(() => {
             });
           }, "delete"),
           clear: /* @__PURE__ */ __name(() => {
             Store.clear();
-            Context22.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
-              () => {
-              }
-            );
+            Context22.MountainClient?.sendRequest("Diagnostic.Clear", [
+              Owner
+            ]).catch(() => {
+            });
           }, "clear"),
           forEach: /* @__PURE__ */ __name((Callback) => {
             const Self = null;
@@ -22838,10 +23090,10 @@ var init_LanguagesNamespace = __esm({
           has: /* @__PURE__ */ __name((Uri2) => Store.has(String(Uri2)), "has"),
           dispose: /* @__PURE__ */ __name(() => {
             Store.clear();
-            Context22.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
-              () => {
-              }
-            );
+            Context22.MountainClient?.sendRequest("Diagnostic.Clear", [
+              Owner
+            ]).catch(() => {
+            });
           }, "dispose")
         };
       }, "createDiagnosticCollection"),
@@ -22880,12 +23132,16 @@ var init_LanguagesNamespace = __esm({
       }, "dispose") }), "registerDocumentDropEditProvider"),
       registerInlineCompletionItemProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
       }, "dispose") }), "registerInlineCompletionItemProvider"),
-      registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerInlineEditProvider"),
+      registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose")
+      }), "registerInlineEditProvider"),
       registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
       }, "dispose") }), "registerMultiDocumentHighlightProvider"),
-      registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerMappedEditsProvider")
+      registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose")
+      }), "registerMappedEditsProvider")
     }), "CreateLanguagesNamespace");
     LanguagesNamespace_default = CreateLanguagesNamespace;
   }
@@ -22896,48 +23152,75 @@ var ExtensionsNamespace_exports = {};
 __export(ExtensionsNamespace_exports, {
   default: () => ExtensionsNamespace_default
 });
-var MakePermissiveExports, ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
+var NoopDisposable, MakePermissiveExports, ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
 var init_ExtensionsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
     "use strict";
-    MakePermissiveExports = /* @__PURE__ */ __name(() => new Proxy(
-      {
-        enabled: true,
-        getAPI: /* @__PURE__ */ __name((_Version) => MakePermissiveExports(), "getAPI")
-      },
-      {
+    NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") };
+    MakePermissiveExports = /* @__PURE__ */ __name(() => {
+      const Base = {
+        enabled: true
+      };
+      return new Proxy(Base, {
         get(Target, Property) {
           if (Property in Target) {
             return Target[Property];
           }
-          if (typeof Property === "string") {
-            if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
-              return () => ({ dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose") });
-            }
-            if (Property === "then") return void 0;
+          if (typeof Property !== "string") {
+            return void 0;
           }
-          return () => void 0;
+          if (Property === "then") return void 0;
+          if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+            return (_Listener) => NoopDisposable;
+          }
+          if (Property.startsWith("register")) {
+            return (..._Args) => NoopDisposable;
+          }
+          if (Property.startsWith("get") || Property.startsWith("create")) {
+            return (..._Args) => MakePermissiveExports();
+          }
+          return (..._Args) => void 0;
         }
-      }
-    ), "MakePermissiveExports");
-    ToExtensionObject = /* @__PURE__ */ __name((Context22, Id, Raw) => ({
-      id: Id,
-      extensionUri: Raw?.extensionLocation ?? { scheme: "file", path: "", fsPath: "" },
-      extensionPath: Raw?.extensionLocation?.fsPath ?? Raw?.extensionLocation?.path ?? "",
-      isActive: Context22.ActivatedExtensions.has(Id),
-      packageJSON: Raw,
-      extensionKind: 1,
-      exports: MakePermissiveExports(),
-      activate: /* @__PURE__ */ __name(async () => {
-      }, "activate")
-    }), "ToExtensionObject");
+      });
+    }, "MakePermissiveExports");
+    ToExtensionObject = /* @__PURE__ */ __name((Context22, Id, Raw) => {
+      const Exports = MakePermissiveExports();
+      return {
+        id: Id,
+        extensionUri: Raw?.extensionLocation ?? {
+          scheme: "file",
+          path: "",
+          fsPath: ""
+        },
+        extensionPath: Raw?.extensionLocation?.fsPath ?? Raw?.extensionLocation?.path ?? "",
+        // Reporting `isActive: true` mirrors VS Code's behaviour for
+        // built-ins that have completed activation; without it, callers
+        // like the `github` extension treat the extension as missing.
+        isActive: true,
+        packageJSON: Raw,
+        extensionKind: 1,
+        exports: Exports,
+        // Critical: `activate()` must resolve to the SAME exports object
+        // so consumers like `vscode.github` can chain
+        // `gitExtension.activate().then(api => api.onDidChangeEnablement(...))`.
+        activate: /* @__PURE__ */ __name(async () => Exports, "activate")
+      };
+    }, "ToExtensionObject");
     CreateExtensionsNamespace = /* @__PURE__ */ __name((Context22) => ({
       getExtension: /* @__PURE__ */ __name((Identifier) => {
         const Raw = Context22.ExtensionRegistry.get(Identifier);
         return Raw ? ToExtensionObject(Context22, Identifier, Raw) : void 0;
       }, "getExtension"),
       get all() {
+        return [...Context22.ExtensionRegistry.entries()].map(
+          ([Id, Raw]) => ToExtensionObject(Context22, Id, Raw)
+        );
+      },
+      // Some extensions (html-language-features) iterate
+      // `extensions.allAcrossExtensionHosts`; return the same array as `all`
+      // so `for (...of...)` does not throw on `is not iterable`.
+      get allAcrossExtensionHosts() {
         return [...Context22.ExtensionRegistry.entries()].map(
           ([Id, Raw]) => ToExtensionObject(Context22, Id, Raw)
         );
@@ -22968,7 +23251,10 @@ var init_EnvNamespace = __esm({
       const Env = Context22.ExtensionHostInitData?.environment ?? {};
       const Call2 = /* @__PURE__ */ __name(async (Method, Parameters) => {
         try {
-          return await Context22.MountainClient?.sendRequest(Method, Parameters);
+          return await Context22.MountainClient?.sendRequest(
+            Method,
+            Parameters
+          );
         } catch {
           return void 0;
         }
@@ -23070,9 +23356,12 @@ var init_DebugNamespace = __esm({
         });
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context22.SendToMountain("unregister_debug_configuration_provider", {
-              handle: Handle
-            }).catch(() => {
+            Context22.SendToMountain(
+              "unregister_debug_configuration_provider",
+              {
+                handle: Handle
+              }
+            ).catch(() => {
             });
           }, "dispose")
         };
@@ -23081,11 +23370,10 @@ var init_DebugNamespace = __esm({
       }, "dispose") }), "registerDebugAdapterTrackerFactory"),
       startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
         try {
-          const Response = await Context22.MountainClient?.sendRequest("Debug.Start", [
-            Folder,
-            NameOrConfig,
-            ParentSession
-          ]);
+          const Response = await Context22.MountainClient?.sendRequest(
+            "Debug.Start",
+            [Folder, NameOrConfig, ParentSession]
+          );
           return Boolean(Response?.success);
         } catch {
           return false;
@@ -23123,14 +23411,17 @@ var init_DebugNamespace = __esm({
         Context22,
         "debug.didReceiveCustomEvent"
       ),
-      onDidChangeBreakpoints: EventSubscriber2(Context22, "debug.didChangeBreakpoints"),
+      onDidChangeBreakpoints: EventSubscriber2(
+        Context22,
+        "debug.didChangeBreakpoints"
+      ),
       activeDebugSession: void 0,
       activeDebugConsole: {
         append: /* @__PURE__ */ __name((Value) => {
-          Context22.SendToMountain("debug.consoleAppend", { value: Value }).catch(
-            () => {
-            }
-          );
+          Context22.SendToMountain("debug.consoleAppend", {
+            value: Value
+          }).catch(() => {
+          });
         }, "append"),
         appendLine: /* @__PURE__ */ __name((Value) => {
           Context22.SendToMountain("debug.consoleAppend", {
@@ -23184,9 +23475,10 @@ var init_TasksNamespace = __esm({
       }, "registerTaskProvider"),
       fetchTasks: /* @__PURE__ */ __name(async (Filter) => {
         try {
-          const Response = await Context22.MountainClient?.sendRequest("Task.Fetch", [
-            Filter
-          ]);
+          const Response = await Context22.MountainClient?.sendRequest(
+            "Task.Fetch",
+            [Filter]
+          );
           return Array.isArray(Response) ? Response : [];
         } catch {
           return [];
@@ -23194,7 +23486,9 @@ var init_TasksNamespace = __esm({
       }, "fetchTasks"),
       executeTask: /* @__PURE__ */ __name(async (Task3) => {
         try {
-          return await Context22.MountainClient?.sendRequest("Task.Execute", [Task3]);
+          return await Context22.MountainClient?.sendRequest("Task.Execute", [
+            Task3
+          ]);
         } catch {
           return void 0;
         }
@@ -23268,10 +23562,13 @@ var init_ScmNamespace = __esm({
                 });
               },
               dispose: /* @__PURE__ */ __name(() => {
-                Context22.SendToMountain("unregister_scm_resource_group", {
-                  scm_handle: Handle,
-                  group_handle: GroupHandle
-                }).catch(() => {
+                Context22.SendToMountain(
+                  "unregister_scm_resource_group",
+                  {
+                    scm_handle: Handle,
+                    group_handle: GroupHandle
+                  }
+                ).catch(() => {
                 });
                 Groups.delete(GroupId);
               }, "dispose")
@@ -23382,7 +23679,13 @@ function Unregister(Handle) {
   Callbacks.delete(Handle);
 }
 function Get(Handle) {
-  return Callbacks.get(Handle);
+  const Provider = Callbacks.get(Handle);
+  if (process.env.LAND_DEV_LOG) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
 }
 function RegisterAutoHandle(Provider) {
   const Handle = NextHandle++;
@@ -23488,7 +23791,10 @@ var init_ExtensionHostHandler = __esm({
         const Identifier = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "unknown";
         Context22.ExtensionRegistry.delete(Identifier);
       }
-      Context22.Emitter.emit("deltaExtensions", { added: Added.length, removed: Removed.length });
+      Context22.Emitter.emit("deltaExtensions", {
+        added: Added.length,
+        removed: Removed.length
+      });
       return {
         success: true,
         registrySize: Context22.ExtensionRegistry.size
@@ -23521,20 +23827,28 @@ var init_ExtensionHostHandler = __esm({
           `[ExtensionHostHandler] Available events: ${[...Context22.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context22.ActivationEventIndex.size > 10 ? ` (+${Context22.ActivationEventIndex.size - 10} more)` : ""}`
         );
       }
-      const ToActivate = MatchingExtensions.filter((Id) => !Context22.ActivatedExtensions.has(Id));
-      console.log(`[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`);
+      const ToActivate = MatchingExtensions.filter(
+        (Id) => !Context22.ActivatedExtensions.has(Id)
+      );
+      console.log(
+        `[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`
+      );
       for (const ExtId of ToActivate) {
-        ActivateExtension(Context22, ExtId, ActivationEvent).catch((Err) => {
-          const Msg = Err instanceof Error ? Err.message : String(Err);
-          console.warn(`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`);
-          if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
-            const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
+        ActivateExtension(Context22, ExtId, ActivationEvent).catch(
+          (Err) => {
+            const Msg = Err instanceof Error ? Err.message : String(Err);
             console.warn(
-              `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
-${Stack}`
+              `[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`
             );
+            if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
+              const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
+              console.warn(
+                `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
+${Stack}`
+              );
+            }
           }
-        });
+        );
       }
       Context22.Emitter.emit("activateByEvent", {
         event: ActivationEvent,
@@ -23742,7 +24056,9 @@ ${Stack}`
             // Fields
             "version"
           ];
-          const NamedExports = VscodeExportNames.map((Name) => `export const ${Name} = API.${Name};`).join("\n");
+          const NamedExports = VscodeExportNames.map(
+            (Name) => `export const ${Name} = API.${Name};`
+          ).join("\n");
           const BridgeSource = [
             "const API = globalThis.__cocoonVscodeAPI || {};",
             NamedExports,
@@ -23828,7 +24144,11 @@ ${Stack}`
         };
         const API = {
           ...VsCodeTypes2,
-          version: "1.88.0",
+          // Reported VS Code version — must satisfy every built-in
+          // extension's `engines.vscode` constraint. `vscode-languageclient`
+          // currently requires `^1.91.0`; bumping above that lets
+          // css/html/json/markdown-language-features activate.
+          version: "1.95.0",
           Uri: URI3,
           CancellationTokenSource: CancellationTokenSource3,
           CancellationError: CancellationError2,
@@ -23836,14 +24156,20 @@ ${Stack}`
           LogLevel: LogLevelEnum,
           OverviewRulerLane,
           // Namespaces — each in its own file under VscodeAPI/
-          window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(Context22),
+          window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(
+            Context22
+          ),
           workspace: (await Promise.resolve().then(() => (init_WorkspaceNamespace(), WorkspaceNamespace_exports))).default(Context22),
           commands: (await Promise.resolve().then(() => (init_CommandsNamespace(), CommandsNamespace_exports))).default(Context22, LanguageProviderRegistry_exports),
           languages: (await Promise.resolve().then(() => (init_LanguagesNamespace(), LanguagesNamespace_exports))).default(Context22, LanguageProviderRegistry_exports),
           extensions: (await Promise.resolve().then(() => (init_ExtensionsNamespace(), ExtensionsNamespace_exports))).default(Context22),
           env: (await Promise.resolve().then(() => (init_EnvNamespace(), EnvNamespace_exports))).default(Context22),
-          debug: (await Promise.resolve().then(() => (init_DebugNamespace(), DebugNamespace_exports))).default(Context22),
-          tasks: (await Promise.resolve().then(() => (init_TasksNamespace(), TasksNamespace_exports))).default(Context22),
+          debug: (await Promise.resolve().then(() => (init_DebugNamespace(), DebugNamespace_exports))).default(
+            Context22
+          ),
+          tasks: (await Promise.resolve().then(() => (init_TasksNamespace(), TasksNamespace_exports))).default(
+            Context22
+          ),
           scm: (await Promise.resolve().then(() => (init_ScmNamespace(), ScmNamespace_exports))).default(Context22),
           authentication: (await Promise.resolve().then(() => (init_AuthenticationNamespace(), AuthenticationNamespace_exports))).default(Context22),
           // Lightweight stub namespaces — no Mountain route yet, returns
@@ -23852,10 +24178,13 @@ ${Stack}`
             t: /* @__PURE__ */ __name((Message, ...Arguments) => {
               const Raw = typeof Message === "string" ? Message : Message?.message ?? String(Message);
               if (!Arguments.length) return Raw;
-              return Raw.replace(/\{(\d+)\}/g, (_Match, Index) => {
-                const Replacement = Arguments[Number(Index)];
-                return Replacement === void 0 ? "" : String(Replacement);
-              });
+              return Raw.replace(
+                /\{(\d+)\}/g,
+                (_Match, Index) => {
+                  const Replacement = Arguments[Number(Index)];
+                  return Replacement === void 0 ? "" : String(Replacement);
+                }
+              );
             }, "t"),
             bundle: void 0,
             uri: void 0
@@ -23893,8 +24222,10 @@ ${Stack}`
               updateNotebookAffinity: /* @__PURE__ */ __name(() => {
               }, "updateNotebookAffinity")
             }), "createNotebookController"),
-            registerNotebookCellStatusBarItemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerNotebookCellStatusBarItemProvider"),
+            registerNotebookCellStatusBarItemProvider: /* @__PURE__ */ __name(() => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "registerNotebookCellStatusBarItemProvider"),
             registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
             }, "dispose") }), "registerNotebookSerializer"),
             registerRendererCommunication: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -23904,8 +24235,10 @@ ${Stack}`
               onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
               }, "dispose") }), "onDidReceiveMessage")
             }), "createRendererMessaging"),
-            onDidChangeNotebookCellExecutionState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidChangeNotebookCellExecutionState")
+            onDidChangeNotebookCellExecutionState: /* @__PURE__ */ __name(() => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "onDidChangeNotebookCellExecutionState")
           },
           lm: {
             registerTool: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -23946,11 +24279,18 @@ ${Stack}`
             createTestController: /* @__PURE__ */ __name(() => ({
               id: "",
               label: "",
-              items: { size: 0, replace: /* @__PURE__ */ __name(() => {
-              }, "replace"), forEach: /* @__PURE__ */ __name(() => {
-              }, "forEach"), add: /* @__PURE__ */ __name(() => {
-              }, "add"), delete: /* @__PURE__ */ __name(() => {
-              }, "delete"), get: /* @__PURE__ */ __name(() => void 0, "get") },
+              items: {
+                size: 0,
+                replace: /* @__PURE__ */ __name(() => {
+                }, "replace"),
+                forEach: /* @__PURE__ */ __name(() => {
+                }, "forEach"),
+                add: /* @__PURE__ */ __name(() => {
+                }, "add"),
+                delete: /* @__PURE__ */ __name(() => {
+                }, "delete"),
+                get: /* @__PURE__ */ __name(() => void 0, "get")
+              },
               createRunProfile: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
               }, "dispose") }), "createRunProfile"),
               resolveHandler: void 0,
@@ -23973,8 +24313,13 @@ ${Stack}`
                 }, "end"),
                 appendOutput: /* @__PURE__ */ __name(() => {
                 }, "appendOutput"),
-                token: { isCancellationRequested: false, onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-                }, "dispose") }), "onCancellationRequested") }
+                token: {
+                  isCancellationRequested: false,
+                  onCancellationRequested: /* @__PURE__ */ __name(() => ({
+                    dispose: /* @__PURE__ */ __name(() => {
+                    }, "dispose")
+                  }), "onCancellationRequested")
+                }
               }), "createTestRun"),
               dispose: /* @__PURE__ */ __name(() => {
               }, "dispose")
@@ -24004,14 +24349,18 @@ ${Stack}`
             }), "createCommentController")
           },
           interactive: {
-            registerInteractiveEditorSessionProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerInteractiveEditorSessionProvider"),
+            registerInteractiveEditorSessionProvider: /* @__PURE__ */ __name(() => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "registerInteractiveEditorSessionProvider"),
             transferActiveChat: /* @__PURE__ */ __name(async () => {
             }, "transferActiveChat")
           }
         };
         globalThis.__cocoonVscodeAPI = API;
-        console.log("[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI");
+        console.log(
+          "[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI"
+        );
         const CriticalNames = [
           "Diagnostic",
           "CodeAction",
@@ -24063,7 +24412,10 @@ ${Stack}`
       }
       let ExtensionPath;
       try {
-        ExtensionPath = new URL(String(LocationRaw)).pathname.replace(/\/$/, "");
+        ExtensionPath = new URL(String(LocationRaw)).pathname.replace(
+          /\/$/,
+          ""
+        );
       } catch {
         ExtensionPath = String(LocationRaw).replace(/^file:\/\//, "").replace(/\/$/, "");
       }
@@ -24095,7 +24447,11 @@ ${Stack}`
         }
         const ActivateFn = typeof ExtModule?.activate === "function" ? ExtModule.activate : typeof ExtModule?.default?.activate === "function" ? ExtModule.default.activate : void 0;
         if (typeof ActivateFn === "function") {
-          const ExtContext = CreateExtensionContext(Context22, Extension2, ExtensionPath);
+          const ExtContext = CreateExtensionContext(
+            Context22,
+            Extension2,
+            ExtensionPath
+          );
           await ActivateFn(ExtContext);
           console.log(
             `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`
@@ -24132,19 +24488,30 @@ ${Stack}`
           "utf8"
         );
         const Parsed = JSON.parse(Contents);
-        FullPackageJSON = { ...Parsed, ...Extension2 };
+        FullPackageJSON = {
+          ...Parsed,
+          ...Extension2
+        };
       } catch {
       }
-      const MakeUri = /* @__PURE__ */ __name((Path) => ({
-        scheme: "file",
-        path: Path,
-        fsPath: Path,
-        authority: "",
-        query: "",
-        fragment: "",
-        with: /* @__PURE__ */ __name(() => ({}), "with"),
-        toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString")
-      }), "MakeUri");
+      const VsCodeUri = globalThis.__cocoonVscodeAPI?.Uri;
+      const MakeUri = /* @__PURE__ */ __name((Path) => {
+        if (VsCodeUri && typeof VsCodeUri.file === "function") {
+          return VsCodeUri.file(Path);
+        }
+        return {
+          scheme: "file",
+          path: Path,
+          fsPath: Path,
+          authority: "",
+          query: "",
+          fragment: "",
+          with: /* @__PURE__ */ __name(function(Change) {
+            return { ...this, ...Change };
+          }, "with"),
+          toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString")
+        };
+      }, "MakeUri");
       return {
         subscriptions: [],
         extensionPath: ExtensionPath,
@@ -24175,20 +24542,29 @@ ${Stack}`
         secrets: {
           get: /* @__PURE__ */ __name(async (Key) => {
             try {
-              return await Context22.MountainClient?.sendRequest("secrets.get", { key: Key });
+              return await Context22.MountainClient?.sendRequest(
+                "secrets.get",
+                { key: Key }
+              );
             } catch {
               return void 0;
             }
           }, "get"),
           store: /* @__PURE__ */ __name(async (Key, Value) => {
             try {
-              await Context22.MountainClient?.sendRequest("secrets.store", { key: Key, value: Value });
+              await Context22.MountainClient?.sendRequest("secrets.store", {
+                key: Key,
+                value: Value
+              });
             } catch {
             }
           }, "store"),
           delete: /* @__PURE__ */ __name(async (Key) => {
             try {
-              await Context22.MountainClient?.sendRequest("secrets.delete", { key: Key });
+              await Context22.MountainClient?.sendRequest(
+                "secrets.delete",
+                { key: Key }
+              );
             } catch {
             }
           }, "delete"),
@@ -24224,7 +24600,11 @@ ${Stack}`
         // ExtensionMode.Production
         extension: {
           id: ExtId,
-          extensionUri: { scheme: "file", path: ExtensionPath, fsPath: ExtensionPath },
+          extensionUri: {
+            scheme: "file",
+            path: ExtensionPath,
+            fsPath: ExtensionPath
+          },
           extensionPath: ExtensionPath,
           isActive: true,
           packageJSON: FullPackageJSON,
@@ -24335,13 +24715,14 @@ var init_LanguageProviderHandler = __esm({
           const StartLine = _range?.start?.line ?? 0;
           const StartChar = _range?.start?.character ?? 0;
           const EndLine = _range?.end?.line ?? Lines.length - 1;
-          const EndChar = _range?.end?.character ?? (Lines[EndLine]?.length ?? 0);
+          const EndChar = _range?.end?.character ?? Lines[EndLine]?.length ?? 0;
           if (StartLine === EndLine) {
             return (Lines[StartLine] ?? "").substring(StartChar, EndChar);
           }
           const Result = [];
           Result.push((Lines[StartLine] ?? "").substring(StartChar));
-          for (let I = StartLine + 1; I < EndLine; I++) Result.push(Lines[I] ?? "");
+          for (let I = StartLine + 1; I < EndLine; I++)
+            Result.push(Lines[I] ?? "");
           Result.push((Lines[EndLine] ?? "").substring(0, EndChar));
           return Result.join("\n");
         }, "getText"),
@@ -24380,7 +24761,10 @@ var init_LanguageProviderHandler = __esm({
             }
             Remaining -= Lines[I].length + 1;
           }
-          return new Position3(Lines.length - 1, (Lines[Lines.length - 1] ?? "").length);
+          return new Position3(
+            Lines.length - 1,
+            (Lines[Lines.length - 1] ?? "").length
+          );
         }, "positionAt"),
         validateRange: /* @__PURE__ */ __name((R) => R, "validateRange"),
         validatePosition: /* @__PURE__ */ __name((P) => P, "validatePosition"),
@@ -24393,7 +24777,12 @@ var init_LanguageProviderHandler = __esm({
           Regex.lastIndex = 0;
           while ((Match = Regex.exec(Line)) !== null) {
             if (Match.index <= Col && Match.index + Match[0].length >= Col) {
-              return new Range3(Pos.line, Match.index, Pos.line, Match.index + Match[0].length);
+              return new Range3(
+                Pos.line,
+                Match.index,
+                Pos.line,
+                Match.index + Match[0].length
+              );
             }
           }
           return void 0;
@@ -24421,18 +24810,33 @@ var init_LanguageProviderHandler = __esm({
       const Ext = UriString.split(".").pop() ?? "";
       const LangId = ResolveLanguageIdentifier(Ext);
       const FsPath = UriString.replace(/^file:\/\//, "");
-      const VsDocument = await BuildVsDocument(UriString, FsPath, LangId, DocumentContentCache);
+      const VsDocument = await BuildVsDocument(
+        UriString,
+        FsPath,
+        LangId,
+        DocumentContentCache
+      );
       const { CancellationTokenSource: CancellationTokenSource3 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
       const VsToken = new CancellationTokenSource3().token;
       const Context22 = Args[3];
       try {
         switch (Method) {
           case "$provideHover": {
+            if (process.env.LAND_DEV_LOG) {
+              console.warn(
+                `[DEV:EXTHOST] provideHover dispatch uri=${UriString} line=${VsPosition?.line} char=${VsPosition?.character} providerHasMethod=${typeof Provider.provideHover === "function"}`
+              );
+            }
             const Result = await Provider.provideHover?.(
               VsDocument,
               VsPosition,
               VsToken
             );
+            if (process.env.LAND_DEV_LOG) {
+              console.warn(
+                `[DEV:EXTHOST] provideHover result kind=${Result ? Array.isArray(Result.contents) ? `array(${Result.contents.length})` : typeof Result.contents : "null"}`
+              );
+            }
             if (!Result) return null;
             const RawContents = Result.contents;
             const Contents = Array.isArray(
@@ -24462,8 +24866,7 @@ var init_LanguageProviderHandler = __esm({
               VsToken,
               Context22
             );
-            if (!Result)
-              return { Suggestions: [], IsIncomplete: false };
+            if (!Result) return { Suggestions: [], IsIncomplete: false };
             const RawItems = Array.isArray(Result) ? Result : Result.items ?? [];
             return {
               Suggestions: RawItems.map((Item) => ({
@@ -24486,9 +24889,7 @@ var init_LanguageProviderHandler = __esm({
             const Locations = Array.isArray(Result) ? Result : [Result];
             return Locations.map((L) => ({
               Uri: (L.uri ?? L.targetUri)?.toString?.() ?? UriString,
-              Range: NormalizeRange(
-                L.range ?? L.targetSelectionRange
-              )
+              Range: NormalizeRange(L.range ?? L.targetSelectionRange)
             }));
           }
           case "$provideReferences": {
@@ -24520,17 +24921,16 @@ var init_LanguageProviderHandler = __esm({
           // Mountain sends "$provideDocumentHighlight" (ProviderType::DocumentHighlight)
           case "$provideDocumentHighlight":
           case "$provideDocumentHighlights": {
-            const Result = await Provider.provideDocumentHighlights?.(
-              VsDocument,
-              VsPosition,
-              VsToken
-            );
+            const Result = await Provider.provideDocumentHighlights?.(VsDocument, VsPosition, VsToken);
             return Result ?? null;
           }
           // Mountain sends "$provideDocumentSymbol" (ProviderType::DocumentSymbol)
           case "$provideDocumentSymbol":
           case "$provideDocumentSymbols": {
-            const Result = await Provider.provideDocumentSymbols?.(VsDocument, VsToken);
+            const Result = await Provider.provideDocumentSymbols?.(
+              VsDocument,
+              VsToken
+            );
             return Result ?? null;
           }
           // Mountain sends "$provideWorkspaceSymbol" (ProviderType::WorkspaceSymbol)
@@ -24580,7 +24980,11 @@ var init_LanguageProviderHandler = __esm({
           // Mountain sends "$provideFoldingRange" (ProviderType::FoldingRange)
           case "$provideFoldingRange":
           case "$provideFoldingRanges": {
-            const Result = await Provider.provideFoldingRanges?.(VsDocument, Context22, VsToken);
+            const Result = await Provider.provideFoldingRanges?.(
+              VsDocument,
+              Context22,
+              VsToken
+            );
             return Result ?? null;
           }
           // Mountain sends "$provideInlayHint" (ProviderType::InlayHint)
@@ -24621,60 +25025,46 @@ var init_LanguageProviderHandler = __esm({
             const Positions = Args[2];
             const Result = await Provider.provideSelectionRanges?.(
               VsDocument,
-              Array.isArray(Positions) ? Positions.map((P) => new Position3(P?.line ?? P?.Line ?? 0, P?.character ?? P?.Character ?? 0)) : [VsPosition],
+              Array.isArray(Positions) ? Positions.map(
+                (P) => new Position3(
+                  P?.line ?? P?.Line ?? 0,
+                  P?.character ?? P?.Character ?? 0
+                )
+              ) : [VsPosition],
               VsToken
             );
             return Result ?? null;
           }
           case "$provideSemanticTokens":
           case "$provideSemanticTokensFull": {
-            const Result = await Provider.provideDocumentSemanticTokens?.(
-              VsDocument,
-              VsToken
-            );
+            const Result = await Provider.provideDocumentSemanticTokens?.(VsDocument, VsToken);
             return Result ?? null;
           }
           case "$provideCallHierarchy":
           case "$provideCallHierarchyIncomingCalls": {
             const Item = Args[1];
-            const Result = await Provider.provideCallHierarchyIncomingCalls?.(
-              Item,
-              VsToken
-            );
+            const Result = await Provider.provideCallHierarchyIncomingCalls?.(Item, VsToken);
             return Result ?? null;
           }
           case "$provideCallHierarchyOutgoingCalls": {
             const Item = Args[1];
-            const Result = await Provider.provideCallHierarchyOutgoingCalls?.(
-              Item,
-              VsToken
-            );
+            const Result = await Provider.provideCallHierarchyOutgoingCalls?.(Item, VsToken);
             return Result ?? null;
           }
           case "$provideTypeHierarchy":
           case "$provideTypeHierarchySupertypes": {
             const Item = Args[1];
-            const Result = await Provider.provideTypeHierarchySupertypes?.(
-              Item,
-              VsToken
-            );
+            const Result = await Provider.provideTypeHierarchySupertypes?.(Item, VsToken);
             return Result ?? null;
           }
           case "$provideTypeHierarchySubtypes": {
             const Item = Args[1];
-            const Result = await Provider.provideTypeHierarchySubtypes?.(
-              Item,
-              VsToken
-            );
+            const Result = await Provider.provideTypeHierarchySubtypes?.(Item, VsToken);
             return Result ?? null;
           }
           case "$provideLinkedEditingRange":
           case "$provideLinkedEditingRanges": {
-            const Result = await Provider.provideLinkedEditingRanges?.(
-              VsDocument,
-              VsPosition,
-              VsToken
-            );
+            const Result = await Provider.provideLinkedEditingRanges?.(VsDocument, VsPosition, VsToken);
             return Result ?? null;
           }
           default:
@@ -24692,245 +25082,6 @@ var init_LanguageProviderHandler = __esm({
       }
     }, "InvokeLanguageProvider");
     LanguageProviderHandler_default = InvokeLanguageProvider;
-  }
-});
-
-// Source/Services/Handler/DocumentContentHandler.ts
-var InferLanguageIdentifier, BuildTextDocument, DocumentVersionMap, HandleDocumentChange, HandleDocumentOpen, HandleDocumentClose, HandleDocumentSave, GetDocumentContent, DocumentContentHandler_default;
-var init_DocumentContentHandler = __esm({
-  "Source/Services/Handler/DocumentContentHandler.ts"() {
-    "use strict";
-    InferLanguageIdentifier = /* @__PURE__ */ __name((Uri2) => {
-      const ExtensionMatch = Uri2.match(/\.([^./?#]+)(?:\?|#|$)/);
-      if (!ExtensionMatch?.[1]) return "plaintext";
-      const Extension2 = ExtensionMatch[1].toLowerCase();
-      const LanguageMap = {
-        ts: "typescript",
-        tsx: "typescriptreact",
-        js: "javascript",
-        jsx: "javascriptreact",
-        json: "json",
-        jsonc: "jsonc",
-        md: "markdown",
-        html: "html",
-        htm: "html",
-        css: "css",
-        scss: "scss",
-        less: "less",
-        xml: "xml",
-        yaml: "yaml",
-        yml: "yaml",
-        toml: "toml",
-        rs: "rust",
-        py: "python",
-        rb: "ruby",
-        go: "go",
-        java: "java",
-        c: "c",
-        cpp: "cpp",
-        h: "c",
-        hpp: "cpp",
-        cs: "csharp",
-        swift: "swift",
-        sh: "shellscript",
-        bash: "shellscript",
-        zsh: "shellscript",
-        ps1: "powershell",
-        sql: "sql",
-        graphql: "graphql",
-        proto: "proto3",
-        dockerfile: "dockerfile",
-        vue: "vue",
-        svelte: "svelte",
-        astro: "astro",
-        txt: "plaintext"
-      };
-      return LanguageMap[Extension2] ?? "plaintext";
-    }, "InferLanguageIdentifier");
-    BuildTextDocument = /* @__PURE__ */ __name((Uri2, Content, Version = 1, LanguageIdentifier) => {
-      const Lines = Content.split(/\r?\n/);
-      const FileName = Uri2.replace(/^file:\/\//, "");
-      const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri2);
-      return {
-        uri: {
-          scheme: "file",
-          path: FileName,
-          fsPath: FileName,
-          authority: "",
-          query: "",
-          fragment: "",
-          with: /* @__PURE__ */ __name(() => ({}), "with"),
-          toString: /* @__PURE__ */ __name(() => Uri2, "toString"),
-          toJSON: /* @__PURE__ */ __name(() => ({ scheme: "file", path: FileName, fsPath: FileName }), "toJSON")
-        },
-        fileName: FileName,
-        languageId: ResolvedLanguage,
-        version: Version,
-        lineCount: Lines.length,
-        getText: /* @__PURE__ */ __name((Range3) => {
-          if (!Range3) return Content;
-          const StartLine = Range3?.start?.line ?? 0;
-          const StartCharacter = Range3?.start?.character ?? 0;
-          const EndLine = Range3?.end?.line ?? Lines.length - 1;
-          const EndCharacter = Range3?.end?.character ?? (Lines[EndLine]?.length ?? 0);
-          if (StartLine === EndLine) {
-            return (Lines[StartLine] ?? "").substring(StartCharacter, EndCharacter);
-          }
-          const Result = [];
-          Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
-          for (let Index = StartLine + 1; Index < EndLine; Index++) {
-            Result.push(Lines[Index] ?? "");
-          }
-          Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter));
-          return Result.join("\n");
-        }, "getText"),
-        lineAt: /* @__PURE__ */ __name((LineOrPosition) => {
-          const LineNumber = typeof LineOrPosition === "number" ? LineOrPosition : LineOrPosition.line;
-          const Text = Lines[LineNumber] ?? "";
-          return {
-            text: Text,
-            lineNumber: LineNumber,
-            range: {
-              start: { line: LineNumber, character: 0 },
-              end: { line: LineNumber, character: Text.length }
-            },
-            isEmptyOrWhitespace: Text.trim().length === 0
-          };
-        }, "lineAt"),
-        isUntitled: false,
-        isDirty: false,
-        isClosed: false,
-        eol: 1,
-        // EndOfLine.LF
-        offsetAt: /* @__PURE__ */ __name((Position3) => {
-          let Offset = 0;
-          for (let Index = 0; Index < Position3.line && Index < Lines.length; Index++) {
-            Offset += (Lines[Index]?.length ?? 0) + 1;
-          }
-          return Offset + Position3.character;
-        }, "offsetAt"),
-        positionAt: /* @__PURE__ */ __name((Offset) => {
-          let Remaining = Offset;
-          for (let Index = 0; Index < Lines.length; Index++) {
-            const LineLength = (Lines[Index]?.length ?? 0) + 1;
-            if (Remaining < LineLength) {
-              return { line: Index, character: Remaining };
-            }
-            Remaining -= LineLength;
-          }
-          return { line: Lines.length - 1, character: Lines[Lines.length - 1]?.length ?? 0 };
-        }, "positionAt"),
-        validateRange: /* @__PURE__ */ __name((Range3) => Range3, "validateRange"),
-        validatePosition: /* @__PURE__ */ __name((Position3) => Position3, "validatePosition"),
-        getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
-        save: /* @__PURE__ */ __name(async () => false, "save")
-      };
-    }, "BuildTextDocument");
-    DocumentVersionMap = /* @__PURE__ */ new Map();
-    HandleDocumentChange = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      let Uri2;
-      let EventData;
-      if (Array.isArray(Parameters) && Parameters.length >= 2) {
-        Uri2 = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
-        EventData = Parameters[1];
-      } else {
-        Uri2 = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
-        EventData = Parameters;
-      }
-      const Content = EventData?.content ?? EventData?.Content ?? EventData?.text;
-      if (Uri2 && Content !== void 0) {
-        DocumentContentCache.set(Uri2, Content);
-      } else if (Uri2 && (EventData?.changes || Parameters?.changes)) {
-        const Existing = DocumentContentCache.get(Uri2) ?? "";
-        let Updated = Existing;
-        const Changes = Array.isArray(EventData?.changes) ? EventData.changes : Array.isArray(Parameters?.changes) ? Parameters.changes : [];
-        const Sorted = [...Changes].sort(
-          (A, B) => (B.rangeOffset ?? 0) - (A.rangeOffset ?? 0)
-        );
-        for (const Change of Sorted) {
-          const Offset = Change.rangeOffset ?? 0;
-          const Length = Change.rangeLength ?? 0;
-          const Text = Change.text ?? "";
-          Updated = Updated.substring(0, Offset) + Text + Updated.substring(Offset + Length);
-        }
-        DocumentContentCache.set(Uri2, Updated);
-      }
-      if (Uri2 && WorkspaceEventEmitter) {
-        const CurrentVersion = (DocumentVersionMap.get(Uri2) ?? 1) + 1;
-        DocumentVersionMap.set(Uri2, CurrentVersion);
-        const CachedContent = DocumentContentCache.get(Uri2) ?? "";
-        const Document = BuildTextDocument(Uri2, CachedContent, CurrentVersion);
-        WorkspaceEventEmitter.emit("didChangeTextDocument", {
-          document: Document,
-          contentChanges: EventData?.changes ?? Parameters?.changes ?? [],
-          reason: void 0
-        });
-      }
-    }, "HandleDocumentChange");
-    HandleDocumentOpen = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
-      for (const Model of Models) {
-        const Uri2 = Model?.URI?.toString?.() ?? Model?.URI ?? Model?.uri?.external ?? Model?.uri ?? Model?.Uri ?? "";
-        const Lines = Model?.Lines ?? Model?.lines;
-        const EOL = Model?.EOL ?? Model?.eol ?? "\n";
-        let Content;
-        if (Array.isArray(Lines)) {
-          Content = Lines.join(EOL);
-        } else {
-          Content = Model?.content ?? Model?.Content ?? Model?.text;
-        }
-        const LanguageIdentifier = Model?.LanguageIdentifier ?? Model?.languageId ?? Model?.language;
-        if (Uri2 && Content !== void 0) {
-          DocumentContentCache.set(Uri2, Content);
-          DocumentVersionMap.set(Uri2, 1);
-          console.log(`[DocumentContentHandler] Document opened: ${Uri2.slice(-60)} (${Content.length} chars)`);
-          if (WorkspaceEventEmitter) {
-            const Document = BuildTextDocument(Uri2, Content, 1, LanguageIdentifier);
-            WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
-          }
-        }
-      }
-    }, "HandleDocumentOpen");
-    HandleDocumentClose = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
-      for (const Item of Items) {
-        const Uri2 = Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
-        if (Uri2) {
-          if (WorkspaceEventEmitter) {
-            const CachedContent = DocumentContentCache.get(Uri2) ?? "";
-            const Version = DocumentVersionMap.get(Uri2) ?? 1;
-            const Document = BuildTextDocument(Uri2, CachedContent, Version);
-            WorkspaceEventEmitter.emit("didCloseTextDocument", Document);
-          }
-          DocumentContentCache.delete(Uri2);
-          DocumentVersionMap.delete(Uri2);
-        }
-      }
-    }, "HandleDocumentClose");
-    HandleDocumentSave = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      if (!WorkspaceEventEmitter) return;
-      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
-      for (const Item of Items) {
-        const Uri2 = typeof Item === "string" ? Item : Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
-        if (Uri2) {
-          const CachedContent = DocumentContentCache.get(Uri2) ?? "";
-          const Version = DocumentVersionMap.get(Uri2) ?? 1;
-          const Document = BuildTextDocument(Uri2, CachedContent, Version);
-          WorkspaceEventEmitter.emit("didSaveTextDocument", Document);
-        }
-      }
-    }, "HandleDocumentSave");
-    GetDocumentContent = /* @__PURE__ */ __name((DocumentContentCache, Uri2) => {
-      return DocumentContentCache.get(Uri2) ?? null;
-    }, "GetDocumentContent");
-    DocumentContentHandler_default = {
-      HandleDocumentChange,
-      HandleDocumentOpen,
-      HandleDocumentClose,
-      HandleDocumentSave,
-      GetDocumentContent,
-      BuildTextDocument
-    };
   }
 });
 
@@ -24958,21 +25109,37 @@ var init_NotificationHandler = __esm({
           break;
         case "$acceptModelChanged":
         case "document.didChange":
-          HandleDocumentChange2(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+          HandleDocumentChange2(
+            DocumentContentCache,
+            Parameters,
+            WorkspaceEventEmitter
+          );
           break;
         case "$acceptModelAdded":
         case "$acceptModelOpen":
         case "document.didOpen":
-          HandleDocumentOpen2(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+          HandleDocumentOpen2(
+            DocumentContentCache,
+            Parameters,
+            WorkspaceEventEmitter
+          );
           break;
         case "$acceptModelRemoved":
         case "$acceptModelClosed":
         case "document.didClose":
-          HandleDocumentClose2(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+          HandleDocumentClose2(
+            DocumentContentCache,
+            Parameters,
+            WorkspaceEventEmitter
+          );
           break;
         case "$acceptModelSaved":
         case "document.didSave":
-          HandleDocumentSave2(DocumentContentCache, Parameters, WorkspaceEventEmitter);
+          HandleDocumentSave2(
+            DocumentContentCache,
+            Parameters,
+            WorkspaceEventEmitter
+          );
           break;
         default:
           console.log(
@@ -24984,8 +25151,246 @@ var init_NotificationHandler = __esm({
   }
 });
 
+// Source/Effect/Telemetry.ts
+import {
+  Context as Context2,
+  Effect as Effect3,
+  HashMap,
+  Layer as Layer2,
+  Option,
+  Ref,
+  Stream,
+  SubscriptionRef
+} from "effect";
+var TelemetryCollectionError, TelemetryTag, Telemetry, TelemetryLive, makeMockTelemetry, TelemetryMock, withSpan;
+var init_Telemetry = __esm({
+  "Source/Effect/Telemetry.ts"() {
+    "use strict";
+    TelemetryCollectionError = class extends Error {
+      constructor(operation, cause) {
+        super(
+          `Telemetry collection failed for '${operation}': ${String(cause)}`
+        );
+        this.operation = operation;
+        this.cause = cause;
+      }
+      operation;
+      cause;
+      static {
+        __name(this, "TelemetryCollectionError");
+      }
+      _tag = "TelemetryCollectionError";
+    };
+    TelemetryTag = class extends Context2.Tag("Cocoon/Telemetry")() {
+      static {
+        __name(this, "TelemetryTag");
+      }
+    };
+    Telemetry = TelemetryTag;
+    TelemetryLive = Layer2.effect(
+      Telemetry,
+      Effect3.gen(function* () {
+        const metricsRef = yield* SubscriptionRef.make(HashMap.empty());
+        const spansRef = yield* SubscriptionRef.make(HashMap.empty());
+        const eventsRef = yield* SubscriptionRef.make([]);
+        const recordMetric = /* @__PURE__ */ __name((name, value, labels) => Effect3.gen(function* () {
+          const metric = {
+            name,
+            value,
+            timestamp: Date.now(),
+            labels
+          };
+          const events = yield* eventsRef.get;
+          yield* Ref.set(eventsRef, [
+            ...events,
+            {
+              type: "metric",
+              timestamp: metric.timestamp,
+              data: metric
+            }
+          ]);
+          const currentMetrics = yield* metricsRef.get;
+          const nameMetrics = HashMap.get(currentMetrics, name).pipe(
+            Option.getOrElse(() => [])
+          );
+          yield* Ref.set(
+            metricsRef,
+            HashMap.set(currentMetrics, name, [...nameMetrics, metric])
+          );
+        }), "recordMetric");
+        const startSpan = /* @__PURE__ */ __name((name, labels) => Effect3.gen(function* () {
+          const startTime = Date.now();
+          const span = {
+            name,
+            startTime,
+            success: false,
+            labels: labels ?? {}
+          };
+          const events = yield* eventsRef.get;
+          yield* Ref.set(eventsRef, [
+            ...events,
+            { type: "span", timestamp: startTime, data: span }
+          ]);
+          return {
+            end: /* @__PURE__ */ __name((success, error) => Effect3.gen(function* () {
+              const endTime = Date.now();
+              const completedSpan = {
+                ...span,
+                endTime,
+                duration: endTime - startTime,
+                success,
+                error
+              };
+              const events2 = yield* eventsRef.get;
+              yield* Ref.set(eventsRef, [
+                ...events2,
+                {
+                  type: "span",
+                  timestamp: endTime,
+                  data: completedSpan
+                }
+              ]);
+              const currentSpans = yield* spansRef.get;
+              const nameSpans = HashMap.get(
+                currentSpans,
+                name
+              ).pipe(Option.getOrElse(() => []));
+              yield* Ref.set(
+                spansRef,
+                HashMap.set(currentSpans, name, [
+                  ...nameSpans,
+                  completedSpan
+                ])
+              );
+            }), "end")
+          };
+        }), "startSpan");
+        const log = /* @__PURE__ */ __name((level, message, context) => Effect3.gen(function* () {
+          const logEntry = {
+            level,
+            message,
+            context
+          };
+          const timestamp = Date.now();
+          const events = yield* eventsRef.get;
+          yield* Ref.set(eventsRef, [
+            ...events,
+            { type: "log", timestamp, data: logEntry }
+          ]);
+          const prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
+          switch (level) {
+            case "debug":
+              console.debug(prefix, message, context ?? "");
+              break;
+            case "info":
+              console.info(prefix, message, context ?? "");
+              break;
+            case "warn":
+              console.warn(prefix, message, context ?? "");
+              break;
+            case "error":
+              console.error(prefix, message, context ?? "");
+              break;
+          }
+        }), "log");
+        const getMetrics = /* @__PURE__ */ __name((name) => Effect3.gen(function* () {
+          const metrics = yield* metricsRef.get;
+          return HashMap.get(metrics, name).pipe(
+            Option.getOrElse(() => [])
+          );
+        }), "getMetrics");
+        const getAverageDuration = /* @__PURE__ */ __name((name) => Effect3.gen(function* () {
+          const spans = yield* spansRef.get;
+          const nameSpans = HashMap.get(spans, name).pipe(
+            Option.getOrElse(() => [])
+          );
+          if (nameSpans.length === 0) {
+            return 0;
+          }
+          const totalDuration = nameSpans.reduce(
+            (sum2, span) => {
+              return sum2 + (span.duration ?? 0);
+            },
+            0
+          );
+          return totalDuration / nameSpans.length;
+        }), "getAverageDuration");
+        const getSuccessRate = /* @__PURE__ */ __name((name) => Effect3.gen(function* () {
+          const spans = yield* spansRef.get;
+          const nameSpans = HashMap.get(spans, name).pipe(
+            Option.getOrElse(() => [])
+          );
+          if (nameSpans.length === 0) {
+            return 1;
+          }
+          const successCount = nameSpans.filter(
+            (span) => span.success
+          ).length;
+          return successCount / nameSpans.length;
+        }), "getSuccessRate");
+        const flush = Effect3.gen(function* () {
+          yield* Ref.set(metricsRef, HashMap.empty());
+          yield* Ref.set(spansRef, HashMap.empty());
+          yield* Ref.set(eventsRef, []);
+        });
+        return {
+          recordMetric,
+          startSpan,
+          log,
+          events: eventsRef.changes,
+          getMetrics,
+          getAverageDuration,
+          getSuccessRate,
+          flush
+        };
+      })
+    );
+    makeMockTelemetry = /* @__PURE__ */ __name(() => ({
+      recordMetric: /* @__PURE__ */ __name(() => Effect3.void, "recordMetric"),
+      startSpan: /* @__PURE__ */ __name(() => Effect3.succeed({
+        end: /* @__PURE__ */ __name(() => Effect3.void, "end")
+      }), "startSpan"),
+      log: /* @__PURE__ */ __name((level, message, context) => Effect3.sync(() => {
+        const prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
+        console.log(prefix, message, context ?? "");
+      }), "log"),
+      events: Stream.empty,
+      getMetrics: /* @__PURE__ */ __name(() => Effect3.succeed([]), "getMetrics"),
+      getAverageDuration: /* @__PURE__ */ __name(() => Effect3.succeed(0), "getAverageDuration"),
+      getSuccessRate: /* @__PURE__ */ __name(() => Effect3.succeed(1), "getSuccessRate"),
+      flush: Effect3.void
+    }), "makeMockTelemetry");
+    TelemetryMock = Layer2.effect(
+      Telemetry,
+      Effect3.succeed(makeMockTelemetry())
+    );
+    withSpan = /* @__PURE__ */ __name((name, effect, labels) => Effect3.gen(function* () {
+      const telemetry = yield* Telemetry;
+      const span = yield* telemetry.startSpan(name, labels);
+      const result = yield* effect.pipe(
+        Effect3.catchAll(
+          (error) => Effect3.gen(function* () {
+            yield* span.end(false, String(error));
+            return yield* Effect3.fail(error);
+          })
+        )
+      );
+      yield* span.end(true);
+      return result;
+    }), "withSpan");
+  }
+});
+
 // Source/Effect/Extension.ts
-import { Context as Context3, Effect as Effect4, HashMap as HashMap2, Layer as Layer3, Option as Option2, Ref as Ref2, SubscriptionRef as SubscriptionRef2 } from "effect";
+import {
+  Context as Context3,
+  Effect as Effect4,
+  HashMap as HashMap2,
+  Layer as Layer3,
+  Option as Option2,
+  Ref as Ref2,
+  SubscriptionRef as SubscriptionRef2
+} from "effect";
 var ExtensionNotFoundError, ExtensionActivationError, ExtensionDeactivationError, ExtensionTag, Extension, ExtensionLive, makeMockExtension, ExtensionMock;
 var init_Extension = __esm({
   "Source/Effect/Extension.ts"() {
@@ -25856,8 +26261,8 @@ var ConnectionError, RPCError2, DisconnectionError, MountainClientTag, MountainC
 var init_MountainClient = __esm({
   "Source/Effect/MountainClient.ts"() {
     "use strict";
-    init_Telemetry();
     init_MountainClientService();
+    init_Telemetry();
     ConnectionError = class extends Error {
       constructor(message, cause) {
         super(message);
@@ -26052,7 +26457,10 @@ var init_MountainClient = __esm({
           try {
             if (!realClient) {
               return yield* Effect7.fail(
-                new RPCError2(method, "Not connected to Mountain")
+                new RPCError2(
+                  method,
+                  "Not connected to Mountain"
+                )
               );
             }
             const Result = yield* Effect7.promise(
@@ -26263,8 +26671,13 @@ var init_Bootstrap = __esm({
           "info",
           "[Cocoon Bootstrap] Stage 5: Starting gRPC server..."
         );
-        const CocoonPort = parseInt(process.env["COCOON_GRPC_PORT"] || "50052", 10);
-        console.log(`[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`);
+        const CocoonPort = parseInt(
+          process.env["COCOON_GRPC_PORT"] || "50052",
+          10
+        );
+        console.log(
+          `[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`
+        );
         yield* rpcServer.start({
           host: "0.0.0.0",
           port: CocoonPort
@@ -26375,7 +26788,9 @@ var init_Bootstrap = __esm({
           const SafeStage = Effect8.suspend(() => stage).pipe(
             Effect8.catchAllCause((Cause) => {
               const Message = String(Cause).slice(0, 300);
-              console.warn(`[Cocoon Bootstrap] Stage failed (continuing): ${Message}`);
+              console.warn(
+                `[Cocoon Bootstrap] Stage failed (continuing): ${Message}`
+              );
               return Effect8.succeed({
                 stageName: "Failed",
                 success: false,
@@ -30853,7 +31268,7 @@ var init_SecurityService = __esm({
 });
 
 // Source/Services/TerminalService.ts
-import { Effect as Effect21, Layer as Layer18, Context as Context18 } from "effect";
+import { Context as Context18, Effect as Effect21, Layer as Layer18 } from "effect";
 var ITerminalService2, TerminalService, TerminalServiceLayer;
 var init_TerminalService = __esm({
   "Source/Services/TerminalService.ts"() {
@@ -31087,27 +31502,21 @@ var init_RequestRoutingHandler = __esm({
           const { IExtensionHostService: IExtensionHostService3 } = await Promise.resolve().then(() => (init_IExtensionHostService(), IExtensionHostService_exports));
           switch (Method2) {
             case "extension.activate": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(
-                IExtensionHostService3
-              );
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
               return await ExtensionHostService2.activateExtension(
                 Params.extensionId,
                 Params.reason
               );
             }
             case "extension.deactivate": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(
-                IExtensionHostService3
-              );
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
               await ExtensionHostService2.deactivateExtension(
                 Params.extensionId
               );
               return { success: true };
             }
             case "extension.get": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(
-                IExtensionHostService3
-              );
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService3);
               return ExtensionHostService2.getActivatedExtension(
                 Params.extensionId
               );
@@ -31152,9 +31561,7 @@ var init_RequestRoutingHandler = __esm({
               return { success: true };
             }
             default:
-              throw new Error(
-                `Unknown configuration method: ${Method2}`
-              );
+              throw new Error(`Unknown configuration method: ${Method2}`);
           }
         }, "configuration.\\w+"),
         "command.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
@@ -31207,9 +31614,7 @@ var init_RequestRoutingHandler = __esm({
               return PerfService.generateReport();
             }
             default:
-              throw new Error(
-                `Unknown performance method: ${Method2}`
-              );
+              throw new Error(`Unknown performance method: ${Method2}`);
           }
         }, "performance.\\w+"),
         "security.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
@@ -31256,8 +31661,8 @@ __export(GRPCServerService_exports, {
 });
 import { EventEmitter } from "events";
 import { createRequire as createRequire2 } from "module";
-import { fileURLToPath as fileURLToPath2 } from "url";
 import { dirname as dirname4 } from "path";
+import { fileURLToPath as fileURLToPath2 } from "url";
 import * as grpc2 from "@grpc/grpc-js";
 import * as protoLoader2 from "@grpc/proto-loader";
 import { Effect as Effect22, Layer as Layer20 } from "effect";
@@ -31266,9 +31671,9 @@ var init_GRPCServerService = __esm({
   "Source/Services/GRPCServerService.ts"() {
     "use strict";
     init_IGRPCServerService();
+    init_DocumentContentHandler();
     init_ExtensionHostHandler();
     init_LanguageProviderHandler();
-    init_DocumentContentHandler();
     init_NotificationHandler();
     init_RequestRoutingHandler();
     __filename2 = fileURLToPath2(import.meta.url);
@@ -31629,7 +32034,9 @@ var init_GRPCServerService = __esm({
       IsValidMethod(method) {
         const DotMethod = /^[a-zA-Z]+\.[a-zA-Z]+$/.test(method);
         const ProvideMethod = /^\$provide[A-Z][a-zA-Z]+$/.test(method);
-        const ExtensionHostMethod = /^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost)$/.test(method);
+        const ExtensionHostMethod = /^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost)$/.test(
+          method
+        );
         return DotMethod || ProvideMethod || ExtensionHostMethod;
       }
       /**
@@ -31680,19 +32087,35 @@ var init_GRPCServerService = __esm({
         }
         const Context22 = this.GetHandlerContext();
         if (method === "InitializeExtensionHost") {
-          return ExtensionHostHandler_default.HandleInitializeExtensionHost(Context22, parameters);
+          return ExtensionHostHandler_default.HandleInitializeExtensionHost(
+            Context22,
+            parameters
+          );
         }
         if (method === "$deltaExtensions") {
-          return ExtensionHostHandler_default.HandleDeltaExtensions(Context22, parameters);
+          return ExtensionHostHandler_default.HandleDeltaExtensions(
+            Context22,
+            parameters
+          );
         }
         if (method === "$activateByEvent") {
-          return ExtensionHostHandler_default.HandleActivateByEvent(Context22, parameters);
+          return ExtensionHostHandler_default.HandleActivateByEvent(
+            Context22,
+            parameters
+          );
         }
         if (method === "$startExtensionHost") {
-          return ExtensionHostHandler_default.HandleStartExtensionHost(Context22, parameters);
+          return ExtensionHostHandler_default.HandleStartExtensionHost(
+            Context22,
+            parameters
+          );
         }
         if (/^\$provide[A-Z]/.test(method)) {
-          return LanguageProviderHandler_default(method, parameters, this.documentContentCache);
+          return LanguageProviderHandler_default(
+            method,
+            parameters,
+            this.documentContentCache
+          );
         }
         throw new Error(`Unknown method: ${method}`);
       }
@@ -31740,7 +32163,10 @@ var init_GRPCServerService = __esm({
        * Used by InvokeLanguageProvider's VsDocument.getText().
        */
       GetDocumentContent(Uri2) {
-        return DocumentContentHandler_default.GetDocumentContent(this.documentContentCache, Uri2);
+        return DocumentContentHandler_default.GetDocumentContent(
+          this.documentContentCache,
+          Uri2
+        );
       }
       // ==================================================================
       // Cancellation
@@ -32077,8 +32503,8 @@ import { Context as Context21, Effect as Effect23, Layer as Layer21, Ref as Ref6
 var ServerStartError, ServerStopError, ServerNotRunningError, RPCServerTag, RPCServer, RPCServerLive, makeMockRPCServer, RPCServerMock;
 var init_RPCServer = __esm({
   "Source/Effect/RPCServer.ts"() {
-    init_Telemetry();
     init_GRPCServerService();
+    init_Telemetry();
     ServerStartError = class extends Error {
       constructor(message, cause) {
         super(message);
@@ -32160,7 +32586,9 @@ var init_RPCServer = __esm({
             _tag: "Starting",
             startTime: startTimeMs
           });
-          console.log(`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`);
+          console.log(
+            `[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`
+          );
           telemetry.log(
             "info",
             `[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`

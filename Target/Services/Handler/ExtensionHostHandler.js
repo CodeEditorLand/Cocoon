@@ -20785,10 +20785,10 @@ var init_WindowNamespace = __esm({
         showErrorMessage: ShowMessage("error"),
         showWarningMessage: ShowMessage("warn"),
         showQuickPick: /* @__PURE__ */ __name(async (Items, _Options) => {
-          Context.SendToMountain("window.showQuickPick", { items: Items }).catch(
-            () => {
-            }
-          );
+          Context.SendToMountain("window.showQuickPick", {
+            items: Items
+          }).catch(() => {
+          });
           return void 0;
         }, "showQuickPick"),
         showInputBox: /* @__PURE__ */ __name(async (_Options) => {
@@ -20825,10 +20825,10 @@ var init_WindowNamespace = __esm({
               });
             }, "show"),
             hide: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("terminal.hide", { handle: Handle }).catch(
-                () => {
-                }
-              );
+              Context.SendToMountain("terminal.hide", {
+                handle: Handle
+              }).catch(() => {
+              });
             }, "hide"),
             dispose: /* @__PURE__ */ __name(() => {
               Context.SendToMountain("terminal.dispose", {
@@ -20998,9 +20998,12 @@ var init_WindowNamespace = __esm({
           return {
             key: Key,
             dispose: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("window.disposeTextEditorDecorationType", {
-                key: Key
-              }).catch(() => {
+              Context.SendToMountain(
+                "window.disposeTextEditorDecorationType",
+                {
+                  key: Key
+                }
+              ).catch(() => {
               });
             }, "dispose")
           };
@@ -21173,8 +21176,10 @@ var init_WindowNamespace = __esm({
         }, "dispose") }), "registerTerminalLinkProvider"),
         registerTerminalProfileProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerTerminalProfileProvider"),
-        registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerProfileContentHandler"),
+        registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerProfileContentHandler"),
         registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerExternalUriOpener"),
         withProgress: /* @__PURE__ */ __name(async (_Option, Task3) => Task3({ report: /* @__PURE__ */ __name(() => {
@@ -21213,8 +21218,14 @@ var init_WindowNamespace = __esm({
           Context,
           "window.didChangeTextEditorViewColumn"
         ),
-        onDidOpenTerminal: MakeEventSubscriber(Context, "window.didOpenTerminal"),
-        onDidCloseTerminal: MakeEventSubscriber(Context, "window.didCloseTerminal"),
+        onDidOpenTerminal: MakeEventSubscriber(
+          Context,
+          "window.didOpenTerminal"
+        ),
+        onDidCloseTerminal: MakeEventSubscriber(
+          Context,
+          "window.didCloseTerminal"
+        ),
         onDidChangeWindowState: MakeEventSubscriber(
           Context,
           "window.didChangeWindowState"
@@ -21243,13 +21254,19 @@ var init_WorkspaceNamespace = __esm({
       Context.WorkspaceEventEmitter.on(EventName, Listener);
       return {
         dispose: /* @__PURE__ */ __name(() => {
-          Context.WorkspaceEventEmitter.removeListener(EventName, Listener);
+          Context.WorkspaceEventEmitter.removeListener(
+            EventName,
+            Listener
+          );
         }, "dispose")
       };
     }, "EventSubscriber");
     Call = /* @__PURE__ */ __name(async (Context, Method, Parameters) => {
       try {
-        return await Context.MountainClient?.sendRequest(Method, Parameters);
+        return await Context.MountainClient?.sendRequest(
+          Method,
+          Parameters
+        );
       } catch {
         return void 0;
       }
@@ -21287,21 +21304,27 @@ var init_WorkspaceNamespace = __esm({
         findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
           const Pattern = typeof Include === "string" ? Include : Include?.pattern ?? "";
           const ExcludePattern = typeof Exclude === "string" ? Exclude : Exclude?.pattern;
-          const Results = await Call(Context, "Search.TextSearch", {
-            pattern: Pattern,
-            include: Pattern,
-            exclude: ExcludePattern,
-            maxResults: MaxResults,
-            isRegExp: false,
-            isCaseSensitive: false,
-            isWordMatch: false
-          });
+          const Results = await Call(
+            Context,
+            "Search.TextSearch",
+            {
+              pattern: Pattern,
+              include: Pattern,
+              exclude: ExcludePattern,
+              maxResults: MaxResults,
+              isRegExp: false,
+              isCaseSensitive: false,
+              isWordMatch: false
+            }
+          );
           return Results ?? [];
         }, "findFiles"),
         openTextDocument: /* @__PURE__ */ __name(async (UriOrPath) => {
           const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
           const Cached = Context.DocumentContentCache.get(UriString);
-          const Text = Cached ?? await Call(Context, "FileSystem.ReadFile", [UriString]) ?? "";
+          const Text = Cached ?? await Call(Context, "FileSystem.ReadFile", [
+            UriString
+          ]) ?? "";
           return {
             uri: UriOrPath,
             fileName: UriString,
@@ -21321,17 +21344,28 @@ var init_WorkspaceNamespace = __esm({
           return true;
         }, "saveAll"),
         applyEdit: /* @__PURE__ */ __name(async (_Edit) => {
-          Context.SendToMountain("workspace.applyEdit", _Edit).catch(() => {
-          });
+          Context.SendToMountain("workspace.applyEdit", _Edit).catch(
+            () => {
+            }
+          );
           return true;
         }, "applyEdit"),
         asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
         updateWorkspaceFolders: /* @__PURE__ */ __name(() => false, "updateWorkspaceFolders"),
         onDidOpenTextDocument: EventSubscriber(Context, "didOpenTextDocument"),
-        onDidCloseTextDocument: EventSubscriber(Context, "didCloseTextDocument"),
-        onDidChangeTextDocument: EventSubscriber(Context, "didChangeTextDocument"),
+        onDidCloseTextDocument: EventSubscriber(
+          Context,
+          "didCloseTextDocument"
+        ),
+        onDidChangeTextDocument: EventSubscriber(
+          Context,
+          "didChangeTextDocument"
+        ),
         onDidSaveTextDocument: EventSubscriber(Context, "didSaveTextDocument"),
-        onWillSaveTextDocument: EventSubscriber(Context, "willSaveTextDocument"),
+        onWillSaveTextDocument: EventSubscriber(
+          Context,
+          "willSaveTextDocument"
+        ),
         onDidCreateFiles: EventSubscriber(Context, "didCreateFiles"),
         onDidDeleteFiles: EventSubscriber(Context, "didDeleteFiles"),
         onDidRenameFiles: EventSubscriber(Context, "didRenameFiles"),
@@ -21351,8 +21385,10 @@ var init_WorkspaceNamespace = __esm({
         }, "dispose") }), "registerNotebookSerializer"),
         registerRemoteAuthorityResolver: /* @__PURE__ */ __name((_AuthorityPrefix, _Resolver) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerRemoteAuthorityResolver"),
-        registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerResourceLabelFormatter"),
+        registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerResourceLabelFormatter"),
         registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerDocumentPasteEditProvider"),
         registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -21368,11 +21404,26 @@ var init_WorkspaceNamespace = __esm({
         isTrusted: true,
         trusted: true,
         requestWorkspaceTrust: /* @__PURE__ */ __name(async () => true, "requestWorkspaceTrust"),
-        onDidOpenNotebookDocument: EventSubscriber(Context, "didOpenNotebookDocument"),
-        onDidCloseNotebookDocument: EventSubscriber(Context, "didCloseNotebookDocument"),
-        onDidChangeNotebookDocument: EventSubscriber(Context, "didChangeNotebookDocument"),
-        onDidSaveNotebookDocument: EventSubscriber(Context, "didSaveNotebookDocument"),
-        onWillSaveNotebookDocument: EventSubscriber(Context, "willSaveNotebookDocument"),
+        onDidOpenNotebookDocument: EventSubscriber(
+          Context,
+          "didOpenNotebookDocument"
+        ),
+        onDidCloseNotebookDocument: EventSubscriber(
+          Context,
+          "didCloseNotebookDocument"
+        ),
+        onDidChangeNotebookDocument: EventSubscriber(
+          Context,
+          "didChangeNotebookDocument"
+        ),
+        onDidSaveNotebookDocument: EventSubscriber(
+          Context,
+          "didSaveNotebookDocument"
+        ),
+        onWillSaveNotebookDocument: EventSubscriber(
+          Context,
+          "willSaveNotebookDocument"
+        ),
         onWillRenameFiles: EventSubscriber(Context, "willRenameFiles"),
         onWillCreateFiles: EventSubscriber(Context, "willCreateFiles"),
         onWillDeleteFiles: EventSubscriber(Context, "willDeleteFiles"),
@@ -21405,7 +21456,9 @@ var init_WorkspaceNamespace = __esm({
         fs: {
           // FileSystem.Stat is not yet in CreateEffectForRequest — falls back
           // to defaults via Call's try/catch until the Rust route is added.
-          stat: /* @__PURE__ */ __name(async (Uri2) => await Call(Context, "FileSystem.Stat", [String(Uri2)]) ?? {
+          stat: /* @__PURE__ */ __name(async (Uri2) => await Call(Context, "FileSystem.Stat", [
+            String(Uri2)
+          ]) ?? {
             type: 1,
             size: 0,
             ctime: 0,
@@ -21508,10 +21561,10 @@ var init_CommandsNamespace = __esm({
         );
         if (LocalResult !== void 0) return LocalResult;
         try {
-          return await Context.MountainClient?.sendRequest("Command.Execute", [
-            Command,
-            ...Arguments
-          ]);
+          return await Context.MountainClient?.sendRequest(
+            "Command.Execute",
+            [Command, ...Arguments]
+          );
         } catch {
           return void 0;
         }
@@ -21545,38 +21598,204 @@ var init_LanguagesNamespace = __esm({
     RegisterProvider = /* @__PURE__ */ __name((Context, LanguageProviderRegistry, MethodName, Selector, Provider) => {
       const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
       const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
-      Context.SendToMountain(MethodName, { handle: Handle, language_selector: Language2, extension_id: "" }).catch(() => {
+      Context.SendToMountain(MethodName, {
+        handle: Handle,
+        language_selector: Language2,
+        extension_id: ""
+      }).catch(() => {
       });
       return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
     }, "RegisterProvider");
     CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProviderRegistry) => ({
-      registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_hover_provider", Selector, Provider), "registerHoverProvider"),
-      registerCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider, ..._TriggerCharacters) => RegisterProvider(Context, LanguageProviderRegistry, "register_completion_item_provider", Selector, Provider), "registerCompletionItemProvider"),
-      registerDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_definition_provider", Selector, Provider), "registerDefinitionProvider"),
-      registerReferenceProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_reference_provider", Selector, Provider), "registerReferenceProvider"),
-      registerCodeActionsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_code_actions_provider", Selector, Provider), "registerCodeActionsProvider"),
-      registerDocumentSymbolProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_document_symbol_provider", Selector, Provider), "registerDocumentSymbolProvider"),
-      registerDocumentFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_document_formatting_provider", Selector, Provider), "registerDocumentFormattingEditProvider"),
-      registerDocumentRangeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_document_range_formatting_provider", Selector, Provider), "registerDocumentRangeFormattingEditProvider"),
-      registerOnTypeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider, _FirstTrigger, ..._MoreTriggers) => RegisterProvider(Context, LanguageProviderRegistry, "register_on_type_formatting_provider", Selector, Provider), "registerOnTypeFormattingEditProvider"),
-      registerTypeDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_type_definition_provider", Selector, Provider), "registerTypeDefinitionProvider"),
-      registerImplementationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_implementation_provider", Selector, Provider), "registerImplementationProvider"),
-      registerDeclarationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_declaration_provider", Selector, Provider), "registerDeclarationProvider"),
-      registerDocumentLinkProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_document_link_provider", Selector, Provider), "registerDocumentLinkProvider"),
-      registerColorProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_color_provider", Selector, Provider), "registerColorProvider"),
-      registerLinkedEditingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_linked_editing_range_provider", Selector, Provider), "registerLinkedEditingRangeProvider"),
-      registerCallHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_call_hierarchy_provider", Selector, Provider), "registerCallHierarchyProvider"),
-      registerTypeHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_type_hierarchy_provider", Selector, Provider), "registerTypeHierarchyProvider"),
-      registerEvaluatableExpressionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_evaluatable_expression_provider", Selector, Provider), "registerEvaluatableExpressionProvider"),
-      registerInlineValuesProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_inline_values_provider", Selector, Provider), "registerInlineValuesProvider"),
-      registerSignatureHelpProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_signature_help_provider", Selector, Provider), "registerSignatureHelpProvider"),
-      registerDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_document_highlight_provider", Selector, Provider), "registerDocumentHighlightProvider"),
-      registerCodeLensProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_code_lens_provider", Selector, Provider), "registerCodeLensProvider"),
-      registerRenameProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_rename_provider", Selector, Provider), "registerRenameProvider"),
-      registerFoldingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_folding_range_provider", Selector, Provider), "registerFoldingRangeProvider"),
-      registerSelectionRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_selection_range_provider", Selector, Provider), "registerSelectionRangeProvider"),
-      registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(Context, LanguageProviderRegistry, "register_semantic_tokens_provider", Selector, Provider), "registerDocumentSemanticTokensProvider"),
-      registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context, LanguageProviderRegistry, "register_inlay_hints_provider", Selector, Provider), "registerInlayHintsProvider"),
+      registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_hover_provider",
+        Selector,
+        Provider
+      ), "registerHoverProvider"),
+      registerCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider, ..._TriggerCharacters) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_completion_item_provider",
+        Selector,
+        Provider
+      ), "registerCompletionItemProvider"),
+      registerDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_definition_provider",
+        Selector,
+        Provider
+      ), "registerDefinitionProvider"),
+      registerReferenceProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_reference_provider",
+        Selector,
+        Provider
+      ), "registerReferenceProvider"),
+      registerCodeActionsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_code_actions_provider",
+        Selector,
+        Provider
+      ), "registerCodeActionsProvider"),
+      registerDocumentSymbolProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_document_symbol_provider",
+        Selector,
+        Provider
+      ), "registerDocumentSymbolProvider"),
+      registerDocumentFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_document_formatting_provider",
+        Selector,
+        Provider
+      ), "registerDocumentFormattingEditProvider"),
+      registerDocumentRangeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_document_range_formatting_provider",
+        Selector,
+        Provider
+      ), "registerDocumentRangeFormattingEditProvider"),
+      registerOnTypeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider, _FirstTrigger, ..._MoreTriggers) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_on_type_formatting_provider",
+        Selector,
+        Provider
+      ), "registerOnTypeFormattingEditProvider"),
+      registerTypeDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_type_definition_provider",
+        Selector,
+        Provider
+      ), "registerTypeDefinitionProvider"),
+      registerImplementationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_implementation_provider",
+        Selector,
+        Provider
+      ), "registerImplementationProvider"),
+      registerDeclarationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_declaration_provider",
+        Selector,
+        Provider
+      ), "registerDeclarationProvider"),
+      registerDocumentLinkProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_document_link_provider",
+        Selector,
+        Provider
+      ), "registerDocumentLinkProvider"),
+      registerColorProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_color_provider",
+        Selector,
+        Provider
+      ), "registerColorProvider"),
+      registerLinkedEditingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_linked_editing_range_provider",
+        Selector,
+        Provider
+      ), "registerLinkedEditingRangeProvider"),
+      registerCallHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_call_hierarchy_provider",
+        Selector,
+        Provider
+      ), "registerCallHierarchyProvider"),
+      registerTypeHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_type_hierarchy_provider",
+        Selector,
+        Provider
+      ), "registerTypeHierarchyProvider"),
+      registerEvaluatableExpressionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_evaluatable_expression_provider",
+        Selector,
+        Provider
+      ), "registerEvaluatableExpressionProvider"),
+      registerInlineValuesProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_inline_values_provider",
+        Selector,
+        Provider
+      ), "registerInlineValuesProvider"),
+      registerSignatureHelpProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_signature_help_provider",
+        Selector,
+        Provider
+      ), "registerSignatureHelpProvider"),
+      registerDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_document_highlight_provider",
+        Selector,
+        Provider
+      ), "registerDocumentHighlightProvider"),
+      registerCodeLensProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_code_lens_provider",
+        Selector,
+        Provider
+      ), "registerCodeLensProvider"),
+      registerRenameProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_rename_provider",
+        Selector,
+        Provider
+      ), "registerRenameProvider"),
+      registerFoldingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_folding_range_provider",
+        Selector,
+        Provider
+      ), "registerFoldingRangeProvider"),
+      registerSelectionRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_selection_range_provider",
+        Selector,
+        Provider
+      ), "registerSelectionRangeProvider"),
+      registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_semantic_tokens_provider",
+        Selector,
+        Provider
+      ), "registerDocumentSemanticTokensProvider"),
+      registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_inlay_hints_provider",
+        Selector,
+        Provider
+      ), "registerInlayHintsProvider"),
       createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
         const Owner = Name ?? "default";
         const Store = /* @__PURE__ */ new Map();
@@ -21593,7 +21812,10 @@ var init_LanguagesNamespace = __esm({
             }
             Context.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
-              [...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D }))
+              [...Store.entries()].map(([U, D]) => ({
+                uri: U,
+                diagnostics: D
+              }))
             ]).catch(() => {
             });
           }, "set"),
@@ -21601,16 +21823,19 @@ var init_LanguagesNamespace = __esm({
             Store.delete(String(Uri2));
             Context.MountainClient?.sendRequest("Diagnostic.Set", [
               Owner,
-              [...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D }))
+              [...Store.entries()].map(([U, D]) => ({
+                uri: U,
+                diagnostics: D
+              }))
             ]).catch(() => {
             });
           }, "delete"),
           clear: /* @__PURE__ */ __name(() => {
             Store.clear();
-            Context.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
-              () => {
-              }
-            );
+            Context.MountainClient?.sendRequest("Diagnostic.Clear", [
+              Owner
+            ]).catch(() => {
+            });
           }, "clear"),
           forEach: /* @__PURE__ */ __name((Callback) => {
             const Self = null;
@@ -21622,10 +21847,10 @@ var init_LanguagesNamespace = __esm({
           has: /* @__PURE__ */ __name((Uri2) => Store.has(String(Uri2)), "has"),
           dispose: /* @__PURE__ */ __name(() => {
             Store.clear();
-            Context.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
-              () => {
-              }
-            );
+            Context.MountainClient?.sendRequest("Diagnostic.Clear", [
+              Owner
+            ]).catch(() => {
+            });
           }, "dispose")
         };
       }, "createDiagnosticCollection"),
@@ -21664,12 +21889,16 @@ var init_LanguagesNamespace = __esm({
       }, "dispose") }), "registerDocumentDropEditProvider"),
       registerInlineCompletionItemProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
       }, "dispose") }), "registerInlineCompletionItemProvider"),
-      registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerInlineEditProvider"),
+      registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose")
+      }), "registerInlineEditProvider"),
       registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
       }, "dispose") }), "registerMultiDocumentHighlightProvider"),
-      registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerMappedEditsProvider")
+      registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose")
+      }), "registerMappedEditsProvider")
     }), "CreateLanguagesNamespace");
     LanguagesNamespace_default = CreateLanguagesNamespace;
   }
@@ -21680,48 +21909,75 @@ var ExtensionsNamespace_exports = {};
 __export(ExtensionsNamespace_exports, {
   default: () => ExtensionsNamespace_default
 });
-var MakePermissiveExports, ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
+var NoopDisposable, MakePermissiveExports, ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
 var init_ExtensionsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
     "use strict";
-    MakePermissiveExports = /* @__PURE__ */ __name(() => new Proxy(
-      {
-        enabled: true,
-        getAPI: /* @__PURE__ */ __name((_Version) => MakePermissiveExports(), "getAPI")
-      },
-      {
+    NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") };
+    MakePermissiveExports = /* @__PURE__ */ __name(() => {
+      const Base = {
+        enabled: true
+      };
+      return new Proxy(Base, {
         get(Target, Property) {
           if (Property in Target) {
             return Target[Property];
           }
-          if (typeof Property === "string") {
-            if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
-              return () => ({ dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose") });
-            }
-            if (Property === "then") return void 0;
+          if (typeof Property !== "string") {
+            return void 0;
           }
-          return () => void 0;
+          if (Property === "then") return void 0;
+          if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+            return (_Listener) => NoopDisposable;
+          }
+          if (Property.startsWith("register")) {
+            return (..._Args) => NoopDisposable;
+          }
+          if (Property.startsWith("get") || Property.startsWith("create")) {
+            return (..._Args) => MakePermissiveExports();
+          }
+          return (..._Args) => void 0;
         }
-      }
-    ), "MakePermissiveExports");
-    ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => ({
-      id: Id,
-      extensionUri: Raw?.extensionLocation ?? { scheme: "file", path: "", fsPath: "" },
-      extensionPath: Raw?.extensionLocation?.fsPath ?? Raw?.extensionLocation?.path ?? "",
-      isActive: Context.ActivatedExtensions.has(Id),
-      packageJSON: Raw,
-      extensionKind: 1,
-      exports: MakePermissiveExports(),
-      activate: /* @__PURE__ */ __name(async () => {
-      }, "activate")
-    }), "ToExtensionObject");
+      });
+    }, "MakePermissiveExports");
+    ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => {
+      const Exports = MakePermissiveExports();
+      return {
+        id: Id,
+        extensionUri: Raw?.extensionLocation ?? {
+          scheme: "file",
+          path: "",
+          fsPath: ""
+        },
+        extensionPath: Raw?.extensionLocation?.fsPath ?? Raw?.extensionLocation?.path ?? "",
+        // Reporting `isActive: true` mirrors VS Code's behaviour for
+        // built-ins that have completed activation; without it, callers
+        // like the `github` extension treat the extension as missing.
+        isActive: true,
+        packageJSON: Raw,
+        extensionKind: 1,
+        exports: Exports,
+        // Critical: `activate()` must resolve to the SAME exports object
+        // so consumers like `vscode.github` can chain
+        // `gitExtension.activate().then(api => api.onDidChangeEnablement(...))`.
+        activate: /* @__PURE__ */ __name(async () => Exports, "activate")
+      };
+    }, "ToExtensionObject");
     CreateExtensionsNamespace = /* @__PURE__ */ __name((Context) => ({
       getExtension: /* @__PURE__ */ __name((Identifier) => {
         const Raw = Context.ExtensionRegistry.get(Identifier);
         return Raw ? ToExtensionObject(Context, Identifier, Raw) : void 0;
       }, "getExtension"),
       get all() {
+        return [...Context.ExtensionRegistry.entries()].map(
+          ([Id, Raw]) => ToExtensionObject(Context, Id, Raw)
+        );
+      },
+      // Some extensions (html-language-features) iterate
+      // `extensions.allAcrossExtensionHosts`; return the same array as `all`
+      // so `for (...of...)` does not throw on `is not iterable`.
+      get allAcrossExtensionHosts() {
         return [...Context.ExtensionRegistry.entries()].map(
           ([Id, Raw]) => ToExtensionObject(Context, Id, Raw)
         );
@@ -21752,7 +22008,10 @@ var init_EnvNamespace = __esm({
       const Env = Context.ExtensionHostInitData?.environment ?? {};
       const Call2 = /* @__PURE__ */ __name(async (Method, Parameters) => {
         try {
-          return await Context.MountainClient?.sendRequest(Method, Parameters);
+          return await Context.MountainClient?.sendRequest(
+            Method,
+            Parameters
+          );
         } catch {
           return void 0;
         }
@@ -21854,9 +22113,12 @@ var init_DebugNamespace = __esm({
         });
         return {
           dispose: /* @__PURE__ */ __name(() => {
-            Context.SendToMountain("unregister_debug_configuration_provider", {
-              handle: Handle
-            }).catch(() => {
+            Context.SendToMountain(
+              "unregister_debug_configuration_provider",
+              {
+                handle: Handle
+              }
+            ).catch(() => {
             });
           }, "dispose")
         };
@@ -21865,11 +22127,10 @@ var init_DebugNamespace = __esm({
       }, "dispose") }), "registerDebugAdapterTrackerFactory"),
       startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
         try {
-          const Response = await Context.MountainClient?.sendRequest("Debug.Start", [
-            Folder,
-            NameOrConfig,
-            ParentSession
-          ]);
+          const Response = await Context.MountainClient?.sendRequest(
+            "Debug.Start",
+            [Folder, NameOrConfig, ParentSession]
+          );
           return Boolean(Response?.success);
         } catch {
           return false;
@@ -21907,14 +22168,17 @@ var init_DebugNamespace = __esm({
         Context,
         "debug.didReceiveCustomEvent"
       ),
-      onDidChangeBreakpoints: EventSubscriber2(Context, "debug.didChangeBreakpoints"),
+      onDidChangeBreakpoints: EventSubscriber2(
+        Context,
+        "debug.didChangeBreakpoints"
+      ),
       activeDebugSession: void 0,
       activeDebugConsole: {
         append: /* @__PURE__ */ __name((Value) => {
-          Context.SendToMountain("debug.consoleAppend", { value: Value }).catch(
-            () => {
-            }
-          );
+          Context.SendToMountain("debug.consoleAppend", {
+            value: Value
+          }).catch(() => {
+          });
         }, "append"),
         appendLine: /* @__PURE__ */ __name((Value) => {
           Context.SendToMountain("debug.consoleAppend", {
@@ -21968,9 +22232,10 @@ var init_TasksNamespace = __esm({
       }, "registerTaskProvider"),
       fetchTasks: /* @__PURE__ */ __name(async (Filter) => {
         try {
-          const Response = await Context.MountainClient?.sendRequest("Task.Fetch", [
-            Filter
-          ]);
+          const Response = await Context.MountainClient?.sendRequest(
+            "Task.Fetch",
+            [Filter]
+          );
           return Array.isArray(Response) ? Response : [];
         } catch {
           return [];
@@ -21978,7 +22243,9 @@ var init_TasksNamespace = __esm({
       }, "fetchTasks"),
       executeTask: /* @__PURE__ */ __name(async (Task3) => {
         try {
-          return await Context.MountainClient?.sendRequest("Task.Execute", [Task3]);
+          return await Context.MountainClient?.sendRequest("Task.Execute", [
+            Task3
+          ]);
         } catch {
           return void 0;
         }
@@ -22052,10 +22319,13 @@ var init_ScmNamespace = __esm({
                 });
               },
               dispose: /* @__PURE__ */ __name(() => {
-                Context.SendToMountain("unregister_scm_resource_group", {
-                  scm_handle: Handle,
-                  group_handle: GroupHandle
-                }).catch(() => {
+                Context.SendToMountain(
+                  "unregister_scm_resource_group",
+                  {
+                    scm_handle: Handle,
+                    group_handle: GroupHandle
+                  }
+                ).catch(() => {
                 });
                 Groups.delete(GroupId);
               }, "dispose")
@@ -22169,7 +22439,13 @@ function Unregister(Handle) {
 }
 __name(Unregister, "Unregister");
 function Get(Handle) {
-  return Callbacks.get(Handle);
+  const Provider = Callbacks.get(Handle);
+  if (process.env.LAND_DEV_LOG) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
 }
 __name(Get, "Get");
 var NextHandle = 1e4;
@@ -22261,7 +22537,10 @@ var HandleDeltaExtensions = /* @__PURE__ */ __name(async (Context, Parameters) =
     const Identifier = Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "unknown";
     Context.ExtensionRegistry.delete(Identifier);
   }
-  Context.Emitter.emit("deltaExtensions", { added: Added.length, removed: Removed.length });
+  Context.Emitter.emit("deltaExtensions", {
+    added: Added.length,
+    removed: Removed.length
+  });
   return {
     success: true,
     registrySize: Context.ExtensionRegistry.size
@@ -22294,20 +22573,28 @@ var HandleActivateByEvent = /* @__PURE__ */ __name(async (Context, Parameters) =
       `[ExtensionHostHandler] Available events: ${[...Context.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context.ActivationEventIndex.size > 10 ? ` (+${Context.ActivationEventIndex.size - 10} more)` : ""}`
     );
   }
-  const ToActivate = MatchingExtensions.filter((Id) => !Context.ActivatedExtensions.has(Id));
-  console.log(`[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`);
+  const ToActivate = MatchingExtensions.filter(
+    (Id) => !Context.ActivatedExtensions.has(Id)
+  );
+  console.log(
+    `[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`
+  );
   for (const ExtId of ToActivate) {
-    ActivateExtension(Context, ExtId, ActivationEvent).catch((Err) => {
-      const Msg = Err instanceof Error ? Err.message : String(Err);
-      console.warn(`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`);
-      if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
-        const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
+    ActivateExtension(Context, ExtId, ActivationEvent).catch(
+      (Err) => {
+        const Msg = Err instanceof Error ? Err.message : String(Err);
         console.warn(
-          `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
-${Stack}`
+          `[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`
         );
+        if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
+          const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
+          console.warn(
+            `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
+${Stack}`
+          );
+        }
       }
-    });
+    );
   }
   Context.Emitter.emit("activateByEvent", {
     event: ActivationEvent,
@@ -22515,7 +22802,9 @@ var InstallVscodeModuleHooks = /* @__PURE__ */ __name(async () => {
         // Fields
         "version"
       ];
-      const NamedExports = VscodeExportNames.map((Name) => `export const ${Name} = API.${Name};`).join("\n");
+      const NamedExports = VscodeExportNames.map(
+        (Name) => `export const ${Name} = API.${Name};`
+      ).join("\n");
       const BridgeSource = [
         "const API = globalThis.__cocoonVscodeAPI || {};",
         NamedExports,
@@ -22601,7 +22890,11 @@ var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
     };
     const API = {
       ...VsCodeTypes,
-      version: "1.88.0",
+      // Reported VS Code version — must satisfy every built-in
+      // extension's `engines.vscode` constraint. `vscode-languageclient`
+      // currently requires `^1.91.0`; bumping above that lets
+      // css/html/json/markdown-language-features activate.
+      version: "1.95.0",
       Uri: URI2,
       CancellationTokenSource: CancellationTokenSource2,
       CancellationError: CancellationError2,
@@ -22609,14 +22902,20 @@ var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
       LogLevel: LogLevelEnum,
       OverviewRulerLane,
       // Namespaces — each in its own file under VscodeAPI/
-      window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(Context),
+      window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(
+        Context
+      ),
       workspace: (await Promise.resolve().then(() => (init_WorkspaceNamespace(), WorkspaceNamespace_exports))).default(Context),
       commands: (await Promise.resolve().then(() => (init_CommandsNamespace(), CommandsNamespace_exports))).default(Context, LanguageProviderRegistry_exports),
       languages: (await Promise.resolve().then(() => (init_LanguagesNamespace(), LanguagesNamespace_exports))).default(Context, LanguageProviderRegistry_exports),
       extensions: (await Promise.resolve().then(() => (init_ExtensionsNamespace(), ExtensionsNamespace_exports))).default(Context),
       env: (await Promise.resolve().then(() => (init_EnvNamespace(), EnvNamespace_exports))).default(Context),
-      debug: (await Promise.resolve().then(() => (init_DebugNamespace(), DebugNamespace_exports))).default(Context),
-      tasks: (await Promise.resolve().then(() => (init_TasksNamespace(), TasksNamespace_exports))).default(Context),
+      debug: (await Promise.resolve().then(() => (init_DebugNamespace(), DebugNamespace_exports))).default(
+        Context
+      ),
+      tasks: (await Promise.resolve().then(() => (init_TasksNamespace(), TasksNamespace_exports))).default(
+        Context
+      ),
       scm: (await Promise.resolve().then(() => (init_ScmNamespace(), ScmNamespace_exports))).default(Context),
       authentication: (await Promise.resolve().then(() => (init_AuthenticationNamespace(), AuthenticationNamespace_exports))).default(Context),
       // Lightweight stub namespaces — no Mountain route yet, returns
@@ -22625,10 +22924,13 @@ var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
         t: /* @__PURE__ */ __name((Message, ...Arguments) => {
           const Raw = typeof Message === "string" ? Message : Message?.message ?? String(Message);
           if (!Arguments.length) return Raw;
-          return Raw.replace(/\{(\d+)\}/g, (_Match, Index) => {
-            const Replacement = Arguments[Number(Index)];
-            return Replacement === void 0 ? "" : String(Replacement);
-          });
+          return Raw.replace(
+            /\{(\d+)\}/g,
+            (_Match, Index) => {
+              const Replacement = Arguments[Number(Index)];
+              return Replacement === void 0 ? "" : String(Replacement);
+            }
+          );
         }, "t"),
         bundle: void 0,
         uri: void 0
@@ -22666,8 +22968,10 @@ var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
           updateNotebookAffinity: /* @__PURE__ */ __name(() => {
           }, "updateNotebookAffinity")
         }), "createNotebookController"),
-        registerNotebookCellStatusBarItemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerNotebookCellStatusBarItemProvider"),
+        registerNotebookCellStatusBarItemProvider: /* @__PURE__ */ __name(() => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerNotebookCellStatusBarItemProvider"),
         registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerNotebookSerializer"),
         registerRendererCommunication: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -22677,8 +22981,10 @@ var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
           onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
           }, "dispose") }), "onDidReceiveMessage")
         }), "createRendererMessaging"),
-        onDidChangeNotebookCellExecutionState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeNotebookCellExecutionState")
+        onDidChangeNotebookCellExecutionState: /* @__PURE__ */ __name(() => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "onDidChangeNotebookCellExecutionState")
       },
       lm: {
         registerTool: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -22719,11 +23025,18 @@ var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
         createTestController: /* @__PURE__ */ __name(() => ({
           id: "",
           label: "",
-          items: { size: 0, replace: /* @__PURE__ */ __name(() => {
-          }, "replace"), forEach: /* @__PURE__ */ __name(() => {
-          }, "forEach"), add: /* @__PURE__ */ __name(() => {
-          }, "add"), delete: /* @__PURE__ */ __name(() => {
-          }, "delete"), get: /* @__PURE__ */ __name(() => void 0, "get") },
+          items: {
+            size: 0,
+            replace: /* @__PURE__ */ __name(() => {
+            }, "replace"),
+            forEach: /* @__PURE__ */ __name(() => {
+            }, "forEach"),
+            add: /* @__PURE__ */ __name(() => {
+            }, "add"),
+            delete: /* @__PURE__ */ __name(() => {
+            }, "delete"),
+            get: /* @__PURE__ */ __name(() => void 0, "get")
+          },
           createRunProfile: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
           }, "dispose") }), "createRunProfile"),
           resolveHandler: void 0,
@@ -22746,8 +23059,13 @@ var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
             }, "end"),
             appendOutput: /* @__PURE__ */ __name(() => {
             }, "appendOutput"),
-            token: { isCancellationRequested: false, onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onCancellationRequested") }
+            token: {
+              isCancellationRequested: false,
+              onCancellationRequested: /* @__PURE__ */ __name(() => ({
+                dispose: /* @__PURE__ */ __name(() => {
+                }, "dispose")
+              }), "onCancellationRequested")
+            }
           }), "createTestRun"),
           dispose: /* @__PURE__ */ __name(() => {
           }, "dispose")
@@ -22777,14 +23095,18 @@ var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
         }), "createCommentController")
       },
       interactive: {
-        registerInteractiveEditorSessionProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerInteractiveEditorSessionProvider"),
+        registerInteractiveEditorSessionProvider: /* @__PURE__ */ __name(() => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerInteractiveEditorSessionProvider"),
         transferActiveChat: /* @__PURE__ */ __name(async () => {
         }, "transferActiveChat")
       }
     };
     globalThis.__cocoonVscodeAPI = API;
-    console.log("[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI");
+    console.log(
+      "[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI"
+    );
     const CriticalNames = [
       "Diagnostic",
       "CodeAction",
@@ -22836,7 +23158,10 @@ var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, Acti
   }
   let ExtensionPath;
   try {
-    ExtensionPath = new URL(String(LocationRaw)).pathname.replace(/\/$/, "");
+    ExtensionPath = new URL(String(LocationRaw)).pathname.replace(
+      /\/$/,
+      ""
+    );
   } catch {
     ExtensionPath = String(LocationRaw).replace(/^file:\/\//, "").replace(/\/$/, "");
   }
@@ -22868,7 +23193,11 @@ var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, Acti
     }
     const ActivateFn = typeof ExtModule?.activate === "function" ? ExtModule.activate : typeof ExtModule?.default?.activate === "function" ? ExtModule.default.activate : void 0;
     if (typeof ActivateFn === "function") {
-      const ExtContext = CreateExtensionContext(Context, Extension, ExtensionPath);
+      const ExtContext = CreateExtensionContext(
+        Context,
+        Extension,
+        ExtensionPath
+      );
       await ActivateFn(ExtContext);
       console.log(
         `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`
@@ -22905,19 +23234,30 @@ var CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, Extensi
       "utf8"
     );
     const Parsed = JSON.parse(Contents);
-    FullPackageJSON = { ...Parsed, ...Extension };
+    FullPackageJSON = {
+      ...Parsed,
+      ...Extension
+    };
   } catch {
   }
-  const MakeUri = /* @__PURE__ */ __name((Path) => ({
-    scheme: "file",
-    path: Path,
-    fsPath: Path,
-    authority: "",
-    query: "",
-    fragment: "",
-    with: /* @__PURE__ */ __name(() => ({}), "with"),
-    toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString")
-  }), "MakeUri");
+  const VsCodeUri = globalThis.__cocoonVscodeAPI?.Uri;
+  const MakeUri = /* @__PURE__ */ __name((Path) => {
+    if (VsCodeUri && typeof VsCodeUri.file === "function") {
+      return VsCodeUri.file(Path);
+    }
+    return {
+      scheme: "file",
+      path: Path,
+      fsPath: Path,
+      authority: "",
+      query: "",
+      fragment: "",
+      with: /* @__PURE__ */ __name(function(Change) {
+        return { ...this, ...Change };
+      }, "with"),
+      toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString")
+    };
+  }, "MakeUri");
   return {
     subscriptions: [],
     extensionPath: ExtensionPath,
@@ -22948,20 +23288,29 @@ var CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, Extensi
     secrets: {
       get: /* @__PURE__ */ __name(async (Key) => {
         try {
-          return await Context.MountainClient?.sendRequest("secrets.get", { key: Key });
+          return await Context.MountainClient?.sendRequest(
+            "secrets.get",
+            { key: Key }
+          );
         } catch {
           return void 0;
         }
       }, "get"),
       store: /* @__PURE__ */ __name(async (Key, Value) => {
         try {
-          await Context.MountainClient?.sendRequest("secrets.store", { key: Key, value: Value });
+          await Context.MountainClient?.sendRequest("secrets.store", {
+            key: Key,
+            value: Value
+          });
         } catch {
         }
       }, "store"),
       delete: /* @__PURE__ */ __name(async (Key) => {
         try {
-          await Context.MountainClient?.sendRequest("secrets.delete", { key: Key });
+          await Context.MountainClient?.sendRequest(
+            "secrets.delete",
+            { key: Key }
+          );
         } catch {
         }
       }, "delete"),
@@ -22997,7 +23346,11 @@ var CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, Extensi
     // ExtensionMode.Production
     extension: {
       id: ExtId,
-      extensionUri: { scheme: "file", path: ExtensionPath, fsPath: ExtensionPath },
+      extensionUri: {
+        scheme: "file",
+        path: ExtensionPath,
+        fsPath: ExtensionPath
+      },
       extensionPath: ExtensionPath,
       isActive: true,
       packageJSON: FullPackageJSON,

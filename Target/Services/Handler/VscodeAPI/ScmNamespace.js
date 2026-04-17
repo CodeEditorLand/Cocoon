@@ -52,10 +52,13 @@ var CreateScmNamespace = /* @__PURE__ */ __name((Context) => ({
             });
           },
           dispose: /* @__PURE__ */ __name(() => {
-            Context.SendToMountain("unregister_scm_resource_group", {
-              scm_handle: Handle,
-              group_handle: GroupHandle
-            }).catch(() => {
+            Context.SendToMountain(
+              "unregister_scm_resource_group",
+              {
+                scm_handle: Handle,
+                group_handle: GroupHandle
+              }
+            ).catch(() => {
             });
             Groups.delete(GroupId);
           }, "dispose")

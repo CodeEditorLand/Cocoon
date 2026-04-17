@@ -45,7 +45,13 @@ export function Unregister(Handle: number): void {
  * Called by GRPCServerService when Mountain invokes a provider.
  */
 export function Get(Handle: number): ProviderObject | undefined {
-	return Callbacks.get(Handle);
+	const Provider = Callbacks.get(Handle);
+	if (process.env.LAND_DEV_LOG) {
+		console.warn(
+			`[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`,
+		);
+	}
+	return Provider;
 }
 
 /**

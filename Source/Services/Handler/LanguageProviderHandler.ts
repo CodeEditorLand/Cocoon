@@ -18,7 +18,9 @@ import * as LanguageProviderRegistry from "../LanguageProviderRegistry.js";
  * Normalize a VS Code range { start: { line, character }, end: {...} } to
  * Mountain's RangeDTO { StartLineNumber, StartColumn, EndLineNumber, EndColumn }.
  */
-const NormalizeRange = (VsRange: any): {
+const NormalizeRange = (
+	VsRange: any,
+): {
 	StartLineNumber: number;
 	StartColumn: number;
 	EndLineNumber: number;
@@ -71,9 +73,8 @@ const BuildVsDocument = async (
 	LanguageIdentifier: string,
 	DocumentContentCache: Map<string, string>,
 ): Promise<any> => {
-	const { Position, Range } = await import(
-		"@codeeditorland/output/vs/workbench/api/common/extHostTypes"
-	);
+	const { Position, Range } =
+		await import("@codeeditorland/output/vs/workbench/api/common/extHostTypes");
 
 	let CachedContent: string | null = null;
 	let CachedLines: string[] | null = null;
@@ -126,13 +127,15 @@ const BuildVsDocument = async (
 			const StartLine = _range?.start?.line ?? 0;
 			const StartChar = _range?.start?.character ?? 0;
 			const EndLine = _range?.end?.line ?? Lines.length - 1;
-			const EndChar = _range?.end?.character ?? (Lines[EndLine]?.length ?? 0);
+			const EndChar =
+				_range?.end?.character ?? Lines[EndLine]?.length ?? 0;
 			if (StartLine === EndLine) {
 				return (Lines[StartLine] ?? "").substring(StartChar, EndChar);
 			}
 			const Result: string[] = [];
 			Result.push((Lines[StartLine] ?? "").substring(StartChar));
-			for (let I = StartLine + 1; I < EndLine; I++) Result.push(Lines[I] ?? "");
+			for (let I = StartLine + 1; I < EndLine; I++)
+				Result.push(Lines[I] ?? "");
 			Result.push((Lines[EndLine] ?? "").substring(0, EndChar));
 			return Result.join("\n");
 		},
@@ -149,11 +152,14 @@ const BuildVsDocument = async (
 				lineNumber: LineNum,
 				range: new Range(LineNum, 0, LineNum, LineText.length),
 				rangeIncludingLineBreak: new Range(LineNum, 0, LineNum + 1, 0),
-				firstNonWhitespaceCharacterIndex: FirstNonWS === -1 ? LineText.length : FirstNonWS,
+				firstNonWhitespaceCharacterIndex:
+					FirstNonWS === -1 ? LineText.length : FirstNonWS,
 				isEmptyOrWhitespace: LineText.trim().length === 0,
 			};
 		},
-		get lineCount() { return GetLines().length; },
+		get lineCount() {
+			return GetLines().length;
+		},
 		offsetAt: (Pos: any) => {
 			const Lines = GetLines();
 			let Offset = 0;
@@ -172,7 +178,10 @@ const BuildVsDocument = async (
 				}
 				Remaining -= Lines[I].length + 1;
 			}
-			return new Position(Lines.length - 1, (Lines[Lines.length - 1] ?? "").length);
+			return new Position(
+				Lines.length - 1,
+				(Lines[Lines.length - 1] ?? "").length,
+			);
 		},
 		validateRange: (R: any) => R,
 		validatePosition: (P: any) => P,
@@ -185,8 +194,16 @@ const BuildVsDocument = async (
 			// Reset regex for global patterns
 			Regex.lastIndex = 0;
 			while ((Match = Regex.exec(Line)) !== null) {
-				if (Match.index <= Col && Match.index + Match[0].length >= Col) {
-					return new Range(Pos.line, Match.index, Pos.line, Match.index + Match[0].length);
+				if (
+					Match.index <= Col &&
+					Match.index + Match[0].length >= Col
+				) {
+					return new Range(
+						Pos.line,
+						Match.index,
+						Pos.line,
+						Match.index + Match[0].length,
+					);
 				}
 			}
 			return undefined;
@@ -211,9 +228,7 @@ const InvokeLanguageProvider = async (
 	Parameters: any,
 	DocumentContentCache: Map<string, string>,
 ): Promise<any> => {
-	const Args: any[] = Array.isArray(Parameters)
-		? Parameters
-		: [Parameters];
+	const Args: any[] = Array.isArray(Parameters) ? Parameters : [Parameters];
 
 	const Handle: number = Args[0];
 	const Provider = LanguageProviderRegistry.Get(Handle);
@@ -244,20 +259,23 @@ const InvokeLanguageProvider = async (
 	const PosChar = RawPos?.Character ?? RawPos?.character ?? 0;
 
 	// Real VS Code Position class from @codeeditorland/output.
-	const { Position } = await import(
-		"@codeeditorland/output/vs/workbench/api/common/extHostTypes"
-	);
+	const { Position } =
+		await import("@codeeditorland/output/vs/workbench/api/common/extHostTypes");
 	const VsPosition = new Position(PosLine, PosChar);
 
 	const Ext = UriString.split(".").pop() ?? "";
 	const LangId = ResolveLanguageIdentifier(Ext);
 	const FsPath = UriString.replace(/^file:\/\//, "");
 
-	const VsDocument = await BuildVsDocument(UriString, FsPath, LangId, DocumentContentCache);
-
-	const { CancellationTokenSource } = await import(
-		"@codeeditorland/output/vs/base/common/cancellation"
+	const VsDocument = await BuildVsDocument(
+		UriString,
+		FsPath,
+		LangId,
+		DocumentContentCache,
 	);
+
+	const { CancellationTokenSource } =
+		await import("@codeeditorland/output/vs/base/common/cancellation");
 	const VsToken = new CancellationTokenSource().token;
 
 	const Context = Args[3];
@@ -265,11 +283,21 @@ const InvokeLanguageProvider = async (
 	try {
 		switch (Method) {
 			case "$provideHover": {
+				if (process.env.LAND_DEV_LOG) {
+					console.warn(
+						`[DEV:EXTHOST] provideHover dispatch uri=${UriString} line=${VsPosition?.line} char=${VsPosition?.character} providerHasMethod=${typeof (Provider as any).provideHover === "function"}`,
+					);
+				}
 				const Result = await (Provider as any).provideHover?.(
 					VsDocument,
 					VsPosition,
 					VsToken,
 				);
+				if (process.env.LAND_DEV_LOG) {
+					console.warn(
+						`[DEV:EXTHOST] provideHover result kind=${Result ? (Array.isArray(Result.contents) ? `array(${Result.contents.length})` : typeof Result.contents) : "null"}`,
+					);
+				}
 				if (!Result) return null;
 				// Normalize VS Code Hover { contents, range? } to
 				// Mountain HoverResultDTO { Contents: IMarkdownStringDTO[], Range? }
@@ -310,16 +338,13 @@ const InvokeLanguageProvider = async (
 			// Mountain sends "$provideCompletion" (Debug fmt of ProviderType::Completion)
 			case "$provideCompletion":
 			case "$provideCompletions": {
-				const Result = await (
-					Provider as any
-				).provideCompletionItems?.(
+				const Result = await (Provider as any).provideCompletionItems?.(
 					VsDocument,
 					VsPosition,
 					VsToken,
 					Context,
 				);
-				if (!Result)
-					return { Suggestions: [], IsIncomplete: false };
+				if (!Result) return { Suggestions: [], IsIncomplete: false };
 				const RawItems = Array.isArray(Result)
 					? Result
 					: (Result.items ?? []);
@@ -360,9 +385,7 @@ const InvokeLanguageProvider = async (
 				// Shape: Vec<LocationDTO> { Uri: string, Range: RangeDTO }
 				return Locations.map((L: any) => ({
 					Uri: (L.uri ?? L.targetUri)?.toString?.() ?? UriString,
-					Range: NormalizeRange(
-						L.range ?? L.targetSelectionRange,
-					),
+					Range: NormalizeRange(L.range ?? L.targetSelectionRange),
 				}));
 			}
 
@@ -399,20 +422,17 @@ const InvokeLanguageProvider = async (
 			case "$provideDocumentHighlights": {
 				const Result = await (
 					Provider as any
-				).provideDocumentHighlights?.(
-					VsDocument,
-					VsPosition,
-					VsToken,
-				);
+				).provideDocumentHighlights?.(VsDocument, VsPosition, VsToken);
 				return Result ?? null;
 			}
 
 			// Mountain sends "$provideDocumentSymbol" (ProviderType::DocumentSymbol)
 			case "$provideDocumentSymbol":
 			case "$provideDocumentSymbols": {
-				const Result = await (
-					Provider as any
-				).provideDocumentSymbols?.(VsDocument, VsToken);
+				const Result = await (Provider as any).provideDocumentSymbols?.(
+					VsDocument,
+					VsToken,
+				);
 				return Result ?? null;
 			}
 
@@ -448,9 +468,7 @@ const InvokeLanguageProvider = async (
 			}
 
 			case "$provideSignatureHelp": {
-				const Result = await (
-					Provider as any
-				).provideSignatureHelp?.(
+				const Result = await (Provider as any).provideSignatureHelp?.(
 					VsDocument,
 					VsPosition,
 					VsToken,
@@ -475,9 +493,11 @@ const InvokeLanguageProvider = async (
 			// Mountain sends "$provideFoldingRange" (ProviderType::FoldingRange)
 			case "$provideFoldingRange":
 			case "$provideFoldingRanges": {
-				const Result = await (
-					Provider as any
-				).provideFoldingRanges?.(VsDocument, Context, VsToken);
+				const Result = await (Provider as any).provideFoldingRanges?.(
+					VsDocument,
+					Context,
+					VsToken,
+				);
 				return Result ?? null;
 			}
 
@@ -507,7 +527,9 @@ const InvokeLanguageProvider = async (
 			case "$provideOnTypeFormattingEdits": {
 				const TypeChar = Args[2] as string;
 				const TypeOptions = Args[3];
-				const Result = await (Provider as any).provideOnTypeFormattingEdits?.(
+				const Result = await (
+					Provider as any
+				).provideOnTypeFormattingEdits?.(
 					VsDocument,
 					VsPosition,
 					TypeChar,
@@ -522,7 +544,15 @@ const InvokeLanguageProvider = async (
 				const Positions = Args[2];
 				const Result = await (Provider as any).provideSelectionRanges?.(
 					VsDocument,
-					Array.isArray(Positions) ? Positions.map((P: any) => new Position(P?.line ?? P?.Line ?? 0, P?.character ?? P?.Character ?? 0)) : [VsPosition],
+					Array.isArray(Positions)
+						? Positions.map(
+								(P: any) =>
+									new Position(
+										P?.line ?? P?.Line ?? 0,
+										P?.character ?? P?.Character ?? 0,
+									),
+							)
+						: [VsPosition],
 					VsToken,
 				);
 				return Result ?? null;
@@ -530,58 +560,51 @@ const InvokeLanguageProvider = async (
 
 			case "$provideSemanticTokens":
 			case "$provideSemanticTokensFull": {
-				const Result = await (Provider as any).provideDocumentSemanticTokens?.(
-					VsDocument,
-					VsToken,
-				);
+				const Result = await (
+					Provider as any
+				).provideDocumentSemanticTokens?.(VsDocument, VsToken);
 				return Result ?? null;
 			}
 
 			case "$provideCallHierarchy":
 			case "$provideCallHierarchyIncomingCalls": {
 				const Item = Args[1];
-				const Result = await (Provider as any).provideCallHierarchyIncomingCalls?.(
-					Item,
-					VsToken,
-				);
+				const Result = await (
+					Provider as any
+				).provideCallHierarchyIncomingCalls?.(Item, VsToken);
 				return Result ?? null;
 			}
 
 			case "$provideCallHierarchyOutgoingCalls": {
 				const Item = Args[1];
-				const Result = await (Provider as any).provideCallHierarchyOutgoingCalls?.(
-					Item,
-					VsToken,
-				);
+				const Result = await (
+					Provider as any
+				).provideCallHierarchyOutgoingCalls?.(Item, VsToken);
 				return Result ?? null;
 			}
 
 			case "$provideTypeHierarchy":
 			case "$provideTypeHierarchySupertypes": {
 				const Item = Args[1];
-				const Result = await (Provider as any).provideTypeHierarchySupertypes?.(
-					Item,
-					VsToken,
-				);
+				const Result = await (
+					Provider as any
+				).provideTypeHierarchySupertypes?.(Item, VsToken);
 				return Result ?? null;
 			}
 
 			case "$provideTypeHierarchySubtypes": {
 				const Item = Args[1];
-				const Result = await (Provider as any).provideTypeHierarchySubtypes?.(
-					Item,
-					VsToken,
-				);
+				const Result = await (
+					Provider as any
+				).provideTypeHierarchySubtypes?.(Item, VsToken);
 				return Result ?? null;
 			}
 
 			case "$provideLinkedEditingRange":
 			case "$provideLinkedEditingRanges": {
-				const Result = await (Provider as any).provideLinkedEditingRanges?.(
-					VsDocument,
-					VsPosition,
-					VsToken,
-				);
+				const Result = await (
+					Provider as any
+				).provideLinkedEditingRanges?.(VsDocument, VsPosition, VsToken);
 				return Result ?? null;
 			}
 

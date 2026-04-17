@@ -5,7 +5,7 @@
  * Manages PTY processes via Mountain.
  */
 
-import { Effect, Layer, Context} from "effect";
+import { Context, Effect, Layer } from "effect";
 
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
 

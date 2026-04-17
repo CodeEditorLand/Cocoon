@@ -404,11 +404,22 @@ export class WindowService extends Effect.Service<WindowService>()(
 					const mountainClient = yield* MountainGRPCClientService;
 
 					const InfoResponse = yield* Effect.tryPromise({
-						try: () => mountainClient.sendRequest("showInformation", { message: Message, items: Items.length > 0 ? Items : undefined }),
+						try: () =>
+							mountainClient.sendRequest("showInformation", {
+								message: Message,
+								items: Items.length > 0 ? Items : undefined,
+							}),
 						catch: () => null,
 					});
 					const InfoSelected = (InfoResponse as any)?.selectedItem;
-					return InfoSelected ? Items.find((I) => (typeof I === "string" ? I : (I as any).title) === InfoSelected) ?? undefined : undefined;
+					return InfoSelected
+						? (Items.find(
+								(I) =>
+									(typeof I === "string"
+										? I
+										: (I as any).title) === InfoSelected,
+							) ?? undefined)
+						: undefined;
 				});
 
 			/**
@@ -440,11 +451,22 @@ export class WindowService extends Effect.Service<WindowService>()(
 					const mountainClient = yield* MountainGRPCClientService;
 
 					const WarnResponse = yield* Effect.tryPromise({
-						try: () => mountainClient.sendRequest("showWarning", { message: Message, items: Items.length > 0 ? Items : undefined }),
+						try: () =>
+							mountainClient.sendRequest("showWarning", {
+								message: Message,
+								items: Items.length > 0 ? Items : undefined,
+							}),
 						catch: () => null,
 					});
 					const WarnSelected = (WarnResponse as any)?.selectedItem;
-					return WarnSelected ? Items.find((I) => (typeof I === "string" ? I : (I as any).title) === WarnSelected) ?? undefined : undefined;
+					return WarnSelected
+						? (Items.find(
+								(I) =>
+									(typeof I === "string"
+										? I
+										: (I as any).title) === WarnSelected,
+							) ?? undefined)
+						: undefined;
 				});
 
 			/**
@@ -476,11 +498,22 @@ export class WindowService extends Effect.Service<WindowService>()(
 					const mountainClient = yield* MountainGRPCClientService;
 
 					const ErrorResponse = yield* Effect.tryPromise({
-						try: () => mountainClient.sendRequest("showError", { message: Message, items: Items.length > 0 ? Items : undefined }),
+						try: () =>
+							mountainClient.sendRequest("showError", {
+								message: Message,
+								items: Items.length > 0 ? Items : undefined,
+							}),
 						catch: () => null,
 					});
 					const ErrorSelected = (ErrorResponse as any)?.selectedItem;
-					return ErrorSelected ? Items.find((I) => (typeof I === "string" ? I : (I as any).title) === ErrorSelected) ?? undefined : undefined;
+					return ErrorSelected
+						? (Items.find(
+								(I) =>
+									(typeof I === "string"
+										? I
+										: (I as any).title) === ErrorSelected,
+							) ?? undefined)
+						: undefined;
 				});
 
 			/**
@@ -795,25 +828,33 @@ export class WindowService extends Effect.Service<WindowService>()(
 						get tooltip() {
 							return State.tooltip;
 						},
-						set tooltip(value: string | VSCode.MarkdownString | undefined) {
+						set tooltip(
+							value: string | VSCode.MarkdownString | undefined,
+						) {
 							State.tooltip = value;
 						},
 						get command() {
 							return State.command;
 						},
-						set command(value: string | VSCode.Command | undefined) {
+						set command(
+							value: string | VSCode.Command | undefined,
+						) {
 							State.command = value;
 						},
 						get backgroundColor() {
 							return State.backgroundColor;
 						},
-						set backgroundColor(value: string | VSCode.ThemeColor | undefined) {
+						set backgroundColor(
+							value: string | VSCode.ThemeColor | undefined,
+						) {
 							State.backgroundColor = value;
 						},
 						get color() {
 							return State.color;
 						},
-						set color(value: string | VSCode.ThemeColor | undefined) {
+						set color(
+							value: string | VSCode.ThemeColor | undefined,
+						) {
 							State.color = value;
 						},
 						show(): void {
@@ -868,30 +909,55 @@ export class WindowService extends Effect.Service<WindowService>()(
 
 					// Notify Mountain to create the output channel (Sky renders it)
 					yield* Effect.tryPromise({
-						try: () => MountainClient.sendNotification("output.create", { id: ChannelId, name: Name }),
-						catch: () => new Error("Failed to create output channel"),
+						try: () =>
+							MountainClient.sendNotification("output.create", {
+								id: ChannelId,
+								name: Name,
+							}),
+						catch: () =>
+							new Error("Failed to create output channel"),
 					});
 
 					// Return output channel proxy
 					return yield* Effect.succeed({
 						name: Name,
 						append(value: string): void {
-							MountainClient.sendNotification("output.append", { channel: ChannelId, value }).catch(() => {});
+							MountainClient.sendNotification("output.append", {
+								channel: ChannelId,
+								value,
+							}).catch(() => {});
 						},
 						appendLine(value: string): void {
-							MountainClient.sendNotification("output.appendLine", { channel: ChannelId, value }).catch(() => {});
+							MountainClient.sendNotification(
+								"output.appendLine",
+								{ channel: ChannelId, value },
+							).catch(() => {});
 						},
 						clear(): void {
-							MountainClient.sendNotification("output.clear", { channel: ChannelId }).catch(() => {});
+							MountainClient.sendNotification("output.clear", {
+								channel: ChannelId,
+							}).catch(() => {});
 						},
-						show(_columnOrPreserveFocus?: boolean | VSCode.ViewColumn, _preserveFocus?: boolean): void {
-							MountainClient.sendNotification("output.show", { channel: ChannelId }).catch(() => {});
+						show(
+							_columnOrPreserveFocus?:
+								| boolean
+								| VSCode.ViewColumn,
+							_preserveFocus?: boolean,
+						): void {
+							MountainClient.sendNotification("output.show", {
+								channel: ChannelId,
+							}).catch(() => {});
 						},
 						hide(): void {
-							MountainClient.sendNotification("output.show", { channel: ChannelId, visible: false }).catch(() => {});
+							MountainClient.sendNotification("output.show", {
+								channel: ChannelId,
+								visible: false,
+							}).catch(() => {});
 						},
 						dispose(): void {
-							MountainClient.sendNotification("output.dispose", { channel: ChannelId }).catch(() => {});
+							MountainClient.sendNotification("output.dispose", {
+								channel: ChannelId,
+							}).catch(() => {});
 						},
 					} as VSCode.OutputChannel);
 				});
@@ -1007,13 +1073,24 @@ export class WindowService extends Effect.Service<WindowService>()(
 					};
 
 					const IPCProxy: IPC = {
-						SendNotification: (method: string, params: unknown[]) => {
+						SendNotification: (
+							method: string,
+							params: unknown[],
+						) => {
 							return Effect.gen(function* () {
-								yield* Logger.Debug(`[WindowService] Webview notification: ${method}`);
-								MountainClient.sendNotification("webview.postMessage", { panelId: PanelId, method, params }).catch(() => {});
+								yield* Logger.Debug(
+									`[WindowService] Webview notification: ${method}`,
+								);
+								MountainClient.sendNotification(
+									"webview.postMessage",
+									{ panelId: PanelId, method, params },
+								).catch(() => {});
 							});
 						},
-						SendRequest: <T>(_method: string, _params: unknown[]): Effect.Effect<T, Error> => {
+						SendRequest: <T>(
+							_method: string,
+							_params: unknown[],
+						): Effect.Effect<T, Error> => {
 							return Effect.gen(function* () {
 								// Webview sendRequest is fire-and-forget from extension side; Sky resolves via onDidReceiveMessage
 								return undefined as T;
@@ -1029,7 +1106,9 @@ export class WindowService extends Effect.Service<WindowService>()(
 						() => {
 							// Dispose callback
 							// Notify Mountain to destroy the webview panel
-							MountainClient.sendNotification("webview.dispose", { panelId: PanelId }).catch(() => {});
+							MountainClient.sendNotification("webview.dispose", {
+								panelId: PanelId,
+							}).catch(() => {});
 						},
 						ViewType,
 						Title,
@@ -1080,17 +1159,28 @@ export class WindowService extends Effect.Service<WindowService>()(
 						message?: string;
 						increment?: number;
 					}> = {
-						report(value: { message?: string; increment?: number }): void {
-							MountainClient.sendNotification("progress.update", { id: ProgressId, message: value.message, increment: value.increment }).catch(() => {});
+						report(value: {
+							message?: string;
+							increment?: number;
+						}): void {
+							MountainClient.sendNotification("progress.update", {
+								id: ProgressId,
+								message: value.message,
+								increment: value.increment,
+							}).catch(() => {});
 						},
 					};
 
 					// Send progress start notification to Mountain
 					// Notify Mountain to show progress indicator
 					yield* Effect.tryPromise({
-						try: () => MountainClient.sendNotification("progress.start", {
-							id: ProgressId, location: Options.location, title: Options.title, cancellable: Options.cancellable ?? false,
-						}),
+						try: () =>
+							MountainClient.sendNotification("progress.start", {
+								id: ProgressId,
+								location: Options.location,
+								title: Options.title,
+								cancellable: Options.cancellable ?? false,
+							}),
 						catch: () => new Error("Failed to start progress"),
 					});
 
@@ -1107,7 +1197,11 @@ export class WindowService extends Effect.Service<WindowService>()(
 					// Send progress complete notification to Mountain
 					// Notify Mountain to hide progress indicator
 					yield* Effect.tryPromise({
-						try: () => MountainClient.sendNotification("progress.complete", { id: ProgressId }),
+						try: () =>
+							MountainClient.sendNotification(
+								"progress.complete",
+								{ id: ProgressId },
+							),
 						catch: () => new Error("Failed to complete progress"),
 					});
 

@@ -16,7 +16,10 @@ const EventSubscriber =
 		Context.WorkspaceEventEmitter.on(EventName, Listener);
 		return {
 			dispose: () => {
-				Context.WorkspaceEventEmitter.removeListener(EventName, Listener);
+				Context.WorkspaceEventEmitter.removeListener(
+					EventName,
+					Listener,
+				);
 			},
 		};
 	};
@@ -27,22 +30,22 @@ const Call = async <T>(
 	Parameters: unknown,
 ): Promise<T | undefined> => {
 	try {
-		return (await Context.MountainClient?.sendRequest(Method, Parameters)) as
-			| T
-			| undefined;
+		return (await Context.MountainClient?.sendRequest(
+			Method,
+			Parameters,
+		)) as T | undefined;
 	} catch {
 		return undefined;
 	}
 };
 
 const CreateWorkspaceNamespace = (Context: HandlerContext) => {
-	const InitWorkspace =
-		(Context.ExtensionHostInitData?.workspace ??
-			Context.ExtensionHostInitData?.workspaceData ??
-			{}) as {
-			folders?: Array<{ uri: unknown; name: string; index: number }>;
-			name?: string;
-		};
+	const InitWorkspace = (Context.ExtensionHostInitData?.workspace ??
+		Context.ExtensionHostInitData?.workspaceData ??
+		{}) as {
+		folders?: Array<{ uri: unknown; name: string; index: number }>;
+		name?: string;
+	};
 
 	return {
 		workspaceFolders: InitWorkspace.folders ?? [],
@@ -95,29 +98,38 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			const Pattern =
 				typeof Include === "string"
 					? Include
-					: (Include as { pattern?: string })?.pattern ?? "";
+					: ((Include as { pattern?: string })?.pattern ?? "");
 			const ExcludePattern =
 				typeof Exclude === "string"
 					? Exclude
 					: (Exclude as { pattern?: string })?.pattern;
-			const Results = await Call<unknown[]>(Context, "Search.TextSearch", {
-				pattern: Pattern,
-				include: Pattern,
-				exclude: ExcludePattern,
-				maxResults: MaxResults,
-				isRegExp: false,
-				isCaseSensitive: false,
-				isWordMatch: false,
-			});
+			const Results = await Call<unknown[]>(
+				Context,
+				"Search.TextSearch",
+				{
+					pattern: Pattern,
+					include: Pattern,
+					exclude: ExcludePattern,
+					maxResults: MaxResults,
+					isRegExp: false,
+					isCaseSensitive: false,
+					isWordMatch: false,
+				},
+			);
 			return Results ?? [];
 		},
 
 		openTextDocument: async (UriOrPath: any) => {
-			const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
+			const UriString =
+				typeof UriOrPath === "string"
+					? UriOrPath
+					: (UriOrPath?.toString?.() ?? "");
 			const Cached = Context.DocumentContentCache.get(UriString);
 			const Text =
 				Cached ??
-				(await Call<string>(Context, "FileSystem.ReadFile", [UriString])) ??
+				(await Call<string>(Context, "FileSystem.ReadFile", [
+					UriString,
+				])) ??
 				"";
 			return {
 				uri: UriOrPath,
@@ -142,7 +154,9 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		applyEdit: async (_Edit: unknown) => {
 			// No dedicated dispatcher route yet — fire as notification so Wind
 			// can subscribe via the cocoon:workspace.applyEdit Tauri event.
-			Context.SendToMountain("workspace.applyEdit", _Edit).catch(() => {});
+			Context.SendToMountain("workspace.applyEdit", _Edit).catch(
+				() => {},
+			);
 			return true;
 		},
 
@@ -151,10 +165,19 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		updateWorkspaceFolders: () => false,
 
 		onDidOpenTextDocument: EventSubscriber(Context, "didOpenTextDocument"),
-		onDidCloseTextDocument: EventSubscriber(Context, "didCloseTextDocument"),
-		onDidChangeTextDocument: EventSubscriber(Context, "didChangeTextDocument"),
+		onDidCloseTextDocument: EventSubscriber(
+			Context,
+			"didCloseTextDocument",
+		),
+		onDidChangeTextDocument: EventSubscriber(
+			Context,
+			"didChangeTextDocument",
+		),
 		onDidSaveTextDocument: EventSubscriber(Context, "didSaveTextDocument"),
-		onWillSaveTextDocument: EventSubscriber(Context, "willSaveTextDocument"),
+		onWillSaveTextDocument: EventSubscriber(
+			Context,
+			"willSaveTextDocument",
+		),
 		onDidCreateFiles: EventSubscriber(Context, "didCreateFiles"),
 		onDidDeleteFiles: EventSubscriber(Context, "didDeleteFiles"),
 		onDidRenameFiles: EventSubscriber(Context, "didRenameFiles"),
@@ -170,9 +193,9 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			_AuthorityPrefix: string,
 			_Resolver: unknown,
 		) => ({ dispose: () => {} }),
-		registerResourceLabelFormatter: (
-			_Formatter: unknown,
-		) => ({ dispose: () => {} }),
+		registerResourceLabelFormatter: (_Formatter: unknown) => ({
+			dispose: () => {},
+		}),
 		registerDocumentPasteEditProvider: (
 			_Selector: unknown,
 			_Provider: unknown,
@@ -189,11 +212,26 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		isTrusted: true,
 		trusted: true,
 		requestWorkspaceTrust: async () => true,
-		onDidOpenNotebookDocument: EventSubscriber(Context, "didOpenNotebookDocument"),
-		onDidCloseNotebookDocument: EventSubscriber(Context, "didCloseNotebookDocument"),
-		onDidChangeNotebookDocument: EventSubscriber(Context, "didChangeNotebookDocument"),
-		onDidSaveNotebookDocument: EventSubscriber(Context, "didSaveNotebookDocument"),
-		onWillSaveNotebookDocument: EventSubscriber(Context, "willSaveNotebookDocument"),
+		onDidOpenNotebookDocument: EventSubscriber(
+			Context,
+			"didOpenNotebookDocument",
+		),
+		onDidCloseNotebookDocument: EventSubscriber(
+			Context,
+			"didCloseNotebookDocument",
+		),
+		onDidChangeNotebookDocument: EventSubscriber(
+			Context,
+			"didChangeNotebookDocument",
+		),
+		onDidSaveNotebookDocument: EventSubscriber(
+			Context,
+			"didSaveNotebookDocument",
+		),
+		onWillSaveNotebookDocument: EventSubscriber(
+			Context,
+			"willSaveNotebookDocument",
+		),
 		onWillRenameFiles: EventSubscriber(Context, "willRenameFiles"),
 		onWillCreateFiles: EventSubscriber(Context, "willCreateFiles"),
 		onWillDeleteFiles: EventSubscriber(Context, "willDeleteFiles"),
@@ -226,7 +264,9 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			// FileSystem.Stat is not yet in CreateEffectForRequest — falls back
 			// to defaults via Call's try/catch until the Rust route is added.
 			stat: async (Uri: any) =>
-				(await Call<unknown>(Context, "FileSystem.Stat", [String(Uri)])) ?? {
+				(await Call<unknown>(Context, "FileSystem.Stat", [
+					String(Uri),
+				])) ?? {
 					type: 1,
 					size: 0,
 					ctime: 0,

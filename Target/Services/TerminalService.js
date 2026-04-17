@@ -13,7 +13,7 @@ var IMountainClientService = Effect.Service()(
 );
 
 // Source/Services/TerminalService.ts
-import { Effect as Effect2, Layer, Context } from "effect";
+import { Context, Effect as Effect2, Layer } from "effect";
 var ITerminalService = Context.Tag("ITerminalService")();
 var TerminalService = class {
   constructor(mountainClient) {

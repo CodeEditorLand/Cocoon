@@ -21939,11 +21939,16 @@ var WindowService = class extends Effect7.Service()(
         };
         const mountainClient = yield* MountainGRPCClientService;
         const InfoResponse = yield* Effect7.tryPromise({
-          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showInformation", { message: Message, items: Items.length > 0 ? Items : void 0 }), "try"),
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showInformation", {
+            message: Message,
+            items: Items.length > 0 ? Items : void 0
+          }), "try"),
           catch: /* @__PURE__ */ __name(() => null, "catch")
         });
         const InfoSelected = InfoResponse?.selectedItem;
-        return InfoSelected ? Items.find((I) => (typeof I === "string" ? I : I.title) === InfoSelected) ?? void 0 : void 0;
+        return InfoSelected ? Items.find(
+          (I) => (typeof I === "string" ? I : I.title) === InfoSelected
+        ) ?? void 0 : void 0;
       }), "ShowInformationMessage");
       const ShowWarningMessage = /* @__PURE__ */ __name((Message, ...Items) => Effect7.gen(function* () {
         yield* Logger2.Debug(
@@ -21956,11 +21961,16 @@ var WindowService = class extends Effect7.Service()(
         };
         const mountainClient = yield* MountainGRPCClientService;
         const WarnResponse = yield* Effect7.tryPromise({
-          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showWarning", { message: Message, items: Items.length > 0 ? Items : void 0 }), "try"),
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showWarning", {
+            message: Message,
+            items: Items.length > 0 ? Items : void 0
+          }), "try"),
           catch: /* @__PURE__ */ __name(() => null, "catch")
         });
         const WarnSelected = WarnResponse?.selectedItem;
-        return WarnSelected ? Items.find((I) => (typeof I === "string" ? I : I.title) === WarnSelected) ?? void 0 : void 0;
+        return WarnSelected ? Items.find(
+          (I) => (typeof I === "string" ? I : I.title) === WarnSelected
+        ) ?? void 0 : void 0;
       }), "ShowWarningMessage");
       const ShowErrorMessage = /* @__PURE__ */ __name((Message, ...Items) => Effect7.gen(function* () {
         yield* Logger2.Debug(
@@ -21973,11 +21983,16 @@ var WindowService = class extends Effect7.Service()(
         };
         const mountainClient = yield* MountainGRPCClientService;
         const ErrorResponse = yield* Effect7.tryPromise({
-          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showError", { message: Message, items: Items.length > 0 ? Items : void 0 }), "try"),
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showError", {
+            message: Message,
+            items: Items.length > 0 ? Items : void 0
+          }), "try"),
           catch: /* @__PURE__ */ __name(() => null, "catch")
         });
         const ErrorSelected = ErrorResponse?.selectedItem;
-        return ErrorSelected ? Items.find((I) => (typeof I === "string" ? I : I.title) === ErrorSelected) ?? void 0 : void 0;
+        return ErrorSelected ? Items.find(
+          (I) => (typeof I === "string" ? I : I.title) === ErrorSelected
+        ) ?? void 0 : void 0;
       }), "ShowErrorMessage");
       const ShowQuickPick = /* @__PURE__ */ __name((Items, Options) => Effect7.gen(function* () {
         yield* Logger2.Debug(
@@ -22212,33 +22227,51 @@ var WindowService = class extends Effect7.Service()(
           `[WindowService] Creating output channel: ${Name} (${ChannelId})`
         );
         yield* Effect7.tryPromise({
-          try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("output.create", { id: ChannelId, name: Name }), "try"),
+          try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("output.create", {
+            id: ChannelId,
+            name: Name
+          }), "try"),
           catch: /* @__PURE__ */ __name(() => new Error("Failed to create output channel"), "catch")
         });
         return yield* Effect7.succeed({
           name: Name,
           append(value) {
-            MountainClient.sendNotification("output.append", { channel: ChannelId, value }).catch(() => {
+            MountainClient.sendNotification("output.append", {
+              channel: ChannelId,
+              value
+            }).catch(() => {
             });
           },
           appendLine(value) {
-            MountainClient.sendNotification("output.appendLine", { channel: ChannelId, value }).catch(() => {
+            MountainClient.sendNotification(
+              "output.appendLine",
+              { channel: ChannelId, value }
+            ).catch(() => {
             });
           },
           clear() {
-            MountainClient.sendNotification("output.clear", { channel: ChannelId }).catch(() => {
+            MountainClient.sendNotification("output.clear", {
+              channel: ChannelId
+            }).catch(() => {
             });
           },
           show(_columnOrPreserveFocus, _preserveFocus) {
-            MountainClient.sendNotification("output.show", { channel: ChannelId }).catch(() => {
+            MountainClient.sendNotification("output.show", {
+              channel: ChannelId
+            }).catch(() => {
             });
           },
           hide() {
-            MountainClient.sendNotification("output.show", { channel: ChannelId, visible: false }).catch(() => {
+            MountainClient.sendNotification("output.show", {
+              channel: ChannelId,
+              visible: false
+            }).catch(() => {
             });
           },
           dispose() {
-            MountainClient.sendNotification("output.dispose", { channel: ChannelId }).catch(() => {
+            MountainClient.sendNotification("output.dispose", {
+              channel: ChannelId
+            }).catch(() => {
             });
           }
         });
@@ -22292,8 +22325,13 @@ var WindowService = class extends Effect7.Service()(
         const IPCProxy = {
           SendNotification: /* @__PURE__ */ __name((method, params) => {
             return Effect7.gen(function* () {
-              yield* Logger2.Debug(`[WindowService] Webview notification: ${method}`);
-              MountainClient.sendNotification("webview.postMessage", { panelId: PanelId, method, params }).catch(() => {
+              yield* Logger2.Debug(
+                `[WindowService] Webview notification: ${method}`
+              );
+              MountainClient.sendNotification(
+                "webview.postMessage",
+                { panelId: PanelId, method, params }
+              ).catch(() => {
               });
             });
           }, "SendNotification"),
@@ -22308,7 +22346,9 @@ var WindowService = class extends Effect7.Service()(
           IPCProxy,
           ExtensionDescription,
           () => {
-            MountainClient.sendNotification("webview.dispose", { panelId: PanelId }).catch(() => {
+            MountainClient.sendNotification("webview.dispose", {
+              panelId: PanelId
+            }).catch(() => {
             });
           },
           ViewType,
@@ -22332,7 +22372,11 @@ var WindowService = class extends Effect7.Service()(
         };
         const ProgressReporter = {
           report(value) {
-            MountainClient.sendNotification("progress.update", { id: ProgressId, message: value.message, increment: value.increment }).catch(() => {
+            MountainClient.sendNotification("progress.update", {
+              id: ProgressId,
+              message: value.message,
+              increment: value.increment
+            }).catch(() => {
             });
           }
         };
@@ -22354,7 +22398,10 @@ var WindowService = class extends Effect7.Service()(
           }, "catch")
         });
         yield* Effect7.tryPromise({
-          try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("progress.complete", { id: ProgressId }), "try"),
+          try: /* @__PURE__ */ __name(() => MountainClient.sendNotification(
+            "progress.complete",
+            { id: ProgressId }
+          ), "try"),
           catch: /* @__PURE__ */ __name(() => new Error("Failed to complete progress"), "catch")
         });
         return Result;

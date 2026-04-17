@@ -43,10 +43,10 @@ var CreateCommandsNamespace = /* @__PURE__ */ __name((Context, LanguageProviderR
     );
     if (LocalResult !== void 0) return LocalResult;
     try {
-      return await Context.MountainClient?.sendRequest("Command.Execute", [
-        Command,
-        ...Arguments
-      ]);
+      return await Context.MountainClient?.sendRequest(
+        "Command.Execute",
+        [Command, ...Arguments]
+      );
     } catch {
       return void 0;
     }

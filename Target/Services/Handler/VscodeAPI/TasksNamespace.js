@@ -31,9 +31,10 @@ var CreateTasksNamespace = /* @__PURE__ */ __name((Context) => ({
   }, "registerTaskProvider"),
   fetchTasks: /* @__PURE__ */ __name(async (Filter) => {
     try {
-      const Response = await Context.MountainClient?.sendRequest("Task.Fetch", [
-        Filter
-      ]);
+      const Response = await Context.MountainClient?.sendRequest(
+        "Task.Fetch",
+        [Filter]
+      );
       return Array.isArray(Response) ? Response : [];
     } catch {
       return [];
@@ -41,7 +42,9 @@ var CreateTasksNamespace = /* @__PURE__ */ __name((Context) => ({
   }, "fetchTasks"),
   executeTask: /* @__PURE__ */ __name(async (Task) => {
     try {
-      return await Context.MountainClient?.sendRequest("Task.Execute", [Task]);
+      return await Context.MountainClient?.sendRequest("Task.Execute", [
+        Task
+      ]);
     } catch {
       return void 0;
     }

@@ -8,11 +8,11 @@ import type * as VSCode from "vscode";
 
 // TreeItemCollapsibleState comes from the Platform/VSCode barrel (real VS Code source).
 import * as ExtHostTypes from "../../Platform/VSCode/Type.js";
-
-const { TreeItemCollapsibleState } = ExtHostTypes;
 import type { Command } from "../Command.js";
 import { FromAPI as MarkdownStringFromAPI } from "../Main/MarkdownString.js";
 import { FromAPI as UriFromAPI, ToAPI as UriToAPI } from "../Main/URI.js";
+
+const { TreeItemCollapsibleState } = ExtHostTypes;
 
 /**
  * @description Converts a `vscode.TreeItem` object into a plain DTO for IPC.

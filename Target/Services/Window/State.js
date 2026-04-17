@@ -2,7 +2,7 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // Source/Services/Window/State.ts
-import { Effect, Ref, Context } from "effect";
+import { Context, Effect, Ref } from "effect";
 var WindowStateService = Context.Tag(
   "Service/Window/State"
 );

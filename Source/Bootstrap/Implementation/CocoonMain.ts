@@ -38,15 +38,22 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 		// Log failures but continue — partial bootstrap is acceptable.
 		// The gRPC server (Stage 5) may have started even if Mountain
 		// connection (Stage 3) failed temporarily.
-		telemetry.log("warn", "[CocoonMain] Bootstrap partially failed (continuing in degraded mode)");
-		console.warn("[CocoonMain] Bootstrap partially failed — running in degraded mode");
+		telemetry.log(
+			"warn",
+			"[CocoonMain] Bootstrap partially failed (continuing in degraded mode)",
+		);
+		console.warn(
+			"[CocoonMain] Bootstrap partially failed — running in degraded mode",
+		);
 		for (const stage of result.stages) {
 			if (!stage.success) {
 				telemetry.log(
 					"warn",
 					`[CocoonMain]   - ${stage.stageName}: ${stage.error?.message}`,
 				);
-				console.warn(`[CocoonMain]   Stage failed: ${stage.stageName}: ${stage.error?.message}`);
+				console.warn(
+					`[CocoonMain]   Stage failed: ${stage.stageName}: ${stage.error?.message}`,
+				);
 			}
 		}
 	}

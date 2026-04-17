@@ -6,13 +6,19 @@ var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) 
   Context.WorkspaceEventEmitter.on(EventName, Listener);
   return {
     dispose: /* @__PURE__ */ __name(() => {
-      Context.WorkspaceEventEmitter.removeListener(EventName, Listener);
+      Context.WorkspaceEventEmitter.removeListener(
+        EventName,
+        Listener
+      );
     }, "dispose")
   };
 }, "EventSubscriber");
 var Call = /* @__PURE__ */ __name(async (Context, Method, Parameters) => {
   try {
-    return await Context.MountainClient?.sendRequest(Method, Parameters);
+    return await Context.MountainClient?.sendRequest(
+      Method,
+      Parameters
+    );
   } catch {
     return void 0;
   }
@@ -50,21 +56,27 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
       const Pattern = typeof Include === "string" ? Include : Include?.pattern ?? "";
       const ExcludePattern = typeof Exclude === "string" ? Exclude : Exclude?.pattern;
-      const Results = await Call(Context, "Search.TextSearch", {
-        pattern: Pattern,
-        include: Pattern,
-        exclude: ExcludePattern,
-        maxResults: MaxResults,
-        isRegExp: false,
-        isCaseSensitive: false,
-        isWordMatch: false
-      });
+      const Results = await Call(
+        Context,
+        "Search.TextSearch",
+        {
+          pattern: Pattern,
+          include: Pattern,
+          exclude: ExcludePattern,
+          maxResults: MaxResults,
+          isRegExp: false,
+          isCaseSensitive: false,
+          isWordMatch: false
+        }
+      );
       return Results ?? [];
     }, "findFiles"),
     openTextDocument: /* @__PURE__ */ __name(async (UriOrPath) => {
       const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
       const Cached = Context.DocumentContentCache.get(UriString);
-      const Text = Cached ?? await Call(Context, "FileSystem.ReadFile", [UriString]) ?? "";
+      const Text = Cached ?? await Call(Context, "FileSystem.ReadFile", [
+        UriString
+      ]) ?? "";
       return {
         uri: UriOrPath,
         fileName: UriString,
@@ -84,17 +96,28 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
       return true;
     }, "saveAll"),
     applyEdit: /* @__PURE__ */ __name(async (_Edit) => {
-      Context.SendToMountain("workspace.applyEdit", _Edit).catch(() => {
-      });
+      Context.SendToMountain("workspace.applyEdit", _Edit).catch(
+        () => {
+        }
+      );
       return true;
     }, "applyEdit"),
     asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
     updateWorkspaceFolders: /* @__PURE__ */ __name(() => false, "updateWorkspaceFolders"),
     onDidOpenTextDocument: EventSubscriber(Context, "didOpenTextDocument"),
-    onDidCloseTextDocument: EventSubscriber(Context, "didCloseTextDocument"),
-    onDidChangeTextDocument: EventSubscriber(Context, "didChangeTextDocument"),
+    onDidCloseTextDocument: EventSubscriber(
+      Context,
+      "didCloseTextDocument"
+    ),
+    onDidChangeTextDocument: EventSubscriber(
+      Context,
+      "didChangeTextDocument"
+    ),
     onDidSaveTextDocument: EventSubscriber(Context, "didSaveTextDocument"),
-    onWillSaveTextDocument: EventSubscriber(Context, "willSaveTextDocument"),
+    onWillSaveTextDocument: EventSubscriber(
+      Context,
+      "willSaveTextDocument"
+    ),
     onDidCreateFiles: EventSubscriber(Context, "didCreateFiles"),
     onDidDeleteFiles: EventSubscriber(Context, "didDeleteFiles"),
     onDidRenameFiles: EventSubscriber(Context, "didRenameFiles"),
@@ -114,8 +137,10 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     }, "dispose") }), "registerNotebookSerializer"),
     registerRemoteAuthorityResolver: /* @__PURE__ */ __name((_AuthorityPrefix, _Resolver) => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerRemoteAuthorityResolver"),
-    registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerResourceLabelFormatter"),
+    registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose")
+    }), "registerResourceLabelFormatter"),
     registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerDocumentPasteEditProvider"),
     registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -131,11 +156,26 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     isTrusted: true,
     trusted: true,
     requestWorkspaceTrust: /* @__PURE__ */ __name(async () => true, "requestWorkspaceTrust"),
-    onDidOpenNotebookDocument: EventSubscriber(Context, "didOpenNotebookDocument"),
-    onDidCloseNotebookDocument: EventSubscriber(Context, "didCloseNotebookDocument"),
-    onDidChangeNotebookDocument: EventSubscriber(Context, "didChangeNotebookDocument"),
-    onDidSaveNotebookDocument: EventSubscriber(Context, "didSaveNotebookDocument"),
-    onWillSaveNotebookDocument: EventSubscriber(Context, "willSaveNotebookDocument"),
+    onDidOpenNotebookDocument: EventSubscriber(
+      Context,
+      "didOpenNotebookDocument"
+    ),
+    onDidCloseNotebookDocument: EventSubscriber(
+      Context,
+      "didCloseNotebookDocument"
+    ),
+    onDidChangeNotebookDocument: EventSubscriber(
+      Context,
+      "didChangeNotebookDocument"
+    ),
+    onDidSaveNotebookDocument: EventSubscriber(
+      Context,
+      "didSaveNotebookDocument"
+    ),
+    onWillSaveNotebookDocument: EventSubscriber(
+      Context,
+      "willSaveNotebookDocument"
+    ),
     onWillRenameFiles: EventSubscriber(Context, "willRenameFiles"),
     onWillCreateFiles: EventSubscriber(Context, "willCreateFiles"),
     onWillDeleteFiles: EventSubscriber(Context, "willDeleteFiles"),
@@ -168,7 +208,9 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     fs: {
       // FileSystem.Stat is not yet in CreateEffectForRequest — falls back
       // to defaults via Call's try/catch until the Rust route is added.
-      stat: /* @__PURE__ */ __name(async (Uri) => await Call(Context, "FileSystem.Stat", [String(Uri)]) ?? {
+      stat: /* @__PURE__ */ __name(async (Uri) => await Call(Context, "FileSystem.Stat", [
+        String(Uri)
+      ]) ?? {
         type: 1,
         size: 0,
         ctime: 0,

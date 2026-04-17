@@ -322,7 +322,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Update statistics
 				const currentStats = yield* statsRef.get;
-				yield* Ref.set(statsRef,{
+				yield* Ref.set(statsRef, {
 					...currentStats,
 					totalInterceptions: currentStats.totalInterceptions + 1,
 				});
@@ -358,7 +358,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 					// Update statistics
 					const statsAfter = yield* statsRef.get;
-					yield* Ref.set(statsRef,{
+					yield* Ref.set(statsRef, {
 						...statsAfter,
 						blockedModules: statsAfter.blockedModules + 1,
 						securityViolations: statsAfter.securityViolations + 1,
@@ -384,7 +384,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 					// Update statistics
 					const statsAfter = yield* statsRef.get;
-					yield* Ref.set(statsRef,{
+					yield* Ref.set(statsRef, {
 						...statsAfter,
 						blockedModules: statsAfter.blockedModules + 1,
 						securityViolations: statsAfter.securityViolations + 1,
@@ -413,7 +413,7 @@ export const ModuleInterceptorLive = Layer.effect(
 					const avgTime =
 						allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
 					const statsAfter = yield* statsRef.get;
-					yield* Ref.set(statsRef,{
+					yield* Ref.set(statsRef, {
 						...statsAfter,
 						averageResolutionTime: avgTime,
 					});
@@ -443,7 +443,8 @@ export const ModuleInterceptorLive = Layer.effect(
 
 				// Cache the module
 				const currentCache = yield* moduleCacheRef.get;
-				yield* Ref.set(moduleCacheRef,
+				yield* Ref.set(
+					moduleCacheRef,
 					HashMap.set(currentCache, cacheKey, module),
 				);
 
@@ -455,7 +456,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				const avgTime =
 					allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
 				const statsAfter = yield* statsRef.get;
-				yield* Ref.set(statsRef,{
+				yield* Ref.set(statsRef, {
 					...statsAfter,
 					averageResolutionTime: avgTime,
 				});
@@ -489,7 +490,8 @@ export const ModuleInterceptorLive = Layer.effect(
 		const setSecurityPolicy = (policy: SecurityPolicy) =>
 			Effect.gen(function* () {
 				const currentPolicies = yield* policiesRef.get;
-				yield* Ref.set(policiesRef,
+				yield* Ref.set(
+					policiesRef,
 					HashMap.set(currentPolicies, policy.extensionId, policy),
 				);
 

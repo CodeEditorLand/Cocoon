@@ -12,11 +12,7 @@ import type { HandlerContext } from "../HandlerContext.js";
 let ScmCounter = 0;
 
 const CreateScmNamespace = (Context: HandlerContext) => ({
-	createSourceControl: (
-		Id: string,
-		Label: string,
-		RootUri?: unknown,
-	) => {
+	createSourceControl: (Id: string, Label: string, RootUri?: unknown) => {
 		const Handle = `scm:${++ScmCounter}`;
 		Context.SendToMountain("register_scm_provider", {
 			handle: Handle,
@@ -26,7 +22,10 @@ const CreateScmNamespace = (Context: HandlerContext) => ({
 			extension_id: "",
 		}).catch(() => {});
 
-		const Groups = new Map<string, { label: string; resourceStates: unknown[] }>();
+		const Groups = new Map<
+			string,
+			{ label: string; resourceStates: unknown[] }
+		>();
 
 		return {
 			id: Id,
@@ -63,10 +62,13 @@ const CreateScmNamespace = (Context: HandlerContext) => ({
 						}).catch(() => {});
 					},
 					dispose: () => {
-						Context.SendToMountain("unregister_scm_resource_group", {
-							scm_handle: Handle,
-							group_handle: GroupHandle,
-						}).catch(() => {});
+						Context.SendToMountain(
+							"unregister_scm_resource_group",
+							{
+								scm_handle: Handle,
+								group_handle: GroupHandle,
+							},
+						).catch(() => {});
 						Groups.delete(GroupId);
 					},
 				};

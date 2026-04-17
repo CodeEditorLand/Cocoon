@@ -18,7 +18,10 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 	console.log(`[RequestRoutingHandler] Routing request: ${Method}`);
 
 	// Service routing table with pattern matching
-	const RoutePatterns: Record<string, (method: string, params: any) => Promise<any>> = {
+	const RoutePatterns: Record<
+		string,
+		(method: string, params: any) => Promise<any>
+	> = {
 		"extension.\\w+": async (Method: string, Params: any) => {
 			// Route to ExtensionHostService via ServiceMapping
 			const { ServiceMapping } = await import("../../ServiceMapping");
@@ -28,9 +31,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			switch (Method) {
 				case "extension.activate": {
 					const ExtensionHostService =
-						await ServiceMapping.getService(
-							IExtensionHostService,
-						);
+						await ServiceMapping.getService(IExtensionHostService);
 					return await ExtensionHostService.activateExtension(
 						Params.extensionId,
 						Params.reason,
@@ -38,9 +39,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				}
 				case "extension.deactivate": {
 					const ExtensionHostService =
-						await ServiceMapping.getService(
-							IExtensionHostService,
-						);
+						await ServiceMapping.getService(IExtensionHostService);
 					await ExtensionHostService.deactivateExtension(
 						Params.extensionId,
 					);
@@ -48,9 +47,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 				}
 				case "extension.get": {
 					const ExtensionHostService =
-						await ServiceMapping.getService(
-							IExtensionHostService,
-						);
+						await ServiceMapping.getService(IExtensionHostService);
 					return ExtensionHostService.getActivatedExtension(
 						Params.extensionId,
 					);
@@ -99,9 +96,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					return { success: true };
 				}
 				default:
-					throw new Error(
-						`Unknown configuration method: ${Method}`,
-					);
+					throw new Error(`Unknown configuration method: ${Method}`);
 			}
 		},
 
@@ -165,9 +160,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 					return PerfService.generateReport();
 				}
 				default:
-					throw new Error(
-						`Unknown performance method: ${Method}`,
-					);
+					throw new Error(`Unknown performance method: ${Method}`);
 			}
 		},
 

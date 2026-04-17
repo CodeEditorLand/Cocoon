@@ -15,11 +15,15 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		unknown
 	>;
 
-	const Call = async <T>(Method: string, Parameters: unknown): Promise<T | undefined> => {
+	const Call = async <T>(
+		Method: string,
+		Parameters: unknown,
+	): Promise<T | undefined> => {
 		try {
-			return await (Context.MountainClient?.sendRequest(Method, Parameters) as
-				| Promise<T>
-				| undefined);
+			return await (Context.MountainClient?.sendRequest(
+				Method,
+				Parameters,
+			) as Promise<T> | undefined);
 		} catch {
 			return undefined;
 		}
@@ -61,10 +65,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 			return Ok ?? false;
 		},
 		asExternalUri: async (Target: unknown) => Target,
-		createTelemetryLogger: (
-			_Sender: unknown,
-			_Options?: unknown,
-		) => ({
+		createTelemetryLogger: (_Sender: unknown, _Options?: unknown) => ({
 			isUsageEnabled: false,
 			isErrorsEnabled: false,
 			onDidChangeEnableStates: () => ({ dispose: () => {} }),

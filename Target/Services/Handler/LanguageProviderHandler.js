@@ -20741,7 +20741,13 @@ function Unregister(Handle) {
 }
 __name(Unregister, "Unregister");
 function Get(Handle) {
-  return Callbacks.get(Handle);
+  const Provider = Callbacks.get(Handle);
+  if (process.env.LAND_DEV_LOG) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
 }
 __name(Get, "Get");
 var NextHandle = 1e4;
@@ -20856,13 +20862,14 @@ var BuildVsDocument = /* @__PURE__ */ __name(async (UriString, FsPath, LanguageI
       const StartLine = _range?.start?.line ?? 0;
       const StartChar = _range?.start?.character ?? 0;
       const EndLine = _range?.end?.line ?? Lines.length - 1;
-      const EndChar = _range?.end?.character ?? (Lines[EndLine]?.length ?? 0);
+      const EndChar = _range?.end?.character ?? Lines[EndLine]?.length ?? 0;
       if (StartLine === EndLine) {
         return (Lines[StartLine] ?? "").substring(StartChar, EndChar);
       }
       const Result = [];
       Result.push((Lines[StartLine] ?? "").substring(StartChar));
-      for (let I = StartLine + 1; I < EndLine; I++) Result.push(Lines[I] ?? "");
+      for (let I = StartLine + 1; I < EndLine; I++)
+        Result.push(Lines[I] ?? "");
       Result.push((Lines[EndLine] ?? "").substring(0, EndChar));
       return Result.join("\n");
     }, "getText"),
@@ -20901,7 +20908,10 @@ var BuildVsDocument = /* @__PURE__ */ __name(async (UriString, FsPath, LanguageI
         }
         Remaining -= Lines[I].length + 1;
       }
-      return new Position3(Lines.length - 1, (Lines[Lines.length - 1] ?? "").length);
+      return new Position3(
+        Lines.length - 1,
+        (Lines[Lines.length - 1] ?? "").length
+      );
     }, "positionAt"),
     validateRange: /* @__PURE__ */ __name((R) => R, "validateRange"),
     validatePosition: /* @__PURE__ */ __name((P) => P, "validatePosition"),
@@ -20914,7 +20924,12 @@ var BuildVsDocument = /* @__PURE__ */ __name(async (UriString, FsPath, LanguageI
       Regex.lastIndex = 0;
       while ((Match = Regex.exec(Line)) !== null) {
         if (Match.index <= Col && Match.index + Match[0].length >= Col) {
-          return new Range3(Pos.line, Match.index, Pos.line, Match.index + Match[0].length);
+          return new Range3(
+            Pos.line,
+            Match.index,
+            Pos.line,
+            Match.index + Match[0].length
+          );
         }
       }
       return void 0;
@@ -20942,18 +20957,33 @@ var InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, D
   const Ext = UriString.split(".").pop() ?? "";
   const LangId = ResolveLanguageIdentifier(Ext);
   const FsPath = UriString.replace(/^file:\/\//, "");
-  const VsDocument = await BuildVsDocument(UriString, FsPath, LangId, DocumentContentCache);
+  const VsDocument = await BuildVsDocument(
+    UriString,
+    FsPath,
+    LangId,
+    DocumentContentCache
+  );
   const { CancellationTokenSource: CancellationTokenSource2 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
   const VsToken = new CancellationTokenSource2().token;
   const Context = Args[3];
   try {
     switch (Method) {
       case "$provideHover": {
+        if (process.env.LAND_DEV_LOG) {
+          console.warn(
+            `[DEV:EXTHOST] provideHover dispatch uri=${UriString} line=${VsPosition?.line} char=${VsPosition?.character} providerHasMethod=${typeof Provider.provideHover === "function"}`
+          );
+        }
         const Result = await Provider.provideHover?.(
           VsDocument,
           VsPosition,
           VsToken
         );
+        if (process.env.LAND_DEV_LOG) {
+          console.warn(
+            `[DEV:EXTHOST] provideHover result kind=${Result ? Array.isArray(Result.contents) ? `array(${Result.contents.length})` : typeof Result.contents : "null"}`
+          );
+        }
         if (!Result) return null;
         const RawContents = Result.contents;
         const Contents = Array.isArray(
@@ -20983,8 +21013,7 @@ var InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, D
           VsToken,
           Context
         );
-        if (!Result)
-          return { Suggestions: [], IsIncomplete: false };
+        if (!Result) return { Suggestions: [], IsIncomplete: false };
         const RawItems = Array.isArray(Result) ? Result : Result.items ?? [];
         return {
           Suggestions: RawItems.map((Item) => ({
@@ -21007,9 +21036,7 @@ var InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, D
         const Locations = Array.isArray(Result) ? Result : [Result];
         return Locations.map((L) => ({
           Uri: (L.uri ?? L.targetUri)?.toString?.() ?? UriString,
-          Range: NormalizeRange(
-            L.range ?? L.targetSelectionRange
-          )
+          Range: NormalizeRange(L.range ?? L.targetSelectionRange)
         }));
       }
       case "$provideReferences": {
@@ -21041,17 +21068,16 @@ var InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, D
       // Mountain sends "$provideDocumentHighlight" (ProviderType::DocumentHighlight)
       case "$provideDocumentHighlight":
       case "$provideDocumentHighlights": {
-        const Result = await Provider.provideDocumentHighlights?.(
-          VsDocument,
-          VsPosition,
-          VsToken
-        );
+        const Result = await Provider.provideDocumentHighlights?.(VsDocument, VsPosition, VsToken);
         return Result ?? null;
       }
       // Mountain sends "$provideDocumentSymbol" (ProviderType::DocumentSymbol)
       case "$provideDocumentSymbol":
       case "$provideDocumentSymbols": {
-        const Result = await Provider.provideDocumentSymbols?.(VsDocument, VsToken);
+        const Result = await Provider.provideDocumentSymbols?.(
+          VsDocument,
+          VsToken
+        );
         return Result ?? null;
       }
       // Mountain sends "$provideWorkspaceSymbol" (ProviderType::WorkspaceSymbol)
@@ -21101,7 +21127,11 @@ var InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, D
       // Mountain sends "$provideFoldingRange" (ProviderType::FoldingRange)
       case "$provideFoldingRange":
       case "$provideFoldingRanges": {
-        const Result = await Provider.provideFoldingRanges?.(VsDocument, Context, VsToken);
+        const Result = await Provider.provideFoldingRanges?.(
+          VsDocument,
+          Context,
+          VsToken
+        );
         return Result ?? null;
       }
       // Mountain sends "$provideInlayHint" (ProviderType::InlayHint)
@@ -21142,60 +21172,46 @@ var InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, D
         const Positions = Args[2];
         const Result = await Provider.provideSelectionRanges?.(
           VsDocument,
-          Array.isArray(Positions) ? Positions.map((P) => new Position3(P?.line ?? P?.Line ?? 0, P?.character ?? P?.Character ?? 0)) : [VsPosition],
+          Array.isArray(Positions) ? Positions.map(
+            (P) => new Position3(
+              P?.line ?? P?.Line ?? 0,
+              P?.character ?? P?.Character ?? 0
+            )
+          ) : [VsPosition],
           VsToken
         );
         return Result ?? null;
       }
       case "$provideSemanticTokens":
       case "$provideSemanticTokensFull": {
-        const Result = await Provider.provideDocumentSemanticTokens?.(
-          VsDocument,
-          VsToken
-        );
+        const Result = await Provider.provideDocumentSemanticTokens?.(VsDocument, VsToken);
         return Result ?? null;
       }
       case "$provideCallHierarchy":
       case "$provideCallHierarchyIncomingCalls": {
         const Item = Args[1];
-        const Result = await Provider.provideCallHierarchyIncomingCalls?.(
-          Item,
-          VsToken
-        );
+        const Result = await Provider.provideCallHierarchyIncomingCalls?.(Item, VsToken);
         return Result ?? null;
       }
       case "$provideCallHierarchyOutgoingCalls": {
         const Item = Args[1];
-        const Result = await Provider.provideCallHierarchyOutgoingCalls?.(
-          Item,
-          VsToken
-        );
+        const Result = await Provider.provideCallHierarchyOutgoingCalls?.(Item, VsToken);
         return Result ?? null;
       }
       case "$provideTypeHierarchy":
       case "$provideTypeHierarchySupertypes": {
         const Item = Args[1];
-        const Result = await Provider.provideTypeHierarchySupertypes?.(
-          Item,
-          VsToken
-        );
+        const Result = await Provider.provideTypeHierarchySupertypes?.(Item, VsToken);
         return Result ?? null;
       }
       case "$provideTypeHierarchySubtypes": {
         const Item = Args[1];
-        const Result = await Provider.provideTypeHierarchySubtypes?.(
-          Item,
-          VsToken
-        );
+        const Result = await Provider.provideTypeHierarchySubtypes?.(Item, VsToken);
         return Result ?? null;
       }
       case "$provideLinkedEditingRange":
       case "$provideLinkedEditingRanges": {
-        const Result = await Provider.provideLinkedEditingRanges?.(
-          VsDocument,
-          VsPosition,
-          VsToken
-        );
+        const Result = await Provider.provideLinkedEditingRanges?.(VsDocument, VsPosition, VsToken);
         return Result ?? null;
       }
       default:

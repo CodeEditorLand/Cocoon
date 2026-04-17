@@ -5,8 +5,8 @@
  * Provides robust error recovery, circuit breaker logic, and automatic retry mechanisms.
  */
 
-import * as Effect from "effect/Effect";
 import { Context } from "effect";
+import * as Effect from "effect/Effect";
 
 // Circuit breaker state
 export interface CircuitBreakerState {

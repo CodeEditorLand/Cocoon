@@ -43,7 +43,6 @@
  */
 
 import ModuleNS from "node:module";
-const Module = ModuleNS as any;
 
 import { Config, Data, Effect } from "effect";
 
@@ -51,6 +50,8 @@ import { ExitPreventedProblem } from "../../Archive/PatchProcess/ExitPreventedPr
 import { InitDataService } from "../Services/InitData.js";
 import { IPCService } from "../Services/IPCService.js";
 import { SecurityPolicy } from "./Security.js";
+
+const Module = ModuleNS as any;
 
 // --- Service Definition ---
 

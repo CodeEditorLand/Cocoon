@@ -2,8 +2,10 @@ var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // Source/Services/Window/Dialog.ts
-import { Effect, Layer, Context } from "effect";
-var DialogService = Context.Tag("Service/Window/Dialog");
+import { Context, Effect, Layer } from "effect";
+var DialogService = Context.Tag(
+  "Service/Window/Dialog"
+);
 var DialogLive = Effect.gen(function* () {
   const ShowInformationMessage = /* @__PURE__ */ __name((message, items = []) => Effect.gen(function* () {
     return void 0;

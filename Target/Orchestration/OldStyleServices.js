@@ -15,545 +15,6 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// Source/Interfaces/IConfigurationService.ts
-var IConfigurationService_exports = {};
-__export(IConfigurationService_exports, {
-  ConfigurationScope: () => ConfigurationScope,
-  IConfigurationService: () => IConfigurationService
-});
-import { Context } from "effect";
-var ConfigurationScope, IConfigurationService;
-var init_IConfigurationService = __esm({
-  "Source/Interfaces/IConfigurationService.ts"() {
-    "use strict";
-    ConfigurationScope = /* @__PURE__ */ ((ConfigurationScope3) => {
-      ConfigurationScope3["APPLICATION"] = "APPLICATION";
-      ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
-      ConfigurationScope3["PROFILE"] = "PROFILE";
-      return ConfigurationScope3;
-    })(ConfigurationScope || {});
-    IConfigurationService = Context.Tag(
-      "IConfigurationService"
-    );
-  }
-});
-
-// Source/Interfaces/IMountainClientService.ts
-import * as Effect2 from "effect/Effect";
-var IMountainClientService;
-var init_IMountainClientService = __esm({
-  "Source/Interfaces/IMountainClientService.ts"() {
-    "use strict";
-    IMountainClientService = Effect2.Service()(
-      "Service/MountainClient",
-      {
-        effect: Effect2.gen(function* () {
-          return {};
-        })
-      }
-    );
-  }
-});
-
-// Source/Services/Configuration.ts
-import { Effect as Effect3, Layer } from "effect";
-var ConfigurationScope2, Configuration, ConfigurationLayer, ConfigurationLive;
-var init_Configuration = __esm({
-  "Source/Services/Configuration.ts"() {
-    "use strict";
-    init_IConfigurationService();
-    init_IMountainClientService();
-    ConfigurationScope2 = /* @__PURE__ */ ((ConfigurationScope3) => {
-      ConfigurationScope3["APPLICATION"] = "APPLICATION";
-      ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
-      ConfigurationScope3["PROFILE"] = "PROFILE";
-      return ConfigurationScope3;
-    })(ConfigurationScope2 || {});
-    Configuration = class {
-      static {
-        __name(this, "Configuration");
-      }
-      _serviceBrand;
-      configuration;
-      mountainClient;
-      listeners;
-      constructor(mountainClient) {
-        this._serviceBrand = void 0;
-        this.mountainClient = mountainClient;
-        this.configuration = /* @__PURE__ */ new Map();
-        this.listeners = /* @__PURE__ */ new Map();
-        console.log(
-          "[ConfigurationService] Initializing configuration service with Universal Spine"
-        );
-      }
-      /**
-       * Initialize the configuration service by fetching from Mountain
-       */
-      async initialize() {
-        console.log(
-          "[ConfigurationService] Loading initial configuration from Spine..."
-        );
-        try {
-          const configData = await this.mountainClient.sendRequest(
-            "config.reload",
-            {}
-          );
-          if (configData?.application) {
-            this.configuration.set(
-              "APPLICATION" /* APPLICATION */,
-              configData.application
-            );
-          }
-          if (configData?.workspace) {
-            this.configuration.set(
-              "WORKSPACE" /* WORKSPACE */,
-              configData.workspace
-            );
-          }
-          if (configData?.profile) {
-            this.configuration.set(
-              "PROFILE" /* PROFILE */,
-              configData.profile
-            );
-          }
-          console.log(
-            "[ConfigurationService] Configuration loaded from Spine",
-            configData
-          );
-        } catch (error) {
-          console.error(
-            "[ConfigurationService] Failed to load initial configuration from Spine:",
-            error
-          );
-          this.configuration.set("APPLICATION" /* APPLICATION */, {
-            _version: 1,
-            _timestamp: Date.now(),
-            window: {
-              zoomLevel: 0,
-              theme: "dark"
-            },
-            editor: {
-              fontSize: 14,
-              lineNumbers: "on"
-            }
-          });
-          this.configuration.set("WORKSPACE" /* WORKSPACE */, {
-            _version: 1,
-            _timestamp: Date.now()
-          });
-          this.configuration.set("PROFILE" /* PROFILE */, {
-            _version: 1,
-            _timestamp: Date.now()
-          });
-        }
-      }
-      /**
-       * Get configuration value
-       */
-      getValue(key, scope = "APPLICATION" /* APPLICATION */, defaultValue) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return defaultValue;
-        }
-        const value = this.getNestedValue(scopeConfig, key);
-        return value !== void 0 ? value : defaultValue;
-      }
-      /**
-       * Set configuration value
-       */
-      async setValue(key, value, scope) {
-        if (!this.validateConfigurationKey(key)) {
-          throw new Error(`Invalid configuration key: ${key}`);
-        }
-        if (!this.validateConfigurationValue(key, value)) {
-          throw new Error(
-            `Invalid configuration value for key ${key}: ${value}`
-          );
-        }
-        let scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          scopeConfig = {};
-          this.configuration.set(scope, scopeConfig);
-        }
-        const oldValue = this.getNestedValue(scopeConfig, key);
-        if (oldValue !== value) {
-          this.setNestedValue(scopeConfig, key, value);
-          scopeConfig._timestamp = Date.now();
-          scopeConfig._version = (scopeConfig._version || 0) + 1;
-          try {
-            let spineScope = 0;
-            if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
-            if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
-            await this.mountainClient.sendRequest("config.update", {
-              key,
-              value,
-              scope: spineScope
-            });
-            console.log(
-              `[ConfigurationService] Configuration updated: ${key} = ${value}`
-            );
-            this.notifyConfigurationChange([key], scope);
-          } catch (error) {
-            console.error(
-              `[ConfigurationService] Failed to update configuration: ${key}`,
-              error
-            );
-            await this.handleConfigurationConflict(
-              error,
-              key,
-              value,
-              scope
-            );
-          }
-        }
-      }
-      /**
-       * Validate configuration key
-       */
-      validateConfigurationKey(key) {
-        if (!key || key.trim().length === 0) {
-          return false;
-        }
-        const invalidChars = /[^a-zA-Z0-9._-]/;
-        if (invalidChars.test(key)) {
-          return false;
-        }
-        if (key.startsWith(".") || key.endsWith(".")) {
-          return false;
-        }
-        if (key.includes("..")) {
-          return false;
-        }
-        return true;
-      }
-      /**
-       * Validate configuration value
-       */
-      validateConfigurationValue(key, value) {
-        if (value === void 0) {
-          return false;
-        }
-        if (key.includes("zoomLevel") || key.includes("fontSize")) {
-          if (typeof value !== "number" || !isFinite(value)) {
-            return false;
-          }
-          if (key.includes("zoomLevel")) {
-            return value >= -8 && value <= 9;
-          }
-          if (key.includes("fontSize")) {
-            return value >= 6 && value <= 100;
-          }
-        }
-        if (key.includes("enable") || key.includes("show") || key.includes("visible")) {
-          return typeof value === "boolean";
-        }
-        if (typeof value === "string") {
-          return value.trim().length > 0;
-        }
-        return true;
-      }
-      /**
-       * Validate entire configuration scope
-       */
-      validateScopeConfiguration(scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return true;
-        }
-        const keys = [];
-        this.collectKeys(scopeConfig, "", keys);
-        for (const key of keys) {
-          const value = this.getNestedValue(scopeConfig, key);
-          if (!this.validateConfigurationKey(key) || !this.validateConfigurationValue(key, value)) {
-            return false;
-          }
-        }
-        return true;
-      }
-      /**
-       * Update configuration value
-       */
-      async updateValue(key, updateFn, scope) {
-        const currentValue = this.getValue(key, scope);
-        const newValue = updateFn(currentValue);
-        await this.setValue(key, newValue, scope);
-      }
-      /**
-       * Check if configuration key exists
-       */
-      hasKey(key, scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return false;
-        }
-        const value = this.getNestedValue(scopeConfig, key);
-        return value !== void 0;
-      }
-      /**
-       * Get all configuration keys for a scope
-       */
-      getConfigurationKeys(scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return [];
-        }
-        const keys = [];
-        this.collectKeys(scopeConfig, "", keys);
-        return keys;
-      }
-      /**
-       * Get all configuration values for a scope
-       */
-      async getAllValues(scope) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return {};
-        }
-        const result = {};
-        this.collectKeys(scopeConfig, "", Object.keys(result));
-        for (const key of Object.keys(result)) {
-          result[key] = this.getNestedValue(scopeConfig, key);
-        }
-        return result;
-      }
-      /**
-       * Inspect configuration value
-       */
-      inspect(key, scope = "APPLICATION" /* APPLICATION */) {
-        const scopeConfig = this.configuration.get(scope);
-        if (!scopeConfig) {
-          return { key };
-        }
-        const value = this.getNestedValue(scopeConfig, key);
-        return {
-          key,
-          value
-        };
-      }
-      /**
-       * Listen for configuration changes
-       */
-      onDidChangeConfiguration(callback) {
-        console.log(
-          "[ConfigurationService] Registering configuration change listener"
-        );
-        const listenerId = `listener_${Date.now()}_${Math.random()}`;
-        let globalListeners = this.listeners.get("*");
-        if (!globalListeners) {
-          globalListeners = [];
-          this.listeners.set("*", globalListeners);
-        }
-        globalListeners.push(callback);
-        console.log(
-          `[ConfigurationService] Configuration change listener registered: ${listenerId}`
-        );
-      }
-      /**
-       * Reload configuration from Mountain
-       */
-      async reloadConfiguration() {
-        console.log(
-          "[ConfigurationService] Reloading configuration from Mountain"
-        );
-        try {
-          this.listeners.clear();
-          await this.initialize();
-          console.log(
-            "[ConfigurationService] Configuration reloaded successfully"
-          );
-        } catch (error) {
-          console.error(
-            "[ConfigurationService] Failed to reload configuration:",
-            error
-          );
-          throw error;
-        }
-      }
-      /**
-       * Handle configuration conflicts with retry logic
-       */
-      async handleConfigurationConflict(error, key, value, scope) {
-        console.warn(
-          "[ConfigurationService] Configuration conflict detected, implementing retry logic"
-        );
-        const maxRetries = 3;
-        const baseDelay = 100;
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-          const delay = baseDelay * Math.pow(2, attempt - 1);
-          console.log(
-            `[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`
-          );
-          await new Promise((resolve2) => setTimeout(resolve2, delay));
-          try {
-            await this.initialize();
-            let scopeConfig = this.configuration.get(scope);
-            if (!scopeConfig) {
-              scopeConfig = {};
-              this.configuration.set(scope, scopeConfig);
-            }
-            this.setNestedValue(scopeConfig, key, value);
-            scopeConfig._timestamp = Date.now();
-            scopeConfig._version = (scopeConfig._version || 0) + 1;
-            let spineScope = 0;
-            if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
-            if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
-            await this.mountainClient.sendRequest("config.update", {
-              key,
-              value,
-              scope: spineScope
-            });
-            console.log(
-              "[ConfigurationService] Configuration saved successfully after retry"
-            );
-            return;
-          } catch (retryError) {
-            console.error(
-              `[ConfigurationService] Retry attempt ${attempt} failed:`,
-              retryError
-            );
-            if (attempt === maxRetries) {
-              console.error(
-                "[ConfigurationService] All retry attempts failed, configuration may be out of sync"
-              );
-              throw new Error(
-                `Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`
-              );
-            }
-          }
-        }
-      }
-      /**
-       * Cleanup configuration service
-       */
-      async cleanup() {
-        console.log("[ConfigurationService] Cleaning up configuration service");
-        this.listeners.clear();
-        this.configuration.clear();
-        console.log("[ConfigurationService] Configuration service cleaned up");
-      }
-      /**
-       * Get nested value from configuration object
-       */
-      getNestedValue(obj, key) {
-        const keys = key.split(".");
-        let current = obj;
-        for (const k of keys) {
-          if (current && typeof current === "object" && k in current) {
-            current = current[k];
-          } else {
-            return void 0;
-          }
-        }
-        return current;
-      }
-      /**
-       * Set nested value in configuration object
-       */
-      setNestedValue(obj, key, value) {
-        const keys = key.split(".");
-        let current = obj;
-        for (let i = 0; i < keys.length - 1; i++) {
-          const k = keys[i];
-          if (!k) continue;
-          if (!(k in current) || typeof current[k] !== "object") {
-            current[k] = {};
-          }
-          current = current[k];
-        }
-        const lastKey = keys[keys.length - 1];
-        if (lastKey) {
-          current[lastKey] = value;
-        }
-      }
-      /**
-       * Collect all configuration keys
-       */
-      collectKeys(obj, prefix, keys) {
-        for (const key in obj) {
-          if (key.startsWith("_")) continue;
-          const fullKey = prefix ? `${prefix}.${key}` : key;
-          if (typeof obj[key] === "object" && obj[key] !== null) {
-            this.collectKeys(obj[key], fullKey, keys);
-          } else {
-            keys.push(fullKey);
-          }
-        }
-      }
-      /**
-       * Notify configuration change listeners
-       */
-      notifyConfigurationChange(keys, scope) {
-        for (const key of keys) {
-          const eventKey = `${scope}.${key}`;
-          const listeners = this.listeners.get(eventKey);
-          const globalListeners = this.listeners.get("*");
-          const allListeners = [
-            ...listeners || [],
-            ...globalListeners || []
-          ];
-          if (allListeners.length > 0) {
-            for (const listener of allListeners) {
-              try {
-                listener([{ key, scope }]);
-              } catch (error) {
-                console.error(
-                  `[ConfigurationService] Error in listener for ${eventKey}:`,
-                  error
-                );
-              }
-            }
-          }
-        }
-      }
-    };
-    ConfigurationLayer = Layer.effect(
-      IConfigurationService,
-      Effect3.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        const configService = new Configuration(mountainClient);
-        yield* Effect3.promise(() => configService.initialize());
-        return configService;
-      })
-    );
-    ConfigurationLive = ConfigurationLayer;
-  }
-});
-
-// Source/Interfaces/IExtensionHostService.ts
-var IExtensionHostService_exports = {};
-__export(IExtensionHostService_exports, {
-  IExtensionHostService: () => IExtensionHostService
-});
-import { Context as Context2 } from "effect";
-var IExtensionHostService;
-var init_IExtensionHostService = __esm({
-  "Source/Interfaces/IExtensionHostService.ts"() {
-    "use strict";
-    IExtensionHostService = Context2.Tag(
-      "IExtensionHostService"
-    );
-  }
-});
-
-// Source/Interfaces/IModuleInterceptorService.ts
-import { Context as Context3 } from "effect";
-var SecurityLevel, IModuleInterceptorService;
-var init_IModuleInterceptorService = __esm({
-  "Source/Interfaces/IModuleInterceptorService.ts"() {
-    "use strict";
-    SecurityLevel = /* @__PURE__ */ ((SecurityLevel4) => {
-      SecurityLevel4["TRUSTED"] = "TRUSTED";
-      SecurityLevel4["SANDBOXED"] = "SANDBOXED";
-      SecurityLevel4["RESTRICTED"] = "RESTRICTED";
-      SecurityLevel4["BLOCKED"] = "BLOCKED";
-      return SecurityLevel4;
-    })(SecurityLevel || {});
-    IModuleInterceptorService = Context3.Tag(
-      "IModuleInterceptorService"
-    );
-  }
-});
-
 // ../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js
 function findLast(array, predicate, fromIndex = array.length - 1) {
   const idx = findLastIdx(array, predicate, fromIndex);
@@ -21295,14 +20756,54 @@ var init_extHostTypes = __esm({
   }
 });
 
+// Source/Interfaces/IConfigurationService.ts
+var IConfigurationService_exports = {};
+__export(IConfigurationService_exports, {
+  ConfigurationScope: () => ConfigurationScope,
+  IConfigurationService: () => IConfigurationService
+});
+import { Context } from "effect";
+var ConfigurationScope, IConfigurationService;
+var init_IConfigurationService = __esm({
+  "Source/Interfaces/IConfigurationService.ts"() {
+    "use strict";
+    ConfigurationScope = /* @__PURE__ */ ((ConfigurationScope3) => {
+      ConfigurationScope3["APPLICATION"] = "APPLICATION";
+      ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
+      ConfigurationScope3["PROFILE"] = "PROFILE";
+      return ConfigurationScope3;
+    })(ConfigurationScope || {});
+    IConfigurationService = Context.Tag(
+      "IConfigurationService"
+    );
+  }
+});
+
+// Source/Interfaces/IMountainClientService.ts
+import * as Effect2 from "effect/Effect";
+var IMountainClientService;
+var init_IMountainClientService = __esm({
+  "Source/Interfaces/IMountainClientService.ts"() {
+    "use strict";
+    IMountainClientService = Effect2.Service()(
+      "Service/MountainClient",
+      {
+        effect: Effect2.gen(function* () {
+          return {};
+        })
+      }
+    );
+  }
+});
+
 // Source/Services/FileSystemService.ts
-import { Context as Context4, Effect as Effect4, Layer as Layer2 } from "effect";
+import { Context as Context2, Effect as Effect3, Layer } from "effect";
 var IFileSystemService, FileSystemService, FileSystemServiceLayer;
 var init_FileSystemService = __esm({
   "Source/Services/FileSystemService.ts"() {
     "use strict";
     init_IMountainClientService();
-    IFileSystemService = Context4.Tag();
+    IFileSystemService = Context2.Tag();
     FileSystemService = class {
       constructor(mountainClient) {
         this.mountainClient = mountainClient;
@@ -21365,9 +20866,9 @@ var init_FileSystemService = __esm({
         });
       }
     };
-    FileSystemServiceLayer = Layer2.effect(
+    FileSystemServiceLayer = Layer.effect(
       IFileSystemService,
-      Effect4.gen(function* () {
+      Effect3.gen(function* () {
         const mountainClient = yield* IMountainClientService;
         return new FileSystemService(mountainClient);
       })
@@ -21383,13 +20884,32 @@ var init_IFileSystemService = __esm({
   }
 });
 
+// Source/Interfaces/IModuleInterceptorService.ts
+import { Context as Context3 } from "effect";
+var SecurityLevel, IModuleInterceptorService;
+var init_IModuleInterceptorService = __esm({
+  "Source/Interfaces/IModuleInterceptorService.ts"() {
+    "use strict";
+    SecurityLevel = /* @__PURE__ */ ((SecurityLevel4) => {
+      SecurityLevel4["TRUSTED"] = "TRUSTED";
+      SecurityLevel4["SANDBOXED"] = "SANDBOXED";
+      SecurityLevel4["RESTRICTED"] = "RESTRICTED";
+      SecurityLevel4["BLOCKED"] = "BLOCKED";
+      return SecurityLevel4;
+    })(SecurityLevel || {});
+    IModuleInterceptorService = Context3.Tag(
+      "IModuleInterceptorService"
+    );
+  }
+});
+
 // Source/Interfaces/ITerminalService.ts
-import { Context as Context5 } from "effect";
+import { Context as Context4 } from "effect";
 var ITerminalService;
 var init_ITerminalService = __esm({
   "Source/Interfaces/ITerminalService.ts"() {
     "use strict";
-    ITerminalService = Context5.Tag();
+    ITerminalService = Context4.Tag();
   }
 });
 
@@ -21413,7 +20933,13 @@ function Unregister(Handle) {
   Callbacks.delete(Handle);
 }
 function Get(Handle) {
-  return Callbacks.get(Handle);
+  const Provider = Callbacks.get(Handle);
+  if (process.env.LAND_DEV_LOG) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
 }
 function RegisterAutoHandle(Provider) {
   const Handle = NextHandle++;
@@ -21463,7 +20989,7 @@ __export(APIFactoryService_exports, {
   APIFactoryService: () => APIFactoryService,
   IAPIFactoryService: () => IAPIFactoryService
 });
-import { Context as Context6, Effect as Effect5, Layer as Layer3 } from "effect";
+import { Context as Context5, Effect as Effect4, Layer as Layer2 } from "effect";
 var VsCodeTypes, URI2, CancellationTokenSource2, CancellationToken2, Emitter3, IAPIFactoryService, createVSCodeAPI, APIFactoryService, APIFactoryLayer;
 var init_APIFactoryService = __esm({
   async "Source/Services/APIFactoryService.ts"() {
@@ -21478,7 +21004,7 @@ var init_APIFactoryService = __esm({
     ({ URI: URI2 } = await Promise.resolve().then(() => (init_uri(), uri_exports)));
     ({ CancellationTokenSource: CancellationTokenSource2, CancellationToken: CancellationToken2 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports)));
     ({ Emitter: Emitter3 } = await Promise.resolve().then(() => (init_event(), event_exports)));
-    IAPIFactoryService = Context6.Tag();
+    IAPIFactoryService = Context5.Tag();
     createVSCodeAPI = /* @__PURE__ */ __name((mountainClient, configService, fsService, terminalService) => {
       return {
         version: "1.88.0",
@@ -21882,9 +21408,9 @@ var init_APIFactoryService = __esm({
         return this.api;
       }
     };
-    APIFactoryLayer = Layer3.effect(
+    APIFactoryLayer = Layer2.effect(
       IAPIFactoryService,
-      Effect5.gen(function* () {
+      Effect4.gen(function* () {
         const mountainClient = yield* IMountainClientService;
         const configService = yield* IConfigurationService;
         const fsService = yield* IFileSystemService;
@@ -21902,13 +21428,896 @@ var init_APIFactoryService = __esm({
   }
 });
 
+// Source/Services/Configuration.ts
+import { Effect as Effect5, Layer as Layer3 } from "effect";
+var ConfigurationScope2, Configuration, ConfigurationLayer, ConfigurationLive;
+var init_Configuration = __esm({
+  "Source/Services/Configuration.ts"() {
+    "use strict";
+    init_IConfigurationService();
+    init_IMountainClientService();
+    ConfigurationScope2 = /* @__PURE__ */ ((ConfigurationScope3) => {
+      ConfigurationScope3["APPLICATION"] = "APPLICATION";
+      ConfigurationScope3["WORKSPACE"] = "WORKSPACE";
+      ConfigurationScope3["PROFILE"] = "PROFILE";
+      return ConfigurationScope3;
+    })(ConfigurationScope2 || {});
+    Configuration = class {
+      static {
+        __name(this, "Configuration");
+      }
+      _serviceBrand;
+      configuration;
+      mountainClient;
+      listeners;
+      constructor(mountainClient) {
+        this._serviceBrand = void 0;
+        this.mountainClient = mountainClient;
+        this.configuration = /* @__PURE__ */ new Map();
+        this.listeners = /* @__PURE__ */ new Map();
+        console.log(
+          "[ConfigurationService] Initializing configuration service with Universal Spine"
+        );
+      }
+      /**
+       * Initialize the configuration service by fetching from Mountain
+       */
+      async initialize() {
+        console.log(
+          "[ConfigurationService] Loading initial configuration from Spine..."
+        );
+        try {
+          const configData = await this.mountainClient.sendRequest(
+            "config.reload",
+            {}
+          );
+          if (configData?.application) {
+            this.configuration.set(
+              "APPLICATION" /* APPLICATION */,
+              configData.application
+            );
+          }
+          if (configData?.workspace) {
+            this.configuration.set(
+              "WORKSPACE" /* WORKSPACE */,
+              configData.workspace
+            );
+          }
+          if (configData?.profile) {
+            this.configuration.set(
+              "PROFILE" /* PROFILE */,
+              configData.profile
+            );
+          }
+          console.log(
+            "[ConfigurationService] Configuration loaded from Spine",
+            configData
+          );
+        } catch (error) {
+          console.error(
+            "[ConfigurationService] Failed to load initial configuration from Spine:",
+            error
+          );
+          this.configuration.set("APPLICATION" /* APPLICATION */, {
+            _version: 1,
+            _timestamp: Date.now(),
+            window: {
+              zoomLevel: 0,
+              theme: "dark"
+            },
+            editor: {
+              fontSize: 14,
+              lineNumbers: "on"
+            }
+          });
+          this.configuration.set("WORKSPACE" /* WORKSPACE */, {
+            _version: 1,
+            _timestamp: Date.now()
+          });
+          this.configuration.set("PROFILE" /* PROFILE */, {
+            _version: 1,
+            _timestamp: Date.now()
+          });
+        }
+      }
+      /**
+       * Get configuration value
+       */
+      getValue(key, scope = "APPLICATION" /* APPLICATION */, defaultValue) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return defaultValue;
+        }
+        const value = this.getNestedValue(scopeConfig, key);
+        return value !== void 0 ? value : defaultValue;
+      }
+      /**
+       * Set configuration value
+       */
+      async setValue(key, value, scope) {
+        if (!this.validateConfigurationKey(key)) {
+          throw new Error(`Invalid configuration key: ${key}`);
+        }
+        if (!this.validateConfigurationValue(key, value)) {
+          throw new Error(
+            `Invalid configuration value for key ${key}: ${value}`
+          );
+        }
+        let scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          scopeConfig = {};
+          this.configuration.set(scope, scopeConfig);
+        }
+        const oldValue = this.getNestedValue(scopeConfig, key);
+        if (oldValue !== value) {
+          this.setNestedValue(scopeConfig, key, value);
+          scopeConfig._timestamp = Date.now();
+          scopeConfig._version = (scopeConfig._version || 0) + 1;
+          try {
+            let spineScope = 0;
+            if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
+            if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
+            await this.mountainClient.sendRequest("config.update", {
+              key,
+              value,
+              scope: spineScope
+            });
+            console.log(
+              `[ConfigurationService] Configuration updated: ${key} = ${value}`
+            );
+            this.notifyConfigurationChange([key], scope);
+          } catch (error) {
+            console.error(
+              `[ConfigurationService] Failed to update configuration: ${key}`,
+              error
+            );
+            await this.handleConfigurationConflict(
+              error,
+              key,
+              value,
+              scope
+            );
+          }
+        }
+      }
+      /**
+       * Validate configuration key
+       */
+      validateConfigurationKey(key) {
+        if (!key || key.trim().length === 0) {
+          return false;
+        }
+        const invalidChars = /[^a-zA-Z0-9._-]/;
+        if (invalidChars.test(key)) {
+          return false;
+        }
+        if (key.startsWith(".") || key.endsWith(".")) {
+          return false;
+        }
+        if (key.includes("..")) {
+          return false;
+        }
+        return true;
+      }
+      /**
+       * Validate configuration value
+       */
+      validateConfigurationValue(key, value) {
+        if (value === void 0) {
+          return false;
+        }
+        if (key.includes("zoomLevel") || key.includes("fontSize")) {
+          if (typeof value !== "number" || !isFinite(value)) {
+            return false;
+          }
+          if (key.includes("zoomLevel")) {
+            return value >= -8 && value <= 9;
+          }
+          if (key.includes("fontSize")) {
+            return value >= 6 && value <= 100;
+          }
+        }
+        if (key.includes("enable") || key.includes("show") || key.includes("visible")) {
+          return typeof value === "boolean";
+        }
+        if (typeof value === "string") {
+          return value.trim().length > 0;
+        }
+        return true;
+      }
+      /**
+       * Validate entire configuration scope
+       */
+      validateScopeConfiguration(scope) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return true;
+        }
+        const keys = [];
+        this.collectKeys(scopeConfig, "", keys);
+        for (const key of keys) {
+          const value = this.getNestedValue(scopeConfig, key);
+          if (!this.validateConfigurationKey(key) || !this.validateConfigurationValue(key, value)) {
+            return false;
+          }
+        }
+        return true;
+      }
+      /**
+       * Update configuration value
+       */
+      async updateValue(key, updateFn, scope) {
+        const currentValue = this.getValue(key, scope);
+        const newValue = updateFn(currentValue);
+        await this.setValue(key, newValue, scope);
+      }
+      /**
+       * Check if configuration key exists
+       */
+      hasKey(key, scope) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return false;
+        }
+        const value = this.getNestedValue(scopeConfig, key);
+        return value !== void 0;
+      }
+      /**
+       * Get all configuration keys for a scope
+       */
+      getConfigurationKeys(scope) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return [];
+        }
+        const keys = [];
+        this.collectKeys(scopeConfig, "", keys);
+        return keys;
+      }
+      /**
+       * Get all configuration values for a scope
+       */
+      async getAllValues(scope) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return {};
+        }
+        const result = {};
+        this.collectKeys(scopeConfig, "", Object.keys(result));
+        for (const key of Object.keys(result)) {
+          result[key] = this.getNestedValue(scopeConfig, key);
+        }
+        return result;
+      }
+      /**
+       * Inspect configuration value
+       */
+      inspect(key, scope = "APPLICATION" /* APPLICATION */) {
+        const scopeConfig = this.configuration.get(scope);
+        if (!scopeConfig) {
+          return { key };
+        }
+        const value = this.getNestedValue(scopeConfig, key);
+        return {
+          key,
+          value
+        };
+      }
+      /**
+       * Listen for configuration changes
+       */
+      onDidChangeConfiguration(callback) {
+        console.log(
+          "[ConfigurationService] Registering configuration change listener"
+        );
+        const listenerId = `listener_${Date.now()}_${Math.random()}`;
+        let globalListeners = this.listeners.get("*");
+        if (!globalListeners) {
+          globalListeners = [];
+          this.listeners.set("*", globalListeners);
+        }
+        globalListeners.push(callback);
+        console.log(
+          `[ConfigurationService] Configuration change listener registered: ${listenerId}`
+        );
+      }
+      /**
+       * Reload configuration from Mountain
+       */
+      async reloadConfiguration() {
+        console.log(
+          "[ConfigurationService] Reloading configuration from Mountain"
+        );
+        try {
+          this.listeners.clear();
+          await this.initialize();
+          console.log(
+            "[ConfigurationService] Configuration reloaded successfully"
+          );
+        } catch (error) {
+          console.error(
+            "[ConfigurationService] Failed to reload configuration:",
+            error
+          );
+          throw error;
+        }
+      }
+      /**
+       * Handle configuration conflicts with retry logic
+       */
+      async handleConfigurationConflict(error, key, value, scope) {
+        console.warn(
+          "[ConfigurationService] Configuration conflict detected, implementing retry logic"
+        );
+        const maxRetries = 3;
+        const baseDelay = 100;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          console.log(
+            `[ConfigurationService] Retry attempt ${attempt}/${maxRetries} after ${delay}ms`
+          );
+          await new Promise((resolve2) => setTimeout(resolve2, delay));
+          try {
+            await this.initialize();
+            let scopeConfig = this.configuration.get(scope);
+            if (!scopeConfig) {
+              scopeConfig = {};
+              this.configuration.set(scope, scopeConfig);
+            }
+            this.setNestedValue(scopeConfig, key, value);
+            scopeConfig._timestamp = Date.now();
+            scopeConfig._version = (scopeConfig._version || 0) + 1;
+            let spineScope = 0;
+            if (scope === "WORKSPACE" /* WORKSPACE */) spineScope = 1;
+            if (scope === "PROFILE" /* PROFILE */) spineScope = 2;
+            await this.mountainClient.sendRequest("config.update", {
+              key,
+              value,
+              scope: spineScope
+            });
+            console.log(
+              "[ConfigurationService] Configuration saved successfully after retry"
+            );
+            return;
+          } catch (retryError) {
+            console.error(
+              `[ConfigurationService] Retry attempt ${attempt} failed:`,
+              retryError
+            );
+            if (attempt === maxRetries) {
+              console.error(
+                "[ConfigurationService] All retry attempts failed, configuration may be out of sync"
+              );
+              throw new Error(
+                `Configuration synchronization failed after ${maxRetries} attempts: ${retryError}`
+              );
+            }
+          }
+        }
+      }
+      /**
+       * Cleanup configuration service
+       */
+      async cleanup() {
+        console.log("[ConfigurationService] Cleaning up configuration service");
+        this.listeners.clear();
+        this.configuration.clear();
+        console.log("[ConfigurationService] Configuration service cleaned up");
+      }
+      /**
+       * Get nested value from configuration object
+       */
+      getNestedValue(obj, key) {
+        const keys = key.split(".");
+        let current = obj;
+        for (const k of keys) {
+          if (current && typeof current === "object" && k in current) {
+            current = current[k];
+          } else {
+            return void 0;
+          }
+        }
+        return current;
+      }
+      /**
+       * Set nested value in configuration object
+       */
+      setNestedValue(obj, key, value) {
+        const keys = key.split(".");
+        let current = obj;
+        for (let i = 0; i < keys.length - 1; i++) {
+          const k = keys[i];
+          if (!k) continue;
+          if (!(k in current) || typeof current[k] !== "object") {
+            current[k] = {};
+          }
+          current = current[k];
+        }
+        const lastKey = keys[keys.length - 1];
+        if (lastKey) {
+          current[lastKey] = value;
+        }
+      }
+      /**
+       * Collect all configuration keys
+       */
+      collectKeys(obj, prefix, keys) {
+        for (const key in obj) {
+          if (key.startsWith("_")) continue;
+          const fullKey = prefix ? `${prefix}.${key}` : key;
+          if (typeof obj[key] === "object" && obj[key] !== null) {
+            this.collectKeys(obj[key], fullKey, keys);
+          } else {
+            keys.push(fullKey);
+          }
+        }
+      }
+      /**
+       * Notify configuration change listeners
+       */
+      notifyConfigurationChange(keys, scope) {
+        for (const key of keys) {
+          const eventKey = `${scope}.${key}`;
+          const listeners = this.listeners.get(eventKey);
+          const globalListeners = this.listeners.get("*");
+          const allListeners = [
+            ...listeners || [],
+            ...globalListeners || []
+          ];
+          if (allListeners.length > 0) {
+            for (const listener of allListeners) {
+              try {
+                listener([{ key, scope }]);
+              } catch (error) {
+                console.error(
+                  `[ConfigurationService] Error in listener for ${eventKey}:`,
+                  error
+                );
+              }
+            }
+          }
+        }
+      }
+    };
+    ConfigurationLayer = Layer3.effect(
+      IConfigurationService,
+      Effect5.gen(function* () {
+        const mountainClient = yield* IMountainClientService;
+        const configService = new Configuration(mountainClient);
+        yield* Effect5.promise(() => configService.initialize());
+        return configService;
+      })
+    );
+    ConfigurationLive = ConfigurationLayer;
+  }
+});
+
+// Source/Services/ErrorHandlingService.ts
+var ErrorHandlingService_exports = {};
+__export(ErrorHandlingService_exports, {
+  ErrorHandlingService: () => ErrorHandlingService,
+  ErrorHandlingServiceLayer: () => ErrorHandlingServiceLayer,
+  ErrorHandlingServiceLive: () => ErrorHandlingServiceLive
+});
+import { Effect as Effect6, Layer as Layer4 } from "effect";
+var ErrorHandlingService, ErrorHandlingServiceLayer, ErrorHandlingServiceLive;
+var init_ErrorHandlingService = __esm({
+  "Source/Services/ErrorHandlingService.ts"() {
+    "use strict";
+    ErrorHandlingService = class {
+      static {
+        __name(this, "ErrorHandlingService");
+      }
+      _serviceBrand;
+      circuitBreakers = /* @__PURE__ */ new Map();
+      config;
+      constructor() {
+        this._serviceBrand = void 0;
+        this.config = this.loadDefaultConfig();
+        console.log(
+          "[ErrorHandlingService] Initializing error handling service"
+        );
+      }
+      /**
+       * Load default configuration
+       */
+      loadDefaultConfig() {
+        return {
+          maxRetries: 3,
+          retryDelay: 1e3,
+          // 1 second
+          exponentialBackoff: true,
+          circuitBreakerTimeout: 3e4,
+          // 30 seconds
+          circuitBreakerThreshold: 5
+        };
+      }
+      /**
+       * Execute operation with advanced error handling and metrics
+       */
+      async executeWithRetry(operation, operationName, customConfig) {
+        const startTime = Date.now();
+        const config = { ...this.config, ...customConfig };
+        console.log(
+          `[ErrorHandlingService] Executing operation: ${operationName}`
+        );
+        const circuitState = this.getCircuitBreakerState(operationName);
+        if (circuitState.state === "OPEN") {
+          const error = new Error(
+            `Circuit breaker is OPEN for ${operationName} (failures: ${circuitState.failureCount})`
+          );
+          console.warn(
+            `[ErrorHandlingService] Circuit breaker blocked operation: ${operationName}`
+          );
+          this.trackCircuitBreakerEvent(operationName, "blocked");
+          return {
+            success: false,
+            error,
+            retries: 0,
+            duration: Date.now() - startTime,
+            circuitBreakerState: circuitState,
+            metrics: {
+              circuitBreakerBlocked: true,
+              totalRetries: 0,
+              executionTime: Date.now() - startTime
+            }
+          };
+        }
+        let lastError;
+        let totalRetries = 0;
+        for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+          try {
+            const operationStartTime = Date.now();
+            const result = await operation();
+            const operationDuration = Date.now() - operationStartTime;
+            this.recordSuccess(operationName);
+            this.trackOperationSuccess(
+              operationName,
+              operationDuration,
+              attempt
+            );
+            console.log(
+              `[ErrorHandlingService] Operation ${operationName} succeeded on attempt ${attempt + 1} in ${operationDuration}ms`
+            );
+            return {
+              success: true,
+              result,
+              retries: attempt,
+              duration: Date.now() - startTime,
+              circuitBreakerState: this.getCircuitBreakerState(operationName),
+              metrics: {
+                totalRetries: attempt,
+                executionTime: Date.now() - startTime,
+                operationDuration,
+                circuitBreakerBlocked: false
+              }
+            };
+          } catch (error) {
+            lastError = error instanceof Error ? error : new Error(String(error));
+            totalRetries = attempt;
+            console.warn(
+              `[ErrorHandlingService] Operation ${operationName} failed on attempt ${attempt + 1}:`,
+              error
+            );
+            this.recordFailure(operationName);
+            this.trackOperationFailure(operationName, error, attempt);
+            if (attempt < config.maxRetries && this.shouldRetry(error)) {
+              const delay = this.calculateRetryDelay(attempt, config);
+              console.log(
+                `[ErrorHandlingService] Retrying ${operationName} in ${delay}ms`
+              );
+              await this.delay(delay);
+            } else {
+              break;
+            }
+          }
+        }
+        console.error(
+          `[ErrorHandlingService] Operation ${operationName} failed after ${totalRetries} retries`
+        );
+        return {
+          success: false,
+          error: lastError,
+          retries: totalRetries,
+          duration: Date.now() - startTime,
+          circuitBreakerState: this.getCircuitBreakerState(operationName),
+          metrics: {
+            totalRetries,
+            executionTime: Date.now() - startTime,
+            circuitBreakerBlocked: false,
+            finalFailure: true
+          }
+        };
+      }
+      /**
+       * Get circuit breaker state
+       */
+      getCircuitBreakerState(serviceName) {
+        if (!this.circuitBreakers.has(serviceName)) {
+          this.circuitBreakers.set(serviceName, {
+            serviceName,
+            state: "CLOSED",
+            failureCount: 0,
+            lastFailureTime: 0,
+            successThreshold: 3,
+            failureThreshold: this.config.circuitBreakerThreshold,
+            timeout: this.config.circuitBreakerTimeout
+          });
+        }
+        const state = this.circuitBreakers.get(serviceName);
+        if (state.state === "OPEN" && Date.now() - state.lastFailureTime > state.timeout) {
+          state.state = "HALF_OPEN";
+          console.log(
+            `[ErrorHandlingService] Circuit breaker for ${serviceName} transitioned to HALF_OPEN`
+          );
+        }
+        return state;
+      }
+      /**
+       * Record operation success
+       */
+      recordSuccess(serviceName) {
+        const state = this.getCircuitBreakerState(serviceName);
+        if (state.state === "HALF_OPEN") {
+          state.state = "CLOSED";
+          state.failureCount = 0;
+          console.log(
+            `[ErrorHandlingService] Circuit breaker for ${serviceName} closed after successful operation`
+          );
+        } else if (state.state === "CLOSED") {
+          state.failureCount = Math.max(0, state.failureCount - 1);
+        }
+      }
+      /**
+       * Record operation failure
+       */
+      recordFailure(serviceName) {
+        const state = this.getCircuitBreakerState(serviceName);
+        state.failureCount++;
+        state.lastFailureTime = Date.now();
+        if (state.state === "HALF_OPEN") {
+          state.state = "OPEN";
+          console.log(
+            `[ErrorHandlingService] Circuit breaker for ${serviceName} reopened after failure in HALF_OPEN state`
+          );
+        } else if (state.state === "CLOSED" && state.failureCount >= state.failureThreshold) {
+          state.state = "OPEN";
+          console.warn(
+            `[ErrorHandlingService] Circuit breaker for ${serviceName} opened after ${state.failureCount} failures`
+          );
+        }
+      }
+      /**
+       * Calculate retry delay with jitter
+       */
+      calculateRetryDelay(attempt, config) {
+        if (!config.exponentialBackoff) {
+          return config.retryDelay;
+        }
+        const baseDelay = config.retryDelay * Math.pow(2, attempt);
+        const jitter = Math.random() * baseDelay * 0.1;
+        const finalDelay = baseDelay + (Math.random() > 0.5 ? jitter : -jitter);
+        return Math.min(finalDelay, 3e4);
+      }
+      /**
+       * Advanced error classification with ML-inspired patterns
+       */
+      shouldRetry(error) {
+        const errorMessage = error.message.toLowerCase();
+        const nonRetryablePatterns = [
+          "invalidargument",
+          "notfound",
+          "alreadyexists",
+          "permissiondenied",
+          "unauthenticated",
+          "unauthorized",
+          "badrequest",
+          "forbidden",
+          "conflict",
+          "gone"
+        ];
+        const retryablePatterns = [
+          "timeout",
+          "deadlineexceeded",
+          "unavailable",
+          "busy",
+          "overloaded",
+          "temporarilyunavailable",
+          "network",
+          "connection",
+          "socket"
+        ];
+        if (nonRetryablePatterns.some(
+          (pattern) => errorMessage.includes(pattern)
+        )) {
+          return false;
+        }
+        if (retryablePatterns.some((pattern) => errorMessage.includes(pattern))) {
+          return true;
+        }
+        return this.isTransientError(error);
+      }
+      /**
+       * Determine if error is transient
+       */
+      isTransientError(error) {
+        const transientIndicators = [
+          "temporary",
+          "transient",
+          "retry",
+          "again",
+          "later",
+          "soon",
+          "momentarily",
+          "briefly"
+        ];
+        const errorMessage = error.message.toLowerCase();
+        return transientIndicators.some(
+          (indicator) => errorMessage.includes(indicator)
+        );
+      }
+      /**
+       * Track operation success with advanced analytics
+       */
+      trackOperationSuccess(operationName, duration, attempt) {
+        const successMetrics = {
+          operationName,
+          duration,
+          attempt,
+          timestamp: Date.now(),
+          success: true,
+          retryCount: attempt,
+          circuitBreakerState: this.getCircuitBreakerState(operationName).state
+        };
+        console.log(
+          `[ErrorHandlingService] Success metrics: ${JSON.stringify(successMetrics)}`
+        );
+        this.adaptRetryStrategy(operationName, duration, attempt);
+      }
+      /**
+       * Adapt retry strategy based on historical patterns
+       */
+      adaptRetryStrategy(operationName, duration, attempt) {
+        const circuitState = this.getCircuitBreakerState(operationName);
+        if (attempt === 0 && duration < 1e3) {
+          circuitState.successThreshold = Math.max(
+            1,
+            circuitState.successThreshold - 1
+          );
+        }
+      }
+      /**
+       * Track operation failure with advanced analytics
+       */
+      trackOperationFailure(operationName, error, attempt) {
+        const failureMetrics = {
+          operationName,
+          attempt,
+          timestamp: Date.now(),
+          success: false,
+          errorType: this.classifyError(error),
+          errorMessage: error.message.substring(0, 200),
+          // Truncate long messages
+          retryable: this.shouldRetry(error),
+          circuitBreakerState: this.getCircuitBreakerState(operationName).state
+        };
+        console.log(
+          `[ErrorHandlingService] Failure metrics: ${JSON.stringify(failureMetrics)}`
+        );
+      }
+      /**
+       * Classify error for better analytics
+       */
+      classifyError(error) {
+        const errorMessage = error.message.toLowerCase();
+        if (errorMessage.includes("timeout") || errorMessage.includes("deadline")) {
+          return "timeout";
+        } else if (errorMessage.includes("network") || errorMessage.includes("connection")) {
+          return "network";
+        } else if (errorMessage.includes("permission") || errorMessage.includes("unauthorized")) {
+          return "permission";
+        } else if (errorMessage.includes("invalid") || errorMessage.includes("bad request")) {
+          return "validation";
+        } else if (errorMessage.includes("not found") || errorMessage.includes("missing")) {
+          return "not_found";
+        } else {
+          return "unknown";
+        }
+      }
+      /**
+       * Track circuit breaker events
+       */
+      trackCircuitBreakerEvent(operationName, eventType) {
+        console.log(
+          `[ErrorHandlingService] Circuit breaker event: ${operationName}, ${eventType}`
+        );
+      }
+      /**
+       * Delay execution
+       */
+      delay(ms) {
+        return new Promise((resolve2) => setTimeout(resolve2, ms));
+      }
+      /**
+       * Get circuit breaker status
+       */
+      getCircuitBreakerStatus(serviceName) {
+        return this.circuitBreakers.get(serviceName);
+      }
+      /**
+       * Get all circuit breaker statuses
+       */
+      getAllCircuitBreakerStatuses() {
+        return Array.from(this.circuitBreakers.values());
+      }
+      /**
+       * Reset circuit breaker
+       */
+      resetCircuitBreaker(serviceName) {
+        if (this.circuitBreakers.has(serviceName)) {
+          this.circuitBreakers.delete(serviceName);
+          console.log(
+            `[ErrorHandlingService] Circuit breaker reset for ${serviceName}`
+          );
+        }
+      }
+      /**
+       * Update configuration
+       */
+      updateConfiguration(newConfig) {
+        this.config = { ...this.config, ...newConfig };
+        console.log("[ErrorHandlingService] Configuration updated");
+      }
+      /**
+       * Get service statistics
+       */
+      getStatistics() {
+        const states = this.getAllCircuitBreakerStatuses();
+        return {
+          totalCircuitBreakers: states.length,
+          openCircuitBreakers: states.filter((s) => s.state === "OPEN").length,
+          halfOpenCircuitBreakers: states.filter(
+            (s) => s.state === "HALF_OPEN"
+          ).length,
+          closedCircuitBreakers: states.filter((s) => s.state === "CLOSED").length,
+          config: this.config
+        };
+      }
+    };
+    ErrorHandlingServiceLayer = Layer4.effect(
+      "ErrorHandlingService",
+      Effect6.sync(() => new ErrorHandlingService())
+    );
+    ErrorHandlingServiceLive = Layer4.effect(
+      "ErrorHandlingService",
+      Effect6.sync(() => new ErrorHandlingService())
+    );
+  }
+});
+
+// Source/Interfaces/IExtensionHostService.ts
+var IExtensionHostService_exports = {};
+__export(IExtensionHostService_exports, {
+  IExtensionHostService: () => IExtensionHostService
+});
+import { Context as Context6 } from "effect";
+var IExtensionHostService;
+var init_IExtensionHostService = __esm({
+  "Source/Interfaces/IExtensionHostService.ts"() {
+    "use strict";
+    IExtensionHostService = Context6.Tag(
+      "IExtensionHostService"
+    );
+  }
+});
+
 // Source/Services/ExtensionHostService.ts
 var ExtensionHostService_exports = {};
 __export(ExtensionHostService_exports, {
   ExtensionHostLayer: () => ExtensionHostLayer,
   ExtensionHostService: () => ExtensionHostService
 });
-import { Effect as Effect6, Layer as Layer4 } from "effect";
+import { Effect as Effect7, Layer as Layer5 } from "effect";
 var ExtensionHostService, ExtensionHostLayer;
 var init_ExtensionHostService = __esm({
   async "Source/Services/ExtensionHostService.ts"() {
@@ -22049,9 +22458,9 @@ var init_ExtensionHostService = __esm({
         this.activatedExtensions.delete(extensionId);
       }
     };
-    ExtensionHostLayer = Layer4.effect(
+    ExtensionHostLayer = Layer5.effect(
       IExtensionHostService,
-      Effect6.gen(function* () {
+      Effect7.gen(function* () {
         const moduleInterceptor = yield* IModuleInterceptorService;
         const apiFactory = yield* IAPIFactoryService;
         return new ExtensionHostService(moduleInterceptor, apiFactory);
@@ -22075,7 +22484,7 @@ var init_IIPCService = __esm({
 });
 
 // Source/Services/IPCService.ts
-import { Effect as Effect7, Layer as Layer5 } from "effect";
+import { Effect as Effect8, Layer as Layer6 } from "effect";
 var CocoonVSBuffer, CocoonMessagePassingProtocol, IPCService, IPCServiceLayer, IPCServiceLive;
 var init_IPCService = __esm({
   "Source/Services/IPCService.ts"() {
@@ -22365,13 +22774,13 @@ var init_IPCService = __esm({
         console.log("[IPCService] IPC service disposed");
       }
     };
-    IPCServiceLayer = Layer5.effect(
+    IPCServiceLayer = Layer6.effect(
       IIPCService,
-      Effect7.sync(() => new IPCService())
+      Effect8.sync(() => new IPCService())
     );
-    IPCServiceLive = Layer5.effect(
+    IPCServiceLive = Layer6.effect(
       IIPCService,
-      Effect7.sync(() => new IPCService())
+      Effect8.sync(() => new IPCService())
     );
   }
 });
@@ -22379,7 +22788,7 @@ var init_IPCService = __esm({
 // Source/Services/ModuleInterceptorService.ts
 import * as acorn from "acorn";
 import * as walk from "acorn-walk";
-import { Effect as Effect8, Layer as Layer6 } from "effect";
+import { Effect as Effect9, Layer as Layer7 } from "effect";
 var ModuleInterceptorService, ModuleInterceptorServiceLayer, ModuleInterceptorServiceLive, ModuleInterceptorService_default;
 var init_ModuleInterceptorService = __esm({
   "Source/Services/ModuleInterceptorService.ts"() {
@@ -22928,13 +23337,13 @@ var init_ModuleInterceptorService = __esm({
         };
       }
     };
-    ModuleInterceptorServiceLayer = Layer6.effect(
+    ModuleInterceptorServiceLayer = Layer7.effect(
       IModuleInterceptorService,
-      Effect8.sync(() => new ModuleInterceptorService())
+      Effect9.sync(() => new ModuleInterceptorService())
     );
-    ModuleInterceptorServiceLive = Layer6.effect(
+    ModuleInterceptorServiceLive = Layer7.effect(
       IModuleInterceptorService,
-      Effect8.sync(() => new ModuleInterceptorService())
+      Effect9.sync(() => new ModuleInterceptorService())
     );
     ModuleInterceptorService_default = ModuleInterceptorService;
   }
@@ -22947,8 +23356,8 @@ __export(MountainClientService_exports, {
   MountainClientServiceLayer: () => MountainClientServiceLayer
 });
 import { createRequire } from "module";
-import { fileURLToPath } from "url";
 import { dirname as dirname3 } from "path";
+import { fileURLToPath } from "url";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { v4 as uuidv4 } from "uuid";
@@ -23228,8 +23637,14 @@ var init_MountainClientService = __esm({
           const fs = require2("fs");
           const path = require2("path");
           const SearchPaths = [
-            path.resolve(__dirname, "../../../../Mountain/Proto/Vine.proto"),
-            path.resolve(process.cwd(), "Element/Mountain/Proto/Vine.proto"),
+            path.resolve(
+              __dirname,
+              "../../../../Mountain/Proto/Vine.proto"
+            ),
+            path.resolve(
+              process.cwd(),
+              "Element/Mountain/Proto/Vine.proto"
+            ),
             path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto")
           ];
           let vineProtoPath = null;
@@ -23708,9 +24123,7 @@ message RPCDataPayload {
           if (channel) {
             const state = channel.getConnectivityState(false);
             if (state !== 2) {
-              throw new Error(
-                `Channel not ready (state: ${state})`
-              );
+              throw new Error(`Channel not ready (state: ${state})`);
             }
           }
           this.consecutiveSuccessfulHealthChecks++;
@@ -23832,13 +24245,10 @@ message RPCDataPayload {
         }
         try {
           await new Promise((resolve2, reject) => {
-            this.client.CancelOperation(
-              cancelRequest,
-              (error) => {
-                if (error) reject(error);
-                else resolve2();
-              }
-            );
+            this.client.CancelOperation(cancelRequest, (error) => {
+              if (error) reject(error);
+              else resolve2();
+            });
           });
         } catch (error) {
           throw error;
@@ -23893,59 +24303,6186 @@ message RPCDataPayload {
   }
 });
 
-// Source/Services/TerminalService.ts
-import { Effect as Effect10, Layer as Layer8, Context as Context9 } from "effect";
-var ITerminalService2, TerminalService, TerminalServiceLayer;
-var init_TerminalService = __esm({
-  "Source/Services/TerminalService.ts"() {
+// Source/Interfaces/IGRPCServerService.ts
+import { Context as Context9 } from "effect";
+var IGRPCServerService;
+var init_IGRPCServerService = __esm({
+  "Source/Interfaces/IGRPCServerService.ts"() {
     "use strict";
-    init_IMountainClientService();
-    ITerminalService2 = Context9.Tag("ITerminalService")();
-    TerminalService = class {
-      constructor(mountainClient) {
-        this.mountainClient = mountainClient;
-      }
-      mountainClient;
-      static {
-        __name(this, "TerminalService");
-      }
-      async createTerminal(name, shellPath, cwd2) {
-        console.log(`[Terminal] Creating terminal: ${name}`);
-        const terminalId = await this.mountainClient.sendRequest(
-          "terminal.create",
-          {
-            name,
-            shell_path: shellPath,
-            cwd: cwd2
+    IGRPCServerService = Context9.GenericTag("IGRPCServerService");
+  }
+});
+
+// Source/Services/Handler/DocumentContentHandler.ts
+var InferLanguageIdentifier, BuildTextDocument, DocumentVersionMap, HandleDocumentChange, HandleDocumentOpen, HandleDocumentClose, HandleDocumentSave, GetDocumentContent, DocumentContentHandler_default;
+var init_DocumentContentHandler = __esm({
+  "Source/Services/Handler/DocumentContentHandler.ts"() {
+    "use strict";
+    InferLanguageIdentifier = /* @__PURE__ */ __name((Uri2) => {
+      const ExtensionMatch = Uri2.match(/\.([^./?#]+)(?:\?|#|$)/);
+      if (!ExtensionMatch?.[1]) return "plaintext";
+      const Extension2 = ExtensionMatch[1].toLowerCase();
+      const LanguageMap = {
+        ts: "typescript",
+        tsx: "typescriptreact",
+        js: "javascript",
+        jsx: "javascriptreact",
+        json: "json",
+        jsonc: "jsonc",
+        md: "markdown",
+        html: "html",
+        htm: "html",
+        css: "css",
+        scss: "scss",
+        less: "less",
+        xml: "xml",
+        yaml: "yaml",
+        yml: "yaml",
+        toml: "toml",
+        rs: "rust",
+        py: "python",
+        rb: "ruby",
+        go: "go",
+        java: "java",
+        c: "c",
+        cpp: "cpp",
+        h: "c",
+        hpp: "cpp",
+        cs: "csharp",
+        swift: "swift",
+        sh: "shellscript",
+        bash: "shellscript",
+        zsh: "shellscript",
+        ps1: "powershell",
+        sql: "sql",
+        graphql: "graphql",
+        proto: "proto3",
+        dockerfile: "dockerfile",
+        vue: "vue",
+        svelte: "svelte",
+        astro: "astro",
+        txt: "plaintext"
+      };
+      return LanguageMap[Extension2] ?? "plaintext";
+    }, "InferLanguageIdentifier");
+    BuildTextDocument = /* @__PURE__ */ __name((Uri2, Content, Version = 1, LanguageIdentifier) => {
+      const Lines = Content.split(/\r?\n/);
+      const FileName = Uri2.replace(/^file:\/\//, "");
+      const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri2);
+      return {
+        uri: {
+          scheme: "file",
+          path: FileName,
+          fsPath: FileName,
+          authority: "",
+          query: "",
+          fragment: "",
+          with: /* @__PURE__ */ __name(() => ({}), "with"),
+          toString: /* @__PURE__ */ __name(() => Uri2, "toString"),
+          toJSON: /* @__PURE__ */ __name(() => ({
+            scheme: "file",
+            path: FileName,
+            fsPath: FileName
+          }), "toJSON")
+        },
+        fileName: FileName,
+        languageId: ResolvedLanguage,
+        version: Version,
+        lineCount: Lines.length,
+        getText: /* @__PURE__ */ __name((Range3) => {
+          if (!Range3) return Content;
+          const StartLine = Range3?.start?.line ?? 0;
+          const StartCharacter = Range3?.start?.character ?? 0;
+          const EndLine = Range3?.end?.line ?? Lines.length - 1;
+          const EndCharacter = Range3?.end?.character ?? Lines[EndLine]?.length ?? 0;
+          if (StartLine === EndLine) {
+            return (Lines[StartLine] ?? "").substring(
+              StartCharacter,
+              EndCharacter
+            );
           }
-        );
-        return terminalId;
+          const Result = [];
+          Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
+          for (let Index = StartLine + 1; Index < EndLine; Index++) {
+            Result.push(Lines[Index] ?? "");
+          }
+          Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter));
+          return Result.join("\n");
+        }, "getText"),
+        lineAt: /* @__PURE__ */ __name((LineOrPosition) => {
+          const LineNumber = typeof LineOrPosition === "number" ? LineOrPosition : LineOrPosition.line;
+          const Text = Lines[LineNumber] ?? "";
+          return {
+            text: Text,
+            lineNumber: LineNumber,
+            range: {
+              start: { line: LineNumber, character: 0 },
+              end: { line: LineNumber, character: Text.length }
+            },
+            isEmptyOrWhitespace: Text.trim().length === 0
+          };
+        }, "lineAt"),
+        isUntitled: false,
+        isDirty: false,
+        isClosed: false,
+        eol: 1,
+        // EndOfLine.LF
+        offsetAt: /* @__PURE__ */ __name((Position3) => {
+          let Offset = 0;
+          for (let Index = 0; Index < Position3.line && Index < Lines.length; Index++) {
+            Offset += (Lines[Index]?.length ?? 0) + 1;
+          }
+          return Offset + Position3.character;
+        }, "offsetAt"),
+        positionAt: /* @__PURE__ */ __name((Offset) => {
+          let Remaining = Offset;
+          for (let Index = 0; Index < Lines.length; Index++) {
+            const LineLength = (Lines[Index]?.length ?? 0) + 1;
+            if (Remaining < LineLength) {
+              return { line: Index, character: Remaining };
+            }
+            Remaining -= LineLength;
+          }
+          return {
+            line: Lines.length - 1,
+            character: Lines[Lines.length - 1]?.length ?? 0
+          };
+        }, "positionAt"),
+        validateRange: /* @__PURE__ */ __name((Range3) => Range3, "validateRange"),
+        validatePosition: /* @__PURE__ */ __name((Position3) => Position3, "validatePosition"),
+        getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
+        save: /* @__PURE__ */ __name(async () => false, "save")
+      };
+    }, "BuildTextDocument");
+    DocumentVersionMap = /* @__PURE__ */ new Map();
+    HandleDocumentChange = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      let Uri2;
+      let EventData;
+      if (Array.isArray(Parameters) && Parameters.length >= 2) {
+        Uri2 = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
+        EventData = Parameters[1];
+      } else {
+        Uri2 = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
+        EventData = Parameters;
       }
-      async sendText(terminalId, text) {
-        await this.mountainClient.sendRequest("terminal.write", {
-          id: terminalId,
-          data: text
+      const Content = EventData?.content ?? EventData?.Content ?? EventData?.text;
+      if (Uri2 && Content !== void 0) {
+        DocumentContentCache.set(Uri2, Content);
+      } else if (Uri2 && (EventData?.changes || Parameters?.changes)) {
+        const Existing = DocumentContentCache.get(Uri2) ?? "";
+        let Updated = Existing;
+        const Changes = Array.isArray(EventData?.changes) ? EventData.changes : Array.isArray(Parameters?.changes) ? Parameters.changes : [];
+        const Sorted = [...Changes].sort(
+          (A, B) => (B.rangeOffset ?? 0) - (A.rangeOffset ?? 0)
+        );
+        for (const Change of Sorted) {
+          const Offset = Change.rangeOffset ?? 0;
+          const Length = Change.rangeLength ?? 0;
+          const Text = Change.text ?? "";
+          Updated = Updated.substring(0, Offset) + Text + Updated.substring(Offset + Length);
+        }
+        DocumentContentCache.set(Uri2, Updated);
+      }
+      if (Uri2 && WorkspaceEventEmitter) {
+        const CurrentVersion = (DocumentVersionMap.get(Uri2) ?? 1) + 1;
+        DocumentVersionMap.set(Uri2, CurrentVersion);
+        const CachedContent = DocumentContentCache.get(Uri2) ?? "";
+        const Document = BuildTextDocument(Uri2, CachedContent, CurrentVersion);
+        WorkspaceEventEmitter.emit("didChangeTextDocument", {
+          document: Document,
+          contentChanges: EventData?.changes ?? Parameters?.changes ?? [],
+          reason: void 0
         });
       }
-      async resize(terminalId, cols, rows) {
-        console.log(`[Terminal] Resize ${terminalId} to ${cols}x${rows}`);
+    }, "HandleDocumentChange");
+    HandleDocumentOpen = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
+      for (const Model of Models) {
+        const Uri2 = Model?.URI?.toString?.() ?? Model?.URI ?? Model?.uri?.external ?? Model?.uri ?? Model?.Uri ?? "";
+        const Lines = Model?.Lines ?? Model?.lines;
+        const EOL = Model?.EOL ?? Model?.eol ?? "\n";
+        let Content;
+        if (Array.isArray(Lines)) {
+          Content = Lines.join(EOL);
+        } else {
+          Content = Model?.content ?? Model?.Content ?? Model?.text;
+        }
+        const LanguageIdentifier = Model?.LanguageIdentifier ?? Model?.languageId ?? Model?.language;
+        if (Uri2 && Content !== void 0) {
+          DocumentContentCache.set(Uri2, Content);
+          DocumentVersionMap.set(Uri2, 1);
+          console.log(
+            `[DocumentContentHandler] Document opened: ${Uri2.slice(-60)} (${Content.length} chars)`
+          );
+          if (WorkspaceEventEmitter) {
+            const Document = BuildTextDocument(
+              Uri2,
+              Content,
+              1,
+              LanguageIdentifier
+            );
+            WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
+          }
+        }
       }
-      async kill(terminalId) {
-        console.log(`[Terminal] Kill ${terminalId}`);
+    }, "HandleDocumentOpen");
+    HandleDocumentClose = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
+      for (const Item of Items) {
+        const Uri2 = Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+        if (Uri2) {
+          if (WorkspaceEventEmitter) {
+            const CachedContent = DocumentContentCache.get(Uri2) ?? "";
+            const Version = DocumentVersionMap.get(Uri2) ?? 1;
+            const Document = BuildTextDocument(Uri2, CachedContent, Version);
+            WorkspaceEventEmitter.emit("didCloseTextDocument", Document);
+          }
+          DocumentContentCache.delete(Uri2);
+          DocumentVersionMap.delete(Uri2);
+        }
+      }
+    }, "HandleDocumentClose");
+    HandleDocumentSave = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
+      if (!WorkspaceEventEmitter) return;
+      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
+      for (const Item of Items) {
+        const Uri2 = typeof Item === "string" ? Item : Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
+        if (Uri2) {
+          const CachedContent = DocumentContentCache.get(Uri2) ?? "";
+          const Version = DocumentVersionMap.get(Uri2) ?? 1;
+          const Document = BuildTextDocument(Uri2, CachedContent, Version);
+          WorkspaceEventEmitter.emit("didSaveTextDocument", Document);
+        }
+      }
+    }, "HandleDocumentSave");
+    GetDocumentContent = /* @__PURE__ */ __name((DocumentContentCache, Uri2) => {
+      return DocumentContentCache.get(Uri2) ?? null;
+    }, "GetDocumentContent");
+    DocumentContentHandler_default = {
+      HandleDocumentChange,
+      HandleDocumentOpen,
+      HandleDocumentClose,
+      HandleDocumentSave,
+      GetDocumentContent,
+      BuildTextDocument
+    };
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WindowNamespace.ts
+var WindowNamespace_exports = {};
+__export(WindowNamespace_exports, {
+  default: () => WindowNamespace_default
+});
+var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
+var init_WindowNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
+    "use strict";
+    MakeEventSubscriber = /* @__PURE__ */ __name((Context22, EventName) => (Callback) => {
+      Context22.Emitter.on(EventName, Callback);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context22.Emitter.off(EventName, Callback);
+        }, "dispose")
+      };
+    }, "MakeEventSubscriber");
+    OutputChannelCounter = 0;
+    TerminalCounter = 0;
+    StatusBarCounter = 0;
+    CreateWindowNamespace = /* @__PURE__ */ __name((Context22) => {
+      const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
+        Context22.SendToMountain("window.showMessage", {
+          message: Message,
+          level: Level,
+          items: Items
+        }).catch(() => {
+        });
+        return void 0;
+      }, "ShowMessage");
+      return {
+        showInformationMessage: ShowMessage("info"),
+        showErrorMessage: ShowMessage("error"),
+        showWarningMessage: ShowMessage("warn"),
+        showQuickPick: /* @__PURE__ */ __name(async (Items, _Options) => {
+          Context22.SendToMountain("window.showQuickPick", {
+            items: Items
+          }).catch(() => {
+          });
+          return void 0;
+        }, "showQuickPick"),
+        showInputBox: /* @__PURE__ */ __name(async (_Options) => {
+          Context22.SendToMountain("window.showInputBox", {}).catch(() => {
+          });
+          return void 0;
+        }, "showInputBox"),
+        showOpenDialog: /* @__PURE__ */ __name(async (_Options) => [], "showOpenDialog"),
+        showSaveDialog: /* @__PURE__ */ __name(async (_Options) => void 0, "showSaveDialog"),
+        createTerminal: /* @__PURE__ */ __name((Options) => {
+          const Handle = `terminal:${++TerminalCounter}`;
+          const Name = Options?.name ?? `Terminal ${TerminalCounter}`;
+          Context22.SendToMountain("window.createTerminal", {
+            handle: Handle,
+            name: Name,
+            options: Options ?? {}
+          }).catch(() => {
+          });
+          return {
+            name: Name,
+            processId: Promise.resolve(void 0),
+            sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
+              Context22.SendToMountain("terminal.sendText", {
+                handle: Handle,
+                text: Text
+              }).catch(() => {
+              });
+            }, "sendText"),
+            show: /* @__PURE__ */ __name((PreserveFocus) => {
+              Context22.SendToMountain("terminal.show", {
+                handle: Handle,
+                preserveFocus: PreserveFocus
+              }).catch(() => {
+              });
+            }, "show"),
+            hide: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("terminal.hide", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "hide"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("terminal.dispose", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "createTerminal"),
+        createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => {
+          const Handle = `statusBar:${++StatusBarCounter}`;
+          const Item = {
+            id: Handle,
+            alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
+            priority: Priority,
+            text: "",
+            tooltip: "",
+            command: void 0,
+            show: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("statusBar.update", {
+                handle: Handle,
+                text: Item.text,
+                tooltip: Item.tooltip,
+                command: Item.command,
+                visible: true
+              }).catch(() => {
+              });
+            }, "show"),
+            hide: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("statusBar.update", {
+                handle: Handle,
+                visible: false
+              }).catch(() => {
+              });
+            }, "hide"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("statusBar.dispose", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+          return Item;
+        }, "createStatusBarItem"),
+        createOutputChannel: /* @__PURE__ */ __name((Name, Options) => {
+          const Handle = `outputChannel:${++OutputChannelCounter}`;
+          const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
+          Context22.SendToMountain("outputChannel.create", {
+            handle: Handle,
+            name: Name,
+            log: IsLog
+          }).catch(() => {
+          });
+          const Channel = {
+            name: Name,
+            append: /* @__PURE__ */ __name((Value) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: Value
+              }).catch(() => {
+              });
+            }, "append"),
+            appendLine: /* @__PURE__ */ __name((Value) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `${Value}
+`
+              }).catch(() => {
+              });
+            }, "appendLine"),
+            clear: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("outputChannel.clear", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "clear"),
+            show: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("outputChannel.show", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "show"),
+            hide: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("outputChannel.hide", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "hide"),
+            replace: /* @__PURE__ */ __name((Value) => {
+              Context22.SendToMountain("outputChannel.clear", {
+                handle: Handle
+              }).catch(() => {
+              });
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: Value
+              }).catch(() => {
+              });
+            }, "replace"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain("outputChannel.dispose", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose"),
+            // LogOutputChannel additions — returned when the caller passes
+            // `{ log: true }`. Kept on the base channel for simplicity;
+            // these are inert on non-log channels.
+            logLevel: 2,
+            // LogLevel.Info
+            onDidChangeLogLevel: /* @__PURE__ */ __name((_Listener) => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "onDidChangeLogLevel"),
+            trace: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[trace] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "trace"),
+            debug: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[debug] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "debug"),
+            info: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[info] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "info"),
+            warn: /* @__PURE__ */ __name((Message, ..._Arguments) => {
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[warn] ${Message}
+`
+              }).catch(() => {
+              });
+            }, "warn"),
+            error: /* @__PURE__ */ __name((MessageOrError, ..._Arguments) => {
+              const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
+              Context22.SendToMountain("outputChannel.append", {
+                handle: Handle,
+                value: `[error] ${Text}
+`
+              }).catch(() => {
+              });
+            }, "error")
+          };
+          void IsLog;
+          return Channel;
+        }, "createOutputChannel"),
+        createTextEditorDecorationType: /* @__PURE__ */ __name((Options) => {
+          const Key = `decoration:${Math.random().toString(36).slice(2)}`;
+          Context22.SendToMountain("window.createTextEditorDecorationType", {
+            key: Key,
+            options: Options ?? {}
+          }).catch(() => {
+          });
+          return {
+            key: Key,
+            dispose: /* @__PURE__ */ __name(() => {
+              Context22.SendToMountain(
+                "window.disposeTextEditorDecorationType",
+                {
+                  key: Key
+                }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "createTextEditorDecorationType"),
+        registerTerminalQuickFixProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTerminalQuickFixProvider"),
+        registerTerminalCompletionProvider: /* @__PURE__ */ __name((_Id, _Provider, ..._TriggerCharacters) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTerminalCompletionProvider"),
+        createQuickPick: /* @__PURE__ */ __name(() => ({
+          value: "",
+          placeholder: void 0,
+          items: [],
+          activeItems: [],
+          selectedItems: [],
+          canSelectMany: false,
+          matchOnDescription: false,
+          matchOnDetail: false,
+          busy: false,
+          enabled: true,
+          ignoreFocusOut: false,
+          step: void 0,
+          totalSteps: void 0,
+          title: void 0,
+          buttons: [],
+          show: /* @__PURE__ */ __name(() => {
+          }, "show"),
+          hide: /* @__PURE__ */ __name(() => {
+          }, "hide"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose"),
+          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidAccept"),
+          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeValue"),
+          onDidChangeActive: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeActive"),
+          onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeSelection"),
+          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidTriggerButton"),
+          onDidTriggerItemButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidTriggerItemButton"),
+          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidHide")
+        }), "createQuickPick"),
+        createInputBox: /* @__PURE__ */ __name(() => ({
+          value: "",
+          valueSelection: void 0,
+          placeholder: void 0,
+          password: false,
+          busy: false,
+          enabled: true,
+          ignoreFocusOut: false,
+          prompt: void 0,
+          validationMessage: void 0,
+          step: void 0,
+          totalSteps: void 0,
+          title: void 0,
+          buttons: [],
+          show: /* @__PURE__ */ __name(() => {
+          }, "show"),
+          hide: /* @__PURE__ */ __name(() => {
+          }, "hide"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose"),
+          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidAccept"),
+          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeValue"),
+          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidTriggerButton"),
+          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidHide")
+        }), "createInputBox"),
+        createWebviewPanel: /* @__PURE__ */ __name((_ViewType, _Title, _ShowOptions, _Options) => ({
+          viewType: _ViewType,
+          title: _Title,
+          iconPath: void 0,
+          webview: {
+            options: {},
+            html: "",
+            cspSource: "",
+            asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
+            postMessage: /* @__PURE__ */ __name(async () => false, "postMessage"),
+            onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidReceiveMessage")
+          },
+          options: {},
+          viewColumn: 1,
+          active: true,
+          visible: true,
+          reveal: /* @__PURE__ */ __name(() => {
+          }, "reveal"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose"),
+          onDidDispose: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidDispose"),
+          onDidChangeViewState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeViewState")
+        }), "createWebviewPanel"),
+        showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
+          Context22.SendToMountain("window.showTextDocument", {
+            document: _Document,
+            column: _Column,
+            preserveFocus: _PreserveFocus
+          }).catch(() => {
+          });
+          return void 0;
+        }, "showTextDocument"),
+        showNotebookDocument: /* @__PURE__ */ __name(async (_Document, _Options) => void 0, "showNotebookDocument"),
+        tabGroups: {
+          all: [],
+          activeTabGroup: {
+            tabs: [],
+            isActive: true,
+            viewColumn: 1,
+            activeTab: void 0
+          },
+          onDidChangeTabs: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeTabs"),
+          onDidChangeTabGroups: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeTabGroups"),
+          close: /* @__PURE__ */ __name(async () => true, "close")
+        },
+        activeColorTheme: {
+          kind: 2,
+          // ColorThemeKind.Dark
+          onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChange")
+        },
+        onDidChangeActiveColorTheme: MakeEventSubscriber(
+          Context22,
+          "window.didChangeActiveColorTheme"
+        ),
+        createTreeView: /* @__PURE__ */ __name((_Id, _Options) => ({
+          reveal: /* @__PURE__ */ __name(async () => {
+          }, "reveal"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose"),
+          selection: [],
+          visible: true,
+          title: void 0,
+          description: void 0,
+          message: void 0,
+          badge: void 0,
+          onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeSelection"),
+          onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeVisibility"),
+          onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidCollapseElement"),
+          onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidExpandElement"),
+          onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeCheckboxState")
+        }), "createTreeView"),
+        registerTreeDataProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTreeDataProvider"),
+        registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerWebviewPanelSerializer"),
+        registerWebviewViewProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerWebviewViewProvider"),
+        registerCustomEditorProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerCustomEditorProvider"),
+        registerFileDecorationProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerFileDecorationProvider"),
+        registerUriHandler: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerUriHandler"),
+        registerTerminalLinkProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTerminalLinkProvider"),
+        registerTerminalProfileProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTerminalProfileProvider"),
+        registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerProfileContentHandler"),
+        registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerExternalUriOpener"),
+        withProgress: /* @__PURE__ */ __name(async (_Option, Task3) => Task3({ report: /* @__PURE__ */ __name(() => {
+        }, "report") }), "withProgress"),
+        setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
+          Context22.SendToMountain("statusBar.message", {
+            text: Text,
+            hideAfter: typeof HideAfter === "number" ? HideAfter : void 0
+          }).catch(() => {
+          });
+          return { dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") };
+        }, "setStatusBarMessage"),
+        // Events sourced from Mountain gRPC notifications → Context.Emitter
+        onDidChangeActiveTextEditor: MakeEventSubscriber(
+          Context22,
+          "window.didChangeActiveTextEditor"
+        ),
+        onDidChangeVisibleTextEditors: MakeEventSubscriber(
+          Context22,
+          "window.didChangeVisibleTextEditors"
+        ),
+        onDidChangeTextEditorSelection: MakeEventSubscriber(
+          Context22,
+          "window.didChangeTextEditorSelection"
+        ),
+        onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
+          Context22,
+          "window.didChangeTextEditorVisibleRanges"
+        ),
+        onDidChangeTextEditorOptions: MakeEventSubscriber(
+          Context22,
+          "window.didChangeTextEditorOptions"
+        ),
+        onDidChangeTextEditorViewColumn: MakeEventSubscriber(
+          Context22,
+          "window.didChangeTextEditorViewColumn"
+        ),
+        onDidOpenTerminal: MakeEventSubscriber(
+          Context22,
+          "window.didOpenTerminal"
+        ),
+        onDidCloseTerminal: MakeEventSubscriber(
+          Context22,
+          "window.didCloseTerminal"
+        ),
+        onDidChangeWindowState: MakeEventSubscriber(
+          Context22,
+          "window.didChangeWindowState"
+        ),
+        activeTextEditor: void 0,
+        visibleTextEditors: [],
+        terminals: [],
+        activeTerminal: void 0,
+        state: { focused: true, active: true }
+      };
+    }, "CreateWindowNamespace");
+    WindowNamespace_default = CreateWindowNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts
+var WorkspaceNamespace_exports = {};
+__export(WorkspaceNamespace_exports, {
+  default: () => WorkspaceNamespace_default
+});
+var EventSubscriber, Call, CreateWorkspaceNamespace, WorkspaceNamespace_default;
+var init_WorkspaceNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts"() {
+    "use strict";
+    EventSubscriber = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
+      Context22.WorkspaceEventEmitter.on(EventName, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context22.WorkspaceEventEmitter.removeListener(
+            EventName,
+            Listener
+          );
+        }, "dispose")
+      };
+    }, "EventSubscriber");
+    Call = /* @__PURE__ */ __name(async (Context22, Method, Parameters) => {
+      try {
+        return await Context22.MountainClient?.sendRequest(
+          Method,
+          Parameters
+        );
+      } catch {
+        return void 0;
+      }
+    }, "Call");
+    CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context22) => {
+      const InitWorkspace = Context22.ExtensionHostInitData?.workspace ?? Context22.ExtensionHostInitData?.workspaceData ?? {};
+      return {
+        workspaceFolders: InitWorkspace.folders ?? [],
+        name: InitWorkspace.name,
+        workspaceFile: void 0,
+        rootPath: void 0,
+        textDocuments: [],
+        notebookDocuments: [],
+        getConfiguration: /* @__PURE__ */ __name((Section, _Scope) => ({
+          get: /* @__PURE__ */ __name((Key, DefaultValue) => {
+            const Full = Section ? `${Section}.${Key}` : Key;
+            void Call(Context22, "Configuration.Inspect", [Full]);
+            return DefaultValue;
+          }, "get"),
+          update: /* @__PURE__ */ __name(async (Key, Value, Target) => {
+            const Full = Section ? `${Section}.${Key}` : Key;
+            const TargetIndex = Target === 2 ? 1 : Target === true ? 0 : typeof Target === "number" ? Target : 0;
+            await Call(Context22, "Configuration.Update", [
+              Full,
+              Value,
+              TargetIndex
+            ]);
+          }, "update"),
+          has: /* @__PURE__ */ __name((Key) => {
+            void Key;
+            return false;
+          }, "has"),
+          inspect: /* @__PURE__ */ __name(() => void 0, "inspect")
+        }), "getConfiguration"),
+        findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
+          const Pattern = typeof Include === "string" ? Include : Include?.pattern ?? "";
+          const ExcludePattern = typeof Exclude === "string" ? Exclude : Exclude?.pattern;
+          const Results = await Call(
+            Context22,
+            "Search.TextSearch",
+            {
+              pattern: Pattern,
+              include: Pattern,
+              exclude: ExcludePattern,
+              maxResults: MaxResults,
+              isRegExp: false,
+              isCaseSensitive: false,
+              isWordMatch: false
+            }
+          );
+          return Results ?? [];
+        }, "findFiles"),
+        openTextDocument: /* @__PURE__ */ __name(async (UriOrPath) => {
+          const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
+          const Cached = Context22.DocumentContentCache.get(UriString);
+          const Text = Cached ?? await Call(Context22, "FileSystem.ReadFile", [
+            UriString
+          ]) ?? "";
+          return {
+            uri: UriOrPath,
+            fileName: UriString,
+            languageId: "plaintext",
+            isDirty: false,
+            isClosed: false,
+            isUntitled: false,
+            version: 1,
+            eol: 1,
+            lineCount: Text.split("\n").length,
+            getText: /* @__PURE__ */ __name(() => Text, "getText"),
+            save: /* @__PURE__ */ __name(async () => true, "save")
+          };
+        }, "openTextDocument"),
+        saveAll: /* @__PURE__ */ __name(async (_IncludeUntitled) => {
+          await Call(Context22, "Document.Save", []);
+          return true;
+        }, "saveAll"),
+        applyEdit: /* @__PURE__ */ __name(async (_Edit) => {
+          Context22.SendToMountain("workspace.applyEdit", _Edit).catch(
+            () => {
+            }
+          );
+          return true;
+        }, "applyEdit"),
+        asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
+        updateWorkspaceFolders: /* @__PURE__ */ __name(() => false, "updateWorkspaceFolders"),
+        onDidOpenTextDocument: EventSubscriber(Context22, "didOpenTextDocument"),
+        onDidCloseTextDocument: EventSubscriber(
+          Context22,
+          "didCloseTextDocument"
+        ),
+        onDidChangeTextDocument: EventSubscriber(
+          Context22,
+          "didChangeTextDocument"
+        ),
+        onDidSaveTextDocument: EventSubscriber(Context22, "didSaveTextDocument"),
+        onWillSaveTextDocument: EventSubscriber(
+          Context22,
+          "willSaveTextDocument"
+        ),
+        onDidCreateFiles: EventSubscriber(Context22, "didCreateFiles"),
+        onDidDeleteFiles: EventSubscriber(Context22, "didDeleteFiles"),
+        onDidRenameFiles: EventSubscriber(Context22, "didRenameFiles"),
+        onDidChangeConfiguration: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeConfiguration"),
+        onDidChangeWorkspaceFolders: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeWorkspaceFolders"),
+        registerTextDocumentContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTextDocumentContentProvider"),
+        registerFileSystemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerFileSystemProvider"),
+        registerTaskProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTaskProvider"),
+        registerNotebookContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerNotebookContentProvider"),
+        registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerNotebookSerializer"),
+        registerRemoteAuthorityResolver: /* @__PURE__ */ __name((_AuthorityPrefix, _Resolver) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerRemoteAuthorityResolver"),
+        registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "registerResourceLabelFormatter"),
+        registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerDocumentPasteEditProvider"),
+        registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerDocumentDropEditProvider"),
+        registerEditSessionIdentityProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerEditSessionIdentityProvider"),
+        registerShareProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerShareProvider"),
+        registerCanonicalUriProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerCanonicalUriProvider"),
+        onDidGrantWorkspaceTrust: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidGrantWorkspaceTrust"),
+        isTrusted: true,
+        trusted: true,
+        requestWorkspaceTrust: /* @__PURE__ */ __name(async () => true, "requestWorkspaceTrust"),
+        onDidOpenNotebookDocument: EventSubscriber(
+          Context22,
+          "didOpenNotebookDocument"
+        ),
+        onDidCloseNotebookDocument: EventSubscriber(
+          Context22,
+          "didCloseNotebookDocument"
+        ),
+        onDidChangeNotebookDocument: EventSubscriber(
+          Context22,
+          "didChangeNotebookDocument"
+        ),
+        onDidSaveNotebookDocument: EventSubscriber(
+          Context22,
+          "didSaveNotebookDocument"
+        ),
+        onWillSaveNotebookDocument: EventSubscriber(
+          Context22,
+          "willSaveNotebookDocument"
+        ),
+        onWillRenameFiles: EventSubscriber(Context22, "willRenameFiles"),
+        onWillCreateFiles: EventSubscriber(Context22, "willCreateFiles"),
+        onWillDeleteFiles: EventSubscriber(Context22, "willDeleteFiles"),
+        registerTunnelProvider: /* @__PURE__ */ __name((_Provider, _Information) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerTunnelProvider"),
+        openTunnel: /* @__PURE__ */ __name(async (_TunnelOptions) => ({
+          remoteAddress: { port: 0, host: "localhost" },
+          localAddress: "",
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "openTunnel"),
+        tunnels: Promise.resolve([]),
+        onDidChangeTunnels: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeTunnels"),
+        registerPortAttributesProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "registerPortAttributesProvider"),
+        createFileSystemWatcher: /* @__PURE__ */ __name(() => ({
+          ignoreCreateEvents: false,
+          ignoreChangeEvents: false,
+          ignoreDeleteEvents: false,
+          onDidCreate: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidCreate"),
+          onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChange"),
+          onDidDelete: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidDelete"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "createFileSystemWatcher"),
+        fs: {
+          // FileSystem.Stat is not yet in CreateEffectForRequest — falls back
+          // to defaults via Call's try/catch until the Rust route is added.
+          stat: /* @__PURE__ */ __name(async (Uri2) => await Call(Context22, "FileSystem.Stat", [
+            String(Uri2)
+          ]) ?? {
+            type: 1,
+            size: 0,
+            ctime: 0,
+            mtime: 0
+          }, "stat"),
+          readFile: /* @__PURE__ */ __name(async (Uri2) => {
+            const Text = await Call(Context22, "FileSystem.ReadFile", [
+              String(Uri2)
+            ]) ?? "";
+            return new TextEncoder().encode(Text);
+          }, "readFile"),
+          writeFile: /* @__PURE__ */ __name(async (Uri2, Content) => {
+            const Text = new TextDecoder().decode(Content);
+            await Call(Context22, "FileSystem.WriteFile", [
+              String(Uri2),
+              Text
+            ]);
+          }, "writeFile"),
+          readDirectory: /* @__PURE__ */ __name(async (Uri2) => await Call(Context22, "FileSystem.ReadDirectory", [
+            String(Uri2)
+          ]) ?? [], "readDirectory"),
+          createDirectory: /* @__PURE__ */ __name(async (Uri2) => {
+            await Call(Context22, "FileSystem.CreateDirectory", [
+              String(Uri2)
+            ]);
+          }, "createDirectory"),
+          delete: /* @__PURE__ */ __name(async (Uri2, Options) => {
+            await Call(Context22, "FileSystem.Delete", [
+              String(Uri2),
+              Options?.recursive ?? false
+            ]);
+          }, "delete"),
+          rename: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
+            await Call(Context22, "FileSystem.Rename", [
+              String(Source),
+              String(Target)
+            ]);
+          }, "rename"),
+          copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
+            await Call(Context22, "FileSystem.Copy", [
+              String(Source),
+              String(Target)
+            ]);
+          }, "copy"),
+          isWritableFileSystem: /* @__PURE__ */ __name((_Scheme) => true, "isWritableFileSystem")
+        }
+      };
+    }, "CreateWorkspaceNamespace");
+    WorkspaceNamespace_default = CreateWorkspaceNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/CommandsNamespace.ts
+var CommandsNamespace_exports = {};
+__export(CommandsNamespace_exports, {
+  default: () => CommandsNamespace_default
+});
+var CreateCommandsNamespace, CommandsNamespace_default;
+var init_CommandsNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/CommandsNamespace.ts"() {
+    "use strict";
+    CreateCommandsNamespace = /* @__PURE__ */ __name((Context22, LanguageProviderRegistry) => ({
+      registerCommand: /* @__PURE__ */ __name((Command, Callback) => {
+        LanguageProviderRegistry.RegisterCommand(Command, Callback);
+        Context22.SendToMountain("registerCommand", { commandId: Command }).catch(
+          () => {
+          }
+        );
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            LanguageProviderRegistry.UnregisterCommand(Command);
+            Context22.SendToMountain("unregisterCommand", {
+              commandId: Command
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerCommand"),
+      registerTextEditorCommand: /* @__PURE__ */ __name((Command, Callback) => {
+        LanguageProviderRegistry.RegisterCommand(Command, Callback);
+        Context22.SendToMountain("registerCommand", {
+          commandId: Command,
+          kind: "textEditor"
+        }).catch(() => {
+        });
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            LanguageProviderRegistry.UnregisterCommand(Command);
+            Context22.SendToMountain("unregisterCommand", {
+              commandId: Command
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerTextEditorCommand"),
+      executeCommand: /* @__PURE__ */ __name(async (Command, ...Arguments) => {
+        const LocalResult = LanguageProviderRegistry.ExecuteCommand(
+          Command,
+          ...Arguments
+        );
+        if (LocalResult !== void 0) return LocalResult;
+        try {
+          return await Context22.MountainClient?.sendRequest(
+            "Command.Execute",
+            [Command, ...Arguments]
+          );
+        } catch {
+          return void 0;
+        }
+      }, "executeCommand"),
+      getCommands: /* @__PURE__ */ __name(async (FilterInternal) => {
+        try {
+          const Response = await Context22.MountainClient?.sendRequest(
+            "Command.GetAll",
+            [FilterInternal ?? false]
+          );
+          if (Array.isArray(Response)) return Response;
+          return [];
+        } catch {
+          return [];
+        }
+      }, "getCommands")
+    }), "CreateCommandsNamespace");
+    CommandsNamespace_default = CreateCommandsNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts
+var LanguagesNamespace_exports = {};
+__export(LanguagesNamespace_exports, {
+  default: () => LanguagesNamespace_default
+});
+var RegisterProvider, CreateLanguagesNamespace, LanguagesNamespace_default;
+var init_LanguagesNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts"() {
+    "use strict";
+    RegisterProvider = /* @__PURE__ */ __name((Context22, LanguageProviderRegistry, MethodName, Selector, Provider) => {
+      const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
+      const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
+      Context22.SendToMountain(MethodName, {
+        handle: Handle,
+        language_selector: Language2,
+        extension_id: ""
+      }).catch(() => {
+      });
+      return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
+    }, "RegisterProvider");
+    CreateLanguagesNamespace = /* @__PURE__ */ __name((Context22, LanguageProviderRegistry) => ({
+      registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_hover_provider",
+        Selector,
+        Provider
+      ), "registerHoverProvider"),
+      registerCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider, ..._TriggerCharacters) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_completion_item_provider",
+        Selector,
+        Provider
+      ), "registerCompletionItemProvider"),
+      registerDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_definition_provider",
+        Selector,
+        Provider
+      ), "registerDefinitionProvider"),
+      registerReferenceProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_reference_provider",
+        Selector,
+        Provider
+      ), "registerReferenceProvider"),
+      registerCodeActionsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_code_actions_provider",
+        Selector,
+        Provider
+      ), "registerCodeActionsProvider"),
+      registerDocumentSymbolProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_document_symbol_provider",
+        Selector,
+        Provider
+      ), "registerDocumentSymbolProvider"),
+      registerDocumentFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_document_formatting_provider",
+        Selector,
+        Provider
+      ), "registerDocumentFormattingEditProvider"),
+      registerDocumentRangeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_document_range_formatting_provider",
+        Selector,
+        Provider
+      ), "registerDocumentRangeFormattingEditProvider"),
+      registerOnTypeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider, _FirstTrigger, ..._MoreTriggers) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_on_type_formatting_provider",
+        Selector,
+        Provider
+      ), "registerOnTypeFormattingEditProvider"),
+      registerTypeDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_type_definition_provider",
+        Selector,
+        Provider
+      ), "registerTypeDefinitionProvider"),
+      registerImplementationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_implementation_provider",
+        Selector,
+        Provider
+      ), "registerImplementationProvider"),
+      registerDeclarationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_declaration_provider",
+        Selector,
+        Provider
+      ), "registerDeclarationProvider"),
+      registerDocumentLinkProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_document_link_provider",
+        Selector,
+        Provider
+      ), "registerDocumentLinkProvider"),
+      registerColorProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_color_provider",
+        Selector,
+        Provider
+      ), "registerColorProvider"),
+      registerLinkedEditingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_linked_editing_range_provider",
+        Selector,
+        Provider
+      ), "registerLinkedEditingRangeProvider"),
+      registerCallHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_call_hierarchy_provider",
+        Selector,
+        Provider
+      ), "registerCallHierarchyProvider"),
+      registerTypeHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_type_hierarchy_provider",
+        Selector,
+        Provider
+      ), "registerTypeHierarchyProvider"),
+      registerEvaluatableExpressionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_evaluatable_expression_provider",
+        Selector,
+        Provider
+      ), "registerEvaluatableExpressionProvider"),
+      registerInlineValuesProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_inline_values_provider",
+        Selector,
+        Provider
+      ), "registerInlineValuesProvider"),
+      registerSignatureHelpProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_signature_help_provider",
+        Selector,
+        Provider
+      ), "registerSignatureHelpProvider"),
+      registerDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_document_highlight_provider",
+        Selector,
+        Provider
+      ), "registerDocumentHighlightProvider"),
+      registerCodeLensProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_code_lens_provider",
+        Selector,
+        Provider
+      ), "registerCodeLensProvider"),
+      registerRenameProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_rename_provider",
+        Selector,
+        Provider
+      ), "registerRenameProvider"),
+      registerFoldingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_folding_range_provider",
+        Selector,
+        Provider
+      ), "registerFoldingRangeProvider"),
+      registerSelectionRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_selection_range_provider",
+        Selector,
+        Provider
+      ), "registerSelectionRangeProvider"),
+      registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_semantic_tokens_provider",
+        Selector,
+        Provider
+      ), "registerDocumentSemanticTokensProvider"),
+      registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context22,
+        LanguageProviderRegistry,
+        "register_inlay_hints_provider",
+        Selector,
+        Provider
+      ), "registerInlayHintsProvider"),
+      createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
+        const Owner = Name ?? "default";
+        const Store = /* @__PURE__ */ new Map();
+        return {
+          name: Owner,
+          set: /* @__PURE__ */ __name((UriOrEntries, Diagnostics) => {
+            if (Array.isArray(UriOrEntries) && Diagnostics === void 0) {
+              const Entries = UriOrEntries;
+              for (const [Uri2, D] of Entries) {
+                Store.set(String(Uri2), D ?? []);
+              }
+            } else {
+              Store.set(String(UriOrEntries), Diagnostics ?? []);
+            }
+            Context22.MountainClient?.sendRequest("Diagnostic.Set", [
+              Owner,
+              [...Store.entries()].map(([U, D]) => ({
+                uri: U,
+                diagnostics: D
+              }))
+            ]).catch(() => {
+            });
+          }, "set"),
+          delete: /* @__PURE__ */ __name((Uri2) => {
+            Store.delete(String(Uri2));
+            Context22.MountainClient?.sendRequest("Diagnostic.Set", [
+              Owner,
+              [...Store.entries()].map(([U, D]) => ({
+                uri: U,
+                diagnostics: D
+              }))
+            ]).catch(() => {
+            });
+          }, "delete"),
+          clear: /* @__PURE__ */ __name(() => {
+            Store.clear();
+            Context22.MountainClient?.sendRequest("Diagnostic.Clear", [
+              Owner
+            ]).catch(() => {
+            });
+          }, "clear"),
+          forEach: /* @__PURE__ */ __name((Callback) => {
+            const Self = null;
+            for (const [Uri2, Diagnostics] of Store) {
+              Callback(Uri2, Diagnostics, Self);
+            }
+          }, "forEach"),
+          get: /* @__PURE__ */ __name((Uri2) => Store.get(String(Uri2)) ?? [], "get"),
+          has: /* @__PURE__ */ __name((Uri2) => Store.has(String(Uri2)), "has"),
+          dispose: /* @__PURE__ */ __name(() => {
+            Store.clear();
+            Context22.MountainClient?.sendRequest("Diagnostic.Clear", [
+              Owner
+            ]).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "createDiagnosticCollection"),
+      getLanguages: /* @__PURE__ */ __name(async () => {
+        try {
+          const Result = await Context22.MountainClient?.sendRequest(
+            "Languages.GetAll",
+            []
+          );
+          return Array.isArray(Result) ? Result : [];
+        } catch {
+          return [];
+        }
+      }, "getLanguages"),
+      setTextDocumentLanguage: /* @__PURE__ */ __name(async (Document, LanguageId) => {
+        Context22.SendToMountain("languages.setDocumentLanguage", {
+          uri: Document?.uri?.toString?.() ?? "",
+          languageId: LanguageId
+        }).catch(() => {
+        });
+        return Document;
+      }, "setTextDocumentLanguage"),
+      match: /* @__PURE__ */ __name((_Selector, _Document) => 10, "match"),
+      onDidChangeDiagnostics: /* @__PURE__ */ __name((Listener) => {
+        Context22.Emitter.on("diagnostics.didChange", Listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.Emitter.off("diagnostics.didChange", Listener);
+          }, "dispose")
+        };
+      }, "onDidChangeDiagnostics"),
+      getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
+      registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerDocumentPasteEditProvider"),
+      registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerDocumentDropEditProvider"),
+      registerInlineCompletionItemProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerInlineCompletionItemProvider"),
+      registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose")
+      }), "registerInlineEditProvider"),
+      registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerMultiDocumentHighlightProvider"),
+      registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose")
+      }), "registerMappedEditsProvider")
+    }), "CreateLanguagesNamespace");
+    LanguagesNamespace_default = CreateLanguagesNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts
+var ExtensionsNamespace_exports = {};
+__export(ExtensionsNamespace_exports, {
+  default: () => ExtensionsNamespace_default
+});
+var NoopDisposable, MakePermissiveExports, ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
+var init_ExtensionsNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
+    "use strict";
+    NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
+    }, "dispose") };
+    MakePermissiveExports = /* @__PURE__ */ __name(() => {
+      const Base = {
+        enabled: true
+      };
+      return new Proxy(Base, {
+        get(Target, Property) {
+          if (Property in Target) {
+            return Target[Property];
+          }
+          if (typeof Property !== "string") {
+            return void 0;
+          }
+          if (Property === "then") return void 0;
+          if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
+            return (_Listener) => NoopDisposable;
+          }
+          if (Property.startsWith("register")) {
+            return (..._Args) => NoopDisposable;
+          }
+          if (Property.startsWith("get") || Property.startsWith("create")) {
+            return (..._Args) => MakePermissiveExports();
+          }
+          return (..._Args) => void 0;
+        }
+      });
+    }, "MakePermissiveExports");
+    ToExtensionObject = /* @__PURE__ */ __name((Context22, Id, Raw) => {
+      const Exports = MakePermissiveExports();
+      return {
+        id: Id,
+        extensionUri: Raw?.extensionLocation ?? {
+          scheme: "file",
+          path: "",
+          fsPath: ""
+        },
+        extensionPath: Raw?.extensionLocation?.fsPath ?? Raw?.extensionLocation?.path ?? "",
+        // Reporting `isActive: true` mirrors VS Code's behaviour for
+        // built-ins that have completed activation; without it, callers
+        // like the `github` extension treat the extension as missing.
+        isActive: true,
+        packageJSON: Raw,
+        extensionKind: 1,
+        exports: Exports,
+        // Critical: `activate()` must resolve to the SAME exports object
+        // so consumers like `vscode.github` can chain
+        // `gitExtension.activate().then(api => api.onDidChangeEnablement(...))`.
+        activate: /* @__PURE__ */ __name(async () => Exports, "activate")
+      };
+    }, "ToExtensionObject");
+    CreateExtensionsNamespace = /* @__PURE__ */ __name((Context22) => ({
+      getExtension: /* @__PURE__ */ __name((Identifier) => {
+        const Raw = Context22.ExtensionRegistry.get(Identifier);
+        return Raw ? ToExtensionObject(Context22, Identifier, Raw) : void 0;
+      }, "getExtension"),
+      get all() {
+        return [...Context22.ExtensionRegistry.entries()].map(
+          ([Id, Raw]) => ToExtensionObject(Context22, Id, Raw)
+        );
+      },
+      // Some extensions (html-language-features) iterate
+      // `extensions.allAcrossExtensionHosts`; return the same array as `all`
+      // so `for (...of...)` does not throw on `is not iterable`.
+      get allAcrossExtensionHosts() {
+        return [...Context22.ExtensionRegistry.entries()].map(
+          ([Id, Raw]) => ToExtensionObject(Context22, Id, Raw)
+        );
+      },
+      onDidChange: /* @__PURE__ */ __name((Listener) => {
+        Context22.Emitter.on("deltaExtensions", Listener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.Emitter.off("deltaExtensions", Listener);
+          }, "dispose")
+        };
+      }, "onDidChange")
+    }), "CreateExtensionsNamespace");
+    ExtensionsNamespace_default = CreateExtensionsNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/EnvNamespace.ts
+var EnvNamespace_exports = {};
+__export(EnvNamespace_exports, {
+  default: () => EnvNamespace_default
+});
+var CreateEnvNamespace, EnvNamespace_default;
+var init_EnvNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/EnvNamespace.ts"() {
+    "use strict";
+    CreateEnvNamespace = /* @__PURE__ */ __name((Context22) => {
+      const Env = Context22.ExtensionHostInitData?.environment ?? {};
+      const Call2 = /* @__PURE__ */ __name(async (Method, Parameters) => {
+        try {
+          return await Context22.MountainClient?.sendRequest(
+            Method,
+            Parameters
+          );
+        } catch {
+          return void 0;
+        }
+      }, "Call");
+      return {
+        appName: Env["appName"] ?? "CodeEditorLand",
+        appRoot: Env["appRoot"] ?? "",
+        appHost: Env["appHost"] ?? "desktop",
+        uiKind: 1,
+        // vscode.UIKind.Desktop
+        language: Env["language"] ?? "en",
+        machineId: Context22.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
+        sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
+        isNewAppInstall: false,
+        isTelemetryEnabled: false,
+        onDidChangeTelemetryEnabled: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeTelemetryEnabled"),
+        uriScheme: Env["uriScheme"] ?? "vscode",
+        shell: Env["shell"] ?? process.env["SHELL"] ?? "",
+        remoteName: void 0,
+        clipboard: {
+          // Clipboard.Read / Clipboard.Write not yet routed — catch returns
+          // empty string / undefined until the Rust dispatcher adds them.
+          readText: /* @__PURE__ */ __name(async () => await Call2("Clipboard.Read", []) ?? "", "readText"),
+          writeText: /* @__PURE__ */ __name(async (Value) => {
+            await Call2("Clipboard.Write", [Value]);
+          }, "writeText")
+        },
+        openExternal: /* @__PURE__ */ __name(async (Target) => {
+          const Ok = await Call2("NativeHost.OpenExternal", [
+            typeof Target === "string" ? Target : String(Target)
+          ]);
+          return Ok ?? false;
+        }, "openExternal"),
+        asExternalUri: /* @__PURE__ */ __name(async (Target) => Target, "asExternalUri"),
+        createTelemetryLogger: /* @__PURE__ */ __name((_Sender, _Options) => ({
+          isUsageEnabled: false,
+          isErrorsEnabled: false,
+          onDidChangeEnableStates: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChangeEnableStates"),
+          logUsage: /* @__PURE__ */ __name((_EventName, _Data) => {
+          }, "logUsage"),
+          logError: /* @__PURE__ */ __name((_EventNameOrError, _Data) => {
+          }, "logError"),
+          dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose")
+        }), "createTelemetryLogger"),
+        logLevel: 2,
+        onDidChangeLogLevel: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeLogLevel")
+      };
+    }, "CreateEnvNamespace");
+    EnvNamespace_default = CreateEnvNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/DebugNamespace.ts
+var DebugNamespace_exports = {};
+__export(DebugNamespace_exports, {
+  default: () => DebugNamespace_default
+});
+var DebugProviderCounter, EventSubscriber2, CreateDebugNamespace, DebugNamespace_default;
+var init_DebugNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/DebugNamespace.ts"() {
+    "use strict";
+    DebugProviderCounter = 0;
+    EventSubscriber2 = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
+      Context22.Emitter.on(EventName, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context22.Emitter.off(EventName, Listener);
+        }, "dispose")
+      };
+    }, "EventSubscriber");
+    CreateDebugNamespace = /* @__PURE__ */ __name((Context22) => ({
+      registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((DebugType, _Factory) => {
+        const Handle = `debugAdapter:${++DebugProviderCounter}`;
+        Context22.SendToMountain("register_debug_adapter", {
+          handle: Handle,
+          debug_type: DebugType,
+          extension_id: ""
+        }).catch(() => {
+        });
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.SendToMountain("unregister_debug_adapter", {
+              handle: Handle
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerDebugAdapterDescriptorFactory"),
+      registerDebugConfigurationProvider: /* @__PURE__ */ __name((DebugType, _Provider) => {
+        const Handle = `debugConfig:${++DebugProviderCounter}`;
+        Context22.SendToMountain("register_debug_configuration_provider", {
+          handle: Handle,
+          debug_type: DebugType
+        }).catch(() => {
+        });
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.SendToMountain(
+              "unregister_debug_configuration_provider",
+              {
+                handle: Handle
+              }
+            ).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerDebugConfigurationProvider"),
+      registerDebugAdapterTrackerFactory: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") }), "registerDebugAdapterTrackerFactory"),
+      startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
+        try {
+          const Response = await Context22.MountainClient?.sendRequest(
+            "Debug.Start",
+            [Folder, NameOrConfig, ParentSession]
+          );
+          return Boolean(Response?.success);
+        } catch {
+          return false;
+        }
+      }, "startDebugging"),
+      stopDebugging: /* @__PURE__ */ __name(async (Session) => {
+        try {
+          await Context22.MountainClient?.sendRequest("Debug.Stop", [Session]);
+        } catch {
+        }
+      }, "stopDebugging"),
+      addBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
+        Context22.SendToMountain("debug.addBreakpoints", {
+          breakpoints: Breakpoints
+        }).catch(() => {
+        });
+      }, "addBreakpoints"),
+      removeBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
+        Context22.SendToMountain("debug.removeBreakpoints", {
+          breakpoints: Breakpoints
+        }).catch(() => {
+        });
+      }, "removeBreakpoints"),
+      asDebugSourceUri: /* @__PURE__ */ __name((Source) => Source, "asDebugSourceUri"),
+      onDidStartDebugSession: EventSubscriber2(Context22, "debug.didStartSession"),
+      onDidTerminateDebugSession: EventSubscriber2(
+        Context22,
+        "debug.didTerminateSession"
+      ),
+      onDidChangeActiveDebugSession: EventSubscriber2(
+        Context22,
+        "debug.didChangeActiveSession"
+      ),
+      onDidReceiveDebugSessionCustomEvent: EventSubscriber2(
+        Context22,
+        "debug.didReceiveCustomEvent"
+      ),
+      onDidChangeBreakpoints: EventSubscriber2(
+        Context22,
+        "debug.didChangeBreakpoints"
+      ),
+      activeDebugSession: void 0,
+      activeDebugConsole: {
+        append: /* @__PURE__ */ __name((Value) => {
+          Context22.SendToMountain("debug.consoleAppend", {
+            value: Value
+          }).catch(() => {
+          });
+        }, "append"),
+        appendLine: /* @__PURE__ */ __name((Value) => {
+          Context22.SendToMountain("debug.consoleAppend", {
+            value: `${Value}
+`
+          }).catch(() => {
+          });
+        }, "appendLine")
+      },
+      breakpoints: []
+    }), "CreateDebugNamespace");
+    DebugNamespace_default = CreateDebugNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/TasksNamespace.ts
+var TasksNamespace_exports = {};
+__export(TasksNamespace_exports, {
+  default: () => TasksNamespace_default
+});
+var TaskProviderCounter, EventSubscriber3, CreateTasksNamespace, TasksNamespace_default;
+var init_TasksNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/TasksNamespace.ts"() {
+    "use strict";
+    TaskProviderCounter = 0;
+    EventSubscriber3 = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
+      Context22.Emitter.on(EventName, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context22.Emitter.off(EventName, Listener);
+        }, "dispose")
+      };
+    }, "EventSubscriber");
+    CreateTasksNamespace = /* @__PURE__ */ __name((Context22) => ({
+      registerTaskProvider: /* @__PURE__ */ __name((TaskType, _Provider) => {
+        const Handle = `taskProvider:${++TaskProviderCounter}`;
+        Context22.SendToMountain("register_task_provider", {
+          handle: Handle,
+          task_type: TaskType,
+          extension_id: ""
+        }).catch(() => {
+        });
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.SendToMountain("unregister_task_provider", {
+              handle: Handle
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerTaskProvider"),
+      fetchTasks: /* @__PURE__ */ __name(async (Filter) => {
+        try {
+          const Response = await Context22.MountainClient?.sendRequest(
+            "Task.Fetch",
+            [Filter]
+          );
+          return Array.isArray(Response) ? Response : [];
+        } catch {
+          return [];
+        }
+      }, "fetchTasks"),
+      executeTask: /* @__PURE__ */ __name(async (Task3) => {
+        try {
+          return await Context22.MountainClient?.sendRequest("Task.Execute", [
+            Task3
+          ]);
+        } catch {
+          return void 0;
+        }
+      }, "executeTask"),
+      onDidStartTask: EventSubscriber3(Context22, "task.didStart"),
+      onDidEndTask: EventSubscriber3(Context22, "task.didEnd"),
+      onDidStartTaskProcess: EventSubscriber3(Context22, "task.didStartProcess"),
+      onDidEndTaskProcess: EventSubscriber3(Context22, "task.didEndProcess"),
+      taskExecutions: []
+    }), "CreateTasksNamespace");
+    TasksNamespace_default = CreateTasksNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/ScmNamespace.ts
+var ScmNamespace_exports = {};
+__export(ScmNamespace_exports, {
+  default: () => ScmNamespace_default
+});
+var ScmCounter, CreateScmNamespace, ScmNamespace_default;
+var init_ScmNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
+    "use strict";
+    ScmCounter = 0;
+    CreateScmNamespace = /* @__PURE__ */ __name((Context22) => ({
+      createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
+        const Handle = `scm:${++ScmCounter}`;
+        Context22.SendToMountain("register_scm_provider", {
+          handle: Handle,
+          id: Id,
+          label: Label,
+          root_uri: RootUri,
+          extension_id: ""
+        }).catch(() => {
+        });
+        const Groups = /* @__PURE__ */ new Map();
+        return {
+          id: Id,
+          label: Label,
+          rootUri: RootUri,
+          inputBox: {
+            value: "",
+            placeholder: "",
+            enabled: true,
+            visible: true
+          },
+          createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
+            const GroupHandle = `${Handle}/${GroupId}`;
+            Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
+            Context22.SendToMountain("register_scm_resource_group", {
+              scm_handle: Handle,
+              group_handle: GroupHandle,
+              group_id: GroupId,
+              label: GroupLabel
+            }).catch(() => {
+            });
+            const State = { resourceStates: [] };
+            return {
+              id: GroupId,
+              label: GroupLabel,
+              get resourceStates() {
+                return State.resourceStates;
+              },
+              set resourceStates(Value) {
+                State.resourceStates = Value;
+                Context22.SendToMountain("update_scm_group", {
+                  scm_handle: Handle,
+                  group_handle: GroupHandle,
+                  resource_states: Value
+                }).catch(() => {
+                });
+              },
+              dispose: /* @__PURE__ */ __name(() => {
+                Context22.SendToMountain(
+                  "unregister_scm_resource_group",
+                  {
+                    scm_handle: Handle,
+                    group_handle: GroupHandle
+                  }
+                ).catch(() => {
+                });
+                Groups.delete(GroupId);
+              }, "dispose")
+            };
+          }, "createResourceGroup"),
+          statusBarCommands: [],
+          count: 0,
+          commitTemplate: "",
+          acceptInputCommand: void 0,
+          quickDiffProvider: void 0,
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.SendToMountain("unregister_scm_provider", {
+              handle: Handle
+            }).catch(() => {
+            });
+            Groups.clear();
+          }, "dispose")
+        };
+      }, "createSourceControl"),
+      inputBox: { value: "" }
+    }), "CreateScmNamespace");
+    ScmNamespace_default = CreateScmNamespace;
+  }
+});
+
+// Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts
+var AuthenticationNamespace_exports = {};
+__export(AuthenticationNamespace_exports, {
+  default: () => AuthenticationNamespace_default
+});
+var AuthProviderCounter, EventSubscriber4, CreateAuthenticationNamespace, AuthenticationNamespace_default;
+var init_AuthenticationNamespace = __esm({
+  "Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts"() {
+    "use strict";
+    AuthProviderCounter = 0;
+    EventSubscriber4 = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
+      Context22.Emitter.on(EventName, Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context22.Emitter.off(EventName, Listener);
+        }, "dispose")
+      };
+    }, "EventSubscriber");
+    CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context22) => ({
+      registerAuthenticationProvider: /* @__PURE__ */ __name((ProviderId, Label, _Provider, Options) => {
+        const Handle = `authProvider:${++AuthProviderCounter}`;
+        Context22.SendToMountain("register_authentication_provider", {
+          handle: Handle,
+          provider_id: ProviderId,
+          label: Label,
+          supports_multiple_accounts: Options?.supportsMultipleAccounts ?? false,
+          extension_id: ""
+        }).catch(() => {
+        });
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context22.SendToMountain("unregister_authentication_provider", {
+              handle: Handle
+            }).catch(() => {
+            });
+          }, "dispose")
+        };
+      }, "registerAuthenticationProvider"),
+      getSession: /* @__PURE__ */ __name(async (ProviderId, Scopes, Options) => {
+        try {
+          return await Context22.MountainClient?.sendRequest(
+            "Authentication.GetSession",
+            [ProviderId, Scopes, Options ?? {}]
+          );
+        } catch {
+          return void 0;
+        }
+      }, "getSession"),
+      getAccounts: /* @__PURE__ */ __name(async (ProviderId) => {
+        try {
+          const Result = await Context22.MountainClient?.sendRequest(
+            "Authentication.GetAccounts",
+            [ProviderId]
+          );
+          return Array.isArray(Result) ? Result : [];
+        } catch {
+          return [];
+        }
+      }, "getAccounts"),
+      onDidChangeSessions: EventSubscriber4(Context22, "auth.didChangeSessions")
+    }), "CreateAuthenticationNamespace");
+    AuthenticationNamespace_default = CreateAuthenticationNamespace;
+  }
+});
+
+// Source/Services/Handler/ExtensionHostHandler.ts
+import * as NodeFS from "node:fs";
+var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent, HandleStartExtensionHost, InstallVscodeModuleHooks, EnsureVscodeAPIRegistered, ActivateExtension, CreateExtensionContext, ExtensionHostHandler_default;
+var init_ExtensionHostHandler = __esm({
+  "Source/Services/Handler/ExtensionHostHandler.ts"() {
+    "use strict";
+    init_LanguageProviderRegistry();
+    HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context22, Parameters) => {
+      const Extensions = Parameters?.extensions ?? [];
+      console.log(
+        `[ExtensionHostHandler] InitializeExtensionHost received ${Extensions.length} extensions`
+      );
+      Context22.ExtensionHostInitData = Parameters;
+      Context22.ExtensionRegistry.clear();
+      Context22.ActivationEventIndex.clear();
+      for (const Extension2 of Extensions) {
+        const Identifier = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "unknown";
+        Context22.ExtensionRegistry.set(Identifier, Extension2);
+        const ActivationEvents = Extension2?.activationEvents ?? [];
+        for (const Event2 of ActivationEvents) {
+          const Existing = Context22.ActivationEventIndex.get(Event2) ?? [];
+          Existing.push(Identifier);
+          Context22.ActivationEventIndex.set(Event2, Existing);
+        }
+      }
+      Context22.ExtensionHostReady = true;
+      console.log(
+        `[ExtensionHostHandler] Extension registry: ${Context22.ExtensionRegistry.size} extensions, ${Context22.ActivationEventIndex.size} activation events`
+      );
+      Context22.Emitter.emit("extensionHostInitialized", {
+        extensionCount: Context22.ExtensionRegistry.size,
+        autoStart: Parameters?.autoStart ?? false
+      });
+      Context22.ConnectToMountain().catch((Error2) => {
+        console.warn(
+          "[ExtensionHostHandler] Background Mountain reconnect failed:",
+          Error2 instanceof globalThis.Error ? Error2.message : String(Error2)
+        );
+      });
+      return "initialized";
+    }, "HandleInitializeExtensionHost");
+    HandleDeltaExtensions = /* @__PURE__ */ __name(async (Context22, Parameters) => {
+      const Added = Parameters?.toAdd ?? [];
+      const Removed = Parameters?.toRemove ?? [];
+      console.log(
+        `[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length}`
+      );
+      for (const Extension2 of Added) {
+        const Identifier = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "unknown";
+        Context22.ExtensionRegistry.set(Identifier, Extension2);
+        const ActivationEvents = Extension2?.activationEvents ?? [];
+        for (const Event2 of ActivationEvents) {
+          const Existing = Context22.ActivationEventIndex.get(Event2) ?? [];
+          if (!Existing.includes(Identifier)) {
+            Existing.push(Identifier);
+            Context22.ActivationEventIndex.set(Event2, Existing);
+          }
+        }
+      }
+      for (const Extension2 of Removed) {
+        const Identifier = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "unknown";
+        Context22.ExtensionRegistry.delete(Identifier);
+      }
+      Context22.Emitter.emit("deltaExtensions", {
+        added: Added.length,
+        removed: Removed.length
+      });
+      return {
+        success: true,
+        registrySize: Context22.ExtensionRegistry.size
+      };
+    }, "HandleDeltaExtensions");
+    HandleActivateByEvent = /* @__PURE__ */ __name(async (Context22, Parameters) => {
+      await EnsureVscodeAPIRegistered(Context22);
+      const ActivationEvent = typeof Parameters === "string" ? Parameters : Parameters?.activationEvent ?? Parameters?.event ?? "*";
+      let MatchingExtensions;
+      if (ActivationEvent === "*") {
+        const All = /* @__PURE__ */ new Set();
+        for (const Ids of Context22.ActivationEventIndex.values()) {
+          for (const Id of Ids) All.add(Id);
+        }
+        MatchingExtensions = [...All];
+      } else {
+        const Specific = Context22.ActivationEventIndex.get(ActivationEvent) ?? [];
+        const Star = Context22.ActivationEventIndex.get("*") ?? [];
+        MatchingExtensions = [.../* @__PURE__ */ new Set([...Specific, ...Star])];
+      }
+      console.log(
+        `[ExtensionHostHandler] $activateByEvent: ${ActivationEvent} \u2192 ${MatchingExtensions.length} extensions`
+      );
+      if (MatchingExtensions.length > 0) {
+        console.log(
+          `[ExtensionHostHandler] Activating: ${MatchingExtensions.slice(0, 5).join(", ")}${MatchingExtensions.length > 5 ? ` (+${MatchingExtensions.length - 5} more)` : ""}`
+        );
+      } else {
+        console.log(
+          `[ExtensionHostHandler] Available events: ${[...Context22.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context22.ActivationEventIndex.size > 10 ? ` (+${Context22.ActivationEventIndex.size - 10} more)` : ""}`
+        );
+      }
+      const ToActivate = MatchingExtensions.filter(
+        (Id) => !Context22.ActivatedExtensions.has(Id)
+      );
+      console.log(
+        `[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`
+      );
+      for (const ExtId of ToActivate) {
+        ActivateExtension(Context22, ExtId, ActivationEvent).catch(
+          (Err) => {
+            const Msg = Err instanceof Error ? Err.message : String(Err);
+            console.warn(
+              `[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`
+            );
+            if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
+              const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
+              console.warn(
+                `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
+${Stack}`
+              );
+            }
+          }
+        );
+      }
+      Context22.Emitter.emit("activateByEvent", {
+        event: ActivationEvent,
+        extensions: MatchingExtensions
+      });
+      return {
+        success: true,
+        activated: ToActivate.length
+      };
+    }, "HandleActivateByEvent");
+    HandleStartExtensionHost = /* @__PURE__ */ __name(async (Context22, Parameters) => {
+      console.log(
+        `[ExtensionHostHandler] $startExtensionHost received (registry: ${Context22.ExtensionRegistry.size} extensions)`
+      );
+      Context22.Emitter.emit("startExtensionHost", {
+        extensionCount: Context22.ExtensionRegistry.size,
+        ready: Context22.ExtensionHostReady
+      });
+      return {
+        success: true,
+        ready: Context22.ExtensionHostReady,
+        extensionCount: Context22.ExtensionRegistry.size
+      };
+    }, "HandleStartExtensionHost");
+    InstallVscodeModuleHooks = /* @__PURE__ */ __name(async () => {
+      if (globalThis.__cocoonModuleHooksInstalled) return;
+      globalThis.__cocoonModuleHooksInstalled = true;
+      const ModuleModule = await import("module");
+      const CreateRequire = ModuleModule.createRequire;
+      const LocalRequire = CreateRequire(import.meta.url);
+      try {
+        const NodeModule = LocalRequire("module");
+        const OriginalLoad = NodeModule._load;
+        NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
+          if (Request === "vscode") {
+            const API = globalThis.__cocoonVscodeAPI;
+            if (API) return API;
+            console.warn(
+              "[ExtensionHostHandler] require('vscode') called before shim registered \u2014 returning empty namespace"
+            );
+            return {};
+          }
+          return OriginalLoad.call(this, Request, Parent, IsMain);
+        }, "PatchedLoad");
+        console.log(
+          "[ExtensionHostHandler] Module._load hook installed \u2014 require('vscode') intercepted"
+        );
+      } catch (Err) {
+        console.warn(
+          "[ExtensionHostHandler] Failed to patch Module._load:",
+          Err instanceof Error ? Err.message : String(Err)
+        );
+      }
+      try {
+        const NodeModule = LocalRequire("module");
+        if (typeof NodeModule.register === "function") {
+          const VscodeExportNames = [
+            // Namespaces
+            "window",
+            "workspace",
+            "commands",
+            "languages",
+            "extensions",
+            "env",
+            "debug",
+            "tasks",
+            "scm",
+            "authentication",
+            "l10n",
+            "notebooks",
+            "tests",
+            "comments",
+            "chat",
+            "lm",
+            "interactive",
+            // Type constructors
+            "Position",
+            "Range",
+            "Location",
+            "LocationLink",
+            "Selection",
+            "MarkdownString",
+            "Hover",
+            "CompletionItem",
+            "CompletionItemKind",
+            "CompletionItemTag",
+            "CompletionList",
+            "CompletionTriggerKind",
+            "Diagnostic",
+            "DiagnosticSeverity",
+            "DiagnosticTag",
+            "DiagnosticRelatedInformation",
+            "TextEdit",
+            "WorkspaceEdit",
+            "SnippetString",
+            "SnippetTextEdit",
+            "SymbolKind",
+            "SymbolTag",
+            "SymbolInformation",
+            "DocumentSymbol",
+            "CodeActionKind",
+            "CodeAction",
+            "CodeActionTriggerKind",
+            "CodeLens",
+            "SignatureHelp",
+            "SignatureHelpTriggerKind",
+            "SignatureInformation",
+            "ParameterInformation",
+            "InlayHint",
+            "InlayHintKind",
+            "InlayHintLabelPart",
+            "FoldingRange",
+            "FoldingRangeKind",
+            "DocumentHighlight",
+            "DocumentHighlightKind",
+            "SelectionRange",
+            "SemanticTokensLegend",
+            "SemanticTokensBuilder",
+            "SemanticTokens",
+            "SemanticTokensEdit",
+            "SemanticTokensEdits",
+            "RelativePattern",
+            "Disposable",
+            "StatusBarAlignment",
+            "ThemeColor",
+            "ThemeIcon",
+            "TreeItem",
+            "TreeItemCollapsibleState",
+            "TreeItemCheckboxState",
+            "ViewColumn",
+            "EndOfLine",
+            "ConfigurationTarget",
+            "Uri",
+            "CancellationTokenSource",
+            "CancellationError",
+            "EventEmitter",
+            "FileType",
+            "FilePermission",
+            "FileSystemError",
+            "DataTransfer",
+            "DataTransferItem",
+            "TextDocumentChangeReason",
+            "TextDocumentSaveReason",
+            "TextEditorCursorStyle",
+            "TextEditorLineNumbersStyle",
+            "TextEditorRevealType",
+            "TextEditorSelectionChangeKind",
+            "DecorationRangeBehavior",
+            "OverviewRulerLane",
+            "ColorPresentation",
+            "ColorInformation",
+            "Color",
+            "QuickPickItemKind",
+            "InputBoxValidationSeverity",
+            "ProgressLocation",
+            "NotebookCellData",
+            "NotebookCellKind",
+            "NotebookCellOutput",
+            "NotebookCellOutputItem",
+            "NotebookData",
+            "NotebookEdit",
+            "NotebookRange",
+            "TestRunProfileKind",
+            "TestMessage",
+            "TestRunRequest",
+            "TestTag",
+            "DebugAdapterExecutable",
+            "DebugAdapterInlineImplementation",
+            "DebugAdapterNamedPipeServer",
+            "DebugAdapterServer",
+            "Breakpoint",
+            "FunctionBreakpoint",
+            "SourceBreakpoint",
+            "TerminalLink",
+            "TerminalLocation",
+            "TerminalProfile",
+            "TaskGroup",
+            "TaskScope",
+            "TaskRevealKind",
+            "TaskPanelKind",
+            "ShellExecution",
+            "ProcessExecution",
+            "CustomExecution",
+            "Task",
+            "CommentMode",
+            "CommentThreadCollapsibleState",
+            "CommentThreadState",
+            "ExtensionKind",
+            "ExtensionMode",
+            "UIKind",
+            "LogLevel",
+            "LanguageStatusSeverity",
+            "TextSearchContext",
+            "TextSearchMatch",
+            "DocumentLink",
+            "LinkedEditingRanges",
+            "EvaluatableExpression",
+            "InlineValueText",
+            "InlineValueVariableLookup",
+            "InlineValueEvaluatableExpression",
+            "TypeHierarchyItem",
+            "CallHierarchyItem",
+            "CallHierarchyIncomingCall",
+            "CallHierarchyOutgoingCall",
+            // Fields
+            "version"
+          ];
+          const NamedExports = VscodeExportNames.map(
+            (Name) => `export const ${Name} = API.${Name};`
+          ).join("\n");
+          const BridgeSource = [
+            "const API = globalThis.__cocoonVscodeAPI || {};",
+            NamedExports,
+            "export default API;",
+            "export const __esModule = true;"
+          ].join("\n");
+          const LoaderSource = `
+				const BRIDGE_URL = 'vscode-shim:///vscode';
+				const BRIDGE_SOURCE = ${JSON.stringify(BridgeSource)};
+				export async function resolve(Specifier, Context, NextResolve) {
+					if (Specifier === 'vscode') {
+						return { url: BRIDGE_URL, shortCircuit: true, format: 'module' };
+					}
+					return NextResolve(Specifier, Context);
+				}
+				export async function load(Url, Context, NextLoad) {
+					if (Url === BRIDGE_URL) {
+						return { format: 'module', source: BRIDGE_SOURCE, shortCircuit: true };
+					}
+					return NextLoad(Url, Context);
+				}
+			`;
+          const LoaderURL = `data:text/javascript;base64,${Buffer.from(LoaderSource).toString("base64")}`;
+          try {
+            NodeModule.register(LoaderURL, import.meta.url);
+            console.log(
+              "[ExtensionHostHandler] ESM loader registered \u2014 import 'vscode' intercepted"
+            );
+          } catch (RegisterErr) {
+            console.warn(
+              "[ExtensionHostHandler] module.register failed (ESM imports of 'vscode' will fail):",
+              RegisterErr instanceof Error ? RegisterErr.message : String(RegisterErr)
+            );
+          }
+        }
+      } catch (Err) {
+        console.warn(
+          "[ExtensionHostHandler] ESM loader setup skipped:",
+          Err instanceof Error ? Err.message : String(Err)
+        );
+      }
+    }, "InstallVscodeModuleHooks");
+    EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context22) => {
+      await InstallVscodeModuleHooks();
+      if (globalThis.__cocoonVscodeAPI) return;
+      try {
+        const VsCodeTypes2 = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
+        const { URI: URI3 } = await Promise.resolve().then(() => (init_uri(), uri_exports));
+        const { CancellationTokenSource: CancellationTokenSource3 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
+        const { Emitter: Emitter4 } = await Promise.resolve().then(() => (init_event(), event_exports));
+        const LogLevelEnum = {
+          Off: 0,
+          Trace: 1,
+          Debug: 2,
+          Info: 3,
+          Warning: 4,
+          Error: 5,
+          0: "Off",
+          1: "Trace",
+          2: "Debug",
+          3: "Info",
+          4: "Warning",
+          5: "Error"
+        };
+        class CancellationError2 extends Error {
+          static {
+            __name(this, "CancellationError");
+          }
+          constructor() {
+            super("Canceled");
+            this.name = "Canceled";
+          }
+        }
+        const OverviewRulerLane = {
+          Left: 1,
+          Center: 2,
+          Right: 4,
+          Full: 7,
+          1: "Left",
+          2: "Center",
+          4: "Right",
+          7: "Full"
+        };
+        const API = {
+          ...VsCodeTypes2,
+          // Reported VS Code version — must satisfy every built-in
+          // extension's `engines.vscode` constraint. `vscode-languageclient`
+          // currently requires `^1.91.0`; bumping above that lets
+          // css/html/json/markdown-language-features activate.
+          version: "1.95.0",
+          Uri: URI3,
+          CancellationTokenSource: CancellationTokenSource3,
+          CancellationError: CancellationError2,
+          EventEmitter: Emitter4,
+          LogLevel: LogLevelEnum,
+          OverviewRulerLane,
+          // Namespaces — each in its own file under VscodeAPI/
+          window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(
+            Context22
+          ),
+          workspace: (await Promise.resolve().then(() => (init_WorkspaceNamespace(), WorkspaceNamespace_exports))).default(Context22),
+          commands: (await Promise.resolve().then(() => (init_CommandsNamespace(), CommandsNamespace_exports))).default(Context22, LanguageProviderRegistry_exports),
+          languages: (await Promise.resolve().then(() => (init_LanguagesNamespace(), LanguagesNamespace_exports))).default(Context22, LanguageProviderRegistry_exports),
+          extensions: (await Promise.resolve().then(() => (init_ExtensionsNamespace(), ExtensionsNamespace_exports))).default(Context22),
+          env: (await Promise.resolve().then(() => (init_EnvNamespace(), EnvNamespace_exports))).default(Context22),
+          debug: (await Promise.resolve().then(() => (init_DebugNamespace(), DebugNamespace_exports))).default(
+            Context22
+          ),
+          tasks: (await Promise.resolve().then(() => (init_TasksNamespace(), TasksNamespace_exports))).default(
+            Context22
+          ),
+          scm: (await Promise.resolve().then(() => (init_ScmNamespace(), ScmNamespace_exports))).default(Context22),
+          authentication: (await Promise.resolve().then(() => (init_AuthenticationNamespace(), AuthenticationNamespace_exports))).default(Context22),
+          // Lightweight stub namespaces — no Mountain route yet, returns
+          // safe defaults so extensions that reference them don't crash.
+          l10n: {
+            t: /* @__PURE__ */ __name((Message, ...Arguments) => {
+              const Raw = typeof Message === "string" ? Message : Message?.message ?? String(Message);
+              if (!Arguments.length) return Raw;
+              return Raw.replace(
+                /\{(\d+)\}/g,
+                (_Match, Index) => {
+                  const Replacement = Arguments[Number(Index)];
+                  return Replacement === void 0 ? "" : String(Replacement);
+                }
+              );
+            }, "t"),
+            bundle: void 0,
+            uri: void 0
+          },
+          notebooks: {
+            createNotebookController: /* @__PURE__ */ __name(() => ({
+              id: "",
+              notebookType: "",
+              supportedLanguages: [],
+              label: "",
+              supportsExecutionOrder: false,
+              executeHandler: /* @__PURE__ */ __name(() => {
+              }, "executeHandler"),
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose"),
+              createNotebookCellExecution: /* @__PURE__ */ __name(() => ({
+                start: /* @__PURE__ */ __name(() => {
+                }, "start"),
+                end: /* @__PURE__ */ __name(() => {
+                }, "end"),
+                replaceOutput: /* @__PURE__ */ __name(async () => {
+                }, "replaceOutput"),
+                appendOutput: /* @__PURE__ */ __name(async () => {
+                }, "appendOutput"),
+                clearOutput: /* @__PURE__ */ __name(async () => {
+                }, "clearOutput"),
+                replaceOutputItems: /* @__PURE__ */ __name(async () => {
+                }, "replaceOutputItems"),
+                appendOutputItems: /* @__PURE__ */ __name(async () => {
+                }, "appendOutputItems"),
+                executionOrder: void 0
+              }), "createNotebookCellExecution"),
+              onDidChangeSelectedNotebooks: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose") }), "onDidChangeSelectedNotebooks"),
+              updateNotebookAffinity: /* @__PURE__ */ __name(() => {
+              }, "updateNotebookAffinity")
+            }), "createNotebookController"),
+            registerNotebookCellStatusBarItemProvider: /* @__PURE__ */ __name(() => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "registerNotebookCellStatusBarItemProvider"),
+            registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerNotebookSerializer"),
+            registerRendererCommunication: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerRendererCommunication"),
+            createRendererMessaging: /* @__PURE__ */ __name(() => ({
+              postMessage: /* @__PURE__ */ __name(async () => false, "postMessage"),
+              onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose") }), "onDidReceiveMessage")
+            }), "createRendererMessaging"),
+            onDidChangeNotebookCellExecutionState: /* @__PURE__ */ __name(() => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "onDidChangeNotebookCellExecutionState")
+          },
+          lm: {
+            registerTool: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerTool"),
+            invokeTool: /* @__PURE__ */ __name(async () => ({ content: [] }), "invokeTool"),
+            selectChatModels: /* @__PURE__ */ __name(async () => [], "selectChatModels"),
+            registerChatModelProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerChatModelProvider"),
+            tools: [],
+            onDidChangeChatModels: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidChangeChatModels")
+          },
+          chat: {
+            createChatParticipant: /* @__PURE__ */ __name(() => ({
+              id: "",
+              iconPath: void 0,
+              requester: void 0,
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose"),
+              followupProvider: void 0,
+              onDidReceiveFeedback: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose") }), "onDidReceiveFeedback")
+            }), "createChatParticipant"),
+            registerChatVariableResolver: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerChatVariableResolver"),
+            registerMappedEditsProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerMappedEditsProvider"),
+            registerChatOutputRenderer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerChatOutputRenderer"),
+            registerRelatedFilesProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerRelatedFilesProvider"),
+            registerChatSessionProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerChatSessionProvider"),
+            registerChatSessionItemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "registerChatSessionItemProvider")
+          },
+          tests: {
+            createTestController: /* @__PURE__ */ __name(() => ({
+              id: "",
+              label: "",
+              items: {
+                size: 0,
+                replace: /* @__PURE__ */ __name(() => {
+                }, "replace"),
+                forEach: /* @__PURE__ */ __name(() => {
+                }, "forEach"),
+                add: /* @__PURE__ */ __name(() => {
+                }, "add"),
+                delete: /* @__PURE__ */ __name(() => {
+                }, "delete"),
+                get: /* @__PURE__ */ __name(() => void 0, "get")
+              },
+              createRunProfile: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose") }), "createRunProfile"),
+              resolveHandler: void 0,
+              refreshHandler: void 0,
+              createTestItem: /* @__PURE__ */ __name(() => ({}), "createTestItem"),
+              createTestRun: /* @__PURE__ */ __name(() => ({
+                enqueued: /* @__PURE__ */ __name(() => {
+                }, "enqueued"),
+                started: /* @__PURE__ */ __name(() => {
+                }, "started"),
+                skipped: /* @__PURE__ */ __name(() => {
+                }, "skipped"),
+                failed: /* @__PURE__ */ __name(() => {
+                }, "failed"),
+                errored: /* @__PURE__ */ __name(() => {
+                }, "errored"),
+                passed: /* @__PURE__ */ __name(() => {
+                }, "passed"),
+                end: /* @__PURE__ */ __name(() => {
+                }, "end"),
+                appendOutput: /* @__PURE__ */ __name(() => {
+                }, "appendOutput"),
+                token: {
+                  isCancellationRequested: false,
+                  onCancellationRequested: /* @__PURE__ */ __name(() => ({
+                    dispose: /* @__PURE__ */ __name(() => {
+                    }, "dispose")
+                  }), "onCancellationRequested")
+                }
+              }), "createTestRun"),
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "createTestController")
+          },
+          comments: {
+            createCommentController: /* @__PURE__ */ __name(() => ({
+              id: "",
+              label: "",
+              commentingRangeProvider: void 0,
+              reactionHandler: void 0,
+              options: void 0,
+              createCommentThread: /* @__PURE__ */ __name(() => ({
+                uri: void 0,
+                range: void 0,
+                comments: [],
+                collapsibleState: 0,
+                canReply: true,
+                contextValue: void 0,
+                label: void 0,
+                state: void 0,
+                dispose: /* @__PURE__ */ __name(() => {
+                }, "dispose")
+              }), "createCommentThread"),
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "createCommentController")
+          },
+          interactive: {
+            registerInteractiveEditorSessionProvider: /* @__PURE__ */ __name(() => ({
+              dispose: /* @__PURE__ */ __name(() => {
+              }, "dispose")
+            }), "registerInteractiveEditorSessionProvider"),
+            transferActiveChat: /* @__PURE__ */ __name(async () => {
+            }, "transferActiveChat")
+          }
+        };
+        globalThis.__cocoonVscodeAPI = API;
+        console.log(
+          "[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI"
+        );
+        const CriticalNames = [
+          "Diagnostic",
+          "CodeAction",
+          "CodeLens",
+          "CompletionItem",
+          "SymbolInformation",
+          "DocumentLink",
+          "TypeHierarchyItem",
+          "CallHierarchyItem",
+          "SemanticTokensBuilder",
+          "SemanticTokens",
+          "RelativePattern",
+          "Position",
+          "Range",
+          "Hover",
+          "LogLevel",
+          "CancellationError",
+          "CancellationTokenSource",
+          "EventEmitter",
+          "Uri",
+          "Disposable"
+        ];
+        const Missing = CriticalNames.filter((Name) => API[Name] === void 0);
+        if (Missing.length) {
+          console.warn(
+            `[ExtensionHostHandler] vscode API shim missing critical symbols: ${Missing.join(", ")}`
+          );
+        } else {
+          console.log(
+            "[ExtensionHostHandler] vscode API shim critical symbols OK"
+          );
+        }
+      } catch (Err) {
+        console.warn(
+          "[ExtensionHostHandler] Failed to create vscode API shim:",
+          Err instanceof Error ? Err.message : String(Err)
+        );
+      }
+    }, "EnsureVscodeAPIRegistered");
+    ActivateExtension = /* @__PURE__ */ __name(async (Context22, ExtensionId, ActivationEvent) => {
+      if (Context22.ActivatedExtensions.has(ExtensionId)) return;
+      Context22.ActivatedExtensions.add(ExtensionId);
+      const Extension2 = Context22.ExtensionRegistry.get(ExtensionId);
+      if (!Extension2) return;
+      const LocationRaw = Extension2?.ExtensionLocation ?? Extension2?.extensionLocation ?? Extension2?.location?.path ?? Extension2?.location;
+      const MainFile = Extension2?.main ?? Extension2?.Main;
+      if (!LocationRaw || !MainFile) {
+        return;
+      }
+      let ExtensionPath;
+      try {
+        ExtensionPath = new URL(String(LocationRaw)).pathname.replace(
+          /\/$/,
+          ""
+        );
+      } catch {
+        ExtensionPath = String(LocationRaw).replace(/^file:\/\//, "").replace(/\/$/, "");
+      }
+      const ModulePath = `${ExtensionPath}/${MainFile}`;
+      const ModuleType = Extension2?.type ?? Extension2?.Type;
+      const IsESM = ModuleType === "module" || /\.mjs$/i.test(MainFile) || /\.mts$/i.test(MainFile);
+      console.log(
+        `[ExtensionHostHandler] Loading ${ExtensionId} (${IsESM ? "ESM" : "CJS"}) from ${ModulePath}`
+      );
+      try {
+        let ExtModule;
+        if (IsESM) {
+          const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
+          ExtModule = await import(ImportURL);
+        } else {
+          const { createRequire: createRequire3 } = await import("module");
+          const Require = createRequire3(import.meta.url);
+          try {
+            ExtModule = Require(ModulePath);
+          } catch (RequireErr) {
+            const Msg = RequireErr instanceof Error ? RequireErr.message : String(RequireErr);
+            if (/ERR_REQUIRE_ESM|Cannot use import statement/i.test(Msg)) {
+              const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
+              ExtModule = await import(ImportURL);
+            } else {
+              throw RequireErr;
+            }
+          }
+        }
+        const ActivateFn = typeof ExtModule?.activate === "function" ? ExtModule.activate : typeof ExtModule?.default?.activate === "function" ? ExtModule.default.activate : void 0;
+        if (typeof ActivateFn === "function") {
+          const ExtContext = CreateExtensionContext(
+            Context22,
+            Extension2,
+            ExtensionPath
+          );
+          await ActivateFn(ExtContext);
+          console.log(
+            `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`
+          );
+        } else {
+          console.warn(
+            `[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`
+          );
+        }
+      } catch (Err) {
+        Context22.ActivatedExtensions.delete(ExtensionId);
+        throw Err;
+      }
+    }, "ActivateExtension");
+    CreateExtensionContext = /* @__PURE__ */ __name((Context22, Extension2, ExtensionPath) => {
+      const ExtId = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "";
+      const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
+      const StorageBase = `${HomeDir}/.codeeditorland/extensions/storage`;
+      const GlobalStorageBase = `${HomeDir}/.codeeditorland/globalStorage`;
+      const LogBase = `${HomeDir}/.codeeditorland/logs`;
+      const ExtStoragePath = `${StorageBase}/${ExtId}`;
+      const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
+      const LogPath = `${LogBase}/${ExtId}`;
+      try {
+        NodeFS.mkdirSync(ExtStoragePath, { recursive: true });
+        NodeFS.mkdirSync(GlobalStoragePath, { recursive: true });
+        NodeFS.mkdirSync(LogPath, { recursive: true });
+      } catch {
+      }
+      let FullPackageJSON = Extension2;
+      try {
+        const Contents = NodeFS.readFileSync(
+          `${ExtensionPath}/package.json`,
+          "utf8"
+        );
+        const Parsed = JSON.parse(Contents);
+        FullPackageJSON = {
+          ...Parsed,
+          ...Extension2
+        };
+      } catch {
+      }
+      const VsCodeUri = globalThis.__cocoonVscodeAPI?.Uri;
+      const MakeUri = /* @__PURE__ */ __name((Path) => {
+        if (VsCodeUri && typeof VsCodeUri.file === "function") {
+          return VsCodeUri.file(Path);
+        }
+        return {
+          scheme: "file",
+          path: Path,
+          fsPath: Path,
+          authority: "",
+          query: "",
+          fragment: "",
+          with: /* @__PURE__ */ __name(function(Change) {
+            return { ...this, ...Change };
+          }, "with"),
+          toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString")
+        };
+      }, "MakeUri");
+      return {
+        subscriptions: [],
+        extensionPath: ExtensionPath,
+        extensionUri: MakeUri(ExtensionPath),
+        // VS Code API: `context.asAbsolutePath(relative)` returns the
+        // extension path joined with a relative path. The 4 language-
+        // features extensions all call this immediately in their activate
+        // function to resolve server bundle locations; without it, they
+        // fail before vscode-languageclient even constructs.
+        asAbsolutePath: /* @__PURE__ */ __name((RelativePath) => {
+          const Trimmed = RelativePath.replace(/^\.?\//, "");
+          return `${ExtensionPath}/${Trimmed}`;
+        }, "asAbsolutePath"),
+        globalState: {
+          get: /* @__PURE__ */ __name((_Key, DefaultValue) => DefaultValue, "get"),
+          update: /* @__PURE__ */ __name(async (_Key, _Value) => {
+          }, "update"),
+          keys: /* @__PURE__ */ __name(() => [], "keys"),
+          setKeysForSync: /* @__PURE__ */ __name((_Keys) => {
+          }, "setKeysForSync")
+        },
+        workspaceState: {
+          get: /* @__PURE__ */ __name((_Key, DefaultValue) => DefaultValue, "get"),
+          update: /* @__PURE__ */ __name(async (_Key, _Value) => {
+          }, "update"),
+          keys: /* @__PURE__ */ __name(() => [], "keys")
+        },
+        secrets: {
+          get: /* @__PURE__ */ __name(async (Key) => {
+            try {
+              return await Context22.MountainClient?.sendRequest(
+                "secrets.get",
+                { key: Key }
+              );
+            } catch {
+              return void 0;
+            }
+          }, "get"),
+          store: /* @__PURE__ */ __name(async (Key, Value) => {
+            try {
+              await Context22.MountainClient?.sendRequest("secrets.store", {
+                key: Key,
+                value: Value
+              });
+            } catch {
+            }
+          }, "store"),
+          delete: /* @__PURE__ */ __name(async (Key) => {
+            try {
+              await Context22.MountainClient?.sendRequest(
+                "secrets.delete",
+                { key: Key }
+              );
+            } catch {
+            }
+          }, "delete"),
+          onDidChange: /* @__PURE__ */ __name((_Listener) => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChange")
+        },
+        environmentVariableCollection: {
+          persistent: true,
+          description: void 0,
+          append: /* @__PURE__ */ __name(() => {
+          }, "append"),
+          prepend: /* @__PURE__ */ __name(() => {
+          }, "prepend"),
+          replace: /* @__PURE__ */ __name(() => {
+          }, "replace"),
+          get: /* @__PURE__ */ __name(() => void 0, "get"),
+          forEach: /* @__PURE__ */ __name(() => {
+          }, "forEach"),
+          delete: /* @__PURE__ */ __name(() => {
+          }, "delete"),
+          clear: /* @__PURE__ */ __name(() => {
+          }, "clear"),
+          getScoped: /* @__PURE__ */ __name(() => ({}), "getScoped"),
+          [Symbol.iterator]: () => [].values()
+        },
+        storagePath: ExtStoragePath,
+        globalStoragePath: GlobalStoragePath,
+        logPath: LogPath,
+        storageUri: MakeUri(ExtStoragePath),
+        globalStorageUri: MakeUri(GlobalStoragePath),
+        logUri: MakeUri(LogPath),
+        extensionMode: 1,
+        // ExtensionMode.Production
+        extension: {
+          id: ExtId,
+          extensionUri: {
+            scheme: "file",
+            path: ExtensionPath,
+            fsPath: ExtensionPath
+          },
+          extensionPath: ExtensionPath,
+          isActive: true,
+          packageJSON: FullPackageJSON,
+          extensionKind: 1,
+          exports: void 0,
+          activate: /* @__PURE__ */ __name(async () => {
+          }, "activate")
+        },
+        languageModelAccessInformation: {
+          canSendRequest: /* @__PURE__ */ __name((_Model) => false, "canSendRequest"),
+          onDidChange: /* @__PURE__ */ __name((_Listener) => ({ dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") }), "onDidChange")
+        }
+      };
+    }, "CreateExtensionContext");
+    ExtensionHostHandler_default = {
+      HandleInitializeExtensionHost,
+      HandleDeltaExtensions,
+      HandleActivateByEvent,
+      HandleStartExtensionHost
+    };
+  }
+});
+
+// Source/Services/Handler/LanguageProviderHandler.ts
+var NormalizeRange, ResolveLanguageIdentifier, BuildVsDocument, InvokeLanguageProvider, LanguageProviderHandler_default;
+var init_LanguageProviderHandler = __esm({
+  "Source/Services/Handler/LanguageProviderHandler.ts"() {
+    "use strict";
+    init_LanguageProviderRegistry();
+    NormalizeRange = /* @__PURE__ */ __name((VsRange) => {
+      return {
+        StartLineNumber: VsRange?.start?.line ?? 0,
+        StartColumn: VsRange?.start?.character ?? 0,
+        EndLineNumber: VsRange?.end?.line ?? 0,
+        EndColumn: VsRange?.end?.character ?? 0
+      };
+    }, "NormalizeRange");
+    ResolveLanguageIdentifier = /* @__PURE__ */ __name((Extension2) => {
+      switch (Extension2) {
+        case "rs":
+          return "rust";
+        case "ts":
+        case "tsx":
+          return "typescript";
+        case "js":
+        case "jsx":
+        case "mjs":
+          return "javascript";
+        case "json":
+          return "json";
+        case "toml":
+          return "toml";
+        case "md":
+          return "markdown";
+        case "py":
+          return "python";
+        case "go":
+          return "go";
+        default:
+          return Extension2 || "plaintext";
+      }
+    }, "ResolveLanguageIdentifier");
+    BuildVsDocument = /* @__PURE__ */ __name(async (UriString, FsPath, LanguageIdentifier, DocumentContentCache) => {
+      const { Position: Position3, Range: Range3 } = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
+      let CachedContent = null;
+      let CachedLines = null;
+      const LoadContent = /* @__PURE__ */ __name(() => {
+        if (CachedContent !== null) return CachedContent;
+        const MirrorContent = DocumentContentCache.get(UriString);
+        if (MirrorContent !== void 0) {
+          CachedContent = MirrorContent;
+          return CachedContent;
+        }
+        try {
+          const Fs = __require("node:fs");
+          CachedContent = Fs.readFileSync(FsPath, "utf8");
+        } catch {
+          CachedContent = "";
+        }
+        return CachedContent;
+      }, "LoadContent");
+      const GetLines = /* @__PURE__ */ __name(() => {
+        if (CachedLines !== null) return CachedLines;
+        CachedLines = LoadContent().split(/\r?\n/);
+        return CachedLines;
+      }, "GetLines");
+      return {
+        uri: {
+          toString: /* @__PURE__ */ __name(() => UriString, "toString"),
+          fsPath: FsPath,
+          external: UriString,
+          $mid: 1,
+          scheme: "file",
+          path: FsPath
+        },
+        fileName: FsPath,
+        languageId: LanguageIdentifier,
+        version: 1,
+        isDirty: false,
+        isClosed: false,
+        eol: 1,
+        // LF
+        getText: /* @__PURE__ */ __name((_range) => {
+          const Text = LoadContent();
+          if (!_range) return Text;
+          const Lines = GetLines();
+          const StartLine = _range?.start?.line ?? 0;
+          const StartChar = _range?.start?.character ?? 0;
+          const EndLine = _range?.end?.line ?? Lines.length - 1;
+          const EndChar = _range?.end?.character ?? Lines[EndLine]?.length ?? 0;
+          if (StartLine === EndLine) {
+            return (Lines[StartLine] ?? "").substring(StartChar, EndChar);
+          }
+          const Result = [];
+          Result.push((Lines[StartLine] ?? "").substring(StartChar));
+          for (let I = StartLine + 1; I < EndLine; I++)
+            Result.push(Lines[I] ?? "");
+          Result.push((Lines[EndLine] ?? "").substring(0, EndChar));
+          return Result.join("\n");
+        }, "getText"),
+        lineAt: /* @__PURE__ */ __name((LineOrPos) => {
+          const LineNum = typeof LineOrPos === "number" ? LineOrPos : LineOrPos?.line ?? 0;
+          const Lines = GetLines();
+          const LineText = Lines[LineNum] ?? "";
+          const FirstNonWS = LineText.search(/\S/);
+          return {
+            text: LineText,
+            lineNumber: LineNum,
+            range: new Range3(LineNum, 0, LineNum, LineText.length),
+            rangeIncludingLineBreak: new Range3(LineNum, 0, LineNum + 1, 0),
+            firstNonWhitespaceCharacterIndex: FirstNonWS === -1 ? LineText.length : FirstNonWS,
+            isEmptyOrWhitespace: LineText.trim().length === 0
+          };
+        }, "lineAt"),
+        get lineCount() {
+          return GetLines().length;
+        },
+        offsetAt: /* @__PURE__ */ __name((Pos) => {
+          const Lines = GetLines();
+          let Offset = 0;
+          const TargetLine = Pos?.line ?? 0;
+          for (let I = 0; I < TargetLine && I < Lines.length; I++) {
+            Offset += Lines[I].length + 1;
+          }
+          return Offset + (Pos?.character ?? 0);
+        }, "offsetAt"),
+        positionAt: /* @__PURE__ */ __name((Offset) => {
+          const Lines = GetLines();
+          let Remaining = Offset;
+          for (let I = 0; I < Lines.length; I++) {
+            if (Remaining <= Lines[I].length) {
+              return new Position3(I, Remaining);
+            }
+            Remaining -= Lines[I].length + 1;
+          }
+          return new Position3(
+            Lines.length - 1,
+            (Lines[Lines.length - 1] ?? "").length
+          );
+        }, "positionAt"),
+        validateRange: /* @__PURE__ */ __name((R) => R, "validateRange"),
+        validatePosition: /* @__PURE__ */ __name((P) => P, "validatePosition"),
+        getWordRangeAtPosition: /* @__PURE__ */ __name((Pos, Pattern) => {
+          const Lines = GetLines();
+          const Line = Lines[Pos?.line ?? 0] ?? "";
+          const Regex = Pattern ?? /\w+/g;
+          const Col = Pos?.character ?? 0;
+          let Match;
+          Regex.lastIndex = 0;
+          while ((Match = Regex.exec(Line)) !== null) {
+            if (Match.index <= Col && Match.index + Match[0].length >= Col) {
+              return new Range3(
+                Pos.line,
+                Match.index,
+                Pos.line,
+                Match.index + Match[0].length
+              );
+            }
+          }
+          return void 0;
+        }, "getWordRangeAtPosition"),
+        save: /* @__PURE__ */ __name(async () => false, "save")
+      };
+    }, "BuildVsDocument");
+    InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, DocumentContentCache) => {
+      const Args = Array.isArray(Parameters) ? Parameters : [Parameters];
+      const Handle = Args[0];
+      const Provider = Get(Handle);
+      if (!Provider) {
+        console.warn(
+          `[LanguageProviderHandler] Provider handle ${Handle} not found for ${Method}`
+        );
+        return null;
+      }
+      const UriObj = Args[1];
+      const UriString = typeof UriObj === "string" ? UriObj : UriObj?.external ?? "file:///unknown";
+      const RawPos = Args[2];
+      const PosLine = RawPos?.Line ?? RawPos?.line ?? 0;
+      const PosChar = RawPos?.Character ?? RawPos?.character ?? 0;
+      const { Position: Position3 } = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
+      const VsPosition = new Position3(PosLine, PosChar);
+      const Ext = UriString.split(".").pop() ?? "";
+      const LangId = ResolveLanguageIdentifier(Ext);
+      const FsPath = UriString.replace(/^file:\/\//, "");
+      const VsDocument = await BuildVsDocument(
+        UriString,
+        FsPath,
+        LangId,
+        DocumentContentCache
+      );
+      const { CancellationTokenSource: CancellationTokenSource3 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
+      const VsToken = new CancellationTokenSource3().token;
+      const Context22 = Args[3];
+      try {
+        switch (Method) {
+          case "$provideHover": {
+            if (process.env.LAND_DEV_LOG) {
+              console.warn(
+                `[DEV:EXTHOST] provideHover dispatch uri=${UriString} line=${VsPosition?.line} char=${VsPosition?.character} providerHasMethod=${typeof Provider.provideHover === "function"}`
+              );
+            }
+            const Result = await Provider.provideHover?.(
+              VsDocument,
+              VsPosition,
+              VsToken
+            );
+            if (process.env.LAND_DEV_LOG) {
+              console.warn(
+                `[DEV:EXTHOST] provideHover result kind=${Result ? Array.isArray(Result.contents) ? `array(${Result.contents.length})` : typeof Result.contents : "null"}`
+              );
+            }
+            if (!Result) return null;
+            const RawContents = Result.contents;
+            const Contents = Array.isArray(
+              RawContents
+            ) ? RawContents.map((C) => ({
+              Value: typeof C === "string" ? C : C?.value ?? C?.Value ?? ""
+            })) : typeof RawContents === "string" ? [{ Value: RawContents }] : [
+              {
+                Value: RawContents?.value ?? RawContents?.Value ?? ""
+              }
+            ];
+            const VsRange = Result.range ?? null;
+            const RangeDTO = VsRange ? {
+              StartLineNumber: VsRange.start?.line ?? 0,
+              StartColumn: VsRange.start?.character ?? 0,
+              EndLineNumber: VsRange.end?.line ?? 0,
+              EndColumn: VsRange.end?.character ?? 0
+            } : void 0;
+            return RangeDTO !== void 0 ? { Contents, Range: RangeDTO } : { Contents };
+          }
+          // Mountain sends "$provideCompletion" (Debug fmt of ProviderType::Completion)
+          case "$provideCompletion":
+          case "$provideCompletions": {
+            const Result = await Provider.provideCompletionItems?.(
+              VsDocument,
+              VsPosition,
+              VsToken,
+              Context22
+            );
+            if (!Result) return { Suggestions: [], IsIncomplete: false };
+            const RawItems = Array.isArray(Result) ? Result : Result.items ?? [];
+            return {
+              Suggestions: RawItems.map((Item) => ({
+                Label: typeof Item.label === "string" ? Item.label : Item.label?.label ?? "",
+                Kind: Item.kind ?? 0,
+                Detail: Item.detail ?? void 0,
+                Documentation: typeof Item.documentation === "string" ? { Value: Item.documentation } : Item.documentation?.value !== void 0 ? { Value: Item.documentation.value } : void 0,
+                InsertText: typeof Item.insertText === "string" ? Item.insertText : typeof Item.label === "string" ? Item.label : Item.label?.label ?? ""
+              })),
+              IsIncomplete: Result.isIncomplete ?? false
+            };
+          }
+          case "$provideDefinition": {
+            const Result = await Provider.provideDefinition?.(
+              VsDocument,
+              VsPosition,
+              VsToken
+            );
+            if (!Result) return null;
+            const Locations = Array.isArray(Result) ? Result : [Result];
+            return Locations.map((L) => ({
+              Uri: (L.uri ?? L.targetUri)?.toString?.() ?? UriString,
+              Range: NormalizeRange(L.range ?? L.targetSelectionRange)
+            }));
+          }
+          case "$provideReferences": {
+            const Result = await Provider.provideReferences?.(
+              VsDocument,
+              VsPosition,
+              Context22 ?? { includeDeclaration: true },
+              VsToken
+            );
+            if (!Result) return null;
+            return Result.map((L) => ({
+              Uri: L.uri?.toString?.() ?? UriString,
+              Range: NormalizeRange(L.range)
+            }));
+          }
+          // Mountain sends "$provideCodeAction" (ProviderType::CodeAction)
+          case "$provideCodeAction":
+          case "$provideCodeActions": {
+            const RangeArg = Args[2];
+            const ContextArg = Args[3];
+            const Result = await Provider.provideCodeActions?.(
+              VsDocument,
+              RangeArg,
+              ContextArg,
+              VsToken
+            );
+            return Result ?? null;
+          }
+          // Mountain sends "$provideDocumentHighlight" (ProviderType::DocumentHighlight)
+          case "$provideDocumentHighlight":
+          case "$provideDocumentHighlights": {
+            const Result = await Provider.provideDocumentHighlights?.(VsDocument, VsPosition, VsToken);
+            return Result ?? null;
+          }
+          // Mountain sends "$provideDocumentSymbol" (ProviderType::DocumentSymbol)
+          case "$provideDocumentSymbol":
+          case "$provideDocumentSymbols": {
+            const Result = await Provider.provideDocumentSymbols?.(
+              VsDocument,
+              VsToken
+            );
+            return Result ?? null;
+          }
+          // Mountain sends "$provideWorkspaceSymbol" (ProviderType::WorkspaceSymbol)
+          case "$provideWorkspaceSymbol":
+          case "$provideWorkspaceSymbols": {
+            const Query = Args[1];
+            const Result = await Provider.provideWorkspaceSymbols?.(Query, VsToken);
+            return Result ?? null;
+          }
+          // Mountain: "$provideDocumentFormatting" / "$provideDocumentRangeFormatting"
+          case "$provideDocumentFormatting":
+          case "$provideDocumentFormattingEdits":
+          case "$provideDocumentRangeFormatting":
+          case "$provideDocumentRangeFormattingEdits": {
+            const RangeArg = Args[2];
+            const OptionsArg = Args[3];
+            const Fn = Method === "$provideDocumentFormattingEdits" || Method === "$provideDocumentFormatting" ? "provideDocumentFormattingEdits" : "provideDocumentRangeFormattingEdits";
+            const Result = await Provider[Fn]?.(
+              VsDocument,
+              RangeArg,
+              OptionsArg,
+              VsToken
+            );
+            return Result ?? null;
+          }
+          case "$provideSignatureHelp": {
+            const Result = await Provider.provideSignatureHelp?.(
+              VsDocument,
+              VsPosition,
+              VsToken,
+              Context22
+            );
+            return Result ?? null;
+          }
+          // Mountain sends "$provideRename" (ProviderType::Rename)
+          case "$provideRename":
+          case "$provideRenameEdits": {
+            const NewName = Args[3];
+            const Result = await Provider.provideRenameEdits?.(
+              VsDocument,
+              VsPosition,
+              NewName,
+              VsToken
+            );
+            return Result ?? null;
+          }
+          // Mountain sends "$provideFoldingRange" (ProviderType::FoldingRange)
+          case "$provideFoldingRange":
+          case "$provideFoldingRanges": {
+            const Result = await Provider.provideFoldingRanges?.(
+              VsDocument,
+              Context22,
+              VsToken
+            );
+            return Result ?? null;
+          }
+          // Mountain sends "$provideInlayHint" (ProviderType::InlayHint)
+          case "$provideInlayHint":
+          case "$provideInlayHints": {
+            const RangeArg = Args[2];
+            const Result = await Provider.provideInlayHints?.(
+              VsDocument,
+              RangeArg,
+              VsToken
+            );
+            return Result ?? null;
+          }
+          // Mountain sends "$provideCodeLens" (ProviderType::CodeLens)
+          case "$provideCodeLens":
+          case "$provideCodeLenses": {
+            const Result = await Provider.provideCodeLenses?.(
+              VsDocument,
+              VsToken
+            );
+            return Result ?? null;
+          }
+          case "$provideOnTypeFormatting":
+          case "$provideOnTypeFormattingEdits": {
+            const TypeChar = Args[2];
+            const TypeOptions = Args[3];
+            const Result = await Provider.provideOnTypeFormattingEdits?.(
+              VsDocument,
+              VsPosition,
+              TypeChar,
+              TypeOptions ?? {},
+              VsToken
+            );
+            return Result ?? null;
+          }
+          case "$provideSelectionRange":
+          case "$provideSelectionRanges": {
+            const Positions = Args[2];
+            const Result = await Provider.provideSelectionRanges?.(
+              VsDocument,
+              Array.isArray(Positions) ? Positions.map(
+                (P) => new Position3(
+                  P?.line ?? P?.Line ?? 0,
+                  P?.character ?? P?.Character ?? 0
+                )
+              ) : [VsPosition],
+              VsToken
+            );
+            return Result ?? null;
+          }
+          case "$provideSemanticTokens":
+          case "$provideSemanticTokensFull": {
+            const Result = await Provider.provideDocumentSemanticTokens?.(VsDocument, VsToken);
+            return Result ?? null;
+          }
+          case "$provideCallHierarchy":
+          case "$provideCallHierarchyIncomingCalls": {
+            const Item = Args[1];
+            const Result = await Provider.provideCallHierarchyIncomingCalls?.(Item, VsToken);
+            return Result ?? null;
+          }
+          case "$provideCallHierarchyOutgoingCalls": {
+            const Item = Args[1];
+            const Result = await Provider.provideCallHierarchyOutgoingCalls?.(Item, VsToken);
+            return Result ?? null;
+          }
+          case "$provideTypeHierarchy":
+          case "$provideTypeHierarchySupertypes": {
+            const Item = Args[1];
+            const Result = await Provider.provideTypeHierarchySupertypes?.(Item, VsToken);
+            return Result ?? null;
+          }
+          case "$provideTypeHierarchySubtypes": {
+            const Item = Args[1];
+            const Result = await Provider.provideTypeHierarchySubtypes?.(Item, VsToken);
+            return Result ?? null;
+          }
+          case "$provideLinkedEditingRange":
+          case "$provideLinkedEditingRanges": {
+            const Result = await Provider.provideLinkedEditingRanges?.(VsDocument, VsPosition, VsToken);
+            return Result ?? null;
+          }
+          default:
+            console.warn(
+              `[LanguageProviderHandler] Unhandled $provide method: ${Method}`
+            );
+            return null;
+        }
+      } catch (Error2) {
+        console.error(
+          `[LanguageProviderHandler] Provider ${Handle} threw for ${Method}:`,
+          Error2
+        );
+        return null;
+      }
+    }, "InvokeLanguageProvider");
+    LanguageProviderHandler_default = InvokeLanguageProvider;
+  }
+});
+
+// Source/Services/Handler/NotificationHandler.ts
+var HandleSpecificNotification, NotificationHandler_default;
+var init_NotificationHandler = __esm({
+  "Source/Services/Handler/NotificationHandler.ts"() {
+    "use strict";
+    HandleSpecificNotification = /* @__PURE__ */ __name((Emitter4, DocumentContentCache, HandleDocumentChange2, HandleDocumentOpen2, HandleDocumentClose2, HandleDocumentSave2, Method, Parameters, WorkspaceEventEmitter) => {
+      switch (Method) {
+        case "extension.change":
+          Emitter4.emit("extensionChanged", Parameters);
+          break;
+        case "configuration.change":
+          Emitter4.emit("configurationChanged", Parameters);
+          break;
+        case "window.focused":
+          Emitter4.emit("windowFocused", Parameters);
+          break;
+        case "window.blurred":
+          Emitter4.emit("windowBlurred", Parameters);
+          break;
+        case "system.shutdown":
+          Emitter4.emit("systemShutdown", Parameters);
+          break;
+        case "$acceptModelChanged":
+        case "document.didChange":
+          HandleDocumentChange2(
+            DocumentContentCache,
+            Parameters,
+            WorkspaceEventEmitter
+          );
+          break;
+        case "$acceptModelAdded":
+        case "$acceptModelOpen":
+        case "document.didOpen":
+          HandleDocumentOpen2(
+            DocumentContentCache,
+            Parameters,
+            WorkspaceEventEmitter
+          );
+          break;
+        case "$acceptModelRemoved":
+        case "$acceptModelClosed":
+        case "document.didClose":
+          HandleDocumentClose2(
+            DocumentContentCache,
+            Parameters,
+            WorkspaceEventEmitter
+          );
+          break;
+        case "$acceptModelSaved":
+        case "document.didSave":
+          HandleDocumentSave2(
+            DocumentContentCache,
+            Parameters,
+            WorkspaceEventEmitter
+          );
+          break;
+        default:
+          console.log(
+            `[NotificationHandler] Generic notification handler for: ${Method}`
+          );
+      }
+    }, "HandleSpecificNotification");
+    NotificationHandler_default = HandleSpecificNotification;
+  }
+});
+
+// Source/Effect/Telemetry.ts
+import {
+  Context as Context10,
+  Effect as Effect11,
+  HashMap,
+  Layer as Layer9,
+  Option,
+  Ref,
+  Stream,
+  SubscriptionRef
+} from "effect";
+var TelemetryCollectionError, TelemetryTag, Telemetry, TelemetryLive, makeMockTelemetry, TelemetryMock, withSpan;
+var init_Telemetry = __esm({
+  "Source/Effect/Telemetry.ts"() {
+    "use strict";
+    TelemetryCollectionError = class extends Error {
+      constructor(operation, cause) {
+        super(
+          `Telemetry collection failed for '${operation}': ${String(cause)}`
+        );
+        this.operation = operation;
+        this.cause = cause;
+      }
+      operation;
+      cause;
+      static {
+        __name(this, "TelemetryCollectionError");
+      }
+      _tag = "TelemetryCollectionError";
+    };
+    TelemetryTag = class extends Context10.Tag("Cocoon/Telemetry")() {
+      static {
+        __name(this, "TelemetryTag");
       }
     };
-    TerminalServiceLayer = Layer8.effect(
-      ITerminalService2,
-      Effect10.gen(function* () {
-        const mountainClient = yield* IMountainClientService;
-        return new TerminalService(mountainClient);
+    Telemetry = TelemetryTag;
+    TelemetryLive = Layer9.effect(
+      Telemetry,
+      Effect11.gen(function* () {
+        const metricsRef = yield* SubscriptionRef.make(HashMap.empty());
+        const spansRef = yield* SubscriptionRef.make(HashMap.empty());
+        const eventsRef = yield* SubscriptionRef.make([]);
+        const recordMetric = /* @__PURE__ */ __name((name, value, labels) => Effect11.gen(function* () {
+          const metric = {
+            name,
+            value,
+            timestamp: Date.now(),
+            labels
+          };
+          const events = yield* eventsRef.get;
+          yield* Ref.set(eventsRef, [
+            ...events,
+            {
+              type: "metric",
+              timestamp: metric.timestamp,
+              data: metric
+            }
+          ]);
+          const currentMetrics = yield* metricsRef.get;
+          const nameMetrics = HashMap.get(currentMetrics, name).pipe(
+            Option.getOrElse(() => [])
+          );
+          yield* Ref.set(
+            metricsRef,
+            HashMap.set(currentMetrics, name, [...nameMetrics, metric])
+          );
+        }), "recordMetric");
+        const startSpan = /* @__PURE__ */ __name((name, labels) => Effect11.gen(function* () {
+          const startTime = Date.now();
+          const span = {
+            name,
+            startTime,
+            success: false,
+            labels: labels ?? {}
+          };
+          const events = yield* eventsRef.get;
+          yield* Ref.set(eventsRef, [
+            ...events,
+            { type: "span", timestamp: startTime, data: span }
+          ]);
+          return {
+            end: /* @__PURE__ */ __name((success, error) => Effect11.gen(function* () {
+              const endTime = Date.now();
+              const completedSpan = {
+                ...span,
+                endTime,
+                duration: endTime - startTime,
+                success,
+                error
+              };
+              const events2 = yield* eventsRef.get;
+              yield* Ref.set(eventsRef, [
+                ...events2,
+                {
+                  type: "span",
+                  timestamp: endTime,
+                  data: completedSpan
+                }
+              ]);
+              const currentSpans = yield* spansRef.get;
+              const nameSpans = HashMap.get(
+                currentSpans,
+                name
+              ).pipe(Option.getOrElse(() => []));
+              yield* Ref.set(
+                spansRef,
+                HashMap.set(currentSpans, name, [
+                  ...nameSpans,
+                  completedSpan
+                ])
+              );
+            }), "end")
+          };
+        }), "startSpan");
+        const log = /* @__PURE__ */ __name((level, message, context) => Effect11.gen(function* () {
+          const logEntry = {
+            level,
+            message,
+            context
+          };
+          const timestamp = Date.now();
+          const events = yield* eventsRef.get;
+          yield* Ref.set(eventsRef, [
+            ...events,
+            { type: "log", timestamp, data: logEntry }
+          ]);
+          const prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
+          switch (level) {
+            case "debug":
+              console.debug(prefix, message, context ?? "");
+              break;
+            case "info":
+              console.info(prefix, message, context ?? "");
+              break;
+            case "warn":
+              console.warn(prefix, message, context ?? "");
+              break;
+            case "error":
+              console.error(prefix, message, context ?? "");
+              break;
+          }
+        }), "log");
+        const getMetrics = /* @__PURE__ */ __name((name) => Effect11.gen(function* () {
+          const metrics = yield* metricsRef.get;
+          return HashMap.get(metrics, name).pipe(
+            Option.getOrElse(() => [])
+          );
+        }), "getMetrics");
+        const getAverageDuration = /* @__PURE__ */ __name((name) => Effect11.gen(function* () {
+          const spans = yield* spansRef.get;
+          const nameSpans = HashMap.get(spans, name).pipe(
+            Option.getOrElse(() => [])
+          );
+          if (nameSpans.length === 0) {
+            return 0;
+          }
+          const totalDuration = nameSpans.reduce(
+            (sum2, span) => {
+              return sum2 + (span.duration ?? 0);
+            },
+            0
+          );
+          return totalDuration / nameSpans.length;
+        }), "getAverageDuration");
+        const getSuccessRate = /* @__PURE__ */ __name((name) => Effect11.gen(function* () {
+          const spans = yield* spansRef.get;
+          const nameSpans = HashMap.get(spans, name).pipe(
+            Option.getOrElse(() => [])
+          );
+          if (nameSpans.length === 0) {
+            return 1;
+          }
+          const successCount = nameSpans.filter(
+            (span) => span.success
+          ).length;
+          return successCount / nameSpans.length;
+        }), "getSuccessRate");
+        const flush = Effect11.gen(function* () {
+          yield* Ref.set(metricsRef, HashMap.empty());
+          yield* Ref.set(spansRef, HashMap.empty());
+          yield* Ref.set(eventsRef, []);
+        });
+        return {
+          recordMetric,
+          startSpan,
+          log,
+          events: eventsRef.changes,
+          getMetrics,
+          getAverageDuration,
+          getSuccessRate,
+          flush
+        };
       })
+    );
+    makeMockTelemetry = /* @__PURE__ */ __name(() => ({
+      recordMetric: /* @__PURE__ */ __name(() => Effect11.void, "recordMetric"),
+      startSpan: /* @__PURE__ */ __name(() => Effect11.succeed({
+        end: /* @__PURE__ */ __name(() => Effect11.void, "end")
+      }), "startSpan"),
+      log: /* @__PURE__ */ __name((level, message, context) => Effect11.sync(() => {
+        const prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
+        console.log(prefix, message, context ?? "");
+      }), "log"),
+      events: Stream.empty,
+      getMetrics: /* @__PURE__ */ __name(() => Effect11.succeed([]), "getMetrics"),
+      getAverageDuration: /* @__PURE__ */ __name(() => Effect11.succeed(0), "getAverageDuration"),
+      getSuccessRate: /* @__PURE__ */ __name(() => Effect11.succeed(1), "getSuccessRate"),
+      flush: Effect11.void
+    }), "makeMockTelemetry");
+    TelemetryMock = Layer9.effect(
+      Telemetry,
+      Effect11.succeed(makeMockTelemetry())
+    );
+    withSpan = /* @__PURE__ */ __name((name, effect, labels) => Effect11.gen(function* () {
+      const telemetry = yield* Telemetry;
+      const span = yield* telemetry.startSpan(name, labels);
+      const result = yield* effect.pipe(
+        Effect11.catchAll(
+          (error) => Effect11.gen(function* () {
+            yield* span.end(false, String(error));
+            return yield* Effect11.fail(error);
+          })
+        )
+      );
+      yield* span.end(true);
+      return result;
+    }), "withSpan");
+  }
+});
+
+// Source/Effect/Extension.ts
+import {
+  Context as Context11,
+  Effect as Effect12,
+  HashMap as HashMap2,
+  Layer as Layer10,
+  Option as Option2,
+  Ref as Ref2,
+  SubscriptionRef as SubscriptionRef2
+} from "effect";
+var ExtensionNotFoundError, ExtensionActivationError, ExtensionDeactivationError, ExtensionTag, Extension, ExtensionLive, makeMockExtension, ExtensionMock;
+var init_Extension = __esm({
+  "Source/Effect/Extension.ts"() {
+    "use strict";
+    init_Telemetry();
+    ExtensionNotFoundError = class extends Error {
+      constructor(extensionId) {
+        super(`Extension not found: ${extensionId}`);
+        this.extensionId = extensionId;
+      }
+      extensionId;
+      static {
+        __name(this, "ExtensionNotFoundError");
+      }
+      _tag = "ExtensionNotFoundError";
+    };
+    ExtensionActivationError = class extends Error {
+      constructor(extensionId, cause) {
+        super(
+          `Failed to activate extension '${extensionId}': ${String(cause)}`
+        );
+        this.extensionId = extensionId;
+        this.cause = cause;
+      }
+      extensionId;
+      cause;
+      static {
+        __name(this, "ExtensionActivationError");
+      }
+      _tag = "ExtensionActivationError";
+    };
+    ExtensionDeactivationError = class extends Error {
+      constructor(extensionId, cause) {
+        super(
+          `Failed to deactivate extension '${extensionId}': ${String(cause)}`
+        );
+        this.extensionId = extensionId;
+        this.cause = cause;
+      }
+      extensionId;
+      cause;
+      static {
+        __name(this, "ExtensionDeactivationError");
+      }
+      _tag = "ExtensionDeactivationError";
+    };
+    ExtensionTag = class extends Context11.Tag("Cocoon/Extension")() {
+      static {
+        __name(this, "ExtensionTag");
+      }
+    };
+    Extension = ExtensionTag;
+    ExtensionLive = Layer10.effect(
+      Extension,
+      Effect12.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const extensionsRef = yield* SubscriptionRef2.make(HashMap2.empty());
+        const getAll = Effect12.gen(function* () {
+          const extensions = yield* extensionsRef.get;
+          return Array.from(HashMap2.values(extensions));
+        });
+        const getById = /* @__PURE__ */ __name((id2) => Effect12.gen(function* () {
+          const extensions = yield* extensionsRef.get;
+          const extension = HashMap2.get(extensions, id2);
+          if (extension._tag === "None") {
+            return yield* Effect12.fail(new ExtensionNotFoundError(id2));
+          }
+          return extension.value;
+        }), "getById");
+        const activate = /* @__PURE__ */ __name((id2) => Effect12.gen(function* () {
+          const startTime = Date.now();
+          const extensions = yield* extensionsRef.get;
+          const extension = HashMap2.get(extensions, id2);
+          if (extension._tag === "None") {
+            return yield* Effect12.fail(new ExtensionNotFoundError(id2));
+          }
+          const current = extension.value;
+          if (current.state._tag === "Active") {
+            return {
+              extensionId: id2,
+              success: true,
+              activationTime: 0,
+              error: void 0
+            };
+          }
+          yield* Ref2.set(
+            extensionsRef,
+            HashMap2.set(extensions, id2, {
+              ...current,
+              state: { _tag: "Activating", startTime }
+            })
+          );
+          telemetry.log(
+            "info",
+            `[Extension] Activating extension: ${id2}`
+          );
+          yield* Effect12.sleep("10 millis");
+          const activationTime = Date.now() - startTime;
+          const updatedExtensions = yield* extensionsRef.get;
+          yield* Ref2.set(
+            extensionsRef,
+            HashMap2.set(updatedExtensions, id2, {
+              ...current,
+              state: { _tag: "Active", activatedAt: startTime },
+              activatedAt: startTime,
+              activationTime
+            })
+          );
+          telemetry.log(
+            "info",
+            `[Extension] Activated extension: ${id2} (${activationTime}ms)`
+          );
+          return {
+            extensionId: id2,
+            success: true,
+            activationTime,
+            error: void 0
+          };
+        }).pipe(
+          Effect12.catchAll(
+            (error) => Effect12.gen(function* () {
+              if (error instanceof ExtensionNotFoundError) {
+                return yield* Effect12.fail(error);
+              }
+              const extensions = yield* extensionsRef.get;
+              yield* Ref2.set(
+                extensionsRef,
+                HashMap2.set(extensions, id2, {
+                  ...HashMap2.get(extensions, id2).pipe(
+                    Option2.getOrElse(() => ({
+                      id: id2,
+                      manifest: {
+                        id: id2,
+                        name: "Unknown",
+                        version: "0.0.0",
+                        description: "",
+                        publisher: "",
+                        entryPoint: "",
+                        enabled: true,
+                        activationEvents: [],
+                        dependencies: [],
+                        contributes: {}
+                      },
+                      state: { _tag: "Idle" },
+                      activatedAt: void 0,
+                      activationTime: void 0
+                    }))
+                  ),
+                  state: { _tag: "Error", error: String(error) }
+                })
+              );
+              telemetry.log(
+                "error",
+                `[Extension] Failed to activate ${id2}: ${String(error)}`
+              );
+              return yield* Effect12.fail(
+                new ExtensionActivationError(id2, error)
+              );
+            })
+          )
+        ), "activate");
+        const deactivate = /* @__PURE__ */ __name((id2) => Effect12.gen(function* () {
+          const extensions = yield* extensionsRef.get;
+          const extension = HashMap2.get(extensions, id2);
+          if (extension._tag === "None") {
+            return yield* Effect12.fail(new ExtensionNotFoundError(id2));
+          }
+          const current = extension.value;
+          if (current.state._tag === "Deactivated" || current.state._tag === "Idle") {
+            return {
+              extensionId: id2,
+              success: true,
+              error: void 0
+            };
+          }
+          telemetry.log(
+            "info",
+            `[Extension] Deactivating extension: ${id2}`
+          );
+          yield* Ref2.set(
+            extensionsRef,
+            HashMap2.set(extensions, id2, {
+              ...current,
+              state: { _tag: "Deactivating" }
+            })
+          );
+          yield* Effect12.sleep("5 millis");
+          const updatedExtensions = yield* extensionsRef.get;
+          yield* Ref2.set(
+            extensionsRef,
+            HashMap2.set(updatedExtensions, id2, {
+              ...current,
+              state: { _tag: "Deactivated" }
+            })
+          );
+          telemetry.log(
+            "info",
+            `[Extension] Deactivated extension: ${id2}`
+          );
+          return {
+            extensionId: id2,
+            success: true,
+            error: void 0
+          };
+        }).pipe(
+          Effect12.catchAll(
+            (error) => Effect12.gen(function* () {
+              if (error instanceof ExtensionNotFoundError) {
+                return yield* Effect12.fail(error);
+              }
+              telemetry.log(
+                "error",
+                `[Extension] Failed to deactivate ${id2}: ${String(error)}`
+              );
+              return yield* Effect12.fail(
+                new ExtensionDeactivationError(id2, error)
+              );
+            })
+          )
+        ), "deactivate");
+        const isActive = /* @__PURE__ */ __name((id2) => Effect12.gen(function* () {
+          const extensions = yield* extensionsRef.get;
+          const extension = HashMap2.get(extensions, id2);
+          if (extension._tag === "None") {
+            return false;
+          }
+          return extension.value.state._tag === "Active";
+        }), "isActive");
+        const getActiveCount = Effect12.gen(function* () {
+          const extensions = yield* extensionsRef.get;
+          const values = Array.from(HashMap2.values(extensions));
+          return values.filter((ext) => ext.state._tag === "Active").length;
+        });
+        const stateChanges = Effect12.map(extensionsRef.get, (extensions) => {
+          const result = {};
+          for (const [id2, host] of HashMap2.entries(extensions)) {
+            result[id2] = host.state;
+          }
+          return result;
+        });
+        return {
+          getAll,
+          getById,
+          activate,
+          deactivate,
+          isActive,
+          getActiveCount,
+          stateChanges
+        };
+      })
+    );
+    makeMockExtension = /* @__PURE__ */ __name((extensions = []) => {
+      const mockExtensions = extensions.map((manifest) => ({
+        id: manifest.id,
+        manifest,
+        state: { _tag: "Idle" },
+        activatedAt: void 0,
+        activationTime: void 0
+      }));
+      return {
+        getAll: Effect12.succeed(mockExtensions),
+        getById: /* @__PURE__ */ __name((id2) => Effect12.gen(function* () {
+          const ext = mockExtensions.find((e) => e.id === id2);
+          if (!ext) {
+            return yield* Effect12.fail(new ExtensionNotFoundError(id2));
+          }
+          return ext;
+        }), "getById"),
+        activate: /* @__PURE__ */ __name((id2) => Effect12.succeed({
+          extensionId: id2,
+          success: true,
+          activationTime: 10,
+          error: void 0
+        }), "activate"),
+        deactivate: /* @__PURE__ */ __name((id2) => Effect12.succeed({
+          extensionId: id2,
+          success: true,
+          error: void 0
+        }), "deactivate"),
+        isActive: /* @__PURE__ */ __name((id2) => Effect12.succeed(
+          mockExtensions.some(
+            (e) => e.id === id2 && e.state._tag === "Active"
+          )
+        ), "isActive"),
+        getActiveCount: Effect12.succeed(0),
+        stateChanges: Effect12.succeed({})
+      };
+    }, "makeMockExtension");
+    ExtensionMock = Layer10.effect(
+      Extension,
+      Effect12.succeed(makeMockExtension())
     );
   }
 });
 
+// Source/Effect/Health.ts
+import { Context as Context12, Effect as Effect13, Layer as Layer11, Schedule } from "effect";
+var HealthTag, createServiceHealth, makeHealthChecker, HealthLive, makeMockHealth, HealthMock;
+var init_Health = __esm({
+  "Source/Effect/Health.ts"() {
+    "use strict";
+    init_Telemetry();
+    HealthTag = class extends Context12.Tag("Cocoon/Health")() {
+      static {
+        __name(this, "HealthTag");
+      }
+    };
+    createServiceHealth = /* @__PURE__ */ __name((name, status2, message, responseTime, details) => ({
+      serviceName: name,
+      status: status2,
+      message,
+      lastChecked: Date.now(),
+      responseTime,
+      details
+    }), "createServiceHealth");
+    makeHealthChecker = /* @__PURE__ */ __name(() => ({
+      checkService: /* @__PURE__ */ __name((serviceName) => Effect13.gen(function* () {
+        const startTime = Date.now();
+        switch (serviceName.toLowerCase()) {
+          case "environment": {
+            const envTime = Date.now() - startTime;
+            return createServiceHealth(
+              "Environment",
+              "healthy",
+              "Environment service available",
+              envTime
+            );
+          }
+          case "telemetry": {
+            const telemetryService = yield* TelemetryTag;
+            const telemetryTime = Date.now() - startTime;
+            return yield* telemetryService.log("info", "[Health] Telemetry health check").pipe(
+              Effect13.map(
+                () => createServiceHealth(
+                  "Telemetry",
+                  "healthy",
+                  "Telemetry service available",
+                  telemetryTime
+                )
+              ),
+              Effect13.catchAll(
+                () => Effect13.succeed(
+                  createServiceHealth(
+                    "Telemetry",
+                    "unhealthy",
+                    "Telemetry service error",
+                    telemetryTime
+                  )
+                )
+              )
+            );
+          }
+          case "grpc": {
+            const grpcTime = Date.now() - startTime;
+            return createServiceHealth(
+              "gRPC",
+              "healthy",
+              "gRPC service available",
+              grpcTime
+            );
+          }
+          case "extension": {
+            const extensionTime = Date.now() - startTime;
+            return createServiceHealth(
+              "Extension",
+              "healthy",
+              "Extension service available",
+              extensionTime
+            );
+          }
+          default:
+            return createServiceHealth(
+              serviceName,
+              "unknown",
+              `Unknown service: ${serviceName}`,
+              0
+            );
+        }
+      }), "checkService"),
+      checkAllServices: /* @__PURE__ */ __name(() => Effect13.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const services = [
+          "environment",
+          "telemetry",
+          "grpc",
+          "extension"
+        ];
+        const healthChecker = makeHealthChecker();
+        telemetry.log(
+          "info",
+          "[Health] Running health checks for all services..."
+        );
+        const healthResults = yield* Effect13.all(
+          services.map((service) => healthChecker.checkService(service))
+        );
+        const unhealthyCount = healthResults.filter(
+          (h) => h.status === "unhealthy"
+        ).length;
+        const degradedCount = healthResults.filter(
+          (h) => h.status === "degraded"
+        ).length;
+        let overallStatus = "healthy";
+        if (unhealthyCount > 0) {
+          overallStatus = "unhealthy";
+        } else if (degradedCount > 0) {
+          overallStatus = "degraded";
+        }
+        return {
+          overallStatus,
+          services: healthResults,
+          systemInfo: {
+            platform: process.platform,
+            architecture: process.arch,
+            nodeVersion: process.version,
+            upSince: Date.now()
+          },
+          lastChecked: Date.now()
+        };
+      }), "checkAllServices"),
+      getOverallStatus: /* @__PURE__ */ __name(() => Effect13.gen(function* () {
+        const healthChecker = makeHealthChecker();
+        const systemHealth = yield* healthChecker.checkAllServices();
+        return systemHealth.overallStatus;
+      }), "getOverallStatus"),
+      monitorService: /* @__PURE__ */ __name((serviceName, intervalMs) => Effect13.gen(function* () {
+        yield* makeHealthChecker().checkService(serviceName).pipe(Effect13.repeat(Schedule.spaced(`${intervalMs} millis`)));
+      }), "monitorService")
+    }), "makeHealthChecker");
+    HealthLive = Layer11.effect(
+      HealthTag,
+      Effect13.succeed(makeHealthChecker())
+    );
+    makeMockHealth = /* @__PURE__ */ __name((overrides) => ({
+      checkService: /* @__PURE__ */ __name((serviceName) => Effect13.gen(function* () {
+        const defaultStatus = "healthy";
+        const status2 = overrides?.[serviceName] ?? defaultStatus;
+        return createServiceHealth(
+          serviceName,
+          status2,
+          status2 === "healthy" ? "Mock service healthy" : "Mock service unhealthy",
+          0
+        );
+      }), "checkService"),
+      checkAllServices: /* @__PURE__ */ __name(() => Effect13.gen(function* () {
+        const services = ["environment", "telemetry", "grpc", "extension"];
+        const results = services.map(
+          (name) => createServiceHealth(
+            name,
+            overrides?.[name] ?? "healthy",
+            "Mock service check",
+            0
+          )
+        );
+        return {
+          overallStatus: "healthy",
+          services: results,
+          systemInfo: {
+            platform: "mock",
+            architecture: "mock",
+            nodeVersion: "mock",
+            upSince: Date.now()
+          },
+          lastChecked: Date.now()
+        };
+      }), "checkAllServices"),
+      getOverallStatus: /* @__PURE__ */ __name(() => Effect13.succeed("healthy"), "getOverallStatus"),
+      monitorService: /* @__PURE__ */ __name(() => Effect13.void, "monitorService")
+    }), "makeMockHealth");
+    HealthMock = Layer11.effect(
+      HealthTag,
+      Effect13.succeed(makeMockHealth())
+    );
+  }
+});
+
+// Source/Effect/ModuleInterceptor.ts
+import {
+  Context as Context13,
+  Effect as Effect14,
+  HashMap as HashMap3,
+  Layer as Layer12,
+  Ref as Ref3,
+  SubscriptionRef as SubscriptionRef3
+} from "effect";
+var SecurityLevel3, ModuleNotFoundError, ModuleAccessDeniedError, SecurityPolicyNotFoundError, ModuleInterceptorTag, ModuleInterceptor, defaultSecurityPolicy, ModuleInterceptorLive, makeMockModuleInterceptor, ModuleInterceptorMock;
+var init_ModuleInterceptor = __esm({
+  "Source/Effect/ModuleInterceptor.ts"() {
+    "use strict";
+    init_Telemetry();
+    SecurityLevel3 = /* @__PURE__ */ ((SecurityLevel4) => {
+      SecurityLevel4["TRUSTED"] = "TRUSTED";
+      SecurityLevel4["SANDBOXED"] = "SANDBOXED";
+      SecurityLevel4["RESTRICTED"] = "RESTRICTED";
+      SecurityLevel4["BLOCKED"] = "BLOCKED";
+      return SecurityLevel4;
+    })(SecurityLevel3 || {});
+    ModuleNotFoundError = class extends Error {
+      constructor(moduleId, extensionId) {
+        super(`Module not found: ${moduleId} for extension ${extensionId}`);
+        this.moduleId = moduleId;
+        this.extensionId = extensionId;
+      }
+      moduleId;
+      extensionId;
+      static {
+        __name(this, "ModuleNotFoundError");
+      }
+      _tag = "ModuleNotFoundError";
+    };
+    ModuleAccessDeniedError = class extends Error {
+      constructor(moduleId, reason) {
+        super(`Module access denied: ${moduleId} - ${reason}`);
+        this.moduleId = moduleId;
+        this.reason = reason;
+      }
+      moduleId;
+      reason;
+      static {
+        __name(this, "ModuleAccessDeniedError");
+      }
+      _tag = "ModuleAccessDeniedError";
+    };
+    SecurityPolicyNotFoundError = class extends Error {
+      constructor(extensionId) {
+        super(`Security policy not found for extension: ${extensionId}`);
+        this.extensionId = extensionId;
+      }
+      extensionId;
+      static {
+        __name(this, "SecurityPolicyNotFoundError");
+      }
+      _tag = "SecurityPolicyNotFoundError";
+    };
+    ModuleInterceptorTag = class extends Context13.Tag(
+      "Cocoon/ModuleInterceptor"
+    )() {
+      static {
+        __name(this, "ModuleInterceptorTag");
+      }
+    };
+    ModuleInterceptor = ModuleInterceptorTag;
+    defaultSecurityPolicy = {
+      allowedModules: ["path", "url", "util", "events", "stream", "buffer"],
+      blockedModules: [
+        "fs",
+        "child_process",
+        "net",
+        "http",
+        "https",
+        "os",
+        "crypto"
+      ],
+      securityLevel: "SANDBOXED" /* SANDBOXED */,
+      maxMemoryUsage: 128 * 1024 * 1024,
+      // 128MB
+      maxExecutionTime: 5e3
+      // 5 seconds
+    };
+    ModuleInterceptorLive = Layer12.effect(
+      ModuleInterceptor,
+      Effect14.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const policiesRef = yield* SubscriptionRef3.make(HashMap3.empty());
+        const moduleCacheRef = yield* SubscriptionRef3.make(HashMap3.empty());
+        const statsRef = yield* SubscriptionRef3.make({
+          totalInterceptions: 0,
+          blockedModules: 0,
+          averageResolutionTime: 0,
+          securityViolations: 0
+        });
+        const resolutionTimes = [];
+        const isNodeBuiltin = /* @__PURE__ */ __name((moduleId) => {
+          const builtins = [
+            "fs",
+            "path",
+            "os",
+            "net",
+            "http",
+            "https",
+            "child_process",
+            "crypto",
+            "util",
+            "events",
+            "stream",
+            "buffer",
+            "url",
+            "querystring"
+          ];
+          return builtins.includes(moduleId);
+        }, "isNodeBuiltin");
+        const initialize = Effect14.gen(function* () {
+          telemetry.log(
+            "info",
+            "[ModuleInterceptor] Initializing module interceptor service..."
+          );
+          yield* Effect14.sleep("5 millis");
+          telemetry.log(
+            "info",
+            "[ModuleInterceptor] Module interceptor service initialized"
+          );
+        });
+        const vscodeAPIRegistry = /* @__PURE__ */ new Map();
+        const install = Effect14.gen(function* () {
+          telemetry.log(
+            "info",
+            "[ModuleInterceptor] Installing Node.js Module._load hook..."
+          );
+          const NodeModule = yield* Effect14.try(() => {
+            return __require("module");
+          });
+          const OriginalLoad = NodeModule._load;
+          NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
+            if (Request === "vscode") {
+              const ParentFilename = Parent?.filename ?? Parent?.id ?? "";
+              for (const [ExtensionId, API] of vscodeAPIRegistry) {
+                if (ParentFilename.includes(ExtensionId)) {
+                  return API;
+                }
+              }
+              if (vscodeAPIRegistry.size > 0) {
+                const LastAPI = [...vscodeAPIRegistry.values()].pop();
+                return LastAPI;
+              }
+              const GlobalAPI = globalThis.__cocoonVscodeAPI;
+              if (GlobalAPI) {
+                return GlobalAPI;
+              }
+              console.warn(
+                `[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`
+              );
+              return {};
+            }
+            return OriginalLoad.apply(this, [Request, Parent, IsMain]);
+          }, "PatchedLoad");
+          telemetry.log(
+            "info",
+            "[ModuleInterceptor] Module._load hook installed \u2014 require('vscode') intercepted"
+          );
+        });
+        const interceptRequire = /* @__PURE__ */ __name((request) => Effect14.gen(function* () {
+          const startTime = Date.now();
+          const currentStats = yield* statsRef.get;
+          yield* Ref3.set(statsRef, {
+            ...currentStats,
+            totalInterceptions: currentStats.totalInterceptions + 1
+          });
+          const policyOpt = HashMap3.get(
+            yield* policiesRef.get,
+            request.extensionId
+          );
+          if (policyOpt._tag === "None") {
+            yield* telemetry.log(
+              "warn",
+              `[ModuleInterceptor] No policy for extension ${request.extensionId}, using default`
+            );
+          }
+          const policy = policyOpt._tag === "Some" ? policyOpt.value : {
+            ...defaultSecurityPolicy,
+            extensionId: request.extensionId
+          };
+          if (policy.blockedModules.includes(request.moduleId)) {
+            yield* telemetry.log(
+              "warn",
+              `[ModuleInterceptor] Blocked module access: ${request.moduleId} for ${request.extensionId}`
+            );
+            const statsAfter2 = yield* statsRef.get;
+            yield* Ref3.set(statsRef, {
+              ...statsAfter2,
+              blockedModules: statsAfter2.blockedModules + 1,
+              securityViolations: statsAfter2.securityViolations + 1
+            });
+            return {
+              success: false,
+              error: `Module access denied: ${request.moduleId}`,
+              securityLevel: "BLOCKED" /* BLOCKED */
+            };
+          }
+          if (!policy.allowedModules.includes(request.moduleId) && !isNodeBuiltin(request.moduleId)) {
+            yield* telemetry.log(
+              "warn",
+              `[ModuleInterceptor] Module not in allowlist: ${request.moduleId} for ${request.extensionId}`
+            );
+            const statsAfter2 = yield* statsRef.get;
+            yield* Ref3.set(statsRef, {
+              ...statsAfter2,
+              blockedModules: statsAfter2.blockedModules + 1,
+              securityViolations: statsAfter2.securityViolations + 1
+            });
+            return {
+              success: false,
+              error: `Module not in allowlist: ${request.moduleId}`,
+              securityLevel: "RESTRICTED" /* RESTRICTED */
+            };
+          }
+          const cacheKey = `${request.extensionId}:${request.moduleId}`;
+          const cachedModule = HashMap3.get(
+            yield* moduleCacheRef.get,
+            cacheKey
+          );
+          if (cachedModule._tag === "Some") {
+            const duration2 = Date.now() - startTime;
+            resolutionTimes.push(duration2);
+            const allTimes2 = [...resolutionTimes];
+            const avgTime2 = allTimes2.reduce((a, b) => a + b, 0) / allTimes2.length;
+            const statsAfter2 = yield* statsRef.get;
+            yield* Ref3.set(statsRef, {
+              ...statsAfter2,
+              averageResolutionTime: avgTime2
+            });
+            telemetry.log(
+              "debug",
+              `[ModuleInterceptor] Module cache hit: ${request.moduleId} (${duration2}ms)`
+            );
+            return {
+              success: true,
+              module: cachedModule.value,
+              securityLevel: policy.securityLevel
+            };
+          }
+          yield* Effect14.sleep("5 millis");
+          telemetry.log(
+            "info",
+            `[ModuleInterceptor] Module loaded: ${request.moduleId} for ${request.extensionId}`
+          );
+          const module = { module: request.moduleId };
+          const currentCache = yield* moduleCacheRef.get;
+          yield* Ref3.set(
+            moduleCacheRef,
+            HashMap3.set(currentCache, cacheKey, module)
+          );
+          const duration = Date.now() - startTime;
+          resolutionTimes.push(duration);
+          const allTimes = [...resolutionTimes];
+          const avgTime = allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
+          const statsAfter = yield* statsRef.get;
+          yield* Ref3.set(statsRef, {
+            ...statsAfter,
+            averageResolutionTime: avgTime
+          });
+          return {
+            success: true,
+            module,
+            securityLevel: policy.securityLevel
+          };
+        }), "interceptRequire");
+        const resolveModule = /* @__PURE__ */ __name((extensionId, modulePath) => Effect14.gen(function* () {
+          yield* Effect14.sleep("5 millis");
+          if (!modulePath) {
+            return yield* Effect14.fail(
+              new ModuleNotFoundError(modulePath, extensionId)
+            );
+          }
+          const resolvedPath = `/node_modules/${modulePath}/index.js`;
+          return resolvedPath;
+        }), "resolveModule");
+        const setSecurityPolicy = /* @__PURE__ */ __name((policy) => Effect14.gen(function* () {
+          const currentPolicies = yield* policiesRef.get;
+          yield* Ref3.set(
+            policiesRef,
+            HashMap3.set(currentPolicies, policy.extensionId, policy)
+          );
+          telemetry.log(
+            "info",
+            `[ModuleInterceptor] Security policy set for extension ${policy.extensionId} (${policy.securityLevel})`
+          );
+        }), "setSecurityPolicy");
+        const getSecurityPolicy = /* @__PURE__ */ __name((extensionId) => Effect14.gen(function* () {
+          const policies = yield* policiesRef.get;
+          const policy = HashMap3.get(policies, extensionId);
+          if (policy._tag === "None") {
+            return yield* Effect14.fail(
+              new SecurityPolicyNotFoundError(extensionId)
+            );
+          }
+          return policy.value;
+        }), "getSecurityPolicy");
+        const validateModuleSecurity = /* @__PURE__ */ __name((extensionId, moduleId) => Effect14.gen(function* () {
+          const policies = yield* policiesRef.get;
+          const policyOpt = HashMap3.get(policies, extensionId);
+          if (policyOpt._tag === "None") {
+            const policy2 = { ...defaultSecurityPolicy, extensionId };
+            return !policy2.blockedModules.includes(moduleId) || policy2.allowedModules.includes(moduleId) || isNodeBuiltin(moduleId);
+          }
+          const policy = policyOpt.value;
+          return !policy.blockedModules.includes(moduleId) || policy.allowedModules.includes(moduleId) || isNodeBuiltin(moduleId);
+        }), "validateModuleSecurity");
+        const getStatistics = Effect14.gen(function* () {
+          return yield* statsRef.get;
+        });
+        const registerVscodeAPI = /* @__PURE__ */ __name((extensionId, api) => Effect14.gen(function* () {
+          vscodeAPIRegistry.set(extensionId, api);
+          telemetry.log(
+            "info",
+            `[ModuleInterceptor] Registered vscode API for extension: ${extensionId}`
+          );
+        }), "registerVscodeAPI");
+        return {
+          initialize,
+          install,
+          registerVscodeAPI,
+          interceptRequire,
+          resolveModule,
+          setSecurityPolicy,
+          getSecurityPolicy,
+          validateModuleSecurity,
+          getStatistics
+        };
+      })
+    );
+    makeMockModuleInterceptor = /* @__PURE__ */ __name(() => ({
+      initialize: Effect14.gen(function* () {
+        yield* Effect14.sleep("1 millis");
+      }),
+      install: Effect14.gen(function* () {
+        yield* Effect14.sleep("1 millis");
+      }),
+      registerVscodeAPI: /* @__PURE__ */ __name((_extensionId, _api) => Effect14.gen(function* () {
+        yield* Effect14.sleep("1 millis");
+      }), "registerVscodeAPI"),
+      interceptRequire: /* @__PURE__ */ __name((request) => Effect14.gen(function* () {
+        yield* Effect14.sleep("1 millis");
+        return {
+          success: true,
+          module: { mock: true, moduleId: request.moduleId },
+          securityLevel: "SANDBOXED" /* SANDBOXED */
+        };
+      }), "interceptRequire"),
+      resolveModule: /* @__PURE__ */ __name((extensionId, modulePath) => Effect14.gen(function* () {
+        yield* Effect14.sleep("1 millis");
+        return `/node_modules/${modulePath}/index.js`;
+      }), "resolveModule"),
+      setSecurityPolicy: /* @__PURE__ */ __name((policy) => Effect14.gen(function* () {
+        yield* Effect14.sleep("1 millis");
+      }), "setSecurityPolicy"),
+      getSecurityPolicy: /* @__PURE__ */ __name((extensionId) => Effect14.gen(function* () {
+        yield* Effect14.sleep("1 millis");
+        return {
+          extensionId,
+          allowedModules: ["path", "util"],
+          blockedModules: ["fs"],
+          securityLevel: "SANDBOXED" /* SANDBOXED */
+        };
+      }), "getSecurityPolicy"),
+      validateModuleSecurity: /* @__PURE__ */ __name((extensionId, moduleId) => Effect14.gen(function* () {
+        yield* Effect14.sleep("1 millis");
+        return true;
+      }), "validateModuleSecurity"),
+      getStatistics: Effect14.gen(function* () {
+        yield* Effect14.sleep("1 millis");
+        return {
+          totalInterceptions: 100,
+          blockedModules: 5,
+          averageResolutionTime: 2.5,
+          securityViolations: 3
+        };
+      })
+    }), "makeMockModuleInterceptor");
+    ModuleInterceptorMock = Layer12.effect(
+      ModuleInterceptor,
+      Effect14.succeed(makeMockModuleInterceptor())
+    );
+  }
+});
+
+// Source/Effect/MountainClient.ts
+import { Context as Context14, Effect as Effect15, Layer as Layer13, Ref as Ref4, SubscriptionRef as SubscriptionRef4 } from "effect";
+var ConnectionError, RPCError2, DisconnectionError, MountainClientTag, MountainClient, MountainClientLive, makeMockMountainClient, MountainClientMock;
+var init_MountainClient = __esm({
+  "Source/Effect/MountainClient.ts"() {
+    "use strict";
+    init_MountainClientService();
+    init_Telemetry();
+    ConnectionError = class extends Error {
+      constructor(message, cause) {
+        super(message);
+        this.message = message;
+        this.cause = cause;
+      }
+      message;
+      cause;
+      static {
+        __name(this, "ConnectionError");
+      }
+      _tag = "ConnectionError";
+    };
+    RPCError2 = class extends Error {
+      constructor(method, message, cause) {
+        super(message);
+        this.method = method;
+        this.message = message;
+        this.cause = cause;
+      }
+      method;
+      message;
+      cause;
+      static {
+        __name(this, "RPCError");
+      }
+      _tag = "RPCError";
+      method;
+    };
+    DisconnectionError = class extends Error {
+      constructor(message, cause) {
+        super(message);
+        this.message = message;
+        this.cause = cause;
+      }
+      message;
+      cause;
+      static {
+        __name(this, "DisconnectionError");
+      }
+      _tag = "DisconnectionError";
+    };
+    MountainClientTag = class extends Context14.Tag("Cocoon/MountainClient")() {
+      static {
+        __name(this, "MountainClientTag");
+      }
+    };
+    MountainClient = MountainClientTag;
+    MountainClientLive = Layer13.effect(
+      MountainClient,
+      Effect15.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const stateRef = yield* SubscriptionRef4.make({
+          _tag: "Disconnected"
+        });
+        let realClient;
+        let currentConfig;
+        let metrics = {
+          totalRequests: 0,
+          successfulRequests: 0,
+          failedRequests: 0,
+          averageLatency: 0,
+          lastRequestTime: 0
+        };
+        const latencies = [];
+        let serverVersion = "";
+        const connect = /* @__PURE__ */ __name((config) => Effect15.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag === "Connected") {
+            telemetry.log(
+              "warn",
+              "[MountainClient] Already connected to Mountain"
+            );
+            return;
+          }
+          currentConfig = config ?? {
+            host: "localhost",
+            port: 50052,
+            timeout: 5e3,
+            maxRetries: 3,
+            retryDelay: 1e3,
+            enableCompression: true,
+            enableMetrics: true
+          };
+          telemetry.log(
+            "info",
+            `[MountainClient] Connecting to Mountain at ${currentConfig.host}:${currentConfig.port}...`
+          );
+          yield* Ref4.set(stateRef, {
+            _tag: "Connecting",
+            attempt: 1
+          });
+          try {
+            realClient = new MountainClientService();
+            realClient.mountainHost = currentConfig.host;
+            realClient.mountainPort = currentConfig.port;
+            yield* Effect15.promise(() => realClient.connect());
+            serverVersion = "1.0.0";
+          } catch (error) {
+            yield* Ref4.set(stateRef, {
+              _tag: "Error",
+              error: String(error)
+            });
+            telemetry.log(
+              "error",
+              `[MountainClient] Failed to connect to Mountain: ${String(error)}`
+            );
+            return yield* Effect15.fail(
+              new ConnectionError(
+                "Failed to connect to Mountain backend",
+                error
+              )
+            );
+          }
+          yield* Ref4.set(stateRef, {
+            _tag: "Connected",
+            serverVersion,
+            connectedAt: Date.now()
+          });
+          telemetry.log(
+            "info",
+            `[MountainClient] Connected to Mountain (v${serverVersion})`
+          );
+        }), "connect");
+        const disconnect = Effect15.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Connected") {
+            telemetry.log(
+              "warn",
+              "[MountainClient] Not connected to Mountain"
+            );
+            return;
+          }
+          yield* Ref4.set(stateRef, {
+            _tag: "Disconnecting"
+          });
+          telemetry.log(
+            "info",
+            "[MountainClient] Disconnecting from Mountain..."
+          );
+          if (realClient) {
+            yield* Effect15.promise(() => realClient.disconnect());
+            realClient = void 0;
+          }
+          yield* Ref4.set(stateRef, {
+            _tag: "Disconnected"
+          });
+          metrics = {
+            totalRequests: 0,
+            successfulRequests: 0,
+            failedRequests: 0,
+            averageLatency: 0,
+            lastRequestTime: 0
+          };
+          latencies.length = 0;
+          telemetry.log(
+            "info",
+            "[MountainClient] Disconnected from Mountain"
+          );
+        }).pipe(
+          Effect15.catchAll(
+            (error) => Effect15.gen(function* () {
+              yield* Ref4.set(stateRef, {
+                _tag: "Error",
+                error: String(error)
+              });
+              telemetry.log(
+                "error",
+                `[MountainClient] Failed to disconnect: ${String(error)}`
+              );
+              return yield* Effect15.fail(
+                new DisconnectionError("Failed to disconnect", error)
+              );
+            })
+          )
+        );
+        const rpc = /* @__PURE__ */ __name((method) => (params) => Effect15.gen(function* () {
+          const requestStartTime = Date.now();
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Connected") {
+            metrics.failedRequests++;
+            return yield* Effect15.fail(
+              new RPCError2(method, "Not connected to Mountain")
+            );
+          }
+          telemetry.log(
+            "debug",
+            `[MountainClient] RPC call: ${method}`,
+            params
+          );
+          metrics.totalRequests++;
+          try {
+            if (!realClient) {
+              return yield* Effect15.fail(
+                new RPCError2(
+                  method,
+                  "Not connected to Mountain"
+                )
+              );
+            }
+            const Result = yield* Effect15.promise(
+              () => realClient.sendRequest(method, params)
+            );
+            const processingTime = Date.now() - requestStartTime;
+            latencies.push(processingTime);
+            if (latencies.length > 100) latencies.shift();
+            metrics.averageLatency = latencies.reduce((sum2, lat) => sum2 + lat, 0) / latencies.length;
+            metrics.lastRequestTime = Date.now();
+            metrics.successfulRequests++;
+            telemetry.log(
+              "debug",
+              `[MountainClient] RPC success: ${method} (${processingTime}ms)`
+            );
+            return Result;
+          } catch (error) {
+            metrics.failedRequests++;
+            telemetry.log(
+              "error",
+              `[MountainClient] RPC failed: ${method} (${String(error)})`
+            );
+            return yield* Effect15.fail(
+              new RPCError2(
+                method,
+                `RPC call failed: ${String(error)}`,
+                error
+              )
+            );
+          }
+        }), "rpc");
+        const version = Effect15.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Connected") {
+            return yield* Effect15.fail(
+              new ConnectionError("Not connected to Mountain")
+            );
+          }
+          return currentState.serverVersion;
+        });
+        const healthCheck = Effect15.gen(function* () {
+          const currentState = yield* stateRef.get;
+          return currentState._tag === "Connected";
+        });
+        const getMetrics = Effect15.succeed({ ...metrics });
+        return {
+          connectionState: stateRef.get,
+          connectionChanges: Effect15.map(stateRef.get, (state) => [state]),
+          connect,
+          disconnect,
+          rpc,
+          version,
+          healthCheck,
+          getMetrics
+        };
+      })
+    );
+    makeMockMountainClient = /* @__PURE__ */ __name(() => {
+      const mockState = {
+        _tag: "Connected",
+        serverVersion: "1.0.0",
+        connectedAt: Date.now()
+      };
+      return {
+        connectionState: Effect15.succeed(mockState),
+        connectionChanges: Effect15.succeed([mockState]),
+        connect: /* @__PURE__ */ __name(() => Effect15.succeed(void 0), "connect"),
+        disconnect: /* @__PURE__ */ __name(() => Effect15.succeed(void 0), "disconnect"),
+        rpc: /* @__PURE__ */ __name((method) => (params) => Effect15.succeed({
+          success: true,
+          data: { method, params, mock: true }
+        }), "rpc"),
+        version: Effect15.succeed("1.0.0"),
+        healthCheck: Effect15.succeed(true),
+        getMetrics: Effect15.succeed({
+          totalRequests: 0,
+          successfulRequests: 0,
+          failedRequests: 0,
+          averageLatency: 0,
+          lastRequestTime: 0
+        })
+      };
+    }, "makeMockMountainClient");
+    MountainClientMock = Layer13.effect(
+      MountainClient,
+      Effect15.succeed(makeMockMountainClient())
+    );
+  }
+});
+
+// Source/Effect/RPCServer.ts
+import { Context as Context15, Effect as Effect16, Layer as Layer14, Ref as Ref5, SubscriptionRef as SubscriptionRef5 } from "effect";
+var ServerStartError, ServerStopError, ServerNotRunningError, RPCServerTag, RPCServer, RPCServerLive, makeMockRPCServer, RPCServerMock;
+var init_RPCServer = __esm({
+  "Source/Effect/RPCServer.ts"() {
+    "use strict";
+    init_GRPCServerService();
+    init_Telemetry();
+    ServerStartError = class extends Error {
+      constructor(message, cause) {
+        super(message);
+        this.message = message;
+        this.cause = cause;
+      }
+      message;
+      cause;
+      static {
+        __name(this, "ServerStartError");
+      }
+      _tag = "ServerStartError";
+    };
+    ServerStopError = class extends Error {
+      constructor(message, cause) {
+        super(message);
+        this.message = message;
+        this.cause = cause;
+      }
+      message;
+      cause;
+      static {
+        __name(this, "ServerStopError");
+      }
+      _tag = "ServerStopError";
+    };
+    ServerNotRunningError = class extends Error {
+      static {
+        __name(this, "ServerNotRunningError");
+      }
+      _tag = "ServerNotRunningError";
+      constructor() {
+        super("Server is not running");
+      }
+    };
+    RPCServerTag = class extends Context15.Tag("Cocoon/RPCServer")() {
+      static {
+        __name(this, "RPCServerTag");
+      }
+    };
+    RPCServer = RPCServerTag;
+    RPCServerLive = Layer14.effect(
+      RPCServer,
+      Effect16.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const stateRef = yield* SubscriptionRef5.make({
+          _tag: "Idle"
+        });
+        let grpcServer;
+        let currentConfig;
+        let metrics = {
+          uptime: 0,
+          connections: 0,
+          requestsHandled: 0,
+          errors: 0,
+          averageLatency: 0
+        };
+        let startTime = 0;
+        const latencies = [];
+        const start = /* @__PURE__ */ __name((config) => Effect16.gen(function* () {
+          const startTimeMs = Date.now();
+          const currentState = yield* stateRef.get;
+          if (currentState._tag === "Running") {
+            telemetry.log("warn", "[RPCServer] Server already running");
+            return;
+          }
+          const CocoonPort = parseInt(
+            process.env["COCOON_GRPC_PORT"] || "50052",
+            10
+          );
+          currentConfig = config ?? {
+            host: "0.0.0.0",
+            port: CocoonPort,
+            maxConnections: 100,
+            enableCompression: true,
+            enableTls: false
+          };
+          yield* Ref5.set(stateRef, {
+            _tag: "Starting",
+            startTime: startTimeMs
+          });
+          console.log(
+            `[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`
+          );
+          telemetry.log(
+            "info",
+            `[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`
+          );
+          try {
+            grpcServer = new GRPCServerService();
+            grpcServer.port = currentConfig.port;
+            yield* Effect16.promise(() => grpcServer.start());
+            startTime = Date.now();
+            metrics = {
+              uptime: 0,
+              connections: 0,
+              requestsHandled: 0,
+              errors: 0,
+              averageLatency: 0
+            };
+            yield* Ref5.set(stateRef, {
+              _tag: "Running",
+              address: currentConfig.host,
+              port: currentConfig.port,
+              startedAt: startTime
+            });
+            telemetry.log(
+              "info",
+              `[RPCServer] gRPC server started on ${currentConfig.host}:${currentConfig.port}`
+            );
+          } catch (error) {
+            yield* Ref5.set(stateRef, {
+              _tag: "Error",
+              error: String(error)
+            });
+            telemetry.log(
+              "error",
+              `[RPCServer] Failed to start gRPC server: ${String(error)}`
+            );
+            return yield* Effect16.fail(
+              new ServerStartError(
+                "Failed to start gRPC server",
+                error
+              )
+            );
+          }
+        }), "start");
+        const stop = Effect16.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Running") {
+            telemetry.log("warn", "[RPCServer] Server is not running");
+            return yield* Effect16.fail(new ServerNotRunningError());
+          }
+          yield* Ref5.set(stateRef, {
+            _tag: "Stopping"
+          });
+          telemetry.log("info", "[RPCServer] Stopping gRPC server...");
+          if (grpcServer) {
+            yield* Effect16.promise(() => grpcServer.stop());
+            grpcServer = void 0;
+          }
+          yield* Ref5.set(stateRef, {
+            _tag: "Stopped"
+          });
+          telemetry.log("info", "[RPCServer] Server stopped successfully");
+        });
+        const handleRequest = /* @__PURE__ */ __name((request) => Effect16.gen(function* () {
+          const requestStartTime = Date.now();
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Running") {
+            return {
+              requestId: request.requestId,
+              success: false,
+              data: null,
+              error: "Server not running",
+              timestamp: Date.now()
+            };
+          }
+          telemetry.log(
+            "debug",
+            `[RPCServer] Handling request: ${request.method} (${request.requestId})`
+          );
+          metrics.requestsHandled = metrics.requestsHandled + 1;
+          yield* Effect16.sleep("5 millis");
+          const processingTime = Date.now() - requestStartTime;
+          latencies.push(processingTime);
+          if (latencies.length > 100) {
+            latencies.shift();
+          }
+          metrics.averageLatency = latencies.reduce((sum2, lat) => sum2 + lat, 0) / latencies.length;
+          telemetry.log(
+            "debug",
+            `[RPCServer] Request completed: ${request.method} (${processingTime}ms)`
+          );
+          return {
+            requestId: request.requestId,
+            success: true,
+            data: {
+              method: request.method,
+              result: "ok"
+            },
+            timestamp: Date.now()
+          };
+        }).pipe(
+          Effect16.catchAll(
+            (error) => Effect16.gen(function* () {
+              metrics.errors = metrics.errors + 1;
+              telemetry.log(
+                "error",
+                `[RPCServer] Request failed: ${request.method} (${error})`
+              );
+              return {
+                requestId: request.requestId,
+                success: false,
+                data: null,
+                error: String(error),
+                timestamp: Date.now()
+              };
+            })
+          )
+        ), "handleRequest");
+        const getMetrics = Effect16.gen(function* () {
+          const currentState = yield* stateRef.get;
+          if (currentState._tag !== "Running") {
+            return yield* Effect16.fail(new ServerNotRunningError());
+          }
+          metrics.uptime = Date.now() - startTime;
+          return { ...metrics };
+        });
+        return {
+          state: stateRef.get,
+          stateChanges: Effect16.map(
+            stateRef.get,
+            (state) => [state]
+          ),
+          start,
+          stop,
+          handleRequest,
+          getMetrics
+        };
+      })
+    );
+    makeMockRPCServer = /* @__PURE__ */ __name(() => {
+      const mockStateRef = { _tag: "Idle" };
+      return {
+        state: Effect16.succeed(mockStateRef),
+        stateChanges: Effect16.succeed([mockStateRef]),
+        start: /* @__PURE__ */ __name(() => Effect16.succeed(void 0), "start"),
+        stop: Effect16.succeed(void 0),
+        handleRequest: /* @__PURE__ */ __name((request) => Effect16.succeed({
+          requestId: request.requestId,
+          success: true,
+          data: { method: request.method, result: "mock" },
+          timestamp: Date.now()
+        }), "handleRequest"),
+        getMetrics: Effect16.succeed({
+          uptime: 0,
+          connections: 0,
+          requestsHandled: 0,
+          errors: 0,
+          averageLatency: 0
+        })
+      };
+    }, "makeMockRPCServer");
+    RPCServerMock = Layer14.effect(
+      RPCServer,
+      Effect16.succeed(makeMockRPCServer())
+    );
+  }
+});
+
+// Source/Effect/Bootstrap.ts
+import { Context as Context16, Effect as Effect17, Layer as Layer15 } from "effect";
+var BootstrapTag, stage1_Environment, stage2_Configuration, stage3_MountainConnection, stage4_ModuleInterceptor, stage5_RPCServer, stage6_Extensions, stage7_HealthCheck, makeBootstrap, BootstrapLive, makeMockBootstrap, BootstrapMock, runBootstrap;
+var init_Bootstrap = __esm({
+  "Source/Effect/Bootstrap.ts"() {
+    "use strict";
+    init_Extension();
+    init_Health();
+    init_ModuleInterceptor();
+    init_MountainClient();
+    init_RPCServer();
+    init_Telemetry();
+    BootstrapTag = class extends Context16.Tag("Cocoon/Bootstrap")() {
+      static {
+        __name(this, "BootstrapTag");
+      }
+    };
+    stage1_Environment = withSpan(
+      "stage1_environment",
+      Effect17.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 1: Detecting environment..."
+        );
+        const nodeVersion = process.version;
+        const platform3 = process.platform;
+        const arch2 = process.arch;
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Node.js ${nodeVersion} on ${platform3}/${arch2}`
+        );
+        return {
+          stageName: "Environment",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage2_Configuration = withSpan(
+      "stage2_configuration",
+      Effect17.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 2: Loading configuration..."
+        );
+        yield* Effect17.sleep("20 millis");
+        telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
+        return {
+          stageName: "Configuration",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage3_MountainConnection = withSpan(
+      "stage3_mountain_connection",
+      Effect17.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const mountainClient = yield* MountainClientTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 3: Connecting to Mountain..."
+        );
+        const MountainPort = parseInt(
+          process.env["MOUNTAIN_GRPC_PORT"] || "50051",
+          10
+        );
+        yield* mountainClient.connect({
+          host: "localhost",
+          port: MountainPort
+        });
+        const version = yield* mountainClient.version;
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Connected to Mountain (v${version})`
+        );
+        return {
+          stageName: "MountainConnection",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage4_ModuleInterceptor = withSpan(
+      "stage4_module_interceptor",
+      Effect17.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const moduleInterceptor = yield* ModuleInterceptorTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 4: Setting up module interceptor..."
+        );
+        yield* moduleInterceptor.initialize;
+        yield* moduleInterceptor.install;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Module interceptor installed successfully"
+        );
+        return {
+          stageName: "ModuleInterceptor",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage5_RPCServer = withSpan(
+      "stage5_rpc_server",
+      Effect17.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const rpcServer = yield* RPCServerTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 5: Starting gRPC server..."
+        );
+        const CocoonPort = parseInt(
+          process.env["COCOON_GRPC_PORT"] || "50052",
+          10
+        );
+        console.log(
+          `[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`
+        );
+        yield* rpcServer.start({
+          host: "0.0.0.0",
+          port: CocoonPort
+        });
+        telemetry.log("info", "[Cocoon Bootstrap] gRPC server started");
+        return {
+          stageName: "RPCServer",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage6_Extensions = withSpan(
+      "stage6_extensions",
+      Effect17.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const extension = yield* ExtensionTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 6: Initializing extensions..."
+        );
+        const extensions = yield* extension.getAll;
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Found ${extensions.length} extensions`
+        );
+        for (const ext of extensions) {
+          if (ext.manifest.enabled) {
+            yield* extension.activate(ext.id);
+          }
+        }
+        const activeCount = yield* extension.getActiveCount;
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Activated ${activeCount} extensions`
+        );
+        return {
+          stageName: "Extensions",
+          success: true,
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    stage7_HealthCheck = withSpan(
+      "stage7_healthcheck",
+      Effect17.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const health = yield* HealthTag;
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Stage 7: Running health checks..."
+        );
+        const systemHealth = yield* health.checkAllServices();
+        telemetry.log(
+          "info",
+          `[Cocoon{
+ Bootstrap] Health check result: ${systemHealth.overallStatus}`
+        );
+        if (systemHealth.overallStatus === "unhealthy") {
+          telemetry.log(
+            "error",
+            "[Cocoon Bootstrap] Some services are unhealthy!"
+          );
+        }
+        return {
+          stageName: "HealthCheck",
+          success: systemHealth.overallStatus !== "unhealthy",
+          duration: 0,
+          error: void 0
+        };
+      })
+    );
+    makeBootstrap = /* @__PURE__ */ __name(() => ({
+      run: /* @__PURE__ */ __name((options) => Effect17.gen(function* () {
+        const telemetry = yield* TelemetryTag;
+        const startTime = Date.now();
+        const { skipHealthCheck = false, debugMode = false } = options ?? {};
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] ==============================================="
+        );
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] Cocoon Extension Host Bootstrap"
+        );
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Debug mode: ${debugMode}`
+        );
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] ==============================================="
+        );
+        const stages = [
+          stage1_Environment,
+          stage2_Configuration,
+          stage3_MountainConnection,
+          stage4_ModuleInterceptor,
+          stage5_RPCServer,
+          stage6_Extensions,
+          ...skipHealthCheck ? [] : [stage7_HealthCheck]
+        ];
+        const results = [];
+        for (const stage of stages) {
+          const stageStartTime = Date.now();
+          const SafeStage = Effect17.suspend(() => stage).pipe(
+            Effect17.catchAllCause((Cause) => {
+              const Message = String(Cause).slice(0, 300);
+              console.warn(
+                `[Cocoon Bootstrap] Stage failed (continuing): ${Message}`
+              );
+              return Effect17.succeed({
+                stageName: "Failed",
+                success: false,
+                duration: Date.now() - stageStartTime,
+                error: new Error(Message)
+              });
+            })
+          );
+          const result = yield* SafeStage;
+          results.push({
+            ...result,
+            duration: Date.now() - stageStartTime
+          });
+        }
+        const endTime = Date.now();
+        const totalDuration = endTime - startTime;
+        const allSuccess = results.every((r) => r.success);
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] ==============================================="
+        );
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] ${allSuccess ? "\u2713 Bootstrap completed successfully" : "\u2717 Bootstrap failed"}`
+        );
+        telemetry.log(
+          "info",
+          `[Cocoon Bootstrap] Total duration: ${totalDuration}ms`
+        );
+        telemetry.log(
+          "info",
+          "[Cocoon Bootstrap] ==============================================="
+        );
+        if (!allSuccess) {
+          const failedStages = results.filter((r) => !r.success);
+          telemetry.log("error", "[Cocoon Bootstrap] Failed stages:");
+          for (const failed of failedStages) {
+            telemetry.log(
+              "error",
+              `[Cocoon Bootstrap]   - ${failed.stageName}: ${failed.error?.message || "Unknown error"}`
+            );
+          }
+        }
+        return {
+          success: allSuccess,
+          totalDuration,
+          stages: results,
+          error: allSuccess ? void 0 : new Error("Bootstrap failed")
+        };
+      }), "run")
+    }), "makeBootstrap");
+    BootstrapLive = Layer15.effect(
+      BootstrapTag,
+      Effect17.succeed(makeBootstrap())
+    );
+    makeMockBootstrap = /* @__PURE__ */ __name(() => ({
+      run: /* @__PURE__ */ __name((options) => Effect17.gen(function* () {
+        yield* Effect17.sleep("1 millis");
+        return {
+          success: true,
+          totalDuration: 1,
+          stages: [
+            {
+              stageName: "Environment",
+              success: true,
+              duration: 0,
+              error: void 0
+            },
+            {
+              stageName: "Configuration",
+              success: true,
+              duration: 0,
+              error: void 0
+            },
+            {
+              stageName: "MountainConnection",
+              success: true,
+              duration: 0,
+              error: void 0
+            },
+            {
+              stageName: "RPCServer",
+              success: true,
+              duration: 0,
+              error: void 0
+            },
+            {
+              stageName: "Extensions",
+              success: true,
+              duration: 0,
+              error: void 0
+            },
+            ...options?.skipHealthCheck ? [] : [
+              {
+                stageName: "HealthCheck",
+                success: true,
+                duration: 0,
+                error: void 0
+              }
+            ]
+          ],
+          error: void 0
+        };
+      }), "run")
+    }), "makeMockBootstrap");
+    BootstrapMock = Layer15.effect(
+      BootstrapTag,
+      Effect17.succeed(makeMockBootstrap())
+    );
+    runBootstrap = /* @__PURE__ */ __name((options) => Effect17.gen(function* () {
+      const bootstrap = yield* BootstrapTag;
+      return yield* bootstrap.run(options);
+    }).pipe(Effect17.provide(BootstrapLive)), "runBootstrap");
+  }
+});
+
+// Source/Effect/index.ts
+var init_Effect = __esm({
+  "Source/Effect/index.ts"() {
+    "use strict";
+    init_Bootstrap();
+    init_Extension();
+    init_Health();
+    init_ModuleInterceptor();
+    init_MountainClient();
+    init_RPCServer();
+    init_Telemetry();
+  }
+});
+
+// Source/Services/Logger.ts
+import { Context as Context17, Effect as Effect18, Ref as Ref6 } from "effect";
+var Logger, LoggerService;
+var init_Logger = __esm({
+  "Source/Services/Logger.ts"() {
+    "use strict";
+    Logger = Context17.Tag("Service/Logger");
+    LoggerService = class extends Effect18.Service()(
+      "Service/Logger",
+      {
+        effect: Effect18.gen(function* () {
+          const ExtensionIdRef = yield* Ref6.make(
+            void 0
+          );
+          const LogLevelRef = yield* Ref6.make("info");
+          const FormatMessage = /* @__PURE__ */ __name((Message, Level, ExtensionId) => {
+            const Timestamp = (/* @__PURE__ */ new Date()).toISOString();
+            const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
+            return `${Timestamp} ${Prefix} ${Message}`;
+          }, "FormatMessage");
+          const Trace = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
+            const LogLevel = yield* Ref6.get(LogLevelRef);
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            if (LogLevel === "trace") {
+              const FormattedMessage = FormatMessage(
+                Message,
+                "trace",
+                ExtensionId
+              );
+              return yield* Effect18.logTrace(Message).pipe(
+                Effect18.annotateLogs({
+                  extensionId: ExtensionId,
+                  data: Data.length === 1 ? Data[0] : Data
+                })
+              );
+            }
+          }), "Trace");
+          const Debug = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
+            const LogLevel = yield* Ref6.get(LogLevelRef);
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            if (LogLevel === "trace" || LogLevel === "debug") {
+              const FormattedMessage = FormatMessage(
+                Message,
+                "debug",
+                ExtensionId
+              );
+              return yield* Effect18.logDebug(Message).pipe(
+                Effect18.annotateLogs({
+                  extensionId: ExtensionId,
+                  data: Data.length === 1 ? Data[0] : Data
+                })
+              );
+            }
+          }), "Debug");
+          const Info = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            const FormattedMessage = FormatMessage(
+              Message,
+              "info",
+              ExtensionId
+            );
+            return yield* Effect18.logInfo(Message).pipe(
+              Effect18.annotateLogs({
+                extensionId: ExtensionId,
+                data: Data.length === 1 ? Data[0] : Data
+              })
+            );
+          }), "Info");
+          const Warn = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            return yield* Effect18.logWarning(Message).pipe(
+              Effect18.annotateLogs({
+                extensionId: ExtensionId,
+                data: Data.length === 1 ? Data[0] : Data
+              })
+            );
+          }), "Warn");
+          const Error2 = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            return yield* Effect18.logError(Message).pipe(
+              Effect18.annotateLogs({
+                extensionId: ExtensionId,
+                data: Data.length === 1 ? Data[0] : Data
+              })
+            );
+          }), "Error");
+          const Fatal = /* @__PURE__ */ __name((Message, ...Data) => Effect18.gen(function* () {
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            return yield* Effect18.logFatal(Message).pipe(
+              Effect18.annotateLogs({
+                extensionId: ExtensionId,
+                data: Data.length === 1 ? Data[0] : Data
+              })
+            );
+          }), "Fatal");
+          const SetExtensionId = /* @__PURE__ */ __name((ExtensionId) => Effect18.gen(function* () {
+            yield* Ref6.set(ExtensionIdRef, ExtensionId);
+          }), "SetExtensionId");
+          const GetExtensionId = /* @__PURE__ */ __name(() => Effect18.gen(function* () {
+            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
+            return ExtensionId ?? "cocoon-core";
+          }), "GetExtensionId");
+          const ServiceImplementation = {
+            Trace,
+            Debug,
+            Info,
+            Warn,
+            Error: Error2,
+            Fatal,
+            SetExtensionId,
+            GetExtensionId
+          };
+          return ServiceImplementation;
+        })
+      }
+    ) {
+      static {
+        __name(this, "LoggerService");
+      }
+    };
+  }
+});
+
+// Source/Services/MountainGRPCClient.ts
+import { Context as Context18, Effect as Effect19, Layer as Layer16 } from "effect";
+var MountainGRPCClientService, MountainGRPCClientLive, MountainGRPCClientMock, MountainGRPCClientLayer, MountainGRPCClientMockLayer;
+var init_MountainGRPCClient = __esm({
+  "Source/Services/MountainGRPCClient.ts"() {
+    "use strict";
+    init_IMountainClientService();
+    init_Logger();
+    MountainGRPCClientService = Context18.GenericTag("Service/MountainGRPCClient");
+    MountainGRPCClientLive = Layer16.effect(
+      MountainGRPCClientService,
+      Effect19.gen(function* () {
+        const mountainClient = yield* IMountainClientService;
+        const logger = yield* Logger.Logger;
+        const service = {
+          _serviceBrand: void 0,
+          // ==================== Window Operations ====================
+          showTextDocument: /* @__PURE__ */ __name((uri, options = {}) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] showTextDocument: ${uri}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showTextDocument", {
+                uri: { value: uri },
+                viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
+                // Convert ViewColumn enum (1-based to 0-based)
+                preserveFocus: options.preserveFocus ?? true
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to show text document: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect19.fail(
+                new Error(`Failed to show text document: ${uri}`)
+              );
+            }
+            return;
+          }), "showTextDocument"),
+          showInformationMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] showInformationMessage: ${message}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showInformation", {
+                message
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to show information message: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect19.fail(
+                new Error(
+                  `Failed to show information message: ${message}`
+                )
+              );
+            }
+            return;
+          }), "showInformationMessage"),
+          showWarningMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] showWarningMessage: ${message}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showWarning", {
+                message
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to show warning message: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect19.fail(
+                new Error(
+                  `Failed to show warning message: ${message}`
+                )
+              );
+            }
+            return;
+          }), "showWarningMessage"),
+          showErrorMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] showErrorMessage: ${message}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showError", {
+                message
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to show error message: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect19.fail(
+                new Error(
+                  `Failed to show error message: ${message}`
+                )
+              );
+            }
+            return;
+          }), "showErrorMessage"),
+          createStatusBarItem: /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] createStatusBarItem: ${options.id}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createStatusBarItem", {
+                id: options.id,
+                text: options.text,
+                tooltip: options.tooltip ?? ""
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to create status bar item: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.itemId) {
+              return yield* Effect19.fail(
+                new Error(
+                  `Failed to create status bar item: ${options.id}`
+                )
+              );
+            }
+            return result.itemId;
+          }), "createStatusBarItem"),
+          setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] setStatusBarText: ${itemId} = ${text}`
+            );
+            yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setStatusBarText", {
+                itemId,
+                text
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to set status bar text: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "setStatusBarText"),
+          createWebviewPanel: /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] createWebviewPanel: ${options.viewType}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createWebviewPanel", {
+                viewType: options.viewType,
+                title: options.title,
+                iconPath: options.iconPath ?? "",
+                viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
+                preserveFocus: options.preserveFocus ?? false,
+                enableFindWidget: options.enableFindWidget ?? true,
+                retainContextWhenHidden: options.retainContextWhenHidden ?? false,
+                localResourceRoots: options.localResourceRoots ?? []
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to create webview panel: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (result?.handle === void 0) {
+              return yield* Effect19.fail(
+                new Error(
+                  `Failed to create webview panel: ${options.viewType}`
+                )
+              );
+            }
+            return result.handle;
+          }), "createWebviewPanel"),
+          setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] setWebviewHtml: handle=${handle}`
+            );
+            yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setWebviewHtml", {
+                handle,
+                html
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to set webview HTML: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "setWebviewHtml"),
+          postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] postWebviewMessage: handle=${handle}`
+            );
+            const isString2 = typeof message === "string";
+            yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
+                "onDidReceiveMessage",
+                {
+                  handle,
+                  stringMessage: isString2 ? message : void 0,
+                  bytesMessage: isString2 ? void 0 : message
+                }
+              ), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to post webview message: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "postWebviewMessage"),
+          // ==================== Workspace Operations ====================
+          findFiles: /* @__PURE__ */ __name((pattern, include) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] findFiles: ${pattern}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findFiles", {
+                pattern,
+                include: include ?? true
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to find files: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return result?.uris ?? [];
+          }), "findFiles"),
+          findTextInFiles: /* @__PURE__ */ __name((pattern, include, exclude) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] findTextInFiles: ${pattern}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findTextInFiles", {
+                pattern,
+                include: include ?? [],
+                exclude: exclude ?? []
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to find text in files: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return result?.matches ?? [];
+          }), "findTextInFiles"),
+          openDocument: /* @__PURE__ */ __name((uri, viewColumn) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] openDocument: ${uri}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("openDocument", {
+                uri: { value: uri },
+                viewColumn: viewColumn ? viewColumn - 2 : void 0
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to open document: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect19.fail(
+                new Error(`Failed to open document: ${uri}`)
+              );
+            }
+            return;
+          }), "openDocument"),
+          saveAll: /* @__PURE__ */ __name((includeUntitled = false) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] saveAll: includeUntitled=${includeUntitled}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("saveAll", {
+                includeUntitled
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to save all: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect19.fail(
+                new Error("Failed to save all documents")
+              );
+            }
+            return;
+          }), "saveAll"),
+          applyEdit: /* @__PURE__ */ __name((uri, edits) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] applyEdit: ${uri}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
+                uri: { value: uri },
+                edits: edits.map((edit) => ({
+                  range: {
+                    start: {
+                      line: edit.range.start.line,
+                      character: edit.range.start.character
+                    },
+                    end: {
+                      line: edit.range.end.line,
+                      character: edit.range.end.character
+                    }
+                  },
+                  newText: edit.newText
+                }))
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.success) {
+              return yield* Effect19.fail(
+                new Error(`Failed to apply edit to: ${uri}`)
+              );
+            }
+            return;
+          }), "applyEdit"),
+          // ==================== Command Operations ====================
+          registerCommand: /* @__PURE__ */ __name((commandId, extensionId, title) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] registerCommand: ${commandId}`
+            );
+            yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("registerCommand", {
+                commandId,
+                extensionId,
+                title
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to register command: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "registerCommand"),
+          executeCommand: /* @__PURE__ */ __name((commandId, ...args) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] executeCommand: ${commandId}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("executeCommand", {
+                commandId,
+                arguments: args.map((arg) => {
+                  if (typeof arg === "string") {
+                    return { stringValue: arg };
+                  }
+                  if (typeof arg === "number") {
+                    return { intValue: arg };
+                  }
+                  if (typeof arg === "boolean") {
+                    return { boolValue: arg };
+                  }
+                  if (arg instanceof Uint8Array) {
+                    return { bytesValue: arg };
+                  }
+                  return { stringValue: String(arg) };
+                })
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (result?.error) {
+              return yield* Effect19.fail(
+                new Error(
+                  `Command execution failed: ${result.error.Message}`
+                )
+              );
+            }
+            return result?.value;
+          }), "executeCommand"),
+          unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] unregisterCommand: ${commandId}`
+            );
+            yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
+                "unregisterCommand",
+                {
+                  commandId
+                }
+              ), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to unregister command: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "unregisterCommand"),
+          // ==================== Secret Storage ====================
+          getSecret: /* @__PURE__ */ __name((key) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] getSecret: ${key}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("getSecret", { key }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to get secret: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return result?.value;
+          }), "getSecret"),
+          storeSecret: /* @__PURE__ */ __name((key, value) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] storeSecret: ${key}`
+            );
+            yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("storeSecret", {
+                key,
+                value
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to store secret: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "storeSecret"),
+          deleteSecret: /* @__PURE__ */ __name((key) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] deleteSecret: ${key}`
+            );
+            yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("deleteSecret", {
+                key
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to delete secret: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "deleteSecret"),
+          // ==================== File System Operations ====================
+          readFile: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] readFile: ${uri}`
+            );
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readFile", {
+                uri: { value: uri }
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to read file: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result?.content) {
+              return yield* Effect19.fail(
+                new Error(`Failed to read file: ${uri}`)
+              );
+            }
+            return result.content;
+          }), "readFile"),
+          writeFile: /* @__PURE__ */ __name((uri, content, encoding = "utf8") => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClient] writeFile: ${uri}`
+            );
+            yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("writeFile", {
+                uri: { value: uri },
+                content,
+                encoding
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to write file: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return;
+          }), "writeFile"),
+          stat: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
+            yield* logger.debug(`[MountainGRPCClient] stat: ${uri}`);
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("stat", {
+                uri: { value: uri }
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to stat file: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            if (!result) {
+              return yield* Effect19.fail(
+                new Error(`Failed to stat file: ${uri}`)
+              );
+            }
+            return result;
+          }), "stat"),
+          readdir: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
+            yield* logger.debug(`[MountainGRPCClient] readdir: ${uri}`);
+            const result = yield* Effect19.tryPromise({
+              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readdir", {
+                uri: { value: uri }
+              }), "try"),
+              catch: /* @__PURE__ */ __name((error) => new Error(
+                `Failed to read directory: ${error instanceof Error ? error.message : String(error)}`
+              ), "catch")
+            });
+            return result?.entries ?? [];
+          }), "readdir")
+        };
+        return service;
+      })
+    );
+    MountainGRPCClientMock = Layer16.effect(
+      MountainGRPCClientService,
+      Effect19.gen(function* () {
+        const logger = yield* Logger.Logger;
+        const mockSecrets = /* @__PURE__ */ new Map();
+        const mockStatusBarItems = /* @__PURE__ */ new Map();
+        const mockWebviewPanels = /* @__PURE__ */ new Map();
+        let mockWebviewHandleCounter = 0;
+        const service = {
+          _serviceBrand: void 0,
+          // Window Operations
+          showTextDocument: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] showTextDocument: ${uri}`
+            );
+            return;
+          }), "showTextDocument"),
+          showInformationMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] showInformationMessage: ${message}`
+            );
+            return;
+          }), "showInformationMessage"),
+          showWarningMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] showWarningMessage: ${message}`
+            );
+            return;
+          }), "showWarningMessage"),
+          showErrorMessage: /* @__PURE__ */ __name((message) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] showErrorMessage: ${message}`
+            );
+            return;
+          }), "showErrorMessage"),
+          createStatusBarItem: /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] createStatusBarItem: ${options.id}`
+            );
+            const itemId = `status-${options.id}`;
+            mockStatusBarItems.set(itemId, options.text);
+            return itemId;
+          }), "createStatusBarItem"),
+          setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] setStatusBarText: ${itemId}`
+            );
+            mockStatusBarItems.set(itemId, text);
+            return;
+          }), "setStatusBarText"),
+          createWebviewPanel: /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`
+            );
+            const handle = mockWebviewHandleCounter++;
+            mockWebviewPanels.set(handle, { html: options.html ?? "" });
+            return handle;
+          }), "createWebviewPanel"),
+          setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] setWebviewHtml: ${handle}`
+            );
+            const panel = mockWebviewPanels.get(handle);
+            if (panel) {
+              panel.html = html;
+            }
+            return;
+          }), "setWebviewHtml"),
+          postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] postWebviewMessage: ${handle}`
+            );
+            return;
+          }), "postWebviewMessage"),
+          // Workspace Operations
+          findFiles: /* @__PURE__ */ __name((pattern) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] findFiles: ${pattern}`
+            );
+            return [];
+          }), "findFiles"),
+          findTextInFiles: /* @__PURE__ */ __name((pattern) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] findTextInFiles: ${pattern}`
+            );
+            return [];
+          }), "findTextInFiles"),
+          openDocument: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] openDocument: ${uri}`
+            );
+            return;
+          }), "openDocument"),
+          saveAll: /* @__PURE__ */ __name(() => Effect19.gen(function* () {
+            yield* logger.debug("[MountainGRPCClientMock] saveAll");
+            return;
+          }), "saveAll"),
+          applyEdit: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] applyEdit: ${uri}`
+            );
+            return;
+          }), "applyEdit"),
+          // Command Operations
+          registerCommand: /* @__PURE__ */ __name((commandId) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] registerCommand: ${commandId}`
+            );
+            return;
+          }), "registerCommand"),
+          executeCommand: /* @__PURE__ */ __name((commandId) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] executeCommand: ${commandId}`
+            );
+            return void 0;
+          }), "executeCommand"),
+          unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] unregisterCommand: ${commandId}`
+            );
+            return;
+          }), "unregisterCommand"),
+          // Secret Storage
+          getSecret: /* @__PURE__ */ __name((key) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] getSecret: ${key}`
+            );
+            return mockSecrets.get(key);
+          }), "getSecret"),
+          storeSecret: /* @__PURE__ */ __name((key, value) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] storeSecret: ${key}`
+            );
+            mockSecrets.set(key, value);
+            return;
+          }), "storeSecret"),
+          deleteSecret: /* @__PURE__ */ __name((key) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] deleteSecret: ${key}`
+            );
+            mockSecrets.delete(key);
+            return;
+          }), "deleteSecret"),
+          // File System Operations
+          readFile: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] readFile: ${uri}`
+            );
+            return new Uint8Array(0);
+          }), "readFile"),
+          writeFile: /* @__PURE__ */ __name((uri, content) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] writeFile: ${uri}`
+            );
+            return;
+          }), "writeFile"),
+          stat: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] stat: ${uri}`
+            );
+            return {
+              isFile: true,
+              isDirectory: false,
+              size: 0,
+              mtime: Date.now()
+            };
+          }), "stat"),
+          readdir: /* @__PURE__ */ __name((uri) => Effect19.gen(function* () {
+            yield* logger.debug(
+              `[MountainGRPCClientMock] readdir: ${uri}`
+            );
+            return [];
+          }), "readdir")
+        };
+        return service;
+      })
+    );
+    MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
+      Layer16.provide(IMountainClientService)
+    );
+    MountainGRPCClientMockLayer = MountainGRPCClientMock;
+  }
+});
+
 // Source/Services/SecurityService.ts
-import { Effect as Effect11, Layer as Layer9 } from "effect";
+import { Effect as Effect20, Layer as Layer17 } from "effect";
 var SecurityService, SecurityServiceLayer, SecurityServiceLive;
 var init_SecurityService = __esm({
   "Source/Services/SecurityService.ts"() {
@@ -24497,6185 +31034,65 @@ var init_SecurityService = __esm({
         console.log("[SecurityService] Security state saved");
       }
     };
-    SecurityServiceLayer = Layer9.effect(
+    SecurityServiceLayer = Layer17.effect(
       "SecurityService",
-      Effect11.sync(() => new SecurityService())
+      Effect20.sync(() => new SecurityService())
     );
-    SecurityServiceLive = Layer9.effect(
+    SecurityServiceLive = Layer17.effect(
       "SecurityService",
-      Effect11.sync(() => new SecurityService())
+      Effect20.sync(() => new SecurityService())
     );
   }
 });
 
-// Source/Services/ErrorHandlingService.ts
-var ErrorHandlingService_exports = {};
-__export(ErrorHandlingService_exports, {
-  ErrorHandlingService: () => ErrorHandlingService,
-  ErrorHandlingServiceLayer: () => ErrorHandlingServiceLayer,
-  ErrorHandlingServiceLive: () => ErrorHandlingServiceLive
-});
-import { Effect as Effect12, Layer as Layer10 } from "effect";
-var ErrorHandlingService, ErrorHandlingServiceLayer, ErrorHandlingServiceLive;
-var init_ErrorHandlingService = __esm({
-  "Source/Services/ErrorHandlingService.ts"() {
-    "use strict";
-    ErrorHandlingService = class {
-      static {
-        __name(this, "ErrorHandlingService");
-      }
-      _serviceBrand;
-      circuitBreakers = /* @__PURE__ */ new Map();
-      config;
-      constructor() {
-        this._serviceBrand = void 0;
-        this.config = this.loadDefaultConfig();
-        console.log(
-          "[ErrorHandlingService] Initializing error handling service"
-        );
-      }
-      /**
-       * Load default configuration
-       */
-      loadDefaultConfig() {
-        return {
-          maxRetries: 3,
-          retryDelay: 1e3,
-          // 1 second
-          exponentialBackoff: true,
-          circuitBreakerTimeout: 3e4,
-          // 30 seconds
-          circuitBreakerThreshold: 5
-        };
-      }
-      /**
-       * Execute operation with advanced error handling and metrics
-       */
-      async executeWithRetry(operation, operationName, customConfig) {
-        const startTime = Date.now();
-        const config = { ...this.config, ...customConfig };
-        console.log(
-          `[ErrorHandlingService] Executing operation: ${operationName}`
-        );
-        const circuitState = this.getCircuitBreakerState(operationName);
-        if (circuitState.state === "OPEN") {
-          const error = new Error(
-            `Circuit breaker is OPEN for ${operationName} (failures: ${circuitState.failureCount})`
-          );
-          console.warn(
-            `[ErrorHandlingService] Circuit breaker blocked operation: ${operationName}`
-          );
-          this.trackCircuitBreakerEvent(operationName, "blocked");
-          return {
-            success: false,
-            error,
-            retries: 0,
-            duration: Date.now() - startTime,
-            circuitBreakerState: circuitState,
-            metrics: {
-              circuitBreakerBlocked: true,
-              totalRetries: 0,
-              executionTime: Date.now() - startTime
-            }
-          };
-        }
-        let lastError;
-        let totalRetries = 0;
-        for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
-          try {
-            const operationStartTime = Date.now();
-            const result = await operation();
-            const operationDuration = Date.now() - operationStartTime;
-            this.recordSuccess(operationName);
-            this.trackOperationSuccess(
-              operationName,
-              operationDuration,
-              attempt
-            );
-            console.log(
-              `[ErrorHandlingService] Operation ${operationName} succeeded on attempt ${attempt + 1} in ${operationDuration}ms`
-            );
-            return {
-              success: true,
-              result,
-              retries: attempt,
-              duration: Date.now() - startTime,
-              circuitBreakerState: this.getCircuitBreakerState(operationName),
-              metrics: {
-                totalRetries: attempt,
-                executionTime: Date.now() - startTime,
-                operationDuration,
-                circuitBreakerBlocked: false
-              }
-            };
-          } catch (error) {
-            lastError = error instanceof Error ? error : new Error(String(error));
-            totalRetries = attempt;
-            console.warn(
-              `[ErrorHandlingService] Operation ${operationName} failed on attempt ${attempt + 1}:`,
-              error
-            );
-            this.recordFailure(operationName);
-            this.trackOperationFailure(operationName, error, attempt);
-            if (attempt < config.maxRetries && this.shouldRetry(error)) {
-              const delay = this.calculateRetryDelay(attempt, config);
-              console.log(
-                `[ErrorHandlingService] Retrying ${operationName} in ${delay}ms`
-              );
-              await this.delay(delay);
-            } else {
-              break;
-            }
-          }
-        }
-        console.error(
-          `[ErrorHandlingService] Operation ${operationName} failed after ${totalRetries} retries`
-        );
-        return {
-          success: false,
-          error: lastError,
-          retries: totalRetries,
-          duration: Date.now() - startTime,
-          circuitBreakerState: this.getCircuitBreakerState(operationName),
-          metrics: {
-            totalRetries,
-            executionTime: Date.now() - startTime,
-            circuitBreakerBlocked: false,
-            finalFailure: true
-          }
-        };
-      }
-      /**
-       * Get circuit breaker state
-       */
-      getCircuitBreakerState(serviceName) {
-        if (!this.circuitBreakers.has(serviceName)) {
-          this.circuitBreakers.set(serviceName, {
-            serviceName,
-            state: "CLOSED",
-            failureCount: 0,
-            lastFailureTime: 0,
-            successThreshold: 3,
-            failureThreshold: this.config.circuitBreakerThreshold,
-            timeout: this.config.circuitBreakerTimeout
-          });
-        }
-        const state = this.circuitBreakers.get(serviceName);
-        if (state.state === "OPEN" && Date.now() - state.lastFailureTime > state.timeout) {
-          state.state = "HALF_OPEN";
-          console.log(
-            `[ErrorHandlingService] Circuit breaker for ${serviceName} transitioned to HALF_OPEN`
-          );
-        }
-        return state;
-      }
-      /**
-       * Record operation success
-       */
-      recordSuccess(serviceName) {
-        const state = this.getCircuitBreakerState(serviceName);
-        if (state.state === "HALF_OPEN") {
-          state.state = "CLOSED";
-          state.failureCount = 0;
-          console.log(
-            `[ErrorHandlingService] Circuit breaker for ${serviceName} closed after successful operation`
-          );
-        } else if (state.state === "CLOSED") {
-          state.failureCount = Math.max(0, state.failureCount - 1);
-        }
-      }
-      /**
-       * Record operation failure
-       */
-      recordFailure(serviceName) {
-        const state = this.getCircuitBreakerState(serviceName);
-        state.failureCount++;
-        state.lastFailureTime = Date.now();
-        if (state.state === "HALF_OPEN") {
-          state.state = "OPEN";
-          console.log(
-            `[ErrorHandlingService] Circuit breaker for ${serviceName} reopened after failure in HALF_OPEN state`
-          );
-        } else if (state.state === "CLOSED" && state.failureCount >= state.failureThreshold) {
-          state.state = "OPEN";
-          console.warn(
-            `[ErrorHandlingService] Circuit breaker for ${serviceName} opened after ${state.failureCount} failures`
-          );
-        }
-      }
-      /**
-       * Calculate retry delay with jitter
-       */
-      calculateRetryDelay(attempt, config) {
-        if (!config.exponentialBackoff) {
-          return config.retryDelay;
-        }
-        const baseDelay = config.retryDelay * Math.pow(2, attempt);
-        const jitter = Math.random() * baseDelay * 0.1;
-        const finalDelay = baseDelay + (Math.random() > 0.5 ? jitter : -jitter);
-        return Math.min(finalDelay, 3e4);
-      }
-      /**
-       * Advanced error classification with ML-inspired patterns
-       */
-      shouldRetry(error) {
-        const errorMessage = error.message.toLowerCase();
-        const nonRetryablePatterns = [
-          "invalidargument",
-          "notfound",
-          "alreadyexists",
-          "permissiondenied",
-          "unauthenticated",
-          "unauthorized",
-          "badrequest",
-          "forbidden",
-          "conflict",
-          "gone"
-        ];
-        const retryablePatterns = [
-          "timeout",
-          "deadlineexceeded",
-          "unavailable",
-          "busy",
-          "overloaded",
-          "temporarilyunavailable",
-          "network",
-          "connection",
-          "socket"
-        ];
-        if (nonRetryablePatterns.some(
-          (pattern) => errorMessage.includes(pattern)
-        )) {
-          return false;
-        }
-        if (retryablePatterns.some((pattern) => errorMessage.includes(pattern))) {
-          return true;
-        }
-        return this.isTransientError(error);
-      }
-      /**
-       * Determine if error is transient
-       */
-      isTransientError(error) {
-        const transientIndicators = [
-          "temporary",
-          "transient",
-          "retry",
-          "again",
-          "later",
-          "soon",
-          "momentarily",
-          "briefly"
-        ];
-        const errorMessage = error.message.toLowerCase();
-        return transientIndicators.some(
-          (indicator) => errorMessage.includes(indicator)
-        );
-      }
-      /**
-       * Track operation success with advanced analytics
-       */
-      trackOperationSuccess(operationName, duration, attempt) {
-        const successMetrics = {
-          operationName,
-          duration,
-          attempt,
-          timestamp: Date.now(),
-          success: true,
-          retryCount: attempt,
-          circuitBreakerState: this.getCircuitBreakerState(operationName).state
-        };
-        console.log(
-          `[ErrorHandlingService] Success metrics: ${JSON.stringify(successMetrics)}`
-        );
-        this.adaptRetryStrategy(operationName, duration, attempt);
-      }
-      /**
-       * Adapt retry strategy based on historical patterns
-       */
-      adaptRetryStrategy(operationName, duration, attempt) {
-        const circuitState = this.getCircuitBreakerState(operationName);
-        if (attempt === 0 && duration < 1e3) {
-          circuitState.successThreshold = Math.max(
-            1,
-            circuitState.successThreshold - 1
-          );
-        }
-      }
-      /**
-       * Track operation failure with advanced analytics
-       */
-      trackOperationFailure(operationName, error, attempt) {
-        const failureMetrics = {
-          operationName,
-          attempt,
-          timestamp: Date.now(),
-          success: false,
-          errorType: this.classifyError(error),
-          errorMessage: error.message.substring(0, 200),
-          // Truncate long messages
-          retryable: this.shouldRetry(error),
-          circuitBreakerState: this.getCircuitBreakerState(operationName).state
-        };
-        console.log(
-          `[ErrorHandlingService] Failure metrics: ${JSON.stringify(failureMetrics)}`
-        );
-      }
-      /**
-       * Classify error for better analytics
-       */
-      classifyError(error) {
-        const errorMessage = error.message.toLowerCase();
-        if (errorMessage.includes("timeout") || errorMessage.includes("deadline")) {
-          return "timeout";
-        } else if (errorMessage.includes("network") || errorMessage.includes("connection")) {
-          return "network";
-        } else if (errorMessage.includes("permission") || errorMessage.includes("unauthorized")) {
-          return "permission";
-        } else if (errorMessage.includes("invalid") || errorMessage.includes("bad request")) {
-          return "validation";
-        } else if (errorMessage.includes("not found") || errorMessage.includes("missing")) {
-          return "not_found";
-        } else {
-          return "unknown";
-        }
-      }
-      /**
-       * Track circuit breaker events
-       */
-      trackCircuitBreakerEvent(operationName, eventType) {
-        console.log(
-          `[ErrorHandlingService] Circuit breaker event: ${operationName}, ${eventType}`
-        );
-      }
-      /**
-       * Delay execution
-       */
-      delay(ms) {
-        return new Promise((resolve2) => setTimeout(resolve2, ms));
-      }
-      /**
-       * Get circuit breaker status
-       */
-      getCircuitBreakerStatus(serviceName) {
-        return this.circuitBreakers.get(serviceName);
-      }
-      /**
-       * Get all circuit breaker statuses
-       */
-      getAllCircuitBreakerStatuses() {
-        return Array.from(this.circuitBreakers.values());
-      }
-      /**
-       * Reset circuit breaker
-       */
-      resetCircuitBreaker(serviceName) {
-        if (this.circuitBreakers.has(serviceName)) {
-          this.circuitBreakers.delete(serviceName);
-          console.log(
-            `[ErrorHandlingService] Circuit breaker reset for ${serviceName}`
-          );
-        }
-      }
-      /**
-       * Update configuration
-       */
-      updateConfiguration(newConfig) {
-        this.config = { ...this.config, ...newConfig };
-        console.log("[ErrorHandlingService] Configuration updated");
-      }
-      /**
-       * Get service statistics
-       */
-      getStatistics() {
-        const states = this.getAllCircuitBreakerStatuses();
-        return {
-          totalCircuitBreakers: states.length,
-          openCircuitBreakers: states.filter((s) => s.state === "OPEN").length,
-          halfOpenCircuitBreakers: states.filter(
-            (s) => s.state === "HALF_OPEN"
-          ).length,
-          closedCircuitBreakers: states.filter((s) => s.state === "CLOSED").length,
-          config: this.config
-        };
-      }
-    };
-    ErrorHandlingServiceLayer = Layer10.effect(
-      "ErrorHandlingService",
-      Effect12.sync(() => new ErrorHandlingService())
-    );
-    ErrorHandlingServiceLive = Layer10.effect(
-      "ErrorHandlingService",
-      Effect12.sync(() => new ErrorHandlingService())
-    );
-  }
-});
-
-// Source/Interfaces/IGRPCServerService.ts
-import { Context as Context10 } from "effect";
-var IGRPCServerService;
-var init_IGRPCServerService = __esm({
-  "Source/Interfaces/IGRPCServerService.ts"() {
-    "use strict";
-    IGRPCServerService = Context10.GenericTag("IGRPCServerService");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WindowNamespace.ts
-var WindowNamespace_exports = {};
-__export(WindowNamespace_exports, {
-  default: () => WindowNamespace_default
-});
-var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
-var init_WindowNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
-    "use strict";
-    MakeEventSubscriber = /* @__PURE__ */ __name((Context22, EventName) => (Callback) => {
-      Context22.Emitter.on(EventName, Callback);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context22.Emitter.off(EventName, Callback);
-        }, "dispose")
-      };
-    }, "MakeEventSubscriber");
-    OutputChannelCounter = 0;
-    TerminalCounter = 0;
-    StatusBarCounter = 0;
-    CreateWindowNamespace = /* @__PURE__ */ __name((Context22) => {
-      const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
-        Context22.SendToMountain("window.showMessage", {
-          message: Message,
-          level: Level,
-          items: Items
-        }).catch(() => {
-        });
-        return void 0;
-      }, "ShowMessage");
-      return {
-        showInformationMessage: ShowMessage("info"),
-        showErrorMessage: ShowMessage("error"),
-        showWarningMessage: ShowMessage("warn"),
-        showQuickPick: /* @__PURE__ */ __name(async (Items, _Options) => {
-          Context22.SendToMountain("window.showQuickPick", { items: Items }).catch(
-            () => {
-            }
-          );
-          return void 0;
-        }, "showQuickPick"),
-        showInputBox: /* @__PURE__ */ __name(async (_Options) => {
-          Context22.SendToMountain("window.showInputBox", {}).catch(() => {
-          });
-          return void 0;
-        }, "showInputBox"),
-        showOpenDialog: /* @__PURE__ */ __name(async (_Options) => [], "showOpenDialog"),
-        showSaveDialog: /* @__PURE__ */ __name(async (_Options) => void 0, "showSaveDialog"),
-        createTerminal: /* @__PURE__ */ __name((Options) => {
-          const Handle = `terminal:${++TerminalCounter}`;
-          const Name = Options?.name ?? `Terminal ${TerminalCounter}`;
-          Context22.SendToMountain("window.createTerminal", {
-            handle: Handle,
-            name: Name,
-            options: Options ?? {}
-          }).catch(() => {
-          });
-          return {
-            name: Name,
-            processId: Promise.resolve(void 0),
-            sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
-              Context22.SendToMountain("terminal.sendText", {
-                handle: Handle,
-                text: Text
-              }).catch(() => {
-              });
-            }, "sendText"),
-            show: /* @__PURE__ */ __name((PreserveFocus) => {
-              Context22.SendToMountain("terminal.show", {
-                handle: Handle,
-                preserveFocus: PreserveFocus
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("terminal.hide", { handle: Handle }).catch(
-                () => {
-                }
-              );
-            }, "hide"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("terminal.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "createTerminal"),
-        createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => {
-          const Handle = `statusBar:${++StatusBarCounter}`;
-          const Item = {
-            id: Handle,
-            alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
-            priority: Priority,
-            text: "",
-            tooltip: "",
-            command: void 0,
-            show: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("statusBar.update", {
-                handle: Handle,
-                text: Item.text,
-                tooltip: Item.tooltip,
-                command: Item.command,
-                visible: true
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("statusBar.update", {
-                handle: Handle,
-                visible: false
-              }).catch(() => {
-              });
-            }, "hide"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("statusBar.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose")
-          };
-          return Item;
-        }, "createStatusBarItem"),
-        createOutputChannel: /* @__PURE__ */ __name((Name, Options) => {
-          const Handle = `outputChannel:${++OutputChannelCounter}`;
-          const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
-          Context22.SendToMountain("outputChannel.create", {
-            handle: Handle,
-            name: Name,
-            log: IsLog
-          }).catch(() => {
-          });
-          const Channel = {
-            name: Name,
-            append: /* @__PURE__ */ __name((Value) => {
-              Context22.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: Value
-              }).catch(() => {
-              });
-            }, "append"),
-            appendLine: /* @__PURE__ */ __name((Value) => {
-              Context22.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `${Value}
-`
-              }).catch(() => {
-              });
-            }, "appendLine"),
-            clear: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("outputChannel.clear", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "clear"),
-            show: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("outputChannel.show", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("outputChannel.hide", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "hide"),
-            replace: /* @__PURE__ */ __name((Value) => {
-              Context22.SendToMountain("outputChannel.clear", {
-                handle: Handle
-              }).catch(() => {
-              });
-              Context22.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: Value
-              }).catch(() => {
-              });
-            }, "replace"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("outputChannel.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose"),
-            // LogOutputChannel additions — returned when the caller passes
-            // `{ log: true }`. Kept on the base channel for simplicity;
-            // these are inert on non-log channels.
-            logLevel: 2,
-            // LogLevel.Info
-            onDidChangeLogLevel: /* @__PURE__ */ __name((_Listener) => ({
-              dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose")
-            }), "onDidChangeLogLevel"),
-            trace: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context22.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[trace] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "trace"),
-            debug: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context22.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[debug] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "debug"),
-            info: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context22.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[info] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "info"),
-            warn: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context22.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[warn] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "warn"),
-            error: /* @__PURE__ */ __name((MessageOrError, ..._Arguments) => {
-              const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
-              Context22.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[error] ${Text}
-`
-              }).catch(() => {
-              });
-            }, "error")
-          };
-          void IsLog;
-          return Channel;
-        }, "createOutputChannel"),
-        createTextEditorDecorationType: /* @__PURE__ */ __name((Options) => {
-          const Key = `decoration:${Math.random().toString(36).slice(2)}`;
-          Context22.SendToMountain("window.createTextEditorDecorationType", {
-            key: Key,
-            options: Options ?? {}
-          }).catch(() => {
-          });
-          return {
-            key: Key,
-            dispose: /* @__PURE__ */ __name(() => {
-              Context22.SendToMountain("window.disposeTextEditorDecorationType", {
-                key: Key
-              }).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "createTextEditorDecorationType"),
-        registerTerminalQuickFixProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalQuickFixProvider"),
-        registerTerminalCompletionProvider: /* @__PURE__ */ __name((_Id, _Provider, ..._TriggerCharacters) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalCompletionProvider"),
-        createQuickPick: /* @__PURE__ */ __name(() => ({
-          value: "",
-          placeholder: void 0,
-          items: [],
-          activeItems: [],
-          selectedItems: [],
-          canSelectMany: false,
-          matchOnDescription: false,
-          matchOnDetail: false,
-          busy: false,
-          enabled: true,
-          ignoreFocusOut: false,
-          step: void 0,
-          totalSteps: void 0,
-          title: void 0,
-          buttons: [],
-          show: /* @__PURE__ */ __name(() => {
-          }, "show"),
-          hide: /* @__PURE__ */ __name(() => {
-          }, "hide"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidAccept"),
-          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeValue"),
-          onDidChangeActive: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeActive"),
-          onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeSelection"),
-          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidTriggerButton"),
-          onDidTriggerItemButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidTriggerItemButton"),
-          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidHide")
-        }), "createQuickPick"),
-        createInputBox: /* @__PURE__ */ __name(() => ({
-          value: "",
-          valueSelection: void 0,
-          placeholder: void 0,
-          password: false,
-          busy: false,
-          enabled: true,
-          ignoreFocusOut: false,
-          prompt: void 0,
-          validationMessage: void 0,
-          step: void 0,
-          totalSteps: void 0,
-          title: void 0,
-          buttons: [],
-          show: /* @__PURE__ */ __name(() => {
-          }, "show"),
-          hide: /* @__PURE__ */ __name(() => {
-          }, "hide"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidAccept"),
-          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeValue"),
-          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidTriggerButton"),
-          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidHide")
-        }), "createInputBox"),
-        createWebviewPanel: /* @__PURE__ */ __name((_ViewType, _Title, _ShowOptions, _Options) => ({
-          viewType: _ViewType,
-          title: _Title,
-          iconPath: void 0,
-          webview: {
-            options: {},
-            html: "",
-            cspSource: "",
-            asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
-            postMessage: /* @__PURE__ */ __name(async () => false, "postMessage"),
-            onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidReceiveMessage")
-          },
-          options: {},
-          viewColumn: 1,
-          active: true,
-          visible: true,
-          reveal: /* @__PURE__ */ __name(() => {
-          }, "reveal"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          onDidDispose: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidDispose"),
-          onDidChangeViewState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeViewState")
-        }), "createWebviewPanel"),
-        showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
-          Context22.SendToMountain("window.showTextDocument", {
-            document: _Document,
-            column: _Column,
-            preserveFocus: _PreserveFocus
-          }).catch(() => {
-          });
-          return void 0;
-        }, "showTextDocument"),
-        showNotebookDocument: /* @__PURE__ */ __name(async (_Document, _Options) => void 0, "showNotebookDocument"),
-        tabGroups: {
-          all: [],
-          activeTabGroup: {
-            tabs: [],
-            isActive: true,
-            viewColumn: 1,
-            activeTab: void 0
-          },
-          onDidChangeTabs: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeTabs"),
-          onDidChangeTabGroups: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeTabGroups"),
-          close: /* @__PURE__ */ __name(async () => true, "close")
-        },
-        activeColorTheme: {
-          kind: 2,
-          // ColorThemeKind.Dark
-          onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChange")
-        },
-        onDidChangeActiveColorTheme: MakeEventSubscriber(
-          Context22,
-          "window.didChangeActiveColorTheme"
-        ),
-        createTreeView: /* @__PURE__ */ __name((_Id, _Options) => ({
-          reveal: /* @__PURE__ */ __name(async () => {
-          }, "reveal"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          selection: [],
-          visible: true,
-          title: void 0,
-          description: void 0,
-          message: void 0,
-          badge: void 0,
-          onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeSelection"),
-          onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeVisibility"),
-          onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidCollapseElement"),
-          onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidExpandElement"),
-          onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeCheckboxState")
-        }), "createTreeView"),
-        registerTreeDataProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTreeDataProvider"),
-        registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerWebviewPanelSerializer"),
-        registerWebviewViewProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerWebviewViewProvider"),
-        registerCustomEditorProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerCustomEditorProvider"),
-        registerFileDecorationProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerFileDecorationProvider"),
-        registerUriHandler: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerUriHandler"),
-        registerTerminalLinkProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalLinkProvider"),
-        registerTerminalProfileProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalProfileProvider"),
-        registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerProfileContentHandler"),
-        registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerExternalUriOpener"),
-        withProgress: /* @__PURE__ */ __name(async (_Option, Task3) => Task3({ report: /* @__PURE__ */ __name(() => {
-        }, "report") }), "withProgress"),
-        setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
-          Context22.SendToMountain("statusBar.message", {
-            text: Text,
-            hideAfter: typeof HideAfter === "number" ? HideAfter : void 0
-          }).catch(() => {
-          });
-          return { dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") };
-        }, "setStatusBarMessage"),
-        // Events sourced from Mountain gRPC notifications → Context.Emitter
-        onDidChangeActiveTextEditor: MakeEventSubscriber(
-          Context22,
-          "window.didChangeActiveTextEditor"
-        ),
-        onDidChangeVisibleTextEditors: MakeEventSubscriber(
-          Context22,
-          "window.didChangeVisibleTextEditors"
-        ),
-        onDidChangeTextEditorSelection: MakeEventSubscriber(
-          Context22,
-          "window.didChangeTextEditorSelection"
-        ),
-        onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
-          Context22,
-          "window.didChangeTextEditorVisibleRanges"
-        ),
-        onDidChangeTextEditorOptions: MakeEventSubscriber(
-          Context22,
-          "window.didChangeTextEditorOptions"
-        ),
-        onDidChangeTextEditorViewColumn: MakeEventSubscriber(
-          Context22,
-          "window.didChangeTextEditorViewColumn"
-        ),
-        onDidOpenTerminal: MakeEventSubscriber(Context22, "window.didOpenTerminal"),
-        onDidCloseTerminal: MakeEventSubscriber(Context22, "window.didCloseTerminal"),
-        onDidChangeWindowState: MakeEventSubscriber(
-          Context22,
-          "window.didChangeWindowState"
-        ),
-        activeTextEditor: void 0,
-        visibleTextEditors: [],
-        terminals: [],
-        activeTerminal: void 0,
-        state: { focused: true, active: true }
-      };
-    }, "CreateWindowNamespace");
-    WindowNamespace_default = CreateWindowNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts
-var WorkspaceNamespace_exports = {};
-__export(WorkspaceNamespace_exports, {
-  default: () => WorkspaceNamespace_default
-});
-var EventSubscriber, Call, CreateWorkspaceNamespace, WorkspaceNamespace_default;
-var init_WorkspaceNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts"() {
-    "use strict";
-    EventSubscriber = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
-      Context22.WorkspaceEventEmitter.on(EventName, Listener);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context22.WorkspaceEventEmitter.removeListener(EventName, Listener);
-        }, "dispose")
-      };
-    }, "EventSubscriber");
-    Call = /* @__PURE__ */ __name(async (Context22, Method, Parameters) => {
-      try {
-        return await Context22.MountainClient?.sendRequest(Method, Parameters);
-      } catch {
-        return void 0;
-      }
-    }, "Call");
-    CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context22) => {
-      const InitWorkspace = Context22.ExtensionHostInitData?.workspace ?? Context22.ExtensionHostInitData?.workspaceData ?? {};
-      return {
-        workspaceFolders: InitWorkspace.folders ?? [],
-        name: InitWorkspace.name,
-        workspaceFile: void 0,
-        rootPath: void 0,
-        textDocuments: [],
-        notebookDocuments: [],
-        getConfiguration: /* @__PURE__ */ __name((Section, _Scope) => ({
-          get: /* @__PURE__ */ __name((Key, DefaultValue) => {
-            const Full = Section ? `${Section}.${Key}` : Key;
-            void Call(Context22, "Configuration.Inspect", [Full]);
-            return DefaultValue;
-          }, "get"),
-          update: /* @__PURE__ */ __name(async (Key, Value, Target) => {
-            const Full = Section ? `${Section}.${Key}` : Key;
-            const TargetIndex = Target === 2 ? 1 : Target === true ? 0 : typeof Target === "number" ? Target : 0;
-            await Call(Context22, "Configuration.Update", [
-              Full,
-              Value,
-              TargetIndex
-            ]);
-          }, "update"),
-          has: /* @__PURE__ */ __name((Key) => {
-            void Key;
-            return false;
-          }, "has"),
-          inspect: /* @__PURE__ */ __name(() => void 0, "inspect")
-        }), "getConfiguration"),
-        findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
-          const Pattern = typeof Include === "string" ? Include : Include?.pattern ?? "";
-          const ExcludePattern = typeof Exclude === "string" ? Exclude : Exclude?.pattern;
-          const Results = await Call(Context22, "Search.TextSearch", {
-            pattern: Pattern,
-            include: Pattern,
-            exclude: ExcludePattern,
-            maxResults: MaxResults,
-            isRegExp: false,
-            isCaseSensitive: false,
-            isWordMatch: false
-          });
-          return Results ?? [];
-        }, "findFiles"),
-        openTextDocument: /* @__PURE__ */ __name(async (UriOrPath) => {
-          const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
-          const Cached = Context22.DocumentContentCache.get(UriString);
-          const Text = Cached ?? await Call(Context22, "FileSystem.ReadFile", [UriString]) ?? "";
-          return {
-            uri: UriOrPath,
-            fileName: UriString,
-            languageId: "plaintext",
-            isDirty: false,
-            isClosed: false,
-            isUntitled: false,
-            version: 1,
-            eol: 1,
-            lineCount: Text.split("\n").length,
-            getText: /* @__PURE__ */ __name(() => Text, "getText"),
-            save: /* @__PURE__ */ __name(async () => true, "save")
-          };
-        }, "openTextDocument"),
-        saveAll: /* @__PURE__ */ __name(async (_IncludeUntitled) => {
-          await Call(Context22, "Document.Save", []);
-          return true;
-        }, "saveAll"),
-        applyEdit: /* @__PURE__ */ __name(async (_Edit) => {
-          Context22.SendToMountain("workspace.applyEdit", _Edit).catch(() => {
-          });
-          return true;
-        }, "applyEdit"),
-        asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
-        updateWorkspaceFolders: /* @__PURE__ */ __name(() => false, "updateWorkspaceFolders"),
-        onDidOpenTextDocument: EventSubscriber(Context22, "didOpenTextDocument"),
-        onDidCloseTextDocument: EventSubscriber(Context22, "didCloseTextDocument"),
-        onDidChangeTextDocument: EventSubscriber(Context22, "didChangeTextDocument"),
-        onDidSaveTextDocument: EventSubscriber(Context22, "didSaveTextDocument"),
-        onWillSaveTextDocument: EventSubscriber(Context22, "willSaveTextDocument"),
-        onDidCreateFiles: EventSubscriber(Context22, "didCreateFiles"),
-        onDidDeleteFiles: EventSubscriber(Context22, "didDeleteFiles"),
-        onDidRenameFiles: EventSubscriber(Context22, "didRenameFiles"),
-        onDidChangeConfiguration: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeConfiguration"),
-        onDidChangeWorkspaceFolders: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeWorkspaceFolders"),
-        registerTextDocumentContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTextDocumentContentProvider"),
-        registerFileSystemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerFileSystemProvider"),
-        registerTaskProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTaskProvider"),
-        registerNotebookContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerNotebookContentProvider"),
-        registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerNotebookSerializer"),
-        registerRemoteAuthorityResolver: /* @__PURE__ */ __name((_AuthorityPrefix, _Resolver) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerRemoteAuthorityResolver"),
-        registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerResourceLabelFormatter"),
-        registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerDocumentPasteEditProvider"),
-        registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerDocumentDropEditProvider"),
-        registerEditSessionIdentityProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerEditSessionIdentityProvider"),
-        registerShareProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerShareProvider"),
-        registerCanonicalUriProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerCanonicalUriProvider"),
-        onDidGrantWorkspaceTrust: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidGrantWorkspaceTrust"),
-        isTrusted: true,
-        trusted: true,
-        requestWorkspaceTrust: /* @__PURE__ */ __name(async () => true, "requestWorkspaceTrust"),
-        onDidOpenNotebookDocument: EventSubscriber(Context22, "didOpenNotebookDocument"),
-        onDidCloseNotebookDocument: EventSubscriber(Context22, "didCloseNotebookDocument"),
-        onDidChangeNotebookDocument: EventSubscriber(Context22, "didChangeNotebookDocument"),
-        onDidSaveNotebookDocument: EventSubscriber(Context22, "didSaveNotebookDocument"),
-        onWillSaveNotebookDocument: EventSubscriber(Context22, "willSaveNotebookDocument"),
-        onWillRenameFiles: EventSubscriber(Context22, "willRenameFiles"),
-        onWillCreateFiles: EventSubscriber(Context22, "willCreateFiles"),
-        onWillDeleteFiles: EventSubscriber(Context22, "willDeleteFiles"),
-        registerTunnelProvider: /* @__PURE__ */ __name((_Provider, _Information) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTunnelProvider"),
-        openTunnel: /* @__PURE__ */ __name(async (_TunnelOptions) => ({
-          remoteAddress: { port: 0, host: "localhost" },
-          localAddress: "",
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "openTunnel"),
-        tunnels: Promise.resolve([]),
-        onDidChangeTunnels: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeTunnels"),
-        registerPortAttributesProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerPortAttributesProvider"),
-        createFileSystemWatcher: /* @__PURE__ */ __name(() => ({
-          ignoreCreateEvents: false,
-          ignoreChangeEvents: false,
-          ignoreDeleteEvents: false,
-          onDidCreate: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidCreate"),
-          onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChange"),
-          onDidDelete: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidDelete"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "createFileSystemWatcher"),
-        fs: {
-          // FileSystem.Stat is not yet in CreateEffectForRequest — falls back
-          // to defaults via Call's try/catch until the Rust route is added.
-          stat: /* @__PURE__ */ __name(async (Uri2) => await Call(Context22, "FileSystem.Stat", [String(Uri2)]) ?? {
-            type: 1,
-            size: 0,
-            ctime: 0,
-            mtime: 0
-          }, "stat"),
-          readFile: /* @__PURE__ */ __name(async (Uri2) => {
-            const Text = await Call(Context22, "FileSystem.ReadFile", [
-              String(Uri2)
-            ]) ?? "";
-            return new TextEncoder().encode(Text);
-          }, "readFile"),
-          writeFile: /* @__PURE__ */ __name(async (Uri2, Content) => {
-            const Text = new TextDecoder().decode(Content);
-            await Call(Context22, "FileSystem.WriteFile", [
-              String(Uri2),
-              Text
-            ]);
-          }, "writeFile"),
-          readDirectory: /* @__PURE__ */ __name(async (Uri2) => await Call(Context22, "FileSystem.ReadDirectory", [
-            String(Uri2)
-          ]) ?? [], "readDirectory"),
-          createDirectory: /* @__PURE__ */ __name(async (Uri2) => {
-            await Call(Context22, "FileSystem.CreateDirectory", [
-              String(Uri2)
-            ]);
-          }, "createDirectory"),
-          delete: /* @__PURE__ */ __name(async (Uri2, Options) => {
-            await Call(Context22, "FileSystem.Delete", [
-              String(Uri2),
-              Options?.recursive ?? false
-            ]);
-          }, "delete"),
-          rename: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
-            await Call(Context22, "FileSystem.Rename", [
-              String(Source),
-              String(Target)
-            ]);
-          }, "rename"),
-          copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
-            await Call(Context22, "FileSystem.Copy", [
-              String(Source),
-              String(Target)
-            ]);
-          }, "copy"),
-          isWritableFileSystem: /* @__PURE__ */ __name((_Scheme) => true, "isWritableFileSystem")
-        }
-      };
-    }, "CreateWorkspaceNamespace");
-    WorkspaceNamespace_default = CreateWorkspaceNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/CommandsNamespace.ts
-var CommandsNamespace_exports = {};
-__export(CommandsNamespace_exports, {
-  default: () => CommandsNamespace_default
-});
-var CreateCommandsNamespace, CommandsNamespace_default;
-var init_CommandsNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/CommandsNamespace.ts"() {
-    "use strict";
-    CreateCommandsNamespace = /* @__PURE__ */ __name((Context22, LanguageProviderRegistry) => ({
-      registerCommand: /* @__PURE__ */ __name((Command, Callback) => {
-        LanguageProviderRegistry.RegisterCommand(Command, Callback);
-        Context22.SendToMountain("registerCommand", { commandId: Command }).catch(
-          () => {
-          }
-        );
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            LanguageProviderRegistry.UnregisterCommand(Command);
-            Context22.SendToMountain("unregisterCommand", {
-              commandId: Command
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerCommand"),
-      registerTextEditorCommand: /* @__PURE__ */ __name((Command, Callback) => {
-        LanguageProviderRegistry.RegisterCommand(Command, Callback);
-        Context22.SendToMountain("registerCommand", {
-          commandId: Command,
-          kind: "textEditor"
-        }).catch(() => {
-        });
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            LanguageProviderRegistry.UnregisterCommand(Command);
-            Context22.SendToMountain("unregisterCommand", {
-              commandId: Command
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerTextEditorCommand"),
-      executeCommand: /* @__PURE__ */ __name(async (Command, ...Arguments) => {
-        const LocalResult = LanguageProviderRegistry.ExecuteCommand(
-          Command,
-          ...Arguments
-        );
-        if (LocalResult !== void 0) return LocalResult;
-        try {
-          return await Context22.MountainClient?.sendRequest("Command.Execute", [
-            Command,
-            ...Arguments
-          ]);
-        } catch {
-          return void 0;
-        }
-      }, "executeCommand"),
-      getCommands: /* @__PURE__ */ __name(async (FilterInternal) => {
-        try {
-          const Response = await Context22.MountainClient?.sendRequest(
-            "Command.GetAll",
-            [FilterInternal ?? false]
-          );
-          if (Array.isArray(Response)) return Response;
-          return [];
-        } catch {
-          return [];
-        }
-      }, "getCommands")
-    }), "CreateCommandsNamespace");
-    CommandsNamespace_default = CreateCommandsNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts
-var LanguagesNamespace_exports = {};
-__export(LanguagesNamespace_exports, {
-  default: () => LanguagesNamespace_default
-});
-var RegisterProvider, CreateLanguagesNamespace, LanguagesNamespace_default;
-var init_LanguagesNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts"() {
-    "use strict";
-    RegisterProvider = /* @__PURE__ */ __name((Context22, LanguageProviderRegistry, MethodName, Selector, Provider) => {
-      const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
-      const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
-      Context22.SendToMountain(MethodName, { handle: Handle, language_selector: Language2, extension_id: "" }).catch(() => {
-      });
-      return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
-    }, "RegisterProvider");
-    CreateLanguagesNamespace = /* @__PURE__ */ __name((Context22, LanguageProviderRegistry) => ({
-      registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_hover_provider", Selector, Provider), "registerHoverProvider"),
-      registerCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider, ..._TriggerCharacters) => RegisterProvider(Context22, LanguageProviderRegistry, "register_completion_item_provider", Selector, Provider), "registerCompletionItemProvider"),
-      registerDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_definition_provider", Selector, Provider), "registerDefinitionProvider"),
-      registerReferenceProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_reference_provider", Selector, Provider), "registerReferenceProvider"),
-      registerCodeActionsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_code_actions_provider", Selector, Provider), "registerCodeActionsProvider"),
-      registerDocumentSymbolProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_document_symbol_provider", Selector, Provider), "registerDocumentSymbolProvider"),
-      registerDocumentFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_document_formatting_provider", Selector, Provider), "registerDocumentFormattingEditProvider"),
-      registerDocumentRangeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_document_range_formatting_provider", Selector, Provider), "registerDocumentRangeFormattingEditProvider"),
-      registerOnTypeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider, _FirstTrigger, ..._MoreTriggers) => RegisterProvider(Context22, LanguageProviderRegistry, "register_on_type_formatting_provider", Selector, Provider), "registerOnTypeFormattingEditProvider"),
-      registerTypeDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_type_definition_provider", Selector, Provider), "registerTypeDefinitionProvider"),
-      registerImplementationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_implementation_provider", Selector, Provider), "registerImplementationProvider"),
-      registerDeclarationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_declaration_provider", Selector, Provider), "registerDeclarationProvider"),
-      registerDocumentLinkProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_document_link_provider", Selector, Provider), "registerDocumentLinkProvider"),
-      registerColorProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_color_provider", Selector, Provider), "registerColorProvider"),
-      registerLinkedEditingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_linked_editing_range_provider", Selector, Provider), "registerLinkedEditingRangeProvider"),
-      registerCallHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_call_hierarchy_provider", Selector, Provider), "registerCallHierarchyProvider"),
-      registerTypeHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_type_hierarchy_provider", Selector, Provider), "registerTypeHierarchyProvider"),
-      registerEvaluatableExpressionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_evaluatable_expression_provider", Selector, Provider), "registerEvaluatableExpressionProvider"),
-      registerInlineValuesProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_inline_values_provider", Selector, Provider), "registerInlineValuesProvider"),
-      registerSignatureHelpProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_signature_help_provider", Selector, Provider), "registerSignatureHelpProvider"),
-      registerDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_document_highlight_provider", Selector, Provider), "registerDocumentHighlightProvider"),
-      registerCodeLensProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_code_lens_provider", Selector, Provider), "registerCodeLensProvider"),
-      registerRenameProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_rename_provider", Selector, Provider), "registerRenameProvider"),
-      registerFoldingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_folding_range_provider", Selector, Provider), "registerFoldingRangeProvider"),
-      registerSelectionRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_selection_range_provider", Selector, Provider), "registerSelectionRangeProvider"),
-      registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(Context22, LanguageProviderRegistry, "register_semantic_tokens_provider", Selector, Provider), "registerDocumentSemanticTokensProvider"),
-      registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(Context22, LanguageProviderRegistry, "register_inlay_hints_provider", Selector, Provider), "registerInlayHintsProvider"),
-      createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
-        const Owner = Name ?? "default";
-        const Store = /* @__PURE__ */ new Map();
-        return {
-          name: Owner,
-          set: /* @__PURE__ */ __name((UriOrEntries, Diagnostics) => {
-            if (Array.isArray(UriOrEntries) && Diagnostics === void 0) {
-              const Entries = UriOrEntries;
-              for (const [Uri2, D] of Entries) {
-                Store.set(String(Uri2), D ?? []);
-              }
-            } else {
-              Store.set(String(UriOrEntries), Diagnostics ?? []);
-            }
-            Context22.MountainClient?.sendRequest("Diagnostic.Set", [
-              Owner,
-              [...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D }))
-            ]).catch(() => {
-            });
-          }, "set"),
-          delete: /* @__PURE__ */ __name((Uri2) => {
-            Store.delete(String(Uri2));
-            Context22.MountainClient?.sendRequest("Diagnostic.Set", [
-              Owner,
-              [...Store.entries()].map(([U, D]) => ({ uri: U, diagnostics: D }))
-            ]).catch(() => {
-            });
-          }, "delete"),
-          clear: /* @__PURE__ */ __name(() => {
-            Store.clear();
-            Context22.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
-              () => {
-              }
-            );
-          }, "clear"),
-          forEach: /* @__PURE__ */ __name((Callback) => {
-            const Self = null;
-            for (const [Uri2, Diagnostics] of Store) {
-              Callback(Uri2, Diagnostics, Self);
-            }
-          }, "forEach"),
-          get: /* @__PURE__ */ __name((Uri2) => Store.get(String(Uri2)) ?? [], "get"),
-          has: /* @__PURE__ */ __name((Uri2) => Store.has(String(Uri2)), "has"),
-          dispose: /* @__PURE__ */ __name(() => {
-            Store.clear();
-            Context22.MountainClient?.sendRequest("Diagnostic.Clear", [Owner]).catch(
-              () => {
-              }
-            );
-          }, "dispose")
-        };
-      }, "createDiagnosticCollection"),
-      getLanguages: /* @__PURE__ */ __name(async () => {
-        try {
-          const Result = await Context22.MountainClient?.sendRequest(
-            "Languages.GetAll",
-            []
-          );
-          return Array.isArray(Result) ? Result : [];
-        } catch {
-          return [];
-        }
-      }, "getLanguages"),
-      setTextDocumentLanguage: /* @__PURE__ */ __name(async (Document, LanguageId) => {
-        Context22.SendToMountain("languages.setDocumentLanguage", {
-          uri: Document?.uri?.toString?.() ?? "",
-          languageId: LanguageId
-        }).catch(() => {
-        });
-        return Document;
-      }, "setTextDocumentLanguage"),
-      match: /* @__PURE__ */ __name((_Selector, _Document) => 10, "match"),
-      onDidChangeDiagnostics: /* @__PURE__ */ __name((Listener) => {
-        Context22.Emitter.on("diagnostics.didChange", Listener);
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context22.Emitter.off("diagnostics.didChange", Listener);
-          }, "dispose")
-        };
-      }, "onDidChangeDiagnostics"),
-      getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
-      registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerDocumentPasteEditProvider"),
-      registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerDocumentDropEditProvider"),
-      registerInlineCompletionItemProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerInlineCompletionItemProvider"),
-      registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerInlineEditProvider"),
-      registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerMultiDocumentHighlightProvider"),
-      registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerMappedEditsProvider")
-    }), "CreateLanguagesNamespace");
-    LanguagesNamespace_default = CreateLanguagesNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts
-var ExtensionsNamespace_exports = {};
-__export(ExtensionsNamespace_exports, {
-  default: () => ExtensionsNamespace_default
-});
-var MakePermissiveExports, ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
-var init_ExtensionsNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
-    "use strict";
-    MakePermissiveExports = /* @__PURE__ */ __name(() => new Proxy(
-      {
-        enabled: true,
-        getAPI: /* @__PURE__ */ __name((_Version) => MakePermissiveExports(), "getAPI")
-      },
-      {
-        get(Target, Property) {
-          if (Property in Target) {
-            return Target[Property];
-          }
-          if (typeof Property === "string") {
-            if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
-              return () => ({ dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose") });
-            }
-            if (Property === "then") return void 0;
-          }
-          return () => void 0;
-        }
-      }
-    ), "MakePermissiveExports");
-    ToExtensionObject = /* @__PURE__ */ __name((Context22, Id, Raw) => ({
-      id: Id,
-      extensionUri: Raw?.extensionLocation ?? { scheme: "file", path: "", fsPath: "" },
-      extensionPath: Raw?.extensionLocation?.fsPath ?? Raw?.extensionLocation?.path ?? "",
-      isActive: Context22.ActivatedExtensions.has(Id),
-      packageJSON: Raw,
-      extensionKind: 1,
-      exports: MakePermissiveExports(),
-      activate: /* @__PURE__ */ __name(async () => {
-      }, "activate")
-    }), "ToExtensionObject");
-    CreateExtensionsNamespace = /* @__PURE__ */ __name((Context22) => ({
-      getExtension: /* @__PURE__ */ __name((Identifier) => {
-        const Raw = Context22.ExtensionRegistry.get(Identifier);
-        return Raw ? ToExtensionObject(Context22, Identifier, Raw) : void 0;
-      }, "getExtension"),
-      get all() {
-        return [...Context22.ExtensionRegistry.entries()].map(
-          ([Id, Raw]) => ToExtensionObject(Context22, Id, Raw)
-        );
-      },
-      onDidChange: /* @__PURE__ */ __name((Listener) => {
-        Context22.Emitter.on("deltaExtensions", Listener);
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context22.Emitter.off("deltaExtensions", Listener);
-          }, "dispose")
-        };
-      }, "onDidChange")
-    }), "CreateExtensionsNamespace");
-    ExtensionsNamespace_default = CreateExtensionsNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/EnvNamespace.ts
-var EnvNamespace_exports = {};
-__export(EnvNamespace_exports, {
-  default: () => EnvNamespace_default
-});
-var CreateEnvNamespace, EnvNamespace_default;
-var init_EnvNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/EnvNamespace.ts"() {
-    "use strict";
-    CreateEnvNamespace = /* @__PURE__ */ __name((Context22) => {
-      const Env = Context22.ExtensionHostInitData?.environment ?? {};
-      const Call2 = /* @__PURE__ */ __name(async (Method, Parameters) => {
-        try {
-          return await Context22.MountainClient?.sendRequest(Method, Parameters);
-        } catch {
-          return void 0;
-        }
-      }, "Call");
-      return {
-        appName: Env["appName"] ?? "CodeEditorLand",
-        appRoot: Env["appRoot"] ?? "",
-        appHost: Env["appHost"] ?? "desktop",
-        uiKind: 1,
-        // vscode.UIKind.Desktop
-        language: Env["language"] ?? "en",
-        machineId: Context22.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
-        sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
-        isNewAppInstall: false,
-        isTelemetryEnabled: false,
-        onDidChangeTelemetryEnabled: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeTelemetryEnabled"),
-        uriScheme: Env["uriScheme"] ?? "vscode",
-        shell: Env["shell"] ?? process.env["SHELL"] ?? "",
-        remoteName: void 0,
-        clipboard: {
-          // Clipboard.Read / Clipboard.Write not yet routed — catch returns
-          // empty string / undefined until the Rust dispatcher adds them.
-          readText: /* @__PURE__ */ __name(async () => await Call2("Clipboard.Read", []) ?? "", "readText"),
-          writeText: /* @__PURE__ */ __name(async (Value) => {
-            await Call2("Clipboard.Write", [Value]);
-          }, "writeText")
-        },
-        openExternal: /* @__PURE__ */ __name(async (Target) => {
-          const Ok = await Call2("NativeHost.OpenExternal", [
-            typeof Target === "string" ? Target : String(Target)
-          ]);
-          return Ok ?? false;
-        }, "openExternal"),
-        asExternalUri: /* @__PURE__ */ __name(async (Target) => Target, "asExternalUri"),
-        createTelemetryLogger: /* @__PURE__ */ __name((_Sender, _Options) => ({
-          isUsageEnabled: false,
-          isErrorsEnabled: false,
-          onDidChangeEnableStates: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeEnableStates"),
-          logUsage: /* @__PURE__ */ __name((_EventName, _Data) => {
-          }, "logUsage"),
-          logError: /* @__PURE__ */ __name((_EventNameOrError, _Data) => {
-          }, "logError"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "createTelemetryLogger"),
-        logLevel: 2,
-        onDidChangeLogLevel: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeLogLevel")
-      };
-    }, "CreateEnvNamespace");
-    EnvNamespace_default = CreateEnvNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/DebugNamespace.ts
-var DebugNamespace_exports = {};
-__export(DebugNamespace_exports, {
-  default: () => DebugNamespace_default
-});
-var DebugProviderCounter, EventSubscriber2, CreateDebugNamespace, DebugNamespace_default;
-var init_DebugNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/DebugNamespace.ts"() {
-    "use strict";
-    DebugProviderCounter = 0;
-    EventSubscriber2 = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
-      Context22.Emitter.on(EventName, Listener);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context22.Emitter.off(EventName, Listener);
-        }, "dispose")
-      };
-    }, "EventSubscriber");
-    CreateDebugNamespace = /* @__PURE__ */ __name((Context22) => ({
-      registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((DebugType, _Factory) => {
-        const Handle = `debugAdapter:${++DebugProviderCounter}`;
-        Context22.SendToMountain("register_debug_adapter", {
-          handle: Handle,
-          debug_type: DebugType,
-          extension_id: ""
-        }).catch(() => {
-        });
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context22.SendToMountain("unregister_debug_adapter", {
-              handle: Handle
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerDebugAdapterDescriptorFactory"),
-      registerDebugConfigurationProvider: /* @__PURE__ */ __name((DebugType, _Provider) => {
-        const Handle = `debugConfig:${++DebugProviderCounter}`;
-        Context22.SendToMountain("register_debug_configuration_provider", {
-          handle: Handle,
-          debug_type: DebugType
-        }).catch(() => {
-        });
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context22.SendToMountain("unregister_debug_configuration_provider", {
-              handle: Handle
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerDebugConfigurationProvider"),
-      registerDebugAdapterTrackerFactory: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerDebugAdapterTrackerFactory"),
-      startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
-        try {
-          const Response = await Context22.MountainClient?.sendRequest("Debug.Start", [
-            Folder,
-            NameOrConfig,
-            ParentSession
-          ]);
-          return Boolean(Response?.success);
-        } catch {
-          return false;
-        }
-      }, "startDebugging"),
-      stopDebugging: /* @__PURE__ */ __name(async (Session) => {
-        try {
-          await Context22.MountainClient?.sendRequest("Debug.Stop", [Session]);
-        } catch {
-        }
-      }, "stopDebugging"),
-      addBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
-        Context22.SendToMountain("debug.addBreakpoints", {
-          breakpoints: Breakpoints
-        }).catch(() => {
-        });
-      }, "addBreakpoints"),
-      removeBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
-        Context22.SendToMountain("debug.removeBreakpoints", {
-          breakpoints: Breakpoints
-        }).catch(() => {
-        });
-      }, "removeBreakpoints"),
-      asDebugSourceUri: /* @__PURE__ */ __name((Source) => Source, "asDebugSourceUri"),
-      onDidStartDebugSession: EventSubscriber2(Context22, "debug.didStartSession"),
-      onDidTerminateDebugSession: EventSubscriber2(
-        Context22,
-        "debug.didTerminateSession"
-      ),
-      onDidChangeActiveDebugSession: EventSubscriber2(
-        Context22,
-        "debug.didChangeActiveSession"
-      ),
-      onDidReceiveDebugSessionCustomEvent: EventSubscriber2(
-        Context22,
-        "debug.didReceiveCustomEvent"
-      ),
-      onDidChangeBreakpoints: EventSubscriber2(Context22, "debug.didChangeBreakpoints"),
-      activeDebugSession: void 0,
-      activeDebugConsole: {
-        append: /* @__PURE__ */ __name((Value) => {
-          Context22.SendToMountain("debug.consoleAppend", { value: Value }).catch(
-            () => {
-            }
-          );
-        }, "append"),
-        appendLine: /* @__PURE__ */ __name((Value) => {
-          Context22.SendToMountain("debug.consoleAppend", {
-            value: `${Value}
-`
-          }).catch(() => {
-          });
-        }, "appendLine")
-      },
-      breakpoints: []
-    }), "CreateDebugNamespace");
-    DebugNamespace_default = CreateDebugNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/TasksNamespace.ts
-var TasksNamespace_exports = {};
-__export(TasksNamespace_exports, {
-  default: () => TasksNamespace_default
-});
-var TaskProviderCounter, EventSubscriber3, CreateTasksNamespace, TasksNamespace_default;
-var init_TasksNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/TasksNamespace.ts"() {
-    "use strict";
-    TaskProviderCounter = 0;
-    EventSubscriber3 = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
-      Context22.Emitter.on(EventName, Listener);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context22.Emitter.off(EventName, Listener);
-        }, "dispose")
-      };
-    }, "EventSubscriber");
-    CreateTasksNamespace = /* @__PURE__ */ __name((Context22) => ({
-      registerTaskProvider: /* @__PURE__ */ __name((TaskType, _Provider) => {
-        const Handle = `taskProvider:${++TaskProviderCounter}`;
-        Context22.SendToMountain("register_task_provider", {
-          handle: Handle,
-          task_type: TaskType,
-          extension_id: ""
-        }).catch(() => {
-        });
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context22.SendToMountain("unregister_task_provider", {
-              handle: Handle
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerTaskProvider"),
-      fetchTasks: /* @__PURE__ */ __name(async (Filter) => {
-        try {
-          const Response = await Context22.MountainClient?.sendRequest("Task.Fetch", [
-            Filter
-          ]);
-          return Array.isArray(Response) ? Response : [];
-        } catch {
-          return [];
-        }
-      }, "fetchTasks"),
-      executeTask: /* @__PURE__ */ __name(async (Task3) => {
-        try {
-          return await Context22.MountainClient?.sendRequest("Task.Execute", [Task3]);
-        } catch {
-          return void 0;
-        }
-      }, "executeTask"),
-      onDidStartTask: EventSubscriber3(Context22, "task.didStart"),
-      onDidEndTask: EventSubscriber3(Context22, "task.didEnd"),
-      onDidStartTaskProcess: EventSubscriber3(Context22, "task.didStartProcess"),
-      onDidEndTaskProcess: EventSubscriber3(Context22, "task.didEndProcess"),
-      taskExecutions: []
-    }), "CreateTasksNamespace");
-    TasksNamespace_default = CreateTasksNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/ScmNamespace.ts
-var ScmNamespace_exports = {};
-__export(ScmNamespace_exports, {
-  default: () => ScmNamespace_default
-});
-var ScmCounter, CreateScmNamespace, ScmNamespace_default;
-var init_ScmNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
-    "use strict";
-    ScmCounter = 0;
-    CreateScmNamespace = /* @__PURE__ */ __name((Context22) => ({
-      createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
-        const Handle = `scm:${++ScmCounter}`;
-        Context22.SendToMountain("register_scm_provider", {
-          handle: Handle,
-          id: Id,
-          label: Label,
-          root_uri: RootUri,
-          extension_id: ""
-        }).catch(() => {
-        });
-        const Groups = /* @__PURE__ */ new Map();
-        return {
-          id: Id,
-          label: Label,
-          rootUri: RootUri,
-          inputBox: {
-            value: "",
-            placeholder: "",
-            enabled: true,
-            visible: true
-          },
-          createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
-            const GroupHandle = `${Handle}/${GroupId}`;
-            Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
-            Context22.SendToMountain("register_scm_resource_group", {
-              scm_handle: Handle,
-              group_handle: GroupHandle,
-              group_id: GroupId,
-              label: GroupLabel
-            }).catch(() => {
-            });
-            const State = { resourceStates: [] };
-            return {
-              id: GroupId,
-              label: GroupLabel,
-              get resourceStates() {
-                return State.resourceStates;
-              },
-              set resourceStates(Value) {
-                State.resourceStates = Value;
-                Context22.SendToMountain("update_scm_group", {
-                  scm_handle: Handle,
-                  group_handle: GroupHandle,
-                  resource_states: Value
-                }).catch(() => {
-                });
-              },
-              dispose: /* @__PURE__ */ __name(() => {
-                Context22.SendToMountain("unregister_scm_resource_group", {
-                  scm_handle: Handle,
-                  group_handle: GroupHandle
-                }).catch(() => {
-                });
-                Groups.delete(GroupId);
-              }, "dispose")
-            };
-          }, "createResourceGroup"),
-          statusBarCommands: [],
-          count: 0,
-          commitTemplate: "",
-          acceptInputCommand: void 0,
-          quickDiffProvider: void 0,
-          dispose: /* @__PURE__ */ __name(() => {
-            Context22.SendToMountain("unregister_scm_provider", {
-              handle: Handle
-            }).catch(() => {
-            });
-            Groups.clear();
-          }, "dispose")
-        };
-      }, "createSourceControl"),
-      inputBox: { value: "" }
-    }), "CreateScmNamespace");
-    ScmNamespace_default = CreateScmNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts
-var AuthenticationNamespace_exports = {};
-__export(AuthenticationNamespace_exports, {
-  default: () => AuthenticationNamespace_default
-});
-var AuthProviderCounter, EventSubscriber4, CreateAuthenticationNamespace, AuthenticationNamespace_default;
-var init_AuthenticationNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts"() {
-    "use strict";
-    AuthProviderCounter = 0;
-    EventSubscriber4 = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
-      Context22.Emitter.on(EventName, Listener);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context22.Emitter.off(EventName, Listener);
-        }, "dispose")
-      };
-    }, "EventSubscriber");
-    CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context22) => ({
-      registerAuthenticationProvider: /* @__PURE__ */ __name((ProviderId, Label, _Provider, Options) => {
-        const Handle = `authProvider:${++AuthProviderCounter}`;
-        Context22.SendToMountain("register_authentication_provider", {
-          handle: Handle,
-          provider_id: ProviderId,
-          label: Label,
-          supports_multiple_accounts: Options?.supportsMultipleAccounts ?? false,
-          extension_id: ""
-        }).catch(() => {
-        });
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context22.SendToMountain("unregister_authentication_provider", {
-              handle: Handle
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerAuthenticationProvider"),
-      getSession: /* @__PURE__ */ __name(async (ProviderId, Scopes, Options) => {
-        try {
-          return await Context22.MountainClient?.sendRequest(
-            "Authentication.GetSession",
-            [ProviderId, Scopes, Options ?? {}]
-          );
-        } catch {
-          return void 0;
-        }
-      }, "getSession"),
-      getAccounts: /* @__PURE__ */ __name(async (ProviderId) => {
-        try {
-          const Result = await Context22.MountainClient?.sendRequest(
-            "Authentication.GetAccounts",
-            [ProviderId]
-          );
-          return Array.isArray(Result) ? Result : [];
-        } catch {
-          return [];
-        }
-      }, "getAccounts"),
-      onDidChangeSessions: EventSubscriber4(Context22, "auth.didChangeSessions")
-    }), "CreateAuthenticationNamespace");
-    AuthenticationNamespace_default = CreateAuthenticationNamespace;
-  }
-});
-
-// Source/Services/Handler/ExtensionHostHandler.ts
-import * as NodeFS from "node:fs";
-var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent, HandleStartExtensionHost, InstallVscodeModuleHooks, EnsureVscodeAPIRegistered, ActivateExtension, CreateExtensionContext, ExtensionHostHandler_default;
-var init_ExtensionHostHandler = __esm({
-  "Source/Services/Handler/ExtensionHostHandler.ts"() {
-    "use strict";
-    init_LanguageProviderRegistry();
-    HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context22, Parameters) => {
-      const Extensions = Parameters?.extensions ?? [];
-      console.log(
-        `[ExtensionHostHandler] InitializeExtensionHost received ${Extensions.length} extensions`
-      );
-      Context22.ExtensionHostInitData = Parameters;
-      Context22.ExtensionRegistry.clear();
-      Context22.ActivationEventIndex.clear();
-      for (const Extension2 of Extensions) {
-        const Identifier = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "unknown";
-        Context22.ExtensionRegistry.set(Identifier, Extension2);
-        const ActivationEvents = Extension2?.activationEvents ?? [];
-        for (const Event2 of ActivationEvents) {
-          const Existing = Context22.ActivationEventIndex.get(Event2) ?? [];
-          Existing.push(Identifier);
-          Context22.ActivationEventIndex.set(Event2, Existing);
-        }
-      }
-      Context22.ExtensionHostReady = true;
-      console.log(
-        `[ExtensionHostHandler] Extension registry: ${Context22.ExtensionRegistry.size} extensions, ${Context22.ActivationEventIndex.size} activation events`
-      );
-      Context22.Emitter.emit("extensionHostInitialized", {
-        extensionCount: Context22.ExtensionRegistry.size,
-        autoStart: Parameters?.autoStart ?? false
-      });
-      Context22.ConnectToMountain().catch((Error2) => {
-        console.warn(
-          "[ExtensionHostHandler] Background Mountain reconnect failed:",
-          Error2 instanceof globalThis.Error ? Error2.message : String(Error2)
-        );
-      });
-      return "initialized";
-    }, "HandleInitializeExtensionHost");
-    HandleDeltaExtensions = /* @__PURE__ */ __name(async (Context22, Parameters) => {
-      const Added = Parameters?.toAdd ?? [];
-      const Removed = Parameters?.toRemove ?? [];
-      console.log(
-        `[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length}`
-      );
-      for (const Extension2 of Added) {
-        const Identifier = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "unknown";
-        Context22.ExtensionRegistry.set(Identifier, Extension2);
-        const ActivationEvents = Extension2?.activationEvents ?? [];
-        for (const Event2 of ActivationEvents) {
-          const Existing = Context22.ActivationEventIndex.get(Event2) ?? [];
-          if (!Existing.includes(Identifier)) {
-            Existing.push(Identifier);
-            Context22.ActivationEventIndex.set(Event2, Existing);
-          }
-        }
-      }
-      for (const Extension2 of Removed) {
-        const Identifier = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "unknown";
-        Context22.ExtensionRegistry.delete(Identifier);
-      }
-      Context22.Emitter.emit("deltaExtensions", { added: Added.length, removed: Removed.length });
-      return {
-        success: true,
-        registrySize: Context22.ExtensionRegistry.size
-      };
-    }, "HandleDeltaExtensions");
-    HandleActivateByEvent = /* @__PURE__ */ __name(async (Context22, Parameters) => {
-      await EnsureVscodeAPIRegistered(Context22);
-      const ActivationEvent = typeof Parameters === "string" ? Parameters : Parameters?.activationEvent ?? Parameters?.event ?? "*";
-      let MatchingExtensions;
-      if (ActivationEvent === "*") {
-        const All = /* @__PURE__ */ new Set();
-        for (const Ids of Context22.ActivationEventIndex.values()) {
-          for (const Id of Ids) All.add(Id);
-        }
-        MatchingExtensions = [...All];
-      } else {
-        const Specific = Context22.ActivationEventIndex.get(ActivationEvent) ?? [];
-        const Star = Context22.ActivationEventIndex.get("*") ?? [];
-        MatchingExtensions = [.../* @__PURE__ */ new Set([...Specific, ...Star])];
-      }
-      console.log(
-        `[ExtensionHostHandler] $activateByEvent: ${ActivationEvent} \u2192 ${MatchingExtensions.length} extensions`
-      );
-      if (MatchingExtensions.length > 0) {
-        console.log(
-          `[ExtensionHostHandler] Activating: ${MatchingExtensions.slice(0, 5).join(", ")}${MatchingExtensions.length > 5 ? ` (+${MatchingExtensions.length - 5} more)` : ""}`
-        );
-      } else {
-        console.log(
-          `[ExtensionHostHandler] Available events: ${[...Context22.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context22.ActivationEventIndex.size > 10 ? ` (+${Context22.ActivationEventIndex.size - 10} more)` : ""}`
-        );
-      }
-      const ToActivate = MatchingExtensions.filter((Id) => !Context22.ActivatedExtensions.has(Id));
-      console.log(`[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`);
-      for (const ExtId of ToActivate) {
-        ActivateExtension(Context22, ExtId, ActivationEvent).catch((Err) => {
-          const Msg = Err instanceof Error ? Err.message : String(Err);
-          console.warn(`[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`);
-          if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
-            const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
-            console.warn(
-              `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
-${Stack}`
-            );
-          }
-        });
-      }
-      Context22.Emitter.emit("activateByEvent", {
-        event: ActivationEvent,
-        extensions: MatchingExtensions
-      });
-      return {
-        success: true,
-        activated: ToActivate.length
-      };
-    }, "HandleActivateByEvent");
-    HandleStartExtensionHost = /* @__PURE__ */ __name(async (Context22, Parameters) => {
-      console.log(
-        `[ExtensionHostHandler] $startExtensionHost received (registry: ${Context22.ExtensionRegistry.size} extensions)`
-      );
-      Context22.Emitter.emit("startExtensionHost", {
-        extensionCount: Context22.ExtensionRegistry.size,
-        ready: Context22.ExtensionHostReady
-      });
-      return {
-        success: true,
-        ready: Context22.ExtensionHostReady,
-        extensionCount: Context22.ExtensionRegistry.size
-      };
-    }, "HandleStartExtensionHost");
-    InstallVscodeModuleHooks = /* @__PURE__ */ __name(async () => {
-      if (globalThis.__cocoonModuleHooksInstalled) return;
-      globalThis.__cocoonModuleHooksInstalled = true;
-      const ModuleModule = await import("module");
-      const CreateRequire = ModuleModule.createRequire;
-      const LocalRequire = CreateRequire(import.meta.url);
-      try {
-        const NodeModule = LocalRequire("module");
-        const OriginalLoad = NodeModule._load;
-        NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
-          if (Request === "vscode") {
-            const API = globalThis.__cocoonVscodeAPI;
-            if (API) return API;
-            console.warn(
-              "[ExtensionHostHandler] require('vscode') called before shim registered \u2014 returning empty namespace"
-            );
-            return {};
-          }
-          return OriginalLoad.call(this, Request, Parent, IsMain);
-        }, "PatchedLoad");
-        console.log(
-          "[ExtensionHostHandler] Module._load hook installed \u2014 require('vscode') intercepted"
-        );
-      } catch (Err) {
-        console.warn(
-          "[ExtensionHostHandler] Failed to patch Module._load:",
-          Err instanceof Error ? Err.message : String(Err)
-        );
-      }
-      try {
-        const NodeModule = LocalRequire("module");
-        if (typeof NodeModule.register === "function") {
-          const VscodeExportNames = [
-            // Namespaces
-            "window",
-            "workspace",
-            "commands",
-            "languages",
-            "extensions",
-            "env",
-            "debug",
-            "tasks",
-            "scm",
-            "authentication",
-            "l10n",
-            "notebooks",
-            "tests",
-            "comments",
-            "chat",
-            "lm",
-            "interactive",
-            // Type constructors
-            "Position",
-            "Range",
-            "Location",
-            "LocationLink",
-            "Selection",
-            "MarkdownString",
-            "Hover",
-            "CompletionItem",
-            "CompletionItemKind",
-            "CompletionItemTag",
-            "CompletionList",
-            "CompletionTriggerKind",
-            "Diagnostic",
-            "DiagnosticSeverity",
-            "DiagnosticTag",
-            "DiagnosticRelatedInformation",
-            "TextEdit",
-            "WorkspaceEdit",
-            "SnippetString",
-            "SnippetTextEdit",
-            "SymbolKind",
-            "SymbolTag",
-            "SymbolInformation",
-            "DocumentSymbol",
-            "CodeActionKind",
-            "CodeAction",
-            "CodeActionTriggerKind",
-            "CodeLens",
-            "SignatureHelp",
-            "SignatureHelpTriggerKind",
-            "SignatureInformation",
-            "ParameterInformation",
-            "InlayHint",
-            "InlayHintKind",
-            "InlayHintLabelPart",
-            "FoldingRange",
-            "FoldingRangeKind",
-            "DocumentHighlight",
-            "DocumentHighlightKind",
-            "SelectionRange",
-            "SemanticTokensLegend",
-            "SemanticTokensBuilder",
-            "SemanticTokens",
-            "SemanticTokensEdit",
-            "SemanticTokensEdits",
-            "RelativePattern",
-            "Disposable",
-            "StatusBarAlignment",
-            "ThemeColor",
-            "ThemeIcon",
-            "TreeItem",
-            "TreeItemCollapsibleState",
-            "TreeItemCheckboxState",
-            "ViewColumn",
-            "EndOfLine",
-            "ConfigurationTarget",
-            "Uri",
-            "CancellationTokenSource",
-            "CancellationError",
-            "EventEmitter",
-            "FileType",
-            "FilePermission",
-            "FileSystemError",
-            "DataTransfer",
-            "DataTransferItem",
-            "TextDocumentChangeReason",
-            "TextDocumentSaveReason",
-            "TextEditorCursorStyle",
-            "TextEditorLineNumbersStyle",
-            "TextEditorRevealType",
-            "TextEditorSelectionChangeKind",
-            "DecorationRangeBehavior",
-            "OverviewRulerLane",
-            "ColorPresentation",
-            "ColorInformation",
-            "Color",
-            "QuickPickItemKind",
-            "InputBoxValidationSeverity",
-            "ProgressLocation",
-            "NotebookCellData",
-            "NotebookCellKind",
-            "NotebookCellOutput",
-            "NotebookCellOutputItem",
-            "NotebookData",
-            "NotebookEdit",
-            "NotebookRange",
-            "TestRunProfileKind",
-            "TestMessage",
-            "TestRunRequest",
-            "TestTag",
-            "DebugAdapterExecutable",
-            "DebugAdapterInlineImplementation",
-            "DebugAdapterNamedPipeServer",
-            "DebugAdapterServer",
-            "Breakpoint",
-            "FunctionBreakpoint",
-            "SourceBreakpoint",
-            "TerminalLink",
-            "TerminalLocation",
-            "TerminalProfile",
-            "TaskGroup",
-            "TaskScope",
-            "TaskRevealKind",
-            "TaskPanelKind",
-            "ShellExecution",
-            "ProcessExecution",
-            "CustomExecution",
-            "Task",
-            "CommentMode",
-            "CommentThreadCollapsibleState",
-            "CommentThreadState",
-            "ExtensionKind",
-            "ExtensionMode",
-            "UIKind",
-            "LogLevel",
-            "LanguageStatusSeverity",
-            "TextSearchContext",
-            "TextSearchMatch",
-            "DocumentLink",
-            "LinkedEditingRanges",
-            "EvaluatableExpression",
-            "InlineValueText",
-            "InlineValueVariableLookup",
-            "InlineValueEvaluatableExpression",
-            "TypeHierarchyItem",
-            "CallHierarchyItem",
-            "CallHierarchyIncomingCall",
-            "CallHierarchyOutgoingCall",
-            // Fields
-            "version"
-          ];
-          const NamedExports = VscodeExportNames.map((Name) => `export const ${Name} = API.${Name};`).join("\n");
-          const BridgeSource = [
-            "const API = globalThis.__cocoonVscodeAPI || {};",
-            NamedExports,
-            "export default API;",
-            "export const __esModule = true;"
-          ].join("\n");
-          const LoaderSource = `
-				const BRIDGE_URL = 'vscode-shim:///vscode';
-				const BRIDGE_SOURCE = ${JSON.stringify(BridgeSource)};
-				export async function resolve(Specifier, Context, NextResolve) {
-					if (Specifier === 'vscode') {
-						return { url: BRIDGE_URL, shortCircuit: true, format: 'module' };
-					}
-					return NextResolve(Specifier, Context);
-				}
-				export async function load(Url, Context, NextLoad) {
-					if (Url === BRIDGE_URL) {
-						return { format: 'module', source: BRIDGE_SOURCE, shortCircuit: true };
-					}
-					return NextLoad(Url, Context);
-				}
-			`;
-          const LoaderURL = `data:text/javascript;base64,${Buffer.from(LoaderSource).toString("base64")}`;
-          try {
-            NodeModule.register(LoaderURL, import.meta.url);
-            console.log(
-              "[ExtensionHostHandler] ESM loader registered \u2014 import 'vscode' intercepted"
-            );
-          } catch (RegisterErr) {
-            console.warn(
-              "[ExtensionHostHandler] module.register failed (ESM imports of 'vscode' will fail):",
-              RegisterErr instanceof Error ? RegisterErr.message : String(RegisterErr)
-            );
-          }
-        }
-      } catch (Err) {
-        console.warn(
-          "[ExtensionHostHandler] ESM loader setup skipped:",
-          Err instanceof Error ? Err.message : String(Err)
-        );
-      }
-    }, "InstallVscodeModuleHooks");
-    EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context22) => {
-      await InstallVscodeModuleHooks();
-      if (globalThis.__cocoonVscodeAPI) return;
-      try {
-        const VsCodeTypes2 = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
-        const { URI: URI3 } = await Promise.resolve().then(() => (init_uri(), uri_exports));
-        const { CancellationTokenSource: CancellationTokenSource3 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
-        const { Emitter: Emitter4 } = await Promise.resolve().then(() => (init_event(), event_exports));
-        const LogLevelEnum = {
-          Off: 0,
-          Trace: 1,
-          Debug: 2,
-          Info: 3,
-          Warning: 4,
-          Error: 5,
-          0: "Off",
-          1: "Trace",
-          2: "Debug",
-          3: "Info",
-          4: "Warning",
-          5: "Error"
-        };
-        class CancellationError2 extends Error {
-          static {
-            __name(this, "CancellationError");
-          }
-          constructor() {
-            super("Canceled");
-            this.name = "Canceled";
-          }
-        }
-        const OverviewRulerLane = {
-          Left: 1,
-          Center: 2,
-          Right: 4,
-          Full: 7,
-          1: "Left",
-          2: "Center",
-          4: "Right",
-          7: "Full"
-        };
-        const API = {
-          ...VsCodeTypes2,
-          version: "1.88.0",
-          Uri: URI3,
-          CancellationTokenSource: CancellationTokenSource3,
-          CancellationError: CancellationError2,
-          EventEmitter: Emitter4,
-          LogLevel: LogLevelEnum,
-          OverviewRulerLane,
-          // Namespaces — each in its own file under VscodeAPI/
-          window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(Context22),
-          workspace: (await Promise.resolve().then(() => (init_WorkspaceNamespace(), WorkspaceNamespace_exports))).default(Context22),
-          commands: (await Promise.resolve().then(() => (init_CommandsNamespace(), CommandsNamespace_exports))).default(Context22, LanguageProviderRegistry_exports),
-          languages: (await Promise.resolve().then(() => (init_LanguagesNamespace(), LanguagesNamespace_exports))).default(Context22, LanguageProviderRegistry_exports),
-          extensions: (await Promise.resolve().then(() => (init_ExtensionsNamespace(), ExtensionsNamespace_exports))).default(Context22),
-          env: (await Promise.resolve().then(() => (init_EnvNamespace(), EnvNamespace_exports))).default(Context22),
-          debug: (await Promise.resolve().then(() => (init_DebugNamespace(), DebugNamespace_exports))).default(Context22),
-          tasks: (await Promise.resolve().then(() => (init_TasksNamespace(), TasksNamespace_exports))).default(Context22),
-          scm: (await Promise.resolve().then(() => (init_ScmNamespace(), ScmNamespace_exports))).default(Context22),
-          authentication: (await Promise.resolve().then(() => (init_AuthenticationNamespace(), AuthenticationNamespace_exports))).default(Context22),
-          // Lightweight stub namespaces — no Mountain route yet, returns
-          // safe defaults so extensions that reference them don't crash.
-          l10n: {
-            t: /* @__PURE__ */ __name((Message, ...Arguments) => {
-              const Raw = typeof Message === "string" ? Message : Message?.message ?? String(Message);
-              if (!Arguments.length) return Raw;
-              return Raw.replace(/\{(\d+)\}/g, (_Match, Index) => {
-                const Replacement = Arguments[Number(Index)];
-                return Replacement === void 0 ? "" : String(Replacement);
-              });
-            }, "t"),
-            bundle: void 0,
-            uri: void 0
-          },
-          notebooks: {
-            createNotebookController: /* @__PURE__ */ __name(() => ({
-              id: "",
-              notebookType: "",
-              supportedLanguages: [],
-              label: "",
-              supportsExecutionOrder: false,
-              executeHandler: /* @__PURE__ */ __name(() => {
-              }, "executeHandler"),
-              dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose"),
-              createNotebookCellExecution: /* @__PURE__ */ __name(() => ({
-                start: /* @__PURE__ */ __name(() => {
-                }, "start"),
-                end: /* @__PURE__ */ __name(() => {
-                }, "end"),
-                replaceOutput: /* @__PURE__ */ __name(async () => {
-                }, "replaceOutput"),
-                appendOutput: /* @__PURE__ */ __name(async () => {
-                }, "appendOutput"),
-                clearOutput: /* @__PURE__ */ __name(async () => {
-                }, "clearOutput"),
-                replaceOutputItems: /* @__PURE__ */ __name(async () => {
-                }, "replaceOutputItems"),
-                appendOutputItems: /* @__PURE__ */ __name(async () => {
-                }, "appendOutputItems"),
-                executionOrder: void 0
-              }), "createNotebookCellExecution"),
-              onDidChangeSelectedNotebooks: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose") }), "onDidChangeSelectedNotebooks"),
-              updateNotebookAffinity: /* @__PURE__ */ __name(() => {
-              }, "updateNotebookAffinity")
-            }), "createNotebookController"),
-            registerNotebookCellStatusBarItemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerNotebookCellStatusBarItemProvider"),
-            registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerNotebookSerializer"),
-            registerRendererCommunication: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerRendererCommunication"),
-            createRendererMessaging: /* @__PURE__ */ __name(() => ({
-              postMessage: /* @__PURE__ */ __name(async () => false, "postMessage"),
-              onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose") }), "onDidReceiveMessage")
-            }), "createRendererMessaging"),
-            onDidChangeNotebookCellExecutionState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidChangeNotebookCellExecutionState")
-          },
-          lm: {
-            registerTool: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerTool"),
-            invokeTool: /* @__PURE__ */ __name(async () => ({ content: [] }), "invokeTool"),
-            selectChatModels: /* @__PURE__ */ __name(async () => [], "selectChatModels"),
-            registerChatModelProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerChatModelProvider"),
-            tools: [],
-            onDidChangeChatModels: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidChangeChatModels")
-          },
-          chat: {
-            createChatParticipant: /* @__PURE__ */ __name(() => ({
-              id: "",
-              iconPath: void 0,
-              requester: void 0,
-              dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose"),
-              followupProvider: void 0,
-              onDidReceiveFeedback: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose") }), "onDidReceiveFeedback")
-            }), "createChatParticipant"),
-            registerChatVariableResolver: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerChatVariableResolver"),
-            registerMappedEditsProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerMappedEditsProvider"),
-            registerChatOutputRenderer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerChatOutputRenderer"),
-            registerRelatedFilesProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerRelatedFilesProvider"),
-            registerChatSessionProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerChatSessionProvider"),
-            registerChatSessionItemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerChatSessionItemProvider")
-          },
-          tests: {
-            createTestController: /* @__PURE__ */ __name(() => ({
-              id: "",
-              label: "",
-              items: { size: 0, replace: /* @__PURE__ */ __name(() => {
-              }, "replace"), forEach: /* @__PURE__ */ __name(() => {
-              }, "forEach"), add: /* @__PURE__ */ __name(() => {
-              }, "add"), delete: /* @__PURE__ */ __name(() => {
-              }, "delete"), get: /* @__PURE__ */ __name(() => void 0, "get") },
-              createRunProfile: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose") }), "createRunProfile"),
-              resolveHandler: void 0,
-              refreshHandler: void 0,
-              createTestItem: /* @__PURE__ */ __name(() => ({}), "createTestItem"),
-              createTestRun: /* @__PURE__ */ __name(() => ({
-                enqueued: /* @__PURE__ */ __name(() => {
-                }, "enqueued"),
-                started: /* @__PURE__ */ __name(() => {
-                }, "started"),
-                skipped: /* @__PURE__ */ __name(() => {
-                }, "skipped"),
-                failed: /* @__PURE__ */ __name(() => {
-                }, "failed"),
-                errored: /* @__PURE__ */ __name(() => {
-                }, "errored"),
-                passed: /* @__PURE__ */ __name(() => {
-                }, "passed"),
-                end: /* @__PURE__ */ __name(() => {
-                }, "end"),
-                appendOutput: /* @__PURE__ */ __name(() => {
-                }, "appendOutput"),
-                token: { isCancellationRequested: false, onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-                }, "dispose") }), "onCancellationRequested") }
-              }), "createTestRun"),
-              dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose")
-            }), "createTestController")
-          },
-          comments: {
-            createCommentController: /* @__PURE__ */ __name(() => ({
-              id: "",
-              label: "",
-              commentingRangeProvider: void 0,
-              reactionHandler: void 0,
-              options: void 0,
-              createCommentThread: /* @__PURE__ */ __name(() => ({
-                uri: void 0,
-                range: void 0,
-                comments: [],
-                collapsibleState: 0,
-                canReply: true,
-                contextValue: void 0,
-                label: void 0,
-                state: void 0,
-                dispose: /* @__PURE__ */ __name(() => {
-                }, "dispose")
-              }), "createCommentThread"),
-              dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose")
-            }), "createCommentController")
-          },
-          interactive: {
-            registerInteractiveEditorSessionProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "registerInteractiveEditorSessionProvider"),
-            transferActiveChat: /* @__PURE__ */ __name(async () => {
-            }, "transferActiveChat")
-          }
-        };
-        globalThis.__cocoonVscodeAPI = API;
-        console.log("[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI");
-        const CriticalNames = [
-          "Diagnostic",
-          "CodeAction",
-          "CodeLens",
-          "CompletionItem",
-          "SymbolInformation",
-          "DocumentLink",
-          "TypeHierarchyItem",
-          "CallHierarchyItem",
-          "SemanticTokensBuilder",
-          "SemanticTokens",
-          "RelativePattern",
-          "Position",
-          "Range",
-          "Hover",
-          "LogLevel",
-          "CancellationError",
-          "CancellationTokenSource",
-          "EventEmitter",
-          "Uri",
-          "Disposable"
-        ];
-        const Missing = CriticalNames.filter((Name) => API[Name] === void 0);
-        if (Missing.length) {
-          console.warn(
-            `[ExtensionHostHandler] vscode API shim missing critical symbols: ${Missing.join(", ")}`
-          );
-        } else {
-          console.log(
-            "[ExtensionHostHandler] vscode API shim critical symbols OK"
-          );
-        }
-      } catch (Err) {
-        console.warn(
-          "[ExtensionHostHandler] Failed to create vscode API shim:",
-          Err instanceof Error ? Err.message : String(Err)
-        );
-      }
-    }, "EnsureVscodeAPIRegistered");
-    ActivateExtension = /* @__PURE__ */ __name(async (Context22, ExtensionId, ActivationEvent) => {
-      if (Context22.ActivatedExtensions.has(ExtensionId)) return;
-      Context22.ActivatedExtensions.add(ExtensionId);
-      const Extension2 = Context22.ExtensionRegistry.get(ExtensionId);
-      if (!Extension2) return;
-      const LocationRaw = Extension2?.ExtensionLocation ?? Extension2?.extensionLocation ?? Extension2?.location?.path ?? Extension2?.location;
-      const MainFile = Extension2?.main ?? Extension2?.Main;
-      if (!LocationRaw || !MainFile) {
-        return;
-      }
-      let ExtensionPath;
-      try {
-        ExtensionPath = new URL(String(LocationRaw)).pathname.replace(/\/$/, "");
-      } catch {
-        ExtensionPath = String(LocationRaw).replace(/^file:\/\//, "").replace(/\/$/, "");
-      }
-      const ModulePath = `${ExtensionPath}/${MainFile}`;
-      const ModuleType = Extension2?.type ?? Extension2?.Type;
-      const IsESM = ModuleType === "module" || /\.mjs$/i.test(MainFile) || /\.mts$/i.test(MainFile);
-      console.log(
-        `[ExtensionHostHandler] Loading ${ExtensionId} (${IsESM ? "ESM" : "CJS"}) from ${ModulePath}`
-      );
-      try {
-        let ExtModule;
-        if (IsESM) {
-          const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
-          ExtModule = await import(ImportURL);
-        } else {
-          const { createRequire: createRequire3 } = await import("module");
-          const Require = createRequire3(import.meta.url);
-          try {
-            ExtModule = Require(ModulePath);
-          } catch (RequireErr) {
-            const Msg = RequireErr instanceof Error ? RequireErr.message : String(RequireErr);
-            if (/ERR_REQUIRE_ESM|Cannot use import statement/i.test(Msg)) {
-              const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
-              ExtModule = await import(ImportURL);
-            } else {
-              throw RequireErr;
-            }
-          }
-        }
-        const ActivateFn = typeof ExtModule?.activate === "function" ? ExtModule.activate : typeof ExtModule?.default?.activate === "function" ? ExtModule.default.activate : void 0;
-        if (typeof ActivateFn === "function") {
-          const ExtContext = CreateExtensionContext(Context22, Extension2, ExtensionPath);
-          await ActivateFn(ExtContext);
-          console.log(
-            `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`
-          );
-        } else {
-          console.warn(
-            `[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`
-          );
-        }
-      } catch (Err) {
-        Context22.ActivatedExtensions.delete(ExtensionId);
-        throw Err;
-      }
-    }, "ActivateExtension");
-    CreateExtensionContext = /* @__PURE__ */ __name((Context22, Extension2, ExtensionPath) => {
-      const ExtId = Extension2?.identifier?.value ?? Extension2?.identifier?.id ?? Extension2?.identifier ?? "";
-      const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
-      const StorageBase = `${HomeDir}/.codeeditorland/extensions/storage`;
-      const GlobalStorageBase = `${HomeDir}/.codeeditorland/globalStorage`;
-      const LogBase = `${HomeDir}/.codeeditorland/logs`;
-      const ExtStoragePath = `${StorageBase}/${ExtId}`;
-      const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
-      const LogPath = `${LogBase}/${ExtId}`;
-      try {
-        NodeFS.mkdirSync(ExtStoragePath, { recursive: true });
-        NodeFS.mkdirSync(GlobalStoragePath, { recursive: true });
-        NodeFS.mkdirSync(LogPath, { recursive: true });
-      } catch {
-      }
-      let FullPackageJSON = Extension2;
-      try {
-        const Contents = NodeFS.readFileSync(
-          `${ExtensionPath}/package.json`,
-          "utf8"
-        );
-        const Parsed = JSON.parse(Contents);
-        FullPackageJSON = { ...Parsed, ...Extension2 };
-      } catch {
-      }
-      const MakeUri = /* @__PURE__ */ __name((Path) => ({
-        scheme: "file",
-        path: Path,
-        fsPath: Path,
-        authority: "",
-        query: "",
-        fragment: "",
-        with: /* @__PURE__ */ __name(() => ({}), "with"),
-        toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString")
-      }), "MakeUri");
-      return {
-        subscriptions: [],
-        extensionPath: ExtensionPath,
-        extensionUri: MakeUri(ExtensionPath),
-        // VS Code API: `context.asAbsolutePath(relative)` returns the
-        // extension path joined with a relative path. The 4 language-
-        // features extensions all call this immediately in their activate
-        // function to resolve server bundle locations; without it, they
-        // fail before vscode-languageclient even constructs.
-        asAbsolutePath: /* @__PURE__ */ __name((RelativePath) => {
-          const Trimmed = RelativePath.replace(/^\.?\//, "");
-          return `${ExtensionPath}/${Trimmed}`;
-        }, "asAbsolutePath"),
-        globalState: {
-          get: /* @__PURE__ */ __name((_Key, DefaultValue) => DefaultValue, "get"),
-          update: /* @__PURE__ */ __name(async (_Key, _Value) => {
-          }, "update"),
-          keys: /* @__PURE__ */ __name(() => [], "keys"),
-          setKeysForSync: /* @__PURE__ */ __name((_Keys) => {
-          }, "setKeysForSync")
-        },
-        workspaceState: {
-          get: /* @__PURE__ */ __name((_Key, DefaultValue) => DefaultValue, "get"),
-          update: /* @__PURE__ */ __name(async (_Key, _Value) => {
-          }, "update"),
-          keys: /* @__PURE__ */ __name(() => [], "keys")
-        },
-        secrets: {
-          get: /* @__PURE__ */ __name(async (Key) => {
-            try {
-              return await Context22.MountainClient?.sendRequest("secrets.get", { key: Key });
-            } catch {
-              return void 0;
-            }
-          }, "get"),
-          store: /* @__PURE__ */ __name(async (Key, Value) => {
-            try {
-              await Context22.MountainClient?.sendRequest("secrets.store", { key: Key, value: Value });
-            } catch {
-            }
-          }, "store"),
-          delete: /* @__PURE__ */ __name(async (Key) => {
-            try {
-              await Context22.MountainClient?.sendRequest("secrets.delete", { key: Key });
-            } catch {
-            }
-          }, "delete"),
-          onDidChange: /* @__PURE__ */ __name((_Listener) => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChange")
-        },
-        environmentVariableCollection: {
-          persistent: true,
-          description: void 0,
-          append: /* @__PURE__ */ __name(() => {
-          }, "append"),
-          prepend: /* @__PURE__ */ __name(() => {
-          }, "prepend"),
-          replace: /* @__PURE__ */ __name(() => {
-          }, "replace"),
-          get: /* @__PURE__ */ __name(() => void 0, "get"),
-          forEach: /* @__PURE__ */ __name(() => {
-          }, "forEach"),
-          delete: /* @__PURE__ */ __name(() => {
-          }, "delete"),
-          clear: /* @__PURE__ */ __name(() => {
-          }, "clear"),
-          getScoped: /* @__PURE__ */ __name(() => ({}), "getScoped"),
-          [Symbol.iterator]: () => [].values()
-        },
-        storagePath: ExtStoragePath,
-        globalStoragePath: GlobalStoragePath,
-        logPath: LogPath,
-        storageUri: MakeUri(ExtStoragePath),
-        globalStorageUri: MakeUri(GlobalStoragePath),
-        logUri: MakeUri(LogPath),
-        extensionMode: 1,
-        // ExtensionMode.Production
-        extension: {
-          id: ExtId,
-          extensionUri: { scheme: "file", path: ExtensionPath, fsPath: ExtensionPath },
-          extensionPath: ExtensionPath,
-          isActive: true,
-          packageJSON: FullPackageJSON,
-          extensionKind: 1,
-          exports: void 0,
-          activate: /* @__PURE__ */ __name(async () => {
-          }, "activate")
-        },
-        languageModelAccessInformation: {
-          canSendRequest: /* @__PURE__ */ __name((_Model) => false, "canSendRequest"),
-          onDidChange: /* @__PURE__ */ __name((_Listener) => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChange")
-        }
-      };
-    }, "CreateExtensionContext");
-    ExtensionHostHandler_default = {
-      HandleInitializeExtensionHost,
-      HandleDeltaExtensions,
-      HandleActivateByEvent,
-      HandleStartExtensionHost
-    };
-  }
-});
-
-// Source/Services/Handler/LanguageProviderHandler.ts
-var NormalizeRange, ResolveLanguageIdentifier, BuildVsDocument, InvokeLanguageProvider, LanguageProviderHandler_default;
-var init_LanguageProviderHandler = __esm({
-  "Source/Services/Handler/LanguageProviderHandler.ts"() {
-    "use strict";
-    init_LanguageProviderRegistry();
-    NormalizeRange = /* @__PURE__ */ __name((VsRange) => {
-      return {
-        StartLineNumber: VsRange?.start?.line ?? 0,
-        StartColumn: VsRange?.start?.character ?? 0,
-        EndLineNumber: VsRange?.end?.line ?? 0,
-        EndColumn: VsRange?.end?.character ?? 0
-      };
-    }, "NormalizeRange");
-    ResolveLanguageIdentifier = /* @__PURE__ */ __name((Extension2) => {
-      switch (Extension2) {
-        case "rs":
-          return "rust";
-        case "ts":
-        case "tsx":
-          return "typescript";
-        case "js":
-        case "jsx":
-        case "mjs":
-          return "javascript";
-        case "json":
-          return "json";
-        case "toml":
-          return "toml";
-        case "md":
-          return "markdown";
-        case "py":
-          return "python";
-        case "go":
-          return "go";
-        default:
-          return Extension2 || "plaintext";
-      }
-    }, "ResolveLanguageIdentifier");
-    BuildVsDocument = /* @__PURE__ */ __name(async (UriString, FsPath, LanguageIdentifier, DocumentContentCache) => {
-      const { Position: Position3, Range: Range3 } = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
-      let CachedContent = null;
-      let CachedLines = null;
-      const LoadContent = /* @__PURE__ */ __name(() => {
-        if (CachedContent !== null) return CachedContent;
-        const MirrorContent = DocumentContentCache.get(UriString);
-        if (MirrorContent !== void 0) {
-          CachedContent = MirrorContent;
-          return CachedContent;
-        }
-        try {
-          const Fs = __require("node:fs");
-          CachedContent = Fs.readFileSync(FsPath, "utf8");
-        } catch {
-          CachedContent = "";
-        }
-        return CachedContent;
-      }, "LoadContent");
-      const GetLines = /* @__PURE__ */ __name(() => {
-        if (CachedLines !== null) return CachedLines;
-        CachedLines = LoadContent().split(/\r?\n/);
-        return CachedLines;
-      }, "GetLines");
-      return {
-        uri: {
-          toString: /* @__PURE__ */ __name(() => UriString, "toString"),
-          fsPath: FsPath,
-          external: UriString,
-          $mid: 1,
-          scheme: "file",
-          path: FsPath
-        },
-        fileName: FsPath,
-        languageId: LanguageIdentifier,
-        version: 1,
-        isDirty: false,
-        isClosed: false,
-        eol: 1,
-        // LF
-        getText: /* @__PURE__ */ __name((_range) => {
-          const Text = LoadContent();
-          if (!_range) return Text;
-          const Lines = GetLines();
-          const StartLine = _range?.start?.line ?? 0;
-          const StartChar = _range?.start?.character ?? 0;
-          const EndLine = _range?.end?.line ?? Lines.length - 1;
-          const EndChar = _range?.end?.character ?? (Lines[EndLine]?.length ?? 0);
-          if (StartLine === EndLine) {
-            return (Lines[StartLine] ?? "").substring(StartChar, EndChar);
-          }
-          const Result = [];
-          Result.push((Lines[StartLine] ?? "").substring(StartChar));
-          for (let I = StartLine + 1; I < EndLine; I++) Result.push(Lines[I] ?? "");
-          Result.push((Lines[EndLine] ?? "").substring(0, EndChar));
-          return Result.join("\n");
-        }, "getText"),
-        lineAt: /* @__PURE__ */ __name((LineOrPos) => {
-          const LineNum = typeof LineOrPos === "number" ? LineOrPos : LineOrPos?.line ?? 0;
-          const Lines = GetLines();
-          const LineText = Lines[LineNum] ?? "";
-          const FirstNonWS = LineText.search(/\S/);
-          return {
-            text: LineText,
-            lineNumber: LineNum,
-            range: new Range3(LineNum, 0, LineNum, LineText.length),
-            rangeIncludingLineBreak: new Range3(LineNum, 0, LineNum + 1, 0),
-            firstNonWhitespaceCharacterIndex: FirstNonWS === -1 ? LineText.length : FirstNonWS,
-            isEmptyOrWhitespace: LineText.trim().length === 0
-          };
-        }, "lineAt"),
-        get lineCount() {
-          return GetLines().length;
-        },
-        offsetAt: /* @__PURE__ */ __name((Pos) => {
-          const Lines = GetLines();
-          let Offset = 0;
-          const TargetLine = Pos?.line ?? 0;
-          for (let I = 0; I < TargetLine && I < Lines.length; I++) {
-            Offset += Lines[I].length + 1;
-          }
-          return Offset + (Pos?.character ?? 0);
-        }, "offsetAt"),
-        positionAt: /* @__PURE__ */ __name((Offset) => {
-          const Lines = GetLines();
-          let Remaining = Offset;
-          for (let I = 0; I < Lines.length; I++) {
-            if (Remaining <= Lines[I].length) {
-              return new Position3(I, Remaining);
-            }
-            Remaining -= Lines[I].length + 1;
-          }
-          return new Position3(Lines.length - 1, (Lines[Lines.length - 1] ?? "").length);
-        }, "positionAt"),
-        validateRange: /* @__PURE__ */ __name((R) => R, "validateRange"),
-        validatePosition: /* @__PURE__ */ __name((P) => P, "validatePosition"),
-        getWordRangeAtPosition: /* @__PURE__ */ __name((Pos, Pattern) => {
-          const Lines = GetLines();
-          const Line = Lines[Pos?.line ?? 0] ?? "";
-          const Regex = Pattern ?? /\w+/g;
-          const Col = Pos?.character ?? 0;
-          let Match;
-          Regex.lastIndex = 0;
-          while ((Match = Regex.exec(Line)) !== null) {
-            if (Match.index <= Col && Match.index + Match[0].length >= Col) {
-              return new Range3(Pos.line, Match.index, Pos.line, Match.index + Match[0].length);
-            }
-          }
-          return void 0;
-        }, "getWordRangeAtPosition"),
-        save: /* @__PURE__ */ __name(async () => false, "save")
-      };
-    }, "BuildVsDocument");
-    InvokeLanguageProvider = /* @__PURE__ */ __name(async (Method, Parameters, DocumentContentCache) => {
-      const Args = Array.isArray(Parameters) ? Parameters : [Parameters];
-      const Handle = Args[0];
-      const Provider = Get(Handle);
-      if (!Provider) {
-        console.warn(
-          `[LanguageProviderHandler] Provider handle ${Handle} not found for ${Method}`
-        );
-        return null;
-      }
-      const UriObj = Args[1];
-      const UriString = typeof UriObj === "string" ? UriObj : UriObj?.external ?? "file:///unknown";
-      const RawPos = Args[2];
-      const PosLine = RawPos?.Line ?? RawPos?.line ?? 0;
-      const PosChar = RawPos?.Character ?? RawPos?.character ?? 0;
-      const { Position: Position3 } = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
-      const VsPosition = new Position3(PosLine, PosChar);
-      const Ext = UriString.split(".").pop() ?? "";
-      const LangId = ResolveLanguageIdentifier(Ext);
-      const FsPath = UriString.replace(/^file:\/\//, "");
-      const VsDocument = await BuildVsDocument(UriString, FsPath, LangId, DocumentContentCache);
-      const { CancellationTokenSource: CancellationTokenSource3 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
-      const VsToken = new CancellationTokenSource3().token;
-      const Context22 = Args[3];
-      try {
-        switch (Method) {
-          case "$provideHover": {
-            const Result = await Provider.provideHover?.(
-              VsDocument,
-              VsPosition,
-              VsToken
-            );
-            if (!Result) return null;
-            const RawContents = Result.contents;
-            const Contents = Array.isArray(
-              RawContents
-            ) ? RawContents.map((C) => ({
-              Value: typeof C === "string" ? C : C?.value ?? C?.Value ?? ""
-            })) : typeof RawContents === "string" ? [{ Value: RawContents }] : [
-              {
-                Value: RawContents?.value ?? RawContents?.Value ?? ""
-              }
-            ];
-            const VsRange = Result.range ?? null;
-            const RangeDTO = VsRange ? {
-              StartLineNumber: VsRange.start?.line ?? 0,
-              StartColumn: VsRange.start?.character ?? 0,
-              EndLineNumber: VsRange.end?.line ?? 0,
-              EndColumn: VsRange.end?.character ?? 0
-            } : void 0;
-            return RangeDTO !== void 0 ? { Contents, Range: RangeDTO } : { Contents };
-          }
-          // Mountain sends "$provideCompletion" (Debug fmt of ProviderType::Completion)
-          case "$provideCompletion":
-          case "$provideCompletions": {
-            const Result = await Provider.provideCompletionItems?.(
-              VsDocument,
-              VsPosition,
-              VsToken,
-              Context22
-            );
-            if (!Result)
-              return { Suggestions: [], IsIncomplete: false };
-            const RawItems = Array.isArray(Result) ? Result : Result.items ?? [];
-            return {
-              Suggestions: RawItems.map((Item) => ({
-                Label: typeof Item.label === "string" ? Item.label : Item.label?.label ?? "",
-                Kind: Item.kind ?? 0,
-                Detail: Item.detail ?? void 0,
-                Documentation: typeof Item.documentation === "string" ? { Value: Item.documentation } : Item.documentation?.value !== void 0 ? { Value: Item.documentation.value } : void 0,
-                InsertText: typeof Item.insertText === "string" ? Item.insertText : typeof Item.label === "string" ? Item.label : Item.label?.label ?? ""
-              })),
-              IsIncomplete: Result.isIncomplete ?? false
-            };
-          }
-          case "$provideDefinition": {
-            const Result = await Provider.provideDefinition?.(
-              VsDocument,
-              VsPosition,
-              VsToken
-            );
-            if (!Result) return null;
-            const Locations = Array.isArray(Result) ? Result : [Result];
-            return Locations.map((L) => ({
-              Uri: (L.uri ?? L.targetUri)?.toString?.() ?? UriString,
-              Range: NormalizeRange(
-                L.range ?? L.targetSelectionRange
-              )
-            }));
-          }
-          case "$provideReferences": {
-            const Result = await Provider.provideReferences?.(
-              VsDocument,
-              VsPosition,
-              Context22 ?? { includeDeclaration: true },
-              VsToken
-            );
-            if (!Result) return null;
-            return Result.map((L) => ({
-              Uri: L.uri?.toString?.() ?? UriString,
-              Range: NormalizeRange(L.range)
-            }));
-          }
-          // Mountain sends "$provideCodeAction" (ProviderType::CodeAction)
-          case "$provideCodeAction":
-          case "$provideCodeActions": {
-            const RangeArg = Args[2];
-            const ContextArg = Args[3];
-            const Result = await Provider.provideCodeActions?.(
-              VsDocument,
-              RangeArg,
-              ContextArg,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          // Mountain sends "$provideDocumentHighlight" (ProviderType::DocumentHighlight)
-          case "$provideDocumentHighlight":
-          case "$provideDocumentHighlights": {
-            const Result = await Provider.provideDocumentHighlights?.(
-              VsDocument,
-              VsPosition,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          // Mountain sends "$provideDocumentSymbol" (ProviderType::DocumentSymbol)
-          case "$provideDocumentSymbol":
-          case "$provideDocumentSymbols": {
-            const Result = await Provider.provideDocumentSymbols?.(VsDocument, VsToken);
-            return Result ?? null;
-          }
-          // Mountain sends "$provideWorkspaceSymbol" (ProviderType::WorkspaceSymbol)
-          case "$provideWorkspaceSymbol":
-          case "$provideWorkspaceSymbols": {
-            const Query = Args[1];
-            const Result = await Provider.provideWorkspaceSymbols?.(Query, VsToken);
-            return Result ?? null;
-          }
-          // Mountain: "$provideDocumentFormatting" / "$provideDocumentRangeFormatting"
-          case "$provideDocumentFormatting":
-          case "$provideDocumentFormattingEdits":
-          case "$provideDocumentRangeFormatting":
-          case "$provideDocumentRangeFormattingEdits": {
-            const RangeArg = Args[2];
-            const OptionsArg = Args[3];
-            const Fn = Method === "$provideDocumentFormattingEdits" || Method === "$provideDocumentFormatting" ? "provideDocumentFormattingEdits" : "provideDocumentRangeFormattingEdits";
-            const Result = await Provider[Fn]?.(
-              VsDocument,
-              RangeArg,
-              OptionsArg,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          case "$provideSignatureHelp": {
-            const Result = await Provider.provideSignatureHelp?.(
-              VsDocument,
-              VsPosition,
-              VsToken,
-              Context22
-            );
-            return Result ?? null;
-          }
-          // Mountain sends "$provideRename" (ProviderType::Rename)
-          case "$provideRename":
-          case "$provideRenameEdits": {
-            const NewName = Args[3];
-            const Result = await Provider.provideRenameEdits?.(
-              VsDocument,
-              VsPosition,
-              NewName,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          // Mountain sends "$provideFoldingRange" (ProviderType::FoldingRange)
-          case "$provideFoldingRange":
-          case "$provideFoldingRanges": {
-            const Result = await Provider.provideFoldingRanges?.(VsDocument, Context22, VsToken);
-            return Result ?? null;
-          }
-          // Mountain sends "$provideInlayHint" (ProviderType::InlayHint)
-          case "$provideInlayHint":
-          case "$provideInlayHints": {
-            const RangeArg = Args[2];
-            const Result = await Provider.provideInlayHints?.(
-              VsDocument,
-              RangeArg,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          // Mountain sends "$provideCodeLens" (ProviderType::CodeLens)
-          case "$provideCodeLens":
-          case "$provideCodeLenses": {
-            const Result = await Provider.provideCodeLenses?.(
-              VsDocument,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          case "$provideOnTypeFormatting":
-          case "$provideOnTypeFormattingEdits": {
-            const TypeChar = Args[2];
-            const TypeOptions = Args[3];
-            const Result = await Provider.provideOnTypeFormattingEdits?.(
-              VsDocument,
-              VsPosition,
-              TypeChar,
-              TypeOptions ?? {},
-              VsToken
-            );
-            return Result ?? null;
-          }
-          case "$provideSelectionRange":
-          case "$provideSelectionRanges": {
-            const Positions = Args[2];
-            const Result = await Provider.provideSelectionRanges?.(
-              VsDocument,
-              Array.isArray(Positions) ? Positions.map((P) => new Position3(P?.line ?? P?.Line ?? 0, P?.character ?? P?.Character ?? 0)) : [VsPosition],
-              VsToken
-            );
-            return Result ?? null;
-          }
-          case "$provideSemanticTokens":
-          case "$provideSemanticTokensFull": {
-            const Result = await Provider.provideDocumentSemanticTokens?.(
-              VsDocument,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          case "$provideCallHierarchy":
-          case "$provideCallHierarchyIncomingCalls": {
-            const Item = Args[1];
-            const Result = await Provider.provideCallHierarchyIncomingCalls?.(
-              Item,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          case "$provideCallHierarchyOutgoingCalls": {
-            const Item = Args[1];
-            const Result = await Provider.provideCallHierarchyOutgoingCalls?.(
-              Item,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          case "$provideTypeHierarchy":
-          case "$provideTypeHierarchySupertypes": {
-            const Item = Args[1];
-            const Result = await Provider.provideTypeHierarchySupertypes?.(
-              Item,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          case "$provideTypeHierarchySubtypes": {
-            const Item = Args[1];
-            const Result = await Provider.provideTypeHierarchySubtypes?.(
-              Item,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          case "$provideLinkedEditingRange":
-          case "$provideLinkedEditingRanges": {
-            const Result = await Provider.provideLinkedEditingRanges?.(
-              VsDocument,
-              VsPosition,
-              VsToken
-            );
-            return Result ?? null;
-          }
-          default:
-            console.warn(
-              `[LanguageProviderHandler] Unhandled $provide method: ${Method}`
-            );
-            return null;
-        }
-      } catch (Error2) {
-        console.error(
-          `[LanguageProviderHandler] Provider ${Handle} threw for ${Method}:`,
-          Error2
-        );
-        return null;
-      }
-    }, "InvokeLanguageProvider");
-    LanguageProviderHandler_default = InvokeLanguageProvider;
-  }
-});
-
-// Source/Services/Handler/DocumentContentHandler.ts
-var InferLanguageIdentifier, BuildTextDocument, DocumentVersionMap, HandleDocumentChange, HandleDocumentOpen, HandleDocumentClose, HandleDocumentSave, GetDocumentContent, DocumentContentHandler_default;
-var init_DocumentContentHandler = __esm({
-  "Source/Services/Handler/DocumentContentHandler.ts"() {
-    "use strict";
-    InferLanguageIdentifier = /* @__PURE__ */ __name((Uri2) => {
-      const ExtensionMatch = Uri2.match(/\.([^./?#]+)(?:\?|#|$)/);
-      if (!ExtensionMatch?.[1]) return "plaintext";
-      const Extension2 = ExtensionMatch[1].toLowerCase();
-      const LanguageMap = {
-        ts: "typescript",
-        tsx: "typescriptreact",
-        js: "javascript",
-        jsx: "javascriptreact",
-        json: "json",
-        jsonc: "jsonc",
-        md: "markdown",
-        html: "html",
-        htm: "html",
-        css: "css",
-        scss: "scss",
-        less: "less",
-        xml: "xml",
-        yaml: "yaml",
-        yml: "yaml",
-        toml: "toml",
-        rs: "rust",
-        py: "python",
-        rb: "ruby",
-        go: "go",
-        java: "java",
-        c: "c",
-        cpp: "cpp",
-        h: "c",
-        hpp: "cpp",
-        cs: "csharp",
-        swift: "swift",
-        sh: "shellscript",
-        bash: "shellscript",
-        zsh: "shellscript",
-        ps1: "powershell",
-        sql: "sql",
-        graphql: "graphql",
-        proto: "proto3",
-        dockerfile: "dockerfile",
-        vue: "vue",
-        svelte: "svelte",
-        astro: "astro",
-        txt: "plaintext"
-      };
-      return LanguageMap[Extension2] ?? "plaintext";
-    }, "InferLanguageIdentifier");
-    BuildTextDocument = /* @__PURE__ */ __name((Uri2, Content, Version = 1, LanguageIdentifier) => {
-      const Lines = Content.split(/\r?\n/);
-      const FileName = Uri2.replace(/^file:\/\//, "");
-      const ResolvedLanguage = LanguageIdentifier ?? InferLanguageIdentifier(Uri2);
-      return {
-        uri: {
-          scheme: "file",
-          path: FileName,
-          fsPath: FileName,
-          authority: "",
-          query: "",
-          fragment: "",
-          with: /* @__PURE__ */ __name(() => ({}), "with"),
-          toString: /* @__PURE__ */ __name(() => Uri2, "toString"),
-          toJSON: /* @__PURE__ */ __name(() => ({ scheme: "file", path: FileName, fsPath: FileName }), "toJSON")
-        },
-        fileName: FileName,
-        languageId: ResolvedLanguage,
-        version: Version,
-        lineCount: Lines.length,
-        getText: /* @__PURE__ */ __name((Range3) => {
-          if (!Range3) return Content;
-          const StartLine = Range3?.start?.line ?? 0;
-          const StartCharacter = Range3?.start?.character ?? 0;
-          const EndLine = Range3?.end?.line ?? Lines.length - 1;
-          const EndCharacter = Range3?.end?.character ?? (Lines[EndLine]?.length ?? 0);
-          if (StartLine === EndLine) {
-            return (Lines[StartLine] ?? "").substring(StartCharacter, EndCharacter);
-          }
-          const Result = [];
-          Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
-          for (let Index = StartLine + 1; Index < EndLine; Index++) {
-            Result.push(Lines[Index] ?? "");
-          }
-          Result.push((Lines[EndLine] ?? "").substring(0, EndCharacter));
-          return Result.join("\n");
-        }, "getText"),
-        lineAt: /* @__PURE__ */ __name((LineOrPosition) => {
-          const LineNumber = typeof LineOrPosition === "number" ? LineOrPosition : LineOrPosition.line;
-          const Text = Lines[LineNumber] ?? "";
-          return {
-            text: Text,
-            lineNumber: LineNumber,
-            range: {
-              start: { line: LineNumber, character: 0 },
-              end: { line: LineNumber, character: Text.length }
-            },
-            isEmptyOrWhitespace: Text.trim().length === 0
-          };
-        }, "lineAt"),
-        isUntitled: false,
-        isDirty: false,
-        isClosed: false,
-        eol: 1,
-        // EndOfLine.LF
-        offsetAt: /* @__PURE__ */ __name((Position3) => {
-          let Offset = 0;
-          for (let Index = 0; Index < Position3.line && Index < Lines.length; Index++) {
-            Offset += (Lines[Index]?.length ?? 0) + 1;
-          }
-          return Offset + Position3.character;
-        }, "offsetAt"),
-        positionAt: /* @__PURE__ */ __name((Offset) => {
-          let Remaining = Offset;
-          for (let Index = 0; Index < Lines.length; Index++) {
-            const LineLength = (Lines[Index]?.length ?? 0) + 1;
-            if (Remaining < LineLength) {
-              return { line: Index, character: Remaining };
-            }
-            Remaining -= LineLength;
-          }
-          return { line: Lines.length - 1, character: Lines[Lines.length - 1]?.length ?? 0 };
-        }, "positionAt"),
-        validateRange: /* @__PURE__ */ __name((Range3) => Range3, "validateRange"),
-        validatePosition: /* @__PURE__ */ __name((Position3) => Position3, "validatePosition"),
-        getWordRangeAtPosition: /* @__PURE__ */ __name(() => void 0, "getWordRangeAtPosition"),
-        save: /* @__PURE__ */ __name(async () => false, "save")
-      };
-    }, "BuildTextDocument");
-    DocumentVersionMap = /* @__PURE__ */ new Map();
-    HandleDocumentChange = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      let Uri2;
-      let EventData;
-      if (Array.isArray(Parameters) && Parameters.length >= 2) {
-        Uri2 = Parameters[0]?.external ?? Parameters[0]?.toString?.() ?? "";
-        EventData = Parameters[1];
-      } else {
-        Uri2 = Parameters?.uri?.external ?? Parameters?.uri ?? Parameters?.Uri ?? "";
-        EventData = Parameters;
-      }
-      const Content = EventData?.content ?? EventData?.Content ?? EventData?.text;
-      if (Uri2 && Content !== void 0) {
-        DocumentContentCache.set(Uri2, Content);
-      } else if (Uri2 && (EventData?.changes || Parameters?.changes)) {
-        const Existing = DocumentContentCache.get(Uri2) ?? "";
-        let Updated = Existing;
-        const Changes = Array.isArray(EventData?.changes) ? EventData.changes : Array.isArray(Parameters?.changes) ? Parameters.changes : [];
-        const Sorted = [...Changes].sort(
-          (A, B) => (B.rangeOffset ?? 0) - (A.rangeOffset ?? 0)
-        );
-        for (const Change of Sorted) {
-          const Offset = Change.rangeOffset ?? 0;
-          const Length = Change.rangeLength ?? 0;
-          const Text = Change.text ?? "";
-          Updated = Updated.substring(0, Offset) + Text + Updated.substring(Offset + Length);
-        }
-        DocumentContentCache.set(Uri2, Updated);
-      }
-      if (Uri2 && WorkspaceEventEmitter) {
-        const CurrentVersion = (DocumentVersionMap.get(Uri2) ?? 1) + 1;
-        DocumentVersionMap.set(Uri2, CurrentVersion);
-        const CachedContent = DocumentContentCache.get(Uri2) ?? "";
-        const Document = BuildTextDocument(Uri2, CachedContent, CurrentVersion);
-        WorkspaceEventEmitter.emit("didChangeTextDocument", {
-          document: Document,
-          contentChanges: EventData?.changes ?? Parameters?.changes ?? [],
-          reason: void 0
-        });
-      }
-    }, "HandleDocumentChange");
-    HandleDocumentOpen = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
-      for (const Model of Models) {
-        const Uri2 = Model?.URI?.toString?.() ?? Model?.URI ?? Model?.uri?.external ?? Model?.uri ?? Model?.Uri ?? "";
-        const Lines = Model?.Lines ?? Model?.lines;
-        const EOL = Model?.EOL ?? Model?.eol ?? "\n";
-        let Content;
-        if (Array.isArray(Lines)) {
-          Content = Lines.join(EOL);
-        } else {
-          Content = Model?.content ?? Model?.Content ?? Model?.text;
-        }
-        const LanguageIdentifier = Model?.LanguageIdentifier ?? Model?.languageId ?? Model?.language;
-        if (Uri2 && Content !== void 0) {
-          DocumentContentCache.set(Uri2, Content);
-          DocumentVersionMap.set(Uri2, 1);
-          console.log(`[DocumentContentHandler] Document opened: ${Uri2.slice(-60)} (${Content.length} chars)`);
-          if (WorkspaceEventEmitter) {
-            const Document = BuildTextDocument(Uri2, Content, 1, LanguageIdentifier);
-            WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
-          }
-        }
-      }
-    }, "HandleDocumentOpen");
-    HandleDocumentClose = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
-      for (const Item of Items) {
-        const Uri2 = Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
-        if (Uri2) {
-          if (WorkspaceEventEmitter) {
-            const CachedContent = DocumentContentCache.get(Uri2) ?? "";
-            const Version = DocumentVersionMap.get(Uri2) ?? 1;
-            const Document = BuildTextDocument(Uri2, CachedContent, Version);
-            WorkspaceEventEmitter.emit("didCloseTextDocument", Document);
-          }
-          DocumentContentCache.delete(Uri2);
-          DocumentVersionMap.delete(Uri2);
-        }
-      }
-    }, "HandleDocumentClose");
-    HandleDocumentSave = /* @__PURE__ */ __name((DocumentContentCache, Parameters, WorkspaceEventEmitter) => {
-      if (!WorkspaceEventEmitter) return;
-      const Items = Array.isArray(Parameters) ? Parameters : [Parameters];
-      for (const Item of Items) {
-        const Uri2 = typeof Item === "string" ? Item : Item?.external ?? Item?.uri?.external ?? Item?.uri ?? Item?.Uri ?? "";
-        if (Uri2) {
-          const CachedContent = DocumentContentCache.get(Uri2) ?? "";
-          const Version = DocumentVersionMap.get(Uri2) ?? 1;
-          const Document = BuildTextDocument(Uri2, CachedContent, Version);
-          WorkspaceEventEmitter.emit("didSaveTextDocument", Document);
-        }
-      }
-    }, "HandleDocumentSave");
-    GetDocumentContent = /* @__PURE__ */ __name((DocumentContentCache, Uri2) => {
-      return DocumentContentCache.get(Uri2) ?? null;
-    }, "GetDocumentContent");
-    DocumentContentHandler_default = {
-      HandleDocumentChange,
-      HandleDocumentOpen,
-      HandleDocumentClose,
-      HandleDocumentSave,
-      GetDocumentContent,
-      BuildTextDocument
-    };
-  }
-});
-
-// Source/Services/Handler/NotificationHandler.ts
-var HandleSpecificNotification, NotificationHandler_default;
-var init_NotificationHandler = __esm({
-  "Source/Services/Handler/NotificationHandler.ts"() {
-    "use strict";
-    HandleSpecificNotification = /* @__PURE__ */ __name((Emitter4, DocumentContentCache, HandleDocumentChange2, HandleDocumentOpen2, HandleDocumentClose2, HandleDocumentSave2, Method, Parameters, WorkspaceEventEmitter) => {
-      switch (Method) {
-        case "extension.change":
-          Emitter4.emit("extensionChanged", Parameters);
-          break;
-        case "configuration.change":
-          Emitter4.emit("configurationChanged", Parameters);
-          break;
-        case "window.focused":
-          Emitter4.emit("windowFocused", Parameters);
-          break;
-        case "window.blurred":
-          Emitter4.emit("windowBlurred", Parameters);
-          break;
-        case "system.shutdown":
-          Emitter4.emit("systemShutdown", Parameters);
-          break;
-        case "$acceptModelChanged":
-        case "document.didChange":
-          HandleDocumentChange2(DocumentContentCache, Parameters, WorkspaceEventEmitter);
-          break;
-        case "$acceptModelAdded":
-        case "$acceptModelOpen":
-        case "document.didOpen":
-          HandleDocumentOpen2(DocumentContentCache, Parameters, WorkspaceEventEmitter);
-          break;
-        case "$acceptModelRemoved":
-        case "$acceptModelClosed":
-        case "document.didClose":
-          HandleDocumentClose2(DocumentContentCache, Parameters, WorkspaceEventEmitter);
-          break;
-        case "$acceptModelSaved":
-        case "document.didSave":
-          HandleDocumentSave2(DocumentContentCache, Parameters, WorkspaceEventEmitter);
-          break;
-        default:
-          console.log(
-            `[NotificationHandler] Generic notification handler for: ${Method}`
-          );
-      }
-    }, "HandleSpecificNotification");
-    NotificationHandler_default = HandleSpecificNotification;
-  }
-});
-
-// Source/Effect/Telemetry.ts
-import {
-  Context as Context11,
-  Effect as Effect13,
-  HashMap,
-  Layer as Layer11,
-  Option,
-  Ref,
-  Stream,
-  SubscriptionRef
-} from "effect";
-var TelemetryCollectionError, TelemetryTag, Telemetry, TelemetryLive, makeMockTelemetry, TelemetryMock, withSpan;
-var init_Telemetry = __esm({
-  "Source/Effect/Telemetry.ts"() {
-    "use strict";
-    TelemetryCollectionError = class extends Error {
-      constructor(operation, cause) {
-        super(
-          `Telemetry collection failed for '${operation}': ${String(cause)}`
-        );
-        this.operation = operation;
-        this.cause = cause;
-      }
-      operation;
-      cause;
-      static {
-        __name(this, "TelemetryCollectionError");
-      }
-      _tag = "TelemetryCollectionError";
-    };
-    TelemetryTag = class extends Context11.Tag("Cocoon/Telemetry")() {
-      static {
-        __name(this, "TelemetryTag");
-      }
-    };
-    Telemetry = TelemetryTag;
-    TelemetryLive = Layer11.effect(
-      Telemetry,
-      Effect13.gen(function* () {
-        const metricsRef = yield* SubscriptionRef.make(HashMap.empty());
-        const spansRef = yield* SubscriptionRef.make(HashMap.empty());
-        const eventsRef = yield* SubscriptionRef.make([]);
-        const recordMetric = /* @__PURE__ */ __name((name, value, labels) => Effect13.gen(function* () {
-          const metric = {
-            name,
-            value,
-            timestamp: Date.now(),
-            labels
-          };
-          const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            {
-              type: "metric",
-              timestamp: metric.timestamp,
-              data: metric
-            }
-          ]);
-          const currentMetrics = yield* metricsRef.get;
-          const nameMetrics = HashMap.get(currentMetrics, name).pipe(
-            Option.getOrElse(() => [])
-          );
-          yield* Ref.set(
-            metricsRef,
-            HashMap.set(currentMetrics, name, [...nameMetrics, metric])
-          );
-        }), "recordMetric");
-        const startSpan = /* @__PURE__ */ __name((name, labels) => Effect13.gen(function* () {
-          const startTime = Date.now();
-          const span = {
-            name,
-            startTime,
-            success: false,
-            labels: labels ?? {}
-          };
-          const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            { type: "span", timestamp: startTime, data: span }
-          ]);
-          return {
-            end: /* @__PURE__ */ __name((success, error) => Effect13.gen(function* () {
-              const endTime = Date.now();
-              const completedSpan = {
-                ...span,
-                endTime,
-                duration: endTime - startTime,
-                success,
-                error
-              };
-              const events2 = yield* eventsRef.get;
-              yield* Ref.set(eventsRef, [
-                ...events2,
-                {
-                  type: "span",
-                  timestamp: endTime,
-                  data: completedSpan
-                }
-              ]);
-              const currentSpans = yield* spansRef.get;
-              const nameSpans = HashMap.get(
-                currentSpans,
-                name
-              ).pipe(Option.getOrElse(() => []));
-              yield* Ref.set(
-                spansRef,
-                HashMap.set(currentSpans, name, [
-                  ...nameSpans,
-                  completedSpan
-                ])
-              );
-            }), "end")
-          };
-        }), "startSpan");
-        const log = /* @__PURE__ */ __name((level, message, context) => Effect13.gen(function* () {
-          const logEntry = {
-            level,
-            message,
-            context
-          };
-          const timestamp = Date.now();
-          const events = yield* eventsRef.get;
-          yield* Ref.set(eventsRef, [
-            ...events,
-            { type: "log", timestamp, data: logEntry }
-          ]);
-          const prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
-          switch (level) {
-            case "debug":
-              console.debug(prefix, message, context ?? "");
-              break;
-            case "info":
-              console.info(prefix, message, context ?? "");
-              break;
-            case "warn":
-              console.warn(prefix, message, context ?? "");
-              break;
-            case "error":
-              console.error(prefix, message, context ?? "");
-              break;
-          }
-        }), "log");
-        const getMetrics = /* @__PURE__ */ __name((name) => Effect13.gen(function* () {
-          const metrics = yield* metricsRef.get;
-          return HashMap.get(metrics, name).pipe(
-            Option.getOrElse(() => [])
-          );
-        }), "getMetrics");
-        const getAverageDuration = /* @__PURE__ */ __name((name) => Effect13.gen(function* () {
-          const spans = yield* spansRef.get;
-          const nameSpans = HashMap.get(spans, name).pipe(
-            Option.getOrElse(() => [])
-          );
-          if (nameSpans.length === 0) {
-            return 0;
-          }
-          const totalDuration = nameSpans.reduce(
-            (sum2, span) => {
-              return sum2 + (span.duration ?? 0);
-            },
-            0
-          );
-          return totalDuration / nameSpans.length;
-        }), "getAverageDuration");
-        const getSuccessRate = /* @__PURE__ */ __name((name) => Effect13.gen(function* () {
-          const spans = yield* spansRef.get;
-          const nameSpans = HashMap.get(spans, name).pipe(
-            Option.getOrElse(() => [])
-          );
-          if (nameSpans.length === 0) {
-            return 1;
-          }
-          const successCount = nameSpans.filter(
-            (span) => span.success
-          ).length;
-          return successCount / nameSpans.length;
-        }), "getSuccessRate");
-        const flush = Effect13.gen(function* () {
-          yield* Ref.set(metricsRef, HashMap.empty());
-          yield* Ref.set(spansRef, HashMap.empty());
-          yield* Ref.set(eventsRef, []);
-        });
-        return {
-          recordMetric,
-          startSpan,
-          log,
-          events: eventsRef.changes,
-          getMetrics,
-          getAverageDuration,
-          getSuccessRate,
-          flush
-        };
-      })
-    );
-    makeMockTelemetry = /* @__PURE__ */ __name(() => ({
-      recordMetric: /* @__PURE__ */ __name(() => Effect13.void, "recordMetric"),
-      startSpan: /* @__PURE__ */ __name(() => Effect13.succeed({
-        end: /* @__PURE__ */ __name(() => Effect13.void, "end")
-      }), "startSpan"),
-      log: /* @__PURE__ */ __name((level, message, context) => Effect13.sync(() => {
-        const prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
-        console.log(prefix, message, context ?? "");
-      }), "log"),
-      events: Stream.empty,
-      getMetrics: /* @__PURE__ */ __name(() => Effect13.succeed([]), "getMetrics"),
-      getAverageDuration: /* @__PURE__ */ __name(() => Effect13.succeed(0), "getAverageDuration"),
-      getSuccessRate: /* @__PURE__ */ __name(() => Effect13.succeed(1), "getSuccessRate"),
-      flush: Effect13.void
-    }), "makeMockTelemetry");
-    TelemetryMock = Layer11.effect(
-      Telemetry,
-      Effect13.succeed(makeMockTelemetry())
-    );
-    withSpan = /* @__PURE__ */ __name((name, effect, labels) => Effect13.gen(function* () {
-      const telemetry = yield* Telemetry;
-      const span = yield* telemetry.startSpan(name, labels);
-      const result = yield* effect.pipe(
-        Effect13.catchAll(
-          (error) => Effect13.gen(function* () {
-            yield* span.end(false, String(error));
-            return yield* Effect13.fail(error);
-          })
-        )
-      );
-      yield* span.end(true);
-      return result;
-    }), "withSpan");
-  }
-});
-
-// Source/Effect/Extension.ts
-import { Context as Context12, Effect as Effect14, HashMap as HashMap2, Layer as Layer12, Option as Option2, Ref as Ref2, SubscriptionRef as SubscriptionRef2 } from "effect";
-var ExtensionNotFoundError, ExtensionActivationError, ExtensionDeactivationError, ExtensionTag, Extension, ExtensionLive, makeMockExtension, ExtensionMock;
-var init_Extension = __esm({
-  "Source/Effect/Extension.ts"() {
-    "use strict";
-    init_Telemetry();
-    ExtensionNotFoundError = class extends Error {
-      constructor(extensionId) {
-        super(`Extension not found: ${extensionId}`);
-        this.extensionId = extensionId;
-      }
-      extensionId;
-      static {
-        __name(this, "ExtensionNotFoundError");
-      }
-      _tag = "ExtensionNotFoundError";
-    };
-    ExtensionActivationError = class extends Error {
-      constructor(extensionId, cause) {
-        super(
-          `Failed to activate extension '${extensionId}': ${String(cause)}`
-        );
-        this.extensionId = extensionId;
-        this.cause = cause;
-      }
-      extensionId;
-      cause;
-      static {
-        __name(this, "ExtensionActivationError");
-      }
-      _tag = "ExtensionActivationError";
-    };
-    ExtensionDeactivationError = class extends Error {
-      constructor(extensionId, cause) {
-        super(
-          `Failed to deactivate extension '${extensionId}': ${String(cause)}`
-        );
-        this.extensionId = extensionId;
-        this.cause = cause;
-      }
-      extensionId;
-      cause;
-      static {
-        __name(this, "ExtensionDeactivationError");
-      }
-      _tag = "ExtensionDeactivationError";
-    };
-    ExtensionTag = class extends Context12.Tag("Cocoon/Extension")() {
-      static {
-        __name(this, "ExtensionTag");
-      }
-    };
-    Extension = ExtensionTag;
-    ExtensionLive = Layer12.effect(
-      Extension,
-      Effect14.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const extensionsRef = yield* SubscriptionRef2.make(HashMap2.empty());
-        const getAll = Effect14.gen(function* () {
-          const extensions = yield* extensionsRef.get;
-          return Array.from(HashMap2.values(extensions));
-        });
-        const getById = /* @__PURE__ */ __name((id2) => Effect14.gen(function* () {
-          const extensions = yield* extensionsRef.get;
-          const extension = HashMap2.get(extensions, id2);
-          if (extension._tag === "None") {
-            return yield* Effect14.fail(new ExtensionNotFoundError(id2));
-          }
-          return extension.value;
-        }), "getById");
-        const activate = /* @__PURE__ */ __name((id2) => Effect14.gen(function* () {
-          const startTime = Date.now();
-          const extensions = yield* extensionsRef.get;
-          const extension = HashMap2.get(extensions, id2);
-          if (extension._tag === "None") {
-            return yield* Effect14.fail(new ExtensionNotFoundError(id2));
-          }
-          const current = extension.value;
-          if (current.state._tag === "Active") {
-            return {
-              extensionId: id2,
-              success: true,
-              activationTime: 0,
-              error: void 0
-            };
-          }
-          yield* Ref2.set(
-            extensionsRef,
-            HashMap2.set(extensions, id2, {
-              ...current,
-              state: { _tag: "Activating", startTime }
-            })
-          );
-          telemetry.log(
-            "info",
-            `[Extension] Activating extension: ${id2}`
-          );
-          yield* Effect14.sleep("10 millis");
-          const activationTime = Date.now() - startTime;
-          const updatedExtensions = yield* extensionsRef.get;
-          yield* Ref2.set(
-            extensionsRef,
-            HashMap2.set(updatedExtensions, id2, {
-              ...current,
-              state: { _tag: "Active", activatedAt: startTime },
-              activatedAt: startTime,
-              activationTime
-            })
-          );
-          telemetry.log(
-            "info",
-            `[Extension] Activated extension: ${id2} (${activationTime}ms)`
-          );
-          return {
-            extensionId: id2,
-            success: true,
-            activationTime,
-            error: void 0
-          };
-        }).pipe(
-          Effect14.catchAll(
-            (error) => Effect14.gen(function* () {
-              if (error instanceof ExtensionNotFoundError) {
-                return yield* Effect14.fail(error);
-              }
-              const extensions = yield* extensionsRef.get;
-              yield* Ref2.set(
-                extensionsRef,
-                HashMap2.set(extensions, id2, {
-                  ...HashMap2.get(extensions, id2).pipe(
-                    Option2.getOrElse(() => ({
-                      id: id2,
-                      manifest: {
-                        id: id2,
-                        name: "Unknown",
-                        version: "0.0.0",
-                        description: "",
-                        publisher: "",
-                        entryPoint: "",
-                        enabled: true,
-                        activationEvents: [],
-                        dependencies: [],
-                        contributes: {}
-                      },
-                      state: { _tag: "Idle" },
-                      activatedAt: void 0,
-                      activationTime: void 0
-                    }))
-                  ),
-                  state: { _tag: "Error", error: String(error) }
-                })
-              );
-              telemetry.log(
-                "error",
-                `[Extension] Failed to activate ${id2}: ${String(error)}`
-              );
-              return yield* Effect14.fail(
-                new ExtensionActivationError(id2, error)
-              );
-            })
-          )
-        ), "activate");
-        const deactivate = /* @__PURE__ */ __name((id2) => Effect14.gen(function* () {
-          const extensions = yield* extensionsRef.get;
-          const extension = HashMap2.get(extensions, id2);
-          if (extension._tag === "None") {
-            return yield* Effect14.fail(new ExtensionNotFoundError(id2));
-          }
-          const current = extension.value;
-          if (current.state._tag === "Deactivated" || current.state._tag === "Idle") {
-            return {
-              extensionId: id2,
-              success: true,
-              error: void 0
-            };
-          }
-          telemetry.log(
-            "info",
-            `[Extension] Deactivating extension: ${id2}`
-          );
-          yield* Ref2.set(
-            extensionsRef,
-            HashMap2.set(extensions, id2, {
-              ...current,
-              state: { _tag: "Deactivating" }
-            })
-          );
-          yield* Effect14.sleep("5 millis");
-          const updatedExtensions = yield* extensionsRef.get;
-          yield* Ref2.set(
-            extensionsRef,
-            HashMap2.set(updatedExtensions, id2, {
-              ...current,
-              state: { _tag: "Deactivated" }
-            })
-          );
-          telemetry.log(
-            "info",
-            `[Extension] Deactivated extension: ${id2}`
-          );
-          return {
-            extensionId: id2,
-            success: true,
-            error: void 0
-          };
-        }).pipe(
-          Effect14.catchAll(
-            (error) => Effect14.gen(function* () {
-              if (error instanceof ExtensionNotFoundError) {
-                return yield* Effect14.fail(error);
-              }
-              telemetry.log(
-                "error",
-                `[Extension] Failed to deactivate ${id2}: ${String(error)}`
-              );
-              return yield* Effect14.fail(
-                new ExtensionDeactivationError(id2, error)
-              );
-            })
-          )
-        ), "deactivate");
-        const isActive = /* @__PURE__ */ __name((id2) => Effect14.gen(function* () {
-          const extensions = yield* extensionsRef.get;
-          const extension = HashMap2.get(extensions, id2);
-          if (extension._tag === "None") {
-            return false;
-          }
-          return extension.value.state._tag === "Active";
-        }), "isActive");
-        const getActiveCount = Effect14.gen(function* () {
-          const extensions = yield* extensionsRef.get;
-          const values = Array.from(HashMap2.values(extensions));
-          return values.filter((ext) => ext.state._tag === "Active").length;
-        });
-        const stateChanges = Effect14.map(extensionsRef.get, (extensions) => {
-          const result = {};
-          for (const [id2, host] of HashMap2.entries(extensions)) {
-            result[id2] = host.state;
-          }
-          return result;
-        });
-        return {
-          getAll,
-          getById,
-          activate,
-          deactivate,
-          isActive,
-          getActiveCount,
-          stateChanges
-        };
-      })
-    );
-    makeMockExtension = /* @__PURE__ */ __name((extensions = []) => {
-      const mockExtensions = extensions.map((manifest) => ({
-        id: manifest.id,
-        manifest,
-        state: { _tag: "Idle" },
-        activatedAt: void 0,
-        activationTime: void 0
-      }));
-      return {
-        getAll: Effect14.succeed(mockExtensions),
-        getById: /* @__PURE__ */ __name((id2) => Effect14.gen(function* () {
-          const ext = mockExtensions.find((e) => e.id === id2);
-          if (!ext) {
-            return yield* Effect14.fail(new ExtensionNotFoundError(id2));
-          }
-          return ext;
-        }), "getById"),
-        activate: /* @__PURE__ */ __name((id2) => Effect14.succeed({
-          extensionId: id2,
-          success: true,
-          activationTime: 10,
-          error: void 0
-        }), "activate"),
-        deactivate: /* @__PURE__ */ __name((id2) => Effect14.succeed({
-          extensionId: id2,
-          success: true,
-          error: void 0
-        }), "deactivate"),
-        isActive: /* @__PURE__ */ __name((id2) => Effect14.succeed(
-          mockExtensions.some(
-            (e) => e.id === id2 && e.state._tag === "Active"
-          )
-        ), "isActive"),
-        getActiveCount: Effect14.succeed(0),
-        stateChanges: Effect14.succeed({})
-      };
-    }, "makeMockExtension");
-    ExtensionMock = Layer12.effect(
-      Extension,
-      Effect14.succeed(makeMockExtension())
-    );
-  }
-});
-
-// Source/Effect/Health.ts
-import { Context as Context13, Effect as Effect15, Layer as Layer13, Schedule } from "effect";
-var HealthTag, createServiceHealth, makeHealthChecker, HealthLive, makeMockHealth, HealthMock;
-var init_Health = __esm({
-  "Source/Effect/Health.ts"() {
-    "use strict";
-    init_Telemetry();
-    HealthTag = class extends Context13.Tag("Cocoon/Health")() {
-      static {
-        __name(this, "HealthTag");
-      }
-    };
-    createServiceHealth = /* @__PURE__ */ __name((name, status2, message, responseTime, details) => ({
-      serviceName: name,
-      status: status2,
-      message,
-      lastChecked: Date.now(),
-      responseTime,
-      details
-    }), "createServiceHealth");
-    makeHealthChecker = /* @__PURE__ */ __name(() => ({
-      checkService: /* @__PURE__ */ __name((serviceName) => Effect15.gen(function* () {
-        const startTime = Date.now();
-        switch (serviceName.toLowerCase()) {
-          case "environment": {
-            const envTime = Date.now() - startTime;
-            return createServiceHealth(
-              "Environment",
-              "healthy",
-              "Environment service available",
-              envTime
-            );
-          }
-          case "telemetry": {
-            const telemetryService = yield* TelemetryTag;
-            const telemetryTime = Date.now() - startTime;
-            return yield* telemetryService.log("info", "[Health] Telemetry health check").pipe(
-              Effect15.map(
-                () => createServiceHealth(
-                  "Telemetry",
-                  "healthy",
-                  "Telemetry service available",
-                  telemetryTime
-                )
-              ),
-              Effect15.catchAll(
-                () => Effect15.succeed(
-                  createServiceHealth(
-                    "Telemetry",
-                    "unhealthy",
-                    "Telemetry service error",
-                    telemetryTime
-                  )
-                )
-              )
-            );
-          }
-          case "grpc": {
-            const grpcTime = Date.now() - startTime;
-            return createServiceHealth(
-              "gRPC",
-              "healthy",
-              "gRPC service available",
-              grpcTime
-            );
-          }
-          case "extension": {
-            const extensionTime = Date.now() - startTime;
-            return createServiceHealth(
-              "Extension",
-              "healthy",
-              "Extension service available",
-              extensionTime
-            );
-          }
-          default:
-            return createServiceHealth(
-              serviceName,
-              "unknown",
-              `Unknown service: ${serviceName}`,
-              0
-            );
-        }
-      }), "checkService"),
-      checkAllServices: /* @__PURE__ */ __name(() => Effect15.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const services = [
-          "environment",
-          "telemetry",
-          "grpc",
-          "extension"
-        ];
-        const healthChecker = makeHealthChecker();
-        telemetry.log(
-          "info",
-          "[Health] Running health checks for all services..."
-        );
-        const healthResults = yield* Effect15.all(
-          services.map((service) => healthChecker.checkService(service))
-        );
-        const unhealthyCount = healthResults.filter(
-          (h) => h.status === "unhealthy"
-        ).length;
-        const degradedCount = healthResults.filter(
-          (h) => h.status === "degraded"
-        ).length;
-        let overallStatus = "healthy";
-        if (unhealthyCount > 0) {
-          overallStatus = "unhealthy";
-        } else if (degradedCount > 0) {
-          overallStatus = "degraded";
-        }
-        return {
-          overallStatus,
-          services: healthResults,
-          systemInfo: {
-            platform: process.platform,
-            architecture: process.arch,
-            nodeVersion: process.version,
-            upSince: Date.now()
-          },
-          lastChecked: Date.now()
-        };
-      }), "checkAllServices"),
-      getOverallStatus: /* @__PURE__ */ __name(() => Effect15.gen(function* () {
-        const healthChecker = makeHealthChecker();
-        const systemHealth = yield* healthChecker.checkAllServices();
-        return systemHealth.overallStatus;
-      }), "getOverallStatus"),
-      monitorService: /* @__PURE__ */ __name((serviceName, intervalMs) => Effect15.gen(function* () {
-        yield* makeHealthChecker().checkService(serviceName).pipe(Effect15.repeat(Schedule.spaced(`${intervalMs} millis`)));
-      }), "monitorService")
-    }), "makeHealthChecker");
-    HealthLive = Layer13.effect(
-      HealthTag,
-      Effect15.succeed(makeHealthChecker())
-    );
-    makeMockHealth = /* @__PURE__ */ __name((overrides) => ({
-      checkService: /* @__PURE__ */ __name((serviceName) => Effect15.gen(function* () {
-        const defaultStatus = "healthy";
-        const status2 = overrides?.[serviceName] ?? defaultStatus;
-        return createServiceHealth(
-          serviceName,
-          status2,
-          status2 === "healthy" ? "Mock service healthy" : "Mock service unhealthy",
-          0
-        );
-      }), "checkService"),
-      checkAllServices: /* @__PURE__ */ __name(() => Effect15.gen(function* () {
-        const services = ["environment", "telemetry", "grpc", "extension"];
-        const results = services.map(
-          (name) => createServiceHealth(
-            name,
-            overrides?.[name] ?? "healthy",
-            "Mock service check",
-            0
-          )
-        );
-        return {
-          overallStatus: "healthy",
-          services: results,
-          systemInfo: {
-            platform: "mock",
-            architecture: "mock",
-            nodeVersion: "mock",
-            upSince: Date.now()
-          },
-          lastChecked: Date.now()
-        };
-      }), "checkAllServices"),
-      getOverallStatus: /* @__PURE__ */ __name(() => Effect15.succeed("healthy"), "getOverallStatus"),
-      monitorService: /* @__PURE__ */ __name(() => Effect15.void, "monitorService")
-    }), "makeMockHealth");
-    HealthMock = Layer13.effect(
-      HealthTag,
-      Effect15.succeed(makeMockHealth())
-    );
-  }
-});
-
-// Source/Effect/ModuleInterceptor.ts
-import {
-  Context as Context14,
-  Effect as Effect16,
-  HashMap as HashMap3,
-  Layer as Layer14,
-  Ref as Ref3,
-  SubscriptionRef as SubscriptionRef3
-} from "effect";
-var SecurityLevel3, ModuleNotFoundError, ModuleAccessDeniedError, SecurityPolicyNotFoundError, ModuleInterceptorTag, ModuleInterceptor, defaultSecurityPolicy, ModuleInterceptorLive, makeMockModuleInterceptor, ModuleInterceptorMock;
-var init_ModuleInterceptor = __esm({
-  "Source/Effect/ModuleInterceptor.ts"() {
-    "use strict";
-    init_Telemetry();
-    SecurityLevel3 = /* @__PURE__ */ ((SecurityLevel4) => {
-      SecurityLevel4["TRUSTED"] = "TRUSTED";
-      SecurityLevel4["SANDBOXED"] = "SANDBOXED";
-      SecurityLevel4["RESTRICTED"] = "RESTRICTED";
-      SecurityLevel4["BLOCKED"] = "BLOCKED";
-      return SecurityLevel4;
-    })(SecurityLevel3 || {});
-    ModuleNotFoundError = class extends Error {
-      constructor(moduleId, extensionId) {
-        super(`Module not found: ${moduleId} for extension ${extensionId}`);
-        this.moduleId = moduleId;
-        this.extensionId = extensionId;
-      }
-      moduleId;
-      extensionId;
-      static {
-        __name(this, "ModuleNotFoundError");
-      }
-      _tag = "ModuleNotFoundError";
-    };
-    ModuleAccessDeniedError = class extends Error {
-      constructor(moduleId, reason) {
-        super(`Module access denied: ${moduleId} - ${reason}`);
-        this.moduleId = moduleId;
-        this.reason = reason;
-      }
-      moduleId;
-      reason;
-      static {
-        __name(this, "ModuleAccessDeniedError");
-      }
-      _tag = "ModuleAccessDeniedError";
-    };
-    SecurityPolicyNotFoundError = class extends Error {
-      constructor(extensionId) {
-        super(`Security policy not found for extension: ${extensionId}`);
-        this.extensionId = extensionId;
-      }
-      extensionId;
-      static {
-        __name(this, "SecurityPolicyNotFoundError");
-      }
-      _tag = "SecurityPolicyNotFoundError";
-    };
-    ModuleInterceptorTag = class extends Context14.Tag(
-      "Cocoon/ModuleInterceptor"
-    )() {
-      static {
-        __name(this, "ModuleInterceptorTag");
-      }
-    };
-    ModuleInterceptor = ModuleInterceptorTag;
-    defaultSecurityPolicy = {
-      allowedModules: ["path", "url", "util", "events", "stream", "buffer"],
-      blockedModules: [
-        "fs",
-        "child_process",
-        "net",
-        "http",
-        "https",
-        "os",
-        "crypto"
-      ],
-      securityLevel: "SANDBOXED" /* SANDBOXED */,
-      maxMemoryUsage: 128 * 1024 * 1024,
-      // 128MB
-      maxExecutionTime: 5e3
-      // 5 seconds
-    };
-    ModuleInterceptorLive = Layer14.effect(
-      ModuleInterceptor,
-      Effect16.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const policiesRef = yield* SubscriptionRef3.make(HashMap3.empty());
-        const moduleCacheRef = yield* SubscriptionRef3.make(HashMap3.empty());
-        const statsRef = yield* SubscriptionRef3.make({
-          totalInterceptions: 0,
-          blockedModules: 0,
-          averageResolutionTime: 0,
-          securityViolations: 0
-        });
-        const resolutionTimes = [];
-        const isNodeBuiltin = /* @__PURE__ */ __name((moduleId) => {
-          const builtins = [
-            "fs",
-            "path",
-            "os",
-            "net",
-            "http",
-            "https",
-            "child_process",
-            "crypto",
-            "util",
-            "events",
-            "stream",
-            "buffer",
-            "url",
-            "querystring"
-          ];
-          return builtins.includes(moduleId);
-        }, "isNodeBuiltin");
-        const initialize = Effect16.gen(function* () {
-          telemetry.log(
-            "info",
-            "[ModuleInterceptor] Initializing module interceptor service..."
-          );
-          yield* Effect16.sleep("5 millis");
-          telemetry.log(
-            "info",
-            "[ModuleInterceptor] Module interceptor service initialized"
-          );
-        });
-        const vscodeAPIRegistry = /* @__PURE__ */ new Map();
-        const install = Effect16.gen(function* () {
-          telemetry.log(
-            "info",
-            "[ModuleInterceptor] Installing Node.js Module._load hook..."
-          );
-          const NodeModule = yield* Effect16.try(() => {
-            return __require("module");
-          });
-          const OriginalLoad = NodeModule._load;
-          NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
-            if (Request === "vscode") {
-              const ParentFilename = Parent?.filename ?? Parent?.id ?? "";
-              for (const [ExtensionId, API] of vscodeAPIRegistry) {
-                if (ParentFilename.includes(ExtensionId)) {
-                  return API;
-                }
-              }
-              if (vscodeAPIRegistry.size > 0) {
-                const LastAPI = [...vscodeAPIRegistry.values()].pop();
-                return LastAPI;
-              }
-              const GlobalAPI = globalThis.__cocoonVscodeAPI;
-              if (GlobalAPI) {
-                return GlobalAPI;
-              }
-              console.warn(
-                `[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`
-              );
-              return {};
-            }
-            return OriginalLoad.apply(this, [Request, Parent, IsMain]);
-          }, "PatchedLoad");
-          telemetry.log(
-            "info",
-            "[ModuleInterceptor] Module._load hook installed \u2014 require('vscode') intercepted"
-          );
-        });
-        const interceptRequire = /* @__PURE__ */ __name((request) => Effect16.gen(function* () {
-          const startTime = Date.now();
-          const currentStats = yield* statsRef.get;
-          yield* Ref3.set(statsRef, {
-            ...currentStats,
-            totalInterceptions: currentStats.totalInterceptions + 1
-          });
-          const policyOpt = HashMap3.get(
-            yield* policiesRef.get,
-            request.extensionId
-          );
-          if (policyOpt._tag === "None") {
-            yield* telemetry.log(
-              "warn",
-              `[ModuleInterceptor] No policy for extension ${request.extensionId}, using default`
-            );
-          }
-          const policy = policyOpt._tag === "Some" ? policyOpt.value : {
-            ...defaultSecurityPolicy,
-            extensionId: request.extensionId
-          };
-          if (policy.blockedModules.includes(request.moduleId)) {
-            yield* telemetry.log(
-              "warn",
-              `[ModuleInterceptor] Blocked module access: ${request.moduleId} for ${request.extensionId}`
-            );
-            const statsAfter2 = yield* statsRef.get;
-            yield* Ref3.set(statsRef, {
-              ...statsAfter2,
-              blockedModules: statsAfter2.blockedModules + 1,
-              securityViolations: statsAfter2.securityViolations + 1
-            });
-            return {
-              success: false,
-              error: `Module access denied: ${request.moduleId}`,
-              securityLevel: "BLOCKED" /* BLOCKED */
-            };
-          }
-          if (!policy.allowedModules.includes(request.moduleId) && !isNodeBuiltin(request.moduleId)) {
-            yield* telemetry.log(
-              "warn",
-              `[ModuleInterceptor] Module not in allowlist: ${request.moduleId} for ${request.extensionId}`
-            );
-            const statsAfter2 = yield* statsRef.get;
-            yield* Ref3.set(statsRef, {
-              ...statsAfter2,
-              blockedModules: statsAfter2.blockedModules + 1,
-              securityViolations: statsAfter2.securityViolations + 1
-            });
-            return {
-              success: false,
-              error: `Module not in allowlist: ${request.moduleId}`,
-              securityLevel: "RESTRICTED" /* RESTRICTED */
-            };
-          }
-          const cacheKey = `${request.extensionId}:${request.moduleId}`;
-          const cachedModule = HashMap3.get(
-            yield* moduleCacheRef.get,
-            cacheKey
-          );
-          if (cachedModule._tag === "Some") {
-            const duration2 = Date.now() - startTime;
-            resolutionTimes.push(duration2);
-            const allTimes2 = [...resolutionTimes];
-            const avgTime2 = allTimes2.reduce((a, b) => a + b, 0) / allTimes2.length;
-            const statsAfter2 = yield* statsRef.get;
-            yield* Ref3.set(statsRef, {
-              ...statsAfter2,
-              averageResolutionTime: avgTime2
-            });
-            telemetry.log(
-              "debug",
-              `[ModuleInterceptor] Module cache hit: ${request.moduleId} (${duration2}ms)`
-            );
-            return {
-              success: true,
-              module: cachedModule.value,
-              securityLevel: policy.securityLevel
-            };
-          }
-          yield* Effect16.sleep("5 millis");
-          telemetry.log(
-            "info",
-            `[ModuleInterceptor] Module loaded: ${request.moduleId} for ${request.extensionId}`
-          );
-          const module = { module: request.moduleId };
-          const currentCache = yield* moduleCacheRef.get;
-          yield* Ref3.set(
-            moduleCacheRef,
-            HashMap3.set(currentCache, cacheKey, module)
-          );
-          const duration = Date.now() - startTime;
-          resolutionTimes.push(duration);
-          const allTimes = [...resolutionTimes];
-          const avgTime = allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
-          const statsAfter = yield* statsRef.get;
-          yield* Ref3.set(statsRef, {
-            ...statsAfter,
-            averageResolutionTime: avgTime
-          });
-          return {
-            success: true,
-            module,
-            securityLevel: policy.securityLevel
-          };
-        }), "interceptRequire");
-        const resolveModule = /* @__PURE__ */ __name((extensionId, modulePath) => Effect16.gen(function* () {
-          yield* Effect16.sleep("5 millis");
-          if (!modulePath) {
-            return yield* Effect16.fail(
-              new ModuleNotFoundError(modulePath, extensionId)
-            );
-          }
-          const resolvedPath = `/node_modules/${modulePath}/index.js`;
-          return resolvedPath;
-        }), "resolveModule");
-        const setSecurityPolicy = /* @__PURE__ */ __name((policy) => Effect16.gen(function* () {
-          const currentPolicies = yield* policiesRef.get;
-          yield* Ref3.set(
-            policiesRef,
-            HashMap3.set(currentPolicies, policy.extensionId, policy)
-          );
-          telemetry.log(
-            "info",
-            `[ModuleInterceptor] Security policy set for extension ${policy.extensionId} (${policy.securityLevel})`
-          );
-        }), "setSecurityPolicy");
-        const getSecurityPolicy = /* @__PURE__ */ __name((extensionId) => Effect16.gen(function* () {
-          const policies = yield* policiesRef.get;
-          const policy = HashMap3.get(policies, extensionId);
-          if (policy._tag === "None") {
-            return yield* Effect16.fail(
-              new SecurityPolicyNotFoundError(extensionId)
-            );
-          }
-          return policy.value;
-        }), "getSecurityPolicy");
-        const validateModuleSecurity = /* @__PURE__ */ __name((extensionId, moduleId) => Effect16.gen(function* () {
-          const policies = yield* policiesRef.get;
-          const policyOpt = HashMap3.get(policies, extensionId);
-          if (policyOpt._tag === "None") {
-            const policy2 = { ...defaultSecurityPolicy, extensionId };
-            return !policy2.blockedModules.includes(moduleId) || policy2.allowedModules.includes(moduleId) || isNodeBuiltin(moduleId);
-          }
-          const policy = policyOpt.value;
-          return !policy.blockedModules.includes(moduleId) || policy.allowedModules.includes(moduleId) || isNodeBuiltin(moduleId);
-        }), "validateModuleSecurity");
-        const getStatistics = Effect16.gen(function* () {
-          return yield* statsRef.get;
-        });
-        const registerVscodeAPI = /* @__PURE__ */ __name((extensionId, api) => Effect16.gen(function* () {
-          vscodeAPIRegistry.set(extensionId, api);
-          telemetry.log(
-            "info",
-            `[ModuleInterceptor] Registered vscode API for extension: ${extensionId}`
-          );
-        }), "registerVscodeAPI");
-        return {
-          initialize,
-          install,
-          registerVscodeAPI,
-          interceptRequire,
-          resolveModule,
-          setSecurityPolicy,
-          getSecurityPolicy,
-          validateModuleSecurity,
-          getStatistics
-        };
-      })
-    );
-    makeMockModuleInterceptor = /* @__PURE__ */ __name(() => ({
-      initialize: Effect16.gen(function* () {
-        yield* Effect16.sleep("1 millis");
-      }),
-      install: Effect16.gen(function* () {
-        yield* Effect16.sleep("1 millis");
-      }),
-      registerVscodeAPI: /* @__PURE__ */ __name((_extensionId, _api) => Effect16.gen(function* () {
-        yield* Effect16.sleep("1 millis");
-      }), "registerVscodeAPI"),
-      interceptRequire: /* @__PURE__ */ __name((request) => Effect16.gen(function* () {
-        yield* Effect16.sleep("1 millis");
-        return {
-          success: true,
-          module: { mock: true, moduleId: request.moduleId },
-          securityLevel: "SANDBOXED" /* SANDBOXED */
-        };
-      }), "interceptRequire"),
-      resolveModule: /* @__PURE__ */ __name((extensionId, modulePath) => Effect16.gen(function* () {
-        yield* Effect16.sleep("1 millis");
-        return `/node_modules/${modulePath}/index.js`;
-      }), "resolveModule"),
-      setSecurityPolicy: /* @__PURE__ */ __name((policy) => Effect16.gen(function* () {
-        yield* Effect16.sleep("1 millis");
-      }), "setSecurityPolicy"),
-      getSecurityPolicy: /* @__PURE__ */ __name((extensionId) => Effect16.gen(function* () {
-        yield* Effect16.sleep("1 millis");
-        return {
-          extensionId,
-          allowedModules: ["path", "util"],
-          blockedModules: ["fs"],
-          securityLevel: "SANDBOXED" /* SANDBOXED */
-        };
-      }), "getSecurityPolicy"),
-      validateModuleSecurity: /* @__PURE__ */ __name((extensionId, moduleId) => Effect16.gen(function* () {
-        yield* Effect16.sleep("1 millis");
-        return true;
-      }), "validateModuleSecurity"),
-      getStatistics: Effect16.gen(function* () {
-        yield* Effect16.sleep("1 millis");
-        return {
-          totalInterceptions: 100,
-          blockedModules: 5,
-          averageResolutionTime: 2.5,
-          securityViolations: 3
-        };
-      })
-    }), "makeMockModuleInterceptor");
-    ModuleInterceptorMock = Layer14.effect(
-      ModuleInterceptor,
-      Effect16.succeed(makeMockModuleInterceptor())
-    );
-  }
-});
-
-// Source/Effect/MountainClient.ts
-import { Context as Context15, Effect as Effect17, Layer as Layer15, Ref as Ref4, SubscriptionRef as SubscriptionRef4 } from "effect";
-var ConnectionError, RPCError2, DisconnectionError, MountainClientTag, MountainClient, MountainClientLive, makeMockMountainClient, MountainClientMock;
-var init_MountainClient = __esm({
-  "Source/Effect/MountainClient.ts"() {
-    "use strict";
-    init_Telemetry();
-    init_MountainClientService();
-    ConnectionError = class extends Error {
-      constructor(message, cause) {
-        super(message);
-        this.message = message;
-        this.cause = cause;
-      }
-      message;
-      cause;
-      static {
-        __name(this, "ConnectionError");
-      }
-      _tag = "ConnectionError";
-    };
-    RPCError2 = class extends Error {
-      constructor(method, message, cause) {
-        super(message);
-        this.method = method;
-        this.message = message;
-        this.cause = cause;
-      }
-      method;
-      message;
-      cause;
-      static {
-        __name(this, "RPCError");
-      }
-      _tag = "RPCError";
-      method;
-    };
-    DisconnectionError = class extends Error {
-      constructor(message, cause) {
-        super(message);
-        this.message = message;
-        this.cause = cause;
-      }
-      message;
-      cause;
-      static {
-        __name(this, "DisconnectionError");
-      }
-      _tag = "DisconnectionError";
-    };
-    MountainClientTag = class extends Context15.Tag("Cocoon/MountainClient")() {
-      static {
-        __name(this, "MountainClientTag");
-      }
-    };
-    MountainClient = MountainClientTag;
-    MountainClientLive = Layer15.effect(
-      MountainClient,
-      Effect17.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const stateRef = yield* SubscriptionRef4.make({
-          _tag: "Disconnected"
-        });
-        let realClient;
-        let currentConfig;
-        let metrics = {
-          totalRequests: 0,
-          successfulRequests: 0,
-          failedRequests: 0,
-          averageLatency: 0,
-          lastRequestTime: 0
-        };
-        const latencies = [];
-        let serverVersion = "";
-        const connect = /* @__PURE__ */ __name((config) => Effect17.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag === "Connected") {
-            telemetry.log(
-              "warn",
-              "[MountainClient] Already connected to Mountain"
-            );
-            return;
-          }
-          currentConfig = config ?? {
-            host: "localhost",
-            port: 50052,
-            timeout: 5e3,
-            maxRetries: 3,
-            retryDelay: 1e3,
-            enableCompression: true,
-            enableMetrics: true
-          };
-          telemetry.log(
-            "info",
-            `[MountainClient] Connecting to Mountain at ${currentConfig.host}:${currentConfig.port}...`
-          );
-          yield* Ref4.set(stateRef, {
-            _tag: "Connecting",
-            attempt: 1
-          });
-          try {
-            realClient = new MountainClientService();
-            realClient.mountainHost = currentConfig.host;
-            realClient.mountainPort = currentConfig.port;
-            yield* Effect17.promise(() => realClient.connect());
-            serverVersion = "1.0.0";
-          } catch (error) {
-            yield* Ref4.set(stateRef, {
-              _tag: "Error",
-              error: String(error)
-            });
-            telemetry.log(
-              "error",
-              `[MountainClient] Failed to connect to Mountain: ${String(error)}`
-            );
-            return yield* Effect17.fail(
-              new ConnectionError(
-                "Failed to connect to Mountain backend",
-                error
-              )
-            );
-          }
-          yield* Ref4.set(stateRef, {
-            _tag: "Connected",
-            serverVersion,
-            connectedAt: Date.now()
-          });
-          telemetry.log(
-            "info",
-            `[MountainClient] Connected to Mountain (v${serverVersion})`
-          );
-        }), "connect");
-        const disconnect = Effect17.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Connected") {
-            telemetry.log(
-              "warn",
-              "[MountainClient] Not connected to Mountain"
-            );
-            return;
-          }
-          yield* Ref4.set(stateRef, {
-            _tag: "Disconnecting"
-          });
-          telemetry.log(
-            "info",
-            "[MountainClient] Disconnecting from Mountain..."
-          );
-          if (realClient) {
-            yield* Effect17.promise(() => realClient.disconnect());
-            realClient = void 0;
-          }
-          yield* Ref4.set(stateRef, {
-            _tag: "Disconnected"
-          });
-          metrics = {
-            totalRequests: 0,
-            successfulRequests: 0,
-            failedRequests: 0,
-            averageLatency: 0,
-            lastRequestTime: 0
-          };
-          latencies.length = 0;
-          telemetry.log(
-            "info",
-            "[MountainClient] Disconnected from Mountain"
-          );
-        }).pipe(
-          Effect17.catchAll(
-            (error) => Effect17.gen(function* () {
-              yield* Ref4.set(stateRef, {
-                _tag: "Error",
-                error: String(error)
-              });
-              telemetry.log(
-                "error",
-                `[MountainClient] Failed to disconnect: ${String(error)}`
-              );
-              return yield* Effect17.fail(
-                new DisconnectionError("Failed to disconnect", error)
-              );
-            })
-          )
-        );
-        const rpc = /* @__PURE__ */ __name((method) => (params) => Effect17.gen(function* () {
-          const requestStartTime = Date.now();
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Connected") {
-            metrics.failedRequests++;
-            return yield* Effect17.fail(
-              new RPCError2(method, "Not connected to Mountain")
-            );
-          }
-          telemetry.log(
-            "debug",
-            `[MountainClient] RPC call: ${method}`,
-            params
-          );
-          metrics.totalRequests++;
-          try {
-            if (!realClient) {
-              return yield* Effect17.fail(
-                new RPCError2(method, "Not connected to Mountain")
-              );
-            }
-            const Result = yield* Effect17.promise(
-              () => realClient.sendRequest(method, params)
-            );
-            const processingTime = Date.now() - requestStartTime;
-            latencies.push(processingTime);
-            if (latencies.length > 100) latencies.shift();
-            metrics.averageLatency = latencies.reduce((sum2, lat) => sum2 + lat, 0) / latencies.length;
-            metrics.lastRequestTime = Date.now();
-            metrics.successfulRequests++;
-            telemetry.log(
-              "debug",
-              `[MountainClient] RPC success: ${method} (${processingTime}ms)`
-            );
-            return Result;
-          } catch (error) {
-            metrics.failedRequests++;
-            telemetry.log(
-              "error",
-              `[MountainClient] RPC failed: ${method} (${String(error)})`
-            );
-            return yield* Effect17.fail(
-              new RPCError2(
-                method,
-                `RPC call failed: ${String(error)}`,
-                error
-              )
-            );
-          }
-        }), "rpc");
-        const version = Effect17.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Connected") {
-            return yield* Effect17.fail(
-              new ConnectionError("Not connected to Mountain")
-            );
-          }
-          return currentState.serverVersion;
-        });
-        const healthCheck = Effect17.gen(function* () {
-          const currentState = yield* stateRef.get;
-          return currentState._tag === "Connected";
-        });
-        const getMetrics = Effect17.succeed({ ...metrics });
-        return {
-          connectionState: stateRef.get,
-          connectionChanges: Effect17.map(stateRef.get, (state) => [state]),
-          connect,
-          disconnect,
-          rpc,
-          version,
-          healthCheck,
-          getMetrics
-        };
-      })
-    );
-    makeMockMountainClient = /* @__PURE__ */ __name(() => {
-      const mockState = {
-        _tag: "Connected",
-        serverVersion: "1.0.0",
-        connectedAt: Date.now()
-      };
-      return {
-        connectionState: Effect17.succeed(mockState),
-        connectionChanges: Effect17.succeed([mockState]),
-        connect: /* @__PURE__ */ __name(() => Effect17.succeed(void 0), "connect"),
-        disconnect: /* @__PURE__ */ __name(() => Effect17.succeed(void 0), "disconnect"),
-        rpc: /* @__PURE__ */ __name((method) => (params) => Effect17.succeed({
-          success: true,
-          data: { method, params, mock: true }
-        }), "rpc"),
-        version: Effect17.succeed("1.0.0"),
-        healthCheck: Effect17.succeed(true),
-        getMetrics: Effect17.succeed({
-          totalRequests: 0,
-          successfulRequests: 0,
-          failedRequests: 0,
-          averageLatency: 0,
-          lastRequestTime: 0
-        })
-      };
-    }, "makeMockMountainClient");
-    MountainClientMock = Layer15.effect(
-      MountainClient,
-      Effect17.succeed(makeMockMountainClient())
-    );
-  }
-});
-
-// Source/Effect/RPCServer.ts
-import { Context as Context16, Effect as Effect18, Layer as Layer16, Ref as Ref5, SubscriptionRef as SubscriptionRef5 } from "effect";
-var ServerStartError, ServerStopError, ServerNotRunningError, RPCServerTag, RPCServer, RPCServerLive, makeMockRPCServer, RPCServerMock;
-var init_RPCServer = __esm({
-  "Source/Effect/RPCServer.ts"() {
-    "use strict";
-    init_Telemetry();
-    init_GRPCServerService();
-    ServerStartError = class extends Error {
-      constructor(message, cause) {
-        super(message);
-        this.message = message;
-        this.cause = cause;
-      }
-      message;
-      cause;
-      static {
-        __name(this, "ServerStartError");
-      }
-      _tag = "ServerStartError";
-    };
-    ServerStopError = class extends Error {
-      constructor(message, cause) {
-        super(message);
-        this.message = message;
-        this.cause = cause;
-      }
-      message;
-      cause;
-      static {
-        __name(this, "ServerStopError");
-      }
-      _tag = "ServerStopError";
-    };
-    ServerNotRunningError = class extends Error {
-      static {
-        __name(this, "ServerNotRunningError");
-      }
-      _tag = "ServerNotRunningError";
-      constructor() {
-        super("Server is not running");
-      }
-    };
-    RPCServerTag = class extends Context16.Tag("Cocoon/RPCServer")() {
-      static {
-        __name(this, "RPCServerTag");
-      }
-    };
-    RPCServer = RPCServerTag;
-    RPCServerLive = Layer16.effect(
-      RPCServer,
-      Effect18.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const stateRef = yield* SubscriptionRef5.make({
-          _tag: "Idle"
-        });
-        let grpcServer;
-        let currentConfig;
-        let metrics = {
-          uptime: 0,
-          connections: 0,
-          requestsHandled: 0,
-          errors: 0,
-          averageLatency: 0
-        };
-        let startTime = 0;
-        const latencies = [];
-        const start = /* @__PURE__ */ __name((config) => Effect18.gen(function* () {
-          const startTimeMs = Date.now();
-          const currentState = yield* stateRef.get;
-          if (currentState._tag === "Running") {
-            telemetry.log("warn", "[RPCServer] Server already running");
-            return;
-          }
-          const CocoonPort = parseInt(
-            process.env["COCOON_GRPC_PORT"] || "50052",
-            10
-          );
-          currentConfig = config ?? {
-            host: "0.0.0.0",
-            port: CocoonPort,
-            maxConnections: 100,
-            enableCompression: true,
-            enableTls: false
-          };
-          yield* Ref5.set(stateRef, {
-            _tag: "Starting",
-            startTime: startTimeMs
-          });
-          console.log(`[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`);
-          telemetry.log(
-            "info",
-            `[RPCServer] Starting REAL gRPC server on ${currentConfig.host}:${currentConfig.port}...`
-          );
-          try {
-            grpcServer = new GRPCServerService();
-            grpcServer.port = currentConfig.port;
-            yield* Effect18.promise(() => grpcServer.start());
-            startTime = Date.now();
-            metrics = {
-              uptime: 0,
-              connections: 0,
-              requestsHandled: 0,
-              errors: 0,
-              averageLatency: 0
-            };
-            yield* Ref5.set(stateRef, {
-              _tag: "Running",
-              address: currentConfig.host,
-              port: currentConfig.port,
-              startedAt: startTime
-            });
-            telemetry.log(
-              "info",
-              `[RPCServer] gRPC server started on ${currentConfig.host}:${currentConfig.port}`
-            );
-          } catch (error) {
-            yield* Ref5.set(stateRef, {
-              _tag: "Error",
-              error: String(error)
-            });
-            telemetry.log(
-              "error",
-              `[RPCServer] Failed to start gRPC server: ${String(error)}`
-            );
-            return yield* Effect18.fail(
-              new ServerStartError(
-                "Failed to start gRPC server",
-                error
-              )
-            );
-          }
-        }), "start");
-        const stop = Effect18.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Running") {
-            telemetry.log("warn", "[RPCServer] Server is not running");
-            return yield* Effect18.fail(new ServerNotRunningError());
-          }
-          yield* Ref5.set(stateRef, {
-            _tag: "Stopping"
-          });
-          telemetry.log("info", "[RPCServer] Stopping gRPC server...");
-          if (grpcServer) {
-            yield* Effect18.promise(() => grpcServer.stop());
-            grpcServer = void 0;
-          }
-          yield* Ref5.set(stateRef, {
-            _tag: "Stopped"
-          });
-          telemetry.log("info", "[RPCServer] Server stopped successfully");
-        });
-        const handleRequest = /* @__PURE__ */ __name((request) => Effect18.gen(function* () {
-          const requestStartTime = Date.now();
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Running") {
-            return {
-              requestId: request.requestId,
-              success: false,
-              data: null,
-              error: "Server not running",
-              timestamp: Date.now()
-            };
-          }
-          telemetry.log(
-            "debug",
-            `[RPCServer] Handling request: ${request.method} (${request.requestId})`
-          );
-          metrics.requestsHandled = metrics.requestsHandled + 1;
-          yield* Effect18.sleep("5 millis");
-          const processingTime = Date.now() - requestStartTime;
-          latencies.push(processingTime);
-          if (latencies.length > 100) {
-            latencies.shift();
-          }
-          metrics.averageLatency = latencies.reduce((sum2, lat) => sum2 + lat, 0) / latencies.length;
-          telemetry.log(
-            "debug",
-            `[RPCServer] Request completed: ${request.method} (${processingTime}ms)`
-          );
-          return {
-            requestId: request.requestId,
-            success: true,
-            data: {
-              method: request.method,
-              result: "ok"
-            },
-            timestamp: Date.now()
-          };
-        }).pipe(
-          Effect18.catchAll(
-            (error) => Effect18.gen(function* () {
-              metrics.errors = metrics.errors + 1;
-              telemetry.log(
-                "error",
-                `[RPCServer] Request failed: ${request.method} (${error})`
-              );
-              return {
-                requestId: request.requestId,
-                success: false,
-                data: null,
-                error: String(error),
-                timestamp: Date.now()
-              };
-            })
-          )
-        ), "handleRequest");
-        const getMetrics = Effect18.gen(function* () {
-          const currentState = yield* stateRef.get;
-          if (currentState._tag !== "Running") {
-            return yield* Effect18.fail(new ServerNotRunningError());
-          }
-          metrics.uptime = Date.now() - startTime;
-          return { ...metrics };
-        });
-        return {
-          state: stateRef.get,
-          stateChanges: Effect18.map(
-            stateRef.get,
-            (state) => [state]
-          ),
-          start,
-          stop,
-          handleRequest,
-          getMetrics
-        };
-      })
-    );
-    makeMockRPCServer = /* @__PURE__ */ __name(() => {
-      const mockStateRef = { _tag: "Idle" };
-      return {
-        state: Effect18.succeed(mockStateRef),
-        stateChanges: Effect18.succeed([mockStateRef]),
-        start: /* @__PURE__ */ __name(() => Effect18.succeed(void 0), "start"),
-        stop: Effect18.succeed(void 0),
-        handleRequest: /* @__PURE__ */ __name((request) => Effect18.succeed({
-          requestId: request.requestId,
-          success: true,
-          data: { method: request.method, result: "mock" },
-          timestamp: Date.now()
-        }), "handleRequest"),
-        getMetrics: Effect18.succeed({
-          uptime: 0,
-          connections: 0,
-          requestsHandled: 0,
-          errors: 0,
-          averageLatency: 0
-        })
-      };
-    }, "makeMockRPCServer");
-    RPCServerMock = Layer16.effect(
-      RPCServer,
-      Effect18.succeed(makeMockRPCServer())
-    );
-  }
-});
-
-// Source/Effect/Bootstrap.ts
-import { Context as Context17, Effect as Effect19, Layer as Layer17 } from "effect";
-var BootstrapTag, stage1_Environment, stage2_Configuration, stage3_MountainConnection, stage4_ModuleInterceptor, stage5_RPCServer, stage6_Extensions, stage7_HealthCheck, makeBootstrap, BootstrapLive, makeMockBootstrap, BootstrapMock, runBootstrap;
-var init_Bootstrap = __esm({
-  "Source/Effect/Bootstrap.ts"() {
-    "use strict";
-    init_Extension();
-    init_Health();
-    init_ModuleInterceptor();
-    init_MountainClient();
-    init_RPCServer();
-    init_Telemetry();
-    BootstrapTag = class extends Context17.Tag("Cocoon/Bootstrap")() {
-      static {
-        __name(this, "BootstrapTag");
-      }
-    };
-    stage1_Environment = withSpan(
-      "stage1_environment",
-      Effect19.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 1: Detecting environment..."
-        );
-        const nodeVersion = process.version;
-        const platform3 = process.platform;
-        const arch2 = process.arch;
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Node.js ${nodeVersion} on ${platform3}/${arch2}`
-        );
-        return {
-          stageName: "Environment",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage2_Configuration = withSpan(
-      "stage2_configuration",
-      Effect19.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 2: Loading configuration..."
-        );
-        yield* Effect19.sleep("20 millis");
-        telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
-        return {
-          stageName: "Configuration",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage3_MountainConnection = withSpan(
-      "stage3_mountain_connection",
-      Effect19.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const mountainClient = yield* MountainClientTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 3: Connecting to Mountain..."
-        );
-        const MountainPort = parseInt(
-          process.env["MOUNTAIN_GRPC_PORT"] || "50051",
-          10
-        );
-        yield* mountainClient.connect({
-          host: "localhost",
-          port: MountainPort
-        });
-        const version = yield* mountainClient.version;
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Connected to Mountain (v${version})`
-        );
-        return {
-          stageName: "MountainConnection",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage4_ModuleInterceptor = withSpan(
-      "stage4_module_interceptor",
-      Effect19.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const moduleInterceptor = yield* ModuleInterceptorTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 4: Setting up module interceptor..."
-        );
-        yield* moduleInterceptor.initialize;
-        yield* moduleInterceptor.install;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Module interceptor installed successfully"
-        );
-        return {
-          stageName: "ModuleInterceptor",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage5_RPCServer = withSpan(
-      "stage5_rpc_server",
-      Effect19.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const rpcServer = yield* RPCServerTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 5: Starting gRPC server..."
-        );
-        const CocoonPort = parseInt(process.env["COCOON_GRPC_PORT"] || "50052", 10);
-        console.log(`[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`);
-        yield* rpcServer.start({
-          host: "0.0.0.0",
-          port: CocoonPort
-        });
-        telemetry.log("info", "[Cocoon Bootstrap] gRPC server started");
-        return {
-          stageName: "RPCServer",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage6_Extensions = withSpan(
-      "stage6_extensions",
-      Effect19.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const extension = yield* ExtensionTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 6: Initializing extensions..."
-        );
-        const extensions = yield* extension.getAll;
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Found ${extensions.length} extensions`
-        );
-        for (const ext of extensions) {
-          if (ext.manifest.enabled) {
-            yield* extension.activate(ext.id);
-          }
-        }
-        const activeCount = yield* extension.getActiveCount;
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Activated ${activeCount} extensions`
-        );
-        return {
-          stageName: "Extensions",
-          success: true,
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    stage7_HealthCheck = withSpan(
-      "stage7_healthcheck",
-      Effect19.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const health = yield* HealthTag;
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Stage 7: Running health checks..."
-        );
-        const systemHealth = yield* health.checkAllServices();
-        telemetry.log(
-          "info",
-          `[Cocoon{
- Bootstrap] Health check result: ${systemHealth.overallStatus}`
-        );
-        if (systemHealth.overallStatus === "unhealthy") {
-          telemetry.log(
-            "error",
-            "[Cocoon Bootstrap] Some services are unhealthy!"
-          );
-        }
-        return {
-          stageName: "HealthCheck",
-          success: systemHealth.overallStatus !== "unhealthy",
-          duration: 0,
-          error: void 0
-        };
-      })
-    );
-    makeBootstrap = /* @__PURE__ */ __name(() => ({
-      run: /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
-        const telemetry = yield* TelemetryTag;
-        const startTime = Date.now();
-        const { skipHealthCheck = false, debugMode = false } = options ?? {};
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] ==============================================="
-        );
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] Cocoon Extension Host Bootstrap"
-        );
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Debug mode: ${debugMode}`
-        );
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] ==============================================="
-        );
-        const stages = [
-          stage1_Environment,
-          stage2_Configuration,
-          stage3_MountainConnection,
-          stage4_ModuleInterceptor,
-          stage5_RPCServer,
-          stage6_Extensions,
-          ...skipHealthCheck ? [] : [stage7_HealthCheck]
-        ];
-        const results = [];
-        for (const stage of stages) {
-          const stageStartTime = Date.now();
-          const SafeStage = Effect19.suspend(() => stage).pipe(
-            Effect19.catchAllCause((Cause) => {
-              const Message = String(Cause).slice(0, 300);
-              console.warn(`[Cocoon Bootstrap] Stage failed (continuing): ${Message}`);
-              return Effect19.succeed({
-                stageName: "Failed",
-                success: false,
-                duration: Date.now() - stageStartTime,
-                error: new Error(Message)
-              });
-            })
-          );
-          const result = yield* SafeStage;
-          results.push({
-            ...result,
-            duration: Date.now() - stageStartTime
-          });
-        }
-        const endTime = Date.now();
-        const totalDuration = endTime - startTime;
-        const allSuccess = results.every((r) => r.success);
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] ==============================================="
-        );
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] ${allSuccess ? "\u2713 Bootstrap completed successfully" : "\u2717 Bootstrap failed"}`
-        );
-        telemetry.log(
-          "info",
-          `[Cocoon Bootstrap] Total duration: ${totalDuration}ms`
-        );
-        telemetry.log(
-          "info",
-          "[Cocoon Bootstrap] ==============================================="
-        );
-        if (!allSuccess) {
-          const failedStages = results.filter((r) => !r.success);
-          telemetry.log("error", "[Cocoon Bootstrap] Failed stages:");
-          for (const failed of failedStages) {
-            telemetry.log(
-              "error",
-              `[Cocoon Bootstrap]   - ${failed.stageName}: ${failed.error?.message || "Unknown error"}`
-            );
-          }
-        }
-        return {
-          success: allSuccess,
-          totalDuration,
-          stages: results,
-          error: allSuccess ? void 0 : new Error("Bootstrap failed")
-        };
-      }), "run")
-    }), "makeBootstrap");
-    BootstrapLive = Layer17.effect(
-      BootstrapTag,
-      Effect19.succeed(makeBootstrap())
-    );
-    makeMockBootstrap = /* @__PURE__ */ __name(() => ({
-      run: /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
-        yield* Effect19.sleep("1 millis");
-        return {
-          success: true,
-          totalDuration: 1,
-          stages: [
-            {
-              stageName: "Environment",
-              success: true,
-              duration: 0,
-              error: void 0
-            },
-            {
-              stageName: "Configuration",
-              success: true,
-              duration: 0,
-              error: void 0
-            },
-            {
-              stageName: "MountainConnection",
-              success: true,
-              duration: 0,
-              error: void 0
-            },
-            {
-              stageName: "RPCServer",
-              success: true,
-              duration: 0,
-              error: void 0
-            },
-            {
-              stageName: "Extensions",
-              success: true,
-              duration: 0,
-              error: void 0
-            },
-            ...options?.skipHealthCheck ? [] : [
-              {
-                stageName: "HealthCheck",
-                success: true,
-                duration: 0,
-                error: void 0
-              }
-            ]
-          ],
-          error: void 0
-        };
-      }), "run")
-    }), "makeMockBootstrap");
-    BootstrapMock = Layer17.effect(
-      BootstrapTag,
-      Effect19.succeed(makeMockBootstrap())
-    );
-    runBootstrap = /* @__PURE__ */ __name((options) => Effect19.gen(function* () {
-      const bootstrap = yield* BootstrapTag;
-      return yield* bootstrap.run(options);
-    }).pipe(Effect19.provide(BootstrapLive)), "runBootstrap");
-  }
-});
-
-// Source/Effect/index.ts
-var init_Effect = __esm({
-  "Source/Effect/index.ts"() {
-    "use strict";
-    init_Bootstrap();
-    init_Extension();
-    init_Health();
-    init_ModuleInterceptor();
-    init_MountainClient();
-    init_RPCServer();
-    init_Telemetry();
-  }
-});
-
-// Source/Services/Logger.ts
-import { Context as Context18, Effect as Effect20, Ref as Ref6 } from "effect";
-var Logger, LoggerService;
-var init_Logger = __esm({
-  "Source/Services/Logger.ts"() {
-    "use strict";
-    Logger = Context18.Tag("Service/Logger");
-    LoggerService = class extends Effect20.Service()(
-      "Service/Logger",
-      {
-        effect: Effect20.gen(function* () {
-          const ExtensionIdRef = yield* Ref6.make(
-            void 0
-          );
-          const LogLevelRef = yield* Ref6.make("info");
-          const FormatMessage = /* @__PURE__ */ __name((Message, Level, ExtensionId) => {
-            const Timestamp = (/* @__PURE__ */ new Date()).toISOString();
-            const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
-            return `${Timestamp} ${Prefix} ${Message}`;
-          }, "FormatMessage");
-          const Trace = /* @__PURE__ */ __name((Message, ...Data) => Effect20.gen(function* () {
-            const LogLevel = yield* Ref6.get(LogLevelRef);
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            if (LogLevel === "trace") {
-              const FormattedMessage = FormatMessage(
-                Message,
-                "trace",
-                ExtensionId
-              );
-              return yield* Effect20.logTrace(Message).pipe(
-                Effect20.annotateLogs({
-                  extensionId: ExtensionId,
-                  data: Data.length === 1 ? Data[0] : Data
-                })
-              );
-            }
-          }), "Trace");
-          const Debug = /* @__PURE__ */ __name((Message, ...Data) => Effect20.gen(function* () {
-            const LogLevel = yield* Ref6.get(LogLevelRef);
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            if (LogLevel === "trace" || LogLevel === "debug") {
-              const FormattedMessage = FormatMessage(
-                Message,
-                "debug",
-                ExtensionId
-              );
-              return yield* Effect20.logDebug(Message).pipe(
-                Effect20.annotateLogs({
-                  extensionId: ExtensionId,
-                  data: Data.length === 1 ? Data[0] : Data
-                })
-              );
-            }
-          }), "Debug");
-          const Info = /* @__PURE__ */ __name((Message, ...Data) => Effect20.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            const FormattedMessage = FormatMessage(
-              Message,
-              "info",
-              ExtensionId
-            );
-            return yield* Effect20.logInfo(Message).pipe(
-              Effect20.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Info");
-          const Warn = /* @__PURE__ */ __name((Message, ...Data) => Effect20.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return yield* Effect20.logWarning(Message).pipe(
-              Effect20.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Warn");
-          const Error2 = /* @__PURE__ */ __name((Message, ...Data) => Effect20.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return yield* Effect20.logError(Message).pipe(
-              Effect20.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Error");
-          const Fatal = /* @__PURE__ */ __name((Message, ...Data) => Effect20.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return yield* Effect20.logFatal(Message).pipe(
-              Effect20.annotateLogs({
-                extensionId: ExtensionId,
-                data: Data.length === 1 ? Data[0] : Data
-              })
-            );
-          }), "Fatal");
-          const SetExtensionId = /* @__PURE__ */ __name((ExtensionId) => Effect20.gen(function* () {
-            yield* Ref6.set(ExtensionIdRef, ExtensionId);
-          }), "SetExtensionId");
-          const GetExtensionId = /* @__PURE__ */ __name(() => Effect20.gen(function* () {
-            const ExtensionId = yield* Ref6.get(ExtensionIdRef);
-            return ExtensionId ?? "cocoon-core";
-          }), "GetExtensionId");
-          const ServiceImplementation = {
-            Trace,
-            Debug,
-            Info,
-            Warn,
-            Error: Error2,
-            Fatal,
-            SetExtensionId,
-            GetExtensionId
-          };
-          return ServiceImplementation;
-        })
-      }
-    ) {
-      static {
-        __name(this, "LoggerService");
-      }
-    };
-  }
-});
-
-// Source/Services/MountainGRPCClient.ts
+// Source/Services/TerminalService.ts
 import { Context as Context19, Effect as Effect21, Layer as Layer18 } from "effect";
-var MountainGRPCClientService, MountainGRPCClientLive, MountainGRPCClientMock, MountainGRPCClientLayer, MountainGRPCClientMockLayer;
-var init_MountainGRPCClient = __esm({
-  "Source/Services/MountainGRPCClient.ts"() {
+var ITerminalService2, TerminalService, TerminalServiceLayer;
+var init_TerminalService = __esm({
+  "Source/Services/TerminalService.ts"() {
     "use strict";
     init_IMountainClientService();
-    init_Logger();
-    MountainGRPCClientService = Context19.GenericTag("Service/MountainGRPCClient");
-    MountainGRPCClientLive = Layer18.effect(
-      MountainGRPCClientService,
+    ITerminalService2 = Context19.Tag("ITerminalService")();
+    TerminalService = class {
+      constructor(mountainClient) {
+        this.mountainClient = mountainClient;
+      }
+      mountainClient;
+      static {
+        __name(this, "TerminalService");
+      }
+      async createTerminal(name, shellPath, cwd2) {
+        console.log(`[Terminal] Creating terminal: ${name}`);
+        const terminalId = await this.mountainClient.sendRequest(
+          "terminal.create",
+          {
+            name,
+            shell_path: shellPath,
+            cwd: cwd2
+          }
+        );
+        return terminalId;
+      }
+      async sendText(terminalId, text) {
+        await this.mountainClient.sendRequest("terminal.write", {
+          id: terminalId,
+          data: text
+        });
+      }
+      async resize(terminalId, cols, rows) {
+        console.log(`[Terminal] Resize ${terminalId} to ${cols}x${rows}`);
+      }
+      async kill(terminalId) {
+        console.log(`[Terminal] Kill ${terminalId}`);
+      }
+    };
+    TerminalServiceLayer = Layer18.effect(
+      ITerminalService2,
       Effect21.gen(function* () {
         const mountainClient = yield* IMountainClientService;
-        const logger = yield* Logger.Logger;
-        const service = {
-          _serviceBrand: void 0,
-          // ==================== Window Operations ====================
-          showTextDocument: /* @__PURE__ */ __name((uri, options = {}) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showTextDocument: ${uri}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showTextDocument", {
-                uri: { value: uri },
-                viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
-                // Convert ViewColumn enum (1-based to 0-based)
-                preserveFocus: options.preserveFocus ?? true
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show text document: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect21.fail(
-                new Error(`Failed to show text document: ${uri}`)
-              );
-            }
-            return;
-          }), "showTextDocument"),
-          showInformationMessage: /* @__PURE__ */ __name((message) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showInformationMessage: ${message}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showInformation", {
-                message
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show information message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect21.fail(
-                new Error(
-                  `Failed to show information message: ${message}`
-                )
-              );
-            }
-            return;
-          }), "showInformationMessage"),
-          showWarningMessage: /* @__PURE__ */ __name((message) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showWarningMessage: ${message}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showWarning", {
-                message
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show warning message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect21.fail(
-                new Error(
-                  `Failed to show warning message: ${message}`
-                )
-              );
-            }
-            return;
-          }), "showWarningMessage"),
-          showErrorMessage: /* @__PURE__ */ __name((message) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] showErrorMessage: ${message}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showError", {
-                message
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to show error message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect21.fail(
-                new Error(
-                  `Failed to show error message: ${message}`
-                )
-              );
-            }
-            return;
-          }), "showErrorMessage"),
-          createStatusBarItem: /* @__PURE__ */ __name((options) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] createStatusBarItem: ${options.id}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createStatusBarItem", {
-                id: options.id,
-                text: options.text,
-                tooltip: options.tooltip ?? ""
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to create status bar item: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.itemId) {
-              return yield* Effect21.fail(
-                new Error(
-                  `Failed to create status bar item: ${options.id}`
-                )
-              );
-            }
-            return result.itemId;
-          }), "createStatusBarItem"),
-          setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] setStatusBarText: ${itemId} = ${text}`
-            );
-            yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setStatusBarText", {
-                itemId,
-                text
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to set status bar text: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "setStatusBarText"),
-          createWebviewPanel: /* @__PURE__ */ __name((options) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] createWebviewPanel: ${options.viewType}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createWebviewPanel", {
-                viewType: options.viewType,
-                title: options.title,
-                iconPath: options.iconPath ?? "",
-                viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
-                preserveFocus: options.preserveFocus ?? false,
-                enableFindWidget: options.enableFindWidget ?? true,
-                retainContextWhenHidden: options.retainContextWhenHidden ?? false,
-                localResourceRoots: options.localResourceRoots ?? []
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to create webview panel: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (result?.handle === void 0) {
-              return yield* Effect21.fail(
-                new Error(
-                  `Failed to create webview panel: ${options.viewType}`
-                )
-              );
-            }
-            return result.handle;
-          }), "createWebviewPanel"),
-          setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] setWebviewHtml: handle=${handle}`
-            );
-            yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setWebviewHtml", {
-                handle,
-                html
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to set webview HTML: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "setWebviewHtml"),
-          postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] postWebviewMessage: handle=${handle}`
-            );
-            const isString2 = typeof message === "string";
-            yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
-                "onDidReceiveMessage",
-                {
-                  handle,
-                  stringMessage: isString2 ? message : void 0,
-                  bytesMessage: isString2 ? void 0 : message
-                }
-              ), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to post webview message: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "postWebviewMessage"),
-          // ==================== Workspace Operations ====================
-          findFiles: /* @__PURE__ */ __name((pattern, include) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] findFiles: ${pattern}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findFiles", {
-                pattern,
-                include: include ?? true
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to find files: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.uris ?? [];
-          }), "findFiles"),
-          findTextInFiles: /* @__PURE__ */ __name((pattern, include, exclude) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] findTextInFiles: ${pattern}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findTextInFiles", {
-                pattern,
-                include: include ?? [],
-                exclude: exclude ?? []
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to find text in files: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.matches ?? [];
-          }), "findTextInFiles"),
-          openDocument: /* @__PURE__ */ __name((uri, viewColumn) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] openDocument: ${uri}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("openDocument", {
-                uri: { value: uri },
-                viewColumn: viewColumn ? viewColumn - 2 : void 0
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to open document: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect21.fail(
-                new Error(`Failed to open document: ${uri}`)
-              );
-            }
-            return;
-          }), "openDocument"),
-          saveAll: /* @__PURE__ */ __name((includeUntitled = false) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] saveAll: includeUntitled=${includeUntitled}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("saveAll", {
-                includeUntitled
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to save all: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect21.fail(
-                new Error("Failed to save all documents")
-              );
-            }
-            return;
-          }), "saveAll"),
-          applyEdit: /* @__PURE__ */ __name((uri, edits) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] applyEdit: ${uri}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
-                uri: { value: uri },
-                edits: edits.map((edit) => ({
-                  range: {
-                    start: {
-                      line: edit.range.start.line,
-                      character: edit.range.start.character
-                    },
-                    end: {
-                      line: edit.range.end.line,
-                      character: edit.range.end.character
-                    }
-                  },
-                  newText: edit.newText
-                }))
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.success) {
-              return yield* Effect21.fail(
-                new Error(`Failed to apply edit to: ${uri}`)
-              );
-            }
-            return;
-          }), "applyEdit"),
-          // ==================== Command Operations ====================
-          registerCommand: /* @__PURE__ */ __name((commandId, extensionId, title) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] registerCommand: ${commandId}`
-            );
-            yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("registerCommand", {
-                commandId,
-                extensionId,
-                title
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to register command: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "registerCommand"),
-          executeCommand: /* @__PURE__ */ __name((commandId, ...args) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] executeCommand: ${commandId}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("executeCommand", {
-                commandId,
-                arguments: args.map((arg) => {
-                  if (typeof arg === "string") {
-                    return { stringValue: arg };
-                  }
-                  if (typeof arg === "number") {
-                    return { intValue: arg };
-                  }
-                  if (typeof arg === "boolean") {
-                    return { boolValue: arg };
-                  }
-                  if (arg instanceof Uint8Array) {
-                    return { bytesValue: arg };
-                  }
-                  return { stringValue: String(arg) };
-                })
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (result?.error) {
-              return yield* Effect21.fail(
-                new Error(
-                  `Command execution failed: ${result.error.Message}`
-                )
-              );
-            }
-            return result?.value;
-          }), "executeCommand"),
-          unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] unregisterCommand: ${commandId}`
-            );
-            yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
-                "unregisterCommand",
-                {
-                  commandId
-                }
-              ), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to unregister command: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "unregisterCommand"),
-          // ==================== Secret Storage ====================
-          getSecret: /* @__PURE__ */ __name((key) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] getSecret: ${key}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("getSecret", { key }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to get secret: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.value;
-          }), "getSecret"),
-          storeSecret: /* @__PURE__ */ __name((key, value) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] storeSecret: ${key}`
-            );
-            yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("storeSecret", {
-                key,
-                value
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to store secret: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "storeSecret"),
-          deleteSecret: /* @__PURE__ */ __name((key) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] deleteSecret: ${key}`
-            );
-            yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("deleteSecret", {
-                key
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to delete secret: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "deleteSecret"),
-          // ==================== File System Operations ====================
-          readFile: /* @__PURE__ */ __name((uri) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] readFile: ${uri}`
-            );
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readFile", {
-                uri: { value: uri }
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to read file: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result?.content) {
-              return yield* Effect21.fail(
-                new Error(`Failed to read file: ${uri}`)
-              );
-            }
-            return result.content;
-          }), "readFile"),
-          writeFile: /* @__PURE__ */ __name((uri, content, encoding = "utf8") => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClient] writeFile: ${uri}`
-            );
-            yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("writeFile", {
-                uri: { value: uri },
-                content,
-                encoding
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to write file: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return;
-          }), "writeFile"),
-          stat: /* @__PURE__ */ __name((uri) => Effect21.gen(function* () {
-            yield* logger.debug(`[MountainGRPCClient] stat: ${uri}`);
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("stat", {
-                uri: { value: uri }
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to stat file: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            if (!result) {
-              return yield* Effect21.fail(
-                new Error(`Failed to stat file: ${uri}`)
-              );
-            }
-            return result;
-          }), "stat"),
-          readdir: /* @__PURE__ */ __name((uri) => Effect21.gen(function* () {
-            yield* logger.debug(`[MountainGRPCClient] readdir: ${uri}`);
-            const result = yield* Effect21.tryPromise({
-              try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readdir", {
-                uri: { value: uri }
-              }), "try"),
-              catch: /* @__PURE__ */ __name((error) => new Error(
-                `Failed to read directory: ${error instanceof Error ? error.message : String(error)}`
-              ), "catch")
-            });
-            return result?.entries ?? [];
-          }), "readdir")
-        };
-        return service;
+        return new TerminalService(mountainClient);
       })
     );
-    MountainGRPCClientMock = Layer18.effect(
-      MountainGRPCClientService,
-      Effect21.gen(function* () {
-        const logger = yield* Logger.Logger;
-        const mockSecrets = /* @__PURE__ */ new Map();
-        const mockStatusBarItems = /* @__PURE__ */ new Map();
-        const mockWebviewPanels = /* @__PURE__ */ new Map();
-        let mockWebviewHandleCounter = 0;
-        const service = {
-          _serviceBrand: void 0,
-          // Window Operations
-          showTextDocument: /* @__PURE__ */ __name((uri) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showTextDocument: ${uri}`
-            );
-            return;
-          }), "showTextDocument"),
-          showInformationMessage: /* @__PURE__ */ __name((message) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showInformationMessage: ${message}`
-            );
-            return;
-          }), "showInformationMessage"),
-          showWarningMessage: /* @__PURE__ */ __name((message) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showWarningMessage: ${message}`
-            );
-            return;
-          }), "showWarningMessage"),
-          showErrorMessage: /* @__PURE__ */ __name((message) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] showErrorMessage: ${message}`
-            );
-            return;
-          }), "showErrorMessage"),
-          createStatusBarItem: /* @__PURE__ */ __name((options) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] createStatusBarItem: ${options.id}`
-            );
-            const itemId = `status-${options.id}`;
-            mockStatusBarItems.set(itemId, options.text);
-            return itemId;
-          }), "createStatusBarItem"),
-          setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] setStatusBarText: ${itemId}`
-            );
-            mockStatusBarItems.set(itemId, text);
-            return;
-          }), "setStatusBarText"),
-          createWebviewPanel: /* @__PURE__ */ __name((options) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`
-            );
-            const handle = mockWebviewHandleCounter++;
-            mockWebviewPanels.set(handle, { html: options.html ?? "" });
-            return handle;
-          }), "createWebviewPanel"),
-          setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] setWebviewHtml: ${handle}`
-            );
-            const panel = mockWebviewPanels.get(handle);
-            if (panel) {
-              panel.html = html;
-            }
-            return;
-          }), "setWebviewHtml"),
-          postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] postWebviewMessage: ${handle}`
-            );
-            return;
-          }), "postWebviewMessage"),
-          // Workspace Operations
-          findFiles: /* @__PURE__ */ __name((pattern) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] findFiles: ${pattern}`
-            );
-            return [];
-          }), "findFiles"),
-          findTextInFiles: /* @__PURE__ */ __name((pattern) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] findTextInFiles: ${pattern}`
-            );
-            return [];
-          }), "findTextInFiles"),
-          openDocument: /* @__PURE__ */ __name((uri) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] openDocument: ${uri}`
-            );
-            return;
-          }), "openDocument"),
-          saveAll: /* @__PURE__ */ __name(() => Effect21.gen(function* () {
-            yield* logger.debug("[MountainGRPCClientMock] saveAll");
-            return;
-          }), "saveAll"),
-          applyEdit: /* @__PURE__ */ __name((uri) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] applyEdit: ${uri}`
-            );
-            return;
-          }), "applyEdit"),
-          // Command Operations
-          registerCommand: /* @__PURE__ */ __name((commandId) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] registerCommand: ${commandId}`
-            );
-            return;
-          }), "registerCommand"),
-          executeCommand: /* @__PURE__ */ __name((commandId) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] executeCommand: ${commandId}`
-            );
-            return void 0;
-          }), "executeCommand"),
-          unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] unregisterCommand: ${commandId}`
-            );
-            return;
-          }), "unregisterCommand"),
-          // Secret Storage
-          getSecret: /* @__PURE__ */ __name((key) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] getSecret: ${key}`
-            );
-            return mockSecrets.get(key);
-          }), "getSecret"),
-          storeSecret: /* @__PURE__ */ __name((key, value) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] storeSecret: ${key}`
-            );
-            mockSecrets.set(key, value);
-            return;
-          }), "storeSecret"),
-          deleteSecret: /* @__PURE__ */ __name((key) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] deleteSecret: ${key}`
-            );
-            mockSecrets.delete(key);
-            return;
-          }), "deleteSecret"),
-          // File System Operations
-          readFile: /* @__PURE__ */ __name((uri) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] readFile: ${uri}`
-            );
-            return new Uint8Array(0);
-          }), "readFile"),
-          writeFile: /* @__PURE__ */ __name((uri, content) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] writeFile: ${uri}`
-            );
-            return;
-          }), "writeFile"),
-          stat: /* @__PURE__ */ __name((uri) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] stat: ${uri}`
-            );
-            return {
-              isFile: true,
-              isDirectory: false,
-              size: 0,
-              mtime: Date.now()
-            };
-          }), "stat"),
-          readdir: /* @__PURE__ */ __name((uri) => Effect21.gen(function* () {
-            yield* logger.debug(
-              `[MountainGRPCClientMock] readdir: ${uri}`
-            );
-            return [];
-          }), "readdir")
-        };
-        return service;
-      })
-    );
-    MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
-      Layer18.provide(IMountainClientService)
-    );
-    MountainGRPCClientMockLayer = MountainGRPCClientMock;
   }
 });
 
@@ -30863,27 +31280,21 @@ var init_RequestRoutingHandler = __esm({
           const { IExtensionHostService: IExtensionHostService4 } = await Promise.resolve().then(() => (init_IExtensionHostService(), IExtensionHostService_exports));
           switch (Method2) {
             case "extension.activate": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(
-                IExtensionHostService4
-              );
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService4);
               return await ExtensionHostService2.activateExtension(
                 Params.extensionId,
                 Params.reason
               );
             }
             case "extension.deactivate": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(
-                IExtensionHostService4
-              );
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService4);
               await ExtensionHostService2.deactivateExtension(
                 Params.extensionId
               );
               return { success: true };
             }
             case "extension.get": {
-              const ExtensionHostService2 = await ServiceMapping2.getService(
-                IExtensionHostService4
-              );
+              const ExtensionHostService2 = await ServiceMapping2.getService(IExtensionHostService4);
               return ExtensionHostService2.getActivatedExtension(
                 Params.extensionId
               );
@@ -30928,9 +31339,7 @@ var init_RequestRoutingHandler = __esm({
               return { success: true };
             }
             default:
-              throw new Error(
-                `Unknown configuration method: ${Method2}`
-              );
+              throw new Error(`Unknown configuration method: ${Method2}`);
           }
         }, "configuration.\\w+"),
         "command.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
@@ -30983,9 +31392,7 @@ var init_RequestRoutingHandler = __esm({
               return PerfService.generateReport();
             }
             default:
-              throw new Error(
-                `Unknown performance method: ${Method2}`
-              );
+              throw new Error(`Unknown performance method: ${Method2}`);
           }
         }, "performance.\\w+"),
         "security.\\w+": /* @__PURE__ */ __name(async (Method2, Params) => {
@@ -31032,8 +31439,8 @@ __export(GRPCServerService_exports, {
 });
 import { EventEmitter } from "events";
 import { createRequire as createRequire2 } from "module";
-import { fileURLToPath as fileURLToPath2 } from "url";
 import { dirname as dirname4 } from "path";
+import { fileURLToPath as fileURLToPath2 } from "url";
 import * as grpc2 from "@grpc/grpc-js";
 import * as protoLoader2 from "@grpc/proto-loader";
 import { Effect as Effect22, Layer as Layer20 } from "effect";
@@ -31042,9 +31449,9 @@ var init_GRPCServerService = __esm({
   "Source/Services/GRPCServerService.ts"() {
     "use strict";
     init_IGRPCServerService();
+    init_DocumentContentHandler();
     init_ExtensionHostHandler();
     init_LanguageProviderHandler();
-    init_DocumentContentHandler();
     init_NotificationHandler();
     init_RequestRoutingHandler();
     __filename2 = fileURLToPath2(import.meta.url);
@@ -31405,7 +31812,9 @@ var init_GRPCServerService = __esm({
       IsValidMethod(method) {
         const DotMethod = /^[a-zA-Z]+\.[a-zA-Z]+$/.test(method);
         const ProvideMethod = /^\$provide[A-Z][a-zA-Z]+$/.test(method);
-        const ExtensionHostMethod = /^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost)$/.test(method);
+        const ExtensionHostMethod = /^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost)$/.test(
+          method
+        );
         return DotMethod || ProvideMethod || ExtensionHostMethod;
       }
       /**
@@ -31456,19 +31865,35 @@ var init_GRPCServerService = __esm({
         }
         const Context22 = this.GetHandlerContext();
         if (method === "InitializeExtensionHost") {
-          return ExtensionHostHandler_default.HandleInitializeExtensionHost(Context22, parameters);
+          return ExtensionHostHandler_default.HandleInitializeExtensionHost(
+            Context22,
+            parameters
+          );
         }
         if (method === "$deltaExtensions") {
-          return ExtensionHostHandler_default.HandleDeltaExtensions(Context22, parameters);
+          return ExtensionHostHandler_default.HandleDeltaExtensions(
+            Context22,
+            parameters
+          );
         }
         if (method === "$activateByEvent") {
-          return ExtensionHostHandler_default.HandleActivateByEvent(Context22, parameters);
+          return ExtensionHostHandler_default.HandleActivateByEvent(
+            Context22,
+            parameters
+          );
         }
         if (method === "$startExtensionHost") {
-          return ExtensionHostHandler_default.HandleStartExtensionHost(Context22, parameters);
+          return ExtensionHostHandler_default.HandleStartExtensionHost(
+            Context22,
+            parameters
+          );
         }
         if (/^\$provide[A-Z]/.test(method)) {
-          return LanguageProviderHandler_default(method, parameters, this.documentContentCache);
+          return LanguageProviderHandler_default(
+            method,
+            parameters,
+            this.documentContentCache
+          );
         }
         throw new Error(`Unknown method: ${method}`);
       }
@@ -31516,7 +31941,10 @@ var init_GRPCServerService = __esm({
        * Used by InvokeLanguageProvider's VsDocument.getText().
        */
       GetDocumentContent(Uri2) {
-        return DocumentContentHandler_default.GetDocumentContent(this.documentContentCache, Uri2);
+        return DocumentContentHandler_default.GetDocumentContent(
+          this.documentContentCache,
+          Uri2
+        );
       }
       // ==================================================================
       // Cancellation
@@ -32330,16 +32758,16 @@ var init_PerformanceMonitoringService = __esm({
 });
 
 // Source/Orchestration/OldStyleServices.ts
+await init_APIFactoryService();
 init_Configuration();
+init_ErrorHandlingService();
 await init_ExtensionHostService();
 init_IPCService();
 init_ModuleInterceptorService();
 init_MountainClientService();
-await init_APIFactoryService();
-init_TerminalService();
-init_SecurityService();
 init_PerformanceMonitoringService();
-init_ErrorHandlingService();
+init_SecurityService();
+init_TerminalService();
 import { Layer as Layer22 } from "effect";
 var OldStyleServices2 = class {
   static {

@@ -5,8 +5,8 @@
  * Constructs complete VS Code API surface with extension-specific scoping.
  */
 
-import * as Effect from "effect/Effect";
 import { Context } from "effect";
+import * as Effect from "effect/Effect";
 
 // API construction types
 export interface APIConstructionRequest {

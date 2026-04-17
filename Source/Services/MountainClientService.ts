@@ -21,18 +21,13 @@
  */
 
 import { createRequire } from "module";
-import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { fileURLToPath } from "url";
 
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import { Effect, Layer } from "effect";
 import { v4 as uuidv4 } from "uuid";
-
-// ESM compatibility
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const require = createRequire(import.meta.url);
 
 import {
 	CancelOperationRequest,
@@ -44,6 +39,11 @@ import {
 	RPCError,
 } from "../Generated/Vine";
 import { IMountainClientService } from "../Interfaces/IMountainClientService";
+
+// ESM compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
 
 /**
  * Circuit breaker state for fault tolerance with comprehensive state management
@@ -316,7 +316,10 @@ export class MountainClientService implements IMountainClientService {
 				"grpc.enable_channelz": 0, // Disable channelz for perf
 			};
 
-			this.client = new (protoDescriptor.Vine?.MountainService || protoDescriptor.MountainService)(
+			this.client = new (
+				protoDescriptor.Vine?.MountainService ||
+				protoDescriptor.MountainService
+			)(
 				target,
 				grpc.credentials.createInsecure(),
 				channelOptions,
@@ -379,13 +382,22 @@ export class MountainClientService implements IMountainClientService {
 			// Never re-add an "Element/" prefix after going up past Land/Element/ —
 			// that produces a bogus Land/Element/Element/Mountain/... path.
 			const SearchPaths = [
-				path.resolve(__dirname, "../../../../Mountain/Proto/Vine.proto"),
-				path.resolve(process.cwd(), "Element/Mountain/Proto/Vine.proto"),
+				path.resolve(
+					__dirname,
+					"../../../../Mountain/Proto/Vine.proto",
+				),
+				path.resolve(
+					process.cwd(),
+					"Element/Mountain/Proto/Vine.proto",
+				),
 				path.resolve(process.cwd(), "../Mountain/Proto/Vine.proto"),
 			];
 			let vineProtoPath: string | null = null;
 			for (const P of SearchPaths) {
-				if (fs.existsSync(P)) { vineProtoPath = P; break; }
+				if (fs.existsSync(P)) {
+					vineProtoPath = P;
+					break;
+				}
 			}
 
 			if (vineProtoPath) {
@@ -985,9 +997,7 @@ message RPCDataPayload {
 			if (channel) {
 				const state = channel.getConnectivityState(false);
 				if (state !== 2 /* READY */) {
-					throw new Error(
-						`Channel not ready (state: ${state})`,
-					);
+					throw new Error(`Channel not ready (state: ${state})`);
 				}
 			}
 			this.consecutiveSuccessfulHealthChecks++;
@@ -1143,13 +1153,10 @@ message RPCDataPayload {
 		try {
 			// @grpc/grpc-js proto-loaded clients use callback style, not promises
 			await new Promise<void>((resolve, reject) => {
-				this.client!.CancelOperation(
-					cancelRequest,
-					(error: any) => {
-						if (error) reject(error);
-						else resolve();
-					},
-				);
+				this.client!.CancelOperation(cancelRequest, (error: any) => {
+					if (error) reject(error);
+					else resolve();
+				});
 			});
 		} catch (error) {
 			throw error;

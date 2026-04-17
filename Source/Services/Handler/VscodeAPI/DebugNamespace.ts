@@ -53,9 +53,12 @@ const CreateDebugNamespace = (Context: HandlerContext) => ({
 		}).catch(() => {});
 		return {
 			dispose: () => {
-				Context.SendToMountain("unregister_debug_configuration_provider", {
-					handle: Handle,
-				}).catch(() => {});
+				Context.SendToMountain(
+					"unregister_debug_configuration_provider",
+					{
+						handle: Handle,
+					},
+				).catch(() => {});
 			},
 		};
 	},
@@ -69,11 +72,10 @@ const CreateDebugNamespace = (Context: HandlerContext) => ({
 	): Promise<boolean> => {
 		try {
 			// Routed by CreateEffectForRequest as Debug.Start.
-			const Response = await Context.MountainClient?.sendRequest("Debug.Start", [
-				Folder,
-				NameOrConfig,
-				ParentSession,
-			]);
+			const Response = await Context.MountainClient?.sendRequest(
+				"Debug.Start",
+				[Folder, NameOrConfig, ParentSession],
+			);
 			return Boolean((Response as { success?: boolean })?.success);
 		} catch {
 			return false;
@@ -115,14 +117,17 @@ const CreateDebugNamespace = (Context: HandlerContext) => ({
 		Context,
 		"debug.didReceiveCustomEvent",
 	),
-	onDidChangeBreakpoints: EventSubscriber(Context, "debug.didChangeBreakpoints"),
+	onDidChangeBreakpoints: EventSubscriber(
+		Context,
+		"debug.didChangeBreakpoints",
+	),
 
 	activeDebugSession: undefined as unknown,
 	activeDebugConsole: {
 		append: (Value: string) => {
-			Context.SendToMountain("debug.consoleAppend", { value: Value }).catch(
-				() => {},
-			);
+			Context.SendToMountain("debug.consoleAppend", {
+				value: Value,
+			}).catch(() => {});
 		},
 		appendLine: (Value: string) => {
 			Context.SendToMountain("debug.consoleAppend", {

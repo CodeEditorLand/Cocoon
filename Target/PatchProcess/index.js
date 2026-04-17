@@ -330,8 +330,8 @@ var IPCServiceLive = Layer2.effect(
 
 // Source/PatchProcess/Patcher.ts
 import ModuleNS from "node:module";
-var Module = ModuleNS;
 import { Config, Data, Effect as Effect3 } from "effect";
+var Module = ModuleNS;
 var ModulePatchProblem = class extends Data.TaggedError("ModulePatchProblem") {
   static {
     __name(this, "ModulePatchProblem");

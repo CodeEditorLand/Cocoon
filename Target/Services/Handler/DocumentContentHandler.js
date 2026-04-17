@@ -63,7 +63,11 @@ var BuildTextDocument = /* @__PURE__ */ __name((Uri, Content, Version = 1, Langu
       fragment: "",
       with: /* @__PURE__ */ __name(() => ({}), "with"),
       toString: /* @__PURE__ */ __name(() => Uri, "toString"),
-      toJSON: /* @__PURE__ */ __name(() => ({ scheme: "file", path: FileName, fsPath: FileName }), "toJSON")
+      toJSON: /* @__PURE__ */ __name(() => ({
+        scheme: "file",
+        path: FileName,
+        fsPath: FileName
+      }), "toJSON")
     },
     fileName: FileName,
     languageId: ResolvedLanguage,
@@ -74,9 +78,12 @@ var BuildTextDocument = /* @__PURE__ */ __name((Uri, Content, Version = 1, Langu
       const StartLine = Range?.start?.line ?? 0;
       const StartCharacter = Range?.start?.character ?? 0;
       const EndLine = Range?.end?.line ?? Lines.length - 1;
-      const EndCharacter = Range?.end?.character ?? (Lines[EndLine]?.length ?? 0);
+      const EndCharacter = Range?.end?.character ?? Lines[EndLine]?.length ?? 0;
       if (StartLine === EndLine) {
-        return (Lines[StartLine] ?? "").substring(StartCharacter, EndCharacter);
+        return (Lines[StartLine] ?? "").substring(
+          StartCharacter,
+          EndCharacter
+        );
       }
       const Result = [];
       Result.push((Lines[StartLine] ?? "").substring(StartCharacter));
@@ -120,7 +127,10 @@ var BuildTextDocument = /* @__PURE__ */ __name((Uri, Content, Version = 1, Langu
         }
         Remaining -= LineLength;
       }
-      return { line: Lines.length - 1, character: Lines[Lines.length - 1]?.length ?? 0 };
+      return {
+        line: Lines.length - 1,
+        character: Lines[Lines.length - 1]?.length ?? 0
+      };
     }, "positionAt"),
     validateRange: /* @__PURE__ */ __name((Range) => Range, "validateRange"),
     validatePosition: /* @__PURE__ */ __name((Position) => Position, "validatePosition"),
@@ -185,9 +195,16 @@ var HandleDocumentOpen = /* @__PURE__ */ __name((DocumentContentCache, Parameter
     if (Uri && Content !== void 0) {
       DocumentContentCache.set(Uri, Content);
       DocumentVersionMap.set(Uri, 1);
-      console.log(`[DocumentContentHandler] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`);
+      console.log(
+        `[DocumentContentHandler] Document opened: ${Uri.slice(-60)} (${Content.length} chars)`
+      );
       if (WorkspaceEventEmitter) {
-        const Document = BuildTextDocument(Uri, Content, 1, LanguageIdentifier);
+        const Document = BuildTextDocument(
+          Uri,
+          Content,
+          1,
+          LanguageIdentifier
+        );
         WorkspaceEventEmitter.emit("didOpenTextDocument", Document);
       }
     }

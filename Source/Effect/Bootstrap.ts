@@ -201,8 +201,13 @@ const stage5_RPCServer = withSpan(
 
 		// Start gRPC server for Mountain ← Cocoon communication.
 		// Port from env var (set by Mountain) or default 50052.
-		const CocoonPort = parseInt(process.env["COCOON_GRPC_PORT"] || "50052", 10);
-		console.log(`[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`);
+		const CocoonPort = parseInt(
+			process.env["COCOON_GRPC_PORT"] || "50052",
+			10,
+		);
+		console.log(
+			`[Cocoon Bootstrap] Stage 5: Starting gRPC on port ${CocoonPort}`,
+		);
 		yield* rpcServer.start({
 			host: "0.0.0.0",
 			port: CocoonPort,
@@ -343,7 +348,9 @@ const makeBootstrap = (): BootstrapService => ({
 				const SafeStage = Effect.suspend(() => stage as any).pipe(
 					Effect.catchAllCause((Cause) => {
 						const Message = String(Cause).slice(0, 300);
-						console.warn(`[Cocoon Bootstrap] Stage failed (continuing): ${Message}`);
+						console.warn(
+							`[Cocoon Bootstrap] Stage failed (continuing): ${Message}`,
+						);
 						return Effect.succeed({
 							stageName: "Failed",
 							success: false as boolean,
