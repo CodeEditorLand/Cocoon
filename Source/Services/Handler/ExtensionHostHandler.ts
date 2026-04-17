@@ -988,7 +988,11 @@ const CreateExtensionContext = (
 
 	// Resolve real storage paths for the extension
 	const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
-	const StorageBase = `${HomeDir}/.codeeditorland/extensions/storage`;
+	// Keep per-extension storage OUT of `~/.codeeditorland/extensions/` —
+	// that directory is now a user-extension scan path in Mountain's
+	// `ScanPathConfigure.rs`, and the scanner warns on non-extension
+	// siblings like `storage/`. Use a dedicated, non-scanned root.
+	const StorageBase = `${HomeDir}/.codeeditorland/extensionStorage`;
 	const GlobalStorageBase = `${HomeDir}/.codeeditorland/globalStorage`;
 	const LogBase = `${HomeDir}/.codeeditorland/logs`;
 	const ExtStoragePath = `${StorageBase}/${ExtId}`;
