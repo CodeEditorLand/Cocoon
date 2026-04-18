@@ -61,7 +61,10 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter, DocumentConten
         );
       } catch {
       }
-      Emitter.emit("unknownNotification", { method: Method, parameters: Parameters });
+      Emitter.emit("unknownNotification", {
+        method: Method,
+        parameters: Parameters
+      });
   }
 }, "HandleSpecificNotification");
 var NotificationHandler_default = HandleSpecificNotification;

@@ -358,7 +358,9 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
     Provider
   ), "registerInlayHintsProvider"),
   registerWorkspaceSymbolProvider: /* @__PURE__ */ __name((Provider) => {
-    process.stdout.write("[LandFix:LangNs] registerWorkspaceSymbolProvider called\n");
+    process.stdout.write(
+      "[LandFix:LangNs] registerWorkspaceSymbolProvider called\n"
+    );
     return RegisterProvider(
       Context,
       LanguageProviderRegistry,
@@ -519,8 +521,10 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
     }, "dispose")
   }), "registerMappedEditsProvider"),
   createLanguageStatusItem: /* @__PURE__ */ __name((Identifier, _Selector) => {
-    process.stdout.write(`[LandFix:LangNs] createLanguageStatusItem id=${Identifier}
-`);
+    process.stdout.write(
+      `[LandFix:LangNs] createLanguageStatusItem id=${Identifier}
+`
+    );
     const Item = {
       id: Identifier,
       name: void 0,

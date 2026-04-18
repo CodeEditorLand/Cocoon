@@ -197,8 +197,7 @@ var ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
   if (typeof Raw === "string" && Raw.length > 0) return Raw;
   if (Raw && typeof Raw === "object") {
     const Obj = Raw;
-    if (typeof Obj["pattern"] === "string")
-      return Obj["pattern"];
+    if (typeof Obj["pattern"] === "string") return Obj["pattern"];
     if (typeof Obj["glob"] === "string") return Obj["glob"];
   }
   return void 0;
@@ -219,18 +218,24 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
   const IncludePattern = ExtractGlobPattern(Include);
   const ExcludePattern = ExtractGlobPattern(Exclude);
   const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
-  process.stdout.write(`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
-`);
+  process.stdout.write(
+    `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
+`
+  );
   if (!IncludePattern) {
-    process.stdout.write("[LandFix:WsNs] findFiles: no include pattern \u2192 []\n");
+    process.stdout.write(
+      "[LandFix:WsNs] findFiles: no include pattern \u2192 []\n"
+    );
     return [];
   }
   let IncludeRegex;
   try {
     IncludeRegex = GlobToRegex_default(IncludePattern);
   } catch (Error2) {
-    process.stdout.write(`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}
-`);
+    process.stdout.write(
+      `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}
+`
+    );
     return [];
   }
   let ExcludeRegex;
@@ -304,8 +309,10 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
   for (const Folder of Folders) {
     const FsPath = FolderToFsPath(Folder?.uri);
     if (!FsPath) {
-      process.stdout.write(`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
-`);
+      process.stdout.write(
+        `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
+`
+      );
       continue;
     }
     await Walk(FsPath, FsPath, 0);
@@ -316,8 +323,10 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
 `
     );
   }
-  process.stdout.write(`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
-`);
+  process.stdout.write(
+    `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
+`
+  );
   return Results;
 }, "FindFilesLocal");
 var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
@@ -348,31 +357,28 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
       ConfigInFlight.delete(Key);
       if (Value === void 0) return;
       const Shape = Value;
-      const Resolved = Shape["workspaceFolderValue"] ?? Shape["workspaceValue"] ?? Shape["globalValue"] ?? Shape["defaultValue"] ?? Value;
+      const Resolved = Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
       const Prior = ConfigCache.get(Key);
       ConfigCache.set(Key, Resolved);
       if (Prior !== Resolved) FireConfigChange(Key);
     });
   }, "PrimeConfig");
-  Context.Emitter.on(
-    "configurationChanged",
-    (Payload) => {
-      const Shape = Payload ?? {};
-      const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
-      if (Keys.length === 0) {
-        for (const CachedKey of [...ConfigCache.keys()]) {
-          ConfigCache.delete(CachedKey);
-          FireConfigChange(CachedKey);
-        }
-        return;
+  Context.Emitter.on("configurationChanged", (Payload) => {
+    const Shape = Payload ?? {};
+    const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
+    if (Keys.length === 0) {
+      for (const CachedKey of [...ConfigCache.keys()]) {
+        ConfigCache.delete(CachedKey);
+        FireConfigChange(CachedKey);
       }
-      for (const Key of Keys) {
-        ConfigCache.delete(Key);
-        FireConfigChange(Key);
-        PrimeConfig(Key);
-      }
+      return;
     }
-  );
+    for (const Key of Keys) {
+      ConfigCache.delete(Key);
+      FireConfigChange(Key);
+      PrimeConfig(Key);
+    }
+  });
   return {
     workspaceFolders: InitWorkspace.folders ?? [],
     name: InitWorkspace.name,
@@ -598,12 +604,12 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
           return new TextEncoder().encode(Text ?? "");
         } catch (Err) {
           const Message = Err instanceof Error ? Err.message : String(Err);
-          const LooksLike404 = /resource not found|ENOENT|not found/i.test(
-            Message
-          );
+          const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);
           if (LooksLike404) {
-            process.stdout.write(`[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
-`);
+            process.stdout.write(
+              `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
+`
+            );
             const Api = globalThis.__cocoonVscodeAPI;
             const FileNotFound = Api?.FileSystemError?.FileNotFound;
             if (typeof FileNotFound === "function") {
@@ -616,8 +622,10 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
             Synthetic.name = "FileSystemError";
             throw Synthetic;
           }
-          process.stdout.write(`[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
-`);
+          process.stdout.write(
+            `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
+`
+          );
           throw Err;
         }
       }, "readFile"),

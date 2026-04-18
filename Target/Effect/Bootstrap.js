@@ -961,8 +961,9 @@ var init_ModuleInterceptor = __esm({
             "info",
             "[ModuleInterceptor] Installing Node.js Module._load hook..."
           );
-          const NodeModule = yield* Effect4.try(() => {
-            return __require("module");
+          const { default: NodeModule } = yield* Effect4.tryPromise({
+            try: /* @__PURE__ */ __name(() => import("node:module"), "try"),
+            catch: /* @__PURE__ */ __name((Err) => new Error(`[ModuleInterceptor] import('node:module') failed: ${Err}`), "catch")
           });
           const OriginalLoad = NodeModule._load;
           NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
@@ -1745,8 +1746,10 @@ message RPCDataPayload {
           const ErrorMessage = error instanceof Error ? error.message : String(error);
           const IsBenignNotFound = method === "FileSystem.ReadFile" && /resource not found|ENOENT|not found/i.test(ErrorMessage);
           if (IsBenignNotFound) {
-            process.stdout.write(`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) \u2014 ${ErrorMessage}
-`);
+            process.stdout.write(
+              `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) \u2014 ${ErrorMessage}
+`
+            );
           } else {
             console.error(
               `[MountainClientService] Request ${method} failed after ${duration}ms:`,
@@ -24309,8 +24312,7 @@ var init_WorkspaceNamespace = __esm({
       if (typeof Raw === "string" && Raw.length > 0) return Raw;
       if (Raw && typeof Raw === "object") {
         const Obj = Raw;
-        if (typeof Obj["pattern"] === "string")
-          return Obj["pattern"];
+        if (typeof Obj["pattern"] === "string") return Obj["pattern"];
         if (typeof Obj["glob"] === "string") return Obj["glob"];
       }
       return void 0;
@@ -24331,18 +24333,24 @@ var init_WorkspaceNamespace = __esm({
       const IncludePattern = ExtractGlobPattern(Include);
       const ExcludePattern = ExtractGlobPattern(Exclude);
       const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
-      process.stdout.write(`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
-`);
+      process.stdout.write(
+        `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
+`
+      );
       if (!IncludePattern) {
-        process.stdout.write("[LandFix:WsNs] findFiles: no include pattern \u2192 []\n");
+        process.stdout.write(
+          "[LandFix:WsNs] findFiles: no include pattern \u2192 []\n"
+        );
         return [];
       }
       let IncludeRegex;
       try {
         IncludeRegex = GlobToRegex_default(IncludePattern);
       } catch (Error2) {
-        process.stdout.write(`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}
-`);
+        process.stdout.write(
+          `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}
+`
+        );
         return [];
       }
       let ExcludeRegex;
@@ -24416,8 +24424,10 @@ var init_WorkspaceNamespace = __esm({
       for (const Folder of Folders) {
         const FsPath = FolderToFsPath(Folder?.uri);
         if (!FsPath) {
-          process.stdout.write(`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
-`);
+          process.stdout.write(
+            `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
+`
+          );
           continue;
         }
         await Walk(FsPath, FsPath, 0);
@@ -24428,8 +24438,10 @@ var init_WorkspaceNamespace = __esm({
 `
         );
       }
-      process.stdout.write(`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
-`);
+      process.stdout.write(
+        `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
+`
+      );
       return Results;
     }, "FindFilesLocal");
     CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context22) => {
@@ -24460,31 +24472,28 @@ var init_WorkspaceNamespace = __esm({
           ConfigInFlight.delete(Key);
           if (Value === void 0) return;
           const Shape = Value;
-          const Resolved = Shape["workspaceFolderValue"] ?? Shape["workspaceValue"] ?? Shape["globalValue"] ?? Shape["defaultValue"] ?? Value;
+          const Resolved = Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
           const Prior = ConfigCache.get(Key);
           ConfigCache.set(Key, Resolved);
           if (Prior !== Resolved) FireConfigChange(Key);
         });
       }, "PrimeConfig");
-      Context22.Emitter.on(
-        "configurationChanged",
-        (Payload) => {
-          const Shape = Payload ?? {};
-          const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
-          if (Keys.length === 0) {
-            for (const CachedKey of [...ConfigCache.keys()]) {
-              ConfigCache.delete(CachedKey);
-              FireConfigChange(CachedKey);
-            }
-            return;
+      Context22.Emitter.on("configurationChanged", (Payload) => {
+        const Shape = Payload ?? {};
+        const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
+        if (Keys.length === 0) {
+          for (const CachedKey of [...ConfigCache.keys()]) {
+            ConfigCache.delete(CachedKey);
+            FireConfigChange(CachedKey);
           }
-          for (const Key of Keys) {
-            ConfigCache.delete(Key);
-            FireConfigChange(Key);
-            PrimeConfig(Key);
-          }
+          return;
         }
-      );
+        for (const Key of Keys) {
+          ConfigCache.delete(Key);
+          FireConfigChange(Key);
+          PrimeConfig(Key);
+        }
+      });
       return {
         workspaceFolders: InitWorkspace.folders ?? [],
         name: InitWorkspace.name,
@@ -24710,12 +24719,12 @@ var init_WorkspaceNamespace = __esm({
               return new TextEncoder().encode(Text ?? "");
             } catch (Err) {
               const Message = Err instanceof Error ? Err.message : String(Err);
-              const LooksLike404 = /resource not found|ENOENT|not found/i.test(
-                Message
-              );
+              const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);
               if (LooksLike404) {
-                process.stdout.write(`[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
-`);
+                process.stdout.write(
+                  `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
+`
+                );
                 const Api = globalThis.__cocoonVscodeAPI;
                 const FileNotFound = Api?.FileSystemError?.FileNotFound;
                 if (typeof FileNotFound === "function") {
@@ -24728,8 +24737,10 @@ var init_WorkspaceNamespace = __esm({
                 Synthetic.name = "FileSystemError";
                 throw Synthetic;
               }
-              process.stdout.write(`[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
-`);
+              process.stdout.write(
+                `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
+`
+              );
               throw Err;
             }
           }, "readFile"),
@@ -25061,7 +25072,9 @@ var init_LanguagesNamespace = __esm({
         Provider
       ), "registerInlayHintsProvider"),
       registerWorkspaceSymbolProvider: /* @__PURE__ */ __name((Provider) => {
-        process.stdout.write("[LandFix:LangNs] registerWorkspaceSymbolProvider called\n");
+        process.stdout.write(
+          "[LandFix:LangNs] registerWorkspaceSymbolProvider called\n"
+        );
         return RegisterProvider(
           Context22,
           LanguageProviderRegistry,
@@ -25222,8 +25235,10 @@ var init_LanguagesNamespace = __esm({
         }, "dispose")
       }), "registerMappedEditsProvider"),
       createLanguageStatusItem: /* @__PURE__ */ __name((Identifier, _Selector) => {
-        process.stdout.write(`[LandFix:LangNs] createLanguageStatusItem id=${Identifier}
-`);
+        process.stdout.write(
+          `[LandFix:LangNs] createLanguageStatusItem id=${Identifier}
+`
+        );
         const Item = {
           id: Identifier,
           name: void 0,
@@ -25363,25 +25378,33 @@ var init_ExtensionsNamespace = __esm({
           try {
             Path = decodeURIComponent(new URL(Raw).pathname);
           } catch (Error2) {
-            process.stdout.write(`[LandFix:ExtNs] URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip
-`);
+            process.stdout.write(
+              `[LandFix:ExtNs] URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip
+`
+            );
             Path = Raw.replace(/^file:\/\//, "");
           }
         }
         Path = Path.replace(/\/$/, "");
-        process.stdout.write(`[LandFix:ExtNs] string extensionLocation ${Raw} \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})
-`);
+        process.stdout.write(
+          `[LandFix:ExtNs] string extensionLocation ${Raw} \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})
+`
+        );
         return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
       }
       if (Raw && typeof Raw === "object") {
         const Obj = Raw;
         const Path = typeof Obj["fsPath"] === "string" && Obj["fsPath"] || typeof Obj["path"] === "string" && Obj["path"] || (typeof Obj["external"] === "string" ? NormalizeLocation(Obj["external"]).ExtensionPath : "");
-        process.stdout.write(`[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})
-`);
+        process.stdout.write(
+          `[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})
+`
+        );
         return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
       }
-      process.stdout.write(`[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path
-`);
+      process.stdout.write(
+        `[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path
+`
+      );
       return { ExtensionPath: "", ExtensionUri: MakeUri("") };
     }, "NormalizeLocation");
     ToExtensionObject = /* @__PURE__ */ __name((Context22, Id, Raw) => {
@@ -25451,7 +25474,10 @@ var init_EnvNamespace = __esm({
       const Env = Context22.ExtensionHostInitData?.environment ?? {};
       const NormalizeAppRoot = /* @__PURE__ */ __name((Raw) => {
         if (typeof Raw !== "string" || Raw.length === 0) {
-          LandFixLog_default.Warn("EnvNs", "appRoot empty or non-string, returning ''");
+          LandFixLog_default.Warn(
+            "EnvNs",
+            "appRoot empty or non-string, returning ''"
+          );
           return "";
         }
         if (!Raw.startsWith("file:")) {
@@ -25462,14 +25488,19 @@ var init_EnvNamespace = __esm({
           const Normalised = decodeURIComponent(
             new URL(Raw).pathname
           ).replace(/\/$/, "");
-          LandFixLog_default.Info("EnvNs", `appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`);
+          LandFixLog_default.Info(
+            "EnvNs",
+            `appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`
+          );
           return Normalised;
         } catch (Error2) {
           const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
           LandFixLog_default.Warn(
             "EnvNs",
             `appRoot URL parse failed; fallback ${Raw} \u2192 ${Fallback}`,
-            { error: Error2 instanceof Error2 ? Error2.message : String(Error2) }
+            {
+              error: Error2 instanceof Error2 ? Error2.message : String(Error2)
+            }
           );
           return Fallback;
         }
@@ -25514,11 +25545,18 @@ var init_EnvNamespace = __esm({
               const Candidates = process.platform === "darwin" ? [["pbpaste", []]] : process.platform === "win32" ? [
                 [
                   "powershell.exe",
-                  ["-NoProfile", "-Command", "Get-Clipboard -Raw"]
+                  [
+                    "-NoProfile",
+                    "-Command",
+                    "Get-Clipboard -Raw"
+                  ]
                 ]
               ] : [
                 ["wl-paste", ["-n"]],
-                ["xclip", ["-selection", "clipboard", "-o"]],
+                [
+                  "xclip",
+                  ["-selection", "clipboard", "-o"]
+                ],
                 ["xsel", ["--clipboard", "--output"]]
               ];
               for (const [Cmd, Args] of Candidates) {
@@ -26755,15 +26793,21 @@ ${Stack}`
           }
         }
         if (!Exists) {
-          process.stdout.write(`[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})
-`);
+          process.stdout.write(
+            `[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})
+`
+          );
           return;
         }
-        process.stdout.write(`[LandFix:Preflight] ${ExtensionId} main resolved \u2192 ${Resolved}
-`);
+        process.stdout.write(
+          `[LandFix:Preflight] ${ExtensionId} main resolved \u2192 ${Resolved}
+`
+        );
       } catch (Err) {
-        process.stdout.write(`[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${Err instanceof Error ? Err.message : String(Err)}
-`);
+        process.stdout.write(
+          `[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${Err instanceof Error ? Err.message : String(Err)}
+`
+        );
       }
       const ModuleType = Extension2?.type ?? Extension2?.Type;
       const IsESM = ModuleType === "module" || /\.mjs$/i.test(MainFile) || /\.mts$/i.test(MainFile);
@@ -27494,7 +27538,10 @@ var init_NotificationHandler = __esm({
             );
           } catch {
           }
-          Emitter4.emit("unknownNotification", { method: Method, parameters: Parameters });
+          Emitter4.emit("unknownNotification", {
+            method: Method,
+            parameters: Parameters
+          });
       }
     }, "HandleSpecificNotification");
     NotificationHandler_default = HandleSpecificNotification;
@@ -32325,7 +32372,9 @@ var init_GRPCServerService = __esm({
         console.log("[GRPCServerService] Initializing gRPC server");
         this.setMaxListeners(0);
         this.workspaceEventEmitter.setMaxListeners(0);
-        process.stdout.write("[LandFix:GRPCSvc] setMaxListeners(0) applied on self + workspaceEventEmitter\n");
+        process.stdout.write(
+          "[LandFix:GRPCSvc] setMaxListeners(0) applied on self + workspaceEventEmitter\n"
+        );
         this.parseEnvironment();
         this.serviceImplementation = this.createServiceImplementation();
         console.log(`[GRPCServerService] Configured for port ${this.port}`);
@@ -33355,8 +33404,8 @@ var init_RPCServer = __esm({
 });
 
 // Source/Effect/Bootstrap.ts
-import { Context as Context21, Duration, Effect as Effect23, Layer as Layer21, Schedule as Schedule4 } from "effect";
 import { createConnection } from "node:net";
+import { Context as Context21, Duration, Effect as Effect23, Layer as Layer21, Schedule as Schedule4 } from "effect";
 var ProbeTcp, BootstrapTag, stage1_Environment, stage2_Configuration, MountainProbeTimeoutMs, MountainProbeMaxAttempts, MountainProbeDelayMs, MountainConnectMaxAttempts, stage3_MountainConnection, stage4_ModuleInterceptor, stage5_RPCServer, stage6_Extensions, stage7_HealthCheck, makeBootstrap, BootstrapLive, makeMockBootstrap, BootstrapMock, runBootstrap;
 var init_Bootstrap = __esm({
   "Source/Effect/Bootstrap.ts"() {
@@ -33711,8 +33760,10 @@ var init_Bootstrap = __esm({
           const SafeStage = Effect23.suspend(() => stage).pipe(
             Effect23.catchAllCause((Cause) => {
               const Message = String(Cause).slice(0, 300);
-              process.stdout.write(`[LandFix:Bootstrap] Stage "${StageName}" failed (continuing): ${Message}
-`);
+              process.stdout.write(
+                `[LandFix:Bootstrap] Stage "${StageName}" failed (continuing): ${Message}
+`
+              );
               return Effect23.succeed({
                 stageName: StageName,
                 success: false,
@@ -33723,11 +33774,15 @@ var init_Bootstrap = __esm({
           );
           const result = yield* SafeStage;
           if (result?.success === false) {
-            process.stdout.write(`[LandFix:Bootstrap] Stage "${StageName}" reported failure: ${result.error?.message ?? "<no message>"}
-`);
+            process.stdout.write(
+              `[LandFix:Bootstrap] Stage "${StageName}" reported failure: ${result.error?.message ?? "<no message>"}
+`
+            );
           } else {
-            process.stdout.write(`[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStartTime}ms
-`);
+            process.stdout.write(
+              `[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStartTime}ms
+`
+            );
           }
           results.push({
             ...result,

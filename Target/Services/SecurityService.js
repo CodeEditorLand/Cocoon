@@ -536,8 +536,10 @@ message RPCDataPayload {
           const ErrorMessage = error instanceof Error ? error.message : String(error);
           const IsBenignNotFound = method === "FileSystem.ReadFile" && /resource not found|ENOENT|not found/i.test(ErrorMessage);
           if (IsBenignNotFound) {
-            process.stdout.write(`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) \u2014 ${ErrorMessage}
-`);
+            process.stdout.write(
+              `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) \u2014 ${ErrorMessage}
+`
+            );
           } else {
             console.error(
               `[MountainClientService] Request ${method} failed after ${duration}ms:`,

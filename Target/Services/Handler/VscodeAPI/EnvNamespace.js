@@ -85,7 +85,10 @@ var CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
   const Env = Context.ExtensionHostInitData?.environment ?? {};
   const NormalizeAppRoot = /* @__PURE__ */ __name((Raw) => {
     if (typeof Raw !== "string" || Raw.length === 0) {
-      LandFixLog_default.Warn("EnvNs", "appRoot empty or non-string, returning ''");
+      LandFixLog_default.Warn(
+        "EnvNs",
+        "appRoot empty or non-string, returning ''"
+      );
       return "";
     }
     if (!Raw.startsWith("file:")) {
@@ -96,14 +99,19 @@ var CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
       const Normalised = decodeURIComponent(
         new URL(Raw).pathname
       ).replace(/\/$/, "");
-      LandFixLog_default.Info("EnvNs", `appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`);
+      LandFixLog_default.Info(
+        "EnvNs",
+        `appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`
+      );
       return Normalised;
     } catch (Error2) {
       const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
       LandFixLog_default.Warn(
         "EnvNs",
         `appRoot URL parse failed; fallback ${Raw} \u2192 ${Fallback}`,
-        { error: Error2 instanceof Error2 ? Error2.message : String(Error2) }
+        {
+          error: Error2 instanceof Error2 ? Error2.message : String(Error2)
+        }
       );
       return Fallback;
     }
@@ -148,11 +156,18 @@ var CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
           const Candidates = process.platform === "darwin" ? [["pbpaste", []]] : process.platform === "win32" ? [
             [
               "powershell.exe",
-              ["-NoProfile", "-Command", "Get-Clipboard -Raw"]
+              [
+                "-NoProfile",
+                "-Command",
+                "Get-Clipboard -Raw"
+              ]
             ]
           ] : [
             ["wl-paste", ["-n"]],
-            ["xclip", ["-selection", "clipboard", "-o"]],
+            [
+              "xclip",
+              ["-selection", "clipboard", "-o"]
+            ],
             ["xsel", ["--clipboard", "--output"]]
           ];
           for (const [Cmd, Args] of Candidates) {

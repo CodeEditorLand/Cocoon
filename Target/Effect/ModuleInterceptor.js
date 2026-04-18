@@ -1,11 +1,5 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
-var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
-  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
-}) : x)(function(x) {
-  if (typeof require !== "undefined") return require.apply(this, arguments);
-  throw Error('Dynamic require of "' + x + '" is not supported');
-});
 
 // Source/Effect/Telemetry.ts
 import {
@@ -372,8 +366,9 @@ var ModuleInterceptorLive = Layer2.effect(
         "info",
         "[ModuleInterceptor] Installing Node.js Module._load hook..."
       );
-      const NodeModule = yield* Effect2.try(() => {
-        return __require("module");
+      const { default: NodeModule } = yield* Effect2.tryPromise({
+        try: /* @__PURE__ */ __name(() => import("node:module"), "try"),
+        catch: /* @__PURE__ */ __name((Err) => new Error(`[ModuleInterceptor] import('node:module') failed: ${Err}`), "catch")
       });
       const OriginalLoad = NodeModule._load;
       NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {

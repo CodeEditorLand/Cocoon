@@ -259,9 +259,12 @@ export const ModuleInterceptorLive = Layer.effect(
 				"[ModuleInterceptor] Installing Node.js Module._load hook...",
 			);
 
-			const NodeModule = (yield* Effect.try(() => {
-				// eslint-disable-next-line @typescript-eslint/no-require-imports
-				return require("module") as typeof import("module");
+			// CocoonMain.js is an ESM bundle — `require` is not in scope.
+			// Use dynamic import() to get the Module constructor.
+			const { default: NodeModule } = (yield* Effect.tryPromise({
+				try: () => import("node:module"),
+				catch: (Err) =>
+					new Error(`[ModuleInterceptor] import('node:module') failed: ${Err}`),
 			})) as any;
 
 			const OriginalLoad = NodeModule._load;

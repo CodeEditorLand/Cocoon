@@ -314,12 +314,13 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			// Mountain may return either the bare value or a
 			// `{ defaultValue, globalValue, workspaceValue }` shape.
 			// Prefer the most-specific override, fall through to defaults.
-			const Shape = Value as Record<string, unknown>;
+			// Shape can be null when the key is not present in Mountain config.
+			const Shape = Value as Record<string, unknown> | null;
 			const Resolved =
-				Shape["workspaceFolderValue"] ??
-				Shape["workspaceValue"] ??
-				Shape["globalValue"] ??
-				Shape["defaultValue"] ??
+				Shape?.["workspaceFolderValue"] ??
+				Shape?.["workspaceValue"] ??
+				Shape?.["globalValue"] ??
+				Shape?.["defaultValue"] ??
 				Value;
 			const Prior = ConfigCache.get(Key);
 			ConfigCache.set(Key, Resolved);
