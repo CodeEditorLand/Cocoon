@@ -42,29 +42,41 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 			"warn",
 			"[CocoonMain] Bootstrap partially failed (continuing in degraded mode)",
 		);
-		console.warn(
-			"[CocoonMain] Bootstrap partially failed — running in degraded mode",
-		);
+		try {
+			process.stderr.write(
+				"[CocoonMain] Bootstrap partially failed — running in degraded mode\n",
+			);
+		} catch {}
 		for (const stage of result.stages) {
 			if (!stage.success) {
 				telemetry.log(
 					"warn",
 					`[CocoonMain]   - ${stage.stageName}: ${stage.error?.message}`,
 				);
-				console.warn(
-					`[CocoonMain]   Stage failed: ${stage.stageName}: ${stage.error?.message}`,
-				);
+				try {
+					process.stderr.write(
+						`[CocoonMain]   Stage failed: ${stage.stageName}: ${stage.error?.message ?? "<no message>"}\n`,
+					);
+				} catch {}
 			}
 		}
 	}
 
-	telemetry.log("info", "[CocoonMain] [OK] Bootstrap completed successfully");
+	if (result.success) {
+		telemetry.log(
+			"info",
+			"[CocoonMain] [OK] Bootstrap completed successfully",
+		);
+	}
 	telemetry.log(
 		"info",
 		`[CocoonMain] Total bootstrap time: ${result.totalDuration}ms`,
 	);
 
-	// TODO: Enter main event loop for extension handling
+	// From this point the gRPC server (Stage 5) holds an open libuv handle,
+	// which keeps the Effect runtime alive. Extension activation is driven by
+	// Mountain's `$activateByEvent` notifications — no explicit event loop
+	// is needed here.
 	telemetry.log("info", "[CocoonMain] Extension host ready");
 });
 

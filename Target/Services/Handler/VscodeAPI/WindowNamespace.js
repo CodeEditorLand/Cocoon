@@ -15,32 +15,74 @@ var TerminalCounter = 0;
 var StatusBarCounter = 0;
 var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
   const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
-    Context.SendToMountain("window.showMessage", {
-      message: Message,
-      level: Level,
-      items: Items
-    }).catch(() => {
-    });
-    return void 0;
+    let Options = void 0;
+    let Actions = Items;
+    if (Items.length > 0 && Items[0] && typeof Items[0] === "object" && !Array.isArray(Items[0]) && "modal" in Items[0]) {
+      Options = Items[0];
+      Actions = Items.slice(1);
+    }
+    try {
+      const Selection = await Context.MountainClient?.sendRequest(
+        "Window.ShowMessage",
+        [
+          {
+            message: Message,
+            level: Level,
+            items: Actions,
+            options: Options ?? {}
+          }
+        ]
+      );
+      return Selection ?? void 0;
+    } catch {
+      return void 0;
+    }
   }, "ShowMessage");
   return {
     showInformationMessage: ShowMessage("info"),
     showErrorMessage: ShowMessage("error"),
     showWarningMessage: ShowMessage("warn"),
-    showQuickPick: /* @__PURE__ */ __name(async (Items, _Options) => {
-      Context.SendToMountain("window.showQuickPick", {
-        items: Items
-      }).catch(() => {
-      });
-      return void 0;
+    showQuickPick: /* @__PURE__ */ __name(async (Items, Options) => {
+      try {
+        return await Context.MountainClient?.sendRequest(
+          "Window.ShowQuickPick",
+          [Items, Options ?? {}]
+        );
+      } catch {
+        return void 0;
+      }
     }, "showQuickPick"),
-    showInputBox: /* @__PURE__ */ __name(async (_Options) => {
-      Context.SendToMountain("window.showInputBox", {}).catch(() => {
-      });
-      return void 0;
+    showInputBox: /* @__PURE__ */ __name(async (Options) => {
+      try {
+        return await Context.MountainClient?.sendRequest(
+          "Window.ShowInputBox",
+          [Options ?? {}]
+        );
+      } catch {
+        return void 0;
+      }
     }, "showInputBox"),
-    showOpenDialog: /* @__PURE__ */ __name(async (_Options) => [], "showOpenDialog"),
-    showSaveDialog: /* @__PURE__ */ __name(async (_Options) => void 0, "showSaveDialog"),
+    showOpenDialog: /* @__PURE__ */ __name(async (Options) => {
+      try {
+        const Selected = await Context.MountainClient?.sendRequest(
+          "Window.ShowOpenDialog",
+          [Options ?? {}]
+        );
+        return Array.isArray(Selected) ? Selected : [];
+      } catch {
+        return [];
+      }
+    }, "showOpenDialog"),
+    showSaveDialog: /* @__PURE__ */ __name(async (Options) => {
+      try {
+        return await Context.MountainClient?.sendRequest(
+          "Window.ShowSaveDialog",
+          [Options ?? {}]
+        );
+      } catch {
+        return void 0;
+      }
+    }, "showSaveDialog"),
     createTerminal: /* @__PURE__ */ __name((Options) => {
       const Handle = `terminal:${++TerminalCounter}`;
       const Name = Options?.name ?? `Terminal ${TerminalCounter}`;
@@ -50,9 +92,31 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         options: Options ?? {}
       }).catch(() => {
       });
+      let ProcessIdPromise;
+      const ResolveProcessId = /* @__PURE__ */ __name(() => {
+        if (ProcessIdPromise !== void 0) return ProcessIdPromise;
+        ProcessIdPromise = (async () => {
+          try {
+            const Response = await Context.MountainClient?.sendRequest(
+              "Terminal.GetProcessId",
+              [Handle]
+            );
+            if (typeof Response === "number") return Response;
+            if (Response && typeof Response.pid === "number") {
+              return Response.pid;
+            }
+            return void 0;
+          } catch {
+            return void 0;
+          }
+        })();
+        return ProcessIdPromise;
+      }, "ResolveProcessId");
       return {
         name: Name,
-        processId: Promise.resolve(void 0),
+        get processId() {
+          return ResolveProcessId();
+        },
         sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
           Context.SendToMountain("terminal.sendText", {
             handle: Handle,

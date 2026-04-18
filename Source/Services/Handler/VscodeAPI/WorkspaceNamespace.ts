@@ -8,6 +8,7 @@
  * document-change notifications.
  */
 
+import GlobToRegex from "../../../Utility/GlobToRegex.js";
 import type { HandlerContext } from "../HandlerContext.js";
 
 const EventSubscriber =
@@ -61,50 +62,6 @@ const DefaultExcludeSegments = new Set([
 ]);
 
 /**
- * Convert a VS Code glob (tolerates `**`, `*`, `?`, `{a,b}`, char classes) to
- * an anchored regex. This is not a full minimatch — we support the subset the
- * built-in extensions use on activate: `**\/package.json`, `**\/*.ts`,
- * `{**\/tsconfig.json,**\/tsconfig.*.json}`. Unknown constructs fall through
- * as literal characters so worst case a stricter pattern just matches nothing.
- */
-const GlobToRegex = (Glob: string): RegExp => {
-	let Expression = "^";
-	let CurlyDepth = 0;
-	for (let I = 0; I < Glob.length; I++) {
-		const Character = Glob[I]!;
-		const Next = Glob[I + 1];
-		if (Character === "*" && Next === "*") {
-			// `**/` or `**` — match anything including `/`
-			Expression += ".*";
-			I++;
-			if (Glob[I + 1] === "/") I++;
-		} else if (Character === "*") {
-			Expression += "[^/]*";
-		} else if (Character === "?") {
-			Expression += "[^/]";
-		} else if (Character === "{") {
-			Expression += "(?:";
-			CurlyDepth++;
-		} else if (Character === "}") {
-			if (CurlyDepth > 0) {
-				Expression += ")";
-				CurlyDepth--;
-			} else {
-				Expression += "\\}";
-			}
-		} else if (Character === "," && CurlyDepth > 0) {
-			Expression += "|";
-		} else if (/[.+^$()|\[\]\\]/.test(Character)) {
-			Expression += "\\" + Character;
-		} else {
-			Expression += Character;
-		}
-	}
-	Expression += "$";
-	return new RegExp(Expression);
-};
-
-/**
  * Normalise VS Code's GlobPattern overloads to a plain string. Accepts a raw
  * string, a RelativePattern-shaped object, or a Uri-shaped object. We only
  * need the pattern — base resolution is handled by the workspace walk.
@@ -113,8 +70,7 @@ const ExtractGlobPattern = (Raw: unknown): string | undefined => {
 	if (typeof Raw === "string" && Raw.length > 0) return Raw;
 	if (Raw && typeof Raw === "object") {
 		const Obj = Raw as Record<string, unknown>;
-		if (typeof Obj["pattern"] === "string")
-			return Obj["pattern"] as string;
+		if (typeof Obj["pattern"] === "string") return Obj["pattern"] as string;
 		if (typeof Obj["glob"] === "string") return Obj["glob"] as string;
 	}
 	return undefined;
@@ -128,9 +84,9 @@ const FolderToFsPath = (FolderUri: unknown): string | undefined => {
 	const Raw =
 		typeof FolderUri === "string"
 			? FolderUri
-			: (FolderUri as Record<string, unknown>)?.["fsPath"] ??
+			: ((FolderUri as Record<string, unknown>)?.["fsPath"] ??
 				(FolderUri as Record<string, unknown>)?.["path"] ??
-				(FolderUri as Record<string, unknown>)?.["external"];
+				(FolderUri as Record<string, unknown>)?.["external"]);
 	if (typeof Raw !== "string" || Raw.length === 0) return undefined;
 	if (Raw.startsWith("file:")) {
 		try {
@@ -152,16 +108,16 @@ const FindFilesLocal = async (
 	const IncludePattern = ExtractGlobPattern(Include);
 	const ExcludePattern = ExtractGlobPattern(Exclude);
 	const Cap =
-		typeof MaxResults === "number" && MaxResults > 0
-			? MaxResults
-			: 10_000;
+		typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 10_000;
 
-	console.log(
-		`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}`,
+	process.stdout.write(
+		`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}\n`,
 	);
 
 	if (!IncludePattern) {
-		console.warn("[LandFix:WsNs] findFiles: no include pattern → []");
+		process.stdout.write(
+			"[LandFix:WsNs] findFiles: no include pattern → []\n",
+		);
 		return [];
 	}
 
@@ -169,10 +125,8 @@ const FindFilesLocal = async (
 	try {
 		IncludeRegex = GlobToRegex(IncludePattern);
 	} catch (Error: unknown) {
-		console.warn(
-			`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${
-				Error instanceof Error ? Error.message : String(Error)
-			}`,
+		process.stdout.write(
+			`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error instanceof Error ? Error.message : String(Error)}\n`,
 		);
 		return [];
 	}
@@ -192,48 +146,116 @@ const FindFilesLocal = async (
 		fsPath: string;
 	}> = [];
 
-	const Walk = async (Root: string, Current: string): Promise<void> => {
-		if (Results.length >= Cap) return;
-		let Entries: Array<{ name: string; isDirectory(): boolean }>;
+	// Hard caps protect against symlink cycles, mis-configured extensions, and
+	// pathological patterns matching the entire filesystem. A typical large
+	// VS Code workspace (chromium, linux) is <= 12 levels deep, so 32 is
+	// generous. The 30 s deadline is pulled forward on caller timeout.
+	const MaxDepth = 32;
+	const DeadlineAt = Date.now() + 30_000;
+	let Truncated: "" | "cap" | "depth" | "deadline" = "";
+
+	const Walk = async (
+		Root: string,
+		Current: string,
+		Depth: number,
+	): Promise<void> => {
+		if (Results.length >= Cap) {
+			Truncated = "cap";
+			return;
+		}
+		if (Depth > MaxDepth) {
+			Truncated = Truncated || "depth";
+			return;
+		}
+		if (Date.now() > DeadlineAt) {
+			Truncated = Truncated || "deadline";
+			return;
+		}
+		let Entries: Array<{
+			name: string;
+			isDirectory(): boolean;
+			isSymbolicLink(): boolean;
+		}>;
 		try {
 			Entries = (await readdir(Current, {
 				withFileTypes: true,
 			})) as unknown as Array<{
 				name: string;
 				isDirectory(): boolean;
+				isSymbolicLink(): boolean;
 			}>;
 		} catch {
 			return;
 		}
+
+		// Partition entries so we can read the directory's own files into the
+		// result set before recursing. This also enables a bounded fan-out into
+		// subdirectories without blocking the main event loop on deep trees.
+		const SubDirectories: string[] = [];
 		for (const Entry of Entries) {
-			if (Results.length >= Cap) return;
+			if (Results.length >= Cap) {
+				Truncated = "cap";
+				return;
+			}
 			const Name = Entry.name;
 			if (DefaultExcludeSegments.has(Name)) continue;
+			// Refuse to follow symlinks — common source of infinite recursion
+			// (e.g. `node_modules/.bin/node → ../node/bin/node → …`).
+			if (
+				typeof Entry.isSymbolicLink === "function" &&
+				Entry.isSymbolicLink()
+			)
+				continue;
 			const Full = join(Current, Name);
 			const RelativeFromRoot = relative(Root, Full).split(sep).join("/");
 			if (Entry.isDirectory()) {
-				await Walk(Root, Full);
+				SubDirectories.push(Full);
 				continue;
 			}
 			if (ExcludeRegex && ExcludeRegex.test(RelativeFromRoot)) continue;
 			if (!IncludeRegex.test(RelativeFromRoot)) continue;
 			Results.push({ scheme: "file", path: Full, fsPath: Full });
 		}
+
+		// Bounded parallel descent: 4 concurrent readdir()s per level keeps
+		// FD pressure low while cutting wall-clock by ~3× on SSD-backed trees.
+		const Concurrency = 4;
+		for (
+			let Index = 0;
+			Index < SubDirectories.length;
+			Index += Concurrency
+		) {
+			const Batch = SubDirectories.slice(Index, Index + Concurrency);
+			await Promise.all(Batch.map((Sub) => Walk(Root, Sub, Depth + 1)));
+			if (Results.length >= Cap) {
+				Truncated = "cap";
+				return;
+			}
+			if (Date.now() > DeadlineAt) {
+				Truncated = Truncated || "deadline";
+				return;
+			}
+		}
 	};
 
 	for (const Folder of Folders) {
 		const FsPath = FolderToFsPath(Folder?.uri);
 		if (!FsPath) {
-			console.warn(
-				`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})`,
+			process.stdout.write(
+				`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})\n`,
 			);
 			continue;
 		}
-		await Walk(FsPath, FsPath);
+		await Walk(FsPath, FsPath, 0);
+	}
+	if (Truncated) {
+		process.stdout.write(
+			`[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)\n`,
+		);
 	}
 
-	console.log(
-		`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}`,
+	process.stdout.write(
+		`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}\n`,
 	);
 	return Results;
 };
@@ -246,6 +268,94 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		name?: string;
 	};
 
+	// Configuration cache: VS Code's `WorkspaceConfiguration.get(key, default)`
+	// is synchronous, but our backing store is a gRPC round-trip to Mountain.
+	// Bridge that mismatch with a write-through cache:
+	//   - First sync read misses, returns `DefaultValue`, fires background
+	//     `Configuration.Inspect` to prime the cache.
+	//   - Subsequent reads hit the cache and return the real value.
+	//   - `update()` writes to Mountain AND the cache; triggers change event.
+	//   - `onDidChangeConfiguration` listeners fire on every cache mutation.
+	// A single cache is shared across all `getConfiguration(section)` calls
+	// because extensions expect settings changes in one section to be visible
+	// to another's listener.
+	const ConfigCache = new Map<string, unknown>();
+	const ConfigInFlight = new Set<string>();
+	const ConfigListeners = new Set<
+		(Event: { affectsConfiguration: (Key: string) => boolean }) => void
+	>();
+
+	const FireConfigChange = (ChangedKey: string): void => {
+		if (ConfigListeners.size === 0) return;
+		const Event = {
+			affectsConfiguration: (QueryKey: string): boolean =>
+				ChangedKey === QueryKey ||
+				ChangedKey.startsWith(`${QueryKey}.`),
+		};
+		for (const Listener of ConfigListeners) {
+			try {
+				Listener(Event);
+			} catch {
+				// Never let a bad listener abort the fan-out.
+			}
+		}
+	};
+
+	const PrimeConfig = (Key: string): void => {
+		if (ConfigInFlight.has(Key)) return;
+		ConfigInFlight.add(Key);
+		void Call<{ value?: unknown } | unknown>(
+			Context,
+			"Configuration.Inspect",
+			[Key],
+		).then((Value) => {
+			ConfigInFlight.delete(Key);
+			if (Value === undefined) return;
+			// Mountain may return either the bare value or a
+			// `{ defaultValue, globalValue, workspaceValue }` shape.
+			// Prefer the most-specific override, fall through to defaults.
+			const Shape = Value as Record<string, unknown>;
+			const Resolved =
+				Shape["workspaceFolderValue"] ??
+				Shape["workspaceValue"] ??
+				Shape["globalValue"] ??
+				Shape["defaultValue"] ??
+				Value;
+			const Prior = ConfigCache.get(Key);
+			ConfigCache.set(Key, Resolved);
+			if (Prior !== Resolved) FireConfigChange(Key);
+		});
+	};
+
+	// Listen for Mountain-side `configuration.change` notifications (routed
+	// through NotificationHandler into `configurationChanged` on the main
+	// Context.Emitter). When a user edits settings.json outside the extension
+	// host, Mountain fires this notification — we invalidate the affected
+	// cache entries and re-prime so downstream `get()` calls reflect the new
+	// value and listeners fire.
+	Context.Emitter.on("configurationChanged", (Payload: unknown) => {
+		const Shape = (Payload ?? {}) as { keys?: unknown; affected?: unknown };
+		const Keys: string[] = Array.isArray(Shape.keys)
+			? (Shape.keys as string[])
+			: Array.isArray(Shape.affected)
+				? (Shape.affected as string[])
+				: [];
+		if (Keys.length === 0) {
+			// Unknown affected keys — invalidate everything. Future reads
+			// re-prime lazily; listeners fire for each cached key.
+			for (const CachedKey of [...ConfigCache.keys()]) {
+				ConfigCache.delete(CachedKey);
+				FireConfigChange(CachedKey);
+			}
+			return;
+		}
+		for (const Key of Keys) {
+			ConfigCache.delete(Key);
+			FireConfigChange(Key);
+			PrimeConfig(Key);
+		}
+	});
+
 	return {
 		workspaceFolders: InitWorkspace.folders ?? [],
 		name: InitWorkspace.name,
@@ -257,9 +367,10 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		getConfiguration: (Section?: string, _Scope?: unknown) => ({
 			get: <T>(Key: string, DefaultValue?: T): T | undefined => {
 				const Full = Section ? `${Section}.${Key}` : Key;
-				// Fire-and-forget; synchronous VS Code API forces default-return.
-				// Real data would require a pre-populated cache primed by Mountain.
-				void Call<T>(Context, "Configuration.Inspect", [Full]);
+				if (ConfigCache.has(Full)) {
+					return ConfigCache.get(Full) as T;
+				}
+				PrimeConfig(Full);
 				return DefaultValue;
 			},
 			update: async (Key: string, Value: unknown, Target?: unknown) => {
@@ -278,12 +389,38 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 					Value,
 					TargetIndex,
 				]);
+				// Write through so the next `get()` reflects the change and
+				// so listeners fire without waiting for a Mountain round-trip.
+				const Prior = ConfigCache.get(Full);
+				ConfigCache.set(Full, Value);
+				if (Prior !== Value) FireConfigChange(Full);
 			},
 			has: (Key: string): boolean => {
-				void Key;
+				const Full = Section ? `${Section}.${Key}` : Key;
+				if (ConfigCache.has(Full)) return true;
+				PrimeConfig(Full);
 				return false;
 			},
-			inspect: () => undefined,
+			inspect: <T>(Key: string) => {
+				const Full = Section ? `${Section}.${Key}` : Key;
+				if (!ConfigCache.has(Full)) {
+					PrimeConfig(Full);
+					return undefined;
+				}
+				const Cached = ConfigCache.get(Full) as T;
+				return {
+					key: Full,
+					defaultValue: undefined,
+					globalValue: Cached,
+					workspaceValue: undefined,
+					workspaceFolderValue: undefined,
+					defaultLanguageValue: undefined,
+					globalLanguageValue: undefined,
+					workspaceLanguageValue: undefined,
+					workspaceFolderLanguageValue: undefined,
+					languageIds: [] as string[],
+				};
+			},
 		}),
 
 		findFiles: async (
@@ -362,7 +499,18 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		onDidCreateFiles: EventSubscriber(Context, "didCreateFiles"),
 		onDidDeleteFiles: EventSubscriber(Context, "didDeleteFiles"),
 		onDidRenameFiles: EventSubscriber(Context, "didRenameFiles"),
-		onDidChangeConfiguration: () => ({ dispose: () => {} }),
+		onDidChangeConfiguration: (
+			Listener: (Event: {
+				affectsConfiguration: (Key: string) => boolean;
+			}) => void,
+		) => {
+			ConfigListeners.add(Listener);
+			return {
+				dispose: () => {
+					ConfigListeners.delete(Listener);
+				},
+			};
+		},
 		onDidChangeWorkspaceFolders: () => ({ dispose: () => {} }),
 
 		registerTextDocumentContentProvider: () => ({ dispose: () => {} }),
@@ -471,16 +619,14 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 				} catch (Err: unknown) {
 					const Message =
 						Err instanceof Error ? Err.message : String(Err);
-					const LooksLike404 = /resource not found|ENOENT|not found/i.test(
-						Message,
-					);
+					const LooksLike404 =
+						/resource not found|ENOENT|not found/i.test(Message);
 					if (LooksLike404) {
-						console.log(
-							`[LandFix:FsRead] 404 → FileNotFound for ${UriString}`,
+						process.stdout.write(
+							`[LandFix:FsRead] 404 → FileNotFound for ${UriString}\n`,
 						);
 						const Api = (globalThis as any).__cocoonVscodeAPI;
-						const FileNotFound =
-							Api?.FileSystemError?.FileNotFound;
+						const FileNotFound = Api?.FileSystemError?.FileNotFound;
 						if (typeof FileNotFound === "function") {
 							throw FileNotFound(Uri);
 						}
@@ -493,8 +639,8 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 						Synthetic.name = "FileSystemError";
 						throw Synthetic;
 					}
-					console.warn(
-						`[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}`,
+					process.stdout.write(
+						`[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}\n`,
 					);
 					throw Err;
 				}

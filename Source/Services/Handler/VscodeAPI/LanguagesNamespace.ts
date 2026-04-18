@@ -6,6 +6,7 @@
  * getLanguages, match, onDidChangeDiagnostics, getDiagnostics.
  */
 
+import GlobToRegex from "../../../Utility/GlobToRegex.js";
 import type { HandlerContext } from "../HandlerContext.js";
 
 /**
@@ -267,8 +268,8 @@ const CreateLanguagesNamespace = (
 			Provider,
 		),
 	registerWorkspaceSymbolProvider: (Provider: any) => {
-		console.log(
-			"[LandFix:LangNs] registerWorkspaceSymbolProvider called",
+		process.stdout.write(
+			"[LandFix:LangNs] registerWorkspaceSymbolProvider called\n",
 		);
 		return RegisterProvider(
 			Context,
@@ -358,7 +359,83 @@ const CreateLanguagesNamespace = (
 		}).catch(() => {});
 		return Document;
 	},
-	match: (_Selector: any, _Document: any): number => 10,
+	match: (Selector: any, Document: any): number => {
+		// Implements VS Code's `languages.match(selector, document)` contract —
+		// returns 0 for no match; higher numbers for better matches. Scoring
+		// loosely mirrors `matchesSelector()` in `vs/editor/common/languageSelector.ts`:
+		//   +5  exact language  |  +3  "*" wildcard
+		//   +5  exact scheme    |  +3  "*" wildcard
+		//   +5  glob pattern match
+		//   +1  notebookType match
+		// Arrays are reduced by MAX — returning the best-matching subselector.
+		const DocLanguage =
+			typeof Document?.languageId === "string" ? Document.languageId : "";
+		const DocScheme =
+			typeof Document?.uri?.scheme === "string"
+				? Document.uri.scheme
+				: "";
+		const DocPath =
+			typeof Document?.uri?.fsPath === "string"
+				? Document.uri.fsPath
+				: typeof Document?.uri?.path === "string"
+					? Document.uri.path
+					: "";
+
+		const ScoreOne = (One: unknown): number => {
+			if (typeof One === "string") {
+				if (One === DocLanguage) return 10;
+				if (One === "*") return 5;
+				return 0;
+			}
+			if (!One || typeof One !== "object") return 0;
+			const Filter = One as {
+				language?: string;
+				scheme?: string;
+				pattern?: string;
+				notebookType?: string;
+			};
+			let Score = 0;
+			if (typeof Filter.language === "string") {
+				if (Filter.language === DocLanguage) Score += 5;
+				else if (Filter.language === "*") Score += 3;
+				else return 0;
+			}
+			if (typeof Filter.scheme === "string") {
+				if (Filter.scheme === DocScheme) Score += 5;
+				else if (Filter.scheme === "*") Score += 3;
+				else return 0;
+			}
+			if (typeof Filter.pattern === "string" && DocPath.length > 0) {
+				try {
+					if (GlobToRegex(Filter.pattern).test(DocPath)) Score += 5;
+					else return 0;
+				} catch {
+					// Malformed pattern — treat as no-match rather than throwing.
+					return 0;
+				}
+			}
+			if (typeof Filter.notebookType === "string") {
+				const NotebookType =
+					typeof Document?.notebook?.notebookType === "string"
+						? Document.notebook.notebookType
+						: "";
+				if (Filter.notebookType === NotebookType) Score += 1;
+				else if (Filter.notebookType === "*") Score += 1;
+				else return 0;
+			}
+			return Score;
+		};
+
+		if (Array.isArray(Selector)) {
+			let Best = 0;
+			for (const One of Selector) {
+				const Value = ScoreOne(One);
+				if (Value > Best) Best = Value;
+			}
+			return Best;
+		}
+		return ScoreOne(Selector);
+	},
 	onDidChangeDiagnostics: (Listener: (...Arguments: any[]) => any) => {
 		Context.Emitter.on("diagnostics.didChange", Listener);
 		return {
@@ -393,8 +470,8 @@ const CreateLanguagesNamespace = (
 		dispose: () => {},
 	}),
 	createLanguageStatusItem: (Identifier: string, _Selector: unknown) => {
-		console.log(
-			`[LandFix:LangNs] createLanguageStatusItem id=${Identifier}`,
+		process.stdout.write(
+			`[LandFix:LangNs] createLanguageStatusItem id=${Identifier}\n`,
 		);
 		const Item: Record<string, unknown> = {
 			id: Identifier,

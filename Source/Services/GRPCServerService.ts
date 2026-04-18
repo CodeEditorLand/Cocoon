@@ -141,8 +141,8 @@ export class GRPCServerService
 		// `MaxListenersExceededWarning` spam during boot. 0 = unlimited.
 		this.setMaxListeners(0);
 		this.workspaceEventEmitter.setMaxListeners(0);
-		console.log(
-			"[LandFix:GRPCSvc] setMaxListeners(0) applied on self + workspaceEventEmitter",
+		process.stdout.write(
+			"[LandFix:GRPCSvc] setMaxListeners(0) applied on self + workspaceEventEmitter\n",
 		);
 
 		// Parse environment variables

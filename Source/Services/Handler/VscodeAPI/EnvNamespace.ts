@@ -7,6 +7,7 @@
  * Clipboard operations proxy to Mountain via MountainClient.
  */
 
+import LandFixLog from "../../../Utility/LandFixLog.js";
 import type { HandlerContext } from "../HandlerContext.js";
 
 const CreateEnvNamespace = (Context: HandlerContext) => {
@@ -22,29 +23,34 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 	// `file://` scheme and percent-decode so those calls resolve correctly.
 	const NormalizeAppRoot = (Raw: unknown): string => {
 		if (typeof Raw !== "string" || Raw.length === 0) {
-			console.log(
-				"[LandFix:EnvNs] appRoot empty or non-string, returning ''",
+			LandFixLog.Warn(
+				"EnvNs",
+				"appRoot empty or non-string, returning ''",
 			);
 			return "";
 		}
 		if (!Raw.startsWith("file:")) {
-			console.log(`[LandFix:EnvNs] appRoot already plain path: ${Raw}`);
+			LandFixLog.Info("EnvNs", `appRoot already plain path: ${Raw}`);
 			return Raw;
 		}
 		try {
 			const Normalised = decodeURIComponent(
 				new URL(Raw).pathname,
 			).replace(/\/$/, "");
-			console.log(
-				`[LandFix:EnvNs] appRoot normalised file-URL ${Raw} → ${Normalised}`,
+			LandFixLog.Info(
+				"EnvNs",
+				`appRoot normalised file-URL ${Raw} → ${Normalised}`,
 			);
 			return Normalised;
 		} catch (Error: unknown) {
 			const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
-			console.warn(
-				`[LandFix:EnvNs] appRoot URL parse failed (${
-					Error instanceof Error ? Error.message : String(Error)
-				}); fallback ${Raw} → ${Fallback}`,
+			LandFixLog.Warn(
+				"EnvNs",
+				`appRoot URL parse failed; fallback ${Raw} → ${Fallback}`,
+				{
+					error:
+						Error instanceof Error ? Error.message : String(Error),
+				},
 			);
 			return Fallback;
 		}
@@ -84,20 +90,142 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		shell: (Env["shell"] as string) ?? process.env["SHELL"] ?? "",
 		remoteName: undefined,
 		clipboard: {
-			// Clipboard.Read / Clipboard.Write not yet routed — catch returns
-			// empty string / undefined until the Rust dispatcher adds them.
-			readText: async (): Promise<string> =>
-				(await Call<string>("Clipboard.Read", [])) ?? "",
+			// Primary path: Mountain's Clipboard.Read / Clipboard.Write (when
+			// routed). Fallback: native OS clipboard CLI — pbcopy/pbpaste on
+			// macOS, xclip/wl-paste on Linux, clip/Get-Clipboard on Windows.
+			// Each branch swallows errors so the extension host never crashes
+			// on an unavailable clipboard subsystem.
+			readText: async (): Promise<string> => {
+				const FromMountain = await Call<string>("Clipboard.Read", []);
+				if (typeof FromMountain === "string") return FromMountain;
+				try {
+					const { spawn } = await import("node:child_process");
+					const Candidates =
+						process.platform === "darwin"
+							? [["pbpaste", []]]
+							: process.platform === "win32"
+								? [
+										[
+											"powershell.exe",
+											[
+												"-NoProfile",
+												"-Command",
+												"Get-Clipboard -Raw",
+											],
+										],
+									]
+								: [
+										["wl-paste", ["-n"]],
+										[
+											"xclip",
+											["-selection", "clipboard", "-o"],
+										],
+										["xsel", ["--clipboard", "--output"]],
+									];
+					for (const [Cmd, Args] of Candidates as Array<
+						[string, string[]]
+					>) {
+						const Text = await new Promise<string | undefined>(
+							(Resolve) => {
+								const Child = spawn(Cmd, Args, {
+									stdio: ["ignore", "pipe", "ignore"],
+								});
+								let Out = "";
+								Child.stdout.on(
+									"data",
+									(Chunk: Buffer) =>
+										(Out += Chunk.toString("utf8")),
+								);
+								Child.once("error", () => Resolve(undefined));
+								Child.once("close", (Code) =>
+									Resolve(Code === 0 ? Out : undefined),
+								);
+							},
+						);
+						if (Text !== undefined) return Text;
+					}
+				} catch {}
+				return "";
+			},
 			writeText: async (Value: string): Promise<void> => {
 				await Call<void>("Clipboard.Write", [Value]);
+				// Mirror to native clipboard as well so the UI and terminal
+				// stay in sync even when only one route is wired up.
+				try {
+					const { spawn } = await import("node:child_process");
+					const Candidates =
+						process.platform === "darwin"
+							? [["pbcopy", []]]
+							: process.platform === "win32"
+								? [["clip.exe", []]]
+								: [
+										["wl-copy", []],
+										["xclip", ["-selection", "clipboard"]],
+										["xsel", ["--clipboard", "--input"]],
+									];
+					for (const [Cmd, Args] of Candidates as Array<
+						[string, string[]]
+					>) {
+						const Ok = await new Promise<boolean>((Resolve) => {
+							const Child = spawn(Cmd, Args, {
+								stdio: ["pipe", "ignore", "ignore"],
+							});
+							Child.once("error", () => Resolve(false));
+							Child.once("close", (Code) => Resolve(Code === 0));
+							try {
+								Child.stdin.end(Value);
+							} catch {
+								Resolve(false);
+							}
+						});
+						if (Ok) return;
+					}
+				} catch {}
 			},
 		},
 		openExternal: async (Target: unknown): Promise<boolean> => {
-			// NativeHost.OpenExternal not yet routed.
-			const Ok = await Call<boolean>("NativeHost.OpenExternal", [
-				typeof Target === "string" ? Target : String(Target),
-			]);
-			return Ok ?? false;
+			const Url = typeof Target === "string" ? Target : String(Target);
+			const OkFromMountain = await Call<boolean>(
+				"NativeHost.OpenExternal",
+				[Url],
+			);
+			if (OkFromMountain === true) return true;
+			// Fallback: platform-native URL opener. `open` on macOS,
+			// `xdg-open` on Linux, `cmd /c start` on Windows. Returns true iff
+			// the child process exits successfully within 2 s.
+			try {
+				const { spawn } = await import("node:child_process");
+				const Command: [string, string[]] =
+					process.platform === "darwin"
+						? ["open", [Url]]
+						: process.platform === "win32"
+							? ["cmd.exe", ["/c", "start", "", Url]]
+							: ["xdg-open", [Url]];
+				const Ok = await new Promise<boolean>((Resolve) => {
+					const Child = spawn(Command[0], Command[1], {
+						stdio: "ignore",
+						detached: true,
+					});
+					const Timer = setTimeout(() => {
+						try {
+							Child.kill();
+						} catch {}
+						Resolve(false);
+					}, 2_000);
+					Child.once("error", () => {
+						clearTimeout(Timer);
+						Resolve(false);
+					});
+					Child.once("close", (Code) => {
+						clearTimeout(Timer);
+						Resolve(Code === 0);
+					});
+					Child.unref();
+				});
+				return Ok;
+			} catch {
+				return false;
+			}
 		},
 		asExternalUri: async (Target: unknown) => Target,
 		createTelemetryLogger: (_Sender: unknown, _Options?: unknown) => ({

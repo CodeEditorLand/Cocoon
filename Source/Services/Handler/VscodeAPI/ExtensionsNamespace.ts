@@ -174,17 +174,15 @@ const NormalizeLocation = (
 			try {
 				Path = decodeURIComponent(new URL(Raw).pathname);
 			} catch (Error: unknown) {
-				console.warn(
-					`[LandFix:ExtNs] URL parse failed for ${Raw}: ${
-						Error instanceof Error ? Error.message : String(Error)
-					}; using fallback strip`,
+				process.stdout.write(
+					`[LandFix:ExtNs] URL parse failed for ${Raw}: ${Error instanceof Error ? Error.message : String(Error)}; using fallback strip\n`,
 				);
 				Path = Raw.replace(/^file:\/\//, "");
 			}
 		}
 		Path = Path.replace(/\/$/, "");
-		console.log(
-			`[LandFix:ExtNs] string extensionLocation ${Raw} → path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})`,
+		process.stdout.write(
+			`[LandFix:ExtNs] string extensionLocation ${Raw} → path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})\n`,
 		);
 		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
 	}
@@ -197,14 +195,14 @@ const NormalizeLocation = (
 			(typeof Obj["external"] === "string"
 				? NormalizeLocation(Obj["external"]).ExtensionPath
 				: "");
-		console.log(
-			`[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})`,
+		process.stdout.write(
+			`[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})\n`,
 		);
 		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
 	}
 
-	console.warn(
-		`[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`,
+	process.stdout.write(
+		`[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path\n`,
 	);
 	return { ExtensionPath: "", ExtensionUri: MakeUri("") };
 };

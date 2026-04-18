@@ -402,10 +402,69 @@ export const MountainClientLive = Layer.effect(
 			return currentState.serverVersion;
 		});
 
-		// Atom: Health check
+		// Atom: Health check — fast local-state check followed by a real gRPC
+		// round-trip against `FileSystem.Stat` (cheap, always routed). A
+		// healthy connection must (a) be in the Connected state locally and
+		// (b) respond to a stat of `/` within the timeout. A transport
+		// failure flips the state to Error so the next request triggers
+		// auto-reconnect; an application-level error (file missing etc.) is
+		// still treated as healthy because it proves the server responds.
+		const HealthCheckTimeoutMs = 1_000;
 		const healthCheck = Effect.gen(function* () {
 			const currentState = yield* stateRef.get;
-			return currentState._tag === "Connected";
+			if (currentState._tag !== "Connected") return false;
+			if (!realClient) return false;
+			const Outcome = yield* Effect.promise(() =>
+				Promise.race([
+					realClient!
+						.sendRequest("FileSystem.Stat", ["/"])
+						.then(() => ({ Kind: "ok" as const }))
+						.catch((Err: unknown) => ({
+							Kind: "app-error" as const,
+							Message:
+								Err instanceof Error
+									? Err.message
+									: String(Err),
+						})),
+					new Promise<{ Kind: "timeout" }>((Resolve) =>
+						setTimeout(
+							() => Resolve({ Kind: "timeout" as const }),
+							HealthCheckTimeoutMs,
+						),
+					),
+				]),
+			);
+			if (Outcome.Kind === "timeout") {
+				yield* Ref.set(stateRef, {
+					_tag: "Error",
+					error: `Health check timed out after ${HealthCheckTimeoutMs}ms`,
+				});
+				telemetry.log(
+					"warn",
+					`[MountainClient] Health check timed out; marking connection as Error state for auto-reconnect`,
+				);
+				return false;
+			}
+			if (Outcome.Kind === "app-error") {
+				// Distinguish transport failure from an application error. The
+				// server is clearly responsive (it replied) — stay Connected.
+				const LooksLikeTransport =
+					/UNAVAILABLE|transport|disconnect|ECONNREFUSED|ECONNRESET|NOT_FOUND service/i.test(
+						Outcome.Message,
+					);
+				if (LooksLikeTransport) {
+					yield* Ref.set(stateRef, {
+						_tag: "Error",
+						error: Outcome.Message,
+					});
+					telemetry.log(
+						"warn",
+						`[MountainClient] Health check hit transport failure (${Outcome.Message}); marking Error state`,
+					);
+					return false;
+				}
+			}
+			return true;
 		});
 
 		// Atom: Get metrics

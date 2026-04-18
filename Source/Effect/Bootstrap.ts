@@ -13,14 +13,56 @@
  * 6. Health Checks
  */
 
-import { Context, Effect, Layer } from "effect";
+import { createConnection } from "node:net";
 
+import { Context, Duration, Effect, Layer, Schedule } from "effect";
+
+import LandFixLog from "../Utility/LandFixLog.js";
 import { ExtensionTag } from "./Extension.js";
 import { HealthTag } from "./Health.js";
 import { ModuleInterceptorTag } from "./ModuleInterceptor.js";
 import { MountainClientTag } from "./MountainClient.js";
 import { RPCServerTag } from "./RPCServer.js";
 import { TelemetryTag, withSpan } from "./Telemetry.js";
+
+/**
+ * Fast TCP port probe — returns true if a client socket can ESTABLISH (not
+ * just send SYN) inside `TimeoutMs`. Used as Stage 3's pre-flight so we only
+ * attempt the expensive gRPC handshake once Mountain's listener is live.
+ * Cheap: one socket, one timeout, no retries.
+ */
+const ProbeTcp = (
+	Host: string,
+	Port: number,
+	TimeoutMs: number,
+): Effect.Effect<boolean, never> =>
+	Effect.async<boolean, never>((Resume) => {
+		let Settled = false;
+		const Settle = (Value: boolean) => {
+			if (Settled) return;
+			Settled = true;
+			try {
+				Socket.destroy();
+			} catch {}
+			Resume(Effect.succeed(Value));
+		};
+		const Socket = createConnection({ host: Host, port: Port });
+		const Timer = setTimeout(() => Settle(false), TimeoutMs);
+		Socket.once("connect", () => {
+			clearTimeout(Timer);
+			Settle(true);
+		});
+		Socket.once("error", () => {
+			clearTimeout(Timer);
+			Settle(false);
+		});
+		return Effect.sync(() => {
+			clearTimeout(Timer);
+			try {
+				Socket.destroy();
+			} catch {}
+		});
+	});
 
 // ============================================================================
 // TYPES
@@ -104,10 +146,44 @@ const stage2_Configuration = withSpan(
 			"[Cocoon Bootstrap] Stage 2: Loading configuration...",
 		);
 
-		// Configuration loading will be handled by Configuration service
-		// For now, we simulate it
-		yield* Effect.sleep("20 millis");
+		// Real bootstrap configuration comes in through the environment —
+		// Mountain spawns Cocoon with `MOUNTAIN_GRPC_PORT`, `COCOON_GRPC_PORT`,
+		// `LAND_DEV_LOG`, `NODE_ENV`, etc. Extension-host settings arrive later
+		// via `InitializeExtensionHost`. Here we:
+		//   (a) parse + validate the bootstrap env vars once,
+		//   (b) report each resolved value via telemetry so a pasted log makes
+		//       misconfiguration obvious, and
+		//   (c) attach the parsed block to `globalThis.__cocoonBootstrapConfig`
+		//       so downstream stages / handlers can read without re-parsing.
+		const ParsePort = (
+			Raw: string | undefined,
+			Fallback: number,
+		): number => {
+			if (Raw === undefined) return Fallback;
+			const Value = parseInt(Raw, 10);
+			return Number.isFinite(Value) && Value > 0 && Value < 65536
+				? Value
+				: Fallback;
+		};
 
+		const ResolvedConfig = {
+			MountainPort: ParsePort(process.env["MOUNTAIN_GRPC_PORT"], 50051),
+			CocoonPort: ParsePort(process.env["COCOON_GRPC_PORT"], 50052),
+			NodeEnv: process.env["NODE_ENV"] ?? "production",
+			DevLog: process.env["LAND_DEV_LOG"] ?? "",
+			DebugFlag: process.env["TAURI_ENV_DEBUG"] === "true",
+		};
+
+		(
+			globalThis as unknown as {
+				__cocoonBootstrapConfig?: typeof ResolvedConfig;
+			}
+		).__cocoonBootstrapConfig = ResolvedConfig;
+
+		LandFixLog.Info(
+			"Bootstrap",
+			`Configuration resolved: MountainPort=${ResolvedConfig.MountainPort} CocoonPort=${ResolvedConfig.CocoonPort} NodeEnv=${ResolvedConfig.NodeEnv} DevLog=${ResolvedConfig.DevLog || "<unset>"} TauriDebug=${ResolvedConfig.DebugFlag}`,
+		);
 		telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
 
 		return {
@@ -118,6 +194,18 @@ const stage2_Configuration = withSpan(
 		} satisfies StageResult;
 	}),
 );
+
+/**
+ * Stage 3 tuning — exposed as constants so a future test harness can override.
+ * Total worst-case duration before we give up: probe 15× + connect retry up to
+ * `MountainConnectMaxAttempts`. With 250 ms probe + 500 ms initial backoff
+ * doubling to 5 s cap, 15 attempts covers the 5–8 s Mountain startup window
+ * observed in every rebuild so far with generous headroom.
+ */
+const MountainProbeTimeoutMs = 250;
+const MountainProbeMaxAttempts = 15;
+const MountainProbeDelayMs = 200;
+const MountainConnectMaxAttempts = 20;
 
 const stage3_MountainConnection = withSpan(
 	"stage3_mountain_connection",
@@ -136,13 +224,79 @@ const stage3_MountainConnection = withSpan(
 			process.env["MOUNTAIN_GRPC_PORT"] || "50051",
 			10,
 		);
-		yield* mountainClient.connect({
-			host: "localhost",
-			port: MountainPort,
-		});
+		const MountainHost = "localhost";
+
+		// Pre-flight: wait for the TCP listener to come up before attempting
+		// the gRPC handshake. Without this, the first `mountainClient.connect`
+		// attempt races Mountain's boot and reports a hard ConnectionError
+		// before the in-client retry loop (SendRequestWithRetry) can recover.
+		let ProbeAttempt = 0;
+		let Listening = false;
+		while (ProbeAttempt < MountainProbeMaxAttempts && !Listening) {
+			ProbeAttempt++;
+			Listening = yield* ProbeTcp(
+				MountainHost,
+				MountainPort,
+				MountainProbeTimeoutMs,
+			);
+			if (Listening) {
+				LandFixLog.Info(
+					"Bootstrap",
+					`Mountain TCP port ${MountainHost}:${MountainPort} listening after ${ProbeAttempt} probe(s)`,
+				);
+				break;
+			}
+			yield* Effect.sleep(Duration.millis(MountainProbeDelayMs));
+		}
+		if (!Listening) {
+			LandFixLog.Warn(
+				"Bootstrap",
+				`Mountain TCP port ${MountainHost}:${MountainPort} unreachable after ${MountainProbeMaxAttempts} probes; attempting connect anyway`,
+			);
+		}
+
+		// Attempt the gRPC connect with exponential backoff. Schedule.exponential
+		// doubles each delay from 500 ms; Schedule.recurs caps total attempts.
+		// On every recur, log the failure so a pasted terminal log surfaces the
+		// cause without having to re-run with a verbose flag.
+		const AttemptRef = { value: 0 };
+		const Connect = Effect.gen(function* () {
+			AttemptRef.value++;
+			yield* mountainClient.connect({
+				host: MountainHost,
+				port: MountainPort,
+			});
+		}).pipe(
+			Effect.tapError((Failure) =>
+				Effect.sync(() => {
+					const Message =
+						Failure instanceof Error
+							? Failure.message
+							: String(Failure);
+					LandFixLog.Warn(
+						"Bootstrap",
+						`MountainConnection attempt ${AttemptRef.value}/${MountainConnectMaxAttempts} failed: ${Message}`,
+					);
+				}),
+			),
+			Effect.retry(
+				Schedule.exponential(Duration.millis(500)).pipe(
+					Schedule.union(Schedule.spaced(Duration.seconds(5))),
+					Schedule.intersect(
+						Schedule.recurs(MountainConnectMaxAttempts - 1),
+					),
+				),
+			),
+		);
+
+		yield* Connect;
 
 		const version = yield* mountainClient.version;
 
+		LandFixLog.Info(
+			"Bootstrap",
+			`MountainConnection OK (v${version}) after ${AttemptRef.value} attempt(s), probe settled after ${ProbeAttempt}`,
+		);
 		telemetry.log(
 			"info",
 			`[Cocoon Bootstrap] Connected to Mountain (v${version})`,
@@ -242,17 +396,45 @@ const stage6_Extensions = withSpan(
 			`[Cocoon Bootstrap] Found ${extensions.length} extensions`,
 		);
 
-		// Activate enabled extensions (in production, this would be based on configuration)
-		for (const ext of extensions) {
-			if (ext.manifest.enabled) {
-				yield* extension.activate(ext.id);
-			}
-		}
+		// Parallel activation with bounded concurrency (8) and per-extension
+		// error isolation — one bad activate must not abort the stage. Sequential
+		// for-loops used to serialise activations behind any slow I/O inside an
+		// extension's activate callback (file reads, LSP launches). Effect.forEach
+		// runs up to 8 concurrently and collects all successes; failures log and
+		// fall through.
+		const EligibleExtensions = extensions.filter(
+			(Ext) => Ext.manifest.enabled,
+		);
+		const ActivationAttempts = yield* Effect.forEach(
+			EligibleExtensions,
+			(Ext) =>
+				extension.activate(Ext.id).pipe(
+					Effect.map(() => ({ Id: Ext.id, Ok: true as const })),
+					Effect.catchAll((Failure) => {
+						const Message =
+							Failure instanceof Error
+								? Failure.message
+								: String(Failure);
+						telemetry.log(
+							"warn",
+							`[Cocoon Bootstrap] Extension ${Ext.id} activation failed: ${Message}`,
+						);
+						return Effect.succeed({
+							Id: Ext.id,
+							Ok: false as const,
+							Error: Message,
+						});
+					}),
+				),
+			{ concurrency: 8 },
+		);
+		const Successful = ActivationAttempts.filter((R) => R.Ok).length;
+		const FailedCount = ActivationAttempts.length - Successful;
 
 		const activeCount = yield* extension.getActiveCount;
 		telemetry.log(
 			"info",
-			`[Cocoon Bootstrap] Activated ${activeCount} extensions`,
+			`[Cocoon Bootstrap] Activated ${activeCount} extensions (${Successful} this stage, ${FailedCount} failed)`,
 		);
 
 		return {
@@ -279,8 +461,7 @@ const stage7_HealthCheck = withSpan(
 
 		telemetry.log(
 			"info",
-			`[Cocoon{
- Bootstrap] Health check result: ${systemHealth.overallStatus}`,
+			`[Cocoon Bootstrap] Health check result: ${systemHealth.overallStatus}`,
 		);
 
 		if (systemHealth.overallStatus === "unhealthy") {
@@ -352,8 +533,8 @@ const makeBootstrap = (): BootstrapService => ({
 				const SafeStage = Effect.suspend(() => stage as any).pipe(
 					Effect.catchAllCause((Cause) => {
 						const Message = String(Cause).slice(0, 300);
-						console.warn(
-							`[LandFix:Bootstrap] Stage "${StageName}" failed (continuing): ${Message}`,
+						process.stdout.write(
+							`[LandFix:Bootstrap] Stage "${StageName}" failed (continuing): ${Message}\n`,
 						);
 						return Effect.succeed({
 							stageName: StageName,
@@ -365,17 +546,12 @@ const makeBootstrap = (): BootstrapService => ({
 				);
 				const result = yield* SafeStage as any;
 				if (result?.success === false) {
-					console.warn(
-						`[LandFix:Bootstrap] Stage "${StageName}" reported failure: ${
-							(result as { error?: { message?: string } }).error
-								?.message ?? "<no message>"
-						}`,
+					process.stdout.write(
+						`[LandFix:Bootstrap] Stage "${StageName}" reported failure: ${(result as { error?: { message?: string } }).error?.message ?? "<no message>"}\n`,
 					);
 				} else {
-					console.log(
-						`[LandFix:Bootstrap] Stage "${StageName}" OK in ${
-							Date.now() - stageStartTime
-						}ms`,
+					process.stdout.write(
+						`[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStartTime}ms\n`,
 					);
 				}
 				results.push({

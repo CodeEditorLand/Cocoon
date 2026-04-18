@@ -112,29 +112,25 @@ var NormalizeLocation = /* @__PURE__ */ __name((Raw) => {
       try {
         Path = decodeURIComponent(new URL(Raw).pathname);
       } catch (Error2) {
-        console.warn(
-          `[LandFix:ExtNs] URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip`
-        );
+        process.stdout.write(`[LandFix:ExtNs] URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip
+`);
         Path = Raw.replace(/^file:\/\//, "");
       }
     }
     Path = Path.replace(/\/$/, "");
-    console.log(
-      `[LandFix:ExtNs] string extensionLocation ${Raw} \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})`
-    );
+    process.stdout.write(`[LandFix:ExtNs] string extensionLocation ${Raw} \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})
+`);
     return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
   }
   if (Raw && typeof Raw === "object") {
     const Obj = Raw;
     const Path = typeof Obj["fsPath"] === "string" && Obj["fsPath"] || typeof Obj["path"] === "string" && Obj["path"] || (typeof Obj["external"] === "string" ? NormalizeLocation(Obj["external"]).ExtensionPath : "");
-    console.log(
-      `[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})`
-    );
+    process.stdout.write(`[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})
+`);
     return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
   }
-  console.warn(
-    `[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`
-  );
+  process.stdout.write(`[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path
+`);
   return { ExtensionPath: "", ExtensionUri: MakeUri("") };
 }, "NormalizeLocation");
 var ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => {

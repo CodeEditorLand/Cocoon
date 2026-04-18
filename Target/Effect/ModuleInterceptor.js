@@ -129,20 +129,21 @@ var TelemetryLive = Layer.effect(
         ...events,
         { type: "log", timestamp, data: logEntry }
       ]);
-      const prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
-      switch (level) {
-        case "debug":
-          console.debug(prefix, message, context ?? "");
-          break;
-        case "info":
-          console.info(prefix, message, context ?? "");
-          break;
-        case "warn":
-          console.warn(prefix, message, context ?? "");
-          break;
-        case "error":
-          console.error(prefix, message, context ?? "");
-          break;
+      const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
+      let ContextText = "";
+      if (context && Object.keys(context).length > 0) {
+        try {
+          ContextText = ` ${JSON.stringify(context)}`;
+        } catch {
+          ContextText = " [unserializable-context]";
+        }
+      }
+      const Line = `${Prefix} ${message}${ContextText}
+`;
+      const Stream2 = level === "error" ? process.stderr : process.stdout;
+      try {
+        Stream2.write(Line);
+      } catch {
       }
     }), "log");
     const getMetrics = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
@@ -203,8 +204,21 @@ var makeMockTelemetry = /* @__PURE__ */ __name(() => ({
     end: /* @__PURE__ */ __name(() => Effect.void, "end")
   }), "startSpan"),
   log: /* @__PURE__ */ __name((level, message, context) => Effect.sync(() => {
-    const prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
-    console.log(prefix, message, context ?? "");
+    const Prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
+    let ContextText = "";
+    if (context && Object.keys(context).length > 0) {
+      try {
+        ContextText = ` ${JSON.stringify(context)}`;
+      } catch {
+        ContextText = " [unserializable-context]";
+      }
+    }
+    const Stream2 = level === "error" ? process.stderr : process.stdout;
+    try {
+      Stream2.write(`${Prefix} ${message}${ContextText}
+`);
+    } catch {
+    }
   }), "log"),
   events: Stream.empty,
   getMetrics: /* @__PURE__ */ __name(() => Effect.succeed([]), "getMetrics"),

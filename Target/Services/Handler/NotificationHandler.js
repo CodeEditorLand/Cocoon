@@ -54,9 +54,14 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter, DocumentConten
       );
       break;
     default:
-      console.log(
-        `[NotificationHandler] Generic notification handler for: ${Method}`
-      );
+      try {
+        process.stdout.write(
+          `[NotificationHandler] Generic notification handler for: ${Method}
+`
+        );
+      } catch {
+      }
+      Emitter.emit("unknownNotification", { method: Method, parameters: Parameters });
   }
 }, "HandleSpecificNotification");
 var NotificationHandler_default = HandleSpecificNotification;

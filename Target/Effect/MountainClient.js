@@ -512,9 +512,8 @@ message RPCDataPayload {
       const ErrorMessage = error instanceof Error ? error.message : String(error);
       const IsBenignNotFound = method === "FileSystem.ReadFile" && /resource not found|ENOENT|not found/i.test(ErrorMessage);
       if (IsBenignNotFound) {
-        console.log(
-          `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) \u2014 ${ErrorMessage}`
-        );
+        process.stdout.write(`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) \u2014 ${ErrorMessage}
+`);
       } else {
         console.error(
           `[MountainClientService] Request ${method} failed after ${duration}ms:`,
@@ -1084,20 +1083,21 @@ var TelemetryLive = Layer2.effect(
         ...events,
         { type: "log", timestamp, data: logEntry }
       ]);
-      const prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
-      switch (level) {
-        case "debug":
-          console.debug(prefix, message, context ?? "");
-          break;
-        case "info":
-          console.info(prefix, message, context ?? "");
-          break;
-        case "warn":
-          console.warn(prefix, message, context ?? "");
-          break;
-        case "error":
-          console.error(prefix, message, context ?? "");
-          break;
+      const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
+      let ContextText = "";
+      if (context && Object.keys(context).length > 0) {
+        try {
+          ContextText = ` ${JSON.stringify(context)}`;
+        } catch {
+          ContextText = " [unserializable-context]";
+        }
+      }
+      const Line = `${Prefix} ${message}${ContextText}
+`;
+      const Stream2 = level === "error" ? process.stderr : process.stdout;
+      try {
+        Stream2.write(Line);
+      } catch {
       }
     }), "log");
     const getMetrics = /* @__PURE__ */ __name((name) => Effect3.gen(function* () {
@@ -1158,8 +1158,21 @@ var makeMockTelemetry = /* @__PURE__ */ __name(() => ({
     end: /* @__PURE__ */ __name(() => Effect3.void, "end")
   }), "startSpan"),
   log: /* @__PURE__ */ __name((level, message, context) => Effect3.sync(() => {
-    const prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
-    console.log(prefix, message, context ?? "");
+    const Prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
+    let ContextText = "";
+    if (context && Object.keys(context).length > 0) {
+      try {
+        ContextText = ` ${JSON.stringify(context)}`;
+      } catch {
+        ContextText = " [unserializable-context]";
+      }
+    }
+    const Stream2 = level === "error" ? process.stderr : process.stdout;
+    try {
+      Stream2.write(`${Prefix} ${message}${ContextText}
+`);
+    } catch {
+    }
   }), "log"),
   events: Stream.empty,
   getMetrics: /* @__PURE__ */ __name(() => Effect3.succeed([]), "getMetrics"),
@@ -1426,9 +1439,53 @@ var MountainClientLive = Layer3.effect(
       }
       return currentState.serverVersion;
     });
+    const HealthCheckTimeoutMs = 1e3;
     const healthCheck = Effect4.gen(function* () {
       const currentState = yield* stateRef.get;
-      return currentState._tag === "Connected";
+      if (currentState._tag !== "Connected") return false;
+      if (!realClient) return false;
+      const Outcome = yield* Effect4.promise(
+        () => Promise.race([
+          realClient.sendRequest("FileSystem.Stat", ["/"]).then(() => ({ Kind: "ok" })).catch((Err) => ({
+            Kind: "app-error",
+            Message: Err instanceof Error ? Err.message : String(Err)
+          })),
+          new Promise(
+            (Resolve) => setTimeout(
+              () => Resolve({ Kind: "timeout" }),
+              HealthCheckTimeoutMs
+            )
+          )
+        ])
+      );
+      if (Outcome.Kind === "timeout") {
+        yield* Ref2.set(stateRef, {
+          _tag: "Error",
+          error: `Health check timed out after ${HealthCheckTimeoutMs}ms`
+        });
+        telemetry.log(
+          "warn",
+          `[MountainClient] Health check timed out; marking connection as Error state for auto-reconnect`
+        );
+        return false;
+      }
+      if (Outcome.Kind === "app-error") {
+        const LooksLikeTransport = /UNAVAILABLE|transport|disconnect|ECONNREFUSED|ECONNRESET|NOT_FOUND service/i.test(
+          Outcome.Message
+        );
+        if (LooksLikeTransport) {
+          yield* Ref2.set(stateRef, {
+            _tag: "Error",
+            error: Outcome.Message
+          });
+          telemetry.log(
+            "warn",
+            `[MountainClient] Health check hit transport failure (${Outcome.Message}); marking Error state`
+          );
+          return false;
+        }
+      }
+      return true;
     });
     const getMetrics = Effect4.succeed({ ...metrics });
     return {

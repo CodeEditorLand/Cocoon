@@ -27,15 +27,49 @@ let TerminalCounter = 0;
 let StatusBarCounter = 0;
 
 const CreateWindowNamespace = (Context: HandlerContext) => {
+	// User-interaction prompts need a *round-trip* (sendRequest) not a
+	// fire-and-forget notification (SendToMountain). Extensions like the
+	// TypeScript updater, Git conflict resolver, and Azure sign-in all gate
+	// behaviour on the returned selection — returning undefined unconditionally
+	// means they either hang or pick the wrong default. Fall back to undefined
+	// only if Mountain hasn't routed the RPC yet; the extension code always
+	// tolerates that case.
 	const ShowMessage =
 		(Level: "info" | "warn" | "error") =>
-		async (Message: string, ...Items: unknown[]) => {
-			Context.SendToMountain("window.showMessage", {
-				message: Message,
-				level: Level,
-				items: Items,
-			}).catch(() => {});
-			return undefined;
+		async (
+			Message: string,
+			...Items: unknown[]
+		): Promise<unknown | undefined> => {
+			// Last argument may be an options object; VS Code's real signature
+			// is `(message, [options], ...items)`. Detect and extract.
+			let Options: unknown = undefined;
+			let Actions = Items;
+			if (
+				Items.length > 0 &&
+				Items[0] &&
+				typeof Items[0] === "object" &&
+				!Array.isArray(Items[0]) &&
+				"modal" in (Items[0] as Record<string, unknown>)
+			) {
+				Options = Items[0];
+				Actions = Items.slice(1);
+			}
+			try {
+				const Selection = await Context.MountainClient?.sendRequest(
+					"Window.ShowMessage",
+					[
+						{
+							message: Message,
+							level: Level,
+							items: Actions,
+							options: Options ?? {},
+						},
+					],
+				);
+				return Selection ?? undefined;
+			} catch {
+				return undefined;
+			}
 		};
 
 	return {
@@ -43,18 +77,49 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 		showErrorMessage: ShowMessage("error"),
 		showWarningMessage: ShowMessage("warn"),
 
-		showQuickPick: async (Items: unknown, _Options: unknown) => {
-			Context.SendToMountain("window.showQuickPick", {
-				items: Items,
-			}).catch(() => {});
-			return undefined;
+		showQuickPick: async (Items: unknown, Options?: unknown) => {
+			try {
+				return await Context.MountainClient?.sendRequest(
+					"Window.ShowQuickPick",
+					[Items, Options ?? {}],
+				);
+			} catch {
+				return undefined;
+			}
 		},
-		showInputBox: async (_Options: unknown) => {
-			Context.SendToMountain("window.showInputBox", {}).catch(() => {});
-			return undefined;
+		showInputBox: async (Options?: unknown) => {
+			try {
+				return await Context.MountainClient?.sendRequest(
+					"Window.ShowInputBox",
+					[Options ?? {}],
+				);
+			} catch {
+				return undefined;
+			}
 		},
-		showOpenDialog: async (_Options: unknown) => [],
-		showSaveDialog: async (_Options: unknown) => undefined,
+		showOpenDialog: async (Options?: unknown): Promise<unknown[]> => {
+			try {
+				const Selected = await Context.MountainClient?.sendRequest(
+					"Window.ShowOpenDialog",
+					[Options ?? {}],
+				);
+				return Array.isArray(Selected) ? (Selected as unknown[]) : [];
+			} catch {
+				return [];
+			}
+		},
+		showSaveDialog: async (
+			Options?: unknown,
+		): Promise<unknown | undefined> => {
+			try {
+				return await Context.MountainClient?.sendRequest(
+					"Window.ShowSaveDialog",
+					[Options ?? {}],
+				);
+			} catch {
+				return undefined;
+			}
+		},
 
 		createTerminal: (Options?: { name?: string; [k: string]: unknown }) => {
 			const Handle = `terminal:${++TerminalCounter}`;
@@ -64,9 +129,41 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				name: Name,
 				options: Options ?? {},
 			}).catch(() => {});
+			// Extensions (task runners, debuggers, test harnesses) query
+			// `terminal.processId` to track the PTY shell process. Resolve it
+			// via a Mountain round-trip the first time it's awaited — cache
+			// the promise so repeated reads return the same value without a
+			// new RPC every call.
+			let ProcessIdPromise: Promise<number | undefined> | undefined;
+			const ResolveProcessId = () => {
+				if (ProcessIdPromise !== undefined) return ProcessIdPromise;
+				ProcessIdPromise = (async () => {
+					try {
+						const Response =
+							await Context.MountainClient?.sendRequest(
+								"Terminal.GetProcessId",
+								[Handle],
+							);
+						if (typeof Response === "number") return Response;
+						if (
+							Response &&
+							typeof (Response as { pid?: unknown }).pid ===
+								"number"
+						) {
+							return (Response as { pid: number }).pid;
+						}
+						return undefined;
+					} catch {
+						return undefined;
+					}
+				})();
+				return ProcessIdPromise;
+			};
 			return {
 				name: Name,
-				processId: Promise.resolve(undefined),
+				get processId() {
+					return ResolveProcessId();
+				},
 				sendText: async (Text: string, _AddNewLine?: boolean) => {
 					Context.SendToMountain("terminal.sendText", {
 						handle: Handle,

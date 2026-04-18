@@ -94,10 +94,18 @@ const HandleSpecificNotification = (
 			);
 			break;
 		default:
-			// Generic handler for unknown notification types
-			console.log(
-				`[NotificationHandler] Generic notification handler for: ${Method}`,
-			);
+			// Generic handler for unknown notification types — survive
+			// esbuild's production `drop: ["console"]` so unknown routes are
+			// still grep-able in shipped builds.
+			try {
+				process.stdout.write(
+					`[NotificationHandler] Generic notification handler for: ${Method}\n`,
+				);
+			} catch {}
+			Emitter.emit("unknownNotification", {
+				method: Method,
+				parameters: Parameters,
+			});
 	}
 };
 

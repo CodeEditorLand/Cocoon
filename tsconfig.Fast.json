@@ -1,0 +1,21 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+
+	"extends": "./tsconfig.json",
+
+	"compilerOptions": {
+		"declarationMap": false,
+
+		"emitDeclarationOnly": false,
+
+		"incremental": true,
+
+		"noEmit": true,
+
+		"skipLibCheck": true,
+
+		"tsBuildInfoFile": "Target/.tsbuildinfo.fast"
+	},
+
+	"include": []
+}

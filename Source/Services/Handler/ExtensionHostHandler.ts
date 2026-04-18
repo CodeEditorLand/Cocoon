@@ -913,21 +913,19 @@ const ActivateExtension = async (
 			} catch {}
 		}
 		if (!Exists) {
-			console.warn(
-				`[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})`,
+			process.stdout.write(
+				`[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})\n`,
 			);
 			return;
 		}
-		console.log(
-			`[LandFix:Preflight] ${ExtensionId} main resolved → ${Resolved}`,
+		process.stdout.write(
+			`[LandFix:Preflight] ${ExtensionId} main resolved → ${Resolved}\n`,
 		);
 	} catch (Err: unknown) {
 		// If `node:fs/promises` is unavailable for any reason, fall through
 		// to the normal require/import path and let it surface the error.
-		console.warn(
-			`[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${
-				Err instanceof Error ? Err.message : String(Err)
-			}`,
+		process.stdout.write(
+			`[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${Err instanceof Error ? Err.message : String(Err)}\n`,
 		);
 	}
 

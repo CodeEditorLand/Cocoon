@@ -1,6 +1,160 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
+// Source/Utility/GlobToRegex.ts
+var FindMatchingBrace = /* @__PURE__ */ __name((Input, Start, Open, Close) => {
+  let Depth = 1;
+  for (let I = Start + 1; I < Input.length; I++) {
+    const Character = Input[I];
+    if (Character === "\\") {
+      I++;
+      continue;
+    }
+    if (Character === Open) Depth++;
+    else if (Character === Close) {
+      Depth--;
+      if (Depth === 0) return I;
+    }
+  }
+  return -1;
+}, "FindMatchingBrace");
+var SplitTopLevelCommas = /* @__PURE__ */ __name((Body) => {
+  const Parts = [];
+  let Depth = 0;
+  let Start = 0;
+  for (let I = 0; I < Body.length; I++) {
+    const Character = Body[I];
+    if (Character === "\\") {
+      I++;
+      continue;
+    }
+    if (Character === "{" || Character === "(") Depth++;
+    else if (Character === "}" || Character === ")") Depth--;
+    else if (Character === "," && Depth === 0) {
+      Parts.push(Body.slice(Start, I));
+      Start = I + 1;
+    }
+  }
+  Parts.push(Body.slice(Start));
+  return Parts;
+}, "SplitTopLevelCommas");
+var ExpandBraces = /* @__PURE__ */ __name((Input) => {
+  const Open = Input.indexOf("{");
+  if (Open === -1) return [Input];
+  const Close = FindMatchingBrace(Input, Open, "{", "}");
+  if (Close === -1) return [Input];
+  const Prefix = Input.slice(0, Open);
+  const Body = Input.slice(Open + 1, Close);
+  const Suffix = Input.slice(Close + 1);
+  const RangeMatch = /^(-?\d+)\.\.(-?\d+)(?:\.\.(-?\d+))?$/.exec(Body);
+  const Alternatives = [];
+  if (RangeMatch) {
+    const Start = parseInt(RangeMatch[1], 10);
+    const End = parseInt(RangeMatch[2], 10);
+    const StepRaw = RangeMatch[3];
+    const Step = StepRaw ? Math.abs(parseInt(StepRaw, 10)) : 1;
+    if (Step > 0 && Number.isFinite(Start) && Number.isFinite(End)) {
+      const Width = RangeMatch[1].startsWith("0") || RangeMatch[2].startsWith("0") ? Math.max(RangeMatch[1].length, RangeMatch[2].length) : 0;
+      const Direction = Start <= End ? 1 : -1;
+      for (let Value = Start; Direction === 1 ? Value <= End : Value >= End; Value += Direction * Step) {
+        const Text = String(Math.abs(Value));
+        const Padded = Width > 0 && Text.length < Width ? "0".repeat(Width - Text.length) + Text : Text;
+        Alternatives.push(Value < 0 ? `-${Padded}` : Padded);
+      }
+    }
+  }
+  if (Alternatives.length === 0) {
+    Alternatives.push(...SplitTopLevelCommas(Body));
+  }
+  const Expanded = [];
+  for (const Alternative of Alternatives) {
+    for (const Sub of ExpandBraces(Alternative)) {
+      for (const Tail of ExpandBraces(Suffix)) {
+        Expanded.push(`${Prefix}${Sub}${Tail}`);
+      }
+    }
+  }
+  return Expanded;
+}, "ExpandBraces");
+var RegexEscape = /* @__PURE__ */ __name((Character) => /[.+^$()|\[\]\\]/.test(Character) ? `\\${Character}` : Character, "RegexEscape");
+var PlainGlobToRegexSource = /* @__PURE__ */ __name((Glob) => {
+  let Expression = "";
+  let I = 0;
+  while (I < Glob.length) {
+    const Character = Glob[I];
+    const Next = Glob[I + 1];
+    if (Character === "*" && Next === "*") {
+      Expression += ".*";
+      I += 2;
+      if (Glob[I] === "/") I++;
+      continue;
+    }
+    if ((Character === "?" || Character === "*" || Character === "+" || Character === "@" || Character === "!") && Next === "(") {
+      const CloseAt = FindMatchingBrace(Glob, I + 1, "(", ")");
+      if (CloseAt !== -1) {
+        const Inside = Glob.slice(I + 2, CloseAt);
+        const Alternatives = SplitTopLevelCommas(
+          Inside.replace(/\|/g, ",")
+        ).map((Alternative) => PlainGlobToRegexSource(Alternative));
+        const Joined = Alternatives.join("|");
+        switch (Character) {
+          case "?":
+            Expression += `(?:${Joined})?`;
+            break;
+          case "*":
+            Expression += `(?:${Joined})*`;
+            break;
+          case "+":
+            Expression += `(?:${Joined})+`;
+            break;
+          case "@":
+            Expression += `(?:${Joined})`;
+            break;
+          case "!":
+            Expression += `(?:(?!(?:${Joined})(?:/|$))[^/])+`;
+            break;
+        }
+        I = CloseAt + 1;
+        continue;
+      }
+    }
+    if (Character === "*") {
+      Expression += "[^/]*";
+      I++;
+      continue;
+    }
+    if (Character === "?") {
+      Expression += "[^/]";
+      I++;
+      continue;
+    }
+    if (Character === "[") {
+      const CloseAt = Glob.indexOf("]", I + 1);
+      if (CloseAt !== -1) {
+        let Class = Glob.slice(I + 1, CloseAt);
+        if (Class.startsWith("!")) Class = `^${Class.slice(1)}`;
+        Expression += `[${Class}]`;
+        I = CloseAt + 1;
+        continue;
+      }
+    }
+    if (Character === "\\" && Next !== void 0) {
+      Expression += RegexEscape(Next);
+      I += 2;
+      continue;
+    }
+    Expression += RegexEscape(Character);
+    I++;
+  }
+  return Expression;
+}, "PlainGlobToRegexSource");
+var GlobToRegex = /* @__PURE__ */ __name((Glob) => {
+  const Variants = ExpandBraces(Glob);
+  const Source = Variants.length === 1 ? PlainGlobToRegexSource(Variants[0]) : `(?:${Variants.map(PlainGlobToRegexSource).join("|")})`;
+  return new RegExp(`^${Source}$`);
+}, "GlobToRegex");
+var GlobToRegex_default = GlobToRegex;
+
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts
 var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
   Context.WorkspaceEventEmitter.on(EventName, Listener);
@@ -39,41 +193,6 @@ var DefaultExcludeSegments = /* @__PURE__ */ new Set([
   "build",
   ".DS_Store"
 ]);
-var GlobToRegex = /* @__PURE__ */ __name((Glob) => {
-  let Expression = "^";
-  let CurlyDepth = 0;
-  for (let I = 0; I < Glob.length; I++) {
-    const Character = Glob[I];
-    const Next = Glob[I + 1];
-    if (Character === "*" && Next === "*") {
-      Expression += ".*";
-      I++;
-      if (Glob[I + 1] === "/") I++;
-    } else if (Character === "*") {
-      Expression += "[^/]*";
-    } else if (Character === "?") {
-      Expression += "[^/]";
-    } else if (Character === "{") {
-      Expression += "(?:";
-      CurlyDepth++;
-    } else if (Character === "}") {
-      if (CurlyDepth > 0) {
-        Expression += ")";
-        CurlyDepth--;
-      } else {
-        Expression += "\\}";
-      }
-    } else if (Character === "," && CurlyDepth > 0) {
-      Expression += "|";
-    } else if (/[.+^$()|\[\]\\]/.test(Character)) {
-      Expression += "\\" + Character;
-    } else {
-      Expression += Character;
-    }
-  }
-  Expression += "$";
-  return new RegExp(Expression);
-}, "GlobToRegex");
 var ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
   if (typeof Raw === "string" && Raw.length > 0) return Raw;
   if (Raw && typeof Raw === "object") {
@@ -100,34 +219,46 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
   const IncludePattern = ExtractGlobPattern(Include);
   const ExcludePattern = ExtractGlobPattern(Exclude);
   const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
-  console.log(
-    `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}`
-  );
+  process.stdout.write(`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
+`);
   if (!IncludePattern) {
-    console.warn("[LandFix:WsNs] findFiles: no include pattern \u2192 []");
+    process.stdout.write("[LandFix:WsNs] findFiles: no include pattern \u2192 []\n");
     return [];
   }
   let IncludeRegex;
   try {
-    IncludeRegex = GlobToRegex(IncludePattern);
+    IncludeRegex = GlobToRegex_default(IncludePattern);
   } catch (Error2) {
-    console.warn(
-      `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}`
-    );
+    process.stdout.write(`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}
+`);
     return [];
   }
   let ExcludeRegex;
   if (ExcludePattern) {
     try {
-      ExcludeRegex = GlobToRegex(ExcludePattern);
+      ExcludeRegex = GlobToRegex_default(ExcludePattern);
     } catch {
     }
   }
   const { readdir } = await import("node:fs/promises");
   const { join, relative, sep } = await import("node:path");
   const Results = [];
-  const Walk = /* @__PURE__ */ __name(async (Root, Current) => {
-    if (Results.length >= Cap) return;
+  const MaxDepth = 32;
+  const DeadlineAt = Date.now() + 3e4;
+  let Truncated = "";
+  const Walk = /* @__PURE__ */ __name(async (Root, Current, Depth) => {
+    if (Results.length >= Cap) {
+      Truncated = "cap";
+      return;
+    }
+    if (Depth > MaxDepth) {
+      Truncated = Truncated || "depth";
+      return;
+    }
+    if (Date.now() > DeadlineAt) {
+      Truncated = Truncated || "deadline";
+      return;
+    }
     let Entries;
     try {
       Entries = await readdir(Current, {
@@ -136,38 +267,112 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
     } catch {
       return;
     }
+    const SubDirectories = [];
     for (const Entry of Entries) {
-      if (Results.length >= Cap) return;
+      if (Results.length >= Cap) {
+        Truncated = "cap";
+        return;
+      }
       const Name = Entry.name;
       if (DefaultExcludeSegments.has(Name)) continue;
+      if (typeof Entry.isSymbolicLink === "function" && Entry.isSymbolicLink())
+        continue;
       const Full = join(Current, Name);
       const RelativeFromRoot = relative(Root, Full).split(sep).join("/");
       if (Entry.isDirectory()) {
-        await Walk(Root, Full);
+        SubDirectories.push(Full);
         continue;
       }
       if (ExcludeRegex && ExcludeRegex.test(RelativeFromRoot)) continue;
       if (!IncludeRegex.test(RelativeFromRoot)) continue;
       Results.push({ scheme: "file", path: Full, fsPath: Full });
     }
+    const Concurrency = 4;
+    for (let Index = 0; Index < SubDirectories.length; Index += Concurrency) {
+      const Batch = SubDirectories.slice(Index, Index + Concurrency);
+      await Promise.all(Batch.map((Sub) => Walk(Root, Sub, Depth + 1)));
+      if (Results.length >= Cap) {
+        Truncated = "cap";
+        return;
+      }
+      if (Date.now() > DeadlineAt) {
+        Truncated = Truncated || "deadline";
+        return;
+      }
+    }
   }, "Walk");
   for (const Folder of Folders) {
     const FsPath = FolderToFsPath(Folder?.uri);
     if (!FsPath) {
-      console.warn(
-        `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})`
-      );
+      process.stdout.write(`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
+`);
       continue;
     }
-    await Walk(FsPath, FsPath);
+    await Walk(FsPath, FsPath, 0);
   }
-  console.log(
-    `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}`
-  );
+  if (Truncated) {
+    process.stdout.write(
+      `[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)
+`
+    );
+  }
+  process.stdout.write(`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
+`);
   return Results;
 }, "FindFilesLocal");
 var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
   const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
+  const ConfigCache = /* @__PURE__ */ new Map();
+  const ConfigInFlight = /* @__PURE__ */ new Set();
+  const ConfigListeners = /* @__PURE__ */ new Set();
+  const FireConfigChange = /* @__PURE__ */ __name((ChangedKey) => {
+    if (ConfigListeners.size === 0) return;
+    const Event = {
+      affectsConfiguration: /* @__PURE__ */ __name((QueryKey) => ChangedKey === QueryKey || ChangedKey.startsWith(`${QueryKey}.`), "affectsConfiguration")
+    };
+    for (const Listener of ConfigListeners) {
+      try {
+        Listener(Event);
+      } catch {
+      }
+    }
+  }, "FireConfigChange");
+  const PrimeConfig = /* @__PURE__ */ __name((Key) => {
+    if (ConfigInFlight.has(Key)) return;
+    ConfigInFlight.add(Key);
+    void Call(
+      Context,
+      "Configuration.Inspect",
+      [Key]
+    ).then((Value) => {
+      ConfigInFlight.delete(Key);
+      if (Value === void 0) return;
+      const Shape = Value;
+      const Resolved = Shape["workspaceFolderValue"] ?? Shape["workspaceValue"] ?? Shape["globalValue"] ?? Shape["defaultValue"] ?? Value;
+      const Prior = ConfigCache.get(Key);
+      ConfigCache.set(Key, Resolved);
+      if (Prior !== Resolved) FireConfigChange(Key);
+    });
+  }, "PrimeConfig");
+  Context.Emitter.on(
+    "configurationChanged",
+    (Payload) => {
+      const Shape = Payload ?? {};
+      const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
+      if (Keys.length === 0) {
+        for (const CachedKey of [...ConfigCache.keys()]) {
+          ConfigCache.delete(CachedKey);
+          FireConfigChange(CachedKey);
+        }
+        return;
+      }
+      for (const Key of Keys) {
+        ConfigCache.delete(Key);
+        FireConfigChange(Key);
+        PrimeConfig(Key);
+      }
+    }
+  );
   return {
     workspaceFolders: InitWorkspace.folders ?? [],
     name: InitWorkspace.name,
@@ -178,7 +383,10 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     getConfiguration: /* @__PURE__ */ __name((Section, _Scope) => ({
       get: /* @__PURE__ */ __name((Key, DefaultValue) => {
         const Full = Section ? `${Section}.${Key}` : Key;
-        void Call(Context, "Configuration.Inspect", [Full]);
+        if (ConfigCache.has(Full)) {
+          return ConfigCache.get(Full);
+        }
+        PrimeConfig(Full);
         return DefaultValue;
       }, "get"),
       update: /* @__PURE__ */ __name(async (Key, Value, Target) => {
@@ -189,12 +397,36 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
           Value,
           TargetIndex
         ]);
+        const Prior = ConfigCache.get(Full);
+        ConfigCache.set(Full, Value);
+        if (Prior !== Value) FireConfigChange(Full);
       }, "update"),
       has: /* @__PURE__ */ __name((Key) => {
-        void Key;
+        const Full = Section ? `${Section}.${Key}` : Key;
+        if (ConfigCache.has(Full)) return true;
+        PrimeConfig(Full);
         return false;
       }, "has"),
-      inspect: /* @__PURE__ */ __name(() => void 0, "inspect")
+      inspect: /* @__PURE__ */ __name((Key) => {
+        const Full = Section ? `${Section}.${Key}` : Key;
+        if (!ConfigCache.has(Full)) {
+          PrimeConfig(Full);
+          return void 0;
+        }
+        const Cached = ConfigCache.get(Full);
+        return {
+          key: Full,
+          defaultValue: void 0,
+          globalValue: Cached,
+          workspaceValue: void 0,
+          workspaceFolderValue: void 0,
+          defaultLanguageValue: void 0,
+          globalLanguageValue: void 0,
+          workspaceLanguageValue: void 0,
+          workspaceFolderLanguageValue: void 0,
+          languageIds: []
+        };
+      }, "inspect")
     }), "getConfiguration"),
     findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
       return FindFilesLocal(
@@ -255,8 +487,14 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     onDidCreateFiles: EventSubscriber(Context, "didCreateFiles"),
     onDidDeleteFiles: EventSubscriber(Context, "didDeleteFiles"),
     onDidRenameFiles: EventSubscriber(Context, "didRenameFiles"),
-    onDidChangeConfiguration: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "onDidChangeConfiguration"),
+    onDidChangeConfiguration: /* @__PURE__ */ __name((Listener) => {
+      ConfigListeners.add(Listener);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          ConfigListeners.delete(Listener);
+        }, "dispose")
+      };
+    }, "onDidChangeConfiguration"),
     onDidChangeWorkspaceFolders: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "onDidChangeWorkspaceFolders"),
     registerTextDocumentContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -364,9 +602,8 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
             Message
           );
           if (LooksLike404) {
-            console.log(
-              `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}`
-            );
+            process.stdout.write(`[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
+`);
             const Api = globalThis.__cocoonVscodeAPI;
             const FileNotFound = Api?.FileSystemError?.FileNotFound;
             if (typeof FileNotFound === "function") {
@@ -379,9 +616,8 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
             Synthetic.name = "FileSystemError";
             throw Synthetic;
           }
-          console.warn(
-            `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}`
-          );
+          process.stdout.write(`[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
+`);
           throw Err;
         }
       }, "readFile"),

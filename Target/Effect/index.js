@@ -15,6 +15,91 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// Source/Utility/LandFixLog.ts
+var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, LandFixLog, LandFixLog_default;
+var init_LandFixLog = __esm({
+  "Source/Utility/LandFixLog.ts"() {
+    "use strict";
+    Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
+    Enabled = Mode !== "off";
+    Long = Mode === "long";
+    DebugEnabled = Long;
+    AllowList = (() => {
+      const Raw = process.env["LAND_LANDFIX_TAGS"];
+      if (!Raw || Raw.trim().length === 0) return void 0;
+      const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+      return Tags.length === 0 ? void 0 : new Set(Tags);
+    })();
+    PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
+    PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
+    FormatTimestamp = /* @__PURE__ */ __name(() => {
+      const Now = /* @__PURE__ */ new Date();
+      if (Long) return Now.toISOString();
+      return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
+        Now.getSeconds()
+      )}.${PadThree(Now.getMilliseconds())}`;
+    }, "FormatTimestamp");
+    SerializeContext = /* @__PURE__ */ __name((Context22) => {
+      const Seen = /* @__PURE__ */ new WeakSet();
+      try {
+        return JSON.stringify(Context22, (_Key, Value) => {
+          if (Value instanceof Error) {
+            return { name: Value.name, message: Value.message };
+          }
+          if (typeof Value === "bigint") return String(Value);
+          if (typeof Value === "function") return "[Function]";
+          if (typeof Value === "object" && Value !== null) {
+            if (Seen.has(Value)) return "[Circular]";
+            Seen.add(Value);
+          }
+          return Value;
+        });
+      } catch {
+        return '"[Unserializable]"';
+      }
+    }, "SerializeContext");
+    LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
+    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context22) => {
+      const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+      if (!Context22) return `${Head}
+`;
+      return `${Head} ${SerializeContext(Context22)}
+`;
+    }, "FormatLine");
+    Emit = /* @__PURE__ */ __name((Stream2, Level, Tag, Message, Context22) => {
+      if (!Enabled) return;
+      if (AllowList && !AllowList.has(Tag)) return;
+      try {
+        Stream2.write(FormatLine(Level, Tag, Message, Context22));
+      } catch {
+      }
+    }, "Emit");
+    Info = /* @__PURE__ */ __name((Tag, Message, Context22) => {
+      Emit(process.stdout, "info", Tag, Message, Context22);
+    }, "Info");
+    Warn = /* @__PURE__ */ __name((Tag, Message, Context22) => {
+      Emit(process.stdout, "warn", Tag, Message, Context22);
+    }, "Warn");
+    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context22) => {
+      Emit(process.stderr, "error", Tag, Message, Context22);
+    }, "ErrorLog");
+    Debug = /* @__PURE__ */ __name((Tag, Message, Context22) => {
+      if (!DebugEnabled) return;
+      Emit(process.stdout, "debug", Tag, Message, Context22);
+    }, "Debug");
+    LandFixLog = {
+      Info,
+      Warn,
+      Error: ErrorLog,
+      Debug,
+      IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
+      IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
+      Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
+    };
+    LandFixLog_default = LandFixLog;
+  }
+});
+
 // Source/Effect/Telemetry.ts
 import {
   Context,
@@ -141,20 +226,21 @@ var init_Telemetry = __esm({
             ...events,
             { type: "log", timestamp, data: logEntry }
           ]);
-          const prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
-          switch (level) {
-            case "debug":
-              console.debug(prefix, message, context ?? "");
-              break;
-            case "info":
-              console.info(prefix, message, context ?? "");
-              break;
-            case "warn":
-              console.warn(prefix, message, context ?? "");
-              break;
-            case "error":
-              console.error(prefix, message, context ?? "");
-              break;
+          const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
+          let ContextText = "";
+          if (context && Object.keys(context).length > 0) {
+            try {
+              ContextText = ` ${JSON.stringify(context)}`;
+            } catch {
+              ContextText = " [unserializable-context]";
+            }
+          }
+          const Line = `${Prefix} ${message}${ContextText}
+`;
+          const Stream2 = level === "error" ? process.stderr : process.stdout;
+          try {
+            Stream2.write(Line);
+          } catch {
           }
         }), "log");
         const getMetrics = /* @__PURE__ */ __name((name) => Effect.gen(function* () {
@@ -215,8 +301,21 @@ var init_Telemetry = __esm({
         end: /* @__PURE__ */ __name(() => Effect.void, "end")
       }), "startSpan"),
       log: /* @__PURE__ */ __name((level, message, context) => Effect.sync(() => {
-        const prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
-        console.log(prefix, message, context ?? "");
+        const Prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
+        let ContextText = "";
+        if (context && Object.keys(context).length > 0) {
+          try {
+            ContextText = ` ${JSON.stringify(context)}`;
+          } catch {
+            ContextText = " [unserializable-context]";
+          }
+        }
+        const Stream2 = level === "error" ? process.stderr : process.stdout;
+        try {
+          Stream2.write(`${Prefix} ${message}${ContextText}
+`);
+        } catch {
+        }
       }), "log"),
       events: Stream.empty,
       getMetrics: /* @__PURE__ */ __name(() => Effect.succeed([]), "getMetrics"),
@@ -1646,9 +1745,8 @@ message RPCDataPayload {
           const ErrorMessage = error instanceof Error ? error.message : String(error);
           const IsBenignNotFound = method === "FileSystem.ReadFile" && /resource not found|ENOENT|not found/i.test(ErrorMessage);
           if (IsBenignNotFound) {
-            console.log(
-              `[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) \u2014 ${ErrorMessage}`
-            );
+            process.stdout.write(`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) \u2014 ${ErrorMessage}
+`);
           } else {
             console.error(
               `[MountainClientService] Request ${method} failed after ${duration}ms:`,
@@ -2344,9 +2442,53 @@ var init_MountainClient = __esm({
           }
           return currentState.serverVersion;
         });
+        const HealthCheckTimeoutMs = 1e3;
         const healthCheck = Effect7.gen(function* () {
           const currentState = yield* stateRef.get;
-          return currentState._tag === "Connected";
+          if (currentState._tag !== "Connected") return false;
+          if (!realClient) return false;
+          const Outcome = yield* Effect7.promise(
+            () => Promise.race([
+              realClient.sendRequest("FileSystem.Stat", ["/"]).then(() => ({ Kind: "ok" })).catch((Err) => ({
+                Kind: "app-error",
+                Message: Err instanceof Error ? Err.message : String(Err)
+              })),
+              new Promise(
+                (Resolve) => setTimeout(
+                  () => Resolve({ Kind: "timeout" }),
+                  HealthCheckTimeoutMs
+                )
+              )
+            ])
+          );
+          if (Outcome.Kind === "timeout") {
+            yield* Ref4.set(stateRef, {
+              _tag: "Error",
+              error: `Health check timed out after ${HealthCheckTimeoutMs}ms`
+            });
+            telemetry.log(
+              "warn",
+              `[MountainClient] Health check timed out; marking connection as Error state for auto-reconnect`
+            );
+            return false;
+          }
+          if (Outcome.Kind === "app-error") {
+            const LooksLikeTransport = /UNAVAILABLE|transport|disconnect|ECONNREFUSED|ECONNRESET|NOT_FOUND service/i.test(
+              Outcome.Message
+            );
+            if (LooksLikeTransport) {
+              yield* Ref4.set(stateRef, {
+                _tag: "Error",
+                error: Outcome.Message
+              });
+              telemetry.log(
+                "warn",
+                `[MountainClient] Health check hit transport failure (${Outcome.Message}); marking Error state`
+              );
+              return false;
+            }
+          }
+          return true;
         });
         const getMetrics = Effect7.succeed({ ...metrics });
         return {
@@ -23423,32 +23565,74 @@ var init_WindowNamespace = __esm({
     StatusBarCounter = 0;
     CreateWindowNamespace = /* @__PURE__ */ __name((Context22) => {
       const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
-        Context22.SendToMountain("window.showMessage", {
-          message: Message,
-          level: Level,
-          items: Items
-        }).catch(() => {
-        });
-        return void 0;
+        let Options = void 0;
+        let Actions = Items;
+        if (Items.length > 0 && Items[0] && typeof Items[0] === "object" && !Array.isArray(Items[0]) && "modal" in Items[0]) {
+          Options = Items[0];
+          Actions = Items.slice(1);
+        }
+        try {
+          const Selection3 = await Context22.MountainClient?.sendRequest(
+            "Window.ShowMessage",
+            [
+              {
+                message: Message,
+                level: Level,
+                items: Actions,
+                options: Options ?? {}
+              }
+            ]
+          );
+          return Selection3 ?? void 0;
+        } catch {
+          return void 0;
+        }
       }, "ShowMessage");
       return {
         showInformationMessage: ShowMessage("info"),
         showErrorMessage: ShowMessage("error"),
         showWarningMessage: ShowMessage("warn"),
-        showQuickPick: /* @__PURE__ */ __name(async (Items, _Options) => {
-          Context22.SendToMountain("window.showQuickPick", {
-            items: Items
-          }).catch(() => {
-          });
-          return void 0;
+        showQuickPick: /* @__PURE__ */ __name(async (Items, Options) => {
+          try {
+            return await Context22.MountainClient?.sendRequest(
+              "Window.ShowQuickPick",
+              [Items, Options ?? {}]
+            );
+          } catch {
+            return void 0;
+          }
         }, "showQuickPick"),
-        showInputBox: /* @__PURE__ */ __name(async (_Options) => {
-          Context22.SendToMountain("window.showInputBox", {}).catch(() => {
-          });
-          return void 0;
+        showInputBox: /* @__PURE__ */ __name(async (Options) => {
+          try {
+            return await Context22.MountainClient?.sendRequest(
+              "Window.ShowInputBox",
+              [Options ?? {}]
+            );
+          } catch {
+            return void 0;
+          }
         }, "showInputBox"),
-        showOpenDialog: /* @__PURE__ */ __name(async (_Options) => [], "showOpenDialog"),
-        showSaveDialog: /* @__PURE__ */ __name(async (_Options) => void 0, "showSaveDialog"),
+        showOpenDialog: /* @__PURE__ */ __name(async (Options) => {
+          try {
+            const Selected = await Context22.MountainClient?.sendRequest(
+              "Window.ShowOpenDialog",
+              [Options ?? {}]
+            );
+            return Array.isArray(Selected) ? Selected : [];
+          } catch {
+            return [];
+          }
+        }, "showOpenDialog"),
+        showSaveDialog: /* @__PURE__ */ __name(async (Options) => {
+          try {
+            return await Context22.MountainClient?.sendRequest(
+              "Window.ShowSaveDialog",
+              [Options ?? {}]
+            );
+          } catch {
+            return void 0;
+          }
+        }, "showSaveDialog"),
         createTerminal: /* @__PURE__ */ __name((Options) => {
           const Handle = `terminal:${++TerminalCounter}`;
           const Name = Options?.name ?? `Terminal ${TerminalCounter}`;
@@ -23458,9 +23642,31 @@ var init_WindowNamespace = __esm({
             options: Options ?? {}
           }).catch(() => {
           });
+          let ProcessIdPromise;
+          const ResolveProcessId = /* @__PURE__ */ __name(() => {
+            if (ProcessIdPromise !== void 0) return ProcessIdPromise;
+            ProcessIdPromise = (async () => {
+              try {
+                const Response = await Context22.MountainClient?.sendRequest(
+                  "Terminal.GetProcessId",
+                  [Handle]
+                );
+                if (typeof Response === "number") return Response;
+                if (Response && typeof Response.pid === "number") {
+                  return Response.pid;
+                }
+                return void 0;
+              } catch {
+                return void 0;
+              }
+            })();
+            return ProcessIdPromise;
+          }, "ResolveProcessId");
           return {
             name: Name,
-            processId: Promise.resolve(void 0),
+            get processId() {
+              return ResolveProcessId();
+            },
             sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
               Context22.SendToMountain("terminal.sendText", {
                 handle: Handle,
@@ -23892,15 +24098,176 @@ var init_WindowNamespace = __esm({
   }
 });
 
+// Source/Utility/GlobToRegex.ts
+var FindMatchingBrace, SplitTopLevelCommas, ExpandBraces, RegexEscape, PlainGlobToRegexSource, GlobToRegex, GlobToRegex_default;
+var init_GlobToRegex = __esm({
+  "Source/Utility/GlobToRegex.ts"() {
+    "use strict";
+    FindMatchingBrace = /* @__PURE__ */ __name((Input, Start, Open, Close) => {
+      let Depth = 1;
+      for (let I = Start + 1; I < Input.length; I++) {
+        const Character = Input[I];
+        if (Character === "\\") {
+          I++;
+          continue;
+        }
+        if (Character === Open) Depth++;
+        else if (Character === Close) {
+          Depth--;
+          if (Depth === 0) return I;
+        }
+      }
+      return -1;
+    }, "FindMatchingBrace");
+    SplitTopLevelCommas = /* @__PURE__ */ __name((Body) => {
+      const Parts = [];
+      let Depth = 0;
+      let Start = 0;
+      for (let I = 0; I < Body.length; I++) {
+        const Character = Body[I];
+        if (Character === "\\") {
+          I++;
+          continue;
+        }
+        if (Character === "{" || Character === "(") Depth++;
+        else if (Character === "}" || Character === ")") Depth--;
+        else if (Character === "," && Depth === 0) {
+          Parts.push(Body.slice(Start, I));
+          Start = I + 1;
+        }
+      }
+      Parts.push(Body.slice(Start));
+      return Parts;
+    }, "SplitTopLevelCommas");
+    ExpandBraces = /* @__PURE__ */ __name((Input) => {
+      const Open = Input.indexOf("{");
+      if (Open === -1) return [Input];
+      const Close = FindMatchingBrace(Input, Open, "{", "}");
+      if (Close === -1) return [Input];
+      const Prefix = Input.slice(0, Open);
+      const Body = Input.slice(Open + 1, Close);
+      const Suffix = Input.slice(Close + 1);
+      const RangeMatch = /^(-?\d+)\.\.(-?\d+)(?:\.\.(-?\d+))?$/.exec(Body);
+      const Alternatives = [];
+      if (RangeMatch) {
+        const Start = parseInt(RangeMatch[1], 10);
+        const End = parseInt(RangeMatch[2], 10);
+        const StepRaw = RangeMatch[3];
+        const Step = StepRaw ? Math.abs(parseInt(StepRaw, 10)) : 1;
+        if (Step > 0 && Number.isFinite(Start) && Number.isFinite(End)) {
+          const Width = RangeMatch[1].startsWith("0") || RangeMatch[2].startsWith("0") ? Math.max(RangeMatch[1].length, RangeMatch[2].length) : 0;
+          const Direction = Start <= End ? 1 : -1;
+          for (let Value = Start; Direction === 1 ? Value <= End : Value >= End; Value += Direction * Step) {
+            const Text = String(Math.abs(Value));
+            const Padded = Width > 0 && Text.length < Width ? "0".repeat(Width - Text.length) + Text : Text;
+            Alternatives.push(Value < 0 ? `-${Padded}` : Padded);
+          }
+        }
+      }
+      if (Alternatives.length === 0) {
+        Alternatives.push(...SplitTopLevelCommas(Body));
+      }
+      const Expanded = [];
+      for (const Alternative of Alternatives) {
+        for (const Sub of ExpandBraces(Alternative)) {
+          for (const Tail of ExpandBraces(Suffix)) {
+            Expanded.push(`${Prefix}${Sub}${Tail}`);
+          }
+        }
+      }
+      return Expanded;
+    }, "ExpandBraces");
+    RegexEscape = /* @__PURE__ */ __name((Character) => /[.+^$()|\[\]\\]/.test(Character) ? `\\${Character}` : Character, "RegexEscape");
+    PlainGlobToRegexSource = /* @__PURE__ */ __name((Glob) => {
+      let Expression = "";
+      let I = 0;
+      while (I < Glob.length) {
+        const Character = Glob[I];
+        const Next = Glob[I + 1];
+        if (Character === "*" && Next === "*") {
+          Expression += ".*";
+          I += 2;
+          if (Glob[I] === "/") I++;
+          continue;
+        }
+        if ((Character === "?" || Character === "*" || Character === "+" || Character === "@" || Character === "!") && Next === "(") {
+          const CloseAt = FindMatchingBrace(Glob, I + 1, "(", ")");
+          if (CloseAt !== -1) {
+            const Inside = Glob.slice(I + 2, CloseAt);
+            const Alternatives = SplitTopLevelCommas(
+              Inside.replace(/\|/g, ",")
+            ).map((Alternative) => PlainGlobToRegexSource(Alternative));
+            const Joined = Alternatives.join("|");
+            switch (Character) {
+              case "?":
+                Expression += `(?:${Joined})?`;
+                break;
+              case "*":
+                Expression += `(?:${Joined})*`;
+                break;
+              case "+":
+                Expression += `(?:${Joined})+`;
+                break;
+              case "@":
+                Expression += `(?:${Joined})`;
+                break;
+              case "!":
+                Expression += `(?:(?!(?:${Joined})(?:/|$))[^/])+`;
+                break;
+            }
+            I = CloseAt + 1;
+            continue;
+          }
+        }
+        if (Character === "*") {
+          Expression += "[^/]*";
+          I++;
+          continue;
+        }
+        if (Character === "?") {
+          Expression += "[^/]";
+          I++;
+          continue;
+        }
+        if (Character === "[") {
+          const CloseAt = Glob.indexOf("]", I + 1);
+          if (CloseAt !== -1) {
+            let Class = Glob.slice(I + 1, CloseAt);
+            if (Class.startsWith("!")) Class = `^${Class.slice(1)}`;
+            Expression += `[${Class}]`;
+            I = CloseAt + 1;
+            continue;
+          }
+        }
+        if (Character === "\\" && Next !== void 0) {
+          Expression += RegexEscape(Next);
+          I += 2;
+          continue;
+        }
+        Expression += RegexEscape(Character);
+        I++;
+      }
+      return Expression;
+    }, "PlainGlobToRegexSource");
+    GlobToRegex = /* @__PURE__ */ __name((Glob) => {
+      const Variants = ExpandBraces(Glob);
+      const Source = Variants.length === 1 ? PlainGlobToRegexSource(Variants[0]) : `(?:${Variants.map(PlainGlobToRegexSource).join("|")})`;
+      return new RegExp(`^${Source}$`);
+    }, "GlobToRegex");
+    GlobToRegex_default = GlobToRegex;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts
 var WorkspaceNamespace_exports = {};
 __export(WorkspaceNamespace_exports, {
   default: () => WorkspaceNamespace_default
 });
-var EventSubscriber, Call, DefaultExcludeSegments, GlobToRegex, ExtractGlobPattern, FolderToFsPath, FindFilesLocal, CreateWorkspaceNamespace, WorkspaceNamespace_default;
+var EventSubscriber, Call, DefaultExcludeSegments, ExtractGlobPattern, FolderToFsPath, FindFilesLocal, CreateWorkspaceNamespace, WorkspaceNamespace_default;
 var init_WorkspaceNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts"() {
     "use strict";
+    init_GlobToRegex();
     EventSubscriber = /* @__PURE__ */ __name((Context22, EventName) => (Listener) => {
       Context22.WorkspaceEventEmitter.on(EventName, Listener);
       return {
@@ -23938,41 +24305,6 @@ var init_WorkspaceNamespace = __esm({
       "build",
       ".DS_Store"
     ]);
-    GlobToRegex = /* @__PURE__ */ __name((Glob) => {
-      let Expression = "^";
-      let CurlyDepth = 0;
-      for (let I = 0; I < Glob.length; I++) {
-        const Character = Glob[I];
-        const Next = Glob[I + 1];
-        if (Character === "*" && Next === "*") {
-          Expression += ".*";
-          I++;
-          if (Glob[I + 1] === "/") I++;
-        } else if (Character === "*") {
-          Expression += "[^/]*";
-        } else if (Character === "?") {
-          Expression += "[^/]";
-        } else if (Character === "{") {
-          Expression += "(?:";
-          CurlyDepth++;
-        } else if (Character === "}") {
-          if (CurlyDepth > 0) {
-            Expression += ")";
-            CurlyDepth--;
-          } else {
-            Expression += "\\}";
-          }
-        } else if (Character === "," && CurlyDepth > 0) {
-          Expression += "|";
-        } else if (/[.+^$()|\[\]\\]/.test(Character)) {
-          Expression += "\\" + Character;
-        } else {
-          Expression += Character;
-        }
-      }
-      Expression += "$";
-      return new RegExp(Expression);
-    }, "GlobToRegex");
     ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
       if (typeof Raw === "string" && Raw.length > 0) return Raw;
       if (Raw && typeof Raw === "object") {
@@ -23999,34 +24331,46 @@ var init_WorkspaceNamespace = __esm({
       const IncludePattern = ExtractGlobPattern(Include);
       const ExcludePattern = ExtractGlobPattern(Exclude);
       const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
-      console.log(
-        `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}`
-      );
+      process.stdout.write(`[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
+`);
       if (!IncludePattern) {
-        console.warn("[LandFix:WsNs] findFiles: no include pattern \u2192 []");
+        process.stdout.write("[LandFix:WsNs] findFiles: no include pattern \u2192 []\n");
         return [];
       }
       let IncludeRegex;
       try {
-        IncludeRegex = GlobToRegex(IncludePattern);
+        IncludeRegex = GlobToRegex_default(IncludePattern);
       } catch (Error2) {
-        console.warn(
-          `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}`
-        );
+        process.stdout.write(`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}
+`);
         return [];
       }
       let ExcludeRegex;
       if (ExcludePattern) {
         try {
-          ExcludeRegex = GlobToRegex(ExcludePattern);
+          ExcludeRegex = GlobToRegex_default(ExcludePattern);
         } catch {
         }
       }
       const { readdir } = await import("node:fs/promises");
       const { join: join3, relative: relative2, sep: sep2 } = await import("node:path");
       const Results = [];
-      const Walk = /* @__PURE__ */ __name(async (Root, Current) => {
-        if (Results.length >= Cap) return;
+      const MaxDepth = 32;
+      const DeadlineAt = Date.now() + 3e4;
+      let Truncated = "";
+      const Walk = /* @__PURE__ */ __name(async (Root, Current, Depth) => {
+        if (Results.length >= Cap) {
+          Truncated = "cap";
+          return;
+        }
+        if (Depth > MaxDepth) {
+          Truncated = Truncated || "depth";
+          return;
+        }
+        if (Date.now() > DeadlineAt) {
+          Truncated = Truncated || "deadline";
+          return;
+        }
         let Entries;
         try {
           Entries = await readdir(Current, {
@@ -24035,38 +24379,112 @@ var init_WorkspaceNamespace = __esm({
         } catch {
           return;
         }
+        const SubDirectories = [];
         for (const Entry of Entries) {
-          if (Results.length >= Cap) return;
+          if (Results.length >= Cap) {
+            Truncated = "cap";
+            return;
+          }
           const Name = Entry.name;
           if (DefaultExcludeSegments.has(Name)) continue;
+          if (typeof Entry.isSymbolicLink === "function" && Entry.isSymbolicLink())
+            continue;
           const Full = join3(Current, Name);
           const RelativeFromRoot = relative2(Root, Full).split(sep2).join("/");
           if (Entry.isDirectory()) {
-            await Walk(Root, Full);
+            SubDirectories.push(Full);
             continue;
           }
           if (ExcludeRegex && ExcludeRegex.test(RelativeFromRoot)) continue;
           if (!IncludeRegex.test(RelativeFromRoot)) continue;
           Results.push({ scheme: "file", path: Full, fsPath: Full });
         }
+        const Concurrency = 4;
+        for (let Index = 0; Index < SubDirectories.length; Index += Concurrency) {
+          const Batch = SubDirectories.slice(Index, Index + Concurrency);
+          await Promise.all(Batch.map((Sub) => Walk(Root, Sub, Depth + 1)));
+          if (Results.length >= Cap) {
+            Truncated = "cap";
+            return;
+          }
+          if (Date.now() > DeadlineAt) {
+            Truncated = Truncated || "deadline";
+            return;
+          }
+        }
       }, "Walk");
       for (const Folder of Folders) {
         const FsPath = FolderToFsPath(Folder?.uri);
         if (!FsPath) {
-          console.warn(
-            `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})`
-          );
+          process.stdout.write(`[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
+`);
           continue;
         }
-        await Walk(FsPath, FsPath);
+        await Walk(FsPath, FsPath, 0);
       }
-      console.log(
-        `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}`
-      );
+      if (Truncated) {
+        process.stdout.write(
+          `[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)
+`
+        );
+      }
+      process.stdout.write(`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
+`);
       return Results;
     }, "FindFilesLocal");
     CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context22) => {
       const InitWorkspace = Context22.ExtensionHostInitData?.workspace ?? Context22.ExtensionHostInitData?.workspaceData ?? {};
+      const ConfigCache = /* @__PURE__ */ new Map();
+      const ConfigInFlight = /* @__PURE__ */ new Set();
+      const ConfigListeners = /* @__PURE__ */ new Set();
+      const FireConfigChange = /* @__PURE__ */ __name((ChangedKey) => {
+        if (ConfigListeners.size === 0) return;
+        const Event2 = {
+          affectsConfiguration: /* @__PURE__ */ __name((QueryKey) => ChangedKey === QueryKey || ChangedKey.startsWith(`${QueryKey}.`), "affectsConfiguration")
+        };
+        for (const Listener of ConfigListeners) {
+          try {
+            Listener(Event2);
+          } catch {
+          }
+        }
+      }, "FireConfigChange");
+      const PrimeConfig = /* @__PURE__ */ __name((Key) => {
+        if (ConfigInFlight.has(Key)) return;
+        ConfigInFlight.add(Key);
+        void Call(
+          Context22,
+          "Configuration.Inspect",
+          [Key]
+        ).then((Value) => {
+          ConfigInFlight.delete(Key);
+          if (Value === void 0) return;
+          const Shape = Value;
+          const Resolved = Shape["workspaceFolderValue"] ?? Shape["workspaceValue"] ?? Shape["globalValue"] ?? Shape["defaultValue"] ?? Value;
+          const Prior = ConfigCache.get(Key);
+          ConfigCache.set(Key, Resolved);
+          if (Prior !== Resolved) FireConfigChange(Key);
+        });
+      }, "PrimeConfig");
+      Context22.Emitter.on(
+        "configurationChanged",
+        (Payload) => {
+          const Shape = Payload ?? {};
+          const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
+          if (Keys.length === 0) {
+            for (const CachedKey of [...ConfigCache.keys()]) {
+              ConfigCache.delete(CachedKey);
+              FireConfigChange(CachedKey);
+            }
+            return;
+          }
+          for (const Key of Keys) {
+            ConfigCache.delete(Key);
+            FireConfigChange(Key);
+            PrimeConfig(Key);
+          }
+        }
+      );
       return {
         workspaceFolders: InitWorkspace.folders ?? [],
         name: InitWorkspace.name,
@@ -24077,7 +24495,10 @@ var init_WorkspaceNamespace = __esm({
         getConfiguration: /* @__PURE__ */ __name((Section, _Scope) => ({
           get: /* @__PURE__ */ __name((Key, DefaultValue) => {
             const Full = Section ? `${Section}.${Key}` : Key;
-            void Call(Context22, "Configuration.Inspect", [Full]);
+            if (ConfigCache.has(Full)) {
+              return ConfigCache.get(Full);
+            }
+            PrimeConfig(Full);
             return DefaultValue;
           }, "get"),
           update: /* @__PURE__ */ __name(async (Key, Value, Target) => {
@@ -24088,12 +24509,36 @@ var init_WorkspaceNamespace = __esm({
               Value,
               TargetIndex
             ]);
+            const Prior = ConfigCache.get(Full);
+            ConfigCache.set(Full, Value);
+            if (Prior !== Value) FireConfigChange(Full);
           }, "update"),
           has: /* @__PURE__ */ __name((Key) => {
-            void Key;
+            const Full = Section ? `${Section}.${Key}` : Key;
+            if (ConfigCache.has(Full)) return true;
+            PrimeConfig(Full);
             return false;
           }, "has"),
-          inspect: /* @__PURE__ */ __name(() => void 0, "inspect")
+          inspect: /* @__PURE__ */ __name((Key) => {
+            const Full = Section ? `${Section}.${Key}` : Key;
+            if (!ConfigCache.has(Full)) {
+              PrimeConfig(Full);
+              return void 0;
+            }
+            const Cached = ConfigCache.get(Full);
+            return {
+              key: Full,
+              defaultValue: void 0,
+              globalValue: Cached,
+              workspaceValue: void 0,
+              workspaceFolderValue: void 0,
+              defaultLanguageValue: void 0,
+              globalLanguageValue: void 0,
+              workspaceLanguageValue: void 0,
+              workspaceFolderLanguageValue: void 0,
+              languageIds: []
+            };
+          }, "inspect")
         }), "getConfiguration"),
         findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
           return FindFilesLocal(
@@ -24154,8 +24599,14 @@ var init_WorkspaceNamespace = __esm({
         onDidCreateFiles: EventSubscriber(Context22, "didCreateFiles"),
         onDidDeleteFiles: EventSubscriber(Context22, "didDeleteFiles"),
         onDidRenameFiles: EventSubscriber(Context22, "didRenameFiles"),
-        onDidChangeConfiguration: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeConfiguration"),
+        onDidChangeConfiguration: /* @__PURE__ */ __name((Listener) => {
+          ConfigListeners.add(Listener);
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              ConfigListeners.delete(Listener);
+            }, "dispose")
+          };
+        }, "onDidChangeConfiguration"),
         onDidChangeWorkspaceFolders: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "onDidChangeWorkspaceFolders"),
         registerTextDocumentContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -24263,9 +24714,8 @@ var init_WorkspaceNamespace = __esm({
                 Message
               );
               if (LooksLike404) {
-                console.log(
-                  `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}`
-                );
+                process.stdout.write(`[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
+`);
                 const Api = globalThis.__cocoonVscodeAPI;
                 const FileNotFound = Api?.FileSystemError?.FileNotFound;
                 if (typeof FileNotFound === "function") {
@@ -24278,9 +24728,8 @@ var init_WorkspaceNamespace = __esm({
                 Synthetic.name = "FileSystemError";
                 throw Synthetic;
               }
-              console.warn(
-                `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}`
-              );
+              process.stdout.write(`[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
+`);
               throw Err;
             }
           }, "readFile"),
@@ -24409,6 +24858,7 @@ var RegisterProvider, CreateLanguagesNamespace, LanguagesNamespace_default;
 var init_LanguagesNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts"() {
     "use strict";
+    init_GlobToRegex();
     RegisterProvider = /* @__PURE__ */ __name((Context22, LanguageProviderRegistry, MethodName, Selector, Provider) => {
       const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
       const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
@@ -24611,9 +25061,7 @@ var init_LanguagesNamespace = __esm({
         Provider
       ), "registerInlayHintsProvider"),
       registerWorkspaceSymbolProvider: /* @__PURE__ */ __name((Provider) => {
-        console.log(
-          "[LandFix:LangNs] registerWorkspaceSymbolProvider called"
-        );
+        process.stdout.write("[LandFix:LangNs] registerWorkspaceSymbolProvider called\n");
         return RegisterProvider(
           Context22,
           LanguageProviderRegistry,
@@ -24699,7 +25147,55 @@ var init_LanguagesNamespace = __esm({
         });
         return Document;
       }, "setTextDocumentLanguage"),
-      match: /* @__PURE__ */ __name((_Selector, _Document) => 10, "match"),
+      match: /* @__PURE__ */ __name((Selector, Document) => {
+        const DocLanguage = typeof Document?.languageId === "string" ? Document.languageId : "";
+        const DocScheme = typeof Document?.uri?.scheme === "string" ? Document.uri.scheme : "";
+        const DocPath = typeof Document?.uri?.fsPath === "string" ? Document.uri.fsPath : typeof Document?.uri?.path === "string" ? Document.uri.path : "";
+        const ScoreOne = /* @__PURE__ */ __name((One) => {
+          if (typeof One === "string") {
+            if (One === DocLanguage) return 10;
+            if (One === "*") return 5;
+            return 0;
+          }
+          if (!One || typeof One !== "object") return 0;
+          const Filter = One;
+          let Score = 0;
+          if (typeof Filter.language === "string") {
+            if (Filter.language === DocLanguage) Score += 5;
+            else if (Filter.language === "*") Score += 3;
+            else return 0;
+          }
+          if (typeof Filter.scheme === "string") {
+            if (Filter.scheme === DocScheme) Score += 5;
+            else if (Filter.scheme === "*") Score += 3;
+            else return 0;
+          }
+          if (typeof Filter.pattern === "string" && DocPath.length > 0) {
+            try {
+              if (GlobToRegex_default(Filter.pattern).test(DocPath)) Score += 5;
+              else return 0;
+            } catch {
+              return 0;
+            }
+          }
+          if (typeof Filter.notebookType === "string") {
+            const NotebookType = typeof Document?.notebook?.notebookType === "string" ? Document.notebook.notebookType : "";
+            if (Filter.notebookType === NotebookType) Score += 1;
+            else if (Filter.notebookType === "*") Score += 1;
+            else return 0;
+          }
+          return Score;
+        }, "ScoreOne");
+        if (Array.isArray(Selector)) {
+          let Best = 0;
+          for (const One of Selector) {
+            const Value = ScoreOne(One);
+            if (Value > Best) Best = Value;
+          }
+          return Best;
+        }
+        return ScoreOne(Selector);
+      }, "match"),
       onDidChangeDiagnostics: /* @__PURE__ */ __name((Listener) => {
         Context22.Emitter.on("diagnostics.didChange", Listener);
         return {
@@ -24726,9 +25222,8 @@ var init_LanguagesNamespace = __esm({
         }, "dispose")
       }), "registerMappedEditsProvider"),
       createLanguageStatusItem: /* @__PURE__ */ __name((Identifier, _Selector) => {
-        console.log(
-          `[LandFix:LangNs] createLanguageStatusItem id=${Identifier}`
-        );
+        process.stdout.write(`[LandFix:LangNs] createLanguageStatusItem id=${Identifier}
+`);
         const Item = {
           id: Identifier,
           name: void 0,
@@ -24868,29 +25363,25 @@ var init_ExtensionsNamespace = __esm({
           try {
             Path = decodeURIComponent(new URL(Raw).pathname);
           } catch (Error2) {
-            console.warn(
-              `[LandFix:ExtNs] URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip`
-            );
+            process.stdout.write(`[LandFix:ExtNs] URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip
+`);
             Path = Raw.replace(/^file:\/\//, "");
           }
         }
         Path = Path.replace(/\/$/, "");
-        console.log(
-          `[LandFix:ExtNs] string extensionLocation ${Raw} \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})`
-        );
+        process.stdout.write(`[LandFix:ExtNs] string extensionLocation ${Raw} \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})
+`);
         return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
       }
       if (Raw && typeof Raw === "object") {
         const Obj = Raw;
         const Path = typeof Obj["fsPath"] === "string" && Obj["fsPath"] || typeof Obj["path"] === "string" && Obj["path"] || (typeof Obj["external"] === "string" ? NormalizeLocation(Obj["external"]).ExtensionPath : "");
-        console.log(
-          `[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})`
-        );
+        process.stdout.write(`[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})
+`);
         return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
       }
-      console.warn(
-        `[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`
-      );
+      process.stdout.write(`[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path
+`);
       return { ExtensionPath: "", ExtensionUri: MakeUri("") };
     }, "NormalizeLocation");
     ToExtensionObject = /* @__PURE__ */ __name((Context22, Id, Raw) => {
@@ -24955,31 +25446,30 @@ var CreateEnvNamespace, EnvNamespace_default;
 var init_EnvNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/EnvNamespace.ts"() {
     "use strict";
+    init_LandFixLog();
     CreateEnvNamespace = /* @__PURE__ */ __name((Context22) => {
       const Env = Context22.ExtensionHostInitData?.environment ?? {};
       const NormalizeAppRoot = /* @__PURE__ */ __name((Raw) => {
         if (typeof Raw !== "string" || Raw.length === 0) {
-          console.log(
-            "[LandFix:EnvNs] appRoot empty or non-string, returning ''"
-          );
+          LandFixLog_default.Warn("EnvNs", "appRoot empty or non-string, returning ''");
           return "";
         }
         if (!Raw.startsWith("file:")) {
-          console.log(`[LandFix:EnvNs] appRoot already plain path: ${Raw}`);
+          LandFixLog_default.Info("EnvNs", `appRoot already plain path: ${Raw}`);
           return Raw;
         }
         try {
           const Normalised = decodeURIComponent(
             new URL(Raw).pathname
           ).replace(/\/$/, "");
-          console.log(
-            `[LandFix:EnvNs] appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`
-          );
+          LandFixLog_default.Info("EnvNs", `appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`);
           return Normalised;
         } catch (Error2) {
           const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
-          console.warn(
-            `[LandFix:EnvNs] appRoot URL parse failed (${Error2 instanceof Error2 ? Error2.message : String(Error2)}); fallback ${Raw} \u2192 ${Fallback}`
+          LandFixLog_default.Warn(
+            "EnvNs",
+            `appRoot URL parse failed; fallback ${Raw} \u2192 ${Fallback}`,
+            { error: Error2 instanceof Error2 ? Error2.message : String(Error2) }
           );
           return Fallback;
         }
@@ -25011,18 +25501,114 @@ var init_EnvNamespace = __esm({
         shell: Env["shell"] ?? process.env["SHELL"] ?? "",
         remoteName: void 0,
         clipboard: {
-          // Clipboard.Read / Clipboard.Write not yet routed — catch returns
-          // empty string / undefined until the Rust dispatcher adds them.
-          readText: /* @__PURE__ */ __name(async () => await Call2("Clipboard.Read", []) ?? "", "readText"),
+          // Primary path: Mountain's Clipboard.Read / Clipboard.Write (when
+          // routed). Fallback: native OS clipboard CLI — pbcopy/pbpaste on
+          // macOS, xclip/wl-paste on Linux, clip/Get-Clipboard on Windows.
+          // Each branch swallows errors so the extension host never crashes
+          // on an unavailable clipboard subsystem.
+          readText: /* @__PURE__ */ __name(async () => {
+            const FromMountain = await Call2("Clipboard.Read", []);
+            if (typeof FromMountain === "string") return FromMountain;
+            try {
+              const { spawn } = await import("node:child_process");
+              const Candidates = process.platform === "darwin" ? [["pbpaste", []]] : process.platform === "win32" ? [
+                [
+                  "powershell.exe",
+                  ["-NoProfile", "-Command", "Get-Clipboard -Raw"]
+                ]
+              ] : [
+                ["wl-paste", ["-n"]],
+                ["xclip", ["-selection", "clipboard", "-o"]],
+                ["xsel", ["--clipboard", "--output"]]
+              ];
+              for (const [Cmd, Args] of Candidates) {
+                const Text = await new Promise(
+                  (Resolve) => {
+                    const Child = spawn(Cmd, Args, {
+                      stdio: ["ignore", "pipe", "ignore"]
+                    });
+                    let Out = "";
+                    Child.stdout.on(
+                      "data",
+                      (Chunk) => Out += Chunk.toString("utf8")
+                    );
+                    Child.once("error", () => Resolve(void 0));
+                    Child.once(
+                      "close",
+                      (Code) => Resolve(Code === 0 ? Out : void 0)
+                    );
+                  }
+                );
+                if (Text !== void 0) return Text;
+              }
+            } catch {
+            }
+            return "";
+          }, "readText"),
           writeText: /* @__PURE__ */ __name(async (Value) => {
             await Call2("Clipboard.Write", [Value]);
+            try {
+              const { spawn } = await import("node:child_process");
+              const Candidates = process.platform === "darwin" ? [["pbcopy", []]] : process.platform === "win32" ? [["clip.exe", []]] : [
+                ["wl-copy", []],
+                ["xclip", ["-selection", "clipboard"]],
+                ["xsel", ["--clipboard", "--input"]]
+              ];
+              for (const [Cmd, Args] of Candidates) {
+                const Ok = await new Promise((Resolve) => {
+                  const Child = spawn(Cmd, Args, {
+                    stdio: ["pipe", "ignore", "ignore"]
+                  });
+                  Child.once("error", () => Resolve(false));
+                  Child.once("close", (Code) => Resolve(Code === 0));
+                  try {
+                    Child.stdin.end(Value);
+                  } catch {
+                    Resolve(false);
+                  }
+                });
+                if (Ok) return;
+              }
+            } catch {
+            }
           }, "writeText")
         },
         openExternal: /* @__PURE__ */ __name(async (Target) => {
-          const Ok = await Call2("NativeHost.OpenExternal", [
-            typeof Target === "string" ? Target : String(Target)
-          ]);
-          return Ok ?? false;
+          const Url = typeof Target === "string" ? Target : String(Target);
+          const OkFromMountain = await Call2(
+            "NativeHost.OpenExternal",
+            [Url]
+          );
+          if (OkFromMountain === true) return true;
+          try {
+            const { spawn } = await import("node:child_process");
+            const Command = process.platform === "darwin" ? ["open", [Url]] : process.platform === "win32" ? ["cmd.exe", ["/c", "start", "", Url]] : ["xdg-open", [Url]];
+            const Ok = await new Promise((Resolve) => {
+              const Child = spawn(Command[0], Command[1], {
+                stdio: "ignore",
+                detached: true
+              });
+              const Timer = setTimeout(() => {
+                try {
+                  Child.kill();
+                } catch {
+                }
+                Resolve(false);
+              }, 2e3);
+              Child.once("error", () => {
+                clearTimeout(Timer);
+                Resolve(false);
+              });
+              Child.once("close", (Code) => {
+                clearTimeout(Timer);
+                Resolve(Code === 0);
+              });
+              Child.unref();
+            });
+            return Ok;
+          } catch {
+            return false;
+          }
         }, "openExternal"),
         asExternalUri: /* @__PURE__ */ __name(async (Target) => Target, "asExternalUri"),
         createTelemetryLogger: /* @__PURE__ */ __name((_Sender, _Options) => ({
@@ -26169,18 +26755,15 @@ ${Stack}`
           }
         }
         if (!Exists) {
-          console.warn(
-            `[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})`
-          );
+          process.stdout.write(`[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})
+`);
           return;
         }
-        console.log(
-          `[LandFix:Preflight] ${ExtensionId} main resolved \u2192 ${Resolved}`
-        );
+        process.stdout.write(`[LandFix:Preflight] ${ExtensionId} main resolved \u2192 ${Resolved}
+`);
       } catch (Err) {
-        console.warn(
-          `[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${Err instanceof Error ? Err.message : String(Err)}`
-        );
+        process.stdout.write(`[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${Err instanceof Error ? Err.message : String(Err)}
+`);
       }
       const ModuleType = Extension2?.type ?? Extension2?.Type;
       const IsESM = ModuleType === "module" || /\.mjs$/i.test(MainFile) || /\.mts$/i.test(MainFile);
@@ -26904,9 +27487,14 @@ var init_NotificationHandler = __esm({
           );
           break;
         default:
-          console.log(
-            `[NotificationHandler] Generic notification handler for: ${Method}`
-          );
+          try {
+            process.stdout.write(
+              `[NotificationHandler] Generic notification handler for: ${Method}
+`
+            );
+          } catch {
+          }
+          Emitter4.emit("unknownNotification", { method: Method, parameters: Parameters });
       }
     }, "HandleSpecificNotification");
     NotificationHandler_default = HandleSpecificNotification;
@@ -29457,7 +30045,7 @@ var init_Logger = __esm({
               );
             }
           }), "Trace");
-          const Debug = /* @__PURE__ */ __name((Message, ...Data) => Effect16.gen(function* () {
+          const Debug2 = /* @__PURE__ */ __name((Message, ...Data) => Effect16.gen(function* () {
             const LogLevel = yield* Ref5.get(LogLevelRef);
             const ExtensionId = yield* Ref5.get(ExtensionIdRef);
             if (LogLevel === "trace" || LogLevel === "debug") {
@@ -29474,7 +30062,7 @@ var init_Logger = __esm({
               );
             }
           }), "Debug");
-          const Info = /* @__PURE__ */ __name((Message, ...Data) => Effect16.gen(function* () {
+          const Info2 = /* @__PURE__ */ __name((Message, ...Data) => Effect16.gen(function* () {
             const ExtensionId = yield* Ref5.get(ExtensionIdRef);
             const FormattedMessage = FormatMessage(
               Message,
@@ -29488,7 +30076,7 @@ var init_Logger = __esm({
               })
             );
           }), "Info");
-          const Warn = /* @__PURE__ */ __name((Message, ...Data) => Effect16.gen(function* () {
+          const Warn2 = /* @__PURE__ */ __name((Message, ...Data) => Effect16.gen(function* () {
             const ExtensionId = yield* Ref5.get(ExtensionIdRef);
             return yield* Effect16.logWarning(Message).pipe(
               Effect16.annotateLogs({
@@ -29524,9 +30112,9 @@ var init_Logger = __esm({
           }), "GetExtensionId");
           const ServiceImplementation = {
             Trace,
-            Debug,
-            Info,
-            Warn,
+            Debug: Debug2,
+            Info: Info2,
+            Warn: Warn2,
             Error: Error2,
             Fatal,
             SetExtensionId,
@@ -31723,9 +32311,7 @@ var init_GRPCServerService = __esm({
         console.log("[GRPCServerService] Initializing gRPC server");
         this.setMaxListeners(0);
         this.workspaceEventEmitter.setMaxListeners(0);
-        console.log(
-          "[LandFix:GRPCSvc] setMaxListeners(0) applied on self + workspaceEventEmitter"
-        );
+        process.stdout.write("[LandFix:GRPCSvc] setMaxListeners(0) applied on self + workspaceEventEmitter\n");
         this.parseEnvironment();
         this.serviceImplementation = this.createServiceImplementation();
         console.log(`[GRPCServerService] Configured for port ${this.port}`);
@@ -32755,17 +33341,48 @@ var init_RPCServer = __esm({
 });
 
 // Source/Effect/Bootstrap.ts
-import { Context as Context21, Effect as Effect23, Layer as Layer21 } from "effect";
-var BootstrapTag, stage1_Environment, stage2_Configuration, stage3_MountainConnection, stage4_ModuleInterceptor, stage5_RPCServer, stage6_Extensions, stage7_HealthCheck, makeBootstrap, BootstrapLive, makeMockBootstrap, BootstrapMock, runBootstrap;
+import { Context as Context21, Duration, Effect as Effect23, Layer as Layer21, Schedule as Schedule4 } from "effect";
+import { createConnection } from "node:net";
+var ProbeTcp, BootstrapTag, stage1_Environment, stage2_Configuration, MountainProbeTimeoutMs, MountainProbeMaxAttempts, MountainProbeDelayMs, MountainConnectMaxAttempts, stage3_MountainConnection, stage4_ModuleInterceptor, stage5_RPCServer, stage6_Extensions, stage7_HealthCheck, makeBootstrap, BootstrapLive, makeMockBootstrap, BootstrapMock, runBootstrap;
 var init_Bootstrap = __esm({
   "Source/Effect/Bootstrap.ts"() {
     "use strict";
+    init_LandFixLog();
     init_Extension();
     init_Health();
     init_ModuleInterceptor();
     init_MountainClient();
     init_RPCServer();
     init_Telemetry();
+    ProbeTcp = /* @__PURE__ */ __name((Host, Port, TimeoutMs) => Effect23.async((Resume) => {
+      let Settled = false;
+      const Settle = /* @__PURE__ */ __name((Value) => {
+        if (Settled) return;
+        Settled = true;
+        try {
+          Socket.destroy();
+        } catch {
+        }
+        Resume(Effect23.succeed(Value));
+      }, "Settle");
+      const Socket = createConnection({ host: Host, port: Port });
+      const Timer = setTimeout(() => Settle(false), TimeoutMs);
+      Socket.once("connect", () => {
+        clearTimeout(Timer);
+        Settle(true);
+      });
+      Socket.once("error", () => {
+        clearTimeout(Timer);
+        Settle(false);
+      });
+      return Effect23.sync(() => {
+        clearTimeout(Timer);
+        try {
+          Socket.destroy();
+        } catch {
+        }
+      });
+    }), "ProbeTcp");
     BootstrapTag = class extends Context21.Tag("Cocoon/Bootstrap")() {
       static {
         __name(this, "BootstrapTag");
@@ -32802,7 +33419,23 @@ var init_Bootstrap = __esm({
           "info",
           "[Cocoon Bootstrap] Stage 2: Loading configuration..."
         );
-        yield* Effect23.sleep("20 millis");
+        const ParsePort = /* @__PURE__ */ __name((Raw, Fallback) => {
+          if (Raw === void 0) return Fallback;
+          const Value = parseInt(Raw, 10);
+          return Number.isFinite(Value) && Value > 0 && Value < 65536 ? Value : Fallback;
+        }, "ParsePort");
+        const ResolvedConfig = {
+          MountainPort: ParsePort(process.env["MOUNTAIN_GRPC_PORT"], 50051),
+          CocoonPort: ParsePort(process.env["COCOON_GRPC_PORT"], 50052),
+          NodeEnv: process.env["NODE_ENV"] ?? "production",
+          DevLog: process.env["LAND_DEV_LOG"] ?? "",
+          DebugFlag: process.env["TAURI_ENV_DEBUG"] === "true"
+        };
+        globalThis.__cocoonBootstrapConfig = ResolvedConfig;
+        LandFixLog_default.Info(
+          "Bootstrap",
+          `Configuration resolved: MountainPort=${ResolvedConfig.MountainPort} CocoonPort=${ResolvedConfig.CocoonPort} NodeEnv=${ResolvedConfig.NodeEnv} DevLog=${ResolvedConfig.DevLog || "<unset>"} TauriDebug=${ResolvedConfig.DebugFlag}`
+        );
         telemetry.log("info", "[Cocoon Bootstrap] Configuration loaded");
         return {
           stageName: "Configuration",
@@ -32812,6 +33445,10 @@ var init_Bootstrap = __esm({
         };
       })
     );
+    MountainProbeTimeoutMs = 250;
+    MountainProbeMaxAttempts = 15;
+    MountainProbeDelayMs = 200;
+    MountainConnectMaxAttempts = 20;
     stage3_MountainConnection = withSpan(
       "stage3_mountain_connection",
       Effect23.gen(function* () {
@@ -32825,11 +33462,63 @@ var init_Bootstrap = __esm({
           process.env["MOUNTAIN_GRPC_PORT"] || "50051",
           10
         );
-        yield* mountainClient.connect({
-          host: "localhost",
-          port: MountainPort
-        });
+        const MountainHost = "localhost";
+        let ProbeAttempt = 0;
+        let Listening = false;
+        while (ProbeAttempt < MountainProbeMaxAttempts && !Listening) {
+          ProbeAttempt++;
+          Listening = yield* ProbeTcp(
+            MountainHost,
+            MountainPort,
+            MountainProbeTimeoutMs
+          );
+          if (Listening) {
+            LandFixLog_default.Info(
+              "Bootstrap",
+              `Mountain TCP port ${MountainHost}:${MountainPort} listening after ${ProbeAttempt} probe(s)`
+            );
+            break;
+          }
+          yield* Effect23.sleep(Duration.millis(MountainProbeDelayMs));
+        }
+        if (!Listening) {
+          LandFixLog_default.Warn(
+            "Bootstrap",
+            `Mountain TCP port ${MountainHost}:${MountainPort} unreachable after ${MountainProbeMaxAttempts} probes; attempting connect anyway`
+          );
+        }
+        const AttemptRef = { value: 0 };
+        const Connect = Effect23.gen(function* () {
+          AttemptRef.value++;
+          yield* mountainClient.connect({
+            host: MountainHost,
+            port: MountainPort
+          });
+        }).pipe(
+          Effect23.tapError(
+            (Failure) => Effect23.sync(() => {
+              const Message = Failure instanceof Error ? Failure.message : String(Failure);
+              LandFixLog_default.Warn(
+                "Bootstrap",
+                `MountainConnection attempt ${AttemptRef.value}/${MountainConnectMaxAttempts} failed: ${Message}`
+              );
+            })
+          ),
+          Effect23.retry(
+            Schedule4.exponential(Duration.millis(500)).pipe(
+              Schedule4.union(Schedule4.spaced(Duration.seconds(5))),
+              Schedule4.intersect(
+                Schedule4.recurs(MountainConnectMaxAttempts - 1)
+              )
+            )
+          )
+        );
+        yield* Connect;
         const version = yield* mountainClient.version;
+        LandFixLog_default.Info(
+          "Bootstrap",
+          `MountainConnection OK (v${version}) after ${AttemptRef.value} attempt(s), probe settled after ${ProbeAttempt}`
+        );
         telemetry.log(
           "info",
           `[Cocoon Bootstrap] Connected to Mountain (v${version})`
@@ -32908,15 +33597,34 @@ var init_Bootstrap = __esm({
           "info",
           `[Cocoon Bootstrap] Found ${extensions.length} extensions`
         );
-        for (const ext of extensions) {
-          if (ext.manifest.enabled) {
-            yield* extension.activate(ext.id);
-          }
-        }
+        const EligibleExtensions = extensions.filter(
+          (Ext) => Ext.manifest.enabled
+        );
+        const ActivationAttempts = yield* Effect23.forEach(
+          EligibleExtensions,
+          (Ext) => extension.activate(Ext.id).pipe(
+            Effect23.map(() => ({ Id: Ext.id, Ok: true })),
+            Effect23.catchAll((Failure) => {
+              const Message = Failure instanceof Error ? Failure.message : String(Failure);
+              telemetry.log(
+                "warn",
+                `[Cocoon Bootstrap] Extension ${Ext.id} activation failed: ${Message}`
+              );
+              return Effect23.succeed({
+                Id: Ext.id,
+                Ok: false,
+                Error: Message
+              });
+            })
+          ),
+          { concurrency: 8 }
+        );
+        const Successful = ActivationAttempts.filter((R) => R.Ok).length;
+        const FailedCount = ActivationAttempts.length - Successful;
         const activeCount = yield* extension.getActiveCount;
         telemetry.log(
           "info",
-          `[Cocoon Bootstrap] Activated ${activeCount} extensions`
+          `[Cocoon Bootstrap] Activated ${activeCount} extensions (${Successful} this stage, ${FailedCount} failed)`
         );
         return {
           stageName: "Extensions",
@@ -32938,8 +33646,7 @@ var init_Bootstrap = __esm({
         const systemHealth = yield* health.checkAllServices();
         telemetry.log(
           "info",
-          `[Cocoon{
- Bootstrap] Health check result: ${systemHealth.overallStatus}`
+          `[Cocoon Bootstrap] Health check result: ${systemHealth.overallStatus}`
         );
         if (systemHealth.overallStatus === "unhealthy") {
           telemetry.log(
@@ -32991,9 +33698,8 @@ var init_Bootstrap = __esm({
           const SafeStage = Effect23.suspend(() => stage).pipe(
             Effect23.catchAllCause((Cause) => {
               const Message = String(Cause).slice(0, 300);
-              console.warn(
-                `[LandFix:Bootstrap] Stage "${StageName}" failed (continuing): ${Message}`
-              );
+              process.stdout.write(`[LandFix:Bootstrap] Stage "${StageName}" failed (continuing): ${Message}
+`);
               return Effect23.succeed({
                 stageName: StageName,
                 success: false,
@@ -33004,13 +33710,11 @@ var init_Bootstrap = __esm({
           );
           const result = yield* SafeStage;
           if (result?.success === false) {
-            console.warn(
-              `[LandFix:Bootstrap] Stage "${StageName}" reported failure: ${result.error?.message ?? "<no message>"}`
-            );
+            process.stdout.write(`[LandFix:Bootstrap] Stage "${StageName}" reported failure: ${result.error?.message ?? "<no message>"}
+`);
           } else {
-            console.log(
-              `[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStartTime}ms`
-            );
+            process.stdout.write(`[LandFix:Bootstrap] Stage "${StageName}" OK in ${Date.now() - stageStartTime}ms
+`);
           }
           results.push({
             ...result,

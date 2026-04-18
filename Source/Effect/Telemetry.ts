@@ -254,21 +254,27 @@ export const TelemetryLive = Layer.effect(
 					{ type: "log", timestamp, data: logEntry },
 				]);
 
-				// Also log to console for debugging
-				const prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
-				switch (level) {
-					case "debug":
-						console.debug(prefix, message, context ?? "");
-						break;
-					case "info":
-						console.info(prefix, message, context ?? "");
-						break;
-					case "warn":
-						console.warn(prefix, message, context ?? "");
-						break;
-					case "error":
-						console.error(prefix, message, context ?? "");
-						break;
+				// Emit via process.stdout.write / process.stderr.write so the
+				// line survives esbuild's production `drop: ["console"]` sweep.
+				// Context is JSON-encoded inline to keep the output one line
+				// per event (parseable by `LAND_DEV_LOG=long` pipelines).
+				const Prefix = `[Cocoon Telemetry] [${level.toUpperCase()}]`;
+				let ContextText = "";
+				if (context && Object.keys(context).length > 0) {
+					try {
+						ContextText = ` ${JSON.stringify(context)}`;
+					} catch {
+						ContextText = " [unserializable-context]";
+					}
+				}
+				const Line = `${Prefix} ${message}${ContextText}\n`;
+				const Stream =
+					level === "error" ? process.stderr : process.stdout;
+				try {
+					Stream.write(Line);
+				} catch {
+					// Broken pipe on shutdown — swallow silently rather than
+					// crashing the extension host fiber mid-telemetry.
 				}
 			});
 
@@ -353,8 +359,19 @@ export const makeMockTelemetry = (): TelemetryService => ({
 		}),
 	log: (level, message, context) =>
 		Effect.sync(() => {
-			const prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
-			console.log(prefix, message, context ?? "");
+			const Prefix = `[Cocoon Telemetry Mock] [${level.toUpperCase()}]`;
+			let ContextText = "";
+			if (context && Object.keys(context).length > 0) {
+				try {
+					ContextText = ` ${JSON.stringify(context)}`;
+				} catch {
+					ContextText = " [unserializable-context]";
+				}
+			}
+			const Stream = level === "error" ? process.stderr : process.stdout;
+			try {
+				Stream.write(`${Prefix} ${message}${ContextText}\n`);
+			} catch {}
 		}),
 	events: Stream.empty,
 	getMetrics: () => Effect.succeed([]),
