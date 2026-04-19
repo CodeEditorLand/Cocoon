@@ -155,6 +155,145 @@ var GlobToRegex = /* @__PURE__ */ __name((Glob) => {
 }, "GlobToRegex");
 var GlobToRegex_default = GlobToRegex;
 
+// Source/Utility/LandFixLog.ts
+var Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
+var Enabled = Mode !== "off";
+var Long = Mode === "long";
+var DebugEnabled = Long;
+var AllowList = (() => {
+  const Raw = process.env["LAND_LANDFIX_TAGS"];
+  if (!Raw || Raw.trim().length === 0) return void 0;
+  const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+  return Tags.length === 0 ? void 0 : new Set(Tags);
+})();
+var PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
+var PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
+var FormatTimestamp = /* @__PURE__ */ __name(() => {
+  const Now = /* @__PURE__ */ new Date();
+  if (Long) return Now.toISOString();
+  return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
+    Now.getSeconds()
+  )}.${PadThree(Now.getMilliseconds())}`;
+}, "FormatTimestamp");
+var SerializeContext = /* @__PURE__ */ __name((Context) => {
+  const Seen = /* @__PURE__ */ new WeakSet();
+  try {
+    return JSON.stringify(Context, (_Key, Value) => {
+      if (Value instanceof Error) {
+        return { name: Value.name, message: Value.message };
+      }
+      if (typeof Value === "bigint") return String(Value);
+      if (typeof Value === "function") return "[Function]";
+      if (typeof Value === "object" && Value !== null) {
+        if (Seen.has(Value)) return "[Circular]";
+        Seen.add(Value);
+      }
+      return Value;
+    });
+  } catch {
+    return '"[Unserializable]"';
+  }
+}, "SerializeContext");
+var LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
+var FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
+  const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+  if (!Context) return `${Head}
+`;
+  return `${Head} ${SerializeContext(Context)}
+`;
+}, "FormatLine");
+var Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
+  if (!Enabled) return;
+  if (AllowList && !AllowList.has(Tag)) return;
+  try {
+    Stream.write(FormatLine(Level, Tag, Message, Context));
+  } catch {
+  }
+}, "Emit");
+var Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "Info");
+var Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stdout, "warn", Tag, Message, Context);
+}, "Warn");
+var ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  Emit(process.stderr, "error", Tag, Message, Context);
+}, "ErrorLog");
+var Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
+  if (!DebugEnabled) return;
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "Debug");
+var SeenOnce = /* @__PURE__ */ new Set();
+var DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  if (!DebugEnabled) return;
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "DebugOnce");
+var InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "InfoOnce");
+var LandFixLog = {
+  Info,
+  InfoOnce,
+  Warn,
+  Error: ErrorLog,
+  Debug,
+  DebugOnce,
+  IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
+  IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
+  Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
+};
+var LandFixLog_default = LandFixLog;
+
+// Source/Utility/Tier.ts
+var Injected = globalThis.__LandTiers ?? {};
+var Pick = /* @__PURE__ */ __name((Capability, Fallback) => {
+  const FromInjected = Injected[Capability];
+  if (typeof FromInjected === "string" && FromInjected.length > 0) {
+    return FromInjected;
+  }
+  const FromEnvironment = process.env[`Tier${Capability}`];
+  if (typeof FromEnvironment === "string" && FromEnvironment.length > 0) {
+    return FromEnvironment;
+  }
+  return Fallback;
+}, "Pick");
+var Tier = {
+  RemoteProcedureCall: Pick(
+    "RemoteProcedureCall",
+    "GRPC"
+  ),
+  HTTPProxy: Pick("HTTPProxy", "HandRolled"),
+  Logger: Pick("Logger", "Standard"),
+  FileSystem: Pick("FileSystem", "Layer2"),
+  FindFiles: Pick("FindFiles", "Layer3"),
+  Glob: Pick("Glob", "JavaScript"),
+  FileWatcher: Pick("FileWatcher", "Stub"),
+  SchemeAssets: Pick("SchemeAssets", "Embedded"),
+  Configuration: Pick("Configuration", "Cache"),
+  Diagnostics: Pick("Diagnostics", "Full"),
+  Clipboard: Pick("Clipboard", "Layer3"),
+  OpenExternal: Pick("OpenExternal", "Layer3"),
+  DocumentMirror: Pick("DocumentMirror", "Full"),
+  ExtensionActivation: Pick(
+    "ExtensionActivation",
+    "Parallel8"
+  ),
+  ExtensionScan: Pick("ExtensionScan", "Sequential"),
+  ModuleCache: Pick("ModuleCache", "Simple"),
+  Telemetry: Pick("Telemetry", "Synchronous")
+};
+LandFixLog_default.Info(
+  "Tier",
+  `Cocoon tier set resolved: ${JSON.stringify(Tier)}`
+);
+var Tier_default = Tier;
+
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts
 var EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
   Context.WorkspaceEventEmitter.on(EventName, Listener);
@@ -202,6 +341,7 @@ var ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
   }
   return void 0;
 }, "ExtractGlobPattern");
+var WatcherCounter = 0;
 var FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
   const Raw = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
   if (typeof Raw !== "string" || Raw.length === 0) return void 0;
@@ -329,6 +469,13 @@ var FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, E
   );
   return Results;
 }, "FindFilesLocal");
+var ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
+  const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
+  return (InitWorkspace.folders ?? []).map((Folder) => ({
+    ...Folder,
+    FsPath: FolderToFsPath(Folder?.uri)
+  }));
+}, "ResolveWorkspaceFolders");
 var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
   const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
   const ConfigCache = /* @__PURE__ */ new Map();
@@ -570,19 +717,108 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     }, "dispose") }), "onDidChangeTunnels"),
     registerPortAttributesProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerPortAttributesProvider"),
-    createFileSystemWatcher: /* @__PURE__ */ __name(() => ({
-      ignoreCreateEvents: false,
-      ignoreChangeEvents: false,
-      ignoreDeleteEvents: false,
-      onDidCreate: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidCreate"),
-      onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChange"),
-      onDidDelete: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidDelete"),
-      dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose")
-    }), "createFileSystemWatcher"),
+    // createFileSystemWatcher is tier-gated.
+    //
+    // • Tier.FileWatcher === "Stub" (default): return a true no-op so
+    //   extensions can call it at activation time without paying any
+    //   cost. The TypeScript language extension alone registers ~10
+    //   watchers at startup — flooding Mountain with recursive
+    //   notifications from every one of them causes the event loop
+    //   to saturate and the UI to stop responding to "Open File"
+    //   clicks.
+    //
+    // • Tier.FileWatcher === "Layer4": wire to Mountain's notify-rs
+    //   backend with pattern-based filtering on the Rust side so
+    //   only matching paths produce events. Even in Layer4 we cap the
+    //   number of watchers per workspace root by de-duplicating on
+    //   root + recursive-mode + pattern combination.
+    createFileSystemWatcher: /* @__PURE__ */ __name((Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
+      const StubDisposable = { dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose") };
+      const StubWatcher = {
+        ignoreCreateEvents: IgnoreCreateEvents === true,
+        ignoreChangeEvents: IgnoreChangeEvents === true,
+        ignoreDeleteEvents: IgnoreDeleteEvents === true,
+        onDidCreate: /* @__PURE__ */ __name(() => StubDisposable, "onDidCreate"),
+        onDidChange: /* @__PURE__ */ __name(() => StubDisposable, "onDidChange"),
+        onDidDelete: /* @__PURE__ */ __name(() => StubDisposable, "onDidDelete"),
+        dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose")
+      };
+      if (Tier_default.FileWatcher !== "Layer4") {
+        return StubWatcher;
+      }
+      const PatternString = ExtractGlobPattern(Pattern);
+      if (!PatternString) {
+        return StubWatcher;
+      }
+      const Matcher = GlobToRegex_default(PatternString);
+      const Folders = ResolveWorkspaceFolders(Context);
+      const Root = Pattern?.baseUri?.fsPath ?? Pattern?.base ?? Folders[0]?.FsPath;
+      if (!Root) {
+        return StubWatcher;
+      }
+      const Handle = `watcher:${++WatcherCounter}`;
+      const IsRecursive = PatternString.includes("**");
+      Context.MountainClient?.sendRequest("FileWatcher.Register", [
+        Handle,
+        Root,
+        IsRecursive,
+        PatternString
+      ]).catch(() => {
+      });
+      const EventName = `fileWatcher:${Handle}`;
+      const MakeSubscriber = /* @__PURE__ */ __name((Kind, Ignore) => (Listener) => {
+        if (Ignore) return StubDisposable;
+        const WrappedListener = /* @__PURE__ */ __name((Event) => {
+          if (Event.kind !== Kind) return;
+          if (!Matcher.test(Event.path)) return;
+          try {
+            Listener({
+              scheme: "file",
+              path: Event.path,
+              fsPath: Event.path,
+              toString: /* @__PURE__ */ __name(() => `file://${Event.path}`, "toString")
+            });
+          } catch {
+          }
+        }, "WrappedListener");
+        Context.Emitter.on(EventName, WrappedListener);
+        return {
+          dispose: /* @__PURE__ */ __name(() => {
+            Context.Emitter.removeListener(
+              EventName,
+              WrappedListener
+            );
+          }, "dispose")
+        };
+      }, "MakeSubscriber");
+      return {
+        ignoreCreateEvents: IgnoreCreateEvents === true,
+        ignoreChangeEvents: IgnoreChangeEvents === true,
+        ignoreDeleteEvents: IgnoreDeleteEvents === true,
+        onDidCreate: MakeSubscriber(
+          "create",
+          IgnoreCreateEvents === true
+        ),
+        onDidChange: MakeSubscriber(
+          "change",
+          IgnoreChangeEvents === true
+        ),
+        onDidDelete: MakeSubscriber(
+          "delete",
+          IgnoreDeleteEvents === true
+        ),
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.Emitter.removeAllListeners(EventName);
+          Context.MountainClient?.sendRequest(
+            "FileWatcher.Unregister",
+            [Handle]
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "createFileSystemWatcher"),
     fs: {
       // FileSystem.Stat is not yet in CreateEffectForRequest — falls back
       // to defaults via Call's try/catch until the Rust route is added.

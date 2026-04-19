@@ -3,6 +3,15 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 import { deepmerge } from "deepmerge-ts";
 import * as Environment from "../Constant/EnvironmentConstant.js";
 import BaseConfig from "./BaseConfig.js";
+const TierDefines = (() => {
+  const Raw = process.env["CocoonEsbuildDefine"];
+  if (!Raw) return {};
+  try {
+    return JSON.parse(Raw);
+  } catch {
+    return {};
+  }
+})();
 async function TargetConfig(Current) {
   const Merged = deepmerge(BaseConfig, {
     outdir: "Target",
@@ -10,7 +19,8 @@ async function TargetConfig(Current) {
     drop: Environment.On ? [] : ["debugger", "console"],
     define: {
       __DEV__: Environment.On ? "true" : "false",
-      __INCREMENT__: `"${`${Environment.On ? "DEVELOPMENT" : "PRODUCTION"}-${(await import("ulid")).ulid()}`}"`
+      __INCREMENT__: `"${`${Environment.On ? "DEVELOPMENT" : "PRODUCTION"}-${(await import("ulid")).ulid()}`}"`,
+      ...TierDefines
     },
     treeShaking: !Environment.On,
     entryPoints: (await import("@playform/build/Target/Function/Entry.js")).default(Current, ["Source/Configuration/*"]),

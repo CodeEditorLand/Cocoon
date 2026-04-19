@@ -26,4 +26,4 @@ Build "Source/**/*.ts" \
 	$TypeScript_Flag || true
 
 # Clean escaped path artifacts from esbuild (linked packages outside outbase)
-rm -rf Configuration/_.._ Target/_.._ 2> /dev/null || true
+rm -rf Configuration/_.._ Target/_.._ 2>/dev/null || true

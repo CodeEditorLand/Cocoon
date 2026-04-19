@@ -146,11 +146,43 @@ const Debug = (
 	Emit(process.stdout, "debug", Tag, Message, Context);
 };
 
+// Dedup key set for *-Once variants. Keys combine Tag + Key so different
+// tags with the same key still both log; extension activations that fire
+// many times per boot no longer flood the log with identical lines.
+const SeenOnce = new Set<string>();
+
+const DebugOnce = (
+	Tag: string,
+	Key: string,
+	Message: string,
+	Context?: Readonly<Record<string, unknown>>,
+): void => {
+	if (!DebugEnabled) return;
+	const Combined = `${Tag}:${Key}`;
+	if (SeenOnce.has(Combined)) return;
+	SeenOnce.add(Combined);
+	Emit(process.stdout, "debug", Tag, Message, Context);
+};
+
+const InfoOnce = (
+	Tag: string,
+	Key: string,
+	Message: string,
+	Context?: Readonly<Record<string, unknown>>,
+): void => {
+	const Combined = `${Tag}:${Key}`;
+	if (SeenOnce.has(Combined)) return;
+	SeenOnce.add(Combined);
+	Emit(process.stdout, "info", Tag, Message, Context);
+};
+
 const LandFixLog = {
 	Info,
+	InfoOnce,
 	Warn,
 	Error: ErrorLog,
 	Debug,
+	DebugOnce,
 	IsEnabled: (): boolean => Enabled,
 	IsDebugEnabled: (): boolean => DebugEnabled,
 	Mode: (): "off" | "short" | "long" =>

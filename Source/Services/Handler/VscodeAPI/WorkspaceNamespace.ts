@@ -9,6 +9,7 @@
  */
 
 import GlobToRegex from "../../../Utility/GlobToRegex.js";
+import Tier from "../../../Utility/Tier.js";
 import type { HandlerContext } from "../HandlerContext.js";
 
 const EventSubscriber =
@@ -80,6 +81,10 @@ const ExtractGlobPattern = (Raw: unknown): string | undefined => {
  * Strip `file://` from a workspace-folder URI (string or UriComponents-ish
  * object) to get a filesystem path we can walk with `fs.readdir`.
  */
+// Process-wide counter for createFileSystemWatcher handles. Monotonic so the
+// same handle never re-appears after dispose.
+let WatcherCounter = 0;
+
 const FolderToFsPath = (FolderUri: unknown): string | undefined => {
 	const Raw =
 		typeof FolderUri === "string"
@@ -258,6 +263,27 @@ const FindFilesLocal = async (
 		`[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}\n`,
 	);
 	return Results;
+};
+
+type WorkspaceFolderRecord = {
+	uri: unknown;
+	name: string;
+	index: number;
+	FsPath?: string;
+};
+
+const ResolveWorkspaceFolders = (
+	Context: HandlerContext,
+): WorkspaceFolderRecord[] => {
+	const InitWorkspace = (Context.ExtensionHostInitData?.workspace ??
+		Context.ExtensionHostInitData?.workspaceData ??
+		{}) as {
+		folders?: Array<{ uri: unknown; name: string; index: number }>;
+	};
+	return (InitWorkspace.folders ?? []).map((Folder) => ({
+		...Folder,
+		FsPath: FolderToFsPath(Folder?.uri),
+	}));
 };
 
 const CreateWorkspaceNamespace = (Context: HandlerContext) => {
@@ -580,15 +606,126 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 			_Selector: unknown,
 			_Provider: unknown,
 		) => ({ dispose: () => {} }),
-		createFileSystemWatcher: () => ({
-			ignoreCreateEvents: false,
-			ignoreChangeEvents: false,
-			ignoreDeleteEvents: false,
-			onDidCreate: () => ({ dispose: () => {} }),
-			onDidChange: () => ({ dispose: () => {} }),
-			onDidDelete: () => ({ dispose: () => {} }),
-			dispose: () => {},
-		}),
+		// createFileSystemWatcher is tier-gated.
+		//
+		// • Tier.FileWatcher === "Stub" (default): return a true no-op so
+		//   extensions can call it at activation time without paying any
+		//   cost. The TypeScript language extension alone registers ~10
+		//   watchers at startup — flooding Mountain with recursive
+		//   notifications from every one of them causes the event loop
+		//   to saturate and the UI to stop responding to "Open File"
+		//   clicks.
+		//
+		// • Tier.FileWatcher === "Layer4": wire to Mountain's notify-rs
+		//   backend with pattern-based filtering on the Rust side so
+		//   only matching paths produce events. Even in Layer4 we cap the
+		//   number of watchers per workspace root by de-duplicating on
+		//   root + recursive-mode + pattern combination.
+		createFileSystemWatcher: (
+			Pattern: unknown,
+			IgnoreCreateEvents?: boolean,
+			IgnoreChangeEvents?: boolean,
+			IgnoreDeleteEvents?: boolean,
+		) => {
+			const StubDisposable = { dispose: () => {} };
+			const StubWatcher = {
+				ignoreCreateEvents: IgnoreCreateEvents === true,
+				ignoreChangeEvents: IgnoreChangeEvents === true,
+				ignoreDeleteEvents: IgnoreDeleteEvents === true,
+				onDidCreate: () => StubDisposable,
+				onDidChange: () => StubDisposable,
+				onDidDelete: () => StubDisposable,
+				dispose: () => {},
+			};
+
+			if (Tier.FileWatcher !== "Layer4") {
+				return StubWatcher;
+			}
+
+			const PatternString = ExtractGlobPattern(Pattern);
+			if (!PatternString) {
+				return StubWatcher;
+			}
+			const Matcher = GlobToRegex(PatternString);
+			const Folders = ResolveWorkspaceFolders(Context);
+			const Root =
+				(Pattern as any)?.baseUri?.fsPath ??
+				(Pattern as any)?.base ??
+				Folders[0]?.FsPath;
+			if (!Root) {
+				return StubWatcher;
+			}
+
+			const Handle = `watcher:${++WatcherCounter}`;
+			// `**` anywhere in the pattern forces recursive watching; plain
+			// globs restricted to a single directory use NonRecursive so we
+			// don't subscribe to the whole tree just to watch one folder.
+			const IsRecursive = PatternString.includes("**");
+			Context.MountainClient?.sendRequest("FileWatcher.Register", [
+				Handle,
+				Root,
+				IsRecursive,
+				PatternString,
+			]).catch(() => {});
+
+			const EventName = `fileWatcher:${Handle}`;
+			const MakeSubscriber = (
+				Kind: "create" | "change" | "delete",
+				Ignore: boolean,
+			) =>
+			(Listener: (Uri: unknown) => any) => {
+				if (Ignore) return StubDisposable;
+				const WrappedListener = (Event: {
+					kind: string;
+					path: string;
+				}) => {
+					if (Event.kind !== Kind) return;
+					if (!Matcher.test(Event.path)) return;
+					try {
+						Listener({
+							scheme: "file",
+							path: Event.path,
+							fsPath: Event.path,
+							toString: () => `file://${Event.path}`,
+						});
+					} catch {}
+				};
+				Context.Emitter.on(EventName, WrappedListener);
+				return {
+					dispose: () => {
+						Context.Emitter.removeListener(
+							EventName,
+							WrappedListener,
+						);
+					},
+				};
+			};
+
+			return {
+				ignoreCreateEvents: IgnoreCreateEvents === true,
+				ignoreChangeEvents: IgnoreChangeEvents === true,
+				ignoreDeleteEvents: IgnoreDeleteEvents === true,
+				onDidCreate: MakeSubscriber(
+					"create",
+					IgnoreCreateEvents === true,
+				),
+				onDidChange: MakeSubscriber(
+					"change",
+					IgnoreChangeEvents === true,
+				),
+				onDidDelete: MakeSubscriber(
+					"delete",
+					IgnoreDeleteEvents === true,
+				),
+				dispose: () => {
+					Context.Emitter.removeAllListeners(EventName);
+					Context.MountainClient?.sendRequest(
+						"FileWatcher.Unregister",
+						[Handle],
+					).catch(() => {});
+				},
+			};
+		},
 
 		fs: {
 			// FileSystem.Stat is not yet in CreateEffectForRequest — falls back

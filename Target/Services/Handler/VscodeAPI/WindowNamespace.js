@@ -12,6 +12,15 @@ var MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callba
 }, "MakeEventSubscriber");
 var OutputChannelCounter = 0;
 var TerminalCounter = 0;
+var TreeDataProviderCounter = 0;
+var WebviewPanelCounter = 0;
+var WebviewViewCounter = 0;
+var CustomEditorCounter = 0;
+var ProgressCounter = 0;
+var TreeDataProviders = /* @__PURE__ */ new Map();
+var WebviewViewProviders = /* @__PURE__ */ new Map();
+var CustomEditorProviders = /* @__PURE__ */ new Map();
+var WebviewPanels = /* @__PURE__ */ new Map();
 var StatusBarCounter = 0;
 var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
   const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
@@ -142,7 +151,18 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
             handle: Handle
           }).catch(() => {
           });
-        }, "dispose")
+        }, "dispose"),
+        // vscode.window.Terminal.resize(columns, rows) → Mountain
+        // PTY master receives SIGWINCH; shell redraws line editor.
+        resize: /* @__PURE__ */ __name(async (Columns, Rows) => {
+          try {
+            await Context.MountainClient?.sendRequest(
+              "Terminal.Resize",
+              [Handle, Columns, Rows]
+            );
+          } catch {
+          }
+        }, "resize")
       };
     }, "createTerminal"),
     createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => {
@@ -385,32 +405,115 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
       }, "dispose") }), "onDidHide")
     }), "createInputBox"),
-    createWebviewPanel: /* @__PURE__ */ __name((_ViewType, _Title, _ShowOptions, _Options) => ({
-      viewType: _ViewType,
-      title: _Title,
-      iconPath: void 0,
-      webview: {
-        options: {},
-        html: "",
-        cspSource: "",
-        asWebviewUri: /* @__PURE__ */ __name((Uri) => Uri, "asWebviewUri"),
-        postMessage: /* @__PURE__ */ __name(async () => false, "postMessage"),
-        onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidReceiveMessage")
-      },
-      options: {},
-      viewColumn: 1,
-      active: true,
-      visible: true,
-      reveal: /* @__PURE__ */ __name(() => {
-      }, "reveal"),
-      dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose"),
-      onDidDispose: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidDispose"),
-      onDidChangeViewState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeViewState")
-    }), "createWebviewPanel"),
+    createWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => {
+      const Handle = `webviewPanel:${++WebviewPanelCounter}`;
+      let CurrentHtml = "";
+      let CurrentOptions = Options ?? {};
+      Context.MountainClient?.sendRequest("webview.create", [
+        Handle,
+        ViewType,
+        Title,
+        ShowOptions,
+        CurrentOptions
+      ]).catch(() => {
+      });
+      const Panel = {
+        viewType: ViewType,
+        title: Title,
+        iconPath: void 0,
+        webview: {
+          get options() {
+            return CurrentOptions;
+          },
+          set options(Value) {
+            CurrentOptions = Value;
+            Context.MountainClient?.sendRequest(
+              "webview.setOptions",
+              [Handle, Value]
+            ).catch(() => {
+            });
+          },
+          get html() {
+            return CurrentHtml;
+          },
+          set html(Value) {
+            CurrentHtml = Value;
+            Context.MountainClient?.sendRequest(
+              "webview.setHtml",
+              [Handle, Value]
+            ).catch(() => {
+            });
+          },
+          cspSource: "vscode-resource: vscode-webview-resource: https:",
+          asWebviewUri: /* @__PURE__ */ __name((Uri) => Uri, "asWebviewUri"),
+          postMessage: /* @__PURE__ */ __name(async (Message) => {
+            try {
+              await Context.MountainClient?.sendRequest(
+                "webview.postMessage",
+                [Handle, Message]
+              );
+              return true;
+            } catch {
+              return false;
+            }
+          }, "postMessage"),
+          onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
+            const Event = `webview.message:${Handle}`;
+            Context.Emitter.on(Event, Listener);
+            return {
+              dispose: /* @__PURE__ */ __name(() => {
+                Context.Emitter.removeListener(
+                  Event,
+                  Listener
+                );
+              }, "dispose")
+            };
+          }, "onDidReceiveMessage")
+        },
+        options: CurrentOptions,
+        viewColumn: 1,
+        active: true,
+        visible: true,
+        reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
+          Context.MountainClient?.sendRequest("webview.reveal", [
+            Handle,
+            Column,
+            PreserveFocus
+          ]).catch(() => {
+          });
+        }, "reveal"),
+        dispose: /* @__PURE__ */ __name(() => {
+          WebviewPanels.delete(Handle);
+          Context.Emitter.removeAllListeners(
+            `webview.message:${Handle}`
+          );
+          Context.MountainClient?.sendRequest("webview.dispose", [
+            Handle
+          ]).catch(() => {
+          });
+        }, "dispose"),
+        onDidDispose: /* @__PURE__ */ __name((Listener) => {
+          const Event = `webview.dispose:${Handle}`;
+          Context.Emitter.on(Event, Listener);
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.Emitter.removeListener(Event, Listener);
+            }, "dispose")
+          };
+        }, "onDidDispose"),
+        onDidChangeViewState: /* @__PURE__ */ __name((Listener) => {
+          const Event = `webview.viewState:${Handle}`;
+          Context.Emitter.on(Event, Listener);
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.Emitter.removeListener(Event, Listener);
+            }, "dispose")
+          };
+        }, "onDidChangeViewState")
+      };
+      WebviewPanels.set(Handle, Panel);
+      return Panel;
+    }, "createWebviewPanel"),
     showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
       Context.SendToMountain("window.showTextDocument", {
         document: _Document,
@@ -445,36 +548,109 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       Context,
       "window.didChangeActiveColorTheme"
     ),
-    createTreeView: /* @__PURE__ */ __name((_Id, _Options) => ({
-      reveal: /* @__PURE__ */ __name(async () => {
-      }, "reveal"),
-      dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose"),
-      selection: [],
-      visible: true,
-      title: void 0,
-      description: void 0,
-      message: void 0,
-      badge: void 0,
-      onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeSelection"),
-      onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeVisibility"),
-      onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidCollapseElement"),
-      onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidExpandElement"),
-      onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeCheckboxState")
-    }), "createTreeView"),
-    registerTreeDataProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerTreeDataProvider"),
+    createTreeView: /* @__PURE__ */ __name((Id, Options) => {
+      const Provider = Options?.treeDataProvider;
+      if (Provider) {
+        const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
+        TreeDataProviders.set(Handle, Provider);
+        const SerializableOptions = {
+          showCollapseAll: Options?.showCollapseAll === true,
+          canSelectMany: Options?.canSelectMany === true,
+          manageCheckboxStateManually: Options?.manageCheckboxStateManually === true
+        };
+        Context.MountainClient?.sendRequest("tree.register", [
+          Handle,
+          Id,
+          SerializableOptions
+        ]).catch(() => {
+        });
+      }
+      return {
+        reveal: /* @__PURE__ */ __name(async () => {
+        }, "reveal"),
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.MountainClient?.sendRequest("tree.dispose", [
+            Id
+          ]).catch(() => {
+          });
+        }, "dispose"),
+        selection: [],
+        visible: true,
+        title: void 0,
+        description: void 0,
+        message: void 0,
+        badge: void 0,
+        onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeSelection"),
+        onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeVisibility"),
+        onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidCollapseElement"),
+        onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidExpandElement"),
+        onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onDidChangeCheckboxState")
+      };
+    }, "createTreeView"),
+    registerTreeDataProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
+      const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
+      TreeDataProviders.set(Handle, Provider);
+      Context.MountainClient?.sendRequest("tree.register", [
+        Handle,
+        ViewId,
+        {}
+      ]).catch(() => {
+      });
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          TreeDataProviders.delete(Handle);
+          Context.MountainClient?.sendRequest("tree.unregister", [
+            Handle
+          ]).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerTreeDataProvider"),
     registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerWebviewPanelSerializer"),
-    registerWebviewViewProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerWebviewViewProvider"),
-    registerCustomEditorProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerCustomEditorProvider"),
+    registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
+      const Handle = `webviewView:${++WebviewViewCounter}`;
+      WebviewViewProviders.set(Handle, Provider);
+      Context.MountainClient?.sendRequest("webview.registerView", [
+        Handle,
+        ViewId
+      ]).catch(() => {
+      });
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          WebviewViewProviders.delete(Handle);
+          Context.MountainClient?.sendRequest(
+            "webview.unregisterView",
+            [Handle]
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerWebviewViewProvider"),
+    registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider) => {
+      const Handle = `customEditor:${++CustomEditorCounter}`;
+      CustomEditorProviders.set(Handle, Provider);
+      Context.MountainClient?.sendRequest(
+        "webview.registerCustomEditor",
+        [Handle, ViewType]
+      ).catch(() => {
+      });
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          CustomEditorProviders.delete(Handle);
+          Context.MountainClient?.sendRequest(
+            "webview.unregisterCustomEditor",
+            [Handle]
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerCustomEditorProvider"),
     registerFileDecorationProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerFileDecorationProvider"),
     registerUriHandler: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -489,8 +665,50 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     }), "registerProfileContentHandler"),
     registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerExternalUriOpener"),
-    withProgress: /* @__PURE__ */ __name(async (_Option, Task) => Task({ report: /* @__PURE__ */ __name(() => {
-    }, "report") }), "withProgress"),
+    // Runs a Task with a progress object that reports to Mountain, which
+    // in turn updates the status-bar progress indicator in Sky.
+    // VS Code's contract: `Task(progress, cancellationToken) -> Thenable<R>`.
+    // We provide a real `report({ message, increment })` path and a
+    // no-op CancellationToken (no cancellation plumbing yet). The
+    // Task's return value is forwarded verbatim.
+    withProgress: /* @__PURE__ */ __name(async (Options, Task) => {
+      const Handle = `progress:${++ProgressCounter}`;
+      const Title = Options && typeof Options === "object" && Options.title || "Progress";
+      const Location = (Options && typeof Options === "object" && Options.location) ?? 15;
+      let Increment = 0;
+      const Progress = {
+        report: /* @__PURE__ */ __name((Value) => {
+          if (Value?.increment) Increment += Value.increment;
+          Context.SendToMountain("progress.report", {
+            handle: Handle,
+            title: Title,
+            location: Location,
+            message: Value?.message,
+            increment: Increment
+          }).catch(() => {
+          });
+        }, "report")
+      };
+      const CancellationToken = {
+        isCancellationRequested: false,
+        onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+        }, "dispose") }), "onCancellationRequested")
+      };
+      Context.SendToMountain("progress.start", {
+        handle: Handle,
+        title: Title,
+        location: Location
+      }).catch(() => {
+      });
+      try {
+        return await Task(Progress, CancellationToken);
+      } finally {
+        Context.SendToMountain("progress.end", {
+          handle: Handle
+        }).catch(() => {
+        });
+      }
+    }, "withProgress"),
     setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
       Context.SendToMountain("statusBar.message", {
         text: Text,
@@ -546,6 +764,10 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
 }, "CreateWindowNamespace");
 var WindowNamespace_default = CreateWindowNamespace;
 export {
+  CustomEditorProviders,
+  TreeDataProviders,
+  WebviewPanels,
+  WebviewViewProviders,
   WindowNamespace_default as default
 };
 //# sourceMappingURL=WindowNamespace.js.map

@@ -20753,9 +20753,13 @@ var init_extHostTypes = __esm({
 // Source/Services/Handler/VscodeAPI/WindowNamespace.ts
 var WindowNamespace_exports = {};
 __export(WindowNamespace_exports, {
+  CustomEditorProviders: () => CustomEditorProviders,
+  TreeDataProviders: () => TreeDataProviders,
+  WebviewPanels: () => WebviewPanels,
+  WebviewViewProviders: () => WebviewViewProviders,
   default: () => WindowNamespace_default
 });
-var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
+var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, TreeDataProviderCounter, WebviewPanelCounter, WebviewViewCounter, CustomEditorCounter, ProgressCounter, TreeDataProviders, WebviewViewProviders, CustomEditorProviders, WebviewPanels, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
 var init_WindowNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
     "use strict";
@@ -20769,6 +20773,15 @@ var init_WindowNamespace = __esm({
     }, "MakeEventSubscriber");
     OutputChannelCounter = 0;
     TerminalCounter = 0;
+    TreeDataProviderCounter = 0;
+    WebviewPanelCounter = 0;
+    WebviewViewCounter = 0;
+    CustomEditorCounter = 0;
+    ProgressCounter = 0;
+    TreeDataProviders = /* @__PURE__ */ new Map();
+    WebviewViewProviders = /* @__PURE__ */ new Map();
+    CustomEditorProviders = /* @__PURE__ */ new Map();
+    WebviewPanels = /* @__PURE__ */ new Map();
     StatusBarCounter = 0;
     CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
       const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
@@ -20899,7 +20912,18 @@ var init_WindowNamespace = __esm({
                 handle: Handle
               }).catch(() => {
               });
-            }, "dispose")
+            }, "dispose"),
+            // vscode.window.Terminal.resize(columns, rows) → Mountain
+            // PTY master receives SIGWINCH; shell redraws line editor.
+            resize: /* @__PURE__ */ __name(async (Columns, Rows) => {
+              try {
+                await Context.MountainClient?.sendRequest(
+                  "Terminal.Resize",
+                  [Handle, Columns, Rows]
+                );
+              } catch {
+              }
+            }, "resize")
           };
         }, "createTerminal"),
         createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => {
@@ -21142,32 +21166,115 @@ var init_WindowNamespace = __esm({
           onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
           }, "dispose") }), "onDidHide")
         }), "createInputBox"),
-        createWebviewPanel: /* @__PURE__ */ __name((_ViewType, _Title, _ShowOptions, _Options) => ({
-          viewType: _ViewType,
-          title: _Title,
-          iconPath: void 0,
-          webview: {
-            options: {},
-            html: "",
-            cspSource: "",
-            asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
-            postMessage: /* @__PURE__ */ __name(async () => false, "postMessage"),
-            onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidReceiveMessage")
-          },
-          options: {},
-          viewColumn: 1,
-          active: true,
-          visible: true,
-          reveal: /* @__PURE__ */ __name(() => {
-          }, "reveal"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          onDidDispose: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidDispose"),
-          onDidChangeViewState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeViewState")
-        }), "createWebviewPanel"),
+        createWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => {
+          const Handle = `webviewPanel:${++WebviewPanelCounter}`;
+          let CurrentHtml = "";
+          let CurrentOptions = Options ?? {};
+          Context.MountainClient?.sendRequest("webview.create", [
+            Handle,
+            ViewType,
+            Title,
+            ShowOptions,
+            CurrentOptions
+          ]).catch(() => {
+          });
+          const Panel = {
+            viewType: ViewType,
+            title: Title,
+            iconPath: void 0,
+            webview: {
+              get options() {
+                return CurrentOptions;
+              },
+              set options(Value) {
+                CurrentOptions = Value;
+                Context.MountainClient?.sendRequest(
+                  "webview.setOptions",
+                  [Handle, Value]
+                ).catch(() => {
+                });
+              },
+              get html() {
+                return CurrentHtml;
+              },
+              set html(Value) {
+                CurrentHtml = Value;
+                Context.MountainClient?.sendRequest(
+                  "webview.setHtml",
+                  [Handle, Value]
+                ).catch(() => {
+                });
+              },
+              cspSource: "vscode-resource: vscode-webview-resource: https:",
+              asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
+              postMessage: /* @__PURE__ */ __name(async (Message) => {
+                try {
+                  await Context.MountainClient?.sendRequest(
+                    "webview.postMessage",
+                    [Handle, Message]
+                  );
+                  return true;
+                } catch {
+                  return false;
+                }
+              }, "postMessage"),
+              onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
+                const Event2 = `webview.message:${Handle}`;
+                Context.Emitter.on(Event2, Listener);
+                return {
+                  dispose: /* @__PURE__ */ __name(() => {
+                    Context.Emitter.removeListener(
+                      Event2,
+                      Listener
+                    );
+                  }, "dispose")
+                };
+              }, "onDidReceiveMessage")
+            },
+            options: CurrentOptions,
+            viewColumn: 1,
+            active: true,
+            visible: true,
+            reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
+              Context.MountainClient?.sendRequest("webview.reveal", [
+                Handle,
+                Column,
+                PreserveFocus
+              ]).catch(() => {
+              });
+            }, "reveal"),
+            dispose: /* @__PURE__ */ __name(() => {
+              WebviewPanels.delete(Handle);
+              Context.Emitter.removeAllListeners(
+                `webview.message:${Handle}`
+              );
+              Context.MountainClient?.sendRequest("webview.dispose", [
+                Handle
+              ]).catch(() => {
+              });
+            }, "dispose"),
+            onDidDispose: /* @__PURE__ */ __name((Listener) => {
+              const Event2 = `webview.dispose:${Handle}`;
+              Context.Emitter.on(Event2, Listener);
+              return {
+                dispose: /* @__PURE__ */ __name(() => {
+                  Context.Emitter.removeListener(Event2, Listener);
+                }, "dispose")
+              };
+            }, "onDidDispose"),
+            onDidChangeViewState: /* @__PURE__ */ __name((Listener) => {
+              const Event2 = `webview.viewState:${Handle}`;
+              Context.Emitter.on(Event2, Listener);
+              return {
+                dispose: /* @__PURE__ */ __name(() => {
+                  Context.Emitter.removeListener(Event2, Listener);
+                }, "dispose")
+              };
+            }, "onDidChangeViewState")
+          };
+          WebviewPanels.set(Handle, Panel);
+          return Panel;
+        }, "createWebviewPanel"),
         showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
           Context.SendToMountain("window.showTextDocument", {
             document: _Document,
@@ -21202,36 +21309,109 @@ var init_WindowNamespace = __esm({
           Context,
           "window.didChangeActiveColorTheme"
         ),
-        createTreeView: /* @__PURE__ */ __name((_Id, _Options) => ({
-          reveal: /* @__PURE__ */ __name(async () => {
-          }, "reveal"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          selection: [],
-          visible: true,
-          title: void 0,
-          description: void 0,
-          message: void 0,
-          badge: void 0,
-          onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeSelection"),
-          onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeVisibility"),
-          onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidCollapseElement"),
-          onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidExpandElement"),
-          onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeCheckboxState")
-        }), "createTreeView"),
-        registerTreeDataProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTreeDataProvider"),
+        createTreeView: /* @__PURE__ */ __name((Id, Options) => {
+          const Provider = Options?.treeDataProvider;
+          if (Provider) {
+            const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
+            TreeDataProviders.set(Handle, Provider);
+            const SerializableOptions = {
+              showCollapseAll: Options?.showCollapseAll === true,
+              canSelectMany: Options?.canSelectMany === true,
+              manageCheckboxStateManually: Options?.manageCheckboxStateManually === true
+            };
+            Context.MountainClient?.sendRequest("tree.register", [
+              Handle,
+              Id,
+              SerializableOptions
+            ]).catch(() => {
+            });
+          }
+          return {
+            reveal: /* @__PURE__ */ __name(async () => {
+            }, "reveal"),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.MountainClient?.sendRequest("tree.dispose", [
+                Id
+              ]).catch(() => {
+              });
+            }, "dispose"),
+            selection: [],
+            visible: true,
+            title: void 0,
+            description: void 0,
+            message: void 0,
+            badge: void 0,
+            onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidChangeSelection"),
+            onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidChangeVisibility"),
+            onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidCollapseElement"),
+            onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidExpandElement"),
+            onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onDidChangeCheckboxState")
+          };
+        }, "createTreeView"),
+        registerTreeDataProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
+          const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
+          TreeDataProviders.set(Handle, Provider);
+          Context.MountainClient?.sendRequest("tree.register", [
+            Handle,
+            ViewId,
+            {}
+          ]).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              TreeDataProviders.delete(Handle);
+              Context.MountainClient?.sendRequest("tree.unregister", [
+                Handle
+              ]).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTreeDataProvider"),
         registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerWebviewPanelSerializer"),
-        registerWebviewViewProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerWebviewViewProvider"),
-        registerCustomEditorProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerCustomEditorProvider"),
+        registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
+          const Handle = `webviewView:${++WebviewViewCounter}`;
+          WebviewViewProviders.set(Handle, Provider);
+          Context.MountainClient?.sendRequest("webview.registerView", [
+            Handle,
+            ViewId
+          ]).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              WebviewViewProviders.delete(Handle);
+              Context.MountainClient?.sendRequest(
+                "webview.unregisterView",
+                [Handle]
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerWebviewViewProvider"),
+        registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider) => {
+          const Handle = `customEditor:${++CustomEditorCounter}`;
+          CustomEditorProviders.set(Handle, Provider);
+          Context.MountainClient?.sendRequest(
+            "webview.registerCustomEditor",
+            [Handle, ViewType]
+          ).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              CustomEditorProviders.delete(Handle);
+              Context.MountainClient?.sendRequest(
+                "webview.unregisterCustomEditor",
+                [Handle]
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerCustomEditorProvider"),
         registerFileDecorationProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerFileDecorationProvider"),
         registerUriHandler: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -21246,8 +21426,50 @@ var init_WindowNamespace = __esm({
         }), "registerProfileContentHandler"),
         registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerExternalUriOpener"),
-        withProgress: /* @__PURE__ */ __name(async (_Option, Task3) => Task3({ report: /* @__PURE__ */ __name(() => {
-        }, "report") }), "withProgress"),
+        // Runs a Task with a progress object that reports to Mountain, which
+        // in turn updates the status-bar progress indicator in Sky.
+        // VS Code's contract: `Task(progress, cancellationToken) -> Thenable<R>`.
+        // We provide a real `report({ message, increment })` path and a
+        // no-op CancellationToken (no cancellation plumbing yet). The
+        // Task's return value is forwarded verbatim.
+        withProgress: /* @__PURE__ */ __name(async (Options, Task3) => {
+          const Handle = `progress:${++ProgressCounter}`;
+          const Title = Options && typeof Options === "object" && Options.title || "Progress";
+          const Location3 = (Options && typeof Options === "object" && Options.location) ?? 15;
+          let Increment = 0;
+          const Progress = {
+            report: /* @__PURE__ */ __name((Value) => {
+              if (Value?.increment) Increment += Value.increment;
+              Context.SendToMountain("progress.report", {
+                handle: Handle,
+                title: Title,
+                location: Location3,
+                message: Value?.message,
+                increment: Increment
+              }).catch(() => {
+              });
+            }, "report")
+          };
+          const CancellationToken2 = {
+            isCancellationRequested: false,
+            onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose") }), "onCancellationRequested")
+          };
+          Context.SendToMountain("progress.start", {
+            handle: Handle,
+            title: Title,
+            location: Location3
+          }).catch(() => {
+          });
+          try {
+            return await Task3(Progress, CancellationToken2);
+          } finally {
+            Context.SendToMountain("progress.end", {
+              handle: Handle
+            }).catch(() => {
+            });
+          }
+        }, "withProgress"),
         setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
           Context.SendToMountain("statusBar.message", {
             text: Text,
@@ -21465,16 +21687,169 @@ var init_GlobToRegex = __esm({
   }
 });
 
+// Source/Utility/LandFixLog.ts
+var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, LandFixLog_default;
+var init_LandFixLog = __esm({
+  "Source/Utility/LandFixLog.ts"() {
+    "use strict";
+    Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
+    Enabled = Mode !== "off";
+    Long = Mode === "long";
+    DebugEnabled = Long;
+    AllowList = (() => {
+      const Raw = process.env["LAND_LANDFIX_TAGS"];
+      if (!Raw || Raw.trim().length === 0) return void 0;
+      const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
+      return Tags.length === 0 ? void 0 : new Set(Tags);
+    })();
+    PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
+    PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
+    FormatTimestamp = /* @__PURE__ */ __name(() => {
+      const Now = /* @__PURE__ */ new Date();
+      if (Long) return Now.toISOString();
+      return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
+        Now.getSeconds()
+      )}.${PadThree(Now.getMilliseconds())}`;
+    }, "FormatTimestamp");
+    SerializeContext = /* @__PURE__ */ __name((Context) => {
+      const Seen = /* @__PURE__ */ new WeakSet();
+      try {
+        return JSON.stringify(Context, (_Key, Value) => {
+          if (Value instanceof Error) {
+            return { name: Value.name, message: Value.message };
+          }
+          if (typeof Value === "bigint") return String(Value);
+          if (typeof Value === "function") return "[Function]";
+          if (typeof Value === "object" && Value !== null) {
+            if (Seen.has(Value)) return "[Circular]";
+            Seen.add(Value);
+          }
+          return Value;
+        });
+      } catch {
+        return '"[Unserializable]"';
+      }
+    }, "SerializeContext");
+    LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
+    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
+      const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
+      if (!Context) return `${Head}
+`;
+      return `${Head} ${SerializeContext(Context)}
+`;
+    }, "FormatLine");
+    Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
+      if (!Enabled) return;
+      if (AllowList && !AllowList.has(Tag)) return;
+      try {
+        Stream.write(FormatLine(Level, Tag, Message, Context));
+      } catch {
+      }
+    }, "Emit");
+    Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      Emit(process.stdout, "info", Tag, Message, Context);
+    }, "Info");
+    Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      Emit(process.stdout, "warn", Tag, Message, Context);
+    }, "Warn");
+    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      Emit(process.stderr, "error", Tag, Message, Context);
+    }, "ErrorLog");
+    Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
+      if (!DebugEnabled) return;
+      Emit(process.stdout, "debug", Tag, Message, Context);
+    }, "Debug");
+    SeenOnce = /* @__PURE__ */ new Set();
+    DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+      if (!DebugEnabled) return;
+      const Combined = `${Tag}:${Key}`;
+      if (SeenOnce.has(Combined)) return;
+      SeenOnce.add(Combined);
+      Emit(process.stdout, "debug", Tag, Message, Context);
+    }, "DebugOnce");
+    InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+      const Combined = `${Tag}:${Key}`;
+      if (SeenOnce.has(Combined)) return;
+      SeenOnce.add(Combined);
+      Emit(process.stdout, "info", Tag, Message, Context);
+    }, "InfoOnce");
+    LandFixLog = {
+      Info,
+      InfoOnce,
+      Warn,
+      Error: ErrorLog,
+      Debug,
+      DebugOnce,
+      IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
+      IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
+      Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
+    };
+    LandFixLog_default = LandFixLog;
+  }
+});
+
+// Source/Utility/Tier.ts
+var Injected, Pick, Tier, Tier_default;
+var init_Tier = __esm({
+  "Source/Utility/Tier.ts"() {
+    "use strict";
+    init_LandFixLog();
+    Injected = globalThis.__LandTiers ?? {};
+    Pick = /* @__PURE__ */ __name((Capability, Fallback) => {
+      const FromInjected = Injected[Capability];
+      if (typeof FromInjected === "string" && FromInjected.length > 0) {
+        return FromInjected;
+      }
+      const FromEnvironment = process.env[`Tier${Capability}`];
+      if (typeof FromEnvironment === "string" && FromEnvironment.length > 0) {
+        return FromEnvironment;
+      }
+      return Fallback;
+    }, "Pick");
+    Tier = {
+      RemoteProcedureCall: Pick(
+        "RemoteProcedureCall",
+        "GRPC"
+      ),
+      HTTPProxy: Pick("HTTPProxy", "HandRolled"),
+      Logger: Pick("Logger", "Standard"),
+      FileSystem: Pick("FileSystem", "Layer2"),
+      FindFiles: Pick("FindFiles", "Layer3"),
+      Glob: Pick("Glob", "JavaScript"),
+      FileWatcher: Pick("FileWatcher", "Stub"),
+      SchemeAssets: Pick("SchemeAssets", "Embedded"),
+      Configuration: Pick("Configuration", "Cache"),
+      Diagnostics: Pick("Diagnostics", "Full"),
+      Clipboard: Pick("Clipboard", "Layer3"),
+      OpenExternal: Pick("OpenExternal", "Layer3"),
+      DocumentMirror: Pick("DocumentMirror", "Full"),
+      ExtensionActivation: Pick(
+        "ExtensionActivation",
+        "Parallel8"
+      ),
+      ExtensionScan: Pick("ExtensionScan", "Sequential"),
+      ModuleCache: Pick("ModuleCache", "Simple"),
+      Telemetry: Pick("Telemetry", "Synchronous")
+    };
+    LandFixLog_default.Info(
+      "Tier",
+      `Cocoon tier set resolved: ${JSON.stringify(Tier)}`
+    );
+    Tier_default = Tier;
+  }
+});
+
 // Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts
 var WorkspaceNamespace_exports = {};
 __export(WorkspaceNamespace_exports, {
   default: () => WorkspaceNamespace_default
 });
-var EventSubscriber, Call, DefaultExcludeSegments, ExtractGlobPattern, FolderToFsPath, FindFilesLocal, CreateWorkspaceNamespace, WorkspaceNamespace_default;
+var EventSubscriber, Call, DefaultExcludeSegments, ExtractGlobPattern, WatcherCounter, FolderToFsPath, FindFilesLocal, ResolveWorkspaceFolders, CreateWorkspaceNamespace, WorkspaceNamespace_default;
 var init_WorkspaceNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts"() {
     "use strict";
     init_GlobToRegex();
+    init_Tier();
     EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
       Context.WorkspaceEventEmitter.on(EventName, Listener);
       return {
@@ -21521,6 +21896,7 @@ var init_WorkspaceNamespace = __esm({
       }
       return void 0;
     }, "ExtractGlobPattern");
+    WatcherCounter = 0;
     FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
       const Raw = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
       if (typeof Raw !== "string" || Raw.length === 0) return void 0;
@@ -21648,6 +22024,13 @@ var init_WorkspaceNamespace = __esm({
       );
       return Results;
     }, "FindFilesLocal");
+    ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
+      const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
+      return (InitWorkspace.folders ?? []).map((Folder) => ({
+        ...Folder,
+        FsPath: FolderToFsPath(Folder?.uri)
+      }));
+    }, "ResolveWorkspaceFolders");
     CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
       const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
       const ConfigCache = /* @__PURE__ */ new Map();
@@ -21889,19 +22272,108 @@ var init_WorkspaceNamespace = __esm({
         }, "dispose") }), "onDidChangeTunnels"),
         registerPortAttributesProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerPortAttributesProvider"),
-        createFileSystemWatcher: /* @__PURE__ */ __name(() => ({
-          ignoreCreateEvents: false,
-          ignoreChangeEvents: false,
-          ignoreDeleteEvents: false,
-          onDidCreate: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidCreate"),
-          onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChange"),
-          onDidDelete: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidDelete"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "createFileSystemWatcher"),
+        // createFileSystemWatcher is tier-gated.
+        //
+        // • Tier.FileWatcher === "Stub" (default): return a true no-op so
+        //   extensions can call it at activation time without paying any
+        //   cost. The TypeScript language extension alone registers ~10
+        //   watchers at startup — flooding Mountain with recursive
+        //   notifications from every one of them causes the event loop
+        //   to saturate and the UI to stop responding to "Open File"
+        //   clicks.
+        //
+        // • Tier.FileWatcher === "Layer4": wire to Mountain's notify-rs
+        //   backend with pattern-based filtering on the Rust side so
+        //   only matching paths produce events. Even in Layer4 we cap the
+        //   number of watchers per workspace root by de-duplicating on
+        //   root + recursive-mode + pattern combination.
+        createFileSystemWatcher: /* @__PURE__ */ __name((Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
+          const StubDisposable = { dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") };
+          const StubWatcher = {
+            ignoreCreateEvents: IgnoreCreateEvents === true,
+            ignoreChangeEvents: IgnoreChangeEvents === true,
+            ignoreDeleteEvents: IgnoreDeleteEvents === true,
+            onDidCreate: /* @__PURE__ */ __name(() => StubDisposable, "onDidCreate"),
+            onDidChange: /* @__PURE__ */ __name(() => StubDisposable, "onDidChange"),
+            onDidDelete: /* @__PURE__ */ __name(() => StubDisposable, "onDidDelete"),
+            dispose: /* @__PURE__ */ __name(() => {
+            }, "dispose")
+          };
+          if (Tier_default.FileWatcher !== "Layer4") {
+            return StubWatcher;
+          }
+          const PatternString = ExtractGlobPattern(Pattern);
+          if (!PatternString) {
+            return StubWatcher;
+          }
+          const Matcher = GlobToRegex_default(PatternString);
+          const Folders = ResolveWorkspaceFolders(Context);
+          const Root = Pattern?.baseUri?.fsPath ?? Pattern?.base ?? Folders[0]?.FsPath;
+          if (!Root) {
+            return StubWatcher;
+          }
+          const Handle = `watcher:${++WatcherCounter}`;
+          const IsRecursive = PatternString.includes("**");
+          Context.MountainClient?.sendRequest("FileWatcher.Register", [
+            Handle,
+            Root,
+            IsRecursive,
+            PatternString
+          ]).catch(() => {
+          });
+          const EventName = `fileWatcher:${Handle}`;
+          const MakeSubscriber = /* @__PURE__ */ __name((Kind, Ignore) => (Listener) => {
+            if (Ignore) return StubDisposable;
+            const WrappedListener = /* @__PURE__ */ __name((Event2) => {
+              if (Event2.kind !== Kind) return;
+              if (!Matcher.test(Event2.path)) return;
+              try {
+                Listener({
+                  scheme: "file",
+                  path: Event2.path,
+                  fsPath: Event2.path,
+                  toString: /* @__PURE__ */ __name(() => `file://${Event2.path}`, "toString")
+                });
+              } catch {
+              }
+            }, "WrappedListener");
+            Context.Emitter.on(EventName, WrappedListener);
+            return {
+              dispose: /* @__PURE__ */ __name(() => {
+                Context.Emitter.removeListener(
+                  EventName,
+                  WrappedListener
+                );
+              }, "dispose")
+            };
+          }, "MakeSubscriber");
+          return {
+            ignoreCreateEvents: IgnoreCreateEvents === true,
+            ignoreChangeEvents: IgnoreChangeEvents === true,
+            ignoreDeleteEvents: IgnoreDeleteEvents === true,
+            onDidCreate: MakeSubscriber(
+              "create",
+              IgnoreCreateEvents === true
+            ),
+            onDidChange: MakeSubscriber(
+              "change",
+              IgnoreChangeEvents === true
+            ),
+            onDidDelete: MakeSubscriber(
+              "delete",
+              IgnoreDeleteEvents === true
+            ),
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.Emitter.removeAllListeners(EventName);
+              Context.MountainClient?.sendRequest(
+                "FileWatcher.Unregister",
+                [Handle]
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "createFileSystemWatcher"),
         fs: {
           // FileSystem.Stat is not yet in CreateEffectForRequest — falls back
           // to defaults via Call's try/catch until the Rust route is added.
@@ -22472,6 +22944,7 @@ var NoopDisposable, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocatio
 var init_ExtensionsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
     "use strict";
+    init_LandFixLog();
     NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") };
     MakeMultiStub = /* @__PURE__ */ __name(() => {
@@ -22582,32 +23055,50 @@ var init_ExtensionsNamespace = __esm({
           try {
             Path = decodeURIComponent(new URL(Raw).pathname);
           } catch (Error2) {
-            process.stdout.write(
-              `[LandFix:ExtNs] URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip
-`
+            LandFixLog_default.Warn(
+              "ExtNs",
+              `URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip`
             );
             Path = Raw.replace(/^file:\/\//, "");
           }
         }
         Path = Path.replace(/\/$/, "");
-        process.stdout.write(
-          `[LandFix:ExtNs] string extensionLocation ${Raw} \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})
-`
-        );
+        if (UriFactoryAvailable) {
+          LandFixLog_default.DebugOnce(
+            "ExtNs",
+            `string:${Path}`,
+            `string extensionLocation ${Raw} \u2192 path=${Path} (factory=real)`
+          );
+        } else {
+          LandFixLog_default.InfoOnce(
+            "ExtNs",
+            `string-fallback:${Path}`,
+            `string extensionLocation ${Raw} \u2192 path=${Path} (factory=FALLBACK)`
+          );
+        }
         return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
       }
       if (Raw && typeof Raw === "object") {
         const Obj = Raw;
         const Path = typeof Obj["fsPath"] === "string" && Obj["fsPath"] || typeof Obj["path"] === "string" && Obj["path"] || (typeof Obj["external"] === "string" ? NormalizeLocation(Obj["external"]).ExtensionPath : "");
-        process.stdout.write(
-          `[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})
-`
-        );
+        if (UriFactoryAvailable) {
+          LandFixLog_default.DebugOnce(
+            "ExtNs",
+            `object:${Path}`,
+            `object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (factory=real)`
+          );
+        } else {
+          LandFixLog_default.InfoOnce(
+            "ExtNs",
+            `object-fallback:${Path}`,
+            `object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (factory=FALLBACK)`
+          );
+        }
         return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
       }
-      process.stdout.write(
-        `[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path
-`
+      LandFixLog_default.Warn(
+        "ExtNs",
+        `extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`
       );
       return { ExtensionPath: "", ExtensionUri: MakeUri("") };
     }, "NormalizeLocation");
@@ -22661,91 +23152,6 @@ var init_ExtensionsNamespace = __esm({
       }, "onDidChange")
     }), "CreateExtensionsNamespace");
     ExtensionsNamespace_default = CreateExtensionsNamespace;
-  }
-});
-
-// Source/Utility/LandFixLog.ts
-var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, LandFixLog, LandFixLog_default;
-var init_LandFixLog = __esm({
-  "Source/Utility/LandFixLog.ts"() {
-    "use strict";
-    Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
-    Enabled = Mode !== "off";
-    Long = Mode === "long";
-    DebugEnabled = Long;
-    AllowList = (() => {
-      const Raw = process.env["LAND_LANDFIX_TAGS"];
-      if (!Raw || Raw.trim().length === 0) return void 0;
-      const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
-      return Tags.length === 0 ? void 0 : new Set(Tags);
-    })();
-    PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
-    PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
-    FormatTimestamp = /* @__PURE__ */ __name(() => {
-      const Now = /* @__PURE__ */ new Date();
-      if (Long) return Now.toISOString();
-      return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
-        Now.getSeconds()
-      )}.${PadThree(Now.getMilliseconds())}`;
-    }, "FormatTimestamp");
-    SerializeContext = /* @__PURE__ */ __name((Context) => {
-      const Seen = /* @__PURE__ */ new WeakSet();
-      try {
-        return JSON.stringify(Context, (_Key, Value) => {
-          if (Value instanceof Error) {
-            return { name: Value.name, message: Value.message };
-          }
-          if (typeof Value === "bigint") return String(Value);
-          if (typeof Value === "function") return "[Function]";
-          if (typeof Value === "object" && Value !== null) {
-            if (Seen.has(Value)) return "[Circular]";
-            Seen.add(Value);
-          }
-          return Value;
-        });
-      } catch {
-        return '"[Unserializable]"';
-      }
-    }, "SerializeContext");
-    LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
-    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
-      const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
-      if (!Context) return `${Head}
-`;
-      return `${Head} ${SerializeContext(Context)}
-`;
-    }, "FormatLine");
-    Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
-      if (!Enabled) return;
-      if (AllowList && !AllowList.has(Tag)) return;
-      try {
-        Stream.write(FormatLine(Level, Tag, Message, Context));
-      } catch {
-      }
-    }, "Emit");
-    Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stdout, "info", Tag, Message, Context);
-    }, "Info");
-    Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stdout, "warn", Tag, Message, Context);
-    }, "Warn");
-    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stderr, "error", Tag, Message, Context);
-    }, "ErrorLog");
-    Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      if (!DebugEnabled) return;
-      Emit(process.stdout, "debug", Tag, Message, Context);
-    }, "Debug");
-    LandFixLog = {
-      Info,
-      Warn,
-      Error: ErrorLog,
-      Debug,
-      IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
-      IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
-      Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
-    };
-    LandFixLog_default = LandFixLog;
   }
 });
 

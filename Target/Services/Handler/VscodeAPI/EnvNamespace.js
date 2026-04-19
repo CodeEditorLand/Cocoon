@@ -69,11 +69,27 @@ var Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
   if (!DebugEnabled) return;
   Emit(process.stdout, "debug", Tag, Message, Context);
 }, "Debug");
+var SeenOnce = /* @__PURE__ */ new Set();
+var DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  if (!DebugEnabled) return;
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "debug", Tag, Message, Context);
+}, "DebugOnce");
+var InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
+  const Combined = `${Tag}:${Key}`;
+  if (SeenOnce.has(Combined)) return;
+  SeenOnce.add(Combined);
+  Emit(process.stdout, "info", Tag, Message, Context);
+}, "InfoOnce");
 var LandFixLog = {
   Info,
+  InfoOnce,
   Warn,
   Error: ErrorLog,
   Debug,
+  DebugOnce,
   IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
   IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
   Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")

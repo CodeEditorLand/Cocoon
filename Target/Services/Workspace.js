@@ -798,7 +798,6 @@ var WorkspaceService = class extends Effect4.Service()(
   "Service/Workspace",
   {
     effect: Effect4.gen(function* () {
-      const IPC = yield* Context3.Tag("IIPCService");
       const Configuration = yield* Context3.Tag(
         "Service/Configuration"
       );

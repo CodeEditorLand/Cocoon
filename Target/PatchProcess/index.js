@@ -29,308 +29,9 @@ var InitDataLive = Layer.succeed(InitDataService, {
   environment: {}
 });
 
-// Source/Interfaces/IIPCService.ts
-import { Context as Context2 } from "effect";
-var IIPCService = Context2.Tag("IIPCService");
-
-// Source/Services/IPCService.ts
-import { Effect as Effect2, Layer as Layer2 } from "effect";
-var CocoonVSBuffer = class _CocoonVSBuffer {
-  constructor(_buffer) {
-    this._buffer = _buffer;
-  }
-  _buffer;
-  static {
-    __name(this, "CocoonVSBuffer");
-  }
-  get buffer() {
-    return this._buffer;
-  }
-  get byteLength() {
-    return this._buffer.byteLength;
-  }
-  toString() {
-    return new TextDecoder().decode(this._buffer);
-  }
-  slice(start, end) {
-    return new _CocoonVSBuffer(this._buffer.slice(start, end));
-  }
-  static fromString(data) {
-    return new _CocoonVSBuffer(new TextEncoder().encode(data));
-  }
-  static wrap(buffer) {
-    return new _CocoonVSBuffer(buffer);
-  }
-};
-var CocoonMessagePassingProtocol = class {
-  constructor(_sendCallback) {
-    this._sendCallback = _sendCallback;
-  }
-  _sendCallback;
-  static {
-    __name(this, "CocoonMessagePassingProtocol");
-  }
-  _onMessage = new Emitter();
-  onMessage = this._onMessage.event;
-  send(buffer) {
-    if (this._sendCallback) {
-      this._sendCallback(buffer);
-    }
-  }
-  // Internal method for simulating message reception
-  simulateMessage(buffer) {
-    this._onMessage.fire(buffer);
-  }
-};
-var IPCService = class {
-  static {
-    __name(this, "IPCService");
-  }
-  _serviceBrand;
-  _protocol = null;
-  _channels = /* @__PURE__ */ new Map();
-  _isConnected = false;
-  _connectionStartTime = 0;
-  _messageCount = 0;
-  _errorCount = 0;
-  _lastPing = 0;
-  _latencySamples = [];
-  // Channel client for making requests
-  _channelClient = null;
-  constructor() {
-    this._serviceBrand = void 0;
-    console.log("[IPCService] Initializing advanced IPC service");
-  }
-  /**
-   * Initialize IPC service with protocol
-   */
-  async initialize(protocol) {
-    console.log("[IPCService] Initializing with protocol");
-    this._protocol = protocol;
-    protocol.onMessage((buffer) => {
-      this._handleMessage(buffer);
-    });
-    await this._establishConnection();
-    this._isConnected = true;
-    this._connectionStartTime = Date.now();
-    this._lastPing = Date.now();
-    console.log("[IPCService] Advanced IPC service initialized");
-  }
-  /**
-   * Establish connection with Mountain
-   */
-  async _establishConnection() {
-    console.log("[IPCService] Establishing connection with Mountain");
-    const handshakeBuffer = CocoonVSBuffer.fromString(
-      JSON.stringify({
-        type: "handshake",
-        timestamp: Date.now(),
-        version: "1.0.0"
-      })
-    );
-    this._protocol.send(handshakeBuffer);
-    const response = await new Promise((resolve2, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error("Handshake timeout"));
-      }, 5e3);
-      const handler = this._protocol.onMessage((buffer) => {
-        try {
-          const data = JSON.parse(buffer.toString());
-          if (data.type === "handshake-response") {
-            clearTimeout(timeout);
-            resolve2(buffer);
-          }
-        } catch (error) {
-        }
-      });
-    });
-    console.log("[IPCService] Connection established with Mountain");
-  }
-  /**
-   * Get channel for specific service
-   */
-  getChannel(channelName) {
-    return {
-      call: /* @__PURE__ */ __name(async (command, arg, cancellationToken) => {
-        if (!this._isConnected) {
-          throw new Error("Not connected to Mountain");
-        }
-        const startTime = Date.now();
-        try {
-          const message = {
-            type: "call",
-            channel: channelName,
-            command,
-            arg,
-            timestamp: startTime,
-            messageId: `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-          };
-          const buffer = CocoonVSBuffer.fromString(
-            JSON.stringify(message)
-          );
-          this._protocol.send(buffer);
-          this._messageCount++;
-          const response = await this._waitForResponse(
-            message.messageId,
-            cancellationToken
-          );
-          const latency = Date.now() - startTime;
-          this._latencySamples.push(latency);
-          return response;
-        } catch (error) {
-          this._errorCount++;
-          throw error;
-        }
-      }, "call"),
-      listen: /* @__PURE__ */ __name((event, arg) => {
-        const emitter = new Emitter();
-        return emitter.event;
-      }, "listen")
-    };
-  }
-  /**
-   * Register server channel for handling requests
-   */
-  registerChannel(channelName, channel) {
-    console.log(`[IPCService] Registering channel: ${channelName}`);
-    this._channels.set(channelName, channel);
-  }
-  /**
-   * Wait for response with cancellation support
-   */
-  async _waitForResponse(messageId, cancellationToken) {
-    return new Promise((resolve2, reject) => {
-      if (cancellationToken?.isCancellationRequested) {
-        reject(new Error("Request cancelled"));
-        return;
-      }
-      const timeout = setTimeout(() => {
-        reject(new Error("Response timeout"));
-      }, 3e4);
-      const handler = this._protocol.onMessage((buffer) => {
-        try {
-          const data = JSON.parse(buffer.toString());
-          if (data.messageId === messageId) {
-            clearTimeout(timeout);
-            if (data.success) {
-              resolve2(data.result);
-            } else {
-              reject(new Error(data.error || "Request failed"));
-            }
-          }
-        } catch (error) {
-        }
-      });
-      if (cancellationToken) {
-        cancellationToken.onCancellationRequested(() => {
-          clearTimeout(timeout);
-          reject(new Error("Request cancelled"));
-        });
-      }
-    });
-  }
-  /**
-   * Handle incoming messages
-   */
-  _handleMessage(buffer) {
-    try {
-      const data = JSON.parse(buffer.toString());
-      if (data.type === "handshake-response") {
-        console.log("[IPCService] Received handshake response");
-        return;
-      }
-      if (data.type === "call" && data.channel) {
-        this._handleCall(data);
-        return;
-      }
-      console.log("[IPCService] Unhandled message type:", data.type);
-    } catch (error) {
-      console.error("[IPCService] Failed to handle message:", error);
-    }
-  }
-  /**
-   * Handle incoming call requests
-   */
-  async _handleCall(data) {
-    const channel = this._channels.get(data.channel);
-    if (!channel) {
-      console.error(`[IPCService] Channel not found: ${data.channel}`);
-      return;
-    }
-    try {
-      const result = await channel.call(data.command, data.arg);
-      const response = {
-        type: "response",
-        messageId: data.messageId,
-        success: true,
-        result,
-        timestamp: Date.now()
-      };
-      const buffer = CocoonVSBuffer.fromString(JSON.stringify(response));
-      this._protocol.send(buffer);
-    } catch (error) {
-      const response = {
-        type: "response",
-        messageId: data.messageId,
-        success: false,
-        error: error.message,
-        timestamp: Date.now()
-      };
-      const buffer = CocoonVSBuffer.fromString(JSON.stringify(response));
-      this._protocol.send(buffer);
-    }
-  }
-  /**
-   * Get connection status
-   */
-  getConnectionStatus() {
-    const now = Date.now();
-    const connectionUptime = this._isConnected ? now - this._connectionStartTime : 0;
-    const averageLatency = this._latencySamples.length > 0 ? this._latencySamples.reduce((a, b) => a + b, 0) / this._latencySamples.length : void 0;
-    return {
-      connected: this._isConnected,
-      lastPing: this._lastPing,
-      errorCount: this._errorCount,
-      connectionUptime,
-      messageCount: this._messageCount,
-      averageLatency
-    };
-  }
-  /**
-   * Reconnect to Mountain
-   */
-  async reconnect() {
-    console.log("[IPCService] Reconnecting to Mountain");
-    await this.dispose();
-    if (this._protocol) {
-      await this.initialize(this._protocol);
-    }
-    console.log("[IPCService] Reconnected to Mountain");
-  }
-  /**
-   * Cleanup IPC service
-   */
-  dispose() {
-    console.log("[IPCService] Disposing IPC service");
-    this._isConnected = false;
-    this._channels.clear();
-    this._protocol = null;
-    this._channelClient = null;
-    console.log("[IPCService] IPC service disposed");
-  }
-};
-var IPCServiceLayer = Layer2.effect(
-  IIPCService,
-  Effect2.sync(() => new IPCService())
-);
-var IPCServiceLive = Layer2.effect(
-  IIPCService,
-  Effect2.sync(() => new IPCService())
-);
-
 // Source/PatchProcess/Patcher.ts
 import ModuleNS from "node:module";
-import { Config, Data, Effect as Effect3 } from "effect";
+import { Config, Data, Effect as Effect2 } from "effect";
 var Module = ModuleNS;
 var ModulePatchProblem = class extends Data.TaggedError("ModulePatchProblem") {
   static {
@@ -342,22 +43,22 @@ var ModulePatchProblem = class extends Data.TaggedError("ModulePatchProblem") {
     this.message = `Failed to patch Node.js module loader: ${this.Context}`;
   }
 };
-var PatcherService = class extends Effect3.Service()(
+var PatcherService = class extends Effect2.Service()(
   "PatchProcess/PatcherService",
   {
-    effect: Effect3.gen(function* () {
+    effect: Effect2.gen(function* () {
       const AllowExit = yield* Config.boolean("AllowExit").pipe(
-        Effect3.catchAll(
-          (Error2) => Effect3.logWarning(
+        Effect2.catchAll(
+          (Error2) => Effect2.logWarning(
             "Failed to load Patcher config, using defaults.",
             { Error: Error2 }
-          ).pipe(Effect3.as(false))
+          ).pipe(Effect2.as(false))
         )
       );
       const SecurityPolicy5 = yield* Config.string("SecurityPolicy").pipe(
-        Effect3.catchTag(
+        Effect2.catchTag(
           "MissingConfig",
-          () => Effect3.succeed("default")
+          () => Effect2.succeed("default")
         ),
         Config.map((Value) => ParseSecurityPolicy(Value))
       );
@@ -374,47 +75,47 @@ var PatcherService = class extends Effect3.Service()(
     __name(this, "PatcherService");
   }
 };
-var SetElectronRunAsNode = Effect3.sync(() => {
+var SetElectronRunAsNode = Effect2.sync(() => {
   process.env["ELECTRON_RUN_AS_NODE"] = "1";
 }).pipe(
-  Effect3.tap(
-    () => Effect3.logTrace("Set `ELECTRON_RUN_AS_NODE` environment variable")
+  Effect2.tap(
+    () => Effect2.logTrace("Set `ELECTRON_RUN_AS_NODE` environment variable")
   )
 );
-var SetStackTraceLimit = Effect3.sync(() => {
+var SetStackTraceLimit = Effect2.sync(() => {
   Error.stackTraceLimit = 100;
 }).pipe(
-  Effect3.tap(
-    () => Effect3.logTrace("Increased `Error.stackTraceLimit` to 100")
+  Effect2.tap(
+    () => Effect2.logTrace("Increased `Error.stackTraceLimit` to 100")
   )
 );
-var PatchProcessCrash = Effect3.gen(function* () {
+var PatchProcessCrash = Effect2.gen(function* () {
   const Service = yield* PatcherService;
   if (Service.NativeCrash) {
     process.crash = () => {
       const PreventionStack = new Error(
         "Stack trace for prevented process.crash()"
       ).stack;
-      Effect3.runSync(
-        Effect3.logWarning(
+      Effect2.runSync(
+        Effect2.logWarning(
           `Call to 'process.crash()' intercepted and PREVENTED by host policy`,
           `Stack: ${PreventionStack ?? "(unavailable)"}`
         )
       );
     };
-    yield* Effect3.logTrace("Successfully patched 'process.crash'");
+    yield* Effect2.logTrace("Successfully patched 'process.crash'");
   } else {
-    yield* Effect3.logTrace(
+    yield* Effect2.logTrace(
       "'process.crash()' not found in environment, skipping patch"
     );
   }
 });
-var PatchProcessExit = Effect3.gen(function* () {
+var PatchProcessExit = Effect2.gen(function* () {
   const Service = yield* PatcherService;
   process.exit = (Code) => {
     if (Service.AllowExit()) {
-      Effect3.runSync(
-        Effect3.logInfo(
+      Effect2.runSync(
+        Effect2.logInfo(
           `'process.exit(${Code ?? ""})' ALLOWED by host policy`
         )
       );
@@ -425,14 +126,14 @@ var PatchProcessExit = Effect3.gen(function* () {
       message: ErrorMessage,
       AttemptedCode: Code
     });
-    Effect3.runSync(
-      Effect3.logWarning("Blocked call to process.exit by host policy")
+    Effect2.runSync(
+      Effect2.logWarning("Blocked call to process.exit by host policy")
     );
     throw PreventionError;
   };
-  yield* Effect3.logTrace("Successfully patched 'process.exit'");
+  yield* Effect2.logTrace("Successfully patched 'process.exit'");
 });
-var BlockNativesModule = Effect3.try({
+var BlockNativesModule = Effect2.try({
   try: /* @__PURE__ */ __name(() => {
     if (typeof Module._load === "function") {
       const OriginalLoad = Module._load;
@@ -455,141 +156,90 @@ var BlockNativesModule = Effect3.try({
     Cause
   }), "catch")
 }).pipe(
-  Effect3.tap(
-    () => Effect3.logTrace("Module._load patched to block 'natives' module")
+  Effect2.tap(
+    () => Effect2.logTrace("Module._load patched to block 'natives' module")
   )
 );
-var SafeToString = /* @__PURE__ */ __name((Arguments) => {
-  const Slices = [];
-  for (let i = 0; i < Arguments.length; i++) {
-    const Argument = Arguments[i];
-    Slices.push(
-      typeof Argument === "object" ? JSON.stringify(Argument, null, 2) : String(Argument)
-    );
-  }
-  return Slices.join(" ");
-}, "SafeToString");
-var PipeLogging = Effect3.gen(function* () {
+var PipeLogging = Effect2.gen(function* () {
   if (process.env["VSCODE_PIPE_LOGGING"] !== "true") {
-    return yield* Effect3.logTrace(
+    return yield* Effect2.logTrace(
       "Console log piping disabled by environment variable"
     );
   }
-  const IPC = yield* IPCService;
-  const ForwardConsoleCall = /* @__PURE__ */ __name((Severity, Arguments) => {
-    const Payload = {
-      type: "__$console",
-      severity: Severity,
-      arguments: SafeToString(Arguments)
-    };
-    return IPC.SendNotification("$log", [Payload]);
-  }, "ForwardConsoleCall");
-  const OriginalConsole = {
-    log: console.log,
-    warn: console.warn,
-    error: console.error
-  };
-  console.log = (...args) => {
-    OriginalConsole.log.apply(console, args);
-    Effect3.runFork(ForwardConsoleCall("log", args));
-  };
-  console.warn = (...args) => {
-    OriginalConsole.warn.apply(console, args);
-    Effect3.runFork(ForwardConsoleCall("warn", args));
-  };
-  console.error = (...args) => {
-    OriginalConsole.error.apply(console, args);
-    Effect3.runFork(ForwardConsoleCall("error", args));
-  };
-  yield* Effect3.logTrace(
-    "Global console object patched to pipe logs to host"
+  yield* Effect2.logTrace(
+    "VSCODE_PIPE_LOGGING set but Cocoon pipes console via MountainClient; no patch applied"
   );
 });
-var HandleException = Effect3.gen(function* () {
+var HandleException = Effect2.gen(function* () {
   if (process.env["VSCODE_HANDLES_UNCAUGHT_ERRORS"] === "true") {
-    return yield* Effect3.logTrace(
+    return yield* Effect2.logTrace(
       "Skipping global exception handler, will be handled by RPC"
     );
   }
-  const IPC = yield* IPCService;
   const LogError = /* @__PURE__ */ __name((Type, CaughtError) => {
     const Message = CaughtError instanceof Error ? CaughtError.stack || CaughtError.message : String(CaughtError);
-    const Payload = {
-      type: "__$error",
-      severity: "error",
-      arguments: `[${Type}] ${Message}`
-    };
-    return IPC.SendNotification("$log", [Payload]).pipe(
-      Effect3.catchAll(
-        (ErrorValue) => Effect3.sync(
-          () => console.error(
-            `[Patcher] Failed to send error to host: ${ErrorValue}`,
-            Payload
-          )
-        )
-      )
-    );
+    console.error(`[Patcher] ${Type}: ${Message}`);
   }, "LogError");
   process.on("uncaughtException", (Error2) => {
-    Effect3.runFork(LogError("uncaughtException", Error2));
+    LogError("uncaughtException", Error2);
   });
   process.on("unhandledRejection", (Reason) => {
-    Effect3.runFork(LogError("unhandledRejection", Reason));
+    LogError("unhandledRejection", Reason);
   });
-  yield* Effect3.logTrace("Global exception handlers installed");
+  yield* Effect2.logTrace("Global exception handlers installed");
 });
-var SetupEnvironment = Effect3.gen(function* () {
+var SetupEnvironment = Effect2.gen(function* () {
   const InitData2 = yield* InitDataService;
   if (InitData2.environment.useHostProxy) {
-    yield* Effect3.logInfo(
+    yield* Effect2.logInfo(
       "Host proxy enabled. Proxy environment variables inherited"
     );
   }
 }).pipe(
-  Effect3.tap(() => Effect3.logTrace("Proxy environment variables configured"))
+  Effect2.tap(() => Effect2.logTrace("Proxy environment variables configured"))
 );
-var TerminateOnParentExit = Effect3.gen(function* () {
+var TerminateOnParentExit = Effect2.gen(function* () {
   const ParentPidString = process.env["VSCODE_PID"];
   if (!ParentPidString) {
-    return yield* Effect3.logTrace(
+    return yield* Effect2.logTrace(
       "No VSCODE_PID found, skipping parent exit monitoring"
     );
   }
   const ParentPid = Number.parseInt(ParentPidString, 10);
   if (Number.isNaN(ParentPid)) {
-    return yield* Effect3.logWarning(
+    return yield* Effect2.logWarning(
       `Invalid VSCODE_PID '${ParentPidString}', cannot monitor parent process`
     );
   }
-  yield* Effect3.logTrace(`Monitoring parent process ${ParentPid} for exit`);
-  const MonitoringLoop = Effect3.gen(function* () {
+  yield* Effect2.logTrace(`Monitoring parent process ${ParentPid} for exit`);
+  const MonitoringLoop = Effect2.gen(function* () {
     while (true) {
       try {
         process.kill(ParentPid, 0);
       } catch (Error2) {
-        yield* Effect3.logInfo(
+        yield* Effect2.logInfo(
           `Parent process ${ParentPid} no longer running. Exiting gracefully`
         );
         process.exit(0);
       }
-      yield* Effect3.sleep("5 seconds");
+      yield* Effect2.sleep("5 seconds");
     }
-  }).pipe(Effect3.forkDaemon);
+  }).pipe(Effect2.forkDaemon);
   yield* MonitoringLoop;
 });
-var EnforceMemoryLimit = Effect3.gen(function* () {
+var EnforceMemoryLimit = Effect2.gen(function* () {
   const Service = yield* PatcherService;
   const Policy = Service.GetSecurityPolicy();
   if (Policy.MaxMemoryMB > 0) {
     const MaxMemoryInBytes = Policy.MaxMemoryMB * 1024 * 1024;
-    yield* Effect3.logDebug(
+    yield* Effect2.logDebug(
       `Memory limit configured: ${Policy.MaxMemoryMB}MB`
     );
   } else {
-    yield* Effect3.logTrace("No memory limit configured");
+    yield* Effect2.logTrace("No memory limit configured");
   }
 });
-var RunPatchProcess = Effect3.gen(function* () {
+var RunPatchProcess = Effect2.gen(function* () {
   const AllPatches = [
     PatchProcessCrash,
     PatchProcessExit,
@@ -602,18 +252,18 @@ var RunPatchProcess = Effect3.gen(function* () {
     TerminateOnParentExit,
     EnforceMemoryLimit
   ];
-  yield* Effect3.all(AllPatches, { discard: true, concurrency: "unbounded" });
+  yield* Effect2.all(AllPatches, { discard: true, concurrency: "unbounded" });
 }).pipe(
-  Effect3.tap(
-    () => Effect3.logDebug("All core process patches have been applied")
+  Effect2.tap(
+    () => Effect2.logDebug("All core process patches have been applied")
   ),
-  Effect3.catchAll(
-    (Error2) => Effect3.logFatal(
+  Effect2.catchAll(
+    (Error2) => Effect2.logFatal(
       "Critical error during process patching. Environment may be unstable",
       Error2
     )
   ),
-  Effect3.provide(PatcherService.Default)
+  Effect2.provide(PatcherService.Default)
 );
 function ParseSecurityPolicy(PolicyString) {
   const Parts = PolicyString.split(",");
@@ -643,20 +293,20 @@ function ParseSecurityPolicy(PolicyString) {
   return Policy;
 }
 __name(ParseSecurityPolicy, "ParseSecurityPolicy");
-var ReloadSecurityPolicy = Effect3.gen(function* () {
-  yield* Effect3.logInfo("Reloading security policy...");
+var ReloadSecurityPolicy = Effect2.gen(function* () {
+  yield* Effect2.logInfo("Reloading security policy...");
   const NewPolicyString = yield* Config.string("SecurityPolicy").pipe(
-    Effect3.catchTag("MissingConfig", () => Effect3.succeed("default"))
+    Effect2.catchTag("MissingConfig", () => Effect2.succeed("default"))
   );
   const NewPolicy = ParseSecurityPolicy(NewPolicyString);
-  yield* Effect3.logDebug("Security policy reloaded", { NewPolicy });
+  yield* Effect2.logDebug("Security policy reloaded", { NewPolicy });
   return NewPolicy;
 });
 
 // Source/PatchProcess/Security.ts
 import * as Path from "node:path";
 import * as URL from "node:url";
-import { Data as Data2, Effect as Effect4 } from "effect";
+import { Data as Data2, Effect as Effect3 } from "effect";
 var DefaultSecurityPolicy = {
   AllowExit: false,
   MaxMemoryMB: 512,
@@ -799,18 +449,18 @@ var ValidateEnvironmentVariable = /* @__PURE__ */ __name((Name, Value) => {
   }
   return Value;
 }, "ValidateEnvironmentVariable");
-var EnforceMemoryLimit2 = Effect4.gen(function* () {
+var EnforceMemoryLimit2 = Effect3.gen(function* () {
   const Policy = DefaultSecurityPolicy;
   if (Policy.MaxMemoryMB <= 0) {
-    return yield* Effect4.logTrace("No memory limit configured");
+    return yield* Effect3.logTrace("No memory limit configured");
   }
   const MemoryUsage = process.memoryUsage();
   const UsedMemoryMB = MemoryUsage.heapUsed / (1024 * 1024);
   if (UsedMemoryMB > Policy.MaxMemoryMB) {
-    yield* Effect4.logError(
+    yield* Effect3.logError(
       `Memory limit exceeded: ${UsedMemoryMB.toFixed(2)}MB / ${Policy.MaxMemoryMB}MB`
     );
-    return yield* Effect4.fail(
+    return yield* Effect3.fail(
       new MemoryLimitExceededError({
         LimitMB: Policy.MaxMemoryMB,
         AttemptedMB: UsedMemoryMB,
@@ -818,20 +468,20 @@ var EnforceMemoryLimit2 = Effect4.gen(function* () {
       })
     );
   }
-  yield* Effect4.logTrace(
+  yield* Effect3.logTrace(
     `Memory usage within limits: ${UsedMemoryMB.toFixed(2)}MB / ${Policy.MaxMemoryMB}MB`
   );
 });
-var EnforceCpuLimit = Effect4.gen(function* () {
+var EnforceCpuLimit = Effect3.gen(function* () {
   const Policy = DefaultSecurityPolicy;
   if (Policy.MaxCpuPercent <= 0) {
-    return yield* Effect4.logTrace("No CPU limit configured");
+    return yield* Effect3.logTrace("No CPU limit configured");
   }
-  yield* Effect4.logDebug(
+  yield* Effect3.logDebug(
     `CPU limit configured: ${Policy.MaxCpuPercent}% (monitoring not yet implemented)`
   );
 });
-var PerformSecurityAudit = Effect4.gen(function* () {
+var PerformSecurityAudit = Effect3.gen(function* () {
   const Policy = DefaultSecurityPolicy;
   const Report = {
     MemoryUsage: process.memoryUsage(),
@@ -848,7 +498,7 @@ var PerformSecurityAudit = Effect4.gen(function* () {
     MaxCpuPercent: Policy.MaxCpuPercent,
     Timestamp: Date.now()
   };
-  yield* Effect4.logInfo("Security audit completed", { Report });
+  yield* Effect3.logInfo("Security audit completed", { Report });
   return Report;
 });
 var GetPolicyHash = /* @__PURE__ */ __name((Policy = DefaultSecurityPolicy) => {
@@ -873,7 +523,7 @@ var MergeSecurityPolicies = /* @__PURE__ */ __name((Overrides) => {
 
 // Source/PatchProcess/Validator.ts
 import * as Process from "node:process";
-import { Data as Data3, Effect as Effect5, Queue } from "effect";
+import { Data as Data3, Effect as Effect4, Queue } from "effect";
 var ValidationError = class extends Data3.TaggedError("ValidationError") {
   static {
     __name(this, "ValidationError");
@@ -932,7 +582,7 @@ var ValidationMetricsStore = class _ValidationMetricsStore {
 };
 var ProcessValidationStates = /* @__PURE__ */ new Map();
 var ValidationAlertQueue = null;
-var InitializeProcessValidation = Effect5.gen(function* () {
+var InitializeProcessValidation = Effect4.gen(function* () {
   const State = {
     ProcessId: Process.pid,
     StartTime: Date.now(),
@@ -944,12 +594,12 @@ var InitializeProcessValidation = Effect5.gen(function* () {
   };
   ProcessValidationStates.set(Process.pid, State);
   ValidationAlertQueue = yield* Queue.unbounded();
-  yield* Effect5.logInfo("Process validation initialized", {
+  yield* Effect4.logInfo("Process validation initialized", {
     ProcessId: Process.pid
   });
   return State;
 });
-var ValidateFileSystemAccess = /* @__PURE__ */ __name((File, Operation) => Effect5.gen(function* () {
+var ValidateFileSystemAccess = /* @__PURE__ */ __name((File, Operation) => Effect4.gen(function* () {
   const StartTime = Date.now();
   const Metrics = ValidationMetricsStore.GetInstance();
   const State = ProcessValidationStates.get(Process.pid);
@@ -979,7 +629,7 @@ var ValidateFileSystemAccess = /* @__PURE__ */ __name((File, Operation) => Effec
       Timestamp: Date.now()
     };
     Metrics.RecordValidation(StartTime, false);
-    yield* Effect5.logWarning("File system access denied", {
+    yield* Effect4.logWarning("File system access denied", {
       File,
       Operation,
       ProcessId: Process.pid
@@ -994,7 +644,7 @@ var ValidateFileSystemAccess = /* @__PURE__ */ __name((File, Operation) => Effec
   Metrics.RecordValidation(StartTime, true);
   return Result;
 }), "ValidateFileSystemAccess");
-var ValidateNetworkAccess2 = /* @__PURE__ */ __name((Endpoint, Operation) => Effect5.gen(function* () {
+var ValidateNetworkAccess2 = /* @__PURE__ */ __name((Endpoint, Operation) => Effect4.gen(function* () {
   const StartTime = Date.now();
   const Metrics = ValidationMetricsStore.GetInstance();
   const State = ProcessValidationStates.get(Process.pid);
@@ -1023,7 +673,7 @@ var ValidateNetworkAccess2 = /* @__PURE__ */ __name((Endpoint, Operation) => Eff
       Timestamp: Date.now()
     };
     Metrics.RecordValidation(StartTime, false);
-    yield* Effect5.logWarning("Network access denied", {
+    yield* Effect4.logWarning("Network access denied", {
       Endpoint,
       Operation,
       ProcessId: Process.pid
@@ -1038,7 +688,7 @@ var ValidateNetworkAccess2 = /* @__PURE__ */ __name((Endpoint, Operation) => Eff
   Metrics.RecordValidation(StartTime, true);
   return Result;
 }), "ValidateNetworkAccess");
-var ValidateChildProcessSpawn = /* @__PURE__ */ __name((Command, Arguments) => Effect5.gen(function* () {
+var ValidateChildProcessSpawn = /* @__PURE__ */ __name((Command, Arguments) => Effect4.gen(function* () {
   const StartTime = Date.now();
   const Metrics = ValidationMetricsStore.GetInstance();
   const State = ProcessValidationStates.get(Process.pid);
@@ -1067,7 +717,7 @@ var ValidateChildProcessSpawn = /* @__PURE__ */ __name((Command, Arguments) => E
       Timestamp: Date.now()
     };
     Metrics.RecordValidation(StartTime, false);
-    yield* Effect5.logWarning("Child process spawn denied", {
+    yield* Effect4.logWarning("Child process spawn denied", {
       Command,
       Arguments,
       ProcessId: Process.pid
@@ -1083,7 +733,7 @@ var ValidateChildProcessSpawn = /* @__PURE__ */ __name((Command, Arguments) => E
   Metrics.RecordValidation(StartTime, true);
   return Result;
 }), "ValidateChildProcessSpawn");
-var ValidateMemoryUsage = Effect5.gen(function* () {
+var ValidateMemoryUsage = Effect4.gen(function* () {
   const StartTime = Date.now();
   const Metrics = ValidationMetricsStore.GetInstance();
   const State = ProcessValidationStates.get(Process.pid);
@@ -1109,7 +759,7 @@ var ValidateMemoryUsage = Effect5.gen(function* () {
       Timestamp: Date.now()
     };
     Metrics.RecordValidation(StartTime, false);
-    yield* Effect5.logError("Memory limit exceeded", {
+    yield* Effect4.logError("Memory limit exceeded", {
       UsedMemoryMB,
       MaxMemoryMB,
       ProcessId: Process.pid
@@ -1124,10 +774,10 @@ var ValidateMemoryUsage = Effect5.gen(function* () {
   Metrics.RecordValidation(StartTime, true);
   return Result;
 });
-var DetectSuspiciousBehavior = Effect5.gen(function* () {
+var DetectSuspiciousBehavior = Effect4.gen(function* () {
   const State = ProcessValidationStates.get(Process.pid);
   if (!State) {
-    return yield* Effect5.fail(
+    return yield* Effect4.fail(
       new ValidationError({
         ProcessId: Process.pid,
         ValidationType: "BehaviorDetection",
@@ -1146,27 +796,27 @@ var DetectSuspiciousBehavior = Effect5.gen(function* () {
     0
   );
   if (UptimeMinutes > 0 && AccessRate / UptimeMinutes > 100) {
-    yield* Effect5.logWarning("Suspicious file access rate detected", {
+    yield* Effect4.logWarning("Suspicious file access rate detected", {
       AccessRate,
       UptimeMinutes,
       ProcessId: Process.pid
     });
   }
   if (UptimeMinutes > 0 && NetworkRate / UptimeMinutes > 10) {
-    yield* Effect5.logWarning("Suspicious network activity detected", {
+    yield* Effect4.logWarning("Suspicious network activity detected", {
       NetworkRate,
       UptimeMinutes,
       ProcessId: Process.pid
     });
   }
   if (State.ChildProcessCount > 50) {
-    yield* Effect5.logWarning("Excessive child process spawning", {
+    yield* Effect4.logWarning("Excessive child process spawning", {
       ChildProcessCount: State.ChildProcessCount,
       ProcessId: Process.pid
     });
   }
   if (State.ViolationCount > 10) {
-    yield* Effect5.logError("Multiple security violations detected", {
+    yield* Effect4.logError("Multiple security violations detected", {
       ViolationCount: State.ViolationCount,
       ProcessId: Process.pid
     });
@@ -1181,7 +831,7 @@ var DetectSuspiciousBehavior = Effect5.gen(function* () {
 var GetValidationMetrics = /* @__PURE__ */ __name(() => {
   return ValidationMetricsStore.GetInstance().GetMetrics();
 }, "GetValidationMetrics");
-var ResetValidationMetrics = Effect5.sync(() => {
+var ResetValidationMetrics = Effect4.sync(() => {
   ValidationMetricsStore.GetInstance().Reset();
   return;
 });
@@ -1189,11 +839,11 @@ var GetProcessValidationState = /* @__PURE__ */ __name((ProcessId = Process.pid)
   return ProcessValidationStates.get(ProcessId);
 }, "GetProcessValidationState");
 var ClearProcessValidationState = /* @__PURE__ */ __name((ProcessId = Process.pid) => {
-  return Effect5.sync(() => {
+  return Effect4.sync(() => {
     ProcessValidationStates.delete(ProcessId);
   });
 }, "ClearProcessValidationState");
-var RunSecurityValidation = Effect5.gen(function* () {
+var RunSecurityValidation = Effect4.gen(function* () {
   yield* ValidateMemoryUsage;
   const BehaviorCheck = yield* DetectSuspiciousBehavior;
   const Result = {
@@ -1202,7 +852,7 @@ var RunSecurityValidation = Effect5.gen(function* () {
     BehaviorCheck,
     Metrics: GetValidationMetrics()
   };
-  yield* Effect5.logInfo(
+  yield* Effect4.logInfo(
     "Comprehensive security validation completed",
     Result
   );
@@ -1211,32 +861,32 @@ var RunSecurityValidation = Effect5.gen(function* () {
 
 // Source/PatchProcess/Loader.ts
 import * as Process2 from "node:process";
-import { Config as Config2, Effect as Effect6, Layer as Layer3 } from "effect";
-var LoaderService = class extends Effect6.Service()(
+import { Config as Config2, Effect as Effect5, Layer as Layer2 } from "effect";
+var LoaderService = class extends Effect5.Service()(
   "PatchProcess/LoaderService",
   {
-    effect: Effect6.gen(function* () {
+    effect: Effect5.gen(function* () {
       const SecurityPolicy5 = yield* Config2.string("SecurityPolicy").pipe(
-        Effect6.catchTag(
+        Effect5.catchTag(
           "MissingConfig",
-          () => Effect6.succeed("default")
+          () => Effect5.succeed("default")
         )
       );
       const EnableMonitoring = yield* Config2.boolean(
         "EnableMonitoring"
-      ).pipe(Effect6.catchAll(() => Effect6.succeed(true)));
+      ).pipe(Effect5.catchAll(() => Effect5.succeed(true)));
       return {
         LoadSecurityPatches: RunPatchProcess,
-        InitializeMonitoring: Effect6.gen(function* () {
+        InitializeMonitoring: Effect5.gen(function* () {
           if (!EnableMonitoring) {
-            return yield* Effect6.logInfo(
+            return yield* Effect5.logInfo(
               "Security monitoring disabled by configuration"
             );
           }
           yield* InitializeProcessValidation;
-          yield* Effect6.logInfo("Process monitoring initialized");
+          yield* Effect5.logInfo("Process monitoring initialized");
         }),
-        GetSecurityPolicy: Effect6.succeed({
+        GetSecurityPolicy: Effect5.succeed({
           AllowExit: false,
           MaxMemoryMB: 512,
           MaxCpuPercent: 50,
@@ -1258,30 +908,30 @@ var LoaderService = class extends Effect6.Service()(
     __name(this, "LoaderService");
   }
 };
-var InitializeSecurityLoader = Effect6.gen(function* () {
+var InitializeSecurityLoader = Effect5.gen(function* () {
   const Loader2 = yield* LoaderService;
-  yield* Effect6.logInfo("Initializing Security Loader...");
-  yield* Effect6.logInfo("Loading security patches...");
+  yield* Effect5.logInfo("Initializing Security Loader...");
+  yield* Effect5.logInfo("Loading security patches...");
   yield* Loader2.LoadSecurityPatches;
-  yield* Effect6.logInfo("Initializing monitoring...");
+  yield* Effect5.logInfo("Initializing monitoring...");
   yield* Loader2.InitializeMonitoring;
-  yield* Effect6.logInfo("Running initial security audit...");
+  yield* Effect5.logInfo("Running initial security audit...");
   const AuditResult = yield* Loader2.RunSecurityAudit;
-  yield* Effect6.logInfo("Initial security audit completed", { AuditResult });
+  yield* Effect5.logInfo("Initial security audit completed", { AuditResult });
   yield* StartPeriodicValidation;
-  yield* Effect6.logInfo("Security Loader initialization completed");
+  yield* Effect5.logInfo("Security Loader initialization completed");
 });
-var StartPeriodicValidation = Effect6.gen(function* () {
+var StartPeriodicValidation = Effect5.gen(function* () {
   const IntervalSeconds = 30;
-  yield* Effect6.logDebug(
+  yield* Effect5.logDebug(
     `Starting periodic security validation (${IntervalSeconds}s interval)`
   );
-  const ValidationLoop = Effect6.gen(function* () {
+  const ValidationLoop = Effect5.gen(function* () {
     while (true) {
-      yield* Effect6.sleep(`${IntervalSeconds} seconds`);
+      yield* Effect5.sleep(`${IntervalSeconds} seconds`);
       const ValidationResult2 = yield* RunSecurityValidation.pipe(
-        Effect6.catchAll((Error2) => {
-          return Effect6.logError(
+        Effect5.catchAll((Error2) => {
+          return Effect5.logError(
             "Periodic security validation failed",
             {
               Error: Error2
@@ -1289,18 +939,18 @@ var StartPeriodicValidation = Effect6.gen(function* () {
           );
         })
       );
-      yield* Effect6.logTrace(
+      yield* Effect5.logTrace(
         "Periodic security validation completed",
         ValidationResult2
       );
     }
   });
-  yield* ValidationLoop.pipe(Effect6.forkDaemon);
+  yield* ValidationLoop.pipe(Effect5.forkDaemon);
 });
-var ValidateFileSystemAccessWrapper = /* @__PURE__ */ __name((File, Operation) => Effect6.gen(function* () {
+var ValidateFileSystemAccessWrapper = /* @__PURE__ */ __name((File, Operation) => Effect5.gen(function* () {
   const Result = yield* ValidateFileSystemAccess(File, Operation);
   if (!Result.Valid) {
-    yield* Effect6.logWarning("File system access prevented", {
+    yield* Effect5.logWarning("File system access prevented", {
       File,
       Operation,
       Reason: Result.Reason
@@ -1309,10 +959,10 @@ var ValidateFileSystemAccessWrapper = /* @__PURE__ */ __name((File, Operation) =
   }
   return true;
 }), "ValidateFileSystemAccessWrapper");
-var ValidateNetworkAccessWrapper = /* @__PURE__ */ __name((Endpoint, Operation) => Effect6.gen(function* () {
+var ValidateNetworkAccessWrapper = /* @__PURE__ */ __name((Endpoint, Operation) => Effect5.gen(function* () {
   const Result = yield* ValidateNetworkAccess2(Endpoint, Operation);
   if (!Result.Valid) {
-    yield* Effect6.logWarning("Network access prevented", {
+    yield* Effect5.logWarning("Network access prevented", {
       Endpoint,
       Operation,
       Reason: Result.Reason
@@ -1321,10 +971,10 @@ var ValidateNetworkAccessWrapper = /* @__PURE__ */ __name((Endpoint, Operation) 
   }
   return true;
 }), "ValidateNetworkAccessWrapper");
-var ValidateChildProcessSpawnWrapper = /* @__PURE__ */ __name((Command, Arguments) => Effect6.gen(function* () {
+var ValidateChildProcessSpawnWrapper = /* @__PURE__ */ __name((Command, Arguments) => Effect5.gen(function* () {
   const Result = yield* ValidateChildProcessSpawn(Command, Arguments);
   if (!Result.Valid) {
-    yield* Effect6.logWarning("Child process spawn prevented", {
+    yield* Effect5.logWarning("Child process spawn prevented", {
       Command,
       Arguments,
       Reason: Result.Reason
@@ -1333,28 +983,28 @@ var ValidateChildProcessSpawnWrapper = /* @__PURE__ */ __name((Command, Argument
   }
   return true;
 }), "ValidateChildProcessSpawnWrapper");
-var InstallModuleHooks = Effect6.gen(function* () {
-  yield* Effect6.logTrace("Module hooks not yet implemented");
+var InstallModuleHooks = Effect5.gen(function* () {
+  yield* Effect5.logTrace("Module hooks not yet implemented");
 });
-var InstallFileSystemHooks = Effect6.gen(function* () {
-  yield* Effect6.logTrace("Filesystem hooks not yet implemented");
+var InstallFileSystemHooks = Effect5.gen(function* () {
+  yield* Effect5.logTrace("Filesystem hooks not yet implemented");
 });
-var InstallChildProcessHooks = Effect6.gen(function* () {
-  yield* Effect6.logTrace("Child process hooks not yet implemented");
+var InstallChildProcessHooks = Effect5.gen(function* () {
+  yield* Effect5.logTrace("Child process hooks not yet implemented");
 });
-var InstallSecurityHooks = Effect6.gen(function* () {
-  yield* Effect6.logInfo("Installing security hooks...");
+var InstallSecurityHooks = Effect5.gen(function* () {
+  yield* Effect5.logInfo("Installing security hooks...");
   yield* InstallModuleHooks;
   yield* InstallFileSystemHooks;
   yield* InstallChildProcessHooks;
-  yield* Effect6.logInfo("Security hooks installed");
+  yield* Effect5.logInfo("Security hooks installed");
 });
-var SetResourceLimits = Effect6.gen(function* () {
-  yield* Effect6.logTrace(
+var SetResourceLimits = Effect5.gen(function* () {
+  yield* Effect5.logTrace(
     "Resource limit setting not yet implemented (needs native integration)"
   );
 });
-var GetResourceUsage = Effect6.gen(function* () {
+var GetResourceUsage = Effect5.gen(function* () {
   return {
     Memory: Process2.memoryUsage(),
     CpuUsage: Process2.cpuUsage(),
@@ -1367,19 +1017,19 @@ var GetResourceUsage = Effect6.gen(function* () {
     Timestamp: Date.now()
   };
 });
-var CleanupSecurityLoader = Effect6.gen(function* () {
-  yield* Effect6.logInfo("Cleaning up Security Loader...");
-  yield* Effect6.logInfo("Security Loader cleanup completed");
+var CleanupSecurityLoader = Effect5.gen(function* () {
+  yield* Effect5.logInfo("Cleaning up Security Loader...");
+  yield* Effect5.logInfo("Security Loader cleanup completed");
 });
-var LoaderServiceLive = Layer3.effect(Loader, LoaderService.Default);
-var SecurityLive = Layer3.provide(
+var LoaderServiceLive = Layer2.effect(Loader, LoaderService.Default);
+var SecurityLive = Layer2.provide(
   LoaderServiceLive,
   PatcherService.Default
 );
 
 // Source/PatchProcess/TypeConverter.ts
 import * as Process3 from "node:process";
-import { Data as Data4, Effect as Effect7 } from "effect";
+import { Data as Data4, Effect as Effect6 } from "effect";
 var ConversionError = class extends Data4.TaggedError("ConversionError") {
   static {
     __name(this, "ConversionError");
@@ -1408,7 +1058,7 @@ var SecurityPolicyToDTO = /* @__PURE__ */ __name((Policy, Version = "1.0.0") => 
   };
 }, "SecurityPolicyToDTO");
 var DTOToSecurityPolicy = /* @__PURE__ */ __name((DTO) => {
-  return Effect7.sync(() => {
+  return Effect6.sync(() => {
     if (!ValidateSecurityPolicyDTO(DTO)) {
       throw new ConversionError({
         SourceType: "SecurityPolicyDTO",
@@ -1458,7 +1108,7 @@ var ProcessStateToDTO = /* @__PURE__ */ __name((ValidationState) => {
   };
 }, "ProcessStateToDTO");
 var DTOToProcessState = /* @__PURE__ */ __name((DTO) => {
-  return Effect7.sync(() => {
+  return Effect6.sync(() => {
     if (!ValidateProcessStateDTO(DTO)) {
       throw new ConversionError({
         SourceType: "ProcessStateDTO",
@@ -1532,7 +1182,7 @@ var CreateSecurityEventDTO = /* @__PURE__ */ __name((EventType, Severity, Messag
   };
 }, "CreateSecurityEventDTO");
 var SerializeDTO = /* @__PURE__ */ __name((DTO) => {
-  return Effect7.try({
+  return Effect6.try({
     try: /* @__PURE__ */ __name(() => JSON.stringify(DTO), "try"),
     catch: /* @__PURE__ */ __name((Error2) => {
       throw new ConversionError({
@@ -1545,7 +1195,7 @@ var SerializeDTO = /* @__PURE__ */ __name((DTO) => {
   });
 }, "SerializeDTO");
 var DeserializeDTO = /* @__PURE__ */ __name((JsonString, ExpectedType) => {
-  return Effect7.try({
+  return Effect6.try({
     try: /* @__PURE__ */ __name(() => JSON.parse(JsonString), "try"),
     catch: /* @__PURE__ */ __name((Error2) => {
       throw new ConversionError({
@@ -1598,7 +1248,7 @@ var BatchSecurityPoliciesToDTO = /* @__PURE__ */ __name((Policies, Version = "1.
   return Policies.map((Policy) => SecurityPolicyToDTO(Policy, Version));
 }, "BatchSecurityPoliciesToDTO");
 var BatchDTOsToSecurityPolicies = /* @__PURE__ */ __name((DTOs) => {
-  return Effect7.all(
+  return Effect6.all(
     DTOs.map((DTO) => DTOToSecurityPolicy(DTO)),
     { concurrency: "unbounded" }
   );

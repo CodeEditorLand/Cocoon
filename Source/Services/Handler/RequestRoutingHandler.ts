@@ -1,13 +1,41 @@
 /**
- * @module Handler/RequestRoutingHandler
+ * @module Services/Handler/RequestRoutingHandler
  * @description
- * Routes Mountain gRPC requests to appropriate Cocoon services.
- * Handles the service routing table with pattern matching for:
- * - extension.* — ExtensionHostService
- * - configuration.* — ConfigurationService
- * - command.* — IPCService (command registry)
- * - performance.* — PerformanceMonitoringService
- * - security.* — SecurityService
+ * Dispatches Mountain → Cocoon gRPC requests (i.e. Mountain asking Cocoon
+ * to do something) to the service that owns the route. The map is a
+ * regex-keyed table so new service prefixes can be added without editing
+ * the caller. Each handler returns a value that gRPC serialises back to
+ * Mountain; returning `undefined` from `RouteRequest` means "no registered
+ * handler" and the caller falls through to the extension-host dispatch.
+ *
+ * ## Routing table (pattern → service)
+ *
+ * | Prefix            | Owner                                         | Notes |
+ * | ----------------- | --------------------------------------------- | ----- |
+ * | `extension.*`     | `IExtensionHostService`                       | activate / deactivate / status / exports |
+ * | `configuration.*` | `IConfigurationService`                       | get / set / update                      |
+ * | `tree.*`          | `TreeDataProviders` (WindowNamespace)         | getChildren / getTreeItem / getParent / resolveTreeItem |
+ * | `webview.*`       | `WebviewPanels` / `WebviewViewProviders` / `CustomEditorProviders` | resolveView / resolveCustomEditor |
+ * | `performance.*`   | `IPerformanceMonitoringService`               | metrics / alerts / report               |
+ * | `security.*`      | `ISecurityService`                            | policy / audit / incidents              |
+ *
+ * ## What this router does NOT handle
+ *
+ * - **`command.*`** is handled directly by Mountain
+ *   (`Track/Effect/CreateEffectForRequest.rs` → `Command.Execute` /
+ *   `Command.Register` / `Command.GetAll`). Cocoon no longer proxies
+ *   command dispatch; the old `IPCService::executeCommand` path was
+ *   deleted in 2026-04.
+ * - **Provider invocations** (`$provideHover`, `$provideCompletionItems`
+ *   and friends) go through `LanguageProviderHandler`, not this router.
+ * - **Extension-host lifecycle** (`$activateByEvent`, `$initExtensionHost`)
+ *   is dispatched directly by `GRPCServerService` before this router is
+ *   consulted.
+ *
+ * The router's contract: if the method matches a pattern, return the
+ * handler's promise; otherwise return `undefined` so the caller can try
+ * the next dispatcher. Throwing from a handler surfaces to the RPC client
+ * as a typed error.
  */
 
 /**
@@ -100,37 +128,91 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 			}
 		},
 
-		"command.\\w+": async (Method: string, Params: any) => {
-			// Route to CommandService via ServiceMapping
-			const { ServiceMapping } = await import("../../ServiceMapping");
-			const { IIPCService } =
-				await import("../../Interfaces/IIPCService");
-
+		"tree\\.\\w+": async (Method: string, Params: any) => {
+			// Mountain asks Cocoon for tree data; route to the registered
+			// TreeDataProvider for the handle and serialise the response.
+			const { TreeDataProviders } = await import(
+				"./VscodeAPI/WindowNamespace.js"
+			);
+			const Handle = Params?.handle ?? Params?.[0];
+			const Provider = TreeDataProviders.get(String(Handle));
+			if (!Provider) {
+				throw new Error(
+					`TreeDataProvider handle not registered: ${Handle}`,
+				);
+			}
 			switch (Method) {
-				case "command.execute": {
-					const IpcService =
-						await ServiceMapping.getService(IIPCService);
-					return await IpcService.executeCommand(
-						Params.commandId,
-						...(Params.args || []),
-					);
+				case "tree.getChildren": {
+					const Element = Params?.element ?? Params?.[1];
+					const Children =
+						(await Provider.getChildren?.(Element)) ?? [];
+					return Array.isArray(Children) ? Children : [];
 				}
-				case "command.register": {
-					const IpcService =
-						await ServiceMapping.getService(IIPCService);
-					const Disposable = await IpcService.registerCommand(
-						Params.commandId,
-						Params.callback,
-					);
-					return { disposableId: "command-registration" };
+				case "tree.getTreeItem": {
+					const Element = Params?.element ?? Params?.[1];
+					return (await Provider.getTreeItem?.(Element)) ?? null;
 				}
-				case "command.get": {
-					const IpcService =
-						await ServiceMapping.getService(IIPCService);
-					return await IpcService.getCommands();
+				case "tree.getParent": {
+					const Element = Params?.element ?? Params?.[1];
+					return (await Provider.getParent?.(Element)) ?? null;
+				}
+				case "tree.resolveTreeItem": {
+					const Item = Params?.item ?? Params?.[1];
+					const Element = Params?.element ?? Params?.[2];
+					return (
+						(await Provider.resolveTreeItem?.(Item, Element)) ?? Item
+					);
 				}
 				default:
-					throw new Error(`Unknown command method: ${Method}`);
+					throw new Error(`Unknown tree method: ${Method}`);
+			}
+		},
+
+		"webview\\.\\w+": async (Method: string, Params: any) => {
+			// Mountain forwards webview events (message, dispose, view-state)
+			// back to Cocoon so extensions' onDid* handlers fire. Emit the
+			// event on Context.Emitter and each createWebviewPanel subscriber
+			// receives it.
+			const { WebviewPanels, WebviewViewProviders, CustomEditorProviders } =
+				await import("./VscodeAPI/WindowNamespace.js");
+			const Handle = Params?.handle ?? Params?.[0];
+			switch (Method) {
+				case "webview.resolveView": {
+					const Provider = WebviewViewProviders.get(String(Handle));
+					if (!Provider) {
+						throw new Error(
+							`WebviewViewProvider handle not registered: ${Handle}`,
+						);
+					}
+					const View = Params?.view ?? Params?.[1];
+					const Ctx = Params?.context ?? Params?.[2];
+					return (
+						(await Provider.resolveWebviewView?.(View, Ctx)) ?? null
+					);
+				}
+				case "webview.resolveCustomEditor": {
+					const Provider = CustomEditorProviders.get(String(Handle));
+					if (!Provider) {
+						throw new Error(
+							`CustomEditorProvider handle not registered: ${Handle}`,
+						);
+					}
+					const Document = Params?.document ?? Params?.[1];
+					const Panel = Params?.panel ?? Params?.[2];
+					return (
+						(await Provider.resolveCustomEditor?.(
+							Document,
+							Panel,
+							{ asAbsolutePath: (p: string) => p },
+						)) ?? null
+					);
+				}
+				default: {
+					// Default: panels host one-off events
+					const Panel = WebviewPanels.get(String(Handle));
+					if (!Panel) return null;
+					return null;
+				}
 			}
 		},
 

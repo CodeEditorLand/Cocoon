@@ -67,13 +67,8 @@ var HealthService = class {
         initialStatus: "healthy" /* HEALTHY */
       },
       {
-        name: "IPCService",
-        dependencies: ["MountainClientService"],
-        initialStatus: "healthy" /* HEALTHY */
-      },
-      {
         name: "ExtensionHostService",
-        dependencies: ["IPCService"],
+        dependencies: ["MountainClientService"],
         initialStatus: "healthy" /* HEALTHY */
       },
       {
@@ -83,7 +78,7 @@ var HealthService = class {
       },
       {
         name: "GRPCServerService",
-        dependencies: ["IPCService"],
+        dependencies: ["MountainClientService"],
         initialStatus: "healthy" /* HEALTHY */
       }
     ];
@@ -238,8 +233,6 @@ var HealthService = class {
     switch (serviceName) {
       case "MountainClientService":
         return await this.checkMountainClientHealth();
-      case "IPCService":
-        return await this.checkIPCServiceHealth();
       case "ExtensionHostService":
         return await this.checkExtensionHostHealth();
       case "ConfigurationService":
@@ -255,12 +248,6 @@ var HealthService = class {
    */
   async checkMountainClientHealth() {
     return Math.random() > 0.1;
-  }
-  /**
-   * Check IPC service health
-   */
-  async checkIPCServiceHealth() {
-    return Math.random() > 0.05;
   }
   /**
    * Check extension host health
@@ -286,7 +273,6 @@ var HealthService = class {
   calculateResponseTime(serviceName) {
     const baseTimes = {
       "MountainClientService": 50,
-      "IPCService": 10,
       "ExtensionHostService": 100,
       "ConfigurationService": 5,
       "GRPCServerService": 20
@@ -299,7 +285,6 @@ var HealthService = class {
   calculateErrorRate(serviceName) {
     const baseRates = {
       "MountainClientService": 2.5,
-      "IPCService": 0.5,
       "ExtensionHostService": 5,
       "ConfigurationService": 0.1,
       "GRPCServerService": 1.5
@@ -312,7 +297,6 @@ var HealthService = class {
   calculateThroughput(serviceName) {
     const baseThroughput = {
       "MountainClientService": 500,
-      "IPCService": 2e3,
       "ExtensionHostService": 300,
       "ConfigurationService": 5e3,
       "GRPCServerService": 1e3
@@ -325,7 +309,6 @@ var HealthService = class {
   getMemoryUsage(serviceName) {
     const baseMemory = {
       "MountainClientService": 256,
-      "IPCService": 128,
       "ExtensionHostService": 512,
       "ConfigurationService": 64,
       "GRPCServerService": 192
@@ -338,7 +321,6 @@ var HealthService = class {
   getCpuUsage(serviceName) {
     const baseCpu = {
       "MountainClientService": 15,
-      "IPCService": 5,
       "ExtensionHostService": 25,
       "ConfigurationService": 2,
       "GRPCServerService": 10

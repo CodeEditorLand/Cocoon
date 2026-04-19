@@ -1,45 +1,55 @@
 /**
- * @module Patcher
+ * @module PatchProcess/Patcher
  * @description
- * Main orchestrator for applying process-level security patches and hardening measures.
- * This module is responsible for patching the Node.js process to restrict malicious or buggy extensions.
+ * Orchestrator for Cocoon's process-level hardening. Runs once before any
+ * extension activates so every subsequent `process.exit`, `process.crash`,
+ * uncaught exception, or `Module._load("natives")` call hits a controlled
+ * policy rather than the raw Node.js runtime.
  *
- * ## Element Connections
+ * ## Architectural role
  *
- * **Air (Rust Workbench)**: Air provides OS-level security enforcement through native process controls.
- * When Air enforces quotas or privileges, those policies are synchronized with Cocoon's process patching.
+ * - **VS Code reference:** mirrors the extension-host hardening done in
+ *   `src/vs/workbench/services/extensions/common/extHostExtensionService.ts`
+ *   and `src/vs/base/parts/sandbox/electron-sandbox/preload.js`.
+ * - **Mountain:** policy decisions (AllowExit, MaxMemoryMB, AllowNetwork,
+ *   AllowChildProcesses) arrive through `Config.string("SecurityPolicy")`
+ *   and are parsed by `ParseSecurityPolicy`. Mountain is the source of
+ *   truth; Cocoon enforces.
+ * - **Air:** Rust-side process quotas run in parallel; the Patcher is the
+ *   Node-side complement that catches anything Air can't intercept from
+ *   outside the V8 isolate.
  *
- * **Mountain (Security Policies)**: Mountain centralizes security policies and synchronizes them with
- * Cocoon's process hardening. Security limits (CPU, memory, network) are retrieved from Mountain's
- * state management.
+ * ## Applied patches (in `RunPatchProcess`)
  *
- * **Wind (Effect-TS Services)**: Wind services respect the security boundaries established by the
- * Patcher. All Effect-TS operations run within the hardened environment.
+ * | Patch                   | Effect                                                                          |
+ * | ----------------------- | ------------------------------------------------------------------------------- |
+ * | `PatchProcessCrash`     | `process.crash()` → logged, prevented                                           |
+ * | `PatchProcessExit`      | `process.exit()` blocked unless `SecurityPolicy.AllowExit`                      |
+ * | `SetStackTraceLimit`    | `Error.stackTraceLimit = 100` — deep traces without runaway attack surface      |
+ * | `SetupEnvironment`      | Apply InitData proxy flags                                                      |
+ * | `SetElectronRunAsNode`  | Force `ELECTRON_RUN_AS_NODE=1` so the bundled Node preserves Node-mode          |
+ * | `BlockNativesModule`    | `Module._load("natives")` → thrown error                                        |
+ * | `PipeLogging`           | Legacy hook — Cocoon now pipes console via MountainClient, patch is a no-op    |
+ * | `HandleException`       | `uncaughtException` / `unhandledRejection` → stderr (RPC takes over when set)   |
+ * | `TerminateOnParentExit` | When `VSCODE_PID` dies, exit cleanly                                            |
+ * | `EnforceMemoryLimit`    | Soft-limit using `v8.setFlagsFromString("--max-old-space-size=…")`              |
  *
- * **Output (VSCode Reference)**: Based on VSCode's extension host security patterns:
- * - src/vs/workbench/services/extensions/common/extHostExtensionService.ts
- * - src/vs/base/parts/sandbox/electron-sandbox/preload.js
+ * ## Historical notes
  *
- * ## Responsibilities
+ * The pre-2026-04 revision of this module used a `Cocoon/Services/IPCService`
+ * to forward console + exception events to Mountain. That service was a
+ * dead runtime path (never wired into the effect graph correctly) and has
+ * been deleted — the gRPC client in `Services/MountainClientService.ts` is
+ * the only remaining Mountain→Cocoon channel. `PipeLogging` and
+ * `HandleException` remain as extension points but no longer push events
+ * through a local pipe.
  *
- * 1. Patch process.exit() and process.crash() to prevent unauthorized termination
- * 2. Limit Error.stackTraceLimit to prevent stack trace attacks
- * 3. Block dangerous modules like "natives"
- * 4. Pipe console logging to host for security monitoring
- * 5. Setup global exception handlers for error containment
- * 6. Configure environment variables for secure execution
- * 7. Monitor parent process for graceful termination
+ * ## Follow-ups
  *
- * ## TODOs
- *
- * - **TBD**: Windows-specific process isolation using Job Objects and AppContainer
- * - **TBD**: Linux seccomp filters for system call restriction
- * - **TBD**: macOS sandbox enforcement and entitlements
- * - **TBD**: Security policy synchronization with Mountain via IPC
- * - **TBD**: Telemetry integration for security event logging
- * - **TBD**: Real-time process monitoring for suspicious activity
- * - **TBD**: Memory pressure detection and early warning system
- * - **TBD**: Process priority management for extension isolation
+ * - Windows Job Objects / AppContainer for platform-native sandboxing.
+ * - Linux seccomp filter installed via `libseccomp` (behind an opt-in).
+ * - macOS sandbox profile via `sandbox-exec` for child shell processes.
+ * - Real-time process-tree monitoring for suspicious fan-out.
  */
 
 import ModuleNS from "node:module";
@@ -48,7 +58,6 @@ import { Config, Data, Effect } from "effect";
 
 import { ExitPreventedProblem } from "../../Archive/PatchProcess/ExitPreventedProblem.js";
 import { InitDataService } from "../Services/InitData.js";
-import { IPCService } from "../Services/IPCService.js";
 import { SecurityPolicy } from "./Security.js";
 
 const Module = ModuleNS as any;
@@ -246,25 +255,12 @@ const BlockNativesModule = Effect.try({
 );
 
 /**
- * Safely convert arguments to string for logging
- * Prevents object circular reference errors
- */
-const SafeToString = (Arguments: ArrayLike<unknown>): string => {
-	const Slices: string[] = [];
-	for (let i = 0; i < Arguments.length; i++) {
-		const Argument = Arguments[i];
-		Slices.push(
-			typeof Argument === "object"
-				? JSON.stringify(Argument, null, 2)
-				: String(Argument),
-		);
-	}
-	return Slices.join(" ");
-};
-
-/**
  * Patch console.log/warn/error to forward logs to host
- * Enables security monitoring of extension console output
+ *
+ * Cocoon's Mountain gRPC client is the canonical log-forwarding path; this
+ * patch is a no-op in the current architecture and stays only as a hook for
+ * environments that still set VSCODE_PIPE_LOGGING. Host-side forwarding
+ * happens via MountainClient notifications, not via the deleted IPCService.
  */
 const PipeLogging = Effect.gen(function* () {
 	if (process.env["VSCODE_PIPE_LOGGING"] !== "true") {
@@ -272,44 +268,17 @@ const PipeLogging = Effect.gen(function* () {
 			"Console log piping disabled by environment variable",
 		);
 	}
-	const IPC = yield* IPCService;
-	const ForwardConsoleCall = (
-		Severity: "log" | "warn" | "error",
-		Arguments: ArrayLike<unknown>,
-	) => {
-		const Payload = {
-			type: "__$console",
-			severity: Severity,
-			arguments: SafeToString(Arguments),
-		};
-		return IPC.SendNotification("$log", [Payload]);
-	};
-	const OriginalConsole = {
-		log: console.log,
-		warn: console.warn,
-		error: console.error,
-	};
-	console.log = (...args: any[]) => {
-		OriginalConsole.log.apply(console, args);
-		Effect.runFork(ForwardConsoleCall("log", args));
-	};
-	console.warn = (...args: any[]) => {
-		OriginalConsole.warn.apply(console, args);
-		Effect.runFork(ForwardConsoleCall("warn", args));
-	};
-	console.error = (...args: any[]) => {
-		OriginalConsole.error.apply(console, args);
-		Effect.runFork(ForwardConsoleCall("error", args));
-	};
 	yield* Effect.logTrace(
-		"Global console object patched to pipe logs to host",
+		"VSCODE_PIPE_LOGGING set but Cocoon pipes console via MountainClient; no patch applied",
 	);
 });
 
 /**
  * Setup global exception handlers
- * Prevents uncaught exceptions from crashing the process
- * Errors are forwarded to host for security monitoring
+ *
+ * Extension-host uncaught errors surface to Mountain through the gRPC error
+ * channel. Cocoon used to mirror them via a local IPC channel, but that path
+ * was removed with IPCService.
  */
 const HandleException = Effect.gen(function* () {
 	if (process.env["VSCODE_HANDLES_UNCAUGHT_ERRORS"] === "true") {
@@ -317,33 +286,18 @@ const HandleException = Effect.gen(function* () {
 			"Skipping global exception handler, will be handled by RPC",
 		);
 	}
-	const IPC = yield* IPCService;
 	const LogError = (Type: string, CaughtError: unknown) => {
 		const Message =
 			CaughtError instanceof Error
 				? CaughtError.stack || CaughtError.message
 				: String(CaughtError);
-		const Payload = {
-			type: "__$error",
-			severity: "error",
-			arguments: `[${Type}] ${Message}`,
-		};
-		return IPC.SendNotification("$log", [Payload]).pipe(
-			Effect.catchAll((ErrorValue) =>
-				Effect.sync(() =>
-					console.error(
-						`[Patcher] Failed to send error to host: ${ErrorValue}`,
-						Payload,
-					),
-				),
-			),
-		);
+		console.error(`[Patcher] ${Type}: ${Message}`);
 	};
 	process.on("uncaughtException", (Error) => {
-		Effect.runFork(LogError("uncaughtException", Error));
+		LogError("uncaughtException", Error);
 	});
 	process.on("unhandledRejection", (Reason) => {
-		Effect.runFork(LogError("unhandledRejection", Reason));
+		LogError("unhandledRejection", Reason);
 	});
 	yield* Effect.logTrace("Global exception handlers installed");
 });

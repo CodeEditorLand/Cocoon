@@ -4,6 +4,20 @@ import type { BuildOptions } from "esbuild";
 import * as Environment from "../Constant/EnvironmentConstant.js";
 import BaseConfig from "./BaseConfig.js";
 
+// Tier:*:Resolution 🟢 Primary — CocoonEsbuildDefine is exported by
+// Maintain/Debug/Build.sh as a JSON blob of `__LandTier_<Name>__` keys.
+// Each value is already JSON-stringified (double-quoted), which is the
+// exact shape esbuild expects for `define`. Absent env var → empty map.
+const TierDefines = (() => {
+	const Raw = process.env["CocoonEsbuildDefine"];
+	if (!Raw) return {};
+	try {
+		return JSON.parse(Raw) as Record<string, string>;
+	} catch {
+		return {};
+	}
+})();
+
 export default async function TargetConfig(
 	Current: BuildOptions,
 ): Promise<BuildOptions> {
@@ -14,6 +28,7 @@ export default async function TargetConfig(
 		define: {
 			__DEV__: Environment.On ? "true" : "false",
 			__INCREMENT__: `"${`${Environment.On ? "DEVELOPMENT" : "PRODUCTION"}-${(await import("ulid")).ulid()}`}"`,
+			...TierDefines,
 		},
 		treeShaking: !Environment.On,
 		entryPoints: (

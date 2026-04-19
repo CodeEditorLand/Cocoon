@@ -7,8 +7,109 @@
  * Supports both old-style service-based architecture and new Effect-TS based architecture.
  */
 
+// ============================================================================
+// TIER-GATING BOOTSTRAP — populate globalThis.__LandTiers before any module
+// that imports Utility/Tier.js executes. Done as the very first line of the
+// bundle so `Pick(...)` resolves against concrete values instead of the
+// fallbacks. esbuild substitutes every `__LandTier_*__` identifier for its
+// JSON-encoded value via the `define` map in Configuration/ESBuild.
+// ============================================================================
+declare const __LandTier_RemoteProcedureCall__: string;
+declare const __LandTier_HTTPProxy__: string;
+declare const __LandTier_Logger__: string;
+declare const __LandTier_FileSystem__: string;
+declare const __LandTier_FindFiles__: string;
+declare const __LandTier_Glob__: string;
+declare const __LandTier_FileWatcher__: string;
+declare const __LandTier_SchemeAssets__: string;
+declare const __LandTier_Configuration__: string;
+declare const __LandTier_Diagnostics__: string;
+declare const __LandTier_Clipboard__: string;
+declare const __LandTier_OpenExternal__: string;
+declare const __LandTier_DocumentMirror__: string;
+declare const __LandTier_ExtensionActivation__: string;
+declare const __LandTier_ExtensionScan__: string;
+declare const __LandTier_ModuleCache__: string;
+declare const __LandTier_Telemetry__: string;
+
+(globalThis as { __LandTiers?: Record<string, string> }).__LandTiers = {
+	RemoteProcedureCall:
+		typeof __LandTier_RemoteProcedureCall__ === "string"
+			? __LandTier_RemoteProcedureCall__
+			: (process.env["TierRemoteProcedureCall"] ?? "GRPC"),
+	HTTPProxy:
+		typeof __LandTier_HTTPProxy__ === "string"
+			? __LandTier_HTTPProxy__
+			: (process.env["TierHTTPProxy"] ?? "HandRolled"),
+	Logger:
+		typeof __LandTier_Logger__ === "string"
+			? __LandTier_Logger__
+			: (process.env["TierLogger"] ?? "Standard"),
+	FileSystem:
+		typeof __LandTier_FileSystem__ === "string"
+			? __LandTier_FileSystem__
+			: (process.env["TierFileSystem"] ?? "Layer2"),
+	FindFiles:
+		typeof __LandTier_FindFiles__ === "string"
+			? __LandTier_FindFiles__
+			: (process.env["TierFindFiles"] ?? "Layer3"),
+	Glob:
+		typeof __LandTier_Glob__ === "string"
+			? __LandTier_Glob__
+			: (process.env["TierGlob"] ?? "JavaScript"),
+	FileWatcher:
+		typeof __LandTier_FileWatcher__ === "string"
+			? __LandTier_FileWatcher__
+			: (process.env["TierFileWatcher"] ?? "Stub"),
+	SchemeAssets:
+		typeof __LandTier_SchemeAssets__ === "string"
+			? __LandTier_SchemeAssets__
+			: (process.env["TierSchemeAssets"] ?? "Embedded"),
+	Configuration:
+		typeof __LandTier_Configuration__ === "string"
+			? __LandTier_Configuration__
+			: (process.env["TierConfiguration"] ?? "Cache"),
+	Diagnostics:
+		typeof __LandTier_Diagnostics__ === "string"
+			? __LandTier_Diagnostics__
+			: (process.env["TierDiagnostics"] ?? "Full"),
+	Clipboard:
+		typeof __LandTier_Clipboard__ === "string"
+			? __LandTier_Clipboard__
+			: (process.env["TierClipboard"] ?? "Layer3"),
+	OpenExternal:
+		typeof __LandTier_OpenExternal__ === "string"
+			? __LandTier_OpenExternal__
+			: (process.env["TierOpenExternal"] ?? "Layer3"),
+	DocumentMirror:
+		typeof __LandTier_DocumentMirror__ === "string"
+			? __LandTier_DocumentMirror__
+			: (process.env["TierDocumentMirror"] ?? "Full"),
+	ExtensionActivation:
+		typeof __LandTier_ExtensionActivation__ === "string"
+			? __LandTier_ExtensionActivation__
+			: (process.env["TierExtensionActivation"] ?? "Parallel8"),
+	ExtensionScan:
+		typeof __LandTier_ExtensionScan__ === "string"
+			? __LandTier_ExtensionScan__
+			: (process.env["TierExtensionScan"] ?? "Sequential"),
+	ModuleCache:
+		typeof __LandTier_ModuleCache__ === "string"
+			? __LandTier_ModuleCache__
+			: (process.env["TierModuleCache"] ?? "Simple"),
+	Telemetry:
+		typeof __LandTier_Telemetry__ === "string"
+			? __LandTier_Telemetry__
+			: (process.env["TierTelemetry"] ?? "Synchronous"),
+};
+
 import { NodeRuntime } from "@effect/platform-node";
 import { Effect } from "effect";
+
+// Import Tier dispatcher *after* __LandTiers is populated so the module's
+// top-level `LandFixLog.Info(...)` banner reports the resolved values.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import Tier from "../../Utility/Tier.js";
 
 // Effect services
 import { BootstrapTag, TelemetryTag } from "../../Effect/index.js";

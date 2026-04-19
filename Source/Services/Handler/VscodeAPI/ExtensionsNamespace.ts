@@ -7,6 +7,7 @@
  * Provides: getExtension, all, onDidChange.
  */
 
+import LandFixLog from "../../../Utility/LandFixLog.js";
 import type { HandlerContext } from "../HandlerContext.js";
 
 // When an extension reads `vscode.extensions.getExtension('X').exports`,
@@ -174,16 +175,27 @@ const NormalizeLocation = (
 			try {
 				Path = decodeURIComponent(new URL(Raw).pathname);
 			} catch (Error: unknown) {
-				process.stdout.write(
-					`[LandFix:ExtNs] URL parse failed for ${Raw}: ${Error instanceof Error ? Error.message : String(Error)}; using fallback strip\n`,
+				LandFixLog.Warn(
+					"ExtNs",
+					`URL parse failed for ${Raw}: ${Error instanceof Error ? Error.message : String(Error)}; using fallback strip`,
 				);
 				Path = Raw.replace(/^file:\/\//, "");
 			}
 		}
 		Path = Path.replace(/\/$/, "");
-		process.stdout.write(
-			`[LandFix:ExtNs] string extensionLocation ${Raw} → path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})\n`,
-		);
+		if (UriFactoryAvailable) {
+			LandFixLog.DebugOnce(
+				"ExtNs",
+				`string:${Path}`,
+				`string extensionLocation ${Raw} → path=${Path} (factory=real)`,
+			);
+		} else {
+			LandFixLog.InfoOnce(
+				"ExtNs",
+				`string-fallback:${Path}`,
+				`string extensionLocation ${Raw} → path=${Path} (factory=FALLBACK)`,
+			);
+		}
 		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
 	}
 
@@ -195,14 +207,25 @@ const NormalizeLocation = (
 			(typeof Obj["external"] === "string"
 				? NormalizeLocation(Obj["external"]).ExtensionPath
 				: "");
-		process.stdout.write(
-			`[LandFix:ExtNs] object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (Uri factory=${UriFactoryAvailable ? "real" : "fallback"})\n`,
-		);
+		if (UriFactoryAvailable) {
+			LandFixLog.DebugOnce(
+				"ExtNs",
+				`object:${Path}`,
+				`object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (factory=real)`,
+			);
+		} else {
+			LandFixLog.InfoOnce(
+				"ExtNs",
+				`object-fallback:${Path}`,
+				`object extensionLocation keys=[${Object.keys(Obj).join(",")}] → path=${Path} (factory=FALLBACK)`,
+			);
+		}
 		return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
 	}
 
-	process.stdout.write(
-		`[LandFix:ExtNs] extensionLocation missing or unsupported type: ${typeof Raw}; using empty path\n`,
+	LandFixLog.Warn(
+		"ExtNs",
+		`extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`,
 	);
 	return { ExtensionPath: "", ExtensionUri: MakeUri("") };
 };

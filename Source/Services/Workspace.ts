@@ -1,35 +1,66 @@
 /**
- * @module Workspace
+ * @module Services/Workspace
  * @description
- * Implements the VS Code API surface for workspace-level operations.
+ * Effect-TS service that backs the `vscode.workspace` namespace inside
+ * Cocoon. Every workspace read (name, folders, configuration, findFiles,
+ * findTextInFiles, openTextDocument, saveAll, applyEdit) delegates to
+ * Mountain via `MountainGRPCClientService`; event-emitting surfaces
+ * (onDidChangeWorkspaceFolders, onDidChangeTextDocument, etc.) are driven
+ * by `$accept*` notifications that arrive on the reverse-RPC channel and
+ * are dispatched through `Services/Handler/NotificationHandler.ts`.
  *
- * Architecture:
- * - Lifted from: src/vs/workbench/api/common/extHostWorkspace.ts (VSCode Dependency/Editor)
- * - Adapted from: Source/Archive/Workspace.ts (borrowed working patterns)
- * - Mountain Integration: Delegates workspace operations via gRPC to backend
+ * ## Architectural lineage
  *
- * Dependencies:
- * - IPCService: For communicating with Mountain (main thread equivalent)
- * - ConfigurationService: For workspace configuration management
- * - DocumentService: For text document operations
- * - LoggerService: For operation logging
+ * - **Upstream contract:** VS Code's `ExtHostWorkspace`
+ *   (`src/vs/workbench/api/common/extHostWorkspace.ts`) defines the exact
+ *   shape of every method and event this service exposes. When a VS Code
+ *   extension imports `vscode.workspace`, it is backed by this service.
+ * - **Mountain side:** the complement of every method here lives in
+ *   `Mountain/Source/RPC/CocoonService/mod.rs` (`update_workspace_folders`,
+ *   `get_workspace_folders`, `init_extension_host`) and in
+ *   `Track/Effect/CreateEffectForRequest.rs` (`FileSystem.*`, `Document.*`,
+ *   `Search.TextSearch`).
  *
- * TODOs:
- * - PRIORITY-1: Implement workspace configuration synchronization with Mountain
- * - PRIORITY-1: Add workspace state persistence and recovery
- * - PRIORITY-2: Implement file system operations (findFiles, findTextInFiles)
- * - PRIORITY-2: Complete workspace edit application with delta calculation
- * - PRIORITY-2: Implement text document content provider registration
- * - PRIORITY-3: Collaborative editing support with multiple cursors
- * - ARCHITECTURE-PATTERN: src/vs/workbench/api/browser/mainThreadWorkspace.ts (Mountain side needed)
- * - VSCODE-LIFT: src/vs/workbench/api/common/extHostWorkspace.ts (complete workspace API)
+ * ## Dependencies
+ *
+ * - `MountainGRPCClientService` — the only channel to Mountain. This
+ *   service was historically wrapped by a `Cocoon/Services/IPCService`,
+ *   but that wrapper was deleted in 2026-04 and all callers now reach
+ *   Mountain directly.
+ * - `ConfigurationService` — the synchronous cache that `getConfiguration`
+ *   reads against; Mountain's async configuration RPCs populate it on
+ *   demand.
+ * - A local `Logger` tag (Effect-TS context) — see the `interface Logger`
+ *   declaration below. The full logger service lives in the Telemetry
+ *   layer; this tag is a compile-time handle, not a concrete impl.
+ *
+ * ## Known gaps (tracked in the Ladder + HANDOFF.md)
+ *
+ * - `OpenTextDocument` still does a local file read to build the
+ *   TextDocument mirror rather than receiving a Mountain-authoritative
+ *   document snapshot. Symptom: race between save-from-disk and
+ *   Cocoon-side cache when two extensions fight over the same URI.
+ * - `ApplyEdit` applies edits per-URI; Mountain needs a bulk-edit RPC to
+ *   preserve transactional semantics across files.
+ * - `OnDidChangeConfiguration` fires only on Mountain-driven mutations
+ *   (via NotificationHandler); in-memory `workspaceConfiguration.update()`
+ *   calls are written through but do not yet emit to listeners.
+ *
+ * ## Follow-ups
+ *
+ * - Wire `MainThreadWorkspace::$save*` to trigger save participants (the
+ *   Effect path exists in Mountain; no Cocoon subscriber yet).
+ * - Document content provider registration (`registerTextDocumentContentProvider`)
+ *   is a stub; requires a Mountain-side `$registerTextDocumentContentProvider`
+ *   effect arm.
+ * - Collaborative editing cursors will come through the Mist WebSocket
+ *   channel, not the Mountain gRPC channel.
  */
 
 import { Context, Effect, Ref } from "effect";
 import type * as VSCode from "vscode";
 
 // Import current Cocoon interfaces
-import { IIPCService } from "../Interfaces/IIPCService.js";
 import { MountainGRPCClientService } from "./MountainGRPCClient.js";
 
 // Temporary placeholder types - TODO: Replace with proper interfaces
@@ -145,7 +176,6 @@ export class WorkspaceService extends Effect.Service<WorkspaceService>()(
 	{
 		effect: Effect.gen(function* () {
 			// Resolve service dependencies
-			const IPC = yield* Context.Tag<IIPCService>("IIPCService");
 			const Configuration = yield* Context.Tag<ConfigurationService>(
 				"Service/Configuration",
 			);

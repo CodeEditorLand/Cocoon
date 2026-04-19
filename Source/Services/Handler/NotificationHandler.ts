@@ -1,12 +1,42 @@
 /**
- * @module Handler/NotificationHandler
+ * @module Services/Handler/NotificationHandler
  * @description
- * Handles Mountain notifications received via SendMountainNotification RPC.
- * Parses notification parameters, emits domain events, and delegates to
- * specific notification handlers (document content, extension change, etc.).
+ * Fan-out for Mountain → Cocoon notifications. Every incoming method is
+ * translated into a domain event on either the shared `Emitter` (reached
+ * by `createFileSystemWatcher`, `createWebviewPanel`, etc.) or the
+ * `WorkspaceEventEmitter` (reached by `onDidChange*TextDocument*` and the
+ * workspace-folder subscriber chain).
  *
- * Document lifecycle notifications also emit workspace events on the
- * WorkspaceEventEmitter so vscode API shim listeners fire correctly.
+ * ## Channels
+ *
+ * | Emitter                  | Events                                                         |
+ * | ------------------------ | -------------------------------------------------------------- |
+ * | `Emitter`                | `extensionChanged`, `configurationChanged`, `windowFocused`, `windowBlurred`, `systemShutdown`, `webview.message:<handle>`, `webview.dispose:<handle>`, `webview.viewState:<handle>`, `fileWatcher:<handle>`, `unknownNotification` |
+ * | `WorkspaceEventEmitter`  | `didOpenTextDocument`, `didChangeTextDocument`, `didCloseTextDocument`, `didSaveTextDocument` |
+ *
+ * ## Why two emitters
+ *
+ * Text-document events are high-volume (one per keystroke when an
+ * extension is in `onDidChangeTextDocument`) and have a distinct
+ * subscriber population — they must not block on
+ * extension-lifecycle listeners. Keeping them on a dedicated emitter
+ * bounds the worst-case fan-out cost.
+ *
+ * ## Subscription contracts
+ *
+ * All emitters use Node's built-in `EventEmitter`. Subscribers added via
+ * the vscode API shims (in `Handler/VscodeAPI/*`) return a VS Code
+ * `Disposable` whose `dispose()` calls `Emitter.removeListener`. The
+ * per-event memory leak check (`MaxListeners`) is left at the Node
+ * default (10) — extensions that register >10 listeners receive a
+ * runtime warning and should rethink their design.
+ *
+ * ## Unknown methods
+ *
+ * Methods that do not match any case land in the `default` arm, are
+ * printed to `process.stdout` (survives esbuild's `drop: ["console"]`
+ * in production), and re-emitted as `unknownNotification` so a plugin
+ * / telemetry listener can surface the gap.
  */
 
 import type { EventEmitter } from "events";
@@ -92,6 +122,54 @@ const HandleSpecificNotification = (
 				Parameters,
 				WorkspaceEventEmitter,
 			);
+			break;
+		case "webview.message": {
+			// { handle, message } — the webview posted a message to the extension.
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			if (Payload?.handle) {
+				Emitter.emit(`webview.message:${Payload.handle}`, Payload.message);
+			}
+			break;
+		}
+		case "webview.dispose": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			if (Payload?.handle) {
+				Emitter.emit(`webview.dispose:${Payload.handle}`);
+			}
+			break;
+		}
+		case "webview.viewState": {
+			const Payload = Array.isArray(Parameters)
+				? Parameters[0]
+				: Parameters;
+			if (Payload?.handle) {
+				Emitter.emit(`webview.viewState:${Payload.handle}`, {
+					active: Payload.active,
+					visible: Payload.visible,
+					viewColumn: Payload.viewColumn,
+				});
+			}
+			break;
+		}
+		case "$fileWatcher:event":
+			// { handle, kind: "create"|"change"|"delete", path }
+			{
+				const Event = (Array.isArray(Parameters)
+					? Parameters[0]
+					: Parameters) as
+					| { handle?: string; kind?: string; path?: string }
+					| undefined;
+				if (Event?.handle && Event.kind && Event.path) {
+					Emitter.emit(`fileWatcher:${Event.handle}`, {
+						kind: Event.kind,
+						path: Event.path,
+					});
+				}
+			}
 			break;
 		default:
 			// Generic handler for unknown notification types — survive

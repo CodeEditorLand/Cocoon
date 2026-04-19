@@ -123,7 +123,6 @@ import { Layer } from "effect";
 import { IConfigurationService } from "../Interfaces/IConfigurationService.js";
 import { IErrorHandlingService } from "../Interfaces/IErrorHandlingService.js";
 import { IExtensionHostService } from "../Interfaces/IExtensionHostService.js";
-import { IIPCService } from "../Interfaces/IIPCService.js";
 import { IModuleInterceptorService } from "../Interfaces/IModuleInterceptorService.js";
 import { IMountainClientService } from "../Interfaces/IMountainClientService.js";
 import { IPerformanceMonitoringService } from "../Interfaces/IPerformanceMonitoringService.js";
@@ -140,7 +139,6 @@ import {
 import { ConfigurationLayer } from "../Services/Configuration.js";
 import { ErrorHandlingServiceLive } from "../Services/ErrorHandlingService.js";
 import { ExtensionHostLayer } from "../Services/ExtensionHostService.js";
-import { IPCServiceLayer } from "../Services/IPCService.js";
 import { ModuleInterceptorServiceLayer } from "../Services/ModuleInterceptorService.js";
 import { MountainClientServiceLayer } from "../Services/MountainClientService.js";
 import { MountainGRPCClientLayer } from "../Services/MountainGRPCClient.js";
@@ -167,7 +165,6 @@ export default class OldStyleServices {
 	validateDependencies() {
 		return Layer.mergeAll(
 			MountainClientServiceLayer,
-			IPCServiceLayer,
 			ConfigurationLayer,
 			ModuleInterceptorServiceLayer,
 			ExtensionHostLayer,

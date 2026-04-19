@@ -95,7 +95,51 @@ var LandFixLog = {
   Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
 };
 var LandFixLog_default = LandFixLog;
-export {
-  LandFixLog_default as default
+
+// Source/Utility/Tier.ts
+var Injected = globalThis.__LandTiers ?? {};
+var Pick = /* @__PURE__ */ __name((Capability, Fallback) => {
+  const FromInjected = Injected[Capability];
+  if (typeof FromInjected === "string" && FromInjected.length > 0) {
+    return FromInjected;
+  }
+  const FromEnvironment = process.env[`Tier${Capability}`];
+  if (typeof FromEnvironment === "string" && FromEnvironment.length > 0) {
+    return FromEnvironment;
+  }
+  return Fallback;
+}, "Pick");
+var Tier = {
+  RemoteProcedureCall: Pick(
+    "RemoteProcedureCall",
+    "GRPC"
+  ),
+  HTTPProxy: Pick("HTTPProxy", "HandRolled"),
+  Logger: Pick("Logger", "Standard"),
+  FileSystem: Pick("FileSystem", "Layer2"),
+  FindFiles: Pick("FindFiles", "Layer3"),
+  Glob: Pick("Glob", "JavaScript"),
+  FileWatcher: Pick("FileWatcher", "Stub"),
+  SchemeAssets: Pick("SchemeAssets", "Embedded"),
+  Configuration: Pick("Configuration", "Cache"),
+  Diagnostics: Pick("Diagnostics", "Full"),
+  Clipboard: Pick("Clipboard", "Layer3"),
+  OpenExternal: Pick("OpenExternal", "Layer3"),
+  DocumentMirror: Pick("DocumentMirror", "Full"),
+  ExtensionActivation: Pick(
+    "ExtensionActivation",
+    "Parallel8"
+  ),
+  ExtensionScan: Pick("ExtensionScan", "Sequential"),
+  ModuleCache: Pick("ModuleCache", "Simple"),
+  Telemetry: Pick("Telemetry", "Synchronous")
 };
-//# sourceMappingURL=LandFixLog.js.map
+LandFixLog_default.Info(
+  "Tier",
+  `Cocoon tier set resolved: ${JSON.stringify(Tier)}`
+);
+var Tier_default = Tier;
+export {
+  Tier_default as default
+};
+//# sourceMappingURL=Tier.js.map

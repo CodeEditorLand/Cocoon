@@ -169,13 +169,8 @@ export class HealthService implements IHealthService {
 				initialStatus: HealthStatus.HEALTHY,
 			},
 			{
-				name: "IPCService",
-				dependencies: ["MountainClientService"],
-				initialStatus: HealthStatus.HEALTHY,
-			},
-			{
 				name: "ExtensionHostService",
-				dependencies: ["IPCService"],
+				dependencies: ["MountainClientService"],
 				initialStatus: HealthStatus.HEALTHY,
 			},
 			{
@@ -185,7 +180,7 @@ export class HealthService implements IHealthService {
 			},
 			{
 				name: "GRPCServerService",
-				dependencies: ["IPCService"],
+				dependencies: ["MountainClientService"],
 				initialStatus: HealthStatus.HEALTHY,
 			},
 		];
@@ -386,9 +381,6 @@ export class HealthService implements IHealthService {
 			case "MountainClientService":
 				// Check Mountain client connection
 				return await this.checkMountainClientHealth();
-			case "IPCService":
-				// Check IPC service status
-				return await this.checkIPCServiceHealth();
 			case "ExtensionHostService":
 				// Check extension host status
 				return await this.checkExtensionHostHealth();
@@ -409,14 +401,6 @@ export class HealthService implements IHealthService {
 	private async checkMountainClientHealth(): Promise<boolean> {
 		// Mock implementation - would check actual Mountain client status
 		return Math.random() > 0.1; // 90% success rate
-	}
-
-	/**
-	 * Check IPC service health
-	 */
-	private async checkIPCServiceHealth(): Promise<boolean> {
-		// Mock implementation - would check actual IPC service status
-		return Math.random() > 0.05; // 95% success rate
 	}
 
 	/**
@@ -450,7 +434,6 @@ export class HealthService implements IHealthService {
 		// Mock implementation - would use real metrics
 		const baseTimes: Record<string, number> = {
 			"MountainClientService": 50,
-			"IPCService": 10,
 			"ExtensionHostService": 100,
 			"ConfigurationService": 5,
 			"GRPCServerService": 20,
@@ -466,7 +449,6 @@ export class HealthService implements IHealthService {
 		// Mock implementation - would use real metrics
 		const baseRates: Record<string, number> = {
 			"MountainClientService": 2.5,
-			"IPCService": 0.5,
 			"ExtensionHostService": 5.0,
 			"ConfigurationService": 0.1,
 			"GRPCServerService": 1.5,
@@ -482,7 +464,6 @@ export class HealthService implements IHealthService {
 		// Mock implementation - would use real metrics
 		const baseThroughput: Record<string, number> = {
 			"MountainClientService": 500,
-			"IPCService": 2000,
 			"ExtensionHostService": 300,
 			"ConfigurationService": 5000,
 			"GRPCServerService": 1000,
@@ -498,7 +479,6 @@ export class HealthService implements IHealthService {
 		// Mock implementation - would use real metrics
 		const baseMemory: Record<string, number> = {
 			"MountainClientService": 256,
-			"IPCService": 128,
 			"ExtensionHostService": 512,
 			"ConfigurationService": 64,
 			"GRPCServerService": 192,
@@ -514,7 +494,6 @@ export class HealthService implements IHealthService {
 		// Mock implementation - would use real metrics
 		const baseCpu: Record<string, number> = {
 			"MountainClientService": 15,
-			"IPCService": 5,
 			"ExtensionHostService": 25,
 			"ConfigurationService": 2,
 			"GRPCServerService": 10,
