@@ -532,17 +532,33 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         viewColumn: 1,
         activeTab: void 0
       },
-      onDidChangeTabs: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeTabs"),
-      onDidChangeTabGroups: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChangeTabGroups"),
-      close: /* @__PURE__ */ __name(async () => true, "close")
+      onDidChangeTabs: MakeEventSubscriber(
+        Context,
+        "window.didChangeTabs"
+      ),
+      onDidChangeTabGroups: MakeEventSubscriber(
+        Context,
+        "window.didChangeTabGroups"
+      ),
+      close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
+        try {
+          await Context.MountainClient?.sendRequest("Command.Execute", [
+            "workbench.action.closeActiveEditor",
+            []
+          ]);
+          return true;
+        } catch {
+          return false;
+        }
+      }, "close")
     },
     activeColorTheme: {
       kind: 2,
       // ColorThemeKind.Dark
-      onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChange")
+      onDidChange: MakeEventSubscriber(
+        Context,
+        "window.didChangeActiveColorTheme"
+      )
     },
     onDidChangeActiveColorTheme: MakeEventSubscriber(
       Context,
@@ -651,20 +667,119 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
         }, "dispose")
       };
     }, "registerCustomEditorProvider"),
-    registerFileDecorationProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerFileDecorationProvider"),
-    registerUriHandler: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerUriHandler"),
-    registerTerminalLinkProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerTerminalLinkProvider"),
-    registerTerminalProfileProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerTerminalProfileProvider"),
+    registerFileDecorationProvider: /* @__PURE__ */ __name((Provider) => {
+      const Handle = `fileDecoration:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+      Context.SendToMountain("register_file_decoration_provider", {
+        handle: Handle,
+        extension_id: ""
+      }).catch(() => {
+      });
+      Context.ExtensionRegistry.set(
+        `__fileDecorationProvider:${Handle}`,
+        Provider
+      );
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(
+            `__fileDecorationProvider:${Handle}`
+          );
+          Context.SendToMountain(
+            "unregister_file_decoration_provider",
+            { handle: Handle }
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerFileDecorationProvider"),
+    registerUriHandler: /* @__PURE__ */ __name((Handler) => {
+      const Handle = `uriHandler:${Date.now()}`;
+      Context.SendToMountain("register_uri_handler", {
+        handle: Handle,
+        extension_id: ""
+      }).catch(() => {
+      });
+      Context.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
+          Context.SendToMountain("unregister_uri_handler", {
+            handle: Handle
+          }).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerUriHandler"),
+    registerTerminalLinkProvider: /* @__PURE__ */ __name((Provider) => {
+      const Handle = `terminalLink:${Date.now()}`;
+      Context.SendToMountain("register_terminal_link_provider", {
+        handle: Handle,
+        extension_id: ""
+      }).catch(() => {
+      });
+      Context.ExtensionRegistry.set(
+        `__terminalLinkProvider:${Handle}`,
+        Provider
+      );
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(
+            `__terminalLinkProvider:${Handle}`
+          );
+          Context.SendToMountain(
+            "unregister_terminal_link_provider",
+            { handle: Handle }
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerTerminalLinkProvider"),
+    registerTerminalProfileProvider: /* @__PURE__ */ __name((Id, Provider) => {
+      const Handle = `terminalProfile:${Id}:${Date.now()}`;
+      Context.SendToMountain("register_terminal_profile_provider", {
+        handle: Handle,
+        profile_id: Id,
+        extension_id: ""
+      }).catch(() => {
+      });
+      Context.ExtensionRegistry.set(
+        `__terminalProfileProvider:${Handle}`,
+        Provider
+      );
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.ExtensionRegistry.delete(
+            `__terminalProfileProvider:${Handle}`
+          );
+          Context.SendToMountain(
+            "unregister_terminal_profile_provider",
+            { handle: Handle }
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerTerminalProfileProvider"),
     registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
       dispose: /* @__PURE__ */ __name(() => {
       }, "dispose")
     }), "registerProfileContentHandler"),
-    registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") }), "registerExternalUriOpener"),
+    registerExternalUriOpener: /* @__PURE__ */ __name((Id, _Opener, _Metadata) => {
+      const Handle = `externalUriOpener:${Id}:${Date.now()}`;
+      Context.SendToMountain("register_external_uri_opener", {
+        handle: Handle,
+        opener_id: Id,
+        extension_id: ""
+      }).catch(() => {
+      });
+      return {
+        dispose: /* @__PURE__ */ __name(() => {
+          Context.SendToMountain(
+            "unregister_external_uri_opener",
+            { handle: Handle }
+          ).catch(() => {
+          });
+        }, "dispose")
+      };
+    }, "registerExternalUriOpener"),
     // Runs a Task with a progress object that reports to Mountain, which
     // in turn updates the status-bar progress indicator in Sky.
     // VS Code's contract: `Task(progress, cancellationToken) -> Thenable<R>`.
@@ -750,6 +865,18 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
     onDidCloseTerminal: MakeEventSubscriber(
       Context,
       "window.didCloseTerminal"
+    ),
+    onDidChangeActiveTerminal: MakeEventSubscriber(
+      Context,
+      "window.didChangeActiveTerminal"
+    ),
+    onDidChangeTerminalState: MakeEventSubscriber(
+      Context,
+      "window.didChangeTerminalState"
+    ),
+    onDidWriteTerminalData: MakeEventSubscriber(
+      Context,
+      "terminalData"
     ),
     onDidChangeWindowState: MakeEventSubscriber(
       Context,

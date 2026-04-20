@@ -63,7 +63,8 @@ var CreateDebugNamespace = /* @__PURE__ */ __name((Context) => ({
   }, "startDebugging"),
   stopDebugging: /* @__PURE__ */ __name(async (Session) => {
     try {
-      await Context.MountainClient?.sendRequest("Debug.Stop", [Session]);
+      const SessionId = typeof Session === "string" ? Session : Session?.id ?? "";
+      await Context.MountainClient?.sendRequest("Debug.Stop", [SessionId]);
     } catch {
     }
   }, "stopDebugging"),

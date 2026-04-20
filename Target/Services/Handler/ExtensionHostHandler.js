@@ -21293,17 +21293,33 @@ var init_WindowNamespace = __esm({
             viewColumn: 1,
             activeTab: void 0
           },
-          onDidChangeTabs: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeTabs"),
-          onDidChangeTabGroups: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeTabGroups"),
-          close: /* @__PURE__ */ __name(async () => true, "close")
+          onDidChangeTabs: MakeEventSubscriber(
+            Context,
+            "window.didChangeTabs"
+          ),
+          onDidChangeTabGroups: MakeEventSubscriber(
+            Context,
+            "window.didChangeTabGroups"
+          ),
+          close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
+            try {
+              await Context.MountainClient?.sendRequest("Command.Execute", [
+                "workbench.action.closeActiveEditor",
+                []
+              ]);
+              return true;
+            } catch {
+              return false;
+            }
+          }, "close")
         },
         activeColorTheme: {
           kind: 2,
           // ColorThemeKind.Dark
-          onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChange")
+          onDidChange: MakeEventSubscriber(
+            Context,
+            "window.didChangeActiveColorTheme"
+          )
         },
         onDidChangeActiveColorTheme: MakeEventSubscriber(
           Context,
@@ -21412,20 +21428,119 @@ var init_WindowNamespace = __esm({
             }, "dispose")
           };
         }, "registerCustomEditorProvider"),
-        registerFileDecorationProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerFileDecorationProvider"),
-        registerUriHandler: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerUriHandler"),
-        registerTerminalLinkProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalLinkProvider"),
-        registerTerminalProfileProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalProfileProvider"),
+        registerFileDecorationProvider: /* @__PURE__ */ __name((Provider) => {
+          const Handle = `fileDecoration:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+          Context.SendToMountain("register_file_decoration_provider", {
+            handle: Handle,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context.ExtensionRegistry.set(
+            `__fileDecorationProvider:${Handle}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.ExtensionRegistry.delete(
+                `__fileDecorationProvider:${Handle}`
+              );
+              Context.SendToMountain(
+                "unregister_file_decoration_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerFileDecorationProvider"),
+        registerUriHandler: /* @__PURE__ */ __name((Handler) => {
+          const Handle = `uriHandler:${Date.now()}`;
+          Context.SendToMountain("register_uri_handler", {
+            handle: Handle,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
+              Context.SendToMountain("unregister_uri_handler", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerUriHandler"),
+        registerTerminalLinkProvider: /* @__PURE__ */ __name((Provider) => {
+          const Handle = `terminalLink:${Date.now()}`;
+          Context.SendToMountain("register_terminal_link_provider", {
+            handle: Handle,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context.ExtensionRegistry.set(
+            `__terminalLinkProvider:${Handle}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.ExtensionRegistry.delete(
+                `__terminalLinkProvider:${Handle}`
+              );
+              Context.SendToMountain(
+                "unregister_terminal_link_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTerminalLinkProvider"),
+        registerTerminalProfileProvider: /* @__PURE__ */ __name((Id, Provider) => {
+          const Handle = `terminalProfile:${Id}:${Date.now()}`;
+          Context.SendToMountain("register_terminal_profile_provider", {
+            handle: Handle,
+            profile_id: Id,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context.ExtensionRegistry.set(
+            `__terminalProfileProvider:${Handle}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.ExtensionRegistry.delete(
+                `__terminalProfileProvider:${Handle}`
+              );
+              Context.SendToMountain(
+                "unregister_terminal_profile_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTerminalProfileProvider"),
         registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
           dispose: /* @__PURE__ */ __name(() => {
           }, "dispose")
         }), "registerProfileContentHandler"),
-        registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerExternalUriOpener"),
+        registerExternalUriOpener: /* @__PURE__ */ __name((Id, _Opener, _Metadata) => {
+          const Handle = `externalUriOpener:${Id}:${Date.now()}`;
+          Context.SendToMountain("register_external_uri_opener", {
+            handle: Handle,
+            opener_id: Id,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.SendToMountain(
+                "unregister_external_uri_opener",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerExternalUriOpener"),
         // Runs a Task with a progress object that reports to Mountain, which
         // in turn updates the status-bar progress indicator in Sky.
         // VS Code's contract: `Task(progress, cancellationToken) -> Thenable<R>`.
@@ -21511,6 +21626,18 @@ var init_WindowNamespace = __esm({
         onDidCloseTerminal: MakeEventSubscriber(
           Context,
           "window.didCloseTerminal"
+        ),
+        onDidChangeActiveTerminal: MakeEventSubscriber(
+          Context,
+          "window.didChangeActiveTerminal"
+        ),
+        onDidChangeTerminalState: MakeEventSubscriber(
+          Context,
+          "window.didChangeTerminalState"
+        ),
+        onDidWriteTerminalData: MakeEventSubscriber(
+          Context,
+          "terminalData"
         ),
         onDidChangeWindowState: MakeEventSubscriber(
           Context,
@@ -21926,9 +22053,10 @@ var init_WorkspaceNamespace = __esm({
       let IncludeRegex;
       try {
         IncludeRegex = GlobToRegex_default(IncludePattern);
-      } catch (Error2) {
+      } catch (CaughtError) {
+        const Message = CaughtError instanceof globalThis.Error ? CaughtError.message : String(CaughtError);
         process.stdout.write(
-          `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}
+          `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Message}
 `
         );
         return [];
@@ -22026,10 +22154,12 @@ var init_WorkspaceNamespace = __esm({
     }, "FindFilesLocal");
     ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
       const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
-      return (InitWorkspace.folders ?? []).map((Folder) => ({
-        ...Folder,
-        FsPath: FolderToFsPath(Folder?.uri)
-      }));
+      return (InitWorkspace.folders ?? []).map((Folder) => {
+        const FsPath = FolderToFsPath(Folder?.uri);
+        const Record = { ...Folder };
+        if (typeof FsPath === "string") Record.FsPath = FsPath;
+        return Record;
+      });
     }, "ResolveWorkspaceFolders");
     CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
       const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
@@ -22081,9 +22211,21 @@ var init_WorkspaceNamespace = __esm({
           PrimeConfig(Key);
         }
       });
+      const ReadFolders = /* @__PURE__ */ __name(() => {
+        const Live = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
+        return Live.folders ?? [];
+      }, "ReadFolders");
+      const ReadName = /* @__PURE__ */ __name(() => {
+        const Live = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
+        return Live.name ?? InitWorkspace.name;
+      }, "ReadName");
       return {
-        workspaceFolders: InitWorkspace.folders ?? [],
-        name: InitWorkspace.name,
+        get workspaceFolders() {
+          return ReadFolders();
+        },
+        get name() {
+          return ReadName();
+        },
         workspaceFile: void 0,
         rootPath: void 0,
         textDocuments: [],
@@ -22139,7 +22281,7 @@ var init_WorkspaceNamespace = __esm({
         findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
           return FindFilesLocal(
             Context,
-            InitWorkspace.folders ?? [],
+            ReadFolders(),
             Include,
             Exclude,
             MaxResults
@@ -22177,7 +22319,46 @@ var init_WorkspaceNamespace = __esm({
           return true;
         }, "applyEdit"),
         asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
-        updateWorkspaceFolders: /* @__PURE__ */ __name(() => false, "updateWorkspaceFolders"),
+        // BATCH-14 follow-up: `vscode.workspace.updateWorkspaceFolders(start,
+        // deleteCount, ...toAdd)` is how extensions drive the folder set from
+        // within the extension host (e.g. the Git extension adds the
+        // repository root when the user clones). We forward the request
+        // through Mountain's `$updateWorkspaceFolders` arm which mutates
+        // ApplicationState.Workspace and then fires `$deltaWorkspaceFolders`
+        // back at us — the listener wiring from BATCH-14 does the rest.
+        updateWorkspaceFolders: /* @__PURE__ */ __name((Start, DeleteCount, ...ToAdd) => {
+          const Current = ReadFolders();
+          const RemoveCount = typeof DeleteCount === "number" && DeleteCount > 0 ? Math.min(DeleteCount, Math.max(Current.length - Start, 0)) : 0;
+          const Removals = Current.slice(Start, Start + RemoveCount).map(
+            (Folder) => ({
+              uri: {
+                value: typeof Folder?.uri === "string" ? Folder.uri : Folder?.uri?.["toString"]?.call(Folder?.uri) ?? String(Folder?.uri)
+              }
+            })
+          );
+          const Additions = ToAdd.map((Folder) => {
+            const Raw = Folder?.uri;
+            const Serialized = typeof Raw === "string" ? Raw : Raw?.["toString"]?.call(Raw) ?? String(Raw ?? "");
+            return {
+              uri: { value: Serialized },
+              name: Folder?.name ?? ""
+            };
+          });
+          Context.MountainClient?.sendRequest("$updateWorkspaceFolders", {
+            additions: Additions,
+            removals: Removals
+          }).catch((Error2) => {
+            const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
+            try {
+              process.stdout.write(
+                `[LandFix:WsNs] updateWorkspaceFolders failed: ${Message}
+`
+              );
+            } catch {
+            }
+          });
+          return true;
+        }, "updateWorkspaceFolders"),
         onDidOpenTextDocument: EventSubscriber(Context, "didOpenTextDocument"),
         onDidCloseTextDocument: EventSubscriber(
           Context,
@@ -22203,24 +22384,147 @@ var init_WorkspaceNamespace = __esm({
             }, "dispose")
           };
         }, "onDidChangeConfiguration"),
-        onDidChangeWorkspaceFolders: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeWorkspaceFolders"),
-        registerTextDocumentContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTextDocumentContentProvider"),
-        registerFileSystemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerFileSystemProvider"),
-        registerTaskProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTaskProvider"),
-        registerNotebookContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerNotebookContentProvider"),
-        registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerNotebookSerializer"),
-        registerRemoteAuthorityResolver: /* @__PURE__ */ __name((_AuthorityPrefix, _Resolver) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerRemoteAuthorityResolver"),
-        registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "registerResourceLabelFormatter"),
+        onDidChangeWorkspaceFolders: /* @__PURE__ */ __name((Listener) => {
+          Context.WorkspaceEventEmitter.on(
+            "didChangeWorkspaceFolders",
+            Listener
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.WorkspaceEventEmitter.removeListener(
+                "didChangeWorkspaceFolders",
+                Listener
+              );
+            }, "dispose")
+          };
+        }, "onDidChangeWorkspaceFolders"),
+        // `vscode.workspace.registerTextDocumentContentProvider(scheme, provider)`
+        // is how extensions back virtual files (e.g. git showing HEAD
+        // contents for a diff). Cocoon stores the provider locally so
+        // `TextDocumentContentProvider$provideTextDocumentContent` from
+        // Mountain can look it up, then informs Mountain so the scheme is
+        // routable.
+        registerTextDocumentContentProvider: /* @__PURE__ */ __name((Scheme, Provider) => {
+          const Handle = `textDocumentContent:${Scheme}:${Date.now()}`;
+          Context.SendToMountain("register_text_document_content_provider", {
+            handle: Handle,
+            scheme: Scheme,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context.ExtensionRegistry.set(
+            `__textDocumentContentProvider:${Scheme}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.ExtensionRegistry.delete(
+                `__textDocumentContentProvider:${Scheme}`
+              );
+              Context.SendToMountain(
+                "unregister_text_document_content_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTextDocumentContentProvider"),
+        registerFileSystemProvider: /* @__PURE__ */ __name((Scheme, _Provider, Options) => {
+          const Handle = `fileSystemProvider:${Scheme}:${Date.now()}`;
+          Context.SendToMountain("register_file_system_provider", {
+            handle: Handle,
+            scheme: Scheme,
+            is_case_sensitive: Options?.isCaseSensitive ?? true,
+            is_readonly: Options?.isReadonly ?? false,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.SendToMountain(
+                "unregister_file_system_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerFileSystemProvider"),
+        registerTaskProvider: /* @__PURE__ */ __name((TaskType, _Provider) => {
+          const Handle = `taskProvider:${TaskType}:${Date.now()}`;
+          Context.SendToMountain("register_task_provider", {
+            handle: Handle,
+            task_type: TaskType,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.SendToMountain("unregister_task_provider", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTaskProvider"),
+        registerNotebookContentProvider: /* @__PURE__ */ __name((NotebookType, _Provider) => {
+          const Handle = `notebookContent:${NotebookType}:${Date.now()}`;
+          Context.SendToMountain("register_notebook_content_provider", {
+            handle: Handle,
+            notebook_type: NotebookType,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.SendToMountain(
+                "unregister_notebook_content_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerNotebookContentProvider"),
+        registerNotebookSerializer: /* @__PURE__ */ __name((NotebookType, _Serializer, _Options) => {
+          const Handle = `notebookSerializer:${NotebookType}:${Date.now()}`;
+          Context.SendToMountain("register_notebook_serializer", {
+            handle: Handle,
+            notebook_type: NotebookType,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.SendToMountain("unregister_notebook_serializer", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerNotebookSerializer"),
+        registerRemoteAuthorityResolver: /* @__PURE__ */ __name((AuthorityPrefix, _Resolver) => {
+          Context.SendToMountain("register_remote_authority_resolver", {
+            authority_prefix: AuthorityPrefix,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context.SendToMountain(
+                "unregister_remote_authority_resolver",
+                { authority_prefix: AuthorityPrefix }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerRemoteAuthorityResolver"),
+        registerResourceLabelFormatter: /* @__PURE__ */ __name((Formatter) => {
+          Context.SendToMountain("register_resource_label_formatter", {
+            formatter: Formatter
+          }).catch(() => {
+          });
+          return { dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") };
+        }, "registerResourceLabelFormatter"),
         registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerDocumentPasteEditProvider"),
         registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -22375,8 +22679,6 @@ var init_WorkspaceNamespace = __esm({
           };
         }, "createFileSystemWatcher"),
         fs: {
-          // FileSystem.Stat is not yet in CreateEffectForRequest — falls back
-          // to defaults via Call's try/catch until the Rust route is added.
           stat: /* @__PURE__ */ __name(async (Uri2) => await Call(Context, "FileSystem.Stat", [
             String(Uri2)
           ]) ?? {
@@ -22894,22 +23196,48 @@ var init_LanguagesNamespace = __esm({
         };
       }, "onDidChangeDiagnostics"),
       getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
-      registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerDocumentPasteEditProvider"),
-      registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerDocumentDropEditProvider"),
-      registerInlineCompletionItemProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerInlineCompletionItemProvider"),
-      registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
-        dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose")
-      }), "registerInlineEditProvider"),
-      registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerMultiDocumentHighlightProvider"),
-      registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
-        dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose")
-      }), "registerMappedEditsProvider"),
+      registerDocumentPasteEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_document_paste_edit_provider",
+        Selector,
+        Provider
+      ), "registerDocumentPasteEditProvider"),
+      registerDocumentDropEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_document_drop_edit_provider",
+        Selector,
+        Provider
+      ), "registerDocumentDropEditProvider"),
+      registerInlineCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_inline_completion_item_provider",
+        Selector,
+        Provider
+      ), "registerInlineCompletionItemProvider"),
+      registerInlineEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_inline_edit_provider",
+        Selector,
+        Provider
+      ), "registerInlineEditProvider"),
+      registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_multi_document_highlight_provider",
+        Selector,
+        Provider
+      ), "registerMultiDocumentHighlightProvider"),
+      registerMappedEditsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context,
+        LanguageProviderRegistry,
+        "register_mapped_edits_provider",
+        Selector,
+        Provider
+      ), "registerMappedEditsProvider"),
       createLanguageStatusItem: /* @__PURE__ */ __name((Identifier, _Selector) => {
         process.stdout.write(
           `[LandFix:LangNs] createLanguageStatusItem id=${Identifier}
@@ -23435,7 +23763,8 @@ var init_DebugNamespace = __esm({
       }, "startDebugging"),
       stopDebugging: /* @__PURE__ */ __name(async (Session) => {
         try {
-          await Context.MountainClient?.sendRequest("Debug.Stop", [Session]);
+          const SessionId = typeof Session === "string" ? Session : Session?.id ?? "";
+          await Context.MountainClient?.sendRequest("Debug.Stop", [SessionId]);
         } catch {
         }
       }, "stopDebugging"),

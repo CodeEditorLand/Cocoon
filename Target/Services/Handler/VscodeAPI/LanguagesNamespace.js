@@ -504,22 +504,48 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
     };
   }, "onDidChangeDiagnostics"),
   getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
-  registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-  }, "dispose") }), "registerDocumentPasteEditProvider"),
-  registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-  }, "dispose") }), "registerDocumentDropEditProvider"),
-  registerInlineCompletionItemProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-  }, "dispose") }), "registerInlineCompletionItemProvider"),
-  registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
-    dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose")
-  }), "registerInlineEditProvider"),
-  registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-  }, "dispose") }), "registerMultiDocumentHighlightProvider"),
-  registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
-    dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose")
-  }), "registerMappedEditsProvider"),
+  registerDocumentPasteEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
+    Context,
+    LanguageProviderRegistry,
+    "register_document_paste_edit_provider",
+    Selector,
+    Provider
+  ), "registerDocumentPasteEditProvider"),
+  registerDocumentDropEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
+    Context,
+    LanguageProviderRegistry,
+    "register_document_drop_edit_provider",
+    Selector,
+    Provider
+  ), "registerDocumentDropEditProvider"),
+  registerInlineCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+    Context,
+    LanguageProviderRegistry,
+    "register_inline_completion_item_provider",
+    Selector,
+    Provider
+  ), "registerInlineCompletionItemProvider"),
+  registerInlineEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+    Context,
+    LanguageProviderRegistry,
+    "register_inline_edit_provider",
+    Selector,
+    Provider
+  ), "registerInlineEditProvider"),
+  registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+    Context,
+    LanguageProviderRegistry,
+    "register_multi_document_highlight_provider",
+    Selector,
+    Provider
+  ), "registerMultiDocumentHighlightProvider"),
+  registerMappedEditsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+    Context,
+    LanguageProviderRegistry,
+    "register_mapped_edits_provider",
+    Selector,
+    Provider
+  ), "registerMappedEditsProvider"),
   createLanguageStatusItem: /* @__PURE__ */ __name((Identifier, _Selector) => {
     process.stdout.write(
       `[LandFix:LangNs] createLanguageStatusItem id=${Identifier}

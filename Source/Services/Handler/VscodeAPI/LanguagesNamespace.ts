@@ -446,29 +446,61 @@ const CreateLanguagesNamespace = (
 	},
 	getDiagnostics: (_Resource?: unknown): unknown[] => [],
 	registerDocumentPasteEditProvider: (
-		_Selector: unknown,
-		_Provider: unknown,
+		Selector: any,
+		Provider: any,
 		_Metadata?: unknown,
-	) => ({ dispose: () => {} }),
+	) =>
+		RegisterProvider(
+			Context,
+			LanguageProviderRegistry,
+			"register_document_paste_edit_provider",
+			Selector,
+			Provider,
+		),
 	registerDocumentDropEditProvider: (
-		_Selector: unknown,
-		_Provider: unknown,
+		Selector: any,
+		Provider: any,
 		_Metadata?: unknown,
-	) => ({ dispose: () => {} }),
-	registerInlineCompletionItemProvider: (
-		_Selector: unknown,
-		_Provider: unknown,
-	) => ({ dispose: () => {} }),
-	registerInlineEditProvider: (_Selector: unknown, _Provider: unknown) => ({
-		dispose: () => {},
-	}),
-	registerMultiDocumentHighlightProvider: (
-		_Selector: unknown,
-		_Provider: unknown,
-	) => ({ dispose: () => {} }),
-	registerMappedEditsProvider: (_Selector: unknown, _Provider: unknown) => ({
-		dispose: () => {},
-	}),
+	) =>
+		RegisterProvider(
+			Context,
+			LanguageProviderRegistry,
+			"register_document_drop_edit_provider",
+			Selector,
+			Provider,
+		),
+	registerInlineCompletionItemProvider: (Selector: any, Provider: any) =>
+		RegisterProvider(
+			Context,
+			LanguageProviderRegistry,
+			"register_inline_completion_item_provider",
+			Selector,
+			Provider,
+		),
+	registerInlineEditProvider: (Selector: any, Provider: any) =>
+		RegisterProvider(
+			Context,
+			LanguageProviderRegistry,
+			"register_inline_edit_provider",
+			Selector,
+			Provider,
+		),
+	registerMultiDocumentHighlightProvider: (Selector: any, Provider: any) =>
+		RegisterProvider(
+			Context,
+			LanguageProviderRegistry,
+			"register_multi_document_highlight_provider",
+			Selector,
+			Provider,
+		),
+	registerMappedEditsProvider: (Selector: any, Provider: any) =>
+		RegisterProvider(
+			Context,
+			LanguageProviderRegistry,
+			"register_mapped_edits_provider",
+			Selector,
+			Provider,
+		),
 	createLanguageStatusItem: (Identifier: string, _Selector: unknown) => {
 		process.stdout.write(
 			`[LandFix:LangNs] createLanguageStatusItem id=${Identifier}\n`,

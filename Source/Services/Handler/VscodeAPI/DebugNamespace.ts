@@ -84,9 +84,13 @@ const CreateDebugNamespace = (Context: HandlerContext) => ({
 
 	stopDebugging: async (Session?: unknown): Promise<void> => {
 		try {
-			// Debug.Stop not yet in dispatcher — falls back to cocoon:Debug.Stop
-			// Tauri event via notification path. Wind can subscribe.
-			await Context.MountainClient?.sendRequest("Debug.Stop", [Session]);
+			// Mountain's CreateEffectForRequest now routes `Debug.Stop`
+			// directly to `DebugService::StopDebugging(SessionId)`.
+			const SessionId =
+				typeof Session === "string"
+					? Session
+					: ((Session as { id?: unknown })?.id ?? "");
+			await Context.MountainClient?.sendRequest("Debug.Stop", [SessionId]);
 		} catch {}
 	},
 

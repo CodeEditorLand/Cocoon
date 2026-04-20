@@ -15,6 +15,75 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// Source/Services/LanguageProviderRegistry.ts
+var LanguageProviderRegistry_exports = {};
+__export(LanguageProviderRegistry_exports, {
+  ExecuteCommand: () => ExecuteCommand,
+  Get: () => Get,
+  ListCommands: () => ListCommands,
+  ListHandles: () => ListHandles,
+  Register: () => Register,
+  RegisterAutoHandle: () => RegisterAutoHandle,
+  RegisterCommand: () => RegisterCommand,
+  Unregister: () => Unregister,
+  UnregisterCommand: () => UnregisterCommand
+});
+function Register(Handle, Provider) {
+  Callbacks.set(Handle, Provider);
+}
+function Unregister(Handle) {
+  Callbacks.delete(Handle);
+}
+function Get(Handle) {
+  const Provider = Callbacks.get(Handle);
+  if (process.env.LAND_DEV_LOG) {
+    console.warn(
+      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
+    );
+  }
+  return Provider;
+}
+function RegisterAutoHandle(Provider) {
+  const Handle = NextHandle++;
+  Callbacks.set(Handle, Provider);
+  return Handle;
+}
+function RegisterCommand(CommandId, Callback) {
+  Commands.set(CommandId, Callback);
+}
+function ExecuteCommand(CommandId, ...Args) {
+  const Handler = Commands.get(CommandId);
+  if (Handler) return Handler(...Args);
+  return void 0;
+}
+function UnregisterCommand(CommandId) {
+  Commands.delete(CommandId);
+}
+function ListCommands() {
+  return Array.from(Commands.keys());
+}
+function ListHandles() {
+  return Array.from(Callbacks.keys());
+}
+var Callbacks, NextHandle, Commands;
+var init_LanguageProviderRegistry = __esm({
+  "Source/Services/LanguageProviderRegistry.ts"() {
+    "use strict";
+    Callbacks = /* @__PURE__ */ new Map();
+    __name(Register, "Register");
+    __name(Unregister, "Unregister");
+    __name(Get, "Get");
+    NextHandle = 1e4;
+    __name(RegisterAutoHandle, "RegisterAutoHandle");
+    Commands = /* @__PURE__ */ new Map();
+    __name(RegisterCommand, "RegisterCommand");
+    __name(ExecuteCommand, "ExecuteCommand");
+    __name(UnregisterCommand, "UnregisterCommand");
+    __name(ListCommands, "ListCommands");
+    __name(ListHandles, "ListHandles");
+  }
+});
+
 // Source/Interfaces/IMountainClientService.ts
 import * as Effect from "effect/Effect";
 var IMountainClientService;
@@ -22545,17 +22614,33 @@ var init_WindowNamespace = __esm({
             viewColumn: 1,
             activeTab: void 0
           },
-          onDidChangeTabs: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeTabs"),
-          onDidChangeTabGroups: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeTabGroups"),
-          close: /* @__PURE__ */ __name(async () => true, "close")
+          onDidChangeTabs: MakeEventSubscriber(
+            Context21,
+            "window.didChangeTabs"
+          ),
+          onDidChangeTabGroups: MakeEventSubscriber(
+            Context21,
+            "window.didChangeTabGroups"
+          ),
+          close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
+            try {
+              await Context21.MountainClient?.sendRequest("Command.Execute", [
+                "workbench.action.closeActiveEditor",
+                []
+              ]);
+              return true;
+            } catch {
+              return false;
+            }
+          }, "close")
         },
         activeColorTheme: {
           kind: 2,
           // ColorThemeKind.Dark
-          onDidChange: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChange")
+          onDidChange: MakeEventSubscriber(
+            Context21,
+            "window.didChangeActiveColorTheme"
+          )
         },
         onDidChangeActiveColorTheme: MakeEventSubscriber(
           Context21,
@@ -22664,20 +22749,119 @@ var init_WindowNamespace = __esm({
             }, "dispose")
           };
         }, "registerCustomEditorProvider"),
-        registerFileDecorationProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerFileDecorationProvider"),
-        registerUriHandler: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerUriHandler"),
-        registerTerminalLinkProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalLinkProvider"),
-        registerTerminalProfileProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalProfileProvider"),
+        registerFileDecorationProvider: /* @__PURE__ */ __name((Provider) => {
+          const Handle = `fileDecoration:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+          Context21.SendToMountain("register_file_decoration_provider", {
+            handle: Handle,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context21.ExtensionRegistry.set(
+            `__fileDecorationProvider:${Handle}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.ExtensionRegistry.delete(
+                `__fileDecorationProvider:${Handle}`
+              );
+              Context21.SendToMountain(
+                "unregister_file_decoration_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerFileDecorationProvider"),
+        registerUriHandler: /* @__PURE__ */ __name((Handler) => {
+          const Handle = `uriHandler:${Date.now()}`;
+          Context21.SendToMountain("register_uri_handler", {
+            handle: Handle,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context21.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
+              Context21.SendToMountain("unregister_uri_handler", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerUriHandler"),
+        registerTerminalLinkProvider: /* @__PURE__ */ __name((Provider) => {
+          const Handle = `terminalLink:${Date.now()}`;
+          Context21.SendToMountain("register_terminal_link_provider", {
+            handle: Handle,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context21.ExtensionRegistry.set(
+            `__terminalLinkProvider:${Handle}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.ExtensionRegistry.delete(
+                `__terminalLinkProvider:${Handle}`
+              );
+              Context21.SendToMountain(
+                "unregister_terminal_link_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTerminalLinkProvider"),
+        registerTerminalProfileProvider: /* @__PURE__ */ __name((Id, Provider) => {
+          const Handle = `terminalProfile:${Id}:${Date.now()}`;
+          Context21.SendToMountain("register_terminal_profile_provider", {
+            handle: Handle,
+            profile_id: Id,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context21.ExtensionRegistry.set(
+            `__terminalProfileProvider:${Handle}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.ExtensionRegistry.delete(
+                `__terminalProfileProvider:${Handle}`
+              );
+              Context21.SendToMountain(
+                "unregister_terminal_profile_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTerminalProfileProvider"),
         registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
           dispose: /* @__PURE__ */ __name(() => {
           }, "dispose")
         }), "registerProfileContentHandler"),
-        registerExternalUriOpener: /* @__PURE__ */ __name((_Id, _Opener, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerExternalUriOpener"),
+        registerExternalUriOpener: /* @__PURE__ */ __name((Id, _Opener, _Metadata) => {
+          const Handle = `externalUriOpener:${Id}:${Date.now()}`;
+          Context21.SendToMountain("register_external_uri_opener", {
+            handle: Handle,
+            opener_id: Id,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain(
+                "unregister_external_uri_opener",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerExternalUriOpener"),
         // Runs a Task with a progress object that reports to Mountain, which
         // in turn updates the status-bar progress indicator in Sky.
         // VS Code's contract: `Task(progress, cancellationToken) -> Thenable<R>`.
@@ -22763,6 +22947,18 @@ var init_WindowNamespace = __esm({
         onDidCloseTerminal: MakeEventSubscriber(
           Context21,
           "window.didCloseTerminal"
+        ),
+        onDidChangeActiveTerminal: MakeEventSubscriber(
+          Context21,
+          "window.didChangeActiveTerminal"
+        ),
+        onDidChangeTerminalState: MakeEventSubscriber(
+          Context21,
+          "window.didChangeTerminalState"
+        ),
+        onDidWriteTerminalData: MakeEventSubscriber(
+          Context21,
+          "terminalData"
         ),
         onDidChangeWindowState: MakeEventSubscriber(
           Context21,
@@ -23178,9 +23374,10 @@ var init_WorkspaceNamespace = __esm({
       let IncludeRegex;
       try {
         IncludeRegex = GlobToRegex_default(IncludePattern);
-      } catch (Error2) {
+      } catch (CaughtError) {
+        const Message = CaughtError instanceof globalThis.Error ? CaughtError.message : String(CaughtError);
         process.stdout.write(
-          `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}
+          `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Message}
 `
         );
         return [];
@@ -23278,10 +23475,12 @@ var init_WorkspaceNamespace = __esm({
     }, "FindFilesLocal");
     ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context21) => {
       const InitWorkspace = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
-      return (InitWorkspace.folders ?? []).map((Folder) => ({
-        ...Folder,
-        FsPath: FolderToFsPath(Folder?.uri)
-      }));
+      return (InitWorkspace.folders ?? []).map((Folder) => {
+        const FsPath = FolderToFsPath(Folder?.uri);
+        const Record = { ...Folder };
+        if (typeof FsPath === "string") Record.FsPath = FsPath;
+        return Record;
+      });
     }, "ResolveWorkspaceFolders");
     CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context21) => {
       const InitWorkspace = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
@@ -23333,9 +23532,21 @@ var init_WorkspaceNamespace = __esm({
           PrimeConfig(Key);
         }
       });
+      const ReadFolders = /* @__PURE__ */ __name(() => {
+        const Live = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
+        return Live.folders ?? [];
+      }, "ReadFolders");
+      const ReadName = /* @__PURE__ */ __name(() => {
+        const Live = Context21.ExtensionHostInitData?.workspace ?? Context21.ExtensionHostInitData?.workspaceData ?? {};
+        return Live.name ?? InitWorkspace.name;
+      }, "ReadName");
       return {
-        workspaceFolders: InitWorkspace.folders ?? [],
-        name: InitWorkspace.name,
+        get workspaceFolders() {
+          return ReadFolders();
+        },
+        get name() {
+          return ReadName();
+        },
         workspaceFile: void 0,
         rootPath: void 0,
         textDocuments: [],
@@ -23391,7 +23602,7 @@ var init_WorkspaceNamespace = __esm({
         findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => {
           return FindFilesLocal(
             Context21,
-            InitWorkspace.folders ?? [],
+            ReadFolders(),
             Include,
             Exclude,
             MaxResults
@@ -23429,7 +23640,46 @@ var init_WorkspaceNamespace = __esm({
           return true;
         }, "applyEdit"),
         asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
-        updateWorkspaceFolders: /* @__PURE__ */ __name(() => false, "updateWorkspaceFolders"),
+        // BATCH-14 follow-up: `vscode.workspace.updateWorkspaceFolders(start,
+        // deleteCount, ...toAdd)` is how extensions drive the folder set from
+        // within the extension host (e.g. the Git extension adds the
+        // repository root when the user clones). We forward the request
+        // through Mountain's `$updateWorkspaceFolders` arm which mutates
+        // ApplicationState.Workspace and then fires `$deltaWorkspaceFolders`
+        // back at us — the listener wiring from BATCH-14 does the rest.
+        updateWorkspaceFolders: /* @__PURE__ */ __name((Start, DeleteCount, ...ToAdd) => {
+          const Current = ReadFolders();
+          const RemoveCount = typeof DeleteCount === "number" && DeleteCount > 0 ? Math.min(DeleteCount, Math.max(Current.length - Start, 0)) : 0;
+          const Removals = Current.slice(Start, Start + RemoveCount).map(
+            (Folder) => ({
+              uri: {
+                value: typeof Folder?.uri === "string" ? Folder.uri : Folder?.uri?.["toString"]?.call(Folder?.uri) ?? String(Folder?.uri)
+              }
+            })
+          );
+          const Additions = ToAdd.map((Folder) => {
+            const Raw = Folder?.uri;
+            const Serialized = typeof Raw === "string" ? Raw : Raw?.["toString"]?.call(Raw) ?? String(Raw ?? "");
+            return {
+              uri: { value: Serialized },
+              name: Folder?.name ?? ""
+            };
+          });
+          Context21.MountainClient?.sendRequest("$updateWorkspaceFolders", {
+            additions: Additions,
+            removals: Removals
+          }).catch((Error2) => {
+            const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
+            try {
+              process.stdout.write(
+                `[LandFix:WsNs] updateWorkspaceFolders failed: ${Message}
+`
+              );
+            } catch {
+            }
+          });
+          return true;
+        }, "updateWorkspaceFolders"),
         onDidOpenTextDocument: EventSubscriber(Context21, "didOpenTextDocument"),
         onDidCloseTextDocument: EventSubscriber(
           Context21,
@@ -23455,24 +23705,147 @@ var init_WorkspaceNamespace = __esm({
             }, "dispose")
           };
         }, "onDidChangeConfiguration"),
-        onDidChangeWorkspaceFolders: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeWorkspaceFolders"),
-        registerTextDocumentContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTextDocumentContentProvider"),
-        registerFileSystemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerFileSystemProvider"),
-        registerTaskProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTaskProvider"),
-        registerNotebookContentProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerNotebookContentProvider"),
-        registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerNotebookSerializer"),
-        registerRemoteAuthorityResolver: /* @__PURE__ */ __name((_AuthorityPrefix, _Resolver) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerRemoteAuthorityResolver"),
-        registerResourceLabelFormatter: /* @__PURE__ */ __name((_Formatter) => ({
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "registerResourceLabelFormatter"),
+        onDidChangeWorkspaceFolders: /* @__PURE__ */ __name((Listener) => {
+          Context21.WorkspaceEventEmitter.on(
+            "didChangeWorkspaceFolders",
+            Listener
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.WorkspaceEventEmitter.removeListener(
+                "didChangeWorkspaceFolders",
+                Listener
+              );
+            }, "dispose")
+          };
+        }, "onDidChangeWorkspaceFolders"),
+        // `vscode.workspace.registerTextDocumentContentProvider(scheme, provider)`
+        // is how extensions back virtual files (e.g. git showing HEAD
+        // contents for a diff). Cocoon stores the provider locally so
+        // `TextDocumentContentProvider$provideTextDocumentContent` from
+        // Mountain can look it up, then informs Mountain so the scheme is
+        // routable.
+        registerTextDocumentContentProvider: /* @__PURE__ */ __name((Scheme, Provider) => {
+          const Handle = `textDocumentContent:${Scheme}:${Date.now()}`;
+          Context21.SendToMountain("register_text_document_content_provider", {
+            handle: Handle,
+            scheme: Scheme,
+            extension_id: ""
+          }).catch(() => {
+          });
+          Context21.ExtensionRegistry.set(
+            `__textDocumentContentProvider:${Scheme}`,
+            Provider
+          );
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.ExtensionRegistry.delete(
+                `__textDocumentContentProvider:${Scheme}`
+              );
+              Context21.SendToMountain(
+                "unregister_text_document_content_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTextDocumentContentProvider"),
+        registerFileSystemProvider: /* @__PURE__ */ __name((Scheme, _Provider, Options) => {
+          const Handle = `fileSystemProvider:${Scheme}:${Date.now()}`;
+          Context21.SendToMountain("register_file_system_provider", {
+            handle: Handle,
+            scheme: Scheme,
+            is_case_sensitive: Options?.isCaseSensitive ?? true,
+            is_readonly: Options?.isReadonly ?? false,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain(
+                "unregister_file_system_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerFileSystemProvider"),
+        registerTaskProvider: /* @__PURE__ */ __name((TaskType, _Provider) => {
+          const Handle = `taskProvider:${TaskType}:${Date.now()}`;
+          Context21.SendToMountain("register_task_provider", {
+            handle: Handle,
+            task_type: TaskType,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("unregister_task_provider", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerTaskProvider"),
+        registerNotebookContentProvider: /* @__PURE__ */ __name((NotebookType, _Provider) => {
+          const Handle = `notebookContent:${NotebookType}:${Date.now()}`;
+          Context21.SendToMountain("register_notebook_content_provider", {
+            handle: Handle,
+            notebook_type: NotebookType,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain(
+                "unregister_notebook_content_provider",
+                { handle: Handle }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerNotebookContentProvider"),
+        registerNotebookSerializer: /* @__PURE__ */ __name((NotebookType, _Serializer, _Options) => {
+          const Handle = `notebookSerializer:${NotebookType}:${Date.now()}`;
+          Context21.SendToMountain("register_notebook_serializer", {
+            handle: Handle,
+            notebook_type: NotebookType,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain("unregister_notebook_serializer", {
+                handle: Handle
+              }).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerNotebookSerializer"),
+        registerRemoteAuthorityResolver: /* @__PURE__ */ __name((AuthorityPrefix, _Resolver) => {
+          Context21.SendToMountain("register_remote_authority_resolver", {
+            authority_prefix: AuthorityPrefix,
+            extension_id: ""
+          }).catch(() => {
+          });
+          return {
+            dispose: /* @__PURE__ */ __name(() => {
+              Context21.SendToMountain(
+                "unregister_remote_authority_resolver",
+                { authority_prefix: AuthorityPrefix }
+              ).catch(() => {
+              });
+            }, "dispose")
+          };
+        }, "registerRemoteAuthorityResolver"),
+        registerResourceLabelFormatter: /* @__PURE__ */ __name((Formatter) => {
+          Context21.SendToMountain("register_resource_label_formatter", {
+            formatter: Formatter
+          }).catch(() => {
+          });
+          return { dispose: /* @__PURE__ */ __name(() => {
+          }, "dispose") };
+        }, "registerResourceLabelFormatter"),
         registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerDocumentPasteEditProvider"),
         registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
@@ -23627,8 +24000,6 @@ var init_WorkspaceNamespace = __esm({
           };
         }, "createFileSystemWatcher"),
         fs: {
-          // FileSystem.Stat is not yet in CreateEffectForRequest — falls back
-          // to defaults via Call's try/catch until the Rust route is added.
           stat: /* @__PURE__ */ __name(async (Uri2) => await Call(Context21, "FileSystem.Stat", [
             String(Uri2)
           ]) ?? {
@@ -24146,22 +24517,48 @@ var init_LanguagesNamespace = __esm({
         };
       }, "onDidChangeDiagnostics"),
       getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
-      registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerDocumentPasteEditProvider"),
-      registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerDocumentDropEditProvider"),
-      registerInlineCompletionItemProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerInlineCompletionItemProvider"),
-      registerInlineEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
-        dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose")
-      }), "registerInlineEditProvider"),
-      registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerMultiDocumentHighlightProvider"),
-      registerMappedEditsProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({
-        dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose")
-      }), "registerMappedEditsProvider"),
+      registerDocumentPasteEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
+        Context21,
+        LanguageProviderRegistry,
+        "register_document_paste_edit_provider",
+        Selector,
+        Provider
+      ), "registerDocumentPasteEditProvider"),
+      registerDocumentDropEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
+        Context21,
+        LanguageProviderRegistry,
+        "register_document_drop_edit_provider",
+        Selector,
+        Provider
+      ), "registerDocumentDropEditProvider"),
+      registerInlineCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context21,
+        LanguageProviderRegistry,
+        "register_inline_completion_item_provider",
+        Selector,
+        Provider
+      ), "registerInlineCompletionItemProvider"),
+      registerInlineEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context21,
+        LanguageProviderRegistry,
+        "register_inline_edit_provider",
+        Selector,
+        Provider
+      ), "registerInlineEditProvider"),
+      registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context21,
+        LanguageProviderRegistry,
+        "register_multi_document_highlight_provider",
+        Selector,
+        Provider
+      ), "registerMultiDocumentHighlightProvider"),
+      registerMappedEditsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
+        Context21,
+        LanguageProviderRegistry,
+        "register_mapped_edits_provider",
+        Selector,
+        Provider
+      ), "registerMappedEditsProvider"),
       createLanguageStatusItem: /* @__PURE__ */ __name((Identifier, _Selector) => {
         process.stdout.write(
           `[LandFix:LangNs] createLanguageStatusItem id=${Identifier}
@@ -24687,7 +25084,8 @@ var init_DebugNamespace = __esm({
       }, "startDebugging"),
       stopDebugging: /* @__PURE__ */ __name(async (Session) => {
         try {
-          await Context21.MountainClient?.sendRequest("Debug.Stop", [Session]);
+          const SessionId = typeof Session === "string" ? Session : Session?.id ?? "";
+          await Context21.MountainClient?.sendRequest("Debug.Stop", [SessionId]);
         } catch {
         }
       }, "stopDebugging"),
@@ -24965,76 +25363,11 @@ var init_AuthenticationNamespace = __esm({
   }
 });
 
-// Source/Services/LanguageProviderRegistry.ts
-var LanguageProviderRegistry_exports = {};
-__export(LanguageProviderRegistry_exports, {
-  ExecuteCommand: () => ExecuteCommand,
-  Get: () => Get,
-  ListCommands: () => ListCommands,
-  ListHandles: () => ListHandles,
-  Register: () => Register,
-  RegisterAutoHandle: () => RegisterAutoHandle,
-  RegisterCommand: () => RegisterCommand,
-  Unregister: () => Unregister,
-  UnregisterCommand: () => UnregisterCommand
-});
-function Register(Handle, Provider) {
-  Callbacks.set(Handle, Provider);
-}
-function Unregister(Handle) {
-  Callbacks.delete(Handle);
-}
-function Get(Handle) {
-  const Provider = Callbacks.get(Handle);
-  if (process.env.LAND_DEV_LOG) {
-    console.warn(
-      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
-    );
-  }
-  return Provider;
-}
-function RegisterAutoHandle(Provider) {
-  const Handle = NextHandle++;
-  Callbacks.set(Handle, Provider);
-  return Handle;
-}
-function RegisterCommand(CommandId, Callback) {
-  Commands.set(CommandId, Callback);
-}
-function ExecuteCommand(CommandId, ...Args) {
-  const Handler = Commands.get(CommandId);
-  if (Handler) return Handler(...Args);
-  return void 0;
-}
-function UnregisterCommand(CommandId) {
-  Commands.delete(CommandId);
-}
-function ListCommands() {
-  return Array.from(Commands.keys());
-}
-function ListHandles() {
-  return Array.from(Callbacks.keys());
-}
-var Callbacks, NextHandle, Commands;
-var init_LanguageProviderRegistry = __esm({
-  "Source/Services/LanguageProviderRegistry.ts"() {
-    "use strict";
-    Callbacks = /* @__PURE__ */ new Map();
-    __name(Register, "Register");
-    __name(Unregister, "Unregister");
-    __name(Get, "Get");
-    NextHandle = 1e4;
-    __name(RegisterAutoHandle, "RegisterAutoHandle");
-    Commands = /* @__PURE__ */ new Map();
-    __name(RegisterCommand, "RegisterCommand");
-    __name(ExecuteCommand, "ExecuteCommand");
-    __name(UnregisterCommand, "UnregisterCommand");
-    __name(ListCommands, "ListCommands");
-    __name(ListHandles, "ListHandles");
-  }
-});
-
 // Source/Services/Handler/ExtensionHostHandler.ts
+var ExtensionHostHandler_exports = {};
+__export(ExtensionHostHandler_exports, {
+  default: () => ExtensionHostHandler_default
+});
 import * as NodeFS from "node:fs";
 var HandleInitializeExtensionHost, HandleDeltaExtensions, HandleActivateByEvent, HandleStartExtensionHost, InstallVscodeModuleHooks, EnsureVscodeAPIRegistered, ActivateExtension, CreateExtensionContext, ExtensionHostHandler_default;
 var init_ExtensionHostHandler = __esm({
@@ -26084,7 +26417,7 @@ var init_LanguageProviderHandler = __esm({
           let Offset = 0;
           const TargetLine = Pos?.line ?? 0;
           for (let I = 0; I < TargetLine && I < Lines.length; I++) {
-            Offset += Lines[I].length + 1;
+            Offset += (Lines[I] ?? "").length + 1;
           }
           return Offset + (Pos?.character ?? 0);
         }, "offsetAt"),
@@ -26092,10 +26425,11 @@ var init_LanguageProviderHandler = __esm({
           const Lines = GetLines();
           let Remaining = Offset;
           for (let I = 0; I < Lines.length; I++) {
-            if (Remaining <= Lines[I].length) {
+            const LineText = Lines[I] ?? "";
+            if (Remaining <= LineText.length) {
               return new Position3(I, Remaining);
             }
-            Remaining -= Lines[I].length + 1;
+            Remaining -= LineText.length + 1;
           }
           return new Position3(
             Lines.length - 1,
@@ -26421,12 +26755,211 @@ var init_LanguageProviderHandler = __esm({
   }
 });
 
+// Source/Services/Handler/WorkspaceContainsActivator.ts
+var WorkspaceContainsActivator_exports = {};
+__export(WorkspaceContainsActivator_exports, {
+  ActivateWorkspaceContainsExtensions: () => ActivateWorkspaceContainsExtensions,
+  default: () => WorkspaceContainsActivator_default
+});
+var WORKSPACE_CONTAINS_PREFIX, UriToFsPath, FolderContainsGlob, GetActivationEvents, GetWorkspaceContainsGlobs, ActivateWorkspaceContainsExtensions, WorkspaceContainsActivator_default;
+var init_WorkspaceContainsActivator = __esm({
+  "Source/Services/Handler/WorkspaceContainsActivator.ts"() {
+    "use strict";
+    init_GlobToRegex();
+    WORKSPACE_CONTAINS_PREFIX = "workspaceContains:";
+    UriToFsPath = /* @__PURE__ */ __name((Uri2) => {
+      const Raw = typeof Uri2 === "string" ? Uri2 : Uri2?.["fsPath"] ?? Uri2?.["path"] ?? Uri2?.["external"];
+      if (typeof Raw !== "string" || Raw.length === 0) return void 0;
+      if (Raw.startsWith("file:")) {
+        try {
+          return decodeURIComponent(new URL(Raw).pathname);
+        } catch {
+          return Raw.replace(/^file:\/\//, "");
+        }
+      }
+      return Raw;
+    }, "UriToFsPath");
+    FolderContainsGlob = /* @__PURE__ */ __name(async (FsPath, Glob) => {
+      const { stat, readdir } = await import("node:fs/promises");
+      const { join: join3, relative: relative2, sep: sep2 } = await import("node:path");
+      const IsLiteral = !/[*?[\]]/.test(Glob);
+      if (IsLiteral) {
+        try {
+          await stat(join3(FsPath, Glob));
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      let Matcher;
+      try {
+        Matcher = GlobToRegex_default(Glob);
+      } catch {
+        return false;
+      }
+      const ExcludeSegments = /* @__PURE__ */ new Set([
+        ".git",
+        "node_modules",
+        ".astro",
+        ".next",
+        ".cache",
+        ".turbo",
+        "Target",
+        "target",
+        "dist",
+        "out",
+        "build"
+      ]);
+      const MaxDepth = 8;
+      const DeadlineAt = Date.now() + 1500;
+      const Walk = /* @__PURE__ */ __name(async (Current, Depth) => {
+        if (Depth > MaxDepth) return false;
+        if (Date.now() > DeadlineAt) return false;
+        let Entries;
+        try {
+          Entries = await readdir(Current, {
+            withFileTypes: true
+          });
+        } catch {
+          return false;
+        }
+        const SubDirs = [];
+        for (const Entry of Entries) {
+          const Name = Entry.name;
+          if (ExcludeSegments.has(Name)) continue;
+          if (typeof Entry.isSymbolicLink === "function" && Entry.isSymbolicLink())
+            continue;
+          const Full = join3(Current, Name);
+          const Rel = relative2(FsPath, Full).split(sep2).join("/");
+          if (Matcher.test(Rel)) return true;
+          if (Entry.isDirectory()) SubDirs.push(Full);
+        }
+        for (const Sub of SubDirs) {
+          if (await Walk(Sub, Depth + 1)) return true;
+        }
+        return false;
+      }, "Walk");
+      return Walk(FsPath, 0);
+    }, "FolderContainsGlob");
+    GetActivationEvents = /* @__PURE__ */ __name((Extension2) => {
+      const Events = Extension2?.activationEvents;
+      return Array.isArray(Events) ? Events.filter((E) => typeof E === "string") : [];
+    }, "GetActivationEvents");
+    GetWorkspaceContainsGlobs = /* @__PURE__ */ __name((Extension2) => GetActivationEvents(Extension2).filter((Event2) => Event2.startsWith(WORKSPACE_CONTAINS_PREFIX)).map((Event2) => Event2.slice(WORKSPACE_CONTAINS_PREFIX.length)).filter((Glob) => Glob.length > 0), "GetWorkspaceContainsGlobs");
+    ActivateWorkspaceContainsExtensions = /* @__PURE__ */ __name(async (Context21, AddedFolders) => {
+      if (AddedFolders.length === 0) return;
+      const FolderPaths = AddedFolders.map((Folder) => ({
+        FsPath: UriToFsPath(Folder?.uri),
+        Uri: Folder?.uri ?? ""
+      })).filter(
+        (Record) => typeof Record.FsPath === "string" && Record.FsPath.length > 0
+      );
+      if (FolderPaths.length === 0) return;
+      const Extensions = [];
+      for (const [Identifier, Extension2] of Context21.ExtensionRegistry.entries()) {
+        const Globs = GetWorkspaceContainsGlobs(Extension2);
+        if (Globs.length === 0) continue;
+        if (Context21.ActivatedExtensions.has(Identifier)) continue;
+        Extensions.push({ Identifier, Globs });
+      }
+      if (Extensions.length === 0) {
+        try {
+          process.stdout.write(
+            "[LandFix:Activator] No pending workspaceContains extensions; skipping scan.\n"
+          );
+        } catch {
+        }
+        return;
+      }
+      const { default: ExtensionHostHandler } = await Promise.resolve().then(() => (init_ExtensionHostHandler(), ExtensionHostHandler_exports));
+      let ActivationCount = 0;
+      for (const { Identifier, Globs } of Extensions) {
+        let MatchingGlob;
+        let MatchingFolder;
+        for (const Folder of FolderPaths) {
+          for (const Glob of Globs) {
+            if (await FolderContainsGlob(Folder.FsPath, Glob)) {
+              MatchingGlob = Glob;
+              MatchingFolder = Folder.FsPath;
+              break;
+            }
+          }
+          if (MatchingGlob) break;
+        }
+        if (!MatchingGlob) continue;
+        try {
+          process.stdout.write(
+            `[LandFix:Activator] workspaceContains match: extension=${Identifier} glob=${MatchingGlob} folder=${MatchingFolder}
+`
+          );
+        } catch {
+        }
+        try {
+          await ExtensionHostHandler.HandleActivateByEvent(Context21, {
+            activationEvent: `${WORKSPACE_CONTAINS_PREFIX}${MatchingGlob}`
+          });
+          ActivationCount += 1;
+        } catch (CaughtError) {
+          const Message = CaughtError instanceof globalThis.Error ? CaughtError.message : String(CaughtError);
+          try {
+            process.stdout.write(
+              `[LandFix:Activator] activate failed for ${Identifier}: ${Message}
+`
+            );
+          } catch {
+          }
+        }
+      }
+      try {
+        process.stdout.write(
+          `[LandFix:Activator] Pass complete: ${ActivationCount} extension(s) activated against ${FolderPaths.length} folder(s).
+`
+        );
+      } catch {
+      }
+    }, "ActivateWorkspaceContainsExtensions");
+    WorkspaceContainsActivator_default = ActivateWorkspaceContainsExtensions;
+  }
+});
+
 // Source/Services/Handler/NotificationHandler.ts
-var HandleSpecificNotification, NotificationHandler_default;
+var ApplyWorkspaceDelta, HandleSpecificNotification, NotificationHandler_default;
 var init_NotificationHandler = __esm({
   "Source/Services/Handler/NotificationHandler.ts"() {
     "use strict";
-    HandleSpecificNotification = /* @__PURE__ */ __name((Emitter3, DocumentContentCache, HandleDocumentChange2, HandleDocumentOpen2, HandleDocumentClose2, HandleDocumentSave2, Method, Parameters, WorkspaceEventEmitter) => {
+    ApplyWorkspaceDelta = /* @__PURE__ */ __name((Context21, Payload) => {
+      const Added = Payload?.added ?? [];
+      const Removed = Payload?.removed ?? [];
+      const RemovedUris = new Set(
+        Removed.map((Folder) => Folder?.uri ?? "").filter((Uri2) => Uri2.length > 0)
+      );
+      const Init = Context21.ExtensionHostInitData ??= {};
+      const Workspace = Init.workspace ??= Init.workspaceData ?? {};
+      const Existing = Array.isArray(Workspace.folders) ? Workspace.folders : [];
+      const Kept = Existing.filter(
+        (Folder) => !RemovedUris.has(Folder?.uri ?? "")
+      );
+      const ExistingUris = new Set(
+        Kept.map((Folder) => Folder?.uri ?? "").filter((Uri2) => Uri2.length > 0)
+      );
+      for (const Candidate of Added) {
+        const Uri2 = Candidate?.uri ?? "";
+        if (Uri2.length === 0 || ExistingUris.has(Uri2)) continue;
+        Kept.push(Candidate);
+        ExistingUris.add(Uri2);
+      }
+      for (let Index = 0; Index < Kept.length; Index += 1) {
+        Kept[Index] = { ...Kept[Index], index: Index };
+      }
+      Workspace.folders = Kept;
+      Init.workspaceData = Workspace;
+      if (typeof Workspace.name !== "string" || Workspace.name.length === 0) {
+        const First = Kept[0];
+        if (First?.name) Workspace.name = First.name;
+      }
+      return Kept;
+    }, "ApplyWorkspaceDelta");
+    HandleSpecificNotification = /* @__PURE__ */ __name((Emitter3, DocumentContentCache, HandleDocumentChange2, HandleDocumentOpen2, HandleDocumentClose2, HandleDocumentSave2, Method, Parameters, WorkspaceEventEmitter, Context21) => {
       switch (Method) {
         case "extension.change":
           Emitter3.emit("extensionChanged", Parameters);
@@ -26459,6 +26992,38 @@ var init_NotificationHandler = __esm({
             Parameters,
             WorkspaceEventEmitter
           );
+          if (Context21) {
+            const CapturedContext = Context21;
+            const Models = Array.isArray(Parameters) ? Parameters : [Parameters];
+            const LanguageIdentifiers = /* @__PURE__ */ new Set();
+            for (const Model of Models) {
+              const Id = Model?.LanguageIdentifier ?? Model?.languageId ?? Model?.language;
+              if (typeof Id === "string" && Id.length > 0) {
+                LanguageIdentifiers.add(Id);
+              }
+            }
+            if (LanguageIdentifiers.size > 0) {
+              setImmediate(() => {
+                Promise.resolve().then(() => (init_ExtensionHostHandler(), ExtensionHostHandler_exports)).then(({ default: ExtensionHostHandler }) => {
+                  for (const Id of LanguageIdentifiers) {
+                    void ExtensionHostHandler.HandleActivateByEvent(
+                      CapturedContext,
+                      { activationEvent: `onLanguage:${Id}` }
+                    ).catch((Error2) => {
+                      try {
+                        process.stdout.write(
+                          `[LandFix:Activator] onLanguage:${Id} activation failed: ${Error2 instanceof globalThis.Error ? Error2.message : String(Error2)}
+`
+                        );
+                      } catch {
+                      }
+                    });
+                  }
+                }).catch(() => {
+                });
+              });
+            }
+          }
           break;
         case "$acceptModelRemoved":
         case "$acceptModelClosed":
@@ -26500,6 +27065,68 @@ var init_NotificationHandler = __esm({
               viewColumn: Payload.viewColumn
             });
           }
+          break;
+        }
+        case "$deltaWorkspaceFolders": {
+          const Payload = Array.isArray(Parameters) ? Parameters[0] : Parameters;
+          const Added = Payload?.added ?? [];
+          const Removed = Payload?.removed ?? [];
+          let Merged = [];
+          if (Context21) {
+            Merged = ApplyWorkspaceDelta(Context21, Payload ?? {});
+          }
+          try {
+            process.stdout.write(
+              `[LandFix:WsDelta] $deltaWorkspaceFolders +${Added.length} -${Removed.length} \u2192 folders=${Merged.length}
+`
+            );
+          } catch {
+          }
+          WorkspaceEventEmitter?.emit("didChangeWorkspaceFolders", {
+            added: Added,
+            removed: Removed,
+            folders: Merged
+          });
+          Emitter3.emit("workspaceFoldersChanged", {
+            added: Added,
+            removed: Removed,
+            folders: Merged
+          });
+          if (Context21 && Added.length > 0) {
+            const CapturedContext = Context21;
+            setImmediate(() => {
+              Promise.resolve().then(() => (init_WorkspaceContainsActivator(), WorkspaceContainsActivator_exports)).then(
+                ({ default: Activate }) => Activate(CapturedContext, Added)
+              ).catch((Error2) => {
+                try {
+                  process.stdout.write(
+                    `[LandFix:Activator] activation pass failed: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}
+`
+                  );
+                } catch {
+                }
+              });
+            });
+          }
+          break;
+        }
+        case "$acceptTerminalProcessData": {
+          const Payload = Array.isArray(Parameters) ? Parameters : [Parameters];
+          const TerminalId = Payload[0];
+          const Data = Payload[1];
+          if (TerminalId !== void 0) {
+            Emitter3.emit(`terminal:data:${TerminalId}`, Data);
+          }
+          Emitter3.emit("terminalData", { id: TerminalId, data: Data });
+          break;
+        }
+        case "$acceptTerminalProcessExit": {
+          const Payload = Array.isArray(Parameters) ? Parameters : [Parameters];
+          const TerminalId = Payload[0];
+          if (TerminalId !== void 0) {
+            Emitter3.emit(`terminal:exit:${TerminalId}`);
+          }
+          Emitter3.emit("terminalExit", { id: TerminalId });
           break;
         }
         case "$fileWatcher:event":
@@ -33588,14 +34215,19 @@ var init_GRPCServerService = __esm({
        *   - "InitializeExtensionHost" — Mountain's extension host init handshake
        *   - "$deltaExtensions", "$activateByEvent", "$startExtensionHost"
        *     Mountain's extension host lifecycle methods
+       *   - "{Prefix}${Method}" — VS Code-style proxied RPC (e.g.
+       *     "ExtHostCommands$ExecuteContributedCommand"). Mountain's
+       *     CommandProvider uses this shape to dispatch extension commands.
+       *   - "$shutdown" — Mountain initiates graceful shutdown via this method.
        */
       IsValidMethod(method) {
         const DotMethod = /^[a-zA-Z]+\.[a-zA-Z]+$/.test(method);
         const ProvideMethod = /^\$provide[A-Z][a-zA-Z]+$/.test(method);
-        const ExtensionHostMethod = /^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost)$/.test(
+        const ExtensionHostMethod = /^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost|\$shutdown|\$deltaWorkspaceFolders)$/.test(
           method
         );
-        return DotMethod || ProvideMethod || ExtensionHostMethod;
+        const ProxiedMethod = /^[A-Za-z]+\$[A-Za-z]+[A-Za-z0-9]*$/.test(method);
+        return DotMethod || ProvideMethod || ExtensionHostMethod || ProxiedMethod;
       }
       /**
        * Serialize response data to buffer
@@ -33675,6 +34307,23 @@ var init_GRPCServerService = __esm({
             this.documentContentCache
           );
         }
+        if (/^ExtHostCommands\$ExecuteContributedCommand/.test(method)) {
+          const Args = Array.isArray(parameters) ? parameters : [parameters];
+          const CommandId = typeof Args[0] === "string" ? Args[0] : "";
+          const CommandArguments = Args[1];
+          if (CommandId) {
+            const LanguageProviderRegistry = await Promise.resolve().then(() => (init_LanguageProviderRegistry(), LanguageProviderRegistry_exports));
+            const ExtensionArguments = Array.isArray(CommandArguments) ? CommandArguments : CommandArguments === void 0 ? [] : [CommandArguments];
+            return LanguageProviderRegistry.ExecuteCommand(
+              CommandId,
+              ...ExtensionArguments
+            );
+          }
+          return void 0;
+        }
+        if (method === "$shutdown") {
+          return { ok: true };
+        }
         throw new Error(`Unknown method: ${method}`);
       }
       // ==================================================================
@@ -33702,7 +34351,8 @@ var init_GRPCServerService = __esm({
             DocumentContentHandler_default.HandleDocumentSave,
             notification.Method,
             parameters,
-            this.workspaceEventEmitter
+            this.workspaceEventEmitter,
+            this.GetHandlerContext()
           );
           console.log(
             `[GRPCServerService] Notification ${notification.Method} handled`,

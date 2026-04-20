@@ -129,9 +129,13 @@ const FindFilesLocal = async (
 	let IncludeRegex: RegExp;
 	try {
 		IncludeRegex = GlobToRegex(IncludePattern);
-	} catch (Error: unknown) {
+	} catch (CaughtError: unknown) {
+		const Message =
+			CaughtError instanceof globalThis.Error
+				? CaughtError.message
+				: String(CaughtError);
 		process.stdout.write(
-			`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Error instanceof Error ? Error.message : String(Error)}\n`,
+			`[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Message}\n`,
 		);
 		return [];
 	}
@@ -280,10 +284,12 @@ const ResolveWorkspaceFolders = (
 		{}) as {
 		folders?: Array<{ uri: unknown; name: string; index: number }>;
 	};
-	return (InitWorkspace.folders ?? []).map((Folder) => ({
-		...Folder,
-		FsPath: FolderToFsPath(Folder?.uri),
-	}));
+	return (InitWorkspace.folders ?? []).map((Folder): WorkspaceFolderRecord => {
+		const FsPath = FolderToFsPath(Folder?.uri);
+		const Record: WorkspaceFolderRecord = { ...Folder };
+		if (typeof FsPath === "string") Record.FsPath = FsPath;
+		return Record;
+	});
 };
 
 const CreateWorkspaceNamespace = (Context: HandlerContext) => {
@@ -383,9 +389,34 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		}
 	});
 
+	// `workspace.workspaceFolders` must reflect Mountain's current state
+	// across `$deltaWorkspaceFolders` mutations without extensions needing to
+	// re-read the namespace. `Context.ExtensionHostInitData.workspace.folders`
+	// is updated in place by NotificationHandler when a delta arrives, so a
+	// live getter on the returned shim always returns the latest array.
+	const ReadFolders = (): Array<{ uri: unknown; name: string; index: number }> => {
+		const Live = (Context.ExtensionHostInitData?.workspace ??
+			Context.ExtensionHostInitData?.workspaceData ??
+			{}) as {
+			folders?: Array<{ uri: unknown; name: string; index: number }>;
+		};
+		return Live.folders ?? [];
+	};
+
+	const ReadName = (): string | undefined => {
+		const Live = (Context.ExtensionHostInitData?.workspace ??
+			Context.ExtensionHostInitData?.workspaceData ??
+			{}) as { name?: string };
+		return Live.name ?? InitWorkspace.name;
+	};
+
 	return {
-		workspaceFolders: InitWorkspace.folders ?? [],
-		name: InitWorkspace.name,
+		get workspaceFolders() {
+			return ReadFolders();
+		},
+		get name() {
+			return ReadName();
+		},
 		workspaceFile: undefined,
 		rootPath: undefined,
 		textDocuments: [] as unknown[],
@@ -457,7 +488,7 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		): Promise<unknown[]> => {
 			return FindFilesLocal(
 				Context,
-				InitWorkspace.folders ?? [],
+				ReadFolders(),
 				Include,
 				Exclude,
 				MaxResults,
@@ -507,7 +538,63 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 
 		asRelativePath: (PathOrUri: unknown) => String(PathOrUri),
 
-		updateWorkspaceFolders: () => false,
+		// BATCH-14 follow-up: `vscode.workspace.updateWorkspaceFolders(start,
+		// deleteCount, ...toAdd)` is how extensions drive the folder set from
+		// within the extension host (e.g. the Git extension adds the
+		// repository root when the user clones). We forward the request
+		// through Mountain's `$updateWorkspaceFolders` arm which mutates
+		// ApplicationState.Workspace and then fires `$deltaWorkspaceFolders`
+		// back at us — the listener wiring from BATCH-14 does the rest.
+		updateWorkspaceFolders: (
+			Start: number,
+			DeleteCount: number | null | undefined,
+			...ToAdd: Array<{ uri?: unknown; name?: string }>
+		) => {
+			const Current = ReadFolders();
+			const RemoveCount =
+				typeof DeleteCount === "number" && DeleteCount > 0
+					? Math.min(DeleteCount, Math.max(Current.length - Start, 0))
+					: 0;
+			const Removals = Current.slice(Start, Start + RemoveCount).map(
+				(Folder) => ({
+					uri: {
+						value: typeof Folder?.uri === "string"
+							? Folder.uri
+							: ((Folder?.uri as Record<string, unknown>)?.["toString"] as
+								| (() => string)
+								| undefined)?.call(Folder?.uri) ?? String(Folder?.uri),
+					},
+				}),
+			);
+			const Additions = ToAdd.map((Folder) => {
+				const Raw = Folder?.uri;
+				const Serialized =
+					typeof Raw === "string"
+						? Raw
+						: ((Raw as Record<string, unknown>)?.["toString"] as
+							| (() => string)
+							| undefined)?.call(Raw) ?? String(Raw ?? "");
+				return {
+					uri: { value: Serialized },
+					name: Folder?.name ?? "",
+				};
+			});
+			Context.MountainClient?.sendRequest("$updateWorkspaceFolders", {
+				additions: Additions,
+				removals: Removals,
+			}).catch((Error) => {
+				const Message =
+					Error instanceof globalThis.Error
+						? Error.message
+						: String(Error);
+				try {
+					process.stdout.write(
+						`[LandFix:WsNs] updateWorkspaceFolders failed: ${Message}\n`,
+					);
+				} catch {}
+			});
+			return true;
+		},
 
 		onDidOpenTextDocument: EventSubscriber(Context, "didOpenTextDocument"),
 		onDidCloseTextDocument: EventSubscriber(
@@ -538,20 +625,163 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 				},
 			};
 		},
-		onDidChangeWorkspaceFolders: () => ({ dispose: () => {} }),
+		onDidChangeWorkspaceFolders: (
+			Listener: (Event: {
+				added: readonly unknown[];
+				removed: readonly unknown[];
+			}) => any,
+		) => {
+			// NotificationHandler emits this on the WorkspaceEventEmitter
+			// whenever Mountain dispatches `$deltaWorkspaceFolders`. Extensions
+			// subscribing via `vscode.workspace.onDidChangeWorkspaceFolders`
+			// must see every mutation so they can re-scan their own state
+			// (TypeScript language server, ESLint, etc. rely on this to boot
+			// project-wide features after Open Folder).
+			Context.WorkspaceEventEmitter.on(
+				"didChangeWorkspaceFolders",
+				Listener,
+			);
+			return {
+				dispose: () => {
+					Context.WorkspaceEventEmitter.removeListener(
+						"didChangeWorkspaceFolders",
+						Listener,
+					);
+				},
+			};
+		},
 
-		registerTextDocumentContentProvider: () => ({ dispose: () => {} }),
-		registerFileSystemProvider: () => ({ dispose: () => {} }),
-		registerTaskProvider: () => ({ dispose: () => {} }),
-		registerNotebookContentProvider: () => ({ dispose: () => {} }),
-		registerNotebookSerializer: () => ({ dispose: () => {} }),
+		// `vscode.workspace.registerTextDocumentContentProvider(scheme, provider)`
+		// is how extensions back virtual files (e.g. git showing HEAD
+		// contents for a diff). Cocoon stores the provider locally so
+		// `TextDocumentContentProvider$provideTextDocumentContent` from
+		// Mountain can look it up, then informs Mountain so the scheme is
+		// routable.
+		registerTextDocumentContentProvider: (Scheme: string, Provider: any) => {
+			const Handle = `textDocumentContent:${Scheme}:${Date.now()}`;
+			Context.SendToMountain("register_text_document_content_provider", {
+				handle: Handle,
+				scheme: Scheme,
+				extension_id: "",
+			}).catch(() => {});
+			// Stash on a module-level map keyed by scheme so subsequent
+			// providers for the same scheme replace cleanly. We use the
+			// existing Context.ExtensionRegistry map with a scheme prefix
+			// since there's no dedicated registry yet.
+			Context.ExtensionRegistry.set(
+				`__textDocumentContentProvider:${Scheme}`,
+				Provider,
+			);
+			return {
+				dispose: () => {
+					Context.ExtensionRegistry.delete(
+						`__textDocumentContentProvider:${Scheme}`,
+					);
+					Context.SendToMountain(
+						"unregister_text_document_content_provider",
+						{ handle: Handle },
+					).catch(() => {});
+				},
+			};
+		},
+		registerFileSystemProvider: (
+			Scheme: string,
+			_Provider: any,
+			Options?: { isCaseSensitive?: boolean; isReadonly?: boolean },
+		) => {
+			const Handle = `fileSystemProvider:${Scheme}:${Date.now()}`;
+			Context.SendToMountain("register_file_system_provider", {
+				handle: Handle,
+				scheme: Scheme,
+				is_case_sensitive: Options?.isCaseSensitive ?? true,
+				is_readonly: Options?.isReadonly ?? false,
+				extension_id: "",
+			}).catch(() => {});
+			return {
+				dispose: () => {
+					Context.SendToMountain(
+						"unregister_file_system_provider",
+						{ handle: Handle },
+					).catch(() => {});
+				},
+			};
+		},
+		registerTaskProvider: (TaskType: string, _Provider: any) => {
+			const Handle = `taskProvider:${TaskType}:${Date.now()}`;
+			Context.SendToMountain("register_task_provider", {
+				handle: Handle,
+				task_type: TaskType,
+				extension_id: "",
+			}).catch(() => {});
+			return {
+				dispose: () => {
+					Context.SendToMountain("unregister_task_provider", {
+						handle: Handle,
+					}).catch(() => {});
+				},
+			};
+		},
+		registerNotebookContentProvider: (
+			NotebookType: string,
+			_Provider: any,
+		) => {
+			const Handle = `notebookContent:${NotebookType}:${Date.now()}`;
+			Context.SendToMountain("register_notebook_content_provider", {
+				handle: Handle,
+				notebook_type: NotebookType,
+				extension_id: "",
+			}).catch(() => {});
+			return {
+				dispose: () => {
+					Context.SendToMountain(
+						"unregister_notebook_content_provider",
+						{ handle: Handle },
+					).catch(() => {});
+				},
+			};
+		},
+		registerNotebookSerializer: (
+			NotebookType: string,
+			_Serializer: any,
+			_Options?: unknown,
+		) => {
+			const Handle = `notebookSerializer:${NotebookType}:${Date.now()}`;
+			Context.SendToMountain("register_notebook_serializer", {
+				handle: Handle,
+				notebook_type: NotebookType,
+				extension_id: "",
+			}).catch(() => {});
+			return {
+				dispose: () => {
+					Context.SendToMountain("unregister_notebook_serializer", {
+						handle: Handle,
+					}).catch(() => {});
+				},
+			};
+		},
 		registerRemoteAuthorityResolver: (
-			_AuthorityPrefix: string,
+			AuthorityPrefix: string,
 			_Resolver: unknown,
-		) => ({ dispose: () => {} }),
-		registerResourceLabelFormatter: (_Formatter: unknown) => ({
-			dispose: () => {},
-		}),
+		) => {
+			Context.SendToMountain("register_remote_authority_resolver", {
+				authority_prefix: AuthorityPrefix,
+				extension_id: "",
+			}).catch(() => {});
+			return {
+				dispose: () => {
+					Context.SendToMountain(
+						"unregister_remote_authority_resolver",
+						{ authority_prefix: AuthorityPrefix },
+					).catch(() => {});
+				},
+			};
+		},
+		registerResourceLabelFormatter: (Formatter: unknown) => {
+			Context.SendToMountain("register_resource_label_formatter", {
+				formatter: Formatter,
+			}).catch(() => {});
+			return { dispose: () => {} };
+		},
 		registerDocumentPasteEditProvider: (
 			_Selector: unknown,
 			_Provider: unknown,
@@ -728,8 +958,6 @@ const CreateWorkspaceNamespace = (Context: HandlerContext) => {
 		},
 
 		fs: {
-			// FileSystem.Stat is not yet in CreateEffectForRequest — falls back
-			// to defaults via Call's try/catch until the Rust route is added.
 			stat: async (Uri: any) =>
 				(await Call<unknown>(Context, "FileSystem.Stat", [
 					String(Uri),

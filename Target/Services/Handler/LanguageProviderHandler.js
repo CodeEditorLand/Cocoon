@@ -20895,7 +20895,7 @@ var BuildVsDocument = /* @__PURE__ */ __name(async (UriString, FsPath, LanguageI
       let Offset = 0;
       const TargetLine = Pos?.line ?? 0;
       for (let I = 0; I < TargetLine && I < Lines.length; I++) {
-        Offset += Lines[I].length + 1;
+        Offset += (Lines[I] ?? "").length + 1;
       }
       return Offset + (Pos?.character ?? 0);
     }, "offsetAt"),
@@ -20903,10 +20903,11 @@ var BuildVsDocument = /* @__PURE__ */ __name(async (UriString, FsPath, LanguageI
       const Lines = GetLines();
       let Remaining = Offset;
       for (let I = 0; I < Lines.length; I++) {
-        if (Remaining <= Lines[I].length) {
+        const LineText = Lines[I] ?? "";
+        if (Remaining <= LineText.length) {
           return new Position3(I, Remaining);
         }
-        Remaining -= Lines[I].length + 1;
+        Remaining -= LineText.length + 1;
       }
       return new Position3(
         Lines.length - 1,

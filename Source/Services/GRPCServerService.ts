@@ -540,15 +540,20 @@ export class GRPCServerService
 	 *   - "InitializeExtensionHost" — Mountain's extension host init handshake
 	 *   - "$deltaExtensions", "$activateByEvent", "$startExtensionHost"
 	 *     Mountain's extension host lifecycle methods
+	 *   - "{Prefix}${Method}" — VS Code-style proxied RPC (e.g.
+	 *     "ExtHostCommands$ExecuteContributedCommand"). Mountain's
+	 *     CommandProvider uses this shape to dispatch extension commands.
+	 *   - "$shutdown" — Mountain initiates graceful shutdown via this method.
 	 */
 	private IsValidMethod(method: string): boolean {
 		const DotMethod = /^[a-zA-Z]+\.[a-zA-Z]+$/.test(method);
 		const ProvideMethod = /^\$provide[A-Z][a-zA-Z]+$/.test(method);
 		const ExtensionHostMethod =
-			/^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost)$/.test(
+			/^(InitializeExtensionHost|\$deltaExtensions|\$activateByEvent|\$startExtensionHost|\$shutdown|\$deltaWorkspaceFolders)$/.test(
 				method,
 			);
-		return DotMethod || ProvideMethod || ExtensionHostMethod;
+		const ProxiedMethod = /^[A-Za-z]+\$[A-Za-z]+[A-Za-z0-9]*$/.test(method);
+		return DotMethod || ProvideMethod || ExtensionHostMethod || ProxiedMethod;
 	}
 
 	/**
@@ -643,6 +648,40 @@ export class GRPCServerService
 			);
 		}
 
+		// VS Code-style proxied RPC: `{Prefix}${Method}`. Mountain's
+		// CommandProvider uses this to reach contributed extension commands.
+		// We only know `ExtHostCommands$ExecuteContributedCommand` so far;
+		// additional `ExtHost*` targets can be added as they appear in the
+		// Editor submodule's protocol definitions.
+		if (/^ExtHostCommands\$ExecuteContributedCommand/.test(method)) {
+			// Parameters shape: [commandId, arguments]
+			const Args = Array.isArray(parameters) ? parameters : [parameters];
+			const CommandId: string = typeof Args[0] === "string" ? Args[0] : "";
+			const CommandArguments: unknown = Args[1];
+			if (CommandId) {
+				const LanguageProviderRegistry = await import(
+					"./LanguageProviderRegistry.js"
+				);
+				const ExtensionArguments = Array.isArray(CommandArguments)
+					? CommandArguments
+					: CommandArguments === undefined
+						? []
+						: [CommandArguments];
+				return (LanguageProviderRegistry as any).ExecuteCommand(
+					CommandId,
+					...ExtensionArguments,
+				);
+			}
+			return undefined;
+		}
+
+		// `$shutdown` is a one-shot notification-style request Mountain fires
+		// on process teardown. Ack politely — the process will exit on its
+		// own once the gRPC server closes.
+		if (method === "$shutdown") {
+			return { ok: true };
+		}
+
 		throw new Error(`Unknown method: ${method}`);
 	}
 
@@ -680,6 +719,7 @@ export class GRPCServerService
 				notification.Method,
 				parameters,
 				this.workspaceEventEmitter,
+				this.GetHandlerContext(),
 			);
 
 			console.log(
