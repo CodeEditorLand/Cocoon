@@ -276,23 +276,21 @@ var ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => {
     activate: /* @__PURE__ */ __name(async () => Exports, "activate")
   };
 }, "ToExtensionObject");
+var IsExtensionKey = /* @__PURE__ */ __name((Key) => !Key.startsWith("__"), "IsExtensionKey");
 var CreateExtensionsNamespace = /* @__PURE__ */ __name((Context) => ({
   getExtension: /* @__PURE__ */ __name((Identifier) => {
+    if (!IsExtensionKey(Identifier)) return void 0;
     const Raw = Context.ExtensionRegistry.get(Identifier);
     return Raw ? ToExtensionObject(Context, Identifier, Raw) : void 0;
   }, "getExtension"),
   get all() {
-    return [...Context.ExtensionRegistry.entries()].map(
-      ([Id, Raw]) => ToExtensionObject(Context, Id, Raw)
-    );
+    return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
   },
   // Some extensions (html-language-features) iterate
   // `extensions.allAcrossExtensionHosts`; return the same array as `all`
   // so `for (...of...)` does not throw on `is not iterable`.
   get allAcrossExtensionHosts() {
-    return [...Context.ExtensionRegistry.entries()].map(
-      ([Id, Raw]) => ToExtensionObject(Context, Id, Raw)
-    );
+    return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
   },
   onDidChange: /* @__PURE__ */ __name((Listener) => {
     Context.Emitter.on("deltaExtensions", Listener);

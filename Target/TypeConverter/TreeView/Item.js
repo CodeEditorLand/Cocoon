@@ -14736,6 +14736,15 @@ function appendEscapedMarkdownCodeBlockFence(code, langId) {
 }
 __name(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
 __name44(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
+function appendEscapedMarkdownInlineCode(text) {
+  const longestBacktickRun = Math.max(0, ...(text.match(/`+/g) ?? []).map((m) => m.length));
+  const fence = "`".repeat(longestBacktickRun + 1);
+  const needsSpace = text.startsWith("`") || text.endsWith("`");
+  const content = needsSpace ? ` ${text} ` : text;
+  return `${fence}${content}${fence}`;
+}
+__name(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
+__name44(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
 function escapeDoubleQuotes(input) {
   return input.replace(/"/g, "&quot;");
 }

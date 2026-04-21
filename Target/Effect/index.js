@@ -1727,6 +1727,17 @@ message RPCDataPayload {
             Method: method,
             Parameter: this.SerializeParameters(parameters)
           };
+          if (method === "tree.register" && typeof process !== "undefined") {
+            try {
+              const Timestamp = process.hrtime.bigint().toString();
+              const Correlation = parameters?.[0]?.viewId ?? `req-${requestIdentifier}`;
+              process.stdout.write(
+                `[LandFix:Tree] wire-send method=${method} correlation=${Correlation} t=${Timestamp}
+`
+              );
+            } catch {
+            }
+          }
           const response = await this.SendRequestWithRetry(
             request,
             cancellationToken
@@ -17556,6 +17567,13 @@ function appendEscapedMarkdownCodeBlockFence(code, langId) {
     `${"`".repeat(desiredFenceLength)}`
   ].join("\n");
 }
+function appendEscapedMarkdownInlineCode(text) {
+  const longestBacktickRun = Math.max(0, ...(text.match(/`+/g) ?? []).map((m) => m.length));
+  const fence = "`".repeat(longestBacktickRun + 1);
+  const needsSpace = text.startsWith("`") || text.endsWith("`");
+  const content = needsSpace ? ` ${text} ` : text;
+  return `${fence}${content}${fence}`;
+}
 function escapeDoubleQuotes(input) {
   return input.replace(/"/g, "&quot;");
 }
@@ -17692,6 +17710,8 @@ ${appendEscapedMarkdownCodeBlockFence(code, langId)}
     __name44(escapeMarkdownSyntaxTokens, "escapeMarkdownSyntaxTokens");
     __name(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
     __name44(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
+    __name(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
+    __name44(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
     __name(escapeDoubleQuotes, "escapeDoubleQuotes");
     __name44(escapeDoubleQuotes, "escapeDoubleQuotes");
     __name(removeMarkdownEscapes, "removeMarkdownEscapes");
@@ -25844,6 +25864,7 @@ var init_LanguagesNamespace = __esm({
       createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
         const Owner = Name ?? "default";
         const Store = /* @__PURE__ */ new Map();
+        let Disposed = false;
         return {
           name: Owner,
           set: /* @__PURE__ */ __name((UriOrEntries, Diagnostics) => {
@@ -25876,6 +25897,7 @@ var init_LanguagesNamespace = __esm({
             });
           }, "delete"),
           clear: /* @__PURE__ */ __name(() => {
+            if (Store.size === 0) return;
             Store.clear();
             Context21.MountainClient?.sendRequest("Diagnostic.Clear", [
               Owner
@@ -25891,6 +25913,9 @@ var init_LanguagesNamespace = __esm({
           get: /* @__PURE__ */ __name((Uri2) => Store.get(String(Uri2)) ?? [], "get"),
           has: /* @__PURE__ */ __name((Uri2) => Store.has(String(Uri2)), "has"),
           dispose: /* @__PURE__ */ __name(() => {
+            if (Disposed) return;
+            Disposed = true;
+            if (Store.size === 0) return;
             Store.clear();
             Context21.MountainClient?.sendRequest("Diagnostic.Clear", [
               Owner
@@ -26048,7 +26073,7 @@ var ExtensionsNamespace_exports = {};
 __export(ExtensionsNamespace_exports, {
   default: () => ExtensionsNamespace_default
 });
-var NoopDisposable, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, CreateExtensionsNamespace, ExtensionsNamespace_default;
+var NoopDisposable, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, IsExtensionKey, CreateExtensionsNamespace, ExtensionsNamespace_default;
 var init_ExtensionsNamespace = __esm({
   "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
     "use strict";
@@ -26232,23 +26257,21 @@ var init_ExtensionsNamespace = __esm({
         activate: /* @__PURE__ */ __name(async () => Exports, "activate")
       };
     }, "ToExtensionObject");
+    IsExtensionKey = /* @__PURE__ */ __name((Key) => !Key.startsWith("__"), "IsExtensionKey");
     CreateExtensionsNamespace = /* @__PURE__ */ __name((Context21) => ({
       getExtension: /* @__PURE__ */ __name((Identifier) => {
+        if (!IsExtensionKey(Identifier)) return void 0;
         const Raw = Context21.ExtensionRegistry.get(Identifier);
         return Raw ? ToExtensionObject(Context21, Identifier, Raw) : void 0;
       }, "getExtension"),
       get all() {
-        return [...Context21.ExtensionRegistry.entries()].map(
-          ([Id, Raw]) => ToExtensionObject(Context21, Id, Raw)
-        );
+        return [...Context21.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context21, Id, Raw));
       },
       // Some extensions (html-language-features) iterate
       // `extensions.allAcrossExtensionHosts`; return the same array as `all`
       // so `for (...of...)` does not throw on `is not iterable`.
       get allAcrossExtensionHosts() {
-        return [...Context21.ExtensionRegistry.entries()].map(
-          ([Id, Raw]) => ToExtensionObject(Context21, Id, Raw)
-        );
+        return [...Context21.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context21, Id, Raw));
       },
       onDidChange: /* @__PURE__ */ __name((Listener) => {
         Context21.Emitter.on("deltaExtensions", Listener);

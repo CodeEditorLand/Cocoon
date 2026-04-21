@@ -282,6 +282,12 @@ const CreateLanguagesNamespace = (
 	createDiagnosticCollection: (Name?: string) => {
 		const Owner = Name ?? "default";
 		const Store = new Map<string, unknown[]>();
+		// LSP clients (json-language-features and others) call `.clear()`
+		// defensively on every doc-update cycle, which otherwise amplifies
+		// to hundreds of Diagnostic.Clear RPCs per second for owner
+		// `default`. Short-circuit when Store is already empty, and make
+		// dispose() idempotent.
+		let Disposed = false;
 		return {
 			name: Owner,
 			set: (UriOrEntries: unknown, Diagnostics?: unknown[]) => {
@@ -314,6 +320,7 @@ const CreateLanguagesNamespace = (
 				]).catch(() => {});
 			},
 			clear: () => {
+				if (Store.size === 0) return;
 				Store.clear();
 				Context.MountainClient?.sendRequest("Diagnostic.Clear", [
 					Owner,
@@ -334,6 +341,9 @@ const CreateLanguagesNamespace = (
 			get: (Uri: unknown): unknown[] => Store.get(String(Uri)) ?? [],
 			has: (Uri: unknown): boolean => Store.has(String(Uri)),
 			dispose: () => {
+				if (Disposed) return;
+				Disposed = true;
+				if (Store.size === 0) return;
 				Store.clear();
 				Context.MountainClient?.sendRequest("Diagnostic.Clear", [
 					Owner,

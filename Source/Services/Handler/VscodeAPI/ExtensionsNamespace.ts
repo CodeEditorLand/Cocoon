@@ -253,23 +253,33 @@ const ToExtensionObject = (Context: HandlerContext, Id: string, Raw: any) => {
 	};
 };
 
+// Registry entries whose key starts with `__` are provider/handler stashes
+// registered from WindowNamespace / WorkspaceNamespace (uriHandler,
+// fileDecorationProvider, terminalLinkProvider, terminalProfileProvider),
+// not real extension descriptions. Exclude them from the extensions.*
+// getters so ToExtensionObject isn't fed Raw = undefined on
+// extensionLocation — otherwise NormalizeLocation emits a WARN and returns
+// a bogus extension with empty path.
+const IsExtensionKey = (Key: string) => !Key.startsWith("__");
+
 const CreateExtensionsNamespace = (Context: HandlerContext) => ({
 	getExtension: (Identifier: string) => {
+		if (!IsExtensionKey(Identifier)) return undefined;
 		const Raw = Context.ExtensionRegistry.get(Identifier);
 		return Raw ? ToExtensionObject(Context, Identifier, Raw) : undefined;
 	},
 	get all() {
-		return [...Context.ExtensionRegistry.entries()].map(([Id, Raw]) =>
-			ToExtensionObject(Context, Id, Raw),
-		);
+		return [...Context.ExtensionRegistry.entries()]
+			.filter(([Id]) => IsExtensionKey(Id))
+			.map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
 	},
 	// Some extensions (html-language-features) iterate
 	// `extensions.allAcrossExtensionHosts`; return the same array as `all`
 	// so `for (...of...)` does not throw on `is not iterable`.
 	get allAcrossExtensionHosts() {
-		return [...Context.ExtensionRegistry.entries()].map(([Id, Raw]) =>
-			ToExtensionObject(Context, Id, Raw),
-		);
+		return [...Context.ExtensionRegistry.entries()]
+			.filter(([Id]) => IsExtensionKey(Id))
+			.map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
 	},
 	onDidChange: (Listener: () => void) => {
 		Context.Emitter.on("deltaExtensions", Listener);

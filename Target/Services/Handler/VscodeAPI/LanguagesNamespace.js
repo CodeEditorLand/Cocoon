@@ -372,6 +372,7 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
   createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
     const Owner = Name ?? "default";
     const Store = /* @__PURE__ */ new Map();
+    let Disposed = false;
     return {
       name: Owner,
       set: /* @__PURE__ */ __name((UriOrEntries, Diagnostics) => {
@@ -404,6 +405,7 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
         });
       }, "delete"),
       clear: /* @__PURE__ */ __name(() => {
+        if (Store.size === 0) return;
         Store.clear();
         Context.MountainClient?.sendRequest("Diagnostic.Clear", [
           Owner
@@ -419,6 +421,9 @@ var CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProvider
       get: /* @__PURE__ */ __name((Uri) => Store.get(String(Uri)) ?? [], "get"),
       has: /* @__PURE__ */ __name((Uri) => Store.has(String(Uri)), "has"),
       dispose: /* @__PURE__ */ __name(() => {
+        if (Disposed) return;
+        Disposed = true;
+        if (Store.size === 0) return;
         Store.clear();
         Context.MountainClient?.sendRequest("Diagnostic.Clear", [
           Owner

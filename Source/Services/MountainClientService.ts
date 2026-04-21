@@ -603,6 +603,24 @@ message RPCDataPayload {
 				Parameter: this.SerializeParameters(parameters),
 			};
 
+			// BATCH-16 latency instrumentation: monotonic ns stamp at the
+			// wire-send boundary. Mountain logs matching stamps on receive
+			// and on final registration; diffing surfaces whether the
+			// 700 ms observed in debug-electron boots is spent in gRPC
+			// transport, Track dispatch, or inside the provider body.
+			// Scoped to tree.register to keep unrelated RPCs quiet.
+			if (method === "tree.register" && typeof process !== "undefined") {
+				try {
+					const Timestamp = process.hrtime.bigint().toString();
+					const Correlation =
+						(parameters?.[0] as { viewId?: string } | undefined)
+							?.viewId ?? `req-${requestIdentifier}`;
+					process.stdout.write(
+						`[LandFix:Tree] wire-send method=${method} correlation=${Correlation} t=${Timestamp}\n`,
+					);
+				} catch {}
+			}
+
 			// Execute with comprehensive retry logic and cancellation support
 			const response = await this.SendRequestWithRetry(
 				request,

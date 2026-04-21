@@ -501,6 +501,17 @@ message RPCDataPayload {
             Method: method,
             Parameter: this.SerializeParameters(parameters)
           };
+          if (method === "tree.register" && typeof process !== "undefined") {
+            try {
+              const Timestamp = process.hrtime.bigint().toString();
+              const Correlation = parameters?.[0]?.viewId ?? `req-${requestIdentifier}`;
+              process.stdout.write(
+                `[LandFix:Tree] wire-send method=${method} correlation=${Correlation} t=${Timestamp}
+`
+              );
+            } catch {
+            }
+          }
           const response = await this.SendRequestWithRetry(
             request,
             cancellationToken

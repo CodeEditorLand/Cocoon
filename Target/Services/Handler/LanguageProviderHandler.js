@@ -14655,6 +14655,13 @@ function appendEscapedMarkdownCodeBlockFence(code, langId) {
     `${"`".repeat(desiredFenceLength)}`
   ].join("\n");
 }
+function appendEscapedMarkdownInlineCode(text) {
+  const longestBacktickRun = Math.max(0, ...(text.match(/`+/g) ?? []).map((m) => m.length));
+  const fence = "`".repeat(longestBacktickRun + 1);
+  const needsSpace = text.startsWith("`") || text.endsWith("`");
+  const content = needsSpace ? ` ${text} ` : text;
+  return `${fence}${content}${fence}`;
+}
 function escapeDoubleQuotes(input) {
   return input.replace(/"/g, "&quot;");
 }
@@ -14791,6 +14798,8 @@ ${appendEscapedMarkdownCodeBlockFence(code, langId)}
     __name44(escapeMarkdownSyntaxTokens, "escapeMarkdownSyntaxTokens");
     __name(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
     __name44(appendEscapedMarkdownCodeBlockFence, "appendEscapedMarkdownCodeBlockFence");
+    __name(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
+    __name44(appendEscapedMarkdownInlineCode, "appendEscapedMarkdownInlineCode");
     __name(escapeDoubleQuotes, "escapeDoubleQuotes");
     __name44(escapeDoubleQuotes, "escapeDoubleQuotes");
     __name(removeMarkdownEscapes, "removeMarkdownEscapes");
