@@ -7005,11 +7005,12 @@ var init_event = __esm({
         if (this._warnCountdown <= 0) {
           this._warnCountdown = threshold * 0.5;
           const [topStack, topCount] = this.getMostFrequentStack();
+          const emitterName = /^[0-9a-f]+$/i.test(this.name) ? void 0 : this.name;
           const message = `[${this.name}] potential listener LEAK detected, having ${listenerCount} listeners already. MOST frequent listener (${topCount}):`;
           console.warn(message);
           console.warn(topStack);
           const kind = topCount / listenerCount > 0.3 ? "dominated" : "popular";
-          const error = new ListenerLeakError(kind, message, topStack, listenerCount);
+          const error = new ListenerLeakError(kind, message, topStack, listenerCount, emitterName);
           this._errorHandler(error);
         }
         return () => {
@@ -7057,8 +7058,8 @@ var init_event = __esm({
       static {
         __name21(this, "ListenerLeakError");
       }
-      constructor(kind, details, stack, listenerCount) {
-        super(`potential listener LEAK detected, ${kind}`);
+      constructor(kind, details, stack, listenerCount, emitterName) {
+        super(emitterName ? `[${emitterName}] potential listener LEAK detected, ${kind}` : `potential listener LEAK detected, ${kind}`);
         this.name = "ListenerLeakError";
         this.kind = kind;
         this.listenerCount = listenerCount;
@@ -7076,8 +7077,8 @@ var init_event = __esm({
       static {
         __name21(this, "ListenerRefusalError");
       }
-      constructor(kind, details, stack, listenerCount) {
-        super(kind, details, stack, listenerCount);
+      constructor(kind, details, stack, listenerCount, emitterName) {
+        super(kind, details, stack, listenerCount, emitterName);
         this.name = "ListenerRefusalError";
       }
     };
@@ -7117,7 +7118,7 @@ var init_event = __esm({
       constructor(options) {
         this._size = 0;
         this._options = options;
-        this._leakageMon = _globalLeakWarningThreshold > 0 || this._options?.leakWarningThreshold ? new LeakageMonitor(options?.onListenerError ?? onUnexpectedError, this._options?.leakWarningThreshold ?? _globalLeakWarningThreshold) : void 0;
+        this._leakageMon = _globalLeakWarningThreshold > 0 || this._options?.leakWarningThreshold ? new LeakageMonitor(options?.onListenerError ?? onUnexpectedError, this._options?.leakWarningThreshold ?? _globalLeakWarningThreshold, this._options?.leakWarningName) : void 0;
         this._perfMon = this._options?._profName ? new EventProfiling(this._options._profName) : void 0;
         this._deliveryQueue = this._options?.deliveryQueue;
       }
@@ -7152,7 +7153,7 @@ var init_event = __esm({
             console.warn(message);
             const tuple = this._leakageMon.getMostFrequentStack() ?? ["UNKNOWN stack", -1];
             const kind = tuple[1] / this._size > 0.3 ? "dominated" : "popular";
-            const error = new ListenerRefusalError(kind, `${message}. HINT: Stack shows most frequent listener (${tuple[1]}-times)`, tuple[0], this._size);
+            const error = new ListenerRefusalError(kind, `${message}. HINT: Stack shows most frequent listener (${tuple[1]}-times)`, tuple[0], this._size, this._options?.leakWarningName);
             const errorHandler2 = this._options?.onListenerError || onUnexpectedError;
             errorHandler2(error);
             return Disposable.None;
