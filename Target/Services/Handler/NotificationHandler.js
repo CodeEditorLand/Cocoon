@@ -9,4487 +9,6 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// ../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js
-function findLast(array, predicate, fromIndex = array.length - 1) {
-  const idx = findLastIdx(array, predicate, fromIndex);
-  if (idx === -1) {
-    return void 0;
-  }
-  return array[idx];
-}
-function findLastIdx(array, predicate, fromIndex = array.length - 1) {
-  for (let i = fromIndex; i >= 0; i--) {
-    const element = array[i];
-    if (predicate(element, i)) {
-      return i;
-    }
-  }
-  return -1;
-}
-function findFirst(array, predicate, fromIndex = 0) {
-  const idx = findFirstIdx(array, predicate, fromIndex);
-  if (idx === -1) {
-    return void 0;
-  }
-  return array[idx];
-}
-function findFirstIdx(array, predicate, fromIndex = 0) {
-  for (let i = fromIndex; i < array.length; i++) {
-    const element = array[i];
-    if (predicate(element, i)) {
-      return i;
-    }
-  }
-  return -1;
-}
-function findLastMonotonous(array, predicate) {
-  const idx = findLastIdxMonotonous(array, predicate);
-  return idx === -1 ? void 0 : array[idx];
-}
-function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
-  let i = startIdx;
-  let j = endIdxEx;
-  while (i < j) {
-    const k = Math.floor((i + j) / 2);
-    if (predicate(array[k])) {
-      i = k + 1;
-    } else {
-      j = k;
-    }
-  }
-  return i - 1;
-}
-function findFirstMonotonous(array, predicate) {
-  const idx = findFirstIdxMonotonousOrArrLen(array, predicate);
-  return idx === array.length ? void 0 : array[idx];
-}
-function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx = array.length) {
-  let i = startIdx;
-  let j = endIdxEx;
-  while (i < j) {
-    const k = Math.floor((i + j) / 2);
-    if (predicate(array[k])) {
-      j = k;
-    } else {
-      i = k + 1;
-    }
-  }
-  return i;
-}
-function findFirstIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
-  const idx = findFirstIdxMonotonousOrArrLen(array, predicate, startIdx, endIdxEx);
-  return idx === array.length ? -1 : idx;
-}
-function findFirstMax(array, comparator) {
-  if (array.length === 0) {
-    return void 0;
-  }
-  let max = array[0];
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, max) > 0) {
-      max = item;
-    }
-  }
-  return max;
-}
-function findLastMax(array, comparator) {
-  if (array.length === 0) {
-    return void 0;
-  }
-  let max = array[0];
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, max) >= 0) {
-      max = item;
-    }
-  }
-  return max;
-}
-function findFirstMin(array, comparator) {
-  return findFirstMax(array, (a, b) => -comparator(a, b));
-}
-function findMaxIdx(array, comparator) {
-  if (array.length === 0) {
-    return -1;
-  }
-  let maxIdx = 0;
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, array[maxIdx]) > 0) {
-      maxIdx = i;
-    }
-  }
-  return maxIdx;
-}
-function mapFindFirst(items, mapFn) {
-  for (const value of items) {
-    const mapped = mapFn(value);
-    if (mapped !== void 0) {
-      return mapped;
-    }
-  }
-  return void 0;
-}
-var __defProp2, __name2, MonotonousArray;
-var init_arraysFind = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js"() {
-    "use strict";
-    __defProp2 = Object.defineProperty;
-    __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
-    __name(findLast, "findLast");
-    __name2(findLast, "findLast");
-    __name(findLastIdx, "findLastIdx");
-    __name2(findLastIdx, "findLastIdx");
-    __name(findFirst, "findFirst");
-    __name2(findFirst, "findFirst");
-    __name(findFirstIdx, "findFirstIdx");
-    __name2(findFirstIdx, "findFirstIdx");
-    __name(findLastMonotonous, "findLastMonotonous");
-    __name2(findLastMonotonous, "findLastMonotonous");
-    __name(findLastIdxMonotonous, "findLastIdxMonotonous");
-    __name2(findLastIdxMonotonous, "findLastIdxMonotonous");
-    __name(findFirstMonotonous, "findFirstMonotonous");
-    __name2(findFirstMonotonous, "findFirstMonotonous");
-    __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
-    __name2(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
-    __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
-    __name2(findFirstIdxMonotonous, "findFirstIdxMonotonous");
-    MonotonousArray = class _MonotonousArray {
-      static {
-        __name(this, "MonotonousArray");
-      }
-      static {
-        __name2(this, "MonotonousArray");
-      }
-      static {
-        this.assertInvariants = false;
-      }
-      constructor(_array) {
-        this._array = _array;
-        this._findLastMonotonousLastIdx = 0;
-      }
-      /**
-       * The predicate must be monotonous, i.e. `arr.map(predicate)` must be like `[true, ..., true, false, ..., false]`!
-       * For subsequent calls, current predicate must be weaker than (or equal to) the previous predicate, i.e. more entries must be `true`.
-       */
-      findLastMonotonous(predicate) {
-        if (_MonotonousArray.assertInvariants) {
-          if (this._prevFindLastPredicate) {
-            for (const item of this._array) {
-              if (this._prevFindLastPredicate(item) && !predicate(item)) {
-                throw new Error("MonotonousArray: current predicate must be weaker than (or equal to) the previous predicate.");
-              }
-            }
-          }
-          this._prevFindLastPredicate = predicate;
-        }
-        const idx = findLastIdxMonotonous(this._array, predicate, this._findLastMonotonousLastIdx);
-        this._findLastMonotonousLastIdx = idx + 1;
-        return idx === -1 ? void 0 : this._array[idx];
-      }
-    };
-    __name(findFirstMax, "findFirstMax");
-    __name2(findFirstMax, "findFirstMax");
-    __name(findLastMax, "findLastMax");
-    __name2(findLastMax, "findLastMax");
-    __name(findFirstMin, "findFirstMin");
-    __name2(findFirstMin, "findFirstMin");
-    __name(findMaxIdx, "findMaxIdx");
-    __name2(findMaxIdx, "findMaxIdx");
-    __name(mapFindFirst, "mapFindFirst");
-    __name2(mapFindFirst, "mapFindFirst");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/errors.js
-function setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
-  errorHandler.setUnexpectedErrorHandler(newUnexpectedErrorHandler);
-}
-function isSigPipeError(e) {
-  if (!e || typeof e !== "object") {
-    return false;
-  }
-  const cast = e;
-  return cast.code === "EPIPE" && cast.syscall?.toUpperCase() === "WRITE";
-}
-function onBugIndicatingError(e) {
-  errorHandler.onUnexpectedError(e);
-  return void 0;
-}
-function onUnexpectedError(e) {
-  if (!isCancellationError(e)) {
-    errorHandler.onUnexpectedError(e);
-  }
-  return void 0;
-}
-function onUnexpectedExternalError(e) {
-  if (!isCancellationError(e)) {
-    errorHandler.onUnexpectedExternalError(e);
-  }
-  return void 0;
-}
-function transformErrorForSerialization(error) {
-  if (error instanceof Error) {
-    const { name, message, cause } = error;
-    const stack = error.stacktrace || error.stack;
-    return {
-      $isError: true,
-      name,
-      message,
-      stack,
-      noTelemetry: ErrorNoTelemetry.isErrorNoTelemetry(error),
-      cause: cause ? transformErrorForSerialization(cause) : void 0,
-      code: error.code
-    };
-  }
-  return error;
-}
-function transformErrorFromSerialization(data) {
-  let error;
-  if (data.noTelemetry) {
-    error = new ErrorNoTelemetry();
-  } else {
-    error = new Error();
-    error.name = data.name;
-  }
-  error.message = data.message;
-  error.stack = data.stack;
-  if (data.code) {
-    error.code = data.code;
-  }
-  if (data.cause) {
-    error.cause = transformErrorFromSerialization(data.cause);
-  }
-  return error;
-}
-function isCancellationError(error) {
-  if (error instanceof CancellationError) {
-    return true;
-  }
-  return error instanceof Error && error.name === canceledName && error.message === canceledName;
-}
-function canceled() {
-  const error = new Error(canceledName);
-  error.name = error.message;
-  return error;
-}
-function illegalArgument(name) {
-  if (name) {
-    return new Error(`Illegal argument: ${name}`);
-  } else {
-    return new Error("Illegal argument");
-  }
-}
-function illegalState(name) {
-  if (name) {
-    return new Error(`Illegal state: ${name}`);
-  } else {
-    return new Error("Illegal state");
-  }
-}
-function getErrorMessage(err) {
-  if (!err) {
-    return "Error";
-  }
-  if (err.message) {
-    return err.message;
-  }
-  if (err.stack) {
-    return err.stack.split("\n")[0];
-  }
-  return String(err);
-}
-var __defProp3, __name3, ErrorHandler, errorHandler, canceledName, CancellationError, PendingMigrationError, ReadonlyError, NotImplementedError, NotSupportedError, ExpectedError, ErrorNoTelemetry, BugIndicatingError;
-var init_errors = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/errors.js"() {
-    "use strict";
-    __defProp3 = Object.defineProperty;
-    __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
-    ErrorHandler = class {
-      static {
-        __name(this, "ErrorHandler");
-      }
-      static {
-        __name3(this, "ErrorHandler");
-      }
-      constructor() {
-        this.listeners = [];
-        this.unexpectedErrorHandler = function(e) {
-          setTimeout(() => {
-            if (e.stack) {
-              if (ErrorNoTelemetry.isErrorNoTelemetry(e)) {
-                throw new ErrorNoTelemetry(e.message + "\n\n" + e.stack);
-              }
-              throw new Error(e.message + "\n\n" + e.stack);
-            }
-            throw e;
-          }, 0);
-        };
-      }
-      addListener(listener) {
-        this.listeners.push(listener);
-        return () => {
-          this._removeListener(listener);
-        };
-      }
-      emit(e) {
-        this.listeners.forEach((listener) => {
-          listener(e);
-        });
-      }
-      _removeListener(listener) {
-        this.listeners.splice(this.listeners.indexOf(listener), 1);
-      }
-      setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
-        this.unexpectedErrorHandler = newUnexpectedErrorHandler;
-      }
-      getUnexpectedErrorHandler() {
-        return this.unexpectedErrorHandler;
-      }
-      onUnexpectedError(e) {
-        this.unexpectedErrorHandler(e);
-        this.emit(e);
-      }
-      // For external errors, we don't want the listeners to be called
-      onUnexpectedExternalError(e) {
-        this.unexpectedErrorHandler(e);
-      }
-    };
-    errorHandler = new ErrorHandler();
-    __name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
-    __name3(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
-    __name(isSigPipeError, "isSigPipeError");
-    __name3(isSigPipeError, "isSigPipeError");
-    __name(onBugIndicatingError, "onBugIndicatingError");
-    __name3(onBugIndicatingError, "onBugIndicatingError");
-    __name(onUnexpectedError, "onUnexpectedError");
-    __name3(onUnexpectedError, "onUnexpectedError");
-    __name(onUnexpectedExternalError, "onUnexpectedExternalError");
-    __name3(onUnexpectedExternalError, "onUnexpectedExternalError");
-    __name(transformErrorForSerialization, "transformErrorForSerialization");
-    __name3(transformErrorForSerialization, "transformErrorForSerialization");
-    __name(transformErrorFromSerialization, "transformErrorFromSerialization");
-    __name3(transformErrorFromSerialization, "transformErrorFromSerialization");
-    canceledName = "Canceled";
-    __name(isCancellationError, "isCancellationError");
-    __name3(isCancellationError, "isCancellationError");
-    CancellationError = class extends Error {
-      static {
-        __name(this, "CancellationError");
-      }
-      static {
-        __name3(this, "CancellationError");
-      }
-      constructor() {
-        super(canceledName);
-        this.name = this.message;
-      }
-    };
-    PendingMigrationError = class _PendingMigrationError extends Error {
-      static {
-        __name(this, "PendingMigrationError");
-      }
-      static {
-        __name3(this, "PendingMigrationError");
-      }
-      static {
-        this._name = "PendingMigrationError";
-      }
-      static is(error) {
-        return error instanceof _PendingMigrationError || error instanceof Error && error.name === _PendingMigrationError._name;
-      }
-      constructor(message) {
-        super(message);
-        this.name = _PendingMigrationError._name;
-      }
-    };
-    __name(canceled, "canceled");
-    __name3(canceled, "canceled");
-    __name(illegalArgument, "illegalArgument");
-    __name3(illegalArgument, "illegalArgument");
-    __name(illegalState, "illegalState");
-    __name3(illegalState, "illegalState");
-    ReadonlyError = class extends TypeError {
-      static {
-        __name(this, "ReadonlyError");
-      }
-      static {
-        __name3(this, "ReadonlyError");
-      }
-      constructor(name) {
-        super(name ? `${name} is read-only and cannot be changed` : "Cannot change read-only property");
-      }
-    };
-    __name(getErrorMessage, "getErrorMessage");
-    __name3(getErrorMessage, "getErrorMessage");
-    NotImplementedError = class extends Error {
-      static {
-        __name(this, "NotImplementedError");
-      }
-      static {
-        __name3(this, "NotImplementedError");
-      }
-      constructor(message) {
-        super("NotImplemented");
-        if (message) {
-          this.message = message;
-        }
-      }
-    };
-    NotSupportedError = class extends Error {
-      static {
-        __name(this, "NotSupportedError");
-      }
-      static {
-        __name3(this, "NotSupportedError");
-      }
-      constructor(message) {
-        super("NotSupported");
-        if (message) {
-          this.message = message;
-        }
-      }
-    };
-    ExpectedError = class extends Error {
-      static {
-        __name(this, "ExpectedError");
-      }
-      static {
-        __name3(this, "ExpectedError");
-      }
-      constructor() {
-        super(...arguments);
-        this.isExpected = true;
-      }
-    };
-    ErrorNoTelemetry = class _ErrorNoTelemetry extends Error {
-      static {
-        __name(this, "ErrorNoTelemetry");
-      }
-      static {
-        __name3(this, "ErrorNoTelemetry");
-      }
-      constructor(msg) {
-        super(msg);
-        this.name = "CodeExpectedError";
-      }
-      static fromError(err) {
-        if (err instanceof _ErrorNoTelemetry) {
-          return err;
-        }
-        const result = new _ErrorNoTelemetry();
-        result.message = err.message;
-        result.stack = err.stack;
-        return result;
-      }
-      static isErrorNoTelemetry(err) {
-        return err.name === "CodeExpectedError";
-      }
-    };
-    BugIndicatingError = class _BugIndicatingError extends Error {
-      static {
-        __name(this, "BugIndicatingError");
-      }
-      static {
-        __name3(this, "BugIndicatingError");
-      }
-      constructor(message) {
-        super(message || "An unexpected bug occurred.");
-        Object.setPrototypeOf(this, _BugIndicatingError.prototype);
-      }
-    };
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js
-function tail(arr) {
-  if (arr.length === 0) {
-    throw new Error("Invalid tail call");
-  }
-  return [arr.slice(0, arr.length - 1), arr[arr.length - 1]];
-}
-function equals(one, other, itemEquals = (a, b) => a === b) {
-  if (one === other) {
-    return true;
-  }
-  if (!one || !other) {
-    return false;
-  }
-  if (one.length !== other.length) {
-    return false;
-  }
-  for (let i = 0, len = one.length; i < len; i++) {
-    if (!itemEquals(one[i], other[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-function removeFastWithoutKeepingOrder(array, index2) {
-  const last = array.length - 1;
-  if (index2 < last) {
-    array[index2] = array[last];
-  }
-  array.pop();
-}
-function binarySearch(array, key, comparator) {
-  return binarySearch2(array.length, (i) => comparator(array[i], key));
-}
-function binarySearch2(length, compareToKey) {
-  let low = 0, high = length - 1;
-  while (low <= high) {
-    const mid = (low + high) / 2 | 0;
-    const comp = compareToKey(mid);
-    if (comp < 0) {
-      low = mid + 1;
-    } else if (comp > 0) {
-      high = mid - 1;
-    } else {
-      return mid;
-    }
-  }
-  return -(low + 1);
-}
-function quickSelect(nth, data, compare2) {
-  nth = nth | 0;
-  if (nth >= data.length) {
-    throw new TypeError("invalid index");
-  }
-  const pivotValue = data[Math.floor(data.length * Math.random())];
-  const lower = [];
-  const higher = [];
-  const pivots = [];
-  for (const value of data) {
-    const val = compare2(value, pivotValue);
-    if (val < 0) {
-      lower.push(value);
-    } else if (val > 0) {
-      higher.push(value);
-    } else {
-      pivots.push(value);
-    }
-  }
-  if (nth < lower.length) {
-    return quickSelect(nth, lower, compare2);
-  } else if (nth < lower.length + pivots.length) {
-    return pivots[0];
-  } else {
-    return quickSelect(nth - (lower.length + pivots.length), higher, compare2);
-  }
-}
-function groupBy(data, compare2) {
-  const result = [];
-  let currentGroup = void 0;
-  for (const element of data.slice(0).sort(compare2)) {
-    if (!currentGroup || compare2(currentGroup[0], element) !== 0) {
-      currentGroup = [element];
-      result.push(currentGroup);
-    } else {
-      currentGroup.push(element);
-    }
-  }
-  return result;
-}
-function* groupAdjacentBy(items, shouldBeGrouped) {
-  let currentGroup;
-  let last;
-  for (const item of items) {
-    if (last !== void 0 && shouldBeGrouped(last, item)) {
-      currentGroup.push(item);
-    } else {
-      if (currentGroup) {
-        yield currentGroup;
-      }
-      currentGroup = [item];
-    }
-    last = item;
-  }
-  if (currentGroup) {
-    yield currentGroup;
-  }
-}
-function forEachAdjacent(arr, f) {
-  for (let i = 0; i <= arr.length; i++) {
-    f(i === 0 ? void 0 : arr[i - 1], i === arr.length ? void 0 : arr[i]);
-  }
-}
-function forEachWithNeighbors(arr, f) {
-  for (let i = 0; i < arr.length; i++) {
-    f(i === 0 ? void 0 : arr[i - 1], arr[i], i + 1 === arr.length ? void 0 : arr[i + 1]);
-  }
-}
-function concatArrays(...arrays) {
-  return [].concat(...arrays);
-}
-function sortedDiff(before, after, compare2) {
-  const result = [];
-  function pushSplice(start, deleteCount, toInsert) {
-    if (deleteCount === 0 && toInsert.length === 0) {
-      return;
-    }
-    const latest = result[result.length - 1];
-    if (latest && latest.start + latest.deleteCount === start) {
-      latest.deleteCount += deleteCount;
-      latest.toInsert.push(...toInsert);
-    } else {
-      result.push({ start, deleteCount, toInsert });
-    }
-  }
-  __name(pushSplice, "pushSplice");
-  __name4(pushSplice, "pushSplice");
-  let beforeIdx = 0;
-  let afterIdx = 0;
-  while (true) {
-    if (beforeIdx === before.length) {
-      pushSplice(beforeIdx, 0, after.slice(afterIdx));
-      break;
-    }
-    if (afterIdx === after.length) {
-      pushSplice(beforeIdx, before.length - beforeIdx, []);
-      break;
-    }
-    const beforeElement = before[beforeIdx];
-    const afterElement = after[afterIdx];
-    const n = compare2(beforeElement, afterElement);
-    if (n === 0) {
-      beforeIdx += 1;
-      afterIdx += 1;
-    } else if (n < 0) {
-      pushSplice(beforeIdx, 1, []);
-      beforeIdx += 1;
-    } else if (n > 0) {
-      pushSplice(beforeIdx, 0, [afterElement]);
-      afterIdx += 1;
-    }
-  }
-  return result;
-}
-function delta(before, after, compare2) {
-  const splices = sortedDiff(before, after, compare2);
-  const removed = [];
-  const added = [];
-  for (const splice2 of splices) {
-    removed.push(...before.slice(splice2.start, splice2.start + splice2.deleteCount));
-    added.push(...splice2.toInsert);
-  }
-  return { removed, added };
-}
-function top(array, compare2, n) {
-  if (n === 0) {
-    return [];
-  }
-  const result = array.slice(0, n).sort(compare2);
-  topStep(array, compare2, result, n, array.length);
-  return result;
-}
-function topAsync(array, compare2, n, batch, token) {
-  if (n === 0) {
-    return Promise.resolve([]);
-  }
-  return new Promise((resolve2, reject) => {
-    (async () => {
-      const o = array.length;
-      const result = array.slice(0, n).sort(compare2);
-      for (let i = n, m = Math.min(n + batch, o); i < o; i = m, m = Math.min(m + batch, o)) {
-        if (i > n) {
-          await new Promise((resolve22) => setTimeout(resolve22));
-        }
-        if (token && token.isCancellationRequested) {
-          throw new CancellationError();
-        }
-        topStep(array, compare2, result, i, m);
-      }
-      return result;
-    })().then(resolve2, reject);
-  });
-}
-function topStep(array, compare2, result, i, m) {
-  for (const n = result.length; i < m; i++) {
-    const element = array[i];
-    if (compare2(element, result[n - 1]) < 0) {
-      result.pop();
-      const j = findFirstIdxMonotonousOrArrLen(result, (e) => compare2(element, e) < 0);
-      result.splice(j, 0, element);
-    }
-  }
-}
-function coalesce(array) {
-  return array.filter((e) => !!e);
-}
-function coalesceInPlace(array) {
-  let to = 0;
-  for (let i = 0; i < array.length; i++) {
-    if (!!array[i]) {
-      array[to] = array[i];
-      to += 1;
-    }
-  }
-  array.length = to;
-}
-function move(array, from, to) {
-  array.splice(to, 0, array.splice(from, 1)[0]);
-}
-function isFalsyOrEmpty(obj) {
-  return !Array.isArray(obj) || obj.length === 0;
-}
-function isNonEmptyArray(obj) {
-  return Array.isArray(obj) && obj.length > 0;
-}
-function distinct(array, keyFn = (value) => value) {
-  const seen = /* @__PURE__ */ new Set();
-  return array.filter((element) => {
-    const key = keyFn(element);
-    if (seen.has(key)) {
-      return false;
-    }
-    seen.add(key);
-    return true;
-  });
-}
-function uniqueFilter(keyFn) {
-  const seen = /* @__PURE__ */ new Set();
-  return (element) => {
-    const key = keyFn(element);
-    if (seen.has(key)) {
-      return false;
-    }
-    seen.add(key);
-    return true;
-  };
-}
-function commonPrefixLength(one, other, equals22 = (a, b) => a === b) {
-  let result = 0;
-  for (let i = 0, len = Math.min(one.length, other.length); i < len && equals22(one[i], other[i]); i++) {
-    result++;
-  }
-  return result;
-}
-function range(arg, to) {
-  let from = typeof to === "number" ? arg : 0;
-  if (typeof to === "number") {
-    from = arg;
-  } else {
-    from = 0;
-    to = arg;
-  }
-  const result = [];
-  if (from <= to) {
-    for (let i = from; i < to; i++) {
-      result.push(i);
-    }
-  } else {
-    for (let i = from; i > to; i--) {
-      result.push(i);
-    }
-  }
-  return result;
-}
-function index(array, indexer, mapper) {
-  return array.reduce((r, t) => {
-    r[indexer(t)] = mapper ? mapper(t) : t;
-    return r;
-  }, /* @__PURE__ */ Object.create(null));
-}
-function insert(array, element) {
-  array.push(element);
-  return () => remove(array, element);
-}
-function remove(array, element) {
-  const index2 = array.indexOf(element);
-  if (index2 > -1) {
-    array.splice(index2, 1);
-    return element;
-  }
-  return void 0;
-}
-function arrayInsert(target, insertIndex, insertArr) {
-  const before = target.slice(0, insertIndex);
-  const after = target.slice(insertIndex);
-  return before.concat(insertArr, after);
-}
-function shuffle(array, _seed) {
-  let rand;
-  if (typeof _seed === "number") {
-    let seed = _seed;
-    rand = /* @__PURE__ */ __name4(() => {
-      const x = Math.sin(seed++) * 179426549;
-      return x - Math.floor(x);
-    }, "rand");
-  } else {
-    rand = Math.random;
-  }
-  for (let i = array.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(rand() * (i + 1));
-    const temp = array[i];
-    array[i] = array[j];
-    array[j] = temp;
-  }
-}
-function pushToStart(arr, value) {
-  const index2 = arr.indexOf(value);
-  if (index2 > -1) {
-    arr.splice(index2, 1);
-    arr.unshift(value);
-  }
-}
-function pushToEnd(arr, value) {
-  const index2 = arr.indexOf(value);
-  if (index2 > -1) {
-    arr.splice(index2, 1);
-    arr.push(value);
-  }
-}
-function pushMany(arr, items) {
-  for (const item of items) {
-    arr.push(item);
-  }
-}
-function mapArrayOrNot(items, fn) {
-  return Array.isArray(items) ? items.map(fn) : fn(items);
-}
-function mapFilter(array, fn) {
-  const result = [];
-  for (const item of array) {
-    const mapped = fn(item);
-    if (mapped !== void 0) {
-      result.push(mapped);
-    }
-  }
-  return result;
-}
-function withoutDuplicates(array) {
-  const s = new Set(array);
-  return Array.from(s);
-}
-function asArray(x) {
-  return Array.isArray(x) ? x : [x];
-}
-function getRandomElement(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-function insertInto(array, start, newItems) {
-  const startIdx = getActualStartIndex(array, start);
-  const originalLength = array.length;
-  const newItemsLength = newItems.length;
-  array.length = originalLength + newItemsLength;
-  for (let i = originalLength - 1; i >= startIdx; i--) {
-    array[i + newItemsLength] = array[i];
-  }
-  for (let i = 0; i < newItemsLength; i++) {
-    array[i + startIdx] = newItems[i];
-  }
-}
-function splice(array, start, deleteCount, newItems) {
-  const index2 = getActualStartIndex(array, start);
-  let result = array.splice(index2, deleteCount);
-  if (result === void 0) {
-    result = [];
-  }
-  insertInto(array, index2, newItems);
-  return result;
-}
-function getActualStartIndex(array, start) {
-  return start < 0 ? Math.max(start + array.length, 0) : Math.min(start, array.length);
-}
-function compareBy(selector, comparator) {
-  return (a, b) => comparator(selector(a), selector(b));
-}
-function tieBreakComparators(...comparators) {
-  return (item1, item2) => {
-    for (const comparator of comparators) {
-      const result = comparator(item1, item2);
-      if (!CompareResult.isNeitherLessOrGreaterThan(result)) {
-        return result;
-      }
-    }
-    return CompareResult.neitherLessOrGreaterThan;
-  };
-}
-function reverseOrder(comparator) {
-  return (a, b) => -comparator(a, b);
-}
-function compareUndefinedSmallest(comparator) {
-  return (a, b) => {
-    if (a === void 0) {
-      return b === void 0 ? CompareResult.neitherLessOrGreaterThan : CompareResult.lessThan;
-    } else if (b === void 0) {
-      return CompareResult.greaterThan;
-    }
-    return comparator(a, b);
-  };
-}
-async function findAsync(array, predicate) {
-  const results = await Promise.all(array.map(async (element, index2) => ({ element, ok: await predicate(element, index2) })));
-  return results.find((r) => r.ok)?.element;
-}
-function sum(array) {
-  return array.reduce((acc, value) => acc + value, 0);
-}
-function sumBy(array, selector) {
-  return array.reduce((acc, value) => acc + selector(value), 0);
-}
-var __defProp4, __name4, CompareResult, numberComparator, booleanComparator, ArrayQueue, CallbackIterable, Permutation;
-var init_arrays = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js"() {
-    "use strict";
-    init_arraysFind();
-    init_errors();
-    __defProp4 = Object.defineProperty;
-    __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
-    __name(tail, "tail");
-    __name4(tail, "tail");
-    __name(equals, "equals");
-    __name4(equals, "equals");
-    __name(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
-    __name4(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
-    __name(binarySearch, "binarySearch");
-    __name4(binarySearch, "binarySearch");
-    __name(binarySearch2, "binarySearch2");
-    __name4(binarySearch2, "binarySearch2");
-    __name(quickSelect, "quickSelect");
-    __name4(quickSelect, "quickSelect");
-    __name(groupBy, "groupBy");
-    __name4(groupBy, "groupBy");
-    __name(groupAdjacentBy, "groupAdjacentBy");
-    __name4(groupAdjacentBy, "groupAdjacentBy");
-    __name(forEachAdjacent, "forEachAdjacent");
-    __name4(forEachAdjacent, "forEachAdjacent");
-    __name(forEachWithNeighbors, "forEachWithNeighbors");
-    __name4(forEachWithNeighbors, "forEachWithNeighbors");
-    __name(concatArrays, "concatArrays");
-    __name4(concatArrays, "concatArrays");
-    __name(sortedDiff, "sortedDiff");
-    __name4(sortedDiff, "sortedDiff");
-    __name(delta, "delta");
-    __name4(delta, "delta");
-    __name(top, "top");
-    __name4(top, "top");
-    __name(topAsync, "topAsync");
-    __name4(topAsync, "topAsync");
-    __name(topStep, "topStep");
-    __name4(topStep, "topStep");
-    __name(coalesce, "coalesce");
-    __name4(coalesce, "coalesce");
-    __name(coalesceInPlace, "coalesceInPlace");
-    __name4(coalesceInPlace, "coalesceInPlace");
-    __name(move, "move");
-    __name4(move, "move");
-    __name(isFalsyOrEmpty, "isFalsyOrEmpty");
-    __name4(isFalsyOrEmpty, "isFalsyOrEmpty");
-    __name(isNonEmptyArray, "isNonEmptyArray");
-    __name4(isNonEmptyArray, "isNonEmptyArray");
-    __name(distinct, "distinct");
-    __name4(distinct, "distinct");
-    __name(uniqueFilter, "uniqueFilter");
-    __name4(uniqueFilter, "uniqueFilter");
-    __name(commonPrefixLength, "commonPrefixLength");
-    __name4(commonPrefixLength, "commonPrefixLength");
-    __name(range, "range");
-    __name4(range, "range");
-    __name(index, "index");
-    __name4(index, "index");
-    __name(insert, "insert");
-    __name4(insert, "insert");
-    __name(remove, "remove");
-    __name4(remove, "remove");
-    __name(arrayInsert, "arrayInsert");
-    __name4(arrayInsert, "arrayInsert");
-    __name(shuffle, "shuffle");
-    __name4(shuffle, "shuffle");
-    __name(pushToStart, "pushToStart");
-    __name4(pushToStart, "pushToStart");
-    __name(pushToEnd, "pushToEnd");
-    __name4(pushToEnd, "pushToEnd");
-    __name(pushMany, "pushMany");
-    __name4(pushMany, "pushMany");
-    __name(mapArrayOrNot, "mapArrayOrNot");
-    __name4(mapArrayOrNot, "mapArrayOrNot");
-    __name(mapFilter, "mapFilter");
-    __name4(mapFilter, "mapFilter");
-    __name(withoutDuplicates, "withoutDuplicates");
-    __name4(withoutDuplicates, "withoutDuplicates");
-    __name(asArray, "asArray");
-    __name4(asArray, "asArray");
-    __name(getRandomElement, "getRandomElement");
-    __name4(getRandomElement, "getRandomElement");
-    __name(insertInto, "insertInto");
-    __name4(insertInto, "insertInto");
-    __name(splice, "splice");
-    __name4(splice, "splice");
-    __name(getActualStartIndex, "getActualStartIndex");
-    __name4(getActualStartIndex, "getActualStartIndex");
-    (function(CompareResult2) {
-      function isLessThan(result) {
-        return result < 0;
-      }
-      __name(isLessThan, "isLessThan");
-      __name4(isLessThan, "isLessThan");
-      CompareResult2.isLessThan = isLessThan;
-      function isLessThanOrEqual(result) {
-        return result <= 0;
-      }
-      __name(isLessThanOrEqual, "isLessThanOrEqual");
-      __name4(isLessThanOrEqual, "isLessThanOrEqual");
-      CompareResult2.isLessThanOrEqual = isLessThanOrEqual;
-      function isGreaterThan(result) {
-        return result > 0;
-      }
-      __name(isGreaterThan, "isGreaterThan");
-      __name4(isGreaterThan, "isGreaterThan");
-      CompareResult2.isGreaterThan = isGreaterThan;
-      function isNeitherLessOrGreaterThan(result) {
-        return result === 0;
-      }
-      __name(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
-      __name4(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
-      CompareResult2.isNeitherLessOrGreaterThan = isNeitherLessOrGreaterThan;
-      CompareResult2.greaterThan = 1;
-      CompareResult2.lessThan = -1;
-      CompareResult2.neitherLessOrGreaterThan = 0;
-    })(CompareResult || (CompareResult = {}));
-    __name(compareBy, "compareBy");
-    __name4(compareBy, "compareBy");
-    __name(tieBreakComparators, "tieBreakComparators");
-    __name4(tieBreakComparators, "tieBreakComparators");
-    numberComparator = /* @__PURE__ */ __name4((a, b) => a - b, "numberComparator");
-    booleanComparator = /* @__PURE__ */ __name4((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
-    __name(reverseOrder, "reverseOrder");
-    __name4(reverseOrder, "reverseOrder");
-    __name(compareUndefinedSmallest, "compareUndefinedSmallest");
-    __name4(compareUndefinedSmallest, "compareUndefinedSmallest");
-    ArrayQueue = class {
-      static {
-        __name(this, "ArrayQueue");
-      }
-      static {
-        __name4(this, "ArrayQueue");
-      }
-      /**
-       * Constructs a queue that is backed by the given array. Runtime is O(1).
-      */
-      constructor(items) {
-        this.firstIdx = 0;
-        this.items = items;
-        this.lastIdx = this.items.length - 1;
-      }
-      get length() {
-        return this.lastIdx - this.firstIdx + 1;
-      }
-      /**
-       * Consumes elements from the beginning of the queue as long as the predicate returns true.
-       * If no elements were consumed, `null` is returned. Has a runtime of O(result.length).
-      */
-      takeWhile(predicate) {
-        let startIdx = this.firstIdx;
-        while (startIdx < this.items.length && predicate(this.items[startIdx])) {
-          startIdx++;
-        }
-        const result = startIdx === this.firstIdx ? null : this.items.slice(this.firstIdx, startIdx);
-        this.firstIdx = startIdx;
-        return result;
-      }
-      /**
-       * Consumes elements from the end of the queue as long as the predicate returns true.
-       * If no elements were consumed, `null` is returned.
-       * The result has the same order as the underlying array!
-      */
-      takeFromEndWhile(predicate) {
-        let endIdx = this.lastIdx;
-        while (endIdx >= 0 && predicate(this.items[endIdx])) {
-          endIdx--;
-        }
-        const result = endIdx === this.lastIdx ? null : this.items.slice(endIdx + 1, this.lastIdx + 1);
-        this.lastIdx = endIdx;
-        return result;
-      }
-      peek() {
-        if (this.length === 0) {
-          return void 0;
-        }
-        return this.items[this.firstIdx];
-      }
-      peekLast() {
-        if (this.length === 0) {
-          return void 0;
-        }
-        return this.items[this.lastIdx];
-      }
-      dequeue() {
-        const result = this.items[this.firstIdx];
-        this.firstIdx++;
-        return result;
-      }
-      removeLast() {
-        const result = this.items[this.lastIdx];
-        this.lastIdx--;
-        return result;
-      }
-      takeCount(count2) {
-        const result = this.items.slice(this.firstIdx, this.firstIdx + count2);
-        this.firstIdx += count2;
-        return result;
-      }
-    };
-    CallbackIterable = class _CallbackIterable {
-      static {
-        __name(this, "CallbackIterable");
-      }
-      static {
-        __name4(this, "CallbackIterable");
-      }
-      static {
-        this.empty = new _CallbackIterable((_callback) => {
-        });
-      }
-      constructor(iterate) {
-        this.iterate = iterate;
-      }
-      forEach(handler) {
-        this.iterate((item) => {
-          handler(item);
-          return true;
-        });
-      }
-      toArray() {
-        const result = [];
-        this.iterate((item) => {
-          result.push(item);
-          return true;
-        });
-        return result;
-      }
-      filter(predicate) {
-        return new _CallbackIterable((cb) => this.iterate((item) => predicate(item) ? cb(item) : true));
-      }
-      map(mapFn) {
-        return new _CallbackIterable((cb) => this.iterate((item) => cb(mapFn(item))));
-      }
-      some(predicate) {
-        let result = false;
-        this.iterate((item) => {
-          result = predicate(item);
-          return !result;
-        });
-        return result;
-      }
-      findFirst(predicate) {
-        let result;
-        this.iterate((item) => {
-          if (predicate(item)) {
-            result = item;
-            return false;
-          }
-          return true;
-        });
-        return result;
-      }
-      findLast(predicate) {
-        let result;
-        this.iterate((item) => {
-          if (predicate(item)) {
-            result = item;
-          }
-          return true;
-        });
-        return result;
-      }
-      findLastMaxBy(comparator) {
-        let result;
-        let first = true;
-        this.iterate((item) => {
-          if (first || CompareResult.isGreaterThan(comparator(item, result))) {
-            first = false;
-            result = item;
-          }
-          return true;
-        });
-        return result;
-      }
-    };
-    Permutation = class _Permutation {
-      static {
-        __name(this, "Permutation");
-      }
-      static {
-        __name4(this, "Permutation");
-      }
-      constructor(_indexMap) {
-        this._indexMap = _indexMap;
-      }
-      /**
-       * Returns a permutation that sorts the given array according to the given compare function.
-       */
-      static createSortPermutation(arr, compareFn) {
-        const sortIndices = Array.from(arr.keys()).sort((index1, index2) => compareFn(arr[index1], arr[index2]));
-        return new _Permutation(sortIndices);
-      }
-      /**
-       * Returns a new array with the elements of the given array re-arranged according to this permutation.
-       */
-      apply(arr) {
-        return arr.map((_, index2) => arr[this._indexMap[index2]]);
-      }
-      /**
-       * Returns a new permutation that undoes the re-arrangement of this permutation.
-      */
-      inverse() {
-        const inverseIndexMap = this._indexMap.slice();
-        for (let i = 0; i < this._indexMap.length; i++) {
-          inverseIndexMap[this._indexMap[i]] = i;
-        }
-        return new _Permutation(inverseIndexMap);
-      }
-    };
-    __name(findAsync, "findAsync");
-    __name4(findAsync, "findAsync");
-    __name(sum, "sum");
-    __name4(sum, "sum");
-    __name(sumBy, "sumBy");
-    __name4(sumBy, "sumBy");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/lazy.js
-var __defProp5, __name5, LazyValueState, Lazy;
-var init_lazy = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/lazy.js"() {
-    "use strict";
-    __defProp5 = Object.defineProperty;
-    __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
-    (function(LazyValueState2) {
-      LazyValueState2[LazyValueState2["Uninitialized"] = 0] = "Uninitialized";
-      LazyValueState2[LazyValueState2["Running"] = 1] = "Running";
-      LazyValueState2[LazyValueState2["Completed"] = 2] = "Completed";
-    })(LazyValueState || (LazyValueState = {}));
-    Lazy = class {
-      static {
-        __name(this, "Lazy");
-      }
-      static {
-        __name5(this, "Lazy");
-      }
-      constructor(executor) {
-        this.executor = executor;
-        this._state = LazyValueState.Uninitialized;
-      }
-      /**
-       * True if the lazy value has been resolved.
-       */
-      get hasValue() {
-        return this._state === LazyValueState.Completed;
-      }
-      /**
-       * Get the wrapped value.
-       *
-       * This will force evaluation of the lazy value if it has not been resolved yet. Lazy values are only
-       * resolved once. `getValue` will re-throw exceptions that are hit while resolving the value
-       */
-      get value() {
-        if (this._state === LazyValueState.Uninitialized) {
-          this._state = LazyValueState.Running;
-          try {
-            this._value = this.executor();
-          } catch (err) {
-            this._error = err;
-          } finally {
-            this._state = LazyValueState.Completed;
-          }
-        } else if (this._state === LazyValueState.Running) {
-          throw new Error("Cannot read the value of a lazy that is being initialized");
-        }
-        if (this._error) {
-          throw this._error;
-        }
-        return this._value;
-      }
-      /**
-       * Get the wrapped value without forcing evaluation.
-       */
-      get rawValue() {
-        return this._value;
-      }
-    };
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/collections.js
-function groupBy2(data, groupFn) {
-  const result = /* @__PURE__ */ Object.create(null);
-  for (const element of data) {
-    const key = groupFn(element);
-    let target = result[key];
-    if (!target) {
-      target = result[key] = [];
-    }
-    target.push(element);
-  }
-  return result;
-}
-function groupByMap(data, groupFn) {
-  const result = /* @__PURE__ */ new Map();
-  for (const element of data) {
-    const key = groupFn(element);
-    let target = result.get(key);
-    if (!target) {
-      target = [];
-      result.set(key, target);
-    }
-    target.push(element);
-  }
-  return result;
-}
-function diffSets(before, after) {
-  const removed = [];
-  const added = [];
-  for (const element of before) {
-    if (!after.has(element)) {
-      removed.push(element);
-    }
-  }
-  for (const element of after) {
-    if (!before.has(element)) {
-      added.push(element);
-    }
-  }
-  return { removed, added };
-}
-function diffMaps(before, after) {
-  const removed = [];
-  const added = [];
-  for (const [index2, value] of before) {
-    if (!after.has(index2)) {
-      removed.push(value);
-    }
-  }
-  for (const [index2, value] of after) {
-    if (!before.has(index2)) {
-      added.push(value);
-    }
-  }
-  return { removed, added };
-}
-function intersection(setA, setB) {
-  const result = /* @__PURE__ */ new Set();
-  for (const elem of setB) {
-    if (setA.has(elem)) {
-      result.add(elem);
-    }
-  }
-  return result;
-}
-var __defProp6, __name6, _a, SetWithKey;
-var init_collections = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/collections.js"() {
-    "use strict";
-    __defProp6 = Object.defineProperty;
-    __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
-    __name(groupBy2, "groupBy");
-    __name6(groupBy2, "groupBy");
-    __name(groupByMap, "groupByMap");
-    __name6(groupByMap, "groupByMap");
-    __name(diffSets, "diffSets");
-    __name6(diffSets, "diffSets");
-    __name(diffMaps, "diffMaps");
-    __name6(diffMaps, "diffMaps");
-    __name(intersection, "intersection");
-    __name6(intersection, "intersection");
-    SetWithKey = class {
-      static {
-        __name(this, "SetWithKey");
-      }
-      static {
-        __name6(this, "SetWithKey");
-      }
-      static {
-        _a = Symbol.toStringTag;
-      }
-      constructor(values, toKey) {
-        this.toKey = toKey;
-        this._map = /* @__PURE__ */ new Map();
-        this[_a] = "SetWithKey";
-        for (const value of values) {
-          this.add(value);
-        }
-      }
-      get size() {
-        return this._map.size;
-      }
-      add(value) {
-        const key = this.toKey(value);
-        this._map.set(key, value);
-        return this;
-      }
-      delete(value) {
-        return this._map.delete(this.toKey(value));
-      }
-      has(value) {
-        return this._map.has(this.toKey(value));
-      }
-      *entries() {
-        for (const entry of this._map.values()) {
-          yield [entry, entry];
-        }
-      }
-      keys() {
-        return this.values();
-      }
-      *values() {
-        for (const entry of this._map.values()) {
-          yield entry;
-        }
-      }
-      clear() {
-        this._map.clear();
-      }
-      forEach(callbackfn, thisArg) {
-        this._map.forEach((entry) => callbackfn.call(thisArg, entry, entry, this));
-      }
-      [Symbol.iterator]() {
-        return this.values();
-      }
-    };
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/map.js
-function getOrSet(map, key, value) {
-  let result = map.get(key);
-  if (result === void 0) {
-    result = value;
-    map.set(key, result);
-  }
-  return result;
-}
-function mapToString(map) {
-  const entries = [];
-  map.forEach((value, key) => {
-    entries.push(`${key} => ${value}`);
-  });
-  return `Map(${map.size}) {${entries.join(", ")}}`;
-}
-function setToString(set) {
-  const entries = [];
-  set.forEach((value) => {
-    entries.push(value);
-  });
-  return `Set(${set.size}) {${entries.join(", ")}}`;
-}
-function isEntries(arg) {
-  return Array.isArray(arg);
-}
-function mapsStrictEqualIgnoreOrder(a, b) {
-  if (a === b) {
-    return true;
-  }
-  if (a.size !== b.size) {
-    return false;
-  }
-  for (const [key, value] of a) {
-    if (!b.has(key) || b.get(key) !== value) {
-      return false;
-    }
-  }
-  for (const [key] of b) {
-    if (!a.has(key)) {
-      return false;
-    }
-  }
-  return true;
-}
-var __defProp7, __name7, _a2, _b, _c, ResourceMapEntry, ResourceMap, ResourceSet, Touch, LinkedMap, Cache, LRUCache, MRUCache, CounterSet, BidirectionalMap, SetMap, NKeyMap;
-var init_map = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/map.js"() {
-    "use strict";
-    __defProp7 = Object.defineProperty;
-    __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
-    __name(getOrSet, "getOrSet");
-    __name7(getOrSet, "getOrSet");
-    __name(mapToString, "mapToString");
-    __name7(mapToString, "mapToString");
-    __name(setToString, "setToString");
-    __name7(setToString, "setToString");
-    ResourceMapEntry = class {
-      static {
-        __name(this, "ResourceMapEntry");
-      }
-      static {
-        __name7(this, "ResourceMapEntry");
-      }
-      constructor(uri, value) {
-        this.uri = uri;
-        this.value = value;
-      }
-    };
-    __name(isEntries, "isEntries");
-    __name7(isEntries, "isEntries");
-    ResourceMap = class _ResourceMap {
-      static {
-        __name(this, "ResourceMap");
-      }
-      static {
-        __name7(this, "ResourceMap");
-      }
-      static {
-        this.defaultToKey = (resource) => resource.toString();
-      }
-      constructor(arg, toKey) {
-        this[_a2] = "ResourceMap";
-        if (arg instanceof _ResourceMap) {
-          this.map = new Map(arg.map);
-          this.toKey = toKey ?? _ResourceMap.defaultToKey;
-        } else if (isEntries(arg)) {
-          this.map = /* @__PURE__ */ new Map();
-          this.toKey = toKey ?? _ResourceMap.defaultToKey;
-          for (const [resource, value] of arg) {
-            this.set(resource, value);
-          }
-        } else {
-          this.map = /* @__PURE__ */ new Map();
-          this.toKey = arg ?? _ResourceMap.defaultToKey;
-        }
-      }
-      set(resource, value) {
-        this.map.set(this.toKey(resource), new ResourceMapEntry(resource, value));
-        return this;
-      }
-      get(resource) {
-        return this.map.get(this.toKey(resource))?.value;
-      }
-      has(resource) {
-        return this.map.has(this.toKey(resource));
-      }
-      get size() {
-        return this.map.size;
-      }
-      clear() {
-        this.map.clear();
-      }
-      delete(resource) {
-        return this.map.delete(this.toKey(resource));
-      }
-      forEach(clb, thisArg) {
-        if (typeof thisArg !== "undefined") {
-          clb = clb.bind(thisArg);
-        }
-        for (const [_, entry] of this.map) {
-          clb(entry.value, entry.uri, this);
-        }
-      }
-      *values() {
-        for (const entry of this.map.values()) {
-          yield entry.value;
-        }
-      }
-      *keys() {
-        for (const entry of this.map.values()) {
-          yield entry.uri;
-        }
-      }
-      *entries() {
-        for (const entry of this.map.values()) {
-          yield [entry.uri, entry.value];
-        }
-      }
-      *[(_a2 = Symbol.toStringTag, Symbol.iterator)]() {
-        for (const [, entry] of this.map) {
-          yield [entry.uri, entry.value];
-        }
-      }
-    };
-    ResourceSet = class {
-      static {
-        __name(this, "ResourceSet");
-      }
-      static {
-        __name7(this, "ResourceSet");
-      }
-      constructor(entriesOrKey, toKey) {
-        this[_b] = "ResourceSet";
-        if (!entriesOrKey || typeof entriesOrKey === "function") {
-          this._map = new ResourceMap(entriesOrKey);
-        } else {
-          this._map = new ResourceMap(toKey);
-          entriesOrKey.forEach(this.add, this);
-        }
-      }
-      get size() {
-        return this._map.size;
-      }
-      add(value) {
-        this._map.set(value, value);
-        return this;
-      }
-      clear() {
-        this._map.clear();
-      }
-      delete(value) {
-        return this._map.delete(value);
-      }
-      forEach(callbackfn, thisArg) {
-        this._map.forEach((_value, key) => callbackfn.call(thisArg, key, key, this));
-      }
-      has(value) {
-        return this._map.has(value);
-      }
-      entries() {
-        return this._map.entries();
-      }
-      keys() {
-        return this._map.keys();
-      }
-      values() {
-        return this._map.keys();
-      }
-      [(_b = Symbol.toStringTag, Symbol.iterator)]() {
-        return this.keys();
-      }
-    };
-    (function(Touch2) {
-      Touch2[Touch2["None"] = 0] = "None";
-      Touch2[Touch2["AsOld"] = 1] = "AsOld";
-      Touch2[Touch2["AsNew"] = 2] = "AsNew";
-    })(Touch || (Touch = {}));
-    LinkedMap = class {
-      static {
-        __name(this, "LinkedMap");
-      }
-      static {
-        __name7(this, "LinkedMap");
-      }
-      constructor() {
-        this[_c] = "LinkedMap";
-        this._map = /* @__PURE__ */ new Map();
-        this._head = void 0;
-        this._tail = void 0;
-        this._size = 0;
-        this._state = 0;
-      }
-      clear() {
-        this._map.clear();
-        this._head = void 0;
-        this._tail = void 0;
-        this._size = 0;
-        this._state++;
-      }
-      isEmpty() {
-        return !this._head && !this._tail;
-      }
-      get size() {
-        return this._size;
-      }
-      get first() {
-        return this._head?.value;
-      }
-      get last() {
-        return this._tail?.value;
-      }
-      has(key) {
-        return this._map.has(key);
-      }
-      get(key, touch = 0) {
-        const item = this._map.get(key);
-        if (!item) {
-          return void 0;
-        }
-        if (touch !== 0) {
-          this.touch(item, touch);
-        }
-        return item.value;
-      }
-      set(key, value, touch = 0) {
-        let item = this._map.get(key);
-        if (item) {
-          item.value = value;
-          if (touch !== 0) {
-            this.touch(item, touch);
-          }
-        } else {
-          item = { key, value, next: void 0, previous: void 0 };
-          switch (touch) {
-            case 0:
-              this.addItemLast(item);
-              break;
-            case 1:
-              this.addItemFirst(item);
-              break;
-            case 2:
-              this.addItemLast(item);
-              break;
-            default:
-              this.addItemLast(item);
-              break;
-          }
-          this._map.set(key, item);
-          this._size++;
-        }
-        return this;
-      }
-      delete(key) {
-        return !!this.remove(key);
-      }
-      remove(key) {
-        const item = this._map.get(key);
-        if (!item) {
-          return void 0;
-        }
-        this._map.delete(key);
-        this.removeItem(item);
-        this._size--;
-        return item.value;
-      }
-      shift() {
-        if (!this._head && !this._tail) {
-          return void 0;
-        }
-        if (!this._head || !this._tail) {
-          throw new Error("Invalid list");
-        }
-        const item = this._head;
-        this._map.delete(item.key);
-        this.removeItem(item);
-        this._size--;
-        return item.value;
-      }
-      forEach(callbackfn, thisArg) {
-        const state = this._state;
-        let current = this._head;
-        while (current) {
-          if (thisArg) {
-            callbackfn.bind(thisArg)(current.value, current.key, this);
-          } else {
-            callbackfn(current.value, current.key, this);
-          }
-          if (this._state !== state) {
-            throw new Error(`LinkedMap got modified during iteration.`);
-          }
-          current = current.next;
-        }
-      }
-      keys() {
-        const map = this;
-        const state = this._state;
-        let current = this._head;
-        const iterator = {
-          [Symbol.iterator]() {
-            return iterator;
-          },
-          next() {
-            if (map._state !== state) {
-              throw new Error(`LinkedMap got modified during iteration.`);
-            }
-            if (current) {
-              const result = { value: current.key, done: false };
-              current = current.next;
-              return result;
-            } else {
-              return { value: void 0, done: true };
-            }
-          }
-        };
-        return iterator;
-      }
-      values() {
-        const map = this;
-        const state = this._state;
-        let current = this._head;
-        const iterator = {
-          [Symbol.iterator]() {
-            return iterator;
-          },
-          next() {
-            if (map._state !== state) {
-              throw new Error(`LinkedMap got modified during iteration.`);
-            }
-            if (current) {
-              const result = { value: current.value, done: false };
-              current = current.next;
-              return result;
-            } else {
-              return { value: void 0, done: true };
-            }
-          }
-        };
-        return iterator;
-      }
-      entries() {
-        const map = this;
-        const state = this._state;
-        let current = this._head;
-        const iterator = {
-          [Symbol.iterator]() {
-            return iterator;
-          },
-          next() {
-            if (map._state !== state) {
-              throw new Error(`LinkedMap got modified during iteration.`);
-            }
-            if (current) {
-              const result = { value: [current.key, current.value], done: false };
-              current = current.next;
-              return result;
-            } else {
-              return { value: void 0, done: true };
-            }
-          }
-        };
-        return iterator;
-      }
-      [(_c = Symbol.toStringTag, Symbol.iterator)]() {
-        return this.entries();
-      }
-      trimOld(newSize) {
-        if (newSize >= this.size) {
-          return;
-        }
-        if (newSize === 0) {
-          this.clear();
-          return;
-        }
-        let current = this._head;
-        let currentSize = this.size;
-        while (current && currentSize > newSize) {
-          this._map.delete(current.key);
-          current = current.next;
-          currentSize--;
-        }
-        this._head = current;
-        this._size = currentSize;
-        if (current) {
-          current.previous = void 0;
-        }
-        this._state++;
-      }
-      trimNew(newSize) {
-        if (newSize >= this.size) {
-          return;
-        }
-        if (newSize === 0) {
-          this.clear();
-          return;
-        }
-        let current = this._tail;
-        let currentSize = this.size;
-        while (current && currentSize > newSize) {
-          this._map.delete(current.key);
-          current = current.previous;
-          currentSize--;
-        }
-        this._tail = current;
-        this._size = currentSize;
-        if (current) {
-          current.next = void 0;
-        }
-        this._state++;
-      }
-      addItemFirst(item) {
-        if (!this._head && !this._tail) {
-          this._tail = item;
-        } else if (!this._head) {
-          throw new Error("Invalid list");
-        } else {
-          item.next = this._head;
-          this._head.previous = item;
-        }
-        this._head = item;
-        this._state++;
-      }
-      addItemLast(item) {
-        if (!this._head && !this._tail) {
-          this._head = item;
-        } else if (!this._tail) {
-          throw new Error("Invalid list");
-        } else {
-          item.previous = this._tail;
-          this._tail.next = item;
-        }
-        this._tail = item;
-        this._state++;
-      }
-      removeItem(item) {
-        if (item === this._head && item === this._tail) {
-          this._head = void 0;
-          this._tail = void 0;
-        } else if (item === this._head) {
-          if (!item.next) {
-            throw new Error("Invalid list");
-          }
-          item.next.previous = void 0;
-          this._head = item.next;
-        } else if (item === this._tail) {
-          if (!item.previous) {
-            throw new Error("Invalid list");
-          }
-          item.previous.next = void 0;
-          this._tail = item.previous;
-        } else {
-          const next = item.next;
-          const previous = item.previous;
-          if (!next || !previous) {
-            throw new Error("Invalid list");
-          }
-          next.previous = previous;
-          previous.next = next;
-        }
-        item.next = void 0;
-        item.previous = void 0;
-        this._state++;
-      }
-      touch(item, touch) {
-        if (!this._head || !this._tail) {
-          throw new Error("Invalid list");
-        }
-        if (touch !== 1 && touch !== 2) {
-          return;
-        }
-        if (touch === 1) {
-          if (item === this._head) {
-            return;
-          }
-          const next = item.next;
-          const previous = item.previous;
-          if (item === this._tail) {
-            previous.next = void 0;
-            this._tail = previous;
-          } else {
-            next.previous = previous;
-            previous.next = next;
-          }
-          item.previous = void 0;
-          item.next = this._head;
-          this._head.previous = item;
-          this._head = item;
-          this._state++;
-        } else if (touch === 2) {
-          if (item === this._tail) {
-            return;
-          }
-          const next = item.next;
-          const previous = item.previous;
-          if (item === this._head) {
-            next.previous = void 0;
-            this._head = next;
-          } else {
-            next.previous = previous;
-            previous.next = next;
-          }
-          item.next = void 0;
-          item.previous = this._tail;
-          this._tail.next = item;
-          this._tail = item;
-          this._state++;
-        }
-      }
-      toJSON() {
-        const data = [];
-        this.forEach((value, key) => {
-          data.push([key, value]);
-        });
-        return data;
-      }
-      fromJSON(data) {
-        this.clear();
-        for (const [key, value] of data) {
-          this.set(key, value);
-        }
-      }
-    };
-    Cache = class extends LinkedMap {
-      static {
-        __name(this, "Cache");
-      }
-      static {
-        __name7(this, "Cache");
-      }
-      constructor(limit, ratio = 1) {
-        super();
-        this._limit = limit;
-        this._ratio = Math.min(Math.max(0, ratio), 1);
-      }
-      get limit() {
-        return this._limit;
-      }
-      set limit(limit) {
-        this._limit = limit;
-        this.checkTrim();
-      }
-      get ratio() {
-        return this._ratio;
-      }
-      set ratio(ratio) {
-        this._ratio = Math.min(Math.max(0, ratio), 1);
-        this.checkTrim();
-      }
-      get(key, touch = 2) {
-        return super.get(key, touch);
-      }
-      peek(key) {
-        return super.get(
-          key,
-          0
-          /* Touch.None */
-        );
-      }
-      set(key, value) {
-        super.set(
-          key,
-          value,
-          2
-          /* Touch.AsNew */
-        );
-        return this;
-      }
-      checkTrim() {
-        if (this.size > this._limit) {
-          this.trim(Math.round(this._limit * this._ratio));
-        }
-      }
-    };
-    LRUCache = class extends Cache {
-      static {
-        __name(this, "LRUCache");
-      }
-      static {
-        __name7(this, "LRUCache");
-      }
-      constructor(limit, ratio = 1) {
-        super(limit, ratio);
-      }
-      trim(newSize) {
-        this.trimOld(newSize);
-      }
-      set(key, value) {
-        super.set(key, value);
-        this.checkTrim();
-        return this;
-      }
-    };
-    MRUCache = class extends Cache {
-      static {
-        __name(this, "MRUCache");
-      }
-      static {
-        __name7(this, "MRUCache");
-      }
-      constructor(limit, ratio = 1) {
-        super(limit, ratio);
-      }
-      trim(newSize) {
-        this.trimNew(newSize);
-      }
-      set(key, value) {
-        if (this._limit <= this.size && !this.has(key)) {
-          this.trim(Math.round(this._limit * this._ratio) - 1);
-        }
-        super.set(key, value);
-        return this;
-      }
-    };
-    CounterSet = class {
-      static {
-        __name(this, "CounterSet");
-      }
-      static {
-        __name7(this, "CounterSet");
-      }
-      constructor() {
-        this.map = /* @__PURE__ */ new Map();
-      }
-      add(value) {
-        this.map.set(value, (this.map.get(value) || 0) + 1);
-        return this;
-      }
-      delete(value) {
-        let counter = this.map.get(value) || 0;
-        if (counter === 0) {
-          return false;
-        }
-        counter--;
-        if (counter === 0) {
-          this.map.delete(value);
-        } else {
-          this.map.set(value, counter);
-        }
-        return true;
-      }
-      has(value) {
-        return this.map.has(value);
-      }
-    };
-    BidirectionalMap = class {
-      static {
-        __name(this, "BidirectionalMap");
-      }
-      static {
-        __name7(this, "BidirectionalMap");
-      }
-      constructor(entries) {
-        this._m1 = /* @__PURE__ */ new Map();
-        this._m2 = /* @__PURE__ */ new Map();
-        if (entries) {
-          for (const [key, value] of entries) {
-            this.set(key, value);
-          }
-        }
-      }
-      clear() {
-        this._m1.clear();
-        this._m2.clear();
-      }
-      set(key, value) {
-        this._m1.set(key, value);
-        this._m2.set(value, key);
-      }
-      get(key) {
-        return this._m1.get(key);
-      }
-      getKey(value) {
-        return this._m2.get(value);
-      }
-      delete(key) {
-        const value = this._m1.get(key);
-        if (value === void 0) {
-          return false;
-        }
-        this._m1.delete(key);
-        this._m2.delete(value);
-        return true;
-      }
-      forEach(callbackfn, thisArg) {
-        this._m1.forEach((value, key) => {
-          callbackfn.call(thisArg, value, key, this);
-        });
-      }
-      keys() {
-        return this._m1.keys();
-      }
-      values() {
-        return this._m1.values();
-      }
-    };
-    SetMap = class {
-      static {
-        __name(this, "SetMap");
-      }
-      static {
-        __name7(this, "SetMap");
-      }
-      constructor() {
-        this.map = /* @__PURE__ */ new Map();
-      }
-      add(key, value) {
-        let values = this.map.get(key);
-        if (!values) {
-          values = /* @__PURE__ */ new Set();
-          this.map.set(key, values);
-        }
-        values.add(value);
-      }
-      delete(key, value) {
-        const values = this.map.get(key);
-        if (!values) {
-          return;
-        }
-        values.delete(value);
-        if (values.size === 0) {
-          this.map.delete(key);
-        }
-      }
-      forEach(key, fn) {
-        const values = this.map.get(key);
-        if (!values) {
-          return;
-        }
-        values.forEach(fn);
-      }
-      get(key) {
-        const values = this.map.get(key);
-        if (!values) {
-          return /* @__PURE__ */ new Set();
-        }
-        return values;
-      }
-    };
-    __name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
-    __name7(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
-    NKeyMap = class {
-      static {
-        __name(this, "NKeyMap");
-      }
-      static {
-        __name7(this, "NKeyMap");
-      }
-      constructor() {
-        this._data = /* @__PURE__ */ new Map();
-      }
-      /**
-       * Sets a value on the map. Note that unlike a standard `Map`, the first argument is the value.
-       * This is because the spread operator is used for the keys and must be last..
-       * @param value The value to set.
-       * @param keys The keys for the value.
-       */
-      set(value, ...keys) {
-        let currentMap = this._data;
-        for (let i = 0; i < keys.length - 1; i++) {
-          let nextMap = currentMap.get(keys[i]);
-          if (nextMap === void 0) {
-            nextMap = /* @__PURE__ */ new Map();
-            currentMap.set(keys[i], nextMap);
-          }
-          currentMap = nextMap;
-        }
-        currentMap.set(keys[keys.length - 1], value);
-      }
-      get(...keys) {
-        let currentMap = this._data;
-        for (let i = 0; i < keys.length - 1; i++) {
-          const nextMap = currentMap.get(keys[i]);
-          if (nextMap === void 0) {
-            return void 0;
-          }
-          currentMap = nextMap;
-        }
-        return currentMap.get(keys[keys.length - 1]);
-      }
-      clear() {
-        this._data.clear();
-      }
-      *values() {
-        function* iterate(map) {
-          for (const value of map.values()) {
-            if (value instanceof Map) {
-              yield* iterate(value);
-            } else {
-              yield value;
-            }
-          }
-        }
-        __name(iterate, "iterate");
-        __name7(iterate, "iterate");
-        yield* iterate(this._data);
-      }
-      /**
-       * Get a textual representation of the map for debugging purposes.
-       */
-      toString() {
-        const printMap = /* @__PURE__ */ __name7((map, depth) => {
-          let result = "";
-          for (const [key, value] of map) {
-            result += `${"  ".repeat(depth)}${key}: `;
-            if (value instanceof Map) {
-              result += "\n" + printMap(value, depth + 1);
-            } else {
-              result += `${value}
-`;
-            }
-          }
-          return result;
-        }, "printMap");
-        return printMap(this._data, 0);
-      }
-    };
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/functional.js
-function createSingleCallFunction(fn, fnDidRunCallback) {
-  const _this = this;
-  let didCall = false;
-  let result;
-  return function() {
-    if (didCall) {
-      return result;
-    }
-    didCall = true;
-    if (fnDidRunCallback) {
-      try {
-        result = fn.apply(_this, arguments);
-      } finally {
-        fnDidRunCallback();
-      }
-    } else {
-      result = fn.apply(_this, arguments);
-    }
-    return result;
-  };
-}
-var __defProp8, __name8;
-var init_functional = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/functional.js"() {
-    "use strict";
-    __defProp8 = Object.defineProperty;
-    __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
-    __name(createSingleCallFunction, "createSingleCallFunction");
-    __name8(createSingleCallFunction, "createSingleCallFunction");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/assert.js
-function ok(value, message) {
-  if (!value) {
-    throw new Error(message ? `Assertion failed (${message})` : "Assertion Failed");
-  }
-}
-function assertNever(value, message = "Unreachable") {
-  throw new Error(message);
-}
-function softAssertNever(value) {
-}
-function assert(condition, messageOrError = "unexpected state") {
-  if (!condition) {
-    const errorToThrow = typeof messageOrError === "string" ? new BugIndicatingError(`Assertion Failed: ${messageOrError}`) : messageOrError;
-    throw errorToThrow;
-  }
-}
-function softAssert(condition, message = "Soft Assertion Failed") {
-  if (!condition) {
-    onUnexpectedError(new BugIndicatingError(message));
-  }
-}
-function assertFn(condition) {
-  if (!condition()) {
-    debugger;
-    condition();
-    onUnexpectedError(new BugIndicatingError("Assertion Failed"));
-  }
-}
-function checkAdjacentItems(items, predicate) {
-  let i = 0;
-  while (i < items.length - 1) {
-    const a = items[i];
-    const b = items[i + 1];
-    if (!predicate(a, b)) {
-      return false;
-    }
-    i++;
-  }
-  return true;
-}
-var __defProp9, __name9;
-var init_assert = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/assert.js"() {
-    "use strict";
-    init_errors();
-    __defProp9 = Object.defineProperty;
-    __name9 = /* @__PURE__ */ __name((target, value) => __defProp9(target, "name", { value, configurable: true }), "__name");
-    __name(ok, "ok");
-    __name9(ok, "ok");
-    __name(assertNever, "assertNever");
-    __name9(assertNever, "assertNever");
-    __name(softAssertNever, "softAssertNever");
-    __name9(softAssertNever, "softAssertNever");
-    __name(assert, "assert");
-    __name9(assert, "assert");
-    __name(softAssert, "softAssert");
-    __name9(softAssert, "softAssert");
-    __name(assertFn, "assertFn");
-    __name9(assertFn, "assertFn");
-    __name(checkAdjacentItems, "checkAdjacentItems");
-    __name9(checkAdjacentItems, "checkAdjacentItems");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/types.js
-function isString(str) {
-  return typeof str === "string";
-}
-function isStringArray(value) {
-  return isArrayOf(value, isString);
-}
-function isArrayOf(value, check) {
-  return Array.isArray(value) && value.every(check);
-}
-function isObject(obj) {
-  return typeof obj === "object" && obj !== null && !Array.isArray(obj) && !(obj instanceof RegExp) && !(obj instanceof Date);
-}
-function isTypedArray(obj) {
-  const TypedArray = Object.getPrototypeOf(Uint8Array);
-  return typeof obj === "object" && obj instanceof TypedArray;
-}
-function isNumber(obj) {
-  return typeof obj === "number" && !isNaN(obj);
-}
-function isIterable(obj) {
-  return !!obj && typeof obj[Symbol.iterator] === "function";
-}
-function isAsyncIterable(obj) {
-  return !!obj && typeof obj[Symbol.asyncIterator] === "function";
-}
-function isBoolean(obj) {
-  return obj === true || obj === false;
-}
-function isUndefined(obj) {
-  return typeof obj === "undefined";
-}
-function isDefined(arg) {
-  return !isUndefinedOrNull(arg);
-}
-function isUndefinedOrNull(obj) {
-  return isUndefined(obj) || obj === null;
-}
-function assertType(condition, type) {
-  if (!condition) {
-    throw new Error(type ? `Unexpected type, expected '${type}'` : "Unexpected type");
-  }
-}
-function assertReturnsDefined(arg) {
-  assert(arg !== null && arg !== void 0, "Argument is `undefined` or `null`.");
-  return arg;
-}
-function assertDefined(value, error) {
-  if (value === null || value === void 0) {
-    const errorToThrow = typeof error === "string" ? new Error(error) : error;
-    throw errorToThrow;
-  }
-}
-function assertReturnsAllDefined(...args) {
-  const result = [];
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (isUndefinedOrNull(arg)) {
-      throw new Error(`Assertion Failed: argument at index ${i} is undefined or null`);
-    }
-    result.push(arg);
-  }
-  return result;
-}
-function typeCheck(_thing) {
-}
-function isEmptyObject(obj) {
-  if (!isObject(obj)) {
-    return false;
-  }
-  for (const key in obj) {
-    if (hasOwnProperty.call(obj, key)) {
-      return false;
-    }
-  }
-  return true;
-}
-function isFunction(obj) {
-  return typeof obj === "function";
-}
-function areFunctions(...objects) {
-  return objects.length > 0 && objects.every(isFunction);
-}
-function validateConstraints(args, constraints) {
-  const len = Math.min(args.length, constraints.length);
-  for (let i = 0; i < len; i++) {
-    validateConstraint(args[i], constraints[i]);
-  }
-}
-function validateConstraint(arg, constraint) {
-  if (isString(constraint)) {
-    if (typeof arg !== constraint) {
-      throw new Error(`argument does not match constraint: typeof ${constraint}`);
-    }
-  } else if (isFunction(constraint)) {
-    try {
-      if (arg instanceof constraint) {
-        return;
-      }
-    } catch {
-    }
-    if (!isUndefinedOrNull(arg) && arg.constructor === constraint) {
-      return;
-    }
-    if (constraint.length === 1 && constraint.call(void 0, arg) === true) {
-      return;
-    }
-    throw new Error(`argument does not match one of these constraints: arg instanceof constraint, arg.constructor === constraint, nor constraint(arg) === true`);
-  }
-}
-function upcast(x) {
-  return x;
-}
-function hasKey(x, key) {
-  for (const k in key) {
-    if (!(k in x)) {
-      return false;
-    }
-  }
-  return true;
-}
-var __defProp10, __name10, isOneOf, hasOwnProperty;
-var init_types = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/types.js"() {
-    "use strict";
-    init_assert();
-    __defProp10 = Object.defineProperty;
-    __name10 = /* @__PURE__ */ __name((target, value) => __defProp10(target, "name", { value, configurable: true }), "__name");
-    __name(isString, "isString");
-    __name10(isString, "isString");
-    __name(isStringArray, "isStringArray");
-    __name10(isStringArray, "isStringArray");
-    __name(isArrayOf, "isArrayOf");
-    __name10(isArrayOf, "isArrayOf");
-    __name(isObject, "isObject");
-    __name10(isObject, "isObject");
-    __name(isTypedArray, "isTypedArray");
-    __name10(isTypedArray, "isTypedArray");
-    __name(isNumber, "isNumber");
-    __name10(isNumber, "isNumber");
-    __name(isIterable, "isIterable");
-    __name10(isIterable, "isIterable");
-    __name(isAsyncIterable, "isAsyncIterable");
-    __name10(isAsyncIterable, "isAsyncIterable");
-    __name(isBoolean, "isBoolean");
-    __name10(isBoolean, "isBoolean");
-    __name(isUndefined, "isUndefined");
-    __name10(isUndefined, "isUndefined");
-    __name(isDefined, "isDefined");
-    __name10(isDefined, "isDefined");
-    __name(isUndefinedOrNull, "isUndefinedOrNull");
-    __name10(isUndefinedOrNull, "isUndefinedOrNull");
-    __name(assertType, "assertType");
-    __name10(assertType, "assertType");
-    __name(assertReturnsDefined, "assertReturnsDefined");
-    __name10(assertReturnsDefined, "assertReturnsDefined");
-    __name(assertDefined, "assertDefined");
-    __name10(assertDefined, "assertDefined");
-    __name(assertReturnsAllDefined, "assertReturnsAllDefined");
-    __name10(assertReturnsAllDefined, "assertReturnsAllDefined");
-    isOneOf = /* @__PURE__ */ __name10((value, validValues) => {
-      return validValues.includes(value);
-    }, "isOneOf");
-    __name(typeCheck, "typeCheck");
-    __name10(typeCheck, "typeCheck");
-    hasOwnProperty = Object.prototype.hasOwnProperty;
-    __name(isEmptyObject, "isEmptyObject");
-    __name10(isEmptyObject, "isEmptyObject");
-    __name(isFunction, "isFunction");
-    __name10(isFunction, "isFunction");
-    __name(areFunctions, "areFunctions");
-    __name10(areFunctions, "areFunctions");
-    __name(validateConstraints, "validateConstraints");
-    __name10(validateConstraints, "validateConstraints");
-    __name(validateConstraint, "validateConstraint");
-    __name10(validateConstraint, "validateConstraint");
-    __name(upcast, "upcast");
-    __name10(upcast, "upcast");
-    __name(hasKey, "hasKey");
-    __name10(hasKey, "hasKey");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js
-var __defProp11, __name11, Iterable;
-var init_iterator = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js"() {
-    "use strict";
-    init_types();
-    __defProp11 = Object.defineProperty;
-    __name11 = /* @__PURE__ */ __name((target, value) => __defProp11(target, "name", { value, configurable: true }), "__name");
-    (function(Iterable2) {
-      function is(thing) {
-        return !!thing && typeof thing === "object" && typeof thing[Symbol.iterator] === "function";
-      }
-      __name(is, "is");
-      __name11(is, "is");
-      Iterable2.is = is;
-      const _empty2 = Object.freeze([]);
-      function empty() {
-        return _empty2;
-      }
-      __name(empty, "empty");
-      __name11(empty, "empty");
-      Iterable2.empty = empty;
-      function* single(element) {
-        yield element;
-      }
-      __name(single, "single");
-      __name11(single, "single");
-      Iterable2.single = single;
-      function wrap(iterableOrElement) {
-        if (is(iterableOrElement)) {
-          return iterableOrElement;
-        } else {
-          return single(iterableOrElement);
-        }
-      }
-      __name(wrap, "wrap");
-      __name11(wrap, "wrap");
-      Iterable2.wrap = wrap;
-      function from(iterable) {
-        return iterable ?? _empty2;
-      }
-      __name(from, "from");
-      __name11(from, "from");
-      Iterable2.from = from;
-      function* reverse(array) {
-        for (let i = array.length - 1; i >= 0; i--) {
-          yield array[i];
-        }
-      }
-      __name(reverse, "reverse");
-      __name11(reverse, "reverse");
-      Iterable2.reverse = reverse;
-      function isEmpty(iterable) {
-        return !iterable || iterable[Symbol.iterator]().next().done === true;
-      }
-      __name(isEmpty, "isEmpty");
-      __name11(isEmpty, "isEmpty");
-      Iterable2.isEmpty = isEmpty;
-      function first(iterable) {
-        return iterable[Symbol.iterator]().next().value;
-      }
-      __name(first, "first");
-      __name11(first, "first");
-      Iterable2.first = first;
-      function some(iterable, predicate) {
-        let i = 0;
-        for (const element of iterable) {
-          if (predicate(element, i++)) {
-            return true;
-          }
-        }
-        return false;
-      }
-      __name(some, "some");
-      __name11(some, "some");
-      Iterable2.some = some;
-      function every(iterable, predicate) {
-        let i = 0;
-        for (const element of iterable) {
-          if (!predicate(element, i++)) {
-            return false;
-          }
-        }
-        return true;
-      }
-      __name(every, "every");
-      __name11(every, "every");
-      Iterable2.every = every;
-      function find(iterable, predicate) {
-        for (const element of iterable) {
-          if (predicate(element)) {
-            return element;
-          }
-        }
-        return void 0;
-      }
-      __name(find, "find");
-      __name11(find, "find");
-      Iterable2.find = find;
-      function* filter(iterable, predicate) {
-        for (const element of iterable) {
-          if (predicate(element)) {
-            yield element;
-          }
-        }
-      }
-      __name(filter, "filter");
-      __name11(filter, "filter");
-      Iterable2.filter = filter;
-      function* map(iterable, fn) {
-        let index2 = 0;
-        for (const element of iterable) {
-          yield fn(element, index2++);
-        }
-      }
-      __name(map, "map");
-      __name11(map, "map");
-      Iterable2.map = map;
-      function* flatMap(iterable, fn) {
-        let index2 = 0;
-        for (const element of iterable) {
-          yield* fn(element, index2++);
-        }
-      }
-      __name(flatMap, "flatMap");
-      __name11(flatMap, "flatMap");
-      Iterable2.flatMap = flatMap;
-      function* concat(...iterables) {
-        for (const item of iterables) {
-          if (isIterable(item)) {
-            yield* item;
-          } else {
-            yield item;
-          }
-        }
-      }
-      __name(concat, "concat");
-      __name11(concat, "concat");
-      Iterable2.concat = concat;
-      function reduce(iterable, reducer, initialValue) {
-        let value = initialValue;
-        for (const element of iterable) {
-          value = reducer(value, element);
-        }
-        return value;
-      }
-      __name(reduce, "reduce");
-      __name11(reduce, "reduce");
-      Iterable2.reduce = reduce;
-      function length(iterable) {
-        let count2 = 0;
-        for (const _ of iterable) {
-          count2++;
-        }
-        return count2;
-      }
-      __name(length, "length");
-      __name11(length, "length");
-      Iterable2.length = length;
-      function* slice(arr, from2, to = arr.length) {
-        if (from2 < -arr.length) {
-          from2 = 0;
-        }
-        if (from2 < 0) {
-          from2 += arr.length;
-        }
-        if (to < 0) {
-          to += arr.length;
-        } else if (to > arr.length) {
-          to = arr.length;
-        }
-        for (; from2 < to; from2++) {
-          yield arr[from2];
-        }
-      }
-      __name(slice, "slice");
-      __name11(slice, "slice");
-      Iterable2.slice = slice;
-      function consume(iterable, atMost = Number.POSITIVE_INFINITY) {
-        const consumed = [];
-        if (atMost === 0) {
-          return [consumed, iterable];
-        }
-        const iterator = iterable[Symbol.iterator]();
-        for (let i = 0; i < atMost; i++) {
-          const next = iterator.next();
-          if (next.done) {
-            return [consumed, Iterable2.empty()];
-          }
-          consumed.push(next.value);
-        }
-        return [consumed, { [Symbol.iterator]() {
-          return iterator;
-        } }];
-      }
-      __name(consume, "consume");
-      __name11(consume, "consume");
-      Iterable2.consume = consume;
-      async function asyncToArray(iterable) {
-        const result = [];
-        for await (const item of iterable) {
-          result.push(item);
-        }
-        return result;
-      }
-      __name(asyncToArray, "asyncToArray");
-      __name11(asyncToArray, "asyncToArray");
-      Iterable2.asyncToArray = asyncToArray;
-      async function asyncToArrayFlat(iterable) {
-        let result = [];
-        for await (const item of iterable) {
-          result = result.concat(item);
-        }
-        return result;
-      }
-      __name(asyncToArrayFlat, "asyncToArrayFlat");
-      __name11(asyncToArrayFlat, "asyncToArrayFlat");
-      Iterable2.asyncToArrayFlat = asyncToArrayFlat;
-    })(Iterable || (Iterable = {}));
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js
-function setDisposableTracker(tracker) {
-  disposableTracker = tracker;
-}
-function trackDisposable(x) {
-  disposableTracker?.trackDisposable(x);
-  return x;
-}
-function markAsDisposed(disposable) {
-  disposableTracker?.markAsDisposed(disposable);
-}
-function setParentOfDisposable(child, parent) {
-  disposableTracker?.setParent(child, parent);
-}
-function setParentOfDisposables(children, parent) {
-  if (!disposableTracker) {
-    return;
-  }
-  for (const child of children) {
-    disposableTracker.setParent(child, parent);
-  }
-}
-function markAsSingleton(singleton) {
-  disposableTracker?.markAsSingleton(singleton);
-  return singleton;
-}
-function isDisposable(thing) {
-  return typeof thing === "object" && thing !== null && typeof thing.dispose === "function" && thing.dispose.length === 0;
-}
-function dispose(arg) {
-  if (Iterable.is(arg)) {
-    const errors = [];
-    for (const d of arg) {
-      if (d) {
-        try {
-          d.dispose();
-        } catch (e) {
-          errors.push(e);
-        }
-      }
-    }
-    if (errors.length === 1) {
-      throw errors[0];
-    } else if (errors.length > 1) {
-      throw new AggregateError(errors, "Encountered errors while disposing of store");
-    }
-    return Array.isArray(arg) ? [] : arg;
-  } else if (arg) {
-    arg.dispose();
-    return arg;
-  }
-}
-function disposeIfDisposable(disposables) {
-  for (const d of disposables) {
-    if (isDisposable(d)) {
-      d.dispose();
-    }
-  }
-  return [];
-}
-function combinedDisposable(...disposables) {
-  const parent = toDisposable(() => dispose(disposables));
-  setParentOfDisposables(disposables, parent);
-  return parent;
-}
-function toDisposable(fn) {
-  return new FunctionDisposable(fn);
-}
-function disposeOnReturn(fn) {
-  const store = new DisposableStore();
-  try {
-    fn(store);
-  } finally {
-    store.dispose();
-  }
-}
-function thenIfNotDisposed(promise, then) {
-  let disposed = false;
-  promise.then((result) => {
-    if (disposed) {
-      return;
-    }
-    then(result);
-  });
-  return toDisposable(() => {
-    disposed = true;
-  });
-}
-function thenRegisterOrDispose(promise, store) {
-  return promise.then((disposable) => {
-    if (store.isDisposed) {
-      disposable.dispose();
-    } else {
-      store.add(disposable);
-    }
-    return disposable;
-  });
-}
-var __defProp12, __name12, TRACK_DISPOSABLES, disposableTracker, GCBasedDisposableTracker, DisposableTracker, FunctionDisposable, DisposableStore, Disposable, MutableDisposable, MandatoryMutableDisposable, RefCountedDisposable, ReferenceCollection, AsyncReferenceCollection, ImmortalReference, DisposableMap, DisposableSet, DisposableResourceMap;
-var init_lifecycle = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js"() {
-    "use strict";
-    init_arrays();
-    init_collections();
-    init_map();
-    init_functional();
-    init_iterator();
-    init_errors();
-    __defProp12 = Object.defineProperty;
-    __name12 = /* @__PURE__ */ __name((target, value) => __defProp12(target, "name", { value, configurable: true }), "__name");
-    TRACK_DISPOSABLES = false;
-    disposableTracker = null;
-    GCBasedDisposableTracker = class {
-      static {
-        __name(this, "GCBasedDisposableTracker");
-      }
-      static {
-        __name12(this, "GCBasedDisposableTracker");
-      }
-      constructor() {
-        this._registry = new FinalizationRegistry((heldValue) => {
-          console.warn(`[LEAKED DISPOSABLE] ${heldValue}`);
-        });
-      }
-      trackDisposable(disposable) {
-        const stack = new Error("CREATED via:").stack;
-        this._registry.register(disposable, stack, disposable);
-      }
-      setParent(child, parent) {
-        if (parent) {
-          this._registry.unregister(child);
-        } else {
-          this.trackDisposable(child);
-        }
-      }
-      markAsDisposed(disposable) {
-        this._registry.unregister(disposable);
-      }
-      markAsSingleton(disposable) {
-        this._registry.unregister(disposable);
-      }
-    };
-    DisposableTracker = class _DisposableTracker {
-      static {
-        __name(this, "DisposableTracker");
-      }
-      static {
-        __name12(this, "DisposableTracker");
-      }
-      constructor() {
-        this.livingDisposables = /* @__PURE__ */ new Map();
-      }
-      static {
-        this.idx = 0;
-      }
-      getDisposableData(d) {
-        let val = this.livingDisposables.get(d);
-        if (!val) {
-          val = { parent: null, source: null, isSingleton: false, value: d, idx: _DisposableTracker.idx++ };
-          this.livingDisposables.set(d, val);
-        }
-        return val;
-      }
-      trackDisposable(d) {
-        const data = this.getDisposableData(d);
-        if (!data.source) {
-          data.source = new Error().stack;
-        }
-      }
-      setParent(child, parent) {
-        const data = this.getDisposableData(child);
-        data.parent = parent;
-      }
-      markAsDisposed(x) {
-        this.livingDisposables.delete(x);
-      }
-      markAsSingleton(disposable) {
-        this.getDisposableData(disposable).isSingleton = true;
-      }
-      getRootParent(data, cache) {
-        const cacheValue = cache.get(data);
-        if (cacheValue) {
-          return cacheValue;
-        }
-        const result = data.parent ? this.getRootParent(this.getDisposableData(data.parent), cache) : data;
-        cache.set(data, result);
-        return result;
-      }
-      getTrackedDisposables() {
-        const rootParentCache = /* @__PURE__ */ new Map();
-        const leaking = [...this.livingDisposables.entries()].filter(([, v]) => v.source !== null && !this.getRootParent(v, rootParentCache).isSingleton).flatMap(([k]) => k);
-        return leaking;
-      }
-      computeLeakingDisposables(maxReported = 10, preComputedLeaks) {
-        let uncoveredLeakingObjs;
-        if (preComputedLeaks) {
-          uncoveredLeakingObjs = preComputedLeaks;
-        } else {
-          const rootParentCache = /* @__PURE__ */ new Map();
-          const leakingObjects = [...this.livingDisposables.values()].filter((info) => info.source !== null && !this.getRootParent(info, rootParentCache).isSingleton);
-          if (leakingObjects.length === 0) {
-            return;
-          }
-          const leakingObjsSet = new Set(leakingObjects.map((o) => o.value));
-          uncoveredLeakingObjs = leakingObjects.filter((l) => {
-            return !(l.parent && leakingObjsSet.has(l.parent));
-          });
-          if (uncoveredLeakingObjs.length === 0) {
-            throw new Error("There are cyclic diposable chains!");
-          }
-        }
-        if (!uncoveredLeakingObjs) {
-          return void 0;
-        }
-        function getStackTracePath(leaking) {
-          function removePrefix(array, linesToRemove) {
-            while (array.length > 0 && linesToRemove.some((regexp) => typeof regexp === "string" ? regexp === array[0] : array[0].match(regexp))) {
-              array.shift();
-            }
-          }
-          __name(removePrefix, "removePrefix");
-          __name12(removePrefix, "removePrefix");
-          const lines = leaking.source.split("\n").map((p) => p.trim().replace("at ", "")).filter((l) => l !== "");
-          removePrefix(lines, ["Error", /^trackDisposable \(.*\)$/, /^DisposableTracker.trackDisposable \(.*\)$/]);
-          return lines.reverse();
-        }
-        __name(getStackTracePath, "getStackTracePath");
-        __name12(getStackTracePath, "getStackTracePath");
-        const stackTraceStarts = new SetMap();
-        for (const leaking of uncoveredLeakingObjs) {
-          const stackTracePath = getStackTracePath(leaking);
-          for (let i2 = 0; i2 <= stackTracePath.length; i2++) {
-            stackTraceStarts.add(stackTracePath.slice(0, i2).join("\n"), leaking);
-          }
-        }
-        uncoveredLeakingObjs.sort(compareBy((l) => l.idx, numberComparator));
-        let message = "";
-        let i = 0;
-        for (const leaking of uncoveredLeakingObjs.slice(0, maxReported)) {
-          i++;
-          const stackTracePath = getStackTracePath(leaking);
-          const stackTraceFormattedLines = [];
-          for (let i2 = 0; i2 < stackTracePath.length; i2++) {
-            let line = stackTracePath[i2];
-            const starts = stackTraceStarts.get(stackTracePath.slice(0, i2 + 1).join("\n"));
-            line = `(shared with ${starts.size}/${uncoveredLeakingObjs.length} leaks) at ${line}`;
-            const prevStarts = stackTraceStarts.get(stackTracePath.slice(0, i2).join("\n"));
-            const continuations = groupBy2([...prevStarts].map((d) => getStackTracePath(d)[i2]), (v) => v);
-            delete continuations[stackTracePath[i2]];
-            for (const [cont, set] of Object.entries(continuations)) {
-              if (set) {
-                stackTraceFormattedLines.unshift(`    - stacktraces of ${set.length} other leaks continue with ${cont}`);
-              }
-            }
-            stackTraceFormattedLines.unshift(line);
-          }
-          message += `
-
-
-==================== Leaking disposable ${i}/${uncoveredLeakingObjs.length}: ${leaking.value.constructor.name} ====================
-${stackTraceFormattedLines.join("\n")}
-============================================================
-
-`;
-        }
-        if (uncoveredLeakingObjs.length > maxReported) {
-          message += `
-
-
-... and ${uncoveredLeakingObjs.length - maxReported} more leaking disposables
-
-`;
-        }
-        return { leaks: uncoveredLeakingObjs, details: message };
-      }
-    };
-    __name(setDisposableTracker, "setDisposableTracker");
-    __name12(setDisposableTracker, "setDisposableTracker");
-    if (TRACK_DISPOSABLES) {
-      const __is_disposable_tracked__ = "__is_disposable_tracked__";
-      setDisposableTracker(new class {
-        trackDisposable(x) {
-          const stack = new Error("Potentially leaked disposable").stack;
-          setTimeout(() => {
-            if (!x[__is_disposable_tracked__]) {
-              console.log(stack);
-            }
-          }, 3e3);
-        }
-        setParent(child, parent) {
-          if (child && child !== Disposable.None) {
-            try {
-              child[__is_disposable_tracked__] = true;
-            } catch {
-            }
-          }
-        }
-        markAsDisposed(disposable) {
-          if (disposable && disposable !== Disposable.None) {
-            try {
-              disposable[__is_disposable_tracked__] = true;
-            } catch {
-            }
-          }
-        }
-        markAsSingleton(disposable) {
-        }
-      }());
-    }
-    __name(trackDisposable, "trackDisposable");
-    __name12(trackDisposable, "trackDisposable");
-    __name(markAsDisposed, "markAsDisposed");
-    __name12(markAsDisposed, "markAsDisposed");
-    __name(setParentOfDisposable, "setParentOfDisposable");
-    __name12(setParentOfDisposable, "setParentOfDisposable");
-    __name(setParentOfDisposables, "setParentOfDisposables");
-    __name12(setParentOfDisposables, "setParentOfDisposables");
-    __name(markAsSingleton, "markAsSingleton");
-    __name12(markAsSingleton, "markAsSingleton");
-    __name(isDisposable, "isDisposable");
-    __name12(isDisposable, "isDisposable");
-    __name(dispose, "dispose");
-    __name12(dispose, "dispose");
-    __name(disposeIfDisposable, "disposeIfDisposable");
-    __name12(disposeIfDisposable, "disposeIfDisposable");
-    __name(combinedDisposable, "combinedDisposable");
-    __name12(combinedDisposable, "combinedDisposable");
-    FunctionDisposable = class {
-      static {
-        __name(this, "FunctionDisposable");
-      }
-      static {
-        __name12(this, "FunctionDisposable");
-      }
-      constructor(fn) {
-        this._isDisposed = false;
-        this._fn = fn;
-        trackDisposable(this);
-      }
-      dispose() {
-        if (this._isDisposed) {
-          return;
-        }
-        if (!this._fn) {
-          throw new Error(`Unbound disposable context: Need to use an arrow function to preserve the value of this`);
-        }
-        this._isDisposed = true;
-        markAsDisposed(this);
-        this._fn();
-      }
-    };
-    __name(toDisposable, "toDisposable");
-    __name12(toDisposable, "toDisposable");
-    DisposableStore = class _DisposableStore {
-      static {
-        __name(this, "DisposableStore");
-      }
-      static {
-        __name12(this, "DisposableStore");
-      }
-      static {
-        this.DISABLE_DISPOSED_WARNING = false;
-      }
-      constructor() {
-        this._toDispose = /* @__PURE__ */ new Set();
-        this._isDisposed = false;
-        trackDisposable(this);
-      }
-      /**
-       * Dispose of all registered disposables and mark this object as disposed.
-       *
-       * Any future disposables added to this object will be disposed of on `add`.
-       */
-      dispose() {
-        if (this._isDisposed) {
-          return;
-        }
-        markAsDisposed(this);
-        this._isDisposed = true;
-        this.clear();
-      }
-      /**
-       * @return `true` if this object has been disposed of.
-       */
-      get isDisposed() {
-        return this._isDisposed;
-      }
-      /**
-       * Dispose of all registered disposables but do not mark this object as disposed.
-       */
-      clear() {
-        if (this._toDispose.size === 0) {
-          return;
-        }
-        try {
-          dispose(this._toDispose);
-        } finally {
-          this._toDispose.clear();
-        }
-      }
-      /**
-       * Add a new {@link IDisposable disposable} to the collection.
-       */
-      add(o) {
-        if (!o || o === Disposable.None) {
-          return o;
-        }
-        if (o === this) {
-          throw new Error("Cannot register a disposable on itself!");
-        }
-        setParentOfDisposable(o, this);
-        if (this._isDisposed) {
-          if (!_DisposableStore.DISABLE_DISPOSED_WARNING) {
-            console.warn(new Error("Trying to add a disposable to a DisposableStore that has already been disposed of. The added object will be leaked!").stack);
-          }
-        } else {
-          this._toDispose.add(o);
-        }
-        return o;
-      }
-      /**
-       * Deletes a disposable from store and disposes of it. This will not throw or warn and proceed to dispose the
-       * disposable even when the disposable is not part in the store.
-       */
-      delete(o) {
-        if (!o) {
-          return;
-        }
-        if (o === this) {
-          throw new Error("Cannot dispose a disposable on itself!");
-        }
-        this._toDispose.delete(o);
-        o.dispose();
-      }
-      /**
-       * Deletes the value from the store, but does not dispose it.
-       */
-      deleteAndLeak(o) {
-        if (!o) {
-          return;
-        }
-        if (this._toDispose.delete(o)) {
-          setParentOfDisposable(o, null);
-        }
-      }
-      assertNotDisposed() {
-        if (this._isDisposed) {
-          onUnexpectedError(new BugIndicatingError("Object disposed"));
-        }
-      }
-    };
-    Disposable = class {
-      static {
-        __name(this, "Disposable");
-      }
-      static {
-        __name12(this, "Disposable");
-      }
-      static {
-        this.None = Object.freeze({ dispose() {
-        } });
-      }
-      constructor() {
-        this._store = new DisposableStore();
-        trackDisposable(this);
-        setParentOfDisposable(this._store, this);
-      }
-      dispose() {
-        markAsDisposed(this);
-        this._store.dispose();
-      }
-      /**
-       * Adds `o` to the collection of disposables managed by this object.
-       */
-      _register(o) {
-        if (o === this) {
-          throw new Error("Cannot register a disposable on itself!");
-        }
-        return this._store.add(o);
-      }
-    };
-    MutableDisposable = class {
-      static {
-        __name(this, "MutableDisposable");
-      }
-      static {
-        __name12(this, "MutableDisposable");
-      }
-      constructor() {
-        this._isDisposed = false;
-        trackDisposable(this);
-      }
-      /**
-       * Get the currently held disposable value, or `undefined` if this MutableDisposable has been disposed
-       */
-      get value() {
-        return this._isDisposed ? void 0 : this._value;
-      }
-      /**
-       * Set a new disposable value.
-       *
-       * Behaviour:
-       * - If the MutableDisposable has been disposed, the setter is a no-op.
-       * - If the new value is strictly equal to the current value, the setter is a no-op.
-       * - Otherwise the previous value (if any) is disposed and the new value is stored.
-       *
-       * Related helpers:
-       * - clear() resets the value to `undefined` (and disposes the previous value).
-       * - clearAndLeak() returns the old value without disposing it and removes its parent.
-       */
-      set value(value) {
-        if (this._isDisposed || value === this._value) {
-          return;
-        }
-        this._value?.dispose();
-        if (value) {
-          setParentOfDisposable(value, this);
-        }
-        this._value = value;
-      }
-      /**
-       * Resets the stored value and disposed of the previously stored value.
-       */
-      clear() {
-        this.value = void 0;
-      }
-      dispose() {
-        this._isDisposed = true;
-        markAsDisposed(this);
-        this._value?.dispose();
-        this._value = void 0;
-      }
-      /**
-       * Clears the value, but does not dispose it.
-       * The old value is returned.
-      */
-      clearAndLeak() {
-        const oldValue = this._value;
-        this._value = void 0;
-        if (oldValue) {
-          setParentOfDisposable(oldValue, null);
-        }
-        return oldValue;
-      }
-    };
-    MandatoryMutableDisposable = class {
-      static {
-        __name(this, "MandatoryMutableDisposable");
-      }
-      static {
-        __name12(this, "MandatoryMutableDisposable");
-      }
-      constructor(initialValue) {
-        this._disposable = new MutableDisposable();
-        this._isDisposed = false;
-        this._disposable.value = initialValue;
-      }
-      get value() {
-        return this._disposable.value;
-      }
-      set value(value) {
-        if (this._isDisposed || value === this._disposable.value) {
-          return;
-        }
-        this._disposable.value = value;
-      }
-      dispose() {
-        this._isDisposed = true;
-        this._disposable.dispose();
-      }
-    };
-    RefCountedDisposable = class {
-      static {
-        __name(this, "RefCountedDisposable");
-      }
-      static {
-        __name12(this, "RefCountedDisposable");
-      }
-      constructor(_disposable) {
-        this._disposable = _disposable;
-        this._counter = 1;
-      }
-      acquire() {
-        this._counter++;
-        return this;
-      }
-      release() {
-        if (--this._counter === 0) {
-          this._disposable.dispose();
-        }
-        return this;
-      }
-    };
-    ReferenceCollection = class {
-      static {
-        __name(this, "ReferenceCollection");
-      }
-      static {
-        __name12(this, "ReferenceCollection");
-      }
-      constructor() {
-        this.references = /* @__PURE__ */ new Map();
-      }
-      acquire(key, ...args) {
-        let reference = this.references.get(key);
-        if (!reference) {
-          reference = { counter: 0, object: this.createReferencedObject(key, ...args) };
-          this.references.set(key, reference);
-        }
-        const { object } = reference;
-        const dispose2 = createSingleCallFunction(() => {
-          if (--reference.counter === 0) {
-            this.destroyReferencedObject(key, reference.object);
-            this.references.delete(key);
-          }
-        });
-        reference.counter++;
-        return { object, dispose: dispose2 };
-      }
-    };
-    AsyncReferenceCollection = class {
-      static {
-        __name(this, "AsyncReferenceCollection");
-      }
-      static {
-        __name12(this, "AsyncReferenceCollection");
-      }
-      constructor(referenceCollection) {
-        this.referenceCollection = referenceCollection;
-      }
-      async acquire(key, ...args) {
-        const ref = this.referenceCollection.acquire(key, ...args);
-        try {
-          const object = await ref.object;
-          return {
-            object,
-            dispose: /* @__PURE__ */ __name12(() => ref.dispose(), "dispose")
-          };
-        } catch (error) {
-          ref.dispose();
-          throw error;
-        }
-      }
-    };
-    ImmortalReference = class {
-      static {
-        __name(this, "ImmortalReference");
-      }
-      static {
-        __name12(this, "ImmortalReference");
-      }
-      constructor(object) {
-        this.object = object;
-      }
-      dispose() {
-      }
-    };
-    __name(disposeOnReturn, "disposeOnReturn");
-    __name12(disposeOnReturn, "disposeOnReturn");
-    DisposableMap = class {
-      static {
-        __name(this, "DisposableMap");
-      }
-      static {
-        __name12(this, "DisposableMap");
-      }
-      constructor(store = /* @__PURE__ */ new Map()) {
-        this._isDisposed = false;
-        this._store = store;
-        trackDisposable(this);
-      }
-      /**
-       * Disposes of all stored values and mark this object as disposed.
-       *
-       * Trying to use this object after it has been disposed of is an error.
-       */
-      dispose() {
-        markAsDisposed(this);
-        this._isDisposed = true;
-        this.clearAndDisposeAll();
-      }
-      /**
-       * Disposes of all stored values and clear the map, but DO NOT mark this object as disposed.
-       */
-      clearAndDisposeAll() {
-        if (!this._store.size) {
-          return;
-        }
-        try {
-          dispose(this._store.values());
-        } finally {
-          this._store.clear();
-        }
-      }
-      has(key) {
-        return this._store.has(key);
-      }
-      get size() {
-        return this._store.size;
-      }
-      get(key) {
-        return this._store.get(key);
-      }
-      set(key, value, skipDisposeOnOverwrite = false) {
-        if (this._isDisposed) {
-          console.warn(new Error("Trying to add a disposable to a DisposableMap that has already been disposed of. The added object will be leaked!").stack);
-        }
-        if (!skipDisposeOnOverwrite) {
-          this._store.get(key)?.dispose();
-        }
-        this._store.set(key, value);
-        setParentOfDisposable(value, this);
-      }
-      /**
-       * Delete the value stored for `key` from this map and also dispose of it.
-       */
-      deleteAndDispose(key) {
-        this._store.get(key)?.dispose();
-        this._store.delete(key);
-      }
-      /**
-       * Delete the value stored for `key` from this map but return it. The caller is
-       * responsible for disposing of the value.
-       */
-      deleteAndLeak(key) {
-        const value = this._store.get(key);
-        if (value) {
-          setParentOfDisposable(value, null);
-        }
-        this._store.delete(key);
-        return value;
-      }
-      keys() {
-        return this._store.keys();
-      }
-      values() {
-        return this._store.values();
-      }
-      [Symbol.iterator]() {
-        return this._store[Symbol.iterator]();
-      }
-    };
-    DisposableSet = class {
-      static {
-        __name(this, "DisposableSet");
-      }
-      static {
-        __name12(this, "DisposableSet");
-      }
-      constructor(store = /* @__PURE__ */ new Set()) {
-        this._isDisposed = false;
-        this._store = store;
-        trackDisposable(this);
-      }
-      /**
-       * Disposes of all stored values and mark this object as disposed.
-       *
-       * Trying to use this object after it has been disposed of is an error.
-       */
-      dispose() {
-        markAsDisposed(this);
-        this._isDisposed = true;
-        this.clearAndDisposeAll();
-      }
-      /**
-       * Disposes of all stored values and clear the set, but DO NOT mark this object as disposed.
-       */
-      clearAndDisposeAll() {
-        if (!this._store.size) {
-          return;
-        }
-        try {
-          dispose(this._store.values());
-        } finally {
-          this._store.clear();
-        }
-      }
-      has(value) {
-        return this._store.has(value);
-      }
-      get size() {
-        return this._store.size;
-      }
-      add(value) {
-        if (this._isDisposed) {
-          console.warn(new Error("Trying to add a disposable to a DisposableSet that has already been disposed of. The added object will be leaked!").stack);
-        }
-        this._store.add(value);
-        setParentOfDisposable(value, this);
-      }
-      /**
-       * Delete the value from this set and also dispose of it.
-       */
-      deleteAndDispose(value) {
-        if (this._store.delete(value)) {
-          value.dispose();
-        }
-      }
-      /**
-       * Delete the value from this set but return it. The caller is
-       * responsible for disposing of the value.
-       */
-      deleteAndLeak(value) {
-        if (this._store.delete(value)) {
-          setParentOfDisposable(value, null);
-          return value;
-        }
-        return void 0;
-      }
-      values() {
-        return this._store.values();
-      }
-      [Symbol.iterator]() {
-        return this._store[Symbol.iterator]();
-      }
-    };
-    __name(thenIfNotDisposed, "thenIfNotDisposed");
-    __name12(thenIfNotDisposed, "thenIfNotDisposed");
-    __name(thenRegisterOrDispose, "thenRegisterOrDispose");
-    __name12(thenRegisterOrDispose, "thenRegisterOrDispose");
-    DisposableResourceMap = class extends DisposableMap {
-      static {
-        __name(this, "DisposableResourceMap");
-      }
-      static {
-        __name12(this, "DisposableResourceMap");
-      }
-      constructor() {
-        super(new ResourceMap());
-      }
-    };
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/stream.js
-function isReadable(obj) {
-  const candidate = obj;
-  if (!candidate) {
-    return false;
-  }
-  return typeof candidate.read === "function";
-}
-function isReadableStream(obj) {
-  const candidate = obj;
-  if (!candidate) {
-    return false;
-  }
-  return [candidate.on, candidate.pause, candidate.resume, candidate.destroy].every((fn) => typeof fn === "function");
-}
-function isReadableBufferedStream(obj) {
-  const candidate = obj;
-  if (!candidate) {
-    return false;
-  }
-  return isReadableStream(candidate.stream) && Array.isArray(candidate.buffer) && typeof candidate.ended === "boolean";
-}
-function newWriteableStream(reducer, options) {
-  return new WriteableStreamImpl(reducer, options);
-}
-function consumeReadable(readable, reducer) {
-  const chunks = [];
-  let chunk;
-  while ((chunk = readable.read()) !== null) {
-    chunks.push(chunk);
-  }
-  return reducer(chunks);
-}
-function peekReadable(readable, reducer, maxChunks) {
-  const chunks = [];
-  let chunk = void 0;
-  while ((chunk = readable.read()) !== null && chunks.length < maxChunks) {
-    chunks.push(chunk);
-  }
-  if (chunk === null && chunks.length > 0) {
-    return reducer(chunks);
-  }
-  return {
-    read: /* @__PURE__ */ __name13(() => {
-      if (chunks.length > 0) {
-        return chunks.shift();
-      }
-      if (typeof chunk !== "undefined") {
-        const lastReadChunk = chunk;
-        chunk = void 0;
-        return lastReadChunk;
-      }
-      return readable.read();
-    }, "read")
-  };
-}
-function consumeStream(stream, reducer) {
-  return new Promise((resolve2, reject) => {
-    const chunks = [];
-    listenStream(stream, {
-      onData: /* @__PURE__ */ __name13((chunk) => {
-        if (reducer) {
-          chunks.push(chunk);
-        }
-      }, "onData"),
-      onError: /* @__PURE__ */ __name13((error) => {
-        if (reducer) {
-          reject(error);
-        } else {
-          resolve2(void 0);
-        }
-      }, "onError"),
-      onEnd: /* @__PURE__ */ __name13(() => {
-        if (reducer) {
-          resolve2(reducer(chunks));
-        } else {
-          resolve2(void 0);
-        }
-      }, "onEnd")
-    });
-  });
-}
-function listenStream(stream, listener, token) {
-  stream.on("error", (error) => {
-    if (!token?.isCancellationRequested) {
-      listener.onError(error);
-    }
-  });
-  stream.on("end", () => {
-    if (!token?.isCancellationRequested) {
-      listener.onEnd();
-    }
-  });
-  stream.on("data", (data) => {
-    if (!token?.isCancellationRequested) {
-      listener.onData(data);
-    }
-  });
-}
-function peekStream(stream, maxChunks) {
-  return new Promise((resolve2, reject) => {
-    const streamListeners = new DisposableStore();
-    const buffer = [];
-    const dataListener = /* @__PURE__ */ __name13((chunk) => {
-      buffer.push(chunk);
-      if (buffer.length > maxChunks) {
-        streamListeners.dispose();
-        stream.pause();
-        return resolve2({ stream, buffer, ended: false });
-      }
-    }, "dataListener");
-    const errorListener = /* @__PURE__ */ __name13((error) => {
-      streamListeners.dispose();
-      return reject(error);
-    }, "errorListener");
-    const endListener = /* @__PURE__ */ __name13(() => {
-      streamListeners.dispose();
-      return resolve2({ stream, buffer, ended: true });
-    }, "endListener");
-    streamListeners.add(toDisposable(() => stream.removeListener("error", errorListener)));
-    stream.on("error", errorListener);
-    streamListeners.add(toDisposable(() => stream.removeListener("end", endListener)));
-    stream.on("end", endListener);
-    streamListeners.add(toDisposable(() => stream.removeListener("data", dataListener)));
-    stream.on("data", dataListener);
-  });
-}
-function toStream(t, reducer) {
-  const stream = newWriteableStream(reducer);
-  stream.end(t);
-  return stream;
-}
-function emptyStream() {
-  const stream = newWriteableStream(() => {
-    throw new Error("not supported");
-  });
-  stream.end();
-  return stream;
-}
-function toReadable(t) {
-  let consumed = false;
-  return {
-    read: /* @__PURE__ */ __name13(() => {
-      if (consumed) {
-        return null;
-      }
-      consumed = true;
-      return t;
-    }, "read")
-  };
-}
-function transform(stream, transformer, reducer) {
-  const target = newWriteableStream(reducer);
-  listenStream(stream, {
-    onData: /* @__PURE__ */ __name13((data) => target.write(transformer.data(data)), "onData"),
-    onError: /* @__PURE__ */ __name13((error) => target.error(transformer.error ? transformer.error(error) : error), "onError"),
-    onEnd: /* @__PURE__ */ __name13(() => target.end(), "onEnd")
-  });
-  return target;
-}
-function prefixedReadable(prefix, readable, reducer) {
-  let prefixHandled = false;
-  return {
-    read: /* @__PURE__ */ __name13(() => {
-      const chunk = readable.read();
-      if (!prefixHandled) {
-        prefixHandled = true;
-        if (chunk !== null) {
-          return reducer([prefix, chunk]);
-        }
-        return prefix;
-      }
-      return chunk;
-    }, "read")
-  };
-}
-function prefixedStream(prefix, stream, reducer) {
-  let prefixHandled = false;
-  const target = newWriteableStream(reducer);
-  listenStream(stream, {
-    onData: /* @__PURE__ */ __name13((data) => {
-      if (!prefixHandled) {
-        prefixHandled = true;
-        return target.write(reducer([prefix, data]));
-      }
-      return target.write(data);
-    }, "onData"),
-    onError: /* @__PURE__ */ __name13((error) => target.error(error), "onError"),
-    onEnd: /* @__PURE__ */ __name13(() => {
-      if (!prefixHandled) {
-        prefixHandled = true;
-        target.write(prefix);
-      }
-      target.end();
-    }, "onEnd")
-  });
-  return target;
-}
-var __defProp13, __name13, WriteableStreamImpl;
-var init_stream = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/stream.js"() {
-    "use strict";
-    init_errors();
-    init_lifecycle();
-    __defProp13 = Object.defineProperty;
-    __name13 = /* @__PURE__ */ __name((target, value) => __defProp13(target, "name", { value, configurable: true }), "__name");
-    __name(isReadable, "isReadable");
-    __name13(isReadable, "isReadable");
-    __name(isReadableStream, "isReadableStream");
-    __name13(isReadableStream, "isReadableStream");
-    __name(isReadableBufferedStream, "isReadableBufferedStream");
-    __name13(isReadableBufferedStream, "isReadableBufferedStream");
-    __name(newWriteableStream, "newWriteableStream");
-    __name13(newWriteableStream, "newWriteableStream");
-    WriteableStreamImpl = class {
-      static {
-        __name(this, "WriteableStreamImpl");
-      }
-      static {
-        __name13(this, "WriteableStreamImpl");
-      }
-      /**
-       * @param reducer a function that reduces the buffered data into a single object;
-       * 				  because some objects can be complex and non-reducible, we also
-       * 				  allow passing the explicit `null` value to skip the reduce step
-       * @param options stream options
-       */
-      constructor(reducer, options) {
-        this.reducer = reducer;
-        this.options = options;
-        this.state = {
-          flowing: false,
-          ended: false,
-          destroyed: false
-        };
-        this.buffer = {
-          data: [],
-          error: []
-        };
-        this.listeners = {
-          data: [],
-          error: [],
-          end: []
-        };
-        this.pendingWritePromises = [];
-      }
-      pause() {
-        if (this.state.destroyed) {
-          return;
-        }
-        this.state.flowing = false;
-      }
-      resume() {
-        if (this.state.destroyed) {
-          return;
-        }
-        if (!this.state.flowing) {
-          this.state.flowing = true;
-          this.flowData();
-          this.flowErrors();
-          this.flowEnd();
-        }
-      }
-      write(data) {
-        if (this.state.destroyed) {
-          return;
-        }
-        if (this.state.flowing) {
-          this.emitData(data);
-        } else {
-          this.buffer.data.push(data);
-          if (typeof this.options?.highWaterMark === "number" && this.buffer.data.length > this.options.highWaterMark) {
-            return new Promise((resolve2) => this.pendingWritePromises.push(resolve2));
-          }
-        }
-      }
-      error(error) {
-        if (this.state.destroyed) {
-          return;
-        }
-        if (this.state.flowing) {
-          this.emitError(error);
-        } else {
-          this.buffer.error.push(error);
-        }
-      }
-      end(result) {
-        if (this.state.destroyed) {
-          return;
-        }
-        if (typeof result !== "undefined") {
-          this.write(result);
-        }
-        if (this.state.flowing) {
-          this.emitEnd();
-          this.destroy();
-        } else {
-          this.state.ended = true;
-        }
-      }
-      emitData(data) {
-        this.listeners.data.slice(0).forEach((listener) => listener(data));
-      }
-      emitError(error) {
-        if (this.listeners.error.length === 0) {
-          onUnexpectedError(error);
-        } else {
-          this.listeners.error.slice(0).forEach((listener) => listener(error));
-        }
-      }
-      emitEnd() {
-        this.listeners.end.slice(0).forEach((listener) => listener());
-      }
-      on(event, callback) {
-        if (this.state.destroyed) {
-          return;
-        }
-        switch (event) {
-          case "data":
-            this.listeners.data.push(callback);
-            this.resume();
-            break;
-          case "end":
-            this.listeners.end.push(callback);
-            if (this.state.flowing && this.flowEnd()) {
-              this.destroy();
-            }
-            break;
-          case "error":
-            this.listeners.error.push(callback);
-            if (this.state.flowing) {
-              this.flowErrors();
-            }
-            break;
-        }
-      }
-      removeListener(event, callback) {
-        if (this.state.destroyed) {
-          return;
-        }
-        let listeners = void 0;
-        switch (event) {
-          case "data":
-            listeners = this.listeners.data;
-            break;
-          case "end":
-            listeners = this.listeners.end;
-            break;
-          case "error":
-            listeners = this.listeners.error;
-            break;
-        }
-        if (listeners) {
-          const index2 = listeners.indexOf(callback);
-          if (index2 >= 0) {
-            listeners.splice(index2, 1);
-          }
-        }
-      }
-      flowData() {
-        if (this.buffer.data.length === 0) {
-          return;
-        }
-        if (typeof this.reducer === "function") {
-          const fullDataBuffer = this.reducer(this.buffer.data);
-          this.emitData(fullDataBuffer);
-        } else {
-          for (const data of this.buffer.data) {
-            this.emitData(data);
-          }
-        }
-        this.buffer.data.length = 0;
-        const pendingWritePromises = [...this.pendingWritePromises];
-        this.pendingWritePromises.length = 0;
-        pendingWritePromises.forEach((pendingWritePromise) => pendingWritePromise());
-      }
-      flowErrors() {
-        if (this.listeners.error.length > 0) {
-          for (const error of this.buffer.error) {
-            this.emitError(error);
-          }
-          this.buffer.error.length = 0;
-        }
-      }
-      flowEnd() {
-        if (this.state.ended) {
-          this.emitEnd();
-          return this.listeners.end.length > 0;
-        }
-        return false;
-      }
-      destroy() {
-        if (!this.state.destroyed) {
-          this.state.destroyed = true;
-          this.state.ended = true;
-          this.buffer.data.length = 0;
-          this.buffer.error.length = 0;
-          this.listeners.data.length = 0;
-          this.listeners.error.length = 0;
-          this.listeners.end.length = 0;
-          this.pendingWritePromises.length = 0;
-        }
-      }
-    };
-    __name(consumeReadable, "consumeReadable");
-    __name13(consumeReadable, "consumeReadable");
-    __name(peekReadable, "peekReadable");
-    __name13(peekReadable, "peekReadable");
-    __name(consumeStream, "consumeStream");
-    __name13(consumeStream, "consumeStream");
-    __name(listenStream, "listenStream");
-    __name13(listenStream, "listenStream");
-    __name(peekStream, "peekStream");
-    __name13(peekStream, "peekStream");
-    __name(toStream, "toStream");
-    __name13(toStream, "toStream");
-    __name(emptyStream, "emptyStream");
-    __name13(emptyStream, "emptyStream");
-    __name(toReadable, "toReadable");
-    __name13(toReadable, "toReadable");
-    __name(transform, "transform");
-    __name13(transform, "transform");
-    __name(prefixedReadable, "prefixedReadable");
-    __name13(prefixedReadable, "prefixedReadable");
-    __name(prefixedStream, "prefixedStream");
-    __name13(prefixedStream, "prefixedStream");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/buffer.js
-function binaryIndexOf(haystack, needle, offset = 0) {
-  const needleLen = needle.byteLength;
-  const haystackLen = haystack.byteLength;
-  if (needleLen === 0) {
-    return 0;
-  }
-  if (needleLen === 1) {
-    return haystack.indexOf(needle[0], offset);
-  }
-  if (needleLen > haystackLen - offset) {
-    return -1;
-  }
-  const table = indexOfTable.value;
-  table.fill(needle.length);
-  for (let i2 = 0; i2 < needle.length; i2++) {
-    table[needle[i2]] = needle.length - i2 - 1;
-  }
-  let i = offset + needle.length - 1;
-  let j = i;
-  let result = -1;
-  while (i < haystackLen) {
-    if (haystack[i] === needle[j]) {
-      if (j === 0) {
-        result = i;
-        break;
-      }
-      i--;
-      j--;
-    } else {
-      i += Math.max(needle.length - j, table[haystack[i]]);
-      j = needle.length - 1;
-    }
-  }
-  return result;
-}
-function readUInt16LE(source, offset) {
-  return source[offset + 0] << 0 >>> 0 | source[offset + 1] << 8 >>> 0;
-}
-function writeUInt16LE(destination, value, offset) {
-  destination[offset + 0] = value & 255;
-  value = value >>> 8;
-  destination[offset + 1] = value & 255;
-}
-function readUInt32BE(source, offset) {
-  return source[offset] * 2 ** 24 + source[offset + 1] * 2 ** 16 + source[offset + 2] * 2 ** 8 + source[offset + 3];
-}
-function writeUInt32BE(destination, value, offset) {
-  destination[offset + 3] = value;
-  value = value >>> 8;
-  destination[offset + 2] = value;
-  value = value >>> 8;
-  destination[offset + 1] = value;
-  value = value >>> 8;
-  destination[offset] = value;
-}
-function readUInt32LE(source, offset) {
-  return source[offset + 0] << 0 >>> 0 | source[offset + 1] << 8 >>> 0 | source[offset + 2] << 16 >>> 0 | source[offset + 3] << 24 >>> 0;
-}
-function writeUInt32LE(destination, value, offset) {
-  destination[offset + 0] = value & 255;
-  value = value >>> 8;
-  destination[offset + 1] = value & 255;
-  value = value >>> 8;
-  destination[offset + 2] = value & 255;
-  value = value >>> 8;
-  destination[offset + 3] = value & 255;
-}
-function readUInt8(source, offset) {
-  return source[offset];
-}
-function writeUInt8(destination, value, offset) {
-  destination[offset] = value;
-}
-function readableToBuffer(readable) {
-  return consumeReadable(readable, (chunks) => VSBuffer.concat(chunks));
-}
-function bufferToReadable(buffer) {
-  return toReadable(buffer);
-}
-function streamToBuffer(stream) {
-  return consumeStream(stream, (chunks) => VSBuffer.concat(chunks));
-}
-async function bufferedStreamToBuffer(bufferedStream) {
-  if (bufferedStream.ended) {
-    return VSBuffer.concat(bufferedStream.buffer);
-  }
-  return VSBuffer.concat([
-    // Include already read chunks...
-    ...bufferedStream.buffer,
-    // ...and all additional chunks
-    await streamToBuffer(bufferedStream.stream)
-  ]);
-}
-function bufferToStream(buffer) {
-  return toStream(buffer, (chunks) => VSBuffer.concat(chunks));
-}
-function streamToBufferReadableStream(stream) {
-  return transform(stream, { data: /* @__PURE__ */ __name14((data) => typeof data === "string" ? VSBuffer.fromString(data) : VSBuffer.wrap(data), "data") }, (chunks) => VSBuffer.concat(chunks));
-}
-function newWriteableBufferStream(options) {
-  return newWriteableStream((chunks) => VSBuffer.concat(chunks), options);
-}
-function prefixedBufferReadable(prefix, readable) {
-  return prefixedReadable(prefix, readable, (chunks) => VSBuffer.concat(chunks));
-}
-function prefixedBufferStream(prefix, stream) {
-  return prefixedStream(prefix, stream, (chunks) => VSBuffer.concat(chunks));
-}
-function decodeBase64(encoded) {
-  let building = 0;
-  let remainder = 0;
-  let bufi = 0;
-  const buffer = new Uint8Array(Math.floor(encoded.length / 4 * 3));
-  const append = /* @__PURE__ */ __name14((value) => {
-    switch (remainder) {
-      case 3:
-        buffer[bufi++] = building | value;
-        remainder = 0;
-        break;
-      case 2:
-        buffer[bufi++] = building | value >>> 2;
-        building = value << 6;
-        remainder = 3;
-        break;
-      case 1:
-        buffer[bufi++] = building | value >>> 4;
-        building = value << 4;
-        remainder = 2;
-        break;
-      default:
-        building = value << 2;
-        remainder = 1;
-    }
-  }, "append");
-  for (let i = 0; i < encoded.length; i++) {
-    const code = encoded.charCodeAt(i);
-    if (code >= 65 && code <= 90) {
-      append(code - 65);
-    } else if (code >= 97 && code <= 122) {
-      append(code - 97 + 26);
-    } else if (code >= 48 && code <= 57) {
-      append(code - 48 + 52);
-    } else if (code === 43 || code === 45) {
-      append(62);
-    } else if (code === 47 || code === 95) {
-      append(63);
-    } else if (code === 61) {
-      break;
-    } else {
-      throw new SyntaxError(`Unexpected base64 character ${encoded[i]}`);
-    }
-  }
-  const unpadded = bufi;
-  while (remainder > 0) {
-    append(0);
-  }
-  return VSBuffer.wrap(buffer).slice(0, unpadded);
-}
-function encodeBase64({ buffer }, padded = true, urlSafe = false) {
-  const dictionary = urlSafe ? base64UrlSafeAlphabet : base64Alphabet;
-  let output = "";
-  const remainder = buffer.byteLength % 3;
-  let i = 0;
-  for (; i < buffer.byteLength - remainder; i += 3) {
-    const a = buffer[i + 0];
-    const b = buffer[i + 1];
-    const c = buffer[i + 2];
-    output += dictionary[a >>> 2];
-    output += dictionary[(a << 4 | b >>> 4) & 63];
-    output += dictionary[(b << 2 | c >>> 6) & 63];
-    output += dictionary[c & 63];
-  }
-  if (remainder === 1) {
-    const a = buffer[i + 0];
-    output += dictionary[a >>> 2];
-    output += dictionary[a << 4 & 63];
-    if (padded) {
-      output += "==";
-    }
-  } else if (remainder === 2) {
-    const a = buffer[i + 0];
-    const b = buffer[i + 1];
-    output += dictionary[a >>> 2];
-    output += dictionary[(a << 4 | b >>> 4) & 63];
-    output += dictionary[b << 2 & 63];
-    if (padded) {
-      output += "=";
-    }
-  }
-  return output;
-}
-function encodeHex({ buffer }) {
-  let result = "";
-  for (let i = 0; i < buffer.length; i++) {
-    const byte = buffer[i];
-    result += hexChars[byte >>> 4];
-    result += hexChars[byte & 15];
-  }
-  return result;
-}
-function decodeHex(hex) {
-  if (hex.length % 2 !== 0) {
-    throw new SyntaxError("Hex string must have an even length");
-  }
-  const out = new Uint8Array(hex.length >> 1);
-  for (let i = 0; i < hex.length; ) {
-    out[i >> 1] = decodeHexChar(hex, i++) << 4 | decodeHexChar(hex, i++);
-  }
-  return VSBuffer.wrap(out);
-}
-function decodeHexChar(str, position) {
-  const s = str.charCodeAt(position);
-  if (s >= 48 && s <= 57) {
-    return s - 48;
-  } else if (s >= 97 && s <= 102) {
-    return s - 87;
-  } else if (s >= 65 && s <= 70) {
-    return s - 55;
-  } else {
-    throw new SyntaxError(`Invalid hex character at position ${position}`);
-  }
-}
-var __defProp14, __name14, hasBuffer, indexOfTable, textEncoder, textDecoder, VSBuffer, base64Alphabet, base64UrlSafeAlphabet, hexChars;
-var init_buffer = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/buffer.js"() {
-    "use strict";
-    init_lazy();
-    init_stream();
-    __defProp14 = Object.defineProperty;
-    __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
-    hasBuffer = typeof Buffer !== "undefined";
-    indexOfTable = new Lazy(() => new Uint8Array(256));
-    VSBuffer = class _VSBuffer {
-      static {
-        __name(this, "VSBuffer");
-      }
-      static {
-        __name14(this, "VSBuffer");
-      }
-      /**
-       * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
-       * might use a nodejs Buffer allocated from node's Buffer pool, which is not transferrable.
-       */
-      static alloc(byteLength) {
-        if (hasBuffer) {
-          return new _VSBuffer(Buffer.allocUnsafe(byteLength));
-        } else {
-          return new _VSBuffer(new Uint8Array(byteLength));
-        }
-      }
-      /**
-       * When running in a nodejs context, if `actual` is not a nodejs Buffer, the backing store for
-       * the returned `VSBuffer` instance might use a nodejs Buffer allocated from node's Buffer pool,
-       * which is not transferrable.
-       */
-      static wrap(actual) {
-        if (hasBuffer && !Buffer.isBuffer(actual)) {
-          actual = Buffer.from(actual.buffer, actual.byteOffset, actual.byteLength);
-        }
-        return new _VSBuffer(actual);
-      }
-      /**
-       * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
-       * might use a nodejs Buffer allocated from node's Buffer pool, which is not transferrable.
-       */
-      static fromString(source, options) {
-        const dontUseNodeBuffer = options?.dontUseNodeBuffer || false;
-        if (!dontUseNodeBuffer && hasBuffer) {
-          return new _VSBuffer(Buffer.from(source));
-        } else {
-          if (!textEncoder) {
-            textEncoder = new TextEncoder();
-          }
-          return new _VSBuffer(textEncoder.encode(source));
-        }
-      }
-      /**
-       * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
-       * might use a nodejs Buffer allocated from node's Buffer pool, which is not transferrable.
-       */
-      static fromByteArray(source) {
-        const result = _VSBuffer.alloc(source.length);
-        for (let i = 0, len = source.length; i < len; i++) {
-          result.buffer[i] = source[i];
-        }
-        return result;
-      }
-      /**
-       * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
-       * might use a nodejs Buffer allocated from node's Buffer pool, which is not transferrable.
-       */
-      static concat(buffers, totalLength) {
-        if (typeof totalLength === "undefined") {
-          totalLength = 0;
-          for (let i = 0, len = buffers.length; i < len; i++) {
-            totalLength += buffers[i].byteLength;
-          }
-        }
-        const ret = _VSBuffer.alloc(totalLength);
-        let offset = 0;
-        for (let i = 0, len = buffers.length; i < len; i++) {
-          const element = buffers[i];
-          ret.set(element, offset);
-          offset += element.byteLength;
-        }
-        return ret;
-      }
-      static isNativeBuffer(buffer) {
-        return hasBuffer && Buffer.isBuffer(buffer);
-      }
-      constructor(buffer) {
-        this.buffer = buffer;
-        this.byteLength = this.buffer.byteLength;
-      }
-      /**
-       * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
-       * might use a nodejs Buffer allocated from node's Buffer pool, which is not transferrable.
-       */
-      clone() {
-        const result = _VSBuffer.alloc(this.byteLength);
-        result.set(this);
-        return result;
-      }
-      toString() {
-        if (hasBuffer) {
-          return this.buffer.toString();
-        } else {
-          if (!textDecoder) {
-            textDecoder = new TextDecoder(void 0, { ignoreBOM: true });
-          }
-          return textDecoder.decode(this.buffer);
-        }
-      }
-      slice(start, end) {
-        return new _VSBuffer(this.buffer.subarray(start, end));
-      }
-      set(array, offset) {
-        if (array instanceof _VSBuffer) {
-          this.buffer.set(array.buffer, offset);
-        } else if (array instanceof Uint8Array) {
-          this.buffer.set(array, offset);
-        } else if (array instanceof ArrayBuffer) {
-          this.buffer.set(new Uint8Array(array), offset);
-        } else if (ArrayBuffer.isView(array)) {
-          this.buffer.set(new Uint8Array(array.buffer, array.byteOffset, array.byteLength), offset);
-        } else {
-          throw new Error(`Unknown argument 'array'`);
-        }
-      }
-      readUInt32BE(offset) {
-        return readUInt32BE(this.buffer, offset);
-      }
-      writeUInt32BE(value, offset) {
-        writeUInt32BE(this.buffer, value, offset);
-      }
-      readUInt32LE(offset) {
-        return readUInt32LE(this.buffer, offset);
-      }
-      writeUInt32LE(value, offset) {
-        writeUInt32LE(this.buffer, value, offset);
-      }
-      readUInt8(offset) {
-        return readUInt8(this.buffer, offset);
-      }
-      writeUInt8(value, offset) {
-        writeUInt8(this.buffer, value, offset);
-      }
-      indexOf(subarray, offset = 0) {
-        return binaryIndexOf(this.buffer, subarray instanceof _VSBuffer ? subarray.buffer : subarray, offset);
-      }
-      equals(other) {
-        if (this === other) {
-          return true;
-        }
-        if (this.byteLength !== other.byteLength) {
-          return false;
-        }
-        return this.buffer.every((value, index2) => value === other.buffer[index2]);
-      }
-    };
-    __name(binaryIndexOf, "binaryIndexOf");
-    __name14(binaryIndexOf, "binaryIndexOf");
-    __name(readUInt16LE, "readUInt16LE");
-    __name14(readUInt16LE, "readUInt16LE");
-    __name(writeUInt16LE, "writeUInt16LE");
-    __name14(writeUInt16LE, "writeUInt16LE");
-    __name(readUInt32BE, "readUInt32BE");
-    __name14(readUInt32BE, "readUInt32BE");
-    __name(writeUInt32BE, "writeUInt32BE");
-    __name14(writeUInt32BE, "writeUInt32BE");
-    __name(readUInt32LE, "readUInt32LE");
-    __name14(readUInt32LE, "readUInt32LE");
-    __name(writeUInt32LE, "writeUInt32LE");
-    __name14(writeUInt32LE, "writeUInt32LE");
-    __name(readUInt8, "readUInt8");
-    __name14(readUInt8, "readUInt8");
-    __name(writeUInt8, "writeUInt8");
-    __name14(writeUInt8, "writeUInt8");
-    __name(readableToBuffer, "readableToBuffer");
-    __name14(readableToBuffer, "readableToBuffer");
-    __name(bufferToReadable, "bufferToReadable");
-    __name14(bufferToReadable, "bufferToReadable");
-    __name(streamToBuffer, "streamToBuffer");
-    __name14(streamToBuffer, "streamToBuffer");
-    __name(bufferedStreamToBuffer, "bufferedStreamToBuffer");
-    __name14(bufferedStreamToBuffer, "bufferedStreamToBuffer");
-    __name(bufferToStream, "bufferToStream");
-    __name14(bufferToStream, "bufferToStream");
-    __name(streamToBufferReadableStream, "streamToBufferReadableStream");
-    __name14(streamToBufferReadableStream, "streamToBufferReadableStream");
-    __name(newWriteableBufferStream, "newWriteableBufferStream");
-    __name14(newWriteableBufferStream, "newWriteableBufferStream");
-    __name(prefixedBufferReadable, "prefixedBufferReadable");
-    __name14(prefixedBufferReadable, "prefixedBufferReadable");
-    __name(prefixedBufferStream, "prefixedBufferStream");
-    __name14(prefixedBufferStream, "prefixedBufferStream");
-    __name(decodeBase64, "decodeBase64");
-    __name14(decodeBase64, "decodeBase64");
-    base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    base64UrlSafeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    __name(encodeBase64, "encodeBase64");
-    __name14(encodeBase64, "encodeBase64");
-    hexChars = "0123456789abcdef";
-    __name(encodeHex, "encodeHex");
-    __name14(encodeHex, "encodeHex");
-    __name(decodeHex, "decodeHex");
-    __name14(decodeHex, "decodeHex");
-    __name(decodeHexChar, "decodeHexChar");
-    __name14(decodeHexChar, "decodeHexChar");
-  }
-});
-
 // ../Output/Target/Microsoft/VSCode/vs/nls.js
 function getNLSMessages() {
   return globalThis._VSCODE_NLS_MESSAGES;
@@ -4548,25 +67,25 @@ function localize2(data, originalMessage, ...args) {
     original: originalMessage === message ? value : _format(originalMessage, args)
   };
 }
-var __defProp15, __name15, isPseudo;
+var __defProp2, __name2, isPseudo;
 var init_nls = __esm({
   "../Output/Target/Microsoft/VSCode/vs/nls.js"() {
     "use strict";
-    __defProp15 = Object.defineProperty;
-    __name15 = /* @__PURE__ */ __name((target, value) => __defProp15(target, "name", { value, configurable: true }), "__name");
+    __defProp2 = Object.defineProperty;
+    __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
     __name(getNLSMessages, "getNLSMessages");
-    __name15(getNLSMessages, "getNLSMessages");
+    __name2(getNLSMessages, "getNLSMessages");
     __name(getNLSLanguage, "getNLSLanguage");
-    __name15(getNLSLanguage, "getNLSLanguage");
+    __name2(getNLSLanguage, "getNLSLanguage");
     isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
     __name(_format, "_format");
-    __name15(_format, "_format");
+    __name2(_format, "_format");
     __name(localize, "localize");
-    __name15(localize, "localize");
+    __name2(localize, "localize");
     __name(lookupMessage, "lookupMessage");
-    __name15(lookupMessage, "lookupMessage");
+    __name2(lookupMessage, "lookupMessage");
     __name(localize2, "localize2");
-    __name15(localize2, "localize2");
+    __name2(localize2, "localize2");
   }
 });
 
@@ -4597,13 +116,13 @@ function isLittleEndian() {
 function isTahoeOrNewer(osVersion) {
   return parseFloat(osVersion) >= 25;
 }
-var __defProp16, __name16, LANGUAGE_DEFAULT, _isWindows, _isMacintosh, _isLinux, _isLinuxSnap, _isNative, _isWeb, _isElectron, _isIOS, _isCI, _isMobile, _locale, _language, _platformLocale, _translationsConfigFile, _userAgent, $globalThis, nodeProcess, isElectronProcess, isElectronRenderer, Platform, _platform, isWindows, isMacintosh, isLinux, isLinuxSnap, isNative, isElectron, isWeb, isWebWorker, webWorkerOrigin, isIOS, isMobile, isCI, platform, userAgent, language, Language, locale, platformLocale, translationsConfigFile, setTimeout0IsFaster, setTimeout0, OperatingSystem, OS, _isLittleEndian, _isLittleEndianComputed, isChrome, isFirefox, isSafari, isEdge, isAndroid;
+var __defProp3, __name3, LANGUAGE_DEFAULT, _isWindows, _isMacintosh, _isLinux, _isLinuxSnap, _isNative, _isWeb, _isElectron, _isIOS, _isCI, _isMobile, _locale, _language, _platformLocale, _translationsConfigFile, _userAgent, $globalThis, nodeProcess, isElectronProcess, isElectronRenderer, Platform, _platform, isWindows, isMacintosh, isLinux, isLinuxSnap, isNative, isElectron, isWeb, isWebWorker, webWorkerOrigin, isIOS, isMobile, isCI, platform, userAgent, language, Language, locale, platformLocale, translationsConfigFile, setTimeout0IsFaster, setTimeout0, OperatingSystem, OS, _isLittleEndian, _isLittleEndianComputed, isChrome, isFirefox, isSafari, isEdge, isAndroid;
 var init_platform = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/platform.js"() {
     "use strict";
     init_nls();
-    __defProp16 = Object.defineProperty;
-    __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
+    __defProp3 = Object.defineProperty;
+    __name3 = /* @__PURE__ */ __name((target, value) => __defProp3(target, "name", { value, configurable: true }), "__name");
     LANGUAGE_DEFAULT = "en";
     _isWindows = false;
     _isMacintosh = false;
@@ -4671,7 +190,7 @@ var init_platform = __esm({
       Platform2[Platform2["Windows"] = 3] = "Windows";
     })(Platform || (Platform = {}));
     __name(PlatformToString, "PlatformToString");
-    __name16(PlatformToString, "PlatformToString");
+    __name3(PlatformToString, "PlatformToString");
     _platform = 0;
     if (_isMacintosh) {
       _platform = 1;
@@ -4700,7 +219,7 @@ var init_platform = __esm({
         return language;
       }
       __name(value, "value");
-      __name16(value, "value");
+      __name3(value, "value");
       Language2.value = value;
       function isDefaultVariant() {
         if (language.length === 2) {
@@ -4712,13 +231,13 @@ var init_platform = __esm({
         }
       }
       __name(isDefaultVariant, "isDefaultVariant");
-      __name16(isDefaultVariant, "isDefaultVariant");
+      __name3(isDefaultVariant, "isDefaultVariant");
       Language2.isDefaultVariant = isDefaultVariant;
       function isDefault() {
         return language === "en";
       }
       __name(isDefault, "isDefault");
-      __name16(isDefault, "isDefault");
+      __name3(isDefault, "isDefault");
       Language2.isDefault = isDefault;
     })(Language || (Language = {}));
     locale = _locale;
@@ -4761,14 +280,14 @@ var init_platform = __esm({
     _isLittleEndian = true;
     _isLittleEndianComputed = false;
     __name(isLittleEndian, "isLittleEndian");
-    __name16(isLittleEndian, "isLittleEndian");
+    __name3(isLittleEndian, "isLittleEndian");
     isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
     isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
     isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
     isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
     isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
     __name(isTahoeOrNewer, "isTahoeOrNewer");
-    __name16(isTahoeOrNewer, "isTahoeOrNewer");
+    __name3(isTahoeOrNewer, "isTahoeOrNewer");
   }
 });
 
@@ -4927,13 +446,13 @@ function _format2(sep2, pathObject) {
   }
   return dir === pathObject.root ? `${dir}${base}` : `${dir}${sep2}${base}`;
 }
-var __defProp17, __name17, CHAR_UPPERCASE_A, CHAR_LOWERCASE_A, CHAR_UPPERCASE_Z, CHAR_LOWERCASE_Z, CHAR_DOT, CHAR_FORWARD_SLASH, CHAR_BACKWARD_SLASH, CHAR_COLON, CHAR_QUESTION_MARK, ErrorInvalidArgType, platformIsWin32, win32, posixCwd, posix, normalize, isAbsolute, join, resolve, relative, dirname, basename, extname, format, parse, toNamespacedPath, sep, delimiter;
+var __defProp4, __name4, CHAR_UPPERCASE_A, CHAR_LOWERCASE_A, CHAR_UPPERCASE_Z, CHAR_LOWERCASE_Z, CHAR_DOT, CHAR_FORWARD_SLASH, CHAR_BACKWARD_SLASH, CHAR_COLON, CHAR_QUESTION_MARK, ErrorInvalidArgType, platformIsWin32, win32, posixCwd, posix, normalize, isAbsolute, join, resolve, relative, dirname, basename, extname, format, parse, toNamespacedPath, sep, delimiter;
 var init_path = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/path.js"() {
     "use strict";
     init_process();
-    __defProp17 = Object.defineProperty;
-    __name17 = /* @__PURE__ */ __name((target, value) => __defProp17(target, "name", { value, configurable: true }), "__name");
+    __defProp4 = Object.defineProperty;
+    __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
     CHAR_UPPERCASE_A = 65;
     CHAR_LOWERCASE_A = 97;
     CHAR_UPPERCASE_Z = 90;
@@ -4948,7 +467,7 @@ var init_path = __esm({
         __name(this, "ErrorInvalidArgType");
       }
       static {
-        __name17(this, "ErrorInvalidArgType");
+        __name4(this, "ErrorInvalidArgType");
       }
       constructor(name, expected, actual) {
         let determiner;
@@ -4966,22 +485,22 @@ var init_path = __esm({
       }
     };
     __name(validateObject, "validateObject");
-    __name17(validateObject, "validateObject");
+    __name4(validateObject, "validateObject");
     __name(validateString, "validateString");
-    __name17(validateString, "validateString");
+    __name4(validateString, "validateString");
     platformIsWin32 = platform2 === "win32";
     __name(isPathSeparator, "isPathSeparator");
-    __name17(isPathSeparator, "isPathSeparator");
+    __name4(isPathSeparator, "isPathSeparator");
     __name(isPosixPathSeparator, "isPosixPathSeparator");
-    __name17(isPosixPathSeparator, "isPosixPathSeparator");
+    __name4(isPosixPathSeparator, "isPosixPathSeparator");
     __name(isWindowsDeviceRoot, "isWindowsDeviceRoot");
-    __name17(isWindowsDeviceRoot, "isWindowsDeviceRoot");
+    __name4(isWindowsDeviceRoot, "isWindowsDeviceRoot");
     __name(normalizeString, "normalizeString");
-    __name17(normalizeString, "normalizeString");
+    __name4(normalizeString, "normalizeString");
     __name(formatExt, "formatExt");
-    __name17(formatExt, "formatExt");
+    __name4(formatExt, "formatExt");
     __name(_format2, "_format");
-    __name17(_format2, "_format");
+    __name4(_format2, "_format");
     win32 = {
       // path.resolve([from ...], to)
       resolve(...pathSegments) {
@@ -5966,6 +1485,5079 @@ var init_path = __esm({
   }
 });
 
+// ../Output/Target/Microsoft/VSCode/vs/base/common/uri.js
+var uri_exports = {};
+__export(uri_exports, {
+  URI: () => URI,
+  isUriComponents: () => isUriComponents,
+  uriToFsPath: () => uriToFsPath
+});
+function _validateUri(ret, _strict) {
+  if (!ret.scheme && _strict) {
+    throw new Error(`[UriError]: Scheme is missing: {scheme: "", authority: "${ret.authority}", path: "${ret.path}", query: "${ret.query}", fragment: "${ret.fragment}"}`);
+  }
+  if (ret.scheme && !_schemePattern.test(ret.scheme)) {
+    const matches = [...ret.scheme.matchAll(/[^\w\d+.-]/gu)];
+    const detail = matches.length > 0 ? ` Found '${matches[0][0]}' at index ${matches[0].index} (${matches.length} total)` : "";
+    throw new Error(`[UriError]: Scheme contains illegal characters.${detail} (len:${ret.scheme.length})`);
+  }
+  if (ret.path) {
+    if (ret.authority) {
+      if (!_singleSlashStart.test(ret.path)) {
+        throw new Error('[UriError]: If a URI contains an authority component, then the path component must either be empty or begin with a slash ("/") character');
+      }
+    } else {
+      if (_doubleSlashStart.test(ret.path)) {
+        throw new Error('[UriError]: If a URI does not contain an authority component, then the path cannot begin with two slash characters ("//")');
+      }
+    }
+  }
+}
+function _schemeFix(scheme, _strict) {
+  if (!scheme && !_strict) {
+    return "file";
+  }
+  return scheme;
+}
+function _referenceResolution(scheme, path) {
+  switch (scheme) {
+    case "https":
+    case "http":
+    case "file":
+      if (!path) {
+        path = _slash;
+      } else if (path[0] !== _slash) {
+        path = _slash + path;
+      }
+      break;
+  }
+  return path;
+}
+function isUriComponents(thing) {
+  if (!thing || typeof thing !== "object") {
+    return false;
+  }
+  return typeof thing.scheme === "string" && (typeof thing.authority === "string" || typeof thing.authority === "undefined") && (typeof thing.path === "string" || typeof thing.path === "undefined") && (typeof thing.query === "string" || typeof thing.query === "undefined") && (typeof thing.fragment === "string" || typeof thing.fragment === "undefined");
+}
+function encodeURIComponentFast(uriComponent, isPath, isAuthority) {
+  let res = void 0;
+  let nativeEncodePos = -1;
+  for (let pos = 0; pos < uriComponent.length; pos++) {
+    const code = uriComponent.charCodeAt(pos);
+    if (code >= 97 && code <= 122 || code >= 65 && code <= 90 || code >= 48 && code <= 57 || code === 45 || code === 46 || code === 95 || code === 126 || isPath && code === 47 || isAuthority && code === 91 || isAuthority && code === 93 || isAuthority && code === 58) {
+      if (nativeEncodePos !== -1) {
+        res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));
+        nativeEncodePos = -1;
+      }
+      if (res !== void 0) {
+        res += uriComponent.charAt(pos);
+      }
+    } else {
+      if (res === void 0) {
+        res = uriComponent.substr(0, pos);
+      }
+      const escaped = encodeTable[code];
+      if (escaped !== void 0) {
+        if (nativeEncodePos !== -1) {
+          res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));
+          nativeEncodePos = -1;
+        }
+        res += escaped;
+      } else if (nativeEncodePos === -1) {
+        nativeEncodePos = pos;
+      }
+    }
+  }
+  if (nativeEncodePos !== -1) {
+    res += encodeURIComponent(uriComponent.substring(nativeEncodePos));
+  }
+  return res !== void 0 ? res : uriComponent;
+}
+function encodeURIComponentMinimal(path) {
+  let res = void 0;
+  for (let pos = 0; pos < path.length; pos++) {
+    const code = path.charCodeAt(pos);
+    if (code === 35 || code === 63) {
+      if (res === void 0) {
+        res = path.substr(0, pos);
+      }
+      res += encodeTable[code];
+    } else {
+      if (res !== void 0) {
+        res += path[pos];
+      }
+    }
+  }
+  return res !== void 0 ? res : path;
+}
+function uriToFsPath(uri, keepDriveLetterCasing) {
+  let value;
+  if (uri.authority && uri.path.length > 1 && uri.scheme === "file") {
+    value = `//${uri.authority}${uri.path}`;
+  } else if (uri.path.charCodeAt(0) === 47 && (uri.path.charCodeAt(1) >= 65 && uri.path.charCodeAt(1) <= 90 || uri.path.charCodeAt(1) >= 97 && uri.path.charCodeAt(1) <= 122) && uri.path.charCodeAt(2) === 58) {
+    if (!keepDriveLetterCasing) {
+      value = uri.path[1].toLowerCase() + uri.path.substr(2);
+    } else {
+      value = uri.path.substr(1);
+    }
+  } else {
+    value = uri.path;
+  }
+  if (isWindows) {
+    value = value.replace(/\//g, "\\");
+  }
+  return value;
+}
+function _asFormatted(uri, skipEncoding) {
+  const encoder = !skipEncoding ? encodeURIComponentFast : encodeURIComponentMinimal;
+  let res = "";
+  let { scheme, authority, path, query, fragment } = uri;
+  if (scheme) {
+    res += scheme;
+    res += ":";
+  }
+  if (authority || scheme === "file") {
+    res += _slash;
+    res += _slash;
+  }
+  if (authority) {
+    let idx = authority.indexOf("@");
+    if (idx !== -1) {
+      const userinfo = authority.substr(0, idx);
+      authority = authority.substr(idx + 1);
+      idx = userinfo.lastIndexOf(":");
+      if (idx === -1) {
+        res += encoder(userinfo, false, false);
+      } else {
+        res += encoder(userinfo.substr(0, idx), false, false);
+        res += ":";
+        res += encoder(userinfo.substr(idx + 1), false, true);
+      }
+      res += "@";
+    }
+    authority = authority.toLowerCase();
+    idx = authority.lastIndexOf(":");
+    if (idx === -1) {
+      res += encoder(authority, false, true);
+    } else {
+      res += encoder(authority.substr(0, idx), false, true);
+      res += authority.substr(idx);
+    }
+  }
+  if (path) {
+    if (path.length >= 3 && path.charCodeAt(0) === 47 && path.charCodeAt(2) === 58) {
+      const code = path.charCodeAt(1);
+      if (code >= 65 && code <= 90) {
+        path = `/${String.fromCharCode(code + 32)}:${path.substr(3)}`;
+      }
+    } else if (path.length >= 2 && path.charCodeAt(1) === 58) {
+      const code = path.charCodeAt(0);
+      if (code >= 65 && code <= 90) {
+        path = `${String.fromCharCode(code + 32)}:${path.substr(2)}`;
+      }
+    }
+    res += encoder(path, true, false);
+  }
+  if (query) {
+    res += "?";
+    res += encoder(query, false, false);
+  }
+  if (fragment) {
+    res += "#";
+    res += !skipEncoding ? encodeURIComponentFast(fragment, false, false) : fragment;
+  }
+  return res;
+}
+function decodeURIComponentGraceful(str) {
+  try {
+    return decodeURIComponent(str);
+  } catch {
+    if (str.length > 3) {
+      return str.substr(0, 3) + decodeURIComponentGraceful(str.substr(3));
+    } else {
+      return str;
+    }
+  }
+}
+function percentDecode(str) {
+  if (!str.match(_rEncodedAsHex)) {
+    return str;
+  }
+  return str.replace(_rEncodedAsHex, (match) => decodeURIComponentGraceful(match));
+}
+var __defProp5, __name5, _schemePattern, _singleSlashStart, _doubleSlashStart, _empty, _slash, _regexp, URI, _pathSepMarker, Uri, encodeTable, _rEncodedAsHex;
+var init_uri = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/uri.js"() {
+    "use strict";
+    init_path();
+    init_platform();
+    __defProp5 = Object.defineProperty;
+    __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
+    _schemePattern = /^\w[\w\d+.-]*$/;
+    _singleSlashStart = /^\//;
+    _doubleSlashStart = /^\/\//;
+    __name(_validateUri, "_validateUri");
+    __name5(_validateUri, "_validateUri");
+    __name(_schemeFix, "_schemeFix");
+    __name5(_schemeFix, "_schemeFix");
+    __name(_referenceResolution, "_referenceResolution");
+    __name5(_referenceResolution, "_referenceResolution");
+    _empty = "";
+    _slash = "/";
+    _regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
+    URI = class _URI {
+      static {
+        __name(this, "URI");
+      }
+      static {
+        __name5(this, "URI");
+      }
+      static isUri(thing) {
+        if (thing instanceof _URI) {
+          return true;
+        }
+        if (!thing || typeof thing !== "object") {
+          return false;
+        }
+        return typeof thing.authority === "string" && typeof thing.fragment === "string" && typeof thing.path === "string" && typeof thing.query === "string" && typeof thing.scheme === "string" && typeof thing.fsPath === "string" && typeof thing.with === "function" && typeof thing.toString === "function";
+      }
+      /**
+       * @internal
+       */
+      constructor(schemeOrData, authority, path, query, fragment, _strict = false) {
+        if (typeof schemeOrData === "object") {
+          this.scheme = schemeOrData.scheme || _empty;
+          this.authority = schemeOrData.authority || _empty;
+          this.path = schemeOrData.path || _empty;
+          this.query = schemeOrData.query || _empty;
+          this.fragment = schemeOrData.fragment || _empty;
+        } else {
+          this.scheme = _schemeFix(schemeOrData, _strict);
+          this.authority = authority || _empty;
+          this.path = _referenceResolution(this.scheme, path || _empty);
+          this.query = query || _empty;
+          this.fragment = fragment || _empty;
+          _validateUri(this, _strict);
+        }
+      }
+      // ---- filesystem path -----------------------
+      /**
+       * Returns a string representing the corresponding file system path of this URI.
+       * Will handle UNC paths, normalizes windows drive letters to lower-case, and uses the
+       * platform specific path separator.
+       *
+       * * Will *not* validate the path for invalid characters and semantics.
+       * * Will *not* look at the scheme of this URI.
+       * * The result shall *not* be used for display purposes but for accessing a file on disk.
+       *
+       *
+       * The *difference* to `URI#path` is the use of the platform specific separator and the handling
+       * of UNC paths. See the below sample of a file-uri with an authority (UNC path).
+       *
+       * ```ts
+          const u = URI.parse('file://server/c$/folder/file.txt')
+          u.authority === 'server'
+          u.path === '/shares/c$/file.txt'
+          u.fsPath === '\\server\c$\folder\file.txt'
+      ```
+       *
+       * Using `URI#path` to read a file (using fs-apis) would not be enough because parts of the path,
+       * namely the server name, would be missing. Therefore `URI#fsPath` exists - it's sugar to ease working
+       * with URIs that represent files on disk (`file` scheme).
+       */
+      get fsPath() {
+        return uriToFsPath(this, false);
+      }
+      // ---- modify to new -------------------------
+      with(change) {
+        if (!change) {
+          return this;
+        }
+        let { scheme, authority, path, query, fragment } = change;
+        if (scheme === void 0) {
+          scheme = this.scheme;
+        } else if (scheme === null) {
+          scheme = _empty;
+        }
+        if (authority === void 0) {
+          authority = this.authority;
+        } else if (authority === null) {
+          authority = _empty;
+        }
+        if (path === void 0) {
+          path = this.path;
+        } else if (path === null) {
+          path = _empty;
+        }
+        if (query === void 0) {
+          query = this.query;
+        } else if (query === null) {
+          query = _empty;
+        }
+        if (fragment === void 0) {
+          fragment = this.fragment;
+        } else if (fragment === null) {
+          fragment = _empty;
+        }
+        if (scheme === this.scheme && authority === this.authority && path === this.path && query === this.query && fragment === this.fragment) {
+          return this;
+        }
+        return new Uri(scheme, authority, path, query, fragment);
+      }
+      // ---- parse & validate ------------------------
+      /**
+       * Creates a new URI from a string, e.g. `http://www.example.com/some/path`,
+       * `file:///usr/home`, or `scheme:with/path`.
+       *
+       * @param value A string which represents an URI (see `URI#toString`).
+       */
+      static parse(value, _strict = false) {
+        const match = _regexp.exec(value);
+        if (!match) {
+          return new Uri(_empty, _empty, _empty, _empty, _empty);
+        }
+        return new Uri(match[2] || _empty, percentDecode(match[4] || _empty), percentDecode(match[5] || _empty), percentDecode(match[7] || _empty), percentDecode(match[9] || _empty), _strict);
+      }
+      /**
+       * Creates a new URI from a file system path, e.g. `c:\my\files`,
+       * `/usr/home`, or `\\server\share\some\path`.
+       *
+       * The *difference* between `URI#parse` and `URI#file` is that the latter treats the argument
+       * as path, not as stringified-uri. E.g. `URI.file(path)` is **not the same as**
+       * `URI.parse('file://' + path)` because the path might contain characters that are
+       * interpreted (# and ?). See the following sample:
+       * ```ts
+      const good = URI.file('/coding/c#/project1');
+      good.scheme === 'file';
+      good.path === '/coding/c#/project1';
+      good.fragment === '';
+      const bad = URI.parse('file://' + '/coding/c#/project1');
+      bad.scheme === 'file';
+      bad.path === '/coding/c'; // path is now broken
+      bad.fragment === '/project1';
+      ```
+       *
+       * @param path A file system path (see `URI#fsPath`)
+       */
+      static file(path) {
+        let authority = _empty;
+        if (isWindows) {
+          path = path.replace(/\\/g, _slash);
+        }
+        if (path[0] === _slash && path[1] === _slash) {
+          const idx = path.indexOf(_slash, 2);
+          if (idx === -1) {
+            authority = path.substring(2);
+            path = _slash;
+          } else {
+            authority = path.substring(2, idx);
+            path = path.substring(idx) || _slash;
+          }
+        }
+        return new Uri("file", authority, path, _empty, _empty);
+      }
+      /**
+       * Creates new URI from uri components.
+       *
+       * Unless `strict` is `true` the scheme is defaults to be `file`. This function performs
+       * validation and should be used for untrusted uri components retrieved from storage,
+       * user input, command arguments etc
+       */
+      static from(components, strict) {
+        const result = new Uri(components.scheme, components.authority, components.path, components.query, components.fragment, strict);
+        return result;
+      }
+      /**
+       * Join a URI path with path fragments and normalizes the resulting path.
+       *
+       * @param uri The input URI.
+       * @param pathFragment The path fragment to add to the URI path.
+       * @returns The resulting URI.
+       */
+      static joinPath(uri, ...pathFragment) {
+        if (!uri.path) {
+          throw new Error(`[UriError]: cannot call joinPath on URI without path: ${uri.toString()}`);
+        }
+        let newPath;
+        if (isWindows && uri.scheme === "file") {
+          newPath = _URI.file(win32.join(uriToFsPath(uri, true), ...pathFragment)).path;
+        } else {
+          newPath = posix.join(uri.path, ...pathFragment);
+        }
+        return uri.with({ path: newPath });
+      }
+      // ---- printing/externalize ---------------------------
+      /**
+       * Creates a string representation for this URI. It's guaranteed that calling
+       * `URI.parse` with the result of this function creates an URI which is equal
+       * to this URI.
+       *
+       * * The result shall *not* be used for display purposes but for externalization or transport.
+       * * The result will be encoded using the percentage encoding and encoding happens mostly
+       * ignore the scheme-specific encoding rules.
+       *
+       * @param skipEncoding Do not encode the result, default is `false`
+       */
+      toString(skipEncoding = false) {
+        return _asFormatted(this, skipEncoding);
+      }
+      toJSON() {
+        return this;
+      }
+      static revive(data) {
+        if (!data) {
+          return data;
+        } else if (data instanceof _URI) {
+          return data;
+        } else {
+          const result = new Uri(data);
+          result._formatted = data.external ?? null;
+          result._fsPath = data._sep === _pathSepMarker ? data.fsPath ?? null : null;
+          return result;
+        }
+      }
+      [/* @__PURE__ */ Symbol.for("debug.description")]() {
+        return `URI(${this.toString()})`;
+      }
+    };
+    __name(isUriComponents, "isUriComponents");
+    __name5(isUriComponents, "isUriComponents");
+    _pathSepMarker = isWindows ? 1 : void 0;
+    Uri = class extends URI {
+      static {
+        __name(this, "Uri");
+      }
+      static {
+        __name5(this, "Uri");
+      }
+      constructor() {
+        super(...arguments);
+        this._formatted = null;
+        this._fsPath = null;
+      }
+      get fsPath() {
+        if (!this._fsPath) {
+          this._fsPath = uriToFsPath(this, false);
+        }
+        return this._fsPath;
+      }
+      toString(skipEncoding = false) {
+        if (!skipEncoding) {
+          if (!this._formatted) {
+            this._formatted = _asFormatted(this, false);
+          }
+          return this._formatted;
+        } else {
+          return _asFormatted(this, true);
+        }
+      }
+      toJSON() {
+        const res = {
+          $mid: 1
+          /* MarshalledId.Uri */
+        };
+        if (this._fsPath) {
+          res.fsPath = this._fsPath;
+          res._sep = _pathSepMarker;
+        }
+        if (this._formatted) {
+          res.external = this._formatted;
+        }
+        if (this.path) {
+          res.path = this.path;
+        }
+        if (this.scheme) {
+          res.scheme = this.scheme;
+        }
+        if (this.authority) {
+          res.authority = this.authority;
+        }
+        if (this.query) {
+          res.query = this.query;
+        }
+        if (this.fragment) {
+          res.fragment = this.fragment;
+        }
+        return res;
+      }
+    };
+    encodeTable = {
+      [
+        58
+        /* CharCode.Colon */
+      ]: "%3A",
+      // gen-delims
+      [
+        47
+        /* CharCode.Slash */
+      ]: "%2F",
+      [
+        63
+        /* CharCode.QuestionMark */
+      ]: "%3F",
+      [
+        35
+        /* CharCode.Hash */
+      ]: "%23",
+      [
+        91
+        /* CharCode.OpenSquareBracket */
+      ]: "%5B",
+      [
+        93
+        /* CharCode.CloseSquareBracket */
+      ]: "%5D",
+      [
+        64
+        /* CharCode.AtSign */
+      ]: "%40",
+      [
+        33
+        /* CharCode.ExclamationMark */
+      ]: "%21",
+      // sub-delims
+      [
+        36
+        /* CharCode.DollarSign */
+      ]: "%24",
+      [
+        38
+        /* CharCode.Ampersand */
+      ]: "%26",
+      [
+        39
+        /* CharCode.SingleQuote */
+      ]: "%27",
+      [
+        40
+        /* CharCode.OpenParen */
+      ]: "%28",
+      [
+        41
+        /* CharCode.CloseParen */
+      ]: "%29",
+      [
+        42
+        /* CharCode.Asterisk */
+      ]: "%2A",
+      [
+        43
+        /* CharCode.Plus */
+      ]: "%2B",
+      [
+        44
+        /* CharCode.Comma */
+      ]: "%2C",
+      [
+        59
+        /* CharCode.Semicolon */
+      ]: "%3B",
+      [
+        61
+        /* CharCode.Equals */
+      ]: "%3D",
+      [
+        32
+        /* CharCode.Space */
+      ]: "%20"
+    };
+    __name(encodeURIComponentFast, "encodeURIComponentFast");
+    __name5(encodeURIComponentFast, "encodeURIComponentFast");
+    __name(encodeURIComponentMinimal, "encodeURIComponentMinimal");
+    __name5(encodeURIComponentMinimal, "encodeURIComponentMinimal");
+    __name(uriToFsPath, "uriToFsPath");
+    __name5(uriToFsPath, "uriToFsPath");
+    __name(_asFormatted, "_asFormatted");
+    __name5(_asFormatted, "_asFormatted");
+    __name(decodeURIComponentGraceful, "decodeURIComponentGraceful");
+    __name5(decodeURIComponentGraceful, "decodeURIComponentGraceful");
+    _rEncodedAsHex = /(%[0-9A-Za-z][0-9A-Za-z])+/g;
+    __name(percentDecode, "percentDecode");
+    __name5(percentDecode, "percentDecode");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js
+function findLast(array, predicate, fromIndex = array.length - 1) {
+  const idx = findLastIdx(array, predicate, fromIndex);
+  if (idx === -1) {
+    return void 0;
+  }
+  return array[idx];
+}
+function findLastIdx(array, predicate, fromIndex = array.length - 1) {
+  for (let i = fromIndex; i >= 0; i--) {
+    const element = array[i];
+    if (predicate(element, i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+function findFirst(array, predicate, fromIndex = 0) {
+  const idx = findFirstIdx(array, predicate, fromIndex);
+  if (idx === -1) {
+    return void 0;
+  }
+  return array[idx];
+}
+function findFirstIdx(array, predicate, fromIndex = 0) {
+  for (let i = fromIndex; i < array.length; i++) {
+    const element = array[i];
+    if (predicate(element, i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+function findLastMonotonous(array, predicate) {
+  const idx = findLastIdxMonotonous(array, predicate);
+  return idx === -1 ? void 0 : array[idx];
+}
+function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
+  let i = startIdx;
+  let j = endIdxEx;
+  while (i < j) {
+    const k = Math.floor((i + j) / 2);
+    if (predicate(array[k])) {
+      i = k + 1;
+    } else {
+      j = k;
+    }
+  }
+  return i - 1;
+}
+function findFirstMonotonous(array, predicate) {
+  const idx = findFirstIdxMonotonousOrArrLen(array, predicate);
+  return idx === array.length ? void 0 : array[idx];
+}
+function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx = array.length) {
+  let i = startIdx;
+  let j = endIdxEx;
+  while (i < j) {
+    const k = Math.floor((i + j) / 2);
+    if (predicate(array[k])) {
+      j = k;
+    } else {
+      i = k + 1;
+    }
+  }
+  return i;
+}
+function findFirstIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
+  const idx = findFirstIdxMonotonousOrArrLen(array, predicate, startIdx, endIdxEx);
+  return idx === array.length ? -1 : idx;
+}
+function findFirstMax(array, comparator) {
+  if (array.length === 0) {
+    return void 0;
+  }
+  let max = array[0];
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, max) > 0) {
+      max = item;
+    }
+  }
+  return max;
+}
+function findLastMax(array, comparator) {
+  if (array.length === 0) {
+    return void 0;
+  }
+  let max = array[0];
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, max) >= 0) {
+      max = item;
+    }
+  }
+  return max;
+}
+function findFirstMin(array, comparator) {
+  return findFirstMax(array, (a, b) => -comparator(a, b));
+}
+function findMaxIdx(array, comparator) {
+  if (array.length === 0) {
+    return -1;
+  }
+  let maxIdx = 0;
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, array[maxIdx]) > 0) {
+      maxIdx = i;
+    }
+  }
+  return maxIdx;
+}
+function mapFindFirst(items, mapFn) {
+  for (const value of items) {
+    const mapped = mapFn(value);
+    if (mapped !== void 0) {
+      return mapped;
+    }
+  }
+  return void 0;
+}
+var __defProp6, __name6, MonotonousArray;
+var init_arraysFind = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js"() {
+    "use strict";
+    __defProp6 = Object.defineProperty;
+    __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
+    __name(findLast, "findLast");
+    __name6(findLast, "findLast");
+    __name(findLastIdx, "findLastIdx");
+    __name6(findLastIdx, "findLastIdx");
+    __name(findFirst, "findFirst");
+    __name6(findFirst, "findFirst");
+    __name(findFirstIdx, "findFirstIdx");
+    __name6(findFirstIdx, "findFirstIdx");
+    __name(findLastMonotonous, "findLastMonotonous");
+    __name6(findLastMonotonous, "findLastMonotonous");
+    __name(findLastIdxMonotonous, "findLastIdxMonotonous");
+    __name6(findLastIdxMonotonous, "findLastIdxMonotonous");
+    __name(findFirstMonotonous, "findFirstMonotonous");
+    __name6(findFirstMonotonous, "findFirstMonotonous");
+    __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
+    __name6(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
+    __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+    __name6(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+    MonotonousArray = class _MonotonousArray {
+      static {
+        __name(this, "MonotonousArray");
+      }
+      static {
+        __name6(this, "MonotonousArray");
+      }
+      static {
+        this.assertInvariants = false;
+      }
+      constructor(_array) {
+        this._array = _array;
+        this._findLastMonotonousLastIdx = 0;
+      }
+      /**
+       * The predicate must be monotonous, i.e. `arr.map(predicate)` must be like `[true, ..., true, false, ..., false]`!
+       * For subsequent calls, current predicate must be weaker than (or equal to) the previous predicate, i.e. more entries must be `true`.
+       */
+      findLastMonotonous(predicate) {
+        if (_MonotonousArray.assertInvariants) {
+          if (this._prevFindLastPredicate) {
+            for (const item of this._array) {
+              if (this._prevFindLastPredicate(item) && !predicate(item)) {
+                throw new Error("MonotonousArray: current predicate must be weaker than (or equal to) the previous predicate.");
+              }
+            }
+          }
+          this._prevFindLastPredicate = predicate;
+        }
+        const idx = findLastIdxMonotonous(this._array, predicate, this._findLastMonotonousLastIdx);
+        this._findLastMonotonousLastIdx = idx + 1;
+        return idx === -1 ? void 0 : this._array[idx];
+      }
+    };
+    __name(findFirstMax, "findFirstMax");
+    __name6(findFirstMax, "findFirstMax");
+    __name(findLastMax, "findLastMax");
+    __name6(findLastMax, "findLastMax");
+    __name(findFirstMin, "findFirstMin");
+    __name6(findFirstMin, "findFirstMin");
+    __name(findMaxIdx, "findMaxIdx");
+    __name6(findMaxIdx, "findMaxIdx");
+    __name(mapFindFirst, "mapFindFirst");
+    __name6(mapFindFirst, "mapFindFirst");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/errors.js
+function setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
+  errorHandler.setUnexpectedErrorHandler(newUnexpectedErrorHandler);
+}
+function isSigPipeError(e) {
+  if (!e || typeof e !== "object") {
+    return false;
+  }
+  const cast = e;
+  return cast.code === "EPIPE" && cast.syscall?.toUpperCase() === "WRITE";
+}
+function onBugIndicatingError(e) {
+  errorHandler.onUnexpectedError(e);
+  return void 0;
+}
+function onUnexpectedError(e) {
+  if (!isCancellationError(e)) {
+    errorHandler.onUnexpectedError(e);
+  }
+  return void 0;
+}
+function onUnexpectedExternalError(e) {
+  if (!isCancellationError(e)) {
+    errorHandler.onUnexpectedExternalError(e);
+  }
+  return void 0;
+}
+function transformErrorForSerialization(error) {
+  if (error instanceof Error) {
+    const { name, message, cause } = error;
+    const stack = error.stacktrace || error.stack;
+    return {
+      $isError: true,
+      name,
+      message,
+      stack,
+      noTelemetry: ErrorNoTelemetry.isErrorNoTelemetry(error),
+      cause: cause ? transformErrorForSerialization(cause) : void 0,
+      code: error.code
+    };
+  }
+  return error;
+}
+function transformErrorFromSerialization(data) {
+  let error;
+  if (data.noTelemetry) {
+    error = new ErrorNoTelemetry();
+  } else {
+    error = new Error();
+    error.name = data.name;
+  }
+  error.message = data.message;
+  error.stack = data.stack;
+  if (data.code) {
+    error.code = data.code;
+  }
+  if (data.cause) {
+    error.cause = transformErrorFromSerialization(data.cause);
+  }
+  return error;
+}
+function isCancellationError(error) {
+  if (error instanceof CancellationError) {
+    return true;
+  }
+  return error instanceof Error && error.name === canceledName && error.message === canceledName;
+}
+function canceled() {
+  const error = new Error(canceledName);
+  error.name = error.message;
+  return error;
+}
+function illegalArgument(name) {
+  if (name) {
+    return new Error(`Illegal argument: ${name}`);
+  } else {
+    return new Error("Illegal argument");
+  }
+}
+function illegalState(name) {
+  if (name) {
+    return new Error(`Illegal state: ${name}`);
+  } else {
+    return new Error("Illegal state");
+  }
+}
+function getErrorMessage(err) {
+  if (!err) {
+    return "Error";
+  }
+  if (err.message) {
+    return err.message;
+  }
+  if (err.stack) {
+    return err.stack.split("\n")[0];
+  }
+  return String(err);
+}
+var __defProp7, __name7, ErrorHandler, errorHandler, canceledName, CancellationError, PendingMigrationError, ReadonlyError, NotImplementedError, NotSupportedError, ExpectedError, ErrorNoTelemetry, BugIndicatingError;
+var init_errors = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/errors.js"() {
+    "use strict";
+    __defProp7 = Object.defineProperty;
+    __name7 = /* @__PURE__ */ __name((target, value) => __defProp7(target, "name", { value, configurable: true }), "__name");
+    ErrorHandler = class {
+      static {
+        __name(this, "ErrorHandler");
+      }
+      static {
+        __name7(this, "ErrorHandler");
+      }
+      constructor() {
+        this.listeners = [];
+        this.unexpectedErrorHandler = function(e) {
+          setTimeout(() => {
+            if (e.stack) {
+              if (ErrorNoTelemetry.isErrorNoTelemetry(e)) {
+                throw new ErrorNoTelemetry(e.message + "\n\n" + e.stack);
+              }
+              throw new Error(e.message + "\n\n" + e.stack);
+            }
+            throw e;
+          }, 0);
+        };
+      }
+      addListener(listener) {
+        this.listeners.push(listener);
+        return () => {
+          this._removeListener(listener);
+        };
+      }
+      emit(e) {
+        this.listeners.forEach((listener) => {
+          listener(e);
+        });
+      }
+      _removeListener(listener) {
+        this.listeners.splice(this.listeners.indexOf(listener), 1);
+      }
+      setUnexpectedErrorHandler(newUnexpectedErrorHandler) {
+        this.unexpectedErrorHandler = newUnexpectedErrorHandler;
+      }
+      getUnexpectedErrorHandler() {
+        return this.unexpectedErrorHandler;
+      }
+      onUnexpectedError(e) {
+        this.unexpectedErrorHandler(e);
+        this.emit(e);
+      }
+      // For external errors, we don't want the listeners to be called
+      onUnexpectedExternalError(e) {
+        this.unexpectedErrorHandler(e);
+      }
+    };
+    errorHandler = new ErrorHandler();
+    __name(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
+    __name7(setUnexpectedErrorHandler, "setUnexpectedErrorHandler");
+    __name(isSigPipeError, "isSigPipeError");
+    __name7(isSigPipeError, "isSigPipeError");
+    __name(onBugIndicatingError, "onBugIndicatingError");
+    __name7(onBugIndicatingError, "onBugIndicatingError");
+    __name(onUnexpectedError, "onUnexpectedError");
+    __name7(onUnexpectedError, "onUnexpectedError");
+    __name(onUnexpectedExternalError, "onUnexpectedExternalError");
+    __name7(onUnexpectedExternalError, "onUnexpectedExternalError");
+    __name(transformErrorForSerialization, "transformErrorForSerialization");
+    __name7(transformErrorForSerialization, "transformErrorForSerialization");
+    __name(transformErrorFromSerialization, "transformErrorFromSerialization");
+    __name7(transformErrorFromSerialization, "transformErrorFromSerialization");
+    canceledName = "Canceled";
+    __name(isCancellationError, "isCancellationError");
+    __name7(isCancellationError, "isCancellationError");
+    CancellationError = class extends Error {
+      static {
+        __name(this, "CancellationError");
+      }
+      static {
+        __name7(this, "CancellationError");
+      }
+      constructor() {
+        super(canceledName);
+        this.name = this.message;
+      }
+    };
+    PendingMigrationError = class _PendingMigrationError extends Error {
+      static {
+        __name(this, "PendingMigrationError");
+      }
+      static {
+        __name7(this, "PendingMigrationError");
+      }
+      static {
+        this._name = "PendingMigrationError";
+      }
+      static is(error) {
+        return error instanceof _PendingMigrationError || error instanceof Error && error.name === _PendingMigrationError._name;
+      }
+      constructor(message) {
+        super(message);
+        this.name = _PendingMigrationError._name;
+      }
+    };
+    __name(canceled, "canceled");
+    __name7(canceled, "canceled");
+    __name(illegalArgument, "illegalArgument");
+    __name7(illegalArgument, "illegalArgument");
+    __name(illegalState, "illegalState");
+    __name7(illegalState, "illegalState");
+    ReadonlyError = class extends TypeError {
+      static {
+        __name(this, "ReadonlyError");
+      }
+      static {
+        __name7(this, "ReadonlyError");
+      }
+      constructor(name) {
+        super(name ? `${name} is read-only and cannot be changed` : "Cannot change read-only property");
+      }
+    };
+    __name(getErrorMessage, "getErrorMessage");
+    __name7(getErrorMessage, "getErrorMessage");
+    NotImplementedError = class extends Error {
+      static {
+        __name(this, "NotImplementedError");
+      }
+      static {
+        __name7(this, "NotImplementedError");
+      }
+      constructor(message) {
+        super("NotImplemented");
+        if (message) {
+          this.message = message;
+        }
+      }
+    };
+    NotSupportedError = class extends Error {
+      static {
+        __name(this, "NotSupportedError");
+      }
+      static {
+        __name7(this, "NotSupportedError");
+      }
+      constructor(message) {
+        super("NotSupported");
+        if (message) {
+          this.message = message;
+        }
+      }
+    };
+    ExpectedError = class extends Error {
+      static {
+        __name(this, "ExpectedError");
+      }
+      static {
+        __name7(this, "ExpectedError");
+      }
+      constructor() {
+        super(...arguments);
+        this.isExpected = true;
+      }
+    };
+    ErrorNoTelemetry = class _ErrorNoTelemetry extends Error {
+      static {
+        __name(this, "ErrorNoTelemetry");
+      }
+      static {
+        __name7(this, "ErrorNoTelemetry");
+      }
+      constructor(msg) {
+        super(msg);
+        this.name = "CodeExpectedError";
+      }
+      static fromError(err) {
+        if (err instanceof _ErrorNoTelemetry) {
+          return err;
+        }
+        const result = new _ErrorNoTelemetry();
+        result.message = err.message;
+        result.stack = err.stack;
+        return result;
+      }
+      static isErrorNoTelemetry(err) {
+        return err.name === "CodeExpectedError";
+      }
+    };
+    BugIndicatingError = class _BugIndicatingError extends Error {
+      static {
+        __name(this, "BugIndicatingError");
+      }
+      static {
+        __name7(this, "BugIndicatingError");
+      }
+      constructor(message) {
+        super(message || "An unexpected bug occurred.");
+        Object.setPrototypeOf(this, _BugIndicatingError.prototype);
+      }
+    };
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js
+function tail(arr) {
+  if (arr.length === 0) {
+    throw new Error("Invalid tail call");
+  }
+  return [arr.slice(0, arr.length - 1), arr[arr.length - 1]];
+}
+function equals(one, other, itemEquals = (a, b) => a === b) {
+  if (one === other) {
+    return true;
+  }
+  if (!one || !other) {
+    return false;
+  }
+  if (one.length !== other.length) {
+    return false;
+  }
+  for (let i = 0, len = one.length; i < len; i++) {
+    if (!itemEquals(one[i], other[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+function removeFastWithoutKeepingOrder(array, index2) {
+  const last = array.length - 1;
+  if (index2 < last) {
+    array[index2] = array[last];
+  }
+  array.pop();
+}
+function binarySearch(array, key, comparator) {
+  return binarySearch2(array.length, (i) => comparator(array[i], key));
+}
+function binarySearch2(length, compareToKey) {
+  let low = 0, high = length - 1;
+  while (low <= high) {
+    const mid = (low + high) / 2 | 0;
+    const comp = compareToKey(mid);
+    if (comp < 0) {
+      low = mid + 1;
+    } else if (comp > 0) {
+      high = mid - 1;
+    } else {
+      return mid;
+    }
+  }
+  return -(low + 1);
+}
+function quickSelect(nth, data, compare2) {
+  nth = nth | 0;
+  if (nth >= data.length) {
+    throw new TypeError("invalid index");
+  }
+  const pivotValue = data[Math.floor(data.length * Math.random())];
+  const lower = [];
+  const higher = [];
+  const pivots = [];
+  for (const value of data) {
+    const val = compare2(value, pivotValue);
+    if (val < 0) {
+      lower.push(value);
+    } else if (val > 0) {
+      higher.push(value);
+    } else {
+      pivots.push(value);
+    }
+  }
+  if (nth < lower.length) {
+    return quickSelect(nth, lower, compare2);
+  } else if (nth < lower.length + pivots.length) {
+    return pivots[0];
+  } else {
+    return quickSelect(nth - (lower.length + pivots.length), higher, compare2);
+  }
+}
+function groupBy(data, compare2) {
+  const result = [];
+  let currentGroup = void 0;
+  for (const element of data.slice(0).sort(compare2)) {
+    if (!currentGroup || compare2(currentGroup[0], element) !== 0) {
+      currentGroup = [element];
+      result.push(currentGroup);
+    } else {
+      currentGroup.push(element);
+    }
+  }
+  return result;
+}
+function* groupAdjacentBy(items, shouldBeGrouped) {
+  let currentGroup;
+  let last;
+  for (const item of items) {
+    if (last !== void 0 && shouldBeGrouped(last, item)) {
+      currentGroup.push(item);
+    } else {
+      if (currentGroup) {
+        yield currentGroup;
+      }
+      currentGroup = [item];
+    }
+    last = item;
+  }
+  if (currentGroup) {
+    yield currentGroup;
+  }
+}
+function forEachAdjacent(arr, f) {
+  for (let i = 0; i <= arr.length; i++) {
+    f(i === 0 ? void 0 : arr[i - 1], i === arr.length ? void 0 : arr[i]);
+  }
+}
+function forEachWithNeighbors(arr, f) {
+  for (let i = 0; i < arr.length; i++) {
+    f(i === 0 ? void 0 : arr[i - 1], arr[i], i + 1 === arr.length ? void 0 : arr[i + 1]);
+  }
+}
+function concatArrays(...arrays) {
+  return [].concat(...arrays);
+}
+function sortedDiff(before, after, compare2) {
+  const result = [];
+  function pushSplice(start, deleteCount, toInsert) {
+    if (deleteCount === 0 && toInsert.length === 0) {
+      return;
+    }
+    const latest = result[result.length - 1];
+    if (latest && latest.start + latest.deleteCount === start) {
+      latest.deleteCount += deleteCount;
+      latest.toInsert.push(...toInsert);
+    } else {
+      result.push({ start, deleteCount, toInsert });
+    }
+  }
+  __name(pushSplice, "pushSplice");
+  __name8(pushSplice, "pushSplice");
+  let beforeIdx = 0;
+  let afterIdx = 0;
+  while (true) {
+    if (beforeIdx === before.length) {
+      pushSplice(beforeIdx, 0, after.slice(afterIdx));
+      break;
+    }
+    if (afterIdx === after.length) {
+      pushSplice(beforeIdx, before.length - beforeIdx, []);
+      break;
+    }
+    const beforeElement = before[beforeIdx];
+    const afterElement = after[afterIdx];
+    const n = compare2(beforeElement, afterElement);
+    if (n === 0) {
+      beforeIdx += 1;
+      afterIdx += 1;
+    } else if (n < 0) {
+      pushSplice(beforeIdx, 1, []);
+      beforeIdx += 1;
+    } else if (n > 0) {
+      pushSplice(beforeIdx, 0, [afterElement]);
+      afterIdx += 1;
+    }
+  }
+  return result;
+}
+function delta(before, after, compare2) {
+  const splices = sortedDiff(before, after, compare2);
+  const removed = [];
+  const added = [];
+  for (const splice2 of splices) {
+    removed.push(...before.slice(splice2.start, splice2.start + splice2.deleteCount));
+    added.push(...splice2.toInsert);
+  }
+  return { removed, added };
+}
+function top(array, compare2, n) {
+  if (n === 0) {
+    return [];
+  }
+  const result = array.slice(0, n).sort(compare2);
+  topStep(array, compare2, result, n, array.length);
+  return result;
+}
+function topAsync(array, compare2, n, batch, token) {
+  if (n === 0) {
+    return Promise.resolve([]);
+  }
+  return new Promise((resolve2, reject) => {
+    (async () => {
+      const o = array.length;
+      const result = array.slice(0, n).sort(compare2);
+      for (let i = n, m = Math.min(n + batch, o); i < o; i = m, m = Math.min(m + batch, o)) {
+        if (i > n) {
+          await new Promise((resolve22) => setTimeout(resolve22));
+        }
+        if (token && token.isCancellationRequested) {
+          throw new CancellationError();
+        }
+        topStep(array, compare2, result, i, m);
+      }
+      return result;
+    })().then(resolve2, reject);
+  });
+}
+function topStep(array, compare2, result, i, m) {
+  for (const n = result.length; i < m; i++) {
+    const element = array[i];
+    if (compare2(element, result[n - 1]) < 0) {
+      result.pop();
+      const j = findFirstIdxMonotonousOrArrLen(result, (e) => compare2(element, e) < 0);
+      result.splice(j, 0, element);
+    }
+  }
+}
+function coalesce(array) {
+  return array.filter((e) => !!e);
+}
+function coalesceInPlace(array) {
+  let to = 0;
+  for (let i = 0; i < array.length; i++) {
+    if (!!array[i]) {
+      array[to] = array[i];
+      to += 1;
+    }
+  }
+  array.length = to;
+}
+function move(array, from, to) {
+  array.splice(to, 0, array.splice(from, 1)[0]);
+}
+function isFalsyOrEmpty(obj) {
+  return !Array.isArray(obj) || obj.length === 0;
+}
+function isNonEmptyArray(obj) {
+  return Array.isArray(obj) && obj.length > 0;
+}
+function distinct(array, keyFn = (value) => value) {
+  const seen = /* @__PURE__ */ new Set();
+  return array.filter((element) => {
+    const key = keyFn(element);
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+function uniqueFilter(keyFn) {
+  const seen = /* @__PURE__ */ new Set();
+  return (element) => {
+    const key = keyFn(element);
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  };
+}
+function commonPrefixLength(one, other, equals22 = (a, b) => a === b) {
+  let result = 0;
+  for (let i = 0, len = Math.min(one.length, other.length); i < len && equals22(one[i], other[i]); i++) {
+    result++;
+  }
+  return result;
+}
+function range(arg, to) {
+  let from = typeof to === "number" ? arg : 0;
+  if (typeof to === "number") {
+    from = arg;
+  } else {
+    from = 0;
+    to = arg;
+  }
+  const result = [];
+  if (from <= to) {
+    for (let i = from; i < to; i++) {
+      result.push(i);
+    }
+  } else {
+    for (let i = from; i > to; i--) {
+      result.push(i);
+    }
+  }
+  return result;
+}
+function index(array, indexer, mapper) {
+  return array.reduce((r, t) => {
+    r[indexer(t)] = mapper ? mapper(t) : t;
+    return r;
+  }, /* @__PURE__ */ Object.create(null));
+}
+function insert(array, element) {
+  array.push(element);
+  return () => remove(array, element);
+}
+function remove(array, element) {
+  const index2 = array.indexOf(element);
+  if (index2 > -1) {
+    array.splice(index2, 1);
+    return element;
+  }
+  return void 0;
+}
+function arrayInsert(target, insertIndex, insertArr) {
+  const before = target.slice(0, insertIndex);
+  const after = target.slice(insertIndex);
+  return before.concat(insertArr, after);
+}
+function shuffle(array, _seed) {
+  let rand;
+  if (typeof _seed === "number") {
+    let seed = _seed;
+    rand = /* @__PURE__ */ __name8(() => {
+      const x = Math.sin(seed++) * 179426549;
+      return x - Math.floor(x);
+    }, "rand");
+  } else {
+    rand = Math.random;
+  }
+  for (let i = array.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rand() * (i + 1));
+    const temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
+  }
+}
+function pushToStart(arr, value) {
+  const index2 = arr.indexOf(value);
+  if (index2 > -1) {
+    arr.splice(index2, 1);
+    arr.unshift(value);
+  }
+}
+function pushToEnd(arr, value) {
+  const index2 = arr.indexOf(value);
+  if (index2 > -1) {
+    arr.splice(index2, 1);
+    arr.push(value);
+  }
+}
+function pushMany(arr, items) {
+  for (const item of items) {
+    arr.push(item);
+  }
+}
+function mapArrayOrNot(items, fn) {
+  return Array.isArray(items) ? items.map(fn) : fn(items);
+}
+function mapFilter(array, fn) {
+  const result = [];
+  for (const item of array) {
+    const mapped = fn(item);
+    if (mapped !== void 0) {
+      result.push(mapped);
+    }
+  }
+  return result;
+}
+function withoutDuplicates(array) {
+  const s = new Set(array);
+  return Array.from(s);
+}
+function asArray(x) {
+  return Array.isArray(x) ? x : [x];
+}
+function getRandomElement(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+function insertInto(array, start, newItems) {
+  const startIdx = getActualStartIndex(array, start);
+  const originalLength = array.length;
+  const newItemsLength = newItems.length;
+  array.length = originalLength + newItemsLength;
+  for (let i = originalLength - 1; i >= startIdx; i--) {
+    array[i + newItemsLength] = array[i];
+  }
+  for (let i = 0; i < newItemsLength; i++) {
+    array[i + startIdx] = newItems[i];
+  }
+}
+function splice(array, start, deleteCount, newItems) {
+  const index2 = getActualStartIndex(array, start);
+  let result = array.splice(index2, deleteCount);
+  if (result === void 0) {
+    result = [];
+  }
+  insertInto(array, index2, newItems);
+  return result;
+}
+function getActualStartIndex(array, start) {
+  return start < 0 ? Math.max(start + array.length, 0) : Math.min(start, array.length);
+}
+function compareBy(selector, comparator) {
+  return (a, b) => comparator(selector(a), selector(b));
+}
+function tieBreakComparators(...comparators) {
+  return (item1, item2) => {
+    for (const comparator of comparators) {
+      const result = comparator(item1, item2);
+      if (!CompareResult.isNeitherLessOrGreaterThan(result)) {
+        return result;
+      }
+    }
+    return CompareResult.neitherLessOrGreaterThan;
+  };
+}
+function reverseOrder(comparator) {
+  return (a, b) => -comparator(a, b);
+}
+function compareUndefinedSmallest(comparator) {
+  return (a, b) => {
+    if (a === void 0) {
+      return b === void 0 ? CompareResult.neitherLessOrGreaterThan : CompareResult.lessThan;
+    } else if (b === void 0) {
+      return CompareResult.greaterThan;
+    }
+    return comparator(a, b);
+  };
+}
+async function findAsync(array, predicate) {
+  const results = await Promise.all(array.map(async (element, index2) => ({ element, ok: await predicate(element, index2) })));
+  return results.find((r) => r.ok)?.element;
+}
+function sum(array) {
+  return array.reduce((acc, value) => acc + value, 0);
+}
+function sumBy(array, selector) {
+  return array.reduce((acc, value) => acc + selector(value), 0);
+}
+var __defProp8, __name8, CompareResult, numberComparator, booleanComparator, ArrayQueue, CallbackIterable, Permutation;
+var init_arrays = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js"() {
+    "use strict";
+    init_arraysFind();
+    init_errors();
+    __defProp8 = Object.defineProperty;
+    __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
+    __name(tail, "tail");
+    __name8(tail, "tail");
+    __name(equals, "equals");
+    __name8(equals, "equals");
+    __name(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
+    __name8(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
+    __name(binarySearch, "binarySearch");
+    __name8(binarySearch, "binarySearch");
+    __name(binarySearch2, "binarySearch2");
+    __name8(binarySearch2, "binarySearch2");
+    __name(quickSelect, "quickSelect");
+    __name8(quickSelect, "quickSelect");
+    __name(groupBy, "groupBy");
+    __name8(groupBy, "groupBy");
+    __name(groupAdjacentBy, "groupAdjacentBy");
+    __name8(groupAdjacentBy, "groupAdjacentBy");
+    __name(forEachAdjacent, "forEachAdjacent");
+    __name8(forEachAdjacent, "forEachAdjacent");
+    __name(forEachWithNeighbors, "forEachWithNeighbors");
+    __name8(forEachWithNeighbors, "forEachWithNeighbors");
+    __name(concatArrays, "concatArrays");
+    __name8(concatArrays, "concatArrays");
+    __name(sortedDiff, "sortedDiff");
+    __name8(sortedDiff, "sortedDiff");
+    __name(delta, "delta");
+    __name8(delta, "delta");
+    __name(top, "top");
+    __name8(top, "top");
+    __name(topAsync, "topAsync");
+    __name8(topAsync, "topAsync");
+    __name(topStep, "topStep");
+    __name8(topStep, "topStep");
+    __name(coalesce, "coalesce");
+    __name8(coalesce, "coalesce");
+    __name(coalesceInPlace, "coalesceInPlace");
+    __name8(coalesceInPlace, "coalesceInPlace");
+    __name(move, "move");
+    __name8(move, "move");
+    __name(isFalsyOrEmpty, "isFalsyOrEmpty");
+    __name8(isFalsyOrEmpty, "isFalsyOrEmpty");
+    __name(isNonEmptyArray, "isNonEmptyArray");
+    __name8(isNonEmptyArray, "isNonEmptyArray");
+    __name(distinct, "distinct");
+    __name8(distinct, "distinct");
+    __name(uniqueFilter, "uniqueFilter");
+    __name8(uniqueFilter, "uniqueFilter");
+    __name(commonPrefixLength, "commonPrefixLength");
+    __name8(commonPrefixLength, "commonPrefixLength");
+    __name(range, "range");
+    __name8(range, "range");
+    __name(index, "index");
+    __name8(index, "index");
+    __name(insert, "insert");
+    __name8(insert, "insert");
+    __name(remove, "remove");
+    __name8(remove, "remove");
+    __name(arrayInsert, "arrayInsert");
+    __name8(arrayInsert, "arrayInsert");
+    __name(shuffle, "shuffle");
+    __name8(shuffle, "shuffle");
+    __name(pushToStart, "pushToStart");
+    __name8(pushToStart, "pushToStart");
+    __name(pushToEnd, "pushToEnd");
+    __name8(pushToEnd, "pushToEnd");
+    __name(pushMany, "pushMany");
+    __name8(pushMany, "pushMany");
+    __name(mapArrayOrNot, "mapArrayOrNot");
+    __name8(mapArrayOrNot, "mapArrayOrNot");
+    __name(mapFilter, "mapFilter");
+    __name8(mapFilter, "mapFilter");
+    __name(withoutDuplicates, "withoutDuplicates");
+    __name8(withoutDuplicates, "withoutDuplicates");
+    __name(asArray, "asArray");
+    __name8(asArray, "asArray");
+    __name(getRandomElement, "getRandomElement");
+    __name8(getRandomElement, "getRandomElement");
+    __name(insertInto, "insertInto");
+    __name8(insertInto, "insertInto");
+    __name(splice, "splice");
+    __name8(splice, "splice");
+    __name(getActualStartIndex, "getActualStartIndex");
+    __name8(getActualStartIndex, "getActualStartIndex");
+    (function(CompareResult2) {
+      function isLessThan(result) {
+        return result < 0;
+      }
+      __name(isLessThan, "isLessThan");
+      __name8(isLessThan, "isLessThan");
+      CompareResult2.isLessThan = isLessThan;
+      function isLessThanOrEqual(result) {
+        return result <= 0;
+      }
+      __name(isLessThanOrEqual, "isLessThanOrEqual");
+      __name8(isLessThanOrEqual, "isLessThanOrEqual");
+      CompareResult2.isLessThanOrEqual = isLessThanOrEqual;
+      function isGreaterThan(result) {
+        return result > 0;
+      }
+      __name(isGreaterThan, "isGreaterThan");
+      __name8(isGreaterThan, "isGreaterThan");
+      CompareResult2.isGreaterThan = isGreaterThan;
+      function isNeitherLessOrGreaterThan(result) {
+        return result === 0;
+      }
+      __name(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
+      __name8(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
+      CompareResult2.isNeitherLessOrGreaterThan = isNeitherLessOrGreaterThan;
+      CompareResult2.greaterThan = 1;
+      CompareResult2.lessThan = -1;
+      CompareResult2.neitherLessOrGreaterThan = 0;
+    })(CompareResult || (CompareResult = {}));
+    __name(compareBy, "compareBy");
+    __name8(compareBy, "compareBy");
+    __name(tieBreakComparators, "tieBreakComparators");
+    __name8(tieBreakComparators, "tieBreakComparators");
+    numberComparator = /* @__PURE__ */ __name8((a, b) => a - b, "numberComparator");
+    booleanComparator = /* @__PURE__ */ __name8((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
+    __name(reverseOrder, "reverseOrder");
+    __name8(reverseOrder, "reverseOrder");
+    __name(compareUndefinedSmallest, "compareUndefinedSmallest");
+    __name8(compareUndefinedSmallest, "compareUndefinedSmallest");
+    ArrayQueue = class {
+      static {
+        __name(this, "ArrayQueue");
+      }
+      static {
+        __name8(this, "ArrayQueue");
+      }
+      /**
+       * Constructs a queue that is backed by the given array. Runtime is O(1).
+      */
+      constructor(items) {
+        this.firstIdx = 0;
+        this.items = items;
+        this.lastIdx = this.items.length - 1;
+      }
+      get length() {
+        return this.lastIdx - this.firstIdx + 1;
+      }
+      /**
+       * Consumes elements from the beginning of the queue as long as the predicate returns true.
+       * If no elements were consumed, `null` is returned. Has a runtime of O(result.length).
+      */
+      takeWhile(predicate) {
+        let startIdx = this.firstIdx;
+        while (startIdx < this.items.length && predicate(this.items[startIdx])) {
+          startIdx++;
+        }
+        const result = startIdx === this.firstIdx ? null : this.items.slice(this.firstIdx, startIdx);
+        this.firstIdx = startIdx;
+        return result;
+      }
+      /**
+       * Consumes elements from the end of the queue as long as the predicate returns true.
+       * If no elements were consumed, `null` is returned.
+       * The result has the same order as the underlying array!
+      */
+      takeFromEndWhile(predicate) {
+        let endIdx = this.lastIdx;
+        while (endIdx >= 0 && predicate(this.items[endIdx])) {
+          endIdx--;
+        }
+        const result = endIdx === this.lastIdx ? null : this.items.slice(endIdx + 1, this.lastIdx + 1);
+        this.lastIdx = endIdx;
+        return result;
+      }
+      peek() {
+        if (this.length === 0) {
+          return void 0;
+        }
+        return this.items[this.firstIdx];
+      }
+      peekLast() {
+        if (this.length === 0) {
+          return void 0;
+        }
+        return this.items[this.lastIdx];
+      }
+      dequeue() {
+        const result = this.items[this.firstIdx];
+        this.firstIdx++;
+        return result;
+      }
+      removeLast() {
+        const result = this.items[this.lastIdx];
+        this.lastIdx--;
+        return result;
+      }
+      takeCount(count2) {
+        const result = this.items.slice(this.firstIdx, this.firstIdx + count2);
+        this.firstIdx += count2;
+        return result;
+      }
+    };
+    CallbackIterable = class _CallbackIterable {
+      static {
+        __name(this, "CallbackIterable");
+      }
+      static {
+        __name8(this, "CallbackIterable");
+      }
+      static {
+        this.empty = new _CallbackIterable((_callback) => {
+        });
+      }
+      constructor(iterate) {
+        this.iterate = iterate;
+      }
+      forEach(handler) {
+        this.iterate((item) => {
+          handler(item);
+          return true;
+        });
+      }
+      toArray() {
+        const result = [];
+        this.iterate((item) => {
+          result.push(item);
+          return true;
+        });
+        return result;
+      }
+      filter(predicate) {
+        return new _CallbackIterable((cb) => this.iterate((item) => predicate(item) ? cb(item) : true));
+      }
+      map(mapFn) {
+        return new _CallbackIterable((cb) => this.iterate((item) => cb(mapFn(item))));
+      }
+      some(predicate) {
+        let result = false;
+        this.iterate((item) => {
+          result = predicate(item);
+          return !result;
+        });
+        return result;
+      }
+      findFirst(predicate) {
+        let result;
+        this.iterate((item) => {
+          if (predicate(item)) {
+            result = item;
+            return false;
+          }
+          return true;
+        });
+        return result;
+      }
+      findLast(predicate) {
+        let result;
+        this.iterate((item) => {
+          if (predicate(item)) {
+            result = item;
+          }
+          return true;
+        });
+        return result;
+      }
+      findLastMaxBy(comparator) {
+        let result;
+        let first = true;
+        this.iterate((item) => {
+          if (first || CompareResult.isGreaterThan(comparator(item, result))) {
+            first = false;
+            result = item;
+          }
+          return true;
+        });
+        return result;
+      }
+    };
+    Permutation = class _Permutation {
+      static {
+        __name(this, "Permutation");
+      }
+      static {
+        __name8(this, "Permutation");
+      }
+      constructor(_indexMap) {
+        this._indexMap = _indexMap;
+      }
+      /**
+       * Returns a permutation that sorts the given array according to the given compare function.
+       */
+      static createSortPermutation(arr, compareFn) {
+        const sortIndices = Array.from(arr.keys()).sort((index1, index2) => compareFn(arr[index1], arr[index2]));
+        return new _Permutation(sortIndices);
+      }
+      /**
+       * Returns a new array with the elements of the given array re-arranged according to this permutation.
+       */
+      apply(arr) {
+        return arr.map((_, index2) => arr[this._indexMap[index2]]);
+      }
+      /**
+       * Returns a new permutation that undoes the re-arrangement of this permutation.
+      */
+      inverse() {
+        const inverseIndexMap = this._indexMap.slice();
+        for (let i = 0; i < this._indexMap.length; i++) {
+          inverseIndexMap[this._indexMap[i]] = i;
+        }
+        return new _Permutation(inverseIndexMap);
+      }
+    };
+    __name(findAsync, "findAsync");
+    __name8(findAsync, "findAsync");
+    __name(sum, "sum");
+    __name8(sum, "sum");
+    __name(sumBy, "sumBy");
+    __name8(sumBy, "sumBy");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/lazy.js
+var __defProp9, __name9, LazyValueState, Lazy;
+var init_lazy = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/lazy.js"() {
+    "use strict";
+    __defProp9 = Object.defineProperty;
+    __name9 = /* @__PURE__ */ __name((target, value) => __defProp9(target, "name", { value, configurable: true }), "__name");
+    (function(LazyValueState2) {
+      LazyValueState2[LazyValueState2["Uninitialized"] = 0] = "Uninitialized";
+      LazyValueState2[LazyValueState2["Running"] = 1] = "Running";
+      LazyValueState2[LazyValueState2["Completed"] = 2] = "Completed";
+    })(LazyValueState || (LazyValueState = {}));
+    Lazy = class {
+      static {
+        __name(this, "Lazy");
+      }
+      static {
+        __name9(this, "Lazy");
+      }
+      constructor(executor) {
+        this.executor = executor;
+        this._state = LazyValueState.Uninitialized;
+      }
+      /**
+       * True if the lazy value has been resolved.
+       */
+      get hasValue() {
+        return this._state === LazyValueState.Completed;
+      }
+      /**
+       * Get the wrapped value.
+       *
+       * This will force evaluation of the lazy value if it has not been resolved yet. Lazy values are only
+       * resolved once. `getValue` will re-throw exceptions that are hit while resolving the value
+       */
+      get value() {
+        if (this._state === LazyValueState.Uninitialized) {
+          this._state = LazyValueState.Running;
+          try {
+            this._value = this.executor();
+          } catch (err) {
+            this._error = err;
+          } finally {
+            this._state = LazyValueState.Completed;
+          }
+        } else if (this._state === LazyValueState.Running) {
+          throw new Error("Cannot read the value of a lazy that is being initialized");
+        }
+        if (this._error) {
+          throw this._error;
+        }
+        return this._value;
+      }
+      /**
+       * Get the wrapped value without forcing evaluation.
+       */
+      get rawValue() {
+        return this._value;
+      }
+    };
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/collections.js
+function groupBy2(data, groupFn) {
+  const result = /* @__PURE__ */ Object.create(null);
+  for (const element of data) {
+    const key = groupFn(element);
+    let target = result[key];
+    if (!target) {
+      target = result[key] = [];
+    }
+    target.push(element);
+  }
+  return result;
+}
+function groupByMap(data, groupFn) {
+  const result = /* @__PURE__ */ new Map();
+  for (const element of data) {
+    const key = groupFn(element);
+    let target = result.get(key);
+    if (!target) {
+      target = [];
+      result.set(key, target);
+    }
+    target.push(element);
+  }
+  return result;
+}
+function diffSets(before, after) {
+  const removed = [];
+  const added = [];
+  for (const element of before) {
+    if (!after.has(element)) {
+      removed.push(element);
+    }
+  }
+  for (const element of after) {
+    if (!before.has(element)) {
+      added.push(element);
+    }
+  }
+  return { removed, added };
+}
+function diffMaps(before, after) {
+  const removed = [];
+  const added = [];
+  for (const [index2, value] of before) {
+    if (!after.has(index2)) {
+      removed.push(value);
+    }
+  }
+  for (const [index2, value] of after) {
+    if (!before.has(index2)) {
+      added.push(value);
+    }
+  }
+  return { removed, added };
+}
+function intersection(setA, setB) {
+  const result = /* @__PURE__ */ new Set();
+  for (const elem of setB) {
+    if (setA.has(elem)) {
+      result.add(elem);
+    }
+  }
+  return result;
+}
+var __defProp10, __name10, _a, SetWithKey;
+var init_collections = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/collections.js"() {
+    "use strict";
+    __defProp10 = Object.defineProperty;
+    __name10 = /* @__PURE__ */ __name((target, value) => __defProp10(target, "name", { value, configurable: true }), "__name");
+    __name(groupBy2, "groupBy");
+    __name10(groupBy2, "groupBy");
+    __name(groupByMap, "groupByMap");
+    __name10(groupByMap, "groupByMap");
+    __name(diffSets, "diffSets");
+    __name10(diffSets, "diffSets");
+    __name(diffMaps, "diffMaps");
+    __name10(diffMaps, "diffMaps");
+    __name(intersection, "intersection");
+    __name10(intersection, "intersection");
+    SetWithKey = class {
+      static {
+        __name(this, "SetWithKey");
+      }
+      static {
+        __name10(this, "SetWithKey");
+      }
+      static {
+        _a = Symbol.toStringTag;
+      }
+      constructor(values, toKey) {
+        this.toKey = toKey;
+        this._map = /* @__PURE__ */ new Map();
+        this[_a] = "SetWithKey";
+        for (const value of values) {
+          this.add(value);
+        }
+      }
+      get size() {
+        return this._map.size;
+      }
+      add(value) {
+        const key = this.toKey(value);
+        this._map.set(key, value);
+        return this;
+      }
+      delete(value) {
+        return this._map.delete(this.toKey(value));
+      }
+      has(value) {
+        return this._map.has(this.toKey(value));
+      }
+      *entries() {
+        for (const entry of this._map.values()) {
+          yield [entry, entry];
+        }
+      }
+      keys() {
+        return this.values();
+      }
+      *values() {
+        for (const entry of this._map.values()) {
+          yield entry;
+        }
+      }
+      clear() {
+        this._map.clear();
+      }
+      forEach(callbackfn, thisArg) {
+        this._map.forEach((entry) => callbackfn.call(thisArg, entry, entry, this));
+      }
+      [Symbol.iterator]() {
+        return this.values();
+      }
+    };
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/map.js
+function getOrSet(map, key, value) {
+  let result = map.get(key);
+  if (result === void 0) {
+    result = value;
+    map.set(key, result);
+  }
+  return result;
+}
+function mapToString(map) {
+  const entries = [];
+  map.forEach((value, key) => {
+    entries.push(`${key} => ${value}`);
+  });
+  return `Map(${map.size}) {${entries.join(", ")}}`;
+}
+function setToString(set) {
+  const entries = [];
+  set.forEach((value) => {
+    entries.push(value);
+  });
+  return `Set(${set.size}) {${entries.join(", ")}}`;
+}
+function isEntries(arg) {
+  return Array.isArray(arg);
+}
+function mapsStrictEqualIgnoreOrder(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const [key, value] of a) {
+    if (!b.has(key) || b.get(key) !== value) {
+      return false;
+    }
+  }
+  for (const [key] of b) {
+    if (!a.has(key)) {
+      return false;
+    }
+  }
+  return true;
+}
+var __defProp11, __name11, _a2, _b, _c, ResourceMapEntry, ResourceMap, ResourceSet, Touch, LinkedMap, Cache, LRUCache, MRUCache, CounterSet, BidirectionalMap, SetMap, NKeyMap;
+var init_map = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/map.js"() {
+    "use strict";
+    __defProp11 = Object.defineProperty;
+    __name11 = /* @__PURE__ */ __name((target, value) => __defProp11(target, "name", { value, configurable: true }), "__name");
+    __name(getOrSet, "getOrSet");
+    __name11(getOrSet, "getOrSet");
+    __name(mapToString, "mapToString");
+    __name11(mapToString, "mapToString");
+    __name(setToString, "setToString");
+    __name11(setToString, "setToString");
+    ResourceMapEntry = class {
+      static {
+        __name(this, "ResourceMapEntry");
+      }
+      static {
+        __name11(this, "ResourceMapEntry");
+      }
+      constructor(uri, value) {
+        this.uri = uri;
+        this.value = value;
+      }
+    };
+    __name(isEntries, "isEntries");
+    __name11(isEntries, "isEntries");
+    ResourceMap = class _ResourceMap {
+      static {
+        __name(this, "ResourceMap");
+      }
+      static {
+        __name11(this, "ResourceMap");
+      }
+      static {
+        this.defaultToKey = (resource) => resource.toString();
+      }
+      constructor(arg, toKey) {
+        this[_a2] = "ResourceMap";
+        if (arg instanceof _ResourceMap) {
+          this.map = new Map(arg.map);
+          this.toKey = toKey ?? _ResourceMap.defaultToKey;
+        } else if (isEntries(arg)) {
+          this.map = /* @__PURE__ */ new Map();
+          this.toKey = toKey ?? _ResourceMap.defaultToKey;
+          for (const [resource, value] of arg) {
+            this.set(resource, value);
+          }
+        } else {
+          this.map = /* @__PURE__ */ new Map();
+          this.toKey = arg ?? _ResourceMap.defaultToKey;
+        }
+      }
+      set(resource, value) {
+        this.map.set(this.toKey(resource), new ResourceMapEntry(resource, value));
+        return this;
+      }
+      get(resource) {
+        return this.map.get(this.toKey(resource))?.value;
+      }
+      has(resource) {
+        return this.map.has(this.toKey(resource));
+      }
+      get size() {
+        return this.map.size;
+      }
+      clear() {
+        this.map.clear();
+      }
+      delete(resource) {
+        return this.map.delete(this.toKey(resource));
+      }
+      forEach(clb, thisArg) {
+        if (typeof thisArg !== "undefined") {
+          clb = clb.bind(thisArg);
+        }
+        for (const [_, entry] of this.map) {
+          clb(entry.value, entry.uri, this);
+        }
+      }
+      *values() {
+        for (const entry of this.map.values()) {
+          yield entry.value;
+        }
+      }
+      *keys() {
+        for (const entry of this.map.values()) {
+          yield entry.uri;
+        }
+      }
+      *entries() {
+        for (const entry of this.map.values()) {
+          yield [entry.uri, entry.value];
+        }
+      }
+      *[(_a2 = Symbol.toStringTag, Symbol.iterator)]() {
+        for (const [, entry] of this.map) {
+          yield [entry.uri, entry.value];
+        }
+      }
+    };
+    ResourceSet = class {
+      static {
+        __name(this, "ResourceSet");
+      }
+      static {
+        __name11(this, "ResourceSet");
+      }
+      constructor(entriesOrKey, toKey) {
+        this[_b] = "ResourceSet";
+        if (!entriesOrKey || typeof entriesOrKey === "function") {
+          this._map = new ResourceMap(entriesOrKey);
+        } else {
+          this._map = new ResourceMap(toKey);
+          entriesOrKey.forEach(this.add, this);
+        }
+      }
+      get size() {
+        return this._map.size;
+      }
+      add(value) {
+        this._map.set(value, value);
+        return this;
+      }
+      clear() {
+        this._map.clear();
+      }
+      delete(value) {
+        return this._map.delete(value);
+      }
+      forEach(callbackfn, thisArg) {
+        this._map.forEach((_value, key) => callbackfn.call(thisArg, key, key, this));
+      }
+      has(value) {
+        return this._map.has(value);
+      }
+      entries() {
+        return this._map.entries();
+      }
+      keys() {
+        return this._map.keys();
+      }
+      values() {
+        return this._map.keys();
+      }
+      [(_b = Symbol.toStringTag, Symbol.iterator)]() {
+        return this.keys();
+      }
+    };
+    (function(Touch2) {
+      Touch2[Touch2["None"] = 0] = "None";
+      Touch2[Touch2["AsOld"] = 1] = "AsOld";
+      Touch2[Touch2["AsNew"] = 2] = "AsNew";
+    })(Touch || (Touch = {}));
+    LinkedMap = class {
+      static {
+        __name(this, "LinkedMap");
+      }
+      static {
+        __name11(this, "LinkedMap");
+      }
+      constructor() {
+        this[_c] = "LinkedMap";
+        this._map = /* @__PURE__ */ new Map();
+        this._head = void 0;
+        this._tail = void 0;
+        this._size = 0;
+        this._state = 0;
+      }
+      clear() {
+        this._map.clear();
+        this._head = void 0;
+        this._tail = void 0;
+        this._size = 0;
+        this._state++;
+      }
+      isEmpty() {
+        return !this._head && !this._tail;
+      }
+      get size() {
+        return this._size;
+      }
+      get first() {
+        return this._head?.value;
+      }
+      get last() {
+        return this._tail?.value;
+      }
+      has(key) {
+        return this._map.has(key);
+      }
+      get(key, touch = 0) {
+        const item = this._map.get(key);
+        if (!item) {
+          return void 0;
+        }
+        if (touch !== 0) {
+          this.touch(item, touch);
+        }
+        return item.value;
+      }
+      set(key, value, touch = 0) {
+        let item = this._map.get(key);
+        if (item) {
+          item.value = value;
+          if (touch !== 0) {
+            this.touch(item, touch);
+          }
+        } else {
+          item = { key, value, next: void 0, previous: void 0 };
+          switch (touch) {
+            case 0:
+              this.addItemLast(item);
+              break;
+            case 1:
+              this.addItemFirst(item);
+              break;
+            case 2:
+              this.addItemLast(item);
+              break;
+            default:
+              this.addItemLast(item);
+              break;
+          }
+          this._map.set(key, item);
+          this._size++;
+        }
+        return this;
+      }
+      delete(key) {
+        return !!this.remove(key);
+      }
+      remove(key) {
+        const item = this._map.get(key);
+        if (!item) {
+          return void 0;
+        }
+        this._map.delete(key);
+        this.removeItem(item);
+        this._size--;
+        return item.value;
+      }
+      shift() {
+        if (!this._head && !this._tail) {
+          return void 0;
+        }
+        if (!this._head || !this._tail) {
+          throw new Error("Invalid list");
+        }
+        const item = this._head;
+        this._map.delete(item.key);
+        this.removeItem(item);
+        this._size--;
+        return item.value;
+      }
+      forEach(callbackfn, thisArg) {
+        const state = this._state;
+        let current = this._head;
+        while (current) {
+          if (thisArg) {
+            callbackfn.bind(thisArg)(current.value, current.key, this);
+          } else {
+            callbackfn(current.value, current.key, this);
+          }
+          if (this._state !== state) {
+            throw new Error(`LinkedMap got modified during iteration.`);
+          }
+          current = current.next;
+        }
+      }
+      keys() {
+        const map = this;
+        const state = this._state;
+        let current = this._head;
+        const iterator = {
+          [Symbol.iterator]() {
+            return iterator;
+          },
+          next() {
+            if (map._state !== state) {
+              throw new Error(`LinkedMap got modified during iteration.`);
+            }
+            if (current) {
+              const result = { value: current.key, done: false };
+              current = current.next;
+              return result;
+            } else {
+              return { value: void 0, done: true };
+            }
+          }
+        };
+        return iterator;
+      }
+      values() {
+        const map = this;
+        const state = this._state;
+        let current = this._head;
+        const iterator = {
+          [Symbol.iterator]() {
+            return iterator;
+          },
+          next() {
+            if (map._state !== state) {
+              throw new Error(`LinkedMap got modified during iteration.`);
+            }
+            if (current) {
+              const result = { value: current.value, done: false };
+              current = current.next;
+              return result;
+            } else {
+              return { value: void 0, done: true };
+            }
+          }
+        };
+        return iterator;
+      }
+      entries() {
+        const map = this;
+        const state = this._state;
+        let current = this._head;
+        const iterator = {
+          [Symbol.iterator]() {
+            return iterator;
+          },
+          next() {
+            if (map._state !== state) {
+              throw new Error(`LinkedMap got modified during iteration.`);
+            }
+            if (current) {
+              const result = { value: [current.key, current.value], done: false };
+              current = current.next;
+              return result;
+            } else {
+              return { value: void 0, done: true };
+            }
+          }
+        };
+        return iterator;
+      }
+      [(_c = Symbol.toStringTag, Symbol.iterator)]() {
+        return this.entries();
+      }
+      trimOld(newSize) {
+        if (newSize >= this.size) {
+          return;
+        }
+        if (newSize === 0) {
+          this.clear();
+          return;
+        }
+        let current = this._head;
+        let currentSize = this.size;
+        while (current && currentSize > newSize) {
+          this._map.delete(current.key);
+          current = current.next;
+          currentSize--;
+        }
+        this._head = current;
+        this._size = currentSize;
+        if (current) {
+          current.previous = void 0;
+        }
+        this._state++;
+      }
+      trimNew(newSize) {
+        if (newSize >= this.size) {
+          return;
+        }
+        if (newSize === 0) {
+          this.clear();
+          return;
+        }
+        let current = this._tail;
+        let currentSize = this.size;
+        while (current && currentSize > newSize) {
+          this._map.delete(current.key);
+          current = current.previous;
+          currentSize--;
+        }
+        this._tail = current;
+        this._size = currentSize;
+        if (current) {
+          current.next = void 0;
+        }
+        this._state++;
+      }
+      addItemFirst(item) {
+        if (!this._head && !this._tail) {
+          this._tail = item;
+        } else if (!this._head) {
+          throw new Error("Invalid list");
+        } else {
+          item.next = this._head;
+          this._head.previous = item;
+        }
+        this._head = item;
+        this._state++;
+      }
+      addItemLast(item) {
+        if (!this._head && !this._tail) {
+          this._head = item;
+        } else if (!this._tail) {
+          throw new Error("Invalid list");
+        } else {
+          item.previous = this._tail;
+          this._tail.next = item;
+        }
+        this._tail = item;
+        this._state++;
+      }
+      removeItem(item) {
+        if (item === this._head && item === this._tail) {
+          this._head = void 0;
+          this._tail = void 0;
+        } else if (item === this._head) {
+          if (!item.next) {
+            throw new Error("Invalid list");
+          }
+          item.next.previous = void 0;
+          this._head = item.next;
+        } else if (item === this._tail) {
+          if (!item.previous) {
+            throw new Error("Invalid list");
+          }
+          item.previous.next = void 0;
+          this._tail = item.previous;
+        } else {
+          const next = item.next;
+          const previous = item.previous;
+          if (!next || !previous) {
+            throw new Error("Invalid list");
+          }
+          next.previous = previous;
+          previous.next = next;
+        }
+        item.next = void 0;
+        item.previous = void 0;
+        this._state++;
+      }
+      touch(item, touch) {
+        if (!this._head || !this._tail) {
+          throw new Error("Invalid list");
+        }
+        if (touch !== 1 && touch !== 2) {
+          return;
+        }
+        if (touch === 1) {
+          if (item === this._head) {
+            return;
+          }
+          const next = item.next;
+          const previous = item.previous;
+          if (item === this._tail) {
+            previous.next = void 0;
+            this._tail = previous;
+          } else {
+            next.previous = previous;
+            previous.next = next;
+          }
+          item.previous = void 0;
+          item.next = this._head;
+          this._head.previous = item;
+          this._head = item;
+          this._state++;
+        } else if (touch === 2) {
+          if (item === this._tail) {
+            return;
+          }
+          const next = item.next;
+          const previous = item.previous;
+          if (item === this._head) {
+            next.previous = void 0;
+            this._head = next;
+          } else {
+            next.previous = previous;
+            previous.next = next;
+          }
+          item.next = void 0;
+          item.previous = this._tail;
+          this._tail.next = item;
+          this._tail = item;
+          this._state++;
+        }
+      }
+      toJSON() {
+        const data = [];
+        this.forEach((value, key) => {
+          data.push([key, value]);
+        });
+        return data;
+      }
+      fromJSON(data) {
+        this.clear();
+        for (const [key, value] of data) {
+          this.set(key, value);
+        }
+      }
+    };
+    Cache = class extends LinkedMap {
+      static {
+        __name(this, "Cache");
+      }
+      static {
+        __name11(this, "Cache");
+      }
+      constructor(limit, ratio = 1) {
+        super();
+        this._limit = limit;
+        this._ratio = Math.min(Math.max(0, ratio), 1);
+      }
+      get limit() {
+        return this._limit;
+      }
+      set limit(limit) {
+        this._limit = limit;
+        this.checkTrim();
+      }
+      get ratio() {
+        return this._ratio;
+      }
+      set ratio(ratio) {
+        this._ratio = Math.min(Math.max(0, ratio), 1);
+        this.checkTrim();
+      }
+      get(key, touch = 2) {
+        return super.get(key, touch);
+      }
+      peek(key) {
+        return super.get(
+          key,
+          0
+          /* Touch.None */
+        );
+      }
+      set(key, value) {
+        super.set(
+          key,
+          value,
+          2
+          /* Touch.AsNew */
+        );
+        return this;
+      }
+      checkTrim() {
+        if (this.size > this._limit) {
+          this.trim(Math.round(this._limit * this._ratio));
+        }
+      }
+    };
+    LRUCache = class extends Cache {
+      static {
+        __name(this, "LRUCache");
+      }
+      static {
+        __name11(this, "LRUCache");
+      }
+      constructor(limit, ratio = 1) {
+        super(limit, ratio);
+      }
+      trim(newSize) {
+        this.trimOld(newSize);
+      }
+      set(key, value) {
+        super.set(key, value);
+        this.checkTrim();
+        return this;
+      }
+    };
+    MRUCache = class extends Cache {
+      static {
+        __name(this, "MRUCache");
+      }
+      static {
+        __name11(this, "MRUCache");
+      }
+      constructor(limit, ratio = 1) {
+        super(limit, ratio);
+      }
+      trim(newSize) {
+        this.trimNew(newSize);
+      }
+      set(key, value) {
+        if (this._limit <= this.size && !this.has(key)) {
+          this.trim(Math.round(this._limit * this._ratio) - 1);
+        }
+        super.set(key, value);
+        return this;
+      }
+    };
+    CounterSet = class {
+      static {
+        __name(this, "CounterSet");
+      }
+      static {
+        __name11(this, "CounterSet");
+      }
+      constructor() {
+        this.map = /* @__PURE__ */ new Map();
+      }
+      add(value) {
+        this.map.set(value, (this.map.get(value) || 0) + 1);
+        return this;
+      }
+      delete(value) {
+        let counter = this.map.get(value) || 0;
+        if (counter === 0) {
+          return false;
+        }
+        counter--;
+        if (counter === 0) {
+          this.map.delete(value);
+        } else {
+          this.map.set(value, counter);
+        }
+        return true;
+      }
+      has(value) {
+        return this.map.has(value);
+      }
+    };
+    BidirectionalMap = class {
+      static {
+        __name(this, "BidirectionalMap");
+      }
+      static {
+        __name11(this, "BidirectionalMap");
+      }
+      constructor(entries) {
+        this._m1 = /* @__PURE__ */ new Map();
+        this._m2 = /* @__PURE__ */ new Map();
+        if (entries) {
+          for (const [key, value] of entries) {
+            this.set(key, value);
+          }
+        }
+      }
+      clear() {
+        this._m1.clear();
+        this._m2.clear();
+      }
+      set(key, value) {
+        this._m1.set(key, value);
+        this._m2.set(value, key);
+      }
+      get(key) {
+        return this._m1.get(key);
+      }
+      getKey(value) {
+        return this._m2.get(value);
+      }
+      delete(key) {
+        const value = this._m1.get(key);
+        if (value === void 0) {
+          return false;
+        }
+        this._m1.delete(key);
+        this._m2.delete(value);
+        return true;
+      }
+      forEach(callbackfn, thisArg) {
+        this._m1.forEach((value, key) => {
+          callbackfn.call(thisArg, value, key, this);
+        });
+      }
+      keys() {
+        return this._m1.keys();
+      }
+      values() {
+        return this._m1.values();
+      }
+    };
+    SetMap = class {
+      static {
+        __name(this, "SetMap");
+      }
+      static {
+        __name11(this, "SetMap");
+      }
+      constructor() {
+        this.map = /* @__PURE__ */ new Map();
+      }
+      add(key, value) {
+        let values = this.map.get(key);
+        if (!values) {
+          values = /* @__PURE__ */ new Set();
+          this.map.set(key, values);
+        }
+        values.add(value);
+      }
+      delete(key, value) {
+        const values = this.map.get(key);
+        if (!values) {
+          return;
+        }
+        values.delete(value);
+        if (values.size === 0) {
+          this.map.delete(key);
+        }
+      }
+      forEach(key, fn) {
+        const values = this.map.get(key);
+        if (!values) {
+          return;
+        }
+        values.forEach(fn);
+      }
+      get(key) {
+        const values = this.map.get(key);
+        if (!values) {
+          return /* @__PURE__ */ new Set();
+        }
+        return values;
+      }
+    };
+    __name(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
+    __name11(mapsStrictEqualIgnoreOrder, "mapsStrictEqualIgnoreOrder");
+    NKeyMap = class {
+      static {
+        __name(this, "NKeyMap");
+      }
+      static {
+        __name11(this, "NKeyMap");
+      }
+      constructor() {
+        this._data = /* @__PURE__ */ new Map();
+      }
+      /**
+       * Sets a value on the map. Note that unlike a standard `Map`, the first argument is the value.
+       * This is because the spread operator is used for the keys and must be last..
+       * @param value The value to set.
+       * @param keys The keys for the value.
+       */
+      set(value, ...keys) {
+        let currentMap = this._data;
+        for (let i = 0; i < keys.length - 1; i++) {
+          let nextMap = currentMap.get(keys[i]);
+          if (nextMap === void 0) {
+            nextMap = /* @__PURE__ */ new Map();
+            currentMap.set(keys[i], nextMap);
+          }
+          currentMap = nextMap;
+        }
+        currentMap.set(keys[keys.length - 1], value);
+      }
+      get(...keys) {
+        let currentMap = this._data;
+        for (let i = 0; i < keys.length - 1; i++) {
+          const nextMap = currentMap.get(keys[i]);
+          if (nextMap === void 0) {
+            return void 0;
+          }
+          currentMap = nextMap;
+        }
+        return currentMap.get(keys[keys.length - 1]);
+      }
+      clear() {
+        this._data.clear();
+      }
+      *values() {
+        function* iterate(map) {
+          for (const value of map.values()) {
+            if (value instanceof Map) {
+              yield* iterate(value);
+            } else {
+              yield value;
+            }
+          }
+        }
+        __name(iterate, "iterate");
+        __name11(iterate, "iterate");
+        yield* iterate(this._data);
+      }
+      /**
+       * Get a textual representation of the map for debugging purposes.
+       */
+      toString() {
+        const printMap = /* @__PURE__ */ __name11((map, depth) => {
+          let result = "";
+          for (const [key, value] of map) {
+            result += `${"  ".repeat(depth)}${key}: `;
+            if (value instanceof Map) {
+              result += "\n" + printMap(value, depth + 1);
+            } else {
+              result += `${value}
+`;
+            }
+          }
+          return result;
+        }, "printMap");
+        return printMap(this._data, 0);
+      }
+    };
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/functional.js
+function createSingleCallFunction(fn, fnDidRunCallback) {
+  const _this = this;
+  let didCall = false;
+  let result;
+  return function() {
+    if (didCall) {
+      return result;
+    }
+    didCall = true;
+    if (fnDidRunCallback) {
+      try {
+        result = fn.apply(_this, arguments);
+      } finally {
+        fnDidRunCallback();
+      }
+    } else {
+      result = fn.apply(_this, arguments);
+    }
+    return result;
+  };
+}
+var __defProp12, __name12;
+var init_functional = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/functional.js"() {
+    "use strict";
+    __defProp12 = Object.defineProperty;
+    __name12 = /* @__PURE__ */ __name((target, value) => __defProp12(target, "name", { value, configurable: true }), "__name");
+    __name(createSingleCallFunction, "createSingleCallFunction");
+    __name12(createSingleCallFunction, "createSingleCallFunction");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/assert.js
+function ok(value, message) {
+  if (!value) {
+    throw new Error(message ? `Assertion failed (${message})` : "Assertion Failed");
+  }
+}
+function assertNever(value, message = "Unreachable") {
+  throw new Error(message);
+}
+function softAssertNever(value) {
+}
+function assert(condition, messageOrError = "unexpected state") {
+  if (!condition) {
+    const errorToThrow = typeof messageOrError === "string" ? new BugIndicatingError(`Assertion Failed: ${messageOrError}`) : messageOrError;
+    throw errorToThrow;
+  }
+}
+function softAssert(condition, message = "Soft Assertion Failed") {
+  if (!condition) {
+    onUnexpectedError(new BugIndicatingError(message));
+  }
+}
+function assertFn(condition) {
+  if (!condition()) {
+    debugger;
+    condition();
+    onUnexpectedError(new BugIndicatingError("Assertion Failed"));
+  }
+}
+function checkAdjacentItems(items, predicate) {
+  let i = 0;
+  while (i < items.length - 1) {
+    const a = items[i];
+    const b = items[i + 1];
+    if (!predicate(a, b)) {
+      return false;
+    }
+    i++;
+  }
+  return true;
+}
+var __defProp13, __name13;
+var init_assert = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/assert.js"() {
+    "use strict";
+    init_errors();
+    __defProp13 = Object.defineProperty;
+    __name13 = /* @__PURE__ */ __name((target, value) => __defProp13(target, "name", { value, configurable: true }), "__name");
+    __name(ok, "ok");
+    __name13(ok, "ok");
+    __name(assertNever, "assertNever");
+    __name13(assertNever, "assertNever");
+    __name(softAssertNever, "softAssertNever");
+    __name13(softAssertNever, "softAssertNever");
+    __name(assert, "assert");
+    __name13(assert, "assert");
+    __name(softAssert, "softAssert");
+    __name13(softAssert, "softAssert");
+    __name(assertFn, "assertFn");
+    __name13(assertFn, "assertFn");
+    __name(checkAdjacentItems, "checkAdjacentItems");
+    __name13(checkAdjacentItems, "checkAdjacentItems");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/types.js
+function isString(str) {
+  return typeof str === "string";
+}
+function isStringArray(value) {
+  return isArrayOf(value, isString);
+}
+function isArrayOf(value, check) {
+  return Array.isArray(value) && value.every(check);
+}
+function isObject(obj) {
+  return typeof obj === "object" && obj !== null && !Array.isArray(obj) && !(obj instanceof RegExp) && !(obj instanceof Date);
+}
+function isTypedArray(obj) {
+  const TypedArray = Object.getPrototypeOf(Uint8Array);
+  return typeof obj === "object" && obj instanceof TypedArray;
+}
+function isNumber(obj) {
+  return typeof obj === "number" && !isNaN(obj);
+}
+function isIterable(obj) {
+  return !!obj && typeof obj[Symbol.iterator] === "function";
+}
+function isAsyncIterable(obj) {
+  return !!obj && typeof obj[Symbol.asyncIterator] === "function";
+}
+function isBoolean(obj) {
+  return obj === true || obj === false;
+}
+function isUndefined(obj) {
+  return typeof obj === "undefined";
+}
+function isDefined(arg) {
+  return !isUndefinedOrNull(arg);
+}
+function isUndefinedOrNull(obj) {
+  return isUndefined(obj) || obj === null;
+}
+function assertType(condition, type) {
+  if (!condition) {
+    throw new Error(type ? `Unexpected type, expected '${type}'` : "Unexpected type");
+  }
+}
+function assertReturnsDefined(arg) {
+  assert(arg !== null && arg !== void 0, "Argument is `undefined` or `null`.");
+  return arg;
+}
+function assertDefined(value, error) {
+  if (value === null || value === void 0) {
+    const errorToThrow = typeof error === "string" ? new Error(error) : error;
+    throw errorToThrow;
+  }
+}
+function assertReturnsAllDefined(...args) {
+  const result = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (isUndefinedOrNull(arg)) {
+      throw new Error(`Assertion Failed: argument at index ${i} is undefined or null`);
+    }
+    result.push(arg);
+  }
+  return result;
+}
+function typeCheck(_thing) {
+}
+function isEmptyObject(obj) {
+  if (!isObject(obj)) {
+    return false;
+  }
+  for (const key in obj) {
+    if (hasOwnProperty.call(obj, key)) {
+      return false;
+    }
+  }
+  return true;
+}
+function isFunction(obj) {
+  return typeof obj === "function";
+}
+function areFunctions(...objects) {
+  return objects.length > 0 && objects.every(isFunction);
+}
+function validateConstraints(args, constraints) {
+  const len = Math.min(args.length, constraints.length);
+  for (let i = 0; i < len; i++) {
+    validateConstraint(args[i], constraints[i]);
+  }
+}
+function validateConstraint(arg, constraint) {
+  if (isString(constraint)) {
+    if (typeof arg !== constraint) {
+      throw new Error(`argument does not match constraint: typeof ${constraint}`);
+    }
+  } else if (isFunction(constraint)) {
+    try {
+      if (arg instanceof constraint) {
+        return;
+      }
+    } catch {
+    }
+    if (!isUndefinedOrNull(arg) && arg.constructor === constraint) {
+      return;
+    }
+    if (constraint.length === 1 && constraint.call(void 0, arg) === true) {
+      return;
+    }
+    throw new Error(`argument does not match one of these constraints: arg instanceof constraint, arg.constructor === constraint, nor constraint(arg) === true`);
+  }
+}
+function upcast(x) {
+  return x;
+}
+function hasKey(x, key) {
+  for (const k in key) {
+    if (!(k in x)) {
+      return false;
+    }
+  }
+  return true;
+}
+var __defProp14, __name14, isOneOf, hasOwnProperty;
+var init_types = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/types.js"() {
+    "use strict";
+    init_assert();
+    __defProp14 = Object.defineProperty;
+    __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
+    __name(isString, "isString");
+    __name14(isString, "isString");
+    __name(isStringArray, "isStringArray");
+    __name14(isStringArray, "isStringArray");
+    __name(isArrayOf, "isArrayOf");
+    __name14(isArrayOf, "isArrayOf");
+    __name(isObject, "isObject");
+    __name14(isObject, "isObject");
+    __name(isTypedArray, "isTypedArray");
+    __name14(isTypedArray, "isTypedArray");
+    __name(isNumber, "isNumber");
+    __name14(isNumber, "isNumber");
+    __name(isIterable, "isIterable");
+    __name14(isIterable, "isIterable");
+    __name(isAsyncIterable, "isAsyncIterable");
+    __name14(isAsyncIterable, "isAsyncIterable");
+    __name(isBoolean, "isBoolean");
+    __name14(isBoolean, "isBoolean");
+    __name(isUndefined, "isUndefined");
+    __name14(isUndefined, "isUndefined");
+    __name(isDefined, "isDefined");
+    __name14(isDefined, "isDefined");
+    __name(isUndefinedOrNull, "isUndefinedOrNull");
+    __name14(isUndefinedOrNull, "isUndefinedOrNull");
+    __name(assertType, "assertType");
+    __name14(assertType, "assertType");
+    __name(assertReturnsDefined, "assertReturnsDefined");
+    __name14(assertReturnsDefined, "assertReturnsDefined");
+    __name(assertDefined, "assertDefined");
+    __name14(assertDefined, "assertDefined");
+    __name(assertReturnsAllDefined, "assertReturnsAllDefined");
+    __name14(assertReturnsAllDefined, "assertReturnsAllDefined");
+    isOneOf = /* @__PURE__ */ __name14((value, validValues) => {
+      return validValues.includes(value);
+    }, "isOneOf");
+    __name(typeCheck, "typeCheck");
+    __name14(typeCheck, "typeCheck");
+    hasOwnProperty = Object.prototype.hasOwnProperty;
+    __name(isEmptyObject, "isEmptyObject");
+    __name14(isEmptyObject, "isEmptyObject");
+    __name(isFunction, "isFunction");
+    __name14(isFunction, "isFunction");
+    __name(areFunctions, "areFunctions");
+    __name14(areFunctions, "areFunctions");
+    __name(validateConstraints, "validateConstraints");
+    __name14(validateConstraints, "validateConstraints");
+    __name(validateConstraint, "validateConstraint");
+    __name14(validateConstraint, "validateConstraint");
+    __name(upcast, "upcast");
+    __name14(upcast, "upcast");
+    __name(hasKey, "hasKey");
+    __name14(hasKey, "hasKey");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js
+var __defProp15, __name15, Iterable;
+var init_iterator = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js"() {
+    "use strict";
+    init_types();
+    __defProp15 = Object.defineProperty;
+    __name15 = /* @__PURE__ */ __name((target, value) => __defProp15(target, "name", { value, configurable: true }), "__name");
+    (function(Iterable2) {
+      function is(thing) {
+        return !!thing && typeof thing === "object" && typeof thing[Symbol.iterator] === "function";
+      }
+      __name(is, "is");
+      __name15(is, "is");
+      Iterable2.is = is;
+      const _empty2 = Object.freeze([]);
+      function empty() {
+        return _empty2;
+      }
+      __name(empty, "empty");
+      __name15(empty, "empty");
+      Iterable2.empty = empty;
+      function* single(element) {
+        yield element;
+      }
+      __name(single, "single");
+      __name15(single, "single");
+      Iterable2.single = single;
+      function wrap(iterableOrElement) {
+        if (is(iterableOrElement)) {
+          return iterableOrElement;
+        } else {
+          return single(iterableOrElement);
+        }
+      }
+      __name(wrap, "wrap");
+      __name15(wrap, "wrap");
+      Iterable2.wrap = wrap;
+      function from(iterable) {
+        return iterable ?? _empty2;
+      }
+      __name(from, "from");
+      __name15(from, "from");
+      Iterable2.from = from;
+      function* reverse(array) {
+        for (let i = array.length - 1; i >= 0; i--) {
+          yield array[i];
+        }
+      }
+      __name(reverse, "reverse");
+      __name15(reverse, "reverse");
+      Iterable2.reverse = reverse;
+      function isEmpty(iterable) {
+        return !iterable || iterable[Symbol.iterator]().next().done === true;
+      }
+      __name(isEmpty, "isEmpty");
+      __name15(isEmpty, "isEmpty");
+      Iterable2.isEmpty = isEmpty;
+      function first(iterable) {
+        return iterable[Symbol.iterator]().next().value;
+      }
+      __name(first, "first");
+      __name15(first, "first");
+      Iterable2.first = first;
+      function some(iterable, predicate) {
+        let i = 0;
+        for (const element of iterable) {
+          if (predicate(element, i++)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      __name(some, "some");
+      __name15(some, "some");
+      Iterable2.some = some;
+      function every(iterable, predicate) {
+        let i = 0;
+        for (const element of iterable) {
+          if (!predicate(element, i++)) {
+            return false;
+          }
+        }
+        return true;
+      }
+      __name(every, "every");
+      __name15(every, "every");
+      Iterable2.every = every;
+      function find(iterable, predicate) {
+        for (const element of iterable) {
+          if (predicate(element)) {
+            return element;
+          }
+        }
+        return void 0;
+      }
+      __name(find, "find");
+      __name15(find, "find");
+      Iterable2.find = find;
+      function* filter(iterable, predicate) {
+        for (const element of iterable) {
+          if (predicate(element)) {
+            yield element;
+          }
+        }
+      }
+      __name(filter, "filter");
+      __name15(filter, "filter");
+      Iterable2.filter = filter;
+      function* map(iterable, fn) {
+        let index2 = 0;
+        for (const element of iterable) {
+          yield fn(element, index2++);
+        }
+      }
+      __name(map, "map");
+      __name15(map, "map");
+      Iterable2.map = map;
+      function* flatMap(iterable, fn) {
+        let index2 = 0;
+        for (const element of iterable) {
+          yield* fn(element, index2++);
+        }
+      }
+      __name(flatMap, "flatMap");
+      __name15(flatMap, "flatMap");
+      Iterable2.flatMap = flatMap;
+      function* concat(...iterables) {
+        for (const item of iterables) {
+          if (isIterable(item)) {
+            yield* item;
+          } else {
+            yield item;
+          }
+        }
+      }
+      __name(concat, "concat");
+      __name15(concat, "concat");
+      Iterable2.concat = concat;
+      function reduce(iterable, reducer, initialValue) {
+        let value = initialValue;
+        for (const element of iterable) {
+          value = reducer(value, element);
+        }
+        return value;
+      }
+      __name(reduce, "reduce");
+      __name15(reduce, "reduce");
+      Iterable2.reduce = reduce;
+      function length(iterable) {
+        let count2 = 0;
+        for (const _ of iterable) {
+          count2++;
+        }
+        return count2;
+      }
+      __name(length, "length");
+      __name15(length, "length");
+      Iterable2.length = length;
+      function* slice(arr, from2, to = arr.length) {
+        if (from2 < -arr.length) {
+          from2 = 0;
+        }
+        if (from2 < 0) {
+          from2 += arr.length;
+        }
+        if (to < 0) {
+          to += arr.length;
+        } else if (to > arr.length) {
+          to = arr.length;
+        }
+        for (; from2 < to; from2++) {
+          yield arr[from2];
+        }
+      }
+      __name(slice, "slice");
+      __name15(slice, "slice");
+      Iterable2.slice = slice;
+      function consume(iterable, atMost = Number.POSITIVE_INFINITY) {
+        const consumed = [];
+        if (atMost === 0) {
+          return [consumed, iterable];
+        }
+        const iterator = iterable[Symbol.iterator]();
+        for (let i = 0; i < atMost; i++) {
+          const next = iterator.next();
+          if (next.done) {
+            return [consumed, Iterable2.empty()];
+          }
+          consumed.push(next.value);
+        }
+        return [consumed, { [Symbol.iterator]() {
+          return iterator;
+        } }];
+      }
+      __name(consume, "consume");
+      __name15(consume, "consume");
+      Iterable2.consume = consume;
+      async function asyncToArray(iterable) {
+        const result = [];
+        for await (const item of iterable) {
+          result.push(item);
+        }
+        return result;
+      }
+      __name(asyncToArray, "asyncToArray");
+      __name15(asyncToArray, "asyncToArray");
+      Iterable2.asyncToArray = asyncToArray;
+      async function asyncToArrayFlat(iterable) {
+        let result = [];
+        for await (const item of iterable) {
+          result = result.concat(item);
+        }
+        return result;
+      }
+      __name(asyncToArrayFlat, "asyncToArrayFlat");
+      __name15(asyncToArrayFlat, "asyncToArrayFlat");
+      Iterable2.asyncToArrayFlat = asyncToArrayFlat;
+    })(Iterable || (Iterable = {}));
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js
+function setDisposableTracker(tracker) {
+  disposableTracker = tracker;
+}
+function trackDisposable(x) {
+  disposableTracker?.trackDisposable(x);
+  return x;
+}
+function markAsDisposed(disposable) {
+  disposableTracker?.markAsDisposed(disposable);
+}
+function setParentOfDisposable(child, parent) {
+  disposableTracker?.setParent(child, parent);
+}
+function setParentOfDisposables(children, parent) {
+  if (!disposableTracker) {
+    return;
+  }
+  for (const child of children) {
+    disposableTracker.setParent(child, parent);
+  }
+}
+function markAsSingleton(singleton) {
+  disposableTracker?.markAsSingleton(singleton);
+  return singleton;
+}
+function isDisposable(thing) {
+  return typeof thing === "object" && thing !== null && typeof thing.dispose === "function" && thing.dispose.length === 0;
+}
+function dispose(arg) {
+  if (Iterable.is(arg)) {
+    const errors = [];
+    for (const d of arg) {
+      if (d) {
+        try {
+          d.dispose();
+        } catch (e) {
+          errors.push(e);
+        }
+      }
+    }
+    if (errors.length === 1) {
+      throw errors[0];
+    } else if (errors.length > 1) {
+      throw new AggregateError(errors, "Encountered errors while disposing of store");
+    }
+    return Array.isArray(arg) ? [] : arg;
+  } else if (arg) {
+    arg.dispose();
+    return arg;
+  }
+}
+function disposeIfDisposable(disposables) {
+  for (const d of disposables) {
+    if (isDisposable(d)) {
+      d.dispose();
+    }
+  }
+  return [];
+}
+function combinedDisposable(...disposables) {
+  const parent = toDisposable(() => dispose(disposables));
+  setParentOfDisposables(disposables, parent);
+  return parent;
+}
+function toDisposable(fn) {
+  return new FunctionDisposable(fn);
+}
+function disposeOnReturn(fn) {
+  const store = new DisposableStore();
+  try {
+    fn(store);
+  } finally {
+    store.dispose();
+  }
+}
+function thenIfNotDisposed(promise, then) {
+  let disposed = false;
+  promise.then((result) => {
+    if (disposed) {
+      return;
+    }
+    then(result);
+  });
+  return toDisposable(() => {
+    disposed = true;
+  });
+}
+function thenRegisterOrDispose(promise, store) {
+  return promise.then((disposable) => {
+    if (store.isDisposed) {
+      disposable.dispose();
+    } else {
+      store.add(disposable);
+    }
+    return disposable;
+  });
+}
+var __defProp16, __name16, TRACK_DISPOSABLES, disposableTracker, GCBasedDisposableTracker, DisposableTracker, FunctionDisposable, DisposableStore, Disposable, MutableDisposable, MandatoryMutableDisposable, RefCountedDisposable, ReferenceCollection, AsyncReferenceCollection, ImmortalReference, DisposableMap, DisposableSet, DisposableResourceMap;
+var init_lifecycle = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js"() {
+    "use strict";
+    init_arrays();
+    init_collections();
+    init_map();
+    init_functional();
+    init_iterator();
+    init_errors();
+    __defProp16 = Object.defineProperty;
+    __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
+    TRACK_DISPOSABLES = false;
+    disposableTracker = null;
+    GCBasedDisposableTracker = class {
+      static {
+        __name(this, "GCBasedDisposableTracker");
+      }
+      static {
+        __name16(this, "GCBasedDisposableTracker");
+      }
+      constructor() {
+        this._registry = new FinalizationRegistry((heldValue) => {
+          console.warn(`[LEAKED DISPOSABLE] ${heldValue}`);
+        });
+      }
+      trackDisposable(disposable) {
+        const stack = new Error("CREATED via:").stack;
+        this._registry.register(disposable, stack, disposable);
+      }
+      setParent(child, parent) {
+        if (parent) {
+          this._registry.unregister(child);
+        } else {
+          this.trackDisposable(child);
+        }
+      }
+      markAsDisposed(disposable) {
+        this._registry.unregister(disposable);
+      }
+      markAsSingleton(disposable) {
+        this._registry.unregister(disposable);
+      }
+    };
+    DisposableTracker = class _DisposableTracker {
+      static {
+        __name(this, "DisposableTracker");
+      }
+      static {
+        __name16(this, "DisposableTracker");
+      }
+      constructor() {
+        this.livingDisposables = /* @__PURE__ */ new Map();
+      }
+      static {
+        this.idx = 0;
+      }
+      getDisposableData(d) {
+        let val = this.livingDisposables.get(d);
+        if (!val) {
+          val = { parent: null, source: null, isSingleton: false, value: d, idx: _DisposableTracker.idx++ };
+          this.livingDisposables.set(d, val);
+        }
+        return val;
+      }
+      trackDisposable(d) {
+        const data = this.getDisposableData(d);
+        if (!data.source) {
+          data.source = new Error().stack;
+        }
+      }
+      setParent(child, parent) {
+        const data = this.getDisposableData(child);
+        data.parent = parent;
+      }
+      markAsDisposed(x) {
+        this.livingDisposables.delete(x);
+      }
+      markAsSingleton(disposable) {
+        this.getDisposableData(disposable).isSingleton = true;
+      }
+      getRootParent(data, cache) {
+        const cacheValue = cache.get(data);
+        if (cacheValue) {
+          return cacheValue;
+        }
+        const result = data.parent ? this.getRootParent(this.getDisposableData(data.parent), cache) : data;
+        cache.set(data, result);
+        return result;
+      }
+      getTrackedDisposables() {
+        const rootParentCache = /* @__PURE__ */ new Map();
+        const leaking = [...this.livingDisposables.entries()].filter(([, v]) => v.source !== null && !this.getRootParent(v, rootParentCache).isSingleton).flatMap(([k]) => k);
+        return leaking;
+      }
+      computeLeakingDisposables(maxReported = 10, preComputedLeaks) {
+        let uncoveredLeakingObjs;
+        if (preComputedLeaks) {
+          uncoveredLeakingObjs = preComputedLeaks;
+        } else {
+          const rootParentCache = /* @__PURE__ */ new Map();
+          const leakingObjects = [...this.livingDisposables.values()].filter((info) => info.source !== null && !this.getRootParent(info, rootParentCache).isSingleton);
+          if (leakingObjects.length === 0) {
+            return;
+          }
+          const leakingObjsSet = new Set(leakingObjects.map((o) => o.value));
+          uncoveredLeakingObjs = leakingObjects.filter((l) => {
+            return !(l.parent && leakingObjsSet.has(l.parent));
+          });
+          if (uncoveredLeakingObjs.length === 0) {
+            throw new Error("There are cyclic diposable chains!");
+          }
+        }
+        if (!uncoveredLeakingObjs) {
+          return void 0;
+        }
+        function getStackTracePath(leaking) {
+          function removePrefix(array, linesToRemove) {
+            while (array.length > 0 && linesToRemove.some((regexp) => typeof regexp === "string" ? regexp === array[0] : array[0].match(regexp))) {
+              array.shift();
+            }
+          }
+          __name(removePrefix, "removePrefix");
+          __name16(removePrefix, "removePrefix");
+          const lines = leaking.source.split("\n").map((p) => p.trim().replace("at ", "")).filter((l) => l !== "");
+          removePrefix(lines, ["Error", /^trackDisposable \(.*\)$/, /^DisposableTracker.trackDisposable \(.*\)$/]);
+          return lines.reverse();
+        }
+        __name(getStackTracePath, "getStackTracePath");
+        __name16(getStackTracePath, "getStackTracePath");
+        const stackTraceStarts = new SetMap();
+        for (const leaking of uncoveredLeakingObjs) {
+          const stackTracePath = getStackTracePath(leaking);
+          for (let i2 = 0; i2 <= stackTracePath.length; i2++) {
+            stackTraceStarts.add(stackTracePath.slice(0, i2).join("\n"), leaking);
+          }
+        }
+        uncoveredLeakingObjs.sort(compareBy((l) => l.idx, numberComparator));
+        let message = "";
+        let i = 0;
+        for (const leaking of uncoveredLeakingObjs.slice(0, maxReported)) {
+          i++;
+          const stackTracePath = getStackTracePath(leaking);
+          const stackTraceFormattedLines = [];
+          for (let i2 = 0; i2 < stackTracePath.length; i2++) {
+            let line = stackTracePath[i2];
+            const starts = stackTraceStarts.get(stackTracePath.slice(0, i2 + 1).join("\n"));
+            line = `(shared with ${starts.size}/${uncoveredLeakingObjs.length} leaks) at ${line}`;
+            const prevStarts = stackTraceStarts.get(stackTracePath.slice(0, i2).join("\n"));
+            const continuations = groupBy2([...prevStarts].map((d) => getStackTracePath(d)[i2]), (v) => v);
+            delete continuations[stackTracePath[i2]];
+            for (const [cont, set] of Object.entries(continuations)) {
+              if (set) {
+                stackTraceFormattedLines.unshift(`    - stacktraces of ${set.length} other leaks continue with ${cont}`);
+              }
+            }
+            stackTraceFormattedLines.unshift(line);
+          }
+          message += `
+
+
+==================== Leaking disposable ${i}/${uncoveredLeakingObjs.length}: ${leaking.value.constructor.name} ====================
+${stackTraceFormattedLines.join("\n")}
+============================================================
+
+`;
+        }
+        if (uncoveredLeakingObjs.length > maxReported) {
+          message += `
+
+
+... and ${uncoveredLeakingObjs.length - maxReported} more leaking disposables
+
+`;
+        }
+        return { leaks: uncoveredLeakingObjs, details: message };
+      }
+    };
+    __name(setDisposableTracker, "setDisposableTracker");
+    __name16(setDisposableTracker, "setDisposableTracker");
+    if (TRACK_DISPOSABLES) {
+      const __is_disposable_tracked__ = "__is_disposable_tracked__";
+      setDisposableTracker(new class {
+        trackDisposable(x) {
+          const stack = new Error("Potentially leaked disposable").stack;
+          setTimeout(() => {
+            if (!x[__is_disposable_tracked__]) {
+              console.log(stack);
+            }
+          }, 3e3);
+        }
+        setParent(child, parent) {
+          if (child && child !== Disposable.None) {
+            try {
+              child[__is_disposable_tracked__] = true;
+            } catch {
+            }
+          }
+        }
+        markAsDisposed(disposable) {
+          if (disposable && disposable !== Disposable.None) {
+            try {
+              disposable[__is_disposable_tracked__] = true;
+            } catch {
+            }
+          }
+        }
+        markAsSingleton(disposable) {
+        }
+      }());
+    }
+    __name(trackDisposable, "trackDisposable");
+    __name16(trackDisposable, "trackDisposable");
+    __name(markAsDisposed, "markAsDisposed");
+    __name16(markAsDisposed, "markAsDisposed");
+    __name(setParentOfDisposable, "setParentOfDisposable");
+    __name16(setParentOfDisposable, "setParentOfDisposable");
+    __name(setParentOfDisposables, "setParentOfDisposables");
+    __name16(setParentOfDisposables, "setParentOfDisposables");
+    __name(markAsSingleton, "markAsSingleton");
+    __name16(markAsSingleton, "markAsSingleton");
+    __name(isDisposable, "isDisposable");
+    __name16(isDisposable, "isDisposable");
+    __name(dispose, "dispose");
+    __name16(dispose, "dispose");
+    __name(disposeIfDisposable, "disposeIfDisposable");
+    __name16(disposeIfDisposable, "disposeIfDisposable");
+    __name(combinedDisposable, "combinedDisposable");
+    __name16(combinedDisposable, "combinedDisposable");
+    FunctionDisposable = class {
+      static {
+        __name(this, "FunctionDisposable");
+      }
+      static {
+        __name16(this, "FunctionDisposable");
+      }
+      constructor(fn) {
+        this._isDisposed = false;
+        this._fn = fn;
+        trackDisposable(this);
+      }
+      dispose() {
+        if (this._isDisposed) {
+          return;
+        }
+        if (!this._fn) {
+          throw new Error(`Unbound disposable context: Need to use an arrow function to preserve the value of this`);
+        }
+        this._isDisposed = true;
+        markAsDisposed(this);
+        this._fn();
+      }
+    };
+    __name(toDisposable, "toDisposable");
+    __name16(toDisposable, "toDisposable");
+    DisposableStore = class _DisposableStore {
+      static {
+        __name(this, "DisposableStore");
+      }
+      static {
+        __name16(this, "DisposableStore");
+      }
+      static {
+        this.DISABLE_DISPOSED_WARNING = false;
+      }
+      constructor() {
+        this._toDispose = /* @__PURE__ */ new Set();
+        this._isDisposed = false;
+        trackDisposable(this);
+      }
+      /**
+       * Dispose of all registered disposables and mark this object as disposed.
+       *
+       * Any future disposables added to this object will be disposed of on `add`.
+       */
+      dispose() {
+        if (this._isDisposed) {
+          return;
+        }
+        markAsDisposed(this);
+        this._isDisposed = true;
+        this.clear();
+      }
+      /**
+       * @return `true` if this object has been disposed of.
+       */
+      get isDisposed() {
+        return this._isDisposed;
+      }
+      /**
+       * Dispose of all registered disposables but do not mark this object as disposed.
+       */
+      clear() {
+        if (this._toDispose.size === 0) {
+          return;
+        }
+        try {
+          dispose(this._toDispose);
+        } finally {
+          this._toDispose.clear();
+        }
+      }
+      /**
+       * Add a new {@link IDisposable disposable} to the collection.
+       */
+      add(o) {
+        if (!o || o === Disposable.None) {
+          return o;
+        }
+        if (o === this) {
+          throw new Error("Cannot register a disposable on itself!");
+        }
+        setParentOfDisposable(o, this);
+        if (this._isDisposed) {
+          if (!_DisposableStore.DISABLE_DISPOSED_WARNING) {
+            console.warn(new Error("Trying to add a disposable to a DisposableStore that has already been disposed of. The added object will be leaked!").stack);
+          }
+        } else {
+          this._toDispose.add(o);
+        }
+        return o;
+      }
+      /**
+       * Deletes a disposable from store and disposes of it. This will not throw or warn and proceed to dispose the
+       * disposable even when the disposable is not part in the store.
+       */
+      delete(o) {
+        if (!o) {
+          return;
+        }
+        if (o === this) {
+          throw new Error("Cannot dispose a disposable on itself!");
+        }
+        this._toDispose.delete(o);
+        o.dispose();
+      }
+      /**
+       * Deletes the value from the store, but does not dispose it.
+       */
+      deleteAndLeak(o) {
+        if (!o) {
+          return;
+        }
+        if (this._toDispose.delete(o)) {
+          setParentOfDisposable(o, null);
+        }
+      }
+      assertNotDisposed() {
+        if (this._isDisposed) {
+          onUnexpectedError(new BugIndicatingError("Object disposed"));
+        }
+      }
+    };
+    Disposable = class {
+      static {
+        __name(this, "Disposable");
+      }
+      static {
+        __name16(this, "Disposable");
+      }
+      static {
+        this.None = Object.freeze({ dispose() {
+        } });
+      }
+      constructor() {
+        this._store = new DisposableStore();
+        trackDisposable(this);
+        setParentOfDisposable(this._store, this);
+      }
+      dispose() {
+        markAsDisposed(this);
+        this._store.dispose();
+      }
+      /**
+       * Adds `o` to the collection of disposables managed by this object.
+       */
+      _register(o) {
+        if (o === this) {
+          throw new Error("Cannot register a disposable on itself!");
+        }
+        return this._store.add(o);
+      }
+    };
+    MutableDisposable = class {
+      static {
+        __name(this, "MutableDisposable");
+      }
+      static {
+        __name16(this, "MutableDisposable");
+      }
+      constructor() {
+        this._isDisposed = false;
+        trackDisposable(this);
+      }
+      /**
+       * Get the currently held disposable value, or `undefined` if this MutableDisposable has been disposed
+       */
+      get value() {
+        return this._isDisposed ? void 0 : this._value;
+      }
+      /**
+       * Set a new disposable value.
+       *
+       * Behaviour:
+       * - If the MutableDisposable has been disposed, the setter is a no-op.
+       * - If the new value is strictly equal to the current value, the setter is a no-op.
+       * - Otherwise the previous value (if any) is disposed and the new value is stored.
+       *
+       * Related helpers:
+       * - clear() resets the value to `undefined` (and disposes the previous value).
+       * - clearAndLeak() returns the old value without disposing it and removes its parent.
+       */
+      set value(value) {
+        if (this._isDisposed || value === this._value) {
+          return;
+        }
+        this._value?.dispose();
+        if (value) {
+          setParentOfDisposable(value, this);
+        }
+        this._value = value;
+      }
+      /**
+       * Resets the stored value and disposed of the previously stored value.
+       */
+      clear() {
+        this.value = void 0;
+      }
+      dispose() {
+        this._isDisposed = true;
+        markAsDisposed(this);
+        this._value?.dispose();
+        this._value = void 0;
+      }
+      /**
+       * Clears the value, but does not dispose it.
+       * The old value is returned.
+      */
+      clearAndLeak() {
+        const oldValue = this._value;
+        this._value = void 0;
+        if (oldValue) {
+          setParentOfDisposable(oldValue, null);
+        }
+        return oldValue;
+      }
+    };
+    MandatoryMutableDisposable = class {
+      static {
+        __name(this, "MandatoryMutableDisposable");
+      }
+      static {
+        __name16(this, "MandatoryMutableDisposable");
+      }
+      constructor(initialValue) {
+        this._disposable = new MutableDisposable();
+        this._isDisposed = false;
+        this._disposable.value = initialValue;
+      }
+      get value() {
+        return this._disposable.value;
+      }
+      set value(value) {
+        if (this._isDisposed || value === this._disposable.value) {
+          return;
+        }
+        this._disposable.value = value;
+      }
+      dispose() {
+        this._isDisposed = true;
+        this._disposable.dispose();
+      }
+    };
+    RefCountedDisposable = class {
+      static {
+        __name(this, "RefCountedDisposable");
+      }
+      static {
+        __name16(this, "RefCountedDisposable");
+      }
+      constructor(_disposable) {
+        this._disposable = _disposable;
+        this._counter = 1;
+      }
+      acquire() {
+        this._counter++;
+        return this;
+      }
+      release() {
+        if (--this._counter === 0) {
+          this._disposable.dispose();
+        }
+        return this;
+      }
+    };
+    ReferenceCollection = class {
+      static {
+        __name(this, "ReferenceCollection");
+      }
+      static {
+        __name16(this, "ReferenceCollection");
+      }
+      constructor() {
+        this.references = /* @__PURE__ */ new Map();
+      }
+      acquire(key, ...args) {
+        let reference = this.references.get(key);
+        if (!reference) {
+          reference = { counter: 0, object: this.createReferencedObject(key, ...args) };
+          this.references.set(key, reference);
+        }
+        const { object } = reference;
+        const dispose2 = createSingleCallFunction(() => {
+          if (--reference.counter === 0) {
+            this.destroyReferencedObject(key, reference.object);
+            this.references.delete(key);
+          }
+        });
+        reference.counter++;
+        return { object, dispose: dispose2 };
+      }
+    };
+    AsyncReferenceCollection = class {
+      static {
+        __name(this, "AsyncReferenceCollection");
+      }
+      static {
+        __name16(this, "AsyncReferenceCollection");
+      }
+      constructor(referenceCollection) {
+        this.referenceCollection = referenceCollection;
+      }
+      async acquire(key, ...args) {
+        const ref = this.referenceCollection.acquire(key, ...args);
+        try {
+          const object = await ref.object;
+          return {
+            object,
+            dispose: /* @__PURE__ */ __name16(() => ref.dispose(), "dispose")
+          };
+        } catch (error) {
+          ref.dispose();
+          throw error;
+        }
+      }
+    };
+    ImmortalReference = class {
+      static {
+        __name(this, "ImmortalReference");
+      }
+      static {
+        __name16(this, "ImmortalReference");
+      }
+      constructor(object) {
+        this.object = object;
+      }
+      dispose() {
+      }
+    };
+    __name(disposeOnReturn, "disposeOnReturn");
+    __name16(disposeOnReturn, "disposeOnReturn");
+    DisposableMap = class {
+      static {
+        __name(this, "DisposableMap");
+      }
+      static {
+        __name16(this, "DisposableMap");
+      }
+      constructor(store = /* @__PURE__ */ new Map()) {
+        this._isDisposed = false;
+        this._store = store;
+        trackDisposable(this);
+      }
+      /**
+       * Disposes of all stored values and mark this object as disposed.
+       *
+       * Trying to use this object after it has been disposed of is an error.
+       */
+      dispose() {
+        markAsDisposed(this);
+        this._isDisposed = true;
+        this.clearAndDisposeAll();
+      }
+      /**
+       * Disposes of all stored values and clear the map, but DO NOT mark this object as disposed.
+       */
+      clearAndDisposeAll() {
+        if (!this._store.size) {
+          return;
+        }
+        try {
+          dispose(this._store.values());
+        } finally {
+          this._store.clear();
+        }
+      }
+      has(key) {
+        return this._store.has(key);
+      }
+      get size() {
+        return this._store.size;
+      }
+      get(key) {
+        return this._store.get(key);
+      }
+      set(key, value, skipDisposeOnOverwrite = false) {
+        if (this._isDisposed) {
+          console.warn(new Error("Trying to add a disposable to a DisposableMap that has already been disposed of. The added object will be leaked!").stack);
+        }
+        if (!skipDisposeOnOverwrite) {
+          this._store.get(key)?.dispose();
+        }
+        this._store.set(key, value);
+        setParentOfDisposable(value, this);
+      }
+      /**
+       * Delete the value stored for `key` from this map and also dispose of it.
+       */
+      deleteAndDispose(key) {
+        this._store.get(key)?.dispose();
+        this._store.delete(key);
+      }
+      /**
+       * Delete the value stored for `key` from this map but return it. The caller is
+       * responsible for disposing of the value.
+       */
+      deleteAndLeak(key) {
+        const value = this._store.get(key);
+        if (value) {
+          setParentOfDisposable(value, null);
+        }
+        this._store.delete(key);
+        return value;
+      }
+      keys() {
+        return this._store.keys();
+      }
+      values() {
+        return this._store.values();
+      }
+      [Symbol.iterator]() {
+        return this._store[Symbol.iterator]();
+      }
+    };
+    DisposableSet = class {
+      static {
+        __name(this, "DisposableSet");
+      }
+      static {
+        __name16(this, "DisposableSet");
+      }
+      constructor(store = /* @__PURE__ */ new Set()) {
+        this._isDisposed = false;
+        this._store = store;
+        trackDisposable(this);
+      }
+      /**
+       * Disposes of all stored values and mark this object as disposed.
+       *
+       * Trying to use this object after it has been disposed of is an error.
+       */
+      dispose() {
+        markAsDisposed(this);
+        this._isDisposed = true;
+        this.clearAndDisposeAll();
+      }
+      /**
+       * Disposes of all stored values and clear the set, but DO NOT mark this object as disposed.
+       */
+      clearAndDisposeAll() {
+        if (!this._store.size) {
+          return;
+        }
+        try {
+          dispose(this._store.values());
+        } finally {
+          this._store.clear();
+        }
+      }
+      has(value) {
+        return this._store.has(value);
+      }
+      get size() {
+        return this._store.size;
+      }
+      add(value) {
+        if (this._isDisposed) {
+          console.warn(new Error("Trying to add a disposable to a DisposableSet that has already been disposed of. The added object will be leaked!").stack);
+        }
+        this._store.add(value);
+        setParentOfDisposable(value, this);
+      }
+      /**
+       * Delete the value from this set and also dispose of it.
+       */
+      deleteAndDispose(value) {
+        if (this._store.delete(value)) {
+          value.dispose();
+        }
+      }
+      /**
+       * Delete the value from this set but return it. The caller is
+       * responsible for disposing of the value.
+       */
+      deleteAndLeak(value) {
+        if (this._store.delete(value)) {
+          setParentOfDisposable(value, null);
+          return value;
+        }
+        return void 0;
+      }
+      values() {
+        return this._store.values();
+      }
+      [Symbol.iterator]() {
+        return this._store[Symbol.iterator]();
+      }
+    };
+    __name(thenIfNotDisposed, "thenIfNotDisposed");
+    __name16(thenIfNotDisposed, "thenIfNotDisposed");
+    __name(thenRegisterOrDispose, "thenRegisterOrDispose");
+    __name16(thenRegisterOrDispose, "thenRegisterOrDispose");
+    DisposableResourceMap = class extends DisposableMap {
+      static {
+        __name(this, "DisposableResourceMap");
+      }
+      static {
+        __name16(this, "DisposableResourceMap");
+      }
+      constructor() {
+        super(new ResourceMap());
+      }
+    };
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/stream.js
+function isReadable(obj) {
+  const candidate = obj;
+  if (!candidate) {
+    return false;
+  }
+  return typeof candidate.read === "function";
+}
+function isReadableStream(obj) {
+  const candidate = obj;
+  if (!candidate) {
+    return false;
+  }
+  return [candidate.on, candidate.pause, candidate.resume, candidate.destroy].every((fn) => typeof fn === "function");
+}
+function isReadableBufferedStream(obj) {
+  const candidate = obj;
+  if (!candidate) {
+    return false;
+  }
+  return isReadableStream(candidate.stream) && Array.isArray(candidate.buffer) && typeof candidate.ended === "boolean";
+}
+function newWriteableStream(reducer, options) {
+  return new WriteableStreamImpl(reducer, options);
+}
+function consumeReadable(readable, reducer) {
+  const chunks = [];
+  let chunk;
+  while ((chunk = readable.read()) !== null) {
+    chunks.push(chunk);
+  }
+  return reducer(chunks);
+}
+function peekReadable(readable, reducer, maxChunks) {
+  const chunks = [];
+  let chunk = void 0;
+  while ((chunk = readable.read()) !== null && chunks.length < maxChunks) {
+    chunks.push(chunk);
+  }
+  if (chunk === null && chunks.length > 0) {
+    return reducer(chunks);
+  }
+  return {
+    read: /* @__PURE__ */ __name17(() => {
+      if (chunks.length > 0) {
+        return chunks.shift();
+      }
+      if (typeof chunk !== "undefined") {
+        const lastReadChunk = chunk;
+        chunk = void 0;
+        return lastReadChunk;
+      }
+      return readable.read();
+    }, "read")
+  };
+}
+function consumeStream(stream, reducer) {
+  return new Promise((resolve2, reject) => {
+    const chunks = [];
+    listenStream(stream, {
+      onData: /* @__PURE__ */ __name17((chunk) => {
+        if (reducer) {
+          chunks.push(chunk);
+        }
+      }, "onData"),
+      onError: /* @__PURE__ */ __name17((error) => {
+        if (reducer) {
+          reject(error);
+        } else {
+          resolve2(void 0);
+        }
+      }, "onError"),
+      onEnd: /* @__PURE__ */ __name17(() => {
+        if (reducer) {
+          resolve2(reducer(chunks));
+        } else {
+          resolve2(void 0);
+        }
+      }, "onEnd")
+    });
+  });
+}
+function listenStream(stream, listener, token) {
+  stream.on("error", (error) => {
+    if (!token?.isCancellationRequested) {
+      listener.onError(error);
+    }
+  });
+  stream.on("end", () => {
+    if (!token?.isCancellationRequested) {
+      listener.onEnd();
+    }
+  });
+  stream.on("data", (data) => {
+    if (!token?.isCancellationRequested) {
+      listener.onData(data);
+    }
+  });
+}
+function peekStream(stream, maxChunks) {
+  return new Promise((resolve2, reject) => {
+    const streamListeners = new DisposableStore();
+    const buffer = [];
+    const dataListener = /* @__PURE__ */ __name17((chunk) => {
+      buffer.push(chunk);
+      if (buffer.length > maxChunks) {
+        streamListeners.dispose();
+        stream.pause();
+        return resolve2({ stream, buffer, ended: false });
+      }
+    }, "dataListener");
+    const errorListener = /* @__PURE__ */ __name17((error) => {
+      streamListeners.dispose();
+      return reject(error);
+    }, "errorListener");
+    const endListener = /* @__PURE__ */ __name17(() => {
+      streamListeners.dispose();
+      return resolve2({ stream, buffer, ended: true });
+    }, "endListener");
+    streamListeners.add(toDisposable(() => stream.removeListener("error", errorListener)));
+    stream.on("error", errorListener);
+    streamListeners.add(toDisposable(() => stream.removeListener("end", endListener)));
+    stream.on("end", endListener);
+    streamListeners.add(toDisposable(() => stream.removeListener("data", dataListener)));
+    stream.on("data", dataListener);
+  });
+}
+function toStream(t, reducer) {
+  const stream = newWriteableStream(reducer);
+  stream.end(t);
+  return stream;
+}
+function emptyStream() {
+  const stream = newWriteableStream(() => {
+    throw new Error("not supported");
+  });
+  stream.end();
+  return stream;
+}
+function toReadable(t) {
+  let consumed = false;
+  return {
+    read: /* @__PURE__ */ __name17(() => {
+      if (consumed) {
+        return null;
+      }
+      consumed = true;
+      return t;
+    }, "read")
+  };
+}
+function transform(stream, transformer, reducer) {
+  const target = newWriteableStream(reducer);
+  listenStream(stream, {
+    onData: /* @__PURE__ */ __name17((data) => target.write(transformer.data(data)), "onData"),
+    onError: /* @__PURE__ */ __name17((error) => target.error(transformer.error ? transformer.error(error) : error), "onError"),
+    onEnd: /* @__PURE__ */ __name17(() => target.end(), "onEnd")
+  });
+  return target;
+}
+function prefixedReadable(prefix, readable, reducer) {
+  let prefixHandled = false;
+  return {
+    read: /* @__PURE__ */ __name17(() => {
+      const chunk = readable.read();
+      if (!prefixHandled) {
+        prefixHandled = true;
+        if (chunk !== null) {
+          return reducer([prefix, chunk]);
+        }
+        return prefix;
+      }
+      return chunk;
+    }, "read")
+  };
+}
+function prefixedStream(prefix, stream, reducer) {
+  let prefixHandled = false;
+  const target = newWriteableStream(reducer);
+  listenStream(stream, {
+    onData: /* @__PURE__ */ __name17((data) => {
+      if (!prefixHandled) {
+        prefixHandled = true;
+        return target.write(reducer([prefix, data]));
+      }
+      return target.write(data);
+    }, "onData"),
+    onError: /* @__PURE__ */ __name17((error) => target.error(error), "onError"),
+    onEnd: /* @__PURE__ */ __name17(() => {
+      if (!prefixHandled) {
+        prefixHandled = true;
+        target.write(prefix);
+      }
+      target.end();
+    }, "onEnd")
+  });
+  return target;
+}
+var __defProp17, __name17, WriteableStreamImpl;
+var init_stream = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/stream.js"() {
+    "use strict";
+    init_errors();
+    init_lifecycle();
+    __defProp17 = Object.defineProperty;
+    __name17 = /* @__PURE__ */ __name((target, value) => __defProp17(target, "name", { value, configurable: true }), "__name");
+    __name(isReadable, "isReadable");
+    __name17(isReadable, "isReadable");
+    __name(isReadableStream, "isReadableStream");
+    __name17(isReadableStream, "isReadableStream");
+    __name(isReadableBufferedStream, "isReadableBufferedStream");
+    __name17(isReadableBufferedStream, "isReadableBufferedStream");
+    __name(newWriteableStream, "newWriteableStream");
+    __name17(newWriteableStream, "newWriteableStream");
+    WriteableStreamImpl = class {
+      static {
+        __name(this, "WriteableStreamImpl");
+      }
+      static {
+        __name17(this, "WriteableStreamImpl");
+      }
+      /**
+       * @param reducer a function that reduces the buffered data into a single object;
+       * 				  because some objects can be complex and non-reducible, we also
+       * 				  allow passing the explicit `null` value to skip the reduce step
+       * @param options stream options
+       */
+      constructor(reducer, options) {
+        this.reducer = reducer;
+        this.options = options;
+        this.state = {
+          flowing: false,
+          ended: false,
+          destroyed: false
+        };
+        this.buffer = {
+          data: [],
+          error: []
+        };
+        this.listeners = {
+          data: [],
+          error: [],
+          end: []
+        };
+        this.pendingWritePromises = [];
+      }
+      pause() {
+        if (this.state.destroyed) {
+          return;
+        }
+        this.state.flowing = false;
+      }
+      resume() {
+        if (this.state.destroyed) {
+          return;
+        }
+        if (!this.state.flowing) {
+          this.state.flowing = true;
+          this.flowData();
+          this.flowErrors();
+          this.flowEnd();
+        }
+      }
+      write(data) {
+        if (this.state.destroyed) {
+          return;
+        }
+        if (this.state.flowing) {
+          this.emitData(data);
+        } else {
+          this.buffer.data.push(data);
+          if (typeof this.options?.highWaterMark === "number" && this.buffer.data.length > this.options.highWaterMark) {
+            return new Promise((resolve2) => this.pendingWritePromises.push(resolve2));
+          }
+        }
+      }
+      error(error) {
+        if (this.state.destroyed) {
+          return;
+        }
+        if (this.state.flowing) {
+          this.emitError(error);
+        } else {
+          this.buffer.error.push(error);
+        }
+      }
+      end(result) {
+        if (this.state.destroyed) {
+          return;
+        }
+        if (typeof result !== "undefined") {
+          this.write(result);
+        }
+        if (this.state.flowing) {
+          this.emitEnd();
+          this.destroy();
+        } else {
+          this.state.ended = true;
+        }
+      }
+      emitData(data) {
+        this.listeners.data.slice(0).forEach((listener) => listener(data));
+      }
+      emitError(error) {
+        if (this.listeners.error.length === 0) {
+          onUnexpectedError(error);
+        } else {
+          this.listeners.error.slice(0).forEach((listener) => listener(error));
+        }
+      }
+      emitEnd() {
+        this.listeners.end.slice(0).forEach((listener) => listener());
+      }
+      on(event, callback) {
+        if (this.state.destroyed) {
+          return;
+        }
+        switch (event) {
+          case "data":
+            this.listeners.data.push(callback);
+            this.resume();
+            break;
+          case "end":
+            this.listeners.end.push(callback);
+            if (this.state.flowing && this.flowEnd()) {
+              this.destroy();
+            }
+            break;
+          case "error":
+            this.listeners.error.push(callback);
+            if (this.state.flowing) {
+              this.flowErrors();
+            }
+            break;
+        }
+      }
+      removeListener(event, callback) {
+        if (this.state.destroyed) {
+          return;
+        }
+        let listeners = void 0;
+        switch (event) {
+          case "data":
+            listeners = this.listeners.data;
+            break;
+          case "end":
+            listeners = this.listeners.end;
+            break;
+          case "error":
+            listeners = this.listeners.error;
+            break;
+        }
+        if (listeners) {
+          const index2 = listeners.indexOf(callback);
+          if (index2 >= 0) {
+            listeners.splice(index2, 1);
+          }
+        }
+      }
+      flowData() {
+        if (this.buffer.data.length === 0) {
+          return;
+        }
+        if (typeof this.reducer === "function") {
+          const fullDataBuffer = this.reducer(this.buffer.data);
+          this.emitData(fullDataBuffer);
+        } else {
+          for (const data of this.buffer.data) {
+            this.emitData(data);
+          }
+        }
+        this.buffer.data.length = 0;
+        const pendingWritePromises = [...this.pendingWritePromises];
+        this.pendingWritePromises.length = 0;
+        pendingWritePromises.forEach((pendingWritePromise) => pendingWritePromise());
+      }
+      flowErrors() {
+        if (this.listeners.error.length > 0) {
+          for (const error of this.buffer.error) {
+            this.emitError(error);
+          }
+          this.buffer.error.length = 0;
+        }
+      }
+      flowEnd() {
+        if (this.state.ended) {
+          this.emitEnd();
+          return this.listeners.end.length > 0;
+        }
+        return false;
+      }
+      destroy() {
+        if (!this.state.destroyed) {
+          this.state.destroyed = true;
+          this.state.ended = true;
+          this.buffer.data.length = 0;
+          this.buffer.error.length = 0;
+          this.listeners.data.length = 0;
+          this.listeners.error.length = 0;
+          this.listeners.end.length = 0;
+          this.pendingWritePromises.length = 0;
+        }
+      }
+    };
+    __name(consumeReadable, "consumeReadable");
+    __name17(consumeReadable, "consumeReadable");
+    __name(peekReadable, "peekReadable");
+    __name17(peekReadable, "peekReadable");
+    __name(consumeStream, "consumeStream");
+    __name17(consumeStream, "consumeStream");
+    __name(listenStream, "listenStream");
+    __name17(listenStream, "listenStream");
+    __name(peekStream, "peekStream");
+    __name17(peekStream, "peekStream");
+    __name(toStream, "toStream");
+    __name17(toStream, "toStream");
+    __name(emptyStream, "emptyStream");
+    __name17(emptyStream, "emptyStream");
+    __name(toReadable, "toReadable");
+    __name17(toReadable, "toReadable");
+    __name(transform, "transform");
+    __name17(transform, "transform");
+    __name(prefixedReadable, "prefixedReadable");
+    __name17(prefixedReadable, "prefixedReadable");
+    __name(prefixedStream, "prefixedStream");
+    __name17(prefixedStream, "prefixedStream");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/buffer.js
+function binaryIndexOf(haystack, needle, offset = 0) {
+  const needleLen = needle.byteLength;
+  const haystackLen = haystack.byteLength;
+  if (needleLen === 0) {
+    return 0;
+  }
+  if (needleLen === 1) {
+    return haystack.indexOf(needle[0], offset);
+  }
+  if (needleLen > haystackLen - offset) {
+    return -1;
+  }
+  const table = indexOfTable.value;
+  table.fill(needle.length);
+  for (let i2 = 0; i2 < needle.length; i2++) {
+    table[needle[i2]] = needle.length - i2 - 1;
+  }
+  let i = offset + needle.length - 1;
+  let j = i;
+  let result = -1;
+  while (i < haystackLen) {
+    if (haystack[i] === needle[j]) {
+      if (j === 0) {
+        result = i;
+        break;
+      }
+      i--;
+      j--;
+    } else {
+      i += Math.max(needle.length - j, table[haystack[i]]);
+      j = needle.length - 1;
+    }
+  }
+  return result;
+}
+function readUInt16LE(source, offset) {
+  return source[offset + 0] << 0 >>> 0 | source[offset + 1] << 8 >>> 0;
+}
+function writeUInt16LE(destination, value, offset) {
+  destination[offset + 0] = value & 255;
+  value = value >>> 8;
+  destination[offset + 1] = value & 255;
+}
+function readUInt32BE(source, offset) {
+  return source[offset] * 2 ** 24 + source[offset + 1] * 2 ** 16 + source[offset + 2] * 2 ** 8 + source[offset + 3];
+}
+function writeUInt32BE(destination, value, offset) {
+  destination[offset + 3] = value;
+  value = value >>> 8;
+  destination[offset + 2] = value;
+  value = value >>> 8;
+  destination[offset + 1] = value;
+  value = value >>> 8;
+  destination[offset] = value;
+}
+function readUInt32LE(source, offset) {
+  return source[offset + 0] << 0 >>> 0 | source[offset + 1] << 8 >>> 0 | source[offset + 2] << 16 >>> 0 | source[offset + 3] << 24 >>> 0;
+}
+function writeUInt32LE(destination, value, offset) {
+  destination[offset + 0] = value & 255;
+  value = value >>> 8;
+  destination[offset + 1] = value & 255;
+  value = value >>> 8;
+  destination[offset + 2] = value & 255;
+  value = value >>> 8;
+  destination[offset + 3] = value & 255;
+}
+function readUInt8(source, offset) {
+  return source[offset];
+}
+function writeUInt8(destination, value, offset) {
+  destination[offset] = value;
+}
+function readableToBuffer(readable) {
+  return consumeReadable(readable, (chunks) => VSBuffer.concat(chunks));
+}
+function bufferToReadable(buffer) {
+  return toReadable(buffer);
+}
+function streamToBuffer(stream) {
+  return consumeStream(stream, (chunks) => VSBuffer.concat(chunks));
+}
+async function bufferedStreamToBuffer(bufferedStream) {
+  if (bufferedStream.ended) {
+    return VSBuffer.concat(bufferedStream.buffer);
+  }
+  return VSBuffer.concat([
+    // Include already read chunks...
+    ...bufferedStream.buffer,
+    // ...and all additional chunks
+    await streamToBuffer(bufferedStream.stream)
+  ]);
+}
+function bufferToStream(buffer) {
+  return toStream(buffer, (chunks) => VSBuffer.concat(chunks));
+}
+function streamToBufferReadableStream(stream) {
+  return transform(stream, { data: /* @__PURE__ */ __name18((data) => typeof data === "string" ? VSBuffer.fromString(data) : VSBuffer.wrap(data), "data") }, (chunks) => VSBuffer.concat(chunks));
+}
+function newWriteableBufferStream(options) {
+  return newWriteableStream((chunks) => VSBuffer.concat(chunks), options);
+}
+function prefixedBufferReadable(prefix, readable) {
+  return prefixedReadable(prefix, readable, (chunks) => VSBuffer.concat(chunks));
+}
+function prefixedBufferStream(prefix, stream) {
+  return prefixedStream(prefix, stream, (chunks) => VSBuffer.concat(chunks));
+}
+function decodeBase64(encoded) {
+  let building = 0;
+  let remainder = 0;
+  let bufi = 0;
+  const buffer = new Uint8Array(Math.floor(encoded.length / 4 * 3));
+  const append = /* @__PURE__ */ __name18((value) => {
+    switch (remainder) {
+      case 3:
+        buffer[bufi++] = building | value;
+        remainder = 0;
+        break;
+      case 2:
+        buffer[bufi++] = building | value >>> 2;
+        building = value << 6;
+        remainder = 3;
+        break;
+      case 1:
+        buffer[bufi++] = building | value >>> 4;
+        building = value << 4;
+        remainder = 2;
+        break;
+      default:
+        building = value << 2;
+        remainder = 1;
+    }
+  }, "append");
+  for (let i = 0; i < encoded.length; i++) {
+    const code = encoded.charCodeAt(i);
+    if (code >= 65 && code <= 90) {
+      append(code - 65);
+    } else if (code >= 97 && code <= 122) {
+      append(code - 97 + 26);
+    } else if (code >= 48 && code <= 57) {
+      append(code - 48 + 52);
+    } else if (code === 43 || code === 45) {
+      append(62);
+    } else if (code === 47 || code === 95) {
+      append(63);
+    } else if (code === 61) {
+      break;
+    } else {
+      throw new SyntaxError(`Unexpected base64 character ${encoded[i]}`);
+    }
+  }
+  const unpadded = bufi;
+  while (remainder > 0) {
+    append(0);
+  }
+  return VSBuffer.wrap(buffer).slice(0, unpadded);
+}
+function encodeBase64({ buffer }, padded = true, urlSafe = false) {
+  const dictionary = urlSafe ? base64UrlSafeAlphabet : base64Alphabet;
+  let output = "";
+  const remainder = buffer.byteLength % 3;
+  let i = 0;
+  for (; i < buffer.byteLength - remainder; i += 3) {
+    const a = buffer[i + 0];
+    const b = buffer[i + 1];
+    const c = buffer[i + 2];
+    output += dictionary[a >>> 2];
+    output += dictionary[(a << 4 | b >>> 4) & 63];
+    output += dictionary[(b << 2 | c >>> 6) & 63];
+    output += dictionary[c & 63];
+  }
+  if (remainder === 1) {
+    const a = buffer[i + 0];
+    output += dictionary[a >>> 2];
+    output += dictionary[a << 4 & 63];
+    if (padded) {
+      output += "==";
+    }
+  } else if (remainder === 2) {
+    const a = buffer[i + 0];
+    const b = buffer[i + 1];
+    output += dictionary[a >>> 2];
+    output += dictionary[(a << 4 | b >>> 4) & 63];
+    output += dictionary[b << 2 & 63];
+    if (padded) {
+      output += "=";
+    }
+  }
+  return output;
+}
+function encodeHex({ buffer }) {
+  let result = "";
+  for (let i = 0; i < buffer.length; i++) {
+    const byte = buffer[i];
+    result += hexChars[byte >>> 4];
+    result += hexChars[byte & 15];
+  }
+  return result;
+}
+function decodeHex(hex) {
+  if (hex.length % 2 !== 0) {
+    throw new SyntaxError("Hex string must have an even length");
+  }
+  const out = new Uint8Array(hex.length >> 1);
+  for (let i = 0; i < hex.length; ) {
+    out[i >> 1] = decodeHexChar(hex, i++) << 4 | decodeHexChar(hex, i++);
+  }
+  return VSBuffer.wrap(out);
+}
+function decodeHexChar(str, position) {
+  const s = str.charCodeAt(position);
+  if (s >= 48 && s <= 57) {
+    return s - 48;
+  } else if (s >= 97 && s <= 102) {
+    return s - 87;
+  } else if (s >= 65 && s <= 70) {
+    return s - 55;
+  } else {
+    throw new SyntaxError(`Invalid hex character at position ${position}`);
+  }
+}
+var __defProp18, __name18, hasBuffer, indexOfTable, textEncoder, textDecoder, VSBuffer, base64Alphabet, base64UrlSafeAlphabet, hexChars;
+var init_buffer = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/buffer.js"() {
+    "use strict";
+    init_lazy();
+    init_stream();
+    __defProp18 = Object.defineProperty;
+    __name18 = /* @__PURE__ */ __name((target, value) => __defProp18(target, "name", { value, configurable: true }), "__name");
+    hasBuffer = typeof Buffer !== "undefined";
+    indexOfTable = new Lazy(() => new Uint8Array(256));
+    VSBuffer = class _VSBuffer {
+      static {
+        __name(this, "VSBuffer");
+      }
+      static {
+        __name18(this, "VSBuffer");
+      }
+      /**
+       * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
+       * might use a nodejs Buffer allocated from node's Buffer pool, which is not transferrable.
+       */
+      static alloc(byteLength) {
+        if (hasBuffer) {
+          return new _VSBuffer(Buffer.allocUnsafe(byteLength));
+        } else {
+          return new _VSBuffer(new Uint8Array(byteLength));
+        }
+      }
+      /**
+       * When running in a nodejs context, if `actual` is not a nodejs Buffer, the backing store for
+       * the returned `VSBuffer` instance might use a nodejs Buffer allocated from node's Buffer pool,
+       * which is not transferrable.
+       */
+      static wrap(actual) {
+        if (hasBuffer && !Buffer.isBuffer(actual)) {
+          actual = Buffer.from(actual.buffer, actual.byteOffset, actual.byteLength);
+        }
+        return new _VSBuffer(actual);
+      }
+      /**
+       * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
+       * might use a nodejs Buffer allocated from node's Buffer pool, which is not transferrable.
+       */
+      static fromString(source, options) {
+        const dontUseNodeBuffer = options?.dontUseNodeBuffer || false;
+        if (!dontUseNodeBuffer && hasBuffer) {
+          return new _VSBuffer(Buffer.from(source));
+        } else {
+          if (!textEncoder) {
+            textEncoder = new TextEncoder();
+          }
+          return new _VSBuffer(textEncoder.encode(source));
+        }
+      }
+      /**
+       * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
+       * might use a nodejs Buffer allocated from node's Buffer pool, which is not transferrable.
+       */
+      static fromByteArray(source) {
+        const result = _VSBuffer.alloc(source.length);
+        for (let i = 0, len = source.length; i < len; i++) {
+          result.buffer[i] = source[i];
+        }
+        return result;
+      }
+      /**
+       * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
+       * might use a nodejs Buffer allocated from node's Buffer pool, which is not transferrable.
+       */
+      static concat(buffers, totalLength) {
+        if (typeof totalLength === "undefined") {
+          totalLength = 0;
+          for (let i = 0, len = buffers.length; i < len; i++) {
+            totalLength += buffers[i].byteLength;
+          }
+        }
+        const ret = _VSBuffer.alloc(totalLength);
+        let offset = 0;
+        for (let i = 0, len = buffers.length; i < len; i++) {
+          const element = buffers[i];
+          ret.set(element, offset);
+          offset += element.byteLength;
+        }
+        return ret;
+      }
+      static isNativeBuffer(buffer) {
+        return hasBuffer && Buffer.isBuffer(buffer);
+      }
+      constructor(buffer) {
+        this.buffer = buffer;
+        this.byteLength = this.buffer.byteLength;
+      }
+      /**
+       * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
+       * might use a nodejs Buffer allocated from node's Buffer pool, which is not transferrable.
+       */
+      clone() {
+        const result = _VSBuffer.alloc(this.byteLength);
+        result.set(this);
+        return result;
+      }
+      toString() {
+        if (hasBuffer) {
+          return this.buffer.toString();
+        } else {
+          if (!textDecoder) {
+            textDecoder = new TextDecoder(void 0, { ignoreBOM: true });
+          }
+          return textDecoder.decode(this.buffer);
+        }
+      }
+      slice(start, end) {
+        return new _VSBuffer(this.buffer.subarray(start, end));
+      }
+      set(array, offset) {
+        if (array instanceof _VSBuffer) {
+          this.buffer.set(array.buffer, offset);
+        } else if (array instanceof Uint8Array) {
+          this.buffer.set(array, offset);
+        } else if (array instanceof ArrayBuffer) {
+          this.buffer.set(new Uint8Array(array), offset);
+        } else if (ArrayBuffer.isView(array)) {
+          this.buffer.set(new Uint8Array(array.buffer, array.byteOffset, array.byteLength), offset);
+        } else {
+          throw new Error(`Unknown argument 'array'`);
+        }
+      }
+      readUInt32BE(offset) {
+        return readUInt32BE(this.buffer, offset);
+      }
+      writeUInt32BE(value, offset) {
+        writeUInt32BE(this.buffer, value, offset);
+      }
+      readUInt32LE(offset) {
+        return readUInt32LE(this.buffer, offset);
+      }
+      writeUInt32LE(value, offset) {
+        writeUInt32LE(this.buffer, value, offset);
+      }
+      readUInt8(offset) {
+        return readUInt8(this.buffer, offset);
+      }
+      writeUInt8(value, offset) {
+        writeUInt8(this.buffer, value, offset);
+      }
+      indexOf(subarray, offset = 0) {
+        return binaryIndexOf(this.buffer, subarray instanceof _VSBuffer ? subarray.buffer : subarray, offset);
+      }
+      equals(other) {
+        if (this === other) {
+          return true;
+        }
+        if (this.byteLength !== other.byteLength) {
+          return false;
+        }
+        return this.buffer.every((value, index2) => value === other.buffer[index2]);
+      }
+    };
+    __name(binaryIndexOf, "binaryIndexOf");
+    __name18(binaryIndexOf, "binaryIndexOf");
+    __name(readUInt16LE, "readUInt16LE");
+    __name18(readUInt16LE, "readUInt16LE");
+    __name(writeUInt16LE, "writeUInt16LE");
+    __name18(writeUInt16LE, "writeUInt16LE");
+    __name(readUInt32BE, "readUInt32BE");
+    __name18(readUInt32BE, "readUInt32BE");
+    __name(writeUInt32BE, "writeUInt32BE");
+    __name18(writeUInt32BE, "writeUInt32BE");
+    __name(readUInt32LE, "readUInt32LE");
+    __name18(readUInt32LE, "readUInt32LE");
+    __name(writeUInt32LE, "writeUInt32LE");
+    __name18(writeUInt32LE, "writeUInt32LE");
+    __name(readUInt8, "readUInt8");
+    __name18(readUInt8, "readUInt8");
+    __name(writeUInt8, "writeUInt8");
+    __name18(writeUInt8, "writeUInt8");
+    __name(readableToBuffer, "readableToBuffer");
+    __name18(readableToBuffer, "readableToBuffer");
+    __name(bufferToReadable, "bufferToReadable");
+    __name18(bufferToReadable, "bufferToReadable");
+    __name(streamToBuffer, "streamToBuffer");
+    __name18(streamToBuffer, "streamToBuffer");
+    __name(bufferedStreamToBuffer, "bufferedStreamToBuffer");
+    __name18(bufferedStreamToBuffer, "bufferedStreamToBuffer");
+    __name(bufferToStream, "bufferToStream");
+    __name18(bufferToStream, "bufferToStream");
+    __name(streamToBufferReadableStream, "streamToBufferReadableStream");
+    __name18(streamToBufferReadableStream, "streamToBufferReadableStream");
+    __name(newWriteableBufferStream, "newWriteableBufferStream");
+    __name18(newWriteableBufferStream, "newWriteableBufferStream");
+    __name(prefixedBufferReadable, "prefixedBufferReadable");
+    __name18(prefixedBufferReadable, "prefixedBufferReadable");
+    __name(prefixedBufferStream, "prefixedBufferStream");
+    __name18(prefixedBufferStream, "prefixedBufferStream");
+    __name(decodeBase64, "decodeBase64");
+    __name18(decodeBase64, "decodeBase64");
+    base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    base64UrlSafeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    __name(encodeBase64, "encodeBase64");
+    __name18(encodeBase64, "encodeBase64");
+    hexChars = "0123456789abcdef";
+    __name(encodeHex, "encodeHex");
+    __name18(encodeHex, "encodeHex");
+    __name(decodeHex, "decodeHex");
+    __name18(decodeHex, "decodeHex");
+    __name(decodeHexChar, "decodeHexChar");
+    __name18(decodeHexChar, "decodeHexChar");
+  }
+});
+
 // ../Output/Target/Microsoft/VSCode/vs/base/common/mime.js
 function getMediaOrTextMime(path) {
   const ext = extname(path);
@@ -6000,13 +6592,13 @@ function normalizeMimeType(mimeType, strict) {
 function isTextStreamMime(mimeType) {
   return ["application/vnd.code.notebook.stdout", "application/vnd.code.notebook.stderr"].includes(mimeType);
 }
-var __defProp18, __name18, Mimes, mapExtToTextMimes, mapExtToMediaMimes, _simplePattern;
+var __defProp19, __name19, Mimes, mapExtToTextMimes, mapExtToMediaMimes, _simplePattern;
 var init_mime = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/mime.js"() {
     "use strict";
     init_path();
-    __defProp18 = Object.defineProperty;
-    __name18 = /* @__PURE__ */ __name((target, value) => __defProp18(target, "name", { value, configurable: true }), "__name");
+    __defProp19 = Object.defineProperty;
+    __name19 = /* @__PURE__ */ __name((target, value) => __defProp19(target, "name", { value, configurable: true }), "__name");
     Mimes = Object.freeze({
       text: "text/plain",
       binary: "application/octet-stream",
@@ -6079,32 +6671,32 @@ var init_mime = __esm({
       ".woff": "application/font-woff"
     };
     __name(getMediaOrTextMime, "getMediaOrTextMime");
-    __name18(getMediaOrTextMime, "getMediaOrTextMime");
+    __name19(getMediaOrTextMime, "getMediaOrTextMime");
     __name(getMediaMime, "getMediaMime");
-    __name18(getMediaMime, "getMediaMime");
+    __name19(getMediaMime, "getMediaMime");
     __name(getExtensionForMimeType, "getExtensionForMimeType");
-    __name18(getExtensionForMimeType, "getExtensionForMimeType");
+    __name19(getExtensionForMimeType, "getExtensionForMimeType");
     _simplePattern = /^(.+)\/(.+?)(;.+)?$/;
     __name(normalizeMimeType, "normalizeMimeType");
-    __name18(normalizeMimeType, "normalizeMimeType");
+    __name19(normalizeMimeType, "normalizeMimeType");
     __name(isTextStreamMime, "isTextStreamMime");
-    __name18(isTextStreamMime, "isTextStreamMime");
+    __name19(isTextStreamMime, "isTextStreamMime");
   }
 });
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/linkedList.js
-var __defProp19, __name19, Node, LinkedList;
+var __defProp20, __name20, Node, LinkedList;
 var init_linkedList = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/linkedList.js"() {
     "use strict";
-    __defProp19 = Object.defineProperty;
-    __name19 = /* @__PURE__ */ __name((target, value) => __defProp19(target, "name", { value, configurable: true }), "__name");
+    __defProp20 = Object.defineProperty;
+    __name20 = /* @__PURE__ */ __name((target, value) => __defProp20(target, "name", { value, configurable: true }), "__name");
     Node = class _Node {
       static {
         __name(this, "Node");
       }
       static {
-        __name19(this, "Node");
+        __name20(this, "Node");
       }
       static {
         this.Undefined = new _Node(void 0);
@@ -6120,7 +6712,7 @@ var init_linkedList = __esm({
         __name(this, "LinkedList");
       }
       static {
-        __name19(this, "LinkedList");
+        __name20(this, "LinkedList");
       }
       constructor() {
         this._first = Node.Undefined;
@@ -6231,19 +6823,19 @@ var init_linkedList = __esm({
 });
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/stopwatch.js
-var __defProp20, __name20, performanceNow, StopWatch;
+var __defProp21, __name21, performanceNow, StopWatch;
 var init_stopwatch = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/stopwatch.js"() {
     "use strict";
-    __defProp20 = Object.defineProperty;
-    __name20 = /* @__PURE__ */ __name((target, value) => __defProp20(target, "name", { value, configurable: true }), "__name");
+    __defProp21 = Object.defineProperty;
+    __name21 = /* @__PURE__ */ __name((target, value) => __defProp21(target, "name", { value, configurable: true }), "__name");
     performanceNow = globalThis.performance.now.bind(globalThis.performance);
     StopWatch = class _StopWatch {
       static {
         __name(this, "StopWatch");
       }
       static {
-        __name20(this, "StopWatch");
+        __name21(this, "StopWatch");
       }
       static create(highResolution) {
         return new _StopWatch(highResolution);
@@ -6342,7 +6934,7 @@ function disposeAndRemove(result, disposables) {
   }
   result.dispose();
 }
-var __defProp21, __name21, _enableDisposeWithListenerWarning, _enableSnapshotPotentialLeakWarning, _bufferLeakWarnCountThreshold, _bufferLeakWarnTimeThreshold, Event, EventProfiling, _globalLeakWarningThreshold, LeakageMonitor, Stacktrace, ListenerLeakError, ListenerRefusalError, id, UniqueContainer, compactionThreshold, forEachListener, Emitter, createEventDeliveryQueue, EventDeliveryQueuePrivate, AsyncEmitter, PauseableEmitter, DebounceEmitter, MicrotaskEmitter, EventMultiplexer, DynamicListEventMultiplexer, EventBufferer, Relay, ValueWithChangeEvent, ConstValueWithChangeEvent;
+var __defProp22, __name22, _enableDisposeWithListenerWarning, _enableSnapshotPotentialLeakWarning, _bufferLeakWarnCountThreshold, _bufferLeakWarnTimeThreshold, Event, EventProfiling, _globalLeakWarningThreshold, LeakageMonitor, Stacktrace, ListenerLeakError, ListenerRefusalError, id, UniqueContainer, compactionThreshold, forEachListener, Emitter, createEventDeliveryQueue, EventDeliveryQueuePrivate, AsyncEmitter, PauseableEmitter, DebounceEmitter, MicrotaskEmitter, EventMultiplexer, DynamicListEventMultiplexer, EventBufferer, Relay, ValueWithChangeEvent, ConstValueWithChangeEvent;
 var init_event = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/event.js"() {
     "use strict";
@@ -6353,14 +6945,14 @@ var init_event = __esm({
     init_linkedList();
     init_process();
     init_stopwatch();
-    __defProp21 = Object.defineProperty;
-    __name21 = /* @__PURE__ */ __name((target, value) => __defProp21(target, "name", { value, configurable: true }), "__name");
+    __defProp22 = Object.defineProperty;
+    __name22 = /* @__PURE__ */ __name((target, value) => __defProp22(target, "name", { value, configurable: true }), "__name");
     _enableDisposeWithListenerWarning = false;
     _enableSnapshotPotentialLeakWarning = false;
     _bufferLeakWarnCountThreshold = 100;
     _bufferLeakWarnTimeThreshold = 6e4;
     __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
-    __name21(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
+    __name22(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
     (function(Event2) {
       Event2.None = () => Disposable.None;
       function _addLeakageTraceLogic(options) {
@@ -6378,12 +6970,12 @@ var init_event = __esm({
         }
       }
       __name(_addLeakageTraceLogic, "_addLeakageTraceLogic");
-      __name21(_addLeakageTraceLogic, "_addLeakageTraceLogic");
+      __name22(_addLeakageTraceLogic, "_addLeakageTraceLogic");
       function defer(event, flushOnListenerRemove, disposable) {
         return debounce(event, () => void 0, 0, void 0, flushOnListenerRemove ?? true, void 0, disposable);
       }
       __name(defer, "defer");
-      __name21(defer, "defer");
+      __name22(defer, "defer");
       Event2.defer = defer;
       function once(event) {
         return (listener, thisArgs = null, disposables) => {
@@ -6406,19 +6998,19 @@ var init_event = __esm({
         };
       }
       __name(once, "once");
-      __name21(once, "once");
+      __name22(once, "once");
       Event2.once = once;
       function onceIf(event, condition) {
         return Event2.once(Event2.filter(event, condition));
       }
       __name(onceIf, "onceIf");
-      __name21(onceIf, "onceIf");
+      __name22(onceIf, "onceIf");
       Event2.onceIf = onceIf;
       function map(event, map2, disposable) {
         return snapshot((listener, thisArgs = null, disposables) => event((i) => listener.call(thisArgs, map2(i)), null, disposables), disposable);
       }
       __name(map, "map");
-      __name21(map, "map");
+      __name22(map, "map");
       Event2.map = map;
       function forEach(event, each, disposable) {
         return snapshot((listener, thisArgs = null, disposables) => event((i) => {
@@ -6427,19 +7019,19 @@ var init_event = __esm({
         }, null, disposables), disposable);
       }
       __name(forEach, "forEach");
-      __name21(forEach, "forEach");
+      __name22(forEach, "forEach");
       Event2.forEach = forEach;
       function filter(event, filter2, disposable) {
         return snapshot((listener, thisArgs = null, disposables) => event((e) => filter2(e) && listener.call(thisArgs, e), null, disposables), disposable);
       }
       __name(filter, "filter");
-      __name21(filter, "filter");
+      __name22(filter, "filter");
       Event2.filter = filter;
       function signal(event) {
         return event;
       }
       __name(signal, "signal");
-      __name21(signal, "signal");
+      __name22(signal, "signal");
       Event2.signal = signal;
       function any(...events) {
         return (listener, thisArgs = null, disposables) => {
@@ -6448,7 +7040,7 @@ var init_event = __esm({
         };
       }
       __name(any, "any");
-      __name21(any, "any");
+      __name22(any, "any");
       Event2.any = any;
       function reduce(event, merge, initial, disposable) {
         let output = initial;
@@ -6458,7 +7050,7 @@ var init_event = __esm({
         }, disposable);
       }
       __name(reduce, "reduce");
-      __name21(reduce, "reduce");
+      __name22(reduce, "reduce");
       Event2.reduce = reduce;
       function snapshot(event, disposable) {
         let listener;
@@ -6478,7 +7070,7 @@ var init_event = __esm({
         return emitter.event;
       }
       __name(snapshot, "snapshot");
-      __name21(snapshot, "snapshot");
+      __name22(snapshot, "snapshot");
       function addAndReturnDisposable(d, store) {
         if (store instanceof Array) {
           store.push(d);
@@ -6488,7 +7080,7 @@ var init_event = __esm({
         return d;
       }
       __name(addAndReturnDisposable, "addAndReturnDisposable");
-      __name21(addAndReturnDisposable, "addAndReturnDisposable");
+      __name22(addAndReturnDisposable, "addAndReturnDisposable");
       function debounce(event, merge, delay = 100, leading = false, flushOnListenerRemove = false, leakWarningThreshold, disposable) {
         let subscription;
         let output = void 0;
@@ -6505,7 +7097,7 @@ var init_event = __esm({
                 emitter.fire(output);
                 output = void 0;
               }
-              doFire = /* @__PURE__ */ __name21(() => {
+              doFire = /* @__PURE__ */ __name22(() => {
                 const _output = output;
                 output = void 0;
                 handle = void 0;
@@ -6545,7 +7137,7 @@ var init_event = __esm({
         return emitter.event;
       }
       __name(debounce, "debounce");
-      __name21(debounce, "debounce");
+      __name22(debounce, "debounce");
       Event2.debounce = debounce;
       function accumulate(event, delay = 0, flushOnListenerRemove, disposable) {
         return Event2.debounce(event, (last, e) => {
@@ -6557,7 +7149,7 @@ var init_event = __esm({
         }, delay, void 0, flushOnListenerRemove ?? true, void 0, disposable);
       }
       __name(accumulate, "accumulate");
-      __name21(accumulate, "accumulate");
+      __name22(accumulate, "accumulate");
       Event2.accumulate = accumulate;
       function throttle(event, merge, delay = 100, leading = true, trailing = true, leakWarningThreshold, disposable) {
         let subscription;
@@ -6611,7 +7203,7 @@ var init_event = __esm({
         return emitter.event;
       }
       __name(throttle, "throttle");
-      __name21(throttle, "throttle");
+      __name22(throttle, "throttle");
       Event2.throttle = throttle;
       function latch(event, equals3 = (a, b) => a === b, disposable) {
         let firstCall = true;
@@ -6624,7 +7216,7 @@ var init_event = __esm({
         }, disposable);
       }
       __name(latch, "latch");
-      __name21(latch, "latch");
+      __name22(latch, "latch");
       Event2.latch = latch;
       function split(event, isT, disposable) {
         return [
@@ -6633,7 +7225,7 @@ var init_event = __esm({
         ];
       }
       __name(split, "split");
-      __name21(split, "split");
+      __name22(split, "split");
       Event2.split = split;
       function buffer(event, debugName, flushAfterTimeout = false, _buffer = [], disposable) {
         let buffer2 = _buffer.slice();
@@ -6654,7 +7246,7 @@ var init_event = __esm({
             disposable.add(toDisposable(() => clearTimeout(bufferLeakWarningData.timerId)));
           }
         }
-        const clearLeakWarningTimer = /* @__PURE__ */ __name21(() => {
+        const clearLeakWarningTimer = /* @__PURE__ */ __name22(() => {
           if (bufferLeakWarningData) {
             clearTimeout(bufferLeakWarningData.timerId);
           }
@@ -6674,7 +7266,7 @@ var init_event = __esm({
         if (disposable) {
           disposable.add(listener);
         }
-        const flush = /* @__PURE__ */ __name21(() => {
+        const flush = /* @__PURE__ */ __name22(() => {
           buffer2?.forEach((e) => emitter.fire(e));
           buffer2 = null;
           clearLeakWarningTimer();
@@ -6711,10 +7303,10 @@ var init_event = __esm({
         return emitter.event;
       }
       __name(buffer, "buffer");
-      __name21(buffer, "buffer");
+      __name22(buffer, "buffer");
       Event2.buffer = buffer;
       function chain(event, sythensize) {
-        const fn = /* @__PURE__ */ __name21((listener, thisArgs, disposables) => {
+        const fn = /* @__PURE__ */ __name22((listener, thisArgs, disposables) => {
           const cs = sythensize(new ChainableSynthesis());
           return event(function(value) {
             const result = cs.evaluate(value);
@@ -6726,7 +7318,7 @@ var init_event = __esm({
         return fn;
       }
       __name(chain, "chain");
-      __name21(chain, "chain");
+      __name22(chain, "chain");
       Event2.chain = chain;
       const HaltChainable = /* @__PURE__ */ Symbol("HaltChainable");
       class ChainableSynthesis {
@@ -6734,7 +7326,7 @@ var init_event = __esm({
           __name(this, "ChainableSynthesis");
         }
         static {
-          __name21(this, "ChainableSynthesis");
+          __name22(this, "ChainableSynthesis");
         }
         constructor() {
           this.steps = [];
@@ -6784,24 +7376,24 @@ var init_event = __esm({
         }
       }
       function fromNodeEventEmitter(emitter, eventName, map2 = (id2) => id2) {
-        const fn = /* @__PURE__ */ __name21((...args) => result.fire(map2(...args)), "fn");
-        const onFirstListenerAdd = /* @__PURE__ */ __name21(() => emitter.on(eventName, fn), "onFirstListenerAdd");
-        const onLastListenerRemove = /* @__PURE__ */ __name21(() => emitter.removeListener(eventName, fn), "onLastListenerRemove");
+        const fn = /* @__PURE__ */ __name22((...args) => result.fire(map2(...args)), "fn");
+        const onFirstListenerAdd = /* @__PURE__ */ __name22(() => emitter.on(eventName, fn), "onFirstListenerAdd");
+        const onLastListenerRemove = /* @__PURE__ */ __name22(() => emitter.removeListener(eventName, fn), "onLastListenerRemove");
         const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
         return result.event;
       }
       __name(fromNodeEventEmitter, "fromNodeEventEmitter");
-      __name21(fromNodeEventEmitter, "fromNodeEventEmitter");
+      __name22(fromNodeEventEmitter, "fromNodeEventEmitter");
       Event2.fromNodeEventEmitter = fromNodeEventEmitter;
       function fromDOMEventEmitter(emitter, eventName, map2 = (id2) => id2) {
-        const fn = /* @__PURE__ */ __name21((...args) => result.fire(map2(...args)), "fn");
-        const onFirstListenerAdd = /* @__PURE__ */ __name21(() => emitter.addEventListener(eventName, fn), "onFirstListenerAdd");
-        const onLastListenerRemove = /* @__PURE__ */ __name21(() => emitter.removeEventListener(eventName, fn), "onLastListenerRemove");
+        const fn = /* @__PURE__ */ __name22((...args) => result.fire(map2(...args)), "fn");
+        const onFirstListenerAdd = /* @__PURE__ */ __name22(() => emitter.addEventListener(eventName, fn), "onFirstListenerAdd");
+        const onLastListenerRemove = /* @__PURE__ */ __name22(() => emitter.removeEventListener(eventName, fn), "onLastListenerRemove");
         const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
         return result.event;
       }
       __name(fromDOMEventEmitter, "fromDOMEventEmitter");
-      __name21(fromDOMEventEmitter, "fromDOMEventEmitter");
+      __name22(fromDOMEventEmitter, "fromDOMEventEmitter");
       Event2.fromDOMEventEmitter = fromDOMEventEmitter;
       function toPromise(event, disposables) {
         let cancelRef;
@@ -6809,7 +7401,7 @@ var init_event = __esm({
         const promise = new Promise((resolve2) => {
           listener = once(event)(resolve2);
           addToDisposables(listener, disposables);
-          cancelRef = /* @__PURE__ */ __name21(() => {
+          cancelRef = /* @__PURE__ */ __name22(() => {
             disposeAndRemove(listener, disposables);
           }, "cancelRef");
         });
@@ -6820,38 +7412,38 @@ var init_event = __esm({
         return promise;
       }
       __name(toPromise, "toPromise");
-      __name21(toPromise, "toPromise");
+      __name22(toPromise, "toPromise");
       Event2.toPromise = toPromise;
       function forward(from, to) {
         return from((e) => to.fire(e));
       }
       __name(forward, "forward");
-      __name21(forward, "forward");
+      __name22(forward, "forward");
       Event2.forward = forward;
       function runAndSubscribe(event, handler, initial) {
         handler(initial);
         return event((e) => handler(e));
       }
       __name(runAndSubscribe, "runAndSubscribe");
-      __name21(runAndSubscribe, "runAndSubscribe");
+      __name22(runAndSubscribe, "runAndSubscribe");
       Event2.runAndSubscribe = runAndSubscribe;
       class EmitterObserver {
         static {
           __name(this, "EmitterObserver");
         }
         static {
-          __name21(this, "EmitterObserver");
+          __name22(this, "EmitterObserver");
         }
         constructor(_observable, store) {
           this._observable = _observable;
           this._counter = 0;
           this._hasChanged = false;
           const options = {
-            onWillAddFirstListener: /* @__PURE__ */ __name21(() => {
+            onWillAddFirstListener: /* @__PURE__ */ __name22(() => {
               _observable.addObserver(this);
               this._observable.reportChanges();
             }, "onWillAddFirstListener"),
-            onDidRemoveLastListener: /* @__PURE__ */ __name21(() => {
+            onDidRemoveLastListener: /* @__PURE__ */ __name22(() => {
               _observable.removeObserver(this);
             }, "onDidRemoveLastListener")
           };
@@ -6887,7 +7479,7 @@ var init_event = __esm({
         return observer.emitter.event;
       }
       __name(fromObservable, "fromObservable");
-      __name21(fromObservable, "fromObservable");
+      __name22(fromObservable, "fromObservable");
       Event2.fromObservable = fromObservable;
       function fromObservableLight(observable) {
         return (listener, thisArgs, disposables) => {
@@ -6925,7 +7517,7 @@ var init_event = __esm({
         };
       }
       __name(fromObservableLight, "fromObservableLight");
-      __name21(fromObservableLight, "fromObservableLight");
+      __name22(fromObservableLight, "fromObservableLight");
       Event2.fromObservableLight = fromObservableLight;
     })(Event || (Event = {}));
     EventProfiling = class _EventProfiling {
@@ -6933,7 +7525,7 @@ var init_event = __esm({
         __name(this, "EventProfiling");
       }
       static {
-        __name21(this, "EventProfiling");
+        __name22(this, "EventProfiling");
       }
       static {
         this.all = /* @__PURE__ */ new Set();
@@ -6965,13 +7557,13 @@ var init_event = __esm({
     };
     _globalLeakWarningThreshold = -1;
     __name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
-    __name21(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
+    __name22(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
     LeakageMonitor = class _LeakageMonitor {
       static {
         __name(this, "LeakageMonitor");
       }
       static {
-        __name21(this, "LeakageMonitor");
+        __name22(this, "LeakageMonitor");
       }
       static {
         this._idPool = 1;
@@ -7031,7 +7623,7 @@ var init_event = __esm({
         __name(this, "Stacktrace");
       }
       static {
-        __name21(this, "Stacktrace");
+        __name22(this, "Stacktrace");
       }
       static create() {
         const err = new Error();
@@ -7049,7 +7641,7 @@ var init_event = __esm({
         __name(this, "ListenerLeakError");
       }
       static {
-        __name21(this, "ListenerLeakError");
+        __name22(this, "ListenerLeakError");
       }
       constructor(kind, details, stack, listenerCount) {
         super(`potential listener LEAK detected, ${kind}`);
@@ -7068,7 +7660,7 @@ var init_event = __esm({
         __name(this, "ListenerRefusalError");
       }
       static {
-        __name21(this, "ListenerRefusalError");
+        __name22(this, "ListenerRefusalError");
       }
       constructor(kind, details, stack, listenerCount) {
         super(kind, details, stack, listenerCount);
@@ -7081,7 +7673,7 @@ var init_event = __esm({
         __name(this, "UniqueContainer");
       }
       static {
-        __name21(this, "UniqueContainer");
+        __name22(this, "UniqueContainer");
       }
       constructor(value) {
         this.value = value;
@@ -7089,7 +7681,7 @@ var init_event = __esm({
       }
     };
     compactionThreshold = 2;
-    forEachListener = /* @__PURE__ */ __name21((listeners, fn) => {
+    forEachListener = /* @__PURE__ */ __name22((listeners, fn) => {
       if (listeners instanceof UniqueContainer) {
         fn(listeners);
       } else {
@@ -7106,7 +7698,7 @@ var init_event = __esm({
         __name(this, "Emitter");
       }
       static {
-        __name21(this, "Emitter");
+        __name22(this, "Emitter");
       }
       constructor(options) {
         this._size = 0;
@@ -7272,13 +7864,13 @@ var init_event = __esm({
         return this._size > 0;
       }
     };
-    createEventDeliveryQueue = /* @__PURE__ */ __name21(() => new EventDeliveryQueuePrivate(), "createEventDeliveryQueue");
+    createEventDeliveryQueue = /* @__PURE__ */ __name22(() => new EventDeliveryQueuePrivate(), "createEventDeliveryQueue");
     EventDeliveryQueuePrivate = class {
       static {
         __name(this, "EventDeliveryQueuePrivate");
       }
       static {
-        __name21(this, "EventDeliveryQueuePrivate");
+        __name22(this, "EventDeliveryQueuePrivate");
       }
       constructor() {
         this.i = -1;
@@ -7301,7 +7893,7 @@ var init_event = __esm({
         __name(this, "AsyncEmitter");
       }
       static {
-        __name21(this, "AsyncEmitter");
+        __name22(this, "AsyncEmitter");
       }
       async fireAsync(data, token, promiseJoin) {
         if (!this._listeners) {
@@ -7317,7 +7909,7 @@ var init_event = __esm({
           const event = {
             ...data2,
             token,
-            waitUntil: /* @__PURE__ */ __name21((p) => {
+            waitUntil: /* @__PURE__ */ __name22((p) => {
               if (Object.isFrozen(thenables)) {
                 throw new Error("waitUntil can NOT be called asynchronous");
               }
@@ -7349,7 +7941,7 @@ var init_event = __esm({
         __name(this, "PauseableEmitter");
       }
       static {
-        __name21(this, "PauseableEmitter");
+        __name22(this, "PauseableEmitter");
       }
       get isPaused() {
         return this._isPaused !== 0;
@@ -7393,7 +7985,7 @@ var init_event = __esm({
         __name(this, "DebounceEmitter");
       }
       static {
-        __name21(this, "DebounceEmitter");
+        __name22(this, "DebounceEmitter");
       }
       constructor(options) {
         super(options);
@@ -7415,7 +8007,7 @@ var init_event = __esm({
         __name(this, "MicrotaskEmitter");
       }
       static {
-        __name21(this, "MicrotaskEmitter");
+        __name22(this, "MicrotaskEmitter");
       }
       constructor(options) {
         super(options);
@@ -7444,14 +8036,14 @@ var init_event = __esm({
         __name(this, "EventMultiplexer");
       }
       static {
-        __name21(this, "EventMultiplexer");
+        __name22(this, "EventMultiplexer");
       }
       constructor() {
         this.hasListeners = false;
         this.events = [];
         this.emitter = new Emitter({
-          onWillAddFirstListener: /* @__PURE__ */ __name21(() => this.onFirstListenerAdd(), "onWillAddFirstListener"),
-          onDidRemoveLastListener: /* @__PURE__ */ __name21(() => this.onLastListenerRemove(), "onDidRemoveLastListener")
+          onWillAddFirstListener: /* @__PURE__ */ __name22(() => this.onFirstListenerAdd(), "onWillAddFirstListener"),
+          onDidRemoveLastListener: /* @__PURE__ */ __name22(() => this.onLastListenerRemove(), "onDidRemoveLastListener")
         });
       }
       get event() {
@@ -7463,7 +8055,7 @@ var init_event = __esm({
         if (this.hasListeners) {
           this.hook(e);
         }
-        const dispose2 = /* @__PURE__ */ __name21(() => {
+        const dispose2 = /* @__PURE__ */ __name22(() => {
           if (this.hasListeners) {
             this.unhook(e);
           }
@@ -7500,7 +8092,7 @@ var init_event = __esm({
         __name(this, "DynamicListEventMultiplexer");
       }
       static {
-        __name21(this, "DynamicListEventMultiplexer");
+        __name22(this, "DynamicListEventMultiplexer");
       }
       constructor(items, onAddItem, onRemoveItem, getEvent) {
         this._store = new DisposableStore();
@@ -7510,7 +8102,7 @@ var init_event = __esm({
           itemListeners.set(instance, multiplexer.add(getEvent(instance)));
         }
         __name(addItem, "addItem");
-        __name21(addItem, "addItem");
+        __name22(addItem, "addItem");
         for (const instance of items) {
           addItem(instance);
         }
@@ -7531,7 +8123,7 @@ var init_event = __esm({
         __name(this, "EventBufferer");
       }
       static {
-        __name21(this, "EventBufferer");
+        __name22(this, "EventBufferer");
       }
       constructor() {
         this.data = [];
@@ -7578,18 +8170,18 @@ var init_event = __esm({
         __name(this, "Relay");
       }
       static {
-        __name21(this, "Relay");
+        __name22(this, "Relay");
       }
       constructor() {
         this.listening = false;
         this.inputEvent = Event.None;
         this.inputEventListener = Disposable.None;
         this.emitter = new Emitter({
-          onDidAddFirstListener: /* @__PURE__ */ __name21(() => {
+          onDidAddFirstListener: /* @__PURE__ */ __name22(() => {
             this.listening = true;
             this.inputEventListener = this.inputEvent(this.emitter.fire, this.emitter);
           }, "onDidAddFirstListener"),
-          onDidRemoveLastListener: /* @__PURE__ */ __name21(() => {
+          onDidRemoveLastListener: /* @__PURE__ */ __name22(() => {
             this.listening = false;
             this.inputEventListener.dispose();
           }, "onDidRemoveLastListener")
@@ -7613,7 +8205,7 @@ var init_event = __esm({
         __name(this, "ValueWithChangeEvent");
       }
       static {
-        __name21(this, "ValueWithChangeEvent");
+        __name22(this, "ValueWithChangeEvent");
       }
       static const(value) {
         return new ConstValueWithChangeEvent(value);
@@ -7638,7 +8230,7 @@ var init_event = __esm({
         __name(this, "ConstValueWithChangeEvent");
       }
       static {
-        __name21(this, "ConstValueWithChangeEvent");
+        __name22(this, "ConstValueWithChangeEvent");
       }
       constructor(value) {
         this.value = value;
@@ -7646,11 +8238,11 @@ var init_event = __esm({
       }
     };
     __name(trackSetChanges, "trackSetChanges");
-    __name21(trackSetChanges, "trackSetChanges");
+    __name22(trackSetChanges, "trackSetChanges");
     __name(addToDisposables, "addToDisposables");
-    __name21(addToDisposables, "addToDisposables");
+    __name22(addToDisposables, "addToDisposables");
     __name(disposeAndRemove, "disposeAndRemove");
-    __name21(disposeAndRemove, "disposeAndRemove");
+    __name22(disposeAndRemove, "disposeAndRemove");
   }
 });
 
@@ -7669,14 +8261,14 @@ function cancelOnDispose(store) {
   } });
   return source.token;
 }
-var __defProp22, __name22, shortcutEvent, CancellationToken, MutableToken, CancellationTokenSource, CancellationTokenPool;
+var __defProp23, __name23, shortcutEvent, CancellationToken, MutableToken, CancellationTokenSource, CancellationTokenPool;
 var init_cancellation = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/cancellation.js"() {
     "use strict";
     init_event();
     init_lifecycle();
-    __defProp22 = Object.defineProperty;
-    __name22 = /* @__PURE__ */ __name((target, value) => __defProp22(target, "name", { value, configurable: true }), "__name");
+    __defProp23 = Object.defineProperty;
+    __name23 = /* @__PURE__ */ __name((target, value) => __defProp23(target, "name", { value, configurable: true }), "__name");
     shortcutEvent = Object.freeze(function(callback, context) {
       const handle = setTimeout(callback.bind(context), 0);
       return { dispose() {
@@ -7697,7 +8289,7 @@ var init_cancellation = __esm({
         return typeof thing.isCancellationRequested === "boolean" && typeof thing.onCancellationRequested === "function";
       }
       __name(isCancellationToken, "isCancellationToken");
-      __name22(isCancellationToken, "isCancellationToken");
+      __name23(isCancellationToken, "isCancellationToken");
       CancellationToken2.isCancellationToken = isCancellationToken;
       CancellationToken2.None = Object.freeze({
         isCancellationRequested: false,
@@ -7713,7 +8305,7 @@ var init_cancellation = __esm({
         __name(this, "MutableToken");
       }
       static {
-        __name22(this, "MutableToken");
+        __name23(this, "MutableToken");
       }
       constructor() {
         this._isCancelled = false;
@@ -7752,7 +8344,7 @@ var init_cancellation = __esm({
         __name(this, "CancellationTokenSource");
       }
       static {
-        __name22(this, "CancellationTokenSource");
+        __name23(this, "CancellationTokenSource");
       }
       constructor(parent) {
         this._token = void 0;
@@ -7785,13 +8377,13 @@ var init_cancellation = __esm({
       }
     };
     __name(cancelOnDispose, "cancelOnDispose");
-    __name22(cancelOnDispose, "cancelOnDispose");
+    __name23(cancelOnDispose, "cancelOnDispose");
     CancellationTokenPool = class {
       static {
         __name(this, "CancellationTokenPool");
       }
       static {
-        __name22(this, "CancellationTokenPool");
+        __name23(this, "CancellationTokenPool");
       }
       constructor() {
         this._source = new CancellationTokenSource();
@@ -7843,19 +8435,19 @@ var init_cancellation = __esm({
 function identity(t) {
   return t;
 }
-var __defProp23, __name23, Cache2, LRUCachedFunction, CachedFunction, WeakCachedFunction;
+var __defProp24, __name24, Cache2, LRUCachedFunction, CachedFunction, WeakCachedFunction;
 var init_cache = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/cache.js"() {
     "use strict";
     init_cancellation();
-    __defProp23 = Object.defineProperty;
-    __name23 = /* @__PURE__ */ __name((target, value) => __defProp23(target, "name", { value, configurable: true }), "__name");
+    __defProp24 = Object.defineProperty;
+    __name24 = /* @__PURE__ */ __name((target, value) => __defProp24(target, "name", { value, configurable: true }), "__name");
     Cache2 = class {
       static {
         __name(this, "Cache");
       }
       static {
-        __name23(this, "Cache");
+        __name24(this, "Cache");
       }
       constructor(task) {
         this.task = task;
@@ -7869,7 +8461,7 @@ var init_cache = __esm({
         const promise = this.task(cts.token);
         this.result = {
           promise,
-          dispose: /* @__PURE__ */ __name23(() => {
+          dispose: /* @__PURE__ */ __name24(() => {
             this.result = null;
             cts.cancel();
             cts.dispose();
@@ -7879,13 +8471,13 @@ var init_cache = __esm({
       }
     };
     __name(identity, "identity");
-    __name23(identity, "identity");
+    __name24(identity, "identity");
     LRUCachedFunction = class {
       static {
         __name(this, "LRUCachedFunction");
       }
       static {
-        __name23(this, "LRUCachedFunction");
+        __name24(this, "LRUCachedFunction");
       }
       constructor(arg1, arg2) {
         this.lastCache = void 0;
@@ -7912,7 +8504,7 @@ var init_cache = __esm({
         __name(this, "CachedFunction");
       }
       static {
-        __name23(this, "CachedFunction");
+        __name24(this, "CachedFunction");
       }
       get cachedValues() {
         return this._map;
@@ -7944,7 +8536,7 @@ var init_cache = __esm({
         __name(this, "WeakCachedFunction");
       }
       static {
-        __name23(this, "WeakCachedFunction");
+        __name24(this, "WeakCachedFunction");
       }
       constructor(arg1, arg2) {
         this._map = /* @__PURE__ */ new WeakMap();
@@ -8619,106 +9211,106 @@ function toBinary(str) {
 function multibyteAwareBtoa(str) {
   return btoa(toBinary(str));
 }
-var __defProp24, __name24, _formatRegexp, _format2Regexp, CodePointIterator, GraphemeIterator, CONTAINS_RTL, IS_BASIC_ASCII, UNUSUAL_LINE_TERMINATORS, CSI_SEQUENCE, OSC_SEQUENCE, ESC_SEQUENCE, CONTROL_SEQUENCES, PROMPT_NON_PRINTABLE, UTF8_BOM_CHARACTER, GraphemeBreakType, GraphemeBreakTree, CodePoint, noBreakWhitespace, AmbiguousCharacters, InvisibleCharacters, Ellipsis;
+var __defProp25, __name25, _formatRegexp, _format2Regexp, CodePointIterator, GraphemeIterator, CONTAINS_RTL, IS_BASIC_ASCII, UNUSUAL_LINE_TERMINATORS, CSI_SEQUENCE, OSC_SEQUENCE, ESC_SEQUENCE, CONTROL_SEQUENCES, PROMPT_NON_PRINTABLE, UTF8_BOM_CHARACTER, GraphemeBreakType, GraphemeBreakTree, CodePoint, noBreakWhitespace, AmbiguousCharacters, InvisibleCharacters, Ellipsis;
 var init_strings = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/strings.js"() {
     "use strict";
     init_cache();
     init_lazy();
-    __defProp24 = Object.defineProperty;
-    __name24 = /* @__PURE__ */ __name((target, value) => __defProp24(target, "name", { value, configurable: true }), "__name");
+    __defProp25 = Object.defineProperty;
+    __name25 = /* @__PURE__ */ __name((target, value) => __defProp25(target, "name", { value, configurable: true }), "__name");
     __name(isFalsyOrWhitespace, "isFalsyOrWhitespace");
-    __name24(isFalsyOrWhitespace, "isFalsyOrWhitespace");
+    __name25(isFalsyOrWhitespace, "isFalsyOrWhitespace");
     _formatRegexp = /{(\d+)}/g;
     __name(format2, "format");
-    __name24(format2, "format");
+    __name25(format2, "format");
     _format2Regexp = /{([^}]+)}/g;
     __name(format22, "format2");
-    __name24(format22, "format2");
+    __name25(format22, "format2");
     __name(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
-    __name24(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
+    __name25(htmlAttributeEncodeValue, "htmlAttributeEncodeValue");
     __name(escape, "escape");
-    __name24(escape, "escape");
+    __name25(escape, "escape");
     __name(escapeRegExpCharacters, "escapeRegExpCharacters");
-    __name24(escapeRegExpCharacters, "escapeRegExpCharacters");
+    __name25(escapeRegExpCharacters, "escapeRegExpCharacters");
     __name(count, "count");
-    __name24(count, "count");
+    __name25(count, "count");
     __name(truncate, "truncate");
-    __name24(truncate, "truncate");
+    __name25(truncate, "truncate");
     __name(truncateMiddle, "truncateMiddle");
-    __name24(truncateMiddle, "truncateMiddle");
+    __name25(truncateMiddle, "truncateMiddle");
     __name(trim, "trim");
-    __name24(trim, "trim");
+    __name25(trim, "trim");
     __name(ltrim, "ltrim");
-    __name24(ltrim, "ltrim");
+    __name25(ltrim, "ltrim");
     __name(rtrim, "rtrim");
-    __name24(rtrim, "rtrim");
+    __name25(rtrim, "rtrim");
     __name(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
-    __name24(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
+    __name25(convertSimple2RegExpPattern, "convertSimple2RegExpPattern");
     __name(createRegExp, "createRegExp");
-    __name24(createRegExp, "createRegExp");
+    __name25(createRegExp, "createRegExp");
     __name(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
-    __name24(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
+    __name25(regExpLeadsToEndlessLoop, "regExpLeadsToEndlessLoop");
     __name(joinStrings, "joinStrings");
-    __name24(joinStrings, "joinStrings");
+    __name25(joinStrings, "joinStrings");
     __name(splitLines, "splitLines");
-    __name24(splitLines, "splitLines");
+    __name25(splitLines, "splitLines");
     __name(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
-    __name24(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
+    __name25(splitLinesIncludeSeparators, "splitLinesIncludeSeparators");
     __name(indexOfPattern, "indexOfPattern");
-    __name24(indexOfPattern, "indexOfPattern");
+    __name25(indexOfPattern, "indexOfPattern");
     __name(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
-    __name24(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
+    __name25(firstNonWhitespaceIndex, "firstNonWhitespaceIndex");
     __name(getLeadingWhitespace, "getLeadingWhitespace");
-    __name24(getLeadingWhitespace, "getLeadingWhitespace");
+    __name25(getLeadingWhitespace, "getLeadingWhitespace");
     __name(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
-    __name24(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
+    __name25(lastNonWhitespaceIndex, "lastNonWhitespaceIndex");
     __name(getIndentationLength, "getIndentationLength");
-    __name24(getIndentationLength, "getIndentationLength");
+    __name25(getIndentationLength, "getIndentationLength");
     __name(replaceAsync, "replaceAsync");
-    __name24(replaceAsync, "replaceAsync");
+    __name25(replaceAsync, "replaceAsync");
     __name(compare, "compare");
-    __name24(compare, "compare");
+    __name25(compare, "compare");
     __name(compareSubstring, "compareSubstring");
-    __name24(compareSubstring, "compareSubstring");
+    __name25(compareSubstring, "compareSubstring");
     __name(compareIgnoreCase, "compareIgnoreCase");
-    __name24(compareIgnoreCase, "compareIgnoreCase");
+    __name25(compareIgnoreCase, "compareIgnoreCase");
     __name(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
-    __name24(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
+    __name25(compareSubstringIgnoreCase, "compareSubstringIgnoreCase");
     __name(isAsciiDigit, "isAsciiDigit");
-    __name24(isAsciiDigit, "isAsciiDigit");
+    __name25(isAsciiDigit, "isAsciiDigit");
     __name(isLowerAsciiLetter, "isLowerAsciiLetter");
-    __name24(isLowerAsciiLetter, "isLowerAsciiLetter");
+    __name25(isLowerAsciiLetter, "isLowerAsciiLetter");
     __name(isUpperAsciiLetter, "isUpperAsciiLetter");
-    __name24(isUpperAsciiLetter, "isUpperAsciiLetter");
+    __name25(isUpperAsciiLetter, "isUpperAsciiLetter");
     __name(equalsIgnoreCase, "equalsIgnoreCase");
-    __name24(equalsIgnoreCase, "equalsIgnoreCase");
+    __name25(equalsIgnoreCase, "equalsIgnoreCase");
     __name(equals2, "equals");
-    __name24(equals2, "equals");
+    __name25(equals2, "equals");
     __name(startsWithIgnoreCase, "startsWithIgnoreCase");
-    __name24(startsWithIgnoreCase, "startsWithIgnoreCase");
+    __name25(startsWithIgnoreCase, "startsWithIgnoreCase");
     __name(endsWithIgnoreCase, "endsWithIgnoreCase");
-    __name24(endsWithIgnoreCase, "endsWithIgnoreCase");
+    __name25(endsWithIgnoreCase, "endsWithIgnoreCase");
     __name(commonPrefixLength2, "commonPrefixLength");
-    __name24(commonPrefixLength2, "commonPrefixLength");
+    __name25(commonPrefixLength2, "commonPrefixLength");
     __name(commonSuffixLength, "commonSuffixLength");
-    __name24(commonSuffixLength, "commonSuffixLength");
+    __name25(commonSuffixLength, "commonSuffixLength");
     __name(isHighSurrogate, "isHighSurrogate");
-    __name24(isHighSurrogate, "isHighSurrogate");
+    __name25(isHighSurrogate, "isHighSurrogate");
     __name(isLowSurrogate, "isLowSurrogate");
-    __name24(isLowSurrogate, "isLowSurrogate");
+    __name25(isLowSurrogate, "isLowSurrogate");
     __name(computeCodePoint, "computeCodePoint");
-    __name24(computeCodePoint, "computeCodePoint");
+    __name25(computeCodePoint, "computeCodePoint");
     __name(getNextCodePoint, "getNextCodePoint");
-    __name24(getNextCodePoint, "getNextCodePoint");
+    __name25(getNextCodePoint, "getNextCodePoint");
     __name(getPrevCodePoint, "getPrevCodePoint");
-    __name24(getPrevCodePoint, "getPrevCodePoint");
+    __name25(getPrevCodePoint, "getPrevCodePoint");
     CodePointIterator = class {
       static {
         __name(this, "CodePointIterator");
       }
       static {
-        __name24(this, "CodePointIterator");
+        __name25(this, "CodePointIterator");
       }
       get offset() {
         return this._offset;
@@ -8750,7 +9342,7 @@ var init_strings = __esm({
         __name(this, "GraphemeIterator");
       }
       static {
-        __name24(this, "GraphemeIterator");
+        __name25(this, "GraphemeIterator");
       }
       get offset() {
         return this._iterator.offset;
@@ -8795,32 +9387,32 @@ var init_strings = __esm({
       }
     };
     __name(nextCharLength, "nextCharLength");
-    __name24(nextCharLength, "nextCharLength");
+    __name25(nextCharLength, "nextCharLength");
     __name(prevCharLength, "prevCharLength");
-    __name24(prevCharLength, "prevCharLength");
+    __name25(prevCharLength, "prevCharLength");
     __name(getCharContainingOffset, "getCharContainingOffset");
-    __name24(getCharContainingOffset, "getCharContainingOffset");
+    __name25(getCharContainingOffset, "getCharContainingOffset");
     __name(charCount, "charCount");
-    __name24(charCount, "charCount");
+    __name25(charCount, "charCount");
     CONTAINS_RTL = void 0;
     __name(makeContainsRtl, "makeContainsRtl");
-    __name24(makeContainsRtl, "makeContainsRtl");
+    __name25(makeContainsRtl, "makeContainsRtl");
     __name(containsRTL, "containsRTL");
-    __name24(containsRTL, "containsRTL");
+    __name25(containsRTL, "containsRTL");
     IS_BASIC_ASCII = /^[\t\n\r\x20-\x7E]*$/;
     __name(isBasicASCII, "isBasicASCII");
-    __name24(isBasicASCII, "isBasicASCII");
+    __name25(isBasicASCII, "isBasicASCII");
     UNUSUAL_LINE_TERMINATORS = /[\u2028\u2029]/;
     __name(containsUnusualLineTerminators, "containsUnusualLineTerminators");
-    __name24(containsUnusualLineTerminators, "containsUnusualLineTerminators");
+    __name25(containsUnusualLineTerminators, "containsUnusualLineTerminators");
     __name(isFullWidthCharacter, "isFullWidthCharacter");
-    __name24(isFullWidthCharacter, "isFullWidthCharacter");
+    __name25(isFullWidthCharacter, "isFullWidthCharacter");
     __name(isEmojiImprecise, "isEmojiImprecise");
-    __name24(isEmojiImprecise, "isEmojiImprecise");
+    __name25(isEmojiImprecise, "isEmojiImprecise");
     __name(lcut, "lcut");
-    __name24(lcut, "lcut");
+    __name25(lcut, "lcut");
     __name(rcut, "rcut");
-    __name24(rcut, "rcut");
+    __name25(rcut, "rcut");
     CSI_SEQUENCE = /(?:\x1b\[|\x9b)[=?>!]?[\d;:]*["$#'* ]?[a-zA-Z@^`{}|~]/;
     OSC_SEQUENCE = /(?:\x1b\]|\x9d).*?(?:\x1b\\|\x07|\x9c)/;
     ESC_SEQUENCE = /\x1b(?:[ #%\(\)\*\+\-\.\/]?[a-zA-Z0-9\|}~@])/;
@@ -8830,34 +9422,34 @@ var init_strings = __esm({
       ESC_SEQUENCE.source
     ].join("|") + ")", "g");
     __name(forAnsiStringParts, "forAnsiStringParts");
-    __name24(forAnsiStringParts, "forAnsiStringParts");
+    __name25(forAnsiStringParts, "forAnsiStringParts");
     __name(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
-    __name24(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
+    __name25(removeAnsiEscapeCodes, "removeAnsiEscapeCodes");
     PROMPT_NON_PRINTABLE = /\\\[.*?\\\]/g;
     __name(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
-    __name24(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
+    __name25(removeAnsiEscapeCodesFromPrompt, "removeAnsiEscapeCodesFromPrompt");
     UTF8_BOM_CHARACTER = String.fromCharCode(
       65279
       /* CharCode.UTF8_BOM */
     );
     __name(startsWithUTF8BOM, "startsWithUTF8BOM");
-    __name24(startsWithUTF8BOM, "startsWithUTF8BOM");
+    __name25(startsWithUTF8BOM, "startsWithUTF8BOM");
     __name(stripUTF8BOM, "stripUTF8BOM");
-    __name24(stripUTF8BOM, "stripUTF8BOM");
+    __name25(stripUTF8BOM, "stripUTF8BOM");
     __name(fuzzyContains, "fuzzyContains");
-    __name24(fuzzyContains, "fuzzyContains");
+    __name25(fuzzyContains, "fuzzyContains");
     __name(containsUppercaseCharacter, "containsUppercaseCharacter");
-    __name24(containsUppercaseCharacter, "containsUppercaseCharacter");
+    __name25(containsUppercaseCharacter, "containsUppercaseCharacter");
     __name(uppercaseFirstLetter, "uppercaseFirstLetter");
-    __name24(uppercaseFirstLetter, "uppercaseFirstLetter");
+    __name25(uppercaseFirstLetter, "uppercaseFirstLetter");
     __name(getNLines, "getNLines");
-    __name24(getNLines, "getNLines");
+    __name25(getNLines, "getNLines");
     __name(singleLetterHash, "singleLetterHash");
-    __name24(singleLetterHash, "singleLetterHash");
+    __name25(singleLetterHash, "singleLetterHash");
     __name(getGraphemeBreakType, "getGraphemeBreakType");
-    __name24(getGraphemeBreakType, "getGraphemeBreakType");
+    __name25(getGraphemeBreakType, "getGraphemeBreakType");
     __name(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
-    __name24(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
+    __name25(breakBetweenGraphemeBreakType, "breakBetweenGraphemeBreakType");
     (function(GraphemeBreakType2) {
       GraphemeBreakType2[GraphemeBreakType2["Other"] = 0] = "Other";
       GraphemeBreakType2[GraphemeBreakType2["Prepend"] = 1] = "Prepend";
@@ -8880,7 +9472,7 @@ var init_strings = __esm({
         __name(this, "GraphemeBreakTree");
       }
       static {
-        __name24(this, "GraphemeBreakTree");
+        __name25(this, "GraphemeBreakTree");
       }
       static {
         this._INSTANCE = null;
@@ -8923,13 +9515,13 @@ var init_strings = __esm({
       }
     };
     __name(getGraphemeBreakRawData, "getGraphemeBreakRawData");
-    __name24(getGraphemeBreakRawData, "getGraphemeBreakRawData");
+    __name25(getGraphemeBreakRawData, "getGraphemeBreakRawData");
     __name(getLeftDeleteOffset, "getLeftDeleteOffset");
-    __name24(getLeftDeleteOffset, "getLeftDeleteOffset");
+    __name25(getLeftDeleteOffset, "getLeftDeleteOffset");
     __name(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
-    __name24(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
+    __name25(getOffsetBeforeLastEmojiComponent, "getOffsetBeforeLastEmojiComponent");
     __name(isEmojiModifier, "isEmojiModifier");
-    __name24(isEmojiModifier, "isEmojiModifier");
+    __name25(isEmojiModifier, "isEmojiModifier");
     (function(CodePoint2) {
       CodePoint2[CodePoint2["zwj"] = 8205] = "zwj";
       CodePoint2[CodePoint2["emojiVariantSelector"] = 65039] = "emojiVariantSelector";
@@ -8942,7 +9534,7 @@ var init_strings = __esm({
         __name(this, "AmbiguousCharacters");
       }
       static {
-        __name24(this, "AmbiguousCharacters");
+        __name25(this, "AmbiguousCharacters");
       }
       static {
         this.ambiguousCharacterData = new Lazy(() => {
@@ -8960,7 +9552,7 @@ var init_strings = __esm({
             return result;
           }
           __name(arrayToMap, "arrayToMap");
-          __name24(arrayToMap, "arrayToMap");
+          __name25(arrayToMap, "arrayToMap");
           function mergeMaps(map1, map2) {
             const result = new Map(map1);
             for (const [key, value] of map2) {
@@ -8969,7 +9561,7 @@ var init_strings = __esm({
             return result;
           }
           __name(mergeMaps, "mergeMaps");
-          __name24(mergeMaps, "mergeMaps");
+          __name25(mergeMaps, "mergeMaps");
           function intersectMaps(map1, map2) {
             if (!map1) {
               return map2;
@@ -8983,7 +9575,7 @@ var init_strings = __esm({
             return result;
           }
           __name(intersectMaps, "intersectMaps");
-          __name24(intersectMaps, "intersectMaps");
+          __name25(intersectMaps, "intersectMaps");
           const data = this.ambiguousCharacterData.value;
           let filteredLocales = locales.filter((l) => !l.startsWith("_") && Object.hasOwn(data, l));
           if (filteredLocales.length === 0) {
@@ -9039,7 +9631,7 @@ var init_strings = __esm({
         __name(this, "InvisibleCharacters");
       }
       static {
-        __name24(this, "InvisibleCharacters");
+        __name25(this, "InvisibleCharacters");
       }
       static getRawData() {
         return JSON.parse('{"_common":[11,12,13,127,847,1564,4447,4448,6068,6069,6155,6156,6157,6158,7355,7356,8192,8193,8194,8195,8196,8197,8198,8199,8200,8201,8202,8204,8205,8206,8207,8234,8235,8236,8237,8238,8239,8287,8288,8289,8290,8291,8292,8293,8294,8295,8296,8297,8298,8299,8300,8301,8302,8303,10240,12644,65024,65025,65026,65027,65028,65029,65030,65031,65032,65033,65034,65035,65036,65037,65038,65039,65279,65440,65520,65521,65522,65523,65524,65525,65526,65527,65528,65532,78844,119155,119156,119157,119158,119159,119160,119161,119162,917504,917505,917506,917507,917508,917509,917510,917511,917512,917513,917514,917515,917516,917517,917518,917519,917520,917521,917522,917523,917524,917525,917526,917527,917528,917529,917530,917531,917532,917533,917534,917535,917536,917537,917538,917539,917540,917541,917542,917543,917544,917545,917546,917547,917548,917549,917550,917551,917552,917553,917554,917555,917556,917557,917558,917559,917560,917561,917562,917563,917564,917565,917566,917567,917568,917569,917570,917571,917572,917573,917574,917575,917576,917577,917578,917579,917580,917581,917582,917583,917584,917585,917586,917587,917588,917589,917590,917591,917592,917593,917594,917595,917596,917597,917598,917599,917600,917601,917602,917603,917604,917605,917606,917607,917608,917609,917610,917611,917612,917613,917614,917615,917616,917617,917618,917619,917620,917621,917622,917623,917624,917625,917626,917627,917628,917629,917630,917631,917760,917761,917762,917763,917764,917765,917766,917767,917768,917769,917770,917771,917772,917773,917774,917775,917776,917777,917778,917779,917780,917781,917782,917783,917784,917785,917786,917787,917788,917789,917790,917791,917792,917793,917794,917795,917796,917797,917798,917799,917800,917801,917802,917803,917804,917805,917806,917807,917808,917809,917810,917811,917812,917813,917814,917815,917816,917817,917818,917819,917820,917821,917822,917823,917824,917825,917826,917827,917828,917829,917830,917831,917832,917833,917834,917835,917836,917837,917838,917839,917840,917841,917842,917843,917844,917845,917846,917847,917848,917849,917850,917851,917852,917853,917854,917855,917856,917857,917858,917859,917860,917861,917862,917863,917864,917865,917866,917867,917868,917869,917870,917871,917872,917873,917874,917875,917876,917877,917878,917879,917880,917881,917882,917883,917884,917885,917886,917887,917888,917889,917890,917891,917892,917893,917894,917895,917896,917897,917898,917899,917900,917901,917902,917903,917904,917905,917906,917907,917908,917909,917910,917911,917912,917913,917914,917915,917916,917917,917918,917919,917920,917921,917922,917923,917924,917925,917926,917927,917928,917929,917930,917931,917932,917933,917934,917935,917936,917937,917938,917939,917940,917941,917942,917943,917944,917945,917946,917947,917948,917949,917950,917951,917952,917953,917954,917955,917956,917957,917958,917959,917960,917961,917962,917963,917964,917965,917966,917967,917968,917969,917970,917971,917972,917973,917974,917975,917976,917977,917978,917979,917980,917981,917982,917983,917984,917985,917986,917987,917988,917989,917990,917991,917992,917993,917994,917995,917996,917997,917998,917999],"cs":[173,8203,12288],"de":[173,8203,12288],"es":[8203,12288],"fr":[173,8203,12288],"it":[160,173,12288],"ja":[173],"ko":[173,12288],"pl":[173,8203,12288],"pt-BR":[173,8203,12288],"qps-ploc":[160,173,8203,12288],"ru":[173,12288],"tr":[160,173,8203,12288],"zh-hans":[160,173,8203,12288],"zh-hant":[173,12288]}');
@@ -9071,601 +9663,9 @@ var init_strings = __esm({
     };
     Ellipsis = "\u2026";
     __name(toBinary, "toBinary");
-    __name24(toBinary, "toBinary");
+    __name25(toBinary, "toBinary");
     __name(multibyteAwareBtoa, "multibyteAwareBtoa");
-    __name24(multibyteAwareBtoa, "multibyteAwareBtoa");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/uri.js
-var uri_exports = {};
-__export(uri_exports, {
-  URI: () => URI,
-  isUriComponents: () => isUriComponents,
-  uriToFsPath: () => uriToFsPath
-});
-function _validateUri(ret, _strict) {
-  if (!ret.scheme && _strict) {
-    throw new Error(`[UriError]: Scheme is missing: {scheme: "", authority: "${ret.authority}", path: "${ret.path}", query: "${ret.query}", fragment: "${ret.fragment}"}`);
-  }
-  if (ret.scheme && !_schemePattern.test(ret.scheme)) {
-    const matches = [...ret.scheme.matchAll(/[^\w\d+.-]/gu)];
-    const detail = matches.length > 0 ? ` Found '${matches[0][0]}' at index ${matches[0].index} (${matches.length} total)` : "";
-    throw new Error(`[UriError]: Scheme contains illegal characters.${detail} (len:${ret.scheme.length})`);
-  }
-  if (ret.path) {
-    if (ret.authority) {
-      if (!_singleSlashStart.test(ret.path)) {
-        throw new Error('[UriError]: If a URI contains an authority component, then the path component must either be empty or begin with a slash ("/") character');
-      }
-    } else {
-      if (_doubleSlashStart.test(ret.path)) {
-        throw new Error('[UriError]: If a URI does not contain an authority component, then the path cannot begin with two slash characters ("//")');
-      }
-    }
-  }
-}
-function _schemeFix(scheme, _strict) {
-  if (!scheme && !_strict) {
-    return "file";
-  }
-  return scheme;
-}
-function _referenceResolution(scheme, path) {
-  switch (scheme) {
-    case "https":
-    case "http":
-    case "file":
-      if (!path) {
-        path = _slash;
-      } else if (path[0] !== _slash) {
-        path = _slash + path;
-      }
-      break;
-  }
-  return path;
-}
-function isUriComponents(thing) {
-  if (!thing || typeof thing !== "object") {
-    return false;
-  }
-  return typeof thing.scheme === "string" && (typeof thing.authority === "string" || typeof thing.authority === "undefined") && (typeof thing.path === "string" || typeof thing.path === "undefined") && (typeof thing.query === "string" || typeof thing.query === "undefined") && (typeof thing.fragment === "string" || typeof thing.fragment === "undefined");
-}
-function encodeURIComponentFast(uriComponent, isPath, isAuthority) {
-  let res = void 0;
-  let nativeEncodePos = -1;
-  for (let pos = 0; pos < uriComponent.length; pos++) {
-    const code = uriComponent.charCodeAt(pos);
-    if (code >= 97 && code <= 122 || code >= 65 && code <= 90 || code >= 48 && code <= 57 || code === 45 || code === 46 || code === 95 || code === 126 || isPath && code === 47 || isAuthority && code === 91 || isAuthority && code === 93 || isAuthority && code === 58) {
-      if (nativeEncodePos !== -1) {
-        res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));
-        nativeEncodePos = -1;
-      }
-      if (res !== void 0) {
-        res += uriComponent.charAt(pos);
-      }
-    } else {
-      if (res === void 0) {
-        res = uriComponent.substr(0, pos);
-      }
-      const escaped = encodeTable[code];
-      if (escaped !== void 0) {
-        if (nativeEncodePos !== -1) {
-          res += encodeURIComponent(uriComponent.substring(nativeEncodePos, pos));
-          nativeEncodePos = -1;
-        }
-        res += escaped;
-      } else if (nativeEncodePos === -1) {
-        nativeEncodePos = pos;
-      }
-    }
-  }
-  if (nativeEncodePos !== -1) {
-    res += encodeURIComponent(uriComponent.substring(nativeEncodePos));
-  }
-  return res !== void 0 ? res : uriComponent;
-}
-function encodeURIComponentMinimal(path) {
-  let res = void 0;
-  for (let pos = 0; pos < path.length; pos++) {
-    const code = path.charCodeAt(pos);
-    if (code === 35 || code === 63) {
-      if (res === void 0) {
-        res = path.substr(0, pos);
-      }
-      res += encodeTable[code];
-    } else {
-      if (res !== void 0) {
-        res += path[pos];
-      }
-    }
-  }
-  return res !== void 0 ? res : path;
-}
-function uriToFsPath(uri, keepDriveLetterCasing) {
-  let value;
-  if (uri.authority && uri.path.length > 1 && uri.scheme === "file") {
-    value = `//${uri.authority}${uri.path}`;
-  } else if (uri.path.charCodeAt(0) === 47 && (uri.path.charCodeAt(1) >= 65 && uri.path.charCodeAt(1) <= 90 || uri.path.charCodeAt(1) >= 97 && uri.path.charCodeAt(1) <= 122) && uri.path.charCodeAt(2) === 58) {
-    if (!keepDriveLetterCasing) {
-      value = uri.path[1].toLowerCase() + uri.path.substr(2);
-    } else {
-      value = uri.path.substr(1);
-    }
-  } else {
-    value = uri.path;
-  }
-  if (isWindows) {
-    value = value.replace(/\//g, "\\");
-  }
-  return value;
-}
-function _asFormatted(uri, skipEncoding) {
-  const encoder = !skipEncoding ? encodeURIComponentFast : encodeURIComponentMinimal;
-  let res = "";
-  let { scheme, authority, path, query, fragment } = uri;
-  if (scheme) {
-    res += scheme;
-    res += ":";
-  }
-  if (authority || scheme === "file") {
-    res += _slash;
-    res += _slash;
-  }
-  if (authority) {
-    let idx = authority.indexOf("@");
-    if (idx !== -1) {
-      const userinfo = authority.substr(0, idx);
-      authority = authority.substr(idx + 1);
-      idx = userinfo.lastIndexOf(":");
-      if (idx === -1) {
-        res += encoder(userinfo, false, false);
-      } else {
-        res += encoder(userinfo.substr(0, idx), false, false);
-        res += ":";
-        res += encoder(userinfo.substr(idx + 1), false, true);
-      }
-      res += "@";
-    }
-    authority = authority.toLowerCase();
-    idx = authority.lastIndexOf(":");
-    if (idx === -1) {
-      res += encoder(authority, false, true);
-    } else {
-      res += encoder(authority.substr(0, idx), false, true);
-      res += authority.substr(idx);
-    }
-  }
-  if (path) {
-    if (path.length >= 3 && path.charCodeAt(0) === 47 && path.charCodeAt(2) === 58) {
-      const code = path.charCodeAt(1);
-      if (code >= 65 && code <= 90) {
-        path = `/${String.fromCharCode(code + 32)}:${path.substr(3)}`;
-      }
-    } else if (path.length >= 2 && path.charCodeAt(1) === 58) {
-      const code = path.charCodeAt(0);
-      if (code >= 65 && code <= 90) {
-        path = `${String.fromCharCode(code + 32)}:${path.substr(2)}`;
-      }
-    }
-    res += encoder(path, true, false);
-  }
-  if (query) {
-    res += "?";
-    res += encoder(query, false, false);
-  }
-  if (fragment) {
-    res += "#";
-    res += !skipEncoding ? encodeURIComponentFast(fragment, false, false) : fragment;
-  }
-  return res;
-}
-function decodeURIComponentGraceful(str) {
-  try {
-    return decodeURIComponent(str);
-  } catch {
-    if (str.length > 3) {
-      return str.substr(0, 3) + decodeURIComponentGraceful(str.substr(3));
-    } else {
-      return str;
-    }
-  }
-}
-function percentDecode(str) {
-  if (!str.match(_rEncodedAsHex)) {
-    return str;
-  }
-  return str.replace(_rEncodedAsHex, (match) => decodeURIComponentGraceful(match));
-}
-var __defProp25, __name25, _schemePattern, _singleSlashStart, _doubleSlashStart, _empty, _slash, _regexp, URI, _pathSepMarker, Uri, encodeTable, _rEncodedAsHex;
-var init_uri = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/uri.js"() {
-    "use strict";
-    init_path();
-    init_platform();
-    __defProp25 = Object.defineProperty;
-    __name25 = /* @__PURE__ */ __name((target, value) => __defProp25(target, "name", { value, configurable: true }), "__name");
-    _schemePattern = /^\w[\w\d+.-]*$/;
-    _singleSlashStart = /^\//;
-    _doubleSlashStart = /^\/\//;
-    __name(_validateUri, "_validateUri");
-    __name25(_validateUri, "_validateUri");
-    __name(_schemeFix, "_schemeFix");
-    __name25(_schemeFix, "_schemeFix");
-    __name(_referenceResolution, "_referenceResolution");
-    __name25(_referenceResolution, "_referenceResolution");
-    _empty = "";
-    _slash = "/";
-    _regexp = /^(([^:/?#]+?):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/;
-    URI = class _URI {
-      static {
-        __name(this, "URI");
-      }
-      static {
-        __name25(this, "URI");
-      }
-      static isUri(thing) {
-        if (thing instanceof _URI) {
-          return true;
-        }
-        if (!thing || typeof thing !== "object") {
-          return false;
-        }
-        return typeof thing.authority === "string" && typeof thing.fragment === "string" && typeof thing.path === "string" && typeof thing.query === "string" && typeof thing.scheme === "string" && typeof thing.fsPath === "string" && typeof thing.with === "function" && typeof thing.toString === "function";
-      }
-      /**
-       * @internal
-       */
-      constructor(schemeOrData, authority, path, query, fragment, _strict = false) {
-        if (typeof schemeOrData === "object") {
-          this.scheme = schemeOrData.scheme || _empty;
-          this.authority = schemeOrData.authority || _empty;
-          this.path = schemeOrData.path || _empty;
-          this.query = schemeOrData.query || _empty;
-          this.fragment = schemeOrData.fragment || _empty;
-        } else {
-          this.scheme = _schemeFix(schemeOrData, _strict);
-          this.authority = authority || _empty;
-          this.path = _referenceResolution(this.scheme, path || _empty);
-          this.query = query || _empty;
-          this.fragment = fragment || _empty;
-          _validateUri(this, _strict);
-        }
-      }
-      // ---- filesystem path -----------------------
-      /**
-       * Returns a string representing the corresponding file system path of this URI.
-       * Will handle UNC paths, normalizes windows drive letters to lower-case, and uses the
-       * platform specific path separator.
-       *
-       * * Will *not* validate the path for invalid characters and semantics.
-       * * Will *not* look at the scheme of this URI.
-       * * The result shall *not* be used for display purposes but for accessing a file on disk.
-       *
-       *
-       * The *difference* to `URI#path` is the use of the platform specific separator and the handling
-       * of UNC paths. See the below sample of a file-uri with an authority (UNC path).
-       *
-       * ```ts
-          const u = URI.parse('file://server/c$/folder/file.txt')
-          u.authority === 'server'
-          u.path === '/shares/c$/file.txt'
-          u.fsPath === '\\server\c$\folder\file.txt'
-      ```
-       *
-       * Using `URI#path` to read a file (using fs-apis) would not be enough because parts of the path,
-       * namely the server name, would be missing. Therefore `URI#fsPath` exists - it's sugar to ease working
-       * with URIs that represent files on disk (`file` scheme).
-       */
-      get fsPath() {
-        return uriToFsPath(this, false);
-      }
-      // ---- modify to new -------------------------
-      with(change) {
-        if (!change) {
-          return this;
-        }
-        let { scheme, authority, path, query, fragment } = change;
-        if (scheme === void 0) {
-          scheme = this.scheme;
-        } else if (scheme === null) {
-          scheme = _empty;
-        }
-        if (authority === void 0) {
-          authority = this.authority;
-        } else if (authority === null) {
-          authority = _empty;
-        }
-        if (path === void 0) {
-          path = this.path;
-        } else if (path === null) {
-          path = _empty;
-        }
-        if (query === void 0) {
-          query = this.query;
-        } else if (query === null) {
-          query = _empty;
-        }
-        if (fragment === void 0) {
-          fragment = this.fragment;
-        } else if (fragment === null) {
-          fragment = _empty;
-        }
-        if (scheme === this.scheme && authority === this.authority && path === this.path && query === this.query && fragment === this.fragment) {
-          return this;
-        }
-        return new Uri(scheme, authority, path, query, fragment);
-      }
-      // ---- parse & validate ------------------------
-      /**
-       * Creates a new URI from a string, e.g. `http://www.example.com/some/path`,
-       * `file:///usr/home`, or `scheme:with/path`.
-       *
-       * @param value A string which represents an URI (see `URI#toString`).
-       */
-      static parse(value, _strict = false) {
-        const match = _regexp.exec(value);
-        if (!match) {
-          return new Uri(_empty, _empty, _empty, _empty, _empty);
-        }
-        return new Uri(match[2] || _empty, percentDecode(match[4] || _empty), percentDecode(match[5] || _empty), percentDecode(match[7] || _empty), percentDecode(match[9] || _empty), _strict);
-      }
-      /**
-       * Creates a new URI from a file system path, e.g. `c:\my\files`,
-       * `/usr/home`, or `\\server\share\some\path`.
-       *
-       * The *difference* between `URI#parse` and `URI#file` is that the latter treats the argument
-       * as path, not as stringified-uri. E.g. `URI.file(path)` is **not the same as**
-       * `URI.parse('file://' + path)` because the path might contain characters that are
-       * interpreted (# and ?). See the following sample:
-       * ```ts
-      const good = URI.file('/coding/c#/project1');
-      good.scheme === 'file';
-      good.path === '/coding/c#/project1';
-      good.fragment === '';
-      const bad = URI.parse('file://' + '/coding/c#/project1');
-      bad.scheme === 'file';
-      bad.path === '/coding/c'; // path is now broken
-      bad.fragment === '/project1';
-      ```
-       *
-       * @param path A file system path (see `URI#fsPath`)
-       */
-      static file(path) {
-        let authority = _empty;
-        if (isWindows) {
-          path = path.replace(/\\/g, _slash);
-        }
-        if (path[0] === _slash && path[1] === _slash) {
-          const idx = path.indexOf(_slash, 2);
-          if (idx === -1) {
-            authority = path.substring(2);
-            path = _slash;
-          } else {
-            authority = path.substring(2, idx);
-            path = path.substring(idx) || _slash;
-          }
-        }
-        return new Uri("file", authority, path, _empty, _empty);
-      }
-      /**
-       * Creates new URI from uri components.
-       *
-       * Unless `strict` is `true` the scheme is defaults to be `file`. This function performs
-       * validation and should be used for untrusted uri components retrieved from storage,
-       * user input, command arguments etc
-       */
-      static from(components, strict) {
-        const result = new Uri(components.scheme, components.authority, components.path, components.query, components.fragment, strict);
-        return result;
-      }
-      /**
-       * Join a URI path with path fragments and normalizes the resulting path.
-       *
-       * @param uri The input URI.
-       * @param pathFragment The path fragment to add to the URI path.
-       * @returns The resulting URI.
-       */
-      static joinPath(uri, ...pathFragment) {
-        if (!uri.path) {
-          throw new Error(`[UriError]: cannot call joinPath on URI without path: ${uri.toString()}`);
-        }
-        let newPath;
-        if (isWindows && uri.scheme === "file") {
-          newPath = _URI.file(win32.join(uriToFsPath(uri, true), ...pathFragment)).path;
-        } else {
-          newPath = posix.join(uri.path, ...pathFragment);
-        }
-        return uri.with({ path: newPath });
-      }
-      // ---- printing/externalize ---------------------------
-      /**
-       * Creates a string representation for this URI. It's guaranteed that calling
-       * `URI.parse` with the result of this function creates an URI which is equal
-       * to this URI.
-       *
-       * * The result shall *not* be used for display purposes but for externalization or transport.
-       * * The result will be encoded using the percentage encoding and encoding happens mostly
-       * ignore the scheme-specific encoding rules.
-       *
-       * @param skipEncoding Do not encode the result, default is `false`
-       */
-      toString(skipEncoding = false) {
-        return _asFormatted(this, skipEncoding);
-      }
-      toJSON() {
-        return this;
-      }
-      static revive(data) {
-        if (!data) {
-          return data;
-        } else if (data instanceof _URI) {
-          return data;
-        } else {
-          const result = new Uri(data);
-          result._formatted = data.external ?? null;
-          result._fsPath = data._sep === _pathSepMarker ? data.fsPath ?? null : null;
-          return result;
-        }
-      }
-      [/* @__PURE__ */ Symbol.for("debug.description")]() {
-        return `URI(${this.toString()})`;
-      }
-    };
-    __name(isUriComponents, "isUriComponents");
-    __name25(isUriComponents, "isUriComponents");
-    _pathSepMarker = isWindows ? 1 : void 0;
-    Uri = class extends URI {
-      static {
-        __name(this, "Uri");
-      }
-      static {
-        __name25(this, "Uri");
-      }
-      constructor() {
-        super(...arguments);
-        this._formatted = null;
-        this._fsPath = null;
-      }
-      get fsPath() {
-        if (!this._fsPath) {
-          this._fsPath = uriToFsPath(this, false);
-        }
-        return this._fsPath;
-      }
-      toString(skipEncoding = false) {
-        if (!skipEncoding) {
-          if (!this._formatted) {
-            this._formatted = _asFormatted(this, false);
-          }
-          return this._formatted;
-        } else {
-          return _asFormatted(this, true);
-        }
-      }
-      toJSON() {
-        const res = {
-          $mid: 1
-          /* MarshalledId.Uri */
-        };
-        if (this._fsPath) {
-          res.fsPath = this._fsPath;
-          res._sep = _pathSepMarker;
-        }
-        if (this._formatted) {
-          res.external = this._formatted;
-        }
-        if (this.path) {
-          res.path = this.path;
-        }
-        if (this.scheme) {
-          res.scheme = this.scheme;
-        }
-        if (this.authority) {
-          res.authority = this.authority;
-        }
-        if (this.query) {
-          res.query = this.query;
-        }
-        if (this.fragment) {
-          res.fragment = this.fragment;
-        }
-        return res;
-      }
-    };
-    encodeTable = {
-      [
-        58
-        /* CharCode.Colon */
-      ]: "%3A",
-      // gen-delims
-      [
-        47
-        /* CharCode.Slash */
-      ]: "%2F",
-      [
-        63
-        /* CharCode.QuestionMark */
-      ]: "%3F",
-      [
-        35
-        /* CharCode.Hash */
-      ]: "%23",
-      [
-        91
-        /* CharCode.OpenSquareBracket */
-      ]: "%5B",
-      [
-        93
-        /* CharCode.CloseSquareBracket */
-      ]: "%5D",
-      [
-        64
-        /* CharCode.AtSign */
-      ]: "%40",
-      [
-        33
-        /* CharCode.ExclamationMark */
-      ]: "%21",
-      // sub-delims
-      [
-        36
-        /* CharCode.DollarSign */
-      ]: "%24",
-      [
-        38
-        /* CharCode.Ampersand */
-      ]: "%26",
-      [
-        39
-        /* CharCode.SingleQuote */
-      ]: "%27",
-      [
-        40
-        /* CharCode.OpenParen */
-      ]: "%28",
-      [
-        41
-        /* CharCode.CloseParen */
-      ]: "%29",
-      [
-        42
-        /* CharCode.Asterisk */
-      ]: "%2A",
-      [
-        43
-        /* CharCode.Plus */
-      ]: "%2B",
-      [
-        44
-        /* CharCode.Comma */
-      ]: "%2C",
-      [
-        59
-        /* CharCode.Semicolon */
-      ]: "%3B",
-      [
-        61
-        /* CharCode.Equals */
-      ]: "%3D",
-      [
-        32
-        /* CharCode.Space */
-      ]: "%20"
-    };
-    __name(encodeURIComponentFast, "encodeURIComponentFast");
-    __name25(encodeURIComponentFast, "encodeURIComponentFast");
-    __name(encodeURIComponentMinimal, "encodeURIComponentMinimal");
-    __name25(encodeURIComponentMinimal, "encodeURIComponentMinimal");
-    __name(uriToFsPath, "uriToFsPath");
-    __name25(uriToFsPath, "uriToFsPath");
-    __name(_asFormatted, "_asFormatted");
-    __name25(_asFormatted, "_asFormatted");
-    __name(decodeURIComponentGraceful, "decodeURIComponentGraceful");
-    __name25(decodeURIComponentGraceful, "decodeURIComponentGraceful");
-    _rEncodedAsHex = /(%[0-9A-Za-z][0-9A-Za-z])+/g;
-    __name(percentDecode, "percentDecode");
-    __name25(percentDecode, "percentDecode");
+    __name25(multibyteAwareBtoa, "multibyteAwareBtoa");
   }
 });
 
@@ -24543,11 +24543,10 @@ ${Stack}`
         };
         const API = {
           ...VsCodeTypes,
-          // Reported VS Code version — must satisfy every built-in
-          // extension's `engines.vscode` constraint. `vscode-languageclient`
-          // currently requires `^1.91.0`; bumping above that lets
-          // css/html/json/markdown-language-features activate.
-          version: "1.95.0",
+          // Atom I5: read from process.env — single source is .env.Land
+          // propagated by Maintain/Script/TierEnvironment.sh. Fallback
+          // tracks the VS Code base from Dependency/.../Editor/package.json.
+          version: process.env["ProductVersion"] ?? "1.118.0",
           Uri: URI2,
           CancellationTokenSource: CancellationTokenSource2,
           CancellationError: CancellationError2,
@@ -25226,6 +25225,57 @@ var init_WorkspaceContainsActivator = __esm({
 });
 
 // Source/Services/Handler/NotificationHandler.ts
+var { URI: LazyURI } = await Promise.resolve().then(() => (init_uri(), uri_exports));
+var HydrateUri = /* @__PURE__ */ __name((Raw) => {
+  if (!Raw) return null;
+  if (typeof Raw === "string") {
+    try {
+      return LazyURI.parse(
+        Raw
+      );
+    } catch {
+      return null;
+    }
+  }
+  if (typeof Raw.toString === "function" && typeof Raw.fsPath === "string")
+    return Raw;
+  try {
+    return LazyURI.parse(
+      Raw.toString()
+    );
+  } catch {
+    return null;
+  }
+}, "HydrateUri");
+if (!process._landUncaughtHandlerInstalled) {
+  process.on("uncaughtException", (Error2) => {
+    try {
+      const Stack = Error2 instanceof globalThis.Error ? Error2.stack?.split("\n").slice(0, 6).join(" | ") : String(Error2);
+      process.stdout.write(
+        `[LandFix:UncaughtException] ${Stack ?? "unknown"}
+`
+      );
+    } catch {
+    }
+  });
+  process.on("unhandledRejection", (Reason) => {
+    try {
+      const Stack = Reason instanceof globalThis.Error ? Reason.stack?.split("\n").slice(0, 6).join(" | ") : String(Reason);
+      process.stdout.write(
+        `[LandFix:UnhandledRejection] ${Stack ?? "unknown"}
+`
+      );
+    } catch {
+    }
+  });
+  process._landUncaughtHandlerInstalled = true;
+  try {
+    process.stdout.write(
+      "[LandFix:UncaughtHandlers] uncaughtException + unhandledRejection handlers installed at NotificationHandler module load\n"
+    );
+  } catch {
+  }
+}
 var ApplyWorkspaceDelta = /* @__PURE__ */ __name((Context, Payload) => {
   const Added = Payload?.added ?? [];
   const Removed = Payload?.removed ?? [];
@@ -25258,6 +25308,26 @@ var ApplyWorkspaceDelta = /* @__PURE__ */ __name((Context, Payload) => {
   }
   return Kept;
 }, "ApplyWorkspaceDelta");
+var SafeEmit = /* @__PURE__ */ __name((Source, Event2, Payload) => {
+  if (!Source) return;
+  const Listeners = Source.listeners(Event2);
+  if (Listeners.length === 0) return;
+  for (const Listener of Listeners) {
+    try {
+      Listener(Payload);
+    } catch (Caught) {
+      const Err = Caught;
+      const Summary = typeof Err?.stack === "string" ? Err.stack.split("\n").slice(0, 3).join(" | ") : typeof Err?.message === "string" ? Err.message : String(Caught);
+      try {
+        process.stdout.write(
+          `[LandFix:SafeEmit] listener for "${Event2}" threw: ${Summary}
+`
+        );
+      } catch {
+      }
+    }
+  }
+}, "SafeEmit");
 var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentContentCache, HandleDocumentChange, HandleDocumentOpen, HandleDocumentClose, HandleDocumentSave, Method, Parameters, WorkspaceEventEmitter, Context) => {
   switch (Method) {
     case "extension.change":
@@ -25381,16 +25451,38 @@ var HandleSpecificNotification = /* @__PURE__ */ __name((Emitter2, DocumentConte
         );
       } catch {
       }
-      WorkspaceEventEmitter?.emit("didChangeWorkspaceFolders", {
-        added: Added,
-        removed: Removed,
-        folders: Merged
-      });
-      Emitter2.emit("workspaceFoldersChanged", {
-        added: Added,
-        removed: Removed,
-        folders: Merged
-      });
+      const HydrateFolder = /* @__PURE__ */ __name((Wire, Index) => {
+        const Uri2 = HydrateUri(Wire.uri);
+        if (!Uri2) return null;
+        return {
+          uri: Uri2,
+          name: Wire.name ?? Uri2.fsPath.split("/").pop() ?? "",
+          index: typeof Wire.index === "number" ? Wire.index : Index
+        };
+      }, "HydrateFolder");
+      const AddedHydrated = Added.map((W, I) => HydrateFolder(W, I)).filter(
+        (V) => V !== null
+      );
+      const RemovedHydrated = Removed.map((W, I) => HydrateFolder(W, I)).filter(
+        (V) => V !== null
+      );
+      const MergedHydrated = Merged.map((W, I) => HydrateFolder(W, I)).filter(
+        (V) => V !== null
+      );
+      try {
+        process.stdout.write(
+          `[LandFix:WsDelta] hydrated +${AddedHydrated.length}/${Added.length} -${RemovedHydrated.length}/${Removed.length} folders=${MergedHydrated.length}/${Merged.length}
+`
+        );
+      } catch {
+      }
+      const Event2 = {
+        added: AddedHydrated,
+        removed: RemovedHydrated,
+        folders: MergedHydrated
+      };
+      SafeEmit(WorkspaceEventEmitter, "didChangeWorkspaceFolders", Event2);
+      SafeEmit(Emitter2, "workspaceFoldersChanged", Event2);
       if (Context && Added.length > 0) {
         const CapturedContext = Context;
         setImmediate(() => {

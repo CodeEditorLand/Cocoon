@@ -24543,11 +24543,10 @@ ${Stack}`
         };
         const API = {
           ...VsCodeTypes,
-          // Reported VS Code version — must satisfy every built-in
-          // extension's `engines.vscode` constraint. `vscode-languageclient`
-          // currently requires `^1.91.0`; bumping above that lets
-          // css/html/json/markdown-language-features activate.
-          version: "1.95.0",
+          // Atom I5: read from process.env — single source is .env.Land
+          // propagated by Maintain/Script/TierEnvironment.sh. Fallback
+          // tracks the VS Code base from Dependency/.../Editor/package.json.
+          version: process.env["ProductVersion"] ?? "1.118.0",
           Uri: URI2,
           CancellationTokenSource: CancellationTokenSource2,
           CancellationError: CancellationError2,

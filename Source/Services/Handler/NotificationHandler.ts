@@ -55,6 +55,93 @@ type WorkspaceDeltaPayload = {
 };
 
 /**
+ * Atom I3 — last-resort uncaught-exception handler.
+ *
+ * The project's `PatchProcess/Patcher.ts` registers one via an Effect, but
+ * esbuild tree-shakes that path out of `CocoonMain.js` (bundle scan confirms
+ * zero `uncaughtException` strings). Without a handler, Node's default is
+ * log-and-exit-1, which is exactly how we've been losing Cocoon when the
+ * built-in `gulp` extension throws on workspace folder changes.
+ *
+ * This module-level registration is intentionally colocated with the
+ * notification dispatch because that's where the explosive event cascades
+ * fan out to extension callbacks. One handler is enough — Node dedupes via
+ * reference and we only register once per process.
+ */
+const { URI: LazyURI } = await import(
+	"@codeeditorland/output/vs/base/common/uri"
+);
+type UriObject = {
+	scheme: string;
+	authority: string;
+	path: string;
+	query: string;
+	fragment: string;
+	fsPath: string;
+	toString(): string;
+};
+const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
+	if (!Raw) return null;
+	if (typeof Raw === "string") {
+		try {
+			return (LazyURI as unknown as { parse: (s: string) => UriObject }).parse(
+				Raw,
+			);
+		} catch {
+			return null;
+		}
+	}
+	// Already a URI-shaped object — check for the critical getters extensions
+	// rely on (`fsPath`, `toString`). If present, use as-is; otherwise try to
+	// reparse via `toString()`.
+	if (
+		typeof Raw.toString === "function" &&
+		typeof (Raw as UriObject).fsPath === "string"
+	)
+		return Raw;
+	try {
+		return (LazyURI as unknown as { parse: (s: string) => UriObject }).parse(
+			Raw.toString(),
+		);
+	} catch {
+		return null;
+	}
+};
+
+// Register once at module load so any sync throw inside a listener chain
+// cannot nuke the extension host.
+if (!(process as { _landUncaughtHandlerInstalled?: boolean })._landUncaughtHandlerInstalled) {
+	process.on("uncaughtException", (Error) => {
+		try {
+			const Stack =
+				Error instanceof globalThis.Error
+					? Error.stack?.split("\n").slice(0, 6).join(" | ")
+					: String(Error);
+			process.stdout.write(
+				`[LandFix:UncaughtException] ${Stack ?? "unknown"}\n`,
+			);
+		} catch {}
+	});
+	process.on("unhandledRejection", (Reason) => {
+		try {
+			const Stack =
+				Reason instanceof globalThis.Error
+					? Reason.stack?.split("\n").slice(0, 6).join(" | ")
+					: String(Reason);
+			process.stdout.write(
+				`[LandFix:UnhandledRejection] ${Stack ?? "unknown"}\n`,
+			);
+		} catch {}
+	});
+	(process as { _landUncaughtHandlerInstalled?: boolean })._landUncaughtHandlerInstalled = true;
+	try {
+		process.stdout.write(
+			"[LandFix:UncaughtHandlers] uncaughtException + unhandledRejection handlers installed at NotificationHandler module load\n",
+		);
+	} catch {}
+}
+
+/**
  * Apply a `$deltaWorkspaceFolders` payload to the cached InitWorkspace snapshot
  * so subsequent synchronous reads of `vscode.workspace.workspaceFolders`
  * reflect the mutation. `Context.ExtensionHostInitData.workspace.folders` is
@@ -108,6 +195,54 @@ const ApplyWorkspaceDelta = (
 		if (First?.name) Workspace.name = First.name;
 	}
 	return Kept;
+};
+
+/**
+ * Invoke every listener for `Event` individually, isolating each from the
+ * others with try/catch. Node's default `emitter.emit()` calls listeners
+ * synchronously in registration order and rethrows the first one that
+ * throws — which skips every subsequent listener AND propagates the
+ * error up, crashing the extension host when an extension's listener
+ * has an uncaught bug.
+ *
+ * Atom I2 (2026-04-21): the built-in `gulp` extension's
+ * `TaskDetector.updateWorkspaceFolders` throws
+ * `ERR_INVALID_ARG_TYPE` (`path.join(undefined, …)`) whenever the
+ * workspace transitions from empty to one-folder. Without SafeEmit,
+ * that kills Cocoon with exit code 1 — every extension dies, and the
+ * whole post-folder-open experience silently breaks.
+ *
+ * We cannot patch `extensions/gulp/out/main.js` (VS Code source) so the
+ * isolation has to live at the emitter level. Per-listener try/catch is
+ * the minimum change that preserves ordering and lets subsequent
+ * listeners run when an upstream one throws.
+ */
+const SafeEmit = (
+	Source: EventEmitter | undefined,
+	Event: string,
+	Payload: unknown,
+): void => {
+	if (!Source) return;
+	const Listeners = Source.listeners(Event);
+	if (Listeners.length === 0) return;
+	for (const Listener of Listeners) {
+		try {
+			(Listener as (..._Args: unknown[]) => void)(Payload);
+		} catch (Caught) {
+			const Err = Caught as { message?: string; stack?: string };
+			const Summary =
+				typeof Err?.stack === "string"
+					? (Err.stack.split("\n").slice(0, 3).join(" | "))
+					: typeof Err?.message === "string"
+						? Err.message
+						: String(Caught);
+			try {
+				process.stdout.write(
+					`[LandFix:SafeEmit] listener for "${Event}" threw: ${Summary}\n`,
+				);
+			} catch {}
+		}
+	}
 };
 
 /**
@@ -285,18 +420,58 @@ const HandleSpecificNotification = (
 					`[LandFix:WsDelta] $deltaWorkspaceFolders +${Added.length} -${Removed.length} → folders=${Merged.length}\n`,
 				);
 			} catch {}
-			WorkspaceEventEmitter?.emit("didChangeWorkspaceFolders", {
-				added: Added,
-				removed: Removed,
-				folders: Merged,
-			});
+			// Atom I3 (root-cause fix): hydrate wire URIs into real
+			// `vscode.Uri` objects before emitting. Built-in extensions
+			// (gulp, task-detectors, lint providers, …) call
+			// `folder.uri.fsPath`, `folder.uri.toString()`, `URI.revive`
+			// etc. on the folder payload. Raw wire `{uri: "file://…"}`
+			// strings don't carry those getters, so `add.uri.fsPath` is
+			// undefined and downstream `path.join(undefined)` explodes.
+			//
+			// Each hydrated entry matches vscode.WorkspaceFolder shape:
+			//   { uri: Uri, name: string, index: number }
+			const HydrateFolder = (
+				Wire: WorkspaceFolderWire,
+				Index: number,
+			): {
+				uri: UriObject;
+				name: string;
+				index: number;
+			} | null => {
+				const Uri = HydrateUri(Wire.uri);
+				if (!Uri) return null;
+				return {
+					uri: Uri,
+					name: Wire.name ?? Uri.fsPath.split("/").pop() ?? "",
+					index: typeof Wire.index === "number" ? Wire.index : Index,
+				};
+			};
+			const AddedHydrated = Added.map((W, I) => HydrateFolder(W, I)).filter(
+				(V): V is Exclude<typeof V, null> => V !== null,
+			);
+			const RemovedHydrated = Removed.map((W, I) => HydrateFolder(W, I)).filter(
+				(V): V is Exclude<typeof V, null> => V !== null,
+			);
+			const MergedHydrated = Merged.map((W, I) => HydrateFolder(W, I)).filter(
+				(V): V is Exclude<typeof V, null> => V !== null,
+			);
+			try {
+				process.stdout.write(
+					`[LandFix:WsDelta] hydrated +${AddedHydrated.length}/${Added.length} -${RemovedHydrated.length}/${Removed.length} folders=${MergedHydrated.length}/${Merged.length}\n`,
+				);
+			} catch {}
+
+			// Atom I2 (retained): SafeEmit isolates each listener's
+			// throws so one buggy extension still can't crash the host.
+			const Event = {
+				added: AddedHydrated,
+				removed: RemovedHydrated,
+				folders: MergedHydrated,
+			};
+			SafeEmit(WorkspaceEventEmitter, "didChangeWorkspaceFolders", Event);
 			// Also emit on the generic Emitter so non-workspace listeners
 			// (e.g. BATCH-15's activator) can subscribe in one place.
-			Emitter.emit("workspaceFoldersChanged", {
-				added: Added,
-				removed: Removed,
-				folders: Merged,
-			});
+			SafeEmit(Emitter, "workspaceFoldersChanged", Event);
 			// BATCH-15: run the workspaceContains activation pass. Lazy-load to
 			// avoid a circular import with the handler suite at module init.
 			if (Context && Added.length > 0) {

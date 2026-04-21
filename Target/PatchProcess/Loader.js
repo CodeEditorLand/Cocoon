@@ -20,9 +20,11 @@ var InitDataService = class extends Context.Tag("Cocoon/InitData")() {
     __name(this, "InitDataService");
   }
 };
+var ResolvedVersion = process.env["ProductVersion"] ?? "1.118.0";
+var ResolvedCommit = process.env["ProductCommit"] ?? "dev";
 var InitDataLive = Layer.succeed(InitDataService, {
-  commit: "dev",
-  version: "0.0.1",
+  commit: ResolvedCommit,
+  version: ResolvedVersion,
   parentPid: process.pid,
   extensions: [],
   workspace: null,

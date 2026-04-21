@@ -27265,11 +27265,10 @@ ${Stack}`
         };
         const API = {
           ...VsCodeTypes2,
-          // Reported VS Code version — must satisfy every built-in
-          // extension's `engines.vscode` constraint. `vscode-languageclient`
-          // currently requires `^1.91.0`; bumping above that lets
-          // css/html/json/markdown-language-features activate.
-          version: "1.95.0",
+          // Atom I5: read from process.env — single source is .env.Land
+          // propagated by Maintain/Script/TierEnvironment.sh. Fallback
+          // tracks the VS Code base from Dependency/.../Editor/package.json.
+          version: process.env["ProductVersion"] ?? "1.118.0",
           Uri: URI3,
           CancellationTokenSource: CancellationTokenSource3,
           CancellationError: CancellationError2,
@@ -28405,10 +28404,61 @@ var init_WorkspaceContainsActivator = __esm({
 });
 
 // Source/Services/Handler/NotificationHandler.ts
-var ApplyWorkspaceDelta, HandleSpecificNotification, NotificationHandler_default;
+var LazyURI, HydrateUri, ApplyWorkspaceDelta, SafeEmit, HandleSpecificNotification, NotificationHandler_default;
 var init_NotificationHandler = __esm({
-  "Source/Services/Handler/NotificationHandler.ts"() {
+  async "Source/Services/Handler/NotificationHandler.ts"() {
     "use strict";
+    ({ URI: LazyURI } = await Promise.resolve().then(() => (init_uri(), uri_exports)));
+    HydrateUri = /* @__PURE__ */ __name((Raw) => {
+      if (!Raw) return null;
+      if (typeof Raw === "string") {
+        try {
+          return LazyURI.parse(
+            Raw
+          );
+        } catch {
+          return null;
+        }
+      }
+      if (typeof Raw.toString === "function" && typeof Raw.fsPath === "string")
+        return Raw;
+      try {
+        return LazyURI.parse(
+          Raw.toString()
+        );
+      } catch {
+        return null;
+      }
+    }, "HydrateUri");
+    if (!process._landUncaughtHandlerInstalled) {
+      process.on("uncaughtException", (Error2) => {
+        try {
+          const Stack = Error2 instanceof globalThis.Error ? Error2.stack?.split("\n").slice(0, 6).join(" | ") : String(Error2);
+          process.stdout.write(
+            `[LandFix:UncaughtException] ${Stack ?? "unknown"}
+`
+          );
+        } catch {
+        }
+      });
+      process.on("unhandledRejection", (Reason) => {
+        try {
+          const Stack = Reason instanceof globalThis.Error ? Reason.stack?.split("\n").slice(0, 6).join(" | ") : String(Reason);
+          process.stdout.write(
+            `[LandFix:UnhandledRejection] ${Stack ?? "unknown"}
+`
+          );
+        } catch {
+        }
+      });
+      process._landUncaughtHandlerInstalled = true;
+      try {
+        process.stdout.write(
+          "[LandFix:UncaughtHandlers] uncaughtException + unhandledRejection handlers installed at NotificationHandler module load\n"
+        );
+      } catch {
+      }
+    }
     ApplyWorkspaceDelta = /* @__PURE__ */ __name((Context21, Payload) => {
       const Added = Payload?.added ?? [];
       const Removed = Payload?.removed ?? [];
@@ -28441,6 +28491,26 @@ var init_NotificationHandler = __esm({
       }
       return Kept;
     }, "ApplyWorkspaceDelta");
+    SafeEmit = /* @__PURE__ */ __name((Source, Event2, Payload) => {
+      if (!Source) return;
+      const Listeners = Source.listeners(Event2);
+      if (Listeners.length === 0) return;
+      for (const Listener of Listeners) {
+        try {
+          Listener(Payload);
+        } catch (Caught) {
+          const Err = Caught;
+          const Summary = typeof Err?.stack === "string" ? Err.stack.split("\n").slice(0, 3).join(" | ") : typeof Err?.message === "string" ? Err.message : String(Caught);
+          try {
+            process.stdout.write(
+              `[LandFix:SafeEmit] listener for "${Event2}" threw: ${Summary}
+`
+            );
+          } catch {
+          }
+        }
+      }
+    }, "SafeEmit");
     HandleSpecificNotification = /* @__PURE__ */ __name((Emitter3, DocumentContentCache, HandleDocumentChange2, HandleDocumentOpen2, HandleDocumentClose2, HandleDocumentSave2, Method, Parameters, WorkspaceEventEmitter, Context21) => {
       switch (Method) {
         case "extension.change":
@@ -28564,16 +28634,38 @@ var init_NotificationHandler = __esm({
             );
           } catch {
           }
-          WorkspaceEventEmitter?.emit("didChangeWorkspaceFolders", {
-            added: Added,
-            removed: Removed,
-            folders: Merged
-          });
-          Emitter3.emit("workspaceFoldersChanged", {
-            added: Added,
-            removed: Removed,
-            folders: Merged
-          });
+          const HydrateFolder = /* @__PURE__ */ __name((Wire, Index) => {
+            const Uri2 = HydrateUri(Wire.uri);
+            if (!Uri2) return null;
+            return {
+              uri: Uri2,
+              name: Wire.name ?? Uri2.fsPath.split("/").pop() ?? "",
+              index: typeof Wire.index === "number" ? Wire.index : Index
+            };
+          }, "HydrateFolder");
+          const AddedHydrated = Added.map((W, I) => HydrateFolder(W, I)).filter(
+            (V) => V !== null
+          );
+          const RemovedHydrated = Removed.map((W, I) => HydrateFolder(W, I)).filter(
+            (V) => V !== null
+          );
+          const MergedHydrated = Merged.map((W, I) => HydrateFolder(W, I)).filter(
+            (V) => V !== null
+          );
+          try {
+            process.stdout.write(
+              `[LandFix:WsDelta] hydrated +${AddedHydrated.length}/${Added.length} -${RemovedHydrated.length}/${Removed.length} folders=${MergedHydrated.length}/${Merged.length}
+`
+            );
+          } catch {
+          }
+          const Event2 = {
+            added: AddedHydrated,
+            removed: RemovedHydrated,
+            folders: MergedHydrated
+          };
+          SafeEmit(WorkspaceEventEmitter, "didChangeWorkspaceFolders", Event2);
+          SafeEmit(Emitter3, "workspaceFoldersChanged", Event2);
           if (Context21 && Added.length > 0) {
             const CapturedContext = Context21;
             setImmediate(() => {
@@ -28656,13 +28748,13 @@ import * as protoLoader2 from "@grpc/proto-loader";
 import { Effect as Effect8, Layer as Layer7 } from "effect";
 var __filename2, __dirname2, require3, GRPCServerService, GRPCServerServiceLayer, GRPCServerServiceLive;
 var init_GRPCServerService = __esm({
-  "Source/Services/GRPCServerService.ts"() {
+  async "Source/Services/GRPCServerService.ts"() {
     "use strict";
     init_IGRPCServerService();
     init_DocumentContentHandler();
     init_ExtensionHostHandler();
     init_LanguageProviderHandler();
-    init_NotificationHandler();
+    await init_NotificationHandler();
     init_RequestRoutingHandler();
     __filename2 = fileURLToPath2(import.meta.url);
     __dirname2 = dirname4(__filename2);
@@ -29518,9 +29610,9 @@ var init_GRPCServerService = __esm({
 import { Context as Context7, Effect as Effect9, Layer as Layer8, Ref as Ref5, SubscriptionRef as SubscriptionRef5 } from "effect";
 var ServerStartError, ServerStopError, ServerNotRunningError, RPCServerTag, RPCServer, RPCServerLive, makeMockRPCServer, RPCServerMock;
 var init_RPCServer = __esm({
-  "Source/Effect/RPCServer.ts"() {
+  async "Source/Effect/RPCServer.ts"() {
     "use strict";
-    init_GRPCServerService();
+    await init_GRPCServerService();
     init_Telemetry();
     ServerStartError = class extends Error {
       constructor(message, cause) {
@@ -29778,14 +29870,14 @@ import { createConnection } from "node:net";
 import { Context as Context8, Duration, Effect as Effect10, Layer as Layer9, Schedule as Schedule4 } from "effect";
 var ProbeTcp, BootstrapTag, stage1_Environment, stage2_Configuration, MountainProbeTimeoutMs, MountainProbeMaxAttempts, MountainProbeDelayMs, MountainConnectMaxAttempts, stage3_MountainConnection, stage4_ModuleInterceptor, stage5_RPCServer, stage6_Extensions, stage7_HealthCheck, makeBootstrap, BootstrapLive, makeMockBootstrap, BootstrapMock, runBootstrap;
 var init_Bootstrap = __esm({
-  "Source/Effect/Bootstrap.ts"() {
+  async "Source/Effect/Bootstrap.ts"() {
     "use strict";
     init_LandFixLog();
     init_Extension();
     init_Health();
     init_ModuleInterceptor();
     init_MountainClient();
-    init_RPCServer();
+    await init_RPCServer();
     init_Telemetry();
     ProbeTcp = /* @__PURE__ */ __name((Host, Port, TimeoutMs) => Effect10.async((Resume) => {
       let Settled = false;
@@ -30264,14 +30356,14 @@ var init_Bootstrap = __esm({
 
 // Source/Effect/index.ts
 var init_Effect = __esm({
-  "Source/Effect/index.ts"() {
+  async "Source/Effect/index.ts"() {
     "use strict";
-    init_Bootstrap();
+    await init_Bootstrap();
     init_Extension();
     init_Health();
     init_ModuleInterceptor();
     init_MountainClient();
-    init_RPCServer();
+    await init_RPCServer();
     init_Telemetry();
   }
 });
@@ -33518,7 +33610,7 @@ var init_PerformanceMonitoringService = __esm({
        */
       async getRequestThroughput() {
         try {
-          const { GRPCServerService: GRPCServerService2 } = await Promise.resolve().then(() => (init_GRPCServerService(), GRPCServerService_exports));
+          const { GRPCServerService: GRPCServerService2 } = await init_GRPCServerService().then(() => GRPCServerService_exports);
           const grpcServerService = new GRPCServerService2();
           const status2 = grpcServerService.getStatus();
           if (status2.uptime && status2.uptime > 0) {
@@ -34369,7 +34461,7 @@ var OldStyleServices, EffectServices, ServiceMapping;
 var init_ServiceMapping = __esm({
   async "Source/ServiceMapping.ts"() {
     "use strict";
-    init_Effect();
+    await init_Effect();
     await init_APIFactoryService();
     init_Configuration();
     init_ErrorHandlingService();
