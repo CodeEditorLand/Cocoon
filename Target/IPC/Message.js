@@ -1,34 +1,17 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Source/IPC/Message.ts
-/**
- * @module Message
- * @description
- * Enhanced IPC messaging for Mountain-Wind communication with comprehensive binary-safe
- * serialization, message batching, compression hints, and defensive coding patterns.
- *
- * This module provides the core messaging infrastructure for Inter-Process Communication
- * between the Wind frontend and Mountain backend, ensuring reliable data transmission
- * with robust error handling and performance optimization.
- *
- * Mountain Connection Points:
- * - Linked with TauriIPCServer.rs for server-side message handling
- * - Used by WindAirCommands.ts for command serialization
- * - Integrated with ConfigurationBridge.rs for message routing
- *
- * Key Features:
- * - Binary-safe VSBuffer implementation inspired by VSCode's buffer system
- * - Efficient message batching with configurable batch sizes
- * - Compression hints to optimize payload size for large messages
- * - Comprehensive validation and defensive coding patterns
- * - Type-safe serialization with explicit schema validation
- *
- * @author Mountain IPC Infrastructure
- * @version 1.0.0
- * @since 2025-01-31
- * @license MIT
- */
+// Source/IPC/Message/Types.ts
+var CompressionHint = /* @__PURE__ */ ((CompressionHint2) => {
+  CompressionHint2["None"] = "none";
+  CompressionHint2["Fast"] = "fast";
+  CompressionHint2["Balanced"] = "balanced";
+  CompressionHint2["Maximum"] = "maximum";
+  return CompressionHint2;
+})(CompressionHint || {});
+var Types_default = {};
+
+// Source/IPC/Message/Constants.ts
 var MAX_MESSAGE_SIZE = 10 * 1024 * 1024;
 var MAX_BATCH_SIZE = 50 * 1024 * 1024;
 var MAX_BATCH_COUNT = 1e3;
@@ -45,13 +28,9 @@ var MessageFlags = /* @__PURE__ */ ((MessageFlags2) => {
   MessageFlags2[MessageFlags2["Priority"] = 16] = "Priority";
   return MessageFlags2;
 })(MessageFlags || {});
-var CompressionHint = /* @__PURE__ */ ((CompressionHint2) => {
-  CompressionHint2["None"] = "none";
-  CompressionHint2["Fast"] = "fast";
-  CompressionHint2["Balanced"] = "balanced";
-  CompressionHint2["Maximum"] = "maximum";
-  return CompressionHint2;
-})(CompressionHint || {});
+var Constants_default = {};
+
+// Source/IPC/Message/VSBuffer.ts
 var VSBuffer = class _VSBuffer {
   static {
     __name(this, "VSBuffer");
@@ -71,7 +50,7 @@ var VSBuffer = class _VSBuffer {
    * Creates a new VSBuffer with the specified capacity
    *
    * @param Capacity - Buffer capacity in bytes
-   * @returns NewVSBuffer instance
+   * @returns New VSBuffer instance
    * @throws If capacity exceeds MAX_MESSAGE_SIZE
    */
   static Allocate(Capacity) {
@@ -89,7 +68,7 @@ var VSBuffer = class _VSBuffer {
    * Wraps an existing Uint8Array in a VSBuffer
    *
    * @param Buffer - Uint8Array to wrap
-   * @returns NewVSBuffer instance wrapping the provided array
+   * @returns New VSBuffer instance wrapping the provided array
    * @throws If buffer is null or undefined
    */
   static Wrap(Buffer2) {
@@ -103,7 +82,7 @@ var VSBuffer = class _VSBuffer {
    *
    * @param String - String to convert
    * @param Encoding - Text encoding (default: utf-8)
-   * @returns NewVSBuffer instance containing the encoded string
+   * @returns New VSBuffer instance containing the encoded string
    */
   static FromString(String2, Encoding = "utf-8") {
     if (String2 === null || String2 === void 0) {
@@ -116,7 +95,7 @@ var VSBuffer = class _VSBuffer {
    * Creates a VSBuffer from a buffer
    *
    * @param Buffer - Node Buffer to convert
-   * @returns NewVSBuffer instance
+   * @returns New VSBuffer instance
    */
   static FromBuffer(Buffer2) {
     if (!Buffer2) {
@@ -128,7 +107,7 @@ var VSBuffer = class _VSBuffer {
    * Concatenates multiple VSBuffers into one
    *
    * @param Buffers - Array of VSBuffers to concatenate
-   * @returns NewVSBuffer containing all concatenated data
+   * @returns New VSBuffer containing all concatenated data
    */
   static Concat(Buffers) {
     if (!Buffers || Buffers.length === 0) {
@@ -281,7 +260,7 @@ var VSBuffer = class _VSBuffer {
    *
    * @param Start - Starting index (inclusive)
    * @param End - Ending index (exclusive)
-   * @returns NewVSBuffer containing the sliced data
+   * @returns New VSBuffer containing the sliced data
    * @throws If indices are out of bounds
    */
   slice(Start, End) {
@@ -299,7 +278,9 @@ var VSBuffer = class _VSBuffer {
     return new _VSBuffer(this.buffer.slice(Start, ActualEnd));
   }
 };
-function ValidateMetadata(Metadata) {
+
+// Source/IPC/Message/Validation.ts
+var ValidateMetadata = /* @__PURE__ */ __name((Metadata) => {
   if (!Metadata) {
     return false;
   }
@@ -319,9 +300,8 @@ function ValidateMetadata(Metadata) {
     return false;
   }
   return true;
-}
-__name(ValidateMetadata, "ValidateMetadata");
-function ValidateMessage(Message) {
+}, "ValidateMetadata");
+var ValidateMessage = /* @__PURE__ */ __name((Message) => {
   if (!Message) {
     return false;
   }
@@ -341,9 +321,8 @@ function ValidateMessage(Message) {
     return false;
   }
   return true;
-}
-__name(ValidateMessage, "ValidateMessage");
-function ValidateBatchMessage(Batch) {
+}, "ValidateMessage");
+var ValidateBatchMessage = /* @__PURE__ */ __name((Batch) => {
   if (!Batch) {
     return false;
   }
@@ -377,9 +356,11 @@ function ValidateBatchMessage(Batch) {
     }
   }
   return true;
-}
-__name(ValidateBatchMessage, "ValidateBatchMessage");
-function SerializeMessage(Message) {
+}, "ValidateBatchMessage");
+var Validation_default = { ValidateMetadata, ValidateMessage, ValidateBatchMessage };
+
+// Source/IPC/Message/SerializeMessage.ts
+var SerializeMessage_default = /* @__PURE__ */ __name((Message) => {
   const Warnings = [];
   let OriginalSize = 0;
   let FinalSize = 0;
@@ -462,9 +443,10 @@ function SerializeMessage(Message) {
       FinalSize
     };
   }
-}
-__name(SerializeMessage, "SerializeMessage");
-function DeserializeMessage(Data) {
+}, "default");
+
+// Source/IPC/Message/DeserializeMessage.ts
+var DeserializeMessage_default = /* @__PURE__ */ __name((Data) => {
   const Warnings = [];
   try {
     if (!Data || !(Data instanceof Uint8Array)) {
@@ -575,9 +557,9 @@ function DeserializeMessage(Data) {
         `Extra data at end of message: ${Data.length - Offset} bytes`
       );
     }
-    let CompressionHint2 = CompressionHint2.None;
+    let Hint = "none" /* None */;
     if (Flags & 1 /* Compressed */) {
-      CompressionHint2 = CompressionHint2.Balanced;
+      Hint = "balanced" /* Balanced */;
       Warnings.push(
         "Message is compressed but decompression not implemented"
       );
@@ -585,7 +567,7 @@ function DeserializeMessage(Data) {
     const Message = {
       Data: MessageData,
       Metadata,
-      CompressionHint: CompressionHint2,
+      CompressionHint: Hint,
       Flags
     };
     return {
@@ -602,9 +584,10 @@ function DeserializeMessage(Data) {
       Warnings
     };
   }
-}
-__name(DeserializeMessage, "DeserializeMessage");
-function BatchMessages(Messages, CompressionHint2 = CompressionHint2.Balanced) {
+}, "default");
+
+// Source/IPC/Message/BatchMessages.ts
+var BatchMessages_default = /* @__PURE__ */ __name((Messages, Hint = "balanced" /* Balanced */) => {
   const Warnings = [];
   let OriginalSize = 0;
   let FinalSize = 0;
@@ -641,7 +624,7 @@ function BatchMessages(Messages, CompressionHint2 = CompressionHint2.Balanced) {
     const SerializedMessages = [];
     let TotalMessageSize = 0;
     for (const Message of Messages) {
-      const Result = SerializeMessage(Message);
+      const Result = SerializeMessage_default(Message);
       if (!Result.Success) {
         return {
           Success: false,
@@ -668,7 +651,7 @@ function BatchMessages(Messages, CompressionHint2 = CompressionHint2.Balanced) {
       MessageCount: Messages.length,
       TotalSize: TotalMessageSize,
       Timestamp: Date.now(),
-      CompressionHint: CompressionHint2
+      CompressionHint: Hint
     };
     const BatchMetadataJSON = JSON.stringify(BatchMetadata);
     const BatchMetadataBuffer = VSBuffer.FromString(BatchMetadataJSON);
@@ -684,14 +667,11 @@ function BatchMessages(Messages, CompressionHint2 = CompressionHint2.Balanced) {
     Offset += 4;
     Buffer2.setBytes(Offset, BatchMetadataBuffer.byteBuffer);
     Offset += BatchMetadataBuffer.length;
-    const MessageOffsets = [];
     for (const SerializedMessage of SerializedMessages) {
-      MessageOffsets.push(Offset);
       Buffer2.writeUInt32LE(Offset, SerializedMessage.length);
       Offset += 4;
     }
-    for (let Index = 0; Index < SerializedMessages.length; Index++) {
-      const MessageData = SerializedMessages[Index];
+    for (const MessageData of SerializedMessages) {
       Buffer2.setBytes(Offset, MessageData);
       Offset += MessageData.length;
     }
@@ -714,9 +694,10 @@ function BatchMessages(Messages, CompressionHint2 = CompressionHint2.Balanced) {
       FinalSize
     };
   }
-}
-__name(BatchMessages, "BatchMessages");
-function UnbatchMessages(Data) {
+}, "default");
+
+// Source/IPC/Message/UnbatchMessages.ts
+var UnbatchMessages_default = /* @__PURE__ */ __name((Data) => {
   const Warnings = [];
   let Messages = [];
   try {
@@ -766,7 +747,7 @@ function UnbatchMessages(Data) {
       return {
         Success: false,
         Message: null,
-        Error: `Metadata extends beyond buffer`,
+        Error: "Metadata extends beyond buffer",
         Warnings,
         Messages: []
       };
@@ -815,7 +796,7 @@ function UnbatchMessages(Data) {
         Header.offset,
         Header.offset + Header.length
       ).byteBuffer;
-      const Result = DeserializeMessage(MessageData);
+      const Result = DeserializeMessage_default(MessageData);
       if (!Result.Success) {
         Warnings.push(
           `Failed to deserialize message ${Index}: ${Result.Error}`
@@ -851,13 +832,11 @@ function UnbatchMessages(Data) {
       Messages
     };
   }
-}
-__name(UnbatchMessages, "UnbatchMessages");
-function GenerateMessageID() {
-  return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`;
-}
-__name(GenerateMessageID, "GenerateMessageID");
-function CreateMessage(Data, MessageType, Source, Destination, CompressionHint2 = CompressionHint2.None) {
+}, "default");
+
+// Source/IPC/Message/Utility.ts
+var GenerateMessageID = /* @__PURE__ */ __name(() => `msg-${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`, "GenerateMessageID");
+var CreateMessage = /* @__PURE__ */ __name((Data, MessageType, Source, Destination, Hint = "none" /* None */) => {
   const DataBytes = typeof Data === "string" ? VSBuffer.FromString(Data).byteBuffer : Data;
   return {
     Data: DataBytes,
@@ -868,12 +847,11 @@ function CreateMessage(Data, MessageType, Source, Destination, CompressionHint2 
       Timestamp: Date.now(),
       MessageType
     },
-    CompressionHint: CompressionHint2,
+    CompressionHint: Hint,
     Flags: 0 /* None */
   };
-}
-__name(CreateMessage, "CreateMessage");
-function GetOptimalCompressionHint(Message) {
+}, "CreateMessage");
+var GetOptimalCompressionHint = /* @__PURE__ */ __name((Message) => {
   if (Message.Data.length < COMPRESSION_THRESHOLD) {
     return "none" /* None */;
   }
@@ -884,18 +862,28 @@ function GetOptimalCompressionHint(Message) {
     return "balanced" /* Balanced */;
   }
   return "maximum" /* Maximum */;
-}
-__name(GetOptimalCompressionHint, "GetOptimalCompressionHint");
+}, "GetOptimalCompressionHint");
+var Utility_default = { GenerateMessageID, CreateMessage, GetOptimalCompressionHint };
 export {
-  BatchMessages,
+  BatchMessages_default as BatchMessages,
+  COMPRESSION_THRESHOLD,
   CompressionHint,
   CreateMessage,
-  DeserializeMessage,
+  DEFAULT_BUFFER_SIZE,
+  DeserializeMessage_default as DeserializeMessage,
   GenerateMessageID,
   GetOptimalCompressionHint,
+  MAX_BATCH_COUNT,
+  MAX_BATCH_SIZE,
+  MAX_MESSAGE_SIZE,
+  MESSAGE_HEADER_MAGIC,
   MessageFlags,
-  SerializeMessage,
-  UnbatchMessages,
-  VSBuffer
+  PROTOCOL_VERSION,
+  SerializeMessage_default as SerializeMessage,
+  UnbatchMessages_default as UnbatchMessages,
+  VSBuffer,
+  ValidateBatchMessage,
+  ValidateMessage,
+  ValidateMetadata
 };
 //# sourceMappingURL=Message.js.map
