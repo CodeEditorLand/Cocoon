@@ -1010,7 +1010,7 @@ var init_ModuleInterceptor = __esm({
             "[ModuleInterceptor] Module._load hook installed - require('vscode') intercepted"
           );
         });
-        const interceptRequire = /* @__PURE__ */ __name((request) => Effect4.gen(function* () {
+        const interceptRequire = /* @__PURE__ */ __name((request2) => Effect4.gen(function* () {
           const startTime = Date.now();
           const currentStats = yield* statsRef.get;
           yield* Ref3.set(statsRef, {
@@ -1019,22 +1019,22 @@ var init_ModuleInterceptor = __esm({
           });
           const policyOpt = HashMap3.get(
             yield* policiesRef.get,
-            request.extensionId
+            request2.extensionId
           );
           if (policyOpt._tag === "None") {
             yield* telemetry.log(
               "warn",
-              `[ModuleInterceptor] No policy for extension ${request.extensionId}, using default`
+              `[ModuleInterceptor] No policy for extension ${request2.extensionId}, using default`
             );
           }
           const policy = policyOpt._tag === "Some" ? policyOpt.value : {
             ...defaultSecurityPolicy,
-            extensionId: request.extensionId
+            extensionId: request2.extensionId
           };
-          if (policy.blockedModules.includes(request.moduleId)) {
+          if (policy.blockedModules.includes(request2.moduleId)) {
             yield* telemetry.log(
               "warn",
-              `[ModuleInterceptor] Blocked module access: ${request.moduleId} for ${request.extensionId}`
+              `[ModuleInterceptor] Blocked module access: ${request2.moduleId} for ${request2.extensionId}`
             );
             const statsAfter2 = yield* statsRef.get;
             yield* Ref3.set(statsRef, {
@@ -1044,14 +1044,14 @@ var init_ModuleInterceptor = __esm({
             });
             return {
               success: false,
-              error: `Module access denied: ${request.moduleId}`,
+              error: `Module access denied: ${request2.moduleId}`,
               securityLevel: "BLOCKED" /* BLOCKED */
             };
           }
-          if (!policy.allowedModules.includes(request.moduleId) && !isNodeBuiltin(request.moduleId)) {
+          if (!policy.allowedModules.includes(request2.moduleId) && !isNodeBuiltin(request2.moduleId)) {
             yield* telemetry.log(
               "warn",
-              `[ModuleInterceptor] Module not in allowlist: ${request.moduleId} for ${request.extensionId}`
+              `[ModuleInterceptor] Module not in allowlist: ${request2.moduleId} for ${request2.extensionId}`
             );
             const statsAfter2 = yield* statsRef.get;
             yield* Ref3.set(statsRef, {
@@ -1061,11 +1061,11 @@ var init_ModuleInterceptor = __esm({
             });
             return {
               success: false,
-              error: `Module not in allowlist: ${request.moduleId}`,
+              error: `Module not in allowlist: ${request2.moduleId}`,
               securityLevel: "RESTRICTED" /* RESTRICTED */
             };
           }
-          const cacheKey = `${request.extensionId}:${request.moduleId}`;
+          const cacheKey = `${request2.extensionId}:${request2.moduleId}`;
           const cachedModule = HashMap3.get(
             yield* moduleCacheRef.get,
             cacheKey
@@ -1082,7 +1082,7 @@ var init_ModuleInterceptor = __esm({
             });
             telemetry.log(
               "debug",
-              `[ModuleInterceptor] Module cache hit: ${request.moduleId} (${duration2}ms)`
+              `[ModuleInterceptor] Module cache hit: ${request2.moduleId} (${duration2}ms)`
             );
             return {
               success: true,
@@ -1093,9 +1093,9 @@ var init_ModuleInterceptor = __esm({
           yield* Effect4.sleep("5 millis");
           telemetry.log(
             "info",
-            `[ModuleInterceptor] Module loaded: ${request.moduleId} for ${request.extensionId}`
+            `[ModuleInterceptor] Module loaded: ${request2.moduleId} for ${request2.extensionId}`
           );
-          const module = { module: request.moduleId };
+          const module = { module: request2.moduleId };
           const currentCache = yield* moduleCacheRef.get;
           yield* Ref3.set(
             moduleCacheRef,
@@ -1190,11 +1190,11 @@ var init_ModuleInterceptor = __esm({
       registerVscodeAPI: /* @__PURE__ */ __name((_extensionId, _api) => Effect4.gen(function* () {
         yield* Effect4.sleep("1 millis");
       }), "registerVscodeAPI"),
-      interceptRequire: /* @__PURE__ */ __name((request) => Effect4.gen(function* () {
+      interceptRequire: /* @__PURE__ */ __name((request2) => Effect4.gen(function* () {
         yield* Effect4.sleep("1 millis");
         return {
           success: true,
-          module: { mock: true, moduleId: request.moduleId },
+          module: { mock: true, moduleId: request2.moduleId },
           securityLevel: "SANDBOXED" /* SANDBOXED */
         };
       }), "interceptRequire"),
@@ -1722,7 +1722,7 @@ message RPCDataPayload {
           if (cancellationToken?.isCancellationRequested) {
             throw new Error("Request cancelled before execution");
           }
-          const request = {
+          const request2 = {
             RequestIdentifier: BigInt(requestIdentifier),
             Method: method,
             Parameter: this.SerializeParameters(parameters)
@@ -1739,7 +1739,7 @@ message RPCDataPayload {
             }
           }
           const response = await this.SendRequestWithRetry(
-            request,
+            request2,
             cancellationToken
           );
           const duration = Date.now() - startTime;
@@ -1875,7 +1875,7 @@ message RPCDataPayload {
       /**
        * Send request with exponential backoff retry logic
        */
-      async SendRequestWithRetry(request) {
+      async SendRequestWithRetry(request2) {
         if (!this.client) {
           throw new Error("Client not initialized");
         }
@@ -1885,7 +1885,7 @@ message RPCDataPayload {
             const response = await new Promise(
               (resolve2, reject) => {
                 this.client.ProcessCocoonRequest(
-                  request,
+                  request2,
                   (error, response2) => {
                     if (error) reject(error);
                     else resolve2(response2);
@@ -1902,7 +1902,7 @@ message RPCDataPayload {
             if (attempt < this.maxRetries - 1) {
               const delay = this.CalculateRetryDelay(attempt);
               console.warn(
-                `[MountainClientService] Request ${request.RequestIdentifier} failed (attempt ${attempt + 1}/${this.maxRetries}), retrying in ${delay}ms:`,
+                `[MountainClientService] Request ${request2.RequestIdentifier} failed (attempt ${attempt + 1}/${this.maxRetries}), retrying in ${delay}ms:`,
                 error
               );
               await new Promise((resolve2) => setTimeout(resolve2, delay));
@@ -33466,11 +33466,11 @@ var init_GRPCServerService = __esm({
           "[GRPCServerService] Starting bidirectional streaming connection"
         );
         this.streamingHandlers.add(stream);
-        stream.on("data", (request) => {
+        stream.on("data", (request2) => {
           console.log(
-            `[GRPCServerService] Received streaming request: ${request.Method}`
+            `[GRPCServerService] Received streaming request: ${request2.Method}`
           );
-          this.handleStreamingRequest(request, stream);
+          this.handleStreamingRequest(request2, stream);
         });
         stream.on("close", () => {
           console.log(
@@ -33487,25 +33487,25 @@ var init_GRPCServerService = __esm({
       /**
        * Handle streaming request
        */
-      async handleStreamingRequest(request, stream) {
+      async handleStreamingRequest(request2, stream) {
         try {
-          const parameters = this.parseParameters(request.Parameter);
+          const parameters = this.parseParameters(request2.Parameter);
           const responseData = await this.routeRequest(
-            request.Method,
+            request2.Method,
             parameters
           );
           const response = {
-            RequestIdentifier: request.RequestIdentifier,
+            RequestIdentifier: request2.RequestIdentifier,
             Result: Buffer.from(JSON.stringify(responseData))
           };
           stream.write(response);
         } catch (error) {
           console.error(
-            `[GRPCServerService] Streaming request failed for ${request.Method}:`,
+            `[GRPCServerService] Streaming request failed for ${request2.Method}:`,
             error
           );
           const response = {
-            RequestIdentifier: request.RequestIdentifier,
+            RequestIdentifier: request2.RequestIdentifier,
             Result: Buffer.from(JSON.stringify({})),
             error: {
               Code: 500,
@@ -33559,44 +33559,44 @@ var init_GRPCServerService = __esm({
       /**
        * Handle Mountain request with validation and routing
        */
-      async handleMountainRequest(request) {
+      async handleMountainRequest(request2) {
         const startTime = Date.now();
         this.requestCount++;
         console.log(
-          `[GRPCServerService] Processing Mountain request: ${request.Method}`
+          `[GRPCServerService] Processing Mountain request: ${request2.Method}`
         );
-        this.activeRequests.set(request.RequestIdentifier, {
-          method: request.Method,
+        this.activeRequests.set(request2.RequestIdentifier, {
+          method: request2.Method,
           startTime
         });
         try {
-          const parameters = this.parseParameters(request.Parameter);
-          if (!request.Method || !this.IsValidMethod(request.Method)) {
-            throw new Error(`Invalid method: ${request.Method}`);
+          const parameters = this.parseParameters(request2.Parameter);
+          if (!request2.Method || !this.IsValidMethod(request2.Method)) {
+            throw new Error(`Invalid method: ${request2.Method}`);
           }
           const responseData = await this.routeRequest(
-            request.Method,
+            request2.Method,
             parameters
           );
           const response = {
-            RequestIdentifier: request.RequestIdentifier,
+            RequestIdentifier: request2.RequestIdentifier,
             Result: this.SerializeResponseData(responseData)
           };
           const processingTime = Date.now() - startTime;
           console.log(
-            `[GRPCServerService] Request ${request.Method} processed in ${processingTime}ms`
+            `[GRPCServerService] Request ${request2.Method} processed in ${processingTime}ms`
           );
-          this.activeRequests.delete(request.RequestIdentifier);
+          this.activeRequests.delete(request2.RequestIdentifier);
           return response;
         } catch (error) {
           this.errorCount++;
           console.error(
-            `[GRPCServerService] Error processing request ${request.Method}:`,
+            `[GRPCServerService] Error processing request ${request2.Method}:`,
             error
           );
-          this.activeRequests.delete(request.RequestIdentifier);
+          this.activeRequests.delete(request2.RequestIdentifier);
           const response = {
-            RequestIdentifier: request.RequestIdentifier,
+            RequestIdentifier: request2.RequestIdentifier,
             Result: Buffer.from(JSON.stringify({})),
             error: {
               Code: 500,
@@ -34261,12 +34261,12 @@ var init_RPCServer = __esm({
           });
           telemetry.log("info", "[RPCServer] Server stopped successfully");
         });
-        const handleRequest = /* @__PURE__ */ __name((request) => Effect21.gen(function* () {
+        const handleRequest = /* @__PURE__ */ __name((request2) => Effect21.gen(function* () {
           const requestStartTime = Date.now();
           const currentState = yield* stateRef.get;
           if (currentState._tag !== "Running") {
             return {
-              requestId: request.requestId,
+              requestId: request2.requestId,
               success: false,
               data: null,
               error: "Server not running",
@@ -34275,7 +34275,7 @@ var init_RPCServer = __esm({
           }
           telemetry.log(
             "debug",
-            `[RPCServer] Handling request: ${request.method} (${request.requestId})`
+            `[RPCServer] Handling request: ${request2.method} (${request2.requestId})`
           );
           metrics.requestsHandled = metrics.requestsHandled + 1;
           yield* Effect21.sleep("5 millis");
@@ -34287,13 +34287,13 @@ var init_RPCServer = __esm({
           metrics.averageLatency = latencies.reduce((sum2, lat) => sum2 + lat, 0) / latencies.length;
           telemetry.log(
             "debug",
-            `[RPCServer] Request completed: ${request.method} (${processingTime}ms)`
+            `[RPCServer] Request completed: ${request2.method} (${processingTime}ms)`
           );
           return {
-            requestId: request.requestId,
+            requestId: request2.requestId,
             success: true,
             data: {
-              method: request.method,
+              method: request2.method,
               result: "ok"
             },
             timestamp: Date.now()
@@ -34304,10 +34304,10 @@ var init_RPCServer = __esm({
               metrics.errors = metrics.errors + 1;
               telemetry.log(
                 "error",
-                `[RPCServer] Request failed: ${request.method} (${error})`
+                `[RPCServer] Request failed: ${request2.method} (${error})`
               );
               return {
-                requestId: request.requestId,
+                requestId: request2.requestId,
                 success: false,
                 data: null,
                 error: String(error),
@@ -34344,10 +34344,10 @@ var init_RPCServer = __esm({
         stateChanges: Effect21.succeed([mockStateRef]),
         start: /* @__PURE__ */ __name(() => Effect21.succeed(void 0), "start"),
         stop: Effect21.succeed(void 0),
-        handleRequest: /* @__PURE__ */ __name((request) => Effect21.succeed({
-          requestId: request.requestId,
+        handleRequest: /* @__PURE__ */ __name((request2) => Effect21.succeed({
+          requestId: request2.requestId,
           success: true,
-          data: { method: request.method, result: "mock" },
+          data: { method: request2.method, result: "mock" },
           timestamp: Date.now()
         }), "handleRequest"),
         getMetrics: Effect21.succeed({
@@ -34869,6 +34869,159 @@ var init_Effect = __esm({
   }
 });
 
+// Source/Telemetry/PostHogBridge.ts
+import * as NodeHttps from "node:https";
+var ReadEnvString = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  return Value && Value.length > 0 ? Value : Fallback;
+}, "ReadEnvString");
+var ReadEnvBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  if (Value === void 0) return Fallback;
+  return !["false", "0", "off", ""].includes(Value.toLowerCase());
+}, "ReadEnvBoolean");
+var ReadEnvNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  const Parsed = Value ? Number(Value) : NaN;
+  return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+}, "ReadEnvNumber");
+var PostHogKey = ReadEnvString(
+  "LAND_POSTHOG_KEY",
+  "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA"
+);
+var PostHogHost = ReadEnvString(
+  "LAND_POSTHOG_HOST",
+  "https://eu.i.posthog.com"
+);
+var PostHogEnabled = ReadEnvBoolean("LAND_POSTHOG_COCOON_ENABLED", true);
+var BatchWindowMs = ReadEnvNumber(
+  "LAND_POSTHOG_COCOON_BATCH_WINDOW_MS",
+  3e3
+);
+var BatchMax = ReadEnvNumber("LAND_POSTHOG_COCOON_BATCH_MAX", 50);
+var DistinctIdSeed = process.env["LAND_POSTHOG_DISTINCT_ID"] ?? "";
+var Username = process.env["USER"] ?? process.env["USERNAME"] ?? "unknown";
+var DistinctId = DistinctIdSeed.length > 0 ? DistinctIdSeed : `land-dev-${Username}`;
+var Queue = [];
+var FlushTimer;
+var Initialized = false;
+var CaptureAllowed = /* @__PURE__ */ __name(() => {
+  if (!PostHogEnabled) return false;
+  if (process.env["NODE_ENV"] === "production") return false;
+  return true;
+}, "CaptureAllowed");
+var Flush = /* @__PURE__ */ __name(() => {
+  if (Queue.length === 0) return;
+  const Pending = Queue;
+  Queue = [];
+  const Payload = JSON.stringify({
+    api_key: PostHogKey,
+    batch: Pending.map((E) => ({
+      event: E.event,
+      timestamp: E.timestamp,
+      distinct_id: DistinctId,
+      properties: {
+        ...E.properties,
+        $app: "land-editor",
+        $app_version: "0.0.1",
+        $build_mode: "debug",
+        $component: "cocoon",
+        $tier: "cocoon",
+        $lib: "cocoon-posthog-bridge",
+        $node_version: process.version
+      }
+    }))
+  });
+  try {
+    const Url = new URL("/batch/", PostHogHost);
+    const Request = NodeHttps.request(
+      {
+        method: "POST",
+        hostname: Url.hostname,
+        port: Url.port || 443,
+        path: Url.pathname,
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(Payload)
+        },
+        timeout: 5e3
+      },
+      (Response) => {
+        Response.resume();
+      }
+    );
+    Request.on("error", () => {
+    });
+    Request.on("timeout", () => {
+      Request.destroy();
+    });
+    Request.write(Payload);
+    Request.end();
+  } catch {
+  }
+}, "Flush");
+var ScheduleFlush = /* @__PURE__ */ __name(() => {
+  if (FlushTimer) return;
+  FlushTimer = setTimeout(() => {
+    FlushTimer = void 0;
+    Flush();
+  }, BatchWindowMs);
+  FlushTimer.unref?.();
+}, "ScheduleFlush");
+var CaptureEvent = /* @__PURE__ */ __name((Event2, Properties = {}) => {
+  if (!CaptureAllowed()) return;
+  try {
+    Queue.push({
+      event: Event2,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      properties: Properties
+    });
+    if (Queue.length >= BatchMax) {
+      Flush();
+    } else {
+      ScheduleFlush();
+    }
+  } catch {
+  }
+}, "CaptureEvent");
+var CaptureError = /* @__PURE__ */ __name((Tag, Message, Extra = {}) => {
+  if (!CaptureAllowed()) return;
+  Queue.push({
+    event: "cocoon:error",
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    properties: {
+      ...Extra,
+      error_tag: Tag,
+      error_message: Message
+    }
+  });
+  Flush();
+}, "CaptureError");
+var Initialize = /* @__PURE__ */ __name(() => {
+  if (Initialized) return;
+  Initialized = true;
+  if (!CaptureAllowed()) return;
+  const FlushOnExit = /* @__PURE__ */ __name(() => {
+    try {
+      Flush();
+    } catch {
+    }
+  }, "FlushOnExit");
+  process.once("exit", FlushOnExit);
+  process.once("SIGINT", FlushOnExit);
+  process.once("SIGTERM", FlushOnExit);
+  CaptureEvent("cocoon:session:start", {
+    pid: process.pid,
+    platform: process.platform,
+    arch: process.arch
+  });
+}, "Initialize");
+var PostHogBridge_default = {
+  CaptureEvent,
+  CaptureError,
+  Initialize
+};
+
 // Source/Bootstrap/Implementation/CocoonMain.ts
 await init_Effect();
 await init_ServiceMapping();
@@ -34893,6 +35046,7 @@ globalThis.__LandTiers = {
 };
 import { NodeRuntime } from "@effect/platform-node";
 import { Effect as Effect23 } from "effect";
+PostHogBridge_default.Initialize();
 var bootstrapCocoonEffect = Effect23.gen(function* () {
   const telemetry = yield* TelemetryTag;
   const bootstrap = yield* BootstrapTag;
