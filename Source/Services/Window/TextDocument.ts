@@ -1,0 +1,239 @@
+/**
+ * @module Services/Window/TextDocument
+ * @description
+ * Text document display and message dialog implementations for the Window
+ * service.  Delegates to Mountain's native UI via gRPC.
+ *
+ * Source: src/vs/workbench/api/common/extHostWindow.ts
+ * (showTextDocument, showInformationMessage, showWarningMessage, showErrorMessage)
+ */
+
+import { Effect } from "effect";
+import type * as VSCode from "vscode";
+
+import { FromAPI as ViewColumnFromAPI } from "../../TypeConverter/Main/ViewColumn.js";
+import type { Workspace } from "./Interfaces.js";
+
+/**
+ * Show a text document in the editor.
+ *
+ * Extracts the URI, converts ViewColumn/options via TypeConverter, and
+ * delegates the actual display to Mountain's showTextDocument gRPC call.
+ *
+ * @param GRPCClient - Mountain gRPC client with showTextDocument support
+ * @param Logger - Logger for info/debug output
+ * @param Workspace_ - Workspace to look up the opened editor
+ * @param DocumentOrUri - URI or TextDocument to display
+ * @param ColumnOrOptions - Optional ViewColumn or TextDocumentShowOptions
+ * @param PreserveFocus - Whether to keep focus in the current editor
+ */
+export const ShowTextDocument = (
+	GRPCClient: {
+		showTextDocument: (
+			Uri: string,
+			Options: {
+				viewColumn: number | undefined;
+				preserveFocus: boolean;
+				preview: boolean;
+				selection: { line: number; character: number } | undefined;
+			},
+		) => Effect.Effect<void, Error>;
+	},
+	Logger: {
+		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	},
+	Workspace_: Workspace,
+	DocumentOrUri: VSCode.Uri | VSCode.TextDocument,
+	ColumnOrOptions?: VSCode.ViewColumn | VSCode.TextDocumentShowOptions,
+	PreserveFocus?: boolean,
+): Effect.Effect<VSCode.TextEditor, Error> =>
+	Effect.gen(function* () {
+		// Extract URI from either Uri or TextDocument
+		const Uri =
+			"uri" in DocumentOrUri ? DocumentOrUri.uri : DocumentOrUri;
+
+		yield* Logger.Info(
+			`[WindowService] Showing text document: ${Uri.toString()}` +
+				(ColumnOrOptions ? ` with options` : ""),
+		);
+
+		let ViewColumnDTO: number | undefined;
+		let PreserveFocusValue = PreserveFocus ?? false;
+		let Selection: any = undefined;
+		let Preview: boolean | undefined;
+
+		if (typeof ColumnOrOptions === "number") {
+			ViewColumnDTO = ViewColumnFromAPI(ColumnOrOptions);
+		} else if (ColumnOrOptions) {
+			const Options = ColumnOrOptions;
+			ViewColumnDTO = ViewColumnFromAPI(Options.viewColumn);
+			PreserveFocusValue = Options.preserveFocus ?? false;
+			Preview = Options.preview;
+			if (Options.selection) {
+				Selection = Options.selection;
+			}
+		}
+
+		// Delegate to Mountain's native showTextDocument via gRPC
+		yield* GRPCClient.showTextDocument(Uri.toString(), {
+			viewColumn: ViewColumnDTO ? ViewColumnDTO + 2 : undefined,
+			preserveFocus: PreserveFocusValue === true,
+			preview: Preview === true,
+			selection: Selection
+				? {
+						line: Selection.start.line,
+						character: Selection.start.character,
+					}
+				: undefined,
+		});
+
+		const EditorId = "editor-" + Uri.toString().slice(-8);
+
+		yield* Logger.Debug(
+			`[WindowService] Showed text document with ID: ${EditorId}`,
+		);
+
+		const Editor = Workspace_.visibleTextEditors.find(
+			(E) => (E as any).id === EditorId,
+		);
+
+		if (!Editor) {
+			return yield* Effect.fail(
+				new Error(
+					`[WindowService] Could not find text editor with ID ${EditorId} after Mountain confirmation`,
+				),
+			);
+		}
+
+		return Editor;
+	});
+
+/**
+ * Show an information message dialog.
+ *
+ * Delegates to Mountain's showInformation gRPC request.
+ * Returns the selected item text or undefined if dismissed.
+ *
+ * @param GRPCClient - Mountain gRPC client with sendRequest support
+ * @param Logger - Logger for debug output
+ * @param Message - Message text
+ * @param Items - Optional action button labels
+ */
+export const ShowInformationMessage = (
+	GRPCClient: {
+		sendRequest: (method: string, params: unknown) => Promise<unknown>;
+	},
+	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+	Message: string,
+	...Items: string[]
+): Effect.Effect<string | undefined, Error> =>
+	Effect.gen(function* () {
+		yield* Logger.Debug(
+			`[WindowService] Showing information message: ${Message}`,
+		);
+
+		const InfoResponse = yield* Effect.tryPromise({
+			try: () =>
+				GRPCClient.sendRequest("showInformation", {
+					message: Message,
+					items: Items.length > 0 ? Items : undefined,
+				}),
+			catch: () => null,
+		});
+
+		const InfoSelected = (InfoResponse as any)?.selectedItem;
+		return InfoSelected
+			? (Items.find(
+					(I) =>
+						(typeof I === "string" ? I : (I as any).title) ===
+						InfoSelected,
+				) ?? undefined)
+			: undefined;
+	});
+
+/**
+ * Show a warning message dialog.
+ *
+ * Delegates to Mountain's showWarning gRPC request.
+ * Returns the selected item text or undefined if dismissed.
+ *
+ * @param GRPCClient - Mountain gRPC client with sendRequest support
+ * @param Logger - Logger for debug output
+ * @param Message - Message text
+ * @param Items - Optional action button labels
+ */
+export const ShowWarningMessage = (
+	GRPCClient: {
+		sendRequest: (method: string, params: unknown) => Promise<unknown>;
+	},
+	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+	Message: string,
+	...Items: string[]
+): Effect.Effect<string | undefined, Error> =>
+	Effect.gen(function* () {
+		yield* Logger.Debug(
+			`[WindowService] Showing warning message: ${Message}`,
+		);
+
+		const WarnResponse = yield* Effect.tryPromise({
+			try: () =>
+				GRPCClient.sendRequest("showWarning", {
+					message: Message,
+					items: Items.length > 0 ? Items : undefined,
+				}),
+			catch: () => null,
+		});
+
+		const WarnSelected = (WarnResponse as any)?.selectedItem;
+		return WarnSelected
+			? (Items.find(
+					(I) =>
+						(typeof I === "string" ? I : (I as any).title) ===
+						WarnSelected,
+				) ?? undefined)
+			: undefined;
+	});
+
+/**
+ * Show an error message dialog.
+ *
+ * Delegates to Mountain's showError gRPC request.
+ * Returns the selected item text or undefined if dismissed.
+ *
+ * @param GRPCClient - Mountain gRPC client with sendRequest support
+ * @param Logger - Logger for debug output
+ * @param Message - Message text
+ * @param Items - Optional action button labels
+ */
+export const ShowErrorMessage = (
+	GRPCClient: {
+		sendRequest: (method: string, params: unknown) => Promise<unknown>;
+	},
+	Logger: { Debug: (Message: string) => Effect.Effect<void> },
+	Message: string,
+	...Items: string[]
+): Effect.Effect<string | undefined, Error> =>
+	Effect.gen(function* () {
+		yield* Logger.Debug(
+			`[WindowService] Showing error message: ${Message}`,
+		);
+
+		const ErrorResponse = yield* Effect.tryPromise({
+			try: () =>
+				GRPCClient.sendRequest("showError", {
+					message: Message,
+					items: Items.length > 0 ? Items : undefined,
+				}),
+			catch: () => null,
+		});
+
+		const ErrorSelected = (ErrorResponse as any)?.selectedItem;
+		return ErrorSelected
+			? (Items.find(
+					(I) =>
+						(typeof I === "string" ? I : (I as any).title) ===
+						ErrorSelected,
+				) ?? undefined)
+			: undefined;
+	});

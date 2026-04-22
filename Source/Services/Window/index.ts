@@ -1,27 +1,31 @@
 /**
  * @module Services/Window
  * @description
- * Barrel export for Window service atomic modules.
- * Following Wind Effect-TS atomic module pattern.
+ * Barrel export for Window service modules.
+ *
+ * Consumers should import from this barrel or from the specific sub-module.
+ * The main service class is exported from Index.ts.
  */
 
 // Error types
-export * as WindowErrors from "./Errors.js";
+export * from "./Errors.js";
 
-// Type definitions
-export * as WindowTypes from "./Types.js";
+// Interface/type declarations
+export type { Logger, Window, Workspace, VSCodeWindowAPI } from "./Interfaces.js";
 
-// State management
-export * from "./State.js";
+// Main service class (default + named)
+export { WindowService, WindowService as default } from "./Index.js";
 
-// Dialog operations
-export * from "./Dialog.js";
-
-// Service interfaces and layers will be added as modules are completed
-// QuickInput operations - Future: implement Source/Services/Window/QuickInput.ts
-// FileDialog operations - Future: implement Source/Services/Window/FileDialog.ts
-// StatusBar operations - Future: implement Source/Services/Window/StatusBar.ts
-// OutputChannel operations - Future: integrated in main Window service
-// WebviewPanel operations - Future: implement in WebviewPanel module
-// Progress operations - Future: implement Source/Services/Window/Progress.ts
-// TextDocument operations - Future: integrate with DocumentService
+// Implementation modules (available for direct use or testing)
+export {
+	ShowTextDocument,
+	ShowInformationMessage,
+	ShowWarningMessage,
+	ShowErrorMessage,
+} from "./TextDocument.js";
+export { ShowQuickPick, ShowInputBox } from "./QuickInput.js";
+export { ShowOpenDialog, ShowSaveDialog } from "./FileDialogs.js";
+export { CreateStatusBarItem } from "./StatusBar.js";
+export { CreateOutputChannel } from "./OutputChannel.js";
+export { CreateWebviewPanel } from "./WebviewPanel.js";
+export { WithProgress } from "./Progress.js";

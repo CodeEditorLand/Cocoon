@@ -1,0 +1,166 @@
+/**
+ * @module Services/Window/WebviewPanel
+ * @description
+ * Webview panel creation for the Window service.
+ * Uses WebviewPanelImplementation and delegates registration to Mountain
+ * via gRPC.
+ *
+ * Source: src/vs/workbench/api/common/extHostWebview.ts (createWebviewPanel)
+ */
+
+import { Effect } from "effect";
+import type * as VSCode from "vscode";
+
+import { FromAPI as ViewColumnFromAPI } from "../../TypeConverter/Main/ViewColumn.js";
+import { WebviewPanelImplementation } from "../../WebviewPanel/WebviewPanelImplementation.js";
+
+/**
+ * IPC proxy shape used inside WebviewPanelImplementation.
+ */
+interface WebviewIPC {
+	SendNotification: (
+		Method: string,
+		Params: unknown[],
+	) => Effect.Effect<void, Error>;
+	SendRequest: <T>(
+		Method: string,
+		Params: unknown[],
+	) => Effect.Effect<T, Error>;
+}
+
+/**
+ * Create a webview panel backed by Mountain gRPC and WebviewPanelImplementation.
+ *
+ * Serializes show options and panel options, registers the panel with Mountain,
+ * and returns a full VSCode.WebviewPanel proxy.
+ *
+ * @param MountainClient - gRPC client with sendNotification support
+ * @param GRPCClient - Mountain gRPC client for createWebviewPanel call
+ * @param Logger - Logger for info/debug output
+ * @param ViewType - Webview panel type identifier
+ * @param Title - Panel title
+ * @param ShowOptions - Column or column+focus options
+ * @param Options - Optional panel and webview options
+ */
+export const CreateWebviewPanel = (
+	MountainClient: {
+		sendNotification: (method: string, params: unknown) => Promise<void>;
+	},
+	GRPCClient: {
+		createWebviewPanel: (params: {
+			viewType: string;
+			title: string;
+			iconPath: undefined;
+			viewColumn: number | undefined;
+			preserveFocus: boolean;
+			enableFindWidget: boolean;
+			retainContextWhenHidden: boolean;
+			localResourceRoots: string[] | undefined;
+		}) => Effect.Effect<unknown, Error>;
+	},
+	Logger: {
+		Info: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+		Debug: (Message: string, ...Data: unknown[]) => Effect.Effect<void>;
+	},
+	ViewType: string,
+	Title: string,
+	ShowOptions:
+		| VSCode.ViewColumn
+		| { viewColumn: VSCode.ViewColumn; preserveFocus?: boolean },
+	Options?: VSCode.WebviewPanelOptions & VSCode.WebviewOptions,
+): Effect.Effect<VSCode.WebviewPanel, Error> =>
+	Effect.gen(function* () {
+		const PanelId = `webview-${crypto.randomUUID()}`;
+		yield* Logger.Info(
+			`[WindowService] Creating webview panel: ${ViewType} - ${Title} (${PanelId})`,
+		);
+
+		// Parse show options
+		const ViewColumn =
+			typeof ShowOptions === "number"
+				? ShowOptions
+				: ShowOptions.viewColumn;
+		const PreserveFocus =
+			typeof ShowOptions === "object"
+				? (ShowOptions.preserveFocus ?? false)
+				: false;
+
+		// Parse panel options for the proxy
+		const PanelOptionsDTO = Options
+			? {
+					enableFindWidget: Options.enableFindWidget,
+					enableScripts: Options.enableScripts,
+					enableForms: Options.enableForms,
+					enableCommandUris: Options.enableCommandUris,
+					portMapping: Options.portMapping,
+					localResourceRoots: Options.localResourceRoots,
+					retainContextWhenHidden: Options.retainContextWhenHidden,
+				}
+			: undefined;
+
+		// Convert ViewColumn to DTO format
+		const ViewColumnDTO = ViewColumnFromAPI(ViewColumn);
+
+		// Register the panel with Mountain
+		yield* GRPCClient.createWebviewPanel({
+			viewType: ViewType,
+			title: Title ?? "",
+			iconPath: undefined,
+			viewColumn: ViewColumn ? ViewColumn - 2 : undefined,
+			preserveFocus: PreserveFocus ?? true,
+			enableFindWidget: Options?.enableFindWidget ?? true,
+			retainContextWhenHidden: Options?.retainContextWhenHidden ?? false,
+			localResourceRoots: Options?.localResourceRoots?.map((Uri) =>
+				Uri.toString(),
+			),
+		});
+
+		// Build IPC proxy for webview <-> extension message passing
+		const IPCProxy: WebviewIPC = {
+			SendNotification: (Method: string, Params: unknown[]) =>
+				Effect.gen(function* () {
+					yield* Logger.Debug(
+						`[WindowService] Webview notification: ${Method}`,
+					);
+					MountainClient.sendNotification("webview.postMessage", {
+						panelId: PanelId,
+						method: Method,
+						params: Params,
+					}).catch(() => {});
+				}),
+			SendRequest: <T>(
+				_Method: string,
+				_Params: unknown[],
+			): Effect.Effect<T, Error> =>
+				Effect.gen(function* () {
+					// Webview sendRequest is fire-and-forget from extension side;
+					// Sky resolves via onDidReceiveMessage.
+					return undefined as T;
+				}),
+		};
+
+		// Placeholder extension description — TODO: get from context
+		const ExtensionDescription: any = {
+			identifier: { value: "extension-placeholder" },
+			extensionLocation: { scheme: "file", path: "/tmp/extension" },
+		};
+
+		// Create and return webview panel implementation
+		const WebviewPanel = new WebviewPanelImplementation(
+			PanelId,
+			IPCProxy,
+			ExtensionDescription,
+			() => {
+				// Dispose callback: notify Mountain to destroy the webview panel
+				MountainClient.sendNotification("webview.dispose", {
+					panelId: PanelId,
+				}).catch(() => {});
+			},
+			ViewType,
+			Title,
+			PanelOptionsDTO ?? {},
+			ViewColumn,
+		);
+
+		return yield* Effect.succeed(WebviewPanel);
+	});
