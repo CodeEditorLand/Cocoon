@@ -1,0 +1,134 @@
+/**
+ * @module Handler/VscodeAPI/WorkspaceNamespace/TextDocument
+ * @description
+ * Document lifecycle operations for the workspace shim:
+ * openTextDocument, saveAll, applyEdit, updateWorkspaceFolders, and all
+ * document/file/notebook event subscriptions.
+ */
+
+import type { HandlerContext } from "../../HandlerContext.js";
+import { Call, EventSubscriber } from "./Helpers.js";
+
+export const BuildOpenTextDocument =
+	(Context: HandlerContext) => async (UriOrPath: any) => {
+		const UriString =
+			typeof UriOrPath === "string"
+				? UriOrPath
+				: (UriOrPath?.toString?.() ?? "");
+		const Cached = Context.DocumentContentCache.get(UriString);
+		const Text =
+			Cached ??
+			(await Call<string>(Context, "FileSystem.ReadFile", [UriString])) ??
+			"";
+		return {
+			uri: UriOrPath,
+			fileName: UriString,
+			languageId: "plaintext",
+			isDirty: false,
+			isClosed: false,
+			isUntitled: false,
+			version: 1,
+			eol: 1,
+			lineCount: Text.split("\n").length,
+			getText: () => Text,
+			save: async () => true,
+		};
+	};
+
+export const BuildSaveAll =
+	(Context: HandlerContext) => async (_IncludeUntitled?: boolean) => {
+		await Call<void>(Context, "Document.Save", []);
+		return true;
+	};
+
+export const BuildApplyEdit =
+	(Context: HandlerContext) => async (_Edit: unknown) => {
+		// No dedicated dispatcher route yet — fire as notification so Wind
+		// can subscribe via the cocoon:workspace.applyEdit Tauri event.
+		Context.SendToMountain("workspace.applyEdit", _Edit).catch(() => {});
+		return true;
+	};
+
+export const BuildUpdateWorkspaceFolders = (
+	Context: HandlerContext,
+	ReadFolders: () => Array<{ uri: unknown; name: string; index: number }>,
+) =>
+(
+	Start: number,
+	DeleteCount: number | null | undefined,
+	...ToAdd: Array<{ uri?: unknown; name?: string }>
+) => {
+	const Current = ReadFolders();
+	const RemoveCount =
+		typeof DeleteCount === "number" && DeleteCount > 0
+			? Math.min(DeleteCount, Math.max(Current.length - Start, 0))
+			: 0;
+	const Removals = Current.slice(Start, Start + RemoveCount).map((Folder) => ({
+		uri: {
+			value:
+				typeof Folder?.uri === "string"
+					? Folder.uri
+					: ((Folder?.uri as Record<string, unknown>)?.[
+							"toString"
+						] as (() => string) | undefined)?.call(Folder?.uri) ??
+						String(Folder?.uri),
+		},
+	}));
+	const Additions = ToAdd.map((Folder) => {
+		const Raw = Folder?.uri;
+		const Serialized =
+			typeof Raw === "string"
+				? Raw
+				: ((Raw as Record<string, unknown>)?.["toString"] as
+						| (() => string)
+						| undefined)?.call(Raw) ?? String(Raw ?? "");
+		return { uri: { value: Serialized }, name: Folder?.name ?? "" };
+	});
+	Context.MountainClient?.sendRequest("$updateWorkspaceFolders", {
+		additions: Additions,
+		removals: Removals,
+	}).catch((Error) => {
+		const Message =
+			Error instanceof globalThis.Error ? Error.message : String(Error);
+		try {
+			process.stdout.write(
+				`[LandFix:WsNs] updateWorkspaceFolders failed: ${Message}\n`,
+			);
+		} catch {}
+	});
+	return true;
+};
+
+export const BuildDocumentEventMembers = (Context: HandlerContext) => ({
+	onDidOpenTextDocument: EventSubscriber(Context, "didOpenTextDocument"),
+	onDidCloseTextDocument: EventSubscriber(Context, "didCloseTextDocument"),
+	onDidChangeTextDocument: EventSubscriber(Context, "didChangeTextDocument"),
+	onDidSaveTextDocument: EventSubscriber(Context, "didSaveTextDocument"),
+	onWillSaveTextDocument: EventSubscriber(Context, "willSaveTextDocument"),
+	onDidCreateFiles: EventSubscriber(Context, "didCreateFiles"),
+	onDidDeleteFiles: EventSubscriber(Context, "didDeleteFiles"),
+	onDidRenameFiles: EventSubscriber(Context, "didRenameFiles"),
+	onWillRenameFiles: EventSubscriber(Context, "willRenameFiles"),
+	onWillCreateFiles: EventSubscriber(Context, "willCreateFiles"),
+	onWillDeleteFiles: EventSubscriber(Context, "willDeleteFiles"),
+	onDidOpenNotebookDocument: EventSubscriber(
+		Context,
+		"didOpenNotebookDocument",
+	),
+	onDidCloseNotebookDocument: EventSubscriber(
+		Context,
+		"didCloseNotebookDocument",
+	),
+	onDidChangeNotebookDocument: EventSubscriber(
+		Context,
+		"didChangeNotebookDocument",
+	),
+	onDidSaveNotebookDocument: EventSubscriber(
+		Context,
+		"didSaveNotebookDocument",
+	),
+	onWillSaveNotebookDocument: EventSubscriber(
+		Context,
+		"willSaveNotebookDocument",
+	),
+});
