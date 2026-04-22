@@ -51,7 +51,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 	// User-interaction prompts need a *round-trip* (sendRequest) not a
 	// fire-and-forget notification (SendToMountain). Extensions like the
 	// TypeScript updater, Git conflict resolver, and Azure sign-in all gate
-	// behaviour on the returned selection — returning undefined unconditionally
+	// behaviour on the returned selection - returning undefined unconditionally
 	// means they either hang or pick the wrong default. Fall back to undefined
 	// only if Mountain hasn't routed the RPC yet; the extension code always
 	// tolerates that case.
@@ -152,7 +152,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			}).catch(() => {});
 			// Extensions (task runners, debuggers, test harnesses) query
 			// `terminal.processId` to track the PTY shell process. Resolve it
-			// via a Mountain round-trip the first time it's awaited — cache
+			// via a Mountain round-trip the first time it's awaited - cache
 			// the promise so repeated reads return the same value without a
 			// new RPC every call.
 			let ProcessIdPromise: Promise<number | undefined> | undefined;
@@ -216,7 +216,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 							[Handle, Columns, Rows],
 						);
 					} catch {
-						// Silent — best-effort UI adaptation.
+						// Silent - best-effort UI adaptation.
 					}
 				},
 			};
@@ -316,7 +316,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 						handle: Handle,
 					}).catch(() => {});
 				},
-				// LogOutputChannel additions — returned when the caller passes
+				// LogOutputChannel additions - returned when the caller passes
 				// `{ log: true }`. Kept on the base channel for simplicity;
 				// these are inert on non-log channels.
 				logLevel: 2, // LogLevel.Info
@@ -591,7 +591,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 			),
 			close: async (_Tab: unknown, _PreserveFocus?: boolean) => {
 				// Extensions call `tabGroups.close(tab)` to dismiss an editor.
-				// Forward through Mountain's existing command dispatcher —
+				// Forward through Mountain's existing command dispatcher -
 				// the workbench command `workbench.action.closeActiveEditor`
 				// covers the default case and is a registered native command.
 				try {
@@ -628,7 +628,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				TreeDataProviders.set(Handle, Provider);
 				// Send ONLY the serialisable primitive options to Mountain.
 				// The previous version forwarded `Options` verbatim, which
-				// included the `treeDataProvider` itself — the provider's
+				// included the `treeDataProvider` itself - the provider's
 				// `.context` field cycles through the whole ExtensionContext
 				// (environmentVariableCollection, nested Uri objects, the
 				// full packageJSON), pushing a 50–200 KB payload per

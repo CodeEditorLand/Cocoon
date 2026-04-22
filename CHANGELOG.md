@@ -3,7 +3,7 @@
 All notable changes to Cocoon (Extension Host) are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/).
 
-## [v2.1] — Q2 2026: Full Workbench Lift
+## [v2.1] - Q2 2026: Full Workbench Lift
 
 ### Added
 
@@ -32,34 +32,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - executeCommand field name correction
 - Document state parsing refinement
 
-## [v2.0] — Q1 2026: Editor Launch Sprint
+## [v2.0] - Q1 2026: Editor Launch Sprint
 
-**~500 commits — complete Effect-TS rewrite quarter.**
+**~500 commits - complete Effect-TS rewrite quarter.**
 
 ### February 7-9: Core Effect-TS Migration
 
 #### Added
 
 - 7 Effect-TS service layers in `Source/Effect/` (2,325 lines):
-  - `Bootstrap.ts` (343 lines) — 6-stage startup orchestration
-  - `Extension.ts` (415 lines) — extension lifecycle via SubscriptionRef
-  - `Health.ts` (266 lines) — periodic health checks and service status
-  - `MountainClient.ts` (433 lines) — gRPC client with retry logic
-  - `RPCServer.ts` (397 lines) — gRPC server for Mountain requests
-  - `Telemetry.ts` (375 lines) — unified logging, metrics, span instrumentation
-  - `index.ts` (96 lines) — Layer composition and exports
-- `Services/MountainGRPCClient.ts` (1,206 lines) — 70+ typed RPC wrappers
+  - `Bootstrap.ts` (343 lines) - 6-stage startup orchestration
+  - `Extension.ts` (415 lines) - extension lifecycle via SubscriptionRef
+  - `Health.ts` (266 lines) - periodic health checks and service status
+  - `MountainClient.ts` (433 lines) - gRPC client with retry logic
+  - `RPCServer.ts` (397 lines) - gRPC server for Mountain requests
+  - `Telemetry.ts` (375 lines) - unified logging, metrics, span instrumentation
+  - `index.ts` (96 lines) - Layer composition and exports
+- `Services/MountainGRPCClient.ts` (1,206 lines) - 70+ typed RPC wrappers
   with `(request, callback)` → `Promise.wrap` → Effect pattern
-- `Services/Adapters/CocoonGrpcAdapter.ts` (119 lines) — bidirectional gRPC
+- `Services/Adapters/CocoonGrpcAdapter.ts` (119 lines) - bidirectional gRPC
   bridge (Spine Adapter pattern)
 - `Services/Window/` (5 files): Dialog.ts (84), Errors.ts (174), State.ts
   (82), Types.ts (216), index.ts (27)
 - `Services/TerminalService.ts` (68 lines)
 - `Services/FileSystemService.ts` (86 lines)
-- `Effect/ModuleInterceptor.ts` (493 lines) — security sandboxing
-- `Services/EchoActionClient.ts` (530 lines) — bidirectional action dispatch
-- `Generated/Vine.ts` (693 lines) — proto-loader generated types
-- `Scripts/compile-grpc-protocol.js` (263 lines) — proto compilation
+- `Effect/ModuleInterceptor.ts` (493 lines) - security sandboxing
+- `Services/EchoActionClient.ts` (530 lines) - bidirectional action dispatch
+- `Generated/Vine.ts` (693 lines) - proto-loader generated types
+- `Scripts/compile-grpc-protocol.js` (263 lines) - proto compilation
 - 13 interface definitions in `Interfaces/`: IAPIFactory, IAPIFactoryService,
   IConfigurationService, IErrorHandlingService, IExtensionHostService,
   IFileSystemService, IGRPCServerService, IIPCService, IModuleInterceptor,
@@ -86,7 +86,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - effect 3.19.13 → 3.21.0, @effect/platform 0.94.0 → 0.96.0
 - Vitest 4.1+ added for testing
 
-## [v1.3] — Q4 2025: Dependency Maintenance
+## [v1.3] - Q4 2025: Dependency Maintenance
 
 ### Changed
 
@@ -96,7 +96,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - google-protobuf 4.0.1 added (gRPC proto runtime)
 - No new source files; pure dependency stabilization
 
-## [v1.2] — Q3 2025: Full Stack Integration
+## [v1.2] - Q3 2025: Full Stack Integration
 
 ### Added
 
@@ -110,23 +110,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - @effect/platform: 0.87.1 → 0.92.1
 - @effect/platform-node: 0.88.3 → 0.98.2
 
-## [v1.1] — Q2 2025: Architecture Buildout
+## [v1.1] - Q2 2025: Architecture Buildout
 
-**~400 commits — Cocoon born from scratch.**
+**~400 commits - Cocoon born from scratch.**
 
-### Added (Late May — June)
+### Added (Late May - June)
 
 - Core service files:
-  - `APIDeprecation.ts` — VS Code API deprecation tracking
-  - `APIFactory.ts` — VS Code API surface factory
-  - `Command.ts` (301 lines) — command registration and execution
-  - `Authentication.ts` (116 lines) — auth flow management
-  - `Dialog.ts` — file dialogs via Tauri
-  - `Message.ts` — message serialization
-  - `Storage.ts` — extension storage APIs
-  - `TreeView.ts` — VS Code TreeView implementation
-  - `WebViewPanel.ts` — WebView panel hosting
-  - `Telemetry.ts` — event tracking and metrics
+  - `APIDeprecation.ts` - VS Code API deprecation tracking
+  - `APIFactory.ts` - VS Code API surface factory
+  - `Command.ts` (301 lines) - command registration and execution
+  - `Authentication.ts` (116 lines) - auth flow management
+  - `Dialog.ts` - file dialogs via Tauri
+  - `Message.ts` - message serialization
+  - `Storage.ts` - extension storage APIs
+  - `TreeView.ts` - VS Code TreeView implementation
+  - `WebViewPanel.ts` - WebView panel hosting
+  - `Telemetry.ts` - event tracking and metrics
 - Tauri integration:
   - `Integration/Tauri/Clipboard/Wrapper.ts`
   - `Integration/Tauri/File/ParseJson.ts`, `ReadRawFile.ts`
@@ -136,7 +136,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
     `Main/URI.ts`, `Dialog/OpenDialogOption.ts`, `Dialog/SaveDialogOption.ts`,
     `Task.ts`
 - Mountain handshake: first gRPC integration
-- `Skeleton/L1.ts` (166 lines) — Layer 1 initialization
+- `Skeleton/L1.ts` (166 lines) - Layer 1 initialization
 
 ### Dependencies (First Release)
 

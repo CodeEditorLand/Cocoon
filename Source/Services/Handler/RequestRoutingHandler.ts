@@ -284,7 +284,7 @@ const RouteRequest = async (Method: string, Parameters: any): Promise<any> => {
 		}
 	}
 
-	// No match found — caller handles extension host and provider methods
+	// No match found - caller handles extension host and provider methods
 	return undefined;
 };
 

@@ -5,16 +5,16 @@
  * multiple viable implementations reads its active tier from this module
  * so the selected path is:
  *
- *   (a) discoverable — `import Tier from "./Tier.js"` at any call site;
- *   (b) logged on boot — single-line banner via LandFixLog;
- *   (c) grep-able — `Tier.<Capability>` is the only spelling allowed.
+ *   (a) discoverable - `import Tier from "./Tier.js"` at any call site;
+ *   (b) logged on boot - single-line banner via LandFixLog;
+ *   (c) grep-able - `Tier.<Capability>` is the only spelling allowed.
  *
  * Cocoon receives tier values two ways, in precedence order:
  *
- *   1. `globalThis.__LandTiers` — populated by Cocoon's bootstrap prelude
+ *   1. `globalThis.__LandTiers` - populated by Cocoon's bootstrap prelude
  *      from esbuild `__LandTier_<Capability>__` substitutions. Used in
  *      shipped builds.
- *   2. `process.env.Tier<Capability>` — fallback for dev runs of Cocoon
+ *   2. `process.env.Tier<Capability>` - fallback for dev runs of Cocoon
  *      launched directly (e.g. via pnpm scripts), set by Maintain's
  *      `Debug/Build.sh` when it sources `.env.Land`.
  *

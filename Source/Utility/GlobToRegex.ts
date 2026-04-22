@@ -16,7 +16,7 @@
  * | `{a,b,c}`                       | Brace alternation (nests)                 |
  * | `{1..10}` `{01..09}` `{1..5..2}`| Numeric range (optional zero-pad, step)   |
  * | `?(p)` `*(p)` `+(p)` `@(p)`     | Extglob: 0-1, 0-*, 1-*, exactly-one of p  |
- * | `!(p)`                          | Bounded negation — one-or-more non-`/`    |
+ * | `!(p)`                          | Bounded negation - one-or-more non-`/`    |
  * |                                 | chars that together don't match `p`       |
  * | `\` + any char                  | Escape (treat char as literal)            |
  *
@@ -141,7 +141,7 @@ const RegexEscape = (Character: string): string =>
  * operators to a regex source. `**` matches any run of characters including
  * `/`; `*` matches any run of non-`/`; `?` matches any single non-`/`.
  *
- * `!(pat1|pat2)` uses a bounded negative lookahead — typical idioms like
+ * `!(pat1|pat2)` uses a bounded negative lookahead - typical idioms like
  * `!(node_modules)` resolve to "any path segment that is not `node_modules`".
  */
 const PlainGlobToRegexSource = (Glob: string): string => {

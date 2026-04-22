@@ -8,7 +8,7 @@
  */
 
 // ============================================================================
-// TIER-GATING BOOTSTRAP — populate globalThis.__LandTiers before any module
+// TIER-GATING BOOTSTRAP - populate globalThis.__LandTiers before any module
 // that imports Utility/Tier.js executes. Done as the very first line of the
 // bundle so `Pick(...)` resolves against concrete values instead of the
 // fallbacks. esbuild substitutes every `__LandTier_*__` identifier for its
@@ -136,7 +136,7 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 	const result = yield* bootstrap.run({ debugMode: false });
 
 	if (!result.success) {
-		// Log failures but continue — partial bootstrap is acceptable.
+		// Log failures but continue - partial bootstrap is acceptable.
 		// The gRPC server (Stage 5) may have started even if Mountain
 		// connection (Stage 3) failed temporarily.
 		telemetry.log(
@@ -145,7 +145,7 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 		);
 		try {
 			process.stderr.write(
-				"[CocoonMain] Bootstrap partially failed — running in degraded mode\n",
+				"[CocoonMain] Bootstrap partially failed - running in degraded mode\n",
 			);
 		} catch {}
 		for (const stage of result.stages) {
@@ -176,7 +176,7 @@ const bootstrapCocoonEffect = Effect.gen(function* () {
 
 	// From this point the gRPC server (Stage 5) holds an open libuv handle,
 	// which keeps the Effect runtime alive. Extension activation is driven by
-	// Mountain's `$activateByEvent` notifications — no explicit event loop
+	// Mountain's `$activateByEvent` notifications - no explicit event loop
 	// is needed here.
 	telemetry.log("info", "[CocoonMain] Extension host ready");
 });

@@ -396,7 +396,7 @@ var ModuleInterceptorLive = Layer2.effect(
       }, "PatchedLoad");
       telemetry.log(
         "info",
-        "[ModuleInterceptor] Module._load hook installed \u2014 require('vscode') intercepted"
+        "[ModuleInterceptor] Module._load hook installed - require('vscode') intercepted"
       );
     });
     const interceptRequire = /* @__PURE__ */ __name((request) => Effect2.gen(function* () {

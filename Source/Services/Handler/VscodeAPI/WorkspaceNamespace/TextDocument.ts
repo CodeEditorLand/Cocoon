@@ -43,7 +43,7 @@ export const BuildSaveAll =
 
 export const BuildApplyEdit =
 	(Context: HandlerContext) => async (_Edit: unknown) => {
-		// No dedicated dispatcher route yet — fire as notification so Wind
+		// No dedicated dispatcher route yet - fire as notification so Wind
 		// can subscribe via the cocoon:workspace.applyEdit Tauri event.
 		Context.SendToMountain("workspace.applyEdit", _Edit).catch(() => {});
 		return true;

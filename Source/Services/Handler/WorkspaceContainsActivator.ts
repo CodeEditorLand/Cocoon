@@ -34,7 +34,7 @@ const WORKSPACE_CONTAINS_PREFIX = "workspaceContains:";
 
 /**
  * Strip `file://` from a workspace folder URI to get a filesystem path. Mirrors
- * the helper in WorkspaceNamespace — kept local to avoid circular imports.
+ * the helper in WorkspaceNamespace - kept local to avoid circular imports.
  */
 const UriToFsPath = (Uri: unknown): string | undefined => {
 	const Raw =
@@ -165,7 +165,7 @@ const GetWorkspaceContainsGlobs = (Extension: unknown): string[] =>
  * For every extension that declares at least one `workspaceContains:<glob>`
  * trigger, check each glob against each new folder. The first match fires
  * `$activateByEvent` via the existing ExtensionHostHandler. Already-active
- * extensions are a no-op in that handler, so we don't need to dedupe here —
+ * extensions are a no-op in that handler, so we don't need to dedupe here -
  * the single-activation guard inside `ActivateExtension` covers it.
  */
 export const ActivateWorkspaceContainsExtensions = async (
@@ -201,7 +201,7 @@ export const ActivateWorkspaceContainsExtensions = async (
 	}
 
 	// Lazy-load ExtensionHostHandler to avoid a circular import with the
-	// handler suite — NotificationHandler imports this module at load time.
+	// handler suite - NotificationHandler imports this module at load time.
 	const { default: ExtensionHostHandler } = await import(
 		"./ExtensionHostHandler.js"
 	);

@@ -2,7 +2,7 @@
  * @module Message/Types
  * @description
  * Type definitions and interfaces for the Mountain-Wind IPC messaging system.
- * Pure type declarations — no runtime code.
+ * Pure type declarations - no runtime code.
  */
 
 // ============================================================================

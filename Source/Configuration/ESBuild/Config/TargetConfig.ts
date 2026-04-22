@@ -4,7 +4,7 @@ import type { BuildOptions } from "esbuild";
 import * as Environment from "../Constant/EnvironmentConstant.js";
 import BaseConfig from "./BaseConfig.js";
 
-// Tier:*:Resolution 🟢 Primary — CocoonEsbuildDefine is exported by
+// Tier:*:Resolution 🟢 Primary - CocoonEsbuildDefine is exported by
 // Maintain/Debug/Build.sh as a JSON blob of `__LandTier_<Name>__` keys.
 // Each value is already JSON-stringified (double-quoted), which is the
 // exact shape esbuild expects for `define`. Absent env var → empty map.

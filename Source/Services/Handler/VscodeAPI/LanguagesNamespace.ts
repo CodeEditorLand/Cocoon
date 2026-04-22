@@ -370,14 +370,14 @@ const CreateLanguagesNamespace = (
 		return Document;
 	},
 	match: (Selector: any, Document: any): number => {
-		// Implements VS Code's `languages.match(selector, document)` contract —
+		// Implements VS Code's `languages.match(selector, document)` contract -
 		// returns 0 for no match; higher numbers for better matches. Scoring
 		// loosely mirrors `matchesSelector()` in `vs/editor/common/languageSelector.ts`:
 		//   +5  exact language  |  +3  "*" wildcard
 		//   +5  exact scheme    |  +3  "*" wildcard
 		//   +5  glob pattern match
 		//   +1  notebookType match
-		// Arrays are reduced by MAX — returning the best-matching subselector.
+		// Arrays are reduced by MAX - returning the best-matching subselector.
 		const DocLanguage =
 			typeof Document?.languageId === "string" ? Document.languageId : "";
 		const DocScheme =
@@ -420,7 +420,7 @@ const CreateLanguagesNamespace = (
 					if (GlobToRegex(Filter.pattern).test(DocPath)) Score += 5;
 					else return 0;
 				} catch {
-					// Malformed pattern — treat as no-match rather than throwing.
+					// Malformed pattern - treat as no-match rather than throwing.
 					return 0;
 				}
 			}

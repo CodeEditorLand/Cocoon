@@ -984,7 +984,7 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
     // BATCH-14 follow-up: forwards through Mountain's `$updateWorkspaceFolders`
     // which mutates ApplicationState.Workspace and fires `$deltaWorkspaceFolders`
-    // back — the listener wiring from BATCH-14 does the rest.
+    // back - the listener wiring from BATCH-14 does the rest.
     updateWorkspaceFolders: BuildUpdateWorkspaceFolders(
       Context,
       ReadFolders
@@ -1005,7 +1005,7 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
         }, "dispose")
       };
     }, "onDidChangeWorkspaceFolders"),
-    // Provider registrations — each backed by a Mountain round-trip.
+    // Provider registrations - each backed by a Mountain round-trip.
     registerTextDocumentContentProvider: BuildRegisterTextDocumentContentProvider(Context),
     registerFileSystemProvider: BuildRegisterFileSystemProvider(Context),
     registerTaskProvider: BuildRegisterTaskProvider(Context),
@@ -1042,7 +1042,7 @@ var CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
     }, "dispose") }), "onDidChangeTunnels"),
     registerPortAttributesProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
     }, "dispose") }), "registerPortAttributesProvider"),
-    // createFileSystemWatcher is tier-gated — see FileSystemWatcher.ts.
+    // createFileSystemWatcher is tier-gated - see FileSystemWatcher.ts.
     createFileSystemWatcher: /* @__PURE__ */ __name((Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => CreateFileSystemWatcher(
       Context,
       Pattern,

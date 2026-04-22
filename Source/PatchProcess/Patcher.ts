@@ -25,11 +25,11 @@
  * | ----------------------- | ------------------------------------------------------------------------------- |
  * | `PatchProcessCrash`     | `process.crash()` → logged, prevented                                           |
  * | `PatchProcessExit`      | `process.exit()` blocked unless `SecurityPolicy.AllowExit`                      |
- * | `SetStackTraceLimit`    | `Error.stackTraceLimit = 100` — deep traces without runaway attack surface      |
+ * | `SetStackTraceLimit`    | `Error.stackTraceLimit = 100` - deep traces without runaway attack surface      |
  * | `SetupEnvironment`      | Apply InitData proxy flags                                                      |
  * | `SetElectronRunAsNode`  | Force `ELECTRON_RUN_AS_NODE=1` so the bundled Node preserves Node-mode          |
  * | `BlockNativesModule`    | `Module._load("natives")` → thrown error                                        |
- * | `PipeLogging`           | Legacy hook — Cocoon now pipes console via MountainClient, patch is a no-op    |
+ * | `PipeLogging`           | Legacy hook - Cocoon now pipes console via MountainClient, patch is a no-op    |
  * | `HandleException`       | `uncaughtException` / `unhandledRejection` → stderr (RPC takes over when set)   |
  * | `TerminateOnParentExit` | When `VSCODE_PID` dies, exit cleanly                                            |
  * | `EnforceMemoryLimit`    | Soft-limit using `v8.setFlagsFromString("--max-old-space-size=…")`              |
@@ -39,7 +39,7 @@
  * The pre-2026-04 revision of this module used a `Cocoon/Services/IPCService`
  * to forward console + exception events to Mountain. That service was a
  * dead runtime path (never wired into the effect graph correctly) and has
- * been deleted — the gRPC client in `Services/MountainClientService.ts` is
+ * been deleted - the gRPC client in `Services/MountainClientService.ts` is
  * the only remaining Mountain→Cocoon channel. `PipeLogging` and
  * `HandleException` remain as extension points but no longer push events
  * through a local pipe.

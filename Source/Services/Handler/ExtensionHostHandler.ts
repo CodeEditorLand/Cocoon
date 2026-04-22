@@ -2,13 +2,13 @@
  * @module Handler/ExtensionHostHandler
  * @description
  * Handles extension host lifecycle methods from Mountain:
- * - InitializeExtensionHost — receives full init payload, builds registry
- * - $deltaExtensions — applies extension list diffs
- * - $activateByEvent — activates extensions matching an event
- * - $startExtensionHost — signals host should begin processing
- * - EnsureVscodeAPIRegistered — creates the vscode API shim
- * - ActivateExtension — loads and activates a single extension
- * - CreateExtensionContext — builds minimal VS Code ExtensionContext
+ * - InitializeExtensionHost - receives full init payload, builds registry
+ * - $deltaExtensions - applies extension list diffs
+ * - $activateByEvent - activates extensions matching an event
+ * - $startExtensionHost - signals host should begin processing
+ * - EnsureVscodeAPIRegistered - creates the vscode API shim
+ * - ActivateExtension - loads and activates a single extension
+ * - CreateExtensionContext - builds minimal VS Code ExtensionContext
  */
 
 import * as NodeFS from "node:fs";
@@ -72,7 +72,7 @@ const HandleInitializeExtensionHost = async (
 	// Mountain's gRPC is now confirmed running (it just called us).
 	// Reconnect MountainClientService in the background so Cocoon can
 	// send notifications back (provider registrations, extension host
-	// messages, etc.). Fire-and-forget — don't block the response.
+	// messages, etc.). Fire-and-forget - don't block the response.
 	Context.ConnectToMountain().catch((Error) => {
 		console.warn(
 			"[ExtensionHostHandler] Background Mountain reconnect failed:",
@@ -90,7 +90,7 @@ const HandleInitializeExtensionHost = async (
  * Wave 7 instrumentation: every delta logs `+Added -Removed` plus the
  * total registry size and the handler wall-clock duration. A Mountain
  * rebuild sees an observable line per VSIX install/uninstall (K2/K3 →
- * K4) — makes sudden registry growth or deletion visible during
+ * K4) - makes sudden registry growth or deletion visible during
  * regression hunts.
  */
 const HandleDeltaExtensions = async (
@@ -201,7 +201,7 @@ const HandleActivateByEvent = async (
 		);
 	}
 
-	// Fire-and-forget — activate each matching extension asynchronously.
+	// Fire-and-forget - activate each matching extension asynchronously.
 	// We cap concurrent activations to avoid flooding the event loop.
 	const ToActivate = MatchingExtensions.filter(
 		(Id) => !Context.ActivatedExtensions.has(Id),
@@ -222,7 +222,7 @@ const HandleActivateByEvent = async (
 				// class) actually failed to resolve. Cascade-7's critical-
 				// symbol diagnostic confirmed the 14 most-used classes are
 				// present on the shim, so the missing symbol is somewhere
-				// deeper — only the stack can say where.
+				// deeper - only the stack can say where.
 				if (
 					Err instanceof Error &&
 					/Class extends value undefined/.test(Err.message)
@@ -282,7 +282,7 @@ const HandleStartExtensionHost = async (
  * Bootstrap's Stage 4 (which may run in degraded mode and skip module
  * interception entirely).
  *
- * This is deliberately side-effecting and synchronous for the CJS path — by
+ * This is deliberately side-effecting and synchronous for the CJS path - by
  * the time we activate extensions we *must* have `require('vscode')` working.
  */
 const InstallVscodeModuleHooks = async (): Promise<void> => {
@@ -290,7 +290,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 	(globalThis as any).__cocoonModuleHooksInstalled = true;
 
 	// Cocoon runs as an ESM bundle (bundle: true in ESBuild). Bare `require`
-	// is not defined here — we must go through createRequire. This is what
+	// is not defined here - we must go through createRequire. This is what
 	// failed Effect-TS Stage 4 in past runs.
 	const ModuleModule = await import("module");
 	const CreateRequire = ModuleModule.createRequire;
@@ -315,14 +315,14 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 				const API = (globalThis as any).__cocoonVscodeAPI;
 				if (API) return API;
 				console.warn(
-					"[ExtensionHostHandler] require('vscode') called before shim registered — returning empty namespace",
+					"[ExtensionHostHandler] require('vscode') called before shim registered - returning empty namespace",
 				);
 				return {};
 			}
 			return OriginalLoad.call(this, Request, Parent, IsMain);
 		};
 		console.log(
-			"[ExtensionHostHandler] Module._load hook installed — require('vscode') intercepted",
+			"[ExtensionHostHandler] Module._load hook installed - require('vscode') intercepted",
 		);
 	} catch (Err: unknown) {
 		console.warn(
@@ -335,7 +335,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 		// ESM path: register a loader that resolves `import 'vscode'` to a
 		// virtual data: URL re-exporting globalThis.__cocoonVscodeAPI.
 		// Node.js 20.6+ supports `module.register()` from inside the main
-		// process. Older Node silently no-ops — CJS path still works.
+		// process. Older Node silently no-ops - CJS path still works.
 		const NodeModule = LocalRequire("module") as {
 			register?: (
 				specifier: string | URL,
@@ -348,7 +348,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 			// API surface has. Extensions doing `import { commands } from 'vscode'`
 			// or `import * as vscode from 'vscode'` both resolve correctly. Each
 			// exported binding reads through to `globalThis.__cocoonVscodeAPI`
-			// at runtime — so as long as the shim is registered before ESM
+			// at runtime - so as long as the shim is registered before ESM
 			// evaluation, the exports are live.
 			const VscodeExportNames = [
 				// Namespaces
@@ -534,7 +534,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 			try {
 				NodeModule.register(LoaderURL, import.meta.url);
 				console.log(
-					"[ExtensionHostHandler] ESM loader registered — import 'vscode' intercepted",
+					"[ExtensionHostHandler] ESM loader registered - import 'vscode' intercepted",
 				);
 			} catch (RegisterErr: unknown) {
 				console.warn(
@@ -562,7 +562,7 @@ const InstallVscodeModuleHooks = async (): Promise<void> => {
 const EnsureVscodeAPIRegistered = async (
 	Context: HandlerContext,
 ): Promise<void> => {
-	// Install hooks *before* anything else — idempotent, runs once.
+	// Install hooks *before* anything else - idempotent, runs once.
 	await InstallVscodeModuleHooks();
 
 	if ((globalThis as any).__cocoonVscodeAPI) return;
@@ -577,13 +577,13 @@ const EnsureVscodeAPIRegistered = async (
 		const { Emitter } =
 			await import("@codeeditorland/output/vs/base/common/event");
 
-		// Spread every named export from extHostTypes — classes, enums,
-		// constants — so extensions that do `class X extends vscode.Y`
+		// Spread every named export from extHostTypes - classes, enums,
+		// constants - so extensions that do `class X extends vscode.Y`
 		// or `vscode.SomeEnum.Value` find the symbol. Explicit overrides
 		// after the spread take precedence (Uri, CancellationTokenSource,
 		// EventEmitter come from separate VS Code modules).
-		// LogLevel is declared in `platform/log/common/log` — not in
-		// extHostTypes — so the spread above misses it. Git/GitHub etc.
+		// LogLevel is declared in `platform/log/common/log` - not in
+		// extHostTypes - so the spread above misses it. Git/GitHub etc.
 		// read `LogLevel[2]` (reverse enum lookup for "Debug") at init.
 		const LogLevelEnum: Record<string | number, string | number> = {
 			Off: 0,
@@ -601,7 +601,7 @@ const EnsureVscodeAPIRegistered = async (
 		};
 
 		// CancellationError lives in `vs/base/common/errors`, not extHostTypes
-		// — the spread misses it. vscode-languageclient/lib/common/features.js
+		// - the spread misses it. vscode-languageclient/lib/common/features.js
 		// does `class LSPCancellationError extends vscode.CancellationError`
 		// at module-load time; undefined throws "Class extends value
 		// undefined" and the whole language-features activate fails. A
@@ -615,7 +615,7 @@ const EnsureVscodeAPIRegistered = async (
 
 		// OverviewRulerLane is defined in `vs/editor/common/model` (bitmask
 		// flags), not extHostTypes. vscode.merge-conflict's decorator calls
-		// `vscode.OverviewRulerLane.Full` — undefined crashes activation.
+		// `vscode.OverviewRulerLane.Full` - undefined crashes activation.
 		const OverviewRulerLane: Record<string | number, string | number> = {
 			Left: 1,
 			Center: 2,
@@ -629,7 +629,7 @@ const EnsureVscodeAPIRegistered = async (
 
 		const API: Record<string, unknown> = {
 			...(VsCodeTypes as unknown as Record<string, unknown>),
-			// Atom I5: read from process.env — single source is .env.Land
+			// Atom I5: read from process.env - single source is .env.Land
 			// propagated by Maintain/Script/TierEnvironment.sh. Fallback
 			// tracks the VS Code base from Dependency/.../Editor/package.json.
 			version: process.env["ProductVersion"] ?? "1.118.0",
@@ -639,7 +639,7 @@ const EnsureVscodeAPIRegistered = async (
 			EventEmitter: Emitter,
 			LogLevel: LogLevelEnum,
 			OverviewRulerLane,
-			// Namespaces — each in its own file under VscodeAPI/
+			// Namespaces - each in its own file under VscodeAPI/
 			window: (await import("./VscodeAPI/WindowNamespace.js")).default(
 				Context,
 			),
@@ -666,7 +666,7 @@ const EnsureVscodeAPIRegistered = async (
 			authentication: (
 				await import("./VscodeAPI/AuthenticationNamespace.js")
 			).default(Context),
-			// Lightweight stub namespaces — no Mountain route yet, returns
+			// Lightweight stub namespaces - no Mountain route yet, returns
 			// safe defaults so extensions that reference them don't crash.
 			l10n: {
 				t: (Message: unknown, ...Arguments: unknown[]): string => {
@@ -887,7 +887,7 @@ const ActivateExtension = async (
 		Extension?.location;
 	const MainFile: string | undefined = Extension?.main ?? Extension?.Main;
 
-	// Declarative extensions (themes, grammars) have no main — mark activated and return.
+	// Declarative extensions (themes, grammars) have no main - mark activated and return.
 	if (!LocationRaw || !MainFile) {
 		return;
 	}
@@ -968,11 +968,11 @@ const ActivateExtension = async (
 			const { createRequire } = await import("module");
 			const Require = createRequire(import.meta.url);
 			try {
-				// Module._load is patched above — require('vscode') returns our API shim.
+				// Module._load is patched above - require('vscode') returns our API shim.
 				ExtModule = Require(ModulePath) as typeof ExtModule;
 			} catch (RequireErr: unknown) {
 				// Fallback for extensions whose main is actually ESM despite
-				// no `"type": "module"` field — try dynamic import().
+				// no `"type": "module"` field - try dynamic import().
 				const Msg =
 					RequireErr instanceof Error
 						? RequireErr.message
@@ -1034,7 +1034,7 @@ const CreateExtensionContext = (
 
 	// Resolve real storage paths for the extension
 	const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
-	// Keep per-extension storage OUT of `~/.land/extensions/` —
+	// Keep per-extension storage OUT of `~/.land/extensions/` -
 	// that directory is now a user-extension scan path in Mountain's
 	// `ScanPathConfigure.rs`, and the scanner warns on non-extension
 	// siblings like `storage/`. Use a dedicated, non-scanned root.
@@ -1047,7 +1047,7 @@ const CreateExtensionContext = (
 
 	// Ensure directories exist (fire-and-forget). Cocoon runs as an ESM
 	// bundle, so bare `require("node:fs")` throws "Dynamic require of
-	// 'node:fs' is not supported" — use the static `NodeFS` import.
+	// 'node:fs' is not supported" - use the static `NodeFS` import.
 	try {
 		NodeFS.mkdirSync(ExtStoragePath, { recursive: true });
 		NodeFS.mkdirSync(GlobalStoragePath, { recursive: true });
@@ -1056,7 +1056,7 @@ const CreateExtensionContext = (
 
 	// Mountain's scanner keeps only a subset of package.json fields. VS
 	// Code extensions expect the FULL manifest on
-	// `context.extension.packageJSON` — notably `aiKey`, which
+	// `context.extension.packageJSON` - notably `aiKey`, which
 	// `@vscode/extension-telemetry` reads at constructor time and calls
 	// `aiKey.length` on. A missing aiKey throws `Cannot read properties of
 	// undefined (reading 'length')` and the whole activate fails.

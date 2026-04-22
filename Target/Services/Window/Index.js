@@ -9,196 +9,142 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// ../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js
-function findLast(array, predicate, fromIndex = array.length - 1) {
-  const idx = findLastIdx(array, predicate, fromIndex);
-  if (idx === -1) {
-    return void 0;
+// ../Output/Target/Microsoft/VSCode/vs/base/common/collections.js
+function groupBy(data, groupFn) {
+  const result = /* @__PURE__ */ Object.create(null);
+  for (const element of data) {
+    const key = groupFn(element);
+    let target = result[key];
+    if (!target) {
+      target = result[key] = [];
+    }
+    target.push(element);
   }
-  return array[idx];
+  return result;
 }
-function findLastIdx(array, predicate, fromIndex = array.length - 1) {
-  for (let i = fromIndex; i >= 0; i--) {
-    const element = array[i];
-    if (predicate(element, i)) {
-      return i;
+function groupByMap(data, groupFn) {
+  const result = /* @__PURE__ */ new Map();
+  for (const element of data) {
+    const key = groupFn(element);
+    let target = result.get(key);
+    if (!target) {
+      target = [];
+      result.set(key, target);
+    }
+    target.push(element);
+  }
+  return result;
+}
+function diffSets(before, after) {
+  const removed = [];
+  const added = [];
+  for (const element of before) {
+    if (!after.has(element)) {
+      removed.push(element);
     }
   }
-  return -1;
-}
-function findFirst(array, predicate, fromIndex = 0) {
-  const idx = findFirstIdx(array, predicate, fromIndex);
-  if (idx === -1) {
-    return void 0;
-  }
-  return array[idx];
-}
-function findFirstIdx(array, predicate, fromIndex = 0) {
-  for (let i = fromIndex; i < array.length; i++) {
-    const element = array[i];
-    if (predicate(element, i)) {
-      return i;
+  for (const element of after) {
+    if (!before.has(element)) {
+      added.push(element);
     }
   }
-  return -1;
+  return { removed, added };
 }
-function findLastMonotonous(array, predicate) {
-  const idx = findLastIdxMonotonous(array, predicate);
-  return idx === -1 ? void 0 : array[idx];
-}
-function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
-  let i = startIdx;
-  let j = endIdxEx;
-  while (i < j) {
-    const k = Math.floor((i + j) / 2);
-    if (predicate(array[k])) {
-      i = k + 1;
-    } else {
-      j = k;
+function diffMaps(before, after) {
+  const removed = [];
+  const added = [];
+  for (const [index2, value] of before) {
+    if (!after.has(index2)) {
+      removed.push(value);
     }
   }
-  return i - 1;
-}
-function findFirstMonotonous(array, predicate) {
-  const idx = findFirstIdxMonotonousOrArrLen(array, predicate);
-  return idx === array.length ? void 0 : array[idx];
-}
-function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx = array.length) {
-  let i = startIdx;
-  let j = endIdxEx;
-  while (i < j) {
-    const k = Math.floor((i + j) / 2);
-    if (predicate(array[k])) {
-      j = k;
-    } else {
-      i = k + 1;
+  for (const [index2, value] of after) {
+    if (!before.has(index2)) {
+      added.push(value);
     }
   }
-  return i;
+  return { removed, added };
 }
-function findFirstIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
-  const idx = findFirstIdxMonotonousOrArrLen(array, predicate, startIdx, endIdxEx);
-  return idx === array.length ? -1 : idx;
-}
-function findFirstMax(array, comparator) {
-  if (array.length === 0) {
-    return void 0;
-  }
-  let max = array[0];
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, max) > 0) {
-      max = item;
+function intersection(setA, setB) {
+  const result = /* @__PURE__ */ new Set();
+  for (const elem of setB) {
+    if (setA.has(elem)) {
+      result.add(elem);
     }
   }
-  return max;
+  return result;
 }
-function findLastMax(array, comparator) {
-  if (array.length === 0) {
-    return void 0;
-  }
-  let max = array[0];
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, max) >= 0) {
-      max = item;
-    }
-  }
-  return max;
-}
-function findFirstMin(array, comparator) {
-  return findFirstMax(array, (a, b) => -comparator(a, b));
-}
-function findMaxIdx(array, comparator) {
-  if (array.length === 0) {
-    return -1;
-  }
-  let maxIdx = 0;
-  for (let i = 1; i < array.length; i++) {
-    const item = array[i];
-    if (comparator(item, array[maxIdx]) > 0) {
-      maxIdx = i;
-    }
-  }
-  return maxIdx;
-}
-function mapFindFirst(items, mapFn) {
-  for (const value of items) {
-    const mapped = mapFn(value);
-    if (mapped !== void 0) {
-      return mapped;
-    }
-  }
-  return void 0;
-}
-var __defProp2, __name2, MonotonousArray;
-var init_arraysFind = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js"() {
+var __defProp2, __name2, _a, SetWithKey;
+var init_collections = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/collections.js"() {
     "use strict";
     __defProp2 = Object.defineProperty;
     __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
-    __name(findLast, "findLast");
-    __name2(findLast, "findLast");
-    __name(findLastIdx, "findLastIdx");
-    __name2(findLastIdx, "findLastIdx");
-    __name(findFirst, "findFirst");
-    __name2(findFirst, "findFirst");
-    __name(findFirstIdx, "findFirstIdx");
-    __name2(findFirstIdx, "findFirstIdx");
-    __name(findLastMonotonous, "findLastMonotonous");
-    __name2(findLastMonotonous, "findLastMonotonous");
-    __name(findLastIdxMonotonous, "findLastIdxMonotonous");
-    __name2(findLastIdxMonotonous, "findLastIdxMonotonous");
-    __name(findFirstMonotonous, "findFirstMonotonous");
-    __name2(findFirstMonotonous, "findFirstMonotonous");
-    __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
-    __name2(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
-    __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
-    __name2(findFirstIdxMonotonous, "findFirstIdxMonotonous");
-    MonotonousArray = class _MonotonousArray {
+    __name(groupBy, "groupBy");
+    __name2(groupBy, "groupBy");
+    __name(groupByMap, "groupByMap");
+    __name2(groupByMap, "groupByMap");
+    __name(diffSets, "diffSets");
+    __name2(diffSets, "diffSets");
+    __name(diffMaps, "diffMaps");
+    __name2(diffMaps, "diffMaps");
+    __name(intersection, "intersection");
+    __name2(intersection, "intersection");
+    SetWithKey = class {
       static {
-        __name(this, "MonotonousArray");
+        __name(this, "SetWithKey");
       }
       static {
-        __name2(this, "MonotonousArray");
+        __name2(this, "SetWithKey");
       }
       static {
-        this.assertInvariants = false;
+        _a = Symbol.toStringTag;
       }
-      constructor(_array) {
-        this._array = _array;
-        this._findLastMonotonousLastIdx = 0;
-      }
-      /**
-       * The predicate must be monotonous, i.e. `arr.map(predicate)` must be like `[true, ..., true, false, ..., false]`!
-       * For subsequent calls, current predicate must be weaker than (or equal to) the previous predicate, i.e. more entries must be `true`.
-       */
-      findLastMonotonous(predicate) {
-        if (_MonotonousArray.assertInvariants) {
-          if (this._prevFindLastPredicate) {
-            for (const item of this._array) {
-              if (this._prevFindLastPredicate(item) && !predicate(item)) {
-                throw new Error("MonotonousArray: current predicate must be weaker than (or equal to) the previous predicate.");
-              }
-            }
-          }
-          this._prevFindLastPredicate = predicate;
+      constructor(values, toKey) {
+        this.toKey = toKey;
+        this._map = /* @__PURE__ */ new Map();
+        this[_a] = "SetWithKey";
+        for (const value of values) {
+          this.add(value);
         }
-        const idx = findLastIdxMonotonous(this._array, predicate, this._findLastMonotonousLastIdx);
-        this._findLastMonotonousLastIdx = idx + 1;
-        return idx === -1 ? void 0 : this._array[idx];
+      }
+      get size() {
+        return this._map.size;
+      }
+      add(value) {
+        const key = this.toKey(value);
+        this._map.set(key, value);
+        return this;
+      }
+      delete(value) {
+        return this._map.delete(this.toKey(value));
+      }
+      has(value) {
+        return this._map.has(this.toKey(value));
+      }
+      *entries() {
+        for (const entry of this._map.values()) {
+          yield [entry, entry];
+        }
+      }
+      keys() {
+        return this.values();
+      }
+      *values() {
+        for (const entry of this._map.values()) {
+          yield entry;
+        }
+      }
+      clear() {
+        this._map.clear();
+      }
+      forEach(callbackfn, thisArg) {
+        this._map.forEach((entry) => callbackfn.call(thisArg, entry, entry, this));
+      }
+      [Symbol.iterator]() {
+        return this.values();
       }
     };
-    __name(findFirstMax, "findFirstMax");
-    __name2(findFirstMax, "findFirstMax");
-    __name(findLastMax, "findLastMax");
-    __name2(findLastMax, "findLastMax");
-    __name(findFirstMin, "findFirstMin");
-    __name2(findFirstMin, "findFirstMin");
-    __name(findMaxIdx, "findMaxIdx");
-    __name2(findMaxIdx, "findMaxIdx");
-    __name(mapFindFirst, "mapFindFirst");
-    __name2(mapFindFirst, "mapFindFirst");
   }
 });
 
@@ -502,6 +448,232 @@ var init_errors = __esm({
   }
 });
 
+// ../Output/Target/Microsoft/VSCode/vs/base/common/functional.js
+function createSingleCallFunction(fn, fnDidRunCallback) {
+  const _this = this;
+  let didCall = false;
+  let result;
+  return function() {
+    if (didCall) {
+      return result;
+    }
+    didCall = true;
+    if (fnDidRunCallback) {
+      try {
+        result = fn.apply(_this, arguments);
+      } finally {
+        fnDidRunCallback();
+      }
+    } else {
+      result = fn.apply(_this, arguments);
+    }
+    return result;
+  };
+}
+var __defProp4, __name4;
+var init_functional = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/functional.js"() {
+    "use strict";
+    __defProp4 = Object.defineProperty;
+    __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
+    __name(createSingleCallFunction, "createSingleCallFunction");
+    __name4(createSingleCallFunction, "createSingleCallFunction");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js
+function findLast(array, predicate, fromIndex = array.length - 1) {
+  const idx = findLastIdx(array, predicate, fromIndex);
+  if (idx === -1) {
+    return void 0;
+  }
+  return array[idx];
+}
+function findLastIdx(array, predicate, fromIndex = array.length - 1) {
+  for (let i = fromIndex; i >= 0; i--) {
+    const element = array[i];
+    if (predicate(element, i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+function findFirst(array, predicate, fromIndex = 0) {
+  const idx = findFirstIdx(array, predicate, fromIndex);
+  if (idx === -1) {
+    return void 0;
+  }
+  return array[idx];
+}
+function findFirstIdx(array, predicate, fromIndex = 0) {
+  for (let i = fromIndex; i < array.length; i++) {
+    const element = array[i];
+    if (predicate(element, i)) {
+      return i;
+    }
+  }
+  return -1;
+}
+function findLastMonotonous(array, predicate) {
+  const idx = findLastIdxMonotonous(array, predicate);
+  return idx === -1 ? void 0 : array[idx];
+}
+function findLastIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
+  let i = startIdx;
+  let j = endIdxEx;
+  while (i < j) {
+    const k = Math.floor((i + j) / 2);
+    if (predicate(array[k])) {
+      i = k + 1;
+    } else {
+      j = k;
+    }
+  }
+  return i - 1;
+}
+function findFirstMonotonous(array, predicate) {
+  const idx = findFirstIdxMonotonousOrArrLen(array, predicate);
+  return idx === array.length ? void 0 : array[idx];
+}
+function findFirstIdxMonotonousOrArrLen(array, predicate, startIdx = 0, endIdxEx = array.length) {
+  let i = startIdx;
+  let j = endIdxEx;
+  while (i < j) {
+    const k = Math.floor((i + j) / 2);
+    if (predicate(array[k])) {
+      j = k;
+    } else {
+      i = k + 1;
+    }
+  }
+  return i;
+}
+function findFirstIdxMonotonous(array, predicate, startIdx = 0, endIdxEx = array.length) {
+  const idx = findFirstIdxMonotonousOrArrLen(array, predicate, startIdx, endIdxEx);
+  return idx === array.length ? -1 : idx;
+}
+function findFirstMax(array, comparator) {
+  if (array.length === 0) {
+    return void 0;
+  }
+  let max = array[0];
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, max) > 0) {
+      max = item;
+    }
+  }
+  return max;
+}
+function findLastMax(array, comparator) {
+  if (array.length === 0) {
+    return void 0;
+  }
+  let max = array[0];
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, max) >= 0) {
+      max = item;
+    }
+  }
+  return max;
+}
+function findFirstMin(array, comparator) {
+  return findFirstMax(array, (a, b) => -comparator(a, b));
+}
+function findMaxIdx(array, comparator) {
+  if (array.length === 0) {
+    return -1;
+  }
+  let maxIdx = 0;
+  for (let i = 1; i < array.length; i++) {
+    const item = array[i];
+    if (comparator(item, array[maxIdx]) > 0) {
+      maxIdx = i;
+    }
+  }
+  return maxIdx;
+}
+function mapFindFirst(items, mapFn) {
+  for (const value of items) {
+    const mapped = mapFn(value);
+    if (mapped !== void 0) {
+      return mapped;
+    }
+  }
+  return void 0;
+}
+var __defProp5, __name5, MonotonousArray;
+var init_arraysFind = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/arraysFind.js"() {
+    "use strict";
+    __defProp5 = Object.defineProperty;
+    __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
+    __name(findLast, "findLast");
+    __name5(findLast, "findLast");
+    __name(findLastIdx, "findLastIdx");
+    __name5(findLastIdx, "findLastIdx");
+    __name(findFirst, "findFirst");
+    __name5(findFirst, "findFirst");
+    __name(findFirstIdx, "findFirstIdx");
+    __name5(findFirstIdx, "findFirstIdx");
+    __name(findLastMonotonous, "findLastMonotonous");
+    __name5(findLastMonotonous, "findLastMonotonous");
+    __name(findLastIdxMonotonous, "findLastIdxMonotonous");
+    __name5(findLastIdxMonotonous, "findLastIdxMonotonous");
+    __name(findFirstMonotonous, "findFirstMonotonous");
+    __name5(findFirstMonotonous, "findFirstMonotonous");
+    __name(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
+    __name5(findFirstIdxMonotonousOrArrLen, "findFirstIdxMonotonousOrArrLen");
+    __name(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+    __name5(findFirstIdxMonotonous, "findFirstIdxMonotonous");
+    MonotonousArray = class _MonotonousArray {
+      static {
+        __name(this, "MonotonousArray");
+      }
+      static {
+        __name5(this, "MonotonousArray");
+      }
+      static {
+        this.assertInvariants = false;
+      }
+      constructor(_array) {
+        this._array = _array;
+        this._findLastMonotonousLastIdx = 0;
+      }
+      /**
+       * The predicate must be monotonous, i.e. `arr.map(predicate)` must be like `[true, ..., true, false, ..., false]`!
+       * For subsequent calls, current predicate must be weaker than (or equal to) the previous predicate, i.e. more entries must be `true`.
+       */
+      findLastMonotonous(predicate) {
+        if (_MonotonousArray.assertInvariants) {
+          if (this._prevFindLastPredicate) {
+            for (const item of this._array) {
+              if (this._prevFindLastPredicate(item) && !predicate(item)) {
+                throw new Error("MonotonousArray: current predicate must be weaker than (or equal to) the previous predicate.");
+              }
+            }
+          }
+          this._prevFindLastPredicate = predicate;
+        }
+        const idx = findLastIdxMonotonous(this._array, predicate, this._findLastMonotonousLastIdx);
+        this._findLastMonotonousLastIdx = idx + 1;
+        return idx === -1 ? void 0 : this._array[idx];
+      }
+    };
+    __name(findFirstMax, "findFirstMax");
+    __name5(findFirstMax, "findFirstMax");
+    __name(findLastMax, "findLastMax");
+    __name5(findLastMax, "findLastMax");
+    __name(findFirstMin, "findFirstMin");
+    __name5(findFirstMin, "findFirstMin");
+    __name(findMaxIdx, "findMaxIdx");
+    __name5(findMaxIdx, "findMaxIdx");
+    __name(mapFindFirst, "mapFindFirst");
+    __name5(mapFindFirst, "mapFindFirst");
+  }
+});
+
 // ../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js
 function tail(arr) {
   if (arr.length === 0) {
@@ -578,7 +750,7 @@ function quickSelect(nth, data, compare2) {
     return quickSelect(nth - (lower.length + pivots.length), higher, compare2);
   }
 }
-function groupBy(data, compare2) {
+function groupBy2(data, compare2) {
   const result = [];
   let currentGroup = void 0;
   for (const element of data.slice(0).sort(compare2)) {
@@ -637,7 +809,7 @@ function sortedDiff(before, after, compare2) {
     }
   }
   __name(pushSplice, "pushSplice");
-  __name4(pushSplice, "pushSplice");
+  __name6(pushSplice, "pushSplice");
   let beforeIdx = 0;
   let afterIdx = 0;
   while (true) {
@@ -812,7 +984,7 @@ function shuffle(array, _seed) {
   let rand;
   if (typeof _seed === "number") {
     let seed = _seed;
-    rand = /* @__PURE__ */ __name4(() => {
+    rand = /* @__PURE__ */ __name6(() => {
       const x = Math.sin(seed++) * 179426549;
       return x - Math.floor(x);
     }, "rand");
@@ -929,141 +1101,141 @@ function sum(array) {
 function sumBy(array, selector) {
   return array.reduce((acc, value) => acc + selector(value), 0);
 }
-var __defProp4, __name4, CompareResult, numberComparator, booleanComparator, ArrayQueue, CallbackIterable, Permutation;
+var __defProp6, __name6, CompareResult, numberComparator, booleanComparator, ArrayQueue, CallbackIterable, Permutation;
 var init_arrays = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/arrays.js"() {
     "use strict";
     init_arraysFind();
     init_errors();
-    __defProp4 = Object.defineProperty;
-    __name4 = /* @__PURE__ */ __name((target, value) => __defProp4(target, "name", { value, configurable: true }), "__name");
+    __defProp6 = Object.defineProperty;
+    __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
     __name(tail, "tail");
-    __name4(tail, "tail");
+    __name6(tail, "tail");
     __name(equals, "equals");
-    __name4(equals, "equals");
+    __name6(equals, "equals");
     __name(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
-    __name4(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
+    __name6(removeFastWithoutKeepingOrder, "removeFastWithoutKeepingOrder");
     __name(binarySearch, "binarySearch");
-    __name4(binarySearch, "binarySearch");
+    __name6(binarySearch, "binarySearch");
     __name(binarySearch2, "binarySearch2");
-    __name4(binarySearch2, "binarySearch2");
+    __name6(binarySearch2, "binarySearch2");
     __name(quickSelect, "quickSelect");
-    __name4(quickSelect, "quickSelect");
-    __name(groupBy, "groupBy");
-    __name4(groupBy, "groupBy");
+    __name6(quickSelect, "quickSelect");
+    __name(groupBy2, "groupBy");
+    __name6(groupBy2, "groupBy");
     __name(groupAdjacentBy, "groupAdjacentBy");
-    __name4(groupAdjacentBy, "groupAdjacentBy");
+    __name6(groupAdjacentBy, "groupAdjacentBy");
     __name(forEachAdjacent, "forEachAdjacent");
-    __name4(forEachAdjacent, "forEachAdjacent");
+    __name6(forEachAdjacent, "forEachAdjacent");
     __name(forEachWithNeighbors, "forEachWithNeighbors");
-    __name4(forEachWithNeighbors, "forEachWithNeighbors");
+    __name6(forEachWithNeighbors, "forEachWithNeighbors");
     __name(concatArrays, "concatArrays");
-    __name4(concatArrays, "concatArrays");
+    __name6(concatArrays, "concatArrays");
     __name(sortedDiff, "sortedDiff");
-    __name4(sortedDiff, "sortedDiff");
+    __name6(sortedDiff, "sortedDiff");
     __name(delta, "delta");
-    __name4(delta, "delta");
+    __name6(delta, "delta");
     __name(top, "top");
-    __name4(top, "top");
+    __name6(top, "top");
     __name(topAsync, "topAsync");
-    __name4(topAsync, "topAsync");
+    __name6(topAsync, "topAsync");
     __name(topStep, "topStep");
-    __name4(topStep, "topStep");
+    __name6(topStep, "topStep");
     __name(coalesce, "coalesce");
-    __name4(coalesce, "coalesce");
+    __name6(coalesce, "coalesce");
     __name(coalesceInPlace, "coalesceInPlace");
-    __name4(coalesceInPlace, "coalesceInPlace");
+    __name6(coalesceInPlace, "coalesceInPlace");
     __name(move, "move");
-    __name4(move, "move");
+    __name6(move, "move");
     __name(isFalsyOrEmpty, "isFalsyOrEmpty");
-    __name4(isFalsyOrEmpty, "isFalsyOrEmpty");
+    __name6(isFalsyOrEmpty, "isFalsyOrEmpty");
     __name(isNonEmptyArray, "isNonEmptyArray");
-    __name4(isNonEmptyArray, "isNonEmptyArray");
+    __name6(isNonEmptyArray, "isNonEmptyArray");
     __name(distinct, "distinct");
-    __name4(distinct, "distinct");
+    __name6(distinct, "distinct");
     __name(uniqueFilter, "uniqueFilter");
-    __name4(uniqueFilter, "uniqueFilter");
+    __name6(uniqueFilter, "uniqueFilter");
     __name(commonPrefixLength, "commonPrefixLength");
-    __name4(commonPrefixLength, "commonPrefixLength");
+    __name6(commonPrefixLength, "commonPrefixLength");
     __name(range, "range");
-    __name4(range, "range");
+    __name6(range, "range");
     __name(index, "index");
-    __name4(index, "index");
+    __name6(index, "index");
     __name(insert, "insert");
-    __name4(insert, "insert");
+    __name6(insert, "insert");
     __name(remove, "remove");
-    __name4(remove, "remove");
+    __name6(remove, "remove");
     __name(arrayInsert, "arrayInsert");
-    __name4(arrayInsert, "arrayInsert");
+    __name6(arrayInsert, "arrayInsert");
     __name(shuffle, "shuffle");
-    __name4(shuffle, "shuffle");
+    __name6(shuffle, "shuffle");
     __name(pushToStart, "pushToStart");
-    __name4(pushToStart, "pushToStart");
+    __name6(pushToStart, "pushToStart");
     __name(pushToEnd, "pushToEnd");
-    __name4(pushToEnd, "pushToEnd");
+    __name6(pushToEnd, "pushToEnd");
     __name(pushMany, "pushMany");
-    __name4(pushMany, "pushMany");
+    __name6(pushMany, "pushMany");
     __name(mapArrayOrNot, "mapArrayOrNot");
-    __name4(mapArrayOrNot, "mapArrayOrNot");
+    __name6(mapArrayOrNot, "mapArrayOrNot");
     __name(mapFilter, "mapFilter");
-    __name4(mapFilter, "mapFilter");
+    __name6(mapFilter, "mapFilter");
     __name(withoutDuplicates, "withoutDuplicates");
-    __name4(withoutDuplicates, "withoutDuplicates");
+    __name6(withoutDuplicates, "withoutDuplicates");
     __name(asArray, "asArray");
-    __name4(asArray, "asArray");
+    __name6(asArray, "asArray");
     __name(getRandomElement, "getRandomElement");
-    __name4(getRandomElement, "getRandomElement");
+    __name6(getRandomElement, "getRandomElement");
     __name(insertInto, "insertInto");
-    __name4(insertInto, "insertInto");
+    __name6(insertInto, "insertInto");
     __name(splice, "splice");
-    __name4(splice, "splice");
+    __name6(splice, "splice");
     __name(getActualStartIndex, "getActualStartIndex");
-    __name4(getActualStartIndex, "getActualStartIndex");
+    __name6(getActualStartIndex, "getActualStartIndex");
     (function(CompareResult2) {
       function isLessThan(result) {
         return result < 0;
       }
       __name(isLessThan, "isLessThan");
-      __name4(isLessThan, "isLessThan");
+      __name6(isLessThan, "isLessThan");
       CompareResult2.isLessThan = isLessThan;
       function isLessThanOrEqual(result) {
         return result <= 0;
       }
       __name(isLessThanOrEqual, "isLessThanOrEqual");
-      __name4(isLessThanOrEqual, "isLessThanOrEqual");
+      __name6(isLessThanOrEqual, "isLessThanOrEqual");
       CompareResult2.isLessThanOrEqual = isLessThanOrEqual;
       function isGreaterThan(result) {
         return result > 0;
       }
       __name(isGreaterThan, "isGreaterThan");
-      __name4(isGreaterThan, "isGreaterThan");
+      __name6(isGreaterThan, "isGreaterThan");
       CompareResult2.isGreaterThan = isGreaterThan;
       function isNeitherLessOrGreaterThan(result) {
         return result === 0;
       }
       __name(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
-      __name4(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
+      __name6(isNeitherLessOrGreaterThan, "isNeitherLessOrGreaterThan");
       CompareResult2.isNeitherLessOrGreaterThan = isNeitherLessOrGreaterThan;
       CompareResult2.greaterThan = 1;
       CompareResult2.lessThan = -1;
       CompareResult2.neitherLessOrGreaterThan = 0;
     })(CompareResult || (CompareResult = {}));
     __name(compareBy, "compareBy");
-    __name4(compareBy, "compareBy");
+    __name6(compareBy, "compareBy");
     __name(tieBreakComparators, "tieBreakComparators");
-    __name4(tieBreakComparators, "tieBreakComparators");
-    numberComparator = /* @__PURE__ */ __name4((a, b) => a - b, "numberComparator");
-    booleanComparator = /* @__PURE__ */ __name4((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
+    __name6(tieBreakComparators, "tieBreakComparators");
+    numberComparator = /* @__PURE__ */ __name6((a, b) => a - b, "numberComparator");
+    booleanComparator = /* @__PURE__ */ __name6((a, b) => numberComparator(a ? 1 : 0, b ? 1 : 0), "booleanComparator");
     __name(reverseOrder, "reverseOrder");
-    __name4(reverseOrder, "reverseOrder");
+    __name6(reverseOrder, "reverseOrder");
     __name(compareUndefinedSmallest, "compareUndefinedSmallest");
-    __name4(compareUndefinedSmallest, "compareUndefinedSmallest");
+    __name6(compareUndefinedSmallest, "compareUndefinedSmallest");
     ArrayQueue = class {
       static {
         __name(this, "ArrayQueue");
       }
       static {
-        __name4(this, "ArrayQueue");
+        __name6(this, "ArrayQueue");
       }
       /**
        * Constructs a queue that is backed by the given array. Runtime is O(1).
@@ -1136,7 +1308,7 @@ var init_arrays = __esm({
         __name(this, "CallbackIterable");
       }
       static {
-        __name4(this, "CallbackIterable");
+        __name6(this, "CallbackIterable");
       }
       static {
         this.empty = new _CallbackIterable((_callback) => {
@@ -1212,7 +1384,7 @@ var init_arrays = __esm({
         __name(this, "Permutation");
       }
       static {
-        __name4(this, "Permutation");
+        __name6(this, "Permutation");
       }
       constructor(_indexMap) {
         this._indexMap = _indexMap;
@@ -1242,213 +1414,11 @@ var init_arrays = __esm({
       }
     };
     __name(findAsync, "findAsync");
-    __name4(findAsync, "findAsync");
+    __name6(findAsync, "findAsync");
     __name(sum, "sum");
-    __name4(sum, "sum");
+    __name6(sum, "sum");
     __name(sumBy, "sumBy");
-    __name4(sumBy, "sumBy");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/lazy.js
-var __defProp5, __name5, LazyValueState, Lazy;
-var init_lazy = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/lazy.js"() {
-    "use strict";
-    __defProp5 = Object.defineProperty;
-    __name5 = /* @__PURE__ */ __name((target, value) => __defProp5(target, "name", { value, configurable: true }), "__name");
-    (function(LazyValueState2) {
-      LazyValueState2[LazyValueState2["Uninitialized"] = 0] = "Uninitialized";
-      LazyValueState2[LazyValueState2["Running"] = 1] = "Running";
-      LazyValueState2[LazyValueState2["Completed"] = 2] = "Completed";
-    })(LazyValueState || (LazyValueState = {}));
-    Lazy = class {
-      static {
-        __name(this, "Lazy");
-      }
-      static {
-        __name5(this, "Lazy");
-      }
-      constructor(executor) {
-        this.executor = executor;
-        this._state = LazyValueState.Uninitialized;
-      }
-      /**
-       * True if the lazy value has been resolved.
-       */
-      get hasValue() {
-        return this._state === LazyValueState.Completed;
-      }
-      /**
-       * Get the wrapped value.
-       *
-       * This will force evaluation of the lazy value if it has not been resolved yet. Lazy values are only
-       * resolved once. `getValue` will re-throw exceptions that are hit while resolving the value
-       */
-      get value() {
-        if (this._state === LazyValueState.Uninitialized) {
-          this._state = LazyValueState.Running;
-          try {
-            this._value = this.executor();
-          } catch (err) {
-            this._error = err;
-          } finally {
-            this._state = LazyValueState.Completed;
-          }
-        } else if (this._state === LazyValueState.Running) {
-          throw new Error("Cannot read the value of a lazy that is being initialized");
-        }
-        if (this._error) {
-          throw this._error;
-        }
-        return this._value;
-      }
-      /**
-       * Get the wrapped value without forcing evaluation.
-       */
-      get rawValue() {
-        return this._value;
-      }
-    };
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/collections.js
-function groupBy2(data, groupFn) {
-  const result = /* @__PURE__ */ Object.create(null);
-  for (const element of data) {
-    const key = groupFn(element);
-    let target = result[key];
-    if (!target) {
-      target = result[key] = [];
-    }
-    target.push(element);
-  }
-  return result;
-}
-function groupByMap(data, groupFn) {
-  const result = /* @__PURE__ */ new Map();
-  for (const element of data) {
-    const key = groupFn(element);
-    let target = result.get(key);
-    if (!target) {
-      target = [];
-      result.set(key, target);
-    }
-    target.push(element);
-  }
-  return result;
-}
-function diffSets(before, after) {
-  const removed = [];
-  const added = [];
-  for (const element of before) {
-    if (!after.has(element)) {
-      removed.push(element);
-    }
-  }
-  for (const element of after) {
-    if (!before.has(element)) {
-      added.push(element);
-    }
-  }
-  return { removed, added };
-}
-function diffMaps(before, after) {
-  const removed = [];
-  const added = [];
-  for (const [index2, value] of before) {
-    if (!after.has(index2)) {
-      removed.push(value);
-    }
-  }
-  for (const [index2, value] of after) {
-    if (!before.has(index2)) {
-      added.push(value);
-    }
-  }
-  return { removed, added };
-}
-function intersection(setA, setB) {
-  const result = /* @__PURE__ */ new Set();
-  for (const elem of setB) {
-    if (setA.has(elem)) {
-      result.add(elem);
-    }
-  }
-  return result;
-}
-var __defProp6, __name6, _a, SetWithKey;
-var init_collections = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/collections.js"() {
-    "use strict";
-    __defProp6 = Object.defineProperty;
-    __name6 = /* @__PURE__ */ __name((target, value) => __defProp6(target, "name", { value, configurable: true }), "__name");
-    __name(groupBy2, "groupBy");
-    __name6(groupBy2, "groupBy");
-    __name(groupByMap, "groupByMap");
-    __name6(groupByMap, "groupByMap");
-    __name(diffSets, "diffSets");
-    __name6(diffSets, "diffSets");
-    __name(diffMaps, "diffMaps");
-    __name6(diffMaps, "diffMaps");
-    __name(intersection, "intersection");
-    __name6(intersection, "intersection");
-    SetWithKey = class {
-      static {
-        __name(this, "SetWithKey");
-      }
-      static {
-        __name6(this, "SetWithKey");
-      }
-      static {
-        _a = Symbol.toStringTag;
-      }
-      constructor(values, toKey) {
-        this.toKey = toKey;
-        this._map = /* @__PURE__ */ new Map();
-        this[_a] = "SetWithKey";
-        for (const value of values) {
-          this.add(value);
-        }
-      }
-      get size() {
-        return this._map.size;
-      }
-      add(value) {
-        const key = this.toKey(value);
-        this._map.set(key, value);
-        return this;
-      }
-      delete(value) {
-        return this._map.delete(this.toKey(value));
-      }
-      has(value) {
-        return this._map.has(this.toKey(value));
-      }
-      *entries() {
-        for (const entry of this._map.values()) {
-          yield [entry, entry];
-        }
-      }
-      keys() {
-        return this.values();
-      }
-      *values() {
-        for (const entry of this._map.values()) {
-          yield entry;
-        }
-      }
-      clear() {
-        this._map.clear();
-      }
-      forEach(callbackfn, thisArg) {
-        this._map.forEach((entry) => callbackfn.call(thisArg, entry, entry, this));
-      }
-      [Symbol.iterator]() {
-        return this.values();
-      }
-    };
+    __name6(sumBy, "sumBy");
   }
 });
 
@@ -2291,39 +2261,6 @@ var init_map = __esm({
   }
 });
 
-// ../Output/Target/Microsoft/VSCode/vs/base/common/functional.js
-function createSingleCallFunction(fn, fnDidRunCallback) {
-  const _this = this;
-  let didCall = false;
-  let result;
-  return function() {
-    if (didCall) {
-      return result;
-    }
-    didCall = true;
-    if (fnDidRunCallback) {
-      try {
-        result = fn.apply(_this, arguments);
-      } finally {
-        fnDidRunCallback();
-      }
-    } else {
-      result = fn.apply(_this, arguments);
-    }
-    return result;
-  };
-}
-var __defProp8, __name8;
-var init_functional = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/functional.js"() {
-    "use strict";
-    __defProp8 = Object.defineProperty;
-    __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
-    __name(createSingleCallFunction, "createSingleCallFunction");
-    __name8(createSingleCallFunction, "createSingleCallFunction");
-  }
-});
-
 // ../Output/Target/Microsoft/VSCode/vs/base/common/assert.js
 function ok(value, message) {
   if (!value) {
@@ -2365,27 +2302,27 @@ function checkAdjacentItems(items, predicate) {
   }
   return true;
 }
-var __defProp9, __name9;
+var __defProp8, __name8;
 var init_assert = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/assert.js"() {
     "use strict";
     init_errors();
-    __defProp9 = Object.defineProperty;
-    __name9 = /* @__PURE__ */ __name((target, value) => __defProp9(target, "name", { value, configurable: true }), "__name");
+    __defProp8 = Object.defineProperty;
+    __name8 = /* @__PURE__ */ __name((target, value) => __defProp8(target, "name", { value, configurable: true }), "__name");
     __name(ok, "ok");
-    __name9(ok, "ok");
+    __name8(ok, "ok");
     __name(assertNever, "assertNever");
-    __name9(assertNever, "assertNever");
+    __name8(assertNever, "assertNever");
     __name(softAssertNever, "softAssertNever");
-    __name9(softAssertNever, "softAssertNever");
+    __name8(softAssertNever, "softAssertNever");
     __name(assert, "assert");
-    __name9(assert, "assert");
+    __name8(assert, "assert");
     __name(softAssert, "softAssert");
-    __name9(softAssert, "softAssert");
+    __name8(softAssert, "softAssert");
     __name(assertFn, "assertFn");
-    __name9(assertFn, "assertFn");
+    __name8(assertFn, "assertFn");
     __name(checkAdjacentItems, "checkAdjacentItems");
-    __name9(checkAdjacentItems, "checkAdjacentItems");
+    __name8(checkAdjacentItems, "checkAdjacentItems");
   }
 });
 
@@ -2510,95 +2447,95 @@ function hasKey(x, key) {
   }
   return true;
 }
-var __defProp10, __name10, isOneOf, hasOwnProperty;
+var __defProp9, __name9, isOneOf, hasOwnProperty;
 var init_types = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/types.js"() {
     "use strict";
     init_assert();
-    __defProp10 = Object.defineProperty;
-    __name10 = /* @__PURE__ */ __name((target, value) => __defProp10(target, "name", { value, configurable: true }), "__name");
+    __defProp9 = Object.defineProperty;
+    __name9 = /* @__PURE__ */ __name((target, value) => __defProp9(target, "name", { value, configurable: true }), "__name");
     __name(isString, "isString");
-    __name10(isString, "isString");
+    __name9(isString, "isString");
     __name(isStringArray, "isStringArray");
-    __name10(isStringArray, "isStringArray");
+    __name9(isStringArray, "isStringArray");
     __name(isArrayOf, "isArrayOf");
-    __name10(isArrayOf, "isArrayOf");
+    __name9(isArrayOf, "isArrayOf");
     __name(isObject, "isObject");
-    __name10(isObject, "isObject");
+    __name9(isObject, "isObject");
     __name(isTypedArray, "isTypedArray");
-    __name10(isTypedArray, "isTypedArray");
+    __name9(isTypedArray, "isTypedArray");
     __name(isNumber, "isNumber");
-    __name10(isNumber, "isNumber");
+    __name9(isNumber, "isNumber");
     __name(isIterable, "isIterable");
-    __name10(isIterable, "isIterable");
+    __name9(isIterable, "isIterable");
     __name(isAsyncIterable, "isAsyncIterable");
-    __name10(isAsyncIterable, "isAsyncIterable");
+    __name9(isAsyncIterable, "isAsyncIterable");
     __name(isBoolean, "isBoolean");
-    __name10(isBoolean, "isBoolean");
+    __name9(isBoolean, "isBoolean");
     __name(isUndefined, "isUndefined");
-    __name10(isUndefined, "isUndefined");
+    __name9(isUndefined, "isUndefined");
     __name(isDefined, "isDefined");
-    __name10(isDefined, "isDefined");
+    __name9(isDefined, "isDefined");
     __name(isUndefinedOrNull, "isUndefinedOrNull");
-    __name10(isUndefinedOrNull, "isUndefinedOrNull");
+    __name9(isUndefinedOrNull, "isUndefinedOrNull");
     __name(assertType, "assertType");
-    __name10(assertType, "assertType");
+    __name9(assertType, "assertType");
     __name(assertReturnsDefined, "assertReturnsDefined");
-    __name10(assertReturnsDefined, "assertReturnsDefined");
+    __name9(assertReturnsDefined, "assertReturnsDefined");
     __name(assertDefined, "assertDefined");
-    __name10(assertDefined, "assertDefined");
+    __name9(assertDefined, "assertDefined");
     __name(assertReturnsAllDefined, "assertReturnsAllDefined");
-    __name10(assertReturnsAllDefined, "assertReturnsAllDefined");
-    isOneOf = /* @__PURE__ */ __name10((value, validValues) => {
+    __name9(assertReturnsAllDefined, "assertReturnsAllDefined");
+    isOneOf = /* @__PURE__ */ __name9((value, validValues) => {
       return validValues.includes(value);
     }, "isOneOf");
     __name(typeCheck, "typeCheck");
-    __name10(typeCheck, "typeCheck");
+    __name9(typeCheck, "typeCheck");
     hasOwnProperty = Object.prototype.hasOwnProperty;
     __name(isEmptyObject, "isEmptyObject");
-    __name10(isEmptyObject, "isEmptyObject");
+    __name9(isEmptyObject, "isEmptyObject");
     __name(isFunction, "isFunction");
-    __name10(isFunction, "isFunction");
+    __name9(isFunction, "isFunction");
     __name(areFunctions, "areFunctions");
-    __name10(areFunctions, "areFunctions");
+    __name9(areFunctions, "areFunctions");
     __name(validateConstraints, "validateConstraints");
-    __name10(validateConstraints, "validateConstraints");
+    __name9(validateConstraints, "validateConstraints");
     __name(validateConstraint, "validateConstraint");
-    __name10(validateConstraint, "validateConstraint");
+    __name9(validateConstraint, "validateConstraint");
     __name(upcast, "upcast");
-    __name10(upcast, "upcast");
+    __name9(upcast, "upcast");
     __name(hasKey, "hasKey");
-    __name10(hasKey, "hasKey");
+    __name9(hasKey, "hasKey");
   }
 });
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js
-var __defProp11, __name11, Iterable;
+var __defProp10, __name10, Iterable;
 var init_iterator = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/iterator.js"() {
     "use strict";
     init_types();
-    __defProp11 = Object.defineProperty;
-    __name11 = /* @__PURE__ */ __name((target, value) => __defProp11(target, "name", { value, configurable: true }), "__name");
+    __defProp10 = Object.defineProperty;
+    __name10 = /* @__PURE__ */ __name((target, value) => __defProp10(target, "name", { value, configurable: true }), "__name");
     (function(Iterable2) {
       function is(thing) {
         return !!thing && typeof thing === "object" && typeof thing[Symbol.iterator] === "function";
       }
       __name(is, "is");
-      __name11(is, "is");
+      __name10(is, "is");
       Iterable2.is = is;
       const _empty2 = Object.freeze([]);
       function empty() {
         return _empty2;
       }
       __name(empty, "empty");
-      __name11(empty, "empty");
+      __name10(empty, "empty");
       Iterable2.empty = empty;
       function* single(element) {
         yield element;
       }
       __name(single, "single");
-      __name11(single, "single");
+      __name10(single, "single");
       Iterable2.single = single;
       function wrap(iterableOrElement) {
         if (is(iterableOrElement)) {
@@ -2608,13 +2545,13 @@ var init_iterator = __esm({
         }
       }
       __name(wrap, "wrap");
-      __name11(wrap, "wrap");
+      __name10(wrap, "wrap");
       Iterable2.wrap = wrap;
       function from(iterable) {
         return iterable ?? _empty2;
       }
       __name(from, "from");
-      __name11(from, "from");
+      __name10(from, "from");
       Iterable2.from = from;
       function* reverse(array) {
         for (let i = array.length - 1; i >= 0; i--) {
@@ -2622,19 +2559,19 @@ var init_iterator = __esm({
         }
       }
       __name(reverse, "reverse");
-      __name11(reverse, "reverse");
+      __name10(reverse, "reverse");
       Iterable2.reverse = reverse;
       function isEmpty(iterable) {
         return !iterable || iterable[Symbol.iterator]().next().done === true;
       }
       __name(isEmpty, "isEmpty");
-      __name11(isEmpty, "isEmpty");
+      __name10(isEmpty, "isEmpty");
       Iterable2.isEmpty = isEmpty;
       function first(iterable) {
         return iterable[Symbol.iterator]().next().value;
       }
       __name(first, "first");
-      __name11(first, "first");
+      __name10(first, "first");
       Iterable2.first = first;
       function some(iterable, predicate) {
         let i = 0;
@@ -2646,7 +2583,7 @@ var init_iterator = __esm({
         return false;
       }
       __name(some, "some");
-      __name11(some, "some");
+      __name10(some, "some");
       Iterable2.some = some;
       function every(iterable, predicate) {
         let i = 0;
@@ -2658,7 +2595,7 @@ var init_iterator = __esm({
         return true;
       }
       __name(every, "every");
-      __name11(every, "every");
+      __name10(every, "every");
       Iterable2.every = every;
       function find(iterable, predicate) {
         for (const element of iterable) {
@@ -2669,7 +2606,7 @@ var init_iterator = __esm({
         return void 0;
       }
       __name(find, "find");
-      __name11(find, "find");
+      __name10(find, "find");
       Iterable2.find = find;
       function* filter(iterable, predicate) {
         for (const element of iterable) {
@@ -2679,7 +2616,7 @@ var init_iterator = __esm({
         }
       }
       __name(filter, "filter");
-      __name11(filter, "filter");
+      __name10(filter, "filter");
       Iterable2.filter = filter;
       function* map(iterable, fn) {
         let index2 = 0;
@@ -2688,7 +2625,7 @@ var init_iterator = __esm({
         }
       }
       __name(map, "map");
-      __name11(map, "map");
+      __name10(map, "map");
       Iterable2.map = map;
       function* flatMap(iterable, fn) {
         let index2 = 0;
@@ -2697,7 +2634,7 @@ var init_iterator = __esm({
         }
       }
       __name(flatMap, "flatMap");
-      __name11(flatMap, "flatMap");
+      __name10(flatMap, "flatMap");
       Iterable2.flatMap = flatMap;
       function* concat(...iterables) {
         for (const item of iterables) {
@@ -2709,7 +2646,7 @@ var init_iterator = __esm({
         }
       }
       __name(concat, "concat");
-      __name11(concat, "concat");
+      __name10(concat, "concat");
       Iterable2.concat = concat;
       function reduce(iterable, reducer, initialValue) {
         let value = initialValue;
@@ -2719,7 +2656,7 @@ var init_iterator = __esm({
         return value;
       }
       __name(reduce, "reduce");
-      __name11(reduce, "reduce");
+      __name10(reduce, "reduce");
       Iterable2.reduce = reduce;
       function length(iterable) {
         let count2 = 0;
@@ -2729,7 +2666,7 @@ var init_iterator = __esm({
         return count2;
       }
       __name(length, "length");
-      __name11(length, "length");
+      __name10(length, "length");
       Iterable2.length = length;
       function* slice(arr, from2, to = arr.length) {
         if (from2 < -arr.length) {
@@ -2748,7 +2685,7 @@ var init_iterator = __esm({
         }
       }
       __name(slice, "slice");
-      __name11(slice, "slice");
+      __name10(slice, "slice");
       Iterable2.slice = slice;
       function consume(iterable, atMost = Number.POSITIVE_INFINITY) {
         const consumed = [];
@@ -2768,7 +2705,7 @@ var init_iterator = __esm({
         } }];
       }
       __name(consume, "consume");
-      __name11(consume, "consume");
+      __name10(consume, "consume");
       Iterable2.consume = consume;
       async function asyncToArray(iterable) {
         const result = [];
@@ -2778,7 +2715,7 @@ var init_iterator = __esm({
         return result;
       }
       __name(asyncToArray, "asyncToArray");
-      __name11(asyncToArray, "asyncToArray");
+      __name10(asyncToArray, "asyncToArray");
       Iterable2.asyncToArray = asyncToArray;
       async function asyncToArrayFlat(iterable) {
         let result = [];
@@ -2788,7 +2725,7 @@ var init_iterator = __esm({
         return result;
       }
       __name(asyncToArrayFlat, "asyncToArrayFlat");
-      __name11(asyncToArrayFlat, "asyncToArrayFlat");
+      __name10(asyncToArrayFlat, "asyncToArrayFlat");
       Iterable2.asyncToArrayFlat = asyncToArrayFlat;
     })(Iterable || (Iterable = {}));
   }
@@ -2892,7 +2829,7 @@ function thenRegisterOrDispose(promise, store) {
     return disposable;
   });
 }
-var __defProp12, __name12, TRACK_DISPOSABLES, disposableTracker, GCBasedDisposableTracker, DisposableTracker, FunctionDisposable, DisposableStore, Disposable, MutableDisposable, MandatoryMutableDisposable, RefCountedDisposable, ReferenceCollection, AsyncReferenceCollection, ImmortalReference, DisposableMap, DisposableSet, DisposableResourceMap;
+var __defProp11, __name11, TRACK_DISPOSABLES, disposableTracker, GCBasedDisposableTracker, DisposableTracker, FunctionDisposable, DisposableStore, Disposable, MutableDisposable, MandatoryMutableDisposable, RefCountedDisposable, ReferenceCollection, AsyncReferenceCollection, ImmortalReference, DisposableMap, DisposableSet, DisposableResourceMap;
 var init_lifecycle = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/lifecycle.js"() {
     "use strict";
@@ -2902,8 +2839,8 @@ var init_lifecycle = __esm({
     init_functional();
     init_iterator();
     init_errors();
-    __defProp12 = Object.defineProperty;
-    __name12 = /* @__PURE__ */ __name((target, value) => __defProp12(target, "name", { value, configurable: true }), "__name");
+    __defProp11 = Object.defineProperty;
+    __name11 = /* @__PURE__ */ __name((target, value) => __defProp11(target, "name", { value, configurable: true }), "__name");
     TRACK_DISPOSABLES = false;
     disposableTracker = null;
     GCBasedDisposableTracker = class {
@@ -2911,7 +2848,7 @@ var init_lifecycle = __esm({
         __name(this, "GCBasedDisposableTracker");
       }
       static {
-        __name12(this, "GCBasedDisposableTracker");
+        __name11(this, "GCBasedDisposableTracker");
       }
       constructor() {
         this._registry = new FinalizationRegistry((heldValue) => {
@@ -2941,7 +2878,7 @@ var init_lifecycle = __esm({
         __name(this, "DisposableTracker");
       }
       static {
-        __name12(this, "DisposableTracker");
+        __name11(this, "DisposableTracker");
       }
       constructor() {
         this.livingDisposables = /* @__PURE__ */ new Map();
@@ -3015,13 +2952,13 @@ var init_lifecycle = __esm({
             }
           }
           __name(removePrefix, "removePrefix");
-          __name12(removePrefix, "removePrefix");
+          __name11(removePrefix, "removePrefix");
           const lines = leaking.source.split("\n").map((p) => p.trim().replace("at ", "")).filter((l) => l !== "");
           removePrefix(lines, ["Error", /^trackDisposable \(.*\)$/, /^DisposableTracker.trackDisposable \(.*\)$/]);
           return lines.reverse();
         }
         __name(getStackTracePath, "getStackTracePath");
-        __name12(getStackTracePath, "getStackTracePath");
+        __name11(getStackTracePath, "getStackTracePath");
         const stackTraceStarts = new SetMap();
         for (const leaking of uncoveredLeakingObjs) {
           const stackTracePath = getStackTracePath(leaking);
@@ -3041,7 +2978,7 @@ var init_lifecycle = __esm({
             const starts = stackTraceStarts.get(stackTracePath.slice(0, i2 + 1).join("\n"));
             line = `(shared with ${starts.size}/${uncoveredLeakingObjs.length} leaks) at ${line}`;
             const prevStarts = stackTraceStarts.get(stackTracePath.slice(0, i2).join("\n"));
-            const continuations = groupBy2([...prevStarts].map((d) => getStackTracePath(d)[i2]), (v) => v);
+            const continuations = groupBy([...prevStarts].map((d) => getStackTracePath(d)[i2]), (v) => v);
             delete continuations[stackTracePath[i2]];
             for (const [cont, set] of Object.entries(continuations)) {
               if (set) {
@@ -3071,7 +3008,7 @@ ${stackTraceFormattedLines.join("\n")}
       }
     };
     __name(setDisposableTracker, "setDisposableTracker");
-    __name12(setDisposableTracker, "setDisposableTracker");
+    __name11(setDisposableTracker, "setDisposableTracker");
     if (TRACK_DISPOSABLES) {
       const __is_disposable_tracked__ = "__is_disposable_tracked__";
       setDisposableTracker(new class {
@@ -3104,29 +3041,29 @@ ${stackTraceFormattedLines.join("\n")}
       }());
     }
     __name(trackDisposable, "trackDisposable");
-    __name12(trackDisposable, "trackDisposable");
+    __name11(trackDisposable, "trackDisposable");
     __name(markAsDisposed, "markAsDisposed");
-    __name12(markAsDisposed, "markAsDisposed");
+    __name11(markAsDisposed, "markAsDisposed");
     __name(setParentOfDisposable, "setParentOfDisposable");
-    __name12(setParentOfDisposable, "setParentOfDisposable");
+    __name11(setParentOfDisposable, "setParentOfDisposable");
     __name(setParentOfDisposables, "setParentOfDisposables");
-    __name12(setParentOfDisposables, "setParentOfDisposables");
+    __name11(setParentOfDisposables, "setParentOfDisposables");
     __name(markAsSingleton, "markAsSingleton");
-    __name12(markAsSingleton, "markAsSingleton");
+    __name11(markAsSingleton, "markAsSingleton");
     __name(isDisposable, "isDisposable");
-    __name12(isDisposable, "isDisposable");
+    __name11(isDisposable, "isDisposable");
     __name(dispose, "dispose");
-    __name12(dispose, "dispose");
+    __name11(dispose, "dispose");
     __name(disposeIfDisposable, "disposeIfDisposable");
-    __name12(disposeIfDisposable, "disposeIfDisposable");
+    __name11(disposeIfDisposable, "disposeIfDisposable");
     __name(combinedDisposable, "combinedDisposable");
-    __name12(combinedDisposable, "combinedDisposable");
+    __name11(combinedDisposable, "combinedDisposable");
     FunctionDisposable = class {
       static {
         __name(this, "FunctionDisposable");
       }
       static {
-        __name12(this, "FunctionDisposable");
+        __name11(this, "FunctionDisposable");
       }
       constructor(fn) {
         this._isDisposed = false;
@@ -3146,13 +3083,13 @@ ${stackTraceFormattedLines.join("\n")}
       }
     };
     __name(toDisposable, "toDisposable");
-    __name12(toDisposable, "toDisposable");
+    __name11(toDisposable, "toDisposable");
     DisposableStore = class _DisposableStore {
       static {
         __name(this, "DisposableStore");
       }
       static {
-        __name12(this, "DisposableStore");
+        __name11(this, "DisposableStore");
       }
       static {
         this.DISABLE_DISPOSED_WARNING = false;
@@ -3250,7 +3187,7 @@ ${stackTraceFormattedLines.join("\n")}
         __name(this, "Disposable");
       }
       static {
-        __name12(this, "Disposable");
+        __name11(this, "Disposable");
       }
       static {
         this.None = Object.freeze({ dispose() {
@@ -3280,7 +3217,7 @@ ${stackTraceFormattedLines.join("\n")}
         __name(this, "MutableDisposable");
       }
       static {
-        __name12(this, "MutableDisposable");
+        __name11(this, "MutableDisposable");
       }
       constructor() {
         this._isDisposed = false;
@@ -3344,7 +3281,7 @@ ${stackTraceFormattedLines.join("\n")}
         __name(this, "MandatoryMutableDisposable");
       }
       static {
-        __name12(this, "MandatoryMutableDisposable");
+        __name11(this, "MandatoryMutableDisposable");
       }
       constructor(initialValue) {
         this._disposable = new MutableDisposable();
@@ -3370,7 +3307,7 @@ ${stackTraceFormattedLines.join("\n")}
         __name(this, "RefCountedDisposable");
       }
       static {
-        __name12(this, "RefCountedDisposable");
+        __name11(this, "RefCountedDisposable");
       }
       constructor(_disposable) {
         this._disposable = _disposable;
@@ -3392,7 +3329,7 @@ ${stackTraceFormattedLines.join("\n")}
         __name(this, "ReferenceCollection");
       }
       static {
-        __name12(this, "ReferenceCollection");
+        __name11(this, "ReferenceCollection");
       }
       constructor() {
         this.references = /* @__PURE__ */ new Map();
@@ -3419,7 +3356,7 @@ ${stackTraceFormattedLines.join("\n")}
         __name(this, "AsyncReferenceCollection");
       }
       static {
-        __name12(this, "AsyncReferenceCollection");
+        __name11(this, "AsyncReferenceCollection");
       }
       constructor(referenceCollection) {
         this.referenceCollection = referenceCollection;
@@ -3430,7 +3367,7 @@ ${stackTraceFormattedLines.join("\n")}
           const object = await ref.object;
           return {
             object,
-            dispose: /* @__PURE__ */ __name12(() => ref.dispose(), "dispose")
+            dispose: /* @__PURE__ */ __name11(() => ref.dispose(), "dispose")
           };
         } catch (error) {
           ref.dispose();
@@ -3443,7 +3380,7 @@ ${stackTraceFormattedLines.join("\n")}
         __name(this, "ImmortalReference");
       }
       static {
-        __name12(this, "ImmortalReference");
+        __name11(this, "ImmortalReference");
       }
       constructor(object) {
         this.object = object;
@@ -3452,13 +3389,13 @@ ${stackTraceFormattedLines.join("\n")}
       }
     };
     __name(disposeOnReturn, "disposeOnReturn");
-    __name12(disposeOnReturn, "disposeOnReturn");
+    __name11(disposeOnReturn, "disposeOnReturn");
     DisposableMap = class {
       static {
         __name(this, "DisposableMap");
       }
       static {
-        __name12(this, "DisposableMap");
+        __name11(this, "DisposableMap");
       }
       constructor(store = /* @__PURE__ */ new Map()) {
         this._isDisposed = false;
@@ -3541,7 +3478,7 @@ ${stackTraceFormattedLines.join("\n")}
         __name(this, "DisposableSet");
       }
       static {
-        __name12(this, "DisposableSet");
+        __name11(this, "DisposableSet");
       }
       constructor(store = /* @__PURE__ */ new Set()) {
         this._isDisposed = false;
@@ -3611,18 +3548,1969 @@ ${stackTraceFormattedLines.join("\n")}
       }
     };
     __name(thenIfNotDisposed, "thenIfNotDisposed");
-    __name12(thenIfNotDisposed, "thenIfNotDisposed");
+    __name11(thenIfNotDisposed, "thenIfNotDisposed");
     __name(thenRegisterOrDispose, "thenRegisterOrDispose");
-    __name12(thenRegisterOrDispose, "thenRegisterOrDispose");
+    __name11(thenRegisterOrDispose, "thenRegisterOrDispose");
     DisposableResourceMap = class extends DisposableMap {
       static {
         __name(this, "DisposableResourceMap");
       }
       static {
-        __name12(this, "DisposableResourceMap");
+        __name11(this, "DisposableResourceMap");
       }
       constructor() {
         super(new ResourceMap());
+      }
+    };
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/linkedList.js
+var __defProp12, __name12, Node, LinkedList;
+var init_linkedList = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/linkedList.js"() {
+    "use strict";
+    __defProp12 = Object.defineProperty;
+    __name12 = /* @__PURE__ */ __name((target, value) => __defProp12(target, "name", { value, configurable: true }), "__name");
+    Node = class _Node {
+      static {
+        __name(this, "Node");
+      }
+      static {
+        __name12(this, "Node");
+      }
+      static {
+        this.Undefined = new _Node(void 0);
+      }
+      constructor(element) {
+        this.element = element;
+        this.next = _Node.Undefined;
+        this.prev = _Node.Undefined;
+      }
+    };
+    LinkedList = class {
+      static {
+        __name(this, "LinkedList");
+      }
+      static {
+        __name12(this, "LinkedList");
+      }
+      constructor() {
+        this._first = Node.Undefined;
+        this._last = Node.Undefined;
+        this._size = 0;
+      }
+      get size() {
+        return this._size;
+      }
+      isEmpty() {
+        return this._first === Node.Undefined;
+      }
+      clear() {
+        let node = this._first;
+        while (node !== Node.Undefined) {
+          const next = node.next;
+          node.prev = Node.Undefined;
+          node.next = Node.Undefined;
+          node = next;
+        }
+        this._first = Node.Undefined;
+        this._last = Node.Undefined;
+        this._size = 0;
+      }
+      unshift(element) {
+        return this._insert(element, false);
+      }
+      push(element) {
+        return this._insert(element, true);
+      }
+      _insert(element, atTheEnd) {
+        const newNode = new Node(element);
+        if (this._first === Node.Undefined) {
+          this._first = newNode;
+          this._last = newNode;
+        } else if (atTheEnd) {
+          const oldLast = this._last;
+          this._last = newNode;
+          newNode.prev = oldLast;
+          oldLast.next = newNode;
+        } else {
+          const oldFirst = this._first;
+          this._first = newNode;
+          newNode.next = oldFirst;
+          oldFirst.prev = newNode;
+        }
+        this._size += 1;
+        let didRemove = false;
+        return () => {
+          if (!didRemove) {
+            didRemove = true;
+            this._remove(newNode);
+          }
+        };
+      }
+      shift() {
+        if (this._first === Node.Undefined) {
+          return void 0;
+        } else {
+          const res = this._first.element;
+          this._remove(this._first);
+          return res;
+        }
+      }
+      pop() {
+        if (this._last === Node.Undefined) {
+          return void 0;
+        } else {
+          const res = this._last.element;
+          this._remove(this._last);
+          return res;
+        }
+      }
+      peek() {
+        if (this._last === Node.Undefined) {
+          return void 0;
+        } else {
+          const res = this._last.element;
+          return res;
+        }
+      }
+      _remove(node) {
+        if (node.prev !== Node.Undefined && node.next !== Node.Undefined) {
+          const anchor = node.prev;
+          anchor.next = node.next;
+          node.next.prev = anchor;
+        } else if (node.prev === Node.Undefined && node.next === Node.Undefined) {
+          this._first = Node.Undefined;
+          this._last = Node.Undefined;
+        } else if (node.next === Node.Undefined) {
+          this._last = this._last.prev;
+          this._last.next = Node.Undefined;
+        } else if (node.prev === Node.Undefined) {
+          this._first = this._first.next;
+          this._first.prev = Node.Undefined;
+        }
+        this._size -= 1;
+      }
+      *[Symbol.iterator]() {
+        let node = this._first;
+        while (node !== Node.Undefined) {
+          yield node.element;
+          node = node.next;
+        }
+      }
+    };
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/nls.js
+function getNLSMessages() {
+  return globalThis._VSCODE_NLS_MESSAGES;
+}
+function getNLSLanguage() {
+  return globalThis._VSCODE_NLS_LANGUAGE;
+}
+function _format(message, args) {
+  let result;
+  if (args.length === 0) {
+    result = message;
+  } else {
+    result = message.replace(/\{(\d+)\}/g, (match, rest) => {
+      const index2 = rest[0];
+      const arg = args[index2];
+      let result2 = match;
+      if (typeof arg === "string") {
+        result2 = arg;
+      } else if (typeof arg === "number" || typeof arg === "boolean" || arg === void 0 || arg === null) {
+        result2 = String(arg);
+      }
+      return result2;
+    });
+  }
+  if (isPseudo) {
+    result = "\uFF3B" + result.replace(/[aouei]/g, "$&$&") + "\uFF3D";
+  }
+  return result;
+}
+function localize(data, message, ...args) {
+  if (typeof data === "number") {
+    return _format(lookupMessage(data, message), args);
+  }
+  return _format(message, args);
+}
+function lookupMessage(index2, fallback) {
+  const message = getNLSMessages()?.[index2];
+  if (typeof message !== "string") {
+    if (typeof fallback === "string") {
+      return fallback;
+    }
+    throw new Error(`!!! NLS MISSING: ${index2} !!!`);
+  }
+  return message;
+}
+function localize2(data, originalMessage, ...args) {
+  let message;
+  if (typeof data === "number") {
+    message = lookupMessage(data, originalMessage);
+  } else {
+    message = originalMessage;
+  }
+  const value = _format(message, args);
+  return {
+    value,
+    original: originalMessage === message ? value : _format(originalMessage, args)
+  };
+}
+var __defProp13, __name13, isPseudo;
+var init_nls = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/nls.js"() {
+    "use strict";
+    __defProp13 = Object.defineProperty;
+    __name13 = /* @__PURE__ */ __name((target, value) => __defProp13(target, "name", { value, configurable: true }), "__name");
+    __name(getNLSMessages, "getNLSMessages");
+    __name13(getNLSMessages, "getNLSMessages");
+    __name(getNLSLanguage, "getNLSLanguage");
+    __name13(getNLSLanguage, "getNLSLanguage");
+    isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
+    __name(_format, "_format");
+    __name13(_format, "_format");
+    __name(localize, "localize");
+    __name13(localize, "localize");
+    __name(lookupMessage, "lookupMessage");
+    __name13(lookupMessage, "lookupMessage");
+    __name(localize2, "localize2");
+    __name13(localize2, "localize2");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/platform.js
+function PlatformToString(platform22) {
+  switch (platform22) {
+    case 0:
+      return "Web";
+    case 1:
+      return "Mac";
+    case 2:
+      return "Linux";
+    case 3:
+      return "Windows";
+  }
+}
+function isLittleEndian() {
+  if (!_isLittleEndianComputed) {
+    _isLittleEndianComputed = true;
+    const test = new Uint8Array(2);
+    test[0] = 1;
+    test[1] = 2;
+    const view = new Uint16Array(test.buffer);
+    _isLittleEndian = view[0] === (2 << 8) + 1;
+  }
+  return _isLittleEndian;
+}
+function isTahoeOrNewer(osVersion) {
+  return parseFloat(osVersion) >= 25;
+}
+var __defProp14, __name14, LANGUAGE_DEFAULT, _isWindows, _isMacintosh, _isLinux, _isLinuxSnap, _isNative, _isWeb, _isElectron, _isIOS, _isCI, _isMobile, _locale, _language, _platformLocale, _translationsConfigFile, _userAgent, $globalThis, nodeProcess, isElectronProcess, isElectronRenderer, Platform, _platform, isWindows, isMacintosh, isLinux, isLinuxSnap, isNative, isElectron, isWeb, isWebWorker, webWorkerOrigin, isIOS, isMobile, isCI, platform, userAgent, language, Language, locale, platformLocale, translationsConfigFile, setTimeout0IsFaster, setTimeout0, OperatingSystem, OS, _isLittleEndian, _isLittleEndianComputed, isChrome, isFirefox, isSafari, isEdge, isAndroid;
+var init_platform = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/platform.js"() {
+    "use strict";
+    init_nls();
+    __defProp14 = Object.defineProperty;
+    __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
+    LANGUAGE_DEFAULT = "en";
+    _isWindows = false;
+    _isMacintosh = false;
+    _isLinux = false;
+    _isLinuxSnap = false;
+    _isNative = false;
+    _isWeb = false;
+    _isElectron = false;
+    _isIOS = false;
+    _isCI = false;
+    _isMobile = false;
+    _locale = void 0;
+    _language = LANGUAGE_DEFAULT;
+    _platformLocale = LANGUAGE_DEFAULT;
+    _translationsConfigFile = void 0;
+    _userAgent = void 0;
+    $globalThis = globalThis;
+    nodeProcess = void 0;
+    if (typeof $globalThis.vscode !== "undefined" && typeof $globalThis.vscode.process !== "undefined") {
+      nodeProcess = $globalThis.vscode.process;
+    } else if (typeof process !== "undefined" && typeof process?.versions?.node === "string") {
+      nodeProcess = process;
+    }
+    isElectronProcess = typeof nodeProcess?.versions?.electron === "string";
+    isElectronRenderer = isElectronProcess && nodeProcess?.type === "renderer";
+    if (typeof nodeProcess === "object") {
+      _isWindows = nodeProcess.platform === "win32";
+      _isMacintosh = nodeProcess.platform === "darwin";
+      _isLinux = nodeProcess.platform === "linux";
+      _isLinuxSnap = _isLinux && !!nodeProcess.env["SNAP"] && !!nodeProcess.env["SNAP_REVISION"];
+      _isElectron = isElectronProcess;
+      _isCI = !!nodeProcess.env["CI"] || !!nodeProcess.env["BUILD_ARTIFACTSTAGINGDIRECTORY"] || !!nodeProcess.env["GITHUB_WORKSPACE"];
+      _locale = LANGUAGE_DEFAULT;
+      _language = LANGUAGE_DEFAULT;
+      const rawNlsConfig = nodeProcess.env["VSCODE_NLS_CONFIG"];
+      if (rawNlsConfig) {
+        try {
+          const nlsConfig = JSON.parse(rawNlsConfig);
+          _locale = nlsConfig.userLocale;
+          _platformLocale = nlsConfig.osLocale;
+          _language = nlsConfig.resolvedLanguage || LANGUAGE_DEFAULT;
+          _translationsConfigFile = nlsConfig.languagePack?.translationsConfigFile;
+        } catch (e) {
+        }
+      }
+      _isNative = true;
+    } else if (typeof navigator === "object" && !isElectronRenderer) {
+      _userAgent = navigator.userAgent;
+      _isWindows = _userAgent.indexOf("Windows") >= 0;
+      _isMacintosh = _userAgent.indexOf("Macintosh") >= 0;
+      _isIOS = (_userAgent.indexOf("Macintosh") >= 0 || _userAgent.indexOf("iPad") >= 0 || _userAgent.indexOf("iPhone") >= 0) && !!navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
+      _isLinux = _userAgent.indexOf("Linux") >= 0;
+      _isMobile = _userAgent?.indexOf("Mobi") >= 0;
+      _isWeb = true;
+      _language = getNLSLanguage() || LANGUAGE_DEFAULT;
+      _locale = navigator.language.toLowerCase();
+      _platformLocale = _locale;
+    } else {
+      console.error("Unable to resolve platform.");
+    }
+    (function(Platform2) {
+      Platform2[Platform2["Web"] = 0] = "Web";
+      Platform2[Platform2["Mac"] = 1] = "Mac";
+      Platform2[Platform2["Linux"] = 2] = "Linux";
+      Platform2[Platform2["Windows"] = 3] = "Windows";
+    })(Platform || (Platform = {}));
+    __name(PlatformToString, "PlatformToString");
+    __name14(PlatformToString, "PlatformToString");
+    _platform = 0;
+    if (_isMacintosh) {
+      _platform = 1;
+    } else if (_isWindows) {
+      _platform = 3;
+    } else if (_isLinux) {
+      _platform = 2;
+    }
+    isWindows = _isWindows;
+    isMacintosh = _isMacintosh;
+    isLinux = _isLinux;
+    isLinuxSnap = _isLinuxSnap;
+    isNative = _isNative;
+    isElectron = _isElectron;
+    isWeb = _isWeb;
+    isWebWorker = _isWeb && typeof $globalThis.importScripts === "function";
+    webWorkerOrigin = isWebWorker ? $globalThis.origin : void 0;
+    isIOS = _isIOS;
+    isMobile = _isMobile;
+    isCI = _isCI;
+    platform = _platform;
+    userAgent = _userAgent;
+    language = _language;
+    (function(Language2) {
+      function value() {
+        return language;
+      }
+      __name(value, "value");
+      __name14(value, "value");
+      Language2.value = value;
+      function isDefaultVariant() {
+        if (language.length === 2) {
+          return language === "en";
+        } else if (language.length >= 3) {
+          return language[0] === "e" && language[1] === "n" && language[2] === "-";
+        } else {
+          return false;
+        }
+      }
+      __name(isDefaultVariant, "isDefaultVariant");
+      __name14(isDefaultVariant, "isDefaultVariant");
+      Language2.isDefaultVariant = isDefaultVariant;
+      function isDefault() {
+        return language === "en";
+      }
+      __name(isDefault, "isDefault");
+      __name14(isDefault, "isDefault");
+      Language2.isDefault = isDefault;
+    })(Language || (Language = {}));
+    locale = _locale;
+    platformLocale = _platformLocale;
+    translationsConfigFile = _translationsConfigFile;
+    setTimeout0IsFaster = typeof $globalThis.postMessage === "function" && !$globalThis.importScripts;
+    setTimeout0 = (() => {
+      if (setTimeout0IsFaster) {
+        const pending = [];
+        $globalThis.addEventListener("message", (e) => {
+          if (e.data && e.data.vscodeScheduleAsyncWork) {
+            for (let i = 0, len = pending.length; i < len; i++) {
+              const candidate = pending[i];
+              if (candidate.id === e.data.vscodeScheduleAsyncWork) {
+                pending.splice(i, 1);
+                candidate.callback();
+                return;
+              }
+            }
+          }
+        });
+        let lastId = 0;
+        return (callback) => {
+          const myId = ++lastId;
+          pending.push({
+            id: myId,
+            callback
+          });
+          $globalThis.postMessage({ vscodeScheduleAsyncWork: myId }, "*");
+        };
+      }
+      return (callback) => setTimeout(callback);
+    })();
+    (function(OperatingSystem2) {
+      OperatingSystem2[OperatingSystem2["Windows"] = 1] = "Windows";
+      OperatingSystem2[OperatingSystem2["Macintosh"] = 2] = "Macintosh";
+      OperatingSystem2[OperatingSystem2["Linux"] = 3] = "Linux";
+    })(OperatingSystem || (OperatingSystem = {}));
+    OS = _isMacintosh || _isIOS ? 2 : _isWindows ? 1 : 3;
+    _isLittleEndian = true;
+    _isLittleEndianComputed = false;
+    __name(isLittleEndian, "isLittleEndian");
+    __name14(isLittleEndian, "isLittleEndian");
+    isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
+    isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
+    isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
+    isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
+    isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
+    __name(isTahoeOrNewer, "isTahoeOrNewer");
+    __name14(isTahoeOrNewer, "isTahoeOrNewer");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/process.js
+var safeProcess, vscodeGlobal, cwd, env, platform2, arch;
+var init_process = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/process.js"() {
+    "use strict";
+    init_platform();
+    vscodeGlobal = globalThis.vscode;
+    if (typeof vscodeGlobal !== "undefined" && typeof vscodeGlobal.process !== "undefined") {
+      const sandboxProcess = vscodeGlobal.process;
+      safeProcess = {
+        get platform() {
+          return sandboxProcess.platform;
+        },
+        get arch() {
+          return sandboxProcess.arch;
+        },
+        get env() {
+          return sandboxProcess.env;
+        },
+        cwd() {
+          return sandboxProcess.cwd();
+        }
+      };
+    } else if (typeof process !== "undefined" && typeof process?.versions?.node === "string") {
+      safeProcess = {
+        get platform() {
+          return process.platform;
+        },
+        get arch() {
+          return process.arch;
+        },
+        get env() {
+          return process.env;
+        },
+        cwd() {
+          return process.env["VSCODE_CWD"] || process.cwd();
+        }
+      };
+    } else {
+      safeProcess = {
+        // Supported
+        get platform() {
+          return isWindows ? "win32" : isMacintosh ? "darwin" : "linux";
+        },
+        get arch() {
+          return void 0;
+        },
+        // Unsupported
+        get env() {
+          return {};
+        },
+        cwd() {
+          return "/";
+        }
+      };
+    }
+    cwd = safeProcess.cwd;
+    env = safeProcess.env;
+    platform2 = safeProcess.platform;
+    arch = safeProcess.arch;
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/stopwatch.js
+var __defProp15, __name15, performanceNow, StopWatch;
+var init_stopwatch = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/stopwatch.js"() {
+    "use strict";
+    __defProp15 = Object.defineProperty;
+    __name15 = /* @__PURE__ */ __name((target, value) => __defProp15(target, "name", { value, configurable: true }), "__name");
+    performanceNow = globalThis.performance.now.bind(globalThis.performance);
+    StopWatch = class _StopWatch {
+      static {
+        __name(this, "StopWatch");
+      }
+      static {
+        __name15(this, "StopWatch");
+      }
+      static create(highResolution) {
+        return new _StopWatch(highResolution);
+      }
+      constructor(highResolution) {
+        this._now = highResolution === false ? Date.now : performanceNow;
+        this._startTime = this._now();
+        this._stopTime = -1;
+      }
+      stop() {
+        this._stopTime = this._now();
+      }
+      reset() {
+        this._startTime = this._now();
+        this._stopTime = -1;
+      }
+      elapsed() {
+        if (this._stopTime !== -1) {
+          return this._stopTime - this._startTime;
+        }
+        return this._now() - this._startTime;
+      }
+    };
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/event.js
+function _isBufferLeakWarningEnabled() {
+  return !!env["VSCODE_DEV"];
+}
+function setGlobalLeakWarningThreshold(n) {
+  const oldValue = _globalLeakWarningThreshold;
+  _globalLeakWarningThreshold = n;
+  return {
+    dispose() {
+      _globalLeakWarningThreshold = oldValue;
+    }
+  };
+}
+function trackSetChanges(getData, onDidChangeData, handleItem) {
+  const map = new DisposableMap();
+  let oldData = new Set(getData());
+  for (const d of oldData) {
+    map.set(d, handleItem(d));
+  }
+  const store = new DisposableStore();
+  store.add(onDidChangeData(() => {
+    const newData = getData();
+    const diff = diffSets(oldData, newData);
+    for (const r of diff.removed) {
+      map.deleteAndDispose(r);
+    }
+    for (const a of diff.added) {
+      map.set(a, handleItem(a));
+    }
+    oldData = new Set(newData);
+  }));
+  store.add(map);
+  return store;
+}
+function addToDisposables(result, disposables) {
+  if (disposables instanceof DisposableStore) {
+    disposables.add(result);
+  } else if (Array.isArray(disposables)) {
+    disposables.push(result);
+  }
+}
+function disposeAndRemove(result, disposables) {
+  if (disposables instanceof DisposableStore) {
+    disposables.delete(result);
+  } else if (Array.isArray(disposables)) {
+    const index2 = disposables.indexOf(result);
+    if (index2 !== -1) {
+      disposables.splice(index2, 1);
+    }
+  }
+  result.dispose();
+}
+var __defProp16, __name16, _enableDisposeWithListenerWarning, _enableSnapshotPotentialLeakWarning, _bufferLeakWarnCountThreshold, _bufferLeakWarnTimeThreshold, Event, EventProfiling, _globalLeakWarningThreshold, LeakageMonitor, Stacktrace, ListenerLeakError, ListenerRefusalError, id, UniqueContainer, compactionThreshold, forEachListener, Emitter, createEventDeliveryQueue, EventDeliveryQueuePrivate, AsyncEmitter, PauseableEmitter, DebounceEmitter, MicrotaskEmitter, EventMultiplexer, DynamicListEventMultiplexer, EventBufferer, Relay, ValueWithChangeEvent, ConstValueWithChangeEvent;
+var init_event = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/event.js"() {
+    "use strict";
+    init_collections();
+    init_errors();
+    init_functional();
+    init_lifecycle();
+    init_linkedList();
+    init_process();
+    init_stopwatch();
+    __defProp16 = Object.defineProperty;
+    __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
+    _enableDisposeWithListenerWarning = false;
+    _enableSnapshotPotentialLeakWarning = false;
+    _bufferLeakWarnCountThreshold = 100;
+    _bufferLeakWarnTimeThreshold = 6e4;
+    __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
+    __name16(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
+    (function(Event2) {
+      Event2.None = () => Disposable.None;
+      function _addLeakageTraceLogic(options) {
+        if (_enableSnapshotPotentialLeakWarning) {
+          const { onDidAddListener: origListenerDidAdd } = options;
+          const stack = Stacktrace.create();
+          let count2 = 0;
+          options.onDidAddListener = () => {
+            if (++count2 === 2) {
+              console.warn("snapshotted emitter LIKELY used public and SHOULD HAVE BEEN created with DisposableStore. snapshotted here");
+              stack.print();
+            }
+            origListenerDidAdd?.();
+          };
+        }
+      }
+      __name(_addLeakageTraceLogic, "_addLeakageTraceLogic");
+      __name16(_addLeakageTraceLogic, "_addLeakageTraceLogic");
+      function defer(event, flushOnListenerRemove, disposable) {
+        return debounce(event, () => void 0, 0, void 0, flushOnListenerRemove ?? true, void 0, disposable);
+      }
+      __name(defer, "defer");
+      __name16(defer, "defer");
+      Event2.defer = defer;
+      function once(event) {
+        return (listener, thisArgs = null, disposables) => {
+          let didFire = false;
+          let result = void 0;
+          result = event((e) => {
+            if (didFire) {
+              return;
+            } else if (result) {
+              result.dispose();
+            } else {
+              didFire = true;
+            }
+            return listener.call(thisArgs, e);
+          }, null, disposables);
+          if (didFire) {
+            result.dispose();
+          }
+          return result;
+        };
+      }
+      __name(once, "once");
+      __name16(once, "once");
+      Event2.once = once;
+      function onceIf(event, condition) {
+        return Event2.once(Event2.filter(event, condition));
+      }
+      __name(onceIf, "onceIf");
+      __name16(onceIf, "onceIf");
+      Event2.onceIf = onceIf;
+      function map(event, map2, disposable) {
+        return snapshot((listener, thisArgs = null, disposables) => event((i) => listener.call(thisArgs, map2(i)), null, disposables), disposable);
+      }
+      __name(map, "map");
+      __name16(map, "map");
+      Event2.map = map;
+      function forEach(event, each, disposable) {
+        return snapshot((listener, thisArgs = null, disposables) => event((i) => {
+          each(i);
+          listener.call(thisArgs, i);
+        }, null, disposables), disposable);
+      }
+      __name(forEach, "forEach");
+      __name16(forEach, "forEach");
+      Event2.forEach = forEach;
+      function filter(event, filter2, disposable) {
+        return snapshot((listener, thisArgs = null, disposables) => event((e) => filter2(e) && listener.call(thisArgs, e), null, disposables), disposable);
+      }
+      __name(filter, "filter");
+      __name16(filter, "filter");
+      Event2.filter = filter;
+      function signal(event) {
+        return event;
+      }
+      __name(signal, "signal");
+      __name16(signal, "signal");
+      Event2.signal = signal;
+      function any(...events) {
+        return (listener, thisArgs = null, disposables) => {
+          const disposable = combinedDisposable(...events.map((event) => event((e) => listener.call(thisArgs, e))));
+          return addAndReturnDisposable(disposable, disposables);
+        };
+      }
+      __name(any, "any");
+      __name16(any, "any");
+      Event2.any = any;
+      function reduce(event, merge, initial, disposable) {
+        let output = initial;
+        return map(event, (e) => {
+          output = merge(output, e);
+          return output;
+        }, disposable);
+      }
+      __name(reduce, "reduce");
+      __name16(reduce, "reduce");
+      Event2.reduce = reduce;
+      function snapshot(event, disposable) {
+        let listener;
+        const options = {
+          onWillAddFirstListener() {
+            listener = event(emitter.fire, emitter);
+          },
+          onDidRemoveLastListener() {
+            listener?.dispose();
+          }
+        };
+        if (!disposable) {
+          _addLeakageTraceLogic(options);
+        }
+        const emitter = new Emitter(options);
+        disposable?.add(emitter);
+        return emitter.event;
+      }
+      __name(snapshot, "snapshot");
+      __name16(snapshot, "snapshot");
+      function addAndReturnDisposable(d, store) {
+        if (store instanceof Array) {
+          store.push(d);
+        } else if (store) {
+          store.add(d);
+        }
+        return d;
+      }
+      __name(addAndReturnDisposable, "addAndReturnDisposable");
+      __name16(addAndReturnDisposable, "addAndReturnDisposable");
+      function debounce(event, merge, delay = 100, leading = false, flushOnListenerRemove = false, leakWarningThreshold, disposable) {
+        let subscription;
+        let output = void 0;
+        let handle = void 0;
+        let numDebouncedCalls = 0;
+        let doFire;
+        const options = {
+          leakWarningThreshold,
+          onWillAddFirstListener() {
+            subscription = event((cur) => {
+              numDebouncedCalls++;
+              output = merge(output, cur);
+              if (leading && !handle) {
+                emitter.fire(output);
+                output = void 0;
+              }
+              doFire = /* @__PURE__ */ __name16(() => {
+                const _output = output;
+                output = void 0;
+                handle = void 0;
+                if (!leading || numDebouncedCalls > 1) {
+                  emitter.fire(_output);
+                }
+                numDebouncedCalls = 0;
+              }, "doFire");
+              if (typeof delay === "number") {
+                if (handle) {
+                  clearTimeout(handle);
+                }
+                handle = setTimeout(doFire, delay);
+              } else {
+                if (handle === void 0) {
+                  handle = null;
+                  queueMicrotask(doFire);
+                }
+              }
+            });
+          },
+          onWillRemoveListener() {
+            if (flushOnListenerRemove && numDebouncedCalls > 0) {
+              doFire?.();
+            }
+          },
+          onDidRemoveLastListener() {
+            doFire = void 0;
+            subscription.dispose();
+          }
+        };
+        if (!disposable) {
+          _addLeakageTraceLogic(options);
+        }
+        const emitter = new Emitter(options);
+        disposable?.add(emitter);
+        return emitter.event;
+      }
+      __name(debounce, "debounce");
+      __name16(debounce, "debounce");
+      Event2.debounce = debounce;
+      function accumulate(event, delay = 0, flushOnListenerRemove, disposable) {
+        return Event2.debounce(event, (last, e) => {
+          if (!last) {
+            return [e];
+          }
+          last.push(e);
+          return last;
+        }, delay, void 0, flushOnListenerRemove ?? true, void 0, disposable);
+      }
+      __name(accumulate, "accumulate");
+      __name16(accumulate, "accumulate");
+      Event2.accumulate = accumulate;
+      function throttle(event, merge, delay = 100, leading = true, trailing = true, leakWarningThreshold, disposable) {
+        let subscription;
+        let output = void 0;
+        let handle = void 0;
+        let numThrottledCalls = 0;
+        const options = {
+          leakWarningThreshold,
+          onWillAddFirstListener() {
+            subscription = event((cur) => {
+              numThrottledCalls++;
+              output = merge(output, cur);
+              if (handle === void 0) {
+                if (leading) {
+                  emitter.fire(output);
+                  output = void 0;
+                  numThrottledCalls = 0;
+                }
+                if (typeof delay === "number") {
+                  handle = setTimeout(() => {
+                    if (trailing && numThrottledCalls > 0) {
+                      emitter.fire(output);
+                    }
+                    output = void 0;
+                    handle = void 0;
+                    numThrottledCalls = 0;
+                  }, delay);
+                } else {
+                  handle = 0;
+                  queueMicrotask(() => {
+                    if (trailing && numThrottledCalls > 0) {
+                      emitter.fire(output);
+                    }
+                    output = void 0;
+                    handle = void 0;
+                    numThrottledCalls = 0;
+                  });
+                }
+              }
+            });
+          },
+          onDidRemoveLastListener() {
+            subscription.dispose();
+          }
+        };
+        if (!disposable) {
+          _addLeakageTraceLogic(options);
+        }
+        const emitter = new Emitter(options);
+        disposable?.add(emitter);
+        return emitter.event;
+      }
+      __name(throttle, "throttle");
+      __name16(throttle, "throttle");
+      Event2.throttle = throttle;
+      function latch(event, equals3 = (a, b) => a === b, disposable) {
+        let firstCall = true;
+        let cache;
+        return filter(event, (value) => {
+          const shouldEmit = firstCall || !equals3(value, cache);
+          firstCall = false;
+          cache = value;
+          return shouldEmit;
+        }, disposable);
+      }
+      __name(latch, "latch");
+      __name16(latch, "latch");
+      Event2.latch = latch;
+      function split(event, isT, disposable) {
+        return [
+          Event2.filter(event, isT, disposable),
+          Event2.filter(event, (e) => !isT(e), disposable)
+        ];
+      }
+      __name(split, "split");
+      __name16(split, "split");
+      Event2.split = split;
+      function buffer(event, debugName, flushAfterTimeout = false, _buffer = [], disposable) {
+        let buffer2 = _buffer.slice();
+        let bufferLeakWarningData;
+        if (_isBufferLeakWarningEnabled()) {
+          bufferLeakWarningData = {
+            stack: Stacktrace.create(),
+            timerId: setTimeout(() => {
+              if (buffer2 && buffer2.length > 0 && bufferLeakWarningData && !bufferLeakWarningData.warned) {
+                bufferLeakWarningData.warned = true;
+                console.warn(`[Event.buffer][${debugName}] potential LEAK detected: ${buffer2.length} events buffered for ${_bufferLeakWarnTimeThreshold / 1e3}s without being consumed. Buffered here:`);
+                bufferLeakWarningData.stack.print();
+              }
+            }, _bufferLeakWarnTimeThreshold),
+            warned: false
+          };
+          if (disposable) {
+            disposable.add(toDisposable(() => clearTimeout(bufferLeakWarningData.timerId)));
+          }
+        }
+        const clearLeakWarningTimer = /* @__PURE__ */ __name16(() => {
+          if (bufferLeakWarningData) {
+            clearTimeout(bufferLeakWarningData.timerId);
+          }
+        }, "clearLeakWarningTimer");
+        let listener = event((e) => {
+          if (buffer2) {
+            buffer2.push(e);
+            if (_isBufferLeakWarningEnabled() && bufferLeakWarningData && !bufferLeakWarningData.warned && buffer2.length >= _bufferLeakWarnCountThreshold) {
+              bufferLeakWarningData.warned = true;
+              console.warn(`[Event.buffer][${debugName}] potential LEAK detected: ${buffer2.length} events buffered without being consumed. Buffered here:`);
+              bufferLeakWarningData.stack.print();
+            }
+          } else {
+            emitter.fire(e);
+          }
+        });
+        if (disposable) {
+          disposable.add(listener);
+        }
+        const flush = /* @__PURE__ */ __name16(() => {
+          buffer2?.forEach((e) => emitter.fire(e));
+          buffer2 = null;
+          clearLeakWarningTimer();
+        }, "flush");
+        const emitter = new Emitter({
+          onWillAddFirstListener() {
+            if (!listener) {
+              listener = event((e) => emitter.fire(e));
+              if (disposable) {
+                disposable.add(listener);
+              }
+            }
+          },
+          onDidAddFirstListener() {
+            if (buffer2) {
+              if (flushAfterTimeout) {
+                setTimeout(flush);
+              } else {
+                flush();
+              }
+            }
+          },
+          onDidRemoveLastListener() {
+            if (listener) {
+              listener.dispose();
+            }
+            listener = null;
+            clearLeakWarningTimer();
+          }
+        });
+        if (disposable) {
+          disposable.add(emitter);
+        }
+        return emitter.event;
+      }
+      __name(buffer, "buffer");
+      __name16(buffer, "buffer");
+      Event2.buffer = buffer;
+      function chain(event, sythensize) {
+        const fn = /* @__PURE__ */ __name16((listener, thisArgs, disposables) => {
+          const cs = sythensize(new ChainableSynthesis());
+          return event(function(value) {
+            const result = cs.evaluate(value);
+            if (result !== HaltChainable) {
+              listener.call(thisArgs, result);
+            }
+          }, void 0, disposables);
+        }, "fn");
+        return fn;
+      }
+      __name(chain, "chain");
+      __name16(chain, "chain");
+      Event2.chain = chain;
+      const HaltChainable = /* @__PURE__ */ Symbol("HaltChainable");
+      class ChainableSynthesis {
+        static {
+          __name(this, "ChainableSynthesis");
+        }
+        static {
+          __name16(this, "ChainableSynthesis");
+        }
+        constructor() {
+          this.steps = [];
+        }
+        map(fn) {
+          this.steps.push(fn);
+          return this;
+        }
+        forEach(fn) {
+          this.steps.push((v) => {
+            fn(v);
+            return v;
+          });
+          return this;
+        }
+        filter(fn) {
+          this.steps.push((v) => fn(v) ? v : HaltChainable);
+          return this;
+        }
+        reduce(merge, initial) {
+          let last = initial;
+          this.steps.push((v) => {
+            last = merge(last, v);
+            return last;
+          });
+          return this;
+        }
+        latch(equals3 = (a, b) => a === b) {
+          let firstCall = true;
+          let cache;
+          this.steps.push((value) => {
+            const shouldEmit = firstCall || !equals3(value, cache);
+            firstCall = false;
+            cache = value;
+            return shouldEmit ? value : HaltChainable;
+          });
+          return this;
+        }
+        evaluate(value) {
+          for (const step of this.steps) {
+            value = step(value);
+            if (value === HaltChainable) {
+              break;
+            }
+          }
+          return value;
+        }
+      }
+      function fromNodeEventEmitter(emitter, eventName, map2 = (id2) => id2) {
+        const fn = /* @__PURE__ */ __name16((...args) => result.fire(map2(...args)), "fn");
+        const onFirstListenerAdd = /* @__PURE__ */ __name16(() => emitter.on(eventName, fn), "onFirstListenerAdd");
+        const onLastListenerRemove = /* @__PURE__ */ __name16(() => emitter.removeListener(eventName, fn), "onLastListenerRemove");
+        const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
+        return result.event;
+      }
+      __name(fromNodeEventEmitter, "fromNodeEventEmitter");
+      __name16(fromNodeEventEmitter, "fromNodeEventEmitter");
+      Event2.fromNodeEventEmitter = fromNodeEventEmitter;
+      function fromDOMEventEmitter(emitter, eventName, map2 = (id2) => id2) {
+        const fn = /* @__PURE__ */ __name16((...args) => result.fire(map2(...args)), "fn");
+        const onFirstListenerAdd = /* @__PURE__ */ __name16(() => emitter.addEventListener(eventName, fn), "onFirstListenerAdd");
+        const onLastListenerRemove = /* @__PURE__ */ __name16(() => emitter.removeEventListener(eventName, fn), "onLastListenerRemove");
+        const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
+        return result.event;
+      }
+      __name(fromDOMEventEmitter, "fromDOMEventEmitter");
+      __name16(fromDOMEventEmitter, "fromDOMEventEmitter");
+      Event2.fromDOMEventEmitter = fromDOMEventEmitter;
+      function toPromise(event, disposables) {
+        let cancelRef;
+        let listener;
+        const promise = new Promise((resolve2) => {
+          listener = once(event)(resolve2);
+          addToDisposables(listener, disposables);
+          cancelRef = /* @__PURE__ */ __name16(() => {
+            disposeAndRemove(listener, disposables);
+          }, "cancelRef");
+        });
+        promise.cancel = cancelRef;
+        if (disposables) {
+          promise.finally(() => disposeAndRemove(listener, disposables));
+        }
+        return promise;
+      }
+      __name(toPromise, "toPromise");
+      __name16(toPromise, "toPromise");
+      Event2.toPromise = toPromise;
+      function forward(from, to) {
+        return from((e) => to.fire(e));
+      }
+      __name(forward, "forward");
+      __name16(forward, "forward");
+      Event2.forward = forward;
+      function runAndSubscribe(event, handler, initial) {
+        handler(initial);
+        return event((e) => handler(e));
+      }
+      __name(runAndSubscribe, "runAndSubscribe");
+      __name16(runAndSubscribe, "runAndSubscribe");
+      Event2.runAndSubscribe = runAndSubscribe;
+      class EmitterObserver {
+        static {
+          __name(this, "EmitterObserver");
+        }
+        static {
+          __name16(this, "EmitterObserver");
+        }
+        constructor(_observable, store) {
+          this._observable = _observable;
+          this._counter = 0;
+          this._hasChanged = false;
+          const options = {
+            onWillAddFirstListener: /* @__PURE__ */ __name16(() => {
+              _observable.addObserver(this);
+              this._observable.reportChanges();
+            }, "onWillAddFirstListener"),
+            onDidRemoveLastListener: /* @__PURE__ */ __name16(() => {
+              _observable.removeObserver(this);
+            }, "onDidRemoveLastListener")
+          };
+          if (!store) {
+            _addLeakageTraceLogic(options);
+          }
+          this.emitter = new Emitter(options);
+          if (store) {
+            store.add(this.emitter);
+          }
+        }
+        beginUpdate(_observable) {
+          this._counter++;
+        }
+        handlePossibleChange(_observable) {
+        }
+        handleChange(_observable, _change) {
+          this._hasChanged = true;
+        }
+        endUpdate(_observable) {
+          this._counter--;
+          if (this._counter === 0) {
+            this._observable.reportChanges();
+            if (this._hasChanged) {
+              this._hasChanged = false;
+              this.emitter.fire(this._observable.get());
+            }
+          }
+        }
+      }
+      function fromObservable(obs, store) {
+        const observer = new EmitterObserver(obs, store);
+        return observer.emitter.event;
+      }
+      __name(fromObservable, "fromObservable");
+      __name16(fromObservable, "fromObservable");
+      Event2.fromObservable = fromObservable;
+      function fromObservableLight(observable) {
+        return (listener, thisArgs, disposables) => {
+          let count2 = 0;
+          let didChange = false;
+          const observer = {
+            beginUpdate() {
+              count2++;
+            },
+            endUpdate() {
+              count2--;
+              if (count2 === 0) {
+                observable.reportChanges();
+                if (didChange) {
+                  didChange = false;
+                  listener.call(thisArgs);
+                }
+              }
+            },
+            handlePossibleChange() {
+            },
+            handleChange() {
+              didChange = true;
+            }
+          };
+          observable.addObserver(observer);
+          observable.reportChanges();
+          const disposable = {
+            dispose() {
+              observable.removeObserver(observer);
+            }
+          };
+          addToDisposables(disposable, disposables);
+          return disposable;
+        };
+      }
+      __name(fromObservableLight, "fromObservableLight");
+      __name16(fromObservableLight, "fromObservableLight");
+      Event2.fromObservableLight = fromObservableLight;
+    })(Event || (Event = {}));
+    EventProfiling = class _EventProfiling {
+      static {
+        __name(this, "EventProfiling");
+      }
+      static {
+        __name16(this, "EventProfiling");
+      }
+      static {
+        this.all = /* @__PURE__ */ new Set();
+      }
+      static {
+        this._idPool = 0;
+      }
+      constructor(name) {
+        this.listenerCount = 0;
+        this.invocationCount = 0;
+        this.elapsedOverall = 0;
+        this.durations = [];
+        this.name = `${name}_${_EventProfiling._idPool++}`;
+        _EventProfiling.all.add(this);
+      }
+      start(listenerCount) {
+        this._stopWatch = new StopWatch();
+        this.listenerCount = listenerCount;
+      }
+      stop() {
+        if (this._stopWatch) {
+          const elapsed = this._stopWatch.elapsed();
+          this.durations.push(elapsed);
+          this.elapsedOverall += elapsed;
+          this.invocationCount += 1;
+          this._stopWatch = void 0;
+        }
+      }
+    };
+    _globalLeakWarningThreshold = -1;
+    __name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
+    __name16(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
+    LeakageMonitor = class _LeakageMonitor {
+      static {
+        __name(this, "LeakageMonitor");
+      }
+      static {
+        __name16(this, "LeakageMonitor");
+      }
+      static {
+        this._idPool = 1;
+      }
+      constructor(_errorHandler, threshold, name = (_LeakageMonitor._idPool++).toString(16).padStart(3, "0")) {
+        this._errorHandler = _errorHandler;
+        this.threshold = threshold;
+        this.name = name;
+        this._warnCountdown = 0;
+      }
+      dispose() {
+        this._stacks?.clear();
+      }
+      check(stack, listenerCount) {
+        const threshold = this.threshold;
+        if (threshold <= 0 || listenerCount < threshold) {
+          return void 0;
+        }
+        if (!this._stacks) {
+          this._stacks = /* @__PURE__ */ new Map();
+        }
+        const count2 = this._stacks.get(stack.value) || 0;
+        this._stacks.set(stack.value, count2 + 1);
+        this._warnCountdown -= 1;
+        if (this._warnCountdown <= 0) {
+          this._warnCountdown = threshold * 0.5;
+          const [topStack, topCount] = this.getMostFrequentStack();
+          const emitterName = /^[0-9a-f]+$/i.test(this.name) ? void 0 : this.name;
+          const message = `[${this.name}] potential listener LEAK detected, having ${listenerCount} listeners already. MOST frequent listener (${topCount}):`;
+          console.warn(message);
+          console.warn(topStack);
+          const kind = topCount / listenerCount > 0.3 ? "dominated" : "popular";
+          const error = new ListenerLeakError(kind, message, topStack, listenerCount, emitterName);
+          this._errorHandler(error);
+        }
+        return () => {
+          const count22 = this._stacks.get(stack.value) || 0;
+          this._stacks.set(stack.value, count22 - 1);
+        };
+      }
+      getMostFrequentStack() {
+        if (!this._stacks) {
+          return void 0;
+        }
+        let topStack;
+        let topCount = 0;
+        for (const [stack, count2] of this._stacks) {
+          if (!topStack || topCount < count2) {
+            topStack = [stack, count2];
+            topCount = count2;
+          }
+        }
+        return topStack;
+      }
+    };
+    Stacktrace = class _Stacktrace {
+      static {
+        __name(this, "Stacktrace");
+      }
+      static {
+        __name16(this, "Stacktrace");
+      }
+      static create() {
+        const err = new Error();
+        return new _Stacktrace(err.stack ?? "");
+      }
+      constructor(value) {
+        this.value = value;
+      }
+      print() {
+        console.warn(this.value.split("\n").slice(2).join("\n"));
+      }
+    };
+    ListenerLeakError = class _ListenerLeakError extends Error {
+      static {
+        __name(this, "ListenerLeakError");
+      }
+      static {
+        __name16(this, "ListenerLeakError");
+      }
+      constructor(kind, details, stack, listenerCount, emitterName) {
+        super(emitterName ? `[${emitterName}] potential listener LEAK detected, ${kind}` : `potential listener LEAK detected, ${kind}`);
+        this.name = "ListenerLeakError";
+        this.kind = kind;
+        this.listenerCount = listenerCount;
+        this.details = details;
+        this.stack = stack;
+      }
+      static is(err) {
+        return err instanceof _ListenerLeakError || err instanceof Error && typeof err.kind === "string" && typeof err.listenerCount === "number";
+      }
+    };
+    ListenerRefusalError = class extends ListenerLeakError {
+      static {
+        __name(this, "ListenerRefusalError");
+      }
+      static {
+        __name16(this, "ListenerRefusalError");
+      }
+      constructor(kind, details, stack, listenerCount, emitterName) {
+        super(kind, details, stack, listenerCount, emitterName);
+        this.name = "ListenerRefusalError";
+      }
+    };
+    id = 0;
+    UniqueContainer = class {
+      static {
+        __name(this, "UniqueContainer");
+      }
+      static {
+        __name16(this, "UniqueContainer");
+      }
+      constructor(value) {
+        this.value = value;
+        this.id = id++;
+      }
+    };
+    compactionThreshold = 2;
+    forEachListener = /* @__PURE__ */ __name16((listeners, fn) => {
+      if (listeners instanceof UniqueContainer) {
+        fn(listeners);
+      } else {
+        for (let i = 0; i < listeners.length; i++) {
+          const l = listeners[i];
+          if (l) {
+            fn(l);
+          }
+        }
+      }
+    }, "forEachListener");
+    Emitter = class {
+      static {
+        __name(this, "Emitter");
+      }
+      static {
+        __name16(this, "Emitter");
+      }
+      constructor(options) {
+        this._size = 0;
+        this._options = options;
+        this._leakageMon = _globalLeakWarningThreshold > 0 || this._options?.leakWarningThreshold ? new LeakageMonitor(options?.onListenerError ?? onUnexpectedError, this._options?.leakWarningThreshold ?? _globalLeakWarningThreshold, this._options?.leakWarningName) : void 0;
+        this._perfMon = this._options?._profName ? new EventProfiling(this._options._profName) : void 0;
+        this._deliveryQueue = this._options?.deliveryQueue;
+      }
+      dispose() {
+        if (!this._disposed) {
+          this._disposed = true;
+          if (this._deliveryQueue?.current === this) {
+            this._deliveryQueue.reset();
+          }
+          if (this._listeners) {
+            if (_enableDisposeWithListenerWarning) {
+              const listeners = this._listeners;
+              queueMicrotask(() => {
+                forEachListener(listeners, (l) => l.stack?.print());
+              });
+            }
+            this._listeners = void 0;
+            this._size = 0;
+          }
+          this._options?.onDidRemoveLastListener?.();
+          this._leakageMon?.dispose();
+        }
+      }
+      /**
+       * For the public to allow to subscribe
+       * to events from this Emitter
+       */
+      get event() {
+        this._event ??= (callback, thisArgs, disposables) => {
+          if (this._leakageMon && this._size > this._leakageMon.threshold ** 2) {
+            const message = `[${this._leakageMon.name}] REFUSES to accept new listeners because it exceeded its threshold by far (${this._size} vs ${this._leakageMon.threshold})`;
+            console.warn(message);
+            const tuple = this._leakageMon.getMostFrequentStack() ?? ["UNKNOWN stack", -1];
+            const kind = tuple[1] / this._size > 0.3 ? "dominated" : "popular";
+            const error = new ListenerRefusalError(kind, `${message}. HINT: Stack shows most frequent listener (${tuple[1]}-times)`, tuple[0], this._size, this._options?.leakWarningName);
+            const errorHandler2 = this._options?.onListenerError || onUnexpectedError;
+            errorHandler2(error);
+            return Disposable.None;
+          }
+          if (this._disposed) {
+            return Disposable.None;
+          }
+          if (thisArgs) {
+            callback = callback.bind(thisArgs);
+          }
+          const contained = new UniqueContainer(callback);
+          let removeMonitor;
+          let stack;
+          if (this._leakageMon && this._size >= Math.ceil(this._leakageMon.threshold * 0.2)) {
+            contained.stack = Stacktrace.create();
+            removeMonitor = this._leakageMon.check(contained.stack, this._size + 1);
+          }
+          if (_enableDisposeWithListenerWarning) {
+            contained.stack = stack ?? Stacktrace.create();
+          }
+          if (!this._listeners) {
+            this._options?.onWillAddFirstListener?.(this);
+            this._listeners = contained;
+            this._options?.onDidAddFirstListener?.(this);
+          } else if (this._listeners instanceof UniqueContainer) {
+            this._deliveryQueue ??= new EventDeliveryQueuePrivate();
+            this._listeners = [this._listeners, contained];
+          } else {
+            this._listeners.push(contained);
+          }
+          this._options?.onDidAddListener?.(this);
+          this._size++;
+          const result = toDisposable(() => {
+            removeMonitor?.();
+            this._removeListener(contained);
+          });
+          addToDisposables(result, disposables);
+          return result;
+        };
+        return this._event;
+      }
+      _removeListener(listener) {
+        this._options?.onWillRemoveListener?.(this);
+        if (!this._listeners) {
+          return;
+        }
+        if (this._size === 1) {
+          this._listeners = void 0;
+          this._options?.onDidRemoveLastListener?.(this);
+          this._size = 0;
+          return;
+        }
+        const listeners = this._listeners;
+        const index2 = listeners.indexOf(listener);
+        if (index2 === -1) {
+          console.log("disposed?", this._disposed);
+          console.log("size?", this._size);
+          console.log("arr?", JSON.stringify(this._listeners));
+          throw new Error("Attempted to dispose unknown listener");
+        }
+        this._size--;
+        listeners[index2] = void 0;
+        const adjustDeliveryQueue = this._deliveryQueue.current === this;
+        if (this._size * compactionThreshold <= listeners.length) {
+          let n = 0;
+          for (let i = 0; i < listeners.length; i++) {
+            if (listeners[i]) {
+              listeners[n++] = listeners[i];
+            } else if (adjustDeliveryQueue && n < this._deliveryQueue.end) {
+              this._deliveryQueue.end--;
+              if (n < this._deliveryQueue.i) {
+                this._deliveryQueue.i--;
+              }
+            }
+          }
+          listeners.length = n;
+        }
+      }
+      _deliver(listener, value) {
+        if (!listener) {
+          return;
+        }
+        const errorHandler2 = this._options?.onListenerError || onUnexpectedError;
+        if (!errorHandler2) {
+          listener.value(value);
+          return;
+        }
+        try {
+          listener.value(value);
+        } catch (e) {
+          errorHandler2(e);
+        }
+      }
+      /** Delivers items in the queue. Assumes the queue is ready to go. */
+      _deliverQueue(dq) {
+        const listeners = dq.current._listeners;
+        while (dq.i < dq.end) {
+          this._deliver(listeners[dq.i++], dq.value);
+        }
+        dq.reset();
+      }
+      /**
+       * To be kept private to fire an event to
+       * subscribers
+       */
+      fire(event) {
+        if (this._deliveryQueue?.current) {
+          this._deliverQueue(this._deliveryQueue);
+          this._perfMon?.stop();
+        }
+        this._perfMon?.start(this._size);
+        if (!this._listeners) {
+        } else if (this._listeners instanceof UniqueContainer) {
+          this._deliver(this._listeners, event);
+        } else {
+          const dq = this._deliveryQueue;
+          dq.enqueue(this, event, this._listeners.length);
+          this._deliverQueue(dq);
+        }
+        this._perfMon?.stop();
+      }
+      hasListeners() {
+        return this._size > 0;
+      }
+    };
+    createEventDeliveryQueue = /* @__PURE__ */ __name16(() => new EventDeliveryQueuePrivate(), "createEventDeliveryQueue");
+    EventDeliveryQueuePrivate = class {
+      static {
+        __name(this, "EventDeliveryQueuePrivate");
+      }
+      static {
+        __name16(this, "EventDeliveryQueuePrivate");
+      }
+      constructor() {
+        this.i = -1;
+        this.end = 0;
+      }
+      enqueue(emitter, value, end) {
+        this.i = 0;
+        this.end = end;
+        this.current = emitter;
+        this.value = value;
+      }
+      reset() {
+        this.i = this.end;
+        this.current = void 0;
+        this.value = void 0;
+      }
+    };
+    AsyncEmitter = class extends Emitter {
+      static {
+        __name(this, "AsyncEmitter");
+      }
+      static {
+        __name16(this, "AsyncEmitter");
+      }
+      async fireAsync(data, token, promiseJoin) {
+        if (!this._listeners) {
+          return;
+        }
+        if (!this._asyncDeliveryQueue) {
+          this._asyncDeliveryQueue = new LinkedList();
+        }
+        forEachListener(this._listeners, (listener) => this._asyncDeliveryQueue.push([listener.value, data]));
+        while (this._asyncDeliveryQueue.size > 0 && !token.isCancellationRequested) {
+          const [listener, data2] = this._asyncDeliveryQueue.shift();
+          const thenables = [];
+          const event = {
+            ...data2,
+            token,
+            waitUntil: /* @__PURE__ */ __name16((p) => {
+              if (Object.isFrozen(thenables)) {
+                throw new Error("waitUntil can NOT be called asynchronous");
+              }
+              if (promiseJoin) {
+                p = promiseJoin(p, listener);
+              }
+              thenables.push(p);
+            }, "waitUntil")
+          };
+          try {
+            listener(event);
+          } catch (e) {
+            onUnexpectedError(e);
+            continue;
+          }
+          Object.freeze(thenables);
+          await Promise.allSettled(thenables).then((values) => {
+            for (const value of values) {
+              if (value.status === "rejected") {
+                onUnexpectedError(value.reason);
+              }
+            }
+          });
+        }
+      }
+    };
+    PauseableEmitter = class extends Emitter {
+      static {
+        __name(this, "PauseableEmitter");
+      }
+      static {
+        __name16(this, "PauseableEmitter");
+      }
+      get isPaused() {
+        return this._isPaused !== 0;
+      }
+      constructor(options) {
+        super(options);
+        this._isPaused = 0;
+        this._eventQueue = new LinkedList();
+        this._mergeFn = options?.merge;
+      }
+      pause() {
+        this._isPaused++;
+      }
+      resume() {
+        if (this._isPaused !== 0 && --this._isPaused === 0) {
+          if (this._mergeFn) {
+            if (this._eventQueue.size > 0) {
+              const events = Array.from(this._eventQueue);
+              this._eventQueue.clear();
+              super.fire(this._mergeFn(events));
+            }
+          } else {
+            while (!this._isPaused && this._eventQueue.size !== 0) {
+              super.fire(this._eventQueue.shift());
+            }
+          }
+        }
+      }
+      fire(event) {
+        if (this._size) {
+          if (this._isPaused !== 0) {
+            this._eventQueue.push(event);
+          } else {
+            super.fire(event);
+          }
+        }
+      }
+    };
+    DebounceEmitter = class extends PauseableEmitter {
+      static {
+        __name(this, "DebounceEmitter");
+      }
+      static {
+        __name16(this, "DebounceEmitter");
+      }
+      constructor(options) {
+        super(options);
+        this._delay = options.delay ?? 100;
+      }
+      fire(event) {
+        if (!this._handle) {
+          this.pause();
+          this._handle = setTimeout(() => {
+            this._handle = void 0;
+            this.resume();
+          }, this._delay);
+        }
+        super.fire(event);
+      }
+    };
+    MicrotaskEmitter = class extends Emitter {
+      static {
+        __name(this, "MicrotaskEmitter");
+      }
+      static {
+        __name16(this, "MicrotaskEmitter");
+      }
+      constructor(options) {
+        super(options);
+        this._queuedEvents = [];
+        this._mergeFn = options?.merge;
+      }
+      fire(event) {
+        if (!this.hasListeners()) {
+          return;
+        }
+        this._queuedEvents.push(event);
+        if (this._queuedEvents.length === 1) {
+          queueMicrotask(() => {
+            if (this._mergeFn) {
+              super.fire(this._mergeFn(this._queuedEvents));
+            } else {
+              this._queuedEvents.forEach((e) => super.fire(e));
+            }
+            this._queuedEvents = [];
+          });
+        }
+      }
+    };
+    EventMultiplexer = class {
+      static {
+        __name(this, "EventMultiplexer");
+      }
+      static {
+        __name16(this, "EventMultiplexer");
+      }
+      constructor() {
+        this.hasListeners = false;
+        this.events = [];
+        this.emitter = new Emitter({
+          onWillAddFirstListener: /* @__PURE__ */ __name16(() => this.onFirstListenerAdd(), "onWillAddFirstListener"),
+          onDidRemoveLastListener: /* @__PURE__ */ __name16(() => this.onLastListenerRemove(), "onDidRemoveLastListener")
+        });
+      }
+      get event() {
+        return this.emitter.event;
+      }
+      add(event) {
+        const e = { event, listener: null };
+        this.events.push(e);
+        if (this.hasListeners) {
+          this.hook(e);
+        }
+        const dispose2 = /* @__PURE__ */ __name16(() => {
+          if (this.hasListeners) {
+            this.unhook(e);
+          }
+          const idx = this.events.indexOf(e);
+          this.events.splice(idx, 1);
+        }, "dispose");
+        return toDisposable(createSingleCallFunction(dispose2));
+      }
+      onFirstListenerAdd() {
+        this.hasListeners = true;
+        this.events.forEach((e) => this.hook(e));
+      }
+      onLastListenerRemove() {
+        this.hasListeners = false;
+        this.events.forEach((e) => this.unhook(e));
+      }
+      hook(e) {
+        e.listener = e.event((r) => this.emitter.fire(r));
+      }
+      unhook(e) {
+        e.listener?.dispose();
+        e.listener = null;
+      }
+      dispose() {
+        this.emitter.dispose();
+        for (const e of this.events) {
+          e.listener?.dispose();
+        }
+        this.events = [];
+      }
+    };
+    DynamicListEventMultiplexer = class {
+      static {
+        __name(this, "DynamicListEventMultiplexer");
+      }
+      static {
+        __name16(this, "DynamicListEventMultiplexer");
+      }
+      constructor(items, onAddItem, onRemoveItem, getEvent) {
+        this._store = new DisposableStore();
+        const multiplexer = this._store.add(new EventMultiplexer());
+        const itemListeners = this._store.add(new DisposableMap());
+        function addItem(instance) {
+          itemListeners.set(instance, multiplexer.add(getEvent(instance)));
+        }
+        __name(addItem, "addItem");
+        __name16(addItem, "addItem");
+        for (const instance of items) {
+          addItem(instance);
+        }
+        this._store.add(onAddItem((instance) => {
+          addItem(instance);
+        }));
+        this._store.add(onRemoveItem((instance) => {
+          itemListeners.deleteAndDispose(instance);
+        }));
+        this.event = multiplexer.event;
+      }
+      dispose() {
+        this._store.dispose();
+      }
+    };
+    EventBufferer = class {
+      static {
+        __name(this, "EventBufferer");
+      }
+      static {
+        __name16(this, "EventBufferer");
+      }
+      constructor() {
+        this.data = [];
+      }
+      wrapEvent(event, reduce, initial) {
+        return (listener, thisArgs, disposables) => {
+          return event((i) => {
+            const data = this.data[this.data.length - 1];
+            if (!reduce) {
+              if (data) {
+                data.buffers.push(() => listener.call(thisArgs, i));
+              } else {
+                listener.call(thisArgs, i);
+              }
+              return;
+            }
+            const reduceData = data;
+            if (!reduceData) {
+              listener.call(thisArgs, reduce(initial, i));
+              return;
+            }
+            reduceData.items ??= [];
+            reduceData.items.push(i);
+            if (reduceData.buffers.length === 0) {
+              data.buffers.push(() => {
+                reduceData.reducedResult ??= initial ? reduceData.items.reduce(reduce, initial) : reduceData.items.reduce(reduce);
+                listener.call(thisArgs, reduceData.reducedResult);
+              });
+            }
+          }, void 0, disposables);
+        };
+      }
+      bufferEvents(fn) {
+        const data = { buffers: new Array() };
+        this.data.push(data);
+        const r = fn();
+        this.data.pop();
+        data.buffers.forEach((flush) => flush());
+        return r;
+      }
+    };
+    Relay = class {
+      static {
+        __name(this, "Relay");
+      }
+      static {
+        __name16(this, "Relay");
+      }
+      constructor() {
+        this.listening = false;
+        this.inputEvent = Event.None;
+        this.inputEventListener = Disposable.None;
+        this.emitter = new Emitter({
+          onDidAddFirstListener: /* @__PURE__ */ __name16(() => {
+            this.listening = true;
+            this.inputEventListener = this.inputEvent(this.emitter.fire, this.emitter);
+          }, "onDidAddFirstListener"),
+          onDidRemoveLastListener: /* @__PURE__ */ __name16(() => {
+            this.listening = false;
+            this.inputEventListener.dispose();
+          }, "onDidRemoveLastListener")
+        });
+        this.event = this.emitter.event;
+      }
+      set input(event) {
+        this.inputEvent = event;
+        if (this.listening) {
+          this.inputEventListener.dispose();
+          this.inputEventListener = event(this.emitter.fire, this.emitter);
+        }
+      }
+      dispose() {
+        this.inputEventListener.dispose();
+        this.emitter.dispose();
+      }
+    };
+    ValueWithChangeEvent = class {
+      static {
+        __name(this, "ValueWithChangeEvent");
+      }
+      static {
+        __name16(this, "ValueWithChangeEvent");
+      }
+      static const(value) {
+        return new ConstValueWithChangeEvent(value);
+      }
+      constructor(_value) {
+        this._value = _value;
+        this._onDidChange = new Emitter();
+        this.onDidChange = this._onDidChange.event;
+      }
+      get value() {
+        return this._value;
+      }
+      set value(value) {
+        if (value !== this._value) {
+          this._value = value;
+          this._onDidChange.fire(void 0);
+        }
+      }
+    };
+    ConstValueWithChangeEvent = class {
+      static {
+        __name(this, "ConstValueWithChangeEvent");
+      }
+      static {
+        __name16(this, "ConstValueWithChangeEvent");
+      }
+      constructor(value) {
+        this.value = value;
+        this.onDidChange = Event.None;
+      }
+    };
+    __name(trackSetChanges, "trackSetChanges");
+    __name16(trackSetChanges, "trackSetChanges");
+    __name(addToDisposables, "addToDisposables");
+    __name16(addToDisposables, "addToDisposables");
+    __name(disposeAndRemove, "disposeAndRemove");
+    __name16(disposeAndRemove, "disposeAndRemove");
+  }
+});
+
+// ../Output/Target/Microsoft/VSCode/vs/base/common/lazy.js
+var __defProp17, __name17, LazyValueState, Lazy;
+var init_lazy = __esm({
+  "../Output/Target/Microsoft/VSCode/vs/base/common/lazy.js"() {
+    "use strict";
+    __defProp17 = Object.defineProperty;
+    __name17 = /* @__PURE__ */ __name((target, value) => __defProp17(target, "name", { value, configurable: true }), "__name");
+    (function(LazyValueState2) {
+      LazyValueState2[LazyValueState2["Uninitialized"] = 0] = "Uninitialized";
+      LazyValueState2[LazyValueState2["Running"] = 1] = "Running";
+      LazyValueState2[LazyValueState2["Completed"] = 2] = "Completed";
+    })(LazyValueState || (LazyValueState = {}));
+    Lazy = class {
+      static {
+        __name(this, "Lazy");
+      }
+      static {
+        __name17(this, "Lazy");
+      }
+      constructor(executor) {
+        this.executor = executor;
+        this._state = LazyValueState.Uninitialized;
+      }
+      /**
+       * True if the lazy value has been resolved.
+       */
+      get hasValue() {
+        return this._state === LazyValueState.Completed;
+      }
+      /**
+       * Get the wrapped value.
+       *
+       * This will force evaluation of the lazy value if it has not been resolved yet. Lazy values are only
+       * resolved once. `getValue` will re-throw exceptions that are hit while resolving the value
+       */
+      get value() {
+        if (this._state === LazyValueState.Uninitialized) {
+          this._state = LazyValueState.Running;
+          try {
+            this._value = this.executor();
+          } catch (err) {
+            this._error = err;
+          } finally {
+            this._state = LazyValueState.Completed;
+          }
+        } else if (this._state === LazyValueState.Running) {
+          throw new Error("Cannot read the value of a lazy that is being initialized");
+        }
+        if (this._error) {
+          throw this._error;
+        }
+        return this._value;
+      }
+      /**
+       * Get the wrapped value without forcing evaluation.
+       */
+      get rawValue() {
+        return this._value;
       }
     };
   }
@@ -3671,7 +5559,7 @@ function peekReadable(readable, reducer, maxChunks) {
     return reducer(chunks);
   }
   return {
-    read: /* @__PURE__ */ __name13(() => {
+    read: /* @__PURE__ */ __name18(() => {
       if (chunks.length > 0) {
         return chunks.shift();
       }
@@ -3688,19 +5576,19 @@ function consumeStream(stream, reducer) {
   return new Promise((resolve2, reject) => {
     const chunks = [];
     listenStream(stream, {
-      onData: /* @__PURE__ */ __name13((chunk) => {
+      onData: /* @__PURE__ */ __name18((chunk) => {
         if (reducer) {
           chunks.push(chunk);
         }
       }, "onData"),
-      onError: /* @__PURE__ */ __name13((error) => {
+      onError: /* @__PURE__ */ __name18((error) => {
         if (reducer) {
           reject(error);
         } else {
           resolve2(void 0);
         }
       }, "onError"),
-      onEnd: /* @__PURE__ */ __name13(() => {
+      onEnd: /* @__PURE__ */ __name18(() => {
         if (reducer) {
           resolve2(reducer(chunks));
         } else {
@@ -3731,7 +5619,7 @@ function peekStream(stream, maxChunks) {
   return new Promise((resolve2, reject) => {
     const streamListeners = new DisposableStore();
     const buffer = [];
-    const dataListener = /* @__PURE__ */ __name13((chunk) => {
+    const dataListener = /* @__PURE__ */ __name18((chunk) => {
       buffer.push(chunk);
       if (buffer.length > maxChunks) {
         streamListeners.dispose();
@@ -3739,11 +5627,11 @@ function peekStream(stream, maxChunks) {
         return resolve2({ stream, buffer, ended: false });
       }
     }, "dataListener");
-    const errorListener = /* @__PURE__ */ __name13((error) => {
+    const errorListener = /* @__PURE__ */ __name18((error) => {
       streamListeners.dispose();
       return reject(error);
     }, "errorListener");
-    const endListener = /* @__PURE__ */ __name13(() => {
+    const endListener = /* @__PURE__ */ __name18(() => {
       streamListeners.dispose();
       return resolve2({ stream, buffer, ended: true });
     }, "endListener");
@@ -3770,7 +5658,7 @@ function emptyStream() {
 function toReadable(t) {
   let consumed = false;
   return {
-    read: /* @__PURE__ */ __name13(() => {
+    read: /* @__PURE__ */ __name18(() => {
       if (consumed) {
         return null;
       }
@@ -3782,16 +5670,16 @@ function toReadable(t) {
 function transform(stream, transformer, reducer) {
   const target = newWriteableStream(reducer);
   listenStream(stream, {
-    onData: /* @__PURE__ */ __name13((data) => target.write(transformer.data(data)), "onData"),
-    onError: /* @__PURE__ */ __name13((error) => target.error(transformer.error ? transformer.error(error) : error), "onError"),
-    onEnd: /* @__PURE__ */ __name13(() => target.end(), "onEnd")
+    onData: /* @__PURE__ */ __name18((data) => target.write(transformer.data(data)), "onData"),
+    onError: /* @__PURE__ */ __name18((error) => target.error(transformer.error ? transformer.error(error) : error), "onError"),
+    onEnd: /* @__PURE__ */ __name18(() => target.end(), "onEnd")
   });
   return target;
 }
 function prefixedReadable(prefix, readable, reducer) {
   let prefixHandled = false;
   return {
-    read: /* @__PURE__ */ __name13(() => {
+    read: /* @__PURE__ */ __name18(() => {
       const chunk = readable.read();
       if (!prefixHandled) {
         prefixHandled = true;
@@ -3808,15 +5696,15 @@ function prefixedStream(prefix, stream, reducer) {
   let prefixHandled = false;
   const target = newWriteableStream(reducer);
   listenStream(stream, {
-    onData: /* @__PURE__ */ __name13((data) => {
+    onData: /* @__PURE__ */ __name18((data) => {
       if (!prefixHandled) {
         prefixHandled = true;
         return target.write(reducer([prefix, data]));
       }
       return target.write(data);
     }, "onData"),
-    onError: /* @__PURE__ */ __name13((error) => target.error(error), "onError"),
-    onEnd: /* @__PURE__ */ __name13(() => {
+    onError: /* @__PURE__ */ __name18((error) => target.error(error), "onError"),
+    onEnd: /* @__PURE__ */ __name18(() => {
       if (!prefixHandled) {
         prefixHandled = true;
         target.write(prefix);
@@ -3826,28 +5714,28 @@ function prefixedStream(prefix, stream, reducer) {
   });
   return target;
 }
-var __defProp13, __name13, WriteableStreamImpl;
+var __defProp18, __name18, WriteableStreamImpl;
 var init_stream = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/stream.js"() {
     "use strict";
     init_errors();
     init_lifecycle();
-    __defProp13 = Object.defineProperty;
-    __name13 = /* @__PURE__ */ __name((target, value) => __defProp13(target, "name", { value, configurable: true }), "__name");
+    __defProp18 = Object.defineProperty;
+    __name18 = /* @__PURE__ */ __name((target, value) => __defProp18(target, "name", { value, configurable: true }), "__name");
     __name(isReadable, "isReadable");
-    __name13(isReadable, "isReadable");
+    __name18(isReadable, "isReadable");
     __name(isReadableStream, "isReadableStream");
-    __name13(isReadableStream, "isReadableStream");
+    __name18(isReadableStream, "isReadableStream");
     __name(isReadableBufferedStream, "isReadableBufferedStream");
-    __name13(isReadableBufferedStream, "isReadableBufferedStream");
+    __name18(isReadableBufferedStream, "isReadableBufferedStream");
     __name(newWriteableStream, "newWriteableStream");
-    __name13(newWriteableStream, "newWriteableStream");
+    __name18(newWriteableStream, "newWriteableStream");
     WriteableStreamImpl = class {
       static {
         __name(this, "WriteableStreamImpl");
       }
       static {
-        __name13(this, "WriteableStreamImpl");
+        __name18(this, "WriteableStreamImpl");
       }
       /**
        * @param reducer a function that reduces the buffered data into a single object;
@@ -4033,27 +5921,27 @@ var init_stream = __esm({
       }
     };
     __name(consumeReadable, "consumeReadable");
-    __name13(consumeReadable, "consumeReadable");
+    __name18(consumeReadable, "consumeReadable");
     __name(peekReadable, "peekReadable");
-    __name13(peekReadable, "peekReadable");
+    __name18(peekReadable, "peekReadable");
     __name(consumeStream, "consumeStream");
-    __name13(consumeStream, "consumeStream");
+    __name18(consumeStream, "consumeStream");
     __name(listenStream, "listenStream");
-    __name13(listenStream, "listenStream");
+    __name18(listenStream, "listenStream");
     __name(peekStream, "peekStream");
-    __name13(peekStream, "peekStream");
+    __name18(peekStream, "peekStream");
     __name(toStream, "toStream");
-    __name13(toStream, "toStream");
+    __name18(toStream, "toStream");
     __name(emptyStream, "emptyStream");
-    __name13(emptyStream, "emptyStream");
+    __name18(emptyStream, "emptyStream");
     __name(toReadable, "toReadable");
-    __name13(toReadable, "toReadable");
+    __name18(toReadable, "toReadable");
     __name(transform, "transform");
-    __name13(transform, "transform");
+    __name18(transform, "transform");
     __name(prefixedReadable, "prefixedReadable");
-    __name13(prefixedReadable, "prefixedReadable");
+    __name18(prefixedReadable, "prefixedReadable");
     __name(prefixedStream, "prefixedStream");
-    __name13(prefixedStream, "prefixedStream");
+    __name18(prefixedStream, "prefixedStream");
   }
 });
 
@@ -4155,7 +6043,7 @@ function bufferToStream(buffer) {
   return toStream(buffer, (chunks) => VSBuffer.concat(chunks));
 }
 function streamToBufferReadableStream(stream) {
-  return transform(stream, { data: /* @__PURE__ */ __name14((data) => typeof data === "string" ? VSBuffer.fromString(data) : VSBuffer.wrap(data), "data") }, (chunks) => VSBuffer.concat(chunks));
+  return transform(stream, { data: /* @__PURE__ */ __name19((data) => typeof data === "string" ? VSBuffer.fromString(data) : VSBuffer.wrap(data), "data") }, (chunks) => VSBuffer.concat(chunks));
 }
 function newWriteableBufferStream(options) {
   return newWriteableStream((chunks) => VSBuffer.concat(chunks), options);
@@ -4171,7 +6059,7 @@ function decodeBase64(encoded) {
   let remainder = 0;
   let bufi = 0;
   const buffer = new Uint8Array(Math.floor(encoded.length / 4 * 3));
-  const append = /* @__PURE__ */ __name14((value) => {
+  const append = /* @__PURE__ */ __name19((value) => {
     switch (remainder) {
       case 3:
         buffer[bufi++] = building | value;
@@ -4280,14 +6168,14 @@ function decodeHexChar(str, position) {
     throw new SyntaxError(`Invalid hex character at position ${position}`);
   }
 }
-var __defProp14, __name14, hasBuffer, indexOfTable, textEncoder, textDecoder, VSBuffer, base64Alphabet, base64UrlSafeAlphabet, hexChars;
+var __defProp19, __name19, hasBuffer, indexOfTable, textEncoder, textDecoder, VSBuffer, base64Alphabet, base64UrlSafeAlphabet, hexChars;
 var init_buffer = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/buffer.js"() {
     "use strict";
     init_lazy();
     init_stream();
-    __defProp14 = Object.defineProperty;
-    __name14 = /* @__PURE__ */ __name((target, value) => __defProp14(target, "name", { value, configurable: true }), "__name");
+    __defProp19 = Object.defineProperty;
+    __name19 = /* @__PURE__ */ __name((target, value) => __defProp19(target, "name", { value, configurable: true }), "__name");
     hasBuffer = typeof Buffer !== "undefined";
     indexOfTable = new Lazy(() => new Uint8Array(256));
     VSBuffer = class _VSBuffer {
@@ -4295,7 +6183,7 @@ var init_buffer = __esm({
         __name(this, "VSBuffer");
       }
       static {
-        __name14(this, "VSBuffer");
+        __name19(this, "VSBuffer");
       }
       /**
        * When running in a nodejs context, the backing store for the returned `VSBuffer` instance
@@ -4439,399 +6327,54 @@ var init_buffer = __esm({
       }
     };
     __name(binaryIndexOf, "binaryIndexOf");
-    __name14(binaryIndexOf, "binaryIndexOf");
+    __name19(binaryIndexOf, "binaryIndexOf");
     __name(readUInt16LE, "readUInt16LE");
-    __name14(readUInt16LE, "readUInt16LE");
+    __name19(readUInt16LE, "readUInt16LE");
     __name(writeUInt16LE, "writeUInt16LE");
-    __name14(writeUInt16LE, "writeUInt16LE");
+    __name19(writeUInt16LE, "writeUInt16LE");
     __name(readUInt32BE, "readUInt32BE");
-    __name14(readUInt32BE, "readUInt32BE");
+    __name19(readUInt32BE, "readUInt32BE");
     __name(writeUInt32BE, "writeUInt32BE");
-    __name14(writeUInt32BE, "writeUInt32BE");
+    __name19(writeUInt32BE, "writeUInt32BE");
     __name(readUInt32LE, "readUInt32LE");
-    __name14(readUInt32LE, "readUInt32LE");
+    __name19(readUInt32LE, "readUInt32LE");
     __name(writeUInt32LE, "writeUInt32LE");
-    __name14(writeUInt32LE, "writeUInt32LE");
+    __name19(writeUInt32LE, "writeUInt32LE");
     __name(readUInt8, "readUInt8");
-    __name14(readUInt8, "readUInt8");
+    __name19(readUInt8, "readUInt8");
     __name(writeUInt8, "writeUInt8");
-    __name14(writeUInt8, "writeUInt8");
+    __name19(writeUInt8, "writeUInt8");
     __name(readableToBuffer, "readableToBuffer");
-    __name14(readableToBuffer, "readableToBuffer");
+    __name19(readableToBuffer, "readableToBuffer");
     __name(bufferToReadable, "bufferToReadable");
-    __name14(bufferToReadable, "bufferToReadable");
+    __name19(bufferToReadable, "bufferToReadable");
     __name(streamToBuffer, "streamToBuffer");
-    __name14(streamToBuffer, "streamToBuffer");
+    __name19(streamToBuffer, "streamToBuffer");
     __name(bufferedStreamToBuffer, "bufferedStreamToBuffer");
-    __name14(bufferedStreamToBuffer, "bufferedStreamToBuffer");
+    __name19(bufferedStreamToBuffer, "bufferedStreamToBuffer");
     __name(bufferToStream, "bufferToStream");
-    __name14(bufferToStream, "bufferToStream");
+    __name19(bufferToStream, "bufferToStream");
     __name(streamToBufferReadableStream, "streamToBufferReadableStream");
-    __name14(streamToBufferReadableStream, "streamToBufferReadableStream");
+    __name19(streamToBufferReadableStream, "streamToBufferReadableStream");
     __name(newWriteableBufferStream, "newWriteableBufferStream");
-    __name14(newWriteableBufferStream, "newWriteableBufferStream");
+    __name19(newWriteableBufferStream, "newWriteableBufferStream");
     __name(prefixedBufferReadable, "prefixedBufferReadable");
-    __name14(prefixedBufferReadable, "prefixedBufferReadable");
+    __name19(prefixedBufferReadable, "prefixedBufferReadable");
     __name(prefixedBufferStream, "prefixedBufferStream");
-    __name14(prefixedBufferStream, "prefixedBufferStream");
+    __name19(prefixedBufferStream, "prefixedBufferStream");
     __name(decodeBase64, "decodeBase64");
-    __name14(decodeBase64, "decodeBase64");
+    __name19(decodeBase64, "decodeBase64");
     base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     base64UrlSafeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
     __name(encodeBase64, "encodeBase64");
-    __name14(encodeBase64, "encodeBase64");
+    __name19(encodeBase64, "encodeBase64");
     hexChars = "0123456789abcdef";
     __name(encodeHex, "encodeHex");
-    __name14(encodeHex, "encodeHex");
+    __name19(encodeHex, "encodeHex");
     __name(decodeHex, "decodeHex");
-    __name14(decodeHex, "decodeHex");
+    __name19(decodeHex, "decodeHex");
     __name(decodeHexChar, "decodeHexChar");
-    __name14(decodeHexChar, "decodeHexChar");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/nls.js
-function getNLSMessages() {
-  return globalThis._VSCODE_NLS_MESSAGES;
-}
-function getNLSLanguage() {
-  return globalThis._VSCODE_NLS_LANGUAGE;
-}
-function _format(message, args) {
-  let result;
-  if (args.length === 0) {
-    result = message;
-  } else {
-    result = message.replace(/\{(\d+)\}/g, (match, rest) => {
-      const index2 = rest[0];
-      const arg = args[index2];
-      let result2 = match;
-      if (typeof arg === "string") {
-        result2 = arg;
-      } else if (typeof arg === "number" || typeof arg === "boolean" || arg === void 0 || arg === null) {
-        result2 = String(arg);
-      }
-      return result2;
-    });
-  }
-  if (isPseudo) {
-    result = "\uFF3B" + result.replace(/[aouei]/g, "$&$&") + "\uFF3D";
-  }
-  return result;
-}
-function localize(data, message, ...args) {
-  if (typeof data === "number") {
-    return _format(lookupMessage(data, message), args);
-  }
-  return _format(message, args);
-}
-function lookupMessage(index2, fallback) {
-  const message = getNLSMessages()?.[index2];
-  if (typeof message !== "string") {
-    if (typeof fallback === "string") {
-      return fallback;
-    }
-    throw new Error(`!!! NLS MISSING: ${index2} !!!`);
-  }
-  return message;
-}
-function localize2(data, originalMessage, ...args) {
-  let message;
-  if (typeof data === "number") {
-    message = lookupMessage(data, originalMessage);
-  } else {
-    message = originalMessage;
-  }
-  const value = _format(message, args);
-  return {
-    value,
-    original: originalMessage === message ? value : _format(originalMessage, args)
-  };
-}
-var __defProp15, __name15, isPseudo;
-var init_nls = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/nls.js"() {
-    "use strict";
-    __defProp15 = Object.defineProperty;
-    __name15 = /* @__PURE__ */ __name((target, value) => __defProp15(target, "name", { value, configurable: true }), "__name");
-    __name(getNLSMessages, "getNLSMessages");
-    __name15(getNLSMessages, "getNLSMessages");
-    __name(getNLSLanguage, "getNLSLanguage");
-    __name15(getNLSLanguage, "getNLSLanguage");
-    isPseudo = getNLSLanguage() === "pseudo" || typeof document !== "undefined" && document.location && typeof document.location.hash === "string" && document.location.hash.indexOf("pseudo=true") >= 0;
-    __name(_format, "_format");
-    __name15(_format, "_format");
-    __name(localize, "localize");
-    __name15(localize, "localize");
-    __name(lookupMessage, "lookupMessage");
-    __name15(lookupMessage, "lookupMessage");
-    __name(localize2, "localize2");
-    __name15(localize2, "localize2");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/platform.js
-function PlatformToString(platform22) {
-  switch (platform22) {
-    case 0:
-      return "Web";
-    case 1:
-      return "Mac";
-    case 2:
-      return "Linux";
-    case 3:
-      return "Windows";
-  }
-}
-function isLittleEndian() {
-  if (!_isLittleEndianComputed) {
-    _isLittleEndianComputed = true;
-    const test = new Uint8Array(2);
-    test[0] = 1;
-    test[1] = 2;
-    const view = new Uint16Array(test.buffer);
-    _isLittleEndian = view[0] === (2 << 8) + 1;
-  }
-  return _isLittleEndian;
-}
-function isTahoeOrNewer(osVersion) {
-  return parseFloat(osVersion) >= 25;
-}
-var __defProp16, __name16, LANGUAGE_DEFAULT, _isWindows, _isMacintosh, _isLinux, _isLinuxSnap, _isNative, _isWeb, _isElectron, _isIOS, _isCI, _isMobile, _locale, _language, _platformLocale, _translationsConfigFile, _userAgent, $globalThis, nodeProcess, isElectronProcess, isElectronRenderer, Platform, _platform, isWindows, isMacintosh, isLinux, isLinuxSnap, isNative, isElectron, isWeb, isWebWorker, webWorkerOrigin, isIOS, isMobile, isCI, platform, userAgent, language, Language, locale, platformLocale, translationsConfigFile, setTimeout0IsFaster, setTimeout0, OperatingSystem, OS, _isLittleEndian, _isLittleEndianComputed, isChrome, isFirefox, isSafari, isEdge, isAndroid;
-var init_platform = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/platform.js"() {
-    "use strict";
-    init_nls();
-    __defProp16 = Object.defineProperty;
-    __name16 = /* @__PURE__ */ __name((target, value) => __defProp16(target, "name", { value, configurable: true }), "__name");
-    LANGUAGE_DEFAULT = "en";
-    _isWindows = false;
-    _isMacintosh = false;
-    _isLinux = false;
-    _isLinuxSnap = false;
-    _isNative = false;
-    _isWeb = false;
-    _isElectron = false;
-    _isIOS = false;
-    _isCI = false;
-    _isMobile = false;
-    _locale = void 0;
-    _language = LANGUAGE_DEFAULT;
-    _platformLocale = LANGUAGE_DEFAULT;
-    _translationsConfigFile = void 0;
-    _userAgent = void 0;
-    $globalThis = globalThis;
-    nodeProcess = void 0;
-    if (typeof $globalThis.vscode !== "undefined" && typeof $globalThis.vscode.process !== "undefined") {
-      nodeProcess = $globalThis.vscode.process;
-    } else if (typeof process !== "undefined" && typeof process?.versions?.node === "string") {
-      nodeProcess = process;
-    }
-    isElectronProcess = typeof nodeProcess?.versions?.electron === "string";
-    isElectronRenderer = isElectronProcess && nodeProcess?.type === "renderer";
-    if (typeof nodeProcess === "object") {
-      _isWindows = nodeProcess.platform === "win32";
-      _isMacintosh = nodeProcess.platform === "darwin";
-      _isLinux = nodeProcess.platform === "linux";
-      _isLinuxSnap = _isLinux && !!nodeProcess.env["SNAP"] && !!nodeProcess.env["SNAP_REVISION"];
-      _isElectron = isElectronProcess;
-      _isCI = !!nodeProcess.env["CI"] || !!nodeProcess.env["BUILD_ARTIFACTSTAGINGDIRECTORY"] || !!nodeProcess.env["GITHUB_WORKSPACE"];
-      _locale = LANGUAGE_DEFAULT;
-      _language = LANGUAGE_DEFAULT;
-      const rawNlsConfig = nodeProcess.env["VSCODE_NLS_CONFIG"];
-      if (rawNlsConfig) {
-        try {
-          const nlsConfig = JSON.parse(rawNlsConfig);
-          _locale = nlsConfig.userLocale;
-          _platformLocale = nlsConfig.osLocale;
-          _language = nlsConfig.resolvedLanguage || LANGUAGE_DEFAULT;
-          _translationsConfigFile = nlsConfig.languagePack?.translationsConfigFile;
-        } catch (e) {
-        }
-      }
-      _isNative = true;
-    } else if (typeof navigator === "object" && !isElectronRenderer) {
-      _userAgent = navigator.userAgent;
-      _isWindows = _userAgent.indexOf("Windows") >= 0;
-      _isMacintosh = _userAgent.indexOf("Macintosh") >= 0;
-      _isIOS = (_userAgent.indexOf("Macintosh") >= 0 || _userAgent.indexOf("iPad") >= 0 || _userAgent.indexOf("iPhone") >= 0) && !!navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
-      _isLinux = _userAgent.indexOf("Linux") >= 0;
-      _isMobile = _userAgent?.indexOf("Mobi") >= 0;
-      _isWeb = true;
-      _language = getNLSLanguage() || LANGUAGE_DEFAULT;
-      _locale = navigator.language.toLowerCase();
-      _platformLocale = _locale;
-    } else {
-      console.error("Unable to resolve platform.");
-    }
-    (function(Platform2) {
-      Platform2[Platform2["Web"] = 0] = "Web";
-      Platform2[Platform2["Mac"] = 1] = "Mac";
-      Platform2[Platform2["Linux"] = 2] = "Linux";
-      Platform2[Platform2["Windows"] = 3] = "Windows";
-    })(Platform || (Platform = {}));
-    __name(PlatformToString, "PlatformToString");
-    __name16(PlatformToString, "PlatformToString");
-    _platform = 0;
-    if (_isMacintosh) {
-      _platform = 1;
-    } else if (_isWindows) {
-      _platform = 3;
-    } else if (_isLinux) {
-      _platform = 2;
-    }
-    isWindows = _isWindows;
-    isMacintosh = _isMacintosh;
-    isLinux = _isLinux;
-    isLinuxSnap = _isLinuxSnap;
-    isNative = _isNative;
-    isElectron = _isElectron;
-    isWeb = _isWeb;
-    isWebWorker = _isWeb && typeof $globalThis.importScripts === "function";
-    webWorkerOrigin = isWebWorker ? $globalThis.origin : void 0;
-    isIOS = _isIOS;
-    isMobile = _isMobile;
-    isCI = _isCI;
-    platform = _platform;
-    userAgent = _userAgent;
-    language = _language;
-    (function(Language2) {
-      function value() {
-        return language;
-      }
-      __name(value, "value");
-      __name16(value, "value");
-      Language2.value = value;
-      function isDefaultVariant() {
-        if (language.length === 2) {
-          return language === "en";
-        } else if (language.length >= 3) {
-          return language[0] === "e" && language[1] === "n" && language[2] === "-";
-        } else {
-          return false;
-        }
-      }
-      __name(isDefaultVariant, "isDefaultVariant");
-      __name16(isDefaultVariant, "isDefaultVariant");
-      Language2.isDefaultVariant = isDefaultVariant;
-      function isDefault() {
-        return language === "en";
-      }
-      __name(isDefault, "isDefault");
-      __name16(isDefault, "isDefault");
-      Language2.isDefault = isDefault;
-    })(Language || (Language = {}));
-    locale = _locale;
-    platformLocale = _platformLocale;
-    translationsConfigFile = _translationsConfigFile;
-    setTimeout0IsFaster = typeof $globalThis.postMessage === "function" && !$globalThis.importScripts;
-    setTimeout0 = (() => {
-      if (setTimeout0IsFaster) {
-        const pending = [];
-        $globalThis.addEventListener("message", (e) => {
-          if (e.data && e.data.vscodeScheduleAsyncWork) {
-            for (let i = 0, len = pending.length; i < len; i++) {
-              const candidate = pending[i];
-              if (candidate.id === e.data.vscodeScheduleAsyncWork) {
-                pending.splice(i, 1);
-                candidate.callback();
-                return;
-              }
-            }
-          }
-        });
-        let lastId = 0;
-        return (callback) => {
-          const myId = ++lastId;
-          pending.push({
-            id: myId,
-            callback
-          });
-          $globalThis.postMessage({ vscodeScheduleAsyncWork: myId }, "*");
-        };
-      }
-      return (callback) => setTimeout(callback);
-    })();
-    (function(OperatingSystem2) {
-      OperatingSystem2[OperatingSystem2["Windows"] = 1] = "Windows";
-      OperatingSystem2[OperatingSystem2["Macintosh"] = 2] = "Macintosh";
-      OperatingSystem2[OperatingSystem2["Linux"] = 3] = "Linux";
-    })(OperatingSystem || (OperatingSystem = {}));
-    OS = _isMacintosh || _isIOS ? 2 : _isWindows ? 1 : 3;
-    _isLittleEndian = true;
-    _isLittleEndianComputed = false;
-    __name(isLittleEndian, "isLittleEndian");
-    __name16(isLittleEndian, "isLittleEndian");
-    isChrome = !!(userAgent && userAgent.indexOf("Chrome") >= 0);
-    isFirefox = !!(userAgent && userAgent.indexOf("Firefox") >= 0);
-    isSafari = !!(!isChrome && (userAgent && userAgent.indexOf("Safari") >= 0));
-    isEdge = !!(userAgent && userAgent.indexOf("Edg/") >= 0);
-    isAndroid = !!(userAgent && userAgent.indexOf("Android") >= 0);
-    __name(isTahoeOrNewer, "isTahoeOrNewer");
-    __name16(isTahoeOrNewer, "isTahoeOrNewer");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/process.js
-var safeProcess, vscodeGlobal, cwd, env, platform2, arch;
-var init_process = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/process.js"() {
-    "use strict";
-    init_platform();
-    vscodeGlobal = globalThis.vscode;
-    if (typeof vscodeGlobal !== "undefined" && typeof vscodeGlobal.process !== "undefined") {
-      const sandboxProcess = vscodeGlobal.process;
-      safeProcess = {
-        get platform() {
-          return sandboxProcess.platform;
-        },
-        get arch() {
-          return sandboxProcess.arch;
-        },
-        get env() {
-          return sandboxProcess.env;
-        },
-        cwd() {
-          return sandboxProcess.cwd();
-        }
-      };
-    } else if (typeof process !== "undefined" && typeof process?.versions?.node === "string") {
-      safeProcess = {
-        get platform() {
-          return process.platform;
-        },
-        get arch() {
-          return process.arch;
-        },
-        get env() {
-          return process.env;
-        },
-        cwd() {
-          return process.env["VSCODE_CWD"] || process.cwd();
-        }
-      };
-    } else {
-      safeProcess = {
-        // Supported
-        get platform() {
-          return isWindows ? "win32" : isMacintosh ? "darwin" : "linux";
-        },
-        get arch() {
-          return void 0;
-        },
-        // Unsupported
-        get env() {
-          return {};
-        },
-        cwd() {
-          return "/";
-        }
-      };
-    }
-    cwd = safeProcess.cwd;
-    env = safeProcess.env;
-    platform2 = safeProcess.platform;
-    arch = safeProcess.arch;
+    __name19(decodeHexChar, "decodeHexChar");
   }
 });
 
@@ -4927,13 +6470,13 @@ function _format2(sep2, pathObject) {
   }
   return dir === pathObject.root ? `${dir}${base}` : `${dir}${sep2}${base}`;
 }
-var __defProp17, __name17, CHAR_UPPERCASE_A, CHAR_LOWERCASE_A, CHAR_UPPERCASE_Z, CHAR_LOWERCASE_Z, CHAR_DOT, CHAR_FORWARD_SLASH, CHAR_BACKWARD_SLASH, CHAR_COLON, CHAR_QUESTION_MARK, ErrorInvalidArgType, platformIsWin32, win32, posixCwd, posix, normalize, isAbsolute, join, resolve, relative, dirname, basename, extname, format, parse, toNamespacedPath, sep, delimiter;
+var __defProp20, __name20, CHAR_UPPERCASE_A, CHAR_LOWERCASE_A, CHAR_UPPERCASE_Z, CHAR_LOWERCASE_Z, CHAR_DOT, CHAR_FORWARD_SLASH, CHAR_BACKWARD_SLASH, CHAR_COLON, CHAR_QUESTION_MARK, ErrorInvalidArgType, platformIsWin32, win32, posixCwd, posix, normalize, isAbsolute, join, resolve, relative, dirname, basename, extname, format, parse, toNamespacedPath, sep, delimiter;
 var init_path = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/path.js"() {
     "use strict";
     init_process();
-    __defProp17 = Object.defineProperty;
-    __name17 = /* @__PURE__ */ __name((target, value) => __defProp17(target, "name", { value, configurable: true }), "__name");
+    __defProp20 = Object.defineProperty;
+    __name20 = /* @__PURE__ */ __name((target, value) => __defProp20(target, "name", { value, configurable: true }), "__name");
     CHAR_UPPERCASE_A = 65;
     CHAR_LOWERCASE_A = 97;
     CHAR_UPPERCASE_Z = 90;
@@ -4948,7 +6491,7 @@ var init_path = __esm({
         __name(this, "ErrorInvalidArgType");
       }
       static {
-        __name17(this, "ErrorInvalidArgType");
+        __name20(this, "ErrorInvalidArgType");
       }
       constructor(name, expected, actual) {
         let determiner;
@@ -4966,22 +6509,22 @@ var init_path = __esm({
       }
     };
     __name(validateObject, "validateObject");
-    __name17(validateObject, "validateObject");
+    __name20(validateObject, "validateObject");
     __name(validateString, "validateString");
-    __name17(validateString, "validateString");
+    __name20(validateString, "validateString");
     platformIsWin32 = platform2 === "win32";
     __name(isPathSeparator, "isPathSeparator");
-    __name17(isPathSeparator, "isPathSeparator");
+    __name20(isPathSeparator, "isPathSeparator");
     __name(isPosixPathSeparator, "isPosixPathSeparator");
-    __name17(isPosixPathSeparator, "isPosixPathSeparator");
+    __name20(isPosixPathSeparator, "isPosixPathSeparator");
     __name(isWindowsDeviceRoot, "isWindowsDeviceRoot");
-    __name17(isWindowsDeviceRoot, "isWindowsDeviceRoot");
+    __name20(isWindowsDeviceRoot, "isWindowsDeviceRoot");
     __name(normalizeString, "normalizeString");
-    __name17(normalizeString, "normalizeString");
+    __name20(normalizeString, "normalizeString");
     __name(formatExt, "formatExt");
-    __name17(formatExt, "formatExt");
+    __name20(formatExt, "formatExt");
     __name(_format2, "_format");
-    __name17(_format2, "_format");
+    __name20(_format2, "_format");
     win32 = {
       // path.resolve([from ...], to)
       resolve(...pathSegments) {
@@ -6000,13 +7543,13 @@ function normalizeMimeType(mimeType, strict) {
 function isTextStreamMime(mimeType) {
   return ["application/vnd.code.notebook.stdout", "application/vnd.code.notebook.stderr"].includes(mimeType);
 }
-var __defProp18, __name18, Mimes, mapExtToTextMimes, mapExtToMediaMimes, _simplePattern;
+var __defProp21, __name21, Mimes, mapExtToTextMimes, mapExtToMediaMimes, _simplePattern;
 var init_mime = __esm({
   "../Output/Target/Microsoft/VSCode/vs/base/common/mime.js"() {
     "use strict";
     init_path();
-    __defProp18 = Object.defineProperty;
-    __name18 = /* @__PURE__ */ __name((target, value) => __defProp18(target, "name", { value, configurable: true }), "__name");
+    __defProp21 = Object.defineProperty;
+    __name21 = /* @__PURE__ */ __name((target, value) => __defProp21(target, "name", { value, configurable: true }), "__name");
     Mimes = Object.freeze({
       text: "text/plain",
       binary: "application/octet-stream",
@@ -6079,1590 +7622,20 @@ var init_mime = __esm({
       ".woff": "application/font-woff"
     };
     __name(getMediaOrTextMime, "getMediaOrTextMime");
-    __name18(getMediaOrTextMime, "getMediaOrTextMime");
+    __name21(getMediaOrTextMime, "getMediaOrTextMime");
     __name(getMediaMime, "getMediaMime");
-    __name18(getMediaMime, "getMediaMime");
+    __name21(getMediaMime, "getMediaMime");
     __name(getExtensionForMimeType, "getExtensionForMimeType");
-    __name18(getExtensionForMimeType, "getExtensionForMimeType");
+    __name21(getExtensionForMimeType, "getExtensionForMimeType");
     _simplePattern = /^(.+)\/(.+?)(;.+)?$/;
     __name(normalizeMimeType, "normalizeMimeType");
-    __name18(normalizeMimeType, "normalizeMimeType");
+    __name21(normalizeMimeType, "normalizeMimeType");
     __name(isTextStreamMime, "isTextStreamMime");
-    __name18(isTextStreamMime, "isTextStreamMime");
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/linkedList.js
-var __defProp19, __name19, Node, LinkedList;
-var init_linkedList = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/linkedList.js"() {
-    "use strict";
-    __defProp19 = Object.defineProperty;
-    __name19 = /* @__PURE__ */ __name((target, value) => __defProp19(target, "name", { value, configurable: true }), "__name");
-    Node = class _Node {
-      static {
-        __name(this, "Node");
-      }
-      static {
-        __name19(this, "Node");
-      }
-      static {
-        this.Undefined = new _Node(void 0);
-      }
-      constructor(element) {
-        this.element = element;
-        this.next = _Node.Undefined;
-        this.prev = _Node.Undefined;
-      }
-    };
-    LinkedList = class {
-      static {
-        __name(this, "LinkedList");
-      }
-      static {
-        __name19(this, "LinkedList");
-      }
-      constructor() {
-        this._first = Node.Undefined;
-        this._last = Node.Undefined;
-        this._size = 0;
-      }
-      get size() {
-        return this._size;
-      }
-      isEmpty() {
-        return this._first === Node.Undefined;
-      }
-      clear() {
-        let node = this._first;
-        while (node !== Node.Undefined) {
-          const next = node.next;
-          node.prev = Node.Undefined;
-          node.next = Node.Undefined;
-          node = next;
-        }
-        this._first = Node.Undefined;
-        this._last = Node.Undefined;
-        this._size = 0;
-      }
-      unshift(element) {
-        return this._insert(element, false);
-      }
-      push(element) {
-        return this._insert(element, true);
-      }
-      _insert(element, atTheEnd) {
-        const newNode = new Node(element);
-        if (this._first === Node.Undefined) {
-          this._first = newNode;
-          this._last = newNode;
-        } else if (atTheEnd) {
-          const oldLast = this._last;
-          this._last = newNode;
-          newNode.prev = oldLast;
-          oldLast.next = newNode;
-        } else {
-          const oldFirst = this._first;
-          this._first = newNode;
-          newNode.next = oldFirst;
-          oldFirst.prev = newNode;
-        }
-        this._size += 1;
-        let didRemove = false;
-        return () => {
-          if (!didRemove) {
-            didRemove = true;
-            this._remove(newNode);
-          }
-        };
-      }
-      shift() {
-        if (this._first === Node.Undefined) {
-          return void 0;
-        } else {
-          const res = this._first.element;
-          this._remove(this._first);
-          return res;
-        }
-      }
-      pop() {
-        if (this._last === Node.Undefined) {
-          return void 0;
-        } else {
-          const res = this._last.element;
-          this._remove(this._last);
-          return res;
-        }
-      }
-      peek() {
-        if (this._last === Node.Undefined) {
-          return void 0;
-        } else {
-          const res = this._last.element;
-          return res;
-        }
-      }
-      _remove(node) {
-        if (node.prev !== Node.Undefined && node.next !== Node.Undefined) {
-          const anchor = node.prev;
-          anchor.next = node.next;
-          node.next.prev = anchor;
-        } else if (node.prev === Node.Undefined && node.next === Node.Undefined) {
-          this._first = Node.Undefined;
-          this._last = Node.Undefined;
-        } else if (node.next === Node.Undefined) {
-          this._last = this._last.prev;
-          this._last.next = Node.Undefined;
-        } else if (node.prev === Node.Undefined) {
-          this._first = this._first.next;
-          this._first.prev = Node.Undefined;
-        }
-        this._size -= 1;
-      }
-      *[Symbol.iterator]() {
-        let node = this._first;
-        while (node !== Node.Undefined) {
-          yield node.element;
-          node = node.next;
-        }
-      }
-    };
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/stopwatch.js
-var __defProp20, __name20, performanceNow, StopWatch;
-var init_stopwatch = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/stopwatch.js"() {
-    "use strict";
-    __defProp20 = Object.defineProperty;
-    __name20 = /* @__PURE__ */ __name((target, value) => __defProp20(target, "name", { value, configurable: true }), "__name");
-    performanceNow = globalThis.performance.now.bind(globalThis.performance);
-    StopWatch = class _StopWatch {
-      static {
-        __name(this, "StopWatch");
-      }
-      static {
-        __name20(this, "StopWatch");
-      }
-      static create(highResolution) {
-        return new _StopWatch(highResolution);
-      }
-      constructor(highResolution) {
-        this._now = highResolution === false ? Date.now : performanceNow;
-        this._startTime = this._now();
-        this._stopTime = -1;
-      }
-      stop() {
-        this._stopTime = this._now();
-      }
-      reset() {
-        this._startTime = this._now();
-        this._stopTime = -1;
-      }
-      elapsed() {
-        if (this._stopTime !== -1) {
-          return this._stopTime - this._startTime;
-        }
-        return this._now() - this._startTime;
-      }
-    };
-  }
-});
-
-// ../Output/Target/Microsoft/VSCode/vs/base/common/event.js
-var event_exports = {};
-__export(event_exports, {
-  AsyncEmitter: () => AsyncEmitter,
-  DebounceEmitter: () => DebounceEmitter,
-  DynamicListEventMultiplexer: () => DynamicListEventMultiplexer,
-  Emitter: () => Emitter,
-  Event: () => Event,
-  EventBufferer: () => EventBufferer,
-  EventMultiplexer: () => EventMultiplexer,
-  EventProfiling: () => EventProfiling,
-  ListenerLeakError: () => ListenerLeakError,
-  ListenerRefusalError: () => ListenerRefusalError,
-  MicrotaskEmitter: () => MicrotaskEmitter,
-  PauseableEmitter: () => PauseableEmitter,
-  Relay: () => Relay,
-  ValueWithChangeEvent: () => ValueWithChangeEvent,
-  createEventDeliveryQueue: () => createEventDeliveryQueue,
-  setGlobalLeakWarningThreshold: () => setGlobalLeakWarningThreshold,
-  trackSetChanges: () => trackSetChanges
-});
-function _isBufferLeakWarningEnabled() {
-  return !!env["VSCODE_DEV"];
-}
-function setGlobalLeakWarningThreshold(n) {
-  const oldValue = _globalLeakWarningThreshold;
-  _globalLeakWarningThreshold = n;
-  return {
-    dispose() {
-      _globalLeakWarningThreshold = oldValue;
-    }
-  };
-}
-function trackSetChanges(getData, onDidChangeData, handleItem) {
-  const map = new DisposableMap();
-  let oldData = new Set(getData());
-  for (const d of oldData) {
-    map.set(d, handleItem(d));
-  }
-  const store = new DisposableStore();
-  store.add(onDidChangeData(() => {
-    const newData = getData();
-    const diff = diffSets(oldData, newData);
-    for (const r of diff.removed) {
-      map.deleteAndDispose(r);
-    }
-    for (const a of diff.added) {
-      map.set(a, handleItem(a));
-    }
-    oldData = new Set(newData);
-  }));
-  store.add(map);
-  return store;
-}
-function addToDisposables(result, disposables) {
-  if (disposables instanceof DisposableStore) {
-    disposables.add(result);
-  } else if (Array.isArray(disposables)) {
-    disposables.push(result);
-  }
-}
-function disposeAndRemove(result, disposables) {
-  if (disposables instanceof DisposableStore) {
-    disposables.delete(result);
-  } else if (Array.isArray(disposables)) {
-    const index2 = disposables.indexOf(result);
-    if (index2 !== -1) {
-      disposables.splice(index2, 1);
-    }
-  }
-  result.dispose();
-}
-var __defProp21, __name21, _enableDisposeWithListenerWarning, _enableSnapshotPotentialLeakWarning, _bufferLeakWarnCountThreshold, _bufferLeakWarnTimeThreshold, Event, EventProfiling, _globalLeakWarningThreshold, LeakageMonitor, Stacktrace, ListenerLeakError, ListenerRefusalError, id, UniqueContainer, compactionThreshold, forEachListener, Emitter, createEventDeliveryQueue, EventDeliveryQueuePrivate, AsyncEmitter, PauseableEmitter, DebounceEmitter, MicrotaskEmitter, EventMultiplexer, DynamicListEventMultiplexer, EventBufferer, Relay, ValueWithChangeEvent, ConstValueWithChangeEvent;
-var init_event = __esm({
-  "../Output/Target/Microsoft/VSCode/vs/base/common/event.js"() {
-    "use strict";
-    init_collections();
-    init_errors();
-    init_functional();
-    init_lifecycle();
-    init_linkedList();
-    init_process();
-    init_stopwatch();
-    __defProp21 = Object.defineProperty;
-    __name21 = /* @__PURE__ */ __name((target, value) => __defProp21(target, "name", { value, configurable: true }), "__name");
-    _enableDisposeWithListenerWarning = false;
-    _enableSnapshotPotentialLeakWarning = false;
-    _bufferLeakWarnCountThreshold = 100;
-    _bufferLeakWarnTimeThreshold = 6e4;
-    __name(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
-    __name21(_isBufferLeakWarningEnabled, "_isBufferLeakWarningEnabled");
-    (function(Event2) {
-      Event2.None = () => Disposable.None;
-      function _addLeakageTraceLogic(options) {
-        if (_enableSnapshotPotentialLeakWarning) {
-          const { onDidAddListener: origListenerDidAdd } = options;
-          const stack = Stacktrace.create();
-          let count2 = 0;
-          options.onDidAddListener = () => {
-            if (++count2 === 2) {
-              console.warn("snapshotted emitter LIKELY used public and SHOULD HAVE BEEN created with DisposableStore. snapshotted here");
-              stack.print();
-            }
-            origListenerDidAdd?.();
-          };
-        }
-      }
-      __name(_addLeakageTraceLogic, "_addLeakageTraceLogic");
-      __name21(_addLeakageTraceLogic, "_addLeakageTraceLogic");
-      function defer(event, flushOnListenerRemove, disposable) {
-        return debounce(event, () => void 0, 0, void 0, flushOnListenerRemove ?? true, void 0, disposable);
-      }
-      __name(defer, "defer");
-      __name21(defer, "defer");
-      Event2.defer = defer;
-      function once(event) {
-        return (listener, thisArgs = null, disposables) => {
-          let didFire = false;
-          let result = void 0;
-          result = event((e) => {
-            if (didFire) {
-              return;
-            } else if (result) {
-              result.dispose();
-            } else {
-              didFire = true;
-            }
-            return listener.call(thisArgs, e);
-          }, null, disposables);
-          if (didFire) {
-            result.dispose();
-          }
-          return result;
-        };
-      }
-      __name(once, "once");
-      __name21(once, "once");
-      Event2.once = once;
-      function onceIf(event, condition) {
-        return Event2.once(Event2.filter(event, condition));
-      }
-      __name(onceIf, "onceIf");
-      __name21(onceIf, "onceIf");
-      Event2.onceIf = onceIf;
-      function map(event, map2, disposable) {
-        return snapshot((listener, thisArgs = null, disposables) => event((i) => listener.call(thisArgs, map2(i)), null, disposables), disposable);
-      }
-      __name(map, "map");
-      __name21(map, "map");
-      Event2.map = map;
-      function forEach(event, each, disposable) {
-        return snapshot((listener, thisArgs = null, disposables) => event((i) => {
-          each(i);
-          listener.call(thisArgs, i);
-        }, null, disposables), disposable);
-      }
-      __name(forEach, "forEach");
-      __name21(forEach, "forEach");
-      Event2.forEach = forEach;
-      function filter(event, filter2, disposable) {
-        return snapshot((listener, thisArgs = null, disposables) => event((e) => filter2(e) && listener.call(thisArgs, e), null, disposables), disposable);
-      }
-      __name(filter, "filter");
-      __name21(filter, "filter");
-      Event2.filter = filter;
-      function signal(event) {
-        return event;
-      }
-      __name(signal, "signal");
-      __name21(signal, "signal");
-      Event2.signal = signal;
-      function any(...events) {
-        return (listener, thisArgs = null, disposables) => {
-          const disposable = combinedDisposable(...events.map((event) => event((e) => listener.call(thisArgs, e))));
-          return addAndReturnDisposable(disposable, disposables);
-        };
-      }
-      __name(any, "any");
-      __name21(any, "any");
-      Event2.any = any;
-      function reduce(event, merge, initial, disposable) {
-        let output = initial;
-        return map(event, (e) => {
-          output = merge(output, e);
-          return output;
-        }, disposable);
-      }
-      __name(reduce, "reduce");
-      __name21(reduce, "reduce");
-      Event2.reduce = reduce;
-      function snapshot(event, disposable) {
-        let listener;
-        const options = {
-          onWillAddFirstListener() {
-            listener = event(emitter.fire, emitter);
-          },
-          onDidRemoveLastListener() {
-            listener?.dispose();
-          }
-        };
-        if (!disposable) {
-          _addLeakageTraceLogic(options);
-        }
-        const emitter = new Emitter(options);
-        disposable?.add(emitter);
-        return emitter.event;
-      }
-      __name(snapshot, "snapshot");
-      __name21(snapshot, "snapshot");
-      function addAndReturnDisposable(d, store) {
-        if (store instanceof Array) {
-          store.push(d);
-        } else if (store) {
-          store.add(d);
-        }
-        return d;
-      }
-      __name(addAndReturnDisposable, "addAndReturnDisposable");
-      __name21(addAndReturnDisposable, "addAndReturnDisposable");
-      function debounce(event, merge, delay = 100, leading = false, flushOnListenerRemove = false, leakWarningThreshold, disposable) {
-        let subscription;
-        let output = void 0;
-        let handle = void 0;
-        let numDebouncedCalls = 0;
-        let doFire;
-        const options = {
-          leakWarningThreshold,
-          onWillAddFirstListener() {
-            subscription = event((cur) => {
-              numDebouncedCalls++;
-              output = merge(output, cur);
-              if (leading && !handle) {
-                emitter.fire(output);
-                output = void 0;
-              }
-              doFire = /* @__PURE__ */ __name21(() => {
-                const _output = output;
-                output = void 0;
-                handle = void 0;
-                if (!leading || numDebouncedCalls > 1) {
-                  emitter.fire(_output);
-                }
-                numDebouncedCalls = 0;
-              }, "doFire");
-              if (typeof delay === "number") {
-                if (handle) {
-                  clearTimeout(handle);
-                }
-                handle = setTimeout(doFire, delay);
-              } else {
-                if (handle === void 0) {
-                  handle = null;
-                  queueMicrotask(doFire);
-                }
-              }
-            });
-          },
-          onWillRemoveListener() {
-            if (flushOnListenerRemove && numDebouncedCalls > 0) {
-              doFire?.();
-            }
-          },
-          onDidRemoveLastListener() {
-            doFire = void 0;
-            subscription.dispose();
-          }
-        };
-        if (!disposable) {
-          _addLeakageTraceLogic(options);
-        }
-        const emitter = new Emitter(options);
-        disposable?.add(emitter);
-        return emitter.event;
-      }
-      __name(debounce, "debounce");
-      __name21(debounce, "debounce");
-      Event2.debounce = debounce;
-      function accumulate(event, delay = 0, flushOnListenerRemove, disposable) {
-        return Event2.debounce(event, (last, e) => {
-          if (!last) {
-            return [e];
-          }
-          last.push(e);
-          return last;
-        }, delay, void 0, flushOnListenerRemove ?? true, void 0, disposable);
-      }
-      __name(accumulate, "accumulate");
-      __name21(accumulate, "accumulate");
-      Event2.accumulate = accumulate;
-      function throttle(event, merge, delay = 100, leading = true, trailing = true, leakWarningThreshold, disposable) {
-        let subscription;
-        let output = void 0;
-        let handle = void 0;
-        let numThrottledCalls = 0;
-        const options = {
-          leakWarningThreshold,
-          onWillAddFirstListener() {
-            subscription = event((cur) => {
-              numThrottledCalls++;
-              output = merge(output, cur);
-              if (handle === void 0) {
-                if (leading) {
-                  emitter.fire(output);
-                  output = void 0;
-                  numThrottledCalls = 0;
-                }
-                if (typeof delay === "number") {
-                  handle = setTimeout(() => {
-                    if (trailing && numThrottledCalls > 0) {
-                      emitter.fire(output);
-                    }
-                    output = void 0;
-                    handle = void 0;
-                    numThrottledCalls = 0;
-                  }, delay);
-                } else {
-                  handle = 0;
-                  queueMicrotask(() => {
-                    if (trailing && numThrottledCalls > 0) {
-                      emitter.fire(output);
-                    }
-                    output = void 0;
-                    handle = void 0;
-                    numThrottledCalls = 0;
-                  });
-                }
-              }
-            });
-          },
-          onDidRemoveLastListener() {
-            subscription.dispose();
-          }
-        };
-        if (!disposable) {
-          _addLeakageTraceLogic(options);
-        }
-        const emitter = new Emitter(options);
-        disposable?.add(emitter);
-        return emitter.event;
-      }
-      __name(throttle, "throttle");
-      __name21(throttle, "throttle");
-      Event2.throttle = throttle;
-      function latch(event, equals3 = (a, b) => a === b, disposable) {
-        let firstCall = true;
-        let cache;
-        return filter(event, (value) => {
-          const shouldEmit = firstCall || !equals3(value, cache);
-          firstCall = false;
-          cache = value;
-          return shouldEmit;
-        }, disposable);
-      }
-      __name(latch, "latch");
-      __name21(latch, "latch");
-      Event2.latch = latch;
-      function split(event, isT, disposable) {
-        return [
-          Event2.filter(event, isT, disposable),
-          Event2.filter(event, (e) => !isT(e), disposable)
-        ];
-      }
-      __name(split, "split");
-      __name21(split, "split");
-      Event2.split = split;
-      function buffer(event, debugName, flushAfterTimeout = false, _buffer = [], disposable) {
-        let buffer2 = _buffer.slice();
-        let bufferLeakWarningData;
-        if (_isBufferLeakWarningEnabled()) {
-          bufferLeakWarningData = {
-            stack: Stacktrace.create(),
-            timerId: setTimeout(() => {
-              if (buffer2 && buffer2.length > 0 && bufferLeakWarningData && !bufferLeakWarningData.warned) {
-                bufferLeakWarningData.warned = true;
-                console.warn(`[Event.buffer][${debugName}] potential LEAK detected: ${buffer2.length} events buffered for ${_bufferLeakWarnTimeThreshold / 1e3}s without being consumed. Buffered here:`);
-                bufferLeakWarningData.stack.print();
-              }
-            }, _bufferLeakWarnTimeThreshold),
-            warned: false
-          };
-          if (disposable) {
-            disposable.add(toDisposable(() => clearTimeout(bufferLeakWarningData.timerId)));
-          }
-        }
-        const clearLeakWarningTimer = /* @__PURE__ */ __name21(() => {
-          if (bufferLeakWarningData) {
-            clearTimeout(bufferLeakWarningData.timerId);
-          }
-        }, "clearLeakWarningTimer");
-        let listener = event((e) => {
-          if (buffer2) {
-            buffer2.push(e);
-            if (_isBufferLeakWarningEnabled() && bufferLeakWarningData && !bufferLeakWarningData.warned && buffer2.length >= _bufferLeakWarnCountThreshold) {
-              bufferLeakWarningData.warned = true;
-              console.warn(`[Event.buffer][${debugName}] potential LEAK detected: ${buffer2.length} events buffered without being consumed. Buffered here:`);
-              bufferLeakWarningData.stack.print();
-            }
-          } else {
-            emitter.fire(e);
-          }
-        });
-        if (disposable) {
-          disposable.add(listener);
-        }
-        const flush = /* @__PURE__ */ __name21(() => {
-          buffer2?.forEach((e) => emitter.fire(e));
-          buffer2 = null;
-          clearLeakWarningTimer();
-        }, "flush");
-        const emitter = new Emitter({
-          onWillAddFirstListener() {
-            if (!listener) {
-              listener = event((e) => emitter.fire(e));
-              if (disposable) {
-                disposable.add(listener);
-              }
-            }
-          },
-          onDidAddFirstListener() {
-            if (buffer2) {
-              if (flushAfterTimeout) {
-                setTimeout(flush);
-              } else {
-                flush();
-              }
-            }
-          },
-          onDidRemoveLastListener() {
-            if (listener) {
-              listener.dispose();
-            }
-            listener = null;
-            clearLeakWarningTimer();
-          }
-        });
-        if (disposable) {
-          disposable.add(emitter);
-        }
-        return emitter.event;
-      }
-      __name(buffer, "buffer");
-      __name21(buffer, "buffer");
-      Event2.buffer = buffer;
-      function chain(event, sythensize) {
-        const fn = /* @__PURE__ */ __name21((listener, thisArgs, disposables) => {
-          const cs = sythensize(new ChainableSynthesis());
-          return event(function(value) {
-            const result = cs.evaluate(value);
-            if (result !== HaltChainable) {
-              listener.call(thisArgs, result);
-            }
-          }, void 0, disposables);
-        }, "fn");
-        return fn;
-      }
-      __name(chain, "chain");
-      __name21(chain, "chain");
-      Event2.chain = chain;
-      const HaltChainable = /* @__PURE__ */ Symbol("HaltChainable");
-      class ChainableSynthesis {
-        static {
-          __name(this, "ChainableSynthesis");
-        }
-        static {
-          __name21(this, "ChainableSynthesis");
-        }
-        constructor() {
-          this.steps = [];
-        }
-        map(fn) {
-          this.steps.push(fn);
-          return this;
-        }
-        forEach(fn) {
-          this.steps.push((v) => {
-            fn(v);
-            return v;
-          });
-          return this;
-        }
-        filter(fn) {
-          this.steps.push((v) => fn(v) ? v : HaltChainable);
-          return this;
-        }
-        reduce(merge, initial) {
-          let last = initial;
-          this.steps.push((v) => {
-            last = merge(last, v);
-            return last;
-          });
-          return this;
-        }
-        latch(equals3 = (a, b) => a === b) {
-          let firstCall = true;
-          let cache;
-          this.steps.push((value) => {
-            const shouldEmit = firstCall || !equals3(value, cache);
-            firstCall = false;
-            cache = value;
-            return shouldEmit ? value : HaltChainable;
-          });
-          return this;
-        }
-        evaluate(value) {
-          for (const step of this.steps) {
-            value = step(value);
-            if (value === HaltChainable) {
-              break;
-            }
-          }
-          return value;
-        }
-      }
-      function fromNodeEventEmitter(emitter, eventName, map2 = (id2) => id2) {
-        const fn = /* @__PURE__ */ __name21((...args) => result.fire(map2(...args)), "fn");
-        const onFirstListenerAdd = /* @__PURE__ */ __name21(() => emitter.on(eventName, fn), "onFirstListenerAdd");
-        const onLastListenerRemove = /* @__PURE__ */ __name21(() => emitter.removeListener(eventName, fn), "onLastListenerRemove");
-        const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
-        return result.event;
-      }
-      __name(fromNodeEventEmitter, "fromNodeEventEmitter");
-      __name21(fromNodeEventEmitter, "fromNodeEventEmitter");
-      Event2.fromNodeEventEmitter = fromNodeEventEmitter;
-      function fromDOMEventEmitter(emitter, eventName, map2 = (id2) => id2) {
-        const fn = /* @__PURE__ */ __name21((...args) => result.fire(map2(...args)), "fn");
-        const onFirstListenerAdd = /* @__PURE__ */ __name21(() => emitter.addEventListener(eventName, fn), "onFirstListenerAdd");
-        const onLastListenerRemove = /* @__PURE__ */ __name21(() => emitter.removeEventListener(eventName, fn), "onLastListenerRemove");
-        const result = new Emitter({ onWillAddFirstListener: onFirstListenerAdd, onDidRemoveLastListener: onLastListenerRemove });
-        return result.event;
-      }
-      __name(fromDOMEventEmitter, "fromDOMEventEmitter");
-      __name21(fromDOMEventEmitter, "fromDOMEventEmitter");
-      Event2.fromDOMEventEmitter = fromDOMEventEmitter;
-      function toPromise(event, disposables) {
-        let cancelRef;
-        let listener;
-        const promise = new Promise((resolve2) => {
-          listener = once(event)(resolve2);
-          addToDisposables(listener, disposables);
-          cancelRef = /* @__PURE__ */ __name21(() => {
-            disposeAndRemove(listener, disposables);
-          }, "cancelRef");
-        });
-        promise.cancel = cancelRef;
-        if (disposables) {
-          promise.finally(() => disposeAndRemove(listener, disposables));
-        }
-        return promise;
-      }
-      __name(toPromise, "toPromise");
-      __name21(toPromise, "toPromise");
-      Event2.toPromise = toPromise;
-      function forward(from, to) {
-        return from((e) => to.fire(e));
-      }
-      __name(forward, "forward");
-      __name21(forward, "forward");
-      Event2.forward = forward;
-      function runAndSubscribe(event, handler, initial) {
-        handler(initial);
-        return event((e) => handler(e));
-      }
-      __name(runAndSubscribe, "runAndSubscribe");
-      __name21(runAndSubscribe, "runAndSubscribe");
-      Event2.runAndSubscribe = runAndSubscribe;
-      class EmitterObserver {
-        static {
-          __name(this, "EmitterObserver");
-        }
-        static {
-          __name21(this, "EmitterObserver");
-        }
-        constructor(_observable, store) {
-          this._observable = _observable;
-          this._counter = 0;
-          this._hasChanged = false;
-          const options = {
-            onWillAddFirstListener: /* @__PURE__ */ __name21(() => {
-              _observable.addObserver(this);
-              this._observable.reportChanges();
-            }, "onWillAddFirstListener"),
-            onDidRemoveLastListener: /* @__PURE__ */ __name21(() => {
-              _observable.removeObserver(this);
-            }, "onDidRemoveLastListener")
-          };
-          if (!store) {
-            _addLeakageTraceLogic(options);
-          }
-          this.emitter = new Emitter(options);
-          if (store) {
-            store.add(this.emitter);
-          }
-        }
-        beginUpdate(_observable) {
-          this._counter++;
-        }
-        handlePossibleChange(_observable) {
-        }
-        handleChange(_observable, _change) {
-          this._hasChanged = true;
-        }
-        endUpdate(_observable) {
-          this._counter--;
-          if (this._counter === 0) {
-            this._observable.reportChanges();
-            if (this._hasChanged) {
-              this._hasChanged = false;
-              this.emitter.fire(this._observable.get());
-            }
-          }
-        }
-      }
-      function fromObservable(obs, store) {
-        const observer = new EmitterObserver(obs, store);
-        return observer.emitter.event;
-      }
-      __name(fromObservable, "fromObservable");
-      __name21(fromObservable, "fromObservable");
-      Event2.fromObservable = fromObservable;
-      function fromObservableLight(observable) {
-        return (listener, thisArgs, disposables) => {
-          let count2 = 0;
-          let didChange = false;
-          const observer = {
-            beginUpdate() {
-              count2++;
-            },
-            endUpdate() {
-              count2--;
-              if (count2 === 0) {
-                observable.reportChanges();
-                if (didChange) {
-                  didChange = false;
-                  listener.call(thisArgs);
-                }
-              }
-            },
-            handlePossibleChange() {
-            },
-            handleChange() {
-              didChange = true;
-            }
-          };
-          observable.addObserver(observer);
-          observable.reportChanges();
-          const disposable = {
-            dispose() {
-              observable.removeObserver(observer);
-            }
-          };
-          addToDisposables(disposable, disposables);
-          return disposable;
-        };
-      }
-      __name(fromObservableLight, "fromObservableLight");
-      __name21(fromObservableLight, "fromObservableLight");
-      Event2.fromObservableLight = fromObservableLight;
-    })(Event || (Event = {}));
-    EventProfiling = class _EventProfiling {
-      static {
-        __name(this, "EventProfiling");
-      }
-      static {
-        __name21(this, "EventProfiling");
-      }
-      static {
-        this.all = /* @__PURE__ */ new Set();
-      }
-      static {
-        this._idPool = 0;
-      }
-      constructor(name) {
-        this.listenerCount = 0;
-        this.invocationCount = 0;
-        this.elapsedOverall = 0;
-        this.durations = [];
-        this.name = `${name}_${_EventProfiling._idPool++}`;
-        _EventProfiling.all.add(this);
-      }
-      start(listenerCount) {
-        this._stopWatch = new StopWatch();
-        this.listenerCount = listenerCount;
-      }
-      stop() {
-        if (this._stopWatch) {
-          const elapsed = this._stopWatch.elapsed();
-          this.durations.push(elapsed);
-          this.elapsedOverall += elapsed;
-          this.invocationCount += 1;
-          this._stopWatch = void 0;
-        }
-      }
-    };
-    _globalLeakWarningThreshold = -1;
-    __name(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
-    __name21(setGlobalLeakWarningThreshold, "setGlobalLeakWarningThreshold");
-    LeakageMonitor = class _LeakageMonitor {
-      static {
-        __name(this, "LeakageMonitor");
-      }
-      static {
-        __name21(this, "LeakageMonitor");
-      }
-      static {
-        this._idPool = 1;
-      }
-      constructor(_errorHandler, threshold, name = (_LeakageMonitor._idPool++).toString(16).padStart(3, "0")) {
-        this._errorHandler = _errorHandler;
-        this.threshold = threshold;
-        this.name = name;
-        this._warnCountdown = 0;
-      }
-      dispose() {
-        this._stacks?.clear();
-      }
-      check(stack, listenerCount) {
-        const threshold = this.threshold;
-        if (threshold <= 0 || listenerCount < threshold) {
-          return void 0;
-        }
-        if (!this._stacks) {
-          this._stacks = /* @__PURE__ */ new Map();
-        }
-        const count2 = this._stacks.get(stack.value) || 0;
-        this._stacks.set(stack.value, count2 + 1);
-        this._warnCountdown -= 1;
-        if (this._warnCountdown <= 0) {
-          this._warnCountdown = threshold * 0.5;
-          const [topStack, topCount] = this.getMostFrequentStack();
-          const emitterName = /^[0-9a-f]+$/i.test(this.name) ? void 0 : this.name;
-          const message = `[${this.name}] potential listener LEAK detected, having ${listenerCount} listeners already. MOST frequent listener (${topCount}):`;
-          console.warn(message);
-          console.warn(topStack);
-          const kind = topCount / listenerCount > 0.3 ? "dominated" : "popular";
-          const error = new ListenerLeakError(kind, message, topStack, listenerCount, emitterName);
-          this._errorHandler(error);
-        }
-        return () => {
-          const count22 = this._stacks.get(stack.value) || 0;
-          this._stacks.set(stack.value, count22 - 1);
-        };
-      }
-      getMostFrequentStack() {
-        if (!this._stacks) {
-          return void 0;
-        }
-        let topStack;
-        let topCount = 0;
-        for (const [stack, count2] of this._stacks) {
-          if (!topStack || topCount < count2) {
-            topStack = [stack, count2];
-            topCount = count2;
-          }
-        }
-        return topStack;
-      }
-    };
-    Stacktrace = class _Stacktrace {
-      static {
-        __name(this, "Stacktrace");
-      }
-      static {
-        __name21(this, "Stacktrace");
-      }
-      static create() {
-        const err = new Error();
-        return new _Stacktrace(err.stack ?? "");
-      }
-      constructor(value) {
-        this.value = value;
-      }
-      print() {
-        console.warn(this.value.split("\n").slice(2).join("\n"));
-      }
-    };
-    ListenerLeakError = class _ListenerLeakError extends Error {
-      static {
-        __name(this, "ListenerLeakError");
-      }
-      static {
-        __name21(this, "ListenerLeakError");
-      }
-      constructor(kind, details, stack, listenerCount, emitterName) {
-        super(emitterName ? `[${emitterName}] potential listener LEAK detected, ${kind}` : `potential listener LEAK detected, ${kind}`);
-        this.name = "ListenerLeakError";
-        this.kind = kind;
-        this.listenerCount = listenerCount;
-        this.details = details;
-        this.stack = stack;
-      }
-      static is(err) {
-        return err instanceof _ListenerLeakError || err instanceof Error && typeof err.kind === "string" && typeof err.listenerCount === "number";
-      }
-    };
-    ListenerRefusalError = class extends ListenerLeakError {
-      static {
-        __name(this, "ListenerRefusalError");
-      }
-      static {
-        __name21(this, "ListenerRefusalError");
-      }
-      constructor(kind, details, stack, listenerCount, emitterName) {
-        super(kind, details, stack, listenerCount, emitterName);
-        this.name = "ListenerRefusalError";
-      }
-    };
-    id = 0;
-    UniqueContainer = class {
-      static {
-        __name(this, "UniqueContainer");
-      }
-      static {
-        __name21(this, "UniqueContainer");
-      }
-      constructor(value) {
-        this.value = value;
-        this.id = id++;
-      }
-    };
-    compactionThreshold = 2;
-    forEachListener = /* @__PURE__ */ __name21((listeners, fn) => {
-      if (listeners instanceof UniqueContainer) {
-        fn(listeners);
-      } else {
-        for (let i = 0; i < listeners.length; i++) {
-          const l = listeners[i];
-          if (l) {
-            fn(l);
-          }
-        }
-      }
-    }, "forEachListener");
-    Emitter = class {
-      static {
-        __name(this, "Emitter");
-      }
-      static {
-        __name21(this, "Emitter");
-      }
-      constructor(options) {
-        this._size = 0;
-        this._options = options;
-        this._leakageMon = _globalLeakWarningThreshold > 0 || this._options?.leakWarningThreshold ? new LeakageMonitor(options?.onListenerError ?? onUnexpectedError, this._options?.leakWarningThreshold ?? _globalLeakWarningThreshold, this._options?.leakWarningName) : void 0;
-        this._perfMon = this._options?._profName ? new EventProfiling(this._options._profName) : void 0;
-        this._deliveryQueue = this._options?.deliveryQueue;
-      }
-      dispose() {
-        if (!this._disposed) {
-          this._disposed = true;
-          if (this._deliveryQueue?.current === this) {
-            this._deliveryQueue.reset();
-          }
-          if (this._listeners) {
-            if (_enableDisposeWithListenerWarning) {
-              const listeners = this._listeners;
-              queueMicrotask(() => {
-                forEachListener(listeners, (l) => l.stack?.print());
-              });
-            }
-            this._listeners = void 0;
-            this._size = 0;
-          }
-          this._options?.onDidRemoveLastListener?.();
-          this._leakageMon?.dispose();
-        }
-      }
-      /**
-       * For the public to allow to subscribe
-       * to events from this Emitter
-       */
-      get event() {
-        this._event ??= (callback, thisArgs, disposables) => {
-          if (this._leakageMon && this._size > this._leakageMon.threshold ** 2) {
-            const message = `[${this._leakageMon.name}] REFUSES to accept new listeners because it exceeded its threshold by far (${this._size} vs ${this._leakageMon.threshold})`;
-            console.warn(message);
-            const tuple = this._leakageMon.getMostFrequentStack() ?? ["UNKNOWN stack", -1];
-            const kind = tuple[1] / this._size > 0.3 ? "dominated" : "popular";
-            const error = new ListenerRefusalError(kind, `${message}. HINT: Stack shows most frequent listener (${tuple[1]}-times)`, tuple[0], this._size, this._options?.leakWarningName);
-            const errorHandler2 = this._options?.onListenerError || onUnexpectedError;
-            errorHandler2(error);
-            return Disposable.None;
-          }
-          if (this._disposed) {
-            return Disposable.None;
-          }
-          if (thisArgs) {
-            callback = callback.bind(thisArgs);
-          }
-          const contained = new UniqueContainer(callback);
-          let removeMonitor;
-          let stack;
-          if (this._leakageMon && this._size >= Math.ceil(this._leakageMon.threshold * 0.2)) {
-            contained.stack = Stacktrace.create();
-            removeMonitor = this._leakageMon.check(contained.stack, this._size + 1);
-          }
-          if (_enableDisposeWithListenerWarning) {
-            contained.stack = stack ?? Stacktrace.create();
-          }
-          if (!this._listeners) {
-            this._options?.onWillAddFirstListener?.(this);
-            this._listeners = contained;
-            this._options?.onDidAddFirstListener?.(this);
-          } else if (this._listeners instanceof UniqueContainer) {
-            this._deliveryQueue ??= new EventDeliveryQueuePrivate();
-            this._listeners = [this._listeners, contained];
-          } else {
-            this._listeners.push(contained);
-          }
-          this._options?.onDidAddListener?.(this);
-          this._size++;
-          const result = toDisposable(() => {
-            removeMonitor?.();
-            this._removeListener(contained);
-          });
-          addToDisposables(result, disposables);
-          return result;
-        };
-        return this._event;
-      }
-      _removeListener(listener) {
-        this._options?.onWillRemoveListener?.(this);
-        if (!this._listeners) {
-          return;
-        }
-        if (this._size === 1) {
-          this._listeners = void 0;
-          this._options?.onDidRemoveLastListener?.(this);
-          this._size = 0;
-          return;
-        }
-        const listeners = this._listeners;
-        const index2 = listeners.indexOf(listener);
-        if (index2 === -1) {
-          console.log("disposed?", this._disposed);
-          console.log("size?", this._size);
-          console.log("arr?", JSON.stringify(this._listeners));
-          throw new Error("Attempted to dispose unknown listener");
-        }
-        this._size--;
-        listeners[index2] = void 0;
-        const adjustDeliveryQueue = this._deliveryQueue.current === this;
-        if (this._size * compactionThreshold <= listeners.length) {
-          let n = 0;
-          for (let i = 0; i < listeners.length; i++) {
-            if (listeners[i]) {
-              listeners[n++] = listeners[i];
-            } else if (adjustDeliveryQueue && n < this._deliveryQueue.end) {
-              this._deliveryQueue.end--;
-              if (n < this._deliveryQueue.i) {
-                this._deliveryQueue.i--;
-              }
-            }
-          }
-          listeners.length = n;
-        }
-      }
-      _deliver(listener, value) {
-        if (!listener) {
-          return;
-        }
-        const errorHandler2 = this._options?.onListenerError || onUnexpectedError;
-        if (!errorHandler2) {
-          listener.value(value);
-          return;
-        }
-        try {
-          listener.value(value);
-        } catch (e) {
-          errorHandler2(e);
-        }
-      }
-      /** Delivers items in the queue. Assumes the queue is ready to go. */
-      _deliverQueue(dq) {
-        const listeners = dq.current._listeners;
-        while (dq.i < dq.end) {
-          this._deliver(listeners[dq.i++], dq.value);
-        }
-        dq.reset();
-      }
-      /**
-       * To be kept private to fire an event to
-       * subscribers
-       */
-      fire(event) {
-        if (this._deliveryQueue?.current) {
-          this._deliverQueue(this._deliveryQueue);
-          this._perfMon?.stop();
-        }
-        this._perfMon?.start(this._size);
-        if (!this._listeners) {
-        } else if (this._listeners instanceof UniqueContainer) {
-          this._deliver(this._listeners, event);
-        } else {
-          const dq = this._deliveryQueue;
-          dq.enqueue(this, event, this._listeners.length);
-          this._deliverQueue(dq);
-        }
-        this._perfMon?.stop();
-      }
-      hasListeners() {
-        return this._size > 0;
-      }
-    };
-    createEventDeliveryQueue = /* @__PURE__ */ __name21(() => new EventDeliveryQueuePrivate(), "createEventDeliveryQueue");
-    EventDeliveryQueuePrivate = class {
-      static {
-        __name(this, "EventDeliveryQueuePrivate");
-      }
-      static {
-        __name21(this, "EventDeliveryQueuePrivate");
-      }
-      constructor() {
-        this.i = -1;
-        this.end = 0;
-      }
-      enqueue(emitter, value, end) {
-        this.i = 0;
-        this.end = end;
-        this.current = emitter;
-        this.value = value;
-      }
-      reset() {
-        this.i = this.end;
-        this.current = void 0;
-        this.value = void 0;
-      }
-    };
-    AsyncEmitter = class extends Emitter {
-      static {
-        __name(this, "AsyncEmitter");
-      }
-      static {
-        __name21(this, "AsyncEmitter");
-      }
-      async fireAsync(data, token, promiseJoin) {
-        if (!this._listeners) {
-          return;
-        }
-        if (!this._asyncDeliveryQueue) {
-          this._asyncDeliveryQueue = new LinkedList();
-        }
-        forEachListener(this._listeners, (listener) => this._asyncDeliveryQueue.push([listener.value, data]));
-        while (this._asyncDeliveryQueue.size > 0 && !token.isCancellationRequested) {
-          const [listener, data2] = this._asyncDeliveryQueue.shift();
-          const thenables = [];
-          const event = {
-            ...data2,
-            token,
-            waitUntil: /* @__PURE__ */ __name21((p) => {
-              if (Object.isFrozen(thenables)) {
-                throw new Error("waitUntil can NOT be called asynchronous");
-              }
-              if (promiseJoin) {
-                p = promiseJoin(p, listener);
-              }
-              thenables.push(p);
-            }, "waitUntil")
-          };
-          try {
-            listener(event);
-          } catch (e) {
-            onUnexpectedError(e);
-            continue;
-          }
-          Object.freeze(thenables);
-          await Promise.allSettled(thenables).then((values) => {
-            for (const value of values) {
-              if (value.status === "rejected") {
-                onUnexpectedError(value.reason);
-              }
-            }
-          });
-        }
-      }
-    };
-    PauseableEmitter = class extends Emitter {
-      static {
-        __name(this, "PauseableEmitter");
-      }
-      static {
-        __name21(this, "PauseableEmitter");
-      }
-      get isPaused() {
-        return this._isPaused !== 0;
-      }
-      constructor(options) {
-        super(options);
-        this._isPaused = 0;
-        this._eventQueue = new LinkedList();
-        this._mergeFn = options?.merge;
-      }
-      pause() {
-        this._isPaused++;
-      }
-      resume() {
-        if (this._isPaused !== 0 && --this._isPaused === 0) {
-          if (this._mergeFn) {
-            if (this._eventQueue.size > 0) {
-              const events = Array.from(this._eventQueue);
-              this._eventQueue.clear();
-              super.fire(this._mergeFn(events));
-            }
-          } else {
-            while (!this._isPaused && this._eventQueue.size !== 0) {
-              super.fire(this._eventQueue.shift());
-            }
-          }
-        }
-      }
-      fire(event) {
-        if (this._size) {
-          if (this._isPaused !== 0) {
-            this._eventQueue.push(event);
-          } else {
-            super.fire(event);
-          }
-        }
-      }
-    };
-    DebounceEmitter = class extends PauseableEmitter {
-      static {
-        __name(this, "DebounceEmitter");
-      }
-      static {
-        __name21(this, "DebounceEmitter");
-      }
-      constructor(options) {
-        super(options);
-        this._delay = options.delay ?? 100;
-      }
-      fire(event) {
-        if (!this._handle) {
-          this.pause();
-          this._handle = setTimeout(() => {
-            this._handle = void 0;
-            this.resume();
-          }, this._delay);
-        }
-        super.fire(event);
-      }
-    };
-    MicrotaskEmitter = class extends Emitter {
-      static {
-        __name(this, "MicrotaskEmitter");
-      }
-      static {
-        __name21(this, "MicrotaskEmitter");
-      }
-      constructor(options) {
-        super(options);
-        this._queuedEvents = [];
-        this._mergeFn = options?.merge;
-      }
-      fire(event) {
-        if (!this.hasListeners()) {
-          return;
-        }
-        this._queuedEvents.push(event);
-        if (this._queuedEvents.length === 1) {
-          queueMicrotask(() => {
-            if (this._mergeFn) {
-              super.fire(this._mergeFn(this._queuedEvents));
-            } else {
-              this._queuedEvents.forEach((e) => super.fire(e));
-            }
-            this._queuedEvents = [];
-          });
-        }
-      }
-    };
-    EventMultiplexer = class {
-      static {
-        __name(this, "EventMultiplexer");
-      }
-      static {
-        __name21(this, "EventMultiplexer");
-      }
-      constructor() {
-        this.hasListeners = false;
-        this.events = [];
-        this.emitter = new Emitter({
-          onWillAddFirstListener: /* @__PURE__ */ __name21(() => this.onFirstListenerAdd(), "onWillAddFirstListener"),
-          onDidRemoveLastListener: /* @__PURE__ */ __name21(() => this.onLastListenerRemove(), "onDidRemoveLastListener")
-        });
-      }
-      get event() {
-        return this.emitter.event;
-      }
-      add(event) {
-        const e = { event, listener: null };
-        this.events.push(e);
-        if (this.hasListeners) {
-          this.hook(e);
-        }
-        const dispose2 = /* @__PURE__ */ __name21(() => {
-          if (this.hasListeners) {
-            this.unhook(e);
-          }
-          const idx = this.events.indexOf(e);
-          this.events.splice(idx, 1);
-        }, "dispose");
-        return toDisposable(createSingleCallFunction(dispose2));
-      }
-      onFirstListenerAdd() {
-        this.hasListeners = true;
-        this.events.forEach((e) => this.hook(e));
-      }
-      onLastListenerRemove() {
-        this.hasListeners = false;
-        this.events.forEach((e) => this.unhook(e));
-      }
-      hook(e) {
-        e.listener = e.event((r) => this.emitter.fire(r));
-      }
-      unhook(e) {
-        e.listener?.dispose();
-        e.listener = null;
-      }
-      dispose() {
-        this.emitter.dispose();
-        for (const e of this.events) {
-          e.listener?.dispose();
-        }
-        this.events = [];
-      }
-    };
-    DynamicListEventMultiplexer = class {
-      static {
-        __name(this, "DynamicListEventMultiplexer");
-      }
-      static {
-        __name21(this, "DynamicListEventMultiplexer");
-      }
-      constructor(items, onAddItem, onRemoveItem, getEvent) {
-        this._store = new DisposableStore();
-        const multiplexer = this._store.add(new EventMultiplexer());
-        const itemListeners = this._store.add(new DisposableMap());
-        function addItem(instance) {
-          itemListeners.set(instance, multiplexer.add(getEvent(instance)));
-        }
-        __name(addItem, "addItem");
-        __name21(addItem, "addItem");
-        for (const instance of items) {
-          addItem(instance);
-        }
-        this._store.add(onAddItem((instance) => {
-          addItem(instance);
-        }));
-        this._store.add(onRemoveItem((instance) => {
-          itemListeners.deleteAndDispose(instance);
-        }));
-        this.event = multiplexer.event;
-      }
-      dispose() {
-        this._store.dispose();
-      }
-    };
-    EventBufferer = class {
-      static {
-        __name(this, "EventBufferer");
-      }
-      static {
-        __name21(this, "EventBufferer");
-      }
-      constructor() {
-        this.data = [];
-      }
-      wrapEvent(event, reduce, initial) {
-        return (listener, thisArgs, disposables) => {
-          return event((i) => {
-            const data = this.data[this.data.length - 1];
-            if (!reduce) {
-              if (data) {
-                data.buffers.push(() => listener.call(thisArgs, i));
-              } else {
-                listener.call(thisArgs, i);
-              }
-              return;
-            }
-            const reduceData = data;
-            if (!reduceData) {
-              listener.call(thisArgs, reduce(initial, i));
-              return;
-            }
-            reduceData.items ??= [];
-            reduceData.items.push(i);
-            if (reduceData.buffers.length === 0) {
-              data.buffers.push(() => {
-                reduceData.reducedResult ??= initial ? reduceData.items.reduce(reduce, initial) : reduceData.items.reduce(reduce);
-                listener.call(thisArgs, reduceData.reducedResult);
-              });
-            }
-          }, void 0, disposables);
-        };
-      }
-      bufferEvents(fn) {
-        const data = { buffers: new Array() };
-        this.data.push(data);
-        const r = fn();
-        this.data.pop();
-        data.buffers.forEach((flush) => flush());
-        return r;
-      }
-    };
-    Relay = class {
-      static {
-        __name(this, "Relay");
-      }
-      static {
-        __name21(this, "Relay");
-      }
-      constructor() {
-        this.listening = false;
-        this.inputEvent = Event.None;
-        this.inputEventListener = Disposable.None;
-        this.emitter = new Emitter({
-          onDidAddFirstListener: /* @__PURE__ */ __name21(() => {
-            this.listening = true;
-            this.inputEventListener = this.inputEvent(this.emitter.fire, this.emitter);
-          }, "onDidAddFirstListener"),
-          onDidRemoveLastListener: /* @__PURE__ */ __name21(() => {
-            this.listening = false;
-            this.inputEventListener.dispose();
-          }, "onDidRemoveLastListener")
-        });
-        this.event = this.emitter.event;
-      }
-      set input(event) {
-        this.inputEvent = event;
-        if (this.listening) {
-          this.inputEventListener.dispose();
-          this.inputEventListener = event(this.emitter.fire, this.emitter);
-        }
-      }
-      dispose() {
-        this.inputEventListener.dispose();
-        this.emitter.dispose();
-      }
-    };
-    ValueWithChangeEvent = class {
-      static {
-        __name(this, "ValueWithChangeEvent");
-      }
-      static {
-        __name21(this, "ValueWithChangeEvent");
-      }
-      static const(value) {
-        return new ConstValueWithChangeEvent(value);
-      }
-      constructor(_value) {
-        this._value = _value;
-        this._onDidChange = new Emitter();
-        this.onDidChange = this._onDidChange.event;
-      }
-      get value() {
-        return this._value;
-      }
-      set value(value) {
-        if (value !== this._value) {
-          this._value = value;
-          this._onDidChange.fire(void 0);
-        }
-      }
-    };
-    ConstValueWithChangeEvent = class {
-      static {
-        __name(this, "ConstValueWithChangeEvent");
-      }
-      static {
-        __name21(this, "ConstValueWithChangeEvent");
-      }
-      constructor(value) {
-        this.value = value;
-        this.onDidChange = Event.None;
-      }
-    };
-    __name(trackSetChanges, "trackSetChanges");
-    __name21(trackSetChanges, "trackSetChanges");
-    __name(addToDisposables, "addToDisposables");
-    __name21(addToDisposables, "addToDisposables");
-    __name(disposeAndRemove, "disposeAndRemove");
-    __name21(disposeAndRemove, "disposeAndRemove");
+    __name21(isTextStreamMime, "isTextStreamMime");
   }
 });
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/cancellation.js
-var cancellation_exports = {};
-__export(cancellation_exports, {
-  CancellationToken: () => CancellationToken,
-  CancellationTokenPool: () => CancellationTokenPool,
-  CancellationTokenSource: () => CancellationTokenSource,
-  cancelOnDispose: () => cancelOnDispose
-});
 function cancelOnDispose(store) {
   const source = new CancellationTokenSource();
   store.add({ dispose() {
@@ -9079,12 +9052,6 @@ var init_strings = __esm({
 });
 
 // ../Output/Target/Microsoft/VSCode/vs/base/common/uri.js
-var uri_exports = {};
-__export(uri_exports, {
-  URI: () => URI,
-  isUriComponents: () => isUriComponents,
-  uriToFsPath: () => uriToFsPath
-});
 function _validateUri(ret, _strict) {
   if (!ret.scheme && _strict) {
     throw new Error(`[UriError]: Scheme is missing: {scheme: "", authority: "${ret.authority}", path: "${ret.path}", query: "${ret.query}", fragment: "${ret.fragment}"}`);
@@ -20760,4333 +20727,1770 @@ var init_extHostTypes = __esm({
   }
 });
 
-// Source/Services/Handler/VscodeAPI/WindowNamespace.ts
-var WindowNamespace_exports = {};
-__export(WindowNamespace_exports, {
-  CustomEditorProviders: () => CustomEditorProviders,
-  TreeDataProviders: () => TreeDataProviders,
-  WebviewPanels: () => WebviewPanels,
-  WebviewViewProviders: () => WebviewViewProviders,
-  default: () => WindowNamespace_default
-});
-var MakeEventSubscriber, OutputChannelCounter, TerminalCounter, TreeDataProviderCounter, WebviewPanelCounter, WebviewViewCounter, CustomEditorCounter, ProgressCounter, TreeDataProviders, WebviewViewProviders, CustomEditorProviders, WebviewPanels, StatusBarCounter, CreateWindowNamespace, WindowNamespace_default;
-var init_WindowNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WindowNamespace.ts"() {
-    "use strict";
-    MakeEventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Callback) => {
-      Context.Emitter.on(EventName, Callback);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.Emitter.off(EventName, Callback);
-        }, "dispose")
-      };
-    }, "MakeEventSubscriber");
-    OutputChannelCounter = 0;
-    TerminalCounter = 0;
-    TreeDataProviderCounter = 0;
-    WebviewPanelCounter = 0;
-    WebviewViewCounter = 0;
-    CustomEditorCounter = 0;
-    ProgressCounter = 0;
-    TreeDataProviders = /* @__PURE__ */ new Map();
-    WebviewViewProviders = /* @__PURE__ */ new Map();
-    CustomEditorProviders = /* @__PURE__ */ new Map();
-    WebviewPanels = /* @__PURE__ */ new Map();
-    StatusBarCounter = 0;
-    CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
-      const ShowMessage = /* @__PURE__ */ __name((Level) => async (Message, ...Items) => {
-        let Options = void 0;
-        let Actions = Items;
-        if (Items.length > 0 && Items[0] && typeof Items[0] === "object" && !Array.isArray(Items[0]) && "modal" in Items[0]) {
-          Options = Items[0];
-          Actions = Items.slice(1);
-        }
-        try {
-          const Selection3 = await Context.MountainClient?.sendRequest(
-            "Window.ShowMessage",
-            [
-              {
-                message: Message,
-                level: Level,
-                items: Actions,
-                options: Options ?? {}
-              }
-            ]
-          );
-          return Selection3 ?? void 0;
-        } catch {
-          return void 0;
-        }
-      }, "ShowMessage");
-      return {
-        showInformationMessage: ShowMessage("info"),
-        showErrorMessage: ShowMessage("error"),
-        showWarningMessage: ShowMessage("warn"),
-        showQuickPick: /* @__PURE__ */ __name(async (Items, Options) => {
-          try {
-            return await Context.MountainClient?.sendRequest(
-              "Window.ShowQuickPick",
-              [Items, Options ?? {}]
-            );
-          } catch {
-            return void 0;
-          }
-        }, "showQuickPick"),
-        showInputBox: /* @__PURE__ */ __name(async (Options) => {
-          try {
-            return await Context.MountainClient?.sendRequest(
-              "Window.ShowInputBox",
-              [Options ?? {}]
-            );
-          } catch {
-            return void 0;
-          }
-        }, "showInputBox"),
-        showOpenDialog: /* @__PURE__ */ __name(async (Options) => {
-          try {
-            const Selected = await Context.MountainClient?.sendRequest(
-              "Window.ShowOpenDialog",
-              [Options ?? {}]
-            );
-            return Array.isArray(Selected) ? Selected : [];
-          } catch {
-            return [];
-          }
-        }, "showOpenDialog"),
-        showSaveDialog: /* @__PURE__ */ __name(async (Options) => {
-          try {
-            return await Context.MountainClient?.sendRequest(
-              "Window.ShowSaveDialog",
-              [Options ?? {}]
-            );
-          } catch {
-            return void 0;
-          }
-        }, "showSaveDialog"),
-        createTerminal: /* @__PURE__ */ __name((Options) => {
-          const Handle = `terminal:${++TerminalCounter}`;
-          const Name = Options?.name ?? `Terminal ${TerminalCounter}`;
-          Context.SendToMountain("window.createTerminal", {
-            handle: Handle,
-            name: Name,
-            options: Options ?? {}
-          }).catch(() => {
-          });
-          let ProcessIdPromise;
-          const ResolveProcessId = /* @__PURE__ */ __name(() => {
-            if (ProcessIdPromise !== void 0) return ProcessIdPromise;
-            ProcessIdPromise = (async () => {
-              try {
-                const Response = await Context.MountainClient?.sendRequest(
-                  "Terminal.GetProcessId",
-                  [Handle]
-                );
-                if (typeof Response === "number") return Response;
-                if (Response && typeof Response.pid === "number") {
-                  return Response.pid;
-                }
-                return void 0;
-              } catch {
-                return void 0;
-              }
-            })();
-            return ProcessIdPromise;
-          }, "ResolveProcessId");
-          return {
-            name: Name,
-            get processId() {
-              return ResolveProcessId();
-            },
-            sendText: /* @__PURE__ */ __name(async (Text, _AddNewLine) => {
-              Context.SendToMountain("terminal.sendText", {
-                handle: Handle,
-                text: Text
-              }).catch(() => {
-              });
-            }, "sendText"),
-            show: /* @__PURE__ */ __name((PreserveFocus) => {
-              Context.SendToMountain("terminal.show", {
-                handle: Handle,
-                preserveFocus: PreserveFocus
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("terminal.hide", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "hide"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("terminal.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose"),
-            // vscode.window.Terminal.resize(columns, rows) → Mountain
-            // PTY master receives SIGWINCH; shell redraws line editor.
-            resize: /* @__PURE__ */ __name(async (Columns, Rows) => {
-              try {
-                await Context.MountainClient?.sendRequest(
-                  "Terminal.Resize",
-                  [Handle, Columns, Rows]
-                );
-              } catch {
-              }
-            }, "resize")
-          };
-        }, "createTerminal"),
-        createStatusBarItem: /* @__PURE__ */ __name((AlignmentOrId, Priority) => {
-          const Handle = `statusBar:${++StatusBarCounter}`;
-          const Item = {
-            id: Handle,
-            alignment: typeof AlignmentOrId === "number" ? AlignmentOrId : 1,
-            priority: Priority,
-            text: "",
-            tooltip: "",
-            command: void 0,
-            show: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("statusBar.update", {
-                handle: Handle,
-                text: Item.text,
-                tooltip: Item.tooltip,
-                command: Item.command,
-                visible: true
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("statusBar.update", {
-                handle: Handle,
-                visible: false
-              }).catch(() => {
-              });
-            }, "hide"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("statusBar.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose")
-          };
-          return Item;
-        }, "createStatusBarItem"),
-        createOutputChannel: /* @__PURE__ */ __name((Name, Options) => {
-          const Handle = `outputChannel:${++OutputChannelCounter}`;
-          const IsLog = typeof Options === "object" && Options !== null ? Options.log === true : false;
-          Context.SendToMountain("outputChannel.create", {
-            handle: Handle,
-            name: Name,
-            log: IsLog
-          }).catch(() => {
-          });
-          const Channel = {
-            name: Name,
-            append: /* @__PURE__ */ __name((Value) => {
-              Context.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: Value
-              }).catch(() => {
-              });
-            }, "append"),
-            appendLine: /* @__PURE__ */ __name((Value) => {
-              Context.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `${Value}
-`
-              }).catch(() => {
-              });
-            }, "appendLine"),
-            clear: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("outputChannel.clear", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "clear"),
-            show: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("outputChannel.show", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "show"),
-            hide: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("outputChannel.hide", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "hide"),
-            replace: /* @__PURE__ */ __name((Value) => {
-              Context.SendToMountain("outputChannel.clear", {
-                handle: Handle
-              }).catch(() => {
-              });
-              Context.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: Value
-              }).catch(() => {
-              });
-            }, "replace"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain("outputChannel.dispose", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose"),
-            // LogOutputChannel additions - returned when the caller passes
-            // `{ log: true }`. Kept on the base channel for simplicity;
-            // these are inert on non-log channels.
-            logLevel: 2,
-            // LogLevel.Info
-            onDidChangeLogLevel: /* @__PURE__ */ __name((_Listener) => ({
-              dispose: /* @__PURE__ */ __name(() => {
-              }, "dispose")
-            }), "onDidChangeLogLevel"),
-            trace: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[trace] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "trace"),
-            debug: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[debug] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "debug"),
-            info: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[info] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "info"),
-            warn: /* @__PURE__ */ __name((Message, ..._Arguments) => {
-              Context.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[warn] ${Message}
-`
-              }).catch(() => {
-              });
-            }, "warn"),
-            error: /* @__PURE__ */ __name((MessageOrError, ..._Arguments) => {
-              const Text = MessageOrError instanceof Error ? MessageOrError.stack ?? MessageOrError.message : String(MessageOrError);
-              Context.SendToMountain("outputChannel.append", {
-                handle: Handle,
-                value: `[error] ${Text}
-`
-              }).catch(() => {
-              });
-            }, "error")
-          };
-          void IsLog;
-          return Channel;
-        }, "createOutputChannel"),
-        createTextEditorDecorationType: /* @__PURE__ */ __name((Options) => {
-          const Key = `decoration:${Math.random().toString(36).slice(2)}`;
-          Context.SendToMountain("window.createTextEditorDecorationType", {
-            key: Key,
-            options: Options ?? {}
-          }).catch(() => {
-          });
-          return {
-            key: Key,
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain(
-                "window.disposeTextEditorDecorationType",
-                {
-                  key: Key
-                }
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "createTextEditorDecorationType"),
-        registerTerminalQuickFixProvider: /* @__PURE__ */ __name((_Id, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalQuickFixProvider"),
-        registerTerminalCompletionProvider: /* @__PURE__ */ __name((_Id, _Provider, ..._TriggerCharacters) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTerminalCompletionProvider"),
-        createQuickPick: /* @__PURE__ */ __name(() => ({
-          value: "",
-          placeholder: void 0,
-          items: [],
-          activeItems: [],
-          selectedItems: [],
-          canSelectMany: false,
-          matchOnDescription: false,
-          matchOnDetail: false,
-          busy: false,
-          enabled: true,
-          ignoreFocusOut: false,
-          step: void 0,
-          totalSteps: void 0,
-          title: void 0,
-          buttons: [],
-          show: /* @__PURE__ */ __name(() => {
-          }, "show"),
-          hide: /* @__PURE__ */ __name(() => {
-          }, "hide"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidAccept"),
-          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeValue"),
-          onDidChangeActive: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeActive"),
-          onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeSelection"),
-          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidTriggerButton"),
-          onDidTriggerItemButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidTriggerItemButton"),
-          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidHide")
-        }), "createQuickPick"),
-        createInputBox: /* @__PURE__ */ __name(() => ({
-          value: "",
-          valueSelection: void 0,
-          placeholder: void 0,
-          password: false,
-          busy: false,
-          enabled: true,
-          ignoreFocusOut: false,
-          prompt: void 0,
-          validationMessage: void 0,
-          step: void 0,
-          totalSteps: void 0,
-          title: void 0,
-          buttons: [],
-          show: /* @__PURE__ */ __name(() => {
-          }, "show"),
-          hide: /* @__PURE__ */ __name(() => {
-          }, "hide"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          onDidAccept: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidAccept"),
-          onDidChangeValue: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeValue"),
-          onDidTriggerButton: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidTriggerButton"),
-          onDidHide: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidHide")
-        }), "createInputBox"),
-        createWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => {
-          const Handle = `webviewPanel:${++WebviewPanelCounter}`;
-          let CurrentHtml = "";
-          let CurrentOptions = Options ?? {};
-          Context.MountainClient?.sendRequest("webview.create", [
-            Handle,
-            ViewType,
-            Title,
-            ShowOptions,
-            CurrentOptions
-          ]).catch(() => {
-          });
-          const Panel = {
-            viewType: ViewType,
-            title: Title,
-            iconPath: void 0,
-            webview: {
-              get options() {
-                return CurrentOptions;
-              },
-              set options(Value) {
-                CurrentOptions = Value;
-                Context.MountainClient?.sendRequest(
-                  "webview.setOptions",
-                  [Handle, Value]
-                ).catch(() => {
-                });
-              },
-              get html() {
-                return CurrentHtml;
-              },
-              set html(Value) {
-                CurrentHtml = Value;
-                Context.MountainClient?.sendRequest(
-                  "webview.setHtml",
-                  [Handle, Value]
-                ).catch(() => {
-                });
-              },
-              cspSource: "vscode-resource: vscode-webview-resource: https:",
-              asWebviewUri: /* @__PURE__ */ __name((Uri2) => Uri2, "asWebviewUri"),
-              postMessage: /* @__PURE__ */ __name(async (Message) => {
-                try {
-                  await Context.MountainClient?.sendRequest(
-                    "webview.postMessage",
-                    [Handle, Message]
-                  );
-                  return true;
-                } catch {
-                  return false;
-                }
-              }, "postMessage"),
-              onDidReceiveMessage: /* @__PURE__ */ __name((Listener) => {
-                const Event2 = `webview.message:${Handle}`;
-                Context.Emitter.on(Event2, Listener);
-                return {
-                  dispose: /* @__PURE__ */ __name(() => {
-                    Context.Emitter.removeListener(
-                      Event2,
-                      Listener
-                    );
-                  }, "dispose")
-                };
-              }, "onDidReceiveMessage")
-            },
-            options: CurrentOptions,
-            viewColumn: 1,
-            active: true,
-            visible: true,
-            reveal: /* @__PURE__ */ __name((Column, PreserveFocus) => {
-              Context.MountainClient?.sendRequest("webview.reveal", [
-                Handle,
-                Column,
-                PreserveFocus
-              ]).catch(() => {
-              });
-            }, "reveal"),
-            dispose: /* @__PURE__ */ __name(() => {
-              WebviewPanels.delete(Handle);
-              Context.Emitter.removeAllListeners(
-                `webview.message:${Handle}`
-              );
-              Context.MountainClient?.sendRequest("webview.dispose", [
-                Handle
-              ]).catch(() => {
-              });
-            }, "dispose"),
-            onDidDispose: /* @__PURE__ */ __name((Listener) => {
-              const Event2 = `webview.dispose:${Handle}`;
-              Context.Emitter.on(Event2, Listener);
-              return {
-                dispose: /* @__PURE__ */ __name(() => {
-                  Context.Emitter.removeListener(Event2, Listener);
-                }, "dispose")
-              };
-            }, "onDidDispose"),
-            onDidChangeViewState: /* @__PURE__ */ __name((Listener) => {
-              const Event2 = `webview.viewState:${Handle}`;
-              Context.Emitter.on(Event2, Listener);
-              return {
-                dispose: /* @__PURE__ */ __name(() => {
-                  Context.Emitter.removeListener(Event2, Listener);
-                }, "dispose")
-              };
-            }, "onDidChangeViewState")
-          };
-          WebviewPanels.set(Handle, Panel);
-          return Panel;
-        }, "createWebviewPanel"),
-        showTextDocument: /* @__PURE__ */ __name(async (_Document, _Column, _PreserveFocus) => {
-          Context.SendToMountain("window.showTextDocument", {
-            document: _Document,
-            column: _Column,
-            preserveFocus: _PreserveFocus
-          }).catch(() => {
-          });
-          return void 0;
-        }, "showTextDocument"),
-        showNotebookDocument: /* @__PURE__ */ __name(async (_Document, _Options) => void 0, "showNotebookDocument"),
-        tabGroups: {
-          all: [],
-          activeTabGroup: {
-            tabs: [],
-            isActive: true,
-            viewColumn: 1,
-            activeTab: void 0
-          },
-          onDidChangeTabs: MakeEventSubscriber(
-            Context,
-            "window.didChangeTabs"
-          ),
-          onDidChangeTabGroups: MakeEventSubscriber(
-            Context,
-            "window.didChangeTabGroups"
-          ),
-          close: /* @__PURE__ */ __name(async (_Tab, _PreserveFocus) => {
-            try {
-              await Context.MountainClient?.sendRequest("Command.Execute", [
-                "workbench.action.closeActiveEditor",
-                []
-              ]);
-              return true;
-            } catch {
-              return false;
-            }
-          }, "close")
-        },
-        activeColorTheme: {
-          kind: 2,
-          // ColorThemeKind.Dark
-          onDidChange: MakeEventSubscriber(
-            Context,
-            "window.didChangeActiveColorTheme"
-          )
-        },
-        onDidChangeActiveColorTheme: MakeEventSubscriber(
-          Context,
-          "window.didChangeActiveColorTheme"
-        ),
-        createTreeView: /* @__PURE__ */ __name((Id, Options) => {
-          const Provider = Options?.treeDataProvider;
-          if (Provider) {
-            const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
-            TreeDataProviders.set(Handle, Provider);
-            const SerializableOptions = {
-              showCollapseAll: Options?.showCollapseAll === true,
-              canSelectMany: Options?.canSelectMany === true,
-              manageCheckboxStateManually: Options?.manageCheckboxStateManually === true
-            };
-            Context.MountainClient?.sendRequest("tree.register", [
-              Handle,
-              Id,
-              SerializableOptions
-            ]).catch(() => {
-            });
-          }
-          return {
-            reveal: /* @__PURE__ */ __name(async () => {
-            }, "reveal"),
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.MountainClient?.sendRequest("tree.dispose", [
-                Id
-              ]).catch(() => {
-              });
-            }, "dispose"),
-            selection: [],
-            visible: true,
-            title: void 0,
-            description: void 0,
-            message: void 0,
-            badge: void 0,
-            onDidChangeSelection: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidChangeSelection"),
-            onDidChangeVisibility: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidChangeVisibility"),
-            onDidCollapseElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidCollapseElement"),
-            onDidExpandElement: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidExpandElement"),
-            onDidChangeCheckboxState: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onDidChangeCheckboxState")
-          };
-        }, "createTreeView"),
-        registerTreeDataProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
-          const Handle = `treeDataProvider:${++TreeDataProviderCounter}`;
-          TreeDataProviders.set(Handle, Provider);
-          Context.MountainClient?.sendRequest("tree.register", [
-            Handle,
-            ViewId,
-            {}
-          ]).catch(() => {
-          });
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              TreeDataProviders.delete(Handle);
-              Context.MountainClient?.sendRequest("tree.unregister", [
-                Handle
-              ]).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerTreeDataProvider"),
-        registerWebviewPanelSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerWebviewPanelSerializer"),
-        registerWebviewViewProvider: /* @__PURE__ */ __name((ViewId, Provider) => {
-          const Handle = `webviewView:${++WebviewViewCounter}`;
-          WebviewViewProviders.set(Handle, Provider);
-          Context.MountainClient?.sendRequest("webview.registerView", [
-            Handle,
-            ViewId
-          ]).catch(() => {
-          });
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              WebviewViewProviders.delete(Handle);
-              Context.MountainClient?.sendRequest(
-                "webview.unregisterView",
-                [Handle]
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerWebviewViewProvider"),
-        registerCustomEditorProvider: /* @__PURE__ */ __name((ViewType, Provider) => {
-          const Handle = `customEditor:${++CustomEditorCounter}`;
-          CustomEditorProviders.set(Handle, Provider);
-          Context.MountainClient?.sendRequest(
-            "webview.registerCustomEditor",
-            [Handle, ViewType]
-          ).catch(() => {
-          });
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              CustomEditorProviders.delete(Handle);
-              Context.MountainClient?.sendRequest(
-                "webview.unregisterCustomEditor",
-                [Handle]
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerCustomEditorProvider"),
-        registerFileDecorationProvider: /* @__PURE__ */ __name((Provider) => {
-          const Handle = `fileDecoration:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-          Context.SendToMountain("register_file_decoration_provider", {
-            handle: Handle,
-            extension_id: ""
-          }).catch(() => {
-          });
-          Context.ExtensionRegistry.set(
-            `__fileDecorationProvider:${Handle}`,
-            Provider
-          );
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.ExtensionRegistry.delete(
-                `__fileDecorationProvider:${Handle}`
-              );
-              Context.SendToMountain(
-                "unregister_file_decoration_provider",
-                { handle: Handle }
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerFileDecorationProvider"),
-        registerUriHandler: /* @__PURE__ */ __name((Handler) => {
-          const Handle = `uriHandler:${Date.now()}`;
-          Context.SendToMountain("register_uri_handler", {
-            handle: Handle,
-            extension_id: ""
-          }).catch(() => {
-          });
-          Context.ExtensionRegistry.set(`__uriHandler:${Handle}`, Handler);
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.ExtensionRegistry.delete(`__uriHandler:${Handle}`);
-              Context.SendToMountain("unregister_uri_handler", {
-                handle: Handle
-              }).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerUriHandler"),
-        registerTerminalLinkProvider: /* @__PURE__ */ __name((Provider) => {
-          const Handle = `terminalLink:${Date.now()}`;
-          Context.SendToMountain("register_terminal_link_provider", {
-            handle: Handle,
-            extension_id: ""
-          }).catch(() => {
-          });
-          Context.ExtensionRegistry.set(
-            `__terminalLinkProvider:${Handle}`,
-            Provider
-          );
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.ExtensionRegistry.delete(
-                `__terminalLinkProvider:${Handle}`
-              );
-              Context.SendToMountain(
-                "unregister_terminal_link_provider",
-                { handle: Handle }
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerTerminalLinkProvider"),
-        registerTerminalProfileProvider: /* @__PURE__ */ __name((Id, Provider) => {
-          const Handle = `terminalProfile:${Id}:${Date.now()}`;
-          Context.SendToMountain("register_terminal_profile_provider", {
-            handle: Handle,
-            profile_id: Id,
-            extension_id: ""
-          }).catch(() => {
-          });
-          Context.ExtensionRegistry.set(
-            `__terminalProfileProvider:${Handle}`,
-            Provider
-          );
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.ExtensionRegistry.delete(
-                `__terminalProfileProvider:${Handle}`
-              );
-              Context.SendToMountain(
-                "unregister_terminal_profile_provider",
-                { handle: Handle }
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerTerminalProfileProvider"),
-        registerProfileContentHandler: /* @__PURE__ */ __name((_Id, _Handler) => ({
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "registerProfileContentHandler"),
-        registerExternalUriOpener: /* @__PURE__ */ __name((Id, _Opener, _Metadata) => {
-          const Handle = `externalUriOpener:${Id}:${Date.now()}`;
-          Context.SendToMountain("register_external_uri_opener", {
-            handle: Handle,
-            opener_id: Id,
-            extension_id: ""
-          }).catch(() => {
-          });
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.SendToMountain(
-                "unregister_external_uri_opener",
-                { handle: Handle }
-              ).catch(() => {
-              });
-            }, "dispose")
-          };
-        }, "registerExternalUriOpener"),
-        // Runs a Task with a progress object that reports to Mountain, which
-        // in turn updates the status-bar progress indicator in Sky.
-        // VS Code's contract: `Task(progress, cancellationToken) -> Thenable<R>`.
-        // We provide a real `report({ message, increment })` path and a
-        // no-op CancellationToken (no cancellation plumbing yet). The
-        // Task's return value is forwarded verbatim.
-        withProgress: /* @__PURE__ */ __name(async (Options, Task3) => {
-          const Handle = `progress:${++ProgressCounter}`;
-          const Title = Options && typeof Options === "object" && Options.title || "Progress";
-          const Location3 = (Options && typeof Options === "object" && Options.location) ?? 15;
-          let Increment = 0;
-          const Progress = {
-            report: /* @__PURE__ */ __name((Value) => {
-              if (Value?.increment) Increment += Value.increment;
-              Context.SendToMountain("progress.report", {
-                handle: Handle,
-                title: Title,
-                location: Location3,
-                message: Value?.message,
-                increment: Increment
-              }).catch(() => {
-              });
-            }, "report")
-          };
-          const CancellationToken2 = {
-            isCancellationRequested: false,
-            onCancellationRequested: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose") }), "onCancellationRequested")
-          };
-          Context.SendToMountain("progress.start", {
-            handle: Handle,
-            title: Title,
-            location: Location3
-          }).catch(() => {
-          });
-          try {
-            return await Task3(Progress, CancellationToken2);
-          } finally {
-            Context.SendToMountain("progress.end", {
-              handle: Handle
-            }).catch(() => {
-            });
-          }
-        }, "withProgress"),
-        setStatusBarMessage: /* @__PURE__ */ __name((Text, HideAfter) => {
-          Context.SendToMountain("statusBar.message", {
-            text: Text,
-            hideAfter: typeof HideAfter === "number" ? HideAfter : void 0
-          }).catch(() => {
-          });
-          return { dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") };
-        }, "setStatusBarMessage"),
-        // Events sourced from Mountain gRPC notifications → Context.Emitter
-        onDidChangeActiveTextEditor: MakeEventSubscriber(
-          Context,
-          "window.didChangeActiveTextEditor"
-        ),
-        onDidChangeVisibleTextEditors: MakeEventSubscriber(
-          Context,
-          "window.didChangeVisibleTextEditors"
-        ),
-        onDidChangeTextEditorSelection: MakeEventSubscriber(
-          Context,
-          "window.didChangeTextEditorSelection"
-        ),
-        onDidChangeTextEditorVisibleRanges: MakeEventSubscriber(
-          Context,
-          "window.didChangeTextEditorVisibleRanges"
-        ),
-        onDidChangeTextEditorOptions: MakeEventSubscriber(
-          Context,
-          "window.didChangeTextEditorOptions"
-        ),
-        onDidChangeTextEditorViewColumn: MakeEventSubscriber(
-          Context,
-          "window.didChangeTextEditorViewColumn"
-        ),
-        onDidOpenTerminal: MakeEventSubscriber(
-          Context,
-          "window.didOpenTerminal"
-        ),
-        onDidCloseTerminal: MakeEventSubscriber(
-          Context,
-          "window.didCloseTerminal"
-        ),
-        onDidChangeActiveTerminal: MakeEventSubscriber(
-          Context,
-          "window.didChangeActiveTerminal"
-        ),
-        onDidChangeTerminalState: MakeEventSubscriber(
-          Context,
-          "window.didChangeTerminalState"
-        ),
-        onDidWriteTerminalData: MakeEventSubscriber(
-          Context,
-          "terminalData"
-        ),
-        onDidChangeWindowState: MakeEventSubscriber(
-          Context,
-          "window.didChangeWindowState"
-        ),
-        activeTextEditor: void 0,
-        visibleTextEditors: [],
-        terminals: [],
-        activeTerminal: void 0,
-        state: { focused: true, active: true }
-      };
-    }, "CreateWindowNamespace");
-    WindowNamespace_default = CreateWindowNamespace;
+// Source/Interfaces/IMountainClientService.ts
+import * as Effect from "effect/Effect";
+var IMountainClientService = Effect.Service()(
+  "Service/MountainClient",
+  {
+    effect: Effect.gen(function* () {
+      return {};
+    })
   }
-});
+);
 
-// Source/Utility/GlobToRegex.ts
-var FindMatchingBrace, SplitTopLevelCommas, ExpandBraces, RegexEscape, PlainGlobToRegexSource, GlobToRegex, GlobToRegex_default;
-var init_GlobToRegex = __esm({
-  "Source/Utility/GlobToRegex.ts"() {
-    "use strict";
-    FindMatchingBrace = /* @__PURE__ */ __name((Input, Start, Open, Close) => {
-      let Depth = 1;
-      for (let I = Start + 1; I < Input.length; I++) {
-        const Character = Input[I];
-        if (Character === "\\") {
-          I++;
-          continue;
-        }
-        if (Character === Open) Depth++;
-        else if (Character === Close) {
-          Depth--;
-          if (Depth === 0) return I;
-        }
-      }
-      return -1;
-    }, "FindMatchingBrace");
-    SplitTopLevelCommas = /* @__PURE__ */ __name((Body) => {
-      const Parts = [];
-      let Depth = 0;
-      let Start = 0;
-      for (let I = 0; I < Body.length; I++) {
-        const Character = Body[I];
-        if (Character === "\\") {
-          I++;
-          continue;
-        }
-        if (Character === "{" || Character === "(") Depth++;
-        else if (Character === "}" || Character === ")") Depth--;
-        else if (Character === "," && Depth === 0) {
-          Parts.push(Body.slice(Start, I));
-          Start = I + 1;
-        }
-      }
-      Parts.push(Body.slice(Start));
-      return Parts;
-    }, "SplitTopLevelCommas");
-    ExpandBraces = /* @__PURE__ */ __name((Input) => {
-      const Open = Input.indexOf("{");
-      if (Open === -1) return [Input];
-      const Close = FindMatchingBrace(Input, Open, "{", "}");
-      if (Close === -1) return [Input];
-      const Prefix = Input.slice(0, Open);
-      const Body = Input.slice(Open + 1, Close);
-      const Suffix = Input.slice(Close + 1);
-      const RangeMatch = /^(-?\d+)\.\.(-?\d+)(?:\.\.(-?\d+))?$/.exec(Body);
-      const Alternatives = [];
-      if (RangeMatch) {
-        const Start = parseInt(RangeMatch[1], 10);
-        const End = parseInt(RangeMatch[2], 10);
-        const StepRaw = RangeMatch[3];
-        const Step = StepRaw ? Math.abs(parseInt(StepRaw, 10)) : 1;
-        if (Step > 0 && Number.isFinite(Start) && Number.isFinite(End)) {
-          const Width = RangeMatch[1].startsWith("0") || RangeMatch[2].startsWith("0") ? Math.max(RangeMatch[1].length, RangeMatch[2].length) : 0;
-          const Direction = Start <= End ? 1 : -1;
-          for (let Value = Start; Direction === 1 ? Value <= End : Value >= End; Value += Direction * Step) {
-            const Text = String(Math.abs(Value));
-            const Padded = Width > 0 && Text.length < Width ? "0".repeat(Width - Text.length) + Text : Text;
-            Alternatives.push(Value < 0 ? `-${Padded}` : Padded);
-          }
-        }
-      }
-      if (Alternatives.length === 0) {
-        Alternatives.push(...SplitTopLevelCommas(Body));
-      }
-      const Expanded = [];
-      for (const Alternative of Alternatives) {
-        for (const Sub of ExpandBraces(Alternative)) {
-          for (const Tail of ExpandBraces(Suffix)) {
-            Expanded.push(`${Prefix}${Sub}${Tail}`);
-          }
-        }
-      }
-      return Expanded;
-    }, "ExpandBraces");
-    RegexEscape = /* @__PURE__ */ __name((Character) => /[.+^$()|\[\]\\]/.test(Character) ? `\\${Character}` : Character, "RegexEscape");
-    PlainGlobToRegexSource = /* @__PURE__ */ __name((Glob) => {
-      let Expression = "";
-      let I = 0;
-      while (I < Glob.length) {
-        const Character = Glob[I];
-        const Next = Glob[I + 1];
-        if (Character === "*" && Next === "*") {
-          Expression += ".*";
-          I += 2;
-          if (Glob[I] === "/") I++;
-          continue;
-        }
-        if ((Character === "?" || Character === "*" || Character === "+" || Character === "@" || Character === "!") && Next === "(") {
-          const CloseAt = FindMatchingBrace(Glob, I + 1, "(", ")");
-          if (CloseAt !== -1) {
-            const Inside = Glob.slice(I + 2, CloseAt);
-            const Alternatives = SplitTopLevelCommas(
-              Inside.replace(/\|/g, ",")
-            ).map((Alternative) => PlainGlobToRegexSource(Alternative));
-            const Joined = Alternatives.join("|");
-            switch (Character) {
-              case "?":
-                Expression += `(?:${Joined})?`;
-                break;
-              case "*":
-                Expression += `(?:${Joined})*`;
-                break;
-              case "+":
-                Expression += `(?:${Joined})+`;
-                break;
-              case "@":
-                Expression += `(?:${Joined})`;
-                break;
-              case "!":
-                Expression += `(?:(?!(?:${Joined})(?:/|$))[^/])+`;
-                break;
-            }
-            I = CloseAt + 1;
-            continue;
-          }
-        }
-        if (Character === "*") {
-          Expression += "[^/]*";
-          I++;
-          continue;
-        }
-        if (Character === "?") {
-          Expression += "[^/]";
-          I++;
-          continue;
-        }
-        if (Character === "[") {
-          const CloseAt = Glob.indexOf("]", I + 1);
-          if (CloseAt !== -1) {
-            let Class = Glob.slice(I + 1, CloseAt);
-            if (Class.startsWith("!")) Class = `^${Class.slice(1)}`;
-            Expression += `[${Class}]`;
-            I = CloseAt + 1;
-            continue;
-          }
-        }
-        if (Character === "\\" && Next !== void 0) {
-          Expression += RegexEscape(Next);
-          I += 2;
-          continue;
-        }
-        Expression += RegexEscape(Character);
-        I++;
-      }
-      return Expression;
-    }, "PlainGlobToRegexSource");
-    GlobToRegex = /* @__PURE__ */ __name((Glob) => {
-      const Variants = ExpandBraces(Glob);
-      const Source = Variants.length === 1 ? PlainGlobToRegexSource(Variants[0]) : `(?:${Variants.map(PlainGlobToRegexSource).join("|")})`;
-      return new RegExp(`^${Source}$`);
-    }, "GlobToRegex");
-    GlobToRegex_default = GlobToRegex;
-  }
-});
+// Source/Utility/EventStream.ts
+init_event();
+import { Effect as Effect2, PubSub } from "effect";
+var CreateEventStream = /* @__PURE__ */ __name(() => {
+  const VSCodeEmitter = new Emitter();
+  const PubSubInstance = Effect2.runSync(PubSub.unbounded());
+  const Fire = /* @__PURE__ */ __name((Data) => PubSub.publish(PubSubInstance, Data).pipe(
+    Effect2.andThen(Effect2.sync(() => VSCodeEmitter.fire(Data))),
+    Effect2.asVoid
+  ), "Fire");
+  const Shutdown = /* @__PURE__ */ __name(() => Effect2.all([
+    PubSub.shutdown(PubSubInstance),
+    Effect2.sync(() => VSCodeEmitter.dispose())
+  ]).pipe(Effect2.asVoid), "Shutdown");
+  return {
+    Fire,
+    PubSub: PubSubInstance,
+    event: VSCodeEmitter.event,
+    Shutdown
+  };
+}, "CreateEventStream");
 
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts
-var EventSubscriber, Call, DefaultExcludeSegments, ExtractGlobPattern, FolderToFsPath, ResolveWorkspaceFolders;
-var init_Helpers = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Helpers.ts"() {
-    "use strict";
-    EventSubscriber = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
-      Context.WorkspaceEventEmitter.on(EventName, Listener);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.WorkspaceEventEmitter.removeListener(
-            EventName,
-            Listener
+// Source/Services/Logger.ts
+import { Context, Effect as Effect3, Ref } from "effect";
+var Logger = Context.Tag("Service/Logger");
+var LoggerService = class extends Effect3.Service()(
+  "Service/Logger",
+  {
+    effect: Effect3.gen(function* () {
+      const ExtensionIdRef = yield* Ref.make(
+        void 0
+      );
+      const LogLevelRef = yield* Ref.make("info");
+      const FormatMessage = /* @__PURE__ */ __name((Message, Level, ExtensionId) => {
+        const Timestamp = (/* @__PURE__ */ new Date()).toISOString();
+        const Prefix = `[${Level.toUpperCase()}${ExtensionId ? `:${ExtensionId}` : ""}]`;
+        return `${Timestamp} ${Prefix} ${Message}`;
+      }, "FormatMessage");
+      const Trace = /* @__PURE__ */ __name((Message, ...Data) => Effect3.gen(function* () {
+        const LogLevel = yield* Ref.get(LogLevelRef);
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        if (LogLevel === "trace") {
+          const FormattedMessage = FormatMessage(
+            Message,
+            "trace",
+            ExtensionId
           );
-        }, "dispose")
-      };
-    }, "EventSubscriber");
-    Call = /* @__PURE__ */ __name(async (Context, Method, Parameters) => {
-      try {
-        return await Context.MountainClient?.sendRequest(
-          Method,
-          Parameters
+          return yield* Effect3.logTrace(Message).pipe(
+            Effect3.annotateLogs({
+              extensionId: ExtensionId,
+              data: Data.length === 1 ? Data[0] : Data
+            })
+          );
+        }
+      }), "Trace");
+      const Debug = /* @__PURE__ */ __name((Message, ...Data) => Effect3.gen(function* () {
+        const LogLevel = yield* Ref.get(LogLevelRef);
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        if (LogLevel === "trace" || LogLevel === "debug") {
+          const FormattedMessage = FormatMessage(
+            Message,
+            "debug",
+            ExtensionId
+          );
+          return yield* Effect3.logDebug(Message).pipe(
+            Effect3.annotateLogs({
+              extensionId: ExtensionId,
+              data: Data.length === 1 ? Data[0] : Data
+            })
+          );
+        }
+      }), "Debug");
+      const Info = /* @__PURE__ */ __name((Message, ...Data) => Effect3.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        const FormattedMessage = FormatMessage(
+          Message,
+          "info",
+          ExtensionId
         );
-      } catch {
+        return yield* Effect3.logInfo(Message).pipe(
+          Effect3.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Info");
+      const Warn = /* @__PURE__ */ __name((Message, ...Data) => Effect3.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return yield* Effect3.logWarning(Message).pipe(
+          Effect3.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Warn");
+      const Error2 = /* @__PURE__ */ __name((Message, ...Data) => Effect3.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return yield* Effect3.logError(Message).pipe(
+          Effect3.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Error");
+      const Fatal = /* @__PURE__ */ __name((Message, ...Data) => Effect3.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return yield* Effect3.logFatal(Message).pipe(
+          Effect3.annotateLogs({
+            extensionId: ExtensionId,
+            data: Data.length === 1 ? Data[0] : Data
+          })
+        );
+      }), "Fatal");
+      const SetExtensionId = /* @__PURE__ */ __name((ExtensionId) => Effect3.gen(function* () {
+        yield* Ref.set(ExtensionIdRef, ExtensionId);
+      }), "SetExtensionId");
+      const GetExtensionId = /* @__PURE__ */ __name(() => Effect3.gen(function* () {
+        const ExtensionId = yield* Ref.get(ExtensionIdRef);
+        return ExtensionId ?? "cocoon-core";
+      }), "GetExtensionId");
+      const ServiceImplementation = {
+        Trace,
+        Debug,
+        Info,
+        Warn,
+        Error: Error2,
+        Fatal,
+        SetExtensionId,
+        GetExtensionId
+      };
+      return ServiceImplementation;
+    })
+  }
+) {
+  static {
+    __name(this, "LoggerService");
+  }
+};
+
+// Source/Services/MountainGRPCClient.ts
+import { Context as Context2, Effect as Effect4, Layer } from "effect";
+var MountainGRPCClientService = Context2.GenericTag("Service/MountainGRPCClient");
+var MountainGRPCClientLive = Layer.effect(
+  MountainGRPCClientService,
+  Effect4.gen(function* () {
+    const mountainClient = yield* IMountainClientService;
+    const logger = yield* Logger.Logger;
+    const service = {
+      _serviceBrand: void 0,
+      // ==================== Window Operations ====================
+      showTextDocument: /* @__PURE__ */ __name((uri, options = {}) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showTextDocument: ${uri}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showTextDocument", {
+            uri: { value: uri },
+            viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
+            // Convert ViewColumn enum (1-based to 0-based)
+            preserveFocus: options.preserveFocus ?? true
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show text document: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect4.fail(
+            new Error(`Failed to show text document: ${uri}`)
+          );
+        }
+        return;
+      }), "showTextDocument"),
+      showInformationMessage: /* @__PURE__ */ __name((message) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showInformationMessage: ${message}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showInformation", {
+            message
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show information message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect4.fail(
+            new Error(
+              `Failed to show information message: ${message}`
+            )
+          );
+        }
+        return;
+      }), "showInformationMessage"),
+      showWarningMessage: /* @__PURE__ */ __name((message) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showWarningMessage: ${message}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showWarning", {
+            message
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show warning message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect4.fail(
+            new Error(
+              `Failed to show warning message: ${message}`
+            )
+          );
+        }
+        return;
+      }), "showWarningMessage"),
+      showErrorMessage: /* @__PURE__ */ __name((message) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] showErrorMessage: ${message}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("showError", {
+            message
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to show error message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect4.fail(
+            new Error(
+              `Failed to show error message: ${message}`
+            )
+          );
+        }
+        return;
+      }), "showErrorMessage"),
+      createStatusBarItem: /* @__PURE__ */ __name((options) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] createStatusBarItem: ${options.id}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createStatusBarItem", {
+            id: options.id,
+            text: options.text,
+            tooltip: options.tooltip ?? ""
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to create status bar item: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.itemId) {
+          return yield* Effect4.fail(
+            new Error(
+              `Failed to create status bar item: ${options.id}`
+            )
+          );
+        }
+        return result.itemId;
+      }), "createStatusBarItem"),
+      setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] setStatusBarText: ${itemId} = ${text}`
+        );
+        yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setStatusBarText", {
+            itemId,
+            text
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to set status bar text: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "setStatusBarText"),
+      createWebviewPanel: /* @__PURE__ */ __name((options) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] createWebviewPanel: ${options.viewType}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("createWebviewPanel", {
+            viewType: options.viewType,
+            title: options.title,
+            iconPath: options.iconPath ?? "",
+            viewColumn: options.viewColumn ? options.viewColumn - 2 : void 0,
+            preserveFocus: options.preserveFocus ?? false,
+            enableFindWidget: options.enableFindWidget ?? true,
+            retainContextWhenHidden: options.retainContextWhenHidden ?? false,
+            localResourceRoots: options.localResourceRoots ?? []
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to create webview panel: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (result?.handle === void 0) {
+          return yield* Effect4.fail(
+            new Error(
+              `Failed to create webview panel: ${options.viewType}`
+            )
+          );
+        }
+        return result.handle;
+      }), "createWebviewPanel"),
+      setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] setWebviewHtml: handle=${handle}`
+        );
+        yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("setWebviewHtml", {
+            handle,
+            html
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to set webview HTML: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "setWebviewHtml"),
+      postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] postWebviewMessage: handle=${handle}`
+        );
+        const isString2 = typeof message === "string";
+        yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
+            "onDidReceiveMessage",
+            {
+              handle,
+              stringMessage: isString2 ? message : void 0,
+              bytesMessage: isString2 ? void 0 : message
+            }
+          ), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to post webview message: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "postWebviewMessage"),
+      // ==================== Workspace Operations ====================
+      findFiles: /* @__PURE__ */ __name((pattern, include) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] findFiles: ${pattern}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findFiles", {
+            pattern,
+            include: include ?? true
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to find files: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.uris ?? [];
+      }), "findFiles"),
+      findTextInFiles: /* @__PURE__ */ __name((pattern, include, exclude) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] findTextInFiles: ${pattern}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("findTextInFiles", {
+            pattern,
+            include: include ?? [],
+            exclude: exclude ?? []
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to find text in files: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.matches ?? [];
+      }), "findTextInFiles"),
+      openDocument: /* @__PURE__ */ __name((uri, viewColumn) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] openDocument: ${uri}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("openDocument", {
+            uri: { value: uri },
+            viewColumn: viewColumn ? viewColumn - 2 : void 0
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to open document: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect4.fail(
+            new Error(`Failed to open document: ${uri}`)
+          );
+        }
+        return;
+      }), "openDocument"),
+      saveAll: /* @__PURE__ */ __name((includeUntitled = false) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] saveAll: includeUntitled=${includeUntitled}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("saveAll", {
+            includeUntitled
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to save all: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect4.fail(
+            new Error("Failed to save all documents")
+          );
+        }
+        return;
+      }), "saveAll"),
+      applyEdit: /* @__PURE__ */ __name((uri, edits) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] applyEdit: ${uri}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("applyEdit", {
+            uri: { value: uri },
+            edits: edits.map((edit) => ({
+              range: {
+                start: {
+                  line: edit.range.start.line,
+                  character: edit.range.start.character
+                },
+                end: {
+                  line: edit.range.end.line,
+                  character: edit.range.end.character
+                }
+              },
+              newText: edit.newText
+            }))
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to apply edit: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.success) {
+          return yield* Effect4.fail(
+            new Error(`Failed to apply edit to: ${uri}`)
+          );
+        }
+        return;
+      }), "applyEdit"),
+      // ==================== Command Operations ====================
+      registerCommand: /* @__PURE__ */ __name((commandId, extensionId, title) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] registerCommand: ${commandId}`
+        );
+        yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("registerCommand", {
+            commandId,
+            extensionId,
+            title
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to register command: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "registerCommand"),
+      executeCommand: /* @__PURE__ */ __name((commandId, ...args) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] executeCommand: ${commandId}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("executeCommand", {
+            commandId,
+            arguments: args.map((arg) => {
+              if (typeof arg === "string") {
+                return { stringValue: arg };
+              }
+              if (typeof arg === "number") {
+                return { intValue: arg };
+              }
+              if (typeof arg === "boolean") {
+                return { boolValue: arg };
+              }
+              if (arg instanceof Uint8Array) {
+                return { bytesValue: arg };
+              }
+              return { stringValue: String(arg) };
+            })
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to execute command: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (result?.error) {
+          return yield* Effect4.fail(
+            new Error(
+              `Command execution failed: ${result.error.Message}`
+            )
+          );
+        }
+        return result?.value;
+      }), "executeCommand"),
+      unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] unregisterCommand: ${commandId}`
+        );
+        yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification(
+            "unregisterCommand",
+            {
+              commandId
+            }
+          ), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to unregister command: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "unregisterCommand"),
+      // ==================== Secret Storage ====================
+      getSecret: /* @__PURE__ */ __name((key) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] getSecret: ${key}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("getSecret", { key }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to get secret: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.value;
+      }), "getSecret"),
+      storeSecret: /* @__PURE__ */ __name((key, value) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] storeSecret: ${key}`
+        );
+        yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("storeSecret", {
+            key,
+            value
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to store secret: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "storeSecret"),
+      deleteSecret: /* @__PURE__ */ __name((key) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] deleteSecret: ${key}`
+        );
+        yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("deleteSecret", {
+            key
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to delete secret: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "deleteSecret"),
+      // ==================== File System Operations ====================
+      readFile: /* @__PURE__ */ __name((uri) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] readFile: ${uri}`
+        );
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readFile", {
+            uri: { value: uri }
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to read file: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result?.content) {
+          return yield* Effect4.fail(
+            new Error(`Failed to read file: ${uri}`)
+          );
+        }
+        return result.content;
+      }), "readFile"),
+      writeFile: /* @__PURE__ */ __name((uri, content, encoding = "utf8") => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClient] writeFile: ${uri}`
+        );
+        yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendNotification("writeFile", {
+            uri: { value: uri },
+            content,
+            encoding
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to write file: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return;
+      }), "writeFile"),
+      stat: /* @__PURE__ */ __name((uri) => Effect4.gen(function* () {
+        yield* logger.debug(`[MountainGRPCClient] stat: ${uri}`);
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("stat", {
+            uri: { value: uri }
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to stat file: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        if (!result) {
+          return yield* Effect4.fail(
+            new Error(`Failed to stat file: ${uri}`)
+          );
+        }
+        return result;
+      }), "stat"),
+      readdir: /* @__PURE__ */ __name((uri) => Effect4.gen(function* () {
+        yield* logger.debug(`[MountainGRPCClient] readdir: ${uri}`);
+        const result = yield* Effect4.tryPromise({
+          try: /* @__PURE__ */ __name(() => mountainClient.sendRequest("readdir", {
+            uri: { value: uri }
+          }), "try"),
+          catch: /* @__PURE__ */ __name((error) => new Error(
+            `Failed to read directory: ${error instanceof Error ? error.message : String(error)}`
+          ), "catch")
+        });
+        return result?.entries ?? [];
+      }), "readdir")
+    };
+    return service;
+  })
+);
+var MountainGRPCClientMock = Layer.effect(
+  MountainGRPCClientService,
+  Effect4.gen(function* () {
+    const logger = yield* Logger.Logger;
+    const mockSecrets = /* @__PURE__ */ new Map();
+    const mockStatusBarItems = /* @__PURE__ */ new Map();
+    const mockWebviewPanels = /* @__PURE__ */ new Map();
+    let mockWebviewHandleCounter = 0;
+    const service = {
+      _serviceBrand: void 0,
+      // Window Operations
+      showTextDocument: /* @__PURE__ */ __name((uri) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showTextDocument: ${uri}`
+        );
+        return;
+      }), "showTextDocument"),
+      showInformationMessage: /* @__PURE__ */ __name((message) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showInformationMessage: ${message}`
+        );
+        return;
+      }), "showInformationMessage"),
+      showWarningMessage: /* @__PURE__ */ __name((message) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showWarningMessage: ${message}`
+        );
+        return;
+      }), "showWarningMessage"),
+      showErrorMessage: /* @__PURE__ */ __name((message) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] showErrorMessage: ${message}`
+        );
+        return;
+      }), "showErrorMessage"),
+      createStatusBarItem: /* @__PURE__ */ __name((options) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] createStatusBarItem: ${options.id}`
+        );
+        const itemId = `status-${options.id}`;
+        mockStatusBarItems.set(itemId, options.text);
+        return itemId;
+      }), "createStatusBarItem"),
+      setStatusBarText: /* @__PURE__ */ __name((itemId, text) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] setStatusBarText: ${itemId}`
+        );
+        mockStatusBarItems.set(itemId, text);
+        return;
+      }), "setStatusBarText"),
+      createWebviewPanel: /* @__PURE__ */ __name((options) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] createWebviewPanel: ${options.viewType}`
+        );
+        const handle = mockWebviewHandleCounter++;
+        mockWebviewPanels.set(handle, { html: options.html ?? "" });
+        return handle;
+      }), "createWebviewPanel"),
+      setWebviewHtml: /* @__PURE__ */ __name((handle, html) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] setWebviewHtml: ${handle}`
+        );
+        const panel = mockWebviewPanels.get(handle);
+        if (panel) {
+          panel.html = html;
+        }
+        return;
+      }), "setWebviewHtml"),
+      postWebviewMessage: /* @__PURE__ */ __name((handle, message) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] postWebviewMessage: ${handle}`
+        );
+        return;
+      }), "postWebviewMessage"),
+      // Workspace Operations
+      findFiles: /* @__PURE__ */ __name((pattern) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] findFiles: ${pattern}`
+        );
+        return [];
+      }), "findFiles"),
+      findTextInFiles: /* @__PURE__ */ __name((pattern) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] findTextInFiles: ${pattern}`
+        );
+        return [];
+      }), "findTextInFiles"),
+      openDocument: /* @__PURE__ */ __name((uri) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] openDocument: ${uri}`
+        );
+        return;
+      }), "openDocument"),
+      saveAll: /* @__PURE__ */ __name(() => Effect4.gen(function* () {
+        yield* logger.debug("[MountainGRPCClientMock] saveAll");
+        return;
+      }), "saveAll"),
+      applyEdit: /* @__PURE__ */ __name((uri) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] applyEdit: ${uri}`
+        );
+        return;
+      }), "applyEdit"),
+      // Command Operations
+      registerCommand: /* @__PURE__ */ __name((commandId) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] registerCommand: ${commandId}`
+        );
+        return;
+      }), "registerCommand"),
+      executeCommand: /* @__PURE__ */ __name((commandId) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] executeCommand: ${commandId}`
+        );
+        return void 0;
+      }), "executeCommand"),
+      unregisterCommand: /* @__PURE__ */ __name((commandId) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] unregisterCommand: ${commandId}`
+        );
+        return;
+      }), "unregisterCommand"),
+      // Secret Storage
+      getSecret: /* @__PURE__ */ __name((key) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] getSecret: ${key}`
+        );
+        return mockSecrets.get(key);
+      }), "getSecret"),
+      storeSecret: /* @__PURE__ */ __name((key, value) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] storeSecret: ${key}`
+        );
+        mockSecrets.set(key, value);
+        return;
+      }), "storeSecret"),
+      deleteSecret: /* @__PURE__ */ __name((key) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] deleteSecret: ${key}`
+        );
+        mockSecrets.delete(key);
+        return;
+      }), "deleteSecret"),
+      // File System Operations
+      readFile: /* @__PURE__ */ __name((uri) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] readFile: ${uri}`
+        );
+        return new Uint8Array(0);
+      }), "readFile"),
+      writeFile: /* @__PURE__ */ __name((uri, content) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] writeFile: ${uri}`
+        );
+        return;
+      }), "writeFile"),
+      stat: /* @__PURE__ */ __name((uri) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] stat: ${uri}`
+        );
+        return {
+          isFile: true,
+          isDirectory: false,
+          size: 0,
+          mtime: Date.now()
+        };
+      }), "stat"),
+      readdir: /* @__PURE__ */ __name((uri) => Effect4.gen(function* () {
+        yield* logger.debug(
+          `[MountainGRPCClientMock] readdir: ${uri}`
+        );
+        return [];
+      }), "readdir")
+    };
+    return service;
+  })
+);
+var MountainGRPCClientLayer = MountainGRPCClientLive.pipe(
+  Layer.provide(IMountainClientService)
+);
+var MountainGRPCClientMockLayer = MountainGRPCClientMock;
+
+// Source/Services/Window/OutputChannel.ts
+import { Effect as Effect5 } from "effect";
+var CreateOutputChannel = /* @__PURE__ */ __name((MountainClient, Logger2, Name) => Effect5.gen(function* () {
+  const ChannelId = `output-${crypto.randomUUID()}`;
+  yield* Logger2.Info(
+    `[WindowService] Creating output channel: ${Name} (${ChannelId})`
+  );
+  yield* Effect5.tryPromise({
+    try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("output.create", {
+      id: ChannelId,
+      name: Name
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => new Error("Failed to create output channel"), "catch")
+  });
+  return yield* Effect5.succeed({
+    name: Name,
+    append(Value) {
+      MountainClient.sendNotification("output.append", {
+        channel: ChannelId,
+        value: Value
+      }).catch(() => {
+      });
+    },
+    appendLine(Value) {
+      MountainClient.sendNotification("output.appendLine", {
+        channel: ChannelId,
+        value: Value
+      }).catch(() => {
+      });
+    },
+    clear() {
+      MountainClient.sendNotification("output.clear", {
+        channel: ChannelId
+      }).catch(() => {
+      });
+    },
+    show(_ColumnOrPreserveFocus, _PreserveFocus) {
+      MountainClient.sendNotification("output.show", {
+        channel: ChannelId
+      }).catch(() => {
+      });
+    },
+    hide() {
+      MountainClient.sendNotification("output.show", {
+        channel: ChannelId,
+        visible: false
+      }).catch(() => {
+      });
+    },
+    dispose() {
+      MountainClient.sendNotification("output.dispose", {
+        channel: ChannelId
+      }).catch(() => {
+      });
+    },
+    replace(_Value) {
+      MountainClient.sendNotification("output.replace", {
+        channel: ChannelId,
+        value: _Value
+      }).catch(() => {
+      });
+    }
+  });
+}), "CreateOutputChannel");
+
+// Source/Services/Window/StatusBar.ts
+import { Effect as Effect6 } from "effect";
+var CreateStatusBarItem = /* @__PURE__ */ __name((MountainClient, GRPCClient, Logger2, Id, Alignment, Priority) => Effect6.gen(function* () {
+  const ItemId = Id ?? `statusbar-${crypto.randomUUID()}`;
+  yield* Logger2.Info(
+    `[WindowService] Creating status bar item with id '${ItemId}'`
+  );
+  const State = {
+    id: ItemId,
+    name: void 0,
+    text: "",
+    tooltip: void 0,
+    command: void 0,
+    alignment: Alignment ?? 1,
+    // Left = 1
+    priority: Priority,
+    backgroundColor: void 0,
+    color: void 0,
+    isVisible: false
+  };
+  yield* GRPCClient.createStatusBarItem({
+    id: ItemId,
+    text: "",
+    tooltip: void 0
+  });
+  return yield* Effect6.succeed({
+    get id() {
+      return State.id;
+    },
+    get name() {
+      return State.name;
+    },
+    set name(Value) {
+      State.name = Value;
+    },
+    get alignment() {
+      return State.alignment;
+    },
+    get priority() {
+      return State.priority;
+    },
+    get text() {
+      return State.text;
+    },
+    set text(Value) {
+      State.text = Value;
+      MountainClient.sendNotification("setStatusBarText", {
+        itemId: ItemId,
+        text: Value
+      }).catch(() => {
+      });
+    },
+    get tooltip() {
+      return State.tooltip;
+    },
+    set tooltip(Value) {
+      State.tooltip = Value;
+    },
+    get command() {
+      return State.command;
+    },
+    set command(Value) {
+      State.command = Value;
+    },
+    get backgroundColor() {
+      return State.backgroundColor;
+    },
+    set backgroundColor(Value) {
+      State.backgroundColor = Value;
+    },
+    get color() {
+      return State.color;
+    },
+    set color(Value) {
+      State.color = Value;
+    },
+    show() {
+      State.isVisible = true;
+      MountainClient.sendNotification("setStatusBarText", {
+        itemId: ItemId,
+        text: State.text,
+        visible: true
+      }).catch(() => {
+      });
+    },
+    hide() {
+      State.isVisible = false;
+      MountainClient.sendNotification("setStatusBarText", {
+        itemId: ItemId,
+        text: State.text,
+        visible: false
+      }).catch(() => {
+      });
+    },
+    dispose() {
+      State.isVisible = false;
+      MountainClient.sendNotification("disposeStatusBarItem", {
+        itemId: ItemId
+      }).catch(() => {
+      });
+    },
+    accessibilityInformation: void 0
+  });
+}), "CreateStatusBarItem");
+
+// Source/TypeConverter/QuickInput.ts
+var SerializeItems = /* @__PURE__ */ __name((Items) => {
+  return Items.map((Item, Index) => {
+    const Base = typeof Item === "string" ? { label: Item } : Item;
+    return { ...Base, handle: Index };
+  });
+}, "SerializeItems");
+var SerializeButtons = /* @__PURE__ */ __name((Buttons) => {
+  return Buttons?.map((Button, Index) => {
+    const iconPath = Button.iconPath;
+    return {
+      iconPath: iconPath ? "dark" in iconPath && "light" in iconPath ? {
+        dark: iconPath.dark.toJSON(),
+        light: iconPath.light.toJSON()
+      } : iconPath.toJSON() : void 0,
+      tooltip: Button.tooltip,
+      handle: Index
+    };
+  });
+}, "SerializeButtons");
+
+// Source/Services/Window/QuickInput.ts
+import { Effect as Effect7 } from "effect";
+var ShowQuickPick = /* @__PURE__ */ __name((MountainClient, Logger2, Items, Options) => Effect7.gen(function* () {
+  yield* Logger2.Debug(
+    `[WindowService] Showing quick pick with ${Items.length} items`
+  );
+  const ItemsDTO = SerializeItems(Items);
+  const ButtonsDTO = Options?.buttons ? SerializeButtons(Options.buttons) : void 0;
+  const RequestPayload = {
+    items: ItemsDTO,
+    options: Options ? {
+      placeHolder: Options.placeHolder,
+      matchOnDescription: Options.matchOnDescription,
+      matchOnDetail: Options.matchOnDetail,
+      ignoreFocusLost: Options.ignoreFocusLost,
+      canPickMany: Options.canPickMany
+    } : void 0,
+    buttons: ButtonsDTO
+  };
+  const SelectedItems = yield* Effect7.tryPromise({
+    try: /* @__PURE__ */ __name(async () => {
+      const Response = await MountainClient.sendRequest(
+        "UserInterface.ShowQuickPick",
+        [RequestPayload.items, RequestPayload.options]
+      );
+      if (Response === null || Response === void 0) {
         return void 0;
       }
-    }, "Call");
-    DefaultExcludeSegments = /* @__PURE__ */ new Set([
-      ".git",
-      "node_modules",
-      ".astro",
-      ".next",
-      ".nuxt",
-      ".cache",
-      ".turbo",
-      ".pnpm",
-      "Target",
-      "target",
-      "dist",
-      "out",
-      "build",
-      ".DS_Store"
-    ]);
-    ExtractGlobPattern = /* @__PURE__ */ __name((Raw) => {
-      if (typeof Raw === "string" && Raw.length > 0) return Raw;
-      if (Raw && typeof Raw === "object") {
-        const Obj = Raw;
-        if (typeof Obj["pattern"] === "string") return Obj["pattern"];
-        if (typeof Obj["glob"] === "string") return Obj["glob"];
-      }
-      return void 0;
-    }, "ExtractGlobPattern");
-    FolderToFsPath = /* @__PURE__ */ __name((FolderUri) => {
-      const Raw = typeof FolderUri === "string" ? FolderUri : FolderUri?.["fsPath"] ?? FolderUri?.["path"] ?? FolderUri?.["external"];
-      if (typeof Raw !== "string" || Raw.length === 0) return void 0;
-      if (Raw.startsWith("file:")) {
-        try {
-          return decodeURIComponent(new URL(Raw).pathname);
-        } catch {
-          return Raw.replace(/^file:\/\//, "");
-        }
-      }
-      return Raw;
-    }, "FolderToFsPath");
-    ResolveWorkspaceFolders = /* @__PURE__ */ __name((Context) => {
-      const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
-      return (InitWorkspace.folders ?? []).map((Folder) => {
-        const FsPath = FolderToFsPath(Folder?.uri);
-        const Record = { ...Folder };
-        if (typeof FsPath === "string") Record.FsPath = FsPath;
-        return Record;
-      });
-    }, "ResolveWorkspaceFolders");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindFiles.ts
-var FindFilesLocal;
-var init_FindFiles = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FindFiles.ts"() {
-    "use strict";
-    init_GlobToRegex();
-    init_Helpers();
-    FindFilesLocal = /* @__PURE__ */ __name(async (_Context, Folders, Include, Exclude, MaxResults) => {
-      const IncludePattern = ExtractGlobPattern(Include);
-      const ExcludePattern = ExtractGlobPattern(Exclude);
-      const Cap = typeof MaxResults === "number" && MaxResults > 0 ? MaxResults : 1e4;
-      process.stdout.write(
-        `[LandFix:WsNs] findFiles include=${IncludePattern ?? "<any>"} exclude=${ExcludePattern ?? "<none>"} cap=${Cap} folders=${Folders.length}
-`
+      return Response;
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Failed to show quick pick: ${Error_.message}`
       );
-      if (!IncludePattern) {
-        process.stdout.write(
-          "[LandFix:WsNs] findFiles: no include pattern \u2192 []\n"
-        );
-        return [];
-      }
-      let IncludeRegex;
-      try {
-        IncludeRegex = GlobToRegex_default(IncludePattern);
-      } catch (CaughtError) {
-        const Message = CaughtError instanceof globalThis.Error ? CaughtError.message : String(CaughtError);
-        process.stdout.write(
-          `[LandFix:WsNs] findFiles: glob compile failed for ${IncludePattern}: ${Message}
-`
-        );
-        return [];
-      }
-      let ExcludeRegex;
-      if (ExcludePattern) {
-        try {
-          ExcludeRegex = GlobToRegex_default(ExcludePattern);
-        } catch {
-        }
-      }
-      const { readdir } = await import("node:fs/promises");
-      const { join: join3, relative: relative2, sep: sep2 } = await import("node:path");
-      const Results = [];
-      const MaxDepth = 32;
-      const DeadlineAt = Date.now() + 3e4;
-      let Truncated = "";
-      const Walk = /* @__PURE__ */ __name(async (Root, Current, Depth) => {
-        if (Results.length >= Cap) {
-          Truncated = "cap";
-          return;
-        }
-        if (Depth > MaxDepth) {
-          Truncated = Truncated || "depth";
-          return;
-        }
-        if (Date.now() > DeadlineAt) {
-          Truncated = Truncated || "deadline";
-          return;
-        }
-        let Entries;
-        try {
-          Entries = await readdir(Current, {
-            withFileTypes: true
-          });
-        } catch {
-          return;
-        }
-        const SubDirectories = [];
-        for (const Entry of Entries) {
-          if (Results.length >= Cap) {
-            Truncated = "cap";
-            return;
-          }
-          const Name = Entry.name;
-          if (DefaultExcludeSegments.has(Name)) continue;
-          if (typeof Entry.isSymbolicLink === "function" && Entry.isSymbolicLink())
-            continue;
-          const Full = join3(Current, Name);
-          const RelativeFromRoot = relative2(Root, Full).split(sep2).join("/");
-          if (Entry.isDirectory()) {
-            SubDirectories.push(Full);
-            continue;
-          }
-          if (ExcludeRegex && ExcludeRegex.test(RelativeFromRoot)) continue;
-          if (!IncludeRegex.test(RelativeFromRoot)) continue;
-          Results.push({ scheme: "file", path: Full, fsPath: Full });
-        }
-        const Concurrency = 4;
-        for (let Index = 0; Index < SubDirectories.length; Index += Concurrency) {
-          const Batch = SubDirectories.slice(Index, Index + Concurrency);
-          await Promise.all(Batch.map((Sub) => Walk(Root, Sub, Depth + 1)));
-          if (Results.length >= Cap) {
-            Truncated = "cap";
-            return;
-          }
-          if (Date.now() > DeadlineAt) {
-            Truncated = Truncated || "deadline";
-            return;
-          }
-        }
-      }, "Walk");
-      for (const Folder of Folders) {
-        const FsPath = FolderToFsPath(Folder?.uri);
-        if (!FsPath) {
-          process.stdout.write(
-            `[LandFix:WsNs] findFiles: folder has no fsPath (name=${Folder?.name})
-`
-          );
-          continue;
-        }
-        await Walk(FsPath, FsPath, 0);
-      }
-      if (Truncated) {
-        process.stdout.write(
-          `[LandFix:WsNs] findFiles: truncated (${Truncated}) at ${Results.length} result(s)
-`
-        );
-      }
-      process.stdout.write(
-        `[LandFix:WsNs] findFiles: matched ${Results.length} file(s) for include=${IncludePattern}
-`
+    }, "catch")
+  });
+  if (!SelectedItems || SelectedItems.length === 0) {
+    return void 0;
+  }
+  const SelectedValue = SelectedItems[0];
+  if (typeof Items[0] === "string") {
+    return SelectedValue;
+  }
+  return Items.find(
+    (Item) => Item.label === SelectedValue
+  );
+}), "ShowQuickPick");
+var ShowInputBox = /* @__PURE__ */ __name((MountainClient, Logger2, Options) => Effect7.gen(function* () {
+  yield* Logger2.Debug(
+    `[WindowService] Showing input box${Options ? ` with placeholder: ${Options.placeholder}` : ""}`
+  );
+  const RequestPayload = Options ? {
+    title: Options.title,
+    value: Options.value,
+    valueSelection: Options.valueSelection,
+    prompt: Options.prompt,
+    placeHolder: Options.placeHolder,
+    password: Options.password,
+    ignoreFocusLost: Options.ignoreFocusLost,
+    validateInput: Options.validateInput ? Options.validateInput.toString() : void 0
+  } : void 0;
+  const Result = yield* Effect7.tryPromise({
+    try: /* @__PURE__ */ __name(async () => {
+      const Response = await MountainClient.sendRequest(
+        "UserInterface.ShowInputBox",
+        [RequestPayload]
       );
-      return Results;
-    }, "FindFilesLocal");
-  }
-});
-
-// Source/Utility/LandFixLog.ts
-var Mode, Enabled, Long, DebugEnabled, AllowList, PadTwo, PadThree, FormatTimestamp, SerializeContext, LevelTag, FormatLine, Emit, Info, Warn, ErrorLog, Debug, SeenOnce, DebugOnce, InfoOnce, LandFixLog, LandFixLog_default;
-var init_LandFixLog = __esm({
-  "Source/Utility/LandFixLog.ts"() {
-    "use strict";
-    Mode = process.env["LAND_LANDFIX_LOG"] ?? "short";
-    Enabled = Mode !== "off";
-    Long = Mode === "long";
-    DebugEnabled = Long;
-    AllowList = (() => {
-      const Raw = process.env["LAND_LANDFIX_TAGS"];
-      if (!Raw || Raw.trim().length === 0) return void 0;
-      const Tags = Raw.split(",").map((Entry) => Entry.trim()).filter((Entry) => Entry.length > 0);
-      return Tags.length === 0 ? void 0 : new Set(Tags);
-    })();
-    PadTwo = /* @__PURE__ */ __name((Value) => Value < 10 ? `0${Value}` : String(Value), "PadTwo");
-    PadThree = /* @__PURE__ */ __name((Value) => Value < 10 ? `00${Value}` : Value < 100 ? `0${Value}` : String(Value), "PadThree");
-    FormatTimestamp = /* @__PURE__ */ __name(() => {
-      const Now = /* @__PURE__ */ new Date();
-      if (Long) return Now.toISOString();
-      return `${PadTwo(Now.getHours())}:${PadTwo(Now.getMinutes())}:${PadTwo(
-        Now.getSeconds()
-      )}.${PadThree(Now.getMilliseconds())}`;
-    }, "FormatTimestamp");
-    SerializeContext = /* @__PURE__ */ __name((Context) => {
-      const Seen = /* @__PURE__ */ new WeakSet();
-      try {
-        return JSON.stringify(Context, (_Key, Value) => {
-          if (Value instanceof Error) {
-            return { name: Value.name, message: Value.message };
-          }
-          if (typeof Value === "bigint") return String(Value);
-          if (typeof Value === "function") return "[Function]";
-          if (typeof Value === "object" && Value !== null) {
-            if (Seen.has(Value)) return "[Circular]";
-            Seen.add(Value);
-          }
-          return Value;
-        });
-      } catch {
-        return '"[Unserializable]"';
+      if (Response === null || Response === void 0) {
+        return void 0;
       }
-    }, "SerializeContext");
-    LevelTag = /* @__PURE__ */ __name((Level) => Level === "info" ? "" : ` ${Level.toUpperCase()}`, "LevelTag");
-    FormatLine = /* @__PURE__ */ __name((Level, Tag, Message, Context) => {
-      const Head = `${FormatTimestamp()} [LandFix:${Tag}]${LevelTag(Level)} ${Message}`;
-      if (!Context) return `${Head}
-`;
-      return `${Head} ${SerializeContext(Context)}
-`;
-    }, "FormatLine");
-    Emit = /* @__PURE__ */ __name((Stream, Level, Tag, Message, Context) => {
-      if (!Enabled) return;
-      if (AllowList && !AllowList.has(Tag)) return;
-      try {
-        Stream.write(FormatLine(Level, Tag, Message, Context));
-      } catch {
-      }
-    }, "Emit");
-    Info = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stdout, "info", Tag, Message, Context);
-    }, "Info");
-    Warn = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stdout, "warn", Tag, Message, Context);
-    }, "Warn");
-    ErrorLog = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      Emit(process.stderr, "error", Tag, Message, Context);
-    }, "ErrorLog");
-    Debug = /* @__PURE__ */ __name((Tag, Message, Context) => {
-      if (!DebugEnabled) return;
-      Emit(process.stdout, "debug", Tag, Message, Context);
-    }, "Debug");
-    SeenOnce = /* @__PURE__ */ new Set();
-    DebugOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
-      if (!DebugEnabled) return;
-      const Combined = `${Tag}:${Key}`;
-      if (SeenOnce.has(Combined)) return;
-      SeenOnce.add(Combined);
-      Emit(process.stdout, "debug", Tag, Message, Context);
-    }, "DebugOnce");
-    InfoOnce = /* @__PURE__ */ __name((Tag, Key, Message, Context) => {
-      const Combined = `${Tag}:${Key}`;
-      if (SeenOnce.has(Combined)) return;
-      SeenOnce.add(Combined);
-      Emit(process.stdout, "info", Tag, Message, Context);
-    }, "InfoOnce");
-    LandFixLog = {
-      Info,
-      InfoOnce,
-      Warn,
-      Error: ErrorLog,
-      Debug,
-      DebugOnce,
-      IsEnabled: /* @__PURE__ */ __name(() => Enabled, "IsEnabled"),
-      IsDebugEnabled: /* @__PURE__ */ __name(() => DebugEnabled, "IsDebugEnabled"),
-      Mode: /* @__PURE__ */ __name(() => Mode === "off" ? "off" : Long ? "long" : "short", "Mode")
-    };
-    LandFixLog_default = LandFixLog;
-  }
-});
-
-// Source/Utility/Tier.ts
-var Injected, Pick, Tier, Tier_default;
-var init_Tier = __esm({
-  "Source/Utility/Tier.ts"() {
-    "use strict";
-    init_LandFixLog();
-    Injected = globalThis.__LandTiers ?? {};
-    Pick = /* @__PURE__ */ __name((Capability, Fallback) => {
-      const FromInjected = Injected[Capability];
-      if (typeof FromInjected === "string" && FromInjected.length > 0) {
-        return FromInjected;
-      }
-      const FromEnvironment = process.env[`Tier${Capability}`];
-      if (typeof FromEnvironment === "string" && FromEnvironment.length > 0) {
-        return FromEnvironment;
-      }
-      return Fallback;
-    }, "Pick");
-    Tier = {
-      RemoteProcedureCall: Pick(
-        "RemoteProcedureCall",
-        "GRPC"
-      ),
-      HTTPProxy: Pick("HTTPProxy", "HandRolled"),
-      Logger: Pick("Logger", "Standard"),
-      FileSystem: Pick("FileSystem", "Layer2"),
-      FindFiles: Pick("FindFiles", "Layer3"),
-      Glob: Pick("Glob", "JavaScript"),
-      FileWatcher: Pick("FileWatcher", "Stub"),
-      SchemeAssets: Pick("SchemeAssets", "Embedded"),
-      Configuration: Pick("Configuration", "Cache"),
-      Diagnostics: Pick("Diagnostics", "Full"),
-      Clipboard: Pick("Clipboard", "Layer3"),
-      OpenExternal: Pick("OpenExternal", "Layer3"),
-      DocumentMirror: Pick("DocumentMirror", "Full"),
-      ExtensionActivation: Pick(
-        "ExtensionActivation",
-        "Parallel8"
-      ),
-      ExtensionScan: Pick("ExtensionScan", "Sequential"),
-      ModuleCache: Pick("ModuleCache", "Simple"),
-      Telemetry: Pick("Telemetry", "Synchronous")
-    };
-    LandFixLog_default.Info(
-      "Tier",
-      `Cocoon tier set resolved: ${JSON.stringify(Tier)}`
-    );
-    Tier_default = Tier;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts
-var WatcherCounter, CreateFileSystemWatcher;
-var init_FileSystemWatcher = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemWatcher.ts"() {
-    "use strict";
-    init_GlobToRegex();
-    init_Tier();
-    init_Helpers();
-    WatcherCounter = 0;
-    CreateFileSystemWatcher = /* @__PURE__ */ __name((Context, Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => {
-      const StubDisposable = { dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") };
-      const StubWatcher = {
-        ignoreCreateEvents: IgnoreCreateEvents === true,
-        ignoreChangeEvents: IgnoreChangeEvents === true,
-        ignoreDeleteEvents: IgnoreDeleteEvents === true,
-        onDidCreate: /* @__PURE__ */ __name(() => StubDisposable, "onDidCreate"),
-        onDidChange: /* @__PURE__ */ __name(() => StubDisposable, "onDidChange"),
-        onDidDelete: /* @__PURE__ */ __name(() => StubDisposable, "onDidDelete"),
-        dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose")
-      };
-      if (Tier_default.FileWatcher !== "Layer4") {
-        return StubWatcher;
-      }
-      const PatternString = ExtractGlobPattern(Pattern);
-      if (!PatternString) {
-        return StubWatcher;
-      }
-      const Matcher = GlobToRegex_default(PatternString);
-      const Folders = ResolveWorkspaceFolders(Context);
-      const Root = Pattern?.baseUri?.fsPath ?? Pattern?.base ?? Folders[0]?.FsPath;
-      if (!Root) {
-        return StubWatcher;
-      }
-      const Handle = `watcher:${++WatcherCounter}`;
-      const IsRecursive = PatternString.includes("**");
-      Context.MountainClient?.sendRequest("FileWatcher.Register", [
-        Handle,
-        Root,
-        IsRecursive,
-        PatternString
-      ]).catch(() => {
-      });
-      const EventName = `fileWatcher:${Handle}`;
-      const MakeSubscriber = /* @__PURE__ */ __name((Kind, Ignore) => (Listener) => {
-        if (Ignore) return StubDisposable;
-        const WrappedListener = /* @__PURE__ */ __name((Event2) => {
-          if (Event2.kind !== Kind) return;
-          if (!Matcher.test(Event2.path)) return;
-          try {
-            Listener({
-              scheme: "file",
-              path: Event2.path,
-              fsPath: Event2.path,
-              toString: /* @__PURE__ */ __name(() => `file://${Event2.path}`, "toString")
-            });
-          } catch {
-          }
-        }, "WrappedListener");
-        Context.Emitter.on(EventName, WrappedListener);
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context.Emitter.removeListener(
-              EventName,
-              WrappedListener
-            );
-          }, "dispose")
-        };
-      }, "MakeSubscriber");
-      return {
-        ignoreCreateEvents: IgnoreCreateEvents === true,
-        ignoreChangeEvents: IgnoreChangeEvents === true,
-        ignoreDeleteEvents: IgnoreDeleteEvents === true,
-        onDidCreate: MakeSubscriber(
-          "create",
-          IgnoreCreateEvents === true
-        ),
-        onDidChange: MakeSubscriber(
-          "change",
-          IgnoreChangeEvents === true
-        ),
-        onDidDelete: MakeSubscriber(
-          "delete",
-          IgnoreDeleteEvents === true
-        ),
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.Emitter.removeAllListeners(EventName);
-          Context.MountainClient?.sendRequest(
-            "FileWatcher.Unregister",
-            [Handle]
-          ).catch(() => {
-          });
-        }, "dispose")
-      };
-    }, "CreateFileSystemWatcher");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts
-var CreateConfigurationState, BuildGetConfiguration, BuildOnDidChangeConfiguration;
-var init_Configuration = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Configuration.ts"() {
-    "use strict";
-    init_Helpers();
-    CreateConfigurationState = /* @__PURE__ */ __name((Context) => {
-      const ConfigCache = /* @__PURE__ */ new Map();
-      const ConfigInFlight = /* @__PURE__ */ new Set();
-      const ConfigListeners = /* @__PURE__ */ new Set();
-      const FireConfigChange = /* @__PURE__ */ __name((ChangedKey) => {
-        if (ConfigListeners.size === 0) return;
-        const Event2 = {
-          affectsConfiguration: /* @__PURE__ */ __name((QueryKey) => ChangedKey === QueryKey || ChangedKey.startsWith(`${QueryKey}.`), "affectsConfiguration")
-        };
-        for (const Listener of ConfigListeners) {
-          try {
-            Listener(Event2);
-          } catch {
-          }
-        }
-      }, "FireConfigChange");
-      const PrimeConfig = /* @__PURE__ */ __name((Key) => {
-        if (ConfigInFlight.has(Key)) return;
-        ConfigInFlight.add(Key);
-        void Call(
-          Context,
-          "Configuration.Inspect",
-          [Key]
-        ).then((Value) => {
-          ConfigInFlight.delete(Key);
-          if (Value === void 0) return;
-          const Shape = Value;
-          const Resolved = Shape?.["workspaceFolderValue"] ?? Shape?.["workspaceValue"] ?? Shape?.["globalValue"] ?? Shape?.["defaultValue"] ?? Value;
-          const Prior = ConfigCache.get(Key);
-          ConfigCache.set(Key, Resolved);
-          if (Prior !== Resolved) FireConfigChange(Key);
-        });
-      }, "PrimeConfig");
-      Context.Emitter.on("configurationChanged", (Payload) => {
-        const Shape = Payload ?? {};
-        const Keys = Array.isArray(Shape.keys) ? Shape.keys : Array.isArray(Shape.affected) ? Shape.affected : [];
-        if (Keys.length === 0) {
-          for (const CachedKey of [...ConfigCache.keys()]) {
-            ConfigCache.delete(CachedKey);
-            FireConfigChange(CachedKey);
-          }
-          return;
-        }
-        for (const Key of Keys) {
-          ConfigCache.delete(Key);
-          FireConfigChange(Key);
-          PrimeConfig(Key);
-        }
-      });
-      return { ConfigCache, ConfigInFlight, ConfigListeners, FireConfigChange, PrimeConfig };
-    }, "CreateConfigurationState");
-    BuildGetConfiguration = /* @__PURE__ */ __name((Context, State) => (Section, _Scope) => ({
-      get: /* @__PURE__ */ __name((Key, DefaultValue) => {
-        const Full = Section ? `${Section}.${Key}` : Key;
-        if (State.ConfigCache.has(Full)) {
-          return State.ConfigCache.get(Full);
-        }
-        State.PrimeConfig(Full);
-        return DefaultValue;
-      }, "get"),
-      update: /* @__PURE__ */ __name(async (Key, Value, Target) => {
-        const Full = Section ? `${Section}.${Key}` : Key;
-        const TargetIndex = Target === 2 ? 1 : Target === true ? 0 : typeof Target === "number" ? Target : 0;
-        await Call(Context, "Configuration.Update", [
-          Full,
-          Value,
-          TargetIndex
-        ]);
-        const Prior = State.ConfigCache.get(Full);
-        State.ConfigCache.set(Full, Value);
-        if (Prior !== Value) State.FireConfigChange(Full);
-      }, "update"),
-      has: /* @__PURE__ */ __name((Key) => {
-        const Full = Section ? `${Section}.${Key}` : Key;
-        if (State.ConfigCache.has(Full)) return true;
-        State.PrimeConfig(Full);
-        return false;
-      }, "has"),
-      inspect: /* @__PURE__ */ __name((Key) => {
-        const Full = Section ? `${Section}.${Key}` : Key;
-        if (!State.ConfigCache.has(Full)) {
-          State.PrimeConfig(Full);
-          return void 0;
-        }
-        const Cached = State.ConfigCache.get(Full);
-        return {
-          key: Full,
-          defaultValue: void 0,
-          globalValue: Cached,
-          workspaceValue: void 0,
-          workspaceFolderValue: void 0,
-          defaultLanguageValue: void 0,
-          globalLanguageValue: void 0,
-          workspaceLanguageValue: void 0,
-          workspaceFolderLanguageValue: void 0,
-          languageIds: []
-        };
-      }, "inspect")
-    }), "BuildGetConfiguration");
-    BuildOnDidChangeConfiguration = /* @__PURE__ */ __name((State) => (Listener) => {
-      State.ConfigListeners.add(Listener);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          State.ConfigListeners.delete(Listener);
-        }, "dispose")
-      };
-    }, "BuildOnDidChangeConfiguration");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/TextDocument.ts
-var BuildOpenTextDocument, BuildSaveAll, BuildApplyEdit, BuildUpdateWorkspaceFolders, BuildDocumentEventMembers;
-var init_TextDocument = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/TextDocument.ts"() {
-    "use strict";
-    init_Helpers();
-    BuildOpenTextDocument = /* @__PURE__ */ __name((Context) => async (UriOrPath) => {
-      const UriString = typeof UriOrPath === "string" ? UriOrPath : UriOrPath?.toString?.() ?? "";
-      const Cached = Context.DocumentContentCache.get(UriString);
-      const Text = Cached ?? await Call(Context, "FileSystem.ReadFile", [UriString]) ?? "";
-      return {
-        uri: UriOrPath,
-        fileName: UriString,
-        languageId: "plaintext",
-        isDirty: false,
-        isClosed: false,
-        isUntitled: false,
-        version: 1,
-        eol: 1,
-        lineCount: Text.split("\n").length,
-        getText: /* @__PURE__ */ __name(() => Text, "getText"),
-        save: /* @__PURE__ */ __name(async () => true, "save")
-      };
-    }, "BuildOpenTextDocument");
-    BuildSaveAll = /* @__PURE__ */ __name((Context) => async (_IncludeUntitled) => {
-      await Call(Context, "Document.Save", []);
-      return true;
-    }, "BuildSaveAll");
-    BuildApplyEdit = /* @__PURE__ */ __name((Context) => async (_Edit) => {
-      Context.SendToMountain("workspace.applyEdit", _Edit).catch(() => {
-      });
-      return true;
-    }, "BuildApplyEdit");
-    BuildUpdateWorkspaceFolders = /* @__PURE__ */ __name((Context, ReadFolders) => (Start, DeleteCount, ...ToAdd) => {
-      const Current = ReadFolders();
-      const RemoveCount = typeof DeleteCount === "number" && DeleteCount > 0 ? Math.min(DeleteCount, Math.max(Current.length - Start, 0)) : 0;
-      const Removals = Current.slice(Start, Start + RemoveCount).map((Folder) => ({
-        uri: {
-          value: typeof Folder?.uri === "string" ? Folder.uri : Folder?.uri?.["toString"]?.call(Folder?.uri) ?? String(Folder?.uri)
-        }
-      }));
-      const Additions = ToAdd.map((Folder) => {
-        const Raw = Folder?.uri;
-        const Serialized = typeof Raw === "string" ? Raw : Raw?.["toString"]?.call(Raw) ?? String(Raw ?? "");
-        return { uri: { value: Serialized }, name: Folder?.name ?? "" };
-      });
-      Context.MountainClient?.sendRequest("$updateWorkspaceFolders", {
-        additions: Additions,
-        removals: Removals
-      }).catch((Error2) => {
-        const Message = Error2 instanceof globalThis.Error ? Error2.message : String(Error2);
-        try {
-          process.stdout.write(
-            `[LandFix:WsNs] updateWorkspaceFolders failed: ${Message}
-`
-          );
-        } catch {
-        }
-      });
-      return true;
-    }, "BuildUpdateWorkspaceFolders");
-    BuildDocumentEventMembers = /* @__PURE__ */ __name((Context) => ({
-      onDidOpenTextDocument: EventSubscriber(Context, "didOpenTextDocument"),
-      onDidCloseTextDocument: EventSubscriber(Context, "didCloseTextDocument"),
-      onDidChangeTextDocument: EventSubscriber(Context, "didChangeTextDocument"),
-      onDidSaveTextDocument: EventSubscriber(Context, "didSaveTextDocument"),
-      onWillSaveTextDocument: EventSubscriber(Context, "willSaveTextDocument"),
-      onDidCreateFiles: EventSubscriber(Context, "didCreateFiles"),
-      onDidDeleteFiles: EventSubscriber(Context, "didDeleteFiles"),
-      onDidRenameFiles: EventSubscriber(Context, "didRenameFiles"),
-      onWillRenameFiles: EventSubscriber(Context, "willRenameFiles"),
-      onWillCreateFiles: EventSubscriber(Context, "willCreateFiles"),
-      onWillDeleteFiles: EventSubscriber(Context, "willDeleteFiles"),
-      onDidOpenNotebookDocument: EventSubscriber(
-        Context,
-        "didOpenNotebookDocument"
-      ),
-      onDidCloseNotebookDocument: EventSubscriber(
-        Context,
-        "didCloseNotebookDocument"
-      ),
-      onDidChangeNotebookDocument: EventSubscriber(
-        Context,
-        "didChangeNotebookDocument"
-      ),
-      onDidSaveNotebookDocument: EventSubscriber(
-        Context,
-        "didSaveNotebookDocument"
-      ),
-      onWillSaveNotebookDocument: EventSubscriber(
-        Context,
-        "willSaveNotebookDocument"
-      )
-    }), "BuildDocumentEventMembers");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Providers.ts
-var MakeProvider, BuildRegisterTextDocumentContentProvider, BuildRegisterFileSystemProvider, BuildRegisterTaskProvider, BuildRegisterNotebookContentProvider, BuildRegisterNotebookSerializer, BuildRegisterRemoteAuthorityResolver, BuildRegisterResourceLabelFormatter;
-var init_Providers = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Providers.ts"() {
-    "use strict";
-    MakeProvider = /* @__PURE__ */ __name((Context, RegisterMethod, UnregisterMethod, HandlePrefix, ExtraPayload, OnRegister, OnDispose) => (Key, _Provider, _Options) => {
-      const Handle = `${HandlePrefix}:${Key}:${Date.now()}`;
-      Context.SendToMountain(RegisterMethod, {
-        handle: Handle,
-        ...ExtraPayload(Key)
-      }).catch(() => {
-      });
-      OnRegister?.(Handle, Key, _Provider);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          OnDispose?.(Handle, Key);
-          Context.SendToMountain(UnregisterMethod, { handle: Handle }).catch(
-            () => {
-            }
-          );
-        }, "dispose")
-      };
-    }, "MakeProvider");
-    BuildRegisterTextDocumentContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
-      Context,
-      "register_text_document_content_provider",
-      "unregister_text_document_content_provider",
-      "textDocumentContent",
-      (Scheme) => ({ scheme: Scheme, extension_id: "" }),
-      (_Handle, Scheme, Provider) => {
-        Context.ExtensionRegistry.set(
-          `__textDocumentContentProvider:${Scheme}`,
-          Provider
-        );
-      },
-      (_Handle, Scheme) => {
-        Context.ExtensionRegistry.delete(
-          `__textDocumentContentProvider:${Scheme}`
-        );
-      }
-    ), "BuildRegisterTextDocumentContentProvider");
-    BuildRegisterFileSystemProvider = /* @__PURE__ */ __name((Context) => (Scheme, _Provider, Options) => {
-      const Handle = `fileSystemProvider:${Scheme}:${Date.now()}`;
-      Context.SendToMountain("register_file_system_provider", {
-        handle: Handle,
-        scheme: Scheme,
-        is_case_sensitive: Options?.isCaseSensitive ?? true,
-        is_readonly: Options?.isReadonly ?? false,
-        extension_id: ""
-      }).catch(() => {
-      });
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.SendToMountain("unregister_file_system_provider", {
-            handle: Handle
-          }).catch(() => {
-          });
-        }, "dispose")
-      };
-    }, "BuildRegisterFileSystemProvider");
-    BuildRegisterTaskProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
-      Context,
-      "register_task_provider",
-      "unregister_task_provider",
-      "taskProvider",
-      (TaskType) => ({ task_type: TaskType, extension_id: "" })
-    ), "BuildRegisterTaskProvider");
-    BuildRegisterNotebookContentProvider = /* @__PURE__ */ __name((Context) => MakeProvider(
-      Context,
-      "register_notebook_content_provider",
-      "unregister_notebook_content_provider",
-      "notebookContent",
-      (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
-    ), "BuildRegisterNotebookContentProvider");
-    BuildRegisterNotebookSerializer = /* @__PURE__ */ __name((Context) => MakeProvider(
-      Context,
-      "register_notebook_serializer",
-      "unregister_notebook_serializer",
-      "notebookSerializer",
-      (NotebookType) => ({ notebook_type: NotebookType, extension_id: "" })
-    ), "BuildRegisterNotebookSerializer");
-    BuildRegisterRemoteAuthorityResolver = /* @__PURE__ */ __name((Context) => (AuthorityPrefix, _Resolver) => {
-      Context.SendToMountain("register_remote_authority_resolver", {
-        authority_prefix: AuthorityPrefix,
-        extension_id: ""
-      }).catch(() => {
-      });
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.SendToMountain(
-            "unregister_remote_authority_resolver",
-            { authority_prefix: AuthorityPrefix }
-          ).catch(() => {
-          });
-        }, "dispose")
-      };
-    }, "BuildRegisterRemoteAuthorityResolver");
-    BuildRegisterResourceLabelFormatter = /* @__PURE__ */ __name((Context) => (Formatter) => {
-      Context.SendToMountain("register_resource_label_formatter", {
-        formatter: Formatter
-      }).catch(() => {
-      });
-      return { dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") };
-    }, "BuildRegisterResourceLabelFormatter");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts
-var BuildFileSystemNamespace;
-var init_FileSystemNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/FileSystemNamespace.ts"() {
-    "use strict";
-    init_Helpers();
-    BuildFileSystemNamespace = /* @__PURE__ */ __name((Context) => ({
-      stat: /* @__PURE__ */ __name(async (Uri2) => await Call(Context, "FileSystem.Stat", [
-        String(Uri2)
-      ]) ?? {
-        type: 1,
-        size: 0,
-        ctime: 0,
-        mtime: 0
-      }, "stat"),
-      readFile: /* @__PURE__ */ __name(async (Uri2) => {
-        const UriString = String(Uri2);
-        try {
-          const Text = await Context.MountainClient?.sendRequest(
-            "FileSystem.ReadFile",
-            [UriString]
-          );
-          return new TextEncoder().encode(Text ?? "");
-        } catch (Err) {
-          const Message = Err instanceof Error ? Err.message : String(Err);
-          const LooksLike404 = /resource not found|ENOENT|not found/i.test(Message);
-          if (LooksLike404) {
-            process.stdout.write(
-              `[LandFix:FsRead] 404 \u2192 FileNotFound for ${UriString}
-`
-            );
-            const Api = globalThis.__cocoonVscodeAPI;
-            const FileNotFound = Api?.FileSystemError?.FileNotFound;
-            if (typeof FileNotFound === "function") {
-              throw FileNotFound(Uri2);
-            }
-            const Synthetic = new Error(
-              `EntryNotFound (FileSystemError): ${UriString}`
-            );
-            Synthetic.code = "FileNotFound";
-            Synthetic.name = "FileSystemError";
-            throw Synthetic;
-          }
-          process.stdout.write(
-            `[LandFix:FsRead] non-404 failure for ${UriString}: ${Message}
-`
-          );
-          throw Err;
-        }
-      }, "readFile"),
-      writeFile: /* @__PURE__ */ __name(async (Uri2, Content) => {
-        const Text = new TextDecoder().decode(Content);
-        await Call(Context, "FileSystem.WriteFile", [
-          String(Uri2),
-          Text
-        ]);
-      }, "writeFile"),
-      readDirectory: /* @__PURE__ */ __name(async (Uri2) => await Call(Context, "FileSystem.ReadDirectory", [
-        String(Uri2)
-      ]) ?? [], "readDirectory"),
-      createDirectory: /* @__PURE__ */ __name(async (Uri2) => {
-        await Call(Context, "FileSystem.CreateDirectory", [
-          String(Uri2)
-        ]);
-      }, "createDirectory"),
-      delete: /* @__PURE__ */ __name(async (Uri2, Options) => {
-        await Call(Context, "FileSystem.Delete", [
-          String(Uri2),
-          Options?.recursive ?? false
-        ]);
-      }, "delete"),
-      rename: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
-        await Call(Context, "FileSystem.Rename", [
-          String(Source),
-          String(Target)
-        ]);
-      }, "rename"),
-      copy: /* @__PURE__ */ __name(async (Source, Target, _Options) => {
-        await Call(Context, "FileSystem.Copy", [
-          String(Source),
-          String(Target)
-        ]);
-      }, "copy"),
-      isWritableFileSystem: /* @__PURE__ */ __name((_Scheme) => true, "isWritableFileSystem")
-    }), "BuildFileSystemNamespace");
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts
-var CreateWorkspaceNamespace, Index_default;
-var init_Index = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace/Index.ts"() {
-    "use strict";
-    init_FindFiles();
-    init_FileSystemWatcher();
-    init_Configuration();
-    init_TextDocument();
-    init_Providers();
-    init_FileSystemNamespace();
-    CreateWorkspaceNamespace = /* @__PURE__ */ __name((Context) => {
-      const InitWorkspace = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
-      const ReadFolders = /* @__PURE__ */ __name(() => {
-        const Live = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
-        return Live.folders ?? [];
-      }, "ReadFolders");
-      const ReadName = /* @__PURE__ */ __name(() => {
-        const Live = Context.ExtensionHostInitData?.workspace ?? Context.ExtensionHostInitData?.workspaceData ?? {};
-        return Live.name ?? InitWorkspace.name;
-      }, "ReadName");
-      const ConfigState = CreateConfigurationState(Context);
-      return {
-        get workspaceFolders() {
-          return ReadFolders();
-        },
-        get name() {
-          return ReadName();
-        },
-        workspaceFile: void 0,
-        rootPath: void 0,
-        textDocuments: [],
-        notebookDocuments: [],
-        getConfiguration: BuildGetConfiguration(Context, ConfigState),
-        findFiles: /* @__PURE__ */ __name(async (Include, Exclude, MaxResults) => FindFilesLocal(Context, ReadFolders(), Include, Exclude, MaxResults), "findFiles"),
-        openTextDocument: BuildOpenTextDocument(Context),
-        saveAll: BuildSaveAll(Context),
-        applyEdit: BuildApplyEdit(Context),
-        asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
-        // BATCH-14 follow-up: forwards through Mountain's `$updateWorkspaceFolders`
-        // which mutates ApplicationState.Workspace and fires `$deltaWorkspaceFolders`
-        // back - the listener wiring from BATCH-14 does the rest.
-        updateWorkspaceFolders: BuildUpdateWorkspaceFolders(
-          Context,
-          ReadFolders
-        ),
-        ...BuildDocumentEventMembers(Context),
-        onDidChangeConfiguration: BuildOnDidChangeConfiguration(ConfigState),
-        onDidChangeWorkspaceFolders: /* @__PURE__ */ __name((Listener) => {
-          Context.WorkspaceEventEmitter.on(
-            "didChangeWorkspaceFolders",
-            Listener
-          );
-          return {
-            dispose: /* @__PURE__ */ __name(() => {
-              Context.WorkspaceEventEmitter.removeListener(
-                "didChangeWorkspaceFolders",
-                Listener
-              );
-            }, "dispose")
-          };
-        }, "onDidChangeWorkspaceFolders"),
-        // Provider registrations - each backed by a Mountain round-trip.
-        registerTextDocumentContentProvider: BuildRegisterTextDocumentContentProvider(Context),
-        registerFileSystemProvider: BuildRegisterFileSystemProvider(Context),
-        registerTaskProvider: BuildRegisterTaskProvider(Context),
-        registerNotebookContentProvider: BuildRegisterNotebookContentProvider(Context),
-        registerNotebookSerializer: BuildRegisterNotebookSerializer(Context),
-        registerRemoteAuthorityResolver: BuildRegisterRemoteAuthorityResolver(Context),
-        registerResourceLabelFormatter: BuildRegisterResourceLabelFormatter(Context),
-        // Stub-only registrations (no Mountain route yet).
-        registerDocumentPasteEditProvider: /* @__PURE__ */ __name((_Selector, _Provider, _Metadata) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerDocumentPasteEditProvider"),
-        registerDocumentDropEditProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerDocumentDropEditProvider"),
-        registerEditSessionIdentityProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerEditSessionIdentityProvider"),
-        registerShareProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerShareProvider"),
-        registerCanonicalUriProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerCanonicalUriProvider"),
-        onDidGrantWorkspaceTrust: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidGrantWorkspaceTrust"),
-        isTrusted: true,
-        trusted: true,
-        requestWorkspaceTrust: /* @__PURE__ */ __name(async () => true, "requestWorkspaceTrust"),
-        registerTunnelProvider: /* @__PURE__ */ __name((_Provider, _Information) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTunnelProvider"),
-        openTunnel: /* @__PURE__ */ __name(async (_TunnelOptions) => ({
-          remoteAddress: { port: 0, host: "localhost" },
-          localAddress: "",
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "openTunnel"),
-        tunnels: Promise.resolve([]),
-        onDidChangeTunnels: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeTunnels"),
-        registerPortAttributesProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerPortAttributesProvider"),
-        // createFileSystemWatcher is tier-gated - see FileSystemWatcher.ts.
-        createFileSystemWatcher: /* @__PURE__ */ __name((Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => CreateFileSystemWatcher(
-          Context,
-          Pattern,
-          IgnoreCreateEvents,
-          IgnoreChangeEvents,
-          IgnoreDeleteEvents
-        ), "createFileSystemWatcher"),
-        fs: BuildFileSystemNamespace(Context)
-      };
-    }, "CreateWorkspaceNamespace");
-    Index_default = CreateWorkspaceNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts
-var WorkspaceNamespace_exports = {};
-__export(WorkspaceNamespace_exports, {
-  default: () => Index_default
-});
-var init_WorkspaceNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/WorkspaceNamespace.ts"() {
-    "use strict";
-    init_Index();
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/CommandsNamespace.ts
-var CommandsNamespace_exports = {};
-__export(CommandsNamespace_exports, {
-  default: () => CommandsNamespace_default
-});
-var CreateCommandsNamespace, CommandsNamespace_default;
-var init_CommandsNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/CommandsNamespace.ts"() {
-    "use strict";
-    CreateCommandsNamespace = /* @__PURE__ */ __name((Context, LanguageProviderRegistry) => ({
-      registerCommand: /* @__PURE__ */ __name((Command, Callback) => {
-        LanguageProviderRegistry.RegisterCommand(Command, Callback);
-        Context.SendToMountain("registerCommand", { commandId: Command }).catch(
-          () => {
-          }
-        );
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            LanguageProviderRegistry.UnregisterCommand(Command);
-            Context.SendToMountain("unregisterCommand", {
-              commandId: Command
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerCommand"),
-      registerTextEditorCommand: /* @__PURE__ */ __name((Command, Callback) => {
-        LanguageProviderRegistry.RegisterCommand(Command, Callback);
-        Context.SendToMountain("registerCommand", {
-          commandId: Command,
-          kind: "textEditor"
-        }).catch(() => {
-        });
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            LanguageProviderRegistry.UnregisterCommand(Command);
-            Context.SendToMountain("unregisterCommand", {
-              commandId: Command
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerTextEditorCommand"),
-      executeCommand: /* @__PURE__ */ __name(async (Command, ...Arguments) => {
-        const LocalResult = LanguageProviderRegistry.ExecuteCommand(
-          Command,
-          ...Arguments
-        );
-        if (LocalResult !== void 0) return LocalResult;
-        try {
-          return await Context.MountainClient?.sendRequest(
-            "Command.Execute",
-            [Command, ...Arguments]
-          );
-        } catch {
-          return void 0;
-        }
-      }, "executeCommand"),
-      getCommands: /* @__PURE__ */ __name(async (FilterInternal) => {
-        try {
-          const Response = await Context.MountainClient?.sendRequest(
-            "Command.GetAll",
-            [FilterInternal ?? false]
-          );
-          if (Array.isArray(Response)) return Response;
-          return [];
-        } catch {
-          return [];
-        }
-      }, "getCommands")
-    }), "CreateCommandsNamespace");
-    CommandsNamespace_default = CreateCommandsNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts
-var LanguagesNamespace_exports = {};
-__export(LanguagesNamespace_exports, {
-  default: () => LanguagesNamespace_default
-});
-var RegisterProvider, CreateLanguagesNamespace, LanguagesNamespace_default;
-var init_LanguagesNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/LanguagesNamespace.ts"() {
-    "use strict";
-    init_GlobToRegex();
-    RegisterProvider = /* @__PURE__ */ __name((Context, LanguageProviderRegistry, MethodName, Selector, Provider) => {
-      const Handle = LanguageProviderRegistry.RegisterAutoHandle(Provider);
-      const Language2 = typeof Selector === "string" ? Selector : Selector?.language ?? "*";
-      Context.SendToMountain(MethodName, {
-        handle: Handle,
-        language_selector: Language2,
-        extension_id: ""
-      }).catch(() => {
-      });
-      return { dispose: /* @__PURE__ */ __name(() => LanguageProviderRegistry.Unregister(Handle), "dispose") };
-    }, "RegisterProvider");
-    CreateLanguagesNamespace = /* @__PURE__ */ __name((Context, LanguageProviderRegistry) => ({
-      registerHoverProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_hover_provider",
-        Selector,
-        Provider
-      ), "registerHoverProvider"),
-      registerCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider, ..._TriggerCharacters) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_completion_item_provider",
-        Selector,
-        Provider
-      ), "registerCompletionItemProvider"),
-      registerDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_definition_provider",
-        Selector,
-        Provider
-      ), "registerDefinitionProvider"),
-      registerReferenceProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_reference_provider",
-        Selector,
-        Provider
-      ), "registerReferenceProvider"),
-      registerCodeActionsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_code_actions_provider",
-        Selector,
-        Provider
-      ), "registerCodeActionsProvider"),
-      registerDocumentSymbolProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_document_symbol_provider",
-        Selector,
-        Provider
-      ), "registerDocumentSymbolProvider"),
-      registerDocumentFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_document_formatting_provider",
-        Selector,
-        Provider
-      ), "registerDocumentFormattingEditProvider"),
-      registerDocumentRangeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_document_range_formatting_provider",
-        Selector,
-        Provider
-      ), "registerDocumentRangeFormattingEditProvider"),
-      registerOnTypeFormattingEditProvider: /* @__PURE__ */ __name((Selector, Provider, _FirstTrigger, ..._MoreTriggers) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_on_type_formatting_provider",
-        Selector,
-        Provider
-      ), "registerOnTypeFormattingEditProvider"),
-      registerTypeDefinitionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_type_definition_provider",
-        Selector,
-        Provider
-      ), "registerTypeDefinitionProvider"),
-      registerImplementationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_implementation_provider",
-        Selector,
-        Provider
-      ), "registerImplementationProvider"),
-      registerDeclarationProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_declaration_provider",
-        Selector,
-        Provider
-      ), "registerDeclarationProvider"),
-      registerDocumentLinkProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_document_link_provider",
-        Selector,
-        Provider
-      ), "registerDocumentLinkProvider"),
-      registerColorProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_color_provider",
-        Selector,
-        Provider
-      ), "registerColorProvider"),
-      registerLinkedEditingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_linked_editing_range_provider",
-        Selector,
-        Provider
-      ), "registerLinkedEditingRangeProvider"),
-      registerCallHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_call_hierarchy_provider",
-        Selector,
-        Provider
-      ), "registerCallHierarchyProvider"),
-      registerTypeHierarchyProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_type_hierarchy_provider",
-        Selector,
-        Provider
-      ), "registerTypeHierarchyProvider"),
-      registerEvaluatableExpressionProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_evaluatable_expression_provider",
-        Selector,
-        Provider
-      ), "registerEvaluatableExpressionProvider"),
-      registerInlineValuesProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_inline_values_provider",
-        Selector,
-        Provider
-      ), "registerInlineValuesProvider"),
-      registerSignatureHelpProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_signature_help_provider",
-        Selector,
-        Provider
-      ), "registerSignatureHelpProvider"),
-      registerDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_document_highlight_provider",
-        Selector,
-        Provider
-      ), "registerDocumentHighlightProvider"),
-      registerCodeLensProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_code_lens_provider",
-        Selector,
-        Provider
-      ), "registerCodeLensProvider"),
-      registerRenameProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_rename_provider",
-        Selector,
-        Provider
-      ), "registerRenameProvider"),
-      registerFoldingRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_folding_range_provider",
-        Selector,
-        Provider
-      ), "registerFoldingRangeProvider"),
-      registerSelectionRangeProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_selection_range_provider",
-        Selector,
-        Provider
-      ), "registerSelectionRangeProvider"),
-      registerDocumentSemanticTokensProvider: /* @__PURE__ */ __name((Selector, Provider, _Legend) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_semantic_tokens_provider",
-        Selector,
-        Provider
-      ), "registerDocumentSemanticTokensProvider"),
-      registerInlayHintsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_inlay_hints_provider",
-        Selector,
-        Provider
-      ), "registerInlayHintsProvider"),
-      registerWorkspaceSymbolProvider: /* @__PURE__ */ __name((Provider) => {
-        process.stdout.write(
-          "[LandFix:LangNs] registerWorkspaceSymbolProvider called\n"
-        );
-        return RegisterProvider(
-          Context,
-          LanguageProviderRegistry,
-          "register_workspace_symbol_provider",
-          "*",
-          Provider
-        );
-      }, "registerWorkspaceSymbolProvider"),
-      createDiagnosticCollection: /* @__PURE__ */ __name((Name) => {
-        const Owner = Name ?? "default";
-        const Store = /* @__PURE__ */ new Map();
-        let Disposed = false;
-        return {
-          name: Owner,
-          set: /* @__PURE__ */ __name((UriOrEntries, Diagnostics) => {
-            if (Array.isArray(UriOrEntries) && Diagnostics === void 0) {
-              const Entries = UriOrEntries;
-              for (const [Uri2, D] of Entries) {
-                Store.set(String(Uri2), D ?? []);
-              }
-            } else {
-              Store.set(String(UriOrEntries), Diagnostics ?? []);
-            }
-            Context.MountainClient?.sendRequest("Diagnostic.Set", [
-              Owner,
-              [...Store.entries()].map(([U, D]) => ({
-                uri: U,
-                diagnostics: D
-              }))
-            ]).catch(() => {
-            });
-          }, "set"),
-          delete: /* @__PURE__ */ __name((Uri2) => {
-            Store.delete(String(Uri2));
-            Context.MountainClient?.sendRequest("Diagnostic.Set", [
-              Owner,
-              [...Store.entries()].map(([U, D]) => ({
-                uri: U,
-                diagnostics: D
-              }))
-            ]).catch(() => {
-            });
-          }, "delete"),
-          clear: /* @__PURE__ */ __name(() => {
-            if (Store.size === 0) return;
-            Store.clear();
-            Context.MountainClient?.sendRequest("Diagnostic.Clear", [
-              Owner
-            ]).catch(() => {
-            });
-          }, "clear"),
-          forEach: /* @__PURE__ */ __name((Callback) => {
-            const Self = null;
-            for (const [Uri2, Diagnostics] of Store) {
-              Callback(Uri2, Diagnostics, Self);
-            }
-          }, "forEach"),
-          get: /* @__PURE__ */ __name((Uri2) => Store.get(String(Uri2)) ?? [], "get"),
-          has: /* @__PURE__ */ __name((Uri2) => Store.has(String(Uri2)), "has"),
-          dispose: /* @__PURE__ */ __name(() => {
-            if (Disposed) return;
-            Disposed = true;
-            if (Store.size === 0) return;
-            Store.clear();
-            Context.MountainClient?.sendRequest("Diagnostic.Clear", [
-              Owner
-            ]).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "createDiagnosticCollection"),
-      getLanguages: /* @__PURE__ */ __name(async () => {
-        try {
-          const Result = await Context.MountainClient?.sendRequest(
-            "Languages.GetAll",
-            []
-          );
-          return Array.isArray(Result) ? Result : [];
-        } catch {
-          return [];
-        }
-      }, "getLanguages"),
-      setTextDocumentLanguage: /* @__PURE__ */ __name(async (Document, LanguageId) => {
-        Context.SendToMountain("languages.setDocumentLanguage", {
-          uri: Document?.uri?.toString?.() ?? "",
-          languageId: LanguageId
-        }).catch(() => {
-        });
-        return Document;
-      }, "setTextDocumentLanguage"),
-      match: /* @__PURE__ */ __name((Selector, Document) => {
-        const DocLanguage = typeof Document?.languageId === "string" ? Document.languageId : "";
-        const DocScheme = typeof Document?.uri?.scheme === "string" ? Document.uri.scheme : "";
-        const DocPath = typeof Document?.uri?.fsPath === "string" ? Document.uri.fsPath : typeof Document?.uri?.path === "string" ? Document.uri.path : "";
-        const ScoreOne = /* @__PURE__ */ __name((One) => {
-          if (typeof One === "string") {
-            if (One === DocLanguage) return 10;
-            if (One === "*") return 5;
-            return 0;
-          }
-          if (!One || typeof One !== "object") return 0;
-          const Filter = One;
-          let Score = 0;
-          if (typeof Filter.language === "string") {
-            if (Filter.language === DocLanguage) Score += 5;
-            else if (Filter.language === "*") Score += 3;
-            else return 0;
-          }
-          if (typeof Filter.scheme === "string") {
-            if (Filter.scheme === DocScheme) Score += 5;
-            else if (Filter.scheme === "*") Score += 3;
-            else return 0;
-          }
-          if (typeof Filter.pattern === "string" && DocPath.length > 0) {
-            try {
-              if (GlobToRegex_default(Filter.pattern).test(DocPath)) Score += 5;
-              else return 0;
-            } catch {
-              return 0;
-            }
-          }
-          if (typeof Filter.notebookType === "string") {
-            const NotebookType = typeof Document?.notebook?.notebookType === "string" ? Document.notebook.notebookType : "";
-            if (Filter.notebookType === NotebookType) Score += 1;
-            else if (Filter.notebookType === "*") Score += 1;
-            else return 0;
-          }
-          return Score;
-        }, "ScoreOne");
-        if (Array.isArray(Selector)) {
-          let Best = 0;
-          for (const One of Selector) {
-            const Value = ScoreOne(One);
-            if (Value > Best) Best = Value;
-          }
-          return Best;
-        }
-        return ScoreOne(Selector);
-      }, "match"),
-      onDidChangeDiagnostics: /* @__PURE__ */ __name((Listener) => {
-        Context.Emitter.on("diagnostics.didChange", Listener);
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context.Emitter.off("diagnostics.didChange", Listener);
-          }, "dispose")
-        };
-      }, "onDidChangeDiagnostics"),
-      getDiagnostics: /* @__PURE__ */ __name((_Resource) => [], "getDiagnostics"),
-      registerDocumentPasteEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_document_paste_edit_provider",
-        Selector,
-        Provider
-      ), "registerDocumentPasteEditProvider"),
-      registerDocumentDropEditProvider: /* @__PURE__ */ __name((Selector, Provider, _Metadata) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_document_drop_edit_provider",
-        Selector,
-        Provider
-      ), "registerDocumentDropEditProvider"),
-      registerInlineCompletionItemProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_inline_completion_item_provider",
-        Selector,
-        Provider
-      ), "registerInlineCompletionItemProvider"),
-      registerInlineEditProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_inline_edit_provider",
-        Selector,
-        Provider
-      ), "registerInlineEditProvider"),
-      registerMultiDocumentHighlightProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_multi_document_highlight_provider",
-        Selector,
-        Provider
-      ), "registerMultiDocumentHighlightProvider"),
-      registerMappedEditsProvider: /* @__PURE__ */ __name((Selector, Provider) => RegisterProvider(
-        Context,
-        LanguageProviderRegistry,
-        "register_mapped_edits_provider",
-        Selector,
-        Provider
-      ), "registerMappedEditsProvider"),
-      createLanguageStatusItem: /* @__PURE__ */ __name((Identifier, _Selector) => {
-        process.stdout.write(
-          `[LandFix:LangNs] createLanguageStatusItem id=${Identifier}
-`
-        );
-        const Item = {
-          id: Identifier,
-          name: void 0,
-          selector: _Selector,
-          severity: 0,
-          text: "",
-          detail: void 0,
-          busy: false,
-          command: void 0,
-          accessibilityInformation: void 0,
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        };
-        return Item;
-      }, "createLanguageStatusItem")
-    }), "CreateLanguagesNamespace");
-    LanguagesNamespace_default = CreateLanguagesNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts
-var ExtensionsNamespace_exports = {};
-__export(ExtensionsNamespace_exports, {
-  default: () => ExtensionsNamespace_default
-});
-var NoopDisposable, MakeMultiStub, Stub, MakePermissiveExports, NormalizeLocation, ToExtensionObject, IsExtensionKey, CreateExtensionsNamespace, ExtensionsNamespace_default;
-var init_ExtensionsNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/ExtensionsNamespace.ts"() {
-    "use strict";
-    init_LandFixLog();
-    NoopDisposable = { dispose: /* @__PURE__ */ __name(() => {
-    }, "dispose") };
-    MakeMultiStub = /* @__PURE__ */ __name(() => {
-      const StubTarget = /* @__PURE__ */ __name(function MultiStub() {
-        return StubProxy;
-      }, "MultiStub");
-      StubTarget.dispose = () => {
-      };
-      StubTarget[Symbol.iterator] = function* () {
-      };
-      const ArrayShim = [];
-      const ArrayMethods = [
-        "forEach",
-        "map",
-        "filter",
-        "find",
-        "findIndex",
-        "some",
-        "every",
-        "reduce",
-        "reduceRight",
-        "includes",
-        "indexOf",
-        "lastIndexOf",
-        "slice",
-        "concat",
-        "join",
-        "entries",
-        "keys",
-        "values",
-        "flat",
-        "flatMap"
-      ];
-      for (const Name of ArrayMethods) {
-        StubTarget[Name] = ArrayShim[Name];
-      }
-      const StubProxy = new Proxy(StubTarget, {
-        get(Target, Property) {
-          if (Property in Target) {
-            return Target[Property];
-          }
-          if (Property === "then") return void 0;
-          if (typeof Property === "symbol") return void 0;
-          return StubProxy;
-        },
-        apply() {
-          return StubProxy;
-        },
-        has() {
-          return true;
-        }
-      });
-      return StubProxy;
-    }, "MakeMultiStub");
-    Stub = MakeMultiStub();
-    MakePermissiveExports = /* @__PURE__ */ __name(() => {
-      const Base = {
-        enabled: true
-      };
-      return new Proxy(Base, {
-        get(Target, Property) {
-          if (Property in Target) {
-            return Target[Property];
-          }
-          if (typeof Property !== "string") {
-            return Stub[Property];
-          }
-          if (Property === "then") return void 0;
-          if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
-            return (_Listener) => NoopDisposable;
-          }
-          if (Property.startsWith("register")) {
-            return (..._Args) => NoopDisposable;
-          }
-          if (Property.startsWith("get") || Property.startsWith("create")) {
-            return (..._Args) => MakePermissiveExports();
-          }
-          return Stub;
-        }
-      });
-    }, "MakePermissiveExports");
-    NormalizeLocation = /* @__PURE__ */ __name((Raw) => {
-      const VsCodeUri = globalThis.__cocoonVscodeAPI?.Uri;
-      const UriFactoryAvailable = VsCodeUri && typeof VsCodeUri.file === "function";
-      const MakeUri = /* @__PURE__ */ __name((Path) => {
-        if (UriFactoryAvailable) {
-          return VsCodeUri.file(Path);
-        }
-        return {
-          scheme: "file",
-          authority: "",
-          path: Path,
-          query: "",
-          fragment: "",
-          fsPath: Path,
-          with(Change) {
-            return { ...this, ...Change };
-          },
-          toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString"),
-          toJSON() {
-            return { scheme: "file", path: Path };
-          }
-        };
-      }, "MakeUri");
-      if (typeof Raw === "string" && Raw.length > 0) {
-        let Path = Raw;
-        if (Raw.startsWith("file:")) {
-          try {
-            Path = decodeURIComponent(new URL(Raw).pathname);
-          } catch (Error2) {
-            LandFixLog_default.Warn(
-              "ExtNs",
-              `URL parse failed for ${Raw}: ${Error2 instanceof Error2 ? Error2.message : String(Error2)}; using fallback strip`
-            );
-            Path = Raw.replace(/^file:\/\//, "");
-          }
-        }
-        Path = Path.replace(/\/$/, "");
-        if (UriFactoryAvailable) {
-          LandFixLog_default.DebugOnce(
-            "ExtNs",
-            `string:${Path}`,
-            `string extensionLocation ${Raw} \u2192 path=${Path} (factory=real)`
-          );
-        } else {
-          LandFixLog_default.InfoOnce(
-            "ExtNs",
-            `string-fallback:${Path}`,
-            `string extensionLocation ${Raw} \u2192 path=${Path} (factory=FALLBACK)`
-          );
-        }
-        return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
-      }
-      if (Raw && typeof Raw === "object") {
-        const Obj = Raw;
-        const Path = typeof Obj["fsPath"] === "string" && Obj["fsPath"] || typeof Obj["path"] === "string" && Obj["path"] || (typeof Obj["external"] === "string" ? NormalizeLocation(Obj["external"]).ExtensionPath : "");
-        if (UriFactoryAvailable) {
-          LandFixLog_default.DebugOnce(
-            "ExtNs",
-            `object:${Path}`,
-            `object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (factory=real)`
-          );
-        } else {
-          LandFixLog_default.InfoOnce(
-            "ExtNs",
-            `object-fallback:${Path}`,
-            `object extensionLocation keys=[${Object.keys(Obj).join(",")}] \u2192 path=${Path} (factory=FALLBACK)`
-          );
-        }
-        return { ExtensionPath: Path, ExtensionUri: MakeUri(Path) };
-      }
-      LandFixLog_default.Warn(
-        "ExtNs",
-        `extensionLocation missing or unsupported type: ${typeof Raw}; using empty path`
+      return Response;
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Failed to show input box: ${Error_.message}`
       );
-      return { ExtensionPath: "", ExtensionUri: MakeUri("") };
-    }, "NormalizeLocation");
-    ToExtensionObject = /* @__PURE__ */ __name((Context, Id, Raw) => {
-      const Exports = MakePermissiveExports();
-      const { ExtensionPath, ExtensionUri } = NormalizeLocation(
-        Raw?.extensionLocation
+    }, "catch")
+  });
+  return Result;
+}), "ShowInputBox");
+
+// Source/TypeConverter/Dialog/Filter.ts
+var SerializeFilters = /* @__PURE__ */ __name((Filters) => {
+  if (!Filters) {
+    return void 0;
+  }
+  return Object.entries(Filters).map(([Name, Extensions]) => ({
+    name: Name,
+    extensions: Extensions
+  }));
+}, "SerializeFilters");
+
+// Source/TypeConverter/Dialog/OpenDialogOption.ts
+var ToDTO = /* @__PURE__ */ __name((Options) => {
+  if (!Options) {
+    return void 0;
+  }
+  return {
+    ...Options,
+    defaultUri: Options.defaultUri?.toJSON(),
+    filters: SerializeFilters(Options.filters)
+  };
+}, "ToDTO");
+
+// Source/TypeConverter/Dialog/SaveDialogOption.ts
+var ToDTO2 = /* @__PURE__ */ __name((Options) => {
+  if (!Options) {
+    return void 0;
+  }
+  return {
+    ...Options,
+    defaultUri: Options.defaultUri?.toJSON(),
+    filters: SerializeFilters(Options.filters)
+  };
+}, "ToDTO");
+
+// Source/Services/Window/FileDialogs.ts
+import { Effect as Effect8 } from "effect";
+var ShowOpenDialog = /* @__PURE__ */ __name((MountainClient, Logger2, Options) => Effect8.gen(function* () {
+  yield* Logger2.Debug(`[WindowService] Showing open dialog`);
+  const OptionsDTO = ToDTO(Options);
+  const Result = yield* Effect8.tryPromise({
+    try: /* @__PURE__ */ __name(async () => {
+      const Response = await MountainClient.sendRequest(
+        "UserInterface.ShowOpenDialog",
+        [OptionsDTO]
       );
-      return {
-        id: Id,
-        extensionUri: ExtensionUri,
-        extensionPath: ExtensionPath,
-        // Reporting `isActive: true` mirrors VS Code's behaviour for
-        // built-ins that have completed activation; without it, callers
-        // like the `github` extension treat the extension as missing.
-        isActive: true,
-        packageJSON: Raw,
-        extensionKind: 1,
-        exports: Exports,
-        // Critical: `activate()` must resolve to the SAME exports object
-        // so consumers like `vscode.github` can chain
-        // `gitExtension.activate().then(api => api.onDidChangeEnablement(...))`.
-        activate: /* @__PURE__ */ __name(async () => Exports, "activate")
-      };
-    }, "ToExtensionObject");
-    IsExtensionKey = /* @__PURE__ */ __name((Key) => !Key.startsWith("__"), "IsExtensionKey");
-    CreateExtensionsNamespace = /* @__PURE__ */ __name((Context) => ({
-      getExtension: /* @__PURE__ */ __name((Identifier) => {
-        if (!IsExtensionKey(Identifier)) return void 0;
-        const Raw = Context.ExtensionRegistry.get(Identifier);
-        return Raw ? ToExtensionObject(Context, Identifier, Raw) : void 0;
-      }, "getExtension"),
-      get all() {
-        return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
-      },
-      // Some extensions (html-language-features) iterate
-      // `extensions.allAcrossExtensionHosts`; return the same array as `all`
-      // so `for (...of...)` does not throw on `is not iterable`.
-      get allAcrossExtensionHosts() {
-        return [...Context.ExtensionRegistry.entries()].filter(([Id]) => IsExtensionKey(Id)).map(([Id, Raw]) => ToExtensionObject(Context, Id, Raw));
-      },
-      onDidChange: /* @__PURE__ */ __name((Listener) => {
-        Context.Emitter.on("deltaExtensions", Listener);
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context.Emitter.off("deltaExtensions", Listener);
-          }, "dispose")
-        };
-      }, "onDidChange")
-    }), "CreateExtensionsNamespace");
-    ExtensionsNamespace_default = CreateExtensionsNamespace;
-  }
-});
+      if (Response === null || Response === void 0) {
+        return void 0;
+      }
+      const FilePaths = Response;
+      const { Uri: Uri2 } = await import("vscode");
+      return FilePaths.map((Path) => Uri2.file(Path));
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Failed to show open dialog: ${Error_.message}`
+      );
+    }, "catch")
+  });
+  return Result;
+}), "ShowOpenDialog");
+var ShowSaveDialog = /* @__PURE__ */ __name((MountainClient, Logger2, Options) => Effect8.gen(function* () {
+  yield* Logger2.Debug(`[WindowService] Showing save dialog`);
+  const OptionsDTO = ToDTO2(Options);
+  const ResultURI = yield* Effect8.tryPromise({
+    try: /* @__PURE__ */ __name(async () => {
+      const Response = await MountainClient.sendRequest(
+        "UserInterface.ShowSaveDialog",
+        [OptionsDTO]
+      );
+      if (Response === null || Response === void 0) {
+        return void 0;
+      }
+      const FilePath = Response;
+      const { Uri: Uri2 } = await import("vscode");
+      return Uri2.file(FilePath);
+    }, "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Failed to show save dialog: ${Error_.message}`
+      );
+    }, "catch")
+  });
+  return ResultURI ? await(async () => {
+    const { Uri: Uri2 } = await import("vscode");
+    return Uri2.parse(ResultURI.toString());
+  })() : void 0;
+}), "ShowSaveDialog");
 
-// Source/Services/Handler/VscodeAPI/EnvNamespace.ts
-var EnvNamespace_exports = {};
-__export(EnvNamespace_exports, {
-  default: () => EnvNamespace_default
-});
-var CreateEnvNamespace, EnvNamespace_default;
-var init_EnvNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/EnvNamespace.ts"() {
-    "use strict";
-    init_LandFixLog();
-    CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
-      const Env = Context.ExtensionHostInitData?.environment ?? {};
-      const NormalizeAppRoot = /* @__PURE__ */ __name((Raw) => {
-        if (typeof Raw !== "string" || Raw.length === 0) {
-          LandFixLog_default.Warn(
-            "EnvNs",
-            "appRoot empty or non-string, returning ''"
-          );
-          return "";
-        }
-        if (!Raw.startsWith("file:")) {
-          LandFixLog_default.Info("EnvNs", `appRoot already plain path: ${Raw}`);
-          return Raw;
-        }
-        try {
-          const Normalised = decodeURIComponent(
-            new URL(Raw).pathname
-          ).replace(/\/$/, "");
-          LandFixLog_default.Info(
-            "EnvNs",
-            `appRoot normalised file-URL ${Raw} \u2192 ${Normalised}`
-          );
-          return Normalised;
-        } catch (Error2) {
-          const Fallback = Raw.replace(/^file:\/\//, "").replace(/\/$/, "");
-          LandFixLog_default.Warn(
-            "EnvNs",
-            `appRoot URL parse failed; fallback ${Raw} \u2192 ${Fallback}`,
-            {
-              error: Error2 instanceof Error2 ? Error2.message : String(Error2)
-            }
-          );
-          return Fallback;
-        }
-      }, "NormalizeAppRoot");
-      const Call2 = /* @__PURE__ */ __name(async (Method, Parameters) => {
-        try {
-          return await Context.MountainClient?.sendRequest(
-            Method,
-            Parameters
-          );
-        } catch {
-          return void 0;
-        }
-      }, "Call");
-      return {
-        appName: Env["appName"] ?? "CodeEditorLand",
-        appRoot: NormalizeAppRoot(Env["appRoot"]),
-        appHost: Env["appHost"] ?? "desktop",
-        uiKind: 1,
-        // vscode.UIKind.Desktop
-        language: Env["language"] ?? "en",
-        machineId: Context.ExtensionHostInitData?.telemetry?.machineId ?? Env["machineId"] ?? "land",
-        sessionId: Env["sessionId"] ?? `land-session-${Date.now().toString(36)}`,
-        isNewAppInstall: false,
-        isTelemetryEnabled: false,
-        onDidChangeTelemetryEnabled: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeTelemetryEnabled"),
-        uriScheme: Env["uriScheme"] ?? "vscode",
-        shell: Env["shell"] ?? process.env["SHELL"] ?? "",
-        remoteName: void 0,
-        clipboard: {
-          // Primary path: Mountain's Clipboard.Read / Clipboard.Write (when
-          // routed). Fallback: native OS clipboard CLI - pbcopy/pbpaste on
-          // macOS, xclip/wl-paste on Linux, clip/Get-Clipboard on Windows.
-          // Each branch swallows errors so the extension host never crashes
-          // on an unavailable clipboard subsystem.
-          readText: /* @__PURE__ */ __name(async () => {
-            const FromMountain = await Call2("Clipboard.Read", []);
-            if (typeof FromMountain === "string") return FromMountain;
-            try {
-              const { spawn } = await import("node:child_process");
-              const Candidates = process.platform === "darwin" ? [["pbpaste", []]] : process.platform === "win32" ? [
-                [
-                  "powershell.exe",
-                  [
-                    "-NoProfile",
-                    "-Command",
-                    "Get-Clipboard -Raw"
-                  ]
-                ]
-              ] : [
-                ["wl-paste", ["-n"]],
-                [
-                  "xclip",
-                  ["-selection", "clipboard", "-o"]
-                ],
-                ["xsel", ["--clipboard", "--output"]]
-              ];
-              for (const [Cmd, Args] of Candidates) {
-                const Text = await new Promise(
-                  (Resolve) => {
-                    const Child = spawn(Cmd, Args, {
-                      stdio: ["ignore", "pipe", "ignore"]
-                    });
-                    let Out = "";
-                    Child.stdout.on(
-                      "data",
-                      (Chunk) => Out += Chunk.toString("utf8")
-                    );
-                    Child.once("error", () => Resolve(void 0));
-                    Child.once(
-                      "close",
-                      (Code) => Resolve(Code === 0 ? Out : void 0)
-                    );
-                  }
-                );
-                if (Text !== void 0) return Text;
-              }
-            } catch {
-            }
-            return "";
-          }, "readText"),
-          writeText: /* @__PURE__ */ __name(async (Value) => {
-            await Call2("Clipboard.Write", [Value]);
-            try {
-              const { spawn } = await import("node:child_process");
-              const Candidates = process.platform === "darwin" ? [["pbcopy", []]] : process.platform === "win32" ? [["clip.exe", []]] : [
-                ["wl-copy", []],
-                ["xclip", ["-selection", "clipboard"]],
-                ["xsel", ["--clipboard", "--input"]]
-              ];
-              for (const [Cmd, Args] of Candidates) {
-                const Ok = await new Promise((Resolve) => {
-                  const Child = spawn(Cmd, Args, {
-                    stdio: ["pipe", "ignore", "ignore"]
-                  });
-                  Child.once("error", () => Resolve(false));
-                  Child.once("close", (Code) => Resolve(Code === 0));
-                  try {
-                    Child.stdin.end(Value);
-                  } catch {
-                    Resolve(false);
-                  }
-                });
-                if (Ok) return;
-              }
-            } catch {
-            }
-          }, "writeText")
-        },
-        openExternal: /* @__PURE__ */ __name(async (Target) => {
-          const Url = typeof Target === "string" ? Target : String(Target);
-          const OkFromMountain = await Call2(
-            "NativeHost.OpenExternal",
-            [Url]
-          );
-          if (OkFromMountain === true) return true;
-          try {
-            const { spawn } = await import("node:child_process");
-            const Command = process.platform === "darwin" ? ["open", [Url]] : process.platform === "win32" ? ["cmd.exe", ["/c", "start", "", Url]] : ["xdg-open", [Url]];
-            const Ok = await new Promise((Resolve) => {
-              const Child = spawn(Command[0], Command[1], {
-                stdio: "ignore",
-                detached: true
-              });
-              const Timer = setTimeout(() => {
-                try {
-                  Child.kill();
-                } catch {
-                }
-                Resolve(false);
-              }, 2e3);
-              Child.once("error", () => {
-                clearTimeout(Timer);
-                Resolve(false);
-              });
-              Child.once("close", (Code) => {
-                clearTimeout(Timer);
-                Resolve(Code === 0);
-              });
-              Child.unref();
-            });
-            return Ok;
-          } catch {
-            return false;
-          }
-        }, "openExternal"),
-        asExternalUri: /* @__PURE__ */ __name(async (Target) => Target, "asExternalUri"),
-        createTelemetryLogger: /* @__PURE__ */ __name((_Sender, _Options) => ({
-          isUsageEnabled: false,
-          isErrorsEnabled: false,
-          onDidChangeEnableStates: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeEnableStates"),
-          logUsage: /* @__PURE__ */ __name((_EventName, _Data) => {
-          }, "logUsage"),
-          logError: /* @__PURE__ */ __name((_EventNameOrError, _Data) => {
-          }, "logError"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "createTelemetryLogger"),
-        logLevel: 2,
-        onDidChangeLogLevel: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeLogLevel")
-      };
-    }, "CreateEnvNamespace");
-    EnvNamespace_default = CreateEnvNamespace;
+// Source/TypeConverter/Main/ViewColumn.ts
+var { ViewColumn: VSCodeViewColumn } = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
+var ActiveEditorGroup = -1;
+var SideGroup = -2;
+var FromAPI = /* @__PURE__ */ __name((ViewColumn2) => {
+  if (typeof ViewColumn2 !== "number") {
+    return void 0;
   }
-});
-
-// Source/Services/Handler/VscodeAPI/DebugNamespace.ts
-var DebugNamespace_exports = {};
-__export(DebugNamespace_exports, {
-  default: () => DebugNamespace_default
-});
-var DebugProviderCounter, EventSubscriber2, CreateDebugNamespace, DebugNamespace_default;
-var init_DebugNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/DebugNamespace.ts"() {
-    "use strict";
-    DebugProviderCounter = 0;
-    EventSubscriber2 = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
-      Context.Emitter.on(EventName, Listener);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.Emitter.off(EventName, Listener);
-        }, "dispose")
-      };
-    }, "EventSubscriber");
-    CreateDebugNamespace = /* @__PURE__ */ __name((Context) => ({
-      registerDebugAdapterDescriptorFactory: /* @__PURE__ */ __name((DebugType, _Factory) => {
-        const Handle = `debugAdapter:${++DebugProviderCounter}`;
-        Context.SendToMountain("register_debug_adapter", {
-          handle: Handle,
-          debug_type: DebugType,
-          extension_id: ""
-        }).catch(() => {
-        });
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context.SendToMountain("unregister_debug_adapter", {
-              handle: Handle
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerDebugAdapterDescriptorFactory"),
-      registerDebugConfigurationProvider: /* @__PURE__ */ __name((DebugType, _Provider) => {
-        const Handle = `debugConfig:${++DebugProviderCounter}`;
-        Context.SendToMountain("register_debug_configuration_provider", {
-          handle: Handle,
-          debug_type: DebugType
-        }).catch(() => {
-        });
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context.SendToMountain(
-              "unregister_debug_configuration_provider",
-              {
-                handle: Handle
-              }
-            ).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerDebugConfigurationProvider"),
-      registerDebugAdapterTrackerFactory: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "registerDebugAdapterTrackerFactory"),
-      startDebugging: /* @__PURE__ */ __name(async (Folder, NameOrConfig, ParentSession) => {
-        try {
-          const Response = await Context.MountainClient?.sendRequest(
-            "Debug.Start",
-            [Folder, NameOrConfig, ParentSession]
-          );
-          return Boolean(Response?.success);
-        } catch {
-          return false;
-        }
-      }, "startDebugging"),
-      stopDebugging: /* @__PURE__ */ __name(async (Session) => {
-        try {
-          const SessionId = typeof Session === "string" ? Session : Session?.id ?? "";
-          await Context.MountainClient?.sendRequest("Debug.Stop", [SessionId]);
-        } catch {
-        }
-      }, "stopDebugging"),
-      addBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
-        Context.SendToMountain("debug.addBreakpoints", {
-          breakpoints: Breakpoints
-        }).catch(() => {
-        });
-      }, "addBreakpoints"),
-      removeBreakpoints: /* @__PURE__ */ __name((Breakpoints) => {
-        Context.SendToMountain("debug.removeBreakpoints", {
-          breakpoints: Breakpoints
-        }).catch(() => {
-        });
-      }, "removeBreakpoints"),
-      asDebugSourceUri: /* @__PURE__ */ __name((Source) => Source, "asDebugSourceUri"),
-      onDidStartDebugSession: EventSubscriber2(Context, "debug.didStartSession"),
-      onDidTerminateDebugSession: EventSubscriber2(
-        Context,
-        "debug.didTerminateSession"
-      ),
-      onDidChangeActiveDebugSession: EventSubscriber2(
-        Context,
-        "debug.didChangeActiveSession"
-      ),
-      onDidReceiveDebugSessionCustomEvent: EventSubscriber2(
-        Context,
-        "debug.didReceiveCustomEvent"
-      ),
-      onDidChangeBreakpoints: EventSubscriber2(
-        Context,
-        "debug.didChangeBreakpoints"
-      ),
-      activeDebugSession: void 0,
-      activeDebugConsole: {
-        append: /* @__PURE__ */ __name((Value) => {
-          Context.SendToMountain("debug.consoleAppend", {
-            value: Value
-          }).catch(() => {
-          });
-        }, "append"),
-        appendLine: /* @__PURE__ */ __name((Value) => {
-          Context.SendToMountain("debug.consoleAppend", {
-            value: `${Value}
-`
-          }).catch(() => {
-          });
-        }, "appendLine")
-      },
-      breakpoints: []
-    }), "CreateDebugNamespace");
-    DebugNamespace_default = CreateDebugNamespace;
+  switch (ViewColumn2) {
+    case VSCodeViewColumn.Active:
+      return ActiveEditorGroup;
+    case VSCodeViewColumn.Beside:
+      return SideGroup;
+    default:
+      if (ViewColumn2 >= VSCodeViewColumn.One) {
+        return ViewColumn2 - 1;
+      }
   }
-});
-
-// Source/Services/Handler/VscodeAPI/TasksNamespace.ts
-var TasksNamespace_exports = {};
-__export(TasksNamespace_exports, {
-  default: () => TasksNamespace_default
-});
-var TaskProviderCounter, EventSubscriber3, CreateTasksNamespace, TasksNamespace_default;
-var init_TasksNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/TasksNamespace.ts"() {
-    "use strict";
-    TaskProviderCounter = 0;
-    EventSubscriber3 = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
-      Context.Emitter.on(EventName, Listener);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.Emitter.off(EventName, Listener);
-        }, "dispose")
-      };
-    }, "EventSubscriber");
-    CreateTasksNamespace = /* @__PURE__ */ __name((Context) => ({
-      registerTaskProvider: /* @__PURE__ */ __name((TaskType, _Provider) => {
-        const Handle = `taskProvider:${++TaskProviderCounter}`;
-        Context.SendToMountain("register_task_provider", {
-          handle: Handle,
-          task_type: TaskType,
-          extension_id: ""
-        }).catch(() => {
-        });
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context.SendToMountain("unregister_task_provider", {
-              handle: Handle
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerTaskProvider"),
-      fetchTasks: /* @__PURE__ */ __name(async (Filter) => {
-        try {
-          const Response = await Context.MountainClient?.sendRequest(
-            "Task.Fetch",
-            [Filter]
-          );
-          return Array.isArray(Response) ? Response : [];
-        } catch {
-          return [];
-        }
-      }, "fetchTasks"),
-      executeTask: /* @__PURE__ */ __name(async (Task3) => {
-        try {
-          return await Context.MountainClient?.sendRequest("Task.Execute", [
-            Task3
-          ]);
-        } catch {
-          return void 0;
-        }
-      }, "executeTask"),
-      onDidStartTask: EventSubscriber3(Context, "task.didStart"),
-      onDidEndTask: EventSubscriber3(Context, "task.didEnd"),
-      onDidStartTaskProcess: EventSubscriber3(Context, "task.didStartProcess"),
-      onDidEndTaskProcess: EventSubscriber3(Context, "task.didEndProcess"),
-      taskExecutions: []
-    }), "CreateTasksNamespace");
-    TasksNamespace_default = CreateTasksNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/ScmNamespace.ts
-var ScmNamespace_exports = {};
-__export(ScmNamespace_exports, {
-  default: () => ScmNamespace_default
-});
-var ScmCounter, CreateScmNamespace, ScmNamespace_default;
-var init_ScmNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/ScmNamespace.ts"() {
-    "use strict";
-    ScmCounter = 0;
-    CreateScmNamespace = /* @__PURE__ */ __name((Context) => ({
-      createSourceControl: /* @__PURE__ */ __name((Id, Label, RootUri) => {
-        const Handle = `scm:${++ScmCounter}`;
-        Context.SendToMountain("register_scm_provider", {
-          handle: Handle,
-          id: Id,
-          label: Label,
-          root_uri: RootUri,
-          extension_id: ""
-        }).catch(() => {
-        });
-        const Groups = /* @__PURE__ */ new Map();
-        return {
-          id: Id,
-          label: Label,
-          rootUri: RootUri,
-          inputBox: {
-            value: "",
-            placeholder: "",
-            enabled: true,
-            visible: true
-          },
-          createResourceGroup: /* @__PURE__ */ __name((GroupId, GroupLabel) => {
-            const GroupHandle = `${Handle}/${GroupId}`;
-            Groups.set(GroupId, { label: GroupLabel, resourceStates: [] });
-            Context.SendToMountain("register_scm_resource_group", {
-              scm_handle: Handle,
-              group_handle: GroupHandle,
-              group_id: GroupId,
-              label: GroupLabel
-            }).catch(() => {
-            });
-            const State = { resourceStates: [] };
-            return {
-              id: GroupId,
-              label: GroupLabel,
-              get resourceStates() {
-                return State.resourceStates;
-              },
-              set resourceStates(Value) {
-                State.resourceStates = Value;
-                Context.SendToMountain("update_scm_group", {
-                  scm_handle: Handle,
-                  group_handle: GroupHandle,
-                  resource_states: Value
-                }).catch(() => {
-                });
-              },
-              dispose: /* @__PURE__ */ __name(() => {
-                Context.SendToMountain(
-                  "unregister_scm_resource_group",
-                  {
-                    scm_handle: Handle,
-                    group_handle: GroupHandle
-                  }
-                ).catch(() => {
-                });
-                Groups.delete(GroupId);
-              }, "dispose")
-            };
-          }, "createResourceGroup"),
-          statusBarCommands: [],
-          count: 0,
-          commitTemplate: "",
-          acceptInputCommand: void 0,
-          quickDiffProvider: void 0,
-          dispose: /* @__PURE__ */ __name(() => {
-            Context.SendToMountain("unregister_scm_provider", {
-              handle: Handle
-            }).catch(() => {
-            });
-            Groups.clear();
-          }, "dispose")
-        };
-      }, "createSourceControl"),
-      inputBox: { value: "" }
-    }), "CreateScmNamespace");
-    ScmNamespace_default = CreateScmNamespace;
-  }
-});
-
-// Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts
-var AuthenticationNamespace_exports = {};
-__export(AuthenticationNamespace_exports, {
-  default: () => AuthenticationNamespace_default
-});
-var AuthProviderCounter, EventSubscriber4, CreateAuthenticationNamespace, AuthenticationNamespace_default;
-var init_AuthenticationNamespace = __esm({
-  "Source/Services/Handler/VscodeAPI/AuthenticationNamespace.ts"() {
-    "use strict";
-    AuthProviderCounter = 0;
-    EventSubscriber4 = /* @__PURE__ */ __name((Context, EventName) => (Listener) => {
-      Context.Emitter.on(EventName, Listener);
-      return {
-        dispose: /* @__PURE__ */ __name(() => {
-          Context.Emitter.off(EventName, Listener);
-        }, "dispose")
-      };
-    }, "EventSubscriber");
-    CreateAuthenticationNamespace = /* @__PURE__ */ __name((Context) => ({
-      registerAuthenticationProvider: /* @__PURE__ */ __name((ProviderId, Label, _Provider, Options) => {
-        const Handle = `authProvider:${++AuthProviderCounter}`;
-        Context.SendToMountain("register_authentication_provider", {
-          handle: Handle,
-          provider_id: ProviderId,
-          label: Label,
-          supports_multiple_accounts: Options?.supportsMultipleAccounts ?? false,
-          extension_id: ""
-        }).catch(() => {
-        });
-        return {
-          dispose: /* @__PURE__ */ __name(() => {
-            Context.SendToMountain("unregister_authentication_provider", {
-              handle: Handle
-            }).catch(() => {
-            });
-          }, "dispose")
-        };
-      }, "registerAuthenticationProvider"),
-      getSession: /* @__PURE__ */ __name(async (ProviderId, Scopes, Options) => {
-        try {
-          return await Context.MountainClient?.sendRequest(
-            "Authentication.GetSession",
-            [ProviderId, Scopes, Options ?? {}]
-          );
-        } catch {
-          return void 0;
-        }
-      }, "getSession"),
-      getAccounts: /* @__PURE__ */ __name(async (ProviderId) => {
-        try {
-          const Result = await Context.MountainClient?.sendRequest(
-            "Authentication.GetAccounts",
-            [ProviderId]
-          );
-          return Array.isArray(Result) ? Result : [];
-        } catch {
-          return [];
-        }
-      }, "getAccounts"),
-      onDidChangeSessions: EventSubscriber4(Context, "auth.didChangeSessions")
-    }), "CreateAuthenticationNamespace");
-    AuthenticationNamespace_default = CreateAuthenticationNamespace;
-  }
-});
-
-// Source/Services/LanguageProviderRegistry.ts
-var LanguageProviderRegistry_exports = {};
-__export(LanguageProviderRegistry_exports, {
-  ExecuteCommand: () => ExecuteCommand,
-  Get: () => Get,
-  ListCommands: () => ListCommands,
-  ListHandles: () => ListHandles,
-  Register: () => Register,
-  RegisterAutoHandle: () => RegisterAutoHandle,
-  RegisterCommand: () => RegisterCommand,
-  Unregister: () => Unregister,
-  UnregisterCommand: () => UnregisterCommand
-});
-var Callbacks = /* @__PURE__ */ new Map();
-function Register(Handle, Provider) {
-  Callbacks.set(Handle, Provider);
-}
-__name(Register, "Register");
-function Unregister(Handle) {
-  Callbacks.delete(Handle);
-}
-__name(Unregister, "Unregister");
-function Get(Handle) {
-  const Provider = Callbacks.get(Handle);
-  if (process.env.LAND_DEV_LOG) {
-    console.warn(
-      `[DEV:LANG] Get(handle=${Handle}) resolved=${Boolean(Provider)} (total_registered=${Callbacks.size})`
-    );
-  }
-  return Provider;
-}
-__name(Get, "Get");
-var NextHandle = 1e4;
-function RegisterAutoHandle(Provider) {
-  const Handle = NextHandle++;
-  Callbacks.set(Handle, Provider);
-  return Handle;
-}
-__name(RegisterAutoHandle, "RegisterAutoHandle");
-var Commands = /* @__PURE__ */ new Map();
-function RegisterCommand(CommandId, Callback) {
-  Commands.set(CommandId, Callback);
-}
-__name(RegisterCommand, "RegisterCommand");
-function ExecuteCommand(CommandId, ...Args) {
-  const Handler = Commands.get(CommandId);
-  if (Handler) return Handler(...Args);
   return void 0;
-}
-__name(ExecuteCommand, "ExecuteCommand");
-function UnregisterCommand(CommandId) {
-  Commands.delete(CommandId);
-}
-__name(UnregisterCommand, "UnregisterCommand");
-function ListCommands() {
-  return Array.from(Commands.keys());
-}
-__name(ListCommands, "ListCommands");
-function ListHandles() {
-  return Array.from(Callbacks.keys());
-}
-__name(ListHandles, "ListHandles");
+}, "FromAPI");
 
-// Source/Services/Handler/ExtensionHostHandler.ts
-import * as NodeFS from "node:fs";
-var HandleInitializeExtensionHost = /* @__PURE__ */ __name(async (Context, Parameters) => {
-  const Extensions = Parameters?.extensions ?? [];
-  console.log(
-    `[ExtensionHostHandler] InitializeExtensionHost received ${Extensions.length} extensions`
-  );
-  Context.ExtensionHostInitData = Parameters;
-  Context.ExtensionRegistry.clear();
-  Context.ActivationEventIndex.clear();
-  for (const Extension of Extensions) {
-    const Identifier = Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "unknown";
-    Context.ExtensionRegistry.set(Identifier, Extension);
-    const ActivationEvents = Extension?.activationEvents ?? [];
-    for (const Event2 of ActivationEvents) {
-      const Existing = Context.ActivationEventIndex.get(Event2) ?? [];
-      Existing.push(Identifier);
-      Context.ActivationEventIndex.set(Event2, Existing);
-    }
-  }
-  Context.ExtensionHostReady = true;
-  console.log(
-    `[ExtensionHostHandler] Extension registry: ${Context.ExtensionRegistry.size} extensions, ${Context.ActivationEventIndex.size} activation events`
-  );
-  Context.Emitter.emit("extensionHostInitialized", {
-    extensionCount: Context.ExtensionRegistry.size,
-    autoStart: Parameters?.autoStart ?? false
-  });
-  Context.ConnectToMountain().catch((Error2) => {
-    console.warn(
-      "[ExtensionHostHandler] Background Mountain reconnect failed:",
-      Error2 instanceof globalThis.Error ? Error2.message : String(Error2)
-    );
-  });
-  return "initialized";
-}, "HandleInitializeExtensionHost");
-var HandleDeltaExtensions = /* @__PURE__ */ __name(async (Context, Parameters) => {
-  const DeltaStart = performance.now();
-  const Added = Parameters?.toAdd ?? [];
-  const Removed = Parameters?.toRemove ?? [];
-  const IdentifierOf = /* @__PURE__ */ __name((Extension) => Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "unknown", "IdentifierOf");
-  let AddedActivationEvents = 0;
-  for (const Extension of Added) {
-    const Identifier = IdentifierOf(Extension);
-    Context.ExtensionRegistry.set(Identifier, Extension);
-    const ActivationEvents = Extension?.activationEvents ?? [];
-    for (const Event2 of ActivationEvents) {
-      const Existing = Context.ActivationEventIndex.get(Event2) ?? [];
-      if (!Existing.includes(Identifier)) {
-        Existing.push(Identifier);
-        Context.ActivationEventIndex.set(Event2, Existing);
-        AddedActivationEvents++;
-      }
-    }
-  }
-  for (const Extension of Removed) {
-    const Identifier = IdentifierOf(Extension);
-    Context.ExtensionRegistry.delete(Identifier);
-  }
-  const DurationMs = Math.round(performance.now() - DeltaStart);
-  console.log(
-    `[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length} | registry=${Context.ExtensionRegistry.size} | activationEvents+=${AddedActivationEvents} | ${DurationMs}ms`
-  );
-  Context.Emitter.emit("deltaExtensions", {
-    added: Added.length,
-    removed: Removed.length,
-    registrySize: Context.ExtensionRegistry.size,
-    durationMs: DurationMs
-  });
-  return {
-    success: true,
-    registrySize: Context.ExtensionRegistry.size,
-    durationMs: DurationMs
+// Source/Platform/VSCode/Type.ts
+init_extHostTypes();
+init_uri();
+init_cancellation();
+
+// Source/TypeConverter/Main/URI.ts
+var FromAPI2 = /* @__PURE__ */ __name((TheURI) => TheURI.toJSON(), "FromAPI");
+var ToAPI = /* @__PURE__ */ __name((DTO) => URI.revive(DTO), "ToAPI");
+
+// Source/TypeConverter/Webview/ConvertShowOptionToDTO.ts
+var ConvertShowOptionToDTO = /* @__PURE__ */ __name((ViewColumn2, PreserveFocus) => {
+  const DTO = {
+    preserveFocus: PreserveFocus
   };
-}, "HandleDeltaExtensions");
-var HandleActivateByEvent = /* @__PURE__ */ __name(async (Context, Parameters) => {
-  await EnsureVscodeAPIRegistered(Context);
-  const ActivationEvent = typeof Parameters === "string" ? Parameters : Parameters?.activationEvent ?? Parameters?.event ?? "*";
-  let MatchingExtensions;
-  if (ActivationEvent === "*") {
-    const All = /* @__PURE__ */ new Set();
-    for (const Ids of Context.ActivationEventIndex.values()) {
-      for (const Id of Ids) All.add(Id);
-    }
-    MatchingExtensions = [...All];
-  } else {
-    const Specific = Context.ActivationEventIndex.get(ActivationEvent) ?? [];
-    const Star = Context.ActivationEventIndex.get("*") ?? [];
-    MatchingExtensions = [.../* @__PURE__ */ new Set([...Specific, ...Star])];
+  const ViewColumnValue = FromAPI(ViewColumn2);
+  if (ViewColumnValue !== void 0) {
+    DTO.viewColumn = ViewColumnValue;
   }
-  console.log(
-    `[ExtensionHostHandler] $activateByEvent: ${ActivationEvent} \u2192 ${MatchingExtensions.length} extensions`
-  );
-  if (MatchingExtensions.length > 0) {
-    console.log(
-      `[ExtensionHostHandler] Activating: ${MatchingExtensions.slice(0, 5).join(", ")}${MatchingExtensions.length > 5 ? ` (+${MatchingExtensions.length - 5} more)` : ""}`
-    );
-  } else {
-    console.log(
-      `[ExtensionHostHandler] Available events: ${[...Context.ActivationEventIndex.keys()].slice(0, 10).join(", ")}${Context.ActivationEventIndex.size > 10 ? ` (+${Context.ActivationEventIndex.size - 10} more)` : ""}`
-    );
-  }
-  const ToActivate = MatchingExtensions.filter(
-    (Id) => !Context.ActivatedExtensions.has(Id)
-  );
-  console.log(
-    `[ExtensionHostHandler] $activateByEvent: ${ToActivate.length} new activations (${MatchingExtensions.length - ToActivate.length} already active)`
-  );
-  for (const ExtId of ToActivate) {
-    ActivateExtension(Context, ExtId, ActivationEvent).catch(
-      (Err) => {
-        const Msg = Err instanceof Error ? Err.message : String(Err);
-        console.warn(
-          `[ExtensionHostHandler] Activation failed for ${ExtId}: ${Msg}`
-        );
-        if (Err instanceof Error && /Class extends value undefined/.test(Err.message)) {
-          const Stack = (Err.stack ?? "").split("\n").slice(0, 6).join("\n");
-          console.warn(
-            `[ExtensionHostHandler] Class-extends stack for ${ExtId}:
-${Stack}`
-          );
-        }
-      }
-    );
-  }
-  Context.Emitter.emit("activateByEvent", {
-    event: ActivationEvent,
-    extensions: MatchingExtensions
-  });
+  return DTO;
+}, "ConvertShowOptionToDTO");
+
+// Source/TypeConverter/Webview/ConvertContentOptionToDTO.ts
+var ConvertContentOptionToDTO = /* @__PURE__ */ __name((ExtensionDescription, Options) => {
   return {
-    success: true,
-    activated: ToActivate.length
+    enableCommandUris: Options.enableCommandUris,
+    enableScripts: Options.enableScripts,
+    enableForms: Options.enableForms,
+    localResourceRoots: Options.localResourceRoots ?? [
+      ExtensionDescription.extensionLocation
+    ],
+    portMapping: Options.portMapping
   };
-}, "HandleActivateByEvent");
-var HandleStartExtensionHost = /* @__PURE__ */ __name(async (Context, Parameters) => {
-  console.log(
-    `[ExtensionHostHandler] $startExtensionHost received (registry: ${Context.ExtensionRegistry.size} extensions)`
-  );
-  Context.Emitter.emit("startExtensionHost", {
-    extensionCount: Context.ExtensionRegistry.size,
-    ready: Context.ExtensionHostReady
-  });
-  return {
-    success: true,
-    ready: Context.ExtensionHostReady,
-    extensionCount: Context.ExtensionRegistry.size
-  };
-}, "HandleStartExtensionHost");
-var InstallVscodeModuleHooks = /* @__PURE__ */ __name(async () => {
-  if (globalThis.__cocoonModuleHooksInstalled) return;
-  globalThis.__cocoonModuleHooksInstalled = true;
-  const ModuleModule = await import("module");
-  const CreateRequire = ModuleModule.createRequire;
-  const LocalRequire = CreateRequire(import.meta.url);
-  try {
-    const NodeModule = LocalRequire("module");
-    const OriginalLoad = NodeModule._load;
-    NodeModule._load = /* @__PURE__ */ __name(function PatchedLoad(Request, Parent, IsMain) {
-      if (Request === "vscode") {
-        const API = globalThis.__cocoonVscodeAPI;
-        if (API) return API;
-        console.warn(
-          "[ExtensionHostHandler] require('vscode') called before shim registered - returning empty namespace"
-        );
-        return {};
-      }
-      return OriginalLoad.call(this, Request, Parent, IsMain);
-    }, "PatchedLoad");
-    console.log(
-      "[ExtensionHostHandler] Module._load hook installed - require('vscode') intercepted"
-    );
-  } catch (Err) {
-    console.warn(
-      "[ExtensionHostHandler] Failed to patch Module._load:",
-      Err instanceof Error ? Err.message : String(Err)
-    );
+}, "ConvertContentOptionToDTO");
+
+// Source/WebviewPanel/WebviewImplementation.ts
+init_network();
+import { Effect as Effect9 } from "effect";
+var WebviewImplementation = class {
+  constructor(Handle, IPCService, Extension, InitialOptions) {
+    this.Handle = Handle;
+    this.IPCService = IPCService;
+    this.Extension = Extension;
+    this._options = InitialOptions;
+    this.onDidReceiveMessage = this.OnDidReceiveMessageEmitter.event;
   }
-  try {
-    const NodeModule = LocalRequire("module");
-    if (typeof NodeModule.register === "function") {
-      const VscodeExportNames = [
-        // Namespaces
-        "window",
-        "workspace",
-        "commands",
-        "languages",
-        "extensions",
-        "env",
-        "debug",
-        "tasks",
-        "scm",
-        "authentication",
-        "l10n",
-        "notebooks",
-        "tests",
-        "comments",
-        "chat",
-        "lm",
-        "interactive",
-        // Type constructors
-        "Position",
-        "Range",
-        "Location",
-        "LocationLink",
-        "Selection",
-        "MarkdownString",
-        "Hover",
-        "CompletionItem",
-        "CompletionItemKind",
-        "CompletionItemTag",
-        "CompletionList",
-        "CompletionTriggerKind",
-        "Diagnostic",
-        "DiagnosticSeverity",
-        "DiagnosticTag",
-        "DiagnosticRelatedInformation",
-        "TextEdit",
-        "WorkspaceEdit",
-        "SnippetString",
-        "SnippetTextEdit",
-        "SymbolKind",
-        "SymbolTag",
-        "SymbolInformation",
-        "DocumentSymbol",
-        "CodeActionKind",
-        "CodeAction",
-        "CodeActionTriggerKind",
-        "CodeLens",
-        "SignatureHelp",
-        "SignatureHelpTriggerKind",
-        "SignatureInformation",
-        "ParameterInformation",
-        "InlayHint",
-        "InlayHintKind",
-        "InlayHintLabelPart",
-        "FoldingRange",
-        "FoldingRangeKind",
-        "DocumentHighlight",
-        "DocumentHighlightKind",
-        "SelectionRange",
-        "SemanticTokensLegend",
-        "SemanticTokensBuilder",
-        "SemanticTokens",
-        "SemanticTokensEdit",
-        "SemanticTokensEdits",
-        "RelativePattern",
-        "Disposable",
-        "StatusBarAlignment",
-        "ThemeColor",
-        "ThemeIcon",
-        "TreeItem",
-        "TreeItemCollapsibleState",
-        "TreeItemCheckboxState",
-        "ViewColumn",
-        "EndOfLine",
-        "ConfigurationTarget",
-        "Uri",
-        "CancellationTokenSource",
-        "CancellationError",
-        "EventEmitter",
-        "FileType",
-        "FilePermission",
-        "FileSystemError",
-        "DataTransfer",
-        "DataTransferItem",
-        "TextDocumentChangeReason",
-        "TextDocumentSaveReason",
-        "TextEditorCursorStyle",
-        "TextEditorLineNumbersStyle",
-        "TextEditorRevealType",
-        "TextEditorSelectionChangeKind",
-        "DecorationRangeBehavior",
-        "OverviewRulerLane",
-        "ColorPresentation",
-        "ColorInformation",
-        "Color",
-        "QuickPickItemKind",
-        "InputBoxValidationSeverity",
-        "ProgressLocation",
-        "NotebookCellData",
-        "NotebookCellKind",
-        "NotebookCellOutput",
-        "NotebookCellOutputItem",
-        "NotebookData",
-        "NotebookEdit",
-        "NotebookRange",
-        "TestRunProfileKind",
-        "TestMessage",
-        "TestRunRequest",
-        "TestTag",
-        "DebugAdapterExecutable",
-        "DebugAdapterInlineImplementation",
-        "DebugAdapterNamedPipeServer",
-        "DebugAdapterServer",
-        "Breakpoint",
-        "FunctionBreakpoint",
-        "SourceBreakpoint",
-        "TerminalLink",
-        "TerminalLocation",
-        "TerminalProfile",
-        "TaskGroup",
-        "TaskScope",
-        "TaskRevealKind",
-        "TaskPanelKind",
-        "ShellExecution",
-        "ProcessExecution",
-        "CustomExecution",
-        "Task",
-        "CommentMode",
-        "CommentThreadCollapsibleState",
-        "CommentThreadState",
-        "ExtensionKind",
-        "ExtensionMode",
-        "UIKind",
-        "LogLevel",
-        "LanguageStatusSeverity",
-        "TextSearchContext",
-        "TextSearchMatch",
-        "DocumentLink",
-        "LinkedEditingRanges",
-        "EvaluatableExpression",
-        "InlineValueText",
-        "InlineValueVariableLookup",
-        "InlineValueEvaluatableExpression",
-        "TypeHierarchyItem",
-        "CallHierarchyItem",
-        "CallHierarchyIncomingCall",
-        "CallHierarchyOutgoingCall",
-        // Fields
-        "version"
-      ];
-      const NamedExports = VscodeExportNames.map(
-        (Name) => `export const ${Name} = API.${Name};`
-      ).join("\n");
-      const BridgeSource = [
-        "const API = globalThis.__cocoonVscodeAPI || {};",
-        NamedExports,
-        "export default API;",
-        "export const __esModule = true;"
-      ].join("\n");
-      const LoaderSource = `
-				const BRIDGE_URL = 'vscode-shim:///vscode';
-				const BRIDGE_SOURCE = ${JSON.stringify(BridgeSource)};
-				export async function resolve(Specifier, Context, NextResolve) {
-					if (Specifier === 'vscode') {
-						return { url: BRIDGE_URL, shortCircuit: true, format: 'module' };
-					}
-					return NextResolve(Specifier, Context);
-				}
-				export async function load(Url, Context, NextLoad) {
-					if (Url === BRIDGE_URL) {
-						return { format: 'module', source: BRIDGE_SOURCE, shortCircuit: true };
-					}
-					return NextLoad(Url, Context);
-				}
-			`;
-      const LoaderURL = `data:text/javascript;base64,${Buffer.from(LoaderSource).toString("base64")}`;
-      try {
-        NodeModule.register(LoaderURL, import.meta.url);
-        console.log(
-          "[ExtensionHostHandler] ESM loader registered - import 'vscode' intercepted"
-        );
-      } catch (RegisterErr) {
-        console.warn(
-          "[ExtensionHostHandler] module.register failed (ESM imports of 'vscode' will fail):",
-          RegisterErr instanceof Error ? RegisterErr.message : String(RegisterErr)
-        );
-      }
+  Handle;
+  IPCService;
+  Extension;
+  static {
+    __name(this, "WebviewImplementation");
+  }
+  IsDisposed = false;
+  _html = "";
+  _options;
+  OnDidReceiveMessageEmitter = CreateEventStream();
+  onDidReceiveMessage;
+  get html() {
+    return this._html;
+  }
+  set html(Value) {
+    if (this.IsDisposed || this._html === Value) return;
+    this._html = Value;
+    const UpdateEffect = this.IPCService.SendNotification(
+      "$setWebviewHtml",
+      [this.Handle, Value]
+    );
+    Effect9.runFork(UpdateEffect);
+  }
+  get options() {
+    return this._options;
+  }
+  set options(NewOptions) {
+    if (this.IsDisposed) return;
+    this._options = NewOptions;
+    const OptionsDTO = ConvertContentOptionToDTO(
+      this.Extension,
+      NewOptions
+    );
+    const UpdateEffect = this.IPCService.SendNotification(
+      "$setWebviewOptions",
+      [this.Handle, OptionsDTO]
+    );
+    Effect9.runFork(UpdateEffect);
+  }
+  get cspSource() {
+    return "vscode-resource: vscode-webview-resource: https:";
+  }
+  postMessage(Message) {
+    if (this.IsDisposed) return Promise.resolve(false);
+    const PostEffect = this.IPCService.SendRequest(
+      "$postMessageToWebview",
+      [this.Handle, Message]
+    ).pipe(Effect9.catchAll(() => Effect9.succeed(false)));
+    return Effect9.runPromise(PostEffect);
+  }
+  asWebviewUri(LocalResource) {
+    const Authority = this.Extension.identifier.value.toLowerCase();
+    return LocalResource.with({
+      scheme: Schemas.vscodeFileResource,
+      authority: Authority
+    });
+  }
+  fireDidReceiveMessage(Message) {
+    if (!this.IsDisposed) {
+      Effect9.runFork(this.OnDidReceiveMessageEmitter.Fire(Message));
     }
-  } catch (Err) {
-    console.warn(
-      "[ExtensionHostHandler] ESM loader setup skipped:",
-      Err instanceof Error ? Err.message : String(Err)
-    );
   }
-}, "InstallVscodeModuleHooks");
-var EnsureVscodeAPIRegistered = /* @__PURE__ */ __name(async (Context) => {
-  await InstallVscodeModuleHooks();
-  if (globalThis.__cocoonVscodeAPI) return;
-  try {
-    const VsCodeTypes = await Promise.resolve().then(() => (init_extHostTypes(), extHostTypes_exports));
-    const { URI: URI2 } = await Promise.resolve().then(() => (init_uri(), uri_exports));
-    const { CancellationTokenSource: CancellationTokenSource2 } = await Promise.resolve().then(() => (init_cancellation(), cancellation_exports));
-    const { Emitter: Emitter2 } = await Promise.resolve().then(() => (init_event(), event_exports));
-    const LogLevelEnum = {
-      Off: 0,
-      Trace: 1,
-      Debug: 2,
-      Info: 3,
-      Warning: 4,
-      Error: 5,
-      0: "Off",
-      1: "Trace",
-      2: "Debug",
-      3: "Info",
-      4: "Warning",
-      5: "Error"
-    };
-    class CancellationError2 extends Error {
-      static {
-        __name(this, "CancellationError");
-      }
-      constructor() {
-        super("Canceled");
-        this.name = "Canceled";
-      }
+  dispose() {
+    if (!this.IsDisposed) {
+      this.IsDisposed = true;
+      this.OnDidReceiveMessageEmitter.Shutdown();
     }
-    const OverviewRulerLane = {
-      Left: 1,
-      Center: 2,
-      Right: 4,
-      Full: 7,
-      1: "Left",
-      2: "Center",
-      4: "Right",
-      7: "Full"
-    };
-    const API = {
-      ...VsCodeTypes,
-      // Atom I5: read from process.env - single source is .env.Land
-      // propagated by Maintain/Script/TierEnvironment.sh. Fallback
-      // tracks the VS Code base from Dependency/.../Editor/package.json.
-      version: process.env["ProductVersion"] ?? "1.118.0",
-      Uri: URI2,
-      CancellationTokenSource: CancellationTokenSource2,
-      CancellationError: CancellationError2,
-      EventEmitter: Emitter2,
-      LogLevel: LogLevelEnum,
-      OverviewRulerLane,
-      // Namespaces - each in its own file under VscodeAPI/
-      window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(
-        Context
-      ),
-      workspace: (await Promise.resolve().then(() => (init_WorkspaceNamespace(), WorkspaceNamespace_exports))).default(Context),
-      commands: (await Promise.resolve().then(() => (init_CommandsNamespace(), CommandsNamespace_exports))).default(Context, LanguageProviderRegistry_exports),
-      languages: (await Promise.resolve().then(() => (init_LanguagesNamespace(), LanguagesNamespace_exports))).default(Context, LanguageProviderRegistry_exports),
-      extensions: (await Promise.resolve().then(() => (init_ExtensionsNamespace(), ExtensionsNamespace_exports))).default(Context),
-      env: (await Promise.resolve().then(() => (init_EnvNamespace(), EnvNamespace_exports))).default(Context),
-      debug: (await Promise.resolve().then(() => (init_DebugNamespace(), DebugNamespace_exports))).default(
-        Context
-      ),
-      tasks: (await Promise.resolve().then(() => (init_TasksNamespace(), TasksNamespace_exports))).default(
-        Context
-      ),
-      scm: (await Promise.resolve().then(() => (init_ScmNamespace(), ScmNamespace_exports))).default(Context),
-      authentication: (await Promise.resolve().then(() => (init_AuthenticationNamespace(), AuthenticationNamespace_exports))).default(Context),
-      // Lightweight stub namespaces - no Mountain route yet, returns
-      // safe defaults so extensions that reference them don't crash.
-      l10n: {
-        t: /* @__PURE__ */ __name((Message, ...Arguments) => {
-          const Raw = typeof Message === "string" ? Message : Message?.message ?? String(Message);
-          if (!Arguments.length) return Raw;
-          return Raw.replace(
-            /\{(\d+)\}/g,
-            (_Match, Index) => {
-              const Replacement = Arguments[Number(Index)];
-              return Replacement === void 0 ? "" : String(Replacement);
-            }
-          );
-        }, "t"),
-        bundle: void 0,
-        uri: void 0
-      },
-      notebooks: {
-        createNotebookController: /* @__PURE__ */ __name(() => ({
-          id: "",
-          notebookType: "",
-          supportedLanguages: [],
-          label: "",
-          supportsExecutionOrder: false,
-          executeHandler: /* @__PURE__ */ __name(() => {
-          }, "executeHandler"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          createNotebookCellExecution: /* @__PURE__ */ __name(() => ({
-            start: /* @__PURE__ */ __name(() => {
-            }, "start"),
-            end: /* @__PURE__ */ __name(() => {
-            }, "end"),
-            replaceOutput: /* @__PURE__ */ __name(async () => {
-            }, "replaceOutput"),
-            appendOutput: /* @__PURE__ */ __name(async () => {
-            }, "appendOutput"),
-            clearOutput: /* @__PURE__ */ __name(async () => {
-            }, "clearOutput"),
-            replaceOutputItems: /* @__PURE__ */ __name(async () => {
-            }, "replaceOutputItems"),
-            appendOutputItems: /* @__PURE__ */ __name(async () => {
-            }, "appendOutputItems"),
-            executionOrder: void 0
-          }), "createNotebookCellExecution"),
-          onDidChangeSelectedNotebooks: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidChangeSelectedNotebooks"),
-          updateNotebookAffinity: /* @__PURE__ */ __name(() => {
-          }, "updateNotebookAffinity")
-        }), "createNotebookController"),
-        registerNotebookCellStatusBarItemProvider: /* @__PURE__ */ __name(() => ({
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "registerNotebookCellStatusBarItemProvider"),
-        registerNotebookSerializer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerNotebookSerializer"),
-        registerRendererCommunication: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerRendererCommunication"),
-        createRendererMessaging: /* @__PURE__ */ __name(() => ({
-          postMessage: /* @__PURE__ */ __name(async () => false, "postMessage"),
-          onDidReceiveMessage: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidReceiveMessage")
-        }), "createRendererMessaging"),
-        onDidChangeNotebookCellExecutionState: /* @__PURE__ */ __name(() => ({
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "onDidChangeNotebookCellExecutionState")
-      },
-      lm: {
-        registerTool: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerTool"),
-        invokeTool: /* @__PURE__ */ __name(async () => ({ content: [] }), "invokeTool"),
-        selectChatModels: /* @__PURE__ */ __name(async () => [], "selectChatModels"),
-        registerChatModelProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerChatModelProvider"),
-        tools: [],
-        onDidChangeChatModels: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "onDidChangeChatModels")
-      },
-      chat: {
-        createChatParticipant: /* @__PURE__ */ __name(() => ({
-          id: "",
-          iconPath: void 0,
-          requester: void 0,
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose"),
-          followupProvider: void 0,
-          onDidReceiveFeedback: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "onDidReceiveFeedback")
-        }), "createChatParticipant"),
-        registerChatVariableResolver: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerChatVariableResolver"),
-        registerMappedEditsProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerMappedEditsProvider"),
-        registerChatOutputRenderer: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerChatOutputRenderer"),
-        registerRelatedFilesProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerRelatedFilesProvider"),
-        registerChatSessionProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerChatSessionProvider"),
-        registerChatSessionItemProvider: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-        }, "dispose") }), "registerChatSessionItemProvider")
-      },
-      tests: {
-        createTestController: /* @__PURE__ */ __name(() => ({
-          id: "",
-          label: "",
-          items: {
-            size: 0,
-            replace: /* @__PURE__ */ __name(() => {
-            }, "replace"),
-            forEach: /* @__PURE__ */ __name(() => {
-            }, "forEach"),
-            add: /* @__PURE__ */ __name(() => {
-            }, "add"),
-            delete: /* @__PURE__ */ __name(() => {
-            }, "delete"),
-            get: /* @__PURE__ */ __name(() => void 0, "get")
-          },
-          createRunProfile: /* @__PURE__ */ __name(() => ({ dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose") }), "createRunProfile"),
-          resolveHandler: void 0,
-          refreshHandler: void 0,
-          createTestItem: /* @__PURE__ */ __name(() => ({}), "createTestItem"),
-          createTestRun: /* @__PURE__ */ __name(() => ({
-            enqueued: /* @__PURE__ */ __name(() => {
-            }, "enqueued"),
-            started: /* @__PURE__ */ __name(() => {
-            }, "started"),
-            skipped: /* @__PURE__ */ __name(() => {
-            }, "skipped"),
-            failed: /* @__PURE__ */ __name(() => {
-            }, "failed"),
-            errored: /* @__PURE__ */ __name(() => {
-            }, "errored"),
-            passed: /* @__PURE__ */ __name(() => {
-            }, "passed"),
-            end: /* @__PURE__ */ __name(() => {
-            }, "end"),
-            appendOutput: /* @__PURE__ */ __name(() => {
-            }, "appendOutput"),
-            token: {
-              isCancellationRequested: false,
-              onCancellationRequested: /* @__PURE__ */ __name(() => ({
-                dispose: /* @__PURE__ */ __name(() => {
-                }, "dispose")
-              }), "onCancellationRequested")
-            }
-          }), "createTestRun"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "createTestController")
-      },
-      comments: {
-        createCommentController: /* @__PURE__ */ __name(() => ({
-          id: "",
-          label: "",
-          commentingRangeProvider: void 0,
-          reactionHandler: void 0,
-          options: void 0,
-          createCommentThread: /* @__PURE__ */ __name(() => ({
-            uri: void 0,
-            range: void 0,
-            comments: [],
-            collapsibleState: 0,
-            canReply: true,
-            contextValue: void 0,
-            label: void 0,
-            state: void 0,
-            dispose: /* @__PURE__ */ __name(() => {
-            }, "dispose")
-          }), "createCommentThread"),
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "createCommentController")
-      },
-      interactive: {
-        registerInteractiveEditorSessionProvider: /* @__PURE__ */ __name(() => ({
-          dispose: /* @__PURE__ */ __name(() => {
-          }, "dispose")
-        }), "registerInteractiveEditorSessionProvider"),
-        transferActiveChat: /* @__PURE__ */ __name(async () => {
-        }, "transferActiveChat")
-      }
-    };
-    globalThis.__cocoonVscodeAPI = API;
-    console.log(
-      "[ExtensionHostHandler] vscode API shim registered on globalThis.__cocoonVscodeAPI"
+  }
+};
+
+// Source/WebviewPanel/WebviewPanelImplementation.ts
+import { Effect as Effect10 } from "effect";
+var WebviewPanelImplementation = class {
+  constructor(Handle, IPC, Extension, OnDidDisposeCallback, InitialViewType, InitialTitle, InitialOptions, InitialViewColumn) {
+    this.Handle = Handle;
+    this.IPC = IPC;
+    this.OnDidDisposeCallback = OnDidDisposeCallback;
+    this.viewType = InitialViewType;
+    this.options = InitialOptions;
+    this.webview = new WebviewImplementation(
+      Handle,
+      IPC,
+      Extension,
+      InitialOptions
     );
-    const CriticalNames = [
-      "Diagnostic",
-      "CodeAction",
-      "CodeLens",
-      "CompletionItem",
-      "SymbolInformation",
-      "DocumentLink",
-      "TypeHierarchyItem",
-      "CallHierarchyItem",
-      "SemanticTokensBuilder",
-      "SemanticTokens",
-      "RelativePattern",
-      "Position",
-      "Range",
-      "Hover",
-      "LogLevel",
-      "CancellationError",
-      "CancellationTokenSource",
-      "EventEmitter",
-      "Uri",
-      "Disposable"
-    ];
-    const Missing = CriticalNames.filter((Name) => API[Name] === void 0);
-    if (Missing.length) {
-      console.warn(
-        `[ExtensionHostHandler] vscode API shim missing critical symbols: ${Missing.join(", ")}`
-      );
-    } else {
-      console.log(
-        "[ExtensionHostHandler] vscode API shim critical symbols OK"
-      );
-    }
-  } catch (Err) {
-    console.warn(
-      "[ExtensionHostHandler] Failed to create vscode API shim:",
-      Err instanceof Error ? Err.message : String(Err)
+    this._title = InitialTitle;
+    this._viewColumn = InitialViewColumn;
+    this._active = true;
+    this._visible = true;
+    this._iconPath = void 0;
+    this.onDidDispose = this.OnDidDisposeEmitter.event;
+    this.onDidChangeViewState = this.OnDidChangeViewStateEmitter.event;
+  }
+  Handle;
+  IPC;
+  OnDidDisposeCallback;
+  static {
+    __name(this, "WebviewPanelImplementation");
+  }
+  IsDisposed = false;
+  _title;
+  // FIX: The error indicates the interface expects a non-optional property.
+  // We will manage an internal `undefined` state but the public property will conform.
+  _iconPath;
+  _active;
+  _visible;
+  _viewColumn;
+  OnDidDisposeEmitter = CreateEventStream();
+  onDidDispose;
+  OnDidChangeViewStateEmitter = CreateEventStream();
+  onDidChangeViewState;
+  webview;
+  viewType;
+  options;
+  get viewColumn() {
+    return this._viewColumn;
+  }
+  get active() {
+    return this._active;
+  }
+  get visible() {
+    return this._visible;
+  }
+  get title() {
+    return this._title;
+  }
+  set title(Value) {
+    if (this.IsDisposed || this._title === Value) return;
+    this._title = Value;
+    Effect10.runFork(
+      this.IPC.SendNotification("$setWebviewTitle", [this.Handle, Value])
     );
   }
-}, "EnsureVscodeAPIRegistered");
-var ActivateExtension = /* @__PURE__ */ __name(async (Context, ExtensionId, ActivationEvent) => {
-  if (Context.ActivatedExtensions.has(ExtensionId)) return;
-  Context.ActivatedExtensions.add(ExtensionId);
-  const Extension = Context.ExtensionRegistry.get(ExtensionId);
-  if (!Extension) return;
-  const LocationRaw = Extension?.ExtensionLocation ?? Extension?.extensionLocation ?? Extension?.location?.path ?? Extension?.location;
-  const MainFile = Extension?.main ?? Extension?.Main;
-  if (!LocationRaw || !MainFile) {
-    return;
+  // FIX: The public property must conform to the interface, even if the
+  // internal state can be undefined. We will cast this in the getter/setter.
+  get iconPath() {
+    return this._iconPath;
   }
-  let ExtensionPath;
-  try {
-    ExtensionPath = new URL(String(LocationRaw)).pathname.replace(
-      /\/$/,
-      ""
+  set iconPath(Value) {
+    const internalValue = Value;
+    if (this.IsDisposed || this._iconPath === internalValue) return;
+    this._iconPath = internalValue;
+    const IconPathDTO = internalValue ? "light" in internalValue && "dark" in internalValue ? {
+      light: FromAPI2(internalValue.light),
+      dark: FromAPI2(internalValue.dark)
+    } : {
+      light: FromAPI2(internalValue),
+      dark: FromAPI2(internalValue)
+    } : void 0;
+    Effect10.runFork(
+      this.IPC.SendNotification("$setWebviewIconPath", [
+        this.Handle,
+        IconPathDTO
+      ])
     );
-  } catch {
-    ExtensionPath = String(LocationRaw).replace(/^file:\/\//, "").replace(/\/$/, "");
   }
-  const ModulePath = `${ExtensionPath}/${MainFile}`;
-  try {
-    const { access } = await import("node:fs/promises");
-    let Exists = false;
-    let Resolved = ModulePath;
-    for (const Candidate of [ModulePath, `${ModulePath}.js`]) {
-      try {
-        await access(Candidate);
-        Exists = true;
-        Resolved = Candidate;
-        break;
-      } catch {
-      }
-    }
-    if (!Exists) {
-      process.stdout.write(
-        `[LandFix:Preflight] Skipping ${ExtensionId}: main file not found on disk (${ModulePath})
-`
-      );
+  reveal(ViewColumn2, PreserveFocus) {
+    if (this.IsDisposed) return;
+    const ViewColumnDTO = ViewColumn2 ? ConvertShowOptionToDTO(ViewColumn2, PreserveFocus ?? false) : void 0;
+    Effect10.runFork(
+      this.IPC.SendNotification("$revealWebviewPanel", [
+        this.Handle,
+        ViewColumnDTO,
+        PreserveFocus
+      ])
+    );
+  }
+  dispose() {
+    if (this.IsDisposed) {
       return;
     }
-    process.stdout.write(
-      `[LandFix:Preflight] ${ExtensionId} main resolved \u2192 ${Resolved}
-`
-    );
-  } catch (Err) {
-    process.stdout.write(
-      `[LandFix:Preflight] preflight disabled for ${ExtensionId}: ${Err instanceof Error ? Err.message : String(Err)}
-`
+    this.IsDisposed = true;
+    this.OnDidDisposeEmitter.Fire();
+    this.OnDidDisposeCallback();
+    this.webview.dispose();
+    Effect10.runFork(
+      this.IPC.SendNotification("$disposeWebview", [this.Handle])
     );
   }
-  const ModuleType = Extension?.type ?? Extension?.Type;
-  const IsESM = ModuleType === "module" || /\.mjs$/i.test(MainFile) || /\.mts$/i.test(MainFile);
-  console.log(
-    `[ExtensionHostHandler] Loading ${ExtensionId} (${IsESM ? "ESM" : "CJS"}) from ${ModulePath}`
+  fireDidReceiveMessage(Message) {
+    this.webview.fireDidReceiveMessage(Message);
+  }
+  updateViewState(NewState) {
+    if (this.IsDisposed) return;
+    const Changed = this._active !== NewState.active || this._visible !== NewState.visible || this._viewColumn !== NewState.viewColumn;
+    this._active = NewState.active;
+    this._visible = NewState.visible;
+    this._viewColumn = NewState.viewColumn;
+    if (Changed) {
+      this.OnDidChangeViewStateEmitter.Fire({
+        webviewPanel: this
+      });
+    }
+  }
+};
+
+// Source/Services/Window/WebviewPanel.ts
+import { Effect as Effect11 } from "effect";
+var CreateWebviewPanel = /* @__PURE__ */ __name((MountainClient, GRPCClient, Logger2, ViewType, Title, ShowOptions, Options) => Effect11.gen(function* () {
+  const PanelId = `webview-${crypto.randomUUID()}`;
+  yield* Logger2.Info(
+    `[WindowService] Creating webview panel: ${ViewType} - ${Title} (${PanelId})`
   );
-  try {
-    let ExtModule;
-    if (IsESM) {
-      const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
-      ExtModule = await import(ImportURL);
-    } else {
-      const { createRequire } = await import("module");
-      const Require = createRequire(import.meta.url);
-      try {
-        ExtModule = Require(ModulePath);
-      } catch (RequireErr) {
-        const Msg = RequireErr instanceof Error ? RequireErr.message : String(RequireErr);
-        if (/ERR_REQUIRE_ESM|Cannot use import statement/i.test(Msg)) {
-          const ImportURL = ModulePath.startsWith("/") ? `file://${ModulePath}` : ModulePath;
-          ExtModule = await import(ImportURL);
-        } else {
-          throw RequireErr;
-        }
-      }
-    }
-    const ActivateFn = typeof ExtModule?.activate === "function" ? ExtModule.activate : typeof ExtModule?.default?.activate === "function" ? ExtModule.default.activate : void 0;
-    if (typeof ActivateFn === "function") {
-      const ExtContext = CreateExtensionContext(
-        Context,
-        Extension,
-        ExtensionPath
+  const ViewColumn2 = typeof ShowOptions === "number" ? ShowOptions : ShowOptions.viewColumn;
+  const PreserveFocus = typeof ShowOptions === "object" ? ShowOptions.preserveFocus ?? false : false;
+  const PanelOptionsDTO = Options ? {
+    enableFindWidget: Options.enableFindWidget,
+    enableScripts: Options.enableScripts,
+    enableForms: Options.enableForms,
+    enableCommandUris: Options.enableCommandUris,
+    portMapping: Options.portMapping,
+    localResourceRoots: Options.localResourceRoots,
+    retainContextWhenHidden: Options.retainContextWhenHidden
+  } : void 0;
+  const ViewColumnDTO = FromAPI(ViewColumn2);
+  yield* GRPCClient.createWebviewPanel({
+    viewType: ViewType,
+    title: Title ?? "",
+    iconPath: void 0,
+    viewColumn: ViewColumn2 ? ViewColumn2 - 2 : void 0,
+    preserveFocus: PreserveFocus ?? true,
+    enableFindWidget: Options?.enableFindWidget ?? true,
+    retainContextWhenHidden: Options?.retainContextWhenHidden ?? false,
+    localResourceRoots: Options?.localResourceRoots?.map(
+      (Uri2) => Uri2.toString()
+    )
+  });
+  const IPCProxy = {
+    SendNotification: /* @__PURE__ */ __name((Method, Params) => Effect11.gen(function* () {
+      yield* Logger2.Debug(
+        `[WindowService] Webview notification: ${Method}`
       );
-      await ActivateFn(ExtContext);
-      console.log(
-        `[ExtensionHostHandler] ${ExtensionId} activated (event: ${ActivationEvent})`
-      );
-    } else {
-      console.warn(
-        `[ExtensionHostHandler] ${ExtensionId} loaded but no activate() function found`
-      );
-    }
-  } catch (Err) {
-    Context.ActivatedExtensions.delete(ExtensionId);
-    throw Err;
-  }
-}, "ActivateExtension");
-var CreateExtensionContext = /* @__PURE__ */ __name((Context, Extension, ExtensionPath) => {
-  const ExtId = Extension?.identifier?.value ?? Extension?.identifier?.id ?? Extension?.identifier ?? "";
-  const HomeDir = process.env["HOME"] ?? process.env["USERPROFILE"] ?? "/tmp";
-  const StorageBase = `${HomeDir}/.land/extensionStorage`;
-  const GlobalStorageBase = `${HomeDir}/.land/globalStorage`;
-  const LogBase = `${HomeDir}/.land/logs`;
-  const ExtStoragePath = `${StorageBase}/${ExtId}`;
-  const GlobalStoragePath = `${GlobalStorageBase}/${ExtId}`;
-  const LogPath = `${LogBase}/${ExtId}`;
-  try {
-    NodeFS.mkdirSync(ExtStoragePath, { recursive: true });
-    NodeFS.mkdirSync(GlobalStoragePath, { recursive: true });
-    NodeFS.mkdirSync(LogPath, { recursive: true });
-  } catch {
-  }
-  let FullPackageJSON = Extension;
-  try {
-    const Contents = NodeFS.readFileSync(
-      `${ExtensionPath}/package.json`,
-      "utf8"
-    );
-    const Parsed = JSON.parse(Contents);
-    FullPackageJSON = {
-      ...Parsed,
-      ...Extension
-    };
-  } catch {
-  }
-  const VsCodeUri = globalThis.__cocoonVscodeAPI?.Uri;
-  const MakeUri = /* @__PURE__ */ __name((Path) => {
-    if (VsCodeUri && typeof VsCodeUri.file === "function") {
-      return VsCodeUri.file(Path);
-    }
-    return {
-      scheme: "file",
-      path: Path,
-      fsPath: Path,
-      authority: "",
-      query: "",
-      fragment: "",
-      with: /* @__PURE__ */ __name(function(Change) {
-        return { ...this, ...Change };
-      }, "with"),
-      toString: /* @__PURE__ */ __name(() => `file://${Path}`, "toString")
-    };
-  }, "MakeUri");
-  return {
-    subscriptions: [],
-    extensionPath: ExtensionPath,
-    extensionUri: MakeUri(ExtensionPath),
-    // VS Code API: `context.asAbsolutePath(relative)` returns the
-    // extension path joined with a relative path. The 4 language-
-    // features extensions all call this immediately in their activate
-    // function to resolve server bundle locations; without it, they
-    // fail before vscode-languageclient even constructs.
-    asAbsolutePath: /* @__PURE__ */ __name((RelativePath) => {
-      const Trimmed = RelativePath.replace(/^\.?\//, "");
-      return `${ExtensionPath}/${Trimmed}`;
-    }, "asAbsolutePath"),
-    globalState: {
-      get: /* @__PURE__ */ __name((_Key, DefaultValue) => DefaultValue, "get"),
-      update: /* @__PURE__ */ __name(async (_Key, _Value) => {
-      }, "update"),
-      keys: /* @__PURE__ */ __name(() => [], "keys"),
-      setKeysForSync: /* @__PURE__ */ __name((_Keys) => {
-      }, "setKeysForSync")
+      MountainClient.sendNotification("webview.postMessage", {
+        panelId: PanelId,
+        method: Method,
+        params: Params
+      }).catch(() => {
+      });
+    }), "SendNotification"),
+    SendRequest: /* @__PURE__ */ __name((_Method, _Params) => Effect11.gen(function* () {
+      return void 0;
+    }), "SendRequest")
+  };
+  const ExtensionDescription = {
+    identifier: { value: "extension-placeholder" },
+    extensionLocation: { scheme: "file", path: "/tmp/extension" }
+  };
+  const WebviewPanel = new WebviewPanelImplementation(
+    PanelId,
+    IPCProxy,
+    ExtensionDescription,
+    () => {
+      MountainClient.sendNotification("webview.dispose", {
+        panelId: PanelId
+      }).catch(() => {
+      });
     },
-    workspaceState: {
-      get: /* @__PURE__ */ __name((_Key, DefaultValue) => DefaultValue, "get"),
-      update: /* @__PURE__ */ __name(async (_Key, _Value) => {
-      }, "update"),
-      keys: /* @__PURE__ */ __name(() => [], "keys")
-    },
-    secrets: {
-      get: /* @__PURE__ */ __name(async (Key) => {
-        try {
-          return await Context.MountainClient?.sendRequest(
-            "secrets.get",
-            { key: Key }
-          );
-        } catch {
-          return void 0;
-        }
-      }, "get"),
-      store: /* @__PURE__ */ __name(async (Key, Value) => {
-        try {
-          await Context.MountainClient?.sendRequest("secrets.store", {
-            key: Key,
-            value: Value
-          });
-        } catch {
-        }
-      }, "store"),
-      delete: /* @__PURE__ */ __name(async (Key) => {
-        try {
-          await Context.MountainClient?.sendRequest(
-            "secrets.delete",
-            { key: Key }
-          );
-        } catch {
-        }
-      }, "delete"),
-      onDidChange: /* @__PURE__ */ __name((_Listener) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChange")
-    },
-    environmentVariableCollection: {
-      persistent: true,
-      description: void 0,
-      append: /* @__PURE__ */ __name(() => {
-      }, "append"),
-      prepend: /* @__PURE__ */ __name(() => {
-      }, "prepend"),
-      replace: /* @__PURE__ */ __name(() => {
-      }, "replace"),
-      get: /* @__PURE__ */ __name(() => void 0, "get"),
-      forEach: /* @__PURE__ */ __name(() => {
-      }, "forEach"),
-      delete: /* @__PURE__ */ __name(() => {
-      }, "delete"),
-      clear: /* @__PURE__ */ __name(() => {
-      }, "clear"),
-      getScoped: /* @__PURE__ */ __name(() => ({}), "getScoped"),
-      [Symbol.iterator]: () => [].values()
-    },
-    storagePath: ExtStoragePath,
-    globalStoragePath: GlobalStoragePath,
-    logPath: LogPath,
-    storageUri: MakeUri(ExtStoragePath),
-    globalStorageUri: MakeUri(GlobalStoragePath),
-    logUri: MakeUri(LogPath),
-    extensionMode: 1,
-    // ExtensionMode.Production
-    extension: {
-      id: ExtId,
-      extensionUri: {
-        scheme: "file",
-        path: ExtensionPath,
-        fsPath: ExtensionPath
-      },
-      extensionPath: ExtensionPath,
-      isActive: true,
-      packageJSON: FullPackageJSON,
-      extensionKind: 1,
-      exports: void 0,
-      activate: /* @__PURE__ */ __name(async () => {
-      }, "activate")
-    },
-    languageModelAccessInformation: {
-      canSendRequest: /* @__PURE__ */ __name((_Model) => false, "canSendRequest"),
-      onDidChange: /* @__PURE__ */ __name((_Listener) => ({ dispose: /* @__PURE__ */ __name(() => {
-      }, "dispose") }), "onDidChange")
+    ViewType,
+    Title,
+    PanelOptionsDTO ?? {},
+    ViewColumn2
+  );
+  return yield* Effect11.succeed(WebviewPanel);
+}), "CreateWebviewPanel");
+
+// Source/Services/Window/Progress.ts
+import { Effect as Effect12 } from "effect";
+var WithProgress = /* @__PURE__ */ __name((MountainClient, Logger2, Options, Task3) => Effect12.gen(function* () {
+  const ProgressId = `progress-${crypto.randomUUID()}`;
+  yield* Logger2.Info(
+    `[WindowService] Starting progress: ${Options.location} (${ProgressId})`
+  );
+  const CancellationToken2 = {
+    isCancellationRequested: false,
+    onCancellationRequested: /* @__PURE__ */ __name((_Listener) => ({
+      dispose: /* @__PURE__ */ __name(() => {
+      }, "dispose")
+    }), "onCancellationRequested")
+  };
+  const ProgressReporter = {
+    report(Value) {
+      MountainClient.sendNotification("progress.update", {
+        id: ProgressId,
+        message: Value.message,
+        increment: Value.increment
+      }).catch(() => {
+      });
     }
   };
-}, "CreateExtensionContext");
-var ExtensionHostHandler_default = {
-  HandleInitializeExtensionHost,
-  HandleDeltaExtensions,
-  HandleActivateByEvent,
-  HandleStartExtensionHost
+  yield* Effect12.tryPromise({
+    try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("progress.start", {
+      id: ProgressId,
+      location: Options.location,
+      title: Options.title,
+      cancellable: Options.cancellable ?? false
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => new Error("Failed to start progress"), "catch")
+  });
+  const Result = yield* Effect12.tryPromise({
+    try: /* @__PURE__ */ __name(() => Task3(ProgressReporter, CancellationToken2), "try"),
+    catch: /* @__PURE__ */ __name((Error_) => {
+      throw new Error(
+        `Progress task failed: ${Error_.message}`
+      );
+    }, "catch")
+  });
+  yield* Effect12.tryPromise({
+    try: /* @__PURE__ */ __name(() => MountainClient.sendNotification("progress.complete", {
+      id: ProgressId
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => new Error("Failed to complete progress"), "catch")
+  });
+  return Result;
+}), "WithProgress");
+
+// Source/Services/Window/TextDocument.ts
+import { Effect as Effect13 } from "effect";
+var ShowTextDocument = /* @__PURE__ */ __name((GRPCClient, Logger2, Workspace_, DocumentOrUri, ColumnOrOptions, PreserveFocus) => Effect13.gen(function* () {
+  const Uri2 = "uri" in DocumentOrUri ? DocumentOrUri.uri : DocumentOrUri;
+  yield* Logger2.Info(
+    `[WindowService] Showing text document: ${Uri2.toString()}` + (ColumnOrOptions ? ` with options` : "")
+  );
+  let ViewColumnDTO;
+  let PreserveFocusValue = PreserveFocus ?? false;
+  let Selection3 = void 0;
+  let Preview;
+  if (typeof ColumnOrOptions === "number") {
+    ViewColumnDTO = FromAPI(ColumnOrOptions);
+  } else if (ColumnOrOptions) {
+    const Options = ColumnOrOptions;
+    ViewColumnDTO = FromAPI(Options.viewColumn);
+    PreserveFocusValue = Options.preserveFocus ?? false;
+    Preview = Options.preview;
+    if (Options.selection) {
+      Selection3 = Options.selection;
+    }
+  }
+  yield* GRPCClient.showTextDocument(Uri2.toString(), {
+    viewColumn: ViewColumnDTO ? ViewColumnDTO + 2 : void 0,
+    preserveFocus: PreserveFocusValue === true,
+    preview: Preview === true,
+    selection: Selection3 ? {
+      line: Selection3.start.line,
+      character: Selection3.start.character
+    } : void 0
+  });
+  const EditorId = "editor-" + Uri2.toString().slice(-8);
+  yield* Logger2.Debug(
+    `[WindowService] Showed text document with ID: ${EditorId}`
+  );
+  const Editor = Workspace_.visibleTextEditors.find(
+    (E) => E.id === EditorId
+  );
+  if (!Editor) {
+    return yield* Effect13.fail(
+      new Error(
+        `[WindowService] Could not find text editor with ID ${EditorId} after Mountain confirmation`
+      )
+    );
+  }
+  return Editor;
+}), "ShowTextDocument");
+var ShowInformationMessage = /* @__PURE__ */ __name((GRPCClient, Logger2, Message, ...Items) => Effect13.gen(function* () {
+  yield* Logger2.Debug(
+    `[WindowService] Showing information message: ${Message}`
+  );
+  const InfoResponse = yield* Effect13.tryPromise({
+    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showInformation", {
+      message: Message,
+      items: Items.length > 0 ? Items : void 0
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => null, "catch")
+  });
+  const InfoSelected = InfoResponse?.selectedItem;
+  return InfoSelected ? Items.find(
+    (I) => (typeof I === "string" ? I : I.title) === InfoSelected
+  ) ?? void 0 : void 0;
+}), "ShowInformationMessage");
+var ShowWarningMessage = /* @__PURE__ */ __name((GRPCClient, Logger2, Message, ...Items) => Effect13.gen(function* () {
+  yield* Logger2.Debug(
+    `[WindowService] Showing warning message: ${Message}`
+  );
+  const WarnResponse = yield* Effect13.tryPromise({
+    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showWarning", {
+      message: Message,
+      items: Items.length > 0 ? Items : void 0
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => null, "catch")
+  });
+  const WarnSelected = WarnResponse?.selectedItem;
+  return WarnSelected ? Items.find(
+    (I) => (typeof I === "string" ? I : I.title) === WarnSelected
+  ) ?? void 0 : void 0;
+}), "ShowWarningMessage");
+var ShowErrorMessage = /* @__PURE__ */ __name((GRPCClient, Logger2, Message, ...Items) => Effect13.gen(function* () {
+  yield* Logger2.Debug(
+    `[WindowService] Showing error message: ${Message}`
+  );
+  const ErrorResponse = yield* Effect13.tryPromise({
+    try: /* @__PURE__ */ __name(() => GRPCClient.sendRequest("showError", {
+      message: Message,
+      items: Items.length > 0 ? Items : void 0
+    }), "try"),
+    catch: /* @__PURE__ */ __name(() => null, "catch")
+  });
+  const ErrorSelected = ErrorResponse?.selectedItem;
+  return ErrorSelected ? Items.find(
+    (I) => (typeof I === "string" ? I : I.title) === ErrorSelected
+  ) ?? void 0 : void 0;
+}), "ShowErrorMessage");
+
+// Source/Services/Window/Index.ts
+import { Context as Context3, Effect as Effect14, Ref as Ref2 } from "effect";
+var WindowService = class extends Effect14.Service()(
+  "Service/Window",
+  {
+    effect: Effect14.gen(function* () {
+      const MountainClient = yield* IMountainClientService;
+      const Workspace_ = yield* Context3.Tag("Service/Workspace");
+      const Logger_ = yield* Context3.Tag("Service/Logger");
+      const MountainGRPC = yield* MountainGRPCClientService;
+      const WindowStateRef = yield* Ref2.make({
+        focused: true,
+        active: true
+      });
+      const OnDidChangeWindowStateStream = CreateEventStream();
+      const AcceptWindowStateChange = /* @__PURE__ */ __name((State) => Effect14.gen(function* () {
+        const CurrentState = yield* Ref2.get(WindowStateRef);
+        if (CurrentState.focused !== State.focused || CurrentState.active !== State.active) {
+          yield* Ref2.set(WindowStateRef, State);
+          yield* Logger_.Debug(
+            `[WindowService] Window state changed: focused=${State.focused}, active=${State.active}`
+          );
+          yield* OnDidChangeWindowStateStream.Fire(State);
+        }
+      }), "AcceptWindowStateChange");
+      const ServiceImplementation = {
+        get state() {
+          return Effect14.runSync(Ref2.get(WindowStateRef));
+        },
+        get activeTextEditor() {
+          return Workspace_.activeTextEditor;
+        },
+        get visibleTextEditors() {
+          return Workspace_.visibleTextEditors;
+        },
+        get onDidChangeWindowState() {
+          return OnDidChangeWindowStateStream.event;
+        },
+        ShowTextDocument: /* @__PURE__ */ __name((DocumentOrUri, ColumnOrOptions, PreserveFocus) => ShowTextDocument(
+          MountainGRPC,
+          Logger_,
+          Workspace_,
+          DocumentOrUri,
+          ColumnOrOptions,
+          PreserveFocus
+        ), "ShowTextDocument"),
+        ShowInformationMessage: /* @__PURE__ */ __name((Message, ...Items) => ShowInformationMessage(
+          MountainGRPC,
+          Logger_,
+          Message,
+          ...Items
+        ), "ShowInformationMessage"),
+        ShowWarningMessage: /* @__PURE__ */ __name((Message, ...Items) => ShowWarningMessage(
+          MountainGRPC,
+          Logger_,
+          Message,
+          ...Items
+        ), "ShowWarningMessage"),
+        ShowErrorMessage: /* @__PURE__ */ __name((Message, ...Items) => ShowErrorMessage(
+          MountainGRPC,
+          Logger_,
+          Message,
+          ...Items
+        ), "ShowErrorMessage"),
+        ShowQuickPick: /* @__PURE__ */ __name((Items, Options) => ShowQuickPick(
+          MountainClient,
+          Logger_,
+          Items,
+          Options
+        ), "ShowQuickPick"),
+        ShowInputBox: /* @__PURE__ */ __name((Options) => ShowInputBox(MountainClient, Logger_, Options), "ShowInputBox"),
+        ShowOpenDialog: /* @__PURE__ */ __name((Options) => ShowOpenDialog(MountainClient, Logger_, Options), "ShowOpenDialog"),
+        ShowSaveDialog: /* @__PURE__ */ __name((Options) => ShowSaveDialog(MountainClient, Logger_, Options), "ShowSaveDialog"),
+        WithProgress: /* @__PURE__ */ __name((Options, Task3) => WithProgress(
+          MountainClient,
+          Logger_,
+          Options,
+          Task3
+        ), "WithProgress"),
+        CreateStatusBarItem: /* @__PURE__ */ __name((Id, Alignment, Priority) => CreateStatusBarItem(
+          MountainClient,
+          MountainGRPC,
+          Logger_,
+          Id,
+          Alignment,
+          Priority
+        ), "CreateStatusBarItem"),
+        CreateOutputChannel: /* @__PURE__ */ __name((Name) => CreateOutputChannel(
+          MountainClient,
+          Logger_,
+          Name
+        ), "CreateOutputChannel"),
+        CreateWebviewPanel: /* @__PURE__ */ __name((ViewType, Title, ShowOptions, Options) => CreateWebviewPanel(
+          MountainClient,
+          MountainGRPC,
+          Logger_,
+          ViewType,
+          Title,
+          ShowOptions,
+          Options
+        ), "CreateWebviewPanel")
+      };
+      return ServiceImplementation;
+    })
+  }
+) {
+  static {
+    __name(this, "WindowService");
+  }
 };
+var Index_default = WindowService;
 export {
-  ExtensionHostHandler_default as default
+  WindowService,
+  Index_default as default
 };
-//# sourceMappingURL=ExtensionHostHandler.js.map
+//# sourceMappingURL=Index.js.map

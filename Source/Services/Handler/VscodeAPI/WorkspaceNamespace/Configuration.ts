@@ -86,7 +86,7 @@ export const CreateConfigurationState = (
 	// Listen for Mountain-side `configuration.change` notifications (routed
 	// through NotificationHandler into `configurationChanged` on the main
 	// Context.Emitter). When a user edits settings.json outside the extension
-	// host, Mountain fires this notification — we invalidate the affected
+	// host, Mountain fires this notification - we invalidate the affected
 	// cache entries and re-prime so downstream `get()` calls reflect the new
 	// value and listeners fire.
 	Context.Emitter.on("configurationChanged", (Payload: unknown) => {
@@ -97,7 +97,7 @@ export const CreateConfigurationState = (
 				? (Shape.affected as string[])
 				: [];
 		if (Keys.length === 0) {
-			// Unknown affected keys — invalidate everything. Future reads
+			// Unknown affected keys - invalidate everything. Future reads
 			// re-prime lazily; listeners fire for each cached key.
 			for (const CachedKey of [...ConfigCache.keys()]) {
 				ConfigCache.delete(CachedKey);

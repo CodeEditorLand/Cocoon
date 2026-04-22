@@ -379,7 +379,7 @@ export class MountainClientService implements IMountainClientService {
 			// From __dirname, ../../../../Mountain/... lands in Land/Element/Mountain/.
 			// From cwd=Land/, Element/Mountain/... is correct.
 			// From cwd=Land/Element/Cocoon/, ../Mountain/... is correct.
-			// Never re-add an "Element/" prefix after going up past Land/Element/ —
+			// Never re-add an "Element/" prefix after going up past Land/Element/ -
 			// that produces a bogus Land/Element/Element/Mountain/... path.
 			const SearchPaths = [
 				path.resolve(
@@ -670,7 +670,7 @@ message RPCDataPayload {
 			this.errorCount++;
 			this.circuitBreakerFailureCount++;
 
-			// Benign 404s on `FileSystem.ReadFile` are very common — every
+			// Benign 404s on `FileSystem.ReadFile` are very common - every
 			// extension that probes for an optional cache file (terminal-
 			// suggest, json-language-features schema associations, …) hits
 			// this path. Downgrade to `info` so the error log stays focused
@@ -684,7 +684,7 @@ message RPCDataPayload {
 				/resource not found|ENOENT|not found/i.test(ErrorMessage);
 			if (IsBenignNotFound) {
 				process.stdout.write(
-					`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) — ${ErrorMessage}\n`,
+					`[LandFix:MountainClient] ${method} 404 after ${duration}ms (benign) - ${ErrorMessage}\n`,
 				);
 			} else {
 				console.error(

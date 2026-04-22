@@ -3,7 +3,7 @@
 # When `Fast=true` is set, swap the main tsconfig for `tsconfig.Fast.json`.
 # The fast config has `noEmit:true`, `emitDeclarationOnly:false`, and an empty
 # `include` array, which causes the Build tool's built-in `tsc -p` and
-# `tsc-alias -f -p` steps to become no-ops — esbuild still produces the
+# `tsc-alias -f -p` steps to become no-ops - esbuild still produces the
 # bundle, skipping the 5000+ declaration-file emit + alias-rewrite pass. The
 # resulting JS bundle is byte-identical to the normal build; only the
 # ancillary `.d.ts` output is omitted.
@@ -20,7 +20,7 @@ Build "Source/Configuration/**/*.{ts,json}" \
 
 # Build TypeScript source files
 # esbuild succeeds (produces Target JS); tsc may fail on pre-existing type errors.
-# The || true ensures the build pipeline continues — runtime JS is correct.
+# The || true ensures the build pipeline continues - runtime JS is correct.
 Build "Source/**/*.ts" \
 	--ESBuild Configuration/ESBuild/Target.js \
 	$TypeScript_Flag || true

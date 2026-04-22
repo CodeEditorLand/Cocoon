@@ -25,7 +25,7 @@
  * serialised as JSON at the tail of the line, with circular references
  * collapsed to `"[Circular]"` for safety.
  *
- * The logger is intentionally synchronous and dependency-free — it must work
+ * The logger is intentionally synchronous and dependency-free - it must work
  * before Effect-TS, before Mountain's gRPC connection, and inside catch
  * handlers that fire during shutdown.
  */

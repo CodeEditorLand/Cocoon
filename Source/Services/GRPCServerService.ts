@@ -16,11 +16,11 @@
  * - Monitor server health and track errors
  *
  * Domain logic is delegated to handler modules in ./Handler/:
- * - ExtensionHostHandler — extension host lifecycle (init, delta, activate, start)
- * - LanguageProviderHandler — $provide* language feature invocations
- * - DocumentContentHandler — document content mirroring ($acceptModel*)
- * - NotificationHandler — notification routing and event emission
- * - RequestRoutingHandler — service.method pattern routing
+ * - ExtensionHostHandler - extension host lifecycle (init, delta, activate, start)
+ * - LanguageProviderHandler - $provide* language feature invocations
+ * - DocumentContentHandler - document content mirroring ($acceptModel*)
+ * - NotificationHandler - notification routing and event emission
+ * - RequestRoutingHandler - service.method pattern routing
  *
  * Based on Mountain's Vine gRPC protocol specification.
  * Specification: MOUNTAIN-COCOON-INTEGRATION.md (gRPC Server Implementation)
@@ -53,7 +53,7 @@ import InvokeLanguageProvider from "./Handler/LanguageProviderHandler.js";
 import HandleSpecificNotification from "./Handler/NotificationHandler.js";
 import RouteRequest from "./Handler/RequestRoutingHandler.js";
 
-// ESM compatibility — provide __dirname and require() for proto loading
+// ESM compatibility - provide __dirname and require() for proto loading
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const require = createRequire(import.meta.url);
@@ -116,7 +116,7 @@ export class GRPCServerService
 	/** Track which extensions have already been activated (prevents double-activation) */
 	private readonly activatedExtensions: Set<string> = new Set();
 
-	/** Document content mirror — caches text content keyed by URI string.
+	/** Document content mirror - caches text content keyed by URI string.
 	 * Updated by $acceptModelChanged notifications from Mountain.
 	 * Read by InvokeLanguageProvider's VsDocument.getText() for real-time content. */
 	private readonly documentContentCache: Map<string, string> = new Map();
@@ -537,13 +537,13 @@ export class GRPCServerService
 	 *   - "service.method" (e.g., "extension.activate")
 	 *   - "$provideFeature" (e.g., "$provideHover", "$provideCompletions")
 	 *     Mountain invokes these when Sky requests language intelligence.
-	 *   - "InitializeExtensionHost" — Mountain's extension host init handshake
+	 *   - "InitializeExtensionHost" - Mountain's extension host init handshake
 	 *   - "$deltaExtensions", "$activateByEvent", "$startExtensionHost"
 	 *     Mountain's extension host lifecycle methods
-	 *   - "{Prefix}${Method}" — VS Code-style proxied RPC (e.g.
+	 *   - "{Prefix}${Method}" - VS Code-style proxied RPC (e.g.
 	 *     "ExtHostCommands$ExecuteContributedCommand"). Mountain's
 	 *     CommandProvider uses this shape to dispatch extension commands.
-	 *   - "$shutdown" — Mountain initiates graceful shutdown via this method.
+	 *   - "$shutdown" - Mountain initiates graceful shutdown via this method.
 	 */
 	private IsValidMethod(method: string): boolean {
 		const DotMethod = /^[a-zA-Z]+\.[a-zA-Z]+$/.test(method);
@@ -676,7 +676,7 @@ export class GRPCServerService
 		}
 
 		// `$shutdown` is a one-shot notification-style request Mountain fires
-		// on process teardown. Ack politely — the process will exit on its
+		// on process teardown. Ack politely - the process will exit on its
 		// own once the gRPC server closes.
 		if (method === "$shutdown") {
 			return { ok: true };
@@ -849,7 +849,7 @@ export class GRPCServerService
 		this.mountainClient = Client;
 
 		console.log(
-			`[GRPCServerService] Connected to Mountain gRPC — return path active`,
+			`[GRPCServerService] Connected to Mountain gRPC - return path active`,
 		);
 
 		this.emit("mountainConnected", { port: MountainPort });
@@ -862,7 +862,7 @@ export class GRPCServerService
 	async SendToMountain(Method: string, Parameters: any): Promise<void> {
 		if (!this.mountainClient) {
 			console.warn(
-				`[GRPCServerService] Cannot send ${Method} to Mountain — not connected`,
+				`[GRPCServerService] Cannot send ${Method} to Mountain - not connected`,
 			);
 			return;
 		}
@@ -1069,7 +1069,7 @@ export class GRPCServerService
 						console.log(
 							`[GRPCServerService] Server bound to port ${port}`,
 						);
-						// server.start() removed — no longer needed in @grpc/grpc-js v1.12+
+						// server.start() removed - no longer needed in @grpc/grpc-js v1.12+
 						resolve();
 					}
 				},

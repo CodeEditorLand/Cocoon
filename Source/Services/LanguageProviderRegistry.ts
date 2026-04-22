@@ -70,7 +70,7 @@ export function RegisterAutoHandle(Provider: ProviderObject): number {
 	return Handle;
 }
 
-/** Command registry — maps command IDs to callbacks. */
+/** Command registry - maps command IDs to callbacks. */
 const Commands = new Map<string, Function>();
 
 /**

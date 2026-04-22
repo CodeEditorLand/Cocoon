@@ -23,14 +23,14 @@
  *
  * ## Dependencies
  *
- * - `MountainGRPCClientService` — the only channel to Mountain. This
+ * - `MountainGRPCClientService` - the only channel to Mountain. This
  *   service was historically wrapped by a `Cocoon/Services/IPCService`,
  *   but that wrapper was deleted in 2026-04 and all callers now reach
  *   Mountain directly.
- * - `ConfigurationService` — the synchronous cache that `getConfiguration`
+ * - `ConfigurationService` - the synchronous cache that `getConfiguration`
  *   reads against; Mountain's async configuration RPCs populate it on
  *   demand.
- * - A local `Logger` tag (Effect-TS context) — see the `interface Logger`
+ * - A local `Logger` tag (Effect-TS context) - see the `interface Logger`
  *   declaration below. The full logger service lives in the Telemetry
  *   layer; this tag is a compile-time handle, not a concrete impl.
  *

@@ -2,7 +2,7 @@
  * @module Handler/VscodeAPI/ExtensionsNamespace
  * @description
  * Factory for the vscode.extensions namespace shim.
- * Backed by HandlerContext.ExtensionRegistry — populated by
+ * Backed by HandlerContext.ExtensionRegistry - populated by
  * `InitializeExtensionHost` from Mountain.
  * Provides: getExtension, all, onDidChange.
  */
@@ -40,7 +40,7 @@ const MakeMultiStub = (): any => {
 	};
 	StubTarget.dispose = () => {};
 	StubTarget[Symbol.iterator] = function* () {
-		// Empty iterator — `for (...of stub)` completes with 0 elements.
+		// Empty iterator - `for (...of stub)` completes with 0 elements.
 	};
 	// Delegate array-ish methods to an empty array so `.map`, `.filter`,
 	// `.forEach`, `.find`, etc. behave without throwing.
@@ -93,7 +93,7 @@ const MakeMultiStub = (): any => {
 	return StubProxy;
 };
 
-// One shared Stub is enough — it's stateless and idempotent.
+// One shared Stub is enough - it's stateless and idempotent.
 const Stub = MakeMultiStub();
 
 const MakePermissiveExports = (): any => {
@@ -113,7 +113,7 @@ const MakePermissiveExports = (): any => {
 					Property as PropertyKey
 				];
 			}
-			// Not a thenable — must not look like a promise to `await`.
+			// Not a thenable - must not look like a promise to `await`.
 			if (Property === "then") return undefined;
 			// Event subscriptions: `onDidX(cb)` / `onWillX(cb)` → disposable.
 			if (Property.startsWith("onDid") || Property.startsWith("onWill")) {
@@ -129,7 +129,7 @@ const MakePermissiveExports = (): any => {
 			if (Property.startsWith("get") || Property.startsWith("create")) {
 				return (..._Args: unknown[]) => MakePermissiveExports();
 			}
-			// Fallback — the multi-stub: callable, iterable, chainable.
+			// Fallback - the multi-stub: callable, iterable, chainable.
 			return Stub;
 		},
 	});
@@ -258,7 +258,7 @@ const ToExtensionObject = (Context: HandlerContext, Id: string, Raw: any) => {
 // fileDecorationProvider, terminalLinkProvider, terminalProfileProvider),
 // not real extension descriptions. Exclude them from the extensions.*
 // getters so ToExtensionObject isn't fed Raw = undefined on
-// extensionLocation — otherwise NormalizeLocation emits a WARN and returns
+// extensionLocation - otherwise NormalizeLocation emits a WARN and returns
 // a bogus extension with empty path.
 const IsExtensionKey = (Key: string) => !Key.startsWith("__");
 

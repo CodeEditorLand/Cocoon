@@ -18,7 +18,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 
 	// Mountain delivers `appRoot` as a `file://` URL string
 	// (`url::Url::from_directory_path`). VS Code's `vscode.env.appRoot`
-	// contract is a plain filesystem path — extensions pass it straight to
+	// contract is a plain filesystem path - extensions pass it straight to
 	// `path.join(appRoot, 'product.json')` and then `fs.readFile`. Strip the
 	// `file://` scheme and percent-decode so those calls resolve correctly.
 	const NormalizeAppRoot = (Raw: unknown): string => {
@@ -91,7 +91,7 @@ const CreateEnvNamespace = (Context: HandlerContext) => {
 		remoteName: undefined,
 		clipboard: {
 			// Primary path: Mountain's Clipboard.Read / Clipboard.Write (when
-			// routed). Fallback: native OS clipboard CLI — pbcopy/pbpaste on
+			// routed). Fallback: native OS clipboard CLI - pbcopy/pbpaste on
 			// macOS, xclip/wl-paste on Linux, clip/Get-Clipboard on Windows.
 			// Each branch swallows errors so the extension host never crashes
 			// on an unavailable clipboard subsystem.

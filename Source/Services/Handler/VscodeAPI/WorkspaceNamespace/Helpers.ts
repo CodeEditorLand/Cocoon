@@ -69,7 +69,7 @@ export const DefaultExcludeSegments = new Set([
 /**
  * Normalise VS Code's GlobPattern overloads to a plain string. Accepts a raw
  * string, a RelativePattern-shaped object, or a Uri-shaped object. We only
- * need the pattern — base resolution is handled by the workspace walk.
+ * need the pattern - base resolution is handled by the workspace walk.
  */
 export const ExtractGlobPattern = (Raw: unknown): string | undefined => {
 	if (typeof Raw === "string" && Raw.length > 0) return Raw;

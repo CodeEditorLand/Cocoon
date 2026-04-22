@@ -402,7 +402,7 @@ export const MountainClientLive = Layer.effect(
 			return currentState.serverVersion;
 		});
 
-		// Atom: Health check — fast local-state check followed by a real gRPC
+		// Atom: Health check - fast local-state check followed by a real gRPC
 		// round-trip against `FileSystem.Stat` (cheap, always routed). A
 		// healthy connection must (a) be in the Connected state locally and
 		// (b) respond to a stat of `/` within the timeout. A transport
@@ -447,7 +447,7 @@ export const MountainClientLive = Layer.effect(
 			}
 			if (Outcome.Kind === "app-error") {
 				// Distinguish transport failure from an application error. The
-				// server is clearly responsive (it replied) — stay Connected.
+				// server is clearly responsive (it replied) - stay Connected.
 				const LooksLikeTransport =
 					/UNAVAILABLE|transport|disconnect|ECONNREFUSED|ECONNRESET|NOT_FOUND service/i.test(
 						Outcome.Message,

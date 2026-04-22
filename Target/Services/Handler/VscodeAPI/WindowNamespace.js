@@ -261,7 +261,7 @@ var CreateWindowNamespace = /* @__PURE__ */ __name((Context) => {
           }).catch(() => {
           });
         }, "dispose"),
-        // LogOutputChannel additions — returned when the caller passes
+        // LogOutputChannel additions - returned when the caller passes
         // `{ log: true }`. Kept on the base channel for simplicity;
         // these are inert on non-log channels.
         logLevel: 2,

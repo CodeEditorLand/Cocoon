@@ -21032,7 +21032,7 @@ var init_WindowNamespace = __esm({
               }).catch(() => {
               });
             }, "dispose"),
-            // LogOutputChannel additions — returned when the caller passes
+            // LogOutputChannel additions - returned when the caller passes
             // `{ log: true }`. Kept on the base channel for simplicity;
             // these are inert on non-log channels.
             logLevel: 2,
@@ -22726,7 +22726,7 @@ var init_Index = __esm({
         asRelativePath: /* @__PURE__ */ __name((PathOrUri) => String(PathOrUri), "asRelativePath"),
         // BATCH-14 follow-up: forwards through Mountain's `$updateWorkspaceFolders`
         // which mutates ApplicationState.Workspace and fires `$deltaWorkspaceFolders`
-        // back — the listener wiring from BATCH-14 does the rest.
+        // back - the listener wiring from BATCH-14 does the rest.
         updateWorkspaceFolders: BuildUpdateWorkspaceFolders(
           Context,
           ReadFolders
@@ -22747,7 +22747,7 @@ var init_Index = __esm({
             }, "dispose")
           };
         }, "onDidChangeWorkspaceFolders"),
-        // Provider registrations — each backed by a Mountain round-trip.
+        // Provider registrations - each backed by a Mountain round-trip.
         registerTextDocumentContentProvider: BuildRegisterTextDocumentContentProvider(Context),
         registerFileSystemProvider: BuildRegisterFileSystemProvider(Context),
         registerTaskProvider: BuildRegisterTaskProvider(Context),
@@ -22784,7 +22784,7 @@ var init_Index = __esm({
         }, "dispose") }), "onDidChangeTunnels"),
         registerPortAttributesProvider: /* @__PURE__ */ __name((_Selector, _Provider) => ({ dispose: /* @__PURE__ */ __name(() => {
         }, "dispose") }), "registerPortAttributesProvider"),
-        // createFileSystemWatcher is tier-gated — see FileSystemWatcher.ts.
+        // createFileSystemWatcher is tier-gated - see FileSystemWatcher.ts.
         createFileSystemWatcher: /* @__PURE__ */ __name((Pattern, IgnoreCreateEvents, IgnoreChangeEvents, IgnoreDeleteEvents) => CreateFileSystemWatcher(
           Context,
           Pattern,
@@ -23607,7 +23607,7 @@ var init_EnvNamespace = __esm({
         remoteName: void 0,
         clipboard: {
           // Primary path: Mountain's Clipboard.Read / Clipboard.Write (when
-          // routed). Fallback: native OS clipboard CLI — pbcopy/pbpaste on
+          // routed). Fallback: native OS clipboard CLI - pbcopy/pbpaste on
           // macOS, xclip/wl-paste on Linux, clip/Get-Clipboard on Windows.
           // Each branch swallows errors so the extension host never crashes
           // on an unavailable clipboard subsystem.
@@ -24333,14 +24333,14 @@ ${Stack}`
             const API = globalThis.__cocoonVscodeAPI;
             if (API) return API;
             console.warn(
-              "[ExtensionHostHandler] require('vscode') called before shim registered \u2014 returning empty namespace"
+              "[ExtensionHostHandler] require('vscode') called before shim registered - returning empty namespace"
             );
             return {};
           }
           return OriginalLoad.call(this, Request, Parent, IsMain);
         }, "PatchedLoad");
         console.log(
-          "[ExtensionHostHandler] Module._load hook installed \u2014 require('vscode') intercepted"
+          "[ExtensionHostHandler] Module._load hook installed - require('vscode') intercepted"
         );
       } catch (Err) {
         console.warn(
@@ -24531,7 +24531,7 @@ ${Stack}`
           try {
             NodeModule.register(LoaderURL, import.meta.url);
             console.log(
-              "[ExtensionHostHandler] ESM loader registered \u2014 import 'vscode' intercepted"
+              "[ExtensionHostHandler] ESM loader registered - import 'vscode' intercepted"
             );
           } catch (RegisterErr) {
             console.warn(
@@ -24590,7 +24590,7 @@ ${Stack}`
         };
         const API = {
           ...VsCodeTypes,
-          // Atom I5: read from process.env — single source is .env.Land
+          // Atom I5: read from process.env - single source is .env.Land
           // propagated by Maintain/Script/TierEnvironment.sh. Fallback
           // tracks the VS Code base from Dependency/.../Editor/package.json.
           version: process.env["ProductVersion"] ?? "1.118.0",
@@ -24600,7 +24600,7 @@ ${Stack}`
           EventEmitter: Emitter2,
           LogLevel: LogLevelEnum,
           OverviewRulerLane,
-          // Namespaces — each in its own file under VscodeAPI/
+          // Namespaces - each in its own file under VscodeAPI/
           window: (await Promise.resolve().then(() => (init_WindowNamespace(), WindowNamespace_exports))).default(
             Context
           ),
@@ -24617,7 +24617,7 @@ ${Stack}`
           ),
           scm: (await Promise.resolve().then(() => (init_ScmNamespace(), ScmNamespace_exports))).default(Context),
           authentication: (await Promise.resolve().then(() => (init_AuthenticationNamespace(), AuthenticationNamespace_exports))).default(Context),
-          // Lightweight stub namespaces — no Mountain route yet, returns
+          // Lightweight stub namespaces - no Mountain route yet, returns
           // safe defaults so extensions that reference them don't crash.
           l10n: {
             t: /* @__PURE__ */ __name((Message, ...Arguments) => {

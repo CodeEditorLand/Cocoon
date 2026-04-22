@@ -139,7 +139,7 @@ export const CreateWebviewPanel = (
 				}),
 		};
 
-		// Placeholder extension description — TODO: get from context
+		// Placeholder extension description - TODO: get from context
 		const ExtensionDescription: any = {
 			identifier: { value: "extension-placeholder" },
 			extensionLocation: { scheme: "file", path: "/tmp/extension" },

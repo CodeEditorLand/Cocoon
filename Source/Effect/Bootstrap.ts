@@ -26,7 +26,7 @@ import { RPCServerTag } from "./RPCServer.js";
 import { TelemetryTag, withSpan } from "./Telemetry.js";
 
 /**
- * Fast TCP port probe — returns true if a client socket can ESTABLISH (not
+ * Fast TCP port probe - returns true if a client socket can ESTABLISH (not
  * just send SYN) inside `TimeoutMs`. Used as Stage 3's pre-flight so we only
  * attempt the expensive gRPC handshake once Mountain's listener is live.
  * Cheap: one socket, one timeout, no retries.
@@ -146,7 +146,7 @@ const stage2_Configuration = withSpan(
 			"[Cocoon Bootstrap] Stage 2: Loading configuration...",
 		);
 
-		// Real bootstrap configuration comes in through the environment —
+		// Real bootstrap configuration comes in through the environment -
 		// Mountain spawns Cocoon with `MOUNTAIN_GRPC_PORT`, `COCOON_GRPC_PORT`,
 		// `LAND_DEV_LOG`, `NODE_ENV`, etc. Extension-host settings arrive later
 		// via `InitializeExtensionHost`. Here we:
@@ -196,7 +196,7 @@ const stage2_Configuration = withSpan(
 );
 
 /**
- * Stage 3 tuning — exposed as constants so a future test harness can override.
+ * Stage 3 tuning - exposed as constants so a future test harness can override.
  * Total worst-case duration before we give up: probe 15× + connect retry up to
  * `MountainConnectMaxAttempts`. With 250 ms probe + 500 ms initial backoff
  * doubling to 5 s cap, 15 attempts covers the 5–8 s Mountain startup window
@@ -397,7 +397,7 @@ const stage6_Extensions = withSpan(
 		);
 
 		// Parallel activation with bounded concurrency (8) and per-extension
-		// error isolation — one bad activate must not abort the stage. Sequential
+		// error isolation - one bad activate must not abort the stage. Sequential
 		// for-loops used to serialise activations behind any slow I/O inside an
 		// extension's activate callback (file reads, LSP launches). Effect.forEach
 		// runs up to 8 concurrently and collects all successes; failures log and

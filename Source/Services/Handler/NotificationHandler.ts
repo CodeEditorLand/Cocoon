@@ -18,7 +18,7 @@
  *
  * Text-document events are high-volume (one per keystroke when an
  * extension is in `onDidChangeTextDocument`) and have a distinct
- * subscriber population — they must not block on
+ * subscriber population - they must not block on
  * extension-lifecycle listeners. Keeping them on a dedicated emitter
  * bounds the worst-case fan-out cost.
  *
@@ -28,7 +28,7 @@
  * the vscode API shims (in `Handler/VscodeAPI/*`) return a VS Code
  * `Disposable` whose `dispose()` calls `Emitter.removeListener`. The
  * per-event memory leak check (`MaxListeners`) is left at the Node
- * default (10) — extensions that register >10 listeners receive a
+ * default (10) - extensions that register >10 listeners receive a
  * runtime warning and should rethink their design.
  *
  * ## Unknown methods
@@ -55,7 +55,7 @@ type WorkspaceDeltaPayload = {
 };
 
 /**
- * Atom I3 — last-resort uncaught-exception handler.
+ * Atom I3 - last-resort uncaught-exception handler.
  *
  * The project's `PatchProcess/Patcher.ts` registers one via an Effect, but
  * esbuild tree-shakes that path out of `CocoonMain.js` (bundle scan confirms
@@ -65,7 +65,7 @@ type WorkspaceDeltaPayload = {
  *
  * This module-level registration is intentionally colocated with the
  * notification dispatch because that's where the explosive event cascades
- * fan out to extension callbacks. One handler is enough — Node dedupes via
+ * fan out to extension callbacks. One handler is enough - Node dedupes via
  * reference and we only register once per process.
  */
 const { URI: LazyURI } = await import(
@@ -91,7 +91,7 @@ const HydrateUri = (Raw: string | UriObject | undefined): UriObject | null => {
 			return null;
 		}
 	}
-	// Already a URI-shaped object — check for the critical getters extensions
+	// Already a URI-shaped object - check for the critical getters extensions
 	// rely on (`fsPath`, `toString`). If present, use as-is; otherwise try to
 	// reparse via `toString()`.
 	if (
@@ -186,7 +186,7 @@ const ApplyWorkspaceDelta = (
 	}
 	Workspace.folders = Kept;
 	// Workspace.workspaceData mirror for consumers that read the alternate
-	// shape — keep them in sync so no extension reads stale state.
+	// shape - keep them in sync so no extension reads stale state.
 	Init.workspaceData = Workspace;
 	// `workspace.name` is derived from the first folder when the workspace has
 	// not been explicitly named. Refresh it so it survives open/close cycles.
@@ -201,7 +201,7 @@ const ApplyWorkspaceDelta = (
  * Invoke every listener for `Event` individually, isolating each from the
  * others with try/catch. Node's default `emitter.emit()` calls listeners
  * synchronously in registration order and rethrows the first one that
- * throws — which skips every subsequent listener AND propagates the
+ * throws - which skips every subsequent listener AND propagates the
  * error up, crashing the extension host when an extension's listener
  * has an uncaught bug.
  *
@@ -209,7 +209,7 @@ const ApplyWorkspaceDelta = (
  * `TaskDetector.updateWorkspaceFolders` throws
  * `ERR_INVALID_ARG_TYPE` (`path.join(undefined, …)`) whenever the
  * workspace transitions from empty to one-folder. Without SafeEmit,
- * that kills Cocoon with exit code 1 — every extension dies, and the
+ * that kills Cocoon with exit code 1 - every extension dies, and the
  * whole post-folder-open experience silently breaks.
  *
  * We cannot patch `extensions/gulp/out/main.js` (VS Code source) so the
@@ -367,7 +367,7 @@ const HandleSpecificNotification = (
 			);
 			break;
 		case "webview.message": {
-			// { handle, message } — the webview posted a message to the extension.
+			// { handle, message } - the webview posted a message to the extension.
 			const Payload = Array.isArray(Parameters)
 				? Parameters[0]
 				: Parameters;
@@ -535,7 +535,7 @@ const HandleSpecificNotification = (
 			}
 			break;
 		default:
-			// Generic handler for unknown notification types — survive
+			// Generic handler for unknown notification types - survive
 			// esbuild's production `drop: ["console"]` so unknown routes are
 			// still grep-able in shipped builds.
 			try {

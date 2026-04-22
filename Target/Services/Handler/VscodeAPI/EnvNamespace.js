@@ -160,7 +160,7 @@ var CreateEnvNamespace = /* @__PURE__ */ __name((Context) => {
     remoteName: void 0,
     clipboard: {
       // Primary path: Mountain's Clipboard.Read / Clipboard.Write (when
-      // routed). Fallback: native OS clipboard CLI — pbcopy/pbpaste on
+      // routed). Fallback: native OS clipboard CLI - pbcopy/pbpaste on
       // macOS, xclip/wl-paste on Linux, clip/Get-Clipboard on Windows.
       // Each branch swallows errors so the extension host never crashes
       // on an unavailable clipboard subsystem.

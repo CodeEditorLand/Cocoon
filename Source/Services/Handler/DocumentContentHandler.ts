@@ -2,13 +2,13 @@
  * @module Handler/DocumentContentHandler
  * @description
  * Handles document content mirroring from Mountain notifications:
- * - $acceptModelAdded / document.didOpen — cache initial content
- * - $acceptModelChanged / document.didChange — apply incremental edits
- * - $acceptModelRemoved / document.didClose — remove from cache
- * - $acceptModelSaved / document.didSave — emit event (disk matches cache)
+ * - $acceptModelAdded / document.didOpen - cache initial content
+ * - $acceptModelChanged / document.didChange - apply incremental edits
+ * - $acceptModelRemoved / document.didClose - remove from cache
+ * - $acceptModelSaved / document.didSave - emit event (disk matches cache)
  *
  * The documentContentCache is the source of truth for InvokeLanguageProvider's
- * VsDocument.getText() — it always reflects the latest unsaved editor state.
+ * VsDocument.getText() - it always reflects the latest unsaved editor state.
  *
  * Each handler also emits workspace lifecycle events on the provided
  * WorkspaceEventEmitter so extensions registered via
@@ -239,7 +239,7 @@ const HandleDocumentChange = (
 	if (Uri && Content !== undefined) {
 		DocumentContentCache.set(Uri, Content);
 	} else if (Uri && (EventData?.changes || Parameters?.changes)) {
-		// Incremental changes — apply edits to cached content
+		// Incremental changes - apply edits to cached content
 		const Existing = DocumentContentCache.get(Uri) ?? "";
 		let Updated = Existing;
 		const Changes: any[] = Array.isArray(EventData?.changes)
@@ -278,7 +278,7 @@ const HandleDocumentChange = (
 };
 
 /**
- * Handle document open from Mountain — cache initial content.
+ * Handle document open from Mountain - cache initial content.
  * Emits "didOpenTextDocument" on the WorkspaceEventEmitter.
  */
 const HandleDocumentOpen = (
@@ -331,7 +331,7 @@ const HandleDocumentOpen = (
 };
 
 /**
- * Handle document close from Mountain — remove from cache.
+ * Handle document close from Mountain - remove from cache.
  * Emits "didCloseTextDocument" on the WorkspaceEventEmitter.
  */
 const HandleDocumentClose = (

@@ -273,7 +273,7 @@ export const TelemetryLive = Layer.effect(
 				try {
 					Stream.write(Line);
 				} catch {
-					// Broken pipe on shutdown — swallow silently rather than
+					// Broken pipe on shutdown - swallow silently rather than
 					// crashing the extension host fiber mid-telemetry.
 				}
 			});

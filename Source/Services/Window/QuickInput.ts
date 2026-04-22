@@ -118,7 +118,7 @@ export const ShowInputBox = (
 			`[WindowService] Showing input box${Options ? ` with placeholder: ${Options.placeholder}` : ""}`,
 		);
 
-		// Construct request payload — options serialized directly
+		// Construct request payload - options serialized directly
 		const RequestPayload = Options
 			? {
 					title: Options.title,

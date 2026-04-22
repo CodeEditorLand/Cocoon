@@ -58,7 +58,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) => ({
 		},
 	): Promise<unknown> => {
 		try {
-			// Authentication.GetSession — not yet routed; catch returns undefined.
+			// Authentication.GetSession - not yet routed; catch returns undefined.
 			return await Context.MountainClient?.sendRequest(
 				"Authentication.GetSession",
 				[ProviderId, Scopes, Options ?? {}],
@@ -70,7 +70,7 @@ const CreateAuthenticationNamespace = (Context: HandlerContext) => ({
 
 	getAccounts: async (ProviderId: string): Promise<unknown[]> => {
 		try {
-			// Authentication.GetAccounts — not yet routed; catch returns [].
+			// Authentication.GetAccounts - not yet routed; catch returns [].
 			const Result = await Context.MountainClient?.sendRequest(
 				"Authentication.GetAccounts",
 				[ProviderId],

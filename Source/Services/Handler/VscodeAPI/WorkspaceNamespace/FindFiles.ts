@@ -119,7 +119,7 @@ export const FindFilesLocal = async (
 			}
 			const Name = Entry.name;
 			if (DefaultExcludeSegments.has(Name)) continue;
-			// Refuse to follow symlinks — common source of infinite recursion
+			// Refuse to follow symlinks - common source of infinite recursion
 			// (e.g. `node_modules/.bin/node → ../node/bin/node → …`).
 			if (
 				typeof Entry.isSymbolicLink === "function" &&

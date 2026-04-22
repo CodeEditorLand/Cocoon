@@ -1,6 +1,6 @@
 /**
  * @module Proto/vine
- * @description Stub types for Vine proto — used by EchoActionClient.
+ * @description Stub types for Vine proto - used by EchoActionClient.
  * Real types are in Source/Generated/Vine.ts.
  */
 

@@ -252,14 +252,14 @@ export const ModuleInterceptorLive = Layer.effect(
 		// vscode API registry: extensionId → vscode API instance
 		const vscodeAPIRegistry = new Map<string, unknown>();
 
-		// Atom: Install — patches Node.js Module._load to intercept require('vscode')
+		// Atom: Install - patches Node.js Module._load to intercept require('vscode')
 		const install = Effect.gen(function* () {
 			telemetry.log(
 				"info",
 				"[ModuleInterceptor] Installing Node.js Module._load hook...",
 			);
 
-			// CocoonMain.js is an ESM bundle — `require` is not in scope.
+			// CocoonMain.js is an ESM bundle - `require` is not in scope.
 			// Use dynamic import() to get the Module constructor.
 			const { default: NodeModule } = (yield* Effect.tryPromise({
 				try: () => import("node:module"),
@@ -274,7 +274,7 @@ export const ModuleInterceptorLive = Layer.effect(
 				Parent: any,
 				IsMain: boolean,
 			) {
-				// Intercept require('vscode') — return the API shim
+				// Intercept require('vscode') - return the API shim
 				if (Request === "vscode") {
 					// Determine which extension is loading by checking parent filename
 					const ParentFilename: string =
@@ -301,7 +301,7 @@ export const ModuleInterceptorLive = Layer.effect(
 						return GlobalAPI;
 					}
 
-					// No API registered yet — return empty namespace
+					// No API registered yet - return empty namespace
 					console.warn(
 						`[ModuleInterceptor] require('vscode') called but no API registered (parent: ${ParentFilename.slice(-80)})`,
 					);
@@ -314,7 +314,7 @@ export const ModuleInterceptorLive = Layer.effect(
 
 			telemetry.log(
 				"info",
-				"[ModuleInterceptor] Module._load hook installed — require('vscode') intercepted",
+				"[ModuleInterceptor] Module._load hook installed - require('vscode') intercepted",
 			);
 		});
 
