@@ -2,8 +2,8 @@
  * @module Telemetry/PostHog/Event
  * @description
  * Shape for a PostHog event queued in Cocoon's buffer. Mirrors the
- * official SDK payload — `event`, `timestamp`, `distinct_id`,
- * `properties` — so the server accepts our direct `/batch` POST
+ * official SDK payload - `event`, `timestamp`, `distinct_id`,
+ * `properties` - so the server accepts our direct `/batch` POST
  * without envelope changes.
  */
 

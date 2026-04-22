@@ -2,7 +2,7 @@
  * @module Telemetry/PostHog/Transport
  * @description
  * POST a batch of events to PostHog's `/batch/` endpoint via `node:https`.
- * Silent on failure — telemetry must never raise into the extension host.
+ * Silent on failure - telemetry must never raise into the extension host.
  * Response body is drained without inspection; only status signals matter
  * and those are sampled separately via PostHog's own project dashboards.
  */
@@ -62,6 +62,6 @@ export default (
 
 		Request.end();
 	} catch {
-		// URL parse or synchronous throw — drop the batch silently.
+		// URL parse or synchronous throw - drop the batch silently.
 	}
 };

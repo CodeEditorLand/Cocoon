@@ -180,7 +180,7 @@ const ApplyWorkspaceDelta = (
 		Kept.push(Candidate);
 		ExistingUris.add(Uri);
 	}
-	// Re-index so the exposed list stays VS Code–compatible.
+	// Re-index so the exposed list stays VS Code-compatible.
 	for (let Index = 0; Index < Kept.length; Index += 1) {
 		Kept[Index] = { ...Kept[Index], index: Index };
 	}

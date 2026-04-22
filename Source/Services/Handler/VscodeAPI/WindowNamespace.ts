@@ -631,7 +631,7 @@ const CreateWindowNamespace = (Context: HandlerContext) => {
 				// included the `treeDataProvider` itself - the provider's
 				// `.context` field cycles through the whole ExtensionContext
 				// (environmentVariableCollection, nested Uri objects, the
-				// full packageJSON), pushing a 50–200 KB payload per
+				// full packageJSON), pushing a 50-200 KB payload per
 				// activation and starving the gRPC channel.
 				const SerializableOptions = {
 					showCollapseAll: Options?.showCollapseAll === true,

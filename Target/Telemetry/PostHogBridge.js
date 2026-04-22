@@ -1,82 +1,54 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// Source/Telemetry/PostHogBridge.ts
+// Source/Telemetry/PostHog/Event.ts
+var BaseProperties = {
+  $app: "land-editor",
+  $app_version: "0.0.1",
+  $build_mode: "debug",
+  $component: "cocoon",
+  $tier: "cocoon",
+  $lib: "cocoon-posthog-bridge"
+};
+var Create = /* @__PURE__ */ __name((Name, Properties = {}) => ({
+  Name,
+  Timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+  Properties
+}), "Create");
+var Enrich = /* @__PURE__ */ __name((Properties) => ({
+  ...Properties,
+  ...BaseProperties,
+  $node_version: process.version
+}), "Enrich");
+var Event_default = { Create, Enrich };
+
+// Source/Telemetry/PostHog/Transport.ts
 import * as NodeHttps from "node:https";
-var ReadEnvString = /* @__PURE__ */ __name((Key, Fallback) => {
-  const Value = process.env[Key];
-  return Value && Value.length > 0 ? Value : Fallback;
-}, "ReadEnvString");
-var ReadEnvBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
-  const Value = process.env[Key];
-  if (Value === void 0) return Fallback;
-  return !["false", "0", "off", ""].includes(Value.toLowerCase());
-}, "ReadEnvBoolean");
-var ReadEnvNumber = /* @__PURE__ */ __name((Key, Fallback) => {
-  const Value = process.env[Key];
-  const Parsed = Value ? Number(Value) : NaN;
-  return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
-}, "ReadEnvNumber");
-var PostHogKey = ReadEnvString(
-  "LAND_POSTHOG_KEY",
-  "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA"
-);
-var PostHogHost = ReadEnvString(
-  "LAND_POSTHOG_HOST",
-  "https://eu.i.posthog.com"
-);
-var PostHogEnabled = ReadEnvBoolean("LAND_POSTHOG_COCOON_ENABLED", true);
-var BatchWindowMs = ReadEnvNumber(
-  "LAND_POSTHOG_COCOON_BATCH_WINDOW_MS",
-  3e3
-);
-var BatchMax = ReadEnvNumber("LAND_POSTHOG_COCOON_BATCH_MAX", 50);
-var DistinctIdSeed = process.env["LAND_POSTHOG_DISTINCT_ID"] ?? "";
-var Username = process.env["USER"] ?? process.env["USERNAME"] ?? "unknown";
-var DistinctId = DistinctIdSeed.length > 0 ? DistinctIdSeed : `land-dev-${Username}`;
-var Queue = [];
-var FlushTimer;
-var Initialized = false;
-var CaptureAllowed = /* @__PURE__ */ __name(() => {
-  if (!PostHogEnabled) return false;
-  if (process.env["NODE_ENV"] === "production") return false;
-  return true;
-}, "CaptureAllowed");
-var Flush = /* @__PURE__ */ __name(() => {
-  if (Queue.length === 0) return;
-  const Pending = Queue;
-  Queue = [];
+var RequestTimeoutMilliseconds = 5e3;
+var Transport_default = /* @__PURE__ */ __name((Host, Key, DistinctIdentifier2, Batch) => {
+  if (Batch.length === 0) return;
   const Payload = JSON.stringify({
-    api_key: PostHogKey,
-    batch: Pending.map((E) => ({
-      event: E.event,
-      timestamp: E.timestamp,
-      distinct_id: DistinctId,
-      properties: {
-        ...E.properties,
-        $app: "land-editor",
-        $app_version: "0.0.1",
-        $build_mode: "debug",
-        $component: "cocoon",
-        $tier: "cocoon",
-        $lib: "cocoon-posthog-bridge",
-        $node_version: process.version
-      }
+    api_key: Key,
+    batch: Batch.map((Entry) => ({
+      event: Entry.Name,
+      timestamp: Entry.Timestamp,
+      distinct_id: DistinctIdentifier2,
+      properties: Event_default.Enrich(Entry.Properties)
     }))
   });
   try {
-    const Url = new URL("/batch/", PostHogHost);
+    const Address = new URL("/batch/", Host);
     const Request = NodeHttps.request(
       {
         method: "POST",
-        hostname: Url.hostname,
-        port: Url.port || 443,
-        path: Url.pathname,
+        hostname: Address.hostname,
+        port: Address.port || 443,
+        path: Address.pathname,
         headers: {
           "Content-Type": "application/json",
           "Content-Length": Buffer.byteLength(Payload)
         },
-        timeout: 5e3
+        timeout: RequestTimeoutMilliseconds
       },
       (Response) => {
         Response.resume();
@@ -91,68 +63,132 @@ var Flush = /* @__PURE__ */ __name(() => {
     Request.end();
   } catch {
   }
-}, "Flush");
-var ScheduleFlush = /* @__PURE__ */ __name(() => {
-  if (FlushTimer) return;
-  FlushTimer = setTimeout(() => {
-    FlushTimer = void 0;
-    Flush();
-  }, BatchWindowMs);
-  FlushTimer.unref?.();
-}, "ScheduleFlush");
-var CaptureEvent = /* @__PURE__ */ __name((Event, Properties = {}) => {
-  if (!CaptureAllowed()) return;
-  try {
-    Queue.push({
-      event: Event,
-      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-      properties: Properties
-    });
-    if (Queue.length >= BatchMax) {
-      Flush();
-    } else {
+}, "default");
+
+// Source/Telemetry/PostHog/Buffer.ts
+var Buffer_default = /* @__PURE__ */ __name((Config, DistinctIdentifier2) => {
+  let Queue = [];
+  let FlushTimer;
+  const Send = /* @__PURE__ */ __name(() => {
+    if (Queue.length === 0) return;
+    const Pending = Queue;
+    Queue = [];
+    Transport_default(Config.Host, Config.Key, DistinctIdentifier2, Pending);
+  }, "Send");
+  const ScheduleFlush = /* @__PURE__ */ __name(() => {
+    if (FlushTimer) return;
+    FlushTimer = setTimeout(() => {
+      FlushTimer = void 0;
+      Send();
+    }, Config.BatchWindowMilliseconds);
+    FlushTimer.unref?.();
+  }, "ScheduleFlush");
+  return {
+    Enqueue: /* @__PURE__ */ __name((Name, Properties) => {
+      Queue.push(Event_default.Create(Name, Properties));
+      if (Queue.length >= Config.BatchMaximum) {
+        Send();
+        return;
+      }
       ScheduleFlush();
-    }
+    }, "Enqueue"),
+    Drain: /* @__PURE__ */ __name(() => {
+      if (FlushTimer) {
+        clearTimeout(FlushTimer);
+        FlushTimer = void 0;
+      }
+      Send();
+    }, "Drain")
+  };
+}, "default");
+
+// Source/Telemetry/PostHog/Configuration.ts
+var DefaultKey = "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA";
+var DefaultHost = "https://eu.i.posthog.com";
+var DefaultBatchWindowMilliseconds = 3e3;
+var DefaultBatchMaximum = 50;
+var ReadString = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  return Value && Value.length > 0 ? Value : Fallback;
+}, "ReadString");
+var ReadBoolean = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  if (Value === void 0) return Fallback;
+  return !["false", "0", "off", ""].includes(Value.toLowerCase());
+}, "ReadBoolean");
+var ReadNumber = /* @__PURE__ */ __name((Key, Fallback) => {
+  const Value = process.env[Key];
+  const Parsed = Value ? Number(Value) : Number.NaN;
+  return Number.isFinite(Parsed) && Parsed > 0 ? Parsed : Fallback;
+}, "ReadNumber");
+var Configuration_default = /* @__PURE__ */ __name(() => ({
+  Key: ReadString("LAND_POSTHOG_KEY", DefaultKey),
+  Host: ReadString("LAND_POSTHOG_HOST", DefaultHost),
+  Enabled: ReadBoolean("LAND_POSTHOG_COCOON_ENABLED", true) && process.env["NODE_ENV"] !== "production",
+  BatchWindowMilliseconds: ReadNumber(
+    "LAND_POSTHOG_COCOON_BATCH_WINDOW_MS",
+    DefaultBatchWindowMilliseconds
+  ),
+  BatchMaximum: ReadNumber(
+    "LAND_POSTHOG_COCOON_BATCH_MAX",
+    DefaultBatchMaximum
+  ),
+  DistinctIdentifierSeed: process.env["LAND_POSTHOG_DISTINCT_ID"] ?? ""
+}), "default");
+
+// Source/Telemetry/PostHog/Identifier.ts
+var Identifier_default = /* @__PURE__ */ __name((Seed) => {
+  if (Seed.length > 0) return Seed;
+  const Username = process.env["USER"] ?? process.env["USERNAME"] ?? "unknown";
+  return `land-dev-${Username}`;
+}, "default");
+
+// Source/Telemetry/PostHogBridge.ts
+var Configuration = Configuration_default();
+var DistinctIdentifier = Identifier_default(
+  Configuration.DistinctIdentifierSeed
+);
+var ActiveBuffer;
+var Initialized = false;
+var Buffered = /* @__PURE__ */ __name(() => {
+  if (!Configuration.Enabled) return void 0;
+  if (!ActiveBuffer) {
+    ActiveBuffer = Buffer_default(Configuration, DistinctIdentifier);
+  }
+  return ActiveBuffer;
+}, "Buffered");
+var CaptureEvent = /* @__PURE__ */ __name((Name, Properties = {}) => {
+  try {
+    Buffered()?.Enqueue(Name, Properties);
   } catch {
   }
 }, "CaptureEvent");
 var CaptureError = /* @__PURE__ */ __name((Tag, Message, Extra = {}) => {
-  if (!CaptureAllowed()) return;
-  Queue.push({
-    event: "cocoon:error",
-    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-    properties: {
-      ...Extra,
-      error_tag: Tag,
-      error_message: Message
-    }
+  const Bridge = Buffered();
+  if (!Bridge) return;
+  Bridge.Enqueue("cocoon:error", {
+    ...Extra,
+    error_tag: Tag,
+    error_message: Message
   });
-  Flush();
+  Bridge.Drain();
 }, "CaptureError");
 var Initialize = /* @__PURE__ */ __name(() => {
   if (Initialized) return;
   Initialized = true;
-  if (!CaptureAllowed()) return;
-  const FlushOnExit = /* @__PURE__ */ __name(() => {
-    try {
-      Flush();
-    } catch {
-    }
-  }, "FlushOnExit");
-  process.once("exit", FlushOnExit);
-  process.once("SIGINT", FlushOnExit);
-  process.once("SIGTERM", FlushOnExit);
+  const Bridge = Buffered();
+  if (!Bridge) return;
+  const OnExit = /* @__PURE__ */ __name(() => Bridge.Drain(), "OnExit");
+  process.once("exit", OnExit);
+  process.once("SIGINT", OnExit);
+  process.once("SIGTERM", OnExit);
   CaptureEvent("cocoon:session:start", {
     pid: process.pid,
     platform: process.platform,
     arch: process.arch
   });
 }, "Initialize");
-var PostHogBridge_default = {
-  CaptureEvent,
-  CaptureError,
-  Initialize
-};
+var PostHogBridge_default = { CaptureEvent, CaptureError, Initialize };
 export {
   CaptureError,
   CaptureEvent,

@@ -4,7 +4,7 @@
  * In-memory event buffer + flush scheduler. Events push onto an array;
  * a debounced timer triggers `Transport` after `BatchWindowMilliseconds`
  * or immediately when `BatchMaximum` is reached. `Drain` runs the same
- * flush path synchronously — used by the process-exit hook.
+ * flush path synchronously - used by the process-exit hook.
  */
 
 import type { Configuration } from "./Configuration.js";

@@ -199,7 +199,7 @@ const stage2_Configuration = withSpan(
  * Stage 3 tuning - exposed as constants so a future test harness can override.
  * Total worst-case duration before we give up: probe 15× + connect retry up to
  * `MountainConnectMaxAttempts`. With 250 ms probe + 500 ms initial backoff
- * doubling to 5 s cap, 15 attempts covers the 5–8 s Mountain startup window
+ * doubling to 5 s cap, 15 attempts covers the 5-8 s Mountain startup window
  * observed in every rebuild so far with generous headroom.
  */
 const MountainProbeTimeoutMs = 250;
