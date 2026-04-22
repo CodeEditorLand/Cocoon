@@ -1,7 +1,7 @@
 /**
  * @module Services/Window/Index
  * @description
- * WindowService Effect.Service class — composition point for all window
+ * WindowService Effect.Service class - composition point for all window
  * sub-modules.  Each operation group is implemented in a dedicated module;
  * this file wires them together and keeps the service declaration thin.
  *
@@ -45,7 +45,7 @@ export type { Logger, Window, Workspace } from "./Interfaces.js";
 export type { VSCodeWindowAPI } from "./Interfaces.js";
 
 /**
- * WindowService — Effect-TS service for all VS Code `vscode.window` operations.
+ * WindowService - Effect-TS service for all VS Code `vscode.window` operations.
  *
  * Manages window state, displays messages and dialogs, and coordinates text
  * document display by delegating to Mountain's native UI implementation via

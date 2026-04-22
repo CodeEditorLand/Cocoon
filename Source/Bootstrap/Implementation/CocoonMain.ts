@@ -115,6 +115,13 @@ import Tier from "../../Utility/Tier.js";
 import { BootstrapTag, TelemetryTag } from "../../Effect/index.js";
 import { EffectServices } from "../../ServiceMapping.js";
 
+// Atom PH3: PostHog telemetry - initialize as early as possible so errors
+// during bootstrap land in PostHog even if the rest of the extension host
+// fails to come up. Side-effect import: CocoonMain is the only direct
+// entry point, so one invocation is guaranteed.
+import PostHogBridge from "../../Telemetry/PostHogBridge.js";
+PostHogBridge.Initialize();
+
 // ============================================================================
 // EFFECT-BASED BOOTSTRAP (NEW APPROACH)
 // ============================================================================
