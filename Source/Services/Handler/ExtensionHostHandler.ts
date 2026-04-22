@@ -86,25 +86,32 @@ const HandleInitializeExtensionHost = async (
 /**
  * Handle $deltaExtensions from Mountain.
  * Receives extension list diffs (added/removed) after initial load.
+ *
+ * Wave 7 instrumentation: every delta logs `+Added -Removed` plus the
+ * total registry size and the handler wall-clock duration. A Mountain
+ * rebuild sees an observable line per VSIX install/uninstall (K2/K3 →
+ * K4) — makes sudden registry growth or deletion visible during
+ * regression hunts.
  */
 const HandleDeltaExtensions = async (
 	Context: HandlerContext,
 	Parameters: any,
 ): Promise<any> => {
+	const DeltaStart = performance.now();
 	const Added: any[] = Parameters?.toAdd ?? [];
 	const Removed: any[] = Parameters?.toRemove ?? [];
 
-	console.log(
-		`[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length}`,
-	);
+	const IdentifierOf = (Extension: any): string =>
+		Extension?.identifier?.value ??
+		Extension?.identifier?.id ??
+		Extension?.identifier ??
+		"unknown";
+
+	let AddedActivationEvents = 0;
 
 	// Add new extensions to registry
 	for (const Extension of Added) {
-		const Identifier =
-			Extension?.identifier?.value ??
-			Extension?.identifier?.id ??
-			Extension?.identifier ??
-			"unknown";
+		const Identifier = IdentifierOf(Extension);
 
 		Context.ExtensionRegistry.set(Identifier, Extension);
 
@@ -116,29 +123,35 @@ const HandleDeltaExtensions = async (
 			if (!Existing.includes(Identifier)) {
 				Existing.push(Identifier);
 				Context.ActivationEventIndex.set(Event, Existing);
+				AddedActivationEvents++;
 			}
 		}
 	}
 
 	// Remove extensions from registry
 	for (const Extension of Removed) {
-		const Identifier =
-			Extension?.identifier?.value ??
-			Extension?.identifier?.id ??
-			Extension?.identifier ??
-			"unknown";
+		const Identifier = IdentifierOf(Extension);
 
 		Context.ExtensionRegistry.delete(Identifier);
 	}
 
+	const DurationMs = Math.round(performance.now() - DeltaStart);
+
+	console.log(
+		`[ExtensionHostHandler] $deltaExtensions: +${Added.length} -${Removed.length} | registry=${Context.ExtensionRegistry.size} | activationEvents+=${AddedActivationEvents} | ${DurationMs}ms`,
+	);
+
 	Context.Emitter.emit("deltaExtensions", {
 		added: Added.length,
 		removed: Removed.length,
+		registrySize: Context.ExtensionRegistry.size,
+		durationMs: DurationMs,
 	});
 
 	return {
 		success: true,
 		registrySize: Context.ExtensionRegistry.size,
+		durationMs: DurationMs,
 	};
 };
 

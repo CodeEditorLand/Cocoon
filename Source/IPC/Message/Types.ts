@@ -81,15 +81,20 @@ export interface IBatchMessage {
 }
 
 /**
- * Serialization result with success/failure information
+ * Serialization result with success/failure information.
+ *
+ * `Error` is declared as `string | undefined` (not `string?`) so call sites
+ * can emit `Error: undefined` on the success branch without tripping TS's
+ * `exactOptionalPropertyTypes` guard (which rejects assigning `undefined`
+ * to an optional field that's declared without `| undefined`).
  */
 export interface ISerializationResult {
 	/** Success flag */
 	readonly Success: boolean;
 	/** Serialized data or null if failed */
 	readonly Data: Uint8Array | null;
-	/** Error message if failed */
-	readonly Error?: string;
+	/** Error message if failed, `undefined` otherwise */
+	readonly Error: string | undefined;
 	/** Original message size for compression ratio calculation */
 	readonly OriginalSize: number;
 	/** Final serialized size */
@@ -97,15 +102,17 @@ export interface ISerializationResult {
 }
 
 /**
- * Deserialize result with message and metadata
+ * Deserialize result with message and metadata.
+ *
+ * See `ISerializationResult` for the `Error: string | undefined` rationale.
  */
 export interface IDeserializationResult {
 	/** Success flag */
 	readonly Success: boolean;
 	/** Deserialized message or null if failed */
 	readonly Message: IMessage | IBatchMessage | null;
-	/** Error message if failed */
-	readonly Error?: string;
+	/** Error message if failed, `undefined` otherwise */
+	readonly Error: string | undefined;
 	/** Validation warnings (non-blocking) */
 	readonly Warnings: string[];
 }
