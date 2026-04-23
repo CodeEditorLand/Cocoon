@@ -114,6 +114,21 @@ const createVSCodeAPI = (
 		ConfigurationTarget: VsCodeTypes.ConfigurationTarget,
 		DecorationRangeBehavior: VsCodeTypes.DecorationRangeBehavior,
 		TextDocumentSaveReason: VsCodeTypes.TextDocumentSaveReason,
+		// These enums are declared in vs/editor/common/config/editorOptions.ts
+		// and vs/workbench/services/extensions/common/extensionHostProtocol.ts
+		// respectively, but extHostTypes.js doesn't re-export them. Extensions
+		// (vscodevim, gitlens) crash at activation reading .Line / .Web off
+		// undefined. Inline the literal enum values so the API surface matches
+		// what extensions expect. Keep in sync with the upstream enums.
+		TextEditorCursorStyle: {
+			Line: 1,
+			Block: 2,
+			Underline: 3,
+			LineThin: 4,
+			BlockOutline: 5,
+			UnderlineThin: 6,
+		},
+		UIKind: { Desktop: 1, Web: 2 },
 		// URI is exposed as 'Uri' to match the vscode API surface
 		Uri: URI,
 		CancellationTokenSource,
@@ -197,6 +212,21 @@ const createVSCodeAPI = (
 			withProgress: async (options: any, task: any) => {
 				return task({ report: (value: any) => {} });
 			},
+			// Terminal shell-integration events. Land doesn't track shell
+			// integration, so extensions (openai.chatgpt) that subscribe get
+			// a never-firing event that still registers/disposes cleanly.
+			// Must be a function returning IDisposable - not just an object -
+			// because `vscode.window.onDidChangeTerminalShellIntegration(cb)`
+			// is called as a function by the extension.
+			onDidChangeTerminalShellIntegration: (_Listener: any) => ({
+				dispose: () => {},
+			}),
+			onDidStartTerminalShellExecution: (_Listener: any) => ({
+				dispose: () => {},
+			}),
+			onDidEndTerminalShellExecution: (_Listener: any) => ({
+				dispose: () => {},
+			}),
 		},
 
 		// --- Workspace Namespace ---
